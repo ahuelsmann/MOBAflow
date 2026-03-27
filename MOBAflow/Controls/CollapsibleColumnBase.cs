@@ -85,11 +85,6 @@ public abstract class CollapsibleColumnBase : Control
         set => SetValue(HeaderActionsProperty, value);
     }
 
-    protected CollapsibleColumnBase()
-    {
-        // By default, the style key will be set in the derived classes.
-    }
-
     protected override void OnApplyTemplate()
     {
         base.OnApplyTemplate();

@@ -347,7 +347,7 @@ internal sealed partial class SpeedometerControl
         {
             14 => (13, new[] { 0, 3, 7, 10, 13 }),
             28 => (27, new[] { 0, 7, 14, 21, 27 }),
-            128 or _ => (126, [0, 32, 63, 95, 126])
+            _ => (126, [0, 32, 63, 95, 126])
         };
 
         // Use AccentColor from accent brush (matching speedometer needle)

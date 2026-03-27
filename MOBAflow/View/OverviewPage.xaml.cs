@@ -1,8 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
-using Common.Navigation;
-using SharedUI.ViewModel;
+using Moba.SharedUI.ViewModel;
 
 /// <summary>
 /// Overview page showing the Lap Counter Dashboard with Z21 connection and track statistics.

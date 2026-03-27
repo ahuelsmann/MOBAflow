@@ -17,18 +17,17 @@
         <docking:DockingManager
             x:Name="DockManager"
             Grid.Row="1"
+            BottomNode="{Binding BottomNode}"
             BottomPanelHeight="180"
-            BottomPanels="{Binding BottomPanels}"
             IsBottomPanelVisible="True"
             IsLeftPanelVisible="True"
             IsRightPanelVisible="True"
             IsTopPanelVisible="False"
+            LeftNode="{Binding LeftNode}"
             LeftPanelWidth="240"
-            LeftPanels="{Binding LeftPanels}"
+            RightNode="{Binding RightNode}"
             RightPanelWidth="260"
-            RightPanels="{Binding RightPanels}"
-            TabDockedToSide="OnTabDockedToSide"
-            TopPanels="{Binding TopPanels}">
+            TopNode="{Binding TopNode}">
 
             <!--  Center: Document Tabs  -->
             <docking:DockingManager.DocumentAreaContent>
@@ -39,7 +38,7 @@
                     EnableTabGrouping="True">
 
                     <docking:LayoutDocument.TabTemplate>
-                        <DataTemplate x:DataType="docking:DocumentTab">
+                        <DataTemplate>
                             <Grid Padding="4,0" ColumnSpacing="6">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
@@ -83,7 +82,7 @@
                     </docking:LayoutDocument.TabTemplate>
 
                     <docking:LayoutDocument.ContentTemplate>
-                        <DataTemplate x:DataType="docking:DocumentTab">
+                        <DataTemplate>
                             <ScrollViewer
                                 Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
                                 HorizontalScrollMode="Disabled"

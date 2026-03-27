@@ -8,9 +8,9 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using Service;
-using SharedUI.ViewModel;
+using Moba.SharedUI.ViewModel;
+using Moba.WinUI.ViewModel;
 using System.ComponentModel;
-using ViewModel;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 
@@ -58,6 +58,9 @@ sealed partial class SignalBoxPage
     private DispatcherTimer? _blinkTimer;
     private bool _blinkState;
 
+    private GridLength _toolboxExpandedWidth = new(240);
+    private GridLength _propertiesExpandedWidth = new(300);
+
     public SignalBoxPage(
         MainWindowViewModel viewModel,
         ISkinProvider skinProvider,
@@ -102,15 +105,46 @@ sealed partial class SignalBoxPage
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName != nameof(MainWindowViewModel.SelectedProject))
-            return;
-        _planViewModel = null;
-        DispatcherQueue.TryEnqueue(() =>
+        if (e.PropertyName == nameof(MainWindowViewModel.IsSignalBoxToolboxExpanded))
         {
-            LoadFromModel();
-            UpdateStatistics();
-            UpdatePropertiesPanel();
-        });
+            if (!ViewModel.IsSignalBoxToolboxExpanded)
+            {
+                if (!ColToolbox.Width.IsAuto)
+                {
+                    _toolboxExpandedWidth = ColToolbox.Width;
+                }
+                ColToolbox.Width = GridLength.Auto;
+            }
+            else
+            {
+                ColToolbox.Width = _toolboxExpandedWidth;
+            }
+        }
+        else if (e.PropertyName == nameof(MainWindowViewModel.IsSignalBoxPropertiesExpanded))
+        {
+            if (!ViewModel.IsSignalBoxPropertiesExpanded)
+            {
+                if (!ColProperties.Width.IsAuto)
+                {
+                    _propertiesExpandedWidth = ColProperties.Width;
+                }
+                ColProperties.Width = GridLength.Auto;
+            }
+            else
+            {
+                ColProperties.Width = _propertiesExpandedWidth;
+            }
+        }
+        else if (e.PropertyName == nameof(MainWindowViewModel.SelectedProject))
+        {
+            _planViewModel = null;
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                LoadFromModel();
+                UpdateStatistics();
+                UpdatePropertiesPanel();
+            });
+        }
     }
 
     private void OnSkinProviderChanged(object? sender, SkinChangedEventArgs e)

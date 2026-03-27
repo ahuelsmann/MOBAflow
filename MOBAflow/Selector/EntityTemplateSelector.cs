@@ -4,7 +4,7 @@ namespace Moba.WinUI.Selector;
 using Domain;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using SharedUI.ViewModel;
+using Moba.SharedUI.ViewModel;
 using SharedUI.ViewModel.Action;
 
 /// <summary>

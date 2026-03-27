@@ -12,7 +12,7 @@ using Microsoft.UI.Xaml.Data;
 /// Usage:
 /// <code>
 /// &lt;converter:BoolToStringConverter x:Key="ScrollIconConverter"
-///     TrueValue="&amp;#xE769;" FalseValue="&amp;#xE768;" /&gt;
+///     TrueValue="&#xE769;" FalseValue="&#xE768;" /&gt;
 /// </code>
 /// </summary>
 internal sealed class BoolToStringConverter : IValueConverter

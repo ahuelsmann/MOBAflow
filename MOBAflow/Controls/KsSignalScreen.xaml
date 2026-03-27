@@ -46,7 +46,6 @@
 
             <!--  Row 0: Zs3  -->
             <TextBox
-                x:Name="Zs3"
                 Grid.Row="0"
                 Grid.Column="0"
                 Grid.ColumnSpan="4" />
@@ -126,7 +125,6 @@
 
             <!--  Row 6: Zs3v  -->
             <TextBox
-                x:Name="Zs3V"
                 Grid.Row="6"
                 Grid.Column="0"
                 Grid.ColumnSpan="4" />

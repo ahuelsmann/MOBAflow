@@ -2,7 +2,6 @@
 namespace Moba.WinUI.View;
 
 using Common.Configuration;
-using Common.Navigation;
 using Controls;
 using Domain;
 using Microsoft.UI.Xaml;
@@ -10,11 +9,11 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Service;
-using SharedUI.Interface;
-using SharedUI.ViewModel;
+using Moba.SharedUI.Interface;
+using Moba.SharedUI.ViewModel;
 using System.ComponentModel;
 using System.Diagnostics;
-using ViewModel;
+using Moba.WinUI.ViewModel;
 using Windows.UI;
 using Windows.UI.ViewManagement;
 
@@ -157,7 +156,7 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
             if (isSystemSkin)
             {
                 // System skin: Use default/transparent background
-                _headerGrid.ClearValue(Grid.BackgroundProperty);
+                _headerGrid.ClearValue(Panel.BackgroundProperty);
             }
             else
             {
@@ -235,7 +234,7 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
             }
             else
             {
-                rootGrid.ClearValue(Grid.BackgroundProperty);
+                rootGrid.ClearValue(Panel.BackgroundProperty);
             }
         }
     }

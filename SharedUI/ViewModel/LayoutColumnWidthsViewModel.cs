@@ -43,9 +43,6 @@ public sealed class LayoutColumnWidthsViewModel
     /// </summary>
     public void LoadFrom(LayoutSettings layout)
     {
-        if (layout == null || layout.ColumnWidths == null)
-            return;
-
         LoadPage(JourneysPage, "JourneysPage", layout.ColumnWidths, 250, 0, 250, 0, 0, 0, 0, 0, 400);
         LoadPage(SolutionPage, "SolutionPage", layout.ColumnWidths, 300, 0, 400);
         LoadPage(TrackPlanPage, "TrackPlanPage", layout.ColumnWidths, 180, 0, 240);

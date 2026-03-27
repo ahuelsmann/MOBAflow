@@ -96,17 +96,11 @@ internal class SettingsService : ISettingsService
         }
 
         _settings.Layout.SettingsPage = source.Layout.SettingsPage;
-        _settings.Layout.ColumnWidths = source.Layout.ColumnWidths != null
-            ? new Dictionary<string, double>(source.Layout.ColumnWidths)
-            : new Dictionary<string, double>();
-        if (source.Layout.JourneysPage != null)
-        {
-            _settings.Layout.JourneysPage ??= new JourneysPageLayoutSettings();
-            _settings.Layout.JourneysPage.IsJourneyListExpanded = source.Layout.JourneysPage.IsJourneyListExpanded;
-            _settings.Layout.JourneysPage.IsCityLibraryExpanded = source.Layout.JourneysPage.IsCityLibraryExpanded;
-            _settings.Layout.JourneysPage.IsWorkflowLibraryExpanded = source.Layout.JourneysPage.IsWorkflowLibraryExpanded;
-            _settings.Layout.JourneysPage.IsJourneyPropertiesExpanded = source.Layout.JourneysPage.IsJourneyPropertiesExpanded;
-        }
+        _settings.Layout.ColumnWidths = new Dictionary<string, double>(source.Layout.ColumnWidths);
+        _settings.Layout.JourneysPage.IsJourneyListExpanded = source.Layout.JourneysPage.IsJourneyListExpanded;
+        _settings.Layout.JourneysPage.IsCityLibraryExpanded = source.Layout.JourneysPage.IsCityLibraryExpanded;
+        _settings.Layout.JourneysPage.IsWorkflowLibraryExpanded = source.Layout.JourneysPage.IsWorkflowLibraryExpanded;
+        _settings.Layout.JourneysPage.IsJourneyPropertiesExpanded = source.Layout.JourneysPage.IsJourneyPropertiesExpanded;
         _settings.Layout.GoodsWagonPage = source.Layout.GoodsWagonPage ?? new GoodsWagonPageLayoutSettings();
         _settings.Layout.LocomotivesPage = source.Layout.LocomotivesPage ?? new LocomotivesPageLayoutSettings();
         _settings.Layout.PassengerWagonPage = source.Layout.PassengerWagonPage ?? new PassengerWagonPageLayoutSettings();
@@ -114,6 +108,7 @@ internal class SettingsService : ISettingsService
         _settings.Layout.WorkflowsPage = source.Layout.WorkflowsPage ?? new WorkflowsPageLayoutSettings();
         _settings.Layout.SignalBoxPage = source.Layout.SignalBoxPage ?? new SignalBoxPageLayoutSettings();
         _settings.Layout.TrackPlanPage = source.Layout.TrackPlanPage ?? new TrackPlanPageLayoutSettings();
+        _settings.Layout.MonitorPage = source.Layout.MonitorPage ?? new MonitorPageLayoutSettings();
         _settings.FeatureToggles = source.FeatureToggles;
     }
 

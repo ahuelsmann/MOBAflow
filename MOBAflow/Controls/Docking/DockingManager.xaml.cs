@@ -3,13 +3,16 @@
 namespace Moba.WinUI.Controls.Docking;
 
 using Behavior;
+
 using Microsoft.UI;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-using System.Collections.ObjectModel;
+
+using Model;
+
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 
@@ -20,7 +23,7 @@ using Windows.Foundation;
 ///   - Draggable proportional splitters (in dedicated Grid columns/rows)
 ///   - Auto-Hide sidebars
 ///   - Focus Highlighting
-///   - Drag &amp; Drop overlay with preview
+///   - Drag & Drop overlay with preview
 /// </summary>
 internal sealed partial class DockingManager
 {
@@ -41,7 +44,7 @@ internal sealed partial class DockingManager
     private double _bottomExpandedHeight;
 
     /// <summary>
-    /// Raised when a DocumentTab is docked to a side via drag &amp; drop.
+    /// Raised when a DocumentTab is docked to a side via drag & drop.
     /// </summary>
     public event EventHandler<DocumentTabDockedEventArgs>? TabDockedToSide;
 
@@ -127,34 +130,6 @@ internal sealed partial class DockingManager
             typeof(DockingManager),
             new PropertyMetadata(true));
 
-    public static readonly DependencyProperty LeftPanelsProperty =
-        DependencyProperty.Register(
-            nameof(LeftPanels),
-            typeof(ObservableCollection<DockPanel>),
-            typeof(DockingManager),
-            new PropertyMetadata(null));
-
-    public static readonly DependencyProperty RightPanelsProperty =
-        DependencyProperty.Register(
-            nameof(RightPanels),
-            typeof(ObservableCollection<DockPanel>),
-            typeof(DockingManager),
-            new PropertyMetadata(null));
-
-    public static readonly DependencyProperty TopPanelsProperty =
-        DependencyProperty.Register(
-            nameof(TopPanels),
-            typeof(ObservableCollection<DockPanel>),
-            typeof(DockingManager),
-            new PropertyMetadata(null));
-
-    public static readonly DependencyProperty BottomPanelsProperty =
-        DependencyProperty.Register(
-            nameof(BottomPanels),
-            typeof(ObservableCollection<DockPanel>),
-            typeof(DockingManager),
-            new PropertyMetadata(null));
-
     public static readonly DependencyProperty LeftLayoutModeProperty =
         DependencyProperty.Register(
             nameof(LeftLayoutMode),
@@ -183,6 +158,34 @@ internal sealed partial class DockingManager
             typeof(DockingManager),
             new PropertyMetadata(DockGroupLayoutMode.Tabbed, OnLayoutModeChanged));
 
+    public static readonly DependencyProperty LeftNodeProperty =
+        DependencyProperty.Register(
+            nameof(LeftNode),
+            typeof(DockNode),
+            typeof(DockingManager),
+            new PropertyMetadata(null, OnLeftNodeChanged));
+
+    public static readonly DependencyProperty RightNodeProperty =
+        DependencyProperty.Register(
+            nameof(RightNode),
+            typeof(DockNode),
+            typeof(DockingManager),
+            new PropertyMetadata(null, OnRightNodeChanged));
+
+    public static readonly DependencyProperty TopNodeProperty =
+        DependencyProperty.Register(
+            nameof(TopNode),
+            typeof(DockNode),
+            typeof(DockingManager),
+            new PropertyMetadata(null, OnTopNodeChanged));
+
+    public static readonly DependencyProperty BottomNodeProperty =
+        DependencyProperty.Register(
+            nameof(BottomNode),
+            typeof(DockNode),
+            typeof(DockingManager),
+            new PropertyMetadata(null, OnBottomNodeChanged));
+
     private static void OnLayoutModeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is DockingManager manager)
@@ -191,12 +194,55 @@ internal sealed partial class DockingManager
         }
     }
 
+    private static void OnLeftNodeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is DockingManager manager)
+        {
+            manager.OnSideNodeChanged(DockPosition.Left, e.NewValue as DockNode);
+        }
+    }
+
+    private static void OnRightNodeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is DockingManager manager)
+        {
+            manager.OnSideNodeChanged(DockPosition.Right, e.NewValue as DockNode);
+        }
+    }
+
+    private static void OnTopNodeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is DockingManager manager)
+        {
+            manager.OnSideNodeChanged(DockPosition.Top, e.NewValue as DockNode);
+        }
+    }
+
+    private static void OnBottomNodeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is DockingManager manager)
+        {
+            manager.OnSideNodeChanged(DockPosition.Bottom, e.NewValue as DockNode);
+        }
+    }
+
+    private void OnSideNodeChanged(DockPosition side, DockNode? node)
+    {
+        if (node is not null)
+        {
+            NormalizeNodeForSide(node, side, null);
+            ApplyLayoutMode(node, GetLayoutMode(side));
+        }
+
+        UpdateSideState(side, node);
+    }
+
     private void SyncLayoutModesToGroups()
     {
-        LeftPanelGroup.LayoutMode = LeftLayoutMode;
-        RightPanelGroup.LayoutMode = RightLayoutMode;
-        TopPanelGroup.LayoutMode = TopLayoutMode;
-        BottomPanelGroup.LayoutMode = BottomLayoutMode;
+        ApplyLayoutMode(LeftNode, LeftLayoutMode);
+        ApplyLayoutMode(RightNode, RightLayoutMode);
+        ApplyLayoutMode(TopNode, TopLayoutMode);
+        ApplyLayoutMode(BottomNode, BottomLayoutMode);
     }
 
     #endregion
@@ -204,7 +250,6 @@ internal sealed partial class DockingManager
     public DockingManager()
     {
         InitializeComponent();
-        WireGroupEvents();
         Loaded += OnLoaded;
     }
 
@@ -216,10 +261,6 @@ internal sealed partial class DockingManager
         _bottomExpandedHeight = BottomPanelHeight;
 
         SyncLayoutModesToGroups();
-        UpdateSideWidth(DockPosition.Left, LeftPanelGroup);
-        UpdateSideWidth(DockPosition.Right, RightPanelGroup);
-        UpdateSideWidth(DockPosition.Top, TopPanelGroup);
-        UpdateSideWidth(DockPosition.Bottom, BottomPanelGroup);
     }
 
     #region Properties
@@ -284,30 +325,6 @@ internal sealed partial class DockingManager
         set => SetValue(IsBottomPanelVisibleProperty, value);
     }
 
-    public ObservableCollection<DockPanel>? LeftPanels
-    {
-        get => (ObservableCollection<DockPanel>?)GetValue(LeftPanelsProperty);
-        set => SetValue(LeftPanelsProperty, value);
-    }
-
-    public ObservableCollection<DockPanel>? RightPanels
-    {
-        get => (ObservableCollection<DockPanel>?)GetValue(RightPanelsProperty);
-        set => SetValue(RightPanelsProperty, value);
-    }
-
-    public ObservableCollection<DockPanel>? TopPanels
-    {
-        get => (ObservableCollection<DockPanel>?)GetValue(TopPanelsProperty);
-        set => SetValue(TopPanelsProperty, value);
-    }
-
-    public ObservableCollection<DockPanel>? BottomPanels
-    {
-        get => (ObservableCollection<DockPanel>?)GetValue(BottomPanelsProperty);
-        set => SetValue(BottomPanelsProperty, value);
-    }
-
     /// <summary>Layout mode of the left dock group (Split = even, Tabbed = tabs).</summary>
     public DockGroupLayoutMode LeftLayoutMode
     {
@@ -336,6 +353,34 @@ internal sealed partial class DockingManager
         set => SetValue(BottomLayoutModeProperty, value);
     }
 
+    /// <summary>Node tree for left dock area.</summary>
+    public DockNode? LeftNode
+    {
+        get => (DockNode?)GetValue(LeftNodeProperty);
+        set => SetValue(LeftNodeProperty, value);
+    }
+
+    /// <summary>Node tree for right dock area.</summary>
+    public DockNode? RightNode
+    {
+        get => (DockNode?)GetValue(RightNodeProperty);
+        set => SetValue(RightNodeProperty, value);
+    }
+
+    /// <summary>Node tree for top dock area.</summary>
+    public DockNode? TopNode
+    {
+        get => (DockNode?)GetValue(TopNodeProperty);
+        set => SetValue(TopNodeProperty, value);
+    }
+
+    /// <summary>Node tree for bottom dock area.</summary>
+    public DockNode? BottomNode
+    {
+        get => (DockNode?)GetValue(BottomNodeProperty);
+        set => SetValue(BottomNodeProperty, value);
+    }
+
     #endregion
 
     #region Panel Group API
@@ -354,21 +399,15 @@ internal sealed partial class DockingManager
             return;
         }
 
-        var collection = GetPanelCollection(position);
-        if (collection is not null)
+        var rootNode = GetSideNode(position);
+        if (!TryGetPrimaryGroupNode(rootNode, out var targetGroup))
         {
-            if (!collection.Contains(panel))
-            {
-                collection.Add(panel);
-            }
-
-            SetPanelVisibility(position, collection.Count > 0);
+            SetSideNode(position, CreateGroupNode(position, panel));
             return;
         }
 
-        var group = GetPanelGroup(position);
-        group.AddPanel(panel);
-        SetPanelVisibility(position, true);
+        targetGroup!.Panels.Add(panel);
+        UpdateSideState(position, rootNode);
     }
 
     /// <summary>
@@ -377,75 +416,47 @@ internal sealed partial class DockingManager
     /// </summary>
     public void RemovePanelFromAllGroups(DockPanel panel)
     {
-        RemoveFromGroupOrCollection(LeftPanels, LeftPanelGroup, panel, DockPosition.Left);
-        RemoveFromGroupOrCollection(RightPanels, RightPanelGroup, panel, DockPosition.Right);
-        RemoveFromGroupOrCollection(TopPanels, TopPanelGroup, panel, DockPosition.Top);
-        RemoveFromGroupOrCollection(BottomPanels, BottomPanelGroup, panel, DockPosition.Bottom);
-    }
+        ArgumentNullException.ThrowIfNull(panel);
 
-    private DockPanelGroup GetPanelGroup(DockPosition position) => position switch
-    {
-        DockPosition.Left => LeftPanelGroup,
-        DockPosition.Right => RightPanelGroup,
-        DockPosition.Top => TopPanelGroup,
-        DockPosition.Bottom => BottomPanelGroup,
-        _ => LeftPanelGroup
-    };
-
-    private ObservableCollection<DockPanel>? GetPanelCollection(DockPosition position) => position switch
-    {
-        DockPosition.Left => LeftPanels,
-        DockPosition.Right => RightPanels,
-        DockPosition.Top => TopPanels,
-        DockPosition.Bottom => BottomPanels,
-        _ => null
-    };
-
-    private void RemoveFromGroupOrCollection(
-        ObservableCollection<DockPanel>? collection,
-        DockPanelGroup group,
-        DockPanel panel,
-        DockPosition side)
-    {
-        if (collection is not null)
+        foreach (var side in new[] { DockPosition.Left, DockPosition.Right, DockPosition.Top, DockPosition.Bottom })
         {
-            collection.Remove(panel);
-            SetPanelVisibility(side, collection.Count > 0);
-            return;
-        }
+            var currentNode = GetSideNode(side);
+            var updatedNode = RemovePanelFromNode(currentNode, panel, out var removed);
+            if (!removed)
+            {
+                continue;
+            }
 
-        RemoveFromGroupAndAutoHide(group, panel, side);
-    }
-
-    private void RemoveFromGroupAndAutoHide(DockPanelGroup group, DockPanel panel, DockPosition side)
-    {
-        if (group.RemovePanel(panel) && group.IsEmpty)
-        {
-            SetPanelVisibility(side, false);
+            if (!ReferenceEquals(currentNode, updatedNode))
+            {
+                SetSideNode(side, updatedNode);
+            }
+            else
+            {
+                UpdateSideState(side, updatedNode);
+            }
         }
     }
 
-    private void WireGroupEvents()
+    private void UpdateSideState(DockPosition side, DockNode? node)
     {
-        WireSingleGroup(LeftPanelGroup, DockPosition.Left);
-        WireSingleGroup(RightPanelGroup, DockPosition.Right);
-        WireSingleGroup(TopPanelGroup, DockPosition.Top);
-        WireSingleGroup(BottomPanelGroup, DockPosition.Bottom);
+        var hasPanels = HasAnyPanels(node);
+        SetPanelVisibility(side, hasPanels);
+        if (hasPanels)
+        {
+            UpdateSideDimension(side);
+        }
     }
 
-    private void WireSingleGroup(DockPanelGroup group, DockPosition side)
+    private void UpdateSideDimension(DockPosition side)
     {
-        group.PanelExpansionChanged += (_, _) => UpdateSideWidth(side, group);
-    }
-
-    private void UpdateSideWidth(DockPosition side, DockPanelGroup group)
-    {
-        if (group.Panels.Count == 0)
+        var rootNode = GetSideNode(side);
+        if (!HasAnyPanels(rootNode))
         {
             return;
         }
 
-        var anyExpanded = group.Panels.Any(panel => panel.IsExpanded);
+        var anyExpanded = HasAnyExpandedPanels(rootNode);
 
         switch (side)
         {
@@ -463,6 +474,169 @@ internal sealed partial class DockingManager
                 break;
         }
     }
+
+    private DockNode? GetSideNode(DockPosition side) => side switch
+    {
+        DockPosition.Left => LeftNode,
+        DockPosition.Right => RightNode,
+        DockPosition.Top => TopNode,
+        DockPosition.Bottom => BottomNode,
+        _ => null
+    };
+
+    private void SetSideNode(DockPosition side, DockNode? node)
+    {
+        switch (side)
+        {
+            case DockPosition.Left:
+                LeftNode = node;
+                break;
+            case DockPosition.Right:
+                RightNode = node;
+                break;
+            case DockPosition.Top:
+                TopNode = node;
+                break;
+            case DockPosition.Bottom:
+                BottomNode = node;
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(side), side, null);
+        }
+    }
+
+    private DockGroupLayoutMode GetLayoutMode(DockPosition side) => side switch
+    {
+        DockPosition.Left => LeftLayoutMode,
+        DockPosition.Right => RightLayoutMode,
+        DockPosition.Top => TopLayoutMode,
+        DockPosition.Bottom => BottomLayoutMode,
+        _ => DockGroupLayoutMode.Tabbed
+    };
+
+    private static DockPanelGroupNode CreateGroupNode(DockPosition side, DockPanel panel)
+    {
+        var groupNode = new DockPanelGroupNode
+        {
+            DockPosition = side
+        };
+        groupNode.Panels.Add(panel);
+        return groupNode;
+    }
+
+    private static void NormalizeNodeForSide(DockNode node, DockPosition side, DockNode? parent)
+    {
+        node.Parent = parent;
+        node.DockPosition = side;
+
+        if (node is DockSplitNode splitNode)
+        {
+            NormalizeNodeForSide(splitNode.FirstNode, side, splitNode);
+            NormalizeNodeForSide(splitNode.SecondNode, side, splitNode);
+        }
+    }
+
+    private static void ApplyLayoutMode(DockNode? node, DockGroupLayoutMode layoutMode)
+    {
+        switch (node)
+        {
+            case DockPanelGroupNode groupNode:
+                groupNode.LayoutMode = layoutMode;
+                break;
+            case DockSplitNode splitNode:
+                ApplyLayoutMode(splitNode.FirstNode, layoutMode);
+                ApplyLayoutMode(splitNode.SecondNode, layoutMode);
+                break;
+        }
+    }
+
+    private static bool TryGetPrimaryGroupNode(DockNode? node, out DockPanelGroupNode? groupNode)
+    {
+        switch (node)
+        {
+            case DockPanelGroupNode directGroupNode:
+                groupNode = directGroupNode;
+                return true;
+            case DockSplitNode splitNode when TryGetPrimaryGroupNode(splitNode.FirstNode, out groupNode):
+                return true;
+            case DockSplitNode splitNode when TryGetPrimaryGroupNode(splitNode.SecondNode, out groupNode):
+                return true;
+            default:
+                groupNode = null;
+                return false;
+        }
+    }
+
+    private static DockNode? RemovePanelFromNode(DockNode? node, DockPanel panel, out bool removed)
+    {
+        removed = false;
+        if (node is null)
+        {
+            return null;
+        }
+
+        if (node is DockPanelGroupNode groupNode)
+        {
+            if (groupNode.Panels.Remove(panel))
+            {
+                removed = true;
+            }
+
+            return groupNode.Panels.Count > 0 ? groupNode : null;
+        }
+
+        if (node is not DockSplitNode splitNode)
+        {
+            return node;
+        }
+
+        var firstNode = RemovePanelFromNode(splitNode.FirstNode, panel, out var removedFromFirst);
+        var secondNode = RemovePanelFromNode(splitNode.SecondNode, panel, out var removedFromSecond);
+        removed = removedFromFirst || removedFromSecond;
+
+        if (firstNode is null && secondNode is null)
+        {
+            return null;
+        }
+
+        if (firstNode is null)
+        {
+            secondNode!.Parent = splitNode.Parent;
+            return secondNode;
+        }
+
+        if (secondNode is null)
+        {
+            firstNode.Parent = splitNode.Parent;
+            return firstNode;
+        }
+
+        if (!ReferenceEquals(splitNode.FirstNode, firstNode))
+        {
+            splitNode.FirstNode = firstNode;
+        }
+
+        if (!ReferenceEquals(splitNode.SecondNode, secondNode))
+        {
+            splitNode.SecondNode = secondNode;
+        }
+
+        return splitNode;
+    }
+
+    private static bool HasAnyPanels(DockNode? node) => node switch
+    {
+        DockPanelGroupNode groupNode => groupNode.Panels.Count > 0,
+        DockSplitNode splitNode => HasAnyPanels(splitNode.FirstNode) || HasAnyPanels(splitNode.SecondNode),
+        _ => false
+    };
+
+    private static bool HasAnyExpandedPanels(DockNode? node) => node switch
+    {
+        DockPanelGroupNode groupNode => groupNode.Panels.Any(panel => panel.IsExpanded),
+        DockSplitNode splitNode => HasAnyExpandedPanels(splitNode.FirstNode) || HasAnyExpandedPanels(splitNode.SecondNode),
+        _ => false
+    };
 
     private void UpdateLeftWidth(bool anyExpanded)
     {

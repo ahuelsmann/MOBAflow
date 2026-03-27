@@ -4,7 +4,10 @@ namespace Moba.WinUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Controls.Docking;
+using Moba.WinUI.Controls.Docking;
+using Moba.WinUI.Controls.Docking.Model;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using System.Collections.ObjectModel;
 
 /// <summary>
@@ -20,16 +23,16 @@ internal sealed partial class DockingPageViewModel : ObservableObject
     private DocumentTab? _activeDocument;
 
     [ObservableProperty]
-    private ObservableCollection<DockPanel> _leftPanels = new();
+    private DockNode? _leftNode;
 
     [ObservableProperty]
-    private ObservableCollection<DockPanel> _rightPanels = new();
+    private DockNode? _rightNode;
 
     [ObservableProperty]
-    private ObservableCollection<DockPanel> _topPanels = new();
+    private DockNode? _topNode;
 
     [ObservableProperty]
-    private ObservableCollection<DockPanel> _bottomPanels = new();
+    private DockNode? _bottomNode;
 
     private int _documentCounter = 1;
 
@@ -41,34 +44,27 @@ internal sealed partial class DockingPageViewModel : ObservableObject
 
     private void InitializePanels()
     {
-        LeftPanels =
-        [
-            new DockPanel
-            {
-                PanelIconGlyph = "\uEC50",
-                PanelTitle = "Solution Explorer"
-            }
-        ];
+        LeftNode = CreateGroupNode(
+            DockPosition.Left,
+            CreatePanel("Solution Explorer", "\uEC50", "Project structure and files."),
+            CreatePanel("Class View", "\uE8B8", "Types and symbols for the active solution."));
 
-        RightPanels =
-        [
-            new DockPanel
-            {
-                PanelIconGlyph = "\uE946",
-                PanelTitle = "Properties"
-            }
-        ];
+        RightNode = CreateGroupNode(
+            DockPosition.Right,
+            CreatePanel("Properties", "\uE946", "Details for the current selection."));
 
-        BottomPanels =
-        [
-            new DockPanel
-            {
-                PanelIconGlyph = "\uE7BA",
-                PanelTitle = "Output"
-            }
-        ];
+        var outputGroup = CreateGroupNode(
+            DockPosition.Bottom,
+            CreatePanel("Output", "\uE7BA", "Build output, diagnostics and execution logs."));
+        var problemsGroup = CreateGroupNode(
+            DockPosition.Bottom,
+            CreatePanel("Problems", "\uEA39", "Warnings and validation results."));
 
-        TopPanels = [];
+        BottomNode = new DockSplitNode(outputGroup, problemsGroup, Orientation.Horizontal)
+        {
+            DockPosition = DockPosition.Bottom
+        };
+        TopNode = null;
     }
 
     private void InitializeDefaultDocuments()
@@ -77,6 +73,7 @@ internal sealed partial class DockingPageViewModel : ObservableObject
         {
             Title = "Document 1",
             IconGlyph = "\uE8A5",
+            Content = CreateDocumentContent("Document 1", "Welcome to the docking demo."),
             IsModified = false,
             Tag = "doc1"
         };
@@ -94,6 +91,9 @@ internal sealed partial class DockingPageViewModel : ObservableObject
         {
             Title = $"Document {docNum}.txt",
             IconGlyph = "\uE160",
+            Content = CreateDocumentContent(
+                $"Document {docNum}.txt",
+                $"Generated sample content for document {docNum}."),
             IsModified = false,
             Tag = $"doc{docNum}"
         };
@@ -138,5 +138,77 @@ internal sealed partial class DockingPageViewModel : ObservableObject
         {
             ActiveDocument = OpenDocuments.FirstOrDefault();
         }
+    }
+
+    public void HandleDockedDocument(DocumentTab document)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        if (!OpenDocuments.Remove(document))
+        {
+            return;
+        }
+
+        if (ReferenceEquals(ActiveDocument, document))
+        {
+            ActiveDocument = OpenDocuments.FirstOrDefault();
+        }
+    }
+
+    private static DockPanelGroupNode CreateGroupNode(DockPosition side, params DockPanel[] panels)
+    {
+        var groupNode = new DockPanelGroupNode
+        {
+            DockPosition = side
+        };
+
+        foreach (var panel in panels)
+        {
+            groupNode.Panels.Add(panel);
+        }
+
+        return groupNode;
+    }
+
+    private static DockPanel CreatePanel(string title, string iconGlyph, string description)
+    {
+        return new DockPanel
+        {
+            PanelTitle = title,
+            PanelIconGlyph = iconGlyph,
+            PanelContent = new Border
+            {
+                Padding = new Thickness(12),
+                Child = new TextBlock
+                {
+                    Text = description,
+                    TextWrapping = TextWrapping.WrapWholeWords
+                }
+            }
+        };
+    }
+
+    private static UIElement CreateDocumentContent(string title, string body)
+    {
+        return new Border
+        {
+            Padding = new Thickness(16),
+            Child = new StackPanel
+            {
+                Spacing = 12,
+                Children =
+                {
+                    new TextBlock
+                    {
+                        FontSize = 20,
+                        Text = title
+                    },
+                    new TextBlock
+                    {
+                        Text = body,
+                        TextWrapping = TextWrapping.WrapWholeWords
+                    }
+                }
+            }
+        };
     }
 }

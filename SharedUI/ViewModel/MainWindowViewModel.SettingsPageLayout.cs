@@ -104,7 +104,7 @@ public partial class MainWindowViewModel
         ArgumentException.ThrowIfNullOrWhiteSpace(sectionKey);
 
         var layout = GetSettingsPageLayout();
-        if (!layout.Sections.TryGetValue(sectionKey, out var state) || state == null)
+        if (!layout.Sections.TryGetValue(sectionKey, out var state))
         {
             state = new SettingsPageSectionState();
             layout.Sections[sectionKey] = state;

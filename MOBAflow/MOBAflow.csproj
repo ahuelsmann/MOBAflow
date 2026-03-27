@@ -56,7 +56,6 @@
         <PackageReference Include="CommunityToolkit.WinUI.Helpers" />
         <PackageReference Include="CommunityToolkit.WinUI.Media" />
         <PackageReference Include="CommunityToolkit.WinUI.Triggers" />
-        <PackageReference Include="GitHub.Copilot.SDK" />
         <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
         <PackageReference Include="Microsoft.Graphics.Win2D" />
         <PackageReference Include="Microsoft.WindowsAppSDK" />

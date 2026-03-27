@@ -2,11 +2,9 @@
 
 namespace Moba.WinUI.View;
 
-using Controls.Docking;
-
 using Microsoft.UI.Xaml;
-
-using ViewModel;
+using Moba.WinUI.Controls.Docking;
+using Moba.WinUI.ViewModel;
 
 internal sealed partial class DockingPage
 {
@@ -18,6 +16,7 @@ internal sealed partial class DockingPage
         InitializeComponent();
         _viewModel = viewModel;
         DataContext = viewModel;
+        DockManager.TabDockedToSide += OnTabDockedToSide;
 
         Loaded += OnPageLoaded;
     }
@@ -32,8 +31,9 @@ internal sealed partial class DockingPage
         _isInitialized = true;
     }
 
-    private void OnTabDockedToSide(object sender, DocumentTabDockedEventArgs e)
+    private void OnTabDockedToSide(object? sender, DocumentTabDockedEventArgs e)
     {
-        _viewModel.OpenDocuments.Remove(e.Document);
+        _viewModel.HandleDockedDocument(e.Document);
     }
+
 }

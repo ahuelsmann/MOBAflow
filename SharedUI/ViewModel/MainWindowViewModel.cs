@@ -33,7 +33,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     // Core Services (required)
     private readonly IIoService _ioService;
     private readonly IZ21 _z21;
-    private readonly IEventBus _eventBus;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly IWorkflowService _workflowService;
     private readonly ILogger<MainWindowViewModel> _logger;
@@ -76,6 +75,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <param name="announcementService">Optional announcement service for text-to-speech announcements.</param>
     /// <param name="photoHubClient">Optional PhotoHub client instance (WinUI only, loosely typed as <see cref="object"/>).</param>
     /// <param name="featureTogglePageProvider">Optional provider for feature toggle page metadata.</param>
+    /// <param name="layoutColumnWidths">Observable column widths loaded from settings and bound by layout panels.</param>
     public MainWindowViewModel(
         LayoutColumnWidthsViewModel layoutColumnWidths,
         IZ21 z21,
@@ -105,7 +105,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         _ioService = ioService ?? new NullIoService();  // Use null object pattern
         _z21 = z21;
-        _eventBus = eventBus;
         _workflowService = workflowService;
         _uiDispatcher = uiDispatcher;
         _settings = settings;
@@ -129,13 +128,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
         InitializeLayoutPanelStates();
 
         // Subscribe to Z21 events
-        _eventBus.Subscribe<Z21ConnectionEstablishedEvent>(_ => OnZ21ConnectedChanged(true));
-        _eventBus.Subscribe<Z21ConnectionLostEvent>(_ => HandleConnectionLost());
-        _eventBus.Subscribe<SystemStateChangedEvent>(evt => OnZ21SystemStateChanged(CreateSystemState(evt)));
-        _eventBus.Subscribe<XBusStatusChangedEvent>(evt => OnZ21XBusStatusChanged(CreateXBusStatus(evt)));
-        _eventBus.Subscribe<VersionInfoChangedEvent>(evt => OnZ21VersionInfoChanged(CreateVersionInfo(evt)));
-        _eventBus.Subscribe<FeedbackReceivedEvent>(e => UpdateTrackStatistics((uint)e.InPort));
-        _eventBus.Subscribe<PostStartupStatusEvent>(e => UpdatePostStartupInitializationStatus(e.IsRunning, e.StatusText));
+        eventBus.Subscribe<Z21ConnectionEstablishedEvent>(_ => OnZ21ConnectedChanged(true));
+        eventBus.Subscribe<Z21ConnectionLostEvent>(_ => HandleConnectionLost());
+        eventBus.Subscribe<SystemStateChangedEvent>(evt => OnZ21SystemStateChanged(CreateSystemState(evt)));
+        eventBus.Subscribe<XBusStatusChangedEvent>(evt => OnZ21XBusStatusChanged(CreateXBusStatus(evt)));
+        eventBus.Subscribe<VersionInfoChangedEvent>(evt => OnZ21VersionInfoChanged(CreateVersionInfo(evt)));
+        eventBus.Subscribe<FeedbackReceivedEvent>(e => UpdateTrackStatistics((uint)e.InPort));
+        eventBus.Subscribe<PostStartupStatusEvent>(e => UpdatePostStartupInitializationStatus(e.IsRunning, e.StatusText));
 
         InitializeTrafficMonitor();
 
@@ -325,6 +324,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     partial void OnJourneysPageSelectedObjectChanged(object? value)
     {
+        _ = value;
         OnPropertyChanged(nameof(JourneysPagePropertiesTitle));
     }
 

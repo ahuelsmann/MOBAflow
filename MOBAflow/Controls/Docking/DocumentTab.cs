@@ -3,6 +3,7 @@
 namespace Moba.WinUI.Controls.Docking;
 
 using Microsoft.UI.Xaml;
+using System.Runtime.CompilerServices;
 
 /// <summary>
 /// Represents a single document tab.
@@ -18,7 +19,7 @@ internal class DocumentTab : IEquatable<DocumentTab>
     public bool IsPinned { get; set; }
     public object? Tag { get; set; }
 
-    public override bool Equals(object? obj) => Equals(obj as DocumentTab);
-    public bool Equals(DocumentTab? other) => other != null && Title == other.Title && Tag?.Equals(other.Tag) == true;
-    public override int GetHashCode() => HashCode.Combine(Title, Tag);
+    public override bool Equals(object? obj) => ReferenceEquals(this, obj);
+    public bool Equals(DocumentTab? other) => ReferenceEquals(this, other);
+    public override int GetHashCode() => RuntimeHelpers.GetHashCode(this);
 }

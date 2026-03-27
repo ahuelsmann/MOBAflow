@@ -1,6 +1,5 @@
 namespace Moba.WinUI.View;
 
-using Common.Navigation;
 using System.Reflection;
 
 internal sealed partial class InfoPage

@@ -45,6 +45,8 @@ public sealed partial class MonitorPageViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private bool _isActivityLogScrollPaused;
 
+    public MainWindowViewModel MainWindowViewModel => _mainWindowViewModel;
+
     /// <summary>
     /// Z21 UDP traffic packets from MainWindowViewModel.
     /// </summary>

@@ -6,13 +6,14 @@ using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
 /// <summary>
-/// Starts the standalone MOBAapi project process when "Auto-start REST API" is enabled.
-/// WinUI then uses the MOBAapi project for status, clients, and MAUI discovery instead of hosting its own in-process API.
+/// Starts the standalone MOBApi project process when "Auto-start REST API" is enabled.
+/// WinUI then uses MOBApi for status, clients, and MAUI discovery instead of hosting its own in-process API.
 /// </summary>
 internal sealed class RestApiProcessService : IDisposable
 {
     private const string SolutionFileName = "Moba.slnx";
-    private const string RestApiProjectName = "MOBAapi";
+    /// <summary>Folder and assembly name under output (must match <c>MOBApi.csproj</c> <c>AssemblyName</c>).</summary>
+    private const string RestApiProjectName = "MOBApi";
 
     /// <summary>
     /// Raised when the REST API has been detected as reachable (either already running or just started).
@@ -39,12 +40,12 @@ internal sealed class RestApiProcessService : IDisposable
     }
 
     /// <summary>
-    /// True when the MOBAapi process has been started and not yet stopped.
+    /// True when the MOBApi process has been started and not yet stopped.
     /// </summary>
     public bool IsRunning => _process != null && !_process.HasExited;
 
     /// <summary>
-    /// Starts the MOBAapi project process when "Auto-start REST API" is enabled.
+    /// Starts the MOBApi project process when "Auto-start REST API" is enabled.
     /// Idempotent: if our process is already running, returns immediately.
     /// Thread-safe: only one process is started even if StartAsync is called concurrently (e.g. from App and PostStartup).
     /// </summary>
@@ -61,7 +62,7 @@ internal sealed class RestApiProcessService : IDisposable
             // If API is already reachable (e.g. run standalone), do not start a second process
             if (await IsApiReachableAsync(port, cancellationToken).ConfigureAwait(false))
             {
-                _logger.LogInformation("MOBAapi already running on port {Port} – reusing existing process", port);
+                _logger.LogInformation("MOBApi already running on port {Port} – reusing existing process", port);
                 StartDiscoveryResponder(port);
                 ApiBecameReachable?.Invoke(this, port);
                 return;
@@ -70,11 +71,11 @@ internal sealed class RestApiProcessService : IDisposable
             // Ensure Windows Firewall allows UDP discovery (21106) and REST API (TCP port) so MAUI can connect
             FirewallHelper.EnsureFirewallRulesExist(port);
 
-            // Prefer MOBAapi next to WinUI (copied by build when WinUI references MOBAapi); fall back to repo-root convention
+            // Prefer MOBApi next to WinUI (copied by build); fall back to repo-root convention
             var (dllPath, workingDir, usePreBuilt) = ResolveMobaApiPaths();
             if (dllPath == null || workingDir == null)
             {
-                _logger.LogWarning("MOBAapi not found – build WinUI to copy MOBAapi, or run from repo with MOBAapi built");
+                _logger.LogWarning("MOBApi not found – build WinUI to copy MOBApi output, or run from repo with MOBApi built");
                 return;
             }
 
@@ -84,13 +85,13 @@ internal sealed class RestApiProcessService : IDisposable
             {
                 fileName = "dotnet";
                 arguments = $"\"{dllPath}\" --urls \"http://0.0.0.0:{port}\"";
-                _logger.LogDebug("Starting MOBAapi from {Path}", dllPath);
+                _logger.LogDebug("Starting MOBApi from {Path}", dllPath);
             }
             else
             {
                 fileName = "dotnet";
                 arguments = $"run --project \"{dllPath}\" --urls \"http://0.0.0.0:{port}\"";
-                _logger.LogInformation("MOBAapi not yet built – running dotnet run (first start may be slow)");
+                _logger.LogInformation("MOBApi not yet built – running dotnet run (first start may be slow)");
             }
 
             try
@@ -125,16 +126,16 @@ internal sealed class RestApiProcessService : IDisposable
 
                         var exitCode = p.ExitCode;
                         if (exitCode != 0)
-                            _logger.LogWarning("MOBAapi process exited with code {ExitCode}", exitCode);
+                            _logger.LogWarning("MOBApi process exited with code {ExitCode}", exitCode);
                     }
                     catch (InvalidOperationException ex)
                     {
-                        _logger.LogDebug(ex, "MOBAapi process exit state not yet available");
+                        _logger.LogDebug(ex, "MOBApi process exit state not yet available");
                     }
                 };
 
                 _process.Start();
-                _logger.LogInformation("MOBAapi process started (port {Port}), PID {Pid}", port, _process.Id);
+                _logger.LogInformation("MOBApi process started (port {Port}), PID {Pid}", port, _process.Id);
 
                 StartDiscoveryResponder(port);
 
@@ -148,17 +149,17 @@ internal sealed class RestApiProcessService : IDisposable
                     waited += pollIntervalMs;
                     if (await IsApiReachableAsync(port, cancellationToken).ConfigureAwait(false))
                     {
-                        _logger.LogInformation("MOBAapi became reachable after {Ms}ms", waited);
+                        _logger.LogInformation("MOBApi became reachable after {Ms}ms", waited);
                         ApiBecameReachable?.Invoke(this, port);
                         break;
                     }
                 }
                 if (!await IsApiReachableAsync(port, cancellationToken).ConfigureAwait(false) && !_process.HasExited)
-                    _logger.LogWarning("MOBAapi not yet reachable after {Ms}ms – continuing anyway", waited);
+                    _logger.LogWarning("MOBApi not yet reachable after {Ms}ms – continuing anyway", waited);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to start MOBAapi process");
+                _logger.LogError(ex, "Failed to start MOBApi process");
                 _process?.Dispose();
                 _process = null;
             }
@@ -185,7 +186,7 @@ internal sealed class RestApiProcessService : IDisposable
     }
 
     /// <summary>
-    /// Returns true if the MOBAapi status endpoint responds successfully on the given port.
+    /// Returns true if the MOBApi status endpoint responds successfully on the given port.
     /// </summary>
     private static async Task<bool> IsApiReachableAsync(int port, CancellationToken cancellationToken)
     {
@@ -205,7 +206,7 @@ internal sealed class RestApiProcessService : IDisposable
     }
 
     /// <summary>
-    /// Stops the MOBAapi process if running.
+    /// Stops the MOBApi process if running.
     /// </summary>
     public void Stop()
     {
@@ -228,13 +229,13 @@ internal sealed class RestApiProcessService : IDisposable
             {
                 _process.Kill(entireProcessTree: true);
                 if (!_process.WaitForExit(TimeSpan.FromSeconds(2)))
-                    _logger.LogDebug("MOBAapi process did not exit within 2s");
-                _logger.LogInformation("MOBAapi process stopped");
+                    _logger.LogDebug("MOBApi process did not exit within 2s");
+                _logger.LogInformation("MOBApi process stopped");
             }
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Error stopping MOBAapi process");
+            _logger.LogWarning(ex, "Error stopping MOBApi process");
         }
         finally
         {
@@ -258,13 +259,13 @@ internal sealed class RestApiProcessService : IDisposable
     }
 
     /// <summary>
-    /// Resolves path to MOBAapi.dll or MOBAapi.csproj and working directory.
-    /// Prefers MOBAapi next to the running app (build-copied); falls back to repo-root convention.
+    /// Resolves path to MOBApi.dll or MOBApi.csproj and working directory.
+    /// Prefers MOBApi next to the running app (build-copied); falls back to repo-root convention.
     /// Returns (pathToDllOrCsproj, workingDir, usePreBuilt: true if path is DLL, false if path is .csproj).
     /// </summary>
     private static (string? path, string? workingDir, bool usePreBuilt) ResolveMobaApiPaths()
     {
-        // Prefer MOBAapi next to WinUI (copied by build when WinUI references MOBAapi)
+        // Prefer MOBApi next to WinUI (see MOBAflow.csproj CopyMOBAapiToOutput target)
         var appDir = AppContext.BaseDirectory;
         var localDll = Path.Combine(appDir, RestApiProjectName, $"{RestApiProjectName}.dll");
         if (File.Exists(localDll))

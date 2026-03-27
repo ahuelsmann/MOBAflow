@@ -18,9 +18,9 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="1*" MinWidth="32" />
+            <ColumnDefinition x:Name="ColList" Width="1*" MinWidth="32" />
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="3.5*" MinWidth="32" />
+            <ColumnDefinition x:Name="ColProperties" Width="3.5*" MinWidth="32" />
         </Grid.ColumnDefinitions>
 
         <controls:CollapsibleColumnCollection

@@ -1,10 +1,9 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
-using Common.Navigation;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
-using SharedUI.ViewModel;
+using Moba.SharedUI.ViewModel;
 using System.Collections.Specialized;
 using System.Runtime.InteropServices;
 
@@ -12,6 +11,9 @@ using System.Runtime.InteropServices;
 internal sealed partial class MonitorPage
 {
     public MonitorPageViewModel ViewModel { get; }
+
+    private GridLength _trafficExpandedWidth = new(1, GridUnitType.Star);
+    private GridLength _activityLogExpandedWidth = new(2, GridUnitType.Star);
 
     public MonitorPage(MonitorPageViewModel viewModel)
     {
@@ -22,13 +24,57 @@ internal sealed partial class MonitorPage
         // Subscribe to page lifecycle events
         Loaded += OnPageLoaded;
         Unloaded += OnPageUnloaded;
+        
+        // Ensure MainWindowViewModel isn't null if we are observing it directly, although here it is not directly observable 
+        // We will need to observe MainWindowViewModel.PropertyChanged from ViewModel
+    }
+
+    private void MainWindowViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(MainWindowViewModel.IsMonitorTrafficExpanded))
+        {
+            if (!ViewModel.MainWindowViewModel.IsMonitorTrafficExpanded)
+            {
+                if (!ColTraffic.Width.IsAuto)
+                {
+                    _trafficExpandedWidth = ColTraffic.Width;
+                }
+                ColTraffic.Width = GridLength.Auto;
+            }
+            else
+            {
+                ColTraffic.Width = _trafficExpandedWidth;
+            }
+        }
+        else if (e.PropertyName == nameof(MainWindowViewModel.IsMonitorActivityLogExpanded))
+        {
+            if (!ViewModel.MainWindowViewModel.IsMonitorActivityLogExpanded)
+            {
+                if (!ColLog.Width.IsAuto)
+                {
+                    _activityLogExpandedWidth = ColLog.Width;
+                }
+                ColLog.Width = GridLength.Auto;
+            }
+            else
+            {
+                ColLog.Width = _activityLogExpandedWidth;
+            }
+        }
     }
 
     private void OnPageLoaded(object sender, RoutedEventArgs e)
     {
+        // Restore layout state initially
+        if (!ViewModel.MainWindowViewModel.IsMonitorTrafficExpanded)
+            ColTraffic.Width = GridLength.Auto;
+        if (!ViewModel.MainWindowViewModel.IsMonitorActivityLogExpanded)
+            ColLog.Width = GridLength.Auto;
+
         // Subscribe when page enters visual tree (DispatcherQueue is valid)
         ViewModel.TrafficPackets.CollectionChanged += OnTrafficPacketsChanged;
         ViewModel.ActivityLogs.CollectionChanged += OnActivityLogsChanged;
+        ViewModel.MainWindowViewModel.PropertyChanged += MainWindowViewModel_PropertyChanged;
     }
 
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
@@ -36,6 +82,7 @@ internal sealed partial class MonitorPage
         // Unsubscribe when page leaves visual tree (prevents NullReferenceException)
         ViewModel.TrafficPackets.CollectionChanged -= OnTrafficPacketsChanged;
         ViewModel.ActivityLogs.CollectionChanged -= OnActivityLogsChanged;
+        ViewModel.MainWindowViewModel.PropertyChanged -= MainWindowViewModel_PropertyChanged;
     }
 
     private void OnTrafficPacketsChanged(object? sender, NotifyCollectionChangedEventArgs e)

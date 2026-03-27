@@ -61,7 +61,7 @@
                 Orientation="Vertical"
                 Visibility="Collapsed" />
 
-            <!--  Left: Drop-Zone wenn eingeklappt, sonst Dock Area  -->
+                <!--  Left: Drop-Zone wenn eingeklappt, sonst Dock Area  -->
             <Grid Grid.Column="1">
                 <Border
                     Width="16"
@@ -84,15 +84,13 @@
                     DragOver="OnDockAreaDragOver"
                     Drop="OnDockAreaDrop"
                     Visibility="{x:Bind IsLeftPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <docking:DockPanelGroup
-                        x:Name="LeftPanelGroup"
+                    <docking:DockNodePresenter
                         behavior:DockingDropBehavior.DockPosition="Left"
                         AllowDrop="True"
-                        DockPosition="Left"
                         DragLeave="OnDockAreaDragLeave"
                         DragOver="OnDockAreaDragOver"
                         Drop="OnDockAreaDrop"
-                        ItemsSource="{x:Bind LeftPanels, Mode=OneWay}" />
+                        Node="{x:Bind LeftNode, Mode=OneWay}" />
                 </Grid>
             </Grid>
 
@@ -140,10 +138,8 @@
                     HorizontalAlignment="Stretch"
                     Background="{ThemeResource LayerFillColorDefaultBrush}"
                     Visibility="{x:Bind IsTopPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <docking:DockPanelGroup
-                        x:Name="TopPanelGroup"
-                        DockPosition="Top"
-                        ItemsSource="{x:Bind TopPanels, Mode=OneWay}" />
+                    <docking:DockNodePresenter
+                        Node="{x:Bind TopNode, Mode=OneWay}" />
                 </Grid>
 
                 <!--  Top Splitter (own row)  -->
@@ -219,15 +215,13 @@
                         DragOver="OnDockAreaDragOver"
                         Drop="OnDockAreaDrop"
                         Visibility="{x:Bind IsBottomPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <docking:DockPanelGroup
-                            x:Name="BottomPanelGroup"
+                        <docking:DockNodePresenter
                             behavior:DockingDropBehavior.DockPosition="Bottom"
                             AllowDrop="True"
-                            DockPosition="Bottom"
                             DragLeave="OnDockAreaDragLeave"
                             DragOver="OnDockAreaDragOver"
                             Drop="OnDockAreaDrop"
-                            ItemsSource="{x:Bind BottomPanels, Mode=OneWay}" />
+                            Node="{x:Bind BottomNode, Mode=OneWay}" />
                     </Grid>
                 </Grid>
             </Grid>
@@ -273,15 +267,13 @@
                     DragOver="OnDockAreaDragOver"
                     Drop="OnDockAreaDrop"
                     Visibility="{x:Bind IsRightPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <docking:DockPanelGroup
-                        x:Name="RightPanelGroup"
+                    <docking:DockNodePresenter
                         behavior:DockingDropBehavior.DockPosition="Right"
                         AllowDrop="True"
-                        DockPosition="Right"
                         DragLeave="OnDockAreaDragLeave"
                         DragOver="OnDockAreaDragOver"
                         Drop="OnDockAreaDrop"
-                        ItemsSource="{x:Bind RightPanels, Mode=OneWay}" />
+                        Node="{x:Bind RightNode, Mode=OneWay}" />
                 </Grid>
             </Grid>
 

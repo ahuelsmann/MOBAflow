@@ -2,7 +2,6 @@
     x:Class="Moba.WinUI.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:converter="using:Moba.WinUI.Converter">
     <Application.Resources>
         <ResourceDictionary>
@@ -54,6 +53,17 @@
                 <Setter Property="FontSize" Value="12" />
                 <Setter Property="FontWeight" Value="Normal" />
                 <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            </Style>
+
+            <Style x:Key="BodyStrongTextBlockStyle" TargetType="TextBlock" BasedOn="{StaticResource CaptionTextBlockStyle}">
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+
+            <Style x:Key="AccentButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="{ThemeResource AccentFillColorDefaultBrush}" />
+                <Setter Property="Foreground" Value="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
+                <Setter Property="Padding" Value="12,6,12,7" />
+                <Setter Property="CornerRadius" Value="4" />
             </Style>
 
             <!--  Skin Swatches (used by skin selector flyouts)  -->

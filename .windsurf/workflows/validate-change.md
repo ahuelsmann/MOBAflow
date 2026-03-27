@@ -1,6 +1,9 @@
+description: >
+  Validate a MOBAflow change with targeted restore, build, and test
+  commands.
 ---
-description: Validate a MOBAflow change with targeted restore, build, and test commands.
----
+
+<!-- markdownlint-disable MD003 MD026 MD041 -->
 
 # Validate Change
 
@@ -17,6 +20,8 @@ Use this workflow after implementing or reviewing a change in MOBAflow.
    - `dotnet build <project>.csproj`
    - `dotnet test Test/Test.csproj`
 5. Do not assume that solution-level restore is the safest option.
-6. If the change is limited to cross-platform shared logic, prefer validating the affected library plus `Test/Test.csproj`.
-7. If the change affects UI behavior, mention relevant manual checks in addition to build and test commands.
+6. If the change is limited to cross-platform shared logic, prefer
+   validating the affected library plus `Test/Test.csproj`.
+7. If the change affects UI behavior, mention relevant manual checks
+   in addition to build and test commands.
 8. End with a short validation checklist tailored to the affected files.

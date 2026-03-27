@@ -5,8 +5,6 @@
     xmlns:controls="using:Moba.WinUI.Controls"
     xmlns:converter="using:Moba.WinUI.Converter"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:i="using:Microsoft.Xaml.Interactivity"
-    xmlns:local="using:Moba.WinUI.Behavior"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="using:Moba.SharedUI.ViewModel"
     DataContext="{x:Bind ViewModel}"
@@ -772,7 +770,6 @@
                         </Grid.RowDefinitions>
                         <!--  Brake: red = active (icon yellow with exclamation mark), green = released (icon white/black per theme, no exclamation mark)  -->
                         <Button
-                            x:Name="BrakeButton"
                             Grid.Row="0"
                             Grid.Column="0"
                             Background="{x:Bind ViewModel.BrakeButtonColorHex, Mode=OneWay, Converter={StaticResource HexColorToBrushConverter}}"
@@ -782,7 +779,6 @@
                             Style="{StaticResource NeonGlowButtonStyle}" />
                         <!--  Door release: green/DoorOpen = released, red/DoorClose = locked; only clickable when brake active (red); 5s yellow with blink  -->
                         <Button
-                            x:Name="DoorReleaseButton"
                             Grid.Row="0"
                             Grid.Column="1"
                             Background="{x:Bind ViewModel.DoorReleaseButtonColorHex, Mode=OneWay, Converter={StaticResource HexColorToBrushConverter}}"

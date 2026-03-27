@@ -20,7 +20,7 @@
             <Expander
                 HorizontalAlignment="Stretch"
                 HorizontalContentAlignment="Stretch"
-                Header="REST API &amp; Clients"
+                Header="REST API and Clients"
                 IsExpanded="True">
                 <Expander.HeaderTemplate>
                     <DataTemplate>
@@ -38,25 +38,21 @@
                 </Expander.HeaderTemplate>
                 <StackPanel Padding="56,16,0,16" Spacing="16">
                     <StackPanel Spacing="8">
-                        <TextBlock
-                            Style="{StaticResource CaptionTextBlockStyle}"
-                            Text="{x:Bind ViewModel.AutoStartWebApp, Mode=OneWay, Converter={StaticResource BoolToAutoStartLabelConverter}}" />
+                        <TextBlock Style="{StaticResource CaptionTextBlockStyle}" Text="{x:Bind ViewModel.AutoStartWebApp, Mode=OneWay, Converter={StaticResource BoolToAutoStartLabelConverter}}" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Spacing="12">
                         <Ellipse
                             Width="12"
                             Height="12"
-                            Fill="{x:Bind ViewModel.RestApiIsReachable, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}}"
-                            VerticalAlignment="Center" />
+                            VerticalAlignment="Center"
+                            Fill="{x:Bind ViewModel.RestApiIsReachable, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}}" />
                         <TextBlock
                             VerticalAlignment="Center"
                             Style="{StaticResource BodyTextBlockStyle}"
                             Text="{x:Bind ViewModel.RestApiStatusText, Mode=OneWay}" />
                     </StackPanel>
                     <StackPanel Spacing="8">
-                        <TextBlock
-                            Style="{StaticResource CaptionTextBlockStyle}"
-                            Text="Connected clients" />
+                        <TextBlock Style="{StaticResource CaptionTextBlockStyle}" Text="Connected clients" />
                         <ItemsRepeater ItemsSource="{x:Bind ViewModel.RestApiConnectedClients, Mode=OneWay}">
                             <ItemsRepeater.ItemTemplate>
                                 <DataTemplate x:DataType="vm:RestApiClientInfo">
@@ -69,14 +65,14 @@
                                         <TextBlock
                                             VerticalAlignment="Center"
                                             FontWeight="SemiBold"
-                                            Text="{x:Bind DeviceName, Mode=OneWay}" />
+                                            Text="{x:Bind DeviceName}" />
                                     </Border>
                                 </DataTemplate>
                             </ItemsRepeater.ItemTemplate>
                         </ItemsRepeater>
                         <TextBlock
-                            Style="{StaticResource CaptionTextBlockStyle}"
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
                             Text="No clients connected"
                             Visibility="{x:Bind ViewModel.RestApiConnectedClientsEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
                     </StackPanel>
@@ -124,9 +120,9 @@
                     <StackPanel
                         Grid.Row="0"
                         Grid.Column="1"
+                        VerticalAlignment="Center"
                         Orientation="Horizontal"
-                        Spacing="4"
-                        VerticalAlignment="Center">
+                        Spacing="4">
                         <TextBlock
                             FontWeight="SemiBold"
                             Foreground="{ThemeResource AccentFillColorDefaultBrush}"
@@ -142,9 +138,9 @@
                     <StackPanel
                         Grid.Row="0"
                         Grid.Column="3"
+                        VerticalAlignment="Center"
                         Orientation="Horizontal"
-                        Spacing="4"
-                        VerticalAlignment="Center">
+                        Spacing="4">
                         <TextBlock
                             FontWeight="SemiBold"
                             Foreground="{ThemeResource AccentFillColorDefaultBrush}"
@@ -161,9 +157,9 @@
                     <StackPanel
                         Grid.Row="1"
                         Grid.Column="1"
+                        VerticalAlignment="Center"
                         Orientation="Horizontal"
-                        Spacing="4"
-                        VerticalAlignment="Center">
+                        Spacing="4">
                         <TextBlock
                             FontWeight="SemiBold"
                             Foreground="{ThemeResource AccentFillColorDefaultBrush}"
@@ -179,9 +175,9 @@
                     <StackPanel
                         Grid.Row="1"
                         Grid.Column="3"
+                        VerticalAlignment="Center"
                         Orientation="Horizontal"
-                        Spacing="4"
-                        VerticalAlignment="Center">
+                        Spacing="4">
                         <TextBlock
                             FontWeight="SemiBold"
                             Foreground="{ThemeResource AccentFillColorDefaultBrush}"

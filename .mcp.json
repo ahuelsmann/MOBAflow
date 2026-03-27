@@ -41,9 +41,6 @@
         "AZURE_DEVOPS_ORG_URL": "https://dev.azure.com/ahuelsmann"
       }
     },
-    "notion": {
-      "url": "https://mcp.notion.com/mcp"
-    },
     "slack": {
       "url": "https://mcp.slack.com/mcp"
     },

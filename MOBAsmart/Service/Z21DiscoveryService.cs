@@ -168,7 +168,6 @@ public class Z21DiscoveryService : IZ21DiscoveryService
         return h2 == Z21Protocol.Header.LAN_SYSTEMSTATE ||
                h2 == Z21Protocol.Header.LAN_X_HEADER ||
                h2 == Z21Protocol.Header.LAN_GET_SERIAL_NUMBER ||
-               h2 == Z21Protocol.Header.LAN_GET_HWINFO ||
-               h2 == 0x10;
+               h2 == Z21Protocol.Header.LAN_GET_HWINFO;
     }
 }

@@ -15,9 +15,11 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition x:Name="ColWorkflows" Width="300" MinWidth="32" />
+            <ColumnDefinition x:Name="ColWorkflows" Width="1*" MinWidth="32" />
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition x:Name="ColActions" Width="1.5*" MinWidth="32" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition x:Name="ColProperties" Width="1.5*" MinWidth="32" />
         </Grid.ColumnDefinitions>
 
         <controls:CollapsibleColumnCollection
@@ -106,146 +108,138 @@
             </controls:CollapsibleColumnCollection.PanelContent>
         </controls:CollapsibleColumnCollection>
 
-        <Grid Grid.Column="2">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition x:Name="ColActions" Width="*" MinWidth="32" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition x:Name="ColProperties" Width="350" MinWidth="32" />
-            </Grid.ColumnDefinitions>
-
-            <controls:CollapsibleColumnHelper
-                Grid.Column="0"
-                Margin="0"
-                Header="Actions"
-                Glyph="&#xE945;"
-                IsExpanded="{x:Bind ViewModel.IsWorkflowActionsExpanded, Mode=TwoWay}">
-                <controls:CollapsibleColumnHelper.PanelContent>
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        
-                        <CommandBar
-                            Grid.Row="0"
-                            DefaultLabelPosition="Right"
-                            OverflowButtonVisibility="Auto">
-                            <AppBarButton
-                                Command="{x:Bind ViewModel.AddAnnouncementCommand}"
-                                Icon="Comment"
-                                Label="Announcement"
-                                ToolTipService.ToolTip="Add an announcement action" />
-                            <AppBarButton
-                                Command="{x:Bind ViewModel.AddCommandCommand}"
-                                Icon="Paste"
-                                Label="Command"
-                                ToolTipService.ToolTip="Add a command action" />
-                            <AppBarButton
-                                Command="{x:Bind ViewModel.AddAudioCommand}"
-                                Icon="Volume"
-                                Label="Audio"
-                                ToolTipService.ToolTip="Add an audio action" />
-                            <AppBarSeparator />
-                            <AppBarButton
-                                Command="{x:Bind ViewModel.DeleteActionCommand}"
-                                Icon="Delete"
-                                Label="Delete"
-                                ToolTipService.ToolTip="Remove the selected action" />
-                        </CommandBar>
-                        
-                        <ListView
-                            Grid.Row="1"
-                            AllowDrop="True"
-                            CanDragItems="True"
-                            CanReorderItems="True"
-                            DragItemsCompleted="ActionListView_DragItemsCompleted"
-                            DragItemsStarting="ActionListView_DragItemsStarting"
-                            Drop="ActionListView_Drop"
-                            IsItemClickEnabled="True"
-                            ItemsSource="{x:Bind ViewModel.SelectedWorkflow.Actions, Mode=OneWay}"
-                            KeyDown="ActionListView_KeyDown"
-                            SelectedItem="{x:Bind ViewModel.SelectedAction, Mode=TwoWay}"
-                            SelectionMode="Single">
-                            <i:Interaction.Behaviors>
-                                <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.WorkflowsPageItemClickedCommand}" />
-                            </i:Interaction.Behaviors>
-                            <ListView.ContextFlyout>
-                                <MenuFlyout>
-                                    <MenuFlyoutItem Command="{x:Bind ViewModel.AddAnnouncementCommand}" Text="Add Announcement">
-                                        <MenuFlyoutItem.Icon>
-                                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE8F2;" />
-                                        </MenuFlyoutItem.Icon>
-                                    </MenuFlyoutItem>
-                                    <MenuFlyoutItem Command="{x:Bind ViewModel.AddCommandCommand}" Text="Add Command">
-                                        <MenuFlyoutItem.Icon>
-                                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE77F;" />
-                                        </MenuFlyoutItem.Icon>
-                                    </MenuFlyoutItem>
-                                    <MenuFlyoutItem Command="{x:Bind ViewModel.AddAudioCommand}" Text="Add Audio">
-                                        <MenuFlyoutItem.Icon>
-                                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE767;" />
-                                        </MenuFlyoutItem.Icon>
-                                    </MenuFlyoutItem>
-                                    <MenuFlyoutSeparator />
-                                    <MenuFlyoutItem Command="{x:Bind ViewModel.DeleteActionCommand}" Text="Delete Action">
-                                        <MenuFlyoutItem.Icon>
-                                            <FontIcon Glyph="&#xE74D;" />
-                                        </MenuFlyoutItem.Icon>
-                                    </MenuFlyoutItem>
-                                </MenuFlyout>
-                            </ListView.ContextFlyout>
-                            <ListView.ItemTemplate>
-                                <DataTemplate x:DataType="vmAction:WorkflowActionViewModel">
-                                    <Grid Padding="6">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <FontIcon
-                                            Grid.Column="0"
-                                            Margin="0,0,8,0"
-                                            FontSize="16"
-                                            Glyph="&#xE945;" />
-                                        <TextBlock Grid.Column="1" VerticalAlignment="Center">
-                                            <Run FontWeight="SemiBold" Text="{x:Bind Name, Mode=OneWay}" />
-                                            <Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text=" (" />
-                                            <Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind Type, Mode=OneWay}" />
-                                            <Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text=")" />
-                                        </TextBlock>
-                                    </Grid>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
-                    </Grid>
-                </controls:CollapsibleColumnHelper.PanelContent>
-            </controls:CollapsibleColumnHelper>
-
-            <controls:CollapsibleColumnProperties
-                Grid.Column="2"
-                Margin="0"
-                Header="Properties"
-                Glyph="&#xE946;"
-                IsExpanded="{x:Bind ViewModel.IsWorkflowPropertiesExpanded, Mode=TwoWay}">
-                <controls:CollapsibleColumnProperties.PanelContent>
-                    <ContentControl
-                        HorizontalContentAlignment="Stretch"
-                        VerticalContentAlignment="Stretch"
-                        Content="{x:Bind ViewModel.WorkflowsPageSelectedObject, Mode=OneWay}"
-                        ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
-                </controls:CollapsibleColumnProperties.PanelContent>
-            </controls:CollapsibleColumnProperties>
-
-            <controls1:GridSplitter
-                Grid.Column="1"
-                Width="4"
-                HorizontalAlignment="Left"
-                ResizeBehavior="PreviousAndNext" />
-        </Grid>
-
         <controls1:GridSplitter
             Grid.Column="1"
             Width="4"
             HorizontalAlignment="Left"
             ResizeBehavior="PreviousAndNext" />
+
+        <controls:CollapsibleColumnHelper
+            Grid.Column="2"
+            Margin="0"
+            Header="Actions"
+            Glyph="&#xE945;"
+            IsExpanded="{x:Bind ViewModel.IsWorkflowActionsExpanded, Mode=TwoWay}">
+            <controls:CollapsibleColumnHelper.PanelContent>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    
+                    <CommandBar
+                        Grid.Row="0"
+                        DefaultLabelPosition="Right"
+                        OverflowButtonVisibility="Auto">
+                        <AppBarButton
+                            Command="{x:Bind ViewModel.AddAnnouncementCommand}"
+                            Icon="Comment"
+                            Label="Announcement"
+                            ToolTipService.ToolTip="Add an announcement action" />
+                        <AppBarButton
+                            Command="{x:Bind ViewModel.AddCommandCommand}"
+                            Icon="Paste"
+                            Label="Command"
+                            ToolTipService.ToolTip="Add a command action" />
+                        <AppBarButton
+                            Command="{x:Bind ViewModel.AddAudioCommand}"
+                            Icon="Volume"
+                            Label="Audio"
+                            ToolTipService.ToolTip="Add an audio action" />
+                        <AppBarSeparator />
+                        <AppBarButton
+                            Command="{x:Bind ViewModel.DeleteActionCommand}"
+                            Icon="Delete"
+                            Label="Delete"
+                            ToolTipService.ToolTip="Remove the selected action" />
+                    </CommandBar>
+                    
+                    <ListView
+                        Grid.Row="1"
+                        AllowDrop="True"
+                        CanDragItems="True"
+                        CanReorderItems="True"
+                        DragItemsCompleted="ActionListView_DragItemsCompleted"
+                        DragItemsStarting="ActionListView_DragItemsStarting"
+                        Drop="ActionListView_Drop"
+                        IsItemClickEnabled="True"
+                        ItemsSource="{x:Bind ViewModel.SelectedWorkflow.Actions, Mode=OneWay}"
+                        KeyDown="ActionListView_KeyDown"
+                        SelectedItem="{x:Bind ViewModel.SelectedAction, Mode=TwoWay}"
+                        SelectionMode="Single">
+                        <i:Interaction.Behaviors>
+                            <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.WorkflowsPageItemClickedCommand}" />
+                        </i:Interaction.Behaviors>
+                        <ListView.ContextFlyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem Command="{x:Bind ViewModel.AddAnnouncementCommand}" Text="Add Announcement">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE8F2;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Command="{x:Bind ViewModel.AddCommandCommand}" Text="Add Command">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE77F;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Command="{x:Bind ViewModel.AddAudioCommand}" Text="Add Audio">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE767;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutSeparator />
+                                <MenuFlyoutItem Command="{x:Bind ViewModel.DeleteActionCommand}" Text="Delete Action">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE74D;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </ListView.ContextFlyout>
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="vmAction:WorkflowActionViewModel">
+                                <Grid Padding="6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <FontIcon
+                                        Grid.Column="0"
+                                        Margin="0,0,8,0"
+                                        FontSize="16"
+                                        Glyph="&#xE945;" />
+                                    <TextBlock Grid.Column="1" VerticalAlignment="Center">
+                                        <Run FontWeight="SemiBold" Text="{x:Bind Name, Mode=OneWay}" />
+                                        <Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text=" (" />
+                                        <Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind Type, Mode=OneWay}" />
+                                        <Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text=")" />
+                                    </TextBlock>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </Grid>
+            </controls:CollapsibleColumnHelper.PanelContent>
+        </controls:CollapsibleColumnHelper>
+
+        <controls1:GridSplitter
+            Grid.Column="3"
+            Width="4"
+            HorizontalAlignment="Left"
+            ResizeBehavior="PreviousAndNext" />
+
+        <controls:CollapsibleColumnProperties
+            Grid.Column="4"
+            Margin="0"
+            Header="Properties"
+            Glyph="&#xE946;"
+            IsExpanded="{x:Bind ViewModel.IsWorkflowPropertiesExpanded, Mode=TwoWay}">
+            <controls:CollapsibleColumnProperties.PanelContent>
+                <ContentControl
+                    HorizontalContentAlignment="Stretch"
+                    VerticalContentAlignment="Stretch"
+                    Content="{x:Bind ViewModel.WorkflowsPageSelectedObject, Mode=OneWay}"
+                    ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
+            </controls:CollapsibleColumnProperties.PanelContent>
+        </controls:CollapsibleColumnProperties>
     </Grid>
 </Page>

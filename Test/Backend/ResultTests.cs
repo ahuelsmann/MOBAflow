@@ -389,11 +389,11 @@ internal class ResultTests
 // Test helper classes
 file class TestClass
 {
-    public string? Value { get; set; }
+    public string? Value;
 }
 
 file class User
 {
-    public int Id { get; set; }
-    public string? Name { get; set; }
+    public int Id;
+    public string? Name;
 }

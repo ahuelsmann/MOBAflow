@@ -1,10 +1,9 @@
 using Moba.Common.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using CommunityToolkit.Mvvm.ComponentModel;
+using System.ComponentModel;
 
-namespace SharedUI.ViewModel;
+namespace Moba.SharedUI.ViewModel;
 
 /// <summary>
 /// ViewModel for managing page layout with VisualStateManager support and GridSplitter integration.
@@ -76,9 +75,9 @@ public class PageLayoutViewModel : ObservableObject
     /// This method should be called by platform-specific implementations.
     /// </summary>
     /// <param name="grid">The Grid whose columns should be updated.</param>
-    public void ApplyToGrid(object grid)
+    public void ApplyToGrid(object? grid)
     {
-        if (grid == null) return;
+        if (grid is null) return;
 
         // Use reflection to get ColumnDefinitions property
         var columnDefinitionsProperty = grid.GetType().GetProperty("ColumnDefinitions");
@@ -94,7 +93,8 @@ public class PageLayoutViewModel : ObservableObject
                     if (columnName != null && Columns.TryGetValue(columnName, out var column))
                     {
                         var columnDefinition = columnDefinitions[i];
-                        column.ApplyToColumnDefinition(columnDefinition);
+                        if (columnDefinition != null)
+                            column.ApplyToColumnDefinition(columnDefinition);
                     }
                 }
             }
@@ -106,9 +106,9 @@ public class PageLayoutViewModel : ObservableObject
     /// This method should be called by platform-specific implementations.
     /// </summary>
     /// <param name="grid">The Grid whose columns should be read.</param>
-    public void UpdateFromGrid(object grid)
+    public void UpdateFromGrid(object? grid)
     {
-        if (grid == null) return;
+        if (grid is null) return;
 
         // Use reflection to get ColumnDefinitions property
         var columnDefinitionsProperty = grid.GetType().GetProperty("ColumnDefinitions");
@@ -124,7 +124,8 @@ public class PageLayoutViewModel : ObservableObject
                     if (columnName != null && Columns.TryGetValue(columnName, out var column))
                     {
                         var columnDefinition = columnDefinitions[i];
-                        column.UpdateFromColumnDefinition(columnDefinition);
+                        if (columnDefinition != null)
+                            column.UpdateFromColumnDefinition(columnDefinition);
                     }
                 }
             }

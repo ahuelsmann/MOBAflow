@@ -1,9 +1,7 @@
 using Moba.Common.Configuration;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace SharedUI.ViewModel;
+namespace Moba.SharedUI.ViewModel;
 
 /// <summary>
 /// ViewModel for managing the state of a single column in a grid layout.
@@ -91,11 +89,11 @@ public class ColumnViewModel : ObservableObject
     /// This method should be called by platform-specific implementations.
     /// </summary>
     /// <param name="columnDefinition">The column definition to apply the state to.</param>
-    public void ApplyToColumnDefinition(object columnDefinition)
+    public void ApplyToColumnDefinition(object? columnDefinition)
     {
         // Platform-specific implementations should override this method
         // or handle the columnDefinition appropriately
-        if (columnDefinition != null)
+        if (columnDefinition is not null)
         {
             // Set width based on expanded state
             var width = IsExpanded ? _width : 0;
@@ -120,9 +118,9 @@ public class ColumnViewModel : ObservableObject
     /// This method should be called by platform-specific implementations.
     /// </summary>
     /// <param name="columnDefinition">The column definition to read the state from.</param>
-    public void UpdateFromColumnDefinition(object columnDefinition)
+    public void UpdateFromColumnDefinition(object? columnDefinition)
     {
-        if (columnDefinition != null)
+        if (columnDefinition is not null)
         {
             // Use reflection to get Width property
             var widthProperty = columnDefinition.GetType().GetProperty("Width");
@@ -135,15 +133,17 @@ public class ColumnViewModel : ObservableObject
                     var valueProperty = widthValue.GetType().GetProperty("Value");
                     if (valueProperty != null)
                     {
-                        var width = (double)valueProperty.GetValue(widthValue);
-                        if (width > 0)
+                        if (valueProperty.GetValue(widthValue) is double width)
                         {
-                            _width = width;
-                            _isExpanded = true;
-                        }
-                        else
-                        {
-                            _isExpanded = false;
+                            if (width > 0)
+                            {
+                                _width = width;
+                                _isExpanded = true;
+                            }
+                            else
+                            {
+                                _isExpanded = false;
+                            }
                         }
                     }
                 }

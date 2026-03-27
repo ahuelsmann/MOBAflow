@@ -9,7 +9,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Xaml.Interactivity;
 using SharedUI.Interface;
-using SharedUI.ViewModel;
+using Moba.SharedUI.ViewModel;
 using Windows.Foundation;
 
 public sealed class GridColumnResizeBehavior : Behavior<Grid>

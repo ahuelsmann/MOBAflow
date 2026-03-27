@@ -6,13 +6,13 @@ using Common.Configuration;
 using Microsoft.Extensions.Logging;
 
 using SharedUI.Interface;
-using SharedUI.ViewModel;
+using Moba.SharedUI.ViewModel;
 
 using System.Text.Json;
 using System.Timers;
 
 /// <summary>
-/// Polls the REST API (RestApi project) status and updates MainWindowViewModel with status and connected clients.
+/// Polls the REST API (MOBApi process) status and updates MainWindowViewModel with status and connected clients.
 /// When the API is reachable, connects PhotoHubClient so WinUI receives photo upload notifications and assigns the photo to the selected item.
 /// </summary>
 internal sealed class RestApiStatusService : IDisposable
@@ -197,15 +197,14 @@ internal sealed class RestApiStatusService : IDisposable
 
     private sealed class StatusResponse
     {
-        public string? Status { get; set; }
         public int Port { get; set; }
         public List<ClientDto>? ConnectedClients { get; set; }
     }
 
     private sealed class ClientDto
     {
-        public string? ClientId { get; init; }
-        public string? DeviceName { get; init; }
-        public DateTime ConnectedAt { get; init; }
+        public string? ClientId { get; set; }
+        public string? DeviceName { get; set; }
+        public DateTime ConnectedAt { get; set; }
     }
 }

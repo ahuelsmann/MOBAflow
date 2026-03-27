@@ -1,10 +1,9 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
-using Common.Navigation;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using SharedUI.ViewModel;
+using Moba.SharedUI.ViewModel;
 
 /// <summary>
 /// Solution page displaying projects list with properties panel.

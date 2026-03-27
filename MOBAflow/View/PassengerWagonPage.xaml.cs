@@ -1,15 +1,54 @@
 namespace Moba.WinUI.View;
 
-using Common.Navigation;
-using SharedUI.ViewModel;
+using Microsoft.UI.Xaml;
+using Moba.SharedUI.ViewModel;
 
 internal sealed partial class PassengerWagonPage
 {
     public MainWindowViewModel ViewModel { get; }
 
+    private GridLength _listExpandedWidth = new(1, GridUnitType.Star);
+    private GridLength _propertiesExpandedWidth = new(3.5, GridUnitType.Star);
+
     public PassengerWagonPage(MainWindowViewModel viewModel)
     {
         ViewModel = viewModel;
         InitializeComponent();
+
+        ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+    }
+
+    private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ViewModel.IsPassengerWagonListExpanded))
+        {
+            if (!ViewModel.IsPassengerWagonListExpanded)
+            {
+                if (!ColList.Width.IsAuto)
+                {
+                    _listExpandedWidth = ColList.Width;
+                }
+                ColList.Width = GridLength.Auto;
+            }
+            else
+            {
+                ColList.Width = _listExpandedWidth;
+            }
+        }
+        else if (e.PropertyName == nameof(ViewModel.IsPassengerWagonPropertiesExpanded))
+        {
+            if (!ViewModel.IsPassengerWagonPropertiesExpanded)
+            {
+                if (!ColProperties.Width.IsAuto)
+                {
+                    _propertiesExpandedWidth = ColProperties.Width;
+                }
+                ColProperties.Width = GridLength.Auto;
+            }
+            else
+            {
+                ColProperties.Width = _propertiesExpandedWidth;
+            }
+        }
     }
 }

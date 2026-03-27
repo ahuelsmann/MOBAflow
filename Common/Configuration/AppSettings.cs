@@ -502,6 +502,8 @@ public class LayoutSettings
     public SignalBoxPageLayoutSettings SignalBoxPage { get; set; } = new();
 
     public TrackPlanPageLayoutSettings TrackPlanPage { get; set; } = new();
+
+    public MonitorPageLayoutSettings MonitorPage { get; set; } = new();
 }
 
 /// <summary>
@@ -674,6 +676,7 @@ public class PassengerWagonPageLayoutSettings
 public class SolutionPageLayoutSettings
 {
     public bool IsProjectListExpanded { get; set; } = true;
+    public bool IsPropertiesExpanded { get; set; } = true;
 }
 
 public class WorkflowsPageLayoutSettings
@@ -703,4 +706,10 @@ public class TrackPlanPageLayoutSettings
     public bool IsToolboxExpanded { get; set; } = true;
 
     public bool IsPropertiesExpanded { get; set; } = true;
+}
+
+public class MonitorPageLayoutSettings
+{
+    public bool IsTrafficExpanded { get; set; } = true;
+    public bool IsActivityLogExpanded { get; set; } = true;
 }

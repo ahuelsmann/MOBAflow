@@ -2,14 +2,13 @@
 namespace Moba.WinUI.View;
 
 using Common.Configuration;
-using Common.Navigation;
 using Converter;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Windows.Storage.Pickers;
 using Service;
-using SharedUI.Interface;
-using SharedUI.ViewModel;
+using Moba.SharedUI.Interface;
+using Moba.SharedUI.ViewModel;
 using Windows.ApplicationModel.DataTransfer;
 
 /// <summary>
@@ -21,7 +20,7 @@ internal sealed partial class SettingsPage
 {
     public MainWindowViewModel ViewModel { get; }
 
-    public SettingsPage(MainWindowViewModel viewModel, ISkinProvider _)
+    public SettingsPage(MainWindowViewModel viewModel)
     {
         ViewModel = viewModel;
         InitializeComponent();
@@ -93,10 +92,9 @@ internal sealed partial class SettingsPage
 
     private static void ResetPersistedLayouts(AppSettings settings)
     {
-        var tabVisibility = settings.Layout.TabVisibility ?? new TabVisibilitySettings();
         settings.Layout = new LayoutSettings
         {
-            TabVisibility = tabVisibility
+            TabVisibility = settings.Layout.TabVisibility
         };
     }
 

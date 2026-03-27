@@ -1598,6 +1598,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
         _doorReleaseBlinkCts?.Cancel();
         _doorReleaseBlinkCts = new CancellationTokenSource();
         var token = _doorReleaseBlinkCts.Token;
+        var blinkHigh = true;
 
         async Task RunBlinkLoopAsync()
         {
@@ -1614,10 +1615,12 @@ public sealed partial class TrainControlViewModel : ObservableObject
                     return;
                 }
 
+                blinkHigh = !blinkHigh;
+                var opacity = blinkHigh ? 1.0 : 0.35;
                 if (_uiDispatcher != null)
-                    _uiDispatcher.InvokeOnUi(() => DoorReleaseBlinkOpacity = DoorReleaseBlinkOpacity == 1.0 ? 0.35 : 1.0);
+                    _uiDispatcher.InvokeOnUi(() => DoorReleaseBlinkOpacity = opacity);
                 else
-                    DoorReleaseBlinkOpacity = DoorReleaseBlinkOpacity == 1.0 ? 0.35 : 1.0;
+                    DoorReleaseBlinkOpacity = opacity;
             }
         }
 

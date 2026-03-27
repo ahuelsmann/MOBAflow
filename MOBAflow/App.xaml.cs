@@ -24,7 +24,7 @@ using Service;
 using SharedUI.Extensions;
 using SharedUI.Interface;
 using SharedUI.Shell;
-using SharedUI.ViewModel;
+using Moba.SharedUI.ViewModel;
 using Sound;
 using System.Diagnostics;
 using TrackLibrary.PikoA;

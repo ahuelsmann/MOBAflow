@@ -1,7 +1,10 @@
----
-description: MOBAflow architecture, C#/.NET quality rules, DI, async/await, and maintainable implementation style.
+description: >
+  MOBAflow architecture, C#/.NET quality rules, DI, async/await, and
+  maintainable implementation style.
 trigger: always_on
 ---
+
+<!-- markdownlint-disable MD003 MD041 -->
 
 # Architecture and Quality Rules
 
@@ -9,7 +12,9 @@ trigger: always_on
 - Respect SOLID and Clean Code principles.
 - Prefer simple, explicit, maintainable code over clever abstractions.
 - Keep methods and classes focused on one responsibility.
-- Use meaningful names. Avoid vague names such as `data`, `helper`, `tmp`, or `manager` unless the surrounding architecture already establishes that concept.
+- Use meaningful names. Avoid vague names such as `data`, `helper`,
+  `tmp`, or `manager` unless the surrounding architecture already
+  establishes that concept.
 
 ## Architecture
 
@@ -22,21 +27,30 @@ trigger: always_on
 
 - Prefer constructor injection.
 - Do not introduce service locator patterns.
-- Do not hide service creation in random `new` calls when the type should be injected.
-- Prefer interfaces and small services where they improve testability and separation of concerns.
+- Do not hide service creation in random `new` calls when the type
+  should be injected.
+- Prefer interfaces and small services where they improve testability
+  and separation of concerns.
 
 ## Async and Concurrency
 
 - Use `async` and `await` correctly.
-- Do not use `.Result`, `.Wait()`, or `.GetAwaiter().GetResult()` in application code.
-- Do not introduce fire-and-forget tasks unless the behavior is explicitly required and failure handling is considered.
-- Preserve existing threading boundaries, especially around UI dispatch and the EventBus.
+- Do not use `.Result`, `.Wait()`, or
+  `.GetAwaiter().GetResult()` in application code.
+- Do not introduce fire-and-forget tasks unless the behavior is
+  explicitly required and failure handling is considered.
+- Preserve existing threading boundaries, especially around UI dispatch
+  and the EventBus.
 
 ## Static Code
 
-- Do not introduce generic static helper or utility classes as a default design choice.
-- Prefer injected services, cohesive domain types, extension methods, or small focused abstractions.
-- Static types are acceptable for narrowly scoped pure functions, constants, or extension method containers when that is the clearest design.
+- Do not introduce generic static helper or utility classes as a
+  default design choice.
+- Prefer injected services, cohesive domain types, extension methods,
+  or small focused abstractions.
+- Static types are acceptable for narrowly scoped pure functions or
+  constants, and for extension method containers when that is the
+  clearest design.
 
 ## Testing and Validation
 

@@ -41,15 +41,27 @@ internal class Z21WrapperTests
         var z21 = new Z21(fake, eventBus);
 
         FeedbackResult? captured = null;
-        // ReSharper disable once AccessToDisposedClosure
-        using var signal = new ManualResetEventSlim(false);
-        z21.Received += f => { captured = f; signal.Set(); };
+        var signal = new ManualResetEventSlim(false);
+        try
+        {
+            void Handler(FeedbackResult f)
+            {
+                captured = f;
+                signal.Set();
+            }
 
-        fake.RaiseReceived(Z21Packets.RBusFeedbackInPort5);
+            z21.Received += Handler;
+            fake.RaiseReceived(Z21Packets.RBusFeedbackInPort5);
 
-        Assert.That(signal.Wait(TimeSpan.FromSeconds(1)), Is.True, "Received event not raised");
-        Assert.That(captured, Is.Not.Null);
-        Assert.That(captured!.InPort, Is.EqualTo(5u));
+            Assert.That(signal.Wait(TimeSpan.FromSeconds(1)), Is.True, "Received event not raised");
+            Assert.That(captured, Is.Not.Null);
+            Assert.That(captured!.InPort, Is.EqualTo(5u));
+            z21.Received -= Handler;
+        }
+        finally
+        {
+            signal.Dispose();
+        }
     }
 
     [Test]
@@ -59,17 +71,29 @@ internal class Z21WrapperTests
         var eventBus = new EventBus();
         var z21 = new Z21(fake, eventBus);
         XBusStatus? status = null;
-        // ReSharper disable once AccessToDisposedClosure
-        using var signal = new ManualResetEventSlim(false);
-        z21.OnXBusStatusChanged += s => { status = s; signal.Set(); };
+        var signal = new ManualResetEventSlim(false);
+        try
+        {
+            void Handler(XBusStatus s)
+            {
+                status = s;
+                signal.Set();
+            }
 
-        fake.RaiseReceived(Z21Packets.XBusStatusChangedAllFlags);
+            z21.OnXBusStatusChanged += Handler;
+            fake.RaiseReceived(Z21Packets.XBusStatusChangedAllFlags);
 
-        Assert.That(signal.Wait(TimeSpan.FromSeconds(1)), Is.True, "XBusStatusChanged not raised");
-        Assert.That(status, Is.Not.Null);
-        Assert.That(status!.EmergencyStop, Is.True);
-        Assert.That(status.TrackOff, Is.True);
-        Assert.That(status.ShortCircuit, Is.True);
-        Assert.That(status.Programming, Is.False);
+            Assert.That(signal.Wait(TimeSpan.FromSeconds(1)), Is.True, "XBusStatusChanged not raised");
+            Assert.That(status, Is.Not.Null);
+            Assert.That(status!.EmergencyStop, Is.True);
+            Assert.That(status.TrackOff, Is.True);
+            Assert.That(status.ShortCircuit, Is.True);
+            Assert.That(status.Programming, Is.False);
+            z21.OnXBusStatusChanged -= Handler;
+        }
+        finally
+        {
+            signal.Dispose();
+        }
     }
 }

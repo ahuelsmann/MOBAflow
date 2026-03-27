@@ -138,7 +138,7 @@ public class RestApiDiscoveryService
         try
         {
             var ctx = Application.Context;
-            var wifi = (WifiManager?)ctx?.GetSystemService(Context.WifiService);
+            var wifi = (WifiManager?)ctx.GetSystemService(Context.WifiService);
             if (wifi != null)
             {
                 _multicastLock = wifi.CreateMulticastLock("MOBAflow REST discovery");

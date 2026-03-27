@@ -2,6 +2,7 @@
 bin/
 obj/
 artifacts/
+*.binlog
 
 # Visual Studio
 .vs/

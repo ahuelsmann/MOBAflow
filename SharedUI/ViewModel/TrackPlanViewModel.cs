@@ -20,6 +20,8 @@ public sealed class TrackPlanViewModel : ObservableObject, IViewModelWrapper<Tra
     /// Initializes a new instance of the <see cref="TrackPlanViewModel"/> class.
     /// </summary>
     /// <param name="model">The track plan domain model.</param>
+    /// <param name="settings">Application settings (layout persistence).</param>
+    /// <param name="settingsService">Settings service for persisting layout changes.</param>
     public TrackPlanViewModel(TrackPlan model, AppSettings settings, ISettingsService settingsService)
     {
         ArgumentNullException.ThrowIfNull(model);
@@ -28,8 +30,8 @@ public sealed class TrackPlanViewModel : ObservableObject, IViewModelWrapper<Tra
         _model = model;
         _settings = settings;
         _settingsService = settingsService;
-        _isToolboxExpanded = _settings.Layout.TrackPlanPage?.IsToolboxExpanded ?? true;
-        _isPropertiesExpanded = _settings.Layout.TrackPlanPage?.IsPropertiesExpanded ?? true;
+        _isToolboxExpanded = _settings.Layout.TrackPlanPage.IsToolboxExpanded;
+        _isPropertiesExpanded = _settings.Layout.TrackPlanPage.IsPropertiesExpanded;
     }
 
     /// <summary>

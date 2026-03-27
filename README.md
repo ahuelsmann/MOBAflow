@@ -62,7 +62,7 @@ MOBAflow controls model train layouts via UDP communication with the **Roco Z21 
 > - ✅ Liability & disclaimer
 > - ✅ Emergency procedures
 
-**Current Status:** ℹ️ *Setup automation scripts not yet available. Manual installation required.*
+**Current Status:** ℹ️ *Azure App Configuration setup scripts are available. Hardware setup, device pairing, and layout integration are still manual.*
 
 ---
 
@@ -79,31 +79,46 @@ MOBAflow controls model train layouts via UDP communication with the **Roco Z21 
 ```bash
 git clone https://github.com/ahuelsmann/MOBAflow.git
 cd MOBAflow
-dotnet restore
-dotnet build
+dotnet restore Moba.slnx
+dotnet build Moba.slnx
 ```
+
+**Cross-platform subset (without WinUI / MAUI projects):**
+
+```bash
+dotnet restore Backend/Backend.csproj
+dotnet build Backend/Backend.csproj
+dotnet test Test/Test.csproj
+```
+
+> Note: On non-Windows systems, the WinUI and MAUI projects are not buildable. Some `System.Speech` tests are Windows-only.
 
 ### Run Applications
 
 **🪟 MOBAflow (Windows Desktop):**
+
 ```bash
-dotnet run --project MOBAflow
+dotnet run --project MOBAflow/MOBAflow.csproj
 ```
 
 **🌐 MOBApi (REST API, Port 5001):**
+
 ```bash
-dotnet run --project MOBApi
+dotnet run --project MOBApi/MOBApi.csproj
 ```
+
 MOBApi listens on **port 5001** (all interfaces). It provides the REST API for the WinUI Overview status and for MOBAsmart (client list, health). You can **start MOBApi in two ways:** (1) **Standalone** – run the command above; (2) **Together with MOBAflow** – enable "Auto-start REST API with MOBAflow" in MOBAflow Settings so MOBAflow starts the MOBApi process automatically. MOBAsmart discovers the server via UDP multicast; ensure PC and phone are on the same network.
 
 **📱 MOBAsmart (Android):**
+
 ```bash
-dotnet build MOBAsmart -f net10.0-android
+dotnet build MOBAsmart/MOBAsmart.csproj -f net10.0-android
 ```
 
 **🧪 Run Tests:**
+
 ```bash
-dotnet test
+dotnet test Test/Test.csproj
 ```
 
 ---
@@ -311,7 +326,7 @@ Platform-specific UI control libraries for consistent, reusable components.
 ### 🏗️ Architecture
 
 ```
-WinUI.Controls/          ← WinUI 3 XAML (Windows Desktop)
+MOBAflow/Controls/       ← WinUI 3 XAML controls inside the desktop app
     ↓
 MAUI.Controls/           ← MAUI XAML (Android Mobile)
     ↓
@@ -324,11 +339,11 @@ Domain/                  ← Business Models
 
 | Project | Platform | Technology | Target |
 |---------|----------|------------|--------|
-| **WinUI.Controls** | Windows | WinUI 3 XAML | Desktop app & plugins |
-| **MAUI.Controls** | Android | .NET MAUI XAML | Mobile app |
+| **MOBAflow/Controls** | Windows | WinUI 3 XAML | Desktop app control set |
+| **MAUI.Controls** | Android | .NET MAUI XAML | Mobile control library |
 | **SharedUI** | Cross-platform | CommunityToolkit.Mvvm | ViewModels |
 
-### 🪟 WinUI.Controls (Windows)
+### 🪟 Windows Controls in MOBAflow
 
 ```xml
 <Page xmlns:controls="using:Moba.WinUI.Controls">
@@ -364,7 +379,7 @@ Domain/                  ← Business Models
 
 ### ⚖️ Platform Differences
 
-| Feature | WinUI.Controls | MAUI.Controls |
+| Feature | MOBAflow/Controls | MAUI.Controls |
 |---------|----------------|---------------|
 | Bindable Properties | `DependencyProperty` | `BindableProperty` |
 | Binding Syntax | `{x:Bind}` | `{Binding}` |

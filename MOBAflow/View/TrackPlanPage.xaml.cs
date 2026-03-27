@@ -2,7 +2,6 @@
 
 namespace Moba.WinUI.View;
 
-using Common.Navigation;
 using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.Graphics.Canvas.UI;
 using Microsoft.Graphics.Canvas.UI.Xaml;
@@ -13,7 +12,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
-using SharedUI.ViewModel;
+using Moba.SharedUI.ViewModel;
 using System.Diagnostics;
 using TrackLibrary.PikoA;
 using TrackPlan.Renderer;
@@ -54,6 +53,9 @@ internal sealed partial class TrackPlanPage
     private double _rotationDragStartAngleRad;
     private double _rotationDragStartSegmentDegrees;
 
+    private GridLength _toolboxExpandedWidth = new(180);
+    private GridLength _propertiesExpandedWidth = new(240);
+
     public TrackPlanPage(TrackPlanViewModel viewModel, EditableTrackPlan plan)
     {
         ViewModel = viewModel;
@@ -61,11 +63,47 @@ internal sealed partial class TrackPlanPage
         InitializeComponent();
         Loaded += OnLoaded;
 
+        ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+
         SnapToggle.Checked += (_, _) => { _snapEnabled = true; };
         SnapToggle.Unchecked += (_, _) => { _snapEnabled = false; };
         DisconnectButton.Click += (_, _) => DisconnectSelectedSegment();
         LoadTestPlanButton.Click += (_, _) => LoadTestPlan();
         OpenSvgInBrowserButton.Click += (_, _) => OpenSvgInBrowser();
+    }
+
+    private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ViewModel.IsToolboxExpanded))
+        {
+            if (!ViewModel.IsToolboxExpanded)
+            {
+                if (!ColToolbox.Width.IsAuto)
+                {
+                    _toolboxExpandedWidth = ColToolbox.Width;
+                }
+                ColToolbox.Width = GridLength.Auto;
+            }
+            else
+            {
+                ColToolbox.Width = _toolboxExpandedWidth;
+            }
+        }
+        else if (e.PropertyName == nameof(ViewModel.IsPropertiesExpanded))
+        {
+            if (!ViewModel.IsPropertiesExpanded)
+            {
+                if (!ColProperties.Width.IsAuto)
+                {
+                    _propertiesExpandedWidth = ColProperties.Width;
+                }
+                ColProperties.Width = GridLength.Auto;
+            }
+            else
+            {
+                ColProperties.Width = _propertiesExpandedWidth;
+            }
+        }
     }
 
     private static TrackPlanResult CreateTestPlan() =>
@@ -213,7 +251,7 @@ internal sealed partial class TrackPlanPage
         _draggedPlaced = new PlacedSegment(entry.CreateInstance(), canvasPoint.X / ScaleMmToPx, canvasPoint.Y / ScaleMmToPx, 0);
         _draggedSegmentId = null;
         CreateGhost(_draggedPlaced);
-        UpdateGhostPosition(canvasPoint.X, canvasPoint.Y);
+        UpdateGhostPosition();
         MainGrid.PointerMoved += Canvas_PointerMoved_ToolboxDrag;
         MainGrid.PointerReleased += Canvas_PointerReleased_ToolboxDrag;
         MainGrid.CapturePointer(pointer);
@@ -307,7 +345,7 @@ internal sealed partial class TrackPlanPage
             _dragStartCanvasPoint = pos;
             _dragHasMoved = false;
             CreateGhost(hit);
-            UpdateGhostPosition(pos.X, pos.Y);
+            UpdateGhostPosition();
             OverlayCanvas.PointerMoved += Canvas_PointerMoved_CanvasDrag;
             OverlayCanvas.PointerReleased += Canvas_PointerReleased_CanvasDrag;
             OverlayCanvas.CapturePointer(e.Pointer);
@@ -324,9 +362,9 @@ internal sealed partial class TrackPlanPage
         if (_draggedPlaced != null)
         {
             _draggedPlaced = _draggedPlaced.WithPosition(worldX, worldY, _draggedPlaced.RotationDegrees);
-            UpdateGhostPosition(canvasPoint.X, canvasPoint.Y);
+            UpdateGhostPosition();
         }
-        UpdatePortHighlights(worldX, worldY);
+        UpdatePortHighlights();
     }
 
     private void Canvas_PointerMoved_CanvasDrag(object sender, PointerRoutedEventArgs e)
@@ -346,11 +384,10 @@ internal sealed partial class TrackPlanPage
         {
             var updated = _draggedPlaced.WithPosition(_draggedPlaced.X + deltaMmX, _draggedPlaced.Y + deltaMmY, _draggedPlaced.RotationDegrees);
             _draggedPlaced = updated;
-            UpdateGhostPosition(ptr.Position.X, ptr.Position.Y);
+            UpdateGhostPosition();
         }
 
-        var (offsetX, offsetY) = GetDrawOffset();
-        UpdatePortHighlights(ptr.Position.X / ScaleMmToPx - offsetX, ptr.Position.Y / ScaleMmToPx - offsetY);
+        UpdatePortHighlights();
     }
 
     private void Canvas_PointerReleased_ToolboxDrag(object sender, PointerRoutedEventArgs e)
@@ -533,7 +570,7 @@ internal sealed partial class TrackPlanPage
         return degrees;
     }
 
-    private void UpdatePortHighlights(double cursorWorldXmm, double cursorWorldYmm)
+    private void UpdatePortHighlights()
     {
         ClearPortHighlights();
 
@@ -682,27 +719,22 @@ internal sealed partial class TrackPlanPage
         if (_plan.Segments.Count == 0)
             return null;
 
-        var first = _plan.Segments[0];
-        var entryPort = GetEntryPortForSegment(first.Segment.No);
-        var path = SegmentLocalPathBuilder.GetPath(first.Segment, entryPort);
-        var (localMinX, localMinY, localMaxX, localMaxY) = SegmentLocalPathBuilder.GetBounds(path);
-
         double minX = double.MaxValue, minY = double.MaxValue;
         double maxX = double.MinValue, maxY = double.MinValue;
 
         foreach (var placed in _plan.Segments)
         {
-            entryPort = GetEntryPortForSegment(placed.Segment.No);
-            path = SegmentLocalPathBuilder.GetPath(placed.Segment, entryPort);
-            (localMinX, localMinY, localMaxX, localMaxY) = SegmentLocalPathBuilder.GetBounds(path);
+            var entryPort = GetEntryPortForSegment(placed.Segment.No);
+            var path = SegmentLocalPathBuilder.GetPath(placed.Segment, entryPort);
+            var (localMinX, localMinY, localMaxX, localMaxY) = SegmentLocalPathBuilder.GetBounds(path);
 
             var angleRad = placed.RotationDegrees * Math.PI / 180;
             var cos = Math.Cos(angleRad);
             var sin = Math.Sin(angleRad);
 
-            static double Tx(double ox, double oy, double lx, double ly, double cos, double sin) =>
+            static double Tx(double ox, double _, double lx, double ly, double cos, double sin) =>
                 ox + lx * cos - ly * sin;
-            static double Ty(double ox, double oy, double lx, double ly, double cos, double sin) =>
+            static double Ty(double _, double oy, double lx, double ly, double cos, double sin) =>
                 oy + lx * sin + ly * cos;
 
             var corners = new[]
@@ -768,7 +800,7 @@ internal sealed partial class TrackPlanPage
         }
     }
 
-    private void UpdateGhostPosition(double xPx, double yPx)
+    private void UpdateGhostPosition()
     {
         if (_ghostShape == null || _draggedPlaced == null)
             return;
@@ -849,12 +881,10 @@ internal sealed partial class TrackPlanPage
         var (offsetX, offsetY) = GetDrawOffset();
 
         // Stroke-Style wie SegmentPlanPathBuilder: Round Join & Caps
-        using var strokeStyle = new CanvasStrokeStyle
-        {
-            LineJoin = CanvasLineJoin.Round,
-            StartCap = CanvasCapStyle.Round,
-            EndCap = CanvasCapStyle.Round
-        };
+        using var strokeStyle = new CanvasStrokeStyle();
+        strokeStyle.LineJoin = CanvasLineJoin.Round;
+        strokeStyle.StartCap = CanvasCapStyle.Round;
+        strokeStyle.EndCap = CanvasCapStyle.Round;
 
         // Theme-aware track colors (Fluent Design: from resources for Dark/Light)
         var strokeBrush = ResolveTrackPlanStrokeBrush();

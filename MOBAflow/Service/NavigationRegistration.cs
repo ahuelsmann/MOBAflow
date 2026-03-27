@@ -5,7 +5,7 @@ using Common.Configuration;
 using Common.Navigation;
 using Microsoft.Extensions.DependencyInjection;
 using SharedUI.Interface;
-using SharedUI.ViewModel;
+using Moba.SharedUI.ViewModel;
 using View;
 using ViewModel;
 using System;
