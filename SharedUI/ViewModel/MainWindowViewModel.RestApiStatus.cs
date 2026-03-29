@@ -48,5 +48,7 @@ public partial class MainWindowViewModel
             : new ObservableCollection<RestApiClientInfo>(clients);
 
         RestApiConnectedClientsEmpty = RestApiConnectedClients.Count == 0;
+
+        RecomputeOperatingState();
     }
 }

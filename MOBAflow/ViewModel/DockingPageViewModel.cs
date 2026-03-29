@@ -4,8 +4,8 @@ namespace Moba.WinUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Moba.WinUI.Controls.Docking;
-using Moba.WinUI.Controls.Docking.Model;
+using Controls.Docking;
+using Controls.Docking.Model;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System.Collections.ObjectModel;

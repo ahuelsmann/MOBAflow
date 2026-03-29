@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.Input;
 using Domain;
 using Domain.Enum;
 using Interface;
+using Common.Runtime;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
@@ -237,26 +238,53 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     }
 
     /// <summary>
+    /// Updates the local runtime state from an immutable runtime snapshot.
+    /// </summary>
+    public void UpdateFromRuntimeSnapshot(JourneyRuntimeSnapshot snapshot)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+
+        _state.Counter = snapshot.Counter;
+        _state.CurrentPos = snapshot.CurrentPos;
+        _state.CurrentStationName = snapshot.CurrentStationName;
+        _state.LastFeedbackTime = snapshot.LastFeedbackTime;
+        _state.IsActive = snapshot.IsActive;
+
+        for (int i = 0; i < Stations.Count; i++)
+        {
+            Stations[i].IsCurrentStation = i == snapshot.CurrentPos;
+        }
+
+        OnPropertyChanged(nameof(CurrentStation));
+        OnPropertyChanged(nameof(CurrentCounter));
+        OnPropertyChanged(nameof(CurrentPos));
+    }
+
+    /// <summary>
+    /// Resets the projected runtime state to the initial journey position.
+    /// </summary>
+    public void ResetRuntimeState()
+    {
+        _state.Reset((int)_journey.FirstPos);
+
+        foreach (var stationVm in Stations)
+        {
+            stationVm.IsCurrentStation = false;
+        }
+
+        OnPropertyChanged(nameof(CurrentStation));
+        OnPropertyChanged(nameof(CurrentCounter));
+        OnPropertyChanged(nameof(CurrentPos));
+    }
+
+    /// <summary>
     /// Resets the journey to its initial state.
     /// Clears counter, position, and station highlighting.
     /// </summary>
     [RelayCommand]
     private void Reset()
     {
-        // Reset the session state
-        _state.Reset((int)_journey.FirstPos);
-
-        // Reset IsCurrentStation for all stations
-        foreach (var stationVm in Stations)
-        {
-            stationVm.IsCurrentStation = false;
-        }
-
-        // Notify UI about property changes
-        OnPropertyChanged(nameof(CurrentStation));
-        OnPropertyChanged(nameof(CurrentCounter));
-        OnPropertyChanged(nameof(CurrentPos));
-
+        ResetRuntimeState();
         Debug.WriteLine($"🔄 Journey '{Name}' reset to initial state");
     }
 

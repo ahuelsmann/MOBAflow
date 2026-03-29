@@ -17,33 +17,13 @@ public partial class MainWindowViewModel
     #region Journey Factory
     /// <summary>
     /// Creates a JourneyViewModel with SessionState.
-    /// Falls back to simplified constructor if JourneyManager is not initialized (e.g., in tests).
+    /// Runtime state is projected separately via IMobaClient snapshots.
     /// </summary>
     private JourneyViewModel CreateJourneyViewModel(Journey journey)
     {
-        // Fallback for tests or when JourneyManager not initialized
-        if (_journeyManager == null || SelectedProject == null)
-        {
-            // Fallback: Create simple ViewModel without SessionState
-            return new JourneyViewModel(
-                journey,
-                SelectedProject?.Model ?? new Project(),
-                _uiDispatcher);
-        }
-
-        var state = _journeyManager.GetState(journey.Id);
-
-        // If state doesn't exist yet (journey just created), create dummy state
-        return state == null || SelectedProject == null
-            ? new JourneyViewModel(
-                journey,
-                SelectedProject?.Model ?? new Project(),
-                _uiDispatcher)
-            : new JourneyViewModel(
+        return new JourneyViewModel(
             journey,
-            SelectedProject.Model,
-            state,
-            _journeyManager,
+            SelectedProject?.Model ?? new Project(),
             _uiDispatcher);
     }
     #endregion
@@ -129,6 +109,7 @@ public partial class MainWindowViewModel
 
         SelectedJourney = journey;
         OnPropertyChanged(nameof(FilteredJourneys));
+        _ = _mobaClient.ActivateProjectAsync(SelectedProject.Model);
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteJourney))]
@@ -143,6 +124,7 @@ public partial class MainWindowViewModel
             () => SelectedJourney = null);
 
         OnPropertyChanged(nameof(FilteredJourneys));
+        _ = _mobaClient.ActivateProjectAsync(SelectedProject.Model);
     }
 
     private bool CanDeleteJourney() => SelectedJourney != null;
@@ -201,27 +183,12 @@ public partial class MainWindowViewModel
     private bool CanDeleteStation() => SelectedStation != null;
 
     [RelayCommand(CanExecute = nameof(CanResetJourneyCounter))]
-    private void ResetJourneyCounter()
+    private async Task ResetJourneyCounter()
     {
         if (SelectedJourney == null) return;
 
-        // Use JourneyManager.Reset() to properly reset state (respects FirstPos)
-        if (_journeyManager != null)
-        {
-            _journeyManager.Reset(SelectedJourney.Model);
-
-            // Get the updated state and sync to ViewModel
-            var state = _journeyManager.GetState(SelectedJourney.Model.Id);
-            if (state != null)
-            {
-                SelectedJourney.UpdateFromSessionState(state);
-            }
-        }
-        else
-        {
-            // Fallback when JourneyManager not available (e.g., tests)
-            SelectedJourney.ResetCommand.Execute(null);
-        }
+        SelectedJourney.ResetCommand.Execute(null);
+        await _mobaClient.ResetJourneyAsync(SelectedJourney.Model.Id).ConfigureAwait(false);
     }
 
     private bool CanResetJourneyCounter() => SelectedJourney != null;

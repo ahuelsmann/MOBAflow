@@ -9,7 +9,7 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using Service;
 using Moba.SharedUI.ViewModel;
-using Moba.WinUI.ViewModel;
+using ViewModel;
 using System.ComponentModel;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;

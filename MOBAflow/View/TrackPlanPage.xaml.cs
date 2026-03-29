@@ -20,7 +20,7 @@ using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.System;
 using Windows.UI;
-using Path = System.IO.Path;
+using Path = Path;
 
 internal sealed partial class TrackPlanPage
 {

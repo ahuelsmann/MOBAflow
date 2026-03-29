@@ -24,6 +24,7 @@ using Service;
 using SharedUI.Extensions;
 using SharedUI.Interface;
 using SharedUI.Shell;
+using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 using Sound;
 using System.Diagnostics;
@@ -215,6 +216,9 @@ public partial class App
         // Backend Services (Interfaces are in Backend.Interface and Backend.Network)
         // Use shared extension method for platform-consistent registration
         services.AddMobaBackendServices();
+        services.AddSingleton<ProjectRuntimeFactory>();
+        services.AddSingleton<IMobaRuntime, MobaRuntimeService>();
+        services.AddSingleton<IMobaClient, InProcessMobaClient>();
 
         services.AddSingleton<IIoService, IoService>();
         services.AddSingleton<IUiDispatcher, UiDispatcher>();
@@ -307,9 +311,8 @@ public partial class App
         services.AddSingleton<LayoutColumnWidthsViewModel>();
         services.AddSingleton(sp => new MainWindowViewModel(
             sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
-            sp.GetRequiredService<IZ21>(),
+            sp.GetRequiredService<IMobaClient>(),
             sp.GetRequiredService<IEventBus>(),
-            sp.GetRequiredService<IWorkflowService>(),
             sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<AppSettings>(),
             sp.GetRequiredService<Solution>(),
@@ -327,8 +330,7 @@ public partial class App
         services.AddTransient<MonitorPageViewModel>();
         services.AddSingleton<SkinSelectorViewModel>();
         services.AddSingleton(sp => new TrainControlViewModel(
-            sp.GetRequiredService<IZ21>(),
-            sp.GetRequiredService<IEventBus>(),
+            sp.GetRequiredService<IMobaClient>(),
             sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<MainWindowViewModel>(),
             sp.GetService<ILogger<TrainControlViewModel>>(),
@@ -498,3 +500,4 @@ public partial class App
         }
     }
 }
+

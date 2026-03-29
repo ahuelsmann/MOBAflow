@@ -2,15 +2,13 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend;
-using Backend.Interface;
-using Backend.Model;
 using Common.Configuration;
-using Common.Events;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Domain;
-using Interface;
 using Microsoft.Extensions.Logging;
+using Moba.Common.Runtime;
+using Moba.SharedUI.Interface;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 
@@ -30,12 +28,13 @@ using System.ComponentModel;
 /// </summary>
 public sealed partial class TrainControlViewModel : ObservableObject
 {
-    private readonly IZ21 _z21;
+    private readonly IMobaClient _mobaClient;
     private readonly ISettingsService _settingsService;
     private readonly ILogger<TrainControlViewModel>? _logger;
     private readonly IUiDispatcher? _uiDispatcher;
 
     private bool _isLoadingPreset;
+    private bool _isApplyingRuntimeLocomotiveState;
     private int _previousSpeed;
     private CancellationTokenSource? _doorReleaseBlinkCts;
 
@@ -523,9 +522,10 @@ public sealed partial class TrainControlViewModel : ObservableObject
     private string _statusMessage = "Ready";
 
     /// <summary>
-    /// Indicates if Z21 is connected.
+    /// Indicates if the active MOBA runtime is connected to the Z21.
     /// </summary>
-    public bool IsConnected => _z21.IsConnected;
+    [ObservableProperty]
+    private bool _isConnected;
 
     // === Amperemeter / Current Monitoring ===
 
@@ -795,24 +795,21 @@ public sealed partial class TrainControlViewModel : ObservableObject
     /// <summary>
     /// Initializes a new instance of the <see cref="TrainControlViewModel"/> class that implements the digital throttle UI.
     /// </summary>
-    /// <param name="z21">The Z21 backend service used to send drive and function commands.</param>
-    /// <param name="eventBus">Event bus used to receive Z21 feedback events.</param>
+    /// <param name="mobaClient">UI-facing client used to talk to the active MOBA runtime.</param>
     /// <param name="settingsService">Service used to persist train control presets and options.</param>
     /// <param name="mainWindowViewModel">Optional main window ViewModel used to access the current project and journey.</param>
     /// <param name="logger">Optional logger for diagnostics.</param>
     /// <param name="uiDispatcher">Optional UI dispatcher for updating UI-bound properties.</param>
     public TrainControlViewModel(
-        IZ21 z21,
-        IEventBus eventBus,
+        IMobaClient mobaClient,
         ISettingsService settingsService,
         MainWindowViewModel? mainWindowViewModel = null,
         ILogger<TrainControlViewModel>? logger = null,
         IUiDispatcher? uiDispatcher = null)
     {
-        ArgumentNullException.ThrowIfNull(z21);
-        ArgumentNullException.ThrowIfNull(eventBus);
+        ArgumentNullException.ThrowIfNull(mobaClient);
         ArgumentNullException.ThrowIfNull(settingsService);
-        _z21 = z21;
+        _mobaClient = mobaClient;
         _settingsService = settingsService;
         _mainWindowViewModel = mainWindowViewModel;
         _logger = logger;
@@ -821,11 +818,8 @@ public sealed partial class TrainControlViewModel : ObservableObject
         // Load presets from settings
         LoadPresetsFromSettings();
 
-        // Subscribe to Z21 events via EventBus (UiThreadEventBusDecorator runs handlers on UI thread)
-        eventBus.Subscribe<Z21ConnectionEstablishedEvent>(_ => OnZ21ConnectionChanged(true));
-        eventBus.Subscribe<Z21ConnectionLostEvent>(_ => OnZ21ConnectionChanged(false));
-        eventBus.Subscribe<LocomotiveInfoChangedEvent>(evt => OnLocoInfoReceived(CreateLocoInfo(evt)));
-        eventBus.Subscribe<SystemStateChangedEvent>(evt => OnSystemStateChanged(CreateSystemState(evt)));
+        _mobaClient.SnapshotChanged += OnRuntimeSnapshotChanged;
+        ApplyRuntimeSnapshot(_mobaClient.Current);
 
         // Subscribe to MainWindowViewModel.SelectedJourney changes
         if (_mainWindowViewModel != null)
@@ -1113,7 +1107,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
     /// </summary>
     private void SaveCurrentStateToPreset()
     {
-        if (_isLoadingPreset) return;
+        if (_isLoadingPreset || _isApplyingRuntimeLocomotiveState) return;
 
         var preset = CurrentPreset;
         preset.DccAddress = LocoAddress;
@@ -1141,9 +1135,40 @@ public sealed partial class TrainControlViewModel : ObservableObject
             ApplyCurrentPreset();
     }
 
+    private void OnRuntimeSnapshotChanged(object? sender, MobaRuntimeSnapshot snapshot)
+    {
+        _ = sender;
+
+        if (_uiDispatcher != null)
+        {
+            _uiDispatcher.InvokeOnUi(() => ApplyRuntimeSnapshot(snapshot));
+            return;
+        }
+
+        ApplyRuntimeSnapshot(snapshot);
+    }
+
+    private void ApplyRuntimeSnapshot(MobaRuntimeSnapshot snapshot)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+
+        var previousConnectionState = IsConnected;
+        IsConnected = snapshot.IsConnected;
+        if (previousConnectionState != snapshot.IsConnected)
+        {
+            OnZ21ConnectionChanged(snapshot.IsConnected);
+        }
+
+        ApplySystemStateFromRuntime(snapshot);
+
+        if (snapshot.LocomotiveStates.TryGetValue(LocoAddress, out var locomotiveState))
+        {
+            ApplyLocomotiveState(locomotiveState);
+        }
+    }
+
     private void OnZ21ConnectionChanged(bool isConnected)
     {
-        OnPropertyChanged(nameof(IsConnected));
         SetSpeedCommand.NotifyCanExecuteChanged();
         ToggleF0Command.NotifyCanExecuteChanged();
         ToggleF1Command.NotifyCanExecuteChanged();
@@ -1170,21 +1195,37 @@ public sealed partial class TrainControlViewModel : ObservableObject
         StatusMessage = isConnected ? "Z21 Connected" : "Z21 Disconnected";
     }
 
-    private void OnLocoInfoReceived(LocoInfo info)
+    private void ApplyLocomotiveState(LocomotiveRuntimeSnapshot locomotiveState)
     {
-        // Only update if this is our current loco
-        if (info.Address != LocoAddress) return;
+        if (locomotiveState.Address != LocoAddress)
+        {
+            return;
+        }
 
-        // Update local state from Z21 response (EventBus handler runs on UI thread)
-        Speed = info.Speed;
-        IsForward = info.IsForward;
-        IsF0On = info.IsF0On;
-        IsF1On = info.IsF1On;
-            StatusMessage = $"Loco {info.Address}: {info.Speed} km/h {(info.IsForward ? "â†’" : "â†")}";
+        _isApplyingRuntimeLocomotiveState = true;
+        _skipSpeedChangeHandler = true;
+
+        try
+        {
+            Speed = locomotiveState.Speed;
+            IsForward = locomotiveState.IsForward;
+
+            for (int functionIndex = 0; functionIndex <= 20; functionIndex++)
+            {
+                SetFunctionState(functionIndex, (locomotiveState.Functions & (1u << functionIndex)) != 0);
+            }
+
+            StatusMessage = $"Loco {locomotiveState.Address}: {locomotiveState.Speed} {(locomotiveState.IsForward ? "FWD" : "REV")}";
+        }
+        finally
+        {
+            _skipSpeedChangeHandler = false;
+            _isApplyingRuntimeLocomotiveState = false;
+        }
     }
 
     /// <summary>
-    /// Called when LocoAddress changes - request current state from Z21 and save to preset.
+    /// Called when LocoAddress changes - request current state from runtime and save to preset.
     /// </summary>
     partial void OnLocoAddressChanged(int value)
     {
@@ -1195,7 +1236,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
             _ = SavePresetsToSettingsAsync();
         }
 
-        if (value >= 1 && value <= 9999 && _z21.IsConnected)
+        if (value >= 1 && value <= 9999 && IsConnected)
         {
             _ = RequestLocoInfoAsync();
         }
@@ -1207,7 +1248,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
     {
         try
         {
-            await _z21.GetLocoInfoAsync(LocoAddress);
+            await _mobaClient.RequestLocomotiveInfoAsync(LocoAddress);
             StatusMessage = $"Requesting loco {LocoAddress}...";
         }
         catch (Exception ex)
@@ -1223,7 +1264,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
     /// </summary>
     partial void OnSpeedChanged(int value)
     {
-        if (_skipSpeedChangeHandler || _isLoadingPreset) return;
+        if (_skipSpeedChangeHandler || _isLoadingPreset || _isApplyingRuntimeLocomotiveState) return;
 
         if (!CanIncreaseSpeed && value > _previousSpeed)
         {
@@ -1251,13 +1292,13 @@ public sealed partial class TrainControlViewModel : ObservableObject
     /// </summary>
     partial void OnIsForwardChanged(bool value)
     {
-        if (_isLoadingPreset) return;
+        if (_isLoadingPreset || _isApplyingRuntimeLocomotiveState) return;
 
         // Save to current preset
         CurrentPreset.IsForward = value;
         _ = SavePresetsToSettingsAsync();
 
-        if (_z21.IsConnected && LocoAddress >= 1)
+        if (IsConnected && LocoAddress >= 1)
         {
             _ = HandleDirectionChangeAsync(value);
         }
@@ -1297,7 +1338,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
             if (token.IsCancellationRequested) return;
 
             // Now at speed 0, send the new direction
-            await _z21.SetLocoDriveAsync(LocoAddress, 0, newDirection);
+            await _mobaClient.SetLocomotiveDriveAsync(LocoAddress, 0, newDirection);
 
             if (token.IsCancellationRequested) return;
 
@@ -1350,7 +1391,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
             _skipSpeedChangeHandler = false;
 
             // Send command to Z21
-            await _z21.SetLocoDriveAsync(LocoAddress, currentSpeed, direction);
+            await _mobaClient.SetLocomotiveDriveAsync(LocoAddress, currentSpeed, direction);
 
             // Wait before next step
             if (currentSpeed != toSpeed)
@@ -1380,7 +1421,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
     /// </remarks>
     private bool CanExecuteLocoCommand() => true;
 
-    // private bool CanExecuteLocoCommand() => _z21.IsConnected && LocoAddress >= 1 && LocoAddress <= 9999;
+    // private bool CanExecuteLocoCommand() => IsConnected && LocoAddress >= 1 && LocoAddress <= 9999;
 
     /// <summary>
     /// Sends the current speed and direction to Z21.
@@ -1395,7 +1436,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
     {
         try
         {
-            await _z21.SetLocoDriveAsync(LocoAddress, Speed, IsForward);
+            await _mobaClient.SetLocomotiveDriveAsync(LocoAddress, Speed, IsForward);
             StatusMessage = $"Loco {LocoAddress}: {Speed} {(IsForward ? "FWD" : "REV")}";
             _logger?.LogDebug("Drive command sent: Loco {Address}, Speed {Speed}, Forward {Forward}",
                 LocoAddress, Speed, IsForward);
@@ -1494,7 +1535,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
                 _ = SavePresetsToSettingsAsync();
             }
 
-            await _z21.SetLocoFunctionAsync(LocoAddress, functionNumber, newState);
+            await _mobaClient.SetLocomotiveFunctionAsync(LocoAddress, functionNumber, newState);
             StatusMessage = $"F{functionNumber}: {(newState ? "ON" : "OFF")}";
             _logger?.LogDebug("F{Function} toggled: {State}", functionNumber, newState);
         }
@@ -1671,7 +1712,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
         try
         {
             Speed = 0;
-            await _z21.SetLocoDriveAsync(LocoAddress, 0, IsForward);
+            await _mobaClient.SetLocomotiveDriveAsync(LocoAddress, 0, IsForward);
             StatusMessage = $"[STOP] Emergency stop - Loco {LocoAddress}";
             _logger?.LogWarning("Emergency stop executed for loco {Address}", LocoAddress);
         }
@@ -1700,7 +1741,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
         try
         {
             Speed = 0;
-            await _z21.SetLocoDriveAsync(LocoAddress, 0, IsForward);
+            await _mobaClient.SetLocomotiveDriveAsync(LocoAddress, 0, IsForward);
             StatusMessage = $"Loco {LocoAddress} stopped";
         }
         catch (Exception ex)
@@ -1786,81 +1827,33 @@ public sealed partial class TrainControlViewModel : ObservableObject
         _logger?.LogInformation("Peak current and peak temperature reset");
     }
 
-    // === Event Handlers ===
+    // === Runtime Projection ===
 
-    /// <summary>
-    /// Called when Z21 system state changes (main track current, temperature, voltage).
-    /// Updates amperemeter display values on UI thread.
-    /// </summary>
-    private void OnSystemStateChanged(SystemState systemState)
+    private void ApplySystemStateFromRuntime(MobaRuntimeSnapshot snapshot)
     {
-        MainTrackCurrent = systemState.MainCurrent;
-        ProgTrackCurrent = systemState.ProgCurrent;
-        FilteredMainCurrent = systemState.FilteredMainCurrent;
-        SupplyVoltage = systemState.SupplyVoltage;
-        Temperature = systemState.Temperature;
+        MainTrackCurrent = snapshot.MainCurrent;
+        ProgTrackCurrent = snapshot.ProgCurrent;
+        FilteredMainCurrent = snapshot.FilteredMainCurrent;
+        SupplyVoltage = snapshot.SupplyVoltage;
+        Temperature = snapshot.Temperature;
 
-        if (systemState.MainCurrent > PeakMainCurrent)
-            PeakMainCurrent = systemState.MainCurrent;
-        if (systemState.Temperature > PeakTemperature)
-            PeakTemperature = systemState.Temperature;
+        if (snapshot.MainCurrent > PeakMainCurrent)
+            PeakMainCurrent = snapshot.MainCurrent;
+        if (snapshot.Temperature > PeakTemperature)
+            PeakTemperature = snapshot.Temperature;
 
         _logger?.LogDebug(
             "SystemState updated: MainCurrent={MainCurrent}mA (Filtered={FilteredCurrent}mA, Peak={PeakCurrent}mA), " +
             "ProgCurrent={ProgCurrent}mA, SupplyVoltage={SupplyVoltage}mV, Temperature={Temperature}°C",
             MainTrackCurrent, FilteredMainCurrent, PeakMainCurrent, ProgTrackCurrent, SupplyVoltage, Temperature);
     }
-
-    private static LocoInfo CreateLocoInfo(LocomotiveInfoChangedEvent evt)
-    {
-        return new LocoInfo
-        {
-            Address = evt.Address,
-            Speed = evt.Speed,
-            IsForward = evt.IsForward,
-            Functions = BuildFunctions(evt)
-        };
-    }
-
-    private static uint BuildFunctions(LocomotiveInfoChangedEvent evt)
-    {
-        uint functions = 0;
-        if (evt.IsF0On) functions |= 1u << 0;
-        if (evt.IsF1On) functions |= 1u << 1;
-        if (evt.IsF2On) functions |= 1u << 2;
-        if (evt.IsF3On) functions |= 1u << 3;
-        if (evt.IsF4On) functions |= 1u << 4;
-        if (evt.IsF5On) functions |= 1u << 5;
-        if (evt.IsF6On) functions |= 1u << 6;
-        if (evt.IsF7On) functions |= 1u << 7;
-        if (evt.IsF8On) functions |= 1u << 8;
-        if (evt.IsF9On) functions |= 1u << 9;
-        if (evt.IsF10On) functions |= 1u << 10;
-        if (evt.IsF11On) functions |= 1u << 11;
-        if (evt.IsF12On) functions |= 1u << 12;
-        if (evt.IsF13On) functions |= 1u << 13;
-        if (evt.IsF14On) functions |= 1u << 14;
-        if (evt.IsF15On) functions |= 1u << 15;
-        if (evt.IsF16On) functions |= 1u << 16;
-        if (evt.IsF17On) functions |= 1u << 17;
-        if (evt.IsF18On) functions |= 1u << 18;
-        if (evt.IsF19On) functions |= 1u << 19;
-        if (evt.IsF20On) functions |= 1u << 20;
-        return functions;
-    }
-
-    private static SystemState CreateSystemState(SystemStateChangedEvent evt)
-    {
-        return new SystemState
-        {
-            MainCurrent = evt.MainCurrent,
-            ProgCurrent = evt.ProgCurrent,
-            FilteredMainCurrent = evt.FilteredMainCurrent,
-            Temperature = evt.Temperature,
-            SupplyVoltage = evt.SupplyVoltage,
-            VccVoltage = evt.VccVoltage,
-            CentralState = unchecked((byte)evt.CentralState),
-            CentralStateEx = unchecked((byte)evt.CentralStateEx)
-        };
-    }
 }
+
+
+
+
+
+
+
+
+

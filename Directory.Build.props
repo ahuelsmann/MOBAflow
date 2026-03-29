@@ -20,7 +20,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <!-- Platform Configuration -->
-    <PlatformTarget>x64</PlatformTarget>
+    <PlatformTarget Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">x64</PlatformTarget>
 
     <!-- Build Performance Optimizations -->
     <SkipAnalyzersOnRestore>true</SkipAnalyzersOnRestore>

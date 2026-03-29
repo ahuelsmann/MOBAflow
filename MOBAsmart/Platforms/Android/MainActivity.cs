@@ -6,7 +6,7 @@ using global::Android.App;
 using global::Android.Content.PM;
 using global::Android.OS;
 using global::Android.Views;
-using Moba.SharedUI.ViewModel;
+using SharedUI.ViewModel;
 using Debug = System.Diagnostics.Debug;
 
 [Activity(

@@ -7,7 +7,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Windows.Storage.Pickers;
 using Service;
-using Moba.SharedUI.Interface;
+using SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
 using Windows.ApplicationModel.DataTransfer;
 

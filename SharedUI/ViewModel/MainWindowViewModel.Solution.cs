@@ -133,8 +133,7 @@ public partial class MainWindowViewModel
         // ✅ Clear all selections to reset property panels across all pages
         ClearAllSelections();
 
-        // Initialize JourneyManager with the new empty project
-        InitializeJourneyManager(newProject);
+        await _mobaClient.ActivateProjectAsync(newProject).ConfigureAwait(false);
 
         SaveSolutionCommand.NotifyCanExecuteChanged();
         ConnectCommand.NotifyCanExecuteChanged();
@@ -212,19 +211,16 @@ public partial class MainWindowViewModel
         CurrentSolutionPath = path;
         HasSolution = Solution.Projects.Count > 0;
 
-        // Re-initialize JourneyManager with the loaded project
-        // This is critical because the initial JourneyManager was created with an empty project
         if (Solution.Projects.Count > 0)
         {
-            InitializeJourneyManager(Solution.Projects[0]);
-            Debug.WriteLine($"✅ JourneyManager initialized after loading solution with {Solution.Projects[0].Journeys.Count} journeys");
-
             // Auto-select first project after loading
             SelectedProject = SolutionViewModel?.Projects.FirstOrDefault();
             if (SelectedProject != null)
             {
                 Debug.WriteLine($"✅ Auto-selected first project: {SelectedProject.Name}");
             }
+
+            _ = _mobaClient.ActivateProjectAsync(Solution.Projects[0]);
         }
 
         SaveSolutionCommand.NotifyCanExecuteChanged();

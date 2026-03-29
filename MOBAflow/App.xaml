@@ -55,7 +55,10 @@
                 <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
             </Style>
 
-            <Style x:Key="BodyStrongTextBlockStyle" TargetType="TextBlock" BasedOn="{StaticResource CaptionTextBlockStyle}">
+            <Style
+                x:Key="BodyStrongTextBlockStyle"
+                BasedOn="{StaticResource CaptionTextBlockStyle}"
+                TargetType="TextBlock">
                 <Setter Property="FontWeight" Value="SemiBold" />
             </Style>
 

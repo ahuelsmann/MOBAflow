@@ -40,6 +40,8 @@ public partial class MainWindowViewModel
             SpeechHealthIcon = "\uE946"; // Sync
             SpeechHealthColor = "SystemFillColorCautionBrush";
         }
+
+        RecomputeOperatingState();
     }
 
     /// <summary>
@@ -66,5 +68,6 @@ public partial class MainWindowViewModel
 
         IsPostStartupInitializationRunning = isRunning;
         PostStartupStatusText = statusText;
+        RecomputeOperatingState();
     }
 }

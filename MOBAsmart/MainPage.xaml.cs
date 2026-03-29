@@ -3,7 +3,7 @@ namespace Moba.MAUI;
 
 using Common.Configuration;
 using SharedUI.Interface;
-using Moba.SharedUI.ViewModel;
+using SharedUI.ViewModel;
 using System.ComponentModel;
 
 // ReSharper disable once PartialTypeWithSinglePart

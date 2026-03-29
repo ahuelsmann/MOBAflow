@@ -2,8 +2,6 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend;
-using Backend.Interface;
-using Backend.Manager;
 using Backend.Model;
 using Backend.Protocol;
 using Backend.Service;
@@ -32,9 +30,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
     #region Fields
     // Core Services (required)
     private readonly IIoService _ioService;
-    private readonly IZ21 _z21;
+    private readonly IMobaClient _mobaClient;
     private readonly IUiDispatcher _uiDispatcher;
-    private readonly IWorkflowService _workflowService;
     private readonly ILogger<MainWindowViewModel> _logger;
 
     // Configuration
@@ -52,18 +49,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
     // Layout column widths (observable, bound from grid columns; loaded from settings so UI reflects persisted values)
     private readonly LayoutColumnWidthsViewModel _layoutColumnWidths;
 
-    // Runtime State
-    private JourneyManager? _journeyManager;
-    private Timer? _z21AutoConnectTimer;
     #endregion
 
     #region Constructor
     /// <summary>
     /// Initializes a new instance of the <see cref="MainWindowViewModel"/> class with all required backend services and configuration.
     /// </summary>
-    /// <param name="z21">The Z21 backend service used for digital command control and feedback.</param>
+    /// <param name="mobaClient">The client used to talk to the active MOBA runtime.</param>
     /// <param name="eventBus">The event bus used to subscribe to backend domain events.</param>
-    /// <param name="workflowService">The workflow service used to execute workflows.</param>
     /// <param name="uiDispatcher">Dispatcher used to marshal callbacks onto the UI thread.</param>
     /// <param name="settings">Application-wide settings object.</param>
     /// <param name="solution">The currently loaded solution with all projects.</param>
@@ -78,9 +71,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <param name="layoutColumnWidths">Observable column widths loaded from settings and bound by layout panels.</param>
     public MainWindowViewModel(
         LayoutColumnWidthsViewModel layoutColumnWidths,
-        IZ21 z21,
+        IMobaClient mobaClient,
         IEventBus eventBus,
-        IWorkflowService workflowService,
         IUiDispatcher uiDispatcher,
         AppSettings settings,
         Solution solution,
@@ -94,9 +86,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         IFeatureTogglePageProvider? featureTogglePageProvider = null)
     {
         ArgumentNullException.ThrowIfNull(layoutColumnWidths);
-        ArgumentNullException.ThrowIfNull(z21);
+        ArgumentNullException.ThrowIfNull(mobaClient);
         ArgumentNullException.ThrowIfNull(eventBus);
-        ArgumentNullException.ThrowIfNull(workflowService);
         ArgumentNullException.ThrowIfNull(uiDispatcher);
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(solution);
@@ -104,8 +95,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(logger);
 
         _ioService = ioService ?? new NullIoService();  // Use null object pattern
-        _z21 = z21;
-        _workflowService = workflowService;
+        _mobaClient = mobaClient;
         _uiDispatcher = uiDispatcher;
         _settings = settings;
         _logger = logger;
@@ -118,6 +108,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _featureTogglePageProvider = featureTogglePageProvider;
         _ = photoHubClient;
 
+        _mobaClient.SnapshotChanged += OnMobaRuntimeSnapshotChanged;
+        ApplyRuntimeSnapshot(_mobaClient.Current);
+
         Solution = solution;
 
         GlobalTargetLapCount = settings.Counter.TargetLapCount;
@@ -127,21 +120,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
         IsDarkMode = settings.Application.IsDarkMode;
         InitializeLayoutPanelStates();
 
-        // Subscribe to Z21 events
-        eventBus.Subscribe<Z21ConnectionEstablishedEvent>(_ => OnZ21ConnectedChanged(true));
-        eventBus.Subscribe<Z21ConnectionLostEvent>(_ => HandleConnectionLost());
-        eventBus.Subscribe<SystemStateChangedEvent>(evt => OnZ21SystemStateChanged(CreateSystemState(evt)));
-        eventBus.Subscribe<XBusStatusChangedEvent>(evt => OnZ21XBusStatusChanged(CreateXBusStatus(evt)));
-        eventBus.Subscribe<VersionInfoChangedEvent>(evt => OnZ21VersionInfoChanged(CreateVersionInfo(evt)));
         eventBus.Subscribe<FeedbackReceivedEvent>(e => UpdateTrackStatistics((uint)e.InPort));
         eventBus.Subscribe<PostStartupStatusEvent>(e => UpdatePostStartupInitializationStatus(e.IsRunning, e.StatusText));
 
         InitializeTrafficMonitor();
 
         InitializeStatisticsFromFeedbackPoints();
-
-        // Connection status will be updated via EventBus when Z21 responds
-        _ = TryAutoConnectToZ21Async();
 
         // Load City Library once on startup (background, non-blocking).
         if (_cityLibraryService != null)
@@ -466,40 +450,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
         // Settings and Solution changes are now auto-saved immediately via PropertyChanged subscriptions
         // No need for conditional save on window close
 
-        // Stop Z21 auto-connect retry timer
-        if (_z21AutoConnectTimer != null)
-        {
-            try
-            {
-                _z21AutoConnectTimer.Dispose();
-                _z21AutoConnectTimer = null;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error disposing Z21 auto-connect timer");
-            }
-        }
-
-        // Dispose JourneyManager if initialized
-        if (_journeyManager != null)
-        {
-            try
-            {
-                _journeyManager.Dispose();
-                _journeyManager = null;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error disposing JourneyManager");
-            }
-        }
-
         // CRITICAL: Always send LAN_LOGOFF to Z21 on app exit
         // This prevents zombie clients on Z21 which can cause it to become unresponsive.
         // Async-first: trigger disconnect without synchronously blocking the UI thread.
         try
         {
-            _ = _z21.DisconnectAsync();
+            _ = _mobaClient.DisconnectAsync();
         }
         catch (TaskCanceledException) { /* Expected during shutdown */ }
         catch (OperationCanceledException) { /* Expected during shutdown */ }

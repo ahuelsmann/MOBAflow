@@ -129,7 +129,7 @@ internal class MultiplexerHelperTests
         var definitions = MultiplexerHelper.GetAllDefinitions();
 
         // Assert
-        Assert.That(definitions, Has.Count.GreaterThanOrEqualTo(2));
+        Assert.That(definitions.Count(), Is.GreaterThanOrEqualTo(2));
     }
 
     [Test]

@@ -2,13 +2,16 @@
 namespace Moba.MAUI;
 
 using Backend.Extensions;
+using Backend.Interface;
+using Backend.Service;
 using Common.Configuration;
 using CommunityToolkit.Maui;
 using Microsoft.Extensions.Logging;
 using Service;
 using SharedUI.Extensions;
 using SharedUI.Interface;
-using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.Service;
+using SharedUI.ViewModel;
 using Sound;
 using System.Net;
 using UraniumUI;
@@ -90,6 +93,9 @@ public static class MauiProgram
         // PERFORMANCE: Backend services (IZ21, WorkflowService, etc.) are configured
         // to defer connection/initialization until explicitly needed
         builder.Services.AddMobaBackendServices();
+        builder.Services.AddSingleton<ProjectRuntimeFactory>();
+        builder.Services.AddSingleton<IMobaRuntime, MobaRuntimeService>();
+        builder.Services.AddSingleton<IMobaClient, InProcessMobaClient>();
 
         // Views
         builder.Services.AddTransient<MainPage>();

@@ -3,8 +3,8 @@
 namespace Moba.WinUI.View;
 
 using Microsoft.UI.Xaml;
-using Moba.WinUI.Controls.Docking;
-using Moba.WinUI.ViewModel;
+using Controls.Docking;
+using ViewModel;
 
 internal sealed partial class DockingPage
 {

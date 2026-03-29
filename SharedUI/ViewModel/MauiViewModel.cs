@@ -6,17 +6,17 @@ using Backend.Interface;
 using Common.Configuration;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Interface;
+using Moba.Common.Runtime;
+using Moba.SharedUI.Interface;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Net;
 
 /// <summary>
 /// Mobile-optimized ViewModel for MAUI - focused on Z21 monitoring and feedback statistics.
 /// </summary>
 public sealed partial class MauiViewModel : ObservableObject
 {
-    private readonly IZ21 _z21;
+    private readonly IMobaClient _mobaClient;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly AppSettings _settings;
     private readonly ISettingsService _settingsService;
@@ -31,8 +31,6 @@ public sealed partial class MauiViewModel : ObservableObject
 
     private const int RestApiReregisterIntervalSeconds = 120;
 
-    /// <summary>Used to cancel the Z21 reconnect loop when we become connected.</summary>
-    private CancellationTokenSource? _z21ReconnectCts;
 
     /// <summary>Last time we ran REST API discovery (for re-discovery when unreachable).</summary>
     private DateTime _lastRestApiDiscoverTime = DateTime.MinValue;
@@ -44,13 +42,11 @@ public sealed partial class MauiViewModel : ObservableObject
     private const int RestApiRediscoverIntervalFirst90Seconds = 10;
     private const int RestApiStartupRetryWindowSeconds = 90;
 
-    /// <summary>Interval in seconds for Z21 auto-connect retries when not yet connected (e.g. app started with delay).</summary>
-    private const int Z21StartupRetryIntervalSeconds = 10;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MauiViewModel"/> class for the MAUI mobile client.
     /// </summary>
-    /// <param name="z21">The Z21 backend service used for digital command control and feedback.</param>
+    /// <param name="mobaClient">UI-facing client used to talk to the active MOBA runtime.</param>
     /// <param name="uiDispatcher">Dispatcher used to marshal updates back to the MAUI UI thread.</param>
     /// <param name="settings">Application settings used to initialize default values.</param>
     /// <param name="settingsService">Service used to persist updated settings.</param>
@@ -60,7 +56,7 @@ public sealed partial class MauiViewModel : ObservableObject
     /// <param name="photoCaptureService">Service used to capture photos on the device.</param>
     /// <param name="restApiClientRegistration">Optional: registers this app with the REST API for Overview client list (MAUI).</param>
     public MauiViewModel(
-        IZ21 z21,
+        IMobaClient mobaClient,
         IUiDispatcher uiDispatcher,
         AppSettings settings,
         ISettingsService settingsService,
@@ -70,7 +66,7 @@ public sealed partial class MauiViewModel : ObservableObject
         IPhotoCaptureService photoCaptureService,
         IRestApiClientRegistration? restApiClientRegistration = null)
     {
-        ArgumentNullException.ThrowIfNull(z21);
+        ArgumentNullException.ThrowIfNull(mobaClient);
         ArgumentNullException.ThrowIfNull(uiDispatcher);
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(settingsService);
@@ -78,7 +74,7 @@ public sealed partial class MauiViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(z21DiscoveryService);
         ArgumentNullException.ThrowIfNull(photoUploadService);
         ArgumentNullException.ThrowIfNull(photoCaptureService);
-        _z21 = z21;
+        _mobaClient = mobaClient;
         _uiDispatcher = uiDispatcher;
         _settings = settings;
         _settingsService = settingsService;
@@ -88,27 +84,26 @@ public sealed partial class MauiViewModel : ObservableObject
         _photoCaptureService = photoCaptureService;
         _restApiClientRegistration = restApiClientRegistration;
 
-        // Subscribe to Z21 events
-        _z21.Received += OnFeedbackReceived;
-        _z21.OnSystemStateChanged += OnZ21SystemStateChanged;
-        _z21.OnConnectedChanged += OnZ21ConnectedChanged;
+        _mobaClient.SnapshotChanged += OnRuntimeSnapshotChanged;
+        _mobaClient.FeedbackReceived += OnFeedbackReceived;
 
-        // ✅ Initialize with loaded settings (settings were loaded in SettingsService constructor)
+        // Initialize with loaded settings (settings were loaded in SettingsService constructor)
         LoadSettingsIntoViewModel();
-        
+        ApplyRuntimeSnapshot(_mobaClient.Current);
+
         // Auto-discover REST-API and optionally Z21 when addresses are empty (non-blocking)
         _ = TryAutoDiscoverEndpointsAsync();
-        
+
         // REST API health check: initial check + periodic every 30s
         StartRestApiHealthCheckLoop();
         _ = RefreshRestApiReachableAsync();
-        
-        // Apply polling interval to Z21 on startup (5 seconds - not configurable)
-        _z21.SetSystemStatePollingInterval(5);
-        
+
+        // Apply polling interval to runtime on startup (5 seconds - not configurable)
+        _mobaClient.SetSystemStatePollingInterval(5);
+
         InitializeStatistics();
     }
-    
+
     /// <summary>
     /// Runs REST-API and Z21 discovery in the background. Uses settings as fallback for REST; discovery can override.
     /// Z21 connect runs as soon as Z21 is discovered (no wait for REST). REST discovery retries with backoff so the
@@ -149,47 +144,13 @@ public sealed partial class MauiViewModel : ObservableObject
                     }
                 }).ConfigureAwait(false);
             }
-
-            // Start periodic Z21 reconnect when not connected (handles delayed app start or Z21 not ready)
-            _ = TryZ21AutoConnectLoopAsync();
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Auto-discover failed: {ex.Message}");
+            Debug.WriteLine($"Auto-discovery failed: {ex.Message}");
         }
     }
 
-    /// <summary>
-    /// Periodically attempts to connect to Z21 when not yet connected (e.g. app or Z21 started with delay).
-    /// Stops when connected. After first connection, reconnects are handled by <see cref="Z21ReconnectLoopAsync"/>.
-    /// </summary>
-    private async Task TryZ21AutoConnectLoopAsync()
-    {
-        var intervalSeconds = _settings.Z21.AutoConnectRetryIntervalSeconds > 0
-            ? _settings.Z21.AutoConnectRetryIntervalSeconds
-            : Z21StartupRetryIntervalSeconds;
-        while (true)
-        {
-            await Task.Delay(TimeSpan.FromSeconds(intervalSeconds)).ConfigureAwait(false);
-            if (IsConnected)
-            {
-                Debug.WriteLine("Z21 startup auto-connect: connected, stopping retry loop");
-                return;
-            }
-            if (string.IsNullOrWhiteSpace(Z21IpAddress))
-                continue;
-            Debug.WriteLine("Z21 startup auto-connect: retrying...");
-            await _uiDispatcher.InvokeOnUiAsync(async () =>
-            {
-                await ConnectCommand.ExecuteAsync(null).ConfigureAwait(false);
-            }).ConfigureAwait(false);
-        }
-    }
-
-    /// <summary>
-    /// Runs REST API discovery with retries and updates RestApiIpAddress when the server is found.
-    /// Runs in background so Z21 connect is not delayed.
-    /// </summary>
     private async Task RestDiscoveryLoopAsync()
     {
         var restDelaysMs = new[] { 0, 2000, 5000, 10000, 15000 }; // 0, +2s, +5s, +10s, +15s (~32s total window)
@@ -413,21 +374,12 @@ public sealed partial class MauiViewModel : ObservableObject
             return;
         }
 
-        if (!int.TryParse(_settings.Z21.DefaultPort, out var port) || port <= 0 || port > 65535)
-            port = 21105;
-
+        _settings.Z21.CurrentIpAddress = Z21IpAddress.Trim();
         _uiDispatcher.InvokeOnUi(() => Z21ConnectionStatus = "Connecting...");
 
         try
         {
-            var address = IPAddress.Parse(Z21IpAddress.Trim());
-            await _z21.ConnectAsync(address, port).ConfigureAwait(false);
-            // Success: status will be set to "Connected" in OnZ21ConnectedChanged when Z21 responds
-        }
-        catch (FormatException ex)
-        {
-            _uiDispatcher.InvokeOnUi(() => Z21ConnectionStatus = $"Invalid IP: {ex.Message}");
-            Debug.WriteLine($"Z21 Connect failed (invalid IP): {ex.Message}");
+            await _mobaClient.ConnectAsync().ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -439,17 +391,14 @@ public sealed partial class MauiViewModel : ObservableObject
     [RelayCommand]
     private async Task DisconnectAsync()
     {
-        await _z21.DisconnectAsync().ConfigureAwait(false);
+        await _mobaClient.DisconnectAsync().ConfigureAwait(false);
         _uiDispatcher.InvokeOnUi(() => Z21ConnectionStatus = null);
     }
 
     [RelayCommand]
     private async Task SetTrackPowerAsync(bool turnOn)
     {
-        if (turnOn)
-            await _z21.SetTrackPowerOnAsync().ConfigureAwait(false);
-        else
-            await _z21.SetTrackPowerOffAsync().ConfigureAwait(false);
+        await _mobaClient.SetTrackPowerAsync(turnOn).ConfigureAwait(false);
     }
 
     #endregion
@@ -606,73 +555,39 @@ public sealed partial class MauiViewModel : ObservableObject
 
     #endregion
 
-    #region Z21 Event Handlers
+    #region Runtime Event Handlers
 
-    private void OnZ21ConnectedChanged(bool connected)
+    private void OnRuntimeSnapshotChanged(object? sender, MobaRuntimeSnapshot snapshot)
     {
-        _uiDispatcher.InvokeOnUi(() =>
-        {
-            IsConnected = connected;
-            Z21ConnectionStatus = connected ? "Connected" : null;
-        });
+        _ = sender;
+        _uiDispatcher.InvokeOnUi(() => ApplyRuntimeSnapshot(snapshot));
+    }
 
-        if (connected)
+    private void ApplyRuntimeSnapshot(MobaRuntimeSnapshot snapshot)
+    {
+        var previousConnectionState = IsConnected;
+
+        IsConnected = snapshot.IsConnected;
+        IsTrackPowerOn = snapshot.IsTrackPowerOn;
+        MainCurrent = snapshot.MainCurrent;
+        Temperature = snapshot.Temperature;
+        SupplyVoltage = snapshot.SupplyVoltage;
+        VccVoltage = snapshot.VccVoltage;
+
+        Z21ConnectionStatus = snapshot.IsConnected
+            ? "Connected"
+            : string.Equals(snapshot.StatusText, "Disconnected", StringComparison.OrdinalIgnoreCase)
+                ? null
+                : snapshot.StatusText;
+
+        if (snapshot.IsConnected && !previousConnectionState)
         {
             _settings.Z21.CurrentIpAddress = Z21IpAddress.Trim();
             _ = SaveSettingsAsync();
-            _z21ReconnectCts?.Cancel();
-            _z21ReconnectCts = null;
-        }
-        else
-        {
-            // Start reconnection loop: retry Connect every 30s until connected
-            _z21ReconnectCts?.Cancel();
-            _z21ReconnectCts = new CancellationTokenSource();
-            _ = Z21ReconnectLoopAsync(_z21ReconnectCts.Token);
         }
     }
 
-    /// <summary>
-    /// Periodically attempts to reconnect to Z21 when disconnected (every 30s).
-    /// Stops when connected or when the cancellation token is set.
-    /// </summary>
-    private async Task Z21ReconnectLoopAsync(CancellationToken cancellationToken)
-    {
-        while (!cancellationToken.IsCancellationRequested)
-        {
-            try
-            {
-                await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-                break;
-            }
-
-            if (cancellationToken.IsCancellationRequested)
-                break;
-
-            Debug.WriteLine("Z21 reconnecting...");
-            await _uiDispatcher.InvokeOnUiAsync(async () =>
-            {
-                await ConnectCommand.ExecuteAsync(null).ConfigureAwait(false);
-            }).ConfigureAwait(false);
-        }
-    }
-
-    private void OnZ21SystemStateChanged(SystemState state)
-    {
-        _uiDispatcher.InvokeOnUi(() =>
-        {
-            IsTrackPowerOn = state.IsTrackPowerOn;
-            MainCurrent = state.MainCurrent;
-            Temperature = state.Temperature;
-            SupplyVoltage = state.SupplyVoltage;
-            VccVoltage = state.VccVoltage;
-        });
-    }
-
-    private void OnFeedbackReceived(FeedbackResult feedback)
+    private void OnFeedbackReceived(object? sender, FeedbackResult feedback)
     {
         _uiDispatcher.InvokeOnUi(() =>
         {
@@ -787,3 +702,13 @@ public sealed partial class MauiViewModel : ObservableObject
 
     #endregion
 }
+
+
+
+
+
+
+
+
+
+

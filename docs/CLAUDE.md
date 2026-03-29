@@ -6,24 +6,32 @@ MOBAflow is an event-driven automation solution for model railroads built on .NE
 
 ## Tech Stack
 
-- **Language:** C# 14, .NET 10 (SDK 10.0.100+)
-- **UI:** WinUI 3 (Windows), MAUI (Android), Blazor (Web)
-- **MVVM:** CommunityToolkit.Mvvm 8.4.0 (source generators)
+- **Language:** C# 14, .NET 10 (SDK pinned via `global.json`)
+- **UI:** WinUI 3 (`MOBAflow`), MAUI for Android (`MOBAsmart`), shared web-facing components in `SharedUI.Web`
+- **MVVM:** CommunityToolkit.Mvvm 8.4.2 (source generators)
 - **DI:** Microsoft.Extensions.DependencyInjection
 - **Logging:** Serilog
 - **Speech:** Azure Cognitive Services, System.Speech
-- **Testing:** NUnit 4.4.0, Moq 4.20.72, Coverlet
+- **Testing:** NUnit 4.5.1, Moq 4.20.72, Coverlet
 - **CI/CD:** Azure DevOps Pipelines
 
 ## Build & Run
 
 ```bash
-dotnet restore
-dotnet build                              # Build all
-dotnet run --project WinUI                # Run Windows app
-dotnet run --project WebApp               # Run Blazor web app
-dotnet test                               # Run all tests (293 passing)
+dotnet restore MOBAflow/MOBAflow.csproj
+dotnet restore MOBApi/MOBApi.csproj
+dotnet build MOBAflow/MOBAflow.csproj     # Build Windows desktop app
+dotnet build MOBApi/MOBApi.csproj         # Build REST API
+dotnet test Test/Test.csproj
 dotnet test Test/Test.csproj --settings Test/coverlet.runsettings --results-directory TestResults  # Run with coverage (coverage.cobertura.xml in TestResults)
+```
+
+**Cross-platform subset (no WinUI / Android MAUI):**
+
+```bash
+dotnet restore Backend/Backend.csproj
+dotnet build Backend/Backend.csproj
+dotnet test Test/Test.csproj
 ```
 
 **Build configurations:** Debug, FastDebug (no analyzers), Release (warnings-as-errors)
@@ -31,22 +39,24 @@ dotnet test Test/Test.csproj --settings Test/coverlet.runsettings --results-dire
 ## Project Structure
 
 ```
-Domain/          Pure business logic, POCOs, domain models (no dependencies)
-Backend/         Application services, Z21 protocol, action executors
-Common/          Shared utilities, config, plugins, events, validation
-SharedUI/        Cross-platform ViewModels (CommunityToolkit.Mvvm)
-WinUI/           Windows Desktop UI (WinUI 3)
-MAUI/            Android Mobile UI
-WebApp/          Blazor Server web application
-TrackPlan.Renderer/    Track geometry & SVG rendering
-TrackLibrary.Base/     Base track system interfaces
-TrackLibrary.PikoA/    Piko A-Gleis track templates
-Sound/           Audio resources & sound management
-Test/            Unit tests (NUnit)
-docs/            Documentation (20+ markdown files)
+Domain/               Pure business logic, POCOs, domain models (no dependencies)
+Backend/              Application services, Z21 protocol, action executors
+Common/               Shared utilities, config, plugins, events, validation
+SharedUI/             Cross-platform ViewModels (CommunityToolkit.Mvvm)
+SharedUI.Web/         Shared ASP.NET Core-facing components
+MOBAflow/             Windows desktop UI (WinUI 3)
+MOBApi/               REST API host
+MOBAsmart/            Android mobile UI (MAUI)
+MAUI.Controls/        Shared MAUI controls
+TrackPlan.Renderer/   Track geometry & rendering
+TrackLibrary.Base/    Base track system interfaces
+TrackLibrary.PikoA/   Piko A-Gleis track templates
+Sound/                Audio resources & sound management
+Test/                 Unit tests (NUnit)
+docs/                 Documentation
 ```
 
-**Dependency flow:** Domain -> Backend/Common -> SharedUI -> WinUI/MAUI/WebApp
+**Dependency flow:** Domain -> Backend/Common -> SharedUI -> MOBAflow/MOBAsmart/SharedUI.Web
 
 ## Architecture
 
@@ -84,7 +94,7 @@ docs/            Documentation (20+ markdown files)
 - Naming: `[TestClass]_Should_[Behavior]_When_[Condition]`
 - Moq for interface mocking, FakeUdpClientWrapper for Z21 simulation
 - Async test support throughout
-- **Test count:** 293 tests across Domain, Common, Backend, SharedUI, Integration. Run `dotnet test Test/Test.csproj`.
+- **Test suite:** Run `dotnet test Test/Test.csproj`. Some `System.Speech` tests are Windows-only.
 - **Coverage (local):** ReSharper includes **dotCover** – in Visual Studio use *ReSharper → Unit Tests → Run Unit Tests with Coverage* (or right-click test project → Cover). Coverage is shown in the Coverage tool window. For CLI/runsettings-based collection, use `dotnet test --settings Test/coverlet.runsettings` (Coverlet; output in `TestResults/.../coverage.cobertura.xml`) or `dotnet-coverage collect -s Test/dotnet-coverage.runsettings -f cobertura -o coverage.cobertura.xml dotnet test Test/Test.csproj --no-build`.
 - **Coverage (CI):** The **quality.yml** pipeline (PRs to main) runs tests with **dotnet-coverage** and publishes results via `PublishCodeCoverageResults@2` (Cobertura). Coverage percentage and report are visible in the Azure DevOps build summary and the "Code Coverage" tab. Settings: `Test/dotnet-coverage.runsettings` (excludes test assemblies, platform-specific paths).
 
@@ -103,6 +113,6 @@ docs/            Documentation (20+ markdown files)
 
 - Repository hosted on Azure DevOps: `dev.azure.com/ahuelsmann/MOBAflow`
 - Release builds treat all warnings as errors
-- MAUI builds are excluded from CI pipeline (WinUI, WebApp, Test only)
+- CI and local validation should restore/build individual projects instead of assuming solution-wide restore works on every platform
 - Protocol constants intentionally use UPPER_SNAKE_CASE to match Z21 LAN Protocol spec
 - ReSharper settings (`.sln.DotSettings`) contain 125+ documented suppression entries

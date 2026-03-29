@@ -21,7 +21,7 @@ public class WorkflowAction
     
     /// <summary>
     /// Execution order number (1-based).
-    /// Automatically updated when actions are reordered via drag & drop.
+    /// Automatically updated when actions are reordered via drag and drop.
     /// Used for sorting actions before execution.
     /// </summary>
     public uint Number { get; set; }

@@ -9,11 +9,11 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Service;
-using Moba.SharedUI.Interface;
+using SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
 using System.ComponentModel;
 using System.Diagnostics;
-using Moba.WinUI.ViewModel;
+using ViewModel;
 using Windows.UI;
 using Windows.UI.ViewManagement;
 

@@ -70,7 +70,7 @@ MOBAflow controls model train layouts via UDP communication with the **Roco Z21 
 
 ### Prerequisites
 
-- ✅ [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
+- ✅ [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) matching [`global.json`](global.json)
 - ✅ [Visual Studio 2026](https://visualstudio.microsoft.com/) (recommended) or VS Code
 - ✅ Roco Z21 Digital Command Station (for Z21 connectivity)
 
@@ -79,8 +79,8 @@ MOBAflow controls model train layouts via UDP communication with the **Roco Z21 
 ```bash
 git clone https://github.com/ahuelsmann/MOBAflow.git
 cd MOBAflow
-dotnet restore Moba.slnx
-dotnet build Moba.slnx
+dotnet restore MOBAflow/MOBAflow.csproj
+dotnet build MOBAflow/MOBAflow.csproj
 ```
 
 **Cross-platform subset (without WinUI / MAUI projects):**
@@ -91,7 +91,7 @@ dotnet build Backend/Backend.csproj
 dotnet test Test/Test.csproj
 ```
 
-> Note: On non-Windows systems, the WinUI and MAUI projects are not buildable. Some `System.Speech` tests are Windows-only.
+> Note: On non-Windows systems, the WinUI and MAUI projects are not buildable. Restore/build individual `.csproj` files instead of relying on solution-level restore. Some `System.Speech` tests are Windows-only.
 
 ### Run Applications
 
@@ -407,6 +407,26 @@ MOBAflow follows **Clean Architecture** principles with strict layer separation.
 └─────────────────────────────────────┘
 ```
 
+### Runtime Boundary (Current Status)
+
+The current control/runtime split now covers the shared shell and the remaining shared Z21-facing ViewModels:
+
+```
+MainWindowViewModel
+  ↓
+IMobaClient
+  ↓
+IMobaRuntime
+  ↓
+IZ21 / JourneyManager / WorkflowService
+```
+
+Current scope:
+- `MainWindowViewModel` now talks to `IMobaClient` instead of driving Z21 and `JourneyManager` directly
+- The runtime publishes `MobaRuntimeSnapshot` objects back to the shell
+- `TrainControlViewModel` and `MauiViewModel` now also use `IMobaClient` instead of addressing `IZ21` directly
+- `ProjectRuntimeFactory` still reuses the live `Project` reference in this first step; a dedicated runtime copy is planned next
+
 ### 🛠️ Technology Stack
 
 | Layer | Technology |
@@ -589,3 +609,4 @@ This project is licensed under the **MIT License** – see [LICENSE](LICENSE) fo
 ---
 
 **Made with ❤️ for model railroad enthusiasts**
+

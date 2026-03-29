@@ -180,6 +180,8 @@ public partial class MainWindowViewModel
             {
                 SelectedJourney = value.Journeys.FirstOrDefault();
             }
+
+            _ = _mobaClient.ActivateProjectAsync(value.Model);
         }
         else
         {
