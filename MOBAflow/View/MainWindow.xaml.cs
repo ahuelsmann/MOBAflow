@@ -13,7 +13,7 @@ using System.Diagnostics;
 using System.Reflection;
 using MainWindowViewModel = SharedUI.ViewModel.MainWindowViewModel;
 
-internal sealed partial class MainWindow
+internal sealed partial class MainWindow : Window
 {
     #region Fields
     public MainWindowViewModel ViewModel { get; }
@@ -27,6 +27,7 @@ internal sealed partial class MainWindow
     private readonly NavigationItemFactory _navigationItemFactory;
     private readonly ISkinProvider _skinProvider;
     private bool _isClosing;
+    private bool _isShutdownInProgress;
 
     /// <summary>
     /// Application version string for display in TitleBar.
@@ -129,6 +130,12 @@ internal sealed partial class MainWindow
             ViewModel.NavigationRequested += OnNavigationRequested;
             ViewModel.PropertyChanged += ViewModel_PropertyChanged;
             Closed += MainWindow_Closed;
+
+            // Wire into app window closing
+            if (AppWindow is not null)
+            {
+                AppWindow.Closing += OnAppWindowClosing;
+            }
 
             // Apply initial theme
             ApplyTheme(ViewModel.IsDarkMode);
@@ -287,10 +294,12 @@ internal sealed partial class MainWindow
             }
         }
 
+        await ViewModel.PrepareForShutdownAsync();
+
+        DetachWindowBindings();
+
         // Auto-save solution before closing to prevent data loss
         await ViewModel.SaveSolutionInternalAsync();
-
-        ViewModel.OnWindowClosing();
 
         // WinUI 3 does not exit the process when the window is closed; we must exit explicitly.
         Application.Current.Exit();
@@ -302,6 +311,16 @@ internal sealed partial class MainWindow
         ViewModel.NavigationRequested -= OnNavigationRequested;
         ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
         Closed -= MainWindow_Closed;
+    }
+
+    private void DetachWindowBindings()
+    {
+        Bindings?.StopTracking();
+
+        if (RootGrid is not null)
+        {
+            RootGrid.DataContext = null;
+        }
     }
 
     private static void OnExitApplicationRequested(object? sender, EventArgs e)
@@ -355,6 +374,29 @@ internal sealed partial class MainWindow
         _ = sender;
         _ = e;
         ApplyTheme(ViewModel.IsDarkMode);
+    }
+
+    // Ensure only one AppWindow.Closing subscription exists and it is inside the MainWindow constructor.
+    private async void OnAppWindowClosing(AppWindow sender, AppWindowClosingEventArgs args)
+    {
+        if (_isShutdownInProgress)
+        {
+            return;
+        }
+
+        // Cancel the synchronous closing to allow async shutdown logic
+        args.Cancel = true;
+        _isShutdownInProgress = true;
+
+        try
+        {
+            await ViewModel.PrepareForShutdownAsync();
+        }
+        finally
+        {
+            sender.Closing -= OnAppWindowClosing;
+            Application.Current.Exit();
+        }
     }
     #endregion
 }

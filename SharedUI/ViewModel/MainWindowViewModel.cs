@@ -28,6 +28,8 @@ using System.Diagnostics;
 public sealed partial class MainWindowViewModel : ObservableObject
 {
     #region Fields
+    private const int ShutdownDisconnectTimeoutSeconds = 5;
+
     // Core Services (required)
     private readonly IIoService _ioService;
     private readonly IMobaClient _mobaClient;
@@ -48,6 +50,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     // Layout column widths (observable, bound from grid columns; loaded from settings so UI reflects persisted values)
     private readonly LayoutColumnWidthsViewModel _layoutColumnWidths;
+
+    private bool _isShuttingDown;
 
     #endregion
 
@@ -443,28 +447,47 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     #region Lifecycle
     /// <summary>
-    /// Handles cleanup logic when the main window is closing and requests disconnect from the Z21.
+    /// Stops runtime-driven UI updates and disconnects from the Z21 before the host window completes shutdown.
     /// </summary>
-    public void OnWindowClosing()
+    public async Task PrepareForShutdownAsync()
     {
-        // Settings and Solution changes are now auto-saved immediately via PropertyChanged subscriptions
-        // No need for conditional save on window close
+        if (!TryBeginShutdown())
+        {
+            return;
+        }
 
-        // CRITICAL: Always send LAN_LOGOFF to Z21 on app exit
-        // This prevents zombie clients on Z21 which can cause it to become unresponsive.
-        // Async-first: trigger disconnect without synchronously blocking the UI thread.
+        using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(ShutdownDisconnectTimeoutSeconds));
+
         try
         {
-            _ = _mobaClient.DisconnectAsync();
+            await _mobaClient.DisconnectAsync(cancellationTokenSource.Token).ConfigureAwait(false);
         }
-        catch (TaskCanceledException) { /* Expected during shutdown */ }
-        catch (OperationCanceledException) { /* Expected during shutdown */ }
+        catch (TaskCanceledException ex)
+        {
+            _logger.LogWarning(ex, "Z21 disconnect timed out during shutdown after {TimeoutSeconds}s", ShutdownDisconnectTimeoutSeconds);
+        }
+        catch (OperationCanceledException ex)
+        {
+            _logger.LogWarning(ex, "Z21 disconnect was canceled during shutdown");
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during Z21 disconnect");
         }
+    }
 
-        ExitApplicationRequested?.Invoke(this, EventArgs.Empty);
+    private bool TryBeginShutdown()
+    {
+        if (_isShuttingDown)
+        {
+            return false;
+        }
+
+        _isShuttingDown = true;
+        _mobaClient.SnapshotChanged -= OnMobaRuntimeSnapshotChanged;
+        _mobaClient.TrafficPacketLogged -= OnTrafficPacketLogged;
+
+        return true;
     }
 
     [RelayCommand]

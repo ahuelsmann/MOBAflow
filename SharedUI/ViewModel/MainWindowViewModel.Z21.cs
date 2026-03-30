@@ -31,8 +31,18 @@ public partial class MainWindowViewModel
     {
         _ = sender;
 
+        if (_isShuttingDown)
+        {
+            return;
+        }
+
         _uiDispatcher.InvokeOnUi(() =>
         {
+            if (_isShuttingDown)
+            {
+                return;
+            }
+
             TrafficPackets.Insert(0, packet);
 
             while (TrafficPackets.Count > 100)
@@ -108,11 +118,30 @@ public partial class MainWindowViewModel
     private void OnMobaRuntimeSnapshotChanged(object? sender, MobaRuntimeSnapshot snapshot)
     {
         _ = sender;
-        _uiDispatcher.InvokeOnUi(() => ApplyRuntimeSnapshot(snapshot));
+
+        if (_isShuttingDown)
+        {
+            return;
+        }
+
+        _uiDispatcher.InvokeOnUi(() =>
+        {
+            if (_isShuttingDown)
+            {
+                return;
+            }
+
+            ApplyRuntimeSnapshot(snapshot);
+        });
     }
 
     private void ApplyRuntimeSnapshot(MobaRuntimeSnapshot snapshot)
     {
+        if (_isShuttingDown)
+        {
+            return;
+        }
+
         SuppressOperatingStateRecompute = true;
         try
         {

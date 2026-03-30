@@ -3,6 +3,8 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.Runtime.InteropServices;
+using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// High-level operating states for the shell-wide status presentation.
@@ -119,6 +121,26 @@ public partial class MainWindowViewModel
 
     private bool CanAcknowledgeOperatingState() => IsOperatorAckRequired && IsConnected;
 
+    private void SafeNotifyCanExecuteChanged(System.Action notifyCanExecuteChanged)
+    {
+        if (_isShuttingDown)
+        {
+            return;
+        }
+
+        try
+        {
+            notifyCanExecuteChanged();
+        }
+        catch (COMException) when (_isShuttingDown)
+        {
+        }
+        catch (COMException ex)
+        {
+            _logger.LogDebug(ex, "Ignored WinRT command notification failure during UI teardown.");
+        }
+    }
+
     partial void OnStatusTextChanged(string value)
     {
         _ = value;
@@ -129,7 +151,13 @@ public partial class MainWindowViewModel
     partial void OnIsConnectedChanged(bool value)
     {
         _ = value;
-        AcknowledgeOperatingStateCommand.NotifyCanExecuteChanged();
+
+        if (_isShuttingDown)
+        {
+            return;
+        }
+
+        SafeNotifyCanExecuteChanged(() => AcknowledgeOperatingStateCommand.NotifyCanExecuteChanged());
         if (SuppressOperatingStateRecompute) return;
         RecomputeOperatingState();
     }
@@ -179,13 +207,25 @@ public partial class MainWindowViewModel
     partial void OnIsOperatorAckRequiredChanged(bool value)
     {
         _ = value;
-        AcknowledgeOperatingStateCommand.NotifyCanExecuteChanged();
+
+        if (_isShuttingDown)
+        {
+            return;
+        }
+
+        SafeNotifyCanExecuteChanged(() => AcknowledgeOperatingStateCommand.NotifyCanExecuteChanged());
     }
 
     partial void OnIsOperationalControlEnabledChanged(bool value)
     {
         _ = value;
-        SetTrackPowerCommand.NotifyCanExecuteChanged();
+
+        if (_isShuttingDown)
+        {
+            return;
+        }
+
+        SafeNotifyCanExecuteChanged(() => SetTrackPowerCommand.NotifyCanExecuteChanged());
     }
 
     /// <summary>
@@ -193,6 +233,11 @@ public partial class MainWindowViewModel
      /// </summary>
     private void RecomputeOperatingState()
     {
+        if (_isShuttingDown)
+        {
+            return;
+        }
+
         OperatingStateKind nextState;
         string nextText;
         string nextDetail;
