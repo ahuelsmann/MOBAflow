@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Domain;
 
+using Moba.Domain;
 using Moba.Domain.Enum;
 
 [TestFixture]
@@ -17,10 +18,8 @@ internal class TrainTests
         Assert.That(train.IsDoubleTraction, Is.False);
         Assert.That(train.TrainType, Is.EqualTo(TrainType.None));
         Assert.That(train.ServiceType, Is.EqualTo(ServiceType.None));
-        Assert.That(train.LocomotiveIds, Is.Not.Null);
-        Assert.That(train.LocomotiveIds, Is.Empty);
-        Assert.That(train.WagonIds, Is.Not.Null);
-        Assert.That(train.WagonIds, Is.Empty);
+        Assert.That(train.Vehicles, Is.Not.Null);
+        Assert.That(train.Vehicles, Is.Empty);
     }
 
     [Test]
@@ -30,6 +29,12 @@ internal class TrainTests
         var locoId1 = Guid.NewGuid();
         var locoId2 = Guid.NewGuid();
         var wagonId = Guid.NewGuid();
+        var vehicles = new List<Vehicle>
+        {
+            new() { VehicleId = locoId1, VehicleKind = TrainVehicleKind.Locomotive },
+            new() { VehicleId = wagonId, VehicleKind = TrainVehicleKind.PassengerWagon },
+            new() { VehicleId = locoId2, VehicleKind = TrainVehicleKind.Locomotive }
+        };
 
         var train = new Train
         {
@@ -39,8 +44,7 @@ internal class TrainTests
             IsDoubleTraction = true,
             TrainType = TrainType.Passenger,
             ServiceType = ServiceType.InterCityExpress,
-            LocomotiveIds = [locoId1, locoId2],
-            WagonIds = [wagonId]
+            Vehicles = vehicles
         };
 
         Assert.That(train.Id, Is.EqualTo(id));
@@ -49,37 +53,47 @@ internal class TrainTests
         Assert.That(train.IsDoubleTraction, Is.True);
         Assert.That(train.TrainType, Is.EqualTo(TrainType.Passenger));
         Assert.That(train.ServiceType, Is.EqualTo(ServiceType.InterCityExpress));
-        Assert.That(train.LocomotiveIds, Has.Count.EqualTo(2));
-        Assert.That(train.LocomotiveIds, Does.Contain(locoId1));
-        Assert.That(train.LocomotiveIds, Does.Contain(locoId2));
-        Assert.That(train.WagonIds, Has.Count.EqualTo(1));
-        Assert.That(train.WagonIds, Does.Contain(wagonId));
+        Assert.That(train.Vehicles, Is.SameAs(vehicles));
+        Assert.That(train.Vehicles.Select(item => item.VehicleKind), Is.EqualTo(new[]
+        {
+            TrainVehicleKind.Locomotive,
+            TrainVehicleKind.PassengerWagon,
+            TrainVehicleKind.Locomotive
+        }));
     }
 
     [Test]
-    public void LocomotiveIds_CanAddAndRemove()
+    public void Vehicles_CanAddAndRemove()
     {
         var train = new Train();
         var locoId = Guid.NewGuid();
+        var wagonId = Guid.NewGuid();
 
-        train.LocomotiveIds.Add(locoId);
-        Assert.That(train.LocomotiveIds, Has.Count.EqualTo(1));
+        train.Vehicles.Add(new Vehicle { VehicleId = locoId, VehicleKind = TrainVehicleKind.Locomotive });
+        train.Vehicles.Add(new Vehicle { VehicleId = wagonId, VehicleKind = TrainVehicleKind.GoodsWagon });
+        Assert.That(train.Vehicles, Has.Count.EqualTo(2));
 
-        train.LocomotiveIds.Remove(locoId);
-        Assert.That(train.LocomotiveIds, Is.Empty);
+        train.Vehicles.RemoveAt(0);
+        Assert.That(train.Vehicles, Has.Count.EqualTo(1));
+        Assert.That(train.Vehicles[0].VehicleId, Is.EqualTo(wagonId));
     }
 
     [Test]
-    public void WagonIds_CanAddAndRemove()
+    public void Vehicles_CanStoreMixedOrderedVehicles()
     {
+        var locomotiveId = Guid.NewGuid();
+        var passengerWagonId = Guid.NewGuid();
+        var goodsWagonId = Guid.NewGuid();
         var train = new Train();
-        var wagonId = Guid.NewGuid();
 
-        train.WagonIds.Add(wagonId);
-        Assert.That(train.WagonIds, Has.Count.EqualTo(1));
+        train.Vehicles.Add(new Vehicle { VehicleId = locomotiveId, VehicleKind = TrainVehicleKind.Locomotive });
+        train.Vehicles.Add(new Vehicle { VehicleId = passengerWagonId, VehicleKind = TrainVehicleKind.PassengerWagon });
+        train.Vehicles.Add(new Vehicle { VehicleId = goodsWagonId, VehicleKind = TrainVehicleKind.GoodsWagon });
 
-        train.WagonIds.Remove(wagonId);
-        Assert.That(train.WagonIds, Is.Empty);
+        Assert.That(train.Vehicles, Has.Count.EqualTo(3));
+        Assert.That(train.Vehicles[0].VehicleId, Is.EqualTo(locomotiveId));
+        Assert.That(train.Vehicles[1].VehicleKind, Is.EqualTo(TrainVehicleKind.PassengerWagon));
+        Assert.That(train.Vehicles[2].VehicleKind, Is.EqualTo(TrainVehicleKind.GoodsWagon));
     }
 
     [TestCase(TrainType.None)]

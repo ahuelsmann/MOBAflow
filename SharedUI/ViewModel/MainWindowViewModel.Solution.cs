@@ -264,9 +264,11 @@ public partial class MainWindowViewModel
         WorkflowsPageSelectedObject = null;
 
         // Wagons & Locomotives
+        SelectedTrain = null;
         SelectedLocomotive = null;
         SelectedPassengerWagon = null;
         SelectedGoodsWagon = null;
+        SelectedVehicle = null;
 
         // General
         CurrentSelectedObject = null;

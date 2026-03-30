@@ -67,6 +67,9 @@ internal static class NavigationRegistration
         services.AddTransient<GoodsWagonPage>();
         pages.Add(new PageMetadata("goodswagons", "Goods Wagons", "\uE7C0", typeof(GoodsWagonPage), NavigationCategory.Solution, 27, "IsGoodsWagonsPageAvailable", "GoodsWagonsPageLabel", null, false));
 
+        services.AddTransient<TrainsPage>();
+        pages.Add(new PageMetadata("trains", "Trains", "\uE7C0", typeof(TrainsPage), NavigationCategory.Solution, 28, "IsTrainsPageAvailable", "TrainsPageLabel", null, false));
+
         services.AddTransient<TrackPlanPage>();
         pages.Add(new PageMetadata("trackplaneditor", "Track Plan", "\uE7F9", typeof(TrackPlanPage), NavigationCategory.TrackManagement, 10, "IsTrackPlanEditorPageAvailable", "TrackPlanEditorPageLabel", null, false));
 

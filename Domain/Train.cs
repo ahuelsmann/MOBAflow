@@ -16,8 +16,7 @@ public class Train
         Id = Guid.NewGuid();
         Name = "New Train";
         Description = string.Empty;
-        LocomotiveIds = [];
-        WagonIds = [];
+        Vehicles = new List<Vehicle>();
         TrainType = TrainType.None;
         ServiceType = ServiceType.None;
     }
@@ -53,12 +52,7 @@ public class Train
     public ServiceType ServiceType { get; set; }
 
     /// <summary>
-    /// Upcoming feature: Locomotive IDs (resolved at runtime via Project.Locomotives lookup)
+    /// Gets or sets the ordered, freely mixed list of vehicles that form this train.
     /// </summary>
-    public List<Guid> LocomotiveIds { get; set; }
-
-    /// <summary>
-    /// Upcoming feature: Wagon IDs (resolved at runtime via Project wagons lookup)
-    /// </summary>
-    public List<Guid> WagonIds { get; set; }
+    public List<Vehicle> Vehicles { get; set; }
 }

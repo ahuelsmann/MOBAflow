@@ -495,6 +495,8 @@ public class LayoutSettings
 
     public PassengerWagonPageLayoutSettings PassengerWagonPage { get; set; } = new();
 
+    public TrainsPageLayoutSettings TrainsPage { get; set; } = new();
+
     public SolutionPageLayoutSettings SolutionPage { get; set; } = new();
 
     public WorkflowsPageLayoutSettings WorkflowsPage { get; set; } = new();
@@ -670,6 +672,15 @@ public class LocomotivesPageLayoutSettings
 public class PassengerWagonPageLayoutSettings
 {
     public bool IsListExpanded { get; set; } = true;
+    public bool IsPropertiesExpanded { get; set; } = true;
+}
+
+public class TrainsPageLayoutSettings
+{
+    public bool IsTrainListExpanded { get; set; } = true;
+    public bool IsLocomotiveLibraryExpanded { get; set; } = true;
+    public bool IsPassengerLibraryExpanded { get; set; } = true;
+    public bool IsGoodsLibraryExpanded { get; set; } = true;
     public bool IsPropertiesExpanded { get; set; } = true;
 }
 

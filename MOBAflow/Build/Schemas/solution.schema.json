@@ -85,8 +85,17 @@
                 "trainType": { "type": "integer" },
                 "serviceType": { "type": "integer" },
                 "isDoubleTraction": { "type": "boolean" },
-                "locomotiveIds": { "type": "array", "items": { "type": "string", "format": "uuid" } },
-                "wagonIds": { "type": "array", "items": { "type": "string", "format": "uuid" } }
+                "vehicles": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["vehicleId", "vehicleKind"],
+                    "properties": {
+                      "vehicleId": { "type": "string", "format": "uuid" },
+                      "vehicleKind": { "type": "integer" }
+                    }
+                  }
+                }
               }
             }
           },

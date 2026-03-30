@@ -86,10 +86,8 @@ internal class TrainDefaultsTests
         Assert.That(train.Id, Is.Not.EqualTo(Guid.Empty));
         Assert.That(train.Name, Is.EqualTo("New Train"));
         Assert.That(train.Description, Is.EqualTo(string.Empty));
-        Assert.That(train.LocomotiveIds, Is.Not.Null);
-        Assert.That(train.LocomotiveIds, Is.Empty);
-        Assert.That(train.WagonIds, Is.Not.Null);
-        Assert.That(train.WagonIds, Is.Empty);
+        Assert.That(train.Vehicles, Is.Not.Null);
+        Assert.That(train.Vehicles, Is.Empty);
         Assert.That(train.TrainType, Is.EqualTo(TrainType.None));
         Assert.That(train.ServiceType, Is.EqualTo(ServiceType.None));
         Assert.That(train.IsDoubleTraction, Is.False);

@@ -67,11 +67,19 @@
           "description": "Regional Express to Minden",
           "trainType": 1,
           "serviceType": 1,
-          "locomotiveIds": [
-            "f1e2d3c4-b5a6-7890-1234-567890abcdef"
-          ],
-          "wagonIds": [
-            "b2c3d4e5-f6a7-8901-2345-678901cdefab"
+          "vehicles": [
+            {
+              "vehicleId": "d4e5f6a7-b8c9-0123-4567-890123efabcd",
+              "vehicleKind": 2
+            },
+            {
+              "vehicleId": "b2c3d4e5-f6a7-8901-2345-678901cdefab",
+              "vehicleKind": 1
+            },
+            {
+              "vehicleId": "bb15c10a-5b78-451f-8f2f-2d4e3efa74af",
+              "vehicleKind": 0
+            }
           ]
         }
       ],

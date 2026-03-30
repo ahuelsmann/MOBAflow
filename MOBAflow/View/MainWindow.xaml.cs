@@ -26,6 +26,7 @@ internal sealed partial class MainWindow
     private readonly List<PageMetadata> _pages;
     private readonly NavigationItemFactory _navigationItemFactory;
     private readonly ISkinProvider _skinProvider;
+    private bool _isClosing;
 
     /// <summary>
     /// Application version string for display in TitleBar.
@@ -204,8 +205,18 @@ internal sealed partial class MainWindow
     #region Event Handlers
     private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (_isClosing || RootGrid.XamlRoot is null)
+        {
+            return;
+        }
+
         if (e.PropertyName == nameof(MainWindowViewModel.IsConnected))
         {
+            if (Z21StatusIcon.XamlRoot is null)
+            {
+                return;
+            }
+
             Z21StatusIcon.Glyph = ViewModel.IsConnected ? "\uE8EB" : "\uF384";
         }
         else if (e.PropertyName == nameof(MainWindowViewModel.IsDarkMode))
@@ -216,12 +227,28 @@ internal sealed partial class MainWindow
 
     private void ApplyTheme(bool isDarkMode)
     {
+        if (_isClosing || RootGrid.XamlRoot is null)
+        {
+            return;
+        }
+
         RootGrid.RequestedTheme = isDarkMode ? ElementTheme.Dark : ElementTheme.Light;
         _skinProvider.IsDarkMode = isDarkMode;
     }
 
     private async void MainWindow_Closed(object sender, WindowEventArgs args)
     {
+        _ = sender;
+        _ = args;
+
+        if (_isClosing)
+        {
+            return;
+        }
+
+        _isClosing = true;
+        UnsubscribeWindowEvents();
+
         // 1) Stop status polling and cancel any in-flight HTTP requests
         _restApiStatusService.Stop();
 
@@ -267,6 +294,14 @@ internal sealed partial class MainWindow
 
         // WinUI 3 does not exit the process when the window is closed; we must exit explicitly.
         Application.Current.Exit();
+    }
+
+    private void UnsubscribeWindowEvents()
+    {
+        ViewModel.ExitApplicationRequested -= OnExitApplicationRequested;
+        ViewModel.NavigationRequested -= OnNavigationRequested;
+        ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+        Closed -= MainWindow_Closed;
     }
 
     private static void OnExitApplicationRequested(object? sender, EventArgs e)

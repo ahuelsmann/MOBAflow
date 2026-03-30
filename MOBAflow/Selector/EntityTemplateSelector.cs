@@ -29,6 +29,11 @@ internal partial class EntityTemplateSelector : DataTemplateSelector
     public DataTemplate? WorkflowTemplate { get; set; }
 
     /// <summary>
+    /// DataTemplate for TrainViewModel
+    /// </summary>
+    public DataTemplate? TrainTemplate { get; set; }
+
+    /// <summary>
     /// DataTemplate for ProjectViewModel
     /// </summary>
     public DataTemplate? ProjectTemplate { get; set; }
@@ -75,6 +80,7 @@ internal partial class EntityTemplateSelector : DataTemplateSelector
             StationViewModel => StationTemplate,
             JourneyViewModel => JourneyTemplate,
             WorkflowViewModel => WorkflowTemplate,
+            TrainViewModel => TrainTemplate,
             LocomotiveViewModel => LocomotiveTemplate,
             PassengerWagonViewModel => WagonTemplate,
             GoodsWagonViewModel => WagonTemplate,

@@ -175,11 +175,28 @@ public partial class MainWindowViewModel
                 workflow.PropertyChanged += OnViewModelPropertyChanged;
             }
 
+            foreach (var train in value.Trains)
+            {
+                train.PropertyChanged -= OnViewModelPropertyChanged;
+                train.PropertyChanged += OnViewModelPropertyChanged;
+            }
+
             // Auto-select first journey when project is selected
             if (value.Journeys.Count > 0)
             {
                 SelectedJourney = value.Journeys.FirstOrDefault();
             }
+            else
+            {
+                SelectedJourney = null;
+            }
+
+            SelectedTrain = value.Trains.FirstOrDefault();
+
+            OnPropertyChanged(nameof(FilteredTrains));
+            OnPropertyChanged(nameof(FilteredLocomotiveLibrary));
+            OnPropertyChanged(nameof(FilteredPassengerWagonLibrary));
+            OnPropertyChanged(nameof(FilteredGoodsWagonLibrary));
 
             _ = _mobaClient.ActivateProjectAsync(value.Model);
         }
@@ -187,6 +204,7 @@ public partial class MainWindowViewModel
         {
             // Clear journey selection when no project is selected
             SelectedJourney = null;
+            SelectedTrain = null;
         }
     }
 

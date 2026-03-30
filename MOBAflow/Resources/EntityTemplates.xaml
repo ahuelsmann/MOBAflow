@@ -981,6 +981,7 @@
         LocomotiveTemplate="{StaticResource LocomotiveTemplate}"
         ProjectTemplate="{StaticResource ProjectTemplate}"
         StationTemplate="{StaticResource StationTemplate}"
+        TrainTemplate="{StaticResource TrainTemplate}"
         WagonTemplate="{StaticResource WagonTemplate}"
         WorkflowTemplate="{StaticResource WorkflowTemplate}" />
 </ResourceDictionary>
