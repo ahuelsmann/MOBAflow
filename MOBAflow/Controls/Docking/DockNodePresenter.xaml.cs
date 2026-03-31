@@ -4,13 +4,19 @@ namespace Moba.WinUI.Controls.Docking;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+
 using Model;
+
 using System.ComponentModel;
 
 internal sealed class DockNodePresenter : UserControl
 {
     private DockNode? _observedNode;
+    private DockPanelGroup? _observedGroup;
+    private DockSplitControl? _observedSplitControl;
     private readonly ContentControl _nodeContainer;
+
+    public event EventHandler<DockPanelExpansionChangedEventArgs>? PanelExpansionChanged;
 
     public static readonly DependencyProperty NodeProperty =
         DependencyProperty.Register(
@@ -85,6 +91,7 @@ internal sealed class DockNodePresenter : UserControl
             group.DockPosition = groupNode.DockPosition;
             group.LayoutMode = groupNode.LayoutMode;
             group.ItemsSource = groupNode.Panels;
+            ObserveContent(group);
             if (!ReferenceEquals(_nodeContainer.Content, group))
             {
                 _nodeContainer.Content = group;
@@ -94,6 +101,7 @@ internal sealed class DockNodePresenter : UserControl
         {
             var splitControl = _nodeContainer.Content as DockSplitControl ?? new DockSplitControl();
             splitControl.SplitNode = splitNode;
+            ObserveContent(splitControl);
             if (!ReferenceEquals(_nodeContainer.Content, splitControl))
             {
                 _nodeContainer.Content = splitControl;
@@ -101,12 +109,59 @@ internal sealed class DockNodePresenter : UserControl
         }
         else
         {
+            ObserveContent(null);
             _nodeContainer.Content = null;
         }
+    }
+
+    private void ObserveContent(object? content)
+    {
+        var nextGroup = content as DockPanelGroup;
+        var nextSplitControl = content as DockSplitControl;
+
+        if (ReferenceEquals(_observedGroup, nextGroup)
+            && ReferenceEquals(_observedSplitControl, nextSplitControl))
+        {
+            return;
+        }
+
+        if (_observedGroup is not null)
+        {
+            _observedGroup.PanelExpansionChanged -= OnGroupPanelExpansionChanged;
+        }
+
+        if (_observedSplitControl is not null)
+        {
+            _observedSplitControl.PanelExpansionChanged -= OnSplitControlPanelExpansionChanged;
+        }
+
+        _observedGroup = nextGroup;
+        _observedSplitControl = nextSplitControl;
+
+        if (_observedGroup is not null)
+        {
+            _observedGroup.PanelExpansionChanged += OnGroupPanelExpansionChanged;
+        }
+
+        if (_observedSplitControl is not null)
+        {
+            _observedSplitControl.PanelExpansionChanged += OnSplitControlPanelExpansionChanged;
+        }
+    }
+
+    private void OnGroupPanelExpansionChanged(object? sender, DockPanelExpansionChangedEventArgs e)
+    {
+        PanelExpansionChanged?.Invoke(this, e);
+    }
+
+    private void OnSplitControlPanelExpansionChanged(object? sender, DockPanelExpansionChangedEventArgs e)
+    {
+        PanelExpansionChanged?.Invoke(this, e);
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         ObserveNode(_observedNode, null);
+        ObserveContent(null);
     }
 }

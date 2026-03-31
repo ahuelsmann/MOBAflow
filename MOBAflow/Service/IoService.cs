@@ -273,6 +273,25 @@ internal class IoService : IIoService
     }
 
     /// <summary>
+    /// Opens a file save picker for saving a JSON file.
+    /// </summary>
+    public async Task<string?> SaveJsonFileAsync(string suggestedFileName)
+    {
+        EnsureInitialized();
+
+        var picker = new FileSavePicker(_windowId.GetValueOrDefault())
+        {
+            SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
+            SuggestedFileName = suggestedFileName,
+            DefaultFileExtension = ".json",
+            FileTypeChoices = { { "JSON Files", new List<string> { ".json" } } }
+        };
+
+        var result = await picker.PickSaveFileAsync();
+        return result?.Path;
+    }
+
+    /// <summary>
     /// Opens a file picker to browse for an XML file (e.g., AnyRail layout).
     /// </summary>
     /// <returns>The selected file path, or null if cancelled.</returns>

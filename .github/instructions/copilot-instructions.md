@@ -27,14 +27,14 @@ applyTo: '**'
 | **Workflow Automation** | Event-driven action sequences |
 | **MOBAtps Track Plan System** | Visual track layout editor with drag & drop |
 | **Track Libraries** | Extensible track system support (Piko A-Gleis active, more planned) |
-| **Multi-Platform** | WinUI (Windows), MAUI (Android), Blazor (Web) |
+| **Multi-Host** | MOBAflow (Windows), MOBAsmart (Android), MOBApi (REST API) |
 
 ### Technology Stack
 
 | Component | Technology |
 |-----------|------------|
 | **Framework** | .NET 10 |
-| **UI Frameworks** | WinUI 3, .NET MAUI, Blazor Server |
+| **UI / Hosts** | WinUI 3, .NET MAUI, ASP.NET Core REST + SignalR |
 | **MVVM** | CommunityToolkit.Mvvm |
 | **Logging** | Serilog (File + In-Memory Sink) |
 | **Speech** | Azure Cognitive Services, Windows Speech API |
@@ -50,7 +50,7 @@ Backend (Platform-independent logic)
   ↑
 SharedUI (Base ViewModels)
   ↑
-WinUI / MAUI / Blazor (Platform-specific)
+MOBAflow / MOBAsmart / MOBApi (Platform-specific hosts)
 ```
 
 ### Track Plan System Architecture
@@ -70,9 +70,9 @@ TrackLibrary.PikoA (Track Templates)
 | Term | Meaning |
 |------|---------|
 | **MOBA** | Short for **Mo**dell**ba**hn (Model Railroad) |
-| **MOBAflow** | Main WinUI desktop application |
-| **MOBAsmart** | Mobile app (MAUI/Android) |
-| **MOBAdash** | Browser-based dashboard (Blazor) |
+| **MOBAflow** | Windows desktop application |
+| **MOBAsmart** | Android mobile app |
+| **MOBAdash** | Historical browser-based dashboard concept |
 | **MOBAtps** | Track Plan System |
 | **Z21** | Roco Z21 Digital Command Station (DCC controller) |
 | **Journey** | A train route with multiple stations |
@@ -82,17 +82,21 @@ TrackLibrary.PikoA (Track Templates)
 ### Build & Run Commands
 
 ```bash
-# Build all
-dotnet restore && dotnet build
+# Restore relevant projects
+dotnet restore MOBAflow/MOBAflow.csproj
+dotnet restore MOBApi/MOBApi.csproj
 
-# Run WinUI (Windows Desktop)
-dotnet run --project WinUI
+# Build desktop app
+dotnet build MOBAflow/MOBAflow.csproj
 
-# Run WebApp (Blazor Dashboard)
-dotnet run --project WebApp
+# Run MOBAflow (Windows Desktop)
+dotnet run --project MOBAflow/MOBAflow.csproj
+
+# Run MOBApi (REST API)
+dotnet run --project MOBApi/MOBApi.csproj
 
 # Run Tests
-dotnet test
+dotnet test Test/Test.csproj
 ```
 
 ---
@@ -124,7 +128,7 @@ dotnet test
 - [xaml-page-registration.instructions.md](./xaml-page-registration.instructions.md) - XAML Page Registration
 - [winui3-best-practices-steps-4-12.md](./winui3-best-practices-steps-4-12.md) - WinUI Best Practices
 - [winui3-vsm-detailed-guide.md](./winui3-vsm-detailed-guide.md) - Visual State Manager
-- [blazor.instructions.md](./blazor.instructions.md) - Blazor WebApp
+- [blazor.instructions.md](./blazor.instructions.md) - Historical Blazor guidance
 - [maui.instructions.md](./maui.instructions.md) - .NET MAUI
 
 ### TrackPlan System (MOBAtps)

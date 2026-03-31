@@ -89,17 +89,25 @@ cd MOBAflow
 ### Step 3: Restore Dependencies
 
 ```bash
-dotnet restore
+# Restore the projects you actually want to build
+dotnet restore MOBAflow/MOBAflow.csproj
+dotnet restore MOBApi/MOBApi.csproj
+
+# Android app
+dotnet restore MOBAsmart/MOBAsmart.csproj
 ```
 
 ### Step 4: Compile Project
 
 ```bash
-# Release build (optimized)
-dotnet build -c Release
+# Windows desktop app
+dotnet build MOBAflow/MOBAflow.csproj -c Release
 
-# Or Debug build (with debugging info)
-dotnet build -c Debug
+# REST API
+dotnet build MOBApi/MOBApi.csproj -c Release
+
+# Android app
+dotnet build MOBAsmart/MOBAsmart.csproj -f net10.0-android -c Release
 ```
 
 **Output:**
@@ -112,22 +120,21 @@ Build succeeded with 0 errors
 
 #### 🖥️ WinUI Desktop App (Windows)
 ```bash
-dotnet run --project WinUI --configuration Release
+dotnet run --project MOBAflow/MOBAflow.csproj --configuration Release
 ```
 
-#### 🌐 Web App (Blazor)
+#### 🌐 MOBApi (REST API)
 ```bash
-dotnet run --project WebApp --configuration Release
-# Open http://localhost:5000
+dotnet run --project MOBApi/MOBApi.csproj --configuration Release
 ```
 
 #### 📱 MAUI Android (Android Phone/Emulator)
 ```bash
 # Emulator must be running or Android device connected
-dotnet build MAUI -f net10.0-android -c Release
+dotnet build MOBAsmart/MOBAsmart.csproj -f net10.0-android -c Release
 
 # Or direct run:
-dotnet run --project MAUI -f net10.0-android
+dotnet run --project MOBAsmart/MOBAsmart.csproj -f net10.0-android
 ```
 
 ---
@@ -193,25 +200,21 @@ New-NetFirewallRule `
 ### Start Unit Tests
 
 ```bash
-dotnet test --configuration Release
+dotnet test Test/Test.csproj --configuration Release
 ```
 
 **Expected Output:**
 ```
 Test Run Successful.
-Total tests: 150
-Passed: 150
-Failed: 0
+Total tests: > 0
+Passed: most tests
+Failed: 0 on supported platforms
 ```
 
-### Test Specific Projects
+### Test Project
 
 ```bash
-# Only Domain Tests
-dotnet test Test/Domain.Tests.csproj
-
-# Only Backend Tests
-dotnet test Backend/Backend.Tests.csproj
+dotnet test Test/Test.csproj
 ```
 
 ---
@@ -221,11 +224,11 @@ dotnet test Backend/Backend.Tests.csproj
 ### Self-Host (Local/Private)
 
 ```bash
-# Create WinUI release package
-dotnet publish WinUI -c Release -o ./publish/WinUI
+# Create MOBAflow desktop build
+dotnet publish MOBAflow/MOBAflow.csproj -c Release -o ./publish/MOBAflow
 
-# Create WebApp release package
-dotnet publish WebApp -c Release -o ./publish/WebApp
+# Create MOBApi release build
+dotnet publish MOBApi/MOBApi.csproj -c Release -o ./publish/MOBApi
 
 # Files are now in ./publish/
 ```
@@ -256,20 +259,20 @@ dotnet --list-sdks
 ```bash
 # Clear NuGet cache & restore
 dotnet nuget locals all --clear
-dotnet restore
+dotnet restore <project>.csproj
 ```
 
 **Error: "WinUI not available on this OS"**
 ```
 WinUI is Windows only!
-- For macOS: Use WebApp (Blazor)
-- For Linux: Use WebApp (Blazor)
-- For Android: Use MAUI App
+- For macOS: the WinUI desktop app is not available in this repo
+- For Linux: use MOBApi or the cross-platform library/test projects
+- For Android: use MOBAsmart
 ```
 
 ### Runtime Errors
 
-**Error: "Z21 Connection Failed"**
+**Error: "Z21 Connection failed"**
 ```
 1. Check Z21 power
 2. Test network: ping <z21-ip>
@@ -288,7 +291,7 @@ WinUI is Windows only!
 
 ```bash
 # Use Release build (faster than Debug)
-dotnet run --project WinUI -c Release
+dotnet run --project MOBAflow/MOBAflow.csproj -c Release
 
 # Use profiler
 # Visual Studio → Analyze → Performance Profiler

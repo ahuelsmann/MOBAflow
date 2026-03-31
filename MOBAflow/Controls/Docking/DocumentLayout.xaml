@@ -10,6 +10,7 @@
 
     <Grid Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
         <TabView
+            x:Name="DocumentTabs"
             Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
             CanDragTabs="True"
             CanReorderTabs="True"

@@ -42,7 +42,6 @@ internal sealed partial class TrackPlanPage
     private HashSet<Guid> _draggingGroup = [];
     private Point _dragStartCanvasPoint;
     private bool _dragHasMoved; // true when pointer actually moved during press
-    private bool _isCanvasDragging;
     private double _cachedDrawOffsetX;
     private double _cachedDrawOffsetY;
     private bool _drawOffsetInitialized;
@@ -61,6 +60,7 @@ internal sealed partial class TrackPlanPage
         ViewModel = viewModel;
         _plan = plan ?? throw new ArgumentNullException(nameof(plan));
         InitializeComponent();
+        InitializeEditorFeatures();
         Loaded += OnLoaded;
 
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
@@ -122,9 +122,7 @@ internal sealed partial class TrackPlanPage
     {
         var plan = CreateTestPlan();
         var renderResult = new TrackPlanSvgRenderer().Render(plan);
-        _plan.LoadFromPlacements(renderResult.Placements, plan.Connections);
-        RecalculateDrawOffset();
-        RefreshCanvas();
+        LoadCurrentPlacementsAsDocument(renderResult.Placements, plan.Connections, clearHistory: true);
         StatusText.Text = "Test plan loaded. Click „SVG in Browser“ for direct comparison.";
     }
 
@@ -133,17 +131,7 @@ internal sealed partial class TrackPlanPage
     /// </summary>
     private void OpenSvgInBrowser()
     {
-        var plan = CreateTestPlan();
-        var renderResult = new TrackPlanSvgRenderer().Render(plan);
-        var path = Path.Combine(Path.GetTempPath(), "trackplan-win2d-compare.html");
-        new SvgExporter().Export(renderResult.Svg, path);
-
-        if (OperatingSystem.IsWindows())
-        {
-            Process.Start(new ProcessStartInfo { FileName = path, UseShellExecute = true });
-        }
-
-        StatusText.Text = $"SVG opened: {path}";
+        ExportCurrentTrackPlanToBrowser();
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
@@ -158,18 +146,46 @@ internal sealed partial class TrackPlanPage
         RefreshCanvas();
     }
 
-    private void Page_KeyDown(object sender, KeyRoutedEventArgs e)
+    private async void Page_KeyDown(object sender, KeyRoutedEventArgs e)
     {
+        if (IsCtrlPressed())
+        {
+            if (e.Key == VirtualKey.Z)
+            {
+                Undo();
+                e.Handled = true;
+                return;
+            }
+
+            if (e.Key == VirtualKey.Y)
+            {
+                Redo();
+                e.Handled = true;
+                return;
+            }
+
+            if (e.Key == VirtualKey.S)
+            {
+                await SaveTrackPlanAsync(IsShiftPressed());
+                e.Handled = true;
+                return;
+            }
+
+            if (e.Key == VirtualKey.O)
+            {
+                await LoadTrackPlanAsync();
+                e.Handled = true;
+                return;
+            }
+        }
+
         if (e.Key != VirtualKey.Delete && e.Key != VirtualKey.Back)
             return;
 
         if (_selectedSegmentId == null)
             return;
 
-        _plan.RemoveSegment(_selectedSegmentId.Value);
-        _selectedSegmentId = null;
-        UpdateSelectionInfo();
-        RefreshCanvas();
+        DeleteSelectedSegment();
         e.Handled = true;
     }
 
@@ -182,6 +198,16 @@ internal sealed partial class TrackPlanPage
             _drawOffsetInitialized = true;
         }
 
+        if (_selectedSegmentId.HasValue && _plan.Segments.All(s => s.Segment.No != _selectedSegmentId.Value))
+        {
+            _selectedSegmentId = null;
+        }
+
+        if (!_isApplyingDocumentState)
+            RefreshDirtyState();
+
+        UpdateSelectionInfo();
+        UpdateCommandStates();
         RefreshCanvas();
     }
 
@@ -351,10 +377,10 @@ internal sealed partial class TrackPlanPage
             _selectedSegmentId = hit.Segment.No;
             UpdateSelectionInfo();
             RefreshCanvas();
-            _isCanvasDragging = true;
             _draggedSegmentId = hit.Segment.No;
             _draggedPlaced = hit;
             _draggingGroup = [.. _plan.GetConnectedGroup(hit.Segment.No)];
+            _pendingDragSnapshot = CaptureDocumentState();
             _dragStartCanvasPoint = pos;
             _dragHasMoved = false;
             CreateGhost(hit);
@@ -429,13 +455,14 @@ internal sealed partial class TrackPlanPage
         OverlayCanvas.PointerReleased -= Canvas_PointerReleased_CanvasDrag;
         OverlayCanvas.ReleasePointerCapture(e.Pointer);
 
-        _isCanvasDragging = false;
-
         if (_draggedSegmentId.HasValue && _dragHasMoved)
         {
             TrySnapOnDrop(_draggedSegmentId.Value);
         }
 
+        CommitHistorySnapshot(_pendingDragSnapshot);
+
+        _pendingDragSnapshot = null;
         _draggedSegmentId = null;
         _draggedPlaced = null;
         ClearGhost();
@@ -464,6 +491,7 @@ internal sealed partial class TrackPlanPage
 
     private void TrySnapAndPlace(PlacedSegment placed, Guid? excludeSegmentId)
     {
+        var before = CaptureDocumentState();
         if (_snapEnabled)
         {
             var snap = FindBestSnap(placed, excludeSegmentId);
@@ -473,12 +501,14 @@ internal sealed partial class TrackPlanPage
                 _plan.AddSegment(newPlaced);
                 _plan.AddConnection(newPlaced.Segment.No, sourcePort, targetSegmentId, targetPort);
                 UpdateStats();
+                CommitHistorySnapshot(before);
                 return;
             }
         }
 
         _plan.AddSegment(placed);
         UpdateStats();
+        CommitHistorySnapshot(before);
     }
 
     private void TrySnapOnDrop(Guid movedSegmentId)
@@ -553,7 +583,7 @@ internal sealed partial class TrackPlanPage
     {
         ClearPortHighlights();
 
-        if (!_snapEnabled || _ghostShape == null || _draggedPlaced == null)
+        if (!_snapEnabled || !_showPortHover || _ghostShape == null || _draggedPlaced == null)
             return;
 
         var (offsetX, offsetY) = GetDrawOffset();
@@ -849,6 +879,9 @@ internal sealed partial class TrackPlanPage
         var resourceCreator = ds;
         var (offsetX, offsetY) = GetDrawOffset();
 
+        if (_showGrid)
+            DrawGrid(ds, offsetX, offsetY);
+
         // Stroke-Style wie SegmentPlanPathBuilder: Round Join & Caps
         using var strokeStyle = new CanvasStrokeStyle();
         strokeStyle.LineJoin = CanvasLineJoin.Round;
@@ -856,8 +889,8 @@ internal sealed partial class TrackPlanPage
         strokeStyle.EndCap = CanvasCapStyle.Round;
 
         // Theme-aware track colors (Fluent Design: from resources for Dark/Light)
-        var strokeBrush = ResolveTrackPlanStrokeBrush();
-        var selectedBrush = ResolveTrackPlanStrokeSelectedBrush();
+        var strokeBrush = ApplyOpacity(ResolveTrackPlanStrokeBrush(), _trackOpacity);
+        var selectedBrush = ApplyOpacity(ResolveTrackPlanStrokeSelectedBrush(), _trackOpacity);
 
         foreach (var placed in _plan.Segments)
         {
@@ -908,7 +941,9 @@ internal sealed partial class TrackPlanPage
     {
         if (_selectedSegmentId == null)
             return;
+        var before = CaptureDocumentState();
         _plan.DisconnectSegmentFromGroup(_selectedSegmentId.Value);
+        CommitHistorySnapshot(before);
     }
 
     private void UpdateSelectionInfo()
@@ -918,6 +953,7 @@ internal sealed partial class TrackPlanPage
             SelectionInfoText.Text = "No selection";
             DisconnectButton.IsEnabled = false;
             UpdateRotationHandle(null);
+            UpdateCommandStates();
             return;
         }
 
@@ -927,6 +963,7 @@ internal sealed partial class TrackPlanPage
             SelectionInfoText.Text = "No selection";
             DisconnectButton.IsEnabled = false;
             UpdateRotationHandle(null);
+            UpdateCommandStates();
             return;
         }
 
@@ -938,6 +975,7 @@ internal sealed partial class TrackPlanPage
         SelectionInfoText.Text = $"{code}\n{displayName}\n\nPosition: X={placed.X:F0} mm, Y={placed.Y:F0} mm\nRotation: {placed.RotationDegrees:F0}°\nVerbindungen: {connCount}";
         DisconnectButton.IsEnabled = connCount > 0;
         UpdateRotationHandle(connCount == 0 ? placed : null);
+        UpdateCommandStates();
     }
 
     private const double RotationHandleOffsetMm = 35.0; // Abstand unterhalb des Drehpunkts (wie AnyRail)
@@ -1012,6 +1050,7 @@ internal sealed partial class TrackPlanPage
         var dy = ptr.Position.Y - pivotDisplayY;
         _rotationDragStartAngleRad = Math.Atan2(dy, dx);
         _rotationDragStartSegmentDegrees = placed.RotationDegrees;
+        _pendingRotationSnapshot = CaptureDocumentState();
 
         OverlayCanvas.PointerMoved += RotationHandle_PointerMoved;
         OverlayCanvas.PointerReleased += RotationHandle_PointerReleased;
@@ -1047,6 +1086,8 @@ internal sealed partial class TrackPlanPage
         OverlayCanvas.PointerMoved -= RotationHandle_PointerMoved;
         OverlayCanvas.PointerReleased -= RotationHandle_PointerReleased;
         OverlayCanvas.ReleasePointerCapture(e.Pointer);
+        CommitHistorySnapshot(_pendingRotationSnapshot);
+        _pendingRotationSnapshot = null;
         UpdateSelectionInfo();
     }
 

@@ -2,10 +2,10 @@
 
 namespace Moba.WinUI.Service;
 
+using Controls.Docking.Workspace;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using ViewModel;
 using Windows.Storage;
 
 /// <summary>
@@ -17,7 +17,7 @@ internal class DockingLayoutService
     #region Constants
 
     private const string LayoutFileName = "docking-layout.json";
-    private const int CurrentLayoutVersion = 1;
+    private const int CurrentLayoutVersion = 2;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -46,7 +46,7 @@ internal class DockingLayoutService
     /// <summary>
     /// Loads the last saved layout.
     /// </summary>
-    public async Task<DockingLayoutState?> LoadLastLayoutAsync()
+    public async Task<DockingWorkspaceState?> LoadLastLayoutAsync()
     {
         try
         {
@@ -55,7 +55,7 @@ internal class DockingLayoutService
                 return null;
 
             var json = await FileIO.ReadTextAsync(layoutFile);
-            var state = JsonSerializer.Deserialize<DockingLayoutState>(json, JsonOptions);
+            var state = JsonSerializer.Deserialize<DockingWorkspaceState>(json, JsonOptions);
 
             // Check version compatibility
             if (state?.Version != CurrentLayoutVersion)
@@ -73,27 +73,11 @@ internal class DockingLayoutService
     /// <summary>
     /// Saves the current layout.
     /// </summary>
-    public async Task SaveLayoutAsync(DockingPanelViewModel viewModel)
+    public async Task SaveLayoutAsync(DockingWorkspaceState state)
     {
         try
         {
-            var state = new DockingLayoutState
-            {
-                Version = CurrentLayoutVersion,
-                Timestamp = DateTime.UtcNow,
-                IsLeftPanelVisible = viewModel.IsLeftPanelVisible,
-                IsRightPanelVisible = viewModel.IsRightPanelVisible,
-                IsTopPanelVisible = viewModel.IsTopPanelVisible,
-                IsBottomPanelVisible = viewModel.IsBottomPanelVisible,
-                LeftPanelWidth = viewModel.LeftPanelWidth,
-                RightPanelWidth = viewModel.RightPanelWidth,
-                TopPanelHeight = viewModel.TopPanelHeight,
-                BottomPanelHeight = viewModel.BottomPanelHeight,
-                IsLeftPanelPinned = viewModel.IsLeftPanelPinned,
-                IsRightPanelPinned = viewModel.IsRightPanelPinned,
-                IsTopPanelPinned = viewModel.IsTopPanelPinned,
-                IsBottomPanelPinned = viewModel.IsBottomPanelPinned
-            };
+            state.Version = CurrentLayoutVersion;
 
             var layoutFile = await _localAppDataFolder.CreateFileAsync(
                 LayoutFileName,
@@ -106,27 +90,6 @@ internal class DockingLayoutService
         {
             _logger.LogWarning(ex, "Error saving layout");
         }
-    }
-
-    /// <summary>
-    /// Applies a saved layout to a ViewModel.
-    /// </summary>
-    public void ApplyLayoutState(DockingLayoutState state, DockingPanelViewModel viewModel)
-    {
-        viewModel.IsLeftPanelVisible = state.IsLeftPanelVisible;
-        viewModel.IsRightPanelVisible = state.IsRightPanelVisible;
-        viewModel.IsTopPanelVisible = state.IsTopPanelVisible;
-        viewModel.IsBottomPanelVisible = state.IsBottomPanelVisible;
-
-        viewModel.LeftPanelWidth = state.LeftPanelWidth;
-        viewModel.RightPanelWidth = state.RightPanelWidth;
-        viewModel.TopPanelHeight = state.TopPanelHeight;
-        viewModel.BottomPanelHeight = state.BottomPanelHeight;
-
-        viewModel.IsLeftPanelPinned = state.IsLeftPanelPinned;
-        viewModel.IsRightPanelPinned = state.IsRightPanelPinned;
-        viewModel.IsTopPanelPinned = state.IsTopPanelPinned;
-        viewModel.IsBottomPanelPinned = state.IsBottomPanelPinned;
     }
 
     /// <summary>
@@ -149,29 +112,4 @@ internal class DockingLayoutService
     }
 
     #endregion
-}
-
-/// <summary>
-/// Serializable representation of the DockingManager layout state.
-/// </summary>
-[JsonSourceGenerationOptions(WriteIndented = true)]
-internal class DockingLayoutState
-{
-    public int Version { get; set; }
-    public DateTime Timestamp { get; set; }
-
-    public bool IsLeftPanelVisible { get; set; }
-    public bool IsRightPanelVisible { get; set; }
-    public bool IsTopPanelVisible { get; set; }
-    public bool IsBottomPanelVisible { get; set; }
-
-    public double LeftPanelWidth { get; set; }
-    public double RightPanelWidth { get; set; }
-    public double TopPanelHeight { get; set; }
-    public double BottomPanelHeight { get; set; }
-
-    public bool IsLeftPanelPinned { get; set; }
-    public bool IsRightPanelPinned { get; set; }
-    public bool IsTopPanelPinned { get; set; }
-    public bool IsBottomPanelPinned { get; set; }
 }

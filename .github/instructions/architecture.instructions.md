@@ -9,7 +9,7 @@ applyTo: '**/*.cs'
 
 ## Layer Overview
 
-Presentation (WinUI/MAUI/Blazor) → SharedUI (ViewModels) → Domain/Backend/TrackPlan → External (Z21 UDP)
+Presentation (MOBAflow/MOBAsmart/MOBApi) → SharedUI (ViewModels) → Domain/Backend/TrackPlan → External (Z21 UDP)
 
 ## Projects
 
@@ -18,9 +18,9 @@ Presentation (WinUI/MAUI/Blazor) → SharedUI (ViewModels) → Domain/Backend/Tr
 | `Domain/` | Domain | POCOs: Solution, Journey, Workflow, Train |
 | `Backend/` | Service | Z21, WorkflowService, ActionExecutor |
 | `SharedUI/` | Presentation | Base ViewModels |
-| `WinUI/` | Platform | Windows Desktop |
-| `MAUI/` | Platform | Android Mobile |
-| `WebApp/` | Platform | Blazor Server |
+| `MOBAflow/` | Platform | Windows Desktop |
+| `MOBAsmart/` | Platform | Android Mobile |
+| `MOBApi/` | Platform | REST API host |
 | `TrackPlan*/` | Domain | Track models, geometry, editor |
 
 ## Key Interfaces
@@ -47,16 +47,16 @@ Z21 UDP → IZ21.FeedbackReceived → MainWindowViewModel → Journey.HandleFeed
 | Artifact | Location | Format |
 |----------|----------|--------|
 | Solution | User-selected | `.mobaflow` (JSON) |
-| Settings | `WinUI/appsettings.json` | JSON |
+| Settings | `MOBAflow/appsettings.json` | JSON |
 | Logs | `bin/Debug/logs/mobaflow-*.log` | Rolling text |
-| Plugins | `WinUI/bin/Debug/Plugins/` | DLL |
+| Plugins | `MOBAflow/bin/Debug/Plugins/` | DLL |
 | Track Libraries | `TrackLibrary.*/` projects | Compiled |
 
 ---
 
 ## Dependency Injection
 
-All services registered in `App.xaml.cs` (WinUI) / `MauiProgram.cs` (MAUI):
+All services registered in `MOBAflow/App.xaml.cs` / `MOBAsmart/MauiProgram.cs`:
 
 ```csharp
 // Core services

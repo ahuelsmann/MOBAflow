@@ -8,14 +8,14 @@ variables:
   buildPlatform: 'x64'
   
   # Solution paths
-  solution: '**/*.sln'
-  testProject: '**/Test.csproj'
+  solution: 'Moba.slnx'
+  testProject: 'Test/Test.csproj'
   
   # WinUI specific
-  winuiProject: '**/WinUI.csproj'
+  winuiProject: 'MOBAflow/MOBAflow.csproj'
   
   # MAUI specific  
-  mauiProject: '**/MAUI.csproj'
+  mauiProject: 'MOBAsmart/MOBAsmart.csproj'
   
-  # Blazor/WebApp specific
-  webAppProject: '**/WebApp.csproj'
+  # REST API specific
+  apiProject: 'MOBApi/MOBApi.csproj'

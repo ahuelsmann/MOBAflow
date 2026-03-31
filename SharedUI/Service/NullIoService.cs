@@ -74,6 +74,11 @@ public class NullIoService : IIoService
         return Task.FromResult<string?>(null);
     }
 
+    public Task<string?> SaveJsonFileAsync(string suggestedFileName)
+    {
+        return Task.FromResult<string?>(null);
+    }
+
     /// <summary>
     /// Always returns <c>null</c> because browsing for XML files is not supported on this platform.
     /// </summary>

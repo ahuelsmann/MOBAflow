@@ -17,6 +17,27 @@
             DefaultLabelPosition="Right"
             OverflowButtonVisibility="Auto">
             <AppBarButton
+                x:Name="LoadTrackPlanButton"
+                Icon="OpenFile"
+                Label="Load" />
+            <AppBarButton
+                x:Name="SaveTrackPlanButton"
+                Icon="SaveLocal"
+                Label="Save" />
+            <AppBarButton
+                x:Name="SaveTrackPlanAsButton"
+                Icon="Save"
+                Label="Save As" />
+            <AppBarButton
+                x:Name="UndoButton"
+                Icon="Undo"
+                Label="Undo" />
+            <AppBarButton
+                x:Name="RedoButton"
+                Icon="Redo"
+                Label="Redo" />
+            <AppBarSeparator />
+            <AppBarButton
                 x:Name="LoadTestPlanButton"
                 Icon="Document"
                 Label="Load Test Plan"
@@ -25,10 +46,19 @@
                 x:Name="OpenSvgInBrowserButton"
                 Icon="Globe"
                 Label="SVG im Browser"
-                ToolTipService.ToolTip="Exportiert dasselbe Test-Plan als SVG und öffnet im Browser (Vergleich)" />
-            <AppBarButton Icon="Accept" Label="Validate" />
-            <AppBarButton Icon="ZoomIn" Label="Fit" />
-            <AppBarButton Icon="Zoom" Label="100%" />
+                ToolTipService.ToolTip="Exportiert den aktuellen Gleisplan als SVG und öffnet ihn im Browser" />
+            <AppBarButton
+                x:Name="ValidateButton"
+                Icon="Accept"
+                Label="Validate" />
+            <AppBarButton
+                x:Name="FitButton"
+                Icon="ZoomIn"
+                Label="Fit" />
+            <AppBarButton
+                x:Name="ResetZoomButton"
+                Icon="Zoom"
+                Label="100%" />
             <AppBarSeparator />
             <AppBarToggleButton
                 x:Name="SnapToggle"
@@ -41,35 +71,54 @@
                 Label="Trennen"
                 ToolTipService.ToolTip="Verbindungen des ausgewählten Gleises lösen (R)" />
             <AppBarToggleButton
+                x:Name="GridToggle"
                 Icon="ViewAll"
                 IsChecked="False"
                 Label="Grid" />
-            <AppBarToggleButton IsChecked="True" Label="Rulers">
+            <AppBarToggleButton
+                x:Name="RulersToggle"
+                IsChecked="False"
+                IsEnabled="False"
+                Label="Rulers">
                 <AppBarToggleButton.Icon>
                     <SymbolIcon Symbol="Trim" />
                 </AppBarToggleButton.Icon>
             </AppBarToggleButton>
-            <AppBarToggleButton IsChecked="False" Label="Movable Ruler">
+            <AppBarToggleButton
+                x:Name="MovableRulerToggle"
+                IsChecked="False"
+                IsEnabled="False"
+                Label="Movable Ruler">
                 <AppBarToggleButton.Icon>
                     <SymbolIcon Symbol="Rotate" />
                 </AppBarToggleButton.Icon>
             </AppBarToggleButton>
-            <AppBarToggleButton IsChecked="True" Label="Port Hover">
+            <AppBarToggleButton
+                x:Name="PortHoverToggle"
+                IsChecked="True"
+                Label="Port Hover">
                 <AppBarToggleButton.Icon>
                     <SymbolIcon Symbol="Highlight" />
                 </AppBarToggleButton.Icon>
             </AppBarToggleButton>
-            <AppBarButton Label="Rotate ←">
+            <AppBarButton
+                x:Name="RotateLeftButton"
+                Label="Rotate ←">
                 <AppBarButton.Icon>
                     <SymbolIcon Symbol="Back" />
                 </AppBarButton.Icon>
             </AppBarButton>
-            <AppBarButton Label="Rotate →">
+            <AppBarButton
+                x:Name="RotateRightButton"
+                Label="Rotate →">
                 <AppBarButton.Icon>
                     <SymbolIcon Symbol="Forward" />
                 </AppBarButton.Icon>
             </AppBarButton>
-            <AppBarButton Label="Reset Ruler">
+            <AppBarButton
+                x:Name="ResetRulerButton"
+                IsEnabled="False"
+                Label="Reset Ruler">
                 <AppBarButton.Icon>
                     <SymbolIcon Symbol="Home" />
                 </AppBarButton.Icon>
@@ -78,6 +127,7 @@
             <AppBarButton Label="Opacity:" />
             <AppBarButton>
                 <Slider
+                    x:Name="TrackOpacitySlider"
                     Width="120"
                     Margin="8,0"
                     Maximum="1.0"

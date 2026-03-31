@@ -16,24 +16,42 @@ internal sealed partial class DockingPage
         InitializeComponent();
         _viewModel = viewModel;
         DataContext = viewModel;
-        DockManager.TabDockedToSide += OnTabDockedToSide;
+        DockManager.DocumentTabDockRequested += OnDocumentTabDockRequested;
+        DockManager.DockPanelDockRequested += OnDockPanelDockRequested;
+        DockManager.DockPanelStateChanged += OnDockPanelStateChanged;
 
         Loaded += OnPageLoaded;
+        Unloaded += OnPageUnloaded;
     }
 
-    private void OnPageLoaded(object sender, RoutedEventArgs e)
+    private async void OnPageLoaded(object sender, RoutedEventArgs e)
     {
         if (_isInitialized)
         {
             return;
         }
 
+        await _viewModel.InitializeAsync();
         _isInitialized = true;
     }
 
-    private void OnTabDockedToSide(object? sender, DocumentTabDockedEventArgs e)
+    private async void OnPageUnloaded(object sender, RoutedEventArgs e)
     {
-        _viewModel.HandleDockedDocument(e.Document);
+        await _viewModel.PersistAsync();
     }
 
+    private void OnDocumentTabDockRequested(object? sender, DocumentTabDockRequestedEventArgs e)
+    {
+        _viewModel.HandleDocumentDockRequested(e.Document, e.Position);
+    }
+
+    private void OnDockPanelDockRequested(object? sender, DockPanelDockRequestedEventArgs e)
+    {
+        _viewModel.HandlePanelDockRequested(e.PanelId, e.Position);
+    }
+
+    private void OnDockPanelStateChanged(object? sender, DockPanelStateChangedEventArgs e)
+    {
+        _viewModel.HandlePanelStateChanged(e.PanelId, e.IsExpanded);
+    }
 }

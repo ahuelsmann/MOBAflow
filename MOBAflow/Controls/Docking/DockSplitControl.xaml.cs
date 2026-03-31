@@ -18,6 +18,8 @@ internal sealed class DockSplitControl : UserControl
     private readonly Grid _verticalSplitterLine;
     private readonly Grid _horizontalSplitterLine;
 
+    public event EventHandler<DockPanelExpansionChangedEventArgs>? PanelExpansionChanged;
+
     public static readonly DependencyProperty SplitNodeProperty =
         DependencyProperty.Register(
             nameof(SplitNode),
@@ -34,6 +36,7 @@ internal sealed class DockSplitControl : UserControl
         };
 
         _firstPresenter = new DockNodePresenter();
+        _firstPresenter.PanelExpansionChanged += OnChildPanelExpansionChanged;
         _verticalSplitterLine = new Grid
         {
             Width = 1,
@@ -61,6 +64,7 @@ internal sealed class DockSplitControl : UserControl
             }
         };
         _secondPresenter = new DockNodePresenter();
+        _secondPresenter.PanelExpansionChanged += OnChildPanelExpansionChanged;
 
         _layoutGrid.Children.Add(_firstPresenter);
         _layoutGrid.Children.Add(_splitter);
@@ -122,6 +126,11 @@ internal sealed class DockSplitControl : UserControl
     {
         UpdateLayoutGrid();
         UpdateNodeBindings();
+    }
+
+    private void OnChildPanelExpansionChanged(object? sender, DockPanelExpansionChangedEventArgs e)
+    {
+        PanelExpansionChanged?.Invoke(this, e);
     }
 
     private void UpdateNodeBindings()

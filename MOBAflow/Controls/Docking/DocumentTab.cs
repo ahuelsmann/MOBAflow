@@ -11,6 +11,8 @@ using System.Runtime.CompilerServices;
 /// </summary>
 internal class DocumentTab : IEquatable<DocumentTab>
 {
+    public string DocumentId { get; set; } = string.Empty;
+
     public string Title { get; set; } = "Untitled";
     public string IconGlyph { get; set; } = "\uE71E";
     public UIElement? Content { get; set; }

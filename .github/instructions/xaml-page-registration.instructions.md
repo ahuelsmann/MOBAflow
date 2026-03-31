@@ -43,7 +43,7 @@ Only use `<Page Remove="..."/>` for intentional exclusions (like temporary files
 
 ### 1. Check csproj for Page Remove entries:
 ```powershell
-Select-String -Path "WinUI\WinUI.csproj" -Pattern "Page Remove" -SimpleMatch
+Select-String -Path "MOBAflow\MOBAflow.csproj" -Pattern "Page Remove" -SimpleMatch
 ```
 
 ### 2. If found, remove the exclusion entries for your page:
@@ -55,8 +55,8 @@ Select-String -Path "WinUI\WinUI.csproj" -Pattern "Page Remove" -SimpleMatch
 
 ### 3. Clean and rebuild:
 ```powershell
-dotnet clean WinUI\WinUI.csproj
-dotnet build WinUI\WinUI.csproj
+dotnet clean MOBAflow\MOBAflow.csproj
+dotnet build MOBAflow\MOBAflow.csproj
 ```
 
 ## Prevention
@@ -71,7 +71,7 @@ When using file tools to recreate XAML:
 
 When recreating or modifying XAML files:
 
-- [ ] Check `WinUI\WinUI.csproj` for `<Page Remove="..."/>` entries
+- [ ] Check `MOBAflow\MOBAflow.csproj` for `<Page Remove="..."/>` entries
 - [ ] Remove any unintended exclusions for the page being created
 - [ ] Run `dotnet build` to verify XAML compilation
 - [ ] Confirm `InitializeComponent()` compiles without errors

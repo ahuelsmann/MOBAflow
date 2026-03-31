@@ -43,9 +43,10 @@ appsettings.Development.json
 appsettings.*.json
 *.user.secrets
 
-# ABER: WinUI/appsettings.json und Schema dürfen ins Repo (keine Secrets)
-!WinUI/appsettings.json
-!WinUI/appsettings.schema.json
+# ABER: MOBAflow/appsettings.json, Schema und Development-Template dürfen ins Repo (keine Secrets)
+!MOBAflow/appsettings.json
+!MOBAflow/appsettings.schema.json
+!MOBAflow/appsettings.Development.template.json
 
 # Azure App Configuration Secrets
 azure-appconfig-connection.txt

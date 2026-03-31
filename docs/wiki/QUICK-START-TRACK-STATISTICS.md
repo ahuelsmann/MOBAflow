@@ -12,10 +12,10 @@ MOBAflow's **Track Statistics** feature tracks lap counts and timing for each fe
 
 ### **Step 1: Configure Number of Feedback Points**
 
-Edit the `appsettings.json` file in your platform:
+Edit the `appsettings.json` file in MOBAflow, or use the settings UI of your app:
 
-#### **WinUI (Desktop)**
-File: `WinUI/appsettings.json`
+#### **MOBAflow (Desktop)**
+File: `MOBAflow/appsettings.json`
 
 ```json
 "Counter": {
@@ -26,22 +26,8 @@ File: `WinUI/appsettings.json`
 }
 ```
 
-#### **MAUI (Mobile)**
-File: `MAUI/appsettings.json` (if exists, otherwise use UI settings)
-
-#### **WebApp (Browser)**
-File: `WebApp/appsettings.json`
-
-```json
-"AppSettings": {
-  "Counter": {
-    "CountOfFeedbackPoints": 3,  // Change this to match your layout
-    "TargetLapCount": 10,
-    "UseTimerFilter": true,
-    "TimerIntervalSeconds": 10.0
-  }
-}
-```
+#### **MOBAsmart (Mobile)**
+These values are stored in the app settings/preferences. Use the settings UI instead of editing a repo file.
 
 ### **Step 2: Understand InPort Mapping**
 
@@ -58,7 +44,7 @@ MOBAflow uses a simple 1:1 mapping:
 
 ### **Step 3: Connect to Z21 & Start Monitoring**
 
-1. Start MOBAflow (WinUI/MAUI/WebApp)
+1. Start MOBAflow
 2. Connect to your Z21 digital command station
 3. Navigate to **Overview** page
 4. **Track Statistics** section will show:
@@ -70,7 +56,7 @@ MOBAflow uses a simple 1:1 mapping:
 
 ---
 
-## 🎛️ Change Settings via UI (WinUI)
+## 🎛️ Change Settings via UI (MOBAflow Desktop)
 
 Instead of editing JSON files, you can use the **Settings Page**:
 
@@ -153,5 +139,5 @@ Once you're comfortable with Track Statistics, explore:
 ## 📖 Related Documentation
 
 - [Architecture Overview](../ARCHITECTURE.md)
-- [Solution File Format](../../WinUI/solution.json)
+- [Solution File Format & Validation](../JSON-VALIDATION.md)
 - [Z21 Connection Guide](../../README.md)

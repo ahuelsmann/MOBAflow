@@ -43,10 +43,11 @@ internal sealed partial class DockingManager
     private double _topExpandedHeight;
     private double _bottomExpandedHeight;
 
-    /// <summary>
-    /// Raised when a DocumentTab is docked to a side via drag & drop.
-    /// </summary>
-    public event EventHandler<DocumentTabDockedEventArgs>? TabDockedToSide;
+    public event EventHandler<DocumentTabDockRequestedEventArgs>? DocumentTabDockRequested;
+
+    public event EventHandler<DockPanelDockRequestedEventArgs>? DockPanelDockRequested;
+
+    public event EventHandler<DockPanelStateChangedEventArgs>? DockPanelStateChanged;
 
     // Auto-Hide state
     private readonly Dictionary<DockPosition, List<AutoHideEntry>> _autoHideEntries = new()
@@ -250,6 +251,10 @@ internal sealed partial class DockingManager
     public DockingManager()
     {
         InitializeComponent();
+        LeftNodePresenter.PanelExpansionChanged += OnRootPanelExpansionChanged;
+        RightNodePresenter.PanelExpansionChanged += OnRootPanelExpansionChanged;
+        TopNodePresenter.PanelExpansionChanged += OnRootPanelExpansionChanged;
+        BottomNodePresenter.PanelExpansionChanged += OnRootPanelExpansionChanged;
         Loaded += OnLoaded;
     }
 
@@ -261,6 +266,23 @@ internal sealed partial class DockingManager
         _bottomExpandedHeight = BottomPanelHeight;
 
         SyncLayoutModesToGroups();
+    }
+
+    private void OnRootPanelExpansionChanged(object? sender, DockPanelExpansionChangedEventArgs e)
+    {
+        if (e.Panel is null)
+        {
+            return;
+        }
+
+        UpdateSideDimension(e.Panel.DockPosition);
+
+        if (string.IsNullOrWhiteSpace(e.Panel.PanelId))
+        {
+            return;
+        }
+
+        DockPanelStateChanged?.Invoke(this, new DockPanelStateChangedEventArgs(e.Panel.PanelId, e.Panel.IsExpanded));
     }
 
     #region Properties
@@ -767,7 +789,10 @@ internal sealed partial class DockingManager
 
         if (TryGetDraggedPanel(e, out var panel) && panel is not null)
         {
-            DockPanel(panel, controlsPosition);
+            if (!TryRaiseDockPanelRequest(panel, controlsPosition))
+            {
+                DockPanel(panel, controlsPosition);
+            }
         }
         else if (TryGetDraggedDocumentTab(e, out var tab) && tab is not null)
         {
@@ -852,19 +877,39 @@ internal sealed partial class DockingManager
     /// <summary>
     /// Docks a DocumentTab as a DockPanel at the specified position.
     /// </summary>
+    private bool TryRaiseDockPanelRequest(DockPanel panel, DockPosition position)
+    {
+        ArgumentNullException.ThrowIfNull(panel);
+
+        if (position == DockPosition.Center
+            || string.IsNullOrWhiteSpace(panel.PanelId)
+            || DockPanelDockRequested is null)
+        {
+            return false;
+        }
+
+        DockPanelDockRequested.Invoke(this, new DockPanelDockRequestedEventArgs(panel.PanelId, position));
+        return true;
+    }
+
     private void DockDocumentTab(DocumentTab tab, DockPosition position)
     {
         ArgumentNullException.ThrowIfNull(tab);
-
-        TabDockedToSide?.Invoke(this, new DocumentTabDockedEventArgs(tab, position));
 
         if (position == DockPosition.Center)
         {
             return;
         }
 
+        if (DocumentTabDockRequested is not null)
+        {
+            DocumentTabDockRequested.Invoke(this, new DocumentTabDockRequestedEventArgs(tab, position));
+            return;
+        }
+
         var wrapper = new DockPanel
         {
+            PanelId = tab.DocumentId,
             PanelTitle = tab.Title,
             PanelIconGlyph = tab.IconGlyph,
             PanelContent = tab.Content
@@ -1181,13 +1226,22 @@ internal sealed partial class DockingManager
 /// </summary>
 internal sealed record AutoHideEntry(DockPanel Panel, DockPosition Side);
 
-/// <summary>
-/// EventArgs for a DocumentTab docked to a side.
-/// </summary>
-internal sealed class DocumentTabDockedEventArgs(DocumentTab document, DockPosition position) : EventArgs
+internal sealed class DocumentTabDockRequestedEventArgs(DocumentTab document, DockPosition position) : EventArgs
 {
     public DocumentTab Document { get; } = document;
     public DockPosition Position { get; } = position;
+}
+
+internal sealed class DockPanelDockRequestedEventArgs(string panelId, DockPosition position) : EventArgs
+{
+    public string PanelId { get; } = panelId;
+    public DockPosition Position { get; } = position;
+}
+
+internal sealed class DockPanelStateChangedEventArgs(string panelId, bool isExpanded) : EventArgs
+{
+    public string PanelId { get; } = panelId;
+    public bool IsExpanded { get; } = isExpanded;
 }
 
 /// <summary>

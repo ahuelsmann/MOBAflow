@@ -93,7 +93,13 @@
     <!-- JSON Schema Files -->
     <ItemGroup>
         <Content Include="appsettings.schema.json" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="track-plan.json">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
         <Content Include="Build\Schemas\*.schema.json" CopyToOutputDirectory="PreserveNewest" Link="Build\Schemas\%(Filename)%(Extension)" />
+    </ItemGroup>
+    <ItemGroup>
+      <None Remove="track-plan.json" />
     </ItemGroup>
     <!-- Import custom build targets for configuration validation -->
     <Import Project="Build\ValidateJsonConfiguration.targets" />

@@ -85,6 +85,7 @@
                     Drop="OnDockAreaDrop"
                     Visibility="{x:Bind IsLeftPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <docking:DockNodePresenter
+                        x:Name="LeftNodePresenter"
                         behavior:DockingDropBehavior.DockPosition="Left"
                         AllowDrop="True"
                         DragLeave="OnDockAreaDragLeave"
@@ -139,6 +140,7 @@
                     Background="{ThemeResource LayerFillColorDefaultBrush}"
                     Visibility="{x:Bind IsTopPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <docking:DockNodePresenter
+                        x:Name="TopNodePresenter"
                         Node="{x:Bind TopNode, Mode=OneWay}" />
                 </Grid>
 
@@ -216,6 +218,7 @@
                         Drop="OnDockAreaDrop"
                         Visibility="{x:Bind IsBottomPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                         <docking:DockNodePresenter
+                            x:Name="BottomNodePresenter"
                             behavior:DockingDropBehavior.DockPosition="Bottom"
                             AllowDrop="True"
                             DragLeave="OnDockAreaDragLeave"
@@ -268,6 +271,7 @@
                     Drop="OnDockAreaDrop"
                     Visibility="{x:Bind IsRightPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <docking:DockNodePresenter
+                        x:Name="RightNodePresenter"
                         behavior:DockingDropBehavior.DockPosition="Right"
                         AllowDrop="True"
                         DragLeave="OnDockAreaDragLeave"

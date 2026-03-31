@@ -451,23 +451,19 @@ When writing tests:
 
 ```
 Test/
+├── Analysis/               # Analysis helpers / experiments
 ├── Backend/                # Backend logic tests
-│   ├── Z21Tests.cs
-│   ├── JourneyManagerTests.cs
-│   └── WorkflowTests.cs
-├── SharedUI/               # ViewModel tests
-│   ├── JourneyViewModelTests.cs
-│   └── MainWindowViewModelTests.cs
-├── WinUI/                  # Platform-specific tests
-│   └── WinUiDiTests.cs
-├── MAUI/                   # MAUI-specific tests
-│   └── MauiDiTests.cs
-├── WebApp/                 # Blazor tests
-│   └── WebAppDiTests.cs
+├── Common/                 # Common infrastructure tests
+├── Domain/                 # Domain model tests
+├── Helpers/                # Test helpers
+├── Integration/            # Integration-style tests
 ├── Mocks/                  # Test doubles
-│   └── FakeUdpClientWrapper.cs
+├── SharedUI/               # ViewModel tests
+├── Sound/                  # Audio / speech tests
+├── TestBase/               # Base classes
 ├── TestData/               # Shared test data
-│   └── Z21Packets.cs
-└── TestBase/               # Base classes
-    └── ViewModelTestBase.cs
+├── TrackPlanRenderer/      # Renderer tests
+├── Unit/                   # Cross-cutting unit tests
+├── WinUI/                  # Platform-specific tests
+└── Z21Simulator/           # Z21 simulator support
 ```

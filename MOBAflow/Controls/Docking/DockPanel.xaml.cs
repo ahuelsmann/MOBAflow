@@ -28,6 +28,8 @@ internal sealed partial class DockPanel
 {
     private const string DockPanelDataKey = "DockPanel";
 
+    public string PanelId { get; set; } = string.Empty;
+
     /// <summary>
     /// Raised when the expand/collapse state changes.
     /// </summary>

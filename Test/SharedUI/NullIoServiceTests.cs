@@ -70,6 +70,14 @@ internal class NullIoServiceTests
     }
 
     [Test]
+    public async Task SaveJsonFileAsync_ReturnsNull()
+    {
+        var result = await _service.SaveJsonFileAsync("track-plan.json");
+
+        Assert.That(result, Is.Null);
+    }
+
+    [Test]
     public async Task BrowseForXmlFileAsync_ReturnsNull()
     {
         var result = await _service.BrowseForXmlFileAsync();

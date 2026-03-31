@@ -12,21 +12,21 @@ Benutzer-Dokumentation findest du im Ordner `docs/wiki/`.
 git clone https://github.com/ahuelsmann/MOBAflow.git
 cd MOBAflow
 
-dotnet restore
-dotnet build
+dotnet restore MOBAflow/MOBAflow.csproj
+dotnet restore MOBApi/MOBApi.csproj
+dotnet build MOBAflow/MOBAflow.csproj
 ```
 
 ### Tests ausführen
 
 ```bash
-dotnet test
+dotnet test Test/Test.csproj
 ```
 
-Falls einzelne Bereiche betroffen sind, kannst du gezielt testen, z. B.:
+Der Großteil der Unit-Tests ist im zentralen Testprojekt gebündelt:
 
 ```bash
-dotnet test Test/Domain.Tests.csproj
-dotnet test Backend/Backend.Tests.csproj
+dotnet test Test/Test.csproj
 ```
 
 ## 2. Projektübersicht & wichtige Doku
@@ -53,7 +53,7 @@ Bitte lies mindestens `README.md` und `docs/ARCHITECTURE.md`, bevor du größere
   1. Repository forken
   2. Feature-Branch anlegen (z. B. `feat/...`, `fix/...`)
   3. Änderungen inklusive Tests implementieren
-  4. `dotnet build` und `dotnet test` lokal ausführen
+  4. Relevante Projekt-Builds und `dotnet test Test/Test.csproj` lokal ausführen
   5. Relevante Doku aktualisieren (README / Wiki / docs)
   6. Pull Request gegen `main` eröffnen
 
@@ -70,7 +70,7 @@ Die vollständigen Regeln stehen in:
 Kurz zusammengefasst:
 
 - **Architektur**
-  - Clean Architecture einhalten (`Domain` → `Backend/Common` → `SharedUI` → `WinUI/MAUI/WebApp`)
+  - Clean Architecture einhalten (`Domain` → `Backend/Common` → `SharedUI` → `MOBAflow/MOBAsmart/MOBApi`)
   - MVVM mit `CommunityToolkit.Mvvm` (`[ObservableProperty]`, `[RelayCommand]`)
   - Nur Konstruktor-Injektion, kein Service Locator
 

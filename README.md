@@ -43,7 +43,7 @@
 > 📚 **Need Help?** Check out our comprehensive [**Wiki Documentation**](docs/wiki/INDEX.md)  
 > - [WinUI User Guide](docs/wiki/MOBAFLOW-USER-GUIDE.md) – Learn how to use MOBAflow  
 > - [Azure Speech Setup](docs/wiki/AZURE-SPEECH-SETUP.md) – Configure text-to-speech  
-> - [Plugin Development](docs/wiki/PLUGIN-DEVELOPMENT.md) – Create custom plugins  
+> - [Installation Guide](docs/wiki/INSTALLATION.md) – Set up MOBAflow, MOBApi and MOBAsmart
 
 ---
 

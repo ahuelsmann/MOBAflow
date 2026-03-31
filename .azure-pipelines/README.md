@@ -71,4 +71,4 @@ Reusable test template with parameters:
 - [ ] `ci-main.yml` - Continuous Integration on main branch
 - [ ] `release.yml` - Release pipeline with MSIX packaging
 - [ ] `build-maui.yml` - MAUI Android build
-- [ ] `build-webapp.yml` - Blazor WebApp build and deploy
+- [ ] `build-mobapi.yml` - MOBApi build and deploy

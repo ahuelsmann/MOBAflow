@@ -368,12 +368,12 @@ public OverviewPage(MainWindowViewModel viewModel) { ViewModel = viewModel; }
 
 ---
 
-## Cross-Platform Consistency (WinUI + MAUI + WebApp)
+## Cross-Platform Consistency (MOBAflow + MOBAsmart)
 
-Both platforms must register core services identically:
+Both UI hosts must register core services identically:
 
 ```csharp
-// WinUI/App.xaml.cs
+// MOBAflow/App.xaml.cs
 private static IServiceProvider ConfigureServices()
 {
     var services = new ServiceCollection();
@@ -381,7 +381,7 @@ private static IServiceProvider ConfigureServices()
     services.AddMobaBackendServices();  // ← Shared across platforms
 }
 
-// MAUI/MauiProgram.cs
+// MOBAsmart/MauiProgram.cs
 public static MauiApp CreateMauiApp()
 {
     var builder = MauiApp.CreateBuilder();
@@ -393,8 +393,8 @@ public static MauiApp CreateMauiApp()
 
 ## Reference Examples
 
-- **Standard Page:** `WinUI/View/OverviewPage.xaml.cs` - Simple MainWindowVM
-- **Custom Page:** `WinUI/View/SignalBoxPage.xaml.cs` - With ISkinProvider factory
+- **Standard Page:** `MOBAflow/View/OverviewPage.xaml.cs` - Simple MainWindowVM
+- **Custom Page:** `MOBAflow/View/SignalBoxPage.xaml.cs` - With ISkinProvider factory
 - **Simple ViewModel:** `SharedUI/ViewModel/LocomotiveViewModel.cs` - Wrapper model
 - **Complex ViewModel:** `SharedUI/ViewModel/MainWindowViewModel.cs` - Partial classes, multi-concern
 - **Specialized ViewModel:** `SharedUI/ViewModel/TrainControlViewModel.cs` - UI-state-specific

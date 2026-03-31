@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System.Collections.ObjectModel;
 using Windows.Graphics;
+using Windows.ApplicationModel.DataTransfer;
 
 /// <summary>
 /// Extended LayoutDocument with tab groups, binding support and window management.
@@ -13,6 +14,8 @@ using Windows.Graphics;
 /// </summary>
 internal sealed partial class LayoutDocument
 {
+    private const string DocumentTabDataKey = "DocumentTab";
+
     #region Dependency Properties
 
     /// <summary>
@@ -75,6 +78,7 @@ internal sealed partial class LayoutDocument
     {
         InitializeComponent();
         Documents = new ObservableCollection<DocumentTab>();
+        DocumentTabs.TabDragStarting += OnTabDragStarting;
     }
 
     #region Properties
@@ -131,6 +135,18 @@ internal sealed partial class LayoutDocument
         get => (bool)GetValue(AllowFloatingTabsProperty);
         set => SetValue(AllowFloatingTabsProperty, value);
     }
+
+    private void OnTabDragStarting(TabView sender, TabViewTabDragStartingEventArgs args)
+    {
+        if (args.Item is not DocumentTab document)
+        {
+            return;
+        }
+
+        args.Data.Properties[DocumentTabDataKey] = document;
+        args.Data.RequestedOperation = DataPackageOperation.Move;
+    }
+
     #endregion
 }
 

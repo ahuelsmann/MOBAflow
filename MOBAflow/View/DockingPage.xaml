@@ -18,15 +18,16 @@
             x:Name="DockManager"
             Grid.Row="1"
             BottomNode="{Binding BottomNode}"
-            BottomPanelHeight="180"
-            IsBottomPanelVisible="True"
-            IsLeftPanelVisible="True"
-            IsRightPanelVisible="True"
-            IsTopPanelVisible="False"
+            BottomPanelHeight="{Binding BottomPanelHeight, Mode=TwoWay}"
+            IsBottomPanelVisible="{Binding IsBottomPanelVisible, Mode=TwoWay}"
+            IsLeftPanelVisible="{Binding IsLeftPanelVisible, Mode=TwoWay}"
+            IsRightPanelVisible="{Binding IsRightPanelVisible, Mode=TwoWay}"
+            IsTopPanelVisible="{Binding IsTopPanelVisible, Mode=TwoWay}"
             LeftNode="{Binding LeftNode}"
-            LeftPanelWidth="240"
+            LeftPanelWidth="{Binding LeftPanelWidth, Mode=TwoWay}"
             RightNode="{Binding RightNode}"
-            RightPanelWidth="260"
+            RightPanelWidth="{Binding RightPanelWidth, Mode=TwoWay}"
+            TopPanelHeight="{Binding TopPanelHeight, Mode=TwoWay}"
             TopNode="{Binding TopNode}">
 
             <!--  Center: Document Tabs  -->

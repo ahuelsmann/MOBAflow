@@ -69,6 +69,13 @@ public interface IIoService
     Task<string?> BrowseForJsonFileAsync();
 
     /// <summary>
+    /// Opens a file save picker for saving a JSON file.
+    /// </summary>
+    /// <param name="suggestedFileName">Suggested file name</param>
+    /// <returns>The selected file path, or null if cancelled.</returns>
+    Task<string?> SaveJsonFileAsync(string suggestedFileName);
+
+    /// <summary>
     /// Opens a file picker to browse for an XML file (e.g., AnyRail layout).
     /// </summary>
     /// <returns>The selected file path, or null if cancelled.</returns>

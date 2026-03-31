@@ -80,7 +80,7 @@ MOBAflow supports **Azure Cognitive Services Speech** for high-quality Text-to-S
 
 ### 5. Configure MOBAflow
 
-Open `WinUI\appsettings.json` and enter the values:
+Open `MOBAflow\appsettings.json` and enter the values:
 
 ```json
 {
@@ -160,7 +160,7 @@ To permanently use Windows SAPI:
 ### Best Practices
 
 1. **Add appsettings.json to .gitignore**
-2. **Commit appsettings.template.json** without secrets
+2. **Commit `appsettings.Development.template.json`** without secrets
 3. **Use User Secrets** for local development:
    ```bash
    dotnet user-secrets set "Speech:Key" "your-key-here"

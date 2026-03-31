@@ -28,7 +28,7 @@
 
 1. **Read the installation guide:** Follow the step‑by‑step instructions in [`INSTALLATION.md`](INSTALLATION.md).  
 2. **Build the project:** Build MOBAflow with .NET 10 as described in the installation guide.  
-3. **Start the app:** Launch the WinUI application as described there (for example via `dotnet run --project WinUI`).  
+3. **Start the app:** Launch the desktop application as described there (for example via `dotnet run --project MOBAflow/MOBAflow.csproj`).
 
 ### 3. First launch
 

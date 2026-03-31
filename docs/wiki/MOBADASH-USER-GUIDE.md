@@ -1,14 +1,20 @@
-# MOBAdash (Blazor) – User Guide
+# MOBAdash – Historical Guide
 
-**Platform:** Web (browser-based)  
-**Status:** Production  
-**Last Updated:** 2025-12-27
+**Platform:** Historical reference
+**Status:** Archived – not buildable from the current repository
+**Last Updated:** 2026-03-31
 
 ---
 
 ## 📱 What is MOBAdash?
 
-**MOBAdash** is the web-based monitoring solution for your model railway layout. Access your Z21 from anywhere in your local network – from smartphone, tablet, or PC. No download, no installation – just open the browser and go.
+**MOBAdash** referred to an earlier web-based monitoring experiment. The current repository does **not** contain a `WebApp`/Blazor host anymore.
+
+Use one of the current entry points instead:
+
+- `MOBAflow/MOBAflow.csproj` for the Windows desktop app
+- `MOBApi/MOBApi.csproj` for the REST/SignalR backend
+- `MOBAsmart/MOBAsmart.csproj` for the Android app
 
 ---
 
@@ -26,27 +32,17 @@
 - **JavaScript enabled**  
 - **Network access** to the server  
 
-### 2. Starting the server
+### 2. Current repository status
 
-#### Option 1: Visual Studio
-```bash
-1. Open solution (MOBAflow.sln)
-2. Set WebApp as startup project
-3. Press F5
-4. Browser will open http://localhost:5000 automatically
-```
+This document is retained for historical context only.
 
-#### Option 2: Command line
-```bash
-cd MOBAflow/WebApp
-dotnet run
-```
+There is no `WebApp` or `WebApp.csproj` in the current repository.
 
-#### Option 3: Published build
-```bash
-cd MOBAflow/WebApp/bin/Release/net10.0/publish
-dotnet WebApp.dll --urls "http://0.0.0.0:5000"
-```
+For current setup and run instructions, use these documents instead:
+
+- [`INSTALLATION.md`](INSTALLATION.md)
+- [`MOBAFLOW-USER-GUIDE.md`](MOBAFLOW-USER-GUIDE.md)
+- [`MOBASMART-USER-GUIDE.md`](MOBASMART-USER-GUIDE.md)
 
 ### 3. Accessing from other devices
 

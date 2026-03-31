@@ -11,6 +11,7 @@ using Common.Events;
 using Common.Extension;
 using Common.Navigation;
 using Common.Serilog;
+using Controls.Docking.Workspace;
 using Converter;
 using Domain;
 using Microsoft.Extensions.Configuration;
@@ -18,14 +19,14 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
+using Moba.SharedUI.Service;
+using Moba.SharedUI.ViewModel;
 using Serilog;
 using Serilog.Events;
 using Service;
 using SharedUI.Extensions;
 using SharedUI.Interface;
 using SharedUI.Shell;
-using Moba.SharedUI.Service;
-using Moba.SharedUI.ViewModel;
 using Sound;
 using System.Diagnostics;
 using TrackLibrary.PikoA;
@@ -190,6 +191,9 @@ public partial class App
 
         // Event Bus mit UI-Thread-Marshalling: alle Handler laufen auf dem UI-Thread
         services.AddEventBusWithUiDispatch();
+
+        services.AddSingleton<DockingWorkspaceService>();
+        services.AddSingleton<DockingLayoutService>();
 
         // Navigation infrastructure - discover and register pages
         // Pages (Auto-discovery + Custom DI)

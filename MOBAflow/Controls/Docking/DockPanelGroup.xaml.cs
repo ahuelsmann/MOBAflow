@@ -35,7 +35,7 @@ internal sealed class DockPanelGroup : UserControl
     /// <summary>
     /// Raised when any panel expansion state changes.
     /// </summary>
-    public event EventHandler? PanelExpansionChanged;
+    public event EventHandler<DockPanelExpansionChangedEventArgs>? PanelExpansionChanged;
 
     public static readonly DependencyProperty ItemsSourceProperty =
         DependencyProperty.Register(
@@ -442,12 +442,12 @@ internal sealed class DockPanelGroup : UserControl
 
     private void OnPanelIsExpandedChanged(object? sender, EventArgs e)
     {
-        RaisePanelExpansionChanged();
+        RaisePanelExpansionChanged(sender as DockPanel);
     }
 
-    private void RaisePanelExpansionChanged()
+    private void RaisePanelExpansionChanged(DockPanel? panel = null)
     {
-        PanelExpansionChanged?.Invoke(this, EventArgs.Empty);
+        PanelExpansionChanged?.Invoke(this, new DockPanelExpansionChangedEventArgs(panel));
     }
 
     private static void OnDockPositionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -484,5 +484,15 @@ internal sealed class DockPanelGroup : UserControl
         }
 
         _panelTabView.TabItems.Clear();
+    }
+}
+
+internal sealed class DockPanelExpansionChangedEventArgs : EventArgs
+{
+    public DockPanel? Panel { get; }
+
+    public DockPanelExpansionChangedEventArgs(DockPanel? panel)
+    {
+        Panel = panel;
     }
 }
