@@ -31,6 +31,25 @@ public sealed partial class VehicleItemViewModel : ObservableObject
 
     public bool IsWagon => !IsLocomotive;
 
+    public bool IsReversed
+    {
+        get => Model.IsReversed;
+        set
+        {
+            if (Model.IsReversed != value)
+            {
+                Model.IsReversed = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(ScaleX));
+            }
+        }
+    }
+
+    public double ScaleX => IsReversed ? -1.0 : 1.0;
+
     [ObservableProperty]
     private IRelayCommand? _removeCommand;
+
+    [ObservableProperty]
+    private IRelayCommand? _toggleDirectionCommand;
 }

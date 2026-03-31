@@ -34,6 +34,8 @@ public sealed partial class TrainViewModel : ObservableObject, IViewModelWrapper
 
     public ObservableCollection<VehicleItemViewModel> VehicleItems { get; } = [];
 
+    public event EventHandler? VehiclesModified;
+
     public string Name
     {
         get => Model.Name;
@@ -96,10 +98,12 @@ public sealed partial class TrainViewModel : ObservableObject, IViewModelWrapper
         Model.Vehicles = [.. VehicleItems.Select(item => new Vehicle
         {
             VehicleId = item.VehicleId,
-            VehicleKind = item.VehicleKind
+            VehicleKind = item.VehicleKind,
+            IsReversed = item.IsReversed
         })];
 
         RefreshVehicleItems();
+        VehiclesModified?.Invoke(this, EventArgs.Empty);
     }
 
     public void RefreshVehicleItems()
@@ -111,12 +115,23 @@ public sealed partial class TrainViewModel : ObservableObject, IViewModelWrapper
         {
             var item = new VehicleItemViewModel(vehicle, ResolveDisplayName(vehicle))
             {
-                RemoveCommand = new RelayCommand(() => RemoveVehicle(vehicle))
+                RemoveCommand = new RelayCommand(() => RemoveVehicle(vehicle)),
+                ToggleDirectionCommand = new RelayCommand(() => ToggleDirection(vehicle))
             };
             VehicleItems.Add(item);
         }
 
         OnPropertyChanged(nameof(VehicleItems));
+    }
+
+    private void ToggleDirection(Vehicle vehicle)
+    {
+        var item = VehicleItems.FirstOrDefault(i => i.VehicleId == vehicle.VehicleId && i.VehicleKind == vehicle.VehicleKind);
+        if (item != null)
+        {
+            item.IsReversed = !item.IsReversed;
+            VehiclesModified?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     private void InsertVehicle(Vehicle vehicle, int index)
@@ -152,6 +167,7 @@ public sealed partial class TrainViewModel : ObservableObject, IViewModelWrapper
 
         Model.Vehicles.RemoveAt(index);
         RefreshVehicleItems();
+        VehiclesModified?.Invoke(this, EventArgs.Empty);
     }
 
     private void EnsureVehiclesInitialized()

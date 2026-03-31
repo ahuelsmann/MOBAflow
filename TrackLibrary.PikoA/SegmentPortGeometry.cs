@@ -62,9 +62,9 @@ public static class SegmentPortGeometry
     }
 
     /// <summary>Calculates all port world positions for a PlacedSegment. Default is entry port A.</summary>
-    public static IReadOnlyList<(string PortName, double X, double Y, double AngleDegrees)> GetAllPortWorldPositions(PlacedSegment placed, char entryPort = 'A')
+    public static IReadOnlyList<(string PortName, double X, double Y, double AngleDegrees)> GetAllPortWorldPositions(PlacedSegment placed)
     {
-        var ports = GetPortsWithEntry(placed.Segment, entryPort);
+        var ports = GetPorts(placed.Segment);
         var result = new List<(string, double, double, double)>();
         foreach (var p in ports)
         {
@@ -75,30 +75,47 @@ public static class SegmentPortGeometry
         return result;
     }
 
-    /// <summary>
-    /// Returns port infos where (0,0) is the entry port.
-    /// Important for curves: With entry B, Port B is at the origin; local coordinates match
-    /// the path geometry from SegmentLocalPathBuilder (curveDirection -1).
-    /// </summary>
-    public static IReadOnlyList<PortInfo> GetPortsWithEntry(Segment segment, char entryPort)
+    public static PortInfo? GetPort(Segment segment, string portName)
     {
-        return segment switch
-        {
-            Curved c => GetCurvedPortsWithEntry(c.ArcInDegree, c.RadiusInMm, entryPort),
-            Straight s => GetStraightPortsWithEntry(s.LengthInMm, entryPort),
-            WR wr => GetWrPorts(wr.LengthInMm, wr.ArcInDegree, wr.RadiusInMm),
-            WL wl => GetWlPorts(wl.LengthInMm, wl.ArcInDegree, wl.RadiusInMm),
-            BWL bwl => GetBwlPorts(bwl.ArcInDegreeR2, bwl.RadiusInMmR2, bwl.RadiusInMmR3),
-            BWR bwr => GetBwrPorts(bwr.ArcInDegreeR2, bwr.RadiusInMmR2, bwr.RadiusInMmR3),
-            BWLR3 b => GetBwlr3Ports(b.RadiusInMmR3),
-            BWRR3 b => GetBwrr3Ports(b.RadiusInMmR3),
-            W3 w3 => GetW3Ports(w3.LengthInMm, w3.ArcInDegree, w3.RadiusInMm),
-            WY wy => GetWyPorts(wy.ArcInDegree, wy.RadiusInMm),
-            DKW dkw => GetDkwPorts(dkw.LengthInMm, dkw.ArcInDegree, dkw.RadiusInMm),
-            K15 k15 => GetK15Ports(k15.LengthInMm, k15.ArcInDegree),
-            K30 k30 => GetK30Ports(k30.LengthInMm, k30.ArcInDegree),
-            _ => GetPorts(segment)
-        };
+        return GetPorts(segment).FirstOrDefault(p => p.PortName == portName);
+    }
+
+    public static double GetPortOutwardLocalAngleDegrees(Segment segment, string portName)
+    {
+        var port = GetPort(segment, portName);
+        if (port == null)
+            return 0;
+
+        var angle = port.LocalAngleDegrees;
+        if (IsStartPort(segment, portName))
+            angle += 180;
+
+        return NormalizeAngle(angle);
+    }
+
+    public static double GetPortOutwardWorldAngleDegrees(PlacedSegment placed, string portName)
+    {
+        return NormalizeAngle(placed.RotationDegrees + GetPortOutwardLocalAngleDegrees(placed.Segment, portName));
+    }
+
+    public static (double X, double Y, double RotationDegrees) GetPlacementForPort(
+        Segment segment,
+        string portName,
+        double worldX,
+        double worldY,
+        double desiredOutwardAngleDegrees)
+    {
+        var port = GetPort(segment, portName);
+        if (port == null)
+            return (worldX, worldY, NormalizeAngle(desiredOutwardAngleDegrees));
+
+        var rotationDegrees = NormalizeAngle(desiredOutwardAngleDegrees - GetPortOutwardLocalAngleDegrees(segment, portName));
+        var r = rotationDegrees * Math.PI / 180;
+        var cos = Math.Cos(r);
+        var sin = Math.Sin(r);
+        var originX = worldX - (port.LocalX * cos - port.LocalY * sin);
+        var originY = worldY - (port.LocalX * sin + port.LocalY * cos);
+        return (originX, originY, rotationDegrees);
     }
 
     private static IReadOnlyList<PortInfo> GetStraightPorts(double length)
@@ -112,12 +129,7 @@ public static class SegmentPortGeometry
 
     private static IReadOnlyList<PortInfo> GetCurvedPorts(double arcDegree, double radius)
     {
-        return GetCurvedPortsWithEntry(arcDegree, radius, 'A');
-    }
-
-    private static IReadOnlyList<PortInfo> GetCurvedPortsWithEntry(double arcDegree, double radius, char entryPort)
-    {
-        var curveDirection = entryPort == 'B' ? -1 : 1;
+        const int curveDirection = 1;
         var centerAngle = (90 * curveDirection) * Math.PI / 180;
         var centerX = radius * Math.Cos(centerAngle);
         var centerY = radius * Math.Sin(centerAngle);
@@ -125,18 +137,7 @@ public static class SegmentPortGeometry
         var endLocalAngleRad = (90 * curveDirection) * Math.PI / 180;
         var endX = centerX + radius * Math.Cos(endAngle - endLocalAngleRad);
         var endY = centerY + radius * Math.Sin(endAngle - endLocalAngleRad);
-
-        if (entryPort == 'A')
-            return [new PortInfo("PortA", 0, 0, 0), new PortInfo("PortB", endX, endY, arcDegree * curveDirection)];
-
-        return [new PortInfo("PortB", 0, 0, 0), new PortInfo("PortA", endX, endY, -arcDegree * curveDirection)];
-    }
-
-    private static IReadOnlyList<PortInfo> GetStraightPortsWithEntry(double length, char entryPort)
-    {
-        if (entryPort == 'A')
-            return [new PortInfo("PortA", 0, 0, 0), new PortInfo("PortB", length, 0, 0)];
-        return [new PortInfo("PortB", 0, 0, 0), new PortInfo("PortA", length, 0, 0)];
+        return [new PortInfo("PortA", 0, 0, 0), new PortInfo("PortB", endX, endY, arcDegree * curveDirection)];
     }
 
     private static IReadOnlyList<PortInfo> GetWrPorts(double straightLength, double arcDegree, double radius)
@@ -330,10 +331,10 @@ public static class SegmentPortGeometry
         var trackOffset = half * sin;
         return
         [
-            new PortInfo("PortA", 0, trackOffset, 0),
-            new PortInfo("PortB", length, trackOffset, 0),
-            new PortInfo("PortC", 0, -trackOffset, 0),
-            new PortInfo("PortD", length, -trackOffset, 0)
+            new PortInfo("PortA", 0, 0, 0),
+            new PortInfo("PortB", length, 0, 0),
+            new PortInfo("PortC", 0, -2 * trackOffset, 0),
+            new PortInfo("PortD", length, -2 * trackOffset, 0)
         ];
     }
 
@@ -342,12 +343,14 @@ public static class SegmentPortGeometry
     {
         var rad = arcDegree * Math.PI / 180;
         var half = length / 2;
+        var cos = Math.Cos(rad);
+        var sin = Math.Sin(rad);
         return
         [
-            new PortInfo("PortA", -half * Math.Cos(rad), -half * Math.Sin(rad), 0),
-            new PortInfo("PortB", half * Math.Cos(rad), half * Math.Sin(rad), 0),
-            new PortInfo("PortC", -half * Math.Cos(-rad), -half * Math.Sin(-rad), arcDegree),
-            new PortInfo("PortD", half * Math.Cos(-rad), half * Math.Sin(-rad), arcDegree)
+            new PortInfo("PortA", 0, 0, 0),
+            new PortInfo("PortB", length, 0, 0),
+            new PortInfo("PortC", half - half * cos, -half * sin, arcDegree),
+            new PortInfo("PortD", half + half * cos, half * sin, arcDegree)
         ];
     }
 
@@ -368,5 +371,22 @@ public static class SegmentPortGeometry
         }
 
         return result;
+    }
+
+    private static bool IsStartPort(Segment segment, string portName)
+    {
+        if (portName == "PortA")
+            return true;
+
+        return segment is DKW or K15 or K30 && portName == "PortC";
+    }
+
+    private static double NormalizeAngle(double degrees)
+    {
+        while (degrees >= 360)
+            degrees -= 360;
+        while (degrees < 0)
+            degrees += 360;
+        return degrees;
     }
 }

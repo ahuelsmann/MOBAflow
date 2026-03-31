@@ -106,10 +106,8 @@ public class TrackPlanSvgRenderer
             entryPort = ExtractPortChar(incomingConnection.TargetPort);
 
         // Placement for Win2D (identical to SVG drawing position)
-        double placeAngle = angle;
-        if ((segment is G239 or G231 or G62) && entryPort == 'B')
-            placeAngle = angle + 180;
-        _placements.Add(new PlacedSegment(segment, x, y, placeAngle));
+        var placed = CreatePlacement(segment, incomingConnection, x, y, angle);
+        _placements.Add(placed);
 
         double nextX = x;
         double nextY = y;
@@ -121,39 +119,39 @@ public class TrackPlanSvgRenderer
         // Rendera dieses Segment
         if (segment is WR wr)
         {
-            RenderWr(wr, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
+            RenderWr(wr, placed, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
         else if (segment is R9 r9)
         {
-            RenderR9(r9, entryPort, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
+            RenderR9(r9, entryPort, placed, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
         else if (segment is R1 r1)
         {
-            RenderR1(r1, entryPort, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
+            RenderR1(r1, entryPort, placed, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
         else if (segment is R2 r2)
         {
-            RenderR2(r2, entryPort, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
+            RenderR2(r2, entryPort, placed, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
         else if (segment is R3 r3)
         {
-            RenderR3(r3, entryPort, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
+            RenderR3(r3, entryPort, placed, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
         else if (segment is R4 r4)
         {
-            RenderR4(r4, entryPort, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
+            RenderR4(r4, entryPort, placed, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
         else if (segment is G239 g239)
         {
-            RenderG239(g239, entryPort, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
+            RenderG239(g239, entryPort, placed, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
         else if (segment is G231 g231)
         {
-            RenderG231(g231, entryPort, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
+            RenderG231(g231, entryPort, placed, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
         else if (segment is G62 g62)
         {
-            RenderG62(g62, entryPort, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
+            RenderG62(g62, entryPort, placed, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
 
         // Add further track types here
@@ -169,24 +167,7 @@ public class TrackPlanSvgRenderer
             if (nextSegment != null && !renderedSegments.Contains(nextSegment.No))
             {
                 // Determine new position/angle based on exit port
-                var outgoingPort = ExtractPortChar(outgoing.SourcePort);
-
-                // Calculate position for this segment from the exit port
-                // For all ports except the current main exit: calculate new rendering position
-                double branchX = nextX;
-                double branchY = nextY;
-                double branchAngle = nextAngle;
-
-                if (segment is WR wrSegment)
-                {
-                    CalculateWrPortPosition(wrSegment, outgoingPort, x, y, angle, out branchX, out branchY, out branchAngle);
-                }
-                else if (segment is R9 or R1 or R2 or R3 or R4)
-                {
-                    CalculateCurvedPortPosition(segment, entryPort, outgoingPort, x, y, angle, nextX, nextY, nextAngle,
-                        out branchX, out branchY, out branchAngle);
-                }
-                // Straight segments (G239, G231, G62) have only one exit → branchX/Y/Angle = nextX/Y/Angle
+                GetOutgoingPortState(placed, outgoing.SourcePort, out var branchX, out var branchY, out var branchAngle);
 
                 RenderSegmentRecursive(nextSegment, outgoing, branchX, branchY, branchAngle, trackPlan, renderedSegments);
             }
@@ -199,6 +180,33 @@ public class TrackPlanSvgRenderer
     private char ExtractPortChar(string portProperty)
     {
         return portProperty.Last();
+    }
+
+    private static PlacedSegment CreatePlacement(Segment segment, PortConnection? incomingConnection, double x, double y, double angle)
+    {
+        if (incomingConnection == null)
+            return new PlacedSegment(segment, x, y, NormalizeAngle(angle));
+
+        var desiredOutwardAngle = NormalizeAngle(angle + 180);
+        var (originX, originY, rotationDegrees) = SegmentPortGeometry.GetPlacementForPort(segment, incomingConnection.TargetPort, x, y, desiredOutwardAngle);
+        return new PlacedSegment(segment, originX, originY, rotationDegrees);
+    }
+
+    private static void GetOutgoingPortState(PlacedSegment placed, string portName, out double x, out double y, out double angle)
+    {
+        var (worldX, worldY, _) = SegmentPortGeometry.GetPortWorldPosition(placed, portName);
+        x = worldX;
+        y = worldY;
+        angle = SegmentPortGeometry.GetPortOutwardWorldAngleDegrees(placed, portName);
+    }
+
+    private static double NormalizeAngle(double angle)
+    {
+        while (angle >= 360)
+            angle -= 360;
+        while (angle < 0)
+            angle += 360;
+        return angle;
     }
 
     /// <summary>
@@ -280,10 +288,10 @@ public class TrackPlanSvgRenderer
     }
 
     /// <summary>Draws a path with shared geometry from SegmentLocalPathBuilder.</summary>
-    private void DrawSegmentPath(Segment segment, char entryPort, double x, double y, double angle)
+    private void DrawSegmentPath(PlacedSegment placed)
     {
-        var path = SegmentLocalPathBuilder.GetPath(segment, entryPort);
-        var svgPath = PathToSvgConverter.ToSvgPath(path, x, y, angle);
+        var path = SegmentLocalPathBuilder.GetPath(placed.Segment);
+        var svgPath = PathToSvgConverter.ToSvgPath(path, placed.X, placed.Y, placed.RotationDegrees);
         _svg.AppendLine($"  <path d=\"{svgPath}\" stroke=\"#333\" stroke-width=\"4\" fill=\"none\" />");
     }
 
@@ -296,42 +304,32 @@ public class TrackPlanSvgRenderer
     /// 
     /// Updates position for continuing drawing to Port B end.
     /// </summary>
-    private void RenderWr(WR wr, ref double x, ref double y, ref double angle, int segmentIndex)
+    private void RenderWr(WR wr, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
     {
-        var straightLength = wr.LengthInMm;
-        var radius = wr.RadiusInMm;
-        var arcDegree = wr.ArcInDegree;
-
         // Port A (entry) - physical port A (black)
-        double portAx = x;
-        double portAy = y;
-        DrawPortStroke(portAx, portAy, angle, GetPortColor('A', segmentIndex), 'A', true);
+        double portAx = placed.X;
+        double portAy = placed.Y;
+        DrawPortStroke(portAx, portAy, placed.RotationDegrees, GetPortColor('A', segmentIndex), 'A', true);
         UpdateBounds(portAx, portAy);
 
         // Port B (Gerade) - physischer Port B (rot) am Ende der Geraden
-        double portBx = x + straightLength * Math.Cos(angle * Math.PI / 180);
-        double portBy = y + straightLength * Math.Sin(angle * Math.PI / 180);
+        var (portBx, portBy, portBAngle) = SegmentPortGeometry.GetPortWorldPosition(placed, "PortB");
 
-        DrawSegmentPath(wr, 'A', x, y, angle);
+        DrawSegmentPath(placed);
 
-        DrawPortStroke(portBx, portBy, angle, GetPortColor('B', segmentIndex), 'B', false);
+        DrawPortStroke(portBx, portBy, portBAngle, GetPortColor('B', segmentIndex), 'B', false);
         UpdateBounds(portBx, portBy);
 
         // Port C (Kurve) - physischer Port C (grün) am Ende der Kurve
-        double centerAngle = angle + 90;
-        double centerX = x + radius * Math.Cos(centerAngle * Math.PI / 180);
-        double centerY = y + radius * Math.Sin(centerAngle * Math.PI / 180);
+        var (portCx, portCy, portCAngle) = SegmentPortGeometry.GetPortWorldPosition(placed, "PortC");
 
-        double endAngle = angle + arcDegree;
-        double portCx = centerX + radius * Math.Cos((endAngle - 90) * Math.PI / 180);
-        double portCy = centerY + radius * Math.Sin((endAngle - 90) * Math.PI / 180);
-
-        DrawPortStroke(portCx, portCy, endAngle, GetPortColor('C', segmentIndex), 'C', false);
+        DrawPortStroke(portCx, portCy, portCAngle, GetPortColor('C', segmentIndex), 'C', false);
         UpdateBounds(portCx, portCy);
 
         // Update position for next track
         x = portBx;
         y = portBy;
+        angle = SegmentPortGeometry.GetPortOutwardWorldAngleDegrees(placed, "PortB");
     }
 
     /// <summary>
@@ -346,39 +344,9 @@ public class TrackPlanSvgRenderer
     /// - Entry A: Kurve nach links (curveDirection = 1)
     /// - Entry B: Kurve nach rechts (curveDirection = -1)
     /// </summary>
-    private void RenderR9(R9 r9, char entryPort, ref double x, ref double y, ref double angle, int segmentIndex)
+    private void RenderR9(R9 r9, char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
     {
-        var radius = r9.RadiusInMm;
-        var arcDegree = r9.ArcInDegree;
-        var curveDirection = entryPort == 'B' ? -1 : 1;
-
-        double startX = x;
-        double startY = y;
-        double centerAngle = angle + (90 * curveDirection);
-        double centerX = x + radius * Math.Cos(centerAngle * Math.PI / 180);
-        double centerY = y + radius * Math.Sin(centerAngle * Math.PI / 180);
-        double endAngle = angle + (arcDegree * curveDirection);
-        double endX = centerX + radius * Math.Cos((endAngle - (90 * curveDirection)) * Math.PI / 180);
-        double endY = centerY + radius * Math.Sin((endAngle - (90 * curveDirection)) * Math.PI / 180);
-
-        DrawSegmentPath(r9, entryPort, x, y, angle);
-
-        // Start port - physical port A or B depending on entry
-        char startPort = entryPort == 'A' ? 'A' : 'B';
-        DrawPortStroke(startX, startY, angle, GetPortColor(startPort, segmentIndex), startPort, true);
-
-        // End port - physical port B or A depending on entry
-        char endPort = entryPort == 'A' ? 'B' : 'A';
-        DrawPortStroke(endX, endY, endAngle, GetPortColor(endPort, segmentIndex), endPort, false);
-
-        // Bounding box aktualisieren
-        UpdateBounds(startX, startY);
-        UpdateBounds(endX, endY);
-
-        // Update position for next track
-        x = endX;
-        y = endY;
-        angle = endAngle;
+        DrawTwoPortSegment(placed, entryPort, segmentIndex, ref x, ref y, ref angle);
     }
 
     /// <summary>
@@ -391,35 +359,9 @@ public class TrackPlanSvgRenderer
     /// 
     /// Curve direction is automatically adjusted based on entry port.
     /// </summary>
-    private void RenderR1(R1 r1, char entryPort, ref double x, ref double y, ref double angle, int segmentIndex)
+    private void RenderR1(R1 r1, char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
     {
-        var radius = r1.RadiusInMm;
-        var arcDegree = r1.ArcInDegree;
-        var curveDirection = entryPort == 'B' ? -1 : 1;
-
-        double startX = x;
-        double startY = y;
-        double centerAngle = angle + (90 * curveDirection);
-        double centerX = x + radius * Math.Cos(centerAngle * Math.PI / 180);
-        double centerY = y + radius * Math.Sin(centerAngle * Math.PI / 180);
-        double endAngle = angle + (arcDegree * curveDirection);
-        double endX = centerX + radius * Math.Cos((endAngle - (90 * curveDirection)) * Math.PI / 180);
-        double endY = centerY + radius * Math.Sin((endAngle - (90 * curveDirection)) * Math.PI / 180);
-
-        DrawSegmentPath(r1, entryPort, x, y, angle);
-
-        char startPort = entryPort == 'A' ? 'A' : 'B';
-        DrawPortStroke(startX, startY, angle, GetPortColor(startPort, segmentIndex), startPort, true);
-
-        char endPort = entryPort == 'A' ? 'B' : 'A';
-        DrawPortStroke(endX, endY, endAngle, GetPortColor(endPort, segmentIndex), endPort, false);
-
-        UpdateBounds(startX, startY);
-        UpdateBounds(endX, endY);
-
-        x = endX;
-        y = endY;
-        angle = endAngle;
+        DrawTwoPortSegment(placed, entryPort, segmentIndex, ref x, ref y, ref angle);
     }
 
     /// <summary>
@@ -432,35 +374,9 @@ public class TrackPlanSvgRenderer
     /// 
     /// Curve direction is automatically adjusted based on entry port.
     /// </summary>
-    private void RenderR2(R2 r2, char entryPort, ref double x, ref double y, ref double angle, int segmentIndex)
+    private void RenderR2(R2 r2, char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
     {
-        var radius = r2.RadiusInMm;
-        var arcDegree = r2.ArcInDegree;
-        var curveDirection = entryPort == 'B' ? -1 : 1;
-
-        double startX = x;
-        double startY = y;
-        double centerAngle = angle + (90 * curveDirection);
-        double centerX = x + radius * Math.Cos(centerAngle * Math.PI / 180);
-        double centerY = y + radius * Math.Sin(centerAngle * Math.PI / 180);
-        double endAngle = angle + (arcDegree * curveDirection);
-        double endX = centerX + radius * Math.Cos((endAngle - (90 * curveDirection)) * Math.PI / 180);
-        double endY = centerY + radius * Math.Sin((endAngle - (90 * curveDirection)) * Math.PI / 180);
-
-        DrawSegmentPath(r2, entryPort, x, y, angle);
-
-        char startPort = entryPort == 'A' ? 'A' : 'B';
-        DrawPortStroke(startX, startY, angle, GetPortColor(startPort, segmentIndex), startPort, true);
-
-        char endPort = entryPort == 'A' ? 'B' : 'A';
-        DrawPortStroke(endX, endY, endAngle, GetPortColor(endPort, segmentIndex), endPort, false);
-
-        UpdateBounds(startX, startY);
-        UpdateBounds(endX, endY);
-
-        x = endX;
-        y = endY;
-        angle = endAngle;
+        DrawTwoPortSegment(placed, entryPort, segmentIndex, ref x, ref y, ref angle);
     }
 
     /// <summary>
@@ -473,35 +389,9 @@ public class TrackPlanSvgRenderer
     /// 
     /// Curve direction is automatically adjusted based on entry port.
     /// </summary>
-    private void RenderR3(R3 r3, char entryPort, ref double x, ref double y, ref double angle, int segmentIndex)
+    private void RenderR3(R3 r3, char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
     {
-        var radius = r3.RadiusInMm;
-        var arcDegree = r3.ArcInDegree;
-        var curveDirection = entryPort == 'B' ? -1 : 1;
-
-        double startX = x;
-        double startY = y;
-        double centerAngle = angle + (90 * curveDirection);
-        double centerX = x + radius * Math.Cos(centerAngle * Math.PI / 180);
-        double centerY = y + radius * Math.Sin(centerAngle * Math.PI / 180);
-        double endAngle = angle + (arcDegree * curveDirection);
-        double endX = centerX + radius * Math.Cos((endAngle - (90 * curveDirection)) * Math.PI / 180);
-        double endY = centerY + radius * Math.Sin((endAngle - (90 * curveDirection)) * Math.PI / 180);
-
-        DrawSegmentPath(r3, entryPort, x, y, angle);
-
-        char startPort = entryPort == 'A' ? 'A' : 'B';
-        DrawPortStroke(startX, startY, angle, GetPortColor(startPort, segmentIndex), startPort, true);
-
-        char endPort = entryPort == 'A' ? 'B' : 'A';
-        DrawPortStroke(endX, endY, endAngle, GetPortColor(endPort, segmentIndex), endPort, false);
-
-        UpdateBounds(startX, startY);
-        UpdateBounds(endX, endY);
-
-        x = endX;
-        y = endY;
-        angle = endAngle;
+        DrawTwoPortSegment(placed, entryPort, segmentIndex, ref x, ref y, ref angle);
     }
 
     /// <summary>
@@ -514,35 +404,9 @@ public class TrackPlanSvgRenderer
     /// 
     /// Curve direction is automatically adjusted based on entry port.
     /// </summary>
-    private void RenderR4(R4 r4, char entryPort, ref double x, ref double y, ref double angle, int segmentIndex)
+    private void RenderR4(R4 r4, char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
     {
-        var radius = r4.RadiusInMm;
-        var arcDegree = r4.ArcInDegree;
-        var curveDirection = entryPort == 'B' ? -1 : 1;
-
-        double startX = x;
-        double startY = y;
-        double centerAngle = angle + (90 * curveDirection);
-        double centerX = x + radius * Math.Cos(centerAngle * Math.PI / 180);
-        double centerY = y + radius * Math.Sin(centerAngle * Math.PI / 180);
-        double endAngle = angle + (arcDegree * curveDirection);
-        double endX = centerX + radius * Math.Cos((endAngle - (90 * curveDirection)) * Math.PI / 180);
-        double endY = centerY + radius * Math.Sin((endAngle - (90 * curveDirection)) * Math.PI / 180);
-
-        DrawSegmentPath(r4, entryPort, x, y, angle);
-
-        char startPort = entryPort == 'A' ? 'A' : 'B';
-        DrawPortStroke(startX, startY, angle, GetPortColor(startPort, segmentIndex), startPort, true);
-
-        char endPort = entryPort == 'A' ? 'B' : 'A';
-        DrawPortStroke(endX, endY, endAngle, GetPortColor(endPort, segmentIndex), endPort, false);
-
-        UpdateBounds(startX, startY);
-        UpdateBounds(endX, endY);
-
-        x = endX;
-        y = endY;
-        angle = endAngle;
+        DrawTwoPortSegment(placed, entryPort, segmentIndex, ref x, ref y, ref angle);
     }
 
     /// <summary>
@@ -555,31 +419,9 @@ public class TrackPlanSvgRenderer
     /// 
     /// Updates position for continuing drawing to Port B.
     /// </summary>
-    private void RenderG239(G239 g239, char entryPort, ref double x, ref double y, ref double angle, int segmentIndex)
+    private void RenderG239(G239 g239, char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
     {
-        if (entryPort == 'B')
-            angle += 180;
-
-        double portAx = x;
-        double portAy = y;
-        double portBx = x + g239.LengthInMm * Math.Cos(angle * Math.PI / 180);
-        double portBy = y + g239.LengthInMm * Math.Sin(angle * Math.PI / 180);
-
-        DrawSegmentPath(g239, entryPort, x, y, angle);
-
-        // Port A - physische Farbe
-        DrawPortStroke(portAx, portAy, angle, GetPortColor('A', segmentIndex), 'A', true);
-
-        // Port B - physische Farbe
-        DrawPortStroke(portBx, portBy, angle, GetPortColor('B', segmentIndex), 'B', false);
-
-        // Bounding box aktualisieren
-        UpdateBounds(portAx, portAy);
-        UpdateBounds(portBx, portBy);
-
-        // Update position for next track
-        x = portBx;
-        y = portBy;
+        DrawTwoPortSegment(placed, entryPort, segmentIndex, ref x, ref y, ref angle);
     }
 
     /// <summary>
@@ -592,31 +434,9 @@ public class TrackPlanSvgRenderer
     /// 
     /// Updates position for continuing drawing to Port B.
     /// </summary>
-    private void RenderG231(G231 g231, char entryPort, ref double x, ref double y, ref double angle, int segmentIndex)
+    private void RenderG231(G231 g231, char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
     {
-        if (entryPort == 'B')
-            angle += 180;
-
-        double portAx = x;
-        double portAy = y;
-        double portBx = x + g231.LengthInMm * Math.Cos(angle * Math.PI / 180);
-        double portBy = y + g231.LengthInMm * Math.Sin(angle * Math.PI / 180);
-
-        DrawSegmentPath(g231, entryPort, x, y, angle);
-
-        // Port A - physische Farbe
-        DrawPortStroke(portAx, portAy, angle, GetPortColor('A', segmentIndex), 'A', true);
-
-        // Port B - physische Farbe
-        DrawPortStroke(portBx, portBy, angle, GetPortColor('B', segmentIndex), 'B', false);
-
-        // Bounding box aktualisieren
-        UpdateBounds(portAx, portAy);
-        UpdateBounds(portBx, portBy);
-
-        // Update position for next track
-        x = portBx;
-        y = portBy;
+        DrawTwoPortSegment(placed, entryPort, segmentIndex, ref x, ref y, ref angle);
     }
 
     /// <summary>
@@ -629,31 +449,31 @@ public class TrackPlanSvgRenderer
     /// 
     /// Updates position for continuing drawing to Port B.
     /// </summary>
-    private void RenderG62(G62 g62, char entryPort, ref double x, ref double y, ref double angle, int segmentIndex)
+    private void RenderG62(G62 g62, char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
     {
-        if (entryPort == 'B')
-            angle += 180;
+        DrawTwoPortSegment(placed, entryPort, segmentIndex, ref x, ref y, ref angle);
+    }
 
-        double portAx = x;
-        double portAy = y;
-        double portBx = x + g62.LengthInMm * Math.Cos(angle * Math.PI / 180);
-        double portBy = y + g62.LengthInMm * Math.Sin(angle * Math.PI / 180);
+    private void DrawTwoPortSegment(PlacedSegment placed, char entryPort, int segmentIndex, ref double x, ref double y, ref double angle)
+    {
+        var (portAx, portAy, portAAngle) = SegmentPortGeometry.GetPortWorldPosition(placed, "PortA");
+        var (portBx, portBy, portBAngle) = SegmentPortGeometry.GetPortWorldPosition(placed, "PortB");
+        var portAOutwardAngle = SegmentPortGeometry.GetPortOutwardWorldAngleDegrees(placed, "PortA");
+        var portBOutwardAngle = SegmentPortGeometry.GetPortOutwardWorldAngleDegrees(placed, "PortB");
+        var portAStrokeAngle = entryPort == 'A' ? NormalizeAngle(portAOutwardAngle + 180) : portAOutwardAngle;
+        var portBStrokeAngle = entryPort == 'B' ? NormalizeAngle(portBOutwardAngle + 180) : portBOutwardAngle;
 
-        DrawSegmentPath(g62, entryPort, x, y, angle);
+        DrawSegmentPath(placed);
 
-        // Port A - physische Farbe
-        DrawPortStroke(portAx, portAy, angle, GetPortColor('A', segmentIndex), 'A', true);
+        DrawPortStroke(portAx, portAy, portAStrokeAngle, GetPortColor('A', segmentIndex), 'A', entryPort == 'A');
+        DrawPortStroke(portBx, portBy, portBStrokeAngle, GetPortColor('B', segmentIndex), 'B', entryPort == 'B');
 
-        // Port B - physische Farbe
-        DrawPortStroke(portBx, portBy, angle, GetPortColor('B', segmentIndex), 'B', false);
-
-        // Bounding box aktualisieren
         UpdateBounds(portAx, portAy);
         UpdateBounds(portBx, portBy);
 
-        // Update position for next track
         x = portBx;
         y = portBy;
+        angle = portBOutwardAngle;
     }
 
     /// <summary>

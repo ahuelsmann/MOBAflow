@@ -385,6 +385,20 @@
 
                                             <Button
                                                 Grid.Row="0"
+                                                HorizontalAlignment="Left"
+                                                Width="20"
+                                                Height="20"
+                                                Padding="0"
+                                                Margin="-2,-2,0,0"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Command="{x:Bind ToggleDirectionCommand}"
+                                                ToolTipService.ToolTip="Toggle direction">
+                                                <FontIcon Glyph="&#xE72C;" FontSize="9" />
+                                            </Button>
+                                            
+                                            <Button
+                                                Grid.Row="0"
                                                 HorizontalAlignment="Right"
                                                 Width="20"
                                                 Height="20"
@@ -400,7 +414,10 @@
                                             <Grid Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,4">
                                                 
                                                 <!-- Locomotive Shape -->
-                                                <Grid Visibility="{x:Bind IsLocomotive, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                <Grid Visibility="{x:Bind IsLocomotive, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" RenderTransformOrigin="0.5,0.5">
+                                                    <Grid.RenderTransform>
+                                                        <ScaleTransform ScaleX="{x:Bind ScaleX, Mode=OneWay}" />
+                                                    </Grid.RenderTransform>
                                                     <!-- ICE-like engine profile, facing left -->
                                                     <Path
                                                         Data="M 12,0 L 40,0 L 40,16 L 2,16 Q 0,16 0,14 L 6,4 Q 8,0 12,0 Z"
@@ -411,13 +428,16 @@
                                                         Margin="0,0,4,-3"
                                                         Orientation="Horizontal"
                                                         Spacing="16">
-                                                        <Border Width="6" Height="3" CornerRadius="0,0,3,3" Background="{ThemeResource TextFillColorPrimaryBrush}" />
-                                                        <Border Width="6" Height="3" CornerRadius="0,0,3,3" Background="{ThemeResource TextFillColorPrimaryBrush}" />
+                                                        <Border Width="6" Height="3" CornerRadius="0,0,3,3" Background="{ThemeResource AccentFillColorDefaultBrush}" />
+                                                        <Border Width="6" Height="3" CornerRadius="0,0,3,3" Background="{ThemeResource AccentFillColorDefaultBrush}" />
                                                     </StackPanel>
                                                 </Grid>
                                                 
-                                                <!-- Wagon Shape -->
-                                                <Grid Visibility="{x:Bind IsWagon, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                <!-- Passenger Wagon Shape -->
+                                                <Grid Visibility="{x:Bind IsPassengerWagon, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" RenderTransformOrigin="0.5,0.5">
+                                                    <Grid.RenderTransform>
+                                                        <ScaleTransform ScaleX="{x:Bind ScaleX, Mode=OneWay}" />
+                                                    </Grid.RenderTransform>
                                                     <Border
                                                         Width="40"
                                                         Height="16"
@@ -425,6 +445,29 @@
                                                         BorderBrush="{ThemeResource TextFillColorSecondaryBrush}"
                                                         BorderThickness="1.5"
                                                         CornerRadius="2" />
+                                                    <StackPanel
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Bottom"
+                                                        Margin="0,0,0,-3"
+                                                        Orientation="Horizontal"
+                                                        Spacing="16">
+                                                        <Border Width="6" Height="3" CornerRadius="0,0,3,3" Background="{ThemeResource TextFillColorSecondaryBrush}" />
+                                                        <Border Width="6" Height="3" CornerRadius="0,0,3,3" Background="{ThemeResource TextFillColorSecondaryBrush}" />
+                                                    </StackPanel>
+                                                </Grid>
+
+                                                <!-- Goods Wagon Shape -->
+                                                <Grid Visibility="{x:Bind IsGoodsWagon, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" RenderTransformOrigin="0.5,0.5">
+                                                    <Grid.RenderTransform>
+                                                        <ScaleTransform ScaleX="{x:Bind ScaleX, Mode=OneWay}" />
+                                                    </Grid.RenderTransform>
+                                                    <Border
+                                                        Width="40"
+                                                        Height="3"
+                                                        Margin="0,0,0,1"
+                                                        VerticalAlignment="Bottom"
+                                                        Background="{ThemeResource TextFillColorSecondaryBrush}"
+                                                        CornerRadius="1" />
                                                     <StackPanel
                                                         HorizontalAlignment="Center"
                                                         VerticalAlignment="Bottom"

@@ -20,6 +20,14 @@ public partial class MainWindowViewModel
     [ObservableProperty]
     private string _trainSearchText = string.Empty;
 
+    partial void OnSelectedTrainChanging(TrainViewModel? value)
+    {
+        if (_selectedTrain != null)
+        {
+            _selectedTrain.VehiclesModified -= SelectedTrain_VehiclesModified;
+        }
+    }
+
     partial void OnSelectedTrainChanged(TrainViewModel? value)
     {
         SelectedVehicle = null;
@@ -27,11 +35,17 @@ public partial class MainWindowViewModel
         if (value != null)
         {
             value.PropertyChanged += OnViewModelPropertyChanged;
+            value.VehiclesModified += SelectedTrain_VehiclesModified;
             value.RefreshVehicleItems();
         }
 
         OnPropertyChanged(nameof(SelectedVehicles));
         OnPropertyChanged(nameof(TrainsCompositionTitle));
+    }
+
+    private void SelectedTrain_VehiclesModified(object? sender, EventArgs e)
+    {
+        _ = SaveSolutionInternalAsync();
     }
 
     partial void OnTrainSearchTextChanged(string value)

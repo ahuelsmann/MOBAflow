@@ -22,9 +22,9 @@ internal static class SegmentPlanPathBuilder
     /// Uses the same transformation logic as PathToSvgConverter: position and rotation are
     /// applied to the geometry so the entry port is always correctly at the connection point.
     /// </summary>
-    public static Path CreatePath(PlacedSegment placed, bool isGhost, bool isSelected, char entryPort = 'A')
+    public static Path CreatePath(PlacedSegment placed, bool isGhost, bool isSelected)
     {
-        var pathCommands = SegmentLocalPathBuilder.GetPath(placed.Segment, entryPort);
+        var pathCommands = SegmentLocalPathBuilder.GetPath(placed.Segment);
         var geometry = BuildPathGeometryInWorldCoords(pathCommands, placed.X, placed.Y, placed.RotationDegrees, ScaleMmToPx);
 
         var path = new Path

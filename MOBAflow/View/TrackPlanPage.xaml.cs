@@ -43,9 +43,9 @@ internal sealed partial class TrackPlanPage
     private Point _dragStartCanvasPoint;
     private bool _dragHasMoved; // true when pointer actually moved during press
     private bool _isCanvasDragging;
-    private bool _useCachedOffsetForNextRefresh;
     private double _cachedDrawOffsetX;
     private double _cachedDrawOffsetY;
+    private bool _drawOffsetInitialized;
     private readonly List<Ellipse> _portIndicators = [];
     private readonly List<Ellipse> _highlightedPorts = [];
     private bool _snapEnabled = true;
@@ -123,6 +123,8 @@ internal sealed partial class TrackPlanPage
         var plan = CreateTestPlan();
         var renderResult = new TrackPlanSvgRenderer().Render(plan);
         _plan.LoadFromPlacements(renderResult.Placements, plan.Connections);
+        RecalculateDrawOffset();
+        RefreshCanvas();
         StatusText.Text = "Test plan loaded. Click „SVG in Browser“ for direct comparison.";
     }
 
@@ -152,6 +154,7 @@ internal sealed partial class TrackPlanPage
         SetupZoom();
         _plan.PlanChanged += OnPlanChanged;
         KeyDown += Page_KeyDown;
+        RecalculateDrawOffset();
         RefreshCanvas();
     }
 
@@ -170,7 +173,17 @@ internal sealed partial class TrackPlanPage
         e.Handled = true;
     }
 
-    private void OnPlanChanged(object? sender, EventArgs e) => RefreshCanvas();
+    private void OnPlanChanged(object? sender, EventArgs e)
+    {
+        if (_plan.Segments.Count == 0)
+        {
+            _cachedDrawOffsetX = 0;
+            _cachedDrawOffsetY = 0;
+            _drawOffsetInitialized = true;
+        }
+
+        RefreshCanvas();
+    }
 
     private void PopulateToolbox()
     {
@@ -457,9 +470,7 @@ internal sealed partial class TrackPlanPage
             if (snap != null)
             {
                 var (newPlaced, sourcePort, targetSegmentId, targetPort) = snap.Value;
-                _useCachedOffsetForNextRefresh = targetPort != "PortA" && !_plan.Connections.Any(c => c.TargetSegment == targetSegmentId);
                 _plan.AddSegment(newPlaced);
-                AdjustTargetSegmentForNewEntryPort(targetSegmentId, targetPort);
                 _plan.AddConnection(newPlaced.Segment.No, sourcePort, targetSegmentId, targetPort);
                 UpdateStats();
                 return;
@@ -484,35 +495,12 @@ internal sealed partial class TrackPlanPage
         var deltaX = newPlaced.X - placed.X;
         var deltaY = newPlaced.Y - placed.Y;
 
-        _useCachedOffsetForNextRefresh = targetPort != "PortA" && !_plan.Connections.Any(c => c.TargetSegment == targetSegmentId);
-
         // Ganze Gruppe um Snap-Delta verschieben, dann Rotation des gezogenen Segments setzen
         if (_draggingGroup.Count > 1)
             _plan.MoveGroup(_draggingGroup, deltaX, deltaY);
 
         _plan.UpdateSegmentPosition(movedSegmentId, newPlaced.X, newPlaced.Y, newPlaced.RotationDegrees);
-        AdjustTargetSegmentForNewEntryPort(targetSegmentId, targetPort);
         _plan.AddConnection(movedSegmentId, sourcePort, targetSegmentId, targetPort);
-    }
-
-    /// <summary>
-    /// Adjusts the target segment when the first connection is at port B (or C/D).
-    /// Without this adjustment the curve would appear mirrored, since (X,Y,R) expects port A as origin.
-    /// </summary>
-    private void AdjustTargetSegmentForNewEntryPort(Guid targetSegmentId, string targetPort)
-    {
-        if (targetPort == "PortA")
-            return;
-        var targetHadIncoming = _plan.Connections.Any(c => c.TargetSegment == targetSegmentId);
-        if (targetHadIncoming)
-            return;
-        var target = _plan.Segments.FirstOrDefault(s => s.Segment.No == targetSegmentId);
-        if (target == null)
-            return;
-        var (newX, newY, portAngle) = SegmentPortGeometry.GetPortWorldPosition(target, targetPort);
-        // With entry B the path tangent at origin points in the opposite direction (+180°).
-        var newR = NormalizeAngle(portAngle - 180);
-        _plan.UpdateSegmentPosition(targetSegmentId, newX, newY, newR);
     }
 
     private (PlacedSegment Placed, string SourcePort, Guid TargetSegmentId, string TargetPort)? FindBestSnap(PlacedSegment placed, Guid? excludeSegmentId)
@@ -520,22 +508,17 @@ internal sealed partial class TrackPlanPage
         const double bestDistThreshold = SnapThresholdMm * 1.5;
         (PlacedSegment Placed, string SourcePort, Guid TargetSegmentId, string TargetPort)? best = null;
         var bestDist = double.MaxValue;
-
-        var myEntryPort = GetEntryPortForSegment(placed.Segment.No);
-        var myPorts = SegmentPortGeometry.GetAllPortWorldPositions(placed, myEntryPort);
-        var myPortsWithEntry = SegmentPortGeometry.GetPortsWithEntry(placed.Segment, myEntryPort)
-            .ToDictionary(p => p.PortName, p => (p.LocalX, p.LocalY, p.LocalAngleDegrees));
+        var myPorts = SegmentPortGeometry.GetAllPortWorldPositions(placed);
 
         foreach (var other in _plan.Segments)
         {
-            if (other.Segment.No == placed.Segment.No || other.Segment.No == excludeSegmentId)
+            if (other.Segment.No == placed.Segment.No || other.Segment.No == excludeSegmentId || _draggingGroup.Contains(other.Segment.No))
                 continue;
 
-            var otherEntryPort = GetEntryPortForSegment(other.Segment.No);
-            var otherPorts = SegmentPortGeometry.GetAllPortWorldPositions(other, otherEntryPort);
+            var otherPorts = SegmentPortGeometry.GetAllPortWorldPositions(other);
 
             foreach (var (myPortName, mx, my, _) in myPorts)
-                foreach (var (otherPortName, ox, oy, oAngle) in otherPorts)
+                foreach (var (otherPortName, ox, oy, _) in otherPorts)
                 {
                     var dx = ox - mx;
                     var dy = oy - my;
@@ -543,17 +526,13 @@ internal sealed partial class TrackPlanPage
                     if (dist < bestDist && dist < bestDistThreshold)
                     {
                         bestDist = dist;
-                        if (!myPortsWithEntry.TryGetValue(myPortName, out var portInfo))
-                            continue;
-                        var (localX, localY, myLocalAngle) = portInfo;
-                        // Tangents must match: our_rotation + myLocalAngle = oAngle.
-                        var newRotation = NormalizeAngle(oAngle - myLocalAngle);
-                        // Set origin so our port (localX, localY) at new rotation exactly hits (ox, oy).
-                        var r = newRotation * Math.PI / 180;
-                        var cos = Math.Cos(r);
-                        var sin = Math.Sin(r);
-                        var newOriginX = ox - (localX * cos - localY * sin);
-                        var newOriginY = oy - (localX * sin + localY * cos);
+                        var desiredOutwardAngle = NormalizeAngle(SegmentPortGeometry.GetPortOutwardWorldAngleDegrees(other, otherPortName) + 180);
+                        var (newOriginX, newOriginY, newRotation) = SegmentPortGeometry.GetPlacementForPort(
+                            placed.Segment,
+                            myPortName,
+                            ox,
+                            oy,
+                            desiredOutwardAngle);
                         var newPlaced = placed.WithPosition(newOriginX, newOriginY, newRotation);
                         best = (newPlaced, myPortName, other.Segment.No, otherPortName);
                     }
@@ -578,16 +557,16 @@ internal sealed partial class TrackPlanPage
             return;
 
         var (offsetX, offsetY) = GetDrawOffset();
-        var draggedEntryPort = _draggedSegmentId.HasValue ? GetEntryPortForSegment(_draggedSegmentId.Value) : 'A';
-        var draggedPorts = SegmentPortGeometry.GetAllPortWorldPositions(_draggedPlaced, draggedEntryPort)
+        var draggedPorts = SegmentPortGeometry.GetAllPortWorldPositions(_draggedPlaced)
             .Select(p => (p.X, p.Y)).ToList();
         var threshold = PortHighlightRadiusMm;
         var portsToHighlight = new HashSet<(double X, double Y)>();
 
         foreach (var placed in _plan.Segments)
         {
-            var entryPort = GetEntryPortForSegment(placed.Segment.No);
-            var ports = SegmentPortGeometry.GetAllPortWorldPositions(placed, entryPort);
+            if (_draggingGroup.Contains(placed.Segment.No))
+                continue;
+            var ports = SegmentPortGeometry.GetAllPortWorldPositions(placed);
             foreach (var (_, px, py, _) in ports)
             {
                 foreach (var (dx, dy) in draggedPorts)
@@ -605,8 +584,9 @@ internal sealed partial class TrackPlanPage
 
         foreach (var placed in _plan.Segments)
         {
-            var entryPort = GetEntryPortForSegment(placed.Segment.No);
-            var ports = SegmentPortGeometry.GetAllPortWorldPositions(placed, entryPort);
+            if (_draggingGroup.Contains(placed.Segment.No))
+                continue;
+            var ports = SegmentPortGeometry.GetAllPortWorldPositions(placed);
             foreach (var (_, px, py, _) in ports)
             {
                 var highlight = portsToHighlight.Contains((px, py));
@@ -648,8 +628,7 @@ internal sealed partial class TrackPlanPage
 
         foreach (var placed in _plan.Segments)
         {
-            var entryPort = GetEntryPortForSegment(placed.Segment.No);
-            var ports = SegmentPortGeometry.GetAllPortWorldPositions(placed, entryPort).ToList();
+            var ports = SegmentPortGeometry.GetAllPortWorldPositions(placed).ToList();
             for (var i = 0; i < ports.Count; i++)
             {
                 var (_, px, py, _) = ports[i];
@@ -703,14 +682,6 @@ internal sealed partial class TrackPlanPage
         return Math.Sqrt((px - projX) * (px - projX) + (py - projY) * (py - projY));
     }
 
-    private char GetEntryPortForSegment(Guid segmentNo)
-    {
-        var incoming = _plan.Connections.FirstOrDefault(c => c.TargetSegment == segmentNo);
-        return incoming != null && incoming.TargetPort.Length > 0
-            ? incoming.TargetPort[^1]
-            : 'A';
-    }
-
     /// <summary>
     /// Berechnet die Bounding-Box aller Segmente in Weltkoordinaten (mm).
     /// </summary>
@@ -724,8 +695,7 @@ internal sealed partial class TrackPlanPage
 
         foreach (var placed in _plan.Segments)
         {
-            var entryPort = GetEntryPortForSegment(placed.Segment.No);
-            var path = SegmentLocalPathBuilder.GetPath(placed.Segment, entryPort);
+            var path = SegmentLocalPathBuilder.GetPath(placed.Segment);
             var (localMinX, localMinY, localMaxX, localMaxY) = SegmentLocalPathBuilder.GetBounds(path);
 
             var angleRad = placed.RotationDegrees * Math.PI / 180;
@@ -759,39 +729,38 @@ internal sealed partial class TrackPlanPage
 
     /// <summary>Offset in mm, damit der gesamte Inhalt im sichtbaren Bereich liegt (analog SVG viewBox).</summary>
     /// <remarks>
-    /// During a canvas drag the offset stays fixed so the displacement remains visible.
-    /// PlanChanged ruft sonst bei jedem MoveGroup RefreshCanvas auf; ein neu berechneter Offset
-    /// would cancel the movement (new offset = old offset − delta).
+    /// During interactive editing the offset must stay stable, otherwise placed or moved tracks
+    /// appear to jump because the viewport is auto-fitted after every model change.
     /// </remarks>
     private (double OffsetX, double OffsetY) GetDrawOffset()
     {
-        if (_isCanvasDragging)
-            return (_cachedDrawOffsetX, _cachedDrawOffsetY);
-        if (_useCachedOffsetForNextRefresh)
-        {
-            _useCachedOffsetForNextRefresh = false;
-            return (_cachedDrawOffsetX, _cachedDrawOffsetY);
-        }
+        if (!_drawOffsetInitialized)
+            RecalculateDrawOffset();
 
+        return (_cachedDrawOffsetX, _cachedDrawOffsetY);
+    }
+
+    private void RecalculateDrawOffset()
+    {
         var bounds = ComputeContentBoundsMm();
         if (bounds == null)
         {
             _cachedDrawOffsetX = 0;
             _cachedDrawOffsetY = 0;
-            return (0, 0);
+            _drawOffsetInitialized = true;
+            return;
         }
 
         var (minX, minY, _, _) = bounds.Value;
         _cachedDrawOffsetX = ContentMarginMm - minX;
         _cachedDrawOffsetY = ContentMarginMm - minY;
-        return (_cachedDrawOffsetX, _cachedDrawOffsetY);
+        _drawOffsetInitialized = true;
     }
 
     private void CreateGhost(PlacedSegment placed)
     {
         ClearGhost();
-        var entryPort = GetEntryPortForSegment(placed.Segment.No);
-        _ghostShape = SegmentPlanPathBuilder.CreatePath(placed, isGhost: true, isSelected: false, entryPort);
+        _ghostShape = SegmentPlanPathBuilder.CreatePath(placed, isGhost: true, isSelected: false);
         if (_ghostLayer != null)
         {
             _ghostLayer.Children.Add(_ghostShape);
@@ -893,8 +862,7 @@ internal sealed partial class TrackPlanPage
         foreach (var placed in _plan.Segments)
         {
             var isSelected = placed.Segment.No == _selectedSegmentId;
-            var entryPort = GetEntryPortForSegment(placed.Segment.No);
-            var pathCommands = SegmentLocalPathBuilder.GetPath(placed.Segment, entryPort);
+            var pathCommands = SegmentLocalPathBuilder.GetPath(placed.Segment);
             var worldGeometry = PathToCanvasGeometryConverter.ToCanvasGeometryInWorldCoords(
                 resourceCreator, pathCommands, placed.X + offsetX, placed.Y + offsetY, placed.RotationDegrees, ScaleMmToPx);
 

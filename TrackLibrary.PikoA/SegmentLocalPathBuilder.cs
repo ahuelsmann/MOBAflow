@@ -25,20 +25,12 @@ public static class SegmentLocalPathBuilder
     /// Start point is always (0, 0) = Port A.
     /// Uses the same formulas as TrackPlanSvgRenderer.
     /// </summary>
-    public static IReadOnlyList<PathCommand> GetPath(Segment segment) => GetPath(segment, 'A');
-
-    /// <summary>
-    /// Returns the path commands for a segment in local coordinates considering the entry port.
-    /// Entry port B for curves: curve right (curveDirection -1). Entry port B for straights: line backwards.
-    /// </summary>
-    public static IReadOnlyList<PathCommand> GetPath(Segment segment, char entryPort)
+    public static IReadOnlyList<PathCommand> GetPath(Segment segment)
     {
-        var curveDirection = entryPort == 'B' ? -1 : 1;
-
         return segment switch
         {
-            Straight s => GetStraightPath(s.LengthInMm, curveDirection),
-            Curved c => GetCurvedPath(c.ArcInDegree, c.RadiusInMm, curveDirection),
+            Straight s => GetStraightPath(s.LengthInMm),
+            Curved c => GetCurvedPath(c.ArcInDegree, c.RadiusInMm),
             WR wr => GetWrPath(wr.LengthInMm, wr.ArcInDegree, wr.RadiusInMm),
             WL wl => GetWlPath(wl.LengthInMm, wl.ArcInDegree, wl.RadiusInMm),
             WY wy => GetWyPath(wy.ArcInDegree, wy.RadiusInMm),
@@ -92,13 +84,14 @@ public static class SegmentLocalPathBuilder
         return (minX, minY, maxX, maxY);
     }
 
-    private static IReadOnlyList<PathCommand> GetStraightPath(double length, int direction = 1)
+    private static IReadOnlyList<PathCommand> GetStraightPath(double length)
     {
-        return [new LineTo(length * direction, 0)];
+        return [new LineTo(length, 0)];
     }
 
-    private static IReadOnlyList<PathCommand> GetCurvedPath(double arcDegree, double radius, int curveDirection = 1)
+    private static IReadOnlyList<PathCommand> GetCurvedPath(double arcDegree, double radius)
     {
+        const int curveDirection = 1;
         var centerAngleRad = (90 * curveDirection) * Math.PI / 180;
         var centerX = radius * Math.Cos(centerAngleRad);
         var centerY = radius * Math.Sin(centerAngleRad);
@@ -106,8 +99,7 @@ public static class SegmentLocalPathBuilder
         var endLocalAngleRad = (90 * curveDirection) * Math.PI / 180;
         var endX = centerX + radius * Math.Cos(endAngle - endLocalAngleRad);
         var endY = centerY + radius * Math.Sin(endAngle - endLocalAngleRad);
-        var clockwise = curveDirection == 1;
-        return [new ArcTo(endX, endY, radius, clockwise)];
+        return [new ArcTo(endX, endY, radius, true)];
     }
 
     private static IReadOnlyList<PathCommand> GetWrPath(double straightLength, double arcDegree, double radius)
@@ -290,38 +282,34 @@ public static class SegmentLocalPathBuilder
         _ = radius;
         var half = length / 2;
         var rad = arcDegree * Math.PI / 180;
-        var cos = Math.Cos(rad);
         var sin = Math.Sin(rad);
-        // Distance of parallel tracks (rhombus height)
         var trackOffset = half * sin;
-        var crossHalf = half * cos;
-        // Upper track: (0, trackOffset) to (length, trackOffset)
-        // Lower track: (0, -trackOffset) to (length, -trackOffset)
-        // X: Diagonal 1 from (half - crossHalf, trackOffset) to (half + crossHalf, -trackOffset)
-        //    Diagonal 2 from (half - crossHalf, -trackOffset) to (half + crossHalf, trackOffset)
+        var crossHalf = length * 0.2;
         return
         [
-            new MoveTo(0, trackOffset),
-            new LineTo(length, trackOffset),
-            new MoveTo(0, -trackOffset),
-            new LineTo(length, -trackOffset),
-            new MoveTo(half - crossHalf, trackOffset),
-            new LineTo(half + crossHalf, -trackOffset),
-            new MoveTo(half - crossHalf, -trackOffset),
-            new LineTo(half + crossHalf, trackOffset)
+            new MoveTo(0, 0),
+            new LineTo(length, 0),
+            new MoveTo(0, -2 * trackOffset),
+            new LineTo(length, -2 * trackOffset),
+            new MoveTo(half - crossHalf, 0),
+            new LineTo(half + crossHalf, -2 * trackOffset),
+            new MoveTo(half - crossHalf, -2 * trackOffset),
+            new LineTo(half + crossHalf, 0)
         ];
     }
 
     private static IReadOnlyList<PathCommand> GetCrossingPath(double angleDeg, double length)
     {
-        var len = length * 0.4;
         var rad = angleDeg * Math.PI / 180;
+        var half = length / 2;
+        var cos = Math.Cos(rad);
+        var sin = Math.Sin(rad);
         return
         [
-            new MoveTo(-len * Math.Cos(rad), -len * Math.Sin(rad)),
-            new LineTo(len * Math.Cos(rad), len * Math.Sin(rad)),
-            new MoveTo(-len * Math.Cos(-rad), -len * Math.Sin(-rad)),
-            new LineTo(len * Math.Cos(-rad), len * Math.Sin(-rad))
+            new MoveTo(0, 0),
+            new LineTo(length, 0),
+            new MoveTo(half - half * cos, -half * sin),
+            new LineTo(half + half * cos, half * sin)
         ];
     }
 }
