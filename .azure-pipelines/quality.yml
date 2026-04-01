@@ -20,10 +20,10 @@ variables:
   dotnetVersion: '10.0.x'
 
   # Sonar-Konfiguration – aktuell deaktiviert (nur für spätere Aktivierung)
-  #sonarProjectKey: 'mobaflow'
-  #sonarProjectName: 'MOBAflow'
-  #sonarProjectVersion: '1.0'
-  #sonarServiceConnection: 'SonarQubeServiceConnection'
+  sonarProjectKey: 'ahuelsmann_MOBAflow'
+  sonarProjectName: 'MOBAflow'
+  sonarProjectVersion: '1.0'
+  sonarServiceConnection: 'SonarQubeServiceConnection'
 
 pool:
   vmImage: 'windows-latest'
@@ -38,7 +38,7 @@ stages:
 
         steps:
           - checkout: self
-            fetchDepth: 1
+            fetchDepth: 0
             clean: true
 
           - task: UseDotNet@2
@@ -66,6 +66,14 @@ stages:
                 **/Test.csproj
               arguments: '--configuration $(buildConfiguration) --no-restore'
 
+          - task: SonarQubeAnalyze@5
+            displayName: 'Run SonarQube Analysis'
+
+          - task: SonarQubePublish@5
+            displayName: 'Publish SonarQube Quality Gate Result'
+            inputs:
+              pollingTimeoutSec: '300'
+              
           - task: DotNetCoreCLI@2
             displayName: 'Install dotnet-coverage'
             inputs:
@@ -98,12 +106,3 @@ stages:
               codeCoverageTool: 'Cobertura'
               summaryFileLocation: '$(Agent.TempDirectory)/coverage.cobertura.xml'
               reportDirectory: '$(Agent.TempDirectory)/coverage-report'
-
-          # - task: SonarQubeAnalyze@5
-          #   displayName: 'Run SonarQube Analysis'
-
-          # - task: SonarQubePublish@5
-          #   displayName: 'Publish SonarQube Quality Gate Result'
-          #   inputs:
-          #     pollingTimeoutSec: '300'
-
