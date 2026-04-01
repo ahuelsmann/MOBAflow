@@ -1,5 +1,5 @@
 # Azure DevOps Pipeline: PR Validation (Build + Tests + Coverage)
-# Nutzt .NET 10 und dotnet-coverage. SonarQube-Schritte sind aktuell auskommentiert.
+# Nutzt .NET 10, dotnet-coverage und SonarQube Cloud für statische Codeanalyse.
 # MAUI bleibt explizit außen vor (dieses Quality Gate prüft nur MOBAflow Desktop und Tests).
 
 trigger: none
@@ -19,11 +19,13 @@ variables:
   buildConfiguration: 'Release'
   dotnetVersion: '10.0.x'
 
-  # Sonar-Konfiguration – aktuell deaktiviert (nur für spätere Aktivierung)
+  # SonarQube Cloud configuration (see SonarCloudPrepare inputs in Sonar docs)
+  # sonarServiceConnection must match the service connection name in Project Settings > Service connections.
+  sonarOrganization: 'ahuelsmann'
   sonarProjectKey: 'ahuelsmann_MOBAflow'
   sonarProjectName: 'MOBAflow'
   sonarProjectVersion: '1.0'
-  sonarServiceConnection: 'SonarQubeServiceConnection'
+  sonarServiceConnection: 'SonarQubeAnalyze'
 
 pool:
   vmImage: 'windows-latest'
@@ -48,6 +50,18 @@ stages:
               version: '$(dotnetVersion)'
               includePreviewVersions: true
 
+          - task: SonarCloudPrepare@4
+            displayName: 'Prepare SonarQube Cloud Analysis'
+            inputs:
+              SonarCloud: '$(sonarServiceConnection)'
+              organization: '$(sonarOrganization)'
+              scannerMode: 'dotnet'
+              projectKey: '$(sonarProjectKey)'
+              projectName: '$(sonarProjectName)'
+              projectVersion: '$(sonarProjectVersion)'
+              extraProperties: |
+                sonar.exclusions=**/obj/**
+
           - task: DotNetCoreCLI@2
             displayName: 'Restore NuGet Packages (MOBAflow + Test)'
             inputs:
@@ -66,11 +80,11 @@ stages:
                 **/Test.csproj
               arguments: '--configuration $(buildConfiguration) --no-restore'
 
-          - task: SonarQubeAnalyze@5
-            displayName: 'Run SonarQube Analysis'
+          - task: SonarCloudAnalyze@4
+            displayName: 'Run SonarQube Cloud Analysis'
 
-          - task: SonarQubePublish@5
-            displayName: 'Publish SonarQube Quality Gate Result'
+          - task: SonarCloudPublish@4
+            displayName: 'Publish SonarQube Cloud Quality Gate Result'
             inputs:
               pollingTimeoutSec: '300'
               
