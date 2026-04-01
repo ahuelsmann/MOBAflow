@@ -17,20 +17,41 @@ internal sealed class DockingWorkspaceService
         var documents = state.Documents
             .Select(documentState => CreateDocumentTab(documentState, contentFactory))
             .ToList();
+        var toolWindowsById = state.ToolWindows.ToDictionary(item => item.Id, StringComparer.Ordinal);
 
         var projection = new DockingWorkspaceProjection
         {
             ActiveDocument = documents.FirstOrDefault(document => document.DocumentId == state.ActiveDocumentId)
                 ?? documents.FirstOrDefault(),
-            LeftNode = CreateNode(state.Left.Root, state.ToolWindows, contentFactory),
-            RightNode = CreateNode(state.Right.Root, state.ToolWindows, contentFactory),
-            TopNode = CreateNode(state.Top.Root, state.ToolWindows, contentFactory),
-            BottomNode = CreateNode(state.Bottom.Root, state.ToolWindows, contentFactory)
+            LeftNode = CreateNode(state.Left.Root, toolWindowsById, contentFactory),
+            RightNode = CreateNode(state.Right.Root, toolWindowsById, contentFactory),
+            TopNode = CreateNode(state.Top.Root, toolWindowsById, contentFactory),
+            BottomNode = CreateNode(state.Bottom.Root, toolWindowsById, contentFactory)
         };
 
         foreach (var document in documents)
         {
             projection.Documents.Add(document);
+        }
+
+        foreach (var panel in CreateAutoHidePanels(state.Left.Root, toolWindowsById, contentFactory))
+        {
+            projection.LeftAutoHidePanels.Add(panel);
+        }
+
+        foreach (var panel in CreateAutoHidePanels(state.Right.Root, toolWindowsById, contentFactory))
+        {
+            projection.RightAutoHidePanels.Add(panel);
+        }
+
+        foreach (var panel in CreateAutoHidePanels(state.Top.Root, toolWindowsById, contentFactory))
+        {
+            projection.TopAutoHidePanels.Add(panel);
+        }
+
+        foreach (var panel in CreateAutoHidePanels(state.Bottom.Root, toolWindowsById, contentFactory))
+        {
+            projection.BottomAutoHidePanels.Add(panel);
         }
 
         return projection;
@@ -65,7 +86,8 @@ internal sealed class DockingWorkspaceService
                 IconGlyph = document.IconGlyph,
                 ContentId = document.ContentId,
                 ContentBody = document.ContentBody,
-                IsExpanded = true
+                IsExpanded = true,
+                IsAutoHidden = false
             });
         }
         else
@@ -75,6 +97,7 @@ internal sealed class DockingWorkspaceService
             toolWindow.ContentId = document.ContentId;
             toolWindow.ContentBody = document.ContentBody;
             toolWindow.IsExpanded = true;
+            toolWindow.IsAutoHidden = false;
         }
 
         state.ActiveDocumentId = state.Documents.FirstOrDefault()?.Id;
@@ -95,6 +118,10 @@ internal sealed class DockingWorkspaceService
         {
             return false;
         }
+
+        var toolWindow = state.ToolWindows.First(item => item.Id == toolWindowId);
+        toolWindow.IsAutoHidden = false;
+        toolWindow.IsExpanded = true;
 
         RemoveToolWindowFromAllSides(state, toolWindowId);
 
@@ -143,6 +170,42 @@ internal sealed class DockingWorkspaceService
         return true;
     }
 
+    public bool UpdateToolWindowAutoHide(
+        DockingWorkspaceState state,
+        string toolWindowId,
+        DockPosition position,
+        bool isAutoHidden)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        ArgumentException.ThrowIfNullOrWhiteSpace(toolWindowId);
+
+        if (position == DockPosition.Center)
+        {
+            return false;
+        }
+
+        var toolWindow = state.ToolWindows.FirstOrDefault(item => item.Id == toolWindowId);
+        if (toolWindow is null)
+        {
+            return false;
+        }
+
+        var side = GetSide(state, position);
+        if (!ContainsToolWindow(side.Root, toolWindowId) && !DockToolWindowToSide(state, toolWindowId, position))
+        {
+            return false;
+        }
+
+        toolWindow.IsAutoHidden = isAutoHidden;
+        if (!isAutoHidden)
+        {
+            toolWindow.IsExpanded = true;
+        }
+
+        SyncSideVisibility(state);
+        return true;
+    }
+
     public static string GetDockedDocumentToolWindowId(string documentId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(documentId);
@@ -165,7 +228,7 @@ internal sealed class DockingWorkspaceService
 
     private static DockNode? CreateNode(
         DockingLayoutNodeState? state,
-        IEnumerable<DockingToolWindowState> toolWindows,
+        IReadOnlyDictionary<string, DockingToolWindowState> toolWindows,
         Func<string, UIElement> contentFactory)
     {
         switch (state)
@@ -179,22 +242,12 @@ internal sealed class DockingWorkspaceService
 
                 foreach (var toolWindowId in groupState.ToolWindowIds)
                 {
-                    var toolWindow = toolWindows.FirstOrDefault(item => item.Id == toolWindowId);
-                    if (toolWindow is null)
+                    if (!toolWindows.TryGetValue(toolWindowId, out var toolWindow) || toolWindow.IsAutoHidden)
                     {
                         continue;
                     }
 
-                    groupNode.Panels.Add(new DockPanel
-                    {
-                        PanelId = toolWindow.Id,
-                        PanelTitle = toolWindow.Title,
-                        PanelIconGlyph = toolWindow.IconGlyph,
-                        PanelContent = contentFactory(toolWindow.ContentId),
-                        IsExpanded = toolWindow.IsExpanded,
-                        DockPosition = groupState.DockPosition,
-                        Tag = toolWindow.Id
-                    });
+                    groupNode.Panels.Add(CreateDockPanel(toolWindow, groupState.DockPosition, contentFactory));
                 }
 
                 return groupNode.Panels.Count > 0 ? groupNode : null;
@@ -222,6 +275,58 @@ internal sealed class DockingWorkspaceService
             default:
                 return null;
         }
+    }
+
+    private static IEnumerable<DockPanel> CreateAutoHidePanels(
+        DockingLayoutNodeState? state,
+        IReadOnlyDictionary<string, DockingToolWindowState> toolWindows,
+        Func<string, UIElement> contentFactory)
+    {
+        switch (state)
+        {
+            case DockingGroupState groupState:
+                foreach (var toolWindowId in groupState.ToolWindowIds)
+                {
+                    if (!toolWindows.TryGetValue(toolWindowId, out var toolWindow) || !toolWindow.IsAutoHidden)
+                    {
+                        continue;
+                    }
+
+                    yield return CreateDockPanel(toolWindow, groupState.DockPosition, contentFactory);
+                }
+
+                yield break;
+
+            case DockingSplitState splitState:
+                foreach (var panel in CreateAutoHidePanels(splitState.FirstNode, toolWindows, contentFactory))
+                {
+                    yield return panel;
+                }
+
+                foreach (var panel in CreateAutoHidePanels(splitState.SecondNode, toolWindows, contentFactory))
+                {
+                    yield return panel;
+                }
+
+                yield break;
+        }
+    }
+
+    private static DockPanel CreateDockPanel(
+        DockingToolWindowState toolWindow,
+        DockPosition dockPosition,
+        Func<string, UIElement> contentFactory)
+    {
+        return new DockPanel
+        {
+            PanelId = toolWindow.Id,
+            PanelTitle = toolWindow.Title,
+            PanelIconGlyph = toolWindow.IconGlyph,
+            PanelContent = contentFactory(toolWindow.ContentId),
+            IsExpanded = toolWindow.IsExpanded,
+            DockPosition = dockPosition,
+            Tag = toolWindow.Id
+        };
     }
 
     private static DockingSideState GetSide(DockingWorkspaceState state, DockPosition position)
@@ -307,6 +412,17 @@ internal sealed class DockingWorkspaceService
         }
     }
 
+    private static bool ContainsToolWindow(DockingLayoutNodeState? node, string toolWindowId)
+    {
+        return node switch
+        {
+            DockingGroupState groupState => groupState.ToolWindowIds.Contains(toolWindowId, StringComparer.Ordinal),
+            DockingSplitState splitState => ContainsToolWindow(splitState.FirstNode, toolWindowId)
+                || ContainsToolWindow(splitState.SecondNode, toolWindowId),
+            _ => false
+        };
+    }
+
     private static void NormalizeDockPosition(DockingLayoutNodeState? node, DockPosition position)
     {
         if (node is null)
@@ -323,21 +439,26 @@ internal sealed class DockingWorkspaceService
         }
     }
 
-    private static bool HasAnyToolWindows(DockingLayoutNodeState? node)
+    private static bool HasAnyVisibleToolWindows(
+        DockingLayoutNodeState? node,
+        IReadOnlyDictionary<string, DockingToolWindowState> toolWindows)
     {
         return node switch
         {
-            DockingGroupState groupState => groupState.ToolWindowIds.Count > 0,
-            DockingSplitState splitNode => HasAnyToolWindows(splitNode.FirstNode) || HasAnyToolWindows(splitNode.SecondNode),
+            DockingGroupState groupState => groupState.ToolWindowIds.Any(
+                toolWindowId => toolWindows.TryGetValue(toolWindowId, out var toolWindow) && !toolWindow.IsAutoHidden),
+            DockingSplitState splitNode => HasAnyVisibleToolWindows(splitNode.FirstNode, toolWindows)
+                || HasAnyVisibleToolWindows(splitNode.SecondNode, toolWindows),
             _ => false
         };
     }
 
     private static void SyncSideVisibility(DockingWorkspaceState state)
     {
-        state.Left.IsVisible = HasAnyToolWindows(state.Left.Root);
-        state.Right.IsVisible = HasAnyToolWindows(state.Right.Root);
-        state.Top.IsVisible = HasAnyToolWindows(state.Top.Root);
-        state.Bottom.IsVisible = HasAnyToolWindows(state.Bottom.Root);
+        var toolWindows = state.ToolWindows.ToDictionary(item => item.Id, StringComparer.Ordinal);
+        state.Left.IsVisible = HasAnyVisibleToolWindows(state.Left.Root, toolWindows);
+        state.Right.IsVisible = HasAnyVisibleToolWindows(state.Right.Root, toolWindows);
+        state.Top.IsVisible = HasAnyVisibleToolWindows(state.Top.Root, toolWindows);
+        state.Bottom.IsVisible = HasAnyVisibleToolWindows(state.Bottom.Root, toolWindows);
     }
 }

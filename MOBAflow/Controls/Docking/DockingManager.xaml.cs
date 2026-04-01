@@ -5,13 +5,18 @@ namespace Moba.WinUI.Controls.Docking;
 using Behavior;
 
 using Microsoft.UI;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Input;
+using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 
 using Model;
+
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
@@ -42,22 +47,23 @@ internal sealed partial class DockingManager
     private double _rightExpandedWidth;
     private double _topExpandedHeight;
     private double _bottomExpandedHeight;
+    private readonly Border _autoHidePreviewHost;
+    private readonly FontIcon _autoHidePreviewIcon;
+    private readonly TextBlock _autoHidePreviewTitle;
+    private readonly ContentPresenter _autoHidePreviewContent;
+    private readonly DispatcherQueueTimer _autoHidePreviewCloseTimer;
+    private string? _activeAutoHidePanelId;
+    private DockPosition? _activeAutoHideSide;
+    private bool _isPointerOverAutoHidePreview;
+    private bool _isPointerOverAutoHideSidebar;
 
     public event EventHandler<DocumentTabDockRequestedEventArgs>? DocumentTabDockRequested;
 
     public event EventHandler<DockPanelDockRequestedEventArgs>? DockPanelDockRequested;
 
-    public event EventHandler<DockPanelStateChangedEventArgs>? DockPanelStateChanged;
+    public event EventHandler<DockPanelAutoHideRequestedEventArgs>? DockPanelAutoHideRequested;
 
-    // Auto-Hide state
-    private readonly Dictionary<DockPosition, List<AutoHideEntry>> _autoHideEntries = new()
-    {
-        [DockPosition.Left] = [],
-        [DockPosition.Right] = [],
-        [DockPosition.Top] = [],
-        [DockPosition.Bottom] = []
-    };
-    private AutoHideEntry? _activeAutoHideEntry;
+    public event EventHandler<DockPanelStateChangedEventArgs>? DockPanelStateChanged;
 
     #region Dependency Properties
 
@@ -187,6 +193,34 @@ internal sealed partial class DockingManager
             typeof(DockingManager),
             new PropertyMetadata(null, OnBottomNodeChanged));
 
+    public static readonly DependencyProperty LeftAutoHidePanelsProperty =
+        DependencyProperty.Register(
+            nameof(LeftAutoHidePanels),
+            typeof(ObservableCollection<DockPanel>),
+            typeof(DockingManager),
+            new PropertyMetadata(null, OnLeftAutoHidePanelsChanged));
+
+    public static readonly DependencyProperty RightAutoHidePanelsProperty =
+        DependencyProperty.Register(
+            nameof(RightAutoHidePanels),
+            typeof(ObservableCollection<DockPanel>),
+            typeof(DockingManager),
+            new PropertyMetadata(null, OnRightAutoHidePanelsChanged));
+
+    public static readonly DependencyProperty TopAutoHidePanelsProperty =
+        DependencyProperty.Register(
+            nameof(TopAutoHidePanels),
+            typeof(ObservableCollection<DockPanel>),
+            typeof(DockingManager),
+            new PropertyMetadata(null, OnTopAutoHidePanelsChanged));
+
+    public static readonly DependencyProperty BottomAutoHidePanelsProperty =
+        DependencyProperty.Register(
+            nameof(BottomAutoHidePanels),
+            typeof(ObservableCollection<DockPanel>),
+            typeof(DockingManager),
+            new PropertyMetadata(null, OnBottomAutoHidePanelsChanged));
+
     private static void OnLayoutModeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is DockingManager manager)
@@ -227,6 +261,50 @@ internal sealed partial class DockingManager
         }
     }
 
+    private static void OnLeftAutoHidePanelsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is DockingManager manager)
+        {
+            manager.OnAutoHidePanelsChanged(
+                DockPosition.Left,
+                e.OldValue as ObservableCollection<DockPanel>,
+                e.NewValue as ObservableCollection<DockPanel>);
+        }
+    }
+
+    private static void OnRightAutoHidePanelsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is DockingManager manager)
+        {
+            manager.OnAutoHidePanelsChanged(
+                DockPosition.Right,
+                e.OldValue as ObservableCollection<DockPanel>,
+                e.NewValue as ObservableCollection<DockPanel>);
+        }
+    }
+
+    private static void OnTopAutoHidePanelsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is DockingManager manager)
+        {
+            manager.OnAutoHidePanelsChanged(
+                DockPosition.Top,
+                e.OldValue as ObservableCollection<DockPanel>,
+                e.NewValue as ObservableCollection<DockPanel>);
+        }
+    }
+
+    private static void OnBottomAutoHidePanelsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is DockingManager manager)
+        {
+            manager.OnAutoHidePanelsChanged(
+                DockPosition.Bottom,
+                e.OldValue as ObservableCollection<DockPanel>,
+                e.NewValue as ObservableCollection<DockPanel>);
+        }
+    }
+
     private void OnSideNodeChanged(DockPosition side, DockNode? node)
     {
         if (node is not null)
@@ -251,11 +329,37 @@ internal sealed partial class DockingManager
     public DockingManager()
     {
         InitializeComponent();
+        (_autoHidePreviewHost, _autoHidePreviewIcon, _autoHidePreviewTitle, _autoHidePreviewContent) =
+            CreateAutoHidePreviewHost();
+        _autoHidePreviewCloseTimer = DispatcherQueue.CreateTimer();
+        _autoHidePreviewCloseTimer.Interval = TimeSpan.FromMilliseconds(180);
+        _autoHidePreviewCloseTimer.Tick += OnAutoHidePreviewCloseTimerTick;
+        Grid.SetRow(_autoHidePreviewHost, 1);
+        RootGrid.Children.Add(_autoHidePreviewHost);
+        RootGrid.KeyDown += OnRootGridKeyDown;
+        RootGrid.PointerPressed += OnRootGridPointerPressed;
+        LeftAutoHideBar.PointerEntered += OnAutoHideSidebarPointerEntered;
+        LeftAutoHideBar.PointerExited += OnAutoHideSidebarPointerExited;
+        LeftAutoHideBar.LostFocus += OnAutoHideUiLostFocus;
+        RightAutoHideBar.PointerEntered += OnAutoHideSidebarPointerEntered;
+        RightAutoHideBar.PointerExited += OnAutoHideSidebarPointerExited;
+        RightAutoHideBar.LostFocus += OnAutoHideUiLostFocus;
+        TopAutoHideBar.PointerEntered += OnAutoHideSidebarPointerEntered;
+        TopAutoHideBar.PointerExited += OnAutoHideSidebarPointerExited;
+        TopAutoHideBar.LostFocus += OnAutoHideUiLostFocus;
+        BottomAutoHideBar.PointerEntered += OnAutoHideSidebarPointerEntered;
+        BottomAutoHideBar.PointerExited += OnAutoHideSidebarPointerExited;
+        BottomAutoHideBar.LostFocus += OnAutoHideUiLostFocus;
         LeftNodePresenter.PanelExpansionChanged += OnRootPanelExpansionChanged;
+        LeftNodePresenter.PanelAutoHideRequested += OnRootPanelAutoHideRequested;
         RightNodePresenter.PanelExpansionChanged += OnRootPanelExpansionChanged;
+        RightNodePresenter.PanelAutoHideRequested += OnRootPanelAutoHideRequested;
         TopNodePresenter.PanelExpansionChanged += OnRootPanelExpansionChanged;
+        TopNodePresenter.PanelAutoHideRequested += OnRootPanelAutoHideRequested;
         BottomNodePresenter.PanelExpansionChanged += OnRootPanelExpansionChanged;
+        BottomNodePresenter.PanelAutoHideRequested += OnRootPanelAutoHideRequested;
         Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
@@ -266,6 +370,29 @@ internal sealed partial class DockingManager
         _bottomExpandedHeight = BottomPanelHeight;
 
         SyncLayoutModesToGroups();
+        ResetObservedAutoHidePanels();
+        RebuildAllAutoHideSidebars();
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        UnobserveAutoHidePanels(LeftAutoHidePanels);
+        UnobserveAutoHidePanels(RightAutoHidePanels);
+        UnobserveAutoHidePanels(TopAutoHidePanels);
+        UnobserveAutoHidePanels(BottomAutoHidePanels);
+        _autoHidePreviewCloseTimer.Stop();
+        HideAutoHidePreview();
+    }
+
+    private void OnRootGridKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key != Windows.System.VirtualKey.Escape || _autoHidePreviewHost.Visibility != Visibility.Visible)
+        {
+            return;
+        }
+
+        HideAutoHidePreview();
+        e.Handled = true;
     }
 
     private void OnRootPanelExpansionChanged(object? sender, DockPanelExpansionChangedEventArgs e)
@@ -283,6 +410,73 @@ internal sealed partial class DockingManager
         }
 
         DockPanelStateChanged?.Invoke(this, new DockPanelStateChangedEventArgs(e.Panel.PanelId, e.Panel.IsExpanded));
+    }
+
+    private void OnRootPanelAutoHideRequested(object? sender, DockPanelAutoHideIntentEventArgs e)
+    {
+        PinToAutoHide(e.Panel, e.Panel.DockPosition);
+    }
+
+    private void OnAutoHidePanelsChanged(
+        DockPosition side,
+        ObservableCollection<DockPanel>? oldValue,
+        ObservableCollection<DockPanel>? newValue)
+    {
+        if (!ReferenceEquals(oldValue, newValue))
+        {
+            UnobserveAutoHidePanels(oldValue);
+            ObserveAutoHidePanels(newValue);
+        }
+
+        RebuildAutoHideSidebar(side);
+    }
+
+    private void ResetObservedAutoHidePanels()
+    {
+        UnobserveAutoHidePanels(LeftAutoHidePanels);
+        UnobserveAutoHidePanels(RightAutoHidePanels);
+        UnobserveAutoHidePanels(TopAutoHidePanels);
+        UnobserveAutoHidePanels(BottomAutoHidePanels);
+        ObserveAutoHidePanels(LeftAutoHidePanels);
+        ObserveAutoHidePanels(RightAutoHidePanels);
+        ObserveAutoHidePanels(TopAutoHidePanels);
+        ObserveAutoHidePanels(BottomAutoHidePanels);
+    }
+
+    private void ObserveAutoHidePanels(ObservableCollection<DockPanel>? panels)
+    {
+        if (panels is not null)
+        {
+            panels.CollectionChanged += OnObservedAutoHidePanelsCollectionChanged;
+        }
+    }
+
+    private void UnobserveAutoHidePanels(ObservableCollection<DockPanel>? panels)
+    {
+        if (panels is not null)
+        {
+            panels.CollectionChanged -= OnObservedAutoHidePanelsCollectionChanged;
+        }
+    }
+
+    private void OnObservedAutoHidePanelsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (ReferenceEquals(sender, LeftAutoHidePanels))
+        {
+            RebuildAutoHideSidebar(DockPosition.Left);
+        }
+        else if (ReferenceEquals(sender, RightAutoHidePanels))
+        {
+            RebuildAutoHideSidebar(DockPosition.Right);
+        }
+        else if (ReferenceEquals(sender, TopAutoHidePanels))
+        {
+            RebuildAutoHideSidebar(DockPosition.Top);
+        }
+        else if (ReferenceEquals(sender, BottomAutoHidePanels))
+        {
+            RebuildAutoHideSidebar(DockPosition.Bottom);
+        }
     }
 
     #region Properties
@@ -401,6 +595,30 @@ internal sealed partial class DockingManager
     {
         get => (DockNode?)GetValue(BottomNodeProperty);
         set => SetValue(BottomNodeProperty, value);
+    }
+
+    public ObservableCollection<DockPanel>? LeftAutoHidePanels
+    {
+        get => (ObservableCollection<DockPanel>?)GetValue(LeftAutoHidePanelsProperty);
+        set => SetValue(LeftAutoHidePanelsProperty, value);
+    }
+
+    public ObservableCollection<DockPanel>? RightAutoHidePanels
+    {
+        get => (ObservableCollection<DockPanel>?)GetValue(RightAutoHidePanelsProperty);
+        set => SetValue(RightAutoHidePanelsProperty, value);
+    }
+
+    public ObservableCollection<DockPanel>? TopAutoHidePanels
+    {
+        get => (ObservableCollection<DockPanel>?)GetValue(TopAutoHidePanelsProperty);
+        set => SetValue(TopAutoHidePanelsProperty, value);
+    }
+
+    public ObservableCollection<DockPanel>? BottomAutoHidePanels
+    {
+        get => (ObservableCollection<DockPanel>?)GetValue(BottomAutoHidePanelsProperty);
+        set => SetValue(BottomAutoHidePanelsProperty, value);
     }
 
     #endregion
@@ -784,7 +1002,6 @@ internal sealed partial class DockingManager
 
         var position = DockingDropBehavior.GetDockPosition(dependencyObject);
 
-        // Convert Behavior.DockPosition to Controls.DockPosition
         var controlsPosition = (DockPosition)Enum.Parse(typeof(DockPosition), position.ToString());
 
         if (TryGetDraggedPanel(e, out var panel) && panel is not null)
@@ -874,9 +1091,6 @@ internal sealed partial class DockingManager
         return tab is not null;
     }
 
-    /// <summary>
-    /// Docks a DocumentTab as a DockPanel at the specified position.
-    /// </summary>
     private bool TryRaiseDockPanelRequest(DockPanel panel, DockPosition position)
     {
         ArgumentNullException.ThrowIfNull(panel);
@@ -1059,16 +1273,13 @@ internal sealed partial class DockingManager
     {
         ArgumentNullException.ThrowIfNull(panel);
 
-        RemovePanelFromAllGroups(panel);
+        if (side == DockPosition.Center || string.IsNullOrWhiteSpace(panel.PanelId))
+        {
+            return;
+        }
 
-        var entry = new AutoHideEntry(panel, side);
-        _autoHideEntries[side].Add(entry);
-
-        var sidebar = GetAutoHideSidebar(side);
-        sidebar.Visibility = Visibility.Visible;
-
-        var tabButton = CreateAutoHideTabButton(entry);
-        sidebar.Children.Add(tabButton);
+        HideAutoHidePreview();
+        DockPanelAutoHideRequested?.Invoke(this, new DockPanelAutoHideRequestedEventArgs(panel.PanelId, side, true));
     }
 
     private StackPanel GetAutoHideSidebar(DockPosition side) => side switch
@@ -1080,7 +1291,47 @@ internal sealed partial class DockingManager
         _ => LeftAutoHideBar
     };
 
-    private Button CreateAutoHideTabButton(AutoHideEntry entry)
+    private ObservableCollection<DockPanel>? GetAutoHidePanels(DockPosition side) => side switch
+    {
+        DockPosition.Left => LeftAutoHidePanels,
+        DockPosition.Right => RightAutoHidePanels,
+        DockPosition.Top => TopAutoHidePanels,
+        DockPosition.Bottom => BottomAutoHidePanels,
+        _ => null
+    };
+
+    private void RebuildAllAutoHideSidebars()
+    {
+        RebuildAutoHideSidebar(DockPosition.Left);
+        RebuildAutoHideSidebar(DockPosition.Right);
+        RebuildAutoHideSidebar(DockPosition.Top);
+        RebuildAutoHideSidebar(DockPosition.Bottom);
+    }
+
+    private void RebuildAutoHideSidebar(DockPosition side)
+    {
+        var sidebar = GetAutoHideSidebar(side);
+        var panels = GetAutoHidePanels(side);
+
+        sidebar.Children.Clear();
+        if (panels is null || panels.Count == 0)
+        {
+            sidebar.Visibility = Visibility.Collapsed;
+            RefreshActiveAutoHidePreview();
+            return;
+        }
+
+        foreach (var panel in panels)
+        {
+            sidebar.Children.Add(CreateAutoHideTabButton(panel, side));
+        }
+
+        sidebar.Visibility = Visibility.Visible;
+        UpdateAutoHideTabVisualStates();
+        RefreshActiveAutoHidePreview();
+    }
+
+    private Button CreateAutoHideTabButton(DockPanel panel, DockPosition side)
     {
         var button = new Button
         {
@@ -1089,6 +1340,7 @@ internal sealed partial class DockingManager
             Padding = new Thickness(8, 4, 8, 4),
             Margin = new Thickness(2),
             CornerRadius = new CornerRadius(4),
+            Tag = panel.PanelId,
             Content = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
@@ -1100,11 +1352,11 @@ internal sealed partial class DockingManager
                         FontFamily = (FontFamily)
                             Application.Current.Resources["SymbolThemeFontFamily"],
                         FontSize = 12,
-                        Glyph = entry.Panel.PanelIconGlyph
+                        Glyph = panel.PanelIconGlyph
                     },
                     new TextBlock
                     {
-                        Text = entry.Panel.PanelTitle,
+                        Text = panel.PanelTitle,
                         FontSize = 11,
                         VerticalAlignment = VerticalAlignment.Center
                     }
@@ -1112,29 +1364,400 @@ internal sealed partial class DockingManager
             }
         };
 
-        button.Click += (_, _) => ToggleAutoHidePanel(entry);
+        ApplyAutoHideTabVisualState(
+            button,
+            _activeAutoHideSide == side && StringComparer.Ordinal.Equals(_activeAutoHidePanelId, panel.PanelId));
+
+        button.PointerEntered += (_, _) =>
+        {
+            _isPointerOverAutoHideSidebar = true;
+            CancelAutoHidePreviewClose();
+            ShowAutoHidePreview(panel, side);
+        };
+        button.GotFocus += (_, _) =>
+        {
+            CancelAutoHidePreviewClose();
+            ShowAutoHidePreview(panel, side);
+        };
+        button.LostFocus += OnAutoHideUiLostFocus;
+        button.Click += (_, _) => ToggleAutoHidePanel(panel, side);
         return button;
     }
 
-    private void ToggleAutoHidePanel(AutoHideEntry entry)
+    private void ToggleAutoHidePanel(DockPanel panel, DockPosition side)
     {
-        if (_activeAutoHideEntry == entry)
+        if (_activeAutoHideSide == side && StringComparer.Ordinal.Equals(_activeAutoHidePanelId, panel.PanelId))
         {
-            RemovePanelFromAllGroups(entry.Panel);
-            SetPanelVisibility(entry.Side, false);
-            _activeAutoHideEntry = null;
+            HideAutoHidePreview();
         }
         else
         {
-            if (_activeAutoHideEntry is not null)
+            ShowAutoHidePreview(panel, side);
+        }
+    }
+
+    private void ShowAutoHidePreview(DockPanel panel, DockPosition side)
+    {
+        CancelAutoHidePreviewClose();
+        _activeAutoHidePanelId = panel.PanelId;
+        _activeAutoHideSide = side;
+        _autoHidePreviewIcon.Glyph = panel.PanelIconGlyph;
+        _autoHidePreviewTitle.Text = panel.PanelTitle;
+        _autoHidePreviewContent.Content = null;
+        _autoHidePreviewContent.Content = panel.PanelContent;
+        UpdateAutoHidePreviewLayout(side);
+        _autoHidePreviewHost.Visibility = Visibility.Visible;
+        UpdateAutoHideTabVisualStates();
+    }
+
+    private void HideAutoHidePreview()
+    {
+        CancelAutoHidePreviewClose();
+        _isPointerOverAutoHidePreview = false;
+        _activeAutoHidePanelId = null;
+        _activeAutoHideSide = null;
+        _autoHidePreviewContent.Content = null;
+        _autoHidePreviewHost.Visibility = Visibility.Collapsed;
+        UpdateAutoHideTabVisualStates();
+    }
+
+    private void RefreshActiveAutoHidePreview()
+    {
+        if (_activeAutoHideSide is null || string.IsNullOrWhiteSpace(_activeAutoHidePanelId))
+        {
+            return;
+        }
+
+        var side = _activeAutoHideSide.Value;
+        var panel = FindAutoHidePanel(side, _activeAutoHidePanelId);
+        if (panel is null)
+        {
+            HideAutoHidePreview();
+            return;
+        }
+
+        ShowAutoHidePreview(panel, side);
+    }
+
+    private DockPanel? FindAutoHidePanel(DockPosition side, string panelId)
+    {
+        var panels = GetAutoHidePanels(side);
+        return panels?.FirstOrDefault(panel => StringComparer.Ordinal.Equals(panel.PanelId, panelId));
+    }
+
+    private (Border Host, FontIcon Icon, TextBlock Title, ContentPresenter Content) CreateAutoHidePreviewHost()
+    {
+        var icon = new FontIcon
+        {
+            FontFamily = (FontFamily)Application.Current.Resources["SymbolThemeFontFamily"],
+            FontSize = 12,
+            Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"],
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        var title = new TextBlock
+        {
+            FontSize = 12,
+            VerticalAlignment = VerticalAlignment.Center,
+            Foreground = (Brush)Application.Current.Resources["TextFillColorPrimaryBrush"]
+        };
+
+        var restoreButton = new Button
+        {
+            Content = "Dock",
+            Padding = new Thickness(8, 2, 8, 2),
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        restoreButton.Click += OnAutoHidePreviewRestoreClicked;
+
+        var header = new Grid
+        {
+            Padding = new Thickness(12, 8, 12, 8)
+        };
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        Grid.SetColumn(icon, 0);
+        Grid.SetColumn(title, 1);
+        Grid.SetColumn(restoreButton, 2);
+        title.Margin = new Thickness(8, 0, 8, 0);
+        header.Children.Add(icon);
+        header.Children.Add(title);
+        header.Children.Add(restoreButton);
+
+        var content = new ContentPresenter
+        {
+            Margin = new Thickness(12, 0, 12, 12),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
+
+        var layout = new Grid();
+        layout.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        layout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+        Grid.SetRow(header, 0);
+        Grid.SetRow(content, 1);
+        layout.Children.Add(header);
+        layout.Children.Add(content);
+
+        var host = new Border
+        {
+            Visibility = Visibility.Collapsed,
+            Background = (Brush)Application.Current.Resources["CardBackgroundFillColorDefaultBrush"],
+            BorderBrush = (Brush)Application.Current.Resources["CardStrokeColorDefaultBrush"],
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(8),
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Stretch,
+            Margin = new Thickness(0),
+            Child = layout
+        };
+
+        host.PointerEntered += OnAutoHidePreviewHostPointerEntered;
+        host.PointerExited += OnAutoHidePreviewHostPointerExited;
+        host.LostFocus += OnAutoHideUiLostFocus;
+
+        return (host, icon, title, content);
+    }
+
+    private void OnAutoHidePreviewRestoreClicked(object? sender, RoutedEventArgs e)
+    {
+        if (_activeAutoHideSide is null || string.IsNullOrWhiteSpace(_activeAutoHidePanelId))
+        {
+            return;
+        }
+
+        var side = _activeAutoHideSide.Value;
+        var panelId = _activeAutoHidePanelId;
+        HideAutoHidePreview();
+        DockPanelAutoHideRequested?.Invoke(this, new DockPanelAutoHideRequestedEventArgs(panelId, side, false));
+    }
+
+    private void UpdateAutoHidePreviewLayout(DockPosition side)
+    {
+        _autoHidePreviewHost.Width = double.NaN;
+        _autoHidePreviewHost.Height = double.NaN;
+        _autoHidePreviewHost.Margin = new Thickness(0);
+
+        switch (side)
+        {
+            case DockPosition.Left:
+                _autoHidePreviewHost.HorizontalAlignment = HorizontalAlignment.Left;
+                _autoHidePreviewHost.VerticalAlignment = VerticalAlignment.Stretch;
+                _autoHidePreviewHost.Width = Math.Max(_leftExpandedWidth, 240.0);
+                _autoHidePreviewHost.Margin = new Thickness(28, 0, 0, 0);
+                break;
+            case DockPosition.Right:
+                _autoHidePreviewHost.HorizontalAlignment = HorizontalAlignment.Right;
+                _autoHidePreviewHost.VerticalAlignment = VerticalAlignment.Stretch;
+                _autoHidePreviewHost.Width = Math.Max(_rightExpandedWidth, 240.0);
+                _autoHidePreviewHost.Margin = new Thickness(0, 0, 28, 0);
+                break;
+            case DockPosition.Top:
+                _autoHidePreviewHost.HorizontalAlignment = HorizontalAlignment.Stretch;
+                _autoHidePreviewHost.VerticalAlignment = VerticalAlignment.Top;
+                _autoHidePreviewHost.Height = Math.Max(_topExpandedHeight, 100.0);
+                break;
+            case DockPosition.Bottom:
+                _autoHidePreviewHost.HorizontalAlignment = HorizontalAlignment.Stretch;
+                _autoHidePreviewHost.VerticalAlignment = VerticalAlignment.Bottom;
+                _autoHidePreviewHost.Height = Math.Max(_bottomExpandedHeight, 100.0);
+                break;
+        }
+    }
+
+    private void OnAutoHidePreviewCloseTimerTick(object? sender, object e)
+    {
+        if (_isPointerOverAutoHidePreview || _isPointerOverAutoHideSidebar || IsFocusWithinAutoHideUi())
+        {
+            return;
+        }
+
+        HideAutoHidePreview();
+    }
+
+    private void OnAutoHideSidebarPointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        _isPointerOverAutoHideSidebar = true;
+        CancelAutoHidePreviewClose();
+    }
+
+    private void OnAutoHideSidebarPointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        _isPointerOverAutoHideSidebar = false;
+        ScheduleAutoHidePreviewClose();
+    }
+
+    private void OnAutoHidePreviewHostPointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        _isPointerOverAutoHidePreview = true;
+        CancelAutoHidePreviewClose();
+    }
+
+    private void OnAutoHidePreviewHostPointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        _isPointerOverAutoHidePreview = false;
+        ScheduleAutoHidePreviewClose();
+    }
+
+    private void OnAutoHideUiLostFocus(object sender, RoutedEventArgs e)
+    {
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            if (_autoHidePreviewHost.Visibility != Visibility.Visible)
             {
-                RemovePanelFromAllGroups(_activeAutoHideEntry.Panel);
-                SetPanelVisibility(_activeAutoHideEntry.Side, false);
+                return;
             }
 
-            DockPanel(entry.Panel, entry.Side);
-            _activeAutoHideEntry = entry;
+            if (_isPointerOverAutoHidePreview || _isPointerOverAutoHideSidebar || IsFocusWithinAutoHideUi())
+            {
+                return;
+            }
+
+            HideAutoHidePreview();
+        });
+    }
+
+    private void OnRootGridPointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        if (_autoHidePreviewHost.Visibility != Visibility.Visible)
+        {
+            return;
         }
+
+        var point = e.GetCurrentPoint(RootGrid).Position;
+        if (IsPointInsideElement(_autoHidePreviewHost, point))
+        {
+            return;
+        }
+
+        if (_activeAutoHideSide is not null && IsPointInsideElement(GetAutoHideSidebar(_activeAutoHideSide.Value), point))
+        {
+            return;
+        }
+
+        HideAutoHidePreview();
+    }
+
+    private void ScheduleAutoHidePreviewClose()
+    {
+        if (_autoHidePreviewHost.Visibility != Visibility.Visible)
+        {
+            return;
+        }
+
+        _autoHidePreviewCloseTimer.Stop();
+        _autoHidePreviewCloseTimer.Start();
+    }
+
+    private void CancelAutoHidePreviewClose()
+    {
+        _autoHidePreviewCloseTimer.Stop();
+    }
+
+    private void UpdateAutoHideTabVisualStates()
+    {
+        UpdateAutoHideTabVisualStates(LeftAutoHideBar, DockPosition.Left);
+        UpdateAutoHideTabVisualStates(RightAutoHideBar, DockPosition.Right);
+        UpdateAutoHideTabVisualStates(TopAutoHideBar, DockPosition.Top);
+        UpdateAutoHideTabVisualStates(BottomAutoHideBar, DockPosition.Bottom);
+    }
+
+    private void UpdateAutoHideTabVisualStates(StackPanel sidebar, DockPosition side)
+    {
+        foreach (var child in sidebar.Children)
+        {
+            if (child is not Button button)
+            {
+                continue;
+            }
+
+            var isActive = _activeAutoHideSide == side
+                && button.Tag is string panelId
+                && StringComparer.Ordinal.Equals(_activeAutoHidePanelId, panelId);
+            ApplyAutoHideTabVisualState(button, isActive);
+        }
+    }
+
+    private static void ApplyAutoHideTabVisualState(Button button, bool isActive)
+    {
+        var activeBackground = (Brush)Application.Current.Resources["AccentFillColorDefaultBrush"];
+        var inactiveBackground = new SolidColorBrush(Colors.Transparent);
+        var activeBorderBrush = (Brush)Application.Current.Resources["AccentFillColorDefaultBrush"];
+        var inactiveBorderBrush = new SolidColorBrush(Colors.Transparent);
+        var activeForeground = (Brush)Application.Current.Resources["TextOnAccentFillColorPrimaryBrush"];
+        var inactiveForeground = (Brush)Application.Current.Resources["TextFillColorPrimaryBrush"];
+
+        button.Background = isActive ? activeBackground : inactiveBackground;
+        button.BorderBrush = isActive ? activeBorderBrush : inactiveBorderBrush;
+        button.BorderThickness = isActive ? new Thickness(1) : new Thickness(0);
+
+        if (button.Content is not StackPanel stackPanel)
+        {
+            return;
+        }
+
+        foreach (var child in stackPanel.Children)
+        {
+            switch (child)
+            {
+                case FontIcon icon:
+                    icon.Foreground = isActive ? activeForeground : inactiveForeground;
+                    break;
+                case TextBlock textBlock:
+                    textBlock.Foreground = isActive ? activeForeground : inactiveForeground;
+                    textBlock.FontWeight = isActive ? FontWeights.SemiBold : FontWeights.Normal;
+                    break;
+            }
+        }
+    }
+
+    private bool IsFocusWithinAutoHideUi()
+    {
+        var focusedElement = FocusManager.GetFocusedElement(XamlRoot) as DependencyObject;
+        if (focusedElement is null)
+        {
+            return false;
+        }
+
+        return IsDescendantOf(focusedElement, _autoHidePreviewHost)
+            || IsDescendantOf(focusedElement, LeftAutoHideBar)
+            || IsDescendantOf(focusedElement, RightAutoHideBar)
+            || IsDescendantOf(focusedElement, TopAutoHideBar)
+            || IsDescendantOf(focusedElement, BottomAutoHideBar);
+    }
+
+    private static bool IsDescendantOf(DependencyObject? element, DependencyObject ancestor)
+    {
+        var current = element;
+        while (current is not null)
+        {
+            if (ReferenceEquals(current, ancestor))
+            {
+                return true;
+            }
+
+            current = VisualTreeHelper.GetParent(current);
+        }
+
+        return false;
+    }
+
+    private bool IsPointInsideElement(FrameworkElement element, Point point)
+    {
+        if (element.Visibility != Visibility.Visible || element.ActualWidth <= 0 || element.ActualHeight <= 0)
+        {
+            return false;
+        }
+
+        var transform = element.TransformToVisual(RootGrid);
+        var origin = transform.TransformPoint(new Point(0, 0));
+        return point.X >= origin.X
+            && point.X <= origin.X + element.ActualWidth
+            && point.Y >= origin.Y
+            && point.Y <= origin.Y + element.ActualHeight;
     }
 
     private void SetPanelVisibility(DockPosition side, bool visible)
@@ -1221,11 +1844,6 @@ internal sealed partial class DockingManager
     #endregion
 }
 
-/// <summary>
-/// Represents an auto-hide panel entry in a sidebar.
-/// </summary>
-internal sealed record AutoHideEntry(DockPanel Panel, DockPosition Side);
-
 internal sealed class DocumentTabDockRequestedEventArgs(DocumentTab document, DockPosition position) : EventArgs
 {
     public DocumentTab Document { get; } = document;
@@ -1236,6 +1854,13 @@ internal sealed class DockPanelDockRequestedEventArgs(string panelId, DockPositi
 {
     public string PanelId { get; } = panelId;
     public DockPosition Position { get; } = position;
+}
+
+internal sealed class DockPanelAutoHideRequestedEventArgs(string panelId, DockPosition position, bool isAutoHidden) : EventArgs
+{
+    public string PanelId { get; } = panelId;
+    public DockPosition Position { get; } = position;
+    public bool IsAutoHidden { get; } = isAutoHidden;
 }
 
 internal sealed class DockPanelStateChangedEventArgs(string panelId, bool isExpanded) : EventArgs

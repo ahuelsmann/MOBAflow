@@ -1,4 +1,5 @@
 ﻿---
+
 description: MAUI-specific patterns for threading, navigation, and platform features
 applyTo: "MAUI/**/*.cs, MAUI/**/*.xaml"
 ---
@@ -11,7 +12,8 @@ applyTo: "MAUI/**/*.cs, MAUI/**/*.xaml"
 - NEVER use TableView (deprecated). Prefer CollectionView or Grid/VerticalStackLayout.
 - NEVER use Frame (deprecated). Use Border instead.
 - NEVER use `*AndExpand` layout options (deprecated). Use Grid and explicit sizing.
-- NEVER place ScrollView or CollectionView inside StackLayout (breaks scrolling). Use Grid as parent.
+- NEVER place ScrollView or CollectionView inside StackLayout (breaks
+  scrolling). Use Grid as parent.
 - NEVER reference images as `.svg` at runtime. Use PNG/JPG resources.
 - NEVER mix Shell navigation with NavigationPage/TabbedPage/FlyoutPage.
 - NEVER use renderers. Use handlers.
@@ -19,8 +21,10 @@ applyTo: "MAUI/**/*.cs, MAUI/**/*.xaml"
 
 ## Layout Selection
 
-- Prefer `VerticalStackLayout`/`HorizontalStackLayout` over `StackLayout Orientation="..."` (more performant).
-- Use `BindableLayout` for small, non-scrollable lists (20 items or less). Use `CollectionView` for larger lists.
+- Prefer `VerticalStackLayout`/`HorizontalStackLayout` over
+  `StackLayout Orientation="..."` (more performant).
+- Use `BindableLayout` for small, non-scrollable lists (20 items or less).
+  Use `CollectionView` for larger lists.
 - Prefer `Grid` for complex layouts.
 - Prefer `Border` over `Frame` for containers with borders/backgrounds.
 
@@ -30,7 +34,9 @@ applyTo: "MAUI/**/*.cs, MAUI/**/*.xaml"
 
 ```csharp
 // CORRECT: MainThread for UI updates
-private async void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
+private async void OnModelPropertyChanged(
+    object sender,
+    PropertyChangedEventArgs e)
 {
     await MainThread.InvokeOnMainThreadAsync(() =>
     {
@@ -41,7 +47,8 @@ private async void OnModelPropertyChanged(object sender, PropertyChangedEventArg
 // WRONG: No await or background thread issues
 private void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
 {
-    OnPropertyChanged(nameof(DisplayName)); // May crash if called from background thread
+    OnPropertyChanged(nameof(DisplayName));
+    // May crash if called from background thread
 }
 ```
 
@@ -109,12 +116,14 @@ public partial class DetailsPage : ContentPage
             <VisualStateGroup x:Name="CommonStates">
                 <VisualState x:Name="Normal">
                     <VisualState.Setters>
-                        <Setter Property="BackgroundColor" Value="{DynamicResource Gray600}" />
+                        <Setter Property="BackgroundColor"
+                                Value="{DynamicResource Gray600}" />
                     </VisualState.Setters>
                 </VisualState>
                 <VisualState x:Name="Focused">
                     <VisualState.Setters>
-                        <Setter Property="BackgroundColor" Value="{DynamicResource Gray600}" />
+                        <Setter Property="BackgroundColor"
+                                Value="{DynamicResource Gray600}" />
                     </VisualState.Setters>
                 </VisualState>
             </VisualStateGroup>
@@ -125,9 +134,10 @@ public partial class DetailsPage : ContentPage
 
 ### Compact Control Spacing
 
-**CheckBox + Label Pattern (Negative Margin Technique)**
+#### CheckBox + Label Pattern (Negative Margin Technique)
 
-When using `Scale` to reduce control size, use negative margin to maintain visual compactness:
+When using `Scale` to reduce control size, use negative margin to
+maintain visual compactness:
 
 ```xaml
 <!-- CORRECT: Compact CheckBox with tight label spacing -->
@@ -146,12 +156,14 @@ When using `Scale` to reduce control size, use negative margin to maintain visua
 ```
 
 **Why this works:**
+
 - `Scale="0.90"` shrinks visual size but preserves hit box (good for touch)
 - `Spacing="6"` would be too large due to invisible CheckBox padding
 - `Margin="-8,0,0,0"` pulls label closer for visual balance
 - Result: Compact appearance + functional touch target
 
 **Scale Guidelines for Mobile:**
+
 - `Scale="1.0"` - Default (often too large for compact UI)
 - `Scale="0.90"` - CheckBox (recommended)
 - `Scale="0.75"` - Switch controls (recommended)
@@ -204,6 +216,7 @@ Standard pattern for increment/decrement controls:
 ```
 
 **Width Guidelines:**
+
 - Buttons: `WidthRequest="36"` (square touch target)
 - Value display:
   - `WidthRequest="44"` - Single/double digit integers (e.g., "3", "10")

@@ -1,5 +1,7 @@
 ---
-description: Testing patterns and best practices for MOBAflow unit and integration tests
+
+description: Testing patterns and best practices for MOBAflow unit and
+  integration tests
 applyTo: "Test/**/*.cs"
 ---
 
@@ -364,7 +366,9 @@ public class WinUiDiTests
 public void CheckPrivateField()
 {
     var obj = new MyClass();
-    var field = typeof(MyClass).GetField("_privateField", BindingFlags.NonPublic | BindingFlags.Instance);
+    var field = typeof(MyClass).GetField(
+        "_privateField",
+        BindingFlags.NonPublic | BindingFlags.Instance);
     Assert.That(field.GetValue(obj), Is.Not.Null); // ❌ Fragile!
 }
 
@@ -449,7 +453,7 @@ When writing tests:
 
 ## 📂 Test Organization
 
-```
+```text
 Test/
 ├── Analysis/               # Analysis helpers / experiments
 ├── Backend/                # Backend logic tests

@@ -84,13 +84,13 @@ services.AddTransient<JourneysPage>();
 
 ## Cross-Platform Strategy
 
-| Feature | WinUI | MAUI | Blazor |
-|---------|-------|------|--------|
-| UI Framework | WinUI 3 XAML | .NET MAUI XAML | Razor Components |
-| Navigation | NavigationView | Shell | NavMenu |
+| Feature | MOBAflow | MOBAsmart | MOBApi |
+| -------- | -------- | ---------- | ------ |
+| UI Framework | WinUI 3 XAML | .NET MAUI XAML | ASP.NET Core |
+| Navigation / Surface | NavigationView | Shell | Controllers + SignalR Hub |
 | File I/O | FileSavePicker | FilePicker | Server-side |
-| Speech | Windows SAPI | Android TTS | Not supported |
-| Z21 Connection | Full UDP | Full UDP | Via REST API |
+| Speech | Windows SAPI | Android TTS | Not applicable |
+| Z21 Integration | Full UDP | Full UDP | API/status surface |
 
 ---
 

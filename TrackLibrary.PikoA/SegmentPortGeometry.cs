@@ -118,6 +118,24 @@ public static class SegmentPortGeometry
         return (originX, originY, rotationDegrees);
     }
 
+    public static (double X, double Y, double RotationDegrees) TranslatePlacementForPort(
+        PlacedSegment placed,
+        string portName,
+        double worldX,
+        double worldY)
+    {
+        var port = GetPort(placed.Segment, portName);
+        if (port == null)
+            return (worldX, worldY, placed.RotationDegrees);
+
+        var r = placed.RotationDegrees * Math.PI / 180;
+        var cos = Math.Cos(r);
+        var sin = Math.Sin(r);
+        var originX = worldX - (port.LocalX * cos - port.LocalY * sin);
+        var originY = worldY - (port.LocalX * sin + port.LocalY * cos);
+        return (originX, originY, placed.RotationDegrees);
+    }
+
     private static IReadOnlyList<PortInfo> GetStraightPorts(double length)
     {
         return

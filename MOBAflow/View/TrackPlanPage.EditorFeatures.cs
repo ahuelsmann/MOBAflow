@@ -28,6 +28,7 @@ internal sealed partial class TrackPlanPage
     private bool _hasUnsavedChanges;
     private bool _showGrid;
     private bool _showPortHover = true;
+    private bool _showValidationOverlay = true;
     private double _trackOpacity = 0.8;
     private bool _isApplyingDocumentState;
 
@@ -47,6 +48,8 @@ internal sealed partial class TrackPlanPage
         GridToggle.Unchecked += (_, _) => ToggleGrid(false);
         PortHoverToggle.Checked += (_, _) => TogglePortHover(true);
         PortHoverToggle.Unchecked += (_, _) => TogglePortHover(false);
+        ValidationOverlayToggle.Checked += (_, _) => ToggleValidationOverlay(true);
+        ValidationOverlayToggle.Unchecked += (_, _) => ToggleValidationOverlay(false);
         TrackOpacitySlider.ValueChanged += (_, _) =>
         {
             _trackOpacity = TrackOpacitySlider.Value;
@@ -55,9 +58,11 @@ internal sealed partial class TrackPlanPage
 
         _showGrid = GridToggle.IsChecked == true;
         _showPortHover = PortHoverToggle.IsChecked != false;
+        _showValidationOverlay = ValidationOverlayToggle.IsChecked != false;
         _trackOpacity = TrackOpacitySlider.Value;
         _lastSavedDocumentJson = SerializeDocument(CaptureDocumentState());
         _hasUnsavedChanges = false;
+        UpdateValidationOverlayVisibility();
         UpdateHistoryButtons();
         UpdateCommandStates();
     }
@@ -79,6 +84,19 @@ internal sealed partial class TrackPlanPage
 
         if (_draggedPlaced != null)
             UpdatePortHighlights();
+    }
+
+    private void ToggleValidationOverlay(bool isEnabled)
+    {
+        _showValidationOverlay = isEnabled;
+        UpdateValidationOverlayVisibility();
+        RefreshCanvas();
+    }
+
+    private void UpdateValidationOverlayVisibility()
+    {
+        if (ValidationLegendPanel != null)
+            ValidationLegendPanel.Visibility = _showValidationOverlay ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private IIoService GetIoService()
@@ -475,66 +493,16 @@ internal sealed partial class TrackPlanPage
         foreach (var usage in portUsage.Where(p => p.Value > 1))
             messages.Add($"Port {usage.Key.PortName} von Segment {usage.Key.SegmentId} wird mehrfach verwendet.");
 
-        var groups = CountConnectedGroups();
-        if (groups > 1)
-            messages.Add($"Der Gleisplan besteht aus {groups} unverbundenen Gruppen.");
+        var analysis = TrackPlanValidationHelper.Analyze(_plan.Segments, _plan.Connections);
 
-        var overlappingPorts = FindUnconnectedOverlappingPorts();
-        foreach (var overlappingPort in overlappingPorts)
-            messages.Add(overlappingPort);
+        if (analysis.ConnectedGroups.Count > 1)
+            messages.Add($"Der Gleisplan besteht aus {analysis.ConnectedGroups.Count} unverbundenen Gruppen.");
 
-        var openEnds = Math.Max(0, _plan.Segments.Sum(p => SegmentPortGeometry.GetPorts(p.Segment).Count) - _plan.Connections.Count * 2);
-        if (openEnds > 0)
-            messages.Add($"Es gibt {openEnds} offene Gleisenden.");
+        foreach (var overlappingPort in analysis.OverlappingPorts)
+            messages.Add($"Unverbundene Ports {overlappingPort.LeftPortName}/{overlappingPort.RightPortName} liegen geometrisch übereinander.");
 
-        return messages;
-    }
-
-    private int CountConnectedGroups()
-    {
-        var remaining = new HashSet<Guid>(_plan.Segments.Select(s => s.Segment.No));
-        var groups = 0;
-
-        while (remaining.Count > 0)
-        {
-            var first = remaining.First();
-            var group = _plan.GetConnectedGroup(first);
-            foreach (var segmentId in group)
-                remaining.Remove(segmentId);
-            groups++;
-        }
-
-        return groups;
-    }
-
-    private List<string> FindUnconnectedOverlappingPorts()
-    {
-        var messages = new List<string>();
-        var allPorts = _plan.Segments
-            .SelectMany(segment => SegmentPortGeometry.GetAllPortWorldPositions(segment)
-                .Select(port => (SegmentId: segment.Segment.No, PortName: port.PortName, X: port.X, Y: port.Y)))
-            .ToList();
-
-        for (var i = 0; i < allPorts.Count; i++)
-        {
-            for (var j = i + 1; j < allPorts.Count; j++)
-            {
-                var left = allPorts[i];
-                var right = allPorts[j];
-                if (left.SegmentId == right.SegmentId)
-                    continue;
-
-                var connected = _plan.Connections.Any(c =>
-                    (c.SourceSegment == left.SegmentId && c.SourcePort == left.PortName && c.TargetSegment == right.SegmentId && c.TargetPort == right.PortName)
-                    || (c.SourceSegment == right.SegmentId && c.SourcePort == right.PortName && c.TargetSegment == left.SegmentId && c.TargetPort == left.PortName));
-                if (connected)
-                    continue;
-
-                var distance = Math.Sqrt((left.X - right.X) * (left.X - right.X) + (left.Y - right.Y) * (left.Y - right.Y));
-                if (distance < 1.0)
-                    messages.Add($"Unverbundene Ports {left.PortName}/{right.PortName} liegen geometrisch übereinander.");
-            }
-        }
+        if (analysis.OpenPorts.Count > 0)
+            messages.Add($"Es gibt {analysis.OpenPorts.Count} offene Gleisenden.");
 
         return messages;
     }

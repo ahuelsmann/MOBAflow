@@ -1,6 +1,6 @@
 ---
 description: 'Fluent Design System guidelines for WinUI 3 - materials, spacing, typography, icons, and theming.'
-applyTo: 'WinUI/**/*.xaml'
+applyTo: 'MOBAflow/**/*.xaml'
 ---
 
 # Fluent Design System (WinUI 3)
@@ -494,7 +494,7 @@ Damit Inhalte **innerhalb** der Zelle bleiben und die Spalte nicht â€žaufblasenâ
 
 ### ControlStyles.xaml
 
-Located at `WinUI/Resources/ControlStyles.xaml`:
+Located at `MOBAflow/Resources/ControlStyles.xaml`:
 
 - `BacklightToggleButtonStyle` - Function buttons with glow effect
 - `DangerButtonStyle` - Red delete/stop buttons

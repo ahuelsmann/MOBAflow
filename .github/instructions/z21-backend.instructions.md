@@ -1,4 +1,5 @@
 ---
+
 description: 'Z21 Backend Implementation - Critical Rules & Lessons Learned'
 applyTo: 'Backend/Z21.cs, Backend/Protocol/Z21*.cs, Backend/Interface/IZ21.cs'
 ---
@@ -66,6 +67,7 @@ if (Z21MessageParser.IsRBusFeedback(content))  // Prüft auf 0x80
 ```
 
 **Warum ist das kritisch?**
+
 - `IsRBusFeedback` prüft auf Header **0x80**
 - `IsSystemState` prüft auf Header **0x84**
 - **0x84 ≠ 0x80** → SystemState-Block wird NIE erreicht!
@@ -98,7 +100,8 @@ private int _systemStatePollingIntervalSeconds = 5;  // ← DOPPELTER TRAFFIC!
 // - DOPPELTE Pakete → Z21 überlastet!
 ```
 
-**Regel:** 
+**Regel:**
+
 - **Default:** `SystemStatePollingInterval = 0` (nur Broadcasts)
 - **Optional:** `1-30` für Redundanz (z.B. bei instabiler Verbindung)
 
@@ -137,6 +140,7 @@ private void SetConnectedIfNotAlready()
 ```
 
 **Warum?**
+
 - Verhindert Request-Flut **BEVOR** Z21 überhaupt antwortet
 - Z21 kann während ConnectAsync bereits überfordert sein
 - Erst nach erster Response ist klar, dass Z21 bereit ist
@@ -148,16 +152,19 @@ private void SetConnectedIfNotAlready()
 ### **Vor jedem Edit von `OnUdpReceived`:**
 
 1. ✅ **Vollständigen Handler lesen** (alle Paket-Typ-Blocks!)
-   ```
+
+   ```text
    get_file(Backend/Z21.cs, startLine=640, endLine=765)
    ```
 
 2. ✅ **Struktur verstehen:**
+
    - Wie viele `if (IsXyz)` Blocks gibt es?
    - Wo ist der richtige Einfügepunkt?
    - Hat jeder Block ein `return`?
 
 3. ✅ **Präzise editieren:**
+
    ```csharp
    // ...existing IsLanXHeader block...
    
@@ -172,13 +179,16 @@ private void SetConnectedIfNotAlready()
    ```
 
 4. ✅ **Sofort validieren:**
+
    - `run_build`
    - **Manuelle Verbindung testen!**
 
 ### **Bei großen Dateien (>500 Zeilen):**
 
 ❌ **NICHT:** Blind mit `// ...existing code...` editieren
-✅ **STATTDESSEN:** 
+
+✅ **STATTDESSEN:**
+
 - Mehrere `get_file`-Calls für vollen Kontext
 - Kleinere, präzise Edits
 - Nach jedem Edit: Build + Test
@@ -206,6 +216,7 @@ private void ApplyCurrentPreset()
 ```
 
 **Warum?**
+
 - Verhindert unerwartete Lokbewegung beim App-Start
 - Decoder könnte noch alte Speed-Befehle gespeichert haben
 - Sicherheit > Convenience
@@ -220,24 +231,28 @@ private void ApplyCurrentPreset()
 // ✅ KORREKT: Alle Abhängigkeiten gelistet
 [ObservableProperty]
 [NotifyPropertyChangedFor(nameof(MaxSpeedStep))]
-[NotifyPropertyChangedFor(nameof(SpeedKmh))]    // ← WICHTIG!
-private DccSpeedSteps speedSteps = DccSpeedSteps.Steps128;
 
-public int MaxSpeedStep => SpeedSteps switch { ... };
+// Speed → NotifyPropertyChangedFor(SpeedKmh) ✅
+[ObservableProperty]
+[NotifyPropertyChangedFor(nameof(SpeedKmh))]
+private int speed;
 
+// SpeedSteps → MaxSpeedStep UND SpeedKmh! ✅
+[ObservableProperty]
+[NotifyPropertyChangedFor(nameof(MaxSpeedStep))]
+[NotifyPropertyChangedFor(nameof(SpeedKmh))]  // ← PFLICHT!
+private DccSpeedSteps speedSteps;
+
+// SelectedVmax → SpeedKmh ✅
+[ObservableProperty]
+[NotifyPropertyChangedFor(nameof(SpeedKmh))]
+private int selectedVmax = 200;
+
+// Berechnung:
 public int SpeedKmh => (Speed / MaxSpeedStep) * SelectedVmax;
 ```
 
-**Wenn `SpeedSteps` sich ändert:**
-1. `MaxSpeedStep` wird neu berechnet ✅
-2. `SpeedKmh` wird neu berechnet ✅
-3. XAML-Bindings werden aktualisiert ✅
-
-**Ohne `[NotifyPropertyChangedFor(nameof(SpeedKmh))]`:**
-- XAML zeigt **veralteten Wert**!
-- `{x:Bind Mode=OneWay}` wird **NICHT** aktualisiert!
-
----
+**Fehlt eine Notification → XAML zeigt veraltete Werte!**
 
 ## 🔍 Debugging Guidelines
 
@@ -274,14 +289,24 @@ _logger?.LogDebug("SystemState polling: {State}, Interval: {Interval}s",
 
 ### **Paket-Header (niemals verwechseln!):**
 
-| Command | Header | Beschreibung |
-|---------|--------|--------------|
-| **LAN_X_HEADER** | **0x40** | X-Bus protocol (Drive, Functions, Status) |
-| **LAN_RMBUS_DATACHANGED** | **0x80** | R-Bus Feedback (Occupancy) |
-| **LAN_SYSTEMSTATE** | **0x84** | System State (Current, Voltage, Temp) |
-| LAN_RAILCOM_DATACHANGED | 0x88 | RailCom (Lok-spezifische Daten) |
-| LAN_GET_SERIAL_NUMBER | 0x10 | Serial Number Request |
-| LAN_GET_HWINFO | 0x1A | Hardware Info Request |
+- **`LAN_X_HEADER`**
+  - **Header:** `0x40`
+  - **Beschreibung:** X-Bus protocol (Drive, Functions, Status)
+- **`LAN_RMBUS_DATACHANGED`**
+  - **Header:** `0x80`
+  - **Beschreibung:** R-Bus Feedback (Occupancy)
+- **`LAN_SYSTEMSTATE`**
+  - **Header:** `0x84`
+  - **Beschreibung:** System State (Current, Voltage, Temp)
+- **`LAN_RAILCOM_DATACHANGED`**
+  - **Header:** `0x88`
+  - **Beschreibung:** RailCom (Lok-spezifische Daten)
+- **`LAN_GET_SERIAL_NUMBER`**
+  - **Header:** `0x10`
+  - **Beschreibung:** Serial Number Request
+- **`LAN_GET_HWINFO`**
+  - **Header:** `0x1A`
+  - **Beschreibung:** Hardware Info Request
 
 **Merke:** 0x80 ≠ 0x84! **Jeder Header = eigener Block!**
 
@@ -292,6 +317,7 @@ _logger?.LogDebug("SystemState polling: {State}, Interval: {Interval}s",
 ### **Incident: Z21 Connection Failed After Amperemeter Implementation**
 
 **Was passierte:**
+
 - `edit_file` mit limited context editierte `OnUdpReceived`
 - SystemState-Code wurde **fälschlicherweise IN IsRBusFeedback-Block** eingefügt
 - SystemState-Pakete (0x84) wurden als Unknown behandelt
@@ -299,10 +325,12 @@ _logger?.LogDebug("SystemState polling: {State}, Interval: {Interval}s",
 - Connection schien "tot"
 
 **Root Cause:**
+
 - **NICHT** die RailCom-Erweiterung (war inaktiv!)
 - **Fehlerhafte Edit-Strategie:** Zu wenig Kontext gelesen
 
 **Prevention:**
+
 - ✅ Bei kritischen Event-Handlern: **VOLLEN Kontext** lesen (100+ Zeilen)
 - ✅ Nach Edit: **Sofort Build + Connection-Test**
 - ✅ Git-Historie nutzen bei Regression
@@ -322,6 +350,7 @@ Nach **JEDER** Änderung an Z21.cs:
 - [ ] Track Power ON/OFF funktioniert
 
 **Wenn Connection fehlschlägt:**
+
 1. Output Window → Debug Logs prüfen
 2. Suche nach: "Unknown message"
 3. Check Header-Byte: `content[2]`
@@ -333,7 +362,7 @@ Nach **JEDER** Änderung an Z21.cs:
 
 **Aktuell (optimiert):**
 
-```
+```text
 ConnectAsync (einmalig):
 ├─ Handshake (0x85)           → 1x
 ├─ BroadcastFlags (0x50)      → 1x
@@ -351,7 +380,7 @@ MAX: ~10 Pakete/Minute (safe für Z21)
 
 **VERBOTEN (überlastet Z21):**
 
-```
+```text
 ❌ SystemState Polling = 5s  → +12 Pakete/Minute
 ❌ BroadcastFlags = 0xFFFFFFFF → +100 Pakete/Minute
 ❌ Keepalive = 5s → +12 Pakete/Minute
@@ -415,6 +444,7 @@ private void SaveCurrentStateToPreset()
 ```
 
 **Begründung:**
+
 - App-Start mit Speed > 0 → Lok fährt los → **Unfallgefahr!**
 - Decoder könnte alte Speed-Werte haben
 - IMMER manueller Start durch Benutzer erzwingen
@@ -485,20 +515,24 @@ edit_file(...,
 Bei **JEDEM** Commit an Backend/Z21.cs:
 
 **Build:**
+
 - [ ] `dotnet build Backend/Backend.csproj` erfolgreich
 - [ ] Keine Warnings in Z21.cs
 
 **Unit Tests:**
+
 - [ ] Z21MessageParser Tests laufen durch
 - [ ] Z21Protocol Tests OK
 
 **Integration Tests:**
+
 - [ ] Z21 Verbindung erfolgreich
 - [ ] SystemState-Event wird gefeuert
 - [ ] LocoInfo-Event wird gefeuert
 - [ ] Track Power Commands funktionieren
 
 **Manual Testing:**
+
 - [ ] App starten
 - [ ] Monitor Page: Z21 verbindet
 - [ ] Train Control Page: Speed-Commands funktionieren

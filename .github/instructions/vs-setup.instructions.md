@@ -5,23 +5,27 @@
 ## 🎯 Essential VS Extensions
 
 ### Code Quality & Analysis
+
 - ✅ **ReSharper** (or Rider) - Static analysis, refactoring
 - ✅ **SonarLint** - Real-time code quality feedback
 - ✅ **StyleCop Analyzers** - Code style enforcement
 - ✅ **Roslynator** - Additional C# analyzers
 
 ### Copilot & AI
+
 - ✅ **GitHub Copilot** - AI-assisted code generation
 - ✅ **GitHub Copilot Chat** - AI chat in IDE
 - ✅ **IntelliCode** - Context-aware suggestions
 
 ### Productivity
+
 - ✅ **Prettier** - Code formatter
 - ✅ **Rainbow Braces** - Brace highlighting
 - ✅ **GitLens** - Git integration
 - ✅ **REST Client** - API testing (REST)
 
 ### Performance
+
 - ✅ **Productivity Power Tools** - Enhanced IDE features
 - ✅ **Thunder** - Performance monitoring
 
@@ -30,7 +34,7 @@
 ## ⚙️ Keyboard Shortcuts (Recommended)
 
 | Action | Shortcut | Use Case |
-|--------|----------|----------|
+| -------- | ---------- | ---------- |
 | Copilot Suggest | `Ctrl+Alt+\` | Get Copilot suggestion |
 | Copilot Chat | `Ctrl+Alt+'` | Open Copilot Chat |
 | Quick Fix | `Ctrl+.` | ReSharper quick fixes |
@@ -56,7 +60,7 @@
 
 ### In `Tools → Options → Text Editor → C# → Code Style`
 
-```
+```text
 [Recommended Settings]
 Tabs:
   - Use spaces: YES
@@ -88,11 +92,11 @@ Highlighting:
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build",
-      "program": "${workspaceFolder}/WinUI/bin/Debug/MOBAflow.exe",
+      "program": "${workspaceFolder}/MOBAflow/bin/Debug/MOBAflow.exe",
       "args": [],
       "stopAtEntry": false,
       "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/WinUI"
+      "cwd": "${workspaceFolder}/MOBAflow"
     },
     {
       "name": "Tests",
@@ -112,13 +116,15 @@ Highlighting:
 ## 🧪 Test Explorer Settings
 
 ### In `Test Explorer`
+
 - ✅ Show test details pane
 - ✅ Group by project
 - ✅ Auto-run tests on build (optional)
 - ✅ Show only failed tests (filter)
 
 ### Test Keyboard Shortcuts
-```
+
+```text
 Run All Tests: Ctrl+R, Ctrl+A
 Run Test at Cursor: Ctrl+R, Ctrl+T
 Debug Test at Cursor: Ctrl+R, Ctrl+D
@@ -129,7 +135,8 @@ Debug Test at Cursor: Ctrl+R, Ctrl+D
 ## 📊 Performance Profiling
 
 ### Memory Profiler (.NET Memory Allocation Profiler)
-```
+
+```text
 Debug → Performance Profiler → .NET Memory Allocation
 - Trace memory allocations
 - Find memory leaks
@@ -137,7 +144,8 @@ Debug → Performance Profiler → .NET Memory Allocation
 ```
 
 ### CPU Profiler
-```
+
+```text
 Debug → Performance Profiler → CPU Usage
 - Find performance bottlenecks
 - Identify hot paths
@@ -149,10 +157,10 @@ Debug → Performance Profiler → CPU Usage
 ## 🔧 Useful VS Commands (Ctrl+Shift+P)
 
 | Command | Function |
-|---------|----------|
+| --------- | ---------- |
 | `format document` | Auto-format file |
 | `rename symbol` | Refactor symbol name |
-| `extract method` | Extract code to new method |
+| `extract method` | Extract method |
 | `organize usings` | Sort & remove unused usings |
 | `analyze performance` | Open performance profiler |
 | `run tests` | Run unit tests |
@@ -244,31 +252,35 @@ git config core.hooksPath .git/hooks
 ## 💡 Pro Tips for Maximum Productivity
 
 ### Tip 1: Use Copilot Chat for Architecture Decisions
-```
-@workspace "Explain how SignalBoxViewModel works and where would be the best place 
-to add signal state change logging"
+
+```text
+@workspace "Explain SignalBoxViewModel and where signal-state logging belongs"
 ```
 
 ### Tip 2: Quick Fixes with ReSharper
-```
+
+```text
 Position cursor on error → Ctrl+. → Select fix
 Often faster than manual refactoring!
 ```
 
 ### Tip 3: Search Symbol Definitions
-```
+
+```text
 Ctrl+F12 in file → Go to Type (opens symbol search)
 Shows inheritance hierarchy
 ```
 
 ### Tip 4: Git Blame for Context
-```
+
+```text
 Right-click line → Git → Blame
 See who changed this and why (commit message!)
 ```
 
 ### Tip 5: Test-Driven with Test Explorer
-```
+
+```text
 1. Write failing test (Red)
 2. Impl implementation (Green)
 3. Refactor (Refactor)
@@ -280,12 +292,12 @@ All in Test Explorer UI
 ## ⚠️ Common Mistakes (and Fixes)
 
 | Problem | Cause | Fix |
-|---------|-------|-----|
+| --------- | ------- | ----- |
 | "NuGet not found" | Dependencies not restored | `dotnet restore` |
-| Copilot suggests `.Result` | Copilot doesn't know async pattern | Remind: "Use await, never .Result" |
-| ReSharper warnings ignored | Warnings not shown | Enable: Tools → Options → Code Analysis |
+| Copilot suggests `.Result` | Async pattern missing | Remind: "Use await" |
+| ReSharper warnings ignored | Warnings hidden | Enable Code Analysis |
 | Tests not discovered | Project not built | `dotnet build` first |
-| Formatting conflicts | EditorConfig not loaded | Reload solution (Ctrl+Shift+F5) |
+| Formatting conflicts | EditorConfig not loaded | Reload solution |
 
 ---
 

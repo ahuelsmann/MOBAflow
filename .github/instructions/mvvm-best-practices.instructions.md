@@ -1,6 +1,7 @@
 ---
+
 description: 'MVVM patterns with CommunityToolkit.Mvvm'
-applyTo: 'SharedUI/**/*.cs,WinUI/ViewModel/**/*.cs'
+applyTo: 'SharedUI/**/*.cs,MOBAflow/ViewModel/**/*.cs'
 ---
 
 # MVVM (CommunityToolkit.Mvvm)
@@ -18,7 +19,8 @@ public partial class TrainViewModel : ObservableObject
     public string DisplayName => $"{Name} ({Address})";
 
     // Partial method after property change
-    partial void OnNameChanged(string value) => _logger.LogInformation("Renamed: {Name}", value);
+    partial void OnNameChanged(string value) =>
+        _logger.LogInformation("Renamed: {Name}", value);
 
     [RelayCommand(CanExecute = nameof(CanSave))]
     private async Task SaveAsync() => await _ioService.SaveAsync(...);

@@ -1,6 +1,7 @@
 ---
-description: WinUI 3 patterns - DispatcherQueue, navigation, responsive layout
-applyTo: "WinUI/**/*.xaml,WinUI/**/*.cs"
+
+description: 'WinUI 3 patterns and layout guidance'
+applyTo: 'MOBAflow/**/*.xaml,MOBAflow/**/*.cs'
 ---
 
 # WinUI 3 Guidelines
@@ -36,7 +37,7 @@ BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
 ### DataTemplates in EntityTemplates.xaml
 
 ```xaml
-<!-- WinUI/Resources/EntityTemplates.xaml -->
+<!-- MOBAflow/Resources/EntityTemplates.xaml -->
 <DataTemplate x:Key="JourneyTemplate" x:DataType="vm:JourneyViewModel">
     <StackPanel Padding="16" Spacing="16">
         <TextBox Header="Name" Text="{x:Bind Name, Mode=TwoWay}" />
@@ -47,7 +48,9 @@ BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
 ### EntityTemplateSelector
 
 ```csharp
-protected override DataTemplate? SelectTemplateCore(object item, DependencyObject container)
+protected override DataTemplate? SelectTemplateCore(
+    object item,
+    DependencyObject container)
     => item switch
     {
         JourneyViewModel => JourneyTemplate,
@@ -58,11 +61,20 @@ protected override DataTemplate? SelectTemplateCore(object item, DependencyObjec
 
 ## Grid und Spaltenlayout
 
-Ausführlich: [fluent-design.instructions.md](./fluent-design.instructions.md) → Abschnitt **Grid System (Spalten & Inhalte)**.
+Ausführlich:
+[fluent-design.instructions.md](./fluent-design.instructions.md)
+→ Abschnitt **Grid System (Spalten & Inhalte)**.
 
-- **Spalten:** `Width="Auto"` nur für schmale Inhalte (Splitter, Buttons); für Inhalte `*` mit **MinWidth** (ggf. **MaxWidth**). Keine Lücken in **Grid.Column** (0, 1, 2, …).
-- **Inhalt in \*-Spalten:** Immer **ScrollViewer** oder **ListView** wenn Inhalt länger werden kann; **TextTrimming="CharacterEllipsis"** für Text in engen Zellen. Kein festes **Width** am Kind in \*-Spalten.
-- **Zeilen:** Scrollbaren Bereich in Zeile mit **Height="*"** legen; darin genau einen **ScrollViewer** mit dem restlichen Inhalt.
+- **Spalten:** `Width="Auto"` nur für schmale Inhalte (Splitter,
+  Buttons); für Inhalte `*` mit **MinWidth**
+  (ggf. **MaxWidth**). Keine Lücken in **Grid.Column**
+  (0, 1, 2, …).
+- **Inhalt in \*-Spalten:** Immer **ScrollViewer** oder **ListView**,
+  wenn Inhalt länger werden kann;
+  **TextTrimming="CharacterEllipsis"** für Text in engen Zellen.
+  Kein festes **Width** am Kind in \*-Spalten.
+- **Zeilen:** Scrollbaren Bereich in Zeile mit **Height="*"** legen;
+  darin genau einen **ScrollViewer** mit dem restlichen Inhalt.
 
 ## Responsive Layout (VSM)
 
@@ -90,8 +102,10 @@ Ausführlich: [fluent-design.instructions.md](./fluent-design.instructions.md) �
 
 ```xaml
 <CommandBar OverflowButtonVisibility="Auto">
-    <AppBarButton CommandBar.DynamicOverflowOrder="0" Label="Connect" />  <!-- Always visible -->
-    <AppBarButton CommandBar.DynamicOverflowOrder="2" Label="Settings" /> <!-- Overflow first -->
+    <!-- Always visible -->
+    <AppBarButton CommandBar.DynamicOverflowOrder="0" Label="Connect" />
+    <!-- Overflow first -->
+    <AppBarButton CommandBar.DynamicOverflowOrder="2" Label="Settings" />
 </CommandBar>
 ```
 
@@ -123,4 +137,8 @@ partial void OnSelectedProjectChanged(ProjectViewModel? value)
 - Hardcoded colors → Use ThemeResource
 - Direct UI updates from background → Use DispatcherQueue
 - FileOpenPicker without InitializeWithWindow → Will fail
-- **Grid:** ColumnDefinition **Width="Auto"** mit langem/breitem Inhalt → Spalte explodiert; **Width="*"** ohne MinWidth → Spalte kann zu schmal werden; Inhalt in \*-Zelle ohne ScrollViewer/TextTrimming → Überlauf oder falsche Spaltenbreiten. Siehe Fluent Design „Grid System“.
+- **Grid:** ColumnDefinition **Width="Auto"** mit langem oder breitem
+  Inhalt → Spalte explodiert; **Width="*"** ohne MinWidth → Spalte kann
+  zu schmal werden; Inhalt in \*-Zelle ohne
+  ScrollViewer/TextTrimming → Überlauf oder falsche Spaltenbreiten.
+  Siehe Fluent Design „Grid System“.

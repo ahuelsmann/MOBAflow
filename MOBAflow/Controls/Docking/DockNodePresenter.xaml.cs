@@ -18,6 +18,8 @@ internal sealed class DockNodePresenter : UserControl
 
     public event EventHandler<DockPanelExpansionChangedEventArgs>? PanelExpansionChanged;
 
+    public event EventHandler<DockPanelAutoHideIntentEventArgs>? PanelAutoHideRequested;
+
     public static readonly DependencyProperty NodeProperty =
         DependencyProperty.Register(
             nameof(Node),
@@ -128,11 +130,13 @@ internal sealed class DockNodePresenter : UserControl
         if (_observedGroup is not null)
         {
             _observedGroup.PanelExpansionChanged -= OnGroupPanelExpansionChanged;
+            _observedGroup.PanelAutoHideRequested -= OnGroupPanelAutoHideRequested;
         }
 
         if (_observedSplitControl is not null)
         {
             _observedSplitControl.PanelExpansionChanged -= OnSplitControlPanelExpansionChanged;
+            _observedSplitControl.PanelAutoHideRequested -= OnSplitControlPanelAutoHideRequested;
         }
 
         _observedGroup = nextGroup;
@@ -141,11 +145,13 @@ internal sealed class DockNodePresenter : UserControl
         if (_observedGroup is not null)
         {
             _observedGroup.PanelExpansionChanged += OnGroupPanelExpansionChanged;
+            _observedGroup.PanelAutoHideRequested += OnGroupPanelAutoHideRequested;
         }
 
         if (_observedSplitControl is not null)
         {
             _observedSplitControl.PanelExpansionChanged += OnSplitControlPanelExpansionChanged;
+            _observedSplitControl.PanelAutoHideRequested += OnSplitControlPanelAutoHideRequested;
         }
     }
 
@@ -154,9 +160,19 @@ internal sealed class DockNodePresenter : UserControl
         PanelExpansionChanged?.Invoke(this, e);
     }
 
+    private void OnGroupPanelAutoHideRequested(object? sender, DockPanelAutoHideIntentEventArgs e)
+    {
+        PanelAutoHideRequested?.Invoke(this, e);
+    }
+
     private void OnSplitControlPanelExpansionChanged(object? sender, DockPanelExpansionChangedEventArgs e)
     {
         PanelExpansionChanged?.Invoke(this, e);
+    }
+
+    private void OnSplitControlPanelAutoHideRequested(object? sender, DockPanelAutoHideIntentEventArgs e)
+    {
+        PanelAutoHideRequested?.Invoke(this, e);
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)

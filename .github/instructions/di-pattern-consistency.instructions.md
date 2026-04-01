@@ -1,6 +1,6 @@
 ---
-description: 'DI pattern consistency for WinUI, MAUI, and shared ViewModels'
-applyTo: 'WinUI/**/*.cs,MAUI/**/*.cs,SharedUI/**/*.cs'
+description: 'DI pattern consistency for MOBAflow, MOBAsmart, and shared ViewModels'
+applyTo: 'MOBAflow/**/*.cs,MOBAsmart/**/*.cs,SharedUI/**/*.cs'
 ---
 
 # DI Pattern Consistency
@@ -33,7 +33,7 @@ User navigates away from MonitorPage
 **ALWAYS** use `Loaded`/`Unloaded` events when subscribing to Singleton ViewModel events:
 
 ```csharp
-// ✅ CORRECT - WinUI/View/MonitorPage.xaml.cs
+// ✅ CORRECT - MOBAflow/View/MonitorPage.xaml.cs
 public sealed partial class MonitorPage : Page
 {
     public MonitorPageViewModel ViewModel { get; }  // Singleton VM
@@ -90,7 +90,7 @@ public MonitorPage(MonitorPageViewModel viewModel)
 
 ### Standard Pages
 ```csharp
-// ✅ CORRECT - WinUI/View/MyPage.xaml.cs
+// ✅ CORRECT - MOBAflow/View/MyPage.xaml.cs
 public sealed partial class MyPage : Page
 {
     public MainWindowViewModel ViewModel { get; }
@@ -102,14 +102,14 @@ public sealed partial class MyPage : Page
     }
 }
 
-// Registration in WinUI/App.xaml.cs
+// Registration in MOBAflow/App.xaml.cs
 services.AddTransient<MyPage>();
 navigationRegistry.Register("mytag", "My Page", "\uE123", typeof(MyPage), "Shell", ...);
 ```
 
 ### Pages with Singleton ViewModel Event Subscriptions
 ```csharp
-// ✅ CORRECT - WinUI/View/MonitorPage.xaml.cs
+// ✅ CORRECT - MOBAflow/View/MonitorPage.xaml.cs
 public sealed partial class MonitorPage : Page
 {
     public MonitorPageViewModel ViewModel { get; }  // Singleton
@@ -138,7 +138,7 @@ public sealed partial class MonitorPage : Page
 
 ### Special Pages with Custom Dependencies
 ```csharp
-// ⚠️ ONLY IF NECESSARY - WinUI/View/SignalBoxPage.xaml.cs
+// ⚠️ ONLY IF NECESSARY - MOBAflow/View/SignalBoxPage.xaml.cs
 public sealed partial class SignalBoxPage : Page
 {
     public MainWindowViewModel ViewModel { get; }
@@ -223,7 +223,7 @@ var journeyVM = new JourneyViewModel(journey, _project, ...);
 | Complex editor/multi-state | ✅ Create specialized VM | Singleton | TrainControlViewModel (user presets) |
 | Page-specific UI state | ✅ Create specialized VM | **Transient** | MonitorPageViewModel (logs from global sink) |
 | Thin wrapper around MainWindowVM | ✅ Create wrapper VM | Singleton | JourneyMapViewModel |
-| Optional platform service | ✅ Add to MainWindowViewModel | Singleton | PhotoHubClient (WinUI only) |
+| Optional platform service | ✅ Add to MainWindowViewModel | Singleton | PhotoHubClient (MOBAflow only) |
 
 ---
 
@@ -278,7 +278,7 @@ public MyViewModel(
 
 ## DI Container Validation
 
-### Startup Validation (WinUI/App.xaml.cs)
+### Startup Validation (MOBAflow/App.xaml.cs)
 ```csharp
 private static IServiceProvider ConfigureServices()
 {
@@ -318,8 +318,8 @@ private static void ValidateDiContainer(IServiceProvider provider)
 - [ ] **Analyze:** Does this page need its own ViewModel or can it use MainWindowViewModel?
 - [ ] **Name:** Use `XxxPage.xaml.cs` (PascalCase, 'Page' suffix)
 - [ ] **Constructor:** Accept `MainWindowViewModel` or specialized `XxxViewModel`
-- [ ] **Register:** Add `services.AddTransient<XxxPage>()` in `App.xaml.cs`
-- [ ] **Navigate:** Register tag in `NavigationRegistry` (WinUI) or use Shell (MAUI)
+- [ ] **Register:** Add `services.AddTransient<XxxPage>()` in `MOBAflow/App.xaml.cs`
+- [ ] **Navigate:** Register tag in `NavigationRegistry` (MOBAflow) or use Shell (MOBAsmart)
 - [ ] **DataContext:** Bind `DataContext="{x:Bind ViewModel}"` in XAML
 - [ ] **Comment:** If using custom factory, document WHY (e.g., "Requires ISkinProvider")
 
@@ -331,7 +331,7 @@ private static void ValidateDiContainer(IServiceProvider provider)
 - [ ] **Type:** Is it a wrapper (IViewModelWrapper<T>) or standalone?
 - [ ] **Dependencies:** List all required/optional services
 - [ ] **Singleton:** Will this VM be reused, or created per-page?
-- [ ] **Register:** Add to `WinUI/App.xaml.cs` + `MAUI/MauiProgram.cs`
+- [ ] **Register:** Add to `MOBAflow/App.xaml.cs` + `MOBAsmart/MauiProgram.cs`
 - [ ] **Comment:** Document why this ViewModel was created
 - [ ] **Test:** Verify it resolves from DI container
 
@@ -413,7 +413,7 @@ public MyViewModel(IZ21 z21)  // ← Single, clear constructor
 
 ### "Unable to resolve service for type..."
 **Problem:** A dependency isn't registered
-**Solution:** Check `WinUI/App.xaml.cs` or `MAUI/MauiProgram.cs`
+**Solution:** Check `MOBAflow/App.xaml.cs` or `MOBAsmart/MauiProgram.cs`
 ```csharp
 // Add missing registration
 services.AddSingleton<IMissingService, MissingServiceImpl>();

@@ -7,7 +7,8 @@
 ## ❓ "Was bringt mir die Hooks?"
 
 **In 30 Sekunden:**
-```
+
+```text
 ❌ OHNE Hooks: Fehler → Commit → Push → Remote broken → Team wartet
 ✅ MIT Hooks: Fehler blockiert vor Commit → sofort fixen → sauberer Remote
 
@@ -19,7 +20,8 @@ Praktisch: 7-11 Stunden Einsparung pro Monat (Fehlersuche, Debugging)
 ## ❓ "Welche NuGet Pakete sollen wir nehmen?"
 
 **Priority:**
-```
+
+```text
 🔴 JETZT SOFORT:
    - Polly (Resilience for Z21)
    - Serilog.Async (Non-blocking logging)
@@ -35,6 +37,7 @@ Praktisch: 7-11 Stunden Einsparung pro Monat (Fehlersuche, Debugging)
 ```
 
 Installation:
+
 ```powershell
 dotnet add Backend package Polly
 dotnet add WinUI package Serilog.Sinks.Async
@@ -46,7 +49,8 @@ dotnet add Common package FluentValidation
 ## ❓ "Was ist SonarQube? Kostenlos?"
 
 **TL;DR:**
-```
+
+```text
 SonarQube = Automatischer Code-Scanner
 - Findet: Bugs, Security Issues, Code Smells
 - Kostet: 💚 KOSTENLOS (Community Edition)
@@ -54,7 +58,8 @@ SonarQube = Automatischer Code-Scanner
 ```
 
 **Beispiele was erkannt wird:**
-```
+
+```text
 ✅ Null-Reference Exception Risk
 ✅ SQL Injection Vulnerability
 ✅ Komplexität zu hoch (> 15)
@@ -63,7 +68,8 @@ SonarQube = Automatischer Code-Scanner
 ```
 
 **Kostenmodelle:**
-```
+
+```text
 Community Edition (FREE) ← ← ← MOBAflow nutzt DAS
 Developer Edition ($150/Jahr)
 Enterprise Edition ($$)
@@ -74,7 +80,8 @@ Enterprise Edition ($$)
 ## ❓ "Was sind ADRs? Brauchen wir die?"
 
 **TL;DR:**
-```
+
+```text
 ADR = "Warum entschieden wir MVVM statt Prism?"
 
 Dokumentiert:
@@ -89,7 +96,8 @@ Nutzen:
 ```
 
 **Beispiel MOBAflow ADRs:**
-```
+
+```text
 ADR-001: Use MVVM Toolkit (80% Boilerplate-Reduktion)
 ADR-002: JSON Schema Validation (Fehlerprävention)
 ADR-003: Constructor Injection (Testability)
@@ -102,15 +110,20 @@ ADR-004: Z21 as Singleton (Connection Pooling)
 
 **Ehrliche Antwort:**
 
-| Ja, nötig wenn: | Nein, vielleicht overkill wenn: |
-|-----------------|----------------------------------|
-| Projekt > 5 KLOC | Hobby-Projekt (< 1000 Zeilen) |
-| Team > 2 Person | Nur dich selbst |
-| Production-Code | Wegwerf-Prototyp |
-| > 6 Monate Lebensdauer | One-time Script |
+- **Ja, nötig wenn:**
+  - Projekt > 5 KLOC
+  - Team > 2 Person
+  - Production-Code
+  - > 6 Monate Lebensdauer
+- **Nein, vielleicht overkill wenn:**
+  - Hobby-Projekt (< 1000 Zeilen)
+  - Nur dich selbst
+  - Wegwerf-Prototyp
+  - One-time Script
 
 **MOBAflow:** ✅ JA, alle Hooks & Tools nötig!
-```
+
+```text
 - Production WinUI Desktop App
 - Team wird wachsen
 - Langfristige Wartung
@@ -122,7 +135,8 @@ ADR-004: Z21 as Singleton (Connection Pooling)
 ## ❓ "Wie lange dauert Session 35 (SonarQube)?"
 
 **Geschätzt:**
-```
+
+```text
 🕐 Installation + Setup: 30 Min
 🕐 GitHub Actions Integration: 45 Min
 🕐 Quality Gate Configuration: 30 Min
@@ -132,7 +146,8 @@ ADR-004: Z21 as Singleton (Connection Pooling)
 ```
 
 **Ergebnis:**
-```
+
+```text
 - Automatischer Security Scan auf jedem Push
 - Fehler-Report vor PR-Merge
 - Dashboard mit Code Quality Trends
@@ -144,7 +159,8 @@ ADR-004: Z21 as Singleton (Connection Pooling)
 ## ❓ "Wo finde ich alles?"
 
 **Ordner-Struktur:**
-```
+
+```text
 .github/instructions/
 ├── copilot-instructions.md              ← Copilot Regeln
 ├── copilot-tips.instructions.md         ← Copilot Prompts
@@ -170,6 +186,7 @@ ADR-004: Z21 as Singleton (Connection Pooling)
 ## ❓ "Was wenn ich einen Hook umgehen will?"
 
 **Git-Befehl:**
+
 ```powershell
 # Commit ohne pre-commit Hook
 git commit --no-verify -m "feat: Emergency fix"
@@ -182,7 +199,8 @@ git push --no-verify
 ```
 
 **Best Practice:**
-```
+
+```text
 ✅ OK: --no-verify bei dringenden Hotfixes
 ❌ NIEMALS: --no-verify als Standard (bricht den Sinn)
 ❌ NIEMALS: --no-verify bei pre-commit (JSON-Fehler!)
@@ -193,7 +211,8 @@ git push --no-verify
 ## ❓ "Was ist das ROI dieser Investition?"
 
 **Kosten:**
-```
+
+```text
 Development: 5 Tage (Sessions 30-34)
 Maintenance: ~4 Stunden/Monat
 Training: 2 Stunden
@@ -202,7 +221,8 @@ GESAMT: ~6-7 Tage + Wartung
 ```
 
 **Nutzen (pro Monat):**
-```
+
+```text
 Fehlersuche vermieden:    3-4 Stunden
 Production-Bugs:         10-15 Stunden (verhindert!)
 Remote broken prevent:   1-2 Stunden
@@ -212,7 +232,8 @@ TOTAL: 15-22 Stunden + Major Quality
 ```
 
 **ROI:**
-```
+
+```text
 6 Tage Setup / 20 Stunden Nutzen/Monat = 300% ROI im ersten Monat 🚀
 ```
 
@@ -220,7 +241,7 @@ TOTAL: 15-22 Stunden + Major Quality
 
 ## ✅ Checkliste: Was ist DONE?
 
-```
+```text
 SESSIONS 30-34 KOMPLETT:
 
 Git Hooks (4/4):
@@ -256,7 +277,8 @@ BEREIT FÜR:
 ## 🎓 Empfehlung für nächste Session
 
 **Session 35 Priorität:**
-```
+
+```text
 1️⃣  SonarQube Community Edition Setup
     → Docker oder SonarCloud (Cloud kostenlos)
     
@@ -278,11 +300,14 @@ BEREIT FÜR:
 
 ---
 
-**"Mit diesen Hooks und Tools haben Sie die Grundlagen für ein professionelles, wartbares Projekt geschaffen. Das ist Enterprise-Grade Quality!" 🏆**
+### Mit diesen Hooks und Tools haben Sie die Grundlagen für ein
+
+professionelles, wartbares Projekt geschaffen. Das ist Enterprise-Grade
+Quality! 🏆
 
 ---
 
-**Q&A**
+## Q&A
 
 **F: Können wir Hooks deaktivieren?**  
 A: Ja, aber nicht empfohlen. Eher: Für Emergency `--no-verify` nutzen.

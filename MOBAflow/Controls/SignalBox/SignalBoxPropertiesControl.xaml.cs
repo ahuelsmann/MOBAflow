@@ -1,19 +1,84 @@
-namespace Moba.WinUI.View;
+namespace Moba.WinUI.Controls.SignalBox;
 
-using Common.Multiplex;
-using Domain;
+using System;
+using System.Linq;
+using System.Diagnostics;
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-using System.Diagnostics;
+using Moba.Common.Multiplex;
+using Moba.Domain;
+using Moba.WinUI.ViewModel;
+using Moba.SharedUI.ViewModel;
+using Moba.WinUI.Service;
+using Microsoft.Extensions.DependencyInjection;
 
-/// <summary>
-/// Partial class containing properties panel logic and event handlers.
-/// </summary>
-sealed partial class SignalBoxPage
+public sealed partial class SignalBoxPropertiesControl : UserControl
 {
-    #region Properties Panel
+    private readonly ViessmannSignalService _viessmannSignalService;
+
+    public static readonly DependencyProperty ViewModelProperty = DependencyProperty.Register(
+        nameof(ViewModel),
+        typeof(MainWindowViewModel),
+        typeof(SignalBoxPropertiesControl),
+        new PropertyMetadata(null));
+
+    public MainWindowViewModel ViewModel
+    {
+        get => (MainWindowViewModel)GetValue(ViewModelProperty);
+        set => SetValue(ViewModelProperty, value);
+    }
+
+    public static readonly DependencyProperty PlanViewModelProperty = DependencyProperty.Register(
+        nameof(PlanViewModel),
+        typeof(SignalBoxPlanViewModel),
+        typeof(SignalBoxPropertiesControl),
+        new PropertyMetadata(null));
+
+    public SignalBoxPlanViewModel PlanViewModel
+    {
+        get => (SignalBoxPlanViewModel)GetValue(PlanViewModelProperty);
+        set => SetValue(PlanViewModelProperty, value);
+    }
+
+    public static readonly DependencyProperty SelectedElementProperty = DependencyProperty.Register(
+        nameof(SelectedElement),
+        typeof(SbElement),
+        typeof(SignalBoxPropertiesControl),
+        new PropertyMetadata(null, OnSelectedElementChanged));
+
+    public SbElement? SelectedElement
+    {
+        get => (SbElement?)GetValue(SelectedElementProperty);
+        set => SetValue(SelectedElementProperty, value);
+    }
+
+    public event EventHandler<SbElement>? RequestVisualRefresh;
+    public event EventHandler<SbElement>? RequestElementDeletion;
+
+    public SignalBoxPropertiesControl()
+    {
+        InitializeComponent();
+        _viessmannSignalService = App.Current.Services.GetRequiredService<ViessmannSignalService>();
+    }
+
+    private static void OnSelectedElementChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is SignalBoxPropertiesControl control)
+        {
+            control.UpdatePropertiesPanel();
+        }
+    }
+
+    public void UpdateStatistics()
+    {
+        if (PlanViewModel == null) return;
+        TrackCountText.Text = PlanViewModel.Elements.Count(e => e is SbTrackStraight or SbTrackCurve).ToString();
+        SwitchCountText.Text = PlanViewModel.Elements.OfType<SbSwitch>().Count().ToString();
+        SignalCountText.Text = PlanViewModel.Elements.OfType<SbSignal>().Count().ToString();
+    }
 
     private void UpdatePropertiesPanel()
     {
@@ -27,12 +92,10 @@ sealed partial class SignalBoxPage
         NoSelectionInfo.Visibility = Visibility.Collapsed;
         ElementPropertiesPanel.Visibility = Visibility.Visible;
 
-        // Update element info (type-based)
         ElementTypeText.Text = GetElementTypeName(SelectedElement);
         ElementPositionText.Text = $"({SelectedElement.X}, {SelectedElement.Y})";
         ElementIdText.Text = SelectedElement.Id.ToString()[..8];
 
-        // Address field - only show for switches, detectors (NOT for signals with multiplex)
         if (SelectedElement is SbSwitch sw)
         {
             ElementAddressBox.Header = "DCC-Adresse (Weiche)";
@@ -49,7 +112,6 @@ sealed partial class SignalBoxPage
         }
         else if (SelectedElement is SbSignal)
         {
-            // Signals use BaseAddress in multiplex panel - hide this address field
             AddressPanel.Visibility = Visibility.Collapsed;
         }
         else
@@ -57,19 +119,12 @@ sealed partial class SignalBoxPage
             AddressPanel.Visibility = Visibility.Collapsed;
         }
 
-        // Signal panel visibility
         SignalAspectPanel.Visibility = SelectedElement is SbSignal ? Visibility.Visible : Visibility.Collapsed;
-
-        // Multiplex configuration panel (only for signals)
         UpdateMultiplexConfigPanel();
-
-        // Switch panel visibility
         SwitchPositionPanel.Visibility = SelectedElement is SbSwitch ? Visibility.Visible : Visibility.Collapsed;
-
-        // Update aspect buttons
         UpdateAspectButtons();
+        UpdateAspectPresentation(SelectedElement as SbSignal);
 
-        // Update switch buttons
         if (SelectedElement is SbSwitch)
         {
             UpdateSwitchButtons();
@@ -84,15 +139,11 @@ sealed partial class SignalBoxPage
             return;
         }
 
-        // Show multiplex panel for all signals
         MultiplexConfigPanel.Visibility = Visibility.Visible;
 
-        // Populate multiplexer ComboBox with available options
         if (MultiplexerComboBox.Items.Count == 0)
         {
-            // Temporarily detach handler to prevent event-loop during initialization
             MultiplexerComboBox.SelectionChanged -= OnMultiplexerSelected;
-
             foreach (var def in MultiplexerHelper.GetAllDefinitions())
             {
                 var item = new ComboBoxItem
@@ -102,12 +153,9 @@ sealed partial class SignalBoxPage
                 };
                 MultiplexerComboBox.Items.Add(item);
             }
-
-            // Re-attach handler after population
             MultiplexerComboBox.SelectionChanged += OnMultiplexerSelected;
         }
 
-        // Select current multiplexer
         if (!string.IsNullOrEmpty(sig.MultiplexerArticleNumber))
         {
             var multiplexerItem = MultiplexerComboBox.Items
@@ -120,24 +168,17 @@ sealed partial class SignalBoxPage
             }
         }
 
-        // Populate main signal and distant signal ComboBoxes
         UpdateSignalArticleComboBoxes(sig);
-
-        // Update base address
         BaseAddressBox.Value = sig.BaseAddress > 0 ? sig.BaseAddress : 1;
-
-        // Update available signal aspects based on multiplexer
         UpdateAvailableSignalAspects(sig);
     }
 
-    /// <summary>
-    /// Shows/hides signal aspect buttons based on what the selected multiplexer supports.
-    /// </summary>
     private void UpdateAvailableSignalAspects(SbSignal sig)
     {
+        UpdateAspectPresentation(sig);
+
         if (string.IsNullOrEmpty(sig.MultiplexerArticleNumber))
         {
-            // No multiplexer selected - show all aspects (default behavior)
             SetAllAspectButtonsVisibility(Visibility.Visible);
             return;
         }
@@ -148,7 +189,6 @@ sealed partial class SignalBoxPage
                 sig.MultiplexerArticleNumber,
                 sig.MainSignalArticleNumber);
 
-            // Show/hide aspect buttons based on multiplexer support
             AspectHp0Button.Visibility = supportedAspects.Contains(SignalAspect.Hp0) ? Visibility.Visible : Visibility.Collapsed;
             AspectKs1Button.Visibility = supportedAspects.Contains(SignalAspect.Ks1) ? Visibility.Visible : Visibility.Collapsed;
             AspectKs2Button.Visibility = supportedAspects.Contains(SignalAspect.Ks2) ? Visibility.Visible : Visibility.Collapsed;
@@ -166,14 +206,10 @@ sealed partial class SignalBoxPage
         }
         catch (ArgumentException)
         {
-            // Unknown multiplexer - show all aspects
             SetAllAspectButtonsVisibility(Visibility.Visible);
         }
     }
 
-    /// <summary>
-    /// Helper method to set visibility for all aspect buttons.
-    /// </summary>
     private void SetAllAspectButtonsVisibility(Visibility visibility)
     {
         AspectHp0Button.Visibility = visibility;
@@ -200,7 +236,6 @@ sealed partial class SignalBoxPage
         {
             var def = MultiplexerHelper.GetDefinition(sig.MultiplexerArticleNumber);
 
-            // Hauptsignal: aus Stammdaten (data.json) oder MultiplexerHelper-Fallback
             MainSignalComboBox.SelectionChanged -= OnMainSignalSelected;
             MainSignalComboBox.Items.Clear();
             foreach (var (articleNumber, displayName) in _viessmannSignalService.GetMainSignalOptions(sig.MultiplexerArticleNumber))
@@ -220,7 +255,6 @@ sealed partial class SignalBoxPage
                 sig.MainSignalArticleNumber = (MainSignalComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? def.MainSignalArticleNumber;
             }
 
-            // Vorsignal: aus Stammdaten (data.json) oder MultiplexerHelper-Fallback
             DistantSignalComboBox.SelectionChanged -= OnDistantSignalSelected;
             DistantSignalComboBox.Items.Clear();
             foreach (var (articleNumber, displayName) in _viessmannSignalService.GetDistantSignalOptions(sig.MultiplexerArticleNumber))
@@ -287,16 +321,60 @@ sealed partial class SignalBoxPage
         AspectZs7Button.Background = sig.SignalAspect == SignalAspect.Zs7 ? accentBrush : normalBrush;
     }
 
+    private void UpdateAspectPresentation(SbSignal? sig)
+    {
+        var is4046 = sig is not null && string.Equals(sig.MainSignalArticleNumber, "4046", StringComparison.Ordinal);
+        var signalArticleNumber = is4046 ? "4046" : string.Empty;
+
+        AspectHp0Signal.SignalArticleNumber = signalArticleNumber;
+        AspectKs1Signal.SignalArticleNumber = signalArticleNumber;
+        AspectKs2Signal.SignalArticleNumber = signalArticleNumber;
+        AspectKs1BlinkSignal.SignalArticleNumber = signalArticleNumber;
+        AspectKennlichtSignal.SignalArticleNumber = signalArticleNumber;
+        AspectDunkelSignal.SignalArticleNumber = signalArticleNumber;
+        AspectRa12Signal.SignalArticleNumber = signalArticleNumber;
+        AspectZs1Signal.SignalArticleNumber = signalArticleNumber;
+        AspectZs7Signal.SignalArticleNumber = signalArticleNumber;
+
+        AspectHp0Signal.Aspect = nameof(SignalAspect.Hp0);
+        AspectKs1Signal.Aspect = nameof(SignalAspect.Ks1);
+        AspectKs2Signal.Aspect = nameof(SignalAspect.Ks2);
+        AspectKs1BlinkSignal.Aspect = nameof(SignalAspect.Ks1Blink);
+        AspectKennlichtSignal.Aspect = nameof(SignalAspect.Kennlicht);
+        AspectDunkelSignal.Aspect = nameof(SignalAspect.Dunkel);
+        AspectRa12Signal.Aspect = nameof(SignalAspect.Ra12);
+        AspectZs1Signal.Aspect = nameof(SignalAspect.Zs1);
+        AspectZs7Signal.Aspect = nameof(SignalAspect.Zs7);
+
+        AspectHp0Label.Text = "Hp0";
+        AspectKs1Label.Text = "Ks1";
+        AspectKs2Label.Text = is4046 ? "Ks2+K" : "Ks2";
+        AspectKs1BlinkLabel.Text = is4046 ? "Ks2+K+G" : "Ks1 Bl";
+        AspectKennlichtLabel.Text = is4046 ? "K links" : "Kennl.";
+        AspectDunkelLabel.Text = is4046 ? "GrBl+K+G" : "Dunkel";
+        AspectRa12Label.Text = is4046 ? "Hp0+Rg" : "Ra12";
+        AspectZs1Label.Text = is4046 ? "Ks1+G" : "Zs1";
+        AspectZs7Label.Text = "Zs7";
+
+        ToolTipService.SetToolTip(AspectHp0Button, "Hp 0 - Halt");
+        ToolTipService.SetToolTip(AspectKs1Button, "Ks 1 - Fahrt");
+        ToolTipService.SetToolTip(AspectKs2Button, is4046 ? "Ks 2 mit weißem Kennlicht oben links" : "Ks 2 - Halt erwarten");
+        ToolTipService.SetToolTip(AspectKs1BlinkButton, is4046 ? "Ks 2 mit weißem Kennlicht oben links und Geschwindigkeitsanzeiger oben" : "Ks 1 blinkend - Fahrt mit Geschwindigkeitsvoranzeiger");
+        ToolTipService.SetToolTip(AspectKennlichtButton, is4046 ? "Nur weißes Kennlicht oben links" : "Kennlicht - Signal betrieblich abgeschaltet");
+        ToolTipService.SetToolTip(AspectDunkelButton, is4046 ? "Grün blinkend mit weißem Kennlicht oben links sowie Geschwindigkeitsanzeigern oben und unten" : "Dunkelschaltung - Signal nicht aktiv");
+        ToolTipService.SetToolTip(AspectRa12Button, is4046 ? "Hp0 mit weißem Kennlicht unten für Rangierfahrten" : "Sh 1/Ra 12 - Rangierfahrt erlaubt");
+        ToolTipService.SetToolTip(AspectZs1Button, is4046 ? "Ks 1 mit Geschwindigkeitsanzeiger oben" : "Zs 1 - Ersatzsignal (weiß blinkend)");
+        ToolTipService.SetToolTip(AspectZs7Button, "Zs 7 - Vorsichtsignal (3x gelb)");
+    }
+
     private void UpdateSwitchButtons()
     {
         if (SelectedElement is not SbSwitch sw) return;
 
-        // All switches support all three positions now
         ThirdSwitchColumn.Width = new GridLength(1, GridUnitType.Star);
         SwitchRightButton.Visibility = Visibility.Visible;
         SwitchLeftButton.Visibility = Visibility.Visible;
 
-        // Highlight active button
         var accentStyle = (Style)Application.Current.Resources["AccentButtonStyle"];
         var defaultStyle = (Style)Application.Current.Resources["DefaultButtonStyle"];
 
@@ -315,18 +393,6 @@ sealed partial class SignalBoxPage
         _ => "Unbekannt"
     };
 
-    private void UpdateStatistics()
-    {
-        if (_planViewModel == null) return;
-        TrackCountText.Text = _planViewModel.Elements.Count(e => e is SbTrackStraight or SbTrackCurve).ToString();
-        SwitchCountText.Text = _planViewModel.Elements.OfType<SbSwitch>().Count().ToString();
-        SignalCountText.Text = _planViewModel.Elements.OfType<SbSignal>().Count().ToString();
-    }
-
-    #endregion
-
-    #region Property Panel Event Handlers
-
     private void OnRotateClicked(object sender, RoutedEventArgs e)
     {
         if (SelectedElement == null || sender is not Button { Tag: string rotationStr }) return;
@@ -334,7 +400,7 @@ sealed partial class SignalBoxPage
         if (int.TryParse(rotationStr, out var rotation))
         {
             SelectedElement.Rotation = rotation;
-            RefreshElementVisual(SelectedElement);
+            RequestVisualRefresh?.Invoke(this, SelectedElement);
         }
     }
 
@@ -344,39 +410,25 @@ sealed partial class SignalBoxPage
 
         if (Enum.TryParse<SignalAspect>(aspectStr, out var aspect))
         {
-            _blinkingLeds.Clear();
             sig.SignalAspect = aspect;
-
-            // Update canvas element
-            RefreshElementVisual(sig);
+            RequestVisualRefresh?.Invoke(this, sig);
             UpdateAspectButtons();
-
-            // Automatically send signal command to Z21 if multiplex is configured
             _ = SetSignalAspectAutomaticallyAsync(sig);
         }
     }
 
-    /// <summary>
-    /// Automatically sends signal command to Z21 after aspect selection.
-    /// Same logic as OnSetSignalAspectClicked but called automatically.
-    /// </summary>
     private async Task SetSignalAspectAutomaticallyAsync(SbSignal sig)
     {
         try
         {
-            Debug.WriteLine($"[AUTO-SIGNAL] Attempting to set signal aspect: {sig.SignalAspect}");
-
-            // Validate configuration
             if (!sig.IsMultiplexed)
             {
-                Debug.WriteLine("[AUTO-SIGNAL] Signal is not multiplexed - skipping auto-set");
                 SetSignalStatusText.Visibility = Visibility.Collapsed;
                 return;
             }
 
             if (string.IsNullOrEmpty(sig.MultiplexerArticleNumber))
             {
-                Debug.WriteLine("[AUTO-SIGNAL] ERROR: No multiplexer configured");
                 SetSignalStatusText.Text = "⚠️ Multiplexer-Nummer nicht konfiguriert.";
                 SetSignalStatusText.Visibility = Visibility.Visible;
                 return;
@@ -384,15 +436,11 @@ sealed partial class SignalBoxPage
 
             if (sig.BaseAddress <= 0 || sig.BaseAddress > 2044)
             {
-                Debug.WriteLine($"[AUTO-SIGNAL] ERROR: Invalid base address: {sig.BaseAddress}");
                 SetSignalStatusText.Text = "⚠️ Basis-DCC-Adresse ungültig (1-2044).";
                 SetSignalStatusText.Visibility = Visibility.Visible;
                 return;
             }
 
-            Debug.WriteLine($"[AUTO-SIGNAL] Configuration valid: Multiplexer={sig.MultiplexerArticleNumber}, BaseAddress={sig.BaseAddress}");
-
-            // Calculate DCC address and activation from base address and current aspect
             try
             {
                 if (!MultiplexerHelper.TryGetTurnoutCommand(
@@ -401,50 +449,40 @@ sealed partial class SignalBoxPage
                         sig.SignalAspect,
                         out var turnoutCommand))
                 {
-                    Debug.WriteLine("[AUTO-SIGNAL] ERROR: Aspect not supported by multiplexer mapping");
                     SetSignalStatusText.Text = "⚠️ Signalaspekt nicht unterstützt.";
                     SetSignalStatusText.Visibility = Visibility.Visible;
                     return;
                 }
 
-                sig.Address = sig.BaseAddress + turnoutCommand.AddressOffset;
+                sig.Address = sig.BaseAddress + turnoutCommand.AddressOffset + 1;
                 sig.ExtendedAccessoryValue = turnoutCommand.Activate ? 1 : 0;
-
-                Debug.WriteLine($"[AUTO-SIGNAL] Calculated: DCC_Address={sig.Address}, Output={turnoutCommand.Output}, Activate={turnoutCommand.Activate}");
             }
             catch (ArgumentException ex)
             {
-                Debug.WriteLine($"[AUTO-SIGNAL] ERROR: Aspect calculation failed: {ex.Message}");
                 SetSignalStatusText.Text = $"⚠️ Signalaspekt nicht unterstützt: {ex.Message}";
                 SetSignalStatusText.Visibility = Visibility.Visible;
                 return;
             }
 
-            // Get MainWindowViewModel from the page's DataContext
-            if (ViewModel is not { } mainVm)
+            if (ViewModel == null)
             {
-                Debug.WriteLine("[AUTO-SIGNAL] ERROR: ViewModel is null or wrong type");
                 SetSignalStatusText.Text = "❌ ViewModel nicht verfügbar.";
                 SetSignalStatusText.Visibility = Visibility.Visible;
                 return;
             }
 
-            if (!mainVm.IsConnected)
+            if (!ViewModel.IsConnected)
             {
-                Debug.WriteLine("[AUTO-SIGNAL] ERROR: Z21 not connected");
-                SetSignalStatusText.Text = mainVm.StatusText;
+                SetSignalStatusText.Text = ViewModel.StatusText;
                 SetSignalStatusText.Visibility = Visibility.Visible;
                 return;
             }
 
-            Debug.WriteLine("[AUTO-SIGNAL] Calling MainWindowViewModel.SetSignalAspectAsync...");
             SetSignalStatusText.Text = "⏳ Signal wird gestellt...";
             SetSignalStatusText.Visibility = Visibility.Visible;
 
-            // Call the ViewModel method to send the signal command
-            await mainVm.SetSignalAspectAsync(sig).ConfigureAwait(false);
+            await ViewModel.SetSignalAspectAsync(sig).ConfigureAwait(false);
 
-            Debug.WriteLine("[AUTO-SIGNAL] SUCCESS: Signal set");
             DispatcherQueue.TryEnqueue(() =>
             {
                 if (MultiplexerHelper.TryGetTurnoutCommand(
@@ -465,8 +503,6 @@ sealed partial class SignalBoxPage
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[AUTO-SIGNAL] EXCEPTION: {ex.Message}");
-            Debug.WriteLine($"[AUTO-SIGNAL] StackTrace: {ex.StackTrace}");
             DispatcherQueue.TryEnqueue(() =>
             {
                 SetSignalStatusText.Text = $"❌ Fehler: {ex.Message}";
@@ -487,7 +523,7 @@ sealed partial class SignalBoxPage
             _ => SwitchPosition.Straight
         };
 
-        RefreshElementVisual(sw);
+        RequestVisualRefresh?.Invoke(this, sw);
         UpdateSwitchButtons();
     }
 
@@ -505,7 +541,10 @@ sealed partial class SignalBoxPage
 
     private void OnDeleteElementClicked(object sender, RoutedEventArgs e)
     {
-        DeleteSelectedElement();
+        if (SelectedElement != null)
+        {
+            RequestElementDeletion?.Invoke(this, SelectedElement);
+        }
     }
 
     private void OnMultiplexerSelected(object sender, SelectionChangedEventArgs e)
@@ -515,27 +554,17 @@ sealed partial class SignalBoxPage
         var selectedItem = MultiplexerComboBox.SelectedItem as ComboBoxItem;
         if (selectedItem?.Tag is string articleNumber)
         {
-            // Multiplexer selected → automatically enable multiplex mode
             sig.MultiplexerArticleNumber = articleNumber;
             sig.IsMultiplexed = true;
-
-            // Update signal article ComboBoxes with compatible signals
             UpdateSignalArticleComboBoxes(sig);
-
-            // Update available signal aspects based on multiplexer capabilities
             UpdateAvailableSignalAspects(sig);
         }
         else
         {
-            // No multiplexer selected → disable multiplex mode
             sig.MultiplexerArticleNumber = string.Empty;
             sig.IsMultiplexed = false;
-
-            // Clear signal article ComboBoxes
             MainSignalComboBox.Items.Clear();
             DistantSignalComboBox.Items.Clear();
-
-            // Show all aspects when no multiplexer is selected
             SetAllAspectButtonsVisibility(Visibility.Visible);
         }
     }
@@ -545,6 +574,4 @@ sealed partial class SignalBoxPage
         if (SelectedElement is not SbSignal sig || double.IsNaN(args.NewValue)) return;
         sig.BaseAddress = (int)args.NewValue;
     }
-
-    #endregion
 }

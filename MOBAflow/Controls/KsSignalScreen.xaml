@@ -46,9 +46,20 @@
 
             <!--  Row 0: Zs3  -->
             <TextBox
+                x:Name="TopSpeedIndicator"
                 Grid.Row="0"
                 Grid.Column="0"
-                Grid.ColumnSpan="4" />
+                Grid.ColumnSpan="4"
+                Background="Transparent"
+                BorderThickness="0"
+                Foreground="White"
+                FontSize="10"
+                HorizontalContentAlignment="Center"
+                IsReadOnly="True"
+                IsTabStop="False"
+                Padding="0"
+                Text=""
+                Visibility="Collapsed" />
 
             <!--  Row 1: W1  -->
             <Ellipse
@@ -125,9 +136,20 @@
 
             <!--  Row 6: Zs3v  -->
             <TextBox
+                x:Name="BottomSpeedIndicator"
                 Grid.Row="6"
                 Grid.Column="0"
-                Grid.ColumnSpan="4" />
+                Grid.ColumnSpan="4"
+                Background="Transparent"
+                BorderThickness="0"
+                Foreground="White"
+                FontSize="10"
+                HorizontalContentAlignment="Center"
+                IsReadOnly="True"
+                IsTabStop="False"
+                Padding="0"
+                Text=""
+                Visibility="Collapsed" />
         </Grid>
     </Viewbox>
 </UserControl>

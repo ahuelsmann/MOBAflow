@@ -40,6 +40,18 @@ internal sealed partial class DockingPageViewModel : ObservableObject
     private DockNode? _bottomNode;
 
     [ObservableProperty]
+    private ObservableCollection<DockPanel> _leftAutoHidePanels = new();
+
+    [ObservableProperty]
+    private ObservableCollection<DockPanel> _rightAutoHidePanels = new();
+
+    [ObservableProperty]
+    private ObservableCollection<DockPanel> _topAutoHidePanels = new();
+
+    [ObservableProperty]
+    private ObservableCollection<DockPanel> _bottomAutoHidePanels = new();
+
+    [ObservableProperty]
     private double _leftPanelWidth = 240;
 
     [ObservableProperty]
@@ -126,6 +138,21 @@ internal sealed partial class DockingPageViewModel : ObservableObject
         }
 
         _workspaceService.UpdateToolWindowExpansion(_workspaceState, panelId, isExpanded);
+    }
+
+    public void HandlePanelAutoHideChanged(string panelId, DockPosition position, bool isAutoHidden)
+    {
+        if (string.IsNullOrWhiteSpace(panelId))
+        {
+            return;
+        }
+
+        if (!_workspaceService.UpdateToolWindowAutoHide(_workspaceState, panelId, position, isAutoHidden))
+        {
+            return;
+        }
+
+        ApplyWorkspaceProjection();
     }
 
     [RelayCommand]
@@ -255,6 +282,10 @@ internal sealed partial class DockingPageViewModel : ObservableObject
         RightNode = projection.RightNode;
         TopNode = projection.TopNode;
         BottomNode = projection.BottomNode;
+        LeftAutoHidePanels = projection.LeftAutoHidePanels;
+        RightAutoHidePanels = projection.RightAutoHidePanels;
+        TopAutoHidePanels = projection.TopAutoHidePanels;
+        BottomAutoHidePanels = projection.BottomAutoHidePanels;
         ActiveDocument = projection.ActiveDocument;
 
         LeftPanelWidth = _workspaceState.Left.Extent;

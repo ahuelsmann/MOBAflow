@@ -4,11 +4,13 @@
 
 ## Overview
 
-MOBAtps (Track Planner System) is MOBAflow's visual track layout editor. It provides a full-featured drag-and-drop interface for designing model railroad layouts.
+MOBAtps (Track Planner System) is MOBAflow's visual track layout
+editor. It provides a full-featured drag-and-drop interface for
+designing model railroad layouts.
 
 ## Architecture
 
-```
+```text
 TrackPlan (Domain Layer)
     - TopologyGraph (Nodes + Edges + Endcaps)
     - Constraints (Validation rules)
@@ -36,12 +38,10 @@ TrackLibrary.PikoA (Track Library)
 
 ## Projects
 
-| Project | Purpose |
-|---------|---------|
-| `TrackPlan` | Domain models (TopologyGraph, Constraints) |
-| `TrackPlan.Renderer` | Geometry calculation and layout engines |
-| `TrackPlan.Editor` | Editor ViewModels, commands, services |
-| `TrackLibrary.PikoA` | Piko A-Gleis track templates |
+- **`TrackPlan`**: Domain models (`TopologyGraph`, constraints)
+- **`TrackPlan.Renderer`**: Geometry calculation and layout engines
+- **`TrackPlan.Editor`**: Editor view models, commands, services
+- **`TrackLibrary.PikoA`**: Piko A-Gleis track templates
 
 ## Domain Model
 
@@ -81,7 +81,8 @@ TrackEdge
 
 ## Track Libraries
 
-Track systems are modular. Each manufacturer's track system is a separate library implementing `ITrackCatalog`:
+Track systems are modular. Each manufacturer's track system is a
+separate library implementing `ITrackCatalog`:
 
 ### ITrackCatalog Interface
 
@@ -104,12 +105,11 @@ public interface ITrackCatalog
 
 ### Available Libraries
 
-| Library | Status | Templates |
-|---------|--------|-----------|
-| **TrackLibrary.PikoA** | Active | G231, G119, G62, G56, G31, R1-R9, BWL, BWR, K30 |
-| TrackLibrary.RocoLine | Planned | - |
-| TrackLibrary.Tillig | Planned | - |
-| TrackLibrary.Maerklin | Planned | - |
+- **TrackLibrary.PikoA**: Active. Templates include `G231`, `G119`,
+  `G62`, `G56`, `G31`, `R1-R9`, `BWL`, `BWR`, `K30`
+- **TrackLibrary.RocoLine**: Planned
+- **TrackLibrary.Tillig**: Planned
+- **TrackLibrary.Maerklin**: Planned
 
 ### Creating a New Track Library
 
@@ -128,34 +128,29 @@ public interface ITrackCatalog
 
 The main editor UI in WinUI:
 
-| Feature | Description |
-|---------|-------------|
-| **Toolbox** | Drag templates from categorized list |
-| **Canvas** | Drop and arrange tracks (3000x2000 work area) |
-| **Properties** | Edit selected track properties |
-| **Grid Snap** | Align to 50mm grid |
-| **Port Snap** | Auto-connect nearby track ends |
-| **Zoom/Pan** | Navigate large layouts |
-| **Validation** | Check for constraint violations |
-| **Theme Support** | Light and Dark mode colors |
+- **Toolbox**: Drag templates from a categorized list
+- **Canvas**: Drop and arrange tracks in a `3000x2000` work area
+- **Properties**: Edit selected track properties
+- **Grid Snap**: Align to the `50mm` grid
+- **Port Snap**: Auto-connect nearby track ends
+- **Zoom/Pan**: Navigate large layouts
+- **Validation**: Check for constraint violations
+- **Theme Support**: Light and dark mode colors
 
 ### Keyboard Shortcuts
 
-| Key | Action |
-|-----|--------|
-| Delete | Remove selected track |
-| Ctrl+N | New plan |
-| Ctrl+S | Save plan |
-| Ctrl+Z | Undo (planned) |
+- **Delete**: Remove selected track
+- **Ctrl+N**: New plan
+- **Ctrl+S**: Save plan
+- **Ctrl+Z**: Undo (planned)
 
 ## Constraints
 
 Validation rules that check graph consistency:
 
-| Constraint | Description |
-|------------|-------------|
-| `DuplicateFeedbackPointNumberConstraint` | No duplicate feedback addresses |
-| (more planned) | - |
+- **`DuplicateFeedbackPointNumberConstraint`**: No duplicate feedback
+  addresses
+- **More planned**
 
 ## Integration with Domain.Project
 

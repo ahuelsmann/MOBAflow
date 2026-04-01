@@ -2,7 +2,7 @@
 
 ## 🔄 Die Entwickler Journey mit Hooks
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │  Developer sitzt am Code & erstellt Feature                    │
 └─────────────────────────────────────────────────────────────────┘
@@ -74,7 +74,7 @@ Andere Aktion: Branch-Wechsel
 
 ## 🎯 Qualitäts-Layers
 
-```
+```text
 ┌────────────────────────────────────────────────────────────────┐
 │                   SONARQUBE (FUTURE)                           │
 │   Security Scanning | Bug Detection | Code Smells | Trends    │
@@ -100,7 +100,7 @@ Alle zusammen = 95%+ Qualität vor Remote
 
 ## 📦 NuGet Pakete - Priority Matrix
 
-```
+```text
                     EASY ←────────────────→ HARD
                      
 HIGH         ┌──────────────────────────┐
@@ -129,6 +129,7 @@ IMPACT       │ • FluentAssertions       │ • Load Testing
 ## 🔍 SonarQube - Impact auf Code
 
 ### VORHER (ohne SonarQube)
+
 ```csharp
 public ProjectValidationResult ValidateCompleteness(Solution solution)
 {
@@ -156,7 +157,8 @@ public ProjectValidationResult ValidateCompleteness(Solution solution)
 ```
 
 **SonarQube würde melden:**
-```
+
+```text
 ❌ CRITICAL: Null reference (line 45) [Security Hotspot]
 ⚠️  MAJOR: Cyclomatic Complexity = 28 (should be < 5)
 ⚠️  MAJOR: Method too long (89 lines, should be < 25)
@@ -165,6 +167,7 @@ public ProjectValidationResult ValidateCompleteness(Solution solution)
 ```
 
 ### NACHHER (mit SonarQube + Refactoring)
+
 ```csharp
 public ProjectValidationResult ValidateCompleteness(Solution solution)
 {
@@ -192,7 +195,8 @@ private void ValidateProjectContent(Project project, ProjectValidationResult res
 ```
 
 **SonarQube würde melden:**
-```
+
+```text
 ✅ PASS: All quality gates met
 ✅ Coverage: 92%
 ✅ Complexity: 2 (OK)
@@ -206,7 +210,8 @@ private void ValidateProjectContent(Project project, ProjectValidationResult res
 ### Szenario: 6 Monate später, neuer Developer beigetreten
 
 **OHNE ADRs:**
-```
+
+```text
 Neuer Dev: "Warum verwenden wir MVVM Toolkit?"
 Älterer Dev: "Äh... ich weiß nicht genau. War halt da."
 Neuer Dev: "Können wir zu Prism wechseln? Das sieht leichter aus."
@@ -215,7 +220,8 @@ Ergebnis: Vielleicht wechseln, vielleicht nicht. Ineffizient.
 ```
 
 **MIT ADRs:**
-```
+
+```text
 Neuer Dev: "Warum verwenden wir MVVM Toolkit?"
 (Schaut sich ADR-001 an...)
         ↓
@@ -233,7 +239,7 @@ Ergebnis: ✅ Entscheidung ist dokumentiert & transparent
 
 ## 🎯 Timeline: Von Heute bis Session 40
 
-```
+```text
 NOW (Session 34)
 ├─ JSON Validation ✅
 ├─ Conventional Commits ✅
@@ -266,7 +272,7 @@ GOAL: MOBAflow = Top-Tier Code Quality Project 🏆
 
 ## 💡 Zusammenfassung: Was Sie gemacht haben
 
-```
+```text
 ✅ Sie haben ein Enterprise-Grade Quality Framework gebaut:
 
     Code Quality     = Pre-Commit + Pre-Push Hooks

@@ -1,4 +1,5 @@
 ---
+
 applyTo: '**/*.cs'
 description: 'Avoid special characters in source code to prevent encoding issues'
 ---
@@ -11,22 +12,31 @@ description: 'Avoid special characters in source code to prevent encoding issues
 
 ### Forbidden Characters
 
-| Type | Examples | Problem |
-|------|----------|---------|
-| Emojis | `🎯 ✅ 🖐️ 🔵 🛑 🚂` | Multi-byte UTF-8, corrupts easily |
-| Box-drawing | `├ └ ─ │ ┌ ┐` | Not ASCII, encoding-sensitive |
-| Arrows | `→ ← ↑ ↓ ➡` | Unicode, causes issues |
-| German Umlaute | `ä ö ü ß Ä Ö Ü` | Use ASCII alternatives in code |
+- **Emojis**
+  - **Examples:** `🎯 ✅ 🖐️ 🔵 🛑 🚂`
+  - **Problem:** Multi-byte UTF-8, corrupts easily
+- **Box-drawing**
+  - **Examples:** `├ └ ─ │ ┌ ┐`
+  - **Problem:** Not ASCII, encoding-sensitive
+- **Arrows**
+  - **Examples:** `→ ← ↑ ↓ ➡`
+  - **Problem:** Unicode, causes issues
+- **German Umlaute**
+  - **Examples:** `ä ö ü ß Ä Ö Ü`
+  - **Problem:** Use ASCII alternatives in code
 
 ### Allowed Alternatives
 
-| Instead of | Use |
-|------------|-----|
-| `Debug.WriteLine("✅ Success")` | `Debug.WriteLine("Success")` |
-| `Debug.WriteLine("🎯 Target")` | `Debug.WriteLine("[TARGET] ...")` |
-| `StatusMessage = "Loko fährt ↑"` | `StatusMessage = "Loko forward"` |
-| `"Bogen 45°"` | `"Bogen 45 Grad"` or `$"Bogen 45{'\u00B0'}"` |
-| `"Löschen"` | Use resource files for UI strings |
+- **`Debug.WriteLine("✅ Success")`**
+  - **Use:** `Debug.WriteLine("Success")`
+- **`Debug.WriteLine("🎯 Target")`**
+  - **Use:** `Debug.WriteLine("[TARGET] ...")`
+- **`StatusMessage = "Loko fährt ↑"`**
+  - **Use:** `StatusMessage = "Loko forward"`
+- **`"Bogen 45°"`**
+  - **Use:** `"Bogen 45 Grad"` or `$"Bogen 45{'\u00B0'}"`
+- **`"Löschen"`**
+  - **Use:** Use resource files for UI strings
 
 ### Where Special Characters ARE Allowed
 
@@ -51,6 +61,7 @@ var text = $"Groesse: 45{'\u00B0'}";  // Unicode escape for degree
 ### Why This Matters
 
 When tools read/write files with different encoding assumptions:
+
 1. UTF-8 emoji `🎯` (4 bytes: F0 9F 8E AF)
 2. Read as Latin-1: `ðŸŽ¯` (4 separate characters)
 3. Written back as UTF-8: Corruption multiplies
@@ -61,6 +72,7 @@ Each edit cycle makes it worse, eventually producing unreadable garbage like:
 ### Enforcement
 
 Before committing, run:
+
 ```powershell
 # Find files with problematic characters
 Get-ChildItem -Include "*.cs" -Recurse | 

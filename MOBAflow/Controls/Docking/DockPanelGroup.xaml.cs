@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using Windows.ApplicationModel.DataTransfer;
 
 /// <summary>
 /// Determines how multiple panels in a dock group are displayed.
@@ -26,6 +27,7 @@ internal enum DockGroupLayoutMode
 /// </summary>
 internal sealed class DockPanelGroup : UserControl
 {
+    private const string DockPanelDataKey = "DockPanel";
     private readonly List<DockPanel> _panels = [];
     private readonly Grid _singlePanelView;
     private readonly TabView _panelTabView;
@@ -36,6 +38,8 @@ internal sealed class DockPanelGroup : UserControl
     /// Raised when any panel expansion state changes.
     /// </summary>
     public event EventHandler<DockPanelExpansionChangedEventArgs>? PanelExpansionChanged;
+
+    public event EventHandler<DockPanelAutoHideIntentEventArgs>? PanelAutoHideRequested;
 
     public static readonly DependencyProperty ItemsSourceProperty =
         DependencyProperty.Register(
@@ -78,6 +82,7 @@ internal sealed class DockPanelGroup : UserControl
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Stretch
         };
+        _panelTabView.TabDragStarting += OnTabDragStarting;
 
         _splitView = new Grid
         {
@@ -430,19 +435,47 @@ internal sealed class DockPanelGroup : UserControl
         };
     }
 
+    private void OnTabDragStarting(TabView sender, TabViewTabDragStartingEventArgs args)
+    {
+        var panel = args.Item switch
+        {
+            DockPanel dockPanel => dockPanel,
+            TabViewItem tabViewItem => tabViewItem.Tag as DockPanel,
+            _ => null
+        };
+
+        if (panel is null)
+        {
+            return;
+        }
+
+        args.Data.Properties[DockPanelDataKey] = panel;
+        args.Data.RequestedOperation = DataPackageOperation.Move;
+    }
+
     private void WirePanelEvents(DockPanel panel)
     {
         panel.IsExpandedChanged += OnPanelIsExpandedChanged;
+        panel.AutoHideRequested += OnPanelAutoHideRequested;
     }
 
     private void UnwirePanelEvents(DockPanel panel)
     {
         panel.IsExpandedChanged -= OnPanelIsExpandedChanged;
+        panel.AutoHideRequested -= OnPanelAutoHideRequested;
     }
 
     private void OnPanelIsExpandedChanged(object? sender, EventArgs e)
     {
         RaisePanelExpansionChanged(sender as DockPanel);
+    }
+
+    private void OnPanelAutoHideRequested(object? sender, EventArgs e)
+    {
+        if (sender is DockPanel panel)
+        {
+            PanelAutoHideRequested?.Invoke(this, new DockPanelAutoHideIntentEventArgs(panel));
+        }
     }
 
     private void RaisePanelExpansionChanged(DockPanel? panel = null)
@@ -492,6 +525,16 @@ internal sealed class DockPanelExpansionChangedEventArgs : EventArgs
     public DockPanel? Panel { get; }
 
     public DockPanelExpansionChangedEventArgs(DockPanel? panel)
+    {
+        Panel = panel;
+    }
+}
+
+internal sealed class DockPanelAutoHideIntentEventArgs : EventArgs
+{
+    public DockPanel Panel { get; }
+
+    public DockPanelAutoHideIntentEventArgs(DockPanel panel)
     {
         Panel = panel;
     }

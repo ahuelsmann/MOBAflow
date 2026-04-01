@@ -1,14 +1,16 @@
 ﻿---
-description: Prevents XAML Page registration issues when recreating files
-applyTo: "WinUI/**/*.xaml"
+
+description: 'Prevents XAML Page registration issues when recreating files'
+applyTo: 'MOBAflow/**/*.xaml'
 ---
 
 # XAML Page Registration (CRITICAL!)
 
 ## Problem: Page files excluded from XAML Compiler
 
-When creating, deleting, or recreating XAML files (especially via `remove_file` and `create_file` tools), 
-MSBuild/WinUI SDK may incorrectly add entries to `.csproj` that **exclude** the page from compilation:
+When creating, deleting, or recreating XAML files
+(especially via file-edit tools), MSBuild/WinUI SDK may incorrectly add
+entries to `.csproj` that **exclude** the page from compilation:
 
 ```xml
 <!-- WRONG: Page excluded from XAML compilation -->
@@ -34,26 +36,29 @@ MSBuild/WinUI SDK may incorrectly add entries to `.csproj` that **exclude** the 
 - SDK auto-globbing conflict with explicit exclusions
 - File recreated but csproj still has removal entry
 
-## Solution: Check .csproj after any XAML file operations!
+## Solution: Check .csproj after XAML file operations
 
 The WinUI SDK automatically includes all `.xaml` files as Page items.
 Only use `<Page Remove="..."/>` for intentional exclusions (like temporary files).
 
 ## Verification Steps
 
-### 1. Check csproj for Page Remove entries:
+### 1. Check csproj for Page Remove entries
+
 ```powershell
 Select-String -Path "MOBAflow\MOBAflow.csproj" -Pattern "Page Remove" -SimpleMatch
 ```
 
-### 2. If found, remove the exclusion entries for your page:
+### 2. If found, remove the exclusion entries for your page
+
 ```xml
 <!-- DELETE these lines if your page should compile -->
 <Page Remove="View\YourPage.xaml" />
 <None Update="View\YourPage.xaml">...</None>
 ```
 
-### 3. Clean and rebuild:
+### 3. Clean and rebuild
+
 ```powershell
 dotnet clean MOBAflow\MOBAflow.csproj
 dotnet build MOBAflow\MOBAflow.csproj
@@ -63,7 +68,8 @@ dotnet build MOBAflow\MOBAflow.csproj
 
 When using file tools to recreate XAML:
 
-1. **After deleting a XAML file**, check csproj for auto-added `<Page Remove="..."/>` entries
+1. **After deleting a XAML file**, check csproj for auto-added
+   `<Page Remove="..."/>` entries
 2. **After creating a XAML file**, verify no conflicting entries in csproj
 3. **Run build** to confirm XAML compiler recognizes the file
 

@@ -35,6 +35,8 @@ internal sealed partial class DockPanel
     /// </summary>
     public event EventHandler? IsExpandedChanged;
 
+    public event EventHandler? AutoHideRequested;
+
     #region Dependency Properties
 
     public static readonly DependencyProperty PanelTitleProperty =
@@ -226,6 +228,12 @@ internal sealed partial class DockPanel
 
     private void OnPinButtonClick(object sender, RoutedEventArgs e)
     {
+        if (AutoHideRequested is not null)
+        {
+            AutoHideRequested.Invoke(this, EventArgs.Empty);
+            return;
+        }
+
         IsExpanded = !IsExpanded;
     }
 }

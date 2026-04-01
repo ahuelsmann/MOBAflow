@@ -1,4 +1,5 @@
 ---
+
 description: 'Comment guidelines - explain WHY not WHAT'
 applyTo: '**/*.cs'
 ---
@@ -6,6 +7,7 @@ applyTo: '**/*.cs'
 # Code Commenting
 
 ## Core Rule
+
 **Comment only when explaining WHY, not WHAT. Code should be self-explanatory.**
 
 ## Good Comments
@@ -25,7 +27,8 @@ applyTo: '**/*.cs'
 - Redundant: `return user.Name;  // Return user name`
 - Dead code comments
 - Changelog in comments (use Git)
-```
+
+```text
 
 ### Divider Comments
 ```javascript
@@ -38,6 +41,7 @@ applyTo: '**/*.cs'
 ## Quality Checklist
 
 Before committing, ensure your comments:
+
 - [ ] Explain WHY, not WHAT
 - [ ] Are grammatically correct and clear
 - [ ] Will remain accurate as code evolves
@@ -47,4 +51,5 @@ Before committing, ensure your comments:
 
 ## Summary
 
-Remember: **The best comment is the one you don't need to write because the code is self-documenting.**
+Remember: **The best comment is the one you don't need to write because
+the code is self-documenting.**

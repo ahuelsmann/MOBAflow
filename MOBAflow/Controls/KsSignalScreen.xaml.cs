@@ -27,12 +27,24 @@ internal sealed partial class KsSignalScreen
         nameof(Aspect),
         typeof(string),
         typeof(KsSignalScreen),
-        new PropertyMetadata("Hp0", OnAspectChanged));
+        new PropertyMetadata("Hp0", OnSignalVisualPropertyChanged));
+
+    public static readonly DependencyProperty SignalArticleNumberProperty = DependencyProperty.Register(
+        nameof(SignalArticleNumber),
+        typeof(string),
+        typeof(KsSignalScreen),
+        new PropertyMetadata(string.Empty, OnSignalVisualPropertyChanged));
 
     public string Aspect
     {
         get => (string)GetValue(AspectProperty);
         set => SetValue(AspectProperty, value);
+    }
+
+    public string SignalArticleNumber
+    {
+        get => (string)GetValue(SignalArticleNumberProperty);
+        set => SetValue(SignalArticleNumberProperty, value);
     }
 
     public KsSignalScreen()
@@ -52,7 +64,7 @@ internal sealed partial class KsSignalScreen
         StopBlinking();
     }
 
-    private static void OnAspectChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    private static void OnSignalVisualPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is KsSignalScreen screen)
         {
@@ -74,6 +86,13 @@ internal sealed partial class KsSignalScreen
         Zs7Right.Fill = OffColor;
         W3.Fill = OffColor;
         Ra12Right.Fill = OffColor;
+        TopSpeedIndicator.Text = string.Empty;
+        TopSpeedIndicator.Visibility = Visibility.Collapsed;
+        BottomSpeedIndicator.Text = string.Empty;
+        BottomSpeedIndicator.Visibility = Visibility.Collapsed;
+
+        if (string.Equals(SignalArticleNumber, "4046", StringComparison.Ordinal) && Render4046Aspect())
+            return;
 
         switch (Aspect)
         {
@@ -110,6 +129,66 @@ internal sealed partial class KsSignalScreen
                 Zs7Right.Fill = YellowOn;
                 break;
         }
+    }
+
+    private bool Render4046Aspect()
+    {
+        switch (Aspect)
+        {
+            case "Hp0":
+                Hp0.Fill = RedOn;
+                return true;
+            case "Ks1":
+                Ks1.Fill = GreenOn;
+                return true;
+            case "Ra12":
+                Hp0.Fill = RedOn;
+                W3.Fill = WhiteOn;
+                Ra12Right.Fill = WhiteOn;
+                return true;
+            case "Zs1":
+                Ks1.Fill = GreenOn;
+                ShowTopSpeedIndicator("G");
+                return true;
+            case "Ks2":
+                Ks2.Fill = YellowOn;
+                W1.Fill = WhiteOn;
+                return true;
+            case "Ks1Blink":
+                Ks2.Fill = YellowOn;
+                W1.Fill = WhiteOn;
+                ShowTopSpeedIndicator("G");
+                return true;
+            case "Kennlicht":
+                W1.Fill = WhiteOn;
+                return true;
+            case "Dunkel":
+                W1.Fill = WhiteOn;
+                Ks1.Fill = GreenOn;
+                StartBlinking(Ks1, GreenOn);
+                ShowTopSpeedIndicator("G");
+                ShowBottomSpeedIndicator("G");
+                return true;
+            case "Zs7":
+                W2.Fill = YellowOn;
+                Zs7Center.Fill = YellowOn;
+                Zs7Right.Fill = YellowOn;
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private void ShowTopSpeedIndicator(string text)
+    {
+        TopSpeedIndicator.Text = text;
+        TopSpeedIndicator.Visibility = Visibility.Visible;
+    }
+
+    private void ShowBottomSpeedIndicator(string text)
+    {
+        BottomSpeedIndicator.Text = text;
+        BottomSpeedIndicator.Visibility = Visibility.Visible;
     }
 
     private void StartBlinking(Ellipse led, SolidColorBrush onColor)

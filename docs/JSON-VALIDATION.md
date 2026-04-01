@@ -8,7 +8,8 @@
 
 ## Overview
 
-MOBAflow uses **JSON schema-style validation** to ensure that only compatible solution files can be loaded. This prevents:
+MOBAflow uses **JSON schema-style validation** to ensure that only
+compatible solution files can be loaded. This prevents:
 
 ❌ Corrupted JSON files  
 ❌ Incorrect data structures  
@@ -21,16 +22,15 @@ MOBAflow uses **JSON schema-style validation** to ensure that only compatible so
 
 ### Components
 
-| Component | Purpose |
-|----------|---------|
-| `Common/Validation/JsonValidationService.cs` | Central validation logic |
-| `Domain/Solution.cs` | Schema version (`SchemaVersion` property) |
-| `WinUI/Service/IoService.cs` | Validation before deserialization |
-| `Test/Common/JsonValidationTests.cs` | 16+ unit tests |
+- **`Common/Validation/JsonValidationService.cs`:** Central validation
+  logic
+- **`Domain/Solution.cs`:** Schema version (`SchemaVersion` property)
+- **`WinUI/Service/IoService.cs`:** Validation before deserialization
+- **`Test/Common/JsonValidationTests.cs`:** 16+ unit tests
 
 ### Flow
 
-```
+```text
 User opens .json file
     ↓
 IoService.LoadAsync()
@@ -94,7 +94,8 @@ JsonDocument.Parse(json)
 ```
 
 **Error examples:**
-```
+
+```text
 ❌ Invalid JSON format: Unexpected character '{' at position 42.
 ❌ Invalid JSON format: Expected ',' or '}' after property value.
 ```
@@ -107,7 +108,8 @@ if (root.ValueKind != JsonValueKind.Object)
 ```
 
 **Error example:**
-```
+
+```text
 ❌ JSON root must be an object.
 ```
 
@@ -122,7 +124,8 @@ if (!root.TryGetProperty("projects", out var projectsElement))
 ```
 
 **Error examples:**
-```
+
+```text
 ❌ Missing required property: 'name'.
 ❌ Missing required property: 'projects'.
 ```
@@ -135,7 +138,8 @@ if (projectsElement.ValueKind != JsonValueKind.Array)
 ```
 
 **Error example:**
-```
+
+```text
 ❌ Property 'projects' must be an array.
 ```
 
@@ -145,18 +149,22 @@ if (projectsElement.ValueKind != JsonValueKind.Array)
 if (requiredSchemaVersion.HasValue)
 {
     if (!root.TryGetProperty("schemaVersion", out var versionElement))
-        return Failure($"Missing schema version. Expected version {requiredSchemaVersion.Value}.");
+        return Failure(
+            $"Missing schema version. Expected version {requiredSchemaVersion.Value}.");
 
     if (!versionElement.TryGetInt32(out var actualVersion))
         return Failure("Schema version must be a number.");
 
     if (actualVersion != requiredSchemaVersion.Value)
-        return Failure($"Incompatible schema version. Expected {requiredSchemaVersion.Value}, found {actualVersion}.");
+        return Failure(
+            $"Incompatible schema version. Expected " +
+            $"{requiredSchemaVersion.Value}, found {actualVersion}.");
 }
 ```
 
 **Error examples:**
-```
+
+```text
 ❌ Missing schema version. Expected version 1.
 ❌ Schema version must be a number.
 ❌ Incompatible schema version. Expected 1, found 999.
@@ -176,7 +184,8 @@ foreach (var project in projectsElement.EnumerateArray())
 ```
 
 **Error examples:**
-```
+
+```text
 ❌ Project at index 0 is not an object.
 ❌ Project at index 1 is missing 'name' property.
 ```
@@ -194,10 +203,12 @@ public static JsonValidationResult Validate(
 ```
 
 **Parameters:**
+
 - `json` - Raw JSON string
 - `requiredSchemaVersion` - Expected schema version (optional)
 
 **Return type:**
+
 ```csharp
 public class JsonValidationResult
 {
@@ -264,7 +275,8 @@ if (!string.IsNullOrEmpty(error))
 ```
 
 **User sees:**
-```
+
+```text
 ❌ Failed to load solution: Invalid solution file: Missing required property: 'projects'
 ```
 
@@ -278,24 +290,27 @@ if (!string.IsNullOrEmpty(error))
 
 ### Test scenarios (16 tests)
 
-| Test | Scenario |
-|------|----------|
-| `Validate_EmptyString_ShouldFail` | Empty string |
-| `Validate_WhitespaceOnly_ShouldFail` | Whitespace only |
-| `Validate_InvalidJson_ShouldFail` | Invalid JSON syntax |
-| `Validate_JsonArray_ShouldFail` | Root is array instead of object |
-| `Validate_MissingNameProperty_ShouldFail` | Missing `name` |
-| `Validate_MissingProjectsProperty_ShouldFail` | Missing `projects` |
-| `Validate_ProjectsNotArray_ShouldFail` | `projects` is not an array |
-| `Validate_ProjectMissingName_ShouldFail` | Project without `name` |
-| `Validate_ProjectNotObject_ShouldFail` | Project is not an object |
-| `Validate_ValidMinimalJson_ShouldSucceed` | Minimal JSON (empty) |
-| `Validate_ValidJsonWithProjects_ShouldSucceed` | Valid solution with projects |
-| `Validate_MissingSchemaVersion_WithRequiredVersion_ShouldFail` | Schema version missing |
-| `Validate_WrongSchemaVersion_ShouldFail` | Wrong version |
-| `Validate_InvalidSchemaVersionType_ShouldFail` | Version is string instead of number |
-| `Validate_CorrectSchemaVersion_ShouldSucceed` | Correct version |
-| `Validate_NoSchemaVersionRequired_ShouldSucceed` | No version required |
+- **`Validate_EmptyString_ShouldFail`:** Empty string
+- **`Validate_WhitespaceOnly_ShouldFail`:** Whitespace only
+- **`Validate_InvalidJson_ShouldFail`:** Invalid JSON syntax
+- **`Validate_JsonArray_ShouldFail`:** Root is array instead of object
+- **`Validate_MissingNameProperty_ShouldFail`:** Missing `name`
+- **`Validate_MissingProjectsProperty_ShouldFail`:** Missing `projects`
+- **`Validate_ProjectsNotArray_ShouldFail`:** `projects` is not an
+  array
+- **`Validate_ProjectMissingName_ShouldFail`:** Project without `name`
+- **`Validate_ProjectNotObject_ShouldFail`:** Project is not an object
+- **`Validate_ValidMinimalJson_ShouldSucceed`:** Minimal JSON (empty)
+- **`Validate_ValidJsonWithProjects_ShouldSucceed`:** Valid solution
+  with projects
+- **`Validate_MissingSchemaVersion_WithRequiredVersion_ShouldFail`:**
+  Schema version missing
+- **`Validate_WrongSchemaVersion_ShouldFail`:** Wrong version
+- **`Validate_InvalidSchemaVersionType_ShouldFail`:** Version is
+  string instead of number
+- **`Validate_CorrectSchemaVersion_ShouldSucceed`:** Correct version
+- **`Validate_NoSchemaVersionRequired_ShouldSucceed`:** No version
+  required
 
 ### Running tests
 
@@ -304,7 +319,8 @@ dotnet test --filter "FullyQualifiedName~JsonValidationTests"
 ```
 
 **Result:**
-```
+
+```text
 Test summary: total: 16; failed: 0; succeeded: 16; skipped: 0
 ```
 
@@ -315,11 +331,13 @@ Test summary: total: 16; failed: 0; succeeded: 16; skipped: 0
 ### When schema version 2 is introduced
 
 1. **Update `Solution.CurrentSchemaVersion`:**
+
    ```csharp
    public const int CurrentSchemaVersion = 2;
    ```
 
 2. **Migration implementieren:**
+
    ```csharp
    public static Solution MigrateFromV1(Solution oldSolution)
    {
@@ -329,6 +347,7 @@ Test summary: total: 16; failed: 0; succeeded: 16; skipped: 0
    ```
 
 3. **In `IoService`:**
+
    ```csharp
    if (solution.SchemaVersion == 1)
    {
@@ -337,6 +356,7 @@ Test summary: total: 16; failed: 0; succeeded: 16; skipped: 0
    ```
 
 4. **Extend tests:**
+
    ```csharp
    [Test]
    public void MigrateFromV1_ShouldConvertCorrectly() { ... }
@@ -366,12 +386,14 @@ Test summary: total: 16; failed: 0; succeeded: 16; skipped: 0
 ## Summary
 
 MOBAflow's JSON validation protects against:
+
 - ❌ Corrupted files
 - ❌ Incompatible versions
 - ❌ Missing required properties
 - ❌ Wrong data types
 
 **Benefits:**
+
 - ✅ Better error handling
 - ✅ Clear user-facing error messages
 - ✅ Future-proof migration support

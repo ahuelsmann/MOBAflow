@@ -116,6 +116,8 @@ internal sealed class DockingToolWindowState
     public string ContentBody { get; set; } = string.Empty;
 
     public bool IsExpanded { get; set; } = true;
+
+    public bool IsAutoHidden { get; set; }
 }
 
 internal sealed class DockingWorkspaceProjection
@@ -131,4 +133,12 @@ internal sealed class DockingWorkspaceProjection
     public DockNode? TopNode { get; init; }
 
     public DockNode? BottomNode { get; init; }
+
+    public ObservableCollection<DockPanel> LeftAutoHidePanels { get; } = [];
+
+    public ObservableCollection<DockPanel> RightAutoHidePanels { get; } = [];
+
+    public ObservableCollection<DockPanel> TopAutoHidePanels { get; } = [];
+
+    public ObservableCollection<DockPanel> BottomAutoHidePanels { get; } = [];
 }

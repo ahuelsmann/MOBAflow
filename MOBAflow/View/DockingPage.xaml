@@ -17,16 +17,20 @@
         <docking:DockingManager
             x:Name="DockManager"
             Grid.Row="1"
+            BottomAutoHidePanels="{Binding BottomAutoHidePanels}"
             BottomNode="{Binding BottomNode}"
             BottomPanelHeight="{Binding BottomPanelHeight, Mode=TwoWay}"
             IsBottomPanelVisible="{Binding IsBottomPanelVisible, Mode=TwoWay}"
             IsLeftPanelVisible="{Binding IsLeftPanelVisible, Mode=TwoWay}"
             IsRightPanelVisible="{Binding IsRightPanelVisible, Mode=TwoWay}"
             IsTopPanelVisible="{Binding IsTopPanelVisible, Mode=TwoWay}"
+            LeftAutoHidePanels="{Binding LeftAutoHidePanels}"
             LeftNode="{Binding LeftNode}"
             LeftPanelWidth="{Binding LeftPanelWidth, Mode=TwoWay}"
+            RightAutoHidePanels="{Binding RightAutoHidePanels}"
             RightNode="{Binding RightNode}"
             RightPanelWidth="{Binding RightPanelWidth, Mode=TwoWay}"
+            TopAutoHidePanels="{Binding TopAutoHidePanels}"
             TopPanelHeight="{Binding TopPanelHeight, Mode=TwoWay}"
             TopNode="{Binding TopNode}">
 

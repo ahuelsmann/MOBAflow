@@ -4,6 +4,7 @@ namespace Moba.WinUI.Service;
 
 using Controls.Docking.Workspace;
 using Microsoft.Extensions.Logging;
+using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Windows.Storage;
@@ -30,15 +31,15 @@ internal class DockingLayoutService
 
     #region Fields
 
-    private readonly StorageFolder _localAppDataFolder;
+    private readonly string _layoutFilePath;
     private readonly ILogger<DockingLayoutService> _logger;
 
     #endregion
 
     public DockingLayoutService(ILogger<DockingLayoutService> logger)
     {
-        _localAppDataFolder = ApplicationData.Current.LocalFolder;
         _logger = logger;
+        _layoutFilePath = Path.Combine(GetLocalDataDirectory(), LayoutFileName);
     }
 
     #region Public Methods
@@ -50,11 +51,10 @@ internal class DockingLayoutService
     {
         try
         {
-            var layoutFile = await _localAppDataFolder.TryGetItemAsync(LayoutFileName) as StorageFile;
-            if (layoutFile == null)
+            if (!File.Exists(_layoutFilePath))
                 return null;
 
-            var json = await FileIO.ReadTextAsync(layoutFile);
+            var json = await File.ReadAllTextAsync(_layoutFilePath);
             var state = JsonSerializer.Deserialize<DockingWorkspaceState>(json, JsonOptions);
 
             // Check version compatibility
@@ -79,12 +79,14 @@ internal class DockingLayoutService
         {
             state.Version = CurrentLayoutVersion;
 
-            var layoutFile = await _localAppDataFolder.CreateFileAsync(
-                LayoutFileName,
-                CreationCollisionOption.ReplaceExisting);
-
             var json = JsonSerializer.Serialize(state, JsonOptions);
-            await FileIO.WriteTextAsync(layoutFile, json);
+            var directoryPath = Path.GetDirectoryName(_layoutFilePath);
+            if (!string.IsNullOrWhiteSpace(directoryPath))
+            {
+                Directory.CreateDirectory(directoryPath);
+            }
+
+            await File.WriteAllTextAsync(_layoutFilePath, json);
         }
         catch (Exception ex)
         {
@@ -99,15 +101,31 @@ internal class DockingLayoutService
     {
         try
         {
-            var layoutFile = await _localAppDataFolder.TryGetItemAsync(LayoutFileName) as StorageFile;
-            if (layoutFile != null)
+            if (File.Exists(_layoutFilePath))
             {
-                await layoutFile.DeleteAsync();
+                File.Delete(_layoutFilePath);
             }
+
+            await Task.CompletedTask;
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Error deleting layout");
+        }
+    }
+
+    private string GetLocalDataDirectory()
+    {
+        try
+        {
+            return ApplicationData.Current.LocalFolder.Path;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "ApplicationData.Current.LocalFolder unavailable, falling back to LocalApplicationData.");
+            return Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "MOBAflow");
         }
     }
 

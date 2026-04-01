@@ -92,6 +92,7 @@ public interface IMobaRuntime
     /// Sets a signal aspect through the runtime.
     /// </summary>
     Task SetSignalAspectAsync(SbSignal signal, CancellationToken cancellationToken = default);
+    Task SendTurnoutCommandAsync(int decoderAddress, int output, bool activate, bool queue = false, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the current traffic monitor packets.

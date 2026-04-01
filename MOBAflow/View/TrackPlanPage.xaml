@@ -101,6 +101,14 @@
                     <SymbolIcon Symbol="Highlight" />
                 </AppBarToggleButton.Icon>
             </AppBarToggleButton>
+            <AppBarToggleButton
+                x:Name="ValidationOverlayToggle"
+                IsChecked="True"
+                Label="Validation Overlay">
+                <AppBarToggleButton.Icon>
+                    <SymbolIcon Symbol="Preview" />
+                </AppBarToggleButton.Icon>
+            </AppBarToggleButton>
             <AppBarButton
                 x:Name="RotateLeftButton"
                 Label="Rotate ←">
@@ -455,6 +463,44 @@
                                         Grid.Column="1"
                                         Text="100%" />
                                 </Grid>
+                            </StackPanel>
+                            <StackPanel x:Name="ValidationLegendPanel" Spacing="8">
+                                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Validation Overlay" />
+                                <TextBlock
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="Live-Hinweise im Canvas für offene Enden, überlappende Ports und getrennte Gruppen."
+                                    TextWrapping="WrapWholeWords" />
+                                <StackPanel Spacing="6">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Ellipse
+                                            Width="12"
+                                            Height="12"
+                                            Fill="#FFB900"
+                                            Stroke="#FF8C00"
+                                            StrokeThickness="1.5" />
+                                        <TextBlock VerticalAlignment="Center" Text="Offene Enden" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Ellipse
+                                            Width="16"
+                                            Height="16"
+                                            Fill="#E81123"
+                                            Stroke="#B40014"
+                                            StrokeThickness="1.5" />
+                                        <TextBlock VerticalAlignment="Center" Text="Unverbundene, überlappende Ports" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Rectangle
+                                            Width="18"
+                                            Height="12"
+                                            RadiusX="2"
+                                            RadiusY="2"
+                                            Stroke="#0078D7"
+                                            StrokeDashArray="4,2"
+                                            StrokeThickness="1.5" />
+                                        <TextBlock VerticalAlignment="Center" Text="Unverbundene Gruppen" />
+                                    </StackPanel>
+                                </StackPanel>
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>

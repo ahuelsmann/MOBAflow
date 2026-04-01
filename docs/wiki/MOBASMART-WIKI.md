@@ -14,14 +14,14 @@ This documentation helps you get the most out of the MOBAsmart Android app.
 
 ## 📚 Table of Contents
 
-- [Getting Started](#-getting-started)
-- [Connecting to the Z21](#-connecting-to-the-z21)
-- [Lap Counter Settings](#-lap-counter-settings)
-- [Understanding Lap Counting](#-understanding-lap-counting)
-- [Best Practices](#-best-practices)
-- [Troubleshooting](#-troubleshooting)
-- [FAQ](#-faq)
-- [Technical Details](#-technical-details)
+- Getting Started
+- Connecting to the Z21
+- Lap Counter Settings
+- Understanding Lap Counting
+- Best Practices
+- Troubleshooting
+- FAQ
+- Technical Details
 
 ---
 
@@ -29,27 +29,30 @@ This documentation helps you get the most out of the MOBAsmart Android app.
 
 ### What you need
 
-| Component | Description | Required |
-|----------|-------------|----------|
-| **Android device** | Smartphone or tablet (Android 7.0+) | ✅ Yes |
-| **Roco Z21** | Digital command station (Z21, Z21 start, z21) | ✅ Yes |
-| **WLAN** | Z21 and Android device in the same network | ✅ Yes |
-| **Feedback modules** | e.g. Roco 10808, 10787 | ✅ Yes |
-| **Track contacts** | e.g. Roco 42614, Märklin 74030 | ✅ Yes |
+- **Android device:** Smartphone or tablet (`Android 7.0+`). Required:
+  Yes
+- **Roco Z21:** Digital command station (`Z21`, `Z21 start`, `z21`).
+  Required: Yes
+- **WLAN:** Z21 and Android device in the same network. Required: Yes
+- **Feedback modules:** e.g. `Roco 10808`, `10787`. Required: Yes
+- **Track contacts:** e.g. `Roco 42614`, `Märklin 74030`.
+  Required: Yes
 
 ### Installation
 
 #### Google Play Store *(planned)*
-1. Open Google Play Store.  
-2. Search for **"MOBAsmart"**.  
-3. Tap **Install**.  
-4. Open the app.  
+
+ 1. Open Google Play Store.  
+ 2. Search for **"MOBAsmart"**.  
+ 3. Tap **Install**.  
+ 4. Open the app.  
 
 #### Manual installation (APK)
-1. Download the APK file.  
-2. **Settings → Security → Unknown sources** → enable.  
-3. Tap the APK file to install.  
-4. Open **MOBAsmart**.  
+
+ 1. Download the APK file.  
+ 2. **Settings → Security → Unknown sources** → enable.  
+ 3. Tap the APK file to install.  
+ 4. Open **MOBAsmart**.  
 
 ### First launch
 
@@ -64,21 +67,24 @@ This documentation helps you get the most out of the MOBAsmart Android app.
 ### Finding the Z21 IP address
 
 #### Method 1: Z21 app (easiest)
-1. Open the **Z21 app** (Roco).  
-2. Go to **Menu → Settings → Z21 information**.  
-3. Note the **IP address** (e.g. `192.168.0.111`).  
+
+ 1. Open the **Z21 app** (Roco).  
+ 2. Go to **Menu → Settings → Z21 information**.  
+ 3. Note the **IP address** (e.g. `192.168.0.111`).  
 
 #### Method 2: Router web interface
-1. Open your router UI (usually `192.168.0.1` or `192.168.1.1`).  
-2. Go to **Network → Connected devices**.  
-3. Look for **"Z21"** or **"ROCO"**.  
-4. Note the IP address.  
+
+ 1. Open your router UI (usually `192.168.0.1` or `192.168.1.1`).  
+ 2. Go to **Network → Connected devices**.  
+ 3. Look for **"Z21"** or **"ROCO"**.  
+ 4. Note the IP address.  
 
 #### Method 3: Network scanner app
-1. Install **"Fing"** or **"Network Scanner"** from Google Play.  
-2. Scan your network.  
-3. Look for a device named **"Z21"**.  
-4. Note the IP address.  
+
+ 1. Install **"Fing"** or **"Network Scanner"** from Google Play.  
+ 2. Scan your network.  
+ 3. Look for a device named **"Z21"**.  
+ 4. Note the IP address.  
 
 ### Establishing the connection
 
@@ -107,10 +113,13 @@ This documentation helps you get the most out of the MOBAsmart Android app.
 ### Feedback points (tracks)
 
 #### What are feedback points?
-**Feedback points** are the feedback modules on your layout that detect when a train passes.
+
+**Feedback points** are the feedback modules on your layout that
+detect when a train passes.
 
 **Example:**
-```
+
+```text
 Anlage mit 3 Gleiskontakten:
 ┌─────────────────────────────────────┐
 │  Start/Ziel                         │
@@ -127,7 +136,7 @@ Anlage mit 3 Gleiskontakten:
 
 **Setting:** `CountOfFeedbackPoints = 3`
 
-#### How to configure
+#### How to configure feedback points
 
 1. **Count your feedback modules:**
    - How many Roco 10808/10787 modules are connected?
@@ -148,14 +157,16 @@ Anlage mit 3 Gleiskontakten:
 ### Target lap count
 
 #### What is it?
+
 **Target Lap Count** is the number of laps you want to reach.
 
 **Example:**
+
 - **Racing:** 10 laps
 - **Endurance test:** 100 laps
 - **Short test:** 5 laps
 
-#### How to configure
+#### How to configure the target lap count
 
 1. **Define the goal:**
    - How many laps should the train run?
@@ -170,11 +181,14 @@ Anlage mit 3 Gleiskontakten:
 
 ### Timer filter (anti double-counting)
 
-#### What is it?
-The **timer filter** prevents a long train from being counted multiple times when it slowly passes a track contact.
+#### What is the timer filter?
+
+The **timer filter** prevents a long train from being counted
+multiple times when it slowly passes a track contact.
 
 **Problem without timer filter:**
-```
+
+```text
 Zug fährt über Gleiskontakt:
   Sekunde 0: Lok aktiviert Kontakt     → Count: 1
   Sekunde 2: Wagen 3 noch auf Kontakt  → Count: 2 ❌
@@ -185,7 +199,8 @@ Result: 4 counts, but only 1 pass!
 ```
 
 **Solution with timer filter (10s):**
-```
+
+```text
 Zug fährt über Gleiskontakt:
   Sekunde 0: Lok aktiviert Kontakt     → Count: 1 ✅
   Sekunde 2: Filter aktiv (noch 8s)    → Ignoriert
@@ -198,24 +213,24 @@ Nächster Durchgang (12 Sekunden später):
 Result: 2 counts, 2 passes = correct!
 ```
 
-#### How to configure
+#### How to configure the timer filter
 
 **1. Enable/disable timer:**
+
 - ✅ Checkbox checked → timer active
 - ⬜ Checkbox empty → timer inactive
 
 **2. Set interval:**
+
 - Tap **− / +** next to the timer value
 - **Values:** 1.0s to 60.0s (steps: 1.0s)
 
 **3. Recommended values:**
 
-| Scenario | Recommendation | Reason |
-|----------|----------------|--------|
-| **Short trains** (2–3 cars) | 5–8 seconds | Fast passes |
-| **Medium trains** (4–6 cars) | 10–15 seconds | Standard length |
-| **Long trains** (>6 cars) | 15–20 seconds | Long contact time |
-| **Very slow speed** | 20–30 seconds | Long time over contact |
+- **Short trains** (`2–3 cars`): `5–8 seconds` — fast passes
+- **Medium trains** (`4–6 cars`): `10–15 seconds` — standard length
+- **Long trains** (`>6 cars`): `15–20 seconds` — long contact time
+- **Very slow speed**: `20–30 seconds` — long time over contact
 
 **💡 Tip:** Start with **10 seconds** (default) and adjust as needed.
 
@@ -225,7 +240,7 @@ Result: 2 counts, 2 passes = correct!
 
 ### Counter display explained
 
-```
+```text
 ┌──────────────────────────────────────────────┐
 │ [5]  Track 1                                 │
 │      Lap: 00:12.5  @  22:15:30               │
@@ -235,37 +250,34 @@ Result: 2 counts, 2 passes = correct!
 
 **Meaning of each element:**
 
-| Element | Meaning | Example |
-|---------|---------|---------|
-| **[5]** | Current lap count | 5 laps completed |
-| **Track 1** | Feedback point number | Track contact no. 1 |
-| **Lap: 00:12.5** | Last lap time | 12.5 seconds |
-| **@ 22:15:30** | Timestamp | Today at 22:15:30 |
-| **Lap 5/10** | Progress | 5 of 10 target laps |
-| **━━━━━━━━━━** | Progress bar | 50% reached |
-| **50%** | Percentage | Half the target |
+- **`[5]`**: Current lap count. Example: 5 laps completed
+- **`Track 1`**: Feedback point number. Example: Track contact no. 1
+- **`Lap: 00:12.5`**: Last lap time. Example: 12.5 seconds
+- **`@ 22:15:30`**: Timestamp. Example: today at `22:15:30`
+- **`Lap 5/10`**: Progress. Example: 5 of 10 target laps
+- **`━━━━━━━━━━`**: Progress bar. Example: 50% reached
+- **`50%`**: Percentage. Example: half the target
 
 ### Badge colours
 
-| Colour | Meaning | When? |
-|--------|---------|-------|
-| 🟦 **Blue (primary)** | Not active yet | No lap recorded |
-| 🟢 **Green (accent)** | Active | At least 1 lap recorded |
+- **Blue (primary)**: Not active yet. When: no lap recorded
+- **Green (accent)**: Active. When: at least 1 lap recorded
 
 ### Lap time calculation
 
 **How is lap time calculated?**
 
-```
+```text
 Zeit zwischen zwei aufeinanderfolgenden Feedbacks:
-
+ 
 Durchgang 1: 22:15:30 (Erste Erfassung, keine Zeit)
 Durchgang 2: 22:15:42 → Lap Time: 12 Sekunden
 Durchgang 3: 22:15:55 → Lap Time: 13 Sekunden
 Durchgang 4: 22:16:07 → Lap Time: 12 Sekunden
 ```
 
-**💡 Note:** 
+**💡 Note:**
+
 - The **first lap** has no time (start point unknown).
 - From the **second lap** onwards, time is measured.
 - The app always shows the **last lap time**, not the average.
@@ -279,7 +291,8 @@ Durchgang 4: 22:16:07 → Lap Time: 12 Sekunden
 **Scenario:** You want to run a race with 3 trains.
 
 #### Hardware setup
-```
+
+```text
 3 separate Gleiskontakte:
 ┌─────────────────────────────────────┐
 │  [Track 1] ← Zug 1 (ICE)           │
@@ -289,6 +302,7 @@ Durchgang 4: 22:16:07 → Lap Time: 12 Sekunden
 ```
 
 #### App settings
+
 ```yaml
 Tracks: 3
 Target: 10
@@ -296,19 +310,23 @@ Timer Filter: ✅ Aktiviert
 Intervall: 8 Sekunden (schnelle Züge)
 ```
 
-#### Workflow
-1. Press **Reset** → counters to 0  
-2. **Track Power ON** → enable track power  
-3. **Start trains** (via Z21 app or handheld controller)  
-4. **Watch:** which train reaches 10/10 first?  
-5. **Winner:** train with 100% progress first 🏆  
+#### Racing workflow
+
+1. Press **Reset** → counters to 0
+2. **Track Power ON** → enable track power
+3. **Start trains** (via Z21 app or handheld controller)
+4. **Watch:** which train reaches 10/10 first?
+5. **Winner:** train with 100% progress first 🏆
 
 ### 🔄 Automatic operation (1 train, continuous)
 
-**Scenario:** One train runs automatically in a loop.
+#### Automatic-operation scenario
 
-#### Hardware setup
-```
+One train runs automatically in a loop.
+
+#### Automatic-operation hardware setup
+
+```text
 1 Gleiskontakt:
 ┌─────────────────────────────────────┐
 │              ↓                      │
@@ -318,7 +336,8 @@ Intervall: 8 Sekunden (schnelle Züge)
 └─────────────────────────────────────┘
 ```
 
-#### App settings
+#### Automatic-operation app settings
+
 ```yaml
 Tracks: 1
 Target: 50 (lange Session)
@@ -326,26 +345,33 @@ Timer Filter: ✅ Aktiviert
 Intervall: 15 Sekunden (langsamer Zug)
 ```
 
-#### Workflow
-1. **Track Power ON**  
-2. **Set train speed to 40–50%** (slow, constant speed)  
-3. **Watch the app** (keep the display on)  
-4. **After 50 laps:** stop the train and analyse the statistics  
+#### Automatic-operation workflow
+
+1. **Track Power ON**
+2. **Set train speed to 40–50%** (slow, constant speed)
+3. **Watch the app** (keep the display on)
+4. **After 50 laps:** stop the train and analyse the statistics
 
 ### 📱 Display management (long sessions)
 
-**Problem:** Battery drains and the display turns off.
+#### Display-management problem
 
-**Solution 1: Increase screen timeout**
-```
+Battery drains and the display turns off.
+
+#### Solutions
+
+##### 1. Increase screen timeout
+
+```text
 Android Einstellungen
 → Display
 → Bildschirm-Timeout
 → 10 Minuten
 ```
 
-**Solution 2: Developer options (with charger!)**
-```
+##### 2. Developer options (with charger!)
+
+```text
 Android Einstellungen
 → Entwickleroptionen
 → Display bleibt an
@@ -353,8 +379,9 @@ Android Einstellungen
 → Ladegerät anschließen!
 ```
 
-**Solution 3: Power bank**
-```
+##### 3. Power bank
+
+```text
 USB-C Power Bank anschließen
 → Display auf 50% Helligkeit
 → Nachtmodus aktivieren (spart Energie)
@@ -366,27 +393,31 @@ USB-C Power Bank anschließen
 
 ### Problem: No connection to Z21
 
-#### Symptoms
-- Red dot in the top right  
-- “Disconnected” is shown  
-- No system stats visible  
+#### Connection symptoms
 
-#### Solutions
+- Red dot in the top right
+- “Disconnected” is shown
+- No system stats visible
 
-**1. Check IP address**
-```
+#### Z21-connection solutions
+
+##### 1. Check IP address
+
+```text
 Richtig: 192.168.0.111
 Falsch:  192.168.0.1   (Router, nicht Z21!)
 Falsch:  192.168.1.111 (falsches Subnetz)
 ```
 
-**2. Check WLAN connection**
+##### 2. Check WLAN connection
+
 - Is the **Android device** in the same WLAN as the **Z21**?
-- Router setting: **“AP isolation”** should be disabled  
+- Router setting: **“AP isolation”** should be disabled
   - Some routers isolate WLAN devices from each other.
 
-**3. Restart Z21**
-```
+##### 3. Restart Z21
+
+```text
 1. Stromversorgung der Z21 trennen
 2. 10 Sekunden warten
 3. Stromversorgung wieder anschließen
@@ -394,7 +425,8 @@ Falsch:  192.168.1.111 (falsches Subnetz)
 5. In MOBAsmart erneut verbinden
 ```
 
-**4. Check firewall**
+##### 4. Check firewall
+
 - Are you using a **firewall app** on Android?
 - MOBAsmart must be allowed to use **UDP port 21105**.
 
@@ -402,24 +434,27 @@ Falsch:  192.168.1.111 (falsches Subnetz)
 
 ### Problem: Lap counters do not increase
 
-#### Symptoms
-- Train passes a track contact  
-- Counter stays at 0 or does not increase  
+#### Counter-increase symptoms
 
-#### Solutions
+- Train passes a track contact
+- Counter stays at 0 or does not increase
 
-**1. Feedback points configured correctly?**
-```
+#### Counter-increase solutions
+
+##### 1. Feedback points configured correctly?
+
+```text
 Anzahl Rückmeldemodule an deiner Anlage:
 → 3 Module = Tracks: 3 einstellen
-
+ 
 Wenn falsch eingestellt:
 → Track 1, 2, 3 vorhanden, aber Track 4 wird erwartet
 → Feedbacks gehen verloren!
 ```
 
-**2. Does the Z21 receive feedbacks?**
-```
+##### 2. Does the Z21 receive feedbacks?
+
+```text
 Test mit Z21 App:
 1. Z21 App öffnen
 2. Menü → Rückmeldungen
@@ -427,8 +462,9 @@ Test mit Z21 App:
 4. Leuchtet die LED auf? → Rückmeldung funktioniert
 ```
 
-**3. Check wiring**
-```
+##### 3. Check wiring
+
+```text
 Rückmeldemodule (Roco 10808):
 - Korrekt an Z21 angeschlossen? (RBus)
 - Gleiskontakte richtig verkabelt?
@@ -436,8 +472,9 @@ Rückmeldemodule (Roco 10808):
 - Kontakte sauber? (Oxidation verhindert Kontakt)
 ```
 
-**4. App in foreground?**
-```
+##### 4. App in foreground?
+
+```text
 ⚠️ WICHTIG: App muss sichtbar sein!
 - Display an?
 - App nicht im Hintergrund?
@@ -448,22 +485,25 @@ Rückmeldemodule (Roco 10808):
 
 ### Problem: Double counting
 
-#### Symptoms
+#### Double-counting symptoms
+
 - Train passes once  
 - Counter increases by 2, 3 or 4  
 
-#### Solutions
+#### Double-counting solutions
 
-**1. Enable timer filter**
-```
+##### 1. Enable timer filter
+
+```text
 ✅ Checkbox "Timer in s" anhaken
 → Intervall: 10 Sekunden (Standard)
 → Test: Zug langsam vorbeifahren lassen
 → Nur 1 Count? → Problem gelöst!
 ```
 
-**2. Increase interval**
-```
+##### 2. Increase interval
+
+```text
 Langer Zug (>6 Wagen):
 → Intervall: 15-20 Sekunden
 
@@ -471,8 +511,9 @@ Sehr langsame Fahrt:
 → Intervall: 20-30 Sekunden
 ```
 
-**3. Check track contacts**
-```
+##### 3. Check track contacts
+
+```text
 Sind mehrere Gleiskontakte zu nah beieinander?
 → Zug aktiviert 2 Kontakte gleichzeitig
 → Lösung: Kontakte weiter auseinander platzieren
@@ -482,17 +523,19 @@ Sind mehrere Gleiskontakte zu nah beieinander?
 
 ### Problem: App crashes or freezes
 
-#### Solutions
+#### Crash/freeze solutions
 
-**1. Restart the app**
-```
+##### 1. Restart the app
+
+```text
 1. Task-Switcher öffnen (Quadrat-Symbol)
 2. MOBAsmart nach oben wischen (schließen)
 3. App-Icon antippen (neu starten)
 ```
 
-**2. Clear cache**
-```
+##### 2. Clear cache
+
+```text
 Android Einstellungen
 → Apps
 → MOBAsmart
@@ -500,8 +543,9 @@ Android Einstellungen
 → Cache leeren
 ```
 
-**3. Clear app data (⚠️ settings will be lost!)**
-```
+##### 3. Clear app data (⚠️ settings will be lost!)
+
+```text
 Android Einstellungen
 → Apps
 → MOBAsmart
@@ -510,8 +554,9 @@ Android Einstellungen
 → App neu starten
 ```
 
-**4. Reinstall the app**
-```
+##### 4. Reinstall the app
+
+```text
 1. MOBAsmart deinstallieren
 2. Gerät neu starten
 3. MOBAsmart neu installieren (Google Play / APK)
@@ -519,71 +564,82 @@ Android Einstellungen
 
 ---
 
-## ❓ FAQ
+## FAQ
 
 ### General questions
 
 #### Does MOBAsmart work with all Z21 variants?
+
 ✅ **Yes.** All variants are supported:
+
 - Z21 (black)
 - Z21 start (white)
 - z21 (small, white)
 
 #### Do I need an internet connection?
-❌ **No.** MOBAsmart communicates **locally** via UDP with the Z21. No cloud and no internet connection required.
 
-#### Can I use the app offline?
-✅ **Yes.** As long as the Android device and Z21 are in the same WLAN, everything works offline.
+❌ **No.** MOBAsmart communicates **locally** via UDP with the Z21.
+No cloud and no internet connection required.
 
 #### Are my data uploaded anywhere?
-❌ **No.** All data stays **local** on your device. No cloud sync, no telemetry.
+
+❌ **No.** All data stays **local** on your device. No cloud sync,
+no telemetry.
 
 #### Does the app cost anything?
-✅ **Free.** MOBAsmart is open source (MIT license).
 
----
+✅ **Free.** MOBAsmart is open source (MIT license).
 
 ### Technical questions
 
 #### Which Android version is required?
+
 - **Minimum:** Android 7.0 (Nougat)
 - **Recommended:** Android 10+ (better networking performance)
 
 #### Does the app work in the background?
-❌ **No.** Android typically closes the UDP connection after ~10 minutes in the background. **Solution:** keep the app in the foreground (see [Display management](#-display-management-long-sessions)).
+
+❌ **No.** Android typically closes the UDP connection after
+~10 minutes in the background.
+**Solution:** keep the app in the foreground (see
+[Display management](#-display-management-long-sessions)).
 
 #### Can I monitor multiple Z21 units at once?
-❌ **Not at the moment.** The app supports only **one Z21 connection** at a time.
+
+❌ **Not at the moment.** The app supports only **one Z21 connection**
+at a time.
 
 #### Why doesn’t the app offer loco control?
-💡 **Design decision:** MOBAsmart focuses on **monitoring** (lap counting, feedback events). For locomotive control, use the official **Z21 app** or **MOBAflow (WinUI)**.
+
+💡 **Design decision:** MOBAsmart focuses on **monitoring**
+(lap counting, feedback events). For locomotive control, use the
+official **Z21 app** or **MOBAflow (WinUI)**.
 
 #### Can I export lap counts?
-⏳ **Planned.** Export to **CSV** or **JSON** is planned for a future version.
 
----
+⏳ **Planned.** Export to **CSV** or **JSON** is planned for a future
+version.
 
 ### Troubleshooting questions
 
 #### Why doesn’t the app connect?
+
 Most common causes:
+
 1. **Wrong IP address** → verify in the Z21 app.  
 2. **Wrong WLAN** → Android device in guest network?  
 3. **AP isolation active** → check router settings.  
-4. **Z21 powered off** → check power supply.  
+4. **Z21 powered off** → check power supply.
 
 #### Why does only Track 1 count, but not Track 2/3?
+
 Possible causes:
+
 1. **Wrong number of tracks** → set `Tracks: 3` (not 1).  
 2. **Feedback modules not connected** → check R-Bus wiring.  
-3. **Faulty track contacts** → test with the Z21 app.  
+3. **Faulty track contacts** → test with the Z21 app.
 
-#### Why is lap time 00:00.0?
-💡 **Normal.** The **first lap** has no time because the starting point is unknown. From the **second lap** onwards, lap time is measured.
-
----
-
-## 🔧 Technical Details
+## Technical Details
 
 ### UDP communication
 
@@ -592,15 +648,18 @@ Possible causes:
 **Direction:** bidirectional (app ↔ Z21)
 
 **Sent commands:**
+
 - `LAN_GET_SERIAL_NUMBER` → query Z21 serial number
 - `LAN_GET_HWINFO` → query hardware information
 - `LAN_SYSTEMSTATE_GETDATA` → query system status (polling every 5s)
 - `LAN_SET_TRACK_POWER_ON/OFF` → toggle track power on/off
 
 **Received events:**
+
 - `LAN_SYSTEMSTATE_DATACHANGED` → system status (current, temperature)
 - `LAN_RMBUS_DATACHANGED` → feedback bus event (feedback!)
-- `LAN_X_TURNOUT_INFO` → turnout state (currently not used in MOBAsmart)
+- `LAN_X_TURNOUT_INFO` → turnout state
+  (currently not used in MOBAsmart)
 
 ### Feedback event processing
 
@@ -650,6 +709,7 @@ public class InPortStatistic
 **Storage location:** `/data/user/0/com.mobaflow.mobasmart/files/appsettings.json`
 
 **Format:**
+
 ```json
 {
   "Counter": {
@@ -713,5 +773,3 @@ See [`THIRD-PARTY-NOTICES.md`](../THIRD-PARTY-NOTICES.md) for full license infor
 ---
 
 **Enjoy using MOBAsmart!** 🚂✨
-
-*Last Updated: 2025-12-27*

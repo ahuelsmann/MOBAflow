@@ -1,10 +1,14 @@
 # Quick Start: Track Statistics Setup
 
-> **For Open Source Users** - Getting started with MOBAflow Track Statistics without creating a full Solution file.
+> **For Open Source Users** - Getting started with MOBAflow Track
+> Statistics without creating a full Solution file.
 
 ## 📋 Overview
 
-MOBAflow's **Track Statistics** feature tracks lap counts and timing for each feedback point (InPort) on your model railway layout. You can use it **without loading a Solution file** by simply configuring the number of feedback points you have.
+MOBAflow's **Track Statistics** feature tracks lap counts and timing
+for each feedback point (InPort) on your model railway layout. You can
+use it **without loading a Solution file** by simply configuring the
+number of feedback points you have.
 
 ---
 
@@ -15,6 +19,7 @@ MOBAflow's **Track Statistics** feature tracks lap counts and timing for each fe
 Edit the `appsettings.json` file in MOBAflow, or use the settings UI of your app:
 
 #### **MOBAflow (Desktop)**
+
 File: `MOBAflow/appsettings.json`
 
 ```json
@@ -27,20 +32,21 @@ File: `MOBAflow/appsettings.json`
 ```
 
 #### **MOBAsmart (Mobile)**
-These values are stored in the app settings/preferences. Use the settings UI instead of editing a repo file.
+
+These values are stored in the app settings/preferences. Use the
+settings UI instead of editing a repo file.
 
 ### **Step 2: Understand InPort Mapping**
 
 MOBAflow uses a simple 1:1 mapping:
 
-| InPort Number | Feedback Point | Track Statistics Display |
-|---------------|----------------|--------------------------|
-| **1** | Feedback Point 1 | "Feedback Point 1" |
-| **2** | Feedback Point 2 | "Feedback Point 2" |
-| **3** | Feedback Point 3 | "Feedback Point 3" |
-| **0** | (Special) | Disabled / Not in use |
+- **InPort 1** → Feedback Point 1 → `Feedback Point 1`
+- **InPort 2** → Feedback Point 2 → `Feedback Point 2`
+- **InPort 3** → Feedback Point 3 → `Feedback Point 3`
+- **InPort 0** → Special case → Disabled / Not in use
 
-**Example:** If you have 3 feedback points on your layout → Set `CountOfFeedbackPoints = 3`
+**Example:** If you have 3 feedback points on your layout → Set
+`CountOfFeedbackPoints = 3`
 
 ### **Step 3: Connect to Z21 & Start Monitoring**
 
@@ -72,7 +78,7 @@ Instead of editing JSON files, you can use the **Settings Page**:
 
 When a train triggers a feedback sensor:
 
-```
+```text
 Train passes InPort 2
      ↓
 Z21 sends feedback event
@@ -91,7 +97,8 @@ MOBAflow updates "Feedback Point 2":
 
 ### **Timer Filter (Prevent Double Counts)**
 
-Long trains (e.g., 16-axle freighters) may trigger the sensor multiple times. Use the **Timer Filter** to ignore duplicate counts:
+Long trains (e.g., 16-axle freighters) may trigger the sensor multiple
+times. Use the **Timer Filter** to ignore duplicate counts:
 
 ```json
 "UseTimerFilter": true,
@@ -111,16 +118,25 @@ Set the target number of laps for all tracks:
 ## ❓ FAQ
 
 ### **Q: I have 0 feedback points configured. Will it crash?**
-**A:** No! MOBAflow will simply show: *"CountOfFeedbackPoints is 0 - no track statistics initialized."*
+
+**A:** No! MOBAflow will simply show:
+*"CountOfFeedbackPoints is 0 - no track statistics initialized."*
 
 ### **Q: Can I use InPort 4 if `CountOfFeedbackPoints = 3`?**
-**A:** Yes! You can configure Journeys/Workflows with InPort 4, but Track Statistics won't show it (unless you increase the setting to 4).
+
+**A:** Yes! You can configure Journeys/Workflows with InPort 4, but
+Track Statistics won't show it (unless you increase the setting to 4).
 
 ### **Q: What does InPort=0 mean in a Journey?**
-**A:** **Disabled** - This Journey won't trigger automatically via feedback. You can still trigger it manually via commands.
+
+**A:** **Disabled** - This Journey won't trigger automatically via
+feedback. You can still trigger it manually via commands.
 
 ### **Q: Do I need a Solution file?**
-**A:** **No!** Track Statistics work standalone with just the `CountOfFeedbackPoints` setting. Solution files are optional (they add named feedback points and advanced features like Journeys/Workflows).
+
+**A:** **No!** Track Statistics work standalone with just the
+`CountOfFeedbackPoints` setting. Solution files are optional (they add
+named feedback points and advanced features like Journeys/Workflows).
 
 ---
 

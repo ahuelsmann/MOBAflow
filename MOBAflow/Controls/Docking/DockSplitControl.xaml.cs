@@ -20,6 +20,8 @@ internal sealed class DockSplitControl : UserControl
 
     public event EventHandler<DockPanelExpansionChangedEventArgs>? PanelExpansionChanged;
 
+    public event EventHandler<DockPanelAutoHideIntentEventArgs>? PanelAutoHideRequested;
+
     public static readonly DependencyProperty SplitNodeProperty =
         DependencyProperty.Register(
             nameof(SplitNode),
@@ -37,6 +39,7 @@ internal sealed class DockSplitControl : UserControl
 
         _firstPresenter = new DockNodePresenter();
         _firstPresenter.PanelExpansionChanged += OnChildPanelExpansionChanged;
+        _firstPresenter.PanelAutoHideRequested += OnChildPanelAutoHideRequested;
         _verticalSplitterLine = new Grid
         {
             Width = 1,
@@ -65,6 +68,7 @@ internal sealed class DockSplitControl : UserControl
         };
         _secondPresenter = new DockNodePresenter();
         _secondPresenter.PanelExpansionChanged += OnChildPanelExpansionChanged;
+        _secondPresenter.PanelAutoHideRequested += OnChildPanelAutoHideRequested;
 
         _layoutGrid.Children.Add(_firstPresenter);
         _layoutGrid.Children.Add(_splitter);
@@ -131,6 +135,11 @@ internal sealed class DockSplitControl : UserControl
     private void OnChildPanelExpansionChanged(object? sender, DockPanelExpansionChangedEventArgs e)
     {
         PanelExpansionChanged?.Invoke(this, e);
+    }
+
+    private void OnChildPanelAutoHideRequested(object? sender, DockPanelAutoHideIntentEventArgs e)
+    {
+        PanelAutoHideRequested?.Invoke(this, e);
     }
 
     private void UpdateNodeBindings()

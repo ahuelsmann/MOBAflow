@@ -2,6 +2,7 @@
 
 namespace Moba.WinUI.View;
 
+using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.Graphics.Canvas.UI;
 using Microsoft.Graphics.Canvas.UI.Xaml;
@@ -28,6 +29,7 @@ internal sealed partial class TrackPlanPage
     private const double ScaleMmToPx = 1.0;
     private const double SnapThresholdMm = 15.0;
     private const double PortHighlightRadiusMm = 25.0;
+    private const double RigidGroupSnapAngleToleranceDegrees = 1.0;
     /// <summary>Margin in mm, damit der gesamte Plan sichtbar ist (auch bei negativen Koordinaten).</summary>
     private const double ContentMarginMm = 50.0;
 
@@ -39,6 +41,7 @@ internal sealed partial class TrackPlanPage
     private Shape? _ghostShape;
     private PlacedSegment? _draggedPlaced;
     private Guid? _draggedSegmentId;
+    private double? _toolboxDragBaseRotationDegrees;
     private HashSet<Guid> _draggingGroup = [];
     private Point _dragStartCanvasPoint;
     private bool _dragHasMoved; // true when pointer actually moved during press
@@ -279,6 +282,7 @@ internal sealed partial class TrackPlanPage
 
             _draggedPlaced = null;
             _draggedSegmentId = null;
+            _draggingGroup = [];
 
             StartDragFromToolbox(entry, border, ptr, e.Pointer);
         }
@@ -287,6 +291,8 @@ internal sealed partial class TrackPlanPage
     private void StartDragFromToolbox(TrackCatalogEntry entry, Border sourceBorder, PointerPoint ptr, Pointer pointer)
     {
         var canvasPoint = sourceBorder.TransformToVisual(OverlayCanvas).TransformPoint(ptr.Position);
+        _draggingGroup = [];
+        _toolboxDragBaseRotationDegrees = 0;
         _draggedPlaced = new PlacedSegment(entry.CreateInstance(), canvasPoint.X / ScaleMmToPx, canvasPoint.Y / ScaleMmToPx, 0);
         _draggedSegmentId = null;
         CreateGhost(_draggedPlaced);
@@ -368,6 +374,7 @@ internal sealed partial class TrackPlanPage
         var hit = HitTestSegment(xMm, yMm);
         if (hit == null)
         {
+            _draggingGroup = [];
             _selectedSegmentId = null;
             UpdateSelectionInfo();
             RefreshCanvas();
@@ -377,6 +384,7 @@ internal sealed partial class TrackPlanPage
             _selectedSegmentId = hit.Segment.No;
             UpdateSelectionInfo();
             RefreshCanvas();
+            _toolboxDragBaseRotationDegrees = null;
             _draggedSegmentId = hit.Segment.No;
             _draggedPlaced = hit;
             _draggingGroup = [.. _plan.GetConnectedGroup(hit.Segment.No)];
@@ -398,12 +406,7 @@ internal sealed partial class TrackPlanPage
         var (offsetX, offsetY) = GetDrawOffset();
         var worldX = canvasPoint.X / ScaleMmToPx - offsetX;
         var worldY = canvasPoint.Y / ScaleMmToPx - offsetY;
-        if (_draggedPlaced != null)
-        {
-            _draggedPlaced = _draggedPlaced.WithPosition(worldX, worldY, _draggedPlaced.RotationDegrees);
-            UpdateGhostPosition();
-        }
-        UpdatePortHighlights();
+        UpdateToolboxDragPlacement(worldX, worldY);
     }
 
     private void Canvas_PointerMoved_CanvasDrag(object sender, PointerRoutedEventArgs e)
@@ -441,12 +444,16 @@ internal sealed partial class TrackPlanPage
             var (offsetX, offsetY) = GetDrawOffset();
             var xMm = canvasPoint.X / ScaleMmToPx - offsetX;
             var yMm = canvasPoint.Y / ScaleMmToPx - offsetY;
-            var placed = _draggedPlaced.WithPosition(xMm, yMm, _draggedPlaced.RotationDegrees);
-            TrySnapAndPlace(placed, null);
+            UpdateToolboxDragPlacement(xMm, yMm);
+            TrySnapAndPlace(_draggedPlaced, null);
         }
 
         ClearGhost();
         ClearPortHighlights();
+        _draggedPlaced = null;
+        _draggedSegmentId = null;
+        _toolboxDragBaseRotationDegrees = null;
+        _draggingGroup = [];
     }
 
     private void Canvas_PointerReleased_CanvasDrag(object sender, PointerRoutedEventArgs e)
@@ -465,9 +472,24 @@ internal sealed partial class TrackPlanPage
         _pendingDragSnapshot = null;
         _draggedSegmentId = null;
         _draggedPlaced = null;
+        _toolboxDragBaseRotationDegrees = null;
+        _draggingGroup = [];
         ClearGhost();
         ClearPortHighlights();
         RefreshCanvas();
+    }
+
+    private void UpdateToolboxDragPlacement(double worldX, double worldY)
+    {
+        if (_draggedPlaced == null)
+            return;
+
+        var rotationDegrees = _toolboxDragBaseRotationDegrees ?? _draggedPlaced.RotationDegrees;
+        var rawPlaced = _draggedPlaced.WithPosition(worldX, worldY, rotationDegrees);
+        var snap = _snapEnabled ? FindBestSnap(rawPlaced, null) : null;
+        _draggedPlaced = snap?.Placed ?? rawPlaced;
+        UpdateGhostPosition();
+        UpdatePortHighlights();
     }
 
     private void Canvas_PointerMoved_UpdateCoords(object sender, PointerRoutedEventArgs e)
@@ -535,41 +557,19 @@ internal sealed partial class TrackPlanPage
 
     private (PlacedSegment Placed, string SourcePort, Guid TargetSegmentId, string TargetPort)? FindBestSnap(PlacedSegment placed, Guid? excludeSegmentId)
     {
-        const double bestDistThreshold = SnapThresholdMm * 1.5;
-        (PlacedSegment Placed, string SourcePort, Guid TargetSegmentId, string TargetPort)? best = null;
-        var bestDist = double.MaxValue;
-        var myPorts = SegmentPortGeometry.GetAllPortWorldPositions(placed);
+        var movingGroup = _draggedSegmentId == placed.Segment.No ? _draggingGroup : null;
+        var snap = TrackPlanSnapHelper.FindBestSnap(
+            placed,
+            _plan.Segments,
+            _plan.Connections,
+            excludeSegmentId,
+            movingGroup,
+            SnapThresholdMm * 1.5,
+            RigidGroupSnapAngleToleranceDegrees);
 
-        foreach (var other in _plan.Segments)
-        {
-            if (other.Segment.No == placed.Segment.No || other.Segment.No == excludeSegmentId || _draggingGroup.Contains(other.Segment.No))
-                continue;
-
-            var otherPorts = SegmentPortGeometry.GetAllPortWorldPositions(other);
-
-            foreach (var (myPortName, mx, my, _) in myPorts)
-                foreach (var (otherPortName, ox, oy, _) in otherPorts)
-                {
-                    var dx = ox - mx;
-                    var dy = oy - my;
-                    var dist = Math.Sqrt(dx * dx + dy * dy);
-                    if (dist < bestDist && dist < bestDistThreshold)
-                    {
-                        bestDist = dist;
-                        var desiredOutwardAngle = NormalizeAngle(SegmentPortGeometry.GetPortOutwardWorldAngleDegrees(other, otherPortName) + 180);
-                        var (newOriginX, newOriginY, newRotation) = SegmentPortGeometry.GetPlacementForPort(
-                            placed.Segment,
-                            myPortName,
-                            ox,
-                            oy,
-                            desiredOutwardAngle);
-                        var newPlaced = placed.WithPosition(newOriginX, newOriginY, newRotation);
-                        best = (newPlaced, myPortName, other.Segment.No, otherPortName);
-                    }
-                }
-        }
-
-        return best;
+        return snap == null
+            ? null
+            : (snap.Placed, snap.SourcePort, snap.TargetSegmentId, snap.TargetPort);
     }
 
     private static double NormalizeAngle(double degrees)
@@ -577,6 +577,36 @@ internal sealed partial class TrackPlanPage
         while (degrees >= 360) degrees -= 360;
         while (degrees < 0) degrees += 360;
         return degrees;
+    }
+
+    private bool IsPortConnected(Guid segmentId, string portName)
+    {
+        return _plan.Connections.Any(connection =>
+            (connection.SourceSegment == segmentId && connection.SourcePort == portName)
+            || (connection.TargetSegment == segmentId && connection.TargetPort == portName));
+    }
+
+    private bool IsRigidDraggingGroup(PlacedSegment placed)
+    {
+        return _draggedSegmentId == placed.Segment.No && _draggingGroup.Count > 1 && _draggingGroup.Contains(placed.Segment.No);
+    }
+
+    private bool CanRigidlySnapToTargetPort(PlacedSegment movingSegment, string sourcePort, PlacedSegment targetSegment, string targetPort)
+    {
+        if (!IsRigidDraggingGroup(movingSegment))
+            return true;
+
+        var desiredOutwardAngle = NormalizeAngle(SegmentPortGeometry.GetPortOutwardWorldAngleDegrees(targetSegment, targetPort) + 180);
+        var currentOutwardAngle = SegmentPortGeometry.GetPortOutwardWorldAngleDegrees(movingSegment, sourcePort);
+        return GetAngleDeltaDegrees(currentOutwardAngle, desiredOutwardAngle) <= RigidGroupSnapAngleToleranceDegrees;
+    }
+
+    private static double GetAngleDeltaDegrees(double leftDegrees, double rightDegrees)
+    {
+        var delta = NormalizeAngle(leftDegrees - rightDegrees);
+        if (delta > 180)
+            delta = 360 - delta;
+        return Math.Abs(delta);
     }
 
     private void UpdatePortHighlights()
@@ -588,7 +618,8 @@ internal sealed partial class TrackPlanPage
 
         var (offsetX, offsetY) = GetDrawOffset();
         var draggedPorts = SegmentPortGeometry.GetAllPortWorldPositions(_draggedPlaced)
-            .Select(p => (p.X, p.Y)).ToList();
+            .Where(p => !IsPortConnected(_draggedPlaced.Segment.No, p.PortName))
+            .Select(p => (p.PortName, p.X, p.Y)).ToList();
         var threshold = PortHighlightRadiusMm;
         var portsToHighlight = new HashSet<(double X, double Y)>();
 
@@ -597,12 +628,15 @@ internal sealed partial class TrackPlanPage
             if (_draggingGroup.Contains(placed.Segment.No))
                 continue;
             var ports = SegmentPortGeometry.GetAllPortWorldPositions(placed);
-            foreach (var (_, px, py, _) in ports)
+            foreach (var (targetPortName, px, py, _) in ports)
             {
-                foreach (var (dx, dy) in draggedPorts)
+                if (IsPortConnected(placed.Segment.No, targetPortName))
+                    continue;
+
+                foreach (var (sourcePortName, dx, dy) in draggedPorts)
                 {
                     var dist = Math.Sqrt((px - dx) * (px - dx) + (py - dy) * (py - dy));
-                    if (dist < threshold)
+                    if (dist < threshold && CanRigidlySnapToTargetPort(_draggedPlaced, sourcePortName, placed, targetPortName))
                     {
                         portsToHighlight.Add((px, py));
                         portsToHighlight.Add((dx, dy));
@@ -617,8 +651,11 @@ internal sealed partial class TrackPlanPage
             if (_draggingGroup.Contains(placed.Segment.No))
                 continue;
             var ports = SegmentPortGeometry.GetAllPortWorldPositions(placed);
-            foreach (var (_, px, py, _) in ports)
+            foreach (var (targetPortName, px, py, _) in ports)
             {
+                if (IsPortConnected(placed.Segment.No, targetPortName))
+                    continue;
+
                 var highlight = portsToHighlight.Contains((px, py));
                 var el = CreatePortIndicator((px + offsetX) * ScaleMmToPx, (py + offsetY) * ScaleMmToPx, highlight);
                 OverlayCanvas.Children.Add(el);
@@ -629,7 +666,7 @@ internal sealed partial class TrackPlanPage
             }
         }
 
-        foreach (var (px, py) in draggedPorts)
+        foreach (var (_, px, py) in draggedPorts)
         {
             if (portsToHighlight.Contains((px, py)))
             {
@@ -903,6 +940,51 @@ internal sealed partial class TrackPlanPage
             var color = isSelected ? selectedBrush : strokeBrush;
             ds.DrawGeometry(worldGeometry, color, strokeWidth, strokeStyle);
         }
+
+        if (_showValidationOverlay)
+            DrawValidationOverlay(ds, offsetX, offsetY);
+    }
+
+    private void DrawValidationOverlay(CanvasDrawingSession drawingSession, double offsetX, double offsetY)
+    {
+        if (_plan.Segments.Count == 0)
+            return;
+
+        var analysis = TrackPlanValidationHelper.Analyze(_plan.Segments, _plan.Connections);
+        var openPortFill = Color.FromArgb(160, 255, 185, 0);
+        var openPortStroke = Color.FromArgb(255, 255, 140, 0);
+        var overlapFill = Color.FromArgb(180, 232, 17, 35);
+        var overlapStroke = Color.FromArgb(255, 180, 0, 20);
+        var groupStroke = Color.FromArgb(220, 0, 120, 215);
+
+        if (analysis.ConnectedGroups.Count > 1)
+        {
+            using var groupStrokeStyle = new CanvasStrokeStyle { DashStyle = CanvasDashStyle.Dash };
+            foreach (var group in analysis.ConnectedGroups)
+            {
+                var x = (float)((group.MinX + offsetX) * ScaleMmToPx - 18);
+                var y = (float)((group.MinY + offsetY) * ScaleMmToPx - 18);
+                var width = (float)Math.Max(24, (group.MaxX - group.MinX) * ScaleMmToPx + 36);
+                var height = (float)Math.Max(24, (group.MaxY - group.MinY) * ScaleMmToPx + 36);
+                drawingSession.DrawRectangle(x, y, width, height, groupStroke, 2, groupStrokeStyle);
+            }
+        }
+
+        foreach (var openPort in analysis.OpenPorts)
+        {
+            var centerX = (float)((openPort.X + offsetX) * ScaleMmToPx);
+            var centerY = (float)((openPort.Y + offsetY) * ScaleMmToPx);
+            drawingSession.FillCircle(centerX, centerY, 5, openPortFill);
+            drawingSession.DrawCircle(centerX, centerY, 5, openPortStroke, 2);
+        }
+
+        foreach (var overlappingPort in analysis.OverlappingPorts)
+        {
+            var centerX = (float)((overlappingPort.CenterX + offsetX) * ScaleMmToPx);
+            var centerY = (float)((overlappingPort.CenterY + offsetY) * ScaleMmToPx);
+            drawingSession.FillCircle(centerX, centerY, 9, overlapFill);
+            drawingSession.DrawCircle(centerX, centerY, 9, overlapStroke, 2.5f);
+        }
     }
 
     private bool _zoomSyncing;
@@ -1093,11 +1175,10 @@ internal sealed partial class TrackPlanPage
 
     private void UpdateStats()
     {
+        var analysis = TrackPlanValidationHelper.Analyze(_plan.Segments, _plan.Connections);
         NodeCountText.Text = _plan.Segments.Count.ToString();
         EdgeCountText.Text = _plan.Connections.Count.ToString();
-        var portCount = _plan.Segments.Sum(p => SegmentPortGeometry.GetPorts(p.Segment).Count);
-        var openEnds = Math.Max(0, portCount - _plan.Connections.Count * 2);
-        EndcapCountText.Text = openEnds.ToString();
+        EndcapCountText.Text = analysis.OpenPorts.Count.ToString();
         ZoomLevelText.Text = $"{ZoomSlider.Value * 100:F0}%";
     }
 }

@@ -1,15 +1,20 @@
 ---
-description: 'MOBAflow C# Naming Conventions - Team-wide standards for identifiers, constants, and protocol definitions'
+
+description: >-
+  MOBAflow C# Naming Conventions - Team-wide standards for identifiers,
+  constants, and protocol definitions
 applyTo: '**/*.cs'
 ---
 
 # C# Naming Conventions
 
-> **Wichtig:** Diese Konventionen sind in `.editorconfig` und `.sln.DotSettings` konfiguriert.
+> **Wichtig:** Diese Konventionen sind in `.editorconfig` und
+> `.sln.DotSettings` konfiguriert.
 
 ## 📋 Standard .NET Naming Rules
 
 ### Classes, Interfaces, Methods, Properties
+
 ```csharp
 // ✅ PascalCase
 public class TrainController { }
@@ -19,6 +24,7 @@ public string Name { get; set; }
 ```
 
 ### Local Variables, Parameters
+
 ```csharp
 // ✅ camelCase
 int locomotiveAddress = 3;
@@ -26,6 +32,7 @@ void SetSpeed(int speedStep) { }
 ```
 
 ### Private Fields
+
 ```csharp
 // ✅ _camelCase (with underscore prefix)
 private readonly ILogger _logger;
@@ -34,6 +41,7 @@ private bool _isConnected;
 ```
 
 ### Constants (Private)
+
 ```csharp
 // ✅ PascalCase
 private const int MaxKeepaliveFailures = 3;
@@ -47,6 +55,7 @@ private const string DefaultPort = "21105";
 ### Z21 Protocol Constants (UPPER_SNAKE_CASE)
 
 **Dateien:**
+
 - `Backend/Protocol/Z21Protocol.cs`
 - `Backend/Protocol/Z21MessageParser.cs`
 
@@ -128,6 +137,7 @@ Die UPPER_SNAKE_CASE-Regel für Protokoll-Konstanten ist in `.sln.DotSettings` d
 ```
 
 **Team-Regel:**
+
 - ReSharper-Warnungen für Protokoll-Konstanten **nicht** beheben
 - Bei neuen Protokoll-Konstanten: UPPER_SNAKE_CASE verwenden
 - Bei Domain-Code: Standard .NET PascalCase/camelCase verwenden
@@ -136,23 +146,40 @@ Die UPPER_SNAKE_CASE-Regel für Protokoll-Konstanten ist in `.sln.DotSettings` d
 
 ## 🎯 Quick Reference
 
-| Element | Convention | Example |
-|---------|-----------|---------|
-| Class | PascalCase | `TrainController` |
-| Interface | IPascalCase | `IZ21Protocol` |
-| Method | PascalCase | `ConnectAsync()` |
-| Property | PascalCase | `IsConnected` |
-| Local Variable | camelCase | `locomotiveAddress` |
-| Parameter | camelCase | `speedStep` |
-| Private Field | _camelCase | `_logger` |
-| Private Const | PascalCase | `MaxRetries` |
-| **Protocol Const** | **UPPER_SNAKE_CASE** | **`LAN_GET_SERIAL_NUMBER`** |
+- **Class**
+  - **Convention:** PascalCase
+  - **Example:** `TrainController`
+- **Interface**
+  - **Convention:** IPascalCase
+  - **Example:** `IZ21Protocol`
+- **Method**
+  - **Convention:** PascalCase
+  - **Example:** `ConnectAsync()`
+- **Property**
+  - **Convention:** PascalCase
+  - **Example:** `IsConnected`
+- **Local Variable**
+  - **Convention:** camelCase
+  - **Example:** `locomotiveAddress`
+- **Parameter**
+  - **Convention:** camelCase
+  - **Example:** `speedStep`
+- **Private Field**
+  - **Convention:** _camelCase
+  - **Example:** `_logger`
+- **Private Const**
+  - **Convention:** PascalCase
+  - **Example:** `MaxRetries`
+- **Protocol Const**
+  - **Convention:** **UPPER_SNAKE_CASE**
+  - **Example:** **`LAN_GET_SERIAL_NUMBER`**
 
 ---
 
 ## ❌ Häufige Fehler
 
 ### 1. Protokoll-Konstanten umbenennen
+
 ```csharp
 // ❌ WRONG
 public const byte LanGetSerialNumber = 0x10;
@@ -162,6 +189,7 @@ public const byte LAN_GET_SERIAL_NUMBER = 0x10;
 ```
 
 ### 2. Private Fields ohne Unterstrich
+
 ```csharp
 // ❌ WRONG
 private ILogger logger;
@@ -171,6 +199,7 @@ private readonly ILogger _logger;
 ```
 
 ### 3. Lokale Variablen mit Unterstrich
+
 ```csharp
 // ❌ WRONG
 int _currentSpeed = 0;

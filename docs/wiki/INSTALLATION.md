@@ -7,7 +7,7 @@
 
 ## ⚠️ Current Status: Manual Installation Required
 
-```
+```text
 ❌ Windows Setup.exe (planned)
 ❌ Automated PowerShell setup scripts (planned)
 ❌ Docker containers (planned)
@@ -22,25 +22,21 @@
 
 ### Software Requirements
 
-| Requirement | Minimum | Recommended |
-|------------|---------|-------------|
-| .NET SDK   | 10.0    | 10.0+       |
-| Visual Studio | 2022 v17.10 | 2026 |
-| Windows    | 10 (1809+) | 11 |
-| Git        | 2.30+  | Latest |
+- **.NET SDK:** Minimum `10.0`, recommended `10.0+`
+- **Visual Studio:** Minimum `2022 v17.10`, recommended `2026`
+- **Windows:** Minimum `10 (1809+)`, recommended `11`
+- **Git:** Minimum `2.30+`, recommended `Latest`
 
 ### Hardware Requirements
 
-| Component | Requirement |
-|-----------|------------|
-| **Roco Z21** | Digital Command Station (latest firmware) |
-| **Network** | LAN/WLAN, Z21 in same subnet |
-| **PC** | Windows 10/11, x64 |
-| **Storage** | Minimum 4GB RAM, 2GB free disk |
+- **Roco Z21:** Digital Command Station (latest firmware)
+- **Network:** LAN/WLAN, Z21 in same subnet
+- **PC:** Windows 10/11, x64
+- **Storage:** Minimum 4GB RAM, 2GB free disk
 
 ### Network Setup
 
-```
+```text
 🖥️ Windows PC                     📡 Z21 Digital Station
    ↓                                  ↓
    └─────── LAN/WLAN ─────────────────┘
@@ -57,6 +53,7 @@
 ### Step 1: Install Prerequisites
 
 **Windows:**
+
 ```powershell
 # Download & install .NET 10 SDK
 winget install Microsoft.DotNet.SDK.10
@@ -66,6 +63,7 @@ winget install Microsoft.VisualStudio.2026.Community
 ```
 
 **macOS/Linux:**
+
 ```bash
 # Install .NET SDK
 curl https://dot.net/v1/dotnet-install.sh | bash
@@ -111,7 +109,8 @@ dotnet build MOBAsmart/MOBAsmart.csproj -f net10.0-android -c Release
 ```
 
 **Output:**
-```
+
+```text
 Build succeeded with 0 errors
 ...
 ```
@@ -119,16 +118,19 @@ Build succeeded with 0 errors
 ### Step 5: Run Applications
 
 #### 🖥️ WinUI Desktop App (Windows)
+
 ```bash
 dotnet run --project MOBAflow/MOBAflow.csproj --configuration Release
 ```
 
 #### 🌐 MOBApi (REST API)
+
 ```bash
 dotnet run --project MOBApi/MOBApi.csproj --configuration Release
 ```
 
 #### 📱 MAUI Android (Android Phone/Emulator)
+
 ```bash
 # Emulator must be running or Android device connected
 dotnet build MOBAsmart/MOBAsmart.csproj -f net10.0-android -c Release
@@ -143,7 +145,7 @@ dotnet run --project MOBAsmart/MOBAsmart.csproj -f net10.0-android
 
 ### 1. Prepare Z21
 
-```
+```text
 1. Check Z21 power button → green LED should be on
 2. Find Z21 IP address:
    - Roco Mobile App → Settings → check Z21 IP
@@ -155,7 +157,8 @@ dotnet run --project MOBAsmart/MOBAsmart.csproj -f net10.0-android
 ### 2. Connect MOBAflow to Z21
 
 **In the application:**
-```
+
+```text
 1. Start MOBAflow
 2. Open Overview Page
 3. "Z21 Connection" widget
@@ -165,7 +168,8 @@ dotnet run --project MOBAsmart/MOBAsmart.csproj -f net10.0-android
 ```
 
 **If connection fails:**
-```
+
+```text
 ❌ "Connection refused" 
    → Z21 IP wrong or Z21 not in network
 
@@ -181,6 +185,7 @@ dotnet run --project MOBAsmart/MOBAsmart.csproj -f net10.0-android
 If MOBAflow doesn't receive Z21 data:
 
 **Open Windows Defender Firewall:**
+
 ```powershell
 # PowerShell as Administrator:
 
@@ -204,7 +209,8 @@ dotnet test Test/Test.csproj --configuration Release
 ```
 
 **Expected Output:**
-```
+
+```text
 Test Run Successful.
 Total tests: > 0
 Passed: most tests
@@ -246,7 +252,8 @@ dotnet publish MOBApi/MOBApi.csproj -c Release -o ./publish/MOBApi
 
 ### Build Errors
 
-**Error: "The specified framework version 10.0 was not found"**
+#### Error: "The specified framework version 10.0 was not found"
+
 ```bash
 # Check .NET 10 SDK
 dotnet --list-sdks
@@ -255,15 +262,17 @@ dotnet --list-sdks
 # https://dotnet.microsoft.com/download
 ```
 
-**Error: "NuGet restore failed"**
+#### Error: "NuGet restore failed"
+
 ```bash
 # Clear NuGet cache & restore
 dotnet nuget locals all --clear
 dotnet restore <project>.csproj
 ```
 
-**Error: "WinUI not available on this OS"**
-```
+#### Error: "WinUI not available on this OS"
+
+```text
 WinUI is Windows only!
 - For macOS: the WinUI desktop app is not available in this repo
 - For Linux: use MOBApi or the cross-platform library/test projects
@@ -272,16 +281,18 @@ WinUI is Windows only!
 
 ### Runtime Errors
 
-**Error: "Z21 Connection failed"**
-```
+#### Error: "Z21 Connection failed"
+
+```text
 1. Check Z21 power
 2. Test network: ping <z21-ip>
 3. Check firewall rule (see above)
 4. Restart Z21 (Power OFF → ON)
 ```
 
-**Error: "Azure Speech not working"**
-```
+#### Error: "Azure Speech not working"
+
+```text
 1. Check Azure Speech API Key
 2. Region correctly set?
 3. See: docs/wiki/AZURE-SPEECH-SETUP.md
@@ -310,13 +321,12 @@ dotnet run --project MOBAflow/MOBAflow.csproj -c Release
 
 ## 🚀 Planned Features (Roadmap)
 
-| Version | Feature | Status |
-|---------|---------|--------|
-| 0.2.0 | Automated Setup Scripts (PowerShell) | 🚧 Planned |
-| 0.3.0 | Docker Container Support | 🚧 Planned |
-| 0.4.0 | Windows Installer (.MSI) | 🚧 Planned |
-| 1.0.0 | Commercial Plugin Support | 🚧 Planned |
+- **0.2.0:** Automated Setup Scripts (PowerShell) — 🚧 Planned
+- **0.3.0:** Docker Container Support — 🚧 Planned
+- **0.4.0:** Windows Installer (.MSI) — 🚧 Planned
+- **1.0.0:** Commercial Plugin Support — 🚧 Planned
 
 ---
 
-*Note: This is a preview version (0.1.0). Installation and setup will be automated in future versions.*
+> Note: This is a preview version (`0.1.0`). Installation and setup
+> will be automated in future versions.

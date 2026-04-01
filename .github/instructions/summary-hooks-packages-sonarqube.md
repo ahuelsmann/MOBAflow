@@ -9,7 +9,8 @@
 ### **1. Pre-Commit Hook - JSON Validierung**
 
 **Problem ohne Hook:**
-```
+
+```text
 ❌ Entwickler committed fehlerhaftes JSON
 ❌ Error wird erst beim Build erkannt (1-2 Min später)
 ❌ Workflow unterbrochen
@@ -17,7 +18,8 @@
 ```
 
 **Mit Hook:**
-```
+
+```text
 ✅ JSON-Fehler SOFORT erkannt (vor commit)
 ✅ Secrets-Validierung (Speech.Key, Z21 IP nicht leer)
 ✅ Schema-Validierung (Struktur korrekt)
@@ -26,6 +28,7 @@
 ```
 
 **Nutzen:**
+
 - ⏱️ Spart 5-10 Min pro Fehler (frühe Validierung)
 - 🚀 Bricht nie broken Code ins Repository
 - 🎯 Verhindert 80% der JSON-Fehler
@@ -35,7 +38,8 @@
 ### **2. Commit-Msg Hook - Conventional Commits**
 
 **Problem ohne Hook:**
-```
+
+```text
 ❌ "fix stuff"
 ❌ "update"
 ❌ "asdf"
@@ -44,7 +48,8 @@
 ```
 
 **Mit Hook:**
-```
+
+```text
 ✅ "fix(z21): Reconnect after timeout"
 ✅ "feat(signal-box): Add aspect switching"
 ✅ "docs: Update README for signals"
@@ -52,6 +57,7 @@
 ```
 
 **Nutzen:**
+
 - 🔍 Git-Historie ist **searchbar** (feat: X, fix: Y, docs: Z)
 - 📝 Kann automatisch **Changelog** generieren
 - 🔗 Integration mit **Azure DevOps** / Jira
@@ -62,7 +68,8 @@
 ### **3. Pre-Push Hook - Build + Tests + Analysis**
 
 **Problem ohne Hook:**
-```
+
+```text
 ❌ Entwickler pusht → Build schlägt fehl
 ❌ Remote ist broken für andere
 ❌ CI/CD wird verschmutzt mit failed builds
@@ -70,7 +77,8 @@
 ```
 
 **Mit Hook (4-Step Validation):**
-```
+
+```text
 Step 1: ✅ Build löst sich? 
 Step 2: ✅ Tests alle green?
 Step 3: ✅ Code-Analyzer warnings? (ReSharper)
@@ -79,6 +87,7 @@ Step 4: ✅ Git Status clean?
 ```
 
 **Nutzen:**
+
 - 🚀 **Remote ist IMMER stabil** (main branch never broken)
 - ⏱️ Spart CI/CD Zeit (failed tests nicht an Remote)
 - 🛡️ Frühe Warnung vor Code Smells
@@ -89,7 +98,8 @@ Step 4: ✅ Git Status clean?
 ### **4. Post-Checkout Hook - Auto NuGet Restore**
 
 **Problem ohne Hook:**
-```
+
+```text
 ❌ Dev wechselt zu anderem Branch
 ❌ .csproj wurde geändert
 ❌ "Package XYZ not found" → Build schlägt fehl
@@ -97,7 +107,8 @@ Step 4: ✅ Git Status clean?
 ```
 
 **Mit Hook:**
-```
+
+```text
 ✅ Dev checkt Branch aus
 ✅ Hook erkennt .csproj-Änderung
 ✅ Lädt automatisch `dotnet restore`
@@ -105,6 +116,7 @@ Step 4: ✅ Git Status clean?
 ```
 
 **Nutzen:**
+
 - ⏱️ Spart 1-2 Min pro Branch-Wechsel
 - 🎯 "NuGet not found" Fehler unmöglich
 - 🚀 Seamless Development Experience
@@ -113,14 +125,30 @@ Step 4: ✅ Git Status clean?
 
 ## 📊 Zusammenfassung: Hooks Impact
 
-| Hook | Problem | Lösung | Impact | Zeit/Woche |
-|------|---------|--------|--------|-----------|
-| **pre-commit** | JSON-Fehler → Remote broken | Early validation | 🟢🟢🟢 | +15 Min |
-| **commit-msg** | Unmögliche Git-Historie | Conventional Commits | 🟢🟢 | +5 Min |
-| **pre-push** | Failed tests in remote | Build validation | 🟢🟢🟢 | +30 Min |
-| **post-checkout** | "Package not found" Fehler | Auto restore | 🟢🟢 | +10 Min |
+- **`pre-commit`**
+  - **Problem:** JSON-Fehler → Remote broken
+  - **Lösung:** Early validation
+  - **Impact:** 🟢🟢🟢
+  - **Zeit/Woche:** +15 Min
+- **`commit-msg`**
+  - **Problem:** Unmögliche Git-Historie
+  - **Lösung:** Conventional Commits
+  - **Impact:** 🟢🟢
+  - **Zeit/Woche:** +5 Min
+- **`pre-push`**
+  - **Problem:** Failed tests in remote
+  - **Lösung:** Build validation
+  - **Impact:** 🟢🟢🟢
+  - **Zeit/Woche:** +30 Min
+- **`post-checkout`**
+  - **Problem:** `"Package not found"` Fehler
+  - **Lösung:** Auto restore
+  - **Impact:** 🟢🟢
+  - **Zeit/Woche:** +10 Min
 
-**TOTAL: 60 Min/Woche Fehler-Prävention = 3+ Stunden/Woche Einsparung (Debugging, Rework, Fix)**
+### TOTAL: 60 Min/Woche Fehler-Prävention = 3+ Stunden/Woche Einsparung
+
+(Debugging, Rework, Fix)
 
 ---
 
@@ -128,7 +156,7 @@ Step 4: ✅ Git Status clean?
 
 ### **🔴 SOFORT (High Priority) - Session 32**
 
-```
+```text
 // Resilience & Error Handling
 dotnet add Backend package Polly                              # v8.2.0+
 // Nutzen: Retry logic, Circuit Breaker für Z21 Reconnect
@@ -145,7 +173,7 @@ dotnet add Common package FluentValidation                 # v11.8.0+
 
 ### **🟡 SOON (Medium Priority) - Session 33**
 
-```
+```text
 dotnet add SharedUI package MediatR                        # v12.1.0+
 // Nutzen: CQRS Pattern (Commands/Queries separieren)
 // Impact: Saubere Architektur, testbar
@@ -157,7 +185,7 @@ dotnet add WinUI package Mapster                           # v8.0.0+
 
 ### **🟢 OPTIONAL (Low Priority) - Later**
 
-```
+```text
 dotnet add Test package FluentAssertions                   # v6.12.0+
 // Nutzen: Readable test assertions
 // Impact: Tests lesbarer: .Should().Be() statt Assert.Equal()
@@ -177,24 +205,34 @@ dotnet add Backend package Polly.Caching                   # (part of Polly)
 
 ### **Was ist SonarQube?**
 
-```
+```text
 SonarQube = Automatische Code-Analyse & Security Scanner
 ```
 
 ### **Was erkennt SonarQube?**
 
-| Kategorie | Beispiel | Severity |
-|-----------|----------|----------|
-| **Bugs** | Null-Reference Exception möglich | 🔴 CRITICAL |
-| **Code Smells** | Zu komplexe Methode (Cognitive Complexity > 15) | 🟡 MAJOR |
-| **Security** | SQL Injection möglich | 🔴 CRITICAL |
-| **Vulnerabilities** | Unsicheres Password Handling | 🔴 CRITICAL |
-| **Code Duplication** | Gleicher Code 3x kopiert | 🟡 MINOR |
-| **Performance** | Ineffiziente Loops | 🟡 MINOR |
+- **Bugs**
+  - **Beispiel:** Null-Reference Exception möglich
+  - **Severity:** 🔴 CRITICAL
+- **Code Smells**
+  - **Beispiel:** Zu komplexe Methode (Cognitive Complexity > 15)
+  - **Severity:** 🟡 MAJOR
+- **Security**
+  - **Beispiel:** SQL Injection möglich
+  - **Severity:** 🔴 CRITICAL
+- **Vulnerabilities**
+  - **Beispiel:** Unsicheres Password Handling
+  - **Severity:** 🔴 CRITICAL
+- **Code Duplication**
+  - **Beispiel:** Gleicher Code 3x kopiert
+  - **Severity:** 🟡 MINOR
+- **Performance**
+  - **Beispiel:** Ineffiziente Loops
+  - **Severity:** 🟡 MINOR
 
 ### **Beispiel-Report:**
 
-```
+```text
 Project: MOBAflow
 Lines of Code: 15,000
 Issues Found: 42
@@ -220,7 +258,8 @@ Reason: > 5 CRITICAL issues
 ### **Vorher vs Nachher:**
 
 **OHNE SonarQube:**
-```
+
+```text
 ❌ Bugs erst in Production erkannt
 ❌ Security-Lücken unbekannt
 ❌ Code Duplication nicht sichtbar
@@ -228,7 +267,8 @@ Reason: > 5 CRITICAL issues
 ```
 
 **MIT SonarQube:**
-```
+
+```text
 ✅ Bugs sofort erkannt (pre-merge)
 ✅ Security-Scan bei jedem Push
 ✅ Code-Duplication tracked
@@ -238,11 +278,18 @@ Reason: > 5 CRITICAL issues
 
 ### **Kostenlos? JA!**
 
-| Version | Kosten | Für | Limit |
-|---------|--------|-----|-------|
-| **Community Edition** | 💚 **KOSTENLOS** | **Open Source + Einzelne** | Unlimitiert |
-| **Developer Edition** | $150/Jahr | Teams + Private Repos | 100 Projekte |
-| **Enterprise Edition** | $$ | Große Organisationen | Custom |
+- **Community Edition**
+  - **Kosten:** 💚 **KOSTENLOS**
+  - **Für:** **Open Source + Einzelne**
+  - **Limit:** Unlimitiert
+- **Developer Edition**
+  - **Kosten:** `$150/Jahr`
+  - **Für:** Teams + Private Repos
+  - **Limit:** 100 Projekte
+- **Enterprise Edition**
+  - **Kosten:** `$$`
+  - **Für:** Große Organisationen
+  - **Limit:** Custom
 
 **MOBAflow → Community Edition ist **KOSTENLOS** & PERFEKT!**
 
@@ -260,11 +307,11 @@ docker run -d --name sonarqube -p 9000:9000 sonarqube:latest
 
 ### **Was ist ein ADR?**
 
-```
+```text
 ADR = Dokumentierte technische Entscheidung + Begründung
 ```
 
-**Beispiel - ADR-001: MVVM Toolkit vs Manual MVVM**
+### Beispiel - ADR-001: MVVM Toolkit vs Manual MVVM
 
 ```markdown
 # ADR-001: Use CommunityToolkit.Mvvm instead of Manual MVVM
@@ -305,7 +352,8 @@ Use CommunityToolkit.Mvvm with [ObservableProperty]
 ### **Warum ADRs?**
 
 **Problem ohne ADRs:**
-```
+
+```text
 ❌ "Warum nutzen wir MVVM Toolkit?"
 ❌ Dev antwortet: "Äh... weil es da war?"
 ❌ Keine Begründung dokumentiert
@@ -314,7 +362,8 @@ Use CommunityToolkit.Mvvm with [ObservableProperty]
 ```
 
 **Mit ADRs:**
-```
+
+```text
 ✅ "Warum MVVM Toolkit?" 
 ✅ Dev zeigt: ADR-001 mit klarer Begründung
 ✅ Pro/Contra dokumentiert
@@ -337,13 +386,16 @@ ADR-008: No .Result/.Wait() - async/await only
 
 ### **ADR Benefits:**
 
-| Vorteil | Beispiel |
-|---------|----------|
-| **Nachvollziehbarkeit** | Neue Devs verstehen "Warum MVVM?" |
-| **Wartung** | Wenn Framework ändern: ADR Update → alle verstehen Impact |
-| **Diskussion** | Im PR: "Warum nicht Prism?" → ADR-001 zeigt Begründung |
-| **Knowledge Transfer** | Wiki ohne ADRs = Verwirrung; mit ADRs = Klarheit |
-| **Audit Trail** | "Wer entschied, MVVM zu nehmen?" → ADR-001 zeigt es |
+- **Nachvollziehbarkeit**
+  - **Beispiel:** Neue Devs verstehen "Warum MVVM?"
+- **Wartung**
+  - **Beispiel:** Wenn Framework ändern: ADR Update → alle verstehen Impact
+- **Diskussion**
+  - **Beispiel:** Im PR: "Warum nicht Prism?" → ADR-001 zeigt Begründung
+- **Knowledge Transfer**
+  - **Beispiel:** Wiki ohne ADRs = Verwirrung; mit ADRs = Klarheit
+- **Audit Trail**
+  - **Beispiel:** "Wer entschied, MVVM zu nehmen?" → ADR-001 zeigt es
 
 ### **ADR Template (Minimal):**
 
@@ -378,6 +430,7 @@ ADR-008: No .Result/.Wait() - async/await only
 ## 🎯 Implementierungs-Timeline
 
 ### **DONE ✅ (Sessions 30-34)**
+
 - JSON Validation Hooks
 - Conventional Commits
 - Unit Test Validation
@@ -386,11 +439,13 @@ ADR-008: No .Result/.Wait() - async/await only
 - Code Quality Guides
 
 ### **NEXT 🚀 (Session 35)**
+
 - **SonarQube Setup** (Docker + GitHub Actions)
 - **ADR Templates** (docs/adr/ Ordner)
 - **Code Coverage Dashboard** (Coverlet + ReportGenerator)
 
 ### **LATER 🔄 (Sessions 36-40)**
+
 - Performance Benchmarking (BenchmarkDotNet)
 - Dependency Scanning (OWASP + GitHub Dependabot)
 - API Documentation (Swagger)
@@ -401,23 +456,35 @@ ADR-008: No .Result/.Wait() - async/await only
 ## 💰 Kosten-Nutzen Analyse
 
 ### **Investment:**
+
 - Implementation: 4-5 Tage (Sessions 30-34)
 - Maintenance: ~1 Tag/Monat (Hook Updates, ADR Writes)
 - Team Training: 2 Stunden Onboarding
 
 ### **Return (pro Monat):**
 
-| Item | Zeit-Einsparung | Fehler-Prävention |
-|------|-----------------|-------------------|
-| JSON-Fehler vermieden | 2-3 Stunden | 90% weniger bugs |
-| Broken Remote verhindert | 1-2 Stunden | 0 build failures |
-| NuGet conflicts gelöst | 30 Min | 0 package errors |
-| Git-Historie durchsuchbar | 1 Stunde | (bessere Wartung) |
-| Code Quality verbessert | 3-4 Stunden | 30% weniger bugs |
-| **TOTAL** | **7-11 Stunden/Monat** | **Major** |
+- **JSON-Fehler vermieden**
+  - **Zeit-Einsparung:** 2-3 Stunden
+  - **Fehler-Prävention:** 90% weniger bugs
+- **Broken Remote verhindert**
+  - **Zeit-Einsparung:** 1-2 Stunden
+  - **Fehler-Prävention:** 0 build failures
+- **NuGet conflicts gelöst**
+  - **Zeit-Einsparung:** 30 Min
+  - **Fehler-Prävention:** 0 package errors
+- **Git-Historie durchsuchbar**
+  - **Zeit-Einsparung:** 1 Stunde
+  - **Fehler-Prävention:** bessere Wartung
+- **Code Quality verbessert**
+  - **Zeit-Einsparung:** 3-4 Stunden
+  - **Fehler-Prävention:** 30% weniger bugs
+- **TOTAL**
+  - **Zeit-Einsparung:** **7-11 Stunden/Monat**
+  - **Fehler-Prävention:** **Major**
 
 ### **ROI:**
-```
+
+```text
 Kosten: 5 Tage Setup
 Nutzen: 40+ Stunden/Monat Einsparung
 ROI: 400%+ im ersten Jahr

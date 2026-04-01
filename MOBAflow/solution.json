@@ -67,23 +67,7 @@
           "description": "Regional Express to Minden",
           "trainType": 1,
           "serviceType": 1,
-          "vehicles": [
-            {
-              "vehicleId": "bb15c10a-5b78-451f-8f2f-2d4e3efa74af",
-              "vehicleKind": 0,
-              "isReversed": false
-            },
-            {
-              "vehicleId": "d4e5f6a7-b8c9-0123-4567-890123efabcd",
-              "vehicleKind": 2,
-              "isReversed": true
-            },
-            {
-              "vehicleId": "b2c3d4e5-f6a7-8901-2345-678901cdefab",
-              "vehicleKind": 1,
-              "isReversed": true
-            }
-          ]
+          "vehicles": []
         }
       ],
       "workflows": [
@@ -272,7 +256,7 @@
           },
           {
             "$type": "Signal",
-            "address": 200,
+            "address": 202,
             "signalSystem": "Ks",
             "signalAspect": "Hp0",
             "isMultiplexed": true,
@@ -283,6 +267,24 @@
             "id": "7f12fb1e-8d9d-488d-b747-ca28286c1c4c",
             "x": 4,
             "y": 6,
+            "rotation": 0,
+            "name": "",
+            "state": "Free"
+          },
+          {
+            "$type": "Signal",
+            "address": 202,
+            "signalSystem": "Ks",
+            "signalAspect": "Zs1",
+            "isMultiplexed": true,
+            "multiplexerArticleNumber": "5229",
+            "mainSignalArticleNumber": "4046",
+            "distantSignalArticleNumber": "4040",
+            "baseAddress": 201,
+            "extendedAccessoryValue": 1,
+            "id": "02810223-a04c-4b4c-ba92-f7e34e07b275",
+            "x": 4,
+            "y": 4,
             "rotation": 0,
             "name": "",
             "state": "Free"

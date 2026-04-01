@@ -361,7 +361,7 @@ public sealed class MobaRuntimeService : IMobaRuntime, IDisposable
                 return;
             }
 
-            var dccAddress = signal.BaseAddress + turnoutCommand.AddressOffset;
+            var dccAddress = signal.BaseAddress + turnoutCommand.AddressOffset + 1;
             if (dccAddress is < 1 or > 2044)
             {
                 throw new ArgumentOutOfRangeException(
@@ -393,6 +393,20 @@ public sealed class MobaRuntimeService : IMobaRuntime, IDisposable
             _logger.LogError(ex, "Failed to set signal aspect for '{SignalName}'", signal.Name);
             throw;
         }
+    }
+    public async Task SendTurnoutCommandAsync(int decoderAddress, int output, bool activate, bool queue = false, CancellationToken cancellationToken = default)
+    {
+        if (!_z21.IsConnected)
+        {
+            _logger.LogWarning("Raw turnout command skipped because Z21 is not connected");
+            _statusText = "⚠️ Z21 nicht verbunden";
+            PublishSnapshot();
+            return;
+        }
+
+        await _z21.SetTurnoutAsync(decoderAddress, output, activate, queue, cancellationToken).ConfigureAwait(false);
+        _statusText = $"Turnout gestellt: DCC-Adresse {decoderAddress}, Ausgang {output}, Activate={activate}, Queue={queue}";
+        PublishSnapshot();
     }
 
     /// <inheritdoc />
@@ -464,8 +478,9 @@ public sealed class MobaRuntimeService : IMobaRuntime, IDisposable
 
         var retryInterval = TimeSpan.FromSeconds(_settings.Z21.AutoConnectRetryIntervalSeconds);
         _z21AutoConnectTimer = new Timer(
-            _ =>
+            state =>
             {
+                _ = state;
                 if (!_isConnected && !_isManualDisconnectRequested)
                 {
                     _ = AttemptZ21ConnectionAsync();

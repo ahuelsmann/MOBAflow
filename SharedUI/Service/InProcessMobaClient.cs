@@ -88,6 +88,8 @@ public sealed class InProcessMobaClient : IMobaClient
     /// <inheritdoc />
     public Task SetSignalAspectAsync(SbSignal signal, CancellationToken cancellationToken = default)
         => _runtime.SetSignalAspectAsync(signal, cancellationToken);
+    public Task SendTurnoutCommandAsync(int decoderAddress, int output, bool activate, bool queue = false, CancellationToken cancellationToken = default)
+        => _runtime.SendTurnoutCommandAsync(decoderAddress, output, activate, queue, cancellationToken);
 
     /// <inheritdoc />
     public IReadOnlyList<Z21TrafficPacket> GetTrafficPackets()

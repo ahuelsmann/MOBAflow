@@ -8,11 +8,20 @@ Here you'll find all information about three platforms:
 
 ## 📚 Platform Overview
 
-| Platform | Technology | Target Users | Main Features |
-|----------|-------------|--------------|----------------|
-| **🖥️ MOBAflow** | WinUI 3 (Windows Desktop) | Power Users | Journey Management, Workflow Automation, Track Plan Editor |
-| **📱 MOBAsmart** | .NET MAUI (Android) | Mobile Users | Lap Counter, Z21 Monitoring, Feedback Statistics |
-| **🌐 MOBApi** | ASP.NET Core REST + SignalR | All Platforms | REST API, Real-time Hub, Client Discovery |
+- **🖥️ MOBAflow**
+  - **Technology:** WinUI 3 (Windows Desktop)
+  - **Target users:** Power Users
+  - **Main features:** Journey Management, Workflow Automation,
+    Track Plan Editor
+- **📱 MOBAsmart**
+  - **Technology:** .NET MAUI (Android)
+  - **Target users:** Mobile Users
+  - **Main features:** Lap Counter, Z21 Monitoring, Feedback
+    Statistics
+- **🌐 MOBApi**
+  - **Technology:** ASP.NET Core REST + SignalR
+  - **Target users:** All Platforms
+  - **Main features:** REST API, Real-time Hub, Client Discovery
 
 ---
 
@@ -20,14 +29,17 @@ Here you'll find all information about three platforms:
 
 > **📖 User Documentation** - For everyone who wants to use MOBAflow
 >
-> **👨‍💻 Developer Documentation** - At the end of this page, for plugin developers and contributors
+> **👨‍💻 Developer Documentation** - At the end of this page, for
+> plugin developers and contributors
 
 ### 🖥️ MOBAflow (Windows Desktop)
 
 **User Guide:**
+
 - [`MOBAFLOW-USER-GUIDE.md`](MOBAFLOW-USER-GUIDE.md) - Complete Guide
 
 **Main Topics:**
+
 - 🚂 Journey Management (Train journeys with stations)
 - ⚡ Workflow Automation (Event-driven actions)
 - 🎨 Track Plan Editor (Track visualization)
@@ -35,17 +47,21 @@ Here you'll find all information about three platforms:
 - 🗂️ Solution Management (Project management)
 
 **Setup Guides:**
-- [`AZURE-SPEECH-SETUP.md`](AZURE-SPEECH-SETUP.md) - Azure Speech Service setup (free!)
+
+- [`AZURE-SPEECH-SETUP.md`](AZURE-SPEECH-SETUP.md) - Azure Speech
+  Service setup (free!)
 
 ---
 
 ### 📱 MOBAsmart (Android)
 
 **User Guide:**
+
 - [`MOBASMART-USER-GUIDE.md`](MOBASMART-USER-GUIDE.md) - Complete Guide
 - [`MOBASMART-WIKI.md`](MOBASMART-WIKI.md) - Extended Documentation
 
 **Main Topics:**
+
 - 📊 Lap Counter (Lap counter with timer filter)
 - 🔌 Z21 Connection (UDP communication)
 - 📱 Display Management (Keep app in foreground)
@@ -57,12 +73,14 @@ Here you'll find all information about three platforms:
 ### 🌐 MOBApi (REST API)
 
 **Main Topics:**
+
 - 🔗 REST API for MOBAflow Overview status
 - 📡 SignalR Hub for real-time updates
 - 📋 Client list & health endpoints
 - 🔍 UDP multicast discovery (MOBAsmart connects automatically)
 
-> **Start MOBApi:** Run `dotnet run --project MOBApi` (Port 5001) or enable "Auto-start REST API" in MOBAflow Settings.
+> **Start MOBApi:** Run `dotnet run --project MOBApi` (Port 5001)
+> or enable "Auto-start REST API" in MOBAflow Settings.
 
 ---
 
@@ -72,9 +90,11 @@ Here you'll find all information about three platforms:
 
 **Not installed yet?** 👉 Read [`📥 Installation Guide`](INSTALLATION.md)!
 
-**Status:** ℹ️ Currently **manual installation from source code is required**. Automated setup scripts are planned for future versions.
+**Status:** ℹ️ Currently **manual installation from source code is
+required**. Automated setup scripts are planned for future versions.
 
 #### 🖥️ **Choose MOBAflow if you...**
+
 - ✅ ...use a **Windows PC**
 - ✅ ...want the most comprehensive features
 - ✅ ...manage complex model railroad layouts
@@ -83,6 +103,7 @@ Here you'll find all information about three platforms:
 **Link:** [`MOBAFLOW-USER-GUIDE.md`](MOBAFLOW-USER-GUIDE.md)
 
 #### 📱 **Choose MOBAsmart, if you...**
+
 - ✅ ...use an **Android device**
 - ✅ ...want to access the system **on the go**
 - ✅ ...need a **Lap Counter**
@@ -92,11 +113,13 @@ Here you'll find all information about three platforms:
 **Link:** [`MOBASMART-USER-GUIDE.md`](MOBASMART-USER-GUIDE.md)
 
 #### 🌐 **Run MOBApi if you...**
+
 - ✅ ...want MOBAsmart to discover MOBAflow automatically
 - ✅ ...need a REST API for external integrations
 - ✅ ...want real-time status via SignalR
 
-> MOBApi can be started standalone or automatically by MOBAflow via the "Auto-start REST API" setting.
+> MOBApi can be started standalone or automatically by MOBAflow via
+> the "Auto-start REST API" setting.
 
 ---
 
@@ -104,13 +127,16 @@ Here you'll find all information about three platforms:
 
 ### Contributing to MOBAflow
 
-- **Einstieg & Übersicht:** Siehe [`README.md`](../../README.md) (einzige Markdown-Datei im Repository-Root)
-- **Architektur:** Siehe [`../ARCHITECTURE.md`](../ARCHITECTURE.md) (Überblick & Schichten)
+- **Einstieg & Übersicht:** Siehe [`README.md`](../../README.md)
+  (einzige Markdown-Datei im Repository-Root)
+- **Architektur:** Siehe [`../ARCHITECTURE.md`](../ARCHITECTURE.md)
+  (Überblick & Schichten)
 
 ### Technische Dokumentation
 
 - **Architektur:** [`../ARCHITECTURE.md`](../ARCHITECTURE.md)
-- **JSON-Validierung:** [`../JSON-VALIDATION.md`](../JSON-VALIDATION.md) – Solution-Dateiformat & Validierung
+- **JSON-Validierung:** [`../JSON-VALIDATION.md`](../JSON-VALIDATION.md)
+  – Solution-Dateiformat & Validierung
 
 ---
 
@@ -119,6 +145,7 @@ Here you'll find all information about three platforms:
 ### Getting Help
 
 **Problem with MOBAflow?**
+
 - 🐛 **Bug:** Report on [GitHub Issues](https://github.com/ahuelsmann/MOBAflow/issues)
 - 💬 **Questions:** Ask in [GitHub Discussions](https://github.com/ahuelsmann/MOBAflow/discussions)
 - 📖 **Documentation:** Search this Wiki first
@@ -126,8 +153,9 @@ Here you'll find all information about three platforms:
 ### Hardware Issues
 
 **Problem with Z21 hardware?**
+
 - 🛠️ **Z21 Not Responding:** See [INSTALLATION.md](INSTALLATION.md) → Troubleshooting
-- 📞 **Roco Support:** https://www.roco.cc/en/customer-service
+- 📞 **Roco Support:** [Roco Customer Service](https://www.roco.cc/en/customer-service)
 - ⚠️ **Safety:** See [HARDWARE-DISCLAIMER.md](../HARDWARE-DISCLAIMER.md)
 
 ### Legal & Safety
@@ -143,6 +171,7 @@ Here you'll find all information about three platforms:
 **Current Version:** 0.1.0 (Preview)
 
 **What's Next:**
+
 - v0.2.0: Automated setup scripts
 - v0.3.0: Commercial plugin marketplace
 - v1.0.0: Feature-complete, production-ready
@@ -153,7 +182,7 @@ Siehe [`../CHANGELOG.md`](../CHANGELOG.md) für Änderungen.
 
 ## 📚 Complete Documentation Map
 
-```
+```text
 MOBAflow Repository
 ├─ README.md (START HERE – einzige MD-Datei im Root)
 ├─ LICENSE (MIT)
@@ -174,16 +203,19 @@ MOBAflow Repository
 ## 🎯 Navigation Tips
 
 **New to MOBAflow?**
+
 1. Read `README.md` (repository root) ← Start here
 2. Check `docs/wiki/INSTALLATION.md` ← Setup guide
 3. Choose your platform (above) ← Pick one
 4. Read platform guide ← Learn features
 
 **Developer?**
+
 1. Read `docs/ARCHITECTURE.md` ← Technical overview
 2. See `README.md` ← Contributing & overview
 
 **Having Issues?**
+
 1. Check this Wiki first (search box) ← Already solved?
 2. Read `INSTALLATION.md` → Troubleshooting
 3. Report on GitHub Issues ← Still not working?

@@ -6,17 +6,21 @@
 
 ## 📋 Overview
 
-MOBAflow supports **Azure Cognitive Services Speech** for high-quality Text-to-Speech (TTS) announcements. With Azure Speech, you can generate realistic station announcements like "Next stop: Hamburg Central Station".
+MOBAflow supports **Azure Cognitive Services Speech** for
+high-quality Text-to-Speech (TTS) announcements. With Azure Speech,
+you can generate realistic station announcements like "Next stop:
+Hamburg Central Station".
 
 ### Why Azure Speech?
 
-| Feature | Windows SAPI | Azure Speech |
-|---------|--------------|--------------|
-| **Voice Quality** | Robotic | Natural (Neural Voices) |
-| **Voices Available** | ~3-5 per language | 100+ per language |
-| **Cost** | Free (offline) | Free up to 500K chars/month |
-| **Internet** | Not required | Required |
-| **Latency** | Instant | ~200-500ms |
+- **Voice Quality:** Windows SAPI = Robotic; Azure Speech = Natural
+  (Neural Voices)
+- **Voices Available:** Windows SAPI = ~3-5 per language;
+  Azure Speech = 100+ per language
+- **Cost:** Windows SAPI = Free (offline); Azure Speech = Free up to
+  500K chars/month
+- **Internet:** Windows SAPI = Not required; Azure Speech = Required
+- **Latency:** Windows SAPI = Instant; Azure Speech = ~200-500ms
 
 ---
 
@@ -26,13 +30,12 @@ MOBAflow supports **Azure Cognitive Services Speech** for high-quality Text-to-S
 
 ### Free Tier F0 - Limits
 
-| Resource | Limit (per month) |
-|----------|-------------------|
-| **Text-to-Speech (Neural)** | 500,000 characters |
-| **Speech-to-Text** | 5 hours audio |
-| **Requests per second** | 20 |
+- **Text-to-Speech (Neural):** 500,000 characters per month
+- **Speech-to-Text:** 5 hours audio per month
+- **Requests per second:** 20
 
 **Example calculation:**
+
 - Average announcement: ~50 characters
 - Free Tier allows: 500,000 / 50 = **10,000 announcements/month**
 - This is sufficient for intensive model railroad sessions!
@@ -58,17 +61,15 @@ MOBAflow supports **Azure Cognitive Services Speech** for high-quality Text-to-S
 
 ### 3. Configure the Service
 
-| Field | Value |
-|-------|-------|
-| **Subscription** | Your Azure subscription |
-| **Resource group** | "mobaflow-rg" (create new) |
-| **Region** | "Germany West Central" (for low latency in DE) |
-| **Name** | "mobaflow-speech" |
-| **Pricing tier** | **Free F0** (free!) |
+- **Subscription:** Your Azure subscription
+- **Resource group:** "mobaflow-rg" (create new)
+- **Region:** "Germany West Central" (for low latency in DE)
+- **Name:** "mobaflow-speech"
+- **Pricing tier:** **Free F0** (free!)
 
-6. Click **"Review + create"**
-7. Click **"Create"**
-8. Wait for deployment to complete (~1-2 minutes)
+1. Click **"Review + create"**
+2. Click **"Create"**
+3. Wait for deployment to complete (~1-2 minutes)
 
 ### 4. Get API Key
 
@@ -98,15 +99,13 @@ Open `MOBAflow\appsettings.json` and enter the values:
 
 Available German Neural Voices:
 
-| Voice Name | Gender | Style |
-|------------|--------|-------|
-| `de-DE-KatjaNeural` | Female | Neutral, professional |
-| `de-DE-ConradNeural` | Male | Friendly |
-| `de-DE-AmalaNeural` | Female | Warm |
-| `de-DE-BerndNeural` | Male | Authoritative |
-| `de-DE-ChristophNeural` | Male | News anchor |
-| `de-DE-ElkeNeural` | Female | Mature |
-| `de-DE-GiselaNeural` | Female | Childlike |
+- **`de-DE-KatjaNeural`:** Female — Neutral, professional
+- **`de-DE-ConradNeural`:** Male — Friendly
+- **`de-DE-AmalaNeural`:** Female — Warm
+- **`de-DE-BerndNeural`:** Male — Authoritative
+- **`de-DE-ChristophNeural`:** Male — News anchor
+- **`de-DE-ElkeNeural`:** Female — Mature
+- **`de-DE-GiselaNeural`:** Female — Childlike
 
 All available voices: [Azure Voice Gallery](https://learn.microsoft.com/azure/ai-services/speech-service/language-support?tabs=tts)
 
@@ -128,17 +127,19 @@ All available voices: [Azure Voice Gallery](https://learn.microsoft.com/azure/ai
 }
 ```
 
-| Parameter | Description | Values |
-|-----------|-------------|--------|
-| `Key` | Azure Speech API Key | 32-character hex string |
-| `Region` | Azure Region | `germanywestcentral`, `westeurope`, etc. |
-| `SpeakerEngineName` | Engine selection | `"Azure Cognitive Services"` or `"Windows SAPI"` |
-| `VoiceName` | Voice | `de-DE-KatjaNeural`, etc. |
-| `Rate` | Speaking rate | `-10` (slow) to `+10` (fast), `-1` = default |
+- **`Key`:** Azure Speech API Key. Values: 32-character hex string
+- **`Region`:** Azure Region. Values: `germanywestcentral`,
+  `westeurope`, etc.
+- **`SpeakerEngineName`:** Engine selection. Values:
+  `"Azure Cognitive Services"` or `"Windows SAPI"`
+- **`VoiceName`:** Voice. Values: `de-DE-KatjaNeural`, etc.
+- **`Rate`:** Speaking rate. Values: `-10` (slow) to `+10` (fast),
+  `-1` = default
 
 ### Fallback to Windows SAPI
 
-If Azure is unavailable (no internet, invalid key), MOBAflow automatically falls back to Windows SAPI.
+If Azure is unavailable (no internet, invalid key), MOBAflow
+automatically falls back to Windows SAPI.
 
 To permanently use Windows SAPI:
 
@@ -162,10 +163,13 @@ To permanently use Windows SAPI:
 1. **Add appsettings.json to .gitignore**
 2. **Commit `appsettings.Development.template.json`** without secrets
 3. **Use User Secrets** for local development:
+
    ```bash
    dotnet user-secrets set "Speech:Key" "your-key-here"
    ```
+
 4. **Environment Variables** for production:
+
    ```bash
    set SPEECH__KEY=your-key-here
    ```
@@ -206,6 +210,7 @@ To permanently use Windows SAPI:
 **Cause:** API key is incorrect or expired.
 
 **Solution:**
+
 1. Check if key was copied correctly (no spaces)
 2. Generate a new key in Azure Portal
 3. Ensure region is correct
@@ -215,6 +220,7 @@ To permanently use Windows SAPI:
 **Cause:** Audio device not available.
 
 **Solution:**
+
 1. Check Windows audio settings
 2. Ensure an output device is selected
 3. Test with other applications
@@ -224,6 +230,7 @@ To permanently use Windows SAPI:
 **Cause:** Free Tier limit reached.
 
 **Solution:**
+
 1. Wait until next month (limit resets)
 2. Upgrade to Standard tier (paid)
 3. Use Windows SAPI as fallback
@@ -233,6 +240,7 @@ To permanently use Windows SAPI:
 **Cause:** No internet connection.
 
 **Solution:**
+
 1. Check internet connection
 2. Check firewall settings (allow HTTPS to *.microsoft.com)
 3. MOBAflow automatically uses Windows SAPI as fallback
@@ -243,10 +251,9 @@ To permanently use Windows SAPI:
 
 If you exceed the Free Tier or need premium features:
 
-| Tier | Cost (EUR) | Characters/Month |
-|------|------------|------------------|
-| **Free F0** | €0.00 | 500,000 |
-| **Standard S0** | ~€15.00 per 1M characters | Unlimited |
+- **Free F0:** Cost `€0.00`, Characters/Month `500,000`
+- **Standard S0:** Cost `~€15.00 per 1M characters`,
+  Characters/Month `Unlimited`
 
 **Tip:** For normal model railroad usage, Free Tier is completely sufficient!
 
@@ -261,4 +268,4 @@ If you exceed the Free Tier or need premium features:
 
 ---
 
-*Last updated: 2025-02-04*
+> Last updated: 2025-02-04

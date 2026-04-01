@@ -1,8 +1,13 @@
 # MOBAflow
 
-**MOBAflow** is an event-driven automation solution for model railroads. The system enables complex workflow sequences, train control with station announcements, and real-time feedback monitoring via direct UDP connection to the Roco Z21 Digital Command Station.
+**MOBAflow** is an event-driven automation solution for model railroads.
+The system enables complex workflow sequences, train control with station
+announcements, and real-time feedback monitoring via direct UDP connection to
+the Roco Z21 Digital Command Station.
 
-> ⚖️ **Legal Notice:** MOBAflow is an independent open-source project. See [THIRD-PARTY-NOTICES.md](docs/THIRD-PARTY-NOTICES.md) for details on third-party software, formats, and trademarks (AnyRail, Piko, Roco).
+> ⚖️ **Legal Notice:** MOBAflow is an independent open-source project.
+> See [THIRD-PARTY-NOTICES.md](docs/THIRD-PARTY-NOTICES.md) for details on
+> third-party software, formats, and trademarks (AnyRail, Piko, Roco).
 
 ---
 
@@ -34,35 +39,41 @@
 - ⚡ **Workflow Automation** – Event-driven action sequences
 - 🎨 **Visual Track Plan** – Drag & drop track editor with snap-to-connect
 - 🟢 **Win2D GPU Rendering** – High-performance track visualization
-- 🛤️ **Track Libraries** – Extensible support (Piko A-Gleis, Roco Line, Tillig, Märklin)
-- 📱 **Multi-Platform** – MOBAflow (Windows), MOBAsmart (Android), MOBApi (REST)
+- 🛤️ **Track Libraries** – Extensible support (Piko A-Gleis, Roco Line,
+  Tillig, Märklin)
+- 📱 **Multi-Host** – MOBAflow (Windows), MOBAsmart (Android), MOBApi (REST)
 - 🟢 **Status Monitoring** – Real-time startup progress with log streaming
 
 ---
 
-> 📚 **Need Help?** Check out our comprehensive [**Wiki Documentation**](docs/wiki/INDEX.md)  
-> - [WinUI User Guide](docs/wiki/MOBAFLOW-USER-GUIDE.md) – Learn how to use MOBAflow  
-> - [Azure Speech Setup](docs/wiki/AZURE-SPEECH-SETUP.md) – Configure text-to-speech  
-> - [Installation Guide](docs/wiki/INSTALLATION.md) – Set up MOBAflow, MOBApi and MOBAsmart
+> 📚 **Need Help?** Check out our comprehensive [**Wiki Documentation**](docs/wiki/INDEX.md)
+>
+> - [WinUI User Guide](docs/wiki/MOBAFLOW-USER-GUIDE.md) – Learn how to use MOBAflow
+> - [Azure Speech Setup](docs/wiki/AZURE-SPEECH-SETUP.md) – Configure text-to-speech
+> - [Installation Guide](docs/wiki/INSTALLATION.md) – Set up MOBAflow,
+>   MOBApi and MOBAsmart
 
 ---
 
 ## ⚠️ Hardware & Safety
 
-MOBAflow controls model train layouts via UDP communication with the **Roco Z21 Digital Command Station**.
+MOBAflow controls model train layouts via UDP communication with the
+**Roco Z21 Digital Command Station**.
 
 ### ⚠️ Important Safety Information
 
-> **Before using MOBAflow, please read:**  
+> **Before using MOBAflow, please read:**
 > 📖 [`HARDWARE-DISCLAIMER.md`](docs/HARDWARE-DISCLAIMER.md)
-> 
+>
 > This document covers:
+>
 > - ✅ Safety requirements and prerequisites
 > - ✅ Network configuration
 > - ✅ Liability & disclaimer
 > - ✅ Emergency procedures
 
-**Current Status:** ℹ️ *Azure App Configuration setup scripts are available. Hardware setup, device pairing, and layout integration are still manual.*
+**Current Status:** ℹ️ *Azure App Configuration setup scripts are available.
+Hardware setup, device pairing, and layout integration are still manual.*
 
 ---
 
@@ -71,7 +82,8 @@ MOBAflow controls model train layouts via UDP communication with the **Roco Z21 
 ### Prerequisites
 
 - ✅ [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) matching [`global.json`](global.json)
-- ✅ [Visual Studio 2026](https://visualstudio.microsoft.com/) (recommended) or VS Code
+- ✅ [Visual Studio 2026](https://visualstudio.microsoft.com/) (recommended)
+  or VS Code
 - ✅ Roco Z21 Digital Command Station (for Z21 connectivity)
 
 ### Clone & Build
@@ -83,7 +95,7 @@ dotnet restore MOBAflow/MOBAflow.csproj
 dotnet build MOBAflow/MOBAflow.csproj
 ```
 
-**Cross-platform subset (without WinUI / MAUI projects):**
+**Cross-platform subset (library and backend projects only):**
 
 ```bash
 dotnet restore Backend/Backend.csproj
@@ -91,7 +103,9 @@ dotnet build Backend/Backend.csproj
 dotnet test Test/Test.csproj
 ```
 
-> Note: On non-Windows systems, the WinUI and MAUI projects are not buildable. Restore/build individual `.csproj` files instead of relying on solution-level restore. Some `System.Speech` tests are Windows-only.
+> Note: On non-Windows systems, the WinUI and MAUI projects are not
+> buildable. Restore/build individual `.csproj` files instead of relying on
+> solution-level restore. Some `System.Speech` tests are Windows-only.
 
 ### Run Applications
 
@@ -107,7 +121,17 @@ dotnet run --project MOBAflow/MOBAflow.csproj
 dotnet run --project MOBApi/MOBApi.csproj
 ```
 
-MOBApi listens on **port 5001** (all interfaces). It provides the REST API for the WinUI Overview status and for MOBAsmart (client list, health). You can **start MOBApi in two ways:** (1) **Standalone** – run the command above; (2) **Together with MOBAflow** – enable "Auto-start REST API with MOBAflow" in MOBAflow Settings so MOBAflow starts the MOBApi process automatically. MOBAsmart discovers the server via UDP multicast; ensure PC and phone are on the same network.
+MOBApi listens on **port 5001** (all interfaces). It provides the REST API for
+the MOBAflow Overview status and for MOBAsmart (client list, health).
+
+You can **start MOBApi in two ways**:
+
+1. **Standalone** – run the command above.
+2. **Together with MOBAflow** – enable "Auto-start REST API with MOBAflow"
+   in MOBAflow Settings so MOBAflow starts the MOBApi process automatically.
+
+MOBAsmart discovers the server via UDP multicast; ensure PC and phone are on
+the same network.
 
 **📱 MOBAsmart (Android):**
 
@@ -128,13 +152,16 @@ dotnet test Test/Test.csproj
 Official MOBAflow releases are identified by **signed Git tags** in this repository.
 
 - Release versions are tagged as `X.Y.Z` (e.g. `0.1.0`).
-- Starting with version `0.1.0`, maintainers sign these tags with their GPG keys so you can verify that a given version really comes from us and was not modified.
+- Starting with version `0.1.0`, maintainers sign these tags with their GPG
+  keys so you can verify that a given version really comes from us and was not
+  modified.
 
 ### How to use signed versions as a user
 
 Typical workflow for installing a specific version:
 
-1. **Select a version**: Pick a tag from the GitHub *Tags* / *Releases* list (e.g. `0.1.0`).
+1. **Select a version**: Pick a tag from the GitHub *Tags* / *Releases* list
+   (e.g. `0.1.0`).
 2. **Fetch tags & verify**:
 
    ```bash
@@ -142,7 +169,8 @@ Typical workflow for installing a specific version:
    git tag -v 0.1.0
    ```
 
-   Only continue if GPG reports a **valid signature** from a maintainer key listed in `docs/legal/MAINTAINERS.md`.
+   Only continue if GPG reports a **valid signature** from a maintainer key
+   listed in `docs/legal/MAINTAINERS.md`.
 3. **Check out the tag**:
 
    ```bash
@@ -158,12 +186,15 @@ git fetch origin --tags
 git tag -v 1.2.3
 ```
 
-- Only trust tags whose signature matches one of the maintainer keys documented in `docs/legal/MAINTAINERS.md` (e.g. key ID `7DAD81238FEE2F49`).
+- Only trust tags whose signature matches one of the maintainer keys
+  documented in `docs/legal/MAINTAINERS.md` (e.g. key ID
+  `7DAD81238FEE2F49`).
 - If verification fails, do **not** use that release and contact the maintainers.
 
 ### Maintainer Keys
 
-The current list of GPG keys and fingerprints used for signing release tags is maintained in:
+The current list of GPG keys and fingerprints used for signing release tags
+is maintained in:
 
 - `docs/legal/MAINTAINERS.md`
 
@@ -171,12 +202,13 @@ The current list of GPG keys and fingerprints used for signing release tags is m
 
 ## 🔧 Configuration
 
-MOBAflow uses **Azure Cognitive Services Speech** for text-to-speech announcements. Choose your preferred setup method:
+MOBAflow uses **Azure Cognitive Services Speech** for text-to-speech
+announcements. Choose your preferred setup method:
 
 ### 🎯 Setup Options
 
 | Method | Best For | Complexity |
-|--------|----------|------------|
+| -------- | ---------- | ------------ |
 | **A) Azure App Config** | Teams, shared environments | ⭐⭐⭐ |
 | **B) User Secrets** | Individual developers | ⭐⭐ |
 | **C) Settings UI** | End users, no coding | ⭐ |
@@ -206,11 +238,13 @@ MOBAflow uses **Azure Cognitive Services Speech** for text-to-speech announcemen
 ### Option B: User Secrets (Developers)
 
 **1. Get Azure Speech Key:**
-   - 🌐 Go to [Azure Portal](https://portal.azure.com)
-   - ➕ Create: **Cognitive Services** → **Speech**
-   - 📋 Copy **Key** and **Region**
+
+- 🌐 Go to [Azure Portal](https://portal.azure.com)
+- ➕ Create: **Cognitive Services** → **Speech**
+- 📋 Copy **Key** and **Region**
 
 **2. Configure Secrets:**
+
 ```bash
 cd MOBAflow
 dotnet user-secrets set "Speech:Key" "YOUR-AZURE-SPEECH-KEY"
@@ -229,7 +263,8 @@ dotnet user-secrets set "Speech:Region" "germanywestcentral"
 **4. Select** Region (e.g., `germanywestcentral`)  
 **5. Click** Save
 
-> ⚠️ **Security:** The key is stored locally in `appsettings.json`. Never commit this file to version control.
+> ⚠️ **Security:** The key is stored locally in `appsettings.json`.
+> Never commit this file to version control.
 
 ---
 
@@ -248,7 +283,7 @@ The app loads settings in this order (first found wins):
 
 Design your model railroad layout with MOBAflow's visual track planning system.
 
-### ✨ Features
+### ✨ Track Plan Features
 
 - ✅ **Drag & Drop** – Place tracks from toolbox
 - ✅ **Snap-to-Connect** – Automatic track joining
@@ -263,7 +298,7 @@ Design your model railroad layout with MOBAflow's visual track planning system.
 ### 🛤️ Supported Track Systems
 
 | Library | Status | Description |
-|---------|--------|-------------|
+| --------- | -------- | ------------- |
 | **TrackLibrary.PikoA** | ✅ Active | Piko A-Gleis |
 | TrackLibrary.RocoLine | 🚧 Planned | Roco Line |
 | TrackLibrary.Tillig | 🚧 Planned | Tillig |
@@ -277,7 +312,7 @@ Play sound effects in workflows (station bells, train whistles, crossing signals
 
 ### 📂 Directory Structure
 
-```
+```text
 Sound/Resources/Sounds/
 ├── Station/          # Station bells, gongs, platform warnings
 ├── Train/            # Whistles, horns, brake sounds
@@ -288,7 +323,7 @@ Sound/Resources/Sounds/
 ### 📋 Requirements
 
 | Property | Value |
-|----------|-------|
+| ---------- | ------- |
 | **Format** | `.wav` (PCM only) |
 | **Sample Rate** | 44100 Hz or 48000 Hz |
 | **Bit Depth** | 16-bit |
@@ -298,7 +333,7 @@ Sound/Resources/Sounds/
 ### 🎯 Naming Conventions
 
 | ✅ Good | ❌ Bad |
-|---------|--------|
+| --------- | -------- |
 | `arrival_bell.wav` | `sound1.wav` |
 | `whistle_short.wav` | `ArrivalBell.wav` |
 | `crossing_warning.wav` | `My Sound.wav` |
@@ -325,7 +360,7 @@ Platform-specific UI control libraries for consistent, reusable components.
 
 ### 🏗️ Architecture
 
-```
+```text
 MOBAflow/Controls/       ← WinUI 3 XAML controls inside the desktop app
     ↓
 MAUI.Controls/           ← MAUI XAML (Android Mobile)
@@ -338,7 +373,7 @@ Domain/                  ← Business Models
 ### 📦 Available Libraries
 
 | Project | Platform | Technology | Target |
-|---------|----------|------------|--------|
+| --------- | ---------- | ------------ | -------- |
 | **MOBAflow/Controls** | Windows | WinUI 3 XAML | Desktop app control set |
 | **MAUI.Controls** | Android | .NET MAUI XAML | Mobile control library |
 | **SharedUI** | Cross-platform | CommunityToolkit.Mvvm | ViewModels |
@@ -355,6 +390,7 @@ Domain/                  ← Business Models
 ```
 
 **Guidelines:**
+
 - Use `DependencyProperty` for bindable properties
 - Prefer `x:Bind` (compiled bindings)
 - Use `ThemeResource` for colors/styles
@@ -372,6 +408,7 @@ Domain/                  ← Business Models
 ```
 
 **Guidelines:**
+
 - Use `BindableProperty` for bindable properties
 - Use `AppThemeBinding` for Light/Dark mode
 - Touch-optimized (minimum 44x44 dp)
@@ -380,7 +417,7 @@ Domain/                  ← Business Models
 ### ⚖️ Platform Differences
 
 | Feature | MOBAflow/Controls | MAUI.Controls |
-|---------|----------------|---------------|
+| --------- | ---------------- | --------------- |
 | Bindable Properties | `DependencyProperty` | `BindableProperty` |
 | Binding Syntax | `{x:Bind}` | `{Binding}` |
 | Base Class | `UserControl` | `ContentView` |
@@ -395,7 +432,7 @@ MOBAflow follows **Clean Architecture** principles with strict layer separation.
 
 ### 🏗️ Layer Structure
 
-```
+```text
 ┌─────────────────────────────────────┐
 │  MOBAflow / MOBAsmart / MOBApi      │  ← Platform UI & API
 ├─────────────────────────────────────┤
@@ -409,9 +446,10 @@ MOBAflow follows **Clean Architecture** principles with strict layer separation.
 
 ### Runtime Boundary (Current Status)
 
-The current control/runtime split now covers the shared shell and the remaining shared Z21-facing ViewModels:
+The current control/runtime split now covers the shared shell and the
+remaining shared Z21-facing ViewModels:
 
-```
+```text
 MainWindowViewModel
   ↓
 IMobaClient
@@ -422,15 +460,19 @@ IZ21 / JourneyManager / WorkflowService
 ```
 
 Current scope:
-- `MainWindowViewModel` now talks to `IMobaClient` instead of driving Z21 and `JourneyManager` directly
+
+- `MainWindowViewModel` now talks to `IMobaClient` instead of driving Z21 and
+  `JourneyManager` directly
 - The runtime publishes `MobaRuntimeSnapshot` objects back to the shell
-- `TrainControlViewModel` and `MauiViewModel` now also use `IMobaClient` instead of addressing `IZ21` directly
-- `ProjectRuntimeFactory` still reuses the live `Project` reference in this first step; a dedicated runtime copy is planned next
+- `TrainControlViewModel` and `MauiViewModel` now also use `IMobaClient`
+  instead of addressing `IZ21` directly
+- `ProjectRuntimeFactory` still reuses the live `Project` reference in this
+  first step; a dedicated runtime copy is planned next
 
 ### 🛠️ Technology Stack
 
 | Layer | Technology |
-|-------|------------|
+| ------- | ------------ |
 | **Framework** | .NET 10 |
 | **UI** | WinUI 3 (MOBAflow), .NET MAUI (MOBAsmart) |
 | **API** | ASP.NET Core REST + SignalR (MOBApi) |
@@ -440,6 +482,7 @@ Current scope:
 | **Speech** | Azure Cognitive Services, Windows Speech |
 | **Networking** | Direct UDP (Z21 Protocol) |
 | **Testing** | NUnit |
+
 ### 📄 Solution File Format
 
 MOBAflow uses **System.Text.Json** with schema validation.
@@ -458,10 +501,10 @@ MOBAflow uses **System.Text.Json** with schema validation.
 
 #### Validation Rules
 
-✅ **JSON Structure** – Valid syntax  
-✅ **Required Properties** – `name`, `projects`  
-✅ **Schema Version** – Compatibility check  
-✅ **Project Integrity** – Valid structure  
+- ✅ **JSON Structure** – Valid syntax
+- ✅ **Required Properties** – `name`, `projects`
+- ✅ **Schema Version** – Compatibility check
+- ✅ **Project Integrity** – Valid structure
 
 ### 📊 Logging Infrastructure
 
@@ -473,8 +516,12 @@ MOBAflow uses **System.Text.Json** with schema validation.
 - 📊 **Log Levels:** Debug (Moba), Warning (Microsoft)
 
 **Example:**
+
 ```csharp
-_logger.LogInformation("Feedback received: InPort={InPort}, Value={Value}", inPort, value);
+_logger.LogInformation(
+    "Feedback received: InPort={InPort}, Value={Value}",
+    inPort,
+    value);
 ```
 
 📖 **Details:** See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
@@ -483,19 +530,22 @@ _logger.LogInformation("Feedback received: InPort={InPort}, Value={Value}", inPo
 
 ## 🔧 Setup Scripts (For Teams)
 
-> 💡 **For Developer Teams:** Centralized Azure App Configuration for shared environments.  
-> 👤 **For End Users:** Skip this section – use [Settings UI](#option-c-settings-ui-end-users) instead.
+> 💡 **For Developer Teams:** Centralized Azure App Configuration for shared
+> environments.
+>
+> 👤 **For End Users:** Skip this section and use
+> [Settings UI](#option-c-settings-ui-end-users) instead.
 
 ### 📜 Available Scripts
 
 | Script | Purpose | Run Where |
-|--------|---------|-----------|
-| `setup-azure-appconfig.ps1` | Create Azure resource | **Once** (any system) |
-| `install-appconfig-connection.ps1` | Set environment variable | **All systems** |
+| -------- | --------- | ----------- |
+| `setup-azure-appconfig.ps1` | Create resource | **Once** (any system) |
+| `install-appconfig-connection.ps1` | Set env var | **All systems** |
 
 ### 🚀 Quick Team Setup
 
-**1️. Create Azure Resource (once):**
+**1. Create Azure Resource:**
 
 ```powershell
 .\scripts\setup-azure-appconfig.ps1 `
@@ -505,18 +555,18 @@ _logger.LogInformation("Feedback received: InPort={InPort}, Value={Value}", inPo
 
 **Output:** Copy the Connection String ✅
 
-**2️. Install on All Team Systems:**
+**2. Install on Team Systems:**
 
 ```powershell
 .\scripts\install-appconfig-connection.ps1 `
     -ConnectionString "Endpoint=https://...;Id=...;Secret=..."
 ```
 
-**3️. Restart IDE:**
+**3. Restart IDE:**
 
 Close and reopen Visual Studio / VS Code
 
-**4️. Verify:**
+**4. Verify:**
 
 Speech settings automatically load from Azure – no local config needed! ✅
 
@@ -529,13 +579,16 @@ Speech settings automatically load from Azure – no local config needed! ✅
 **Purpose:** Creates Azure App Configuration resource
 
 **Parameters:**
+
 - `-SpeechKey` (required) – Azure Speech API Key
-- `-SpeechRegion` (required) – Azure region (e.g., `germanywestcentral`)
+- `-SpeechRegion` (required) – Azure region
+  (e.g., `germanywestcentral`)
 - `-ResourceGroupName` (optional) – Default: `MOBAflow-RG`
 - `-ConfigStoreName` (optional) – Default: `mobaflow-config`
 - `-Location` (optional) – Default: `germanywestcentral`
 
 **Requirements:**
+
 - Azure CLI installed
 - Logged in (`az login`)
 - Subscription selected (`az account set`)
@@ -547,9 +600,11 @@ Speech settings automatically load from Azure – no local config needed! ✅
 **Purpose:** Sets `AZURE_APPCONFIG_CONNECTION` environment variable
 
 **Parameters:**
+
 - `-ConnectionString` (required) – From previous script output
 
 **Requirements:**
+
 - Run as normal user (not Admin)
 - Restart IDE after running
 
@@ -571,17 +626,17 @@ Speech settings automatically load from Azure – no local config needed! ✅
 **Location:** `docs/`
 
 | Document | Description |
-|----------|-------------|
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture & design patterns |
+| ---------- | ------------- |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Architecture & design patterns |
 | [CHANGELOG.md](docs/CHANGELOG.md) | Version history & release notes |
-| [SECURITY.md](docs/SECURITY.md) | Security policies & vulnerability reporting |
-| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community code of conduct for MOBAflow |
-| [JSON-VALIDATION.md](docs/JSON-VALIDATION.md) | Solution JSON validation documentation |
-| [MINVER-SETUP.md](docs/MINVER-SETUP.md) | MinVer-based versioning setup |
-| [HARDWARE-DISCLAIMER.md](docs/HARDWARE-DISCLAIMER.md) | Hardware safety & liability information |
-| [THIRD-PARTY-NOTICES.md](docs/THIRD-PARTY-NOTICES.md) | Third-party licenses & attributions |
-| [CURSOR-AZURE-DEVOPS-MCP.md](docs/CURSOR-AZURE-DEVOPS-MCP.md) | Azure DevOps MCP integration for Cursor |
-| [CLAUDE.md](docs/CLAUDE.md) | AI assistant project instructions |
+| [SECURITY.md](docs/SECURITY.md) | Security policy & reporting |
+| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community conduct guidelines |
+| [JSON-VALIDATION.md](docs/JSON-VALIDATION.md) | Solution JSON validation |
+| [MINVER-SETUP.md](docs/MINVER-SETUP.md) | MinVer versioning setup |
+| [HARDWARE-DISCLAIMER.md](docs/HARDWARE-DISCLAIMER.md) | Hardware safety & liability |
+| [THIRD-PARTY-NOTICES.md](docs/THIRD-PARTY-NOTICES.md) | Third-party licenses |
+| [CURSOR-AZURE-DEVOPS-MCP.md](docs/CURSOR-AZURE-DEVOPS-MCP.md) | Azure DevOps MCP integration |
+| [CLAUDE.md](docs/CLAUDE.md) | AI assistant instructions |
 | [CLA.md](docs/legal/CLA.md) | Contributor License Agreement (CLA) |
 
 ### 📚 Wiki (User & Feature Guides)
@@ -589,24 +644,24 @@ Speech settings automatically load from Azure – no local config needed! ✅
 **Location:** `docs/wiki/`
 
 | Guide | Description |
-|-------|-------------|
-| [INDEX.md](docs/wiki/INDEX.md) | Wiki navigation & platform overview |
-| [INSTALLATION.md](docs/wiki/INSTALLATION.md) | Installation & setup guide (all platforms) |
+| ------- | ------------- |
+| [INDEX.md](docs/wiki/INDEX.md) | Wiki index & platform overview |
+| [INSTALLATION.md](docs/wiki/INSTALLATION.md) | Installation & setup guide |
 | [MOBAFLOW-USER-GUIDE.md](docs/wiki/MOBAFLOW-USER-GUIDE.md) | WinUI desktop app user guide |
 | [MOBASMART-USER-GUIDE.md](docs/wiki/MOBASMART-USER-GUIDE.md) | MOBAsmart Android app user guide |
-| [MOBASMART-WIKI.md](docs/wiki/MOBASMART-WIKI.md) | In-depth MOBAsmart documentation |
-| [AZURE-SPEECH-SETUP.md](docs/wiki/AZURE-SPEECH-SETUP.md) | Azure Speech configuration for announcements |
-| [QUICK-START-TRACK-STATISTICS.md](docs/wiki/QUICK-START-TRACK-STATISTICS.md) | Quick start for track statistics & lap counting |
-| [VIESSMANN-SIGNAL-MAPPING.md](docs/wiki/VIESSMANN-SIGNAL-MAPPING.md) | Viessmann multiplex signal mapping (SignalBox) |
+| [MOBASMART-WIKI.md](docs/wiki/MOBASMART-WIKI.md) | Detailed MOBAsmart documentation |
+| [AZURE-SPEECH-SETUP.md](docs/wiki/AZURE-SPEECH-SETUP.md) | Azure Speech setup |
+| [QUICK-START-TRACK-STATISTICS.md](docs/wiki/QUICK-START-TRACK-STATISTICS.md) | Track statistics quick start |
+| [VIESSMANN-SIGNAL-MAPPING.md](docs/wiki/VIESSMANN-SIGNAL-MAPPING.md) | Viessmann signal mapping |
 | [MOBATPS.md](docs/wiki/MOBATPS.md) | MOBAtps track plan system architecture |
 
 ---
 
 ## 📄 License
 
-This project is licensed under the **MIT License** – see [LICENSE](LICENSE) for details.
+This project is licensed under the **MIT License**.
+See [LICENSE](LICENSE) for details.
 
 ---
 
-**Made with ❤️ for model railroad enthusiasts**
-
+Made with ❤️ for model railroad enthusiasts.

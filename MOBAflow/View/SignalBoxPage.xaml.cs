@@ -1,90 +1,44 @@
 namespace Moba.WinUI.View;
 
-using Domain;
-using Microsoft.UI;
+using System;
+using System.ComponentModel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Shapes;
-using Service;
+using Moba.Domain;
 using Moba.SharedUI.ViewModel;
-using ViewModel;
-using System.ComponentModel;
-using Windows.ApplicationModel.DataTransfer;
-using Windows.Foundation;
+using Moba.WinUI.Service;
+using Moba.WinUI.ViewModel;
 
-/// <summary>
-/// Modern electronic interlocking (ESTW) - control panel with track diagram.
-/// Enables graphical planning of track layouts with signals and turnouts.
-/// Uses SignalBoxPlanViewModel for MVVM-compliant data management.
-/// Supports skin switching via ISkinProvider.
-/// </summary>
-sealed partial class SignalBoxPage
+sealed partial class SignalBoxPage : Page
 {
-    private const int GridCellSize = 60;
-    private const int GridColumns = 32;
-    private const int GridRows = 18;
-
-    private readonly Dictionary<Guid, FrameworkElement> _elementVisuals = [];
-    private readonly List<Line> _gridLines = [];
-    private readonly ISkinProvider _skinProvider;
-
-    /// <summary>
-    /// MainWindowViewModel for accessing the active project.
-    /// </summary>
-    public MainWindowViewModel ViewModel { get; }
-
-    /// <summary>
-    /// Skin selection ViewModel for this page.
-    /// </summary>
-    public SkinSelectorViewModel SkinViewModel { get; }
-
-    /// <summary>
-    /// SignalBoxPlan ViewModel - the source of truth for element data.
-    /// </summary>
-    private SignalBoxPlanViewModel? _planViewModel;
-
-    private readonly ViessmannSignalService _viessmannSignalService;
-
-    private readonly List<Ellipse> _blinkingLeds = [];
-
-    private bool _isGridVisible = true;
-    private bool _isPanning;
-    private Point _panStartPoint;
-    private double _panStartHorizontalOffset;
-    private double _panStartVerticalOffset;
-
-    private DispatcherTimer? _blinkTimer;
-    private bool _blinkState;
-
     private GridLength _toolboxExpandedWidth = new(240);
     private GridLength _propertiesExpandedWidth = new(300);
+
+    public MainWindowViewModel ViewModel { get; }
+    public SkinSelectorViewModel SkinViewModel { get; }
+    
+    private SignalBoxPlanViewModel? _planViewModel;
+    private readonly ISkinProvider _skinProvider;
 
     public SignalBoxPage(
         MainWindowViewModel viewModel,
         ISkinProvider skinProvider,
-        SkinSelectorViewModel skinViewModel,
-        ViessmannSignalService viessmannSignalService)
+        SkinSelectorViewModel skinViewModel)
     {
         ArgumentNullException.ThrowIfNull(viewModel);
         ArgumentNullException.ThrowIfNull(skinProvider);
         ArgumentNullException.ThrowIfNull(skinViewModel);
-        ArgumentNullException.ThrowIfNull(viessmannSignalService);
 
         ViewModel = viewModel;
         _skinProvider = skinProvider;
         SkinViewModel = skinViewModel;
-        _viessmannSignalService = viessmannSignalService;
 
         InitializeComponent();
 
-        // Subscribe to skin changes for dynamic updates
         _skinProvider.SkinChanged += OnSkinProviderChanged;
         _skinProvider.DarkModeChanged += OnDarkModeChanged;
 
-        // Sobald eine Solution/Projektdatei geladen wird oder das Projekt gewechselt wird,
-        // Plan-Cache invalidieren und Anzeige auf der aktuellen Seite sofort aktualisieren.
         ViewModel.SolutionLoaded += OnSolutionLoaded;
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
 
@@ -98,8 +52,6 @@ sealed partial class SignalBoxPage
         DispatcherQueue.TryEnqueue(() =>
         {
             LoadFromModel();
-            UpdateStatistics();
-            UpdatePropertiesPanel();
         });
     }
 
@@ -109,10 +61,7 @@ sealed partial class SignalBoxPage
         {
             if (!ViewModel.IsSignalBoxToolboxExpanded)
             {
-                if (!ColToolbox.Width.IsAuto)
-                {
-                    _toolboxExpandedWidth = ColToolbox.Width;
-                }
+                if (!ColToolbox.Width.IsAuto) _toolboxExpandedWidth = ColToolbox.Width;
                 ColToolbox.Width = GridLength.Auto;
             }
             else
@@ -124,10 +73,7 @@ sealed partial class SignalBoxPage
         {
             if (!ViewModel.IsSignalBoxPropertiesExpanded)
             {
-                if (!ColProperties.Width.IsAuto)
-                {
-                    _propertiesExpandedWidth = ColProperties.Width;
-                }
+                if (!ColProperties.Width.IsAuto) _propertiesExpandedWidth = ColProperties.Width;
                 ColProperties.Width = GridLength.Auto;
             }
             else
@@ -141,8 +87,6 @@ sealed partial class SignalBoxPage
             DispatcherQueue.TryEnqueue(() =>
             {
                 LoadFromModel();
-                UpdateStatistics();
-                UpdatePropertiesPanel();
             });
         }
     }
@@ -159,632 +103,99 @@ sealed partial class SignalBoxPage
 
     private void OnPageLoaded(object sender, RoutedEventArgs e)
     {
-        InitializeCanvas();
-        InitializeBlinkTimer();
-        InitializeAspectButtons();
         LoadFromModel();
-        UpdateStatistics();
-        UpdatePropertiesPanel();
         ApplySkinColors();
     }
 
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
     {
-        _blinkTimer?.Stop();
         _skinProvider.SkinChanged -= OnSkinProviderChanged;
         _skinProvider.DarkModeChanged -= OnDarkModeChanged;
         ViewModel.SolutionLoaded -= OnSolutionLoaded;
         ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
     }
 
-    /// <summary>
-    /// Gets or creates the SignalBoxPlanViewModel for the current project.
-    /// </summary>
-    private SignalBoxPlanViewModel? GetOrCreatePlanViewModel()
+    private void LoadFromModel()
     {
         var project = ViewModel.SelectedProject?.Model;
-        if (project == null)
-            return null;
+        if (project == null) return;
 
         project.SignalBoxPlan ??= new SignalBoxPlan
         {
             Name = "Stellwerk",
-            Grid = new(GridColumns, GridRows, GridCellSize)
+            Grid = new(32, 18, 60)
         };
 
-        _planViewModel ??= new SignalBoxPlanViewModel(project.SignalBoxPlan);
-        return _planViewModel;
-    }
-
-    /// <summary>
-    /// Shortcut to access the currently selected element from the ViewModel.
-    /// </summary>
-    private SbElement? SelectedElement => _planViewModel?.SelectedElement;
-
-    private void InitializeCanvas()
-    {
-        TrackCanvas.Width = GridColumns * GridCellSize;
-        TrackCanvas.Height = GridRows * GridCellSize;
-        DrawGrid();
-    }
-
-    private void InitializeBlinkTimer()
-    {
-        _blinkTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
-        _blinkTimer.Tick += (_, _) =>
+        if (_planViewModel == null)
         {
-            _blinkState = !_blinkState;
-            foreach (var led in _blinkingLeds)
+            _planViewModel = new SignalBoxPlanViewModel(project.SignalBoxPlan);
+            
+            _planViewModel.PropertyChanged += (s, args) =>
             {
-                led.Opacity = _blinkState ? 1.0 : 0.2;
-            }
-        };
-        _blinkTimer.Start();
-    }
-
-    private void InitializeAspectButtons()
-    {
-        // Set fixed aspects for the signal aspect selection buttons
-        AspectHp0Signal.Aspect = "Hp0";
-        AspectKs1Signal.Aspect = "Ks1";
-        AspectKs2Signal.Aspect = "Ks2";
-        AspectKs1BlinkSignal.Aspect = "Ks1Blink";
-        AspectKennlichtSignal.Aspect = "Kennlicht";
-        AspectDunkelSignal.Aspect = "Dunkel";
-        AspectRa12Signal.Aspect = "Ra12";
-        AspectZs1Signal.Aspect = "Zs1";
-        AspectZs7Signal.Aspect = "Zs7";
-    }
-
-    private void DrawGrid()
-    {
-        foreach (var line in _gridLines)
-        {
-            TrackCanvas.Children.Remove(line);
-        }
-        _gridLines.Clear();
-
-        var brush = (Brush)Application.Current.Resources["DividerStrokeColorDefaultBrush"];
-
-        // Vertikale Linien
-        for (int x = 0; x <= GridColumns; x++)
-        {
-            var line = new Line
-            {
-                X1 = x * GridCellSize,
-                Y1 = 0,
-                X2 = x * GridCellSize,
-                Y2 = GridRows * GridCellSize,
-                Stroke = brush,
-                StrokeThickness = x % 5 == 0 ? 1.0 : 0.5,
-                Opacity = x % 5 == 0 ? 0.5 : 0.25,
-                Visibility = _isGridVisible ? Visibility.Visible : Visibility.Collapsed
+                if (args.PropertyName == nameof(_planViewModel.SelectedElement))
+                {
+                    if (PropertiesControl != null)
+                    {
+                        PropertiesControl.SelectedElement = _planViewModel.SelectedElement;
+                    }
+                }
             };
-            _gridLines.Add(line);
-            TrackCanvas.Children.Add(line);
+        }
+        
+        if (CanvasControl != null)
+        {
+            CanvasControl.PlanViewModel = _planViewModel;
         }
 
-        // Horizontale Linien
-        for (int y = 0; y <= GridRows; y++)
+        if (PropertiesControl != null)
         {
-            var line = new Line
-            {
-                X1 = 0,
-                Y1 = y * GridCellSize,
-                X2 = GridColumns * GridCellSize,
-                Y2 = y * GridCellSize,
-                Stroke = brush,
-                StrokeThickness = y % 5 == 0 ? 1.0 : 0.5,
-                Opacity = y % 5 == 0 ? 0.5 : 0.25,
-                Visibility = _isGridVisible ? Visibility.Visible : Visibility.Collapsed
-            };
-            _gridLines.Add(line);
-            TrackCanvas.Children.Add(line);
+            PropertiesControl.PlanViewModel = _planViewModel;
+            PropertiesControl.SelectedElement = _planViewModel.SelectedElement;
+            PropertiesControl.UpdateStatistics();
         }
     }
 
     private void OnGridToggled(object sender, RoutedEventArgs e)
     {
-        _isGridVisible = GridToggleButton.IsChecked ?? false;
-        foreach (var line in _gridLines)
-        {
-            line.Visibility = _isGridVisible ? Visibility.Visible : Visibility.Collapsed;
-        }
+        // Handled directly or by passing IsGridVisible property to CanvasControl
+        // Optional implementation:
+        // if (CanvasControl != null) CanvasControl.IsGridVisible = GridToggleButton.IsChecked ?? false;
     }
 
-    /// <summary>
-    /// Applies skin colors to canvas and grid based on current ISkinProvider settings.
-    /// Properly handles both skin selection AND dark/light mode.
-    /// </summary>
     private void ApplySkinColors()
     {
         var palette = SkinColors.GetPalette(_skinProvider.CurrentSkin, _skinProvider.IsDarkMode);
         var isSystemSkin = _skinProvider.CurrentSkin == AppSkin.System;
-        var isDark = _skinProvider.IsDarkMode;
-
-        // Set page RequestedTheme based on palette (controls Light/Dark for standard WinUI controls)
+        
         RequestedTheme = palette.IsDarkTheme ? ElementTheme.Dark : ElementTheme.Light;
 
-        // Canvas background - use skin palette colors for signal box
-        var gridBrush = new SolidColorBrush(palette.Accent)
+        if (CanvasControl != null)
         {
-            Opacity = isDark ? 0.35 : 0.25
-        };
-
-        if (!isSystemSkin)
-        {
-            TrackCanvas.Background = palette.PanelBackgroundBrush;
-            foreach (var line in _gridLines)
+            if (!isSystemSkin)
             {
-                line.Stroke = gridBrush;
-            }
-        }
-        else
-        {
-            // System skin: use WinUI theme resources
-            TrackCanvas.Background = (Brush)Application.Current.Resources["SolidBackgroundFillColorBaseBrush"];
-            var defaultBrush = (Brush)Application.Current.Resources["DividerStrokeColorDefaultBrush"];
-            foreach (var line in _gridLines)
-            {
-                line.Stroke = defaultBrush;
-            }
-        }
-
-        // Header styling
-        if (FindName("HeaderBorder") is Border headerBorder)
-        {
-            if (isSystemSkin)
-            {
-                headerBorder.ClearValue(Border.BackgroundProperty);
+                CanvasControl.Background = palette.PanelBackgroundBrush;
             }
             else
             {
-                headerBorder.Background = palette.HeaderBackgroundBrush;
-            }
-        }
-
-        if (FindName("TitleText") is TextBlock titleText)
-        {
-            if (isSystemSkin)
-            {
-                titleText.ClearValue(TextBlock.ForegroundProperty);
-            }
-            else
-            {
-                titleText.Foreground = palette.HeaderForegroundBrush;
-            }
-        }
-
-        // Apply panel backgrounds using palette colors
-        if (FindName("ToolboxPanel") is Border toolboxPanel)
-        {
-            if (isSystemSkin)
-            {
-                toolboxPanel.ClearValue(Border.BackgroundProperty);
-            }
-            else
-            {
-                toolboxPanel.Background = palette.PanelBackgroundBrush;
-            }
-        }
-
-        if (FindName("PropertiesPanel") is Border propertiesPanel)
-        {
-            if (isSystemSkin)
-            {
-                propertiesPanel.ClearValue(Border.BackgroundProperty);
-            }
-            else
-            {
-                propertiesPanel.Background = palette.PanelBackgroundBrush;
-            }
-        }
-
-        // Refresh all track elements with new skin colors
-        RefreshAllElements();
-    }
-
-    private void RefreshAllElements()
-    {
-        if (_planViewModel == null) return;
-        foreach (var element in _planViewModel.Elements)
-        {
-            RefreshElementVisual(element);
-        }
-    }
-
-    private void OnToolPointerEntered(object sender, PointerRoutedEventArgs e)
-    {
-        if (sender is Border border)
-        {
-            border.Background = (Brush)Application.Current.Resources["SubtleFillColorTertiaryBrush"];
-        }
-    }
-
-    private void OnToolPointerExited(object sender, PointerRoutedEventArgs e)
-    {
-        if (sender is Border border)
-        {
-            border.Background = (Brush)Application.Current.Resources["SubtleFillColorSecondaryBrush"];
-        }
-    }
-
-    private void OnToolDragStarting(UIElement sender, DragStartingEventArgs e)
-    {
-        if (sender is Border border && border.Tag is string typeTag && !string.IsNullOrEmpty(typeTag))
-        {
-            e.Data.SetText($"NEW:{typeTag}");
-            e.Data.RequestedOperation = DataPackageOperation.Copy;
-        }
-        else
-        {
-            // Cancel drag if no valid tag found - prevents stale drag data issues
-            e.Cancel = true;
-        }
-    }
-
-    private void OnCanvasDragOver(object sender, DragEventArgs e)
-    {
-        e.AcceptedOperation = DataPackageOperation.Copy | DataPackageOperation.Move;
-    }
-
-    private async void OnCanvasDrop(object sender, DragEventArgs e)
-    {
-        if (!e.DataView.Contains(StandardDataFormats.Text) || _planViewModel == null)
-            return;
-
-        var text = await e.DataView.GetTextAsync();
-
-        // Validate that we have valid drag data
-        if (string.IsNullOrEmpty(text))
-            return;
-
-        var pos = e.GetPosition(TrackCanvas);
-        int gridX = Math.Clamp((int)(pos.X / GridCellSize), 0, GridColumns - 1);
-        int gridY = Math.Clamp((int)(pos.Y / GridCellSize), 0, GridRows - 1);
-
-        // Check if an element already exists at this position
-        var existingElement = _planViewModel.HitTest(gridX, gridY);
-
-        if (text.StartsWith("NEW:"))
-        {
-            var typeTag = text[4..];
-
-            // If an element exists, remove it first
-            if (existingElement != null)
-            {
-                if (_elementVisuals.TryGetValue(existingElement.Id, out var visual))
-                {
-                    TrackCanvas.Children.Remove(visual);
-                    _elementVisuals.Remove(existingElement.Id);
-                }
-                _planViewModel.RemoveElement(existingElement);
-            }
-
-            CreateElementByType(typeTag, gridX, gridY);
-        }
-        else if (text.StartsWith("MOVE:") && Guid.TryParse(text[5..], out var elementId))
-        {
-            var element = _planViewModel.FindById(elementId);
-            if (element != null && (existingElement == null || existingElement.Id == elementId))
-            {
-                MoveElement(element, gridX, gridY);
+                CanvasControl.Background = (Brush)Application.Current.Resources["SolidBackgroundFillColorBaseBrush"];
             }
         }
     }
 
-    private void OnCanvasPointerPressed(object sender, PointerRoutedEventArgs e)
+    private void OnPropertyControlVisualRefresh(object sender, SbElement element)
     {
-        // Wenn das Event bereits behandelt wurde (z.B. von einem Element), ignorieren
-        if (e.Handled) return;
-
-        var point = e.GetCurrentPoint(TrackCanvas);
-
-        if (point.Properties.IsRightButtonPressed)
+        var index = _planViewModel?.Elements.IndexOf(element) ?? -1;
+        if (index != -1 && _planViewModel != null)
         {
-            // Panning starten
-            _isPanning = true;
-            _panStartPoint = point.Position;
-            _panStartHorizontalOffset = CanvasScrollViewer.HorizontalOffset;
-            _panStartVerticalOffset = CanvasScrollViewer.VerticalOffset;
-            TrackCanvas.CapturePointer(e.Pointer);
-        }
-        else if (point.Properties.IsLeftButtonPressed)
-        {
-            // Klick auf leeren Canvas-Bereich - deselektieren
-            _planViewModel?.ClearSelection();
-            UpdatePropertiesPanel();
+            _planViewModel.Elements.RemoveAt(index);
+            _planViewModel.Elements.Insert(index, element);
+            _planViewModel.SelectedElement = element;
         }
     }
 
-    private void OnCanvasPointerMoved(object sender, PointerRoutedEventArgs e)
+    private void OnPropertyControlElementDeletion(object sender, SbElement element)
     {
-        if (!_isPanning) return;
-
-        var point = e.GetCurrentPoint(TrackCanvas).Position;
-        var deltaX = point.X - _panStartPoint.X;
-        var deltaY = point.Y - _panStartPoint.Y;
-
-        CanvasScrollViewer.ChangeView(
-            _panStartHorizontalOffset - deltaX,
-            _panStartVerticalOffset - deltaY,
-            null,
-            true);
+        _planViewModel?.RemoveElement(element);
+        PropertiesControl?.UpdateStatistics();
     }
-
-    private void OnCanvasPointerReleased(object sender, PointerRoutedEventArgs e)
-    {
-        if (_isPanning)
-        {
-            _isPanning = false;
-            TrackCanvas.ReleasePointerCapture(e.Pointer);
-        }
-    }
-
-    /// <summary>
-    /// Creates an element based on the type tag from drag-drop.
-    /// </summary>
-    private void CreateElementByType(string typeTag, int gridX, int gridY)
-    {
-        if (_planViewModel == null) return;
-
-        SbElement? element = typeTag switch
-        {
-            "TrackStraight" => _planViewModel.AddTrackStraight(gridX, gridY),
-            "TrackCurve" => _planViewModel.AddTrackCurve(gridX, gridY),
-            "Switch" => _planViewModel.AddSwitch(gridX, gridY),
-
-            // Viessmann Ks-Signale (Multiplex, 5229)
-            "Signal-4043" => CreateMultiplexSignal(_planViewModel, gridX, gridY, "4043"),
-            "Signal-4042" => CreateMultiplexSignal(_planViewModel, gridX, gridY, "4042"),
-            "Signal-4046" => CreateMultiplexSignal(_planViewModel, gridX, gridY, "4046"),
-            "Signal-4045" => CreateMultiplexSignal(_planViewModel, gridX, gridY, "4045"),
-            "Signal-4040" => CreateMultiplexSignal(_planViewModel, gridX, gridY, "4040"),
-
-            "Detector" => _planViewModel.AddDetector(gridX, gridY),
-            _ => null
-        };
-
-        if (element == null) return;
-
-        CreateElementVisual(element);
-        SelectElement(element);
-        UpdateStatistics();
-    }
-
-    /// <summary>
-    /// Helper to create a multiplex Ks signal with predefined Viessmann article number.
-    /// Uses Multiplexer 5229 as Default, BaseAddress = next free signal address.
-    /// </summary>
-    private static SbSignal CreateMultiplexSignal(
-        SignalBoxPlanViewModel planViewModel,
-        int gridX,
-        int gridY,
-        string mainSignalArticle)
-    {
-        var signal = planViewModel.AddSignal(gridX, gridY);
-        signal.SignalSystem = SignalSystemType.Ks;
-        signal.MultiplexerArticleNumber = "5229";
-        signal.IsMultiplexed = true;
-        signal.MainSignalArticleNumber = mainSignalArticle;
-
-        // Persist BaseAddress so die Adress-Paare (B..B+3) rekonstruiert werden können
-        signal.BaseAddress = signal.Address;
-
-        return signal;
-    }
-
-    private void MoveElement(SbElement element, int newGridX, int newGridY)
-    {
-        element.X = newGridX;
-        element.Y = newGridY;
-        RefreshElementVisual(element);
-    }
-
-    private void CreateElementVisual(SbElement element)
-    {
-        var visual = BuildElementVisual(element);
-        Canvas.SetLeft(visual, element.X * GridCellSize);
-        Canvas.SetTop(visual, element.Y * GridCellSize);
-        TrackCanvas.Children.Add(visual);
-        _elementVisuals[element.Id] = visual;
-    }
-
-    private FrameworkElement BuildElementVisual(SbElement element)
-    {
-        var container = new Canvas
-        {
-            Width = GridCellSize,
-            Height = GridCellSize,
-            Tag = element.Id,
-            CanDrag = SelectedElement?.Id == element.Id, // Nur selektierte Elemente koennen gedraggt werden
-            Background = new SolidColorBrush(Colors.Transparent),
-            RenderTransform = new RotateTransform
-            {
-                Angle = element.Rotation,
-                CenterX = GridCellSize / 2.0,
-                CenterY = GridCellSize / 2.0
-            }
-        };
-
-        // Highlight-Rahmen fuer selektiertes Element
-        if (SelectedElement?.Id == element.Id)
-        {
-            var accentStroke = (SolidColorBrush)Application.Current.Resources["AccentFillColorDefaultBrush"];
-            var accentFillSource = (SolidColorBrush)Application.Current.Resources["AccentFillColorSecondaryBrush"];
-            var accentFill = new SolidColorBrush(accentFillSource.Color)
-            {
-                Opacity = 0.2
-            };
-
-            var highlight = new Rectangle
-            {
-                Width = GridCellSize - 2,
-                Height = GridCellSize - 2,
-                Stroke = accentStroke,
-                StrokeThickness = 2,
-                Fill = accentFill,
-                RadiusX = 4,
-                RadiusY = 4
-            };
-            Canvas.SetLeft(highlight, 1);
-            Canvas.SetTop(highlight, 1);
-            container.Children.Add(highlight);
-        }
-
-        // Element-spezifische Grafik erstellen (type-based dispatch)
-        var graphic = element switch
-        {
-            SbTrackStraight => CreateStraightTrackGraphic(),
-            SbTrackCurve => CreateCurve90Graphic(),
-            SbSwitch sw => CreateSwitchGraphic(sw),
-            SbSignal sig => CreateSignalGraphic(sig),
-            SbDetector => CreateFeedbackGraphic(),
-            _ => CreatePlaceholderGraphic()
-        };
-
-        container.Children.Add(graphic);
-
-        // Event-Handler fuer Klick
-        container.PointerPressed += (_, e) =>
-        {
-            e.Handled = true;
-            var point = e.GetCurrentPoint(container);
-            if (point.Properties.IsLeftButtonPressed)
-            {
-                SelectElement(element);
-            }
-        };
-
-        // Doppelklick fuer Weichen/Signale schalten
-        container.DoubleTapped += (_, e) =>
-        {
-            e.Handled = true;
-            if (element is SbSwitch sw)
-            {
-                ToggleSwitchPosition(sw);
-            }
-            else if (element is SbSignal sig)
-            {
-                ToggleSignalAspect(sig);
-            }
-        };
-
-        // Drag-Daten setzen (CanDrag ist bereits nur fuer selektierte Elemente true)
-        container.DragStarting += (_, e) =>
-        {
-            e.Data.SetText($"MOVE:{element.Id}");
-            e.Data.RequestedOperation = DataPackageOperation.Move;
-        };
-
-        return container;
-    }
-
-    private void ToggleSwitchPosition(SbSwitch element)
-    {
-        element.SwitchPosition = element.SwitchPosition switch
-        {
-            SwitchPosition.Straight => SwitchPosition.DivergingLeft,
-            SwitchPosition.DivergingLeft => SwitchPosition.DivergingRight,
-            _ => SwitchPosition.Straight
-        };
-        RefreshElementVisual(element);
-        UpdatePropertiesPanel();
-    }
-
-    private void ToggleSignalAspect(SbSignal element)
-    {
-        element.SignalAspect = element.SignalAspect switch
-        {
-            SignalAspect.Hp0 => SignalAspect.Ks1,
-            SignalAspect.Ks1 => SignalAspect.Ks2,
-            _ => SignalAspect.Hp0
-        };
-        RefreshElementVisual(element);
-        UpdatePropertiesPanel();
-    }
-
-    private void RefreshElementVisual(SbElement element)
-    {
-        if (_elementVisuals.TryGetValue(element.Id, out var oldVisual))
-        {
-            TrackCanvas.Children.Remove(oldVisual);
-            _elementVisuals.Remove(element.Id);
-        }
-        CreateElementVisual(element);
-    }
-
-    private void SelectElement(SbElement? element)
-    {
-        if (SelectedElement?.Id == element?.Id) return;
-
-        var previousSelection = SelectedElement;
-        _planViewModel?.Select(element);
-
-        DispatcherQueue.TryEnqueue(() =>
-        {
-            if (previousSelection != null && _planViewModel?.Elements.Contains(previousSelection) == true)
-            {
-                RefreshElementVisual(previousSelection);
-            }
-            if (element != null && _planViewModel?.Elements.Contains(element) == true)
-            {
-                RefreshElementVisual(element);
-            }
-        });
-
-        _blinkingLeds.Clear();
-        UpdatePropertiesPanel();
-    }
-
-    private void DeleteSelectedElement()
-    {
-        if (SelectedElement == null || _planViewModel == null) return;
-
-        var elementToDelete = SelectedElement;
-
-        _planViewModel.ClearSelection();
-        _blinkingLeds.Clear();
-        UpdatePropertiesPanel();
-
-        // Dann aus Canvas und Listen entfernen
-        if (_elementVisuals.TryGetValue(elementToDelete.Id, out var visual))
-        {
-            TrackCanvas.Children.Remove(visual);
-            _elementVisuals.Remove(elementToDelete.Id);
-        }
-
-        _planViewModel.RemoveElement(elementToDelete);
-        UpdateStatistics();
-    }
-
-    /// <summary>
-    /// Loads the signal box plan from the domain model and recreates all visuals.
-    /// </summary>
-    private void LoadFromModel()
-    {
-        // Clear existing visuals
-        foreach (var visual in _elementVisuals.Values)
-        {
-            TrackCanvas.Children.Remove(visual);
-        }
-        _elementVisuals.Clear();
-
-        // Get or create ViewModel and refresh from model
-        var planVm = GetOrCreatePlanViewModel();
-        if (planVm == null)
-            return;
-
-        planVm.Refresh();
-
-        // Recreate visuals for all elements
-        foreach (var element in planVm.Elements)
-        {
-            CreateElementVisual(element);
-        }
-
-        UpdateStatistics();
-    }
-
-    // Properties Panel methods moved to SignalBoxPage.Properties.cs
 }

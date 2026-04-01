@@ -18,6 +18,7 @@ internal sealed partial class DockingPage
         DataContext = viewModel;
         DockManager.DocumentTabDockRequested += OnDocumentTabDockRequested;
         DockManager.DockPanelDockRequested += OnDockPanelDockRequested;
+        DockManager.DockPanelAutoHideRequested += OnDockPanelAutoHideRequested;
         DockManager.DockPanelStateChanged += OnDockPanelStateChanged;
 
         Loaded += OnPageLoaded;
@@ -48,6 +49,11 @@ internal sealed partial class DockingPage
     private void OnDockPanelDockRequested(object? sender, DockPanelDockRequestedEventArgs e)
     {
         _viewModel.HandlePanelDockRequested(e.PanelId, e.Position);
+    }
+
+    private void OnDockPanelAutoHideRequested(object? sender, DockPanelAutoHideRequestedEventArgs e)
+    {
+        _viewModel.HandlePanelAutoHideChanged(e.PanelId, e.Position, e.IsAutoHidden);
     }
 
     private void OnDockPanelStateChanged(object? sender, DockPanelStateChangedEventArgs e)
