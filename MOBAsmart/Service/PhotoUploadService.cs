@@ -1,8 +1,10 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
 
-using Android.OS;
 using Microsoft.Extensions.Logging;
+
+using System.Net;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Sockets;
 
@@ -11,8 +13,30 @@ using System.Net.Sockets;
 /// </summary>
 public class PhotoUploadService
 {
+    /// <summary>
+    /// LAN health checks bypass the platform <see cref="HttpClient"/> handler so Android does not route
+    /// private IPs through a system proxy/VPN (avoids <c>SocksSocketImpl</c> / failed connects in logs).
+    /// </summary>
+    private static readonly Lazy<HttpClient> LanHealthHttpClient = new(CreateLanHealthHttpClient);
+
     private readonly HttpClient _httpClient;
     private readonly ILogger<PhotoUploadService> _logger;
+
+    private static HttpClient CreateLanHealthHttpClient()
+    {
+        var handler = new SocketsHttpHandler
+        {
+            UseProxy = false,
+            AutomaticDecompression = DecompressionMethods.None,
+            ConnectTimeout = TimeSpan.FromSeconds(3),
+            PooledConnectionLifetime = TimeSpan.FromMinutes(2),
+        };
+
+        return new HttpClient(handler, disposeHandler: true)
+        {
+            Timeout = TimeSpan.FromSeconds(6),
+        };
+    }
 
     public PhotoUploadService(HttpClient httpClient, ILogger<PhotoUploadService> logger)
     {
@@ -170,11 +194,12 @@ public class PhotoUploadService
         try
         {
             var url = $"http://{serverIp}:{serverPort}/api/photos/health";
-            
-            // Add timeout for health check
+
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            var response = await _httpClient.GetAsync(url, cts.Token);
-            
+            using var response = await LanHealthHttpClient.Value
+                .GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cts.Token)
+                .ConfigureAwait(false);
+
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex)
@@ -185,67 +210,25 @@ public class PhotoUploadService
     }
 
     /// <summary>
-    /// Builds a user-friendly error message when server cannot be reached.
-    /// Provides platform-specific guidance for Android emulator vs physical device.
+    /// Builds a user-friendly error message when server cannot be reached (smartphone on LAN to PC running MOBAflow).
     /// </summary>
     private string BuildConnectivityErrorMessage(string serverIp, int serverPort)
     {
         var message = $"Cannot reach server at {serverIp}:{serverPort}\n\n";
 
 #if ANDROID
-        // Android-specific guidance
-        var isEmulator = IsAndroidEmulator();
-        if (isEmulator)
-        {
-            message += "🔧 Running on Android Emulator:\n";
-            message += $"   • Use IP: 10.0.2.2 (not {serverIp})\n";
-            message += "   • Emulators need special IP to access host PC\n\n";
-        }
-        else
-        {
-            message += "📱 Running on Physical Device:\n";
-            message += "   • Ensure device is on SAME Wi-Fi network\n";
-            message += $"   • Verify PC IP is correct ({serverIp})\n";
-            message += "   • Check PC firewall allows connections\n\n";
-        }
+        message += "📱 On your phone:\n";
+        message += "   • Use the same Wi‑Fi as the PC running MOBAflow\n";
+        message += $"   • Verify the PC’s LAN address ({serverIp}) and REST port\n";
+        message += "   • Allow inbound TCP on that port in Windows Firewall\n\n";
 #else
         message += "Troubleshooting:\n";
 #endif
 
-        message += "✓ Server is running on PC\n";
-        message += $"✓ WinUI app shows REST API on port {serverPort}\n";
+        message += "✓ MOBAflow is running on the PC with REST API started\n";
+        message += $"✓ REST API listens on port {serverPort}\n";
         message += $"✓ Windows Firewall allows port {serverPort}";
 
         return message;
     }
-
-#if ANDROID
-    /// <summary>
-    /// Detects if running on Android emulator.
-    /// </summary>
-    private bool IsAndroidEmulator()
-    {
-        try
-        {
-            var brand = Build.Brand?.ToLowerInvariant() ?? string.Empty;
-            var device = Build.Device?.ToLowerInvariant() ?? string.Empty;
-            var model = Build.Model?.ToLowerInvariant() ?? string.Empty;
-            var product = Build.Product?.ToLowerInvariant() ?? string.Empty;
-            var hardware = Build.Hardware?.ToLowerInvariant() ?? string.Empty;
-
-            return brand.Contains("generic") || 
-                   device.Contains("generic") ||
-                   model.Contains("emulator") || 
-                   model.Contains("sdk") ||
-                   product.Contains("sdk") || 
-                   product.Contains("emulator") ||
-                   hardware.Contains("goldfish") || 
-                   hardware.Contains("ranchu");
-        }
-        catch
-        {
-            return false;
-        }
-    }
-#endif
 }

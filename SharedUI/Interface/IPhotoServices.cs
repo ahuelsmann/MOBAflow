@@ -7,7 +7,7 @@ namespace Moba.SharedUI.Interface;
 public interface IRestDiscoveryService
 {
     /// <summary>
-    /// Attempts to discover a REST server endpoint via UDP multicast (or emulator shortcut).
+    /// Attempts to discover a REST server endpoint (e.g. UDP multicast and LAN fallback on MAUI).
     /// </summary>
     /// <returns>
     /// A task that returns the discovered IP address and port, or <c>null</c> values when discovery fails.

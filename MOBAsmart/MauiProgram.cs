@@ -49,17 +49,11 @@ public static class MauiProgram
         builder.Services.AddSingleton<ISoundPlayer, NullSoundPlayer>();
         builder.Services.AddSingleton<ISpeakerEngine, NullSpeakerEngine>();
 
-        // PERFORMANCE: REST-API Discovery - Lazy-loaded (deferred until first use)
-        // This service does network discovery which should not block startup
+        // REST-API discovery (multicast + subnet HTTP); uses its own HttpClient (no proxy) to avoid LAN issues.
         builder.Services.AddSingleton<RestApiDiscoveryService>(sp =>
-            new Lazy<RestApiDiscoveryService>(() =>
-            {
-                // Actual initialization happens on first access
-                return new RestApiDiscoveryService(
-                    sp.GetRequiredService<ILogger<RestApiDiscoveryService>>(),
-                    sp.GetRequiredService<AppSettings>()
-                );
-            }).Value);
+            new RestApiDiscoveryService(
+                sp.GetRequiredService<ILogger<RestApiDiscoveryService>>(),
+                sp.GetRequiredService<AppSettings>()));
 
         // Configure HttpClient with proper timeout and Android-specific handler
         builder.Services.AddSingleton<HttpClient>(_ =>
@@ -69,7 +63,9 @@ public static class MauiProgram
             {
                 AllowAutoRedirect = true,
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                ServerCertificateCustomValidationCallback = (_, _, _, _) => true
+                ServerCertificateCustomValidationCallback = (_, _, _, _) => true,
+                // Route RFC1918 MOBApi/health checks directly; system VPN/proxy often breaks LAN (see SocksSocketImpl in logs).
+                UseProxy = false
             };
             var httpClient = new HttpClient(handler);
 #else
@@ -85,6 +81,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IPhotoUploadService, PhotoUploadAdapter>();
         builder.Services.AddSingleton<IPhotoCaptureService, PhotoCaptureService>();
         builder.Services.AddSingleton<IRestApiClientRegistration, RestApiClientRegistrationService>();
+        builder.Services.AddSingleton<INetworkProfileChangeNotifier, MauiNetworkProfileChangeNotifier>();
 
         // ViewModels
         builder.Services.AddSingleton<MauiViewModel>();

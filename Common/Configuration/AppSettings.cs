@@ -69,8 +69,8 @@ public class AppSettings
 }
 
 /// <summary>
-/// REST-API Server connection settings (for MAUI client connecting to WinUI/WebApp server).
-/// Manual IP configuration only - no automatic discovery.
+/// REST-API server connection settings (MAUI client to WinUI in-process API or MOBApi).
+/// MOBAsmart uses multicast and LAN HTTP discovery; saved IP and recent addresses are probed first.
 /// </summary>
 public class RestApiSettings
 {

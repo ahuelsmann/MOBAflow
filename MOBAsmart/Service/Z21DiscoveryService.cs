@@ -1,12 +1,15 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
 
-using Common.Discovery;
 using Backend.Protocol;
+
+using Common.Discovery;
+
 using Microsoft.Extensions.Logging;
+
 using SharedUI.Interface;
+
 using System.Net;
-using System.Net.NetworkInformation;
 using System.Net.Sockets;
 
 /// <summary>
@@ -36,7 +39,7 @@ public class Z21DiscoveryService : IZ21DiscoveryService
     /// <returns>IP address of the first responding Z21, or null if none found.</returns>
     public async Task<string?> DiscoverZ21Async(CancellationToken cancellationToken = default)
     {
-        var localAddresses = GetCandidateLocalIpv4Addresses();
+        var localAddresses = LanIpv4AddressHelper.GetCandidateLocalIpv4Addresses();
         var candidates = SubnetCandidateBuilder.BuildCandidates(localAddresses);
         if (candidates.Count == 0)
         {
@@ -91,63 +94,6 @@ public class Z21DiscoveryService : IZ21DiscoveryService
 
         _logger.LogInformation("Z21 discovery: no Z21 found on subnet");
         return null;
-    }
-
-    /// <summary>
-    /// Gets candidate local IPv4 addresses whose /24 subnets should be scanned for the Z21.
-    /// </summary>
-    private static List<IPAddress> GetCandidateLocalIpv4Addresses()
-    {
-        try
-        {
-            var privateAddresses = new List<IPAddress>();
-            var fallbackAddresses = new List<IPAddress>();
-
-            foreach (var ni in NetworkInterface.GetAllNetworkInterfaces())
-            {
-                if (ni.OperationalStatus != OperationalStatus.Up ||
-                    ni.NetworkInterfaceType == NetworkInterfaceType.Loopback)
-                {
-                    continue;
-                }
-
-                var props = ni.GetIPProperties();
-                foreach (var ua in props.UnicastAddresses)
-                {
-                    var address = ua.Address;
-                    if (address.AddressFamily != AddressFamily.InterNetwork || IPAddress.IsLoopback(address))
-                    {
-                        continue;
-                    }
-
-                    if (SubnetCandidateBuilder.IsPrivateIPv4(address))
-                    {
-                        privateAddresses.Add(address);
-                    }
-                    else
-                    {
-                        fallbackAddresses.Add(address);
-                    }
-                }
-            }
-
-            if (privateAddresses.Count > 0)
-            {
-                return privateAddresses;
-            }
-
-#if ANDROID
-            return fallbackAddresses;
-#else
-            return [];
-#endif
-        }
-        catch
-        {
-            // Ignore: e.g. permission or platform
-        }
-
-        return [];
     }
 
     /// <summary>

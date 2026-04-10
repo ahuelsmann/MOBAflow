@@ -28,6 +28,10 @@ public sealed partial class MauiViewModel : ObservableObject
     private readonly IPhotoUploadService _photoUploadService;
     private readonly IPhotoCaptureService _photoCaptureService;
     private readonly IRestApiClientRegistration? _restApiClientRegistration;
+    private readonly INetworkProfileChangeNotifier _networkProfileChangeNotifier;
+
+    private readonly object _networkChangeDebounceLock = new();
+    private CancellationTokenSource? _networkChangeDebounceCts;
 
     /// <summary>Last time we registered with the REST API (for periodic re-register to stay in Overview list).</summary>
     private DateTime _lastRestApiRegisterTime = DateTime.MinValue;
@@ -45,6 +49,9 @@ public sealed partial class MauiViewModel : ObservableObject
     private const int RestApiRediscoverIntervalFirst90Seconds = 10;
     private const int RestApiStartupRetryWindowSeconds = 90;
 
+    /// <summary>Coalesces rapid platform connectivity notifications before re-running REST discovery.</summary>
+    private const int NetworkChangeDebounceMilliseconds = 750;
+
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MauiViewModel"/> class for the MAUI mobile client.
@@ -58,6 +65,7 @@ public sealed partial class MauiViewModel : ObservableObject
     /// <param name="photoUploadService">Service used to upload captured photos to the server.</param>
     /// <param name="photoCaptureService">Service used to capture photos on the device.</param>
     /// <param name="restApiClientRegistration">Optional: registers this app with the REST API for Overview client list (MAUI).</param>
+    /// <param name="networkProfileChangeNotifier">Raises when device connectivity changes so cached LAN REST endpoints can be re-resolved.</param>
     public MauiViewModel(
         IMobaClient mobaClient,
         IUiDispatcher uiDispatcher,
@@ -67,6 +75,7 @@ public sealed partial class MauiViewModel : ObservableObject
         IZ21DiscoveryService z21DiscoveryService,
         IPhotoUploadService photoUploadService,
         IPhotoCaptureService photoCaptureService,
+        INetworkProfileChangeNotifier networkProfileChangeNotifier,
         IRestApiClientRegistration? restApiClientRegistration = null)
     {
         ArgumentNullException.ThrowIfNull(mobaClient);
@@ -77,6 +86,7 @@ public sealed partial class MauiViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(z21DiscoveryService);
         ArgumentNullException.ThrowIfNull(photoUploadService);
         ArgumentNullException.ThrowIfNull(photoCaptureService);
+        ArgumentNullException.ThrowIfNull(networkProfileChangeNotifier);
         _mobaClient = mobaClient;
         _uiDispatcher = uiDispatcher;
         _settings = settings;
@@ -85,7 +95,11 @@ public sealed partial class MauiViewModel : ObservableObject
         _z21DiscoveryService = z21DiscoveryService;
         _photoUploadService = photoUploadService;
         _photoCaptureService = photoCaptureService;
+        _networkProfileChangeNotifier = networkProfileChangeNotifier;
         _restApiClientRegistration = restApiClientRegistration;
+
+        _networkProfileChangeNotifier.NetworkProfilePossiblyChanged += OnNetworkProfilePossiblyChanged;
+        _networkProfileChangeNotifier.StartListening();
 
         _mobaClient.SnapshotChanged += OnRuntimeSnapshotChanged;
         _mobaClient.FeedbackReceived += OnFeedbackReceived;
@@ -94,12 +108,11 @@ public sealed partial class MauiViewModel : ObservableObject
         LoadSettingsIntoViewModel();
         ApplyRuntimeSnapshot(_mobaClient.Current);
 
-        // Auto-discover REST-API and optionally Z21 when addresses are empty (non-blocking)
+        // Auto-discover REST (awaited inside) and Z21 like Z21: discovery before trusting reachability
         _ = TryAutoDiscoverEndpointsAsync();
 
-        // REST API health check: initial check + periodic every 30s
+        // REST API health check: periodic every 30s (no immediate check — avoids stale saved IP before discovery)
         StartRestApiHealthCheckLoop();
-        _ = RefreshRestApiReachableAsync();
 
         // Apply polling interval to runtime on startup (5 seconds - not configurable)
         _mobaClient.SetSystemStatePollingInterval(5);
@@ -108,9 +121,9 @@ public sealed partial class MauiViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Runs REST-API and Z21 discovery in the background. Uses settings as fallback for REST; discovery can override.
-    /// Z21 connect runs as soon as Z21 is discovered (no wait for REST). REST discovery retries with backoff so the
-    /// server has time to come up when both apps start together (~10–15s).
+    /// Runs LAN discovery for MOBApi (REST) and Z21. Matches the Z21 pattern: REST discovery is awaited (with retries),
+    /// not fire-and-forget, so we do not health-check a stale saved IP before discovery runs. Z21 discovery runs in
+    /// parallel with REST retries so connect latency stays low.
     /// </summary>
     private async Task TryAutoDiscoverEndpointsAsync()
     {
@@ -119,10 +132,10 @@ public sealed partial class MauiViewModel : ObservableObject
             // Short delay for network stack (especially on Android)
             await Task.Delay(TimeSpan.FromMilliseconds(500)).ConfigureAwait(false);
 
-            // Start REST discovery in background (updates RestApiIpAddress when found; does not block Z21)
-            _ = RestDiscoveryLoopAsync();
+            // REST: same idea as Z21 — run discovery to completion (retries), in parallel with Z21 lookup
+            var restDiscoveryTask = RestDiscoveryLoopAsync();
 
-            // Z21 discovery: wait for result and connect immediately when found (no wait for REST)
+            // Z21 discovery: wait for result and connect immediately when found (parallel to REST)
             var z21Ip = await _z21DiscoveryService.DiscoverZ21Async(CancellationToken.None).ConfigureAwait(false);
             if (!string.IsNullOrEmpty(z21Ip))
             {
@@ -147,6 +160,11 @@ public sealed partial class MauiViewModel : ObservableObject
                     }
                 }).ConfigureAwait(false);
             }
+
+            await restDiscoveryTask.ConfigureAwait(false);
+
+            // First reachability update after startup discovery (avoids ctor-time check against obsolete REST IP)
+            await RefreshRestApiReachableAsync().ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -156,7 +174,10 @@ public sealed partial class MauiViewModel : ObservableObject
 
     private async Task RestDiscoveryLoopAsync()
     {
-        var restDelaysMs = new[] { 0, 2000, 5000, 10000, 15000 }; // 0, +2s, +5s, +10s, +15s (~32s total window)
+        _lastRestApiDiscoverTime = DateTime.UtcNow;
+
+        // Fewer full discovery passes than before: each pass runs multicast + LAN HTTP subnet probe (expensive on Wi‑Fi)
+        var restDelaysMs = new[] { 0, 5000, 15000 };
         foreach (var delayMs in restDelaysMs)
         {
             if (delayMs > 0)
@@ -165,21 +186,86 @@ public sealed partial class MauiViewModel : ObservableObject
             var (ip, port) = await _restDiscoveryService.DiscoverServerAsync().ConfigureAwait(false);
             if (!string.IsNullOrEmpty(ip) && port.HasValue)
             {
-                _lastRestApiDiscoverTime = DateTime.UtcNow;
-                _uiDispatcher.InvokeOnUi(() =>
-                {
-                    RestApiIpAddress = ip;
-                    RestApiPort = port.Value;
-                });
-                _settings.RestApi.CurrentIpAddress = ip;
-                _settings.RestApi.Port = port.Value;
-                try { await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false); } catch { /* ignore */ }
-                await RefreshRestApiReachableAsync().ConfigureAwait(false);
+                await ApplyDiscoveredRestEndpointAsync(ip, port.Value).ConfigureAwait(false);
                 return;
             }
         }
     }
-    
+
+    /// <summary>
+    /// Applies a discovered REST endpoint to the UI, settings, recent-IP history, and reachability state.
+    /// </summary>
+    private async Task ApplyDiscoveredRestEndpointAsync(string ip, int port)
+    {
+        _lastRestApiDiscoverTime = DateTime.UtcNow;
+        var trimmedIp = ip.Trim();
+        _uiDispatcher.InvokeOnUi(() =>
+        {
+            RestApiIpAddress = trimmedIp;
+            RestApiPort = port;
+        });
+        _settings.RestApi.CurrentIpAddress = trimmedIp;
+        _settings.RestApi.Port = port;
+        RestApiRecentEndpointHistory.RecordRecentIp(_settings.RestApi, trimmedIp);
+        try
+        {
+            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Ignore persistence errors (e.g. read-only storage); in-memory state still applies for this session.
+        }
+
+        await RefreshRestApiReachableAsync().ConfigureAwait(false);
+    }
+
+    private void OnNetworkProfilePossiblyChanged(object? sender, EventArgs e)
+    {
+        _ = sender;
+        _ = e;
+        CancellationToken token;
+        lock (_networkChangeDebounceLock)
+        {
+            _networkChangeDebounceCts?.Cancel();
+            _networkChangeDebounceCts?.Dispose();
+            _networkChangeDebounceCts = new CancellationTokenSource();
+            token = _networkChangeDebounceCts.Token;
+        }
+
+        _ = RunDebouncedNetworkChangeAsync(token);
+    }
+
+    private async Task RunDebouncedNetworkChangeAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(NetworkChangeDebounceMilliseconds, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        try
+        {
+            _uiDispatcher.InvokeOnUi(() => IsRestApiReachable = false);
+            _lastRestApiDiscoverTime = DateTime.MinValue;
+
+            var (ip, port) = await _restDiscoveryService.DiscoverServerAsync().ConfigureAwait(false);
+            if (!string.IsNullOrEmpty(ip) && port.HasValue)
+            {
+                await ApplyDiscoveredRestEndpointAsync(ip, port.Value).ConfigureAwait(false);
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"REST discovery after network change: {ex.Message}");
+        }
+
+        await RefreshRestApiReachableAsync().ConfigureAwait(false);
+    }
+
     /// <summary>
     /// Loads settings from AppSettings singleton into ViewModel properties.
     /// Called during constructor after SettingsService has loaded the file.
@@ -279,12 +365,7 @@ public sealed partial class MauiViewModel : ObservableObject
                     var (restIp, restPort) = await _restDiscoveryService.DiscoverServerAsync().ConfigureAwait(false);
                     if (!string.IsNullOrEmpty(restIp) && restPort.HasValue)
                     {
-                        _uiDispatcher.InvokeOnUi(() =>
-                        {
-                            RestApiIpAddress = restIp;
-                            RestApiPort = restPort.Value;
-                        });
-                        await RefreshRestApiReachableAsync().ConfigureAwait(false);
+                        await ApplyDiscoveredRestEndpointAsync(restIp, restPort.Value).ConfigureAwait(false);
                     }
                 }
                 catch (Exception ex)
@@ -309,6 +390,19 @@ public sealed partial class MauiViewModel : ObservableObject
         {
             var reachable = await _photoUploadService.HealthCheckAsync(RestApiIpAddress, RestApiPort).ConfigureAwait(false);
             _uiDispatcher.InvokeOnUi(() => IsRestApiReachable = reachable);
+
+            if (reachable
+                && RestApiRecentEndpointHistory.RecordRecentIp(_settings.RestApi, RestApiIpAddress.Trim()))
+            {
+                try
+                {
+                    await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
+                }
+                catch
+                {
+                    // Ignore persistence errors; recent list still helps discovery within this session.
+                }
+            }
 
             if (reachable && _restApiClientRegistration != null)
             {
@@ -687,6 +781,17 @@ public sealed partial class MauiViewModel : ObservableObject
             {
                 PhotoUploadSuccess = true;
                 PhotoUploadStatus = serverPhotoPath ?? "Uploaded successfully.";
+                if (RestApiRecentEndpointHistory.RecordRecentIp(_settings.RestApi, ip.Trim()))
+                {
+                    try
+                    {
+                        await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
+                    }
+                    catch
+                    {
+                        // Ignore persistence errors.
+                    }
+                }
             }
             else
             {
