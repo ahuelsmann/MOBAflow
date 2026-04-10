@@ -1,9 +1,12 @@
 namespace Moba.WinUI.Controls.Docking.Workspace;
 
-using System;
-using Moba.WinUI.Controls.Docking;
+using Docking;
+
 using Microsoft.UI.Xaml.Controls;
-using Moba.WinUI.Controls.Docking.Model;
+
+using Model;
+
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;

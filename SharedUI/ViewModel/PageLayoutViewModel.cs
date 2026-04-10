@@ -1,6 +1,7 @@
-using Moba.Common.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using CommunityToolkit.Mvvm.ComponentModel;
+
+using Moba.Common.Configuration;
+
 using System.ComponentModel;
 
 namespace Moba.SharedUI.ViewModel;

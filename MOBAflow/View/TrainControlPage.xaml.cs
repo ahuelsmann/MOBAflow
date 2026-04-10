@@ -14,8 +14,6 @@ using Moba.SharedUI.ViewModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using ViewModel;
-using Windows.UI;
-using Windows.UI.ViewManagement;
 
 /// <summary>
 /// TrainControlPage - Theme-aware train control interface.

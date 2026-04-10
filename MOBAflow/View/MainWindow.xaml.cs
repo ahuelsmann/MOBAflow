@@ -13,7 +13,7 @@ using System.Diagnostics;
 using System.Reflection;
 using MainWindowViewModel = SharedUI.ViewModel.MainWindowViewModel;
 
-internal sealed partial class MainWindow : Window
+internal sealed partial class MainWindow
 {
     #region Fields
     public MainWindowViewModel ViewModel { get; }

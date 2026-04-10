@@ -31,8 +31,8 @@
             RightNode="{Binding RightNode}"
             RightPanelWidth="{Binding RightPanelWidth, Mode=TwoWay}"
             TopAutoHidePanels="{Binding TopAutoHidePanels}"
-            TopPanelHeight="{Binding TopPanelHeight, Mode=TwoWay}"
-            TopNode="{Binding TopNode}">
+            TopNode="{Binding TopNode}"
+            TopPanelHeight="{Binding TopPanelHeight, Mode=TwoWay}">
 
             <!--  Center: Document Tabs  -->
             <docking:DockingManager.DocumentAreaContent>

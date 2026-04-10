@@ -1,16 +1,21 @@
 namespace Moba.WinUI.View;
 
-using System;
-using System.ComponentModel;
+using Domain;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-using Moba.Domain;
-using Moba.SharedUI.ViewModel;
-using Moba.WinUI.Service;
-using Moba.WinUI.ViewModel;
 
-sealed partial class SignalBoxPage : Page
+using Moba.SharedUI.ViewModel;
+
+using Service;
+
+using System;
+using System.ComponentModel;
+
+using ViewModel;
+
+sealed partial class SignalBoxPage
 {
     private GridLength _toolboxExpandedWidth = new(240);
     private GridLength _propertiesExpandedWidth = new(300);

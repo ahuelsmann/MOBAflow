@@ -1,21 +1,29 @@
 namespace Moba.WinUI.View;
 
-using Moba.Domain;
-using Moba.SharedUI.Interface;
-using Moba.SharedUI.Service;
+using Domain;
+
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+
+using Moba.SharedUI.Service;
+
+using SharedUI.Interface;
+
 using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
+
 using TrackLibrary.PikoA;
+
 using TrackPlan.Renderer;
+
 using Windows.System;
 using Windows.UI;
 using Windows.UI.Core;
-using Path = System.IO.Path;
+
+using Path = Path;
 
 internal sealed partial class TrackPlanPage
 {
@@ -232,21 +240,19 @@ internal sealed partial class TrackPlanPage
         }
     }
 
-    private async Task<bool> LoadTrackPlanAsync()
+    private async Task LoadTrackPlanAsync()
     {
         var ioService = GetIoService();
         if (ioService is NullIoService)
         {
             StatusText.Text = "Laden ist auf dieser Plattform nicht verfügbar.";
-            return false;
+            return;
         }
 
-        if (!await ConfirmDiscardOrSaveAsync())
-            return false;
+        if (!await ConfirmDiscardOrSaveAsync()) return;
 
         var path = await ioService.BrowseForJsonFileAsync();
-        if (string.IsNullOrWhiteSpace(path))
-            return false;
+        if (string.IsNullOrWhiteSpace(path)) return;
 
         try
         {
@@ -255,7 +261,7 @@ internal sealed partial class TrackPlanPage
             if (document == null)
             {
                 StatusText.Text = "TrackPlan-Datei konnte nicht geladen werden.";
-                return false;
+                return;
             }
 
             ApplyEditorDocument(document, clearHistory: true);
@@ -263,12 +269,12 @@ internal sealed partial class TrackPlanPage
             _lastSavedDocumentJson = SerializeDocument(CaptureDocumentState());
             _hasUnsavedChanges = false;
             StatusText.Text = $"Track plan geladen: {path}";
-            return true;
+            return;
         }
         catch (Exception ex)
         {
             StatusText.Text = $"Laden fehlgeschlagen: {ex.Message}";
-            return false;
+            return;
         }
     }
 
@@ -549,7 +555,7 @@ internal sealed partial class TrackPlanPage
             return;
         }
 
-        var svg = new PlacedTrackPlanSvgRenderer().Render(_plan.Segments, _trackOpacity, _showGrid, false);
+        var svg = new PlacedTrackPlanSvgRenderer().Render(_plan.Segments, _trackOpacity, _showGrid);
         var path = Path.Combine(Path.GetTempPath(), "trackplan-current.html");
         new SvgExporter().Export(svg, path);
 

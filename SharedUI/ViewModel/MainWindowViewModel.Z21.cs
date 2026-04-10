@@ -2,10 +2,12 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Model;
+
+using Common.Runtime;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Domain;
-using Common.Runtime;
+
 using System.Collections.ObjectModel;
 
 /// <summary>

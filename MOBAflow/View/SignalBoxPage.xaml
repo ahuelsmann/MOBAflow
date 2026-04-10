@@ -4,9 +4,9 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:Moba.WinUI.Controls"
     xmlns:controls1="using:CommunityToolkit.WinUI.Controls"
-    xmlns:signalbox="using:Moba.WinUI.Controls.SignalBox"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:signalbox="using:Moba.WinUI.Controls.SignalBox"
     mc:Ignorable="d">
 
     <Grid Padding="0" Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
@@ -171,19 +171,25 @@
             Padding="0"
             ColumnSpacing="0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition x:Name="ColToolbox" Width="240" MinWidth="32" />
+                <ColumnDefinition
+                    x:Name="ColToolbox"
+                    Width="240"
+                    MinWidth="32" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" MinWidth="100" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition x:Name="ColProperties" Width="300" MinWidth="32" />
+                <ColumnDefinition
+                    x:Name="ColProperties"
+                    Width="300"
+                    MinWidth="32" />
             </Grid.ColumnDefinitions>
 
             <!--  LEFT: Toolbox Panel  -->
             <controls:CollapsibleColumnHelper
                 Grid.Column="0"
                 Margin="0"
-                Header="Elemente"
                 Glyph="&#xE70F;"
+                Header="Elemente"
                 IsExpanded="{x:Bind ViewModel.IsSignalBoxToolboxExpanded, Mode=TwoWay}">
                 <controls:CollapsibleColumnHelper.PanelContent>
                     <signalbox:SignalBoxToolboxControl />
@@ -215,15 +221,15 @@
             <controls:CollapsibleColumnProperties
                 Grid.Column="4"
                 Margin="0"
-                Header="Eigenschaften"
                 Glyph="&#xE946;"
+                Header="Eigenschaften"
                 IsExpanded="{x:Bind ViewModel.IsSignalBoxPropertiesExpanded, Mode=TwoWay}">
                 <controls:CollapsibleColumnProperties.PanelContent>
                     <signalbox:SignalBoxPropertiesControl
                         x:Name="PropertiesControl"
-                        ViewModel="{x:Bind ViewModel, Mode=OneWay}"
+                        RequestElementDeletion="OnPropertyControlElementDeletion"
                         RequestVisualRefresh="OnPropertyControlVisualRefresh"
-                        RequestElementDeletion="OnPropertyControlElementDeletion" />
+                        ViewModel="{x:Bind ViewModel, Mode=OneWay}" />
                 </controls:CollapsibleColumnProperties.PanelContent>
             </controls:CollapsibleColumnProperties>
         </Grid>

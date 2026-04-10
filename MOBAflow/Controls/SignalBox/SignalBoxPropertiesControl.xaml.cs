@@ -1,21 +1,25 @@
 namespace Moba.WinUI.Controls.SignalBox;
 
-using System;
-using System.Linq;
-using System.Diagnostics;
-using System.Threading.Tasks;
+using Common.Multiplex;
+
+using Domain;
+
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-using Moba.Common.Multiplex;
-using Moba.Domain;
-using Moba.WinUI.ViewModel;
-using Moba.SharedUI.ViewModel;
-using Moba.WinUI.Service;
-using Microsoft.Extensions.DependencyInjection;
 
-public sealed partial class SignalBoxPropertiesControl : UserControl
+using Moba.SharedUI.ViewModel;
+
+using Service;
+
+using System;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
+
+public sealed partial class SignalBoxPropertiesControl
 {
     private readonly ViessmannSignalService _viessmannSignalService;
 
@@ -74,7 +78,6 @@ public sealed partial class SignalBoxPropertiesControl : UserControl
 
     public void UpdateStatistics()
     {
-        if (PlanViewModel == null) return;
         TrackCountText.Text = PlanViewModel.Elements.Count(e => e is SbTrackStraight or SbTrackCurve).ToString();
         SwitchCountText.Text = PlanViewModel.Elements.OfType<SbSwitch>().Count().ToString();
         SignalCountText.Text = PlanViewModel.Elements.OfType<SbSignal>().Count().ToString();

@@ -1,8 +1,11 @@
 namespace Moba.WinUI.Controls.Docking.Workspace;
 
-using Moba.WinUI.Controls.Docking;
+using Docking;
+
 using Microsoft.UI.Xaml;
-using Moba.WinUI.Controls.Docking.Model;
+
+using Model;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;

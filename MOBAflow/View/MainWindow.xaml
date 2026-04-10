@@ -225,10 +225,10 @@
                 Orientation="Horizontal"
                 Spacing="4">
                 <DropDownButton
+                    Padding="8,4"
                     VerticalAlignment="Center"
                     Background="Transparent"
-                    BorderThickness="0"
-                    Padding="8,4">
+                    BorderThickness="0">
                     <DropDownButton.Content>
                         <TextBlock
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"

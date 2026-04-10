@@ -195,89 +195,40 @@ public static class SegmentPortGeometry
     /// <summary>BWL/BWR: Curved switch R2→R3. Port A origin, Port B end of R2 arc, Port C end of R3 arc.</summary>
     private static IReadOnlyList<PortInfo> GetBwlPorts(double arcR2, double radiusR2, double radiusR3)
     {
-        var curveDir = -1;
-        var centerAngle = (90 * curveDir) * Math.PI / 180;
-        var centerX = radiusR2 * Math.Cos(centerAngle);
-        var centerY = radiusR2 * Math.Sin(centerAngle);
-        var endAngleRad = arcR2 * curveDir * Math.PI / 180;
-        var endLocalAngleRad = (90 * curveDir) * Math.PI / 180;
-        var sweep = endAngleRad - endLocalAngleRad;
-        var portBx = centerX + radiusR2 * Math.Cos(sweep);
-        var portBy = centerY + radiusR2 * Math.Sin(sweep);
-        var portCx = centerX + radiusR3 * Math.Cos(sweep);
-        var portCy = centerY + radiusR3 * Math.Sin(sweep);
-        var exitAngle = arcR2 * curveDir;
-        return
-        [
-            new PortInfo("PortA", 0, 0, 0),
-            new PortInfo("PortB", portBx, portBy, exitAngle),
-            new PortInfo("PortC", portCx, portCy, exitAngle)
-        ];
+        return GetParallelArcSwitchPorts(arcR2, radiusR2, radiusR3, -1);
     }
 
     private static IReadOnlyList<PortInfo> GetBwrPorts(double arcR2, double radiusR2, double radiusR3)
     {
-        const int curveDir = 1;
-        var centerAngle = 90 * Math.PI / 180;
-        var centerX = radiusR2 * Math.Cos(centerAngle);
-        var centerY = radiusR2 * Math.Sin(centerAngle);
-        var endAngleRad = arcR2 * curveDir * Math.PI / 180;
-        var endLocalAngleRad = 90 * Math.PI / 180;
-        var sweep = endAngleRad - endLocalAngleRad;
-        var portBx = centerX + radiusR2 * Math.Cos(sweep);
-        var portBy = centerY + radiusR2 * Math.Sin(sweep);
-        var portCx = centerX + radiusR3 * Math.Cos(sweep);
-        var portCy = centerY + radiusR3 * Math.Sin(sweep);
-        var exitAngle = arcR2 * curveDir;
-        return
-        [
-            new PortInfo("PortA", 0, 0, 0),
-            new PortInfo("PortB", portBx, portBy, exitAngle),
-            new PortInfo("PortC", portCx, portCy, exitAngle)
-        ];
+        return GetParallelArcSwitchPorts(arcR2, radiusR2, radiusR3, 1);
     }
 
     /// <summary>BWLR3/BWRR3: Curved switch R3→R4. Port A origin, Port B end of R3 arc, Port C end of R4 arc.</summary>
     private static IReadOnlyList<PortInfo> GetBwlr3Ports(double radiusR3)
     {
         var radiusR4 = radiusR3 + ParallelSpacingMm;
-        const int curveDir = -1;
-        var centerAngle = -90 * Math.PI / 180;
-        var centerX = radiusR3 * Math.Cos(centerAngle);
-        var centerY = radiusR3 * Math.Sin(centerAngle);
-        const double arcDeg = 30;
-        var endAngleRad = arcDeg * curveDir * Math.PI / 180;
-        var endLocalAngleRad = -90 * Math.PI / 180;
-        var sweep = endAngleRad - endLocalAngleRad;
-        var portBx = centerX + radiusR3 * Math.Cos(sweep);
-        var portBy = centerY + radiusR3 * Math.Sin(sweep);
-        var portCx = centerX + radiusR4 * Math.Cos(sweep);
-        var portCy = centerY + radiusR4 * Math.Sin(sweep);
-        var exitAngle = arcDeg * curveDir;
-        return
-        [
-            new PortInfo("PortA", 0, 0, 0),
-            new PortInfo("PortB", portBx, portBy, exitAngle),
-            new PortInfo("PortC", portCx, portCy, exitAngle)
-        ];
+        return GetParallelArcSwitchPorts(30, radiusR3, radiusR4, -1);
     }
 
     private static IReadOnlyList<PortInfo> GetBwrr3Ports(double radiusR3)
     {
         var radiusR4 = radiusR3 + ParallelSpacingMm;
-        const int curveDir = 1;
-        var centerAngle = 90 * Math.PI / 180;
-        var centerX = radiusR3 * Math.Cos(centerAngle);
-        var centerY = radiusR3 * Math.Sin(centerAngle);
-        const double arcDeg = 30;
-        var endAngleRad = arcDeg * curveDir * Math.PI / 180;
-        var endLocalAngleRad = 90 * Math.PI / 180;
+        return GetParallelArcSwitchPorts(30, radiusR3, radiusR4, 1);
+    }
+
+    private static IReadOnlyList<PortInfo> GetParallelArcSwitchPorts(double arcDegree, double innerRadius, double outerRadius, int curveDirection)
+    {
+        var centerAngle = (90 * curveDirection) * Math.PI / 180;
+        var centerX = innerRadius * Math.Cos(centerAngle);
+        var centerY = innerRadius * Math.Sin(centerAngle);
+        var endAngleRad = arcDegree * curveDirection * Math.PI / 180;
+        var endLocalAngleRad = (90 * curveDirection) * Math.PI / 180;
         var sweep = endAngleRad - endLocalAngleRad;
-        var portBx = centerX + radiusR3 * Math.Cos(sweep);
-        var portBy = centerY + radiusR3 * Math.Sin(sweep);
-        var portCx = centerX + radiusR4 * Math.Cos(sweep);
-        var portCy = centerY + radiusR4 * Math.Sin(sweep);
-        var exitAngle = arcDeg * curveDir;
+        var portBx = centerX + innerRadius * Math.Cos(sweep);
+        var portBy = centerY + innerRadius * Math.Sin(sweep);
+        var portCx = centerX + outerRadius * Math.Cos(sweep);
+        var portCy = centerY + outerRadius * Math.Sin(sweep);
+        var exitAngle = arcDegree * curveDirection;
         return
         [
             new PortInfo("PortA", 0, 0, 0),

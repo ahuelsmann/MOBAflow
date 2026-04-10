@@ -2,8 +2,11 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
 using Domain;
-using SharedUI.Helper;
+
+using Helper;
+
 using System.Collections.ObjectModel;
 
 public partial class MainWindowViewModel

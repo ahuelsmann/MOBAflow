@@ -10,7 +10,7 @@ using Interface;
 
 using System.Collections.ObjectModel;
 
-public sealed partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
+public sealed class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
 {
     private readonly ProjectViewModel _project;
 

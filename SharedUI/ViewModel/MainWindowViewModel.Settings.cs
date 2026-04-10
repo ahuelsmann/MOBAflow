@@ -16,6 +16,44 @@ using System.Net.Sockets;
 /// </summary>
 public partial class MainWindowViewModel
 {
+    private void PersistSettings()
+    {
+        _ = _settingsService?.SaveSettingsAsync(_settings);
+    }
+
+    private bool UpdateSetting<T>(
+        Func<T> currentValue,
+        Action<T> applyValue,
+        T newValue,
+        string propertyName,
+        params string[] additionalPropertyNames)
+    {
+        if (EqualityComparer<T>.Default.Equals(currentValue(), newValue))
+        {
+            return false;
+        }
+
+        applyValue(newValue);
+        OnPropertyChanged(propertyName);
+        foreach (var additionalPropertyName in additionalPropertyNames)
+        {
+            OnPropertyChanged(additionalPropertyName);
+        }
+
+        PersistSettings();
+        return true;
+    }
+
+    private bool UpdateFeatureToggleSetting(
+        Func<bool> currentValue,
+        Action<bool> applyValue,
+        bool newValue,
+        string settingPropertyName,
+        string availabilityPropertyName)
+    {
+        return UpdateSetting(currentValue, applyValue, newValue, settingPropertyName, availabilityPropertyName);
+    }
+
     #region Settings Properties
     /// <summary>
     /// Application settings - exposed for direct binding.
@@ -492,16 +530,12 @@ public partial class MainWindowViewModel
     public bool IsOverviewPageAvailableSetting
     {
         get => _settings.FeatureToggles.IsOverviewPageAvailable;
-        set
-        {
-            if (_settings.FeatureToggles.IsOverviewPageAvailable != value)
-            {
-                _settings.FeatureToggles.IsOverviewPageAvailable = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(IsOverviewPageAvailable));
-                _ = _settingsService?.SaveSettingsAsync(_settings);
-            }
-        }
+        set => UpdateFeatureToggleSetting(
+            () => _settings.FeatureToggles.IsOverviewPageAvailable,
+            updated => _settings.FeatureToggles.IsOverviewPageAvailable = updated,
+            value,
+            nameof(IsOverviewPageAvailableSetting),
+            nameof(IsOverviewPageAvailable));
     }
 
     /// <summary>
@@ -510,16 +544,12 @@ public partial class MainWindowViewModel
     public bool IsSolutionPageAvailableSetting
     {
         get => _settings.FeatureToggles.IsSolutionPageAvailable;
-        set
-        {
-            if (_settings.FeatureToggles.IsSolutionPageAvailable != value)
-            {
-                _settings.FeatureToggles.IsSolutionPageAvailable = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(IsSolutionPageAvailable));
-                _ = _settingsService?.SaveSettingsAsync(_settings);
-            }
-        }
+        set => UpdateFeatureToggleSetting(
+            () => _settings.FeatureToggles.IsSolutionPageAvailable,
+            updated => _settings.FeatureToggles.IsSolutionPageAvailable = updated,
+            value,
+            nameof(IsSolutionPageAvailableSetting),
+            nameof(IsSolutionPageAvailable));
     }
 
     /// <summary>
@@ -528,16 +558,12 @@ public partial class MainWindowViewModel
     public bool IsSettingsPageAvailableSetting
     {
         get => _settings.FeatureToggles.IsSettingsPageAvailable;
-        set
-        {
-            if (_settings.FeatureToggles.IsSettingsPageAvailable != value)
-            {
-                _settings.FeatureToggles.IsSettingsPageAvailable = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(IsSettingsPageAvailable));
-                _ = _settingsService?.SaveSettingsAsync(_settings);
-            }
-        }
+        set => UpdateFeatureToggleSetting(
+            () => _settings.FeatureToggles.IsSettingsPageAvailable,
+            updated => _settings.FeatureToggles.IsSettingsPageAvailable = updated,
+            value,
+            nameof(IsSettingsPageAvailableSetting),
+            nameof(IsSettingsPageAvailable));
     }
 
     /// <summary>
@@ -546,16 +572,12 @@ public partial class MainWindowViewModel
     public bool IsJourneysPageAvailableSetting
     {
         get => _settings.FeatureToggles.IsJourneysPageAvailable;
-        set
-        {
-            if (_settings.FeatureToggles.IsJourneysPageAvailable != value)
-            {
-                _settings.FeatureToggles.IsJourneysPageAvailable = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(IsJourneysPageAvailable));
-                _ = _settingsService?.SaveSettingsAsync(_settings);
-            }
-        }
+        set => UpdateFeatureToggleSetting(
+            () => _settings.FeatureToggles.IsJourneysPageAvailable,
+            updated => _settings.FeatureToggles.IsJourneysPageAvailable = updated,
+            value,
+            nameof(IsJourneysPageAvailableSetting),
+            nameof(IsJourneysPageAvailable));
     }
 
     /// <summary>
@@ -564,16 +586,12 @@ public partial class MainWindowViewModel
     public bool IsWorkflowsPageAvailableSetting
     {
         get => _settings.FeatureToggles.IsWorkflowsPageAvailable;
-        set
-        {
-            if (_settings.FeatureToggles.IsWorkflowsPageAvailable != value)
-            {
-                _settings.FeatureToggles.IsWorkflowsPageAvailable = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(IsWorkflowsPageAvailable));
-                _ = _settingsService?.SaveSettingsAsync(_settings);
-            }
-        }
+        set => UpdateFeatureToggleSetting(
+            () => _settings.FeatureToggles.IsWorkflowsPageAvailable,
+            updated => _settings.FeatureToggles.IsWorkflowsPageAvailable = updated,
+            value,
+            nameof(IsWorkflowsPageAvailableSetting),
+            nameof(IsWorkflowsPageAvailable));
     }
 
     /// <summary>
@@ -582,16 +600,12 @@ public partial class MainWindowViewModel
     public bool IsTrackPlanEditorPageAvailableSetting
     {
         get => _settings.FeatureToggles.IsTrackPlanEditorPageAvailable;
-        set
-        {
-            if (_settings.FeatureToggles.IsTrackPlanEditorPageAvailable != value)
-            {
-                _settings.FeatureToggles.IsTrackPlanEditorPageAvailable = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(IsTrackPlanEditorPageAvailable));
-                _ = _settingsService?.SaveSettingsAsync(_settings);
-            }
-        }
+        set => UpdateFeatureToggleSetting(
+            () => _settings.FeatureToggles.IsTrackPlanEditorPageAvailable,
+            updated => _settings.FeatureToggles.IsTrackPlanEditorPageAvailable = updated,
+            value,
+            nameof(IsTrackPlanEditorPageAvailableSetting),
+            nameof(IsTrackPlanEditorPageAvailable));
     }
 
     /// <summary>
@@ -600,16 +614,12 @@ public partial class MainWindowViewModel
     public bool IsSignalBoxPageAvailableSetting
     {
         get => _settings.FeatureToggles.IsSignalBoxPageAvailable;
-        set
-        {
-            if (_settings.FeatureToggles.IsSignalBoxPageAvailable != value)
-            {
-                _settings.FeatureToggles.IsSignalBoxPageAvailable = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(IsSignalBoxPageAvailable));
-                _ = _settingsService?.SaveSettingsAsync(_settings);
-            }
-        }
+        set => UpdateFeatureToggleSetting(
+            () => _settings.FeatureToggles.IsSignalBoxPageAvailable,
+            updated => _settings.FeatureToggles.IsSignalBoxPageAvailable = updated,
+            value,
+            nameof(IsSignalBoxPageAvailableSetting),
+            nameof(IsSignalBoxPageAvailable));
     }
 
     /// <summary>
@@ -618,16 +628,12 @@ public partial class MainWindowViewModel
     public bool IsJourneyMapPageAvailableSetting
     {
         get => _settings.FeatureToggles.IsJourneyMapPageAvailable;
-        set
-        {
-            if (_settings.FeatureToggles.IsJourneyMapPageAvailable != value)
-            {
-                _settings.FeatureToggles.IsJourneyMapPageAvailable = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(IsJourneyMapPageAvailable));
-                _ = _settingsService?.SaveSettingsAsync(_settings);
-            }
-        }
+        set => UpdateFeatureToggleSetting(
+            () => _settings.FeatureToggles.IsJourneyMapPageAvailable,
+            updated => _settings.FeatureToggles.IsJourneyMapPageAvailable = updated,
+            value,
+            nameof(IsJourneyMapPageAvailableSetting),
+            nameof(IsJourneyMapPageAvailable));
     }
 
     /// <summary>
@@ -636,16 +642,12 @@ public partial class MainWindowViewModel
     public bool IsMonitorPageAvailableSetting
     {
         get => _settings.FeatureToggles.IsMonitorPageAvailable;
-        set
-        {
-            if (_settings.FeatureToggles.IsMonitorPageAvailable != value)
-            {
-                _settings.FeatureToggles.IsMonitorPageAvailable = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(IsMonitorPageAvailable));
-                _ = _settingsService?.SaveSettingsAsync(_settings);
-            }
-        }
+        set => UpdateFeatureToggleSetting(
+            () => _settings.FeatureToggles.IsMonitorPageAvailable,
+            updated => _settings.FeatureToggles.IsMonitorPageAvailable = updated,
+            value,
+            nameof(IsMonitorPageAvailableSetting),
+            nameof(IsMonitorPageAvailable));
     }
 
     /// <summary>
@@ -654,16 +656,12 @@ public partial class MainWindowViewModel
     public bool IsTrainsPageAvailableSetting
     {
         get => _settings.FeatureToggles.IsTrainsPageAvailable;
-        set
-        {
-            if (_settings.FeatureToggles.IsTrainsPageAvailable != value)
-            {
-                _settings.FeatureToggles.IsTrainsPageAvailable = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(IsTrainsPageAvailable));
-                _ = _settingsService?.SaveSettingsAsync(_settings);
-            }
-        }
+        set => UpdateFeatureToggleSetting(
+            () => _settings.FeatureToggles.IsTrainsPageAvailable,
+            updated => _settings.FeatureToggles.IsTrainsPageAvailable = updated,
+            value,
+            nameof(IsTrainsPageAvailableSetting),
+            nameof(IsTrainsPageAvailable));
     }
 
     /// <summary>
@@ -672,16 +670,12 @@ public partial class MainWindowViewModel
     public bool IsTrainControlPageAvailableSetting
     {
         get => _settings.FeatureToggles.IsTrainControlPageAvailable;
-        set
-        {
-            if (_settings.FeatureToggles.IsTrainControlPageAvailable != value)
-            {
-                _settings.FeatureToggles.IsTrainControlPageAvailable = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(IsTrainControlPageAvailable));
-                _ = _settingsService?.SaveSettingsAsync(_settings);
-            }
-        }
+        set => UpdateFeatureToggleSetting(
+            () => _settings.FeatureToggles.IsTrainControlPageAvailable,
+            updated => _settings.FeatureToggles.IsTrainControlPageAvailable = updated,
+            value,
+            nameof(IsTrainControlPageAvailableSetting),
+            nameof(IsTrainControlPageAvailable));
     }
 
     #endregion

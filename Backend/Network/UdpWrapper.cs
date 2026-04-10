@@ -50,6 +50,42 @@ public class UdpWrapper : IUdpClientWrapper
     private readonly Stopwatch _performanceTimer = Stopwatch.StartNew();
     private readonly Lock _statsLock = new();
 
+    private void IncrementReceiveCount()
+    {
+        lock (_statsLock)
+        {
+            _totalReceiveCount++;
+        }
+    }
+
+    private void IncrementSendAndLogStatsIfNeeded()
+    {
+        lock (_statsLock)
+        {
+            _totalSendCount++;
+            if (_totalSendCount % 10 != 0)
+            {
+                return;
+            }
+
+            var elapsedSeconds = _performanceTimer.Elapsed.TotalSeconds;
+            var sendsPerSecond = _totalSendCount / elapsedSeconds;
+            var retriesPerSecond = _totalRetryCount / elapsedSeconds;
+
+            _logger?.LogInformation(
+                "📊 UDP Performance: {SendCount} total sends, {RetryCount} retries, {SendRate:F2} sends/sec, {RetryRate:F2} retries/sec, {ReceiveCount} receives",
+                _totalSendCount, _totalRetryCount, sendsPerSecond, retriesPerSecond, _totalReceiveCount);
+        }
+    }
+
+    private void IncrementRetryCount()
+    {
+        lock (_statsLock)
+        {
+            _totalRetryCount++;
+        }
+    }
+
     /// <summary>
     /// Indicates whether the UDP wrapper is connected and ready to send/receive.
     /// </summary>
@@ -125,10 +161,7 @@ public class UdpWrapper : IUdpClientWrapper
 
                     result = await _client.ReceiveAsync(cancellationToken).ConfigureAwait(false);
 
-                    lock (_statsLock)
-                    {
-                        _totalReceiveCount++;
-                    }
+                    IncrementReceiveCount();
 
                     _logger?.LogDebug("📥 Received {Length} bytes from {Endpoint}: {Data}",
                         result.Buffer.Length,
@@ -180,22 +213,7 @@ public class UdpWrapper : IUdpClientWrapper
         int attempt = 0;
         int delayMs = 50;
 
-        lock (_statsLock)
-        {
-            _totalSendCount++;
-
-            // Log performance stats every 10 sends
-            if (_totalSendCount % 10 == 0)
-            {
-                var elapsedSeconds = _performanceTimer.Elapsed.TotalSeconds;
-                var sendsPerSecond = _totalSendCount / elapsedSeconds;
-                var retriesPerSecond = _totalRetryCount / elapsedSeconds;
-
-                _logger?.LogInformation(
-                    "📊 UDP Performance: {SendCount} total sends, {RetryCount} retries, {SendRate:F2} sends/sec, {RetryRate:F2} retries/sec, {ReceiveCount} receives",
-                    _totalSendCount, _totalRetryCount, sendsPerSecond, retriesPerSecond, _totalReceiveCount);
-            }
-        }
+        IncrementSendAndLogStatsIfNeeded();
 
         _logger?.LogDebug("📤 Sending {Length} bytes (attempt 1/{MaxRetries}): {Data}",
             data.Length, maxRetries, BitConverter.ToString(data).Replace("-", " "));
@@ -216,10 +234,7 @@ public class UdpWrapper : IUdpClientWrapper
             {
                 attempt++;
 
-                lock (_statsLock)
-                {
-                    _totalRetryCount++;
-                }
+                IncrementRetryCount();
 
                 _logger?.LogWarning("⚠️ Send attempt {Attempt}/{MaxRetries} failed: {Error}. Retrying in {DelayMs}ms",
                     attempt, maxRetries, ex.Message, delayMs);
@@ -246,15 +261,7 @@ public class UdpWrapper : IUdpClientWrapper
             await _cts.CancelAsync().ConfigureAwait(false);
             try
             {
-                if (_receiverTask != null)
-                {
-                    // Wait with timeout to prevent hanging
-                    var completedTask = await Task.WhenAny(_receiverTask, Task.Delay(2000)).ConfigureAwait(false);
-                    if (completedTask != _receiverTask)
-                    {
-                        _logger?.LogWarning("Receiver task did not complete within timeout");
-                    }
-                }
+                await WaitForReceiverTaskAsync().ConfigureAwait(false);
             }
             catch (OperationCanceledException) { }
             catch (Exception ex)
@@ -285,6 +292,20 @@ public class UdpWrapper : IUdpClientWrapper
         }
 
         _logger?.LogInformation("UDP client stopped successfully");
+    }
+
+    private async Task WaitForReceiverTaskAsync()
+    {
+        if (_receiverTask == null)
+        {
+            return;
+        }
+
+        var completedTask = await Task.WhenAny(_receiverTask, Task.Delay(2000)).ConfigureAwait(false);
+        if (completedTask != _receiverTask)
+        {
+            _logger?.LogWarning("Receiver task did not complete within timeout");
+        }
     }
 
     /// <summary>

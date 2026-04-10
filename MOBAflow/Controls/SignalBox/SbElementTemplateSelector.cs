@@ -1,8 +1,9 @@
 namespace Moba.WinUI.Controls.SignalBox;
 
+using Domain;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Moba.Domain;
 
 public class SbElementTemplateSelector : DataTemplateSelector
 {

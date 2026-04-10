@@ -14,14 +14,12 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using Moba.SharedUI.ViewModel;
-using System.Diagnostics;
 using TrackLibrary.PikoA;
 using TrackPlan.Renderer;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.System;
 using Windows.UI;
-using Path = Path;
 
 internal sealed partial class TrackPlanPage
 {
@@ -563,9 +561,7 @@ internal sealed partial class TrackPlanPage
             _plan.Segments,
             _plan.Connections,
             excludeSegmentId,
-            movingGroup,
-            SnapThresholdMm * 1.5,
-            RigidGroupSnapAngleToleranceDegrees);
+            movingGroup);
 
         return snap == null
             ? null

@@ -109,16 +109,12 @@
                     <SymbolIcon Symbol="Preview" />
                 </AppBarToggleButton.Icon>
             </AppBarToggleButton>
-            <AppBarButton
-                x:Name="RotateLeftButton"
-                Label="Rotate ←">
+            <AppBarButton x:Name="RotateLeftButton" Label="Rotate ←">
                 <AppBarButton.Icon>
                     <SymbolIcon Symbol="Back" />
                 </AppBarButton.Icon>
             </AppBarButton>
-            <AppBarButton
-                x:Name="RotateRightButton"
-                Label="Rotate →">
+            <AppBarButton x:Name="RotateRightButton" Label="Rotate →">
                 <AppBarButton.Icon>
                     <SymbolIcon Symbol="Forward" />
                 </AppBarButton.Icon>
@@ -146,18 +142,24 @@
         <!--  Main Content Grid  -->
         <Grid x:Name="MainGrid" Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition x:Name="ColToolbox" Width="180" MinWidth="32" />
+                <ColumnDefinition
+                    x:Name="ColToolbox"
+                    Width="180"
+                    MinWidth="32" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" MinWidth="100" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition x:Name="ColProperties" Width="240" MinWidth="32" />
+                <ColumnDefinition
+                    x:Name="ColProperties"
+                    Width="240"
+                    MinWidth="32" />
             </Grid.ColumnDefinitions>
             <!--  Left Panel: Toolbox  -->
             <controls:CollapsibleColumnHelper
                 Grid.Column="0"
                 Margin="0"
-                Header="Piko A-Gleis"
                 Glyph="&#xE70F;"
+                Header="Piko A-Gleis"
                 IsExpanded="{x:Bind ViewModel.IsToolboxExpanded, Mode=TwoWay}">
                 <controls:CollapsibleColumnHelper.PanelContent>
                     <ScrollViewer Padding="8,0">
@@ -255,8 +257,8 @@
             <controls:CollapsibleColumnProperties
                 Grid.Column="4"
                 Margin="0"
-                Header="Properties"
                 Glyph="&#xE946;"
+                Header="Properties"
                 IsExpanded="{x:Bind ViewModel.IsPropertiesExpanded, Mode=TwoWay}">
                 <controls:CollapsibleColumnProperties.PanelContent>
                     <ScrollViewer Padding="16">

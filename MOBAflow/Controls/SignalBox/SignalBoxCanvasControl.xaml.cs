@@ -1,14 +1,17 @@
 namespace Moba.WinUI.Controls.SignalBox;
 
-using System;
+using Domain;
+
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Data;
+using Microsoft.UI.Xaml.Input;
+
+using Moba.SharedUI.ViewModel;
+
+using System;
+
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
-using Moba.SharedUI.ViewModel;
-using Domain;
 
 public class GridCoordinateConverter : IValueConverter
 {

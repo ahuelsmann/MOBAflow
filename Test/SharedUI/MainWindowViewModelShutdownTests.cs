@@ -2,8 +2,7 @@
 namespace Moba.Test.SharedUI;
 
 using Microsoft.Extensions.Logging;
-using Moq;
-using Moba.Backend;
+
 using Moba.Backend.Model;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
@@ -12,6 +11,8 @@ using Moba.Common.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
+
+using Moq;
 
 /// <summary>
 /// Regression tests for MainWindowViewModel shutdown behavior.

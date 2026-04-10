@@ -6,7 +6,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Windows.ApplicationModel.DataTransfer;
 
-public sealed partial class SignalBoxToolboxControl : UserControl
+public sealed partial class SignalBoxToolboxControl
 {
     public SignalBoxToolboxControl()
     {
