@@ -114,13 +114,13 @@ public class SignalBoxPlan
     {
         ArgumentNullException.ThrowIfNull(connection);
 
-        if (Elements.All(e => e.Id != connection.FromElementId))
+        if (!ElementExists(connection.FromElementId))
         {
             throw new InvalidOperationException(
                 $"Source element {connection.FromElementId} does not exist in the plan.");
         }
 
-        if (Elements.All(e => e.Id != connection.ToElementId))
+        if (!ElementExists(connection.ToElementId))
         {
             throw new InvalidOperationException(
                 $"Target element {connection.ToElementId} does not exist in the plan.");
@@ -167,7 +167,7 @@ public class SignalBoxPlan
         }
 
         var missingElementIds = route.ElementIds
-            .Where(id => Elements.All(e => e.Id != id))
+            .Where(id => !ElementExists(id))
             .ToList();
 
         if (missingElementIds.Count > 0)
@@ -177,7 +177,7 @@ public class SignalBoxPlan
         }
 
         var missingSwitchIds = route.SwitchPositions.Keys
-            .Where(id => Elements.All(e => e.Id != id) || FindElement(id) is not SbSwitch)
+            .Where(id => FindElement(id) is not SbSwitch)
             .ToList();
 
         if (missingSwitchIds.Count > 0)
@@ -208,6 +208,11 @@ public class SignalBoxPlan
         Elements.Clear();
         Connections.Clear();
         Routes.Clear();
+    }
+
+    private bool ElementExists(Guid elementId)
+    {
+        return Elements.Any(e => e.Id == elementId);
     }
 }
 

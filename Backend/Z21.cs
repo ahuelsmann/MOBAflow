@@ -696,6 +696,17 @@ public class Z21 : IZ21
         });
     }
 
+    private void UpdateAndPublishVersionInfo(Action<Z21VersionInfo> updateAction)
+    {
+        VersionInfo ??= new Z21VersionInfo();
+        updateAction(VersionInfo);
+        OnVersionInfoChanged?.Invoke(VersionInfo);
+        PublishEventAsync(new VersionInfoChangedEvent(
+            VersionInfo.SerialNumber,
+            (int)VersionInfo.HardwareTypeCode,
+            (int)VersionInfo.FirmwareVersionCode));
+    }
+
     private void OnUdpReceived(object? sender, UdpReceivedEventArgs e)
     {
         var content = e.Buffer;
@@ -772,18 +783,15 @@ public class Z21 : IZ21
             if (Z21MessageParser.TryParseLanXGetVersionResponse(content, out var xbusVer, out var cmdstId))
             {
                 SetConnectedIfNotAlready();
-                VersionInfo ??= new Z21VersionInfo();
-                // Preserve existing SerialNumber/HardwareTypeCode if already set; otherwise encode X-Bus version in FirmwareVersionCode for display
-                if (VersionInfo.SerialNumber == 0 && VersionInfo.HardwareTypeCode == 0)
+                UpdateAndPublishVersionInfo(versionInfo =>
                 {
-                    VersionInfo.FirmwareVersionCode = xbusVer; // Display as V0.xx (e.g. V0.40 for xbusVer=0x40)
-                    _logger?.LogInformation("📌 Z21 LAN_X_GET_VERSION: X-Bus 0x{XBusVer:X2}, CMDST_ID 0x{CmdstId:X4}", xbusVer, cmdstId);
-                }
-                OnVersionInfoChanged?.Invoke(VersionInfo);
-                PublishEventAsync(new VersionInfoChangedEvent(
-                    VersionInfo.SerialNumber,
-                    (int)VersionInfo.HardwareTypeCode,
-                    (int)VersionInfo.FirmwareVersionCode));
+                    // Preserve existing SerialNumber/HardwareTypeCode if already set; otherwise encode X-Bus version in FirmwareVersionCode for display.
+                    if (versionInfo.SerialNumber == 0 && versionInfo.HardwareTypeCode == 0)
+                    {
+                        versionInfo.FirmwareVersionCode = xbusVer; // Display as V0.xx (e.g. V0.40 for xbusVer=0x40)
+                        _logger?.LogInformation("📌 Z21 LAN_X_GET_VERSION: X-Bus 0x{XBusVer:X2}, CMDST_ID 0x{CmdstId:X4}", xbusVer, cmdstId);
+                    }
+                });
             }
 
             return;
@@ -857,14 +865,8 @@ public class Z21 : IZ21
                 // Z21 is responding - mark as connected
                 SetConnectedIfNotAlready();
 
-                VersionInfo ??= new Z21VersionInfo();
-                VersionInfo.SerialNumber = serialNumber;
+                UpdateAndPublishVersionInfo(versionInfo => versionInfo.SerialNumber = serialNumber);
                 _logger?.LogInformation("📌 Z21 Serial Number: {SerialNumber}", serialNumber);
-                OnVersionInfoChanged?.Invoke(VersionInfo);
-                PublishEventAsync(new VersionInfoChangedEvent(
-                    VersionInfo.SerialNumber,
-                    (int)VersionInfo.HardwareTypeCode,
-                    (int)VersionInfo.FirmwareVersionCode));
             }
             return;
         }
@@ -874,15 +876,16 @@ public class Z21 : IZ21
         {
             if (Z21MessageParser.TryParseHwInfo(content, out var hwType, out var fwVersion))
             {
-                VersionInfo ??= new Z21VersionInfo();
-                VersionInfo.HardwareTypeCode = hwType;
-                VersionInfo.FirmwareVersionCode = fwVersion;
-                _logger?.LogInformation("📌 Z21 Hardware: {HwType}, Firmware: {FwVersion}", VersionInfo.HardwareType, VersionInfo.FirmwareVersion);
-                OnVersionInfoChanged?.Invoke(VersionInfo);
-                PublishEventAsync(new VersionInfoChangedEvent(
-                    VersionInfo.SerialNumber,
-                    (int)VersionInfo.HardwareTypeCode,
-                    (int)VersionInfo.FirmwareVersionCode));
+                UpdateAndPublishVersionInfo(versionInfo =>
+                {
+                    versionInfo.HardwareTypeCode = hwType;
+                    versionInfo.FirmwareVersionCode = fwVersion;
+                });
+                var versionInfo = VersionInfo;
+                if (versionInfo != null)
+                {
+                    _logger?.LogInformation("📌 Z21 Hardware: {HwType}, Firmware: {FwVersion}", versionInfo.HardwareType, versionInfo.FirmwareVersion);
+                }
             }
             return;
         }

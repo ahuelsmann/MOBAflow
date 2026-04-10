@@ -138,25 +138,7 @@ public partial class MainWindowViewModel
 
         // Note: This creates a placeholder station.
         // In practice, stations should be added from City Library via drag & drop.
-        var newStation = new Station
-        {
-            Name = "New Station",
-            NumberOfLapsToStop = 2,
-            IsExitOnLeft = false
-        };
-
-        // Add Station directly to Journey
-        SelectedJourney.Model.Stations.Add(newStation);
-
-        // Refresh Journey's Stations collection
-        SelectedJourney.RefreshStations();
-
-        // Select the new station
-        var stationVm = SelectedJourney.Stations.LastOrDefault();
-        if (stationVm != null)
-        {
-            SelectedStation = stationVm;
-        }
+        AddStationToSelectedJourney(CreateStation("New Station", 2));
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteStation))]
@@ -205,21 +187,8 @@ public partial class MainWindowViewModel
         var cityStation = SelectedCity.Stations.FirstOrDefault();
         if (cityStation != null)
         {
-
             // Create NEW Station (copy name from City Library)
-            var newStation = new Station
-            {
-                Name = cityStation.Name,
-                InPort = 1,  // User must configure!
-                NumberOfLapsToStop = 2,
-                IsExitOnLeft = false
-            };
-
-            // Add Station directly to Journey
-            SelectedJourney.Model.Stations.Add(newStation);
-
-            // Refresh Journey's Stations collection
-            SelectedJourney.RefreshStations();
+            AddStationToSelectedJourney(CreateStation(cityStation.Name, 2));
         }
     }
 
@@ -245,4 +214,27 @@ public partial class MainWindowViewModel
         });
     }
     #endregion
+
+    private Station CreateStation(string name, uint lapsToStop)
+    {
+        return new Station
+        {
+            Name = name,
+            InPort = 1, // User must configure!
+            NumberOfLapsToStop = lapsToStop,
+            IsExitOnLeft = false
+        };
+    }
+
+    private void AddStationToSelectedJourney(Station station)
+    {
+        if (SelectedJourney == null)
+        {
+            return;
+        }
+
+        SelectedJourney.Model.Stations.Add(station);
+        SelectedJourney.RefreshStations();
+        SelectedStation = SelectedJourney.Stations.LastOrDefault();
+    }
 }

@@ -143,34 +143,48 @@ public sealed partial class SignalBoxPropertiesControl
         }
 
         MultiplexConfigPanel.Visibility = Visibility.Visible;
+        EnsureMultiplexerComboBoxItems();
+        RestoreMultiplexerSelection(sig);
+        ApplySignalConfigToMultiplexPanel(sig);
+    }
 
-        if (MultiplexerComboBox.Items.Count == 0)
+    private void EnsureMultiplexerComboBoxItems()
+    {
+        if (MultiplexerComboBox.Items.Count > 0)
         {
-            MultiplexerComboBox.SelectionChanged -= OnMultiplexerSelected;
-            foreach (var def in MultiplexerHelper.GetAllDefinitions())
-            {
-                var item = new ComboBoxItem
-                {
-                    Content = def.DisplayName,
-                    Tag = def.ArticleNumber
-                };
-                MultiplexerComboBox.Items.Add(item);
-            }
-            MultiplexerComboBox.SelectionChanged += OnMultiplexerSelected;
+            return;
         }
 
-        if (!string.IsNullOrEmpty(sig.MultiplexerArticleNumber))
+        MultiplexerComboBox.SelectionChanged -= OnMultiplexerSelected;
+        foreach (var def in MultiplexerHelper.GetAllDefinitions())
         {
-            var multiplexerItem = MultiplexerComboBox.Items
-                .OfType<ComboBoxItem>()
-                .FirstOrDefault(x => x.Tag?.ToString() == sig.MultiplexerArticleNumber);
-
-            if (multiplexerItem != null)
+            MultiplexerComboBox.Items.Add(new ComboBoxItem
             {
-                MultiplexerComboBox.SelectedItem = multiplexerItem;
-            }
+                Content = def.DisplayName,
+                Tag = def.ArticleNumber
+            });
+        }
+        MultiplexerComboBox.SelectionChanged += OnMultiplexerSelected;
+    }
+
+    private void RestoreMultiplexerSelection(SbSignal sig)
+    {
+        if (string.IsNullOrEmpty(sig.MultiplexerArticleNumber))
+        {
+            return;
         }
 
+        var selectedItem = MultiplexerComboBox.Items
+            .OfType<ComboBoxItem>()
+            .FirstOrDefault(x => x.Tag?.ToString() == sig.MultiplexerArticleNumber);
+        if (selectedItem != null)
+        {
+            MultiplexerComboBox.SelectedItem = selectedItem;
+        }
+    }
+
+    private void ApplySignalConfigToMultiplexPanel(SbSignal sig)
+    {
         UpdateSignalArticleComboBoxes(sig);
         BaseAddressBox.Value = sig.BaseAddress > 0 ? sig.BaseAddress : 1;
         UpdateAvailableSignalAspects(sig);
@@ -186,31 +200,51 @@ public sealed partial class SignalBoxPropertiesControl
             return;
         }
 
-        try
+        if (!TryGetSupportedAspects(sig, out var supportedAspects))
         {
-            var supportedAspects = MultiplexerHelper.GetSupportedAspects(
-                sig.MultiplexerArticleNumber,
-                sig.MainSignalArticleNumber);
-
-            AspectHp0Button.Visibility = supportedAspects.Contains(SignalAspect.Hp0) ? Visibility.Visible : Visibility.Collapsed;
-            AspectKs1Button.Visibility = supportedAspects.Contains(SignalAspect.Ks1) ? Visibility.Visible : Visibility.Collapsed;
-            AspectKs2Button.Visibility = supportedAspects.Contains(SignalAspect.Ks2) ? Visibility.Visible : Visibility.Collapsed;
-            AspectKs1BlinkButton.Visibility = supportedAspects.Contains(SignalAspect.Ks1Blink) ? Visibility.Visible : Visibility.Collapsed;
-            AspectKennlichtButton.Visibility = supportedAspects.Contains(SignalAspect.Kennlicht) ? Visibility.Visible : Visibility.Collapsed;
-            AspectDunkelButton.Visibility = supportedAspects.Contains(SignalAspect.Dunkel) ? Visibility.Visible : Visibility.Collapsed;
-            AspectRa12Button.Visibility = supportedAspects.Contains(SignalAspect.Ra12) ? Visibility.Visible : Visibility.Collapsed;
-            AspectZs1Button.Visibility = supportedAspects.Contains(SignalAspect.Zs1) ? Visibility.Visible : Visibility.Collapsed;
-            AspectZs7Button.Visibility = supportedAspects.Contains(SignalAspect.Zs7) ? Visibility.Visible : Visibility.Collapsed;
-
-            if (supportedAspects.Count == 0)
-            {
-                SetAllAspectButtonsVisibility(Visibility.Visible);
-            }
+            SetAllAspectButtonsVisibility(Visibility.Visible);
+            return;
         }
-        catch (ArgumentException)
+
+        ApplySupportedAspectVisibility(supportedAspects);
+        if (supportedAspects.Count == 0)
         {
             SetAllAspectButtonsVisibility(Visibility.Visible);
         }
+    }
+
+    private static bool TryGetSupportedAspects(SbSignal sig, out IReadOnlyCollection<SignalAspect> supportedAspects)
+    {
+        try
+        {
+            supportedAspects = MultiplexerHelper.GetSupportedAspects(
+                sig.MultiplexerArticleNumber!,
+                sig.MainSignalArticleNumber);
+            return true;
+        }
+        catch (ArgumentException)
+        {
+            supportedAspects = Array.Empty<SignalAspect>();
+            return false;
+        }
+    }
+
+    private void ApplySupportedAspectVisibility(IReadOnlyCollection<SignalAspect> supportedAspects)
+    {
+        AspectHp0Button.Visibility = ToVisibility(supportedAspects.Contains(SignalAspect.Hp0));
+        AspectKs1Button.Visibility = ToVisibility(supportedAspects.Contains(SignalAspect.Ks1));
+        AspectKs2Button.Visibility = ToVisibility(supportedAspects.Contains(SignalAspect.Ks2));
+        AspectKs1BlinkButton.Visibility = ToVisibility(supportedAspects.Contains(SignalAspect.Ks1Blink));
+        AspectKennlichtButton.Visibility = ToVisibility(supportedAspects.Contains(SignalAspect.Kennlicht));
+        AspectDunkelButton.Visibility = ToVisibility(supportedAspects.Contains(SignalAspect.Dunkel));
+        AspectRa12Button.Visibility = ToVisibility(supportedAspects.Contains(SignalAspect.Ra12));
+        AspectZs1Button.Visibility = ToVisibility(supportedAspects.Contains(SignalAspect.Zs1));
+        AspectZs7Button.Visibility = ToVisibility(supportedAspects.Contains(SignalAspect.Zs7));
+    }
+
+    private static Visibility ToVisibility(bool isVisible)
+    {
+        return isVisible ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void SetAllAspectButtonsVisibility(Visibility visibility)
@@ -238,47 +272,8 @@ public sealed partial class SignalBoxPropertiesControl
         try
         {
             var def = MultiplexerHelper.GetDefinition(sig.MultiplexerArticleNumber);
-
-            MainSignalComboBox.SelectionChanged -= OnMainSignalSelected;
-            MainSignalComboBox.Items.Clear();
-            foreach (var (articleNumber, displayName) in _viessmannSignalService.GetMainSignalOptions(sig.MultiplexerArticleNumber))
-            {
-                var item = new ComboBoxItem { Content = displayName, Tag = articleNumber };
-                MainSignalComboBox.Items.Add(item);
-            }
-            MainSignalComboBox.SelectionChanged += OnMainSignalSelected;
-
-            var mainSelected = MainSignalComboBox.Items.OfType<ComboBoxItem>()
-                .FirstOrDefault(x => x.Tag?.ToString() == sig.MainSignalArticleNumber);
-            if (mainSelected != null)
-                MainSignalComboBox.SelectedItem = mainSelected;
-            else if (MainSignalComboBox.Items.Count > 0)
-            {
-                MainSignalComboBox.SelectedIndex = 0;
-                sig.MainSignalArticleNumber = (MainSignalComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? def.MainSignalArticleNumber;
-            }
-
-            DistantSignalComboBox.SelectionChanged -= OnDistantSignalSelected;
-            DistantSignalComboBox.Items.Clear();
-            foreach (var (articleNumber, displayName) in _viessmannSignalService.GetDistantSignalOptions(sig.MultiplexerArticleNumber))
-            {
-                var item = new ComboBoxItem { Content = displayName, Tag = articleNumber };
-                DistantSignalComboBox.Items.Add(item);
-            }
-            DistantSignalComboBox.SelectionChanged += OnDistantSignalSelected;
-
-            if (DistantSignalComboBox.Items.Count > 0)
-            {
-                var distantSelected = DistantSignalComboBox.Items.OfType<ComboBoxItem>()
-                    .FirstOrDefault(x => x.Tag?.ToString() == sig.DistantSignalArticleNumber);
-                if (distantSelected != null)
-                    DistantSignalComboBox.SelectedItem = distantSelected;
-                else
-                {
-                    DistantSignalComboBox.SelectedIndex = 0;
-                    sig.DistantSignalArticleNumber = (DistantSignalComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString();
-                }
-            }
+            UpdateMainSignalComboBox(sig, def.MainSignalArticleNumber);
+            UpdateDistantSignalComboBox(sig);
         }
         catch (Exception ex)
         {
@@ -286,24 +281,83 @@ public sealed partial class SignalBoxPropertiesControl
         }
     }
 
+    private void UpdateMainSignalComboBox(SbSignal sig, string defaultMainSignalArticleNumber)
+    {
+        MainSignalComboBox.SelectionChanged -= OnMainSignalSelected;
+        MainSignalComboBox.Items.Clear();
+        foreach (var (articleNumber, displayName) in _viessmannSignalService.GetMainSignalOptions(sig.MultiplexerArticleNumber!))
+        {
+            MainSignalComboBox.Items.Add(new ComboBoxItem { Content = displayName, Tag = articleNumber });
+        }
+        MainSignalComboBox.SelectionChanged += OnMainSignalSelected;
+
+        var mainSelected = MainSignalComboBox.Items
+            .OfType<ComboBoxItem>()
+            .FirstOrDefault(x => x.Tag?.ToString() == sig.MainSignalArticleNumber);
+        if (mainSelected != null)
+        {
+            MainSignalComboBox.SelectedItem = mainSelected;
+            return;
+        }
+
+        if (MainSignalComboBox.Items.Count > 0)
+        {
+            MainSignalComboBox.SelectedIndex = 0;
+            sig.MainSignalArticleNumber = (MainSignalComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? defaultMainSignalArticleNumber;
+        }
+    }
+
+    private void UpdateDistantSignalComboBox(SbSignal sig)
+    {
+        DistantSignalComboBox.SelectionChanged -= OnDistantSignalSelected;
+        DistantSignalComboBox.Items.Clear();
+        foreach (var (articleNumber, displayName) in _viessmannSignalService.GetDistantSignalOptions(sig.MultiplexerArticleNumber!))
+        {
+            DistantSignalComboBox.Items.Add(new ComboBoxItem { Content = displayName, Tag = articleNumber });
+        }
+        DistantSignalComboBox.SelectionChanged += OnDistantSignalSelected;
+
+        if (DistantSignalComboBox.Items.Count == 0)
+        {
+            return;
+        }
+
+        var distantSelected = DistantSignalComboBox.Items
+            .OfType<ComboBoxItem>()
+            .FirstOrDefault(x => x.Tag?.ToString() == sig.DistantSignalArticleNumber);
+        if (distantSelected != null)
+        {
+            DistantSignalComboBox.SelectedItem = distantSelected;
+            return;
+        }
+
+        DistantSignalComboBox.SelectedIndex = 0;
+        sig.DistantSignalArticleNumber = (DistantSignalComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+    }
+
     private void OnMainSignalSelected(object sender, SelectionChangedEventArgs e)
     {
-        if (SelectedElement is not SbSignal sig) return;
-        if (MainSignalComboBox.SelectedItem is ComboBoxItem { Tag: string articleNumber })
-        {
-            sig.MainSignalArticleNumber = articleNumber;
-            UpdateAvailableSignalAspects(sig);
-        }
+        _ = sender;
+        _ = e;
+        TryApplySignalArticleSelection(MainSignalComboBox, static (sig, articleNumber) => sig.MainSignalArticleNumber = articleNumber);
     }
 
     private void OnDistantSignalSelected(object sender, SelectionChangedEventArgs e)
     {
-        if (SelectedElement is not SbSignal sig) return;
-        if (DistantSignalComboBox.SelectedItem is ComboBoxItem { Tag: string articleNumber })
+        _ = sender;
+        _ = e;
+        TryApplySignalArticleSelection(DistantSignalComboBox, static (sig, articleNumber) => sig.DistantSignalArticleNumber = articleNumber);
+    }
+
+    private void TryApplySignalArticleSelection(ComboBox comboBox, Action<SbSignal, string> applySelection)
+    {
+        if (SelectedElement is not SbSignal sig || comboBox.SelectedItem is not ComboBoxItem { Tag: string articleNumber })
         {
-            sig.DistantSignalArticleNumber = articleNumber;
-            UpdateAvailableSignalAspects(sig);
+            return;
         }
+
+        applySelection(sig, articleNumber);
+        UpdateAvailableSignalAspects(sig);
     }
 
     private void UpdateAspectButtons()
@@ -313,15 +367,23 @@ public sealed partial class SignalBoxPropertiesControl
         var accentBrush = (Brush)Application.Current.Resources["AccentFillColorDefaultBrush"];
         var normalBrush = (Brush)Application.Current.Resources["SubtleFillColorSecondaryBrush"];
 
-        AspectHp0Button.Background = sig.SignalAspect == SignalAspect.Hp0 ? accentBrush : normalBrush;
-        AspectKs1Button.Background = sig.SignalAspect == SignalAspect.Ks1 ? accentBrush : normalBrush;
-        AspectKs2Button.Background = sig.SignalAspect == SignalAspect.Ks2 ? accentBrush : normalBrush;
-        AspectKs1BlinkButton.Background = sig.SignalAspect == SignalAspect.Ks1Blink ? accentBrush : normalBrush;
-        AspectKennlichtButton.Background = sig.SignalAspect == SignalAspect.Kennlicht ? accentBrush : normalBrush;
-        AspectDunkelButton.Background = sig.SignalAspect == SignalAspect.Dunkel ? accentBrush : normalBrush;
-        AspectRa12Button.Background = sig.SignalAspect == SignalAspect.Ra12 ? accentBrush : normalBrush;
-        AspectZs1Button.Background = sig.SignalAspect == SignalAspect.Zs1 ? accentBrush : normalBrush;
-        AspectZs7Button.Background = sig.SignalAspect == SignalAspect.Zs7 ? accentBrush : normalBrush;
+        foreach (var (button, aspect) in EnumerateAspectButtons())
+        {
+            button.Background = sig.SignalAspect == aspect ? accentBrush : normalBrush;
+        }
+    }
+
+    private IEnumerable<(Border Button, SignalAspect Aspect)> EnumerateAspectButtons()
+    {
+        yield return (AspectHp0Button, SignalAspect.Hp0);
+        yield return (AspectKs1Button, SignalAspect.Ks1);
+        yield return (AspectKs2Button, SignalAspect.Ks2);
+        yield return (AspectKs1BlinkButton, SignalAspect.Ks1Blink);
+        yield return (AspectKennlichtButton, SignalAspect.Kennlicht);
+        yield return (AspectDunkelButton, SignalAspect.Dunkel);
+        yield return (AspectRa12Button, SignalAspect.Ra12);
+        yield return (AspectZs1Button, SignalAspect.Zs1);
+        yield return (AspectZs7Button, SignalAspect.Zs7);
     }
 
     private void UpdateAspectPresentation(SbSignal? sig)
@@ -329,6 +391,13 @@ public sealed partial class SignalBoxPropertiesControl
         var is4046 = sig is not null && string.Equals(sig.MainSignalArticleNumber, "4046", StringComparison.Ordinal);
         var signalArticleNumber = is4046 ? "4046" : string.Empty;
 
+        ApplyAspectPreviewSignals(signalArticleNumber);
+        ApplyAspectLabels(is4046);
+        ApplyAspectTooltips(is4046);
+    }
+
+    private void ApplyAspectPreviewSignals(string signalArticleNumber)
+    {
         AspectHp0Signal.SignalArticleNumber = signalArticleNumber;
         AspectKs1Signal.SignalArticleNumber = signalArticleNumber;
         AspectKs2Signal.SignalArticleNumber = signalArticleNumber;
@@ -348,7 +417,10 @@ public sealed partial class SignalBoxPropertiesControl
         AspectRa12Signal.Aspect = nameof(SignalAspect.Ra12);
         AspectZs1Signal.Aspect = nameof(SignalAspect.Zs1);
         AspectZs7Signal.Aspect = nameof(SignalAspect.Zs7);
+    }
 
+    private void ApplyAspectLabels(bool is4046)
+    {
         AspectHp0Label.Text = "Hp0";
         AspectKs1Label.Text = "Ks1";
         AspectKs2Label.Text = is4046 ? "Ks2+K" : "Ks2";
@@ -358,7 +430,10 @@ public sealed partial class SignalBoxPropertiesControl
         AspectRa12Label.Text = is4046 ? "Hp0+Rg" : "Ra12";
         AspectZs1Label.Text = is4046 ? "Ks1+G" : "Zs1";
         AspectZs7Label.Text = "Zs7";
+    }
 
+    private void ApplyAspectTooltips(bool is4046)
+    {
         ToolTipService.SetToolTip(AspectHp0Button, "Hp 0 - Halt");
         ToolTipService.SetToolTip(AspectKs1Button, "Ks 1 - Fahrt");
         ToolTipService.SetToolTip(AspectKs2Button, is4046 ? "Ks 2 mit weißem Kennlicht oben links" : "Ks 2 - Halt erwarten");
@@ -380,10 +455,14 @@ public sealed partial class SignalBoxPropertiesControl
 
         var accentStyle = (Style)Application.Current.Resources["AccentButtonStyle"];
         var defaultStyle = (Style)Application.Current.Resources["DefaultButtonStyle"];
+        ApplySwitchButtonStyle(SwitchStraightButton, sw.SwitchPosition == SwitchPosition.Straight, accentStyle, defaultStyle);
+        ApplySwitchButtonStyle(SwitchLeftButton, sw.SwitchPosition == SwitchPosition.DivergingLeft, accentStyle, defaultStyle);
+        ApplySwitchButtonStyle(SwitchRightButton, sw.SwitchPosition == SwitchPosition.DivergingRight, accentStyle, defaultStyle);
+    }
 
-        SwitchStraightButton.Style = sw.SwitchPosition == SwitchPosition.Straight ? accentStyle : defaultStyle;
-        SwitchLeftButton.Style = sw.SwitchPosition == SwitchPosition.DivergingLeft ? accentStyle : defaultStyle;
-        SwitchRightButton.Style = sw.SwitchPosition == SwitchPosition.DivergingRight ? accentStyle : defaultStyle;
+    private static void ApplySwitchButtonStyle(Button button, bool isActive, Style accentStyle, Style defaultStyle)
+    {
+        button.Style = isActive ? accentStyle : defaultStyle;
     }
 
     private static string GetElementTypeName(SbElement element) => element switch
@@ -398,13 +477,14 @@ public sealed partial class SignalBoxPropertiesControl
 
     private void OnRotateClicked(object sender, RoutedEventArgs e)
     {
-        if (SelectedElement == null || sender is not Button { Tag: string rotationStr }) return;
-
-        if (int.TryParse(rotationStr, out var rotation))
+        _ = e;
+        if (SelectedElement == null || !TryGetButtonTag(sender, out var rotationTag) || !int.TryParse(rotationTag, out var rotation))
         {
-            SelectedElement.Rotation = rotation;
-            RequestVisualRefresh?.Invoke(this, SelectedElement);
+            return;
         }
+
+        SelectedElement.Rotation = rotation;
+        RequestVisualRefresh?.Invoke(this, SelectedElement);
     }
 
     private void OnAspectClicked(object sender, PointerRoutedEventArgs e)
@@ -424,79 +504,49 @@ public sealed partial class SignalBoxPropertiesControl
     {
         try
         {
-            if (!sig.IsMultiplexed)
+            if (!TryValidateAspectSetRequest(sig, out var validationError))
             {
-                SetSignalStatusText.Visibility = Visibility.Collapsed;
-                return;
-            }
-
-            if (string.IsNullOrEmpty(sig.MultiplexerArticleNumber))
-            {
-                SetSignalStatusText.Text = "⚠️ Multiplexer-Nummer nicht konfiguriert.";
-                SetSignalStatusText.Visibility = Visibility.Visible;
-                return;
-            }
-
-            if (sig.BaseAddress <= 0 || sig.BaseAddress > 2044)
-            {
-                SetSignalStatusText.Text = "⚠️ Basis-DCC-Adresse ungültig (1-2044).";
-                SetSignalStatusText.Visibility = Visibility.Visible;
-                return;
-            }
-
-            try
-            {
-                if (!MultiplexerHelper.TryGetTurnoutCommand(
-                        sig.MultiplexerArticleNumber,
-                        sig.MainSignalArticleNumber,
-                        sig.SignalAspect,
-                        out var turnoutCommand))
+                if (validationError != null)
                 {
-                    SetSignalStatusText.Text = "⚠️ Signalaspekt nicht unterstützt.";
-                    SetSignalStatusText.Visibility = Visibility.Visible;
-                    return;
+                    ShowSignalStatus(validationError);
+                }
+                else
+                {
+                    HideSignalStatus();
                 }
 
-                sig.Address = sig.BaseAddress + turnoutCommand.AddressOffset + 1;
-                sig.ExtendedAccessoryValue = turnoutCommand.Activate ? 1 : 0;
+                return;
             }
-            catch (ArgumentException ex)
+
+            if (!TryApplyTurnoutCommand(sig, out var turnoutCommand, out var turnoutError))
             {
-                SetSignalStatusText.Text = $"⚠️ Signalaspekt nicht unterstützt: {ex.Message}";
-                SetSignalStatusText.Visibility = Visibility.Visible;
+                ShowSignalStatus(turnoutError!);
                 return;
             }
 
             if (ViewModel == null)
             {
-                SetSignalStatusText.Text = "❌ ViewModel nicht verfügbar.";
-                SetSignalStatusText.Visibility = Visibility.Visible;
+                ShowSignalStatus("❌ ViewModel nicht verfügbar.");
                 return;
             }
 
             if (!ViewModel.IsConnected)
             {
-                SetSignalStatusText.Text = ViewModel.StatusText;
-                SetSignalStatusText.Visibility = Visibility.Visible;
+                ShowSignalStatus(ViewModel.StatusText);
                 return;
             }
 
-            SetSignalStatusText.Text = "⏳ Signal wird gestellt...";
-            SetSignalStatusText.Visibility = Visibility.Visible;
+            ShowSignalStatus("⏳ Signal wird gestellt...");
 
             await ViewModel.SetSignalAspectAsync(sig).ConfigureAwait(false);
 
             DispatcherQueue.TryEnqueue(() =>
             {
-                if (MultiplexerHelper.TryGetTurnoutCommand(
-                        sig.MultiplexerArticleNumber!,
-                        sig.MainSignalArticleNumber,
-                        sig.SignalAspect,
-                        out var cmd))
+                if (turnoutCommand != null)
                 {
                     SetSignalStatusText.Text =
                         $"Signal: {sig.SignalAspect}\n" +
-                        $"DCC-Adresse: {sig.Address}, Ausgang: {cmd.Output}, Activate: {(cmd.Activate ? "Ja" : "Nein")}";
+                        $"DCC-Adresse: {sig.Address}, Ausgang: {turnoutCommand.Value.Output}, Activate: {(turnoutCommand.Value.Activate ? "Ja" : "Nein")}";
                 }
                 else
                 {
@@ -514,32 +564,116 @@ public sealed partial class SignalBoxPropertiesControl
         }
     }
 
+    private bool TryValidateAspectSetRequest(SbSignal sig, out string? validationError)
+    {
+        validationError = null;
+
+        if (!sig.IsMultiplexed)
+        {
+            return false;
+        }
+
+        if (string.IsNullOrEmpty(sig.MultiplexerArticleNumber))
+        {
+            validationError = "⚠️ Multiplexer-Nummer nicht konfiguriert.";
+            return false;
+        }
+
+        if (sig.BaseAddress <= 0 || sig.BaseAddress > 2044)
+        {
+            validationError = "⚠️ Basis-DCC-Adresse ungültig (1-2044).";
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool TryApplyTurnoutCommand(SbSignal sig, out MultiplexerTurnoutCommand? turnoutCommand, out string? turnoutError)
+    {
+        turnoutCommand = null;
+        turnoutError = null;
+
+        try
+        {
+            if (!MultiplexerHelper.TryGetTurnoutCommand(
+                    sig.MultiplexerArticleNumber!,
+                    sig.MainSignalArticleNumber,
+                    sig.SignalAspect,
+                    out var resolvedTurnoutCommand))
+            {
+                turnoutError = "⚠️ Signalaspekt nicht unterstützt.";
+                return false;
+            }
+
+            turnoutCommand = resolvedTurnoutCommand;
+            sig.Address = sig.BaseAddress + resolvedTurnoutCommand.AddressOffset + 1;
+            sig.ExtendedAccessoryValue = resolvedTurnoutCommand.Activate ? 1 : 0;
+            return true;
+        }
+        catch (ArgumentException ex)
+        {
+            turnoutError = $"⚠️ Signalaspekt nicht unterstützt: {ex.Message}";
+            return false;
+        }
+    }
+
+    private void ShowSignalStatus(string message)
+    {
+        SetSignalStatusText.Text = message;
+        SetSignalStatusText.Visibility = Visibility.Visible;
+    }
+
+    private void HideSignalStatus()
+    {
+        SetSignalStatusText.Visibility = Visibility.Collapsed;
+    }
+
     private void OnSwitchPositionClicked(object sender, RoutedEventArgs e)
     {
-        if (SelectedElement is not SbSwitch sw || sender is not Button { Tag: string positionStr }) return;
+        _ = e;
+        if (SelectedElement is not SbSwitch sw || !TryGetButtonTag(sender, out var positionTag))
+        {
+            return;
+        }
 
-        sw.SwitchPosition = positionStr switch
+        sw.SwitchPosition = ParseSwitchPosition(positionTag);
+
+        RequestVisualRefresh?.Invoke(this, sw);
+        UpdateSwitchButtons();
+    }
+
+    private static bool TryGetButtonTag(object sender, out string tag)
+    {
+        if (sender is Button { Tag: string buttonTag })
+        {
+            tag = buttonTag;
+            return true;
+        }
+
+        tag = string.Empty;
+        return false;
+    }
+
+    private static SwitchPosition ParseSwitchPosition(string positionTag)
+    {
+        return positionTag switch
         {
             "Straight" => SwitchPosition.Straight,
             "DivergingLeft" => SwitchPosition.DivergingLeft,
             "DivergingRight" => SwitchPosition.DivergingRight,
             _ => SwitchPosition.Straight
         };
-
-        RequestVisualRefresh?.Invoke(this, sw);
-        UpdateSwitchButtons();
     }
 
     private void OnAddressChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
     {
-        if (SelectedElement == null || double.IsNaN(args.NewValue)) return;
+        _ = sender;
+        if (!TryGetNumberBoxIntValue(args, out var value) || SelectedElement == null)
+        {
+            return;
+        }
 
-        if (SelectedElement is SbSwitch sw)
-            sw.Address = (int)args.NewValue;
-        else if (SelectedElement is SbSignal sig)
-            sig.Address = (int)args.NewValue;
-        else if (SelectedElement is SbDetector det)
-            det.FeedbackAddress = (int)args.NewValue;
+        ApplyAddressValue(SelectedElement, value);
     }
 
     private void OnDeleteElementClicked(object sender, RoutedEventArgs e)
@@ -552,29 +686,85 @@ public sealed partial class SignalBoxPropertiesControl
 
     private void OnMultiplexerSelected(object sender, SelectionChangedEventArgs e)
     {
+        _ = sender;
+        _ = e;
         if (SelectedElement is not SbSignal sig) return;
 
-        var selectedItem = MultiplexerComboBox.SelectedItem as ComboBoxItem;
-        if (selectedItem?.Tag is string articleNumber)
+        if (TryGetSelectedMultiplexerArticle(out var articleNumber))
         {
-            sig.MultiplexerArticleNumber = articleNumber;
-            sig.IsMultiplexed = true;
-            UpdateSignalArticleComboBoxes(sig);
-            UpdateAvailableSignalAspects(sig);
+            ApplyMultiplexerSelection(sig, articleNumber);
         }
         else
         {
-            sig.MultiplexerArticleNumber = string.Empty;
-            sig.IsMultiplexed = false;
-            MainSignalComboBox.Items.Clear();
-            DistantSignalComboBox.Items.Clear();
-            SetAllAspectButtonsVisibility(Visibility.Visible);
+            ResetMultiplexerSelection(sig);
         }
+    }
+
+    private bool TryGetSelectedMultiplexerArticle(out string articleNumber)
+    {
+        if (MultiplexerComboBox.SelectedItem is ComboBoxItem { Tag: string selectedArticleNumber })
+        {
+            articleNumber = selectedArticleNumber;
+            return true;
+        }
+
+        articleNumber = string.Empty;
+        return false;
+    }
+
+    private void ApplyMultiplexerSelection(SbSignal sig, string articleNumber)
+    {
+        sig.MultiplexerArticleNumber = articleNumber;
+        sig.IsMultiplexed = true;
+        UpdateSignalArticleComboBoxes(sig);
+        UpdateAvailableSignalAspects(sig);
+    }
+
+    private void ResetMultiplexerSelection(SbSignal sig)
+    {
+        sig.MultiplexerArticleNumber = string.Empty;
+        sig.IsMultiplexed = false;
+        MainSignalComboBox.Items.Clear();
+        DistantSignalComboBox.Items.Clear();
+        SetAllAspectButtonsVisibility(Visibility.Visible);
     }
 
     private void OnBaseAddressChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
     {
-        if (SelectedElement is not SbSignal sig || double.IsNaN(args.NewValue)) return;
-        sig.BaseAddress = (int)args.NewValue;
+        _ = sender;
+        if (!TryGetNumberBoxIntValue(args, out var value) || SelectedElement is not SbSignal sig)
+        {
+            return;
+        }
+
+        sig.BaseAddress = value;
+    }
+
+    private static bool TryGetNumberBoxIntValue(NumberBoxValueChangedEventArgs args, out int value)
+    {
+        if (double.IsNaN(args.NewValue))
+        {
+            value = 0;
+            return false;
+        }
+
+        value = (int)args.NewValue;
+        return true;
+    }
+
+    private static void ApplyAddressValue(SbElement element, int value)
+    {
+        switch (element)
+        {
+            case SbSwitch sw:
+                sw.Address = value;
+                break;
+            case SbSignal sig:
+                sig.Address = value;
+                break;
+            case SbDetector det:
+                det.FeedbackAddress = value;
+                break;
+        }
     }
 }

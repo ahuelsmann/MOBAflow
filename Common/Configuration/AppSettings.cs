@@ -444,6 +444,23 @@ public class SignalBoxSettings
 
     /// <summary>Invert polarity for address 4 (base address + 3, e.g. 204).</summary>
     public bool InvertPolarityOffset3 { get; set; }
+
+    /// <summary>
+    /// Gets whether polarity inversion is enabled for the given address offset.
+    /// </summary>
+    /// <param name="addressOffset">Offset relative to base address (0..3).</param>
+    /// <returns>True when inversion is enabled for the offset; otherwise false.</returns>
+    public bool GetInvertPolarityForOffset(int addressOffset)
+    {
+        return addressOffset switch
+        {
+            0 => InvertPolarityOffset0,
+            1 => InvertPolarityOffset1,
+            2 => InvertPolarityOffset2,
+            3 => InvertPolarityOffset3,
+            _ => false
+        };
+    }
 }
 
 /// <summary>

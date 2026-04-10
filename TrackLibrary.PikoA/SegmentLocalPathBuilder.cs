@@ -191,88 +191,50 @@ public static class SegmentLocalPathBuilder
     /// <summary>BWL: Curved turnout left R2→R3. Main track R2 curve, branch R3 curve.</summary>
     private static IReadOnlyList<PathCommand> GetBwlPath(double arcR2, double radiusR2, double radiusR3)
     {
-        var curveDir = -1;
-        var centerAngle = (90 * curveDir) * Math.PI / 180;
-        var centerX = radiusR2 * Math.Cos(centerAngle);
-        var centerY = radiusR2 * Math.Sin(centerAngle);
-        var endAngleRad = arcR2 * curveDir * Math.PI / 180;
-        var endLocalAngleRad = (90 * curveDir) * Math.PI / 180;
-        var sweep = endAngleRad - endLocalAngleRad;
-        var portBx = centerX + radiusR2 * Math.Cos(sweep);
-        var portBy = centerY + radiusR2 * Math.Sin(sweep);
-        var portCx = centerX + radiusR3 * Math.Cos(sweep);
-        var portCy = centerY + radiusR3 * Math.Sin(sweep);
-        return
-        [
-            new ArcTo(portBx, portBy, radiusR2, false),
-            new MoveTo(0, 0),
-            new ArcTo(portCx, portCy, radiusR3, false)
-        ];
+        return GetParallelCurvedTurnoutPath(arcR2, radiusR2, radiusR3, curveDirection: -1);
     }
 
     /// <summary>BWR: Curved turnout right R2→R3. Main track R2 curve, branch R3 curve.</summary>
     private static IReadOnlyList<PathCommand> GetBwrPath(double arcR2, double radiusR2, double radiusR3)
     {
-        const int curveDir = 1;
-        var centerAngle = 90 * Math.PI / 180;
-        var centerX = radiusR2 * Math.Cos(centerAngle);
-        var centerY = radiusR2 * Math.Sin(centerAngle);
-        var endAngleRad = arcR2 * curveDir * Math.PI / 180;
-        var endLocalAngleRad = 90 * Math.PI / 180;
-        var sweep = endAngleRad - endLocalAngleRad;
-        var portBx = centerX + radiusR2 * Math.Cos(sweep);
-        var portBy = centerY + radiusR2 * Math.Sin(sweep);
-        var portCx = centerX + radiusR3 * Math.Cos(sweep);
-        var portCy = centerY + radiusR3 * Math.Sin(sweep);
-        return
-        [
-            new ArcTo(portBx, portBy, radiusR2, true),
-            new MoveTo(0, 0),
-            new ArcTo(portCx, portCy, radiusR3, true)
-        ];
+        return GetParallelCurvedTurnoutPath(arcR2, radiusR2, radiusR3, curveDirection: 1);
     }
 
     /// <summary>BWLR3: Curved turnout left R3→R4.</summary>
     private static IReadOnlyList<PathCommand> GetBwlr3Path(double radiusR3)
     {
         var radiusR4 = radiusR3 + 61.88;
-        const int curveDir = -1;
-        var centerAngle = -90 * Math.PI / 180;
-        var centerX = radiusR3 * Math.Cos(centerAngle);
-        var centerY = radiusR3 * Math.Sin(centerAngle);
-        const double arcDeg = 30;
-        var sweep = (arcDeg * curveDir * Math.PI / 180) - (-90 * Math.PI / 180);
-        var portBx = centerX + radiusR3 * Math.Cos(sweep);
-        var portBy = centerY + radiusR3 * Math.Sin(sweep);
-        var portCx = centerX + radiusR4 * Math.Cos(sweep);
-        var portCy = centerY + radiusR4 * Math.Sin(sweep);
-        return
-        [
-            new ArcTo(portBx, portBy, radiusR3, false),
-            new MoveTo(0, 0),
-            new ArcTo(portCx, portCy, radiusR4, false)
-        ];
+        return GetParallelCurvedTurnoutPath(30, radiusR3, radiusR4, curveDirection: -1);
     }
 
     /// <summary>BWRR3: Curved turnout right R3→R4.</summary>
     private static IReadOnlyList<PathCommand> GetBwrr3Path(double radiusR3)
     {
         var radiusR4 = radiusR3 + 61.88;
-        const int curveDir = 1;
-        var centerAngle = 90 * Math.PI / 180;
-        var centerX = radiusR3 * Math.Cos(centerAngle);
-        var centerY = radiusR3 * Math.Sin(centerAngle);
-        const double arcDeg = 30;
-        var sweep = (arcDeg * curveDir * Math.PI / 180) - (90 * Math.PI / 180);
-        var portBx = centerX + radiusR3 * Math.Cos(sweep);
-        var portBy = centerY + radiusR3 * Math.Sin(sweep);
-        var portCx = centerX + radiusR4 * Math.Cos(sweep);
-        var portCy = centerY + radiusR4 * Math.Sin(sweep);
+        return GetParallelCurvedTurnoutPath(30, radiusR3, radiusR4, curveDirection: 1);
+    }
+
+    private static IReadOnlyList<PathCommand> GetParallelCurvedTurnoutPath(
+        double arcDegree,
+        double mainRadius,
+        double branchRadius,
+        int curveDirection)
+    {
+        var centerAngle = (90 * curveDirection) * Math.PI / 180;
+        var centerX = mainRadius * Math.Cos(centerAngle);
+        var centerY = mainRadius * Math.Sin(centerAngle);
+        var sweep = (arcDegree * curveDirection * Math.PI / 180) - centerAngle;
+        var clockwise = curveDirection > 0;
+        var mainEndX = centerX + mainRadius * Math.Cos(sweep);
+        var mainEndY = centerY + mainRadius * Math.Sin(sweep);
+        var branchEndX = centerX + branchRadius * Math.Cos(sweep);
+        var branchEndY = centerY + branchRadius * Math.Sin(sweep);
+
         return
         [
-            new ArcTo(portBx, portBy, radiusR3, true),
+            new ArcTo(mainEndX, mainEndY, mainRadius, clockwise),
             new MoveTo(0, 0),
-            new ArcTo(portCx, portCy, radiusR4, true)
+            new ArcTo(branchEndX, branchEndY, branchRadius, clockwise)
         ];
     }
 

@@ -33,18 +33,8 @@ public partial class MainWindowViewModel
     {
         _ = sender;
 
-        if (_isShuttingDown)
+        ExecuteOnUiWhenActive(() =>
         {
-            return;
-        }
-
-        _uiDispatcher.InvokeOnUi(() =>
-        {
-            if (_isShuttingDown)
-            {
-                return;
-            }
-
             TrafficPackets.Insert(0, packet);
 
             while (TrafficPackets.Count > 100)
@@ -121,18 +111,8 @@ public partial class MainWindowViewModel
     {
         _ = sender;
 
-        if (_isShuttingDown)
+        ExecuteOnUiWhenActive(() =>
         {
-            return;
-        }
-
-        _uiDispatcher.InvokeOnUi(() =>
-        {
-            if (_isShuttingDown)
-            {
-                return;
-            }
-
             ApplyRuntimeSnapshot(snapshot);
         });
     }
@@ -175,12 +155,7 @@ public partial class MainWindowViewModel
             SuppressOperatingStateRecompute = false;
         }
 
-        ConnectCommand.NotifyCanExecuteChanged();
-        DisconnectCommand.NotifyCanExecuteChanged();
-        SetTrackPowerCommand.NotifyCanExecuteChanged();
-        ResetJourneyCommand.NotifyCanExecuteChanged();
-        ResetJourneyCounterCommand.NotifyCanExecuteChanged();
-        AcknowledgeOperatingStateCommand.NotifyCanExecuteChanged();
+        NotifyRuntimeCommandStatesChanged();
         RecomputeOperatingState();
     }
 
@@ -200,6 +175,34 @@ public partial class MainWindowViewModel
                 journeyVm.ResetRuntimeState();
             }
         }
+    }
+
+    private void ExecuteOnUiWhenActive(System.Action action)
+    {
+        if (_isShuttingDown)
+        {
+            return;
+        }
+
+        _uiDispatcher.InvokeOnUi(() =>
+        {
+            if (_isShuttingDown)
+            {
+                return;
+            }
+
+            action();
+        });
+    }
+
+    private void NotifyRuntimeCommandStatesChanged()
+    {
+        ConnectCommand.NotifyCanExecuteChanged();
+        DisconnectCommand.NotifyCanExecuteChanged();
+        SetTrackPowerCommand.NotifyCanExecuteChanged();
+        ResetJourneyCommand.NotifyCanExecuteChanged();
+        ResetJourneyCounterCommand.NotifyCanExecuteChanged();
+        AcknowledgeOperatingStateCommand.NotifyCanExecuteChanged();
     }
     #endregion
 }

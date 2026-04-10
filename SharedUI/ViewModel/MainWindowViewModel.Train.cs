@@ -181,38 +181,17 @@ public partial class MainWindowViewModel
 
     public void AddLocomotiveToSelectedTrain(LocomotiveViewModel? locomotive, int insertIndex = -1)
     {
-        if (SelectedTrain == null || locomotive == null)
-        {
-            return;
-        }
-
-        SelectedTrain.InsertLocomotive(locomotive, insertIndex);
-        OnPropertyChanged(nameof(SelectedVehicles));
-        _ = SaveSolutionInternalAsync();
+        AddVehicleToSelectedTrain(locomotive, insertIndex, static (train, value, index) => train.InsertLocomotive(value, index));
     }
 
     public void AddPassengerWagonToSelectedTrain(PassengerWagonViewModel? wagon, int insertIndex = -1)
     {
-        if (SelectedTrain == null || wagon == null)
-        {
-            return;
-        }
-
-        SelectedTrain.InsertPassengerWagon(wagon, insertIndex);
-        OnPropertyChanged(nameof(SelectedVehicles));
-        _ = SaveSolutionInternalAsync();
+        AddVehicleToSelectedTrain(wagon, insertIndex, static (train, value, index) => train.InsertPassengerWagon(value, index));
     }
 
     public void AddGoodsWagonToSelectedTrain(GoodsWagonViewModel? wagon, int insertIndex = -1)
     {
-        if (SelectedTrain == null || wagon == null)
-        {
-            return;
-        }
-
-        SelectedTrain.InsertGoodsWagon(wagon, insertIndex);
-        OnPropertyChanged(nameof(SelectedVehicles));
-        _ = SaveSolutionInternalAsync();
+        AddVehicleToSelectedTrain(wagon, insertIndex, static (train, value, index) => train.InsertGoodsWagon(value, index));
     }
 
     public void RemoveSelectedVehicle(VehicleItemViewModel? item)
@@ -235,6 +214,22 @@ public partial class MainWindowViewModel
         }
 
         SelectedTrain.SynchronizeVehiclesFromItems();
+        OnPropertyChanged(nameof(SelectedVehicles));
+        _ = SaveSolutionInternalAsync();
+    }
+
+    private void AddVehicleToSelectedTrain<TVehicle>(
+        TVehicle? vehicle,
+        int insertIndex,
+        Action<TrainViewModel, TVehicle, int> insertAction)
+        where TVehicle : class
+    {
+        if (SelectedTrain == null || vehicle == null)
+        {
+            return;
+        }
+
+        insertAction(SelectedTrain, vehicle, insertIndex);
         OnPropertyChanged(nameof(SelectedVehicles));
         _ = SaveSolutionInternalAsync();
     }

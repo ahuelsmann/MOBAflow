@@ -85,42 +85,60 @@ public sealed partial class SignalBoxCanvasControl
         if (string.IsNullOrEmpty(text))
             return;
 
-        var pos = e.GetPosition(canvas);
-        int gridX = Math.Clamp((int)(pos.X / GridCellSize), 0, GridColumns - 1);
-        int gridY = Math.Clamp((int)(pos.Y / GridCellSize), 0, GridRows - 1);
+        var (gridX, gridY) = GetGridPosition(e.GetPosition(canvas));
 
         var existingElement = PlanViewModel.HitTest(gridX, gridY);
 
         if (text.StartsWith("NEW:"))
         {
-            var typeTag = text[4..];
-
-            if (existingElement != null)
-            {
-                PlanViewModel.RemoveElement(existingElement);
-            }
-
-            CreateElementByType(typeTag, gridX, gridY);
+            TryHandleNewElementDrop(text[4..], gridX, gridY, existingElement);
         }
         else if (text.StartsWith("MOVE:") && Guid.TryParse(text[5..], out var elementId))
         {
-            var element = PlanViewModel.FindById(elementId);
-            if (element != null && (existingElement == null || existingElement.Id == elementId))
-            {
-                element.X = gridX;
-                element.Y = gridY;
-                
-                // Force UI update
-                var index = PlanViewModel.Elements.IndexOf(element);
-                if (index != -1)
-                {
-                    PlanViewModel.Elements.RemoveAt(index);
-                    PlanViewModel.Elements.Insert(index, element);
-                }
-                
-                PlanViewModel.SelectedElement = element;
-            }
+            TryHandleMoveDrop(elementId, gridX, gridY, existingElement);
         }
+    }
+
+    private void TryHandleNewElementDrop(string typeTag, int gridX, int gridY, SbElement? existingElement)
+    {
+        if (PlanViewModel == null)
+        {
+            return;
+        }
+
+        if (existingElement != null)
+        {
+            PlanViewModel.RemoveElement(existingElement);
+        }
+
+        CreateElementByType(typeTag, gridX, gridY);
+    }
+
+    private void TryHandleMoveDrop(Guid elementId, int gridX, int gridY, SbElement? existingElement)
+    {
+        if (PlanViewModel == null)
+        {
+            return;
+        }
+
+        var element = PlanViewModel.FindById(elementId);
+        if (element == null || (existingElement != null && existingElement.Id != elementId))
+        {
+            return;
+        }
+
+        element.X = gridX;
+        element.Y = gridY;
+
+        // Reinsert keeps the observable collection update explicit for the canvas binding.
+        var index = PlanViewModel.Elements.IndexOf(element);
+        if (index != -1)
+        {
+            PlanViewModel.Elements.RemoveAt(index);
+            PlanViewModel.Elements.Insert(index, element);
+        }
+
+        PlanViewModel.SelectedElement = element;
     }
 
     private void CreateElementByType(string typeTag, int gridX, int gridY)
@@ -177,23 +195,26 @@ public sealed partial class SignalBoxCanvasControl
         }
         else if (point.Properties.IsLeftButtonPressed)
         {
-            var pos = e.GetCurrentPoint(canvas).Position;
-            int gridX = Math.Clamp((int)(pos.X / GridCellSize), 0, GridColumns - 1);
-            int gridY = Math.Clamp((int)(pos.Y / GridCellSize), 0, GridRows - 1);
-
-            var elementUnderCursor = PlanViewModel?.HitTest(gridX, gridY);
-            if (elementUnderCursor != null)
-            {
-                if (PlanViewModel != null)
-                {
-                    PlanViewModel.SelectedElement = elementUnderCursor;
-                }
-            }
-            else
-            {
-                PlanViewModel?.ClearSelection();
-            }
+            SelectElementAtPointer(canvas, e);
         }
+    }
+
+    private void SelectElementAtPointer(UIElement canvas, PointerRoutedEventArgs e)
+    {
+        if (PlanViewModel == null)
+        {
+            return;
+        }
+
+        var (gridX, gridY) = GetGridPosition(e.GetCurrentPoint(canvas).Position);
+        var elementUnderCursor = PlanViewModel.HitTest(gridX, gridY);
+        if (elementUnderCursor != null)
+        {
+            PlanViewModel.SelectedElement = elementUnderCursor;
+            return;
+        }
+
+        PlanViewModel.ClearSelection();
     }
 
     private void OnCanvasPointerMoved(object sender, PointerRoutedEventArgs e)
@@ -222,5 +243,12 @@ public sealed partial class SignalBoxCanvasControl
             if (sender is UIElement canvas)
                 canvas.ReleasePointerCapture(e.Pointer);
         }
+    }
+
+    private static (int GridX, int GridY) GetGridPosition(Point position)
+    {
+        var gridX = Math.Clamp((int)(position.X / GridCellSize), 0, GridColumns - 1);
+        var gridY = Math.Clamp((int)(position.Y / GridCellSize), 0, GridRows - 1);
+        return (gridX, gridY);
     }
 }

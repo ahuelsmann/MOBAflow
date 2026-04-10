@@ -83,61 +83,11 @@ internal sealed partial class MainWindow
 
             Debug.WriteLine("[MainWindow] InitializeComponent completed");
 
-            // Set DataContext for Binding (needed for NavigationView.MenuItems which don't support x:Bind)
-            RootGrid.DataContext = this;
-
-            ExtendsContentIntoTitleBar = true;
-            SetTitleBar(AppTitleBar);
-
-            // Set TitleBar subtitle with version
-            AppTitleBar.Subtitle = $"flow  {AppVersion}";
-
-            // Set taskbar/window icon
-            var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "mobaflow-icon.ico");
-            if (File.Exists(iconPath))
-            {
-                AppWindow.SetIcon(iconPath);
-            }
-
-            // Maximize window on startup and set minimum size
-            var appWindow = AppWindow;
-            if (appWindow.Presenter is OverlappedPresenter presenter)
-            {
-                presenter.PreferredMinimumWidth = 1024;
-                presenter.PreferredMinimumHeight = 768;
-                presenter.Maximize();
-            }
-
-            // Initialize IoService with WindowId (required before any file operations)
-            if (ioService is IoService winUiIoService)
-            {
-                winUiIoService.SetWindowId(AppWindow.Id, Content.XamlRoot);
-                Debug.WriteLine("[OK] IoService initialized with WindowId");
-            }
-
-            // Build navigation items from registry (replaces hardcoded XAML items)
-            BuildNavigationFromRegistry();
-            Debug.WriteLine("[MainWindow] Navigation built");
-
-            // Initialize NavigationService with ContentFrame (async initialization)
-            _ = InitializeNavigationAsync();
-
-            // Set first nav item as selected (Overview)
-            MainNavigation.SelectedItem = MainNavigation.MenuItems.FirstOrDefault();
-
-            // Subscribe to ViewModel events
-            ViewModel.ExitApplicationRequested += OnExitApplicationRequested;
-            ViewModel.NavigationRequested += OnNavigationRequested;
-            ViewModel.PropertyChanged += ViewModel_PropertyChanged;
-            Closed += MainWindow_Closed;
-
-            // Wire into app window closing
-            if (AppWindow is not null)
-            {
-                AppWindow.Closing += OnAppWindowClosing;
-            }
-
-            // Apply initial theme
+            ConfigureWindowChrome();
+            ConfigureWindowIconAndSizing();
+            InitializeIoService(ioService);
+            InitializeNavigation();
+            SubscribeWindowEvents();
             ApplyTheme(ViewModel.IsDarkMode);
 
             _restApiStatusService.Start();
@@ -149,6 +99,64 @@ internal sealed partial class MainWindow
             Debug.WriteLine($"[MainWindow] FATAL ERROR: {ex.GetType().Name}: {ex.Message}");
             Debug.WriteLine($"[MainWindow] StackTrace: {ex.StackTrace}");
             throw;
+        }
+    }
+
+    private void ConfigureWindowChrome()
+    {
+        // Set DataContext for Binding (needed for NavigationView.MenuItems which don't support x:Bind)
+        RootGrid.DataContext = this;
+        ExtendsContentIntoTitleBar = true;
+        SetTitleBar(AppTitleBar);
+        AppTitleBar.Subtitle = $"flow  {AppVersion}";
+    }
+
+    private void ConfigureWindowIconAndSizing()
+    {
+        var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "mobaflow-icon.ico");
+        if (File.Exists(iconPath))
+        {
+            AppWindow.SetIcon(iconPath);
+        }
+
+        var appWindow = AppWindow;
+        if (appWindow.Presenter is OverlappedPresenter presenter)
+        {
+            presenter.PreferredMinimumWidth = 1024;
+            presenter.PreferredMinimumHeight = 768;
+            presenter.Maximize();
+        }
+    }
+
+    private void InitializeIoService(IIoService ioService)
+    {
+        if (ioService is not IoService winUiIoService)
+        {
+            return;
+        }
+
+        winUiIoService.SetWindowId(AppWindow.Id, Content.XamlRoot);
+        Debug.WriteLine("[OK] IoService initialized with WindowId");
+    }
+
+    private void InitializeNavigation()
+    {
+        BuildNavigationFromRegistry();
+        Debug.WriteLine("[MainWindow] Navigation built");
+        _ = InitializeNavigationAsync();
+        MainNavigation.SelectedItem = MainNavigation.MenuItems.FirstOrDefault();
+    }
+
+    private void SubscribeWindowEvents()
+    {
+        ViewModel.ExitApplicationRequested += OnExitApplicationRequested;
+        ViewModel.NavigationRequested += OnNavigationRequested;
+        ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+        Closed += MainWindow_Closed;
+
+        if (AppWindow is not null)
+        {
+            AppWindow.Closing += OnAppWindowClosing;
         }
     }
 

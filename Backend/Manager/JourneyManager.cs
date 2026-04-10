@@ -2,6 +2,7 @@
 
 namespace Moba.Backend.Manager;
 
+using System.Diagnostics.CodeAnalysis;
 using Domain;
 using Domain.Enum;
 using Interface;
@@ -150,14 +151,10 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
             SessionState = state
         });
 
-        // Get current Station directly from Journey
-        if (state.CurrentPos >= journey.Stations.Count)
+        if (!TryGetCurrentStation(journey, state, out var currentStation))
         {
-            _logger.LogWarning("CurrentPos out of Stations list bounds for journey '{Journey}'", journey.Name);
             return;
         }
-
-        var currentStation = journey.Stations[state.CurrentPos];
 
         if (state.Counter >= currentStation.NumberOfLapsToStop)
         {
@@ -175,26 +172,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
             });
 
             // ✅ THEN execute station workflow (async announcements run after UI is updated)
-            if (currentStation.WorkflowId.HasValue)
-            {
-                var workflow = _project.Workflows.FirstOrDefault(w => w.Id == currentStation.WorkflowId.Value);
-                if (workflow != null && ExecutionContext != null)
-                {
-                    // Set template context for actions (e.g., Announcement action)
-                    ExecutionContext.JourneyTemplateText = journey.Text;
-                    ExecutionContext.CurrentStation = currentStation;
-
-                    await _workflowService.ExecuteAsync(workflow, ExecutionContext).ConfigureAwait(false);
-
-                    // Clear context after workflow execution
-                    ExecutionContext.JourneyTemplateText = null;
-                    ExecutionContext.CurrentStation = null;
-                }
-                else if (workflow == null)
-                {
-                    _logger.LogWarning("Workflow with ID {WorkflowId} not found", currentStation.WorkflowId.Value);
-                }
-            }
+            await ExecuteStationWorkflowAsync(journey, currentStation).ConfigureAwait(false);
 
             state.Counter = 0;
 
@@ -227,17 +205,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
             case BehaviorOnLastStop.GotoJourney:
                 if (journey.NextJourneyId.HasValue)
                 {
-                    var nextJourney = _project.Journeys.FirstOrDefault(j => j.Id == journey.NextJourneyId.Value);
-                    if (nextJourney != null && _states.TryGetValue(nextJourney.Id, out var nextState))
-                    {
-                        _logger.LogInformation("Switching to journey: {Journey}", nextJourney.Name);
-                        nextState.CurrentPos = (int)nextJourney.FirstPos;
-                        _logger.LogInformation("Journey '{Journey}' activated at position {Position}", nextJourney.Name, nextState.CurrentPos);
-                    }
-                    else
-                    {
-                        _logger.LogWarning("NextJourney with ID {NextJourneyId} not found or state missing", journey.NextJourneyId.Value);
-                    }
+                    TryActivateNextJourney(journey.NextJourneyId.Value);
                 }
                 else
                 {
@@ -252,6 +220,79 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
         }
 
         await Task.CompletedTask.ConfigureAwait(false);
+    }
+
+    private bool TryGetCurrentStation(
+        Journey journey,
+        JourneySessionState state,
+        [NotNullWhen(true)] out Station? currentStation)
+    {
+        if (journey.Stations.Count == 0)
+        {
+            _logger.LogWarning("Journey '{Journey}' has no stations configured", journey.Name);
+            currentStation = null;
+            return false;
+        }
+
+        if (state.CurrentPos < 0 || state.CurrentPos >= journey.Stations.Count)
+        {
+            _logger.LogWarning(
+                "CurrentPos {CurrentPos} is out of range for journey '{Journey}' (station count: {Count})",
+                state.CurrentPos,
+                journey.Name,
+                journey.Stations.Count);
+            currentStation = null;
+            return false;
+        }
+
+        currentStation = journey.Stations[state.CurrentPos];
+        return true;
+    }
+
+    private async Task ExecuteStationWorkflowAsync(Journey journey, Station currentStation)
+    {
+        if (!currentStation.WorkflowId.HasValue)
+        {
+            return;
+        }
+
+        var workflow = _project.Workflows.FirstOrDefault(w => w.Id == currentStation.WorkflowId.Value);
+        if (workflow == null)
+        {
+            _logger.LogWarning("Workflow with ID {WorkflowId} not found", currentStation.WorkflowId.Value);
+            return;
+        }
+
+        if (ExecutionContext == null)
+        {
+            return;
+        }
+
+        ExecutionContext.JourneyTemplateText = journey.Text;
+        ExecutionContext.CurrentStation = currentStation;
+        try
+        {
+            await _workflowService.ExecuteAsync(workflow, ExecutionContext).ConfigureAwait(false);
+        }
+        finally
+        {
+            ExecutionContext.JourneyTemplateText = null;
+            ExecutionContext.CurrentStation = null;
+        }
+    }
+
+    private void TryActivateNextJourney(Guid nextJourneyId)
+    {
+        var nextJourney = _project.Journeys.FirstOrDefault(j => j.Id == nextJourneyId);
+        if (nextJourney == null || !_states.TryGetValue(nextJourney.Id, out var nextState))
+        {
+            _logger.LogWarning("NextJourney with ID {NextJourneyId} not found or state missing", nextJourneyId);
+            return;
+        }
+
+        _logger.LogInformation("Switching to journey: {Journey}", nextJourney.Name);
+        nextState.CurrentPos = (int)nextJourney.FirstPos;
+        _logger.LogInformation("Journey '{Journey}' activated at position {Position}", nextJourney.Name, nextState.CurrentPos);
     }
 
     /// <summary>

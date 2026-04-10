@@ -577,21 +577,9 @@ public sealed class MobaRuntimeService : IMobaRuntime, IDisposable
     {
         _isConnected = connected;
         _isZ21Connecting = false;
-
-        if (connected)
-        {
-            _hasSeenSuccessfulZ21Connection = true;
-            _isManualDisconnectRequested = false;
-            _statusText = $"Connected to {_settings.Z21.CurrentIpAddress}";
-        }
-        else if (_isManualDisconnectRequested)
-        {
-            _statusText = "Disconnected";
-        }
-        else
-        {
-            _statusText = "Z21 disconnected";
-        }
+        _statusText = connected
+            ? GetConnectedStatusText()
+            : GetDisconnectedStatusText();
 
         PublishSnapshot();
     }
@@ -625,26 +613,7 @@ public sealed class MobaRuntimeService : IMobaRuntime, IDisposable
         _temperature = systemState.Temperature;
         _supplyVoltage = systemState.SupplyVoltage;
         _vccVoltage = systemState.VccVoltage;
-
-        var warnings = new List<string>();
-        if (systemState.IsEmergencyStop)
-        {
-            warnings.Add("EMERGENCY STOP");
-        }
-
-        if (systemState.IsShortCircuit)
-        {
-            warnings.Add("SHORT CIRCUIT");
-        }
-
-        if (systemState.IsProgrammingMode)
-        {
-            warnings.Add("Programming");
-        }
-
-        _statusText = warnings.Count > 0
-            ? $"Connected | {string.Join(" | ", warnings)}"
-            : "Connected";
+        _statusText = BuildSystemStateStatusText(systemState);
 
         PublishSnapshot();
     }
@@ -719,15 +688,44 @@ public sealed class MobaRuntimeService : IMobaRuntime, IDisposable
 
     private bool ShouldInvertPolarityForOffset(int addressOffset)
     {
-        var signalBoxSettings = _settings.SignalBox;
-        return addressOffset switch
+        return _settings.SignalBox.GetInvertPolarityForOffset(addressOffset);
+    }
+
+    private string BuildSystemStateStatusText(SystemState systemState)
+    {
+        List<string> warnings = [];
+        if (systemState.IsEmergencyStop)
         {
-            0 => signalBoxSettings.InvertPolarityOffset0,
-            1 => signalBoxSettings.InvertPolarityOffset1,
-            2 => signalBoxSettings.InvertPolarityOffset2,
-            3 => signalBoxSettings.InvertPolarityOffset3,
-            _ => false
-        };
+            warnings.Add("EMERGENCY STOP");
+        }
+
+        if (systemState.IsShortCircuit)
+        {
+            warnings.Add("SHORT CIRCUIT");
+        }
+
+        if (systemState.IsProgrammingMode)
+        {
+            warnings.Add("Programming");
+        }
+
+        return warnings.Count > 0
+            ? $"Connected | {string.Join(" | ", warnings)}"
+            : "Connected";
+    }
+
+    private string GetConnectedStatusText()
+    {
+        _hasSeenSuccessfulZ21Connection = true;
+        _isManualDisconnectRequested = false;
+        return $"Connected to {_settings.Z21.CurrentIpAddress}";
+    }
+
+    private string GetDisconnectedStatusText()
+    {
+        return _isManualDisconnectRequested
+            ? "Disconnected"
+            : "Z21 disconnected";
     }
 
     private void PublishSnapshot()
