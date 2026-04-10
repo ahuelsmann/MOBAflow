@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
 
+using Common.Discovery;
 using Backend.Protocol;
 using Microsoft.Extensions.Logging;
 using SharedUI.Interface;
@@ -17,7 +18,7 @@ public class Z21DiscoveryService : IZ21DiscoveryService
     private const int Z21Port = 21105;
     private const int SendReceiveTimeoutMs = 400;
     /// <summary>After sending to all candidates, wait this long for the first response.</summary>
-    private const int ReceiveAnyTimeoutMs = 600;
+    private const int ReceiveAnyTimeoutMs = 1000;
 
     private readonly ILogger<Z21DiscoveryService> _logger;
 
@@ -27,7 +28,7 @@ public class Z21DiscoveryService : IZ21DiscoveryService
     }
 
     /// <summary>
-    /// Attempts to discover a Z21 on the local network by scanning the same subnet as this device.
+    /// Attempts to discover a Z21 on the local network by scanning every reachable /24 subnet of the active IPv4 interfaces.
     /// Sends a Z21 handshake to all candidate IPs in quick succession, then waits for the first response.
     /// This is much faster than probing each IP sequentially (typically under 1 second if Z21 is present).
     /// </summary>
@@ -35,14 +36,19 @@ public class Z21DiscoveryService : IZ21DiscoveryService
     /// <returns>IP address of the first responding Z21, or null if none found.</returns>
     public async Task<string?> DiscoverZ21Async(CancellationToken cancellationToken = default)
     {
-        var candidates = GetSubnetCandidates();
+        var localAddresses = GetCandidateLocalIpv4Addresses();
+        var candidates = SubnetCandidateBuilder.BuildCandidates(localAddresses);
         if (candidates.Count == 0)
         {
             _logger.LogWarning("Z21 discovery: no subnet candidates (no suitable local IPv4)");
             return null;
         }
 
-        _logger.LogInformation("Z21 discovery: sending handshake to {Count} addresses on port {Port}", candidates.Count, Z21Port);
+        _logger.LogInformation(
+            "Z21 discovery: sending handshake to {Count} addresses derived from {LocalAddressCount} local IPv4 addresses on port {Port}",
+            candidates.Count,
+            localAddresses.Count,
+            Z21Port);
         var handshake = Z21Command.BuildHandshake();
 
         using var udp = new UdpClient();
@@ -88,59 +94,52 @@ public class Z21DiscoveryService : IZ21DiscoveryService
     }
 
     /// <summary>
-    /// Gets a list of IPv4 addresses to scan (same subnet as the first private local address).
-    /// Skips .0, .255 and the local address.
+    /// Gets candidate local IPv4 addresses whose /24 subnets should be scanned for the Z21.
     /// </summary>
-    private static List<IPAddress> GetSubnetCandidates()
-    {
-        var local = GetFirstPrivateIPv4();
-        if (local == null)
-            return [];
-
-        var bytes = local.GetAddressBytes();
-        if (bytes.Length != 4)
-            return [];
-
-        var list = new List<IPAddress>(254);
-        for (int last = 1; last <= 254; last++)
-        {
-            if (last == bytes[3])
-                continue;
-            list.Add(new IPAddress(new[] { bytes[0], bytes[1], bytes[2], (byte)last }));
-        }
-        return list;
-    }
-
-    private static IPAddress? GetFirstPrivateIPv4()
+    private static List<IPAddress> GetCandidateLocalIpv4Addresses()
     {
         try
         {
-            IPAddress? fallbackAny = null;
+            var privateAddresses = new List<IPAddress>();
+            var fallbackAddresses = new List<IPAddress>();
+
             foreach (var ni in NetworkInterface.GetAllNetworkInterfaces())
             {
                 if (ni.OperationalStatus != OperationalStatus.Up ||
                     ni.NetworkInterfaceType == NetworkInterfaceType.Loopback)
+                {
                     continue;
+                }
 
                 var props = ni.GetIPProperties();
                 foreach (var ua in props.UnicastAddresses)
                 {
-                    if (ua.Address.AddressFamily != AddressFamily.InterNetwork)
+                    var address = ua.Address;
+                    if (address.AddressFamily != AddressFamily.InterNetwork || IPAddress.IsLoopback(address))
+                    {
                         continue;
-                    var ip = ua.Address.ToString();
-                    if (ip.StartsWith("192.168.") || ip.StartsWith("10."))
-                        return ua.Address;
-#if ANDROID
-                    // On Android, interfaces may not be reported as 192.168/10; keep first non-loopback IPv4 as fallback.
-                    if (fallbackAny == null && !IPAddress.IsLoopback(ua.Address))
-                        fallbackAny = ua.Address;
-#endif
+                    }
+
+                    if (SubnetCandidateBuilder.IsPrivateIPv4(address))
+                    {
+                        privateAddresses.Add(address);
+                    }
+                    else
+                    {
+                        fallbackAddresses.Add(address);
+                    }
                 }
             }
+
+            if (privateAddresses.Count > 0)
+            {
+                return privateAddresses;
+            }
+
 #if ANDROID
-            return fallbackAny;
+            return fallbackAddresses;
 #else
-            return null;
+            return [];
 #endif
         }
         catch
@@ -148,7 +147,7 @@ public class Z21DiscoveryService : IZ21DiscoveryService
             // Ignore: e.g. permission or platform
         }
 
-        return null;
+        return [];
     }
 
     /// <summary>
