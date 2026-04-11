@@ -2,8 +2,11 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Common.Configuration;
+
 using CommunityToolkit.Mvvm.Input;
+
 using Domain;
+
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Net;

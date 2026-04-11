@@ -5,8 +5,9 @@ using Common.Configuration;
 
 using Microsoft.Extensions.Logging;
 
-using SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
+
+using SharedUI.Interface;
 
 using System.Text.Json;
 using System.Timers;

@@ -109,12 +109,8 @@
                                         <StackPanel Grid.Column="1" Spacing="2">
                                             <TextBlock FontWeight="SemiBold" Text="{x:Bind Name, Mode=OneWay}" />
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock
-                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                    Text="{x:Bind VehicleItems.Count, Mode=OneWay}" />
-                                                <TextBlock
-                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                    Text="vehicles" />
+                                                <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind VehicleItems.Count, Mode=OneWay}" />
+                                                <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="vehicles" />
                                             </StackPanel>
                                         </StackPanel>
                                     </Grid>
@@ -340,9 +336,7 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <TextBlock
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Text="Drag locomotives and wagons into this row. Reorder directly and remove via X or Delete." />
+                <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Drag locomotives and wagons into this row. Reorder directly and remove via X or Delete." />
 
                 <Grid Grid.Row="1">
                     <ListView

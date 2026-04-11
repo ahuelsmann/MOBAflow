@@ -5,8 +5,10 @@ using Timer = System.Timers.Timer;
 namespace Moba.WinUI.Service;
 
 using Common.Extension;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+
 using Sound;
 
 /// <summary>

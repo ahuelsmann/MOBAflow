@@ -2,7 +2,9 @@
 namespace Moba.WinUI.Service;
 
 using Common.Configuration;
+
 using Microsoft.Extensions.Logging;
+
 using System.Diagnostics;
 
 /// <summary>

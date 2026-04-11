@@ -1,18 +1,24 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Backend;
 using Backend.Service;
+
 using Common.Configuration;
 using Common.Events;
 using Common.Navigation;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
 using Domain;
 using Domain.Enum;
+
 using Interface;
+
 using Microsoft.Extensions.Logging;
+
 using Service;
+
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;

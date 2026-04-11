@@ -3,8 +3,10 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Runtime.InteropServices;
+
 using Microsoft.Extensions.Logging;
+
+using System.Runtime.InteropServices;
 
 /// <summary>
 /// High-level operating states for the shell-wide status presentation.

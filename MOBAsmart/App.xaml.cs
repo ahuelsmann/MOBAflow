@@ -2,7 +2,9 @@
 namespace Moba.MAUI;
 
 using SharedUI.ViewModel;
+
 using System.Diagnostics;
+
 using View;
 
 public partial class App

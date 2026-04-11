@@ -117,9 +117,7 @@
                     <SymbolIcon Symbol="Forward" />
                 </AppBarButton.Icon>
             </AppBarButton>
-            <AppBarButton
-                IsEnabled="False"
-                Label="Reset Ruler">
+            <AppBarButton IsEnabled="False" Label="Reset Ruler">
                 <AppBarButton.Icon>
                     <SymbolIcon Symbol="Home" />
                 </AppBarButton.Icon>

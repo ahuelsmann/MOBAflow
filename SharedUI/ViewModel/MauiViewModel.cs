@@ -349,7 +349,7 @@ public sealed partial class MauiViewModel : ObservableObject
     /// <summary>
     /// Signals background tasks (REST health loop) to stop; call from the host before tearing down services.
     /// </summary>
-    internal void NotifyApplicationStopping()
+    public void NotifyApplicationStopping()
     {
         try
         {
