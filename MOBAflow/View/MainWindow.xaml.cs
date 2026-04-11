@@ -225,7 +225,7 @@ public sealed partial class MainWindow
     #region Event Handlers
     private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (_isClosing || RootGrid.XamlRoot is null)
+        if (_isClosing)
         {
             return;
         }
@@ -247,11 +247,14 @@ public sealed partial class MainWindow
 
     private void ApplyTheme(bool isDarkMode)
     {
-        if (_isClosing || RootGrid.XamlRoot is null)
+        if (_isClosing)
         {
             return;
         }
 
+        // Do not gate on XamlRoot: during the window constructor it is often still null, which
+        // previously skipped syncing ISkinProvider — pages (TrainControl, SignalBox) then forced
+        // ElementTheme.Light while the shell appeared dark.
         RootGrid.RequestedTheme = isDarkMode ? ElementTheme.Dark : ElementTheme.Light;
         _skinProvider.IsDarkMode = isDarkMode;
     }

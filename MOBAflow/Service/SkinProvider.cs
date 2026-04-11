@@ -20,6 +20,10 @@ internal class SkinProvider : ISkinProvider
     /// </summary>
     public void Initialize(AppSettings settings)
     {
+        // Keep provider in sync with persisted theme before MainWindow runs ApplyTheme (XamlRoot
+        // may not exist yet in the window constructor).
+        _isDarkMode = settings.Application.IsDarkMode;
+
         if (!string.IsNullOrEmpty(settings.Application.SelectedSkin))
         {
             // Support both old enum names and new names for backwards compatibility

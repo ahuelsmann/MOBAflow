@@ -304,7 +304,6 @@ public partial class MainWindowViewModel
     {
         // Solution Page
         SelectedProject = null;
-        SolutionPageSelectedObject = null;
 
         // Journeys Page
         SelectedJourney = null;

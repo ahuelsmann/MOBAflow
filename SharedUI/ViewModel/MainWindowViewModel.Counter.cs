@@ -3,9 +3,7 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
 using Microsoft.Extensions.Logging;
-
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 
@@ -158,10 +156,6 @@ public partial class MainWindowViewModel
     /// </summary>
     partial void OnSelectedProjectChanged(ProjectViewModel? value)
     {
-        // Align Solution page property editor with list selection. ListView binds SelectedProject;
-        // the properties ContentControl binds SolutionPageSelectedObject (updated on item click only).
-        SolutionPageSelectedObject = value;
-
         // Statistics are replaced (new ObservableCollection), not mutated in place,
         // so no Enqueue needed – only one PropertyChanged, no CollectionChanged during binding.
         InitializeStatisticsFromFeedbackPoints();

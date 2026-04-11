@@ -289,11 +289,6 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        // Subscribe to skin and ViewModel events when page enters visual tree
-        _skinProvider.SkinChanged += OnSkinProviderChanged;
-        _skinProvider.DarkModeChanged += OnDarkModeChanged;
-        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
-
         // Reload templates if needed (if not yet available at startup) and update UI
         LoadIconTemplates();
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BrakeIconTemplate)));
@@ -349,6 +344,9 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
+        _skinProvider.SkinChanged -= OnSkinProviderChanged;
+        _skinProvider.DarkModeChanged -= OnDarkModeChanged;
+        ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
     }
 
     private void LocoSeriesBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)

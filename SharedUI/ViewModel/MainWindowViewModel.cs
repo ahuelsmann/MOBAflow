@@ -337,13 +337,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private int _selectedThemeIndex = 1; // Default: Dark
 
     /// <summary>
-    /// The currently selected object for SolutionPage properties panel.
-    /// Displays: SelectedProject
-    /// </summary>
-    [ObservableProperty]
-    private object? _solutionPageSelectedObject;
-
-    /// <summary>
     /// The currently selected object for JourneysPage properties panel.
     /// Displays: SelectedJourney, SelectedStation
     /// </summary>
