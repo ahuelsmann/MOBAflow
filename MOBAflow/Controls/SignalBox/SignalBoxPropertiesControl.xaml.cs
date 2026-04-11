@@ -29,9 +29,9 @@ public sealed partial class SignalBoxPropertiesControl
         typeof(SignalBoxPropertiesControl),
         new PropertyMetadata(null));
 
-    public MainWindowViewModel ViewModel
+    public MainWindowViewModel? ViewModel
     {
-        get => (MainWindowViewModel)GetValue(ViewModelProperty);
+        get => (MainWindowViewModel?)GetValue(ViewModelProperty);
         set => SetValue(ViewModelProperty, value);
     }
 
@@ -544,9 +544,10 @@ public sealed partial class SignalBoxPropertiesControl
             {
                 if (turnoutCommand != null)
                 {
+                    var dccAddress = sig.BaseAddress + turnoutCommand.Value.AddressOffset;
                     SetSignalStatusText.Text =
                         $"Signal: {sig.SignalAspect}\n" +
-                        $"DCC-Adresse: {sig.Address}, Ausgang: {turnoutCommand.Value.Output}, Activate: {(turnoutCommand.Value.Activate ? "Ja" : "Nein")}";
+                        $"DCC-Adresse: {dccAddress}, Ausgang: {turnoutCommand.Value.Output}, Activate: {(turnoutCommand.Value.Activate ? "Ja" : "Nein")}";
                 }
                 else
                 {
@@ -585,6 +586,27 @@ public sealed partial class SignalBoxPropertiesControl
             return false;
         }
 
+        if (sig.BaseAddress % 2 == 0)
+        {
+            validationError = "⚠️ Basis-DCC-Adresse muss ungerade sein (Herstellerangabe Viessmann).";
+            return false;
+        }
+
+        if (!MultiplexerHelper.TryGetMaxAddressOffset(
+                sig.MultiplexerArticleNumber,
+                sig.MainSignalArticleNumber,
+                out var maxOffset))
+        {
+            validationError = "⚠️ Keine Adresstabelle für Multiplexer/Hauptsignal-Kombination.";
+            return false;
+        }
+
+        if (sig.BaseAddress + maxOffset > 2044)
+        {
+            validationError = $"⚠️ Basis + Adressbereich überschreitet 2044 (max. Offset {maxOffset}).";
+            return false;
+        }
+
         return true;
     }
 
@@ -606,7 +628,6 @@ public sealed partial class SignalBoxPropertiesControl
             }
 
             turnoutCommand = resolvedTurnoutCommand;
-            sig.Address = sig.BaseAddress + resolvedTurnoutCommand.AddressOffset + 1;
             sig.ExtendedAccessoryValue = resolvedTurnoutCommand.Activate ? 1 : 0;
             return true;
         }
@@ -758,9 +779,6 @@ public sealed partial class SignalBoxPropertiesControl
         {
             case SbSwitch sw:
                 sw.Address = value;
-                break;
-            case SbSignal sig:
-                sig.Address = value;
                 break;
             case SbDetector det:
                 det.FeedbackAddress = value;

@@ -468,6 +468,7 @@ Test/
 ├── TestData/               # Shared test data
 ├── TrackPlanRenderer/      # Renderer tests
 ├── Unit/                   # Cross-cutting unit tests
-├── WinUI/                  # Platform-specific tests
-└── Z21Simulator/           # Z21 simulator support
+└── WinUI/                  # Platform-specific tests
 ```
+
+The former `Test/Z21Simulator` tree was removed; simulate Z21 UDP I/O in tests with `FakeUdpClientWrapper` (see **FakeUdpClientWrapper Usage** above), not a separate UDP harness process.

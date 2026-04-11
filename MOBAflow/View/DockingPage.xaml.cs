@@ -6,7 +6,7 @@ using Microsoft.UI.Xaml;
 using Controls.Docking;
 using ViewModel;
 
-internal sealed partial class DockingPage
+public sealed partial class DockingPage
 {
     private readonly DockingPageViewModel _viewModel;
     private bool _isInitialized;

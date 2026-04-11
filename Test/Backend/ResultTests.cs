@@ -47,6 +47,7 @@ internal class ResultTests
         // Assert
         Assert.That(result.IsSuccess, Is.True);
         Assert.That(result.Value, Is.SameAs(testObject));
+        Assert.That(result.Value?.Value, Is.EqualTo("test"));
     }
 
     [Test]
@@ -339,6 +340,7 @@ internal class ResultTests
         // Assert
         Assert.That(result.IsSuccess, Is.True);
         Assert.That(result.Value?.Name, Is.EqualTo("John"));
+        Assert.That(result.Value?.Id, Is.EqualTo(1));
     }
 
     [Test]

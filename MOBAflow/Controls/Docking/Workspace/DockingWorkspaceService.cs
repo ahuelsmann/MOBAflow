@@ -10,7 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-internal sealed class DockingWorkspaceService
+public sealed class DockingWorkspaceService
 {
     public DockingWorkspaceProjection BuildProjection(DockingWorkspaceState state, Func<string, UIElement> contentFactory)
     {

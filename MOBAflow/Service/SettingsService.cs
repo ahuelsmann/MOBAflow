@@ -101,14 +101,14 @@ internal class SettingsService : ISettingsService
         _settings.Layout.JourneysPage.IsCityLibraryExpanded = source.Layout.JourneysPage.IsCityLibraryExpanded;
         _settings.Layout.JourneysPage.IsWorkflowLibraryExpanded = source.Layout.JourneysPage.IsWorkflowLibraryExpanded;
         _settings.Layout.JourneysPage.IsJourneyPropertiesExpanded = source.Layout.JourneysPage.IsJourneyPropertiesExpanded;
-        _settings.Layout.GoodsWagonPage = source.Layout.GoodsWagonPage ?? new GoodsWagonPageLayoutSettings();
-        _settings.Layout.LocomotivesPage = source.Layout.LocomotivesPage ?? new LocomotivesPageLayoutSettings();
-        _settings.Layout.PassengerWagonPage = source.Layout.PassengerWagonPage ?? new PassengerWagonPageLayoutSettings();
-        _settings.Layout.SolutionPage = source.Layout.SolutionPage ?? new SolutionPageLayoutSettings();
-        _settings.Layout.WorkflowsPage = source.Layout.WorkflowsPage ?? new WorkflowsPageLayoutSettings();
-        _settings.Layout.SignalBoxPage = source.Layout.SignalBoxPage ?? new SignalBoxPageLayoutSettings();
-        _settings.Layout.TrackPlanPage = source.Layout.TrackPlanPage ?? new TrackPlanPageLayoutSettings();
-        _settings.Layout.MonitorPage = source.Layout.MonitorPage ?? new MonitorPageLayoutSettings();
+        _settings.Layout.GoodsWagonPage = source.Layout.GoodsWagonPage;
+        _settings.Layout.LocomotivesPage = source.Layout.LocomotivesPage;
+        _settings.Layout.PassengerWagonPage = source.Layout.PassengerWagonPage;
+        _settings.Layout.SolutionPage = source.Layout.SolutionPage;
+        _settings.Layout.WorkflowsPage = source.Layout.WorkflowsPage;
+        _settings.Layout.SignalBoxPage = source.Layout.SignalBoxPage;
+        _settings.Layout.TrackPlanPage = source.Layout.TrackPlanPage;
+        _settings.Layout.MonitorPage = source.Layout.MonitorPage;
         _settings.FeatureToggles = source.FeatureToggles;
     }
 

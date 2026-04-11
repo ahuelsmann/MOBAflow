@@ -25,7 +25,7 @@ using Windows.UI.Core;
 
 using Path = Path;
 
-internal sealed partial class TrackPlanPage
+public sealed partial class TrackPlanPage
 {
     private readonly Stack<TrackPlanEditorDocument> _undoStack = [];
     private readonly Stack<TrackPlanEditorDocument> _redoStack = [];
@@ -269,12 +269,10 @@ internal sealed partial class TrackPlanPage
             _lastSavedDocumentJson = SerializeDocument(CaptureDocumentState());
             _hasUnsavedChanges = false;
             StatusText.Text = $"Track plan geladen: {path}";
-            return;
         }
         catch (Exception ex)
         {
             StatusText.Text = $"Laden fehlgeschlagen: {ex.Message}";
-            return;
         }
     }
 

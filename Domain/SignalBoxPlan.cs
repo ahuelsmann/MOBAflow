@@ -308,15 +308,11 @@ public sealed record SbSwitch : SbElement
 }
 
 /// <summary>
-/// Signal element with DCC address, system type and current aspect.
-/// Supports both traditional aspects and extended multiplex-decoders (up to 256 states).
+/// Signal element with multiplex base DCC address, system type and current aspect.
+/// Accessory commands use <see cref="BaseAddress"/> plus per-aspect offsets from the multiplexer mapping.
 /// </summary>
 public sealed record SbSignal : SbElement
 {
-    /// <summary>DCC address for Z21 control (0 = not configured).</summary>
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public int Address { get; set; }
-
     /// <summary>Signal system type (Ks, Hv, Hl, Form, Sv).</summary>
     public SignalSystemType SignalSystem { get; set; } = SignalSystemType.Ks;
 

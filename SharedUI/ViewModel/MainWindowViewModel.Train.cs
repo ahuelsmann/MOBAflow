@@ -8,6 +8,7 @@ using Domain;
 using Helper;
 
 using System.Collections.ObjectModel;
+using System.Threading;
 
 public partial class MainWindowViewModel
 {
@@ -25,6 +26,7 @@ public partial class MainWindowViewModel
 
     partial void OnSelectedTrainChanging(TrainViewModel? value)
     {
+        _ = value;
         if (_selectedTrain != null)
         {
             _selectedTrain.VehiclesModified -= SelectedTrain_VehiclesModified;
@@ -48,6 +50,11 @@ public partial class MainWindowViewModel
 
     private void SelectedTrain_VehiclesModified(object? sender, EventArgs e)
     {
+        if (Volatile.Read(ref _solutionAutoSaveSuppressionCount) > 0)
+        {
+            return;
+        }
+
         _ = SaveSolutionInternalAsync();
     }
 

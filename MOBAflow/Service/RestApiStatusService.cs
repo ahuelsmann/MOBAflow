@@ -15,7 +15,7 @@ using System.Timers;
 /// Polls the REST API (MOBApi process) status and updates MainWindowViewModel with status and connected clients.
 /// When the API is reachable, connects PhotoHubClient so WinUI receives photo upload notifications and assigns the photo to the selected item.
 /// </summary>
-internal sealed class RestApiStatusService : IDisposable
+public sealed class RestApiStatusService : IDisposable
 {
     private const int PollIntervalWhenReachableMs = 30_000;  // 30 s when API is up
     private const int PollIntervalWhenWaitingMs = 2_000;      // 2 s while "Waiting for the REST API to start..."
@@ -201,10 +201,6 @@ internal sealed class RestApiStatusService : IDisposable
         public List<ClientDto>? ConnectedClients { get; set; }
     }
 
-    private sealed class ClientDto
-    {
-        public string? ClientId { get; set; }
-        public string? DeviceName { get; set; }
-        public DateTime ConnectedAt { get; set; }
-    }
+    /// <summary>REST status payload item; deserialized via primary constructor (avoids unused synthetic property setters).</summary>
+    private sealed record ClientDto(string? ClientId, string? DeviceName, DateTime ConnectedAt);
 }

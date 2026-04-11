@@ -2,7 +2,9 @@
 namespace Moba.Backend.Data;
 
 using Domain;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 /// <summary>
 /// Central master data class for cities/stations and locomotive library.
@@ -24,7 +26,6 @@ public class DataManager
     {
         Cities = [];
         Locomotives = [];
-        MultiplexSignals = [];
         SchemaVersion = CurrentSchemaVersion;
     }
 
@@ -44,10 +45,10 @@ public class DataManager
     public List<LocomotiveCategory> Locomotives { get; set; }
 
     /// <summary>
-    /// Viessmann Multiplex signals (Ks main signal, Ks distant signal) for the ComboBox in the signal box.
-    /// Source: https://viessmann-modell.com/sortiment/spur-h0/signale/
+    /// Viessmann Multiplex signals for signal box combo boxes (master data key <c>viessmannMultiplexSignals</c> in data.json).
     /// </summary>
-    public List<MultiplexSignalEntry> MultiplexSignals { get; set; }
+    [JsonPropertyName("viessmannMultiplexSignals")]
+    public List<MultiplexSignalEntry> MultiplexSignals { get; set; } = [];
 
     /// <summary>
     /// Updates this instance from another DataManager instance.
@@ -65,7 +66,9 @@ public class DataManager
             Locomotives.Add(l);
         MultiplexSignals.Clear();
         foreach (var s in other.MultiplexSignals)
+        {
             MultiplexSignals.Add(s);
+        }
     }
 
     /// <summary>
@@ -194,7 +197,11 @@ public class MultiplexSignalEntry
 /// <summary>
 /// Helper class for deserializing locomotive library JSON files.
 /// </summary>
-internal class LocomotiveLibraryData
+[UnconditionalSuppressMessage(
+    "Performance",
+    "CA1812:Avoid uninstantiated internal classes",
+    Justification = "Instantiated by System.Text.Json deserialization.")]
+internal sealed class LocomotiveLibraryData
 {
     public List<LocomotiveCategory> Locomotives { get; set; } = [];
 }

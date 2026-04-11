@@ -151,7 +151,7 @@ public sealed class SbSwitchViewModel : SbElementViewModel
 
 /// <summary>
 /// ViewModel for signal elements.
-/// Manages DCC address, system type, and current aspect.
+/// Manages signal system type and current aspect (multiplex base address is edited in the signal box properties UI).
 /// </summary>
 public sealed class SbSignalViewModel : SbElementViewModel
 {
@@ -165,15 +165,6 @@ public sealed class SbSignalViewModel : SbElementViewModel
     /// Gets the typed model.
     /// </summary>
     public new SbSignal Model => (SbSignal)base.Model;
-
-    /// <summary>
-    /// Gets or sets the DCC address (0 = not configured).
-    /// </summary>
-    public int Address
-    {
-        get => Model.Address;
-        set => SetProperty(Model.Address, value, Model, (m, v) => m.Address = v);
-    }
 
     /// <summary>
     /// Gets or sets the signal system type.

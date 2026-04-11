@@ -7,7 +7,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 /// <summary>
 /// Base class for all nodes in the docking hierarchy.
 /// </summary>
-internal abstract partial class DockNode : ObservableObject
+public abstract partial class DockNode : ObservableObject
 {
     /// <summary>
     /// The parent node in the hierarchy, or null if this is a root node.

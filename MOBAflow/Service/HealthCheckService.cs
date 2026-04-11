@@ -13,7 +13,7 @@ using Sound;
 /// Centralized health check service that monitors Azure Speech Service and other dependencies.
 /// Provides periodic health checks and status reporting for UI display.
 /// </summary>
-internal partial class HealthCheckService : IDisposable
+public partial class HealthCheckService : IDisposable
 {
     private readonly SpeechHealthCheck _speechHealthCheck;
     private readonly ILogger<HealthCheckService> _logger;
@@ -180,7 +180,7 @@ internal partial class HealthCheckService : IDisposable
 /// <summary>
 /// Event args for health status changes.
 /// </summary>
-internal class HealthStatusChangedEventArgs : EventArgs
+public class HealthStatusChangedEventArgs : EventArgs
 {
     public string ServiceName { get; set; } = string.Empty;
     public bool IsHealthy { get; set; }

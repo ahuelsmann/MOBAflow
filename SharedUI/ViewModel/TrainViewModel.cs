@@ -22,7 +22,6 @@ public sealed class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
         Model = model;
         _project = project;
 
-        EnsureVehiclesInitialized();
         RefreshVehicleItems();
     }
 
@@ -108,8 +107,6 @@ public sealed class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
 
     public void RefreshVehicleItems()
     {
-        EnsureVehiclesInitialized();
-
         VehicleItems.Clear();
         foreach (var vehicle in Model.Vehicles)
         {
@@ -136,8 +133,6 @@ public sealed class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
 
     private void InsertVehicle(Vehicle vehicle, int index)
     {
-        EnsureVehiclesInitialized();
-
         if (Model.Vehicles.Any(existing => existing.VehicleId == vehicle.VehicleId && existing.VehicleKind == vehicle.VehicleKind))
         {
             return;
@@ -157,8 +152,6 @@ public sealed class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
 
     private void RemoveVehicle(Vehicle vehicle)
     {
-        EnsureVehiclesInitialized();
-
         var index = Model.Vehicles.FindIndex(existing => existing.VehicleId == vehicle.VehicleId && existing.VehicleKind == vehicle.VehicleKind);
         if (index < 0)
         {
@@ -168,11 +161,6 @@ public sealed class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
         Model.Vehicles.RemoveAt(index);
         RefreshVehicleItems();
         VehiclesModified?.Invoke(this, EventArgs.Empty);
-    }
-
-    private void EnsureVehiclesInitialized()
-    {
-        Model.Vehicles ??= [];
     }
 
     private string ResolveDisplayName(Vehicle vehicle)

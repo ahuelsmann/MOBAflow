@@ -6,7 +6,8 @@ using Common.Multiplex;
 
 /// <summary>
 /// Provides the selectable Viessmann Multiplex signals (main and distant signal) from master data (data.json).
-/// Filters by multiplexer (5229/52292) and role (main/distant).
+/// Main-signal articles follow Viessmann manual section 7 (&quot;Verwendbare Signale&quot;), captured in data.json
+/// (Ks 4042/4043/4045/4046; Lichtsignale 4721–4728; Signalköpfe 4751–4753; Ks-Vorsignal 4040 as distant).
 /// </summary>
 internal sealed class ViessmannSignalService
 {
@@ -19,15 +20,15 @@ internal sealed class ViessmannSignalService
 
     /// <summary>
     /// Returns all entries selectable as main signal for the specified multiplexer.
-    /// Only article numbers that the multiplexer supports and that have role "main" in master data.
+    /// Uses role "main" from master data (data.json). Articles without a turnout mapping in
+    /// <see cref="MultiplexerHelper"/> still appear but aspect commands fail until mappings are added.
     /// </summary>
     public IReadOnlyList<(string ArticleNumber, string DisplayName)> GetMainSignalOptions(string multiplexerArticleNumber)
     {
-        var definition = MultiplexerHelper.GetDefinition(multiplexerArticleNumber);
-        var supportedArticles = definition.SignalAspectCommandsBySignalArticle.Keys;
+        _ = MultiplexerHelper.GetDefinition(multiplexerArticleNumber);
         var fromData = _dataManager.MultiplexSignals;
         var main = fromData
-            .Where(s => string.Equals(s.Role, "main", StringComparison.OrdinalIgnoreCase) && supportedArticles.Contains(s.ArticleNumber))
+            .Where(s => string.Equals(s.Role, "main", StringComparison.OrdinalIgnoreCase))
             .Select(s => (s.ArticleNumber, $"{s.ArticleNumber} - {s.DisplayName}"))
             .ToList();
         if (main.Count == 0)

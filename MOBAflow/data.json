@@ -2767,7 +2767,7 @@
         },
         {
             "articleNumber": "4042",
-            "displayName": "Ks-Hauptsignal (4042)",
+            "displayName": "Ks-Einfahrsignal",
             "role": "main"
         },
         {
@@ -2777,12 +2777,67 @@
         },
         {
             "articleNumber": "4045",
-            "displayName": "Ks-Hauptsignal (4045)",
+            "displayName": "Ks-Einfahrsignal (Mehrbereich)",
             "role": "main"
         },
         {
             "articleNumber": "4046",
-            "displayName": "Ks-Mehrabschnittssignal",
+            "displayName": "Ks-Ausfahrsignal (Mehrbereich)",
+            "role": "main"
+        },
+        {
+            "articleNumber": "4721",
+            "displayName": "Licht-Blocksignal (Bauart 1969)",
+            "role": "main"
+        },
+        {
+            "articleNumber": "4722",
+            "displayName": "Licht-Einfahrsignal (Bauart 1969)",
+            "role": "main"
+        },
+        {
+            "articleNumber": "4723",
+            "displayName": "Licht-Ausfahrsignal (Bauart 1969)",
+            "role": "main"
+        },
+        {
+            "articleNumber": "4724",
+            "displayName": "Licht-Blocksignal mit Vorsignal",
+            "role": "main"
+        },
+        {
+            "articleNumber": "4725",
+            "displayName": "Licht-Einfahrsignal mit Vorsignal",
+            "role": "main"
+        },
+        {
+            "articleNumber": "4726",
+            "displayName": "Licht-Ausfahrsignal mit Vorsignal",
+            "role": "main"
+        },
+        {
+            "articleNumber": "4727",
+            "displayName": "Licht-Sperrsignal",
+            "role": "main"
+        },
+        {
+            "articleNumber": "4728",
+            "displayName": "Licht-Sperrsignal",
+            "role": "main"
+        },
+        {
+            "articleNumber": "4751",
+            "displayName": "Ausfahrsignalköpfe mit Vorsignal",
+            "role": "main"
+        },
+        {
+            "articleNumber": "4752",
+            "displayName": "Blocksignalköpfe mit Vorsignal",
+            "role": "main"
+        },
+        {
+            "articleNumber": "4753",
+            "displayName": "Einfahrsignalköpfe mit Vorsignal",
             "role": "main"
         }
     ]

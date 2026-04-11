@@ -47,6 +47,24 @@ internal class MultiplexerHelperTests
     }
 
     [Test]
+    public void TryGetMaxAddressOffset_5229_4046_ShouldReturn3()
+    {
+        var ok = MultiplexerHelper.TryGetMaxAddressOffset("5229", "4046", out var max);
+
+        Assert.That(ok, Is.True);
+        Assert.That(max, Is.EqualTo(3));
+    }
+
+    [Test]
+    public void TryGetMaxAddressOffset_5229_4042_ShouldReturn0()
+    {
+        var ok = MultiplexerHelper.TryGetMaxAddressOffset("5229", "4042", out var max);
+
+        Assert.That(ok, Is.True);
+        Assert.That(max, Is.EqualTo(0));
+    }
+
+    [Test]
     public void GetDefinition_EmptyArticle_ShouldThrow()
     {
         // Act & Assert

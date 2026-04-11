@@ -87,7 +87,6 @@
                             Text="{x:Bind ViewModel.TrainSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
                         <ListView
-                            x:Name="TrainsListView"
                             Grid.Row="1"
                             IsItemClickEnabled="True"
                             ItemsSource="{x:Bind ViewModel.FilteredTrains, Mode=OneWay}"
@@ -112,11 +111,9 @@
                                             <StackPanel Orientation="Horizontal" Spacing="4">
                                                 <TextBlock
                                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                    Style="{ThemeResource CaptionTextBlockStyle}"
                                                     Text="{x:Bind VehicleItems.Count, Mode=OneWay}" />
                                                 <TextBlock
                                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                    Style="{ThemeResource CaptionTextBlockStyle}"
                                                     Text="vehicles" />
                                             </StackPanel>
                                         </StackPanel>
@@ -154,7 +151,6 @@
                             Text="{x:Bind ViewModel.LocomotiveSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
                         <ListView
-                            x:Name="LocomotiveLibraryListView"
                             Grid.Row="1"
                             CanDragItems="True"
                             DragItemsStarting="LocomotiveLibraryListView_DragItemsStarting"
@@ -211,7 +207,6 @@
                             Text="{x:Bind ViewModel.PassengerWagonSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
                         <ListView
-                            x:Name="PassengerWagonLibraryListView"
                             Grid.Row="1"
                             CanDragItems="True"
                             DragItemsStarting="PassengerWagonLibraryListView_DragItemsStarting"
@@ -271,7 +266,6 @@
                             Text="{x:Bind ViewModel.GoodsWagonSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
                         <ListView
-                            x:Name="GoodsWagonLibraryListView"
                             Grid.Row="1"
                             CanDragItems="True"
                             DragItemsStarting="GoodsWagonLibraryListView_DragItemsStarting"
@@ -348,7 +342,6 @@
 
                 <TextBlock
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Style="{ThemeResource CaptionTextBlockStyle}"
                     Text="Drag locomotives and wagons into this row. Reorder directly and remove via X or Delete." />
 
                 <Grid Grid.Row="1">

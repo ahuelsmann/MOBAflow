@@ -103,6 +103,48 @@ public static class MultiplexerHelper
     }
 
     /// <summary>
+    /// Gets the largest <see cref="MultiplexerTurnoutCommand.AddressOffset"/> among all aspects
+    /// for the given multiplexer and signal article (used for DCC range validation).
+    /// </summary>
+    /// <param name="multiplexerArticle">Multiplexer article number (e.g. 5229).</param>
+    /// <param name="signalArticleNumber">Signal article or null to use the definition default main signal.</param>
+    /// <param name="maxOffset">Maximum offset when the article is found; otherwise 0.</param>
+    /// <returns>True when the signal article has a mapping table in the definition.</returns>
+    public static bool TryGetMaxAddressOffset(
+        string multiplexerArticle,
+        string? signalArticleNumber,
+        out int maxOffset)
+    {
+        maxOffset = 0;
+        try
+        {
+            var definition = GetDefinition(multiplexerArticle);
+            var resolvedArticle = string.IsNullOrWhiteSpace(signalArticleNumber)
+                ? definition.MainSignalArticleNumber
+                : signalArticleNumber;
+            if (string.IsNullOrWhiteSpace(resolvedArticle) ||
+                !definition.SignalAspectCommandsBySignalArticle.TryGetValue(resolvedArticle, out var mapping))
+            {
+                return false;
+            }
+
+            foreach (var cmd in mapping.Values)
+            {
+                if (cmd.AddressOffset > maxOffset)
+                {
+                    maxOffset = cmd.AddressOffset;
+                }
+            }
+
+            return true;
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Article number of the Viessmann distant signal (Ks distant signal); all others count as main signal.
     /// </summary>
     private const string DistantSignalArticle = "4040";
@@ -113,10 +155,21 @@ public static class MultiplexerHelper
     private static readonly IReadOnlyDictionary<string, string> SignalArticleDisplayNames = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["4040"] = "Ks-Vorsignal",
-        ["4042"] = "Ks-Hauptsignal (4042)",
+        ["4042"] = "Ks-Einfahrsignal",
         ["4043"] = "Ks-Ausfahrsignal",
-        ["4045"] = "Ks-Hauptsignal (4045)",
-        ["4046"] = "Ks-Mehrabschnittssignal"
+        ["4045"] = "Ks-Einfahrsignal (Mehrbereich)",
+        ["4046"] = "Ks-Ausfahrsignal (Mehrbereich)",
+        ["4721"] = "Licht-Blocksignal (Bauart 1969)",
+        ["4722"] = "Licht-Einfahrsignal (Bauart 1969)",
+        ["4723"] = "Licht-Ausfahrsignal (Bauart 1969)",
+        ["4724"] = "Licht-Blocksignal mit Vorsignal",
+        ["4725"] = "Licht-Einfahrsignal mit Vorsignal",
+        ["4726"] = "Licht-Ausfahrsignal mit Vorsignal",
+        ["4727"] = "Licht-Sperrsignal",
+        ["4728"] = "Licht-Sperrsignal",
+        ["4751"] = "Ausfahrsignalköpfe mit Vorsignal",
+        ["4752"] = "Blocksignalköpfe mit Vorsignal",
+        ["4753"] = "Einfahrsignalköpfe mit Vorsignal"
     };
 
     /// <summary>
@@ -174,7 +227,7 @@ public static class MultiplexerHelper
     /// 5229 - Multiplexer for light signals with multiplex technology.
     /// Controls 1 main signal (e.g. 4046) + 1 distant signal (e.g. 4040, synchronized).
     ///
-    /// DCC mapping at base address 201 (4 addresses: 201, 202, 203, 204):
+    /// DCC mapping at base address B = 201 (four addresses: 201..204 for offsets 0..3):
     /// - Address 201 (Offset 0): Hp0 = output 1, false (red); Ks1 = output 1, true (green)
     /// - Address 202 (Offset 1): Ra12 = output 0, true
     /// - Address 203 (Offset 2): Ks2 = output 0, true; Ks1Blink = output 1, true

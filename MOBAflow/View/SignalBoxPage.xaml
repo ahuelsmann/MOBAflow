@@ -45,7 +45,6 @@
 
                 <!--  Grid Toggle  -->
                 <ToggleButton
-                    x:Name="GridToggleButton"
                     Grid.Column="2"
                     VerticalAlignment="Center"
                     Checked="OnGridToggled"

@@ -526,7 +526,7 @@
                                     <TextBlock
                                         FontSize="9"
                                         Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                        Text="Die wirksamen DCC-Adressen beginnen bei Basisadresse + 1 (z. B. Basis 200 => 201-204)." />
+                                        Text="B = Basis-Adresse (Viessmann [B]); wirksame Adressen sind B, B+1, … gemäß Handbuch. Basis muss ungerade sein." />
                                     <NumberBox
                                         x:Name="BaseAddressBox"
                                         Maximum="2044"

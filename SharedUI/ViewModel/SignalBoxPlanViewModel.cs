@@ -161,7 +161,7 @@ public sealed partial class SignalBoxPlanViewModel : ObservableObject, IViewMode
     /// </summary>
     public SbSignal AddSignal(int x, int y, int rotation = 0, SignalSystemType system = SignalSystemType.Ks)
     {
-        var element = new SbSignal { X = x, Y = y, Rotation = rotation, Address = GetNextSignalAddress(), SignalSystem = system };
+        var element = new SbSignal { X = x, Y = y, Rotation = rotation, SignalSystem = system };
         _model.AddElement(element);
         Elements.Add(element);
         OnPropertyChanged(nameof(ElementCount));
@@ -187,15 +187,6 @@ public sealed partial class SignalBoxPlanViewModel : ObservableObject, IViewMode
     {
         var switches = Elements.OfType<SbSwitch>().ToList();
         return switches.Count > 0 ? switches.Max(e => e.Address) + 1 : 1;
-    }
-
-    /// <summary>
-    /// Gets the next available address for signals.
-    /// </summary>
-    public int GetNextSignalAddress()
-    {
-        var signals = Elements.OfType<SbSignal>().ToList();
-        return signals.Count > 0 ? signals.Max(e => e.Address) + 1 : 1;
     }
 
     /// <summary>

@@ -17,7 +17,7 @@ using System.Linq;
 /// ViewModel for DockingPage demonstrating LayoutDocument capabilities.
 /// (Host-side: no plugin dependencies)
 /// </summary>
-internal sealed partial class DockingPageViewModel : ObservableObject
+public sealed partial class DockingPageViewModel : ObservableObject
 {
     private const double CollapsedPanelExtent = 32.0;
 

@@ -12,7 +12,7 @@ using Windows.ApplicationModel.DataTransfer;
 /// <summary>
 /// Determines how multiple panels in a dock group are displayed.
 /// </summary>
-internal enum DockGroupLayoutMode
+public enum DockGroupLayoutMode
 {
     /// <summary>Split panels evenly (Split).</summary>
     Split,

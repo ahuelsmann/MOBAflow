@@ -4,7 +4,6 @@ namespace Moba.Backend;
 
 using Common.Events;
 using CommunityToolkit.Mvvm.Messaging;
-using Domain;
 using Domain.Message;
 using Interface;
 using Microsoft.Extensions.Logging;
@@ -1099,29 +1098,6 @@ public class Z21 : IZ21
         _logger?.LogDebug("GetTurnoutInfo: Address={Address}", decoderAddress);
     }
 
-    /// <summary>
-    /// Sets a signal aspect using the standard turnout command.
-    /// Z21 treats all accessory decoders uniformly - no special multiplex handling needed.
-    /// </summary>
-    public async Task SetSignalAspectAsync(SbSignal signal, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(signal);
-
-        if (signal.Address is < 1 or > 2044)
-        {
-            throw new ArgumentOutOfRangeException(nameof(signal.Address), "Signal address must be between 1 and 2044");
-        }
-
-        // Determine activation state from signal aspect
-        var activate = signal.SignalAspect != SignalAspect.Hp0;
-
-        // Use standard turnout command for all signal types
-        // Output is always 0 for signal control (Z21 doesn't distinguish multiplex vs classic)
-        await SetTurnoutAsync(signal.Address, 0, activate, false, cancellationToken).ConfigureAwait(false);
-
-        _logger?.LogInformation("SetSignalAspect: Address={Address}, Aspect={Aspect}, Activate={Activate}",
-            signal.Address, signal.SignalAspect, activate);
-    }
     #endregion
 
     #region Log & Debugging

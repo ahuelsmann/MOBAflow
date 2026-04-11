@@ -214,9 +214,8 @@ public static class Z21Command
     /// Example: Decoder Address 201 → FAdr = 200 (0x00C8).
     /// 
     /// For multiplex signal decoders (e.g., 5229):
-    /// - BaseAddress + AddressOffset (e.g., 50 + 0 = 50) is treated as a regular decoder address
-    /// - FAdr = 50 - 1 = 49
-    /// - Z21 decodes: Dcc_Addr = 49 + 1 = 50, Port = 0 (no special multiplex handling on Z21 side)
+    /// - DCC accessory address = BaseAddress + AddressOffset (Viessmann [B+k]); passed here as <paramref name="decoderAddress"/>.
+    /// - FAdr = decoderAddress - 1 per Z21 encoding above.
     /// 
     /// See Z21-Protokoll.md Section 5.2 for details.
     /// </summary>

@@ -22,11 +22,10 @@ using Windows.Foundation;
 using Windows.System;
 using Windows.UI;
 
-internal sealed partial class TrackPlanPage
+public sealed partial class TrackPlanPage
 {
     private const string DragFormatTrackCatalog = "application/x-moba-track-catalog";
     private const double ScaleMmToPx = 1.0;
-    private const double SnapThresholdMm = 15.0;
     private const double PortHighlightRadiusMm = 25.0;
     private const double RigidGroupSnapAngleToleranceDegrees = 1.0;
     /// <summary>Margin in mm, damit der gesamte Plan sichtbar ist (auch bei negativen Koordinaten).</summary>
@@ -921,10 +920,17 @@ internal sealed partial class TrackPlanPage
             var cos = Math.Cos(angleRad);
             var sin = Math.Sin(angleRad);
 
-            static double Tx(double ox, double _, double lx, double ly, double cos, double sin) =>
-                ox + lx * cos - ly * sin;
-            static double Ty(double _, double oy, double lx, double ly, double cos, double sin) =>
-                oy + lx * sin + ly * cos;
+            static double Tx(double ox, double oy, double lx, double ly, double cos, double sin)
+            {
+                _ = oy;
+                return ox + lx * cos - ly * sin;
+            }
+
+            static double Ty(double ox, double oy, double lx, double ly, double cos, double sin)
+            {
+                _ = ox;
+                return oy + lx * sin + ly * cos;
+            }
 
             var corners = new[]
             {
@@ -1085,7 +1091,7 @@ internal sealed partial class TrackPlanPage
         {
             var isSelected = placed.Segment.No == _selectedSegmentId;
             var pathCommands = SegmentLocalPathBuilder.GetPath(placed.Segment);
-            var worldGeometry = PathToCanvasGeometryConverter.ToCanvasGeometryInWorldCoords(
+            var worldGeometry = Moba.WinUI.Converter.PathToCanvasGeometryConverter.ToCanvasGeometryInWorldCoords(
                 resourceCreator, pathCommands, placed.X + offsetX, placed.Y + offsetY, placed.RotationDegrees, ScaleMmToPx);
 
             var strokeWidth = (float)(isSelected ? 10 : 4);
@@ -1111,7 +1117,8 @@ internal sealed partial class TrackPlanPage
 
         if (analysis.ConnectedGroups.Count > 1)
         {
-            using var groupStrokeStyle = new CanvasStrokeStyle { DashStyle = CanvasDashStyle.Dash };
+            using var groupStrokeStyle = new CanvasStrokeStyle();
+            groupStrokeStyle.DashStyle = CanvasDashStyle.Dash;
             foreach (var group in analysis.ConnectedGroups)
             {
                 var x = (float)((group.MinX + offsetX) * ScaleMmToPx - 18);

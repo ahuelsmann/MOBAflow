@@ -14,7 +14,7 @@ using System.Diagnostics;
 /// For plugins: Uses ContentProvider pattern to avoid XamlTypeInfo resolution issues.
 /// Plugins provide a class with CreateContent() method that returns UIElement.
 /// </summary>
-internal class NavigationService : INavigationService
+public class NavigationService : INavigationService
 {
     #region Fields
     private readonly IServiceProvider _serviceProvider;

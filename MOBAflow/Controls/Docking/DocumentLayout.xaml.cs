@@ -12,7 +12,7 @@ using Windows.ApplicationModel.DataTransfer;
 /// Extended LayoutDocument with tab groups, binding support and window management.
 /// Supports grouped tabs (Modified, Pinned, Regular) and floating windows.
 /// </summary>
-internal sealed partial class LayoutDocument
+public sealed partial class LayoutDocument
 {
     private const string DocumentTabDataKey = "DocumentTab";
 

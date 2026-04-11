@@ -2,8 +2,6 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend;
-using Backend.Model;
-using Backend.Protocol;
 using Backend.Service;
 using Common.Configuration;
 using Common.Events;
@@ -18,6 +16,7 @@ using Service;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Threading;
 
 // For NullIoService
 
@@ -52,6 +51,21 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly LayoutColumnWidthsViewModel _layoutColumnWidths;
 
     private bool _isShuttingDown;
+
+    /// <summary>
+    /// When greater than zero, PropertyChanged-driven solution auto-save is suppressed (bulk load / new solution).
+    /// </summary>
+    private int _solutionAutoSaveSuppressionCount;
+
+    /// <summary>
+    /// Ensures at most one solution file write runs at a time (avoids races on temp/rename writes).
+    /// </summary>
+    private readonly SemaphoreSlim _solutionSaveSemaphore = new(1, 1);
+
+    /// <summary>
+    /// Set to 1 after <see cref="DrainAndDisposeSolutionSaveSemaphoreAsync"/> has run (idempotent shutdown).
+    /// </summary>
+    private int _solutionSaveSemaphoreDrainStarted;
 
     #endregion
 
@@ -257,14 +271,34 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// </summary>
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        // Ignore certain properties that don't affect the model
-        var ignoredProperties = new[] { "IsSelected", "IsExpanded", "IsHighlighted" };
-
-        if (!ignoredProperties.Contains(e.PropertyName))
+        if (Volatile.Read(ref _solutionAutoSaveSuppressionCount) > 0)
         {
-            _ = SaveSolutionInternalAsync();
+            return;
         }
+
+        // Ignore UI-only or runtime-backed properties that must not persist the whole solution.
+        // Journey: UpdateFromRuntimeSnapshot / UpdateFromSessionState refresh counters and station labels from Z21/backend.
+        // Station: IsCurrentStation is runtime highlight when the active journey position changes.
+        if (e.PropertyName is { } name &&
+            (name is "IsSelected" or "IsExpanded" or "IsHighlighted" or "IsCurrentStation"
+             or "CurrentStation" or "CurrentCounter" or "CurrentPos"))
+        {
+            return;
+        }
+
+        _ = SaveSolutionInternalAsync();
     }
+
+    /// <summary>
+    /// Increments suppression counter so <see cref="OnViewModelPropertyChanged"/> does not trigger auto-save.
+    /// Must be paired with <see cref="EndSuppressSolutionAutoSave"/>.
+    /// </summary>
+    private void BeginSuppressSolutionAutoSave() => Interlocked.Increment(ref _solutionAutoSaveSuppressionCount);
+
+    /// <summary>
+    /// Decrements suppression counter started by <see cref="BeginSuppressSolutionAutoSave"/>.
+    /// </summary>
+    private void EndSuppressSolutionAutoSave() => Interlocked.Decrement(ref _solutionAutoSaveSuppressionCount);
 
     /// <summary>
     /// The currently selected object to display in the properties panel.
@@ -474,6 +508,32 @@ public sealed partial class MainWindowViewModel : ObservableObject
         {
             _logger.LogError(ex, "Error during Z21 disconnect");
         }
+
+        await DrainAndDisposeSolutionSaveSemaphoreAsync().ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Waits until no in-flight solution save holds the semaphore, then releases managed resources.
+    /// Safe to call once per application shutdown; subsequent calls are ignored.
+    /// </summary>
+    private async Task DrainAndDisposeSolutionSaveSemaphoreAsync()
+    {
+        if (Interlocked.CompareExchange(ref _solutionSaveSemaphoreDrainStarted, 1, 0) != 0)
+        {
+            return;
+        }
+
+        try
+        {
+            await _solutionSaveSemaphore.WaitAsync().ConfigureAwait(false);
+            _solutionSaveSemaphore.Release();
+        }
+        catch (ObjectDisposedException)
+        {
+            return;
+        }
+
+        _solutionSaveSemaphore.Dispose();
     }
 
     private bool TryBeginShutdown()
@@ -599,34 +659,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private bool CanAssignWorkflowToStation() => SelectedStation != null;
 
     #endregion
-
-    private static SystemState CreateSystemState(SystemStateChangedEvent evt)
-    {
-        return new SystemState
-        {
-            MainCurrent = evt.MainCurrent,
-            ProgCurrent = evt.ProgCurrent,
-            FilteredMainCurrent = evt.FilteredMainCurrent,
-            Temperature = evt.Temperature,
-            SupplyVoltage = evt.SupplyVoltage,
-            VccVoltage = evt.VccVoltage,
-            CentralState = unchecked((byte)evt.CentralState),
-            CentralStateEx = unchecked((byte)evt.CentralStateEx)
-        };
-    }
-
-    private static XBusStatus CreateXBusStatus(XBusStatusChangedEvent evt)
-        => new(evt.EmergencyStop, evt.TrackOff, evt.ShortCircuit, evt.Programming);
-
-    private static Z21VersionInfo CreateVersionInfo(VersionInfoChangedEvent evt)
-    {
-        return new Z21VersionInfo
-        {
-            SerialNumber = evt.SerialNumber,
-            HardwareTypeCode = unchecked((uint)evt.HardwareTypeCode),
-            FirmwareVersionCode = unchecked((uint)evt.FirmwareVersionCode)
-        };
-    }
 
     #region Signal Box / Viessmann Multiplex Signals (binding for Settings page)
 

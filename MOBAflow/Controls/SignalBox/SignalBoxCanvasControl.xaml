@@ -179,7 +179,6 @@
 
         <Grid Width="1920" Height="1080">
             <Canvas
-                x:Name="GridCanvas"
                 Width="1920"
                 Height="1080"
                 IsHitTestVisible="False" />
@@ -187,7 +186,6 @@
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <Canvas
-                            x:Name="TrackCanvas"
                             Width="1920"
                             Height="1080"
                             AllowDrop="True"

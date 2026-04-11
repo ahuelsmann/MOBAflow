@@ -172,7 +172,6 @@ public sealed partial class SignalBoxCanvasControl
         signal.MultiplexerArticleNumber = "5229";
         signal.IsMultiplexed = true;
         signal.MainSignalArticleNumber = mainSignalArticle;
-        signal.BaseAddress = signal.Address;
         return signal;
     }
 

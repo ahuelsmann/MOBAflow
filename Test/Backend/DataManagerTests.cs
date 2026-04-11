@@ -189,6 +189,30 @@ internal class DataManagerTests
     }
 
     [Test]
+    public async Task LoadFromFileAsync_WithViessmannMultiplexSignalsKey_ShouldDeserializeEntries()
+    {
+        var jsonContent = """
+        {
+            "schemaVersion": 1,
+            "cities": [],
+            "locomotives": [],
+            "viessmannMultiplexSignals": [
+                { "articleNumber": "4046", "displayName": "Ks-Ausfahrsignal (Mehrbereich)", "role": "main" },
+                { "articleNumber": "4721", "displayName": "Licht-Blocksignal (Bauart 1969)", "role": "main" }
+            ]
+        }
+        """;
+        await File.WriteAllTextAsync(_testFilePath, jsonContent);
+
+        var result = await DataManager.LoadFromFileAsync(_testFilePath);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.MultiplexSignals, Has.Count.EqualTo(2));
+        Assert.That(result.MultiplexSignals[0].ArticleNumber, Is.EqualTo("4046"));
+        Assert.That(result.MultiplexSignals[1].ArticleNumber, Is.EqualTo("4721"));
+    }
+
+    [Test]
     public async Task SaveAsync_ThenLoadFromFileAsync_RoundtripsData()
     {
         // Arrange: Instanz mit Daten

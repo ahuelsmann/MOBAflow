@@ -2,7 +2,6 @@
 
 namespace Moba.Backend.Interface;
 
-using Domain;
 using Model;
 using Protocol;
 using Service;
@@ -249,12 +248,4 @@ public interface IZ21 : IDisposable
         /// <param name="decoderAddress">Accessory decoder address (1-2044)</param>
         /// <param name="cancellationToken">Cancellation token</param>
         Task GetTurnoutInfoAsync(int decoderAddress, CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Sets a signal aspect for a multiplex signal decoder.
-        /// This is a high-level convenience method combining signal addressing with multiplex control.
-        /// </summary>
-        /// <param name="signal">The signal element containing address, aspect, and multiplex settings</param>
-        /// <param name="cancellationToken">Cancellation token</param>
-        Task SetSignalAspectAsync(SbSignal signal, CancellationToken cancellationToken = default);
-        }
+}

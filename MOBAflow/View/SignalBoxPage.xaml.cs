@@ -5,7 +5,6 @@ using Domain;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-
 using Moba.SharedUI.ViewModel;
 
 using Service;
@@ -135,7 +134,7 @@ sealed partial class SignalBoxPage
         {
             _planViewModel = new SignalBoxPlanViewModel(project.SignalBoxPlan);
             
-            _planViewModel.PropertyChanged += (s, args) =>
+            _planViewModel.PropertyChanged += (_, args) =>
             {
                 if (args.PropertyName == nameof(_planViewModel.SelectedElement))
                 {

@@ -11,7 +11,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 
-internal sealed class DockingWorkspaceState
+public sealed class DockingWorkspaceState
 {
     public int Version { get; set; } = 2;
 
@@ -50,7 +50,7 @@ internal sealed class DockingWorkspaceState
     };
 }
 
-internal sealed class DockingSideState
+public sealed class DockingSideState
 {
     public DockPosition Position { get; set; }
 
@@ -64,19 +64,19 @@ internal sealed class DockingSideState
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
 [JsonDerivedType(typeof(DockingGroupState), "group")]
 [JsonDerivedType(typeof(DockingSplitState), "split")]
-internal abstract class DockingLayoutNodeState
+public abstract class DockingLayoutNodeState
 {
     public DockPosition DockPosition { get; set; }
 }
 
-internal sealed class DockingGroupState : DockingLayoutNodeState
+public sealed class DockingGroupState : DockingLayoutNodeState
 {
     public DockGroupLayoutMode LayoutMode { get; set; } = DockGroupLayoutMode.Tabbed;
 
     public List<string> ToolWindowIds { get; set; } = [];
 }
 
-internal sealed class DockingSplitState : DockingLayoutNodeState
+public sealed class DockingSplitState : DockingLayoutNodeState
 {
     public Orientation Orientation { get; set; } = Orientation.Horizontal;
 
@@ -87,7 +87,7 @@ internal sealed class DockingSplitState : DockingLayoutNodeState
     public DockingLayoutNodeState SecondNode { get; set; } = null!;
 }
 
-internal sealed class DockingDocumentState
+public sealed class DockingDocumentState
 {
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
 
@@ -106,7 +106,7 @@ internal sealed class DockingDocumentState
     public bool IsPinned { get; set; }
 }
 
-internal sealed class DockingToolWindowState
+public sealed class DockingToolWindowState
 {
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
 
@@ -123,7 +123,7 @@ internal sealed class DockingToolWindowState
     public bool IsAutoHidden { get; set; }
 }
 
-internal sealed class DockingWorkspaceProjection
+public sealed class DockingWorkspaceProjection
 {
     public ObservableCollection<DocumentTab> Documents { get; } = [];
 

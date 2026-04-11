@@ -117,41 +117,41 @@ public class TrackPlanSvgRenderer
         var currentSegmentIndex = _segmentIndex++;
 
         // Rendera dieses Segment
-        if (segment is WR wr)
+        if (segment is WR)
         {
-            RenderWr(wr, placed, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
+            RenderWr(placed, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
-        else if (segment is R9 r9)
+        else if (segment is R9)
         {
-            RenderR9(r9, entryPort, placed, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
+            RenderR9(entryPort, placed, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
-        else if (segment is R1 r1)
+        else if (segment is R1)
         {
-            RenderR1(r1, entryPort, placed, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
+            RenderR1(entryPort, placed, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
-        else if (segment is R2 r2)
+        else if (segment is R2)
         {
-            RenderR2(r2, entryPort, placed, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
+            RenderR2(entryPort, placed, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
-        else if (segment is R3 r3)
+        else if (segment is R3)
         {
-            RenderR3(r3, entryPort, placed, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
+            RenderR3(entryPort, placed, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
-        else if (segment is R4 r4)
+        else if (segment is R4)
         {
-            RenderR4(r4, entryPort, placed, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
+            RenderR4(entryPort, placed, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
-        else if (segment is G239 g239)
+        else if (segment is G239)
         {
-            RenderG239(g239, entryPort, placed, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
+            RenderG239(entryPort, placed, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
-        else if (segment is G231 g231)
+        else if (segment is G231)
         {
-            RenderG231(g231, entryPort, placed, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
+            RenderG231(entryPort, placed, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
-        else if (segment is G62 g62)
+        else if (segment is G62)
         {
-            RenderG62(g62, entryPort, placed, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
+            RenderG62(entryPort, placed, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
 
         // Add further track types here
@@ -209,84 +209,6 @@ public class TrackPlanSvgRenderer
         return angle;
     }
 
-    /// <summary>
-    /// Calculates the exit position for a specific port of the WR segment.
-    /// </summary>
-    private void CalculateWrPortPosition(WR wr, char outgoingPort, double x, double y, double angle, out double outX, out double outY, out double outAngle)
-    {
-        var straightLength = wr.LengthInMm;
-        var radius = wr.RadiusInMm;
-        var arcDegree = wr.ArcInDegree;
-
-        outX = x;
-        outY = y;
-        outAngle = angle;
-
-        if (outgoingPort == 'A')
-        {
-            // Port A: backwards, angle + 180°
-            outX = x;
-            outY = y;
-            outAngle = angle + 180;
-        }
-        else if (outgoingPort == 'B')
-        {
-            // Port B: straight forward, at end of straight
-            outX = x + straightLength * Math.Cos(angle * Math.PI / 180);
-            outY = y + straightLength * Math.Sin(angle * Math.PI / 180);
-            outAngle = angle;
-        }
-        else if (outgoingPort == 'C')
-        {
-            // Port C: end of curve
-            double centerAngle = angle + 90;
-            double centerX = x + radius * Math.Cos(centerAngle * Math.PI / 180);
-            double centerY = y + radius * Math.Sin(centerAngle * Math.PI / 180);
-
-            double endAngle = angle + arcDegree;
-            outX = centerX + radius * Math.Cos((endAngle - 90) * Math.PI / 180);
-            outY = centerY + radius * Math.Sin((endAngle - 90) * Math.PI / 180);
-            outAngle = endAngle;
-        }
-    }
-
-    /// <summary>
-    /// Calculates the exit position for a specific port of a curved segment (R9, R1–R4).
-    /// For curves with two ports, the correct position must be calculated for each exit.
-    /// </summary>
-    private void CalculateCurvedPortPosition(Segment segment, char entryPort, char outgoingPort, double x, double y, double angle,
-        double nextX, double nextY, double nextAngle, out double outX, out double outY, out double outAngle)
-    {
-        _ = (nextX, nextY);
-        var radius = segment switch { R9 r => r.RadiusInMm, R1 r => r.RadiusInMm, R2 r => r.RadiusInMm, R3 r => r.RadiusInMm, R4 r => r.RadiusInMm, _ => 0.0 };
-        var arcDegree = segment switch { R9 r => r.ArcInDegree, R1 r => r.ArcInDegree, R2 r => r.ArcInDegree, R3 r => r.ArcInDegree, R4 r => r.ArcInDegree, _ => 0.0 };
-
-        var curveDirection = entryPort == 'B' ? -1 : 1;
-        double startX = x;
-        double startY = y;
-        double centerAngle = angle + (90 * curveDirection);
-        double centerX = x + radius * Math.Cos(centerAngle * Math.PI / 180);
-        double centerY = y + radius * Math.Sin(centerAngle * Math.PI / 180);
-        double endAngle = angle + (arcDegree * curveDirection);
-        double endX = centerX + radius * Math.Cos((endAngle - (90 * curveDirection)) * Math.PI / 180);
-        double endY = centerY + radius * Math.Sin((endAngle - (90 * curveDirection)) * Math.PI / 180);
-
-        // entryPort A: physisch A = Start, B = Ende. entryPort B: physisch B = Start, A = Ende.
-        bool isStartPort = (entryPort == 'A' && outgoingPort == 'A') || (entryPort == 'B' && outgoingPort == 'B');
-        if (isStartPort)
-        {
-            outX = startX;
-            outY = startY;
-            outAngle = angle + 180; // next segment looks back
-        }
-        else
-        {
-            outX = endX;
-            outY = endY;
-            outAngle = nextAngle; // = endAngle (Hauptausgang)
-        }
-    }
-
     /// <summary>Draws a path with shared geometry from SegmentLocalPathBuilder.</summary>
     private void DrawSegmentPath(PlacedSegment placed)
     {
@@ -304,7 +226,7 @@ public class TrackPlanSvgRenderer
     /// 
     /// Updates position for continuing drawing to Port B end.
     /// </summary>
-    private void RenderWr(WR wr, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
+    private void RenderWr(PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
     {
         // Port A (entry) - physical port A (black)
         double portAx = placed.X;
@@ -344,7 +266,7 @@ public class TrackPlanSvgRenderer
     /// - Entry A: Kurve nach links (curveDirection = 1)
     /// - Entry B: Kurve nach rechts (curveDirection = -1)
     /// </summary>
-    private void RenderR9(R9 r9, char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
+    private void RenderR9(char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
     {
         DrawTwoPortSegment(placed, entryPort, segmentIndex, ref x, ref y, ref angle);
     }
@@ -359,7 +281,7 @@ public class TrackPlanSvgRenderer
     /// 
     /// Curve direction is automatically adjusted based on entry port.
     /// </summary>
-    private void RenderR1(R1 r1, char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
+    private void RenderR1(char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
     {
         DrawTwoPortSegment(placed, entryPort, segmentIndex, ref x, ref y, ref angle);
     }
@@ -374,7 +296,7 @@ public class TrackPlanSvgRenderer
     /// 
     /// Curve direction is automatically adjusted based on entry port.
     /// </summary>
-    private void RenderR2(R2 r2, char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
+    private void RenderR2(char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
     {
         DrawTwoPortSegment(placed, entryPort, segmentIndex, ref x, ref y, ref angle);
     }
@@ -389,7 +311,7 @@ public class TrackPlanSvgRenderer
     /// 
     /// Curve direction is automatically adjusted based on entry port.
     /// </summary>
-    private void RenderR3(R3 r3, char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
+    private void RenderR3(char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
     {
         DrawTwoPortSegment(placed, entryPort, segmentIndex, ref x, ref y, ref angle);
     }
@@ -404,7 +326,7 @@ public class TrackPlanSvgRenderer
     /// 
     /// Curve direction is automatically adjusted based on entry port.
     /// </summary>
-    private void RenderR4(R4 r4, char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
+    private void RenderR4(char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
     {
         DrawTwoPortSegment(placed, entryPort, segmentIndex, ref x, ref y, ref angle);
     }
@@ -419,7 +341,7 @@ public class TrackPlanSvgRenderer
     /// 
     /// Updates position for continuing drawing to Port B.
     /// </summary>
-    private void RenderG239(G239 g239, char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
+    private void RenderG239(char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
     {
         DrawTwoPortSegment(placed, entryPort, segmentIndex, ref x, ref y, ref angle);
     }
@@ -434,7 +356,7 @@ public class TrackPlanSvgRenderer
     /// 
     /// Updates position for continuing drawing to Port B.
     /// </summary>
-    private void RenderG231(G231 g231, char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
+    private void RenderG231(char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
     {
         DrawTwoPortSegment(placed, entryPort, segmentIndex, ref x, ref y, ref angle);
     }
@@ -449,15 +371,16 @@ public class TrackPlanSvgRenderer
     /// 
     /// Updates position for continuing drawing to Port B.
     /// </summary>
-    private void RenderG62(G62 g62, char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
+    private void RenderG62(char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
     {
         DrawTwoPortSegment(placed, entryPort, segmentIndex, ref x, ref y, ref angle);
     }
 
     private void DrawTwoPortSegment(PlacedSegment placed, char entryPort, int segmentIndex, ref double x, ref double y, ref double angle)
     {
-        var (portAx, portAy, portAAngle) = SegmentPortGeometry.GetPortWorldPosition(placed, "PortA");
-        var (portBx, portBy, portBAngle) = SegmentPortGeometry.GetPortWorldPosition(placed, "PortB");
+        _ = x + y + angle;
+        var (portAx, portAy, _) = SegmentPortGeometry.GetPortWorldPosition(placed, "PortA");
+        var (portBx, portBy, _) = SegmentPortGeometry.GetPortWorldPosition(placed, "PortB");
         var portAOutwardAngle = SegmentPortGeometry.GetPortOutwardWorldAngleDegrees(placed, "PortA");
         var portBOutwardAngle = SegmentPortGeometry.GetPortOutwardWorldAngleDegrees(placed, "PortB");
         var portAStrokeAngle = entryPort == 'A' ? NormalizeAngle(portAOutwardAngle + 180) : portAOutwardAngle;

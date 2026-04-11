@@ -10,7 +10,7 @@ using Windows.ApplicationModel.DataTransfer;
 /// <summary>
 /// Specifies the docking position of a panel in the DockingManager.
 /// </summary>
-internal enum DockPosition
+public enum DockPosition
 {
     Left,
     Right,
@@ -24,7 +24,7 @@ internal enum DockPosition
 /// Used in DockingManager areas.
 /// Cherry-Picked: Close/Undock (Qt-ADS), Pin to AutoHide (Qt-ADS 4.x).
 /// </summary>
-internal sealed partial class DockPanel
+public sealed partial class DockPanel
 {
     private const string DockPanelDataKey = "DockPanel";
 

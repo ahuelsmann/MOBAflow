@@ -9,7 +9,7 @@ using System.Diagnostics;
 /// Starts the standalone MOBApi project process when "Auto-start REST API" is enabled.
 /// WinUI then uses MOBApi for status, clients, and MAUI discovery instead of hosting its own in-process API.
 /// </summary>
-internal sealed class RestApiProcessService : IDisposable
+public sealed class RestApiProcessService : IDisposable
 {
     private const string SolutionFileName = "Moba.slnx";
     /// <summary>Folder and assembly name under output (must match <c>MOBApi.csproj</c> <c>AssemblyName</c>).</summary>

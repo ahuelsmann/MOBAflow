@@ -171,6 +171,7 @@ public partial class App
             var viewModel = _services.GetService<MauiViewModel>();
             if (viewModel != null)
             {
+                viewModel.NotifyApplicationStopping();
                 if (viewModel.IsConnected)
                 {
                     await viewModel.DisconnectCommand.ExecuteAsync(null);

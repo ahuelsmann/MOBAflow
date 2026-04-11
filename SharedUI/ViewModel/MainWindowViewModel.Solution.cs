@@ -71,35 +71,69 @@ public partial class MainWindowViewModel
             return;
         }
 
-        // Notify subscribers to sync their data before saving
-        SolutionSaving?.Invoke(this, EventArgs.Empty);
-
-        // Debug: Log workflow actions before saving
-        foreach (var project in Solution.Projects)
+        if (_isShuttingDown)
         {
-            foreach (var workflow in project.Workflows)
+            return;
+        }
+
+        var lockTaken = false;
+        try
+        {
+            try
             {
-                Debug.WriteLine($"💾 Saving Workflow '{workflow.Name}' with {workflow.Actions.Count} actions:");
-                foreach (var action in workflow.Actions)
+                await _solutionSaveSemaphore.WaitAsync().ConfigureAwait(false);
+            }
+            catch (ObjectDisposedException)
+            {
+                return;
+            }
+
+            lockTaken = true;
+
+            // Notify subscribers to sync their data before saving
+            SolutionSaving?.Invoke(this, EventArgs.Empty);
+
+            // Debug: Log workflow actions before saving
+            foreach (var project in Solution.Projects)
+            {
+                foreach (var workflow in project.Workflows)
                 {
-                    Debug.WriteLine($"   - Action: {action.Name} (Type: {action.Type}, Id: {action.Id})");
+                    Debug.WriteLine($"💾 Saving Workflow '{workflow.Name}' with {workflow.Actions.Count} actions:");
+                    foreach (var action in workflow.Actions)
+                    {
+                        Debug.WriteLine($"   - Action: {action.Name} (Type: {action.Type}, Id: {action.Id})");
+                    }
                 }
             }
-        }
 
-        var (success, path, error) = await _ioService.SaveAsync(Solution, CurrentSolutionPath).ConfigureAwait(false);
-        if (success && path != null)
-        {
-            // Marshal to UI thread to update observable properties bound to UI
-            _uiDispatcher.InvokeOnUi(() =>
+            var (success, path, error) = await _ioService.SaveAsync(Solution, CurrentSolutionPath).ConfigureAwait(false);
+            if (success && path != null)
             {
-                CurrentSolutionPath = path;
-            });
-            Debug.WriteLine($"✅ Solution saved to {path}");
+                // Marshal to UI thread to update observable properties bound to UI
+                _uiDispatcher.InvokeOnUi(() =>
+                {
+                    CurrentSolutionPath = path;
+                });
+                Debug.WriteLine($"✅ Solution saved to {path}");
+            }
+            else if (!string.IsNullOrEmpty(error))
+            {
+                throw new InvalidOperationException($"Failed to save solution: {error}");
+            }
         }
-        else if (!string.IsNullOrEmpty(error))
+        finally
         {
-            throw new InvalidOperationException($"Failed to save solution: {error}");
+            if (lockTaken)
+            {
+                try
+                {
+                    _solutionSaveSemaphore.Release();
+                }
+                catch (ObjectDisposedException)
+                {
+                    // Semaphore was disposed during shutdown while this save was finishing.
+                }
+            }
         }
     }
 
@@ -112,31 +146,39 @@ public partial class MainWindowViewModel
             await SaveSolutionCommand.ExecuteAsync(null);
         }
 
-        // Clear existing Solution (DI singleton)
-        Solution.Projects.Clear();
-        Solution.Name = "New Solution";
-
-        // Add default project
-        var newProject = new Project
+        BeginSuppressSolutionAutoSave();
+        try
         {
-            Name = "New Project",
-            Journeys = [],
-            Workflows = [],
-            Trains = []
-        };
-        Solution.Projects.Add(newProject);
+            // Clear existing Solution (DI singleton)
+            Solution.Projects.Clear();
+            Solution.Name = "New Solution";
 
-        SolutionViewModel?.Refresh();
+            // Add default project
+            var newProject = new Project
+            {
+                Name = "New Project",
+                Journeys = [],
+                Workflows = [],
+                Trains = []
+            };
+            Solution.Projects.Add(newProject);
 
-        CurrentSolutionPath = null;
+            SolutionViewModel?.Refresh();
 
-        // ✅ Clear all selections to reset property panels across all pages
-        ClearAllSelections();
+            CurrentSolutionPath = null;
 
-        await _mobaClient.ActivateProjectAsync(newProject).ConfigureAwait(false);
+            // ✅ Clear all selections to reset property panels across all pages
+            ClearAllSelections();
 
-        SaveSolutionCommand.NotifyCanExecuteChanged();
-        ConnectCommand.NotifyCanExecuteChanged();
+            await _mobaClient.ActivateProjectAsync(newProject).ConfigureAwait(false);
+
+            SaveSolutionCommand.NotifyCanExecuteChanged();
+            ConnectCommand.NotifyCanExecuteChanged();
+        }
+        finally
+        {
+            EndSuppressSolutionAutoSave();
+        }
     }
 
     [RelayCommand]
@@ -196,44 +238,52 @@ public partial class MainWindowViewModel
     /// </summary>
     private void ApplyLoadedSolution(Solution loadedSolution, string path)
     {
-        // ✅ Clear all selections first to prevent stale data from previous solution
-        ClearAllSelections();
-
-        Solution.Projects.Clear();
-        foreach (var project in loadedSolution.Projects)
+        BeginSuppressSolutionAutoSave();
+        try
         {
-            Solution.Projects.Add(project);
-        }
+            // ✅ Clear all selections first to prevent stale data from previous solution
+            ClearAllSelections();
 
-        Solution.Name = loadedSolution.Name;
-        SolutionViewModel?.Refresh();
-
-        CurrentSolutionPath = path;
-        HasSolution = Solution.Projects.Count > 0;
-
-        if (Solution.Projects.Count > 0)
-        {
-            // Auto-select first project after loading
-            SelectedProject = SolutionViewModel?.Projects.FirstOrDefault();
-            if (SelectedProject != null)
+            Solution.Projects.Clear();
+            foreach (var project in loadedSolution.Projects)
             {
-                Debug.WriteLine($"✅ Auto-selected first project: {SelectedProject.Name}");
+                Solution.Projects.Add(project);
             }
 
-            _ = _mobaClient.ActivateProjectAsync(Solution.Projects[0]);
+            Solution.Name = loadedSolution.Name;
+            SolutionViewModel?.Refresh();
+
+            CurrentSolutionPath = path;
+            HasSolution = Solution.Projects.Count > 0;
+
+            if (Solution.Projects.Count > 0)
+            {
+                // Auto-select first project after loading
+                SelectedProject = SolutionViewModel?.Projects.FirstOrDefault();
+                if (SelectedProject != null)
+                {
+                    Debug.WriteLine($"✅ Auto-selected first project: {SelectedProject.Name}");
+                }
+
+                _ = _mobaClient.ActivateProjectAsync(Solution.Projects[0]);
+            }
+
+            SaveSolutionCommand.NotifyCanExecuteChanged();
+            ConnectCommand.NotifyCanExecuteChanged();
+            LoadCities();
+
+            OnPropertyChanged(nameof(Solution));
+
+            // Notify subscribers to load their data after loading
+            SolutionLoaded?.Invoke(this, EventArgs.Empty);
+
+            Debug.WriteLine($"✅ Solution loaded: {path}");
+            Debug.WriteLine($"   Projects: {Solution.Projects.Count}, Journeys: {Solution.Projects.FirstOrDefault()?.Journeys.Count ?? 0}");
         }
-
-        SaveSolutionCommand.NotifyCanExecuteChanged();
-        ConnectCommand.NotifyCanExecuteChanged();
-        LoadCities();
-
-        OnPropertyChanged(nameof(Solution));
-
-        // Notify subscribers to load their data after loading
-        SolutionLoaded?.Invoke(this, EventArgs.Empty);
-
-        Debug.WriteLine($"✅ Solution loaded: {path}");
-        Debug.WriteLine($"   Projects: {Solution.Projects.Count}, Journeys: {Solution.Projects.FirstOrDefault()?.Journeys.Count ?? 0}");
+        finally
+        {
+            EndSuppressSolutionAutoSave();
+        }
     }
 
     private bool CanSaveSolution() => _ioService is not NullIoService;

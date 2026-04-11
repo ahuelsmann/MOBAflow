@@ -156,7 +156,9 @@ public partial class MainWindowViewModel
     /// </summary>
     partial void OnSelectedProjectChanged(ProjectViewModel? value)
     {
-        _ = value; // Suppress unused parameter warning
+        // Align Solution page property editor with list selection. ListView binds SelectedProject;
+        // the properties ContentControl binds SolutionPageSelectedObject (updated on item click only).
+        SolutionPageSelectedObject = value;
 
         // Statistics are replaced (new ObservableCollection), not mutated in place,
         // so no Enqueue needed – only one PropertyChanged, no CollectionChanged during binding.

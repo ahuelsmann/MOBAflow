@@ -9,7 +9,7 @@ using System.Runtime.CompilerServices;
 /// Represents a single document tab.
 /// Used by LayoutDocumentEx and DockingManager.
 /// </summary>
-internal class DocumentTab : IEquatable<DocumentTab>
+public class DocumentTab : IEquatable<DocumentTab>
 {
     public string DocumentId { get; set; } = string.Empty;
 

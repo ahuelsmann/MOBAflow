@@ -13,7 +13,7 @@ using Windows.Storage;
 /// Service for persisting and restoring DockingManager layouts.
 /// Saves layout state to JSON file in LocalAppData.
 /// </summary>
-internal class DockingLayoutService
+public class DockingLayoutService
 {
     #region Constants
 

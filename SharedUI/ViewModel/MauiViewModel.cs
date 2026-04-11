@@ -33,6 +33,9 @@ public sealed partial class MauiViewModel : ObservableObject
     private readonly object _networkChangeDebounceLock = new();
     private CancellationTokenSource? _networkChangeDebounceCts;
 
+    /// <summary>Cancels long-running background loops when the host app is shutting down.</summary>
+    private readonly CancellationTokenSource _applicationLifetimeCts = new();
+
     /// <summary>Last time we registered with the REST API (for periodic re-register to stay in Overview list).</summary>
     private DateTime _lastRestApiRegisterTime = DateTime.MinValue;
 
@@ -343,36 +346,58 @@ public sealed partial class MauiViewModel : ObservableObject
         _ = RestApiHealthCheckLoopAsync();
     }
 
+    /// <summary>
+    /// Signals background tasks (REST health loop) to stop; call from the host before tearing down services.
+    /// </summary>
+    internal void NotifyApplicationStopping()
+    {
+        try
+        {
+            _applicationLifetimeCts.Cancel();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Already disposed.
+        }
+    }
+
     private async Task RestApiHealthCheckLoopAsync()
     {
-        while (true)
+        try
         {
-            await Task.Delay(TimeSpan.FromSeconds(30)).ConfigureAwait(false);
-            await RefreshRestApiReachableAsync().ConfigureAwait(false);
-
-            // When API is unreachable, re-run discovery periodically. Use shorter interval in the first 90s
-            // so we find the server quickly when both apps are started together (e.g. from Visual Studio).
-            var elapsedSinceStart = (DateTime.UtcNow - _appStartTimeUtc).TotalSeconds;
-            var interval = elapsedSinceStart < RestApiStartupRetryWindowSeconds
-                ? RestApiRediscoverIntervalFirst90Seconds
-                : RestApiRediscoverIntervalSeconds;
-
-            if (!IsRestApiReachable && (DateTime.UtcNow - _lastRestApiDiscoverTime).TotalSeconds >= interval)
+            while (!_applicationLifetimeCts.IsCancellationRequested)
             {
-                _lastRestApiDiscoverTime = DateTime.UtcNow;
-                try
+                await Task.Delay(TimeSpan.FromSeconds(30), _applicationLifetimeCts.Token).ConfigureAwait(false);
+                await RefreshRestApiReachableAsync().ConfigureAwait(false);
+
+                // When API is unreachable, re-run discovery periodically. Use shorter interval in the first 90s
+                // so we find the server quickly when both apps are started together (e.g. from Visual Studio).
+                var elapsedSinceStart = (DateTime.UtcNow - _appStartTimeUtc).TotalSeconds;
+                var interval = elapsedSinceStart < RestApiStartupRetryWindowSeconds
+                    ? RestApiRediscoverIntervalFirst90Seconds
+                    : RestApiRediscoverIntervalSeconds;
+
+                if (!IsRestApiReachable && (DateTime.UtcNow - _lastRestApiDiscoverTime).TotalSeconds >= interval)
                 {
-                    var (restIp, restPort) = await _restDiscoveryService.DiscoverServerAsync().ConfigureAwait(false);
-                    if (!string.IsNullOrEmpty(restIp) && restPort.HasValue)
+                    _lastRestApiDiscoverTime = DateTime.UtcNow;
+                    try
                     {
-                        await ApplyDiscoveredRestEndpointAsync(restIp, restPort.Value).ConfigureAwait(false);
+                        var (restIp, restPort) = await _restDiscoveryService.DiscoverServerAsync().ConfigureAwait(false);
+                        if (!string.IsNullOrEmpty(restIp) && restPort.HasValue)
+                        {
+                            await ApplyDiscoveredRestEndpointAsync(restIp, restPort.Value).ConfigureAwait(false);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"REST API re-discovery failed: {ex.Message}");
                     }
                 }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"REST API re-discovery failed: {ex.Message}");
-                }
             }
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected when the MAUI host cancels the lifetime token during shutdown.
         }
     }
 

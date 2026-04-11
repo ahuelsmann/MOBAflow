@@ -6,7 +6,6 @@ using CommunityToolkit.Mvvm.Input;
 using Domain;
 using Domain.Enum;
 using Helper;
-using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// MainWindowViewModel - Journey and Station Management
@@ -193,26 +192,6 @@ public partial class MainWindowViewModel
     }
 
     private bool CanAddStationToJourney() => true;
-    #endregion
-
-    #region Action Execution Error Handling
-    /// <summary>
-    /// Handles action execution errors from WorkflowService.
-    /// Displays error message to user and logs to application log (MonitorPage).
-    /// </summary>
-    private void OnActionExecutionError(object? sender, ActionExecutionErrorEventArgs e)
-    {
-        // Dispatch to UI thread for UI updates
-        _uiDispatcher.InvokeOnUi(() =>
-        {
-            // Set status text for immediate visibility
-            StatusText = $"❌ Action '{e.Action.Name}' failed: {e.ErrorMessage}";
-
-            // Log to application log (visible in MonitorPage)
-            _logger.LogError(e.Exception, "Action '{ActionName}' execution failed: {ErrorMessage}",
-                e.Action.Name, e.ErrorMessage);
-        });
-    }
     #endregion
 
     private Station CreateStation(string name, uint lapsToStop)

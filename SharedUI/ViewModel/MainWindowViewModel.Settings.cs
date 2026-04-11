@@ -44,14 +44,14 @@ public partial class MainWindowViewModel
         return true;
     }
 
-    private bool UpdateFeatureToggleSetting(
+    private void UpdateFeatureToggleSetting(
         Func<bool> currentValue,
         Action<bool> applyValue,
         bool newValue,
         string settingPropertyName,
         string availabilityPropertyName)
     {
-        return UpdateSetting(currentValue, applyValue, newValue, settingPropertyName, availabilityPropertyName);
+        _ = UpdateSetting(currentValue, applyValue, newValue, settingPropertyName, availabilityPropertyName);
     }
 
     #region Settings Properties
@@ -365,11 +365,9 @@ public partial class MainWindowViewModel
     }
 
     /// <summary>
-    /// Gets the local IP address(es) for the REST API endpoint.
-    /// Returns all IPv4 addresses of the machine.
-    /// </summary>
-    /// <summary>
-    /// Gets a comma-separated list of local IPv4 addresses for displaying REST API endpoints.
+    /// Gets the recommended local IPv4 for the REST API (MOBAsmart hint).
+    /// Uses the same preference as UDP discovery: 192.168.x.x, then 10.x.x.x, then any other IPv4.
+    /// Virtual adapters (WSL2/Docker vEthernet) often add extra 172.16–31.x addresses; those are not listed first.
     /// </summary>
     public string LocalIpAddress
     {
@@ -377,14 +375,23 @@ public partial class MainWindowViewModel
         {
             try
             {
-                var addresses = Dns.GetHostAddresses(Dns.GetHostName())
+                var host = Dns.GetHostEntry(Dns.GetHostName());
+                var ipv4 = host.AddressList
                     .Where(ip => ip.AddressFamily == AddressFamily.InterNetwork)
-                    .Select(ip => ip.ToString())
                     .ToList();
 
-                return addresses.Count > 0
-                    ? string.Join(", ", addresses)
-                    : "No network connection";
+                if (ipv4.Count == 0)
+                    return "No network connection";
+
+                var s192 = ipv4.FirstOrDefault(ip => ip.ToString().StartsWith("192.168.", StringComparison.Ordinal));
+                if (s192 is not null)
+                    return s192.ToString();
+
+                var s10 = ipv4.FirstOrDefault(ip => ip.ToString().StartsWith("10.", StringComparison.Ordinal));
+                if (s10 is not null)
+                    return s10.ToString();
+
+                return ipv4[0].ToString();
             }
             catch (Exception ex)
             {

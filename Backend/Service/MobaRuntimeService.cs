@@ -340,6 +340,38 @@ public sealed class MobaRuntimeService : IMobaRuntime, IDisposable
             return;
         }
 
+        if (signal.BaseAddress % 2 == 0)
+        {
+            _logger.LogWarning(
+                "Signal '{SignalName}': Base address {Address} must be odd (Viessmann DCC multiplexer pairing).",
+                signal.Name,
+                signal.BaseAddress);
+            return;
+        }
+
+        if (!MultiplexerHelper.TryGetMaxAddressOffset(
+                signal.MultiplexerArticleNumber,
+                signal.MainSignalArticleNumber,
+                out var maxOffset))
+        {
+            _logger.LogWarning(
+                "Signal '{SignalName}': No multiplexer address mapping for multiplexer {Mux} and signal article {Article}.",
+                signal.Name,
+                signal.MultiplexerArticleNumber,
+                signal.MainSignalArticleNumber ?? "(default)");
+            return;
+        }
+
+        if (signal.BaseAddress + maxOffset > 2044)
+        {
+            _logger.LogWarning(
+                "Signal '{SignalName}': Base address {Address} with max offset {MaxOffset} exceeds DCC limit 2044.",
+                signal.Name,
+                signal.BaseAddress,
+                maxOffset);
+            return;
+        }
+
         if (!_z21.IsConnected)
         {
             _logger.LogWarning("Signal '{SignalName}': Z21 not connected; skipping command send.", signal.Name);
@@ -361,7 +393,7 @@ public sealed class MobaRuntimeService : IMobaRuntime, IDisposable
                 return;
             }
 
-            var dccAddress = signal.BaseAddress + turnoutCommand.AddressOffset + 1;
+            var dccAddress = signal.BaseAddress + turnoutCommand.AddressOffset;
             if (dccAddress is < 1 or > 2044)
             {
                 throw new ArgumentOutOfRangeException(

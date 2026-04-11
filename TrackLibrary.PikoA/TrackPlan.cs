@@ -147,7 +147,7 @@ public class TrackPlanBuilder
     /// <summary>
     /// Internal node for track tracking during builder construction.
     /// </summary>
-    internal class TrackNode
+    internal sealed class TrackNode
     {
         /// <summary>CLR type of the track segment (e.g. typeof(WR), typeof(R9))</summary>
         public Type Type { get; set; } = null!;
@@ -156,7 +156,7 @@ public class TrackPlanBuilder
     /// <summary>
     /// Internal record for connection information between two port pairs.
     /// </summary>
-    private record Connection(TrackNode Source, string SourcePort, TrackNode Target, string TargetPort);
+    private sealed record Connection(TrackNode Source, string SourcePort, TrackNode Target, string TargetPort);
 }
 
 /// <summary>
