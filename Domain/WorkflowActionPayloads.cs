@@ -2,8 +2,9 @@
 
 namespace Moba.Domain;
 
-using System.Text.Json.Serialization;
 using Moba.Domain.Enum;
+
+using System.Text.Json.Serialization;
 
 /// <summary>
 /// Typed payload for <see cref="ActionType.Command"/> workflow actions (Z21 / DCC bytes and optional UI fields).

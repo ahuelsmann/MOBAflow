@@ -2,8 +2,11 @@
 namespace Moba.SharedUI.Extensions;
 
 using Common.Events;
+
 using Interface;
+
 using Microsoft.Extensions.DependencyInjection;
+
 using Service;
 
 /// <summary>

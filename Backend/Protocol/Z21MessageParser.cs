@@ -222,17 +222,17 @@ public static class Z21MessageParser
             // Parse speed steps and current speed
             byte speedSteps = (byte)(data[7] & 0x0F); // Lower 4 bits: 0=14, 2=28, 3=128
             byte speedByte = data[8];
-            
+
             // Speed: bit 7 = direction, bits 0-6 = speed value
             bool forward = (speedByte & 0x80) != 0;
             int speed = speedByte & 0x7F;
-            
+
             // Decode speed: 0=stop, 1=e-stop, 2-127=speed 1-126
             if (speed > 1) speed--; // Adjust encoding
 
             // Parse function status (F0-F28 in 5 bytes) as bitmask (uint)
             uint functions = 0;
-            
+
             if (data.Length >= 9)
             {
                 byte f04 = data[9];

@@ -5,7 +5,9 @@ namespace Moba.Test.Backend;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Common.Events;
+
 using Mocks;
+
 using System.Net;
 
 [TestFixture]
@@ -21,7 +23,8 @@ internal class Z21UnitTests
         FeedbackResult? captured = null;
         var signaled = new TaskCompletionSource<bool>();
 
-        z21.Received += f => {
+        z21.Received += f =>
+        {
             captured = f;
             signaled.TrySetResult(true);
         };
@@ -49,7 +52,7 @@ internal class Z21UnitTests
         // With FakeUdpClientWrapper, we don't simulate any responses
         // The connection is initiated (payloads sent), but IsConnected is still false
         // This is correct behavior - it means "connected and responded"
-        
+
         // Verify that connection was initiated (payloads were sent)
         Assert.That(fakeUdp.SentPayloads, Has.Count.GreaterThanOrEqualTo(2), "Connection should send handshake and broadcast flags");
 
@@ -69,12 +72,12 @@ internal class Z21UnitTests
 
         var address = IPAddress.Parse("192.168.0.111");
         await z21.ConnectAsync(address);
-        
+
         // Verify connection was initiated
         Assert.That(fakeUdp.SentPayloads, Has.Count.GreaterThanOrEqualTo(2));
 
         await z21.DisconnectAsync();
-        
+
         // After disconnect, should not be connected
         Assert.That(z21.IsConnected, Is.False, "Should be disconnected after DisconnectAsync");
 

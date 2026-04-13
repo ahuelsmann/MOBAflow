@@ -89,7 +89,7 @@ internal class SettingsServiceInterfaceTests
     private class TestSettingsService : ISettingsService
     {
         private readonly AppSettings _settings = new();
-        
+
         public bool LoadCalled { get; private set; }
         public bool SaveCalled { get; private set; }
         public bool ResetCalled { get; private set; }

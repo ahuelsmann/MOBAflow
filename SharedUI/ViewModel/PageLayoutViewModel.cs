@@ -207,7 +207,7 @@ public class PageLayoutViewModel : ObservableObject
     /// </summary>
     protected virtual void OnColumnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(ColumnViewModel.IsExpanded) || 
+        if (e.PropertyName == nameof(ColumnViewModel.IsExpanded) ||
             e.PropertyName == nameof(ColumnViewModel.Width))
         {
             // Platform-specific implementations should handle visual state updates

@@ -2,8 +2,9 @@
 
 namespace Moba.Common.Events;
 
-using System.Diagnostics;
 using Microsoft.Extensions.Logging;
+
+using System.Diagnostics;
 
 /// <summary>
 /// Central event bus for publishing and subscribing to application-wide events.

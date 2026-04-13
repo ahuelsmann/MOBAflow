@@ -1,7 +1,7 @@
 namespace Moba.WinUI.Behavior;
 
 using Common.Configuration;
-using Moba.Common.Extension;
+
 using Microsoft.Extensions.Logging;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
@@ -9,8 +9,12 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Xaml.Interactivity;
-using SharedUI.Interface;
+
+using Moba.Common.Extension;
 using Moba.SharedUI.ViewModel;
+
+using SharedUI.Interface;
+
 using Windows.Foundation;
 
 public sealed class GridColumnResizeBehavior : Behavior<Grid>
@@ -470,7 +474,7 @@ public sealed class GridColumnResizeBehavior : Behavior<Grid>
                 PersistWidth(i, width);
         }
 
-        var hostVm = FindMainWindowViewModel(AssociatedObject as FrameworkElement);
+        var hostVm = FindMainWindowViewModel(AssociatedObject);
         _settingsService.SaveSettingsAsync(_settings).Observe(ex =>
             hostVm?.UiShellLogger.LogWarning(ex, "Persist column widths failed"));
     }
@@ -529,7 +533,7 @@ public sealed class GridColumnResizeBehavior : Behavior<Grid>
             return;
         }
 
-        var hostVm = FindMainWindowViewModel(AssociatedObject as FrameworkElement);
+        var hostVm = FindMainWindowViewModel(AssociatedObject);
         if (hostVm == null)
         {
             return;

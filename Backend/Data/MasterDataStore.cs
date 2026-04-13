@@ -2,6 +2,7 @@
 namespace Moba.Backend.Data;
 
 using Domain;
+
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;

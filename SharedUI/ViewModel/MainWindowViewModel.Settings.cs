@@ -5,9 +5,9 @@ using Common.Configuration;
 
 using CommunityToolkit.Mvvm.Input;
 
-using Microsoft.Extensions.Logging;
-
 using Domain;
+
+using Microsoft.Extensions.Logging;
 
 using System.Collections.ObjectModel;
 using System.Net;

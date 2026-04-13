@@ -2,6 +2,7 @@
 namespace Moba.MAUI.Service;
 
 using Microsoft.Maui.Networking;
+
 using SharedUI.Interface;
 
 /// <summary>

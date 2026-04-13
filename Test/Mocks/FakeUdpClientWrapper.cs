@@ -3,6 +3,7 @@
 namespace Moba.Test.Mocks;
 
 using Moba.Backend.Network;
+
 using System.Net;
 
 internal sealed class FakeUdpClientWrapper : IUdpClientWrapper

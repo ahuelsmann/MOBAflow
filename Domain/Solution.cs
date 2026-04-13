@@ -33,7 +33,7 @@ public class Solution
     /// Gets or sets the list of projects contained in this solution.
     /// </summary>
     public List<Project> Projects { get; set; }
-    
+
     /// <summary>
     /// Schema version of this solution file.
     /// Used to detect incompatible file formats.

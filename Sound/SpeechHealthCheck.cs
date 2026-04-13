@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.Sound;
 
@@ -64,10 +64,10 @@ public class SpeechHealthCheck(IOptions<SpeechOptions> options, ILogger<SpeechHe
             logger.LogInformation("Testing Azure Speech Service connectivity...");
 
             var config = SpeechConfig.FromSubscription(speechKey!, speechRegion!);
-            
+
             // Simple test: Try to create a synthesizer (doesn't actually call Azure yet)
             using var synthesizer = new SpeechSynthesizer(config, null);
-            
+
             // If we can create the config and synthesizer, credentials are likely valid
             logger.LogInformation("Azure Speech Service connectivity test passed");
             return Task.FromResult(true);

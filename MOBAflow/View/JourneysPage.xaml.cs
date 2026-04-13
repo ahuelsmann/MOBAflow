@@ -2,14 +2,19 @@
 namespace Moba.WinUI.View;
 
 using Common.Configuration;
-using Microsoft.Extensions.Logging;
-using Moba.Common.Extension;
+
 using Domain;
+
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using SharedUI.Interface;
+
+using Moba.Common.Extension;
 using Moba.SharedUI.ViewModel;
+
+using SharedUI.Interface;
+
 using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 
@@ -179,7 +184,7 @@ internal sealed partial class JourneysPage
         {
             _cityLibExpandedWidth = layout.CityLibraryColumnWidth;
         }
-        
+
         if (layout.IsCityLibraryExpanded)
         {
             ColCityLib.Width = new GridLength(_cityLibExpandedWidth);
@@ -193,7 +198,7 @@ internal sealed partial class JourneysPage
         {
             _workflowLibExpandedWidth = layout.WorkflowLibraryColumnWidth;
         }
-        
+
         if (layout.IsWorkflowLibraryExpanded)
         {
             ColWorkflowLib.Width = new GridLength(_workflowLibExpandedWidth);

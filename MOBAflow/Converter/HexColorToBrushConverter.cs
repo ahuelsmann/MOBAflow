@@ -4,6 +4,7 @@ namespace Moba.WinUI.Converter;
 using Microsoft.UI;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
+
 using Windows.UI;
 
 /// <summary>
@@ -28,14 +29,14 @@ internal partial class HexColorToBrushConverter : IValueConverter
 
                 // Remove '#' if present
                 hexColor = hexColor.TrimStart('#');
-                
+
                 // Parse hex string (RRGGBB format)
                 if (hexColor.Length == 6)
                 {
                     var r = System.Convert.ToByte(hexColor[..2], 16);
                     var g = System.Convert.ToByte(hexColor.Substring(2, 2), 16);
                     var b = System.Convert.ToByte(hexColor.Substring(4, 2), 16);
-                    
+
                     return new SolidColorBrush(Color.FromArgb(255, r, g, b));
                 }
             }
@@ -44,7 +45,7 @@ internal partial class HexColorToBrushConverter : IValueConverter
                 // Fallback to null on parse error
             }
         }
-        
+
         // Empty string or null = return null, XAML will use FallbackValue
         return null;
     }

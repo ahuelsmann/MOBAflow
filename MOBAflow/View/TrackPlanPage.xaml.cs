@@ -2,11 +2,11 @@
 
 namespace Moba.WinUI.View;
 
+using Microsoft.Extensions.Logging;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.Graphics.Canvas.UI;
 using Microsoft.Graphics.Canvas.UI.Xaml;
-using Microsoft.Extensions.Logging;
 using Microsoft.UI.Input;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
@@ -18,6 +18,7 @@ using Microsoft.UI.Xaml.Shapes;
 
 using Moba.Common.Extension;
 using Moba.SharedUI.ViewModel;
+
 using SharedUI.Interface;
 
 using TrackLibrary.PikoA;

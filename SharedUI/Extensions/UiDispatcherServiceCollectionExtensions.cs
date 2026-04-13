@@ -3,6 +3,7 @@
 namespace Moba.SharedUI.Extensions;
 
 using Interface;
+
 using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>

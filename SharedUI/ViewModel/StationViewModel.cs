@@ -3,7 +3,9 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
 using Domain;
+
 using Interface;
 
 /// <summary>
@@ -15,7 +17,7 @@ public sealed partial class StationViewModel : ObservableObject, IViewModelWrapp
     #region Fields
     // Model
     private readonly Station _station;
-    
+
     // Context
     private readonly Project _project;
     #endregion

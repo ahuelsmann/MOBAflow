@@ -2,6 +2,7 @@
 namespace Moba.Test.Unit;
 
 using Microsoft.Extensions.Logging;
+
 using Moba.Sound;
 
 /// <summary>

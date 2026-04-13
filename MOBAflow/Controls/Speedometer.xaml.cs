@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
+
 using Windows.Foundation;
 using Windows.UI;
 
@@ -140,7 +141,7 @@ internal sealed partial class SpeedometerControl
         {
             control.UpdateNeedle();
             control.UpdateSpeedArc();
-            
+
             // Update km/h markers when MaxValue changes (Vmax)
             if (e.Property == MaxValueProperty)
             {
@@ -452,7 +453,7 @@ internal sealed partial class SpeedometerControl
         foreach (var kmh in kmhValues)
         {
             var isMax = kmh == VmaxKmh;
-            
+
             // Normalize position: 0 km/h = left (180°), Vmax = right (0°)
             var percentage = VmaxKmh > 0 ? (double)kmh / VmaxKmh : 0;
 

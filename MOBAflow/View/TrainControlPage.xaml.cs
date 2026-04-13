@@ -2,19 +2,26 @@
 namespace Moba.WinUI.View;
 
 using Common.Configuration;
+
 using Controls;
+
 using Domain;
+
 using Microsoft.Extensions.Logging;
-using Moba.Common.Extension;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-using Service;
-using SharedUI.Interface;
+
+using Moba.Common.Extension;
 using Moba.SharedUI.ViewModel;
+
+using Service;
+
+using SharedUI.Interface;
+
 using System.ComponentModel;
-using System.Threading;
+
 using ViewModel;
 
 /// <summary>

@@ -2,9 +2,13 @@
 namespace Moba.WinUI.ViewModel;
 
 using Common.Configuration;
+
 using CommunityToolkit.Mvvm.Input;
+
 using Microsoft.Extensions.Logging;
+
 using Service;
+
 using SharedUI.Interface;
 
 /// <summary>

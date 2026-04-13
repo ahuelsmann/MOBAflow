@@ -328,7 +328,7 @@ public sealed partial class MauiViewModel : ObservableObject
         {
             Z21IpAddress = _settings.Z21.CurrentIpAddress.Trim();
         }
-        
+
         // Z21 and REST API: load from settings as fallback so REST connect works when discovery fails
         if (!string.IsNullOrWhiteSpace(_settings.RestApi.CurrentIpAddress) && _settings.RestApi.Port > 0)
         {
@@ -339,7 +339,7 @@ public sealed partial class MauiViewModel : ObservableObject
         GlobalTargetLapCount = _settings.Counter.TargetLapCount;
         UseTimerFilter = _settings.Counter.UseTimerFilter;
         TimerIntervalSeconds = _settings.Counter.TimerIntervalSeconds;
-        
+
         _logger.LogDebug(
             "Settings applied to ViewModel: RestApi={RestIp}:{RestPort}, Z21={Z21}, CountOfFeedbackPoints={Count}, GlobalTargetLapCount={Laps}, UseTimerFilter={Timer}, TimerIntervalSeconds={Interval}",
             RestApiIpAddress,
@@ -599,13 +599,13 @@ public sealed partial class MauiViewModel : ObservableObject
     {
         _logger.LogTrace("OnGlobalTargetLapCountChanged: {Value}", value);
         _settings.Counter.TargetLapCount = value;
-        
+
         // Update all existing statistics
         foreach (var stat in Statistics)
         {
             stat.TargetLapCount = value;
         }
-        
+
         QueueSaveSettings();
     }
 

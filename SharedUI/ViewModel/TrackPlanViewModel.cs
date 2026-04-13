@@ -1,10 +1,14 @@
 namespace Moba.SharedUI.ViewModel;
 
-using CommunityToolkit.Mvvm.ComponentModel;
-using Interface;
-using TrackPlan.Renderer;
 using Common.Configuration;
+
+using CommunityToolkit.Mvvm.ComponentModel;
+
+using Interface;
+
 using Microsoft.Extensions.Logging;
+
+using TrackPlan.Renderer;
 
 /// <summary>
 /// ViewModel wrapper for <see cref="TrackPlan"/> used by the track plan editor UI.

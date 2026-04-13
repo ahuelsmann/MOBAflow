@@ -11,7 +11,7 @@ internal class Z21MessageParserTests
     public void TryParseXBusStatus_ParsesFlags()
     {
         // 07-00-40-00 62 00 07 -> status changed with flags 0x07 (emergency + trackoff + short)
-        var data = new byte[] { 0x07,0x00,0x40,0x00, 0x62, 0x00, 0x07 };
+        var data = new byte[] { 0x07, 0x00, 0x40, 0x00, 0x62, 0x00, 0x07 };
         var status = Z21MessageParser.TryParseXBusStatus(data);
         Assert.That(status, Is.Not.Null);
         Assert.That(status!.EmergencyStop, Is.True);

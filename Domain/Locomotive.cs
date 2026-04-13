@@ -2,6 +2,7 @@
 namespace Moba.Domain;
 
 using Enum;
+
 using System.Text.Json.Serialization;
 
 /// <summary>

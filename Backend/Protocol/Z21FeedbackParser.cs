@@ -31,17 +31,17 @@ public static class Z21FeedbackParser
     public static int ExtractFirstInPort(byte[] data)
     {
         if (data.Length < 6) return 0;
-        
+
         int groupNumber = data[4];  // Module ID (0-based)
-        
+
         // Scan 8 data bytes (up to 64 feedback points per module)
         for (int byteIndex = 0; byteIndex < 8; byteIndex++)
         {
             if (5 + byteIndex >= data.Length) break;
-            
+
             byte feedbackByte = data[5 + byteIndex];
             if (feedbackByte == 0) continue;  // No bits set in this byte
-            
+
             // Find first set bit (LSB to MSB)
             for (int bit = 0; bit < 8; bit++)
             {
@@ -52,7 +52,7 @@ public static class Z21FeedbackParser
                 }
             }
         }
-        
+
         return 0;  // No feedback active
     }
 
@@ -67,17 +67,17 @@ public static class Z21FeedbackParser
     {
         var inPorts = new List<int>();
         if (data.Length < 6) return inPorts;
-        
+
         int groupNumber = data[4];  // Module ID (0-based)
-        
+
         // Scan 8 data bytes (up to 64 feedback points per module)
         for (int byteIndex = 0; byteIndex < 8; byteIndex++)
         {
             if (5 + byteIndex >= data.Length) break;
-            
+
             byte feedbackByte = data[5 + byteIndex];
             if (feedbackByte == 0) continue;  // No bits set in this byte
-            
+
             // Check all 8 bits
             for (int bit = 0; bit < 8; bit++)
             {
@@ -89,7 +89,7 @@ public static class Z21FeedbackParser
                 }
             }
         }
-        
+
         return inPorts;
     }
 
@@ -111,7 +111,7 @@ public static class Z21FeedbackParser
     public static byte[] GetFeedbackState(byte[] data)
     {
         if (data.Length < 13) return [];
-        
+
         var state = new byte[8];
         Array.Copy(data, 5, state, 0, 8);
         return state;

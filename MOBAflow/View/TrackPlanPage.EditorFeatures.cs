@@ -9,8 +9,6 @@ using Microsoft.UI.Xaml.Controls;
 
 using Moba.SharedUI.Service;
 
-using SharedUI.Interface;
-
 using System.Diagnostics;
 using System.IO;
 using System.Text.Json;

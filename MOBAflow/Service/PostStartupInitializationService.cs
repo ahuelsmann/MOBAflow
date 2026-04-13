@@ -4,10 +4,14 @@ namespace Moba.WinUI.Service;
 
 using Backend.Data;
 using Backend.Extensions;
+
 using Common.Configuration;
 using Common.Events;
+
 using Microsoft.Extensions.Logging;
+
 using System.Diagnostics;
+
 using View;
 
 /// <summary>

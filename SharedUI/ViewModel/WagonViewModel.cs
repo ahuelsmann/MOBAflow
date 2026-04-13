@@ -3,8 +3,10 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
 using Domain;
 using Domain.Enum;
+
 using Interface;
 
 /// <summary>
@@ -173,18 +175,18 @@ public partial class WagonViewModel : ObservableObject, IViewModelWrapper<Wagon>
     /// </summary>
     public bool HasPhoto => !string.IsNullOrWhiteSpace(Model.PhotoPath);
 
-        [ObservableProperty]
-        private IAsyncRelayCommand? _browsePhotoCommand;
+    [ObservableProperty]
+    private IAsyncRelayCommand? _browsePhotoCommand;
 
-        [ObservableProperty]
-        private IRelayCommand? _deletePhotoCommand;
+    [ObservableProperty]
+    private IRelayCommand? _deletePhotoCommand;
 
-        [ObservableProperty]
-        private IRelayCommand? _showInExplorerCommand;
+    [ObservableProperty]
+    private IRelayCommand? _showInExplorerCommand;
 
-        /// <summary>
-        /// Command to open/preview the photo. Set by the hosting page.
-        /// </summary>
-        [ObservableProperty]
-        private IRelayCommand? _openPhotoCommand;
-    }
+    /// <summary>
+    /// Command to open/preview the photo. Set by the hosting page.
+    /// </summary>
+    [ObservableProperty]
+    private IRelayCommand? _openPhotoCommand;
+}

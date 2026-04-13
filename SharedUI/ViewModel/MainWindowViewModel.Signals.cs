@@ -2,7 +2,9 @@
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.Input;
+
 using Domain;
+
 using Microsoft.Extensions.Logging;
 
 /// <summary>

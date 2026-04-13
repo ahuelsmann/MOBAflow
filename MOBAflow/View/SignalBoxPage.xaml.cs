@@ -24,7 +24,7 @@ sealed partial class SignalBoxPage
 
     public MainWindowViewModel ViewModel { get; }
     public SkinSelectorViewModel SkinViewModel { get; }
-    
+
     private SignalBoxPlanViewModel? _planViewModel;
     private readonly ISkinProvider _skinProvider;
 
@@ -153,7 +153,7 @@ sealed partial class SignalBoxPage
             _planViewModel = new SignalBoxPlanViewModel(project.SignalBoxPlan);
             _planViewModel.PropertyChanged += OnPlanViewModelPropertyChanged;
         }
-        
+
         if (CanvasControl != null)
         {
             CanvasControl.PlanViewModel = _planViewModel;
@@ -201,7 +201,7 @@ sealed partial class SignalBoxPage
     {
         var palette = SkinColors.GetPalette(_skinProvider.CurrentSkin, _skinProvider.IsDarkMode);
         var isSystemSkin = _skinProvider.CurrentSkin == AppSkin.System;
-        
+
         RequestedTheme = palette.IsDarkTheme ? ElementTheme.Dark : ElementTheme.Light;
 
         if (CanvasControl != null)

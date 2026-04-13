@@ -3,9 +3,12 @@
 namespace Moba.WinUI.ViewModel;
 
 using Backend.Interface;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
 using Domain;
+
 using System.Collections.ObjectModel;
 
 /// <summary>

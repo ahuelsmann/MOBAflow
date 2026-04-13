@@ -2,36 +2,31 @@
 
 namespace Moba.WinUI;
 
-using Backend.Data;
-using Backend.Extensions;
-using Backend.Interface;
-using Backend.Service;
 using Common.Configuration;
-using Common.Events;
 using Common.Extension;
-using Common.Navigation;
 using Common.Serilog;
+
 using Converter;
-using Domain;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
-using Moba.WinUI.Extensions;
-using Moba.SharedUI.Service;
+
 using Moba.SharedUI.ViewModel;
+using Moba.WinUI.Extensions;
+
 using Serilog;
 using Serilog.Events;
+
 using Service;
-using SharedUI.Extensions;
+
 using SharedUI.Interface;
-using SharedUI.Shell;
+
 using Sound;
-using TrackLibrary.PikoA;
-using TrackPlan.Renderer;
+
 using View;
-using ViewModel;
 
 /// <summary>
 /// Provides application-specific behavior to supplement the default Application class.
@@ -315,4 +310,3 @@ public partial class App
         }
     }
 }
-

@@ -4,6 +4,7 @@
 namespace Moba.WinUI.Service;
 
 using Microsoft.UI.Xaml;
+
 using SharedUI.Shell;
 
 /// <summary>

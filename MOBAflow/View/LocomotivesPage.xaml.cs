@@ -2,6 +2,7 @@
 namespace Moba.WinUI.View;
 
 using Microsoft.UI.Xaml;
+
 using Moba.SharedUI.ViewModel;
 
 internal sealed partial class LocomotivesPage

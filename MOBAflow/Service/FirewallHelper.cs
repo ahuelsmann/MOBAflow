@@ -1,8 +1,9 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
-using System.Diagnostics;
 using Microsoft.Extensions.Logging;
+
+using System.Diagnostics;
 
 /// <summary>
 /// Helper class for managing Windows Firewall rules for WebApp UDP Discovery and HTTP REST-API.

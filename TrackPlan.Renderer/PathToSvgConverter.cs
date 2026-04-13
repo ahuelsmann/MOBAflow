@@ -2,6 +2,7 @@ namespace Moba.TrackPlan.Renderer;
 
 using System.Globalization;
 using System.Text;
+
 using TrackLibrary.PikoA;
 
 /// <summary>

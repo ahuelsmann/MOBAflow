@@ -4,16 +4,25 @@ namespace Moba.MAUI;
 using Backend.Extensions;
 using Backend.Interface;
 using Backend.Service;
+
 using Common.Configuration;
+
 using CommunityToolkit.Maui;
+
 using Microsoft.Extensions.Logging;
+
 using Service;
+
 using SharedUI.Extensions;
 using SharedUI.Interface;
 using SharedUI.ViewModel;
+
 using Sound;
+
 using System.Net;
+
 using UraniumUI;
+
 using Xamarin.Android.Net;
 
 public static class MauiProgram

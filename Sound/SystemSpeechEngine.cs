@@ -3,6 +3,7 @@
 namespace Moba.Sound;
 
 using Microsoft.Extensions.Logging;
+
 using System.Globalization;
 using System.Runtime.Versioning;
 using System.Speech.Synthesis;
@@ -47,7 +48,7 @@ public class SystemSpeechEngine : ISpeakerEngine
         await Task.Run(() =>
         {
             using var synthesizer = new SpeechSynthesizer();
-            
+
             // Configure output to default audio device
             synthesizer.SetOutputToDefaultAudioDevice();
 
@@ -55,14 +56,14 @@ public class SystemSpeechEngine : ISpeakerEngine
             if (!string.IsNullOrEmpty(voiceName) && !TrySelectVoice(synthesizer, voiceName))
             {
                 _logger.LogWarning("Voice '{VoiceName}' not found. Using default voice", voiceName);
-                
+
                 _logger.LogInformation("Available voices:");
-                
+
                 // Use Select() instead of foreach for better performance
                 var voiceDescriptions = synthesizer.GetInstalledVoices()
                     .Select(voice => voice.VoiceInfo)
                     .Select(info => $"  - {info.Name} ({info.Culture.Name}, {info.Gender}, {info.Age})");
-                
+
                 foreach (var description in voiceDescriptions)
                 {
                     _logger.LogInformation("{VoiceDescription}", description);
@@ -80,9 +81,9 @@ public class SystemSpeechEngine : ISpeakerEngine
             {
                 // Synthesize speech synchronously
                 _logger.LogInformation("Synthesizing speech: {Message}", message);
-                
+
                 synthesizer.Speak(message);
-                
+
                 _logger.LogInformation("Speech synthesized successfully for text: {Message}", message);
             }
             catch (Exception ex)
@@ -115,7 +116,7 @@ public class SystemSpeechEngine : ISpeakerEngine
 
         // Try to find a voice that contains the given name
         var installedVoices = synthesizer.GetInstalledVoices();
-        var matchingVoice = installedVoices.FirstOrDefault(v => 
+        var matchingVoice = installedVoices.FirstOrDefault(v =>
             v.VoiceInfo.Name.Contains(voiceName, StringComparison.OrdinalIgnoreCase));
 
         if (matchingVoice != null)
@@ -126,7 +127,7 @@ public class SystemSpeechEngine : ISpeakerEngine
         }
 
         // Try to select by gender and culture if the name suggests German
-        if (voiceName.Contains("German", StringComparison.OrdinalIgnoreCase) || 
+        if (voiceName.Contains("German", StringComparison.OrdinalIgnoreCase) ||
             voiceName.Contains("de-", StringComparison.OrdinalIgnoreCase))
         {
             try

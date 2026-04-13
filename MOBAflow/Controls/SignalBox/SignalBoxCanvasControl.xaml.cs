@@ -1,13 +1,13 @@
 namespace Moba.WinUI.Controls.SignalBox;
 
 using Domain;
-using Moba.Common.Extension;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 
+using Moba.Common.Extension;
 using Moba.SharedUI.ViewModel;
 
 using System;

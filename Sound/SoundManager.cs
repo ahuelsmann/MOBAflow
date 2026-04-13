@@ -1,8 +1,9 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.Sound;
 
 using Microsoft.Extensions.Logging;
+
 using System.Media;
 using System.Runtime.Versioning;
 
@@ -23,12 +24,12 @@ public class WindowsSoundPlayer(ILogger<WindowsSoundPlayer> logger) : ISoundPlay
         try
         {
             logger.LogInformation("Playing sound file: {WaveFile}", waveFile);
-            
+
             // Run on background thread to avoid blocking UI
             await Task.Run(() =>
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                
+
                 // ReSharper disable once ArrangeObjectCreationWhenTypeEvident
                 using var player = new SoundPlayer();
                 player.SoundLocation = waveFile;
@@ -36,18 +37,18 @@ public class WindowsSoundPlayer(ILogger<WindowsSoundPlayer> logger) : ISoundPlay
                 // PlaySync() blocks until sound completes - perfect for sequential execution!
                 player.PlaySync();
             }, cancellationToken).ConfigureAwait(false);
-            
+
             logger.LogDebug("Sound file played successfully: {WaveFile}", waveFile);
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        logger.LogInformation("Sound playback cancelled: {WaveFile}", waveFile);
-                        throw;
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogError(ex, "Failed to play sound file: {WaveFile}", waveFile);
-                        throw new InvalidOperationException($"Failed to play sound file: {waveFile}", ex);
-                    }
-                }
-            }
+        }
+        catch (OperationCanceledException)
+        {
+            logger.LogInformation("Sound playback cancelled: {WaveFile}", waveFile);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to play sound file: {WaveFile}", waveFile);
+            throw new InvalidOperationException($"Failed to play sound file: {waveFile}", ex);
+        }
+    }
+}

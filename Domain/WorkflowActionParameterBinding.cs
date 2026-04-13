@@ -2,8 +2,9 @@
 
 namespace Moba.Domain;
 
-using System.Diagnostics.CodeAnalysis;
 using Moba.Domain.Enum;
+
+using System.Diagnostics.CodeAnalysis;
 
 /// <summary>
 /// Reads execution fields from typed <see cref="WorkflowAction"/> payloads (command / audio).

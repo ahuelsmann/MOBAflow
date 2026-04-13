@@ -2,10 +2,10 @@
 namespace Moba.WinUI.Service;
 
 using Common.Configuration;
-using Moba.Common.Extension;
 
 using Microsoft.Extensions.Logging;
 
+using Moba.Common.Extension;
 using Moba.SharedUI.ViewModel;
 
 using SharedUI.Interface;

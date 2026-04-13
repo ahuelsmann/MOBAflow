@@ -3,6 +3,7 @@
 namespace Moba.WinUI.Service;
 
 using Common.Configuration;
+
 using Microsoft.UI.Xaml;
 
 /// <summary>

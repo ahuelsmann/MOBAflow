@@ -78,13 +78,13 @@ public class CognitiveSpeechEngine : ISpeakerEngine
         string? speechKey = options.Key ?? Environment.GetEnvironmentVariable("SPEECH_KEY");
         string? speechRegion = options.Region ?? Environment.GetEnvironmentVariable("SPEECH_REGION");
 
-        _logger.LogDebug("🔊 [AZURE SPEECH] Key configured: {KeyConfigured}, Key length: {KeyLength}, Region: {Region}", 
+        _logger.LogDebug("🔊 [AZURE SPEECH] Key configured: {KeyConfigured}, Key length: {KeyLength}, Region: {Region}",
             !string.IsNullOrEmpty(speechKey), speechKey?.Length ?? 0, speechRegion);
 
         if (string.IsNullOrEmpty(speechKey) || string.IsNullOrEmpty(speechRegion))
         {
             var ex = new InvalidOperationException("Azure Speech credentials missing");
-            _logger.LogError(ex, 
+            _logger.LogError(ex,
                 "Azure Speech credentials not configured. Please set SPEECH_KEY and SPEECH_REGION via SpeechOptions or environment variables");
             throw new InvalidOperationException(
                 "Please configure Azure Speech credentials via SpeechOptions or environment variables SPEECH_KEY and SPEECH_REGION.\n" +
@@ -111,8 +111,8 @@ public class CognitiveSpeechEngine : ISpeakerEngine
             var audioConfig = AudioConfig.FromDefaultSpeakerOutput();
 
             // Use voiceName from parameter, fallback to options, then to default
-            var effectiveVoiceName = !string.IsNullOrEmpty(voiceName) 
-                ? voiceName 
+            var effectiveVoiceName = !string.IsNullOrEmpty(voiceName)
+                ? voiceName
                 : (!string.IsNullOrEmpty(options.VoiceName) ? options.VoiceName : "ElkeNeural");
 
             // Get speech rate from options (convert to percentage format for SSML)
@@ -135,17 +135,17 @@ public class CognitiveSpeechEngine : ISpeakerEngine
 
             // ✅ FIX: Pass audioConfig to SpeechSynthesizer
             using var speechSynthesizer = new SpeechSynthesizer(speechConfig, audioConfig);
-            
-            _logger.LogInformation("Synthesizing speech via Azure: {Message} (Voice: {Voice}, Rate: {Rate}, Volume: {Volume})", 
+
+            _logger.LogInformation("Synthesizing speech via Azure: {Message} (Voice: {Voice}, Rate: {Rate}, Volume: {Volume})",
                 message, effectiveVoiceName, ratePercent, volumePercent);
-            
+
             var speechSynthesisResult = await speechSynthesizer.SpeakSsmlAsync(ssml).ConfigureAwait(false);
             OutputSpeechSynthesisResult(speechSynthesisResult, message);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, 
-                "Azure Speech Service Error for message: {Message}, Region: {Region}", 
+            _logger.LogError(ex,
+                "Azure Speech Service Error for message: {Message}, Region: {Region}",
                 message, speechRegion);
             throw;
         }
@@ -165,21 +165,21 @@ public class CognitiveSpeechEngine : ISpeakerEngine
 
                 if (cancellation.Reason == CancellationReason.Error)
                 {
-                    _logger.LogError("ErrorCode: {ErrorCode}, ErrorDetails: {ErrorDetails}", 
+                    _logger.LogError("ErrorCode: {ErrorCode}, ErrorDetails: {ErrorDetails}",
                         cancellation.ErrorCode, cancellation.ErrorDetails);
-                    
+
                     // Provide helpful troubleshooting hints based on error code
                     var errorCodeString = cancellation.ErrorCode.ToString();
                     if (errorCodeString.Contains("Connection", StringComparison.OrdinalIgnoreCase))
                     {
                         _logger.LogWarning("Check your internet connection and firewall settings");
                     }
-                    else if (errorCodeString.Contains("Forbidden", StringComparison.OrdinalIgnoreCase) || 
+                    else if (errorCodeString.Contains("Forbidden", StringComparison.OrdinalIgnoreCase) ||
                              errorCodeString.Contains("Unauthorized", StringComparison.OrdinalIgnoreCase))
                     {
                         _logger.LogWarning("Check your SPEECH_KEY - it might be invalid or expired");
                     }
-                    
+
                     // ✅ FIX: Throw exception so error is visible in UI
                     throw new InvalidOperationException($"Azure Speech synthesis failed: {cancellation.ErrorCode} - {cancellation.ErrorDetails}");
                 }

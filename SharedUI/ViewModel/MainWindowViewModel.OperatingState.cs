@@ -231,8 +231,8 @@ public partial class MainWindowViewModel
     }
 
     /// <summary>
-     /// Recomputes the shell-wide operating state from subsystem status.
-     /// </summary>
+    /// Recomputes the shell-wide operating state from subsystem status.
+    /// </summary>
     private void RecomputeOperatingState()
     {
         if (_isShuttingDown)

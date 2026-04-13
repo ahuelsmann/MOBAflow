@@ -3,7 +3,9 @@ namespace Moba.WinUI.View;
 
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
+
 using Moba.SharedUI.ViewModel;
+
 using System.Collections.Specialized;
 using System.Runtime.InteropServices;
 
@@ -24,7 +26,7 @@ internal sealed partial class MonitorPage
         // Subscribe to page lifecycle events
         Loaded += OnPageLoaded;
         Unloaded += OnPageUnloaded;
-        
+
         // Ensure MainWindowViewModel isn't null if we are observing it directly, although here it is not directly observable 
         // We will need to observe MainWindowViewModel.PropertyChanged from ViewModel
     }

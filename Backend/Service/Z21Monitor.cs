@@ -2,8 +2,11 @@
 namespace Moba.Backend.Service;
 
 using Microsoft.Extensions.Logging;
+
 using Model;
+
 using Protocol;
+
 using System.Collections.Concurrent;
 
 /// <summary>
@@ -45,7 +48,7 @@ public class Z21Monitor
         };
 
         // ✅ Log to Serilog for persistence (Debug level for traffic)
-        _logger.LogDebug("Z21 TX: {PacketType} Bytes={Length} Data={DataHex}", 
+        _logger.LogDebug("Z21 TX: {PacketType} Bytes={Length} Data={DataHex}",
             packet.PacketType, data.Length, packet.DataHex);
 
         AddPacket(packet);
@@ -69,7 +72,7 @@ public class Z21Monitor
         {
             packet.InPort = ExtractInPort(data);
             packet.AllInPorts = ExtractAllInPorts(data);
-            
+
             // If no InPort could be extracted (e.g., all bits zero), treat as non-feedback
             // This prevents highlighting packets with no actual feedback data
             if (packet.InPort == null || packet.InPort == 0)
@@ -81,12 +84,12 @@ public class Z21Monitor
         // ✅ Log to Serilog for persistence (Debug level for traffic, Info for feedback)
         if (packet.IsFeedbackRelated && packet.InPort.HasValue)
         {
-            _logger.LogInformation("Z21 RX: {PacketType} InPort={InPort} AllInPorts={AllInPorts} Data={DataHex}", 
+            _logger.LogInformation("Z21 RX: {PacketType} InPort={InPort} AllInPorts={AllInPorts} Data={DataHex}",
                 packet.PacketType, packet.InPort, string.Join(",", packet.AllInPorts), packet.DataHex);
         }
         else
         {
-            _logger.LogDebug("Z21 RX: {PacketType} Bytes={Length} Data={DataHex}", 
+            _logger.LogDebug("Z21 RX: {PacketType} Bytes={Length} Data={DataHex}",
                 packet.PacketType, data.Length, packet.DataHex);
         }
 
@@ -209,7 +212,7 @@ public class Z21Monitor
         if (data.Length < 6) return null;
 
         var header = BitConverter.ToUInt16(data, 2);
-        
+
         // LAN_RMBUS_DATACHANGED: Use Z21FeedbackParser for correct bit-to-InPort conversion
         if (header == 0x80 && data.Length >= 13)
         {
@@ -231,7 +234,7 @@ public class Z21Monitor
         if (data.Length < 13) return [];
 
         var header = BitConverter.ToUInt16(data, 2);
-        
+
         // LAN_RMBUS_DATACHANGED: Use Z21FeedbackParser to extract all active InPorts
         if (header == 0x80)
         {

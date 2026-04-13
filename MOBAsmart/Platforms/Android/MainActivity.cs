@@ -6,9 +6,12 @@ using global::Android.App;
 using global::Android.Content.PM;
 using global::Android.OS;
 using global::Android.Views;
-using Moba.Common.Extension;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+
+using Moba.Common.Extension;
+
 using SharedUI.ViewModel;
 
 [Activity(

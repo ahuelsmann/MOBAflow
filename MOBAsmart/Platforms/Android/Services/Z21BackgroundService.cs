@@ -8,6 +8,7 @@
 namespace Moba.MAUI.Platforms.Android.Services;
 
 using AndroidX.Core.App;
+
 using global::Android;
 using global::Android.App;
 using global::Android.Content;

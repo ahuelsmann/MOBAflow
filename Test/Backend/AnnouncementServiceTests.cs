@@ -3,7 +3,9 @@
 namespace Moba.Test.Backend;
 
 using Microsoft.Extensions.Logging;
+
 using Moba.Backend.Service;
+
 using Moq;
 
 /// <summary>
@@ -136,8 +138,8 @@ internal class AnnouncementServiceTests
         {
             Text = "Willkommen in {StationName}, Gleis {TrackNumber}, Ausgang {ExitDirection}"
         };
-        var station = new Station 
-        { 
+        var station = new Station
+        {
             Name = "Berlin Central",
             Track = 7,
             IsExitOnLeft = false

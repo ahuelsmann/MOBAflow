@@ -2,10 +2,14 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Action;
+
 using CommunityToolkit.Mvvm.Input;
+
 using Domain;
 using Domain.Enum;
+
 using Helper;
+
 using Microsoft.Extensions.Logging;
 
 /// <summary>
@@ -67,7 +71,7 @@ public partial class MainWindowViewModel
 
         SelectedWorkflow = workflow;
         OnPropertyChanged(nameof(FilteredWorkflows));
-        
+
         // Trigger auto-save after adding workflow
         ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
     }
@@ -90,7 +94,7 @@ public partial class MainWindowViewModel
             () => SelectedWorkflow = null);
 
         OnPropertyChanged(nameof(FilteredWorkflows));
-        
+
         // Trigger auto-save after deleting workflow
         ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
     }
@@ -119,7 +123,7 @@ public partial class MainWindowViewModel
         SelectedWorkflow.Model.Actions.Add(newAction);
         var viewModel = new AnnouncementViewModel(newAction);
         SelectedWorkflow.Actions.Add(viewModel);
-        
+
         // Trigger auto-save after adding action
         ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
     }
@@ -167,7 +171,7 @@ public partial class MainWindowViewModel
         SelectedWorkflow.Model.Actions.Add(newAction);
         var viewModel = new AudioViewModel(newAction, _ioService, _executionContext.SoundPlayer);
         SelectedWorkflow.Actions.Add(viewModel);
-        
+
         // Trigger auto-save after adding action
         ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
     }
@@ -183,7 +187,7 @@ public partial class MainWindowViewModel
         // Find and remove action from Domain model by ID
         var action = SelectedWorkflow.Model.Actions
             .FirstOrDefault(a => a.Id == actionVm.Id);
-        
+
         if (action != null)
         {
             SelectedWorkflow.Model.Actions.Remove(action);
@@ -192,7 +196,7 @@ public partial class MainWindowViewModel
         // Remove from ViewModel's ObservableCollection
         SelectedWorkflow.Actions.Remove(actionVm);
         SelectedAction = null;
-        
+
         // Trigger auto-save after deleting action
         ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
     }

@@ -29,7 +29,7 @@ internal class NullSoundPlayerTests
     public async Task PlayAsync_WithCancellationToken_CompletesSuccessfully()
     {
         using var cts = new CancellationTokenSource();
-        
+
         await _player.PlayAsync("sound.wav", cts.Token);
 
         Assert.Pass("PlayAsync with cancellation token completed");

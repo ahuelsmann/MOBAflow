@@ -3,7 +3,9 @@
 namespace Moba.Backend.Service;
 
 using Domain;
+
 using Microsoft.Extensions.Logging;
+
 using System.Text;
 
 /// <summary>
@@ -89,7 +91,7 @@ public class ProjectValidator : IProjectValidator
         else
         {
             result.AddInfo($"[{projectName}] ✓ Journeys: {project.Journeys.Count} defined");
-            
+
             // Check journey stations
             var totalStations = project.Journeys.Sum(j => j.Stations.Count);
             if (totalStations == 0)

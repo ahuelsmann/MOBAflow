@@ -5,6 +5,7 @@
 namespace Moba.Test.TestBase;
 
 using Moba.SharedUI.Interface;
+
 using Moq;
 
 /// <summary>

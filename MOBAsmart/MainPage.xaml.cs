@@ -2,9 +2,10 @@
 namespace Moba.MAUI;
 
 using Common.Configuration;
-using Moba.Common.Extension;
 
 using Microsoft.Extensions.Logging;
+
+using Moba.Common.Extension;
 
 using SharedUI.Interface;
 using SharedUI.ViewModel;

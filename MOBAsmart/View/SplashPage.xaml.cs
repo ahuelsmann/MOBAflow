@@ -2,8 +2,9 @@
 
 namespace Moba.MAUI.View;
 
-using SharedUI.Interface;
 using Microsoft.Extensions.Logging;
+
+using SharedUI.Interface;
 
 /// <summary>
 /// Splash page shown during app startup.

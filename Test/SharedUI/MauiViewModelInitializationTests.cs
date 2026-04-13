@@ -1,13 +1,13 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.SharedUI;
 
+using Microsoft.Extensions.Logging.Abstractions;
+
 using Moba.Backend.Interface;
 using Moba.Common.Configuration;
 using Moba.Common.Runtime;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
-
-using Microsoft.Extensions.Logging.Abstractions;
 
 using Moq;
 

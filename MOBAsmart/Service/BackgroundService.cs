@@ -1,9 +1,12 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
 
 using Android.OS;
+
 using Platforms.Android.Services;
+
 using SharedUI.Interface;
+
 #if ANDROID
 using Android.Content;
 

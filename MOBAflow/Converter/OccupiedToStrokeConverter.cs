@@ -14,11 +14,11 @@ internal partial class OccupiedToStrokeConverter : IValueConverter
     public object Convert(object? value, Type targetType, object? parameter, string language)
     {
         var isOccupied = value is bool occupied && occupied;
-        
+
         // Occupied: Orange warning color
         // Free: Default red (from existing template)
-        return isOccupied 
-            ? new SolidColorBrush(Colors.Orange) 
+        return isOccupied
+            ? new SolidColorBrush(Colors.Orange)
             : new SolidColorBrush(Colors.Red);
     }
 

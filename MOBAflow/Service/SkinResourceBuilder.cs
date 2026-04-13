@@ -4,6 +4,7 @@ namespace Moba.WinUI.Service;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
+
 using Windows.UI;
 
 /// <summary>

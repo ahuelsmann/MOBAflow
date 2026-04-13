@@ -4,8 +4,11 @@ namespace Moba.WinUI.Behavior;
 
 using Microsoft.UI.Xaml;
 using Microsoft.Xaml.Interactivity;
+
 using Moba.SharedUI.ViewModel;
+
 using System.Windows.Input;
+
 using Windows.ApplicationModel.DataTransfer;
 
 /// <summary>

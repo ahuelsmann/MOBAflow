@@ -2,7 +2,6 @@
 
 namespace Moba.Backend.Service;
 
-using Common.Configuration;
 using Common.Extension;
 
 using Microsoft.Extensions.Logging;

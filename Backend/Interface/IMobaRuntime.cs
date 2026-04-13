@@ -2,9 +2,9 @@
 
 namespace Moba.Backend.Interface;
 
-using Domain;
-
 using Common.Runtime;
+
+using Domain;
 
 using Model;
 

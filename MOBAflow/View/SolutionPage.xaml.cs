@@ -4,6 +4,7 @@ namespace Moba.WinUI.View;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+
 using Moba.Common.Extension;
 using Moba.SharedUI.ViewModel;
 

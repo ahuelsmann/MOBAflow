@@ -1,8 +1,8 @@
-using System.Reflection;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using Moba.Common.Configuration;
+
+using System.Reflection;
 
 namespace Moba.SharedUI.ViewModel;
 
@@ -64,7 +64,7 @@ public class ColumnViewModel : ObservableObject
             if (value < 0) value = 0;
             if (MaxWidth > 0 && !double.IsNaN(MaxWidth) && value > MaxWidth) value = MaxWidth;
             if (value < MinWidth) value = MinWidth;
-            
+
             if (SetProperty(ref _width, value))
             {
                 OnPropertyChanged(nameof(IsExpanded));

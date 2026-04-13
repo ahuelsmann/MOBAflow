@@ -2,9 +2,10 @@
 
 namespace Moba.Domain;
 
+using Moba.Domain.Enum;
+
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Moba.Domain.Enum;
 
 /// <summary>
 /// Serializes <see cref="WorkflowAction"/> as a flat JSON object with typed payload properties

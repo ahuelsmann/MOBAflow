@@ -143,7 +143,7 @@ public static class Z21DccCommandDecoder
         {
             // Simple heuristic for generic locomotive commands
             // Assumes: bytes[3-4] = address, bytes[5] = speed
-            
+
             if (bytes.Length >= 5)
             {
                 // Try to extract address from bytes 3-4
@@ -174,11 +174,11 @@ public static class Z21DccCommandDecoder
         }
     }
 
-        /// <summary>
-        /// Formats byte array as hexadecimal string (e.g., "0A 00 80 00 E4 03 E5 80 12").
-        /// </summary>
-        public static string FormatBytesAsHex(byte[]? bytes)
-        {
+    /// <summary>
+    /// Formats byte array as hexadecimal string (e.g., "0A 00 80 00 E4 03 E5 80 12").
+    /// </summary>
+    public static string FormatBytesAsHex(byte[]? bytes)
+    {
         return bytes == null || bytes.Length == 0 ? "(empty)" : BitConverter.ToString(bytes).Replace("-", " ");
     }
 
@@ -187,7 +187,7 @@ public static class Z21DccCommandDecoder
     /// Example: "Addr: 101, Speed: 127, Direction: Forward"
     /// </summary>
     public static string FormatDccCommand(DccCommand? command)
-        {
+    {
         return command == null || !command.IsValid
                 ? command?.ErrorMessage ?? "(Unknown format)"
                 : $"Addr: {command.Address}, Speed: {command.Speed}, Direction: {command.Direction}";
@@ -201,57 +201,57 @@ public static class Z21DccCommandDecoder
     /// <param name="direction">Direction ("Forward" or "Backward").</param>
     /// <returns>Z21 command bytes ready to send to Z21.</returns>
     public static byte[] EncodeLocoCommand(int address, int speed, string direction)
+    {
+        // Validate inputs
+        if (address < 0 || address > 10239)
+            throw new ArgumentOutOfRangeException(nameof(address), "Address must be between 0 and 10239");
+
+        if (speed < 0 || speed > 127)
+            throw new ArgumentOutOfRangeException(nameof(speed), "Speed must be between 0 and 127");
+
+        // Create command bytes
+        byte[] bytes = new byte[10];
+
+        // [0-1] Length (10 bytes, little-endian)
+        bytes[0] = 0x0A;
+        bytes[1] = 0x00;
+
+        // [2-3] Header (LAN_X_HEADER)
+        bytes[2] = 0x40;
+        bytes[3] = 0x00;
+
+        // [4] X-Header (SET_LOCO_DRIVE)
+        bytes[4] = 0xE4;
+
+        // [5] DB1 (Speed step format: 0x13 = 128-step mode)
+        bytes[5] = 0x13;
+
+        // [6-7] Address (16-bit, big-endian)
+        bytes[6] = (byte)((address >> 8) & 0xFF);  // High byte
+        bytes[7] = (byte)(address & 0xFF);         // Low byte
+
+        // [8] Speed + Direction
+        byte speedDir = (byte)(speed & 0x7F);  // Bits 0-6: Speed
+
+        // Bit 7: Direction (1 = Backward, 0 = Forward)
+        if (direction.Equals("Backward", StringComparison.OrdinalIgnoreCase))
         {
-            // Validate inputs
-            if (address < 0 || address > 10239)
-                throw new ArgumentOutOfRangeException(nameof(address), "Address must be between 0 and 10239");
-
-            if (speed < 0 || speed > 127)
-                throw new ArgumentOutOfRangeException(nameof(speed), "Speed must be between 0 and 127");
-
-            // Create command bytes
-            byte[] bytes = new byte[10];
-
-            // [0-1] Length (10 bytes, little-endian)
-            bytes[0] = 0x0A;
-            bytes[1] = 0x00;
-
-            // [2-3] Header (LAN_X_HEADER)
-            bytes[2] = 0x40;
-            bytes[3] = 0x00;
-
-            // [4] X-Header (SET_LOCO_DRIVE)
-            bytes[4] = 0xE4;
-
-            // [5] DB1 (Speed step format: 0x13 = 128-step mode)
-            bytes[5] = 0x13;
-
-            // [6-7] Address (16-bit, big-endian)
-            bytes[6] = (byte)((address >> 8) & 0xFF);  // High byte
-            bytes[7] = (byte)(address & 0xFF);         // Low byte
-
-            // [8] Speed + Direction
-            byte speedDir = (byte)(speed & 0x7F);  // Bits 0-6: Speed
-
-            // Bit 7: Direction (1 = Backward, 0 = Forward)
-            if (direction.Equals("Backward", StringComparison.OrdinalIgnoreCase))
-            {
-                speedDir |= 0x80;  // Set bit 7
-            }
-
-            bytes[8] = speedDir;
-
-            // [9] XOR checksum (XOR of bytes 4-8)
-            bytes[9] = (byte)(bytes[4] ^ bytes[5] ^ bytes[6] ^ bytes[7] ^ bytes[8]);
-
-            return bytes;
+            speedDir |= 0x80;  // Set bit 7
         }
 
-        /// <summary>
-        /// Encodes DCC command from DccCommand object.
-        /// </summary>
-        public static byte[] EncodeLocoCommand(DccCommand command)
-        {
+        bytes[8] = speedDir;
+
+        // [9] XOR checksum (XOR of bytes 4-8)
+        bytes[9] = (byte)(bytes[4] ^ bytes[5] ^ bytes[6] ^ bytes[7] ^ bytes[8]);
+
+        return bytes;
+    }
+
+    /// <summary>
+    /// Encodes DCC command from DccCommand object.
+    /// </summary>
+    public static byte[] EncodeLocoCommand(DccCommand command)
+    {
         return command == null
                 ? throw new ArgumentNullException(nameof(command))
                 : EncodeLocoCommand(command.Address, command.Speed, command.Direction);

@@ -3,7 +3,9 @@
 namespace Moba.Backend.Service;
 
 using Domain;
+
 using Microsoft.Extensions.Logging;
+
 using Sound;
 
 /// <summary>
@@ -54,7 +56,7 @@ public class AnnouncementService
     {
         _speakerEngineFactory = speakerEngineFactory;
         _logger = logger;
-        _logger?.LogInformation("AnnouncementService initialized (Speaker Engine Factory: {FactoryAvailable})", 
+        _logger?.LogInformation("AnnouncementService initialized (Speaker Engine Factory: {FactoryAvailable})",
             _speakerEngineFactory != null ? "Available" : "None");
     }
 
@@ -92,8 +94,8 @@ public class AnnouncementService
         text = ReplaceToken(text, "StationName", station.Name);
 
         // Replace {StationIsExitOnLeft} - full German phrase
-        var exitPhrase = station.IsExitOnLeft 
-            ? "links" 
+        var exitPhrase = station.IsExitOnLeft
+            ? "links"
             : "rechts";
         text = ReplaceToken(text, "StationIsExitOnLeft", exitPhrase);
 
@@ -123,8 +125,8 @@ public class AnnouncementService
     /// <param name="stationIndex">Station position (1-based)</param>
     /// <param name="cancellationToken">Cancellation token for async operation</param>
     public async Task GenerateAndSpeakAnnouncementAsync(
-        Journey journey, 
-        Station station, 
+        Journey journey,
+        Station station,
         int stationIndex,
         CancellationToken cancellationToken = default)
     {
@@ -163,7 +165,7 @@ public class AnnouncementService
                 // ✅ Create engine dynamically based on current settings
                 var speakerEngine = _speakerEngineFactory.CreateEngineFromOptions();
 
-                _logger?.LogInformation("🔊 Speaking announcement via {SpeakerEngine} for station '{StationName}'", 
+                _logger?.LogInformation("🔊 Speaking announcement via {SpeakerEngine} for station '{StationName}'",
                     speakerEngine.Name, station.Name);
                 await speakerEngine.AnnouncementAsync(announcementText, voiceName: null).ConfigureAwait(false);
             }
@@ -190,7 +192,7 @@ public class AnnouncementService
     {
         var pattern = $"{{{token}}}";
         var replaced = text.Replace(pattern, value);
-        
+
         if (replaced != text)
         {
             _logger?.LogDebug("Replaced {{{Token}}} with '{Value}'", token, value);

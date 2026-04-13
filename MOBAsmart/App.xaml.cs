@@ -1,8 +1,10 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI;
 
-using Moba.Common.Extension;
 using Microsoft.Extensions.Logging;
+
+using Moba.Common.Extension;
+
 using SharedUI.ViewModel;
 
 using View;
@@ -46,10 +48,10 @@ public partial class App
             targetTheme = isDarkMode ? AppTheme.Dark : AppTheme.Light;
             effectiveIsDark = isDarkMode;
         }
-        
+
         UserAppTheme = targetTheme;
         LoadThemeResources(effectiveIsDark);
-        
+
         _logger?.LogDebug("Theme applied: {ThemeMode} (isDark: {IsDark})",
             useSystemTheme ? "System" : isDarkMode ? "Dark" : "Light",
             effectiveIsDark);

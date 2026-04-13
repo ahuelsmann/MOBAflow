@@ -3,6 +3,7 @@
 namespace Moba.WinUI.Service;
 
 using Microsoft.Extensions.Logging;
+
 using Moba.Common.Extension;
 
 using System.Net;

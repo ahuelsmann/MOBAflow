@@ -77,10 +77,26 @@ public sealed partial class PageColumnWidthsViewModel : ObservableObject
     {
         get => index switch
         {
-            0 => Col0, 1 => Col1, 2 => Col2, 3 => Col3, 4 => Col4, 5 => Col5,
-            6 => Col6, 7 => Col7, 8 => Col8, 9 => Col9, 10 => Col10, 11 => Col11,
-            12 => Col12, 13 => Col13, 14 => Col14, 15 => Col15, 16 => Col16,
-            17 => Col17, 18 => Col18, 19 => Col19,
+            0 => Col0,
+            1 => Col1,
+            2 => Col2,
+            3 => Col3,
+            4 => Col4,
+            5 => Col5,
+            6 => Col6,
+            7 => Col7,
+            8 => Col8,
+            9 => Col9,
+            10 => Col10,
+            11 => Col11,
+            12 => Col12,
+            13 => Col13,
+            14 => Col14,
+            15 => Col15,
+            16 => Col16,
+            17 => Col17,
+            18 => Col18,
+            19 => Col19,
             _ => 0
         };
         set

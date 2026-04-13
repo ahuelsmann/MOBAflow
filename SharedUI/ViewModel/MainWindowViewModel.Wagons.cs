@@ -3,8 +3,11 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
 using Domain;
+
 using Microsoft.Extensions.Logging;
+
 using System.Diagnostics;
 
 /// <summary>
@@ -265,7 +268,7 @@ public partial class MainWindowViewModel
 
         // Remove from ViewModel collection first (may trigger selection change)
         selectedProject.Locomotives.Remove(selectedLoco);
-        
+
         // Remove from Domain model
         selectedProject.Model.Locomotives.Remove(locoModel);
 
