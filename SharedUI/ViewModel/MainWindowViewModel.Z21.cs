@@ -21,9 +21,9 @@ public partial class MainWindowViewModel
 
     private void InitializeTrafficMonitor()
     {
-        _mobaClient.TrafficPacketLogged += OnTrafficPacketLogged;
+        _mobaRuntime.TrafficPacketLogged += OnTrafficPacketLogged;
 
-        foreach (var packet in _mobaClient.GetTrafficPackets())
+        foreach (var packet in _mobaRuntime.GetTrafficPackets())
         {
             TrafficPackets.Add(packet);
         }
@@ -48,7 +48,7 @@ public partial class MainWindowViewModel
     private void ClearTrafficMonitor()
     {
         TrafficPackets.Clear();
-        _mobaClient.ClearTrafficMonitor();
+        _mobaRuntime.ClearTrafficMonitor();
     }
     #endregion
 
@@ -56,13 +56,13 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanConnect))]
     private async Task ConnectAsync()
     {
-        await _mobaClient.ConnectAsync().ConfigureAwait(false);
+        await _mobaRuntime.ConnectAsync().ConfigureAwait(false);
     }
 
     [RelayCommand(CanExecute = nameof(CanDisconnect))]
     private async Task DisconnectAsync()
     {
-        await _mobaClient.DisconnectAsync().ConfigureAwait(false);
+        await _mobaRuntime.DisconnectAsync().ConfigureAwait(false);
     }
 
     [RelayCommand]
@@ -81,7 +81,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        await _mobaClient.SimulateFeedbackAsync(inPort).ConfigureAwait(false);
+        await _mobaRuntime.SimulateFeedbackAsync(inPort).ConfigureAwait(false);
     }
 
     private bool CanResetJourney() => SelectedJourney != null;
@@ -92,13 +92,13 @@ public partial class MainWindowViewModel
         if (SelectedJourney == null) return;
 
         SelectedJourney.ResetCommand.Execute(null);
-        await _mobaClient.ResetJourneyAsync(SelectedJourney.Model.Id).ConfigureAwait(false);
+        await _mobaRuntime.ResetJourneyAsync(SelectedJourney.Model.Id).ConfigureAwait(false);
     }
 
     [RelayCommand(CanExecute = nameof(CanToggleTrackPower))]
     private async Task SetTrackPowerAsync(bool turnOn)
     {
-        await _mobaClient.SetTrackPowerAsync(turnOn).ConfigureAwait(false);
+        await _mobaRuntime.SetTrackPowerAsync(turnOn).ConfigureAwait(false);
     }
 
     private bool CanConnect() => !IsConnected;

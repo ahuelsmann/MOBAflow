@@ -446,28 +446,29 @@ MOBAflow follows **Clean Architecture** principles with strict layer separation.
 
 ### Runtime Boundary (Current Status)
 
-The current control/runtime split now covers the shared shell and the
-remaining shared Z21-facing ViewModels:
+Shared ViewModels talk to the in-process runtime only; there is no separate UI client interface:
 
 ```text
-MainWindowViewModel
+MainWindowViewModel / TrainControlViewModel / MauiViewModel
   ↓
-IMobaClient
-  ↓
-IMobaRuntime
+IMobaRuntime  (MobaRuntimeService)
   ↓
 IZ21 / JourneyManager / WorkflowService
 ```
 
 Current scope:
 
-- `MainWindowViewModel` now talks to `IMobaClient` instead of driving Z21 and
-  `JourneyManager` directly
-- The runtime publishes `MobaRuntimeSnapshot` objects back to the shell
-- `TrainControlViewModel` and `MauiViewModel` now also use `IMobaClient`
-  instead of addressing `IZ21` directly
-- `ProjectRuntimeFactory` still reuses the live `Project` reference in this
-  first step; a dedicated runtime copy is planned next
+- `MainWindowViewModel`, `TrainControlViewModel`, and `MauiViewModel` inject
+  `IMobaRuntime` (singleton `MobaRuntimeService`) instead of using `IZ21` or
+  `JourneyManager` directly for commands and snapshots
+- The runtime publishes `MobaRuntimeSnapshot` (and related events such as
+  traffic and feedback) back to the shell
+- Project activation is performed inside `MobaRuntimeService.ActivateProjectAsync`,
+  which owns `ActiveProjectContext` and a `JourneyManager` per active project
+- The active runtime still uses the live `Project` instance from the loaded
+  `Solution`; a dedicated runtime copy remains a possible future step
+- Shared master data (`data.json`) is held in **`MasterDataStore`** (Backend DI);
+  WinUI services expose cities and locomotives to the shell
 
 ### 🛠️ Technology Stack
 

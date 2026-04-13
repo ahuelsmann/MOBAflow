@@ -107,11 +107,6 @@ public sealed partial class TrackPlanPage
             ValidationLegendPanel.Visibility = _showValidationOverlay ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    private IIoService GetIoService()
-    {
-        return App.Current.Services.GetService(typeof(IIoService)) as IIoService ?? new NullIoService();
-    }
-
     private TrackPlanEditorDocument CaptureDocumentState()
     {
         return TrackPlanEditorDocument.FromEditableTrackPlan(
@@ -159,7 +154,7 @@ public sealed partial class TrackPlanPage
 
     private void UpdateCommandStates()
     {
-        var ioServiceAvailable = GetIoService() is not NullIoService;
+        var ioServiceAvailable = _ioService is not NullIoService;
         LoadTrackPlanButton.IsEnabled = ioServiceAvailable;
         SaveTrackPlanButton.IsEnabled = ioServiceAvailable;
         SaveTrackPlanAsButton.IsEnabled = ioServiceAvailable;
@@ -203,7 +198,7 @@ public sealed partial class TrackPlanPage
 
     private async Task<bool> SaveTrackPlanAsync(bool saveAs)
     {
-        var ioService = GetIoService();
+        var ioService = _ioService;
         if (ioService is NullIoService)
         {
             StatusText.Text = "Speichern ist auf dieser Plattform nicht verfügbar.";
@@ -242,7 +237,7 @@ public sealed partial class TrackPlanPage
 
     private async Task LoadTrackPlanAsync()
     {
-        var ioService = GetIoService();
+        var ioService = _ioService;
         if (ioService is NullIoService)
         {
             StatusText.Text = "Laden ist auf dieser Plattform nicht verfügbar.";

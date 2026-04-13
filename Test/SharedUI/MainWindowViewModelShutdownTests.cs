@@ -3,6 +3,7 @@ namespace Moba.Test.SharedUI;
 
 using Microsoft.Extensions.Logging;
 
+using Moba.Backend.Interface;
 using Moba.Backend.Model;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
@@ -23,12 +24,12 @@ internal class MainWindowViewModelShutdownTests
     [Test]
     public async Task PrepareForShutdownAsync_UnsubscribesFromRuntimeSnapshots()
     {
-        var mobaClientMock = CreateMobaClientMock();
-        var viewModel = CreateViewModel(mobaClientMock);
+        var mobaRuntimeMock = CreateMobaRuntimeMock();
+        var viewModel = CreateViewModel(mobaRuntimeMock);
 
-        mobaClientMock.Raise(
+        mobaRuntimeMock.Raise(
             client => client.SnapshotChanged += null,
-            mobaClientMock.Object,
+            mobaRuntimeMock.Object,
             new MobaRuntimeSnapshot
             {
                 IsConnected = true,
@@ -40,9 +41,9 @@ internal class MainWindowViewModelShutdownTests
 
         await viewModel.PrepareForShutdownAsync();
 
-        mobaClientMock.Raise(
+        mobaRuntimeMock.Raise(
             client => client.SnapshotChanged += null,
-            mobaClientMock.Object,
+            mobaRuntimeMock.Object,
             new MobaRuntimeSnapshot
             {
                 IsConnected = false,
@@ -58,25 +59,25 @@ internal class MainWindowViewModelShutdownTests
     [Test]
     public async Task PrepareForShutdownAsync_DisconnectsOnlyOnce()
     {
-        var mobaClientMock = CreateMobaClientMock();
-        var viewModel = CreateViewModel(mobaClientMock);
+        var mobaRuntimeMock = CreateMobaRuntimeMock();
+        var viewModel = CreateViewModel(mobaRuntimeMock);
 
         await viewModel.PrepareForShutdownAsync();
         await viewModel.PrepareForShutdownAsync();
 
-        mobaClientMock.Verify(client => client.DisconnectAsync(It.IsAny<CancellationToken>()), Times.Once);
+        mobaRuntimeMock.Verify(client => client.DisconnectAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    private static Mock<IMobaClient> CreateMobaClientMock()
+    private static Mock<IMobaRuntime> CreateMobaRuntimeMock()
     {
-        var mobaClientMock = new Mock<IMobaClient>();
-        mobaClientMock.SetupGet(client => client.Current).Returns(MobaRuntimeSnapshot.Empty);
-        mobaClientMock.Setup(client => client.GetTrafficPackets()).Returns(Array.Empty<Z21TrafficPacket>());
-        mobaClientMock.Setup(client => client.DisconnectAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        return mobaClientMock;
+        var mobaRuntimeMock = new Mock<IMobaRuntime>();
+        mobaRuntimeMock.SetupGet(client => client.Current).Returns(MobaRuntimeSnapshot.Empty);
+        mobaRuntimeMock.Setup(client => client.GetTrafficPackets()).Returns(Array.Empty<Z21TrafficPacket>());
+        mobaRuntimeMock.Setup(client => client.DisconnectAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        return mobaRuntimeMock;
     }
 
-    private static MainWindowViewModel CreateViewModel(Mock<IMobaClient> mobaClientMock)
+    private static MainWindowViewModel CreateViewModel(Mock<IMobaRuntime> mobaRuntimeMock)
     {
         var eventBusMock = new Mock<IEventBus>();
         var uiDispatcherMock = new Mock<IUiDispatcher>();
@@ -88,7 +89,7 @@ internal class MainWindowViewModelShutdownTests
 
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
-            mobaClientMock.Object,
+            mobaRuntimeMock.Object,
             eventBusMock.Object,
             uiDispatcherMock.Object,
             new AppSettings(),

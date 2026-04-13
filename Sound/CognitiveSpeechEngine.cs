@@ -7,7 +7,6 @@ using Microsoft.CognitiveServices.Speech.Audio;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using System.Diagnostics;
 
 /// <summary>
 /// Azure Cognitive Services Text-to-Speech implementation.
@@ -154,39 +153,31 @@ public class CognitiveSpeechEngine : ISpeakerEngine
 
     private void OutputSpeechSynthesisResult(SpeechSynthesisResult speechSynthesisResult, string text)
     {
-        Debug.WriteLine($"🔊 [AZURE SPEECH] Result Reason: {speechSynthesisResult.Reason}");
-        
         switch (speechSynthesisResult.Reason)
         {
             case ResultReason.SynthesizingAudioCompleted:
                 _logger.LogInformation("Speech synthesized for text: {Text}", text);
-                Debug.WriteLine($"🔊 [AZURE SPEECH] ✅ SUCCESS: Speech synthesized for text: {text}");
                 break;
 
             case ResultReason.Canceled:
                 var cancellation = SpeechSynthesisCancellationDetails.FromResult(speechSynthesisResult);
                 _logger.LogWarning("CANCELED: Reason={Reason}", cancellation.Reason);
-                Debug.WriteLine($"🔊 [AZURE SPEECH] ❌ CANCELED: Reason={cancellation.Reason}");
 
                 if (cancellation.Reason == CancellationReason.Error)
                 {
                     _logger.LogError("ErrorCode: {ErrorCode}, ErrorDetails: {ErrorDetails}", 
                         cancellation.ErrorCode, cancellation.ErrorDetails);
-                    Debug.WriteLine($"🔊 [AZURE SPEECH] ❌ ERROR CODE: {cancellation.ErrorCode}");
-                    Debug.WriteLine($"🔊 [AZURE SPEECH] ❌ ERROR DETAILS: {cancellation.ErrorDetails}");
                     
                     // Provide helpful troubleshooting hints based on error code
                     var errorCodeString = cancellation.ErrorCode.ToString();
                     if (errorCodeString.Contains("Connection", StringComparison.OrdinalIgnoreCase))
                     {
                         _logger.LogWarning("Check your internet connection and firewall settings");
-                        Debug.WriteLine("🔊 [AZURE SPEECH] ⚠️ Check your internet connection and firewall settings");
                     }
                     else if (errorCodeString.Contains("Forbidden", StringComparison.OrdinalIgnoreCase) || 
                              errorCodeString.Contains("Unauthorized", StringComparison.OrdinalIgnoreCase))
                     {
                         _logger.LogWarning("Check your SPEECH_KEY - it might be invalid or expired");
-                        Debug.WriteLine("🔊 [AZURE SPEECH] ⚠️ Check your SPEECH_KEY - it might be invalid or expired");
                     }
                     
                     // ✅ FIX: Throw exception so error is visible in UI

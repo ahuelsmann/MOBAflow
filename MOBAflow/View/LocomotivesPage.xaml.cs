@@ -17,6 +17,15 @@ internal sealed partial class LocomotivesPage
         InitializeComponent();
 
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+        Unloaded += OnPageUnloaded;
+    }
+
+    private void OnPageUnloaded(object sender, RoutedEventArgs e)
+    {
+        _ = sender;
+        _ = e;
+        ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+        Unloaded -= OnPageUnloaded;
     }
 
     private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

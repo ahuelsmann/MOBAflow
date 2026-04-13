@@ -2,8 +2,13 @@
 namespace Moba.MAUI;
 
 using Common.Configuration;
+using Moba.Common.Extension;
+
+using Microsoft.Extensions.Logging;
+
 using SharedUI.Interface;
 using SharedUI.ViewModel;
+
 using System.ComponentModel;
 
 // ReSharper disable once PartialTypeWithSinglePart
@@ -12,13 +17,20 @@ public partial class MainPage
     public MauiViewModel ViewModel { get; }
     private readonly ISettingsService _settingsService;
     private readonly AppSettings _settings;
+    private readonly ILogger<MainPage>? _logger;
     private CancellationTokenSource? _pulseAnimationCts;
+    private Task? _viewModelInitializationTask;
 
-    public MainPage(MauiViewModel viewModel, ISettingsService settingsService, AppSettings settings)
+    public MainPage(
+        MauiViewModel viewModel,
+        ISettingsService settingsService,
+        AppSettings settings,
+        ILogger<MainPage>? logger = null)
     {
         ViewModel = viewModel;
         _settingsService = settingsService;
         _settings = settings;
+        _logger = logger;
         BindingContext = ViewModel;
         InitializeComponent();
 
@@ -52,6 +64,12 @@ public partial class MainPage
         }
     }
 
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        _viewModelInitializationTask ??= ViewModel.InitializeAsync();
+    }
+
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(MauiViewModel.IsConnected))
@@ -67,19 +85,36 @@ public partial class MainPage
         }
     }
 
-    private async void TrackPowerSwitch_Toggled(object sender, ToggledEventArgs e)
+    private void TrackPowerSwitch_Toggled(object sender, ToggledEventArgs e)
     {
         _ = sender; // Suppress unused parameter warning
+        HandleTrackPowerSwitchToggledAsync(e.Value).Observe(
+            ex => _logger?.LogWarning(ex, "Track power toggle failed"));
+    }
+
+    private async Task HandleTrackPowerSwitchToggledAsync(bool isTrackPowerOn)
+    {
+        // Ignore programmatic toggle updates from runtime snapshots.
+        if (isTrackPowerOn == ViewModel.IsTrackPowerOn)
+        {
+            return;
+        }
 
         // Haptic feedback for track power toggle
         PerformHapticFeedback();
 
-        await ViewModel.SetTrackPowerCommand.ExecuteAsync(e.Value);
+        await ViewModel.SetTrackPowerCommand.ExecuteAsync(isTrackPowerOn);
     }
 
-    private async void ThemeSwitch_Toggled(object sender, ToggledEventArgs e)
+    private void ThemeSwitch_Toggled(object sender, ToggledEventArgs e)
     {
         _ = sender; // Suppress unused parameter warning
+        HandleThemeSwitchToggledAsync(e.Value).Observe(
+            ex => _logger?.LogWarning(ex, "Theme toggle failed"));
+    }
+
+    private async Task HandleThemeSwitchToggledAsync(bool isLightTheme)
+    {
         if (Application.Current is not App app)
             return;
 
@@ -87,7 +122,6 @@ public partial class MainPage
         PerformHapticFeedback();
 
         // Switch ON = Light, Switch OFF = Dark
-        var isLightTheme = e.Value;
         var isDarkMode = !isLightTheme;
 
         // Disable UseSystemTheme when manually toggling
@@ -102,6 +136,33 @@ public partial class MainPage
 
         // Save preference to settings
         await _settingsService.SaveSettingsAsync(_settings);
+    }
+
+    private void ResetCountersButton_Clicked(object sender, EventArgs e)
+    {
+        _ = sender;
+        _ = e;
+        HandleResetCountersButtonClickedAsync().Observe(
+            ex => _logger?.LogWarning(ex, "Reset counters failed"));
+    }
+
+    private async Task HandleResetCountersButtonClickedAsync()
+    {
+
+        PerformHapticFeedback();
+
+        var shouldReset = await DisplayAlertAsync(
+            "Reset lap counters",
+            "Do you really want to reset all lap counters to zero?",
+            "Reset",
+            "Cancel");
+
+        if (!shouldReset)
+        {
+            return;
+        }
+
+        ViewModel.ResetCountersCommand.Execute(null);
     }
 
     /// <summary>
@@ -135,35 +196,8 @@ public partial class MainPage
     {
         StopPulseAnimation();
         _pulseAnimationCts = new CancellationTokenSource();
-
-        _ = Task.Run(async () =>
-        {
-            while (!_pulseAnimationCts.Token.IsCancellationRequested)
-            {
-                try
-                {
-                    await MainThread.InvokeOnMainThreadAsync(async () =>
-                    {
-                        // Pulse: Scale up
-                        await ConnectionIndicator.ScaleToAsync(1.3, 500, Easing.SinInOut);
-                        // Pulse: Scale down
-                        await ConnectionIndicator.ScaleToAsync(1.0, 500, Easing.SinInOut);
-                    });
-
-                    // Pause between pulses
-                    await Task.Delay(1500, _pulseAnimationCts.Token);
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
-                }
-                catch
-                {
-                    // Animation failed, stop trying
-                    break;
-                }
-            }
-        }, _pulseAnimationCts.Token);
+        RunPulseAnimationAsync(_pulseAnimationCts.Token).Observe(
+            ex => _logger?.LogWarning(ex, "Connection pulse animation failed"));
     }
 
     /// <summary>
@@ -181,6 +215,36 @@ public partial class MainPage
             ConnectionIndicator.Scale = 1.0;
         });
     }
+
+    private async Task RunPulseAnimationAsync(CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    // Pulse: Scale up
+                    await ConnectionIndicator.ScaleToAsync(1.3, 500, Easing.SinInOut);
+                    // Pulse: Scale down
+                    await ConnectionIndicator.ScaleToAsync(1.0, 500, Easing.SinInOut);
+                });
+
+                // Pause between pulses
+                await Task.Delay(1500, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch
+            {
+                // Animation failed, stop trying
+                break;
+            }
+        }
+    }
+
 }
 
 

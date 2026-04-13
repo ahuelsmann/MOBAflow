@@ -1,7 +1,9 @@
 namespace Moba.WinUI.Controls.SignalBox;
 
 using Domain;
+using Moba.Common.Extension;
 
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
@@ -42,6 +44,12 @@ public sealed partial class SignalBoxCanvasControl
     private Point _panStartPoint;
     private double _panStartHorizontalOffset;
     private double _panStartVerticalOffset;
+    private ILogger<SignalBoxCanvasControl>? _logger;
+
+    /// <summary>
+    /// Attaches an optional logger for drop-handling failures (control is not constructed via DI).
+    /// </summary>
+    internal void AttachLogger(ILogger<SignalBoxCanvasControl>? logger) => _logger = logger;
 
     public static readonly DependencyProperty PlanViewModelProperty = DependencyProperty.Register(
         nameof(PlanViewModel),
@@ -73,29 +81,41 @@ public sealed partial class SignalBoxCanvasControl
         e.AcceptedOperation = DataPackageOperation.Copy | DataPackageOperation.Move;
     }
 
-    private async void OnCanvasDrop(object sender, DragEventArgs e)
+    private void OnCanvasDrop(object sender, DragEventArgs e)
     {
-        if (!e.DataView.Contains(StandardDataFormats.Text) || PlanViewModel == null)
-            return;
+        HandleCanvasDropAsync(sender, e).Observe(ex => _logger?.LogWarning(ex, "Signal box canvas drop handling failed"));
+    }
 
-        if (sender is not UIElement canvas)
-            return;
-
-        var text = await e.DataView.GetTextAsync();
-        if (string.IsNullOrEmpty(text))
-            return;
-
-        var (gridX, gridY) = GetGridPosition(e.GetPosition(canvas));
-
-        var existingElement = PlanViewModel.HitTest(gridX, gridY);
-
-        if (text.StartsWith("NEW:"))
+    private async Task HandleCanvasDropAsync(object sender, DragEventArgs e)
+    {
+        try
         {
-            TryHandleNewElementDrop(text[4..], gridX, gridY, existingElement);
+            if (!e.DataView.Contains(StandardDataFormats.Text) || PlanViewModel == null)
+                return;
+
+            if (sender is not UIElement canvas)
+                return;
+
+            var text = await e.DataView.GetTextAsync();
+            if (string.IsNullOrEmpty(text))
+                return;
+
+            var (gridX, gridY) = GetGridPosition(e.GetPosition(canvas));
+
+            var existingElement = PlanViewModel.HitTest(gridX, gridY);
+
+            if (text.StartsWith("NEW:"))
+            {
+                TryHandleNewElementDrop(text[4..], gridX, gridY, existingElement);
+            }
+            else if (text.StartsWith("MOVE:") && Guid.TryParse(text[5..], out var elementId))
+            {
+                TryHandleMoveDrop(elementId, gridX, gridY, existingElement);
+            }
         }
-        else if (text.StartsWith("MOVE:") && Guid.TryParse(text[5..], out var elementId))
+        catch (Exception ex)
         {
-            TryHandleMoveDrop(elementId, gridX, gridY, existingElement);
+            _logger?.LogWarning(ex, "Signal box canvas drop handling failed");
         }
     }
 

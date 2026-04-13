@@ -2,8 +2,11 @@
 namespace Moba.MAUI.Service;
 
 using Common.Configuration;
+
 using Microsoft.Extensions.Logging;
+
 using SharedUI.Interface;
+
 using System.Text.Json;
 
 /// <summary>
@@ -65,12 +68,22 @@ public class SettingsService : ISettingsService
                 if (loadedSettings != null)
                 {
                     var loadedRestApi = loadedSettings.RestApi;
+                    var loadedFeedbackPointCount = Math.Max(loadedSettings.Counter.CountOfFeedbackPoints, 1);
 
                     // Auto-migrate legacy default port 5000 to 5001 to avoid conflicts
                     if (loadedRestApi.Port == 5000 || loadedRestApi.Port == 0)
                     {
                         _logger.LogWarning("REST API port {LegacyPort} detected (legacy default) - migrating to {NewPort}", loadedRestApi.Port, 5001);
                         loadedRestApi.Port = 5001;
+                    }
+
+                    if (loadedSettings.Counter.CountOfFeedbackPoints != loadedFeedbackPointCount)
+                    {
+                        _logger.LogWarning(
+                            "Feedback point count {LoadedCount} detected - migrating to {NormalizedCount}",
+                            loadedSettings.Counter.CountOfFeedbackPoints,
+                            loadedFeedbackPointCount);
+                        loadedSettings.Counter.CountOfFeedbackPoints = loadedFeedbackPointCount;
                     }
 
                     _logger.LogInformation("Deserializing settings: Tracks {Tracks}; Target {Target}; Timer {Timer}s; Z21 IP {Z21Ip}; REST IP {RestIp}; REST Port {RestPort}",
@@ -88,7 +101,7 @@ public class SettingsService : ISettingsService
                     _settings.Application.UseSystemTheme = loadedSettings.Application.UseSystemTheme;
                     _settings.Z21.CurrentIpAddress = loadedSettings.Z21.CurrentIpAddress;
                     _settings.Z21.DefaultPort = loadedSettings.Z21.DefaultPort;
-                    _settings.Counter.CountOfFeedbackPoints = loadedSettings.Counter.CountOfFeedbackPoints;
+                    _settings.Counter.CountOfFeedbackPoints = loadedFeedbackPointCount;
                     _settings.Counter.TargetLapCount = loadedSettings.Counter.TargetLapCount;
                     _settings.Counter.UseTimerFilter = loadedSettings.Counter.UseTimerFilter;
                     _settings.Counter.TimerIntervalSeconds = loadedSettings.Counter.TimerIntervalSeconds;
@@ -202,7 +215,7 @@ public class SettingsService : ISettingsService
             if (_settings.Application.LastSolutionPath != newValue)
             {
                 _settings.Application.LastSolutionPath = newValue;
-                _ = SaveSettingsAsync(_settings);
+                QueueSaveSettings();
             }
         }
     }
@@ -218,7 +231,7 @@ public class SettingsService : ISettingsService
             if (_settings.Application.AutoLoadLastSolution != value)
             {
                 _settings.Application.AutoLoadLastSolution = value;
-                _ = SaveSettingsAsync(_settings);
+                QueueSaveSettings();
             }
         }
     }
@@ -234,7 +247,7 @@ public class SettingsService : ISettingsService
             if (_settings.Application.IsDarkMode != value)
             {
                 _settings.Application.IsDarkMode = value;
-                _ = SaveSettingsAsync(_settings);
+                QueueSaveSettings();
             }
         }
     }
@@ -250,9 +263,24 @@ public class SettingsService : ISettingsService
             if (_settings.Application.UseSystemTheme != value)
             {
                 _settings.Application.UseSystemTheme = value;
-                _ = SaveSettingsAsync(_settings);
+                QueueSaveSettings();
             }
         }
     }
     #endregion
+
+    private void QueueSaveSettings()
+    {
+        SaveSettingsAsync(_settings).ContinueWith(
+            t =>
+            {
+                if (t.Exception != null)
+                {
+                    _logger.LogWarning(t.Exception, "Background settings save failed");
+                }
+            },
+            CancellationToken.None,
+            TaskContinuationOptions.OnlyOnFaulted,
+            TaskScheduler.Default);
+    }
 }

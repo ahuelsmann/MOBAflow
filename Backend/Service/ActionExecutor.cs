@@ -4,21 +4,19 @@ namespace Moba.Backend.Service;
 using Domain;
 using Domain.Enum;
 using Interface;
-using System.Diagnostics;
+using Microsoft.Extensions.Logging;
 
 /// <summary>
-/// Action Executor Service.
-/// Executes WorkflowActions based on their type and parameters.
-/// This implements Clean Architecture by separating domain models (WorkflowAction) from execution logic.
+/// Executes <see cref="WorkflowAction"/> instances (command, audio, announcement) using shared runtime dependencies.
 /// </summary>
-public class ActionExecutor(AnnouncementService? announcementService = null) : IActionExecutor
+public class ActionExecutor(AnnouncementService? announcementService = null, ILogger<ActionExecutor>? logger = null) : IActionExecutor
 {
     /// <summary>
     /// Executes a WorkflowAction based on its type.
     /// </summary>
     public async Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context)
     {
-        Debug.WriteLine($"  ▶ Executing action #{action.Number}: {action.Name} (Type: {action.Type})");
+        logger?.LogDebug("Executing action #{Number}: {Name} (Type: {Type})", action.Number, action.Name, action.Type);
 
         switch (action.Type)
         {
@@ -40,75 +38,49 @@ public class ActionExecutor(AnnouncementService? announcementService = null) : I
     }
 
     /// <summary>
-    /// Executes a Z21 command action.
-    /// Parameters: Bytes (byte[]) - Raw Z21 command bytes
+    /// Executes a Z21 command action using <see cref="WorkflowAction.Command"/> (<c>bytesBase64</c>).
     /// </summary>
     private async Task ExecuteCommandAsync(WorkflowAction action, ActionExecutionContext context)
     {
-        if (action.Parameters == null)
-            throw new ArgumentException("Command action requires Parameters");
+        if (action.Command == null)
+            throw new ArgumentException("Command action requires a command payload");
 
-        // Get bytes from parameters (stored as base64 string or byte array)
-        byte[]? bytes = null;
-
-        if (action.Parameters.TryGetValue("Bytes", out var bytesObj))
+        if (!WorkflowActionParameterBinding.TryGetCommandBytes(action, out var bytes))
         {
-            Debug.WriteLine($"    📦 Bytes parameter type: {bytesObj.GetType().FullName}");
-            Debug.WriteLine($"    📦 Bytes parameter value: {bytesObj}");
-
-            if (bytesObj is byte[] byteArray)
-            {
-                bytes = byteArray;
-            }
-            else if (bytesObj is string base64String)
-            {
-                bytes = Convert.FromBase64String(base64String);
-            }
-            else
-            {
-                // Handle JToken or other types - convert to string first
-                var str = bytesObj.ToString();
-                if (!string.IsNullOrEmpty(str))
-                {
-                    bytes = Convert.FromBase64String(str);
-                }
-            }
+            logger?.LogWarning("Command action skipped: no valid bytes provided");
+            return;
         }
 
-        if (bytes != null && bytes.Length > 0)
-        {
-            Debug.WriteLine($"    📤 Sending {bytes.Length} bytes: {BitConverter.ToString(bytes)}");
-            await context.Z21.SendCommandAsync(bytes).ConfigureAwait(false);
-            Debug.WriteLine($"    ✓ Command sent: {bytes.Length} bytes");
-        }
-        else
-        {
-            Debug.WriteLine("    ⚠ Command skipped: No valid bytes");
-        }
+        logger?.LogDebug("Sending command bytes: {ByteCount}", bytes.Length);
+        await context.Z21.SendCommandAsync(bytes).ConfigureAwait(false);
+        logger?.LogDebug("Command sent: {ByteCount} bytes", bytes.Length);
     }
 
     /// <summary>
-    /// Executes an audio playback action.
-    /// Parameters: FilePath (string)
+    /// Executes an audio playback action using <see cref="WorkflowAction.Audio"/> (<c>filePath</c>).
     /// </summary>
     private async Task ExecuteAudioAsync(WorkflowAction action, ActionExecutionContext context)
     {
-        if (action.Parameters == null || context.SoundPlayer == null)
-            throw new ArgumentException("Audio action requires Parameters and SoundPlayer");
+        if (context.SoundPlayer == null)
+            throw new ArgumentException("Audio action requires SoundPlayer");
 
-        var filePath = action.Parameters["FilePath"].ToString()!;
+        if (action.Audio == null)
+            throw new ArgumentException("Audio action requires an audio payload");
+
+        if (!WorkflowActionParameterBinding.TryGetAudioFilePath(action, out var filePath))
+            throw new ArgumentException("Audio action requires a valid FilePath parameter");
 
         // Validate file exists before attempting playback
         if (!File.Exists(filePath))
         {
             var error = $"Audio file not found: {filePath}";
-            Debug.WriteLine($"    ❌ {error}");
+            logger?.LogWarning("Audio action failed: {Error}", error);
             throw new FileNotFoundException(error, filePath);
         }
 
         await context.SoundPlayer.PlayAsync(filePath).ConfigureAwait(false);
 
-        Debug.WriteLine($"    ✓ Audio played: {filePath}");
+        logger?.LogDebug("Audio played: {FilePath}", filePath);
     }
 
     /// <summary>
@@ -126,37 +98,41 @@ public class ActionExecutor(AnnouncementService? announcementService = null) : I
         // Verify prerequisites
         if (string.IsNullOrEmpty(context.JourneyTemplateText))
         {
-            Debug.WriteLine($"    ⚠ Announcement '{action.Name}' skipped: No Journey template text");
+            logger?.LogWarning("Announcement '{ActionName}' skipped: missing journey template text", action.Name);
             return;
         }
 
         if (context.CurrentStation == null)
         {
-            Debug.WriteLine($"    ⚠ Announcement '{action.Name}' skipped: No current station");
+            logger?.LogWarning("Announcement '{ActionName}' skipped: no current station", action.Name);
             return;
         }
 
         if (announcementService == null)
         {
-            Debug.WriteLine($"    ⚠ Announcement '{action.Name}' skipped: AnnouncementService not configured");
+            logger?.LogWarning("Announcement '{ActionName}' skipped: AnnouncementService not configured", action.Name);
             return;
         }
 
+        var stationIndex = context.CurrentStationIndex.GetValueOrDefault(1);
+
         // Generate announcement text from template
         var announcementText = announcementService.GenerateAnnouncementText(
-            new Journey { Text = context.JourneyTemplateText },
+            context.JourneyTemplateText,
             context.CurrentStation,
-            stationIndex: 1  // Will be calculated from context if needed
+            stationIndex,
+            action.Name
         );
 
         // Speak the announcement
         await announcementService.GenerateAndSpeakAnnouncementAsync(
-            new Journey { Text = context.JourneyTemplateText },
+            context.JourneyTemplateText,
             context.CurrentStation,
-            stationIndex: 1,
-            CancellationToken.None
+            stationIndex,
+            CancellationToken.None,
+            action.Name
         ).ConfigureAwait(false);
 
-        Debug.WriteLine($"    ✓ Announcement: \"{announcementText}\"");
+        logger?.LogInformation("Announcement executed for action '{ActionName}': {AnnouncementText}", action.Name, announcementText);
     }
 }

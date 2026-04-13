@@ -19,7 +19,7 @@ public static class MobaServiceCollectionExtensions
 {
     /// <summary>
     /// Registers all shared backend services (Z21, ActionExecutor, WorkflowService, etc).
-    /// Use in WinUI/App.xaml.cs, MAUI/MauiProgram.cs, and WebApp/Program.cs
+    /// Use in WinUI/App.xaml.cs and MAUI/MauiProgram.cs (and any future ASP.NET host that references Backend).
     /// 
     /// Includes:
     /// - Network: IUdpClientWrapper, Z21Monitor, IZ21
@@ -81,7 +81,7 @@ public static class MobaServiceCollectionExtensions
 
         // Domain
         services.AddSingleton<Solution>();
-        services.AddSingleton<DataManager>();
+        services.AddSingleton<MasterDataStore>();
 
         // ✅ Validation Services
         services.AddSingleton<IProjectValidator, ProjectValidator>();
@@ -91,7 +91,7 @@ public static class MobaServiceCollectionExtensions
 
     /// <summary>
     /// Initializes the TrainClassLibrary from the master data file (data.json).
-    /// Call after DataManager has been loaded, e.g. from PostStartupInitializationService.
+    /// Call after <see cref="MasterDataStore"/> has been loaded, e.g. from PostStartupInitializationService.
     /// </summary>
     /// <param name="jsonPath">Path to data.json (or legacy locomotives-only JSON)</param>
     public static void InitializeTrainClassLibrary(string jsonPath)

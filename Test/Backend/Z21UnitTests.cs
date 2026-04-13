@@ -2,6 +2,8 @@
 
 namespace Moba.Test.Backend;
 
+using Microsoft.Extensions.Logging.Abstractions;
+
 using Moba.Common.Events;
 using Mocks;
 using System.Net;
@@ -13,7 +15,7 @@ internal class Z21UnitTests
     public async Task SimulateFeedback_RaisesReceivedEvent()
     {
         var fakeUdp = new FakeUdpClientWrapper();
-        var eventBus = new EventBus();
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         using var z21 = new Z21(fakeUdp, eventBus);
 
         FeedbackResult? captured = null;
@@ -37,7 +39,7 @@ internal class Z21UnitTests
     public async Task ConnectAsync_StartsKeepaliveTimer()
     {
         var fakeUdp = new FakeUdpClientWrapper();
-        var eventBus = new EventBus();
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         using var z21 = new Z21(fakeUdp, eventBus);
 
         var address = IPAddress.Parse("192.168.0.111");
@@ -62,7 +64,7 @@ internal class Z21UnitTests
     public async Task DisconnectAsync_StopsKeepaliveTimer()
     {
         var fakeUdp = new FakeUdpClientWrapper();
-        var eventBus = new EventBus();
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         using var z21 = new Z21(fakeUdp, eventBus);
 
         var address = IPAddress.Parse("192.168.0.111");
@@ -87,7 +89,7 @@ internal class Z21UnitTests
     public async Task KeepaliveTimer_SendsPeriodicStatusRequests()
     {
         var fakeUdp = new FakeUdpClientWrapper();
-        var eventBus = new EventBus();
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         using var z21 = new Z21(fakeUdp, eventBus);
 
         var address = IPAddress.Parse("192.168.0.111");
@@ -111,7 +113,7 @@ internal class Z21UnitTests
     public async Task Dispose_StopsKeepaliveTimer()
     {
         var fakeUdp = new FakeUdpClientWrapper();
-        var eventBus = new EventBus();
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var z21 = new Z21(fakeUdp, eventBus);
 
         var address = IPAddress.Parse("192.168.0.111");

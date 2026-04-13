@@ -5,7 +5,7 @@ using Domain;
 
 /// <summary>
 /// Service interface for loading city master data from JSON.
-/// Cities are read-only reference data (from data.json via DataManager).
+/// Cities are read-only reference data (from data.json via the host's master data store).
 /// </summary>
 public interface ICityService
 {

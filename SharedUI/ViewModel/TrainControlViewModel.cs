@@ -7,6 +7,8 @@ using Common.Runtime;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using Backend.Interface;
+
 using Domain;
 
 using Interface;
@@ -32,7 +34,7 @@ using System.ComponentModel;
 /// </summary>
 public sealed partial class TrainControlViewModel : ObservableObject
 {
-    private readonly IMobaClient _mobaClient;
+    private readonly IMobaRuntime _mobaRuntime;
     private readonly ISettingsService _settingsService;
     private readonly ILogger<TrainControlViewModel>? _logger;
     private readonly IUiDispatcher? _uiDispatcher;
@@ -57,12 +59,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
     /// Maximum speed step value based on SpeedSteps configuration.
     /// Returns: 13 for 14 steps, 27 for 28 steps, 126 for 128 steps.
     /// </summary>
-    public int MaxSpeedStep => SpeedSteps switch
-    {
-        DccSpeedSteps.Steps14 => 13,
-        DccSpeedSteps.Steps28 => 27,
-        _ => 126
-    };
+    public int MaxSpeedStep => TrainControlDccSpeed.GetMaxSpeedStep(SpeedSteps);
 
     /// <summary>
     /// DCC locomotive address (1-9999).
@@ -126,7 +123,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
 
         if (!_isLoadingPreset)
         {
-            _ = SavePresetsToSettingsAsync();
+            QueueBackgroundTask(SavePresetsToSettingsAsync(), "Save train control presets");
         }
     }
 
@@ -179,7 +176,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
                 {
                     LocoAddress = value;
                 }
-                _ = SavePresetsToSettingsAsync();
+                QueueBackgroundTask(SavePresetsToSettingsAsync(), "Save train control presets");
             }
         }
     }
@@ -200,7 +197,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
                 {
                     LocoAddress = value;
                 }
-                _ = SavePresetsToSettingsAsync();
+                QueueBackgroundTask(SavePresetsToSettingsAsync(), "Save train control presets");
             }
         }
     }
@@ -221,7 +218,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
                 {
                     LocoAddress = value;
                 }
-                _ = SavePresetsToSettingsAsync();
+                QueueBackgroundTask(SavePresetsToSettingsAsync(), "Save train control presets");
             }
         }
     }
@@ -249,7 +246,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
     partial void OnSelectedLocoSeriesChanged(string value)
     {
         _ = value;
-        _ = SaveLocoSeriesSettingsAsync();
+        QueueBackgroundTask(SaveLocoSeriesSettingsAsync(), "Save locomotive series settings");
     }
 
     /// <summary>
@@ -263,7 +260,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
     partial void OnSelectedVmaxChanged(int value)
     {
         _ = value;
-        _ = SaveLocoSeriesSettingsAsync();
+        QueueBackgroundTask(SaveLocoSeriesSettingsAsync(), "Save locomotive series settings");
     }
 
     /// <summary>
@@ -799,21 +796,21 @@ public sealed partial class TrainControlViewModel : ObservableObject
     /// <summary>
     /// Initializes a new instance of the <see cref="TrainControlViewModel"/> class that implements the digital throttle UI.
     /// </summary>
-    /// <param name="mobaClient">UI-facing client used to talk to the active MOBA runtime.</param>
+    /// <param name="mobaRuntime">In-process MOBA runtime (Z21, locomotive commands, snapshots).</param>
     /// <param name="settingsService">Service used to persist train control presets and options.</param>
     /// <param name="mainWindowViewModel">Optional main window ViewModel used to access the current project and journey.</param>
     /// <param name="logger">Optional logger for diagnostics.</param>
     /// <param name="uiDispatcher">Optional UI dispatcher for updating UI-bound properties.</param>
     public TrainControlViewModel(
-        IMobaClient mobaClient,
+        IMobaRuntime mobaRuntime,
         ISettingsService settingsService,
         MainWindowViewModel? mainWindowViewModel = null,
         ILogger<TrainControlViewModel>? logger = null,
         IUiDispatcher? uiDispatcher = null)
     {
-        ArgumentNullException.ThrowIfNull(mobaClient);
+        ArgumentNullException.ThrowIfNull(mobaRuntime);
         ArgumentNullException.ThrowIfNull(settingsService);
-        _mobaClient = mobaClient;
+        _mobaRuntime = mobaRuntime;
         _settingsService = settingsService;
         _mainWindowViewModel = mainWindowViewModel;
         _logger = logger;
@@ -822,8 +819,8 @@ public sealed partial class TrainControlViewModel : ObservableObject
         // Load presets from settings
         LoadPresetsFromSettings();
 
-        _mobaClient.SnapshotChanged += OnRuntimeSnapshotChanged;
-        ApplyRuntimeSnapshot(_mobaClient.Current);
+        _mobaRuntime.SnapshotChanged += OnRuntimeSnapshotChanged;
+        ApplyRuntimeSnapshot(_mobaRuntime.Current);
 
         // Subscribe to MainWindowViewModel.SelectedJourney changes
         if (_mainWindowViewModel != null)
@@ -1092,7 +1089,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
             loco.FunctionSymbols.Add(string.Empty);
         loco.FunctionSymbols[functionIndex] = glyph;
         NotifyAllFunctionGlyphsChanged();
-        _ = _mainWindowViewModel?.SaveSolutionInternalAsync();
+        QueueBackgroundTask(_mainWindowViewModel?.SaveSolutionInternalAsync(), "Auto-save solution");
         return true;
     }
 
@@ -1126,7 +1123,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
         }
 
         // Save to persistent storage (fire and forget)
-        _ = SavePresetsToSettingsAsync();
+        QueueBackgroundTask(SavePresetsToSettingsAsync(), "Save train control presets");
     }
 
     /// <summary>
@@ -1237,12 +1234,12 @@ public sealed partial class TrainControlViewModel : ObservableObject
         if (!_isLoadingPreset)
         {
             CurrentPreset.DccAddress = value;
-            _ = SavePresetsToSettingsAsync();
+            QueueBackgroundTask(SavePresetsToSettingsAsync(), "Save train control presets");
         }
 
         if (value >= 1 && value <= 9999 && IsConnected)
         {
-            _ = RequestLocoInfoAsync();
+            QueueBackgroundTask(RequestLocoInfoAsync(), "Request locomotive info");
         }
 
         NotifyAllFunctionGlyphsChanged();
@@ -1252,7 +1249,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
     {
         try
         {
-            await _mobaClient.RequestLocomotiveInfoAsync(LocoAddress);
+            await _mobaRuntime.RequestLocomotiveInfoAsync(LocoAddress);
             StatusMessage = $"Requesting loco {LocoAddress}...";
         }
         catch (Exception ex)
@@ -1282,11 +1279,11 @@ public sealed partial class TrainControlViewModel : ObservableObject
 
         // Save to current preset
         CurrentPreset.Speed = value;
-        _ = SavePresetsToSettingsAsync();
+        QueueBackgroundTask(SavePresetsToSettingsAsync(), "Save train control presets");
 
         if (CanExecuteLocoCommand() && LocoAddress >= 1)
         {
-            _ = SendDriveCommandAsync();
+            QueueBackgroundTask(SendDriveCommandAsync(), "Send drive command");
         }
     }
 
@@ -1300,11 +1297,11 @@ public sealed partial class TrainControlViewModel : ObservableObject
 
         // Save to current preset
         CurrentPreset.IsForward = value;
-        _ = SavePresetsToSettingsAsync();
+        QueueBackgroundTask(SavePresetsToSettingsAsync(), "Save train control presets");
 
         if (IsConnected && LocoAddress >= 1)
         {
-            _ = HandleDirectionChangeAsync(value);
+            QueueBackgroundTask(HandleDirectionChangeAsync(value), "Handle direction change");
         }
     }
 
@@ -1342,7 +1339,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
             if (token.IsCancellationRequested) return;
 
             // Now at speed 0, send the new direction
-            await _mobaClient.SetLocomotiveDriveAsync(LocoAddress, 0, newDirection);
+            await _mobaRuntime.SetLocomotiveDriveAsync(LocoAddress, 0, newDirection);
 
             if (token.IsCancellationRequested) return;
 
@@ -1395,7 +1392,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
             _skipSpeedChangeHandler = false;
 
             // Send command to Z21
-            await _mobaClient.SetLocomotiveDriveAsync(LocoAddress, currentSpeed, direction);
+            await _mobaRuntime.SetLocomotiveDriveAsync(LocoAddress, currentSpeed, direction);
 
             // Wait before next step
             if (currentSpeed != toSpeed)
@@ -1440,7 +1437,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
     {
         try
         {
-            await _mobaClient.SetLocomotiveDriveAsync(LocoAddress, Speed, IsForward);
+            await _mobaRuntime.SetLocomotiveDriveAsync(LocoAddress, Speed, IsForward);
             StatusMessage = $"Loco {LocoAddress}: {Speed} {(IsForward ? "FWD" : "REV")}";
             _logger?.LogDebug("Drive command sent: Loco {Address}, Speed {Speed}, Forward {Forward}",
                 LocoAddress, Speed, IsForward);
@@ -1536,10 +1533,10 @@ public sealed partial class TrainControlViewModel : ObservableObject
             if (!_isLoadingPreset)
             {
                 CurrentPreset.SetFunction(functionNumber, newState);
-                _ = SavePresetsToSettingsAsync();
+                QueueBackgroundTask(SavePresetsToSettingsAsync(), "Save train control presets");
             }
 
-            await _mobaClient.SetLocomotiveFunctionAsync(LocoAddress, functionNumber, newState);
+            await _mobaRuntime.SetLocomotiveFunctionAsync(LocoAddress, functionNumber, newState);
             StatusMessage = $"F{functionNumber}: {(newState ? "ON" : "OFF")}";
             _logger?.LogDebug("F{Function} toggled: {State}", functionNumber, newState);
         }
@@ -1716,7 +1713,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
         try
         {
             Speed = 0;
-            await _mobaClient.SetLocomotiveDriveAsync(LocoAddress, 0, IsForward);
+            await _mobaRuntime.SetLocomotiveDriveAsync(LocoAddress, 0, IsForward);
             StatusMessage = $"[STOP] Emergency stop - Loco {LocoAddress}";
             _logger?.LogWarning("Emergency stop executed for loco {Address}", LocoAddress);
         }
@@ -1745,7 +1742,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
         try
         {
             Speed = 0;
-            await _mobaClient.SetLocomotiveDriveAsync(LocoAddress, 0, IsForward);
+            await _mobaRuntime.SetLocomotiveDriveAsync(LocoAddress, 0, IsForward);
             StatusMessage = $"Loco {LocoAddress} stopped";
         }
         catch (Exception ex)
@@ -1850,6 +1847,26 @@ public sealed partial class TrainControlViewModel : ObservableObject
             "SystemState updated: MainCurrent={MainCurrent}mA (Filtered={FilteredCurrent}mA, Peak={PeakCurrent}mA), " +
             "ProgCurrent={ProgCurrent}mA, SupplyVoltage={SupplyVoltage}mV, Temperature={Temperature}°C",
             MainTrackCurrent, FilteredMainCurrent, PeakMainCurrent, ProgTrackCurrent, SupplyVoltage, Temperature);
+    }
+
+    private void QueueBackgroundTask(Task? task, string operationName)
+    {
+        if (task == null)
+        {
+            return;
+        }
+
+        task.ContinueWith(
+            t =>
+            {
+                if (t.Exception != null)
+                {
+                    _logger?.LogWarning(t.Exception, "{OperationName} failed", operationName);
+                }
+            },
+            CancellationToken.None,
+            TaskContinuationOptions.OnlyOnFaulted,
+            TaskScheduler.Default);
     }
 }
 

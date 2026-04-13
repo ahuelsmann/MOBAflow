@@ -40,4 +40,10 @@ public class ActionExecutionContext
     /// Set by JourneyManager when workflow is triggered during a journey.
     /// </summary>
     public string? JourneyTemplateText { get; set; }
+
+    /// <summary>
+    /// Current station index within the active journey (1-based).
+    /// Optional and used for announcement placeholder rendering.
+    /// </summary>
+    public int? CurrentStationIndex { get; set; }
 }

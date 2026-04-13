@@ -7,7 +7,7 @@ using Domain.Enum;
 
 /// <summary>
 /// Base class for Action ViewModels that wrap WorkflowAction.
-/// Provides common functionality for parameter management.
+/// Provides common fields shared by concrete workflow action editors.
 /// </summary>
 public abstract class WorkflowActionViewModel : ObservableObject
 {
@@ -26,7 +26,6 @@ public abstract class WorkflowActionViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(action);
         _action = action;
         _action.Type = type;
-        _action.Parameters ??= [];
     }
 
     /// <summary>
@@ -76,49 +75,7 @@ public abstract class WorkflowActionViewModel : ObservableObject
     public WorkflowAction ToWorkflowAction() => _action;
 
     /// <summary>
-    /// Gets a typed parameter value from the underlying workflow action.
+    /// Gets the wrapped domain action for derived editors (payloads).
     /// </summary>
-    /// <typeparam name="T">The expected parameter type.</typeparam>
-    /// <param name="key">The parameter key.</param>
-    /// <returns>The parameter value converted to <typeparamref name="T"/>, or the default value of <typeparamref name="T"/> when not present.</returns>
-    protected T? GetParameter<T>(string key)
-    {
-        if (_action.Parameters?.TryGetValue(key, out var value) == true)
-        {
-            if (value is T typedValue)
-                return typedValue;
-            
-            // Handle type conversions (e.g., long → int, string → enum)
-            try
-            {
-                return (T)Convert.ChangeType(value, typeof(T));
-            }
-            catch
-            {
-                return default;
-            }
-        }
-        return default;
-    }
-
-    /// <summary>
-    /// Sets a typed parameter value on the underlying workflow action.
-    /// </summary>
-    /// <typeparam name="T">The parameter type.</typeparam>
-    /// <param name="key">The parameter key.</param>
-    /// <param name="value">The value to store; <c>null</c> removes the parameter.</param>
-    protected void SetParameter<T>(string key, T value)
-    {
-        _action.Parameters ??= [];
-        
-        if (EqualityComparer<T>.Default.Equals(value, GetParameter<T>(key)))
-            return;
-        
-        if (value != null)
-            _action.Parameters[key] = value;
-        else
-            _action.Parameters.Remove(key);
-        
-        OnPropertyChanged(key);
-    }
+    protected WorkflowAction UnderlyingAction => _action;
 }

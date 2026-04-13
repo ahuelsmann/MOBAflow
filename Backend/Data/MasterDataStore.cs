@@ -7,10 +7,10 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 
 /// <summary>
-/// Central master data class for cities/stations and locomotive library.
+/// Central master data store for cities/stations and locomotive library.
 /// Loads and saves from a shared JSON file (e.g. data.json), analogous to the Solution class.
 /// </summary>
-public class DataManager
+public class MasterDataStore
 {
     /// <summary>
     /// Current schema version for the master data JSON format.
@@ -19,10 +19,10 @@ public class DataManager
     public const int CurrentSchemaVersion = 1;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="DataManager"/> class
+    /// Initializes a new instance of the <see cref="MasterDataStore"/> class
     /// with empty collections and the current schema version.
     /// </summary>
-    public DataManager()
+    public MasterDataStore()
     {
         Cities = [];
         Locomotives = [];
@@ -51,10 +51,10 @@ public class DataManager
     public List<MultiplexSignalEntry> MultiplexSignals { get; set; } = [];
 
     /// <summary>
-    /// Updates this instance from another DataManager instance.
+    /// Updates this instance from another <see cref="MasterDataStore"/> instance.
     /// Keeps the same object reference and replaces the data.
     /// </summary>
-    public void UpdateFrom(DataManager other)
+    public void UpdateFrom(MasterDataStore other)
     {
         ArgumentNullException.ThrowIfNull(other);
         SchemaVersion = other.SchemaVersion;
@@ -96,7 +96,7 @@ public class DataManager
             MultiplexSignals.Clear();
             return;
         }
-        var loaded = JsonSerializer.Deserialize<DataManager>(json, JsonOptions.Default)
+        var loaded = JsonSerializer.Deserialize<MasterDataStore>(json, JsonOptions.Default)
             ?? throw new InvalidOperationException("Failed to deserialize master data file");
         UpdateFrom(loaded);
     }
@@ -119,7 +119,7 @@ public class DataManager
     /// </summary>
     /// <param name="path">Full path including file name.</param>
     /// <returns>Loaded instance or null on error.</returns>
-    public static async Task<DataManager?> LoadFromFileAsync(string path)
+    public static async Task<MasterDataStore?> LoadFromFileAsync(string path)
     {
         if (!string.IsNullOrEmpty(path) && File.Exists(path))
         {
@@ -128,7 +128,7 @@ public class DataManager
             {
                 try
                 {
-                    var temp = JsonSerializer.Deserialize<DataManager>(json, JsonOptions.Default);
+                    var temp = JsonSerializer.Deserialize<MasterDataStore>(json, JsonOptions.Default);
                     return temp;
                 }
                 catch (JsonException)

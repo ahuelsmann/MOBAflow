@@ -1,1 +1,8 @@
-{}
+{
+  "profiles": {
+    "MOBAsmart": {
+      "commandName": "Project",
+      "hotReloadEnabled": false
+    }
+  }
+}

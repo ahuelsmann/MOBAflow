@@ -12,6 +12,12 @@ using System.Diagnostics;
 /// </summary>
 public partial class MainWindowViewModel
 {
+    private const string LocomotivesPageTag = "locomotives";
+    private const string PassengerWagonsPageTag = "passengerwagons";
+    private const string GoodsWagonsPageTag = "goodswagons";
+
+    private string? _activePhotoAssignmentPageTag;
+
     #region Locomotive/Wagon Selection Properties
     [ObservableProperty]
     private LocomotiveViewModel? _selectedLocomotive;
@@ -168,6 +174,52 @@ public partial class MainWindowViewModel
                 _logger.LogError(ex, "Failed to open Explorer for: {Path}", fullPath);
             }
         });
+    }
+
+    /// <summary>
+    /// Updates the active page tag used to resolve uploaded photo assignment target.
+    /// </summary>
+    public void UpdateActivePhotoAssignmentPageTag(string? pageTag)
+    {
+        _activePhotoAssignmentPageTag = pageTag;
+    }
+
+    /// <summary>
+    /// Assigns an uploaded photo to the currently selected entity.
+    /// Assignment is page-aware and only uses the selection of the active vehicle page.
+    /// </summary>
+    public PhotoAssignmentTarget AssignUploadedPhotoToSelectedEntity(string photoPath)
+    {
+        if (string.IsNullOrWhiteSpace(photoPath))
+        {
+            return PhotoAssignmentTarget.None;
+        }
+
+        return _activePhotoAssignmentPageTag switch
+        {
+            LocomotivesPageTag when SelectedLocomotive != null => AssignPhotoToSelectedLocomotive(photoPath),
+            PassengerWagonsPageTag when SelectedPassengerWagon != null => AssignPhotoToSelectedPassengerWagon(photoPath),
+            GoodsWagonsPageTag when SelectedGoodsWagon != null => AssignPhotoToSelectedGoodsWagon(photoPath),
+            _ => PhotoAssignmentTarget.None,
+        };
+    }
+
+    private PhotoAssignmentTarget AssignPhotoToSelectedLocomotive(string photoPath)
+    {
+        SelectedLocomotive!.PhotoPath = photoPath;
+        return PhotoAssignmentTarget.Locomotive;
+    }
+
+    private PhotoAssignmentTarget AssignPhotoToSelectedPassengerWagon(string photoPath)
+    {
+        SelectedPassengerWagon!.PhotoPath = photoPath;
+        return PhotoAssignmentTarget.PassengerWagon;
+    }
+
+    private PhotoAssignmentTarget AssignPhotoToSelectedGoodsWagon(string photoPath)
+    {
+        SelectedGoodsWagon!.PhotoPath = photoPath;
+        return PhotoAssignmentTarget.GoodsWagon;
     }
     #endregion
 

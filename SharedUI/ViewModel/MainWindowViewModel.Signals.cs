@@ -20,7 +20,7 @@ public partial class MainWindowViewModel
     public async Task SetSignalAspectAsync(SbSignal signal, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(signal);
-        await _mobaClient.SetSignalAspectAsync(signal, cancellationToken).ConfigureAwait(false);
+        await _mobaRuntime.SetSignalAspectAsync(signal, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>

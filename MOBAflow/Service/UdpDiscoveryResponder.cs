@@ -3,6 +3,7 @@
 namespace Moba.WinUI.Service;
 
 using Microsoft.Extensions.Logging;
+using Moba.Common.Extension;
 
 using System.Net;
 using System.Net.Sockets;
@@ -46,6 +47,7 @@ public sealed partial class UdpDiscoveryResponder : IDisposable
 
         _cts = new CancellationTokenSource();
         _listenerTask = Task.Run(() => ListenAsync(_cts.Token));
+        _listenerTask.Observe(ex => _logger.LogWarning(ex, "UDP discovery listener failed"));
         _logger.LogInformation("🔍 UDP Discovery responder started on Multicast {MulticastAddress}:{Port}",
             MulticastAddress, DiscoveryPort);
     }
@@ -57,6 +59,7 @@ public sealed partial class UdpDiscoveryResponder : IDisposable
     {
         _cts?.Cancel();
         _udpListener?.Close();
+        _listenerTask = null;
         _logger.LogInformation("UDP Discovery responder stopped");
     }
 
@@ -226,4 +229,5 @@ public sealed partial class UdpDiscoveryResponder : IDisposable
         _cts?.Dispose();
         _udpListener?.Dispose();
     }
+
 }

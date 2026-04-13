@@ -8,544 +8,635 @@
     Title="MOBAsmart"
     x:DataType="local:MauiViewModel">
 
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <Style
+                x:Key="MainSectionCard"
+                TargetType="Border">
+                <Setter Property="Margin" Value="16,4" />
+                <Setter Property="Padding" Value="12" />
+                <Setter Property="BackgroundColor" Value="{DynamicResource Surface}" />
+                <Setter Property="Stroke" Value="{DynamicResource Border}" />
+                <Setter Property="StrokeThickness" Value="1" />
+                <Setter Property="StrokeShape" Value="RoundRectangle 12" />
+            </Style>
+
+            <Style x:Key="SectionTitleLabel" TargetType="Label">
+                <Setter Property="Style" Value="{StaticResource TitleSmall}" />
+                <Setter Property="Margin" Value="0,0,0,8" />
+            </Style>
+
+            <Style x:Key="StepperButtonStyle" TargetType="Button">
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceDark}" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="FontAttributes" Value="Bold" />
+                <Setter Property="FontSize" Value="22" />
+                <Setter Property="HeightRequest" Value="44" />
+                <Setter Property="TextColor" Value="{DynamicResource TextPrimary}" />
+                <Setter Property="WidthRequest" Value="44" />
+                <Setter Property="VisualStateManager.VisualStateGroups">
+                    <VisualStateGroupList>
+                        <VisualStateGroup x:Name="CommonStates">
+                            <VisualState x:Name="Normal" />
+                            <VisualState x:Name="Disabled">
+                                <VisualState.Setters>
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceVariant}" />
+                                    <Setter Property="TextColor" Value="{DynamicResource TextDisabled}" />
+                                    <Setter Property="Opacity" Value="0.85" />
+                                </VisualState.Setters>
+                            </VisualState>
+                        </VisualStateGroup>
+                    </VisualStateGroupList>
+                </Setter>
+            </Style>
+
+            <Style x:Key="StepperValueBorderStyle" TargetType="Border">
+                <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceDark}" />
+                <Setter Property="StrokeShape" Value="RoundRectangle 8" />
+                <Setter Property="StrokeThickness" Value="0" />
+                <Setter Property="HeightRequest" Value="44" />
+            </Style>
+
+            <Style x:Key="MetricTileStyle" TargetType="Border">
+                <Setter Property="Padding" Value="8,6" />
+                <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceDark}" />
+                <Setter Property="StrokeShape" Value="RoundRectangle 8" />
+                <Setter Property="StrokeThickness" Value="0" />
+            </Style>
+
+            <Style x:Key="SectionChipButtonStyle" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceDark}" />
+                <Setter Property="TextColor" Value="{DynamicResource TextPrimary}" />
+                <Setter Property="CornerRadius" Value="14" />
+                <Setter Property="Padding" Value="12,8" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="HeightRequest" Value="36" />
+            </Style>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
     <ScrollView>
         <VerticalStackLayout
             Padding="0"
             HorizontalOptions="Fill"
-            Spacing="1">
+            Spacing="8">
             <!--  Header with Status Indicators (Z21 + REST API) and Theme Switch  -->
-            <Grid Padding="16,6,16,12" ColumnDefinitions="Auto,Auto,Auto,*,Auto">
-                <!--  App Title  -->
-                <Label
-                    Grid.Column="0"
-                    FontAttributes="Bold"
-                    FontSize="22"
-                    Text="MOBAsmart"
-                    TextColor="{DynamicResource RailwayPrimary}"
-                    VerticalOptions="Center" />
-
-                <!--  App Logo (Train Icon)  -->
-                <Image
-                    Grid.Column="1"
-                    Margin="8,0,0,0"
-                    HeightRequest="28"
-                    Source="logo_train.png"
-                    VerticalOptions="Center"
-                    WidthRequest="28" />
-
-                <!--  Theme Switch  -->
-                <HorizontalStackLayout
-                    Grid.Column="2"
-                    Margin="8,0,0,0"
-                    Spacing="0"
-                    VerticalOptions="Center">
-                    <Label
-                        x:Name="ThemeIcon"
-                        FontSize="14"
-                        Text="🌙"
-                        VerticalOptions="Center" />
-                    <Switch
-                        x:Name="ThemeSwitch"
-                        OnColor="{DynamicResource RailwayPrimary}"
-                        Scale="0.75"
-                        ThumbColor="White"
-                        Toggled="ThemeSwitch_Toggled" />
-                </HorizontalStackLayout>
-
-                <!--  Spacer  -->
-                <BoxView Grid.Column="3" Color="Transparent" />
-
-                <!--  Z21 + MOBAflow status indicators (two dots: Z21 left, MOBAflow right)  -->
-                <HorizontalStackLayout
-                    Grid.Column="4"
-                    Spacing="6"
-                    VerticalOptions="Center">
-                    <!--  Z21 connection indicator  -->
-                    <HorizontalStackLayout Spacing="4" VerticalOptions="Center">
-                        <Border
-                            x:Name="ConnectionIndicator"
-                            BackgroundColor="{Binding IsConnected, Converter={toolkit:BoolToObjectConverter TrueObject={StaticResource RailwayAccent}, FalseObject={StaticResource RailwayDanger}}}"
-                            HeightRequest="12"
-                            StrokeShape="RoundRectangle 6"
-                            StrokeThickness="0"
-                            WidthRequest="12">
-                            <Border.Shadow>
-                                <Shadow
-                                    Brush="{Binding IsConnected, Converter={toolkit:BoolToObjectConverter TrueObject={StaticResource RailwayAccent}, FalseObject={StaticResource RailwayDanger}}}"
-                                    Opacity="0.6"
-                                    Radius="6" />
-                            </Border.Shadow>
-                        </Border>
+            <Border Style="{StaticResource MainSectionCard}">
+                <VerticalStackLayout Spacing="10">
+                    <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                        <!--  App Title  -->
                         <Label
-                            FontSize="10"
-                            Text="Z21"
-                            TextColor="{DynamicResource TextSecondary}"
-                            VerticalOptions="Center" />
-                    </HorizontalStackLayout>
-                    <!--  MOBAflow (REST API) indicator  -->
-                    <HorizontalStackLayout Spacing="4" VerticalOptions="Center">
-                        <Border
-                            x:Name="RestApiIndicator"
-                            BackgroundColor="{Binding IsRestApiReachable, Converter={toolkit:BoolToObjectConverter TrueObject={StaticResource RailwayAccent}, FalseObject={StaticResource RailwayDanger}}}"
-                            HeightRequest="12"
-                            StrokeShape="RoundRectangle 6"
-                            StrokeThickness="0"
-                            WidthRequest="12">
-                            <Border.Shadow>
-                                <Shadow
-                                    Brush="{Binding IsRestApiReachable, Converter={toolkit:BoolToObjectConverter TrueObject={StaticResource RailwayAccent}, FalseObject={StaticResource RailwayDanger}}}"
-                                    Opacity="0.6"
-                                    Radius="6" />
-                            </Border.Shadow>
-                        </Border>
-                        <Label
-                            FontSize="10"
-                            Text="MOBAflow"
-                            TextColor="{DynamicResource TextSecondary}"
-                            VerticalOptions="Center" />
-                    </HorizontalStackLayout>
-                </HorizontalStackLayout>
-            </Grid>
-
-
-            <!--  Track Power (Z21 auto-connects after discovery)  -->
-            <VerticalStackLayout Padding="16,6" Spacing="8">
-                <HorizontalStackLayout
-                    HorizontalOptions="End"
-                    Spacing="0"
-                    VerticalOptions="Center">
-                    <Label
-                        FontSize="11"
-                        Text="Track Power"
-                        TextColor="{DynamicResource TextSecondary}"
-                        VerticalTextAlignment="Center" />
-                    <Switch
-                        IsEnabled="{Binding IsConnected}"
-                        IsToggled="{Binding IsTrackPowerOn, Mode=OneWay}"
-                        OnColor="{DynamicResource RailwayWarning}"
-                        Scale="0.75"
-                        ThumbColor="White"
-                        Toggled="TrackPowerSwitch_Toggled" />
-                </HorizontalStackLayout>
-
-                <!--  Z21 connection status/error message  -->
-                <Label
-                    IsVisible="{Binding Z21ConnectionStatus, Converter={toolkit:IsStringNotNullOrEmptyConverter}}"
-                    FontSize="11"
-                    Text="{Binding Z21ConnectionStatus}"
-                    TextColor="{DynamicResource TextSecondary}" />
-            </VerticalStackLayout>
-
-            <!--  System Stats Card (when connected)  -->
-            <VerticalStackLayout
-                Padding="16,6"
-                IsVisible="{Binding IsConnected}"
-                Spacing="6">
-                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
-                    <!--  Temperature  -->
-                    <Border
-                        Grid.Column="0"
-                        Padding="8,6"
-                        BackgroundColor="{DynamicResource SurfaceDark}"
-                        StrokeShape="RoundRectangle 6"
-                        StrokeThickness="0">
-                        <Border.Shadow>
-                            <Shadow
-                                Brush="Black"
-                                Opacity="0.15"
-                                Radius="4"
-                                Offset="0,2" />
-                        </Border.Shadow>
-                        <HorizontalStackLayout HorizontalOptions="Center" Spacing="6">
-                            <Label
-                                FontSize="14"
-                                Text="🌡️"
-                                VerticalOptions="Center" />
-                            <Label
-                                FontAttributes="Bold"
-                                FontSize="13"
-                                Text="{Binding Temperature, StringFormat='{0}°C'}"
-                                TextColor="{DynamicResource TextPrimary}"
-                                VerticalOptions="Center" />
-                        </HorizontalStackLayout>
-                    </Border>
-                    <!--  Supply Voltage  -->
-                    <Border
-                        Grid.Column="1"
-                        Padding="8,6"
-                        BackgroundColor="{DynamicResource SurfaceDark}"
-                        StrokeShape="RoundRectangle 6"
-                        StrokeThickness="0">
-                        <HorizontalStackLayout HorizontalOptions="Center" Spacing="6">
-                            <Label
-                                FontSize="14"
-                                Text="🔌"
-                                VerticalOptions="Center" />
-                            <Label
-                                FontAttributes="Bold"
-                                FontSize="13"
-                                Text="{Binding SupplyVoltage, StringFormat='{0}mV'}"
-                                TextColor="{DynamicResource TextPrimary}"
-                                VerticalOptions="Center" />
-                        </HorizontalStackLayout>
-                    </Border>
-                    <!--  VCC Voltage  -->
-                    <Border
-                        Grid.Column="2"
-                        Padding="8,6"
-                        BackgroundColor="{DynamicResource SurfaceDark}"
-                        StrokeShape="RoundRectangle 6"
-                        StrokeThickness="0">
-                        <HorizontalStackLayout HorizontalOptions="Center" Spacing="6">
-                            <Label
-                                FontSize="14"
-                                Text="⚡"
-                                VerticalOptions="Center" />
-                            <Label
-                                FontAttributes="Bold"
-                                FontSize="13"
-                                Text="{Binding VccVoltage, StringFormat='{0}mV'}"
-                                TextColor="{DynamicResource TextPrimary}"
-                                VerticalOptions="Center" />
-                        </HorizontalStackLayout>
-                    </Border>
-                </Grid>
-            </VerticalStackLayout>
-
-            <!--  Counter Settings Card (Compact & Aligned)  -->
-            <VerticalStackLayout Padding="16,6" Spacing="8">
-                <!--  Section Header  -->
-                <Grid ColumnDefinitions="*,*">
-                    <Label
-                        Grid.Column="0"
-                        FontAttributes="Bold"
-                        FontSize="12"
-                        Text="Feedback Points"
-                        TextColor="{DynamicResource TextSecondary}" />
-                    <Label
-                        Grid.Column="1"
-                        FontAttributes="Bold"
-                        FontSize="12"
-                        HorizontalTextAlignment="End"
-                        Text="Lap Counter"
-                        TextColor="{DynamicResource TextSecondary}" />
-                </Grid>
-
-                <!--  Feedback Points & Target Laps (Full-Width Aligned)  -->
-                <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
-                    <!--  Feedback Points Stepper  -->
-                    <Grid Grid.Column="0" ColumnDefinitions="36,*,36" ColumnSpacing="4">
-                        <Button
                             Grid.Column="0"
-                            Padding="0"
-                            BackgroundColor="{DynamicResource SurfaceDark}"
-                            Command="{Binding DecrementFeedbackPointsCommand}"
-                            CornerRadius="6"
                             FontAttributes="Bold"
-                            FontSize="20"
-                            HeightRequest="36"
-                            Text="−"
-                            TextColor="{DynamicResource TextPrimary}"
-                            WidthRequest="36" />
-                        <Border
-                            Grid.Column="1"
-                            BackgroundColor="{DynamicResource SurfaceDark}"
-                            StrokeShape="RoundRectangle 6"
-                            StrokeThickness="0">
-                            <Label
-                                FontAttributes="Bold"
-                                FontSize="18"
-                                HorizontalOptions="Center"
-                                Text="{Binding CountOfFeedbackPoints}"
-                                TextColor="{DynamicResource TextPrimary}"
-                                VerticalOptions="Center" />
-                        </Border>
-                        <Button
-                            Grid.Column="2"
-                            Padding="0"
-                            BackgroundColor="{DynamicResource SurfaceDark}"
-                            Command="{Binding IncrementFeedbackPointsCommand}"
-                            CornerRadius="6"
-                            FontAttributes="Bold"
-                            FontSize="20"
-                            HeightRequest="36"
-                            Text="+"
-                            TextColor="{DynamicResource TextPrimary}"
-                            WidthRequest="36" />
-                    </Grid>
-                    <!--  Target Lap Count Stepper  -->
-                    <Grid Grid.Column="1" ColumnDefinitions="36,*,36" ColumnSpacing="4">
-                        <Button
-                            Grid.Column="0"
-                            Padding="0"
-                            BackgroundColor="{DynamicResource SurfaceDark}"
-                            Command="{Binding DecrementTargetLapCountCommand}"
-                            CornerRadius="6"
-                            FontAttributes="Bold"
-                            FontSize="20"
-                            HeightRequest="36"
-                            Text="−"
-                            TextColor="{DynamicResource TextPrimary}"
-                            WidthRequest="36" />
-                        <Border
-                            Grid.Column="1"
-                            BackgroundColor="{DynamicResource SurfaceDark}"
-                            StrokeShape="RoundRectangle 6"
-                            StrokeThickness="0">
-                            <Label
-                                FontAttributes="Bold"
-                                FontSize="18"
-                                HorizontalOptions="Center"
-                                Text="{Binding GlobalTargetLapCount}"
-                                TextColor="{DynamicResource TextPrimary}"
-                                VerticalOptions="Center" />
-                        </Border>
-                        <Button
-                            Grid.Column="2"
-                            Padding="0"
-                            BackgroundColor="{DynamicResource SurfaceDark}"
-                            Command="{Binding IncrementTargetLapCountCommand}"
-                            CornerRadius="6"
-                            FontAttributes="Bold"
-                            FontSize="20"
-                            HeightRequest="36"
-                            Text="+"
-                            TextColor="{DynamicResource TextPrimary}"
-                            WidthRequest="36" />
-                    </Grid>
-                </Grid>
+                            FontSize="24"
+                            Text="MOBAsmart"
+                            TextColor="{DynamicResource RailwayPrimary}"
+                            VerticalOptions="Center" />
 
-                <!--  Timer Filter Row (Aligned)  -->
-                <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
-                    <HorizontalStackLayout
-                        Grid.Column="0"
-                        HorizontalOptions="Start"
-                        Spacing="4"
-                        VerticalOptions="Center">
-                        <CheckBox
-                            IsChecked="{Binding UseTimerFilter}"
-                            Scale="0.9"
-                            VerticalOptions="Center" />
-                        <Label
-                            FontSize="12"
-                            Text="Timer Filter"
-                            TextColor="{DynamicResource TextSecondary}"
-                            VerticalOptions="Center" />
-                    </HorizontalStackLayout>
-                    <Grid Grid.Column="1" ColumnDefinitions="36,*,36" ColumnSpacing="4">
-                        <Button
-                            Grid.Column="0"
-                            Padding="0"
-                            BackgroundColor="{DynamicResource SurfaceDark}"
-                            Command="{Binding DecrementTimerIntervalCommand}"
-                            CornerRadius="6"
-                            FontAttributes="Bold"
-                            FontSize="20"
-                            HeightRequest="36"
-                            IsEnabled="{Binding UseTimerFilter}"
-                            Text="−"
-                            TextColor="{DynamicResource TextPrimary}"
-                            WidthRequest="36" />
-                        <Border
+                        <!--  App Logo (Train Icon)  -->
+                        <Image
                             Grid.Column="1"
-                            BackgroundColor="{DynamicResource SurfaceDark}"
-                            StrokeShape="RoundRectangle 6"
-                            StrokeThickness="0">
+                            Margin="8,0,0,0"
+                            HeightRequest="28"
+                            Source="logo_train.png"
+                            VerticalOptions="Center"
+                            WidthRequest="28" />
+
+                        <!--  Theme Switch  -->
+                        <HorizontalStackLayout
+                            Grid.Column="3"
+                            Spacing="4"
+                            VerticalOptions="Center">
                             <Label
-                                FontAttributes="Bold"
+                                x:Name="ThemeIcon"
                                 FontSize="14"
-                                HorizontalOptions="Center"
-                                Text="{Binding TimerIntervalSeconds, StringFormat='{0:F1}s'}"
-                                TextColor="{DynamicResource TextPrimary}"
+                                Text="🌙"
                                 VerticalOptions="Center" />
-                        </Border>
-                        <Button
-                            Grid.Column="2"
-                            Padding="0"
-                            BackgroundColor="{DynamicResource SurfaceDark}"
-                            Command="{Binding IncrementTimerIntervalCommand}"
-                            CornerRadius="6"
-                            FontAttributes="Bold"
-                            FontSize="20"
-                            HeightRequest="36"
-                            IsEnabled="{Binding UseTimerFilter}"
-                            Text="+"
-                            TextColor="{DynamicResource TextPrimary}"
-                            WidthRequest="36" />
+                            <Switch
+                                x:Name="ThemeSwitch"
+                                OnColor="{DynamicResource RailwayPrimary}"
+                                SemanticProperties.Description="Toggle light or dark application theme"
+                                ThumbColor="{DynamicResource White}"
+                                Toggled="ThemeSwitch_Toggled" />
+                        </HorizontalStackLayout>
                     </Grid>
-                </Grid>
-            </VerticalStackLayout>
 
-            <!--  Lap Counters Card  -->
-            <VerticalStackLayout Padding="16,6" Spacing="6">
-                <!--  Section Header with Reset Button  -->
-                <Grid ColumnDefinitions="Auto,*,Auto">
-                    <Label
-                        Grid.Column="0"
-                        FontAttributes="Bold"
-                        FontSize="14"
-                        Text="Laps"
-                        VerticalOptions="Center" />
-                    <Button
-                        Grid.Column="2"
-                        Padding="12,4"
-                        BackgroundColor="{DynamicResource RailwayPrimary}"
-                        Command="{Binding ResetCountersCommand}"
-                        CornerRadius="6"
-                        FontSize="11"
-                        HeightRequest="28"
-                        Text="↻ Reset"
-                        TextColor="White"
-                        VerticalOptions="Center" />
-                </Grid>
+                    <BoxView HeightRequest="1" Color="{DynamicResource BorderColor}" />
 
-                <!--  Counters List  -->
-                <CollectionView ItemsSource="{Binding Statistics}">
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="local:InPortStatistic">
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <!--  Z21 connection indicator  -->
+                        <HorizontalStackLayout
+                            Grid.Column="0"
+                            Spacing="6"
+                            VerticalOptions="Center">
                             <Border
-                                Margin="0,0,0,4"
-                                Padding="12,8"
-                                BackgroundColor="{DynamicResource SurfaceDark}"
-                                StrokeShape="RoundRectangle 8"
-                                StrokeThickness="0">
+                                x:Name="ConnectionIndicator"
+                                BackgroundColor="{Binding IsConnected, Converter={toolkit:BoolToObjectConverter TrueObject={StaticResource RailwayAccent}, FalseObject={StaticResource RailwayDanger}}}"
+                                HeightRequest="12"
+                                StrokeShape="RoundRectangle 6"
+                                StrokeThickness="0"
+                                WidthRequest="12">
                                 <Border.Shadow>
                                     <Shadow
-                                        Brush="Black"
-                                        Opacity="0.12"
-                                        Radius="4"
-                                        Offset="0,1" />
+                                        Brush="{Binding IsConnected, Converter={toolkit:BoolToObjectConverter TrueObject={StaticResource RailwayAccent}, FalseObject={StaticResource RailwayDanger}}}"
+                                        Opacity="0.6"
+                                        Radius="6" />
                                 </Border.Shadow>
-                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                                    <!--  Counter Badge  -->
-                                    <Border
-                                        Grid.Column="0"
-                                        BackgroundColor="{Binding HasReceivedFirstLap, Converter={toolkit:BoolToObjectConverter TrueObject={StaticResource RailwayAccent}, FalseObject={StaticResource RailwayPrimary}}}"
-                                        HeightRequest="32"
-                                        StrokeShape="RoundRectangle 8"
-                                        StrokeThickness="0"
-                                        VerticalOptions="Center"
-                                        WidthRequest="32">
-                                        <Label
-                                            FontAttributes="Bold"
-                                            FontSize="14"
-                                            HorizontalOptions="Center"
-                                            Text="{Binding Count}"
-                                            TextColor="White"
-                                            VerticalOptions="Center" />
-                                    </Border>
+                            </Border>
+                            <Label
+                                FontAttributes="Bold"
+                                FontSize="12"
+                                Text="Z21"
+                                TextColor="{DynamicResource TextSecondary}"
+                                VerticalOptions="Center" />
+                            <Label
+                                FontSize="12"
+                                SemanticProperties.Description="{Binding IsConnected, Converter={toolkit:BoolToObjectConverter TrueObject=Z21 connected, FalseObject=Z21 disconnected}}"
+                                Text="{Binding IsConnected, Converter={toolkit:BoolToObjectConverter TrueObject=Connected, FalseObject=Disconnected}}"
+                                TextColor="{Binding IsConnected, Converter={toolkit:BoolToObjectConverter TrueObject={StaticResource RailwayAccent}, FalseObject={StaticResource RailwayDanger}}}"
+                                VerticalOptions="Center" />
+                        </HorizontalStackLayout>
 
-                                    <!--  Content Grid  -->
-                                    <Grid
-                                        Grid.Column="1"
-                                        RowDefinitions="Auto,Auto"
-                                        RowSpacing="2">
-                                        <!--  Track Name and Times  -->
-                                        <Grid
-                                            Grid.Row="0"
-                                            ColumnDefinitions="Auto,*"
-                                            ColumnSpacing="8">
-                                            <!--  Track Name  -->
+                        <!--  MOBAflow (REST API) indicator  -->
+                        <HorizontalStackLayout
+                            Grid.Column="1"
+                            HorizontalOptions="End"
+                            Spacing="6"
+                            VerticalOptions="Center">
+                            <Border
+                                x:Name="RestApiIndicator"
+                                BackgroundColor="{Binding IsRestApiReachable, Converter={toolkit:BoolToObjectConverter TrueObject={StaticResource RailwayAccent}, FalseObject={StaticResource RailwayDanger}}}"
+                                HeightRequest="12"
+                                StrokeShape="RoundRectangle 6"
+                                StrokeThickness="0"
+                                WidthRequest="12">
+                                <Border.Shadow>
+                                    <Shadow
+                                        Brush="{Binding IsRestApiReachable, Converter={toolkit:BoolToObjectConverter TrueObject={StaticResource RailwayAccent}, FalseObject={StaticResource RailwayDanger}}}"
+                                        Opacity="0.6"
+                                        Radius="6" />
+                                </Border.Shadow>
+                            </Border>
+                            <Label
+                                FontAttributes="Bold"
+                                FontSize="12"
+                                Text="MOBAflow"
+                                TextColor="{DynamicResource TextSecondary}"
+                                VerticalOptions="Center" />
+                            <Label
+                                FontSize="12"
+                                SemanticProperties.Description="{Binding IsRestApiReachable, Converter={toolkit:BoolToObjectConverter TrueObject=MOBAflow REST API connected, FalseObject=MOBAflow REST API disconnected}}"
+                                Text="{Binding IsRestApiReachable, Converter={toolkit:BoolToObjectConverter TrueObject=Connected, FalseObject=Disconnected}}"
+                                TextColor="{Binding IsRestApiReachable, Converter={toolkit:BoolToObjectConverter TrueObject={StaticResource RailwayAccent}, FalseObject={StaticResource RailwayDanger}}}"
+                                VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                    </Grid>
+
+                    <BoxView HeightRequest="1" Color="{DynamicResource Border}" />
+
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <VerticalStackLayout Grid.Column="0" Spacing="2">
+                            <Label
+                                FontAttributes="Bold"
+                                FontSize="14"
+                                Text="Track Power"
+                                TextColor="{DynamicResource TextPrimary}" />
+                            <Label
+                                FontSize="12"
+                                Text="{Binding IsTrackPowerOn, Converter={toolkit:BoolToObjectConverter TrueObject=Power ON, FalseObject=Power OFF}}"
+                                TextColor="{Binding IsTrackPowerOn, Converter={toolkit:BoolToObjectConverter TrueObject={StaticResource RailwayWarning}, FalseObject={StaticResource TextSecondary}}}" />
+                        </VerticalStackLayout>
+                        <Switch
+                            Grid.Column="1"
+                            IsEnabled="{Binding IsConnected}"
+                            IsToggled="{Binding IsTrackPowerOn, Mode=OneWay}"
+                            OnColor="{DynamicResource RailwayWarning}"
+                            SemanticProperties.Description="Toggle track power for connected Z21"
+                            ThumbColor="{DynamicResource White}"
+                            Toggled="TrackPowerSwitch_Toggled"
+                            VerticalOptions="Center" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <!--  System Stats Card (when connected)  -->
+            <Border
+                x:Name="LiveDataSectionCard"
+                IsVisible="{Binding IsConnected}"
+                Style="{StaticResource MainSectionCard}">
+                <VerticalStackLayout Spacing="8">
+                    <Label Style="{StaticResource SectionTitleLabel}" Text="Z21 Status" />
+                    <Grid
+                        ColumnDefinitions="*,*"
+                        ColumnSpacing="8"
+                        RowDefinitions="Auto,Auto"
+                        RowSpacing="8">
+                        <!--  Temperature  -->
+                        <Border
+                            Grid.Row="0"
+                            Grid.Column="0"
+                            Style="{StaticResource MetricTileStyle}">
+                            <Border.Shadow>
+                                <Shadow
+                                    Brush="Black"
+                                    Opacity="0.15"
+                                    Radius="4"
+                                    Offset="0,2" />
+                            </Border.Shadow>
+                            <HorizontalStackLayout HorizontalOptions="Center" Spacing="6">
+                                <Label
+                                    FontSize="14"
+                                    Text="🌡️"
+                                    VerticalOptions="Center" />
+                                <Label
+                                    FontAttributes="Bold"
+                                    FontSize="12"
+                                    LineBreakMode="NoWrap"
+                                    Text="{Binding Temperature, StringFormat='{0}°C'}"
+                                    TextColor="{DynamicResource TextPrimary}"
+                                    VerticalOptions="Center" />
+                            </HorizontalStackLayout>
+                        </Border>
+                        <!--  Supply Voltage  -->
+                        <Border
+                            Grid.Row="0"
+                            Grid.Column="1"
+                            Style="{StaticResource MetricTileStyle}">
+                            <HorizontalStackLayout HorizontalOptions="Center" Spacing="6">
+                                <Label
+                                    FontSize="14"
+                                    Text="🔌"
+                                    VerticalOptions="Center" />
+                                <Label
+                                    FontAttributes="Bold"
+                                    FontSize="12"
+                                    LineBreakMode="NoWrap"
+                                    Text="{Binding SupplyVoltage, StringFormat='{0}mV'}"
+                                    TextColor="{DynamicResource TextPrimary}"
+                                    VerticalOptions="Center" />
+                            </HorizontalStackLayout>
+                        </Border>
+                        <!--  VCC Voltage  -->
+                        <Border
+                            Grid.Row="1"
+                            Grid.ColumnSpan="2"
+                            Style="{StaticResource MetricTileStyle}">
+                            <HorizontalStackLayout HorizontalOptions="Center" Spacing="6">
+                                <Label
+                                    FontSize="14"
+                                    Text="⚡"
+                                    VerticalOptions="Center" />
+                                <Label
+                                    FontAttributes="Bold"
+                                    FontSize="12"
+                                    LineBreakMode="NoWrap"
+                                    Text="{Binding VccVoltage, StringFormat='{0}mV'}"
+                                    TextColor="{DynamicResource TextPrimary}"
+                                    VerticalOptions="Center" />
+                            </HorizontalStackLayout>
+                        </Border>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <!--  Counter Settings Card (Compact & Aligned)  -->
+            <Border x:Name="SetupSectionCard" Style="{StaticResource MainSectionCard}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Style="{StaticResource SectionTitleLabel}" Text="Lap Counter Setup" />
+                    <!--  Section Header  -->
+                    <Grid ColumnDefinitions="*,*">
+                        <Label
+                            Grid.Column="0"
+                            FontAttributes="Bold"
+                            FontSize="12"
+                            Text="Feedback Points"
+                            TextColor="{DynamicResource TextSecondary}" />
+                        <Label
+                            Grid.Column="1"
+                            FontAttributes="Bold"
+                            FontSize="12"
+                            HorizontalTextAlignment="End"
+                            Text="Lap Counter"
+                            TextColor="{DynamicResource TextSecondary}" />
+                    </Grid>
+
+                    <!--  Feedback Points & Target Laps (Full-Width Aligned)  -->
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+                        <!--  Feedback Points Stepper  -->
+                        <Grid
+                            Grid.Column="0"
+                            ColumnDefinitions="44,*,44"
+                            ColumnSpacing="4">
+                            <Button
+                                Grid.Column="0"
+                                Command="{Binding DecrementFeedbackPointsCommand}"
+                                SemanticProperties.Description="Reduce feedback points"
+                                Style="{StaticResource StepperButtonStyle}"
+                                Text="−" />
+                            <Border Grid.Column="1" Style="{StaticResource StepperValueBorderStyle}">
+                                <Label
+                                    FontAttributes="Bold"
+                                    FontSize="18"
+                                    HorizontalOptions="Center"
+                                    Text="{Binding CountOfFeedbackPoints}"
+                                    TextColor="{DynamicResource TextPrimary}"
+                                    VerticalOptions="Center" />
+                            </Border>
+                            <Button
+                                Grid.Column="2"
+                                Command="{Binding IncrementFeedbackPointsCommand}"
+                                SemanticProperties.Description="Increase feedback points"
+                                Style="{StaticResource StepperButtonStyle}"
+                                Text="+" />
+                        </Grid>
+                        <!--  Target Lap Count Stepper  -->
+                        <Grid
+                            Grid.Column="1"
+                            ColumnDefinitions="44,*,44"
+                            ColumnSpacing="4">
+                            <Button
+                                Grid.Column="0"
+                                Command="{Binding DecrementTargetLapCountCommand}"
+                                SemanticProperties.Description="Reduce target lap count"
+                                Style="{StaticResource StepperButtonStyle}"
+                                Text="−" />
+                            <Border Grid.Column="1" Style="{StaticResource StepperValueBorderStyle}">
+                                <Label
+                                    FontAttributes="Bold"
+                                    FontSize="18"
+                                    HorizontalOptions="Center"
+                                    Text="{Binding GlobalTargetLapCount}"
+                                    TextColor="{DynamicResource TextPrimary}"
+                                    VerticalOptions="Center" />
+                            </Border>
+                            <Button
+                                Grid.Column="2"
+                                Command="{Binding IncrementTargetLapCountCommand}"
+                                SemanticProperties.Description="Increase target lap count"
+                                Style="{StaticResource StepperButtonStyle}"
+                                Text="+" />
+                        </Grid>
+                    </Grid>
+
+                    <!--  Timer Filter Row (Aligned)  -->
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+                        <HorizontalStackLayout
+                            Grid.Column="0"
+                            HeightRequest="44"
+                            HorizontalOptions="Start"
+                            Spacing="8"
+                            VerticalOptions="Center">
+                            <CheckBox
+                                Color="{DynamicResource RailwayPrimary}"
+                                IsChecked="{Binding UseTimerFilter}"
+                                VerticalOptions="Center" />
+                            <Label
+                                FontSize="13"
+                                Text="Timer Filter"
+                                TextColor="{DynamicResource TextSecondary}"
+                                VerticalOptions="Center"
+                                VerticalTextAlignment="Center" />
+                        </HorizontalStackLayout>
+                        <Grid
+                            Grid.Column="1"
+                            ColumnDefinitions="44,*,44"
+                            ColumnSpacing="4">
+                            <Button
+                                Grid.Column="0"
+                                Padding="0"
+                                BackgroundColor="{DynamicResource SurfaceDark}"
+                                Command="{Binding DecrementTimerIntervalCommand}"
+                                CornerRadius="8"
+                                FontAttributes="Bold"
+                                FontSize="22"
+                                HeightRequest="44"
+                                IsEnabled="{Binding UseTimerFilter}"
+                                SemanticProperties.Description="Reduce timer filter interval"
+                                TextColor="{DynamicResource TextPrimary}"
+                                Text="−" />
+                            <Border Grid.Column="1" Style="{StaticResource StepperValueBorderStyle}">
+                                <Label
+                                    FontAttributes="Bold"
+                                    FontSize="14"
+                                    HorizontalOptions="Center"
+                                    Text="{Binding TimerIntervalSeconds, StringFormat='{0:F1}s'}"
+                                    TextColor="{DynamicResource TextPrimary}"
+                                    VerticalOptions="Center" />
+                            </Border>
+                            <Button
+                                Grid.Column="2"
+                                Padding="0"
+                                BackgroundColor="{DynamicResource SurfaceDark}"
+                                Command="{Binding IncrementTimerIntervalCommand}"
+                                CornerRadius="8"
+                                FontAttributes="Bold"
+                                FontSize="22"
+                                HeightRequest="44"
+                                IsEnabled="{Binding UseTimerFilter}"
+                                SemanticProperties.Description="Increase timer filter interval"
+                                TextColor="{DynamicResource TextPrimary}"
+                                Text="+" />
+                        </Grid>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <!--  Lap Counters Card  -->
+            <Border x:Name="LapsSectionCard" Style="{StaticResource MainSectionCard}">
+                <VerticalStackLayout Spacing="8">
+                    <!--  Section Header with Reset Button  -->
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <Label
+                            Grid.Column="0"
+                            Margin="0"
+                            Style="{StaticResource SectionTitleLabel}"
+                            Text="Laps per Track"
+                            VerticalOptions="Center" />
+                        <Button
+                            Grid.Column="2"
+                            Padding="12,6"
+                            BackgroundColor="{DynamicResource SurfaceDark}"
+                            Clicked="ResetCountersButton_Clicked"
+                            CornerRadius="6"
+                            FontSize="12"
+                            HeightRequest="34"
+                            SemanticProperties.Description="Reset all lap counters"
+                            Text="↻ Reset"
+                            TextColor="{DynamicResource TextPrimary}"
+                            VerticalOptions="Center" />
+                    </Grid>
+
+                    <!--  Counters List (BindableLayout to avoid nested scroll issues)  -->
+                    <VerticalStackLayout
+                        BindableLayout.ItemsSource="{Binding Statistics}"
+                        Spacing="4">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="local:InPortStatistic">
+                                <Border
+                                    Margin="0,0,0,4"
+                                    Padding="12,8"
+                                    BackgroundColor="{DynamicResource SurfaceDark}"
+                                    StrokeShape="RoundRectangle 8"
+                                    StrokeThickness="0">
+                                    <Border.Shadow>
+                                        <Shadow
+                                            Brush="Black"
+                                            Opacity="0.12"
+                                            Radius="4"
+                                            Offset="0,1" />
+                                    </Border.Shadow>
+                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                        <!--  Counter Badge  -->
+                                        <Border
+                                            Grid.Column="0"
+                                            BackgroundColor="{Binding HasReceivedFirstLap, Converter={toolkit:BoolToObjectConverter TrueObject={StaticResource RailwayAccent}, FalseObject={StaticResource RailwayPrimary}}}"
+                                            HeightRequest="32"
+                                            StrokeShape="RoundRectangle 8"
+                                            StrokeThickness="0"
+                                            VerticalOptions="Center"
+                                            WidthRequest="32">
                                             <Label
-                                                Grid.Column="0"
                                                 FontAttributes="Bold"
-                                                FontSize="13"
-                                                Text="{Binding InPort, StringFormat='Track {0}'}"
+                                                FontSize="14"
+                                                HorizontalOptions="Center"
+                                                Text="{Binding Count}"
+                                                TextColor="White"
                                                 VerticalOptions="Center" />
-                                            <!--  Times on right  -->
-                                            <HorizontalStackLayout
-                                                Grid.Column="1"
-                                                HorizontalOptions="End"
-                                                Spacing="6"
-                                                VerticalOptions="Center">
-                                                <Label
-                                                    FontSize="10"
-                                                    Text="Lap:"
-                                                    TextColor="{DynamicResource TextDisabled}" />
-                                                <Label
-                                                    FontAttributes="Bold"
-                                                    FontSize="10"
-                                                    Text="{Binding LastLapTimeFormatted}"
-                                                    TextColor="{DynamicResource RailwaySecondary}" />
-                                                <Label
-                                                    FontSize="10"
-                                                    Text="@"
-                                                    TextColor="{DynamicResource TextDisabled}" />
-                                                <Label
-                                                    FontSize="10"
-                                                    Text="{Binding LastFeedbackTimeFormatted}"
-                                                    TextColor="{DynamicResource TextDisabled}" />
-                                            </HorizontalStackLayout>
-                                        </Grid>
+                                        </Border>
 
-                                        <!--  Lap Count and Progress  -->
+                                        <!--  Content Grid  -->
                                         <Grid
-                                            Grid.Row="1"
-                                            ColumnDefinitions="Auto,*,Auto,Auto"
-                                            ColumnSpacing="6">
-                                            <!--  Lap Count  -->
-                                            <Label
-                                                Grid.Column="0"
-                                                FontSize="10"
-                                                Text="{Binding LapCountFormatted}"
-                                                TextColor="{DynamicResource TextSecondary}"
-                                                VerticalOptions="Center" />
-                                            <!--  Spacer  -->
-                                            <BoxView Grid.Column="1" Color="Transparent" />
-                                            <!--  Progress Bar  -->
-                                            <ProgressBar
-                                                Grid.Column="2"
-                                                HeightRequest="4"
-                                                Progress="{Binding Progress}"
-                                                ProgressColor="{DynamicResource RailwayAccent}"
-                                                VerticalOptions="Center"
-                                                WidthRequest="50" />
-                                            <!--  Progress Percentage  -->
-                                            <Label
-                                                Grid.Column="3"
-                                                FontSize="10"
-                                                HorizontalTextAlignment="End"
-                                                Text="{Binding Progress, StringFormat='{0:P0}'}"
-                                                TextColor="{DynamicResource TextSecondary}"
-                                                VerticalOptions="Center"
-                                                WidthRequest="35" />
+                                            Grid.Column="1"
+                                            RowDefinitions="Auto,Auto"
+                                            RowSpacing="4">
+                                            <!--  Track Name and Times  -->
+                                            <Grid
+                                                Grid.Row="0"
+                                                ColumnDefinitions="Auto,*"
+                                                ColumnSpacing="8">
+                                                <!--  Track Name  -->
+                                                <Label
+                                                    Grid.Column="0"
+                                                    FontAttributes="Bold"
+                                                    FontSize="14"
+                                                    Text="{Binding InPort, StringFormat='Track {0}'}"
+                                                    VerticalOptions="Center" />
+                                                <!--  Times on right  -->
+                                                <HorizontalStackLayout
+                                                    Grid.Column="1"
+                                                    HorizontalOptions="End"
+                                                    Spacing="6"
+                                                    VerticalOptions="Center">
+                                                    <Label
+                                                        FontSize="11"
+                                                        Text="Lap:"
+                                                        TextColor="{DynamicResource TextDisabled}" />
+                                                    <Label
+                                                        FontAttributes="Bold"
+                                                        FontSize="11"
+                                                        Text="{Binding LastLapTimeFormatted}"
+                                                        TextColor="{DynamicResource RailwaySecondary}" />
+                                                    <Label
+                                                        FontSize="11"
+                                                        Text="@"
+                                                        TextColor="{DynamicResource TextDisabled}" />
+                                                    <Label
+                                                        FontSize="11"
+                                                        LineBreakMode="TailTruncation"
+                                                        MaxLines="1"
+                                                        Text="{Binding LastFeedbackTimeFormatted}"
+                                                        TextColor="{DynamicResource TextDisabled}" />
+                                                </HorizontalStackLayout>
+                                            </Grid>
+
+                                            <!--  Lap Count and Progress  -->
+                                            <Grid
+                                                Grid.Row="1"
+                                                ColumnDefinitions="Auto,*,Auto,Auto"
+                                                ColumnSpacing="6">
+                                                <!--  Lap Count  -->
+                                                <Label
+                                                    Grid.Column="0"
+                                                    FontSize="11"
+                                                    Text="{Binding LapCountFormatted}"
+                                                    TextColor="{DynamicResource TextSecondary}"
+                                                    VerticalOptions="Center" />
+                                                <!--  Spacer  -->
+                                                <BoxView Grid.Column="1" Color="Transparent" />
+                                                <!--  Progress Bar  -->
+                                                <ProgressBar
+                                                    Grid.Column="2"
+                                                    HeightRequest="6"
+                                                    Progress="{Binding Progress}"
+                                                    ProgressColor="{DynamicResource RailwayAccent}"
+                                                    VerticalOptions="Center"
+                                                    WidthRequest="72" />
+                                                <!--  Progress Percentage  -->
+                                                <Label
+                                                    Grid.Column="3"
+                                                    FontSize="11"
+                                                    HorizontalTextAlignment="End"
+                                                    Text="{Binding Progress, StringFormat='{0:P0}'}"
+                                                    TextColor="{DynamicResource TextSecondary}"
+                                                    VerticalOptions="Center"
+                                                    WidthRequest="35" />
+                                            </Grid>
                                         </Grid>
                                     </Grid>
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
-            </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                        <BindableLayout.EmptyView>
+                            <Label
+                                FontSize="12"
+                                HorizontalTextAlignment="Center"
+                                Text="No lap data available yet."
+                                TextColor="{DynamicResource TextSecondary}" />
+                        </BindableLayout.EmptyView>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
 
             <!--  Photo Capture & Upload Card  -->
-            <VerticalStackLayout Padding="16,6">
-                <Button
-                    Command="{Binding CaptureAndUploadPhotoCommand}"
-                    HeightRequest="44"
-                    IsEnabled="{Binding IsPhotoUploading, Converter={toolkit:BoolToObjectConverter TrueObject=False, FalseObject=True}}"
-                    Style="{DynamicResource AccentButtonStyle}"
-                    Text="Take Photo &amp; Upload" />
-                <Grid
-                    ColumnDefinitions="Auto,*"
-                    ColumnSpacing="8"
-                    VerticalOptions="Center">
-                    <ActivityIndicator
-                        Grid.Column="0"
-                        IsRunning="{Binding IsPhotoUploading}"
-                        IsVisible="{Binding IsPhotoUploading}" />
+            <Border x:Name="UploadSectionCard" Style="{StaticResource MainSectionCard}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Style="{StaticResource SectionTitleLabel}" Text="Foto-Upload" />
+                    <Button
+                        Command="{Binding CaptureAndUploadPhotoCommand}"
+                        HeightRequest="48"
+                        IsEnabled="{Binding IsPhotoUploading, Converter={toolkit:BoolToObjectConverter TrueObject=False, FalseObject=True}}"
+                        SemanticProperties.Description="Capture a photo and upload it to MOBAflow"
+                        Style="{DynamicResource AccentButtonStyle}"
+                        Text="Take Photo &amp; Upload" />
+                    <Grid
+                        ColumnDefinitions="Auto,*"
+                        ColumnSpacing="8"
+                        VerticalOptions="Center">
+                        <ActivityIndicator
+                            Grid.Column="0"
+                            IsRunning="{Binding IsPhotoUploading}"
+                            IsVisible="{Binding IsPhotoUploading}" />
+                        <Label
+                            Grid.Column="1"
+                            FontAttributes="Bold"
+                            FontSize="12"
+                            Text="{Binding IsPhotoUploading, Converter={toolkit:BoolToObjectConverter TrueObject=Uploading..., FalseObject=Ready}}"
+                            TextColor="{Binding IsPhotoUploading, Converter={toolkit:BoolToObjectConverter TrueObject={StaticResource RailwaySecondary}, FalseObject={StaticResource TextSecondary}}}"
+                            VerticalOptions="Center" />
+                    </Grid>
                     <Label
-                        Grid.Column="1"
                         FontSize="12"
                         Text="{Binding PhotoUploadStatus}"
                         TextColor="{Binding PhotoUploadSuccess, Converter={toolkit:BoolToObjectConverter TrueObject={StaticResource RailwayAccent}, FalseObject={StaticResource RailwayDanger}}}"
                         TextType="Text"
                         VerticalOptions="Center" />
-                </Grid>
-            </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
 
             <!--  Footer  -->
             <Label
+                Margin="0,8,0,12"
                 FontSize="10"
                 HorizontalOptions="Center"
                 Text="© 2026 Andreas Huelsmann"

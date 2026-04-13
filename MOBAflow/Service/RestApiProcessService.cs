@@ -71,7 +71,7 @@ public sealed class RestApiProcessService : IDisposable
             }
 
             // Ensure Windows Firewall allows UDP discovery (21106) and REST API (TCP port) so MAUI can connect
-            FirewallHelper.EnsureFirewallRulesExist(port);
+            FirewallHelper.EnsureFirewallRulesExist(port, _logger);
 
             // Prefer MOBApi next to WinUI (copied by build); fall back to repo-root convention
             var (dllPath, workingDir, usePreBuilt) = ResolveMobaApiPaths();

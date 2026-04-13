@@ -5,6 +5,7 @@ using Domain;
 using Domain.Enum;
 using Interface;
 using Microsoft.Extensions.Logging;
+using System.Runtime.ExceptionServices;
 
 /// <summary>
 /// Event args for action execution errors.
@@ -48,7 +49,7 @@ public class WorkflowService(IActionExecutor actionExecutor, ILogger<WorkflowSer
     /// <param name="workflow">The workflow to execute</param>
     /// <param name="context">Execution context containing dependencies and state</param>
     /// <exception cref="ArgumentNullException">Thrown when workflow or context is null</exception>
-    public async Task ExecuteAsync(Workflow workflow, ActionExecutionContext context)
+    public async Task ExecuteAsync(Workflow workflow, ActionExecutionContext context, WorkflowExecutionOptions options = default)
     {
         ArgumentNullException.ThrowIfNull(workflow);
         ArgumentNullException.ThrowIfNull(context);
@@ -67,7 +68,7 @@ public class WorkflowService(IActionExecutor actionExecutor, ILogger<WorkflowSer
         }
         else  // Sequential (default)
         {
-            await ExecuteSequentialAsync(workflow, context).ConfigureAwait(false);
+            await ExecuteSequentialAsync(workflow, context, options).ConfigureAwait(false);
         }
 
         logger?.LogInformation("✅ Workflow '{WorkflowName}' completed", workflow.Name);
@@ -77,7 +78,7 @@ public class WorkflowService(IActionExecutor actionExecutor, ILogger<WorkflowSer
     /// Executes actions sequentially, waiting for each to complete.
     /// Respects DelayAfterMs property for precise timing control.
     /// </summary>
-    private async Task ExecuteSequentialAsync(Workflow workflow, ActionExecutionContext context)
+    private async Task ExecuteSequentialAsync(Workflow workflow, ActionExecutionContext context, WorkflowExecutionOptions options)
     {
         foreach (var action in workflow.Actions.OrderBy(a => a.Number))
         {
@@ -97,14 +98,16 @@ public class WorkflowService(IActionExecutor actionExecutor, ILogger<WorkflowSer
                 var errorMsg = $"Audio file not found for action '{action.Name}': {fnfEx.FileName}";
                 logger?.LogError(fnfEx, "❌ {ErrorMessage}", errorMsg);
                 OnActionExecutionError(action, fnfEx, errorMsg);
-                // Continue with next action
+                if (options.StopOnFirstActionFailure)
+                    ExceptionDispatchInfo.Capture(fnfEx).Throw();
             }
             catch (Exception ex)
             {
                 var errorMsg = $"Error executing action #{action.Number} '{action.Name}': {ex.Message}";
                 logger?.LogError(ex, "❌ {ErrorMessage}", errorMsg);
                 OnActionExecutionError(action, ex, errorMsg);
-                // Continue with next action even if one fails
+                if (options.StopOnFirstActionFailure)
+                    ExceptionDispatchInfo.Capture(ex).Throw();
             }
         }
     }
@@ -124,39 +127,41 @@ public class WorkflowService(IActionExecutor actionExecutor, ILogger<WorkflowSer
         {
             // Capture delay for this action's task
             var startDelay = cumulativeDelay;
-            
-            tasks.Add(Task.Run(async () =>
-            {
-                try
-                {
-                    // Wait before starting this action (staggered start)
-                    if (startDelay > 0)
-                    {
-                        logger?.LogDebug("    ⏱ Action #{ActionNumber} waiting {StartDelay}ms before start...", action.Number, startDelay);
-                        await Task.Delay(startDelay).ConfigureAwait(false);
-                    }
 
-                    await actionExecutor.ExecuteAsync(action, context).ConfigureAwait(false);
-                }
-                catch (FileNotFoundException fnfEx)
-                {
-                    var errorMsg = $"Audio file not found for action '{action.Name}': {fnfEx.FileName}";
-                    logger?.LogError(fnfEx, "❌ {ErrorMessage}", errorMsg);
-                    OnActionExecutionError(action, fnfEx, errorMsg);
-                }
-                catch (Exception ex)
-                {
-                    var errorMsg = $"Error executing action #{action.Number} '{action.Name}': {ex.Message}";
-                    logger?.LogError(ex, "❌ {ErrorMessage}", errorMsg);
-                    OnActionExecutionError(action, ex, errorMsg);
-                }
-            }));
+            tasks.Add(ExecuteParallelActionAsync(action, startDelay, context));
 
             // Accumulate delay for next action
             cumulativeDelay += action.DelayAfterMs;
         }
 
         await Task.WhenAll(tasks).ConfigureAwait(false);  // Wait for all actions to complete
+    }
+
+    private async Task ExecuteParallelActionAsync(WorkflowAction action, int startDelay, ActionExecutionContext context)
+    {
+        try
+        {
+            // Wait before starting this action (staggered start)
+            if (startDelay > 0)
+            {
+                logger?.LogDebug("    ⏱ Action #{ActionNumber} waiting {StartDelay}ms before start...", action.Number, startDelay);
+                await Task.Delay(startDelay).ConfigureAwait(false);
+            }
+
+            await actionExecutor.ExecuteAsync(action, context).ConfigureAwait(false);
+        }
+        catch (FileNotFoundException fnfEx)
+        {
+            var errorMsg = $"Audio file not found for action '{action.Name}': {fnfEx.FileName}";
+            logger?.LogError(fnfEx, "❌ {ErrorMessage}", errorMsg);
+            OnActionExecutionError(action, fnfEx, errorMsg);
+        }
+        catch (Exception ex)
+        {
+            var errorMsg = $"Error executing action #{action.Number} '{action.Name}': {ex.Message}";
+            logger?.LogError(ex, "❌ {ErrorMessage}", errorMsg);
+            OnActionExecutionError(action, ex, errorMsg);
+        }
     }
 
     /// <summary>

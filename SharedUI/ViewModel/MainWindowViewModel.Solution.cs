@@ -7,8 +7,6 @@ using Domain;
 
 using Service;
 
-using System.Diagnostics;
-
 /// <summary>
 /// MainWindowViewModel - Solution and Project Management
 /// Handles solution lifecycle (New, Load, Save) and project management.
@@ -36,7 +34,7 @@ public partial class MainWindowViewModel
             value.Projects.Add(new Project { Name = "(Untitled Project)" });
         }
 
-        SolutionViewModel = new SolutionViewModel(value, _uiDispatcher, _ioService, _executionContext.SoundPlayer);
+        SolutionViewModel = new SolutionViewModel(value, _uiDispatcher, _ioService, _executionContext.SoundPlayer, _loggerFactory);
         HasSolution = value.Projects.Count > 0;
 
         // Auto-select first project if no project is selected
@@ -69,10 +67,7 @@ public partial class MainWindowViewModel
     {
         // Skip if IoService not available (WebApp/MAUI)
         if (_ioService is NullIoService)
-        {
-            Debug.WriteLine("⚠️ Save not supported on this platform");
             return;
-        }
 
         if (_isShuttingDown)
         {
@@ -96,19 +91,6 @@ public partial class MainWindowViewModel
             // Notify subscribers to sync their data before saving
             SolutionSaving?.Invoke(this, EventArgs.Empty);
 
-            // Debug: Log workflow actions before saving
-            foreach (var project in Solution.Projects)
-            {
-                foreach (var workflow in project.Workflows)
-                {
-                    Debug.WriteLine($"💾 Saving Workflow '{workflow.Name}' with {workflow.Actions.Count} actions:");
-                    foreach (var action in workflow.Actions)
-                    {
-                        Debug.WriteLine($"   - Action: {action.Name} (Type: {action.Type}, Id: {action.Id})");
-                    }
-                }
-            }
-
             var (success, path, error) = await _ioService.SaveAsync(Solution, CurrentSolutionPath).ConfigureAwait(false);
             if (success && path != null)
             {
@@ -117,7 +99,6 @@ public partial class MainWindowViewModel
                 {
                     CurrentSolutionPath = path;
                 });
-                Debug.WriteLine($"✅ Solution saved to {path}");
             }
             else if (!string.IsNullOrEmpty(error))
             {
@@ -173,7 +154,7 @@ public partial class MainWindowViewModel
             // ✅ Clear all selections to reset property panels across all pages
             ClearAllSelections();
 
-            await _mobaClient.ActivateProjectAsync(newProject).ConfigureAwait(false);
+            await _mobaRuntime.ActivateProjectAsync(newProject).ConfigureAwait(false);
 
             SaveSolutionCommand.NotifyCanExecuteChanged();
             ConnectCommand.NotifyCanExecuteChanged();
@@ -189,10 +170,7 @@ public partial class MainWindowViewModel
     {
         // Skip if IoService not available (WebApp/MAUI)
         if (_ioService is NullIoService)
-        {
-            Debug.WriteLine("⚠️ Load not supported on this platform");
             return;
-        }
 
         var (loadedSolution, path, error) = await _ioService.LoadAsync().ConfigureAwait(false);
 
@@ -216,10 +194,7 @@ public partial class MainWindowViewModel
     {
         // Skip if IoService not available (WebApp/MAUI)
         if (_ioService is NullIoService)
-        {
-            Debug.WriteLine("⚠️ Load not supported on this platform");
             return;
-        }
 
         var (loadedSolution, path, error) = await _ioService.LoadFromPathAsync(filePath).ConfigureAwait(false);
 
@@ -263,12 +238,8 @@ public partial class MainWindowViewModel
             {
                 // Auto-select first project after loading
                 SelectedProject = SolutionViewModel?.Projects.FirstOrDefault();
-                if (SelectedProject != null)
-                {
-                    Debug.WriteLine($"✅ Auto-selected first project: {SelectedProject.Name}");
-                }
 
-                _ = _mobaClient.ActivateProjectAsync(Solution.Projects[0]);
+                ObserveBackgroundTask(_mobaRuntime.ActivateProjectAsync(Solution.Projects[0]), "Activate project runtime");
             }
 
             SaveSolutionCommand.NotifyCanExecuteChanged();
@@ -279,9 +250,6 @@ public partial class MainWindowViewModel
 
             // Notify subscribers to load their data after loading
             SolutionLoaded?.Invoke(this, EventArgs.Empty);
-
-            Debug.WriteLine($"✅ Solution loaded: {path}");
-            Debug.WriteLine($"   Projects: {Solution.Projects.Count}, Journeys: {Solution.Projects.FirstOrDefault()?.Journeys.Count ?? 0}");
         }
         finally
         {
@@ -332,9 +300,7 @@ public partial class MainWindowViewModel
     /// </summary>
     private void LoadCities()
     {
-        // Cities are loaded from CityLibrary, NOT from Project
-        // This method can be removed or kept as no-op for backward compatibility
-        Debug.WriteLine("ℹ️ LoadCities called - Cities are loaded from CityLibrary on startup");
+        // Cities are loaded from CityLibrary on startup, not from the solution file.
     }
     #endregion
 }

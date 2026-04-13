@@ -80,7 +80,8 @@ public partial class HealthCheckService : IDisposable
         _logger.LogInformation("Starting periodic health checks every {Interval} seconds", intervalSeconds);
 
         _healthCheckTimer = new Timer(intervalSeconds * 1000);
-        _healthCheckTimer.Elapsed += async (_, _) => await PerformHealthCheckAsync();
+        _healthCheckTimer.Elapsed += (_, _) =>
+            PerformHealthCheckAsync().SafeFireAndForget(ex => _logger.LogError(ex, "Periodic health check failed"));
         _healthCheckTimer.AutoReset = true;
         _healthCheckTimer.Start();
     }

@@ -25,6 +25,7 @@ public interface IWorkflowService
     /// </summary>
     /// <param name="workflow">The workflow to execute</param>
     /// <param name="context">Execution context containing dependencies and state</param>
+    /// <param name="options">Optional execution behavior (e.g. stop after first failure in sequential mode).</param>
     /// <exception cref="ArgumentNullException">Thrown when workflow or context is null</exception>
-    Task ExecuteAsync(Workflow workflow, ActionExecutionContext context);
+    Task ExecuteAsync(Workflow workflow, ActionExecutionContext context, WorkflowExecutionOptions options = default);
 }

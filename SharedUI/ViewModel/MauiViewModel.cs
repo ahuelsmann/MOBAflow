@@ -2,6 +2,7 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend;
+using Backend.Interface;
 
 using Common.Configuration;
 using Common.Runtime;
@@ -11,15 +12,16 @@ using CommunityToolkit.Mvvm.Input;
 
 using Interface;
 
+using Microsoft.Extensions.Logging;
+
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 
 /// <summary>
 /// Mobile-optimized ViewModel for MAUI - focused on Z21 monitoring and feedback statistics.
 /// </summary>
 public sealed partial class MauiViewModel : ObservableObject
 {
-    private readonly IMobaClient _mobaClient;
+    private readonly IMobaRuntime _mobaRuntime;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly AppSettings _settings;
     private readonly ISettingsService _settingsService;
@@ -29,6 +31,7 @@ public sealed partial class MauiViewModel : ObservableObject
     private readonly IPhotoCaptureService _photoCaptureService;
     private readonly IRestApiClientRegistration? _restApiClientRegistration;
     private readonly INetworkProfileChangeNotifier _networkProfileChangeNotifier;
+    private readonly ILogger<MauiViewModel> _logger;
 
     private readonly object _networkChangeDebounceLock = new();
     private CancellationTokenSource? _networkChangeDebounceCts;
@@ -55,11 +58,16 @@ public sealed partial class MauiViewModel : ObservableObject
     /// <summary>Coalesces rapid platform connectivity notifications before re-running REST discovery.</summary>
     private const int NetworkChangeDebounceMilliseconds = 750;
 
+    private readonly SemaphoreSlim _initializationLock = new(1, 1);
+    private Task? _initializationTask;
+    private Task? _startupDiscoveryTask;
+    private Task? _restApiHealthCheckTask;
+
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MauiViewModel"/> class for the MAUI mobile client.
     /// </summary>
-    /// <param name="mobaClient">UI-facing client used to talk to the active MOBA runtime.</param>
+    /// <param name="mobaRuntime">In-process MOBA runtime (Z21, snapshots, feedback).</param>
     /// <param name="uiDispatcher">Dispatcher used to marshal updates back to the MAUI UI thread.</param>
     /// <param name="settings">Application settings used to initialize default values.</param>
     /// <param name="settingsService">Service used to persist updated settings.</param>
@@ -69,8 +77,9 @@ public sealed partial class MauiViewModel : ObservableObject
     /// <param name="photoCaptureService">Service used to capture photos on the device.</param>
     /// <param name="restApiClientRegistration">Optional: registers this app with the REST API for Overview client list (MAUI).</param>
     /// <param name="networkProfileChangeNotifier">Raises when device connectivity changes so cached LAN REST endpoints can be re-resolved.</param>
+    /// <param name="logger">Logger for diagnostics.</param>
     public MauiViewModel(
-        IMobaClient mobaClient,
+        IMobaRuntime mobaRuntime,
         IUiDispatcher uiDispatcher,
         AppSettings settings,
         ISettingsService settingsService,
@@ -79,9 +88,10 @@ public sealed partial class MauiViewModel : ObservableObject
         IPhotoUploadService photoUploadService,
         IPhotoCaptureService photoCaptureService,
         INetworkProfileChangeNotifier networkProfileChangeNotifier,
+        ILogger<MauiViewModel> logger,
         IRestApiClientRegistration? restApiClientRegistration = null)
     {
-        ArgumentNullException.ThrowIfNull(mobaClient);
+        ArgumentNullException.ThrowIfNull(mobaRuntime);
         ArgumentNullException.ThrowIfNull(uiDispatcher);
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(settingsService);
@@ -90,7 +100,8 @@ public sealed partial class MauiViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(photoUploadService);
         ArgumentNullException.ThrowIfNull(photoCaptureService);
         ArgumentNullException.ThrowIfNull(networkProfileChangeNotifier);
-        _mobaClient = mobaClient;
+        ArgumentNullException.ThrowIfNull(logger);
+        _mobaRuntime = mobaRuntime;
         _uiDispatcher = uiDispatcher;
         _settings = settings;
         _settingsService = settingsService;
@@ -99,28 +110,52 @@ public sealed partial class MauiViewModel : ObservableObject
         _photoUploadService = photoUploadService;
         _photoCaptureService = photoCaptureService;
         _networkProfileChangeNotifier = networkProfileChangeNotifier;
+        _logger = logger;
         _restApiClientRegistration = restApiClientRegistration;
 
+        _mobaRuntime.SnapshotChanged += OnRuntimeSnapshotChanged;
+        _mobaRuntime.FeedbackReceived += OnFeedbackReceived;
+    }
+
+    /// <summary>
+    /// Initializes the mobile view model after the MAUI page has appeared.
+    /// </summary>
+    /// <param name="cancellationToken">Cancels the initialization wait.</param>
+    public async Task InitializeAsync(CancellationToken cancellationToken = default)
+    {
+        Task initializationTask;
+
+        await _initializationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            _initializationTask ??= InitializeCoreAsync();
+            initializationTask = _initializationTask;
+        }
+        finally
+        {
+            _initializationLock.Release();
+        }
+
+        await initializationTask.WaitAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task InitializeCoreAsync()
+    {
         _networkProfileChangeNotifier.NetworkProfilePossiblyChanged += OnNetworkProfilePossiblyChanged;
         _networkProfileChangeNotifier.StartListening();
 
-        _mobaClient.SnapshotChanged += OnRuntimeSnapshotChanged;
-        _mobaClient.FeedbackReceived += OnFeedbackReceived;
+        await _uiDispatcher.InvokeOnUiAsync(() =>
+        {
+            LoadSettingsIntoViewModel();
+            ApplyRuntimeSnapshot(_mobaRuntime.Current);
+            InitializeStatistics();
+            return Task.CompletedTask;
+        }).ConfigureAwait(false);
 
-        // Initialize with loaded settings (settings were loaded in SettingsService constructor)
-        LoadSettingsIntoViewModel();
-        ApplyRuntimeSnapshot(_mobaClient.Current);
+        _startupDiscoveryTask ??= TryAutoDiscoverEndpointsAsync();
+        _restApiHealthCheckTask ??= RestApiHealthCheckLoopAsync();
 
-        // Auto-discover REST (awaited inside) and Z21 like Z21: discovery before trusting reachability
-        _ = TryAutoDiscoverEndpointsAsync();
-
-        // REST API health check: periodic every 30s (no immediate check — avoids stale saved IP before discovery)
-        StartRestApiHealthCheckLoop();
-
-        // Apply polling interval to runtime on startup (5 seconds - not configurable)
-        _mobaClient.SetSystemStatePollingInterval(5);
-
-        InitializeStatistics();
+        _mobaRuntime.SetSystemStatePollingInterval(5);
     }
 
     /// <summary>
@@ -158,7 +193,7 @@ public sealed partial class MauiViewModel : ObservableObject
                 {
                     if (!IsConnected && !string.IsNullOrWhiteSpace(Z21IpAddress))
                     {
-                        Debug.WriteLine("Z21 discovery did not find device; trying saved/default IP...");
+                        _logger.LogInformation("Z21 discovery did not find device; trying saved/default IP");
                         await ConnectCommand.ExecuteAsync(null).ConfigureAwait(false);
                     }
                 }).ConfigureAwait(false);
@@ -171,7 +206,7 @@ public sealed partial class MauiViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Auto-discovery failed: {ex.Message}");
+            _logger.LogWarning(ex, "Auto-discovery failed");
         }
     }
 
@@ -235,7 +270,7 @@ public sealed partial class MauiViewModel : ObservableObject
             token = _networkChangeDebounceCts.Token;
         }
 
-        _ = RunDebouncedNetworkChangeAsync(token);
+        RunInBackground(RunDebouncedNetworkChangeAsync(token), "Debounced network profile handling");
     }
 
     private async Task RunDebouncedNetworkChangeAsync(CancellationToken cancellationToken)
@@ -263,7 +298,7 @@ public sealed partial class MauiViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"REST discovery after network change: {ex.Message}");
+            _logger.LogWarning(ex, "REST discovery after network change failed");
         }
 
         await RefreshRestApiReachableAsync().ConfigureAwait(false);
@@ -275,13 +310,19 @@ public sealed partial class MauiViewModel : ObservableObject
     /// </summary>
     private void LoadSettingsIntoViewModel()
     {
-        Debug.WriteLine("═══════════════════════════════════════════════════════");
-        Debug.WriteLine("🔄 MauiViewModel.LoadSettingsIntoViewModel START");
-        Debug.WriteLine($"   AppSettings.Counter.CountOfFeedbackPoints: {_settings.Counter.CountOfFeedbackPoints}");
-        Debug.WriteLine($"   AppSettings.Counter.TargetLapCount: {_settings.Counter.TargetLapCount}");
-        Debug.WriteLine($"   AppSettings.Counter.UseTimerFilter: {_settings.Counter.UseTimerFilter}");
-        Debug.WriteLine($"   AppSettings.Counter.TimerIntervalSeconds: {_settings.Counter.TimerIntervalSeconds}");
-        
+        var countOfFeedbackPoints = Math.Max(_settings.Counter.CountOfFeedbackPoints, 1);
+        if (_settings.Counter.CountOfFeedbackPoints != countOfFeedbackPoints)
+        {
+            _settings.Counter.CountOfFeedbackPoints = countOfFeedbackPoints;
+        }
+
+        _logger.LogDebug(
+            "LoadSettingsIntoViewModel: CountOfFeedbackPoints={Count}, TargetLapCount={Target}, UseTimerFilter={UseTimer}, TimerIntervalSeconds={Interval}",
+            _settings.Counter.CountOfFeedbackPoints,
+            _settings.Counter.TargetLapCount,
+            _settings.Counter.UseTimerFilter,
+            _settings.Counter.TimerIntervalSeconds);
+
         // Z21: load from settings so UI shows last used IP and we can auto-connect when discovery fails
         if (!string.IsNullOrWhiteSpace(_settings.Z21.CurrentIpAddress))
         {
@@ -294,21 +335,20 @@ public sealed partial class MauiViewModel : ObservableObject
             RestApiIpAddress = _settings.RestApi.CurrentIpAddress.Trim();
             RestApiPort = _settings.RestApi.Port;
         }
-        CountOfFeedbackPoints = _settings.Counter.CountOfFeedbackPoints;
+        CountOfFeedbackPoints = countOfFeedbackPoints;
         GlobalTargetLapCount = _settings.Counter.TargetLapCount;
         UseTimerFilter = _settings.Counter.UseTimerFilter;
         TimerIntervalSeconds = _settings.Counter.TimerIntervalSeconds;
         
-        Debug.WriteLine("───────────────────────────────────────────────────────");
-        Debug.WriteLine("✅ Values loaded into ViewModel (REST: from settings as fallback, discovery can override):");
-        Debug.WriteLine($"   RestApiIpAddress: {RestApiIpAddress}");
-        Debug.WriteLine($"   RestApiPort: {RestApiPort}");
-        Debug.WriteLine($"   Z21IpAddress: {Z21IpAddress}");
-        Debug.WriteLine($"   CountOfFeedbackPoints: {CountOfFeedbackPoints}");
-        Debug.WriteLine($"   GlobalTargetLapCount: {GlobalTargetLapCount}");
-        Debug.WriteLine($"   UseTimerFilter: {UseTimerFilter}");
-        Debug.WriteLine($"   TimerIntervalSeconds: {TimerIntervalSeconds}s");
-        Debug.WriteLine("═══════════════════════════════════════════════════════");
+        _logger.LogDebug(
+            "Settings applied to ViewModel: RestApi={RestIp}:{RestPort}, Z21={Z21}, CountOfFeedbackPoints={Count}, GlobalTargetLapCount={Laps}, UseTimerFilter={Timer}, TimerIntervalSeconds={Interval}",
+            RestApiIpAddress,
+            RestApiPort,
+            Z21IpAddress,
+            CountOfFeedbackPoints,
+            GlobalTargetLapCount,
+            UseTimerFilter,
+            TimerIntervalSeconds);
     }
 
     #region REST-API Connection
@@ -328,13 +368,13 @@ public sealed partial class MauiViewModel : ObservableObject
     partial void OnRestApiIpAddressChanged(string value)
     {
         _ = value;
-        _ = RefreshRestApiReachableAsync();
+        RunInBackground(RefreshRestApiReachableAsync(), "Refresh REST reachability (IP changed)");
     }
 
     partial void OnRestApiPortChanged(int value)
     {
         _ = value;
-        _ = RefreshRestApiReachableAsync();
+        RunInBackground(RefreshRestApiReachableAsync(), "Refresh REST reachability (port changed)");
     }
 
     /// <summary>
@@ -343,7 +383,7 @@ public sealed partial class MauiViewModel : ObservableObject
     /// </summary>
     internal void StartRestApiHealthCheckLoop()
     {
-        _ = RestApiHealthCheckLoopAsync();
+        _restApiHealthCheckTask ??= RestApiHealthCheckLoopAsync();
     }
 
     /// <summary>
@@ -390,7 +430,7 @@ public sealed partial class MauiViewModel : ObservableObject
                     }
                     catch (Exception ex)
                     {
-                        Debug.WriteLine($"REST API re-discovery failed: {ex.Message}");
+                        _logger.LogWarning(ex, "REST API re-discovery failed");
                     }
                 }
             }
@@ -437,7 +477,9 @@ public sealed partial class MauiViewModel : ObservableObject
                 if (shouldRegister)
                 {
                     _lastRestApiRegisterTime = now;
-                    _ = _restApiClientRegistration.RegisterAsync(RestApiIpAddress, RestApiPort);
+                    RunInBackground(
+                        _restApiClientRegistration.RegisterAsync(RestApiIpAddress, RestApiPort),
+                        "REST API client registration");
                 }
             }
         }
@@ -483,7 +525,7 @@ public sealed partial class MauiViewModel : ObservableObject
         if (!string.IsNullOrWhiteSpace(value))
         {
             _settings.Z21.CurrentIpAddress = value.Trim();
-            _ = SaveSettingsAsync();
+            QueueSaveSettings();
         }
     }
 
@@ -501,26 +543,26 @@ public sealed partial class MauiViewModel : ObservableObject
 
         try
         {
-            await _mobaClient.ConnectAsync().ConfigureAwait(false);
+            await _mobaRuntime.ConnectAsync().ConfigureAwait(false);
         }
         catch (Exception ex)
         {
             _uiDispatcher.InvokeOnUi(() => Z21ConnectionStatus = $"Connection failed: {ex.Message}");
-            Debug.WriteLine($"Z21 Connection failed: {ex.Message}");
+            _logger.LogWarning(ex, "Z21 connection failed");
         }
     }
 
     [RelayCommand]
     private async Task DisconnectAsync()
     {
-        await _mobaClient.DisconnectAsync().ConfigureAwait(false);
+        await _mobaRuntime.DisconnectAsync().ConfigureAwait(false);
         _uiDispatcher.InvokeOnUi(() => Z21ConnectionStatus = null);
     }
 
     [RelayCommand]
     private async Task SetTrackPowerAsync(bool turnOn)
     {
-        await _mobaClient.SetTrackPowerAsync(turnOn).ConfigureAwait(false);
+        await _mobaRuntime.SetTrackPowerAsync(turnOn).ConfigureAwait(false);
     }
 
     #endregion
@@ -547,15 +589,15 @@ public sealed partial class MauiViewModel : ObservableObject
 
     partial void OnCountOfFeedbackPointsChanged(int value)
     {
-        Debug.WriteLine($"🔔 OnCountOfFeedbackPointsChanged: {value}");
+        _logger.LogTrace("OnCountOfFeedbackPointsChanged: {Value}", value);
         _settings.Counter.CountOfFeedbackPoints = value;
         InitializeStatistics();
-        _ = SaveSettingsAsync(); // Auto-save
+        QueueSaveSettings();
     }
 
     partial void OnGlobalTargetLapCountChanged(int value)
     {
-        Debug.WriteLine($"🔔 OnGlobalTargetLapCountChanged: {value}");
+        _logger.LogTrace("OnGlobalTargetLapCountChanged: {Value}", value);
         _settings.Counter.TargetLapCount = value;
         
         // Update all existing statistics
@@ -564,21 +606,21 @@ public sealed partial class MauiViewModel : ObservableObject
             stat.TargetLapCount = value;
         }
         
-        _ = SaveSettingsAsync(); // Auto-save
+        QueueSaveSettings();
     }
 
     partial void OnUseTimerFilterChanged(bool value)
     {
-        Debug.WriteLine($"🔔 OnUseTimerFilterChanged: {value}");
+        _logger.LogTrace("OnUseTimerFilterChanged: {Value}", value);
         _settings.Counter.UseTimerFilter = value;
-        _ = SaveSettingsAsync(); // Auto-save
+        QueueSaveSettings();
     }
 
     partial void OnTimerIntervalSecondsChanged(double value)
     {
-        Debug.WriteLine($"🔔 OnTimerIntervalSecondsChanged: {value}");
+        _logger.LogTrace("OnTimerIntervalSecondsChanged: {Value}", value);
         _settings.Counter.TimerIntervalSeconds = value;
-        _ = SaveSettingsAsync(); // Auto-save
+        QueueSaveSettings();
     }
 
     private void InitializeStatistics()
@@ -667,12 +709,32 @@ public sealed partial class MauiViewModel : ObservableObject
         try
         {
             await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
-            Debug.WriteLine("✅ Counter settings saved");
+            _logger.LogDebug("Counter settings saved");
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"❌ Failed to save settings: {ex.Message}");
+            _logger.LogWarning(ex, "Failed to save settings");
         }
+    }
+
+    private void QueueSaveSettings()
+    {
+        RunInBackground(SaveSettingsAsync(), "Persist MAUI settings");
+    }
+
+    private void RunInBackground(Task task, string operationName)
+    {
+        task.ContinueWith(
+            t =>
+            {
+                if (t.Exception != null)
+                {
+                    _logger.LogWarning(t.Exception.GetBaseException(), "{Operation} failed", operationName);
+                }
+            },
+            CancellationToken.None,
+            TaskContinuationOptions.OnlyOnFaulted,
+            TaskScheduler.Default);
     }
 
     #endregion
@@ -705,7 +767,7 @@ public sealed partial class MauiViewModel : ObservableObject
         if (snapshot.IsConnected && !previousConnectionState)
         {
             _settings.Z21.CurrentIpAddress = Z21IpAddress.Trim();
-            _ = SaveSettingsAsync();
+            QueueSaveSettings();
         }
     }
 

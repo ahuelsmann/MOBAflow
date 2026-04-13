@@ -15,7 +15,7 @@ using Service;
 /// Platform-independent: No UI thread dispatching (that's handled by platform-specific ViewModels).
 /// Uses SessionState to separate runtime state from domain objects.
 /// </summary>
-public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
+public class JourneyManager : JourneyFeedbackManagerBase
 {
     private readonly SemaphoreSlim _processingLock = new(1, 1);
     private readonly IWorkflowService _workflowService;
@@ -65,7 +65,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
         IWorkflowService workflowService,
         ActionExecutionContext? executionContext = null,
         ILogger<JourneyManager>? logger = null)
-    : base(z21, project.Journeys, executionContext)
+    : base(z21, project.Journeys, executionContext, logger)
     {
         _project = project;
         _workflowService = workflowService;
@@ -107,7 +107,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
 
                 _logger.LogInformation("Feedback received: InPort {InPort}", feedback.InPort);
 
-                foreach (var journey in Entities)
+                foreach (var journey in Journeys)
                 {
                     if (GetInPort(journey) == feedback.InPort)
                     {
@@ -270,6 +270,8 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
 
         ExecutionContext.JourneyTemplateText = journey.Text;
         ExecutionContext.CurrentStation = currentStation;
+        var stationIndex = journey.Stations.IndexOf(currentStation) + 1;
+        ExecutionContext.CurrentStationIndex = stationIndex > 0 ? stationIndex : 1;
         try
         {
             await _workflowService.ExecuteAsync(workflow, ExecutionContext).ConfigureAwait(false);
@@ -278,6 +280,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
         {
             ExecutionContext.JourneyTemplateText = null;
             ExecutionContext.CurrentStation = null;
+            ExecutionContext.CurrentStationIndex = null;
         }
     }
 
@@ -323,7 +326,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
     /// <inheritdoc/>
     public override void ResetAll()
     {
-        foreach (var journey in Entities)
+        foreach (var journey in Journeys)
         {
             Reset(journey);
         }

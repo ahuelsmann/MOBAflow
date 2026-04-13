@@ -2,6 +2,8 @@
 
 namespace Moba.Test.Backend;
 
+using Microsoft.Extensions.Logging.Abstractions;
+
 using Moba.Backend.Protocol;
 using Moba.Common.Events;
 using Mocks;
@@ -15,7 +17,7 @@ internal class Z21WrapperTests
     public async Task ConnectAsync_UsesWrapper_AndSendsHandshakeAndBroadcast()
     {
         var fake = new FakeUdpClientWrapper();
-        var eventBus = new EventBus();
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var z21 = new Z21(fake, eventBus);
 
         await z21.ConnectAsync(IPAddress.Loopback);
@@ -38,7 +40,7 @@ internal class Z21WrapperTests
     {
         using var signal = new ManualResetEventSlim(false);
         var fake = new FakeUdpClientWrapper();
-        var eventBus = new EventBus();
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var z21 = new Z21(fake, eventBus);
 
         FeedbackResult? captured = null;
@@ -63,7 +65,7 @@ internal class Z21WrapperTests
     {
         using var signal = new ManualResetEventSlim(false);
         var fake = new FakeUdpClientWrapper();
-        var eventBus = new EventBus();
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var z21 = new Z21(fake, eventBus);
         XBusStatus? status = null;
 

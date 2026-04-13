@@ -7,8 +7,6 @@ using Microsoft.UI.Xaml.Controls;
 
 using SharedUI.Shell;
 
-using System.Diagnostics;
-
 /// <summary>
 /// Navigation service for MOBAflow WinUI application.
 /// Handles page navigation via DI-resolved pages.
@@ -90,7 +88,7 @@ public class NavigationService : INavigationService
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Navigation failed: {ex.Message}");
+            _logger.LogError(ex, "Navigation to page tag '{Tag}' failed", tag);
             throw;
         }
 

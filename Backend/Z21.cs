@@ -2,16 +2,14 @@
 
 namespace Moba.Backend;
 
+using Common.Extension;
 using Common.Events;
-using CommunityToolkit.Mvvm.Messaging;
-using Domain.Message;
 using Interface;
 using Microsoft.Extensions.Logging;
 using Model;
 using Network;
 using Protocol;
 using Service;
-using System.Diagnostics;
 using System.Net;
 
 /// <summary>
@@ -244,7 +242,11 @@ public class Z21 : IZ21
         StopKeepaliveTimer();
 
         _keepaliveTimer = new Timer(
-            state => { _ = state; _ = SendKeepaliveAsync(); },
+            state =>
+            {
+                _ = state;
+                SendKeepaliveAsync().Observe(ex => _logger?.LogWarning(ex, "Send keepalive failed"));
+            },
             null,
             TimeSpan.FromSeconds(30),  // First keepalive after 30 seconds
             TimeSpan.FromSeconds(30)); // Subsequent keepalives every 30 seconds
@@ -336,10 +338,10 @@ public class Z21 : IZ21
         {
             // Normal during shutdown, don't log
         }
-        catch (InvalidOperationException ex) when (ex.Message.Contains("not connected"))
+        catch (UdpNotConnectedException ex)
         {
             // UDP disconnected during timer callback - this is expected during shutdown
-            _logger?.LogTrace("Keep-Alive skipped: {Message}", ex.Message);
+            _logger?.LogTrace(ex, "Keep-Alive skipped: UDP not connected");
         }
         catch (Exception ex)
         {
@@ -353,7 +355,7 @@ public class Z21 : IZ21
                     MaxKeepaliveFailures);
 
                 // Trigger disconnect on background thread to avoid deadlock
-                _ = Task.Run(async () => await HandleConnectionLostAsync().ConfigureAwait(false));
+                HandleConnectionLostAsync().Observe(ex => _logger?.LogWarning(ex, "Handle connection lost failed"));
             }
         }
     }
@@ -409,7 +411,11 @@ public class Z21 : IZ21
 
         var interval = TimeSpan.FromSeconds(_systemStatePollingIntervalSeconds);
         _systemStatePollingTimer = new Timer(
-            state => { _ = state; _ = SendSystemStateRequestAsync(); },
+            state =>
+            {
+                _ = state;
+                SendSystemStateRequestAsync().Observe(ex => _logger?.LogWarning(ex, "Send system state request failed"));
+            },
             null,
             interval,  // First poll after interval
             interval); // Subsequent polls at interval
@@ -461,10 +467,10 @@ public class Z21 : IZ21
         {
             // Normal during shutdown, don't log
         }
-        catch (InvalidOperationException ex) when (ex.Message.Contains("not connected"))
+        catch (UdpNotConnectedException ex)
         {
             // UDP disconnected during timer callback - this is expected during shutdown
-            _logger?.LogTrace("SystemState request skipped: {Message}", ex.Message);
+            _logger?.LogTrace(ex, "SystemState request skipped: UDP not connected");
         }
         catch (Exception ex)
         {
@@ -847,11 +853,6 @@ public class Z21 : IZ21
 
             PublishEventAsync(new FeedbackReceivedEvent(feedback.InPort));
 
-            // Publish via Messenger
-            WeakReferenceMessenger.Default.Send(
-                new FeedbackReceivedMessage((uint)feedback.InPort, content)
-            );
-
             _logger?.LogDebug("📍 R-Bus Feedback: InPort={InPort}", feedback.InPort);
             return;
         }
@@ -944,12 +945,11 @@ public class Z21 : IZ21
 
         _logger?.LogInformation("🔔 SimulateFeedback: InPort={InPort}, Group={Group}, Byte={ByteIndex}, Bit={BitPosition}, Subscribers={Count}",
             inPort, groupNumber, byteIndex, bitPosition, Received?.GetInvocationList().Length ?? 0);
-        Debug.WriteLine($"🔔 SimulateFeedback: InPort={inPort}, Group={groupNumber}, Byte={byteIndex}, Bit={bitPosition}, Subscribers={Received?.GetInvocationList().Length ?? 0}");
 
         Received?.Invoke(new FeedbackResult(simulatedContent));
         PublishEventAsync(new FeedbackReceivedEvent(inPort));
 
-        Debug.WriteLine($"✅ SimulateFeedback: Event invoked for InPort={inPort}");
+        _logger?.LogDebug("SimulateFeedback event invoked for InPort={InPort}", inPort);
     }
     #endregion
 
@@ -1060,26 +1060,26 @@ public class Z21 : IZ21
     /// </summary>
     public async Task SetExtAccessoryAsync(int extAccessoryAddress, int commandValue, CancellationToken cancellationToken = default)
     {
-        Debug.WriteLine($"[Z21.SetExtAccessory] START: Address={extAccessoryAddress}, Value={commandValue}");
+        _logger?.LogDebug("SetExtAccessory start: Address={Address}, Value={Value}", extAccessoryAddress, commandValue);
 
         if (extAccessoryAddress is < 0 or > 255)
         {
-            Debug.WriteLine($"[Z21.SetExtAccessory] ERROR: Invalid address {extAccessoryAddress}");
+            _logger?.LogWarning("SetExtAccessory invalid address: {Address}", extAccessoryAddress);
             throw new ArgumentOutOfRangeException(nameof(extAccessoryAddress), "Extended accessory address must be between 0 and 255");
         }
 
         if (commandValue is < 0 or > 255)
         {
-            Debug.WriteLine($"[Z21.SetExtAccessory] ERROR: Invalid command value {commandValue}");
+            _logger?.LogWarning("SetExtAccessory invalid command value: {CommandValue}", commandValue);
             throw new ArgumentOutOfRangeException(nameof(commandValue), "Command value must be between 0 and 255");
         }
 
         var command = Z21Command.BuildSetExtAccessory(extAccessoryAddress, commandValue);
-        Debug.WriteLine($"[Z21.SetExtAccessory] Command built: {string.Join(" ", command.Select(b => b.ToString("X2")))}");
+        _logger?.LogTrace("SetExtAccessory command built: {CommandBytes}", string.Join(" ", command.Select(b => b.ToString("X2"))));
 
         await SendAsync(command, cancellationToken).ConfigureAwait(false);
 
-        Debug.WriteLine("[Z21.SetExtAccessory] Command sent successfully");
+        _logger?.LogDebug("SetExtAccessory command sent successfully");
         _logger?.LogInformation("SetExtAccessory: Address={Address}, Value={Value}", extAccessoryAddress, commandValue);
     }
 
@@ -1161,5 +1161,6 @@ public class Z21 : IZ21
 
         _disposed = true;
     }
+
     #endregion
 }

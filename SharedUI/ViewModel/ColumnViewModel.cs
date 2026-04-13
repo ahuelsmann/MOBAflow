@@ -1,5 +1,8 @@
-using Moba.Common.Configuration;
+using System.Reflection;
+
 using CommunityToolkit.Mvvm.ComponentModel;
+
+using Moba.Common.Configuration;
 
 namespace Moba.SharedUI.ViewModel;
 
@@ -91,26 +94,20 @@ public class ColumnViewModel : ObservableObject
     /// <param name="columnDefinition">The column definition to apply the state to.</param>
     public void ApplyToColumnDefinition(object? columnDefinition)
     {
-        // Platform-specific implementations should override this method
-        // or handle the columnDefinition appropriately
-        if (columnDefinition is not null)
-        {
-            // Set width based on expanded state
-            var width = IsExpanded ? _width : 0;
-            
-            // Use reflection to set Width property if available
-            var widthProperty = columnDefinition.GetType().GetProperty("Width");
-            if (widthProperty != null)
-            {
-                // Try to create GridLength if the type exists
-                var gridLengthType = Type.GetType("Microsoft.UI.Xaml.GridLength");
-                if (gridLengthType != null)
-                {
-                    var gridLength = Activator.CreateInstance(gridLengthType, width);
-                    widthProperty.SetValue(columnDefinition, gridLength);
-                }
-            }
-        }
+        if (columnDefinition is null)
+            return;
+
+        var width = IsExpanded ? _width : 0;
+        var widthProperty = columnDefinition.GetType().GetProperty("Width", BindingFlags.Public | BindingFlags.Instance);
+        if (widthProperty is null || widthProperty.PropertyType is not { } gridLengthType)
+            return;
+
+        var ctor = gridLengthType.GetConstructor([typeof(double)]);
+        if (ctor is null)
+            return;
+
+        var gridLength = ctor.Invoke([width]);
+        widthProperty.SetValue(columnDefinition, gridLength);
     }
 
     /// <summary>
@@ -123,7 +120,7 @@ public class ColumnViewModel : ObservableObject
         if (columnDefinition is not null)
         {
             // Use reflection to get Width property
-            var widthProperty = columnDefinition.GetType().GetProperty("Width");
+            var widthProperty = columnDefinition.GetType().GetProperty("Width", BindingFlags.Public | BindingFlags.Instance);
             if (widthProperty != null)
             {
                 var widthValue = widthProperty.GetValue(columnDefinition);

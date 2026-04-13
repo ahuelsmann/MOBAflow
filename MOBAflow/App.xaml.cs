@@ -11,7 +11,6 @@ using Common.Events;
 using Common.Extension;
 using Common.Navigation;
 using Common.Serilog;
-using Controls.Docking.Workspace;
 using Converter;
 using Domain;
 using Microsoft.Extensions.Configuration;
@@ -19,6 +18,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
+using Moba.WinUI.Extensions;
 using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 using Serilog;
@@ -28,7 +28,6 @@ using SharedUI.Extensions;
 using SharedUI.Interface;
 using SharedUI.Shell;
 using Sound;
-using System.Diagnostics;
 using TrackLibrary.PikoA;
 using TrackPlan.Renderer;
 using View;
@@ -58,28 +57,18 @@ public partial class App
     {
         try
         {
-            Debug.WriteLine("[App] Constructor START");
-
             Services = ConfigureServices();
-            Debug.WriteLine("[App] Services configured");
-
             _logger = Services.GetRequiredService<ILogger<App>>();
-            Debug.WriteLine("[App] Logger resolved");
 
             InitializeComponent();
-            Debug.WriteLine("[App] InitializeComponent completed");
 
             // Register global UnhandledException handler for better diagnostics
             UnhandledException += OnUnhandledException;
-            Debug.WriteLine("[App] UnhandledException handler registered");
-
-            Debug.WriteLine("[App] Constructor COMPLETE");
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[App] FATAL ERROR: {ex.GetType().Name}: {ex.Message}");
-            Debug.WriteLine($"[App] StackTrace: {ex.StackTrace}");
-            _logger?.LogCritical(ex, "FATAL ERROR during App initialization");
+            // Serilog is configured first in ConfigureServices; use it when DI or ILogger<App> is not available yet.
+            Log.Fatal(ex, "FATAL ERROR during App initialization");
             throw;
         }
     }
@@ -90,10 +79,7 @@ public partial class App
         var message = $"UNHANDLED EXCEPTION: {e.Exception.GetType().Name}: {e.Exception.Message}";
         var stackTrace = e.Exception.StackTrace ?? "(no stack trace)";
 
-        Debug.WriteLine(message);
-        Debug.WriteLine(stackTrace);
-
-        _logger.LogCritical(e.Exception, "Unhandled exception in WinUI application");
+        _logger.LogCritical(e.Exception, "Unhandled exception in WinUI application: {Message}", message);
 
         // Mark as handled to prevent immediate termination (allows logging)
         // The debugger will still break due to App.g.i.cs handler
@@ -124,13 +110,16 @@ public partial class App
     {
         var services = new ServiceCollection();
 
+        // Serilog first so bootstrap diagnostics go to the same sinks as the rest of the app.
+        ConfigureSerilog();
+
         // Load appsettings.json configuration (fast, file-based)
         var basePath = AppContext.BaseDirectory;
         var devJsonPath = Path.Combine(basePath, "appsettings.Development.json");
         var devJsonExists = File.Exists(devJsonPath);
 
-        Debug.WriteLine($"[CONFIG] BaseDirectory: {basePath}");
-        Debug.WriteLine($"[CONFIG] appsettings.Development.json exists: {devJsonExists}");
+        Log.Information("CONFIG BaseDirectory: {BasePath}", basePath);
+        Log.Information("CONFIG appsettings.Development.json exists: {Exists}", devJsonExists);
 
         var configBuilder = new ConfigurationBuilder()
             .SetBasePath(basePath)
@@ -143,7 +132,7 @@ public partial class App
         // Add User Secrets in Development (for developers without Azure App Config)
 #if DEBUG
         configBuilder.AddUserSecrets<App>(optional: true);
-        Debug.WriteLine("[CONFIG] User Secrets loaded (if configured)");
+        Log.Information("CONFIG User Secrets loaded (if configured)");
 #endif
 
         // Add Azure App Configuration (if connection string is set)
@@ -153,22 +142,26 @@ public partial class App
             try
             {
                 configBuilder.AddAzureAppConfiguration(azureAppConfigConnection);
-                Debug.WriteLine("[CONFIG] Azure App Configuration loaded");
+                Log.Information("CONFIG Azure App Configuration loaded");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[CONFIG] Azure App Configuration failed: {ex.Message}");
+                Log.Warning(ex, "CONFIG Azure App Configuration failed");
             }
         }
         else
         {
-            Debug.WriteLine("[CONFIG] Azure App Configuration skipped (no connection string)");
+            Log.Information("CONFIG Azure App Configuration skipped (no connection string)");
         }
 
         var configuration = configBuilder.Build();
 
-        Debug.WriteLine($"[CONFIG] IsTrainControlPageAvailable: {configuration["FeatureToggles:IsTrainControlPageAvailable"]}");
-        Debug.WriteLine($"[CONFIG] IsTrackPlanEditorPageAvailable: {configuration["FeatureToggles:IsTrackPlanEditorPageAvailable"]}");
+        Log.Information(
+            "CONFIG IsTrainControlPageAvailable: {Value}",
+            configuration["FeatureToggles:IsTrainControlPageAvailable"]);
+        Log.Information(
+            "CONFIG IsTrackPlanEditorPageAvailable: {Value}",
+            configuration["FeatureToggles:IsTrackPlanEditorPageAvailable"]);
 
         // Register IConfiguration
         services.AddSingleton<IConfiguration>(configuration);
@@ -180,182 +173,10 @@ public partial class App
         // Register SpeechOptions (Sound service configuration)
         services.Configure<SpeechOptions>(configuration.GetSection("Speech"));
 
-        // Configure Serilog for file logging
-        ConfigureSerilog();
-
         // Logging (required by HealthCheckService and SpeechHealthCheck)
         services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(Log.Logger, dispose: true));
 
-        // UI thread dispatcher (platform-specific) – before EventBus, as decorator needs it
-        services.AddUiDispatcher();
-
-        // Event Bus mit UI-Thread-Marshalling: alle Handler laufen auf dem UI-Thread
-        services.AddEventBusWithUiDispatch();
-
-        services.AddSingleton<DockingWorkspaceService>();
-        services.AddSingleton<DockingLayoutService>();
-
-        // Navigation infrastructure - discover and register pages
-        // Pages (Auto-discovery + Custom DI)
-        var corePages = NavigationRegistration.RegisterPages(services);
-        services.AddSingleton(corePages);
-
-        // Feature toggle page list for dynamic Settings UI (based on NavigationRegistration)
-        services.AddSingleton<IFeatureTogglePageProvider>(sp =>
-            new FeatureTogglePageProvider(
-                sp.GetRequiredService<List<PageMetadata>>(),
-                sp.GetRequiredService<AppSettings>()));
-
-        // Register Speech Engine Factory for dynamic engine switching
-        services.AddSingleton<SpeakerEngineFactory>();
-
-        // Register ISpeakerEngine that uses factory (for ActionExecutionContext)
-        // This provides a default engine, but AnnouncementService will create fresh engines
-        services.AddSingleton<ISpeakerEngine>(sp =>
-        {
-            var factory = sp.GetRequiredService<SpeakerEngineFactory>();
-            return factory.CreateEngineFromOptions();
-        });
-
-        // Backend Services (Interfaces are in Backend.Interface and Backend.Network)
-        // Use shared extension method for platform-consistent registration
-        services.AddMobaBackendServices();
-        services.AddSingleton<ProjectRuntimeFactory>();
-        services.AddSingleton<IMobaRuntime, MobaRuntimeService>();
-        services.AddSingleton<IMobaClient, InProcessMobaClient>();
-
-        services.AddSingleton<IIoService, IoService>();
-        services.AddSingleton<IUiDispatcher, UiDispatcher>();
-        services.AddSingleton<PhotoHubClient>();  // Real-time photo notifications from MAUI
-
-        // HttpClient for REST API status polling (Overview page)
-        services.AddHttpClient();
-
-        // REST API status service (polls /api/status, updates ViewModel for Overview page)
-        services.AddSingleton<RestApiStatusService>(sp =>
-        {
-            var factory = sp.GetRequiredService<IHttpClientFactory>();
-            return new RestApiStatusService(
-                factory.CreateClient(),
-                sp.GetRequiredService<AppSettings>(),
-                sp.GetRequiredService<RestApiProcessService>(),
-                sp.GetRequiredService<PhotoHubClient>(),
-                sp.GetRequiredService<MainWindowViewModel>(),
-                sp.GetRequiredService<IUiDispatcher>(),
-                sp.GetRequiredService<ILogger<RestApiStatusService>>());
-        });
-
-        // RestApi process starter (when Auto-start enabled); in-process API no longer used
-        services.AddSingleton<RestApiProcessService>();
-
-        // ICityService mit DataManager (Stammdaten aus gemeinsamer Datei)
-        services.AddSingleton<ICityService>(sp =>
-        {
-            try
-            {
-                var dataManager = sp.GetRequiredService<DataManager>();
-                var logger = sp.GetRequiredService<ILogger<CityService>>();
-                return new CityService(dataManager, logger);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[DI] CityService failed, using NullCityService: {ex.Message}");
-                return new NullCityService();
-            }
-        });
-
-        // ILocomotiveService mit DataManager (Stammdaten aus gemeinsamer Datei)
-        services.AddSingleton<ILocomotiveService>(sp =>
-        {
-            try
-            {
-                var dataManager = sp.GetRequiredService<DataManager>();
-                var logger = sp.GetRequiredService<ILogger<LocomotiveService>>();
-                return new LocomotiveService(dataManager, logger);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[DI] LocomotiveService failed, using NullLocomotiveService: {ex.Message}");
-                return new NullLocomotiveService();
-            }
-        });
-
-        // Viessmann Multiplex-Signale aus data.json (Stellwerk ComboBox-Optionen)
-        services.AddSingleton<ViessmannSignalService>(sp =>
-            new ViessmannSignalService(sp.GetRequiredService<DataManager>()));
-
-        // ISettingsService with NullObject fallback
-        services.AddSingleton<ISettingsService>(sp =>
-        {
-            try
-            {
-                var appSettings = sp.GetRequiredService<AppSettings>();
-                var logger = sp.GetRequiredService<ILogger<SettingsService>>();
-                return new SettingsService(appSettings, logger);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[DI] SettingsService failed, using NullSettingsService: {ex.Message}");
-                return new NullSettingsService();
-            }
-        });
-
-        services.AddSingleton<NavigationService>();
-        services.AddSingleton<INavigationService>(sp => sp.GetRequiredService<NavigationService>());
-        services.AddSingleton<IPageFactory, PageFactory>();
-        services.AddSingleton<IShellService, ShellService>();
-
-        // Sound Services (required by HealthCheckService)
-        // HealthCheckService initialization deferred to PostStartupInitializationService
-        services.AddSingleton<ISoundPlayer, WindowsSoundPlayer>();
-        services.AddSingleton<HealthCheckService>();
-        // NOTE: SpeechHealthCheck and HealthCheckService are initialized during post-startup
-
-        // ViewModels
-        services.AddSingleton<LayoutColumnWidthsViewModel>();
-        services.AddSingleton(sp => new MainWindowViewModel(
-            sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
-            sp.GetRequiredService<IMobaClient>(),
-            sp.GetRequiredService<IEventBus>(),
-            sp.GetRequiredService<IUiDispatcher>(),
-            sp.GetRequiredService<AppSettings>(),
-            sp.GetRequiredService<Solution>(),
-            sp.GetRequiredService<ActionExecutionContext>(),
-            sp.GetRequiredService<ILogger<MainWindowViewModel>>(),
-            sp.GetRequiredService<IIoService>(),
-            sp.GetRequiredService<ICityService>(),
-            sp.GetRequiredService<ISettingsService>(),
-            sp.GetRequiredService<AnnouncementService>(),
-            sp.GetRequiredService<PhotoHubClient>(),
-            sp.GetService<IFeatureTogglePageProvider>()
-        ));
-
-        services.AddSingleton<JourneyMapViewModel>();
-        services.AddTransient<MonitorPageViewModel>();
-        services.AddSingleton<SkinSelectorViewModel>();
-        services.AddSingleton(sp => new TrainControlViewModel(
-            sp.GetRequiredService<IMobaClient>(),
-            sp.GetRequiredService<ISettingsService>(),
-            sp.GetRequiredService<MainWindowViewModel>(),
-            sp.GetService<ILogger<TrainControlViewModel>>(),
-            sp.GetService<IUiDispatcher>()
-        ));
-
-        // TrackPlan (model and ViewModel)
-        services.AddSingleton<TrackPlan>();
-        services.AddSingleton<TrackPlanViewModel>();
-        services.AddSingleton<EditableTrackPlan>();
-
-        // Skin Provider
-        services.AddSingleton<ISkinProvider, SkinProvider>();
-
-        // MainWindow (Singleton = one instance for app lifetime)
-        services.AddSingleton<MainWindow>();
-
-        // DEFERRED: PostStartupInitializationService (runs after MainWindow.Loaded)
-        // This calls pluginLoader.InitializePluginsAsync() to complete plugin initialization
-        services.AddSingleton<PostStartupInitializationService>();
-        services.AddSingleton<SpeechHealthCheck>();  // Lazy init in deferred service
+        services.AddMobaWinUiApplicationServices();
 
         return services.BuildServiceProvider();
     }
@@ -389,33 +210,25 @@ public partial class App
     {
         try
         {
-            Debug.WriteLine("[OnLaunched] START");
-
             // Load settings (including Layout) first so the singleton has persisted values before any View/ViewModel is created
             _ = Services.GetRequiredService<ISettingsService>();
-            Debug.WriteLine("[OnLaunched] Settings loaded (ISettingsService resolved)");
 
             // Initialize SkinProvider with saved settings before creating MainWindow
             var skinProvider = Services.GetRequiredService<ISkinProvider>();
-            Debug.WriteLine("[OnLaunched] SkinProvider resolved");
 
             var appSettings = Services.GetRequiredService<AppSettings>();
-            Debug.WriteLine("[OnLaunched] AppSettings resolved");
 
             PhotoPathToImageConverter.SetPhotoBasePath(appSettings.Application.PhotoStoragePath);
 
             skinProvider.Initialize(appSettings);
-            Debug.WriteLine("[OnLaunched] SkinProvider initialized");
 
             // Expose LayoutColumnWidths as app resource before MainWindow so pages can bind to it (e.g. TrackPlanPage with its own ViewModel)
             var layoutColumnWidths = Services.GetRequiredService<LayoutColumnWidthsViewModel>();
             Current.Resources["LayoutColumnWidths"] = layoutColumnWidths;
 
             _window = Services.GetRequiredService<MainWindow>();
-            Debug.WriteLine("[OnLaunched] MainWindow created");
 
             _window.Activate();
-            Debug.WriteLine("[OnLaunched] MainWindow activated");
 
             // DEFERRED INITIALIZATION (async, doesn't block UI):
             // After MainWindow is visible, start deferred services (incl. RestApi process when Auto-start enabled)
@@ -426,12 +239,10 @@ public partial class App
             AutoLoadLastSolutionAsync(((MainWindow)_window).ViewModel)
                 .SafeFireAndForget(ex => _logger.LogError(ex, "Auto-load last solution failed unexpectedly"));
 
-            Debug.WriteLine("[OnLaunched] COMPLETE");
+            _logger.LogInformation("Application UI launched (main window activated)");
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[OnLaunched] FATAL ERROR: {ex.GetType().Name}: {ex.Message}");
-            Debug.WriteLine($"[OnLaunched] StackTrace: {ex.StackTrace}");
             _logger.LogCritical(ex, "OnLaunched failed");
             throw;
         }

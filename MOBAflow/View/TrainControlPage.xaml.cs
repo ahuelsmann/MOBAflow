@@ -4,6 +4,8 @@ namespace Moba.WinUI.View;
 using Common.Configuration;
 using Controls;
 using Domain;
+using Microsoft.Extensions.Logging;
+using Moba.Common.Extension;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -12,7 +14,7 @@ using Service;
 using SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
 using System.ComponentModel;
-using System.Diagnostics;
+using System.Threading;
 using ViewModel;
 
 /// <summary>
@@ -43,6 +45,7 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
     private readonly ISkinProvider _skinProvider;
     private readonly AppSettings _settings;
     private readonly ISettingsService? _settingsService;
+    private readonly ILogger<TrainControlPage>? _logger;
     private List<LocomotiveSeries> _allLocomotives = [];
 
     /// <summary>
@@ -69,7 +72,8 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
         ISkinProvider skinProvider,
         AppSettings settings,
         SkinSelectorViewModel skinViewModel,
-        ISettingsService? settingsService = null)
+        ISettingsService? settingsService = null,
+        ILogger<TrainControlPage>? logger = null)
     {
         ArgumentNullException.ThrowIfNull(viewModel);
         ArgumentNullException.ThrowIfNull(locomotiveService);
@@ -82,6 +86,7 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
         _skinProvider = skinProvider;
         _settings = settings;
         _settingsService = settingsService;
+        _logger = logger;
         SkinViewModel = skinViewModel;
 
         InitializeComponent();
@@ -315,7 +320,7 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
         UpdateSpeedStepMarkers();
 
         // Load locomotes asynchronously (fire-and-forget with error handling)
-        _ = LoadLocomotivesAsync();
+        LoadLocomotivesAsync().Observe(ex => _logger?.LogWarning(ex, "Load locomotive series failed"));
 
         // Initialize AutoSuggestBox with saved locomotive series
         if (!string.IsNullOrEmpty(ViewModel.SelectedLocoSeries))
@@ -337,7 +342,7 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Failed to load locomotives: {ex.Message}");
+            _logger?.LogWarning(ex, "Failed to load locomotives");
             // Fail silently - app continues with empty list
         }
     }
@@ -406,19 +411,33 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
         }
     }
 
-    private async void FunctionButton_RightTapped(object sender, RightTappedRoutedEventArgs e)
+    private void FunctionButton_RightTapped(object sender, RightTappedRoutedEventArgs e)
     {
-        if (sender is not FrameworkElement fe || fe.Tag is not string tag || !int.TryParse(tag, out var functionIndex) || functionIndex < 0 || functionIndex > 20)
-            return;
+        _ = sender;
+        _ = e;
+        HandleFunctionButtonRightTappedAsync(sender).Observe(ex => _logger?.LogWarning(ex, "Function symbol selection failed"));
+    }
 
-        var picker = new FunctionSymbolPickerDialog();
-        picker.XamlRoot = XamlRoot;
-        await picker.ShowAsync();
-
-        if (picker.SelectedGlyph != null)
+    private async Task HandleFunctionButtonRightTappedAsync(object sender)
+    {
+        try
         {
-            if (!ViewModel.SetFunctionSymbol(functionIndex, picker.SelectedGlyph))
-                ViewModel.StatusMessage = $"Keine Lok mit Adresse {ViewModel.LocoAddress} im Projekt. Bitte zuerst eine Lok mit dieser Digitaladresse anlegen.";
+            if (sender is not FrameworkElement fe || fe.Tag is not string tag || !int.TryParse(tag, out var functionIndex) || functionIndex < 0 || functionIndex > 20)
+                return;
+
+            var picker = new FunctionSymbolPickerDialog();
+            picker.XamlRoot = XamlRoot;
+            await picker.ShowAsync();
+
+            if (picker.SelectedGlyph != null)
+            {
+                if (!ViewModel.SetFunctionSymbol(functionIndex, picker.SelectedGlyph))
+                    ViewModel.StatusMessage = $"Keine Lok mit Adresse {ViewModel.LocoAddress} im Projekt. Bitte zuerst eine Lok mit dieser Digitaladresse anlegen.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning(ex, "Function symbol selection failed");
         }
     }
 
@@ -440,15 +459,7 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
         UpdateSpeedometerScale();
         UpdateSpeedStepMarkers();
 
-        // Save settings asynchronously (fire-and-forget with error handling)
-        _ = SaveSpeedStepsSettingAsync()
-            .ContinueWith(task =>
-            {
-                if (task.IsFaulted)
-                {
-                    Debug.WriteLine($"Failed to save speed steps setting: {task.Exception?.InnerException?.Message}");
-                }
-            });
+        SaveSpeedStepsSettingAsync().Observe(ex => _logger?.LogWarning(ex, "Save speed step settings failed"));
     }
 
     private async Task SaveSpeedStepsSettingAsync()
@@ -467,4 +478,5 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
         // Update speedometer SpeedSteps property to trigger marker re-rendering
         _speedometer.SpeedSteps = (int)ViewModel.SpeedSteps;
     }
+
 }

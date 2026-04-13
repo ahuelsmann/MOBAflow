@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using Moba.Common.Configuration;
+using Moba.SharedUI.Interop;
 
 using System.ComponentModel;
 
@@ -78,26 +79,18 @@ public class PageLayoutViewModel : ObservableObject
     /// <param name="grid">The Grid whose columns should be updated.</param>
     public void ApplyToGrid(object? grid)
     {
-        if (grid is null) return;
+        if (grid is null || !WinUiGridInterop.TryGetColumnDefinitions(grid, out var columnDefinitions))
+            return;
 
-        // Use reflection to get ColumnDefinitions property
-        var columnDefinitionsProperty = grid.GetType().GetProperty("ColumnDefinitions");
-        if (columnDefinitionsProperty != null)
+        for (int i = 0; i < columnDefinitions.Count && i < Columns.Count; i++)
         {
-            var columnDefinitions = columnDefinitionsProperty.GetValue(grid) as System.Collections.IList;
-            if (columnDefinitions != null)
+            var columnName = GetColumnNameByIndex(i);
+
+            if (columnName != null && Columns.TryGetValue(columnName, out var column))
             {
-                for (int i = 0; i < columnDefinitions.Count && i < Columns.Count; i++)
-                {
-                    var columnName = GetColumnNameByIndex(i);
-                    
-                    if (columnName != null && Columns.TryGetValue(columnName, out var column))
-                    {
-                        var columnDefinition = columnDefinitions[i];
-                        if (columnDefinition != null)
-                            column.ApplyToColumnDefinition(columnDefinition);
-                    }
-                }
+                var columnDefinition = columnDefinitions[i];
+                if (columnDefinition != null)
+                    column.ApplyToColumnDefinition(columnDefinition);
             }
         }
     }
@@ -109,26 +102,18 @@ public class PageLayoutViewModel : ObservableObject
     /// <param name="grid">The Grid whose columns should be read.</param>
     public void UpdateFromGrid(object? grid)
     {
-        if (grid is null) return;
+        if (grid is null || !WinUiGridInterop.TryGetColumnDefinitions(grid, out var columnDefinitions))
+            return;
 
-        // Use reflection to get ColumnDefinitions property
-        var columnDefinitionsProperty = grid.GetType().GetProperty("ColumnDefinitions");
-        if (columnDefinitionsProperty != null)
+        for (int i = 0; i < columnDefinitions.Count && i < Columns.Count; i++)
         {
-            var columnDefinitions = columnDefinitionsProperty.GetValue(grid) as System.Collections.IList;
-            if (columnDefinitions != null)
+            var columnName = GetColumnNameByIndex(i);
+
+            if (columnName != null && Columns.TryGetValue(columnName, out var column))
             {
-                for (int i = 0; i < columnDefinitions.Count && i < Columns.Count; i++)
-                {
-                    var columnName = GetColumnNameByIndex(i);
-                    
-                    if (columnName != null && Columns.TryGetValue(columnName, out var column))
-                    {
-                        var columnDefinition = columnDefinitions[i];
-                        if (columnDefinition != null)
-                            column.UpdateFromColumnDefinition(columnDefinition);
-                    }
-                }
+                var columnDefinition = columnDefinitions[i];
+                if (columnDefinition != null)
+                    column.UpdateFromColumnDefinition(columnDefinition);
             }
         }
     }

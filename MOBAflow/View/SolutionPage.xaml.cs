@@ -1,8 +1,10 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Moba.Common.Extension;
 using Moba.SharedUI.ViewModel;
 
 /// <summary>
@@ -11,50 +13,66 @@ using Moba.SharedUI.ViewModel;
 internal sealed partial class SolutionPage
 {
     public MainWindowViewModel ViewModel { get; }
+    private readonly ILogger<SolutionPage>? _logger;
 
-    public SolutionPage(MainWindowViewModel viewModel)
+    public SolutionPage(MainWindowViewModel viewModel, ILogger<SolutionPage>? logger = null)
     {
         ViewModel = viewModel;
+        _logger = logger;
         InitializeComponent();
     }
 
-    private async void DeleteProjectButton_Click(object sender, RoutedEventArgs e)
+    private void DeleteProjectButton_Click(object sender, RoutedEventArgs e)
     {
-        if (ViewModel.SelectedProject == null)
-            return;
+        _ = sender;
+        _ = e;
+        HandleDeleteProjectButtonClickAsync().Observe(ex => _logger?.LogWarning(ex, "Delete project failed"));
+    }
 
-        var dialog = new ContentDialog
+    private async Task HandleDeleteProjectButtonClickAsync()
+    {
+        try
         {
-            XamlRoot = XamlRoot,
-            Title = "Projekt löschen",
-            Content = "Wollen Sie das Projekt wirklich löschen?",
-            PrimaryButtonText = "Ja",
-            SecondaryButtonText = "Nein",
-            DefaultButton = ContentDialogButton.Secondary
-        };
+            if (ViewModel.SelectedProject == null)
+                return;
 
-        if (await dialog.ShowAsync() != ContentDialogResult.Primary)
-            return;
+            var dialog = new ContentDialog
+            {
+                XamlRoot = XamlRoot,
+                Title = "Projekt löschen",
+                Content = "Wollen Sie das Projekt wirklich löschen?",
+                PrimaryButtonText = "Ja",
+                SecondaryButtonText = "Nein",
+                DefaultButton = ContentDialogButton.Secondary
+            };
 
-        // Create backup of current solution file (before deletion)
-        var solutionPath = ViewModel.CurrentSolutionPath;
-        if (!string.IsNullOrEmpty(solutionPath) && File.Exists(solutionPath))
-        {
-            try
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+                return;
+
+            // Create backup of current solution file (before deletion)
+            var solutionPath = ViewModel.CurrentSolutionPath;
+            if (!string.IsNullOrEmpty(solutionPath) && File.Exists(solutionPath))
             {
-                var dir = Path.GetDirectoryName(solutionPath);
-                var fileName = Path.GetFileNameWithoutExtension(solutionPath);
-                var ext = Path.GetExtension(solutionPath);
-                var backupPath = Path.Combine(dir ?? string.Empty, $"{fileName}.backup{ext}");
-                File.Copy(solutionPath, backupPath, overwrite: true);
+                try
+                {
+                    var dir = Path.GetDirectoryName(solutionPath);
+                    var fileName = Path.GetFileNameWithoutExtension(solutionPath);
+                    var ext = Path.GetExtension(solutionPath);
+                    var backupPath = Path.Combine(dir ?? string.Empty, $"{fileName}.backup{ext}");
+                    File.Copy(solutionPath, backupPath, overwrite: true);
+                }
+                catch
+                {
+                    // Backup failed – still perform deletion (user has confirmed)
+                }
             }
-            catch
-            {
-                // Backup failed – still perform deletion (user has confirmed)
-            }
+
+            if (ViewModel.DeleteProjectCommand.CanExecute(null))
+                ViewModel.DeleteProjectCommand.Execute(null);
         }
-
-        if (ViewModel.DeleteProjectCommand.CanExecute(null))
-            ViewModel.DeleteProjectCommand.Execute(null);
+        catch (Exception ex)
+        {
+            _logger?.LogWarning(ex, "Delete project failed");
+        }
     }
 }

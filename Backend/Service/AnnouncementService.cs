@@ -67,13 +67,26 @@ public class AnnouncementService
     /// <returns>Generated announcement text ready to speak</returns>
     public string GenerateAnnouncementText(Journey journey, Station station, int stationIndex)
     {
-        if (string.IsNullOrEmpty(journey.Text))
+        return GenerateAnnouncementText(journey.Text, station, stationIndex, journey.Name);
+    }
+
+    /// <summary>
+    /// Generates announcement text by replacing template placeholders with station data.
+    /// </summary>
+    /// <param name="templateText">Raw announcement template text.</param>
+    /// <param name="station">Station with data to substitute.</param>
+    /// <param name="stationIndex">Ordinal position of station in journey (1-based).</param>
+    /// <param name="templateName">Optional template name used for logging context.</param>
+    /// <returns>Generated announcement text ready to speak.</returns>
+    public string GenerateAnnouncementText(string? templateText, Station station, int stationIndex, string? templateName = null)
+    {
+        if (string.IsNullOrEmpty(templateText))
         {
-            _logger?.LogWarning("Journey '{JourneyName}' has no announcement template", journey.Name);
+            _logger?.LogWarning("Announcement template '{TemplateName}' is empty", templateName ?? "<unknown>");
             return string.Empty;
         }
 
-        var text = journey.Text;
+        var text = templateText;
 
         // Replace {StationName}
         text = ReplaceToken(text, "StationName", station.Name);
@@ -115,8 +128,26 @@ public class AnnouncementService
         int stationIndex,
         CancellationToken cancellationToken = default)
     {
+        await GenerateAndSpeakAnnouncementAsync(journey.Text, station, stationIndex, cancellationToken, journey.Name).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Generates announcement text and speaks it via speaker engine.
+    /// </summary>
+    /// <param name="templateText">Raw announcement template text.</param>
+    /// <param name="station">Station with data.</param>
+    /// <param name="stationIndex">Station position (1-based).</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <param name="templateName">Optional template name used for logging context.</param>
+    public async Task GenerateAndSpeakAnnouncementAsync(
+        string? templateText,
+        Station station,
+        int stationIndex,
+        CancellationToken cancellationToken = default,
+        string? templateName = null)
+    {
         // Generate text
-        var announcementText = GenerateAnnouncementText(journey, station, stationIndex);
+        var announcementText = GenerateAnnouncementText(templateText, station, stationIndex, templateName);
 
         if (string.IsNullOrEmpty(announcementText))
         {

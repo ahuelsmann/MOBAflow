@@ -36,3 +36,9 @@ dotnet test Test/Test.csproj
 ### .NET SDK
 
 The project requires .NET 10 SDK (pinned in `global.json` to 10.0.103 with `latestFeature` rollForward). Installed at `/usr/share/dotnet`.
+
+### Architecture notes (for agents)
+
+- Shared ViewModels use **`IMobaRuntime`** (`MobaRuntimeService`), not a separate `IMobaClient`.
+- Master JSON (`data.json`) is represented by **`MasterDataStore`** in Backend DI.
+- Up-to-date diagrams and DI examples: `docs/ARCHITECTURE.md` and `README.md` (runtime boundary).

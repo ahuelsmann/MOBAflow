@@ -6,8 +6,10 @@ using global::Android.App;
 using global::Android.Content.PM;
 using global::Android.OS;
 using global::Android.Views;
+using Moba.Common.Extension;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using SharedUI.ViewModel;
-using Debug = System.Diagnostics.Debug;
 
 [Activity(
     Theme = "@style/Maui.SplashTheme",
@@ -17,8 +19,15 @@ using Debug = System.Diagnostics.Debug;
     ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density)]
 public class MainActivity : MauiAppCompatActivity
 {
-    // MAUI handles splash screen theme switching automatically via Maui.SplashTheme
-    // No need to override OnCreate for theme switching
+    /// <summary>
+    /// Creates the Android activity without restoring a stale fragment hierarchy.
+    /// </summary>
+    /// <param name="savedInstanceState">The previously saved activity state.</param>
+    protected override void OnCreate(Bundle? savedInstanceState)
+    {
+        _ = savedInstanceState;
+        base.OnCreate(null);
+    }
 
     /// <summary>
     /// Called when the activity is being destroyed (app closing, back button, swipe away).
@@ -28,28 +37,31 @@ public class MainActivity : MauiAppCompatActivity
     /// </summary>
     protected override void OnDestroy()
     {
-        Debug.WriteLine("🔄 MainActivity: OnDestroy - Starting Z21 cleanup...");
+        var services = IPlatformApplication.Current?.Services;
+        var logger = services?.GetService<ILogger<MainActivity>>();
+        logger?.LogInformation("MainActivity OnDestroy: starting Z21 cleanup");
 
         try
         {
             // Get the MainWindowViewModel from DI and trigger cleanup
-            var viewModel = IPlatformApplication.Current?.Services.GetService<MainWindowViewModel>();
+            var viewModel = services?.GetService<MainWindowViewModel>();
             if (viewModel != null && viewModel.IsConnected)
             {
                 // Async-first: start cleanup without synchronously blocking the Android lifecycle thread
-                _ = CleanupAsync(viewModel);
+                CleanupAsync(viewModel, logger).Observe(
+                    ex => logger?.LogWarning(ex, "MainActivity Android cleanup failed"));
             }
 
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"⚠️ MainActivity: Cleanup error: {ex.Message}");
+            logger?.LogWarning(ex, "MainActivity cleanup error");
         }
 
         base.OnDestroy();
     }
 
-    private static async Task CleanupAsync(MainWindowViewModel viewModel)
+    private static async Task CleanupAsync(MainWindowViewModel viewModel, ILogger<MainActivity>? logger)
     {
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
 
@@ -61,22 +73,23 @@ public class MainActivity : MauiAppCompatActivity
             if (completed == disconnectTask)
             {
                 await disconnectTask.ConfigureAwait(false);
-                Debug.WriteLine("✅ MainActivity: Z21 cleanup complete");
+                logger?.LogInformation("MainActivity Z21 cleanup complete");
             }
             else
             {
-                Debug.WriteLine("⚠️ MainActivity: Cleanup timed out (2s)");
+                logger?.LogWarning("MainActivity cleanup timed out (2s)");
             }
         }
         catch (OperationCanceledException)
         {
-            Debug.WriteLine("⚠️ MainActivity: Cleanup canceled");
+            logger?.LogWarning("MainActivity cleanup canceled");
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"⚠️ MainActivity: Cleanup error: {ex.Message}");
+            logger?.LogWarning(ex, "MainActivity cleanup error");
         }
     }
+
 }
 
 

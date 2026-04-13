@@ -1,12 +1,14 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Domain;
 
-using Enum;
+using System.Text.Json.Serialization;
+using Moba.Domain.Enum;
 
 /// <summary>
 /// Workflow Action - Pure Data Object.
 /// Execution logic moved to ActionExecutor service in Backend.
 /// </summary>
+[JsonConverter(typeof(WorkflowActionJsonConverter))]
 public class WorkflowAction
 {
     /// <summary>
@@ -18,14 +20,14 @@ public class WorkflowAction
     /// Gets or sets the display name of the workflow action.
     /// </summary>
     public string Name { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// Execution order number (1-based).
     /// Automatically updated when actions are reordered via drag drop.
     /// Used for sorting actions before execution.
     /// </summary>
     public uint Number { get; set; }
-    
+
     /// <summary>
     /// Gets or sets the action type that defines the concrete behavior.
     /// </summary>
@@ -33,25 +35,34 @@ public class WorkflowAction
 
     /// <summary>
     /// Delay in milliseconds for timing control.
-    /// 
+    ///
     /// Sequential Mode: Pause AFTER this action completes (before next action starts).
     /// - Use for: Adding silence between actions (e.g., wait 1s after Gong before Announcement)
-    /// 
+    ///
     /// Parallel Mode: Start offset FROM previous action (cumulative).
     /// - Use for: Staggered overlapping effects (e.g., Gong at t=0, Announcement at t+500ms)
-    /// 
+    ///
     /// Default: 0 (no delay)
     /// </summary>
     public int DelayAfterMs { get; set; }
 
     /// <summary>
-    /// Action-specific parameters (polymorphic via <see cref="Type"/>).
-    /// Converters preserve the JSON structure during serialization and deserialization.
-    /// 
-    /// Examples:
-    /// - Command: {"Address": 123, "Speed": 80, "Direction": "Forward"}
-    /// - Audio: {"FilePath": "sound.wav"}
-    /// - Announcement: {"Message": "Train departing", "VoiceName": "de-DE-KatjaNeural"}
+    /// Payload for <see cref="ActionType.Command"/> actions.
     /// </summary>
-    public Dictionary<string, object>? Parameters { get; set; }
+    public CommandActionPayload? Command { get; set; }
+
+    /// <summary>
+    /// Payload for <see cref="ActionType.Audio"/> actions.
+    /// </summary>
+    public AudioActionPayload? Audio { get; set; }
+
+    /// <summary>
+    /// Payload for <see cref="ActionType.Announcement"/> actions.
+    /// </summary>
+    public AnnouncementActionPayload? Announcement { get; set; }
+
+    /// <summary>
+    /// Payload for <see cref="ActionType.ExecutePowerShellScript"/> actions.
+    /// </summary>
+    public PowerShellActionPayload? PowerShell { get; set; }
 }

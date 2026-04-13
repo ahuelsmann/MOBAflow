@@ -19,15 +19,26 @@ public sealed class AnnouncementViewModel : WorkflowActionViewModel
     /// Initializes a new instance of the <see cref="AnnouncementViewModel"/> class for the given workflow action.
     /// </summary>
     /// <param name="action">The underlying workflow action that defines this announcement.</param>
-    public AnnouncementViewModel(WorkflowAction action) : base(action, ActionType.Announcement) { }
+    public AnnouncementViewModel(WorkflowAction action) : base(action, ActionType.Announcement)
+    {
+        action.Announcement ??= new AnnouncementActionPayload();
+    }
+
+    private AnnouncementActionPayload AnnouncementPayload => UnderlyingAction.Announcement ??= new AnnouncementActionPayload();
 
     /// <summary>
     /// Text to be spoken (supports templates: {JourneyName}, {StationName}).
     /// </summary>
     public string Message
     {
-        get => GetParameter<string>("Message") ?? string.Empty;
-        set => SetParameter("Message", value);
+        get => AnnouncementPayload.Message ?? string.Empty;
+        set
+        {
+            if (AnnouncementPayload.Message == value)
+                return;
+            AnnouncementPayload.Message = value;
+            OnPropertyChanged();
+        }
     }
 
     /// <summary>
@@ -35,8 +46,14 @@ public sealed class AnnouncementViewModel : WorkflowActionViewModel
     /// </summary>
     public string VoiceName
     {
-        get => GetParameter<string>("VoiceName") ?? "de-DE-KatjaNeural";
-        set => SetParameter("VoiceName", value);
+        get => AnnouncementPayload.VoiceName ?? "de-DE-KatjaNeural";
+        set
+        {
+            if (AnnouncementPayload.VoiceName == value)
+                return;
+            AnnouncementPayload.VoiceName = value;
+            OnPropertyChanged();
+        }
     }
 
     /// <summary>
@@ -44,8 +61,14 @@ public sealed class AnnouncementViewModel : WorkflowActionViewModel
     /// </summary>
     public int Rate
     {
-        get => GetParameter<int>("Rate");
-        set => SetParameter("Rate", value);
+        get => AnnouncementPayload.Rate ?? 0;
+        set
+        {
+            if ((AnnouncementPayload.Rate ?? 0) == value)
+                return;
+            AnnouncementPayload.Rate = value;
+            OnPropertyChanged();
+        }
     }
 
     /// <summary>

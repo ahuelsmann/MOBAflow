@@ -18,7 +18,7 @@ public partial class MainWindowViewModel
 
             layout.SortMode = normalized;
             OnPropertyChanged();
-            _ = _settingsService?.SaveSettingsAsync(_settings);
+            PersistSettingsSafely();
         }
     }
 
@@ -46,7 +46,7 @@ public partial class MainWindowViewModel
         }
 
         state.IsExpanded = isExpanded;
-        _ = _settingsService?.SaveSettingsAsync(_settings);
+        PersistSettingsSafely();
     }
 
     public void MarkSettingsPageSectionUsed(string sectionKey)
@@ -59,7 +59,7 @@ public partial class MainWindowViewModel
         var state = GetOrCreateSettingsPageSectionState(sectionKey);
         state.UsageCount++;
         state.LastUsedUtc = DateTimeOffset.UtcNow;
-        _ = _settingsService?.SaveSettingsAsync(_settings);
+        PersistSettingsSafely();
     }
 
     public void SetSettingsPageSectionOrder(IReadOnlyList<string> orderedSectionKeys)
@@ -90,7 +90,7 @@ public partial class MainWindowViewModel
 
         if (changed)
         {
-            _ = _settingsService?.SaveSettingsAsync(_settings);
+            PersistSettingsSafely();
         }
     }
 

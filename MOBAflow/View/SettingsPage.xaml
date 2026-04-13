@@ -400,7 +400,7 @@
                     <StackPanel Padding="56,16,0,16" Spacing="16">
                         <TextBlock
                             Style="{StaticResource CaptionTextBlockStyle}"
-                            Text="Reset saved splitter positions, panel widths, Settings page section ordering, and the Docking preview layout back to their defaults. Open pages may need to be revisited to pick up the default layout."
+                            Text="Reset saved splitter positions, panel widths, and Settings page section ordering back to their defaults. Open pages may need to be revisited to pick up the default layout."
                             TextWrapping="Wrap" />
                         <Button
                             HorizontalAlignment="Left"

@@ -5,8 +5,11 @@ using Common.Configuration;
 using Common.Navigation;
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 using Moba.SharedUI.ViewModel;
+
+using Moba.WinUI.Controls.SignalBox;
 
 using SharedUI.Interface;
 
@@ -113,7 +116,10 @@ internal static class NavigationRegistration
         services.AddTransient<SignalBoxPage>(sp => new SignalBoxPage(
             sp.GetRequiredService<MainWindowViewModel>(),
             sp.GetRequiredService<ISkinProvider>(),
-            sp.GetRequiredService<SkinSelectorViewModel>()));
+            sp.GetRequiredService<SkinSelectorViewModel>(),
+            sp.GetRequiredService<ViessmannSignalService>(),
+            sp.GetService<ILogger<SignalBoxPropertiesControl>>(),
+            sp.GetService<ILogger<SignalBoxCanvasControl>>()));
         pages.Add(new PageMetadata(
             Tag: "signalbox",
             Title: "Signal Box",
@@ -124,21 +130,6 @@ internal static class NavigationRegistration
             FeatureToggleKey: "IsSignalBoxPageAvailable",
             BadgeLabelKey: "SignalBoxPageLabel",
             PathIconData: "M7,2 A2,2 0 1,1 11,2 A2,2 0 1,1 7,2 M3,10 A2,2 0 1,1 7,10 A2,2 0 1,1 3,10 M11,10 A2,2 0 1,1 15,10 A2,2 0 1,1 11,10",
-            IsBold: false));
-
-        // DockingPage: requires separate ViewModel registration
-        services.AddTransient<DockingPageViewModel>();
-        services.AddTransient<DockingPage>();
-        pages.Add(new PageMetadata(
-            Tag: "docking",
-            Title: "Docking",
-            Icon: null,
-            PageType: typeof(DockingPage),
-            Category: NavigationCategory.Monitoring,
-            Order: 20,
-            FeatureToggleKey: "IsDockingPageAvailable",
-            BadgeLabelKey: "DockingPageLabel",
-            PathIconData: "M2,3 L6,3 L6,7 L2,7 Z M8,3 L12,3 L12,7 L8,7 Z M2,9 L6,9 L6,13 L2,13 Z M8,9 L12,9 L12,13 L8,13 Z",
             IsBold: false));
 
         // Return sorted

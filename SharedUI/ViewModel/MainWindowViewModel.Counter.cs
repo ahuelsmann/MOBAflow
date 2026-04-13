@@ -5,7 +5,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 
 /// <summary>
 /// MainWindowViewModel - Counter/Statistics Features
@@ -110,8 +109,7 @@ public partial class MainWindowViewModel
         // Save to AppSettings (RAM)
         _settings.Counter.TargetLapCount = value;
 
-        // Persist to appsettings.json (Disk) - fire and forget
-        _settingsService?.SaveSettingsAsync(_settings);
+        PersistSettingsSafely();
 
         // Update all existing statistics when global target changes
         foreach (var stat in Statistics)
@@ -125,8 +123,7 @@ public partial class MainWindowViewModel
         // Save to AppSettings (RAM)
         _settings.Counter.UseTimerFilter = value;
 
-        // Persist to appsettings.json (Disk) - fire and forget
-        _settingsService?.SaveSettingsAsync(_settings);
+        PersistSettingsSafely();
     }
 
     partial void OnTimerIntervalSecondsChanged(double value)
@@ -134,18 +131,7 @@ public partial class MainWindowViewModel
         // Save to AppSettings (RAM)
         _settings.Counter.TimerIntervalSeconds = value;
 
-        Debug.WriteLine($"OnTimerIntervalSecondsChanged called. Value={value}, SettingsService={(_settingsService != null ? "EXISTS" : "NULL")}");
-
-        // Persist to appsettings.json (Disk) - fire and forget
-        if (_settingsService != null)
-        {
-            Debug.WriteLine($"Calling SaveSettingsAsync with TimerIntervalSeconds={value}");
-            _settingsService.SaveSettingsAsync(_settings);
-        }
-        else
-        {
-            Debug.WriteLine("SettingsService is NULL - cannot save.");
-        }
+        PersistSettingsSafely();
     }
 
     /// <summary>
@@ -196,7 +182,7 @@ public partial class MainWindowViewModel
             OnPropertyChanged(nameof(FilteredPassengerWagonLibrary));
             OnPropertyChanged(nameof(FilteredGoodsWagonLibrary));
 
-            _ = _mobaClient.ActivateProjectAsync(value.Model);
+            ObserveBackgroundTask(_mobaRuntime.ActivateProjectAsync(value.Model), "Activate project runtime");
         }
         else
         {

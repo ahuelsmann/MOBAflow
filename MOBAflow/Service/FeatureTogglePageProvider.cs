@@ -3,18 +3,16 @@ namespace Moba.WinUI.Service;
 
 using Common.Configuration;
 using Common.Navigation;
-using System.Reflection;
 
 /// <summary>
 /// Provides the list of feature-toggle pages based on NavigationRegistration.
-/// Filters to only pages whose FeatureToggleKey exists in FeatureToggleSettings.
+/// Filters to only pages whose FeatureToggleKey exists in <see cref="FeatureToggleRegistry"/>.
 /// </summary>
 internal sealed class FeatureTogglePageProvider : IFeatureTogglePageProvider
 {
     private readonly List<PageMetadata> _pages;
     private readonly AppSettings _appSettings;
     private readonly Lazy<IReadOnlyList<FeatureTogglePageInfo>> _toggleablePages;
-    private static readonly HashSet<string> ValidFeatureToggleKeys = GetValidFeatureToggleKeys();
 
     public FeatureTogglePageProvider(List<PageMetadata> pages, AppSettings appSettings)
     {
@@ -28,20 +26,10 @@ internal sealed class FeatureTogglePageProvider : IFeatureTogglePageProvider
     /// <inheritdoc />
     public IReadOnlyList<FeatureTogglePageInfo> GetToggleablePages() => _toggleablePages.Value;
 
-    private static HashSet<string> GetValidFeatureToggleKeys()
-    {
-        var props = typeof(FeatureToggleSettings)
-            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(p => p.PropertyType == typeof(bool) && p.Name.EndsWith("Available"))
-            .Select(p => p.Name)
-            .ToHashSet();
-        return props;
-    }
-
     private IReadOnlyList<FeatureTogglePageInfo> BuildToggleablePages()
     {
         return _pages
-            .Where(p => !string.IsNullOrEmpty(p.FeatureToggleKey) && ValidFeatureToggleKeys.Contains(p.FeatureToggleKey))
+            .Where(p => !string.IsNullOrEmpty(p.FeatureToggleKey) && FeatureToggleRegistry.PageAvailabilityKeys.Contains(p.FeatureToggleKey!))
             .Select(p => new FeatureTogglePageInfo(
                 Title: p.Title,
                 FeatureToggleKey: p.FeatureToggleKey!,
@@ -53,12 +41,6 @@ internal sealed class FeatureTogglePageProvider : IFeatureTogglePageProvider
             .ToList();
     }
 
-    private string? GetBadgeLabel(PageMetadata page)
-    {
-        if (string.IsNullOrEmpty(page.BadgeLabelKey)) return null;
-        var prop = typeof(FeatureToggleSettings).GetProperty(page.BadgeLabelKey);
-        if (prop == null) return null;
-        var value = prop.GetValue(_appSettings.FeatureToggles) as string;
-        return string.IsNullOrWhiteSpace(value) ? null : value;
-    }
+    private string? GetBadgeLabel(PageMetadata page) =>
+        FeatureToggleRegistry.GetBadgeLabel(_appSettings.FeatureToggles, page.BadgeLabelKey);
 }

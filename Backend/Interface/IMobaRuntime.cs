@@ -10,6 +10,7 @@ using Model;
 
 /// <summary>
 /// Defines the in-process MOBA runtime that owns Z21 connection state and active project execution.
+/// WinUI and MAUI inject this interface directly into SharedUI view models (no separate UI client facade).
 /// </summary>
 public interface IMobaRuntime
 {

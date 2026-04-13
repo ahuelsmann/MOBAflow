@@ -48,7 +48,6 @@ trigger: model_decision
   - `JourneyMapPage`
   - `InfoPage`
   - `HelpPage`
-  - `DockingPage`
 - For approved splitter pages, prefer the established explicit
   splitter-column pattern instead of layout heuristics.
 - Do not mix docking layout behavior with the normal page-splitter architecture.

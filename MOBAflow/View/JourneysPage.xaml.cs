@@ -2,6 +2,8 @@
 namespace Moba.WinUI.View;
 
 using Common.Configuration;
+using Microsoft.Extensions.Logging;
+using Moba.Common.Extension;
 using Domain;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -20,14 +22,20 @@ internal sealed partial class JourneysPage
 {
     private readonly AppSettings _settings;
     private readonly ISettingsService? _settingsService;
+    private readonly ILogger<JourneysPage>? _logger;
 
     public MainWindowViewModel ViewModel { get; }
 
-    public JourneysPage(MainWindowViewModel viewModel, AppSettings settings, ISettingsService? settingsService = null)
+    public JourneysPage(
+        MainWindowViewModel viewModel,
+        AppSettings settings,
+        ISettingsService? settingsService = null,
+        ILogger<JourneysPage>? logger = null)
     {
         ViewModel = viewModel;
         _settings = settings;
         _settingsService = settingsService;
+        _logger = logger;
         InitializeComponent();
         Loaded += OnPageLoaded;
         Unloaded += OnPageUnloaded;
@@ -105,14 +113,33 @@ internal sealed partial class JourneysPage
 
     private void OnPageLoaded(object sender, RoutedEventArgs e)
     {
+        ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+        ViewModel.PropertyChanged += ViewModel_PropertyChanged;
         RestoreLayout();
     }
 
-    private async void OnPageUnloaded(object sender, RoutedEventArgs e)
+    private void OnPageUnloaded(object sender, RoutedEventArgs e)
     {
-        SaveLayout();
-        if (_settingsService != null)
-            await _settingsService.SaveSettingsAsync(_settings);
+        _ = sender;
+        _ = e;
+        HandlePageUnloadedAsync().Observe(ex => _logger?.LogWarning(ex, "Persist layout on unload failed"));
+    }
+
+    private async Task HandlePageUnloadedAsync()
+    {
+        try
+        {
+            ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+            SaveLayout();
+            if (_settingsService != null)
+            {
+                await _settingsService.SaveSettingsAsync(_settings);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning(ex, "Persist layout on unload failed");
+        }
     }
 
     private void RestoreLayout()

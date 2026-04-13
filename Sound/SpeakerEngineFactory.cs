@@ -40,14 +40,17 @@ public class SpeakerEngineFactory
     /// <summary>
     /// Creates the appropriate speaker engine based on current configuration.
     /// </summary>
-    /// <param name="engineName">Engine name (e.g., "Azure Cognitive Services" or "System Speech (Windows SAPI)")</param>
+    /// <param name="engineName">
+    /// Engine id: <see cref="SpeechSpeakerEngineSelection.AzureCognitiveServices"/> or
+    /// <see cref="SpeechSpeakerEngineSelection.SystemSpeech"/>; legacy display strings
+    /// <see cref="SpeechSpeakerEngineSelection.LegacyAzureDisplayName"/> are still accepted.
+    /// </param>
     /// <returns>Configured speaker engine</returns>
     public ISpeakerEngine CreateEngine(string engineName)
     {
         _systemLogger.LogDebug("🔊 [FACTORY] Creating engine for: '{EngineName}'", engineName);
 
-        if (!string.IsNullOrEmpty(engineName) &&
-            engineName.Contains("Azure", StringComparison.OrdinalIgnoreCase))
+        if (SpeechSpeakerEngineSelection.ShouldUseAzureCognitive(engineName))
         {
             // Check if Azure credentials are available
             var options = _optionsMonitor.CurrentValue;

@@ -2,6 +2,7 @@
 namespace Moba.WinUI.Service;
 
 using Common.Configuration;
+using Moba.Common.Extension;
 
 using Microsoft.Extensions.Logging;
 
@@ -13,7 +14,7 @@ using System.Text.Json;
 using System.Timers;
 
 /// <summary>
-/// Polls the REST API (MOBApi process) status and updates MainWindowViewModel with status and connected clients.
+/// Polls the REST API (MOBApi process) status and updates <see cref="IRestApiStatusSink"/> with status and connected clients.
 /// When the API is reachable, connects PhotoHubClient so WinUI receives photo upload notifications and assigns the photo to the selected item.
 /// </summary>
 public sealed class RestApiStatusService : IDisposable
@@ -25,7 +26,7 @@ public sealed class RestApiStatusService : IDisposable
     private readonly AppSettings _appSettings;
     private readonly RestApiProcessService _restApiProcessService;
     private readonly PhotoHubClient _photoHubClient;
-    private readonly MainWindowViewModel _viewModel;
+    private readonly IRestApiStatusSink _statusSink;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly ILogger<RestApiStatusService> _logger;
     private readonly Timer _timer;
@@ -38,7 +39,7 @@ public sealed class RestApiStatusService : IDisposable
         AppSettings appSettings,
         RestApiProcessService restApiProcessService,
         PhotoHubClient photoHubClient,
-        MainWindowViewModel viewModel,
+        IRestApiStatusSink statusSink,
         IUiDispatcher uiDispatcher,
         ILogger<RestApiStatusService> logger)
     {
@@ -46,19 +47,20 @@ public sealed class RestApiStatusService : IDisposable
         _appSettings = appSettings;
         _restApiProcessService = restApiProcessService;
         _photoHubClient = photoHubClient;
-        _viewModel = viewModel;
+        _statusSink = statusSink;
         _uiDispatcher = uiDispatcher;
         _logger = logger;
         _httpClient.Timeout = TimeSpan.FromSeconds(5);
         _timer = new Timer(PollIntervalWhenWaitingMs);
-        _timer.Elapsed += (_, _) => _ = RefreshAsync();
+        _timer.Elapsed += (_, _) => QueueRefresh("Timer refresh");
 
         _restApiProcessService.ApiBecameReachable += OnRestApiBecameReachable;
+        _photoHubClient.PhotoUploaded += OnPhotoUploadedAsync;
     }
 
     private void OnRestApiBecameReachable(object? sender, int port)
     {
-        _ = RefreshAsync();
+        QueueRefresh("Reachability event refresh");
     }
 
     /// <summary>
@@ -67,7 +69,7 @@ public sealed class RestApiStatusService : IDisposable
     public void Start()
     {
         _timer.Start();
-        _ = RefreshAsync();
+        QueueRefresh("Service start refresh");
     }
 
     /// <summary>
@@ -107,7 +109,7 @@ public sealed class RestApiStatusService : IDisposable
                 var statusText = data != null
                     ? $"Running on port {data.Port}"
                     : $"Running on port {port}";
-                _uiDispatcher.InvokeOnUi(() => _viewModel.UpdateRestApiStatus(statusText, isReachable: true, clients));
+                _uiDispatcher.InvokeOnUi(() => _statusSink.UpdateRestApiStatus(statusText, isReachable: true, clients));
 
                 SetPollInterval(PollIntervalWhenReachableMs);
 
@@ -128,7 +130,7 @@ public sealed class RestApiStatusService : IDisposable
             else
             {
                 var statusText = BuildUnreachableStatusText(port);
-                _uiDispatcher.InvokeOnUi(() => _viewModel.UpdateRestApiStatus(statusText, false, null));
+                _uiDispatcher.InvokeOnUi(() => _statusSink.UpdateRestApiStatus(statusText, false, null));
                 SetPollInterval(_appSettings.Application.AutoStartWebApp
                     ? PollIntervalWhenWaitingMs
                     : PollIntervalWhenReachableMs);
@@ -143,7 +145,7 @@ public sealed class RestApiStatusService : IDisposable
             _logger.LogDebug(ex, "REST API status check failed");
             var portFallback = _appSettings.RestApi.Port > 0 ? _appSettings.RestApi.Port : 5001;
             var statusText = BuildUnreachableStatusText(portFallback);
-            _uiDispatcher.InvokeOnUi(() => _viewModel.UpdateRestApiStatus(statusText, false, null));
+            _uiDispatcher.InvokeOnUi(() => _statusSink.UpdateRestApiStatus(statusText, false, null));
             SetPollInterval(_appSettings.Application.AutoStartWebApp
                 ? PollIntervalWhenWaitingMs
                 : PollIntervalWhenReachableMs);
@@ -178,22 +180,33 @@ public sealed class RestApiStatusService : IDisposable
     public void Dispose()
     {
         _restApiProcessService.ApiBecameReachable -= OnRestApiBecameReachable;
+        _photoHubClient.PhotoUploaded -= OnPhotoUploadedAsync;
         _timer.Stop();
         _timer.Dispose();
         try { _disposeCts.Cancel(); } catch (ObjectDisposedException) { /* already disposed */ }
         _disposeCts.Dispose();
 
         // Disconnect SignalR so it doesn't keep the process alive on exit
-        try
+        DisposePhotoHubClientAsync().Observe(ex => _logger.LogDebug(ex, "PhotoHubClient disconnect during dispose"));
+    }
+
+    private void QueueRefresh(string operationName)
+    {
+        RefreshAsync().Observe(ex => _logger.LogDebug(ex, "{OperationName} failed", operationName));
+    }
+
+    private async Task DisposePhotoHubClientAsync()
+    {
+        var disposeTask = _photoHubClient.DisposeAsync().AsTask();
+        var completedTask = await Task.WhenAny(disposeTask, Task.Delay(TimeSpan.FromSeconds(3))).ConfigureAwait(false);
+
+        if (completedTask != disposeTask)
         {
-            var disposeTask = Task.Run(() => _photoHubClient.DisposeAsync().AsTask());
-            if (!disposeTask.Wait(TimeSpan.FromSeconds(3)))
-                _logger.LogDebug("PhotoHubClient disconnect timed out during app exit");
+            _logger.LogDebug("PhotoHubClient disconnect timed out during app exit");
+            return;
         }
-        catch (Exception ex)
-        {
-            _logger.LogDebug(ex, "PhotoHubClient disconnect during dispose");
-        }
+
+        await disposeTask.ConfigureAwait(false);
     }
 
     private sealed class StatusResponse
@@ -204,4 +217,34 @@ public sealed class RestApiStatusService : IDisposable
 
     /// <summary>REST status payload item; deserialized via primary constructor (avoids unused synthetic property setters).</summary>
     private sealed record ClientDto(string? ClientId, string? DeviceName, DateTime ConnectedAt);
+
+    /// <summary>
+    /// Applies a freshly uploaded photo path to the currently selected entity in WinUI.
+    /// </summary>
+    private Task OnPhotoUploadedAsync(string photoPath, DateTime uploadedAt)
+    {
+        _ = uploadedAt;
+
+        _uiDispatcher.InvokeOnUi(() =>
+        {
+            var target = _statusSink.AssignUploadedPhotoToSelectedEntity(photoPath);
+            switch (target)
+            {
+                case PhotoAssignmentTarget.Locomotive:
+                    _logger.LogInformation("Assigned uploaded photo to selected locomotive: {PhotoPath}", photoPath);
+                    break;
+                case PhotoAssignmentTarget.PassengerWagon:
+                    _logger.LogInformation("Assigned uploaded photo to selected passenger wagon: {PhotoPath}", photoPath);
+                    break;
+                case PhotoAssignmentTarget.GoodsWagon:
+                    _logger.LogInformation("Assigned uploaded photo to selected goods wagon: {PhotoPath}", photoPath);
+                    break;
+                default:
+                    _logger.LogDebug("Photo uploaded but no locomotive/wagon is selected. Path: {PhotoPath}", photoPath);
+                    break;
+            }
+        });
+
+        return Task.CompletedTask;
+    }
 }

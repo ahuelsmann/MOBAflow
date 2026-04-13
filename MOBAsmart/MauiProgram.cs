@@ -10,7 +10,6 @@ using Microsoft.Extensions.Logging;
 using Service;
 using SharedUI.Extensions;
 using SharedUI.Interface;
-using Moba.SharedUI.Service;
 using SharedUI.ViewModel;
 using Sound;
 using System.Net;
@@ -90,11 +89,10 @@ public static class MauiProgram
         // PERFORMANCE: Backend services (IZ21, WorkflowService, etc.) are configured
         // to defer connection/initialization until explicitly needed
         builder.Services.AddMobaBackendServices();
-        builder.Services.AddSingleton<ProjectRuntimeFactory>();
         builder.Services.AddSingleton<IMobaRuntime, MobaRuntimeService>();
-        builder.Services.AddSingleton<IMobaClient, InProcessMobaClient>();
 
         // Views
+        builder.Services.AddTransient<View.SplashPage>();
         builder.Services.AddTransient<MainPage>();
 
 #if DEBUG

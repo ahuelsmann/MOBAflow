@@ -4,16 +4,17 @@ namespace Moba.WinUI.View;
 using Common.Configuration;
 using Common.Navigation;
 
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
+using Moba.Common.Extension;
 using Service;
 
 using SharedUI.Interface;
 
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Reflection;
 
 using MainWindowViewModel = SharedUI.ViewModel.MainWindowViewModel;
@@ -31,6 +32,7 @@ public sealed partial class MainWindow
     private readonly List<PageMetadata> _pages;
     private readonly NavigationItemFactory _navigationItemFactory;
     private readonly ISkinProvider _skinProvider;
+    private readonly ILogger<MainWindow> _logger;
     private bool _isClosing;
     private bool _isShutdownInProgress;
 
@@ -67,12 +69,13 @@ public sealed partial class MainWindow
         AppSettings appSettings,
         ISkinProvider skinProvider,
         RestApiStatusService restApiStatusService,
-        RestApiProcessService restApiProcessService)
+        RestApiProcessService restApiProcessService,
+        ILogger<MainWindow> logger)
     {
+        ArgumentNullException.ThrowIfNull(logger);
+        _logger = logger;
         try
         {
-            Debug.WriteLine("[MainWindow] Constructor START");
-
             ViewModel = viewModel;
             _navigationService = navigationService;
             _uiDispatcher = uiDispatcher;
@@ -82,11 +85,7 @@ public sealed partial class MainWindow
             _navigationItemFactory = new NavigationItemFactory(appSettings);
             _skinProvider = skinProvider;
 
-            Debug.WriteLine("[MainWindow] Dependencies assigned");
-
             InitializeComponent();
-
-            Debug.WriteLine("[MainWindow] InitializeComponent completed");
 
             ConfigureWindowChrome();
             ConfigureWindowIconAndSizing();
@@ -96,13 +95,10 @@ public sealed partial class MainWindow
             ApplyTheme(ViewModel.IsDarkMode);
 
             _restApiStatusService.Start();
-
-            Debug.WriteLine("[MainWindow] Constructor COMPLETE");
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[MainWindow] FATAL ERROR: {ex.GetType().Name}: {ex.Message}");
-            Debug.WriteLine($"[MainWindow] StackTrace: {ex.StackTrace}");
+            _logger.LogCritical(ex, "MainWindow constructor failed");
             throw;
         }
     }
@@ -141,14 +137,12 @@ public sealed partial class MainWindow
         }
 
         winUiIoService.SetWindowId(AppWindow.Id, Content.XamlRoot);
-        Debug.WriteLine("[OK] IoService initialized with WindowId");
     }
 
     private void InitializeNavigation()
     {
         BuildNavigationFromRegistry();
-        Debug.WriteLine("[MainWindow] Navigation built");
-        _ = InitializeNavigationAsync();
+        InitializeNavigationAsync().Observe(ex => _logger.LogWarning(ex, "Initialize navigation failed"));
         MainNavigation.SelectedItem = MainNavigation.MenuItems.FirstOrDefault();
     }
 
@@ -157,6 +151,7 @@ public sealed partial class MainWindow
         ViewModel.ExitApplicationRequested += OnExitApplicationRequested;
         ViewModel.NavigationRequested += OnNavigationRequested;
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+        _navigationService.Navigated += OnNavigationServiceNavigated;
         Closed += MainWindow_Closed;
 
         if (AppWindow is not null)
@@ -209,8 +204,6 @@ public sealed partial class MainWindow
 
             lastCategory = page.Category;
         }
-
-        Debug.WriteLine($"[NAV] Built {MainNavigation.MenuItems.Count} navigation items from discovered pages");
     }
 
     /// <summary>
@@ -220,6 +213,7 @@ public sealed partial class MainWindow
     {
         await _navigationService.InitializeAsync(ContentFrame);
         await _navigationService.NavigateToOverviewAsync();
+        ViewModel.UpdateActivePhotoAssignmentPageTag(_navigationService.CurrentPageTag);
     }
 
     #region Event Handlers
@@ -259,11 +253,15 @@ public sealed partial class MainWindow
         _skinProvider.IsDarkMode = isDarkMode;
     }
 
-    private async void MainWindow_Closed(object sender, WindowEventArgs args)
+    private void MainWindow_Closed(object sender, WindowEventArgs args)
     {
         _ = sender;
         _ = args;
+        HandleMainWindowClosedAsync().Observe(ex => _logger.LogWarning(ex, "Main window closed handler failed"));
+    }
 
+    private async Task HandleMainWindowClosedAsync()
+    {
         if (_isClosing)
         {
             return;
@@ -283,7 +281,7 @@ public sealed partial class MainWindow
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[MainWindow] RestApiStatusService.Dispose: {ex.Message}");
+            _logger.LogWarning(ex, "RestApiStatusService.Dispose failed");
         }
 
         // 3) Stop RestApi child process so it doesn't outlive the app
@@ -293,7 +291,7 @@ public sealed partial class MainWindow
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[MainWindow] RestApiProcessService.Stop: {ex.Message}");
+            _logger.LogWarning(ex, "RestApiProcessService.Stop failed");
         }
 
         if (_healthCheckService != null)
@@ -306,16 +304,22 @@ public sealed partial class MainWindow
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[MainWindow] HealthCheckService.Dispose: {ex.Message}");
+                _logger.LogWarning(ex, "HealthCheckService.Dispose failed");
             }
         }
 
-        await ViewModel.PrepareForShutdownAsync();
+        try
+        {
+            await ViewModel.PrepareForShutdownAsync();
+            DetachWindowBindings();
 
-        DetachWindowBindings();
-
-        // Auto-save solution before closing to prevent data loss
-        await ViewModel.SaveSolutionInternalAsync();
+            // Auto-save solution before closing to prevent data loss
+            await ViewModel.SaveSolutionInternalAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Shutdown workflow failed");
+        }
 
         // WinUI 3 does not exit the process when the window is closed; we must exit explicitly.
         Application.Current.Exit();
@@ -326,7 +330,14 @@ public sealed partial class MainWindow
         ViewModel.ExitApplicationRequested -= OnExitApplicationRequested;
         ViewModel.NavigationRequested -= OnNavigationRequested;
         ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+        _navigationService.Navigated -= OnNavigationServiceNavigated;
         Closed -= MainWindow_Closed;
+    }
+
+    private void OnNavigationServiceNavigated(object? sender, SharedUI.Shell.NavigationEventArgs e)
+    {
+        _ = sender;
+        ViewModel.UpdateActivePhotoAssignmentPageTag(e.PageTag);
     }
 
     private void DetachWindowBindings()
@@ -344,17 +355,29 @@ public sealed partial class MainWindow
         Application.Current.Exit();
     }
 
-    private async void OnNavigationRequested(object? sender, string tag)
+    private void OnNavigationRequested(object? sender, string tag)
     {
         _ = sender; // Suppress unused parameter warning
-        await _navigationService.NavigateToPageAsync(tag);
+        HandleNavigationRequestedAsync(tag).Observe(ex => _logger.LogWarning(ex, "Navigation request failed"));
+    }
 
-        // Update NavigationView selection to match the navigated page
-        var navItem = MainNavigation.MenuItems.OfType<NavigationViewItem>()
-            .FirstOrDefault(item => string.Equals(item.Tag as string, tag, StringComparison.OrdinalIgnoreCase));
-        if (navItem != null)
+    private async Task HandleNavigationRequestedAsync(string tag)
+    {
+        try
         {
-            MainNavigation.SelectedItem = navItem;
+            await _navigationService.NavigateToPageAsync(tag);
+
+            // Update NavigationView selection to match the navigated page
+            var navItem = MainNavigation.MenuItems.OfType<NavigationViewItem>()
+                .FirstOrDefault(item => string.Equals(item.Tag as string, tag, StringComparison.OrdinalIgnoreCase));
+            if (navItem != null)
+            {
+                MainNavigation.SelectedItem = navItem;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Navigation request failed for {Tag}", tag);
         }
     }
 
@@ -364,12 +387,24 @@ public sealed partial class MainWindow
         _uiDispatcher.InvokeOnUi(() => ViewModel.UpdateHealthStatus(e.StatusMessage));
     }
 
-    private async void NavigationView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
+    private void NavigationView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
     {
         _ = sender; // Suppress unused parameter warning
-        if (args.InvokedItemContainer?.Tag is string tag)
+        HandleNavigationViewItemInvokedAsync(args).Observe(ex => _logger.LogWarning(ex, "Navigation item invoke failed"));
+    }
+
+    private async Task HandleNavigationViewItemInvokedAsync(NavigationViewItemInvokedEventArgs args)
+    {
+        try
         {
-            await _navigationService.NavigateToPageAsync(tag);
+            if (args.InvokedItemContainer?.Tag is string tag)
+            {
+                await _navigationService.NavigateToPageAsync(tag);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Navigation item invoke failed");
         }
     }
 
@@ -393,7 +428,7 @@ public sealed partial class MainWindow
     }
 
     // Ensure only one AppWindow.Closing subscription exists and it is inside the MainWindow constructor.
-    private async void OnAppWindowClosing(AppWindow sender, AppWindowClosingEventArgs args)
+    private void OnAppWindowClosing(AppWindow sender, AppWindowClosingEventArgs args)
     {
         if (_isShutdownInProgress)
         {
@@ -403,10 +438,18 @@ public sealed partial class MainWindow
         // Cancel the synchronous closing to allow async shutdown logic
         args.Cancel = true;
         _isShutdownInProgress = true;
+        HandleAppWindowClosingAsync(sender).Observe(ex => _logger.LogWarning(ex, "App window closing failed"));
+    }
 
+    private async Task HandleAppWindowClosingAsync(AppWindow sender)
+    {
         try
         {
             await ViewModel.PrepareForShutdownAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "AppWindow closing workflow failed");
         }
         finally
         {

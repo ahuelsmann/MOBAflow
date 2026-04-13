@@ -2,8 +2,11 @@
 
 namespace Moba.Test.Integration;
 
+using Microsoft.Extensions.Logging.Abstractions;
+
 using Moba.Backend.Service;
 using Moba.Common.Events;
+using Moba.Domain;
 using Moba.Domain.Enum;
 using Mocks;
 
@@ -25,7 +28,7 @@ internal class WorkflowExecutionEndToEndTests
     public void SetUp()
     {
         _fakeUdp = new FakeUdpClientWrapper();
-        _eventBus = new EventBus();
+        _eventBus = new EventBus(NullLogger<EventBus>.Instance);
         _z21 = new Z21(_fakeUdp, _eventBus);
         _actionExecutor = new ActionExecutor();
         _workflowService = new WorkflowService(_actionExecutor);
@@ -59,9 +62,9 @@ internal class WorkflowExecutionEndToEndTests
                     Number = 1,
                     Name = "Stop Train",
                     Type = ActionType.Command,
-                    Parameters = new Dictionary<string, object>
+                    Command = new CommandActionPayload
                     {
-                        { "Bytes", Convert.ToBase64String(new byte[] { 0x40, 0x00, 0x00, 0x00 }) }
+                        BytesBase64 = Convert.ToBase64String(new byte[] { 0x40, 0x00, 0x00, 0x00 })
                     }
                 }
             ]
@@ -90,9 +93,9 @@ internal class WorkflowExecutionEndToEndTests
                     Number = 1,
                     Name = "Action 1",
                     Type = ActionType.Command,
-                    Parameters = new Dictionary<string, object>
+                    Command = new CommandActionPayload
                     {
-                        { "Bytes", Convert.ToBase64String(new byte[] { 0x01 }) }
+                        BytesBase64 = Convert.ToBase64String(new byte[] { 0x01 })
                     }
                 },
                 new WorkflowAction
@@ -101,10 +104,7 @@ internal class WorkflowExecutionEndToEndTests
                     Number = 2,
                     Name = "Action 2",
                     Type = ActionType.Audio,
-                    Parameters = new Dictionary<string, object>
-                    {
-                        { "AudioFile", "test.mp3" }
-                    }
+                    Audio = new AudioActionPayload { FilePath = "test.mp3" }
                 },
                 new WorkflowAction
                 {
@@ -112,9 +112,9 @@ internal class WorkflowExecutionEndToEndTests
                     Number = 3,
                     Name = "Action 3",
                     Type = ActionType.Command,
-                    Parameters = new Dictionary<string, object>
+                    Command = new CommandActionPayload
                     {
-                        { "Bytes", Convert.ToBase64String(new byte[] { 0x03 }) }
+                        BytesBase64 = Convert.ToBase64String(new byte[] { 0x03 })
                     }
                 }
             ]
@@ -163,8 +163,7 @@ internal class WorkflowExecutionEndToEndTests
                     Id = Guid.NewGuid(),
                     Number = 1,
                     Name = "Invalid Action",
-                    Type = (ActionType)999, // Invalid type
-                    Parameters = []
+                    Type = (ActionType)999 // Invalid type
                 }
             ]
         };
@@ -193,9 +192,9 @@ internal class WorkflowExecutionEndToEndTests
                     Number = 1,
                     Name = "Set Track Power",
                     Type = ActionType.Command,
-                    Parameters = new Dictionary<string, object>
+                    Command = new CommandActionPayload
                     {
-                        { "Bytes", Convert.ToBase64String(new byte[] { 0x21, 0x81, 0x00, 0xA0 }) }
+                        BytesBase64 = Convert.ToBase64String(new byte[] { 0x21, 0x81, 0x00, 0xA0 })
                     }
                 }
             ]

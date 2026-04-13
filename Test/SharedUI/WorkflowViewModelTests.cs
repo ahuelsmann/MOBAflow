@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.SharedUI;
 
+using Moba.Domain;
 using Moba.Domain.Enum;
 using Moba.SharedUI.ViewModel;
 
@@ -120,7 +121,7 @@ internal class WorkflowViewModelTests
             Name = "Gong",
             Type = ActionType.Audio,
             Number = 1,
-            Parameters = new Dictionary<string, object> { ["FilePath"] = "gong.wav" }
+            Audio = new AudioActionPayload { FilePath = "gong.wav" }
         });
 
         var vm = new WorkflowViewModel(workflow);

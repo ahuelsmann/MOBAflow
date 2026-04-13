@@ -2,6 +2,7 @@
 namespace Moba.WinUI.Service;
 
 using System.Diagnostics;
+using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// Helper class for managing Windows Firewall rules for WebApp UDP Discovery and HTTP REST-API.
@@ -17,25 +18,20 @@ internal static class FirewallHelper
     /// Ensures Windows Firewall rules exist for WebApp UDP Discovery and REST-API.
     /// Creates rules if they don't exist, using netsh advfirewall command.
     /// </summary>
-    /// <returns>True if rules were created/verified successfully, false otherwise</returns>
-    public static bool EnsureFirewallRulesExist(int httpPort)
+    /// <param name="httpPort">TCP port for the REST API inbound rule.</param>
+    /// <param name="logger">Optional logger; failures are logged at warning level.</param>
+    /// <returns>True if rules were created or verified successfully; false if an error occurred.</returns>
+    public static bool EnsureFirewallRulesExist(int httpPort, ILogger? logger = null)
     {
         try
         {
-            Debug.WriteLine("🔥 Checking Windows Firewall rules for WebApp...");
-
             var httpRuleName = $"{RuleNameHttpPrefix} (Port {httpPort})";
 
             // Check and create UDP Discovery rule (Port 21106 Inbound)
             // Delete and recreate to ensure correct profile=any is applied
             if (FirewallRuleExists(RuleNameUdp))
             {
-                Debug.WriteLine($"   Updating UDP Discovery firewall rule (Port {UdpPort})...");
                 DeleteFirewallRule(RuleNameUdp);
-            }
-            else
-            {
-                Debug.WriteLine($"   Creating UDP Discovery firewall rule (Port {UdpPort})...");
             }
             CreateUdpFirewallRule();
 
@@ -43,23 +39,18 @@ internal static class FirewallHelper
             // Delete and recreate to ensure correct profile=any is applied
             if (FirewallRuleExists(httpRuleName))
             {
-                Debug.WriteLine($"   Updating HTTP REST-API firewall rule (Port {httpPort})...");
                 DeleteFirewallRule(httpRuleName);
-            }
-            else
-            {
-                Debug.WriteLine($"   Creating HTTP REST-API firewall rule (Port {httpPort})...");
             }
             CreateHttpFirewallRule(httpRuleName, httpPort);
 
-            Debug.WriteLine("✅ Windows Firewall rules verified");
             return true;
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"⚠️ Failed to create firewall rules: {ex.Message}");
-            Debug.WriteLine("   This is normal if running without admin rights.");
-            Debug.WriteLine("   Manually create firewall rules or run WinUI as Administrator once.");
+            logger?.LogWarning(ex,
+                "Failed to create or verify Windows Firewall rules for REST API (port {HttpPort}). " +
+                "This is normal without admin rights; create rules manually or run once as Administrator.",
+                httpPort);
             return false;
         }
     }
@@ -183,16 +174,6 @@ internal static class FirewallHelper
 
         using var process = Process.Start(psi);
         process?.WaitForExit();
-
-        if (process?.ExitCode == 0)
-        {
-            Debug.WriteLine("   ✅ Firewall rule created successfully");
-        }
-        else
-        {
-            Debug.WriteLine($"   ⚠️ Firewall rule creation failed (Exit Code: {process?.ExitCode})");
-            Debug.WriteLine("      Run WinUI as Administrator once to create firewall rules automatically");
-        }
     }
 
     /// <summary>
@@ -202,16 +183,12 @@ internal static class FirewallHelper
     {
         try
         {
-            Debug.WriteLine("🔥 Removing WebApp firewall rules...");
-
             ExecuteNetshCommand($"advfirewall firewall delete rule name=\"{RuleNameUdp}\"");
             ExecuteNetshCommand($"advfirewall firewall delete rule name=\"{RuleNameHttpPrefix} (Port 5000)\"");
-
-            Debug.WriteLine("✅ Firewall rules removed");
         }
-        catch (Exception ex)
+        catch
         {
-            Debug.WriteLine($"⚠️ Failed to remove firewall rules: {ex.Message}");
+            // Best-effort cleanup; ignore failures (often insufficient rights).
         }
     }
 }

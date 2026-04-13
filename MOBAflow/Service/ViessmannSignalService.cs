@@ -12,11 +12,11 @@ using Common.Multiplex;
 /// </summary>
 internal sealed class ViessmannSignalService
 {
-    private readonly DataManager _dataManager;
+    private readonly MasterDataStore _masterDataStore;
 
-    public ViessmannSignalService(DataManager dataManager)
+    public ViessmannSignalService(MasterDataStore masterDataStore)
     {
-        _dataManager = dataManager ?? throw new ArgumentNullException(nameof(dataManager));
+        _masterDataStore = masterDataStore ?? throw new ArgumentNullException(nameof(masterDataStore));
     }
 
     /// <summary>
@@ -27,7 +27,7 @@ internal sealed class ViessmannSignalService
     public IReadOnlyList<(string ArticleNumber, string DisplayName)> GetMainSignalOptions(string multiplexerArticleNumber)
     {
         _ = MultiplexerHelper.GetDefinition(multiplexerArticleNumber);
-        var fromData = _dataManager.MultiplexSignals;
+        var fromData = _masterDataStore.MultiplexSignals;
         var main = fromData
             .Where(s => string.Equals(s.Role, "main", StringComparison.OrdinalIgnoreCase))
             .Select(s => (s.ArticleNumber, $"{s.ArticleNumber} - {s.DisplayName}"))
@@ -52,7 +52,7 @@ internal sealed class ViessmannSignalService
         if (definition.DistantSignalArticleNumber == null)
             return [];
         var supportedArticles = definition.SignalAspectCommandsBySignalArticle.Keys;
-        var fromData = _dataManager.MultiplexSignals;
+        var fromData = _masterDataStore.MultiplexSignals;
         var distant = fromData
             .Where(s => string.Equals(s.Role, "distant", StringComparison.OrdinalIgnoreCase) && supportedArticles.Contains(s.ArticleNumber))
             .Select(s => (s.ArticleNumber, $"{s.ArticleNumber} - {s.DisplayName}"))

@@ -3,6 +3,7 @@
 namespace Moba.Common.Events;
 
 using System.Diagnostics;
+using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// Central event bus for publishing and subscribing to application-wide events.
@@ -52,6 +53,17 @@ public sealed class EventBus : IEventBus
     // Tuple: (subscription ID, WeakReference to target object, handler delegate)
     private readonly Dictionary<Type, List<(Guid Id, WeakReference<object>? TargetRef, Delegate Handler)>> _subscriptions = [];
     private readonly object _lock = new();
+    private readonly ILogger<EventBus> _logger;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EventBus"/> class.
+    /// </summary>
+    /// <param name="logger">Logger for handler failures (handlers are isolated; failures do not propagate).</param>
+    public EventBus(ILogger<EventBus> logger)
+    {
+        ArgumentNullException.ThrowIfNull(logger);
+        _logger = logger;
+    }
 
     /// <inheritdoc />
     public void Publish<TEvent>(TEvent @event) where TEvent : class, IEvent
@@ -75,8 +87,12 @@ public sealed class EventBus : IEventBus
                 }
                 catch (Exception ex)
                 {
-                    // Log but don't rethrow - other handlers should still execute
-                    Debug.WriteLine($"EventBus handler error for {eventType.Name}: {ex.Message}");
+                    // Isolate failures so other handlers still run; surface severity for diagnostics.
+                    _logger.LogError(ex, "EventBus handler failed for {EventType}", eventType.Name);
+                    if (Debugger.IsAttached)
+                    {
+                        Debug.WriteLine($"EventBus handler failed for {eventType.Name}: {ex}");
+                    }
                 }
             }
         }

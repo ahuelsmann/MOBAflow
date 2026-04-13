@@ -2,8 +2,11 @@
 
 namespace Moba.Test.Backend;
 
+using Microsoft.Extensions.Logging.Abstractions;
+
 using Moba.Backend.Service;
 using Moba.Common.Events;
+using Moba.Domain;
 using Moba.Domain.Enum;
 using Mocks;
 
@@ -25,7 +28,7 @@ internal class ActionExecutorTests
     {
         _actionExecutor = new ActionExecutor(); // No AnnouncementService for basic tests
         _fakeUdp = new FakeUdpClientWrapper();
-        _eventBus = new EventBus();
+        _eventBus = new EventBus(NullLogger<EventBus>.Instance);
         _z21 = new Z21(_fakeUdp, _eventBus);
 
         _context = new ActionExecutionContext
@@ -52,9 +55,9 @@ internal class ActionExecutorTests
             Number = 1,
             Name = "Test Command",
             Type = ActionType.Command,
-            Parameters = new Dictionary<string, object>
+            Command = new CommandActionPayload
             {
-                { "Bytes", Convert.ToBase64String(commandBytes) }
+                BytesBase64 = Convert.ToBase64String(commandBytes)
             }
         };
 
@@ -69,7 +72,7 @@ internal class ActionExecutorTests
     }
 
     [Test]
-    public void ExecuteAsync_WithCommandAction_MissingParameters_ShouldThrow()
+    public void ExecuteAsync_WithCommandAction_MissingCommandPayload_ShouldThrow()
     {
         // Arrange
         var action = new WorkflowAction
@@ -78,7 +81,7 @@ internal class ActionExecutorTests
             Number = 1,
             Name = "Invalid Command",
             Type = ActionType.Command,
-            Parameters = null
+            Command = null
         };
 
         // Act & Assert
@@ -95,10 +98,7 @@ internal class ActionExecutorTests
             Number = 2,
             Name = "Test Audio",
             Type = ActionType.Audio,
-            Parameters = new Dictionary<string, object>
-            {
-                { "AudioFile", "test.mp3" }
-            }
+            Audio = new AudioActionPayload { FilePath = "test.mp3" }
         };
 
         // Act & Assert
@@ -115,8 +115,7 @@ internal class ActionExecutorTests
             Id = Guid.NewGuid(),
             Number = 4,
             Name = "Unsupported Action",
-            Type = (ActionType)999,
-            Parameters = []
+            Type = (ActionType)999
         };
 
         // Act & Assert

@@ -4,24 +4,25 @@ using Common.Multiplex;
 
 using Domain;
 
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Moba.Common.Extension;
 
 using Moba.SharedUI.ViewModel;
 
 using Service;
 
 using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
 public sealed partial class SignalBoxPropertiesControl
 {
-    private readonly ViessmannSignalService _viessmannSignalService;
+    private ViessmannSignalService? _viessmannSignalService;
+    private ILogger<SignalBoxPropertiesControl>? _logger;
 
     public static readonly DependencyProperty ViewModelProperty = DependencyProperty.Register(
         nameof(ViewModel),
@@ -65,7 +66,19 @@ public sealed partial class SignalBoxPropertiesControl
     public SignalBoxPropertiesControl()
     {
         InitializeComponent();
-        _viessmannSignalService = App.Current.Services.GetRequiredService<ViessmannSignalService>();
+    }
+
+    /// <summary>
+    /// Wires runtime services from the hosting page. Required because WinUI instantiates this control from XAML
+    /// before constructor injection can supply dependencies.
+    /// </summary>
+    /// <param name="viessmannSignalService">Viessmann signal catalog and aspect helpers.</param>
+    /// <param name="logger">Optional logger for diagnostics.</param>
+    internal void AttachRuntimeServices(ViessmannSignalService viessmannSignalService, ILogger<SignalBoxPropertiesControl>? logger = null)
+    {
+        ArgumentNullException.ThrowIfNull(viessmannSignalService);
+        _viessmannSignalService = viessmannSignalService;
+        _logger = logger;
     }
 
     private static void OnSelectedElementChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -262,6 +275,12 @@ public sealed partial class SignalBoxPropertiesControl
 
     private void UpdateSignalArticleComboBoxes(SbSignal sig)
     {
+        var viessmann = _viessmannSignalService;
+        if (viessmann == null)
+        {
+            return;
+        }
+
         if (string.IsNullOrEmpty(sig.MultiplexerArticleNumber))
         {
             MainSignalComboBox.Items.Clear();
@@ -272,20 +291,20 @@ public sealed partial class SignalBoxPropertiesControl
         try
         {
             var def = MultiplexerHelper.GetDefinition(sig.MultiplexerArticleNumber);
-            UpdateMainSignalComboBox(sig, def.MainSignalArticleNumber);
-            UpdateDistantSignalComboBox(sig);
+            UpdateMainSignalComboBox(sig, def.MainSignalArticleNumber, viessmann);
+            UpdateDistantSignalComboBox(sig, viessmann);
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Error updating signal article ComboBoxes: {ex.Message}");
+            _logger?.LogWarning(ex, "Error updating signal article ComboBoxes");
         }
     }
 
-    private void UpdateMainSignalComboBox(SbSignal sig, string defaultMainSignalArticleNumber)
+    private void UpdateMainSignalComboBox(SbSignal sig, string defaultMainSignalArticleNumber, ViessmannSignalService viessmann)
     {
         MainSignalComboBox.SelectionChanged -= OnMainSignalSelected;
         MainSignalComboBox.Items.Clear();
-        foreach (var (articleNumber, displayName) in _viessmannSignalService.GetMainSignalOptions(sig.MultiplexerArticleNumber!))
+        foreach (var (articleNumber, displayName) in viessmann.GetMainSignalOptions(sig.MultiplexerArticleNumber!))
         {
             MainSignalComboBox.Items.Add(new ComboBoxItem { Content = displayName, Tag = articleNumber });
         }
@@ -307,11 +326,11 @@ public sealed partial class SignalBoxPropertiesControl
         }
     }
 
-    private void UpdateDistantSignalComboBox(SbSignal sig)
+    private void UpdateDistantSignalComboBox(SbSignal sig, ViessmannSignalService viessmann)
     {
         DistantSignalComboBox.SelectionChanged -= OnDistantSignalSelected;
         DistantSignalComboBox.Items.Clear();
-        foreach (var (articleNumber, displayName) in _viessmannSignalService.GetDistantSignalOptions(sig.MultiplexerArticleNumber!))
+        foreach (var (articleNumber, displayName) in viessmann.GetDistantSignalOptions(sig.MultiplexerArticleNumber!))
         {
             DistantSignalComboBox.Items.Add(new ComboBoxItem { Content = displayName, Tag = articleNumber });
         }
@@ -496,7 +515,8 @@ public sealed partial class SignalBoxPropertiesControl
             sig.SignalAspect = aspect;
             RequestVisualRefresh?.Invoke(this, sig);
             UpdateAspectButtons();
-            _ = SetSignalAspectAutomaticallyAsync(sig);
+            SetSignalAspectAutomaticallyAsync(sig).Observe(
+                ex => _logger?.LogWarning(ex, "Set signal aspect failed"));
         }
     }
 
@@ -785,4 +805,5 @@ public sealed partial class SignalBoxPropertiesControl
                 break;
         }
     }
+
 }

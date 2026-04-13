@@ -6,7 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 using Domain;
 using Domain.Enum;
 using Helper;
-using System.Diagnostics;
+using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// MainWindowViewModel - Workflow Management
@@ -60,7 +60,7 @@ public partial class MainWindowViewModel
             SelectedProject.Model.Workflows,
             SelectedProject.Workflows,
             () => new Workflow { Name = "New Workflow" },
-            model => new WorkflowViewModel(model));
+            model => new WorkflowViewModel(model, ioService: _ioService, soundPlayer: _executionContext.SoundPlayer, loggerFactory: _loggerFactory));
 
         // Subscribe to PropertyChanged for auto-save (consistent with other ViewModels)
         workflow.PropertyChanged += OnViewModelPropertyChanged;
@@ -69,7 +69,7 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(FilteredWorkflows));
         
         // Trigger auto-save after adding workflow
-        _ = SaveSolutionInternalAsync();
+        ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteWorkflow))]
@@ -92,7 +92,7 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(FilteredWorkflows));
         
         // Trigger auto-save after deleting workflow
-        _ = SaveSolutionInternalAsync();
+        ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
     }
 
     private bool CanDeleteWorkflow() => SelectedWorkflow != null;
@@ -109,10 +109,10 @@ public partial class MainWindowViewModel
             Name = "New Announcement",
             Number = (uint)(SelectedWorkflow.Model.Actions.Count + 1),
             Type = ActionType.Announcement,
-            Parameters = new Dictionary<string, object>
+            Announcement = new AnnouncementActionPayload
             {
-                ["Message"] = "Enter announcement text",
-                ["VoiceName"] = "de-DE-KatjaNeural"
+                Message = "Enter announcement text",
+                VoiceName = "de-DE-KatjaNeural"
             }
         };
 
@@ -121,7 +121,7 @@ public partial class MainWindowViewModel
         SelectedWorkflow.Actions.Add(viewModel);
         
         // Trigger auto-save after adding action
-        _ = SaveSolutionInternalAsync();
+        ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
     }
 
     [RelayCommand]
@@ -134,22 +134,18 @@ public partial class MainWindowViewModel
             Name = "New Command",
             Number = (uint)(SelectedWorkflow.Model.Actions.Count + 1),
             Type = ActionType.Command,
-            Parameters = new Dictionary<string, object>
+            Command = new CommandActionPayload
             {
-                ["Bytes"] = new byte[] { 0x00 }
+                BytesBase64 = Convert.ToBase64String(new byte[] { 0x00 })
             }
         };
 
         SelectedWorkflow.Model.Actions.Add(newAction);
-        var viewModel = new CommandViewModel(newAction);
+        var viewModel = new CommandViewModel(newAction, _loggerFactory?.CreateLogger<CommandViewModel>());
         SelectedWorkflow.Actions.Add(viewModel);
 
-        Debug.WriteLine($"➕ Added Command action '{newAction.Name}' to workflow '{SelectedWorkflow.Name}'");
-        Debug.WriteLine($"   Workflow now has {SelectedWorkflow.Model.Actions.Count} actions in Model");
-        Debug.WriteLine($"   Workflow now has {SelectedWorkflow.Actions.Count} actions in ViewModel");
-        
         // Trigger auto-save after adding action
-        _ = SaveSolutionInternalAsync();
+        ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
     }
 
     [RelayCommand]
@@ -162,9 +158,9 @@ public partial class MainWindowViewModel
             Name = "New Audio",
             Number = (uint)(SelectedWorkflow.Model.Actions.Count + 1),
             Type = ActionType.Audio,
-            Parameters = new Dictionary<string, object>
+            Audio = new AudioActionPayload
             {
-                ["FilePath"] = "sound.wav"
+                FilePath = "sound.wav"
             }
         };
 
@@ -173,7 +169,7 @@ public partial class MainWindowViewModel
         SelectedWorkflow.Actions.Add(viewModel);
         
         // Trigger auto-save after adding action
-        _ = SaveSolutionInternalAsync();
+        ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteAction))]
@@ -198,7 +194,7 @@ public partial class MainWindowViewModel
         SelectedAction = null;
         
         // Trigger auto-save after deleting action
-        _ = SaveSolutionInternalAsync();
+        ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
     }
 
     private bool CanDeleteAction() => SelectedAction != null;

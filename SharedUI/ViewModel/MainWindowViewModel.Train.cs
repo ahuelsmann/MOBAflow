@@ -55,7 +55,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        _ = SaveSolutionInternalAsync();
+        ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
     }
 
     partial void OnTrainSearchTextChanged(string value)
@@ -210,7 +210,7 @@ public partial class MainWindowViewModel
 
         item.RemoveCommand.Execute(null);
         OnPropertyChanged(nameof(SelectedVehicles));
-        _ = SaveSolutionInternalAsync();
+        ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
     }
 
     public void SynchronizeSelectedVehicles()
@@ -222,7 +222,7 @@ public partial class MainWindowViewModel
 
         SelectedTrain.SynchronizeVehiclesFromItems();
         OnPropertyChanged(nameof(SelectedVehicles));
-        _ = SaveSolutionInternalAsync();
+        ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
     }
 
     private void AddVehicleToSelectedTrain<TVehicle>(
@@ -238,6 +238,6 @@ public partial class MainWindowViewModel
 
         insertAction(SelectedTrain, vehicle, insertIndex);
         OnPropertyChanged(nameof(SelectedVehicles));
-        _ = SaveSolutionInternalAsync();
+        ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
     }
 }

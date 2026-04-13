@@ -15,7 +15,7 @@ public static class TrainClassLibrary
 
     /// <summary>
     /// Initialize the library by loading from the master data file (data.json).
-    /// Call this during app startup after DataManager is loaded.
+    /// Call this during app startup after the shared master data file (e.g. data.json) is loaded.
     /// </summary>
     /// <param name="jsonPath">Path to data.json</param>
     public static void Initialize(string jsonPath)

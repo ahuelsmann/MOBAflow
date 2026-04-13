@@ -21,7 +21,7 @@ internal class PostStartupInitializationService
     private readonly HealthCheckService _healthCheckService;
     private readonly MainWindow _mainWindow;
     private readonly AppSettings _appSettings;
-    private readonly DataManager _dataManager;
+    private readonly MasterDataStore _masterDataStore;
     private readonly RestApiProcessService _restApiProcessService;
     private readonly ILogger<PostStartupInitializationService> _logger;
 
@@ -30,7 +30,7 @@ internal class PostStartupInitializationService
         HealthCheckService healthCheckService,
         MainWindow mainWindow,
         AppSettings appSettings,
-        DataManager dataManager,
+        MasterDataStore masterDataStore,
         RestApiProcessService restApiProcessService,
         ILogger<PostStartupInitializationService> logger)
     {
@@ -38,7 +38,7 @@ internal class PostStartupInitializationService
         _healthCheckService = healthCheckService;
         _mainWindow = mainWindow;
         _appSettings = appSettings;
-        _dataManager = dataManager ?? throw new ArgumentNullException(nameof(dataManager));
+        _masterDataStore = masterDataStore ?? throw new ArgumentNullException(nameof(masterDataStore));
         _restApiProcessService = restApiProcessService;
         _logger = logger;
     }
@@ -102,7 +102,7 @@ internal class PostStartupInitializationService
     }
 
     /// <summary>
-    /// Loads the central master data file (Cities + Locomotives) into the DataManager,
+    /// Loads the central master data file (Cities + Locomotives) into the <see cref="MasterDataStore"/>,
     /// initializes the TrainClassLibrary from the same file and refreshes the City Library
     /// in the MainWindowViewModel so that the Journeys page shows the loaded cities.
     /// </summary>
@@ -117,12 +117,12 @@ internal class PostStartupInitializationService
             _logger.LogInformation("[PostStartup] Loading master data from {Path}", fullPath);
             _eventBus.Publish(new PostStartupStatusEvent(true, "Loading master data..."));
 
-            await _dataManager.LoadAsync(fullPath).ConfigureAwait(false);
+            await _masterDataStore.LoadAsync(fullPath).ConfigureAwait(false);
 
             MobaServiceCollectionExtensions.InitializeTrainClassLibrary(fullPath);
 
             _logger.LogInformation("[PostStartup] Master data loaded: {Cities} cities, {Locomotives} categories",
-                _dataManager.Cities.Count, _dataManager.Locomotives.Count);
+                _masterDataStore.Cities.Count, _masterDataStore.Locomotives.Count);
 
             // Refresh City Library in UI after master data has been loaded
             try

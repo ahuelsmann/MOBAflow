@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Interface;
 using TrackPlan.Renderer;
 using Common.Configuration;
+using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// ViewModel wrapper for <see cref="TrackPlan"/> used by the track plan editor UI.
@@ -13,6 +14,7 @@ public sealed class TrackPlanViewModel : ObservableObject, IViewModelWrapper<Tra
     private readonly TrackPlan _model;
     private readonly AppSettings _settings;
     private readonly ISettingsService _settingsService;
+    private readonly ILogger<TrackPlanViewModel> _logger;
     private bool _isToolboxExpanded;
     private bool _isPropertiesExpanded;
 
@@ -22,14 +24,17 @@ public sealed class TrackPlanViewModel : ObservableObject, IViewModelWrapper<Tra
     /// <param name="model">The track plan domain model.</param>
     /// <param name="settings">Application settings (layout persistence).</param>
     /// <param name="settingsService">Settings service for persisting layout changes.</param>
-    public TrackPlanViewModel(TrackPlan model, AppSettings settings, ISettingsService settingsService)
+    /// <param name="logger">Logger for persistence failures.</param>
+    public TrackPlanViewModel(TrackPlan model, AppSettings settings, ISettingsService settingsService, ILogger<TrackPlanViewModel> logger)
     {
         ArgumentNullException.ThrowIfNull(model);
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(settingsService);
+        ArgumentNullException.ThrowIfNull(logger);
         _model = model;
         _settings = settings;
         _settingsService = settingsService;
+        _logger = logger;
         _isToolboxExpanded = _settings.Layout.TrackPlanPage.IsToolboxExpanded;
         _isPropertiesExpanded = _settings.Layout.TrackPlanPage.IsPropertiesExpanded;
     }
@@ -48,7 +53,7 @@ public sealed class TrackPlanViewModel : ObservableObject, IViewModelWrapper<Tra
                 return;
 
             _settings.Layout.TrackPlanPage.IsToolboxExpanded = value;
-            _ = _settingsService.SaveSettingsAsync(_settings);
+            PersistSettingsSafely();
         }
     }
 
@@ -61,7 +66,22 @@ public sealed class TrackPlanViewModel : ObservableObject, IViewModelWrapper<Tra
                 return;
 
             _settings.Layout.TrackPlanPage.IsPropertiesExpanded = value;
-            _ = _settingsService.SaveSettingsAsync(_settings);
+            PersistSettingsSafely();
         }
+    }
+
+    private void PersistSettingsSafely()
+    {
+        _settingsService.SaveSettingsAsync(_settings).ContinueWith(
+            t =>
+            {
+                if (t.Exception != null)
+                {
+                    _logger.LogWarning(t.Exception.GetBaseException(), "Track plan layout settings save failed");
+                }
+            },
+            CancellationToken.None,
+            TaskContinuationOptions.OnlyOnFaulted,
+            TaskScheduler.Default);
     }
 }

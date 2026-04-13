@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Domain;
 
+using System.Text.Json;
+using Moba.Domain;
 using Moba.Domain.Enum;
 
 [TestFixture]
@@ -81,7 +83,7 @@ internal class WorkflowTests
     }
 
     [Test]
-    public void Actions_WithParameters_WorkCorrectly()
+    public void Actions_WithAnnouncementPayload_WorkCorrectly()
     {
         var workflow = new Workflow();
         var action = new WorkflowAction
@@ -90,10 +92,10 @@ internal class WorkflowTests
             Type = ActionType.Announcement,
             Number = 1,
             DelayAfterMs = 500,
-            Parameters = new Dictionary<string, object>
+            Announcement = new AnnouncementActionPayload
             {
-                ["Message"] = "Zug fährt ab",
-                ["VoiceName"] = "de-DE-KatjaNeural"
+                Message = "Zug fährt ab",
+                VoiceName = "de-DE-KatjaNeural"
             }
         };
 
@@ -103,7 +105,29 @@ internal class WorkflowTests
         Assert.That(workflow.Actions[0].Type, Is.EqualTo(ActionType.Announcement));
         Assert.That(workflow.Actions[0].Number, Is.EqualTo(1u));
         Assert.That(workflow.Actions[0].DelayAfterMs, Is.EqualTo(500));
-        Assert.That(workflow.Actions[0].Parameters, Is.Not.Null);
-        Assert.That(workflow.Actions[0].Parameters!["Message"], Is.EqualTo("Zug fährt ab"));
+        Assert.That(workflow.Actions[0].Announcement, Is.Not.Null);
+        Assert.That(workflow.Actions[0].Announcement!.Message, Is.EqualTo("Zug fährt ab"));
+    }
+
+    [Test]
+    public void WorkflowAction_LegacyParametersJson_MigratesToTypedPayload()
+    {
+        const string json = """
+            {
+              "id": "11111111-1111-1111-1111-111111111111",
+              "name": "Gong",
+              "number": 1,
+              "type": 2,
+              "delayAfterMs": 100,
+              "parameters": { "FilePath": "C:\\sounds\\gong.wav" }
+            }
+            """;
+
+        var action = JsonSerializer.Deserialize<WorkflowAction>(json, JsonOptions.Default);
+        Assert.That(action, Is.Not.Null);
+        Assert.That(action!.Type, Is.EqualTo(ActionType.Audio));
+        Assert.That(action.DelayAfterMs, Is.EqualTo(100));
+        Assert.That(action.Audio, Is.Not.Null);
+        Assert.That(action.Audio!.FilePath, Is.EqualTo(@"C:\sounds\gong.wav"));
     }
 }

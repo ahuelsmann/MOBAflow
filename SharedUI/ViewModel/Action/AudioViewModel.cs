@@ -31,15 +31,24 @@ public sealed partial class AudioViewModel : WorkflowActionViewModel
         ArgumentNullException.ThrowIfNull(ioService);
         _ioService = ioService;
         _soundPlayer = soundPlayer;
+        action.Audio ??= new AudioActionPayload();
     }
+
+    private AudioActionPayload AudioPayload => UnderlyingAction.Audio ??= new AudioActionPayload();
 
     /// <summary>
     /// Path to audio file (relative or absolute).
     /// </summary>
     public string FilePath
     {
-        get => GetParameter<string>("FilePath") ?? string.Empty;
-        set => SetParameter("FilePath", value);
+        get => AudioPayload.FilePath ?? string.Empty;
+        set
+        {
+            if (AudioPayload.FilePath == value)
+                return;
+            AudioPayload.FilePath = value;
+            OnPropertyChanged();
+        }
     }
 
     /// <summary>

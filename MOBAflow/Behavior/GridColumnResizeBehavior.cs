@@ -1,7 +1,8 @@
 namespace Moba.WinUI.Behavior;
 
 using Common.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+using Moba.Common.Extension;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -469,29 +470,39 @@ public sealed class GridColumnResizeBehavior : Behavior<Grid>
                 PersistWidth(i, width);
         }
 
-        _ = _settingsService.SaveSettingsAsync(_settings);
+        var hostVm = FindMainWindowViewModel(AssociatedObject as FrameworkElement);
+        _settingsService.SaveSettingsAsync(_settings).Observe(ex =>
+            hostVm?.UiShellLogger.LogWarning(ex, "Persist column widths failed"));
     }
 
     private LayoutColumnWidthsViewModel? GetLayoutColumnWidths()
     {
-        var app = Application.Current as App;
-        if (app != null)
+        var fe = AssociatedObject as FrameworkElement;
+        var fromVm = FindMainWindowViewModel(fe);
+        if (fromVm != null)
         {
-            var fromDi = app.Services.GetService<LayoutColumnWidthsViewModel>();
-            if (fromDi != null)
-                return fromDi;
-            if (app.Resources.TryGetValue("LayoutColumnWidths", out var res) && res is LayoutColumnWidthsViewModel fromRes)
-                return fromRes;
+            return fromVm.LayoutColumnWidths;
         }
 
-        // Fallback: from DataContext when the grid is under a page with MainWindowViewModel (e.g. JourneysPage)
-        var fe = AssociatedObject as FrameworkElement;
-        if (fe != null)
+        if (Application.Current?.Resources.TryGetValue("LayoutColumnWidths", out var res) == true &&
+            res is LayoutColumnWidthsViewModel fromResources)
         {
-            for (var current = fe; current != null; current = current.Parent as FrameworkElement)
+            return fromResources;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Finds a <see cref="MainWindowViewModel"/> in the visual tree (DataContext on self or ancestors).
+    /// </summary>
+    private static MainWindowViewModel? FindMainWindowViewModel(FrameworkElement? start)
+    {
+        for (var current = start; current != null; current = current.Parent as FrameworkElement)
+        {
+            if (current.DataContext is MainWindowViewModel mainVm)
             {
-                if (current.DataContext is MainWindowViewModel mainVm)
-                    return mainVm.LayoutColumnWidths;
+                return mainVm;
             }
         }
 
@@ -513,12 +524,19 @@ public sealed class GridColumnResizeBehavior : Behavior<Grid>
 
     private void EnsureServices()
     {
-        if (_settings != null)
+        if (_settings != null && _settingsService != null)
+        {
             return;
+        }
 
-        var app = Application.Current as App;
-        _settings = app?.Services.GetService<AppSettings>();
-        _settingsService = app?.Services.GetService<ISettingsService>();
+        var hostVm = FindMainWindowViewModel(AssociatedObject as FrameworkElement);
+        if (hostVm == null)
+        {
+            return;
+        }
+
+        _settings ??= hostVm.ApplicationSettings;
+        _settingsService ??= hostVm.SettingsPersistence;
     }
 
     private static double GetMaxWidth(ColumnDefinition column)

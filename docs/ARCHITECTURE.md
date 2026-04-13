@@ -79,7 +79,8 @@ public record Workflow(int Id, string Name, List<WorkflowAction> Actions, ...);
 - IMobaRuntime / MobaRuntimeService (authoritative runtime owner)
 - WorkflowService (Action Execution)
 - ActionExecutor (Action Implementation)
-- ProjectRuntimeFactory / ActiveProjectContext (runtime project activation)
+- `MasterDataStore` (shared cities/locomotives/multiplex master JSON, e.g. `data.json`)
+- `ActiveProjectContext` (runtime project activation inside `MobaRuntimeService`)
 - Runtime Snapshots (MobaRuntimeSnapshot, JourneyRuntimeSnapshot)
 - Configuration & Settings Management
 - Logging Infrastructure (Serilog)
@@ -126,7 +127,7 @@ public interface IActionExecutor
 
 - MainWindowViewModel (App State Management)
 - Page-specific ViewModels (JourneyViewModel, WorkflowViewModel, etc.)
-- IMobaClient / InProcessMobaClient (UI-facing runtime access)
+- ViewModels consume `IMobaRuntime` directly (no separate `IMobaClient` facade)
 - MVVM Commands & Converters
 - Observable Property Definitions
 
@@ -136,16 +137,16 @@ public interface IActionExecutor
 // Shared ViewModel consuming runtime snapshots
 public partial class MainWindowViewModel : ObservableObject
 {
-    private readonly IMobaClient _mobaClient;
+    private readonly IMobaRuntime _mobaRuntime;
     private readonly Solution _solution;
-    
+
     [ObservableProperty]
     private bool isConnected;
-    
+
     [RelayCommand]
     private async Task ConnectAsync()
     {
-        await _mobaClient.ConnectAsync();
+        await _mobaRuntime.ConnectAsync();
     }
 
     private void ApplyRuntimeSnapshot(MobaRuntimeSnapshot snapshot)
@@ -170,47 +171,37 @@ The runtime split now covers the shared shell and the remaining
 Z21-driven shared ViewModels:
 
 ```text
-MainWindowViewModel
+MainWindowViewModel / TrainControlViewModel / MauiViewModel
     ↓
-IMobaClient
-    ↓
-IMobaRuntime
+IMobaRuntime (MobaRuntimeService)
     ↓
 IZ21 / JourneyManager / WorkflowService
 ```
 
-**Current responsibilities of `IMobaRuntime`:**
+**Responsibilities of `IMobaRuntime` / `MobaRuntimeService`:**
 
 - Owns Z21 connection state, auto-connect, disconnect and track power
-- Owns active project execution via `ActiveProjectContext`
-- Owns `JourneyManager`, fail-safe latching and traffic monitor access
+- Owns active project execution via `ActiveProjectContext` and constructs
+  `JourneyManager` when a project is activated
+- Surfaces traffic monitor access, locomotive commands, multiplex signals,
+  journey reset, and fail-safe / operator-ack state
 - Publishes immutable runtime projections via `MobaRuntimeSnapshot`
-  including current system and locomotive state
+  (system, journeys, locomotives) and raises `FeedbackReceived` for UI consumers
+- Implementation is split into partial files under `Backend/Service/`
+  (`RuntimeApi`, `Z21Handlers`, `AutoConnect`, `StatusFormatting`, core snapshot/ctor)
 
-**Current responsibilities of `IMobaClient`:**
+**ViewModel wiring:**
 
-- Provides a UI-safe access point for commands, runtime snapshots,
-  locomotive control and feedback events
-- Hides whether the runtime is in-process or remote
-- Uses `InProcessMobaClient` today; a remote client can replace it
-  later without changing the ViewModels again
+- `MainWindowViewModel`, `TrainControlViewModel`, and `MauiViewModel` take
+  `IMobaRuntime` from DI (WinUI / MAUI hosts register `MobaRuntimeService` as the
+  singleton implementation)
+- Journey-related UI still receives state from snapshots rather than owning
+  `JourneyManager` directly
 
-**Current migration status:**
+**Transition note (editor vs runtime state):**
 
-- MainWindowViewModel now consumes IMobaClient instead of
-  orchestrating Z21 and JourneyManager directly
-- JourneyViewModel receives runtime state from snapshots instead of
-  directly from the runtime manager
-- TrainControlViewModel now routes locomotive drive/function/info
-  handling through IMobaClient and consumes runtime snapshots for
-  connection/system state
-- MauiViewModel now routes connect/disconnect/track-power through
-  IMobaClient and consumes runtime snapshots plus feedback events
-
-**Important transition note:**
-
-- `ProjectRuntimeFactory` currently still reuses the live `Project`
-  reference from the loaded `Solution`
+- The active runtime still uses the live `Project` reference from the loaded
+  `Solution`
 - This is still an intentionally incremental refactoring step to keep
   the migration safe
 - The next architectural step is a true runtime copy so editor state
@@ -262,7 +253,7 @@ IZ21 / JourneyManager / WorkflowService
 - **WinUI:** `AddEventBusWithUiDispatch()` bleibt fuer klassische
   UI-Events aktiv. `MainWindowViewModel` nutzt weiterhin EventBus-
   und View-basierte Statuspfade; `TrainControlViewModel` bezieht
-  Z21-nahe Laufzeitdaten jetzt ueber `IMobaClient`-Snapshots und
+  Z21-nahe Laufzeitdaten jetzt ueber `IMobaRuntime`-Snapshots und
   Runtime-Events statt direkt ueber EventBus-Subscriptions.
 - **Verbleibende Dispatcher-Nutzung:** Dort, wo Snapshot-/Runtime-
   Events oder View-Callbacks außerhalb des UI-Threads ankommen:
@@ -319,12 +310,12 @@ Z21 Station (UDP broadcast on Port 21105)
   ↓ (UDP packet)
 IZ21.ReceiveFeedback()
   ↓
-IMobaRuntime
+IMobaRuntime (MobaRuntimeService)
   ├─ JourneyManager processes feedback
   ├─ Runtime state is updated
   └─ MobaRuntimeSnapshot is published
   ↓
-IMobaClient.SnapshotChanged
+IMobaRuntime.SnapshotChanged
   ↓
 MainWindowViewModel.ApplyRuntimeSnapshot()
   ↓
@@ -339,11 +330,11 @@ User clicks Button (MOBAflow/MOBAsmart)
   ↓
 [RelayCommand] -> ViewModel Method
   ↓
-IMobaClient.ExecuteCommand()
+IMobaRuntime (e.g. ConnectAsync, SetTrackPowerAsync, SetLocomotiveDriveAsync)
   ↓
-IMobaRuntime
+IZ21 / JourneyManager / WorkflowService as appropriate
   ↓
-ActionExecutor.ExecuteActionAsync()
+ActionExecutor.ExecuteAsync() (workflow actions)
   ├─ Set Track Power
   ├─ Control Locomotive
   ├─ Play Sound
@@ -370,12 +361,12 @@ var services = new ServiceCollection();
 
 // Domain/Backend Services
 services.AddSingleton<Solution>();           // Domain
+services.AddSingleton<MasterDataStore>();    // Master data (data.json)
 services.AddSingleton<IZ21>(/* z21 impl */); // Backend Service
 services.AddSingleton<IMobaRuntime, MobaRuntimeService>();
-services.AddSingleton<WorkflowService>();    // Business Logic
+services.AddSingleton<IWorkflowService, WorkflowService>();
 
 // Presentation Layer
-services.AddSingleton<IMobaClient, InProcessMobaClient>();
 services.AddSingleton<MainWindowViewModel>(); // Shared ViewModel
 services.AddTransient<JourneyPage>();        // Platform-specific Pages
 
@@ -398,7 +389,7 @@ provider.GetRequiredService<MainWindowViewModel>()
 
 // DI Container resolves:
 MainWindowViewModel(
-    IMobaClient mobaClient,      // → Singleton instance
+    IMobaRuntime mobaRuntime,    // → Singleton MobaRuntimeService
     IEventBus eventBus,          // → Singleton instance
     Solution solution,           // → Singleton instance
     ...
@@ -408,6 +399,13 @@ MainWindowViewModel(
 ---
 
 ## 🛡️ Error Handling & Robustness
+
+### Event bus (`IEventBus`)
+
+- Handlers run sequentially per publish; one failing handler does **not** cancel
+  the others.
+- Failures are logged at **error** level; when a debugger is attached, an extra
+  `Debug.WriteLine` aids local diagnosis (see `Common/Events/IEventBus.cs`).
 
 ### Graceful Degradation
 

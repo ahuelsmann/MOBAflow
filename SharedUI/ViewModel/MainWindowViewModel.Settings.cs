@@ -5,10 +5,11 @@ using Common.Configuration;
 
 using CommunityToolkit.Mvvm.Input;
 
+using Microsoft.Extensions.Logging;
+
 using Domain;
 
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 
@@ -21,7 +22,7 @@ public partial class MainWindowViewModel
 {
     private void PersistSettings()
     {
-        _ = _settingsService?.SaveSettingsAsync(_settings);
+        PersistSettingsSafely();
     }
 
     private bool UpdateSetting<T>(
@@ -82,7 +83,7 @@ public partial class MainWindowViewModel
             {
                 _settings.Z21.CurrentIpAddress = value;
                 OnPropertyChanged();
-                _ = _settingsService?.SaveSettingsAsync(_settings);
+                PersistSettings();
             }
         }
     }
@@ -99,7 +100,7 @@ public partial class MainWindowViewModel
             {
                 _settings.Z21.DefaultPort = value;
                 OnPropertyChanged();
-                _ = _settingsService?.SaveSettingsAsync(_settings);
+                PersistSettings();
             }
         }
     }
@@ -116,7 +117,7 @@ public partial class MainWindowViewModel
             {
                 _settings.Z21.AutoConnectRetryIntervalSeconds = (int)value;
                 OnPropertyChanged();
-                _ = _settingsService?.SaveSettingsAsync(_settings);
+                PersistSettings();
             }
         }
     }
@@ -133,7 +134,7 @@ public partial class MainWindowViewModel
             {
                 _settings.Z21.SystemStatePollingIntervalSeconds = (int)value;
                 OnPropertyChanged();
-                _ = _settingsService?.SaveSettingsAsync(_settings);
+                PersistSettings();
             }
         }
     }
@@ -150,7 +151,7 @@ public partial class MainWindowViewModel
             {
                 _settings.Speech.Key = value ?? string.Empty;
                 OnPropertyChanged();
-                _ = _settingsService?.SaveSettingsAsync(_settings);
+                PersistSettings();
             }
         }
     }
@@ -167,7 +168,7 @@ public partial class MainWindowViewModel
             {
                 _settings.Speech.Region = value;
                 OnPropertyChanged();
-                _ = _settingsService?.SaveSettingsAsync(_settings);
+                PersistSettings();
             }
         }
     }
@@ -184,7 +185,7 @@ public partial class MainWindowViewModel
             {
                 _settings.Speech.Rate = value;
                 OnPropertyChanged();
-                _ = _settingsService?.SaveSettingsAsync(_settings);
+                PersistSettings();
             }
         }
     }
@@ -201,7 +202,7 @@ public partial class MainWindowViewModel
             {
                 _settings.Speech.Volume = (uint)value;
                 OnPropertyChanged();
-                _ = _settingsService?.SaveSettingsAsync(_settings);
+                PersistSettings();
             }
         }
     }
@@ -218,7 +219,7 @@ public partial class MainWindowViewModel
             {
                 _settings.Speech.VoiceName = value;
                 OnPropertyChanged();
-                _ = _settingsService?.SaveSettingsAsync(_settings);
+                PersistSettings();
             }
         }
     }
@@ -236,7 +237,7 @@ public partial class MainWindowViewModel
             {
                 _settings.Speech.TestMessage = value;
                 OnPropertyChanged();
-                _ = _settingsService?.SaveSettingsAsync(_settings);
+                PersistSettings();
             }
         }
     }
@@ -285,7 +286,7 @@ public partial class MainWindowViewModel
                 _settings.Speech.SpeakerEngineName = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(IsAzureSpeechEngineSelected));
-                _ = _settingsService?.SaveSettingsAsync(_settings);
+                PersistSettings();
             }
         }
     }
@@ -295,7 +296,7 @@ public partial class MainWindowViewModel
     /// Used to show/hide Azure-specific settings.
     /// </summary>
     public bool IsAzureSpeechEngineSelected =>
-        SelectedSpeechEngine.Contains("Azure", StringComparison.OrdinalIgnoreCase);
+        SpeechSpeakerEngineSelection.ShouldUseAzureCognitive(SelectedSpeechEngine);
 
     /// <summary>
     /// Gets or sets a value indicating whether the last used solution is automatically loaded on startup.
@@ -309,7 +310,7 @@ public partial class MainWindowViewModel
             {
                 _settings.Application.AutoLoadLastSolution = value;
                 OnPropertyChanged();
-                _ = _settingsService?.SaveSettingsAsync(_settings);
+                PersistSettings();
             }
         }
     }
@@ -326,7 +327,7 @@ public partial class MainWindowViewModel
             {
                 _settings.Application.AutoStartWebApp = value;
                 OnPropertyChanged();
-                _ = _settingsService?.SaveSettingsAsync(_settings);
+                PersistSettings();
             }
         }
     }
@@ -344,7 +345,7 @@ public partial class MainWindowViewModel
             {
                 _settings.RestApi.Port = value;
                 OnPropertyChanged();
-                _ = _settingsService?.SaveSettingsAsync(_settings);
+                PersistSettings();
             }
         }
     }
@@ -362,7 +363,7 @@ public partial class MainWindowViewModel
             {
                 _settings.Application.PhotoStoragePath = v;
                 OnPropertyChanged();
-                _ = _settingsService?.SaveSettingsAsync(_settings);
+                PersistSettings();
             }
         }
     }
@@ -418,7 +419,7 @@ public partial class MainWindowViewModel
             {
                 _settings.HealthCheck.Enabled = value;
                 OnPropertyChanged();
-                _ = _settingsService?.SaveSettingsAsync(_settings);
+                PersistSettings();
             }
         }
     }
@@ -435,7 +436,7 @@ public partial class MainWindowViewModel
             {
                 _settings.HealthCheck.IntervalSeconds = (int)value;
                 OnPropertyChanged();
-                _ = _settingsService?.SaveSettingsAsync(_settings);
+                PersistSettings();
             }
         }
     }
@@ -452,7 +453,7 @@ public partial class MainWindowViewModel
             {
                 _settings.Counter.CountOfFeedbackPoints = (int)value;
                 OnPropertyChanged();
-                _ = _settingsService?.SaveSettingsAsync(_settings);
+                PersistSettings();
 
                 // Immediately update Track Statistics on Overview page (replaces collection, safe in property setter)
                 InitializeStatisticsFromFeedbackPoints();
@@ -493,30 +494,29 @@ public partial class MainWindowViewModel
     }
 
     /// <summary>
-    /// Reads the feature toggle value via reflection from FeatureToggleSettings.
+    /// Reads the feature toggle value from <see cref="FeatureToggleRegistry"/> (no reflection).
     /// </summary>
     internal bool GetFeatureToggleValue(string key)
     {
-        var prop = typeof(FeatureToggleSettings).GetProperty(key);
-        if (prop == null) return true;
-        return prop.GetValue(_settings.FeatureToggles) as bool? ?? true;
+        if (FeatureToggleRegistry.TryGetPageAvailability(_settings.FeatureToggles, key, out var v))
+            return v;
+        return true;
     }
 
     /// <summary>
-    /// Writes the feature toggle value via reflection to FeatureToggleSettings and saves.
+    /// Writes the feature toggle value via <see cref="FeatureToggleRegistry"/> and saves.
     /// Raises OnPropertyChanged for the corresponding read-only property (e.g. IsOverviewPageAvailable).
     /// </summary>
     internal void SetFeatureToggleValue(string key, bool value)
     {
-        var prop = typeof(FeatureToggleSettings).GetProperty(key);
-        if (prop == null) return;
+        if (!FeatureToggleRegistry.TryGetPageAvailability(_settings.FeatureToggles, key, out var previous))
+            return;
+        if (previous == value)
+            return;
 
-        var current = prop.GetValue(_settings.FeatureToggles) as bool?;
-        if (current == value) return;
-
-        prop.SetValue(_settings.FeatureToggles, value);
-        OnPropertyChanged(key); // z. B. IsOverviewPageAvailable
-        _ = _settingsService?.SaveSettingsAsync(_settings);
+        FeatureToggleRegistry.TrySetPageAvailability(_settings.FeatureToggles, key, value);
+        OnPropertyChanged(key);
+        PersistSettings();
     }
 
     /// <summary>
@@ -727,7 +727,7 @@ public partial class MainWindowViewModel
         if (changed && propertyName != null)
         {
             OnPropertyChanged(propertyName);
-            _ = _settingsService?.SaveSettingsAsync(_settings);
+            PersistSettings();
         }
     }
 
@@ -784,12 +784,6 @@ public partial class MainWindowViewModel
     public bool IsSettingsPageAvailable => _settings.FeatureToggles.IsSettingsPageAvailable;
 
     /// <summary>
-    /// Gets whether the Docking page is available.
-    /// Bound to NavigationView item visibility.
-    /// </summary>
-    public bool IsDockingPageAvailable => _settings.FeatureToggles.IsDockingPageAvailable;
-
-    /// <summary>
     /// Gets whether the Monitor page is available.
     /// Bound to NavigationView item visibility.
     /// </summary>
@@ -842,10 +836,6 @@ public partial class MainWindowViewModel
     /// </summary>
     public string SettingsPageLabel => _settings.FeatureToggles.SettingsPageLabel;
     /// <summary>
-    /// Gets the optional label override for the Docking page.
-    /// </summary>
-    public string DockingPageLabel => _settings.FeatureToggles.DockingPageLabel;
-    /// <summary>
     /// Gets the optional label override for the Monitor page.
     /// </summary>
     public string MonitorPageLabel => _settings.FeatureToggles.MonitorPageLabel;
@@ -872,10 +862,6 @@ public partial class MainWindowViewModel
     /// Gets the checkbox label for enabling or disabling the Journey Map page.
     /// </summary>
     public string JourneyMapCheckBoxContent => FormatPageContent("Journey Map Page", JourneyMapPageLabel);
-    /// <summary>
-    /// Gets the checkbox label for enabling or disabling the Docking page.
-    /// </summary>
-    public string DockingCheckBoxContent => FormatPageContent("Docking Page", DockingPageLabel);
     /// <summary>
     /// Gets the checkbox label for enabling or disabling the Monitor page.
     /// </summary>
@@ -948,7 +934,6 @@ public partial class MainWindowViewModel
             OnPropertyChanged(nameof(IsTrackPlanEditorPageAvailable));
             OnPropertyChanged(nameof(IsSignalBoxPageAvailable));
             OnPropertyChanged(nameof(IsJourneyMapPageAvailable));
-            OnPropertyChanged(nameof(IsDockingPageAvailable));
             OnPropertyChanged(nameof(IsMonitorPageAvailable));
             OnPropertyChanged(nameof(IsTrainsPageAvailable));
             OnPropertyChanged(nameof(IsTrainControlPageAvailable));
@@ -977,12 +962,6 @@ public partial class MainWindowViewModel
     {
         try
         {
-            Debug.WriteLine("[TEST SPEECH] Button clicked");
-            Debug.WriteLine($"[TEST SPEECH] Speech key configured: {!string.IsNullOrWhiteSpace(_settings.Speech.Key)}");
-            Debug.WriteLine($"[TEST SPEECH] Speech key length: {_settings.Speech.Key.Length}");
-            Debug.WriteLine($"[TEST SPEECH] Speech region: {_settings.Speech.Region}");
-            Debug.WriteLine($"[TEST SPEECH] Selected engine: {_settings.Speech.SpeakerEngineName}");
-
             // FIX: Reset error state on UI thread
             _uiDispatcher.InvokeOnUi(() =>
             {
@@ -993,16 +972,12 @@ public partial class MainWindowViewModel
             // Use custom test message from settings (user can modify in UI)
             var testMessage = SpeechTestMessage;
 
-            Debug.WriteLine($"[TEST SPEECH] AnnouncementService available: {_announcementService != null}");
-
             // Use the announcement service if available
             if (_announcementService != null)
             {
                 // FIX: Check if speaker engine is properly configured
                 if (!_announcementService.IsSpeakerEngineAvailable)
                 {
-                    Debug.WriteLine("[TEST SPEECH] Speaker engine not available");
-
                     _uiDispatcher.InvokeOnUi(() =>
                     {
                         ErrorMessage = "Speech engine not configured. Please configure Azure Speech Service in Settings or select Windows SAPI engine.";
@@ -1011,13 +986,9 @@ public partial class MainWindowViewModel
                     return;
                 }
 
-                Debug.WriteLine("[TEST SPEECH] Calling GenerateAndSpeakAnnouncementAsync...");
-
                 var testJourney = new Journey { Text = testMessage };
                 var testStation = new Station { Name = "Test", IsExitOnLeft = false };
                 await _announcementService.GenerateAndSpeakAnnouncementAsync(testJourney, testStation, 1).ConfigureAwait(false);
-
-                Debug.WriteLine("[TEST SPEECH] GenerateAndSpeakAnnouncementAsync completed");
 
                 // SUCCESS: Show success message on UI thread
                 _uiDispatcher.InvokeOnUi(() =>
@@ -1029,6 +1000,7 @@ public partial class MainWindowViewModel
         }
         catch (Exception ex)
         {
+            _logger.LogWarning(ex, "Speech test failed");
             ErrorMessage = ex.Message;
             ShowErrorMessage = true;
         }

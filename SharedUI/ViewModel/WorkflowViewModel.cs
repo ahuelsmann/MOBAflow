@@ -8,10 +8,10 @@ using Domain;
 using Domain.Enum;
 using Interface;
 using Service;
+using Microsoft.Extensions.Logging;
 using Sound;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics;
 
 /// <summary>
 /// ViewModel wrapper for <see cref="Workflow"/> that exposes configuration and actions for editor and execution UI.
@@ -25,6 +25,7 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
     // Services
     private readonly IIoService _ioService;
     private readonly ISoundPlayer? _soundPlayer;
+    private readonly ILogger<CommandViewModel>? _commandLogger;
     #endregion
 
     /// <summary>
@@ -33,12 +34,14 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
     /// <param name="model">The workflow domain model.</param>
     /// <param name="ioService">Optional IO service used by audio actions.</param>
     /// <param name="soundPlayer">Optional sound player used to preview audio actions.</param>
-    public WorkflowViewModel(Workflow model, IIoService? ioService = null, ISoundPlayer? soundPlayer = null)
+    /// <param name="loggerFactory">Optional factory for command action logging.</param>
+    public WorkflowViewModel(Workflow model, IIoService? ioService = null, ISoundPlayer? soundPlayer = null, ILoggerFactory? loggerFactory = null)
     {
         ArgumentNullException.ThrowIfNull(model);
         _model = model;
         _ioService = ioService ?? new NullIoService();
         _soundPlayer = soundPlayer;
+        _commandLogger = loggerFactory?.CreateLogger<CommandViewModel>();
 
         Actions = new ObservableCollection<object>(
             model.Actions
@@ -136,10 +139,10 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
                 Name = "New Announcement",
                 Number = (uint)(_model.Actions.Count + 1),
                 Type = ActionType.Announcement,
-                Parameters = new Dictionary<string, object>
+                Announcement = new AnnouncementActionPayload
                 {
-                    ["Message"] = "New announcement text",
-                    ["VoiceName"] = "de-DE-KatjaNeural"
+                    Message = "New announcement text",
+                    VoiceName = "de-DE-KatjaNeural"
                 }
             },
             ActionType.Audio => new WorkflowAction
@@ -147,9 +150,9 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
                 Name = "New Audio",
                 Number = (uint)(_model.Actions.Count + 1),
                 Type = ActionType.Audio,
-                Parameters = new Dictionary<string, object>
+                Audio = new AudioActionPayload
                 {
-                    ["FilePath"] = "path/to/sound.wav"
+                    FilePath = "path/to/sound.wav"
                 }
             },
             ActionType.Command => new WorkflowAction
@@ -157,9 +160,9 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
                 Name = "New Command",
                 Number = (uint)(_model.Actions.Count + 1),
                 Type = ActionType.Command,
-                Parameters = new Dictionary<string, object>
+                Command = new CommandActionPayload
                 {
-                    ["Bytes"] = Array.Empty<byte>()
+                    BytesBase64 = Convert.ToBase64String(new byte[] { 0x00 })
                 }
             },
             _ => throw new ArgumentException($"Unsupported action type: {actionType}")
@@ -243,36 +246,8 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
     /// <param name="station">The current station context.</param>
     public Task StartAsync(Journey journey, Station station)
     {
-        Debug.WriteLine($"[START] Workflow '{_model.Name}' for station '{station.Name}'");
-
-        if (Actions.Count == 0)
-        {
-            Debug.WriteLine($"[WARN] Workflow '{_model.Name}' has no actions");
-            return Task.CompletedTask;
-        }
-
-        foreach (var actionVm in Actions)
-        {
-            switch (actionVm)
-            {
-                case AnnouncementViewModel announcement:
-                    Debug.WriteLine($"[ACTION] Announcement - {announcement.Name}");
-                    break;
-
-                case AudioViewModel audio:
-                    Debug.WriteLine($"[ACTION] Audio - {audio.Name}");
-                    break;
-
-                case CommandViewModel command:
-                    Debug.WriteLine($"[ACTION] Command - {command.Name}");
-                    break;
-
-                default:
-                    Debug.WriteLine($"[WARN] Unknown action view model type: {actionVm.GetType().Name}");
-                    break;
-            }
-        }
-
+        _ = journey;
+        _ = station;
         return Task.CompletedTask;
     }
 
@@ -282,7 +257,7 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
         {
             ActionType.Announcement => new AnnouncementViewModel(action),
             ActionType.Audio => new AudioViewModel(action, _ioService, _soundPlayer),
-            ActionType.Command => new CommandViewModel(action),
+            ActionType.Command => new CommandViewModel(action, _commandLogger),
             _ => throw new NotSupportedException($"Action type {action.Type} is not supported")
         };
     }
@@ -297,12 +272,8 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
         // Ignore internal properties that are managed by UpdateActionNumbers()
         // Only user-edited properties (Name, Message, VoiceName, etc.) should trigger save
         if (e.PropertyName == nameof(WorkflowActionViewModel.Number))
-        {
-            Debug.WriteLine("[SKIP] Action.Number changed - internal property, no save needed");
             return;
-        }
 
-        Debug.WriteLine($"[INFO] Action property '{e.PropertyName}' changed, propagating as PropertyChanged(Actions)");
         OnPropertyChanged(nameof(Actions));
     }
 }

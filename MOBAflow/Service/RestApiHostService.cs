@@ -143,7 +143,7 @@ internal sealed class RestApiHostService : IAsyncDisposable
         _logger.LogInformation("REST API started in-process on port {Port}", port);
 
         // Ensure firewall allows UDP discovery (21106) and REST API (TCP port) so MAUI can discover and connect
-        FirewallHelper.EnsureFirewallRulesExist(port);
+        FirewallHelper.EnsureFirewallRulesExist(port, _logger);
 
         // Start UDP discovery so MAUI can find this server
         try

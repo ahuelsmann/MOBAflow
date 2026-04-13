@@ -5,11 +5,11 @@ namespace Moba.Test.Backend;
 using Moba.Backend.Data;
 
 /// <summary>
-/// Unit tests for DataManager JSON deserialization.
+/// Unit tests for <see cref="MasterDataStore"/> JSON deserialization.
 /// Tests file I/O operations for city library data loading.
 /// </summary>
 [TestFixture]
-internal class DataManagerTests
+internal class MasterDataStoreTests
 {
     private string _tempDir = null!;
     private string _testFilePath = null!;
@@ -17,7 +17,7 @@ internal class DataManagerTests
     [SetUp]
     public void SetUp()
     {
-        _tempDir = Path.Combine(Path.GetTempPath(), $"DataManagerTests_{Guid.NewGuid()}");
+        _tempDir = Path.Combine(Path.GetTempPath(), $"MasterDataStoreTests_{Guid.NewGuid()}");
         Directory.CreateDirectory(_tempDir);
         _testFilePath = Path.Combine(_tempDir, "test-data.json");
     }
@@ -41,59 +41,47 @@ internal class DataManagerTests
     [Test]
     public void Constructor_ShouldInitializeEmptyCities()
     {
-        // Act
-        var manager = new DataManager();
+        var store = new MasterDataStore();
 
-        // Assert
-        Assert.That(manager.Cities, Is.Not.Null, "Cities should be initialized");
-        Assert.That(manager.Cities, Is.Empty, "Cities should be empty initially");
+        Assert.That(store.Cities, Is.Not.Null, "Cities should be initialized");
+        Assert.That(store.Cities, Is.Empty, "Cities should be empty initially");
     }
 
     [Test]
     public async Task LoadAsync_WithNonExistentFile_ShouldReturnNull()
     {
-        // Arrange
         var nonExistentPath = Path.Combine(_tempDir, "non-existent.json");
 
-        // Act
-        var result = await DataManager.LoadFromFileAsync(nonExistentPath);
+        var result = await MasterDataStore.LoadFromFileAsync(nonExistentPath);
 
-        // Assert
         Assert.That(result, Is.Null, "Should return null for non-existent file");
     }
 
     [Test]
     public async Task LoadAsync_WithEmptyFile_ShouldReturnNull()
     {
-        // Arrange
         await File.WriteAllTextAsync(_testFilePath, "");
 
-        // Act
-        var result = await DataManager.LoadFromFileAsync(_testFilePath);
+        var result = await MasterDataStore.LoadFromFileAsync(_testFilePath);
 
-        // Assert
         Assert.That(result, Is.Null, "Should return null for empty file");
     }
 
     [Test]
-    public async Task LoadAsync_WithEmptyJsonObject_ShouldReturnEmptyDataManager()
+    public async Task LoadAsync_WithEmptyJsonObject_ShouldReturnEmptyStore()
     {
-        // Arrange
         var jsonContent = @"{ ""Cities"": [] }";
         await File.WriteAllTextAsync(_testFilePath, jsonContent);
 
-        // Act
-        var result = await DataManager.LoadFromFileAsync(_testFilePath);
+        var result = await MasterDataStore.LoadFromFileAsync(_testFilePath);
 
-        // Assert
-        Assert.That(result, Is.Not.Null, "Should return DataManager instance");
+        Assert.That(result, Is.Not.Null, "Should return MasterDataStore instance");
         Assert.That(result!.Cities, Is.Empty, "Cities should be empty");
     }
 
     [Test]
     public async Task LoadAsync_WithValidJsonFile_ShouldDeserializeData()
     {
-        // Arrange
         var jsonContent = @"
         {
             ""Cities"": [
@@ -103,10 +91,8 @@ internal class DataManagerTests
         }";
         await File.WriteAllTextAsync(_testFilePath, jsonContent);
 
-        // Act
-        var result = await DataManager.LoadFromFileAsync(_testFilePath);
+        var result = await MasterDataStore.LoadFromFileAsync(_testFilePath);
 
-        // Assert
         Assert.That(result, Is.Not.Null);
         Assert.That(result!.Cities, Has.Count.EqualTo(2), "Should load 2 cities");
         Assert.That(result.Cities[0].Name, Is.EqualTo("Berlin"), "First city should be Berlin");
@@ -116,40 +102,32 @@ internal class DataManagerTests
     [Test]
     public async Task LoadAsync_WithInvalidJson_ShouldReturnNull()
     {
-        // Arrange
         await File.WriteAllTextAsync(_testFilePath, "{ invalid json content }");
 
-        // Act
-        var result = await DataManager.LoadFromFileAsync(_testFilePath);
+        var result = await MasterDataStore.LoadFromFileAsync(_testFilePath);
 
-        // Assert
         Assert.That(result, Is.Null, "Should return null for invalid JSON");
     }
 
     [Test]
     public async Task LoadAsync_WithNullPath_ShouldReturnNull()
     {
-        // Act
-        var result = await DataManager.LoadFromFileAsync(null!);
+        var result = await MasterDataStore.LoadFromFileAsync(null!);
 
-        // Assert
         Assert.That(result, Is.Null, "Should return null for null path");
     }
 
     [Test]
     public async Task LoadAsync_WithEmptyPath_ShouldReturnNull()
     {
-        // Act
-        var result = await DataManager.LoadFromFileAsync("");
+        var result = await MasterDataStore.LoadFromFileAsync("");
 
-        // Assert
         Assert.That(result, Is.Null, "Should return null for empty path");
     }
 
     [Test]
     public async Task LoadAsync_WithMultipleCities_ShouldLoadAll()
     {
-        // Arrange
         var jsonContent = @"
         {
             ""Cities"": [
@@ -162,10 +140,8 @@ internal class DataManagerTests
         }";
         await File.WriteAllTextAsync(_testFilePath, jsonContent);
 
-        // Act
-        var result = await DataManager.LoadFromFileAsync(_testFilePath);
+        var result = await MasterDataStore.LoadFromFileAsync(_testFilePath);
 
-        // Assert
         Assert.That(result!.Cities, Has.Count.EqualTo(5), "Should load all 5 cities");
         var cityNames = result.Cities.Select(c => c.Name).ToList();
         Assert.That(cityNames, Contains.Item("Berlin"));
@@ -178,13 +154,10 @@ internal class DataManagerTests
     [Test]
     public async Task LoadAsync_WithWhitespaceOnlyFile_ShouldReturnNull()
     {
-        // Arrange
         await File.WriteAllTextAsync(_testFilePath, "   \n  \t  \n  ");
 
-        // Act
-        var result = await DataManager.LoadFromFileAsync(_testFilePath);
+        var result = await MasterDataStore.LoadFromFileAsync(_testFilePath);
 
-        // Assert
         Assert.That(result, Is.Null, "Should return null for whitespace-only file");
     }
 
@@ -204,7 +177,7 @@ internal class DataManagerTests
         """;
         await File.WriteAllTextAsync(_testFilePath, jsonContent);
 
-        var result = await DataManager.LoadFromFileAsync(_testFilePath);
+        var result = await MasterDataStore.LoadFromFileAsync(_testFilePath);
 
         Assert.That(result, Is.Not.Null);
         Assert.That(result!.MultiplexSignals, Has.Count.EqualTo(2));
@@ -215,21 +188,18 @@ internal class DataManagerTests
     [Test]
     public async Task SaveAsync_ThenLoadFromFileAsync_RoundtripsData()
     {
-        // Arrange: Instanz mit Daten
-        var manager = new DataManager();
-        manager.Cities.Add(new City { Name = "Teststadt" });
-        manager.Locomotives.Add(new LocomotiveCategory { Category = "Test", Series = [] });
+        var store = new MasterDataStore();
+        store.Cities.Add(new City { Name = "Teststadt" });
+        store.Locomotives.Add(new LocomotiveCategory { Category = "Test", Series = [] });
 
-        // Act: Speichern und erneut laden (statisch)
-        await manager.SaveAsync(_testFilePath);
-        var loaded = await DataManager.LoadFromFileAsync(_testFilePath);
+        await store.SaveAsync(_testFilePath);
+        var loaded = await MasterDataStore.LoadFromFileAsync(_testFilePath);
 
-        // Assert
         Assert.That(loaded, Is.Not.Null);
         Assert.That(loaded!.Cities, Has.Count.EqualTo(1));
         Assert.That(loaded.Cities[0].Name, Is.EqualTo("Teststadt"));
         Assert.That(loaded.Locomotives, Has.Count.EqualTo(1));
         Assert.That(loaded.Locomotives[0].Category, Is.EqualTo("Test"));
-        Assert.That(loaded.SchemaVersion, Is.EqualTo(DataManager.CurrentSchemaVersion));
+        Assert.That(loaded.SchemaVersion, Is.EqualTo(MasterDataStore.CurrentSchemaVersion));
     }
 }

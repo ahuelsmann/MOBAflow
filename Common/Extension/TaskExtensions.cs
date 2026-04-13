@@ -8,20 +8,36 @@ namespace Moba.Common.Extension;
 public static class TaskExtensions
 {
     /// <summary>
-    /// Safely executes a Task without awaiting, routing exceptions to the provided callback.
+    /// Observes a task without awaiting and routes faults to the provided callback.
+    /// Use this for fire-and-forget calls in event handlers where no await chain is available.
+    /// </summary>
+    /// <param name="task">The task to observe.</param>
+    /// <param name="onException">Callback invoked when the task faults. If null, exceptions are silently ignored.</param>
+    public static void Observe(this Task task, Action<Exception>? onException = null)
+    {
+        ArgumentNullException.ThrowIfNull(task);
+
+        task.ContinueWith(
+            t =>
+            {
+                if (t.Exception != null)
+                {
+                    onException?.Invoke(t.Exception.GetBaseException());
+                }
+            },
+            CancellationToken.None,
+            TaskContinuationOptions.OnlyOnFaulted,
+            TaskScheduler.Default);
+    }
+
+    /// <summary>
+    /// Backward-compatible alias for <see cref="Observe(Task,Action{Exception}?)"/>.
     /// Use instead of <c>_ = SomeAsync()</c> to ensure exceptions are never silently swallowed.
     /// </summary>
     /// <param name="task">The task to execute.</param>
     /// <param name="onException">Callback invoked when the task faults. If null, exceptions are silently ignored.</param>
-    public static async void SafeFireAndForget(this Task task, Action<Exception>? onException = null)
+    public static void SafeFireAndForget(this Task task, Action<Exception>? onException = null)
     {
-        try
-        {
-            await task.ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            onException?.Invoke(ex);
-        }
+        task.Observe(onException);
     }
 }

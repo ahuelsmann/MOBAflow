@@ -3,6 +3,7 @@ namespace Moba.Test.SharedUI;
 
 using Microsoft.Extensions.Logging;
 
+using Moba.Backend.Interface;
 using Moba.Backend.Model;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
@@ -23,10 +24,10 @@ internal class ViewModelCharacterizationTests
     [Test]
     public void TrainControlViewModel_Constructor_ProjectsConnectionStateFromCurrentSnapshot()
     {
-        var mobaClientMock = CreateMobaClientMock(new MobaRuntimeSnapshot { IsConnected = true });
+        var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = true });
         var settingsServiceMock = CreateSettingsServiceMock();
 
-        var viewModel = new TrainControlViewModel(mobaClientMock.Object, settingsServiceMock.Object);
+        var viewModel = new TrainControlViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object);
 
         Assert.That(viewModel.IsConnected, Is.True);
     }
@@ -34,58 +35,58 @@ internal class ViewModelCharacterizationTests
     [Test]
     public async Task TrainControlViewModel_SpeedChange_SendsDriveCommand()
     {
-        var mobaClientMock = CreateMobaClientMock(new MobaRuntimeSnapshot { IsConnected = true });
+        var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = true });
         var settingsServiceMock = CreateSettingsServiceMock();
-        var viewModel = new TrainControlViewModel(mobaClientMock.Object, settingsServiceMock.Object);
+        var viewModel = new TrainControlViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object);
 
         viewModel.Speed = 12;
         await Task.Delay(100);
 
-        mobaClientMock.Verify(client => client.SetLocomotiveDriveAsync(3, 12, true, It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+        mobaRuntimeMock.Verify(client => client.SetLocomotiveDriveAsync(3, 12, true, It.IsAny<CancellationToken>()), Times.AtLeastOnce);
     }
 
     [Test]
     public async Task TrainControlViewModel_ToggleFunctionAsync_UpdatesStateAndCallsRuntime()
     {
-        var mobaClientMock = CreateMobaClientMock(new MobaRuntimeSnapshot { IsConnected = true });
+        var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = true });
         var settingsServiceMock = CreateSettingsServiceMock();
-        var viewModel = new TrainControlViewModel(mobaClientMock.Object, settingsServiceMock.Object);
+        var viewModel = new TrainControlViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object);
 
         await viewModel.ToggleFunctionAsync(1);
 
         Assert.That(viewModel.IsF1On, Is.True);
-        mobaClientMock.Verify(client => client.SetLocomotiveFunctionAsync(3, 1, true, It.IsAny<CancellationToken>()), Times.Once);
+        mobaRuntimeMock.Verify(client => client.SetLocomotiveFunctionAsync(3, 1, true, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
     public void MainWindowViewModel_AutoStartWebApp_SetterPersistsSettings()
     {
-        var mobaClientMock = new Mock<IMobaClient>();
-        mobaClientMock.SetupGet(client => client.Current).Returns(MobaRuntimeSnapshot.Empty);
-        mobaClientMock.Setup(client => client.GetTrafficPackets()).Returns(Array.Empty<Z21TrafficPacket>());
+        var mobaRuntimeMock = new Mock<IMobaRuntime>();
+        mobaRuntimeMock.SetupGet(client => client.Current).Returns(MobaRuntimeSnapshot.Empty);
+        mobaRuntimeMock.Setup(client => client.GetTrafficPackets()).Returns(Array.Empty<Z21TrafficPacket>());
 
         var settings = new AppSettings();
         var settingsServiceMock = CreateSettingsServiceMock(settings);
 
-        var viewModel = CreateMainWindowViewModel(mobaClientMock.Object, settingsServiceMock.Object, settings);
+        var viewModel = CreateMainWindowViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object, settings);
         viewModel.AutoStartWebApp = false;
 
         Assert.That(settings.Application.AutoStartWebApp, Is.False);
         settingsServiceMock.Verify(service => service.SaveSettingsAsync(settings), Times.AtLeastOnce);
     }
 
-    private static Mock<IMobaClient> CreateMobaClientMock(MobaRuntimeSnapshot snapshot)
+    private static Mock<IMobaRuntime> CreateMobaRuntimeMock(MobaRuntimeSnapshot snapshot)
     {
-        var mobaClientMock = new Mock<IMobaClient>();
-        mobaClientMock.SetupGet(client => client.Current).Returns(snapshot);
-        mobaClientMock.Setup(client => client.GetTrafficPackets()).Returns(Array.Empty<Z21TrafficPacket>());
-        mobaClientMock.Setup(client => client.SetLocomotiveDriveAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+        var mobaRuntimeMock = new Mock<IMobaRuntime>();
+        mobaRuntimeMock.SetupGet(client => client.Current).Returns(snapshot);
+        mobaRuntimeMock.Setup(client => client.GetTrafficPackets()).Returns(Array.Empty<Z21TrafficPacket>());
+        mobaRuntimeMock.Setup(client => client.SetLocomotiveDriveAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-        mobaClientMock.Setup(client => client.SetLocomotiveFunctionAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+        mobaRuntimeMock.Setup(client => client.SetLocomotiveFunctionAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-        mobaClientMock.Setup(client => client.RequestLocomotiveInfoAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+        mobaRuntimeMock.Setup(client => client.RequestLocomotiveInfoAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-        return mobaClientMock;
+        return mobaRuntimeMock;
     }
 
     private static Mock<ISettingsService> CreateSettingsServiceMock(AppSettings? settings = null)
@@ -100,7 +101,7 @@ internal class ViewModelCharacterizationTests
     }
 
     private static MainWindowViewModel CreateMainWindowViewModel(
-        IMobaClient mobaClient,
+        IMobaRuntime mobaRuntime,
         ISettingsService settingsService,
         AppSettings settings)
     {
@@ -114,7 +115,7 @@ internal class ViewModelCharacterizationTests
 
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
-            mobaClient,
+            mobaRuntime,
             eventBusMock.Object,
             uiDispatcherMock.Object,
             settings,

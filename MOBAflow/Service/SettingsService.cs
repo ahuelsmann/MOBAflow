@@ -189,9 +189,17 @@ internal class SettingsService : ISettingsService
     /// </summary>
     public async Task SaveSettingsAsync(AppSettings settings)
     {
+        ArgumentNullException.ThrowIfNull(settings);
         await _saveLock.WaitAsync();
         try
         {
+            // Keep the DI singleton in sync even when callers provide a separate instance
+            // (for example ResetToDefaultsAsync).
+            if (!ReferenceEquals(settings, _settings))
+            {
+                ApplyLoadedSettings(settings);
+            }
+
             var json = JsonSerializer.Serialize(_settings, JsonOptions.Default);
             await File.WriteAllTextAsync(_settingsFilePath, json);
             _logger.LogInformation("Settings saved to {SettingsFilePath}", _settingsFilePath);

@@ -143,7 +143,6 @@ public class UdpWrapper : IUdpClientWrapper
     private async Task ReceiverLoopAsync(CancellationToken cancellationToken)
     {
         _logger?.LogInformation("🔄 UDP Receiver loop started");
-        Debug.WriteLine("UdpWrapper: Receiver loop started");
 
         try
         {
@@ -176,7 +175,6 @@ public class UdpWrapper : IUdpClientWrapper
                 catch (SocketException ex)
                 {
                     _logger?.LogError("❌ Socket error in receiver loop: {Error}", ex.Message);
-                    Debug.WriteLine($"UdpWrapper: Socket error: {ex.Message}");
                     break;
                 }
 
@@ -187,7 +185,6 @@ public class UdpWrapper : IUdpClientWrapper
         {
             _logger?.LogInformation("🛑 UDP Receiver loop stopped. Stats: {SendCount} sends, {RetryCount} retries, {ReceiveCount} receives",
                 _totalSendCount, _totalRetryCount, _totalReceiveCount);
-            Debug.WriteLine("UdpWrapper: Receiver loop stopped");
         }
     }
 
@@ -198,7 +195,7 @@ public class UdpWrapper : IUdpClientWrapper
     /// <param name="data">Byte array to send to Z21</param>
     /// <param name="cancellationToken">Token to cancel the operation</param>
     /// <param name="maxRetries">Maximum number of retry attempts (default: 3)</param>
-    /// <exception cref="InvalidOperationException">Thrown if not connected</exception>
+    /// <exception cref="UdpNotConnectedException">Thrown if not connected</exception>
     /// <exception cref="SocketException">Thrown if all retry attempts fail</exception>
     public async Task SendAsync(byte[] data, CancellationToken cancellationToken = default, int maxRetries = 3)
     {
@@ -206,7 +203,7 @@ public class UdpWrapper : IUdpClientWrapper
         var client = _client;
         if (client == null || _disposed)
         {
-            throw new InvalidOperationException("UdpWrapper is not connected");
+            throw new UdpNotConnectedException();
         }
 
         var sendStartTime = Stopwatch.StartNew();
@@ -238,8 +235,6 @@ public class UdpWrapper : IUdpClientWrapper
 
                 _logger?.LogWarning("⚠️ Send attempt {Attempt}/{MaxRetries} failed: {Error}. Retrying in {DelayMs}ms",
                     attempt, maxRetries, ex.Message, delayMs);
-
-                Debug.WriteLine($"UdpWrapper: Send attempt {attempt} failed: {ex.Message}. Retrying in {delayMs}ms");
                 await Task.Delay(delayMs, cancellationToken).ConfigureAwait(false);
                 delayMs *= 2;
             }
@@ -266,30 +261,11 @@ public class UdpWrapper : IUdpClientWrapper
             catch (OperationCanceledException) { }
             catch (Exception ex)
             {
-                Debug.WriteLine($"UdpWrapper: StopAsync receiver error: {ex.Message}");
                 _logger?.LogWarning("StopAsync receiver error: {Message}", ex.Message);
             }
         }
 
-        // Dispose CancellationTokenSource
-        _cts?.Dispose();
-        _cts = null;
-        _receiverTask = null;
-
-        // Close and dispose the UDP client
-        if (_client != null)
-        {
-            try
-            {
-                _client.Close();
-                _client.Dispose();
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogWarning("Error closing UDP client: {Message}", ex.Message);
-            }
-            _client = null;
-        }
+        DisposeClientResources();
 
         _logger?.LogInformation("UDP client stopped successfully");
     }
@@ -318,18 +294,44 @@ public class UdpWrapper : IUdpClientWrapper
         if (_disposed) return;
         _disposed = true;
 
-        // Use StopAsync() to ensure proper cleanup (wait for receiver task to complete)
-        // GetAwaiter().GetResult() is acceptable in Dispose() as a synchronous wrapper
+        // Dispose must remain synchronous. Perform a best-effort, non-blocking shutdown.
         try
         {
-            StopAsync().GetAwaiter().GetResult();
+            if (_cts is { IsCancellationRequested: false })
+            {
+                _cts.Cancel();
+            }
         }
         catch (Exception ex)
         {
             _logger?.LogError(ex, "Error during dispose");
-            Debug.WriteLine($"UdpWrapper: Dispose error: {ex.Message}");
         }
 
+        DisposeClientResources();
         _logger?.LogInformation("UdpWrapper disposed");
+    }
+
+    private void DisposeClientResources()
+    {
+        _cts?.Dispose();
+        _cts = null;
+        _receiverTask = null;
+
+        if (_client == null)
+        {
+            return;
+        }
+
+        try
+        {
+            _client.Close();
+            _client.Dispose();
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning("Error closing UDP client: {Message}", ex.Message);
+        }
+
+        _client = null;
     }
 }

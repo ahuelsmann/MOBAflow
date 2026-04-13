@@ -360,17 +360,6 @@ public class FeatureToggleSettings
     // Monitoring (Testing - ENABLED by default)
 
     /// <summary>
-    /// Enable Docking page (Layout management with collapsible panels).
-    /// Experimental feature marked as Preview. Hidden by default.
-    /// </summary>
-    public bool IsDockingPageAvailable { get; set; } = false;
-
-    /// <summary>
-    /// Gets or sets an optional label suffix for the Docking page.
-    /// </summary>
-    public string DockingPageLabel { get; set; } = "Preview";
-
-    /// <summary>
     /// Enable Monitor page (Real-time system monitoring and diagnostics).
     /// Experimental feature marked as Preview.
     /// </summary>

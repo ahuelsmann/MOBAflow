@@ -11,7 +11,6 @@ using Interface;
 using Common.Runtime;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
 
 /// <summary>
 /// ViewModel wrapper for <see cref="Journey"/> that exposes configuration and runtime state
@@ -285,7 +284,6 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     private void Reset()
     {
         ResetRuntimeState();
-        Debug.WriteLine($"🔄 Journey '{Name}' reset to initial state");
     }
 
     /// <summary>
@@ -370,9 +368,6 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     /// </summary>
     public void RefreshStations()
     {
-        Debug.WriteLine($"🔄 RefreshStations() called for Journey '{_journey.Name}'");
-        Debug.WriteLine($"   - Stations count: {_journey.Stations.Count}");
-
         // Create or clear the collection
         if (_stations == null)
         {
@@ -387,8 +382,6 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
         var index = 0;
         foreach (var station in _journey.Stations)
         {
-            Debug.WriteLine($"   - Station: {station.Name}");
-
             var vm = new StationViewModel(station, _project)
             {
                 Position = index + 1,  // 1-based position
@@ -400,8 +393,6 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
             _stations.Add(vm);
             index++;
         }
-
-        Debug.WriteLine($"✅ RefreshStations() complete: {_stations.Count} stations loaded");
 
         // Notify UI
         OnPropertyChanged(nameof(Stations));

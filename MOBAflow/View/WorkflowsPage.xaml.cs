@@ -5,7 +5,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Moba.SharedUI.ViewModel;
-using System.Diagnostics;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 
@@ -27,7 +26,15 @@ internal sealed partial class WorkflowsPage
         InitializeComponent();
 
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
-        Debug.WriteLine("✅ ✅ ✅ WorkflowsPage LOADED - Debug Output is WORKING! ✅ ✅ ✅");
+        Unloaded += OnPageUnloaded;
+    }
+
+    private void OnPageUnloaded(object sender, RoutedEventArgs e)
+    {
+        _ = sender;
+        _ = e;
+        ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+        Unloaded -= OnPageUnloaded;
     }
 
     private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -117,10 +124,6 @@ internal sealed partial class WorkflowsPage
     private void ActionListView_DragItemsCompleted(object sender, DragItemsCompletedEventArgs e)
     {
         if (ViewModel.SelectedWorkflow == null) return;
-
-        // Log to file - check WinUI/bin/Debug/logs/mobaflow-YYYYMMDD.txt
-        Trace.WriteLine("[DRAG] DragItemsCompleted - Items were reordered!");
-        Debug.WriteLine("🔄 DragItemsCompleted - Items were reordered!");
 
         // Update action numbers and save after drag & drop completes
         ViewModel.SelectedWorkflow.UpdateActionNumbers();

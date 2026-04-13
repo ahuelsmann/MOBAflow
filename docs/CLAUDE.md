@@ -69,6 +69,15 @@ docs/                 Documentation
 - **Constructor injection only** (no service locator)
 - **Event-driven** via IEventBus for decoupled messaging
 - **Async-first** - all I/O uses async/await, no `.Result` or `.Wait()`
+- **Runtime:** SharedUI ViewModels depend on **`IMobaRuntime`** (`MobaRuntimeService`).
+  There is no `IMobaClient` layer; WinUI and MAUI register the same singleton runtime.
+- **Master data:** Shared cities/locomotives JSON is loaded into **`MasterDataStore`**
+  (registered in `AddMobaBackendServices`).
+- **Workflows:** `IWorkflowService.ExecuteAsync` accepts optional **`WorkflowExecutionOptions`**
+  (e.g. `StopOnFirstActionFailure` for sequential runs).
+- **MobaRuntimeService** is a **`partial`** type split across several files under
+  `Backend/Service/` for maintainability (public API, Z21 handlers, auto-connect,
+  status text helpers, core snapshot/ctor).
 
 ## Coding Conventions
 

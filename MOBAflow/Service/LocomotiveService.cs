@@ -7,17 +7,17 @@ using Microsoft.Extensions.Logging;
 using SharedUI.Interface;
 
 /// <summary>
-/// Service for locomotive master data from the central DataManager instance.
+/// Service for locomotive master data from the central <see cref="MasterDataStore"/> instance.
 /// Data is loaded from the shared master data file (e.g. data.json).
 /// </summary>
 internal class LocomotiveService : ILocomotiveService
 {
-    private readonly DataManager _dataManager;
+    private readonly MasterDataStore _masterDataStore;
 
-    public LocomotiveService(DataManager dataManager, ILogger<LocomotiveService> logger)
+    public LocomotiveService(MasterDataStore masterDataStore, ILogger<LocomotiveService> logger)
     {
-        _dataManager = dataManager ?? throw new ArgumentNullException(nameof(dataManager));
-        logger.LogInformation("LocomotiveService initialized (data from DataManager)");
+        _masterDataStore = masterDataStore ?? throw new ArgumentNullException(nameof(masterDataStore));
+        logger.LogInformation("LocomotiveService initialized (data from MasterDataStore)");
     }
 
     /// <summary>
@@ -25,7 +25,7 @@ internal class LocomotiveService : ILocomotiveService
     /// </summary>
     public Task<List<LocomotiveCategory>> LoadCategoriesAsync()
     {
-        return Task.FromResult(_dataManager.Locomotives);
+        return Task.FromResult(_masterDataStore.Locomotives);
     }
 
     /// <summary>
@@ -33,7 +33,7 @@ internal class LocomotiveService : ILocomotiveService
     /// </summary>
     public Task<List<LocomotiveSeries>> GetAllSeriesAsync()
     {
-        var series = DataManager.FlattenLocomotiveSeries(_dataManager.Locomotives);
+        var series = MasterDataStore.FlattenLocomotiveSeries(_masterDataStore.Locomotives);
         return Task.FromResult(series);
     }
 
@@ -42,7 +42,7 @@ internal class LocomotiveService : ILocomotiveService
     /// </summary>
     public List<LocomotiveSeries> FilterSeries(string searchTerm)
     {
-        var series = DataManager.FlattenLocomotiveSeries(_dataManager.Locomotives);
+        var series = MasterDataStore.FlattenLocomotiveSeries(_masterDataStore.Locomotives);
         return string.IsNullOrWhiteSpace(searchTerm)
             ? series
             : [.. series.Where(s => s.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))];
@@ -53,7 +53,7 @@ internal class LocomotiveService : ILocomotiveService
     /// </summary>
     public List<LocomotiveSeries> GetCachedSeries()
     {
-        return DataManager.FlattenLocomotiveSeries(_dataManager.Locomotives);
+        return MasterDataStore.FlattenLocomotiveSeries(_masterDataStore.Locomotives);
     }
 
     /// <summary>

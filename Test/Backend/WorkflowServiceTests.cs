@@ -2,10 +2,16 @@
 
 namespace Moba.Test.Backend;
 
+using Microsoft.Extensions.Logging.Abstractions;
+
+using Moba.Backend.Interface;
 using Moba.Backend.Service;
 using Moba.Common.Events;
+using Moba.Domain;
 using Moba.Domain.Enum;
 using Mocks;
+
+using Moq;
 
 /// <summary>
 /// Integration tests for WorkflowService with IActionExecutor.
@@ -25,7 +31,7 @@ internal class WorkflowServiceTests
     public void SetUp()
     {
         _fakeUdp = new FakeUdpClientWrapper();
-        _eventBus = new EventBus();
+        _eventBus = new EventBus(NullLogger<EventBus>.Instance);
         _z21 = new Z21(_fakeUdp, _eventBus);
         _actionExecutor = new ActionExecutor();
         _workflowService = new WorkflowService(_actionExecutor);
@@ -75,9 +81,9 @@ internal class WorkflowServiceTests
                     Number = 1,
                     Name = "Command 1",
                     Type = ActionType.Command,
-                    Parameters = new Dictionary<string, object>
+                    Command = new CommandActionPayload
                     {
-                        { "Bytes", Convert.ToBase64String(new byte[] { 0x01, 0x00, 0x00, 0x00 }) }
+                        BytesBase64 = Convert.ToBase64String(new byte[] { 0x01, 0x00, 0x00, 0x00 })
                     }
                 },
                 new WorkflowAction
@@ -86,9 +92,9 @@ internal class WorkflowServiceTests
                     Number = 2,
                     Name = "Command 2",
                     Type = ActionType.Command,
-                    Parameters = new Dictionary<string, object>
+                    Command = new CommandActionPayload
                     {
-                        { "Bytes", Convert.ToBase64String(new byte[] { 0x02, 0x00, 0x00, 0x00 }) }
+                        BytesBase64 = Convert.ToBase64String(new byte[] { 0x02, 0x00, 0x00, 0x00 })
                     }
                 }
             ]
@@ -115,6 +121,42 @@ internal class WorkflowServiceTests
             await _workflowService.ExecuteAsync(workflow, _context);
 #pragma warning restore CS8604
         });
+    }
+
+    [Test]
+    public async Task ExecuteAsync_Sequential_StopOnFirstActionFailure_StopsAfterFirstException()
+    {
+        var executorMock = new Mock<IActionExecutor>();
+        executorMock
+            .Setup(e => e.ExecuteAsync(It.IsAny<WorkflowAction>(), It.IsAny<ActionExecutionContext>()))
+            .ThrowsAsync(new InvalidOperationException("first action failed"));
+
+        var service = new WorkflowService(executorMock.Object);
+        var workflow = new Workflow
+        {
+            Id = Guid.NewGuid(),
+            Name = "Two-step",
+            ExecutionMode = WorkflowExecutionMode.Sequential,
+            Actions =
+            [
+                new WorkflowAction { Id = Guid.NewGuid(), Number = 1, Name = "A", Type = ActionType.Command },
+                new WorkflowAction { Id = Guid.NewGuid(), Number = 2, Name = "B", Type = ActionType.Command }
+            ]
+        };
+
+        try
+        {
+            await service.ExecuteAsync(workflow, _context, new WorkflowExecutionOptions { StopOnFirstActionFailure = true });
+            Assert.Fail("Expected exception");
+        }
+        catch (InvalidOperationException ex)
+        {
+            Assert.That(ex.Message, Is.EqualTo("first action failed"));
+        }
+
+        executorMock.Verify(
+            e => e.ExecuteAsync(It.IsAny<WorkflowAction>(), It.IsAny<ActionExecutionContext>()),
+            Times.Once);
     }
 
     [Test]

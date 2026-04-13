@@ -2,10 +2,13 @@ namespace Moba.WinUI.View;
 
 using Domain;
 
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 
 using Moba.SharedUI.ViewModel;
+
+using Moba.WinUI.Controls.SignalBox;
 
 using Service;
 
@@ -28,17 +31,24 @@ sealed partial class SignalBoxPage
     public SignalBoxPage(
         MainWindowViewModel viewModel,
         ISkinProvider skinProvider,
-        SkinSelectorViewModel skinViewModel)
+        SkinSelectorViewModel skinViewModel,
+        ViessmannSignalService viessmannSignalService,
+        ILogger<SignalBoxPropertiesControl>? signalBoxPropertiesLogger = null,
+        ILogger<SignalBoxCanvasControl>? signalBoxCanvasLogger = null)
     {
         ArgumentNullException.ThrowIfNull(viewModel);
         ArgumentNullException.ThrowIfNull(skinProvider);
         ArgumentNullException.ThrowIfNull(skinViewModel);
+        ArgumentNullException.ThrowIfNull(viessmannSignalService);
 
         ViewModel = viewModel;
         _skinProvider = skinProvider;
         SkinViewModel = skinViewModel;
 
         InitializeComponent();
+
+        PropertiesControl.AttachRuntimeServices(viessmannSignalService, signalBoxPropertiesLogger);
+        CanvasControl.AttachLogger(signalBoxCanvasLogger);
 
         _skinProvider.SkinChanged += OnSkinProviderChanged;
         _skinProvider.DarkModeChanged += OnDarkModeChanged;
@@ -52,6 +62,7 @@ sealed partial class SignalBoxPage
 
     private void OnSolutionLoaded(object? sender, EventArgs e)
     {
+        DetachPlanViewModel();
         _planViewModel = null;
         DispatcherQueue.TryEnqueue(() =>
         {
@@ -87,6 +98,7 @@ sealed partial class SignalBoxPage
         }
         else if (e.PropertyName == nameof(MainWindowViewModel.SelectedProject))
         {
+            DetachPlanViewModel();
             _planViewModel = null;
             DispatcherQueue.TryEnqueue(() =>
             {
@@ -113,10 +125,16 @@ sealed partial class SignalBoxPage
 
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
     {
+        _ = sender;
+        _ = e;
+
         _skinProvider.SkinChanged -= OnSkinProviderChanged;
         _skinProvider.DarkModeChanged -= OnDarkModeChanged;
         ViewModel.SolutionLoaded -= OnSolutionLoaded;
         ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        DetachPlanViewModel();
+        Loaded -= OnPageLoaded;
+        Unloaded -= OnPageUnloaded;
     }
 
     private void LoadFromModel()
@@ -133,17 +151,7 @@ sealed partial class SignalBoxPage
         if (_planViewModel == null)
         {
             _planViewModel = new SignalBoxPlanViewModel(project.SignalBoxPlan);
-            
-            _planViewModel.PropertyChanged += (_, args) =>
-            {
-                if (args.PropertyName == nameof(_planViewModel.SelectedElement))
-                {
-                    if (PropertiesControl != null)
-                    {
-                        PropertiesControl.SelectedElement = _planViewModel.SelectedElement;
-                    }
-                }
-            };
+            _planViewModel.PropertyChanged += OnPlanViewModelPropertyChanged;
         }
         
         if (CanvasControl != null)
@@ -157,6 +165,29 @@ sealed partial class SignalBoxPage
             PropertiesControl.SelectedElement = _planViewModel.SelectedElement;
             PropertiesControl.UpdateStatistics();
         }
+    }
+
+    private void OnPlanViewModelPropertyChanged(object? sender, PropertyChangedEventArgs args)
+    {
+        if (args.PropertyName != nameof(SignalBoxPlanViewModel.SelectedElement))
+        {
+            return;
+        }
+
+        if (PropertiesControl != null && _planViewModel != null)
+        {
+            PropertiesControl.SelectedElement = _planViewModel.SelectedElement;
+        }
+    }
+
+    private void DetachPlanViewModel()
+    {
+        if (_planViewModel == null)
+        {
+            return;
+        }
+
+        _planViewModel.PropertyChanged -= OnPlanViewModelPropertyChanged;
     }
 
     private void OnGridToggled(object sender, RoutedEventArgs e)

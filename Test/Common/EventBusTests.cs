@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Common;
 
+using Microsoft.Extensions.Logging.Abstractions;
+
 using Moba.Common.Events;
 
 /// <summary>
@@ -13,7 +15,7 @@ internal class EventBusTests
     [Test]
     public void Publish_WithNoSubscribers_DoesNotThrow()
     {
-        var bus = new EventBus();
+        var bus = new EventBus(NullLogger<EventBus>.Instance);
 
         Assert.DoesNotThrow(() => bus.Publish(new Z21ConnectionEstablishedEvent()));
     }
@@ -21,7 +23,7 @@ internal class EventBusTests
     [Test]
     public void Publish_InvokesSubscribedHandler()
     {
-        var bus = new EventBus();
+        var bus = new EventBus(NullLogger<EventBus>.Instance);
         var received = false;
 
         bus.Subscribe<Z21ConnectionEstablishedEvent>(_ => received = true);
@@ -33,7 +35,7 @@ internal class EventBusTests
     [Test]
     public void Publish_InvokesMultipleHandlersForSameEventType()
     {
-        var bus = new EventBus();
+        var bus = new EventBus(NullLogger<EventBus>.Instance);
         var count = 0;
 
         bus.Subscribe<FeedbackReceivedEvent>(_ => count++);
@@ -46,7 +48,7 @@ internal class EventBusTests
     [Test]
     public void Publish_DoesNotInvokeHandlersForOtherEventTypes()
     {
-        var bus = new EventBus();
+        var bus = new EventBus(NullLogger<EventBus>.Instance);
         var connectionReceived = false;
         var feedbackReceived = false;
 
@@ -61,7 +63,7 @@ internal class EventBusTests
     [Test]
     public void Subscribe_ReturnsNonEmptyGuid()
     {
-        var bus = new EventBus();
+        var bus = new EventBus(NullLogger<EventBus>.Instance);
 
         var id = bus.Subscribe<Z21ConnectionEstablishedEvent>(_ => { });
 
@@ -71,7 +73,7 @@ internal class EventBusTests
     [Test]
     public void Subscribe_ReturnsUniqueIds()
     {
-        var bus = new EventBus();
+        var bus = new EventBus(NullLogger<EventBus>.Instance);
         var id1 = bus.Subscribe<Z21ConnectionEstablishedEvent>(_ => { });
         var id2 = bus.Subscribe<Z21ConnectionEstablishedEvent>(_ => { });
 
@@ -81,7 +83,7 @@ internal class EventBusTests
     [Test]
     public void Unsubscribe_StopsReceivingEvents()
     {
-        var bus = new EventBus();
+        var bus = new EventBus(NullLogger<EventBus>.Instance);
         var count = 0;
         var id = bus.Subscribe<FeedbackReceivedEvent>(_ => count++);
 
@@ -97,7 +99,7 @@ internal class EventBusTests
     [Test]
     public void Unsubscribe_DoesNotAffectOtherSubscriptions()
     {
-        var bus = new EventBus();
+        var bus = new EventBus(NullLogger<EventBus>.Instance);
         var count = 0;
         var id1 = bus.Subscribe<FeedbackReceivedEvent>(_ => count++);
         bus.Subscribe<FeedbackReceivedEvent>(_ => count++);
@@ -111,7 +113,7 @@ internal class EventBusTests
     [Test]
     public void GetSubscriberCount_ReturnsZero_WhenNoSubscribers()
     {
-        var bus = new EventBus();
+        var bus = new EventBus(NullLogger<EventBus>.Instance);
 
         Assert.That(bus.GetSubscriberCount<Z21ConnectionEstablishedEvent>(), Is.Zero);
     }
@@ -119,7 +121,7 @@ internal class EventBusTests
     [Test]
     public void GetSubscriberCount_ReturnsCorrectCount_AfterSubscribe()
     {
-        var bus = new EventBus();
+        var bus = new EventBus(NullLogger<EventBus>.Instance);
 
         bus.Subscribe<FeedbackReceivedEvent>(_ => { });
         bus.Subscribe<FeedbackReceivedEvent>(_ => { });
@@ -130,7 +132,7 @@ internal class EventBusTests
     [Test]
     public void GetSubscriberCount_ReturnsCorrectCount_AfterUnsubscribe()
     {
-        var bus = new EventBus();
+        var bus = new EventBus(NullLogger<EventBus>.Instance);
         var id = bus.Subscribe<FeedbackReceivedEvent>(_ => { });
         bus.Subscribe<FeedbackReceivedEvent>(_ => { });
 
@@ -142,7 +144,7 @@ internal class EventBusTests
     [Test]
     public void Publish_WithNullEvent_ThrowsArgumentNullException()
     {
-        var bus = new EventBus();
+        var bus = new EventBus(NullLogger<EventBus>.Instance);
 
         Assert.Throws<ArgumentNullException>(() => bus.Publish<Z21ConnectionEstablishedEvent>(null!));
     }
@@ -150,7 +152,7 @@ internal class EventBusTests
     [Test]
     public void Subscribe_WithNullHandler_ThrowsArgumentNullException()
     {
-        var bus = new EventBus();
+        var bus = new EventBus(NullLogger<EventBus>.Instance);
 
         Assert.Throws<ArgumentNullException>(() => bus.Subscribe<Z21ConnectionEstablishedEvent>(null!));
     }
@@ -158,7 +160,7 @@ internal class EventBusTests
     [Test]
     public void Publish_PassesEventInstanceToHandler()
     {
-        var bus = new EventBus();
+        var bus = new EventBus(NullLogger<EventBus>.Instance);
         FeedbackReceivedEvent? captured = null;
 
         bus.Subscribe<FeedbackReceivedEvent>(e => captured = e);

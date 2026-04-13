@@ -4,6 +4,7 @@ namespace Moba.SharedUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Domain;
 using Interface;
+using Microsoft.Extensions.Logging;
 using Sound;
 using System.Collections.ObjectModel;
 
@@ -24,6 +25,7 @@ public sealed partial class ProjectViewModel : ObservableObject, IViewModelWrapp
     private readonly IUiDispatcher? _dispatcher;
     private readonly IIoService? _ioService;
     private readonly ISoundPlayer? _soundPlayer;
+    private readonly ILoggerFactory? _loggerFactory;
 
     // Properties (ObservableProperty fields)
     [ObservableProperty]
@@ -105,13 +107,15 @@ public sealed partial class ProjectViewModel : ObservableObject, IViewModelWrapp
     /// <param name="dispatcher">Optional UI dispatcher used by nested ViewModels.</param>
     /// <param name="ioService">Optional IO service used by nested ViewModels.</param>
     /// <param name="soundPlayer">Optional sound player used by nested ViewModels.</param>
-    public ProjectViewModel(Project model, IUiDispatcher? dispatcher = null, IIoService? ioService = null, ISoundPlayer? soundPlayer = null)
+    /// <param name="loggerFactory">Optional factory for nested view model loggers.</param>
+    public ProjectViewModel(Project model, IUiDispatcher? dispatcher = null, IIoService? ioService = null, ISoundPlayer? soundPlayer = null, ILoggerFactory? loggerFactory = null)
     {
         ArgumentNullException.ThrowIfNull(model);
         Model = model;
         _dispatcher = dispatcher;
         _ioService = ioService;
         _soundPlayer = soundPlayer;
+        _loggerFactory = loggerFactory;
         _name = model.Name;  // Initialize from Model
         Refresh();
 
@@ -147,7 +151,7 @@ public sealed partial class ProjectViewModel : ObservableObject, IViewModelWrapp
 
         Workflows.Clear();
         foreach (var w in Model.Workflows)
-            Workflows.Add(new WorkflowViewModel(w, ioService: _ioService, soundPlayer: _soundPlayer));
+            Workflows.Add(new WorkflowViewModel(w, ioService: _ioService, soundPlayer: _soundPlayer, loggerFactory: _loggerFactory));
 
         Trains.Clear();
         foreach (var train in Model.Trains)

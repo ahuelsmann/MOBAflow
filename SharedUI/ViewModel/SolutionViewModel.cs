@@ -4,6 +4,7 @@ namespace Moba.SharedUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Domain;
 using Interface;
+using Microsoft.Extensions.Logging;
 using Sound;
 using System.Collections.ObjectModel;
 
@@ -25,6 +26,7 @@ public sealed partial class SolutionViewModel : ObservableObject, IViewModelWrap
     private readonly IUiDispatcher? _dispatcher;
     private readonly IIoService? _ioService;
     private readonly ISoundPlayer? _soundPlayer;
+    private readonly ILoggerFactory? _loggerFactory;
 
     // Properties
     [ObservableProperty]
@@ -45,13 +47,15 @@ public sealed partial class SolutionViewModel : ObservableObject, IViewModelWrap
     /// <param name="dispatcher">Optional UI dispatcher used by nested project ViewModels.</param>
     /// <param name="ioService">Optional IO service used by nested ViewModels.</param>
     /// <param name="soundPlayer">Optional sound player used by nested ViewModels.</param>
-    public SolutionViewModel(Solution model, IUiDispatcher? dispatcher = null, IIoService? ioService = null, ISoundPlayer? soundPlayer = null)
+    /// <param name="loggerFactory">Optional factory for nested view model loggers.</param>
+    public SolutionViewModel(Solution model, IUiDispatcher? dispatcher = null, IIoService? ioService = null, ISoundPlayer? soundPlayer = null, ILoggerFactory? loggerFactory = null)
     {
         ArgumentNullException.ThrowIfNull(model);
         Model = model;
         _dispatcher = dispatcher;
         _ioService = ioService;
         _soundPlayer = soundPlayer;
+        _loggerFactory = loggerFactory;
         Refresh();
     }
 
@@ -67,7 +71,7 @@ public sealed partial class SolutionViewModel : ObservableObject, IViewModelWrap
         Projects.Clear();
         foreach (var project in Model.Projects)
         {
-            Projects.Add(new ProjectViewModel(project, _dispatcher, _ioService, _soundPlayer));
+            Projects.Add(new ProjectViewModel(project, _dispatcher, _ioService, _soundPlayer, _loggerFactory));
         }
     }
 }

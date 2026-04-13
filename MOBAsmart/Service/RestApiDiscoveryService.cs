@@ -15,8 +15,6 @@ using System.Net.Http;
 using System.Net.Sockets;
 using System.Text;
 
-using Debug = System.Diagnostics.Debug;
-
 /// <summary>
 /// REST-API server discovery for MOBAsmart (smartphone on LAN).
 /// Tries UDP multicast first, then scans the local /24 subnets for MOBApi HTTP health (same idea as Z21 subnet scan).
@@ -319,7 +317,7 @@ public class RestApiDiscoveryService
 #if ANDROID
     private static WifiManager.MulticastLock? _multicastLock;
 
-    private static void AcquireMulticastLock()
+    private void AcquireMulticastLock()
     {
         try
         {
@@ -334,7 +332,7 @@ public class RestApiDiscoveryService
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"MulticastLock acquire failed: {ex.Message}");
+            _logger.LogWarning(ex, "MulticastLock acquire failed for REST discovery");
         }
     }
 

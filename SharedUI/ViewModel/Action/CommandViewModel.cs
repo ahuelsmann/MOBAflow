@@ -4,7 +4,7 @@ namespace Moba.SharedUI.ViewModel.Action;
 using Domain;
 using Domain.Enum;
 using Helper;
-using System.Diagnostics;
+using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// ViewModel for Z21 Command actions (loco control).
@@ -15,17 +15,22 @@ public sealed class CommandViewModel : WorkflowActionViewModel
 {
     #region Fields
     private Z21DccCommandDecoder.DccCommand? _decodedCommand;
+    private readonly ILogger<CommandViewModel>? _logger;
     #endregion
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CommandViewModel"/> class for the given workflow action.
     /// </summary>
     /// <param name="action">The underlying workflow action that defines this Z21 locomotive command.</param>
-    public CommandViewModel(WorkflowAction action) : base(action, ActionType.Command) 
+    /// <param name="logger">Optional logger for encoding failures.</param>
+    public CommandViewModel(WorkflowAction action, ILogger<CommandViewModel>? logger = null) : base(action, ActionType.Command)
     {
-        // Decode bytes on initialization
+        _logger = logger;
+        action.Command ??= new CommandActionPayload();
         _decodedCommand = DecodeBytes();
     }
+
+    private CommandActionPayload Cmd => UnderlyingAction.Command ??= new CommandActionPayload();
 
     /// <summary>
     /// Available direction values for ComboBox binding.
@@ -41,13 +46,11 @@ public sealed class CommandViewModel : WorkflowActionViewModel
     {
         get
         {
-            // Priority: decoded from bytes
             var decoded = DecodedCommand;
             if (decoded?.IsValid == true)
                 return decoded.Address;
-            
-            // Fallback: stored parameter
-            return GetParameter<int>("Address");
+
+            return Cmd.Address ?? 0;
         }
         set
         {
@@ -55,10 +58,9 @@ public sealed class CommandViewModel : WorkflowActionViewModel
             if (currentValue == value)
                 return;
 
-            SetParameter("Address", value);
-            // ReSharper disable once RedundantArgumentDefaultValue
-            OnPropertyChanged(nameof(Address));  // Explicit notification for NumberBox
-            UpdateBytesFromProperties();  // Auto-update bytes
+            Cmd.Address = value;
+            OnPropertyChanged(nameof(Address));
+            UpdateBytesFromProperties();
             OnPropertyChanged(nameof(BytesHex));
         }
     }
@@ -72,13 +74,11 @@ public sealed class CommandViewModel : WorkflowActionViewModel
     {
         get
         {
-            // Priority: decoded from bytes
             var decoded = DecodedCommand;
             if (decoded?.IsValid == true)
                 return decoded.Speed;
 
-            // Fallback: stored parameter
-            return GetParameter<int>("Speed");
+            return Cmd.Speed ?? 0;
         }
         set
         {
@@ -86,10 +86,9 @@ public sealed class CommandViewModel : WorkflowActionViewModel
             if (currentValue == value)
                 return;
 
-            SetParameter("Speed", value);
-            // ReSharper disable once RedundantArgumentDefaultValue
-            OnPropertyChanged(nameof(Speed));  // Explicit notification for NumberBox
-            UpdateBytesFromProperties();  // Auto-update bytes
+            Cmd.Speed = value;
+            OnPropertyChanged(nameof(Speed));
+            UpdateBytesFromProperties();
             OnPropertyChanged(nameof(BytesHex));
         }
     }
@@ -103,13 +102,11 @@ public sealed class CommandViewModel : WorkflowActionViewModel
     {
         get
         {
-            // Priority: decoded from bytes
             var decoded = DecodedCommand;
             if (decoded?.IsValid == true)
                 return decoded.Direction;
 
-            // Fallback: stored parameter
-            return GetParameter<string>("Direction") ?? "Forward";
+            return Cmd.Direction ?? "Forward";
         }
         set
         {
@@ -117,10 +114,9 @@ public sealed class CommandViewModel : WorkflowActionViewModel
             if (currentValue == value)
                 return;
 
-            SetParameter("Direction", value);
-            // ReSharper disable once RedundantArgumentDefaultValue
-            OnPropertyChanged(nameof(Direction));  // Explicit notification for ComboBox
-            UpdateBytesFromProperties();  // Auto-update bytes
+            Cmd.Direction = value;
+            OnPropertyChanged(nameof(Direction));
+            UpdateBytesFromProperties();
             OnPropertyChanged(nameof(BytesHex));
         }
     }
@@ -130,12 +126,29 @@ public sealed class CommandViewModel : WorkflowActionViewModel
     /// </summary>
     public byte[]? Bytes
     {
-        get => GetParameter<byte[]>("Bytes");
+        get
+        {
+            var b64 = Cmd.BytesBase64;
+            if (string.IsNullOrEmpty(b64))
+                return null;
+            try
+            {
+                return Convert.FromBase64String(b64);
+            }
+            catch (FormatException)
+            {
+                return null;
+            }
+        }
         set
         {
-            SetParameter("Bytes", value);
-            // Update decoded command when bytes change
+            string? newB64 = value is { Length: > 0 } ? Convert.ToBase64String(value) : null;
+            if (Cmd.BytesBase64 == newB64)
+                return;
+
+            Cmd.BytesBase64 = newB64;
             _decodedCommand = DecodeBytes();
+            OnPropertyChanged(nameof(Bytes));
             OnPropertyChanged(nameof(DecodedCommand));
             OnPropertyChanged(nameof(Address));
             OnPropertyChanged(nameof(Speed));
@@ -175,12 +188,12 @@ public sealed class CommandViewModel : WorkflowActionViewModel
         }
     }
 
-        /// <summary>
-        /// Decodes the current <see cref="Bytes"/> value into a <see cref="Z21DccCommandDecoder.DccCommand"/> instance.
-        /// </summary>
-        private Z21DccCommandDecoder.DccCommand? DecodeBytes()
-        {
-            var bytes = Bytes;
+    /// <summary>
+    /// Decodes the current <see cref="Bytes"/> value into a <see cref="Z21DccCommandDecoder.DccCommand"/> instance.
+    /// </summary>
+    private Z21DccCommandDecoder.DccCommand? DecodeBytes()
+    {
+        var bytes = Bytes;
         return bytes == null || bytes.Length == 0 ? null : Z21DccCommandDecoder.DecodeLocoCommand(bytes);
     }
 
@@ -189,34 +202,31 @@ public sealed class CommandViewModel : WorkflowActionViewModel
     /// and <see cref="Direction"/> values. Called automatically when any of these properties change.
     /// </summary>
     private void UpdateBytesFromProperties()
+    {
+        try
         {
-            try
-            {
-                // Get current values (use stored parameters, not decoded values to avoid circular reference)
-                int address = GetParameter<int>("Address");
-                int speed = GetParameter<int>("Speed");
-                string direction = GetParameter<string>("Direction") ?? "Forward";
+            int address = Cmd.Address ?? 0;
+            int speed = Cmd.Speed ?? 0;
+            string direction = Cmd.Direction ?? "Forward";
 
-                // Generate new bytes
-                byte[] newBytes = Z21DccCommandDecoder.EncodeLocoCommand(address, speed, direction);
+            byte[] newBytes = Z21DccCommandDecoder.EncodeLocoCommand(address, speed, direction);
 
-                // Update bytes (suppress property change notifications to avoid recursion)
-                SetParameter("Bytes", newBytes);
+            Cmd.BytesBase64 = Convert.ToBase64String(newBytes);
 
-                // Update decoded command
-                _decodedCommand = DecodeBytes();
-                OnPropertyChanged(nameof(DecodedCommand));
-            }
-            catch (Exception ex)
-            {
-                // Log error but don't crash
-                Debug.WriteLine($"Error encoding Z21 command: {ex.Message}");
-            }
+            _decodedCommand = DecodeBytes();
+            OnPropertyChanged(nameof(DecodedCommand));
+            OnPropertyChanged(nameof(Bytes));
+            OnPropertyChanged(nameof(BytesHex));
         }
-
-        /// <summary>
-        /// Returns a human-readable description of the Z21 command for debugging and UI display.
-        /// </summary>
-        /// <returns>A string describing the command.</returns>
-        public override string ToString() => !string.IsNullOrEmpty(Name) ? $"{Name} (Command)" : $"Command - Addr:{Address} Speed:{Speed} Dir:{Direction}";
+        catch (Exception ex)
+        {
+            _logger?.LogWarning(ex, "Error encoding Z21 command from property values");
+        }
     }
+
+    /// <summary>
+    /// Returns a human-readable description of the Z21 command for debugging and UI display.
+    /// </summary>
+    /// <returns>A string describing the command.</returns>
+    public override string ToString() => !string.IsNullOrEmpty(Name) ? $"{Name} (Command)" : $"Command - Addr:{Address} Speed:{Speed} Dir:{Direction}";
+}

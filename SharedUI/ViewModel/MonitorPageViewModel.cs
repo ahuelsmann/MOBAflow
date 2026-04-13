@@ -2,6 +2,7 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Model;
+using Common.Extension;
 using Common.Serilog;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -115,7 +116,8 @@ public sealed partial class MonitorPageViewModel : ObservableObject, IDisposable
             _batchUpdateCts = new CancellationTokenSource();
 
             // Schedule batch update after delay
-            _ = ScheduleBatchUpdateAsync(_batchUpdateCts.Token);
+            ScheduleBatchUpdateAsync(_batchUpdateCts.Token).Observe(
+                ex => _logger.LogWarning(ex, "Batch log update failed"));
         }
     }
 
@@ -189,4 +191,5 @@ public sealed partial class MonitorPageViewModel : ObservableObject, IDisposable
         _batchUpdateCts?.Cancel();
         _batchUpdateCts?.Dispose();
     }
+
 }

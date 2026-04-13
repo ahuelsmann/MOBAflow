@@ -5,10 +5,12 @@ using Common.Configuration;
 
 using Converter;
 
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Windows.Storage.Pickers;
 
+using Moba.Common.Extension;
 using Moba.SharedUI.ViewModel;
 
 using SharedUI.Interface;
@@ -23,10 +25,16 @@ using Windows.ApplicationModel.DataTransfer;
 internal sealed partial class SettingsPage
 {
     public MainWindowViewModel ViewModel { get; }
+    private readonly ISettingsService? _settingsService;
+    private readonly AppSettings? _settings;
+    private readonly ILogger<SettingsPage>? _logger;
 
-    public SettingsPage(MainWindowViewModel viewModel)
+    public SettingsPage(MainWindowViewModel viewModel, ISettingsService? settingsService = null, AppSettings? settings = null, ILogger<SettingsPage>? logger = null)
     {
         ViewModel = viewModel;
+        _settingsService = settingsService;
+        _settings = settings;
+        _logger = logger;
         InitializeComponent();
     }
 
@@ -37,29 +45,50 @@ internal sealed partial class SettingsPage
         Clipboard.SetContent(dataPackage);
     }
 
-    private async void BrowsePhotoFolder_Click(object sender, RoutedEventArgs e)
+    private void BrowsePhotoFolder_Click(object sender, RoutedEventArgs e)
     {
-        var window = App.MainWindow;
-        if (window == null) return;
-
-        var picker = new FolderPicker(window.AppWindow.Id)
-        {
-            SuggestedStartLocation = PickerLocationId.DocumentsLibrary
-        };
-
-        var folder = await picker.PickSingleFolderAsync();
-        if (folder == null) return;
-
-        var path = folder.Path;
-        ViewModel.PhotoStoragePath = path;
-        RecordSettingsSectionUsage("REST API");
-        PhotoPathToImageConverter.SetPhotoBasePath(path);
+        _ = sender;
+        _ = e;
+        HandleBrowsePhotoFolderAsync().Observe(ex => _logger?.LogWarning(ex, "Browse photo folder failed"));
     }
 
-    private async void ResetLayoutButton_Click(object sender, RoutedEventArgs e)
+    private async Task HandleBrowsePhotoFolderAsync()
     {
-        var settingsService = App.Current.Services.GetService(typeof(ISettingsService)) as ISettingsService;
-        var settings = App.Current.Services.GetService(typeof(AppSettings)) as AppSettings ?? settingsService?.GetSettings();
+        try
+        {
+            var window = App.MainWindow;
+            if (window == null) return;
+
+            var picker = new FolderPicker(window.AppWindow.Id)
+            {
+                SuggestedStartLocation = PickerLocationId.DocumentsLibrary
+            };
+
+            var folder = await picker.PickSingleFolderAsync();
+            if (folder == null) return;
+
+            var path = folder.Path;
+            ViewModel.PhotoStoragePath = path;
+            RecordSettingsSectionUsage("REST API");
+            PhotoPathToImageConverter.SetPhotoBasePath(path);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning(ex, "Browse photo folder failed");
+        }
+    }
+
+    private void ResetLayoutButton_Click(object sender, RoutedEventArgs e)
+    {
+        _ = sender;
+        _ = e;
+        HandleResetLayoutButtonAsync().Observe(ex => _logger?.LogWarning(ex, "Reset layout failed"));
+    }
+
+    private async Task HandleResetLayoutButtonAsync()
+    {
+        var settingsService = _settingsService;
+        var settings = _settings ?? settingsService?.GetSettings();
 
         if (settingsService == null || settings == null)
         {

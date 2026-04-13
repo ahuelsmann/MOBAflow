@@ -6,6 +6,7 @@ using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.Graphics.Canvas.UI;
 using Microsoft.Graphics.Canvas.UI.Xaml;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Input;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
@@ -15,7 +16,9 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 
+using Moba.Common.Extension;
 using Moba.SharedUI.ViewModel;
+using SharedUI.Interface;
 
 using TrackLibrary.PikoA;
 
@@ -37,6 +40,8 @@ public sealed partial class TrackPlanPage
 
     public TrackPlanViewModel ViewModel { get; }
     private readonly EditableTrackPlan _plan;
+    private readonly IIoService _ioService;
+    private readonly ILogger<TrackPlanPage>? _logger;
 
     private Canvas? _ghostLayer;
     private Canvas? _rotationHandleLayer;
@@ -60,13 +65,20 @@ public sealed partial class TrackPlanPage
     private GridLength _toolboxExpandedWidth = new(180);
     private GridLength _propertiesExpandedWidth = new(240);
 
-    public TrackPlanPage(TrackPlanViewModel viewModel, EditableTrackPlan plan)
+    public TrackPlanPage(
+        TrackPlanViewModel viewModel,
+        EditableTrackPlan plan,
+        IIoService ioService,
+        ILogger<TrackPlanPage>? logger = null)
     {
         ViewModel = viewModel;
         _plan = plan ?? throw new ArgumentNullException(nameof(plan));
+        _ioService = ioService ?? throw new ArgumentNullException(nameof(ioService));
+        _logger = logger;
         InitializeComponent();
         InitializeEditorFeatures();
         Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
 
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
 
@@ -151,47 +163,72 @@ public sealed partial class TrackPlanPage
         RefreshCanvas();
     }
 
-    private async void Page_KeyDown(object sender, KeyRoutedEventArgs e)
+    private void OnUnloaded(object sender, RoutedEventArgs e)
     {
-        if (IsCtrlPressed())
+        _ = sender;
+        _ = e;
+
+        ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+        _plan.PlanChanged -= OnPlanChanged;
+        KeyDown -= Page_KeyDown;
+        Loaded -= OnLoaded;
+        Unloaded -= OnUnloaded;
+    }
+
+    private void Page_KeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        _ = sender;
+        HandlePageKeyDownAsync(e).Observe(ex => _logger?.LogWarning(ex, "Keyboard handler failed"));
+    }
+
+    private async Task HandlePageKeyDownAsync(KeyRoutedEventArgs e)
+    {
+        try
         {
-            if (e.Key == VirtualKey.Z)
+            if (IsCtrlPressed())
             {
-                Undo();
-                e.Handled = true;
-                return;
+                if (e.Key == VirtualKey.Z)
+                {
+                    Undo();
+                    e.Handled = true;
+                    return;
+                }
+
+                if (e.Key == VirtualKey.Y)
+                {
+                    Redo();
+                    e.Handled = true;
+                    return;
+                }
+
+                if (e.Key == VirtualKey.S)
+                {
+                    await SaveTrackPlanAsync(IsShiftPressed());
+                    e.Handled = true;
+                    return;
+                }
+
+                if (e.Key == VirtualKey.O)
+                {
+                    await LoadTrackPlanAsync();
+                    e.Handled = true;
+                    return;
+                }
             }
 
-            if (e.Key == VirtualKey.Y)
-            {
-                Redo();
-                e.Handled = true;
+            if (e.Key != VirtualKey.Delete && e.Key != VirtualKey.Back)
                 return;
-            }
 
-            if (e.Key == VirtualKey.S)
-            {
-                await SaveTrackPlanAsync(IsShiftPressed());
-                e.Handled = true;
+            if (_selectedSegmentId == null)
                 return;
-            }
 
-            if (e.Key == VirtualKey.O)
-            {
-                await LoadTrackPlanAsync();
-                e.Handled = true;
-                return;
-            }
+            DeleteSelectedSegment();
+            e.Handled = true;
         }
-
-        if (e.Key != VirtualKey.Delete && e.Key != VirtualKey.Back)
-            return;
-
-        if (_selectedSegmentId == null)
-            return;
-
-        DeleteSelectedSegment();
-        e.Handled = true;
+        catch (Exception ex)
+        {
+            _logger?.LogWarning(ex, "Keyboard handler failed");
+        }
     }
 
     private void OnPlanChanged(object? sender, EventArgs e)
@@ -270,24 +307,38 @@ public sealed partial class TrackPlanPage
         }
     }
 
-    private async void ToolboxItem_PointerPressed(object sender, PointerRoutedEventArgs e)
+    private void ToolboxItem_PointerPressed(object sender, PointerRoutedEventArgs e)
     {
-        if (sender is not Border border || border.Tag is not TrackCatalogEntry entry)
-            return;
+        HandleToolboxItemPointerPressedAsync(sender, e).Observe(ex => _logger?.LogWarning(ex, "Toolbox drag start failed"));
+    }
 
-        var ptr = e.GetCurrentPoint(border);
-        if (ptr.Properties.IsLeftButtonPressed)
+    private Task HandleToolboxItemPointerPressedAsync(object sender, PointerRoutedEventArgs e)
+    {
+        try
         {
-            var dataPackage = new DataPackage();
-            dataPackage.SetData(DragFormatTrackCatalog, entry.Code);
-            dataPackage.SetText(entry.DisplayName);
+            if (sender is not Border border || border.Tag is not TrackCatalogEntry entry)
+                return Task.CompletedTask;
 
-            _draggedPlaced = null;
-            _draggedSegmentId = null;
-            _draggingGroup = [];
+            var ptr = e.GetCurrentPoint(border);
+            if (ptr.Properties.IsLeftButtonPressed)
+            {
+                var dataPackage = new DataPackage();
+                dataPackage.SetData(DragFormatTrackCatalog, entry.Code);
+                dataPackage.SetText(entry.DisplayName);
 
-            StartDragFromToolbox(entry, border, ptr, e.Pointer);
+                _draggedPlaced = null;
+                _draggedSegmentId = null;
+                _draggingGroup = [];
+
+                StartDragFromToolbox(entry, border, ptr, e.Pointer);
+            }
         }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning(ex, "Toolbox drag start failed");
+        }
+
+        return Task.CompletedTask;
     }
 
     private void StartDragFromToolbox(TrackCatalogEntry entry, Border sourceBorder, PointerPoint ptr, Pointer pointer)
@@ -339,21 +390,34 @@ public sealed partial class TrackPlanPage
             e.DragUIOverride.Caption = "Gleis ablegen";
     }
 
-    private async void Canvas_Drop(object sender, DragEventArgs e)
+    private void Canvas_Drop(object sender, DragEventArgs e)
     {
-        var (xMm, yMm) = ToWorldCoordinates(e.GetPosition(OverlayCanvas));
+        _ = sender;
+        HandleCanvasDropAsync(e).Observe(ex => _logger?.LogWarning(ex, "Drop handling failed"));
+    }
 
-        if (e.DataView.Contains(DragFormatTrackCatalog))
+    private async Task HandleCanvasDropAsync(DragEventArgs e)
+    {
+        try
         {
-            var data = await e.DataView.GetDataAsync(DragFormatTrackCatalog);
-            var code = data?.ToString();
-            var entry = PikoACatalog.All.FirstOrDefault(c => c.Code == code);
-            if (entry != null)
+            var (xMm, yMm) = ToWorldCoordinates(e.GetPosition(OverlayCanvas));
+
+            if (e.DataView.Contains(DragFormatTrackCatalog))
             {
-                var segment = entry.CreateInstance();
-                var placed = new PlacedSegment(segment, xMm, yMm, 0);
-                TrySnapAndPlace(placed, null);
+                var data = await e.DataView.GetDataAsync(DragFormatTrackCatalog);
+                var code = data?.ToString();
+                var entry = PikoACatalog.All.FirstOrDefault(c => c.Code == code);
+                if (entry != null)
+                {
+                    var segment = entry.CreateInstance();
+                    var placed = new PlacedSegment(segment, xMm, yMm, 0);
+                    TrySnapAndPlace(placed, null);
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning(ex, "Drop handling failed");
         }
     }
 

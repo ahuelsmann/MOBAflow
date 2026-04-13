@@ -17,7 +17,7 @@ public partial class MainWindowViewModel
     #region Journey Factory
     /// <summary>
     /// Creates a JourneyViewModel with SessionState.
-    /// Runtime state is projected separately via IMobaClient snapshots.
+    /// Runtime state is projected separately via <see cref="IMobaRuntime"/> snapshots.
     /// </summary>
     private JourneyViewModel CreateJourneyViewModel(Journey journey)
     {
@@ -109,7 +109,7 @@ public partial class MainWindowViewModel
 
         SelectedJourney = journey;
         OnPropertyChanged(nameof(FilteredJourneys));
-        _ = _mobaClient.ActivateProjectAsync(SelectedProject.Model);
+        ObserveBackgroundTask(_mobaRuntime.ActivateProjectAsync(SelectedProject.Model), "Activate project runtime");
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteJourney))]
@@ -124,7 +124,7 @@ public partial class MainWindowViewModel
             () => SelectedJourney = null);
 
         OnPropertyChanged(nameof(FilteredJourneys));
-        _ = _mobaClient.ActivateProjectAsync(SelectedProject.Model);
+        ObserveBackgroundTask(_mobaRuntime.ActivateProjectAsync(SelectedProject.Model), "Activate project runtime");
     }
 
     private bool CanDeleteJourney() => SelectedJourney != null;
@@ -170,7 +170,7 @@ public partial class MainWindowViewModel
         if (SelectedJourney == null) return;
 
         SelectedJourney.ResetCommand.Execute(null);
-        await _mobaClient.ResetJourneyAsync(SelectedJourney.Model.Id).ConfigureAwait(false);
+        await _mobaRuntime.ResetJourneyAsync(SelectedJourney.Model.Id).ConfigureAwait(false);
     }
 
     private bool CanResetJourneyCounter() => SelectedJourney != null;

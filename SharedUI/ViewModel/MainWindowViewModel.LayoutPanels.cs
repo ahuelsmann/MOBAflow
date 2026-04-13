@@ -290,6 +290,6 @@ public partial class MainWindowViewModel
     private void PersistLayoutState(Action<LayoutSettings> apply)
     {
         apply(_settings.Layout);
-        _ = _settingsService?.SaveSettingsAsync(_settings);
+        PersistSettingsSafely();
     }
 }

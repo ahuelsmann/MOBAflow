@@ -1,9 +1,11 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
+using Backend.Interface;
 using Backend.Service;
 
 using Common.Configuration;
+using Common.Extension;
 using Common.Events;
 using Common.Navigation;
 
@@ -16,30 +18,28 @@ using Domain.Enum;
 using Interface;
 
 using Microsoft.Extensions.Logging;
-
 using Service;
 
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics;
-using System.Threading;
 
 // For NullIoService
 
 /// <summary>
 /// Core ViewModel for main window functionality.
-/// Partial classes handle: Selection, Solution, Journey, Workflow, Train, Z21, Settings.
+/// Partial classes handle: Selection, Solution, SolutionAutoSave, Journey, Workflow, Train, Z21, Settings.
 /// </summary>
-public sealed partial class MainWindowViewModel : ObservableObject
+public sealed partial class MainWindowViewModel : ObservableObject, IRestApiStatusSink
 {
     #region Fields
     private const int ShutdownDisconnectTimeoutSeconds = 5;
 
     // Core Services (required)
     private readonly IIoService _ioService;
-    private readonly IMobaClient _mobaClient;
+    private readonly IMobaRuntime _mobaRuntime;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly ILogger<MainWindowViewModel> _logger;
+    private readonly ILoggerFactory? _loggerFactory;
 
     // Configuration
     private readonly AppSettings _settings;
@@ -58,28 +58,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool _isShuttingDown;
 
-    /// <summary>
-    /// When greater than zero, PropertyChanged-driven solution auto-save is suppressed (bulk load / new solution).
-    /// </summary>
-    private int _solutionAutoSaveSuppressionCount;
-
-    /// <summary>
-    /// Ensures at most one solution file write runs at a time (avoids races on temp/rename writes).
-    /// </summary>
-    private readonly SemaphoreSlim _solutionSaveSemaphore = new(1, 1);
-
-    /// <summary>
-    /// Set to 1 after <see cref="DrainAndDisposeSolutionSaveSemaphoreAsync"/> has run (idempotent shutdown).
-    /// </summary>
-    private int _solutionSaveSemaphoreDrainStarted;
-
     #endregion
 
     #region Constructor
     /// <summary>
     /// Initializes a new instance of the <see cref="MainWindowViewModel"/> class with all required backend services and configuration.
     /// </summary>
-    /// <param name="mobaClient">The client used to talk to the active MOBA runtime.</param>
+    /// <param name="layoutColumnWidths">Observable column widths loaded from settings and bound by layout panels.</param>
+    /// <param name="mobaRuntime">The in-process MOBA runtime (Z21, project activation, snapshots).</param>
     /// <param name="eventBus">The event bus used to subscribe to backend domain events.</param>
     /// <param name="uiDispatcher">Dispatcher used to marshal callbacks onto the UI thread.</param>
     /// <param name="settings">Application-wide settings object.</param>
@@ -92,10 +78,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <param name="announcementService">Optional announcement service for text-to-speech announcements.</param>
     /// <param name="photoHubClient">Optional PhotoHub client instance (WinUI only, loosely typed as <see cref="object"/>).</param>
     /// <param name="featureTogglePageProvider">Optional provider for feature toggle page metadata.</param>
-    /// <param name="layoutColumnWidths">Observable column widths loaded from settings and bound by layout panels.</param>
+    /// <param name="loggerFactory">Optional factory used to create loggers for nested view models (e.g. workflow command encoding).</param>
     public MainWindowViewModel(
         LayoutColumnWidthsViewModel layoutColumnWidths,
-        IMobaClient mobaClient,
+        IMobaRuntime mobaRuntime,
         IEventBus eventBus,
         IUiDispatcher uiDispatcher,
         AppSettings settings,
@@ -107,10 +93,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ISettingsService? settingsService = null,
         AnnouncementService? announcementService = null,
         object? photoHubClient = null,  // Optional PhotoHubClient (only in WinUI, type is object to avoid assembly reference)
-        IFeatureTogglePageProvider? featureTogglePageProvider = null)
+        IFeatureTogglePageProvider? featureTogglePageProvider = null,
+        ILoggerFactory? loggerFactory = null)
     {
         ArgumentNullException.ThrowIfNull(layoutColumnWidths);
-        ArgumentNullException.ThrowIfNull(mobaClient);
+        ArgumentNullException.ThrowIfNull(mobaRuntime);
         ArgumentNullException.ThrowIfNull(eventBus);
         ArgumentNullException.ThrowIfNull(uiDispatcher);
         ArgumentNullException.ThrowIfNull(settings);
@@ -119,10 +106,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(logger);
 
         _ioService = ioService ?? new NullIoService();  // Use null object pattern
-        _mobaClient = mobaClient;
+        _mobaRuntime = mobaRuntime;
         _uiDispatcher = uiDispatcher;
         _settings = settings;
         _logger = logger;
+        _loggerFactory = loggerFactory;
         _layoutColumnWidths = layoutColumnWidths;
         _layoutColumnWidths.LoadFrom(settings.Layout);
         _cityLibraryService = cityLibraryService;
@@ -132,8 +120,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _featureTogglePageProvider = featureTogglePageProvider;
         _ = photoHubClient;
 
-        _mobaClient.SnapshotChanged += OnMobaRuntimeSnapshotChanged;
-        ApplyRuntimeSnapshot(_mobaClient.Current);
+        _mobaRuntime.SnapshotChanged += OnMobaRuntimeSnapshotChanged;
+        ApplyRuntimeSnapshot(_mobaRuntime.Current);
 
         Solution = solution;
 
@@ -154,18 +142,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         // Load City Library once on startup (background, non-blocking).
         if (_cityLibraryService != null)
         {
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await LoadCityLibraryAsync().ConfigureAwait(false);
-                    Debug.WriteLine($"[OK] City Library loaded: {CityLibrary.Count} cities");
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"[ERROR] Failed to load City Library: {ex.Message}");
-                }
-            });
+            LoadCityLibraryOnStartupAsync().Observe(ex => _logger.LogWarning(ex, "Load city library failed"));
         }
 
         InitializeFeatureToggleItems();
@@ -189,17 +166,28 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public LayoutColumnWidthsViewModel LayoutColumnWidths => _layoutColumnWidths;
 
     /// <summary>
+    /// Application settings model shared with the shell. Exposed for UI behaviors that walk the visual tree
+    /// (e.g. column width persistence) without using a service locator.
+    /// </summary>
+    public AppSettings ApplicationSettings => _settings;
+
+    /// <summary>
+    /// Optional settings persistence service (platform-provided). Used by shell-level UI behaviors.
+    /// </summary>
+    public ISettingsService? SettingsPersistence => _settingsService;
+
+    /// <summary>
+    /// Non-generic logger for UI shell subsystems (e.g. layout behaviors) that are not constructed via DI.
+    /// </summary>
+    public ILogger UiShellLogger => _logger;
+
+    /// <summary>
     /// Called when IsDarkMode changes. Persists to AppSettings.
     /// </summary>
     partial void OnIsDarkModeChanged(bool value)
     {
         _settings.Application.IsDarkMode = value;
-
-        // Auto-save settings when theme changes
-        if (_settingsService != null)
-        {
-            _ = _settingsService.SaveSettingsAsync(_settings);
-        }
+        PersistSettingsSafely();
     }
 
     /// <summary>
@@ -236,32 +224,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private JourneyViewModel? _selectedJourney;
 
-    /// <summary>
-    /// Called when SelectedJourney changes. Subscribes to PropertyChanged for auto-save.
-    /// </summary>
-    partial void OnSelectedJourneyChanged(JourneyViewModel? value)
-    {
-        if (value != null)
-        {
-            value.PropertyChanged += OnViewModelPropertyChanged;
-        }
-        ResetJourneyCommand.NotifyCanExecuteChanged();
-    }
-
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(DeleteStationCommand))]
     private StationViewModel? _selectedStation;
-
-    /// <summary>
-    /// Called when SelectedStation changes. Subscribes to PropertyChanged for auto-save.
-    /// </summary>
-    partial void OnSelectedStationChanged(StationViewModel? value)
-    {
-        if (value != null)
-        {
-            value.PropertyChanged += OnViewModelPropertyChanged;
-        }
-    }
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(DeleteWorkflowCommand))]
@@ -270,41 +235,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(DeleteActionCommand))]
     private object? _selectedAction;
-
-    /// <summary>
-    /// Generic handler for ViewModel PropertyChanged events.
-    /// Triggers auto-save for any model property change.
-    /// </summary>
-    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (Volatile.Read(ref _solutionAutoSaveSuppressionCount) > 0)
-        {
-            return;
-        }
-
-        // Ignore UI-only or runtime-backed properties that must not persist the whole solution.
-        // Journey: UpdateFromRuntimeSnapshot / UpdateFromSessionState refresh counters and station labels from Z21/backend.
-        // Station: IsCurrentStation is runtime highlight when the active journey position changes.
-        if (e.PropertyName is { } name &&
-            (name is "IsSelected" or "IsExpanded" or "IsHighlighted" or "IsCurrentStation"
-             or "CurrentStation" or "CurrentCounter" or "CurrentPos"))
-        {
-            return;
-        }
-
-        _ = SaveSolutionInternalAsync();
-    }
-
-    /// <summary>
-    /// Increments suppression counter so <see cref="OnViewModelPropertyChanged"/> does not trigger auto-save.
-    /// Must be paired with <see cref="EndSuppressSolutionAutoSave"/>.
-    /// </summary>
-    private void BeginSuppressSolutionAutoSave() => Interlocked.Increment(ref _solutionAutoSaveSuppressionCount);
-
-    /// <summary>
-    /// Decrements suppression counter started by <see cref="BeginSuppressSolutionAutoSave"/>.
-    /// </summary>
-    private void EndSuppressSolutionAutoSave() => Interlocked.Decrement(ref _solutionAutoSaveSuppressionCount);
 
     /// <summary>
     /// The currently selected object to display in the properties panel.
@@ -394,13 +324,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private ObservableCollection<City> _availableCities = [];
 
     /// <summary>
-    /// Currently selected city for adding stations to journeys.
-    /// </summary>
-    /// <summary>
     /// Raised when the application should be closed (for example when the user selects an Exit command).
     /// </summary>
     public event EventHandler? ExitApplicationRequested;
 
+    /// <summary>
+    /// Currently selected city for adding stations to journeys.
+    /// </summary>
     [ObservableProperty]
     private City? _selectedCity;
 
@@ -433,7 +363,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         Solution.Projects.Add(project);
 
         // Create ViewModel and add to SolutionViewModel
-        var projectVm = new ProjectViewModel(project);
+        var projectVm = new ProjectViewModel(project, _uiDispatcher, _ioService, _executionContext.SoundPlayer, _loggerFactory);
         SolutionViewModel!.Projects.Add(projectVm);
 
         // Select the newly created project
@@ -493,7 +423,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         try
         {
-            await _mobaClient.DisconnectAsync(cancellationTokenSource.Token).ConfigureAwait(false);
+            await _mobaRuntime.DisconnectAsync(cancellationTokenSource.Token).ConfigureAwait(false);
         }
         catch (TaskCanceledException ex)
         {
@@ -511,30 +441,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         await DrainAndDisposeSolutionSaveSemaphoreAsync().ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Waits until no in-flight solution save holds the semaphore, then releases managed resources.
-    /// Safe to call once per application shutdown; subsequent calls are ignored.
-    /// </summary>
-    private async Task DrainAndDisposeSolutionSaveSemaphoreAsync()
-    {
-        if (Interlocked.CompareExchange(ref _solutionSaveSemaphoreDrainStarted, 1, 0) != 0)
-        {
-            return;
-        }
-
-        try
-        {
-            await _solutionSaveSemaphore.WaitAsync().ConfigureAwait(false);
-            _solutionSaveSemaphore.Release();
-        }
-        catch (ObjectDisposedException)
-        {
-            return;
-        }
-
-        _solutionSaveSemaphore.Dispose();
-    }
-
     private bool TryBeginShutdown()
     {
         if (_isShuttingDown)
@@ -543,10 +449,30 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
 
         _isShuttingDown = true;
-        _mobaClient.SnapshotChanged -= OnMobaRuntimeSnapshotChanged;
-        _mobaClient.TrafficPacketLogged -= OnTrafficPacketLogged;
+        _mobaRuntime.SnapshotChanged -= OnMobaRuntimeSnapshotChanged;
+        _mobaRuntime.TrafficPacketLogged -= OnTrafficPacketLogged;
 
         return true;
+    }
+
+    private void PersistSettingsSafely()
+    {
+        if (_settingsService == null)
+        {
+            return;
+        }
+
+        _settingsService.SaveSettingsAsync(_settings).Observe(ex => _logger.LogWarning(ex, "Persist MainWindow settings failed"));
+    }
+
+    private void ObserveBackgroundTask(Task task, string operationName)
+    {
+        task.Observe(ex => _logger.LogWarning(ex, "{OperationName} failed", operationName));
+    }
+
+    private async Task LoadCityLibraryOnStartupAsync()
+    {
+        await LoadCityLibraryAsync().ConfigureAwait(false);
     }
 
     [RelayCommand]
@@ -603,7 +529,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
             SelectedStation = stationVm;
         }
 
-        Debug.WriteLine($"[OK] Added station from city: {city.Name} -> {cityStation.Name}");
     }
 
     private bool CanAddStationFromCity() => SelectedJourney != null;
@@ -622,7 +547,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _uiDispatcher.InvokeOnUi(() =>
         {
             CityLibrary = new ObservableCollection<City>(cities);
-            Debug.WriteLine($"[OK] City Library loaded: {CityLibrary.Count} cities");
         });
     }
     #endregion
@@ -651,8 +575,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (SelectedStation == null || workflow == null) return;
 
         SelectedStation.WorkflowId = workflow.Model.Id;
-
-        Debug.WriteLine($"[OK] Assigned workflow '{workflow.Name}' to station '{SelectedStation.Name}'");
     }
 
     private bool CanAssignWorkflowToStation() => SelectedStation != null;

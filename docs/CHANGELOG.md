@@ -9,35 +9,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Added a first runtime boundary with `IMobaRuntime`,
-  `MobaRuntimeService`, `IMobaClient`, and `InProcessMobaClient`.
-- Added runtime projection models `MobaRuntimeSnapshot`,
-  `JourneyRuntimeSnapshot`, and `LocomotiveRuntimeSnapshot`, plus
-  runtime-side feedback forwarding for UI consumers.
-- Added `ActiveProjectContext` and `ProjectRuntimeFactory` as the
-  first activation layer for the running project.
+- `MasterDataStore` as the CLR type for shared master JSON (`data.json`: cities,
+  locomotives, Viessmann multiplex catalogue). Replaces the former `DataManager`
+  name; JSON shape and keys are unchanged.
+- `WorkflowExecutionOptions` (`StopOnFirstActionFailure`) on
+  `IWorkflowService.ExecuteAsync` for optional fail-fast sequential workflows.
+- `FeatureToggleRegistry` page-availability get/set without reflection on
+  `FeatureToggleSettings`.
+- `WinUiGridInterop` in SharedUI to access WinUI `Grid.ColumnDefinitions` without
+  referencing WinUI from the cross-platform library.
+- `MobaRuntimeService` implemented as a **partial** class split across
+  `MobaRuntimeService.cs` (ctor, snapshot, dispose),
+  `MobaRuntimeService.RuntimeApi.cs`, `MobaRuntimeService.Z21Handlers.cs`,
+  `MobaRuntimeService.AutoConnect.cs`, and `MobaRuntimeService.StatusFormatting.cs`.
 
 ### Changed
 
-- `MainWindowViewModel` no longer orchestrates Z21 connection
-  handling and `JourneyManager` directly. It now consumes runtime
-  snapshots and delegates control commands through `IMobaClient`.
-- Traffic monitor access, track power commands, feedback simulation,
-  journey reset, multiplex signal commands, locomotive control, and
-  locomotive info requests are now routed through the runtime
-  boundary.
-- `JourneyViewModel` now accepts projected runtime state updates from
-  snapshots instead of depending on direct runtime manager ownership.
-- `TrainControlViewModel` and `MauiViewModel` now consume
-  `IMobaClient` instead of using `IZ21` directly.
-- WinUI DI registration now wires the shell through
-  `IMobaClient`/`IMobaRuntime`.
+- **Runtime boundary:** Removed `IMobaClient` and `InProcessMobaClient`.
+  `MainWindowViewModel`, `TrainControlViewModel`, and `MauiViewModel` inject
+  `IMobaRuntime` (`MobaRuntimeService`) directly from DI.
+- **WinUI DI:** City, locomotive, and settings services register without
+  try/catch fallbacks to null implementations; misconfiguration fails at startup.
+- **EventBus:** Handler exceptions are logged at **error** severity; when a
+  debugger is attached, `Debug.WriteLine` includes the failure for visibility.
+- **Column layout:** `ColumnViewModel` builds `GridLength` via the runtime
+  `Width` property type (double ctor) instead of a hard-coded type name string.
+- Runtime projection models `MobaRuntimeSnapshot`, `JourneyRuntimeSnapshot`, and
+  `LocomotiveRuntimeSnapshot` remain the UI-facing state; feedback is forwarded
+  from the runtime for MAUI and WinUI consumers.
+- `JourneyViewModel` continues to consume projected runtime state rather than
+  owning `JourneyManager` directly.
+
+### Removed
+
+- `IMobaClient`, `InProcessMobaClient`.
+- `ProjectRuntimeFactory` (superseded by `MobaRuntimeService.ActivateProjectAsync`
+  and `ActiveProjectContext`).
 
 ### Notes
 
-- The runtime split now covers the shared shell plus the remaining
-  shared Z21-facing ViewModels.
-- The active runtime still uses the live `Project` reference from the
-  loaded `Solution`.
-- A later step will introduce a true runtime copy so editor state and
-  execution state are fully separated.
+- A **remote** runtime client could still be introduced later as another
+  `IMobaRuntime` implementation; the extra UI facade layer was removed as redundant
+  for the in-process hosts.
+- The active runtime still uses the live `Project` from the loaded `Solution`;
+  separating editor state from execution state remains a possible follow-up.
+

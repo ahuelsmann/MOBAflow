@@ -667,18 +667,8 @@
 	<!-- ============================================ -->
 	<!-- 
 		Category: NonReadonlyMemberInGetHashCode
-		Count: 2 occurrences
-		File: WinUI/Controls/Docking/DocumentTab.cs
-		
-		Issue: GetHashCode uses Title and Tag which are mutable
-		
-		Why It's OK:
-		- DocumentTab is internal, only used as tab identity in DockingManager
-		- Title and Tag are set once during construction and never changed
-		- HashCode is only used for Dictionary/HashSet lookups within DockingManager
-		- Making properties init-only would break existing XAML bindings
-		
-		Status: ACCEPTED RISK – Internal type with stable identity
+		Suppressed at solution level for known false positives / WinUI binding types.
+		Re-enable and fix per-file if new GetHashCode implementations trigger noise.
 	-->
 	<s:Boolean x:Key="/Default/CodeInspection/Inspections/NonReadonlyMemberInGetHashCode/@EntryIndexedValue">False</s:Boolean>
 
@@ -688,11 +678,11 @@
 	<!-- 
 		Category: Xaml.UnusedField / FieldCanBeMadeReadOnly
 		Count: ~10 occurrences
-		Files: DockingPage.xaml (DockManager), TrainControlPage.xaml (BrakeButton, DoorReleaseButton),
+		Files: TrainControlPage.xaml (BrakeButton, DoorReleaseButton),
 		       KsSignalScreen.xaml (Zs3, Zs3V)
 		
 		Issue: ReSharper reports x:Name fields as unused because they are:
-		1. Reserved for future XAML features (DockManager)
+		1. Reserved for future XAML features
 		2. Only used via FindName() or DataTemplate binding (not direct code-behind access)
 		3. Signal screen LEDs reserved for future signal aspects (Zs3, Zs3V)
 		
@@ -823,7 +813,7 @@
 	<!-- 
 		Category: UnusedMember.Local / UnusedMethodReturnValue.Local
 		Count: ~5 occurrences
-		Files: SignalBoxPage.Properties.cs (OnSignalTypeChanged), DockingPage.xaml.cs (OnPanelUndocked)
+		Files: SignalBoxPage.Properties.cs (OnSignalTypeChanged)
 		
 		Issue: Methods appear unused in C# but are:
 		1. Referenced from XAML event bindings (Click="OnSignalTypeChanged")
