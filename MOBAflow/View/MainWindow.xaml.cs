@@ -2,14 +2,13 @@
 namespace Moba.WinUI.View;
 
 using Common.Configuration;
+using Common.Extension;
 using Common.Navigation;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-
-using Common.Extension;
 
 using Service;
 
