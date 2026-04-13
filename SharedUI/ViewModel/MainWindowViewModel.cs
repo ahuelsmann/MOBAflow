@@ -350,7 +350,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IRestApiStat
     }
     #endregion
 
-
     #region Project Management
     /// <summary>
     /// Creates a new empty project in the current solution and selects it.
@@ -528,7 +527,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IRestApiStat
         {
             SelectedStation = stationVm;
         }
-
     }
 
     private bool CanAddStationFromCity() => SelectedJourney != null;

@@ -16,6 +16,7 @@ public static class TrainControlDccSpeed
     {
         DccSpeedSteps.Steps14 => 13,
         DccSpeedSteps.Steps28 => 27,
-        _ => 126
+        DccSpeedSteps.Steps128 => 126,
+        _ => throw new NotImplementedException(),
     };
 }
