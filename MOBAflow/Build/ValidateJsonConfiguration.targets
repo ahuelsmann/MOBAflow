@@ -4,7 +4,7 @@
   Purpose: Catch JSON syntax errors (missing commas, quotes, etc.) at compile time, not runtime
   Runs: Before every build (BeforeTargets="Build")
 -->
-<Project>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Target Name="ValidateJsonConfiguration" BeforeTargets="Build">
     <!-- Find all appsettings*.json files -->
     <ItemGroup>

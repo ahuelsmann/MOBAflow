@@ -14,8 +14,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
 
-using Moba.SharedUI.ViewModel;
-using Moba.WinUI.Extensions;
+using SharedUI.ViewModel;
+using Extensions;
 
 using Serilog;
 using Serilog.Events;
@@ -72,7 +72,6 @@ public partial class App
     {
         // Log the exception with full details before the debugger breaks
         var message = $"UNHANDLED EXCEPTION: {e.Exception.GetType().Name}: {e.Exception.Message}";
-        var stackTrace = e.Exception.StackTrace ?? "(no stack trace)";
 
         _logger.LogCritical(e.Exception, "Unhandled exception in WinUI application: {Message}", message);
 

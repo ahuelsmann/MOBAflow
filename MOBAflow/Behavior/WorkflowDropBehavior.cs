@@ -15,7 +15,7 @@ using Windows.ApplicationModel.DataTransfer;
 /// Behavior that enables drop functionality for Workflow assignment.
 /// Attach to any UIElement (e.g., Border, Grid) to accept Workflow drops.
 /// </summary>
-internal sealed class WorkflowDropBehavior : Behavior<UIElement>
+public sealed class WorkflowDropBehavior : Behavior<UIElement>
 {
     public static readonly DependencyProperty CommandProperty =
         DependencyProperty.Register(

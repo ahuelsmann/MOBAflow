@@ -14,7 +14,7 @@ using SharedUI.ViewModel.Action;
 /// Selects the appropriate DataTemplate based on the type of entity.
 /// Used by ContentControl to display type-specific property editors.
 /// </summary>
-internal partial class EntityTemplateSelector : DataTemplateSelector
+public partial class EntityTemplateSelector : DataTemplateSelector
 {
     /// <summary>
     /// DataTemplate for JourneyViewModel

@@ -65,14 +65,6 @@
                 <Setter Property="StrokeThickness" Value="0" />
             </Style>
 
-            <Style x:Key="SectionChipButtonStyle" TargetType="Button">
-                <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceDark}" />
-                <Setter Property="TextColor" Value="{DynamicResource TextPrimary}" />
-                <Setter Property="CornerRadius" Value="14" />
-                <Setter Property="Padding" Value="12,8" />
-                <Setter Property="FontSize" Value="12" />
-                <Setter Property="HeightRequest" Value="36" />
-            </Style>
         </ResourceDictionary>
     </ContentPage.Resources>
 

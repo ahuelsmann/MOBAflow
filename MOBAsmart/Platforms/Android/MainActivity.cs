@@ -10,7 +10,7 @@ using global::Android.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-using Moba.Common.Extension;
+using Common.Extension;
 
 using SharedUI.ViewModel;
 

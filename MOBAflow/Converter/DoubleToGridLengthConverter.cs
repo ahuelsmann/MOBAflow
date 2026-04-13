@@ -8,7 +8,7 @@ using Microsoft.UI.Xaml.Data;
 /// Converts a numeric column width (double, pixels) to a <see cref="GridLength"/> for use with
 /// Values less than or equal to zero are converted to <see cref="GridLength.Auto"/>.
 /// </summary>
-internal sealed class DoubleToGridLengthConverter : IValueConverter
+public sealed class DoubleToGridLengthConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {

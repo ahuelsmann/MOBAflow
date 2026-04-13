@@ -6,6 +6,8 @@ using Common.Multiplex;
 
 using Domain;
 
+using Interface;
+
 using Manager;
 
 using Microsoft.Extensions.Logging;

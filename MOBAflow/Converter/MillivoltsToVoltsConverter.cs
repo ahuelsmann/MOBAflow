@@ -7,7 +7,7 @@ using Microsoft.UI.Xaml.Data;
 /// Converts millivolts (mV) to volts (V) for display.
 /// Example: 16000 mV → "16.0" V
 /// &lt;/summary&gt;
-internal class MillivoltsToVoltsConverter : IValueConverter
+public class MillivoltsToVoltsConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {

@@ -15,7 +15,7 @@ using Microsoft.UI.Xaml.Data;
 ///     TrueValue="&#xE769;" FalseValue="&#xE768;" /&gt;
 /// </code>
 /// </summary>
-internal sealed class BoolToStringConverter : IValueConverter
+public sealed class BoolToStringConverter : IValueConverter
 {
     /// <summary>
     /// String returned when value is true.

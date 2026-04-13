@@ -269,7 +269,7 @@ public class TrackPlanSvgRenderer
     /// </summary>
     private void RenderR9(char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
     {
-        DrawTwoPortSegment(placed, entryPort, segmentIndex, ref x, ref y, ref angle);
+        (x, y, angle) = DrawTwoPortSegment(placed, entryPort, segmentIndex);
     }
 
     /// <summary>
@@ -284,7 +284,7 @@ public class TrackPlanSvgRenderer
     /// </summary>
     private void RenderR1(char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
     {
-        DrawTwoPortSegment(placed, entryPort, segmentIndex, ref x, ref y, ref angle);
+        (x, y, angle) = DrawTwoPortSegment(placed, entryPort, segmentIndex);
     }
 
     /// <summary>
@@ -299,7 +299,7 @@ public class TrackPlanSvgRenderer
     /// </summary>
     private void RenderR2(char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
     {
-        DrawTwoPortSegment(placed, entryPort, segmentIndex, ref x, ref y, ref angle);
+        (x, y, angle) = DrawTwoPortSegment(placed, entryPort, segmentIndex);
     }
 
     /// <summary>
@@ -314,7 +314,7 @@ public class TrackPlanSvgRenderer
     /// </summary>
     private void RenderR3(char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
     {
-        DrawTwoPortSegment(placed, entryPort, segmentIndex, ref x, ref y, ref angle);
+        (x, y, angle) = DrawTwoPortSegment(placed, entryPort, segmentIndex);
     }
 
     /// <summary>
@@ -329,7 +329,7 @@ public class TrackPlanSvgRenderer
     /// </summary>
     private void RenderR4(char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
     {
-        DrawTwoPortSegment(placed, entryPort, segmentIndex, ref x, ref y, ref angle);
+        (x, y, angle) = DrawTwoPortSegment(placed, entryPort, segmentIndex);
     }
 
     /// <summary>
@@ -344,7 +344,7 @@ public class TrackPlanSvgRenderer
     /// </summary>
     private void RenderG239(char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
     {
-        DrawTwoPortSegment(placed, entryPort, segmentIndex, ref x, ref y, ref angle);
+        (x, y, angle) = DrawTwoPortSegment(placed, entryPort, segmentIndex);
     }
 
     /// <summary>
@@ -359,7 +359,7 @@ public class TrackPlanSvgRenderer
     /// </summary>
     private void RenderG231(char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
     {
-        DrawTwoPortSegment(placed, entryPort, segmentIndex, ref x, ref y, ref angle);
+        (x, y, angle) = DrawTwoPortSegment(placed, entryPort, segmentIndex);
     }
 
     /// <summary>
@@ -374,12 +374,11 @@ public class TrackPlanSvgRenderer
     /// </summary>
     private void RenderG62(char entryPort, PlacedSegment placed, ref double x, ref double y, ref double angle, int segmentIndex)
     {
-        DrawTwoPortSegment(placed, entryPort, segmentIndex, ref x, ref y, ref angle);
+        (x, y, angle) = DrawTwoPortSegment(placed, entryPort, segmentIndex);
     }
 
-    private void DrawTwoPortSegment(PlacedSegment placed, char entryPort, int segmentIndex, ref double x, ref double y, ref double angle)
+    private (double X, double Y, double Angle) DrawTwoPortSegment(PlacedSegment placed, char entryPort, int segmentIndex)
     {
-        _ = x + y + angle;
         var (portAx, portAy, _) = SegmentPortGeometry.GetPortWorldPosition(placed, "PortA");
         var (portBx, portBy, _) = SegmentPortGeometry.GetPortWorldPosition(placed, "PortB");
         var portAOutwardAngle = SegmentPortGeometry.GetPortOutwardWorldAngleDegrees(placed, "PortA");
@@ -395,9 +394,7 @@ public class TrackPlanSvgRenderer
         UpdateBounds(portAx, portAy);
         UpdateBounds(portBx, portBy);
 
-        x = portBx;
-        y = portBy;
-        angle = portBOutwardAngle;
+        return (portBx, portBy, portBOutwardAngle);
     }
 
     /// <summary>

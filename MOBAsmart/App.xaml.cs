@@ -3,7 +3,7 @@ namespace Moba.MAUI;
 
 using Microsoft.Extensions.Logging;
 
-using Moba.Common.Extension;
+using Common.Extension;
 
 using SharedUI.ViewModel;
 

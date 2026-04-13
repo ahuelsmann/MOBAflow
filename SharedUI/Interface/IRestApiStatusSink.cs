@@ -2,7 +2,7 @@
 
 namespace Moba.SharedUI.Interface;
 
-using Moba.SharedUI.ViewModel;
+using ViewModel;
 
 /// <summary>
 /// Receives REST API polling results and photo-upload assignments from WinUI services without coupling them to <see cref="MainWindowViewModel"/>.

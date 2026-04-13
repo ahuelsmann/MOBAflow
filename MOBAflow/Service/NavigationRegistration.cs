@@ -7,9 +7,9 @@ using Common.Navigation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-using Moba.SharedUI.ViewModel;
+using SharedUI.ViewModel;
 
-using Moba.WinUI.Controls.SignalBox;
+using Controls.SignalBox;
 
 using SharedUI.Interface;
 

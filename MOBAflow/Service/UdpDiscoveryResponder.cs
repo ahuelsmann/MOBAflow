@@ -4,7 +4,7 @@ namespace Moba.WinUI.Service;
 
 using Microsoft.Extensions.Logging;
 
-using Moba.Common.Extension;
+using Common.Extension;
 
 using System.Net;
 using System.Net.Sockets;

@@ -51,6 +51,7 @@ public class WorkflowService(IActionExecutor actionExecutor, ILogger<WorkflowSer
     /// </summary>
     /// <param name="workflow">The workflow to execute</param>
     /// <param name="context">Execution context containing dependencies and state</param>
+    /// <param name="options">Execution options controlling workflow failure behavior.</param>
     /// <exception cref="ArgumentNullException">Thrown when workflow or context is null</exception>
     public async Task ExecuteAsync(Workflow workflow, ActionExecutionContext context, WorkflowExecutionOptions options = default)
     {

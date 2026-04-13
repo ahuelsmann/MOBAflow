@@ -9,7 +9,7 @@ using Microsoft.UI.Xaml.Data;
 /// True → Visible, False → Collapsed.
 /// Use ConverterParameter="Invert" to invert the logic (True → Collapsed, False → Visible).
 /// </summary>
-internal partial class BoolToVisibilityConverter : IValueConverter
+public partial class BoolToVisibilityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {

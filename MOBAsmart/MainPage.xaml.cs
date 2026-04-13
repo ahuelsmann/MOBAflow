@@ -5,7 +5,7 @@ using Common.Configuration;
 
 using Microsoft.Extensions.Logging;
 
-using Moba.Common.Extension;
+using Common.Extension;
 
 using SharedUI.Interface;
 using SharedUI.ViewModel;

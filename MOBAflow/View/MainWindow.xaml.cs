@@ -9,7 +9,7 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-using Moba.Common.Extension;
+using Common.Extension;
 
 using Service;
 

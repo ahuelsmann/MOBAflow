@@ -9,7 +9,7 @@ using Moba.SharedUI.ViewModel;
 /// <summary>
 /// Converts <see cref="OperatingStateKind"/> values to <see cref="InfoBarSeverity"/>.
 /// </summary>
-internal sealed class OperatingStateToInfoBarSeverityConverter : IValueConverter
+public sealed class OperatingStateToInfoBarSeverityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {

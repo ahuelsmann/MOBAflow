@@ -10,7 +10,7 @@ using Microsoft.UI.Xaml.Media;
 /// True → AccentFillColorDefaultBrush, False → TextFillColorSecondaryBrush
 /// Used for highlighting current/active items with accent color.
 /// </summary>
-internal partial class BoolToAccentBrushConverter : IValueConverter
+public partial class BoolToAccentBrushConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {

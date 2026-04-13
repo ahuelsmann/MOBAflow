@@ -362,7 +362,7 @@ public class Z21 : IZ21
                     MaxKeepaliveFailures);
 
                 // Trigger disconnect on background thread to avoid deadlock
-                HandleConnectionLostAsync().Observe(ex => _logger?.LogWarning(ex, "Handle connection lost failed"));
+                HandleConnectionLostAsync().Observe(innerEx => _logger?.LogWarning(innerEx, "Handle connection lost failed"));
             }
         }
     }

@@ -2,10 +2,10 @@
 namespace Moba.WinUI.Service;
 
 using Common.Configuration;
+using Common.Extension;
 
 using Microsoft.Extensions.Logging;
 
-using Moba.Common.Extension;
 using Moba.SharedUI.ViewModel;
 
 using SharedUI.Interface;
@@ -209,11 +209,7 @@ public sealed class RestApiStatusService : IDisposable
         await disposeTask.ConfigureAwait(false);
     }
 
-    private sealed class StatusResponse
-    {
-        public int Port { get; set; }
-        public List<ClientDto>? ConnectedClients { get; set; }
-    }
+    private sealed record StatusResponse(int Port, List<ClientDto>? ConnectedClients);
 
     /// <summary>REST status payload item; deserialized via primary constructor (avoids unused synthetic property setters).</summary>
     private sealed record ClientDto(string? ClientId, string? DeviceName, DateTime ConnectedAt);

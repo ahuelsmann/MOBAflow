@@ -10,8 +10,8 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Windows.Storage.Pickers;
 
-using Moba.Common.Extension;
-using Moba.SharedUI.ViewModel;
+using Common.Extension;
+using SharedUI.ViewModel;
 
 using SharedUI.Interface;
 

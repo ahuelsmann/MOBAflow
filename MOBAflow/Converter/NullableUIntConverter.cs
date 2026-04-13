@@ -6,7 +6,7 @@ using Microsoft.UI.Xaml.Data;
 /// <summary>
 /// Converts between uint? and double for NumberBox binding.
 /// </summary>
-internal partial class NullableUIntConverter : IValueConverter
+public partial class NullableUIntConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, string language)
     {

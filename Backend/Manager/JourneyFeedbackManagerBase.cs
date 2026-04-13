@@ -8,7 +8,7 @@ using Interface;
 
 using Microsoft.Extensions.Logging;
 
-using Moba.Common.Extension;
+using Common.Extension;
 
 using Service;
 

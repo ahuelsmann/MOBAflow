@@ -6,9 +6,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 
-using Moba.SharedUI.ViewModel;
+using SharedUI.ViewModel;
 
-using Moba.WinUI.Controls.SignalBox;
+using Controls.SignalBox;
 
 using Service;
 

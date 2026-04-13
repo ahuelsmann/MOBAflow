@@ -5,8 +5,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-using Moba.Common.Extension;
-using Moba.SharedUI.ViewModel;
+using Common.Extension;
+using SharedUI.ViewModel;
 
 /// <summary>
 /// Solution page displaying projects list with properties panel.

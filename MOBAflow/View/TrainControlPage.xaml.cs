@@ -13,8 +13,8 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 
-using Moba.Common.Extension;
-using Moba.SharedUI.ViewModel;
+using Common.Extension;
+using SharedUI.ViewModel;
 
 using Service;
 

@@ -12,7 +12,7 @@ using Windows.UI;
 /// <summary>
 /// Converts <see cref="OperatingStateKind"/> values into subtle Fluent-style brushes for the shell status badge.
 /// </summary>
-internal sealed class OperatingStateToBrushConverter : IValueConverter
+public sealed class OperatingStateToBrushConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {

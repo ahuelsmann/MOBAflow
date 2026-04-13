@@ -16,14 +16,16 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 
-using Moba.Common.Extension;
-using Moba.SharedUI.ViewModel;
+using Common.Extension;
+using SharedUI.ViewModel;
 
 using SharedUI.Interface;
 
 using TrackLibrary.PikoA;
 
 using TrackPlan.Renderer;
+
+using Converter;
 
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
@@ -1160,7 +1162,7 @@ public sealed partial class TrackPlanPage
         {
             var isSelected = placed.Segment.No == _selectedSegmentId;
             var pathCommands = SegmentLocalPathBuilder.GetPath(placed.Segment);
-            var worldGeometry = Moba.WinUI.Converter.PathToCanvasGeometryConverter.ToCanvasGeometryInWorldCoords(
+            var worldGeometry = PathToCanvasGeometryConverter.ToCanvasGeometryInWorldCoords(
                 resourceCreator, pathCommands, placed.X + offsetX, placed.Y + offsetY, placed.RotationDegrees, ScaleMmToPx);
 
             var strokeWidth = (float)(isSelected ? 10 : 4);

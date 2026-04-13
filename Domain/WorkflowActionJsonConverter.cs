@@ -2,7 +2,7 @@
 
 namespace Moba.Domain;
 
-using Moba.Domain.Enum;
+using Enum;
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -270,7 +270,7 @@ public sealed class WorkflowActionJsonConverter : JsonConverter<WorkflowAction>
         if (el.ValueKind == JsonValueKind.String)
         {
             var s = el.GetString();
-            if (!string.IsNullOrEmpty(s) && global::System.Enum.TryParse(s, ignoreCase: true, out ActionType parsed))
+            if (!string.IsNullOrEmpty(s) && System.Enum.TryParse(s, ignoreCase: true, out ActionType parsed))
                 return parsed;
         }
 

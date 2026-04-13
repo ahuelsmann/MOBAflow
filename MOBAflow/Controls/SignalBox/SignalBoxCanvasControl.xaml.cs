@@ -7,8 +7,8 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 
-using Moba.Common.Extension;
-using Moba.SharedUI.ViewModel;
+using Common.Extension;
+using SharedUI.ViewModel;
 
 using System;
 

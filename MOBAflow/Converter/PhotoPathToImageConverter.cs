@@ -8,7 +8,7 @@ using Microsoft.UI.Xaml.Media.Imaging;
 /// Converts a relative photo path ("photos/...") into a BitmapImage that bypasses the image cache.
 /// Uses configurable base path when set via SetPhotoBasePath (e.g. from AppSettings); otherwise My Documents\MOBAflow\Photos.
 /// </summary>
-internal partial class PhotoPathToImageConverter : IValueConverter
+public partial class PhotoPathToImageConverter : IValueConverter
 {
     private static string? _sPhotoBasePath;
 
