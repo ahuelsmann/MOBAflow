@@ -24,6 +24,7 @@ public sealed partial class SignalBoxPropertiesControl
 {
     private ViessmannSignalService? _viessmannSignalService;
     private ILogger<SignalBoxPropertiesControl>? _logger;
+    private bool _isUpdatingSpeedIndicatorControls;
 
     public static readonly DependencyProperty ViewModelProperty = DependencyProperty.Register(
         nameof(ViewModel),
@@ -201,7 +202,25 @@ public sealed partial class SignalBoxPropertiesControl
     {
         UpdateSignalArticleComboBoxes(sig);
         BaseAddressBox.Value = sig.BaseAddress > 0 ? sig.BaseAddress : 1;
+        UpdateSpeedIndicatorConfig(sig);
         UpdateAvailableSignalAspects(sig);
+    }
+
+    private void UpdateSpeedIndicatorConfig(SbSignal sig)
+    {
+        var is4046 = string.Equals(sig.MainSignalArticleNumber, "4046", StringComparison.Ordinal);
+        SpeedIndicatorConfigPanel.Visibility = is4046 ? Visibility.Visible : Visibility.Collapsed;
+
+        _isUpdatingSpeedIndicatorControls = true;
+        try
+        {
+            TopSpeedIndicatorBox.Value = ParseNullableSpeedIndicator(sig.TopSpeedIndicator) ?? double.NaN;
+            BottomSpeedIndicatorBox.Value = ParseNullableSpeedIndicator(sig.BottomSpeedIndicator) ?? double.NaN;
+        }
+        finally
+        {
+            _isUpdatingSpeedIndicatorControls = false;
+        }
     }
 
     private void UpdateAvailableSignalAspects(SbSignal sig)
@@ -378,6 +397,7 @@ public sealed partial class SignalBoxPropertiesControl
 
         applySelection(sig, articleNumber);
         UpdateAvailableSignalAspects(sig);
+        QueueSolutionSave();
     }
 
     private void UpdateAspectButtons()
@@ -411,13 +431,16 @@ public sealed partial class SignalBoxPropertiesControl
         var is4046 = sig is not null && string.Equals(sig.MainSignalArticleNumber, "4046", StringComparison.Ordinal);
         var signalArticleNumber = is4046 ? "4046" : string.Empty;
 
-        ApplyAspectPreviewSignals(signalArticleNumber);
+        ApplyAspectPreviewSignals(signalArticleNumber, sig);
         ApplyAspectLabels(is4046);
         ApplyAspectTooltips(is4046);
     }
 
-    private void ApplyAspectPreviewSignals(string signalArticleNumber)
+    private void ApplyAspectPreviewSignals(string signalArticleNumber, SbSignal? selectedSignal)
     {
+        var topSpeedIndicator = selectedSignal?.TopSpeedIndicator ?? string.Empty;
+        var bottomSpeedIndicator = selectedSignal?.BottomSpeedIndicator ?? string.Empty;
+
         AspectHp0Signal.SignalArticleNumber = signalArticleNumber;
         AspectKs1Signal.SignalArticleNumber = signalArticleNumber;
         AspectKs2Signal.SignalArticleNumber = signalArticleNumber;
@@ -427,6 +450,26 @@ public sealed partial class SignalBoxPropertiesControl
         AspectRa12Signal.SignalArticleNumber = signalArticleNumber;
         AspectZs1Signal.SignalArticleNumber = signalArticleNumber;
         AspectZs7Signal.SignalArticleNumber = signalArticleNumber;
+
+        AspectHp0Signal.TopSpeedValue = topSpeedIndicator;
+        AspectKs1Signal.TopSpeedValue = topSpeedIndicator;
+        AspectKs2Signal.TopSpeedValue = topSpeedIndicator;
+        AspectKs1BlinkSignal.TopSpeedValue = topSpeedIndicator;
+        AspectKennlichtSignal.TopSpeedValue = topSpeedIndicator;
+        AspectDunkelSignal.TopSpeedValue = topSpeedIndicator;
+        AspectRa12Signal.TopSpeedValue = topSpeedIndicator;
+        AspectZs1Signal.TopSpeedValue = topSpeedIndicator;
+        AspectZs7Signal.TopSpeedValue = topSpeedIndicator;
+
+        AspectHp0Signal.BottomSpeedValue = bottomSpeedIndicator;
+        AspectKs1Signal.BottomSpeedValue = bottomSpeedIndicator;
+        AspectKs2Signal.BottomSpeedValue = bottomSpeedIndicator;
+        AspectKs1BlinkSignal.BottomSpeedValue = bottomSpeedIndicator;
+        AspectKennlichtSignal.BottomSpeedValue = bottomSpeedIndicator;
+        AspectDunkelSignal.BottomSpeedValue = bottomSpeedIndicator;
+        AspectRa12Signal.BottomSpeedValue = bottomSpeedIndicator;
+        AspectZs1Signal.BottomSpeedValue = bottomSpeedIndicator;
+        AspectZs7Signal.BottomSpeedValue = bottomSpeedIndicator;
 
         AspectHp0Signal.Aspect = nameof(SignalAspect.Hp0);
         AspectKs1Signal.Aspect = nameof(SignalAspect.Ks1);
@@ -780,6 +823,58 @@ public sealed partial class SignalBoxPropertiesControl
         }
 
         sig.BaseAddress = value;
+        QueueSolutionSave();
+    }
+
+    private void OnTopSpeedIndicatorChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+        _ = sender;
+        if (_isUpdatingSpeedIndicatorControls || SelectedElement is not SbSignal sig)
+        {
+            return;
+        }
+
+        sig.TopSpeedIndicator = ParseSpeedIndicatorInput(args.NewValue);
+        RequestVisualRefresh?.Invoke(this, sig);
+        UpdateAspectPresentation(sig);
+        QueueSolutionSave();
+    }
+
+    private void OnBottomSpeedIndicatorChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+        _ = sender;
+        if (_isUpdatingSpeedIndicatorControls || SelectedElement is not SbSignal sig)
+        {
+            return;
+        }
+
+        sig.BottomSpeedIndicator = ParseSpeedIndicatorInput(args.NewValue);
+        RequestVisualRefresh?.Invoke(this, sig);
+        UpdateAspectPresentation(sig);
+        QueueSolutionSave();
+    }
+
+    private static string? ParseSpeedIndicatorInput(double newValue)
+    {
+        return double.IsNaN(newValue) ? null : ((int)newValue).ToString();
+    }
+
+    private static double? ParseNullableSpeedIndicator(string? rawValue)
+    {
+        if (string.IsNullOrWhiteSpace(rawValue))
+        {
+            return null;
+        }
+
+        return int.TryParse(rawValue, out var parsedValue)
+            ? parsedValue
+            : null;
+    }
+
+    private void QueueSolutionSave()
+    {
+        ViewModel?.SaveSolutionInternalAsync().Observe(
+            ex => _logger?.LogWarning(ex, "Failed to persist signal box properties"));
     }
 
     private static bool TryGetNumberBoxIntValue(NumberBoxValueChangedEventArgs args, out int value)

@@ -122,7 +122,9 @@
                         Width="50"
                         Height="50"
                         Aspect="{x:Bind SignalAspect, Mode=OneWay}"
-                        SignalArticleNumber="{x:Bind MainSignalArticleNumber, Mode=OneWay}" />
+                        BottomSpeedValue="{x:Bind BottomSpeedIndicator, Mode=OneWay}"
+                        SignalArticleNumber="{x:Bind MainSignalArticleNumber, Mode=OneWay}"
+                        TopSpeedValue="{x:Bind TopSpeedIndicator, Mode=OneWay}" />
                 </Canvas>
             </Canvas>
         </DataTemplate>

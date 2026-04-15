@@ -76,6 +76,28 @@ internal sealed class MauiViewModelInitializationTests
         dependencies.SettingsServiceMock.Verify(service => service.SaveSettingsAsync(settings), Times.AtLeastOnce);
     }
 
+    [Test]
+    public async Task IncrementFeedbackPoints_ReplacesStatisticsCollectionAndKeepsListInSync()
+    {
+        var settings = new AppSettings();
+        settings.Counter.CountOfFeedbackPoints = 1;
+
+        var dependencies = CreateDependencies(settings);
+        var viewModel = CreateViewModel(dependencies);
+
+        await viewModel.InitializeAsync();
+
+        var previousStatisticsReference = viewModel.Statistics;
+        viewModel.IncrementFeedbackPointsCommand.Execute(null);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel.CountOfFeedbackPoints, Is.EqualTo(2));
+            Assert.That(viewModel.Statistics, Has.Count.EqualTo(2));
+            Assert.That(ReferenceEquals(previousStatisticsReference, viewModel.Statistics), Is.False);
+        });
+    }
+
     private MauiViewModel CreateViewModel(TestDependencies dependencies)
     {
         var viewModel = new MauiViewModel(

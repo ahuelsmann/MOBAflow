@@ -39,61 +39,69 @@ public class Z21DiscoveryService : IZ21DiscoveryService
     /// <returns>IP address of the first responding Z21, or null if none found.</returns>
     public async Task<string?> DiscoverZ21Async(CancellationToken cancellationToken = default)
     {
-        var localAddresses = LanIpv4AddressHelper.GetCandidateLocalIpv4Addresses();
-        var candidates = SubnetCandidateBuilder.BuildCandidates(localAddresses);
-        if (candidates.Count == 0)
-        {
-            _logger.LogWarning("Z21 discovery: no subnet candidates (no suitable local IPv4)");
-            return null;
-        }
-
-        _logger.LogInformation(
-            "Z21 discovery: sending handshake to {Count} addresses derived from {LocalAddressCount} local IPv4 addresses on port {Port}",
-            candidates.Count,
-            localAddresses.Count,
-            Z21Port);
-        var handshake = Z21Command.BuildHandshake();
-
-        using var udp = new UdpClient();
-        udp.Client.ReceiveTimeout = ReceiveAnyTimeoutMs;
-        udp.Client.SendTimeout = SendReceiveTimeoutMs;
-
-        // Send handshake to all candidates as fast as possible (no per-IP wait)
-        foreach (var ip in candidates)
-        {
-            if (cancellationToken.IsCancellationRequested)
-                return null;
-            var endpoint = new IPEndPoint(ip, Z21Port);
-            try
-            {
-                udp.Send(handshake, handshake.Length, endpoint);
-            }
-            catch (SocketException)
-            {
-                // Skip unreachable; continue with others
-            }
-        }
-
-        // Wait for the first Z21 response from any of them
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        cts.CancelAfter(ReceiveAnyTimeoutMs);
         try
         {
-            var result = await udp.ReceiveAsync(cts.Token).ConfigureAwait(false);
-            var data = result.Buffer;
-            if (IsZ21Response(data))
+            var localAddresses = LanIpv4AddressHelper.GetCandidateLocalIpv4Addresses();
+            var candidates = SubnetCandidateBuilder.BuildCandidates(localAddresses);
+            if (candidates.Count == 0)
             {
-                _logger.LogInformation("Z21 discovered at {Ip}", result.RemoteEndPoint.Address);
-                return result.RemoteEndPoint.Address.ToString();
+                _logger.LogWarning("Z21 discovery: no subnet candidates (no suitable local IPv4)");
+                return null;
             }
-        }
-        catch (OperationCanceledException)
-        {
-            // Timeout or user cancel
-        }
 
-        _logger.LogInformation("Z21 discovery: no Z21 found on subnet");
-        return null;
+            _logger.LogInformation(
+                "Z21 discovery: sending handshake to {Count} addresses derived from {LocalAddressCount} local IPv4 addresses on port {Port}",
+                candidates.Count,
+                localAddresses.Count,
+                Z21Port);
+            var handshake = Z21Command.BuildHandshake();
+
+            using var udp = new UdpClient();
+            udp.Client.ReceiveTimeout = ReceiveAnyTimeoutMs;
+            udp.Client.SendTimeout = SendReceiveTimeoutMs;
+
+            // Send handshake to all candidates as fast as possible (no per-IP wait)
+            foreach (var ip in candidates)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                    return null;
+                var endpoint = new IPEndPoint(ip, Z21Port);
+                try
+                {
+                    udp.Send(handshake, handshake.Length, endpoint);
+                }
+                catch (SocketException)
+                {
+                    // Skip unreachable; continue with others
+                }
+            }
+
+            // Wait for the first Z21 response from any of them
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            cts.CancelAfter(ReceiveAnyTimeoutMs);
+            try
+            {
+                var result = await udp.ReceiveAsync(cts.Token).ConfigureAwait(false);
+                var data = result.Buffer;
+                if (IsZ21Response(data))
+                {
+                    _logger.LogInformation("Z21 discovered at {Ip}", result.RemoteEndPoint.Address);
+                    return result.RemoteEndPoint.Address.ToString();
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Timeout or user cancel
+            }
+
+            _logger.LogInformation("Z21 discovery: no Z21 found on subnet");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Z21 discovery failed");
+            return null;
+        }
     }
 
     /// <summary>

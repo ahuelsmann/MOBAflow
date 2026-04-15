@@ -140,10 +140,16 @@ public class RestApiDiscoveryService
         _logger.LogInformation(
             "ℹ️ Multicast did not find MOBApi — scanning LAN for HTTP health on port {Port} (fallback)",
             restPort);
-
-        var probed = await TryDiscoverBySubnetHttpProbeAsync(restPort, cancellationToken).ConfigureAwait(false);
-        if (probed.ip != null && probed.port.HasValue)
-            return probed;
+        try
+        {
+            var probed = await TryDiscoverBySubnetHttpProbeAsync(restPort, cancellationToken).ConfigureAwait(false);
+            if (probed.ip != null && probed.port.HasValue)
+                return probed;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "REST subnet probe failed");
+        }
 
         _logger.LogInformation("ℹ️ Auto-discovery did not find server");
         return (null, null);
@@ -264,7 +270,7 @@ public class RestApiDiscoveryService
         }
 
         TryAddString(settings.RestApi.CurrentIpAddress);
-        foreach (var r in settings.RestApi.RecentIpAddresses)
+        foreach (var r in settings.RestApi.RecentIpAddresses ?? [])
             TryAddString(r);
 
         foreach (var c in orderedSubnetCandidates)

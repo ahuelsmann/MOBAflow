@@ -517,42 +517,6 @@
                         </ItemsRepeater>
                     </StackPanel>
                 </Expander>
-
-                <!--  Multiplex Signal Configuration for Signal Box Page  -->
-                <Expander
-                    HorizontalAlignment="Stretch"
-                    HorizontalContentAlignment="Stretch"
-                    Header="Multiplex Signal Configuration"
-                    IsExpanded="False">
-                    <Expander.HeaderTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal" Spacing="12">
-                                <FontIcon FontSize="20" Glyph="&#xE713;" />
-                                <TextBlock
-                                    VerticalAlignment="Center"
-                                    Style="{StaticResource SubtitleTextBlockStyle}"
-                                    Text="{Binding}" />
-                            </StackPanel>
-                        </DataTemplate>
-                    </Expander.HeaderTemplate>
-
-                    <StackPanel Padding="56,16,0,16" Spacing="12">
-                        <TextBlock
-                            Style="{StaticResource CaptionTextBlockStyle}"
-                            Text="Aktivieren, wenn am echten Signal das Bild bei dieser Adresse vertauscht erscheint (Activate-Bit umkehren). Pro Multiplex-Signal 4 aufeinanderfolgende Adressen (z. B. 201–204)."
-                            TextWrapping="Wrap" />
-
-                        <CheckBox Content="Address 1 – Reverse" IsChecked="{x:Bind ViewModel.InvertPolarityOffset0Setting, Mode=TwoWay}" />
-                        <CheckBox Content="Address 2 – Reverse" IsChecked="{x:Bind ViewModel.InvertPolarityOffset1Setting, Mode=TwoWay}" />
-                        <CheckBox Content="Address 3 – Reverse" IsChecked="{x:Bind ViewModel.InvertPolarityOffset2Setting, Mode=TwoWay}" />
-                        <CheckBox Content="Address 4 – Reverse" IsChecked="{x:Bind ViewModel.InvertPolarityOffset3Setting, Mode=TwoWay}" />
-                        <TextBlock
-                            Margin="0,8,0,0"
-                            Style="{StaticResource CaptionTextBlockStyle}"
-                            Text="More info: docs/wiki/VIESSMANN-SIGNAL-MAPPING.md"
-                            TextWrapping="Wrap" />
-                    </StackPanel>
-                </Expander>
             </StackPanel>
 
             <!--  Save/Reset Buttons  -->

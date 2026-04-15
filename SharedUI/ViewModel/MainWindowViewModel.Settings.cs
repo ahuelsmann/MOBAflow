@@ -563,20 +563,6 @@ public partial class MainWindowViewModel
     }
 
     /// <summary>
-    /// Gets or sets whether the Settings page is enabled in the navigation.
-    /// </summary>
-    public bool IsSettingsPageAvailableSetting
-    {
-        get => _settings.FeatureToggles.IsSettingsPageAvailable;
-        set => UpdateFeatureToggleSetting(
-            () => _settings.FeatureToggles.IsSettingsPageAvailable,
-            updated => _settings.FeatureToggles.IsSettingsPageAvailable = updated,
-            value,
-            nameof(IsSettingsPageAvailableSetting),
-            nameof(IsSettingsPageAvailable));
-    }
-
-    /// <summary>
     /// Gets or sets whether the Journeys page is enabled in the navigation.
     /// </summary>
     public bool IsJourneysPageAvailableSetting
@@ -781,7 +767,7 @@ public partial class MainWindowViewModel
     /// Gets whether the Settings page is available.
     /// Bound to NavigationView item visibility.
     /// </summary>
-    public bool IsSettingsPageAvailable => _settings.FeatureToggles.IsSettingsPageAvailable;
+    public bool IsSettingsPageAvailable => true;
 
     /// <summary>
     /// Gets whether the Monitor page is available.
@@ -831,10 +817,6 @@ public partial class MainWindowViewModel
     /// Gets the optional label override for the Journey Map page.
     /// </summary>
     public string JourneyMapPageLabel => _settings.FeatureToggles.JourneyMapPageLabel;
-    /// <summary>
-    /// Gets the optional label override for the Settings page.
-    /// </summary>
-    public string SettingsPageLabel => _settings.FeatureToggles.SettingsPageLabel;
     /// <summary>
     /// Gets the optional label override for the Monitor page.
     /// </summary>
@@ -915,7 +897,6 @@ public partial class MainWindowViewModel
             // FeatureToggle wrapper properties
             OnPropertyChanged(nameof(IsOverviewPageAvailableSetting));
             OnPropertyChanged(nameof(IsSolutionPageAvailableSetting));
-            OnPropertyChanged(nameof(IsSettingsPageAvailableSetting));
             OnPropertyChanged(nameof(IsJourneysPageAvailableSetting));
             OnPropertyChanged(nameof(IsWorkflowsPageAvailableSetting));
             OnPropertyChanged(nameof(IsTrackPlanEditorPageAvailableSetting));
@@ -928,7 +909,6 @@ public partial class MainWindowViewModel
             // FeatureToggle read-only properties (for NavigationView)
             OnPropertyChanged(nameof(IsOverviewPageAvailable));
             OnPropertyChanged(nameof(IsSolutionPageAvailable));
-            OnPropertyChanged(nameof(IsSettingsPageAvailable));
             OnPropertyChanged(nameof(IsJourneysPageAvailable));
             OnPropertyChanged(nameof(IsWorkflowsPageAvailable));
             OnPropertyChanged(nameof(IsTrackPlanEditorPageAvailable));

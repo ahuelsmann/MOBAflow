@@ -152,9 +152,22 @@ public static class Z21MessageParser
     {
         if (data.Length < 7) return null;
         byte xHeader = data[4];
-        if (xHeader != Z21Protocol.XHeader.X_STATUS && xHeader != Z21Protocol.XHeader.X_STATUS_CHANGED)
-            return null;
-        byte status = data[6];
+        byte status;
+        switch (xHeader)
+        {
+            case Z21Protocol.XHeader.X_STATUS:
+                // LAN_X_BC_STATUS (0x61): [xHeader, DB0=status, XOR]
+                // The status flags are in DB0 (byte index 5), not in the XOR byte.
+                status = data[5];
+                break;
+            case Z21Protocol.XHeader.X_STATUS_CHANGED:
+                // LAN_X_STATUS_CHANGED (0x62): [xHeader, DB0, status, XOR]
+                status = data[6];
+                break;
+            default:
+                return null;
+        }
+
         bool emergencyStop = (status & 0x01) != 0;
         bool trackOff = (status & 0x02) != 0;
         bool shortCircuit = (status & 0x04) != 0;

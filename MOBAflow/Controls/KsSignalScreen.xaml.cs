@@ -36,6 +36,18 @@ internal sealed partial class KsSignalScreen
         typeof(KsSignalScreen),
         new PropertyMetadata(string.Empty, OnSignalVisualPropertyChanged));
 
+    public static readonly DependencyProperty TopSpeedValueProperty = DependencyProperty.Register(
+        nameof(TopSpeedValue),
+        typeof(string),
+        typeof(KsSignalScreen),
+        new PropertyMetadata(string.Empty, OnSignalVisualPropertyChanged));
+
+    public static readonly DependencyProperty BottomSpeedValueProperty = DependencyProperty.Register(
+        nameof(BottomSpeedValue),
+        typeof(string),
+        typeof(KsSignalScreen),
+        new PropertyMetadata(string.Empty, OnSignalVisualPropertyChanged));
+
     public string Aspect
     {
         get => (string)GetValue(AspectProperty);
@@ -46,6 +58,18 @@ internal sealed partial class KsSignalScreen
     {
         get => (string)GetValue(SignalArticleNumberProperty);
         set => SetValue(SignalArticleNumberProperty, value);
+    }
+
+    public string TopSpeedValue
+    {
+        get => (string)GetValue(TopSpeedValueProperty);
+        set => SetValue(TopSpeedValueProperty, value);
+    }
+
+    public string BottomSpeedValue
+    {
+        get => (string)GetValue(BottomSpeedValueProperty);
+        set => SetValue(BottomSpeedValueProperty, value);
     }
 
     public KsSignalScreen()
@@ -144,12 +168,12 @@ internal sealed partial class KsSignalScreen
                 return true;
             case "Ra12":
                 Hp0.Fill = RedOn;
-                W3.Fill = WhiteOn;
-                Ra12Right.Fill = WhiteOn;
+                // Hp0 + Rg for 4046: single white light below the red main signal.
+                Zs7Center.Fill = WhiteOn;
                 return true;
             case "Zs1":
                 Ks1.Fill = GreenOn;
-                ShowTopSpeedIndicator("G");
+                ShowTopSpeedIndicator(FormatSpeedIndicatorValue(TopSpeedValue));
                 return true;
             case "Ks2":
                 Ks2.Fill = YellowOn;
@@ -158,7 +182,7 @@ internal sealed partial class KsSignalScreen
             case "Ks1Blink":
                 Ks2.Fill = YellowOn;
                 W1.Fill = WhiteOn;
-                ShowTopSpeedIndicator("G");
+                ShowTopSpeedIndicator(FormatSpeedIndicatorValue(TopSpeedValue));
                 return true;
             case "Kennlicht":
                 W1.Fill = WhiteOn;
@@ -167,8 +191,8 @@ internal sealed partial class KsSignalScreen
                 W1.Fill = WhiteOn;
                 Ks1.Fill = GreenOn;
                 StartBlinking(Ks1, GreenOn);
-                ShowTopSpeedIndicator("G");
-                ShowBottomSpeedIndicator("G");
+                ShowTopSpeedIndicator(FormatSpeedIndicatorValue(TopSpeedValue));
+                ShowBottomSpeedIndicator(FormatSpeedIndicatorValue(BottomSpeedValue));
                 return true;
             case "Zs7":
                 W2.Fill = YellowOn;
@@ -190,6 +214,11 @@ internal sealed partial class KsSignalScreen
     {
         BottomSpeedIndicator.Text = text;
         BottomSpeedIndicator.Visibility = Visibility.Visible;
+    }
+
+    private static string FormatSpeedIndicatorValue(string? speedCode)
+    {
+        return string.IsNullOrWhiteSpace(speedCode) ? "--" : speedCode;
     }
 
     private void StartBlinking(Ellipse led, SolidColorBrush onColor)

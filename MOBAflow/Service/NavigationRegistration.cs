@@ -65,7 +65,7 @@ internal static class NavigationRegistration
         pages.Add(new PageMetadata("help", "Help", "\uE897", typeof(HelpPage), NavigationCategory.Help, 10, null, null, null, false));
 
         services.AddTransient<SettingsPage>();
-        pages.Add(new PageMetadata("settings", "Settings", "\uE115", typeof(SettingsPage), NavigationCategory.Help, 30, "IsSettingsPageAvailable", "SettingsPageLabel", null, false));
+        pages.Add(new PageMetadata("settings", "Settings", "\uE115", typeof(SettingsPage), NavigationCategory.Help, 30, null, null, null, false));
 
         services.AddTransient<OverviewPage>();
         pages.Add(new PageMetadata("overview", "Overview", "\uE80F", typeof(OverviewPage), NavigationCategory.Core, 10, "IsOverviewPageAvailable", "OverviewPageLabel", null, false));

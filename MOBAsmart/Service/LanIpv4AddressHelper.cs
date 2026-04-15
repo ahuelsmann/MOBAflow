@@ -20,7 +20,6 @@ internal static class LanIpv4AddressHelper
         try
         {
             var privateAddresses = new List<IPAddress>();
-            var fallbackAddresses = new List<IPAddress>();
 
             foreach (var ni in NetworkInterface.GetAllNetworkInterfaces())
             {
@@ -43,23 +42,10 @@ internal static class LanIpv4AddressHelper
                     {
                         privateAddresses.Add(address);
                     }
-                    else
-                    {
-                        fallbackAddresses.Add(address);
-                    }
                 }
             }
 
-            if (privateAddresses.Count > 0)
-            {
-                return privateAddresses;
-            }
-
-#if ANDROID
-            return fallbackAddresses;
-#else
-            return [];
-#endif
+            return privateAddresses;
         }
         catch
         {

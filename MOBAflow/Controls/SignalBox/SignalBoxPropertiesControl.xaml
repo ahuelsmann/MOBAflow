@@ -523,10 +523,6 @@
                             FontWeight="SemiBold"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             Text="Basis-DCC-Adresse" />
-                        <TextBlock
-                            FontSize="9"
-                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                            Text="B = Basis-Adresse (Viessmann [B]); wirksame Adressen sind B, B+1, … gemäß Handbuch. Basis muss ungerade sein." />
                         <NumberBox
                             x:Name="BaseAddressBox"
                             Maximum="2044"
@@ -534,6 +530,41 @@
                             PlaceholderText="z.B. 200"
                             SpinButtonPlacementMode="Compact"
                             ValueChanged="OnBaseAddressChanged" />
+                    </StackPanel>
+
+                    <StackPanel
+                        x:Name="SpeedIndicatorConfigPanel"
+                        Spacing="6"
+                        Visibility="Collapsed">
+                        <TextBlock
+                            FontSize="10"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="Geschwindigkeitsanzeiger" />
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <NumberBox
+                                x:Name="TopSpeedIndicatorBox"
+                                Grid.Column="0"
+                                Header="Zs3 oben"
+                                Maximum="999"
+                                Minimum="0"
+                                PlaceholderText="z.B. 8"
+                                SpinButtonPlacementMode="Compact"
+                                ValueChanged="OnTopSpeedIndicatorChanged" />
+                            <NumberBox
+                                x:Name="BottomSpeedIndicatorBox"
+                                Grid.Column="1"
+                                Header="Zs3v unten"
+                                Maximum="999"
+                                Minimum="0"
+                                PlaceholderText="z.B. 6"
+                                SpinButtonPlacementMode="Compact"
+                                ValueChanged="OnBottomSpeedIndicatorChanged" />
+                        </Grid>
                     </StackPanel>
 
                     <!--  Status Message (visible after automatic signal command)  -->

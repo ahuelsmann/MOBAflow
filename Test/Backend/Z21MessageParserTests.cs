@@ -8,7 +8,7 @@ using Moba.Backend.Protocol;
 internal class Z21MessageParserTests
 {
     [Test]
-    public void TryParseXBusStatus_ParsesFlags()
+    public void TryParseXBusStatus_ParsesFlagsFromLanXStatusChanged()
     {
         // 07-00-40-00 62 00 07 -> status changed with flags 0x07 (emergency + trackoff + short)
         var data = new byte[] { 0x07, 0x00, 0x40, 0x00, 0x62, 0x00, 0x07 };
@@ -17,6 +17,20 @@ internal class Z21MessageParserTests
         Assert.That(status!.EmergencyStop, Is.True);
         Assert.That(status.TrackOff, Is.True);
         Assert.That(status.ShortCircuit, Is.True);
+        Assert.That(status.Programming, Is.False);
+    }
+
+    [Test]
+    public void TryParseXBusStatus_ParsesFlagsFromLanXBroadcastStatus()
+    {
+        // 07-00-40-00 61 02 63 -> broadcast status with DB0=0x02 (track power off)
+        // Important regression check: status is in DB0 (byte 5), not in XOR (byte 6).
+        var data = new byte[] { 0x07, 0x00, 0x40, 0x00, 0x61, 0x02, 0x63 };
+        var status = Z21MessageParser.TryParseXBusStatus(data);
+        Assert.That(status, Is.Not.Null);
+        Assert.That(status!.EmergencyStop, Is.False);
+        Assert.That(status.TrackOff, Is.True);
+        Assert.That(status.ShortCircuit, Is.False);
         Assert.That(status.Programming, Is.False);
     }
 

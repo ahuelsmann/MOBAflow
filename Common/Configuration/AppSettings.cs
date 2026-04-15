@@ -290,16 +290,6 @@ public class FeatureToggleSettings
     /// </summary>
     public string SolutionPageLabel { get; set; } = string.Empty;
 
-    /// <summary>
-    /// Enable Settings page (Application configuration).
-    /// </summary>
-    public bool IsSettingsPageAvailable { get; set; } = true;
-
-    /// <summary>
-    /// Gets or sets an optional label suffix for the Settings page.
-    /// </summary>
-    public string SettingsPageLabel { get; set; } = string.Empty;
-
     // Journey Management (Stable - ENABLED by default)
 
     /// <summary>

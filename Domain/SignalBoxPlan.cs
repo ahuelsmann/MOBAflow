@@ -319,6 +319,20 @@ public sealed record SbSignal : SbElement
     /// <summary>Current signal aspect (traditional aspect-based display).</summary>
     public SignalAspect SignalAspect { get; set; } = SignalAspect.Hp0;
 
+    /// <summary>
+    /// Optional top speed indicator (Zs3) for aspects that include a speed display.
+    /// Example values: "4", "8", "12".
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? TopSpeedIndicator { get; set; }
+
+    /// <summary>
+    /// Optional bottom speed indicator (Zs3v) for aspects that include a distant speed display.
+    /// Example values: "4", "8", "12".
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? BottomSpeedIndicator { get; set; }
+
     // ==================== MULTIPLEX CONFIGURATION ====================
 
     /// <summary>

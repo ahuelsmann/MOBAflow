@@ -625,10 +625,10 @@ public sealed partial class MauiViewModel : ObservableObject
 
     private void InitializeStatistics()
     {
-        Statistics.Clear();
+        var updatedStatistics = new ObservableCollection<InPortStatistic>();
         for (int i = 1; i <= CountOfFeedbackPoints; i++)
         {
-            Statistics.Add(new InPortStatistic
+            updatedStatistics.Add(new InPortStatistic
             {
                 InPort = i,
                 Name = $"Track {i}",
@@ -636,6 +636,14 @@ public sealed partial class MauiViewModel : ObservableObject
                 TargetLapCount = GlobalTargetLapCount
             });
         }
+
+        _uiDispatcher.InvokeOnUi(() =>
+        {
+            // Replace the collection instance atomically to avoid MAUI BindableLayout reentrancy glitches.
+            Statistics = updatedStatistics;
+        });
+
+        _lastFeedbackTime.Clear();
     }
 
     [RelayCommand]

@@ -15,7 +15,6 @@ public static class FeatureToggleRegistry
     [
         nameof(FeatureToggleSettings.IsOverviewPageAvailable),
         nameof(FeatureToggleSettings.IsSolutionPageAvailable),
-        nameof(FeatureToggleSettings.IsSettingsPageAvailable),
         nameof(FeatureToggleSettings.IsJourneysPageAvailable),
         nameof(FeatureToggleSettings.IsWorkflowsPageAvailable),
         nameof(FeatureToggleSettings.IsTrackPlanEditorPageAvailable),
@@ -34,7 +33,6 @@ public static class FeatureToggleRegistry
         {
             [nameof(FeatureToggleSettings.IsOverviewPageAvailable)] = (s => s.IsOverviewPageAvailable, (s, v) => s.IsOverviewPageAvailable = v),
             [nameof(FeatureToggleSettings.IsSolutionPageAvailable)] = (s => s.IsSolutionPageAvailable, (s, v) => s.IsSolutionPageAvailable = v),
-            [nameof(FeatureToggleSettings.IsSettingsPageAvailable)] = (s => s.IsSettingsPageAvailable, (s, v) => s.IsSettingsPageAvailable = v),
             [nameof(FeatureToggleSettings.IsJourneysPageAvailable)] = (s => s.IsJourneysPageAvailable, (s, v) => s.IsJourneysPageAvailable = v),
             [nameof(FeatureToggleSettings.IsWorkflowsPageAvailable)] = (s => s.IsWorkflowsPageAvailable, (s, v) => s.IsWorkflowsPageAvailable = v),
             [nameof(FeatureToggleSettings.IsTrackPlanEditorPageAvailable)] = (s => s.IsTrackPlanEditorPageAvailable, (s, v) => s.IsTrackPlanEditorPageAvailable = v),
@@ -89,7 +87,6 @@ public static class FeatureToggleRegistry
         {
             [nameof(FeatureToggleSettings.OverviewPageLabel)] = ft => ft.OverviewPageLabel,
             [nameof(FeatureToggleSettings.SolutionPageLabel)] = ft => ft.SolutionPageLabel,
-            [nameof(FeatureToggleSettings.SettingsPageLabel)] = ft => ft.SettingsPageLabel,
             [nameof(FeatureToggleSettings.JourneysPageLabel)] = ft => ft.JourneysPageLabel,
             [nameof(FeatureToggleSettings.WorkflowsPageLabel)] = ft => ft.WorkflowsPageLabel,
             [nameof(FeatureToggleSettings.TrackPlanEditorPageLabel)] = ft => ft.TrackPlanEditorPageLabel,
