@@ -3,8 +3,6 @@ namespace Moba.MAUI;
 
 using Common.Configuration;
 
-using Microsoft.Extensions.Logging;
-
 using Common.Extension;
 
 using SharedUI.Interface;
@@ -18,20 +16,17 @@ public partial class MainPage
     public MauiViewModel ViewModel { get; }
     private readonly ISettingsService _settingsService;
     private readonly AppSettings _settings;
-    private readonly ILogger<MainPage>? _logger;
     private CancellationTokenSource? _pulseAnimationCts;
     private Task? _viewModelInitializationTask;
 
     public MainPage(
         MauiViewModel viewModel,
         ISettingsService settingsService,
-        AppSettings settings,
-        ILogger<MainPage>? logger = null)
+        AppSettings settings)
     {
         ViewModel = viewModel;
         _settingsService = settingsService;
         _settings = settings;
-        _logger = logger;
         BindingContext = ViewModel;
         InitializeComponent();
 
@@ -89,8 +84,7 @@ public partial class MainPage
     private void TrackPowerSwitch_Toggled(object sender, ToggledEventArgs e)
     {
         _ = sender; // Suppress unused parameter warning
-        HandleTrackPowerSwitchToggledAsync(e.Value).Observe(
-            ex => _logger?.LogWarning(ex, "Track power toggle failed"));
+        HandleTrackPowerSwitchToggledAsync(e.Value).Observe();
     }
 
     private async Task HandleTrackPowerSwitchToggledAsync(bool isTrackPowerOn)
@@ -110,8 +104,7 @@ public partial class MainPage
     private void ThemeSwitch_Toggled(object sender, ToggledEventArgs e)
     {
         _ = sender; // Suppress unused parameter warning
-        HandleThemeSwitchToggledAsync(e.Value).Observe(
-            ex => _logger?.LogWarning(ex, "Theme toggle failed"));
+        HandleThemeSwitchToggledAsync(e.Value).Observe();
     }
 
     private async Task HandleThemeSwitchToggledAsync(bool isLightTheme)
@@ -143,8 +136,7 @@ public partial class MainPage
     {
         _ = sender;
         _ = e;
-        HandleResetCountersButtonClickedAsync().Observe(
-            ex => _logger?.LogWarning(ex, "Reset counters failed"));
+        HandleResetCountersButtonClickedAsync().Observe();
     }
 
     private async Task HandleResetCountersButtonClickedAsync()
@@ -197,8 +189,7 @@ public partial class MainPage
     {
         StopPulseAnimation();
         _pulseAnimationCts = new CancellationTokenSource();
-        RunPulseAnimationAsync(_pulseAnimationCts.Token).Observe(
-            ex => _logger?.LogWarning(ex, "Connection pulse animation failed"));
+        RunPulseAnimationAsync(_pulseAnimationCts.Token).Observe();
     }
 
     /// <summary>

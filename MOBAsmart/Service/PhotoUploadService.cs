@@ -1,8 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
 
-using Microsoft.Extensions.Logging;
-
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -20,7 +18,6 @@ public class PhotoUploadService
     private static readonly Lazy<HttpClient> LanHealthHttpClient = new(CreateLanHealthHttpClient);
 
     private readonly HttpClient _httpClient;
-    private readonly ILogger<PhotoUploadService> _logger;
 
     private static HttpClient CreateLanHealthHttpClient()
     {
@@ -38,10 +35,9 @@ public class PhotoUploadService
         };
     }
 
-    public PhotoUploadService(HttpClient httpClient, ILogger<PhotoUploadService> logger)
+    public PhotoUploadService(HttpClient httpClient)
     {
         _httpClient = httpClient;
-        _logger = logger;
     }
 
     /// <summary>
@@ -73,7 +69,6 @@ public class PhotoUploadService
             if (!isReachable)
             {
                 var errorMsg = BuildConnectivityErrorMessage(serverIp, serverPort);
-                _logger.LogError(errorMsg);
                 return (false, null, errorMsg);
             }
 
@@ -93,14 +88,11 @@ public class PhotoUploadService
             form.Add(new StringContent(category), "category");
             form.Add(new StringContent(entityId.ToString()), "entityId");
 
-            _logger.LogInformation("Uploading photo to {Url}: {Category}/{EntityId}", url, category, entityId);
-
             var response = await _httpClient.PostAsync(url, form);
 
             if (response.IsSuccessStatusCode)
             {
                 var result = await response.Content.ReadAsStringAsync();
-                _logger.LogInformation("Photo uploaded successfully: {Result}", result);
 
                 // Parse JSON response (simple approach - could use System.Text.Json for robustness)
                 // Expected: {"success":true,"photoPath":"photos/locomotives/xxx.jpg","message":"..."}
@@ -120,28 +112,24 @@ public class PhotoUploadService
             }
             else
             {
-                var error = await response.Content.ReadAsStringAsync();
-                _logger.LogError("Photo upload failed: {StatusCode} - {Error}", response.StatusCode, error);
+                _ = await response.Content.ReadAsStringAsync();
                 return (false, null, $"Upload failed: {response.StatusCode}");
             }
         }
         catch (HttpRequestException ex)
         {
-            _logger.LogError(ex, "HTTP connection error uploading photo");
             var errorMsg = $"Connection failed: {ex.Message}\n\nTroubleshooting:\n" +
                           $"• Verify server IP: {serverIp}\n" +
                           $"• Check server is running on port {serverPort}\n" +
                           $"• Ensure device and server are on same network";
             return (false, null, errorMsg);
         }
-        catch (TaskCanceledException ex)
+        catch (TaskCanceledException)
         {
-            _logger.LogError(ex, "Upload timeout");
             return (false, null, "Upload timeout - file may be too large or connection too slow");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error uploading photo");
             return (false, null, $"Upload error: {ex.Message}");
         }
         finally
@@ -167,21 +155,18 @@ public class PhotoUploadService
 
             if (completedTask == timeoutTask)
             {
-                _logger.LogWarning("Connection test to {Ip}:{Port} timed out", serverIp, serverPort);
                 return false;
             }
 
             if (tcpClient.Connected)
             {
-                _logger.LogInformation("✅ Server {Ip}:{Port} is reachable", serverIp, serverPort);
                 return true;
             }
 
             return false;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _logger.LogWarning(ex, "Cannot reach {Ip}:{Port}", serverIp, serverPort);
             return false;
         }
     }
@@ -202,9 +187,8 @@ public class PhotoUploadService
 
             return response.IsSuccessStatusCode;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _logger.LogWarning(ex, "Health check failed for {Ip}:{Port}", serverIp, serverPort);
             return false;
         }
     }

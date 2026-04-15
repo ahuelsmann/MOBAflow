@@ -116,14 +116,14 @@ public sealed partial class SignalBoxPropertiesControl
 
         if (SelectedElement is SbSwitch sw)
         {
-            ElementAddressBox.Header = "DCC-Adresse (Weiche)";
+            ElementAddressBox.Header = "DCC address (switch)";
             ElementAddressBox.Value = sw.Address;
             ElementAddressBox.Visibility = Visibility.Visible;
             AddressPanel.Visibility = Visibility.Visible;
         }
         else if (SelectedElement is SbDetector det)
         {
-            ElementAddressBox.Header = "Feedback-Adresse";
+            ElementAddressBox.Header = "Feedback address";
             ElementAddressBox.Value = det.FeedbackAddress;
             ElementAddressBox.Visibility = Visibility.Visible;
             AddressPanel.Visibility = Visibility.Visible;
@@ -498,14 +498,14 @@ public sealed partial class SignalBoxPropertiesControl
     private void ApplyAspectTooltips(bool is4046)
     {
         ToolTipService.SetToolTip(AspectHp0Button, "Hp 0 - Halt");
-        ToolTipService.SetToolTip(AspectKs1Button, "Ks 1 - Fahrt");
-        ToolTipService.SetToolTip(AspectKs2Button, is4046 ? "Ks 2 mit weißem Kennlicht oben links" : "Ks 2 - Halt erwarten");
-        ToolTipService.SetToolTip(AspectKs1BlinkButton, is4046 ? "Ks 2 mit weißem Kennlicht oben links und Geschwindigkeitsanzeiger oben" : "Ks 1 blinkend - Fahrt mit Geschwindigkeitsvoranzeiger");
-        ToolTipService.SetToolTip(AspectKennlichtButton, is4046 ? "Nur weißes Kennlicht oben links" : "Kennlicht - Signal betrieblich abgeschaltet");
-        ToolTipService.SetToolTip(AspectDunkelButton, is4046 ? "Grün blinkend mit weißem Kennlicht oben links sowie Geschwindigkeitsanzeigern oben und unten" : "Dunkelschaltung - Signal nicht aktiv");
-        ToolTipService.SetToolTip(AspectRa12Button, is4046 ? "Hp0 mit weißem Kennlicht unten für Rangierfahrten" : "Sh 1/Ra 12 - Rangierfahrt erlaubt");
-        ToolTipService.SetToolTip(AspectZs1Button, is4046 ? "Ks 1 mit Geschwindigkeitsanzeiger oben" : "Zs 1 - Ersatzsignal (weiß blinkend)");
-        ToolTipService.SetToolTip(AspectZs7Button, "Zs 7 - Vorsichtsignal (3x gelb)");
+        ToolTipService.SetToolTip(AspectKs1Button, "Ks 1 - Proceed");
+        ToolTipService.SetToolTip(AspectKs2Button, is4046 ? "Ks 2 with white marker light at the top left" : "Ks 2 - Expect stop");
+        ToolTipService.SetToolTip(AspectKs1BlinkButton, is4046 ? "Ks 2 with white marker light at the top left and top speed indicator" : "Ks 1 flashing - Proceed with speed pre-indicator");
+        ToolTipService.SetToolTip(AspectKennlichtButton, is4046 ? "Only white marker light at the top left" : "Marker light - Signal disabled for operations");
+        ToolTipService.SetToolTip(AspectDunkelButton, is4046 ? "Green flashing with white marker light at the top left and top/bottom speed indicators" : "Dark mode - Signal inactive");
+        ToolTipService.SetToolTip(AspectRa12Button, is4046 ? "Hp0 with white marker light at the bottom for shunting movements" : "Sh 1/Ra 12 - Shunting allowed");
+        ToolTipService.SetToolTip(AspectZs1Button, is4046 ? "Ks 1 with top speed indicator" : "Zs 1 - Substitute signal (white flashing)");
+        ToolTipService.SetToolTip(AspectZs7Button, "Zs 7 - Caution signal (3x yellow)");
     }
 
     private void UpdateSwitchButtons()
@@ -530,12 +530,12 @@ public sealed partial class SignalBoxPropertiesControl
 
     private static string GetElementTypeName(SbElement element) => element switch
     {
-        SbTrackStraight => "Gerades Gleis",
-        SbTrackCurve => "Kurve 90 Grad",
-        SbSwitch => "Weiche",
+        SbTrackStraight => "Straight track",
+        SbTrackCurve => "90 degree curve",
+        SbSwitch => "Switch",
         SbSignal => "Signal",
-        SbDetector => "Rückmelder",
-        _ => "Unbekannt"
+        SbDetector => "Feedback detector",
+        _ => "Unknown"
     };
 
     private void OnRotateClicked(object sender, RoutedEventArgs e)
@@ -590,7 +590,7 @@ public sealed partial class SignalBoxPropertiesControl
 
             if (ViewModel == null)
             {
-                ShowSignalStatus("❌ ViewModel nicht verfügbar.");
+                ShowSignalStatus("❌ ViewModel unavailable.");
                 return;
             }
 
@@ -600,7 +600,7 @@ public sealed partial class SignalBoxPropertiesControl
                 return;
             }
 
-            ShowSignalStatus("⏳ Signal wird gestellt...");
+            ShowSignalStatus("⏳ Applying signal...");
 
             await ViewModel.SetSignalAspectAsync(sig).ConfigureAwait(false);
 
@@ -611,11 +611,11 @@ public sealed partial class SignalBoxPropertiesControl
                     var dccAddress = sig.BaseAddress + turnoutCommand.Value.AddressOffset;
                     SetSignalStatusText.Text =
                         $"Signal: {sig.SignalAspect}\n" +
-                        $"DCC-Adresse: {dccAddress}, Ausgang: {turnoutCommand.Value.Output}, Activate: {(turnoutCommand.Value.Activate ? "Ja" : "Nein")}";
+                        $"DCC address: {dccAddress}, output: {turnoutCommand.Value.Output}, activate: {(turnoutCommand.Value.Activate ? "Yes" : "No")}";
                 }
                 else
                 {
-                    SetSignalStatusText.Text = $"Signal gesetzt: {sig.SignalAspect}";
+                    SetSignalStatusText.Text = $"Signal applied: {sig.SignalAspect}";
                 }
             });
         }
@@ -623,7 +623,7 @@ public sealed partial class SignalBoxPropertiesControl
         {
             DispatcherQueue.TryEnqueue(() =>
             {
-                SetSignalStatusText.Text = $"❌ Fehler: {ex.Message}";
+                SetSignalStatusText.Text = $"❌ Error: {ex.Message}";
                 SetSignalStatusText.Visibility = Visibility.Visible;
             });
         }
@@ -640,19 +640,19 @@ public sealed partial class SignalBoxPropertiesControl
 
         if (string.IsNullOrEmpty(sig.MultiplexerArticleNumber))
         {
-            validationError = "⚠️ Multiplexer-Nummer nicht konfiguriert.";
+            validationError = "⚠️ Multiplexer number is not configured.";
             return false;
         }
 
         if (sig.BaseAddress <= 0 || sig.BaseAddress > 2044)
         {
-            validationError = "⚠️ Basis-DCC-Adresse ungültig (1-2044).";
+            validationError = "⚠️ Base DCC address is invalid (1-2044).";
             return false;
         }
 
         if (sig.BaseAddress % 2 == 0)
         {
-            validationError = "⚠️ Basis-DCC-Adresse muss ungerade sein (Herstellerangabe Viessmann).";
+            validationError = "⚠️ Base DCC address must be odd (Viessmann specification).";
             return false;
         }
 
@@ -661,13 +661,13 @@ public sealed partial class SignalBoxPropertiesControl
                 sig.MainSignalArticleNumber,
                 out var maxOffset))
         {
-            validationError = "⚠️ Keine Adresstabelle für Multiplexer/Hauptsignal-Kombination.";
+            validationError = "⚠️ No address table for this multiplexer/main signal combination.";
             return false;
         }
 
         if (sig.BaseAddress + maxOffset > 2044)
         {
-            validationError = $"⚠️ Basis + Adressbereich überschreitet 2044 (max. Offset {maxOffset}).";
+            validationError = $"⚠️ Base + address range exceeds 2044 (max offset {maxOffset}).";
             return false;
         }
 
@@ -687,7 +687,7 @@ public sealed partial class SignalBoxPropertiesControl
                     sig.SignalAspect,
                     out var resolvedTurnoutCommand))
             {
-                turnoutError = "⚠️ Signalaspekt nicht unterstützt.";
+                turnoutError = "⚠️ Signal aspect is not supported.";
                 return false;
             }
 
@@ -697,7 +697,7 @@ public sealed partial class SignalBoxPropertiesControl
         }
         catch (ArgumentException ex)
         {
-            turnoutError = $"⚠️ Signalaspekt nicht unterstützt: {ex.Message}";
+            turnoutError = $"⚠️ Signal aspect is not supported: {ex.Message}";
             return false;
         }
     }

@@ -5,8 +5,6 @@ using Backend.Protocol;
 
 using Common.Discovery;
 
-using Microsoft.Extensions.Logging;
-
 using SharedUI.Interface;
 
 using System.Net;
@@ -23,11 +21,8 @@ public class Z21DiscoveryService : IZ21DiscoveryService
     /// <summary>After sending to all candidates, wait this long for the first response.</summary>
     private const int ReceiveAnyTimeoutMs = 1000;
 
-    private readonly ILogger<Z21DiscoveryService> _logger;
-
-    public Z21DiscoveryService(ILogger<Z21DiscoveryService> logger)
+    public Z21DiscoveryService()
     {
-        _logger = logger;
     }
 
     /// <summary>
@@ -45,15 +40,8 @@ public class Z21DiscoveryService : IZ21DiscoveryService
             var candidates = SubnetCandidateBuilder.BuildCandidates(localAddresses);
             if (candidates.Count == 0)
             {
-                _logger.LogWarning("Z21 discovery: no subnet candidates (no suitable local IPv4)");
                 return null;
             }
-
-            _logger.LogInformation(
-                "Z21 discovery: sending handshake to {Count} addresses derived from {LocalAddressCount} local IPv4 addresses on port {Port}",
-                candidates.Count,
-                localAddresses.Count,
-                Z21Port);
             var handshake = Z21Command.BuildHandshake();
 
             using var udp = new UdpClient();
@@ -85,7 +73,6 @@ public class Z21DiscoveryService : IZ21DiscoveryService
                 var data = result.Buffer;
                 if (IsZ21Response(data))
                 {
-                    _logger.LogInformation("Z21 discovered at {Ip}", result.RemoteEndPoint.Address);
                     return result.RemoteEndPoint.Address.ToString();
                 }
             }
@@ -94,12 +81,10 @@ public class Z21DiscoveryService : IZ21DiscoveryService
                 // Timeout or user cancel
             }
 
-            _logger.LogInformation("Z21 discovery: no Z21 found on subnet");
             return null;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _logger.LogWarning(ex, "Z21 discovery failed");
             return null;
         }
     }

@@ -9,8 +9,6 @@ using Common.Configuration;
 
 using CommunityToolkit.Maui;
 
-using Microsoft.Extensions.Logging;
-
 using Service;
 
 using SharedUI.Extensions;
@@ -60,7 +58,6 @@ public static class MauiProgram
         // REST-API discovery (multicast + subnet HTTP); uses its own HttpClient (no proxy) to avoid LAN issues.
         builder.Services.AddSingleton<RestApiDiscoveryService>(sp =>
             new RestApiDiscoveryService(
-                sp.GetRequiredService<ILogger<RestApiDiscoveryService>>(),
                 sp.GetRequiredService<AppSettings>()));
 
         // Configure HttpClient with proper timeout and Android-specific handler
@@ -103,10 +100,6 @@ public static class MauiProgram
         // Views
         builder.Services.AddTransient<View.SplashPage>();
         builder.Services.AddTransient<MainPage>();
-
-#if DEBUG
-        builder.Logging.AddDebug();
-#endif
 
         return builder.Build();
     }

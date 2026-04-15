@@ -8,7 +8,6 @@ using global::Android.OS;
 using global::Android.Views;
 
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 using Common.Extension;
 
@@ -41,8 +40,6 @@ public class MainActivity : MauiAppCompatActivity
     protected override void OnDestroy()
     {
         var services = IPlatformApplication.Current?.Services;
-        var logger = services?.GetService<ILogger<MainActivity>>();
-        logger?.LogInformation("MainActivity OnDestroy: starting Z21 cleanup");
 
         try
         {
@@ -51,20 +48,19 @@ public class MainActivity : MauiAppCompatActivity
             if (viewModel != null && viewModel.IsConnected)
             {
                 // Async-first: start cleanup without synchronously blocking the Android lifecycle thread
-                CleanupAsync(viewModel, logger).Observe(
-                    ex => logger?.LogWarning(ex, "MainActivity Android cleanup failed"));
+                CleanupAsync(viewModel).Observe();
             }
 
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            logger?.LogWarning(ex, "MainActivity cleanup error");
+            // Ignore cleanup failures during activity shutdown.
         }
 
         base.OnDestroy();
     }
 
-    private static async Task CleanupAsync(MainWindowViewModel viewModel, ILogger<MainActivity>? logger)
+    private static async Task CleanupAsync(MainWindowViewModel viewModel)
     {
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
 
@@ -76,20 +72,15 @@ public class MainActivity : MauiAppCompatActivity
             if (completed == disconnectTask)
             {
                 await disconnectTask.ConfigureAwait(false);
-                logger?.LogInformation("MainActivity Z21 cleanup complete");
-            }
-            else
-            {
-                logger?.LogWarning("MainActivity cleanup timed out (2s)");
             }
         }
         catch (OperationCanceledException)
         {
-            logger?.LogWarning("MainActivity cleanup canceled");
+            // Ignore cancellation during shutdown.
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            logger?.LogWarning(ex, "MainActivity cleanup error");
+            // Ignore cleanup failures during shutdown.
         }
     }
 

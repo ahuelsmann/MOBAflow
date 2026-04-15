@@ -49,11 +49,11 @@
                     VerticalAlignment="Center"
                     Checked="OnGridToggled"
                     IsChecked="True"
-                    ToolTipService.ToolTip="Raster ein-/ausblenden"
+                    ToolTipService.ToolTip="Toggle grid"
                     Unchecked="OnGridToggled">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="16" Glyph="&#xE80A;" />
-                        <TextBlock Text="Raster" />
+                        <TextBlock Text="Grid" />
                     </StackPanel>
                 </ToggleButton>
 
@@ -62,7 +62,7 @@
                     Grid.Column="3"
                     VerticalAlignment="Center"
                     IsChecked="True"
-                    ToolTipService.ToolTip="Toolbox ein-/ausblenden"
+                    ToolTipService.ToolTip="Toggle toolbox"
                     Visibility="Collapsed">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="16" Glyph="&#xE70F;" />
@@ -75,11 +75,11 @@
                     Grid.Column="4"
                     VerticalAlignment="Center"
                     IsChecked="True"
-                    ToolTipService.ToolTip="Eigenschaften ein-/ausblenden"
+                    ToolTipService.ToolTip="Toggle properties"
                     Visibility="Collapsed">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="16" Glyph="&#xE713;" />
-                        <TextBlock Text="Eigenschaften" />
+                        <TextBlock Text="Properties" />
                     </StackPanel>
                 </ToggleButton>
 
@@ -87,7 +87,7 @@
                 <Button
                     Grid.Column="5"
                     VerticalAlignment="Center"
-                    ToolTipService.ToolTip="Farbschema auswählen">
+                    ToolTipService.ToolTip="Select color scheme">
                     <Button.Content>
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon FontSize="16" Glyph="&#xE790;" />
@@ -101,7 +101,7 @@
                                     FontSize="12"
                                     FontWeight="SemiBold"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Text="FARBSCHEMA WÄHLEN" />
+                                    Text="SELECT COLOR SCHEME" />
                                 <Button HorizontalAlignment="Stretch" Command="{x:Bind SkinViewModel.SelectSystemCommand}">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <Border
@@ -124,7 +124,7 @@
                                             Height="20"
                                             Background="{ThemeResource SkinBlueBrush}"
                                             CornerRadius="4" />
-                                        <TextBlock VerticalAlignment="Center" Text="Blau" />
+                                        <TextBlock VerticalAlignment="Center" Text="Blue" />
                                     </StackPanel>
                                 </Button>
                                 <Button HorizontalAlignment="Stretch" Command="{x:Bind SkinViewModel.SelectGreenCommand}">
@@ -134,7 +134,7 @@
                                             Height="20"
                                             Background="{ThemeResource SkinGreenBrush}"
                                             CornerRadius="4" />
-                                        <TextBlock VerticalAlignment="Center" Text="Grün" />
+                                        <TextBlock VerticalAlignment="Center" Text="Green" />
                                     </StackPanel>
                                 </Button>
                                 <Button HorizontalAlignment="Stretch" Command="{x:Bind SkinViewModel.SelectOrangeCommand}">
@@ -188,7 +188,7 @@
                 Grid.Column="0"
                 Margin="0"
                 Glyph="&#xE70F;"
-                Header="Elemente"
+                Header="Elements"
                 IsExpanded="{x:Bind ViewModel.IsSignalBoxToolboxExpanded, Mode=TwoWay}">
                 <controls:CollapsibleColumnHelper.PanelContent>
                     <signalbox:SignalBoxToolboxControl />
@@ -221,7 +221,7 @@
                 Grid.Column="4"
                 Margin="0"
                 Glyph="&#xE946;"
-                Header="Eigenschaften"
+                Header="Properties"
                 IsExpanded="{x:Bind ViewModel.IsSignalBoxPropertiesExpanded, Mode=TwoWay}">
                 <controls:CollapsibleColumnProperties.PanelContent>
                     <signalbox:SignalBoxPropertiesControl

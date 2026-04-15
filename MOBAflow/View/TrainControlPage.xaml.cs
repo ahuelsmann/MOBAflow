@@ -439,7 +439,7 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
             if (picker.SelectedGlyph != null)
             {
                 if (!ViewModel.SetFunctionSymbol(functionIndex, picker.SelectedGlyph))
-                    ViewModel.StatusMessage = $"Keine Lok mit Adresse {ViewModel.LocoAddress} im Projekt. Bitte zuerst eine Lok mit dieser Digitaladresse anlegen.";
+                    ViewModel.StatusMessage = $"No locomotive with address {ViewModel.LocoAddress} in the project. Please create one with this digital address first.";
             }
         }
         catch (Exception ex)

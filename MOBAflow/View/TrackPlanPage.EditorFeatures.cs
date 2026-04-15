@@ -181,7 +181,7 @@ public sealed partial class TrackPlanPage
     {
         if (!CanRotateSelectedSegment(out var placed) || placed == null)
         {
-            StatusText.Text = "Rotation ist nur für nicht verbundene Gleise verfügbar.";
+            StatusText.Text = "Rotation is only available for disconnected tracks.";
             UpdateCommandStates();
             return;
         }
@@ -190,7 +190,7 @@ public sealed partial class TrackPlanPage
         var newRotation = NormalizeAngle(placed.RotationDegrees + deltaDegrees);
         _plan.UpdateSegmentPosition(placed.Segment.No, placed.X, placed.Y, newRotation);
         CommitHistorySnapshot(before);
-        StatusText.Text = $"Rotation auf {newRotation:F0}° gesetzt.";
+        StatusText.Text = $"Rotation set to {newRotation:F0}°.";
         UpdateSelectionInfo();
     }
 
@@ -199,7 +199,7 @@ public sealed partial class TrackPlanPage
         var ioService = _ioService;
         if (ioService is NullIoService)
         {
-            StatusText.Text = "Speichern ist auf dieser Plattform nicht verfügbar.";
+            StatusText.Text = "Saving is not available on this platform.";
             return false;
         }
 
@@ -223,12 +223,12 @@ public sealed partial class TrackPlanPage
             _hasUnsavedChanges = false;
             UpdateHistoryButtons();
             UpdateCommandStates();
-            StatusText.Text = $"Track plan gespeichert: {path}";
+            StatusText.Text = $"Track plan saved: {path}";
             return true;
         }
         catch (Exception ex)
         {
-            StatusText.Text = $"Speichern fehlgeschlagen: {ex.Message}";
+            StatusText.Text = $"Save failed: {ex.Message}";
             return false;
         }
     }
@@ -238,7 +238,7 @@ public sealed partial class TrackPlanPage
         var ioService = _ioService;
         if (ioService is NullIoService)
         {
-            StatusText.Text = "Laden ist auf dieser Plattform nicht verfügbar.";
+            StatusText.Text = "Loading is not available on this platform.";
             return;
         }
 
@@ -253,7 +253,7 @@ public sealed partial class TrackPlanPage
             var document = JsonSerializer.Deserialize<TrackPlanEditorDocument>(json, JsonOptions.Default);
             if (document == null)
             {
-                StatusText.Text = "TrackPlan-Datei konnte nicht geladen werden.";
+                StatusText.Text = "Track plan file could not be loaded.";
                 return;
             }
 
@@ -261,11 +261,11 @@ public sealed partial class TrackPlanPage
             _currentTrackPlanPath = path;
             _lastSavedDocumentJson = SerializeDocument(CaptureDocumentState());
             _hasUnsavedChanges = false;
-            StatusText.Text = $"Track plan geladen: {path}";
+            StatusText.Text = $"Track plan loaded: {path}";
         }
         catch (Exception ex)
         {
-            StatusText.Text = $"Laden fehlgeschlagen: {ex.Message}";
+            StatusText.Text = $"Load failed: {ex.Message}";
         }
     }
 
@@ -277,11 +277,11 @@ public sealed partial class TrackPlanPage
         var dialog = new ContentDialog
         {
             XamlRoot = XamlRoot,
-            Title = "Ungespeicherte Änderungen",
-            Content = "Der aktuelle Gleisplan enthält ungespeicherte Änderungen. Soll vor dem Laden gespeichert werden?",
-            PrimaryButtonText = "Speichern",
-            SecondaryButtonText = "Verwerfen",
-            CloseButtonText = "Abbrechen",
+            Title = "Unsaved Changes",
+            Content = "The current track plan has unsaved changes. Save before loading?",
+            PrimaryButtonText = "Save",
+            SecondaryButtonText = "Discard",
+            CloseButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Primary
         };
 
@@ -373,7 +373,7 @@ public sealed partial class TrackPlanPage
         ApplyEditorDocument(previous, clearHistory: false);
         RefreshDirtyState();
         UpdateHistoryButtons();
-        StatusText.Text = "Undo ausgeführt.";
+        StatusText.Text = "Undo executed.";
     }
 
     private void Redo()
@@ -387,7 +387,7 @@ public sealed partial class TrackPlanPage
         ApplyEditorDocument(next, clearHistory: false);
         RefreshDirtyState();
         UpdateHistoryButtons();
-        StatusText.Text = "Redo ausgeführt.";
+        StatusText.Text = "Redo executed.";
     }
 
     private void DeleteSelectedSegment()
@@ -407,7 +407,7 @@ public sealed partial class TrackPlanPage
         var bounds = ComputeContentBoundsMm();
         if (bounds == null)
         {
-            StatusText.Text = "Kein Gleisplan zum Einpassen vorhanden.";
+            StatusText.Text = "No track plan available to fit.";
             return;
         }
 
@@ -421,7 +421,7 @@ public sealed partial class TrackPlanPage
         CanvasScrollViewer.ChangeView(0, 0, (float)zoom);
         RefreshCanvas();
         RefreshDirtyState();
-        StatusText.Text = "Gleisplan eingepasst.";
+        StatusText.Text = "Track plan fitted.";
     }
 
     private void ResetZoom()
@@ -429,15 +429,15 @@ public sealed partial class TrackPlanPage
         ZoomSlider.Value = 1.0;
         CanvasScrollViewer.ChangeView(null, null, 1.0f);
         RefreshDirtyState();
-        StatusText.Text = "Zoom auf 100% gesetzt.";
+        StatusText.Text = "Zoom set to 100%.";
     }
 
     private async Task ValidateCurrentPlanAsync()
     {
         var messages = CollectValidationMessages();
-        var title = messages.Count == 0 ? "Gleisplan gültig" : "Validierung abgeschlossen";
+        var title = messages.Count == 0 ? "Track Plan Valid" : "Validation Completed";
         var content = messages.Count == 0
-            ? "Keine Probleme gefunden."
+            ? "No issues found."
             : string.Join(Environment.NewLine, messages.Select((m, i) => $"{i + 1}. {m}"));
 
         var dialog = new ContentDialog
@@ -457,7 +457,7 @@ public sealed partial class TrackPlanPage
         };
 
         await dialog.ShowAsync();
-        StatusText.Text = messages.Count == 0 ? "Validierung erfolgreich." : $"Validierung abgeschlossen: {messages.Count} Hinweis(e).";
+        StatusText.Text = messages.Count == 0 ? "Validation successful." : $"Validation completed: {messages.Count} hint(s).";
     }
 
     private List<string> CollectValidationMessages()
@@ -465,7 +465,7 @@ public sealed partial class TrackPlanPage
         var messages = new List<string>();
         if (_plan.Segments.Count == 0)
         {
-            messages.Add("Der Gleisplan enthält keine Gleise.");
+            messages.Add("The track plan contains no tracks.");
             return messages;
         }
 
@@ -475,11 +475,11 @@ public sealed partial class TrackPlanPage
         foreach (var connection in _plan.Connections)
         {
             if (!knownSegments.Contains(connection.SourceSegment))
-                messages.Add($"Verbindung referenziert unbekanntes Quellsegment {connection.SourceSegment}.");
+                messages.Add($"Connection references unknown source segment {connection.SourceSegment}.");
             if (!knownSegments.Contains(connection.TargetSegment))
-                messages.Add($"Verbindung referenziert unbekanntes Zielsegment {connection.TargetSegment}.");
+                messages.Add($"Connection references unknown target segment {connection.TargetSegment}.");
             if (connection.SourceSegment == connection.TargetSegment)
-                messages.Add($"Segment {connection.SourceSegment} ist mit sich selbst verbunden.");
+                messages.Add($"Segment {connection.SourceSegment} is connected to itself.");
 
             var sourceKey = (connection.SourceSegment, connection.SourcePort);
             var targetKey = (connection.TargetSegment, connection.TargetPort);
@@ -488,18 +488,18 @@ public sealed partial class TrackPlanPage
         }
 
         foreach (var usage in portUsage.Where(p => p.Value > 1))
-            messages.Add($"Port {usage.Key.PortName} von Segment {usage.Key.SegmentId} wird mehrfach verwendet.");
+            messages.Add($"Port {usage.Key.PortName} of segment {usage.Key.SegmentId} is used multiple times.");
 
         var analysis = TrackPlanValidationHelper.Analyze(_plan.Segments, _plan.Connections);
 
         if (analysis.ConnectedGroups.Count > 1)
-            messages.Add($"Der Gleisplan besteht aus {analysis.ConnectedGroups.Count} unverbundenen Gruppen.");
+            messages.Add($"The track plan consists of {analysis.ConnectedGroups.Count} disconnected groups.");
 
         foreach (var overlappingPort in analysis.OverlappingPorts)
-            messages.Add($"Unverbundene Ports {overlappingPort.LeftPortName}/{overlappingPort.RightPortName} liegen geometrisch übereinander.");
+            messages.Add($"Disconnected ports {overlappingPort.LeftPortName}/{overlappingPort.RightPortName} overlap geometrically.");
 
         if (analysis.OpenPorts.Count > 0)
-            messages.Add($"Es gibt {analysis.OpenPorts.Count} offene Gleisenden.");
+            messages.Add($"There are {analysis.OpenPorts.Count} open track ends.");
 
         return messages;
     }
@@ -542,7 +542,7 @@ public sealed partial class TrackPlanPage
     {
         if (_plan.Segments.Count == 0)
         {
-            StatusText.Text = "Es gibt keinen aktuellen Gleisplan zum Exportieren.";
+            StatusText.Text = "There is no current track plan to export.";
             return;
         }
 
@@ -553,7 +553,7 @@ public sealed partial class TrackPlanPage
         if (OperatingSystem.IsWindows())
             Process.Start(new ProcessStartInfo { FileName = path, UseShellExecute = true });
 
-        StatusText.Text = $"SVG geöffnet: {path}";
+        StatusText.Text = $"SVG opened: {path}";
     }
 
     private bool IsCtrlPressed()

@@ -41,12 +41,12 @@
                 x:Name="LoadTestPlanButton"
                 Icon="Document"
                 Label="Load Test Plan"
-                ToolTipService.ToolTip="Lädt das Test-TrackPlanResult (WR+R9+G62+G239) wie im SVG-Test" />
+                ToolTipService.ToolTip="Loads the test TrackPlanResult (WR+R9+G62+G239) used in the SVG test" />
             <AppBarButton
                 x:Name="OpenSvgInBrowserButton"
                 Icon="Globe"
-                Label="SVG im Browser"
-                ToolTipService.ToolTip="Exportiert den aktuellen Gleisplan als SVG und öffnet ihn im Browser" />
+                Label="SVG in Browser"
+                ToolTipService.ToolTip="Exports the current track plan as SVG and opens it in the browser" />
             <AppBarButton
                 x:Name="ValidateButton"
                 Icon="Accept"
@@ -68,8 +68,8 @@
             <AppBarButton
                 x:Name="DisconnectButton"
                 Icon="Remove"
-                Label="Trennen"
-                ToolTipService.ToolTip="Verbindungen des ausgewählten Gleises lösen (R)" />
+                Label="Disconnect"
+                ToolTipService.ToolTip="Disconnect selected track connections (R)" />
             <AppBarToggleButton
                 x:Name="GridToggle"
                 Icon="ViewAll"
@@ -154,7 +154,7 @@
                 Grid.Column="0"
                 Margin="0"
                 Glyph="&#xE70F;"
-                Header="Piko A-Gleis"
+                Header="Piko A-Track"
                 IsExpanded="{x:Bind ViewModel.IsToolboxExpanded, Mode=TwoWay}">
                 <controls:CollapsibleColumnHelper.PanelContent>
                     <ScrollViewer Padding="8,0">
@@ -308,12 +308,12 @@
                                 <StackPanel Spacing="8" Visibility="Collapsed">
                                     <TextBox Header="Section Name" PlaceholderText="Enter section name" />
                                     <ComboBox HorizontalAlignment="Stretch" Header="Function">
-                                        <ComboBoxItem Content="Strecke" Tag="Track" />
-                                        <ComboBoxItem Content="Bahnhof" Tag="Station" />
-                                        <ComboBoxItem Content="Abstellgleis" Tag="Siding" />
-                                        <ComboBoxItem Content="Rangiergleis" Tag="Shunting" />
-                                        <ComboBoxItem Content="Hauptgleis" Tag="Main" />
-                                        <ComboBoxItem Content="Nebengleis" Tag="Branch" />
+                                        <ComboBoxItem Content="Track" Tag="Track" />
+                                        <ComboBoxItem Content="Station" Tag="Station" />
+                                        <ComboBoxItem Content="Siding" Tag="Siding" />
+                                        <ComboBoxItem Content="Shunting" Tag="Shunting" />
+                                        <ComboBoxItem Content="Main" Tag="Main" />
+                                        <ComboBoxItem Content="Branch" Tag="Branch" />
                                     </ComboBox>
                                     <StackPanel>
                                         <TextBlock Margin="0,0,0,4" Text="Color" />
@@ -465,7 +465,7 @@
                                 <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Validation Overlay" />
                                 <TextBlock
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Text="Live-Hinweise im Canvas für offene Enden, überlappende Ports und getrennte Gruppen."
+                                    Text="Live hints in the canvas for open ends, overlapping ports, and disconnected groups."
                                     TextWrapping="WrapWholeWords" />
                                 <StackPanel Spacing="6">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
@@ -475,7 +475,7 @@
                                             Fill="#FFB900"
                                             Stroke="#FF8C00"
                                             StrokeThickness="1.5" />
-                                        <TextBlock VerticalAlignment="Center" Text="Offene Enden" />
+                                        <TextBlock VerticalAlignment="Center" Text="Open ends" />
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <Ellipse
@@ -484,7 +484,7 @@
                                             Fill="#E81123"
                                             Stroke="#B40014"
                                             StrokeThickness="1.5" />
-                                        <TextBlock VerticalAlignment="Center" Text="Unverbundene, überlappende Ports" />
+                                        <TextBlock VerticalAlignment="Center" Text="Disconnected, overlapping ports" />
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <Rectangle
@@ -495,7 +495,7 @@
                                             Stroke="#0078D7"
                                             StrokeDashArray="4,2"
                                             StrokeThickness="1.5" />
-                                        <TextBlock VerticalAlignment="Center" Text="Unverbundene Gruppen" />
+                                        <TextBlock VerticalAlignment="Center" Text="Disconnected groups" />
                                     </StackPanel>
                                 </StackPanel>
                             </StackPanel>

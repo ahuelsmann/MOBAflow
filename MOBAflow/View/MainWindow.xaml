@@ -133,7 +133,7 @@
             </Grid>
         </NavigationView>
 
-        <!--  StatusBar  -->
+        <!--  StatusBar (classic segmented layout)  -->
         <Grid
             Grid.Row="2"
             MinHeight="36"
@@ -142,118 +142,35 @@
             BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
             BorderThickness="0,1,0,0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <!--  Operating State (Col 0)  -->
+            <!--  Solution path  -->
             <StackPanel
                 Grid.Column="0"
+                Margin="0,0,12,0"
                 VerticalAlignment="Center"
                 Orientation="Horizontal"
-                Spacing="12">
-                <Border
-                    Padding="8,2"
-                    Background="{Binding ElementName=RootWindow, Path=ViewModel.OperatingState, Converter={StaticResource OperatingStateToBrushConverter}, ConverterParameter=Background, Mode=OneWay}"
-                    BorderBrush="{Binding ElementName=RootWindow, Path=ViewModel.OperatingState, Converter={StaticResource OperatingStateToBrushConverter}, Mode=OneWay}"
-                    BorderThickness="1"
-                    CornerRadius="12"
-                    ToolTipService.ToolTip="{x:Bind ViewModel.OperatingStateTooltipText, Mode=OneWay}">
-                    <StackPanel
-                        VerticalAlignment="Center"
-                        Orientation="Horizontal"
-                        Spacing="6">
-                        <FontIcon
-                            VerticalAlignment="Center"
-                            FontSize="12"
-                            Foreground="{Binding ElementName=RootWindow, Path=ViewModel.OperatingState, Converter={StaticResource OperatingStateToBrushConverter}, Mode=OneWay}"
-                            Glyph="{x:Bind ViewModel.OperatingStateIconGlyph, Mode=OneWay}" />
-                        <TextBlock
-                            VerticalAlignment="Center"
-                            Foreground="{Binding ElementName=RootWindow, Path=ViewModel.OperatingState, Converter={StaticResource OperatingStateToBrushConverter}, Mode=OneWay}"
-                            Text="{x:Bind ViewModel.OperatingStateText, Mode=OneWay}" />
-                    </StackPanel>
-                </Border>
+                Spacing="8">
                 <TextBlock
-                    MaxWidth="400"
                     VerticalAlignment="Center"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Text="{x:Bind ViewModel.OperatingStateDetailText, Mode=OneWay}"
+                    Text="Solution:" />
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="{x:Bind ViewModel.CurrentSolutionPath, Mode=OneWay}"
                     TextTrimming="CharacterEllipsis"
-                    Visibility="{Binding ElementName=RootWindow, Path=ViewModel.HasOperatingStateDetailText, Converter={StaticResource BoolToVisibilityConverter}, Mode=OneWay}" />
+                    ToolTipService.ToolTip="{x:Bind ViewModel.CurrentSolutionPath, Mode=OneWay}" />
             </StackPanel>
 
-            <!--  Post-startup initialization status (Col 1)  -->
+            <!--  Z21 status + Track Power  -->
             <StackPanel
                 Grid.Column="1"
-                Margin="16,0,0,0"
-                VerticalAlignment="Center"
-                Orientation="Horizontal"
-                Spacing="8"
-                Visibility="{Binding ElementName=RootWindow, Path=ViewModel.IsPostStartupInitializationRunning, Converter={StaticResource BoolToVisibilityConverter}, Mode=OneWay}">
-                <ProgressRing
-                    Width="14"
-                    Height="14"
-                    Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                    IsActive="{x:Bind ViewModel.IsPostStartupInitializationRunning, Mode=OneWay}" />
-                <TextBlock
-                    VerticalAlignment="Center"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Text="{x:Bind ViewModel.PostStartupStatusText, Mode=OneWay}" />
-            </StackPanel>
-
-            <!--  Solution Path (Col 2 - stretches and truncates)  -->
-            <TextBlock
-                Grid.Column="2"
-                Margin="16,0,16,0"
-                VerticalAlignment="Center"
-                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                Text="{x:Bind ViewModel.CurrentSolutionPath, Mode=OneWay}"
-                TextTrimming="CharacterEllipsis" />
-
-            <!--  Azure Speech Health Status (Col 3)  -->
-            <StackPanel
-                Grid.Column="3"
-                VerticalAlignment="Center"
-                Orientation="Horizontal"
-                Spacing="4">
-                <DropDownButton
-                    Padding="8,4"
-                    VerticalAlignment="Center"
-                    Background="Transparent"
-                    BorderThickness="0">
-                    <DropDownButton.Content>
-                        <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind ViewModel.SelectedSpeechEngine, Mode=OneWay}" />
-                    </DropDownButton.Content>
-                    <DropDownButton.Flyout>
-                        <MenuFlyout>
-                            <MenuFlyoutItem
-                                Command="{x:Bind ViewModel.SelectSpeechEngineCommand}"
-                                CommandParameter="System Speech (Windows SAPI)"
-                                Text="System Speech (Windows SAPI)" />
-                            <MenuFlyoutItem
-                                Command="{x:Bind ViewModel.SelectSpeechEngineCommand}"
-                                CommandParameter="Azure Cognitive Services"
-                                Text="Azure Cognitive Services" />
-                        </MenuFlyout>
-                    </DropDownButton.Flyout>
-                </DropDownButton>
-                <FontIcon
-                    Margin="0,0,8,0"
-                    VerticalAlignment="Center"
-                    FontSize="14"
-                    Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                    Glyph="{x:Bind ViewModel.SpeechHealthIcon, Mode=OneWay}" />
-            </StackPanel>
-
-            <!--  Z21 Status (Col 4)  -->
-            <StackPanel
-                Grid.Column="4"
-                Margin="8,0,0,0"
+                Margin="12,0,0,0"
                 VerticalAlignment="Center"
                 Orientation="Horizontal"
                 Spacing="8">
@@ -272,21 +189,8 @@
                     VerticalAlignment="Center"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Text="{x:Bind ViewModel.StatusText, Mode=OneWay}" />
-            </StackPanel>
-
-            <!--  Track Power (Col 5)  -->
-            <StackPanel
-                Grid.Column="5"
-                Margin="12,0,0,0"
-                VerticalAlignment="Center"
-                Orientation="Horizontal"
-                Spacing="8">
-                <Border
-                    Width="1"
-                    Height="16"
-                    Margin="0,0,4,0"
-                    Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
                 <TextBlock
+                    Margin="8,0,0,0"
                     VerticalAlignment="Center"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Text="Track Power" />
@@ -299,6 +203,78 @@
                     OffContent="{x:Null}"
                     OnContent="{x:Null}"
                     Toggled="TrackPower_Toggled" />
+            </StackPanel>
+
+            <!--  REST API status  -->
+            <StackPanel
+                Grid.Column="2"
+                Margin="12,0,0,0"
+                VerticalAlignment="Center"
+                Orientation="Horizontal"
+                Spacing="8">
+                <Border
+                    Width="1"
+                    Height="16"
+                    Margin="0,0,4,0"
+                    Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="REST API:" />
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="{x:Bind ViewModel.RestApiStatusText, Mode=OneWay}" />
+            </StackPanel>
+
+            <!--  Speech selection + health status  -->
+            <StackPanel
+                Grid.Column="3"
+                Margin="12,0,0,0"
+                VerticalAlignment="Center"
+                Orientation="Horizontal"
+                Spacing="8">
+                <Border
+                    Width="1"
+                    Height="16"
+                    Margin="0,0,4,0"
+                    Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Speech:" />
+                <DropDownButton
+                    Padding="8,4"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderThickness="0">
+                    <DropDownButton.Content>
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="{x:Bind ViewModel.SelectedSpeechEngine, Mode=OneWay}" />
+                    </DropDownButton.Content>
+                    <DropDownButton.Flyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem
+                                Command="{x:Bind ViewModel.SelectSpeechEngineCommand}"
+                                CommandParameter="System Speech (Windows SAPI)"
+                                Text="System Speech (Windows SAPI)" />
+                            <MenuFlyoutItem
+                                Command="{x:Bind ViewModel.SelectSpeechEngineCommand}"
+                                CommandParameter="Azure Cognitive Services"
+                                Text="Azure Cognitive Services" />
+                        </MenuFlyout>
+                    </DropDownButton.Flyout>
+                </DropDownButton>
+                <FontIcon
+                    VerticalAlignment="Center"
+                    FontSize="14"
+                    Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                    Glyph="{x:Bind ViewModel.SpeechHealthIcon, Mode=OneWay}" />
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="{x:Bind ViewModel.SpeechStatusDisplayText, Mode=OneWay}" />
             </StackPanel>
         </Grid>
     </Grid>

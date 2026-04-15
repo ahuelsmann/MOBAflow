@@ -40,10 +40,10 @@ internal sealed partial class SolutionPage
             var dialog = new ContentDialog
             {
                 XamlRoot = XamlRoot,
-                Title = "Projekt löschen",
-                Content = "Wollen Sie das Projekt wirklich löschen?",
-                PrimaryButtonText = "Ja",
-                SecondaryButtonText = "Nein",
+                Title = "Delete Project",
+                Content = "Do you really want to delete the project?",
+                PrimaryButtonText = "Yes",
+                SecondaryButtonText = "No",
                 DefaultButton = ContentDialogButton.Secondary
             };
 

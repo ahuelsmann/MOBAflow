@@ -11,6 +11,15 @@ using CommunityToolkit.Mvvm.ComponentModel;
 public partial class MainWindowViewModel
 {
     /// <summary>
+    /// Gets the speech status text shown in the status bar.
+    /// Uses Azure health details for Azure engine and a local-ready text for System Speech.
+    /// </summary>
+    public string SpeechStatusDisplayText =>
+        IsAzureSpeechEngineSelected
+            ? SpeechHealthStatus
+            : "System Speech: Ready (local)";
+
+    /// <summary>
     /// Update health status UI properties based on status message.
     /// Called by HealthCheckService via event.
     /// </summary>
@@ -41,6 +50,7 @@ public partial class MainWindowViewModel
             SpeechHealthColor = "SystemFillColorCautionBrush";
         }
 
+        OnPropertyChanged(nameof(SpeechStatusDisplayText));
         RecomputeOperatingState();
     }
 

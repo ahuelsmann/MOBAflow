@@ -2,8 +2,6 @@
 
 namespace Moba.MAUI.View;
 
-using Microsoft.Extensions.Logging;
-
 using SharedUI.Interface;
 
 /// <summary>
@@ -13,12 +11,10 @@ using SharedUI.Interface;
 public partial class SplashPage
 {
     private readonly ISettingsService _settingsService;
-    private readonly ILogger<SplashPage> _logger;
 
-    public SplashPage(ISettingsService settingsService, ILogger<SplashPage> logger)
+    public SplashPage(ISettingsService settingsService)
     {
         _settingsService = settingsService;
-        _logger = logger;
         InitializeComponent();
     }
 
@@ -37,19 +33,17 @@ public partial class SplashPage
                 app.ApplyTheme(settings.Application.IsDarkMode, settings.Application.UseSystemTheme);
             }
 
-            // Show splash for a short time, then navigate to main page
-            await Task.Delay(1500).ConfigureAwait(true);
-
             // Navigate to main page using the new Windows API (MainPage is deprecated)
-            var window = Application.Current?.Windows.FirstOrDefault();
+            var windows = Application.Current?.Windows;
+            var window = windows != null && windows.Count > 0 ? windows[0] : null;
             if (window is not null)
             {
                 window.Page = App.CreateMainPage();
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _logger.LogWarning(ex, "SplashPage initialization failed");
+            // Keep splash page visible when initialization fails.
         }
     }
 }

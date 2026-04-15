@@ -86,7 +86,6 @@
     <ItemGroup>
         <!-- MAUI Core -->
         <PackageReference Include="Microsoft.Maui.Controls" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
         <!-- CommunityToolkit.Maui (UI features: Expander, Converters, Behaviors) -->
         <PackageReference Include="CommunityToolkit.Maui" />
         <!-- CommunityToolkit.Maui.MediaElement (Video/Audio support) -->

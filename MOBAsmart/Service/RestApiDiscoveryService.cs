@@ -8,8 +8,6 @@ using Android.Net.Wifi;
 using Common.Configuration;
 using Common.Discovery;
 
-using Microsoft.Extensions.Logging;
-
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
@@ -34,14 +32,10 @@ public class RestApiDiscoveryService
     private static readonly Lazy<HttpClient> LanProbeHttpClient = new(CreateLanProbeHttpClient);
     private const string MobApiHealthPath = "/api/photos/health";
 
-    private readonly ILogger<RestApiDiscoveryService> _logger;
     private readonly AppSettings _appSettings;
 
-    public RestApiDiscoveryService(
-        ILogger<RestApiDiscoveryService> logger,
-        AppSettings appSettings)
+    public RestApiDiscoveryService(AppSettings appSettings)
     {
-        _logger = logger;
         _appSettings = appSettings;
     }
 
@@ -73,8 +67,6 @@ public class RestApiDiscoveryService
     /// </summary>
     public async Task<(string? ip, int? port)> DiscoverServerAsync(CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("🔍 Starting UDP Multicast discovery for MOBAflow server...");
-
         try
         {
 #if ANDROID
@@ -91,9 +83,6 @@ public class RestApiDiscoveryService
             var requestBytes = Encoding.UTF8.GetBytes(DiscoveryRequest);
             var multicastEndpoint = new IPEndPoint(IPAddress.Parse(MulticastAddress), DiscoveryPort);
 
-            _logger.LogDebug("📤 Sending discovery request to {MulticastAddress}:{Port}",
-                MulticastAddress, DiscoveryPort);
-
             await udpClient.SendAsync(requestBytes, requestBytes.Length, multicastEndpoint).ConfigureAwait(false);
 
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -104,30 +93,23 @@ public class RestApiDiscoveryService
                 var result = await udpClient.ReceiveAsync(cts.Token).ConfigureAwait(false);
                 var response = Encoding.UTF8.GetString(result.Buffer).TrimEnd('\0').Trim();
 
-                _logger.LogDebug("📥 Received response: {Response}", response);
-
                 if (DiscoveryResponseParser.TryParse(response, out var ip, out var portVal) && ip != null && portVal != null)
                 {
-                    _logger.LogInformation("✅ Server discovered: {Ip}:{Port}", ip, portVal);
                     return (ip, portVal);
                 }
             }
             catch (OperationCanceledException)
             {
-                _logger.LogDebug("⏱️ Discovery timeout - no response received");
             }
-            catch (SocketException ex) when (ex.SocketErrorCode == SocketError.TimedOut)
+            catch (SocketException socketException) when (socketException.SocketErrorCode == SocketError.TimedOut)
             {
-                _logger.LogDebug("⏱️ Discovery timeout - no response received");
             }
         }
         catch (OperationCanceledException)
         {
-            _logger.LogDebug("⏱️ Discovery timeout - no response received");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _logger.LogWarning(ex, "Multicast discovery failed");
         }
 #if ANDROID
         finally
@@ -137,21 +119,16 @@ public class RestApiDiscoveryService
 #endif
 
         var restPort = _appSettings.RestApi.Port > 0 ? _appSettings.RestApi.Port : 5001;
-        _logger.LogInformation(
-            "ℹ️ Multicast did not find MOBApi — scanning LAN for HTTP health on port {Port} (fallback)",
-            restPort);
         try
         {
             var probed = await TryDiscoverBySubnetHttpProbeAsync(restPort, cancellationToken).ConfigureAwait(false);
             if (probed.ip != null && probed.port.HasValue)
                 return probed;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _logger.LogWarning(ex, "REST subnet probe failed");
         }
 
-        _logger.LogInformation("ℹ️ Auto-discovery did not find server");
         return (null, null);
     }
 
@@ -164,17 +141,11 @@ public class RestApiDiscoveryService
         var candidates = SubnetCandidateBuilder.BuildCandidates(localAddresses);
         if (candidates.Count == 0)
         {
-            _logger.LogDebug("REST subnet probe: no subnet candidates (no suitable local IPv4)");
             return (null, null);
         }
 
         var orderedSubnet = OrderLanProbeCandidates(candidates, localAddresses);
         var ordered = MergePriorityRestEndpointCandidates(_appSettings, orderedSubnet);
-
-        _logger.LogInformation(
-            "REST subnet probe: up to {Count} hosts on port {Port} (saved/recent IPs first, then LAN order)",
-            ordered.Count,
-            restPort);
 
         foreach (var batch in ordered.Chunk(SubnetProbeBatchSize))
         {
@@ -185,7 +156,6 @@ public class RestApiDiscoveryService
             var found = results.FirstOrDefault(r => !string.IsNullOrEmpty(r));
             if (found != null)
             {
-                _logger.LogInformation("✅ MOBApi found by subnet probe: {Ip}:{Port}", found, restPort);
                 return (found, restPort);
             }
         }
@@ -313,9 +283,8 @@ public class RestApiDiscoveryService
         {
             return null;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _logger.LogTrace(ex, "REST probe miss at {Ip}:{Port}", ip, port);
             return null;
         }
     }
@@ -336,9 +305,8 @@ public class RestApiDiscoveryService
                 _multicastLock?.Acquire();
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _logger.LogWarning(ex, "MulticastLock acquire failed for REST discovery");
         }
     }
 

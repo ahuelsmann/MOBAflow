@@ -1,8 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
 
-using Microsoft.Extensions.Logging;
-
 using SharedUI.Interface;
 
 using System.Text;
@@ -17,12 +15,10 @@ public sealed class RestApiClientRegistrationService : IRestApiClientRegistratio
     private const string DeviceNameDefault = "MOBAsmart";
 
     private readonly HttpClient _httpClient;
-    private readonly ILogger<RestApiClientRegistrationService> _logger;
 
-    public RestApiClientRegistrationService(HttpClient httpClient, ILogger<RestApiClientRegistrationService> logger)
+    public RestApiClientRegistrationService(HttpClient httpClient)
     {
         _httpClient = httpClient;
-        _logger = logger;
     }
 
     /// <inheritdoc />
@@ -42,15 +38,12 @@ public sealed class RestApiClientRegistrationService : IRestApiClientRegistratio
             var response = await _httpClient.PostAsync(url, content).ConfigureAwait(false);
             if (response.IsSuccessStatusCode)
             {
-                _logger.LogDebug("Registered with REST API as {DeviceName} ({ClientId})", deviceName, clientId);
                 return true;
             }
-            _logger.LogWarning("REST API client registration failed: {StatusCode}", response.StatusCode);
             return false;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _logger.LogDebug(ex, "REST API client registration failed");
             return false;
         }
     }

@@ -401,17 +401,12 @@
                             ColumnSpacing="4">
                             <Button
                                 Grid.Column="0"
-                                Padding="0"
-                                BackgroundColor="{DynamicResource SurfaceDark}"
                                 Command="{Binding DecrementTimerIntervalCommand}"
-                                CornerRadius="8"
-                                FontAttributes="Bold"
-                                FontSize="22"
-                                HeightRequest="44"
                                 IsEnabled="{Binding UseTimerFilter}"
                                 SemanticProperties.Description="Reduce timer filter interval"
+                                Style="{StaticResource StepperButtonStyle}"
                                 Text="−"
-                                TextColor="{DynamicResource TextPrimary}" />
+                             />
                             <Border Grid.Column="1" Style="{StaticResource StepperValueBorderStyle}">
                                 <Label
                                     FontAttributes="Bold"
@@ -423,17 +418,11 @@
                             </Border>
                             <Button
                                 Grid.Column="2"
-                                Padding="0"
-                                BackgroundColor="{DynamicResource SurfaceDark}"
                                 Command="{Binding IncrementTimerIntervalCommand}"
-                                CornerRadius="8"
-                                FontAttributes="Bold"
-                                FontSize="22"
-                                HeightRequest="44"
                                 IsEnabled="{Binding UseTimerFilter}"
                                 SemanticProperties.Description="Increase timer filter interval"
-                                Text="+"
-                                TextColor="{DynamicResource TextPrimary}" />
+                                Style="{StaticResource StepperButtonStyle}"
+                                Text="+" />
                         </Grid>
                     </Grid>
                 </VerticalStackLayout>

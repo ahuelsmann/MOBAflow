@@ -65,7 +65,7 @@
                         VerticalAlignment="Center"
                         AutomationProperties.HelpText="Enter locomotive series to set maximum speed"
                         AutomationProperties.Name="Locomotive Series Selection"
-                        PlaceholderText="Baureihe (z.B. BR 103)"
+                        PlaceholderText="Series (e.g. BR 103)"
                         QuerySubmitted="LocoSeriesBox_QuerySubmitted"
                         SuggestionChosen="LocoSeriesBox_SuggestionChosen"
                         TextChanged="LocoSeriesBox_TextChanged">
@@ -250,17 +250,17 @@
                                 Text="Select preset and control" />
                         </StackPanel>
 
-                        <!--  Lok aus Projekt (Alternative zu Presets)  -->
+                        <!--  Locomotive from project (alternative to presets)  -->
                         <StackPanel Spacing="6">
                             <TextBlock
                                 FontSize="11"
                                 FontWeight="SemiBold"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Text="LOK AUS PROJEKT" />
+                                Text="LOCOMOTIVE FROM PROJECT" />
                             <ComboBox
                                 HorizontalAlignment="Stretch"
                                 ItemsSource="{x:Bind ViewModel.ProjectLocomotives, Mode=OneWay}"
-                                PlaceholderText="Lok aus Projekt wählen …"
+                                PlaceholderText="Select locomotive from project..."
                                 SelectedItem="{x:Bind ViewModel.SelectedLocomotiveFromProject, Mode=TwoWay}">
                                 <ComboBox.ItemTemplate>
                                     <DataTemplate x:DataType="vm:LocomotiveViewModel">
@@ -303,7 +303,7 @@
                                     Orientation="Horizontal"
                                     Spacing="6">
                                     <FontIcon FontSize="14" Glyph="&#xE7C0;" />
-                                    <TextBlock FontWeight="SemiBold" Text="Lok 1" />
+                                    <TextBlock FontWeight="SemiBold" Text="Loco 1" />
                                 </StackPanel>
                                 <NumberBox
                                     Grid.Column="2"
@@ -336,7 +336,7 @@
                                     Orientation="Horizontal"
                                     Spacing="6">
                                     <FontIcon FontSize="14" Glyph="&#xE7C0;" />
-                                    <TextBlock FontWeight="SemiBold" Text="Lok 2" />
+                                    <TextBlock FontWeight="SemiBold" Text="Loco 2" />
                                 </StackPanel>
                                 <NumberBox
                                     Grid.Column="2"
@@ -369,7 +369,7 @@
                                     Orientation="Horizontal"
                                     Spacing="6">
                                     <FontIcon FontSize="14" Glyph="&#xE7C0;" />
-                                    <TextBlock FontWeight="SemiBold" Text="Lok 3" />
+                                    <TextBlock FontWeight="SemiBold" Text="Loco 3" />
                                 </StackPanel>
                                 <NumberBox
                                     Grid.Column="2"

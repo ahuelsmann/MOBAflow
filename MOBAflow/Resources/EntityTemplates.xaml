@@ -118,7 +118,7 @@
                     Height="120"
                     AcceptsReturn="True"
                     Header="Text-to-Speech Template"
-                    PlaceholderText="e.g., 'Nächster Halt: {StationName}'"
+                    PlaceholderText="e.g., 'Next stop: {StationName}'"
                     Text="{Binding Text, Mode=TwoWay}"
                     TextWrapping="Wrap" />
             </StackPanel>

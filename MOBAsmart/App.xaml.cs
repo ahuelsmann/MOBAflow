@@ -1,8 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI;
 
-using Microsoft.Extensions.Logging;
-
 using Common.Extension;
 
 using SharedUI.ViewModel;
@@ -12,12 +10,10 @@ using View;
 public partial class App
 {
     private readonly IServiceProvider _services;
-    private readonly ILogger<App>? _logger;
 
     public App(IServiceProvider services)
     {
         _services = services;
-        _logger = services.GetService<ILogger<App>>();
 
         // ⚠️ CRITICAL: Load default dark theme resources BEFORE InitializeComponent
         // Theme will be properly applied after settings are loaded in SplashPage.
@@ -52,9 +48,6 @@ public partial class App
         UserAppTheme = targetTheme;
         LoadThemeResources(effectiveIsDark);
 
-        _logger?.LogDebug("Theme applied: {ThemeMode} (isDark: {IsDark})",
-            useSystemTheme ? "System" : isDarkMode ? "Dark" : "Light",
-            effectiveIsDark);
     }
 
     /// <summary>
@@ -134,9 +127,6 @@ public partial class App
 
     protected override Window CreateWindow(IActivationState? activationState)
     {
-        // Settings and theme are loaded in SplashPage.OnAppearing before MainPage is shown.
-        _logger?.LogDebug("Creating SplashPage");
-
         // ✅ Show SplashPage first, then navigate to MainPage (SplashPage loads settings)
         var splashPage = _services.GetRequiredService<SplashPage>();
         var window = new Window(splashPage);
@@ -144,7 +134,6 @@ public partial class App
         // ✅ Subscribe to lifecycle events for cleanup
         window.Destroying += OnWindowDestroying;
 
-        _logger?.LogDebug("Window created with SplashPage");
         return window;
     }
 
@@ -171,16 +160,13 @@ public partial class App
     {
         _ = sender; // Suppress unused parameter warning
         _ = e;
-        CleanupOnWindowDestroyingAsync().Observe(
-            ex => _logger?.LogWarning(ex, "Window destroying cleanup failed"));
+        CleanupOnWindowDestroyingAsync().Observe();
     }
 
     private async Task CleanupOnWindowDestroyingAsync()
     {
         try
         {
-            _logger?.LogDebug("OnWindowDestroying - starting cleanup");
-
             // Get MauiViewModel and trigger graceful disconnect
             var viewModel = _services.GetService<MauiViewModel>();
             if (viewModel != null)
@@ -190,12 +176,11 @@ public partial class App
                 {
                     await viewModel.DisconnectCommand.ExecuteAsync(null);
                 }
-                _logger?.LogDebug("MauiViewModel cleanup complete");
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _logger?.LogWarning(ex, "Cleanup error during window destroy");
+            // Ignore cleanup failures during application shutdown.
         }
     }
 

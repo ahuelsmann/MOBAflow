@@ -286,6 +286,7 @@ public partial class MainWindowViewModel
                 _settings.Speech.SpeakerEngineName = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(IsAzureSpeechEngineSelected));
+                OnPropertyChanged(nameof(SpeechStatusDisplayText));
                 PersistSettings();
             }
         }

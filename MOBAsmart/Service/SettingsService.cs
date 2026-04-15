@@ -3,8 +3,6 @@ namespace Moba.MAUI.Service;
 
 using Common.Configuration;
 
-using Microsoft.Extensions.Logging;
-
 using SharedUI.Interface;
 
 using System.Text.Json;
@@ -17,16 +15,12 @@ public class SettingsService : ISettingsService
 {
     private readonly AppSettings _settings;
     private readonly string _settingsFilePath;
-    private readonly ILogger<SettingsService> _logger;
     private bool _isLoaded;
 
-    public SettingsService(AppSettings settings, ILogger<SettingsService> logger)
+    public SettingsService(AppSettings settings)
     {
         _settings = settings;
-        _logger = logger;
         _settingsFilePath = Path.Combine(FileSystem.AppDataDirectory, "appsettings.json");
-
-        _logger.LogInformation("SettingsService initialized. FilePath: {SettingsFilePath}; AppDataDirectory: {AppDataDirectory}", _settingsFilePath, FileSystem.AppDataDirectory);
 
         // ✅ DON'T block constructor - settings will be loaded in App.xaml.cs
         _isLoaded = false;
@@ -43,22 +37,17 @@ public class SettingsService : ISettingsService
     {
         if (_isLoaded)
         {
-            _logger.LogDebug("Settings already loaded, skipping");
             return;
         }
 
         try
         {
-            _logger.LogInformation("LoadSettingsAsync: Checking file existence at {SettingsFilePath}; Exists: {Exists}", _settingsFilePath, File.Exists(_settingsFilePath));
-
             if (File.Exists(_settingsFilePath))
             {
                 var json = await File.ReadAllTextAsync(_settingsFilePath).ConfigureAwait(false);
-                _logger.LogDebug("Settings file length: {Length} chars", json.Length);
 
                 if (string.IsNullOrWhiteSpace(json))
                 {
-                    _logger.LogWarning("Settings file is empty, using defaults");
                     _isLoaded = true;
                     return;
                 }
@@ -73,26 +62,13 @@ public class SettingsService : ISettingsService
                     // Auto-migrate legacy default port 5000 to 5001 to avoid conflicts
                     if (loadedRestApi.Port == 5000 || loadedRestApi.Port == 0)
                     {
-                        _logger.LogWarning("REST API port {LegacyPort} detected (legacy default) - migrating to {NewPort}", loadedRestApi.Port, 5001);
                         loadedRestApi.Port = 5001;
                     }
 
                     if (loadedSettings.Counter.CountOfFeedbackPoints != loadedFeedbackPointCount)
                     {
-                        _logger.LogWarning(
-                            "Feedback point count {LoadedCount} detected - migrating to {NormalizedCount}",
-                            loadedSettings.Counter.CountOfFeedbackPoints,
-                            loadedFeedbackPointCount);
                         loadedSettings.Counter.CountOfFeedbackPoints = loadedFeedbackPointCount;
                     }
-
-                    _logger.LogInformation("Deserializing settings: Tracks {Tracks}; Target {Target}; Timer {Timer}s; Z21 IP {Z21Ip}; REST IP {RestIp}; REST Port {RestPort}",
-                        loadedSettings.Counter.CountOfFeedbackPoints,
-                        loadedSettings.Counter.TargetLapCount,
-                        loadedSettings.Counter.TimerIntervalSeconds,
-                        loadedSettings.Z21.CurrentIpAddress,
-                        loadedRestApi.CurrentIpAddress,
-                        loadedRestApi.Port);
 
                     // Copy all loaded values to the DI-registered singleton
                     _settings.Application.LastSolutionPath = loadedSettings.Application.LastSolutionPath;
@@ -120,40 +96,22 @@ public class SettingsService : ISettingsService
                     _settings.RestApi.Port = loadedRestApi.Port;
                     _settings.RestApi.RecentIpAddresses = loadedRestApi.RecentIpAddresses;
 
-                    _logger.LogInformation("Settings applied to singleton");
                     _isLoaded = true;
                 }
                 else
                 {
-                    _logger.LogWarning("Deserialization returned null");
                     _isLoaded = true;
                 }
             }
             else
             {
-                _logger.LogInformation("No settings file found, using defaults. Tracks {Tracks}; Target {Target}; Timer {Timer}s; REST IP {RestIp}",
-                    _settings.Counter.CountOfFeedbackPoints,
-                    _settings.Counter.TargetLapCount,
-                    _settings.Counter.TimerIntervalSeconds,
-                    _settings.RestApi.CurrentIpAddress);
-
                 // ✅ Create initial settings file with defaults
-                _logger.LogInformation("Creating initial settings file...");
                 await SaveSettingsAsync(_settings).ConfigureAwait(false);
                 _isLoaded = true;
             }
-
-            _logger.LogInformation("SettingsService initialized. Tracks {Tracks}; Target {Target}; Timer Filter {TimerFilter}; Timer Interval {TimerInterval}s; Z21 IP {Z21Ip}; REST IP {RestIp}",
-                _settings.Counter.CountOfFeedbackPoints,
-                _settings.Counter.TargetLapCount,
-                _settings.Counter.UseTimerFilter,
-                _settings.Counter.TimerIntervalSeconds,
-                _settings.Z21.CurrentIpAddress,
-                _settings.RestApi.CurrentIpAddress);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _logger.LogError(ex, "Failed to load settings");
             _isLoaded = true; // Don't retry on error
         }
     }
@@ -172,23 +130,10 @@ public class SettingsService : ISettingsService
         {
             var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
 
-            _logger.LogInformation("SaveSettingsAsync called. Path: {SettingsFilePath}; Tracks {Tracks}; Target {Target}; Timer {Timer}s; Z21 IP {Z21Ip}; REST IP {RestIp}; REST Port {RestPort}",
-                _settingsFilePath,
-                settings.Counter.CountOfFeedbackPoints,
-                settings.Counter.TargetLapCount,
-                settings.Counter.TimerIntervalSeconds,
-                settings.Z21.CurrentIpAddress,
-                settings.RestApi.CurrentIpAddress,
-                settings.RestApi.Port);
-
             await File.WriteAllTextAsync(_settingsFilePath, json).ConfigureAwait(false);
-
-            var fileInfo = new FileInfo(_settingsFilePath);
-            _logger.LogInformation("Settings saved successfully. File size: {FileSize} bytes; Last modified: {LastModified}", fileInfo.Length, fileInfo.LastWriteTime);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _logger.LogError(ex, "Failed to save settings");
             throw;
         }
     }
@@ -272,13 +217,7 @@ public class SettingsService : ISettingsService
     private void QueueSaveSettings()
     {
         SaveSettingsAsync(_settings).ContinueWith(
-            t =>
-            {
-                if (t.Exception != null)
-                {
-                    _logger.LogWarning(t.Exception, "Background settings save failed");
-                }
-            },
+            _ => { },
             CancellationToken.None,
             TaskContinuationOptions.OnlyOnFaulted,
             TaskScheduler.Default);

@@ -12,6 +12,12 @@ using System.Net.Sockets;
 /// </summary>
 internal static class LanIpv4AddressHelper
 {
+    private static readonly HashSet<NetworkInterfaceType> AllowedInterfaceTypes =
+    [
+        NetworkInterfaceType.Wireless80211,
+        NetworkInterfaceType.Ethernet
+    ];
+
     /// <summary>
     /// Gets candidate local IPv4 addresses whose /24 subnets should be scanned on the LAN.
     /// </summary>
@@ -23,8 +29,7 @@ internal static class LanIpv4AddressHelper
 
             foreach (var ni in NetworkInterface.GetAllNetworkInterfaces())
             {
-                if (ni.OperationalStatus != OperationalStatus.Up ||
-                    ni.NetworkInterfaceType == NetworkInterfaceType.Loopback)
+                if (!IsDiscoveryCapableInterface(ni))
                 {
                     continue;
                 }
@@ -53,5 +58,13 @@ internal static class LanIpv4AddressHelper
         }
 
         return [];
+    }
+
+    private static bool IsDiscoveryCapableInterface(NetworkInterface ni)
+    {
+        // Restrict discovery to active Wi-Fi and wired LAN interfaces.
+        // This avoids scanning VPN, virtual adapters, and tunnel interfaces.
+        return ni.OperationalStatus == OperationalStatus.Up
+               && AllowedInterfaceTypes.Contains(ni.NetworkInterfaceType);
     }
 }

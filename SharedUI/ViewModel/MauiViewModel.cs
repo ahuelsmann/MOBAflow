@@ -584,6 +584,9 @@ public sealed partial class MauiViewModel : ObservableObject
     [ObservableProperty]
     private double _timerIntervalSeconds = 2.0;
 
+    // O(1) lookup for high-frequency feedback updates.
+    private Dictionary<int, InPortStatistic> _statisticsByInPort = [];
+
     // Last feedback time tracking for timer filter
     private readonly Dictionary<int, DateTime> _lastFeedbackTime = [];
 
@@ -626,21 +629,25 @@ public sealed partial class MauiViewModel : ObservableObject
     private void InitializeStatistics()
     {
         var updatedStatistics = new ObservableCollection<InPortStatistic>();
+        var updatedByInPort = new Dictionary<int, InPortStatistic>();
         for (int i = 1; i <= CountOfFeedbackPoints; i++)
         {
-            updatedStatistics.Add(new InPortStatistic
+            var statistic = new InPortStatistic
             {
                 InPort = i,
                 Name = $"Track {i}",
                 Count = 0,
                 TargetLapCount = GlobalTargetLapCount
-            });
+            };
+            updatedStatistics.Add(statistic);
+            updatedByInPort[i] = statistic;
         }
 
         _uiDispatcher.InvokeOnUi(() =>
         {
             // Replace the collection instance atomically to avoid MAUI BindableLayout reentrancy glitches.
             Statistics = updatedStatistics;
+            _statisticsByInPort = updatedByInPort;
         });
 
         _lastFeedbackTime.Clear();
@@ -783,8 +790,7 @@ public sealed partial class MauiViewModel : ObservableObject
     {
         _uiDispatcher.InvokeOnUi(() =>
         {
-            var stat = Statistics.FirstOrDefault(s => s.InPort == feedback.InPort);
-            if (stat != null)
+            if (_statisticsByInPort.TryGetValue(feedback.InPort, out var stat))
             {
                 // Timer filter: Prevent duplicate counts from long trains
                 if (UseTimerFilter)

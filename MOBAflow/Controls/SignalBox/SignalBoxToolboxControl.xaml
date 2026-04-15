@@ -13,11 +13,11 @@
                             <TextBlock
                                 FontSize="16"
                                 FontWeight="SemiBold"
-                                Text="Elemente" />
+                                Text="Elements" />
                             <TextBlock
                                 FontSize="11"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="Drag &amp; Drop auf Gleisbild" />
+                                Text="Drag &amp; drop onto track canvas" />
                         </StackPanel>
 
                         <!--  GLEISE Category  -->
@@ -26,7 +26,7 @@
                                 FontSize="11"
                                 FontWeight="SemiBold"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Text="GLEISE" />
+                                Text="TRACKS" />
                             <Grid ColumnSpacing="6" RowSpacing="6">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
@@ -51,7 +51,7 @@
                                     PointerEntered="OnToolPointerEntered"
                                     PointerExited="OnToolPointerExited"
                                     Tag="TrackStraight"
-                                    ToolTipService.ToolTip="Gerades Gleis">
+                                    ToolTipService.ToolTip="Straight track">
                                     <StackPanel
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
@@ -74,7 +74,7 @@
                                         <TextBlock
                                             HorizontalAlignment="Center"
                                             FontSize="10"
-                                            Text="Gerade" />
+                                            Text="Straight" />
                                     </StackPanel>
                                 </Border>
                                 <!--  Kurve 90°  -->
@@ -92,7 +92,7 @@
                                     PointerEntered="OnToolPointerEntered"
                                     PointerExited="OnToolPointerExited"
                                     Tag="TrackCurve"
-                                    ToolTipService.ToolTip="Kurve 90°">
+                                    ToolTipService.ToolTip="90° curve">
                                     <StackPanel
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
@@ -110,7 +110,7 @@
                                         <TextBlock
                                             HorizontalAlignment="Center"
                                             FontSize="10"
-                                            Text="Kurve" />
+                                            Text="Curve" />
                                     </StackPanel>
                                 </Border>
                                 <!--  Prellbock  -->
@@ -128,7 +128,7 @@
                                     PointerEntered="OnToolPointerEntered"
                                     PointerExited="OnToolPointerExited"
                                     Tag="TrackStraight"
-                                    ToolTipService.ToolTip="Prellbock">
+                                    ToolTipService.ToolTip="Buffer stop">
                                     <StackPanel
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
@@ -159,7 +159,7 @@
                                         <TextBlock
                                             HorizontalAlignment="Center"
                                             FontSize="10"
-                                            Text="Prellbock" />
+                                            Text="Buffer stop" />
                                     </StackPanel>
                                 </Border>
                             </Grid>
@@ -174,7 +174,7 @@
                                 FontSize="11"
                                 FontWeight="SemiBold"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Text="WEICHEN" />
+                                Text="SWITCHES" />
                             <Grid ColumnSpacing="6" RowSpacing="6">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
@@ -200,7 +200,7 @@
                                     PointerEntered="OnToolPointerEntered"
                                     PointerExited="OnToolPointerExited"
                                     Tag="Switch"
-                                    ToolTipService.ToolTip="Einfache Weiche Links">
+                                    ToolTipService.ToolTip="Simple left switch">
                                     <StackPanel
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
@@ -250,7 +250,7 @@
                                     PointerEntered="OnToolPointerEntered"
                                     PointerExited="OnToolPointerExited"
                                     Tag="Switch"
-                                    ToolTipService.ToolTip="Einfache Weiche Rechts">
+                                    ToolTipService.ToolTip="Simple right switch">
                                     <StackPanel
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
@@ -300,7 +300,7 @@
                                     PointerEntered="OnToolPointerEntered"
                                     PointerExited="OnToolPointerExited"
                                     Tag="Switch"
-                                    ToolTipService.ToolTip="Doppelkreuzungsweiche">
+                                    ToolTipService.ToolTip="Double slip switch">
                                     <StackPanel
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
@@ -365,7 +365,7 @@
                                     PointerEntered="OnToolPointerEntered"
                                     PointerExited="OnToolPointerExited"
                                     Tag="TrackStraight"
-                                    ToolTipService.ToolTip="Kreuzung">
+                                    ToolTipService.ToolTip="Crossing">
                                     <StackPanel
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
@@ -395,7 +395,7 @@
                                         <TextBlock
                                             HorizontalAlignment="Center"
                                             FontSize="10"
-                                            Text="Kreuz" />
+                                            Text="Crossing" />
                                     </StackPanel>
                                 </Border>
                                 <!--  Dreiwege-Weiche  -->
@@ -413,7 +413,7 @@
                                     PointerEntered="OnToolPointerEntered"
                                     PointerExited="OnToolPointerExited"
                                     Tag="Switch"
-                                    ToolTipService.ToolTip="Dreiwege-Weiche">
+                                    ToolTipService.ToolTip="Three-way switch">
                                     <StackPanel
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
@@ -483,7 +483,7 @@
                                     PointerEntered="OnToolPointerEntered"
                                     PointerExited="OnToolPointerExited"
                                     Tag="Signal-4043"
-                                    ToolTipService.ToolTip="Ks-Hauptsignal als Ausfahrsignal (4043)">
+                                    ToolTipService.ToolTip="Ks main signal as exit signal (4043)">
                                     <StackPanel
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
@@ -496,7 +496,7 @@
                                         <TextBlock
                                             HorizontalAlignment="Center"
                                             FontSize="10"
-                                            Text="Ks-Ausfahrsignal (4043)" />
+                                            Text="Ks Exit Signal (4043)" />
                                     </StackPanel>
                                 </Border>
 
@@ -513,7 +513,7 @@
                                     PointerEntered="OnToolPointerEntered"
                                     PointerExited="OnToolPointerExited"
                                     Tag="Signal-4042"
-                                    ToolTipService.ToolTip="Ks-Hauptsignal als Einfahrsignal (4042)">
+                                    ToolTipService.ToolTip="Ks main signal as entry signal (4042)">
                                     <StackPanel
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
@@ -526,7 +526,7 @@
                                         <TextBlock
                                             HorizontalAlignment="Center"
                                             FontSize="10"
-                                            Text="Ks-Einfahrsignal (4042)" />
+                                            Text="Ks Entry Signal (4042)" />
                                     </StackPanel>
                                 </Border>
 
@@ -543,7 +543,7 @@
                                     PointerEntered="OnToolPointerEntered"
                                     PointerExited="OnToolPointerExited"
                                     Tag="Signal-4046"
-                                    ToolTipService.ToolTip="Ks-Mehrabschnittssignal als Ausfahrsignal (4046)">
+                                    ToolTipService.ToolTip="Ks multi-section signal as exit signal (4046)">
                                     <StackPanel
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
@@ -556,7 +556,7 @@
                                         <TextBlock
                                             HorizontalAlignment="Center"
                                             FontSize="10"
-                                            Text="Ks-Mehrabschnitt (4046)" />
+                                            Text="Ks Multi-Section (4046)" />
                                     </StackPanel>
                                 </Border>
 
@@ -573,7 +573,7 @@
                                     PointerEntered="OnToolPointerEntered"
                                     PointerExited="OnToolPointerExited"
                                     Tag="Signal-4045"
-                                    ToolTipService.ToolTip="Ks-Mehrabschnittssignal als Einfahrsignal (4045)">
+                                    ToolTipService.ToolTip="Ks multi-section signal as entry signal (4045)">
                                     <StackPanel
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
@@ -586,7 +586,7 @@
                                         <TextBlock
                                             HorizontalAlignment="Center"
                                             FontSize="10"
-                                            Text="Ks-Mehrabschnitt (4045)" />
+                                            Text="Ks Multi-Section (4045)" />
                                     </StackPanel>
                                 </Border>
 
@@ -603,7 +603,7 @@
                                     PointerEntered="OnToolPointerEntered"
                                     PointerExited="OnToolPointerExited"
                                     Tag="Signal-4040"
-                                    ToolTipService.ToolTip="Ks-Vorsignal (4040)">
+                                    ToolTipService.ToolTip="Ks distant signal (4040)">
                                     <StackPanel
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
@@ -616,7 +616,7 @@
                                         <TextBlock
                                             HorizontalAlignment="Center"
                                             FontSize="10"
-                                            Text="Ks-Vorsignal (4040)" />
+                                            Text="Ks Distant Signal (4040)" />
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
@@ -631,7 +631,7 @@
                                 FontSize="11"
                                 FontWeight="SemiBold"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Text="SONSTIGE" />
+                                Text="OTHER" />
                             <Grid ColumnSpacing="6" RowSpacing="6">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
@@ -650,7 +650,7 @@
                                     PointerEntered="OnToolPointerEntered"
                                     PointerExited="OnToolPointerExited"
                                     Tag="Detector"
-                                    ToolTipService.ToolTip="Rückmelder">
+                                    ToolTipService.ToolTip="Feedback detector">
                                     <StackPanel
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
@@ -681,7 +681,7 @@
                                         <TextBlock
                                             HorizontalAlignment="Center"
                                             FontSize="10"
-                                            Text="Rückm." />
+                                            Text="Fdbk." />
                                     </StackPanel>
                                 </Border>
                             </Grid>

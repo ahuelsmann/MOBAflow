@@ -74,8 +74,9 @@ MainWindowViewModel.OnFeedbackReceived() → IsConnected = true (UI thread safe)
 - `.github/todos.instructions.md` updated
 - Inline comments: Why, not What
 - Public APIs: XML docs
-- AI-generated commit messages must use the Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/
-
+- AI-generated commit messages must be written in English
+  and must follow the “Conventional Commits” format:
+  https://www.conventionalcommits.org/en/v1.0.0/
 ---
 
 ## 🏗️ Layer Responsibilities

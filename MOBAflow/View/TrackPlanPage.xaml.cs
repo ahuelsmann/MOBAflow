@@ -143,7 +143,7 @@ public sealed partial class TrackPlanPage
         var plan = CreateTestPlan();
         var renderResult = new TrackPlanSvgRenderer().Render(plan);
         LoadCurrentPlacementsAsDocument(renderResult.Placements, plan.Connections, clearHistory: true);
-        StatusText.Text = "Test plan loaded. Click „SVG in Browser“ for direct comparison.";
+        StatusText.Text = "Test plan loaded. Click \"SVG in Browser\" for direct comparison.";
     }
 
     /// <summary>
@@ -259,10 +259,10 @@ public sealed partial class TrackPlanPage
     private void PopulateToolbox()
     {
         ToolboxStackPanel.Children.Clear();
-        AddToolboxGroup("Geraden", PikoACatalog.Straights);
-        AddToolboxGroup("Kurven", PikoACatalog.Curves);
-        AddToolboxGroup("Weichen", PikoACatalog.Switches);
-        AddToolboxGroup("Kreuzungen", PikoACatalog.Crossings);
+        AddToolboxGroup("Straights", PikoACatalog.Straights);
+        AddToolboxGroup("Curves", PikoACatalog.Curves);
+        AddToolboxGroup("Switches", PikoACatalog.Switches);
+        AddToolboxGroup("Crossings", PikoACatalog.Crossings);
     }
 
     private void AddToolboxGroup(string title, IReadOnlyList<TrackCatalogEntry> entries)
@@ -390,7 +390,7 @@ public sealed partial class TrackPlanPage
     {
         e.AcceptedOperation = DataPackageOperation.Copy | DataPackageOperation.Move;
         if (e.DataView.Contains(DragFormatTrackCatalog))
-            e.DragUIOverride.Caption = "Gleis ablegen";
+            e.DragUIOverride.Caption = "Drop track";
     }
 
     private void Canvas_Drop(object sender, DragEventArgs e)
@@ -1313,7 +1313,7 @@ public sealed partial class TrackPlanPage
         var displayName = entry?.DisplayName ?? code;
         var connCount = _plan.Connections.Count(c => c.SourceSegment == placed.Segment.No || c.TargetSegment == placed.Segment.No);
 
-        SelectionInfoText.Text = $"{code}\n{displayName}\n\nPosition: X={placed.X:F0} mm, Y={placed.Y:F0} mm\nRotation: {placed.RotationDegrees:F0}°\nVerbindungen: {connCount}";
+        SelectionInfoText.Text = $"{code}\n{displayName}\n\nPosition: X={placed.X:F0} mm, Y={placed.Y:F0} mm\nRotation: {placed.RotationDegrees:F0}°\nConnections: {connCount}";
         DisconnectButton.IsEnabled = connCount > 0;
         UpdateRotationHandle(connCount == 0 ? placed : null);
         UpdateCommandStates();
@@ -1345,7 +1345,7 @@ public sealed partial class TrackPlanPage
             BorderBrush = (Brush)Application.Current.Resources["AccentFillColorDefaultBrush"]!,
             BorderThickness = new Thickness(1.5)
         };
-        ToolTipService.SetToolTip(handle, "Ziehen zum Drehen");
+        ToolTipService.SetToolTip(handle, "Drag to rotate");
 
         // Linie vom Drehpunkt zum Handle (wie AnyRail)
         var line = new Line
