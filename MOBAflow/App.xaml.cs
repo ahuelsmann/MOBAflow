@@ -30,6 +30,7 @@ using Service;
 
 using SharedUI.Extensions;
 using SharedUI.Interface;
+using SharedUI.Service;
 using SharedUI.Shell;
 using SharedUI.ViewModel;
 
@@ -291,6 +292,7 @@ public partial class App
             sp.GetRequiredService<ILogger<TrackPlanViewModel>>()));
         services.AddSingleton<EditableTrackPlan>();
         services.AddSingleton<TrackPlanSolutionBinder>();
+        services.AddSingleton<TrackPlanFeedbackHighlighter>();
 
         services.AddSingleton<ISkinProvider, SkinProvider>();
 
@@ -361,6 +363,9 @@ public partial class App
             // Bridge EditableTrackPlan ↔ Project.TrackPlan (hybrid solution.json persistence).
             // Must be activated AFTER MainWindow/MainWindowViewModel are materialized.
             Services.GetRequiredService<TrackPlanSolutionBinder>().Activate();
+
+            // Start listening for Z21 R-Bus feedback so placed tracks with a matching InPort pulse in the UI.
+            Services.GetRequiredService<TrackPlanFeedbackHighlighter>().Activate();
 
             _window.Activate();
 

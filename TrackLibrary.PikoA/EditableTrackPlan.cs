@@ -50,6 +50,20 @@ public sealed class EditableTrackPlan
         PlanChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>
+    /// Returns the ids of all placed segments that are currently bound to the given Z21 InPort.
+    /// Used by the feedback highlighter to map an incoming R-Bus feedback (1-based InPort number)
+    /// onto the affected placements.
+    /// </summary>
+    public IEnumerable<Guid> GetSegmentIdsByInPort(int inPort)
+    {
+        foreach (var s in _segments)
+        {
+            if (s.InPort == inPort)
+                yield return s.Segment.No;
+        }
+    }
+
     /// <summary>Updates the Z21 InPort feedback address of a placed segment.</summary>
     public void UpdateSegmentInPort(Guid segmentNo, int? inPort)
     {

@@ -296,10 +296,25 @@
             "code": "R1",
             "x": 254,
             "y": 174,
-            "rotationDegrees": 0
+            "rotationDegrees": 0,
+            "inPort": 1
+          },
+          {
+            "id": "8e764195-f612-4fb0-9ffe-6c75b0787f0e",
+            "code": "R1",
+            "x": 434,
+            "y": 222.23085463760208,
+            "rotationDegrees": 30
           }
         ],
-        "connections": []
+        "connections": [
+          {
+            "sourceSegment": "8e764195-f612-4fb0-9ffe-6c75b0787f0e",
+            "sourcePort": "PortA",
+            "targetSegment": "3924429b-bb7c-483d-a8b2-e165db764044",
+            "targetPort": "PortB"
+          }
+        ]
       }
     }
   ],

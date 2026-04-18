@@ -21,6 +21,8 @@ using SharedUI.ViewModel;
 
 using SharedUI.Interface;
 
+using SharedUI.Service;
+
 using TrackLibrary.PikoA;
 
 using TrackPlan.Renderer;
@@ -45,6 +47,7 @@ public sealed partial class TrackPlanPage
     public MainWindowViewModel MainViewModel { get; }
     private readonly EditableTrackPlan _plan;
     private readonly IIoService _ioService;
+    private readonly TrackPlanFeedbackHighlighter _feedbackHighlighter;
     private readonly ILogger<TrackPlanPage>? _logger;
 
     private Canvas? _ghostLayer;
@@ -75,12 +78,14 @@ public sealed partial class TrackPlanPage
         MainWindowViewModel mainViewModel,
         EditableTrackPlan plan,
         IIoService ioService,
+        TrackPlanFeedbackHighlighter feedbackHighlighter,
         ILogger<TrackPlanPage>? logger = null)
     {
         ViewModel = viewModel;
         MainViewModel = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
         _plan = plan ?? throw new ArgumentNullException(nameof(plan));
         _ioService = ioService ?? throw new ArgumentNullException(nameof(ioService));
+        _feedbackHighlighter = feedbackHighlighter ?? throw new ArgumentNullException(nameof(feedbackHighlighter));
         _logger = logger;
         InitializeComponent();
         InitializeEditorFeatures();
@@ -169,6 +174,8 @@ public sealed partial class TrackPlanPage
 
         // Solution <-> EditableTrackPlan sync is handled centrally by TrackPlanSolutionBinder (singleton).
         // The page only reflects the current plan state that the binder maintains.
+        _feedbackHighlighter.HighlightsChanged += OnFeedbackHighlightsChanged;
+
         RecalculateDrawOffset();
         RefreshCanvas();
     }
@@ -181,8 +188,17 @@ public sealed partial class TrackPlanPage
         ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
         _plan.PlanChanged -= OnPlanChanged;
         KeyDown -= Page_KeyDown;
+        _feedbackHighlighter.HighlightsChanged -= OnFeedbackHighlightsChanged;
         Loaded -= OnLoaded;
         Unloaded -= OnUnloaded;
+    }
+
+    private void OnFeedbackHighlightsChanged(object? sender, EventArgs e)
+    {
+        _ = sender;
+        _ = e;
+        // Called from a ThreadPool timer; marshal to UI thread before touching the canvas.
+        DispatcherQueue.TryEnqueue(() => GraphCanvasControl.Invalidate());
     }
 
     private void Page_KeyDown(object sender, KeyRoutedEventArgs e)
@@ -1216,6 +1232,19 @@ public sealed partial class TrackPlanPage
             var pathCommands = SegmentLocalPathBuilder.GetPath(placed.Segment);
             var worldGeometry = PathToCanvasGeometryConverter.ToCanvasGeometryInWorldCoords(
                 resourceCreator, pathCommands, placed.X + offsetX, placed.Y + offsetY, placed.RotationDegrees, ScaleMmToPx);
+
+            // Z21 feedback pulse: draw a yellow/orange glow BEFORE the track stroke so the track
+            // itself stays on top and remains readable.
+            var pulseIntensity = _feedbackHighlighter.GetPulseIntensity(placed.Segment.No);
+            if (pulseIntensity > 0)
+            {
+                var outerAlpha = (byte)Math.Clamp(160 * pulseIntensity, 0, 255);
+                var innerAlpha = (byte)Math.Clamp(255 * pulseIntensity, 0, 255);
+                var outerGlow = Color.FromArgb(outerAlpha, 255, 180, 0);
+                var innerGlow = Color.FromArgb(innerAlpha, 255, 215, 0);
+                ds.DrawGeometry(worldGeometry, outerGlow, 14f, strokeStyle);
+                ds.DrawGeometry(worldGeometry, innerGlow, 8f, strokeStyle);
+            }
 
             var strokeWidth = (float)(isSelected ? 10 : 4);
             var color = isSelected ? selectedBrush : strokeBrush;
