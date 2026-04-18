@@ -50,6 +50,21 @@ public sealed class EditableTrackPlan
         PlanChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>Updates the Z21 InPort feedback address of a placed segment.</summary>
+    public void UpdateSegmentInPort(Guid segmentNo, int? inPort)
+    {
+        var idx = _segments.FindIndex(s => s.Segment.No == segmentNo);
+        if (idx < 0)
+            return;
+
+        var old = _segments[idx];
+        if (old.InPort == inPort)
+            return;
+
+        _segments[idx] = old.WithInPort(inPort);
+        PlanChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     /// <summary>Moves all segments in the connected group by the specified delta.</summary>
     public void MoveGroup(IReadOnlySet<Guid> segmentNos, double deltaX, double deltaY)
     {

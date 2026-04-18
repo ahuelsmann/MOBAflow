@@ -290,6 +290,7 @@ public partial class App
             sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<ILogger<TrackPlanViewModel>>()));
         services.AddSingleton<EditableTrackPlan>();
+        services.AddSingleton<TrackPlanSolutionBinder>();
 
         services.AddSingleton<ISkinProvider, SkinProvider>();
 
@@ -356,6 +357,10 @@ public partial class App
             Current.Resources["LayoutColumnWidths"] = layoutColumnWidths;
 
             _window = Services.GetRequiredService<MainWindow>();
+
+            // Bridge EditableTrackPlan ↔ Project.TrackPlan (hybrid solution.json persistence).
+            // Must be activated AFTER MainWindow/MainWindowViewModel are materialized.
+            Services.GetRequiredService<TrackPlanSolutionBinder>().Activate();
 
             _window.Activate();
 

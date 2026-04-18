@@ -42,6 +42,7 @@ public sealed partial class TrackPlanPage
     private const double ContentMarginMm = 50.0;
 
     public TrackPlanViewModel ViewModel { get; }
+    public MainWindowViewModel MainViewModel { get; }
     private readonly EditableTrackPlan _plan;
     private readonly IIoService _ioService;
     private readonly ILogger<TrackPlanPage>? _logger;
@@ -62,6 +63,7 @@ public sealed partial class TrackPlanPage
     private readonly List<Ellipse> _highlightedPorts = [];
     private bool _snapEnabled = true;
     private Guid? _selectedSegmentId;
+    private bool _isSyncingSelectedTrackInPort;
     private double _rotationDragStartAngleRad;
     private double _rotationDragStartSegmentDegrees;
 
@@ -70,11 +72,13 @@ public sealed partial class TrackPlanPage
 
     public TrackPlanPage(
         TrackPlanViewModel viewModel,
+        MainWindowViewModel mainViewModel,
         EditableTrackPlan plan,
         IIoService ioService,
         ILogger<TrackPlanPage>? logger = null)
     {
         ViewModel = viewModel;
+        MainViewModel = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
         _plan = plan ?? throw new ArgumentNullException(nameof(plan));
         _ioService = ioService ?? throw new ArgumentNullException(nameof(ioService));
         _logger = logger;
@@ -162,6 +166,9 @@ public sealed partial class TrackPlanPage
         SetupZoom();
         _plan.PlanChanged += OnPlanChanged;
         KeyDown += Page_KeyDown;
+
+        // Solution <-> EditableTrackPlan sync is handled centrally by TrackPlanSolutionBinder (singleton).
+        // The page only reflects the current plan state that the binder maintains.
         RecalculateDrawOffset();
         RefreshCanvas();
     }
@@ -182,6 +189,50 @@ public sealed partial class TrackPlanPage
     {
         _ = sender;
         HandlePageKeyDownAsync(e).Observe(ex => _logger?.LogWarning(ex, "Keyboard handler failed"));
+    }
+
+    private void OnDeleteAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        _ = sender;
+        // Don't eat Delete/Backspace while the user is editing a text field.
+        if (FocusManager.GetFocusedElement(XamlRoot) is TextBox or NumberBox)
+            return;
+
+        if (_selectedSegmentId == null)
+            return;
+
+        DeleteSelectedSegment();
+        args.Handled = true;
+    }
+
+    private void OnUndoAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        _ = sender;
+        Undo();
+        args.Handled = true;
+    }
+
+    private void OnRedoAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        _ = sender;
+        Redo();
+        args.Handled = true;
+    }
+
+    private void OnSelectedTrackInPortChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+        _ = sender;
+        if (_selectedSegmentId == null || _isSyncingSelectedTrackInPort)
+            return;
+
+        int? newInPort = double.IsNaN(args.NewValue) ? null : (int)args.NewValue;
+        var placed = _plan.Segments.FirstOrDefault(s => s.Segment.No == _selectedSegmentId.Value);
+        if (placed == null || placed.InPort == newInPort)
+            return;
+
+        var before = CaptureDocumentState();
+        _plan.UpdateSegmentInPort(_selectedSegmentId.Value, newInPort);
+        CommitHistorySnapshot(before);
     }
 
     private async Task HandlePageKeyDownAsync(KeyRoutedEventArgs e)
@@ -426,7 +477,8 @@ public sealed partial class TrackPlanPage
 
     private void Canvas_PointerPressed(object sender, PointerRoutedEventArgs e)
     {
-        Focus(FocusState.Pointer);
+        // OverlayCanvas has IsTabStop=true, so Focus() sticks here and KeyboardAccelerators on the page fire.
+        OverlayCanvas.Focus(FocusState.Pointer);
 
         var ptr = e.GetCurrentPoint(OverlayCanvas);
         if (!ptr.Properties.IsLeftButtonPressed)
@@ -1293,6 +1345,7 @@ public sealed partial class TrackPlanPage
         {
             SelectionInfoText.Text = "No selection";
             DisconnectButton.IsEnabled = false;
+            HideSelectedTrackPropertiesPanel();
             UpdateRotationHandle(null);
             UpdateCommandStates();
             return;
@@ -1303,6 +1356,7 @@ public sealed partial class TrackPlanPage
         {
             SelectionInfoText.Text = "No selection";
             DisconnectButton.IsEnabled = false;
+            HideSelectedTrackPropertiesPanel();
             UpdateRotationHandle(null);
             UpdateCommandStates();
             return;
@@ -1315,8 +1369,37 @@ public sealed partial class TrackPlanPage
 
         SelectionInfoText.Text = $"{code}\n{displayName}\n\nPosition: X={placed.X:F0} mm, Y={placed.Y:F0} mm\nRotation: {placed.RotationDegrees:F0}°\nConnections: {connCount}";
         DisconnectButton.IsEnabled = connCount > 0;
+        ShowSelectedTrackPropertiesPanel(placed);
         UpdateRotationHandle(connCount == 0 ? placed : null);
         UpdateCommandStates();
+    }
+
+    private void ShowSelectedTrackPropertiesPanel(PlacedSegment placed)
+    {
+        _isSyncingSelectedTrackInPort = true;
+        try
+        {
+            SelectedTrackInPortBox.Value = placed.InPort ?? double.NaN;
+        }
+        finally
+        {
+            _isSyncingSelectedTrackInPort = false;
+        }
+        SelectedTrackPropertiesPanel.Visibility = Visibility.Visible;
+    }
+
+    private void HideSelectedTrackPropertiesPanel()
+    {
+        _isSyncingSelectedTrackInPort = true;
+        try
+        {
+            SelectedTrackInPortBox.Value = double.NaN;
+        }
+        finally
+        {
+            _isSyncingSelectedTrackInPort = false;
+        }
+        SelectedTrackPropertiesPanel.Visibility = Visibility.Collapsed;
     }
 
     private const double RotationHandleOffsetMm = 35.0; // Abstand unterhalb des Drehpunkts (wie AnyRail)

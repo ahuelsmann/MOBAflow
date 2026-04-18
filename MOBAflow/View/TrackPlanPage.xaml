@@ -5,6 +5,18 @@
     xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml"
     xmlns:controls="using:Moba.WinUI.Controls"
     xmlns:controls1="using:CommunityToolkit.WinUI.Controls">
+    <Page.KeyboardAccelerators>
+        <KeyboardAccelerator Key="Delete" Invoked="OnDeleteAccelerator" />
+        <KeyboardAccelerator Key="Back" Invoked="OnDeleteAccelerator" />
+        <KeyboardAccelerator
+            Key="Z"
+            Invoked="OnUndoAccelerator"
+            Modifiers="Control" />
+        <KeyboardAccelerator
+            Key="Y"
+            Invoked="OnRedoAccelerator"
+            Modifiers="Control" />
+    </Page.KeyboardAccelerators>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -76,22 +88,6 @@
                 IsChecked="False"
                 Label="Grid" />
             <AppBarToggleButton
-                IsChecked="False"
-                IsEnabled="False"
-                Label="Rulers">
-                <AppBarToggleButton.Icon>
-                    <SymbolIcon Symbol="Trim" />
-                </AppBarToggleButton.Icon>
-            </AppBarToggleButton>
-            <AppBarToggleButton
-                IsChecked="False"
-                IsEnabled="False"
-                Label="Movable Ruler">
-                <AppBarToggleButton.Icon>
-                    <SymbolIcon Symbol="Rotate" />
-                </AppBarToggleButton.Icon>
-            </AppBarToggleButton>
-            <AppBarToggleButton
                 x:Name="PortHoverToggle"
                 IsChecked="True"
                 Label="Port Hover">
@@ -117,22 +113,23 @@
                     <SymbolIcon Symbol="Forward" />
                 </AppBarButton.Icon>
             </AppBarButton>
-            <AppBarButton IsEnabled="False" Label="Reset Ruler">
-                <AppBarButton.Icon>
-                    <SymbolIcon Symbol="Home" />
-                </AppBarButton.Icon>
-            </AppBarButton>
             <AppBarSeparator />
-            <AppBarButton Label="Opacity:" />
-            <AppBarButton>
-                <Slider
-                    x:Name="TrackOpacitySlider"
-                    Width="120"
+            <AppBarElementContainer>
+                <StackPanel
                     Margin="8,0"
-                    Maximum="1.0"
-                    Minimum="0.1"
-                    Value="0.8" />
-            </AppBarButton>
+                    VerticalAlignment="Center"
+                    Orientation="Horizontal"
+                    Spacing="8">
+                    <TextBlock VerticalAlignment="Center" Text="Opacity" />
+                    <Slider
+                        x:Name="TrackOpacitySlider"
+                        Width="120"
+                        VerticalAlignment="Center"
+                        Maximum="1.0"
+                        Minimum="0.1"
+                        Value="0.8" />
+                </StackPanel>
+            </AppBarElementContainer>
         </CommandBar>
         <!--  Main Content Grid  -->
         <Grid x:Name="MainGrid" Grid.Row="1">
@@ -196,7 +193,8 @@
                                 Width="3000"
                                 Height="2000"
                                 AllowDrop="True"
-                                Background="Transparent" />
+                                Background="Transparent"
+                                IsTabStop="True" />
                         </Grid>
                     </ScrollViewer>
                     <!--  Zoom Control Overlay (Bottom-Right)  -->
@@ -266,6 +264,24 @@
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     Text="No selection"
                                     TextWrapping="Wrap" />
+                            </StackPanel>
+                            <!--  Selected Track Properties (InPort etc.)  -->
+                            <StackPanel
+                                x:Name="SelectedTrackPropertiesPanel"
+                                Spacing="8"
+                                Visibility="Collapsed">
+                                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Track Properties" />
+                                <NumberBox
+                                    x:Name="SelectedTrackInPortBox"
+                                    Header="InPort (Z21 feedback address)"
+                                    LargeChange="8"
+                                    Maximum="4096"
+                                    Minimum="0"
+                                    PlaceholderText="None"
+                                    SmallChange="1"
+                                    SpinButtonPlacementMode="Inline"
+                                    ToolTipService.ToolTip="Z21 R-BUS feedback address assigned to this track (leave empty for none)"
+                                    ValueChanged="OnSelectedTrackInPortChanged" />
                             </StackPanel>
                             <!--  Properties Panel  -->
                             <StackPanel Spacing="12" Visibility="Collapsed">

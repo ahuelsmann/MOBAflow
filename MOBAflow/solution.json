@@ -287,6 +287,19 @@
         ],
         "connections": [],
         "routes": []
+      },
+      "trackPlan": {
+        "version": 1,
+        "segments": [
+          {
+            "id": "3924429b-bb7c-483d-a8b2-e165db764044",
+            "code": "R1",
+            "x": 254,
+            "y": 174,
+            "rotationDegrees": 0
+          }
+        ],
+        "connections": []
       }
     }
   ],

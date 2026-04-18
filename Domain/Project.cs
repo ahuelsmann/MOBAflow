@@ -57,8 +57,12 @@ public class Project
     public List<Journey> Journeys { get; set; }
 
     /// <summary>
-    /// Signal box plan for this project (MOBAesb - Electronic Signal Box).
-    /// Topological representation with signals, switches, and routes.
+    /// Signal box plan - Topological representation with signals, switches, and routes.
     /// </summary>
     public SignalBoxPlan? SignalBoxPlan { get; set; }
+
+    /// <summary>
+    /// Physical track plan for this project (Piko A-Gleis segments + port connections).
+    /// </summary>
+    public TrackPlanDocument? TrackPlan { get; set; }
 }

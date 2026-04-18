@@ -21,9 +21,14 @@ dotnet build <project>.csproj
 
 # Typical cross-platform host build
 dotnet build MOBApi/MOBApi.csproj
+dotnet run --project MOBApi/MOBApi.csproj   # REST API host (default port 5001)
 
 # Run tests
 dotnet test Test/Test.csproj
+
+# Collect coverage locally
+dotnet test Test/Test.csproj --settings Test/coverlet.runsettings \
+  --results-directory TestResults
 ```
 
 ### Known issues on Linux Cloud VM
@@ -41,4 +46,6 @@ The project requires .NET 10 SDK (pinned in `global.json` to 10.0.103 with `late
 
 - Shared ViewModels use **`IMobaRuntime`** (`MobaRuntimeService`), not a separate `IMobaClient`.
 - Master JSON (`data.json`) is represented by **`MasterDataStore`** in Backend DI.
+- Workflow execution goes through **`IWorkflowService.ExecuteAsync`** with optional **`WorkflowExecutionOptions`**
+  (for example `StopOnFirstActionFailure` during sequential runs).
 - Up-to-date diagrams and DI examples: `docs/ARCHITECTURE.md` and `README.md` (runtime boundary).

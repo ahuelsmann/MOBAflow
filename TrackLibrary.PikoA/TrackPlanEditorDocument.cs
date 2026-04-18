@@ -2,6 +2,8 @@ namespace Moba.TrackLibrary.PikoA;
 
 using Base;
 
+using Moba.Domain;
+
 public sealed class TrackPlanEditorDocument
 {
     public int Version { get; init; } = 1;
@@ -52,6 +54,66 @@ public sealed class TrackPlanEditorDocument
         return (placements, Connections.ToList());
     }
 
+    /// <summary>
+    /// Maps this editor document to the Domain <see cref="TrackPlanDocument"/>
+    /// used by <c>Project.TrackPlan</c> when persisting to <c>solution.json</c>.
+    /// </summary>
+    public TrackPlanDocument ToDomainDocument()
+    {
+        return new TrackPlanDocument
+        {
+            Version = Version,
+            OffsetX = OffsetX,
+            OffsetY = OffsetY,
+            ZoomFactor = ZoomFactor,
+            Segments = Segments.Select(s => new TrackPlanSegment
+            {
+                Id = s.Id,
+                Code = s.Code,
+                X = s.X,
+                Y = s.Y,
+                RotationDegrees = s.RotationDegrees,
+                InPort = s.InPort
+            }).ToList(),
+            Connections = Connections.Select(c => new TrackPlanConnection
+            {
+                SourceSegment = c.SourceSegment,
+                SourcePort = c.SourcePort,
+                TargetSegment = c.TargetSegment,
+                TargetPort = c.TargetPort
+            }).ToList()
+        };
+    }
+
+    /// <summary>
+    /// Creates an editor document from a Domain <see cref="TrackPlanDocument"/>
+    /// as loaded from <c>solution.json</c>.
+    /// </summary>
+    public static TrackPlanEditorDocument FromDomainDocument(TrackPlanDocument document)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+
+        return new TrackPlanEditorDocument
+        {
+            Version = document.Version,
+            OffsetX = document.OffsetX,
+            OffsetY = document.OffsetY,
+            ZoomFactor = document.ZoomFactor,
+            Segments = document.Segments.Select(s => new TrackPlanEditorSegment
+            {
+                Id = s.Id,
+                Code = s.Code,
+                X = s.X,
+                Y = s.Y,
+                RotationDegrees = s.RotationDegrees,
+                InPort = s.InPort
+            }).ToList(),
+            Connections = document.Connections
+                .Select(c => new PortConnection(c.SourceSegment, c.SourcePort, c.TargetSegment, c.TargetPort))
+                .ToList()
+        };
+    }
+
     private static TrackPlanEditorSegment CreateSegmentSnapshot(PlacedSegment placed)
     {
         var entry = PikoACatalog.All.FirstOrDefault(c => c.SegmentType == placed.Segment.GetType());
@@ -64,7 +126,8 @@ public sealed class TrackPlanEditorDocument
             Code = entry.Code,
             X = placed.X,
             Y = placed.Y,
-            RotationDegrees = placed.RotationDegrees
+            RotationDegrees = placed.RotationDegrees,
+            InPort = placed.InPort
         };
     }
 
@@ -76,7 +139,7 @@ public sealed class TrackPlanEditorDocument
 
         var segment = (Segment)Activator.CreateInstance(entry.SegmentType)!;
         segment.No = segmentSnapshot.Id;
-        return new PlacedSegment(segment, segmentSnapshot.X, segmentSnapshot.Y, segmentSnapshot.RotationDegrees);
+        return new PlacedSegment(segment, segmentSnapshot.X, segmentSnapshot.Y, segmentSnapshot.RotationDegrees, segmentSnapshot.InPort);
     }
 }
 
@@ -91,4 +154,7 @@ public sealed class TrackPlanEditorSegment
     public double Y { get; init; }
 
     public double RotationDegrees { get; init; }
+
+    /// <summary>Optional Z21 R-BUS feedback address assigned to this placed track.</summary>
+    public int? InPort { get; init; }
 }
