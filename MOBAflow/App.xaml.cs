@@ -36,6 +36,8 @@ using SharedUI.ViewModel;
 
 using Sound;
 
+using Moba.Vision;
+
 using TrackLibrary.PikoA;
 
 using TrackPlan.Renderer;
@@ -183,6 +185,9 @@ public partial class App
         // Register SpeechOptions (Sound service configuration)
         services.Configure<SpeechOptions>(configuration.GetSection("Speech"));
 
+        // Register VisionOptions (Azure AI Vision / Image Analysis / OCR)
+        services.Configure<VisionOptions>(configuration.GetSection("Vision"));
+
         // Logging (required by HealthCheckService and SpeechHealthCheck)
         services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(Log.Logger, dispose: true));
 
@@ -268,7 +273,8 @@ public partial class App
             sp.GetRequiredService<AnnouncementService>(),
             sp.GetRequiredService<PhotoHubClient>(),
             sp.GetService<IFeatureTogglePageProvider>(),
-            loggerFactory: sp.GetRequiredService<ILoggerFactory>()
+            loggerFactory: sp.GetRequiredService<ILoggerFactory>(),
+            visionService: sp.GetService<IVisionService>()
         ));
 
         services.AddSingleton<IRestApiStatusSink>(sp => sp.GetRequiredService<MainWindowViewModel>());
@@ -310,6 +316,11 @@ public partial class App
 
         services.AddSingleton<PostStartupInitializationService>();
         services.AddSingleton<SpeechHealthCheck>();
+
+        // Azure AI Vision (Image Analysis / OCR)
+        services.AddSingleton<IVisionService, AzureVisionService>();
+        services.AddSingleton<VisionHealthCheck>();
+
         return services.BuildServiceProvider();
     }
 

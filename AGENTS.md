@@ -1,5 +1,67 @@
 # AGENTS.md
 
+**For AI coding agents working on MOBAflow** — event-driven model railroad automation on .NET 10.
+
+> **Load `.github/copilot-instructions.md` FIRST** — it contains essential patterns, EventBus threading rules, absolute coding rules, and the 6-Step Workflow that all agents must follow.
+>
+> This file focuses on **platform-specific setup, build procedures, and architecture notes for agents running on the Cursor Cloud Linux VM.**
+
+---
+
+## 🎯 Critical for All Agents (Read First!)
+
+1. **EventBus Threading Boundary** (MOST CRITICAL)
+   - Z21 publishes on background thread → `UiThreadEventBusDecorator` marshals to UI thread
+   - ViewModels subscribe directly (no manual dispatcher calls)
+   - Key files: `Backend/Z21.cs`, `SharedUI/Service/UiThreadEventBusDecorator.cs`, `SharedUI/ViewModel/MainWindowViewModel.cs`
+   - See: `.github/copilot-instructions.md` § EventBus Threading Boundary
+
+2. **Absolute Rules (11 rules)**
+   - No `.Result` / `.Wait()` → Always use `await`
+   - No hardcoded colors → `ThemeResource` only
+   - No `InvokeOnUi` in EventBus handlers → Decorator already marshals
+   - Backend/Common platform-independent → Zero WinUI/MAUI references
+   - See: `.github/copilot-instructions.md` § Absolute Rules
+
+3. **6-Step Workflow**
+   - **1. ANALYSE** → **2. RESEARCH** → **3. PLAN** (use `plan()` tool) → **4. IMPLEMENT** → **5. VALIDATE** → **6. DOCUMENT**
+   - Tests for every new/changed feature (run `dotnet test` before commit)
+   - See: `.github/copilot-instructions.md` § 6-Step Workflow
+
+---
+
+## 📚 Reference All Instruction Files
+
+Located in `.github/instructions/`:
+
+| File | Purpose |
+|------|---------|
+| `copilot-instructions.md` | **LOAD THIS FIRST** — EventBus, rules, workflows, MVVM patterns |
+| `di-pattern-consistency.instructions.md` | DI registration, singletons, constructor injection |
+| `architecture.instructions.md` | Layer boundaries, data flow, threading model |
+| `backend.instructions.md` | Platform independence, Z21 protocol, action executors |
+| `mvvm-best-practices.instructions.md` | `[ObservableProperty]`, `[RelayCommand]`, observable state |
+| `test.instructions.md` | AAA (Arrange-Act-Assert), NUnit, Moq, FakeUdpClientWrapper |
+| `winui.instructions.md` | DispatcherQueue, DataTemplates, x:Bind |
+| `fluent-design.instructions.md` | `ThemeResource`, 8px grid, icons, visual hierarchy |
+| `xaml-page-registration.instructions.md` | XAML compiler, `<Page Remove>` issues |
+| `naming-conventions.instructions.md` | PascalCase, `_camelCase`, UPPER_SNAKE_CASE (Z21 constants) |
+| `self-explanatory-code-commenting.instructions.md` | Why, not What — document intent |
+| `no-special-chars.instructions.md` | ASCII-only identifiers |
+| `z21-backend.instructions.md` | Z21 UDP protocol, handler patterns |
+| `maui.instructions.md` | MAUI-specific patterns for MOBAsmart |
+| `vs-setup.instructions.md` | ReSharper extensions, project setup |
+
+---
+
+## 🤖 Available Agents
+
+- **`enterprise-pr-reviewer`** — Structured PR reviews, architecture validation, security checks
+  - Location: `.github/agents/enterprise-pr-reviewer.agent.md`
+  - Use when: Reviewing pull requests, checking enterprise quality, producing PR feedback
+
+---
+
 ## Cursor Cloud specific instructions
 
 ### Platform scope
@@ -42,10 +104,186 @@ dotnet test Test/Test.csproj --settings Test/coverlet.runsettings \
 
 The project requires .NET 10 SDK (pinned in `global.json` to 10.0.103 with `latestFeature` rollForward). Installed at `/usr/share/dotnet`.
 
+---
+
+## 🔀 Key Patterns & Examples for Agents
+
+### MVVM ViewModel Pattern (CommunityToolkit)
+
+```csharp
+// ✅ CORRECT
+public sealed partial class TrainControlViewModel : ObservableObject
+{
+    private readonly IMobaRuntime _runtime;
+    private readonly IEventBus _eventBus;
+    private readonly ILogger<TrainControlViewModel> _logger;
+
+    [ObservableProperty]
+    private string statusText = "Ready";
+
+    [RelayCommand]
+    private async Task ExecuteWorkflow()
+    {
+        try
+        {
+            await _runtime.ExecuteWorkflow(workflowId);
+            StatusText = "Workflow completed";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Workflow failed");
+            StatusText = "Error";
+        }
+    }
+
+    public TrainControlViewModel(IMobaRuntime runtime, IEventBus eventBus, ILogger<TrainControlViewModel> logger)
+    {
+        _runtime = runtime;
+        _eventBus = eventBus;
+        _logger = logger;
+        _eventBus.Subscribe<WorkflowCompletedEvent>(OnWorkflowCompleted);
+    }
+
+    private void OnWorkflowCompleted(WorkflowCompletedEvent e)
+    {
+        StatusText = $"Completed: {e.WorkflowId}";  // UI thread safe (decorator guaranteed)
+    }
+}
+```
+
+### EventBus Handler Pattern (No InvokeOnUi!)
+
+```csharp
+// ✅ CORRECT - Decorator already marshals to UI thread
+private void OnFeedbackReceived(FeedbackReceivedEvent e)
+{
+    IsConnected = true;  // Safe: runs on UI thread
+}
+
+// ❌ WRONG - DO NOT do this
+private void OnFeedbackReceived(FeedbackReceivedEvent e)
+{
+    _dispatcher.InvokeOnUi(() => IsConnected = true);  // Redundant, breaks pattern
+}
+```
+
+### Backend Service (Platform-Independent)
+
+```csharp
+// ✅ CORRECT - Backend layer
+public class WorkflowService : IWorkflowService
+{
+    private readonly IEventBus _eventBus;
+    private readonly ILogger<WorkflowService> _logger;
+
+    public async Task ExecuteAsync(Workflow workflow, WorkflowExecutionOptions? options = null)
+    {
+        ArgumentNullException.ThrowIfNull(workflow);
+
+        _logger.LogInformation("Executing workflow {WorkflowId}", workflow.Id);
+
+        foreach (var action in workflow.Actions)
+        {
+            await action.ExecuteAsync();  // No `.Result` or `.Wait()`!
+
+            if (options?.StopOnFirstActionFailure ?? false)
+            {
+                _eventBus.Publish(new WorkflowStoppedEvent(workflow.Id));
+                break;
+            }
+        }
+    }
+}
+
+// ❌ WRONG - Sync blocking
+public void Execute(Workflow workflow)
+{
+    var task = ExecuteAsync(workflow);
+    task.Wait();  // WRONG! Use await instead
+}
+```
+
+### DI Registration (WinUI/MOBAsmart)
+
+```csharp
+// In WinUI/App.xaml.cs or MOBAsmart/MauiProgram.cs
+var services = new ServiceCollection();
+
+// Domain & Backend
+services.AddSingleton<IZ21, Z21>();
+services.AddSingleton<IMobaRuntime, MobaRuntimeService>();
+services.AddSingleton<IWorkflowService, WorkflowService>();
+
+// EventBus with UI thread decorator
+services.AddSingleton<IEventBus, EventBus>();
+services.AddEventBusWithUiDispatch();  // Wraps EventBus, ensures handlers run on UI thread
+
+// ViewModels
+services.AddSingleton<MainWindowViewModel>();
+services.AddTransient<TrainControlViewModel>();
+
+// Logging
+services.AddLogging(builder =>
+{
+    builder.AddSerilog(/* configure Serilog */);
+});
+```
+
+### Testing Pattern (NUnit + Moq)
+
+```csharp
+[TestFixture]
+internal sealed class WorkflowServiceTests
+{
+    [Test]
+    public async Task ExecuteAsync_Should_RunAllActions_When_OptionsNull()
+    {
+        // Arrange
+        var eventBusMock = new Mock<IEventBus>();
+        var loggerMock = new Mock<ILogger<WorkflowService>>();
+        var service = new WorkflowService(eventBusMock.Object, loggerMock.Object);
+
+        var workflow = new Workflow { Id = 1, Actions = new List<WorkflowAction> { /* ... */ } };
+
+        // Act
+        await service.ExecuteAsync(workflow, null);
+
+        // Assert
+        eventBusMock.Verify(e => e.Publish(It.IsAny<WorkflowCompletedEvent>()), Times.Once);
+    }
+}
+```
+
 ### Architecture notes (for agents)
 
-- Shared ViewModels use **`IMobaRuntime`** (`MobaRuntimeService`), not a separate `IMobaClient`.
-- Master JSON (`data.json`) is represented by **`MasterDataStore`** in Backend DI.
-- Workflow execution goes through **`IWorkflowService.ExecuteAsync`** with optional **`WorkflowExecutionOptions`**
-  (for example `StopOnFirstActionFailure` during sequential runs).
-- Up-to-date diagrams and DI examples: `docs/ARCHITECTURE.md` and `README.md` (runtime boundary).
+**Runtime & ViewModels:**
+- Shared ViewModels depend on **`IMobaRuntime`** (`MobaRuntimeService`), not `IMobaClient`
+- `MobaRuntimeService` is a **sealed partial** type split across:
+  - `MobaRuntimeService.cs` (core, constructor, snapshot)
+  - `MobaRuntimeService.RuntimeApi.cs` (public IMobaRuntime API)
+  - `MobaRuntimeService.Z21Handlers.cs` (Z21 event callbacks, journey projection)
+  - `MobaRuntimeService.AutoConnect.cs` (auto-connect timer, endpoint resolution)
+  - `MobaRuntimeService.StatusFormatting.cs` (status text helpers, signal polarity)
+
+**Master Data & Configuration:**
+- Master JSON (`data.json`) → **`MasterDataStore`** in Backend DI (registered in `AddMobaBackendServices`)
+- Project/Solution state → **`IMobaRuntime.CurrentSnapshot`** (immutable at query time)
+- Config defaults → `Common.Configuration` (must not break existing defaults; see tests: `Test/Common/AppSettingsDefaultsTests.cs`)
+
+**Workflows & Actions:**
+- Workflow execution: **`IWorkflowService.ExecuteAsync`** with optional **`WorkflowExecutionOptions`**
+  - Example: `StopOnFirstActionFailure` for sequential runs
+- Action executors live in `Backend/Manager/` (pluggable, FakeUdpClientWrapper for testing)
+
+**DI Bindings (see `.github/instructions/di-pattern-consistency.instructions.md`):**
+- Registration pattern: `services.AddSingleton<IZ21, Z21>()`, `services.AddSingleton<IMobaRuntime, MobaRuntimeService>()`
+- WinUI App.xaml.cs (~line 215), MOBAsmart MauiProgram.cs (~line 98)
+- EventBus wrapping: `AddEventBusWithUiDispatch()` decorator ensures UI thread safety
+
+**Test Coverage (Regression Protection):**
+- **Path handling:** Use `Common.Path.PhotoPathHelper.ToFullPath(baseDir, relativePath)` → Tests: `Test/Common/PhotoPathHelperTests.cs`
+- **Discovery protocol:** Use `Common.Discovery.DiscoveryResponseParser.TryParse()` for "MOBAFLOW_REST_API|ip|port" → Tests: `Test/Common/DiscoveryResponseParserTests.cs`
+- **Config defaults:** Changing `Common.Configuration` must preserve defaults → Tests: `Test/Common/AppSettingsDefaultsTests.cs`
+- **New features:** Always add unit tests for shared logic (Domain, Backend, Common); platform UI (WinUI/MAUI) at least critical paths covered
+
+**Up-to-date diagrams and DI examples:** See `docs/ARCHITECTURE.md` and `README.md` (runtime boundary)

@@ -24,6 +24,7 @@
   </Project>
   <Project Path="SharedUI/SharedUI.csproj" />
   <Project Path="Sound/Sound.csproj" />
+  <Project Path="Vision/Vision.csproj" />
   <Project Path="Test/Test.csproj" />
   <Project Path="TrackLibrary.Base/TrackLibrary.Base.csproj" />
   <Project Path="TrackLibrary.PikoA/TrackLibrary.PikoA.csproj" />

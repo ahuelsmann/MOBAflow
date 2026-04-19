@@ -88,6 +88,7 @@
             <!--  Global Converters  -->
             <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
             <converter:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
+            <converter:StringToInfoBarSeverityConverter x:Key="StringToInfoBarSeverityConverter" />
             <converter:NullableConverter x:Key="NullableConverter" />
             <converter:BoolToOpacityConverter x:Key="BoolToOpacityConverter" />
             <converter:HexColorToBrushConverter x:Key="HexColorToBrushConverter" />

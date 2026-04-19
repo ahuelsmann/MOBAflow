@@ -52,6 +52,41 @@ internal sealed partial class SettingsPage
         HandleBrowsePhotoFolderAsync().Observe(ex => _logger?.LogWarning(ex, "Browse photo folder failed"));
     }
 
+    private void BrowseVisionTestImage_Click(object sender, RoutedEventArgs e)
+    {
+        _ = sender;
+        _ = e;
+        HandleBrowseVisionTestImageAsync().Observe(ex => _logger?.LogWarning(ex, "Browse vision test image failed"));
+    }
+
+    private async Task HandleBrowseVisionTestImageAsync()
+    {
+        try
+        {
+            var window = App.MainWindow;
+            if (window == null) return;
+
+            var picker = new FileOpenPicker(window.AppWindow.Id)
+            {
+                SuggestedStartLocation = PickerLocationId.PicturesLibrary
+            };
+            picker.FileTypeFilter.Add(".png");
+            picker.FileTypeFilter.Add(".jpg");
+            picker.FileTypeFilter.Add(".jpeg");
+            picker.FileTypeFilter.Add(".bmp");
+            picker.FileTypeFilter.Add(".tiff");
+
+            var file = await picker.PickSingleFileAsync();
+            if (file == null) return;
+
+            ViewModel.VisionTestImagePath = file.Path;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning(ex, "Browse vision test image failed");
+        }
+    }
+
     private async Task HandleBrowsePhotoFolderAsync()
     {
         try

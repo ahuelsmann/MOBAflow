@@ -23,6 +23,8 @@ using SharedUI.Interface;
 
 using SharedUI.Service;
 
+using Moba.Vision;
+
 using TrackLibrary.PikoA;
 
 using TrackPlan.Renderer;
@@ -48,6 +50,7 @@ public sealed partial class TrackPlanPage
     private readonly EditableTrackPlan _plan;
     private readonly IIoService _ioService;
     private readonly TrackPlanFeedbackHighlighter _feedbackHighlighter;
+    private readonly IVisionService? _visionService;
     private readonly ILogger<TrackPlanPage>? _logger;
 
     private Canvas? _ghostLayer;
@@ -79,13 +82,15 @@ public sealed partial class TrackPlanPage
         EditableTrackPlan plan,
         IIoService ioService,
         TrackPlanFeedbackHighlighter feedbackHighlighter,
-        ILogger<TrackPlanPage>? logger = null)
+        ILogger<TrackPlanPage>? logger = null,
+        IVisionService? visionService = null)
     {
         ViewModel = viewModel;
         MainViewModel = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
         _plan = plan ?? throw new ArgumentNullException(nameof(plan));
         _ioService = ioService ?? throw new ArgumentNullException(nameof(ioService));
         _feedbackHighlighter = feedbackHighlighter ?? throw new ArgumentNullException(nameof(feedbackHighlighter));
+        _visionService = visionService;
         _logger = logger;
         InitializeComponent();
         InitializeEditorFeatures();
@@ -99,6 +104,8 @@ public sealed partial class TrackPlanPage
         DisconnectButton.Click += (_, _) => DisconnectSelectedSegment();
         LoadTestPlanButton.Click += (_, _) => LoadTestPlan();
         OpenSvgInBrowserButton.Click += (_, _) => OpenSvgInBrowser();
+        ImportFromScreenshotButton.Click += (_, _) =>
+            ImportFromScreenshotAsync().Observe(ex => _logger?.LogWarning(ex, "Import from screenshot failed"));
     }
 
     private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

@@ -176,7 +176,11 @@ public sealed partial class MainWindow
         _healthCheckService.HealthStatusChanged += OnHealthStatusChanged;
         _healthCheckService.StartPeriodicChecks();
 
-        _uiDispatcher.InvokeOnUi(() => ViewModel.UpdateHealthStatus(_healthCheckService.SpeechServiceStatus));
+        _uiDispatcher.InvokeOnUi(() =>
+        {
+            ViewModel.UpdateHealthStatus(_healthCheckService.SpeechServiceStatus);
+            ViewModel.UpdateVisionHealthStatus(_healthCheckService.VisionServiceStatus);
+        });
     }
 
     /// <summary>
@@ -383,8 +387,18 @@ public sealed partial class MainWindow
 
     private void OnHealthStatusChanged(object? sender, HealthStatusChangedEventArgs e)
     {
-        // Update ViewModel on UI thread
-        _uiDispatcher.InvokeOnUi(() => ViewModel.UpdateHealthStatus(e.StatusMessage));
+        // Route to the right VM update method based on the reporting service.
+        _uiDispatcher.InvokeOnUi(() =>
+        {
+            if (string.Equals(e.ServiceName, "AzureVision", StringComparison.Ordinal))
+            {
+                ViewModel.UpdateVisionHealthStatus(e.StatusMessage);
+            }
+            else
+            {
+                ViewModel.UpdateHealthStatus(e.StatusMessage);
+            }
+        });
     }
 
     private void NavigationView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)

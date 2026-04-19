@@ -294,17 +294,51 @@
           {
             "id": "3924429b-bb7c-483d-a8b2-e165db764044",
             "code": "R1",
-            "x": 254,
-            "y": 174,
-            "rotationDegrees": 0,
-            "inPort": 1
+            "x": 1953.5,
+            "y": 611.5,
+            "rotationDegrees": 0
           },
           {
             "id": "8e764195-f612-4fb0-9ffe-6c75b0787f0e",
             "code": "R1",
-            "x": 434,
-            "y": 222.23085463760208,
+            "x": 2133.5,
+            "y": 659.7308546376021,
             "rotationDegrees": 30
+          },
+          {
+            "id": "faf62da0-b3eb-4e3b-b387-9d2fc0fe23e6",
+            "code": "R1",
+            "x": 2265.269145362398,
+            "y": 791.5,
+            "rotationDegrees": 60
+          },
+          {
+            "id": "66f121b7-bb81-47b0-a2b8-5dfa8ad4c56f",
+            "code": "R1",
+            "x": 2313.5,
+            "y": 971.5,
+            "rotationDegrees": 90
+          },
+          {
+            "id": "8a9f220f-9d05-48bf-92db-e14679da0feb",
+            "code": "R1",
+            "x": 2265.269145362398,
+            "y": 1151.5,
+            "rotationDegrees": 120
+          },
+          {
+            "id": "3f57c7a2-1ab7-457b-afdc-ea322db11923",
+            "code": "R1",
+            "x": 2133.5,
+            "y": 1283.269145362398,
+            "rotationDegrees": 150
+          },
+          {
+            "id": "312f824d-bd91-47ee-ba43-c7df17d66e1a",
+            "code": "G231",
+            "x": 1722.57,
+            "y": 1331.5,
+            "rotationDegrees": 0
           }
         ],
         "connections": [
@@ -312,6 +346,36 @@
             "sourceSegment": "8e764195-f612-4fb0-9ffe-6c75b0787f0e",
             "sourcePort": "PortA",
             "targetSegment": "3924429b-bb7c-483d-a8b2-e165db764044",
+            "targetPort": "PortB"
+          },
+          {
+            "sourceSegment": "faf62da0-b3eb-4e3b-b387-9d2fc0fe23e6",
+            "sourcePort": "PortA",
+            "targetSegment": "8e764195-f612-4fb0-9ffe-6c75b0787f0e",
+            "targetPort": "PortB"
+          },
+          {
+            "sourceSegment": "66f121b7-bb81-47b0-a2b8-5dfa8ad4c56f",
+            "sourcePort": "PortA",
+            "targetSegment": "faf62da0-b3eb-4e3b-b387-9d2fc0fe23e6",
+            "targetPort": "PortB"
+          },
+          {
+            "sourceSegment": "8a9f220f-9d05-48bf-92db-e14679da0feb",
+            "sourcePort": "PortA",
+            "targetSegment": "66f121b7-bb81-47b0-a2b8-5dfa8ad4c56f",
+            "targetPort": "PortB"
+          },
+          {
+            "sourceSegment": "3f57c7a2-1ab7-457b-afdc-ea322db11923",
+            "sourcePort": "PortA",
+            "targetSegment": "8a9f220f-9d05-48bf-92db-e14679da0feb",
+            "targetPort": "PortB"
+          },
+          {
+            "sourceSegment": "312f824d-bd91-47ee-ba43-c7df17d66e1a",
+            "sourcePort": "PortB",
+            "targetSegment": "3f57c7a2-1ab7-457b-afdc-ea322db11923",
             "targetPort": "PortB"
           }
         ]
