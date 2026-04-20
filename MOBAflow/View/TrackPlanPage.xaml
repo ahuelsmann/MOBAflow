@@ -108,6 +108,15 @@
                     <SymbolIcon Symbol="Preview" />
                 </AppBarToggleButton.Icon>
             </AppBarToggleButton>
+            <AppBarToggleButton
+                x:Name="TrackLabelsToggle"
+                IsChecked="True"
+                Label="Track Labels"
+                ToolTipService.ToolTip="Show/hide PIKO A track codes (G231, WR, DKW, ...) on the plan">
+                <AppBarToggleButton.Icon>
+                    <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE8D2;" />
+                </AppBarToggleButton.Icon>
+            </AppBarToggleButton>
             <AppBarButton x:Name="RotateLeftButton" Label="Rotate ←">
                 <AppBarButton.Icon>
                     <SymbolIcon Symbol="Back" />

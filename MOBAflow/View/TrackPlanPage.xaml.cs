@@ -5,6 +5,7 @@ namespace Moba.WinUI.View;
 using Microsoft.Extensions.Logging;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Geometry;
+using Microsoft.Graphics.Canvas.Text;
 using Microsoft.Graphics.Canvas.UI;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI.Input;
@@ -183,8 +184,19 @@ public sealed partial class TrackPlanPage
         // The page only reflects the current plan state that the binder maintains.
         _feedbackHighlighter.HighlightsChanged += OnFeedbackHighlightsChanged;
 
+        // Apply persisted collapse state to the grid columns. ViewModel_PropertyChanged only fires
+        // on changes, so without this the columns would stay at their XAML default width on app
+        // restart even though the CollapsibleColumnHelper itself is already collapsed via binding.
+        ApplyColumnCollapseState();
+
         RecalculateDrawOffset();
         RefreshCanvas();
+    }
+
+    private void ApplyColumnCollapseState()
+    {
+        ColToolbox.Width = ViewModel.IsToolboxExpanded ? _toolboxExpandedWidth : GridLength.Auto;
+        ColProperties.Width = ViewModel.IsPropertiesExpanded ? _propertiesExpandedWidth : GridLength.Auto;
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
@@ -611,6 +623,7 @@ public sealed partial class TrackPlanPage
         var (xMm, yMm) = ToWorldCoordinates(canvasPoint);
         UpdateToolboxDragPlacement(xMm, yMm);
         TrySnapAndPlace(_draggedPlaced, null);
+        _plan.HealImplicitConnections();
     }
 
     private void Canvas_PointerReleased_CanvasDrag(object sender, PointerRoutedEventArgs e)
@@ -636,6 +649,7 @@ public sealed partial class TrackPlanPage
             TrySnapOnDrop(_draggedSegmentId!.Value);
         }
 
+        _plan.HealImplicitConnections();
         CommitPendingDragSnapshot();
     }
 
@@ -1260,6 +1274,111 @@ public sealed partial class TrackPlanPage
 
         if (_showValidationOverlay)
             DrawValidationOverlay(ds, offsetX, offsetY);
+
+        if (_showTrackLabels)
+            DrawTrackLabels(ds, offsetX, offsetY);
+    }
+
+    /// <summary>
+    /// Draws the PIKO A catalog code (G231, WR, DKW, ...) near each segment's geometric center.
+    /// The anchor is the centroid of the segment's ports, which always lies on or next to the
+    /// physical track regardless of segment type (straight, curved, switch, crossing). Labels use
+    /// Leading alignment so the computed background box and the rendered text share the exact
+    /// same origin. Colors follow the page's ActualTheme so labels look native in both modes.
+    /// Toggle via TrackLabelsToggle.
+    /// </summary>
+    private void DrawTrackLabels(CanvasDrawingSession ds, double offsetX, double offsetY)
+    {
+        if (_plan.Segments.Count == 0)
+            return;
+
+        using var textFormat = new CanvasTextFormat
+        {
+            FontFamily = "Segoe UI",
+            FontSize = 10,
+            FontWeight = FontWeights.SemiBold,
+            HorizontalAlignment = CanvasHorizontalAlignment.Left,
+            VerticalAlignment = CanvasVerticalAlignment.Top,
+            WordWrapping = CanvasWordWrapping.NoWrap
+        };
+
+        var (backgroundColor, textColor, borderColor) = ResolveTrackLabelColors();
+
+        foreach (var placed in _plan.Segments)
+        {
+            var entry = PikoACatalog.All.FirstOrDefault(e => e.SegmentType == placed.Segment.GetType());
+            if (entry == null)
+                continue;
+
+            var (worldX, worldY) = GetTrackLabelAnchorWorld(placed);
+            var anchorX = (float)((worldX + offsetX) * ScaleMmToPx);
+            var anchorY = (float)((worldY + offsetY) * ScaleMmToPx);
+
+            // Measure the text in its natural size (Leading/Top alignment + generous bounding box
+            // → LayoutBounds.Width/Height return the actual glyph extents, not the requested box).
+            using var layout = new CanvasTextLayout(ds, entry.Code, textFormat, float.PositiveInfinity, float.PositiveInfinity);
+            var textWidth = (float)layout.LayoutBounds.Width;
+            var textHeight = (float)layout.LayoutBounds.Height;
+
+            const float padX = 4f;
+            const float padY = 1f;
+            var textX = anchorX - textWidth / 2f;
+            var textY = anchorY - textHeight / 2f;
+            var rectX = textX - padX;
+            var rectY = textY - padY;
+            var rectW = textWidth + padX * 2;
+            var rectH = textHeight + padY * 2;
+
+            ds.FillRoundedRectangle(rectX, rectY, rectW, rectH, 2, 2, backgroundColor);
+            ds.DrawRoundedRectangle(rectX, rectY, rectW, rectH, 2, 2, borderColor, 0.75f);
+            ds.DrawTextLayout(layout, textX, textY, textColor);
+        }
+    }
+
+    /// <summary>
+    /// Returns (background, text, border) colors for track labels based on the page's current
+    /// ActualTheme. Dark mode uses near-black background + near-white text; light mode the inverse.
+    /// Both modes get a subtle border so labels pop off track strokes at any zoom level.
+    /// </summary>
+    private (Color Background, Color Text, Color Border) ResolveTrackLabelColors()
+    {
+        var theme = ActualTheme;
+        if (theme == ElementTheme.Default)
+            theme = Application.Current.RequestedTheme == ApplicationTheme.Dark ? ElementTheme.Dark : ElementTheme.Light;
+
+        if (theme == ElementTheme.Dark)
+        {
+            return (
+                Background: Color.FromArgb(235, 32, 32, 32),
+                Text: Color.FromArgb(255, 240, 240, 240),
+                Border: Color.FromArgb(160, 180, 180, 180));
+        }
+
+        return (
+            Background: Color.FromArgb(235, 250, 250, 250),
+            Text: Color.FromArgb(255, 20, 20, 20),
+            Border: Color.FromArgb(160, 40, 40, 40));
+    }
+
+    /// <summary>
+    /// Returns the world-space anchor position for a segment's label. Uses the centroid of the
+    /// segment's ports, which reliably lies on (straight, curved) or just next to (switch,
+    /// crossing) the physical track regardless of rotation or segment type.
+    /// </summary>
+    private static (double X, double Y) GetTrackLabelAnchorWorld(PlacedSegment placed)
+    {
+        var ports = SegmentPortGeometry.GetAllPortWorldPositions(placed);
+        if (ports.Count == 0)
+            return (placed.X, placed.Y);
+
+        double sumX = 0, sumY = 0;
+        foreach (var port in ports)
+        {
+            sumX += port.X;
+            sumY += port.Y;
+        }
+
+        return (sumX / ports.Count, sumY / ports.Count);
     }
 
     private void DrawValidationOverlay(CanvasDrawingSession drawingSession, double offsetX, double offsetY)

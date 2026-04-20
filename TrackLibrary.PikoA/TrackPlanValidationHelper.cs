@@ -65,6 +65,90 @@ public static class TrackPlanValidationHelper
         return new ValidationAnalysis(openPorts, overlappingPorts, connectedGroups);
     }
 
+    /// <summary>
+    /// Finds open-port pairs that geometrically coincide within <paramref name="overlapThresholdMm"/> AND whose
+    /// outward world angles are opposite within <paramref name="angleToleranceDegrees"/>, i.e. a missing connection
+    /// that can safely be inferred from the placement. Used to auto-heal plans after load, import, or edit.
+    /// Each port appears in at most one returned pair (the geometrically closest match wins), so repeated application
+    /// is idempotent.
+    /// </summary>
+    public static IReadOnlyList<PortConnection> FindImplicitConnections(
+        IReadOnlyList<PlacedSegment> segments,
+        IReadOnlyList<PortConnection> connections,
+        double overlapThresholdMm = 1.0,
+        double angleToleranceDegrees = 2.0)
+    {
+        ArgumentNullException.ThrowIfNull(segments);
+        ArgumentNullException.ThrowIfNull(connections);
+
+        var segmentsById = segments.ToDictionary(s => s.Segment.No);
+        var openPorts = segments
+            .SelectMany(segment => SegmentPortGeometry.GetAllPortWorldPositions(segment)
+                .Where(port => !IsPortConnected(connections, segment.Segment.No, port.PortName))
+                .Select(port => (SegmentId: segment.Segment.No, port.PortName, port.X, port.Y)))
+            .ToList();
+
+        var consumed = new HashSet<(Guid, string)>();
+        var result = new List<PortConnection>();
+
+        for (var i = 0; i < openPorts.Count; i++)
+        {
+            var left = openPorts[i];
+            if (consumed.Contains((left.SegmentId, left.PortName)))
+                continue;
+
+            var bestDistance = overlapThresholdMm;
+            (Guid Seg, string Port)? bestMatch = null;
+            for (var j = i + 1; j < openPorts.Count; j++)
+            {
+                var right = openPorts[j];
+                if (left.SegmentId == right.SegmentId)
+                    continue;
+                if (consumed.Contains((right.SegmentId, right.PortName)))
+                    continue;
+
+                var dx = left.X - right.X;
+                var dy = left.Y - right.Y;
+                var distance = Math.Sqrt(dx * dx + dy * dy);
+                if (distance >= bestDistance)
+                    continue;
+
+                var leftAngle = SegmentPortGeometry.GetPortOutwardWorldAngleDegrees(segmentsById[left.SegmentId], left.PortName);
+                var rightAngle = SegmentPortGeometry.GetPortOutwardWorldAngleDegrees(segmentsById[right.SegmentId], right.PortName);
+                var expectedOpposite = NormalizeAngle(rightAngle + 180);
+                if (AngleDelta(leftAngle, expectedOpposite) > angleToleranceDegrees)
+                    continue;
+
+                bestDistance = distance;
+                bestMatch = (right.SegmentId, right.PortName);
+            }
+
+            if (bestMatch is { } match)
+            {
+                consumed.Add((left.SegmentId, left.PortName));
+                consumed.Add(match);
+                result.Add(new PortConnection(left.SegmentId, left.PortName, match.Seg, match.Port));
+            }
+        }
+
+        return result;
+    }
+
+    private static double NormalizeAngle(double degrees)
+    {
+        while (degrees >= 360) degrees -= 360;
+        while (degrees < 0) degrees += 360;
+        return degrees;
+    }
+
+    private static double AngleDelta(double leftDegrees, double rightDegrees)
+    {
+        var delta = NormalizeAngle(leftDegrees - rightDegrees);
+        if (delta > 180)
+            delta = 360 - delta;
+        return Math.Abs(delta);
+    }
+
     private static IReadOnlyList<ConnectedGroup> BuildConnectedGroups(IReadOnlyList<PlacedSegment> segments, IReadOnlyList<PortConnection> connections)
     {
         var byId = segments.ToDictionary(segment => segment.Segment.No);

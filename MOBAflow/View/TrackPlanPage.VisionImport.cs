@@ -110,7 +110,11 @@ public sealed partial class TrackPlanPage
         }
 
         var added = VisionTrackPlanImporter.Import(_plan, toImport, vm.PixelsPerMillimeter);
-        _logger?.LogInformation("Screenshot import: {Added} segments added to the track plan", added);
+        var healed = _plan.HealImplicitConnections();
+        _logger?.LogInformation(
+            "Screenshot import: {Added} segments added, {Healed} implicit port connections inferred",
+            added,
+            healed);
 
         // Force a redraw after bulk-add
         GraphCanvasControl.Invalidate();

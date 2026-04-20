@@ -35,6 +35,7 @@ public sealed partial class TrackPlanPage
     private bool _showGrid;
     private bool _showPortHover = true;
     private bool _showValidationOverlay = true;
+    private bool _showTrackLabels = true;
     private double _trackOpacity = 0.8;
     private bool _isApplyingDocumentState;
 
@@ -56,6 +57,9 @@ public sealed partial class TrackPlanPage
         PortHoverToggle.Unchecked += (_, _) => TogglePortHover(false);
         ValidationOverlayToggle.Checked += (_, _) => ToggleValidationOverlay(true);
         ValidationOverlayToggle.Unchecked += (_, _) => ToggleValidationOverlay(false);
+        TrackLabelsToggle.Checked += (_, _) => ToggleTrackLabels(true);
+        TrackLabelsToggle.Unchecked += (_, _) => ToggleTrackLabels(false);
+        ActualThemeChanged += (_, _) => RefreshCanvas();
         TrackOpacitySlider.ValueChanged += (_, _) =>
         {
             _trackOpacity = TrackOpacitySlider.Value;
@@ -65,6 +69,7 @@ public sealed partial class TrackPlanPage
         _showGrid = GridToggle.IsChecked == true;
         _showPortHover = PortHoverToggle.IsChecked != false;
         _showValidationOverlay = ValidationOverlayToggle.IsChecked != false;
+        _showTrackLabels = TrackLabelsToggle.IsChecked != false;
         _trackOpacity = TrackOpacitySlider.Value;
         _lastSavedDocumentJson = SerializeDocument(CaptureDocumentState());
         _hasUnsavedChanges = false;
@@ -96,6 +101,12 @@ public sealed partial class TrackPlanPage
     {
         _showValidationOverlay = isEnabled;
         UpdateValidationOverlayVisibility();
+        RefreshCanvas();
+    }
+
+    private void ToggleTrackLabels(bool isEnabled)
+    {
+        _showTrackLabels = isEnabled;
         RefreshCanvas();
     }
 
@@ -311,6 +322,7 @@ public sealed partial class TrackPlanPage
             ClearGhost();
             ClearPortHighlights();
             _plan.LoadFromPlacements(placements, connections);
+            _plan.HealImplicitConnections();
 
             if (document.OffsetX.HasValue && document.OffsetY.HasValue)
             {

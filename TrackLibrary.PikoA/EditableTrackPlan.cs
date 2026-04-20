@@ -169,6 +169,26 @@ public sealed class EditableTrackPlan
         PlanChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>
+    /// Ergänzt fehlende PortConnections für Port-Paare, die geometrisch exakt übereinanderliegen
+    /// und deren Ausrichtungen zueinander passen (±180°). Verhindert, dass nach Laden, Vision-Import
+    /// oder manuellem Platzieren ohne Snap sichtbar aneinanderliegende Gleise als unverbunden gelten.
+    /// </summary>
+    /// <returns>Anzahl der neu angelegten Verbindungen.</returns>
+    public int HealImplicitConnections(double overlapThresholdMm = 1.0, double angleToleranceDegrees = 2.0)
+    {
+        var implicitConnections = TrackPlanValidationHelper.FindImplicitConnections(
+            _segments, _connections, overlapThresholdMm, angleToleranceDegrees);
+
+        if (implicitConnections.Count == 0)
+            return 0;
+
+        foreach (var c in implicitConnections)
+            AddConnection(c.SourceSegment, c.SourcePort, c.TargetSegment, c.TargetPort);
+
+        return implicitConnections.Count;
+    }
+
     /// <summary>Ermittelt alle Segment-IDs, die mit dem angegebenen verbunden sind (transitiv).</summary>
     public IReadOnlySet<Guid> GetConnectedGroup(Guid segmentNo)
     {
