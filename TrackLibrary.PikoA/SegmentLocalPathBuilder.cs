@@ -238,26 +238,16 @@ public static class SegmentLocalPathBuilder
         ];
     }
 
-    /// <summary>DKW (Piko 55224) – AnyRail reference: Two parallel main tracks (top A–B, bottom C–D), X in center from two diagonals (15°).</summary>
+    /// <summary>
+    /// DKW (Piko 55224): Two straight tracks crossing at <paramref name="arcDegree"/> (15°) through the midpoint.
+    /// Same crossing topology as K15, but with four switchable ports (slip semantics handled by IsStartPort).
+    /// Port C/D end vertically at ±½·length·sin(arcDegree) ≈ ±30.93 mm, i.e. half the parallel track spacing (61.88 mm),
+    /// so the DKW naturally connects to adjacent WR/WL turnouts bridging the full parallel spacing.
+    /// </summary>
     private static IReadOnlyList<PathCommand> GetDkwPath(double length, double arcDegree, double radius)
     {
         _ = radius;
-        var half = length / 2;
-        var rad = arcDegree * Math.PI / 180;
-        var sin = Math.Sin(rad);
-        var trackOffset = half * sin;
-        var crossHalf = length * 0.2;
-        return
-        [
-            new MoveTo(0, 0),
-            new LineTo(length, 0),
-            new MoveTo(0, -2 * trackOffset),
-            new LineTo(length, -2 * trackOffset),
-            new MoveTo(half - crossHalf, 0),
-            new LineTo(half + crossHalf, -2 * trackOffset),
-            new MoveTo(half - crossHalf, -2 * trackOffset),
-            new LineTo(half + crossHalf, 0)
-        ];
+        return GetCrossingPath(arcDegree, length);
     }
 
     private static IReadOnlyList<PathCommand> GetCrossingPath(double angleDeg, double length)

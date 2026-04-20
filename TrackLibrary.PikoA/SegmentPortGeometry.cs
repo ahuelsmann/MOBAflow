@@ -290,20 +290,24 @@ public static class SegmentPortGeometry
         ];
     }
 
-    /// <summary>DKW (Piko 55224) – AnyRail reference: Four ports at the ends of the two parallel tracks – A/B top track, C/D bottom track.</summary>
+    /// <summary>
+    /// DKW (Piko 55224): Four ports on two straight tracks crossing at <paramref name="arcDegree"/> (15°).
+    /// Port A/B lie on the horizontal main track, Port C/D on the diagonal track that crosses through the midpoint.
+    /// Geometry identical to K15, but all four ports are switchable (IsStartPort treats PortC as start).
+    /// </summary>
     private static IReadOnlyList<PortInfo> GetDkwPorts(double length, double arcDegree, double radius)
     {
         _ = radius;
-        var half = length / 2;
         var rad = arcDegree * Math.PI / 180;
+        var half = length / 2;
+        var cos = Math.Cos(rad);
         var sin = Math.Sin(rad);
-        var trackOffset = half * sin;
         return
         [
             new PortInfo("PortA", 0, 0, 0),
             new PortInfo("PortB", length, 0, 0),
-            new PortInfo("PortC", 0, -2 * trackOffset, 0),
-            new PortInfo("PortD", length, -2 * trackOffset, 0)
+            new PortInfo("PortC", half - half * cos, -half * sin, arcDegree),
+            new PortInfo("PortD", half + half * cos, half * sin, arcDegree)
         ];
     }
 
