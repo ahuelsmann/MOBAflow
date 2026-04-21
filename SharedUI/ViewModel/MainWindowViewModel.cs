@@ -19,8 +19,6 @@ using Interface;
 
 using Microsoft.Extensions.Logging;
 
-using Moba.Vision;
-
 using Service;
 
 using System.Collections.ObjectModel;
@@ -50,7 +48,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IRestApiStat
     private readonly ICityService? _cityLibraryService;
     private readonly ISettingsService? _settingsService;
     private readonly AnnouncementService? _announcementService;
-    private readonly IVisionService? _visionService;
     private readonly IFeatureTogglePageProvider? _featureTogglePageProvider;
 
     // Execution Context (contains all action execution dependencies)
@@ -82,7 +79,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IRestApiStat
     /// <param name="photoHubClient">Optional PhotoHub client instance (WinUI only, loosely typed as <see cref="object"/>).</param>
     /// <param name="featureTogglePageProvider">Optional provider for feature toggle page metadata.</param>
     /// <param name="loggerFactory">Optional factory used to create loggers for nested view models (e.g. workflow command encoding).</param>
-    /// <param name="visionService">Optional Azure AI Vision service used by the Settings test command.</param>
     public MainWindowViewModel(
         LayoutColumnWidthsViewModel layoutColumnWidths,
         IMobaRuntime mobaRuntime,
@@ -98,8 +94,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IRestApiStat
         AnnouncementService? announcementService = null,
         object? photoHubClient = null,  // Optional PhotoHubClient (only in WinUI, type is object to avoid assembly reference)
         IFeatureTogglePageProvider? featureTogglePageProvider = null,
-        ILoggerFactory? loggerFactory = null,
-        IVisionService? visionService = null)
+        ILoggerFactory? loggerFactory = null)
     {
         ArgumentNullException.ThrowIfNull(layoutColumnWidths);
         ArgumentNullException.ThrowIfNull(mobaRuntime);
@@ -121,7 +116,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IRestApiStat
         _cityLibraryService = cityLibraryService;
         _settingsService = settingsService;
         _announcementService = announcementService;
-        _visionService = visionService;
         _executionContext = executionContext;
         _featureTogglePageProvider = featureTogglePageProvider;
         _ = photoHubClient;
@@ -220,25 +214,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IRestApiStat
     /// </summary>
     [ObservableProperty]
     private string _speechHealthColor = "SystemFillColorCautionBrush";
-
-    /// <summary>
-    /// Health status message for Azure AI Vision.
-    /// Updated by <see cref="HealthCheckService"/> via event.
-    /// </summary>
-    [ObservableProperty]
-    private string _visionHealthStatus = "Initializing...";
-
-    /// <summary>
-    /// Icon glyph for Azure AI Vision health status.
-    /// </summary>
-    [ObservableProperty]
-    private string _visionHealthIcon = "\uE946"; // Sync
-
-    /// <summary>
-    /// Color for Azure AI Vision health status icon.
-    /// </summary>
-    [ObservableProperty]
-    private string _visionHealthColor = "SystemFillColorCautionBrush";
 
     [ObservableProperty]
     private SolutionViewModel? _solutionViewModel;

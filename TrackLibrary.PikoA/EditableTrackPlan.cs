@@ -171,7 +171,7 @@ public sealed class EditableTrackPlan
 
     /// <summary>
     /// Ergänzt fehlende PortConnections für Port-Paare, die geometrisch exakt übereinanderliegen
-    /// und deren Ausrichtungen zueinander passen (±180°). Verhindert, dass nach Laden, Vision-Import
+    /// und deren Ausrichtungen zueinander passen (±180°). Verhindert, dass nach Laden
     /// oder manuellem Platzieren ohne Snap sichtbar aneinanderliegende Gleise als unverbunden gelten.
     /// </summary>
     /// <returns>Anzahl der neu angelegten Verbindungen.</returns>

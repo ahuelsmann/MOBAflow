@@ -60,11 +60,6 @@
                 Label="SVG in Browser"
                 ToolTipService.ToolTip="Exports the current track plan as SVG and opens it in the browser" />
             <AppBarButton
-                x:Name="ImportFromScreenshotButton"
-                Icon="Camera"
-                Label="Import Screenshot"
-                ToolTipService.ToolTip="Use Azure AI Vision to import PIKO A track codes from a screenshot (AnyRail etc.)" />
-            <AppBarButton
                 x:Name="ValidateButton"
                 Icon="Accept"
                 Label="Validate" />

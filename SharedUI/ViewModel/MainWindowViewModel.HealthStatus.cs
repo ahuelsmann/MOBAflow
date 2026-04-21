@@ -55,36 +55,6 @@ public partial class MainWindowViewModel
     }
 
     /// <summary>
-    /// Update Azure AI Vision health status UI properties based on the raw status message
-    /// emitted by the <c>HealthCheckService</c>.
-    /// </summary>
-    public void UpdateVisionHealthStatus(string statusMessage)
-    {
-        VisionHealthStatus = $"Azure AI Vision: {statusMessage.TrimStart('✅', '❌', '⚠', '️', '⏳', ' ')}";
-
-        if (statusMessage.Contains("Ready"))
-        {
-            VisionHealthIcon = "\uE930"; // Checkmark circle
-            VisionHealthColor = "Green";
-        }
-        else if (statusMessage.Contains("Not Configured"))
-        {
-            VisionHealthIcon = "\uE7BA"; // Warning
-            VisionHealthColor = "SystemFillColorCautionBrush";
-        }
-        else if (statusMessage.Contains("Failed"))
-        {
-            VisionHealthIcon = "\uE711"; // Error
-            VisionHealthColor = "Red";
-        }
-        else // Initializing
-        {
-            VisionHealthIcon = "\uE946"; // Sync
-            VisionHealthColor = "SystemFillColorCautionBrush";
-        }
-    }
-
-    /// <summary>
     /// Indicates whether post-startup initialization is running.
     /// </summary>
     [ObservableProperty]

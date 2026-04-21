@@ -13,6 +13,5 @@
         <ProjectReference Include="..\Common\Common.csproj" />
         <ProjectReference Include="..\Domain\Domain.csproj" />
         <ProjectReference Include="..\Sound\Sound.csproj" />
-        <ProjectReference Include="..\Vision\Vision.csproj" />
     </ItemGroup>
 </Project>

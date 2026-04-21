@@ -10,16 +10,14 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 using Sound;
-using Moba.Vision;
 
 /// <summary>
-/// Centralized health check service that monitors Azure Speech Service, Azure AI Vision
-/// and other dependencies. Provides periodic health checks and status reporting for UI display.
+/// Centralized health check service that monitors Azure Speech Service and provides
+/// periodic status updates for UI display.
 /// </summary>
 public partial class HealthCheckService : IDisposable
 {
     private readonly SpeechHealthCheck _speechHealthCheck;
-    private readonly VisionHealthCheck? _visionHealthCheck;
     private readonly ILogger<HealthCheckService> _logger;
     private readonly IConfiguration _configuration;
     private Timer? _healthCheckTimer;
@@ -28,17 +26,14 @@ public partial class HealthCheckService : IDisposable
     public HealthCheckService(
         SpeechHealthCheck speechHealthCheck,
         ILogger<HealthCheckService> logger,
-        IConfiguration configuration,
-        VisionHealthCheck? visionHealthCheck = null)
+        IConfiguration configuration)
     {
         _speechHealthCheck = speechHealthCheck;
-        _visionHealthCheck = visionHealthCheck;
         _logger = logger;
         _configuration = configuration;
 
         // Initialize status
         SpeechServiceStatus = "⏳ Initializing...";
-        VisionServiceStatus = "⏳ Initializing...";
     }
 
     /// <summary>
@@ -51,16 +46,6 @@ public partial class HealthCheckService : IDisposable
     /// Indicates whether Azure Speech Service is healthy.
     /// </summary>
     public bool IsSpeechServiceHealthy { get; private set; }
-
-    /// <summary>
-    /// Current status of Azure AI Vision service.
-    /// </summary>
-    public string VisionServiceStatus { get; private set; }
-
-    /// <summary>
-    /// Indicates whether Azure AI Vision service is healthy.
-    /// </summary>
-    public bool IsVisionServiceHealthy { get; private set; }
 
     /// <summary>
     /// Event raised when health status changes.
@@ -158,52 +143,6 @@ public partial class HealthCheckService : IDisposable
             IsSpeechServiceHealthy = false;
         }
 
-        // Azure AI Vision (separate try/catch so a Vision failure doesn't hide the Speech result)
-        if (_visionHealthCheck is null)
-        {
-            return;
-        }
-        try
-        {
-            var previousStatus = VisionServiceStatus;
-            var previousHealthy = IsVisionServiceHealthy;
-
-            var visionConfigured = _visionHealthCheck.IsConfigured();
-            var visionHealthy = visionConfigured && await _visionHealthCheck.TestConnectivityAsync();
-
-            if (!visionConfigured)
-            {
-                VisionServiceStatus = "⚠️ Not Configured";
-                IsVisionServiceHealthy = false;
-            }
-            else if (visionHealthy)
-            {
-                VisionServiceStatus = "✅ Ready";
-                IsVisionServiceHealthy = true;
-            }
-            else
-            {
-                VisionServiceStatus = "❌ Connection Failed";
-                IsVisionServiceHealthy = false;
-            }
-
-            if (VisionServiceStatus != previousStatus || IsVisionServiceHealthy != previousHealthy)
-            {
-                _logger.LogInformation("Vision health status changed: {Status}", VisionServiceStatus);
-                OnHealthStatusChanged(new HealthStatusChangedEventArgs
-                {
-                    ServiceName = "AzureVision",
-                    IsHealthy = IsVisionServiceHealthy,
-                    StatusMessage = VisionServiceStatus
-                });
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Vision health check failed with exception");
-            VisionServiceStatus = "❌ Check Failed";
-            IsVisionServiceHealthy = false;
-        }
     }
 
     /// <summary>

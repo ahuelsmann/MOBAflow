@@ -10,10 +10,6 @@ using Domain;
 
 using Microsoft.Extensions.Logging;
 
-using Moba.TrackLibrary.PikoA.Import;
-
-using Moba.Vision;
-
 using System.Collections.ObjectModel;
 using System.Net;
 using System.Net.Sockets;
@@ -228,80 +224,6 @@ public partial class MainWindowViewModel
             }
         }
     }
-
-    /// <summary>
-    /// Gets or sets the Azure AI Vision subscription key.
-    /// </summary>
-    public string? VisionKey
-    {
-        get => _settings.Vision.Key;
-        set
-        {
-            var v = value ?? string.Empty;
-            if (_settings.Vision.Key != v)
-            {
-                _settings.Vision.Key = v;
-                OnPropertyChanged();
-                PersistSettings();
-            }
-        }
-    }
-
-    /// <summary>
-    /// Gets or sets the Azure AI Vision endpoint URL (e.g. <c>https://&lt;resource&gt;.cognitiveservices.azure.com/</c>).
-    /// </summary>
-    public string VisionEndpoint
-    {
-        get => _settings.Vision.Endpoint;
-        set
-        {
-            var v = value ?? string.Empty;
-            if (_settings.Vision.Endpoint != v)
-            {
-                _settings.Vision.Endpoint = v;
-                OnPropertyChanged();
-                PersistSettings();
-            }
-        }
-    }
-
-    /// <summary>
-    /// Gets or sets an optional local image path used by the "Test Vision" button.
-    /// </summary>
-    public string VisionTestImagePath
-    {
-        get => _settings.Vision.TestImagePath;
-        set
-        {
-            var v = value ?? string.Empty;
-            if (_settings.Vision.TestImagePath != v)
-            {
-                _settings.Vision.TestImagePath = v;
-                OnPropertyChanged();
-                PersistSettings();
-            }
-        }
-    }
-
-    /// <summary>
-    /// Human-readable result of the last "Test Vision" run, shown inline next to the button.
-    /// Empty string = no result yet.
-    /// </summary>
-    [ObservableProperty]
-    private string _visionTestResult = string.Empty;
-
-    /// <summary>
-    /// Severity of the last "Test Vision" run: "Success", "Error", "Warning" or "Informational".
-    /// Bound to an InfoBar Severity converter in the Settings page.
-    /// </summary>
-    [ObservableProperty]
-    private string _visionTestSeverity = "Informational";
-
-    /// <summary>
-    /// Controls visibility of the inline Vision test result InfoBar.
-    /// </summary>
-    [ObservableProperty]
-    private bool _showVisionTestResult;
 
     /// <summary>
     /// Custom test message for speech synthesis test.
@@ -1066,97 +988,5 @@ public partial class MainWindowViewModel
         }
     }
 
-    /// <summary>
-    /// Runs a connectivity + OCR roundtrip against Azure AI Vision using the configured key and endpoint.
-    /// If <see cref="VisionTestImagePath"/> points at an existing file, the image is sent to the Read API
-    /// and the number of recognized lines and words is reported. Otherwise only the credential shape is validated.
-    /// </summary>
-    [RelayCommand]
-    private async Task TestVisionAsync()
-    {
-        _logger.LogInformation("Vision test: starting");
-        SetVisionResult("Running Azure AI Vision test…", "Informational");
-
-        try
-        {
-            if (_visionService is null)
-            {
-                SetVisionResult("Vision service not available (not registered in DI).", "Error");
-                return;
-            }
-
-            if (!_visionService.IsConfigured)
-            {
-                SetVisionResult("Azure AI Vision not configured. Please set Key and Endpoint above.", "Warning");
-                return;
-            }
-
-            var imagePath = VisionTestImagePath;
-            if (string.IsNullOrWhiteSpace(imagePath) || !System.IO.File.Exists(imagePath))
-            {
-                SetVisionResult("Please select an existing PNG/JPEG file in the 'Test image' field.", "Warning");
-                return;
-            }
-
-            var result = await _visionService.ReadTextAsync(imagePath).ConfigureAwait(false);
-            _logger.LogInformation(
-                "Azure AI Vision test OK. Image {Width}x{Height}px, lines={Lines}, words={Words}",
-                result.ImageWidth, result.ImageHeight, result.Lines.Count, result.WordCount);
-
-            // Full dump of recognized lines (text + bounding-box center) so we can design the
-            // PIKO A code extractor against real OCR output without a second round-trip.
-            for (var i = 0; i < result.Lines.Count; i++)
-            {
-                var line = result.Lines[i];
-                var cx = line.BoundingPolygon.Count == 0 ? 0d : line.BoundingPolygon.Average(p => (double)p.X);
-                var cy = line.BoundingPolygon.Count == 0 ? 0d : line.BoundingPolygon.Average(p => (double)p.Y);
-                _logger.LogInformation(
-                    "Vision line {Index:D3}: \"{Text}\" center=({Cx:F0},{Cy:F0}) words={Words}",
-                    i, line.Text, cx, cy, line.Words.Count);
-            }
-
-            // Second pass: strict PIKO A catalog extraction so the user gets an immediate
-            // bill of materials + a list of OCR artifacts that need review.
-            var extraction = PikoACodeExtractor.Extract(result);
-            var sortedCounts = extraction.MatchCountsByCode
-                .OrderByDescending(kv => kv.Value)
-                .ThenBy(kv => kv.Key, StringComparer.Ordinal)
-                .ToList();
-
-            _logger.LogInformation(
-                "PIKO A extraction: {Matches} matches, {Unresolved} unresolved. Counts: {Counts}",
-                extraction.Matches.Count,
-                extraction.Unresolved.Count,
-                string.Join(", ", sortedCounts.Select(kv => $"{kv.Key}×{kv.Value}")));
-            foreach (var unresolved in extraction.Unresolved)
-            {
-                _logger.LogInformation(
-                    "PIKO A unresolved: \"{Raw}\" @ ({X:F0},{Y:F0}) (line {Line})",
-                    unresolved.RawText, unresolved.CenterX, unresolved.CenterY, unresolved.SourceLineIndex);
-            }
-
-            var countsPreview = sortedCounts.Count == 0
-                ? "(no PIKO codes)"
-                : string.Join(", ", sortedCounts.Take(5).Select(kv => $"{kv.Key}×{kv.Value}"));
-            SetVisionResult(
-                $"OK — {result.ImageWidth}×{result.ImageHeight}px, {result.Lines.Count} lines. PIKO: {extraction.Matches.Count} matches ({countsPreview}), {extraction.Unresolved.Count} unresolved.",
-                "Success");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Vision test failed");
-            SetVisionResult($"Failed: {ex.Message}", "Error");
-        }
-    }
-
-    private void SetVisionResult(string message, string severity)
-    {
-        _uiDispatcher.InvokeOnUi(() =>
-        {
-            VisionTestResult = message;
-            VisionTestSeverity = severity;
-            ShowVisionTestResult = true;
-        });
-    }
     #endregion
 }

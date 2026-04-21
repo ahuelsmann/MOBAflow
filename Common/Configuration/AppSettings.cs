@@ -23,11 +23,6 @@ public class AppSettings
     public SpeechSettings Speech { get; set; } = new();
 
     /// <summary>
-    /// Gets or sets Azure AI Vision (image analysis / OCR) configuration.
-    /// </summary>
-    public VisionSettings Vision { get; set; } = new();
-
-    /// <summary>
     /// Gets or sets general application behavior settings.
     /// </summary>
     public ApplicationSettings Application { get; set; } = new();
@@ -171,30 +166,6 @@ public class SpeechSettings
     /// Default: German test message.
     /// </summary>
     public string TestMessage { get; set; } = "Dies ist ein Test der Sprachsynthese. Nächster Halt: Hauptbahnhof.";
-}
-
-/// <summary>
-/// Azure AI Vision (Image Analysis / OCR) configuration.
-/// </summary>
-public class VisionSettings
-{
-    /// <summary>
-    /// Azure AI Vision subscription key.
-    /// Can also be provided via environment variable <c>VISION_KEY</c>.
-    /// </summary>
-    public string Key { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Azure AI Vision endpoint URL, e.g.
-    /// <c>https://myaivision-xxx.cognitiveservices.azure.com/</c>.
-    /// Can also be provided via environment variable <c>VISION_ENDPOINT</c>.
-    /// </summary>
-    public string Endpoint { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Optional test image path used by the Settings "Test Vision" button.
-    /// </summary>
-    public string TestImagePath { get; set; } = string.Empty;
 }
 
 /// <summary>

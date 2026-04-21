@@ -179,7 +179,6 @@ public sealed partial class MainWindow
         _uiDispatcher.InvokeOnUi(() =>
         {
             ViewModel.UpdateHealthStatus(_healthCheckService.SpeechServiceStatus);
-            ViewModel.UpdateVisionHealthStatus(_healthCheckService.VisionServiceStatus);
         });
     }
 
@@ -387,17 +386,9 @@ public sealed partial class MainWindow
 
     private void OnHealthStatusChanged(object? sender, HealthStatusChangedEventArgs e)
     {
-        // Route to the right VM update method based on the reporting service.
         _uiDispatcher.InvokeOnUi(() =>
         {
-            if (string.Equals(e.ServiceName, "AzureVision", StringComparison.Ordinal))
-            {
-                ViewModel.UpdateVisionHealthStatus(e.StatusMessage);
-            }
-            else
-            {
-                ViewModel.UpdateHealthStatus(e.StatusMessage);
-            }
+            ViewModel.UpdateHealthStatus(e.StatusMessage);
         });
     }
 
@@ -426,6 +417,12 @@ public sealed partial class MainWindow
     {
         _ = e; // Suppress unused parameter warning
         if (sender is not ToggleSwitch toggleSwitch) return;
+
+        // Ignore programmatic UI synchronization updates from runtime snapshots.
+        if (toggleSwitch.IsOn == ViewModel.IsTrackPowerOn)
+        {
+            return;
+        }
 
         // Execute track power command
         if (ViewModel.SetTrackPowerCommand.CanExecute(toggleSwitch.IsOn))

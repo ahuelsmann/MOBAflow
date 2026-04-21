@@ -199,7 +199,7 @@
                     Margin="0"
                     VerticalAlignment="Center"
                     IsEnabled="{x:Bind ViewModel.IsOperationalControlEnabled, Mode=OneWay}"
-                    IsOn="{x:Bind ViewModel.IsTrackPowerOn, Mode=TwoWay}"
+                    IsOn="{x:Bind ViewModel.IsTrackPowerOn, Mode=OneWay}"
                     OffContent="{x:Null}"
                     OnContent="{x:Null}"
                     Toggled="TrackPower_Toggled" />
