@@ -44,13 +44,6 @@
     "slack": {
       "url": "https://mcp.slack.com/mcp"
     },
-    "stack-mcp-server": {
-      "command": "npx",
-      "args": [
-        "mcp-remote",
-        "https://mcp.stackoverflow.com"
-      ]
-    },
     "linear": {
       "command": "npx",
       "args": [
