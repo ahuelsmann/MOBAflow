@@ -116,7 +116,7 @@ internal sealed class NavigationItemFactory
 
         panel.Children.Add(titleBlock);
 
-        // Badge (Preview, SKIN, etc.)
+        // Badge (Preview, etc.)
         if (hasBadge)
         {
             var badge = CreateBadge(badgeLabel);
@@ -131,14 +131,12 @@ internal sealed class NavigationItemFactory
     /// </summary>
     private static Border CreateBadge(string label)
     {
-        // SKIN badge = purple (#5C2D91)
-        var isSkinBadge = label.Equals("SKIN", StringComparison.OrdinalIgnoreCase);
         var isPreviewBadge = label.Equals("Preview", StringComparison.OrdinalIgnoreCase);
 
         Brush backgroundColor;
         Brush foregroundColor;
 
-        if (isSkinBadge || isPreviewBadge)
+        if (isPreviewBadge)
         {
             backgroundColor = (Brush)Application.Current.Resources["AccentFillColorDefaultBrush"];
             foregroundColor = (Brush)Application.Current.Resources["TextFillColorInverseBrush"];
@@ -165,7 +163,7 @@ internal sealed class NavigationItemFactory
             Foreground = foregroundColor
         };
 
-        if (!isSkinBadge && !isPreviewBadge)
+        if (!isPreviewBadge)
         {
             badgeText.Opacity = 0.7;
         }
@@ -175,16 +173,10 @@ internal sealed class NavigationItemFactory
     }
 
     /// <summary>
-    /// Gets the badge label from settings or returns hardcoded "SKIN" for theme-enabled pages.
+    /// Gets the badge label from settings.
     /// </summary>
     private string GetBadgeLabel(PageMetadata registration)
     {
-        // Hardcoded SKIN badge for theme-enabled pages
-        if (registration.Tag is "traincontrol2" or "signalbox2")
-        {
-            return "SKIN";
-        }
-
         // Get from FeatureToggleSettings
         if (string.IsNullOrEmpty(registration.BadgeLabelKey))
         {

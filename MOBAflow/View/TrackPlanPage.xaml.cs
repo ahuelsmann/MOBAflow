@@ -2,6 +2,10 @@
 
 namespace Moba.WinUI.View;
 
+using Common.Extension;
+
+using Converter;
+
 using Microsoft.Extensions.Logging;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Geometry;
@@ -17,18 +21,10 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 
-using Common.Extension;
+using SharedUI.Service;
 using SharedUI.ViewModel;
 
-using SharedUI.Interface;
-
-using SharedUI.Service;
-
 using TrackLibrary.PikoA;
-
-using TrackPlan.Renderer;
-
-using Converter;
 
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
@@ -47,7 +43,6 @@ public sealed partial class TrackPlanPage
     public TrackPlanViewModel ViewModel { get; }
     public MainWindowViewModel MainViewModel { get; }
     private readonly EditableTrackPlan _plan;
-    private readonly IIoService _ioService;
     private readonly TrackPlanFeedbackHighlighter _feedbackHighlighter;
     private readonly ILogger<TrackPlanPage>? _logger;
 
@@ -78,14 +73,12 @@ public sealed partial class TrackPlanPage
         TrackPlanViewModel viewModel,
         MainWindowViewModel mainViewModel,
         EditableTrackPlan plan,
-        IIoService ioService,
         TrackPlanFeedbackHighlighter feedbackHighlighter,
         ILogger<TrackPlanPage>? logger = null)
     {
         ViewModel = viewModel;
         MainViewModel = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
         _plan = plan ?? throw new ArgumentNullException(nameof(plan));
-        _ioService = ioService ?? throw new ArgumentNullException(nameof(ioService));
         _feedbackHighlighter = feedbackHighlighter ?? throw new ArgumentNullException(nameof(feedbackHighlighter));
         _logger = logger;
         InitializeComponent();
@@ -98,8 +91,7 @@ public sealed partial class TrackPlanPage
         SnapToggle.Checked += (_, _) => { _snapEnabled = true; };
         SnapToggle.Unchecked += (_, _) => { _snapEnabled = false; };
         DisconnectButton.Click += (_, _) => DisconnectSelectedSegment();
-        LoadTestPlanButton.Click += (_, _) => LoadTestPlan();
-        OpenSvgInBrowserButton.Click += (_, _) => OpenSvgInBrowser();
+        ExportSvgInBrowserMenuItem.Click += (_, _) => OpenSvgInBrowser();
     }
 
     private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -136,28 +128,8 @@ public sealed partial class TrackPlanPage
         }
     }
 
-    private static TrackPlanResult CreateTestPlan() =>
-        new TrackPlanBuilder()
-            .Start(0)
-            .Add<WR>().Connections(
-                wr => wr.FromA.ToB<R9>().FromA.ToA<G62>(),
-                wr => wr.FromB.ToA<G239>().FromB.ToA<G62>(),
-                wr => wr.FromC.ToA<R9>().FromB.ToA<R9>().FromB.ToA<G62>())
-            .Create();
-
     /// <summary>
-    /// Loads the test TrackPlanResult (identical to SVG test) for visual comparison Win2D vs. SVG.
-    /// </summary>
-    private void LoadTestPlan()
-    {
-        var plan = CreateTestPlan();
-        var renderResult = new TrackPlanSvgRenderer().Render(plan);
-        LoadCurrentPlacementsAsDocument(renderResult.Placements, plan.Connections, clearHistory: true);
-        StatusText.Text = "Test plan loaded. Click \"SVG in Browser\" for direct comparison.";
-    }
-
-    /// <summary>
-    /// Exports the same test plan as SVG and opens in browser.
+    /// Exports the current track plan as SVG and opens it in browser.
     /// </summary>
     private void OpenSvgInBrowser()
     {
@@ -283,19 +255,6 @@ public sealed partial class TrackPlanPage
                     return;
                 }
 
-                if (e.Key == VirtualKey.S)
-                {
-                    await SaveTrackPlanAsync(IsShiftPressed());
-                    e.Handled = true;
-                    return;
-                }
-
-                if (e.Key == VirtualKey.O)
-                {
-                    await LoadTrackPlanAsync();
-                    e.Handled = true;
-                    return;
-                }
             }
 
             if (e.Key != VirtualKey.Delete && e.Key != VirtualKey.Back)
@@ -327,9 +286,6 @@ public sealed partial class TrackPlanPage
             _selectedSegmentId = null;
         }
 
-        if (!_isApplyingDocumentState)
-            RefreshDirtyState();
-
         UpdateSelectionInfo();
         UpdateCommandStates();
         RefreshCanvas();
@@ -353,6 +309,13 @@ public sealed partial class TrackPlanPage
             Margin = new Thickness(0, 8, 0, 4)
         };
         ToolboxStackPanel.Children.Add(header);
+
+        // Resolve theme-dependent brushes once per populate pass; PopulateToolbox() is called again
+        // on ActualThemeChanged so these stay in sync with light/dark mode.
+        var strokeBrush = ThemeResourceResolver.ResolveBrush(this, "TrackPlanStrokeBrush", Color.FromArgb(255, 26, 26, 26));
+        var cardBorderBrush = ThemeResourceResolver.ResolveBrush(this, "CardStrokeColorDefaultBrush", Color.FromArgb(255, 200, 200, 200));
+        var cardBackgroundBrush = ThemeResourceResolver.ResolveBrush(this, "CardBackgroundFillColorDefaultBrush", Color.FromArgb(255, 245, 245, 245));
+
         foreach (var entry in entries)
         {
             var border = new Border
@@ -361,9 +324,9 @@ public sealed partial class TrackPlanPage
                 Margin = new Thickness(0, 2, 0, 2),
                 CornerRadius = new CornerRadius(4),
                 BorderThickness = new Thickness(1),
-                BorderBrush = (Brush)Application.Current.Resources["CardStrokeColorDefaultBrush"]!,
+                BorderBrush = cardBorderBrush,
                 Tag = entry,
-                Background = (Brush)Application.Current.Resources["CardBackgroundFillColorDefaultBrush"]!
+                Background = cardBackgroundBrush
             };
             var panel = new StackPanel
             {
@@ -371,7 +334,7 @@ public sealed partial class TrackPlanPage
                 Spacing = 8,
                 VerticalAlignment = VerticalAlignment.Center
             };
-            var symbol = TrackPreviewSymbol.CreateSymbol(entry);
+            var symbol = TrackPreviewSymbol.CreateSymbol(entry, strokeBrush);
             panel.Children.Add(symbol);
             var codeText = new TextBlock
             {
@@ -844,7 +807,7 @@ public sealed partial class TrackPlanPage
 
     private bool CanShowPortHighlights()
     {
-        return _snapEnabled && _showPortHover && _ghostShape != null && _draggedPlaced != null;
+        return _snapEnabled && _ghostShape != null && _draggedPlaced != null;
     }
 
     private List<(string PortName, double X, double Y)> GetUnconnectedDraggedPorts()
@@ -1206,20 +1169,12 @@ public sealed partial class TrackPlanPage
     }
 
     /// <summary>Reads the theme-dependent track stroke color for Win2D (Dark: light, Light: dark).</summary>
-    private static Color ResolveTrackPlanStrokeBrush()
-    {
-        if (Application.Current.Resources.TryGetValue("TrackPlanStrokeBrush", out var obj) && obj is SolidColorBrush brush)
-            return brush.Color;
-        return Color.FromArgb(255, 26, 26, 26);
-    }
+    private Color ResolveTrackPlanStrokeBrush()
+        => ThemeResourceResolver.ResolveColor(this, "TrackPlanStrokeBrush", Color.FromArgb(255, 26, 26, 26));
 
     /// <summary>Reads the theme-dependent selection stroke color for Win2D.</summary>
-    private static Color ResolveTrackPlanStrokeSelectedBrush()
-    {
-        if (Application.Current.Resources.TryGetValue("TrackPlanStrokeSelectedBrush", out var obj) && obj is SolidColorBrush brush)
-            return brush.Color;
-        return Color.FromArgb(255, 0, 120, 215);
-    }
+    private Color ResolveTrackPlanStrokeSelectedBrush()
+        => ThemeResourceResolver.ResolveColor(this, "TrackPlanStrokeSelectedBrush", Color.FromArgb(255, 0, 120, 215));
 
     private void GraphCanvasControl_Draw(CanvasControl sender, CanvasDrawEventArgs args)
     {
@@ -1237,8 +1192,8 @@ public sealed partial class TrackPlanPage
         strokeStyle.EndCap = CanvasCapStyle.Round;
 
         // Theme-aware track colors (Fluent Design: from resources for Dark/Light)
-        var strokeBrush = ApplyOpacity(ResolveTrackPlanStrokeBrush(), _trackOpacity);
-        var selectedBrush = ApplyOpacity(ResolveTrackPlanStrokeSelectedBrush(), _trackOpacity);
+        var strokeBrush = ResolveTrackPlanStrokeBrush();
+        var selectedBrush = ResolveTrackPlanStrokeSelectedBrush();
 
         foreach (var placed in _plan.Segments)
         {

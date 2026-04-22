@@ -275,7 +275,6 @@ public partial class App
 
         services.AddSingleton<JourneyMapViewModel>();
         services.AddTransient<MonitorPageViewModel>();
-        services.AddSingleton<SkinSelectorViewModel>();
         services.AddSingleton(sp => new TrainControlViewModel(
             sp.GetRequiredService<IMobaRuntime>(),
             sp.GetRequiredService<ISettingsService>(),
@@ -294,8 +293,6 @@ public partial class App
         services.AddSingleton<TrackPlanSolutionBinder>();
         services.AddSingleton<TrackPlanFeedbackHighlighter>();
 
-        services.AddSingleton<ISkinProvider, SkinProvider>();
-
         services.AddSingleton(sp => new MainWindow(
             sp.GetRequiredService<MainWindowViewModel>(),
             sp.GetRequiredService<NavigationService>(),
@@ -303,7 +300,6 @@ public partial class App
             sp.GetRequiredService<IIoService>(),
             sp.GetRequiredService<List<PageMetadata>>(),
             sp.GetRequiredService<AppSettings>(),
-            sp.GetRequiredService<ISkinProvider>(),
             sp.GetRequiredService<RestApiStatusService>(),
             sp.GetRequiredService<RestApiProcessService>(),
             sp.GetRequiredService<ILogger<MainWindow>>()));
@@ -346,14 +342,9 @@ public partial class App
             // Load settings (including Layout) first so the singleton has persisted values before any View/ViewModel is created
             _ = Services.GetRequiredService<ISettingsService>();
 
-            // Initialize SkinProvider with saved settings before creating MainWindow
-            var skinProvider = Services.GetRequiredService<ISkinProvider>();
-
             var appSettings = Services.GetRequiredService<AppSettings>();
 
             PhotoPathToImageConverter.SetPhotoBasePath(appSettings.Application.PhotoStoragePath);
-
-            skinProvider.Initialize(appSettings);
 
             // Expose LayoutColumnWidths as app resource before MainWindow so pages can bind to it (e.g. TrackPlanPage with its own ViewModel)
             var layoutColumnWidths = Services.GetRequiredService<LayoutColumnWidthsViewModel>();

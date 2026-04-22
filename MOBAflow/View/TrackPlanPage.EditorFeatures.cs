@@ -7,10 +7,7 @@ using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-using Moba.SharedUI.Service;
-
 using System.Diagnostics;
-using System.IO;
 using System.Text.Json;
 
 using TrackLibrary.PikoA;
@@ -29,21 +26,13 @@ public sealed partial class TrackPlanPage
     private readonly Stack<TrackPlanEditorDocument> _redoStack = [];
     private TrackPlanEditorDocument? _pendingDragSnapshot;
     private TrackPlanEditorDocument? _pendingRotationSnapshot;
-    private string? _currentTrackPlanPath;
-    private string? _lastSavedDocumentJson;
-    private bool _hasUnsavedChanges;
     private bool _showGrid;
-    private bool _showPortHover = true;
     private bool _showValidationOverlay = true;
     private bool _showTrackLabels = true;
-    private double _trackOpacity = 0.8;
     private bool _isApplyingDocumentState;
 
     private void InitializeEditorFeatures()
     {
-        LoadTrackPlanButton.Click += async (_, _) => await LoadTrackPlanAsync();
-        SaveTrackPlanButton.Click += async (_, _) => await SaveTrackPlanAsync(false);
-        SaveTrackPlanAsButton.Click += async (_, _) => await SaveTrackPlanAsync(true);
         UndoButton.Click += (_, _) => Undo();
         RedoButton.Click += (_, _) => Redo();
         ValidateButton.Click += async (_, _) => await ValidateCurrentPlanAsync();
@@ -53,26 +42,23 @@ public sealed partial class TrackPlanPage
         RotateRightButton.Click += (_, _) => RotateSelectedSegment(15);
         GridToggle.Checked += (_, _) => ToggleGrid(true);
         GridToggle.Unchecked += (_, _) => ToggleGrid(false);
-        PortHoverToggle.Checked += (_, _) => TogglePortHover(true);
-        PortHoverToggle.Unchecked += (_, _) => TogglePortHover(false);
         ValidationOverlayToggle.Checked += (_, _) => ToggleValidationOverlay(true);
         ValidationOverlayToggle.Unchecked += (_, _) => ToggleValidationOverlay(false);
         TrackLabelsToggle.Checked += (_, _) => ToggleTrackLabels(true);
         TrackLabelsToggle.Unchecked += (_, _) => ToggleTrackLabels(false);
-        ActualThemeChanged += (_, _) => RefreshCanvas();
-        TrackOpacitySlider.ValueChanged += (_, _) =>
+        ActualThemeChanged += (_, _) =>
         {
-            _trackOpacity = TrackOpacitySlider.Value;
+            // Rebuild toolbox previews so their Stroke/Border/Background brushes resolve against
+            // the new theme (these are plain Brush instances set in code and do not auto-update
+            // like {ThemeResource} bindings). The Win2D canvas picks up the new colors via its
+            // Draw handler.
+            PopulateToolbox();
             RefreshCanvas();
         };
 
         _showGrid = GridToggle.IsChecked == true;
-        _showPortHover = PortHoverToggle.IsChecked != false;
         _showValidationOverlay = ValidationOverlayToggle.IsChecked != false;
         _showTrackLabels = TrackLabelsToggle.IsChecked != false;
-        _trackOpacity = TrackOpacitySlider.Value;
-        _lastSavedDocumentJson = SerializeDocument(CaptureDocumentState());
-        _hasUnsavedChanges = false;
         UpdateValidationOverlayVisibility();
         UpdateHistoryButtons();
         UpdateCommandStates();
@@ -82,19 +68,6 @@ public sealed partial class TrackPlanPage
     {
         _showGrid = isEnabled;
         RefreshCanvas();
-    }
-
-    private void TogglePortHover(bool isEnabled)
-    {
-        _showPortHover = isEnabled;
-        if (!isEnabled)
-        {
-            ClearPortHighlights();
-            return;
-        }
-
-        if (_draggedPlaced != null)
-            UpdatePortHighlights();
     }
 
     private void ToggleValidationOverlay(bool isEnabled)
@@ -142,17 +115,8 @@ public sealed partial class TrackPlanPage
 
         _undoStack.Push(beforeSnapshot);
         _redoStack.Clear();
-        RefreshDirtyState();
         UpdateHistoryButtons();
         UpdateCommandStates();
-    }
-
-    private void RefreshDirtyState()
-    {
-        var currentJson = SerializeDocument(CaptureDocumentState());
-        _hasUnsavedChanges = _lastSavedDocumentJson == null
-            ? _plan.Segments.Count > 0 || _plan.Connections.Count > 0
-            : !string.Equals(currentJson, _lastSavedDocumentJson, StringComparison.Ordinal);
     }
 
     private void UpdateHistoryButtons()
@@ -163,13 +127,10 @@ public sealed partial class TrackPlanPage
 
     private void UpdateCommandStates()
     {
-        var ioServiceAvailable = _ioService is not NullIoService;
-        LoadTrackPlanButton.IsEnabled = ioServiceAvailable;
-        SaveTrackPlanButton.IsEnabled = ioServiceAvailable;
-        SaveTrackPlanAsButton.IsEnabled = ioServiceAvailable;
         ValidateButton.IsEnabled = _plan.Segments.Count > 0;
         FitButton.IsEnabled = _plan.Segments.Count > 0;
-        OpenSvgInBrowserButton.IsEnabled = _plan.Segments.Count > 0;
+        ExportDropDownButton.IsEnabled = _plan.Segments.Count > 0;
+        ExportSvgInBrowserMenuItem.IsEnabled = _plan.Segments.Count > 0;
         RotateLeftButton.IsEnabled = CanRotateSelectedSegment(out _);
         RotateRightButton.IsEnabled = RotateLeftButton.IsEnabled;
     }
@@ -203,107 +164,6 @@ public sealed partial class TrackPlanPage
         CommitHistorySnapshot(before);
         StatusText.Text = $"Rotation set to {newRotation:F0}°.";
         UpdateSelectionInfo();
-    }
-
-    private async Task<bool> SaveTrackPlanAsync(bool saveAs)
-    {
-        var ioService = _ioService;
-        if (ioService is NullIoService)
-        {
-            StatusText.Text = "Saving is not available on this platform.";
-            return false;
-        }
-
-        var path = saveAs ? null : _currentTrackPlanPath;
-        if (string.IsNullOrWhiteSpace(path))
-            path = await ioService.SaveJsonFileAsync("track-plan");
-
-        if (string.IsNullOrWhiteSpace(path))
-            return false;
-
-        try
-        {
-            var document = CaptureDocumentState();
-            var json = SerializeDocument(document);
-            var tempPath = path + ".tmp";
-            await File.WriteAllTextAsync(tempPath, json);
-            File.Move(tempPath, path, overwrite: true);
-
-            _currentTrackPlanPath = path;
-            _lastSavedDocumentJson = json;
-            _hasUnsavedChanges = false;
-            UpdateHistoryButtons();
-            UpdateCommandStates();
-            StatusText.Text = $"Track plan saved: {path}";
-            return true;
-        }
-        catch (Exception ex)
-        {
-            StatusText.Text = $"Save failed: {ex.Message}";
-            return false;
-        }
-    }
-
-    private async Task LoadTrackPlanAsync()
-    {
-        var ioService = _ioService;
-        if (ioService is NullIoService)
-        {
-            StatusText.Text = "Loading is not available on this platform.";
-            return;
-        }
-
-        if (!await ConfirmDiscardOrSaveAsync()) return;
-
-        var path = await ioService.BrowseForJsonFileAsync();
-        if (string.IsNullOrWhiteSpace(path)) return;
-
-        try
-        {
-            var json = await File.ReadAllTextAsync(path);
-            var document = JsonSerializer.Deserialize<TrackPlanEditorDocument>(json, JsonOptions.Default);
-            if (document == null)
-            {
-                StatusText.Text = "Track plan file could not be loaded.";
-                return;
-            }
-
-            ApplyEditorDocument(document, clearHistory: true);
-            _currentTrackPlanPath = path;
-            _lastSavedDocumentJson = SerializeDocument(CaptureDocumentState());
-            _hasUnsavedChanges = false;
-            StatusText.Text = $"Track plan loaded: {path}";
-        }
-        catch (Exception ex)
-        {
-            StatusText.Text = $"Load failed: {ex.Message}";
-        }
-    }
-
-    private async Task<bool> ConfirmDiscardOrSaveAsync()
-    {
-        if (!_hasUnsavedChanges)
-            return true;
-
-        var dialog = new ContentDialog
-        {
-            XamlRoot = XamlRoot,
-            Title = "Unsaved Changes",
-            Content = "The current track plan has unsaved changes. Save before loading?",
-            PrimaryButtonText = "Save",
-            SecondaryButtonText = "Discard",
-            CloseButtonText = "Cancel",
-            DefaultButton = ContentDialogButton.Primary
-        };
-
-        var result = await dialog.ShowAsync();
-        if (result == ContentDialogResult.None)
-            return false;
-
-        if (result == ContentDialogResult.Primary)
-            return await SaveTrackPlanAsync(false);
-
-        return true;
     }
 
     private void ApplyEditorDocument(TrackPlanEditorDocument document, bool clearHistory)
@@ -363,17 +223,6 @@ public sealed partial class TrackPlanPage
         UpdateCommandStates();
     }
 
-    private void LoadCurrentPlacementsAsDocument(IReadOnlyList<PlacedSegment> placements, IReadOnlyList<PortConnection> connections, bool clearHistory)
-    {
-        var document = TrackPlanEditorDocument.FromData(placements, connections);
-        ApplyEditorDocument(document, clearHistory);
-        _currentTrackPlanPath = null;
-        _lastSavedDocumentJson = null;
-        RefreshDirtyState();
-        UpdateHistoryButtons();
-        UpdateCommandStates();
-    }
-
     private void Undo()
     {
         if (_undoStack.Count == 0)
@@ -383,7 +232,6 @@ public sealed partial class TrackPlanPage
         var previous = _undoStack.Pop();
         _redoStack.Push(current);
         ApplyEditorDocument(previous, clearHistory: false);
-        RefreshDirtyState();
         UpdateHistoryButtons();
         StatusText.Text = "Undo executed.";
     }
@@ -397,7 +245,6 @@ public sealed partial class TrackPlanPage
         var next = _redoStack.Pop();
         _undoStack.Push(current);
         ApplyEditorDocument(next, clearHistory: false);
-        RefreshDirtyState();
         UpdateHistoryButtons();
         StatusText.Text = "Redo executed.";
     }
@@ -432,7 +279,6 @@ public sealed partial class TrackPlanPage
         ZoomSlider.Value = zoom;
         CanvasScrollViewer.ChangeView(0, 0, (float)zoom);
         RefreshCanvas();
-        RefreshDirtyState();
         StatusText.Text = "Track plan fitted.";
     }
 
@@ -440,7 +286,6 @@ public sealed partial class TrackPlanPage
     {
         ZoomSlider.Value = 1.0;
         CanvasScrollViewer.ChangeView(null, null, 1.0f);
-        RefreshDirtyState();
         StatusText.Text = "Zoom set to 100%.";
     }
 
@@ -526,8 +371,8 @@ public sealed partial class TrackPlanPage
         var worldMaxY = (heightPx / ScaleMmToPx) - offsetY;
         var startX = Math.Floor(worldMinX / 100.0) * 100.0;
         var startY = Math.Floor(worldMinY / 100.0) * 100.0;
-        var minorColor = Color.FromArgb(255, 236, 236, 236);
-        var majorColor = Color.FromArgb(255, 208, 208, 208);
+        var minorColor = ThemeResourceResolver.ResolveColor(this, "TrackPlanGridMinorBrush", Color.FromArgb(255, 236, 236, 236));
+        var majorColor = ThemeResourceResolver.ResolveColor(this, "TrackPlanGridMajorBrush", Color.FromArgb(255, 208, 208, 208));
 
         for (var worldX = startX; worldX <= worldMaxX; worldX += 100.0)
         {
@@ -544,12 +389,6 @@ public sealed partial class TrackPlanPage
         }
     }
 
-    private static Color ApplyOpacity(Color color, double opacity)
-    {
-        var alpha = (byte)Math.Clamp(Math.Round(opacity * 255), 0, 255);
-        return Color.FromArgb(alpha, color.R, color.G, color.B);
-    }
-
     private void ExportCurrentTrackPlanToBrowser()
     {
         if (_plan.Segments.Count == 0)
@@ -558,7 +397,7 @@ public sealed partial class TrackPlanPage
             return;
         }
 
-        var svg = new PlacedTrackPlanSvgRenderer().Render(_plan.Segments, _trackOpacity, _showGrid);
+        var svg = new PlacedTrackPlanSvgRenderer().Render(_plan.Segments, showGrid: _showGrid);
         var path = Path.Combine(Path.GetTempPath(), "trackplan-current.html");
         new SvgExporter().Export(svg, path);
 
@@ -573,8 +412,4 @@ public sealed partial class TrackPlanPage
         return InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control).HasFlag(CoreVirtualKeyStates.Down);
     }
 
-    private bool IsShiftPressed()
-    {
-        return InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Shift).HasFlag(CoreVirtualKeyStates.Down);
-    }
 }

@@ -112,11 +112,9 @@ internal static class NavigationRegistration
             PathIconData: null,
             IsBold: true));
 
-        // SignalBoxPage: requires custom viewmodel injection
+        // SignalBoxPage: requires custom runtime services
         services.AddTransient<SignalBoxPage>(sp => new SignalBoxPage(
             sp.GetRequiredService<MainWindowViewModel>(),
-            sp.GetRequiredService<ISkinProvider>(),
-            sp.GetRequiredService<SkinSelectorViewModel>(),
             sp.GetRequiredService<ViessmannSignalService>(),
             sp.GetService<ILogger<SignalBoxPropertiesControl>>(),
             sp.GetService<ILogger<SignalBoxCanvasControl>>()));

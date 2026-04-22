@@ -36,8 +36,6 @@
                     <ColumnDefinition Width="*" MinWidth="250" />
                     <!--  Baureihe + Vmax  -->
                     <ColumnDefinition Width="Auto" MinWidth="80" />
-                    <!--  Skin  -->
-                    <ColumnDefinition Width="Auto" MinWidth="180" />
                     <!--  Emergency Stop  -->
                 </Grid.ColumnDefinitions>
 
@@ -96,104 +94,8 @@
                     </StackPanel>
                 </StackPanel>
 
-                <!--  Skin Selector Button with Flyout  -->
                 <Button
                     Grid.Column="2"
-                    VerticalAlignment="Center"
-                    AccessKey="K"
-                    AutomationProperties.Name="Select Color Skin"
-                    ToolTipService.ToolTip="Select Skin (Alt+K)">
-                    <Button.Content>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon FontSize="16" Glyph="&#xE790;" />
-                            <TextBlock Text="Skin" />
-                        </StackPanel>
-                    </Button.Content>
-                    <Button.Flyout>
-                        <Flyout Placement="Bottom">
-                            <StackPanel Width="200" Spacing="8">
-                                <TextBlock
-                                    FontSize="12"
-                                    FontWeight="SemiBold"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Text="SELECT SKIN" />
-                                <Button
-                                    HorizontalAlignment="Stretch"
-                                    AutomationProperties.Name="System Accent Color"
-                                    Command="{x:Bind SkinViewModel.SelectSystemCommand}">
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <Border
-                                            Width="20"
-                                            Height="20"
-                                            Background="{ThemeResource SystemAccentColor}"
-                                            CornerRadius="4" />
-                                        <TextBlock VerticalAlignment="Center" Text="System" />
-                                    </StackPanel>
-                                </Button>
-                                <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-                                <TextBlock
-                                    FontSize="10"
-                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                    Text="COLOR SKINS" />
-                                <Button
-                                    HorizontalAlignment="Stretch"
-                                    AutomationProperties.Name="Blue Color Skin"
-                                    Command="{x:Bind SkinViewModel.SelectBlueCommand}">
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <Border
-                                            Width="20"
-                                            Height="20"
-                                            Background="{ThemeResource SkinBlueBrush}"
-                                            CornerRadius="4" />
-                                        <TextBlock VerticalAlignment="Center" Text="Blue" />
-                                    </StackPanel>
-                                </Button>
-                                <Button
-                                    HorizontalAlignment="Stretch"
-                                    AutomationProperties.Name="Green Color Skin"
-                                    Command="{x:Bind SkinViewModel.SelectGreenCommand}">
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <Border
-                                            Width="20"
-                                            Height="20"
-                                            Background="{ThemeResource SkinGreenBrush}"
-                                            CornerRadius="4" />
-                                        <TextBlock VerticalAlignment="Center" Text="Green" />
-                                    </StackPanel>
-                                </Button>
-                                <Button
-                                    HorizontalAlignment="Stretch"
-                                    AutomationProperties.Name="Orange Color Skin"
-                                    Command="{x:Bind SkinViewModel.SelectOrangeCommand}">
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <Border
-                                            Width="20"
-                                            Height="20"
-                                            Background="{ThemeResource SkinOrangeBrush}"
-                                            CornerRadius="4" />
-                                        <TextBlock VerticalAlignment="Center" Text="Orange" />
-                                    </StackPanel>
-                                </Button>
-                                <Button
-                                    HorizontalAlignment="Stretch"
-                                    AutomationProperties.Name="Red Color Skin"
-                                    Command="{x:Bind SkinViewModel.SelectRedCommand}">
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <Border
-                                            Width="20"
-                                            Height="20"
-                                            Background="{ThemeResource SkinRedBrush}"
-                                            CornerRadius="4" />
-                                        <TextBlock VerticalAlignment="Center" Text="Red" />
-                                    </StackPanel>
-                                </Button>
-                            </StackPanel>
-                        </Flyout>
-                    </Button.Flyout>
-                </Button>
-
-                <Button
-                    Grid.Column="3"
                     Padding="16,8"
                     AccessKey="S"
                     AutomationProperties.HelpText="Immediately stops the locomotive"

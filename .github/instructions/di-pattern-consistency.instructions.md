@@ -145,25 +145,24 @@ public sealed partial class SignalBoxPage : Page
     
     public SignalBoxPage(
         MainWindowViewModel viewModel,
-        ISkinProvider skinProvider,           // ← Custom dependency
-        AppSettings settings,
-        ISettingsService? settingsService = null)
+        ViessmannSignalService viessmannSignalService,   // ← Custom dependency
+        ILogger<SignalBoxPropertiesControl>? signalBoxPropertiesLogger = null,
+        ILogger<SignalBoxCanvasControl>? signalBoxCanvasLogger = null)
     {
         ViewModel = viewModel;
-        _skinProvider = skinProvider;
-        _settings = settings;
-        _settingsService = settingsService;
+        PropertiesControl.AttachRuntimeServices(viessmannSignalService, signalBoxPropertiesLogger);
+        CanvasControl.AttachLogger(signalBoxCanvasLogger);
         InitializeComponent();
     }
 }
 
 // Registration with custom factory (Document the reason!)
-// Reason: SignalBoxPage requires ISkinProvider for dynamic theme switching
+// Reason: SignalBoxPage requires ViessmannSignalService + control-specific logger wiring
 services.AddSingleton<SignalBoxPage>(sp => new SignalBoxPage(
     sp.GetRequiredService<MainWindowViewModel>(),
-    sp.GetRequiredService<ISkinProvider>(),
-    sp.GetRequiredService<AppSettings>(),
-    sp.GetService<ISettingsService>()
+    sp.GetRequiredService<ViessmannSignalService>(),
+    sp.GetService<ILogger<SignalBoxPropertiesControl>>(),
+    sp.GetService<ILogger<SignalBoxCanvasControl>>()
 ));
 ```
 
@@ -321,7 +320,7 @@ private static void ValidateDiContainer(IServiceProvider provider)
 - [ ] **Register:** Add `services.AddTransient<XxxPage>()` in `MOBAflow/App.xaml.cs`
 - [ ] **Navigate:** Register tag in `NavigationRegistry` (MOBAflow) or use Shell (MOBAsmart)
 - [ ] **DataContext:** Bind `DataContext="{x:Bind ViewModel}"` in XAML
-- [ ] **Comment:** If using custom factory, document WHY (e.g., "Requires ISkinProvider")
+- [ ] **Comment:** If using custom factory, document WHY (e.g., "Requires ViessmannSignalService")
 
 ---
 
@@ -394,7 +393,7 @@ public static MauiApp CreateMauiApp()
 ## Reference Examples
 
 - **Standard Page:** `MOBAflow/View/OverviewPage.xaml.cs` - Simple MainWindowVM
-- **Custom Page:** `MOBAflow/View/SignalBoxPage.xaml.cs` - With ISkinProvider factory
+- **Custom Page:** `MOBAflow/View/SignalBoxPage.xaml.cs` - With ViessmannSignalService factory
 - **Simple ViewModel:** `SharedUI/ViewModel/LocomotiveViewModel.cs` - Wrapper model
 - **Complex ViewModel:** `SharedUI/ViewModel/MainWindowViewModel.cs` - Partial classes, multi-concern
 - **Specialized ViewModel:** `SharedUI/ViewModel/TrainControlViewModel.cs` - UI-state-specific

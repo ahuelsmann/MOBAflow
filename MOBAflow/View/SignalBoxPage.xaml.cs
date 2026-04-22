@@ -4,7 +4,7 @@ using Domain;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Input;
 
 using SharedUI.ViewModel;
 
@@ -13,6 +13,7 @@ using Controls.SignalBox;
 using Service;
 
 using System;
+using System.Collections.Specialized;
 using System.ComponentModel;
 
 using ViewModel;
@@ -23,35 +24,24 @@ sealed partial class SignalBoxPage
     private GridLength _propertiesExpandedWidth = new(300);
 
     public MainWindowViewModel ViewModel { get; }
-    public SkinSelectorViewModel SkinViewModel { get; }
 
     private SignalBoxPlanViewModel? _planViewModel;
-    private readonly ISkinProvider _skinProvider;
 
     public SignalBoxPage(
         MainWindowViewModel viewModel,
-        ISkinProvider skinProvider,
-        SkinSelectorViewModel skinViewModel,
         ViessmannSignalService viessmannSignalService,
         ILogger<SignalBoxPropertiesControl>? signalBoxPropertiesLogger = null,
         ILogger<SignalBoxCanvasControl>? signalBoxCanvasLogger = null)
     {
         ArgumentNullException.ThrowIfNull(viewModel);
-        ArgumentNullException.ThrowIfNull(skinProvider);
-        ArgumentNullException.ThrowIfNull(skinViewModel);
         ArgumentNullException.ThrowIfNull(viessmannSignalService);
 
         ViewModel = viewModel;
-        _skinProvider = skinProvider;
-        SkinViewModel = skinViewModel;
 
         InitializeComponent();
 
         PropertiesControl.AttachRuntimeServices(viessmannSignalService, signalBoxPropertiesLogger);
         CanvasControl.AttachLogger(signalBoxCanvasLogger);
-
-        _skinProvider.SkinChanged += OnSkinProviderChanged;
-        _skinProvider.DarkModeChanged += OnDarkModeChanged;
 
         ViewModel.SolutionLoaded += OnSolutionLoaded;
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
@@ -107,20 +97,9 @@ sealed partial class SignalBoxPage
         }
     }
 
-    private void OnSkinProviderChanged(object? sender, SkinChangedEventArgs e)
-    {
-        DispatcherQueue.TryEnqueue(ApplySkinColors);
-    }
-
-    private void OnDarkModeChanged(object? sender, EventArgs e)
-    {
-        DispatcherQueue.TryEnqueue(ApplySkinColors);
-    }
-
     private void OnPageLoaded(object sender, RoutedEventArgs e)
     {
         LoadFromModel();
-        ApplySkinColors();
     }
 
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
@@ -128,8 +107,6 @@ sealed partial class SignalBoxPage
         _ = sender;
         _ = e;
 
-        _skinProvider.SkinChanged -= OnSkinProviderChanged;
-        _skinProvider.DarkModeChanged -= OnDarkModeChanged;
         ViewModel.SolutionLoaded -= OnSolutionLoaded;
         ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
         DetachPlanViewModel();
@@ -152,6 +129,7 @@ sealed partial class SignalBoxPage
         {
             _planViewModel = new SignalBoxPlanViewModel(project.SignalBoxPlan);
             _planViewModel.PropertyChanged += OnPlanViewModelPropertyChanged;
+            _planViewModel.Elements.CollectionChanged += OnElementsCollectionChanged;
         }
 
         if (CanvasControl != null)
@@ -165,6 +143,26 @@ sealed partial class SignalBoxPage
             PropertiesControl.SelectedElement = _planViewModel.SelectedElement;
             PropertiesControl.UpdateStatistics();
         }
+
+        UpdateElementCount();
+    }
+
+    private void UpdateElementCount()
+    {
+        if (ElementCountText == null)
+        {
+            return;
+        }
+
+        var count = _planViewModel?.Elements.Count ?? 0;
+        ElementCountText.Text = $"Elements: {count}";
+    }
+
+    private void OnElementsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        _ = sender;
+        _ = e;
+        UpdateElementCount();
     }
 
     private void OnPlanViewModelPropertyChanged(object? sender, PropertyChangedEventArgs args)
@@ -188,33 +186,37 @@ sealed partial class SignalBoxPage
         }
 
         _planViewModel.PropertyChanged -= OnPlanViewModelPropertyChanged;
+        _planViewModel.Elements.CollectionChanged -= OnElementsCollectionChanged;
     }
 
-    private void OnGridToggled(object sender, RoutedEventArgs e)
+    private void OnDeleteButtonClick(object sender, RoutedEventArgs e)
     {
-        // Handled directly or by passing IsGridVisible property to CanvasControl
-        // Optional implementation:
-        // if (CanvasControl != null) CanvasControl.IsGridVisible = GridToggleButton.IsChecked ?? false;
+        _ = sender;
+        _ = e;
+        DeleteSelectedElement();
     }
 
-    private void ApplySkinColors()
+    private void OnDeleteAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
     {
-        var palette = SkinColors.GetPalette(_skinProvider.CurrentSkin, _skinProvider.IsDarkMode);
-        var isSystemSkin = _skinProvider.CurrentSkin == AppSkin.System;
+        _ = sender;
+        args.Handled = DeleteSelectedElement();
+    }
 
-        RequestedTheme = palette.IsDarkTheme ? ElementTheme.Dark : ElementTheme.Light;
-
-        if (CanvasControl != null)
+    private bool DeleteSelectedElement()
+    {
+        var selected = _planViewModel?.SelectedElement;
+        if (selected == null || _planViewModel == null)
         {
-            if (!isSystemSkin)
-            {
-                CanvasControl.Background = palette.PanelBackgroundBrush;
-            }
-            else
-            {
-                CanvasControl.Background = (Brush)Application.Current.Resources["SolidBackgroundFillColorBaseBrush"];
-            }
+            return false;
         }
+
+        _planViewModel.RemoveElement(selected);
+        PropertiesControl?.UpdateStatistics();
+        if (StatusText != null)
+        {
+            StatusText.Text = "Element deleted.";
+        }
+        return true;
     }
 
     private void OnPropertyControlVisualRefresh(object sender, SbElement element)

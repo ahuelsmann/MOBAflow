@@ -8,161 +8,30 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:signalbox="using:Moba.WinUI.Controls.SignalBox"
     mc:Ignorable="d">
+    <Page.KeyboardAccelerators>
+        <KeyboardAccelerator Key="Delete" Invoked="OnDeleteAccelerator" />
+        <KeyboardAccelerator Key="Back" Invoked="OnDeleteAccelerator" />
+    </Page.KeyboardAccelerators>
 
-    <Grid Padding="0" Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
+    <Grid Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!--  Page Header - Fluent Design System  -->
-        <Border
+        <!--  Toolbar  -->
+        <CommandBar
             Grid.Row="0"
-            Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}"
-            BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
-            BorderThickness="0,0,0,1">
-            <Grid Padding="32,20,32,20" ColumnSpacing="16">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <!--  Title  -->
-                <StackPanel
-                    Grid.Column="0"
-                    VerticalAlignment="Center"
-                    Spacing="2">
-                    <TextBlock
-                        AutomationProperties.HeadingLevel="Level1"
-                        FontSize="32"
-                        FontWeight="SemiBold"
-                        Text="Signal Box" />
-                </StackPanel>
-
-                <!--  Grid Toggle  -->
-                <ToggleButton
-                    Grid.Column="2"
-                    VerticalAlignment="Center"
-                    Checked="OnGridToggled"
-                    IsChecked="True"
-                    ToolTipService.ToolTip="Toggle grid"
-                    Unchecked="OnGridToggled">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon FontSize="16" Glyph="&#xE80A;" />
-                        <TextBlock Text="Grid" />
-                    </StackPanel>
-                </ToggleButton>
-
-                <!--  Toolbox Toggle (for Medium/Compact)  -->
-                <ToggleButton
-                    Grid.Column="3"
-                    VerticalAlignment="Center"
-                    IsChecked="True"
-                    ToolTipService.ToolTip="Toggle toolbox"
-                    Visibility="Collapsed">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon FontSize="16" Glyph="&#xE70F;" />
-                        <TextBlock Text="Toolbox" />
-                    </StackPanel>
-                </ToggleButton>
-
-                <!--  Properties Toggle (for Medium/Compact)  -->
-                <ToggleButton
-                    Grid.Column="4"
-                    VerticalAlignment="Center"
-                    IsChecked="True"
-                    ToolTipService.ToolTip="Toggle properties"
-                    Visibility="Collapsed">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon FontSize="16" Glyph="&#xE713;" />
-                        <TextBlock Text="Properties" />
-                    </StackPanel>
-                </ToggleButton>
-
-                <!--  Skin Selector Button with Flyout  -->
-                <Button
-                    Grid.Column="5"
-                    VerticalAlignment="Center"
-                    ToolTipService.ToolTip="Select color scheme">
-                    <Button.Content>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon FontSize="16" Glyph="&#xE790;" />
-                            <TextBlock Text="Skin" />
-                        </StackPanel>
-                    </Button.Content>
-                    <Button.Flyout>
-                        <Flyout Placement="Bottom">
-                            <StackPanel Width="200" Spacing="8">
-                                <TextBlock
-                                    FontSize="12"
-                                    FontWeight="SemiBold"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Text="SELECT COLOR SCHEME" />
-                                <Button HorizontalAlignment="Stretch" Command="{x:Bind SkinViewModel.SelectSystemCommand}">
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <Border
-                                            Width="20"
-                                            Height="20"
-                                            Background="{ThemeResource SystemAccentColor}"
-                                            CornerRadius="4" />
-                                        <TextBlock VerticalAlignment="Center" Text="System" />
-                                    </StackPanel>
-                                </Button>
-                                <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-                                <TextBlock
-                                    FontSize="10"
-                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                    Text="COLOR SKINS" />
-                                <Button HorizontalAlignment="Stretch" Command="{x:Bind SkinViewModel.SelectBlueCommand}">
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <Border
-                                            Width="20"
-                                            Height="20"
-                                            Background="{ThemeResource SkinBlueBrush}"
-                                            CornerRadius="4" />
-                                        <TextBlock VerticalAlignment="Center" Text="Blue" />
-                                    </StackPanel>
-                                </Button>
-                                <Button HorizontalAlignment="Stretch" Command="{x:Bind SkinViewModel.SelectGreenCommand}">
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <Border
-                                            Width="20"
-                                            Height="20"
-                                            Background="{ThemeResource SkinGreenBrush}"
-                                            CornerRadius="4" />
-                                        <TextBlock VerticalAlignment="Center" Text="Green" />
-                                    </StackPanel>
-                                </Button>
-                                <Button HorizontalAlignment="Stretch" Command="{x:Bind SkinViewModel.SelectOrangeCommand}">
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <Border
-                                            Width="20"
-                                            Height="20"
-                                            Background="{ThemeResource SkinOrangeBrush}"
-                                            CornerRadius="4" />
-                                        <TextBlock VerticalAlignment="Center" Text="Orange" />
-                                    </StackPanel>
-                                </Button>
-                                <Button HorizontalAlignment="Stretch" Command="{x:Bind SkinViewModel.SelectRedCommand}">
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <Border
-                                            Width="20"
-                                            Height="20"
-                                            Background="{ThemeResource SkinRedBrush}"
-                                            CornerRadius="4" />
-                                        <TextBlock VerticalAlignment="Center" Text="Red" />
-                                    </StackPanel>
-                                </Button>
-                            </StackPanel>
-                        </Flyout>
-                    </Button.Flyout>
-                </Button>
-            </Grid>
-        </Border>
+            DefaultLabelPosition="Right"
+            OverflowButtonVisibility="Auto">
+            <AppBarButton
+                x:Name="DeleteButton"
+                Click="OnDeleteButtonClick"
+                Icon="Delete"
+                Label="Delete"
+                ToolTipService.ToolTip="Delete selected element (Del)" />
+        </CommandBar>
 
         <!--  Main Content: Toolbox | Canvas | Properties  -->
         <Grid
@@ -201,13 +70,16 @@
                 HorizontalAlignment="Left"
                 ResizeBehavior="PreviousAndNext" />
 
-            <!--  CENTER: Stellwerk Canvas  -->
+            <!--  CENTER: Stellwerk Canvas (clipped so the internal 1920x1080 surface does not push the status bar off-screen)  -->
             <Border
                 Grid.Column="2"
-                Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+                Background="{ThemeResource SolidBackgroundFillColorBaseAltBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="0">
-                <signalbox:SignalBoxCanvasControl x:Name="CanvasControl" />
+                <signalbox:SignalBoxCanvasControl
+                    x:Name="CanvasControl"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch" />
             </Border>
 
             <controls1:GridSplitter
@@ -232,5 +104,33 @@
                 </controls:CollapsibleColumnProperties.PanelContent>
             </controls:CollapsibleColumnProperties>
         </Grid>
+
+        <!--  Status Bar  -->
+        <Border
+            Grid.Row="2"
+            MinHeight="32"
+            Padding="16,8"
+            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="0,1,0,0">
+            <Grid VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock
+                    x:Name="StatusText"
+                    Grid.Column="0"
+                    VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="" />
+                <TextBlock
+                    x:Name="ElementCountText"
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    Text="Elements: 0" />
+            </Grid>
+        </Border>
     </Grid>
 </Page>

@@ -29,18 +29,6 @@
             DefaultLabelPosition="Right"
             OverflowButtonVisibility="Auto">
             <AppBarButton
-                x:Name="LoadTrackPlanButton"
-                Icon="OpenFile"
-                Label="Load" />
-            <AppBarButton
-                x:Name="SaveTrackPlanButton"
-                Icon="SaveLocal"
-                Label="Save" />
-            <AppBarButton
-                x:Name="SaveTrackPlanAsButton"
-                Icon="Save"
-                Label="Save As" />
-            <AppBarButton
                 x:Name="UndoButton"
                 Icon="Undo"
                 Label="Undo" />
@@ -48,17 +36,34 @@
                 x:Name="RedoButton"
                 Icon="Redo"
                 Label="Redo" />
-            <AppBarSeparator />
-            <AppBarButton
-                x:Name="LoadTestPlanButton"
-                Icon="Document"
-                Label="Load Test Plan"
-                ToolTipService.ToolTip="Loads the test TrackPlanResult (WR+R9+G62+G239) used in the SVG test" />
-            <AppBarButton
-                x:Name="OpenSvgInBrowserButton"
-                Icon="Globe"
-                Label="SVG in Browser"
-                ToolTipService.ToolTip="Exports the current track plan as SVG and opens it in the browser" />
+            <AppBarElementContainer VerticalAlignment="Center">
+                <DropDownButton
+                    x:Name="ExportDropDownButton"
+                    Padding="8,4"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    ToolTipService.ToolTip="Export options">
+                    <DropDownButton.Content>
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <SymbolIcon Symbol="OpenFile" />
+                            <TextBlock Text="Export" />
+                        </StackPanel>
+                    </DropDownButton.Content>
+                    <DropDownButton.Flyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem
+                                x:Name="ExportSvgInBrowserMenuItem"
+                                Text="SVG in Browser"
+                                ToolTipService.ToolTip="Exports the current track plan as SVG and opens it in the browser">
+                                <MenuFlyoutItem.Icon>
+                                    <SymbolIcon Symbol="Globe" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                        </MenuFlyout>
+                    </DropDownButton.Flyout>
+                </DropDownButton>
+            </AppBarElementContainer>
             <AppBarButton
                 x:Name="ValidateButton"
                 Icon="Accept"
@@ -88,14 +93,6 @@
                 IsChecked="False"
                 Label="Grid" />
             <AppBarToggleButton
-                x:Name="PortHoverToggle"
-                IsChecked="True"
-                Label="Port Hover">
-                <AppBarToggleButton.Icon>
-                    <SymbolIcon Symbol="Highlight" />
-                </AppBarToggleButton.Icon>
-            </AppBarToggleButton>
-            <AppBarToggleButton
                 x:Name="ValidationOverlayToggle"
                 IsChecked="True"
                 Label="Validation Overlay">
@@ -122,23 +119,6 @@
                     <SymbolIcon Symbol="Forward" />
                 </AppBarButton.Icon>
             </AppBarButton>
-            <AppBarSeparator />
-            <AppBarElementContainer>
-                <StackPanel
-                    Margin="8,0"
-                    VerticalAlignment="Center"
-                    Orientation="Horizontal"
-                    Spacing="8">
-                    <TextBlock VerticalAlignment="Center" Text="Opacity" />
-                    <Slider
-                        x:Name="TrackOpacitySlider"
-                        Width="120"
-                        VerticalAlignment="Center"
-                        Maximum="1.0"
-                        Minimum="0.1"
-                        Value="0.8" />
-                </StackPanel>
-            </AppBarElementContainer>
         </CommandBar>
         <!--  Main Content Grid  -->
         <Grid x:Name="MainGrid" Grid.Row="1">
@@ -545,7 +525,7 @@
                     x:Name="StatusText"
                     Grid.Column="0"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Text="Ready. Drag tracks from toolbox to canvas." />
+                    Text="" />
                 <TextBlock
                     x:Name="CoordinatesText"
                     Grid.Column="1"

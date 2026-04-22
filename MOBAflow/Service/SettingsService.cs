@@ -75,7 +75,6 @@ internal class SettingsService : ISettingsService
         _settings.Application.LastSolutionPath = source.Application.LastSolutionPath;
         _settings.Application.AutoLoadLastSolution = source.Application.AutoLoadLastSolution;
         _settings.Application.AutoStartWebApp = source.Application.AutoStartWebApp;
-        _settings.Application.SelectedSkin = source.Application.SelectedSkin;
         _settings.Application.IsDarkMode = source.Application.IsDarkMode;
         _settings.Application.UseSystemTheme = source.Application.UseSystemTheme;
 

@@ -22,6 +22,9 @@
                     <!--  TrackPlan: strong dark stroke on light background (Fluent: good contrast)  -->
                     <SolidColorBrush x:Key="TrackPlanStrokeBrush" Color="#FF121212" />
                     <SolidColorBrush x:Key="TrackPlanStrokeSelectedBrush" Color="#FF0078D4" />
+                    <!--  TrackPlan grid lines  -->
+                    <SolidColorBrush x:Key="TrackPlanGridMinorBrush" Color="#FFECECEC" />
+                    <SolidColorBrush x:Key="TrackPlanGridMajorBrush" Color="#FFD0D0D0" />
                     <!--  Icons (Icons.xaml): schwarz im Light-Theme  -->
                     <SolidColorBrush x:Key="IconStrokeBrush" Color="#FF000000" />
                 </ResourceDictionary>
@@ -31,6 +34,9 @@
                     <!--  TrackPlan: heller Strich auf dunklem Hintergrund (Fluent: Lesbarkeit im Dark Mode)  -->
                     <SolidColorBrush x:Key="TrackPlanStrokeBrush" Color="#FFEBEBEB" />
                     <SolidColorBrush x:Key="TrackPlanStrokeSelectedBrush" Color="#FF60CDFF" />
+                    <!--  TrackPlan grid lines (gedämpftes Grau auf dunklem Canvas)  -->
+                    <SolidColorBrush x:Key="TrackPlanGridMinorBrush" Color="#FF2A2A2A" />
+                    <SolidColorBrush x:Key="TrackPlanGridMajorBrush" Color="#FF3F3F3F" />
                     <!--  Icons (Icons.xaml): white in dark theme  -->
                     <SolidColorBrush x:Key="IconStrokeBrush" Color="#FFFFFFFF" />
                 </ResourceDictionary>
@@ -68,12 +74,6 @@
                 <Setter Property="Padding" Value="12,6,12,7" />
                 <Setter Property="CornerRadius" Value="4" />
             </Style>
-
-            <!--  Skin Swatches (used by skin selector flyouts)  -->
-            <SolidColorBrush x:Key="SkinBlueBrush" Color="#0078D4" />
-            <SolidColorBrush x:Key="SkinGreenBrush" Color="#2ECC71" />
-            <SolidColorBrush x:Key="SkinOrangeBrush" Color="#FF6600" />
-            <SolidColorBrush x:Key="SkinRedBrush" Color="#CC0000" />
 
             <!--  TrackPlan Section Colors (used by section editor in TrackPlanPage)  -->
             <SolidColorBrush x:Key="TrackPlanSectionColor1" Color="#FF5733" />

@@ -31,7 +31,6 @@ public sealed partial class MainWindow
     private readonly IUiDispatcher _uiDispatcher;
     private readonly List<PageMetadata> _pages;
     private readonly NavigationItemFactory _navigationItemFactory;
-    private readonly ISkinProvider _skinProvider;
     private readonly ILogger<MainWindow> _logger;
     private bool _isClosing;
     private bool _isShutdownInProgress;
@@ -67,7 +66,6 @@ public sealed partial class MainWindow
         IIoService ioService,
         List<PageMetadata> pages,
         AppSettings appSettings,
-        ISkinProvider skinProvider,
         RestApiStatusService restApiStatusService,
         RestApiProcessService restApiProcessService,
         ILogger<MainWindow> logger)
@@ -83,7 +81,6 @@ public sealed partial class MainWindow
             _restApiProcessService = restApiProcessService;
             _pages = pages;
             _navigationItemFactory = new NavigationItemFactory(appSettings);
-            _skinProvider = skinProvider;
 
             InitializeComponent();
 
@@ -249,11 +246,8 @@ public sealed partial class MainWindow
             return;
         }
 
-        // Do not gate on XamlRoot: during the window constructor it is often still null, which
-        // previously skipped syncing ISkinProvider — pages (TrainControl, SignalBox) then forced
-        // ElementTheme.Light while the shell appeared dark.
+        // Do not gate on XamlRoot: during the window constructor it is often still null.
         RootGrid.RequestedTheme = isDarkMode ? ElementTheme.Dark : ElementTheme.Light;
-        _skinProvider.IsDarkMode = isDarkMode;
     }
 
     private void MainWindow_Closed(object sender, WindowEventArgs args)

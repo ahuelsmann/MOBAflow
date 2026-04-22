@@ -2,14 +2,12 @@
 
 namespace Moba.WinUI.View;
 
-using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 
 using TrackLibrary.PikoA;
 
 using Windows.Foundation;
-using Windows.UI;
 
 /// <summary>
 /// Creates preview symbols for Piko A track types in the toolbox.
@@ -23,9 +21,11 @@ internal static class TrackPreviewSymbol
     private const double StrokeThickness = 2;
 
     /// <summary>
-    /// Creates a preview symbol for the specified catalog entry.
+    /// Creates a preview symbol for the specified catalog entry. The <paramref name="strokeBrush"/>
+    /// should be resolved against the hosting page's actual theme via
+    /// <see cref="ThemeResourceResolver"/> so the preview matches light/dark mode.
     /// </summary>
-    public static Path CreateSymbol(TrackCatalogEntry entry)
+    public static Path CreateSymbol(TrackCatalogEntry entry, Brush strokeBrush)
     {
         var segment = entry.CreateInstance();
         var pathCommands = SegmentLocalPathBuilder.GetPath(segment);
@@ -44,7 +44,7 @@ internal static class TrackPreviewSymbol
             Width = Width,
             Height = Height,
             Stretch = Stretch.None,
-            Stroke = ResolveTrackStrokeBrush(),
+            Stroke = strokeBrush,
             StrokeThickness = StrokeThickness,
             StrokeLineJoin = PenLineJoin.Round,
             StrokeStartLineCap = PenLineCap.Round,
@@ -112,10 +112,4 @@ internal static class TrackPreviewSymbol
         return pg;
     }
 
-    private static Brush ResolveTrackStrokeBrush()
-    {
-        if (Application.Current.Resources.TryGetValue("TrackPlanStrokeBrush", out var obj) && obj is Brush brush)
-            return brush;
-        return new SolidColorBrush(Color.FromArgb(255, 26, 26, 26));
-    }
 }

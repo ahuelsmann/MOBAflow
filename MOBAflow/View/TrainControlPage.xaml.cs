@@ -11,7 +11,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
 
 using Common.Extension;
 using SharedUI.ViewModel;
@@ -25,9 +24,7 @@ using System.ComponentModel;
 using ViewModel;
 
 /// <summary>
-/// TrainControlPage - Theme-aware train control interface.
-/// Supports multiple manufacturer-inspired color themes with system accent as default.
-/// Dynamically applies theme colors to all UI elements.
+/// TrainControlPage - train control interface.
 /// </summary>
 internal sealed partial class TrainControlPage : INotifyPropertyChanged
 {
@@ -49,61 +46,38 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
     private DataTemplate? _brakeReleasedTemplate;
 
     private readonly ILocomotiveService _locomotiveService;
-    private readonly ISkinProvider _skinProvider;
     private readonly AppSettings _settings;
     private readonly ISettingsService? _settingsService;
     private readonly ILogger<TrainControlPage>? _logger;
     private List<LocomotiveSeries> _allLocomotives = [];
 
-    /// <summary>
-    /// Skin selection ViewModel for this page.
-    /// </summary>
-    public SkinSelectorViewModel SkinViewModel { get; }
-
-    // UI element references for theme application
+    // UI element references
     private SpeedometerControl? _speedometer;
     private AmperemeterControl? _amperemeter;
-    private TextBlock? _titleText;
-    private Border? _headerBorder;
-    private Grid? _headerGrid;
-    private Border? _settingsPanel;
-    private Border? _speedometerPanel;
-    private Border? _amperemeterPanel;
-    private Border? _functionsPanel;
 
     public TrainControlViewModel ViewModel { get; }
 
     public TrainControlPage(
         TrainControlViewModel viewModel,
         ILocomotiveService locomotiveService,
-        ISkinProvider skinProvider,
         AppSettings settings,
-        SkinSelectorViewModel skinViewModel,
         ISettingsService? settingsService = null,
         ILogger<TrainControlPage>? logger = null)
     {
         ArgumentNullException.ThrowIfNull(viewModel);
         ArgumentNullException.ThrowIfNull(locomotiveService);
-        ArgumentNullException.ThrowIfNull(skinProvider);
         ArgumentNullException.ThrowIfNull(settings);
-        ArgumentNullException.ThrowIfNull(skinViewModel);
 
         ViewModel = viewModel;
         _locomotiveService = locomotiveService;
-        _skinProvider = skinProvider;
         _settings = settings;
         _settingsService = settingsService;
         _logger = logger;
-        SkinViewModel = skinViewModel;
 
         InitializeComponent();
 
         // Load icons immediately so brake and door release buttons are visible at startup (not only in OnLoaded)
         LoadIconTemplates();
-
-        // Subscribe to skin changes for dynamic updates
-        _skinProvider.SkinChanged += OnSkinProviderChanged;
-        _skinProvider.DarkModeChanged += OnDarkModeChanged;
 
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
@@ -122,132 +96,6 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
     /// Selected index for SpeedSteps ComboBox (for x:Bind).
     /// </summary>
     public int SpeedStepsSelectedIndex { get; set; }
-
-    private void OnSkinProviderChanged(object? sender, SkinChangedEventArgs e)
-    {
-        DispatcherQueue.TryEnqueue(ApplySkinColors);
-    }
-
-    private void OnDarkModeChanged(object? sender, EventArgs e)
-    {
-        DispatcherQueue.TryEnqueue(ApplySkinColors);
-    }
-
-    private void ApplySkinColors()
-    {
-        var palette = SkinColors.GetPalette(_skinProvider.CurrentSkin, _skinProvider.IsDarkMode);
-
-        // Set page RequestedTheme based on skin (controls Light/Dark for standard WinUI controls)
-        RequestedTheme = palette.IsDarkTheme
-            ? ElementTheme.Dark
-            : ElementTheme.Light;
-
-        // Check if this is the "System" skin (uses Windows accent color)
-        var isSystemSkin = _skinProvider.CurrentSkin == AppSkin.System;
-
-        // Header border background - use skin-appropriate color
-        if (_headerBorder != null)
-        {
-            if (isSystemSkin)
-            {
-                // System skin: Use Acrylic background
-                _headerBorder.ClearValue(Border.BackgroundProperty);
-            }
-            else
-            {
-                // Color skins: Use HeaderBackground color with opacity
-                _headerBorder.Background = palette.HeaderBackgroundBrush;
-            }
-        }
-
-        // Header grid background - use skin-appropriate color for solid colored header
-        if (_headerGrid != null)
-        {
-            if (isSystemSkin)
-            {
-                // System skin: Use default/transparent background
-                _headerGrid.ClearValue(Panel.BackgroundProperty);
-            }
-            else
-            {
-                // Color skins: Use HeaderBackground color (fallback if border not available)
-                _headerGrid.Background = palette.HeaderBackgroundBrush;
-            }
-        }
-
-        // Title text color - use skin-appropriate color
-        if (_titleText != null)
-        {
-            if (isSystemSkin)
-            {
-                // System skin: Use standard text color
-                _titleText.ClearValue(TextBlock.ForegroundProperty);
-            }
-            else
-            {
-                // Color skins: Use HeaderForeground color
-                _titleText.Foreground = palette.HeaderForegroundBrush;
-            }
-        }
-
-        // Panel backgrounds and borders - only apply if not transparent (Alpha > 0)
-        var hasCustomPanelColors = palette.PanelBackground.A > 0;
-
-        if (_speedometer != null)
-        {
-            _speedometer.AccentColor = null;
-        }
-
-        if (_amperemeter != null)
-        {
-            _amperemeter.AccentColor = null;
-        }
-
-        // Get default WinUI card brushes for Original theme
-        var defaultCardBackground = hasCustomPanelColors
-            ? palette.PanelBackgroundBrush
-            : (Brush)Application.Current.Resources["CardBackgroundFillColorDefaultBrush"];
-        var defaultCardBorder = hasCustomPanelColors
-            ? palette.PanelBorderBrush
-            : (Brush)Application.Current.Resources["CardStrokeColorDefaultBrush"];
-
-        if (_settingsPanel != null)
-        {
-            _settingsPanel.Background = defaultCardBackground;
-            _settingsPanel.BorderBrush = defaultCardBorder;
-        }
-
-        if (_speedometerPanel != null)
-        {
-            _speedometerPanel.Background = defaultCardBackground;
-            _speedometerPanel.BorderBrush = defaultCardBorder;
-        }
-
-        if (_amperemeterPanel != null)
-        {
-            _amperemeterPanel.Background = defaultCardBackground;
-            _amperemeterPanel.BorderBrush = defaultCardBorder;
-        }
-
-        if (_functionsPanel != null)
-        {
-            _functionsPanel.Background = defaultCardBackground;
-            _functionsPanel.BorderBrush = defaultCardBorder;
-        }
-
-        // Update page background (only if not transparent)
-        if (Content is Grid rootGrid)
-        {
-            if (hasCustomPanelColors)
-            {
-                rootGrid.Background = palette.PanelBackgroundBrush;
-            }
-            else
-            {
-                rootGrid.ClearValue(Panel.BackgroundProperty);
-            }
-        }
-    }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -309,16 +157,6 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
         // Find and store references to themed elements
         _speedometer = FindName("Speedometer") as SpeedometerControl;
         _amperemeter = FindName("Amperemeter") as AmperemeterControl;
-        _titleText = FindName("TitleText") as TextBlock;
-        _headerBorder = FindName("HeaderBorder") as Border;
-        _headerGrid = FindName("HeaderGrid") as Grid;
-        _settingsPanel = FindName("SettingsPanel") as Border;
-        _speedometerPanel = FindName("SpeedometerPanel") as Border;
-        _amperemeterPanel = FindName("AmperemeterPanel") as Border;
-        _functionsPanel = FindName("FunctionsPanel") as Border;
-
-        // Apply current skin colors
-        ApplySkinColors();
 
         // Initialize speedometer scale based on current Vmax
         UpdateSpeedometerScale();
@@ -356,8 +194,6 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
-        _skinProvider.SkinChanged -= OnSkinProviderChanged;
-        _skinProvider.DarkModeChanged -= OnDarkModeChanged;
         ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
     }
 
