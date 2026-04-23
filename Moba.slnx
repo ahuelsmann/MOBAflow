@@ -17,6 +17,7 @@
   <Project Path="Backend/Backend.csproj" />
   <Project Path="Common/Common.csproj" />
   <Project Path="Domain/Domain.csproj" />
+  <Project Path="MOBAdisplay/MOBAdisplay.csproj" />
   <Project Path="MOBAflow/MOBAflow.csproj" />
   <Project Path="MOBApi/MOBApi.csproj" />
   <Project Path="MOBAsmart/MOBAsmart.csproj">
