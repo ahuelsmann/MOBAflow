@@ -36,9 +36,13 @@
         <ProjectReference Include="..\TrackPlan.Renderer\TrackPlan.Renderer.csproj" />
         <ProjectReference Include="..\TrackLibrary.PikoA\TrackLibrary.PikoA.csproj" />
         <ProjectReference Include="..\Sound\Sound.csproj" />
+        <ProjectReference Include="..\MOBAdisplay\MOBAdisplay.csproj" />
     </ItemGroup>
     <ItemGroup>
         <None Update="TestFile\**">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="..\MOBAdisplay\test.png" Link="TestFile\MOBAdisplay\test.png">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <!-- Exclude helper console program with top-level statements from test compilation -->
