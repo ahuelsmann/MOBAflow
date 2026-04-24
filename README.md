@@ -14,6 +14,7 @@ the Roco Z21 Digital Command Station.
 ## 📑 Table of Contents
 
 - [✨ Features](#-features)
+- [📸 Screenshots](#-screenshots)
 - [⚠️ Hardware & Safety](#️-hardware--safety)
 - [🚀 Quick Start](#-quick-start)
   - [Prerequisites](#prerequisites)
@@ -43,6 +44,69 @@ the Roco Z21 Digital Command Station.
   Tillig, Märklin)
 - 📱 **Multi-Host** – MOBAflow (Windows), MOBAsmart (Android), MOBApi (REST)
 - 🟢 **Status Monitoring** – Real-time startup progress with log streaming
+
+---
+
+## 📸 Screenshots
+
+A visual tour of MOBAflow's main features. Click any image to view it in full
+resolution.
+
+<!--
+  Add new screenshots to docs/images/ (PNG, optimized via tinypng.com,
+  target width ~1280 px). Use descriptive, kebab-case filenames and keep
+  alt texts meaningful for accessibility.
+-->
+
+### 🪟 MOBAflow Desktop (WinUI)
+
+<p align="center">
+  <a href="docs/images/mobaflow-overview.png">
+    <img src="docs/images/mobaflow-overview.png" alt="MOBAflow main window with live Z21 status and journey overview" width="800" />
+  </a>
+  <br />
+  <em>Main window – live Z21 status, active journeys and feedback monitoring.</em>
+</p>
+
+### 🎛️ Train Control
+
+<p align="center">
+  <a href="docs/images/train-control.png">
+    <img src="docs/images/train-control.png" alt="Train Control with locomotive presets, timetable, speedometer, ammeter and F0-F20 functions" width="800" />
+  </a>
+  <br />
+  <em>Locomotive presets, live timetable, speed &amp; current dials and F0–F20 function keys.</em>
+</p>
+
+### 🛤️ Visual Track Plan Editor
+
+<p align="center">
+  <a href="docs/images/trackplan-editor.png">
+    <img src="docs/images/trackplan-editor.png" alt="Drag and drop track plan editor with Piko A-Gleis library" width="800" />
+  </a>
+  <br />
+  <em>Drag &amp; drop track editor with snap-to-connect and Win2D rendering.</em>
+</p>
+
+### 🎯 Journey Management
+
+<p align="center">
+  <a href="docs/images/journey-management.png">
+    <img src="docs/images/journey-management.png" alt="Journey editor with stations, city library, workflow library and journey properties" width="800" />
+  </a>
+  <br />
+  <em>Compose journeys from stations, cities and workflows with live runtime state.</em>
+</p>
+
+### 🖥️ ESP32 Remote Display
+
+<p align="center">
+  <a href="docs/images/display-page.png">
+    <img src="docs/images/display-page.png" alt="Display page streaming track number and clock via UDP to an ESP32 remote display" width="800" />
+  </a>
+  <br />
+  <em>Stream track numbers and live clock via UDP to an ESP32-based remote display.</em>
+</p>
 
 ---
 
