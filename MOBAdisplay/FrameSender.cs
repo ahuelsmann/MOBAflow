@@ -9,15 +9,18 @@ public static class FrameSender
 
     public static void SendFrame(byte[] rgb565Frame, string ip)
     {
+        ArgumentNullException.ThrowIfNull(rgb565Frame);
+        ArgumentException.ThrowIfNullOrWhiteSpace(ip);
         using var client = new UdpClient();
         client.Connect(ip, Port);
 
         const int chunkSize = 1024;
 
-        for (int i = 0; i < rgb565Frame.Length; i += chunkSize)
+        for (var i = 0; i < rgb565Frame.Length; i += chunkSize)
         {
-            int size = Math.Min(chunkSize, rgb565Frame.Length - i);
+            var size = Math.Min(chunkSize, rgb565Frame.Length - i);
             client.Send(rgb565Frame.AsSpan(i, size).ToArray());
+            Thread.Sleep(1);
         }
 
         var end = Encoding.ASCII.GetBytes("FRAME_DONE");

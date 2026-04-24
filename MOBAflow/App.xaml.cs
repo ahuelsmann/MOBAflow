@@ -23,6 +23,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
 
+using Moba.Display.Rendering;
+using Moba.Display.Runtime;
+using Moba.Display.Transport;
+
 using Serilog;
 using Serilog.Events;
 
@@ -275,6 +279,10 @@ public partial class App
 
         services.AddSingleton<JourneyMapViewModel>();
         services.AddTransient<MonitorPageViewModel>();
+        services.AddSingleton<IFrameRenderer, SkiaFrameRenderer>();
+        services.AddSingleton<IFrameSender, UdpLineFrameSender>();
+        services.AddTransient<FrameLoopScheduler>();
+        services.AddTransient<DisplayPageViewModel>();
         services.AddSingleton(sp => new TrainControlViewModel(
             sp.GetRequiredService<IMobaRuntime>(),
             sp.GetRequiredService<ISettingsService>(),

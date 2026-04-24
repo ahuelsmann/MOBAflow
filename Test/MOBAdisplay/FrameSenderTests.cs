@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 
 using Moba.Display;
+using Moba.Display.Transport;
 
 namespace Moba.Test.MOBAdisplay;
 
@@ -193,7 +194,8 @@ internal class FrameSenderTests
             }
         });
 
-        SendFrameLinesToPort(frame, IPAddress.Loopback, port);
+        using var sender = new UdpLineFrameSender();
+        sender.SendFrame(frame, IPAddress.Loopback.ToString(), port);
 
         Assert.That(done.Wait(TimeSpan.FromSeconds(2)), Is.True,
             "Expected FRAME_DONE marker was not received.");
@@ -224,7 +226,8 @@ internal class FrameSenderTests
         using var bmp = new Bitmap(_testPng); // 240x280
         var frame = BitmapToRgb565.Convert(bmp);
 
-        SendFrameLinesToPort(frame, IPAddress.Parse("192.168.0.82"), 4210);
+        using var sender = new UdpLineFrameSender();
+        sender.SendFrame(frame, IPAddress.Parse("192.168.0.82").ToString(), 4210);
 
         TestContext.Out.WriteLine("Frame gesendet.");
     }

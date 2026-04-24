@@ -5,9 +5,11 @@
         <OutputType>Library</OutputType>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="SkiaSharp" />
         <PackageReference Include="System.Drawing.Common" />
     </ItemGroup>
 

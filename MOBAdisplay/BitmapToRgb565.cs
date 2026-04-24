@@ -1,33 +1,34 @@
 using System.Drawing;
 
+using Moba.Display.Rendering;
+
+using SkiaSharp;
+
 namespace Moba.Display;
 
+[Obsolete("Use Rgb565Converter with SkiaFrameRenderer for runtime performance.")]
 public static class BitmapToRgb565
 {
     public static byte[] Convert(Bitmap bmp)
     {
-        int width = bmp.Width;
-        int height = bmp.Height;
-
-        byte[] buffer = new byte[width * height * 2];
-        int pos = 0;
-
-        for (int y = 0; y < height; y++)
+        ArgumentNullException.ThrowIfNull(bmp);
+        if (bmp.Width != FrameDimensions.Width || bmp.Height != FrameDimensions.Height)
         {
-            for (int x = 0; x < width; x++)
+            throw new ArgumentException("Bitmap must be 240x280.", nameof(bmp));
+        }
+
+        using var skBitmap = new SKBitmap(FrameDimensions.Width, FrameDimensions.Height, SKColorType.Bgra8888, SKAlphaType.Opaque);
+        for (var y = 0; y < FrameDimensions.Height; y++)
+        {
+            for (var x = 0; x < FrameDimensions.Width; x++)
             {
-                Color c = bmp.GetPixel(x, y);
-
-                ushort rgb =
-                    (ushort)(((c.R & 0xF8) << 8) |
-                             ((c.G & 0xFC) << 3) |
-                             (c.B >> 3));
-
-                buffer[pos++] = (byte)(rgb >> 8);
-                buffer[pos++] = (byte)(rgb & 0xFF);
+                var c = bmp.GetPixel(x, y);
+                skBitmap.SetPixel(x, y, new SKColor(c.R, c.G, c.B));
             }
         }
 
+        var buffer = new byte[FrameDimensions.FrameByteCount];
+        Rgb565Converter.Convert(skBitmap, buffer);
         return buffer;
     }
 }
