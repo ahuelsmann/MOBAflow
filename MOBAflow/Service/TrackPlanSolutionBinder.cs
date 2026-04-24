@@ -4,10 +4,10 @@ namespace Moba.WinUI.Service;
 
 using System.ComponentModel;
 
-using Moba.Common.Extension;
-using Moba.Domain;
+using Common.Extension;
+using Domain;
 using Moba.SharedUI.ViewModel;
-using Moba.TrackLibrary.PikoA;
+using TrackLibrary.PikoA;
 
 /// <summary>
 /// Singleton bridge between the shared <see cref="EditableTrackPlan"/> (singleton in DI)

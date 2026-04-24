@@ -2,7 +2,7 @@ namespace Moba.WinUI.View;
 
 using Microsoft.UI.Xaml;
 
-using Moba.WinUI.ViewModel;
+using ViewModel;
 
 internal sealed partial class DisplayPage
 {

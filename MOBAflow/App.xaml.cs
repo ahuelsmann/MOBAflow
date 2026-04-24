@@ -23,9 +23,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
 
-using Moba.Display.Rendering;
-using Moba.Display.Runtime;
-using Moba.Display.Transport;
+using Display.Rendering;
+using Display.Runtime;
+using Display.Transport;
 
 using Serilog;
 using Serilog.Events;

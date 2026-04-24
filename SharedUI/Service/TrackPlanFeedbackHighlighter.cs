@@ -4,8 +4,8 @@ namespace Moba.SharedUI.Service;
 
 using Microsoft.Extensions.Logging;
 
-using Moba.Common.Events;
-using Moba.TrackLibrary.PikoA;
+using Common.Events;
+using TrackLibrary.PikoA;
 
 using System.Diagnostics;
 

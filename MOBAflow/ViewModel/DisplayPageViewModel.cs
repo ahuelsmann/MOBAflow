@@ -3,11 +3,11 @@ namespace Moba.WinUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using Display.Rendering;
+using Display.Runtime;
+
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml.Media.Imaging;
-
-using Moba.Display.Rendering;
-using Moba.Display.Runtime;
 
 using System.Runtime.InteropServices.WindowsRuntime;
 
