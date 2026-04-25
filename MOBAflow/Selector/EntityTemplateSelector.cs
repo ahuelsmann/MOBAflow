@@ -27,6 +27,11 @@ public partial class EntityTemplateSelector : DataTemplateSelector
     public DataTemplate? StationTemplate { get; set; }
 
     /// <summary>
+    /// DataTemplate for PlatformViewModel
+    /// </summary>
+    public DataTemplate? PlatformTemplate { get; set; }
+
+    /// <summary>
     /// DataTemplate for WorkflowViewModel
     /// </summary>
     public DataTemplate? WorkflowTemplate { get; set; }
@@ -81,6 +86,7 @@ public partial class EntityTemplateSelector : DataTemplateSelector
         return item switch
         {
             StationViewModel => StationTemplate,
+            PlatformViewModel => PlatformTemplate,
             JourneyViewModel => JourneyTemplate,
             WorkflowViewModel => WorkflowTemplate,
             TrainViewModel => TrainTemplate,

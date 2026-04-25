@@ -82,6 +82,27 @@ public sealed class JourneyManagerFeedbackTests
         Assert.That(state.Counter, Is.EqualTo(1));
     }
 
+    [Test]
+    public async Task ProcessFeedbackAsync_JourneyInPortZero_DoesNotIncrementCounter()
+    {
+        var z21Mock = new Mock<IZ21>();
+        var workflowMock = new Mock<IWorkflowService>();
+        var journey = new Journey { InPort = 0, Stations = [] };
+        var project = new Project();
+        project.Journeys.Add(journey);
+
+        var context = new ActionExecutionContext { Z21 = z21Mock.Object };
+
+        using var manager = new TestableJourneyManager(z21Mock.Object, project, workflowMock.Object, context);
+
+        var feedback = new FeedbackResult(BuildFeedbackPacketWithoutFeedback());
+        await manager.RunProcessFeedbackAsync(feedback).ConfigureAwait(false);
+
+        var state = manager.GetState(journey.Id);
+        Assert.That(state, Is.Not.Null);
+        Assert.That(state!.Counter, Is.EqualTo(0));
+    }
+
     /// <summary>
     /// Builds a minimal LAN_RMBUS_DATACHANGED packet with a single active bit for the given 1-based InPort.
     /// </summary>
@@ -100,5 +121,27 @@ public sealed class JourneyManagerFeedbackTests
         content[4] = (byte)groupNumber;
         content[5 + byteIndex] = (byte)(1 << bitPosition);
         return content;
+    }
+
+    private static byte[] BuildFeedbackPacketWithoutFeedback()
+    {
+        return
+        [
+            0x0F,
+            0x00,
+            0x80,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00
+        ];
     }
 }

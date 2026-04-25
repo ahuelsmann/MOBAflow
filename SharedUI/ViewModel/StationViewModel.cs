@@ -8,6 +8,8 @@ using Domain;
 
 using Interface;
 
+using System.Collections.ObjectModel;
+
 /// <summary>
 /// ViewModel wrapper for Station model with workflow assignment operations.
 /// Uses Project for resolving workflow GUID references.
@@ -20,6 +22,7 @@ public sealed partial class StationViewModel : ObservableObject, IViewModelWrapp
 
     // Context
     private readonly Project _project;
+    private ObservableCollection<PlatformViewModel>? _platforms;
     #endregion
 
     /// <summary>
@@ -33,6 +36,7 @@ public sealed partial class StationViewModel : ObservableObject, IViewModelWrapp
         ArgumentNullException.ThrowIfNull(project);
         _station = station;
         _project = project;
+        RefreshPlatforms();
     }
 
     /// <summary>
@@ -125,12 +129,110 @@ public sealed partial class StationViewModel : ObservableObject, IViewModelWrapp
     }
 
     /// <summary>
-    /// Gets or sets the track number used at this station.
+    /// Gets the platforms belonging to this station.
     /// </summary>
-    public int Track
+    public ObservableCollection<PlatformViewModel> Platforms
     {
-        get => (int)(_station.Track ?? 1);
-        set => SetProperty(_station.Track, (uint?)value, _station, (m, v) => m.Track = v);
+        get
+        {
+            if (_platforms == null)
+            {
+                RefreshPlatforms();
+            }
+
+            return _platforms!;
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the platform selected for this journey stop.
+    /// </summary>
+    public Guid? PlatformId
+    {
+        get => _station.PlatformId;
+        set
+        {
+            if (SetProperty(_station.PlatformId, value, _station, (m, v) => m.PlatformId = v))
+            {
+                OnPropertyChanged(nameof(PlatformName));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the display name of the selected platform.
+    /// </summary>
+    public string PlatformName
+    {
+        get
+        {
+            if (_station.PlatformId == null)
+            {
+                return "(No platform)";
+            }
+
+            var platform = _project.Stations
+                .SelectMany(station => station.Platforms)
+                .FirstOrDefault(platform => platform.Id == _station.PlatformId.Value);
+
+            return platform?.Summary ?? "(Unknown platform)";
+        }
+    }
+
+    /// <summary>
+    /// Refreshes the platform ViewModel collection from the model.
+    /// </summary>
+    public void RefreshPlatforms()
+    {
+        if (_platforms == null)
+        {
+            _platforms = [];
+        }
+        else
+        {
+            _platforms.Clear();
+        }
+
+        foreach (var platform in _station.Platforms)
+        {
+            _platforms.Add(new PlatformViewModel(platform, _project));
+        }
+
+        OnPropertyChanged(nameof(Platforms));
+        OnPropertyChanged(nameof(PlatformName));
+    }
+
+    /// <summary>
+    /// Adds a new platform to this station.
+    /// </summary>
+    [RelayCommand]
+    private void AddPlatform()
+    {
+        var platform = new Platform
+        {
+            Number = (uint)(_station.Platforms.Count + 1),
+            Name = $"Platform {_station.Platforms.Count + 1}"
+        };
+
+        _station.Platforms.Add(platform);
+        RefreshPlatforms();
+    }
+
+    /// <summary>
+    /// Removes a platform from this station.
+    /// </summary>
+    [RelayCommand]
+    private void DeletePlatform(PlatformViewModel? platform)
+    {
+        if (platform == null) return;
+
+        _station.Platforms.Remove(platform.Model);
+        if (_station.PlatformId == platform.Model.Id)
+        {
+            PlatformId = null;
+        }
+
+        RefreshPlatforms();
     }
 
     /// <summary>

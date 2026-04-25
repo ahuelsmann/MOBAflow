@@ -61,11 +61,17 @@
             {
               "Name": "Bielefeld Hauptbahnhof",
               "Description": "Main station",
-              "Platforms": [],
+              "Platforms": [
+                {
+                  "InPort": 0,
+                  "Number": 3,
+                  "WorkflowId": null,
+                  "Name": "Gleis 3"
+                }
+              ],
               "InPort": 1,
               "NumberOfLapsToStop": 0,
               "WorkflowId": "00000000-0000-0000-0000-000000000001",
-              "Track": 3,
               "Arrival": null,
               "Departure": null,
               "IsExitOnLeft": false

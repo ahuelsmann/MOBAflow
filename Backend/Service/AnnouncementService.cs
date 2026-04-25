@@ -34,7 +34,7 @@ using Sound;
 /// - {StationIsExitOnLeft} → "Ausstieg in Fahrtrichtung links" or "Ausstieg in Fahrtrichtung rechts"
 /// - {ExitDirection} → "links" or "rechts" (based on Station.IsExitOnLeft)
 /// - {StationNumber} → Station ordinal position in journey
-/// - {TrackNumber} → Station.Track
+/// - {TrackNumber} → Station.Platforms/Station.PlatformId
 /// </summary>
 public class AnnouncementService
 {
@@ -107,9 +107,10 @@ public class AnnouncementService
         text = ReplaceToken(text, "StationNumber", stationIndex.ToString());
 
         // Replace {TrackNumber} if available
-        if (station.Track.HasValue)
+        var platformNumber = ResolvePlatformNumber(station);
+        if (platformNumber.HasValue)
         {
-            text = ReplaceToken(text, "TrackNumber", station.Track.Value.ToString());
+            text = ReplaceToken(text, "TrackNumber", platformNumber.Value.ToString());
         }
 
         _logger?.LogInformation("Generated announcement: \"{AnnouncementText}\"", text);
@@ -199,5 +200,19 @@ public class AnnouncementService
         }
 
         return replaced;
+    }
+
+    private static uint? ResolvePlatformNumber(Station station)
+    {
+        if (station.PlatformId.HasValue)
+        {
+            var platform = station.Platforms.FirstOrDefault(platform => platform.Id == station.PlatformId.Value);
+            if (platform != null)
+            {
+                return platform.Number;
+            }
+        }
+
+        return station.Platforms.FirstOrDefault()?.Number;
     }
 }

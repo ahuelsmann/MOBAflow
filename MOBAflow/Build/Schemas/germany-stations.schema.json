@@ -23,7 +23,7 @@
             "minItems": 1,
             "items": {
               "type": "object",
-              "required": ["Name", "Number", "Track"],
+              "required": ["Name", "Number", "Platforms"],
               "properties": {
                 "Name": {
                   "type": "string",
@@ -51,12 +51,6 @@
                   "format": "time",
                   "description": "Expected departure time (HH:mm:ss format)"
                 },
-                "Track": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "maximum": 50,
-                  "description": "Track number"
-                },
                 "IsExitOnLeft": {
                   "type": "boolean",
                   "description": "Whether exit/turnout is on left side"
@@ -68,7 +62,14 @@
                 "Platforms": {
                   "type": "array",
                   "items": {
-                    "type": "object"
+                    "type": "object",
+                    "required": ["Name", "Number", "InPort"],
+                    "properties": {
+                      "Name": { "type": ["string", "null"] },
+                      "Number": { "type": "integer", "minimum": 1, "maximum": 50 },
+                      "InPort": { "type": "integer", "minimum": 0 },
+                      "WorkflowId": { "type": ["string", "null"], "format": "uuid" }
+                    }
                   },
                   "description": "Platform information"
                 }

@@ -19,6 +19,7 @@ public class Project
         Trains = [];
         Workflows = [];
         Journeys = [];
+        Stations = [];
     }
 
     /// <summary>
@@ -55,6 +56,11 @@ public class Project
     /// Gets or sets the journeys defined in this project.
     /// </summary>
     public List<Journey> Journeys { get; set; }
+
+    /// <summary>
+    /// Gets or sets the stations defined in this project.
+    /// </summary>
+    public List<Station> Stations { get; set; }
 
     /// <summary>
     /// Signal box plan - Topological representation with signals, switches, and routes.

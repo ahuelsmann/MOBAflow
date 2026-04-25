@@ -178,11 +178,6 @@
                                             FontSize="10"
                                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                             HorizontalTextAlignment="Center"
-                                            Text="{x:Bind Track, Mode=OneWay, Converter={StaticResource TrackNumberConverter}}" />
-                                        <TextBlock
-                                            FontSize="10"
-                                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                            HorizontalTextAlignment="Center"
                                             Text="{x:Bind IsExitOnLeft, Mode=OneWay, Converter={StaticResource ExitSideConverter}}" />
                                     </StackPanel>
                                 </DataTemplate>

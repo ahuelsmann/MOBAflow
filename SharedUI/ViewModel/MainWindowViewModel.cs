@@ -509,7 +509,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IRestApiStat
         var newStation = new Station
         {
             Name = cityStation.Name,
-            InPort = 1,  // User must configure InPort!
+            InPort = 0,
             IsExitOnLeft = false,
             NumberOfLapsToStop = 1,
             WorkflowId = null

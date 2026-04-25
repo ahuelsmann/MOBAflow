@@ -44,7 +44,8 @@ internal class StationDefaultsTests
         Assert.That(station.NumberOfLapsToStop, Is.EqualTo(1u));
         Assert.That(station.InPort, Is.EqualTo(0u));
         Assert.That(station.WorkflowId, Is.Null);
-        Assert.That(station.Track, Is.EqualTo(1u));
+        Assert.That(station.Platforms, Is.Not.Null);
+        Assert.That(station.Platforms, Is.Empty);
         Assert.That(station.Arrival, Is.Null);
         Assert.That(station.Departure, Is.Null);
         Assert.That(station.IsExitOnLeft, Is.False);
@@ -117,6 +118,8 @@ internal class ProjectDefaultsTests
         Assert.That(project.Workflows, Is.Empty);
         Assert.That(project.Journeys, Is.Not.Null);
         Assert.That(project.Journeys, Is.Empty);
+        Assert.That(project.Stations, Is.Not.Null);
+        Assert.That(project.Stations, Is.Empty);
         Assert.That(project.SignalBoxPlan, Is.Null);
     }
 }

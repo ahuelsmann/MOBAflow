@@ -117,6 +117,37 @@
               }
             }
           },
+
+          "stations": {
+            "type": "array",
+            "description": "Project stations with platforms",
+            "items": {
+              "type": "object",
+              "required": ["id", "name", "platforms"],
+              "properties": {
+                "id": { "type": "string", "format": "uuid" },
+                "name": { "type": "string" },
+                "inPort": { "type": "integer", "minimum": 0 },
+                "numberOfLapsToStop": { "type": "integer", "minimum": 0 },
+                "workflowId": { "type": ["string", "null"], "format": "uuid" },
+                "isExitOnLeft": { "type": "boolean" },
+                "platforms": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["id", "number"],
+                    "properties": {
+                      "id": { "type": "string", "format": "uuid" },
+                      "name": { "type": ["string", "null"] },
+                      "number": { "type": "integer", "minimum": 1 },
+                      "inPort": { "type": "integer", "minimum": 0 },
+                      "workflowId": { "type": ["string", "null"], "format": "uuid" }
+                    }
+                  }
+                }
+              }
+            }
+          },
           
           "journeys": {
             "type": "array",
@@ -139,11 +170,11 @@
                   "minItems": 1,
                   "items": {
                     "type": "object",
-                    "required": ["name", "number", "track"],
+                    "required": ["name"],
                     "properties": {
                       "name": { "type": "string" },
                       "number": { "type": "integer", "minimum": 0 },
-                      "track": { "type": "integer", "minimum": 1, "maximum": 50 },
+                      "platformId": { "type": ["string", "null"], "format": "uuid" },
                       "cityId": { "type": ["string", "null"], "format": "uuid", "description": "Id of the city this station belongs to" },
                       "numberOfLapsToStop": { "type": "integer", "minimum": 0 },
                       "arrival": { "type": ["string", "null"] },

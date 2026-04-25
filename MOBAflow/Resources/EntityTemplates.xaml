@@ -209,12 +209,65 @@
                     ClockIdentifier="24HourClock"
                     Header="Departure Time"
                     Time="{Binding Departure, Mode=TwoWay, Converter={StaticResource DateTimeToTimeSpanConverter}}" />
+            </StackPanel>
+        </ScrollViewer>
+    </DataTemplate>
 
-                <!--<NumberBox
-                    Header="Track Number"
+    <!--  ============================================  -->
+    <!--  Platform Template (Fluent Design 2)  -->
+    <!--  ============================================  -->
+    <DataTemplate x:Key="PlatformTemplate">
+        <ScrollViewer>
+            <StackPanel Padding="0,0,16,16" Spacing="16">
+                <TextBox
+                    Header="Name"
+                    PlaceholderText="Platform name"
+                    Text="{Binding Name, Mode=TwoWay}" />
+
+                <NumberBox
+                    Header="Number"
                     Minimum="1"
                     SpinButtonPlacementMode="Inline"
-                    Value="{Binding Track, Mode=TwoWay}" />-->
+                    Value="{Binding Number, Mode=TwoWay}" />
+
+                <NumberBox
+                    Header="InPort"
+                    Minimum="0"
+                    SpinButtonPlacementMode="Inline"
+                    Value="{Binding InPort, Mode=TwoWay}" />
+
+                <TextBlock
+                    Margin="0,8,0,4"
+                    Style="{ThemeResource BaseTextBlockStyle}"
+                    Text="Workflow" />
+                <Grid Background="Transparent">
+                    <i:Interaction.Behaviors>
+                        <behavior:WorkflowDropBehavior Command="{Binding AssignWorkflowCommand}" />
+                    </i:Interaction.Behaviors>
+                    <Rectangle
+                        RadiusX="6"
+                        RadiusY="6"
+                        Stroke="{ThemeResource AccentFillColorDefaultBrush}"
+                        StrokeDashArray="4,2"
+                        StrokeThickness="1.5" />
+                    <Grid Margin="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock
+                            Grid.Column="0"
+                            VerticalAlignment="Center"
+                            Text="{Binding WorkflowName, Mode=OneWay, TargetNullValue='Drop workflow here...'}" />
+                        <FontIcon
+                            Grid.Column="1"
+                            FontSize="14"
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                            Glyph="&#xE74B;"
+                            ToolTipService.ToolTip="Drag a workflow from the library" />
+                    </Grid>
+                </Grid>
             </StackPanel>
         </ScrollViewer>
     </DataTemplate>
@@ -979,6 +1032,7 @@
         DefaultTemplate="{StaticResource DefaultTemplate}"
         JourneyTemplate="{StaticResource JourneyTemplate}"
         LocomotiveTemplate="{StaticResource LocomotiveTemplate}"
+        PlatformTemplate="{StaticResource PlatformTemplate}"
         ProjectTemplate="{StaticResource ProjectTemplate}"
         StationTemplate="{StaticResource StationTemplate}"
         TrainTemplate="{StaticResource TrainTemplate}"

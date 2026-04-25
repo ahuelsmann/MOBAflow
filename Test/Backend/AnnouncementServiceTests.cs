@@ -104,7 +104,7 @@ internal class AnnouncementServiceTests
         {
             Text = "Gleis {TrackNumber}"
         };
-        var station = new Station { Track = 5 };
+        var station = new Station { Platforms = [new Platform { Number = 5 }] };
 
         // Act
         var result = _announcementService.GenerateAnnouncementText(journey, station, 1);
@@ -121,7 +121,7 @@ internal class AnnouncementServiceTests
         {
             Text = "Gleis {TrackNumber}"
         };
-        var station = new Station { Track = null };
+        var station = new Station();
 
         // Act
         var result = _announcementService.GenerateAnnouncementText(journey, station, 1);
@@ -141,7 +141,7 @@ internal class AnnouncementServiceTests
         var station = new Station
         {
             Name = "Berlin Central",
-            Track = 7,
+            Platforms = [new Platform { Number = 7 }],
             IsExitOnLeft = false
         };
 

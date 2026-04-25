@@ -4,6 +4,8 @@
 
 > Essential patterns, boundaries, and critical knowledge. Read `.github/instructions/` for deep dives. **This file is ALWAYS loaded.**
 
+AI-generated commit messages must be written in english and must follow the “Conventional Commits” format: https://www.conventionalcommits.org/en/v1.0.0/
+
 ---
 
 ## 🎯 EventBus Threading Boundary (MOST CRITICAL)
@@ -74,9 +76,7 @@ MainWindowViewModel.OnFeedbackReceived() → IsConnected = true (UI thread safe)
 - `.github/todos.instructions.md` updated
 - Inline comments: Why, not What
 - Public APIs: XML docs
-- AI-generated commit messages must be written in English
-  and must follow the “Conventional Commits” format:
-  https://www.conventionalcommits.org/en/v1.0.0/
+
 ---
 
 ## 🏗️ Layer Responsibilities

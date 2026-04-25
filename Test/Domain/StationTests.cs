@@ -16,7 +16,8 @@ internal class StationTests
         Assert.That(station.NumberOfLapsToStop, Is.EqualTo(1u));
         Assert.That(station.WorkflowId, Is.Null);
         Assert.That(station.IsExitOnLeft, Is.False);
-        Assert.That(station.Track, Is.EqualTo(1u));
+        Assert.That(station.Platforms, Is.Not.Null);
+        Assert.That(station.Platforms, Is.Empty);
         Assert.That(station.Arrival, Is.Null);
         Assert.That(station.Departure, Is.Null);
         Assert.That(station.Connections, Is.Not.Null);
@@ -41,7 +42,7 @@ internal class StationTests
             NumberOfLapsToStop = 3,
             WorkflowId = workflowId,
             IsExitOnLeft = true,
-            Track = 5,
+            Platforms = [new Platform { Number = 5, InPort = 20 }],
             Arrival = arrival,
             Departure = departure,
             Connections = connections
@@ -54,7 +55,8 @@ internal class StationTests
         Assert.That(station.NumberOfLapsToStop, Is.EqualTo(3u));
         Assert.That(station.WorkflowId, Is.EqualTo(workflowId));
         Assert.That(station.IsExitOnLeft, Is.True);
-        Assert.That(station.Track, Is.EqualTo(5u));
+        Assert.That(station.Platforms, Has.Count.EqualTo(1));
+        Assert.That(station.Platforms[0].Number, Is.EqualTo(5u));
         Assert.That(station.Arrival, Is.EqualTo(arrival));
         Assert.That(station.Departure, Is.EqualTo(departure));
         Assert.That(station.Connections, Is.SameAs(connections));
@@ -75,15 +77,16 @@ internal class StationTests
     }
 
     [Test]
-    public void Track_NullableUint_DefaultsToOne()
+    public void Platforms_CanAddAndRemove()
     {
         var station = new Station();
-        Assert.That(station.Track, Is.EqualTo(1u));
+        var platform = new Platform { Number = 12 };
 
-        station.Track = null;
-        Assert.That(station.Track, Is.Null);
+        station.Platforms.Add(platform);
+        Assert.That(station.Platforms, Has.Count.EqualTo(1));
+        Assert.That(station.Platforms[0].Number, Is.EqualTo(12u));
 
-        station.Track = 12;
-        Assert.That(station.Track, Is.EqualTo(12u));
+        station.Platforms.Remove(platform);
+        Assert.That(station.Platforms, Is.Empty);
     }
 }

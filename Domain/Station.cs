@@ -17,6 +17,7 @@ public class Station
         Id = Guid.NewGuid();
         Name = "New Station";
         Connections = [];
+        Platforms = [];
     }
 
     /// <summary>
@@ -68,9 +69,15 @@ public class Station
     public bool IsExitOnLeft { get; set; }
 
     /// <summary>
-    /// Upcoming feature: Track/Platform number.
+    /// Platforms (tracks) at this station when used as master data in <see cref="Project.Stations"/>.
     /// </summary>
-    public uint? Track { get; set; } = 1;
+    public List<Platform> Platforms { get; set; }
+
+    /// <summary>
+    /// When this station is embedded in a <see cref="Journey.Stations"/> list, optionally references a
+    /// <see cref="Platform.Id"/> from the same project's <see cref="Project.Stations"/> for display and announcements.
+    /// </summary>
+    public Guid? PlatformId { get; set; }
 
     /// <summary>
     /// Upcoming feature: Arrival time.

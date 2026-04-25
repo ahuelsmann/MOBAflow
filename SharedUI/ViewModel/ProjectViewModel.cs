@@ -41,6 +41,7 @@ public sealed partial class ProjectViewModel : ObservableObject, IViewModelWrapp
     /// Gets the number of journeys contained in this project.
     /// </summary>
     public int JourneyCount => Journeys.Count;
+    public int StationCount => Stations.Count;
     /// <summary>
     /// Gets the number of workflows contained in this project.
     /// </summary>
@@ -70,6 +71,8 @@ public sealed partial class ProjectViewModel : ObservableObject, IViewModelWrapp
     /// Manually synced with Model.Journeys via Refresh().
     /// </summary>
     public ObservableCollection<JourneyViewModel> Journeys { get; } = [];
+
+    public ObservableCollection<StationViewModel> Stations { get; } = [];
 
     /// <summary>
     /// Hierarchical collection of Workflow ViewModels.
@@ -125,6 +128,7 @@ public sealed partial class ProjectViewModel : ObservableObject, IViewModelWrapp
         Refresh();
 
         Journeys.CollectionChanged += (_, _) => NotifyStatisticsChanged();
+        Stations.CollectionChanged += (_, _) => NotifyStatisticsChanged();
         Workflows.CollectionChanged += (_, _) => NotifyStatisticsChanged();
         Trains.CollectionChanged += (_, _) => NotifyStatisticsChanged();
         Locomotives.CollectionChanged += (_, _) => NotifyStatisticsChanged();
@@ -134,6 +138,7 @@ public sealed partial class ProjectViewModel : ObservableObject, IViewModelWrapp
     private void NotifyStatisticsChanged()
     {
         OnPropertyChanged(nameof(JourneyCount));
+        OnPropertyChanged(nameof(StationCount));
         OnPropertyChanged(nameof(WorkflowCount));
         OnPropertyChanged(nameof(TrainCount));
         OnPropertyChanged(nameof(LocomotiveCount));
@@ -153,6 +158,10 @@ public sealed partial class ProjectViewModel : ObservableObject, IViewModelWrapp
         Journeys.Clear();
         foreach (var j in Model.Journeys)
             Journeys.Add(new JourneyViewModel(j, Model, _dispatcher));
+
+        Stations.Clear();
+        foreach (var station in Model.Stations)
+            Stations.Add(new StationViewModel(station, Model));
 
         Workflows.Clear();
         foreach (var w in Model.Workflows)

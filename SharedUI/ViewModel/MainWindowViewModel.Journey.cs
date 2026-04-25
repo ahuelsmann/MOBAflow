@@ -202,7 +202,7 @@ public partial class MainWindowViewModel
         return new Station
         {
             Name = name,
-            InPort = 1, // User must configure!
+            InPort = 0,
             NumberOfLapsToStop = lapsToStop,
             IsExitOnLeft = false
         };

@@ -37,6 +37,8 @@ public class ActionExecutionContext
     /// </summary>
     public Station? CurrentStation { get; set; }
 
+    public Platform? CurrentPlatform { get; set; }
+
     /// <summary>
     /// Journey template text for {JourneyName} placeholder in announcements.
     /// Set by JourneyManager when workflow is triggered during a journey.

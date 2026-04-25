@@ -3,19 +3,52 @@
     {
       "Name": "München",
       "Stations": [
-        { "Name": "München Hauptbahnhof", "Track": 1, "IsExitOnLeft": false, "Platforms": [] }
+        {
+          "Name": "München Hauptbahnhof",
+          "IsExitOnLeft": false,
+          "Platforms": [
+            {
+              "InPort": 0,
+              "Number": 1,
+              "WorkflowId": null,
+              "Name": "Gleis 1"
+            }
+          ]
+        }
       ]
     },
     {
       "Name": "Hamburg",
       "Stations": [
-        { "Name": "Hamburg Hauptbahnhof", "Track": 1, "IsExitOnLeft": false, "Platforms": [] }
+        {
+          "Name": "Hamburg Hauptbahnhof",
+          "IsExitOnLeft": false,
+          "Platforms": [
+            {
+              "InPort": 0,
+              "Number": 1,
+              "WorkflowId": null,
+              "Name": "Gleis 1"
+            }
+          ]
+        }
       ]
     },
     {
       "Name": "Berlin",
       "Stations": [
-        { "Name": "Berlin Hauptbahnhof", "Track": 1, "IsExitOnLeft": false, "Platforms": [] }
+        {
+          "Name": "Berlin Hauptbahnhof",
+          "IsExitOnLeft": false,
+          "Platforms": [
+            {
+              "InPort": 0,
+              "Number": 1,
+              "WorkflowId": null,
+              "Name": "Gleis 1"
+            }
+          ]
+        }
       ]
     }
   ]

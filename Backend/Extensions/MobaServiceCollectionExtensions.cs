@@ -9,6 +9,8 @@ using Domain;
 
 using Interface;
 
+using Manager;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -82,6 +84,20 @@ public static class MobaServiceCollectionExtensions
 
         // Workflow & Actions
         services.AddSingleton<IWorkflowService, WorkflowService>();
+        services.AddTransient<Func<Project, StationManager>>(sp => project => new StationManager(
+            sp.GetRequiredService<IZ21>(),
+            project,
+            sp.GetRequiredService<IWorkflowService>(),
+            sp.GetRequiredService<ActionExecutionContext>(),
+            sp.GetService<ILogger<StationManager>>(),
+            sp.GetService<ILoggerFactory>()));
+        services.AddTransient<Func<Project, Station, PlatformManager>>(sp => (project, station) => new PlatformManager(
+            sp.GetRequiredService<IZ21>(),
+            project,
+            station,
+            sp.GetRequiredService<IWorkflowService>(),
+            sp.GetRequiredService<ActionExecutionContext>(),
+            sp.GetService<ILogger<PlatformManager>>()));
 
         // Train Class Parsing
         services.AddSingleton<ITrainClassParser, TrainClassParser>();

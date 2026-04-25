@@ -686,7 +686,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
     /// <summary>
     /// Used by TimetableStopsControl to display the previous station track value.
     /// </summary>
-    public string PreviousStationTrack => GetPreviousStation()?.Track?.ToString() ?? StationPlaceholder;
+    public string PreviousStationTrack => ResolvePlatformText(GetPreviousStation());
 
     /// <summary>
     /// Used by TimetableStopsControl to hide exit direction icons when there is no previous station.
@@ -716,7 +716,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
     /// <summary>
     /// Used by TimetableStopsControl to display the current station track value.
     /// </summary>
-    public string CurrentStationTrack => GetCurrentStation()?.Track?.ToString() ?? StationPlaceholder;
+    public string CurrentStationTrack => ResolvePlatformText(GetCurrentStation());
 
     /// <summary>
     /// Used by TimetableStopsControl to hide exit direction icons when there is no current station.
@@ -746,7 +746,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
     /// <summary>
     /// Used by TimetableStopsControl to display the next station track value.
     /// </summary>
-    public string NextStationTrack => GetNextStation()?.Track?.ToString() ?? StationPlaceholder;
+    public string NextStationTrack => ResolvePlatformText(GetNextStation());
 
     /// <summary>
     /// Used by TimetableStopsControl to hide exit direction icons when there is no next station.
@@ -791,6 +791,25 @@ public sealed partial class TrainControlViewModel : ObservableObject
             return null;
 
         return CurrentJourney.Stations[nextIndex];
+    }
+
+    private static string ResolvePlatformText(Station? station)
+    {
+        if (station == null)
+        {
+            return StationPlaceholder;
+        }
+
+        if (station.PlatformId.HasValue)
+        {
+            var platform = station.Platforms.FirstOrDefault(platform => platform.Id == station.PlatformId.Value);
+            if (platform != null)
+            {
+                return platform.Number.ToString();
+            }
+        }
+
+        return station.Platforms.FirstOrDefault()?.Number.ToString() ?? StationPlaceholder;
     }
 
     /// <summary>

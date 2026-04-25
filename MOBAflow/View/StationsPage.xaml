@@ -1,0 +1,189 @@
+<Page
+    x:Class="Moba.WinUI.View.StationsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Moba.WinUI.Controls"
+    xmlns:controls1="using:CommunityToolkit.WinUI.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:viewmodel="using:Moba.SharedUI.ViewModel"
+    DataContext="{x:Bind ViewModel}"
+    mc:Ignorable="d">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="280" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="280" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="250" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <controls:CollapsibleColumnCollection
+            Grid.Column="0"
+            Header="Stations"
+            Glyph="&#xEC06;"
+            IsExpanded="True">
+            <controls:CollapsibleColumnCollection.HeaderActions>
+                <StackPanel Orientation="Horizontal" Spacing="2">
+                    <Button
+                        Padding="4"
+                        Command="{x:Bind ViewModel.AddProjectStationCommand}"
+                        ToolTipService.ToolTip="Create a new station">
+                        <FontIcon FontSize="14" Glyph="&#xE710;" />
+                    </Button>
+                    <Button
+                        Padding="4"
+                        Command="{x:Bind ViewModel.DeleteProjectStationCommand}"
+                        ToolTipService.ToolTip="Remove the selected station">
+                        <FontIcon FontSize="14" Glyph="&#xE74D;" />
+                    </Button>
+                </StackPanel>
+            </controls:CollapsibleColumnCollection.HeaderActions>
+            <controls:CollapsibleColumnCollection.PanelContent>
+                <ListView
+                    IsItemClickEnabled="True"
+                    ItemsSource="{x:Bind ViewModel.SelectedProject.Stations, Mode=OneWay}"
+                    SelectedItem="{x:Bind ViewModel.SelectedProjectStation, Mode=TwoWay}"
+                    SelectionMode="Single">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="viewmodel:StationViewModel">
+                            <Grid Padding="6">
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="{x:Bind Name, Mode=OneWay}" />
+                                    <TextBlock
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Style="{ThemeResource CaptionTextBlockStyle}"
+                                        Text="{x:Bind InPort, Mode=OneWay}" />
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </controls:CollapsibleColumnCollection.PanelContent>
+        </controls:CollapsibleColumnCollection>
+
+        <controls1:GridSplitter
+            Grid.Column="1"
+            Width="4"
+            HorizontalAlignment="Left"
+            ResizeBehavior="PreviousAndNext" />
+
+        <controls:CollapsibleColumnCollection
+            Grid.Column="2"
+            Header="Platforms"
+            Glyph="&#xE7C1;"
+            IsExpanded="True">
+            <controls:CollapsibleColumnCollection.HeaderActions>
+                <StackPanel Orientation="Horizontal" Spacing="2">
+                    <Button
+                        Padding="4"
+                        Command="{x:Bind ViewModel.AddPlatformToProjectStationCommand}"
+                        ToolTipService.ToolTip="Create a new platform">
+                        <FontIcon FontSize="14" Glyph="&#xE710;" />
+                    </Button>
+                    <Button
+                        Padding="4"
+                        Command="{x:Bind ViewModel.DeleteProjectStationPlatformCommand}"
+                        ToolTipService.ToolTip="Remove the selected platform">
+                        <FontIcon FontSize="14" Glyph="&#xE74D;" />
+                    </Button>
+                </StackPanel>
+            </controls:CollapsibleColumnCollection.HeaderActions>
+            <controls:CollapsibleColumnCollection.PanelContent>
+                <ListView
+                    IsItemClickEnabled="True"
+                    ItemsSource="{x:Bind ViewModel.SelectedProjectStation.Platforms, Mode=OneWay}"
+                    SelectedItem="{x:Bind ViewModel.SelectedProjectStationPlatform, Mode=TwoWay}"
+                    SelectionMode="Single">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="viewmodel:PlatformViewModel">
+                            <Grid Padding="6">
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="{x:Bind Summary, Mode=OneWay}" />
+                                    <TextBlock
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Style="{ThemeResource CaptionTextBlockStyle}"
+                                        Text="{x:Bind InPort, Mode=OneWay}" />
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </controls:CollapsibleColumnCollection.PanelContent>
+        </controls:CollapsibleColumnCollection>
+
+        <controls1:GridSplitter
+            Grid.Column="3"
+            Width="4"
+            HorizontalAlignment="Left"
+            ResizeBehavior="PreviousAndNext" />
+
+        <controls:CollapsibleColumnProperties
+            Grid.Column="6"
+            Header="{x:Bind ViewModel.StationsPagePropertiesTitle, Mode=OneWay}"
+            Glyph="&#xE946;"
+            IsExpanded="True">
+            <controls:CollapsibleColumnProperties.PanelContent>
+                <ContentControl
+                    HorizontalContentAlignment="Stretch"
+                    VerticalContentAlignment="Stretch"
+                    Content="{x:Bind ViewModel.StationsPageSelectedObject, Mode=OneWay}"
+                    ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
+            </controls:CollapsibleColumnProperties.PanelContent>
+        </controls:CollapsibleColumnProperties>
+
+        <controls:CollapsibleColumnHelper
+            Grid.Column="4"
+            Glyph="&#xE945;"
+            Header="Workflow Library"
+            IsExpanded="{x:Bind ViewModel.IsWorkflowLibraryVisible, Mode=TwoWay}">
+            <controls:CollapsibleColumnHelper.PanelContent>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <AutoSuggestBox
+                        Grid.Row="0"
+                        Margin="0,0,0,8"
+                        PlaceholderText="Search workflows..."
+                        QueryIcon="Find"
+                        Text="{x:Bind ViewModel.WorkflowSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" VerticalScrollMode="Auto">
+                        <StackPanel Spacing="8">
+                            <TextBlock
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="Drag to station or platform to assign" />
+                            <ListView
+                                CanDragItems="True"
+                                DragItemsStarting="WorkflowListView_DragItemsStarting"
+                                ItemsSource="{x:Bind ViewModel.FilteredWorkflows, Mode=OneWay}"
+                                SelectionMode="Single">
+                                <ListView.ItemTemplate>
+                                    <DataTemplate x:DataType="viewmodel:WorkflowViewModel">
+                                        <Grid Padding="6">
+                                            <TextBlock VerticalAlignment="Center" Text="{x:Bind Name, Mode=OneWay}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </controls:CollapsibleColumnHelper.PanelContent>
+        </controls:CollapsibleColumnHelper>
+
+        <controls1:GridSplitter
+            Grid.Column="5"
+            Width="4"
+            HorizontalAlignment="Left"
+            ResizeBehavior="PreviousAndNext"
+            Visibility="{x:Bind ViewModel.IsWorkflowLibraryVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+    </Grid>
+</Page>

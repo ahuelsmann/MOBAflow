@@ -113,7 +113,7 @@ public class JourneyManager : JourneyFeedbackManagerBase
 
                 foreach (var journey in Journeys)
                 {
-                    if (GetInPort(journey) == feedback.InPort)
+                    if (GetInPort(journey) != 0 && GetInPort(journey) == feedback.InPort)
                     {
                         if (ShouldIgnoreFeedback(journey))
                         {
