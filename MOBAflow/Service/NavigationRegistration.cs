@@ -4,22 +4,19 @@ namespace Moba.WinUI.Service;
 using Common.Configuration;
 using Common.Navigation;
 
+using Controls.SignalBox;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-using SharedUI.ViewModel;
-
-using Controls.SignalBox;
-
 using SharedUI.Interface;
+using SharedUI.ViewModel;
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 using View;
-
-using ViewModel;
 
 /// <summary>
 /// Metadata for a registered page with navigation information.
