@@ -111,23 +111,6 @@
                     </CommandBar>
                 </Grid>
 
-                <InfoBar
-                    Title="{x:Bind ViewModel.OperatingStateInfoBarTitle, Mode=OneWay}"
-                    Grid.Row="1"
-                    Margin="12,8,12,0"
-                    IsClosable="False"
-                    IsIconVisible="True"
-                    IsOpen="{x:Bind ViewModel.ShowOperatingStateInfoBar, Mode=OneWay}"
-                    Message="{x:Bind ViewModel.OperatingStateInfoBarMessage, Mode=OneWay}"
-                    Severity="{Binding ElementName=RootWindow, Path=ViewModel.OperatingState, Converter={StaticResource OperatingStateToInfoBarSeverityConverter}, Mode=OneWay}">
-                    <InfoBar.ActionButton>
-                        <Button
-                            Command="{x:Bind ViewModel.AcknowledgeOperatingStateCommand}"
-                            Content="Release System"
-                            Visibility="{Binding ElementName=RootWindow, Path=ViewModel.IsOperatorAckRequired, Converter={StaticResource BoolToVisibilityConverter}, Mode=OneWay}" />
-                    </InfoBar.ActionButton>
-                </InfoBar>
-
                 <!--  Content Frame for page navigation  -->
                 <Frame x:Name="ContentFrame" Grid.Row="2" />
             </Grid>
@@ -179,12 +162,19 @@
                     Height="16"
                     Margin="0,0,4,0"
                     Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-                <FontIcon
+                <Image
                     x:Name="Z21StatusIcon"
+                    Width="18"
+                    Height="18"
                     VerticalAlignment="Center"
-                    FontSize="14"
-                    Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                    Glyph="&#xF384;" />
+                    Opacity="0.4">
+                    <Image.Source>
+                        <SvgImageSource
+                            RasterizePixelHeight="72"
+                            RasterizePixelWidth="72"
+                            UriSource="ms-appx:///Assets/track_power.svg" />
+                    </Image.Source>
+                </Image>
                 <TextBlock
                     VerticalAlignment="Center"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -249,9 +239,7 @@
                     Background="Transparent"
                     BorderThickness="0">
                     <DropDownButton.Content>
-                        <TextBlock
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Text="{x:Bind ViewModel.SelectedSpeechEngine, Mode=OneWay}" />
+                        <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind ViewModel.SelectedSpeechEngine, Mode=OneWay}" />
                     </DropDownButton.Content>
                     <DropDownButton.Flyout>
                         <MenuFlyout>

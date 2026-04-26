@@ -35,6 +35,9 @@ public sealed partial class MainWindow
     private bool _isClosing;
     private bool _isShutdownInProgress;
 
+    private const double Z21TrackPowerIconOpacityConnected = 1.0;
+    private const double Z21TrackPowerIconOpacityDisconnected = 0.4;
+
     /// <summary>
     /// Application version string for display in TitleBar.
     /// </summary>
@@ -90,6 +93,7 @@ public sealed partial class MainWindow
             InitializeNavigation();
             SubscribeWindowEvents();
             ApplyTheme(ViewModel.IsDarkMode);
+            ApplyZ21TrackPowerIconConnectedState();
 
             _restApiStatusService.Start();
         }
@@ -141,6 +145,21 @@ public sealed partial class MainWindow
         BuildNavigationFromRegistry();
         InitializeNavigationAsync().Observe(ex => _logger.LogWarning(ex, "Initialize navigation failed"));
         MainNavigation.SelectedItem = MainNavigation.MenuItems.FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Updates track-power status icon opacity: full when Z21 is connected, dimmed when not.
+    /// </summary>
+    private void ApplyZ21TrackPowerIconConnectedState()
+    {
+        if (_isClosing)
+        {
+            return;
+        }
+
+        Z21StatusIcon.Opacity = ViewModel.IsConnected
+            ? Z21TrackPowerIconOpacityConnected
+            : Z21TrackPowerIconOpacityDisconnected;
     }
 
     private void SubscribeWindowEvents()
@@ -226,12 +245,7 @@ public sealed partial class MainWindow
 
         if (e.PropertyName == nameof(MainWindowViewModel.IsConnected))
         {
-            if (Z21StatusIcon.XamlRoot is null)
-            {
-                return;
-            }
-
-            Z21StatusIcon.Glyph = ViewModel.IsConnected ? "\uE8EB" : "\uF384";
+            ApplyZ21TrackPowerIconConnectedState();
         }
         else if (e.PropertyName == nameof(MainWindowViewModel.IsDarkMode))
         {
