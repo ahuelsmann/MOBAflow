@@ -31,6 +31,11 @@ public sealed class FrameLoopScheduler
 
     public event EventHandler<FrameReadyEventArgs>? FrameReady;
 
+    /// <summary>
+    /// Fired after each <see cref="IFrameSender.SendFrameAsync"/> completes (success) or throws (failure).
+    /// </summary>
+    public event EventHandler<FrameTransmissionCompletedEventArgs>? FrameTransmissionCompleted;
+
     public bool IsRunning => _runTask is { IsCompleted: false };
 
     public Task StartAsync(FrameLoopOptions options, CancellationToken cancellationToken = default)
@@ -88,15 +93,21 @@ public sealed class FrameLoopScheduler
 
             try
             {
-                await _frameSender.SendFrameAsync(_frameBuffer, options.IpAddress, options.Port, cancellationToken).ConfigureAwait(false);
+                await _frameSender.SendFrameAsync(_frameBuffer, options, cancellationToken).ConfigureAwait(false);
+                FrameTransmissionCompleted?.Invoke(
+                    this,
+                    new FrameTransmissionCompletedEventArgs(timestamp, true, null));
             }
             catch (OperationCanceledException)
             {
                 throw;
             }
-            catch
+            catch (Exception ex)
             {
-                // Swallow transient network errors so the loop keeps rendering frames.
+                // Keep the loop alive for local preview; surface failure via FrameTransmissionCompleted.
+                FrameTransmissionCompleted?.Invoke(
+                    this,
+                    new FrameTransmissionCompletedEventArgs(timestamp, false, ex.Message));
             }
         }
     }

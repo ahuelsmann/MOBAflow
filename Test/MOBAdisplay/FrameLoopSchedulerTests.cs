@@ -37,7 +37,15 @@ internal sealed class FrameLoopSchedulerTests
         var sender = new FakeFrameSender();
         var scheduler = new FrameLoopScheduler(renderer, sender);
         var eventCount = 0;
+        var transmitted = 0;
         scheduler.FrameReady += (_, _) => eventCount++;
+        scheduler.FrameTransmissionCompleted += (_, e) =>
+        {
+            if (e.Success)
+            {
+                transmitted++;
+            }
+        };
 
         await scheduler.StartAsync(new FrameLoopOptions
         {
@@ -52,6 +60,7 @@ internal sealed class FrameLoopSchedulerTests
         Assert.That(renderer.RenderCount, Is.GreaterThanOrEqualTo(3));
         Assert.That(sender.SendCount, Is.GreaterThanOrEqualTo(3));
         Assert.That(eventCount, Is.GreaterThanOrEqualTo(3));
+        Assert.That(transmitted, Is.GreaterThanOrEqualTo(3));
     }
 
     private sealed class FakeFrameRenderer : IFrameRenderer
@@ -72,11 +81,13 @@ internal sealed class FrameLoopSchedulerTests
     {
         public int SendCount { get; private set; }
 
-        public Task SendFrameAsync(ReadOnlyMemory<byte> rgb565Frame, string ipAddress, int port, CancellationToken cancellationToken = default)
+        public Task SendFrameAsync(
+            ReadOnlyMemory<byte> rgb565Frame,
+            FrameLoopOptions options,
+            CancellationToken cancellationToken = default)
         {
             _ = rgb565Frame;
-            _ = ipAddress;
-            _ = port;
+            _ = options;
             _ = cancellationToken;
             SendCount++;
             return Task.CompletedTask;

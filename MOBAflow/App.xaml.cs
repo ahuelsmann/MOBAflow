@@ -280,7 +280,9 @@ public partial class App
         services.AddSingleton<JourneyMapViewModel>();
         services.AddTransient<MonitorPageViewModel>();
         services.AddSingleton<IFrameRenderer, SkiaFrameRenderer>();
-        services.AddSingleton<IFrameSender, UdpLineFrameSender>();
+        services.AddSingleton<UdpLineFrameSender>();
+        services.AddSingleton<SerialLineFrameSender>();
+        services.AddSingleton<IFrameSender, RoutingFrameSender>();
         services.AddTransient<FrameLoopScheduler>();
         services.AddTransient<DisplayPageViewModel>();
         services.AddSingleton(sp => new TrainControlViewModel(

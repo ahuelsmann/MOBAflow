@@ -17,7 +17,7 @@
 
         <Grid Grid.Row="1" ColumnSpacing="12">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="360" />
+                <ColumnDefinition Width="400" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
@@ -28,8 +28,50 @@
                     Maximum="99"
                     SpinButtonPlacementMode="Inline"
                     Value="{x:Bind ViewModel.TrackNumber, Mode=TwoWay}" />
-                <TextBox Header="ESP32 IP-Adresse" Text="{x:Bind ViewModel.EspIpAddress, Mode=TwoWay}" />
-                <NumberBox Header="UDP Port" Minimum="1" Maximum="65535" Value="{x:Bind ViewModel.UdpPort, Mode=TwoWay}" />
+
+                <ComboBox
+                    Header="Ausgabe"
+                    SelectedIndex="{x:Bind ViewModel.TransportKindIndex, Mode=TwoWay}">
+                    <ComboBoxItem Content="Netzwerk (UDP)" />
+                    <ComboBoxItem Content="USB / Seriell (COM)" />
+                </ComboBox>
+
+                <StackPanel
+                    Spacing="8"
+                    Visibility="{x:Bind ViewModel.UdpInputsVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <TextBox Header="ESP32 IP-Adresse" Text="{x:Bind ViewModel.EspIpAddress, Mode=TwoWay}" />
+                    <NumberBox Header="UDP Port" Minimum="1" Maximum="65535" Value="{x:Bind ViewModel.UdpPort, Mode=TwoWay}" />
+                </StackPanel>
+
+                <StackPanel
+                    Spacing="8"
+                    Visibility="{x:Bind ViewModel.SerialInputsVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ComboBox
+                            x:Name="SerialPortCombo"
+                            MinWidth="120"
+                            Header="COM-Port"
+                            HorizontalAlignment="Stretch"
+                            ItemsSource="{x:Bind ViewModel.SerialPortNames, Mode=OneWay}"
+                            SelectedItem="{x:Bind ViewModel.SelectedSerialPort, Mode=TwoWay}" />
+                        <Button
+                            VerticalAlignment="Bottom"
+                            Command="{x:Bind ViewModel.RefreshSerialPortsCommand}"
+                            Content="Aktualisieren" />
+                    </StackPanel>
+                    <NumberBox
+                        Header="Baudrate"
+                        Minimum="115200"
+                        Maximum="3686400"
+                        SpinButtonPlacementMode="Inline"
+                        Value="{x:Bind ViewModel.SerialBaudRate, Mode=TwoWay}" />
+                    <TextBlock
+                        TextWrapping="WrapWholeWords"
+                        Opacity="0.88"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Text="Schließen Sie für USB den seriellen Monitor (z. B. PlatformIO), bevor Sie Start wählen — dieselbe COM-Schnittstelle kann nur von einem Programm geöffnet werden." />
+                </StackPanel>
+
                 <NumberBox Header="Refresh Hz" Minimum="1" Maximum="60" Value="{x:Bind ViewModel.RefreshHz, Mode=TwoWay}" />
 
                 <StackPanel Orientation="Horizontal" Spacing="8">
@@ -39,6 +81,9 @@
 
                 <TextBlock Text="{x:Bind ViewModel.ActivityStatusText, Mode=OneWay}" />
                 <TextBlock Text="{x:Bind ViewModel.FramesSentStatusText, Mode=OneWay}" />
+                <TextBlock
+                    TextWrapping="WrapWholeWords"
+                    Text="{x:Bind ViewModel.LastTransportOutcomeText, Mode=OneWay}" />
                 <TextBlock Text="{x:Bind ViewModel.LastFrameTimeText, Mode=OneWay}" />
             </StackPanel>
 
