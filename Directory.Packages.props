@@ -70,6 +70,5 @@
     <PackageVersion Include="MinVer" Version="7.0.0" />
     <PackageVersion Include="CommunityToolkit.WinUI.UI.Controls.Markdown" Version="7.1.2" />
     <PackageVersion Include="SkiaSharp" Version="3.119.2" />
-    <PackageVersion Include="System.IO.Ports" Version="10.0.7" />
   </ItemGroup>
 </Project>

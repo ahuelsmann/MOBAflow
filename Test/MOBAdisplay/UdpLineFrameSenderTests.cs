@@ -53,5 +53,16 @@ internal sealed class UdpLineFrameSenderTests
         Assert.That(Encoding.ASCII.GetString(packets[0]), Is.EqualTo("FRAME_START"));
         Assert.That(Encoding.ASCII.GetString(packets[^1]), Is.EqualTo("FRAME_DONE"));
         Assert.That(packets.Count - 2, Is.EqualTo(FrameDimensions.Height));
+
+        var firstLinePacket = packets[1];
+        var lastLinePacket = packets[^2];
+        var expectedLinePacketLength = (FrameDimensions.Width * FrameDimensions.BytesPerPixel) + 2;
+        Assert.That(firstLinePacket.Length, Is.EqualTo(expectedLinePacketLength));
+        Assert.That(lastLinePacket.Length, Is.EqualTo(expectedLinePacketLength));
+
+        var firstRowIndex = (firstLinePacket[0] << 8) | firstLinePacket[1];
+        var lastRowIndex = (lastLinePacket[0] << 8) | lastLinePacket[1];
+        Assert.That(firstRowIndex, Is.EqualTo(0));
+        Assert.That(lastRowIndex, Is.EqualTo(FrameDimensions.Height - 1));
     }
 }

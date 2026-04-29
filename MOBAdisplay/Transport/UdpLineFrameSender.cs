@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Text;
 
 using Moba.Display.Rendering;
@@ -7,12 +8,15 @@ using Moba.Display.Runtime;
 
 namespace Moba.Display.Transport;
 
-public sealed class UdpLineFrameSender : IDisposable
+public sealed class UdpLineFrameSender : IFrameSender, IDisposable
 {
     private static readonly byte[] FrameStart = Encoding.ASCII.GetBytes("FRAME_START");
     private static readonly byte[] FrameDone = Encoding.ASCII.GetBytes("FRAME_DONE");
+    private static readonly byte[] HostVersionPacket = Encoding.ASCII.GetBytes($"HOST_VER:{ResolveHostVersion()}");
 
     private readonly UdpClient _udpClient = new(AddressFamily.InterNetwork);
+    private string _lastEndpoint = string.Empty;
+    private bool _hostVersionSentForEndpoint;
     private bool _disposed;
 
     /// <inheritdoc cref="IFrameSender.SendFrameAsync"/>
@@ -22,11 +26,6 @@ public sealed class UdpLineFrameSender : IDisposable
         CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
-        if (options.Transport != DisplayTransportKind.Udp)
-        {
-            throw new InvalidOperationException("UdpLineFrameSender only supports DisplayTransportKind.Udp.");
-        }
-
         if (rgb565Frame.Length != FrameDimensions.FrameByteCount)
         {
             throw new ArgumentException("RGB565 frame size is invalid.", nameof(rgb565Frame));
@@ -57,12 +56,14 @@ public sealed class UdpLineFrameSender : IDisposable
         _udpClient.Send(FrameStart, FrameStart.Length);
 
         var bytesPerLine = FrameDimensions.Width * FrameDimensions.BytesPerPixel;
+        var packet = new byte[bytesPerLine + 2];
         for (var row = 0; row < FrameDimensions.Height; row++)
         {
             var offset = row * bytesPerLine;
-            var lineBytes = rgb565Frame.Slice(offset, bytesPerLine).ToArray();
-            _udpClient.Send(lineBytes, lineBytes.Length);
-            Thread.Sleep(1);
+            packet[0] = (byte)((row >> 8) & 0xFF);
+            packet[1] = (byte)(row & 0xFF);
+            rgb565Frame.Slice(offset, bytesPerLine).CopyTo(packet.AsSpan(2));
+            _udpClient.Send(packet, packet.Length);
         }
 
         _udpClient.Send(FrameDone, FrameDone.Length);
@@ -74,18 +75,44 @@ public sealed class UdpLineFrameSender : IDisposable
         int port,
         CancellationToken cancellationToken)
     {
+        var endpointKey = $"{ip}:{port}";
+        if (!string.Equals(_lastEndpoint, endpointKey, StringComparison.Ordinal))
+        {
+            _lastEndpoint = endpointKey;
+            _hostVersionSentForEndpoint = false;
+        }
+
         _udpClient.Connect(new IPEndPoint(ip, port));
+        if (!_hostVersionSentForEndpoint)
+        {
+            await _udpClient.SendAsync(HostVersionPacket, cancellationToken).ConfigureAwait(false);
+            _hostVersionSentForEndpoint = true;
+        }
         await _udpClient.SendAsync(FrameStart, cancellationToken).ConfigureAwait(false);
 
         var bytesPerLine = FrameDimensions.Width * FrameDimensions.BytesPerPixel;
+        var packet = new byte[bytesPerLine + 2];
         for (var row = 0; row < FrameDimensions.Height; row++)
         {
-            var line = rgb565Frame.Slice(row * bytesPerLine, bytesPerLine).ToArray();
-            await _udpClient.SendAsync(line, cancellationToken).ConfigureAwait(false);
-            await Task.Delay(1, cancellationToken).ConfigureAwait(false);
+            packet[0] = (byte)((row >> 8) & 0xFF);
+            packet[1] = (byte)(row & 0xFF);
+            rgb565Frame.Slice(row * bytesPerLine, bytesPerLine).Span.CopyTo(packet.AsSpan(2));
+            await _udpClient.SendAsync(packet, cancellationToken).ConfigureAwait(false);
         }
 
         await _udpClient.SendAsync(FrameDone, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static string ResolveHostVersion()
+    {
+        var assembly = typeof(UdpLineFrameSender).Assembly;
+        var informational = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        if (!string.IsNullOrWhiteSpace(informational))
+        {
+            return informational!;
+        }
+
+        return assembly.GetName().Version?.ToString() ?? "dev";
     }
 
     public void Dispose()

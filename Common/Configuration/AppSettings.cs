@@ -52,6 +52,11 @@ public class AppSettings
     public LayoutSettings Layout { get; set; } = new();
 
     /// <summary>
+    /// Display page settings (ESP display transport/UI preferences).
+    /// </summary>
+    public DisplaySettings Display { get; set; } = new();
+
+    /// <summary>
     /// Signal Box / Viessmann Multiplex signal settings.
     /// Optional; if not present in appsettings.json, default values are used.
     /// </summary>
@@ -90,6 +95,17 @@ public class RestApiSettings
     /// List of recently used IP addresses.
     /// </summary>
     public List<string> RecentIpAddresses { get; set; } = [];
+}
+
+/// <summary>
+/// Display page specific settings for ESP communication.
+/// </summary>
+public class DisplaySettings
+{
+    /// <summary>
+    /// Last used ESP32 target IP for display UDP transport.
+    /// </summary>
+    public string Esp32IpAddress { get; set; } = "192.168.0.82";
 }
 
 /// <summary>
