@@ -15,7 +15,6 @@
         <converter:IntToPresetCheckedConverter x:Key="IntToPresetCheckedConverter" />
         <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
         <converter:MillivoltsToVoltsConverter x:Key="MillivoltsToVoltsConverter" />
-        <converter:AssetNameToSvgImageSourceConverter x:Key="AssetNameToSvgImageSourceConverter" />
         <converter:AssetNameToUriConverter x:Key="AssetNameToUriConverter" />
     </Page.Resources>
 

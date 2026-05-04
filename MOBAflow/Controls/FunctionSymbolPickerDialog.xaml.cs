@@ -16,12 +16,10 @@ internal sealed class FunctionSymbolItem
     {
         FileName = fileName;
         DisplayName = ToDisplayName(fileName);
-        UriSource = new Uri($"ms-appx:///Assets/{fileName}");
     }
 
     public string FileName { get; }
     public string DisplayName { get; }
-    public Uri UriSource { get; }
 
     private static string ToDisplayName(string fileName)
     {

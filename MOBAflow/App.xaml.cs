@@ -4,6 +4,7 @@ namespace Moba.WinUI;
 
 using Backend.Data;
 using Backend.Interface;
+using Backend.Network;
 using Backend.Service;
 
 using Common.Configuration;
@@ -46,6 +47,8 @@ using TrackPlan.Renderer;
 using View;
 
 using ViewModel;
+
+using Moba.Backend;
 
 /// <summary>
 /// Provides application-specific behavior to supplement the default Application class.
@@ -209,6 +212,24 @@ public partial class App
             return factory.CreateEngineFromOptions();
         });
 
+        services.AddSingleton<Solution>();
+        services.AddSingleton<MasterDataStore>();
+        services.AddSingleton<Z21Monitor>();
+        services.AddSingleton<IUdpClientWrapper, UdpWrapper>();
+        services.AddSingleton<IZ21, Z21>();
+        services.AddSingleton<IProjectValidator, ProjectValidator>();
+        services.AddSingleton<AnnouncementService>();
+        services.AddSingleton<IActionExecutor>(sp => new ActionExecutor(
+            sp.GetRequiredService<AnnouncementService>(),
+            sp.GetService<ITrainDestinationDisplayService>(),
+            sp.GetRequiredService<ILogger<ActionExecutor>>()));
+        services.AddSingleton<IWorkflowService, WorkflowService>();
+        services.AddSingleton(sp => new ActionExecutionContext
+        {
+            Z21 = sp.GetRequiredService<IZ21>(),
+            SpeakerEngine = sp.GetService<ISpeakerEngine>(),
+            SoundPlayer = sp.GetService<ISoundPlayer>()
+        });
         services.AddSingleton<IMobaRuntime, MobaRuntimeService>();
 
         services.AddSingleton<IIoService, IoService>();

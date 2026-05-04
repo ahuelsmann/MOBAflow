@@ -1,42 +1,29 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Converter;
 
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Imaging;
-
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media.Imaging;
+
 using Windows.Storage.Streams;
 
 /// <summary>
-/// Converts an asset filename (e.g. "scheinwerfer.svg") to an <see cref="SvgImageSource"/>
-/// referencing the packaged Assets folder. Empty/null input produces null so the bound
-/// Image control stays blank.
-/// </summary>
-public sealed partial class AssetNameToSvgImageSourceConverter : IValueConverter
-{
-    public object? Convert(object value, Type targetType, object parameter, string language)
-    {
-        if (value is not string name || string.IsNullOrWhiteSpace(name))
-            return null;
-
-        // Return a placeholder - actual loading happens via SvgImageBehavior
-        return new SvgImageSource(new Uri($"ms-appx:///Assets/{name.Trim()}"));
-    }
-
-    public object ConvertBack(object value, Type targetType, object parameter, string language)
-        => throw new NotSupportedException();
-}
-
-/// <summary>
-/// Attached property for Image controls that loads SVG assets asynchronously with currentColor replacement.
-/// WinUI 3 requires async loading for proper SVG processing from streams.
+/// Attached property that loads a monochrome SVG asset into an <see cref="Image"/>
+/// and recolors it to match the current application theme (white in dark mode,
+/// black in light mode).
+/// <para>
+/// WinUI 3's <see cref="SvgImageSource"/> does not evaluate the CSS <c>currentColor</c>
+/// keyword, and unpackaged apps cannot use <c>ms-appx://</c> URIs. The behavior therefore
+/// reads each SVG from the on-disk Assets folder, rewrites stroke/fill values to the
+/// theme color, and feeds the result into <see cref="SvgImageSource"/> via an in-memory
+/// stream (no disk writes — works in packaged MSIX where the install folder is read-only).
+/// </para>
 /// </summary>
 public static class SvgImageBehavior
 {
@@ -49,80 +36,86 @@ public static class SvgImageBehavior
     public static string? GetSvgAssetName(DependencyObject obj) => (string?)obj.GetValue(SvgAssetNameProperty);
     public static void SetSvgAssetName(DependencyObject obj, string? value) => obj.SetValue(SvgAssetNameProperty, value);
 
-    private static readonly Dictionary<Image, string> _loadingCache = new();
+    private const string ColorValuePattern = @"currentColor|black|#000|#000000|rgb\(0,\s*0,\s*0\)";
+
+    private static readonly Regex ColorReplacementQuoted = new(
+        $@"(?<name>stroke|fill)=[""'](?<value>{ColorValuePattern})[""']",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    private static readonly Regex ColorReplacementUnquoted = new(
+        $@"(?<name>stroke|fill)=(?<value>{ColorValuePattern})\b",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    private static readonly Regex ColorReplacementCss = new(
+        $@"(?<name>stroke|fill)\s*:\s*(?<value>{ColorValuePattern})\b",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    private static readonly Dictionary<Image, string> _assetByImage = new();
 
     private static async void OnSvgAssetNameChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is not Image image || e.NewValue is not string assetName || string.IsNullOrWhiteSpace(assetName))
+        if (d is not Image image)
+            return;
+
+        if (e.NewValue is not string assetName || string.IsNullOrWhiteSpace(assetName))
         {
-            if (d is Image img) img.Source = null;
+            _assetByImage.Remove(image);
+            image.Source = null;
             return;
         }
 
-        // Cache the asset name for theme change handling
-        _loadingCache[image] = assetName;
+        _assetByImage[image] = assetName;
 
-        // Subscribe to theme changes if not already subscribed
+        // Subscribe once; the Tag flag avoids repeated subscriptions on rebind.
         if (image.Tag is not bool)
         {
-            image.ActualThemeChanged += OnImageActualThemeChanged;
+            image.ActualThemeChanged += (s, _) =>
+            {
+                if (s is Image img && _assetByImage.TryGetValue(img, out var name))
+                    _ = LoadSvgAsync(img, name);
+            };
             image.Tag = true;
         }
 
         await LoadSvgAsync(image, assetName);
     }
 
-    private static void OnImageActualThemeChanged(FrameworkElement sender, object args)
-    {
-        if (sender is Image image && _loadingCache.TryGetValue(image, out var assetName))
-        {
-            _ = LoadSvgAsync(image, assetName);
-        }
-    }
-
     private static async Task LoadSvgAsync(Image image, string assetName)
     {
+        var trimmed = assetName.Trim();
         try
         {
-            // Try to load from ms-appx first
-            var uri = new Uri($"ms-appx:///Assets/{assetName.Trim()}");
-            var file = await Windows.Storage.StorageFile.GetFileFromApplicationUriAsync(uri);
-            var buffer = await Windows.Storage.FileIO.ReadBufferAsync(file);
+            var sourcePath = Path.Combine(AppContext.BaseDirectory, "Assets", trimmed);
+            var svg = await File.ReadAllTextAsync(sourcePath);
+            var color = GetThemeColor();
 
-            // Read SVG content
-            using var dataReader = Windows.Storage.Streams.DataReader.FromBuffer(buffer);
-            var bytes = new byte[buffer.Length];
-            dataReader.ReadBytes(bytes);
-            var svgContent = Encoding.UTF8.GetString(bytes);
+            var modified = ColorReplacementQuoted.Replace(svg, m => $"{m.Groups["name"].Value}=\"{color}\"");
+            modified = ColorReplacementUnquoted.Replace(modified, m => $"{m.Groups["name"].Value}=\"{color}\"");
+            modified = ColorReplacementCss.Replace(modified, m => $"{m.Groups["name"].Value}:{color}");
 
-            // Get appropriate color based on current theme
-            var themeColor = GetThemeColor(image);
-
-            // Replace currentColor with theme-appropriate color
-            var modifiedSvg = ReplaceCurrentColor(svgContent, themeColor);
-
-            // Create stream for SvgImageSource
+            // Feed the recolored SVG directly into SvgImageSource via an in-memory stream.
+            // Avoids writing to AppContext.BaseDirectory (read-only in packaged MSIX) and
+            // avoids file:// URI sandboxing issues.
             using var stream = new InMemoryRandomAccessStream();
             using (var writer = new DataWriter(stream))
             {
-                writer.WriteBytes(Encoding.UTF8.GetBytes(modifiedSvg));
+                writer.WriteBytes(Encoding.UTF8.GetBytes(modified));
                 await writer.StoreAsync();
                 await writer.FlushAsync();
-                writer.DetachStream(); // Prevent DataWriter from closing the stream on dispose
+                writer.DetachStream();
             }
             stream.Seek(0);
 
-            // Create and set SvgImageSource
             var svgSource = new SvgImageSource();
             await svgSource.SetSourceAsync(stream);
             image.Source = svgSource;
         }
         catch
         {
-            // Fallback: try direct ms-appx URI
+            // Fallback: show the raw (uncolored) SVG so the icon is at least visible.
             try
             {
-                image.Source = new SvgImageSource(new Uri($"ms-appx:///Assets/{assetName.Trim()}"));
+                image.Source = new SvgImageSource(new Uri($"ms-appx:///Assets/{trimmed}"));
             }
             catch
             {
@@ -131,52 +124,13 @@ public static class SvgImageBehavior
         }
     }
 
-    private static string GetThemeColor(Image image)
+    private static string GetThemeColor()
     {
-        // Use the global application theme state from MainWindowViewModel as the most reliable source.
-        // ContentDialogs and dynamically loaded DataTemplates often fail to inherit ActualTheme correctly
-        // before they are fully materialized or when hosted in popup roots.
-        if (Application.Current is Moba.WinUI.App app)
-        {
-            var vm = app.Services?.GetService(typeof(Moba.SharedUI.ViewModel.MainWindowViewModel)) as Moba.SharedUI.ViewModel.MainWindowViewModel;
-            if (vm != null)
-            {
-                return vm.IsDarkMode ? "#FFFFFF" : "#000000";
-            }
-        }
+        var vm = (Application.Current as Moba.WinUI.App)?.Services
+            ?.GetService(typeof(Moba.SharedUI.ViewModel.MainWindowViewModel))
+            as Moba.SharedUI.ViewModel.MainWindowViewModel;
 
-        // Fallback (should normally not be reached)
-        var theme = image.ActualTheme;
-        if (theme == ElementTheme.Default && image.XamlRoot?.Content is FrameworkElement root)
-            theme = root.ActualTheme;
-
-        return theme == ElementTheme.Light ? "#000000" : "#FFFFFF";
-    }
-
-    private static string ReplaceCurrentColor(string svg, string color)
-    {
-        // Replace currentColor with the specified color
-        // Handle both quoted and unquoted variants
-        const string colorValuePattern = @"currentColor|black|#000|#000000|rgb\(0,\s*0,\s*0\)";
-
-        var result = Regex.Replace(
-            svg,
-            $@"(?<name>stroke|fill)=[""'](?<value>{colorValuePattern})[""']",
-            match => $"{match.Groups["name"].Value}=\"{color}\"",
-            RegexOptions.IgnoreCase);
-
-        result = Regex.Replace(
-            result,
-            $@"(?<name>stroke|fill)=(?<value>{colorValuePattern})\b",
-            match => $"{match.Groups["name"].Value}=\"{color}\"",
-            RegexOptions.IgnoreCase);
-
-        result = Regex.Replace(
-            result,
-            $@"(?<name>stroke|fill)\s*:\s*(?<value>{colorValuePattern})\b",
-            match => $"{match.Groups["name"].Value}:{color}",
-            RegexOptions.IgnoreCase);
-
-        return result;
+        // Default to dark (white icons) when not resolvable: matches AppSettings default IsDarkMode=true.
+        return vm is null || vm.IsDarkMode ? "#FFFFFF" : "#000000";
     }
 }
