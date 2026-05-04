@@ -1,11 +1,17 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
+using Common.Configuration;
+using Common.Extension;
+
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 
 using Moba.SharedUI.ViewModel;
+
+using SharedUI.Interface;
 
 using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
@@ -16,27 +22,61 @@ using Windows.System;
 /// </summary>
 internal sealed partial class WorkflowsPage
 {
+    private readonly AppSettings _settings;
+    private readonly ISettingsService? _settingsService;
+    private readonly ILogger<WorkflowsPage>? _logger;
+
     public MainWindowViewModel ViewModel { get; }
 
-    private GridLength _workflowsExpandedWidth = new(1, GridUnitType.Star);
-    private GridLength _actionsExpandedWidth = new(1.5, GridUnitType.Star);
-    private GridLength _propertiesExpandedWidth = new(1.5, GridUnitType.Star);
+    private double _workflowsExpandedWidth = 200;
+    private double _actionsExpandedWidth = 300;
+    private double _propertiesExpandedWidth = 300;
 
-    public WorkflowsPage(MainWindowViewModel viewModel)
+    public WorkflowsPage(
+        MainWindowViewModel viewModel,
+        AppSettings settings,
+        ISettingsService? settingsService = null,
+        ILogger<WorkflowsPage>? logger = null)
     {
         ViewModel = viewModel;
+        _settings = settings;
+        _settingsService = settingsService;
+        _logger = logger;
         InitializeComponent();
 
-        ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+        Loaded += OnPageLoaded;
         Unloaded += OnPageUnloaded;
+    }
+
+    private void OnPageLoaded(object sender, RoutedEventArgs e)
+    {
+        ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+        ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+        RestoreLayout();
     }
 
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
     {
         _ = sender;
         _ = e;
-        ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
-        Unloaded -= OnPageUnloaded;
+        HandlePageUnloadedAsync().Observe(ex => _logger?.LogWarning(ex, "Persist layout on unload failed"));
+    }
+
+    private async Task HandlePageUnloadedAsync()
+    {
+        try
+        {
+            ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+            SaveLayout();
+            if (_settingsService != null)
+            {
+                await _settingsService.SaveSettingsAsync(_settings);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning(ex, "Persist layout on unload failed");
+        }
     }
 
     private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -45,46 +85,140 @@ internal sealed partial class WorkflowsPage
         {
             if (!ViewModel.IsWorkflowListExpanded)
             {
-                if (!ColWorkflows.Width.IsAuto)
+                if (ColWorkflows.Width.IsAbsolute)
                 {
-                    _workflowsExpandedWidth = ColWorkflows.Width;
+                    _workflowsExpandedWidth = ColWorkflows.Width.Value;
                 }
                 ColWorkflows.Width = GridLength.Auto;
             }
             else
             {
-                ColWorkflows.Width = _workflowsExpandedWidth;
+                ColWorkflows.Width = new GridLength(_workflowsExpandedWidth);
             }
         }
         else if (e.PropertyName == nameof(ViewModel.IsWorkflowActionsExpanded))
         {
             if (!ViewModel.IsWorkflowActionsExpanded)
             {
-                if (!ColActions.Width.IsAuto)
+                if (ColActions.Width.IsAbsolute)
                 {
-                    _actionsExpandedWidth = ColActions.Width;
+                    _actionsExpandedWidth = ColActions.Width.Value;
                 }
                 ColActions.Width = GridLength.Auto;
             }
             else
             {
-                ColActions.Width = _actionsExpandedWidth;
+                ColActions.Width = new GridLength(_actionsExpandedWidth);
             }
         }
         else if (e.PropertyName == nameof(ViewModel.IsWorkflowPropertiesExpanded))
         {
             if (!ViewModel.IsWorkflowPropertiesExpanded)
             {
-                if (!ColProperties.Width.IsAuto)
+                if (ColProperties.Width.IsAbsolute)
                 {
-                    _propertiesExpandedWidth = ColProperties.Width;
+                    _propertiesExpandedWidth = ColProperties.Width.Value;
                 }
                 ColProperties.Width = GridLength.Auto;
             }
             else
             {
-                ColProperties.Width = _propertiesExpandedWidth;
+                ColProperties.Width = new GridLength(_propertiesExpandedWidth);
             }
+        }
+    }
+
+    private void RestoreLayout()
+    {
+        var layout = _settings.Layout.WorkflowsPage;
+
+        if (layout.WorkflowListColumnWidth > 0)
+        {
+            _workflowsExpandedWidth = layout.WorkflowListColumnWidth;
+        }
+        if (layout.ActionsColumnWidth > 0)
+        {
+            _actionsExpandedWidth = layout.ActionsColumnWidth;
+        }
+        if (layout.PropertiesColumnWidth > 0)
+        {
+            _propertiesExpandedWidth = layout.PropertiesColumnWidth;
+        }
+
+        if (layout.IsWorkflowListExpanded)
+        {
+            ColWorkflows.Width = new GridLength(_workflowsExpandedWidth);
+        }
+        else
+        {
+            ColWorkflows.Width = GridLength.Auto;
+        }
+
+        if (layout.IsActionsExpanded)
+        {
+            ColActions.Width = new GridLength(_actionsExpandedWidth);
+        }
+        else
+        {
+            ColActions.Width = GridLength.Auto;
+        }
+
+        if (layout.IsPropertiesExpanded)
+        {
+            ColProperties.Width = new GridLength(_propertiesExpandedWidth);
+        }
+        else
+        {
+            ColProperties.Width = GridLength.Auto;
+        }
+
+        if (ViewModel.IsWorkflowListExpanded != layout.IsWorkflowListExpanded)
+        {
+            ViewModel.IsWorkflowListExpanded = layout.IsWorkflowListExpanded;
+        }
+        if (ViewModel.IsWorkflowActionsExpanded != layout.IsActionsExpanded)
+        {
+            ViewModel.IsWorkflowActionsExpanded = layout.IsActionsExpanded;
+        }
+        if (ViewModel.IsWorkflowPropertiesExpanded != layout.IsPropertiesExpanded)
+        {
+            ViewModel.IsWorkflowPropertiesExpanded = layout.IsPropertiesExpanded;
+        }
+    }
+
+    private void SaveLayout()
+    {
+        var layout = _settings.Layout.WorkflowsPage;
+
+        layout.IsWorkflowListExpanded = ViewModel.IsWorkflowListExpanded;
+        layout.IsActionsExpanded = ViewModel.IsWorkflowActionsExpanded;
+        layout.IsPropertiesExpanded = ViewModel.IsWorkflowPropertiesExpanded;
+
+        if (ColWorkflows.Width.IsAbsolute)
+        {
+            layout.WorkflowListColumnWidth = ColWorkflows.Width.Value;
+        }
+        else if (!ViewModel.IsWorkflowListExpanded)
+        {
+            layout.WorkflowListColumnWidth = _workflowsExpandedWidth;
+        }
+
+        if (ColActions.Width.IsAbsolute)
+        {
+            layout.ActionsColumnWidth = ColActions.Width.Value;
+        }
+        else if (!ViewModel.IsWorkflowActionsExpanded)
+        {
+            layout.ActionsColumnWidth = _actionsExpandedWidth;
+        }
+
+        if (ColProperties.Width.IsAbsolute)
+        {
+            layout.PropertiesColumnWidth = ColProperties.Width.Value;
+        }
+        else if (!ViewModel.IsWorkflowPropertiesExpanded)
+        {
+            layout.PropertiesColumnWidth = _propertiesExpandedWidth;
         }
     }
 

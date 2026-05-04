@@ -1,8 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-
 namespace Moba.Domain;
-
-using System.Text.Json.Serialization;
 
 /// <summary>
 /// Platform (track) at a station — one physical track with optional feedback and workflow.
@@ -44,13 +41,4 @@ public class Platform
     /// Optional workflow executed when feedback is received on this platform's <see cref="InPort"/>.
     /// </summary>
     public Guid? WorkflowId { get; set; }
-
-    /// <summary>
-    /// Short label for UI pickers (not serialized).
-    /// </summary>
-    [JsonIgnore]
-    public string Summary =>
-        string.IsNullOrWhiteSpace(Name)
-            ? $"Track {Number}"
-            : $"{Name} ({Number})";
 }

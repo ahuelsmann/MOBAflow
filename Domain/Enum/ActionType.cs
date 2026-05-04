@@ -17,4 +17,7 @@ public enum ActionType
 
     /// <summary>Execute a PowerShell script.</summary>
     ExecutePowerShellScript,
+
+    /// <summary>Refreshes the train destination display.</summary>
+    TrainDestinationDisplay,
 }

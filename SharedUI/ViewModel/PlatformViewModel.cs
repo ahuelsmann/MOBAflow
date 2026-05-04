@@ -42,7 +42,6 @@ public sealed partial class PlatformViewModel : ObservableObject, IViewModelWrap
         {
             if (SetProperty(_platform.Name, value, _platform, (m, v) => m.Name = v))
             {
-                OnPropertyChanged(nameof(Summary));
             }
         }
     }
@@ -57,7 +56,6 @@ public sealed partial class PlatformViewModel : ObservableObject, IViewModelWrap
         {
             if (SetProperty(_platform.Number, (uint)value, _platform, (m, v) => m.Number = v))
             {
-                OnPropertyChanged(nameof(Summary));
             }
         }
     }
@@ -85,11 +83,6 @@ public sealed partial class PlatformViewModel : ObservableObject, IViewModelWrap
             }
         }
     }
-
-    /// <summary>
-    /// Gets the platform summary.
-    /// </summary>
-    public string Summary => _platform.Summary;
 
     /// <summary>
     /// Gets the name of the assigned workflow, or a placeholder if none is assigned.

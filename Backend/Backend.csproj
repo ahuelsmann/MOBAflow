@@ -12,6 +12,10 @@
     <ItemGroup>
         <ProjectReference Include="..\Common\Common.csproj" />
         <ProjectReference Include="..\Domain\Domain.csproj" />
+        <ProjectReference Include="..\MOBAdisplay\MOBAdisplay.csproj" />
         <ProjectReference Include="..\Sound\Sound.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+      <Folder Include="Extensions\" />
     </ItemGroup>
 </Project>

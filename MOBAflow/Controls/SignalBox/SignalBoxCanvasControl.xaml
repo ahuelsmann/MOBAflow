@@ -15,13 +15,13 @@
                 Height="1080"
                 IsHitTestVisible="False">
                 <Canvas
-                    Canvas.Left="{x:Bind X, Converter={StaticResource GridConverter}, Mode=OneWay}"
-                    Canvas.Top="{x:Bind Y, Converter={StaticResource GridConverter}, Mode=OneWay}"
+                    Canvas.Left="{x:Bind X, Converter={StaticResource GridConverter}, Mode=OneTime}"
+                    Canvas.Top="{x:Bind Y, Converter={StaticResource GridConverter}, Mode=OneTime}"
                     Width="60"
                     Height="60"
                     RenderTransformOrigin="0.5,0.5">
                     <Canvas.RenderTransform>
-                        <RotateTransform Angle="{x:Bind Rotation, Mode=OneWay}" />
+                        <RotateTransform Angle="{x:Bind Rotation, Mode=OneTime}" />
                     </Canvas.RenderTransform>
                     <Line
                         Stroke="{ThemeResource SignalBoxTrackColor}"
@@ -40,13 +40,13 @@
                 Height="1080"
                 IsHitTestVisible="False">
                 <Canvas
-                    Canvas.Left="{x:Bind X, Converter={StaticResource GridConverter}, Mode=OneWay}"
-                    Canvas.Top="{x:Bind Y, Converter={StaticResource GridConverter}, Mode=OneWay}"
+                    Canvas.Left="{x:Bind X, Converter={StaticResource GridConverter}, Mode=OneTime}"
+                    Canvas.Top="{x:Bind Y, Converter={StaticResource GridConverter}, Mode=OneTime}"
                     Width="60"
                     Height="60"
                     RenderTransformOrigin="0.5,0.5">
                     <Canvas.RenderTransform>
-                        <RotateTransform Angle="{x:Bind Rotation, Mode=OneWay}" />
+                        <RotateTransform Angle="{x:Bind Rotation, Mode=OneTime}" />
                     </Canvas.RenderTransform>
                     <Path
                         Data="M 0,30 Q 30,30 30,60"
@@ -62,13 +62,13 @@
                 Height="1080"
                 IsHitTestVisible="False">
                 <Canvas
-                    Canvas.Left="{x:Bind X, Converter={StaticResource GridConverter}, Mode=OneWay}"
-                    Canvas.Top="{x:Bind Y, Converter={StaticResource GridConverter}, Mode=OneWay}"
+                    Canvas.Left="{x:Bind X, Converter={StaticResource GridConverter}, Mode=OneTime}"
+                    Canvas.Top="{x:Bind Y, Converter={StaticResource GridConverter}, Mode=OneTime}"
                     Width="60"
                     Height="60"
                     RenderTransformOrigin="0.5,0.5">
                     <Canvas.RenderTransform>
-                        <RotateTransform Angle="{x:Bind Rotation, Mode=OneWay}" />
+                        <RotateTransform Angle="{x:Bind Rotation, Mode=OneTime}" />
                     </Canvas.RenderTransform>
                     <Line
                         Stroke="{ThemeResource SignalBoxTrackColor}"
@@ -108,23 +108,23 @@
                 Height="1080"
                 IsHitTestVisible="False">
                 <Canvas
-                    Canvas.Left="{x:Bind X, Converter={StaticResource GridConverter}, Mode=OneWay}"
-                    Canvas.Top="{x:Bind Y, Converter={StaticResource GridConverter}, Mode=OneWay}"
+                    Canvas.Left="{x:Bind X, Converter={StaticResource GridConverter}, Mode=OneTime}"
+                    Canvas.Top="{x:Bind Y, Converter={StaticResource GridConverter}, Mode=OneTime}"
                     Width="60"
                     Height="60"
                     RenderTransformOrigin="0.5,0.5">
                     <Canvas.RenderTransform>
-                        <RotateTransform Angle="{x:Bind Rotation, Mode=OneWay}" />
+                        <RotateTransform Angle="{x:Bind Rotation, Mode=OneTime}" />
                     </Canvas.RenderTransform>
                     <controls:KsSignalScreen
                         Canvas.Left="5"
                         Canvas.Top="5"
                         Width="50"
                         Height="50"
-                        Aspect="{x:Bind SignalAspect, Mode=OneWay}"
-                        BottomSpeedValue="{x:Bind BottomSpeedIndicator, Mode=OneWay}"
-                        SignalArticleNumber="{x:Bind MainSignalArticleNumber, Mode=OneWay}"
-                        TopSpeedValue="{x:Bind TopSpeedIndicator, Mode=OneWay}" />
+                        Aspect="{x:Bind SignalAspect, Mode=OneTime}"
+                        BottomSpeedValue="{x:Bind BottomSpeedIndicator, Mode=OneTime}"
+                        SignalArticleNumber="{x:Bind MainSignalArticleNumber, Mode=OneTime}"
+                        TopSpeedValue="{x:Bind TopSpeedIndicator, Mode=OneTime}" />
                 </Canvas>
             </Canvas>
         </DataTemplate>
@@ -135,13 +135,13 @@
                 Height="1080"
                 IsHitTestVisible="False">
                 <Canvas
-                    Canvas.Left="{x:Bind X, Converter={StaticResource GridConverter}, Mode=OneWay}"
-                    Canvas.Top="{x:Bind Y, Converter={StaticResource GridConverter}, Mode=OneWay}"
+                    Canvas.Left="{x:Bind X, Converter={StaticResource GridConverter}, Mode=OneTime}"
+                    Canvas.Top="{x:Bind Y, Converter={StaticResource GridConverter}, Mode=OneTime}"
                     Width="60"
                     Height="60"
                     RenderTransformOrigin="0.5,0.5">
                     <Canvas.RenderTransform>
-                        <RotateTransform Angle="{x:Bind Rotation, Mode=OneWay}" />
+                        <RotateTransform Angle="{x:Bind Rotation, Mode=OneTime}" />
                     </Canvas.RenderTransform>
                     <Line
                         Stroke="{ThemeResource SignalBoxTrackColor}"

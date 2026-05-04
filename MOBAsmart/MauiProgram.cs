@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI;
 
-using Backend.Extensions;
 using Backend.Interface;
 using Backend.Service;
 
@@ -91,10 +90,6 @@ public static class MauiProgram
         // ViewModels
         builder.Services.AddSingleton<MauiViewModel>();
 
-        // Backend services - Register in dependency order
-        // PERFORMANCE: Backend services (IZ21, WorkflowService, etc.) are configured
-        // to defer connection/initialization until explicitly needed
-        builder.Services.AddMobaBackendServices();
         builder.Services.AddSingleton<IMobaRuntime, MobaRuntimeService>();
 
         // Views

@@ -1,10 +1,10 @@
+using Moba.Display.Rendering;
+using Moba.Display.Runtime;
+
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
-
-using Moba.Display.Rendering;
-using Moba.Display.Runtime;
 
 namespace Moba.Display.Transport;
 
@@ -26,7 +26,8 @@ public sealed class UdpLineFrameSender : IFrameSender, IDisposable
         CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
-        if (rgb565Frame.Length != FrameDimensions.FrameByteCount)
+        var frameByteCount = options.Width * options.Height * FrameDimensions.BytesPerPixel;
+        if (rgb565Frame.Length != frameByteCount)
         {
             throw new ArgumentException("RGB565 frame size is invalid.", nameof(rgb565Frame));
         }
@@ -36,53 +37,23 @@ public sealed class UdpLineFrameSender : IFrameSender, IDisposable
             throw new ArgumentException("Invalid IP address format.", nameof(options));
         }
 
-        await SendFrameCoreAsync(rgb565Frame, ip, options.Port, cancellationToken).ConfigureAwait(false);
-    }
-
-    public void SendFrame(ReadOnlySpan<byte> rgb565Frame, string ipAddress, int port)
-    {
-        ThrowIfDisposed();
-        if (!IPAddress.TryParse(ipAddress, out var ip))
-        {
-            throw new ArgumentException("Invalid IP address format.", nameof(ipAddress));
-        }
-
-        if (rgb565Frame.Length != FrameDimensions.FrameByteCount)
-        {
-            throw new ArgumentException("RGB565 frame size is invalid.", nameof(rgb565Frame));
-        }
-
-        _udpClient.Connect(new IPEndPoint(ip, port));
-        _udpClient.Send(FrameStart, FrameStart.Length);
-
-        var bytesPerLine = FrameDimensions.Width * FrameDimensions.BytesPerPixel;
-        var packet = new byte[bytesPerLine + 2];
-        for (var row = 0; row < FrameDimensions.Height; row++)
-        {
-            var offset = row * bytesPerLine;
-            packet[0] = (byte)((row >> 8) & 0xFF);
-            packet[1] = (byte)(row & 0xFF);
-            rgb565Frame.Slice(offset, bytesPerLine).CopyTo(packet.AsSpan(2));
-            _udpClient.Send(packet, packet.Length);
-        }
-
-        _udpClient.Send(FrameDone, FrameDone.Length);
+        await SendFrameCoreAsync(rgb565Frame, ip, options, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task SendFrameCoreAsync(
         ReadOnlyMemory<byte> rgb565Frame,
         IPAddress ip,
-        int port,
+        FrameLoopOptions options,
         CancellationToken cancellationToken)
     {
-        var endpointKey = $"{ip}:{port}";
+        var endpointKey = $"{ip}:{options.Port}";
         if (!string.Equals(_lastEndpoint, endpointKey, StringComparison.Ordinal))
         {
             _lastEndpoint = endpointKey;
             _hostVersionSentForEndpoint = false;
         }
 
-        _udpClient.Connect(new IPEndPoint(ip, port));
+        _udpClient.Connect(new IPEndPoint(ip, options.Port));
         if (!_hostVersionSentForEndpoint)
         {
             await _udpClient.SendAsync(HostVersionPacket, cancellationToken).ConfigureAwait(false);
@@ -90,14 +61,15 @@ public sealed class UdpLineFrameSender : IFrameSender, IDisposable
         }
         await _udpClient.SendAsync(FrameStart, cancellationToken).ConfigureAwait(false);
 
-        var bytesPerLine = FrameDimensions.Width * FrameDimensions.BytesPerPixel;
+        var bytesPerLine = options.Width * FrameDimensions.BytesPerPixel;
         var packet = new byte[bytesPerLine + 2];
-        for (var row = 0; row < FrameDimensions.Height; row++)
+        for (var row = 0; row < options.Height; row++)
         {
             packet[0] = (byte)((row >> 8) & 0xFF);
             packet[1] = (byte)(row & 0xFF);
             rgb565Frame.Slice(row * bytesPerLine, bytesPerLine).Span.CopyTo(packet.AsSpan(2));
             await _udpClient.SendAsync(packet, cancellationToken).ConfigureAwait(false);
+            await Task.Delay(1, cancellationToken).ConfigureAwait(false);
         }
 
         await _udpClient.SendAsync(FrameDone, cancellationToken).ConfigureAwait(false);

@@ -3,9 +3,11 @@ namespace Moba.WinUI.View;
 
 using Common.Configuration;
 using Common.Extension;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Common.Navigation;
 
-using Microsoft.Extensions.Logging;
+using Microsoft.UI.Input;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -34,6 +36,9 @@ public sealed partial class MainWindow
     private readonly ILogger<MainWindow> _logger;
     private bool _isClosing;
     private bool _isShutdownInProgress;
+
+    // NEU: Window Activation Service für InputActivationListener
+    private readonly WindowActivationService _windowActivationService;
 
     private const double Z21TrackPowerIconOpacityConnected = 1.0;
     private const double Z21TrackPowerIconOpacityDisconnected = 0.4;
@@ -87,6 +92,11 @@ public sealed partial class MainWindow
 
             InitializeComponent();
 
+            // NEU: Window Activation Service initialisieren
+            _windowActivationService = new WindowActivationService(AppWindow,
+                App.Current.Services.GetRequiredService<ILogger<WindowActivationService>>());
+            SubscribeWindowActivationEvents();
+
             ConfigureWindowChrome();
             ConfigureWindowIconAndSizing();
             InitializeIoService(ioService);
@@ -110,7 +120,25 @@ public sealed partial class MainWindow
         RootGrid.DataContext = this;
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
-        AppTitleBar.Subtitle = $"flow  {AppVersion}";
+
+        // Windows App SDK 2.0 TitleBar-Erweiterungen
+        ConfigureTitleBarOptions();
+    }
+
+    private void ConfigureTitleBarOptions()
+    {
+        var titleBar = AppWindow.TitleBar;
+
+        titleBar.PreferredHeightOption = TitleBarHeightOption.Standard;
+
+        // Icon mit System-Menü anzeigen
+        titleBar.IconShowOptions = IconShowOptions.ShowIconAndSystemMenu;
+
+        // Hintergrundfarbe auf transparent für Mica-Effekt
+        titleBar.BackgroundColor = Microsoft.UI.Colors.Transparent;
+        titleBar.InactiveBackgroundColor = Microsoft.UI.Colors.Transparent;
+        titleBar.ButtonBackgroundColor = Microsoft.UI.Colors.Transparent;
+        titleBar.ButtonInactiveBackgroundColor = Microsoft.UI.Colors.Transparent;
     }
 
     private void ConfigureWindowIconAndSizing()
@@ -173,6 +201,26 @@ public sealed partial class MainWindow
         if (AppWindow is not null)
         {
             AppWindow.Closing += OnAppWindowClosing;
+        }
+    }
+
+    private void SubscribeWindowActivationEvents()
+    {
+        _windowActivationService.ActivationStateChanged += OnActivationStateChanged;
+    }
+
+    private void OnActivationStateChanged(object? sender, InputActivationStateChangedEventArgs e)
+    {
+        if (e.NewState == InputActivationState.Activated)
+        {
+            // Z21-Status refreshen wenn Fenster aktiv wird
+            ViewModel?.RefreshZ21StatusCommand?.Execute(null);
+            _restApiStatusService?.ResumePolling();
+        }
+        else if (e.NewState == InputActivationState.Deactivated)
+        {
+            // SignalR/Polling pausieren bei Inaktivität
+            _restApiStatusService?.PausePolling();
         }
     }
 
@@ -343,6 +391,9 @@ public sealed partial class MainWindow
         ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
         _navigationService.Navigated -= OnNavigationServiceNavigated;
         Closed -= MainWindow_Closed;
+
+        // NEU: Window Activation Service cleanup
+        _windowActivationService?.Dispose();
     }
 
     private void OnNavigationServiceNavigated(object? sender, SharedUI.Shell.NavigationEventArgs e)

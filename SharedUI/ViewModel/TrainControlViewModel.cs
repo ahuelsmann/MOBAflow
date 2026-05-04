@@ -26,7 +26,7 @@ using System.ComponentModel;
 /// - 3 locomotive presets with persistent DCC addresses, speed, and function states
 /// - Speed control (0-126 for 128 speed steps)
 /// - Direction toggle (Forward/Backward)
-/// - Function keys F0-F20
+/// - Function keys F0-F31
 /// - Emergency stop
 /// - Speed ramping for smooth direction changes
 /// 
@@ -43,6 +43,12 @@ public sealed partial class TrainControlViewModel : ObservableObject
     private bool _isApplyingRuntimeLocomotiveState;
     private int _previousSpeed;
     private CancellationTokenSource? _doorReleaseBlinkCts;
+
+    private const string SignalWhiteHex = "#8A8A8A";
+    private const string SignalGreenHex = "#06D6A0";
+    private const string SignalYellowHex = "#FFD700";
+    private const string SignalRedHex = "#E63946";
+    private const string SignalGrayHex = "#888888";  // Neutral gray for inactive state (visible in both light/dark)
 
     // === DCC Speed Steps Configuration ===
 
@@ -75,6 +81,11 @@ public sealed partial class TrainControlViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(ToggleF6Command))]
     [NotifyCanExecuteChangedFor(nameof(ToggleF7Command))]
     [NotifyCanExecuteChangedFor(nameof(ToggleF8Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF9Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF10Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF11Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF12Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF13Command))]
     [NotifyCanExecuteChangedFor(nameof(ToggleF14Command))]
     [NotifyCanExecuteChangedFor(nameof(ToggleF15Command))]
     [NotifyCanExecuteChangedFor(nameof(ToggleF16Command))]
@@ -82,6 +93,17 @@ public sealed partial class TrainControlViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(ToggleF18Command))]
     [NotifyCanExecuteChangedFor(nameof(ToggleF19Command))]
     [NotifyCanExecuteChangedFor(nameof(ToggleF20Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF21Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF22Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF23Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF24Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF25Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF26Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF27Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF28Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF29Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF30Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF31Command))]
     [NotifyCanExecuteChangedFor(nameof(EmergencyStopCommand))]
     private int _locoAddress = 3;
 
@@ -309,7 +331,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
     private bool _isForward = true;
 
     /// <summary>
-    /// Function states F0-F20. Array index corresponds to function number.
+    /// Function states F0-F31. Array index corresponds to function number.
     /// </summary>
     [ObservableProperty]
     private bool _isF0On;
@@ -374,101 +396,152 @@ public sealed partial class TrainControlViewModel : ObservableObject
     [ObservableProperty]
     private bool _isF20On;
 
+    [ObservableProperty]
+    private bool _isF21On;
+
+    [ObservableProperty]
+    private bool _isF22On;
+
+    [ObservableProperty]
+    private bool _isF23On;
+
+    [ObservableProperty]
+    private bool _isF24On;
+
+    [ObservableProperty]
+    private bool _isF25On;
+
+    [ObservableProperty]
+    private bool _isF26On;
+
+    [ObservableProperty]
+    private bool _isF27On;
+
+    [ObservableProperty]
+    private bool _isF28On;
+
+    [ObservableProperty]
+    private bool _isF29On;
+
+    [ObservableProperty]
+    private bool _isF30On;
+
+    [ObservableProperty]
+    private bool _isF31On;
+
     // === Brake (locomotive: parking brake/spring brake) and door release ===
     // Flow: speed 0 → brake on → release door; end: close door → release brake → drive.
 
     /// <summary>
-    /// Brake applied (parking brake/spring-loaded brake): speed 0, cannot be increased.
+    /// Brake applied (true = red, train cannot move; false = green, train can move if doors closed).
     /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(BrakeButtonColorHex))]
+    [NotifyPropertyChangedFor(nameof(DoorReleaseButtonColorHex))]
     [NotifyPropertyChangedFor(nameof(IsBrakeButtonEnabled))]
     [NotifyPropertyChangedFor(nameof(IsDoorReleaseButtonEnabled))]
     [NotifyCanExecuteChangedFor(nameof(ToggleBrakeCommand))]
     [NotifyCanExecuteChangedFor(nameof(ToggleDoorReleaseCommand))]
-    private bool _brakeEngaged;
+    private bool _isParkingBrakeEnabled;
 
     /// <summary>
     /// Door release locked (doors closed): Icon DoorClose. When released (doors open), speed cannot be increased.
     /// Default true = doors closed, so brake can be released again after applying.
     /// </summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowDoorCloseIcon))]
+    [NotifyPropertyChangedFor(nameof(IsDoorCloseIconVisible))]
     [NotifyPropertyChangedFor(nameof(DoorReleaseButtonColorHex))]
     [NotifyPropertyChangedFor(nameof(IsDoorReleaseButtonEnabled))]
     [NotifyPropertyChangedFor(nameof(IsBrakeButtonEnabled))]
     [NotifyCanExecuteChangedFor(nameof(ToggleDoorReleaseCommand))]
     [NotifyCanExecuteChangedFor(nameof(ToggleBrakeCommand))]
-    private bool _doorReleaseLocked = true;
+    private bool _isDoorReleaseLocked = true;
 
     /// <summary>
     /// During the 5-second transition phase the button blinks yellow (color + opacity change).
     /// </summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowDoorCloseIcon))]
+    [NotifyPropertyChangedFor(nameof(IsDoorCloseIconVisible))]
     [NotifyPropertyChangedFor(nameof(DoorReleaseButtonColorHex))]
     [NotifyPropertyChangedFor(nameof(IsDoorReleaseButtonEnabled))]
     [NotifyCanExecuteChangedFor(nameof(ToggleDoorReleaseCommand))]
-    private bool _doorReleaseBlinking;
+    private bool _isDoorReleaseBlinking;
 
     /// <summary>
     /// Opacity of the door release button: alternating 1.0 / 0.35 during blinking, otherwise 1.0.
     /// </summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(DoorBlockedIndicatorOpacity))]
     private double _doorReleaseBlinkOpacity = 1.0;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(DoorBlockedIndicatorColorHex))]
+    [NotifyPropertyChangedFor(nameof(DoorBlockedIndicatorIconColorHex))]
+    [NotifyPropertyChangedFor(nameof(DoorBlockedIndicatorOpacity))]
+    private bool _isDoorBlocked;
 
     /// <summary>
     /// Target state of door release after the 5-second blink phase expires.
     /// </summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowDoorCloseIcon))]
-    private bool _doorReleaseLockedNext;
+    [NotifyPropertyChangedFor(nameof(IsDoorCloseIconVisible))]
+    private bool _isDoorReleaseLockedNext;
 
     /// <summary>
     /// True = show DoorClose icon, False = DoorOpen icon (for ContentTemplate binding).
     /// </summary>
-    public bool ShowDoorCloseIcon => (DoorReleaseBlinking && DoorReleaseLockedNext) || (!DoorReleaseBlinking && DoorReleaseLocked);
+    public bool IsDoorCloseIconVisible => (IsDoorReleaseBlinking && IsDoorReleaseLockedNext) || (!IsDoorReleaseBlinking && IsDoorReleaseLocked);
 
     /// <summary>
     /// Background color of brake button: green = released, red = applied.
     /// </summary>
-    public string BrakeButtonColorHex => BrakeEngaged ? "#E63946" : "#06D6A0";
+    public string BrakeButtonColorHex => IsParkingBrakeEnabled ? SignalRedHex : SignalGreenHex;
 
     /// <summary>
     /// Brake button: apply always possible (sets speed to 0). Release only when door release ended (doors closed).
     /// </summary>
-    public bool IsBrakeButtonEnabled => !BrakeEngaged || DoorReleaseLocked;
+    public bool IsBrakeButtonEnabled => !IsParkingBrakeEnabled || IsDoorReleaseLocked;
 
     /// <summary>
     /// Segoe Fluent glyph for brake: Pause (applied) or Play (released).
     /// </summary>
-    public string BrakeButtonGlyph => BrakeEngaged ? "\uE72E" : "\uE102";
+    public string BrakeButtonGlyph => IsParkingBrakeEnabled ? "\uE72E" : "\uE102";
 
     /// <summary>
-    /// Background color of door release button: green at 0 km/h and released, red when locked or &gt;0 km/h, yellow when blinking.
+    /// Background color of door release button: white when not relevant, green when released, red when locked, yellow when blinking.
     /// </summary>
-    public string DoorReleaseButtonColorHex => DoorReleaseBlinking ? "#FFD700" : (!DoorReleaseLocked && SpeedKmh == 0 ? "#06D6A0" : "#E63946");
+    public string DoorReleaseButtonColorHex => !IsParkingBrakeEnabled ? SignalWhiteHex : IsDoorReleaseBlinking ? SignalYellowHex : (!IsDoorReleaseLocked && SpeedKmh == 0 ? SignalGreenHex : SignalRedHex);
+
+    public string DoorBlockedIndicatorColorHex => IsDoorBlocked ? SignalYellowHex : SignalWhiteHex;
+
+    public string DoorBlockedIndicatorIconColorHex => IsDoorBlocked ? SignalRedHex : SignalGrayHex;
+
+    public double DoorBlockedIndicatorOpacity => IsDoorBlocked ? DoorReleaseBlinkOpacity : 1.0;
 
     /// <summary>
     /// Door release button only clickable when brake applied, 0 km/h, and not during blinking.
     /// </summary>
-    public bool IsDoorReleaseButtonEnabled => BrakeEngaged && SpeedKmh == 0 && !DoorReleaseBlinking;
+    public bool IsDoorReleaseButtonEnabled => IsParkingBrakeEnabled && SpeedKmh == 0 && !IsDoorReleaseBlinking;
 
     /// <summary>
     /// Speed may only be increased when brake released and doors closed (door release locked).
     /// </summary>
-    private bool CanIncreaseSpeed => !BrakeEngaged && DoorReleaseLocked;
+    private bool CanIncreaseSpeed => !IsParkingBrakeEnabled && IsDoorReleaseLocked;
 
-    // === Function button symbols (F0–F20) – per-locomotive, from Domain.Locomotive.FunctionSymbols ===
+    // === Function button symbols (F0–F31) – per-locomotive SVG asset filenames, from Domain.Locomotive.FunctionSymbols ===
 
     /// <summary>
-    /// Default symbols for F0–F20 (Segoe MDL2) when no locomotive in project or no customization saved.
+    /// Default SVG asset filenames (relative to MOBAflow/Assets) for F0–F31 when no locomotive
+    /// in project or no customization saved. Empty string = no default symbol for this function.
     /// </summary>
-    private static readonly string[] DefaultFunctionGlyphs =
+    private static readonly string[] DefaultFunctionAssets =
     {
-        "\uE7B7", "\uE767", "\uE7C0", "\uE8BB", "\uE8BA", "\uE754", "\uEB50", "\uE753",
-        "\uE74A", "\uE71B", "\uE713", "\uE713", "\uE720", "\uE90F", "\uE7C1", "\uE90F",
-        "\uE9D9", "\uE945", "\uE823", "\uE734", "\uE734"
+        "scheinwerfer.svg",          // F0  – default headlight
+        "f1__fahrgeräusch.svg",      // F1  – default sound
+        "", "", "", "", "", "",
+        "", "", "", "", "", "", "", "",
+        "", "", "", "", "", "", "", "",
+        "", "", "", "", "", "", "", ""
     };
 
     /// <summary>
@@ -515,6 +588,28 @@ public sealed partial class TrainControlViewModel : ObservableObject
     public string Function19Glyph => GetFunctionGlyph(19);
     /// <summary>Glyph for F20.</summary>
     public string Function20Glyph => GetFunctionGlyph(20);
+    /// <summary>Glyph for F21.</summary>
+    public string Function21Glyph => GetFunctionGlyph(21);
+    /// <summary>Glyph for F22.</summary>
+    public string Function22Glyph => GetFunctionGlyph(22);
+    /// <summary>Glyph for F23.</summary>
+    public string Function23Glyph => GetFunctionGlyph(23);
+    /// <summary>Glyph for F24.</summary>
+    public string Function24Glyph => GetFunctionGlyph(24);
+    /// <summary>Glyph for F25.</summary>
+    public string Function25Glyph => GetFunctionGlyph(25);
+    /// <summary>Glyph for F26.</summary>
+    public string Function26Glyph => GetFunctionGlyph(26);
+    /// <summary>Glyph for F27.</summary>
+    public string Function27Glyph => GetFunctionGlyph(27);
+    /// <summary>Glyph for F28.</summary>
+    public string Function28Glyph => GetFunctionGlyph(28);
+    /// <summary>Glyph for F29.</summary>
+    public string Function29Glyph => GetFunctionGlyph(29);
+    /// <summary>Glyph for F30.</summary>
+    public string Function30Glyph => GetFunctionGlyph(30);
+    /// <summary>Glyph for F31.</summary>
+    public string Function31Glyph => GetFunctionGlyph(31);
 
     /// <summary>
     /// Status message for UI feedback.
@@ -1051,7 +1146,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
                 preset.Name, preset.DccAddress, Speed, SpeedKmh, MaxSpeedStep, SpeedSteps, SelectedVmax);
 
             // Apply function states from bitmask
-            for (int i = 0; i <= 20; i++)
+            for (int i = 0; i <= 31; i++)
             {
                 SetFunctionState(i, preset.GetFunction(i));
             }
@@ -1077,28 +1172,44 @@ public sealed partial class TrainControlViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Glyph for the function button with index 0–20. Uses Domain.Locomotive.FunctionSymbols, otherwise default symbol.
+    /// SVG asset filename for the function button with index 0–31. Uses Domain.Locomotive.FunctionSymbols when set
+    /// (and pointing to an .svg asset), otherwise the default asset. Returns empty string when no symbol is configured.
+    /// Legacy Unicode-codepoint values from earlier versions are ignored.
     /// </summary>
     private string GetFunctionGlyph(int functionIndex)
     {
-        if (functionIndex < 0 || functionIndex > 20)
-            return DefaultFunctionGlyphs[0];
+        if (functionIndex < 0 || functionIndex > 31)
+            return string.Empty;
         var loco = GetCurrentLocomotive();
-        if (loco?.FunctionSymbols != null && functionIndex < loco.FunctionSymbols.Count && !string.IsNullOrEmpty(loco.FunctionSymbols[functionIndex]))
-            return loco.FunctionSymbols[functionIndex];
-        return functionIndex < DefaultFunctionGlyphs.Length ? DefaultFunctionGlyphs[functionIndex] : DefaultFunctionGlyphs[0];
+        if (loco?.FunctionSymbols != null && functionIndex < loco.FunctionSymbols.Count)
+        {
+            var stored = loco.FunctionSymbols[functionIndex];
+            if (IsValidAssetReference(stored))
+                return stored;
+        }
+        return functionIndex < DefaultFunctionAssets.Length ? DefaultFunctionAssets[functionIndex] : string.Empty;
     }
 
     /// <summary>
-    /// Sets the symbol for the specified function (0–20) for the current locomotive (LocoAddress) and saves the Solution.
-    /// Only effective when a locomotive with this digital address exists in the selected project.
+    /// Returns true when the stored value is a non-empty SVG asset filename. Filters out legacy
+    /// Segoe MDL2 codepoint strings from earlier versions (single-character entries without .svg suffix).
     /// </summary>
-    /// <param name="functionIndex">Funktionsindex 0–20 (F0–F20).</param>
-    /// <param name="glyph">Unicode-Glyph-String (z. B. "\uE7B7").</param>
+    private static bool IsValidAssetReference(string? value)
+    {
+        return !string.IsNullOrWhiteSpace(value)
+            && value.EndsWith(".svg", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Sets the SVG asset filename for the specified function (0–31) for the current locomotive (LocoAddress)
+    /// and saves the Solution. Only effective when a locomotive with this digital address exists in the selected project.
+    /// </summary>
+    /// <param name="functionIndex">Funktionsindex 0–31 (F0–F31).</param>
+    /// <param name="glyph">SVG asset filename relative to Assets/ (e.g. "scheinwerfer.svg").</param>
     /// <returns>True, wenn gespeichert; False, wenn keine passende Lok im Projekt.</returns>
     public bool SetFunctionSymbol(int functionIndex, string glyph)
     {
-        if (functionIndex < 0 || functionIndex > 20 || string.IsNullOrEmpty(glyph))
+        if (functionIndex < 0 || functionIndex > 31 || string.IsNullOrEmpty(glyph))
             return false;
         var loco = GetCurrentLocomotive();
         if (loco == null)
@@ -1117,7 +1228,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
     /// </summary>
     private void NotifyAllFunctionGlyphsChanged()
     {
-        for (int i = 0; i <= 20; i++)
+        for (int i = 0; i <= 31; i++)
             OnPropertyChanged($"Function{i}Glyph");
     }
 
@@ -1136,7 +1247,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
         // This is a safety feature to prevent unexpected locomotive movement
 
         // Save function states to bitmask
-        for (int i = 0; i <= 20; i++)
+        for (int i = 0; i <= 31; i++)
         {
             preset.SetFunction(i, GetFunctionState(i));
         }
@@ -1211,6 +1322,17 @@ public sealed partial class TrainControlViewModel : ObservableObject
         ToggleF18Command.NotifyCanExecuteChanged();
         ToggleF19Command.NotifyCanExecuteChanged();
         ToggleF20Command.NotifyCanExecuteChanged();
+        ToggleF21Command.NotifyCanExecuteChanged();
+        ToggleF22Command.NotifyCanExecuteChanged();
+        ToggleF23Command.NotifyCanExecuteChanged();
+        ToggleF24Command.NotifyCanExecuteChanged();
+        ToggleF25Command.NotifyCanExecuteChanged();
+        ToggleF26Command.NotifyCanExecuteChanged();
+        ToggleF27Command.NotifyCanExecuteChanged();
+        ToggleF28Command.NotifyCanExecuteChanged();
+        ToggleF29Command.NotifyCanExecuteChanged();
+        ToggleF30Command.NotifyCanExecuteChanged();
+        ToggleF31Command.NotifyCanExecuteChanged();
         EmergencyStopCommand.NotifyCanExecuteChanged();
         StatusMessage = isConnected ? "Z21 Connected" : "Z21 Disconnected";
     }
@@ -1230,7 +1352,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
             Speed = locomotiveState.Speed;
             IsForward = locomotiveState.IsForward;
 
-            for (int functionIndex = 0; functionIndex <= 20; functionIndex++)
+            for (int functionIndex = 0; functionIndex <= 31; functionIndex++)
             {
                 SetFunctionState(functionIndex, (locomotiveState.Functions & (1u << functionIndex)) != 0);
             }
@@ -1537,6 +1659,39 @@ public sealed partial class TrainControlViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
     private async Task ToggleF20Async() => await ToggleFunctionAsync(20);
 
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF21Async() => await ToggleFunctionAsync(21);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF22Async() => await ToggleFunctionAsync(22);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF23Async() => await ToggleFunctionAsync(23);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF24Async() => await ToggleFunctionAsync(24);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF25Async() => await ToggleFunctionAsync(25);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF26Async() => await ToggleFunctionAsync(26);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF27Async() => await ToggleFunctionAsync(27);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF28Async() => await ToggleFunctionAsync(28);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF29Async() => await ToggleFunctionAsync(29);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF30Async() => await ToggleFunctionAsync(30);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF31Async() => await ToggleFunctionAsync(31);
+
     /// <summary>
     /// Generic function toggle implementation.
     /// Public method to allow direct UI event handling (bypasses CanExecute).
@@ -1589,6 +1744,17 @@ public sealed partial class TrainControlViewModel : ObservableObject
         18 => IsF18On,
         19 => IsF19On,
         20 => IsF20On,
+        21 => IsF21On,
+        22 => IsF22On,
+        23 => IsF23On,
+        24 => IsF24On,
+        25 => IsF25On,
+        26 => IsF26On,
+        27 => IsF27On,
+        28 => IsF28On,
+        29 => IsF29On,
+        30 => IsF30On,
+        31 => IsF31On,
         _ => false
     };
 
@@ -1617,6 +1783,17 @@ public sealed partial class TrainControlViewModel : ObservableObject
             case 18: IsF18On = state; break;
             case 19: IsF19On = state; break;
             case 20: IsF20On = state; break;
+            case 21: IsF21On = state; break;
+            case 22: IsF22On = state; break;
+            case 23: IsF23On = state; break;
+            case 24: IsF24On = state; break;
+            case 25: IsF25On = state; break;
+            case 26: IsF26On = state; break;
+            case 27: IsF27On = state; break;
+            case 28: IsF28On = state; break;
+            case 29: IsF29On = state; break;
+            case 30: IsF30On = state; break;
+            case 31: IsF31On = state; break;
         }
     }
 
@@ -1628,9 +1805,9 @@ public sealed partial class TrainControlViewModel : ObservableObject
     {
         if (!IsBrakeButtonEnabled) return;
 
-        if (BrakeEngaged)
+        if (IsParkingBrakeEnabled)
         {
-            BrakeEngaged = false;
+            IsParkingBrakeEnabled = false;
             _logger?.LogDebug("Bremse gelöst");
         }
         else
@@ -1639,22 +1816,31 @@ public sealed partial class TrainControlViewModel : ObservableObject
             Speed = 0;
             _skipSpeedChangeHandler = false;
             await SendDriveCommandAsync();
-            BrakeEngaged = true;
+            IsParkingBrakeEnabled = true;
             _logger?.LogDebug("Bremse angelegt, Geschwindigkeit 0");
         }
     }
 
     /// <summary>
-    /// Toggles door release (release/lock). 5 seconds yellow blinking (opacity change), then icon/color change.
+    /// Toggles door release (release/lock). Closing uses 5 seconds plus a random additional blocking delay.
     /// Only executable when brake applied (button red) and 0 km/h.
     /// </summary>
     [RelayCommand(CanExecute = nameof(IsDoorReleaseButtonEnabled))]
     private async Task ToggleDoorReleaseAsync()
     {
-        if (!IsDoorReleaseButtonEnabled || DoorReleaseBlinking) return;
+        if (!IsDoorReleaseButtonEnabled || IsDoorReleaseBlinking) return;
 
-        DoorReleaseLockedNext = !DoorReleaseLocked;
-        DoorReleaseBlinking = true;
+        IsDoorReleaseLockedNext = !IsDoorReleaseLocked;
+        var isClosingDoor = IsDoorReleaseLockedNext;
+        var blockingDelaySeconds = isClosingDoor ? Random.Shared.Next(0, 61) : 0;
+        var transitionDelay = TimeSpan.FromSeconds(5 + blockingDelaySeconds);
+
+        if (!isClosingDoor)
+        {
+            SetDoorBlocked(false);
+        }
+
+        IsDoorReleaseBlinking = true;
         DoorReleaseBlinkOpacity = 1.0;
         _doorReleaseBlinkCts?.Cancel();
         _doorReleaseBlinkCts = new CancellationTokenSource();
@@ -1664,7 +1850,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
         async Task RunBlinkLoopAsync()
         {
             const int intervalMs = 400;
-            const int totalMs = 5000;
+            var totalMs = (int)transitionDelay.TotalMilliseconds;
             for (var elapsed = 0; elapsed < totalMs && !token.IsCancellationRequested; elapsed += intervalMs)
             {
                 try
@@ -1687,18 +1873,28 @@ public sealed partial class TrainControlViewModel : ObservableObject
 
         try
         {
-            await Task.WhenAll(
-                Task.Delay(TimeSpan.FromSeconds(5), token),
-                RunBlinkLoopAsync());
+            if (isClosingDoor)
+            {
+                await Task.WhenAll(
+                    RunDoorBlockingTimerAsync(blockingDelaySeconds, token),
+                    RunBlinkLoopAsync());
+            }
+            else
+            {
+                await Task.WhenAll(
+                    Task.Delay(TimeSpan.FromSeconds(5), token),
+                    RunBlinkLoopAsync());
+            }
         }
         catch (OperationCanceledException)
         {
             if (_uiDispatcher != null)
-                _uiDispatcher.InvokeOnUi(() => { DoorReleaseBlinkOpacity = 1.0; DoorReleaseBlinking = false; });
+                _uiDispatcher.InvokeOnUi(() => { DoorReleaseBlinkOpacity = 1.0; IsDoorReleaseBlinking = false; IsDoorBlocked = false; });
             else
             {
                 DoorReleaseBlinkOpacity = 1.0;
-                DoorReleaseBlinking = false;
+                IsDoorReleaseBlinking = false;
+                SetDoorBlocked(false);
             }
             return;
         }
@@ -1707,19 +1903,36 @@ public sealed partial class TrainControlViewModel : ObservableObject
         {
             _uiDispatcher.InvokeOnUi(() =>
             {
-                DoorReleaseLocked = DoorReleaseLockedNext;
-                DoorReleaseBlinking = false;
+                IsDoorReleaseLocked = IsDoorReleaseLockedNext;
+                IsDoorReleaseBlinking = false;
                 DoorReleaseBlinkOpacity = 1.0;
+                IsDoorBlocked = false;
             });
         }
         else
         {
-            DoorReleaseLocked = DoorReleaseLockedNext;
-            DoorReleaseBlinking = false;
+            IsDoorReleaseLocked = IsDoorReleaseLockedNext;
+            IsDoorReleaseBlinking = false;
             DoorReleaseBlinkOpacity = 1.0;
+            SetDoorBlocked(false);
         }
 
-        _logger?.LogDebug("Türfreigabe {State}", DoorReleaseLocked ? "gesperrt" : "freigegeben");
+        _logger?.LogDebug("Türfreigabe {State}", IsDoorReleaseLocked ? "gesperrt" : "freigegeben");
+    }
+
+    private async Task RunDoorBlockingTimerAsync(int blockingDelaySeconds, CancellationToken cancellationToken)
+    {
+        await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+        SetDoorBlocked(true);
+        await Task.Delay(TimeSpan.FromSeconds(blockingDelaySeconds), cancellationToken);
+    }
+
+    private void SetDoorBlocked(bool value)
+    {
+        if (_uiDispatcher != null)
+            _uiDispatcher.InvokeOnUi(() => IsDoorBlocked = value);
+        else
+            IsDoorBlocked = value;
     }
 
     /// <summary>

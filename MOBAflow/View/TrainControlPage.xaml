@@ -15,6 +15,8 @@
         <converter:IntToPresetCheckedConverter x:Key="IntToPresetCheckedConverter" />
         <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
         <converter:MillivoltsToVoltsConverter x:Key="MillivoltsToVoltsConverter" />
+        <converter:AssetNameToSvgImageSourceConverter x:Key="AssetNameToSvgImageSourceConverter" />
+        <converter:AssetNameToUriConverter x:Key="AssetNameToUriConverter" />
     </Page.Resources>
 
     <Grid Padding="0">
@@ -663,6 +665,7 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*" />
@@ -689,11 +692,22 @@
                             IsEnabled="{x:Bind ViewModel.IsDoorReleaseButtonEnabled, Mode=OneWay}"
                             Opacity="{x:Bind ViewModel.DoorReleaseBlinkOpacity, Mode=OneWay}"
                             Style="{StaticResource NeonGlowButtonStyle}" />
+                        <Button
+                            Grid.Row="0"
+                            Grid.Column="2"
+                            AutomationProperties.Name="Door blocking indicator"
+                            Background="{x:Bind ViewModel.DoorBlockedIndicatorColorHex, Mode=OneWay, Converter={StaticResource HexColorToBrushConverter}}"
+                            Content="{x:Bind ViewModel.DoorBlockedIndicatorIconColorHex, Mode=OneWay}"
+                            ContentTemplate="{x:Bind DoorBlockedIconTemplate, Mode=OneWay}"
+                            IsHitTestVisible="False"
+                            IsTabStop="False"
+                            Opacity="{x:Bind ViewModel.DoorBlockedIndicatorOpacity, Mode=OneWay}"
+                            Style="{StaticResource NeonGlowButtonStyle}" />
                     </Grid>
                 </Border>
             </Grid>
 
-            <!--  RIGHT PANEL: Functions F0-F20 (Grid.Column="2") - Hidden on Medium/Compact  -->
+            <!--  RIGHT PANEL: Functions F0-F31 (Grid.Column="2") - Hidden on Medium/Compact  -->
             <Border
                 Grid.Column="2"
                 Padding="16"
@@ -710,27 +724,30 @@
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                             Text="FUNCTIONS" />
 
-                        <!--  Functions F0-F10 (Left Column)  -->
-                        <StackPanel Spacing="4">
-                            <TextBlock
-                                FontSize="9"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="F0 - F10" />
-                            <Grid ColumnSpacing="4" RowSpacing="4">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
+                        <Grid ColumnSpacing="4" RowSpacing="4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
 
-                                <!--  F0 (Light - Yellow)  -->
                                 <ToggleButton
                                     Grid.Row="0"
                                     Grid.Column="0"
@@ -741,15 +758,10 @@
                                     Style="{StaticResource BacklightToggleButtonStyle}"
                                     Tag="0">
                                     <StackPanel Spacing="2">
-                                        <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function0Glyph, Mode=OneWay}" />
-                                        <TextBlock
-                                            FontSize="9"
-                                            Text="F0"
-                                            TextAlignment="Center" />
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function0Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F0" TextAlignment="Center" />
                                     </StackPanel>
                                 </ToggleButton>
-
-                                <!--  F1 (Sound - Blue)  -->
                                 <ToggleButton
                                     Grid.Row="0"
                                     Grid.Column="1"
@@ -760,15 +772,10 @@
                                     Style="{StaticResource BacklightToggleButtonStyle}"
                                     Tag="1">
                                     <StackPanel Spacing="2">
-                                        <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function1Glyph, Mode=OneWay}" />
-                                        <TextBlock
-                                            FontSize="9"
-                                            Text="F1"
-                                            TextAlignment="Center" />
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function1Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F1" TextAlignment="Center" />
                                     </StackPanel>
                                 </ToggleButton>
-
-                                <!--  F2 (Horn - Orange)  -->
                                 <ToggleButton
                                     Grid.Row="1"
                                     Grid.Column="0"
@@ -779,15 +786,10 @@
                                     Style="{StaticResource BacklightToggleButtonStyle}"
                                     Tag="2">
                                     <StackPanel Spacing="2">
-                                        <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function2Glyph, Mode=OneWay}" />
-                                        <TextBlock
-                                            FontSize="9"
-                                            Text="F2"
-                                            TextAlignment="Center" />
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function2Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F2" TextAlignment="Center" />
                                     </StackPanel>
                                 </ToggleButton>
-
-                                <!--  F3 (Door Close - Red)  -->
                                 <ToggleButton
                                     Grid.Row="1"
                                     Grid.Column="1"
@@ -798,15 +800,10 @@
                                     Style="{StaticResource BacklightToggleButtonStyle}"
                                     Tag="3">
                                     <StackPanel Spacing="2">
-                                        <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function3Glyph, Mode=OneWay}" />
-                                        <TextBlock
-                                            FontSize="9"
-                                            Text="F3"
-                                            TextAlignment="Center" />
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function3Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F3" TextAlignment="Center" />
                                     </StackPanel>
                                 </ToggleButton>
-
-                                <!--  F4 (Door Release - Green)  -->
                                 <ToggleButton
                                     Grid.Row="2"
                                     Grid.Column="0"
@@ -817,15 +814,10 @@
                                     Style="{StaticResource BacklightToggleButtonStyle}"
                                     Tag="4">
                                     <StackPanel Spacing="2">
-                                        <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function4Glyph, Mode=OneWay}" />
-                                        <TextBlock
-                                            FontSize="9"
-                                            Text="F4"
-                                            TextAlignment="Center" />
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function4Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F4" TextAlignment="Center" />
                                     </StackPanel>
                                 </ToggleButton>
-
-                                <!--  F5 (Shunting Light - Teal)  -->
                                 <ToggleButton
                                     Grid.Row="2"
                                     Grid.Column="1"
@@ -836,15 +828,10 @@
                                     Style="{StaticResource BacklightToggleButtonStyle}"
                                     Tag="5">
                                     <StackPanel Spacing="2">
-                                        <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function5Glyph, Mode=OneWay}" />
-                                        <TextBlock
-                                            FontSize="9"
-                                            Text="F5"
-                                            TextAlignment="Center" />
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function5Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F5" TextAlignment="Center" />
                                     </StackPanel>
                                 </ToggleButton>
-
-                                <!--  F6 (Interior Light - Warm Yellow)  -->
                                 <ToggleButton
                                     Grid.Row="3"
                                     Grid.Column="0"
@@ -855,15 +842,10 @@
                                     Style="{StaticResource BacklightToggleButtonStyle}"
                                     Tag="6">
                                     <StackPanel Spacing="2">
-                                        <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function6Glyph, Mode=OneWay}" />
-                                        <TextBlock
-                                            FontSize="9"
-                                            Text="F6"
-                                            TextAlignment="Center" />
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function6Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F6" TextAlignment="Center" />
                                     </StackPanel>
                                 </ToggleButton>
-
-                                <!--  F7 (Smoke - Gray)  -->
                                 <ToggleButton
                                     Grid.Row="3"
                                     Grid.Column="1"
@@ -874,15 +856,10 @@
                                     Style="{StaticResource BacklightToggleButtonStyle}"
                                     Tag="7">
                                     <StackPanel Spacing="2">
-                                        <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function7Glyph, Mode=OneWay}" />
-                                        <TextBlock
-                                            FontSize="9"
-                                            Text="F7"
-                                            TextAlignment="Center" />
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function7Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F7" TextAlignment="Center" />
                                     </StackPanel>
                                 </ToggleButton>
-
-                                <!--  F8 (Pantograph - Magenta)  -->
                                 <ToggleButton
                                     Grid.Row="4"
                                     Grid.Column="0"
@@ -893,15 +870,10 @@
                                     Style="{StaticResource BacklightToggleButtonStyle}"
                                     Tag="8">
                                     <StackPanel Spacing="2">
-                                        <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function8Glyph, Mode=OneWay}" />
-                                        <TextBlock
-                                            FontSize="9"
-                                            Text="F8"
-                                            TextAlignment="Center" />
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function8Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F8" TextAlignment="Center" />
                                     </StackPanel>
                                 </ToggleButton>
-
-                                <!--  F9 (Coupler - Purple)  -->
                                 <ToggleButton
                                     Grid.Row="4"
                                     Grid.Column="1"
@@ -912,39 +884,27 @@
                                     Style="{StaticResource BacklightToggleButtonStyle}"
                                     Tag="9">
                                     <StackPanel Spacing="2">
-                                        <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function9Glyph, Mode=OneWay}" />
-                                        <TextBlock
-                                            FontSize="9"
-                                            Text="F9"
-                                            TextAlignment="Center" />
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function9Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F9" TextAlignment="Center" />
                                     </StackPanel>
                                 </ToggleButton>
-                            </Grid>
-                        </StackPanel>
-
-                        <!--  Functions F11-F20 (Right Column)  -->
-                        <StackPanel Spacing="4">
-                            <TextBlock
-                                FontSize="9"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="F11 - F20" />
-                            <Grid ColumnSpacing="4" RowSpacing="4">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-
-                                <!--  F11 (Teal)  -->
                                 <ToggleButton
-                                    Grid.Row="0"
+                                    Grid.Row="5"
                                     Grid.Column="0"
+                                    Background="{x:Bind ViewModel.IsF10On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#8764B8}"
+                                    Command="{x:Bind ViewModel.ToggleF10Command}"
+                                    IsChecked="{x:Bind ViewModel.IsF10On, Mode=OneWay}"
+                                    RightTapped="FunctionButton_RightTapped"
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="10">
+                                    <StackPanel Spacing="2">
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function10Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F10" TextAlignment="Center" />
+                                    </StackPanel>
+                                </ToggleButton>
+                                <ToggleButton
+                                    Grid.Row="5"
+                                    Grid.Column="1"
                                     Background="{x:Bind ViewModel.IsF11On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#038387}"
                                     Command="{x:Bind ViewModel.ToggleF11Command}"
                                     IsChecked="{x:Bind ViewModel.IsF11On, Mode=OneWay}"
@@ -952,18 +912,13 @@
                                     Style="{StaticResource BacklightToggleButtonStyle}"
                                     Tag="11">
                                     <StackPanel Spacing="2">
-                                        <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function11Glyph, Mode=OneWay}" />
-                                        <TextBlock
-                                            FontSize="9"
-                                            Text="F11"
-                                            TextAlignment="Center" />
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function11Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F11" TextAlignment="Center" />
                                     </StackPanel>
                                 </ToggleButton>
-
-                                <!--  F12 (Orchid)  -->
                                 <ToggleButton
-                                    Grid.Row="0"
-                                    Grid.Column="1"
+                                    Grid.Row="6"
+                                    Grid.Column="0"
                                     Background="{x:Bind ViewModel.IsF12On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#C239B3}"
                                     Command="{x:Bind ViewModel.ToggleF12Command}"
                                     IsChecked="{x:Bind ViewModel.IsF12On, Mode=OneWay}"
@@ -971,18 +926,13 @@
                                     Style="{StaticResource BacklightToggleButtonStyle}"
                                     Tag="12">
                                     <StackPanel Spacing="2">
-                                        <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function12Glyph, Mode=OneWay}" />
-                                        <TextBlock
-                                            FontSize="9"
-                                            Text="F12"
-                                            TextAlignment="Center" />
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function12Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F12" TextAlignment="Center" />
                                     </StackPanel>
                                 </ToggleButton>
-
-                                <!--  F13 (Hot Pink)  -->
                                 <ToggleButton
-                                    Grid.Row="1"
-                                    Grid.Column="0"
+                                    Grid.Row="6"
+                                    Grid.Column="1"
                                     Background="{x:Bind ViewModel.IsF13On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#FF1493}"
                                     Command="{x:Bind ViewModel.ToggleF13Command}"
                                     IsChecked="{x:Bind ViewModel.IsF13On, Mode=OneWay}"
@@ -990,18 +940,13 @@
                                     Style="{StaticResource BacklightToggleButtonStyle}"
                                     Tag="13">
                                     <StackPanel Spacing="2">
-                                        <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function13Glyph, Mode=OneWay}" />
-                                        <TextBlock
-                                            FontSize="9"
-                                            Text="F13"
-                                            TextAlignment="Center" />
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function13Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F13" TextAlignment="Center" />
                                     </StackPanel>
                                 </ToggleButton>
-
-                                <!--  F14 (Gray)  -->
                                 <ToggleButton
-                                    Grid.Row="1"
-                                    Grid.Column="1"
+                                    Grid.Row="7"
+                                    Grid.Column="0"
                                     Background="{x:Bind ViewModel.IsF14On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#7A7574}"
                                     Command="{x:Bind ViewModel.ToggleF14Command}"
                                     IsChecked="{x:Bind ViewModel.IsF14On, Mode=OneWay}"
@@ -1009,18 +954,13 @@
                                     Style="{StaticResource BacklightToggleButtonStyle}"
                                     Tag="14">
                                     <StackPanel Spacing="2">
-                                        <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function14Glyph, Mode=OneWay}" />
-                                        <TextBlock
-                                            FontSize="9"
-                                            Text="F14"
-                                            TextAlignment="Center" />
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function14Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F14" TextAlignment="Center" />
                                     </StackPanel>
                                 </ToggleButton>
-
-                                <!--  F15 (Sage)  -->
                                 <ToggleButton
-                                    Grid.Row="2"
-                                    Grid.Column="0"
+                                    Grid.Row="7"
+                                    Grid.Column="1"
                                     Background="{x:Bind ViewModel.IsF15On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#567C73}"
                                     Command="{x:Bind ViewModel.ToggleF15Command}"
                                     IsChecked="{x:Bind ViewModel.IsF15On, Mode=OneWay}"
@@ -1028,18 +968,13 @@
                                     Style="{StaticResource BacklightToggleButtonStyle}"
                                     Tag="15">
                                     <StackPanel Spacing="2">
-                                        <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function15Glyph, Mode=OneWay}" />
-                                        <TextBlock
-                                            FontSize="9"
-                                            Text="F15"
-                                            TextAlignment="Center" />
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function15Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F15" TextAlignment="Center" />
                                     </StackPanel>
                                 </ToggleButton>
-
-                                <!--  F16 (Brown)  -->
                                 <ToggleButton
-                                    Grid.Row="2"
-                                    Grid.Column="1"
+                                    Grid.Row="8"
+                                    Grid.Column="0"
                                     Background="{x:Bind ViewModel.IsF16On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#8E562E}"
                                     Command="{x:Bind ViewModel.ToggleF16Command}"
                                     IsChecked="{x:Bind ViewModel.IsF16On, Mode=OneWay}"
@@ -1047,18 +982,13 @@
                                     Style="{StaticResource BacklightToggleButtonStyle}"
                                     Tag="16">
                                     <StackPanel Spacing="2">
-                                        <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function16Glyph, Mode=OneWay}" />
-                                        <TextBlock
-                                            FontSize="9"
-                                            Text="F16"
-                                            TextAlignment="Center" />
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function16Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F16" TextAlignment="Center" />
                                     </StackPanel>
                                 </ToggleButton>
-
-                                <!--  F17 (Tan)  -->
                                 <ToggleButton
-                                    Grid.Row="3"
-                                    Grid.Column="0"
+                                    Grid.Row="8"
+                                    Grid.Column="1"
                                     Background="{x:Bind ViewModel.IsF17On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#847545}"
                                     Command="{x:Bind ViewModel.ToggleF17Command}"
                                     IsChecked="{x:Bind ViewModel.IsF17On, Mode=OneWay}"
@@ -1066,18 +996,13 @@
                                     Style="{StaticResource BacklightToggleButtonStyle}"
                                     Tag="17">
                                     <StackPanel Spacing="2">
-                                        <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function17Glyph, Mode=OneWay}" />
-                                        <TextBlock
-                                            FontSize="9"
-                                            Text="F17"
-                                            TextAlignment="Center" />
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function17Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F17" TextAlignment="Center" />
                                     </StackPanel>
                                 </ToggleButton>
-
-                                <!--  F18 (Slate)  -->
                                 <ToggleButton
-                                    Grid.Row="3"
-                                    Grid.Column="1"
+                                    Grid.Row="9"
+                                    Grid.Column="0"
                                     Background="{x:Bind ViewModel.IsF18On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#525E54}"
                                     Command="{x:Bind ViewModel.ToggleF18Command}"
                                     IsChecked="{x:Bind ViewModel.IsF18On, Mode=OneWay}"
@@ -1085,18 +1010,13 @@
                                     Style="{StaticResource BacklightToggleButtonStyle}"
                                     Tag="18">
                                     <StackPanel Spacing="2">
-                                        <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function18Glyph, Mode=OneWay}" />
-                                        <TextBlock
-                                            FontSize="9"
-                                            Text="F18"
-                                            TextAlignment="Center" />
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function18Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F18" TextAlignment="Center" />
                                     </StackPanel>
                                 </ToggleButton>
-
-                                <!--  F19 (Dark Gray)  -->
                                 <ToggleButton
-                                    Grid.Row="4"
-                                    Grid.Column="0"
+                                    Grid.Row="9"
+                                    Grid.Column="1"
                                     Background="{x:Bind ViewModel.IsF19On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#4A5459}"
                                     Command="{x:Bind ViewModel.ToggleF19Command}"
                                     IsChecked="{x:Bind ViewModel.IsF19On, Mode=OneWay}"
@@ -1104,18 +1024,13 @@
                                     Style="{StaticResource BacklightToggleButtonStyle}"
                                     Tag="19">
                                     <StackPanel Spacing="2">
-                                        <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function19Glyph, Mode=OneWay}" />
-                                        <TextBlock
-                                            FontSize="9"
-                                            Text="F19"
-                                            TextAlignment="Center" />
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function19Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F19" TextAlignment="Center" />
                                     </StackPanel>
                                 </ToggleButton>
-
-                                <!--  F20 (Steel Blue)  -->
                                 <ToggleButton
-                                    Grid.Row="4"
-                                    Grid.Column="1"
+                                    Grid.Row="10"
+                                    Grid.Column="0"
                                     Background="{x:Bind ViewModel.IsF20On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#69797E}"
                                     Command="{x:Bind ViewModel.ToggleF20Command}"
                                     IsChecked="{x:Bind ViewModel.IsF20On, Mode=OneWay}"
@@ -1123,18 +1038,170 @@
                                     Style="{StaticResource BacklightToggleButtonStyle}"
                                     Tag="20">
                                     <StackPanel Spacing="2">
-                                        <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function20Glyph, Mode=OneWay}" />
-                                        <TextBlock
-                                            FontSize="9"
-                                            Text="F20"
-                                            TextAlignment="Center" />
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function20Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F20" TextAlignment="Center" />
                                     </StackPanel>
                                 </ToggleButton>
-                            </Grid>
-                        </StackPanel>
+                                <ToggleButton
+                                    Grid.Row="10"
+                                    Grid.Column="1"
+                                    Background="{x:Bind ViewModel.IsF21On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#69797E}"
+                                    Command="{x:Bind ViewModel.ToggleF21Command}"
+                                    IsChecked="{x:Bind ViewModel.IsF21On, Mode=OneWay}"
+                                    RightTapped="FunctionButton_RightTapped"
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="21">
+                                    <StackPanel Spacing="2">
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function21Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F21" TextAlignment="Center" />
+                                    </StackPanel>
+                                </ToggleButton>
+                                <ToggleButton
+                                    Grid.Row="11"
+                                    Grid.Column="0"
+                                    Background="{x:Bind ViewModel.IsF22On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#69797E}"
+                                    Command="{x:Bind ViewModel.ToggleF22Command}"
+                                    IsChecked="{x:Bind ViewModel.IsF22On, Mode=OneWay}"
+                                    RightTapped="FunctionButton_RightTapped"
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="22">
+                                    <StackPanel Spacing="2">
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function22Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F22" TextAlignment="Center" />
+                                    </StackPanel>
+                                </ToggleButton>
+                                <ToggleButton
+                                    Grid.Row="11"
+                                    Grid.Column="1"
+                                    Background="{x:Bind ViewModel.IsF23On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#69797E}"
+                                    Command="{x:Bind ViewModel.ToggleF23Command}"
+                                    IsChecked="{x:Bind ViewModel.IsF23On, Mode=OneWay}"
+                                    RightTapped="FunctionButton_RightTapped"
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="23">
+                                    <StackPanel Spacing="2">
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function23Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F23" TextAlignment="Center" />
+                                    </StackPanel>
+                                </ToggleButton>
+                                <ToggleButton
+                                    Grid.Row="12"
+                                    Grid.Column="0"
+                                    Background="{x:Bind ViewModel.IsF24On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#69797E}"
+                                    Command="{x:Bind ViewModel.ToggleF24Command}"
+                                    IsChecked="{x:Bind ViewModel.IsF24On, Mode=OneWay}"
+                                    RightTapped="FunctionButton_RightTapped"
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="24">
+                                    <StackPanel Spacing="2">
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function24Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F24" TextAlignment="Center" />
+                                    </StackPanel>
+                                </ToggleButton>
+                                <ToggleButton
+                                    Grid.Row="12"
+                                    Grid.Column="1"
+                                    Background="{x:Bind ViewModel.IsF25On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#69797E}"
+                                    Command="{x:Bind ViewModel.ToggleF25Command}"
+                                    IsChecked="{x:Bind ViewModel.IsF25On, Mode=OneWay}"
+                                    RightTapped="FunctionButton_RightTapped"
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="25">
+                                    <StackPanel Spacing="2">
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function25Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F25" TextAlignment="Center" />
+                                    </StackPanel>
+                                </ToggleButton>
+                                <ToggleButton
+                                    Grid.Row="13"
+                                    Grid.Column="0"
+                                    Background="{x:Bind ViewModel.IsF26On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#69797E}"
+                                    Command="{x:Bind ViewModel.ToggleF26Command}"
+                                    IsChecked="{x:Bind ViewModel.IsF26On, Mode=OneWay}"
+                                    RightTapped="FunctionButton_RightTapped"
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="26">
+                                    <StackPanel Spacing="2">
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function26Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F26" TextAlignment="Center" />
+                                    </StackPanel>
+                                </ToggleButton>
+                                <ToggleButton
+                                    Grid.Row="13"
+                                    Grid.Column="1"
+                                    Background="{x:Bind ViewModel.IsF27On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#69797E}"
+                                    Command="{x:Bind ViewModel.ToggleF27Command}"
+                                    IsChecked="{x:Bind ViewModel.IsF27On, Mode=OneWay}"
+                                    RightTapped="FunctionButton_RightTapped"
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="27">
+                                    <StackPanel Spacing="2">
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function27Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F27" TextAlignment="Center" />
+                                    </StackPanel>
+                                </ToggleButton>
+                                <ToggleButton
+                                    Grid.Row="14"
+                                    Grid.Column="0"
+                                    Background="{x:Bind ViewModel.IsF28On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#69797E}"
+                                    Command="{x:Bind ViewModel.ToggleF28Command}"
+                                    IsChecked="{x:Bind ViewModel.IsF28On, Mode=OneWay}"
+                                    RightTapped="FunctionButton_RightTapped"
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="28">
+                                    <StackPanel Spacing="2">
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function28Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F28" TextAlignment="Center" />
+                                    </StackPanel>
+                                </ToggleButton>
+                                <ToggleButton
+                                    Grid.Row="14"
+                                    Grid.Column="1"
+                                    Background="{x:Bind ViewModel.IsF29On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#69797E}"
+                                    Command="{x:Bind ViewModel.ToggleF29Command}"
+                                    IsChecked="{x:Bind ViewModel.IsF29On, Mode=OneWay}"
+                                    RightTapped="FunctionButton_RightTapped"
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="29">
+                                    <StackPanel Spacing="2">
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function29Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F29" TextAlignment="Center" />
+                                    </StackPanel>
+                                </ToggleButton>
+                                <ToggleButton
+                                    Grid.Row="15"
+                                    Grid.Column="0"
+                                    Background="{x:Bind ViewModel.IsF30On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#69797E}"
+                                    Command="{x:Bind ViewModel.ToggleF30Command}"
+                                    IsChecked="{x:Bind ViewModel.IsF30On, Mode=OneWay}"
+                                    RightTapped="FunctionButton_RightTapped"
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="30">
+                                    <StackPanel Spacing="2">
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function30Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F30" TextAlignment="Center" />
+                                    </StackPanel>
+                                </ToggleButton>
+                                <ToggleButton
+                                    Grid.Row="15"
+                                    Grid.Column="1"
+                                    Background="{x:Bind ViewModel.IsF31On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#69797E}"
+                                    Command="{x:Bind ViewModel.ToggleF31Command}"
+                                    IsChecked="{x:Bind ViewModel.IsF31On, Mode=OneWay}"
+                                    RightTapped="FunctionButton_RightTapped"
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="31">
+                                    <StackPanel Spacing="2">
+                                        <Image Width="20" Height="20" converter:SvgImageBehavior.SvgAssetName="{x:Bind ViewModel.Function31Glyph, Mode=OneWay}" />
+                                        <TextBlock FontSize="9" Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="F31" TextAlignment="Center" />
+                                    </StackPanel>
+                                </ToggleButton>
+                        </Grid>
                     </StackPanel>
                 </ScrollViewer>
             </Border>
         </Grid>
     </Grid>
 </Page>
+
+

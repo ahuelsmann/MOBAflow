@@ -672,6 +672,53 @@
         </ScrollViewer>
     </DataTemplate>
 
+    <!--  Train Destination Display Action Template  -->
+    <DataTemplate x:Key="TrainDestinationDisplayActionTemplate">
+        <ScrollViewer>
+            <StackPanel Padding="0,0,16,16" Spacing="16">
+                <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Display Output Action" />
+
+                <TextBox
+                    Header="Name"
+                    PlaceholderText="e.g., Show Arrival on Platform 1"
+                    Text="{Binding Name, Mode=TwoWay}" />
+
+                <!--  Display Device Selection  -->
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Display Device" />
+                    <ComboBox
+                        HorizontalAlignment="Stretch"
+                        DisplayMemberPath="Name"
+                        ItemsSource="{Binding AvailableDisplayDevices}"
+                        PlaceholderText="Select a display device..."
+                        SelectedValue="{Binding DisplayDeviceId, Mode=TwoWay}"
+                        SelectedValuePath="Id" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{ThemeResource CaptionTextBlockStyle}"
+                        Text="{Binding SelectedDeviceName}" />
+                </StackPanel>
+
+                <!--  Clear Before Render  -->
+                <ToggleSwitch Header="Clear display before rendering" IsOn="{Binding ClearBeforeRender, Mode=TwoWay}" />
+
+                <NumberBox
+                    Header="Delay After (ms)"
+                    Maximum="60000"
+                    Minimum="0"
+                    SpinButtonPlacementMode="Inline"
+                    ToolTipService.ToolTip="Wait time after this action completes (Sequential mode only)"
+                    Value="{Binding DelayAfterMs, Mode=TwoWay}" />
+
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    Style="{ThemeResource CaptionTextBlockStyle}"
+                    Text="Shows journey information (train name, destination, departure time) on the selected ESP32-S3 display. Configure displays and layouts in Display Page. Use Drag &amp; Drop to change execution order. DelayAfterMs applies only in Sequential mode."
+                    TextWrapping="Wrap" />
+            </StackPanel>
+        </ScrollViewer>
+    </DataTemplate>
+
     <!--  Generic Action Template (Fallback)  -->
     <DataTemplate x:Key="ActionTemplate">
         <ScrollViewer>

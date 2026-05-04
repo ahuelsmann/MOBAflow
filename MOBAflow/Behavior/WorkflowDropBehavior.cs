@@ -61,8 +61,12 @@ public sealed class WorkflowDropBehavior : Behavior<UIElement>
         if (e.DataView.Properties.ContainsKey("Workflow"))
         {
             e.AcceptedOperation = DataPackageOperation.Link;
+
+            // Windows App SDK 2.0 Drag/Drop Visual Enhancements
             e.DragUIOverride.Caption = "Assign Workflow";
             e.DragUIOverride.IsCaptionVisible = true;
+            e.DragUIOverride.IsContentVisible = true;
+            e.DragUIOverride.IsGlyphVisible = true;
         }
         else
         {

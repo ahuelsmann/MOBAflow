@@ -30,8 +30,8 @@ public class LocomotivePreset
     public bool IsForward { get; set; } = true;
 
     /// <summary>
-    /// Function states F0-F28 as bitmask.
-    /// F0 = bit 0, F1 = bit 1, ..., F28 = bit 28.
+    /// Function states F0-F31 as bitmask.
+    /// F0 = bit 0, F1 = bit 1, ..., F31 = bit 31.
     /// </summary>
     public uint FunctionStates { get; set; }
 
@@ -40,7 +40,7 @@ public class LocomotivePreset
     /// </summary>
     public bool GetFunction(int functionNumber)
     {
-        return functionNumber >= 0 && functionNumber <= 28 && (FunctionStates & (1u << functionNumber)) != 0;
+        return functionNumber >= 0 && functionNumber <= 31 && (FunctionStates & (1u << functionNumber)) != 0;
     }
 
     /// <summary>
@@ -48,7 +48,7 @@ public class LocomotivePreset
     /// </summary>
     public void SetFunction(int functionNumber, bool isOn)
     {
-        if (functionNumber < 0 || functionNumber > 28) return;
+        if (functionNumber < 0 || functionNumber > 31) return;
         if (isOn)
             FunctionStates |= 1u << functionNumber;
         else

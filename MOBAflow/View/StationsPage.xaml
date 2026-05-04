@@ -12,20 +12,32 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="280" />
+            <ColumnDefinition
+                x:Name="ColStations"
+                Width="280"
+                MinWidth="32" />
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="280" />
+            <ColumnDefinition
+                x:Name="ColPlatforms"
+                Width="280"
+                MinWidth="32" />
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="250" />
+            <ColumnDefinition
+                x:Name="ColWorkflowLib"
+                Width="250"
+                MinWidth="32" />
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition
+                x:Name="ColProperties"
+                Width="350"
+                MinWidth="32" />
         </Grid.ColumnDefinitions>
 
         <controls:CollapsibleColumnCollection
             Grid.Column="0"
-            Header="Stations"
             Glyph="&#xEC06;"
-            IsExpanded="True">
+            Header="Stations"
+            IsExpanded="{x:Bind ViewModel.IsStationsListExpanded, Mode=TwoWay}">
             <controls:CollapsibleColumnCollection.HeaderActions>
                 <StackPanel Orientation="Horizontal" Spacing="2">
                     <Button
@@ -73,9 +85,9 @@
 
         <controls:CollapsibleColumnCollection
             Grid.Column="2"
-            Header="Platforms"
             Glyph="&#xE7C1;"
-            IsExpanded="True">
+            Header="Platforms"
+            IsExpanded="{x:Bind ViewModel.IsPlatformsListExpanded, Mode=TwoWay}">
             <controls:CollapsibleColumnCollection.HeaderActions>
                 <StackPanel Orientation="Horizontal" Spacing="2">
                     <Button
@@ -102,7 +114,6 @@
                         <DataTemplate x:DataType="viewmodel:PlatformViewModel">
                             <Grid Padding="6">
                                 <StackPanel Spacing="2">
-                                    <TextBlock Text="{x:Bind Summary, Mode=OneWay}" />
                                     <TextBlock
                                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                         Style="{ThemeResource CaptionTextBlockStyle}"
@@ -123,9 +134,9 @@
 
         <controls:CollapsibleColumnProperties
             Grid.Column="6"
-            Header="{x:Bind ViewModel.StationsPagePropertiesTitle, Mode=OneWay}"
             Glyph="&#xE946;"
-            IsExpanded="True">
+            Header="{x:Bind ViewModel.StationsPagePropertiesTitle, Mode=OneWay}"
+            IsExpanded="{x:Bind ViewModel.IsStationsPropertiesExpanded, Mode=TwoWay}">
             <controls:CollapsibleColumnProperties.PanelContent>
                 <ContentControl
                     HorizontalContentAlignment="Stretch"
@@ -154,7 +165,10 @@
                         QueryIcon="Find"
                         Text="{x:Bind ViewModel.WorkflowSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" VerticalScrollMode="Auto">
+                    <ScrollViewer
+                        Grid.Row="1"
+                        VerticalScrollBarVisibility="Auto"
+                        VerticalScrollMode="Auto">
                         <StackPanel Spacing="8">
                             <TextBlock
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"

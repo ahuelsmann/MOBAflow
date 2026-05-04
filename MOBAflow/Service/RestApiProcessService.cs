@@ -296,7 +296,7 @@ public sealed class RestApiProcessService : IDisposable
     {
         if (_disposed) return;
         _disposed = true;
-        _startLock.Dispose();
         Stop();
+        _startLock.Dispose();
     }
 }

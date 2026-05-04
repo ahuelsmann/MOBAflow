@@ -66,4 +66,9 @@ public class WorkflowAction
     /// Payload for <see cref="ActionType.ExecutePowerShellScript"/> actions.
     /// </summary>
     public PowerShellActionPayload? PowerShell { get; set; }
+
+    /// <summary>
+    /// Payload for <see cref="ActionType.TrainDestinationDisplay"/> actions.
+    /// </summary>
+    public TrainDestinationDisplayActionPayload? TrainDestinationDisplay { get; set; }
 }

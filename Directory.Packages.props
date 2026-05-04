@@ -49,18 +49,18 @@
     <PackageVersion Include="UraniumUI.Material" Version="2.15.0" />
     <PackageVersion Include="UraniumUI.Icons.MaterialIcons" Version="2.15.0" />
     <PackageVersion Include="Xamarin.AndroidX.Startup.StartupRuntime" Version="1.2.0.7" />
-    <PackageVersion Include="Microsoft.WindowsAppSDK" Version="1.8.260416003" />
+    <PackageVersion Include="Microsoft.WindowsAppSDK" Version="2.0.1" />
     <PackageVersion Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.4654" />
     <PackageVersion Include="Microsoft.Windows.SDK.BuildTools.MSIX" Version="1.7.251221100" />
     <PackageVersion Include="Microsoft.Graphics.Win2D" Version="1.4.0" />
     <PackageVersion Include="Microsoft.SourceLink.AzureRepos.Git" Version="10.0.203" />
     <PackageVersion Include="coverlet.collector" Version="10.0.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.5.1" />
-    <PackageVersion Include="NUnit" Version="4.5.1" />
-    <PackageVersion Include="NUnit.Analyzers" Version="4.12.0" />
+    <PackageVersion Include="NUnit" Version="4.6.0" />
+    <PackageVersion Include="NUnit.Analyzers" Version="4.13.0" />
     <PackageVersion Include="NUnit3TestAdapter" Version="6.2.0" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.5" />
-    <PackageVersion Include="Microsoft.Maui.Controls" Version="10.0.51" />
+    <PackageVersion Include="Microsoft.Maui.Controls" Version="10.0.60" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="10.0.5" />
     <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.5" />

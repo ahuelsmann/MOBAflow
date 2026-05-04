@@ -512,6 +512,8 @@ public class LayoutSettings
     public TrackPlanPageLayoutSettings TrackPlanPage { get; set; } = new();
 
     public MonitorPageLayoutSettings MonitorPage { get; set; } = new();
+
+    public StationsPageLayoutSettings StationsPage { get; set; } = new();
 }
 
 /// <summary>
@@ -667,18 +669,24 @@ public class GoodsWagonPageLayoutSettings
 {
     public bool IsListExpanded { get; set; } = true;
     public bool IsPropertiesExpanded { get; set; } = true;
+    public double ListColumnWidth { get; set; } = 250;
+    public double PropertiesColumnWidth { get; set; } = 600;
 }
 
 public class LocomotivesPageLayoutSettings
 {
     public bool IsListExpanded { get; set; } = true;
     public bool IsPropertiesExpanded { get; set; } = true;
+    public double ListColumnWidth { get; set; } = 250;
+    public double PropertiesColumnWidth { get; set; } = 600;
 }
 
 public class PassengerWagonPageLayoutSettings
 {
     public bool IsListExpanded { get; set; } = true;
     public bool IsPropertiesExpanded { get; set; } = true;
+    public double ListColumnWidth { get; set; } = 250;
+    public double PropertiesColumnWidth { get; set; } = 600;
 }
 
 public class TrainsPageLayoutSettings
@@ -699,34 +707,45 @@ public class SolutionPageLayoutSettings
 public class WorkflowsPageLayoutSettings
 {
     public bool IsWorkflowListExpanded { get; set; } = true;
-
     public bool IsActionsExpanded { get; set; } = true;
-
     public bool IsPropertiesExpanded { get; set; } = true;
-
-    public double WorkflowsColumnWidth { get; set; } = 300;
-
-    public double ActionsColumnWidth { get; set; } = -1; // -1 can mean Auto/Star
-
-    public double PropertiesColumnWidth { get; set; } = 350;
+    public double WorkflowListColumnWidth { get; set; } = 200;
+    public double ActionsColumnWidth { get; set; } = 300;
+    public double PropertiesColumnWidth { get; set; } = 300;
 }
 
 public class SignalBoxPageLayoutSettings
 {
     public bool IsToolboxExpanded { get; set; } = true;
-
     public bool IsPropertiesExpanded { get; set; } = true;
+    public double ToolboxColumnWidth { get; set; } = 240;
+    public double PropertiesColumnWidth { get; set; } = 300;
 }
 
 public class TrackPlanPageLayoutSettings
 {
     public bool IsToolboxExpanded { get; set; } = true;
-
     public bool IsPropertiesExpanded { get; set; } = true;
+    public double ToolboxColumnWidth { get; set; } = 180;
+    public double PropertiesColumnWidth { get; set; } = 240;
 }
 
 public class MonitorPageLayoutSettings
 {
     public bool IsTrafficExpanded { get; set; } = true;
     public bool IsActivityLogExpanded { get; set; } = true;
+    public double TrafficColumnStarValue { get; set; } = 1;
+    public double ActivityLogColumnStarValue { get; set; } = 2;
+}
+
+public class StationsPageLayoutSettings
+{
+    public bool IsStationsListExpanded { get; set; } = true;
+    public bool IsPlatformsListExpanded { get; set; } = true;
+    public bool IsWorkflowLibraryExpanded { get; set; } = true;
+    public bool IsPropertiesExpanded { get; set; } = true;
+    public double StationsColumnWidth { get; set; } = 280;
+    public double PlatformsColumnWidth { get; set; } = 280;
+    public double WorkflowLibraryColumnWidth { get; set; } = 250;
+    public double PropertiesColumnWidth { get; set; } = 350;
 }

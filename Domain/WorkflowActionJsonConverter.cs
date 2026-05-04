@@ -1,5 +1,4 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-
 namespace Moba.Domain;
 
 using Enum;
@@ -51,6 +50,9 @@ public sealed class WorkflowActionJsonConverter : JsonConverter<WorkflowAction>
         if (TryGetPropertyInsensitive(root, "powerShell", out var psEl) && psEl.ValueKind == JsonValueKind.Object)
             action.PowerShell = JsonSerializer.Deserialize<PowerShellActionPayload>(psEl.GetRawText(), NestedOptions);
 
+        if (TryGetPropertyInsensitive(root, "trainDestinationDisplay", out var displayEl) && displayEl.ValueKind == JsonValueKind.Object)
+            action.TrainDestinationDisplay = JsonSerializer.Deserialize<TrainDestinationDisplayActionPayload>(displayEl.GetRawText(), NestedOptions);
+
         if (TryGetPropertyInsensitive(root, "parameters", out var legacyParams) && legacyParams.ValueKind == JsonValueKind.Object)
             MergeLegacyParameters(action, legacyParams);
 
@@ -93,6 +95,10 @@ public sealed class WorkflowActionJsonConverter : JsonConverter<WorkflowAction>
                 writer.WritePropertyName("powerShell");
                 JsonSerializer.Serialize(writer, value.PowerShell ?? new PowerShellActionPayload(), NestedOptions);
                 break;
+            case ActionType.TrainDestinationDisplay:
+                writer.WritePropertyName("trainDestinationDisplay");
+                JsonSerializer.Serialize(writer, value.TrainDestinationDisplay ?? new TrainDestinationDisplayActionPayload(), NestedOptions);
+                break;
             default:
                 if (value.Command != null)
                 {
@@ -116,6 +122,12 @@ public sealed class WorkflowActionJsonConverter : JsonConverter<WorkflowAction>
                 {
                     writer.WritePropertyName("powerShell");
                     JsonSerializer.Serialize(writer, value.PowerShell, NestedOptions);
+                }
+
+                if (value.TrainDestinationDisplay != null)
+                {
+                    writer.WritePropertyName("trainDestinationDisplay");
+                    JsonSerializer.Serialize(writer, value.TrainDestinationDisplay, NestedOptions);
                 }
 
                 break;
@@ -171,6 +183,18 @@ public sealed class WorkflowActionJsonConverter : JsonConverter<WorkflowAction>
                     action.PowerShell.ScriptPath = spEl.GetString();
                 if (action.PowerShell.Arguments == null && TryGetInsensitive(legacyParams, "Arguments", out var argEl) && argEl.ValueKind == JsonValueKind.String)
                     action.PowerShell.Arguments = argEl.GetString();
+                break;
+
+            case ActionType.TrainDestinationDisplay:
+                action.TrainDestinationDisplay ??= new TrainDestinationDisplayActionPayload();
+                if (action.TrainDestinationDisplay.DisplayDeviceId == Guid.Empty &&
+                    TryGetInsensitive(legacyParams, "DisplayDeviceId", out var deviceEl) &&
+                    deviceEl.ValueKind == JsonValueKind.String &&
+                    Guid.TryParse(deviceEl.GetString(), out var deviceId))
+                    action.TrainDestinationDisplay.DisplayDeviceId = deviceId;
+                if (TryGetInsensitive(legacyParams, "ClearBeforeRender", out var clearEl) &&
+                    clearEl.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                    action.TrainDestinationDisplay.ClearBeforeRender = clearEl.GetBoolean();
                 break;
         }
     }

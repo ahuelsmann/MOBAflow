@@ -3,11 +3,12 @@ namespace Moba.WinUI.Service;
 
 using Microsoft.UI.Dispatching;
 
-using SharedUI.Interface;
+using Moba.SharedUI.Interface;
 
 /// <summary>
 /// WinUI implementation of IUiDispatcher. Uses the DispatcherQueue of the thread
 /// on which the instance was created (typically UI thread on first DI resolution).
+/// Supports priorities for critical vs. background updates with Windows App SDK 2.0.
 /// </summary>
 internal class UiDispatcher : IUiDispatcher
 {
@@ -26,13 +27,77 @@ internal class UiDispatcher : IUiDispatcher
             return;
         }
 
-        if (_dispatcherQueue is not null && _dispatcherQueue.TryEnqueue(() => action()))
+        // Normal-Priorität für Standard-Updates
+        if (_dispatcherQueue is not null && _dispatcherQueue.TryEnqueue(
+            DispatcherQueuePriority.Normal, () => action()))
+            return;
+
+        action();
+    }
+
+    public void InvokeOnUiHighPriority(Action action)
+    {
+        if (_dispatcherQueue?.HasThreadAccess == true)
+        {
+            action();
+            return;
+        }
+
+        if (_dispatcherQueue is not null && _dispatcherQueue.TryEnqueue(
+            DispatcherQueuePriority.High, () => action()))
+            return;
+
+        action();
+    }
+
+    public void InvokeOnUiLowPriority(Action action)
+    {
+        if (_dispatcherQueue?.HasThreadAccess == true)
+        {
+            action();
+            return;
+        }
+
+        if (_dispatcherQueue is not null && _dispatcherQueue.TryEnqueue(
+            DispatcherQueuePriority.Low, () => action()))
             return;
 
         action();
     }
 
     public async Task InvokeOnUiAsync(Func<Task> asyncAction)
+    {
+        await InvokeOnUiAsync(asyncAction, UiPriority.Normal);
+    }
+
+    public async Task<T> InvokeOnUiAsync<T>(Func<Task<T>> asyncFunc)
+    {
+        return await InvokeOnUiAsync(asyncFunc, UiPriority.Normal);
+    }
+
+    public async Task<T> InvokeOnUiAsync<T>(Func<Task<T>> asyncFunc, UiPriority priority)
+    {
+        if (_dispatcherQueue?.HasThreadAccess == true)
+        {
+            return await asyncFunc();
+        }
+
+        if (_dispatcherQueue is null)
+        {
+            return await asyncFunc();
+        }
+
+        var tcs = new TaskCompletionSource<T>();
+        var dispatcherPriority = MapToDispatcherPriority(priority);
+        if (!_dispatcherQueue.TryEnqueue(dispatcherPriority, () => _ = InvokeAsyncInternal(asyncFunc, tcs)))
+        {
+            return await asyncFunc();
+        }
+
+        return await tcs.Task;
+    }
+
+    public async Task InvokeOnUiAsync(Func<Task> asyncAction, UiPriority priority)
     {
         if (_dispatcherQueue?.HasThreadAccess == true)
         {
@@ -47,7 +112,8 @@ internal class UiDispatcher : IUiDispatcher
         }
 
         var tcs = new TaskCompletionSource();
-        if (!_dispatcherQueue.TryEnqueue(() => _ = InvokeAsyncInternal(asyncAction, tcs)))
+        var dispatcherPriority = MapToDispatcherPriority(priority);
+        if (!_dispatcherQueue.TryEnqueue(dispatcherPriority, () => _ = InvokeAsyncInternal(asyncAction, tcs)))
         {
             await asyncAction();
             return;
@@ -56,25 +122,14 @@ internal class UiDispatcher : IUiDispatcher
         await tcs.Task;
     }
 
-    public async Task<T> InvokeOnUiAsync<T>(Func<Task<T>> asyncFunc)
+    private static DispatcherQueuePriority MapToDispatcherPriority(UiPriority priority)
     {
-        if (_dispatcherQueue?.HasThreadAccess == true)
+        return priority switch
         {
-            return await asyncFunc();
-        }
-
-        if (_dispatcherQueue is null)
-        {
-            return await asyncFunc();
-        }
-
-        var tcs = new TaskCompletionSource<T>();
-        if (!_dispatcherQueue.TryEnqueue(() => _ = InvokeAsyncInternal(asyncFunc, tcs)))
-        {
-            return await asyncFunc();
-        }
-
-        return await tcs.Task;
+            UiPriority.Low => DispatcherQueuePriority.Low,
+            UiPriority.High => DispatcherQueuePriority.High,
+            _ => DispatcherQueuePriority.Normal
+        };
     }
 
     private static async Task InvokeAsyncInternal(Func<Task> asyncAction, TaskCompletionSource tcs)

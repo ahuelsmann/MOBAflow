@@ -16,6 +16,7 @@ public class Station
     {
         Id = Guid.NewGuid();
         Name = "New Station";
+        PlatformTag = string.Empty;
         Connections = [];
         Platforms = [];
     }
@@ -69,15 +70,24 @@ public class Station
     public bool IsExitOnLeft { get; set; }
 
     /// <summary>
-    /// Platforms (tracks) at this station when used as master data in <see cref="Project.Stations"/>.
+    /// List of all platform for this station.
     /// </summary>
     public List<Platform> Platforms { get; set; }
 
     /// <summary>
-    /// When this station is embedded in a <see cref="Journey.Stations"/> list, optionally references a
-    /// <see cref="Platform.Id"/> from the same project's <see cref="Project.Stations"/> for display and announcements.
+    /// Gets or sets the track / platform number by platform id.
     /// </summary>
     public Guid? PlatformId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the track / platform number.
+    /// </summary>
+    public uint PlatformNumber { get; set; }
+
+    /// <summary>
+    /// Gets or sets the track / platform number as string (e.g. 12A).
+    /// </summary>
+    public string PlatformTag  { get; set; }
 
     /// <summary>
     /// Upcoming feature: Arrival time.

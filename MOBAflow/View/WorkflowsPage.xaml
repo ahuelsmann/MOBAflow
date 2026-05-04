@@ -15,18 +15,27 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition x:Name="ColWorkflows" Width="1*" MinWidth="32" />
+            <ColumnDefinition
+                x:Name="ColWorkflows"
+                Width="1*"
+                MinWidth="32" />
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition x:Name="ColActions" Width="1.5*" MinWidth="32" />
+            <ColumnDefinition
+                x:Name="ColActions"
+                Width="1.5*"
+                MinWidth="32" />
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition x:Name="ColProperties" Width="1.5*" MinWidth="32" />
+            <ColumnDefinition
+                x:Name="ColProperties"
+                Width="1.5*"
+                MinWidth="32" />
         </Grid.ColumnDefinitions>
 
         <controls:CollapsibleColumnCollection
             Grid.Column="0"
             Margin="0"
-            Header="Workflows"
             Glyph="&#xEF90;"
+            Header="Workflows"
             IsExpanded="{x:Bind ViewModel.IsWorkflowListExpanded, Mode=TwoWay}">
             <controls:CollapsibleColumnCollection.HeaderActions>
                 <StackPanel Orientation="Horizontal" Spacing="2">
@@ -50,7 +59,7 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    
+
                     <AutoSuggestBox
                         Grid.Row="0"
                         Margin="0,0,0,8"
@@ -117,8 +126,8 @@
         <controls:CollapsibleColumnHelper
             Grid.Column="2"
             Margin="0"
-            Header="Actions"
             Glyph="&#xE945;"
+            Header="Actions"
             IsExpanded="{x:Bind ViewModel.IsWorkflowActionsExpanded, Mode=TwoWay}">
             <controls:CollapsibleColumnHelper.PanelContent>
                 <Grid>
@@ -126,7 +135,7 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    
+
                     <CommandBar
                         Grid.Row="0"
                         DefaultLabelPosition="Right"
@@ -153,7 +162,7 @@
                             Label="Delete"
                             ToolTipService.ToolTip="Remove the selected action" />
                     </CommandBar>
-                    
+
                     <ListView
                         Grid.Row="1"
                         AllowDrop="True"
@@ -230,8 +239,8 @@
         <controls:CollapsibleColumnProperties
             Grid.Column="4"
             Margin="0"
-            Header="Properties"
             Glyph="&#xE946;"
+            Header="Properties"
             IsExpanded="{x:Bind ViewModel.IsWorkflowPropertiesExpanded, Mode=TwoWay}">
             <controls:CollapsibleColumnProperties.PanelContent>
                 <ContentControl

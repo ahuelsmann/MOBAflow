@@ -62,8 +62,10 @@ internal class IoService : IIoService
 
         var picker = new FileOpenPicker(_windowId.GetValueOrDefault())
         {
+            SettingsIdentifier = "MobaSolutionPicker",
             SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
-            FileTypeFilter = { ".json" }
+            Title = "Open MOBAflow Solution",
+            FileTypeChoices = { { "MOBAflow Solution (*.json)", new List<string> { ".json" } } }
         };
 
         var result = await picker.PickSingleFileAsync();
@@ -174,10 +176,13 @@ internal class IoService : IIoService
         {
             var picker = new FileSavePicker(_windowId.GetValueOrDefault())
             {
+                SettingsIdentifier = "MobaSolutionSaver",
                 SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
                 SuggestedFileName = "solution",
                 DefaultFileExtension = ".json",
-                FileTypeChoices = { { "JSON", new List<string> { ".json" } } }
+                ShowOverwritePrompt = true,
+                Title = "Save MOBAflow Solution",
+                FileTypeChoices = { { "MOBAflow Solution (*.json)", new List<string> { ".json" } } }
             };
 
             var result = await picker.PickSaveFileAsync();
@@ -264,8 +269,10 @@ internal class IoService : IIoService
 
         var picker = new FileOpenPicker(_windowId.GetValueOrDefault())
         {
+            SettingsIdentifier = "MobaJsonPicker",
             SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
-            FileTypeFilter = { ".json" }
+            Title = "Select JSON File",
+            FileTypeChoices = { { "JSON Files (*.json)", new List<string> { ".json" } } }
         };
 
         var result = await picker.PickSingleFileAsync();
@@ -281,10 +288,13 @@ internal class IoService : IIoService
 
         var picker = new FileSavePicker(_windowId.GetValueOrDefault())
         {
+            SettingsIdentifier = "MobaJsonSaver",
             SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
             SuggestedFileName = suggestedFileName,
             DefaultFileExtension = ".json",
-            FileTypeChoices = { { "JSON Files", new List<string> { ".json" } } }
+            ShowOverwritePrompt = true,
+            Title = "Save JSON File",
+            FileTypeChoices = { { "JSON Files (*.json)", new List<string> { ".json" } } }
         };
 
         var result = await picker.PickSaveFileAsync();
@@ -301,8 +311,10 @@ internal class IoService : IIoService
 
         var picker = new FileOpenPicker(_windowId.GetValueOrDefault())
         {
+            SettingsIdentifier = "MobaXmlPicker",
             SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
-            FileTypeFilter = { ".xml" }
+            Title = "Import AnyRail Layout",
+            FileTypeChoices = { { "AnyRail Layout (*.xml)", new List<string> { ".xml" } } }
         };
 
         var result = await picker.PickSingleFileAsync();
@@ -318,10 +330,13 @@ internal class IoService : IIoService
 
         var picker = new FileSavePicker(_windowId.GetValueOrDefault())
         {
+            SettingsIdentifier = "MobaXmlSaver",
             SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
             SuggestedFileName = suggestedFileName,
             DefaultFileExtension = ".xml",
-            FileTypeChoices = { { "XML Files", new List<string> { ".xml" } } }
+            ShowOverwritePrompt = true,
+            Title = "Save XML File",
+            FileTypeChoices = { { "XML Files (*.xml)", new List<string> { ".xml" } } }
         };
 
         var result = await picker.PickSaveFileAsync();
@@ -338,8 +353,10 @@ internal class IoService : IIoService
 
         var picker = new FileOpenPicker(_windowId.GetValueOrDefault())
         {
+            SettingsIdentifier = "MobaAudioPicker",
             SuggestedStartLocation = PickerLocationId.MusicLibrary,
-            FileTypeFilter = { ".wav", ".mp3", ".ogg", ".flac", ".m4a" }
+            Title = "Select Audio File",
+            FileTypeChoices = { { "Audio Files", new List<string> { ".wav", ".mp3", ".ogg", ".flac", ".m4a" } } }
         };
 
         var result = await picker.PickSingleFileAsync();
@@ -356,8 +373,10 @@ internal class IoService : IIoService
 
         var picker = new FileOpenPicker(_windowId.GetValueOrDefault())
         {
+            SettingsIdentifier = "MobaPhotoPicker",
             SuggestedStartLocation = PickerLocationId.PicturesLibrary,
-            FileTypeFilter = { ".jpg", ".jpeg", ".png", ".bmp", ".gif" }
+            Title = "Select Photo",
+            FileTypeChoices = { { "Image Files", new List<string> { ".jpg", ".jpeg", ".png", ".bmp", ".gif" } } }
         };
 
         var result = await picker.PickSingleFileAsync();

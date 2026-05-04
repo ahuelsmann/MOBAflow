@@ -1,704 +1,716 @@
 {
-  "name": "Example Solution",
-  "projects": [
-    {
-      "name": "myMOBA",
-      "locomotives": [
+    "name": "Example Solution",
+    "projects": [
         {
-          "id": "bb15c10a-5b78-451f-8f2f-2d4e3efa74af",
-          "name": "BR 110 Verkehrsrot",
-          "pos": 1,
-          "digitalAddress": 7,
-          "manufacturer": "Roco",
-          "articleNumber": "62550",
-          "functionSymbols": [
-            "\uEA3B",
-            "",
-            "",
-            "",
-            "\uE767"
-          ],
-          "isPushing": false,
-          "photoPath": "photos/latest/10efa2c052214c4d890a2946b9df6bc0.jpg"
-        }
-      ],
-      "passengerWagons": [
-        {
-          "wagonClass": 1,
-          "id": "b2c3d4e5-f6a7-8901-2345-678901cdefab",
-          "name": "Avmz 107 - 1st Class",
-          "pos": 1,
-          "manufacturer": "Piko",
-          "articleNumber": "58520",
-          "series": "Avmz 107",
-          "colorPrimary": 4,
-          "colorSecondary": 6,
-          "details": {
-            "axles": 2,
-            "epoch": 5,
-            "railroadCompany": "DB Regio",
-            "description": "First class passenger coach"
-          },
-          "photoPath": "photos/latest/242e53cced544362951dbc39e4fea39e.jpg"
-        }
-      ],
-      "goodsWagons": [
-        {
-          "cargo": 1,
-          "id": "d4e5f6a7-b8c9-0123-4567-890123efabcd",
-          "name": "Container Wagon Sgns",
-          "pos": 1,
-          "manufacturer": "Piko",
-          "articleNumber": "54771",
-          "series": "Sgns",
-          "colorPrimary": 8,
-          "details": {
-            "axles": 4,
-            "epoch": 6,
-            "railroadCompany": "DB Cargo",
-            "description": "Container flat wagon"
-          },
-          "photoPath": "photos/latest/82680c4a10b14db9bef80ea45e297662.jpg"
-        }
-      ],
-      "trains": [
-        {
-          "id": "e2d3c4b5-a6f7-8901-2345-678901bcdef0",
-          "isDoubleTraction": false,
-          "name": "RE 78",
-          "description": "Regional Express to Minden",
-          "trainType": 1,
-          "serviceType": 1,
-          "vehicles": [
-            {
-              "vehicleId": "bb15c10a-5b78-451f-8f2f-2d4e3efa74af",
-              "vehicleKind": 0,
-              "isReversed": false
+            "name": "myMOBA",
+            "locomotives": [
+                {
+                    "id": "bb15c10a-5b78-451f-8f2f-2d4e3efa74af",
+                    "name": "BR 110 Verkehrsrot",
+                    "pos": 1,
+                    "digitalAddress": 7,
+                    "manufacturer": "Roco",
+                    "articleNumber": "62550",
+                    "functionSymbols": [
+                        "track_power.svg",
+                        "",
+                        "",
+                        "",
+                        "\uE767"
+                    ],
+                    "isPushing": false,
+                    "photoPath": "photos/latest/10efa2c052214c4d890a2946b9df6bc0.jpg"
+                }
+            ],
+            "passengerWagons": [
+                {
+                    "wagonClass": 1,
+                    "id": "b2c3d4e5-f6a7-8901-2345-678901cdefab",
+                    "name": "Avmz 107 - 1st Class",
+                    "pos": 1,
+                    "manufacturer": "Piko",
+                    "articleNumber": "58520",
+                    "series": "Avmz 107",
+                    "colorPrimary": 4,
+                    "colorSecondary": 6,
+                    "details": {
+                        "axles": 2,
+                        "epoch": 5,
+                        "railroadCompany": "DB Regio",
+                        "description": "First class passenger coach"
+                    },
+                    "photoPath": "photos/latest/242e53cced544362951dbc39e4fea39e.jpg"
+                }
+            ],
+            "goodsWagons": [
+                {
+                    "cargo": 1,
+                    "id": "d4e5f6a7-b8c9-0123-4567-890123efabcd",
+                    "name": "Container Wagon Sgns",
+                    "pos": 1,
+                    "manufacturer": "Piko",
+                    "articleNumber": "54771",
+                    "series": "Sgns",
+                    "colorPrimary": 8,
+                    "details": {
+                        "axles": 4,
+                        "epoch": 6,
+                        "railroadCompany": "DB Cargo",
+                        "description": "Container flat wagon"
+                    },
+                    "photoPath": "photos/latest/82680c4a10b14db9bef80ea45e297662.jpg"
+                }
+            ],
+            "trains": [
+                {
+                    "id": "e2d3c4b5-a6f7-8901-2345-678901bcdef0",
+                    "isDoubleTraction": false,
+                    "name": "RE 78",
+                    "description": "Regional Express to Minden",
+                    "trainType": 1,
+                    "serviceType": 1,
+                    "vehicles": [
+                        {
+                            "vehicleId": "bb15c10a-5b78-451f-8f2f-2d4e3efa74af",
+                            "vehicleKind": 0,
+                            "isReversed": false
+                        },
+                        {
+                            "vehicleId": "b2c3d4e5-f6a7-8901-2345-678901cdefab",
+                            "vehicleKind": 1,
+                            "isReversed": false
+                        }
+                    ]
+                }
+            ],
+            "workflows": [
+                {
+                    "id": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+                    "name": "Arrival Main Station",
+                    "description": "Plays announcement on station arrival",
+                    "actions": [
+                        {
+                            "id": "131d050b-a36c-4fb1-8f1b-370869537c5a",
+                            "name": "Gong",
+                            "number": 1,
+                            "type": 2,
+                            "delayAfterMs": 0,
+                            "audio": {
+                                "filePath": "C:\\Repo\\ahuelsmann\\MOBAflow\\Sound\\Resources\\Sounds\\273231__gollamar__announcement-04.wav"
+                            }
+                        },
+                        {
+                            "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+                            "name": "Arrival Announcement",
+                            "number": 2,
+                            "type": 0,
+                            "delayAfterMs": 0,
+                            "announcement": {
+                                "rate": -1
+                            }
+                        }
+                    ],
+                    "executionMode": 0,
+                    "inPort": 0,
+                    "isUsingTimerToIgnoreFeedbacks": false,
+                    "intervalForTimerToIgnoreFeedbacks": 0
+                }
+            ],
+            "journeys": [
+                {
+                    "id": "c1d2e3f4-a5b6-7890-1234-567890abcdef",
+                    "name": "RE 78 (Porta-Express)",
+                    "description": "Regional Express from Bielefeld to Minden",
+                    "text": "N\u00E4chster Halt: {StationName}. Ausstieg: {StationIsExitOnLeft}.",
+                    "stations": [
+                        {
+                            "id": "d1e2f3a4-b5c6-7890-1234-567890abcdef",
+                            "name": "Bielefeld Hauptbahnhof",
+                            "inPort": 0,
+                            "numberOfLapsToStop": 2,
+                            "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+                            "isExitOnLeft": true,
+                            "platforms": [],
+                            "platformNumber": 0,
+                            "platformTag": "",
+                            "arrival": "2026-02-16T08:00:00+01:00",
+                            "departure": "2026-02-16T08:02:00+01:00",
+                            "connections": []
+                        },
+                        {
+                            "id": "d2e3f4a5-b6c7-8901-2345-678901bcdef0",
+                            "name": "Herford",
+                            "inPort": 0,
+                            "numberOfLapsToStop": 2,
+                            "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+                            "isExitOnLeft": false,
+                            "platforms": [],
+                            "platformNumber": 0,
+                            "platformTag": "",
+                            "arrival": "2026-02-16T08:10:00+01:00",
+                            "departure": "2026-02-16T08:12:00+01:00",
+                            "connections": []
+                        },
+                        {
+                            "id": "d3e4f5a6-b7c8-9012-3456-789012cdef01",
+                            "name": "Minden (Westf)",
+                            "inPort": 0,
+                            "numberOfLapsToStop": 2,
+                            "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+                            "isExitOnLeft": true,
+                            "platforms": [],
+                            "platformNumber": 0,
+                            "platformTag": "",
+                            "arrival": "2026-02-16T08:20:00+01:00",
+                            "departure": "2026-02-16T08:22:00+01:00",
+                            "connections": []
+                        }
+                    ],
+                    "inPort": 1,
+                    "isUsingTimerToIgnoreFeedbacks": false,
+                    "intervalForTimerToIgnoreFeedbacks": 20,
+                    "behaviorOnLastStop": 1,
+                    "firstPos": 0
+                }
+            ],
+            "stations": [
+                {
+                    "id": "d1e2f3a4-b5c6-7890-1234-567890abcdef",
+                    "name": "Bielefeld Hauptbahnhof",
+                    "inPort": 10,
+                    "numberOfLapsToStop": 1,
+                    "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+                    "isExitOnLeft": false,
+                    "platforms": [
+                        {
+                            "id": "a1111111-1111-1111-1111-111111111111",
+                            "name": "Gleis 1",
+                            "number": 1,
+                            "inPort": 11,
+                            "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+                        }
+                    ],
+                    "platformNumber": 0,
+                    "platformTag": "",
+                    "connections": []
+                },
+                {
+                    "id": "d2e3f4a5-b6c7-8901-2345-678901bcdef0",
+                    "name": "Herford",
+                    "inPort": 20,
+                    "numberOfLapsToStop": 1,
+                    "isExitOnLeft": false,
+                    "platforms": [
+                        {
+                            "id": "a2222222-2222-2222-2222-222222222222",
+                            "name": "Gleis 1",
+                            "number": 1,
+                            "inPort": 21
+                        }
+                    ],
+                    "platformNumber": 0,
+                    "platformTag": "",
+                    "connections": []
+                },
+                {
+                    "id": "d3e4f5a6-b7c8-9012-3456-789012cdef01",
+                    "name": "Minden (Westf)",
+                    "inPort": 30,
+                    "numberOfLapsToStop": 1,
+                    "isExitOnLeft": false,
+                    "platforms": [
+                        {
+                            "id": "a3333333-3333-3333-3333-333333333333",
+                            "name": "Gleis 1",
+                            "number": 1,
+                            "inPort": 31
+                        }
+                    ],
+                    "platformNumber": 0,
+                    "platformTag": "",
+                    "connections": []
+                }
+            ],
+            "signalBoxPlan": {
+                "id": "f1d3dd73-dcd5-4faa-b180-e687659598ea",
+                "name": "Stellwerk",
+                "grid": {
+                    "width": 20,
+                    "height": 12,
+                    "cellSize": 60
+                },
+                "elements": [
+                    {
+                        "$type": "TrackCurve",
+                        "id": "f364d7d8-8fc3-4217-a84f-31e9805a88b2",
+                        "x": 2,
+                        "y": 3,
+                        "rotation": 270,
+                        "name": "",
+                        "state": "Free"
+                    },
+                    {
+                        "$type": "TrackStraight",
+                        "id": "f52c9e75-8a52-4c3c-9bd4-f88cb8fb8903",
+                        "x": 3,
+                        "y": 3,
+                        "rotation": 0,
+                        "name": "",
+                        "state": "Free"
+                    },
+                    {
+                        "$type": "TrackStraight",
+                        "id": "3bcaa969-8d75-447c-9bf8-a5540d274de4",
+                        "x": 4,
+                        "y": 3,
+                        "rotation": 0,
+                        "name": "",
+                        "state": "Free"
+                    },
+                    {
+                        "$type": "TrackCurve",
+                        "id": "d2d86731-9122-4c16-8e08-00fdef17989c",
+                        "x": 5,
+                        "y": 3,
+                        "rotation": 0,
+                        "name": "",
+                        "state": "Free"
+                    },
+                    {
+                        "$type": "Detector",
+                        "feedbackAddress": 1,
+                        "id": "89a8b660-1623-4edb-99b5-c0cf01afba72",
+                        "x": 2,
+                        "y": 4,
+                        "rotation": 90,
+                        "name": "",
+                        "state": "Free"
+                    },
+                    {
+                        "$type": "TrackStraight",
+                        "id": "339647eb-4cc2-41d6-8517-e540f6c16e5c",
+                        "x": 5,
+                        "y": 4,
+                        "rotation": 90,
+                        "name": "",
+                        "state": "Free"
+                    },
+                    {
+                        "$type": "TrackCurve",
+                        "id": "ad566a5c-60be-429a-bff4-720c93c9854a",
+                        "x": 5,
+                        "y": 5,
+                        "rotation": 90,
+                        "name": "",
+                        "state": "Free"
+                    },
+                    {
+                        "$type": "TrackStraight",
+                        "id": "ae0dd7a5-5505-4051-8a81-35fc7409984a",
+                        "x": 4,
+                        "y": 5,
+                        "rotation": 0,
+                        "name": "",
+                        "state": "Free"
+                    },
+                    {
+                        "$type": "TrackStraight",
+                        "id": "b9edfafb-611b-4e20-a98a-7c1ce739c00e",
+                        "x": 3,
+                        "y": 5,
+                        "rotation": 0,
+                        "name": "",
+                        "state": "Free"
+                    },
+                    {
+                        "$type": "TrackCurve",
+                        "id": "ac4d1724-c7cd-4740-91d0-85bc9c14992c",
+                        "x": 2,
+                        "y": 5,
+                        "rotation": 180,
+                        "name": "",
+                        "state": "Free"
+                    },
+                    {
+                        "$type": "Signal",
+                        "signalSystem": "Ks",
+                        "signalAspect": "Zs1",
+                        "isMultiplexed": true,
+                        "multiplexerArticleNumber": "5229",
+                        "mainSignalArticleNumber": "4046",
+                        "distantSignalArticleNumber": "4040",
+                        "baseAddress": 201,
+                        "extendedAccessoryValue": 1,
+                        "id": "02810223-a04c-4b4c-ba92-f7e34e07b275",
+                        "x": 4,
+                        "y": 4,
+                        "rotation": 0,
+                        "name": "",
+                        "state": "Free"
+                    }
+                ],
+                "connections": [],
+                "routes": []
             },
-            {
-              "vehicleId": "b2c3d4e5-f6a7-8901-2345-678901cdefab",
-              "vehicleKind": 1,
-              "isReversed": false
+            "trackPlan": {
+                "version": 1,
+                "segments": [
+                    {
+                        "id": "3924429b-bb7c-483d-a8b2-e165db764044",
+                        "code": "R1",
+                        "x": 3944.9470825195312,
+                        "y": 1320.8026123046875,
+                        "rotationDegrees": 0
+                    },
+                    {
+                        "id": "8e764195-f612-4fb0-9ffe-6c75b0787f0e",
+                        "code": "R1",
+                        "x": 4124.947082519531,
+                        "y": 1369.0334669422896,
+                        "rotationDegrees": 30
+                    },
+                    {
+                        "id": "faf62da0-b3eb-4e3b-b387-9d2fc0fe23e6",
+                        "code": "R1",
+                        "x": 4256.716227881929,
+                        "y": 1500.8026123046875,
+                        "rotationDegrees": 60
+                    },
+                    {
+                        "id": "66f121b7-bb81-47b0-a2b8-5dfa8ad4c56f",
+                        "code": "R1",
+                        "x": 4304.947082519531,
+                        "y": 1680.8026123046875,
+                        "rotationDegrees": 90
+                    },
+                    {
+                        "id": "8a9f220f-9d05-48bf-92db-e14679da0feb",
+                        "code": "R1",
+                        "x": 4256.716227881929,
+                        "y": 1860.8026123046875,
+                        "rotationDegrees": 120
+                    },
+                    {
+                        "id": "3f57c7a2-1ab7-457b-afdc-ea322db11923",
+                        "code": "R1",
+                        "x": 4124.947082519531,
+                        "y": 1992.5717576670854,
+                        "rotationDegrees": 150
+                    },
+                    {
+                        "id": "84368447-d6fb-4848-8f47-d75788448a33",
+                        "code": "G239",
+                        "x": 3004.947082519531,
+                        "y": 2040.8026123046875,
+                        "rotationDegrees": 0
+                    },
+                    {
+                        "id": "a6233055-54f4-4037-a558-1b902d138918",
+                        "code": "G231",
+                        "x": 2774.017082519531,
+                        "y": 2040.8026123046875,
+                        "rotationDegrees": 0
+                    },
+                    {
+                        "id": "b9a22aa8-6dcc-4f0c-82f9-50d4c924a85a",
+                        "code": "G239",
+                        "x": 2534.947082519531,
+                        "y": 2040.8026123046875,
+                        "rotationDegrees": 0
+                    },
+                    {
+                        "id": "dda2fbc7-b20c-4707-81a6-c34970f9c473",
+                        "code": "G231",
+                        "x": 2304.017082519531,
+                        "y": 2040.8026123046875,
+                        "rotationDegrees": 0
+                    },
+                    {
+                        "id": "9b625629-7e21-47e5-8a50-2356d1f3ad44",
+                        "code": "R1",
+                        "x": 2304.017082519531,
+                        "y": 2040.8026123046875,
+                        "rotationDegrees": 180
+                    },
+                    {
+                        "id": "247a09fa-4d66-4844-b44b-9e30ca3e9987",
+                        "code": "R1",
+                        "x": 2124.017082519531,
+                        "y": 1992.5717576670854,
+                        "rotationDegrees": 210
+                    },
+                    {
+                        "id": "a42d33ff-bec7-4226-aa2b-7cccbcd2d762",
+                        "code": "R1",
+                        "x": 1992.2479371571335,
+                        "y": 1860.8026123046875,
+                        "rotationDegrees": 240
+                    },
+                    {
+                        "id": "b06578bf-6655-4ae0-be7a-87a2ba8f9ff0",
+                        "code": "R1",
+                        "x": 1944.0170825195314,
+                        "y": 1680.8026123046875,
+                        "rotationDegrees": 270
+                    },
+                    {
+                        "id": "1c5c97a2-7358-4796-b5f8-705a54f481cb",
+                        "code": "R1",
+                        "x": 1992.2479371571335,
+                        "y": 1500.8026123046875,
+                        "rotationDegrees": 300
+                    },
+                    {
+                        "id": "95816a67-26a9-4752-bf4d-4fbaba4a3eb4",
+                        "code": "R1",
+                        "x": 2124.0170825195314,
+                        "y": 1369.0334669422896,
+                        "rotationDegrees": 330
+                    },
+                    {
+                        "id": "d0f74455-6b51-4c54-9af0-b710b6224e1e",
+                        "code": "WL",
+                        "x": 2304.0170825195314,
+                        "y": 1320.8026123046875,
+                        "rotationDegrees": 0
+                    },
+                    {
+                        "id": "01d69a4f-89dc-47b0-8d74-c465947c0817",
+                        "code": "G231",
+                        "x": 2543.0870825195316,
+                        "y": 1320.8026123046875,
+                        "rotationDegrees": 0
+                    },
+                    {
+                        "id": "1e3e35e6-3c84-4536-b99e-ec5ef74abc23",
+                        "code": "G231",
+                        "x": 2774.0170825195314,
+                        "y": 1320.8026123046875,
+                        "rotationDegrees": 0
+                    },
+                    {
+                        "id": "0142b796-d8c8-46d7-b261-d92abd42c057",
+                        "code": "DKW",
+                        "x": 3004.9470825195312,
+                        "y": 1320.8026123046875,
+                        "rotationDegrees": 0
+                    },
+                    {
+                        "id": "55809d4c-22c0-47a4-88a9-c6219fa35540",
+                        "code": "WR",
+                        "x": 3944.9470825195312,
+                        "y": 1320.8026123046875,
+                        "rotationDegrees": 180
+                    },
+                    {
+                        "id": "203f4011-6cc6-4ef2-ad80-27ef0d6b0a5b",
+                        "code": "G231",
+                        "x": 3474.9470825195312,
+                        "y": 1320.8026123046875,
+                        "rotationDegrees": 0
+                    },
+                    {
+                        "id": "c972f20a-f743-48d3-a6e3-6e27b17c89cf",
+                        "code": "G231",
+                        "x": 3244.0170825195314,
+                        "y": 1320.8026123046875,
+                        "rotationDegrees": 0
+                    },
+                    {
+                        "id": "15ebf670-5326-4204-869a-e5b5a51431f5",
+                        "code": "WR",
+                        "x": 3474.943954546731,
+                        "y": 1382.678874365332,
+                        "rotationDegrees": 180
+                    },
+                    {
+                        "id": "24dcece0-2eb4-4481-9955-38352c655d3e",
+                        "code": "G231",
+                        "x": 3714.017082519532,
+                        "y": 2040.8026123046875,
+                        "rotationDegrees": 0
+                    },
+                    {
+                        "id": "46e79b7c-5e9d-45dd-b650-2669700d71a9",
+                        "code": "G239",
+                        "x": 3474.9470825195317,
+                        "y": 2040.8026123046875,
+                        "rotationDegrees": 0
+                    },
+                    {
+                        "id": "281179e7-9ce3-41b9-86f9-582679a3d5f4",
+                        "code": "G231",
+                        "x": 3244.017082519531,
+                        "y": 2040.8026123046875,
+                        "rotationDegrees": 0
+                    }
+                ],
+                "connections": [
+                    {
+                        "sourceSegment": "8e764195-f612-4fb0-9ffe-6c75b0787f0e",
+                        "sourcePort": "PortA",
+                        "targetSegment": "3924429b-bb7c-483d-a8b2-e165db764044",
+                        "targetPort": "PortB"
+                    },
+                    {
+                        "sourceSegment": "faf62da0-b3eb-4e3b-b387-9d2fc0fe23e6",
+                        "sourcePort": "PortA",
+                        "targetSegment": "8e764195-f612-4fb0-9ffe-6c75b0787f0e",
+                        "targetPort": "PortB"
+                    },
+                    {
+                        "sourceSegment": "66f121b7-bb81-47b0-a2b8-5dfa8ad4c56f",
+                        "sourcePort": "PortA",
+                        "targetSegment": "faf62da0-b3eb-4e3b-b387-9d2fc0fe23e6",
+                        "targetPort": "PortB"
+                    },
+                    {
+                        "sourceSegment": "8a9f220f-9d05-48bf-92db-e14679da0feb",
+                        "sourcePort": "PortA",
+                        "targetSegment": "66f121b7-bb81-47b0-a2b8-5dfa8ad4c56f",
+                        "targetPort": "PortB"
+                    },
+                    {
+                        "sourceSegment": "3f57c7a2-1ab7-457b-afdc-ea322db11923",
+                        "sourcePort": "PortA",
+                        "targetSegment": "8a9f220f-9d05-48bf-92db-e14679da0feb",
+                        "targetPort": "PortB"
+                    },
+                    {
+                        "sourceSegment": "a6233055-54f4-4037-a558-1b902d138918",
+                        "sourcePort": "PortB",
+                        "targetSegment": "84368447-d6fb-4848-8f47-d75788448a33",
+                        "targetPort": "PortA"
+                    },
+                    {
+                        "sourceSegment": "b9a22aa8-6dcc-4f0c-82f9-50d4c924a85a",
+                        "sourcePort": "PortB",
+                        "targetSegment": "a6233055-54f4-4037-a558-1b902d138918",
+                        "targetPort": "PortA"
+                    },
+                    {
+                        "sourceSegment": "dda2fbc7-b20c-4707-81a6-c34970f9c473",
+                        "sourcePort": "PortB",
+                        "targetSegment": "b9a22aa8-6dcc-4f0c-82f9-50d4c924a85a",
+                        "targetPort": "PortA"
+                    },
+                    {
+                        "sourceSegment": "9b625629-7e21-47e5-8a50-2356d1f3ad44",
+                        "sourcePort": "PortA",
+                        "targetSegment": "dda2fbc7-b20c-4707-81a6-c34970f9c473",
+                        "targetPort": "PortA"
+                    },
+                    {
+                        "sourceSegment": "247a09fa-4d66-4844-b44b-9e30ca3e9987",
+                        "sourcePort": "PortA",
+                        "targetSegment": "9b625629-7e21-47e5-8a50-2356d1f3ad44",
+                        "targetPort": "PortB"
+                    },
+                    {
+                        "sourceSegment": "a42d33ff-bec7-4226-aa2b-7cccbcd2d762",
+                        "sourcePort": "PortA",
+                        "targetSegment": "247a09fa-4d66-4844-b44b-9e30ca3e9987",
+                        "targetPort": "PortB"
+                    },
+                    {
+                        "sourceSegment": "b06578bf-6655-4ae0-be7a-87a2ba8f9ff0",
+                        "sourcePort": "PortA",
+                        "targetSegment": "a42d33ff-bec7-4226-aa2b-7cccbcd2d762",
+                        "targetPort": "PortB"
+                    },
+                    {
+                        "sourceSegment": "1c5c97a2-7358-4796-b5f8-705a54f481cb",
+                        "sourcePort": "PortA",
+                        "targetSegment": "b06578bf-6655-4ae0-be7a-87a2ba8f9ff0",
+                        "targetPort": "PortB"
+                    },
+                    {
+                        "sourceSegment": "95816a67-26a9-4752-bf4d-4fbaba4a3eb4",
+                        "sourcePort": "PortA",
+                        "targetSegment": "1c5c97a2-7358-4796-b5f8-705a54f481cb",
+                        "targetPort": "PortB"
+                    },
+                    {
+                        "sourceSegment": "d0f74455-6b51-4c54-9af0-b710b6224e1e",
+                        "sourcePort": "PortA",
+                        "targetSegment": "95816a67-26a9-4752-bf4d-4fbaba4a3eb4",
+                        "targetPort": "PortB"
+                    },
+                    {
+                        "sourceSegment": "01d69a4f-89dc-47b0-8d74-c465947c0817",
+                        "sourcePort": "PortA",
+                        "targetSegment": "d0f74455-6b51-4c54-9af0-b710b6224e1e",
+                        "targetPort": "PortB"
+                    },
+                    {
+                        "sourceSegment": "1e3e35e6-3c84-4536-b99e-ec5ef74abc23",
+                        "sourcePort": "PortA",
+                        "targetSegment": "01d69a4f-89dc-47b0-8d74-c465947c0817",
+                        "targetPort": "PortB"
+                    },
+                    {
+                        "sourceSegment": "0142b796-d8c8-46d7-b261-d92abd42c057",
+                        "sourcePort": "PortA",
+                        "targetSegment": "1e3e35e6-3c84-4536-b99e-ec5ef74abc23",
+                        "targetPort": "PortB"
+                    },
+                    {
+                        "sourceSegment": "55809d4c-22c0-47a4-88a9-c6219fa35540",
+                        "sourcePort": "PortA",
+                        "targetSegment": "3924429b-bb7c-483d-a8b2-e165db764044",
+                        "targetPort": "PortA"
+                    },
+                    {
+                        "sourceSegment": "203f4011-6cc6-4ef2-ad80-27ef0d6b0a5b",
+                        "sourcePort": "PortB",
+                        "targetSegment": "55809d4c-22c0-47a4-88a9-c6219fa35540",
+                        "targetPort": "PortB"
+                    },
+                    {
+                        "sourceSegment": "c972f20a-f743-48d3-a6e3-6e27b17c89cf",
+                        "sourcePort": "PortB",
+                        "targetSegment": "203f4011-6cc6-4ef2-ad80-27ef0d6b0a5b",
+                        "targetPort": "PortA"
+                    },
+                    {
+                        "sourceSegment": "c972f20a-f743-48d3-a6e3-6e27b17c89cf",
+                        "sourcePort": "PortA",
+                        "targetSegment": "0142b796-d8c8-46d7-b261-d92abd42c057",
+                        "targetPort": "PortB"
+                    },
+                    {
+                        "sourceSegment": "15ebf670-5326-4204-869a-e5b5a51431f5",
+                        "sourcePort": "PortC",
+                        "targetSegment": "0142b796-d8c8-46d7-b261-d92abd42c057",
+                        "targetPort": "PortD"
+                    },
+                    {
+                        "sourceSegment": "24dcece0-2eb4-4481-9955-38352c655d3e",
+                        "sourcePort": "PortB",
+                        "targetSegment": "3f57c7a2-1ab7-457b-afdc-ea322db11923",
+                        "targetPort": "PortB"
+                    },
+                    {
+                        "sourceSegment": "46e79b7c-5e9d-45dd-b650-2669700d71a9",
+                        "sourcePort": "PortB",
+                        "targetSegment": "24dcece0-2eb4-4481-9955-38352c655d3e",
+                        "targetPort": "PortA"
+                    },
+                    {
+                        "sourceSegment": "281179e7-9ce3-41b9-86f9-582679a3d5f4",
+                        "sourcePort": "PortA",
+                        "targetSegment": "84368447-d6fb-4848-8f47-d75788448a33",
+                        "targetPort": "PortB"
+                    },
+                    {
+                        "sourceSegment": "46e79b7c-5e9d-45dd-b650-2669700d71a9",
+                        "sourcePort": "PortA",
+                        "targetSegment": "281179e7-9ce3-41b9-86f9-582679a3d5f4",
+                        "targetPort": "PortB"
+                    }
+                ]
             }
-          ]
         }
-      ],
-      "workflows": [
-        {
-          "id": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
-          "name": "Arrival Main Station",
-          "description": "Plays announcement on station arrival",
-          "actions": [
-            {
-              "id": "131d050b-a36c-4fb1-8f1b-370869537c5a",
-              "name": "Gong",
-              "number": 1,
-              "type": 2,
-              "delayAfterMs": 0,
-              "audio": {
-                "filePath": "C:\\Repo\\ahuelsmann\\MOBAflow\\Sound\\Resources\\Sounds\\273231__gollamar__announcement-04.wav"
-              }
-            },
-            {
-              "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
-              "name": "Arrival Announcement",
-              "number": 2,
-              "type": 0,
-              "delayAfterMs": 0,
-              "announcement": {
-                "rate": -1
-              }
-            }
-          ],
-          "executionMode": 0,
-          "inPort": 0,
-          "isUsingTimerToIgnoreFeedbacks": false,
-          "intervalForTimerToIgnoreFeedbacks": 0
-        }
-      ],
-      "journeys": [
-        {
-          "id": "c1d2e3f4-a5b6-7890-1234-567890abcdef",
-          "name": "RE 78 (Porta-Express)",
-          "description": "Regional Express from Bielefeld to Minden",
-          "text": "N\u00E4chster Halt: {StationName}. Ausstieg: {StationIsExitOnLeft}.",
-          "stations": [
-            {
-              "id": "d1e2f3a4-b5c6-7890-1234-567890abcdef",
-              "name": "Bielefeld Hauptbahnhof",
-              "inPort": 0,
-              "numberOfLapsToStop": 2,
-              "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
-              "isExitOnLeft": true,
-              "platforms": [],
-              "arrival": "2026-02-16T08:00:00+01:00",
-              "departure": "2026-02-16T08:02:00+01:00",
-              "connections": []
-            },
-            {
-              "id": "d2e3f4a5-b6c7-8901-2345-678901bcdef0",
-              "name": "Herford",
-              "inPort": 0,
-              "numberOfLapsToStop": 2,
-              "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
-              "isExitOnLeft": false,
-              "platforms": [],
-              "arrival": "2026-02-16T08:10:00+01:00",
-              "departure": "2026-02-16T08:12:00+01:00",
-              "connections": []
-            },
-            {
-              "id": "d3e4f5a6-b7c8-9012-3456-789012cdef01",
-              "name": "Minden (Westf)",
-              "inPort": 0,
-              "numberOfLapsToStop": 2,
-              "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
-              "isExitOnLeft": true,
-              "platforms": [],
-              "arrival": "2026-02-16T08:20:00+01:00",
-              "departure": "2026-02-16T08:22:00+01:00",
-              "connections": []
-            }
-          ],
-          "inPort": 1,
-          "isUsingTimerToIgnoreFeedbacks": false,
-          "intervalForTimerToIgnoreFeedbacks": 20,
-          "behaviorOnLastStop": 1,
-          "firstPos": 0
-        }
-      ],
-      "stations": [
-        {
-          "id": "d1e2f3a4-b5c6-7890-1234-567890abcdef",
-          "name": "Bielefeld Hauptbahnhof",
-          "inPort": 10,
-          "numberOfLapsToStop": 1,
-          "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
-          "isExitOnLeft": false,
-          "platforms": [
-            {
-              "id": "a1111111-1111-1111-1111-111111111111",
-              "name": "Gleis 1",
-              "number": 1,
-              "inPort": 11,
-              "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
-            }
-          ],
-          "connections": []
-        },
-        {
-          "id": "d2e3f4a5-b6c7-8901-2345-678901bcdef0",
-          "name": "Herford",
-          "inPort": 20,
-          "numberOfLapsToStop": 1,
-          "isExitOnLeft": false,
-          "platforms": [
-            {
-              "id": "a2222222-2222-2222-2222-222222222222",
-              "name": "Gleis 1",
-              "number": 1,
-              "inPort": 21
-            }
-          ],
-          "connections": []
-        },
-        {
-          "id": "d3e4f5a6-b7c8-9012-3456-789012cdef01",
-          "name": "Minden (Westf)",
-          "inPort": 30,
-          "numberOfLapsToStop": 1,
-          "isExitOnLeft": false,
-          "platforms": [
-            {
-              "id": "a3333333-3333-3333-3333-333333333333",
-              "name": "Gleis 1",
-              "number": 1,
-              "inPort": 31
-            }
-          ],
-          "connections": []
-        }
-      ],
-      "signalBoxPlan": {
-        "id": "f1d3dd73-dcd5-4faa-b180-e687659598ea",
-        "name": "Stellwerk",
-        "grid": {
-          "width": 20,
-          "height": 12,
-          "cellSize": 60
-        },
-        "elements": [
-          {
-            "$type": "TrackCurve",
-            "id": "f364d7d8-8fc3-4217-a84f-31e9805a88b2",
-            "x": 2,
-            "y": 3,
-            "rotation": 270,
-            "name": "",
-            "state": "Free"
-          },
-          {
-            "$type": "TrackStraight",
-            "id": "f52c9e75-8a52-4c3c-9bd4-f88cb8fb8903",
-            "x": 3,
-            "y": 3,
-            "rotation": 0,
-            "name": "",
-            "state": "Free"
-          },
-          {
-            "$type": "TrackStraight",
-            "id": "3bcaa969-8d75-447c-9bf8-a5540d274de4",
-            "x": 4,
-            "y": 3,
-            "rotation": 0,
-            "name": "",
-            "state": "Free"
-          },
-          {
-            "$type": "TrackCurve",
-            "id": "d2d86731-9122-4c16-8e08-00fdef17989c",
-            "x": 5,
-            "y": 3,
-            "rotation": 0,
-            "name": "",
-            "state": "Free"
-          },
-          {
-            "$type": "Detector",
-            "feedbackAddress": 1,
-            "id": "89a8b660-1623-4edb-99b5-c0cf01afba72",
-            "x": 2,
-            "y": 4,
-            "rotation": 90,
-            "name": "",
-            "state": "Free"
-          },
-          {
-            "$type": "TrackStraight",
-            "id": "339647eb-4cc2-41d6-8517-e540f6c16e5c",
-            "x": 5,
-            "y": 4,
-            "rotation": 90,
-            "name": "",
-            "state": "Free"
-          },
-          {
-            "$type": "TrackCurve",
-            "id": "ad566a5c-60be-429a-bff4-720c93c9854a",
-            "x": 5,
-            "y": 5,
-            "rotation": 90,
-            "name": "",
-            "state": "Free"
-          },
-          {
-            "$type": "TrackStraight",
-            "id": "ae0dd7a5-5505-4051-8a81-35fc7409984a",
-            "x": 4,
-            "y": 5,
-            "rotation": 0,
-            "name": "",
-            "state": "Free"
-          },
-          {
-            "$type": "TrackStraight",
-            "id": "b9edfafb-611b-4e20-a98a-7c1ce739c00e",
-            "x": 3,
-            "y": 5,
-            "rotation": 0,
-            "name": "",
-            "state": "Free"
-          },
-          {
-            "$type": "TrackCurve",
-            "id": "ac4d1724-c7cd-4740-91d0-85bc9c14992c",
-            "x": 2,
-            "y": 5,
-            "rotation": 180,
-            "name": "",
-            "state": "Free"
-          },
-          {
-            "$type": "Signal",
-            "signalSystem": "Ks",
-            "signalAspect": "Zs1",
-            "isMultiplexed": true,
-            "multiplexerArticleNumber": "5229",
-            "mainSignalArticleNumber": "4046",
-            "distantSignalArticleNumber": "4040",
-            "baseAddress": 201,
-            "extendedAccessoryValue": 1,
-            "id": "02810223-a04c-4b4c-ba92-f7e34e07b275",
-            "x": 4,
-            "y": 4,
-            "rotation": 0,
-            "name": "",
-            "state": "Free"
-          }
-        ],
-        "connections": [],
-        "routes": []
-      },
-      "trackPlan": {
-        "version": 1,
-        "segments": [
-          {
-            "id": "3924429b-bb7c-483d-a8b2-e165db764044",
-            "code": "R1",
-            "x": 3944.9470825195312,
-            "y": 1320.8026123046875,
-            "rotationDegrees": 0
-          },
-          {
-            "id": "8e764195-f612-4fb0-9ffe-6c75b0787f0e",
-            "code": "R1",
-            "x": 4124.947082519531,
-            "y": 1369.0334669422896,
-            "rotationDegrees": 30
-          },
-          {
-            "id": "faf62da0-b3eb-4e3b-b387-9d2fc0fe23e6",
-            "code": "R1",
-            "x": 4256.716227881929,
-            "y": 1500.8026123046875,
-            "rotationDegrees": 60
-          },
-          {
-            "id": "66f121b7-bb81-47b0-a2b8-5dfa8ad4c56f",
-            "code": "R1",
-            "x": 4304.947082519531,
-            "y": 1680.8026123046875,
-            "rotationDegrees": 90
-          },
-          {
-            "id": "8a9f220f-9d05-48bf-92db-e14679da0feb",
-            "code": "R1",
-            "x": 4256.716227881929,
-            "y": 1860.8026123046875,
-            "rotationDegrees": 120
-          },
-          {
-            "id": "3f57c7a2-1ab7-457b-afdc-ea322db11923",
-            "code": "R1",
-            "x": 4124.947082519531,
-            "y": 1992.5717576670854,
-            "rotationDegrees": 150
-          },
-          {
-            "id": "84368447-d6fb-4848-8f47-d75788448a33",
-            "code": "G239",
-            "x": 3004.947082519531,
-            "y": 2040.8026123046875,
-            "rotationDegrees": 0
-          },
-          {
-            "id": "a6233055-54f4-4037-a558-1b902d138918",
-            "code": "G231",
-            "x": 2774.017082519531,
-            "y": 2040.8026123046875,
-            "rotationDegrees": 0
-          },
-          {
-            "id": "b9a22aa8-6dcc-4f0c-82f9-50d4c924a85a",
-            "code": "G239",
-            "x": 2534.947082519531,
-            "y": 2040.8026123046875,
-            "rotationDegrees": 0
-          },
-          {
-            "id": "dda2fbc7-b20c-4707-81a6-c34970f9c473",
-            "code": "G231",
-            "x": 2304.017082519531,
-            "y": 2040.8026123046875,
-            "rotationDegrees": 0
-          },
-          {
-            "id": "9b625629-7e21-47e5-8a50-2356d1f3ad44",
-            "code": "R1",
-            "x": 2304.017082519531,
-            "y": 2040.8026123046875,
-            "rotationDegrees": 180
-          },
-          {
-            "id": "247a09fa-4d66-4844-b44b-9e30ca3e9987",
-            "code": "R1",
-            "x": 2124.017082519531,
-            "y": 1992.5717576670854,
-            "rotationDegrees": 210
-          },
-          {
-            "id": "a42d33ff-bec7-4226-aa2b-7cccbcd2d762",
-            "code": "R1",
-            "x": 1992.2479371571335,
-            "y": 1860.8026123046875,
-            "rotationDegrees": 240
-          },
-          {
-            "id": "b06578bf-6655-4ae0-be7a-87a2ba8f9ff0",
-            "code": "R1",
-            "x": 1944.0170825195314,
-            "y": 1680.8026123046875,
-            "rotationDegrees": 270
-          },
-          {
-            "id": "1c5c97a2-7358-4796-b5f8-705a54f481cb",
-            "code": "R1",
-            "x": 1992.2479371571335,
-            "y": 1500.8026123046875,
-            "rotationDegrees": 300
-          },
-          {
-            "id": "95816a67-26a9-4752-bf4d-4fbaba4a3eb4",
-            "code": "R1",
-            "x": 2124.0170825195314,
-            "y": 1369.0334669422896,
-            "rotationDegrees": 330
-          },
-          {
-            "id": "d0f74455-6b51-4c54-9af0-b710b6224e1e",
-            "code": "WL",
-            "x": 2304.0170825195314,
-            "y": 1320.8026123046875,
-            "rotationDegrees": 0
-          },
-          {
-            "id": "01d69a4f-89dc-47b0-8d74-c465947c0817",
-            "code": "G231",
-            "x": 2543.0870825195316,
-            "y": 1320.8026123046875,
-            "rotationDegrees": 0
-          },
-          {
-            "id": "1e3e35e6-3c84-4536-b99e-ec5ef74abc23",
-            "code": "G231",
-            "x": 2774.0170825195314,
-            "y": 1320.8026123046875,
-            "rotationDegrees": 0
-          },
-          {
-            "id": "0142b796-d8c8-46d7-b261-d92abd42c057",
-            "code": "DKW",
-            "x": 3004.9470825195312,
-            "y": 1320.8026123046875,
-            "rotationDegrees": 0
-          },
-          {
-            "id": "55809d4c-22c0-47a4-88a9-c6219fa35540",
-            "code": "WR",
-            "x": 3944.9470825195312,
-            "y": 1320.8026123046875,
-            "rotationDegrees": 180
-          },
-          {
-            "id": "203f4011-6cc6-4ef2-ad80-27ef0d6b0a5b",
-            "code": "G231",
-            "x": 3474.9470825195312,
-            "y": 1320.8026123046875,
-            "rotationDegrees": 0
-          },
-          {
-            "id": "c972f20a-f743-48d3-a6e3-6e27b17c89cf",
-            "code": "G231",
-            "x": 3244.0170825195314,
-            "y": 1320.8026123046875,
-            "rotationDegrees": 0
-          },
-          {
-            "id": "15ebf670-5326-4204-869a-e5b5a51431f5",
-            "code": "WR",
-            "x": 3474.943954546731,
-            "y": 1382.678874365332,
-            "rotationDegrees": 180
-          },
-          {
-            "id": "24dcece0-2eb4-4481-9955-38352c655d3e",
-            "code": "G231",
-            "x": 3714.017082519532,
-            "y": 2040.8026123046875,
-            "rotationDegrees": 0
-          },
-          {
-            "id": "46e79b7c-5e9d-45dd-b650-2669700d71a9",
-            "code": "G239",
-            "x": 3474.9470825195317,
-            "y": 2040.8026123046875,
-            "rotationDegrees": 0
-          },
-          {
-            "id": "281179e7-9ce3-41b9-86f9-582679a3d5f4",
-            "code": "G231",
-            "x": 3244.017082519531,
-            "y": 2040.8026123046875,
-            "rotationDegrees": 0
-          }
-        ],
-        "connections": [
-          {
-            "sourceSegment": "8e764195-f612-4fb0-9ffe-6c75b0787f0e",
-            "sourcePort": "PortA",
-            "targetSegment": "3924429b-bb7c-483d-a8b2-e165db764044",
-            "targetPort": "PortB"
-          },
-          {
-            "sourceSegment": "faf62da0-b3eb-4e3b-b387-9d2fc0fe23e6",
-            "sourcePort": "PortA",
-            "targetSegment": "8e764195-f612-4fb0-9ffe-6c75b0787f0e",
-            "targetPort": "PortB"
-          },
-          {
-            "sourceSegment": "66f121b7-bb81-47b0-a2b8-5dfa8ad4c56f",
-            "sourcePort": "PortA",
-            "targetSegment": "faf62da0-b3eb-4e3b-b387-9d2fc0fe23e6",
-            "targetPort": "PortB"
-          },
-          {
-            "sourceSegment": "8a9f220f-9d05-48bf-92db-e14679da0feb",
-            "sourcePort": "PortA",
-            "targetSegment": "66f121b7-bb81-47b0-a2b8-5dfa8ad4c56f",
-            "targetPort": "PortB"
-          },
-          {
-            "sourceSegment": "3f57c7a2-1ab7-457b-afdc-ea322db11923",
-            "sourcePort": "PortA",
-            "targetSegment": "8a9f220f-9d05-48bf-92db-e14679da0feb",
-            "targetPort": "PortB"
-          },
-          {
-            "sourceSegment": "a6233055-54f4-4037-a558-1b902d138918",
-            "sourcePort": "PortB",
-            "targetSegment": "84368447-d6fb-4848-8f47-d75788448a33",
-            "targetPort": "PortA"
-          },
-          {
-            "sourceSegment": "b9a22aa8-6dcc-4f0c-82f9-50d4c924a85a",
-            "sourcePort": "PortB",
-            "targetSegment": "a6233055-54f4-4037-a558-1b902d138918",
-            "targetPort": "PortA"
-          },
-          {
-            "sourceSegment": "dda2fbc7-b20c-4707-81a6-c34970f9c473",
-            "sourcePort": "PortB",
-            "targetSegment": "b9a22aa8-6dcc-4f0c-82f9-50d4c924a85a",
-            "targetPort": "PortA"
-          },
-          {
-            "sourceSegment": "9b625629-7e21-47e5-8a50-2356d1f3ad44",
-            "sourcePort": "PortA",
-            "targetSegment": "dda2fbc7-b20c-4707-81a6-c34970f9c473",
-            "targetPort": "PortA"
-          },
-          {
-            "sourceSegment": "247a09fa-4d66-4844-b44b-9e30ca3e9987",
-            "sourcePort": "PortA",
-            "targetSegment": "9b625629-7e21-47e5-8a50-2356d1f3ad44",
-            "targetPort": "PortB"
-          },
-          {
-            "sourceSegment": "a42d33ff-bec7-4226-aa2b-7cccbcd2d762",
-            "sourcePort": "PortA",
-            "targetSegment": "247a09fa-4d66-4844-b44b-9e30ca3e9987",
-            "targetPort": "PortB"
-          },
-          {
-            "sourceSegment": "b06578bf-6655-4ae0-be7a-87a2ba8f9ff0",
-            "sourcePort": "PortA",
-            "targetSegment": "a42d33ff-bec7-4226-aa2b-7cccbcd2d762",
-            "targetPort": "PortB"
-          },
-          {
-            "sourceSegment": "1c5c97a2-7358-4796-b5f8-705a54f481cb",
-            "sourcePort": "PortA",
-            "targetSegment": "b06578bf-6655-4ae0-be7a-87a2ba8f9ff0",
-            "targetPort": "PortB"
-          },
-          {
-            "sourceSegment": "95816a67-26a9-4752-bf4d-4fbaba4a3eb4",
-            "sourcePort": "PortA",
-            "targetSegment": "1c5c97a2-7358-4796-b5f8-705a54f481cb",
-            "targetPort": "PortB"
-          },
-          {
-            "sourceSegment": "d0f74455-6b51-4c54-9af0-b710b6224e1e",
-            "sourcePort": "PortA",
-            "targetSegment": "95816a67-26a9-4752-bf4d-4fbaba4a3eb4",
-            "targetPort": "PortB"
-          },
-          {
-            "sourceSegment": "01d69a4f-89dc-47b0-8d74-c465947c0817",
-            "sourcePort": "PortA",
-            "targetSegment": "d0f74455-6b51-4c54-9af0-b710b6224e1e",
-            "targetPort": "PortB"
-          },
-          {
-            "sourceSegment": "1e3e35e6-3c84-4536-b99e-ec5ef74abc23",
-            "sourcePort": "PortA",
-            "targetSegment": "01d69a4f-89dc-47b0-8d74-c465947c0817",
-            "targetPort": "PortB"
-          },
-          {
-            "sourceSegment": "0142b796-d8c8-46d7-b261-d92abd42c057",
-            "sourcePort": "PortA",
-            "targetSegment": "1e3e35e6-3c84-4536-b99e-ec5ef74abc23",
-            "targetPort": "PortB"
-          },
-          {
-            "sourceSegment": "55809d4c-22c0-47a4-88a9-c6219fa35540",
-            "sourcePort": "PortA",
-            "targetSegment": "3924429b-bb7c-483d-a8b2-e165db764044",
-            "targetPort": "PortA"
-          },
-          {
-            "sourceSegment": "203f4011-6cc6-4ef2-ad80-27ef0d6b0a5b",
-            "sourcePort": "PortB",
-            "targetSegment": "55809d4c-22c0-47a4-88a9-c6219fa35540",
-            "targetPort": "PortB"
-          },
-          {
-            "sourceSegment": "c972f20a-f743-48d3-a6e3-6e27b17c89cf",
-            "sourcePort": "PortB",
-            "targetSegment": "203f4011-6cc6-4ef2-ad80-27ef0d6b0a5b",
-            "targetPort": "PortA"
-          },
-          {
-            "sourceSegment": "c972f20a-f743-48d3-a6e3-6e27b17c89cf",
-            "sourcePort": "PortA",
-            "targetSegment": "0142b796-d8c8-46d7-b261-d92abd42c057",
-            "targetPort": "PortB"
-          },
-          {
-            "sourceSegment": "15ebf670-5326-4204-869a-e5b5a51431f5",
-            "sourcePort": "PortC",
-            "targetSegment": "0142b796-d8c8-46d7-b261-d92abd42c057",
-            "targetPort": "PortD"
-          },
-          {
-            "sourceSegment": "24dcece0-2eb4-4481-9955-38352c655d3e",
-            "sourcePort": "PortB",
-            "targetSegment": "3f57c7a2-1ab7-457b-afdc-ea322db11923",
-            "targetPort": "PortB"
-          },
-          {
-            "sourceSegment": "46e79b7c-5e9d-45dd-b650-2669700d71a9",
-            "sourcePort": "PortB",
-            "targetSegment": "24dcece0-2eb4-4481-9955-38352c655d3e",
-            "targetPort": "PortA"
-          },
-          {
-            "sourceSegment": "281179e7-9ce3-41b9-86f9-582679a3d5f4",
-            "sourcePort": "PortA",
-            "targetSegment": "84368447-d6fb-4848-8f47-d75788448a33",
-            "targetPort": "PortB"
-          },
-          {
-            "sourceSegment": "46e79b7c-5e9d-45dd-b650-2669700d71a9",
-            "sourcePort": "PortA",
-            "targetSegment": "281179e7-9ce3-41b9-86f9-582679a3d5f4",
-            "targetPort": "PortB"
-          }
-        ]
-      }
-    }
-  ],
-  "schemaVersion": 1
+    ],
+    "schemaVersion": 1
 }

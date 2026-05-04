@@ -92,4 +92,56 @@ internal class AppSettingsDefaultsTests
         var app = new ApplicationSettings();
         Assert.That(app.IsDarkMode, Is.True);
     }
+
+    [Test]
+    public void Layout_CollapsibleColumn_defaults_are_expanded()
+    {
+        var layout = new LayoutSettings();
+
+        Assert.That(layout.StationsPage.IsStationsListExpanded, Is.True);
+        Assert.That(layout.StationsPage.IsPlatformsListExpanded, Is.True);
+        Assert.That(layout.StationsPage.IsWorkflowLibraryExpanded, Is.True);
+        Assert.That(layout.StationsPage.IsPropertiesExpanded, Is.True);
+        Assert.That(layout.WorkflowsPage.IsWorkflowListExpanded, Is.True);
+        Assert.That(layout.WorkflowsPage.IsActionsExpanded, Is.True);
+        Assert.That(layout.WorkflowsPage.IsPropertiesExpanded, Is.True);
+        Assert.That(layout.LocomotivesPage.IsListExpanded, Is.True);
+        Assert.That(layout.LocomotivesPage.IsPropertiesExpanded, Is.True);
+        Assert.That(layout.PassengerWagonPage.IsListExpanded, Is.True);
+        Assert.That(layout.PassengerWagonPage.IsPropertiesExpanded, Is.True);
+        Assert.That(layout.GoodsWagonPage.IsListExpanded, Is.True);
+        Assert.That(layout.GoodsWagonPage.IsPropertiesExpanded, Is.True);
+        Assert.That(layout.SignalBoxPage.IsToolboxExpanded, Is.True);
+        Assert.That(layout.SignalBoxPage.IsPropertiesExpanded, Is.True);
+        Assert.That(layout.TrackPlanPage.IsToolboxExpanded, Is.True);
+        Assert.That(layout.TrackPlanPage.IsPropertiesExpanded, Is.True);
+        Assert.That(layout.MonitorPage.IsTrafficExpanded, Is.True);
+        Assert.That(layout.MonitorPage.IsActivityLogExpanded, Is.True);
+    }
+
+    [Test]
+    public void Layout_CollapsibleColumn_width_defaults_are_positive()
+    {
+        var layout = new LayoutSettings();
+
+        Assert.That(layout.StationsPage.StationsColumnWidth, Is.GreaterThan(0));
+        Assert.That(layout.StationsPage.PlatformsColumnWidth, Is.GreaterThan(0));
+        Assert.That(layout.StationsPage.WorkflowLibraryColumnWidth, Is.GreaterThan(0));
+        Assert.That(layout.StationsPage.PropertiesColumnWidth, Is.GreaterThan(0));
+        Assert.That(layout.WorkflowsPage.WorkflowListColumnWidth, Is.GreaterThan(0));
+        Assert.That(layout.WorkflowsPage.ActionsColumnWidth, Is.GreaterThan(0));
+        Assert.That(layout.WorkflowsPage.PropertiesColumnWidth, Is.GreaterThan(0));
+        Assert.That(layout.LocomotivesPage.ListColumnWidth, Is.GreaterThan(0));
+        Assert.That(layout.LocomotivesPage.PropertiesColumnWidth, Is.GreaterThan(0));
+        Assert.That(layout.PassengerWagonPage.ListColumnWidth, Is.GreaterThan(0));
+        Assert.That(layout.PassengerWagonPage.PropertiesColumnWidth, Is.GreaterThan(0));
+        Assert.That(layout.GoodsWagonPage.ListColumnWidth, Is.GreaterThan(0));
+        Assert.That(layout.GoodsWagonPage.PropertiesColumnWidth, Is.GreaterThan(0));
+        Assert.That(layout.SignalBoxPage.ToolboxColumnWidth, Is.GreaterThan(0));
+        Assert.That(layout.SignalBoxPage.PropertiesColumnWidth, Is.GreaterThan(0));
+        Assert.That(layout.TrackPlanPage.ToolboxColumnWidth, Is.GreaterThan(0));
+        Assert.That(layout.TrackPlanPage.PropertiesColumnWidth, Is.GreaterThan(0));
+        Assert.That(layout.MonitorPage.TrafficColumnStarValue, Is.GreaterThan(0));
+        Assert.That(layout.MonitorPage.ActivityLogColumnStarValue, Is.GreaterThan(0));
+    }
 }

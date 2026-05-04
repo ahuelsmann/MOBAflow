@@ -33,6 +33,7 @@ public sealed class RestApiStatusService : IDisposable
     private static readonly JsonSerializerOptions SJsonOptions = new() { PropertyNameCaseInsensitive = true };
     private bool _photoHubConnected;
     private readonly CancellationTokenSource _disposeCts = new();
+    private bool _disposed;
 
     public RestApiStatusService(
         HttpClient httpClient,
@@ -68,6 +69,11 @@ public sealed class RestApiStatusService : IDisposable
     /// </summary>
     public void Start()
     {
+        if (_disposed)
+        {
+            return;
+        }
+
         _timer.Start();
         QueueRefresh("Service start refresh");
     }
@@ -77,8 +83,42 @@ public sealed class RestApiStatusService : IDisposable
     /// </summary>
     public void Stop()
     {
+        if (_disposed)
+        {
+            return;
+        }
+
         _timer.Stop();
         try { _disposeCts.Cancel(); } catch (ObjectDisposedException) { /* already disposed */ }
+    }
+
+    /// <summary>
+    /// Pauses polling when window is deactivated to conserve resources.
+    /// </summary>
+    public void PausePolling()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _timer.Stop();
+        _logger.LogDebug("Health check polling paused due to window deactivation");
+    }
+
+    /// <summary>
+    /// Resumes polling when window is activated and triggers immediate refresh.
+    /// </summary>
+    public void ResumePolling()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _timer.Start();
+        _logger.LogDebug("Health check polling resumed due to window activation");
+        QueueRefresh("Activation resume refresh");
     }
 
     /// <summary>
@@ -86,6 +126,8 @@ public sealed class RestApiStatusService : IDisposable
     /// </summary>
     public async Task RefreshAsync()
     {
+        if (_disposed)
+            return;
         if (_disposeCts.Token.IsCancellationRequested)
             return;
         var port = _appSettings.RestApi.Port;
@@ -109,7 +151,11 @@ public sealed class RestApiStatusService : IDisposable
                 var statusText = data != null
                     ? $"Running on port {data.Port}"
                     : $"Running on port {port}";
-                _uiDispatcher.InvokeOnUi(() => _statusSink.UpdateRestApiStatus(statusText, isReachable: true, clients));
+
+                // Windows App SDK 2.0: Use Low Priority for background status updates
+                // (not critical for UI responsiveness)
+                _uiDispatcher.InvokeOnUiLowPriority(() =>
+                    _statusSink.UpdateRestApiStatus(statusText, isReachable: true, clients));
 
                 SetPollInterval(PollIntervalWhenReachableMs);
 
@@ -154,6 +200,11 @@ public sealed class RestApiStatusService : IDisposable
 
     private void SetPollInterval(int intervalMs)
     {
+        if (_disposed)
+        {
+            return;
+        }
+
         if (Math.Abs(_timer.Interval - intervalMs) > 0.001)
         {
             _timer.Interval = intervalMs;
@@ -179,6 +230,12 @@ public sealed class RestApiStatusService : IDisposable
     /// </summary>
     public void Dispose()
     {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
         _restApiProcessService.ApiBecameReachable -= OnRestApiBecameReachable;
         _photoHubClient.PhotoUploaded -= OnPhotoUploadedAsync;
         _timer.Stop();
@@ -192,6 +249,11 @@ public sealed class RestApiStatusService : IDisposable
 
     private void QueueRefresh(string operationName)
     {
+        if (_disposed)
+        {
+            return;
+        }
+
         RefreshAsync().Observe(ex => _logger.LogDebug(ex, "{OperationName} failed", operationName));
     }
 

@@ -3,7 +3,6 @@
 namespace Moba.WinUI;
 
 using Backend.Data;
-using Backend.Extensions;
 using Backend.Interface;
 using Backend.Service;
 
@@ -210,7 +209,6 @@ public partial class App
             return factory.CreateEngineFromOptions();
         });
 
-        services.AddMobaBackendServices();
         services.AddSingleton<IMobaRuntime, MobaRuntimeService>();
 
         services.AddSingleton<IIoService, IoService>();
@@ -283,7 +281,6 @@ public partial class App
         services.AddSingleton<UdpLineFrameSender>();
         services.AddSingleton<IFrameSender, UdpLineFrameSender>();
         services.AddTransient<FrameLoopScheduler>();
-        services.AddTransient<DisplayPageViewModel>();
         services.AddSingleton(sp => new TrainControlViewModel(
             sp.GetRequiredService<IMobaRuntime>(),
             sp.GetRequiredService<ISettingsService>(),
@@ -360,6 +357,9 @@ public partial class App
             Current.Resources["LayoutColumnWidths"] = layoutColumnWidths;
 
             _window = Services.GetRequiredService<MainWindow>();
+
+            // Windows App SDK 2.0: Explicit window closing for better resource cleanup
+            _window.Closed += OnWindowClosed;
 
             // Bridge EditableTrackPlan ↔ Project.TrackPlan (hybrid solution.json persistence).
             // Must be activated AFTER MainWindow/MainWindowViewModel are materialized.
@@ -453,5 +453,31 @@ public partial class App
         {
             _logger.LogError(ex, "Auto-load failed");
         }
+    }
+
+    /// <summary>
+    /// Windows App SDK 2.0: Explicit window closing for better resource cleanup.
+    /// Ensures proper disposal of services and graceful shutdown.
+    /// </summary>
+    private void OnWindowClosed(object sender, WindowEventArgs args)
+    {
+        _ = sender;
+        _logger.LogInformation("Window closed - performing cleanup");
+
+        try
+        {
+            // Dispose services in reverse order of creation
+            if (Services is IDisposable disposableServices)
+            {
+                disposableServices.Dispose();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Service disposal during window close failed");
+        }
+
+        // Explicit exit for cleaner process termination (WinUI 3 doesn't exit by default)
+        Current.Exit();
     }
 }

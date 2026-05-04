@@ -4,6 +4,7 @@ namespace Moba.Test.Backend;
 
 using Microsoft.Extensions.Logging.Abstractions;
 
+using Moba.Backend.Interface;
 using Moba.Backend.Service;
 using Moba.Common.Events;
 using Moba.Domain;
@@ -121,5 +122,48 @@ internal class ActionExecutorTests
 
         // Act & Assert
         Assert.ThrowsAsync<NotSupportedException>(async () => await _actionExecutor.ExecuteAsync(action, _context));
+    }
+
+    [Test]
+    public async Task ExecuteAsync_WithTrainDestinationDisplayAction_ShouldCallDisplayService()
+    {
+        var displayDeviceId = Guid.NewGuid();
+        var displayService = new RecordingTrainDestinationDisplayService();
+        var actionExecutor = new ActionExecutor(trainDestinationDisplayService: displayService);
+        var action = new WorkflowAction
+        {
+            Id = Guid.NewGuid(),
+            Number = 5,
+            Name = "Update Display",
+            Type = ActionType.TrainDestinationDisplay,
+            TrainDestinationDisplay = new TrainDestinationDisplayActionPayload
+            {
+                DisplayDeviceId = displayDeviceId
+            }
+        };
+
+        await actionExecutor.ExecuteAsync(action, _context);
+
+        Assert.That(displayService.Calls, Is.EqualTo(1));
+        Assert.That(displayService.LastAction, Is.SameAs(action));
+        Assert.That(displayService.LastContext, Is.SameAs(_context));
+    }
+
+    private sealed class RecordingTrainDestinationDisplayService : ITrainDestinationDisplayService
+    {
+        public int Calls { get; private set; }
+
+        public WorkflowAction? LastAction { get; private set; }
+
+        public ActionExecutionContext? LastContext { get; private set; }
+
+        public Task UpdateAsync(WorkflowAction action, ActionExecutionContext context, CancellationToken cancellationToken = default)
+        {
+            _ = cancellationToken;
+            Calls++;
+            LastAction = action;
+            LastContext = context;
+            return Task.CompletedTask;
+        }
     }
 }

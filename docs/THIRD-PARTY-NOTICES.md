@@ -72,19 +72,19 @@ The following table reflects the direct package and framework references current
 | `CommunityToolkit.Labs.WinUI.Controls.DataTable`, `CommunityToolkit.Labs.WinUI.Controls.Ribbon` | `0.1.251217-build.2433` | `MOBAflow` | Experimental WinUI data table and ribbon controls. |
 | `CommunityToolkit.WinUI.*`, `CommunityToolkit.WinUI.UI.Controls.Markdown` | `8.2.251219`, `7.1.2` | `MOBAflow` | WinUI helpers, behaviors, animations, controls, and Markdown rendering. |
 | `CommunityToolkit.Mvvm` | `8.4.2` | `Domain`, `SharedUI` | MVVM primitives such as observable properties and relay commands. |
-| `CommunityToolkit.Maui`, `CommunityToolkit.Maui.MediaElement` | `14.0.1`, `8.0.1` | `MAUI.Controls`, `MOBAsmart` | MAUI helpers, converters, behaviors, and media playback support. |
-| `Microsoft.WindowsAppSDK`, `Microsoft.Graphics.Win2D`, `Microsoft.Xaml.Behaviors.WinUI.Managed` | `1.8.260317003`, `1.4.0`, `3.0.1` | `MOBAflow` | Windows desktop shell, GPU-accelerated 2D rendering, and XAML behaviors. |
+| `CommunityToolkit.Maui`, `CommunityToolkit.Maui.MediaElement` | `14.1.0`, `9.0.0` | `MAUI.Controls`, `MOBAsmart` | MAUI helpers, converters, behaviors, and media playback support. |
+| `Microsoft.WindowsAppSDK`, `Microsoft.Graphics.Win2D`, `Microsoft.Xaml.Behaviors.WinUI.Managed` | `2.0.1`, `1.4.0`, `3.0.1` | `MOBAflow` | Windows desktop shell, GPU-accelerated 2D rendering, and XAML behaviors. |
 | `Microsoft.Azure.AppConfiguration.AspNetCore` | `8.5.0` | `MOBAflow` | Centralized runtime configuration from Azure App Configuration. |
-| `Microsoft.AspNetCore.App`, `Microsoft.AspNetCore.Mvc.Core`, `Microsoft.AspNetCore.SignalR.Client` | `Framework reference`, `2.3.0`, `10.0.5` | `MOBAflow`, `SharedUI.Web`, `MOBApi` (via Web SDK) | ASP.NET Core shared framework, MVC abstractions, and SignalR client connectivity. |
-| `Microsoft.Extensions.*` | `10.0.1` to `10.0.5` | `Common`, `Backend`, `SharedUI.Web`, `Sound`, `MOBAsmart`, `Test` | Logging, dependency injection, configuration, options, and debug output. |
-| `Microsoft.Maui.Controls` | `10.0.51` | `MOBAsmart` | Core .NET MAUI UI framework for the Android client. |
-| `Microsoft.CognitiveServices.Speech`, `System.Speech`, `System.Windows.Extensions` | `1.48.2`, `10.0.5`, `10.0.5` | `Sound` | Azure and Windows text-to-speech plus Windows-specific APIs. |
+| `Microsoft.AspNetCore.App`, `Microsoft.AspNetCore.SignalR.Client` | `Framework reference`, `10.0.7` | `MOBAflow`, `MOBApi`, `SharedUI.Web` | ASP.NET Core shared framework and SignalR client connectivity. |
+| `Microsoft.Extensions.*` | `10.0.5` to `10.0.7` | `Common`, `Backend`, `SharedUI.Web`, `Sound`, `MOBAsmart`, `Test` | Logging, dependency injection, configuration, options, hosting, and debug output. |
+| `Microsoft.Maui.Controls` | `10.0.60` | `MOBAsmart` | Core .NET MAUI UI framework for the Android client. |
+| `Microsoft.CognitiveServices.Speech`, `System.Speech`, `System.Windows.Extensions` | `1.49.1`, `10.0.7`, `10.0.7` | `Sound` | Azure and Windows text-to-speech plus Windows-specific APIs. |
 | `Serilog`, `Serilog.Extensions.Logging`, `Serilog.Sinks.Debug`, `Serilog.Sinks.File` | `4.3.1`, `10.0.0`, `3.0.0`, `7.0.0` | `Common`, `MOBAflow` | Structured logging, file logging, and debug integration. |
 | `UraniumUI.Material`, `UraniumUI.Icons.MaterialIcons`, `Xamarin.AndroidX.Startup.StartupRuntime` | `2.15.0`, `2.15.0`, `1.2.0.7` | `MOBAsmart` | Material UI components, icon resources, and AndroidX startup integration. |
-| `GitHub.Copilot.SDK` | `0.2.0` | `MOBAflow` | GitHub Copilot SDK package reference currently included in the WinUI application project. |
-| `coverlet.collector`, `Microsoft.NET.Test.Sdk`, `NUnit`, `NUnit.Analyzers`, `NUnit3TestAdapter`, `Moq` | `8.0.1`, `18.3.0`, `4.5.1`, `4.12.0`, `6.2.0`, `4.20.72` | `Test` | Test execution, coverage collection, analyzers, and mocking. |
+| `SkiaSharp`, `System.Drawing.Common` | `3.119.2`, `10.0.7` | `MOBAdisplay` | Display frame rendering and image conversion utilities. |
+| `coverlet.collector`, `Microsoft.NET.Test.Sdk`, `NUnit`, `NUnit.Analyzers`, `NUnit3TestAdapter`, `Moq` | `10.0.0`, `18.5.1`, `4.5.1`, `4.12.0`, `6.2.0`, `4.20.72` | `Test` | Test execution, coverage collection, analyzers, and mocking. |
 | `MinVer` | `7.0.0` | Build-wide via `Directory.Build.props` | Semantic version generation from git tags during builds. |
-| `Microsoft.SourceLink.AzureRepos.Git` | `10.0.201` | Build-wide via `Directory.Build.targets` | Source link metadata for debugger source navigation. |
+| `Microsoft.SourceLink.AzureRepos.Git` | `10.0.203` | Build-wide via `Directory.Build.targets` | Source link metadata for debugger source navigation. |
 
 ---
 
@@ -95,7 +95,7 @@ The currently referenced direct dependencies primarily fall under the following 
 | License family | Examples |
 | --- | --- |
 | MIT | Most Microsoft/.NET packages, CommunityToolkit packages, NUnit, coverlet, MinVer, SourceLink |
-| Apache-2.0 | Serilog family, UraniumUI family, AndroidX startup runtime |
+| Apache-2.0 | Serilog family, UraniumUI family, AndroidX startup runtime, SkiaSharp |
 | BSD-3-Clause | Moq |
 
 The authoritative license for a package is the license metadata published by its upstream project or NuGet package page.
@@ -127,6 +127,6 @@ We are grateful to the open-source maintainers and standards authors whose work 
 
 ---
 
-**Last Updated:** 2026-03-27  
+**Last Updated:** 2026-05-02
 **Scope:** Current direct dependencies and external interoperability surface  
 **License:** MIT License (see [LICENSE](../LICENSE))

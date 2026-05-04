@@ -1,4 +1,8 @@
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
+
+using Common.Configuration;
+using Common.Extension;
 
 using Domain;
 
@@ -11,6 +15,7 @@ using SharedUI.ViewModel;
 using Controls.SignalBox;
 
 using Service;
+using SharedUI.Interface;
 
 using System;
 using System.Collections.Specialized;
@@ -20,8 +25,12 @@ using ViewModel;
 
 sealed partial class SignalBoxPage
 {
-    private GridLength _toolboxExpandedWidth = new(240);
-    private GridLength _propertiesExpandedWidth = new(300);
+    private readonly AppSettings _settings;
+    private readonly ISettingsService? _settingsService;
+    private readonly ILogger<SignalBoxPage>? _logger;
+
+    private double _toolboxExpandedWidth = 240;
+    private double _propertiesExpandedWidth = 300;
 
     public MainWindowViewModel ViewModel { get; }
 
@@ -30,6 +39,9 @@ sealed partial class SignalBoxPage
     public SignalBoxPage(
         MainWindowViewModel viewModel,
         ViessmannSignalService viessmannSignalService,
+        AppSettings settings,
+        ISettingsService? settingsService = null,
+        ILogger<SignalBoxPage>? logger = null,
         ILogger<SignalBoxPropertiesControl>? signalBoxPropertiesLogger = null,
         ILogger<SignalBoxCanvasControl>? signalBoxCanvasLogger = null)
     {
@@ -37,6 +49,9 @@ sealed partial class SignalBoxPage
         ArgumentNullException.ThrowIfNull(viessmannSignalService);
 
         ViewModel = viewModel;
+        _settings = settings;
+        _settingsService = settingsService;
+        _logger = logger;
 
         InitializeComponent();
 
@@ -44,7 +59,6 @@ sealed partial class SignalBoxPage
         CanvasControl.AttachLogger(signalBoxCanvasLogger);
 
         ViewModel.SolutionLoaded += OnSolutionLoaded;
-        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
 
         Loaded += OnPageLoaded;
         Unloaded += OnPageUnloaded;
@@ -66,24 +80,30 @@ sealed partial class SignalBoxPage
         {
             if (!ViewModel.IsSignalBoxToolboxExpanded)
             {
-                if (!ColToolbox.Width.IsAuto) _toolboxExpandedWidth = ColToolbox.Width;
+                if (ColToolbox.Width.IsAbsolute)
+                {
+                    _toolboxExpandedWidth = ColToolbox.Width.Value;
+                }
                 ColToolbox.Width = GridLength.Auto;
             }
             else
             {
-                ColToolbox.Width = _toolboxExpandedWidth;
+                ColToolbox.Width = new GridLength(_toolboxExpandedWidth);
             }
         }
         else if (e.PropertyName == nameof(MainWindowViewModel.IsSignalBoxPropertiesExpanded))
         {
             if (!ViewModel.IsSignalBoxPropertiesExpanded)
             {
-                if (!ColProperties.Width.IsAuto) _propertiesExpandedWidth = ColProperties.Width;
+                if (ColProperties.Width.IsAbsolute)
+                {
+                    _propertiesExpandedWidth = ColProperties.Width.Value;
+                }
                 ColProperties.Width = GridLength.Auto;
             }
             else
             {
-                ColProperties.Width = _propertiesExpandedWidth;
+                ColProperties.Width = new GridLength(_propertiesExpandedWidth);
             }
         }
         else if (e.PropertyName == nameof(MainWindowViewModel.SelectedProject))
@@ -99,6 +119,9 @@ sealed partial class SignalBoxPage
 
     private void OnPageLoaded(object sender, RoutedEventArgs e)
     {
+        ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+        RestoreLayout();
         LoadFromModel();
     }
 
@@ -107,11 +130,93 @@ sealed partial class SignalBoxPage
         _ = sender;
         _ = e;
 
+        HandlePageUnloadedAsync().Observe(ex => _logger?.LogWarning(ex, "Persist layout on unload failed"));
         ViewModel.SolutionLoaded -= OnSolutionLoaded;
-        ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
         DetachPlanViewModel();
-        Loaded -= OnPageLoaded;
-        Unloaded -= OnPageUnloaded;
+    }
+
+    private async Task HandlePageUnloadedAsync()
+    {
+        try
+        {
+            ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+            SaveLayout();
+            if (_settingsService != null)
+            {
+                await _settingsService.SaveSettingsAsync(_settings);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning(ex, "Persist layout on unload failed");
+        }
+    }
+
+    private void RestoreLayout()
+    {
+        var layout = _settings.Layout.SignalBoxPage;
+
+        if (layout.ToolboxColumnWidth > 0)
+        {
+            _toolboxExpandedWidth = layout.ToolboxColumnWidth;
+        }
+        if (layout.PropertiesColumnWidth > 0)
+        {
+            _propertiesExpandedWidth = layout.PropertiesColumnWidth;
+        }
+
+        if (layout.IsToolboxExpanded)
+        {
+            ColToolbox.Width = new GridLength(_toolboxExpandedWidth);
+        }
+        else
+        {
+            ColToolbox.Width = GridLength.Auto;
+        }
+
+        if (layout.IsPropertiesExpanded)
+        {
+            ColProperties.Width = new GridLength(_propertiesExpandedWidth);
+        }
+        else
+        {
+            ColProperties.Width = GridLength.Auto;
+        }
+
+        if (ViewModel.IsSignalBoxToolboxExpanded != layout.IsToolboxExpanded)
+        {
+            ViewModel.IsSignalBoxToolboxExpanded = layout.IsToolboxExpanded;
+        }
+        if (ViewModel.IsSignalBoxPropertiesExpanded != layout.IsPropertiesExpanded)
+        {
+            ViewModel.IsSignalBoxPropertiesExpanded = layout.IsPropertiesExpanded;
+        }
+    }
+
+    private void SaveLayout()
+    {
+        var layout = _settings.Layout.SignalBoxPage;
+
+        layout.IsToolboxExpanded = ViewModel.IsSignalBoxToolboxExpanded;
+        layout.IsPropertiesExpanded = ViewModel.IsSignalBoxPropertiesExpanded;
+
+        if (ColToolbox.Width.IsAbsolute)
+        {
+            layout.ToolboxColumnWidth = ColToolbox.Width.Value;
+        }
+        else if (!ViewModel.IsSignalBoxToolboxExpanded)
+        {
+            layout.ToolboxColumnWidth = _toolboxExpandedWidth;
+        }
+
+        if (ColProperties.Width.IsAbsolute)
+        {
+            layout.PropertiesColumnWidth = ColProperties.Width.Value;
+        }
+        else if (!ViewModel.IsSignalBoxPropertiesExpanded)
+        {
+            layout.PropertiesColumnWidth = _propertiesExpandedWidth;
+        }
     }
 
     private void LoadFromModel()

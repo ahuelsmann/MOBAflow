@@ -77,6 +77,11 @@ public partial class EntityTemplateSelector : DataTemplateSelector
     public DataTemplate? CommandActionTemplate { get; set; }
 
     /// <summary>
+    /// DataTemplate for TrainDestinationDisplayViewModel
+    /// </summary>
+    public DataTemplate? TrainDestinationDisplayActionTemplate { get; set; }
+
+    /// <summary>
     /// Fallback DataTemplate for unknown types
     /// </summary>
     public DataTemplate? DefaultTemplate { get; set; }

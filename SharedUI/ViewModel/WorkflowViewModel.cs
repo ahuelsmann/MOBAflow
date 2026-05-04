@@ -172,6 +172,17 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
                     BytesBase64 = Convert.ToBase64String(new byte[] { 0x00 })
                 }
             },
+            ActionType.TrainDestinationDisplay => new WorkflowAction
+            {
+                Name = "New Display Output",
+                Number = (uint)(_model.Actions.Count + 1),
+                Type = ActionType.TrainDestinationDisplay,
+                TrainDestinationDisplay = new TrainDestinationDisplayActionPayload
+                {
+                    DisplayDeviceId = Guid.Empty,
+                    ClearBeforeRender = true
+                }
+            },
             _ => throw new ArgumentException($"Unsupported action type: {actionType}")
         };
 

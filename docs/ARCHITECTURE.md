@@ -2,6 +2,11 @@
 
 ## 📐 System Overview
 
+For the current repository-wide implementation reference, including pages,
+models, workflow action support, display rendering, ESP32-S3 transport,
+configuration files, build/deploy commands, and documentation findings, see
+[`PROJECT-REFERENCE.md`](PROJECT-REFERENCE.md).
+
 MOBAflow is built on **Clean Architecture** principles with a clear
 separation of concerns:
 
@@ -506,4 +511,4 @@ The architecture supports:
 
 ---
 
-**Last Updated:** March 2026
+**Last Updated:** May 2026

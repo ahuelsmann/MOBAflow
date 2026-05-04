@@ -1,5 +1,4 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-
 namespace Moba.Domain;
 
 using Enum;
@@ -39,5 +38,14 @@ public static class WorkflowActionParameterBinding
     {
         filePath = action.Audio?.FilePath;
         return !string.IsNullOrWhiteSpace(filePath);
+    }
+
+    /// <summary>
+    /// Tries to read the configured display device ID for a <see cref="ActionType.TrainDestinationDisplay"/> action.
+    /// </summary>
+    public static bool TryGetDisplayDeviceId(WorkflowAction action, out Guid displayDeviceId)
+    {
+        displayDeviceId = action.TrainDestinationDisplay?.DisplayDeviceId ?? Guid.Empty;
+        return displayDeviceId != Guid.Empty;
     }
 }

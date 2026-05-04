@@ -26,6 +26,39 @@ public partial class MainWindowViewModel
     private bool _isSignalBoxPropertiesExpanded = true;
     private bool _isMonitorTrafficExpanded = true;
     private bool _isMonitorActivityLogExpanded = true;
+    private bool _isStationsListExpanded = true;
+    private bool _isPlatformsListExpanded = true;
+    private bool _isStationsPropertiesExpanded = true;
+
+    public bool IsStationsListExpanded
+    {
+        get => _isStationsListExpanded;
+        set
+        {
+            if (SetProperty(ref _isStationsListExpanded, value))
+                PersistLayoutState(layout => layout.StationsPage.IsStationsListExpanded = value);
+        }
+    }
+
+    public bool IsPlatformsListExpanded
+    {
+        get => _isPlatformsListExpanded;
+        set
+        {
+            if (SetProperty(ref _isPlatformsListExpanded, value))
+                PersistLayoutState(layout => layout.StationsPage.IsPlatformsListExpanded = value);
+        }
+    }
+
+    public bool IsStationsPropertiesExpanded
+    {
+        get => _isStationsPropertiesExpanded;
+        set
+        {
+            if (SetProperty(ref _isStationsPropertiesExpanded, value))
+                PersistLayoutState(layout => layout.StationsPage.IsPropertiesExpanded = value);
+        }
+    }
 
     public bool IsMonitorTrafficExpanded
     {
@@ -283,6 +316,9 @@ public partial class MainWindowViewModel
         _isWorkflowPropertiesExpanded = _settings.Layout.WorkflowsPage.IsPropertiesExpanded;
         _isSignalBoxToolboxExpanded = _settings.Layout.SignalBoxPage.IsToolboxExpanded;
         _isSignalBoxPropertiesExpanded = _settings.Layout.SignalBoxPage.IsPropertiesExpanded;
+        _isStationsListExpanded = _settings.Layout.StationsPage.IsStationsListExpanded;
+        _isPlatformsListExpanded = _settings.Layout.StationsPage.IsPlatformsListExpanded;
+        _isStationsPropertiesExpanded = _settings.Layout.StationsPage.IsPropertiesExpanded;
         _isMonitorTrafficExpanded = _settings.Layout.MonitorPage.IsTrafficExpanded;
         _isMonitorActivityLogExpanded = _settings.Layout.MonitorPage.IsActivityLogExpanded;
     }

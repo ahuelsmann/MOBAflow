@@ -3,7 +3,6 @@
 namespace Moba.WinUI.Service;
 
 using Backend.Data;
-using Backend.Extensions;
 
 using Common.Configuration;
 using Common.Events;
@@ -122,8 +121,6 @@ internal class PostStartupInitializationService
             _eventBus.Publish(new PostStartupStatusEvent(true, "Loading master data..."));
 
             await _masterDataStore.LoadAsync(fullPath).ConfigureAwait(false);
-
-            MobaServiceCollectionExtensions.InitializeTrainClassLibrary(fullPath);
 
             _logger.LogInformation("[PostStartup] Master data loaded: {Cities} cities, {Locomotives} categories",
                 _masterDataStore.Cities.Count, _masterDataStore.Locomotives.Count);

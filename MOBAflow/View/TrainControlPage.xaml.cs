@@ -31,17 +31,20 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
 
     /// <summary>
-    /// DataTemplate for the door release button (DoorOpen or DoorClose depending on ViewModel.ShowDoorCloseIcon).
+    /// DataTemplate for the door release button (DoorOpen or DoorClose depending on ViewModel.IsDoorCloseIconVisible).
     /// </summary>
-    public DataTemplate? DoorReleaseIconTemplate => ViewModel.ShowDoorCloseIcon ? _doorCloseTemplate : _doorOpenTemplate;
+    public DataTemplate? DoorReleaseIconTemplate => ViewModel.IsDoorCloseIconVisible ? _doorCloseTemplate : _doorOpenTemplate;
 
     /// <summary>
     /// DataTemplate for the brake button: BrakeActiveIcon (yellow with exclamation mark) when brake is on, otherwise BrakeReleasedIcon (theme, without exclamation mark).
     /// </summary>
-    public DataTemplate? BrakeIconTemplate => ViewModel.BrakeEngaged ? _brakeActiveTemplate : _brakeReleasedTemplate;
+    public DataTemplate? BrakeIconTemplate => ViewModel.IsParkingBrakeEnabled ? _brakeActiveTemplate : _brakeReleasedTemplate;
+
+    public DataTemplate? DoorBlockedIconTemplate => _doorBlockedTemplate;
 
     private DataTemplate? _doorOpenTemplate;
     private DataTemplate? _doorCloseTemplate;
+    private DataTemplate? _doorBlockedTemplate;
     private DataTemplate? _brakeActiveTemplate;
     private DataTemplate? _brakeReleasedTemplate;
 
@@ -105,9 +108,9 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
             UpdateSpeedometerScale();  // This will update both MaxValue and VmaxKmh
         }
 
-        if (e.PropertyName is nameof(ViewModel.DoorReleaseLocked) or nameof(ViewModel.DoorReleaseBlinking) or nameof(ViewModel.DoorReleaseLockedNext))
+        if (e.PropertyName is nameof(ViewModel.IsDoorReleaseLocked) or nameof(ViewModel.IsDoorReleaseBlinking) or nameof(ViewModel.IsDoorReleaseLockedNext))
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DoorReleaseIconTemplate)));
-        if (e.PropertyName is nameof(ViewModel.BrakeEngaged))
+        if (e.PropertyName is nameof(ViewModel.IsParkingBrakeEnabled))
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BrakeIconTemplate)));
     }
 
@@ -116,6 +119,7 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
         var appRes = Application.Current.Resources;
         _doorOpenTemplate = appRes.ContainsKey("DoorOpenIcon") ? appRes["DoorOpenIcon"] as DataTemplate : null;
         _doorCloseTemplate = appRes.ContainsKey("DoorCloseIcon") ? appRes["DoorCloseIcon"] as DataTemplate : null;
+        _doorBlockedTemplate = appRes.ContainsKey("DoorBlockedIcon") ? appRes["DoorBlockedIcon"] as DataTemplate : null;
         _brakeActiveTemplate = appRes.ContainsKey("BrakeActiveIcon") ? appRes["BrakeActiveIcon"] as DataTemplate : null;
         _brakeReleasedTemplate = appRes.ContainsKey("BrakeReleasedIcon") ? appRes["BrakeReleasedIcon"] as DataTemplate : null;
     }
@@ -153,6 +157,7 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
         LoadIconTemplates();
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BrakeIconTemplate)));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DoorReleaseIconTemplate)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DoorBlockedIconTemplate)));
 
         // Find and store references to themed elements
         _speedometer = FindName("Speedometer") as SpeedometerControl;
@@ -265,11 +270,14 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
     {
         try
         {
-            if (sender is not FrameworkElement fe || fe.Tag is not string tag || !int.TryParse(tag, out var functionIndex) || functionIndex < 0 || functionIndex > 20)
+            if (sender is not FrameworkElement fe || fe.Tag is not string tag || !int.TryParse(tag, out var functionIndex) || functionIndex < 0 || functionIndex > 31)
                 return;
 
-            var picker = new FunctionSymbolPickerDialog();
-            picker.XamlRoot = XamlRoot;
+            var picker = new FunctionSymbolPickerDialog
+            {
+                RequestedTheme = ActualTheme == ElementTheme.Light ? ElementTheme.Light : ElementTheme.Dark,
+                XamlRoot = XamlRoot
+            };
             await picker.ShowAsync();
 
             if (picker.SelectedGlyph != null)

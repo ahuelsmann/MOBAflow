@@ -1,32 +1,72 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
+using Common.Configuration;
+using Common.Extension;
+
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 
 using Moba.SharedUI.ViewModel;
 
+using SharedUI.Interface;
+
 internal sealed partial class LocomotivesPage
 {
+    private readonly AppSettings _settings;
+    private readonly ISettingsService? _settingsService;
+    private readonly ILogger<LocomotivesPage>? _logger;
+
     public MainWindowViewModel ViewModel { get; }
 
-    private GridLength _listExpandedWidth = new(1, GridUnitType.Star);
-    private GridLength _propertiesExpandedWidth = new(3.5, GridUnitType.Star);
+    private double _listExpandedWidth = 250;
+    private double _propertiesExpandedWidth = 600;
 
-    public LocomotivesPage(MainWindowViewModel viewModel)
+    public LocomotivesPage(
+        MainWindowViewModel viewModel,
+        AppSettings settings,
+        ISettingsService? settingsService = null,
+        ILogger<LocomotivesPage>? logger = null)
     {
         ViewModel = viewModel;
+        _settings = settings;
+        _settingsService = settingsService;
+        _logger = logger;
         InitializeComponent();
 
-        ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+        Loaded += OnPageLoaded;
         Unloaded += OnPageUnloaded;
+    }
+
+    private void OnPageLoaded(object sender, RoutedEventArgs e)
+    {
+        ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+        ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+        RestoreLayout();
     }
 
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
     {
         _ = sender;
         _ = e;
-        ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
-        Unloaded -= OnPageUnloaded;
+        HandlePageUnloadedAsync().Observe(ex => _logger?.LogWarning(ex, "Persist layout on unload failed"));
+    }
+
+    private async Task HandlePageUnloadedAsync()
+    {
+        try
+        {
+            ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+            SaveLayout();
+            if (_settingsService != null)
+            {
+                await _settingsService.SaveSettingsAsync(_settings);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning(ex, "Persist layout on unload failed");
+        }
     }
 
     private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -35,31 +75,98 @@ internal sealed partial class LocomotivesPage
         {
             if (!ViewModel.IsLocomotivesListExpanded)
             {
-                if (!ColList.Width.IsAuto)
+                if (ColList.Width.IsAbsolute)
                 {
-                    _listExpandedWidth = ColList.Width;
+                    _listExpandedWidth = ColList.Width.Value;
                 }
                 ColList.Width = GridLength.Auto;
             }
             else
             {
-                ColList.Width = _listExpandedWidth;
+                ColList.Width = new GridLength(_listExpandedWidth);
             }
         }
         else if (e.PropertyName == nameof(ViewModel.IsLocomotivesPropertiesExpanded))
         {
             if (!ViewModel.IsLocomotivesPropertiesExpanded)
             {
-                if (!ColProperties.Width.IsAuto)
+                if (ColProperties.Width.IsAbsolute)
                 {
-                    _propertiesExpandedWidth = ColProperties.Width;
+                    _propertiesExpandedWidth = ColProperties.Width.Value;
                 }
                 ColProperties.Width = GridLength.Auto;
             }
             else
             {
-                ColProperties.Width = _propertiesExpandedWidth;
+                ColProperties.Width = new GridLength(_propertiesExpandedWidth);
             }
+        }
+    }
+
+    private void RestoreLayout()
+    {
+        var layout = _settings.Layout.LocomotivesPage;
+
+        if (layout.ListColumnWidth > 0)
+        {
+            _listExpandedWidth = layout.ListColumnWidth;
+        }
+        if (layout.PropertiesColumnWidth > 0)
+        {
+            _propertiesExpandedWidth = layout.PropertiesColumnWidth;
+        }
+
+        if (layout.IsListExpanded)
+        {
+            ColList.Width = new GridLength(_listExpandedWidth);
+        }
+        else
+        {
+            ColList.Width = GridLength.Auto;
+        }
+
+        if (layout.IsPropertiesExpanded)
+        {
+            ColProperties.Width = new GridLength(_propertiesExpandedWidth);
+        }
+        else
+        {
+            ColProperties.Width = GridLength.Auto;
+        }
+
+        if (ViewModel.IsLocomotivesListExpanded != layout.IsListExpanded)
+        {
+            ViewModel.IsLocomotivesListExpanded = layout.IsListExpanded;
+        }
+        if (ViewModel.IsLocomotivesPropertiesExpanded != layout.IsPropertiesExpanded)
+        {
+            ViewModel.IsLocomotivesPropertiesExpanded = layout.IsPropertiesExpanded;
+        }
+    }
+
+    private void SaveLayout()
+    {
+        var layout = _settings.Layout.LocomotivesPage;
+
+        layout.IsListExpanded = ViewModel.IsLocomotivesListExpanded;
+        layout.IsPropertiesExpanded = ViewModel.IsLocomotivesPropertiesExpanded;
+
+        if (ColList.Width.IsAbsolute)
+        {
+            layout.ListColumnWidth = ColList.Width.Value;
+        }
+        else if (!ViewModel.IsLocomotivesListExpanded)
+        {
+            layout.ListColumnWidth = _listExpandedWidth;
+        }
+
+        if (ColProperties.Width.IsAbsolute)
+        {
+            layout.PropertiesColumnWidth = ColProperties.Width.Value;
+        }
+        else if (!ViewModel.IsLocomotivesPropertiesExpanded)
+        {
+            layout.PropertiesColumnWidth = _propertiesExpandedWidth;
         }
     }
 }

@@ -1,10 +1,16 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
+using Common.Configuration;
+using Common.Extension;
+
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 
 using Moba.SharedUI.ViewModel;
+
+using SharedUI.Interface;
 
 using System.Collections.Specialized;
 using System.Runtime.InteropServices;
@@ -12,23 +18,29 @@ using System.Runtime.InteropServices;
 // ReSharper disable once PartialTypeWithSinglePart
 internal sealed partial class MonitorPage
 {
+    private readonly AppSettings _settings;
+    private readonly ISettingsService? _settingsService;
+    private readonly ILogger<MonitorPage>? _logger;
+
     public MonitorPageViewModel ViewModel { get; }
 
-    private GridLength _trafficExpandedWidth = new(1, GridUnitType.Star);
-    private GridLength _activityLogExpandedWidth = new(2, GridUnitType.Star);
+    private double _trafficExpandedStarValue = 1;
+    private double _activityLogExpandedStarValue = 2;
 
-    public MonitorPage(MonitorPageViewModel viewModel)
+    public MonitorPage(
+        MonitorPageViewModel viewModel,
+        AppSettings settings,
+        ISettingsService? settingsService = null,
+        ILogger<MonitorPage>? logger = null)
     {
         ViewModel = viewModel;
+        _settings = settings;
+        _settingsService = settingsService;
+        _logger = logger;
         InitializeComponent();
 
-        // ✅ FIX: Use Loaded/Unloaded pattern to prevent memory leaks and NullReferenceException
-        // Subscribe to page lifecycle events
         Loaded += OnPageLoaded;
         Unloaded += OnPageUnloaded;
-
-        // Ensure MainWindowViewModel isn't null if we are observing it directly, although here it is not directly observable 
-        // We will need to observe MainWindowViewModel.PropertyChanged from ViewModel
     }
 
     private void MainWindowViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -37,54 +49,133 @@ internal sealed partial class MonitorPage
         {
             if (!ViewModel.MainWindowViewModel.IsMonitorTrafficExpanded)
             {
-                if (!ColTraffic.Width.IsAuto)
+                if (ColTraffic.Width.IsStar)
                 {
-                    _trafficExpandedWidth = ColTraffic.Width;
+                    _trafficExpandedStarValue = ColTraffic.Width.Value;
                 }
                 ColTraffic.Width = GridLength.Auto;
             }
             else
             {
-                ColTraffic.Width = _trafficExpandedWidth;
+                ColTraffic.Width = new GridLength(_trafficExpandedStarValue, GridUnitType.Star);
             }
         }
         else if (e.PropertyName == nameof(MainWindowViewModel.IsMonitorActivityLogExpanded))
         {
             if (!ViewModel.MainWindowViewModel.IsMonitorActivityLogExpanded)
             {
-                if (!ColLog.Width.IsAuto)
+                if (ColLog.Width.IsStar)
                 {
-                    _activityLogExpandedWidth = ColLog.Width;
+                    _activityLogExpandedStarValue = ColLog.Width.Value;
                 }
                 ColLog.Width = GridLength.Auto;
             }
             else
             {
-                ColLog.Width = _activityLogExpandedWidth;
+                ColLog.Width = new GridLength(_activityLogExpandedStarValue, GridUnitType.Star);
             }
         }
     }
 
     private void OnPageLoaded(object sender, RoutedEventArgs e)
     {
-        // Restore layout state initially
-        if (!ViewModel.MainWindowViewModel.IsMonitorTrafficExpanded)
-            ColTraffic.Width = GridLength.Auto;
-        if (!ViewModel.MainWindowViewModel.IsMonitorActivityLogExpanded)
-            ColLog.Width = GridLength.Auto;
+        ViewModel.MainWindowViewModel.PropertyChanged -= MainWindowViewModel_PropertyChanged;
+        ViewModel.MainWindowViewModel.PropertyChanged += MainWindowViewModel_PropertyChanged;
+        RestoreLayout();
 
-        // Subscribe when page enters visual tree (DispatcherQueue is valid)
         ViewModel.TrafficPackets.CollectionChanged += OnTrafficPacketsChanged;
         ViewModel.ActivityLogs.CollectionChanged += OnActivityLogsChanged;
-        ViewModel.MainWindowViewModel.PropertyChanged += MainWindowViewModel_PropertyChanged;
     }
 
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
     {
-        // Unsubscribe when page leaves visual tree (prevents NullReferenceException)
+        HandlePageUnloadedAsync().Observe(ex => _logger?.LogWarning(ex, "Persist layout on unload failed"));
         ViewModel.TrafficPackets.CollectionChanged -= OnTrafficPacketsChanged;
         ViewModel.ActivityLogs.CollectionChanged -= OnActivityLogsChanged;
-        ViewModel.MainWindowViewModel.PropertyChanged -= MainWindowViewModel_PropertyChanged;
+    }
+
+    private async Task HandlePageUnloadedAsync()
+    {
+        try
+        {
+            ViewModel.MainWindowViewModel.PropertyChanged -= MainWindowViewModel_PropertyChanged;
+            SaveLayout();
+            if (_settingsService != null)
+            {
+                await _settingsService.SaveSettingsAsync(_settings);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning(ex, "Persist layout on unload failed");
+        }
+    }
+
+    private void RestoreLayout()
+    {
+        var layout = _settings.Layout.MonitorPage;
+
+        if (layout.TrafficColumnStarValue > 0)
+        {
+            _trafficExpandedStarValue = layout.TrafficColumnStarValue;
+        }
+        if (layout.ActivityLogColumnStarValue > 0)
+        {
+            _activityLogExpandedStarValue = layout.ActivityLogColumnStarValue;
+        }
+
+        if (layout.IsTrafficExpanded)
+        {
+            ColTraffic.Width = new GridLength(_trafficExpandedStarValue, GridUnitType.Star);
+        }
+        else
+        {
+            ColTraffic.Width = GridLength.Auto;
+        }
+
+        if (layout.IsActivityLogExpanded)
+        {
+            ColLog.Width = new GridLength(_activityLogExpandedStarValue, GridUnitType.Star);
+        }
+        else
+        {
+            ColLog.Width = GridLength.Auto;
+        }
+
+        if (ViewModel.MainWindowViewModel.IsMonitorTrafficExpanded != layout.IsTrafficExpanded)
+        {
+            ViewModel.MainWindowViewModel.IsMonitorTrafficExpanded = layout.IsTrafficExpanded;
+        }
+        if (ViewModel.MainWindowViewModel.IsMonitorActivityLogExpanded != layout.IsActivityLogExpanded)
+        {
+            ViewModel.MainWindowViewModel.IsMonitorActivityLogExpanded = layout.IsActivityLogExpanded;
+        }
+    }
+
+    private void SaveLayout()
+    {
+        var layout = _settings.Layout.MonitorPage;
+
+        layout.IsTrafficExpanded = ViewModel.MainWindowViewModel.IsMonitorTrafficExpanded;
+        layout.IsActivityLogExpanded = ViewModel.MainWindowViewModel.IsMonitorActivityLogExpanded;
+
+        if (ColTraffic.Width.IsStar)
+        {
+            layout.TrafficColumnStarValue = ColTraffic.Width.Value;
+        }
+        else if (!ViewModel.MainWindowViewModel.IsMonitorTrafficExpanded)
+        {
+            layout.TrafficColumnStarValue = _trafficExpandedStarValue;
+        }
+
+        if (ColLog.Width.IsStar)
+        {
+            layout.ActivityLogColumnStarValue = ColLog.Width.Value;
+        }
+        else if (!ViewModel.MainWindowViewModel.IsMonitorActivityLogExpanded)
+        {
+            layout.ActivityLogColumnStarValue = _activityLogExpandedStarValue;
+        }
     }
 
     private void OnTrafficPacketsChanged(object? sender, NotifyCollectionChangedEventArgs e)

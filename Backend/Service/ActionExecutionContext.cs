@@ -32,6 +32,21 @@ public class ActionExecutionContext
     public ISoundPlayer? SoundPlayer { get; init; }
 
     /// <summary>
+    /// Current project context for workflow actions that need project-level configuration.
+    /// </summary>
+    public Project? CurrentProject { get; set; }
+
+    /// <summary>
+    /// Current journey context for workflow actions triggered by JourneyManager.
+    /// </summary>
+    public Journey? CurrentJourney { get; set; }
+
+    /// <summary>
+    /// Current journey session state for workflow actions triggered by JourneyManager.
+    /// </summary>
+    public JourneySessionState? CurrentJourneySessionState { get; set; }
+
+    /// <summary>
     /// Current station context for template replacements in announcements.
     /// Set by JourneyManager when workflow is triggered at a station.
     /// </summary>

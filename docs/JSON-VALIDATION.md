@@ -2,7 +2,7 @@
 
 **Scope:** Solution JSON file validation  
 **Status:** Production  
-**Last Updated:** 2026-02-05
+**Last Updated:** 2026-05-02
 
 ---
 
@@ -25,7 +25,7 @@ compatible solution files can be loaded. This prevents:
 - **`Common/Validation/JsonValidationService.cs`:** Central validation
   logic
 - **`Domain/Solution.cs`:** Schema version (`SchemaVersion` property)
-- **`WinUI/Service/IoService.cs`:** Validation before deserialization
+- **`MOBAflow/Service/IoService.cs`:** Validation before deserialization in the WinUI host
 - **`Test/Common/JsonValidationTests.cs`:** 16+ unit tests
 
 ### Flow
@@ -404,3 +404,21 @@ MOBAflow's JSON validation protects against:
 **Status:** Implemented & tested (16 unit tests)  
 **Owner:** `Common/Validation/JsonValidationService.cs`  
 **Tests:** `Test/Common/JsonValidationTests.cs`
+
+## Related current model notes
+
+The current sample solution also contains rolling-stock and display data that
+is not shown in the minimal examples above:
+
+- `Project.Locomotives`, `Project.PassengerWagons`, and `Project.GoodsWagons`
+  store the vehicle libraries.
+- `Project.Trains` uses `Train.Vehicles` as the canonical, ordered, mixed
+  consist model. Legacy split lists such as locomotive IDs and wagon IDs are
+  not the canonical representation.
+- `Project.DisplayDevices` stores ESP32-S3 display targets, selected display
+  model, purpose, rotation, UDP endpoint, and free-positioned layout labels.
+- Workflow actions use typed payload objects such as `announcement`, `audio`,
+  `command`, and `trainDestinationDisplay`.
+
+See [`PROJECT-REFERENCE.md`](PROJECT-REFERENCE.md) for the full current data
+model overview.

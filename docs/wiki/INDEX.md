@@ -12,7 +12,7 @@ Here you'll find all information about three platforms:
   - **Technology:** WinUI 3 (Windows Desktop)
   - **Target users:** Power Users
   - **Main features:** Journey Management, Workflow Automation,
-    Track Plan Editor
+    Track Plan Editor, Train Control, Signal Box, Display Page
 - **📱 MOBAsmart**
   - **Technology:** .NET MAUI (Android)
   - **Target users:** Mobile Users
@@ -21,7 +21,7 @@ Here you'll find all information about three platforms:
 - **🌐 MOBApi**
   - **Technology:** ASP.NET Core REST + SignalR
   - **Target users:** All Platforms
-  - **Main features:** REST API, Real-time Hub, Client Discovery
+  - **Main features:** REST API, photo upload, real-time hub, client discovery
 
 ---
 
@@ -43,6 +43,9 @@ Here you'll find all information about three platforms:
 - 🚂 Journey Management (Train journeys with stations)
 - ⚡ Workflow Automation (Event-driven actions)
 - 🎨 Track Plan Editor (Track visualization)
+- 🚦 Signal Box and Viessmann multiplex signal testing
+- 🖥️ ESP32-S3 display rendering and UDP frame transport
+- 🎛️ Train Control with F0-F31 functions
 - 🎙️ Text-to-Speech (Azure Cognitive Services)
 - 🗂️ Solution Management (Project management)
 
@@ -135,6 +138,9 @@ required**. Automated setup scripts are planned for future versions.
 ### Technische Dokumentation
 
 - **Architektur:** [`../ARCHITECTURE.md`](../ARCHITECTURE.md)
+- **Projekt-Referenz:** [`../PROJECT-REFERENCE.md`](../PROJECT-REFERENCE.md)
+  – aktuelle Repo-Struktur, Modelle, Services, Pages, Display-Pipeline,
+  Workflows, Build/Deploy und bekannte Dokumentationslücken
 - **JSON-Validierung:** [`../JSON-VALIDATION.md`](../JSON-VALIDATION.md)
   – Solution-Dateiformat & Validierung
 
@@ -187,7 +193,7 @@ MOBAflow Repository
 ├─ README.md (START HERE – einzige MD-Datei im Root)
 ├─ LICENSE (MIT)
 ├─ docs/
-│  ├─ ARCHITECTURE.md, CHANGELOG.md, CLAUDE.md
+│  ├─ ARCHITECTURE.md, PROJECT-REFERENCE.md, CHANGELOG.md, CLAUDE.md
 │  ├─ HARDWARE-DISCLAIMER.md, JSON-VALIDATION.md, MINVER-SETUP.md
 │  ├─ SECURITY.md, THIRD-PARTY-NOTICES.md
 │  └─ wiki/ (This Wiki)
@@ -222,5 +228,5 @@ MOBAflow Repository
 
 ---
 
-*Last Updated: June 2025*
+*Last Updated: May 2026*
 *Questions? Open an issue or discussion on GitHub!* 💬

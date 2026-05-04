@@ -104,5 +104,11 @@ public interface IMobaRuntime
     /// Clears the traffic monitor.
     /// </summary>
     void ClearTrafficMonitor();
+
+    /// <summary>
+    /// Requests the current system state from the Z21.
+    /// Called when window is activated to refresh connection status.
+    /// </summary>
+    Task RequestSystemStateAsync(CancellationToken cancellationToken = default);
 }
 

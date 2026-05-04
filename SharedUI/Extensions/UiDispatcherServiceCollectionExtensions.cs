@@ -71,14 +71,40 @@ public static class UiDispatcherServiceCollectionExtensions
             action();
         }
 
+        public void InvokeOnUiHighPriority(Action action)
+        {
+            ArgumentNullException.ThrowIfNull(action);
+            action();
+        }
+
+        public void InvokeOnUiLowPriority(Action action)
+        {
+            ArgumentNullException.ThrowIfNull(action);
+            action();
+        }
+
         public Task InvokeOnUiAsync(Func<Task> asyncAction)
         {
             ArgumentNullException.ThrowIfNull(asyncAction);
             return asyncAction();
         }
 
+        public Task InvokeOnUiAsync(Func<Task> asyncAction, UiPriority priority)
+        {
+            _ = priority;
+            ArgumentNullException.ThrowIfNull(asyncAction);
+            return asyncAction();
+        }
+
         public Task<T> InvokeOnUiAsync<T>(Func<Task<T>> asyncFunc)
         {
+            ArgumentNullException.ThrowIfNull(asyncFunc);
+            return asyncFunc();
+        }
+
+        public Task<T> InvokeOnUiAsync<T>(Func<Task<T>> asyncFunc, UiPriority priority)
+        {
+            _ = priority;
             ArgumentNullException.ThrowIfNull(asyncFunc);
             return asyncFunc();
         }

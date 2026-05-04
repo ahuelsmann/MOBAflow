@@ -274,6 +274,9 @@ public class JourneyManager : JourneyFeedbackManagerBase
 
         ExecutionContext.JourneyTemplateText = journey.Text;
         ExecutionContext.CurrentStation = currentStation;
+        ExecutionContext.CurrentProject = _project;
+        ExecutionContext.CurrentJourney = journey;
+        ExecutionContext.CurrentJourneySessionState = _states[journey.Id];
         var stationIndex = journey.Stations.IndexOf(currentStation) + 1;
         ExecutionContext.CurrentStationIndex = stationIndex > 0 ? stationIndex : 1;
         try
@@ -284,6 +287,9 @@ public class JourneyManager : JourneyFeedbackManagerBase
         {
             ExecutionContext.JourneyTemplateText = null;
             ExecutionContext.CurrentStation = null;
+            ExecutionContext.CurrentProject = null;
+            ExecutionContext.CurrentJourney = null;
+            ExecutionContext.CurrentJourneySessionState = null;
             ExecutionContext.CurrentStationIndex = null;
         }
     }

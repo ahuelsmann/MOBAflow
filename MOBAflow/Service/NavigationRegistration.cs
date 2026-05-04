@@ -94,9 +94,6 @@ internal static class NavigationRegistration
         services.AddTransient<MonitorPage>();
         pages.Add(new PageMetadata("monitor", "Monitor", "\uE7F4", typeof(MonitorPage), NavigationCategory.Monitoring, 10, "IsMonitorPageAvailable", "MonitorPageLabel", null, false));
 
-        services.AddTransient<DisplayPage>();
-        pages.Add(new PageMetadata("display", "Display", "\uE7F4", typeof(DisplayPage), NavigationCategory.Monitoring, 20, null, null, null, false));
-
         // Manual registrations for pages with custom DI requirements
         // JourneysPage: requires AppSettings + ISettingsService injection
         services.AddTransient<JourneysPage>(sp => new JourneysPage(
@@ -119,6 +116,9 @@ internal static class NavigationRegistration
         services.AddTransient<SignalBoxPage>(sp => new SignalBoxPage(
             sp.GetRequiredService<MainWindowViewModel>(),
             sp.GetRequiredService<ViessmannSignalService>(),
+            sp.GetRequiredService<AppSettings>(),
+            sp.GetService<ISettingsService>(),
+            sp.GetService<ILogger<SignalBoxPage>>(),
             sp.GetService<ILogger<SignalBoxPropertiesControl>>(),
             sp.GetService<ILogger<SignalBoxCanvasControl>>()));
         pages.Add(new PageMetadata(

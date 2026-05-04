@@ -2,6 +2,7 @@
 
 namespace Moba.WinUI.View;
 
+using Common.Configuration;
 using Common.Extension;
 
 using Converter;
@@ -12,6 +13,7 @@ using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.Graphics.Canvas.Text;
 using Microsoft.Graphics.Canvas.UI;
 using Microsoft.Graphics.Canvas.UI.Xaml;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Input;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
@@ -21,6 +23,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 
+using SharedUI.Interface;
 using SharedUI.Service;
 using SharedUI.ViewModel;
 
@@ -39,6 +42,9 @@ public sealed partial class TrackPlanPage
     private const double RigidGroupSnapAngleToleranceDegrees = 1.0;
     /// <summary>Margin in mm, damit der gesamte Plan sichtbar ist (auch bei negativen Koordinaten).</summary>
     private const double ContentMarginMm = 50.0;
+
+    private readonly AppSettings _settings;
+    private readonly ISettingsService? _settingsService;
 
     public TrackPlanViewModel ViewModel { get; }
     public MainWindowViewModel MainViewModel { get; }
@@ -66,20 +72,24 @@ public sealed partial class TrackPlanPage
     private double _rotationDragStartAngleRad;
     private double _rotationDragStartSegmentDegrees;
 
-    private GridLength _toolboxExpandedWidth = new(180);
-    private GridLength _propertiesExpandedWidth = new(240);
+    private double _toolboxExpandedWidth = 180;
+    private double _propertiesExpandedWidth = 240;
 
     public TrackPlanPage(
         TrackPlanViewModel viewModel,
         MainWindowViewModel mainViewModel,
         EditableTrackPlan plan,
         TrackPlanFeedbackHighlighter feedbackHighlighter,
+        AppSettings settings,
+        ISettingsService? settingsService = null,
         ILogger<TrackPlanPage>? logger = null)
     {
         ViewModel = viewModel;
         MainViewModel = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
         _plan = plan ?? throw new ArgumentNullException(nameof(plan));
         _feedbackHighlighter = feedbackHighlighter ?? throw new ArgumentNullException(nameof(feedbackHighlighter));
+        _settings = settings;
+        _settingsService = settingsService;
         _logger = logger;
         InitializeComponent();
         InitializeEditorFeatures();
@@ -100,30 +110,30 @@ public sealed partial class TrackPlanPage
         {
             if (!ViewModel.IsToolboxExpanded)
             {
-                if (!ColToolbox.Width.IsAuto)
+                if (ColToolbox.Width.IsAbsolute)
                 {
-                    _toolboxExpandedWidth = ColToolbox.Width;
+                    _toolboxExpandedWidth = ColToolbox.Width.Value;
                 }
                 ColToolbox.Width = GridLength.Auto;
             }
             else
             {
-                ColToolbox.Width = _toolboxExpandedWidth;
+                ColToolbox.Width = new GridLength(_toolboxExpandedWidth);
             }
         }
         else if (e.PropertyName == nameof(ViewModel.IsPropertiesExpanded))
         {
             if (!ViewModel.IsPropertiesExpanded)
             {
-                if (!ColProperties.Width.IsAuto)
+                if (ColProperties.Width.IsAbsolute)
                 {
-                    _propertiesExpandedWidth = ColProperties.Width;
+                    _propertiesExpandedWidth = ColProperties.Width.Value;
                 }
                 ColProperties.Width = GridLength.Auto;
             }
             else
             {
-                ColProperties.Width = _propertiesExpandedWidth;
+                ColProperties.Width = new GridLength(_propertiesExpandedWidth);
             }
         }
     }
@@ -152,16 +162,10 @@ public sealed partial class TrackPlanPage
         // Apply persisted collapse state to the grid columns. ViewModel_PropertyChanged only fires
         // on changes, so without this the columns would stay at their XAML default width on app
         // restart even though the CollapsibleColumnHelper itself is already collapsed via binding.
-        ApplyColumnCollapseState();
+        RestoreLayout();
 
         RecalculateDrawOffset();
         RefreshCanvas();
-    }
-
-    private void ApplyColumnCollapseState()
-    {
-        ColToolbox.Width = ViewModel.IsToolboxExpanded ? _toolboxExpandedWidth : GridLength.Auto;
-        ColProperties.Width = ViewModel.IsPropertiesExpanded ? _propertiesExpandedWidth : GridLength.Auto;
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
@@ -169,12 +173,94 @@ public sealed partial class TrackPlanPage
         _ = sender;
         _ = e;
 
-        ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+        HandlePageUnloadedAsync().Observe(ex => _logger?.LogWarning(ex, "Persist layout on unload failed"));
         _plan.PlanChanged -= OnPlanChanged;
         KeyDown -= Page_KeyDown;
         _feedbackHighlighter.HighlightsChanged -= OnFeedbackHighlightsChanged;
-        Loaded -= OnLoaded;
-        Unloaded -= OnUnloaded;
+    }
+
+    private async Task HandlePageUnloadedAsync()
+    {
+        try
+        {
+            ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+            SaveLayout();
+            if (_settingsService != null)
+            {
+                await _settingsService.SaveSettingsAsync(_settings);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning(ex, "Persist layout on unload failed");
+        }
+    }
+
+    private void RestoreLayout()
+    {
+        var layout = _settings.Layout.TrackPlanPage;
+
+        if (layout.ToolboxColumnWidth > 0)
+        {
+            _toolboxExpandedWidth = layout.ToolboxColumnWidth;
+        }
+        if (layout.PropertiesColumnWidth > 0)
+        {
+            _propertiesExpandedWidth = layout.PropertiesColumnWidth;
+        }
+
+        if (layout.IsToolboxExpanded)
+        {
+            ColToolbox.Width = new GridLength(_toolboxExpandedWidth);
+        }
+        else
+        {
+            ColToolbox.Width = GridLength.Auto;
+        }
+
+        if (layout.IsPropertiesExpanded)
+        {
+            ColProperties.Width = new GridLength(_propertiesExpandedWidth);
+        }
+        else
+        {
+            ColProperties.Width = GridLength.Auto;
+        }
+
+        if (ViewModel.IsToolboxExpanded != layout.IsToolboxExpanded)
+        {
+            ViewModel.IsToolboxExpanded = layout.IsToolboxExpanded;
+        }
+        if (ViewModel.IsPropertiesExpanded != layout.IsPropertiesExpanded)
+        {
+            ViewModel.IsPropertiesExpanded = layout.IsPropertiesExpanded;
+        }
+    }
+
+    private void SaveLayout()
+    {
+        var layout = _settings.Layout.TrackPlanPage;
+
+        layout.IsToolboxExpanded = ViewModel.IsToolboxExpanded;
+        layout.IsPropertiesExpanded = ViewModel.IsPropertiesExpanded;
+
+        if (ColToolbox.Width.IsAbsolute)
+        {
+            layout.ToolboxColumnWidth = ColToolbox.Width.Value;
+        }
+        else if (!ViewModel.IsToolboxExpanded)
+        {
+            layout.ToolboxColumnWidth = _toolboxExpandedWidth;
+        }
+
+        if (ColProperties.Width.IsAbsolute)
+        {
+            layout.PropertiesColumnWidth = ColProperties.Width.Value;
+        }
+        else if (!ViewModel.IsPropertiesExpanded)
+        {
+            layout.PropertiesColumnWidth = _propertiesExpandedWidth;
+        }
     }
 
     private void OnFeedbackHighlightsChanged(object? sender, EventArgs e)
@@ -182,7 +268,8 @@ public sealed partial class TrackPlanPage
         _ = sender;
         _ = e;
         // Called from a ThreadPool timer; marshal to UI thread before touching the canvas.
-        DispatcherQueue.TryEnqueue(() => GraphCanvasControl.Invalidate());
+        // Windows App SDK 2.0: Use High Priority for critical UI updates (canvas refresh)
+        DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.High, () => GraphCanvasControl.Invalidate());
     }
 
     private void Page_KeyDown(object sender, KeyRoutedEventArgs e)
@@ -432,7 +519,13 @@ public sealed partial class TrackPlanPage
     {
         e.AcceptedOperation = DataPackageOperation.Copy | DataPackageOperation.Move;
         if (e.DataView.Contains(DragFormatTrackCatalog))
-            e.DragUIOverride.Caption = "Drop track";
+        {
+            // Windows App SDK 2.0 Drag/Drop Visual Enhancements
+            e.DragUIOverride.Caption = "Place track on plan";
+            e.DragUIOverride.IsCaptionVisible = true;
+            e.DragUIOverride.IsContentVisible = true;
+            e.DragUIOverride.IsGlyphVisible = true;
+        }
     }
 
     private void Canvas_Drop(object sender, DragEventArgs e)

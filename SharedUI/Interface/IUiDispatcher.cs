@@ -2,6 +2,20 @@
 namespace Moba.SharedUI.Interface;
 
 /// <summary>
+/// Priority levels for UI thread dispatching (cross-platform abstraction).
+/// Maps to platform-specific priority systems (e.g., DispatcherQueuePriority on WinUI).
+/// </summary>
+public enum UiPriority
+{
+    /// <summary>Low priority - for background updates that can be deferred.</summary>
+    Low,
+    /// <summary>Normal priority - standard UI updates.</summary>
+    Normal,
+    /// <summary>High priority - for critical UI updates that should be processed immediately.</summary>
+    High
+}
+
+/// <summary>
 /// Ensures execution of actions on the UI thread (thread marshalling).
 /// Used by ViewModels when e.g. events or background services run on a non-UI thread
 /// and properties/collections need to be updated.
@@ -28,4 +42,21 @@ public interface IUiDispatcher
     /// Executes an async function on the UI thread and returns the result.
     /// </summary>
     Task<T> InvokeOnUiAsync<T>(Func<Task<T>> asyncFunc);
+
+    /// <summary>
+    /// Executes the action on the UI thread with high priority.
+    /// Use for critical UI updates that should be processed immediately.
+    /// </summary>
+    void InvokeOnUiHighPriority(Action action);
+
+    /// <summary>
+    /// Executes the action on the UI thread with low priority.
+    /// Use for background UI updates that can be deferred.
+    /// </summary>
+    void InvokeOnUiLowPriority(Action action);
+
+    /// <summary>
+    /// Executes an async action on the UI thread with specified priority.
+    /// </summary>
+    Task InvokeOnUiAsync(Func<Task> asyncAction, UiPriority priority);
 }

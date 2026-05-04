@@ -154,28 +154,7 @@ public sealed partial class StationViewModel : ObservableObject, IViewModelWrapp
         {
             if (SetProperty(_station.PlatformId, value, _station, (m, v) => m.PlatformId = v))
             {
-                OnPropertyChanged(nameof(PlatformName));
             }
-        }
-    }
-
-    /// <summary>
-    /// Gets the display name of the selected platform.
-    /// </summary>
-    public string PlatformName
-    {
-        get
-        {
-            if (_station.PlatformId == null)
-            {
-                return "(No platform)";
-            }
-
-            var platform = _project.Stations
-                .SelectMany(station => station.Platforms)
-                .FirstOrDefault(platform => platform.Id == _station.PlatformId.Value);
-
-            return platform?.Summary ?? "(Unknown platform)";
         }
     }
 
@@ -199,7 +178,6 @@ public sealed partial class StationViewModel : ObservableObject, IViewModelWrapp
         }
 
         OnPropertyChanged(nameof(Platforms));
-        OnPropertyChanged(nameof(PlatformName));
     }
 
     /// <summary>

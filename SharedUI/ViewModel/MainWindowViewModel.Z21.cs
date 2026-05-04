@@ -104,6 +104,19 @@ public partial class MainWindowViewModel
     private bool CanConnect() => !IsConnected;
     private bool CanDisconnect() => IsConnected;
     private bool CanToggleTrackPower() => IsOperationalControlEnabled;
+
+    /// <summary>
+    /// Refreshes Z21 status explicitly (called when window is activated).
+    /// </summary>
+    [RelayCommand]
+    private void RefreshZ21Status()
+    {
+        // Trigger a status update request to the Z21
+        if (IsConnected)
+        {
+            _ = _mobaRuntime.RequestSystemStateAsync();
+        }
+    }
     #endregion
 
     #region Runtime Snapshot Projection

@@ -8,14 +8,15 @@ public static class Rgb565Converter
     {
         ArgumentNullException.ThrowIfNull(bitmap);
 
-        if (destinationRgb565.Length < FrameDimensions.FrameByteCount)
+        var pixelCount = bitmap.Width * bitmap.Height;
+        var required = pixelCount * FrameDimensions.BytesPerPixel;
+        if (destinationRgb565.Length < required)
         {
             throw new ArgumentException("Destination buffer is too small.", nameof(destinationRgb565));
         }
 
         var src = (uint*)bitmap.GetPixels().ToPointer();
         var pos = 0;
-        var pixelCount = FrameDimensions.Width * FrameDimensions.Height;
         for (var i = 0; i < pixelCount; i++)
         {
             var pixel = src[i];
@@ -30,13 +31,17 @@ public static class Rgb565Converter
     }
 
     public static void DecodeToBgra8888(ReadOnlySpan<byte> rgb565, Span<byte> destinationBgra8888)
+        => DecodeToBgra8888(rgb565, destinationBgra8888, FrameDimensions.Width, FrameDimensions.Height);
+
+    public static void DecodeToBgra8888(ReadOnlySpan<byte> rgb565, Span<byte> destinationBgra8888, int width, int height)
     {
-        if (rgb565.Length < FrameDimensions.FrameByteCount)
+        var frameByteCount = width * height * FrameDimensions.BytesPerPixel;
+        if (rgb565.Length < frameByteCount)
         {
             throw new ArgumentException("RGB565 source buffer is too small.", nameof(rgb565));
         }
 
-        var required = FrameDimensions.Width * FrameDimensions.Height * 4;
+        var required = width * height * 4;
         if (destinationBgra8888.Length < required)
         {
             throw new ArgumentException("BGRA destination buffer is too small.", nameof(destinationBgra8888));
@@ -44,7 +49,7 @@ public static class Rgb565Converter
 
         var src = 0;
         var dst = 0;
-        for (var i = 0; i < FrameDimensions.Width * FrameDimensions.Height; i++)
+        for (var i = 0; i < width * height; i++)
         {
             var hi = rgb565[src++];
             var lo = rgb565[src++];

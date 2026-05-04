@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MOBAflow Locomotives Library Schema",
+  "description": "JSON Schema for germany-locomotives.json - defines available locomotives by category and series",
+  "type": "object",
+  "required": ["Locomotives"],
+  "properties": {
+    "Locomotives": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["Category", "Series"],
+        "properties": {
+          "Category": {
+            "type": "string",
+            "enum": ["Dampflokomotiven", "Elektrolokomotiven", "Diesellokomotiven", "Triebwagen", "Sonstige"],
+            "description": "Locomotive category"
+          },
+          "Series": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["Name", "Vmax", "Type"],
+              "properties": {
+                "Name": { 
+                  "type": "string", 
+                  "minLength": 1,
+                  "pattern": "^BR [0-9].*$",
+                  "description": "Series designation (e.g., BR 01, BR 103)"
+                },
+                "Vmax": { 
+                  "type": "integer", 
+                  "minimum": 20, 
+                  "maximum": 350,
+                  "description": "Maximum speed in km/h"
+                },
+                "Type": { 
+                  "type": "string",
+                  "enum": ["Dampflok", "E-Lok", "Diesel-Lok", "Triebwagen"],
+                  "description": "Locomotive type"
+                },
+                "Epoch": { 
+                  "type": "string",
+                  "enum": ["I", "II", "II-III", "III", "III-IV", "IV", "IV-V", "V", "VI"],
+                  "description": "Railway epoch classification"
+                },
+                "Description": { 
+                  "type": "string",
+                  "description": "Locomotive description"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -303,6 +303,22 @@ internal sealed partial class JourneysPage
     private void StationListView_DragOver(object sender, DragEventArgs e)
     {
         e.AcceptedOperation = DataPackageOperation.Copy;
+
+        // Windows App SDK 2.0 Drag/Drop Visual Enhancements
+        if (e.DataView.Properties.ContainsKey("City"))
+        {
+            e.DragUIOverride.Caption = "Add as station";
+            e.DragUIOverride.IsCaptionVisible = true;
+            e.DragUIOverride.IsContentVisible = true;
+            e.DragUIOverride.IsGlyphVisible = true;
+        }
+        else if (e.DataView.Properties.ContainsKey("Workflow"))
+        {
+            e.DragUIOverride.Caption = "Assign workflow";
+            e.DragUIOverride.IsCaptionVisible = true;
+            e.DragUIOverride.IsContentVisible = true;
+            e.DragUIOverride.IsGlyphVisible = true;
+        }
     }
 
     private void StationListView_Drop(object sender, DragEventArgs e)

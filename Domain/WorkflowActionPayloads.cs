@@ -1,5 +1,4 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-
 namespace Moba.Domain;
 
 using Enum;
@@ -88,4 +87,20 @@ public sealed class PowerShellActionPayload
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Arguments { get; set; }
+}
+
+/// <summary>
+/// Typed payload for <see cref="ActionType.TrainDestinationDisplay"/> workflow actions.
+/// </summary>
+public sealed class TrainDestinationDisplayActionPayload
+{
+    /// <summary>
+    /// Gets or sets the project display device that should be updated.
+    /// </summary>
+    public Guid DisplayDeviceId { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the target display should be cleared before rendering.
+    /// </summary>
+    public bool ClearBeforeRender { get; set; } = true;
 }

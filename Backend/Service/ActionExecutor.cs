@@ -11,7 +11,10 @@ using Microsoft.Extensions.Logging;
 /// <summary>
 /// Executes <see cref="WorkflowAction"/> instances (command, audio, announcement) using shared runtime dependencies.
 /// </summary>
-public class ActionExecutor(AnnouncementService? announcementService = null, ILogger<ActionExecutor>? logger = null) : IActionExecutor
+public class ActionExecutor(
+    AnnouncementService? announcementService = null,
+    ITrainDestinationDisplayService? trainDestinationDisplayService = null,
+    ILogger<ActionExecutor>? logger = null) : IActionExecutor
 {
     /// <summary>
     /// Executes a WorkflowAction based on its type.
@@ -32,6 +35,10 @@ public class ActionExecutor(AnnouncementService? announcementService = null, ILo
 
             case ActionType.Announcement:
                 await ExecuteAnnouncementAsync(action, context).ConfigureAwait(false);
+                break;
+
+            case ActionType.TrainDestinationDisplay:
+                await ExecuteTrainDestinationDisplayAsync(action, context).ConfigureAwait(false);
                 break;
 
             default:
@@ -136,5 +143,16 @@ public class ActionExecutor(AnnouncementService? announcementService = null, ILo
         ).ConfigureAwait(false);
 
         logger?.LogInformation("Announcement executed for action '{ActionName}': {AnnouncementText}", action.Name, announcementText);
+    }
+
+    private async Task ExecuteTrainDestinationDisplayAsync(WorkflowAction action, ActionExecutionContext context)
+    {
+        if (trainDestinationDisplayService == null)
+        {
+            logger?.LogWarning("Train destination display action '{ActionName}' skipped: TrainDestinationDisplayService not configured", action.Name);
+            return;
+        }
+
+        await trainDestinationDisplayService.UpdateAsync(action, context).ConfigureAwait(false);
     }
 }

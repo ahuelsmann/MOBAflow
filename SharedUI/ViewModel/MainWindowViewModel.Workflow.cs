@@ -175,7 +175,7 @@ public partial class MainWindowViewModel
         // Trigger auto-save after adding action
         ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
     }
-
+    
     [RelayCommand(CanExecute = nameof(CanDeleteAction))]
     private void DeleteAction()
     {

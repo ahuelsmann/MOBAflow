@@ -358,4 +358,14 @@ public sealed partial class MobaRuntimeService
     {
         _z21.TrafficMonitor?.Clear();
     }
+
+    /// <inheritdoc />
+    public async Task RequestSystemStateAsync(CancellationToken cancellationToken = default)
+    {
+        if (_z21.IsConnected)
+        {
+            // Trigger a status request - this will update the snapshot via events
+            await _z21.GetStatusAsync(cancellationToken).ConfigureAwait(false);
+        }
+    }
 }
