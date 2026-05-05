@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 using Moba.Display.Rendering;
 using Moba.Display.Runtime;
 using Moba.Display.Transport;

@@ -192,4 +192,16 @@ applyTo: '**'
 
 ---
 
+## Copyright Header (Absolute Rule)
+
+Every new `.cs` file must start with this exact header on line 1 (before `using` or `namespace`):
+
+```csharp
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+```
+
+Exclude generated files (`*.g.cs`, `*.g.i.cs`, `*.designer.cs`) and build artifacts (`obj/`, `bin/`).
+
+---
+
 # End of File

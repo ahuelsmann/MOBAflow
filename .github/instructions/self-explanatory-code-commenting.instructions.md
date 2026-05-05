@@ -6,6 +6,16 @@ applyTo: '**/*.cs'
 
 # Code Commenting
 
+## File Header (Mandatory)
+
+Every new `.cs` file must start with the following copyright header as the very first line (before `using` or `namespace`):
+
+```csharp
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+```
+
+This applies to all hand-written `.cs` files. Exclude generated files (`*.g.cs`, `*.g.i.cs`, `*.designer.cs`) and build artifacts (`obj/`, `bin/`).
+
 ## Core Rule
 
 **Comment only when explaining WHY, not WHAT. Code should be self-explanatory.**
@@ -42,6 +52,7 @@ applyTo: '**/*.cs'
 
 Before committing, ensure your comments:
 
+- [ ] Every new `.cs` file has the mandatory copyright header on line 1
 - [ ] Explain WHY, not WHAT
 - [ ] Are grammatically correct and clear
 - [ ] Will remain accurate as code evolves
