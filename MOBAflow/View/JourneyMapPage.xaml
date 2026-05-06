@@ -90,15 +90,27 @@
                     VerticalScrollBarVisibility="Disabled"
                     Visibility="{x:Bind ViewModel.HasSelectedJourney, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
+                        <!-- Row Headers for Additional Info -->
+                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,8,8,0" Spacing="2">
+                            <TextBlock FontSize="10" Foreground="{ThemeResource TextFillColorTertiaryBrush}" HorizontalTextAlignment="Right" Text="Exit" />
+                            <TextBlock FontSize="10" Foreground="{ThemeResource TextFillColorTertiaryBrush}" HorizontalTextAlignment="Right" Text="Arrival" />
+                            <TextBlock FontSize="10" Foreground="{ThemeResource TextFillColorTertiaryBrush}" HorizontalTextAlignment="Right" Text="Departure" />
+                        </StackPanel>
+
                         <!--  Station Names (Top)  -->
                         <ItemsControl
                             Grid.Row="0"
+                            Grid.Column="1"
                             Margin="0,0,0,16"
                             ItemsSource="{x:Bind ViewModel.RouteStations, Mode=OneWay}">
                             <ItemsControl.ItemsPanel>
@@ -122,7 +134,7 @@
                         </ItemsControl>
 
                         <!--  Track Line with Station Dots  -->
-                        <ItemsControl Grid.Row="1" ItemsSource="{x:Bind ViewModel.RouteStations, Mode=OneWay}">
+                        <ItemsControl Grid.Row="1" Grid.Column="1" ItemsSource="{x:Bind ViewModel.RouteStations, Mode=OneWay}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <StackPanel Orientation="Horizontal" Spacing="0" />
@@ -164,6 +176,7 @@
                         <!--  Additional Info (Bottom)  -->
                         <ItemsControl
                             Grid.Row="2"
+                            Grid.Column="1"
                             Margin="0,8,0,0"
                             ItemsSource="{x:Bind ViewModel.RouteStations, Mode=OneWay}">
                             <ItemsControl.ItemsPanel>
@@ -178,7 +191,17 @@
                                             FontSize="10"
                                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                             HorizontalTextAlignment="Center"
-                                            Text="{x:Bind IsExitOnLeft, Mode=OneWay, Converter={StaticResource ExitSideConverter}}" />
+                                            Text="{x:Bind ExitSideText, Mode=OneWay}" />
+                                        <TextBlock
+                                            FontSize="10"
+                                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                            HorizontalTextAlignment="Center"
+                                            Text="{x:Bind ArrivalTimeText, Mode=OneWay}" />
+                                        <TextBlock
+                                            FontSize="10"
+                                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                            HorizontalTextAlignment="Center"
+                                            Text="{x:Bind DepartureTimeText, Mode=OneWay}" />
                                     </StackPanel>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>

@@ -125,8 +125,16 @@ public sealed partial class StationViewModel : ObservableObject, IViewModelWrapp
     public bool IsExitOnLeft
     {
         get => _station.IsExitOnLeft;
-        set => SetProperty(_station.IsExitOnLeft, value, _station, (m, v) => m.IsExitOnLeft = v);
+        set
+        {
+            if (SetProperty(_station.IsExitOnLeft, value, _station, (m, v) => m.IsExitOnLeft = v))
+            {
+                OnPropertyChanged(nameof(ExitSideText));
+            }
+        }
     }
+
+    public string ExitSideText => IsExitOnLeft ? "Left" : "Right";
 
     /// <summary>
     /// Gets the platforms belonging to this station.
@@ -219,8 +227,16 @@ public sealed partial class StationViewModel : ObservableObject, IViewModelWrapp
     public DateTime? Arrival
     {
         get => _station.Arrival;
-        set => SetProperty(_station.Arrival, value, _station, (m, v) => m.Arrival = v);
+        set
+        {
+            if (SetProperty(_station.Arrival, value, _station, (m, v) => m.Arrival = v))
+            {
+                OnPropertyChanged(nameof(ArrivalTimeText));
+            }
+        }
     }
+
+    public string ArrivalTimeText => Arrival?.ToString("HH:mm") ?? "--:--";
 
     /// <summary>
     /// Gets or sets the planned departure time from this station.
@@ -228,8 +244,16 @@ public sealed partial class StationViewModel : ObservableObject, IViewModelWrapp
     public DateTime? Departure
     {
         get => _station.Departure;
-        set => SetProperty(_station.Departure, value, _station, (m, v) => m.Departure = v);
+        set
+        {
+            if (SetProperty(_station.Departure, value, _station, (m, v) => m.Departure = v))
+            {
+                OnPropertyChanged(nameof(DepartureTimeText));
+            }
+        }
     }
+
+    public string DepartureTimeText => Departure?.ToString("HH:mm") ?? "--:--";
 
     /// <summary>
     /// Gets or sets the 1-based position of this station within the journey.

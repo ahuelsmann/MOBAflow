@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 // ReSharper disable InconsistentNaming
-namespace Moba.Domain;
+namespace Moba.Domain.ESP;
 
-public class ESP32S3 : ESP32
+public class ESP32
 {
 }

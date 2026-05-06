@@ -104,4 +104,36 @@ internal class StationViewModelTests
 
         Assert.That(propertyChangedRaised, Is.True);
     }
+
+    [Test]
+    public void ArrivalTimeText_WithArrival_ReturnsHourMinute()
+    {
+        _viewModel.Arrival = new DateTime(2026, 5, 6, 8, 15, 0);
+
+        Assert.That(_viewModel.ArrivalTimeText, Is.EqualTo("08:15"));
+    }
+
+    [Test]
+    public void ArrivalTimeText_WithoutArrival_ReturnsPlaceholder()
+    {
+        _viewModel.Arrival = null;
+
+        Assert.That(_viewModel.ArrivalTimeText, Is.EqualTo("--:--"));
+    }
+
+    [Test]
+    public void DepartureTimeText_WithDeparture_ReturnsHourMinute()
+    {
+        _viewModel.Departure = new DateTime(2026, 5, 6, 18, 45, 0);
+
+        Assert.That(_viewModel.DepartureTimeText, Is.EqualTo("18:45"));
+    }
+
+    [Test]
+    public void DepartureTimeText_WithoutDeparture_ReturnsPlaceholder()
+    {
+        _viewModel.Departure = null;
+
+        Assert.That(_viewModel.DepartureTimeText, Is.EqualTo("--:--"));
+    }
 }
