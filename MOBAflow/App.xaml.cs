@@ -246,8 +246,7 @@ public partial class App
                 sp.GetRequiredService<AppSettings>(),
                 sp.GetRequiredService<RestApiProcessService>(),
                 sp.GetRequiredService<PhotoHubClient>(),
-                sp.GetRequiredService<IRestApiStatusSink>(),
-                sp.GetRequiredService<IUiDispatcher>(),
+                sp.GetRequiredService<IEventBus>(),
                 sp.GetRequiredService<ILogger<RestApiStatusService>>());
         });
 
@@ -272,6 +271,9 @@ public partial class App
         services.AddSingleton<INavigationService>(sp => sp.GetRequiredService<NavigationService>());
         services.AddSingleton<IShellService, ShellService>();
 
+        // DialogService mit lazy XamlRoot-Auflösung (verhindert Startup-Deadlock)
+        services.AddSingleton<IDialogService, DialogService>();
+
         services.AddSingleton<ISoundPlayer, WindowsSoundPlayer>();
         services.AddSingleton<HealthCheckService>();
 
@@ -291,10 +293,9 @@ public partial class App
             sp.GetRequiredService<AnnouncementService>(),
             sp.GetRequiredService<PhotoHubClient>(),
             sp.GetService<IFeatureTogglePageProvider>(),
-            loggerFactory: sp.GetRequiredService<ILoggerFactory>()
+            loggerFactory: sp.GetRequiredService<ILoggerFactory>(),
+            dialogService: sp.GetService<IDialogService>()
         ));
-
-        services.AddSingleton<IRestApiStatusSink>(sp => sp.GetRequiredService<MainWindowViewModel>());
 
         services.AddSingleton<JourneyMapViewModel>();
         services.AddTransient<MonitorPageViewModel>();
@@ -338,7 +339,8 @@ public partial class App
     }
 
     /// <summary>
-    /// Configures Serilog for file logging to bin\Debug\logs folder and in-memory sink for MonitorPage.
+    /// Configures Serilog with async file logging, environment and process enrichment.
+    /// Uses Async-Sink for non-blocking file I/O, InMemory sink for MonitorPage display.
     /// </summary>
     private static void ConfigureSerilog()
     {
@@ -349,12 +351,17 @@ public partial class App
             .MinimumLevel.Debug()
             .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
             .Enrich.FromLogContext()
+            .Enrich.WithMachineName()
+            .Enrich.WithProcessId()
+            .Enrich.WithProcessName()
+            .Enrich.WithThreadId()
             .WriteTo.InMemory()  // Custom sink for MonitorPage real-time display
-            .WriteTo.File(
+            .WriteTo.Async(a => a.File(
                 Path.Combine(logDirectory, "mobaflow-.log"),
                 rollingInterval: RollingInterval.Day,
                 retainedFileCountLimit: 7,
-                outputTemplate: "[{Timestamp:HH:mm:ss.fff} {Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}")
+                outputTemplate: "[{Timestamp:HH:mm:ss.fff} {Level:u3}] [{MachineName}] [{ProcessId}:{ProcessName}] [{ThreadId}] [{SourceContext}] {Message:lj}{NewLine}{Exception}"),
+                bufferSize: 1000)  // Bounded buffer for memory safety under high load
             .CreateLogger();
     }
 

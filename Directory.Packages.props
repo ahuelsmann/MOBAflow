@@ -37,14 +37,18 @@
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageVersion Include="Microsoft.CognitiveServices.Speech" Version="1.49.1" />
     <PackageVersion Include="Serilog" Version="4.3.1" />
+    <PackageVersion Include="Serilog.Enrichers.Environment" Version="3.0.1" />
+    <PackageVersion Include="Serilog.Enrichers.Process" Version="3.0.0" />
+    <PackageVersion Include="Serilog.Enrichers.Thread" Version="4.0.0" />
     <PackageVersion Include="Serilog.Extensions.Logging" Version="10.0.0" />
+    <PackageVersion Include="Serilog.Sinks.Async" Version="2.1.0" />
     <PackageVersion Include="Serilog.Sinks.Debug" Version="3.0.0" />
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageVersion Include="System.Speech" Version="10.0.7" />
     <PackageVersion Include="System.Drawing.Common" Version="10.0.7" />
     <PackageVersion Include="System.Windows.Extensions" Version="10.0.7" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-    <PackageVersion Include="CommunityToolkit.Maui" Version="14.1.0" />
+    <PackageVersion Include="CommunityToolkit.Maui" Version="14.1.1" />
     <PackageVersion Include="CommunityToolkit.Maui.MediaElement" Version="9.0.0" />
     <PackageVersion Include="UraniumUI.Material" Version="2.15.0" />
     <PackageVersion Include="UraniumUI.Icons.MaterialIcons" Version="2.15.0" />

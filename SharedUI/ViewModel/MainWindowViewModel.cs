@@ -29,7 +29,7 @@ using System.Collections.ObjectModel;
 /// Core ViewModel for main window functionality.
 /// Partial classes handle: Selection, Solution, SolutionAutoSave, Journey, Workflow, Train, Z21, Settings.
 /// </summary>
-public sealed partial class MainWindowViewModel : ObservableObject, IRestApiStatusSink
+public sealed partial class MainWindowViewModel : ObservableObject
 {
     #region Fields
     private const int ShutdownDisconnectTimeoutSeconds = 5;
@@ -49,6 +49,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IRestApiStat
     private readonly ISettingsService? _settingsService;
     private readonly AnnouncementService? _announcementService;
     private readonly IFeatureTogglePageProvider? _featureTogglePageProvider;
+    private readonly IDialogService? _dialogService;
 
     // Execution Context (contains all action execution dependencies)
     private readonly ActionExecutionContext _executionContext;
@@ -79,6 +80,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IRestApiStat
     /// <param name="photoHubClient">Optional PhotoHub client instance (WinUI only, loosely typed as <see cref="object"/>).</param>
     /// <param name="featureTogglePageProvider">Optional provider for feature toggle page metadata.</param>
     /// <param name="loggerFactory">Optional factory used to create loggers for nested view models (e.g. workflow command encoding).</param>
+    /// <param name="dialogService">Optional dialog service for showing confirmation dialogs (WinUI only).</param>
     public MainWindowViewModel(
         LayoutColumnWidthsViewModel layoutColumnWidths,
         IMobaRuntime mobaRuntime,
@@ -94,7 +96,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IRestApiStat
         AnnouncementService? announcementService = null,
         object? photoHubClient = null,  // Optional PhotoHubClient (only in WinUI, type is object to avoid assembly reference)
         IFeatureTogglePageProvider? featureTogglePageProvider = null,
-        ILoggerFactory? loggerFactory = null)
+        ILoggerFactory? loggerFactory = null,
+        IDialogService? dialogService = null)
     {
         ArgumentNullException.ThrowIfNull(layoutColumnWidths);
         ArgumentNullException.ThrowIfNull(mobaRuntime);
@@ -118,6 +121,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IRestApiStat
         _announcementService = announcementService;
         _executionContext = executionContext;
         _featureTogglePageProvider = featureTogglePageProvider;
+        _dialogService = dialogService;
         _ = photoHubClient;
 
         _mobaRuntime.SnapshotChanged += OnMobaRuntimeSnapshotChanged;
@@ -134,6 +138,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IRestApiStat
 
         eventBus.Subscribe<FeedbackReceivedEvent>(e => UpdateTrackStatistics((uint)e.InPort));
         eventBus.Subscribe<PostStartupStatusEvent>(e => UpdatePostStartupInitializationStatus(e.IsRunning, e.StatusText));
+        eventBus.Subscribe<RestApiStatusChangedEvent>(OnRestApiStatusChanged);
+        eventBus.Subscribe<PhotoAssignedEvent>(OnPhotoAssigned);
 
         InitializeTrafficMonitor();
 
@@ -376,9 +382,39 @@ public sealed partial class MainWindowViewModel : ObservableObject, IRestApiStat
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteProject))]
-    private void DeleteProject()
+    private async Task DeleteProjectAsync()
     {
         if (SelectedProject == null) return;
+        if (_dialogService == null) return;
+
+        // Show confirmation dialog
+        var confirmed = await _dialogService.ShowConfirmationAsync(
+            title: "Delete Project",
+            message: "Do you really want to delete the project?",
+            confirmButtonText: "Yes",
+            cancelButtonText: "No",
+            isCancelDefault: true);
+
+        if (!confirmed) return;
+
+        // Create backup of current solution file (before deletion)
+        var solutionPath = CurrentSolutionPath;
+        if (!string.IsNullOrEmpty(solutionPath) && File.Exists(solutionPath))
+        {
+            try
+            {
+                var dir = Path.GetDirectoryName(solutionPath);
+                var fileName = Path.GetFileNameWithoutExtension(solutionPath);
+                var ext = Path.GetExtension(solutionPath);
+                var backupPath = Path.Combine(dir ?? string.Empty, $"{fileName}.backup{ext}");
+                File.Copy(solutionPath, backupPath, overwrite: true);
+            }
+            catch
+            {
+                // Backup failed – still perform deletion (user has confirmed)
+                _logger.LogDebug("Failed to create backup before project deletion");
+            }
+        }
 
         // Store reference to deleted project
         var deletedProject = SelectedProject;
@@ -404,7 +440,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IRestApiStat
         DeleteProjectCommand.NotifyCanExecuteChanged();
     }
 
-    private bool CanDeleteProject() => SelectedProject != null;
+    private bool CanDeleteProject() => SelectedProject != null && _dialogService != null;
     #endregion
 
     #region Lifecycle

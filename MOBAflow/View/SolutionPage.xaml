@@ -49,7 +49,7 @@
                     </Button>
                     <Button
                         Padding="4"
-                        Click="DeleteProjectButton_Click"
+                        Command="{x:Bind ViewModel.DeleteProjectCommand}"
                         ToolTipService.ToolTip="Remove the selected project">
                         <FontIcon FontSize="14" Glyph="&#xE74D;" />
                     </Button>

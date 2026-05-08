@@ -1,13 +1,17 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
+using Common.Events;
+
 using CommunityToolkit.Mvvm.ComponentModel;
+
+using Microsoft.Extensions.Logging;
 
 using System.Collections.ObjectModel;
 
 /// <summary>
 /// MainWindowViewModel - REST API status and connected clients for Overview page.
-/// Updated by WinUI RestApiStatusService when polling http://127.0.0.1:RestApiPort/api/status.
+/// Receives updates via EventBus (RestApiStatusChangedEvent) marshalled by UiThreadEventBusDecorator.
 /// </summary>
 public partial class MainWindowViewModel
 {
@@ -51,5 +55,41 @@ public partial class MainWindowViewModel
         RestApiConnectedClientsEmpty = RestApiConnectedClients.Count == 0;
 
         RecomputeOperatingState();
+    }
+
+    /// <summary>
+    /// Event handler for RestApiStatusChangedEvent.
+    /// Called via UiThreadEventBusDecorator (already on UI thread).
+    /// </summary>
+    private void OnRestApiStatusChanged(RestApiStatusChangedEvent e)
+    {
+        UpdateRestApiStatus(e.Status, e.IsReachable, e.Clients);
+    }
+
+    /// <summary>
+    /// Event handler for PhotoAssignedEvent.
+    /// Called via UiThreadEventBusDecorator (already on UI thread).
+    /// Performs photo assignment and logging.
+    /// </summary>
+    private void OnPhotoAssigned(PhotoAssignedEvent e)
+    {
+        var target = AssignUploadedPhotoToSelectedEntity(e.PhotoPath);
+
+        // Log based on actual assignment result
+        switch (target)
+        {
+            case PhotoAssignmentTarget.Locomotive:
+                _logger.LogInformation("Assigned uploaded photo to selected locomotive: {PhotoPath}", e.PhotoPath);
+                break;
+            case PhotoAssignmentTarget.PassengerWagon:
+                _logger.LogInformation("Assigned uploaded photo to selected passenger wagon: {PhotoPath}", e.PhotoPath);
+                break;
+            case PhotoAssignmentTarget.GoodsWagon:
+                _logger.LogInformation("Assigned uploaded photo to selected goods wagon: {PhotoPath}", e.PhotoPath);
+                break;
+            default:
+                _logger.LogDebug("Photo uploaded but no locomotive/wagon is selected. Path: {PhotoPath}", e.PhotoPath);
+                break;
+        }
     }
 }

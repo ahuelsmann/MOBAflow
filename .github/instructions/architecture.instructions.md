@@ -94,6 +94,58 @@ services.AddTransient<JourneysPage>();
 
 ---
 
+## EventBus Pattern (UI-Thread Marshalling)
+
+**Preferred pattern for backend → UI communication.** The `UiThreadEventBusDecorator` ensures all event handlers run on the UI thread automatically.
+
+```csharp
+// Backend service publishes events
+public class RestApiStatusService
+{
+    private readonly IEventBus _eventBus;
+    
+    public async Task RefreshAsync()
+    {
+        // ... check API status ...
+        _eventBus.Publish(new RestApiStatusChangedEvent(status, isReachable, clients));
+    }
+}
+
+// ViewModel subscribes (no dispatcher calls needed!)
+public partial class MainWindowViewModel
+{
+    public MainWindowViewModel(IEventBus eventBus, ...)
+    {
+        eventBus.Subscribe<RestApiStatusChangedEvent>(OnRestApiStatusChanged);
+    }
+    
+    private void OnRestApiStatusChanged(RestApiStatusChangedEvent e)
+    {
+        // Already on UI thread (decorator marshals automatically)
+        RestApiStatusText = e.Status;
+        RestApiIsReachable = e.IsReachable;
+    }
+}
+```
+
+### Registration (WinUI)
+
+```csharp
+// App.xaml.cs
+services.AddSingleton<IEventBus, EventBus>();
+services.AddEventBusWithUiDispatch(); // Wraps with UiThreadEventBusDecorator
+```
+
+### InvokeOnUi Status
+
+| Approach | Status | When to Use |
+|----------|--------|-------------|
+| `EventBus` + `UiThreadEventBusDecorator` | ✅ **Preferred** | All backend → UI updates |
+| `IUiDispatcher.InvokeOnUi()` | ⚠️ **Legacy** | Direct UI interaction only (e.g., WinUI-specific code) |
+| Manual `DispatcherQueue` | ❌ **Avoid** | Never - use decorator pattern |
+
+---
+
 ## Key Conventions
 
 1. **Async Suffix**: All async methods end with `Async`

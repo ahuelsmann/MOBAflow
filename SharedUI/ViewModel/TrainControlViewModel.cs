@@ -621,6 +621,40 @@ public sealed partial class TrainControlViewModel : ObservableObject
     /// Indicates if the active MOBA runtime is connected to the Z21.
     /// </summary>
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SetSpeedCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF0Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF1Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF2Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF3Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF4Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF5Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF6Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF7Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF8Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF9Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF10Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF11Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF12Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF13Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF14Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF15Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF16Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF17Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF18Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF19Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF20Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF21Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF22Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF23Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF24Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF25Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF26Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF27Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF28Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF29Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF30Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF31Command))]
+    [NotifyCanExecuteChangedFor(nameof(EmergencyStopCommand))]
     private bool _isConnected;
 
     // === Amperemeter / Current Monitoring ===
@@ -1556,14 +1590,10 @@ public sealed partial class TrainControlViewModel : ObservableObject
     private bool _skipSpeedChangeHandler;
 
     /// <summary>
-    /// Locomotive command execution check used for UI testing without hardware.
+    /// Validates whether locomotive commands can be executed.
+    /// Requires active Z21 connection and valid DCC address (1-9999).
     /// </summary>
-    /// <remarks>
-    /// TODO: Re-enable the Z21 connection check when hardware is available.
-    /// </remarks>
-    private bool CanExecuteLocoCommand() => true;
-
-    // private bool CanExecuteLocoCommand() => IsConnected && LocoAddress >= 1 && LocoAddress <= 9999;
+    private bool CanExecuteLocoCommand() => IsConnected && LocoAddress >= 1 && LocoAddress <= 9999;
 
     /// <summary>
     /// Sends the current speed and direction to Z21.

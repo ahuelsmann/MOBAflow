@@ -156,21 +156,23 @@ Hardware setup, device pairing, and layout integration are still manual.*
 ```bash
 git clone https://github.com/ahuelsmann/MOBAflow.git
 cd MOBAflow
-dotnet restore MOBAflow/MOBAflow.csproj
-dotnet build MOBAflow/MOBAflow.csproj
+dotnet build Moba.slnx
 ```
 
 **Cross-platform subset (library and backend projects only):**
 
 ```bash
-dotnet restore Backend/Backend.csproj
 dotnet build Backend/Backend.csproj
+dotnet build Common/Common.csproj
+dotnet build Domain/Domain.csproj
+dotnet build SharedUI/SharedUI.csproj
 dotnet test Test/Test.csproj
 ```
 
-> Note: On non-Windows systems, the WinUI and MAUI projects are not
-> buildable. Restore/build individual `.csproj` files instead of relying on
-> solution-level restore. Some `System.Speech` tests are Windows-only.
+> Note: On non-Windows systems, the WinUI (`MOBAflow.csproj`) and MAUI (`MOBAsmart.csproj`)
+> projects are not buildable due to platform-specific dependencies.
+> Build individual cross-platform `.csproj` files instead of the full solution.
+> Some `System.Speech` tests are Windows-only and will skip on Linux.
 
 ### Run Applications
 
@@ -365,6 +367,8 @@ Design your model railroad layout with MOBAflow's visual track planning system.
 | Library | Status | Description |
 | --------- | -------- | ------------- |
 | **TrackLibrary.PikoA** | ✅ Active | Piko A-Gleis |
+| TrackLibrary.Base | ✅ Active | Base classes and geometry primitives |
+| TrackPlan.Renderer | ✅ Active | Win2D-based track plan rendering |
 | TrackLibrary.RocoLine | 🚧 Planned | Roco Line |
 | TrackLibrary.Tillig | 🚧 Planned | Tillig |
 | TrackLibrary.Maerklin | 🚧 Planned | Märklin |
@@ -430,7 +434,8 @@ MOBAflow/Controls/       ← WinUI 3 XAML controls inside the desktop app
     ↓
 MAUI.Controls/           ← MAUI XAML (Android Mobile)
     ↓
-SharedUI/                ← ViewModels (Platform-agnostic)
+SharedUI/                ← ViewModels (Platform-agnostic, Desktop)
+SharedUI.Web/            ← ViewModels (Web-compatible subset)
     ↓
 Domain/                  ← Business Models
 ```
@@ -441,7 +446,8 @@ Domain/                  ← Business Models
 | --------- | ---------- | ------------ | -------- |
 | **MOBAflow/Controls** | Windows | WinUI 3 XAML | Desktop app control set |
 | **MAUI.Controls** | Android | .NET MAUI XAML | Mobile control library |
-| **SharedUI** | Cross-platform | CommunityToolkit.Mvvm | ViewModels |
+| **SharedUI** | Cross-platform | CommunityToolkit.Mvvm | Desktop ViewModels |
+| **SharedUI.Web** | Cross-platform | CommunityToolkit.Mvvm | Web-compatible ViewModels |
 
 ### 🪟 Windows Controls in MOBAflow
 
@@ -501,9 +507,11 @@ MOBAflow follows **Clean Architecture** principles with strict layer separation.
 ┌─────────────────────────────────────┐
 │  MOBAflow / MOBAsmart / MOBApi      │  ← Platform UI & API
 ├─────────────────────────────────────┤
-│  SharedUI (ViewModels)              │  ← MVVM Layer
+│  SharedUI / SharedUI.Web            │  ← MVVM Layer (Desktop + Web)
 ├─────────────────────────────────────┤
 │  Backend (Services, Logic)          │  ← Business Logic
+├─────────────────────────────────────┤
+│  Common (Configuration, Events)     │  ← Shared Infrastructure
 ├─────────────────────────────────────┤
 │  Domain (Models, POCOs)             │  ← Core Entities
 └─────────────────────────────────────┘
@@ -545,10 +553,11 @@ Current scope:
 | **Graphics** | Microsoft.Graphics.Win2D |
 | **Display rendering** | SkiaSharp RGB565 rendering, UDP transport to ESP32-S3 displays |
 | **MVVM** | CommunityToolkit.Mvvm |
-| **Logging** | Serilog (File + In-Memory Sink) |
+| **Logging** | Serilog (Async File Sink + In-Memory + Environment/Process/Thread Enrichers) |
 | **Speech** | Azure Cognitive Services, Windows Speech |
 | **Networking** | Direct UDP (Z21 Protocol) |
 | **Testing** | NUnit |
+| **Communication** | EventBus with UiThreadEventBusDecorator |
 
 ### 📄 Solution File Format
 
@@ -577,9 +586,10 @@ MOBAflow uses **System.Text.Json** with schema validation.
 
 **Serilog Configuration:**
 
-- 📁 **File Logs:** `bin/Debug/logs/mobaflow-YYYYMMDD.log` (rolling, 7-day retention)
+- 📁 **File Logs:** `bin/Debug/logs/mobaflow-YYYYMMDD.log` (async, rolling, 7-day retention)
 - 💾 **In-Memory Sink:** Real-time log streaming to MonitorPage UI
-- 🔍 **Structured Logging:** Searchable properties
+- 🔍 **Structured Logging:** Searchable properties with context enrichment
+- 🏷️ **Enrichers:** MachineName, ProcessId, ProcessName, ThreadId
 - 📊 **Log Levels:** Debug (Moba), Warning (Microsoft)
 
 **Example:**
@@ -589,6 +599,12 @@ _logger.LogInformation(
     "Feedback received: InPort={InPort}, Value={Value}",
     inPort,
     value);
+```
+
+**Sample Output:**
+
+```text
+[14:32:15.123 INF] [MY-PC] [12345:MOBAflow.exe] [12] [Moba.Z21] Feedback received: InPort=1, Value=255
 ```
 
 📖 **Details:** See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
@@ -746,4 +762,4 @@ See [LICENSE](LICENSE) for details.
 
 ---
 
-Made with ❤️ for model railroad enthusiasts.
+Made with ❤️ and ai for model railroad enthusiasts.

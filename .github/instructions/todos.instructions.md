@@ -1,6 +1,82 @@
 # MOBAflow TODOs & Roadmap
 
-> Last Updated: 2026-03-19
+> Last Updated: 2026-05-08 (Phasen 2-4 abgeschlossen)
+
+---
+
+## ✅ 2026-05-08: Z21 Connection Check Activated
+
+**Ziel:** Veralteten TODO-Kommentar entfernen und Z21-Verbindungsprüfung für Lok-Befehle aktivieren.
+
+**Erledigt:**
+
+- [x] `TrainControlViewModel.CanExecuteLocoCommand()` auf echte Logik umgestellt:
+  `IsConnected && LocoAddress >= 1 && LocoAddress <= 9999`
+- [x] TODO-Kommentar und auskommentierte Zeile entfernt
+- [x] `[NotifyCanExecuteChangedFor]` zu `_isConnected` hinzugefügt für alle Lok-Commands
+- [x] XML-Dokumentation aktualisiert
+
+**Referenz:** `SharedUI/ViewModel/TrainControlViewModel.cs`
+
+---
+
+## ✅ 2026-05-08: Phase 3 - MVVM Pattern für SolutionPage
+
+**Ziel:** Code-Behind minimieren durch ViewModel-verwaltete DeleteProject-Logik.
+
+**Erledigt:**
+
+- [x] `IDialogService` Interface für plattform-agnostische Dialoge
+- [x] `NullDialogService` für MAUI/Tests
+- [x] WinUI `DialogService` mit `ContentDialog`
+- [x] `MainWindowViewModel.DeleteProjectAsync()` mit Dialog-Bestätigung und Backup
+- [x] `SolutionPage.xaml.cs` auf 20 Zeilen reduziert (nur Konstruktor)
+- [x] DI-Registrierung für `IDialogService`
+
+**Referenz:** `SharedUI/Interface/IDialogService.cs`, `MOBAflow/Service/DialogService.cs`
+
+---
+
+## ✅ 2026-05-08: Phase 4 - Serilog Verbesserungen
+
+**Ziel:** Async-Logging und erweiterte Enricher für bessere Diagnose.
+
+**Erledigt:**
+
+- [x] `Serilog.Sinks.Async` für non-blocking File-Logging
+- [x] `Serilog.Enrichers.Environment` (MachineName)
+- [x] `Serilog.Enrichers.Process` (ProcessId, ProcessName)
+- [x] `Serilog.Enrichers.Thread` (ThreadId)
+- [x] Erweitertes Output-Template mit allen Enrichern
+- [x] NuGet-Pakete in `.csproj` hinzugefügt
+
+**Neues Output-Template:**
+```
+[{Timestamp:HH:mm:ss.fff} {Level:u3}] [{MachineName}] [{ProcessId}:{ProcessName}] [{ThreadId}] [{SourceContext}] {Message}
+```
+
+**Referenz:** `MOBAflow/App.xaml.cs` - `ConfigureSerilog()`
+
+---
+
+## ✅ 2026-05-08: Phase 5 - Instructions & Agent-Regeln aktualisiert
+
+**Ziel:** Dokumentation der neuen Patterns für zukünftige Agenten.
+
+**Erledigt:**
+
+- [x] `mvvm-best-practices.instructions.md` erweitert:
+  - Abschnitt "Page-Specific ViewModels (Code-Behind vs. ViewModel)"
+  - Tabelle: Code-Behind vs. ViewModel Verantwortlichkeiten
+  - Beispiele für korrekte Muster
+- [x] `copilot-instructions.md` aktualisiert:
+  - Neue Absolute Rule #12: "No commands in code-behind"
+- [x] `architecture.instructions.md` aktualisiert:
+  - Abschnitt "EventBus Pattern (UI-Thread Marshalling)"
+  - Tabelle: `InvokeOnUi` Status (Preferred/Legacy/Avoid)
+  - Beispiel für EventBus-Nutzung
+
+**Referenz:** `.github/instructions/*.md`
 
 ---
 
@@ -74,6 +150,16 @@ Stelle (EventBus-Decorator), ViewModels ohne Dispatcher für Event-Quellen.
   `InvokeOnUi` / `InvokeOnUiAsync` reduziert
 - [x] Architektur-Dokumentation: `docs/ARCHITECTURE.md` Abschnitt
   „Threading und UI-Thread-Grenze“ + Umsetzungsstand
+
+**Erledigt (Phase 2 - EventBus für InvokeOnUi-Restarbeiten):**
+
+- [x] `RestApiStatusService` auf EventBus umgestellt:
+  - `RestApiStatusChangedEvent` für API-Status-Updates
+  - `PhotoAssignedEvent` für Photo-Upload-Handling
+  - `IRestApiStatusSink` und `IUiDispatcher` entfernt
+  - `IRestApiStatusSink` Registrierung aus DI entfernt
+- [x] `MainWindowViewModel` subscribiert auf neue Events
+- [x] Duplikate `RestApiClientInfo` und `PhotoAssignmentTarget` konsolidiert nach `Common.Events`
 
 **Optional (verbleibende Dispatcher-Nutzung, bei Bedarf auf Events umstellbar):**
 

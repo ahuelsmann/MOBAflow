@@ -62,8 +62,12 @@
         <PackageReference Include="Microsoft.Xaml.Behaviors.WinUI.Managed" />
         <PackageReference Include="Microsoft.Azure.AppConfiguration.AspNetCore" />
         <PackageReference Include="Serilog.Extensions.Logging" />
+        <PackageReference Include="Serilog.Sinks.Async" />
         <PackageReference Include="Serilog.Sinks.Debug" />
         <PackageReference Include="Serilog.Sinks.File" />
+        <PackageReference Include="Serilog.Enrichers.Environment" />
+        <PackageReference Include="Serilog.Enrichers.Process" />
+        <PackageReference Include="Serilog.Enrichers.Thread" />
         <PackageReference Include="CommunityToolkit.WinUI.UI.Controls.Markdown" />
     </ItemGroup>
     <!-- Project References -->

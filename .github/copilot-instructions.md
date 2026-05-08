@@ -39,6 +39,7 @@ MainWindowViewModel.OnFeedbackReceived() → IsConnected = true (UI thread safe)
 9. **Never guess file names, APIs** — Use tools first
 10. **No session details here** — Session progress → Azure DevOps or `.github/todos.instructions.md`
 11. **All new or changed features must have tests** — Every suggested/implemented feature needs unit or integration tests; run `dotnet test` before commit.
+12. **No commands in code-behind** — Move to ViewModel with `IDialogService` for UI interaction
 
 ---
 
