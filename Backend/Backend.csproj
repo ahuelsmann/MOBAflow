@@ -16,6 +16,6 @@
         <ProjectReference Include="..\Sound\Sound.csproj" />
     </ItemGroup>
     <ItemGroup>
-      <Folder Include="Extensions\" />
+        <Folder Include="Extensions\" />
     </ItemGroup>
 </Project>

@@ -104,6 +104,14 @@
         </Content>
         <Content Include="Build\Schemas\*.schema.json" CopyToOutputDirectory="PreserveNewest" Link="Build\Schemas\%(Filename)%(Extension)" />
     </ItemGroup>
+    <ItemGroup>
+      <Folder Include="Controls\Display\" />
+    </ItemGroup>
+    <ItemGroup>
+      <Page Update="Controls\Matrix\View5x5.xaml">
+        <Generator>MSBuild:Compile</Generator>
+      </Page>
+    </ItemGroup>
     <!-- Import custom build targets for configuration validation -->
     <Import Project="Build\ValidateJsonConfiguration.targets" />
     <!-- Copy MOBAapi build output next to WinUI so RestApiProcessService can start it from a known path -->

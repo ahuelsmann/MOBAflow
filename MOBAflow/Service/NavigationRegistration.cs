@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 using View;
+using ViewModel;
 
 /// <summary>
 /// Metadata for a registered page with navigation information.
@@ -93,6 +94,20 @@ internal static class NavigationRegistration
 
         services.AddTransient<MonitorPage>();
         pages.Add(new PageMetadata("monitor", "Monitor", "\uE7F4", typeof(MonitorPage), NavigationCategory.Monitoring, 10, "IsMonitorPageAvailable", "MonitorPageLabel", null, false));
+
+        services.AddTransient<DisplayPage>();
+        services.AddTransient<DisplayPageViewModel>();
+        pages.Add(new PageMetadata(
+            Tag: "display",
+            Title: "Display",
+            Icon: "\uE7F4",
+            PageType: typeof(DisplayPage),
+            Category: NavigationCategory.Monitoring,
+            Order: 20,
+            FeatureToggleKey: "IsDisplayPageAvailable",
+            BadgeLabelKey: "DisplayPageLabel",
+            PathIconData: null,
+            IsBold: false));
 
         // Manual registrations for pages with custom DI requirements
         // JourneysPage: requires AppSettings + ISettingsService injection

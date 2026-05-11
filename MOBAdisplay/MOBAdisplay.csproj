@@ -7,23 +7,19 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
-
     <ItemGroup>
         <PackageReference Include="SkiaSharp" />
         <PackageReference Include="System.Drawing.Common" />
     </ItemGroup>
-
     <ItemGroup>
-      <ProjectReference Include="..\Domain\Domain.csproj" />
+        <ProjectReference Include="..\Domain\Domain.csproj" />
     </ItemGroup>
-
     <ItemGroup>
-      <None Update="test.png">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
+        <None Update="test.png">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
-
     <ItemGroup>
-      <Folder Include="Model\" />
+        <Folder Include="Model\" />
     </ItemGroup>
 </Project>
