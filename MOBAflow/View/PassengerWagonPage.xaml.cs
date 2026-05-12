@@ -20,7 +20,7 @@ internal sealed partial class PassengerWagonPage
     public MainWindowViewModel ViewModel { get; }
 
     private double _listExpandedWidth = 250;
-    private double _propertiesExpandedWidth = 600;
+    private double _propertiesExpandedStarValue = 1;
 
     public PassengerWagonPage(
         MainWindowViewModel viewModel,
@@ -90,15 +90,15 @@ internal sealed partial class PassengerWagonPage
         {
             if (!ViewModel.IsPassengerWagonPropertiesExpanded)
             {
-                if (ColProperties.Width.IsAbsolute)
+                if (ColProperties.Width.IsStar)
                 {
-                    _propertiesExpandedWidth = ColProperties.Width.Value;
+                    _propertiesExpandedStarValue = ColProperties.Width.Value;
                 }
                 ColProperties.Width = GridLength.Auto;
             }
             else
             {
-                ColProperties.Width = new GridLength(_propertiesExpandedWidth);
+                ColProperties.Width = new GridLength(_propertiesExpandedStarValue, GridUnitType.Star);
             }
         }
     }
@@ -111,9 +111,9 @@ internal sealed partial class PassengerWagonPage
         {
             _listExpandedWidth = layout.ListColumnWidth;
         }
-        if (layout.PropertiesColumnWidth > 0)
+        if (layout.PropertiesColumnStarValue > 0)
         {
-            _propertiesExpandedWidth = layout.PropertiesColumnWidth;
+            _propertiesExpandedStarValue = layout.PropertiesColumnStarValue;
         }
 
         if (layout.IsListExpanded)
@@ -127,7 +127,7 @@ internal sealed partial class PassengerWagonPage
 
         if (layout.IsPropertiesExpanded)
         {
-            ColProperties.Width = new GridLength(_propertiesExpandedWidth);
+            ColProperties.Width = new GridLength(_propertiesExpandedStarValue, GridUnitType.Star);
         }
         else
         {
@@ -160,13 +160,13 @@ internal sealed partial class PassengerWagonPage
             layout.ListColumnWidth = _listExpandedWidth;
         }
 
-        if (ColProperties.Width.IsAbsolute)
+        if (ColProperties.Width.IsStar)
         {
-            layout.PropertiesColumnWidth = ColProperties.Width.Value;
+            layout.PropertiesColumnStarValue = ColProperties.Width.Value;
         }
         else if (!ViewModel.IsPassengerWagonPropertiesExpanded)
         {
-            layout.PropertiesColumnWidth = _propertiesExpandedWidth;
+            layout.PropertiesColumnStarValue = _propertiesExpandedStarValue;
         }
     }
 }

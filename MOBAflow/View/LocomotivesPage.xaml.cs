@@ -20,7 +20,7 @@ internal sealed partial class LocomotivesPage
     public MainWindowViewModel ViewModel { get; }
 
     private double _listExpandedWidth = 250;
-    private double _propertiesExpandedWidth = 600;
+    private double _propertiesExpandedStarValue = 1;
 
     public LocomotivesPage(
         MainWindowViewModel viewModel,
@@ -90,15 +90,15 @@ internal sealed partial class LocomotivesPage
         {
             if (!ViewModel.IsLocomotivesPropertiesExpanded)
             {
-                if (ColProperties.Width.IsAbsolute)
+                if (ColProperties.Width.IsStar)
                 {
-                    _propertiesExpandedWidth = ColProperties.Width.Value;
+                    _propertiesExpandedStarValue = ColProperties.Width.Value;
                 }
                 ColProperties.Width = GridLength.Auto;
             }
             else
             {
-                ColProperties.Width = new GridLength(_propertiesExpandedWidth);
+                ColProperties.Width = new GridLength(_propertiesExpandedStarValue, GridUnitType.Star);
             }
         }
     }
@@ -111,9 +111,9 @@ internal sealed partial class LocomotivesPage
         {
             _listExpandedWidth = layout.ListColumnWidth;
         }
-        if (layout.PropertiesColumnWidth > 0)
+        if (layout.PropertiesColumnStarValue > 0)
         {
-            _propertiesExpandedWidth = layout.PropertiesColumnWidth;
+            _propertiesExpandedStarValue = layout.PropertiesColumnStarValue;
         }
 
         if (layout.IsListExpanded)
@@ -127,7 +127,7 @@ internal sealed partial class LocomotivesPage
 
         if (layout.IsPropertiesExpanded)
         {
-            ColProperties.Width = new GridLength(_propertiesExpandedWidth);
+            ColProperties.Width = new GridLength(_propertiesExpandedStarValue, GridUnitType.Star);
         }
         else
         {
@@ -160,13 +160,13 @@ internal sealed partial class LocomotivesPage
             layout.ListColumnWidth = _listExpandedWidth;
         }
 
-        if (ColProperties.Width.IsAbsolute)
+        if (ColProperties.Width.IsStar)
         {
-            layout.PropertiesColumnWidth = ColProperties.Width.Value;
+            layout.PropertiesColumnStarValue = ColProperties.Width.Value;
         }
         else if (!ViewModel.IsLocomotivesPropertiesExpanded)
         {
-            layout.PropertiesColumnWidth = _propertiesExpandedWidth;
+            layout.PropertiesColumnStarValue = _propertiesExpandedStarValue;
         }
     }
 }

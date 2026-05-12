@@ -670,7 +670,7 @@ public class GoodsWagonPageLayoutSettings
     public bool IsListExpanded { get; set; } = true;
     public bool IsPropertiesExpanded { get; set; } = true;
     public double ListColumnWidth { get; set; } = 250;
-    public double PropertiesColumnWidth { get; set; } = 600;
+    public double PropertiesColumnStarValue { get; set; } = 1;
 }
 
 public class LocomotivesPageLayoutSettings
@@ -678,7 +678,7 @@ public class LocomotivesPageLayoutSettings
     public bool IsListExpanded { get; set; } = true;
     public bool IsPropertiesExpanded { get; set; } = true;
     public double ListColumnWidth { get; set; } = 250;
-    public double PropertiesColumnWidth { get; set; } = 600;
+    public double PropertiesColumnStarValue { get; set; } = 1;
 }
 
 public class PassengerWagonPageLayoutSettings
@@ -686,7 +686,7 @@ public class PassengerWagonPageLayoutSettings
     public bool IsListExpanded { get; set; } = true;
     public bool IsPropertiesExpanded { get; set; } = true;
     public double ListColumnWidth { get; set; } = 250;
-    public double PropertiesColumnWidth { get; set; } = 600;
+    public double PropertiesColumnStarValue { get; set; } = 1;
 }
 
 public class TrainsPageLayoutSettings
@@ -711,7 +711,7 @@ public class WorkflowsPageLayoutSettings
     public bool IsPropertiesExpanded { get; set; } = true;
     public double WorkflowListColumnWidth { get; set; } = 200;
     public double ActionsColumnWidth { get; set; } = 300;
-    public double PropertiesColumnWidth { get; set; } = 300;
+    public double PropertiesColumnStarValue { get; set; } = 1;
 }
 
 public class SignalBoxPageLayoutSettings
@@ -719,7 +719,7 @@ public class SignalBoxPageLayoutSettings
     public bool IsToolboxExpanded { get; set; } = true;
     public bool IsPropertiesExpanded { get; set; } = true;
     public double ToolboxColumnWidth { get; set; } = 240;
-    public double PropertiesColumnWidth { get; set; } = 300;
+    public double PropertiesColumnStarValue { get; set; } = 1;
 }
 
 public class TrackPlanPageLayoutSettings
@@ -727,7 +727,7 @@ public class TrackPlanPageLayoutSettings
     public bool IsToolboxExpanded { get; set; } = true;
     public bool IsPropertiesExpanded { get; set; } = true;
     public double ToolboxColumnWidth { get; set; } = 180;
-    public double PropertiesColumnWidth { get; set; } = 240;
+    public double PropertiesColumnStarValue { get; set; } = 1;
 }
 
 public class MonitorPageLayoutSettings
@@ -747,5 +747,5 @@ public class StationsPageLayoutSettings
     public double StationsColumnWidth { get; set; } = 280;
     public double PlatformsColumnWidth { get; set; } = 280;
     public double WorkflowLibraryColumnWidth { get; set; } = 250;
-    public double PropertiesColumnWidth { get; set; } = 350;
+    public double PropertiesColumnStarValue { get; set; } = 1;
 }

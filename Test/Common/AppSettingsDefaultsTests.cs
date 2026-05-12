@@ -127,20 +127,20 @@ internal class AppSettingsDefaultsTests
         Assert.That(layout.StationsPage.StationsColumnWidth, Is.GreaterThan(0));
         Assert.That(layout.StationsPage.PlatformsColumnWidth, Is.GreaterThan(0));
         Assert.That(layout.StationsPage.WorkflowLibraryColumnWidth, Is.GreaterThan(0));
-        Assert.That(layout.StationsPage.PropertiesColumnWidth, Is.GreaterThan(0));
+        Assert.That(layout.StationsPage.PropertiesColumnStarValue, Is.GreaterThan(0));
         Assert.That(layout.WorkflowsPage.WorkflowListColumnWidth, Is.GreaterThan(0));
         Assert.That(layout.WorkflowsPage.ActionsColumnWidth, Is.GreaterThan(0));
-        Assert.That(layout.WorkflowsPage.PropertiesColumnWidth, Is.GreaterThan(0));
+        Assert.That(layout.WorkflowsPage.PropertiesColumnStarValue, Is.GreaterThan(0));
         Assert.That(layout.LocomotivesPage.ListColumnWidth, Is.GreaterThan(0));
-        Assert.That(layout.LocomotivesPage.PropertiesColumnWidth, Is.GreaterThan(0));
+        Assert.That(layout.LocomotivesPage.PropertiesColumnStarValue, Is.GreaterThan(0));
         Assert.That(layout.PassengerWagonPage.ListColumnWidth, Is.GreaterThan(0));
-        Assert.That(layout.PassengerWagonPage.PropertiesColumnWidth, Is.GreaterThan(0));
+        Assert.That(layout.PassengerWagonPage.PropertiesColumnStarValue, Is.GreaterThan(0));
         Assert.That(layout.GoodsWagonPage.ListColumnWidth, Is.GreaterThan(0));
-        Assert.That(layout.GoodsWagonPage.PropertiesColumnWidth, Is.GreaterThan(0));
+        Assert.That(layout.GoodsWagonPage.PropertiesColumnStarValue, Is.GreaterThan(0));
         Assert.That(layout.SignalBoxPage.ToolboxColumnWidth, Is.GreaterThan(0));
-        Assert.That(layout.SignalBoxPage.PropertiesColumnWidth, Is.GreaterThan(0));
+        Assert.That(layout.SignalBoxPage.PropertiesColumnStarValue, Is.GreaterThan(0));
         Assert.That(layout.TrackPlanPage.ToolboxColumnWidth, Is.GreaterThan(0));
-        Assert.That(layout.TrackPlanPage.PropertiesColumnWidth, Is.GreaterThan(0));
+        Assert.That(layout.TrackPlanPage.PropertiesColumnStarValue, Is.GreaterThan(0));
         Assert.That(layout.MonitorPage.TrafficColumnStarValue, Is.GreaterThan(0));
         Assert.That(layout.MonitorPage.ActivityLogColumnStarValue, Is.GreaterThan(0));
     }

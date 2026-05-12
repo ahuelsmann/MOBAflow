@@ -16,7 +16,7 @@
    - Key files: `Backend/Z21.cs`, `SharedUI/Service/UiThreadEventBusDecorator.cs`, `SharedUI/ViewModel/MainWindowViewModel.cs`
    - See: `.github/copilot-instructions.md` § EventBus Threading Boundary
 
-2. **Absolute Rules (11 rules)**
+2. **Absolute Rules (14 rules)**
    - No `.Result` / `.Wait()` → Always use `await`
    - No hardcoded colors → `ThemeResource` only
    - No `InvokeOnUi` in EventBus handlers → Decorator already marshals
@@ -35,7 +35,7 @@
 Located in `.github/instructions/`:
 
 | File | Purpose |
-|------|---------|
+| ---- | ------- |
 | `copilot-instructions.md` | **LOAD THIS FIRST** — EventBus, rules, workflows, MVVM patterns |
 | `di-pattern-consistency.instructions.md` | DI registration, singletons, constructor injection |
 | `architecture.instructions.md` | Layer boundaries, data flow, threading model |
@@ -69,7 +69,7 @@ Located in `.github/instructions/`:
 This is a .NET 10 multi-platform solution. On the Linux Cloud VM **only cross-platform projects** can build and run:
 
 | Buildable on Linux | NOT buildable (platform-specific) |
-|---|---|
+| ------------------ | -------------------------------- |
 | Domain, Common, Backend, Sound, SharedUI, SharedUI.Web, TrackLibrary.Base, TrackLibrary.PikoA, TrackPlan.Renderer, MOBApi, Test | MOBAflow (`net10.0-windows10.0.22621.0`), MOBAsmart (`net10.0-android`), MAUI.Controls (`net10.0;net10.0-android`) |
 
 ### Build & test commands
@@ -151,12 +151,53 @@ public sealed partial class TrainControlViewModel : ObservableObject
 }
 ```
 
+### UI Interaction Pattern (Commands, Not Code-Behind Logic)
+
+```csharp
+// ✅ CORRECT - UserControl forwards input to a ViewModel command
+public ICommand? CellTappedCommand { get; set; }
+
+private void OnCellTapped(object sender, TappedRoutedEventArgs e)
+{
+    if (sender is FrameworkElement element && int.TryParse(element.Tag?.ToString(), out var index))
+    {
+        CellTappedCommand?.Execute(index);
+    }
+}
+
+// ✅ CORRECT - ViewModel owns the behavior
+[RelayCommand]
+private void CellClicked(int cellIndex)
+{
+    MatrixViewModel.SetCellColor(cellIndex, SelectedColorBrush);
+}
+
+// ❌ WRONG - Page code-behind performs domain/UI behavior directly
+private void OnMatrixCellTapped(object? sender, CellTappedEventArgs e)
+{
+    ViewModel.MatrixViewModel.SetCellColor(e.CellIndex, ViewModel.SelectedColorBrush);
+}
+```
+
+### Platform-Neutral State Pattern
+
+- Keep WinUI/MAUI types out of `Common`, `Domain`, and `Backend`.
+- If UI state must be unit-tested, extract the behavior into a platform-neutral model in `Common`.
+- Example: store matrix colors as ARGB values in `Common.Display.LedMatrix5x5State`; adapt to `SolidColorBrush` only in the WinUI ViewModel.
+
+### Layout Persistence Pattern
+
+- Persist star-sized resizable columns as `*ColumnStarValue`.
+- Persist pixel widths only for intentionally fixed side columns/toolboxes.
+- Do not reintroduce mixed semantics such as saving a pixel width in `PropertiesColumnWidth` and restoring it as `GridUnitType.Star`.
+
 ### EventBus Handler Pattern (No InvokeOnUi!)
 
 ```csharp
 // ✅ CORRECT - Decorator already marshals to UI thread
 private void OnFeedbackReceived(FeedbackReceivedEvent e)
 {
+    // ... 
     IsConnected = true;  // Safe: runs on UI thread
 }
 
@@ -257,6 +298,7 @@ internal sealed class WorkflowServiceTests
 ### Architecture notes (for agents)
 
 **Runtime & ViewModels:**
+
 - Shared ViewModels depend on **`IMobaRuntime`** (`MobaRuntimeService`), not `IMobaClient`
 - `MobaRuntimeService` is a **sealed partial** type split across:
   - `MobaRuntimeService.cs` (core, constructor, snapshot)
@@ -266,21 +308,25 @@ internal sealed class WorkflowServiceTests
   - `MobaRuntimeService.StatusFormatting.cs` (status text helpers, signal polarity)
 
 **Master Data & Configuration:**
+
 - Master JSON (`data.json`) → **`MasterDataStore`** in Backend DI (registered in `AddMobaBackendServices`)
 - Project/Solution state → **`IMobaRuntime.CurrentSnapshot`** (immutable at query time)
 - Config defaults → `Common.Configuration` (must not break existing defaults; see tests: `Test/Common/AppSettingsDefaultsTests.cs`)
 
 **Workflows & Actions:**
+
 - Workflow execution: **`IWorkflowService.ExecuteAsync`** with optional **`WorkflowExecutionOptions`**
   - Example: `StopOnFirstActionFailure` for sequential runs
 - Action executors live in `Backend/Manager/` (pluggable, FakeUdpClientWrapper for testing)
 
 **DI Bindings (see `.github/instructions/di-pattern-consistency.instructions.md`):**
+
 - Registration pattern: `services.AddSingleton<IZ21, Z21>()`, `services.AddSingleton<IMobaRuntime, MobaRuntimeService>()`
 - WinUI App.xaml.cs (~line 215), MOBAsmart MauiProgram.cs (~line 98)
 - EventBus wrapping: `AddEventBusWithUiDispatch()` decorator ensures UI thread safety
 
 **Test Coverage (Regression Protection):**
+
 - **Path handling:** Use `Common.Path.PhotoPathHelper.ToFullPath(baseDir, relativePath)` → Tests: `Test/Common/PhotoPathHelperTests.cs`
 - **Discovery protocol:** Use `Common.Discovery.DiscoveryResponseParser.TryParse()` for "MOBAFLOW_REST_API|ip|port" → Tests: `Test/Common/DiscoveryResponseParserTests.cs`
 - **Config defaults:** Changing `Common.Configuration` must preserve defaults → Tests: `Test/Common/AppSettingsDefaultsTests.cs`

@@ -239,7 +239,26 @@ Actions:
 
 ---
 
-### 🗂️ Solution management
+### Display page
+
+**Design and test LED matrix output for remote display scenarios.**
+
+#### 5x5 matrix editor
+
+The Display page contains a color palette and a 5x5 LED matrix preview.
+
+- **Choose a color:** Use the color picker on the left.
+- **Paint a cell:** Left-click or tap a matrix cell.
+- **Clear a cell:** Right-click a matrix cell to switch it back to the off state.
+- **Off state:** Cleared cells use the default light-gray off color.
+
+#### Interaction model
+
+The page uses ViewModel commands for painting and clearing cells. This keeps the interaction consistent with the MOBAflow MVVM pattern and makes the matrix state testable outside the WinUI runtime.
+
+---
+
+### Solution management
 
 **Organise your layout into projects and solutions.**
 

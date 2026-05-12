@@ -30,7 +30,7 @@ sealed partial class SignalBoxPage
     private readonly ILogger<SignalBoxPage>? _logger;
 
     private double _toolboxExpandedWidth = 240;
-    private double _propertiesExpandedWidth = 300;
+    private double _propertiesExpandedStarValue = 1;
 
     public MainWindowViewModel ViewModel { get; }
 
@@ -95,15 +95,15 @@ sealed partial class SignalBoxPage
         {
             if (!ViewModel.IsSignalBoxPropertiesExpanded)
             {
-                if (ColProperties.Width.IsAbsolute)
+                if (ColProperties.Width.IsStar)
                 {
-                    _propertiesExpandedWidth = ColProperties.Width.Value;
+                    _propertiesExpandedStarValue = ColProperties.Width.Value;
                 }
                 ColProperties.Width = GridLength.Auto;
             }
             else
             {
-                ColProperties.Width = new GridLength(_propertiesExpandedWidth);
+                ColProperties.Width = new GridLength(_propertiesExpandedStarValue, GridUnitType.Star);
             }
         }
         else if (e.PropertyName == nameof(MainWindowViewModel.SelectedProject))
@@ -160,9 +160,9 @@ sealed partial class SignalBoxPage
         {
             _toolboxExpandedWidth = layout.ToolboxColumnWidth;
         }
-        if (layout.PropertiesColumnWidth > 0)
+        if (layout.PropertiesColumnStarValue > 0)
         {
-            _propertiesExpandedWidth = layout.PropertiesColumnWidth;
+            _propertiesExpandedStarValue = layout.PropertiesColumnStarValue;
         }
 
         if (layout.IsToolboxExpanded)
@@ -176,7 +176,7 @@ sealed partial class SignalBoxPage
 
         if (layout.IsPropertiesExpanded)
         {
-            ColProperties.Width = new GridLength(_propertiesExpandedWidth);
+            ColProperties.Width = new GridLength(_propertiesExpandedStarValue, GridUnitType.Star);
         }
         else
         {
@@ -209,13 +209,13 @@ sealed partial class SignalBoxPage
             layout.ToolboxColumnWidth = _toolboxExpandedWidth;
         }
 
-        if (ColProperties.Width.IsAbsolute)
+        if (ColProperties.Width.IsStar)
         {
-            layout.PropertiesColumnWidth = ColProperties.Width.Value;
+            layout.PropertiesColumnStarValue = ColProperties.Width.Value;
         }
         else if (!ViewModel.IsSignalBoxPropertiesExpanded)
         {
-            layout.PropertiesColumnWidth = _propertiesExpandedWidth;
+            layout.PropertiesColumnStarValue = _propertiesExpandedStarValue;
         }
     }
 

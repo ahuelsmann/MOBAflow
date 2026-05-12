@@ -128,11 +128,11 @@
                     Width="180"
                     MinWidth="32" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" MinWidth="100" />
+                <ColumnDefinition Width="3*" MinWidth="100" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition
                     x:Name="ColProperties"
-                    Width="240"
+                    Width="1*"
                     MinWidth="32" />
             </Grid.ColumnDefinitions>
             <!--  Left Panel: Toolbox  -->

@@ -22,7 +22,7 @@ MainWindowViewModel.OnFeedbackReceived() → IsConnected = true (UI thread safe)
 - `Backend/Z21.cs` — Publishes events
 - `SharedUI/Service/UiThreadEventBusDecorator.cs` — Marshals to UI thread
 - `SharedUI/ViewModel/MainWindowViewModel.cs` — Subscribes (no dispatcher needed!)
-- `WinUI/App.xaml.cs:295` — `AddEventBusWithUiDispatch()` registration
+- `MOBAflow/App.xaml.cs` — `AddEventBusWithUiDispatch()` registration
 
 ---
 
@@ -40,6 +40,8 @@ MainWindowViewModel.OnFeedbackReceived() → IsConnected = true (UI thread safe)
 10. **No session details here** — Session progress → Azure DevOps or `.github/todos.instructions.md`
 11. **All new or changed features must have tests** — Every suggested/implemented feature needs unit or integration tests; run `dotnet test` before commit.
 12. **No commands in code-behind** — Move to ViewModel with `IDialogService` for UI interaction
+13. **UserControls are input adapters only** — They may translate XAML events to `ICommand`, but must not own feature behavior
+14. **Persist star layout as star values** — Use `*ColumnStarValue` for star-sized columns; do not mix pixel persistence with star restore
 
 ---
 
@@ -65,6 +67,7 @@ MainWindowViewModel.OnFeedbackReceived() → IsConnected = true (UI thread safe)
 - Use `get_errors()` after each file
 - XAML: `ThemeResource` only
 - MVVM: `[ObservableProperty]`, `[RelayCommand]`
+- UserControl input: expose `ICommand` dependency properties instead of page code-behind actions
 - Async: `await` always
 
 ### 5. VALIDATION
@@ -89,6 +92,7 @@ MainWindowViewModel.OnFeedbackReceived() → IsConnected = true (UI thread safe)
 | EventBus | `Common/Events/`, `SharedUI/Service/` | Pub/sub, UI marshalling |
 | ViewModels | `SharedUI/ViewModel/*.cs` | Observable state |
 | Platform | `MOBAflow/`, `MOBAsmart/`, `MOBApi/` | Pages, navigation, API |
+| Testable state | `Common/`, `Domain/` | Platform-neutral behavior and state models |
 
 ---
 
@@ -116,9 +120,37 @@ public partial class MainWindowViewModel : ObservableObject
 _dispatcher.InvokeOnUi(() => IsConnected = true);
 ```
 
+### UI Interaction Pattern
+
+```csharp
+// ✅ CORRECT - UserControl forwards input to ViewModel command
+public ICommand? CellTappedCommand { get; set; }
+
+private void OnCellTapped(object sender, TappedRoutedEventArgs e)
+{
+    if (sender is FrameworkElement element && int.TryParse(element.Tag?.ToString(), out var index))
+    {
+        CellTappedCommand?.Execute(index);
+    }
+}
+
+// ✅ CORRECT - ViewModel owns behavior
+[RelayCommand]
+private void CellClicked(int cellIndex)
+{
+    MatrixViewModel.SetCellColor(cellIndex, SelectedColorBrush);
+}
+
+// ❌ WRONG - Page code-behind owns behavior
+private void OnMatrixCellTapped(object? sender, CellTappedEventArgs e)
+{
+    ViewModel.MatrixViewModel.SetCellColor(e.CellIndex, ViewModel.SelectedColorBrush);
+}
+```
+
 ---
 
-## 💉 DI Registration (WinUI/App.xaml.cs:290+)
+## 💉 DI Registration (MOBAflow/App.xaml.cs)
 
 ```csharp
 var services = new ServiceCollection();
@@ -139,15 +171,16 @@ services.AddTransient<View.JourneyPage>();
 
 **ViewModels:** `SharedUI/ViewModel/MainWindowViewModel.cs`, `TrainControlViewModel.cs`, `SignalBoxViewModel.cs`
 
-**WinUI Pages:** `WinUI/View/MainWindow.xaml`, `TrackPlanPage.xaml`, `SignalBoxPage.xaml`
+**WinUI Pages:** `MOBAflow/View/MainWindow.xaml`, `TrackPlanPage.xaml`, `SignalBoxPage.xaml`
 
 ---
 
 ## 🛠️ Build & Test
 
 ```bash
-dotnet build          # Full build
-dotnet test           # All tests (286+ passing)
+dotnet build MOBApi/MOBApi.csproj
+dotnet test Test/Test.csproj
+dotnet build MOBAflow/MOBAflow.csproj --no-restore --no-dependencies  # Windows/WinUI compile check
 dotnet run --project MOBAflow    # Windows app
 dotnet run --project MOBApi      # REST API (Port 5001)
 ```
@@ -156,7 +189,8 @@ dotnet run --project MOBApi      # REST API (Port 5001)
 - **Path handling:** Use `Common.Path.PhotoPathHelper.ToFullPath(baseDir, relativePath)` for photo paths; do not duplicate path logic. Tests: `Test/Common/PhotoPathHelperTests.cs`.
 - **Discovery protocol:** Use `Common.Discovery.DiscoveryResponseParser.TryParse()` for "MOBAFLOW_REST_API|ip|port". Tests: `Test/Common/DiscoveryResponseParserTests.cs`.
 - **Config defaults:** Changing `Common.Configuration` (e.g. `Application.PhotoStoragePath`, `RestApi.Port`) must not break defaults. Tests: `Test/Common/AppSettingsDefaultsTests.cs`.
-- **New features:** Add unit tests for shared logic (path, config, parsing). Platform-specific UI (WinUI/MAUI) should at least have critical paths covered by integration or documented manual checks.
+- **New features:** Add unit tests for shared logic (path, config, parsing, state models). Platform-specific UI (WinUI/MAUI) should at least have critical paths covered by integration or documented manual checks.
+- **UI testability:** If WinUI/MAUI types make tests impractical, extract behavior into platform-neutral `Common`, `Domain`, or `Backend` types and adapt it in the platform ViewModel.
 
 ---
 
@@ -167,27 +201,28 @@ dotnet run --project MOBApi      # REST API (Port 5001)
 - **KISS:** Keep It Simple (<20 lines/method)
 - **Meaningful Names:** Not "x", "temp", "data"
 - **Separation of Concerns:** Domain ↔ ViewModel ↔ View strictly separated
+- **Layout Persistence:** Store star-sized columns as `*ColumnStarValue`; store pixel widths only for intentionally fixed columns
 
 ---
 
 ## 📚 Instruction Files
 
 **Architecture:**
-- `di-pattern-consistency.md` — DI rules, singletons
-- `architecture.md` — Layers, data flow, threading
-- `backend.md` — Platform independence
-- `mvvm-best-practices.md` — MVVM patterns
-- `test.md` — AAA, Fakes, NUnit
+- `di-pattern-consistency.instructions.md` — DI rules, singletons
+- `architecture.instructions.md` — Layers, data flow, threading
+- `backend.instructions.md` — Platform independence
+- `mvvm-best-practices.instructions.md` — MVVM patterns
+- `test.instructions.md` — AAA, Fakes, NUnit
 
 **WinUI:**
-- `winui.md` — DispatcherQueue, DataTemplates, x:Bind
-- `fluent-design.md` — ThemeResource, 8px grid, icons
-- `xaml-page-registration.md` — XAML compiler issues
+- `winui.instructions.md` — DispatcherQueue, DataTemplates, x:Bind
+- `fluent-design.instructions.md` — ThemeResource, 8px grid, icons
+- `xaml-page-registration.instructions.md` — XAML compiler issues
 
 **Code Quality:**
-- `naming-conventions.md` — PascalCase
-- `self-explanatory-code-commenting.md` — Why not What
-- `no-special-chars.md` — ASCII only
+- `naming-conventions.instructions.md` — PascalCase
+- `self-explanatory-code-commenting.instructions.md` — Why not What
+- `no-special-chars.instructions.md` — ASCII only
 
 **Workflow:**
 - **`todos.instructions.md`** — Session progress (OPTIONAL)

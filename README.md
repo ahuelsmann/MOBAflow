@@ -109,6 +109,13 @@ resolution.
   <em>Stream track numbers and live clock via UDP to an ESP32-based remote display.</em>
 </p>
 
+The Display page also includes an interactive 5x5 LED matrix editor:
+
+- **Color palette:** Pick the active LED color with the WinUI color picker.
+- **Left click / tap:** Paint a matrix cell with the selected color.
+- **Right click:** Clear a matrix cell back to the off state.
+- **MVVM interaction:** Matrix input is routed through ViewModel commands, so the cell-state logic is covered by platform-neutral unit tests.
+
 ---
 
 > 📚 **Need Help?** Check out our comprehensive [**Wiki Documentation**](docs/wiki/INDEX.md)

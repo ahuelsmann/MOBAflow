@@ -73,7 +73,7 @@ public sealed partial class TrackPlanPage
     private double _rotationDragStartSegmentDegrees;
 
     private double _toolboxExpandedWidth = 180;
-    private double _propertiesExpandedWidth = 240;
+    private double _propertiesExpandedStarValue = 1;
 
     public TrackPlanPage(
         TrackPlanViewModel viewModel,
@@ -125,15 +125,15 @@ public sealed partial class TrackPlanPage
         {
             if (!ViewModel.IsPropertiesExpanded)
             {
-                if (ColProperties.Width.IsAbsolute)
+                if (ColProperties.Width.IsStar)
                 {
-                    _propertiesExpandedWidth = ColProperties.Width.Value;
+                    _propertiesExpandedStarValue = ColProperties.Width.Value;
                 }
                 ColProperties.Width = GridLength.Auto;
             }
             else
             {
-                ColProperties.Width = new GridLength(_propertiesExpandedWidth);
+                ColProperties.Width = new GridLength(_propertiesExpandedStarValue, GridUnitType.Star);
             }
         }
     }
@@ -204,9 +204,9 @@ public sealed partial class TrackPlanPage
         {
             _toolboxExpandedWidth = layout.ToolboxColumnWidth;
         }
-        if (layout.PropertiesColumnWidth > 0)
+        if (layout.PropertiesColumnStarValue > 0)
         {
-            _propertiesExpandedWidth = layout.PropertiesColumnWidth;
+            _propertiesExpandedStarValue = layout.PropertiesColumnStarValue;
         }
 
         if (layout.IsToolboxExpanded)
@@ -220,7 +220,7 @@ public sealed partial class TrackPlanPage
 
         if (layout.IsPropertiesExpanded)
         {
-            ColProperties.Width = new GridLength(_propertiesExpandedWidth);
+            ColProperties.Width = new GridLength(_propertiesExpandedStarValue, GridUnitType.Star);
         }
         else
         {
@@ -253,13 +253,13 @@ public sealed partial class TrackPlanPage
             layout.ToolboxColumnWidth = _toolboxExpandedWidth;
         }
 
-        if (ColProperties.Width.IsAbsolute)
+        if (ColProperties.Width.IsStar)
         {
-            layout.PropertiesColumnWidth = ColProperties.Width.Value;
+            layout.PropertiesColumnStarValue = ColProperties.Width.Value;
         }
         else if (!ViewModel.IsPropertiesExpanded)
         {
-            layout.PropertiesColumnWidth = _propertiesExpandedWidth;
+            layout.PropertiesColumnStarValue = _propertiesExpandedStarValue;
         }
     }
 

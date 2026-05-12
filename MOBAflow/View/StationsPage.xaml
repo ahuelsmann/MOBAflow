@@ -29,7 +29,7 @@
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition
                 x:Name="ColProperties"
-                Width="350"
+                Width="*"
                 MinWidth="32" />
         </Grid.ColumnDefinitions>
 

@@ -25,21 +25,36 @@
 
         <Grid Grid.Row="0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition x:Name="ColTrains" Width="1.1*" MinWidth="32" />
+                <ColumnDefinition
+                    x:Name="ColTrains"
+                    Width="0.9*"
+                    MinWidth="32" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition x:Name="ColLocomotives" Width="1*" MinWidth="32" />
+                <ColumnDefinition
+                    x:Name="ColLocomotives"
+                    Width="0.8*"
+                    MinWidth="32" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition x:Name="ColPassengerWagons" Width="1*" MinWidth="32" />
+                <ColumnDefinition
+                    x:Name="ColPassengerWagons"
+                    Width="0.8*"
+                    MinWidth="32" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition x:Name="ColGoodsWagons" Width="1*" MinWidth="32" />
+                <ColumnDefinition
+                    x:Name="ColGoodsWagons"
+                    Width="0.8*"
+                    MinWidth="32" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition x:Name="ColProperties" Width="1.25*" MinWidth="32" />
+                <ColumnDefinition
+                    x:Name="ColProperties"
+                    Width="1.9*"
+                    MinWidth="32" />
             </Grid.ColumnDefinitions>
 
             <controls:CollapsibleColumnCollection
                 Grid.Column="0"
-                Header="Trains"
                 Glyph="&#xE7C0;"
+                Header="Trains"
                 IsExpanded="{x:Bind ViewModel.IsTrainsListExpanded, Mode=TwoWay}">
                 <controls:CollapsibleColumnCollection.HeaderActions>
                     <StackPanel Orientation="Horizontal" Spacing="2">
@@ -121,8 +136,8 @@
 
             <controls:CollapsibleColumnHelper
                 Grid.Column="2"
-                Header="Locomotive Library"
                 Glyph="&#xE7C0;"
+                Header="Locomotive Library"
                 IsExpanded="{x:Bind ViewModel.IsTrainsLocomotiveLibraryExpanded, Mode=TwoWay}">
                 <controls:CollapsibleColumnHelper.PanelContent>
                     <Grid>
@@ -178,8 +193,8 @@
 
             <controls:CollapsibleColumnHelper
                 Grid.Column="4"
-                Header="Passenger Wagon Library"
                 Glyph="&#xE8D5;"
+                Header="Passenger Wagon Library"
                 IsExpanded="{x:Bind ViewModel.IsTrainsPassengerLibraryExpanded, Mode=TwoWay}">
                 <controls:CollapsibleColumnHelper.PanelContent>
                     <Grid>
@@ -238,8 +253,8 @@
 
             <controls:CollapsibleColumnHelper
                 Grid.Column="6"
-                Header="Goods Wagon Library"
                 Glyph="&#xE7C0;"
+                Header="Goods Wagon Library"
                 IsExpanded="{x:Bind ViewModel.IsTrainsGoodsLibraryExpanded, Mode=TwoWay}">
                 <controls:CollapsibleColumnHelper.PanelContent>
                     <Grid>
@@ -299,8 +314,8 @@
 
             <controls:CollapsibleColumnProperties
                 Grid.Column="8"
-                Header="Properties"
                 Glyph="&#xE946;"
+                Header="Properties"
                 IsExpanded="{x:Bind ViewModel.IsTrainsPropertiesExpanded, Mode=TwoWay}">
                 <controls:CollapsibleColumnProperties.PanelContent>
                     <ContentControl
@@ -365,11 +380,19 @@
                         </ListView.ItemsPanel>
                         <ListView.ItemTemplate>
                             <DataTemplate x:DataType="viewmodel:VehicleItemViewModel">
-                                <Grid Width="72" Margin="0,0,4,0" ToolTipService.ToolTip="{x:Bind DisplayName}">
-                                    
-                                    <!-- Visual connector to next vehicle -->
-                                    <Border Width="6" Height="2" Background="{ThemeResource CardStrokeColorDefaultBrush}" HorizontalAlignment="Right" Margin="0,32,-4,0" />
-                                    
+                                <Grid
+                                    Width="72"
+                                    Margin="0,0,4,0"
+                                    ToolTipService.ToolTip="{x:Bind DisplayName}">
+
+                                    <!--  Visual connector to next vehicle  -->
+                                    <Border
+                                        Width="6"
+                                        Height="2"
+                                        Margin="0,32,-4,0"
+                                        HorizontalAlignment="Right"
+                                        Background="{ThemeResource CardStrokeColorDefaultBrush}" />
+
                                     <Border
                                         Padding="4"
                                         Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
@@ -385,56 +408,66 @@
 
                                             <Button
                                                 Grid.Row="0"
-                                                HorizontalAlignment="Left"
                                                 Width="20"
                                                 Height="20"
-                                                Padding="0"
                                                 Margin="-2,-2,0,0"
+                                                Padding="0"
+                                                HorizontalAlignment="Left"
                                                 Background="Transparent"
                                                 BorderThickness="0"
                                                 Command="{x:Bind ToggleDirectionCommand}"
                                                 ToolTipService.ToolTip="Toggle direction">
-                                                <FontIcon Glyph="&#xE72C;" FontSize="9" />
+                                                <FontIcon FontSize="9" Glyph="&#xE72C;" />
                                             </Button>
-                                            
+
                                             <Button
                                                 Grid.Row="0"
-                                                HorizontalAlignment="Right"
                                                 Width="20"
                                                 Height="20"
-                                                Padding="0"
                                                 Margin="0,-2,-2,0"
+                                                Padding="0"
+                                                HorizontalAlignment="Right"
                                                 Background="Transparent"
                                                 BorderThickness="0"
                                                 Command="{x:Bind RemoveCommand}"
                                                 ToolTipService.ToolTip="Remove vehicle from consist">
-                                                <FontIcon Glyph="&#xE711;" FontSize="9" />
+                                                <FontIcon FontSize="9" Glyph="&#xE711;" />
                                             </Button>
 
-                                            <Grid Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,4">
-                                                
-                                                <!-- Locomotive Shape -->
-                                                <Grid Visibility="{x:Bind IsLocomotive, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" RenderTransformOrigin="0.5,0.5">
+                                            <Grid
+                                                Grid.Row="1"
+                                                Margin="0,0,0,4"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Bottom">
+
+                                                <!--  Locomotive Shape  -->
+                                                <Grid RenderTransformOrigin="0.5,0.5" Visibility="{x:Bind IsLocomotive, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                                                     <Grid.RenderTransform>
                                                         <ScaleTransform ScaleX="{x:Bind ScaleX, Mode=OneWay}" />
                                                     </Grid.RenderTransform>
-                                                    <!-- ICE-like engine profile, facing left -->
-                                                    <Path
-                                                        Data="M 12,0 L 40,0 L 40,16 L 2,16 Q 0,16 0,14 L 6,4 Q 8,0 12,0 Z"
-                                                        Fill="{ThemeResource AccentFillColorDefaultBrush}" />
+                                                    <!--  ICE-like engine profile, facing left  -->
+                                                    <Path Data="M 12,0 L 40,0 L 40,16 L 2,16 Q 0,16 0,14 L 6,4 Q 8,0 12,0 Z" Fill="{ThemeResource AccentFillColorDefaultBrush}" />
                                                     <StackPanel
+                                                        Margin="0,0,4,-3"
                                                         HorizontalAlignment="Right"
                                                         VerticalAlignment="Bottom"
-                                                        Margin="0,0,4,-3"
                                                         Orientation="Horizontal"
                                                         Spacing="16">
-                                                        <Border Width="6" Height="3" CornerRadius="0,0,3,3" Background="{ThemeResource AccentFillColorDefaultBrush}" />
-                                                        <Border Width="6" Height="3" CornerRadius="0,0,3,3" Background="{ThemeResource AccentFillColorDefaultBrush}" />
+                                                        <Border
+                                                            Width="6"
+                                                            Height="3"
+                                                            Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                                            CornerRadius="0,0,3,3" />
+                                                        <Border
+                                                            Width="6"
+                                                            Height="3"
+                                                            Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                                            CornerRadius="0,0,3,3" />
                                                     </StackPanel>
                                                 </Grid>
-                                                
-                                                <!-- Passenger Wagon Shape -->
-                                                <Grid Visibility="{x:Bind IsPassengerWagon, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" RenderTransformOrigin="0.5,0.5">
+
+                                                <!--  Passenger Wagon Shape  -->
+                                                <Grid RenderTransformOrigin="0.5,0.5" Visibility="{x:Bind IsPassengerWagon, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                                                     <Grid.RenderTransform>
                                                         <ScaleTransform ScaleX="{x:Bind ScaleX, Mode=OneWay}" />
                                                     </Grid.RenderTransform>
@@ -446,18 +479,26 @@
                                                         BorderThickness="1.5"
                                                         CornerRadius="2" />
                                                     <StackPanel
+                                                        Margin="0,0,0,-3"
                                                         HorizontalAlignment="Center"
                                                         VerticalAlignment="Bottom"
-                                                        Margin="0,0,0,-3"
                                                         Orientation="Horizontal"
                                                         Spacing="16">
-                                                        <Border Width="6" Height="3" CornerRadius="0,0,3,3" Background="{ThemeResource TextFillColorSecondaryBrush}" />
-                                                        <Border Width="6" Height="3" CornerRadius="0,0,3,3" Background="{ThemeResource TextFillColorSecondaryBrush}" />
+                                                        <Border
+                                                            Width="6"
+                                                            Height="3"
+                                                            Background="{ThemeResource TextFillColorSecondaryBrush}"
+                                                            CornerRadius="0,0,3,3" />
+                                                        <Border
+                                                            Width="6"
+                                                            Height="3"
+                                                            Background="{ThemeResource TextFillColorSecondaryBrush}"
+                                                            CornerRadius="0,0,3,3" />
                                                     </StackPanel>
                                                 </Grid>
 
-                                                <!-- Goods Wagon Shape -->
-                                                <Grid Visibility="{x:Bind IsGoodsWagon, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" RenderTransformOrigin="0.5,0.5">
+                                                <!--  Goods Wagon Shape  -->
+                                                <Grid RenderTransformOrigin="0.5,0.5" Visibility="{x:Bind IsGoodsWagon, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                                                     <Grid.RenderTransform>
                                                         <ScaleTransform ScaleX="{x:Bind ScaleX, Mode=OneWay}" />
                                                     </Grid.RenderTransform>
@@ -469,13 +510,21 @@
                                                         Background="{ThemeResource TextFillColorSecondaryBrush}"
                                                         CornerRadius="1" />
                                                     <StackPanel
+                                                        Margin="0,0,0,-3"
                                                         HorizontalAlignment="Center"
                                                         VerticalAlignment="Bottom"
-                                                        Margin="0,0,0,-3"
                                                         Orientation="Horizontal"
                                                         Spacing="16">
-                                                        <Border Width="6" Height="3" CornerRadius="0,0,3,3" Background="{ThemeResource TextFillColorSecondaryBrush}" />
-                                                        <Border Width="6" Height="3" CornerRadius="0,0,3,3" Background="{ThemeResource TextFillColorSecondaryBrush}" />
+                                                        <Border
+                                                            Width="6"
+                                                            Height="3"
+                                                            Background="{ThemeResource TextFillColorSecondaryBrush}"
+                                                            CornerRadius="0,0,3,3" />
+                                                        <Border
+                                                            Width="6"
+                                                            Height="3"
+                                                            Background="{ThemeResource TextFillColorSecondaryBrush}"
+                                                            CornerRadius="0,0,3,3" />
                                                     </StackPanel>
                                                 </Grid>
                                             </Grid>

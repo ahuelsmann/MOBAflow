@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Windows.Foundation;
 
 using Common.Extension;
 using SharedUI.ViewModel;
@@ -261,9 +262,39 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
 
     private void FunctionButton_RightTapped(object sender, RightTappedRoutedEventArgs e)
     {
-        _ = sender;
-        _ = e;
-        HandleFunctionButtonRightTappedAsync(sender).Observe(ex => _logger?.LogWarning(ex, "Function symbol selection failed"));
+        var source = ReferenceEquals(sender, FunctionButtonsGrid)
+            ? ResolveFunctionButtonFromPoint(e.GetPosition(FunctionButtonsGrid))
+            : sender;
+
+        if (source == null)
+        {
+            return;
+        }
+
+        e.Handled = true;
+        HandleFunctionButtonRightTappedAsync(source).Observe(ex => _logger?.LogWarning(ex, "Function symbol selection failed"));
+    }
+
+    private FrameworkElement? ResolveFunctionButtonFromPoint(Point position)
+    {
+        foreach (var child in FunctionButtonsGrid.Children)
+        {
+            if (child is not FrameworkElement element || element.Tag is not string)
+            {
+                continue;
+            }
+
+            var bounds = element
+                .TransformToVisual(FunctionButtonsGrid)
+                .TransformBounds(new Rect(0, 0, element.ActualWidth, element.ActualHeight));
+
+            if (position.X >= bounds.Left && position.X <= bounds.Right && position.Y >= bounds.Top && position.Y <= bounds.Bottom)
+            {
+                return element;
+            }
+        }
+
+        return null;
     }
 
     private async Task HandleFunctionButtonRightTappedAsync(object sender)

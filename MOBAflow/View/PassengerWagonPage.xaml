@@ -4,10 +4,10 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:Moba.WinUI.Controls"
     xmlns:controls1="using:CommunityToolkit.WinUI.Controls"
+    xmlns:converter="using:Moba.WinUI.Converter"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:viewmodel="using:Moba.SharedUI.ViewModel"
-    xmlns:converter="using:Moba.WinUI.Converter"
     DataContext="{x:Bind ViewModel}"
     mc:Ignorable="d">
 
@@ -18,16 +18,22 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition x:Name="ColList" Width="1*" MinWidth="32" />
+            <ColumnDefinition
+                x:Name="ColList"
+                Width="1*"
+                MinWidth="32" />
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition x:Name="ColProperties" Width="3.5*" MinWidth="32" />
+            <ColumnDefinition
+                x:Name="ColProperties"
+                Width="3.5*"
+                MinWidth="32" />
         </Grid.ColumnDefinitions>
 
         <controls:CollapsibleColumnCollection
             Grid.Column="0"
             Margin="0"
-            Header="Passenger Wagons"
             Glyph="&#xE7C0;"
+            Header="Passenger Wagons"
             IsExpanded="{x:Bind ViewModel.IsPassengerWagonListExpanded, Mode=TwoWay}">
             <controls:CollapsibleColumnCollection.HeaderActions>
                 <StackPanel Orientation="Horizontal" Spacing="2">
@@ -119,8 +125,8 @@
         <controls:CollapsibleColumnProperties
             Grid.Column="2"
             Margin="0"
-            Header="Properties"
             Glyph="&#xE946;"
+            Header="Properties"
             IsExpanded="{x:Bind ViewModel.IsPassengerWagonPropertiesExpanded, Mode=TwoWay}">
             <controls:CollapsibleColumnProperties.PanelContent>
                 <ContentControl

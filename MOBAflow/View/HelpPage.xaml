@@ -1,60 +1,76 @@
 <Page
     x:Class="Moba.WinUI.View.HelpPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Moba.WinUI.Controls"
+    xmlns:controls1="using:CommunityToolkit.WinUI.Controls">
 
     <Grid Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="280" />
+            <ColumnDefinition Width="280" MinWidth="32" />
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" MinWidth="100" />
         </Grid.ColumnDefinitions>
 
         <!--  Navigation Panel  -->
-        <Border
+        <controls:CollapsibleColumnCollection
             Grid.Column="0"
-            Background="{ThemeResource LayerFillColorDefaultBrush}"
-            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-            BorderThickness="0,0,1,0">
-            <ScrollViewer
-                Padding="16"
-                HorizontalScrollBarVisibility="Disabled"
-                VerticalScrollBarVisibility="Auto">
-                <StackPanel Spacing="16">
-                    <StackPanel Spacing="4">
-                        <TextBlock
-                            FontSize="20"
-                            FontWeight="SemiBold"
-                            Text="MOBAflow Wiki" />
-                        <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="Dokumentation" />
-                    </StackPanel>
+            Glyph="&#xE8A5;"
+            Header="MOBAflow Wiki"
+            IsExpanded="True">
+            <controls:CollapsibleColumnCollection.PanelContent>
+                <ScrollViewer
+                    HorizontalScrollBarVisibility="Disabled"
+                    VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="16">
+                        <StackPanel Spacing="4">
+                            <TextBlock
+                                FontSize="20"
+                                FontWeight="SemiBold"
+                                Text="MOBAflow Wiki" />
+                            <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="Dokumentation" />
+                        </StackPanel>
 
-                    <TreeView
-                        x:Name="NavigationTreeView"
-                        ItemInvoked="OnNavigationItemInvoked"
-                        SelectionMode="Single" />
-                </StackPanel>
-            </ScrollViewer>
-        </Border>
+                        <TreeView
+                            x:Name="NavigationTreeView"
+                            ItemInvoked="OnNavigationItemInvoked"
+                            SelectionMode="Single" />
+                    </StackPanel>
+                </ScrollViewer>
+            </controls:CollapsibleColumnCollection.PanelContent>
+        </controls:CollapsibleColumnCollection>
+
+        <controls1:GridSplitter
+            Grid.Column="1"
+            Width="4"
+            HorizontalAlignment="Left"
+            ResizeBehavior="PreviousAndNext" />
 
         <!--  Content Panel  -->
-        <ScrollViewer
+        <controls:CollapsibleColumnHelper
             Grid.Column="2"
-            Padding="24"
-            VerticalScrollBarVisibility="Auto">
-            <StackPanel Spacing="16">
-                <TextBlock
-                    x:Name="HeaderTextBlock"
-                    FontSize="32"
-                    FontWeight="SemiBold"
-                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                    Text="Willkommen" />
-                <RichTextBlock
-                    x:Name="ContentRichTextBlock"
-                    FontSize="15"
-                    IsTextSelectionEnabled="True"
-                    TextWrapping="Wrap" />
-            </StackPanel>
-        </ScrollViewer>
+            Glyph="&#xE8A5;"
+            Header="Documentation"
+            IsExpanded="True">
+            <controls:CollapsibleColumnHelper.PanelContent>
+                <ScrollViewer
+                    Padding="8"
+                    VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="16">
+                        <TextBlock
+                            x:Name="HeaderTextBlock"
+                            FontSize="32"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                            Text="Willkommen" />
+                        <RichTextBlock
+                            x:Name="ContentRichTextBlock"
+                            FontSize="15"
+                            IsTextSelectionEnabled="True"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                </ScrollViewer>
+            </controls:CollapsibleColumnHelper.PanelContent>
+        </controls:CollapsibleColumnHelper>
     </Grid>
 </Page>

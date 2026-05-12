@@ -95,13 +95,13 @@ internal static class NavigationRegistration
         services.AddTransient<MonitorPage>();
         pages.Add(new PageMetadata("monitor", "Monitor", "\uE7F4", typeof(MonitorPage), NavigationCategory.Monitoring, 10, "IsMonitorPageAvailable", "MonitorPageLabel", null, false));
 
-        services.AddTransient<DisplayPage>();
-        services.AddTransient<DisplayPageViewModel>();
+        services.AddTransient<MatrixPage>();
+        services.AddTransient<MatrixPageViewModel>();
         pages.Add(new PageMetadata(
-            Tag: "display",
-            Title: "Display",
-            Icon: "\uE7F4",
-            PageType: typeof(DisplayPage),
+            Tag: "matrix",
+            Title: "Matrix",
+            Icon: "\uE8A9",
+            PageType: typeof(MatrixPage),
             Category: NavigationCategory.Monitoring,
             Order: 20,
             FeatureToggleKey: "IsDisplayPageAvailable",

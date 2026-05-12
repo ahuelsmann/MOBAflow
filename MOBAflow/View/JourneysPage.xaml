@@ -32,8 +32,8 @@
         <controls:CollapsibleColumnCollection
             Grid.Column="0"
             Margin="0"
-            Header="Journeys"
             Glyph="&#xE7C1;"
+            Header="Journeys"
             IsExpanded="{x:Bind ViewModel.IsJourneyListExpanded, Mode=TwoWay}">
             <controls:CollapsibleColumnCollection.HeaderActions>
                 <StackPanel Orientation="Horizontal" Spacing="2">
@@ -92,9 +92,7 @@
                         <ListView.ItemTemplate>
                             <DataTemplate x:DataType="viewmodel:JourneyViewModel">
                                 <Grid Padding="6">
-                                    <TextBlock
-                                        VerticalAlignment="Center"
-                                        Text="{x:Bind Name, Mode=OneWay}" />
+                                    <TextBlock VerticalAlignment="Center" Text="{x:Bind Name, Mode=OneWay}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
@@ -116,8 +114,8 @@
             <controls:CollapsibleColumnCollection
                 Grid.Column="0"
                 Margin="0"
-                Header="Stations"
                 Glyph="&#xE81D;"
+                Header="Stations"
                 IsExpanded="{x:Bind ViewModel.IsStationListExpanded, Mode=TwoWay}">
                 <controls:CollapsibleColumnCollection.HeaderActions>
                     <StackPanel Orientation="Horizontal" Spacing="2">
@@ -156,43 +154,41 @@
                             Drop="StationListView_Drop"
                             IsItemClickEnabled="True"
                             ItemsSource="{x:Bind ViewModel.SelectedJourney.FilteredStations, Mode=OneWay}"
-                        KeyDown="StationsListView_KeyDown"
-                        SelectedItem="{x:Bind ViewModel.SelectedStation, Mode=TwoWay}"
-                        SelectionMode="Single">
-                        <i:Interaction.Behaviors>
-                            <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.JourneysPageItemClickedCommand}" />
-                        </i:Interaction.Behaviors>
-                        <ListView.ContextFlyout>
-                            <MenuFlyout>
-                                <MenuFlyoutItem Command="{x:Bind ViewModel.AddStationCommand}" Text="Add Station">
-                                    <MenuFlyoutItem.Icon>
-                                        <FontIcon Glyph="&#xE710;" />
-                                    </MenuFlyoutItem.Icon>
-                                </MenuFlyoutItem>
-                                <MenuFlyoutItem Command="{x:Bind ViewModel.DeleteStationCommand}" Text="Delete Station">
-                                    <MenuFlyoutItem.Icon>
-                                        <FontIcon Glyph="&#xE74D;" />
-                                    </MenuFlyoutItem.Icon>
-                                </MenuFlyoutItem>
-                            </MenuFlyout>
-                        </ListView.ContextFlyout>
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="viewmodel:StationViewModel">
-                                <Grid Padding="6">
-                                    <!--  Current Station Indicator  -->
-                                    <Border
-                                        Margin="-6"
-                                        Background="{ThemeResource SystemAccentColorLight2}"
-                                        CornerRadius="4"
-                                        Opacity="0.3"
-                                        Visibility="{x:Bind IsCurrentStation, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
-                                    <TextBlock
-                                        VerticalAlignment="Center"
-                                        Text="{x:Bind Name, Mode=OneWay}" />
-                                </Grid>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
+                            KeyDown="StationsListView_KeyDown"
+                            SelectedItem="{x:Bind ViewModel.SelectedStation, Mode=TwoWay}"
+                            SelectionMode="Single">
+                            <i:Interaction.Behaviors>
+                                <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.JourneysPageItemClickedCommand}" />
+                            </i:Interaction.Behaviors>
+                            <ListView.ContextFlyout>
+                                <MenuFlyout>
+                                    <MenuFlyoutItem Command="{x:Bind ViewModel.AddStationCommand}" Text="Add Station">
+                                        <MenuFlyoutItem.Icon>
+                                            <FontIcon Glyph="&#xE710;" />
+                                        </MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
+                                    <MenuFlyoutItem Command="{x:Bind ViewModel.DeleteStationCommand}" Text="Delete Station">
+                                        <MenuFlyoutItem.Icon>
+                                            <FontIcon Glyph="&#xE74D;" />
+                                        </MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
+                                </MenuFlyout>
+                            </ListView.ContextFlyout>
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="viewmodel:StationViewModel">
+                                    <Grid Padding="6">
+                                        <!--  Current Station Indicator  -->
+                                        <Border
+                                            Margin="-6"
+                                            Background="{ThemeResource SystemAccentColorLight2}"
+                                            CornerRadius="4"
+                                            Opacity="0.3"
+                                            Visibility="{x:Bind IsCurrentStation, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                        <TextBlock VerticalAlignment="Center" Text="{x:Bind Name, Mode=OneWay}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
                     </Grid>
                 </controls:CollapsibleColumnCollection.PanelContent>
             </controls:CollapsibleColumnCollection>
@@ -227,34 +223,37 @@
                                 QueryIcon="Find"
                                 Text="{x:Bind ViewModel.CitySearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" VerticalScrollMode="Auto">
-                            <StackPanel Spacing="8">
-                                <TextBlock
-                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                    Style="{StaticResource CaptionTextBlockStyle}"
-                                    Text="Drag or double-click to add" />
-                                <ListView
-                                    CanDragItems="True"
-                                    DoubleTapped="CityListView_DoubleTapped"
-                                    DragItemsStarting="CityListView_DragItemsStarting"
-                                    ItemsSource="{x:Bind ViewModel.CityLibrary, Mode=OneWay}"
-                                    SelectedItem="{x:Bind ViewModel.SelectedCity, Mode=TwoWay}"
-                                    SelectionMode="Single">
-                                    <ListView.ItemTemplate>
-                                        <DataTemplate x:DataType="domain:City">
-                                            <Grid Padding="6">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock
-                                                    Grid.Column="0"
-                                                    VerticalAlignment="Center"
-                                                    Text="{x:Bind Name}" />
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ListView.ItemTemplate>
-                                </ListView>
-                            </StackPanel>
+                            <ScrollViewer
+                                Grid.Row="1"
+                                VerticalScrollBarVisibility="Auto"
+                                VerticalScrollMode="Auto">
+                                <StackPanel Spacing="8">
+                                    <TextBlock
+                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                        Style="{StaticResource CaptionTextBlockStyle}"
+                                        Text="Drag or double-click to add" />
+                                    <ListView
+                                        CanDragItems="True"
+                                        DoubleTapped="CityListView_DoubleTapped"
+                                        DragItemsStarting="CityListView_DragItemsStarting"
+                                        ItemsSource="{x:Bind ViewModel.CityLibrary, Mode=OneWay}"
+                                        SelectedItem="{x:Bind ViewModel.SelectedCity, Mode=TwoWay}"
+                                        SelectionMode="Single">
+                                        <ListView.ItemTemplate>
+                                            <DataTemplate x:DataType="domain:City">
+                                                <Grid Padding="6">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock
+                                                        Grid.Column="0"
+                                                        VerticalAlignment="Center"
+                                                        Text="{x:Bind Name}" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListView.ItemTemplate>
+                                    </ListView>
+                                </StackPanel>
                             </ScrollViewer>
                         </Grid>
                     </controls:CollapsibleColumnHelper.PanelContent>
@@ -290,7 +289,10 @@
                                     QueryIcon="Find"
                                     Text="{x:Bind ViewModel.WorkflowSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" VerticalScrollMode="Auto">
+                                <ScrollViewer
+                                    Grid.Row="1"
+                                    VerticalScrollBarVisibility="Auto"
+                                    VerticalScrollMode="Auto">
                                     <StackPanel Spacing="8">
                                         <TextBlock
                                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
@@ -300,18 +302,18 @@
                                             CanDragItems="True"
                                             DragItemsStarting="WorkflowListView_DragItemsStarting"
                                             ItemsSource="{x:Bind ViewModel.FilteredWorkflows, Mode=OneWay}"
-                                        SelectionMode="Single">
-                                        <ListView.ItemTemplate>
-                                            <DataTemplate x:DataType="viewmodel:WorkflowViewModel">
-                                                <Grid Padding="6">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <TextBlock
-                                                        Grid.Column="0"
-                                                        VerticalAlignment="Center"
-                                                        Text="{x:Bind Name, Mode=OneWay}" />
-                                                </Grid>
+                                            SelectionMode="Single">
+                                            <ListView.ItemTemplate>
+                                                <DataTemplate x:DataType="viewmodel:WorkflowViewModel">
+                                                    <Grid Padding="6">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock
+                                                            Grid.Column="0"
+                                                            VerticalAlignment="Center"
+                                                            Text="{x:Bind Name, Mode=OneWay}" />
+                                                    </Grid>
                                                 </DataTemplate>
                                             </ListView.ItemTemplate>
                                         </ListView>
@@ -325,8 +327,8 @@
                     <controls:CollapsibleColumnProperties
                         Grid.Column="2"
                         Margin="0"
-                        Header="{x:Bind ViewModel.JourneysPagePropertiesTitle, Mode=OneWay}"
                         Glyph="&#xE946;"
+                        Header="{x:Bind ViewModel.JourneysPagePropertiesTitle, Mode=OneWay}"
                         IsExpanded="{x:Bind ViewModel.IsJourneyPropertiesExpanded, Mode=TwoWay}">
                         <controls:CollapsibleColumnProperties.PanelContent>
                             <ContentControl

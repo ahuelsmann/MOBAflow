@@ -655,7 +655,10 @@ public sealed partial class TrainControlViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(ToggleF30Command))]
     [NotifyCanExecuteChangedFor(nameof(ToggleF31Command))]
     [NotifyCanExecuteChangedFor(nameof(EmergencyStopCommand))]
+    [NotifyPropertyChangedFor(nameof(IsSpeedControlEnabled))]
     private bool _isConnected;
+
+    public bool IsSpeedControlEnabled => IsConnected;
 
     // === Amperemeter / Current Monitoring ===
 
@@ -1170,6 +1173,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
 
             // Always start at speed 0 (safety feature - no unexpected movement)
             Speed = 0;
+            _previousSpeed = 0;
 
             // Always start in forward direction
             IsForward = true;
@@ -1384,6 +1388,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
         try
         {
             Speed = locomotiveState.Speed;
+            _previousSpeed = locomotiveState.Speed;
             IsForward = locomotiveState.IsForward;
 
             for (int functionIndex = 0; functionIndex <= 31; functionIndex++)
@@ -1441,6 +1446,14 @@ public sealed partial class TrainControlViewModel : ObservableObject
     partial void OnSpeedChanged(int value)
     {
         if (_skipSpeedChangeHandler || _isLoadingPreset || _isApplyingRuntimeLocomotiveState) return;
+
+        if (!IsConnected && value > _previousSpeed)
+        {
+            _skipSpeedChangeHandler = true;
+            Speed = _previousSpeed;
+            _skipSpeedChangeHandler = false;
+            return;
+        }
 
         if (!CanIncreaseSpeed && value > _previousSpeed)
         {

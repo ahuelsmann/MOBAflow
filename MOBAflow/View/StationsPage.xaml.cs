@@ -25,7 +25,7 @@ internal sealed partial class StationsPage
     private double _stationsExpandedWidth = 280;
     private double _platformsExpandedWidth = 280;
     private double _workflowLibExpandedWidth = 250;
-    private double _propertiesExpandedWidth = 350;
+    private double _propertiesExpandedStarValue = 1;
 
     public StationsPage(
         MainWindowViewModel viewModel,
@@ -94,15 +94,15 @@ internal sealed partial class StationsPage
         {
             if (!ViewModel.IsStationsPropertiesExpanded)
             {
-                if (ColProperties.Width.IsAbsolute)
+                if (ColProperties.Width.IsStar)
                 {
-                    _propertiesExpandedWidth = ColProperties.Width.Value;
+                    _propertiesExpandedStarValue = ColProperties.Width.Value;
                 }
                 ColProperties.Width = GridLength.Auto;
             }
             else
             {
-                ColProperties.Width = new GridLength(_propertiesExpandedWidth);
+                ColProperties.Width = new GridLength(_propertiesExpandedStarValue, GridUnitType.Star);
             }
         }
     }
@@ -185,14 +185,14 @@ internal sealed partial class StationsPage
             ColWorkflowLib.Width = GridLength.Auto;
         }
 
-        if (layout.PropertiesColumnWidth > 0)
+        if (layout.PropertiesColumnStarValue > 0)
         {
-            _propertiesExpandedWidth = layout.PropertiesColumnWidth;
+            _propertiesExpandedStarValue = layout.PropertiesColumnStarValue;
         }
 
         if (layout.IsPropertiesExpanded)
         {
-            ColProperties.Width = new GridLength(_propertiesExpandedWidth);
+            ColProperties.Width = new GridLength(_propertiesExpandedStarValue, GridUnitType.Star);
         }
         else
         {
@@ -256,13 +256,13 @@ internal sealed partial class StationsPage
             layout.WorkflowLibraryColumnWidth = _workflowLibExpandedWidth;
         }
 
-        if (ColProperties.Width.IsAbsolute)
+        if (ColProperties.Width.IsStar)
         {
-            layout.PropertiesColumnWidth = ColProperties.Width.Value;
+            layout.PropertiesColumnStarValue = ColProperties.Width.Value;
         }
         else if (!ViewModel.IsStationsPropertiesExpanded)
         {
-            layout.PropertiesColumnWidth = _propertiesExpandedWidth;
+            layout.PropertiesColumnStarValue = _propertiesExpandedStarValue;
         }
     }
 

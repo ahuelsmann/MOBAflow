@@ -46,6 +46,20 @@ internal class ViewModelCharacterizationTests
     }
 
     [Test]
+    public void TrainControlViewModel_SpeedIncrease_WhenDisconnected_IsRejected()
+    {
+        var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = false });
+        var settingsServiceMock = CreateSettingsServiceMock();
+        var viewModel = new TrainControlViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object);
+
+        viewModel.Speed = 12;
+
+        Assert.That(viewModel.Speed, Is.Zero);
+        Assert.That(viewModel.IsSpeedControlEnabled, Is.False);
+        mobaRuntimeMock.Verify(client => client.SetLocomotiveDriveAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
     public async Task TrainControlViewModel_ToggleFunctionAsync_UpdatesStateAndCallsRuntime()
     {
         var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = true });

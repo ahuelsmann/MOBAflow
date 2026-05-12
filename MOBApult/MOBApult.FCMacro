@@ -1,0 +1,93 @@
+import FreeCAD as App
+import FreeCADGui as Gui
+import Part
+
+doc = App.newDocument("MobaflowPult")
+
+# ============================
+# PARAMETER
+# ============================
+Width = 550
+Depth = 200
+BaseHeight = 140
+ModuleGap = 12
+ModuleTilt = 30
+ModuleYaw = 11
+Wood = 5
+
+ModuleWidth = 180
+ModuleHeight = 120
+
+CutoutX = 154
+CutoutY = 86
+FrameOverlap = 2.5
+
+SideThickness = 8
+SideHeight = 160   # Höhe der Seitenteile
+
+# ============================
+# BASE PLATE
+# ============================
+base = doc.addObject("Part::Box", "BasePlate")
+base.Length = Width
+base.Width = Depth
+base.Height = Wood
+base.Placement.Base.z = 0
+
+# ============================
+# FUNCTION: CREATE MODULE
+# ============================
+def createModule(name, x_offset, yaw):
+    body = doc.addObject("Part::Feature", name)
+
+    outer = Part.makeBox(ModuleWidth, Wood, ModuleHeight)
+
+    cut = Part.makeBox(CutoutX, Wood + 1, CutoutY)
+    cut.translate(App.Vector((ModuleWidth - CutoutX)/2,
+                             -0.5,
+                             (ModuleHeight - CutoutY)/2))
+
+    frame = outer.cut(cut)
+
+    placement = App.Placement()
+    placement.Rotation = App.Rotation(App.Vector(1,0,0), -ModuleTilt)
+    placement.Rotation = placement.Rotation.multiply(
+        App.Rotation(App.Vector(0,0,1), yaw)
+    )
+
+    placement.Base = App.Vector(x_offset, 40, BaseHeight)
+
+    body.Shape = frame
+    body.Placement = placement
+
+    return body
+
+# ============================
+# MODULE POSITIONS
+# ============================
+center_x = Width/2 - ModuleWidth/2
+left_x = center_x - ModuleWidth - ModuleGap
+right_x = center_x + ModuleWidth + ModuleGap
+
+mod_left = createModule("ModuleLeft", left_x, +ModuleYaw)
+mod_center = createModule("ModuleCenter", center_x, 0)
+mod_right = createModule("ModuleRight", right_x, -ModuleYaw)
+
+# ============================
+# SIDE PANELS
+# ============================
+side_left = doc.addObject("Part::Box", "SideLeft")
+side_left.Length = SideThickness
+side_left.Width = Depth
+side_left.Height = SideHeight
+side_left.Placement.Base = App.Vector(0, 0, 0)
+
+side_right = doc.addObject("Part::Box", "SideRight")
+side_right.Length = SideThickness
+side_right.Width = Depth
+side_right.Height = SideHeight
+side_right.Placement.Base = App.Vector(Width - SideThickness, 0, 0)
+
+doc.recompute()
+Gui.activeDocument().activeView().viewAxonometric()
+Gui.SendMsgToActiveView("ViewFit")

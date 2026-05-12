@@ -100,11 +100,27 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <!-- Row Headers for Additional Info -->
-                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,8,8,0" Spacing="2">
-                            <TextBlock FontSize="10" Foreground="{ThemeResource TextFillColorTertiaryBrush}" HorizontalTextAlignment="Right" Text="Exit" />
-                            <TextBlock FontSize="10" Foreground="{ThemeResource TextFillColorTertiaryBrush}" HorizontalTextAlignment="Right" Text="Arrival" />
-                            <TextBlock FontSize="10" Foreground="{ThemeResource TextFillColorTertiaryBrush}" HorizontalTextAlignment="Right" Text="Departure" />
+                        <!--  Row Headers for Additional Info  -->
+                        <StackPanel
+                            Grid.Row="2"
+                            Grid.Column="0"
+                            Margin="0,8,8,0"
+                            Spacing="2">
+                            <TextBlock
+                                FontSize="10"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                HorizontalTextAlignment="Right"
+                                Text="Exit" />
+                            <TextBlock
+                                FontSize="10"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                HorizontalTextAlignment="Right"
+                                Text="Arrival" />
+                            <TextBlock
+                                FontSize="10"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                HorizontalTextAlignment="Right"
+                                Text="Departure" />
                         </StackPanel>
 
                         <!--  Station Names (Top)  -->
@@ -134,7 +150,10 @@
                         </ItemsControl>
 
                         <!--  Track Line with Station Dots  -->
-                        <ItemsControl Grid.Row="1" Grid.Column="1" ItemsSource="{x:Bind ViewModel.RouteStations, Mode=OneWay}">
+                        <ItemsControl
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            ItemsSource="{x:Bind ViewModel.RouteStations, Mode=OneWay}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <StackPanel Orientation="Horizontal" Spacing="0" />

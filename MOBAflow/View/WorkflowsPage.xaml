@@ -22,12 +22,12 @@
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition
                 x:Name="ColActions"
-                Width="1.5*"
+                Width="1.2*"
                 MinWidth="32" />
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition
                 x:Name="ColProperties"
-                Width="1.5*"
+                Width="2.2*"
                 MinWidth="32" />
         </Grid.ColumnDefinitions>
 

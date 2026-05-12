@@ -30,7 +30,7 @@ internal sealed partial class WorkflowsPage
 
     private double _workflowsExpandedWidth = 200;
     private double _actionsExpandedWidth = 300;
-    private double _propertiesExpandedWidth = 300;
+    private double _propertiesExpandedStarValue = 1;
 
     public WorkflowsPage(
         MainWindowViewModel viewModel,
@@ -115,15 +115,15 @@ internal sealed partial class WorkflowsPage
         {
             if (!ViewModel.IsWorkflowPropertiesExpanded)
             {
-                if (ColProperties.Width.IsAbsolute)
+                if (ColProperties.Width.IsStar)
                 {
-                    _propertiesExpandedWidth = ColProperties.Width.Value;
+                    _propertiesExpandedStarValue = ColProperties.Width.Value;
                 }
                 ColProperties.Width = GridLength.Auto;
             }
             else
             {
-                ColProperties.Width = new GridLength(_propertiesExpandedWidth);
+                ColProperties.Width = new GridLength(_propertiesExpandedStarValue, GridUnitType.Star);
             }
         }
     }
@@ -140,9 +140,9 @@ internal sealed partial class WorkflowsPage
         {
             _actionsExpandedWidth = layout.ActionsColumnWidth;
         }
-        if (layout.PropertiesColumnWidth > 0)
+        if (layout.PropertiesColumnStarValue > 0)
         {
-            _propertiesExpandedWidth = layout.PropertiesColumnWidth;
+            _propertiesExpandedStarValue = layout.PropertiesColumnStarValue;
         }
 
         if (layout.IsWorkflowListExpanded)
@@ -165,7 +165,7 @@ internal sealed partial class WorkflowsPage
 
         if (layout.IsPropertiesExpanded)
         {
-            ColProperties.Width = new GridLength(_propertiesExpandedWidth);
+            ColProperties.Width = new GridLength(_propertiesExpandedStarValue, GridUnitType.Star);
         }
         else
         {
@@ -212,13 +212,13 @@ internal sealed partial class WorkflowsPage
             layout.ActionsColumnWidth = _actionsExpandedWidth;
         }
 
-        if (ColProperties.Width.IsAbsolute)
+        if (ColProperties.Width.IsStar)
         {
-            layout.PropertiesColumnWidth = ColProperties.Width.Value;
+            layout.PropertiesColumnStarValue = ColProperties.Width.Value;
         }
         else if (!ViewModel.IsWorkflowPropertiesExpanded)
         {
-            layout.PropertiesColumnWidth = _propertiesExpandedWidth;
+            layout.PropertiesColumnStarValue = _propertiesExpandedStarValue;
         }
     }
 

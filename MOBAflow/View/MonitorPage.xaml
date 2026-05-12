@@ -12,7 +12,10 @@
         <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
         <converter:BoolToFontWeightConverter x:Key="BoolToFontWeightConverter" />
         <converter:BoolToFeedbackBackgroundConverter x:Key="BoolToFeedbackBackgroundConverter" />
-        <converter:BoolToStringConverter x:Key="BoolToScrollIconConverter" TrueValue="&#xE769;" FalseValue="&#xE768;" />
+        <converter:BoolToStringConverter
+            x:Key="BoolToScrollIconConverter"
+            FalseValue="&#xE768;"
+            TrueValue="&#xE769;" />
     </Page.Resources>
 
     <Grid Padding="8">
@@ -31,17 +34,23 @@
         <!--  Main Content: Traffic + Activity Logs  -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition x:Name="ColTraffic" Width="1*" MinWidth="350" />
+                <ColumnDefinition
+                    x:Name="ColTraffic"
+                    Width="1*"
+                    MinWidth="350" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition x:Name="ColLog" Width="2*" MinWidth="400" />
+                <ColumnDefinition
+                    x:Name="ColLog"
+                    Width="2*"
+                    MinWidth="400" />
             </Grid.ColumnDefinitions>
 
             <!--  Traffic Packets List  -->
             <controls:CollapsibleColumnHelper
                 Grid.Column="0"
                 Margin="0"
-                Header="Z21 Traffic"
                 Glyph="&#xE8F1;"
+                Header="Z21 Traffic"
                 IsExpanded="{x:Bind ViewModel.MainWindowViewModel.IsMonitorTrafficExpanded, Mode=TwoWay}">
                 <controls:CollapsibleColumnHelper.HeaderActions>
                     <StackPanel Orientation="Horizontal" Spacing="2">
@@ -195,8 +204,8 @@
             <controls:CollapsibleColumnHelper
                 Grid.Column="2"
                 Margin="0"
-                Header="Application Log"
                 Glyph="&#xE81C;"
+                Header="Application Log"
                 IsExpanded="{x:Bind ViewModel.MainWindowViewModel.IsMonitorActivityLogExpanded, Mode=TwoWay}">
                 <controls:CollapsibleColumnHelper.HeaderActions>
                     <StackPanel Orientation="Horizontal" Spacing="2">
