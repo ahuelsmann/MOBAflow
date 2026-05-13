@@ -1,3 +1,18 @@
 {
-    "kiroAgent.configureMCP": "Disabled"
+    "kiroAgent.configureMCP": "Disabled",
+    "files.watcherExclude": {
+        "**/.nuget/**": true,
+        "**/bin/**": true,
+        "**/obj/**": true
+    },
+    "search.exclude": {
+        "**/.nuget/**": true,
+        "**/bin/**": true,
+        "**/obj/**": true
+    },
+    "files.exclude": {
+        "**/.nuget": true,
+        "**/bin": true,
+        "**/obj": true
+    }
 }

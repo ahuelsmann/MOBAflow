@@ -60,6 +60,17 @@ Located in `.github/instructions/`:
   - Location: `.github/agents/enterprise-pr-reviewer.agent.md`
   - Use when: Reviewing pull requests, checking enterprise quality, producing PR feedback
 
+### Optional Windows WinUI tooling
+
+- **`winapp` CLI** — Available on the Windows development machine (`winapp --version` showed 0.3.1).
+  - Use for Windows App SDK / WinUI app execution, packaging, and future UI automation checks.
+  - Prefer project-scoped commands; do not scan or build every `.csproj` under the workspace.
+- **Microsoft `win-dev-skills`** — Installed as an external Copilot/Claude plugin, not automatically loaded by all agents.
+  - Treat it as guidance for WinUI workflows: WinUI 3 lane, Fluent Design, `x:Bind`, accessibility, packaging, and UI automation.
+  - Do not let it override MOBAflow-specific rules in `.github/copilot-instructions.md`.
+- **Workspace hygiene** — Keep `.nuget`, `bin`, and `obj` excluded from IDE search/watch/project discovery where possible.
+  - The local `.nuget/packages` folder can contain package source projects that break central package management during C# language-server discovery.
+
 ---
 
 ## Cursor Cloud specific instructions

@@ -117,6 +117,19 @@ InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(window));
 var file = await picker.PickSingleFileAsync();
 ```
 
+## Windows App SDK tooling
+
+- Use `winapp` on Windows when a task needs packaged WinUI execution, packaging/signing, or UI automation.
+- `winapp --version` is known to be available on the Windows development machine and returned `0.3.1`.
+- Prefer project-scoped commands such as `MOBAflow/MOBAflow.csproj`; avoid repository-wide `.csproj` discovery.
+- Treat Microsoft `win-dev-skills` as optional guidance for WinUI 3 workflows, Fluent Design, accessibility, `x:Bind`, packaging, and UI automation. MOBAflow rules remain authoritative.
+
+## Workspace/LSP hygiene
+
+- Keep `.nuget`, `bin`, and `obj` excluded from IDE search, file watchers, and language-server project discovery.
+- The repository-local `.nuget/packages` folder can contain package source projects whose `PackageReference` versions conflict with central package management.
+- If the C# language server reports duplicate generated files from `.nuget`, `bin`, or `obj`, reload the IDE after verifying the workspace excludes.
+
 ## Selection Management
 
 ```csharp

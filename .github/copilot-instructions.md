@@ -185,6 +185,11 @@ dotnet run --project MOBAflow    # Windows app
 dotnet run --project MOBApi      # REST API (Port 5001)
 ```
 
+**Windows WinUI tooling:**
+- `winapp` is available on the Windows development machine (`winapp --version` returned 0.3.1). Use it when packaged WinUI execution, packaging/signing, or UI automation is needed.
+- Microsoft `win-dev-skills` can guide WinUI 3 workflows, Fluent Design, accessibility, `x:Bind`, packaging, and UI automation, but MOBAflow instructions remain authoritative.
+- Keep `.nuget`, `bin`, and `obj` excluded from IDE search/watch/project discovery. Do not scan or build every `.csproj` under the workspace because `.nuget/packages` can contain package source projects that conflict with central package management.
+
 **Test coverage (regression protection):**
 - **Path handling:** Use `Common.Path.PhotoPathHelper.ToFullPath(baseDir, relativePath)` for photo paths; do not duplicate path logic. Tests: `Test/Common/PhotoPathHelperTests.cs`.
 - **Discovery protocol:** Use `Common.Discovery.DiscoveryResponseParser.TryParse()` for "MOBAFLOW_REST_API|ip|port". Tests: `Test/Common/DiscoveryResponseParserTests.cs`.
