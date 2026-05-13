@@ -96,7 +96,9 @@ internal static class NavigationRegistration
         pages.Add(new PageMetadata("monitor", "Monitor", "\uE7F4", typeof(MonitorPage), NavigationCategory.Monitoring, 10, "IsMonitorPageAvailable", "MonitorPageLabel", null, false));
 
         services.AddTransient<MatrixPage>();
-        services.AddTransient<MatrixPageViewModel>();
+        services.AddTransient(sp => new MatrixPageViewModel(
+            sp.GetRequiredService<MainWindowViewModel>(),
+            sp.GetRequiredService<ILogger<MatrixPageViewModel>>()));
         pages.Add(new PageMetadata(
             Tag: "matrix",
             Title: "Matrix",

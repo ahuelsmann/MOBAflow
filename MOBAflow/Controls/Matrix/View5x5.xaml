@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8" ?>
 <UserControl
     x:Class="Moba.WinUI.Controls.Matrix.View5x5"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -6,234 +5,220 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
-    <Grid
-        x:Name="RootGrid"
-        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-        PointerCanceled="OnMatrixPointerCanceled"
-        PointerCaptureLost="OnMatrixPointerCaptureLost"
-        PointerMoved="OnMatrixPointerMoved"
-        PointerPressed="OnMatrixPointerPressed"
-        PointerReleased="OnMatrixPointerReleased"
-        RightTapped="OnCellRightTapped">
+    <Grid Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" RowSpacing="12">
         <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
-
-        <Rectangle
+        <TextBox
             Grid.Row="0"
-            Grid.Column="0"
-            Fill="{Binding Cell11}"
-            Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
-            StrokeThickness="1"
-            Tag="0"
-            Tapped="OnCellTapped" />
-        <Rectangle
-            Grid.Row="0"
-            Grid.Column="1"
-            Fill="{Binding Cell12}"
-            Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
-            StrokeThickness="1"
-            Tag="1"
-            Tapped="OnCellTapped" />
-        <Rectangle
-            Grid.Row="0"
-            Grid.Column="2"
-            Fill="{Binding Cell13}"
-            Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
-            StrokeThickness="1"
-            Tag="2"
-            Tapped="OnCellTapped" />
-        <Rectangle
-            Grid.Row="0"
-            Grid.Column="3"
-            Fill="{Binding Cell14}"
-            Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
-            StrokeThickness="1"
-            Tag="3"
-            Tapped="OnCellTapped" />
-        <Rectangle
-            Grid.Row="0"
-            Grid.Column="4"
-            Fill="{Binding Cell15}"
-            Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
-            StrokeThickness="1"
-            Tag="4"
-            Tapped="OnCellTapped" />
+            PlaceholderText="Name"
+            Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-        <Rectangle
+        <Grid
             Grid.Row="1"
-            Grid.Column="0"
-            Fill="{Binding Cell21}"
-            Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
-            StrokeThickness="1"
-            Tag="5"
-            Tapped="OnCellTapped" />
-        <Rectangle
-            Grid.Row="1"
-            Grid.Column="1"
-            Fill="{Binding Cell22}"
-            Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
-            StrokeThickness="1"
-            Tag="6"
-            Tapped="OnCellTapped" />
-        <Rectangle
-            Grid.Row="1"
-            Grid.Column="2"
-            Fill="{Binding Cell23}"
-            Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
-            StrokeThickness="1"
-            Tag="7"
-            Tapped="OnCellTapped" />
-        <Rectangle
-            Grid.Row="1"
-            Grid.Column="3"
-            Fill="{Binding Cell24}"
-            Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
-            StrokeThickness="1"
-            Tag="8"
-            Tapped="OnCellTapped" />
-        <Rectangle
-            Grid.Row="1"
-            Grid.Column="4"
-            Fill="{Binding Cell25}"
-            Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
-            StrokeThickness="1"
-            Tag="9"
-            Tapped="OnCellTapped" />
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            PointerCanceled="OnMatrixPointerEnded"
+            PointerCaptureLost="OnMatrixPointerEnded"
+            PointerMoved="OnMatrixPointerMoved"
+            PointerPressed="OnMatrixPointerPressed"
+            PointerReleased="OnMatrixPointerEnded">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-        <Rectangle
-            Grid.Row="2"
-            Grid.Column="0"
-            Fill="{Binding Cell31}"
-            Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
-            StrokeThickness="1"
-            Tag="10"
-            Tapped="OnCellTapped" />
-        <Rectangle
-            Grid.Row="2"
-            Grid.Column="1"
-            Fill="{Binding Cell32}"
-            Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
-            StrokeThickness="1"
-            Tag="11"
-            Tapped="OnCellTapped" />
-        <Rectangle
-            Grid.Row="2"
-            Grid.Column="2"
-            Fill="{Binding Cell33}"
-            Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
-            StrokeThickness="1"
-            Tag="12"
-            Tapped="OnCellTapped" />
-        <Rectangle
-            Grid.Row="2"
-            Grid.Column="3"
-            Fill="{Binding Cell34}"
-            Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
-            StrokeThickness="1"
-            Tag="13"
-            Tapped="OnCellTapped" />
-        <Rectangle
-            Grid.Row="2"
-            Grid.Column="4"
-            Fill="{Binding Cell35}"
-            Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
-            StrokeThickness="1"
-            Tag="14"
-            Tapped="OnCellTapped" />
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-        <Rectangle
-            Grid.Row="3"
-            Grid.Column="0"
-            Fill="{Binding Cell41}"
-            Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
-            StrokeThickness="1"
-            Tag="15"
-            Tapped="OnCellTapped" />
-        <Rectangle
-            Grid.Row="3"
-            Grid.Column="1"
-            Fill="{Binding Cell42}"
-            Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
-            StrokeThickness="1"
-            Tag="16"
-            Tapped="OnCellTapped" />
-        <Rectangle
-            Grid.Row="3"
-            Grid.Column="2"
-            Fill="{Binding Cell43}"
-            Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
-            StrokeThickness="1"
-            Tag="17"
-            Tapped="OnCellTapped" />
-        <Rectangle
-            Grid.Row="3"
-            Grid.Column="3"
-            Fill="{Binding Cell44}"
-            Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
-            StrokeThickness="1"
-            Tag="18"
-            Tapped="OnCellTapped" />
-        <Rectangle
-            Grid.Row="3"
-            Grid.Column="4"
-            Fill="{Binding Cell45}"
-            Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
-            StrokeThickness="1"
-            Tag="19"
-            Tapped="OnCellTapped" />
+            <Rectangle
+                Grid.Row="0"
+                Grid.Column="0"
+                Fill="{Binding Cell11}"
+                Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                StrokeThickness="1"
+                Tag="0" />
+            <Rectangle
+                Grid.Row="0"
+                Grid.Column="1"
+                Fill="{Binding Cell12}"
+                Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                StrokeThickness="1"
+                Tag="1" />
+            <Rectangle
+                Grid.Row="0"
+                Grid.Column="2"
+                Fill="{Binding Cell13}"
+                Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                StrokeThickness="1"
+                Tag="2" />
+            <Rectangle
+                Grid.Row="0"
+                Grid.Column="3"
+                Fill="{Binding Cell14}"
+                Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                StrokeThickness="1"
+                Tag="3" />
+            <Rectangle
+                Grid.Row="0"
+                Grid.Column="4"
+                Fill="{Binding Cell15}"
+                Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                StrokeThickness="1"
+                Tag="4" />
 
-        <Rectangle
-            Grid.Row="4"
-            Grid.Column="0"
-            Fill="{Binding Cell51}"
-            Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
-            StrokeThickness="1"
-            Tag="20"
-            Tapped="OnCellTapped" />
-        <Rectangle
-            Grid.Row="4"
-            Grid.Column="1"
-            Fill="{Binding Cell52}"
-            Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
-            StrokeThickness="1"
-            Tag="21"
-            Tapped="OnCellTapped" />
-        <Rectangle
-            Grid.Row="4"
-            Grid.Column="2"
-            Fill="{Binding Cell53}"
-            Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
-            StrokeThickness="1"
-            Tag="22"
-            Tapped="OnCellTapped" />
-        <Rectangle
-            Grid.Row="4"
-            Grid.Column="3"
-            Fill="{Binding Cell54}"
-            Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
-            StrokeThickness="1"
-            Tag="23"
-            Tapped="OnCellTapped" />
-        <Rectangle
-            Grid.Row="4"
-            Grid.Column="4"
-            Fill="{Binding Cell55}"
-            Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
-            StrokeThickness="1"
-            Tag="24"
-            Tapped="OnCellTapped" />
+            <Rectangle
+                Grid.Row="1"
+                Grid.Column="0"
+                Fill="{Binding Cell21}"
+                Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                StrokeThickness="1"
+                Tag="5" />
+            <Rectangle
+                Grid.Row="1"
+                Grid.Column="1"
+                Fill="{Binding Cell22}"
+                Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                StrokeThickness="1"
+                Tag="6" />
+            <Rectangle
+                Grid.Row="1"
+                Grid.Column="2"
+                Fill="{Binding Cell23}"
+                Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                StrokeThickness="1"
+                Tag="7" />
+            <Rectangle
+                Grid.Row="1"
+                Grid.Column="3"
+                Fill="{Binding Cell24}"
+                Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                StrokeThickness="1"
+                Tag="8" />
+            <Rectangle
+                Grid.Row="1"
+                Grid.Column="4"
+                Fill="{Binding Cell25}"
+                Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                StrokeThickness="1"
+                Tag="9" />
+
+            <Rectangle
+                Grid.Row="2"
+                Grid.Column="0"
+                Fill="{Binding Cell31}"
+                Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                StrokeThickness="1"
+                Tag="10" />
+            <Rectangle
+                Grid.Row="2"
+                Grid.Column="1"
+                Fill="{Binding Cell32}"
+                Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                StrokeThickness="1"
+                Tag="11" />
+            <Rectangle
+                Grid.Row="2"
+                Grid.Column="2"
+                Fill="{Binding Cell33}"
+                Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                StrokeThickness="1"
+                Tag="12" />
+            <Rectangle
+                Grid.Row="2"
+                Grid.Column="3"
+                Fill="{Binding Cell34}"
+                Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                StrokeThickness="1"
+                Tag="13" />
+            <Rectangle
+                Grid.Row="2"
+                Grid.Column="4"
+                Fill="{Binding Cell35}"
+                Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                StrokeThickness="1"
+                Tag="14" />
+
+            <Rectangle
+                Grid.Row="3"
+                Grid.Column="0"
+                Fill="{Binding Cell41}"
+                Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                StrokeThickness="1"
+                Tag="15" />
+            <Rectangle
+                Grid.Row="3"
+                Grid.Column="1"
+                Fill="{Binding Cell42}"
+                Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                StrokeThickness="1"
+                Tag="16" />
+            <Rectangle
+                Grid.Row="3"
+                Grid.Column="2"
+                Fill="{Binding Cell43}"
+                Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                StrokeThickness="1"
+                Tag="17" />
+            <Rectangle
+                Grid.Row="3"
+                Grid.Column="3"
+                Fill="{Binding Cell44}"
+                Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                StrokeThickness="1"
+                Tag="18" />
+            <Rectangle
+                Grid.Row="3"
+                Grid.Column="4"
+                Fill="{Binding Cell45}"
+                Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                StrokeThickness="1"
+                Tag="19" />
+
+            <Rectangle
+                Grid.Row="4"
+                Grid.Column="0"
+                Fill="{Binding Cell51}"
+                Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                StrokeThickness="1"
+                Tag="20" />
+            <Rectangle
+                Grid.Row="4"
+                Grid.Column="1"
+                Fill="{Binding Cell52}"
+                Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                StrokeThickness="1"
+                Tag="21" />
+            <Rectangle
+                Grid.Row="4"
+                Grid.Column="2"
+                Fill="{Binding Cell53}"
+                Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                StrokeThickness="1"
+                Tag="22" />
+            <Rectangle
+                Grid.Row="4"
+                Grid.Column="3"
+                Fill="{Binding Cell54}"
+                Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                StrokeThickness="1"
+                Tag="23" />
+            <Rectangle
+                Grid.Row="4"
+                Grid.Column="4"
+                Fill="{Binding Cell55}"
+                Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                StrokeThickness="1"
+                Tag="24" />
+        </Grid>
     </Grid>
 </UserControl>

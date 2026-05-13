@@ -22,18 +22,14 @@ public sealed partial class View5x5 : UserControl
     public static readonly DependencyProperty CellRightTappedCommandProperty =
         DependencyProperty.Register(nameof(CellRightTappedCommand), typeof(ICommand), typeof(View5x5), new PropertyMetadata(null));
 
+    public static readonly DependencyProperty ViewModelProperty =
+        DependencyProperty.Register(nameof(ViewModel), typeof(ViewModel5x5), typeof(View5x5), new PropertyMetadata(null, OnViewModelChanged));
+
     public ViewModel5x5 ViewModel
     {
-        get => _viewModel;
-        set
-        {
-            _viewModel = value;
-            DataContext = value;
-        }
+        get => (ViewModel5x5)GetValue(ViewModelProperty);
+        set => SetValue(ViewModelProperty, value);
     }
-    private ViewModel5x5 _viewModel = new();
-    private readonly HashSet<int> processedDragCells = [];
-    private DragMode currentDragMode = DragMode.None;
 
     public ICommand? CellTappedCommand
     {
@@ -50,128 +46,123 @@ public sealed partial class View5x5 : UserControl
     public View5x5()
     {
         InitializeComponent();
-        DataContext = ViewModel;
+        ViewModel = new ViewModel5x5();
     }
 
-    private void OnCellTapped(object sender, TappedRoutedEventArgs e)
+    private static void OnViewModelChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (sender is FrameworkElement element && int.TryParse(element.Tag?.ToString(), out var index))
+        if (d is View5x5 view)
         {
-            ExecuteCommand(CellTappedCommand, index);
+            view.DataContext = e.NewValue;
         }
     }
 
-    private void OnCellRightTapped(object sender, RightTappedRoutedEventArgs e)
-    {
-        if (e.OriginalSource is FrameworkElement element && int.TryParse(element.Tag?.ToString(), out var index))
-        {
-            ExecuteCommand(CellRightTappedCommand, index);
-            e.Handled = true;
-        }
-    }
+    private readonly HashSet<int> processedDragCells = [];
+    private DragMode dragMode = DragMode.None;
 
     private void OnMatrixPointerPressed(object sender, PointerRoutedEventArgs e)
     {
-        var point = e.GetCurrentPoint(RootGrid);
+        if (sender is not FrameworkElement matrixGrid)
+        {
+            return;
+        }
 
-        if (point.Properties.IsLeftButtonPressed)
+        var point = e.GetCurrentPoint(matrixGrid);
+        var properties = point.Properties;
+
+        dragMode = properties.IsRightButtonPressed
+            ? DragMode.Clear
+            : properties.IsLeftButtonPressed
+                ? DragMode.Paint
+                : DragMode.None;
+
+        processedDragCells.Clear();
+
+        if (dragMode == DragMode.None)
         {
-            StartDrag(DragMode.Paint, e);
+            return;
         }
-        else if (point.Properties.IsRightButtonPressed)
-        {
-            StartDrag(DragMode.Clear, e);
-        }
+
+        matrixGrid.CapturePointer(e.Pointer);
+        ExecuteCellCommand(GetCellIndex(point.Position, matrixGrid));
+        e.Handled = true;
     }
 
     private void OnMatrixPointerMoved(object sender, PointerRoutedEventArgs e)
     {
-        if (currentDragMode == DragMode.None)
+        if (dragMode == DragMode.None)
         {
             return;
         }
 
-        var point = e.GetCurrentPoint(RootGrid);
-        if (currentDragMode == DragMode.Paint && !point.Properties.IsLeftButtonPressed ||
-            currentDragMode == DragMode.Clear && !point.Properties.IsRightButtonPressed)
+        if (sender is not FrameworkElement matrixGrid)
         {
-            EndDrag();
             return;
         }
 
-        ApplyDragAt(point.Position.X, point.Position.Y);
+        var point = e.GetCurrentPoint(matrixGrid);
+        var properties = point.Properties;
+
+        if ((dragMode == DragMode.Paint && !properties.IsLeftButtonPressed)
+            || (dragMode == DragMode.Clear && !properties.IsRightButtonPressed))
+        {
+            ResetDrag();
+            return;
+        }
+
+        ExecuteCellCommand(GetCellIndex(point.Position, matrixGrid));
         e.Handled = true;
     }
 
-    private void OnMatrixPointerReleased(object sender, PointerRoutedEventArgs e)
+    private void OnMatrixPointerEnded(object sender, PointerRoutedEventArgs e)
     {
-        EndDrag();
+        if (sender is not FrameworkElement matrixGrid)
+        {
+            return;
+        }
+
+        ResetDrag();
+        matrixGrid.ReleasePointerCapture(e.Pointer);
         e.Handled = true;
     }
 
-    private void OnMatrixPointerCanceled(object sender, PointerRoutedEventArgs e)
+    private static int GetCellIndex(Windows.Foundation.Point position, FrameworkElement matrixGrid)
     {
-        EndDrag();
+        if (matrixGrid.ActualWidth <= 0 || matrixGrid.ActualHeight <= 0)
+        {
+            return -1;
+        }
+
+        if (position.X < 0 || position.Y < 0 || position.X >= matrixGrid.ActualWidth || position.Y >= matrixGrid.ActualHeight)
+        {
+            return -1;
+        }
+
+        var column = Math.Min((int)(position.X / (matrixGrid.ActualWidth / 5)), 4);
+        var row = Math.Min((int)(position.Y / (matrixGrid.ActualHeight / 5)), 4);
+        return (row * 5) + column;
     }
 
-    private void OnMatrixPointerCaptureLost(object sender, PointerRoutedEventArgs e)
+    private void ExecuteCellCommand(int cellIndex)
     {
-        EndDrag();
+        if (cellIndex < 0 || !processedDragCells.Add(cellIndex))
+        {
+            return;
+        }
+
+        var command = dragMode == DragMode.Clear
+            ? CellRightTappedCommand
+            : CellTappedCommand;
+
+        if (command?.CanExecute(cellIndex) == true)
+        {
+            command.Execute(cellIndex);
+        }
     }
 
-    private void StartDrag(DragMode mode, PointerRoutedEventArgs e)
+    private void ResetDrag()
     {
-        currentDragMode = mode;
+        dragMode = DragMode.None;
         processedDragCells.Clear();
-        RootGrid.CapturePointer(e.Pointer);
-
-        var point = e.GetCurrentPoint(RootGrid);
-        ApplyDragAt(point.Position.X, point.Position.Y);
-        e.Handled = true;
-    }
-
-    private void EndDrag()
-    {
-        currentDragMode = DragMode.None;
-        processedDragCells.Clear();
-        RootGrid.ReleasePointerCaptures();
-    }
-
-    private void ApplyDragAt(double x, double y)
-    {
-        if (!TryGetCellIndex(x, y, out var index) || !processedDragCells.Add(index))
-        {
-            return;
-        }
-
-        ExecuteCommand(currentDragMode == DragMode.Paint ? CellTappedCommand : CellRightTappedCommand, index);
-    }
-
-    private bool TryGetCellIndex(double x, double y, out int index)
-    {
-        index = -1;
-
-        if (RootGrid.ActualWidth <= 0 ||
-            RootGrid.ActualHeight <= 0 ||
-            x < 0 ||
-            y < 0 ||
-            x > RootGrid.ActualWidth ||
-            y > RootGrid.ActualHeight)
-        {
-            return false;
-        }
-
-        var column = Math.Clamp((int)(x / RootGrid.ActualWidth * 5), 0, 4);
-        var row = Math.Clamp((int)(y / RootGrid.ActualHeight * 5), 0, 4);
-        index = row * 5 + column;
-        return true;
-    }
-
-    private static void ExecuteCommand(ICommand? command, int index)
-    {
-        if (command?.CanExecute(index) == true)
-        {
-            command.Execute(index);
-        }
     }
 }

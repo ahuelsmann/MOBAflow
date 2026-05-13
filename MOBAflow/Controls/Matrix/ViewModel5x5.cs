@@ -2,14 +2,24 @@
 namespace Moba.WinUI.Controls.Matrix;
 
 using Moba.Common.Display;
+using Moba.Domain;
 
 using Microsoft.UI;
 using Microsoft.UI.Xaml.Media;
 
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 public partial class ViewModel5x5 : ObservableObject
 {
+    public Guid Id { get; set; } = Guid.NewGuid();
+
+    [ObservableProperty] private string name = string.Empty;
+
+    [ObservableProperty] private SolidColorBrush selectedColorBrush = new(Colors.Red);
+
+    public IRelayCommand<ViewModel5x5?>? DeleteCommand { get; set; }
+
     [ObservableProperty] private SolidColorBrush cell11 = new(Colors.LightGray);
     [ObservableProperty] private SolidColorBrush cell12 = new(Colors.LightGray);
     [ObservableProperty] private SolidColorBrush cell13 = new(Colors.LightGray);
@@ -126,9 +136,65 @@ public partial class ViewModel5x5 : ObservableObject
         }
     }
 
+    [RelayCommand]
+    private void PaintCell(int cellIndex)
+    {
+        if (cellIndex >= 0 && cellIndex < MatrixImage.CellCount)
+        {
+            SetCellColor(cellIndex, SelectedColorBrush);
+        }
+    }
+
+    [RelayCommand]
+    private void ClearCell(int cellIndex)
+    {
+        ClearCellColor(cellIndex);
+    }
+
     public uint GetCellColorArgb(int index)
     {
         return state.GetCellColorArgb(index);
+    }
+
+    public MatrixImage ToModel()
+    {
+        return new MatrixImage
+        {
+            Id = Id,
+            Name = Name,
+            Cells = Enumerable.Range(0, MatrixImage.CellCount)
+                .Select(GetCellColorArgb)
+                .ToList()
+        };
+    }
+
+    public static ViewModel5x5 FromModel(MatrixImage model)
+    {
+        ArgumentNullException.ThrowIfNull(model);
+        model.NormalizeCells();
+
+        var viewModel = new ViewModel5x5
+        {
+            Id = model.Id,
+            Name = model.Name
+        };
+
+        for (var i = 0; i < MatrixImage.CellCount; i++)
+        {
+            viewModel.SetCellColorArgb(i, model.Cells[i]);
+        }
+
+        return viewModel;
+    }
+
+    public void SetCellColorArgb(int index, uint argb)
+    {
+        if (!state.SetCellColorArgb(index, argb))
+        {
+            return;
+        }
+
+        ApplyCellBrush(index, FromArgb(argb));
     }
 
     private static uint ToArgb(Windows.UI.Color color)

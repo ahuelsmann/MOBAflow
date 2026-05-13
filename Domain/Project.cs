@@ -16,6 +16,7 @@ public class Project
         PassengerWagons = [];
         GoodsWagons = [];
         Trains = [];
+        Matrices = [];
         Workflows = [];
         Journeys = [];
         Stations = [];
@@ -45,6 +46,11 @@ public class Project
     /// Gets or sets the trains defined in this project.
     /// </summary>
     public List<Train> Trains { get; set; }
+
+    /// <summary>
+    /// Gets or sets the 5x5 matrix images defined in this project.
+    /// </summary>
+    public List<MatrixImage> Matrices { get; set; }
 
     /// <summary>
     /// Gets or sets the workflows available in this project.
