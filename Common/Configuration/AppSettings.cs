@@ -370,6 +370,14 @@ public class FeatureToggleSettings
     /// </summary>
     public string MonitorPageLabel { get; set; } = "Preview";
 
+    public bool IsMatrixPageAvailable { get; set; } = true;
+
+    public string MatrixPageLabel { get; set; } = string.Empty;
+
+    public bool IsDisplayPageAvailable { get; set; } = true;
+
+    public string DisplayPageLabel { get; set; } = string.Empty;
+
     // Train/Rolling Stock Management (Upcoming - ENABLED by default)
 
     /// <summary>

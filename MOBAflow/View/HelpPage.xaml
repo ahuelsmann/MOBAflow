@@ -19,9 +19,7 @@
             Header="MOBAflow Wiki"
             IsExpanded="True">
             <controls:CollapsibleColumnCollection.PanelContent>
-                <ScrollViewer
-                    HorizontalScrollBarVisibility="Disabled"
-                    VerticalScrollBarVisibility="Auto">
+                <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
                     <StackPanel Spacing="16">
                         <StackPanel Spacing="4">
                             <TextBlock
@@ -53,9 +51,7 @@
             Header="Documentation"
             IsExpanded="True">
             <controls:CollapsibleColumnHelper.PanelContent>
-                <ScrollViewer
-                    Padding="8"
-                    VerticalScrollBarVisibility="Auto">
+                <ScrollViewer Padding="8" VerticalScrollBarVisibility="Auto">
                     <StackPanel Spacing="16">
                         <TextBlock
                             x:Name="HeaderTextBlock"

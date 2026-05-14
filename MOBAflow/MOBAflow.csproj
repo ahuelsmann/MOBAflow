@@ -106,7 +106,15 @@
         <Content Include="Build\Schemas\*.schema.json" CopyToOutputDirectory="PreserveNewest" Link="Build\Schemas\%(Filename)%(Extension)" />
     </ItemGroup>
     <ItemGroup>
+      <None Remove="View\DisplayPage.xaml" />
+    </ItemGroup>
+    <ItemGroup>
       <Folder Include="Controls\Display\" />
+    </ItemGroup>
+    <ItemGroup>
+      <Page Update="View\DisplayPage.xaml">
+        <Generator>MSBuild:Compile</Generator>
+      </Page>
     </ItemGroup>
     <ItemGroup>
       <Page Update="Controls\Matrix\View5x5.xaml">

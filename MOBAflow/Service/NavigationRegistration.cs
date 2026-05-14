@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 using View;
+
 using ViewModel;
 
 /// <summary>
@@ -104,8 +105,22 @@ internal static class NavigationRegistration
             Title: "Matrix",
             Icon: "\uE8A9",
             PageType: typeof(MatrixPage),
-            Category: NavigationCategory.Monitoring,
-            Order: 20,
+            Category: NavigationCategory.TrackManagement,
+            Order: 40,
+            FeatureToggleKey: "IsMatrixPageAvailable",
+            BadgeLabelKey: "MatrixPageLabel",
+            PathIconData: null,
+            IsBold: false));
+
+        services.AddTransient<DisplayViewModel>();
+        services.AddTransient<DisplayPage>();
+        pages.Add(new PageMetadata(
+            Tag: "display",
+            Title: "Display",
+            Icon: "\uE7F4",
+            PageType: typeof(DisplayPage),
+            Category: NavigationCategory.TrackManagement,
+            Order: 30,
             FeatureToggleKey: "IsDisplayPageAvailable",
             BadgeLabelKey: "DisplayPageLabel",
             PathIconData: null,
