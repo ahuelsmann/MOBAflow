@@ -1,0 +1,80 @@
+<UserControl
+    x:Class="Moba.WinUI.Controls.Matrix.Matrix5x5ConfigurationView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:matrix="using:Moba.WinUI.Controls.Matrix">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border
+            Grid.Row="0"
+            Padding="16"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="8">
+            <Grid RowSpacing="12">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <CommandBar
+                    Grid.Row="0"
+                    DefaultLabelPosition="Right"
+                    IsDynamicOverflowEnabled="False">
+                    <AppBarButton
+                        Command="{Binding AddMatrixCommand}"
+                        Icon="Add"
+                        Label="Add matrix" />
+                </CommandBar>
+
+                <ScrollViewer
+                    Grid.Row="1"
+                    HorizontalScrollBarVisibility="Disabled"
+                    VerticalScrollBarVisibility="Auto">
+                    <ItemsRepeater ItemsSource="{Binding Matrices}">
+                        <ItemsRepeater.Layout>
+                            <StackLayout Orientation="Vertical" Spacing="12" />
+                        </ItemsRepeater.Layout>
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate x:DataType="matrix:ViewModel5x5">
+                                <Border
+                                    Padding="12"
+                                    HorizontalAlignment="Center"
+                                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="4">
+                                    <Grid RowSpacing="8">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+
+                                        <Button
+                                            Grid.Row="0"
+                                            HorizontalAlignment="Right"
+                                            Command="{x:Bind DeleteCommand}"
+                                            CommandParameter="{x:Bind}"
+                                            Content="Delete" />
+
+                                        <matrix:View5x5
+                                            Grid.Row="1"
+                                            Width="200"
+                                            Height="250"
+                                            CellRightTappedCommand="{x:Bind ClearCellCommand}"
+                                            CellTappedCommand="{x:Bind PaintCellCommand}"
+                                            ViewModel="{x:Bind}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

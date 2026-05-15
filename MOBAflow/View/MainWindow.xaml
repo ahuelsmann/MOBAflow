@@ -30,6 +30,7 @@
         </TitleBar>
 
         <!--  NavigationView with Auto pane display mode for responsive behavior  -->
+        <!--  See class NavigationRegistration  -->
         <NavigationView
             x:Name="MainNavigation"
             Grid.Row="1"

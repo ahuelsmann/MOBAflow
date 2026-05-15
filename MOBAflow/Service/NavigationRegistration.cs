@@ -102,7 +102,7 @@ internal static class NavigationRegistration
             sp.GetRequiredService<ILogger<MatrixPageViewModel>>()));
         pages.Add(new PageMetadata(
             Tag: "matrix",
-            Title: "Matrix",
+            Title: "Matrix Images",
             Icon: "\uE8A9",
             PageType: typeof(MatrixPage),
             Category: NavigationCategory.TrackManagement,
@@ -116,7 +116,7 @@ internal static class NavigationRegistration
         services.AddTransient<DisplayPage>();
         pages.Add(new PageMetadata(
             Tag: "display",
-            Title: "Display",
+            Title: "Display Configurations",
             Icon: "\uE7F4",
             PageType: typeof(DisplayPage),
             Category: NavigationCategory.TrackManagement,

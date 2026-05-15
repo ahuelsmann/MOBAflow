@@ -106,20 +106,29 @@
         <Content Include="Build\Schemas\*.schema.json" CopyToOutputDirectory="PreserveNewest" Link="Build\Schemas\%(Filename)%(Extension)" />
     </ItemGroup>
     <ItemGroup>
-      <None Remove="View\DisplayPage.xaml" />
+        <Folder Include="Controls\Display\" />
     </ItemGroup>
     <ItemGroup>
-      <Folder Include="Controls\Display\" />
+        <Page Update="View\DisplayPage.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </Page>
     </ItemGroup>
     <ItemGroup>
-      <Page Update="View\DisplayPage.xaml">
-        <Generator>MSBuild:Compile</Generator>
-      </Page>
-    </ItemGroup>
-    <ItemGroup>
-      <Page Update="Controls\Matrix\View5x5.xaml">
-        <Generator>MSBuild:Compile</Generator>
-      </Page>
+        <Page Update="Controls\Matrix\View5x5.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </Page>
+        <Page Update="Controls\Matrix\Matrix5x5ConfigurationView.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </Page>
+        <Page Update="Controls\Display\WaveshareLcdTouch700InchConfigurationView.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </Page>
+        <Page Update="Controls\Display\WaveshareLcd169InchConfigurationView.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </Page>
+        <Page Update="Controls\Display\WaveshareLcd147InchConfigurationView.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </Page>
     </ItemGroup>
     <!-- Import custom build targets for configuration validation -->
     <Import Project="Build\ValidateJsonConfiguration.targets" />

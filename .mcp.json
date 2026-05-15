@@ -5,10 +5,10 @@
       "args": [
         "-y",
         "@modelcontextprotocol/server-filesystem@latest",
-        "."
+        "C:\\Repo\\ahuelsmann\\MOBAflow"
       ],
       "env": {
-        "MCP_FILESYSTEM_ROOT": ".",
+        "MCP_FILESYSTEM_ROOT": "C:\\Repo\\ahuelsmann\\MOBAflow",
         "MCP_FILESYSTEM_ENABLE_DELETE": "false"
       }
     },
@@ -17,13 +17,6 @@
       "args": [
         "-y",
         "mcp-ripgrep@latest"
-      ]
-    },
-    "memory": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-memory"
       ]
     },
     "azure-devops": {
@@ -40,34 +33,6 @@
       "env": {
         "AZURE_DEVOPS_ORG_URL": "https://dev.azure.com/ahuelsmann"
       }
-    },
-    "slack": {
-      "url": "https://mcp.slack.com/mcp"
-    },
-    "stack-mcp-server": {
-      "command": "npx",
-      "args": [
-        "mcp-remote",
-        "https://mcp.stackoverflow.com"
-      ]
-    },
-    "linear": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "mcp-remote",
-        "https://mcp.linear.app/mcp"
-      ]
-    },
-    "figma": {
-      "url": "https://mcp.figma.com/mcp"
-    },
-    "sequential-thinking": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-sequential-thinking"
-      ]
     },
     "fetch": {
       "command": "python",

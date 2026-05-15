@@ -3,6 +3,8 @@
 
 namespace Moba.WinUI.View;
 
+using System;
+
 using Microsoft.UI.Xaml.Controls;
 
 using Moba.SharedUI.ViewModel;
@@ -18,5 +20,17 @@ public sealed partial class DisplayPage : Page
     {
         ViewModel = viewModel;
         InitializeComponent();
+    }
+
+    private void OnDisplaySelectionChanged(object sender, SelectorBarSelectionChangedEventArgs args)
+    {
+        if (sender is not SelectorBar selectorBar ||
+            selectorBar.SelectedItem?.Tag is not string tag ||
+            !Enum.TryParse<DisplayConfigurationKind>(tag, out var kind))
+        {
+            return;
+        }
+
+        ViewModel.SelectConfiguration(kind);
     }
 }

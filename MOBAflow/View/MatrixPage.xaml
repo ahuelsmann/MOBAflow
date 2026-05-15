@@ -44,69 +44,20 @@
             Grid.Column="2"
             Margin="0"
             Glyph="&#xE70F;"
-            Header="5x5 Matrix"
+            Header="Matrix Images"
             IsExpanded="True">
             <controls:CollapsibleColumnHelper.PanelContent>
-                <Grid RowSpacing="12">
+                <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <CommandBar
-                        Grid.Row="0"
-                        DefaultLabelPosition="Right"
-                        IsDynamicOverflowEnabled="False">
-                        <AppBarButton
-                            Command="{x:Bind ViewModel.AddMatrixCommand}"
-                            Icon="Add"
-                            Label="Add matrix" />
+                    <SelectorBar Grid.Row="0">
+                        <SelectorBarItem IsSelected="True" Text="5x5 Matrix" />
+                    </SelectorBar>
 
-                    </CommandBar>
-
-                    <ScrollViewer
-                        Grid.Row="1"
-                        HorizontalScrollBarVisibility="Disabled"
-                        VerticalScrollBarVisibility="Auto">
-                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.Matrices}">
-                            <ItemsRepeater.Layout>
-                                <StackLayout Orientation="Vertical" Spacing="12" />
-                            </ItemsRepeater.Layout>
-                            <ItemsRepeater.ItemTemplate>
-                                <DataTemplate x:DataType="matrix:ViewModel5x5">
-                                    <Border
-                                        Padding="12"
-                                        HorizontalAlignment="Center"
-                                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                        BorderThickness="1"
-                                        CornerRadius="4">
-                                        <Grid RowSpacing="8">
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition Height="Auto" />
-                                                <RowDefinition Height="Auto" />
-                                            </Grid.RowDefinitions>
-
-                                            <Button
-                                                Grid.Row="0"
-                                                HorizontalAlignment="Right"
-                                                Command="{x:Bind DeleteCommand}"
-                                                CommandParameter="{x:Bind}"
-                                                Content="Delete" />
-
-                                            <matrix:View5x5
-                                                Grid.Row="1"
-                                                Width="200"
-                                                Height="250"
-                                                CellRightTappedCommand="{x:Bind ClearCellCommand}"
-                                                CellTappedCommand="{x:Bind PaintCellCommand}"
-                                                ViewModel="{x:Bind}" />
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsRepeater.ItemTemplate>
-                        </ItemsRepeater>
-                    </ScrollViewer>
+                    <matrix:Matrix5x5ConfigurationView Grid.Row="1" DataContext="{x:Bind ViewModel, Mode=OneWay}" />
                 </Grid>
             </controls:CollapsibleColumnHelper.PanelContent>
         </controls:CollapsibleColumnHelper>
