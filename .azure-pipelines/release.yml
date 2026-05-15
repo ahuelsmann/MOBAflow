@@ -1,6 +1,6 @@
 # Azure DevOps Pipeline: MOBAflow Release
 # - Version wird über MinVer aus Git-Tags ermittelt
-# - CHANGELOG wird aus Conventional Commits generiert/aktualisiert
+# - CHANGELOG wird über git-cliff aus Conventional Commits generiert/aktualisiert
 #
 # WICHTIG:
 # - Diese Pipeline hat keinen automatischen Trigger.
@@ -32,41 +32,33 @@ stages:
               version: '$(dotnetVersion)'
               includePreviewVersions: true
 
-          - task: NodeTool@0
-            displayName: 'Install Node.js'
-            inputs:
-              versionSpec: '20.x'
-
           - task: PowerShell@2
-            displayName: 'Determine version via MinVer'
+            displayName: 'Install & run git-cliff + determine version via MinVer'
             inputs:
               targetType: 'inline'
               script: |
+                # Install MinVer CLI
                 dotnet tool install --global minver-cli --version 5.*
                 $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
                 $version = minver
                 Write-Host "Detected version (MinVer): $version"
                 Write-Host "##vso[task.setvariable variable=MobaflowVersion]$version"
-              pwsh: true
 
-          - script: |
-              cd "$(Build.SourcesDirectory)"
-              echo "Ensuring conventional-changelog CLI and preset (conventionalcommits) are available..."
-              npm install -g conventional-changelog-cli conventional-changelog-conventionalcommits
-              if exist package.json (
-                echo "Running npm ci..."
-                npm ci
-              ) else (
-                echo "No package.json found – skipping npm ci."
-              )
-              if exist docs\CHANGELOG.md (
-                echo "Updating docs/CHANGELOG.md using conventional-changelog..."
-                npx conventional-changelog -p conventionalcommits -i docs/CHANGELOG.md -s
-              ) else (
-                echo "docs/CHANGELOG.md not found, creating new file..."
-                npx conventional-changelog -p conventionalcommits -o docs/CHANGELOG.md
-              )
-            displayName: 'Update docs/CHANGELOG.md from Conventional Commits'
+                # Install git-cliff via Chocolatey (pre-installed on windows-latest agents)
+                choco install git-cliff -y --no-progress
+                $env:PATH += ";C:\ProgramData\chocolatey\bin"
+
+                # Generate/Update CHANGELOG.md
+                cd "$(Build.SourcesDirectory)"
+                if (Test-Path docs\CHANGELOG.md) {
+                  Write-Host "Updating docs/CHANGELOG.md using git-cliff..."
+                  git-cliff -o docs/CHANGELOG.md
+                } else {
+                  Write-Host "docs/CHANGELOG.md not found, creating new file..."
+                  git-cliff -o docs/CHANGELOG.md
+                }
+                Write-Host "CHANGELOG updated successfully."
+              pwsh: true
 
           # HINWEIS:
           # - An dieser Stelle können Build/Publish-Schritte für Release-Artefakte folgen.

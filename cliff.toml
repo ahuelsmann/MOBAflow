@@ -1,0 +1,66 @@
+# git-cliff configuration for MOBAflow
+# https://git-cliff.org/docs/configuration/
+#
+# Usage:
+#   git cliff --unreleased          # Preview unreleased changes
+#   git cliff --unreleased -o docs/CHANGELOG.md   # Write to file (prepends)
+#   git cliff -o docs/CHANGELOG.md  # Regenerate full changelog
+
+[changelog]
+header = """# Changelog
+
+All notable changes to MOBAflow will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+"""
+
+body = """
+{% if version -%}
+    ## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+{% else -%}
+    ## [Unreleased]
+{% endif -%}
+
+{% for group, commits in commits | group_by(attribute="group") %}
+    ### {{ group | striptags | trim | upper_first }}
+    {% for commit in commits %}
+        - {% if commit.breaking %}[**breaking**] {% endif %}{{ commit.message | split(pat="\n") | first | trim }}{% if commit.remote.username %} (@{{ commit.remote.username }}){% endif %}\
+    {% endfor %}
+{% endfor %}
+
+"""
+
+trim = true
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+split_commits = false
+commit_preprocessors = [
+    # Remove issue/PR numbers from message for cleaner output
+    { pattern = '\(#(\d+)\)', replace = "" },
+]
+commit_parsers = [
+    { message = "^feat", group = "<!-- 0 -->Added" },
+    { message = "^fix", group = "<!-- 1 -->Fixed" },
+    { message = "^docs", group = "<!-- 2 -->Documentation" },
+    { message = "^style", group = "<!-- 3 -->Changed" },
+    { message = "^refactor", group = "<!-- 3 -->Changed" },
+    { message = "^perf", group = "<!-- 3 -->Changed" },
+    { message = "^test", group = "<!-- 4 -->Tests" },
+    { message = "^chore\\(release\\)", skip = true },
+    { message = "^chore\\(deps\\)", group = "<!-- 5 -->Dependencies" },
+    { message = "^chore", group = "<!-- 6 -->Chore" },
+    { message = "^revert", group = "<!-- 7 -->Reverted" },
+    { body = ".*BREAKING CHANGE", group = "<!-- 8 -->Breaking" },
+    { message = "^BREAKING CHANGE", group = "<!-- 8 -->Breaking" },
+]
+protect_breaking_commits = false
+filter_commits = false
+tag_pattern = "v[0-9].*"
+skip_tags = ""
+ignore_tags = ""
+topo_order = false
+sort_commits = "oldest"
