@@ -10,12 +10,19 @@
     mc:Ignorable="d">
     <Grid>
         <Grid.ColumnDefinitions>
+            <ColumnDefinition
+                x:Name="ColColorPalette"
+                Width="320"
+                MinWidth="32" />
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition
+                x:Name="ColImages"
+                Width="*"
+                MinWidth="100" />
         </Grid.ColumnDefinitions>
 
         <controls:CollapsibleColumnHelper
+            x:Name="ColorPalettePanel"
             Grid.Column="0"
             Margin="0"
             Glyph="&#xE70F;"
@@ -41,6 +48,7 @@
             ResizeBehavior="PreviousAndNext" />
 
         <controls:CollapsibleColumnHelper
+            x:Name="ImagesPanel"
             Grid.Column="2"
             Margin="0"
             Glyph="&#xE70F;"

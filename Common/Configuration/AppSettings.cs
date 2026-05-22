@@ -513,6 +513,10 @@ public class LayoutSettings
 
     public SolutionPageLayoutSettings SolutionPage { get; set; } = new();
 
+    public HelpPageLayoutSettings HelpPage { get; set; } = new();
+
+    public MatrixPageLayoutSettings MatrixPage { get; set; } = new();
+
     public WorkflowsPageLayoutSettings WorkflowsPage { get; set; } = new();
 
     public SignalBoxPageLayoutSettings SignalBoxPage { get; set; } = new();
@@ -704,12 +708,35 @@ public class TrainsPageLayoutSettings
     public bool IsPassengerLibraryExpanded { get; set; } = true;
     public bool IsGoodsLibraryExpanded { get; set; } = true;
     public bool IsPropertiesExpanded { get; set; } = true;
+    public double TrainListColumnStarValue { get; set; } = 0.9;
+    public double LocomotiveLibraryColumnStarValue { get; set; } = 0.8;
+    public double PassengerLibraryColumnStarValue { get; set; } = 0.8;
+    public double GoodsLibraryColumnStarValue { get; set; } = 0.8;
+    public double PropertiesColumnStarValue { get; set; } = 1.9;
 }
 
 public class SolutionPageLayoutSettings
 {
     public bool IsProjectListExpanded { get; set; } = true;
     public bool IsPropertiesExpanded { get; set; } = true;
+    public double ProjectListColumnStarValue { get; set; } = 1;
+    public double PropertiesColumnStarValue { get; set; } = 2.2;
+}
+
+public class HelpPageLayoutSettings
+{
+    public bool IsNavigationExpanded { get; set; } = true;
+    public bool IsDocumentationExpanded { get; set; } = true;
+    public double NavigationColumnWidth { get; set; } = 280;
+    public double DocumentationColumnStarValue { get; set; } = 1;
+}
+
+public class MatrixPageLayoutSettings
+{
+    public bool IsColorPaletteExpanded { get; set; } = true;
+    public bool IsImagesExpanded { get; set; } = true;
+    public double ColorPaletteColumnWidth { get; set; } = 320;
+    public double ImagesColumnStarValue { get; set; } = 1;
 }
 
 public class WorkflowsPageLayoutSettings
@@ -735,6 +762,7 @@ public class TrackPlanPageLayoutSettings
     public bool IsToolboxExpanded { get; set; } = true;
     public bool IsPropertiesExpanded { get; set; } = true;
     public double ToolboxColumnWidth { get; set; } = 180;
+    public double PropertiesColumnWidth { get; set; } = 240;
     public double PropertiesColumnStarValue { get; set; } = 1;
 }
 

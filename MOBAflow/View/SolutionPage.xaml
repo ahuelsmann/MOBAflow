@@ -12,9 +12,15 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="1*" MinWidth="32" />
+            <ColumnDefinition
+                x:Name="ColProjects"
+                Width="1*"
+                MinWidth="32" />
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="2.2*" MinWidth="32" />
+            <ColumnDefinition
+                x:Name="ColProperties"
+                Width="2.2*"
+                MinWidth="32" />
         </Grid.ColumnDefinitions>
 
         <!--  Projects List  -->
@@ -22,7 +28,7 @@
             Grid.Column="0"
             Glyph="&#xE8F1;"
             Header="Projects"
-            IsExpanded="True">
+            IsExpanded="{x:Bind ViewModel.IsProjectListExpanded, Mode=TwoWay}">
             <!--  Header: Title + Actions  -->
             <controls:CollapsibleColumnCollection.HeaderActions>
                 <StackPanel Orientation="Horizontal" Spacing="2">
@@ -82,7 +88,7 @@
             Grid.Column="2"
             Glyph="&#xE946;"
             Header="Properties"
-            IsExpanded="True">
+            IsExpanded="{x:Bind ViewModel.IsProjectPropertiesExpanded, Mode=TwoWay}">
             <controls:CollapsibleColumnProperties.PanelContent>
                 <ContentControl
                     HorizontalContentAlignment="Stretch"

@@ -1,11 +1,17 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
+using Common.Configuration;
+using Common.Extension;
+
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 
 using Moba.SharedUI.ViewModel;
+
+using SharedUI.Interface;
 
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
@@ -15,27 +21,61 @@ internal sealed partial class TrainsPage
 {
     public MainWindowViewModel ViewModel { get; }
 
-    private GridLength _trainsExpandedWidth = new(1.1, GridUnitType.Star);
-    private GridLength _locomotiveLibraryExpandedWidth = new(1, GridUnitType.Star);
-    private GridLength _passengerLibraryExpandedWidth = new(1, GridUnitType.Star);
-    private GridLength _goodsLibraryExpandedWidth = new(1, GridUnitType.Star);
-    private GridLength _propertiesExpandedWidth = new(1.25, GridUnitType.Star);
+    private readonly AppSettings _settings;
+    private readonly ISettingsService? _settingsService;
+    private readonly ILogger<TrainsPage>? _logger;
 
-    public TrainsPage(MainWindowViewModel viewModel)
+    private GridLength _trainsExpandedWidth = new(0.9, GridUnitType.Star);
+    private GridLength _locomotiveLibraryExpandedWidth = new(0.8, GridUnitType.Star);
+    private GridLength _passengerLibraryExpandedWidth = new(0.8, GridUnitType.Star);
+    private GridLength _goodsLibraryExpandedWidth = new(0.8, GridUnitType.Star);
+    private GridLength _propertiesExpandedWidth = new(1.9, GridUnitType.Star);
+
+    public TrainsPage(
+        MainWindowViewModel viewModel,
+        AppSettings settings,
+        ISettingsService? settingsService = null,
+        ILogger<TrainsPage>? logger = null)
     {
         ViewModel = viewModel;
+        _settings = settings;
+        _settingsService = settingsService;
+        _logger = logger;
         InitializeComponent();
 
-        ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+        Loaded += OnPageLoaded;
         Unloaded += OnPageUnloaded;
+    }
+
+    private void OnPageLoaded(object sender, RoutedEventArgs e)
+    {
+        ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+        ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+        RestoreLayout();
     }
 
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
     {
         _ = sender;
         _ = e;
-        ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
-        Unloaded -= OnPageUnloaded;
+        HandlePageUnloadedAsync().Observe(ex => _logger?.LogWarning(ex, "Persist layout on unload failed"));
+    }
+
+    private async Task HandlePageUnloadedAsync()
+    {
+        try
+        {
+            ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+            SaveLayout();
+            if (_settingsService != null)
+            {
+                await _settingsService.SaveSettingsAsync(_settings);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning(ex, "Persist layout on unload failed");
+        }
     }
 
     private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -77,6 +117,62 @@ internal sealed partial class TrainsPage
         {
             column.Width = rememberedWidth;
         }
+    }
+
+    private void RestoreLayout()
+    {
+        var layout = _settings.Layout.TrainsPage;
+
+        _trainsExpandedWidth = ToStarGridLength(layout.TrainListColumnStarValue, _trainsExpandedWidth);
+        _locomotiveLibraryExpandedWidth = ToStarGridLength(layout.LocomotiveLibraryColumnStarValue, _locomotiveLibraryExpandedWidth);
+        _passengerLibraryExpandedWidth = ToStarGridLength(layout.PassengerLibraryColumnStarValue, _passengerLibraryExpandedWidth);
+        _goodsLibraryExpandedWidth = ToStarGridLength(layout.GoodsLibraryColumnStarValue, _goodsLibraryExpandedWidth);
+        _propertiesExpandedWidth = ToStarGridLength(layout.PropertiesColumnStarValue, _propertiesExpandedWidth);
+
+        RestoreColumnState(layout.IsTrainListExpanded, ColTrains, _trainsExpandedWidth);
+        RestoreColumnState(layout.IsLocomotiveLibraryExpanded, ColLocomotives, _locomotiveLibraryExpandedWidth);
+        RestoreColumnState(layout.IsPassengerLibraryExpanded, ColPassengerWagons, _passengerLibraryExpandedWidth);
+        RestoreColumnState(layout.IsGoodsLibraryExpanded, ColGoodsWagons, _goodsLibraryExpandedWidth);
+        RestoreColumnState(layout.IsPropertiesExpanded, ColProperties, _propertiesExpandedWidth);
+    }
+
+    private void SaveLayout()
+    {
+        var layout = _settings.Layout.TrainsPage;
+
+        layout.IsTrainListExpanded = ViewModel.IsTrainsListExpanded;
+        layout.IsLocomotiveLibraryExpanded = ViewModel.IsTrainsLocomotiveLibraryExpanded;
+        layout.IsPassengerLibraryExpanded = ViewModel.IsTrainsPassengerLibraryExpanded;
+        layout.IsGoodsLibraryExpanded = ViewModel.IsTrainsGoodsLibraryExpanded;
+        layout.IsPropertiesExpanded = ViewModel.IsTrainsPropertiesExpanded;
+
+        layout.TrainListColumnStarValue = GetCurrentStarValue(ColTrains, _trainsExpandedWidth);
+        layout.LocomotiveLibraryColumnStarValue = GetCurrentStarValue(ColLocomotives, _locomotiveLibraryExpandedWidth);
+        layout.PassengerLibraryColumnStarValue = GetCurrentStarValue(ColPassengerWagons, _passengerLibraryExpandedWidth);
+        layout.GoodsLibraryColumnStarValue = GetCurrentStarValue(ColGoodsWagons, _goodsLibraryExpandedWidth);
+        layout.PropertiesColumnStarValue = GetCurrentStarValue(ColProperties, _propertiesExpandedWidth);
+    }
+
+    private static GridLength ToStarGridLength(double starValue, GridLength fallback)
+    {
+        return starValue > 0
+            ? new GridLength(starValue, GridUnitType.Star)
+            : fallback;
+    }
+
+    private static void RestoreColumnState(bool isExpanded, ColumnDefinition column, GridLength rememberedWidth)
+    {
+        column.Width = isExpanded ? rememberedWidth : GridLength.Auto;
+    }
+
+    private static double GetCurrentStarValue(ColumnDefinition column, GridLength fallback)
+    {
+        if (column.Width.IsStar)
+        {
+            return column.Width.Value;
+        }
+
+        return fallback.IsStar ? fallback.Value : 1;
     }
 
     private void LocomotiveLibraryListView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)

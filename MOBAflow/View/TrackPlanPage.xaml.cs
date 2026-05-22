@@ -73,7 +73,7 @@ public sealed partial class TrackPlanPage
     private double _rotationDragStartSegmentDegrees;
 
     private double _toolboxExpandedWidth = 180;
-    private double _propertiesExpandedStarValue = 1;
+    private double _propertiesExpandedWidth = 240;
 
     public TrackPlanPage(
         TrackPlanViewModel viewModel,
@@ -125,15 +125,19 @@ public sealed partial class TrackPlanPage
         {
             if (!ViewModel.IsPropertiesExpanded)
             {
-                if (ColProperties.Width.IsStar)
+                if (ColProperties.ActualWidth > 0)
                 {
-                    _propertiesExpandedStarValue = ColProperties.Width.Value;
+                    _propertiesExpandedWidth = ColProperties.ActualWidth;
+                }
+                else if (ColProperties.Width.IsAbsolute)
+                {
+                    _propertiesExpandedWidth = ColProperties.Width.Value;
                 }
                 ColProperties.Width = GridLength.Auto;
             }
             else
             {
-                ColProperties.Width = new GridLength(_propertiesExpandedStarValue, GridUnitType.Star);
+                ColProperties.Width = new GridLength(_propertiesExpandedWidth);
             }
         }
     }
@@ -204,9 +208,13 @@ public sealed partial class TrackPlanPage
         {
             _toolboxExpandedWidth = layout.ToolboxColumnWidth;
         }
-        if (layout.PropertiesColumnStarValue > 0)
+        if (layout.PropertiesColumnStarValue > 32)
         {
-            _propertiesExpandedStarValue = layout.PropertiesColumnStarValue;
+            _propertiesExpandedWidth = layout.PropertiesColumnStarValue;
+        }
+        else if (layout.PropertiesColumnWidth > 0)
+        {
+            _propertiesExpandedWidth = layout.PropertiesColumnWidth;
         }
 
         if (layout.IsToolboxExpanded)
@@ -220,7 +228,7 @@ public sealed partial class TrackPlanPage
 
         if (layout.IsPropertiesExpanded)
         {
-            ColProperties.Width = new GridLength(_propertiesExpandedStarValue, GridUnitType.Star);
+            ColProperties.Width = new GridLength(_propertiesExpandedWidth);
         }
         else
         {
@@ -253,13 +261,22 @@ public sealed partial class TrackPlanPage
             layout.ToolboxColumnWidth = _toolboxExpandedWidth;
         }
 
-        if (ColProperties.Width.IsStar)
+        if (ColProperties.ActualWidth > 0 && ViewModel.IsPropertiesExpanded)
         {
-            layout.PropertiesColumnStarValue = ColProperties.Width.Value;
+            _propertiesExpandedWidth = ColProperties.ActualWidth;
+            layout.PropertiesColumnWidth = _propertiesExpandedWidth;
+            layout.PropertiesColumnStarValue = 1;
+        }
+        else if (ColProperties.Width.IsAbsolute)
+        {
+            _propertiesExpandedWidth = ColProperties.Width.Value;
+            layout.PropertiesColumnWidth = _propertiesExpandedWidth;
+            layout.PropertiesColumnStarValue = 1;
         }
         else if (!ViewModel.IsPropertiesExpanded)
         {
-            layout.PropertiesColumnStarValue = _propertiesExpandedStarValue;
+            layout.PropertiesColumnWidth = _propertiesExpandedWidth;
+            layout.PropertiesColumnStarValue = 1;
         }
     }
 

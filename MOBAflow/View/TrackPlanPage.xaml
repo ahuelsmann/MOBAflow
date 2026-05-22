@@ -132,7 +132,7 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition
                     x:Name="ColProperties"
-                    Width="1*"
+                    Width="240"
                     MinWidth="32" />
             </Grid.ColumnDefinitions>
             <!--  Left Panel: Toolbox  -->

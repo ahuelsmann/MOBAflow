@@ -20,12 +20,12 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition
                 x:Name="ColList"
-                Width="1*"
+                Width="250"
                 MinWidth="32" />
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition
                 x:Name="ColProperties"
-                Width="3.5*"
+                Width="1*"
                 MinWidth="32" />
         </Grid.ColumnDefinitions>
 

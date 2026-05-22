@@ -7,13 +7,20 @@
 
     <Grid Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="280" MinWidth="32" />
+            <ColumnDefinition
+                x:Name="ColNavigation"
+                Width="280"
+                MinWidth="32" />
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="*" MinWidth="100" />
+            <ColumnDefinition
+                x:Name="ColDocumentation"
+                Width="*"
+                MinWidth="100" />
         </Grid.ColumnDefinitions>
 
         <!--  Navigation Panel  -->
         <controls:CollapsibleColumnCollection
+            x:Name="NavigationPanel"
             Grid.Column="0"
             Glyph="&#xE8A5;"
             Header="MOBAflow Wiki"
@@ -46,6 +53,7 @@
 
         <!--  Content Panel  -->
         <controls:CollapsibleColumnHelper
+            x:Name="DocumentationPanel"
             Grid.Column="2"
             Glyph="&#xE8A5;"
             Header="Documentation"

@@ -11,9 +11,9 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.Windows.Storage.Pickers;
 
 using Common.Extension;
-using SharedUI.ViewModel;
-
 using SharedUI.Interface;
+using SharedUI.Shell;
+using SharedUI.ViewModel;
 
 using Windows.ApplicationModel.DataTransfer;
 
@@ -28,13 +28,20 @@ internal sealed partial class SettingsPage
     private readonly ISettingsService? _settingsService;
     private readonly AppSettings? _settings;
     private readonly ILogger<SettingsPage>? _logger;
+    private readonly INavigationService? _navigationService;
 
-    public SettingsPage(MainWindowViewModel viewModel, ISettingsService? settingsService = null, AppSettings? settings = null, ILogger<SettingsPage>? logger = null)
+    public SettingsPage(
+        MainWindowViewModel viewModel,
+        ISettingsService? settingsService = null,
+        AppSettings? settings = null,
+        ILogger<SettingsPage>? logger = null,
+        INavigationService? navigationService = null)
     {
         ViewModel = viewModel;
         _settingsService = settingsService;
         _settings = settings;
         _logger = logger;
+        _navigationService = navigationService;
         InitializeComponent();
     }
 
@@ -111,15 +118,16 @@ internal sealed partial class SettingsPage
 
     private void AzureSpeechSetupButton_Click(object sender, RoutedEventArgs e)
     {
-        var parent = Parent;
-        while (parent != null)
+        _ = sender;
+        _ = e;
+        NavigateToAzureSpeechSetupAsync().Observe(ex => _logger?.LogWarning(ex, "Navigate to Azure Speech setup failed"));
+    }
+
+    private async Task NavigateToAzureSpeechSetupAsync()
+    {
+        if (_navigationService != null)
         {
-            if (parent is Frame frame)
-            {
-                frame.Navigate(typeof(HelpPage), "Azure Speech Setup");
-                return;
-            }
-            parent = (parent as FrameworkElement)?.Parent;
+            await _navigationService.NavigateToAsync("help", "Azure Speech Setup");
         }
     }
 

@@ -55,7 +55,7 @@ public class NavigationService : INavigationService
     /// For core pages: Direct Page instantiation
     /// For plugins: Uses ContentProvider pattern (CreateContent returns UIElement)
     /// </summary>
-    public async Task NavigateToPageAsync(string tag)
+    public async Task NavigateToPageAsync(string tag, object? parameter = null)
     {
         if (_contentFrame is null)
             throw new InvalidOperationException("NavigationService not initialized. Call InitializeAsync(Frame) first.");
@@ -77,12 +77,17 @@ public class NavigationService : INavigationService
             // For now, all pages are core pages (Plugins will use attributes later)
             // Resolve Page from DI and navigate
             var pageInstance = _serviceProvider.GetRequiredService(page.PageType);
+            if (parameter != null && pageInstance is INavigationParameterReceiver parameterReceiver)
+            {
+                parameterReceiver.ReceiveNavigationParameter(parameter);
+            }
             _contentFrame.Content = pageInstance;
 
             CurrentPageTag = tag;
             Navigated?.Invoke(this, new NavigationEventArgs
             {
                 PageTag = tag,
+                Parameter = parameter,
                 PreviousPageTag = previousTag
             });
         }
@@ -100,7 +105,7 @@ public class NavigationService : INavigationService
     {
         try
         {
-            await NavigateToPageAsync(pageTag);
+            await NavigateToPageAsync(pageTag, parameter);
             return true;
         }
         catch (Exception ex)
@@ -154,4 +159,9 @@ public class NavigationService : INavigationService
     {
         return NavigateToPageAsync("overview");
     }
+}
+
+internal interface INavigationParameterReceiver
+{
+    void ReceiveNavigationParameter(object parameter);
 }
