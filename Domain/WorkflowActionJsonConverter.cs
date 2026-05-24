@@ -50,6 +50,9 @@ public sealed class WorkflowActionJsonConverter : JsonConverter<WorkflowAction>
         if (TryGetPropertyInsensitive(root, "powerShell", out var psEl) && psEl.ValueKind == JsonValueKind.Object)
             action.PowerShell = JsonSerializer.Deserialize<PowerShellActionPayload>(psEl.GetRawText(), NestedOptions);
 
+        if (TryGetPropertyInsensitive(root, "selectSignalAspect", out var signalEl) && signalEl.ValueKind == JsonValueKind.Object)
+            action.SelectSignalAspect = JsonSerializer.Deserialize<SelectSignalAspectActionPayload>(signalEl.GetRawText(), NestedOptions);
+
         if (TryGetPropertyInsensitive(root, "trainDestinationDisplay", out var displayEl) && displayEl.ValueKind == JsonValueKind.Object)
             action.TrainDestinationDisplay = JsonSerializer.Deserialize<TrainDestinationDisplayActionPayload>(displayEl.GetRawText(), NestedOptions);
 
@@ -91,9 +94,13 @@ public sealed class WorkflowActionJsonConverter : JsonConverter<WorkflowAction>
                 writer.WritePropertyName("announcement");
                 JsonSerializer.Serialize(writer, value.Announcement ?? new AnnouncementActionPayload(), NestedOptions);
                 break;
-            case ActionType.ExecutePowerShellScript:
+            case ActionType.ExecuteScript:
                 writer.WritePropertyName("powerShell");
                 JsonSerializer.Serialize(writer, value.PowerShell ?? new PowerShellActionPayload(), NestedOptions);
+                break;
+            case ActionType.SelectSignalAspect:
+                writer.WritePropertyName("selectSignalAspect");
+                JsonSerializer.Serialize(writer, value.SelectSignalAspect ?? new SelectSignalAspectActionPayload(), NestedOptions);
                 break;
             case ActionType.TrainDestinationDisplay:
                 writer.WritePropertyName("trainDestinationDisplay");
@@ -122,6 +129,12 @@ public sealed class WorkflowActionJsonConverter : JsonConverter<WorkflowAction>
                 {
                     writer.WritePropertyName("powerShell");
                     JsonSerializer.Serialize(writer, value.PowerShell, NestedOptions);
+                }
+
+                if (value.SelectSignalAspect != null)
+                {
+                    writer.WritePropertyName("selectSignalAspect");
+                    JsonSerializer.Serialize(writer, value.SelectSignalAspect, NestedOptions);
                 }
 
                 if (value.TrainDestinationDisplay != null)
@@ -177,7 +190,7 @@ public sealed class WorkflowActionJsonConverter : JsonConverter<WorkflowAction>
                     action.Announcement.Rate = rate;
                 break;
 
-            case ActionType.ExecutePowerShellScript:
+            case ActionType.ExecuteScript:
                 action.PowerShell ??= new PowerShellActionPayload();
                 if (action.PowerShell.ScriptPath == null && TryGetInsensitive(legacyParams, "ScriptPath", out var spEl) && spEl.ValueKind == JsonValueKind.String)
                     action.PowerShell.ScriptPath = spEl.GetString();

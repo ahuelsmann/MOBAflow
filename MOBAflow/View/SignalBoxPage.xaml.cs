@@ -30,6 +30,7 @@ sealed partial class SignalBoxPage
     private readonly ILogger<SignalBoxPage>? _logger;
 
     private double _toolboxExpandedWidth = 240;
+    private double _canvasExpandedStarValue = 3;
     private double _propertiesExpandedStarValue = 1;
 
     public MainWindowViewModel ViewModel { get; }
@@ -95,6 +96,10 @@ sealed partial class SignalBoxPage
         {
             if (!ViewModel.IsSignalBoxPropertiesExpanded)
             {
+                if (ColCanvas.Width.IsStar)
+                {
+                    _canvasExpandedStarValue = ColCanvas.Width.Value;
+                }
                 if (ColProperties.Width.IsStar)
                 {
                     _propertiesExpandedStarValue = ColProperties.Width.Value;
@@ -103,6 +108,7 @@ sealed partial class SignalBoxPage
             }
             else
             {
+                ColCanvas.Width = new GridLength(_canvasExpandedStarValue, GridUnitType.Star);
                 ColProperties.Width = new GridLength(_propertiesExpandedStarValue, GridUnitType.Star);
             }
         }
@@ -164,7 +170,12 @@ sealed partial class SignalBoxPage
         {
             _propertiesExpandedStarValue = layout.PropertiesColumnStarValue;
         }
+        if (layout.CanvasColumnStarValue > 0)
+        {
+            _canvasExpandedStarValue = layout.CanvasColumnStarValue;
+        }
 
+        ColCanvas.Width = new GridLength(_canvasExpandedStarValue, GridUnitType.Star);
         if (layout.IsToolboxExpanded)
         {
             ColToolbox.Width = new GridLength(_toolboxExpandedWidth);
@@ -216,6 +227,15 @@ sealed partial class SignalBoxPage
         else if (!ViewModel.IsSignalBoxPropertiesExpanded)
         {
             layout.PropertiesColumnStarValue = _propertiesExpandedStarValue;
+        }
+
+        if (ColCanvas.Width.IsStar)
+        {
+            layout.CanvasColumnStarValue = ColCanvas.Width.Value;
+        }
+        else
+        {
+            layout.CanvasColumnStarValue = _canvasExpandedStarValue;
         }
     }
 

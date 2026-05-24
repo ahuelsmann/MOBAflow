@@ -155,6 +155,11 @@
                             Icon="Volume"
                             Label="Audio"
                             ToolTipService.ToolTip="Add an audio action" />
+                        <AppBarButton
+                            Command="{x:Bind ViewModel.AddSelectSignalAspectCommand}"
+                            Icon="Flag"
+                            Label="Signal"
+                            ToolTipService.ToolTip="Add a signal aspect action" />
                         <AppBarSeparator />
                         <AppBarButton
                             Command="{x:Bind ViewModel.DeleteActionCommand}"
@@ -194,6 +199,11 @@
                                 <MenuFlyoutItem Command="{x:Bind ViewModel.AddAudioCommand}" Text="Add Audio">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE767;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Command="{x:Bind ViewModel.AddSelectSignalAspectCommand}" Text="Add Signal Aspect">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE7C1;" />
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
                                 <MenuFlyoutSeparator />

@@ -1,0 +1,210 @@
+<UserControl
+    x:Class="Moba.WinUI.Controls.SignalAspectPicker"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Moba.WinUI.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+    <Grid ColumnSpacing="8" RowSpacing="8">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Border
+            x:Name="AspectHp0Button"
+            Grid.Row="0"
+            Grid.Column="0"
+            Height="112"
+            Padding="8"
+            BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="10"
+            PointerPressed="OnAspectClicked"
+            Tag="Hp0">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+                <controls:KsSignalScreen
+                    x:Name="AspectHp0Signal"
+                    Width="64"
+                    Height="70"
+                    IsHitTestVisible="False" />
+                <TextBlock x:Name="AspectHp0Label" HorizontalAlignment="Center" Text="Hp0" />
+            </StackPanel>
+        </Border>
+
+        <Border
+            x:Name="AspectKs1Button"
+            Grid.Row="0"
+            Grid.Column="1"
+            Height="112"
+            Padding="8"
+            BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="10"
+            PointerPressed="OnAspectClicked"
+            Tag="Ks1">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+                <controls:KsSignalScreen
+                    x:Name="AspectKs1Signal"
+                    Width="64"
+                    Height="70"
+                    IsHitTestVisible="False" />
+                <TextBlock x:Name="AspectKs1Label" HorizontalAlignment="Center" Text="Ks1" />
+            </StackPanel>
+        </Border>
+
+        <Border
+            x:Name="AspectKs2Button"
+            Grid.Row="0"
+            Grid.Column="2"
+            Height="112"
+            Padding="8"
+            BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="10"
+            PointerPressed="OnAspectClicked"
+            Tag="Ks2">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+                <controls:KsSignalScreen
+                    x:Name="AspectKs2Signal"
+                    Width="64"
+                    Height="70"
+                    IsHitTestVisible="False" />
+                <TextBlock x:Name="AspectKs2Label" HorizontalAlignment="Center" Text="Ks2" />
+            </StackPanel>
+        </Border>
+
+        <Border
+            x:Name="AspectKs1BlinkButton"
+            Grid.Row="1"
+            Grid.Column="0"
+            Height="112"
+            Padding="8"
+            BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="10"
+            PointerPressed="OnAspectClicked"
+            Tag="Ks1Blink">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+                <controls:KsSignalScreen
+                    x:Name="AspectKs1BlinkSignal"
+                    Width="64"
+                    Height="70"
+                    IsHitTestVisible="False" />
+                <TextBlock x:Name="AspectKs1BlinkLabel" HorizontalAlignment="Center" Text="Ks1 Bl" />
+            </StackPanel>
+        </Border>
+
+        <Border
+            x:Name="AspectKennlichtButton"
+            Grid.Row="1"
+            Grid.Column="1"
+            Height="112"
+            Padding="8"
+            BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="10"
+            PointerPressed="OnAspectClicked"
+            Tag="Kennlicht">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+                <controls:KsSignalScreen
+                    x:Name="AspectKennlichtSignal"
+                    Width="64"
+                    Height="70"
+                    IsHitTestVisible="False" />
+                <TextBlock x:Name="AspectKennlichtLabel" HorizontalAlignment="Center" Text="Kennl." />
+            </StackPanel>
+        </Border>
+
+        <Border
+            x:Name="AspectDunkelButton"
+            Grid.Row="1"
+            Grid.Column="2"
+            Height="112"
+            Padding="8"
+            BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="10"
+            PointerPressed="OnAspectClicked"
+            Tag="Dunkel">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+                <controls:KsSignalScreen
+                    x:Name="AspectDunkelSignal"
+                    Width="64"
+                    Height="70"
+                    IsHitTestVisible="False" />
+                <TextBlock x:Name="AspectDunkelLabel" HorizontalAlignment="Center" Text="Dunkel" />
+            </StackPanel>
+        </Border>
+
+        <Border
+            x:Name="AspectRa12Button"
+            Grid.Row="2"
+            Grid.Column="0"
+            Height="112"
+            Padding="8"
+            BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="10"
+            PointerPressed="OnAspectClicked"
+            Tag="Ra12">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+                <controls:KsSignalScreen
+                    x:Name="AspectRa12Signal"
+                    Width="64"
+                    Height="70"
+                    IsHitTestVisible="False" />
+                <TextBlock x:Name="AspectRa12Label" HorizontalAlignment="Center" Text="Ra12" />
+            </StackPanel>
+        </Border>
+
+        <Border
+            x:Name="AspectZs1Button"
+            Grid.Row="2"
+            Grid.Column="1"
+            Height="112"
+            Padding="8"
+            BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="10"
+            PointerPressed="OnAspectClicked"
+            Tag="Zs1">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+                <controls:KsSignalScreen
+                    x:Name="AspectZs1Signal"
+                    Width="64"
+                    Height="70"
+                    IsHitTestVisible="False" />
+                <TextBlock x:Name="AspectZs1Label" HorizontalAlignment="Center" Text="Zs1" />
+            </StackPanel>
+        </Border>
+
+        <Border
+            x:Name="AspectZs7Button"
+            Grid.Row="2"
+            Grid.Column="2"
+            Height="112"
+            Padding="8"
+            BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="10"
+            PointerPressed="OnAspectClicked"
+            Tag="Zs7">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+                <controls:KsSignalScreen
+                    x:Name="AspectZs7Signal"
+                    Width="64"
+                    Height="70"
+                    IsHitTestVisible="False" />
+                <TextBlock x:Name="AspectZs7Label" HorizontalAlignment="Center" Text="Zs7" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

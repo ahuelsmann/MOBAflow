@@ -160,6 +160,7 @@ internal class AppSettingsDefaultsTests
         Assert.That(layout.MatrixPage.ColorPaletteColumnWidth, Is.GreaterThan(0));
         Assert.That(layout.MatrixPage.ImagesColumnStarValue, Is.GreaterThan(0));
         Assert.That(layout.SignalBoxPage.ToolboxColumnWidth, Is.GreaterThan(0));
+        Assert.That(layout.SignalBoxPage.CanvasColumnStarValue, Is.GreaterThan(0));
         Assert.That(layout.SignalBoxPage.PropertiesColumnStarValue, Is.GreaterThan(0));
         Assert.That(layout.TrackPlanPage.ToolboxColumnWidth, Is.GreaterThan(0));
         Assert.That(layout.TrackPlanPage.PropertiesColumnWidth, Is.GreaterThan(0));

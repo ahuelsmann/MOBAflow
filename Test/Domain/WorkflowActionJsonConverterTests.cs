@@ -55,4 +55,34 @@ internal sealed class WorkflowActionJsonConverterTests
         Assert.That(result, Is.True);
         Assert.That(actual, Is.EqualTo(displayDeviceId));
     }
-}
+
+    [Test]
+    public void SerializeDeserialize_Should_RoundTripSelectSignalAspectPayload()
+    {
+        var action = new WorkflowAction
+        {
+            Id = Guid.NewGuid(),
+            Name = "Set signal",
+            Number = 4,
+            Type = ActionType.SelectSignalAspect,
+            DelayAfterMs = 100,
+            SelectSignalAspect = new SelectSignalAspectActionPayload
+            {
+                BaseAddress = 201,
+                SignalAspect = SignalAspect.Hp0,
+                MultiplexerArticleNumber = "5229",
+                SignalArticleNumber = "4046"
+            }
+        };
+
+        var json = JsonSerializer.Serialize(action);
+        var roundTripped = JsonSerializer.Deserialize<WorkflowAction>(json);
+
+        Assert.That(roundTripped, Is.Not.Null);
+        Assert.That(roundTripped!.Type, Is.EqualTo(ActionType.SelectSignalAspect));
+        Assert.That(roundTripped.SelectSignalAspect, Is.Not.Null);
+        Assert.That(roundTripped.SelectSignalAspect!.BaseAddress, Is.EqualTo(201));
+        Assert.That(roundTripped.SelectSignalAspect.SignalAspect, Is.EqualTo(SignalAspect.Hp0));
+        Assert.That(roundTripped.SelectSignalAspect.MultiplexerArticleNumber, Is.EqualTo("5229"));
+        Assert.That(roundTripped.SelectSignalAspect.SignalArticleNumber, Is.EqualTo("4046"));
+    }}

@@ -754,6 +754,7 @@ public class SignalBoxPageLayoutSettings
     public bool IsToolboxExpanded { get; set; } = true;
     public bool IsPropertiesExpanded { get; set; } = true;
     public double ToolboxColumnWidth { get; set; } = 240;
+    public double CanvasColumnStarValue { get; set; } = 3;
     public double PropertiesColumnStarValue { get; set; } = 1;
 }
 

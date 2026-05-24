@@ -172,6 +172,19 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
                     BytesBase64 = Convert.ToBase64String(new byte[] { 0x00 })
                 }
             },
+            ActionType.SelectSignalAspect => new WorkflowAction
+            {
+                Name = "New Signal Aspect",
+                Number = (uint)(_model.Actions.Count + 1),
+                Type = ActionType.SelectSignalAspect,
+                SelectSignalAspect = new SelectSignalAspectActionPayload
+                {
+                    BaseAddress = 1,
+                    SignalAspect = SignalAspect.Hp0,
+                    MultiplexerArticleNumber = "5229",
+                    SignalArticleNumber = "4046"
+                }
+            },
             ActionType.TrainDestinationDisplay => new WorkflowAction
             {
                 Name = "New Display Output",
@@ -210,6 +223,7 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
             AnnouncementViewModel avm => avm.ToWorkflowAction(),
             AudioViewModel audvm => audvm.ToWorkflowAction(),
             CommandViewModel cvm => cvm.ToWorkflowAction(),
+            SelectSignalAspectViewModel savm => savm.ToWorkflowAction(),
             _ => null
         };
 
@@ -276,6 +290,7 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
             ActionType.Announcement => new AnnouncementViewModel(action),
             ActionType.Audio => new AudioViewModel(action, _ioService, _soundPlayer),
             ActionType.Command => new CommandViewModel(action, _commandLogger),
+            ActionType.SelectSignalAspect => new SelectSignalAspectViewModel(action),
             _ => throw new NotSupportedException($"Action type {action.Type} is not supported")
         };
     }

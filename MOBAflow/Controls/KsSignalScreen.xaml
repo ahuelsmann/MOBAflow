@@ -51,11 +51,17 @@
                 Grid.Column="0"
                 Grid.ColumnSpan="4"
                 HorizontalAlignment="Stretch"
-                FontSize="10"
+                FontSize="16"
+                FontWeight="Bold"
                 Foreground="White"
+                RenderTransformOrigin="0.5,0.5"
                 Text=""
                 TextAlignment="Center"
-                Visibility="Collapsed" />
+                Visibility="Collapsed">
+                <TextBlock.RenderTransform>
+                    <ScaleTransform ScaleX="2.4" ScaleY="2.4" />
+                </TextBlock.RenderTransform>
+            </TextBlock>
 
             <!--  Row 1: W1  -->
             <Ellipse
@@ -137,11 +143,17 @@
                 Grid.Column="0"
                 Grid.ColumnSpan="4"
                 HorizontalAlignment="Stretch"
-                FontSize="10"
+                FontSize="16"
+                FontWeight="Bold"
                 Foreground="White"
+                RenderTransformOrigin="0.5,0.5"
                 Text=""
                 TextAlignment="Center"
-                Visibility="Collapsed" />
+                Visibility="Collapsed">
+                <TextBlock.RenderTransform>
+                    <ScaleTransform ScaleX="2.4" ScaleY="2.4" />
+                </TextBlock.RenderTransform>
+            </TextBlock>
         </Grid>
     </Viewbox>
 </UserControl>

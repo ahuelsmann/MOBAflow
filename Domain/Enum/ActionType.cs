@@ -9,15 +9,21 @@ public enum ActionType
     /// <summary>Play a spoken announcement.</summary>
     Announcement,
 
-    /// <summary>Send a digital command to the control unit (e.g., Z21).</summary>
-    Command,
-
     /// <summary>Play an audio file.</summary>
     Audio,
 
-    /// <summary>Execute a PowerShell script.</summary>
-    ExecutePowerShellScript,
+    /// <summary>Send a digital command to the control unit (e.g., Z21).</summary>
+    Command,
 
-    /// <summary>Refreshes the train destination display.</summary>
+    /// <summary>Execute a PowerShell script.</summary>
+    ExecuteScript,
+
+    /// <summary>Select matrix aspect.</summary>
+    Matrix,
+
+    /// <summary>Select signal aspect.</summary>
+    SelectSignalAspect,
+
+    /// <summary>Refresh train destination display.</summary>
     TrainDestinationDisplay,
 }

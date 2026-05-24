@@ -176,6 +176,17 @@ public partial class MainWindowViewModel
         ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
     }
     
+
+    [RelayCommand]
+    private void AddSelectSignalAspect()
+    {
+        if (SelectedWorkflow == null) return;
+
+        SelectedWorkflow.AddActionCommand.Execute(ActionType.SelectSignalAspect);
+
+        ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
+    }
+
     [RelayCommand(CanExecute = nameof(CanDeleteAction))]
     private void DeleteAction()
     {

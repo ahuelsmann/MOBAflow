@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend.Service;
 
+using Common.Multiplex;
+
 using Domain;
 using Domain.Enum;
 
@@ -39,6 +41,10 @@ public class ActionExecutor(
 
             case ActionType.TrainDestinationDisplay:
                 await ExecuteTrainDestinationDisplayAsync(action, context).ConfigureAwait(false);
+                break;
+
+            case ActionType.SelectSignalAspect:
+                await ExecuteSelectSignalAspectAsync(action, context).ConfigureAwait(false);
                 break;
 
             default:
@@ -154,5 +160,42 @@ public class ActionExecutor(
         }
 
         await trainDestinationDisplayService.UpdateAsync(action, context).ConfigureAwait(false);
+    }
+    private async Task ExecuteSelectSignalAspectAsync(WorkflowAction action, ActionExecutionContext context)
+    {
+        var payload = action.SelectSignalAspect ?? throw new ArgumentException("Select signal aspect action requires a signal aspect payload");
+
+        if (payload.BaseAddress is < 1 or > 2044)
+            throw new ArgumentOutOfRangeException(nameof(payload.BaseAddress), "Base DCC address must be in the range 1-2044.");
+
+        if (!MultiplexerHelper.TryGetMaxAddressOffset(
+                payload.MultiplexerArticleNumber,
+                payload.SignalArticleNumber,
+                out var maxOffset))
+        {
+            throw new ArgumentException(
+                $"No multiplexer mapping found for multiplexer '{payload.MultiplexerArticleNumber}' and signal article '{payload.SignalArticleNumber}'.");
+        }
+
+        if (payload.BaseAddress + maxOffset > 2044)
+            throw new ArgumentOutOfRangeException(nameof(payload.BaseAddress), "Base DCC address plus multiplexer offset exceeds 2044.");
+
+        if (!MultiplexerHelper.TryGetTurnoutCommand(
+                payload.MultiplexerArticleNumber,
+                payload.SignalArticleNumber,
+                payload.SignalAspect,
+                out var turnoutCommand))
+        {
+            throw new ArgumentException(
+                $"Signal aspect '{payload.SignalAspect}' is not supported for multiplexer '{payload.MultiplexerArticleNumber}' and signal article '{payload.SignalArticleNumber}'.");
+        }
+
+        var dccAddress = payload.BaseAddress + turnoutCommand.AddressOffset;
+        await context.Z21.SetTurnoutAsync(
+                dccAddress,
+                turnoutCommand.Output,
+                turnoutCommand.Activate,
+                false)
+            .ConfigureAwait(false);
     }
 }

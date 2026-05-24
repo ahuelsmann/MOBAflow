@@ -72,7 +72,7 @@ public sealed class AnnouncementActionPayload
 }
 
 /// <summary>
-/// Typed payload for <see cref="ActionType.ExecutePowerShellScript"/> (reserved for future execution support).
+/// Typed payload for <see cref="ActionType.ExecuteScript"/> (reserved for future execution support).
 /// </summary>
 public sealed class PowerShellActionPayload
 {
@@ -87,6 +87,32 @@ public sealed class PowerShellActionPayload
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Arguments { get; set; }
+}
+
+/// <summary>
+/// Typed payload for <see cref="ActionType.SelectSignalAspect"/> workflow actions.
+/// </summary>
+public sealed class SelectSignalAspectActionPayload
+{
+    /// <summary>
+    /// Base DCC accessory address of the signal or multiplexer address block.
+    /// </summary>
+    public int BaseAddress { get; set; }
+
+    /// <summary>
+    /// Desired signal aspect to show.
+    /// </summary>
+    public SignalAspect SignalAspect { get; set; } = SignalAspect.Hp0;
+
+    /// <summary>
+    /// Multiplexer article number used for address/output mapping.
+    /// </summary>
+    public string MultiplexerArticleNumber { get; set; } = "5229";
+
+    /// <summary>
+    /// Signal article number used for aspect mapping.
+    /// </summary>
+    public string SignalArticleNumber { get; set; } = "4046";
 }
 
 /// <summary>

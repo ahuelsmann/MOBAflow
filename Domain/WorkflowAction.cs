@@ -63,9 +63,14 @@ public class WorkflowAction
     public AnnouncementActionPayload? Announcement { get; set; }
 
     /// <summary>
-    /// Payload for <see cref="ActionType.ExecutePowerShellScript"/> actions.
+    /// Payload for <see cref="ActionType.ExecuteScript"/> actions.
     /// </summary>
     public PowerShellActionPayload? PowerShell { get; set; }
+
+    /// <summary>
+    /// Payload for <see cref="ActionType.SelectSignalAspect"/> actions.
+    /// </summary>
+    public SelectSignalAspectActionPayload? SelectSignalAspect { get; set; }
 
     /// <summary>
     /// Payload for <see cref="ActionType.TrainDestinationDisplay"/> actions.

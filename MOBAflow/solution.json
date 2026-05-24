@@ -159,9 +159,7 @@
               "number": 1,
               "type": 2,
               "delayAfterMs": 0,
-              "audio": {
-                "filePath": "C:\\Repo\\ahuelsmann\\MOBAflow\\Sound\\Resources\\Sounds\\273231__gollamar__announcement-04.wav"
-              }
+              "command": {}
             },
             {
               "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
@@ -171,6 +169,78 @@
               "delayAfterMs": 0,
               "announcement": {
                 "rate": -1
+              }
+            }
+          ],
+          "executionMode": 0,
+          "inPort": 0,
+          "isUsingTimerToIgnoreFeedbacks": false,
+          "intervalForTimerToIgnoreFeedbacks": 0
+        },
+        {
+          "id": "0c6c5064-5f2c-42ce-8aaf-dfe8ea28ec8c",
+          "name": "SignalRed",
+          "description": "",
+          "actions": [
+            {
+              "id": "97958600-a93c-42d4-a20e-3798d46daea4",
+              "name": "SignalRed",
+              "number": 1,
+              "type": 5,
+              "delayAfterMs": 0,
+              "selectSignalAspect": {
+                "baseAddress": 201,
+                "signalAspect": "Ra12",
+                "multiplexerArticleNumber": "5229",
+                "signalArticleNumber": "4046"
+              }
+            }
+          ],
+          "executionMode": 0,
+          "inPort": 0,
+          "isUsingTimerToIgnoreFeedbacks": false,
+          "intervalForTimerToIgnoreFeedbacks": 0
+        },
+        {
+          "id": "124171fc-cbf9-415e-bc94-e88770eb981a",
+          "name": "SignalYellow",
+          "description": "",
+          "actions": [
+            {
+              "id": "3c534192-af22-4053-806e-94706000747e",
+              "name": "SignalYellow",
+              "number": 1,
+              "type": 5,
+              "delayAfterMs": 0,
+              "selectSignalAspect": {
+                "baseAddress": 201,
+                "signalAspect": "Ks1Blink",
+                "multiplexerArticleNumber": "5229",
+                "signalArticleNumber": "4046"
+              }
+            }
+          ],
+          "executionMode": 0,
+          "inPort": 0,
+          "isUsingTimerToIgnoreFeedbacks": false,
+          "intervalForTimerToIgnoreFeedbacks": 0
+        },
+        {
+          "id": "ef9572ce-7705-42b0-8597-3d9f6fbe6f68",
+          "name": "SignalGreen",
+          "description": "",
+          "actions": [
+            {
+              "id": "9d14dc58-2c9c-454e-9d3c-ca95a267aead",
+              "name": "SignalGreen",
+              "number": 1,
+              "type": 5,
+              "delayAfterMs": 0,
+              "selectSignalAspect": {
+                "baseAddress": 201,
+                "signalAspect": "Dunkel",
+                "multiplexerArticleNumber": "5229",
+                "signalArticleNumber": "4046"
               }
             }
           ],
@@ -192,7 +262,7 @@
               "name": "Bielefeld Hauptbahnhof",
               "inPort": 0,
               "numberOfLapsToStop": 2,
-              "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+              "workflowId": "0c6c5064-5f2c-42ce-8aaf-dfe8ea28ec8c",
               "isExitOnLeft": true,
               "platforms": [],
               "platformNumber": 0,
@@ -206,7 +276,7 @@
               "name": "Herford",
               "inPort": 0,
               "numberOfLapsToStop": 2,
-              "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+              "workflowId": "124171fc-cbf9-415e-bc94-e88770eb981a",
               "isExitOnLeft": false,
               "platforms": [],
               "platformNumber": 0,
@@ -220,7 +290,7 @@
               "name": "Minden (Westf)",
               "inPort": 0,
               "numberOfLapsToStop": 2,
-              "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+              "workflowId": "ef9572ce-7705-42b0-8597-3d9f6fbe6f68",
               "isExitOnLeft": true,
               "platforms": [],
               "platformNumber": 0,
@@ -398,7 +468,9 @@
           {
             "$type": "Signal",
             "signalSystem": "Ks",
-            "signalAspect": "Zs1",
+            "signalAspect": "Ks1",
+            "topSpeedIndicator": "8",
+            "bottomSpeedIndicator": "6",
             "isMultiplexed": true,
             "multiplexerArticleNumber": "5229",
             "mainSignalArticleNumber": "4046",

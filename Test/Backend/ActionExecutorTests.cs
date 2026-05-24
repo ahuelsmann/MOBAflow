@@ -149,6 +149,29 @@ internal class ActionExecutorTests
         Assert.That(displayService.LastContext, Is.SameAs(_context));
     }
 
+
+    [Test]
+    public async Task ExecuteAsync_WithSelectSignalAspectAction_ShouldSendTurnoutCommand()
+    {
+        var action = new WorkflowAction
+        {
+            Id = Guid.NewGuid(),
+            Number = 6,
+            Name = "Set Hp0",
+            Type = ActionType.SelectSignalAspect,
+            SelectSignalAspect = new SelectSignalAspectActionPayload
+            {
+                BaseAddress = 201,
+                SignalAspect = SignalAspect.Hp0,
+                MultiplexerArticleNumber = "5229",
+                SignalArticleNumber = "4046"
+            }
+        };
+
+        await _actionExecutor.ExecuteAsync(action, _context);
+
+        Assert.That(_fakeUdp.SentPayloads, Is.Not.Empty);
+    }
     private sealed class RecordingTrainDestinationDisplayService : ITrainDestinationDisplayService
     {
         public int Calls { get; private set; }
