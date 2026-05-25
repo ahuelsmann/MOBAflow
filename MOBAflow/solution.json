@@ -154,12 +154,26 @@
           "description": "Plays announcement on station arrival",
           "actions": [
             {
+              "id": "7c46176e-2dd4-44cb-9c9e-ce1e2e6ac09d",
+              "name": "Aspect Red",
+              "number": 1,
+              "type": 5,
+              "delayAfterMs": 0,
+              "selectSignalAspect": {
+                "baseAddress": 201,
+                "signalAspect": "Ra12",
+                "multiplexerArticleNumber": "5229",
+                "signalArticleNumber": "4046"
+              }
+            },
+            {
               "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
               "name": "Arrival Announcement",
               "number": 2,
               "type": 0,
               "delayAfterMs": 0,
               "announcement": {
+                "message": "Wir erreichen jetzt {StationName}. Ausstieg: {StationIsExitOnLeft}.",
                 "rate": -1
               }
             }
@@ -240,22 +254,57 @@
           "inPort": 0,
           "isUsingTimerToIgnoreFeedbacks": false,
           "intervalForTimerToIgnoreFeedbacks": 0
+        },
+        {
+          "id": "b0830625-1939-403a-8878-05a8d8546323",
+          "name": "Next Stop Announcement",
+          "description": "Next Stop Announcement",
+          "actions": [
+            {
+              "id": "68762cfe-28ac-4814-9686-1fd7009e445b",
+              "name": "Aspect Yellow",
+              "number": 1,
+              "type": 5,
+              "delayAfterMs": 0,
+              "selectSignalAspect": {
+                "baseAddress": 201,
+                "signalAspect": "Ks1Blink",
+                "multiplexerArticleNumber": "5229",
+                "signalArticleNumber": "4046"
+              }
+            },
+            {
+              "id": "c60f8ab8-15ad-4f7d-a68c-0bfa95fa6afe",
+              "name": "Next Stop Announcement",
+              "number": 2,
+              "type": 0,
+              "delayAfterMs": 0,
+              "announcement": {
+                "message": "N\u00E4chster Halt: {StationName}. Ausstieg: {StationIsExitOnLeft}.",
+                "voiceName": "de-DE-KatjaNeural"
+              }
+            }
+          ],
+          "executionMode": 0,
+          "inPort": 0,
+          "isUsingTimerToIgnoreFeedbacks": false,
+          "intervalForTimerToIgnoreFeedbacks": 0
         }
       ],
       "journeys": [
         {
           "id": "c1d2e3f4-a5b6-7890-1234-567890abcdef",
           "name": "RE 78 (Porta-Express)",
-          "description": "Regional Express from Bielefeld to Minden",
+          "description": "Regional Express \rBielefeld - Minden",
           "text": "N\u00E4chster Halt: {StationName}. Ausstieg: {StationIsExitOnLeft}.",
           "stations": [
             {
-              "id": "4e7ce88c-1782-4185-b0e8-e4c63fea795b",
+              "id": "0284b108-361f-4357-ae1e-7fb8c52aa33e",
               "name": "Event3",
               "isVirtual": true,
               "inPort": 0,
               "numberOfLapsToStop": 1,
-              "workflowId": "124171fc-cbf9-415e-bc94-e88770eb981a",
+              "workflowId": "b0830625-1939-403a-8878-05a8d8546323",
               "isExitOnLeft": false,
               "platforms": [],
               "platformNumber": 0,
@@ -283,7 +332,7 @@
               "isVirtual": true,
               "inPort": 0,
               "numberOfLapsToStop": 1,
-              "workflowId": "124171fc-cbf9-415e-bc94-e88770eb981a",
+              "workflowId": "b0830625-1939-403a-8878-05a8d8546323",
               "isExitOnLeft": false,
               "platforms": [],
               "platformNumber": 0,
@@ -311,7 +360,7 @@
               "isVirtual": true,
               "inPort": 0,
               "numberOfLapsToStop": 1,
-              "workflowId": "124171fc-cbf9-415e-bc94-e88770eb981a",
+              "workflowId": "b0830625-1939-403a-8878-05a8d8546323",
               "isExitOnLeft": false,
               "platforms": [],
               "platformNumber": 0,
