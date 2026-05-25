@@ -157,7 +157,10 @@
                     SpinButtonPlacementMode="Inline"
                     Value="{Binding NumberOfLapsToStop, Mode=TwoWay}" />
 
-                <CheckBox Content="Exit On Left Side" IsChecked="{Binding IsExitOnLeft, Mode=TwoWay}" />
+                <CheckBox
+                    Content="Exit On Left Side"
+                    IsChecked="{Binding IsExitOnLeft, Mode=TwoWay}"
+                    Visibility="{Binding IsRealStation, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                 <!--  Workflow Assignment (Drop Target)  -->
                 <TextBlock
@@ -204,12 +207,14 @@
                 <TimePicker
                     ClockIdentifier="24HourClock"
                     Header="Arrival Time"
-                    Time="{Binding Arrival, Mode=TwoWay, Converter={StaticResource DateTimeToTimeSpanConverter}}" />
+                    Time="{Binding Arrival, Mode=TwoWay, Converter={StaticResource DateTimeToTimeSpanConverter}}"
+                    Visibility="{Binding IsRealStation, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                 <TimePicker
                     ClockIdentifier="24HourClock"
                     Header="Departure Time"
-                    Time="{Binding Departure, Mode=TwoWay, Converter={StaticResource DateTimeToTimeSpanConverter}}" />
+                    Time="{Binding Departure, Mode=TwoWay, Converter={StaticResource DateTimeToTimeSpanConverter}}"
+                    Visibility="{Binding IsRealStation, Converter={StaticResource BoolToVisibilityConverter}}" />
             </StackPanel>
         </ScrollViewer>
     </DataTemplate>

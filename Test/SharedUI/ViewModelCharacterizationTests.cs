@@ -10,6 +10,7 @@ using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Common.Runtime;
 using Moba.Domain;
+using Moba.Domain.Enum;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
 
@@ -73,6 +74,122 @@ internal class ViewModelCharacterizationTests
     }
 
     [Test]
+    public void TrainControlViewModel_Timetable_ShowsVirtualEventWithSignalAspect()
+    {
+        var workflowId = Guid.NewGuid();
+        var journey = new Journey
+        {
+            FirstPos = 1,
+            Stations =
+            [
+                new Station { Name = "Bielefeld", Arrival = new DateTime(2026, 5, 25, 12, 0, 0), Departure = new DateTime(2026, 5, 25, 12, 1, 0) },
+                new Station { Name = "Signal Event", IsVirtual = true, WorkflowId = workflowId },
+                new Station { Name = "Herford" }
+            ]
+        };
+        var workflow = new Workflow
+        {
+            Id = workflowId,
+            Actions =
+            [
+                new WorkflowAction
+                {
+                    Number = 1,
+                    Type = ActionType.SelectSignalAspect,
+                    SelectSignalAspect = new SelectSignalAspectActionPayload { SignalAspect = SignalAspect.Ks1 }
+                }
+            ]
+        };
+        var project = new Project { Journeys = [journey], Workflows = [workflow] };
+        var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = true });
+        var settingsServiceMock = CreateSettingsServiceMock();
+        var mainViewModel = CreateMainWindowViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object, new AppSettings());
+        mainViewModel.SelectedProject = new ProjectViewModel(project);
+        mainViewModel.SelectedJourney = mainViewModel.SelectedProject.Journeys.Single();
+        mainViewModel.SelectedJourney.UpdateFromSessionState(new JourneySessionState { JourneyId = journey.Id, CurrentPos = 1 });
+
+        var viewModel = new TrainControlViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object, mainViewModel);
+
+        Assert.That(viewModel.CurrentStationName, Is.EqualTo("Signal Event"));
+        Assert.That(viewModel.CurrentStationIsEvent, Is.True);
+        Assert.That(viewModel.CurrentStationArrival, Is.EqualTo("\u2014"));
+        Assert.That(viewModel.CurrentStationDeparture, Is.EqualTo("\u2014"));
+        Assert.That(viewModel.CurrentStationTrack, Is.EqualTo("Signal: Ks1"));
+        Assert.That(viewModel.CurrentStationShowsExitDirection, Is.False);
+        Assert.That(viewModel.PreviousStationName, Is.EqualTo("Bielefeld"));
+        Assert.That(viewModel.NextStationName, Is.EqualTo("Herford"));
+    }
+
+    [Test]
+    public void TrainControlViewModel_Timetable_ResolvesSignalAspectFromSolutionWhenSelectedProjectDiffers()
+    {
+        var workflowId = Guid.NewGuid();
+        var journey = new Journey
+        {
+            FirstPos = 0,
+            Stations =
+            [
+                new Station { Name = "Signal Event", IsVirtual = true, WorkflowId = workflowId }
+            ]
+        };
+        var workflow = new Workflow
+        {
+            Id = workflowId,
+            Actions =
+            [
+                new WorkflowAction
+                {
+                    Number = 1,
+                    Type = ActionType.SelectSignalAspect,
+                    SelectSignalAspect = new SelectSignalAspectActionPayload { SignalAspect = SignalAspect.Ks2 }
+                }
+            ]
+        };
+        var project = new Project { Name = "Runtime Project", Journeys = [journey], Workflows = [workflow] };
+        var otherProject = new Project { Name = "Other Project" };
+        var solution = new Solution { Projects = [project, otherProject] };
+        var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = true });
+        var settingsServiceMock = CreateSettingsServiceMock();
+        var mainViewModel = CreateMainWindowViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object, new AppSettings(), solution);
+        mainViewModel.SelectedProject = mainViewModel.SolutionViewModel?.Projects.Single(viewModel => viewModel.Model == otherProject);
+        mainViewModel.SelectedJourney = mainViewModel.SolutionViewModel?.Projects.Single(viewModel => viewModel.Model == project).Journeys.Single();
+
+        var viewModel = new TrainControlViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object, mainViewModel);
+
+        Assert.That(viewModel.CurrentStationTrack, Is.EqualTo("Signal: Ks2"));
+    }
+
+    [Test]
+    public void MainWindowViewModel_AssignWorkflowToStation_UsesExplicitTargetStation()
+    {
+        var firstStation = new Station { Name = "A" };
+        var secondStation = new Station { Name = "B" };
+        var workflow = new Workflow { Name = "Target workflow" };
+        var project = new Project
+        {
+            Journeys =
+            [
+                new Journey { Stations = [firstStation, secondStation] }
+            ],
+            Workflows = [workflow]
+        };
+        var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = true });
+        var settingsServiceMock = CreateSettingsServiceMock();
+        var mainViewModel = CreateMainWindowViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object, new AppSettings());
+        mainViewModel.SelectedProject = new ProjectViewModel(project);
+        mainViewModel.SelectedJourney = mainViewModel.SelectedProject.Journeys.Single();
+        mainViewModel.SelectedStation = mainViewModel.SelectedJourney.Stations[0];
+        var targetStation = mainViewModel.SelectedJourney.Stations[1];
+        var workflowViewModel = mainViewModel.SelectedProject.Workflows.Single();
+
+        mainViewModel.AssignWorkflowToStation(workflowViewModel, targetStation);
+
+        Assert.That(firstStation.WorkflowId, Is.Null);
+        Assert.That(secondStation.WorkflowId, Is.EqualTo(workflow.Id));
+        Assert.That(mainViewModel.SelectedStation, Is.SameAs(targetStation));
+    }
+
+    [Test]
     public void MainWindowViewModel_AutoStartWebApp_SetterPersistsSettings()
     {
         var mobaRuntimeMock = new Mock<IMobaRuntime>();
@@ -117,7 +234,8 @@ internal class ViewModelCharacterizationTests
     private static MainWindowViewModel CreateMainWindowViewModel(
         IMobaRuntime mobaRuntime,
         ISettingsService settingsService,
-        AppSettings settings)
+        AppSettings settings,
+        Solution? solution = null)
     {
         var eventBusMock = new Mock<IEventBus>();
         var uiDispatcherMock = new Mock<IUiDispatcher>();
@@ -133,7 +251,7 @@ internal class ViewModelCharacterizationTests
             eventBusMock.Object,
             uiDispatcherMock.Object,
             settings,
-            new Solution(),
+            solution ?? new Solution(),
             new ActionExecutionContext
             {
                 Z21 = new Mock<IZ21>().Object

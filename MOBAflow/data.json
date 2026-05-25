@@ -442,10 +442,10 @@
       ]
     },
     {
-      "Name": "DÃ¼sseldorf",
+      "Name": "Düsseldorf",
       "Stations": [
         {
-          "Name": "DÃ¼sseldorf Hauptbahnhof",
+          "Name": "Düsseldorf Hauptbahnhof",
           "Number": 0,
           "NumberOfLapsToStop": 0,
           "Arrival": null,
@@ -596,10 +596,10 @@
       ]
     },
     {
-      "Name": "FÃ¼rth",
+      "Name": "Fürth",
       "Stations": [
         {
-          "Name": "FÃ¼rth Hauptbahnhof",
+          "Name": "Fürth Hauptbahnhof",
           "Number": 0,
           "NumberOfLapsToStop": 0,
           "Arrival": null,
@@ -640,10 +640,10 @@
       ]
     },
     {
-      "Name": "GieÃŸen",
+      "Name": "Gießen",
       "Stations": [
         {
-          "Name": "GieÃŸen Bahnhof",
+          "Name": "Gießen Bahnhof",
           "Number": 0,
           "NumberOfLapsToStop": 0,
           "Arrival": null,
@@ -662,10 +662,10 @@
       ]
     },
     {
-      "Name": "GÃ¼tersloh",
+      "Name": "Gütersloh",
       "Stations": [
         {
-          "Name": "GÃ¼tersloh Hauptbahnhof",
+          "Name": "Gütersloh Hauptbahnhof",
           "Number": 0,
           "NumberOfLapsToStop": 0,
           "Arrival": null,
@@ -684,10 +684,10 @@
       ]
     },
     {
-      "Name": "GÃ¶ttingen",
+      "Name": "Göttingen",
       "Stations": [
         {
-          "Name": "GÃ¶ttingen Bahnhof",
+          "Name": "Göttingen Bahnhof",
           "Number": 0,
           "NumberOfLapsToStop": 0,
           "Arrival": null,
@@ -973,7 +973,7 @@
       "Name": "Kassel",
       "Stations": [
         {
-          "Name": "Kassel-WilhelmshÃ¶he",
+          "Name": "Kassel-Wilhelmshöhe",
           "Number": 0,
           "NumberOfLapsToStop": 0,
           "Arrival": null,
@@ -1036,10 +1036,10 @@
       ]
     },
     {
-      "Name": "KÃ¶ln",
+      "Name": "Köln",
       "Stations": [
         {
-          "Name": "KÃ¶ln Hauptbahnhof",
+          "Name": "Köln Hauptbahnhof",
           "Number": 0,
           "NumberOfLapsToStop": 0,
           "Arrival": null,
@@ -1146,10 +1146,10 @@
       ]
     },
     {
-      "Name": "LÃ¼beck",
+      "Name": "Lübeck",
       "Stations": [
         {
-          "Name": "LÃ¼beck Hauptbahnhof",
+          "Name": "Lübeck Hauptbahnhof",
           "Number": 0,
           "NumberOfLapsToStop": 0,
           "Arrival": null,
@@ -1190,10 +1190,10 @@
       ]
     },
     {
-      "Name": "LÃ¼neburg",
+      "Name": "Lüneburg",
       "Stations": [
         {
-          "Name": "LÃ¼neburg Bahnhof",
+          "Name": "Lüneburg Bahnhof",
           "Number": 0,
           "NumberOfLapsToStop": 0,
           "Arrival": null,
@@ -1322,10 +1322,10 @@
       ]
     },
     {
-      "Name": "MÃ¶nchengladbach",
+      "Name": "Mönchengladbach",
       "Stations": [
         {
-          "Name": "MÃ¶nchengladbach Hauptbahnhof",
+          "Name": "Mönchengladbach Hauptbahnhof",
           "Number": 0,
           "NumberOfLapsToStop": 0,
           "Arrival": null,
@@ -1344,10 +1344,10 @@
       ]
     },
     {
-      "Name": "MÃ¼lheim an der Ruhr",
+      "Name": "Mülheim an der Ruhr",
       "Stations": [
         {
-          "Name": "MÃ¼lheim (Ruhr) Hauptbahnhof",
+          "Name": "Mülheim (Ruhr) Hauptbahnhof",
           "Number": 0,
           "NumberOfLapsToStop": 0,
           "Arrival": null,
@@ -1366,10 +1366,10 @@
       ]
     },
     {
-      "Name": "MÃ¼nchen",
+      "Name": "München",
       "Stations": [
         {
-          "Name": "MÃ¼nchen Hauptbahnhof",
+          "Name": "München Hauptbahnhof",
           "Number": 0,
           "NumberOfLapsToStop": 0,
           "Arrival": null,
@@ -1388,10 +1388,10 @@
       ]
     },
     {
-      "Name": "MÃ¼nster",
+      "Name": "Münster",
       "Stations": [
         {
-          "Name": "MÃ¼nster (Westf) Hauptbahnhof",
+          "Name": "Münster (Westf) Hauptbahnhof",
           "Number": 0,
           "NumberOfLapsToStop": 0,
           "Arrival": null,
@@ -1432,10 +1432,10 @@
       ]
     },
     {
-      "Name": "NÃ¼rnberg",
+      "Name": "Nürnberg",
       "Stations": [
         {
-          "Name": "NÃ¼rnberg Hauptbahnhof",
+          "Name": "Nürnberg Hauptbahnhof",
           "Number": 0,
           "NumberOfLapsToStop": 0,
           "Arrival": null,
@@ -1520,10 +1520,10 @@
       ]
     },
     {
-      "Name": "OsnabrÃ¼ck",
+      "Name": "Osnabrück",
       "Stations": [
         {
-          "Name": "OsnabrÃ¼ck Hauptbahnhof",
+          "Name": "Osnabrück Hauptbahnhof",
           "Number": 0,
           "NumberOfLapsToStop": 0,
           "Arrival": null,
@@ -1718,10 +1718,10 @@
       ]
     },
     {
-      "Name": "SaarbrÃ¼cken",
+      "Name": "Saarbrücken",
       "Stations": [
         {
-          "Name": "SaarbrÃ¼cken Hauptbahnhof",
+          "Name": "Saarbrücken Hauptbahnhof",
           "Number": 0,
           "NumberOfLapsToStop": 0,
           "Arrival": null,
@@ -1982,10 +1982,10 @@
       ]
     },
     {
-      "Name": "WÃ¼rzburg",
+      "Name": "Würzburg",
       "Stations": [
         {
-          "Name": "WÃ¼rzburg Hauptbahnhof",
+          "Name": "Würzburg Hauptbahnhof",
           "Number": 0,
           "NumberOfLapsToStop": 0,
           "Arrival": null,
@@ -2105,21 +2105,21 @@
           "Vmax": 100,
           "Type": "Dampflok",
           "Epoch": "I-III",
-          "Description": "PreuÃŸische P 8"
+          "Description": "Preußische P 8"
         },
         {
           "Name": "BR 39",
           "Vmax": 110,
           "Type": "Dampflok",
           "Epoch": "II-III",
-          "Description": "PreuÃŸische P 10"
+          "Description": "Preußische P 10"
         },
         {
           "Name": "BR 41",
           "Vmax": 90,
           "Type": "Dampflok",
           "Epoch": "II-IV",
-          "Description": "GÃ¼terzug-/Personenzuglok"
+          "Description": "Güterzug-/Personenzuglok"
         },
         {
           "Name": "BR 42",
@@ -2133,21 +2133,21 @@
           "Vmax": 80,
           "Type": "Dampflok",
           "Epoch": "II-IV",
-          "Description": "Schwere GÃ¼terzuglok"
+          "Description": "Schwere Güterzuglok"
         },
         {
           "Name": "BR 45",
           "Vmax": 90,
           "Type": "Dampflok",
           "Epoch": "II-III",
-          "Description": "Schwere GÃ¼terzuglok"
+          "Description": "Schwere Güterzuglok"
         },
         {
           "Name": "BR 50",
           "Vmax": 80,
           "Type": "Dampflok",
           "Epoch": "II-IV",
-          "Description": "GÃ¼terzuglok"
+          "Description": "Güterzuglok"
         },
         {
           "Name": "BR 52",
@@ -2161,28 +2161,28 @@
           "Vmax": 55,
           "Type": "Dampflok",
           "Epoch": "I-III",
-          "Description": "PreuÃŸische G 8.1"
+          "Description": "Preußische G 8.1"
         },
         {
           "Name": "BR 56",
           "Vmax": 70,
           "Type": "Dampflok",
           "Epoch": "II-III",
-          "Description": "PreuÃŸische G 8.2"
+          "Description": "Preußische G 8.2"
         },
         {
           "Name": "BR 57",
           "Vmax": 65,
           "Type": "Dampflok",
           "Epoch": "I-III",
-          "Description": "PreuÃŸische G 10"
+          "Description": "Preußische G 10"
         },
         {
           "Name": "BR 58",
           "Vmax": 65,
           "Type": "Dampflok",
           "Epoch": "II-III",
-          "Description": "PreuÃŸische G 12"
+          "Description": "Preußische G 12"
         },
         {
           "Name": "BR 64",
@@ -2203,14 +2203,14 @@
           "Vmax": 75,
           "Type": "Dampflok",
           "Epoch": "I-III",
-          "Description": "PreuÃŸische T 11/T 12"
+          "Description": "Preußische T 11/T 12"
         },
         {
           "Name": "BR 78",
           "Vmax": 100,
           "Type": "Dampflok",
           "Epoch": "II-IV",
-          "Description": "PreuÃŸische T 18"
+          "Description": "Preußische T 18"
         },
         {
           "Name": "BR 80",
@@ -2252,14 +2252,14 @@
           "Vmax": 45,
           "Type": "Dampflok",
           "Epoch": "I-III",
-          "Description": "PreuÃŸische T 3"
+          "Description": "Preußische T 3"
         },
         {
           "Name": "BR 91",
           "Vmax": 65,
           "Type": "Dampflok",
           "Epoch": "I-III",
-          "Description": "PreuÃŸische T 9.3"
+          "Description": "Preußische T 9.3"
         },
         {
           "Name": "BR 92",
@@ -2273,14 +2273,14 @@
           "Vmax": 65,
           "Type": "Dampflok",
           "Epoch": "II-III",
-          "Description": "PreuÃŸische T 14.1"
+          "Description": "Preußische T 14.1"
         },
         {
           "Name": "BR 94",
           "Vmax": 65,
           "Type": "Dampflok",
           "Epoch": "I-IV",
-          "Description": "PreuÃŸische T 16.1"
+          "Description": "Preußische T 16.1"
         },
         {
           "Name": "BR 95",
@@ -2330,7 +2330,7 @@
           "Description": "Einheitslok"
         },
         {
-          "Name": "BR 110.3 (BÃ¼gelfalte)",
+          "Name": "BR 110.3 (Bügelfalte)",
           "Vmax": 150,
           "Type": "Elektrolok",
           "Epoch": "IV-V",
@@ -2341,7 +2341,7 @@
           "Vmax": 110,
           "Type": "Elektrolok",
           "Epoch": "III-VI",
-          "Description": "GÃ¼terzuglok"
+          "Description": "Güterzuglok"
         },
         {
           "Name": "E 41 / BR 141",
@@ -2362,7 +2362,7 @@
           "Vmax": 100,
           "Type": "Elektrolok",
           "Epoch": "III-V",
-          "Description": "Schwere GÃ¼terzuglok"
+          "Description": "Schwere Güterzuglok"
         },
         {
           "Name": "E 52 / BR 152 (alt)",
@@ -2425,7 +2425,7 @@
           "Vmax": 160,
           "Type": "Elektrolok",
           "Epoch": "IV-V",
-          "Description": "S-Bahn MÃ¼nchen"
+          "Description": "S-Bahn München"
         },
         {
           "Name": "BR 112 (DR)",
@@ -2467,7 +2467,7 @@
           "Vmax": 140,
           "Type": "Elektrolok",
           "Epoch": "V-VI",
-          "Description": "TRAXX-GÃ¼terlok"
+          "Description": "TRAXX-Güterlok"
         },
         {
           "Name": "BR 146",
@@ -2481,21 +2481,21 @@
           "Vmax": 120,
           "Type": "Elektrolok",
           "Epoch": "IV-VI",
-          "Description": "Schwere GÃ¼terzuglok"
+          "Description": "Schwere Güterzuglok"
         },
         {
           "Name": "BR 152",
           "Vmax": 140,
           "Type": "Elektrolok",
           "Epoch": "V-VI",
-          "Description": "Schwere GÃ¼terzuglok"
+          "Description": "Schwere Güterzuglok"
         },
         {
           "Name": "BR 155",
           "Vmax": 125,
           "Type": "Elektrolok",
           "Epoch": "IV-VI",
-          "Description": "DR 250 GÃ¼terlok"
+          "Description": "DR 250 Güterlok"
         },
         {
           "Name": "BR 156",
@@ -2661,7 +2661,7 @@
           "Vmax": 140,
           "Type": "Diesellok",
           "Epoch": "III-V",
-          "Description": "Schnellzuglok verstÃ¤rkt"
+          "Description": "Schnellzuglok verstärkt"
         },
         {
           "Name": "BR 225",
@@ -2682,14 +2682,14 @@
           "Vmax": 140,
           "Type": "Diesellok",
           "Epoch": "IV",
-          "Description": "DR GroÃŸdiesel"
+          "Description": "DR Großdiesel"
         },
         {
           "Name": "BR 231/232 (Ludmilla)",
           "Vmax": 120,
           "Type": "Diesellok",
           "Epoch": "IV-VI",
-          "Description": "Sowjetische GroÃŸdiesel"
+          "Description": "Sowjetische Großdiesel"
         },
         {
           "Name": "BR 233",
@@ -2717,7 +2717,7 @@
           "Vmax": 45,
           "Type": "Diesellok",
           "Epoch": "V-VI",
-          "Description": "KÃ¶f III"
+          "Description": "Köf III"
         },
         {
           "Name": "BR 363",
@@ -2736,7 +2736,7 @@
       ]
     },
     {
-      "Category": "ICE-ZÃ¼ge",
+      "Category": "ICE-Züge",
       "Series": [
         {
           "Name": "ICE 1 (BR 401)",
@@ -2814,7 +2814,7 @@
           "Description": "Wittfeld-Akkutriebwagen"
         },
         {
-          "Name": "ET 91 (GlÃ¤serner Zug)",
+          "Name": "ET 91 (Gläserner Zug)",
           "Vmax": 110,
           "Type": "Triebwagen",
           "Epoch": "III-IV",
@@ -2832,7 +2832,7 @@
           "Vmax": 120,
           "Type": "Triebzug",
           "Epoch": "IV-V",
-          "Description": "S-Bahn MÃ¼nchen"
+          "Description": "S-Bahn München"
         },
         {
           "Name": "ET 423",
@@ -3104,14 +3104,14 @@
           "Description": "Schnelltriebwagen 1933"
         },
         {
-          "Name": "SVT 137 (Bauart KÃ¶ln)",
+          "Name": "SVT 137 (Bauart Köln)",
           "Vmax": 160,
           "Type": "Triebwagen",
           "Epoch": "II-III",
           "Description": "Schnelltriebwagen"
         },
         {
-          "Name": "VT 04 (Fliegender KÃ¶lner)",
+          "Name": "VT 04 (Fliegender Kölner)",
           "Vmax": 160,
           "Type": "Triebwagen",
           "Epoch": "II-III",

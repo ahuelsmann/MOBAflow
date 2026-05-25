@@ -33,6 +33,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
 {
     #region Fields
     private const int ShutdownDisconnectTimeoutSeconds = 5;
+    private const uint DefaultStationLapsToStop = 1;
+    private const uint DefaultEventLapsToStop = 1;
+    private const string EventLibraryName = "Event";
 
     // Core Services (required)
     private readonly IIoService _ioService;
@@ -228,6 +231,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private ProjectViewModel? _selectedProject;
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(AddStationCommand))]
+    [NotifyCanExecuteChangedFor(nameof(AddEventCommand))]
+    [NotifyCanExecuteChangedFor(nameof(AddStationFromCityCommand))]
     private JourneyViewModel? _selectedJourney;
 
     [ObservableProperty]
@@ -290,7 +296,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         get
         {
             if (JourneysPageSelectedObject is JourneyViewModel) return "Journey Properties";
-            if (JourneysPageSelectedObject is StationViewModel) return "Station Properties";
+            if (JourneysPageSelectedObject is StationViewModel station) return station.IsVirtual ? "Event Properties" : "Station Properties";
             return "Properties";
         }
     }
@@ -529,13 +535,19 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (_cityLibraryService == null) return;
 
         var filtered = _cityLibraryService.FilterCities(value);
-        CityLibrary = new ObservableCollection<City>(filtered);
+        CityLibrary = new ObservableCollection<City>(BuildCityLibraryWithEvent(filtered, value));
     }
 
     [RelayCommand(CanExecute = nameof(CanAddStationFromCity))]
     private void AddStationFromCity(City city)
     {
         if (SelectedJourney == null) return;
+
+        if (city.IsVirtual)
+        {
+            AddEventToSelectedJourney();
+            return;
+        }
 
         // Get City's first station (Hauptbahnhof) - only the NAME
         var cityStation = city.Stations.FirstOrDefault();
@@ -547,8 +559,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
             Name = cityStation.Name,
             InPort = 0,
             IsExitOnLeft = false,
-            NumberOfLapsToStop = 1,
-            WorkflowId = null
+            NumberOfLapsToStop = DefaultStationLapsToStop,
+            WorkflowId = null,
+            IsVirtual = false
         };
 
         // Add JourneyStation to Journey
@@ -580,8 +593,40 @@ public sealed partial class MainWindowViewModel : ObservableObject
         // Ensure collection update happens on UI thread (WinUI requirement)
         _uiDispatcher.InvokeOnUi(() =>
         {
-            CityLibrary = new ObservableCollection<City>(cities);
+            CityLibrary = new ObservableCollection<City>(BuildCityLibraryWithEvent(cities, CitySearchText));
         });
+    }
+
+    private static IEnumerable<City> BuildCityLibraryWithEvent(IEnumerable<City> cities, string searchText)
+    {
+        if (string.IsNullOrWhiteSpace(searchText) || EventLibraryName.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+        {
+            yield return CreateEventCity();
+        }
+
+        foreach (var city in cities)
+        {
+            yield return city;
+        }
+    }
+
+    private static City CreateEventCity()
+    {
+        return new City
+        {
+            Name = EventLibraryName,
+            IsVirtual = true,
+            Stations =
+            [
+                new Station
+                {
+                    Name = EventLibraryName,
+                    InPort = 0,
+                    NumberOfLapsToStop = DefaultEventLapsToStop,
+                    IsVirtual = true
+                }
+            ]
+        };
     }
     #endregion
 
@@ -606,9 +651,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanAssignWorkflowToStation))]
     private void AssignWorkflowToStation(WorkflowViewModel? workflow)
     {
-        if (SelectedStation == null || workflow == null) return;
+        AssignWorkflowToStation(workflow, SelectedStation);
+    }
 
-        SelectedStation.WorkflowId = workflow.Model.Id;
+    public void AssignWorkflowToStation(WorkflowViewModel? workflow, StationViewModel? station)
+    {
+        if (station == null || workflow == null) return;
+
+        station.WorkflowId = workflow.Model.Id;
+        SelectedStation = station;
     }
 
     private bool CanAssignWorkflowToStation() => SelectedStation != null;

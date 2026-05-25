@@ -16,6 +16,7 @@
 
     <Page.Resources>
         <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <converter:ResourceKeyToBrushConverter x:Key="ResourceKeyToBrushConverter" />
     </Page.Resources>
 
     <Grid>
@@ -127,6 +128,12 @@
                         </Button>
                         <Button
                             Padding="4"
+                            Command="{x:Bind ViewModel.AddEventCommand}"
+                            ToolTipService.ToolTip="Add a new event to this journey">
+                            <FontIcon FontSize="14" Glyph="&#xE945;" />
+                        </Button>
+                        <Button
+                            Padding="4"
                             Command="{x:Bind ViewModel.DeleteStationCommand}"
                             ToolTipService.ToolTip="Remove the selected station">
                             <FontIcon FontSize="14" Glyph="&#xE74D;" />
@@ -148,8 +155,11 @@
                             Text="{x:Bind ViewModel.SelectedJourney.StationSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
                         <ListView
+                            x:Name="StationListView"
                             Grid.Row="1"
                             AllowDrop="True"
+                            CanDragItems="True"
+                            DragItemsStarting="StationListView_DragItemsStarting"
                             DragOver="StationListView_DragOver"
                             Drop="StationListView_Drop"
                             IsItemClickEnabled="True"
@@ -177,14 +187,31 @@
                             <ListView.ItemTemplate>
                                 <DataTemplate x:DataType="viewmodel:StationViewModel">
                                     <Grid Padding="6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
                                         <!--  Current Station Indicator  -->
                                         <Border
+                                            Grid.ColumnSpan="2"
                                             Margin="-6"
                                             Background="{ThemeResource SystemAccentColorLight2}"
                                             CornerRadius="4"
                                             Opacity="0.3"
                                             Visibility="{x:Bind IsCurrentStation, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
-                                        <TextBlock VerticalAlignment="Center" Text="{x:Bind Name, Mode=OneWay}" />
+                                        <FontIcon
+                                            Grid.Column="0"
+                                            Margin="0,0,8,0"
+                                            VerticalAlignment="Center"
+                                            FontSize="14"
+                                            Foreground="{x:Bind StationForegroundResourceKey, Mode=OneWay, Converter={StaticResource ResourceKeyToBrushConverter}}"
+                                            Glyph="{x:Bind StationIconGlyph, Mode=OneWay}"
+                                            ToolTipService.ToolTip="{x:Bind StationKindText, Mode=OneWay}" />
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            VerticalAlignment="Center"
+                                            Foreground="{x:Bind StationForegroundResourceKey, Mode=OneWay, Converter={StaticResource ResourceKeyToBrushConverter}}"
+                                            Text="{x:Bind Name, Mode=OneWay}" />
                                     </Grid>
                                 </DataTemplate>
                             </ListView.ItemTemplate>

@@ -15,6 +15,7 @@ internal class StationTests
         Assert.That(station.InPort, Is.EqualTo(0u));
         Assert.That(station.NumberOfLapsToStop, Is.EqualTo(1u));
         Assert.That(station.WorkflowId, Is.Null);
+        Assert.That(station.IsVirtual, Is.False);
         Assert.That(station.IsExitOnLeft, Is.False);
         Assert.That(station.Platforms, Is.Not.Null);
         Assert.That(station.Platforms, Is.Empty);
@@ -41,6 +42,7 @@ internal class StationTests
             InPort = 15,
             NumberOfLapsToStop = 3,
             WorkflowId = workflowId,
+            IsVirtual = true,
             IsExitOnLeft = true,
             Platforms = [new Platform { Number = 5, InPort = 20 }],
             Arrival = arrival,
@@ -54,6 +56,7 @@ internal class StationTests
         Assert.That(station.InPort, Is.EqualTo(15u));
         Assert.That(station.NumberOfLapsToStop, Is.EqualTo(3u));
         Assert.That(station.WorkflowId, Is.EqualTo(workflowId));
+        Assert.That(station.IsVirtual, Is.True);
         Assert.That(station.IsExitOnLeft, Is.True);
         Assert.That(station.Platforms, Has.Count.EqualTo(1));
         Assert.That(station.Platforms[0].Number, Is.EqualTo(5u));

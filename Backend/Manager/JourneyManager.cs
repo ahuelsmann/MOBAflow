@@ -190,6 +190,12 @@ public class JourneyManager : JourneyFeedbackManagerBase
             {
                 state.CurrentPos++;
             }
+
+            OnFeedbackReceived(new JourneyFeedbackEventArgs
+            {
+                JourneyId = journey.Id,
+                SessionState = state
+            });
         }
     }
 

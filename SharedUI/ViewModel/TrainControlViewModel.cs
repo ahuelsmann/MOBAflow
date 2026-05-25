@@ -10,6 +10,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using Domain;
+using Domain.Enum;
 
 using Interface;
 
@@ -758,18 +759,24 @@ public sealed partial class TrainControlViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(PreviousStationTrack))]
     [NotifyPropertyChangedFor(nameof(PreviousStationHasValue))]
     [NotifyPropertyChangedFor(nameof(PreviousStationIsExitOnLeft))]
+    [NotifyPropertyChangedFor(nameof(PreviousStationIsEvent))]
+    [NotifyPropertyChangedFor(nameof(PreviousStationShowsExitDirection))]
     [NotifyPropertyChangedFor(nameof(CurrentStationName))]
     [NotifyPropertyChangedFor(nameof(CurrentStationArrival))]
     [NotifyPropertyChangedFor(nameof(CurrentStationDeparture))]
     [NotifyPropertyChangedFor(nameof(CurrentStationTrack))]
     [NotifyPropertyChangedFor(nameof(CurrentStationHasValue))]
     [NotifyPropertyChangedFor(nameof(CurrentStationIsExitOnLeft))]
+    [NotifyPropertyChangedFor(nameof(CurrentStationIsEvent))]
+    [NotifyPropertyChangedFor(nameof(CurrentStationShowsExitDirection))]
     [NotifyPropertyChangedFor(nameof(NextStationName))]
     [NotifyPropertyChangedFor(nameof(NextStationArrival))]
     [NotifyPropertyChangedFor(nameof(NextStationDeparture))]
     [NotifyPropertyChangedFor(nameof(NextStationTrack))]
     [NotifyPropertyChangedFor(nameof(NextStationHasValue))]
     [NotifyPropertyChangedFor(nameof(NextStationIsExitOnLeft))]
+    [NotifyPropertyChangedFor(nameof(NextStationIsEvent))]
+    [NotifyPropertyChangedFor(nameof(NextStationShowsExitDirection))]
     private Journey? _currentJourney;
 
     /// <summary>
@@ -782,18 +789,24 @@ public sealed partial class TrainControlViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(PreviousStationTrack))]
     [NotifyPropertyChangedFor(nameof(PreviousStationHasValue))]
     [NotifyPropertyChangedFor(nameof(PreviousStationIsExitOnLeft))]
+    [NotifyPropertyChangedFor(nameof(PreviousStationIsEvent))]
+    [NotifyPropertyChangedFor(nameof(PreviousStationShowsExitDirection))]
     [NotifyPropertyChangedFor(nameof(CurrentStationName))]
     [NotifyPropertyChangedFor(nameof(CurrentStationArrival))]
     [NotifyPropertyChangedFor(nameof(CurrentStationDeparture))]
     [NotifyPropertyChangedFor(nameof(CurrentStationTrack))]
     [NotifyPropertyChangedFor(nameof(CurrentStationHasValue))]
     [NotifyPropertyChangedFor(nameof(CurrentStationIsExitOnLeft))]
+    [NotifyPropertyChangedFor(nameof(CurrentStationIsEvent))]
+    [NotifyPropertyChangedFor(nameof(CurrentStationShowsExitDirection))]
     [NotifyPropertyChangedFor(nameof(NextStationName))]
     [NotifyPropertyChangedFor(nameof(NextStationArrival))]
     [NotifyPropertyChangedFor(nameof(NextStationDeparture))]
     [NotifyPropertyChangedFor(nameof(NextStationTrack))]
     [NotifyPropertyChangedFor(nameof(NextStationHasValue))]
     [NotifyPropertyChangedFor(nameof(NextStationIsExitOnLeft))]
+    [NotifyPropertyChangedFor(nameof(NextStationIsEvent))]
+    [NotifyPropertyChangedFor(nameof(NextStationShowsExitDirection))]
     private int _currentStationIndex;
 
     // === Computed Properties for TimetableStopsControl ===
@@ -808,17 +821,17 @@ public sealed partial class TrainControlViewModel : ObservableObject
     /// <summary>
     /// Used by TimetableStopsControl to display the previous station arrival time.
     /// </summary>
-    public string PreviousStationArrival => GetPreviousStation()?.Arrival?.ToString("HH:mm") ?? StationPlaceholder;
+    public string PreviousStationArrival => ResolveArrivalText(GetPreviousStation());
 
     /// <summary>
     /// Used by TimetableStopsControl to display the previous station departure time.
     /// </summary>
-    public string PreviousStationDeparture => GetPreviousStation()?.Departure?.ToString("HH:mm") ?? StationPlaceholder;
+    public string PreviousStationDeparture => ResolveDepartureText(GetPreviousStation());
 
     /// <summary>
     /// Used by TimetableStopsControl to display the previous station track value.
     /// </summary>
-    public string PreviousStationTrack => ResolvePlatformText(GetPreviousStation());
+    public string PreviousStationTrack => ResolveTimetableDetailText(GetPreviousStation());
 
     /// <summary>
     /// Used by TimetableStopsControl to hide exit direction icons when there is no previous station.
@@ -830,6 +843,10 @@ public sealed partial class TrainControlViewModel : ObservableObject
     /// </summary>
     public bool PreviousStationIsExitOnLeft => GetPreviousStation()?.IsExitOnLeft ?? false;
 
+    public bool PreviousStationIsEvent => GetPreviousStation()?.IsVirtual ?? false;
+
+    public bool PreviousStationShowsExitDirection => GetPreviousStation() is { IsVirtual: false };
+
     /// <summary>
     /// Provides TimetableStopsControl with the current station name, using a placeholder when none.
     /// </summary>
@@ -838,17 +855,17 @@ public sealed partial class TrainControlViewModel : ObservableObject
     /// <summary>
     /// Used by TimetableStopsControl to display the current station arrival time.
     /// </summary>
-    public string CurrentStationArrival => GetCurrentStation()?.Arrival?.ToString("HH:mm") ?? StationPlaceholder;
+    public string CurrentStationArrival => ResolveArrivalText(GetCurrentStation());
 
     /// <summary>
     /// Used by TimetableStopsControl to display the current station departure time.
     /// </summary>
-    public string CurrentStationDeparture => GetCurrentStation()?.Departure?.ToString("HH:mm") ?? StationPlaceholder;
+    public string CurrentStationDeparture => ResolveDepartureText(GetCurrentStation());
 
     /// <summary>
     /// Used by TimetableStopsControl to display the current station track value.
     /// </summary>
-    public string CurrentStationTrack => ResolvePlatformText(GetCurrentStation());
+    public string CurrentStationTrack => ResolveTimetableDetailText(GetCurrentStation());
 
     /// <summary>
     /// Used by TimetableStopsControl to hide exit direction icons when there is no current station.
@@ -860,6 +877,10 @@ public sealed partial class TrainControlViewModel : ObservableObject
     /// </summary>
     public bool CurrentStationIsExitOnLeft => GetCurrentStation()?.IsExitOnLeft ?? false;
 
+    public bool CurrentStationIsEvent => GetCurrentStation()?.IsVirtual ?? false;
+
+    public bool CurrentStationShowsExitDirection => GetCurrentStation() is { IsVirtual: false };
+
     /// <summary>
     /// Provides TimetableStopsControl with the next station name, using a placeholder when none.
     /// </summary>
@@ -868,17 +889,17 @@ public sealed partial class TrainControlViewModel : ObservableObject
     /// <summary>
     /// Used by TimetableStopsControl to display the next station arrival time.
     /// </summary>
-    public string NextStationArrival => GetNextStation()?.Arrival?.ToString("HH:mm") ?? StationPlaceholder;
+    public string NextStationArrival => ResolveArrivalText(GetNextStation());
 
     /// <summary>
     /// Used by TimetableStopsControl to display the next station departure time.
     /// </summary>
-    public string NextStationDeparture => GetNextStation()?.Departure?.ToString("HH:mm") ?? StationPlaceholder;
+    public string NextStationDeparture => ResolveDepartureText(GetNextStation());
 
     /// <summary>
     /// Used by TimetableStopsControl to display the next station track value.
     /// </summary>
-    public string NextStationTrack => ResolvePlatformText(GetNextStation());
+    public string NextStationTrack => ResolveTimetableDetailText(GetNextStation());
 
     /// <summary>
     /// Used by TimetableStopsControl to hide exit direction icons when there is no next station.
@@ -890,16 +911,21 @@ public sealed partial class TrainControlViewModel : ObservableObject
     /// </summary>
     public bool NextStationIsExitOnLeft => GetNextStation()?.IsExitOnLeft ?? false;
 
+    public bool NextStationIsEvent => GetNextStation()?.IsVirtual ?? false;
+
+    public bool NextStationShowsExitDirection => GetNextStation() is { IsVirtual: false };
+
     private Station? GetPreviousStation()
     {
         if (CurrentJourney == null || CurrentJourney.Stations.Count == 0)
+        {
             return null;
+        }
 
-        var prevIndex = CurrentStationIndex - 1;
-        if (prevIndex < 0 || prevIndex >= CurrentJourney.Stations.Count)
-            return null;
-
-        return CurrentJourney.Stations[prevIndex];
+        var currentIndex = Math.Clamp(CurrentStationIndex, 0, CurrentJourney.Stations.Count);
+        return currentIndex <= 0
+            ? null
+            : CurrentJourney.Stations[currentIndex - 1];
     }
 
     private Station? GetCurrentStation()
@@ -908,7 +934,9 @@ public sealed partial class TrainControlViewModel : ObservableObject
             return null;
 
         if (CurrentStationIndex < 0 || CurrentStationIndex >= CurrentJourney.Stations.Count)
+        {
             return null;
+        }
 
         return CurrentJourney.Stations[CurrentStationIndex];
     }
@@ -920,9 +948,73 @@ public sealed partial class TrainControlViewModel : ObservableObject
 
         var nextIndex = CurrentStationIndex + 1;
         if (nextIndex < 0 || nextIndex >= CurrentJourney.Stations.Count)
+        {
             return null;
+        }
 
         return CurrentJourney.Stations[nextIndex];
+    }
+
+    private string ResolveArrivalText(Station? station)
+    {
+        if (station == null || station.IsVirtual)
+        {
+            return StationPlaceholder;
+        }
+
+        return station.Arrival?.ToString("HH:mm") ?? StationPlaceholder;
+    }
+
+    private string ResolveDepartureText(Station? station)
+    {
+        if (station == null || station.IsVirtual)
+        {
+            return StationPlaceholder;
+        }
+
+        return station.Departure?.ToString("HH:mm") ?? StationPlaceholder;
+    }
+
+    private string ResolveTimetableDetailText(Station? station)
+    {
+        if (station == null)
+        {
+            return StationPlaceholder;
+        }
+
+        if (station.IsVirtual)
+        {
+            return ResolveEventSignalText(station);
+        }
+
+        return ResolvePlatformText(station);
+    }
+
+    private string ResolveEventSignalText(Station station)
+    {
+        var workflow = station.WorkflowId.HasValue
+            ? ResolveWorkflow(station.WorkflowId.Value)
+            : null;
+        var signalAction = workflow?.Actions
+            .OrderBy(action => action.Number)
+            .FirstOrDefault(action => action.Type == ActionType.SelectSignalAspect && action.SelectSignalAspect != null);
+
+        return signalAction?.SelectSignalAspect != null
+            ? $"Signal: {signalAction.SelectSignalAspect.SignalAspect}"
+            : "Event";
+    }
+
+    private Workflow? ResolveWorkflow(Guid workflowId)
+    {
+        var selectedProjectWorkflow = _mainWindowViewModel?.SelectedProject?.Model.Workflows.FirstOrDefault(workflow => workflow.Id == workflowId);
+        if (selectedProjectWorkflow != null)
+        {
+            return selectedProjectWorkflow;
+        }
+
+        return _mainWindowViewModel?.SolutionViewModel?.Projects
+            .SelectMany(project => project.Model.Workflows)
+            .FirstOrDefault(workflow => workflow.Id == workflowId);
     }
 
     private static string ResolvePlatformText(Station? station)

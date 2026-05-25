@@ -16,6 +16,7 @@ using SharedUI.ViewModel;
 using SharedUI.Interface;
 
 using Windows.ApplicationModel.DataTransfer;
+using Windows.Foundation;
 using Windows.System;
 
 /// <summary>
@@ -300,12 +301,38 @@ internal sealed partial class JourneysPage
         }
     }
 
+    private void StationListView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
+    {
+        if (e.Items.FirstOrDefault() is StationViewModel station)
+        {
+            e.Data.Properties.Add("Station", station);
+            e.Data.RequestedOperation = DataPackageOperation.Move;
+            e.Data.SetText(station.Name);
+        }
+    }
+
     private void StationListView_DragOver(object sender, DragEventArgs e)
     {
         e.AcceptedOperation = DataPackageOperation.Copy;
 
         // Windows App SDK 2.0 Drag/Drop Visual Enhancements
-        if (e.DataView.Properties.ContainsKey("City"))
+        if (e.DataView.Properties.ContainsKey("Station"))
+        {
+            if (!string.IsNullOrWhiteSpace(ViewModel.SelectedJourney?.StationSearchText))
+            {
+                e.AcceptedOperation = DataPackageOperation.None;
+                e.DragUIOverride.Caption = "Clear search to reorder";
+                e.DragUIOverride.IsCaptionVisible = true;
+                return;
+            }
+
+            e.AcceptedOperation = DataPackageOperation.Move;
+            e.DragUIOverride.Caption = "Move station";
+            e.DragUIOverride.IsCaptionVisible = true;
+            e.DragUIOverride.IsContentVisible = true;
+            e.DragUIOverride.IsGlyphVisible = true;
+        }
+        else if (e.DataView.Properties.ContainsKey("City"))
         {
             e.DragUIOverride.Caption = "Add as station";
             e.DragUIOverride.IsCaptionVisible = true;
@@ -323,16 +350,67 @@ internal sealed partial class JourneysPage
 
     private void StationListView_Drop(object sender, DragEventArgs e)
     {
+        if (e.DataView.Properties.TryGetValue("Station", out object? stationObj) && stationObj is StationViewModel station)
+        {
+            if (!string.IsNullOrWhiteSpace(ViewModel.SelectedJourney?.StationSearchText))
+            {
+                return;
+            }
+
+            ViewModel.SelectedJourney?.MoveStationTo(station, GetStationDropIndex(e.GetPosition(StationListView)));
+            ViewModel.SelectedStation = station;
+        }
         // Handle City drop (create new Station)
-        if (e.DataView.Properties.TryGetValue("City", out object? cityObj) && cityObj is City city)
+        else if (e.DataView.Properties.TryGetValue("City", out object? cityObj) && cityObj is City city)
         {
             ViewModel.AddStationFromCityCommand.Execute(city);
         }
         // Handle Workflow drop (assign to selected Station)
         else if (e.DataView.Properties.TryGetValue("Workflow", out object? workflowObj) && workflowObj is WorkflowViewModel workflow)
         {
-            ViewModel.AssignWorkflowToStationCommand.Execute(workflow);
+            var targetStation = GetStationAtPosition(e.GetPosition(StationListView));
+            ViewModel.AssignWorkflowToStation(workflow, targetStation ?? ViewModel.SelectedStation);
         }
+    }
+
+    private StationViewModel? GetStationAtPosition(Point position)
+    {
+        for (var i = 0; i < StationListView.Items.Count; i++)
+        {
+            if (StationListView.ContainerFromIndex(i) is not ListViewItem container)
+            {
+                continue;
+            }
+
+            var topLeft = container.TransformToVisual(StationListView).TransformPoint(new Point(0, 0));
+            var bottom = topLeft.Y + container.ActualHeight;
+            if (position.Y >= topLeft.Y && position.Y <= bottom)
+            {
+                return StationListView.Items[i] as StationViewModel;
+            }
+        }
+
+        return null;
+    }
+
+    private int GetStationDropIndex(Point position)
+    {
+        for (var i = 0; i < StationListView.Items.Count; i++)
+        {
+            if (StationListView.ContainerFromIndex(i) is not ListViewItem container)
+            {
+                continue;
+            }
+
+            var topLeft = container.TransformToVisual(StationListView).TransformPoint(new Point(0, 0));
+            var center = topLeft.Y + (container.ActualHeight / 2);
+            if (position.Y < center)
+            {
+                return i;
+            }
+        }
+
+        return StationListView.Items.Count;
     }
 
     private void CityListView_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)

@@ -441,6 +441,31 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
         // PropertyChanged fires automatically via Stations property
     }
 
+    public void MoveStationTo(StationViewModel station, int insertIndex)
+    {
+        var currentIndex = Stations.IndexOf(station);
+        if (currentIndex < 0)
+        {
+            return;
+        }
+
+        var targetIndex = Math.Clamp(insertIndex, 0, Stations.Count);
+        if (currentIndex < targetIndex)
+        {
+            targetIndex--;
+        }
+
+        targetIndex = Math.Clamp(targetIndex, 0, Stations.Count - 1);
+        if (currentIndex == targetIndex)
+        {
+            return;
+        }
+
+        Stations.Move(currentIndex, targetIndex);
+        StationsReorderedCommand.Execute(null);
+        OnPropertyChanged(nameof(FilteredStations));
+    }
+
     /// <summary>
     /// Moves a station up in the journey (decreases its position by 1).
     /// </summary>

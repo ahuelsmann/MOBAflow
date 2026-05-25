@@ -3,6 +3,7 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
+using System.Collections.Specialized;
 using System.Collections.ObjectModel;
 
 /// <summary>
@@ -14,6 +15,7 @@ public sealed class JourneyMapViewModel : ObservableObject
     #region Fields
     // Context
     private readonly MainWindowViewModel _mainViewModel;
+    private JourneyViewModel? _observedJourney;
     #endregion
 
     /// <summary>
@@ -34,6 +36,7 @@ public sealed class JourneyMapViewModel : ObservableObject
                     OnPropertyChanged(nameof(AvailableJourneys));
                     break;
                 case nameof(MainWindowViewModel.SelectedJourney):
+                    AttachToSelectedJourney();
                     OnPropertyChanged(nameof(SelectedJourney));
                     OnPropertyChanged(nameof(HasSelectedJourney));
                     OnPropertyChanged(nameof(RouteStations));
@@ -44,6 +47,8 @@ public sealed class JourneyMapViewModel : ObservableObject
                     break;
             }
         };
+
+        AttachToSelectedJourney();
     }
 
     #region Journey Selection
@@ -64,6 +69,7 @@ public sealed class JourneyMapViewModel : ObservableObject
             if (_mainViewModel.SelectedJourney != value)
             {
                 _mainViewModel.SelectedJourney = value;
+                AttachToSelectedJourney();
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(HasSelectedJourney));
                 OnPropertyChanged(nameof(RouteStations));
@@ -81,8 +87,8 @@ public sealed class JourneyMapViewModel : ObservableObject
     /// <summary>
     /// Stations of the selected journey for route display.
     /// </summary>
-    public ObservableCollection<StationViewModel>? RouteStations =>
-        SelectedJourney?.Stations;
+    public IReadOnlyList<StationViewModel> RouteStations =>
+        SelectedJourney?.Stations.Where(station => station.IsRealStation).ToList() ?? [];
     #endregion
 
     #region Status Bar Properties
@@ -94,8 +100,10 @@ public sealed class JourneyMapViewModel : ObservableObject
         get
         {
             if (SelectedJourney == null) return "-";
-            var currentIndex = SelectedJourney.CurrentPos + 1;
-            var total = SelectedJourney.Stations.Count;
+            var total = RouteStations.Count;
+            var currentIndex = SelectedJourney.Stations
+                .Take(Math.Clamp(SelectedJourney.CurrentPos + 1, 0, SelectedJourney.Stations.Count))
+                .Count(station => station.IsRealStation);
             return $"Station {currentIndex} of {total}";
         }
     }
@@ -133,4 +141,43 @@ public sealed class JourneyMapViewModel : ObservableObject
         }
     }
     #endregion
+
+    private void AttachToSelectedJourney()
+    {
+        if (_observedJourney != null)
+        {
+            _observedJourney.PropertyChanged -= OnSelectedJourneyPropertyChanged;
+            _observedJourney.Stations.CollectionChanged -= OnSelectedJourneyStationsChanged;
+        }
+
+        _observedJourney = _mainViewModel.SelectedJourney;
+        if (_observedJourney != null)
+        {
+            _observedJourney.PropertyChanged += OnSelectedJourneyPropertyChanged;
+            _observedJourney.Stations.CollectionChanged += OnSelectedJourneyStationsChanged;
+        }
+    }
+
+    private void OnSelectedJourneyPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        _ = sender;
+        if (e.PropertyName is nameof(JourneyViewModel.CurrentPos) or nameof(JourneyViewModel.Stations))
+        {
+            OnPropertyChanged(nameof(RouteStations));
+            OnPropertyChanged(nameof(ProgressText));
+        }
+
+        if (e.PropertyName == nameof(JourneyViewModel.CurrentCounter))
+        {
+            OnPropertyChanged(nameof(CounterText));
+        }
+    }
+
+    private void OnSelectedJourneyStationsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        _ = sender;
+        _ = e;
+        OnPropertyChanged(nameof(RouteStations));
+        OnPropertyChanged(nameof(ProgressText));
+    }
 }

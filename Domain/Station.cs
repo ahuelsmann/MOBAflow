@@ -31,6 +31,8 @@ public class Station
     /// </summary>
     public string Name { get; set; }
 
+    public bool IsVirtual { get; set; }
+
     /// <summary>
     /// Id of the city this station belongs to (for persistence).
     /// </summary>

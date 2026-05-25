@@ -103,6 +103,83 @@ public sealed class JourneyManagerFeedbackTests
         Assert.That(state!.Counter, Is.EqualTo(0));
     }
 
+    [Test]
+    public async Task ProcessFeedbackAsync_VirtualStation_ExecutesWorkflow()
+    {
+        var z21Mock = new Mock<IZ21>();
+        var workflowMock = new Mock<IWorkflowService>();
+        var workflowId = Guid.NewGuid();
+        var eventStation = new Station
+        {
+            Name = "Event1",
+            IsVirtual = true,
+            NumberOfLapsToStop = 1,
+            WorkflowId = workflowId
+        };
+        var journey = new Journey
+        {
+            InPort = 1,
+            Stations =
+            [
+                eventStation,
+                new Station { Name = "Bielefeld", NumberOfLapsToStop = 1 }
+            ]
+        };
+        var project = new Project();
+        project.Workflows.Add(new Workflow { Id = workflowId, Name = "Event workflow" });
+        project.Journeys.Add(journey);
+        var context = new ActionExecutionContext { Z21 = z21Mock.Object };
+        Station? capturedStation = null;
+        workflowMock
+            .Setup(service => service.ExecuteAsync(It.IsAny<Workflow>(), It.IsAny<ActionExecutionContext>(), It.IsAny<WorkflowExecutionOptions>()))
+            .Callback<Workflow, ActionExecutionContext, WorkflowExecutionOptions>((_, executionContext, _) => capturedStation = executionContext.CurrentStation)
+            .Returns(Task.CompletedTask);
+
+        using var manager = new TestableJourneyManager(z21Mock.Object, project, workflowMock.Object, context);
+
+        await manager.RunProcessFeedbackAsync(new FeedbackResult(BuildFeedbackPacketForInPort(1))).ConfigureAwait(false);
+
+        workflowMock.Verify(
+            service => service.ExecuteAsync(
+                It.Is<Workflow>(workflow => workflow.Id == workflowId),
+                It.IsAny<ActionExecutionContext>(),
+                It.IsAny<WorkflowExecutionOptions>()),
+            Times.Once);
+        Assert.That(capturedStation, Is.SameAs(eventStation));
+    }
+
+    [Test]
+    public async Task ProcessFeedbackAsync_StationReached_RaisesFeedbackAfterPositionAdvance()
+    {
+        var z21Mock = new Mock<IZ21>();
+        var workflowMock = new Mock<IWorkflowService>();
+        var journey = new Journey
+        {
+            InPort = 1,
+            Stations =
+            [
+                new Station { Name = "Event1", IsVirtual = true, NumberOfLapsToStop = 1 },
+                new Station { Name = "Bielefeld", NumberOfLapsToStop = 1 }
+            ]
+        };
+        var project = new Project();
+        project.Journeys.Add(journey);
+        var context = new ActionExecutionContext { Z21 = z21Mock.Object };
+        using var manager = new TestableJourneyManager(z21Mock.Object, project, workflowMock.Object, context);
+        var feedbackPositions = new List<int>();
+        var feedbackCounters = new List<int>();
+        manager.FeedbackReceived += (_, args) =>
+        {
+            feedbackPositions.Add(args.SessionState.CurrentPos);
+            feedbackCounters.Add(args.SessionState.Counter);
+        };
+
+        await manager.RunProcessFeedbackAsync(new FeedbackResult(BuildFeedbackPacketForInPort(1))).ConfigureAwait(false);
+
+        Assert.That(feedbackPositions, Is.EqualTo(new[] { 0, 1 }));
+        Assert.That(feedbackCounters, Is.EqualTo(new[] { 1, 0 }));
+    }
+
     /// <summary>
     /// Builds a minimal LAN_RMBUS_DATACHANGED packet with a single active bit for the given 1-based InPort.
     /// </summary>

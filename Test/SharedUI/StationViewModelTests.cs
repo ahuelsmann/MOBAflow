@@ -91,6 +91,26 @@ internal class StationViewModelTests
     }
 
     [Test]
+    public void IsVirtual_SetValue_UpdatesModelAndComputedProperties()
+    {
+        _viewModel.IsVirtual = true;
+
+        Assert.That(_station.IsVirtual, Is.True);
+        Assert.That(_viewModel.IsRealStation, Is.False);
+        Assert.That(_viewModel.StationKindText, Is.EqualTo("Event"));
+        Assert.That(_viewModel.StationIconGlyph, Is.EqualTo("\uE945"));
+        Assert.That(_viewModel.StationForegroundResourceKey, Is.EqualTo("SystemFillColorCautionBrush"));
+    }
+
+    [Test]
+    public void StationIconGlyph_ForRealStation_ReturnsCityGlyph()
+    {
+        Assert.That(_viewModel.StationIconGlyph, Is.EqualTo("\uEC06"));
+        Assert.That(_viewModel.StationKindText, Is.EqualTo("Station"));
+        Assert.That(_viewModel.StationForegroundResourceKey, Is.EqualTo("TextFillColorPrimaryBrush"));
+    }
+
+    [Test]
     public void Name_SetValue_RaisesPropertyChanged()
     {
         var propertyChangedRaised = false;
