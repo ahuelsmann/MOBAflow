@@ -17,22 +17,29 @@
         <Grid RowSpacing="12">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
             <!--  Header  -->
-            <StackPanel Grid.Row="0">
+            <StackPanel x:Name="HeaderPanel" Grid.Row="0">
                 <TextBlock
                     FontSize="16"
                     FontWeight="SemiBold"
                     Text="Timetable / Stops" />
             </StackPanel>
 
-            <!--  Previous Station (grayed out)  -->
-            <Border
+            <ScrollViewer
+                x:Name="StopsScrollViewer"
                 Grid.Row="1"
+                HorizontalAlignment="Stretch"
+                HorizontalScrollMode="Disabled"
+                VerticalAlignment="Stretch"
+                VerticalScrollBarVisibility="Auto"
+                VerticalScrollMode="Auto">
+                <StackPanel Spacing="12">
+
+                    <!--  Previous Station (grayed out)  -->
+                    <Border
                 Padding="12"
                 Background="{ThemeResource LayerFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
@@ -144,7 +151,7 @@
 
             <!--  Current Station (highlighted)  -->
             <Border
-                Grid.Row="2"
+
                 Padding="14"
                 Background="{ThemeResource AccentFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource AccentControlElevationBorderBrush}"
@@ -267,7 +274,7 @@
 
             <!--  Next Station  -->
             <Border
-                Grid.Row="3"
+
                 Padding="12"
                 Background="{ThemeResource LayerFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
@@ -368,6 +375,8 @@
                     </StackPanel>
                 </Grid>
             </Border>
+                </StackPanel>
+            </ScrollViewer>
         </Grid>
     </Border>
 </UserControl>

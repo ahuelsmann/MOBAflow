@@ -42,6 +42,7 @@ MainWindowViewModel.OnFeedbackReceived() → IsConnected = true (UI thread safe)
 12. **No commands in code-behind** — Move to ViewModel with `IDialogService` for UI interaction
 13. **UserControls are input adapters only** — They may translate XAML events to `ICommand`, but must not own feature behavior
 14. **Persist star layout as star values** — Use `*ColumnStarValue` for star-sized columns; do not mix pixel persistence with star restore
+15. **Validate Light and Dark theme for every UI change** — Use `ThemeResource` / platform theme tokens for foregrounds, backgrounds, borders, icons, selected states, hover states, disabled states, drag/drop visuals, and custom converters. Never encode colors that only work in one theme.
 
 ---
 
@@ -66,6 +67,7 @@ MainWindowViewModel.OnFeedbackReceived() → IsConnected = true (UI thread safe)
 - Backend → ViewModel → View
 - Use `get_errors()` after each file
 - XAML: `ThemeResource` only
+- UI theme validation: verify Light and Dark theme contrast for new or changed views, templates, icons, visual states, and converters
 - MVVM: `[ObservableProperty]`, `[RelayCommand]`
 - UserControl input: expose `ICommand` dependency properties instead of page code-behind actions
 - Async: `await` always

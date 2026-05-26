@@ -74,7 +74,7 @@ public sealed partial class StationViewModel : ObservableObject, IViewModelWrapp
 
     public string StationKindText => IsVirtual ? "Event" : "Station";
 
-    public string StationForegroundResourceKey => IsVirtual ? "SystemFillColorCautionBrush" : "TextFillColorPrimaryBrush";
+    public string StationForegroundResourceKey => "TextFillColorPrimaryBrush";
 
     /// <summary>
     /// Gets or sets an optional description shown in the UI for this station.
@@ -115,9 +115,13 @@ public sealed partial class StationViewModel : ObservableObject, IViewModelWrapp
             if (SetProperty(_station.WorkflowId, value, _station, (m, v) => m.WorkflowId = v))
             {
                 OnPropertyChanged(nameof(WorkflowName));
+                OnPropertyChanged(nameof(HasWorkflow));
+                RemoveWorkflowCommand.NotifyCanExecuteChanged();
             }
         }
     }
+
+    public bool HasWorkflow => WorkflowId.HasValue;
 
     /// <summary>
     /// Gets the name of the assigned workflow, or a placeholder if none is assigned.
@@ -141,6 +145,14 @@ public sealed partial class StationViewModel : ObservableObject, IViewModelWrapp
         if (workflow == null) return;
         WorkflowId = workflow.Model.Id;
     }
+
+    [RelayCommand(CanExecute = nameof(CanRemoveWorkflow))]
+    private void RemoveWorkflow()
+    {
+        WorkflowId = null;
+    }
+
+    private bool CanRemoveWorkflow() => WorkflowId.HasValue;
 
     /// <summary>
     /// Gets or sets a value indicating whether the train exits this station on the left side.

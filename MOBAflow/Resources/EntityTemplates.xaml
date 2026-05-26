@@ -3,8 +3,11 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:behavior="using:Moba.WinUI.Behavior"
     xmlns:controls="using:Moba.WinUI.Controls"
+    xmlns:converter="using:Moba.WinUI.Converter"
     xmlns:i="using:Microsoft.Xaml.Interactivity"
     xmlns:selector="using:Moba.WinUI.Selector">
+
+    <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
 
     <!--  ============================================  -->
     <!--  Journey Template (Fluent Design 2)  -->
@@ -188,13 +191,20 @@
                         <TextBlock
                             Grid.Column="0"
                             VerticalAlignment="Center"
-                            Text="{Binding WorkflowName, Mode=OneWay, TargetNullValue='Drop workflow here...'}" />
-                        <FontIcon
+                            Text="{Binding WorkflowName, Mode=OneWay, TargetNullValue='Drop workflow here...'}"
+                            TextTrimming="CharacterEllipsis" />
+                        <Button
                             Grid.Column="1"
-                            FontSize="14"
-                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                            Glyph="&#xE74B;"
-                            ToolTipService.ToolTip="Drag a workflow from the library" />
+                            MinWidth="32"
+                            Padding="4"
+                            Command="{Binding RemoveWorkflowCommand}"
+                            ToolTipService.ToolTip="Remove workflow assignment"
+                            Visibility="{Binding HasWorkflow, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <FontIcon
+                                FontSize="14"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Glyph="&#xE711;" />
+                        </Button>
                     </Grid>
                 </Grid>
 
@@ -265,13 +275,20 @@
                         <TextBlock
                             Grid.Column="0"
                             VerticalAlignment="Center"
-                            Text="{Binding WorkflowName, Mode=OneWay, TargetNullValue='Drop workflow here...'}" />
-                        <FontIcon
+                            Text="{Binding WorkflowName, Mode=OneWay, TargetNullValue='Drop workflow here...'}"
+                            TextTrimming="CharacterEllipsis" />
+                        <Button
                             Grid.Column="1"
-                            FontSize="14"
-                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                            Glyph="&#xE74B;"
-                            ToolTipService.ToolTip="Drag a workflow from the library" />
+                            MinWidth="32"
+                            Padding="4"
+                            Command="{Binding RemoveWorkflowCommand}"
+                            ToolTipService.ToolTip="Remove workflow assignment"
+                            Visibility="{Binding HasWorkflow, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <FontIcon
+                                FontSize="14"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Glyph="&#xE711;" />
+                        </Button>
                     </Grid>
                 </Grid>
             </StackPanel>

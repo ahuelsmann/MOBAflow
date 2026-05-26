@@ -164,6 +164,27 @@ internal sealed partial class TimetableStopsControl
     public TimetableStopsControl()
     {
         InitializeComponent();
+        Loaded += OnLoaded;
+        SizeChanged += OnSizeChanged;
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        UpdateStopsScrollViewport();
+    }
+
+    private void OnSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        UpdateStopsScrollViewport();
+    }
+
+    private void UpdateStopsScrollViewport()
+    {
+        var maxHeight = ActualHeight - HeaderPanel.ActualHeight - 44;
+        if (maxHeight > 0)
+        {
+            StopsScrollViewer.MaxHeight = maxHeight;
+        }
     }
 
     // === Previous Station Properties ===

@@ -151,6 +151,11 @@ public sealed class WorkflowActionJsonConverter : JsonConverter<WorkflowAction>
 
     private static void MergeLegacyParameters(WorkflowAction action, JsonElement legacyParams)
     {
+        if (action.Type == ActionType.Command &&
+            (TryGetInsensitive(legacyParams, "FilePath", out _) || TryGetInsensitive(legacyParams, "AudioFile", out _)))
+        {
+            action.Type = ActionType.Audio;
+        }
         switch (action.Type)
         {
             case ActionType.Command:

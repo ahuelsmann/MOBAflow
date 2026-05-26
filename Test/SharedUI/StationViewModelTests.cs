@@ -91,6 +91,32 @@ internal class StationViewModelTests
     }
 
     [Test]
+    public void RemoveWorkflowCommand_WithAssignedWorkflow_ClearsWorkflow()
+    {
+        var workflowId = Guid.NewGuid();
+        _viewModel.WorkflowId = workflowId;
+
+        _viewModel.RemoveWorkflowCommand.Execute(null);
+
+        Assert.That(_station.WorkflowId, Is.Null);
+        Assert.That(_viewModel.WorkflowId, Is.Null);
+        Assert.That(_viewModel.HasWorkflow, Is.False);
+    }
+
+    [Test]
+    public void PlatformRemoveWorkflowCommand_WithAssignedWorkflow_ClearsWorkflow()
+    {
+        var platform = new Platform { WorkflowId = Guid.NewGuid() };
+        var viewModel = new PlatformViewModel(platform, _project);
+
+        viewModel.RemoveWorkflowCommand.Execute(null);
+
+        Assert.That(platform.WorkflowId, Is.Null);
+        Assert.That(viewModel.WorkflowId, Is.Null);
+        Assert.That(viewModel.HasWorkflow, Is.False);
+    }
+
+    [Test]
     public void IsVirtual_SetValue_UpdatesModelAndComputedProperties()
     {
         _viewModel.IsVirtual = true;
@@ -99,7 +125,7 @@ internal class StationViewModelTests
         Assert.That(_viewModel.IsRealStation, Is.False);
         Assert.That(_viewModel.StationKindText, Is.EqualTo("Event"));
         Assert.That(_viewModel.StationIconGlyph, Is.EqualTo("\uE945"));
-        Assert.That(_viewModel.StationForegroundResourceKey, Is.EqualTo("SystemFillColorCautionBrush"));
+        Assert.That(_viewModel.StationForegroundResourceKey, Is.EqualTo("TextFillColorPrimaryBrush"));
     }
 
     [Test]

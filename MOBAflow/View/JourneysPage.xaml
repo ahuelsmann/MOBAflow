@@ -204,13 +204,13 @@
                                             Margin="0,0,8,0"
                                             VerticalAlignment="Center"
                                             FontSize="14"
-                                            Foreground="{x:Bind StationForegroundResourceKey, Mode=OneWay, Converter={StaticResource ResourceKeyToBrushConverter}}"
+                                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"
                                             Glyph="{x:Bind StationIconGlyph, Mode=OneWay}"
                                             ToolTipService.ToolTip="{x:Bind StationKindText, Mode=OneWay}" />
                                         <TextBlock
                                             Grid.Column="1"
                                             VerticalAlignment="Center"
-                                            Foreground="{x:Bind StationForegroundResourceKey, Mode=OneWay, Converter={StaticResource ResourceKeyToBrushConverter}}"
+                                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"
                                             Text="{x:Bind Name, Mode=OneWay}" />
                                     </Grid>
                                 </DataTemplate>

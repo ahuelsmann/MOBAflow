@@ -204,6 +204,9 @@ public MainWindow()
 
 ## Light/Dark Theme Support
 
+
+All UI changes must be validated in both Light and Dark theme. Use `ThemeResource` / platform theme tokens for foregrounds, backgrounds, borders, icons, selected states, hover states, disabled states, drag/drop visuals, and custom converters. Never encode colors that only work in one theme; if a custom visual state is required, define theme-aware resources and verify contrast in both themes.
+
 ### Theme Resources
 
 ```xaml

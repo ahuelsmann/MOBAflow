@@ -80,9 +80,13 @@ public sealed partial class PlatformViewModel : ObservableObject, IViewModelWrap
             if (SetProperty(_platform.WorkflowId, value, _platform, (m, v) => m.WorkflowId = v))
             {
                 OnPropertyChanged(nameof(WorkflowName));
+                OnPropertyChanged(nameof(HasWorkflow));
+                RemoveWorkflowCommand.NotifyCanExecuteChanged();
             }
         }
     }
+
+    public bool HasWorkflow => WorkflowId.HasValue;
 
     /// <summary>
     /// Gets the name of the assigned workflow, or a placeholder if none is assigned.
@@ -103,4 +107,12 @@ public sealed partial class PlatformViewModel : ObservableObject, IViewModelWrap
         if (workflow == null) return;
         WorkflowId = workflow.Model.Id;
     }
+
+    [RelayCommand(CanExecute = nameof(CanRemoveWorkflow))]
+    private void RemoveWorkflow()
+    {
+        WorkflowId = null;
+    }
+
+    private bool CanRemoveWorkflow() => WorkflowId.HasValue;
 }

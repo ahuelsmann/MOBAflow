@@ -111,9 +111,10 @@ public class ActionExecutor(
     private async Task ExecuteAnnouncementAsync(WorkflowAction action, ActionExecutionContext context)
     {
         // Verify prerequisites
-        if (string.IsNullOrEmpty(context.JourneyTemplateText))
+        var templateText = action.Announcement?.Message ?? context.JourneyTemplateText;
+        if (string.IsNullOrEmpty(templateText))
         {
-            logger?.LogWarning("Announcement '{ActionName}' skipped: missing journey template text", action.Name);
+            logger?.LogWarning("Announcement '{ActionName}' skipped: missing announcement template text", action.Name);
             return;
         }
 
@@ -133,7 +134,7 @@ public class ActionExecutor(
 
         // Generate announcement text from template
         var announcementText = announcementService.GenerateAnnouncementText(
-            context.JourneyTemplateText,
+            templateText,
             context.CurrentStation,
             stationIndex,
             action.Name
@@ -141,7 +142,7 @@ public class ActionExecutor(
 
         // Speak the announcement
         await announcementService.GenerateAndSpeakAnnouncementAsync(
-            context.JourneyTemplateText,
+            templateText,
             context.CurrentStation,
             stationIndex,
             CancellationToken.None,
