@@ -297,6 +297,16 @@ public sealed partial class MobaRuntimeService
                 return;
             }
 
+            // Warn if any signal aspect resolves to a pure deactivate command (likely no-op on hardware)
+            if (!turnoutCommand.Activate)
+            {
+                _logger.LogWarning(
+                    "Signal '{SignalName}': Aspect {Aspect} mapped to Activate=false. " +
+                    "This typically does not switch the Viessmann multiplexer; verify hardware behavior.",
+                    signal.Name,
+                    signal.SignalAspect);
+            }
+
             var dccAddress = signal.BaseAddress + turnoutCommand.AddressOffset;
             if (dccAddress is < 1 or > 2044)
             {

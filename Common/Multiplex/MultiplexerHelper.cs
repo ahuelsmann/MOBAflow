@@ -227,11 +227,11 @@ public static class MultiplexerHelper
     /// 5229 - Multiplexer for light signals with multiplex technology.
     /// Controls 1 main signal (e.g. 4046) + 1 distant signal (e.g. 4040, synchronized).
     ///
-    /// DCC mapping at base address B = 201 (four addresses: 201..204 for offsets 0..3):
-    /// - Address 201 (Offset 0): Hp0 = output 1, false (red); Ks1 = output 1, true (green)
-    /// - Address 202 (Offset 1): Ra12 = output 0, true
-    /// - Address 203 (Offset 2): Ks2 = output 0, true; Ks1Blink = output 1, true
-    /// - Address 204 (Offset 3): optionally other aspects (e.g. Kennlicht/Dunkel)
+    /// DCC mapping at base address B (four addresses: B..B+3 for offsets 0..3):
+    /// - Address [B] (Offset 0): Hp0 = output 0, true; Ks1 = output 1, true
+    /// - Address [B+1] (Offset 1): Ra12 = output 0, true; Zs1 = output 1, true
+    /// - Address [B+2] (Offset 2): Ks2 = output 0, true; Ks1Blink = output 1, true
+    /// - Address [B+3] (Offset 3): Kennlicht = output 0, true; Dunkel = output 1, true
     /// Polarity reversible per address: Settings → interlocking/Viessmann signals or signalBox.invertPolarityOffset0 … Offset3.
     /// </summary>
     private static MultiplexerDefinition Create5229Definition()
@@ -270,8 +270,9 @@ public static class MultiplexerHelper
                 },
                 ["4046"] = new Dictionary<SignalAspect, MultiplexerTurnoutCommand>
                 {
-                    // Address [B]  (Offset 0)  -> Hp0 / Ks1
-                    { SignalAspect.Hp0, new MultiplexerTurnoutCommand(0, 1, false) },
+                    // Address [B] (Offset 0) -> Hp0 / Ks1
+                    // Both use Activate=true (required for Viessmann multiplexer to switch)
+                    { SignalAspect.Hp0, new MultiplexerTurnoutCommand(0, 0, true) },
                     { SignalAspect.Ks1, new MultiplexerTurnoutCommand(0, 1, true) },
 
                     // Address [B+1] (Offset 1) -> Sh1 / weitere Kombinationen

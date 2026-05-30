@@ -184,78 +184,6 @@
           "intervalForTimerToIgnoreFeedbacks": 0
         },
         {
-          "id": "0c6c5064-5f2c-42ce-8aaf-dfe8ea28ec8c",
-          "name": "SignalRed",
-          "description": "",
-          "actions": [
-            {
-              "id": "97958600-a93c-42d4-a20e-3798d46daea4",
-              "name": "SignalRed",
-              "number": 1,
-              "type": 5,
-              "delayAfterMs": 0,
-              "selectSignalAspect": {
-                "baseAddress": 201,
-                "signalAspect": "Ra12",
-                "multiplexerArticleNumber": "5229",
-                "signalArticleNumber": "4046"
-              }
-            }
-          ],
-          "executionMode": 0,
-          "inPort": 0,
-          "isUsingTimerToIgnoreFeedbacks": false,
-          "intervalForTimerToIgnoreFeedbacks": 0
-        },
-        {
-          "id": "124171fc-cbf9-415e-bc94-e88770eb981a",
-          "name": "SignalYellow",
-          "description": "",
-          "actions": [
-            {
-              "id": "3c534192-af22-4053-806e-94706000747e",
-              "name": "SignalYellow",
-              "number": 1,
-              "type": 5,
-              "delayAfterMs": 0,
-              "selectSignalAspect": {
-                "baseAddress": 201,
-                "signalAspect": "Ks1Blink",
-                "multiplexerArticleNumber": "5229",
-                "signalArticleNumber": "4046"
-              }
-            }
-          ],
-          "executionMode": 0,
-          "inPort": 0,
-          "isUsingTimerToIgnoreFeedbacks": false,
-          "intervalForTimerToIgnoreFeedbacks": 0
-        },
-        {
-          "id": "ef9572ce-7705-42b0-8597-3d9f6fbe6f68",
-          "name": "SignalGreen",
-          "description": "",
-          "actions": [
-            {
-              "id": "9d14dc58-2c9c-454e-9d3c-ca95a267aead",
-              "name": "SignalGreen",
-              "number": 1,
-              "type": 5,
-              "delayAfterMs": 0,
-              "selectSignalAspect": {
-                "baseAddress": 201,
-                "signalAspect": "Dunkel",
-                "multiplexerArticleNumber": "5229",
-                "signalArticleNumber": "4046"
-              }
-            }
-          ],
-          "executionMode": 0,
-          "inPort": 0,
-          "isUsingTimerToIgnoreFeedbacks": false,
-          "intervalForTimerToIgnoreFeedbacks": 0
-        },
-        {
           "id": "b0830625-1939-403a-8878-05a8d8546323",
           "name": "Next Stop Announcement",
           "description": "Next Stop Announcement",
@@ -553,7 +481,7 @@
           {
             "$type": "Signal",
             "signalSystem": "Ks",
-            "signalAspect": "Ks1",
+            "signalAspect": "Hp0",
             "topSpeedIndicator": "8",
             "bottomSpeedIndicator": "6",
             "isMultiplexed": true,
@@ -562,8 +490,8 @@
             "distantSignalArticleNumber": "4040",
             "baseAddress": 201,
             "extendedAccessoryValue": 1,
-            "id": "02810223-a04c-4b4c-ba92-f7e34e07b275",
-            "x": 4,
+            "id": "3d6c0ace-dde2-4329-95d5-8e474b65828f",
+            "x": 6,
             "y": 4,
             "rotation": 0,
             "name": "",
