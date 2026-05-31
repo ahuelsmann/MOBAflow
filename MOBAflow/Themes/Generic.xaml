@@ -37,25 +37,23 @@
                             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                             BorderThickness="1"
                             CornerRadius="8">
-                            
+
                             <!--  Subtle accent bar on the left  -->
-                            <Border 
-                                Width="3" 
-                                Margin="0,8,0,8" 
-                                HorizontalAlignment="Left" 
+                            <Border
+                                Width="3"
+                                Margin="0,8,0,8"
+                                HorizontalAlignment="Left"
                                 Background="#FFE666"
-                                Opacity="0.16"
-                                CornerRadius="2" />
-                                
+                                CornerRadius="2"
+                                Opacity="0.16" />
+
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="*" />
                                 </Grid.RowDefinitions>
 
-                                <Border
-                                    Grid.Row="0"
-                                    Padding="12,8,8,4">
+                                <Border Grid.Row="0" Padding="12,8,8,4">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
@@ -100,8 +98,8 @@
                                         </Button>
                                     </Grid>
                                 </Border>
-                                <ContentPresenter 
-                                    Grid.Row="1" 
+                                <ContentPresenter
+                                    Grid.Row="1"
                                     Padding="12,4,8,8"
                                     Content="{TemplateBinding PanelContent}" />
                             </Grid>
@@ -163,25 +161,23 @@
                             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                             BorderThickness="1"
                             CornerRadius="8">
-                            
+
                             <!--  Subtle accent bar on the left  -->
-                            <Border 
-                                Width="3" 
-                                Margin="0,8,0,8" 
-                                HorizontalAlignment="Left" 
+                            <Border
+                                Width="3"
+                                Margin="0,8,0,8"
+                                HorizontalAlignment="Left"
                                 Background="#0078D4"
-                                Opacity="0.16"
-                                CornerRadius="2" />
-                                
+                                CornerRadius="2"
+                                Opacity="0.16" />
+
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="*" />
                                 </Grid.RowDefinitions>
 
-                                <Border
-                                    Grid.Row="0"
-                                    Padding="12,8,8,4">
+                                <Border Grid.Row="0" Padding="12,8,8,4">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
@@ -226,9 +222,9 @@
                                         </Button>
                                     </Grid>
                                 </Border>
-                                
-                                <ContentPresenter 
-                                    Grid.Row="1" 
+
+                                <ContentPresenter
+                                    Grid.Row="1"
                                     Padding="12,4,8,8"
                                     Content="{TemplateBinding PanelContent}" />
                             </Grid>
@@ -290,25 +286,23 @@
                             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                             BorderThickness="1"
                             CornerRadius="8">
-                            
+
                             <!--  Subtle accent bar on the left to show it's the active properties panel  -->
-                            <Border 
-                                Width="3" 
-                                Margin="0,8,0,8" 
-                                HorizontalAlignment="Left" 
+                            <Border
+                                Width="3"
+                                Margin="0,8,0,8"
+                                HorizontalAlignment="Left"
                                 Background="#FF8C00"
-                                Opacity="0.16"
-                                CornerRadius="2" />
-                                
+                                CornerRadius="2"
+                                Opacity="0.16" />
+
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="*" />
                                 </Grid.RowDefinitions>
 
-                                <Border
-                                    Grid.Row="0"
-                                    Padding="12,8,8,4">
+                                <Border Grid.Row="0" Padding="12,8,8,4">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />

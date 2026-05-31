@@ -83,7 +83,7 @@
                             HorizontalAlignment="Left"
                             Header="IP Address"
                             PlaceholderText="192.168.0.111"
-                            Text="{x:Bind ViewModel.IpAddress, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            Text="{x:Bind ViewModel.IpAddress, Mode=TwoWay, UpdateSourceTrigger=LostFocus}">
                             <TextBox.Description>
                                 <TextBlock Text="IP address of your Z21 digital command station" />
                             </TextBox.Description>
@@ -93,7 +93,7 @@
                             HorizontalAlignment="Left"
                             Header="Port"
                             PlaceholderText="21105"
-                            Text="{x:Bind ViewModel.Port, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            Text="{x:Bind ViewModel.Port, Mode=TwoWay, UpdateSourceTrigger=LostFocus}">
                             <TextBox.Description>
                                 <TextBlock Text="Z21 communication port (default: 21105)" />
                             </TextBox.Description>
@@ -178,7 +178,7 @@
                                 HorizontalAlignment="Left"
                                 Header="Azure Speech Key"
                                 PlaceholderText="Enter your Azure Speech API key"
-                                Text="{x:Bind ViewModel.SpeechKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                Text="{x:Bind ViewModel.SpeechKey, Mode=TwoWay, UpdateSourceTrigger=LostFocus}">
                                 <TextBox.Description>
                                     <TextBlock>
                                         <Run Text="Get your key from the " />
@@ -192,7 +192,7 @@
                                 HorizontalAlignment="Left"
                                 Header="Azure Region"
                                 PlaceholderText="germanywestcentral"
-                                Text="{x:Bind ViewModel.SpeechRegion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                Text="{x:Bind ViewModel.SpeechRegion, Mode=TwoWay, UpdateSourceTrigger=LostFocus}">
                                 <TextBox.Description>
                                     <TextBlock Text="Azure region for Speech Service (e.g., germanywestcentral, westeurope)" />
                                 </TextBox.Description>
@@ -239,7 +239,7 @@
                             HorizontalAlignment="Left"
                             Header="Test Message"
                             PlaceholderText="Enter text to test speech synthesis"
-                            Text="{x:Bind ViewModel.SpeechTestMessage, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            Text="{x:Bind ViewModel.SpeechTestMessage, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
                             TextWrapping="Wrap">
                             <TextBox.Description>
                                 <TextBlock Text="Custom text that will be spoken when you click 'Test Speech'" TextWrapping="Wrap" />
@@ -309,7 +309,7 @@
                                 <TextBox
                                     Grid.Column="0"
                                     PlaceholderText="Default: My Documents\MOBAflow\Photos"
-                                    Text="{x:Bind ViewModel.PhotoStoragePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                    Text="{x:Bind ViewModel.PhotoStoragePath, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
                                 <Button
                                     Grid.Column="1"
                                     VerticalAlignment="Stretch"

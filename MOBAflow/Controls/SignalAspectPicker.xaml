@@ -29,13 +29,19 @@
             CornerRadius="10"
             PointerPressed="OnAspectClicked"
             Tag="Hp0">
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+            <StackPanel
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="6">
                 <controls:KsSignalScreen
                     x:Name="AspectHp0Signal"
                     Width="64"
                     Height="70"
                     IsHitTestVisible="False" />
-                <TextBlock x:Name="AspectHp0Label" HorizontalAlignment="Center" Text="Hp0" />
+                <TextBlock
+                    x:Name="AspectHp0Label"
+                    HorizontalAlignment="Center"
+                    Text="Hp0" />
             </StackPanel>
         </Border>
 
@@ -50,13 +56,19 @@
             CornerRadius="10"
             PointerPressed="OnAspectClicked"
             Tag="Ks1">
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+            <StackPanel
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="6">
                 <controls:KsSignalScreen
                     x:Name="AspectKs1Signal"
                     Width="64"
                     Height="70"
                     IsHitTestVisible="False" />
-                <TextBlock x:Name="AspectKs1Label" HorizontalAlignment="Center" Text="Ks1" />
+                <TextBlock
+                    x:Name="AspectKs1Label"
+                    HorizontalAlignment="Center"
+                    Text="Ks1" />
             </StackPanel>
         </Border>
 
@@ -71,13 +83,19 @@
             CornerRadius="10"
             PointerPressed="OnAspectClicked"
             Tag="Ks2">
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+            <StackPanel
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="6">
                 <controls:KsSignalScreen
                     x:Name="AspectKs2Signal"
                     Width="64"
                     Height="70"
                     IsHitTestVisible="False" />
-                <TextBlock x:Name="AspectKs2Label" HorizontalAlignment="Center" Text="Ks2" />
+                <TextBlock
+                    x:Name="AspectKs2Label"
+                    HorizontalAlignment="Center"
+                    Text="Ks2" />
             </StackPanel>
         </Border>
 
@@ -92,13 +110,19 @@
             CornerRadius="10"
             PointerPressed="OnAspectClicked"
             Tag="Ks1Blink">
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+            <StackPanel
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="6">
                 <controls:KsSignalScreen
                     x:Name="AspectKs1BlinkSignal"
                     Width="64"
                     Height="70"
                     IsHitTestVisible="False" />
-                <TextBlock x:Name="AspectKs1BlinkLabel" HorizontalAlignment="Center" Text="Ks1 Bl" />
+                <TextBlock
+                    x:Name="AspectKs1BlinkLabel"
+                    HorizontalAlignment="Center"
+                    Text="Ks1 Bl" />
             </StackPanel>
         </Border>
 
@@ -113,13 +137,19 @@
             CornerRadius="10"
             PointerPressed="OnAspectClicked"
             Tag="Kennlicht">
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+            <StackPanel
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="6">
                 <controls:KsSignalScreen
                     x:Name="AspectKennlichtSignal"
                     Width="64"
                     Height="70"
                     IsHitTestVisible="False" />
-                <TextBlock x:Name="AspectKennlichtLabel" HorizontalAlignment="Center" Text="Kennl." />
+                <TextBlock
+                    x:Name="AspectKennlichtLabel"
+                    HorizontalAlignment="Center"
+                    Text="Kennl." />
             </StackPanel>
         </Border>
 
@@ -134,13 +164,19 @@
             CornerRadius="10"
             PointerPressed="OnAspectClicked"
             Tag="Dunkel">
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+            <StackPanel
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="6">
                 <controls:KsSignalScreen
                     x:Name="AspectDunkelSignal"
                     Width="64"
                     Height="70"
                     IsHitTestVisible="False" />
-                <TextBlock x:Name="AspectDunkelLabel" HorizontalAlignment="Center" Text="Dunkel" />
+                <TextBlock
+                    x:Name="AspectDunkelLabel"
+                    HorizontalAlignment="Center"
+                    Text="Dunkel" />
             </StackPanel>
         </Border>
 
@@ -155,13 +191,19 @@
             CornerRadius="10"
             PointerPressed="OnAspectClicked"
             Tag="Ra12">
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+            <StackPanel
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="6">
                 <controls:KsSignalScreen
                     x:Name="AspectRa12Signal"
                     Width="64"
                     Height="70"
                     IsHitTestVisible="False" />
-                <TextBlock x:Name="AspectRa12Label" HorizontalAlignment="Center" Text="Ra12" />
+                <TextBlock
+                    x:Name="AspectRa12Label"
+                    HorizontalAlignment="Center"
+                    Text="Ra12" />
             </StackPanel>
         </Border>
 
@@ -176,13 +218,19 @@
             CornerRadius="10"
             PointerPressed="OnAspectClicked"
             Tag="Zs1">
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+            <StackPanel
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="6">
                 <controls:KsSignalScreen
                     x:Name="AspectZs1Signal"
                     Width="64"
                     Height="70"
                     IsHitTestVisible="False" />
-                <TextBlock x:Name="AspectZs1Label" HorizontalAlignment="Center" Text="Zs1" />
+                <TextBlock
+                    x:Name="AspectZs1Label"
+                    HorizontalAlignment="Center"
+                    Text="Zs1" />
             </StackPanel>
         </Border>
 
@@ -197,13 +245,19 @@
             CornerRadius="10"
             PointerPressed="OnAspectClicked"
             Tag="Zs7">
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+            <StackPanel
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="6">
                 <controls:KsSignalScreen
                     x:Name="AspectZs7Signal"
                     Width="64"
                     Height="70"
                     IsHitTestVisible="False" />
-                <TextBlock x:Name="AspectZs7Label" HorizontalAlignment="Center" Text="Zs7" />
+                <TextBlock
+                    x:Name="AspectZs7Label"
+                    HorizontalAlignment="Center"
+                    Text="Zs7" />
             </StackPanel>
         </Border>
     </Grid>

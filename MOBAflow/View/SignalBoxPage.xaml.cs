@@ -4,24 +4,22 @@ namespace Moba.WinUI.View;
 using Common.Configuration;
 using Common.Extension;
 
+using Controls.SignalBox;
+
 using Domain;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 
-using SharedUI.ViewModel;
-
-using Controls.SignalBox;
-
 using Service;
+
 using SharedUI.Interface;
+using SharedUI.ViewModel;
 
 using System;
 using System.Collections.Specialized;
 using System.ComponentModel;
-
-using ViewModel;
 
 sealed partial class SignalBoxPage
 {
@@ -266,7 +264,6 @@ sealed partial class SignalBoxPage
         {
             PropertiesControl.PlanViewModel = _planViewModel;
             PropertiesControl.SelectedElement = _planViewModel.SelectedElement;
-            PropertiesControl.UpdateStatistics();
         }
 
         UpdateElementCount();
@@ -336,7 +333,6 @@ sealed partial class SignalBoxPage
         }
 
         _planViewModel.RemoveElement(selected);
-        PropertiesControl?.UpdateStatistics();
         if (StatusText != null)
         {
             StatusText.Text = "Element deleted.";
@@ -358,6 +354,5 @@ sealed partial class SignalBoxPage
     private void OnPropertyControlElementDeletion(object sender, SbElement element)
     {
         _planViewModel?.RemoveElement(element);
-        PropertiesControl?.UpdateStatistics();
     }
 }

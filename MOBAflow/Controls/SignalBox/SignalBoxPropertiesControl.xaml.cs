@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Controls.SignalBox;
 
+using Common.Extension;
 using Common.Multiplex;
 
 using Domain;
@@ -11,11 +12,9 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 
-using Common.Extension;
+using Service;
 
 using SharedUI.ViewModel;
-
-using Service;
 
 using System;
 using System.Linq;
@@ -26,6 +25,7 @@ public sealed partial class SignalBoxPropertiesControl
     private ViessmannSignalService? _viessmannSignalService;
     private ILogger<SignalBoxPropertiesControl>? _logger;
     private bool _isUpdatingSpeedIndicatorControls;
+    private bool _isUpdatingNameBox;
 
     public static readonly DependencyProperty ViewModelProperty = DependencyProperty.Register(
         nameof(ViewModel),
@@ -92,13 +92,6 @@ public sealed partial class SignalBoxPropertiesControl
         }
     }
 
-    public void UpdateStatistics()
-    {
-        TrackCountText.Text = PlanViewModel.Elements.Count(e => e is SbTrackStraight or SbTrackCurve).ToString();
-        SwitchCountText.Text = PlanViewModel.Elements.OfType<SbSwitch>().Count().ToString();
-        SignalCountText.Text = PlanViewModel.Elements.OfType<SbSignal>().Count().ToString();
-    }
-
     private void UpdatePropertiesPanel()
     {
         if (SelectedElement == null)
@@ -111,9 +104,15 @@ public sealed partial class SignalBoxPropertiesControl
         NoSelectionInfo.Visibility = Visibility.Collapsed;
         ElementPropertiesPanel.Visibility = Visibility.Visible;
 
-        ElementTypeText.Text = GetElementTypeName(SelectedElement);
-        ElementPositionText.Text = $"({SelectedElement.X}, {SelectedElement.Y})";
-        ElementIdText.Text = SelectedElement.Id.ToString()[..8];
+        _isUpdatingNameBox = true;
+        try
+        {
+            ElementNameBox.Text = SelectedElement.Name;
+        }
+        finally
+        {
+            _isUpdatingNameBox = false;
+        }
 
         if (SelectedElement is SbSwitch sw)
         {
@@ -529,15 +528,18 @@ public sealed partial class SignalBoxPropertiesControl
         button.Style = isActive ? accentStyle : defaultStyle;
     }
 
-    private static string GetElementTypeName(SbElement element) => element switch
+    private void OnElementNameChanged(object sender, TextChangedEventArgs e)
     {
-        SbTrackStraight => "Straight track",
-        SbTrackCurve => "90 degree curve",
-        SbSwitch => "Switch",
-        SbSignal => "Signal",
-        SbDetector => "Feedback detector",
-        _ => "Unknown"
-    };
+        _ = sender;
+        _ = e;
+        if (_isUpdatingNameBox || SelectedElement == null)
+        {
+            return;
+        }
+
+        SelectedElement.Name = ElementNameBox.Text;
+        QueueSolutionSave();
+    }
 
     private void OnRotateClicked(object sender, RoutedEventArgs e)
     {
@@ -567,73 +569,31 @@ public sealed partial class SignalBoxPropertiesControl
 
     private async Task SetSignalAspectAutomaticallyAsync(SbSignal sig)
     {
-        try
+        if (!TryValidateAspectSetRequest(sig))
         {
-            if (!TryValidateAspectSetRequest(sig, out var validationError))
-            {
-                if (validationError != null)
-                {
-                    ShowSignalStatus(validationError);
-                }
-                else
-                {
-                    HideSignalStatus();
-                }
-
-                return;
-            }
-
-            if (!TryApplyTurnoutCommand(sig, out var turnoutCommand, out var turnoutError))
-            {
-                ShowSignalStatus(turnoutError!);
-                return;
-            }
-
-            if (ViewModel == null)
-            {
-                ShowSignalStatus("❌ ViewModel unavailable.");
-                return;
-            }
-
-            if (!ViewModel.IsConnected)
-            {
-                ShowSignalStatus(ViewModel.StatusText);
-                return;
-            }
-
-            ShowSignalStatus("⏳ Applying signal...");
-
-            await ViewModel.SetSignalAspectAsync(sig).ConfigureAwait(false);
-
-            DispatcherQueue.TryEnqueue(() =>
-            {
-                if (turnoutCommand != null)
-                {
-                    var dccAddress = sig.BaseAddress + turnoutCommand.Value.AddressOffset;
-                    SetSignalStatusText.Text =
-                        $"Signal: {sig.SignalAspect}\n" +
-                        $"DCC address: {dccAddress}, output: {turnoutCommand.Value.Output}, activate: {(turnoutCommand.Value.Activate ? "Yes" : "No")}";
-                }
-                else
-                {
-                    SetSignalStatusText.Text = $"Signal applied: {sig.SignalAspect}";
-                }
-            });
+            return;
         }
-        catch (Exception ex)
+
+        if (!TryApplyTurnoutCommand(sig))
         {
-            DispatcherQueue.TryEnqueue(() =>
-            {
-                SetSignalStatusText.Text = $"❌ Error: {ex.Message}";
-                SetSignalStatusText.Visibility = Visibility.Visible;
-            });
+            return;
         }
+
+        if (ViewModel == null)
+        {
+            return;
+        }
+
+        if (!ViewModel.IsConnected)
+        {
+            return;
+        }
+
+        await ViewModel.SetSignalAspectAsync(sig).ConfigureAwait(false);
     }
 
-    private bool TryValidateAspectSetRequest(SbSignal sig, out string? validationError)
+    private static bool TryValidateAspectSetRequest(SbSignal sig)
     {
-        validationError = null;
-
         if (!sig.IsMultiplexed)
         {
             return false;
@@ -641,19 +601,16 @@ public sealed partial class SignalBoxPropertiesControl
 
         if (string.IsNullOrEmpty(sig.MultiplexerArticleNumber))
         {
-            validationError = "⚠️ Multiplexer number is not configured.";
             return false;
         }
 
         if (sig.BaseAddress <= 0 || sig.BaseAddress > 2044)
         {
-            validationError = "⚠️ Base DCC address is invalid (1-2044).";
             return false;
         }
 
         if (sig.BaseAddress % 2 == 0)
         {
-            validationError = "⚠️ Base DCC address must be odd (Viessmann specification).";
             return false;
         }
 
@@ -662,24 +619,14 @@ public sealed partial class SignalBoxPropertiesControl
                 sig.MainSignalArticleNumber,
                 out var maxOffset))
         {
-            validationError = "⚠️ No address table for this multiplexer/main signal combination.";
             return false;
         }
 
-        if (sig.BaseAddress + maxOffset > 2044)
-        {
-            validationError = $"⚠️ Base + address range exceeds 2044 (max offset {maxOffset}).";
-            return false;
-        }
-
-        return true;
+        return sig.BaseAddress + maxOffset <= 2044;
     }
 
-    private bool TryApplyTurnoutCommand(SbSignal sig, out MultiplexerTurnoutCommand? turnoutCommand, out string? turnoutError)
+    private static bool TryApplyTurnoutCommand(SbSignal sig)
     {
-        turnoutCommand = null;
-        turnoutError = null;
-
         try
         {
             if (!MultiplexerHelper.TryGetTurnoutCommand(
@@ -688,30 +635,16 @@ public sealed partial class SignalBoxPropertiesControl
                     sig.SignalAspect,
                     out var resolvedTurnoutCommand))
             {
-                turnoutError = "⚠️ Signal aspect is not supported.";
                 return false;
             }
 
-            turnoutCommand = resolvedTurnoutCommand;
             sig.ExtendedAccessoryValue = resolvedTurnoutCommand.Activate ? 1 : 0;
             return true;
         }
-        catch (ArgumentException ex)
+        catch (ArgumentException)
         {
-            turnoutError = $"⚠️ Signal aspect is not supported: {ex.Message}";
             return false;
         }
-    }
-
-    private void ShowSignalStatus(string message)
-    {
-        SetSignalStatusText.Text = message;
-        SetSignalStatusText.Visibility = Visibility.Visible;
-    }
-
-    private void HideSignalStatus()
-    {
-        SetSignalStatusText.Visibility = Visibility.Collapsed;
     }
 
     private void OnSwitchPositionClicked(object sender, RoutedEventArgs e)

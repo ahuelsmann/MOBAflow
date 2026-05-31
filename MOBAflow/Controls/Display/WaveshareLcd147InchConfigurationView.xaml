@@ -11,9 +11,7 @@
                 BorderThickness="1"
                 CornerRadius="8">
                 <StackPanel Spacing="8">
-                    <TextBlock
-                        Style="{ThemeResource SubtitleTextBlockStyle}"
-                        Text="ST7789V2" />
+                    <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="ST7789V2" />
                     <TextBlock Text="{Binding ResolutionLabel}" />
                 </StackPanel>
             </Border>

@@ -2,571 +2,571 @@
     x:Class="Moba.WinUI.Controls.SignalBox.SignalBoxToolboxControl"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Moba.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:controls="using:Moba.WinUI.Controls"
     mc:Ignorable="d">
-                    <ScrollViewer Padding="0,0,4,0" VerticalScrollBarVisibility="Auto">
-                    <StackPanel Padding="16" Spacing="20">
-                        <!--  Toolbox Header  -->
-                        <StackPanel Spacing="2">
+    <ScrollViewer Padding="0,0,4,0" VerticalScrollBarVisibility="Auto">
+        <StackPanel Padding="16" Spacing="20">
+            <!--  Toolbox Header  -->
+            <StackPanel Spacing="2">
+                <TextBlock
+                    FontSize="16"
+                    FontWeight="SemiBold"
+                    Text="Elements" />
+                <TextBlock
+                    FontSize="11"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Drag &amp; drop onto track canvas" />
+            </StackPanel>
+
+            <!--  GLEISE Category  -->
+            <StackPanel Spacing="8">
+                <TextBlock
+                    FontSize="11"
+                    FontWeight="SemiBold"
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    Text="TRACKS" />
+                <Grid ColumnSpacing="6" RowSpacing="6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <!--  Gerade  -->
+                    <Border
+                        Grid.Row="0"
+                        Grid.Column="0"
+                        Height="60"
+                        Padding="4"
+                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                        BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CanDrag="True"
+                        CornerRadius="6"
+                        DragStarting="OnToolDragStarting"
+                        PointerEntered="OnToolPointerEntered"
+                        PointerExited="OnToolPointerExited"
+                        Tag="TrackStraight"
+                        ToolTipService.ToolTip="Straight track">
+                        <StackPanel
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="4">
+                            <Border
+                                Width="48"
+                                Height="28"
+                                Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
+                                CornerRadius="4">
+                                <Canvas>
+                                    <Line
+                                        Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                        StrokeThickness="3"
+                                        X1="4"
+                                        X2="44"
+                                        Y1="14"
+                                        Y2="14" />
+                                </Canvas>
+                            </Border>
                             <TextBlock
-                                FontSize="16"
-                                FontWeight="SemiBold"
-                                Text="Elements" />
-                            <TextBlock
-                                FontSize="11"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="Drag &amp; drop onto track canvas" />
+                                HorizontalAlignment="Center"
+                                FontSize="10"
+                                Text="Straight" />
                         </StackPanel>
-
-                        <!--  GLEISE Category  -->
-                        <StackPanel Spacing="8">
+                    </Border>
+                    <!--  Kurve 90°  -->
+                    <Border
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        Height="60"
+                        Padding="4"
+                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                        BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CanDrag="True"
+                        CornerRadius="6"
+                        DragStarting="OnToolDragStarting"
+                        PointerEntered="OnToolPointerEntered"
+                        PointerExited="OnToolPointerExited"
+                        Tag="TrackCurve"
+                        ToolTipService.ToolTip="90° curve">
+                        <StackPanel
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="4">
+                            <Border
+                                Width="48"
+                                Height="28"
+                                Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
+                                CornerRadius="4">
+                                <Path
+                                    Data="M 4,14 Q 24,14 24,26"
+                                    Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                    StrokeThickness="3" />
+                            </Border>
                             <TextBlock
-                                FontSize="11"
-                                FontWeight="SemiBold"
-                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Text="TRACKS" />
-                            <Grid ColumnSpacing="6" RowSpacing="6">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-                                <!--  Gerade  -->
-                                <Border
-                                    Grid.Row="0"
-                                    Grid.Column="0"
-                                    Height="60"
-                                    Padding="4"
-                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                    BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
-                                    BorderThickness="1"
-                                    CanDrag="True"
-                                    CornerRadius="6"
-                                    DragStarting="OnToolDragStarting"
-                                    PointerEntered="OnToolPointerEntered"
-                                    PointerExited="OnToolPointerExited"
-                                    Tag="TrackStraight"
-                                    ToolTipService.ToolTip="Straight track">
-                                    <StackPanel
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        Spacing="4">
-                                        <Border
-                                            Width="48"
-                                            Height="28"
-                                            Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
-                                            CornerRadius="4">
-                                            <Canvas>
-                                                <Line
-                                                    Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                                    StrokeThickness="3"
-                                                    X1="4"
-                                                    X2="44"
-                                                    Y1="14"
-                                                    Y2="14" />
-                                            </Canvas>
-                                        </Border>
-                                        <TextBlock
-                                            HorizontalAlignment="Center"
-                                            FontSize="10"
-                                            Text="Straight" />
-                                    </StackPanel>
-                                </Border>
-                                <!--  Kurve 90°  -->
-                                <Border
-                                    Grid.Row="0"
-                                    Grid.Column="1"
-                                    Height="60"
-                                    Padding="4"
-                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                    BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
-                                    BorderThickness="1"
-                                    CanDrag="True"
-                                    CornerRadius="6"
-                                    DragStarting="OnToolDragStarting"
-                                    PointerEntered="OnToolPointerEntered"
-                                    PointerExited="OnToolPointerExited"
-                                    Tag="TrackCurve"
-                                    ToolTipService.ToolTip="90° curve">
-                                    <StackPanel
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        Spacing="4">
-                                        <Border
-                                            Width="48"
-                                            Height="28"
-                                            Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
-                                            CornerRadius="4">
-                                            <Path
-                                                Data="M 4,14 Q 24,14 24,26"
-                                                Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                                StrokeThickness="3" />
-                                        </Border>
-                                        <TextBlock
-                                            HorizontalAlignment="Center"
-                                            FontSize="10"
-                                            Text="Curve" />
-                                    </StackPanel>
-                                </Border>
-                                <!--  Prellbock  -->
-                                <Border
-                                    Grid.Row="1"
-                                    Grid.Column="0"
-                                    Height="60"
-                                    Padding="4"
-                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                    BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
-                                    BorderThickness="1"
-                                    CanDrag="True"
-                                    CornerRadius="6"
-                                    DragStarting="OnToolDragStarting"
-                                    PointerEntered="OnToolPointerEntered"
-                                    PointerExited="OnToolPointerExited"
-                                    Tag="TrackStraight"
-                                    ToolTipService.ToolTip="Buffer stop">
-                                    <StackPanel
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        Spacing="4">
-                                        <Border
-                                            Width="48"
-                                            Height="28"
-                                            Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
-                                            CornerRadius="4">
-                                            <Canvas>
-                                                <Line
-                                                    Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                                    StrokeThickness="3"
-                                                    X1="4"
-                                                    X2="32"
-                                                    Y1="14"
-                                                    Y2="14" />
-                                                <Rectangle
-                                                    Canvas.Left="32"
-                                                    Canvas.Top="6"
-                                                    Width="4"
-                                                    Height="16"
-                                                    Fill="{StaticResource BufferStopFillBrush}"
-                                                    RadiusX="1"
-                                                    RadiusY="1" />
-                                            </Canvas>
-                                        </Border>
-                                        <TextBlock
-                                            HorizontalAlignment="Center"
-                                            FontSize="10"
-                                            Text="Buffer stop" />
-                                    </StackPanel>
-                                </Border>
-                            </Grid>
+                                HorizontalAlignment="Center"
+                                FontSize="10"
+                                Text="Curve" />
                         </StackPanel>
-
-                        <!--  Separator  -->
-                        <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-
-                        <!--  WEICHEN Category  -->
-                        <StackPanel Spacing="8">
+                    </Border>
+                    <!--  Prellbock  -->
+                    <Border
+                        Grid.Row="1"
+                        Grid.Column="0"
+                        Height="60"
+                        Padding="4"
+                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                        BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CanDrag="True"
+                        CornerRadius="6"
+                        DragStarting="OnToolDragStarting"
+                        PointerEntered="OnToolPointerEntered"
+                        PointerExited="OnToolPointerExited"
+                        Tag="TrackStraight"
+                        ToolTipService.ToolTip="Buffer stop">
+                        <StackPanel
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="4">
+                            <Border
+                                Width="48"
+                                Height="28"
+                                Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
+                                CornerRadius="4">
+                                <Canvas>
+                                    <Line
+                                        Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                        StrokeThickness="3"
+                                        X1="4"
+                                        X2="32"
+                                        Y1="14"
+                                        Y2="14" />
+                                    <Rectangle
+                                        Canvas.Left="32"
+                                        Canvas.Top="6"
+                                        Width="4"
+                                        Height="16"
+                                        Fill="{StaticResource BufferStopFillBrush}"
+                                        RadiusX="1"
+                                        RadiusY="1" />
+                                </Canvas>
+                            </Border>
                             <TextBlock
-                                FontSize="11"
-                                FontWeight="SemiBold"
-                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Text="SWITCHES" />
-                            <Grid ColumnSpacing="6" RowSpacing="6">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-                                <!--  Weiche Links  -->
-                                <Border
-                                    Grid.Row="0"
-                                    Grid.Column="0"
-                                    Height="60"
-                                    Padding="4"
-                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                    BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
-                                    BorderThickness="1"
-                                    CanDrag="True"
-                                    CornerRadius="6"
-                                    DragStarting="OnToolDragStarting"
-                                    PointerEntered="OnToolPointerEntered"
-                                    PointerExited="OnToolPointerExited"
-                                    Tag="Switch"
-                                    ToolTipService.ToolTip="Simple left switch">
-                                    <StackPanel
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        Spacing="4">
-                                        <Border
-                                            Width="48"
-                                            Height="28"
-                                            Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
-                                            CornerRadius="4">
-                                            <Canvas>
-                                                <!--  Hauptgleis  -->
-                                                <Line
-                                                    Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                                    StrokeThickness="3"
-                                                    X1="4"
-                                                    X2="44"
-                                                    Y1="14"
-                                                    Y2="14" />
-                                                <!--  Abzweig  -->
-                                                <Line
-                                                    Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                                    StrokeThickness="2"
-                                                    X1="24"
-                                                    X2="44"
-                                                    Y1="14"
-                                                    Y2="4" />
-                                            </Canvas>
-                                        </Border>
-                                        <TextBlock
-                                            HorizontalAlignment="Center"
-                                            FontSize="10"
-                                            Text="EW L" />
-                                    </StackPanel>
-                                </Border>
-                                <!--  Weiche Rechts  -->
-                                <Border
-                                    Grid.Row="0"
-                                    Grid.Column="1"
-                                    Height="60"
-                                    Padding="4"
-                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                    BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
-                                    BorderThickness="1"
-                                    CanDrag="True"
-                                    CornerRadius="6"
-                                    DragStarting="OnToolDragStarting"
-                                    PointerEntered="OnToolPointerEntered"
-                                    PointerExited="OnToolPointerExited"
-                                    Tag="Switch"
-                                    ToolTipService.ToolTip="Simple right switch">
-                                    <StackPanel
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        Spacing="4">
-                                        <Border
-                                            Width="48"
-                                            Height="28"
-                                            Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
-                                            CornerRadius="4">
-                                            <Canvas>
-                                                <!--  Hauptgleis  -->
-                                                <Line
-                                                    Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                                    StrokeThickness="3"
-                                                    X1="4"
-                                                    X2="44"
-                                                    Y1="14"
-                                                    Y2="14" />
-                                                <!--  Abzweig  -->
-                                                <Line
-                                                    Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                                    StrokeThickness="2"
-                                                    X1="24"
-                                                    X2="44"
-                                                    Y1="14"
-                                                    Y2="24" />
-                                            </Canvas>
-                                        </Border>
-                                        <TextBlock
-                                            HorizontalAlignment="Center"
-                                            FontSize="10"
-                                            Text="EW R" />
-                                    </StackPanel>
-                                </Border>
-                                <!--  DKW  -->
-                                <Border
-                                    Grid.Row="1"
-                                    Grid.Column="0"
-                                    Height="60"
-                                    Padding="4"
-                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                    BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
-                                    BorderThickness="1"
-                                    CanDrag="True"
-                                    CornerRadius="6"
-                                    DragStarting="OnToolDragStarting"
-                                    PointerEntered="OnToolPointerEntered"
-                                    PointerExited="OnToolPointerExited"
-                                    Tag="Switch"
-                                    ToolTipService.ToolTip="Double slip switch">
-                                    <StackPanel
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        Spacing="4">
-                                        <Border
-                                            Width="48"
-                                            Height="28"
-                                            Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
-                                            CornerRadius="4">
-                                            <Canvas>
-                                                <!--  Oberes Gleis  -->
-                                                <Line
-                                                    Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                                    StrokeThickness="2"
-                                                    X1="4"
-                                                    X2="44"
-                                                    Y1="8"
-                                                    Y2="8" />
-                                                <!--  Unteres Gleis  -->
-                                                <Line
-                                                    Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                                    StrokeThickness="2"
-                                                    X1="4"
-                                                    X2="44"
-                                                    Y1="20"
-                                                    Y2="20" />
-                                                <!--  Kreuzung  -->
-                                                <Line
-                                                    Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                                    StrokeThickness="2"
-                                                    X1="10"
-                                                    X2="38"
-                                                    Y1="8"
-                                                    Y2="20" />
-                                                <Line
-                                                    Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                                    StrokeThickness="2"
-                                                    X1="10"
-                                                    X2="38"
-                                                    Y1="20"
-                                                    Y2="8" />
-                                            </Canvas>
-                                        </Border>
-                                        <TextBlock
-                                            HorizontalAlignment="Center"
-                                            FontSize="10"
-                                            Text="DKW" />
-                                    </StackPanel>
-                                </Border>
-                                <!--  Kreuzung  -->
-                                <Border
-                                    Grid.Row="1"
-                                    Grid.Column="1"
-                                    Height="60"
-                                    Padding="4"
-                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                    BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
-                                    BorderThickness="1"
-                                    CanDrag="True"
-                                    CornerRadius="6"
-                                    DragStarting="OnToolDragStarting"
-                                    PointerEntered="OnToolPointerEntered"
-                                    PointerExited="OnToolPointerExited"
-                                    Tag="TrackStraight"
-                                    ToolTipService.ToolTip="Crossing">
-                                    <StackPanel
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        Spacing="4">
-                                        <Border
-                                            Width="48"
-                                            Height="28"
-                                            Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
-                                            CornerRadius="4">
-                                            <Canvas>
-                                                <Line
-                                                    Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                                    StrokeThickness="3"
-                                                    X1="4"
-                                                    X2="44"
-                                                    Y1="14"
-                                                    Y2="14" />
-                                                <Line
-                                                    Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                                    StrokeThickness="3"
-                                                    X1="24"
-                                                    X2="24"
-                                                    Y1="2"
-                                                    Y2="26" />
-                                            </Canvas>
-                                        </Border>
-                                        <TextBlock
-                                            HorizontalAlignment="Center"
-                                            FontSize="10"
-                                            Text="Crossing" />
-                                    </StackPanel>
-                                </Border>
-                                <!--  Dreiwege-Weiche  -->
-                                <Border
-                                    Grid.Row="2"
-                                    Grid.Column="0"
-                                    Height="60"
-                                    Padding="4"
-                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                    BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
-                                    BorderThickness="1"
-                                    CanDrag="True"
-                                    CornerRadius="6"
-                                    DragStarting="OnToolDragStarting"
-                                    PointerEntered="OnToolPointerEntered"
-                                    PointerExited="OnToolPointerExited"
-                                    Tag="Switch"
-                                    ToolTipService.ToolTip="Three-way switch">
-                                    <StackPanel
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        Spacing="4">
-                                        <Border
-                                            Width="48"
-                                            Height="28"
-                                            Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
-                                            CornerRadius="4">
-                                            <Canvas>
-                                                <!--  Hauptgleis  -->
-                                                <Line
-                                                    Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                                    StrokeThickness="3"
-                                                    X1="4"
-                                                    X2="44"
-                                                    Y1="14"
-                                                    Y2="14" />
-                                                <!--  Abzweig oben  -->
-                                                <Line
-                                                    Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                                    StrokeThickness="2"
-                                                    X1="24"
-                                                    X2="44"
-                                                    Y1="14"
-                                                    Y2="4" />
-                                                <!--  Abzweig unten  -->
-                                                <Line
-                                                    Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                                    StrokeThickness="2"
-                                                    X1="24"
-                                                    X2="44"
-                                                    Y1="14"
-                                                    Y2="24" />
-                                            </Canvas>
-                                        </Border>
-                                        <TextBlock
-                                            HorizontalAlignment="Center"
-                                            FontSize="10"
-                                            Text="DWW" />
-                                    </StackPanel>
-                                </Border>
-                            </Grid>
+                                HorizontalAlignment="Center"
+                                FontSize="10"
+                                Text="Buffer stop" />
                         </StackPanel>
+                    </Border>
+                </Grid>
+            </StackPanel>
 
-                        <!--  Separator  -->
-                        <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+            <!--  Separator  -->
+            <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
-                        <!--  SIGNAL Category - Viessmann Ks-Signale  -->
-                        <StackPanel Spacing="8">
+            <!--  WEICHEN Category  -->
+            <StackPanel Spacing="8">
+                <TextBlock
+                    FontSize="11"
+                    FontWeight="SemiBold"
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    Text="SWITCHES" />
+                <Grid ColumnSpacing="6" RowSpacing="6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <!--  Weiche Links  -->
+                    <Border
+                        Grid.Row="0"
+                        Grid.Column="0"
+                        Height="60"
+                        Padding="4"
+                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                        BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CanDrag="True"
+                        CornerRadius="6"
+                        DragStarting="OnToolDragStarting"
+                        PointerEntered="OnToolPointerEntered"
+                        PointerExited="OnToolPointerExited"
+                        Tag="Switch"
+                        ToolTipService.ToolTip="Simple left switch">
+                        <StackPanel
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="4">
+                            <Border
+                                Width="48"
+                                Height="28"
+                                Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
+                                CornerRadius="4">
+                                <Canvas>
+                                    <!--  Hauptgleis  -->
+                                    <Line
+                                        Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                        StrokeThickness="3"
+                                        X1="4"
+                                        X2="44"
+                                        Y1="14"
+                                        Y2="14" />
+                                    <!--  Abzweig  -->
+                                    <Line
+                                        Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                        StrokeThickness="2"
+                                        X1="24"
+                                        X2="44"
+                                        Y1="14"
+                                        Y2="4" />
+                                </Canvas>
+                            </Border>
                             <TextBlock
-                                FontSize="11"
-                                FontWeight="SemiBold"
-                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Text="SIGNAL" />
-                            <StackPanel Spacing="6">
-                                <!--  Generic Ks signal - variant is selected in the properties column  -->
-                                <Border
-                                    Height="70"
-                                    Padding="4"
-                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                    BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
-                                    BorderThickness="1"
-                                    CanDrag="True"
-                                    CornerRadius="6"
-                                    DragStarting="OnToolDragStarting"
-                                    PointerEntered="OnToolPointerEntered"
-                                    PointerExited="OnToolPointerExited"
-                                    Tag="Signal"
-                                    ToolTipService.ToolTip="Ks signal (variant selected in properties)">
-                                    <StackPanel
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        Spacing="4">
-                                        <controls:KsSignalScreen
-                                            Width="50"
-                                            Height="40"
-                                            HorizontalAlignment="Center"
-                                            Aspect="Dunkel"
-                                            IsHitTestVisible="False" />
-                                        <TextBlock
-                                            HorizontalAlignment="Center"
-                                            FontSize="10"
-                                            Text="Ks Signal" />
-                                    </StackPanel>
-                                </Border>
-                            </StackPanel>
+                                HorizontalAlignment="Center"
+                                FontSize="10"
+                                Text="EW L" />
                         </StackPanel>
-
-                        <!--  Separator  -->
-                        <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-
-                        <!--  SONSTIGE Category  -->
-                        <StackPanel Spacing="8">
+                    </Border>
+                    <!--  Weiche Rechts  -->
+                    <Border
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        Height="60"
+                        Padding="4"
+                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                        BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CanDrag="True"
+                        CornerRadius="6"
+                        DragStarting="OnToolDragStarting"
+                        PointerEntered="OnToolPointerEntered"
+                        PointerExited="OnToolPointerExited"
+                        Tag="Switch"
+                        ToolTipService.ToolTip="Simple right switch">
+                        <StackPanel
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="4">
+                            <Border
+                                Width="48"
+                                Height="28"
+                                Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
+                                CornerRadius="4">
+                                <Canvas>
+                                    <!--  Hauptgleis  -->
+                                    <Line
+                                        Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                        StrokeThickness="3"
+                                        X1="4"
+                                        X2="44"
+                                        Y1="14"
+                                        Y2="14" />
+                                    <!--  Abzweig  -->
+                                    <Line
+                                        Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                        StrokeThickness="2"
+                                        X1="24"
+                                        X2="44"
+                                        Y1="14"
+                                        Y2="24" />
+                                </Canvas>
+                            </Border>
                             <TextBlock
-                                FontSize="11"
-                                FontWeight="SemiBold"
-                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Text="OTHER" />
-                            <Grid ColumnSpacing="6" RowSpacing="6">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <!--  Feedback point  -->
-                                <Border
-                                    Grid.Column="0"
-                                    Height="60"
-                                    Padding="4"
-                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                    BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
-                                    BorderThickness="1"
-                                    CanDrag="True"
-                                    CornerRadius="6"
-                                    DragStarting="OnToolDragStarting"
-                                    PointerEntered="OnToolPointerEntered"
-                                    PointerExited="OnToolPointerExited"
-                                    Tag="Detector"
-                                    ToolTipService.ToolTip="Feedback detector">
-                                    <StackPanel
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        Spacing="4">
-                                        <Border
-                                            Width="48"
-                                            Height="28"
-                                            Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
-                                            CornerRadius="4">
-                                            <Canvas>
-                                                <!--  Gleis  -->
-                                                <Line
-                                                    Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                                    StrokeThickness="3"
-                                                    X1="4"
-                                                    X2="44"
-                                                    Y1="14"
-                                                    Y2="14" />
-                                                <!--  Sensor-Markierung  -->
-                                                <Ellipse
-                                                    Canvas.Left="20"
-                                                    Canvas.Top="10"
-                                                    Width="8"
-                                                    Height="8"
-                                                    Fill="#00C800" />
-                                            </Canvas>
-                                        </Border>
-                                        <TextBlock
-                                            HorizontalAlignment="Center"
-                                            FontSize="10"
-                                            Text="Fdbk." />
-                                    </StackPanel>
-                                </Border>
-                            </Grid>
+                                HorizontalAlignment="Center"
+                                FontSize="10"
+                                Text="EW R" />
                         </StackPanel>
-                    </StackPanel>
-                </ScrollViewer>
+                    </Border>
+                    <!--  DKW  -->
+                    <Border
+                        Grid.Row="1"
+                        Grid.Column="0"
+                        Height="60"
+                        Padding="4"
+                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                        BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CanDrag="True"
+                        CornerRadius="6"
+                        DragStarting="OnToolDragStarting"
+                        PointerEntered="OnToolPointerEntered"
+                        PointerExited="OnToolPointerExited"
+                        Tag="Switch"
+                        ToolTipService.ToolTip="Double slip switch">
+                        <StackPanel
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="4">
+                            <Border
+                                Width="48"
+                                Height="28"
+                                Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
+                                CornerRadius="4">
+                                <Canvas>
+                                    <!--  Oberes Gleis  -->
+                                    <Line
+                                        Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                        StrokeThickness="2"
+                                        X1="4"
+                                        X2="44"
+                                        Y1="8"
+                                        Y2="8" />
+                                    <!--  Unteres Gleis  -->
+                                    <Line
+                                        Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                        StrokeThickness="2"
+                                        X1="4"
+                                        X2="44"
+                                        Y1="20"
+                                        Y2="20" />
+                                    <!--  Kreuzung  -->
+                                    <Line
+                                        Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                        StrokeThickness="2"
+                                        X1="10"
+                                        X2="38"
+                                        Y1="8"
+                                        Y2="20" />
+                                    <Line
+                                        Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                        StrokeThickness="2"
+                                        X1="10"
+                                        X2="38"
+                                        Y1="20"
+                                        Y2="8" />
+                                </Canvas>
+                            </Border>
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                FontSize="10"
+                                Text="DKW" />
+                        </StackPanel>
+                    </Border>
+                    <!--  Kreuzung  -->
+                    <Border
+                        Grid.Row="1"
+                        Grid.Column="1"
+                        Height="60"
+                        Padding="4"
+                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                        BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CanDrag="True"
+                        CornerRadius="6"
+                        DragStarting="OnToolDragStarting"
+                        PointerEntered="OnToolPointerEntered"
+                        PointerExited="OnToolPointerExited"
+                        Tag="TrackStraight"
+                        ToolTipService.ToolTip="Crossing">
+                        <StackPanel
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="4">
+                            <Border
+                                Width="48"
+                                Height="28"
+                                Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
+                                CornerRadius="4">
+                                <Canvas>
+                                    <Line
+                                        Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                        StrokeThickness="3"
+                                        X1="4"
+                                        X2="44"
+                                        Y1="14"
+                                        Y2="14" />
+                                    <Line
+                                        Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                        StrokeThickness="3"
+                                        X1="24"
+                                        X2="24"
+                                        Y1="2"
+                                        Y2="26" />
+                                </Canvas>
+                            </Border>
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                FontSize="10"
+                                Text="Crossing" />
+                        </StackPanel>
+                    </Border>
+                    <!--  Dreiwege-Weiche  -->
+                    <Border
+                        Grid.Row="2"
+                        Grid.Column="0"
+                        Height="60"
+                        Padding="4"
+                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                        BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CanDrag="True"
+                        CornerRadius="6"
+                        DragStarting="OnToolDragStarting"
+                        PointerEntered="OnToolPointerEntered"
+                        PointerExited="OnToolPointerExited"
+                        Tag="Switch"
+                        ToolTipService.ToolTip="Three-way switch">
+                        <StackPanel
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="4">
+                            <Border
+                                Width="48"
+                                Height="28"
+                                Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
+                                CornerRadius="4">
+                                <Canvas>
+                                    <!--  Hauptgleis  -->
+                                    <Line
+                                        Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                        StrokeThickness="3"
+                                        X1="4"
+                                        X2="44"
+                                        Y1="14"
+                                        Y2="14" />
+                                    <!--  Abzweig oben  -->
+                                    <Line
+                                        Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                        StrokeThickness="2"
+                                        X1="24"
+                                        X2="44"
+                                        Y1="14"
+                                        Y2="4" />
+                                    <!--  Abzweig unten  -->
+                                    <Line
+                                        Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                        StrokeThickness="2"
+                                        X1="24"
+                                        X2="44"
+                                        Y1="14"
+                                        Y2="24" />
+                                </Canvas>
+                            </Border>
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                FontSize="10"
+                                Text="DWW" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </StackPanel>
+
+            <!--  Separator  -->
+            <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
+            <!--  SIGNAL Category - Viessmann Ks-Signale  -->
+            <StackPanel Spacing="8">
+                <TextBlock
+                    FontSize="11"
+                    FontWeight="SemiBold"
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    Text="SIGNAL" />
+                <StackPanel Spacing="6">
+                    <!--  Generic Ks signal - variant is selected in the properties column  -->
+                    <Border
+                        Height="70"
+                        Padding="4"
+                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                        BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CanDrag="True"
+                        CornerRadius="6"
+                        DragStarting="OnToolDragStarting"
+                        PointerEntered="OnToolPointerEntered"
+                        PointerExited="OnToolPointerExited"
+                        Tag="Signal"
+                        ToolTipService.ToolTip="Ks signal (variant selected in properties)">
+                        <StackPanel
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="4">
+                            <controls:KsSignalScreen
+                                Width="50"
+                                Height="40"
+                                HorizontalAlignment="Center"
+                                Aspect="Dunkel"
+                                IsHitTestVisible="False" />
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                FontSize="10"
+                                Text="Ks Signal" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+
+            <!--  Separator  -->
+            <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
+            <!--  SONSTIGE Category  -->
+            <StackPanel Spacing="8">
+                <TextBlock
+                    FontSize="11"
+                    FontWeight="SemiBold"
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    Text="OTHER" />
+                <Grid ColumnSpacing="6" RowSpacing="6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <!--  Feedback point  -->
+                    <Border
+                        Grid.Column="0"
+                        Height="60"
+                        Padding="4"
+                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                        BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CanDrag="True"
+                        CornerRadius="6"
+                        DragStarting="OnToolDragStarting"
+                        PointerEntered="OnToolPointerEntered"
+                        PointerExited="OnToolPointerExited"
+                        Tag="Detector"
+                        ToolTipService.ToolTip="Feedback detector">
+                        <StackPanel
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="4">
+                            <Border
+                                Width="48"
+                                Height="28"
+                                Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
+                                CornerRadius="4">
+                                <Canvas>
+                                    <!--  Gleis  -->
+                                    <Line
+                                        Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                        StrokeThickness="3"
+                                        X1="4"
+                                        X2="44"
+                                        Y1="14"
+                                        Y2="14" />
+                                    <!--  Sensor-Markierung  -->
+                                    <Ellipse
+                                        Canvas.Left="20"
+                                        Canvas.Top="10"
+                                        Width="8"
+                                        Height="8"
+                                        Fill="#00C800" />
+                                </Canvas>
+                            </Border>
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                FontSize="10"
+                                Text="Fdbk." />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
 </UserControl>

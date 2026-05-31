@@ -1,65 +1,98 @@
-﻿<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <?xaml-comp compile="true" ?>
 <ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
-    <!-- ========================================
-         FLUENT DESIGN 2 COLOR PALETTE
-         Platform: Android (Light + Dark modes)
-         ======================================== -->
+    <!--
+        ========================================
+        FLUENT DESIGN 2 COLOR PALETTE
+        Platform: Android (Light + Dark modes)
+        ========================================
+    -->
 
-    <!-- **PRIMARY BRAND COLOR** -->
-    <Color x:Key="SystemAccentColor">#6366F1</Color>  <!-- Indigo (MOBAflow brand) -->
+    <!--  **PRIMARY BRAND COLOR**  -->
+    <Color x:Key="SystemAccentColor">#6366F1</Color>
+    <!--  Indigo (MOBAflow brand)  -->
 
-    <!-- **RAILWAY THEME COLORS** -->
-    <!-- Primary (Main Interaction) -->
-    <Color x:Key="RailwayPrimary">#6366F1</Color>      <!-- Indigo - Main interactive element -->
-    <Color x:Key="RailwayPrimaryDark">#4F46E5</Color>  <!-- Darker indigo for pressed/hover -->
-    <Color x:Key="RailwayPrimaryLight">#818CF8</Color> <!-- Lighter indigo for disabled/inactive -->
+    <!--  **RAILWAY THEME COLORS**  -->
+    <!--  Primary (Main Interaction)  -->
+    <Color x:Key="RailwayPrimary">#6366F1</Color>
+    <!--  Indigo - Main interactive element  -->
+    <Color x:Key="RailwayPrimaryDark">#4F46E5</Color>
+    <!--  Darker indigo for pressed/hover  -->
+    <Color x:Key="RailwayPrimaryLight">#818CF8</Color>
+    <!--  Lighter indigo for disabled/inactive  -->
 
-    <!-- Secondary (Supporting Actions) -->
-    <Color x:Key="RailwaySecondary">#8B5CF6</Color>    <!-- Purple - Supporting element -->
-    <Color x:Key="RailwaySecondaryDark">#7C3AED</Color><!-- Darker purple -->
-    <Color x:Key="RailwaySecondaryLight">#A78BFA</Color><!-- Lighter purple -->
+    <!--  Secondary (Supporting Actions)  -->
+    <Color x:Key="RailwaySecondary">#8B5CF6</Color>
+    <!--  Purple - Supporting element  -->
+    <Color x:Key="RailwaySecondaryDark">#7C3AED</Color>
+    <!--  Darker purple  -->
+    <Color x:Key="RailwaySecondaryLight">#A78BFA</Color>
+    <!--  Lighter purple  -->
 
-    <!-- Accent (Highlights, Badges) -->
-    <Color x:Key="RailwayAccent">#3B82F6</Color>       <!-- Blue - Counter badges, highlights -->
-    <Color x:Key="RailwayAccentDark">#1D4ED8</Color>   <!-- Darker blue -->
-    <Color x:Key="RailwayAccentLight">#60A5FA</Color>  <!-- Lighter blue -->
+    <!--  Accent (Highlights, Badges)  -->
+    <Color x:Key="RailwayAccent">#3B82F6</Color>
+    <!--  Blue - Counter badges, highlights  -->
+    <Color x:Key="RailwayAccentDark">#1D4ED8</Color>
+    <!--  Darker blue  -->
+    <Color x:Key="RailwayAccentLight">#60A5FA</Color>
+    <!--  Lighter blue  -->
 
-    <!-- Danger (Error, Negative Actions) -->
-    <Color x:Key="RailwayDanger">#EF4444</Color>       <!-- Red - Delete, stop, errors -->
-    <Color x:Key="RailwayDangerDark">#DC2626</Color>   <!-- Darker red -->
-    <Color x:Key="RailwayDangerLight">#FCA5A5</Color>  <!-- Lighter red -->
+    <!--  Danger (Error, Negative Actions)  -->
+    <Color x:Key="RailwayDanger">#EF4444</Color>
+    <!--  Red - Delete, stop, errors  -->
+    <Color x:Key="RailwayDangerDark">#DC2626</Color>
+    <!--  Darker red  -->
+    <Color x:Key="RailwayDangerLight">#FCA5A5</Color>
+    <!--  Lighter red  -->
 
-    <!-- Warning (Caution, Alerts) -->
-    <Color x:Key="RailwayWarning">#F59E0B</Color>      <!-- Amber - Warnings, cautions -->
-    <Color x:Key="RailwayWarningDark">#D97706</Color>  <!-- Darker amber -->
-    <Color x:Key="RailwayWarningLight">#FBBF24</Color> <!-- Lighter amber -->
+    <!--  Warning (Caution, Alerts)  -->
+    <Color x:Key="RailwayWarning">#F59E0B</Color>
+    <!--  Amber - Warnings, cautions  -->
+    <Color x:Key="RailwayWarningDark">#D97706</Color>
+    <!--  Darker amber  -->
+    <Color x:Key="RailwayWarningLight">#FBBF24</Color>
+    <!--  Lighter amber  -->
 
-    <!-- **SURFACE COLORS (Backgrounds)** -->
-    <Color x:Key="SurfaceBackground">#FFFFFF</Color>  <!-- Light mode background -->
-    <Color x:Key="SurfaceDark">#F3F4F6</Color>         <!-- Light mode subtle bg (Gray 100) -->
-    <Color x:Key="SurfaceCard">#F9FAFB</Color>         <!-- Light mode card bg (Gray 50) -->
-    <Color x:Key="SurfaceElevated">#FFFFFF</Color>     <!-- Light mode elevated surface -->
-    <Color x:Key="SurfaceHighlight">#E5E7EB</Color>    <!-- Light mode highlighted area (Gray 200) -->
+    <!--  **SURFACE COLORS (Backgrounds)**  -->
+    <Color x:Key="SurfaceBackground">#FFFFFF</Color>
+    <!--  Light mode background  -->
+    <Color x:Key="SurfaceDark">#F3F4F6</Color>
+    <!--  Light mode subtle bg (Gray 100)  -->
+    <Color x:Key="SurfaceCard">#F9FAFB</Color>
+    <!--  Light mode card bg (Gray 50)  -->
+    <Color x:Key="SurfaceElevated">#FFFFFF</Color>
+    <!--  Light mode elevated surface  -->
+    <Color x:Key="SurfaceHighlight">#E5E7EB</Color>
+    <!--  Light mode highlighted area (Gray 200)  -->
 
-    <!-- **TEXT COLORS** -->
-    <Color x:Key="TextPrimary">#111827</Color>         <!-- Dark gray - Primary text (Dark Gray 900) -->
-    <Color x:Key="TextSecondary">#6B7280</Color>       <!-- Medium gray - Secondary text (Gray 500) -->
-    <Color x:Key="TextDisabled">#9CA3AF</Color>        <!-- Light gray - Disabled text (Gray 400) -->
-    <Color x:Key="TextOnPrimary">#FFFFFF</Color>       <!-- White - Text on primary color -->
-    <Color x:Key="TextOnSecondary">#FFFFFF</Color>     <!-- White - Text on secondary color -->
+    <!--  **TEXT COLORS**  -->
+    <Color x:Key="TextPrimary">#111827</Color>
+    <!--  Dark gray - Primary text (Dark Gray 900)  -->
+    <Color x:Key="TextSecondary">#6B7280</Color>
+    <!--  Medium gray - Secondary text (Gray 500)  -->
+    <Color x:Key="TextDisabled">#9CA3AF</Color>
+    <!--  Light gray - Disabled text (Gray 400)  -->
+    <Color x:Key="TextOnPrimary">#FFFFFF</Color>
+    <!--  White - Text on primary color  -->
+    <Color x:Key="TextOnSecondary">#FFFFFF</Color>
+    <!--  White - Text on secondary color  -->
 
-    <!-- **BORDERS & DIVIDERS** -->
-    <Color x:Key="Divider">#D1D5DB</Color>             <!-- Light gray divider (Gray 300) -->
-    <Color x:Key="BorderColor">#D1D5DB</Color>         <!-- Light gray border (Gray 300) -->
+    <!--  **BORDERS & DIVIDERS**  -->
+    <Color x:Key="Divider">#D1D5DB</Color>
+    <!--  Light gray divider (Gray 300)  -->
+    <Color x:Key="BorderColor">#D1D5DB</Color>
+    <!--  Light gray border (Gray 300)  -->
 
-    <!-- **SEMANTIC COLORS** -->
-    <Color x:Key="Primary">#6366F1</Color>             <!-- Indigo (matches RailwayPrimary) -->
-    <Color x:Key="Secondary">#8B5CF6</Color>           <!-- Purple (matches RailwaySecondary) -->
-    <Color x:Key="Tertiary">#3B82F6</Color>            <!-- Blue (matches RailwayAccent) -->
+    <!--  **SEMANTIC COLORS**  -->
+    <Color x:Key="Primary">#6366F1</Color>
+    <!--  Indigo (matches RailwayPrimary)  -->
+    <Color x:Key="Secondary">#8B5CF6</Color>
+    <!--  Purple (matches RailwaySecondary)  -->
+    <Color x:Key="Tertiary">#3B82F6</Color>
+    <!--  Blue (matches RailwayAccent)  -->
 
-    <!-- **GRAYSCALE PALETTE** (for neutral elements) -->
+    <!--  **GRAYSCALE PALETTE** (for neutral elements)  -->
     <Color x:Key="White">#FFFFFF</Color>
     <Color x:Key="Black">#000000</Color>
     <Color x:Key="Gray100">#F3F4F6</Color>
@@ -71,7 +104,7 @@
     <Color x:Key="Gray900">#111827</Color>
     <Color x:Key="Gray950">#030712</Color>
 
-    <!-- **PAGE COLORS** -->
+    <!--  **PAGE COLORS**  -->
     <Color x:Key="PageBackgroundColor">#FFFFFF</Color>
     <Color x:Key="FrameBackgroundColor">#F3F4F6</Color>
 

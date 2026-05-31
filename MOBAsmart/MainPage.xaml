@@ -405,8 +405,7 @@
                                 IsEnabled="{Binding UseTimerFilter}"
                                 SemanticProperties.Description="Reduce timer filter interval"
                                 Style="{StaticResource StepperButtonStyle}"
-                                Text="−"
-                             />
+                                Text="−" />
                             <Border Grid.Column="1" Style="{StaticResource StepperValueBorderStyle}">
                                 <Label
                                     FontAttributes="Bold"

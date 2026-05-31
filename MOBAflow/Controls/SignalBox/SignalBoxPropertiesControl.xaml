@@ -8,18 +8,6 @@
     mc:Ignorable="d">
     <ScrollViewer Padding="0,0,4,0" VerticalScrollBarVisibility="Auto">
         <StackPanel Padding="16" Spacing="16">
-            <!--  Properties Header  -->
-            <StackPanel Spacing="2">
-                <TextBlock
-                    FontSize="16"
-                    FontWeight="SemiBold"
-                    Text="Properties" />
-                <TextBlock
-                    FontSize="11"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Text="Edit element" />
-            </StackPanel>
-
             <!--  No Selection State  -->
             <Border
                 x:Name="NoSelectionInfo"
@@ -52,69 +40,19 @@
                 x:Name="ElementPropertiesPanel"
                 Spacing="16"
                 Visibility="Collapsed">
-                <!--  Element Info  -->
-                <Border
-                    Padding="12"
-                    Background="{ThemeResource LayerFillColorDefaultBrush}"
-                    CornerRadius="6">
-                    <StackPanel Spacing="8">
-                        <TextBlock
-                            FontSize="11"
-                            FontWeight="SemiBold"
-                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                        Text="ELEMENT INFO" />
-                        <Grid ColumnSpacing="12" RowSpacing="4">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-                            <TextBlock
-                                Grid.Row="0"
-                                Grid.Column="0"
-                                FontSize="12"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="Type:" />
-                            <TextBlock
-                                x:Name="ElementTypeText"
-                                Grid.Row="0"
-                                Grid.Column="1"
-                                FontSize="12"
-                                FontWeight="SemiBold"
-                                Text="--" />
-                            <TextBlock
-                                Grid.Row="1"
-                                Grid.Column="0"
-                                FontSize="12"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="Position:" />
-                            <TextBlock
-                                x:Name="ElementPositionText"
-                                Grid.Row="1"
-                                Grid.Column="1"
-                                FontSize="12"
-                                Text="--" />
-                            <TextBlock
-                                Grid.Row="2"
-                                Grid.Column="0"
-                                FontSize="12"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="ID:" />
-                            <TextBlock
-                                x:Name="ElementIdText"
-                                Grid.Row="2"
-                                Grid.Column="1"
-                                FontSize="10"
-                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Text="--"
-                                TextTrimming="CharacterEllipsis" />
-                        </Grid>
-                    </StackPanel>
-                </Border>
+
+                <!--  Name Control  -->
+                <StackPanel Spacing="8">
+                    <TextBlock
+                        FontSize="11"
+                        FontWeight="SemiBold"
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                        Text="NAME" />
+                    <TextBox
+                        x:Name="ElementNameBox"
+                        PlaceholderText="Element name"
+                        TextChanged="OnElementNameChanged" />
+                </StackPanel>
 
                 <!--  Rotation Control  -->
                 <StackPanel Spacing="8">
@@ -566,14 +504,6 @@
                                 ValueChanged="OnBottomSpeedIndicatorChanged" />
                         </Grid>
                     </StackPanel>
-
-                    <!--  Status Message (visible after automatic signal command)  -->
-                    <TextBlock
-                        x:Name="SetSignalStatusText"
-                        FontSize="10"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        TextWrapping="WrapWholeWords"
-                        Visibility="Collapsed" />
                 </StackPanel>
 
                 <!--  Switch Position Control (only for switches)  -->
@@ -663,70 +593,6 @@
                     </StackPanel>
                 </Button>
             </StackPanel>
-
-            <!--  Statistics  -->
-            <Border
-                Padding="12"
-                Background="{ThemeResource LayerFillColorDefaultBrush}"
-                CornerRadius="6">
-                <StackPanel Spacing="8">
-                    <TextBlock
-                        FontSize="11"
-                        FontWeight="SemiBold"
-                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                        Text="STATISTICS" />
-                    <Grid ColumnSpacing="12" RowSpacing="4">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-                        <TextBlock
-                            Grid.Row="0"
-                            Grid.Column="0"
-                            FontSize="12"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Text="Tracks:" />
-                        <TextBlock
-                            x:Name="TrackCountText"
-                            Grid.Row="0"
-                            Grid.Column="1"
-                            FontSize="12"
-                            FontWeight="SemiBold"
-                            Text="0" />
-                        <TextBlock
-                            Grid.Row="1"
-                            Grid.Column="0"
-                            FontSize="12"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Text="Switches:" />
-                        <TextBlock
-                            x:Name="SwitchCountText"
-                            Grid.Row="1"
-                            Grid.Column="1"
-                            FontSize="12"
-                            FontWeight="SemiBold"
-                            Text="0" />
-                        <TextBlock
-                            Grid.Row="2"
-                            Grid.Column="0"
-                            FontSize="12"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Text="Signals:" />
-                        <TextBlock
-                            x:Name="SignalCountText"
-                            Grid.Row="2"
-                            Grid.Column="1"
-                            FontSize="12"
-                            FontWeight="SemiBold"
-                            Text="0" />
-                    </Grid>
-                </StackPanel>
-            </Border>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

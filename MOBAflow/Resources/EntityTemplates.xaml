@@ -720,13 +720,9 @@
                         SignalArticleNumber="{Binding SignalArticleNumber, Mode=OneWay}" />
                 </StackPanel>
 
-                <TextBox
-                    Header="Multiplexer Article Number"
-                    Text="{Binding MultiplexerArticleNumber, Mode=TwoWay}" />
+                <TextBox Header="Multiplexer Article Number" Text="{Binding MultiplexerArticleNumber, Mode=TwoWay}" />
 
-                <TextBox
-                    Header="Signal Article Number"
-                    Text="{Binding SignalArticleNumber, Mode=TwoWay}" />
+                <TextBox Header="Signal Article Number" Text="{Binding SignalArticleNumber, Mode=TwoWay}" />
 
                 <NumberBox
                     Header="Delay After (ms)"
@@ -1141,12 +1137,12 @@
         AnnouncementActionTemplate="{StaticResource AnnouncementActionTemplate}"
         AudioActionTemplate="{StaticResource AudioActionTemplate}"
         CommandActionTemplate="{StaticResource CommandActionTemplate}"
-        SelectSignalAspectActionTemplate="{StaticResource SelectSignalAspectActionTemplate}"
         DefaultTemplate="{StaticResource DefaultTemplate}"
         JourneyTemplate="{StaticResource JourneyTemplate}"
         LocomotiveTemplate="{StaticResource LocomotiveTemplate}"
         PlatformTemplate="{StaticResource PlatformTemplate}"
         ProjectTemplate="{StaticResource ProjectTemplate}"
+        SelectSignalAspectActionTemplate="{StaticResource SelectSignalAspectActionTemplate}"
         StationTemplate="{StaticResource StationTemplate}"
         TrainTemplate="{StaticResource TrainTemplate}"
         WagonTemplate="{StaticResource WagonTemplate}"
