@@ -481,7 +481,7 @@
           {
             "$type": "Signal",
             "signalSystem": "Ks",
-            "signalAspect": "Hp0",
+            "signalAspect": "Dunkel",
             "topSpeedIndicator": "8",
             "bottomSpeedIndicator": "6",
             "isMultiplexed": true,

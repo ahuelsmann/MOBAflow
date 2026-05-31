@@ -171,11 +171,7 @@ public sealed partial class SignalBoxCanvasControl
             "TrackStraight" => PlanViewModel.AddTrackStraight(gridX, gridY),
             "TrackCurve" => PlanViewModel.AddTrackCurve(gridX, gridY),
             "Switch" => PlanViewModel.AddSwitch(gridX, gridY),
-            "Signal-4043" => CreateMultiplexSignal(PlanViewModel, gridX, gridY, "4043"),
-            "Signal-4042" => CreateMultiplexSignal(PlanViewModel, gridX, gridY, "4042"),
-            "Signal-4046" => CreateMultiplexSignal(PlanViewModel, gridX, gridY, "4046"),
-            "Signal-4045" => CreateMultiplexSignal(PlanViewModel, gridX, gridY, "4045"),
-            "Signal-4040" => CreateMultiplexSignal(PlanViewModel, gridX, gridY, "4040"),
+            "Signal" => CreateMultiplexSignal(PlanViewModel, gridX, gridY),
             "Detector" => PlanViewModel.AddDetector(gridX, gridY),
             _ => null
         };
@@ -186,13 +182,14 @@ public sealed partial class SignalBoxCanvasControl
         }
     }
 
-    private static SbSignal CreateMultiplexSignal(SignalBoxPlanViewModel planViewModel, int gridX, int gridY, string mainSignalArticle)
+    private static SbSignal CreateMultiplexSignal(SignalBoxPlanViewModel planViewModel, int gridX, int gridY)
     {
+        // Generic Ks signal: the concrete variant (main signal article) is selected
+        // in the properties column, not when dropping the toolbox icon.
         var signal = planViewModel.AddSignal(gridX, gridY);
         signal.SignalSystem = SignalSystemType.Ks;
         signal.MultiplexerArticleNumber = "5229";
         signal.IsMultiplexed = true;
-        signal.MainSignalArticleNumber = mainSignalArticle;
         return signal;
     }
 
