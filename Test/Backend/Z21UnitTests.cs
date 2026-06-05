@@ -130,4 +130,33 @@ internal class Z21UnitTests
         // If timer wasn't stopped properly, it would throw exceptions
         // No assertion needed - test passes if no exception occurs
     }
+
+    [Test]
+    public async Task SetLocoFunctionAsync_SendsPacket_ForF31()
+    {
+        var fakeUdp = new FakeUdpClientWrapper();
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        using var z21 = new Z21(fakeUdp, eventBus);
+
+        await z21.SetLocoFunctionAsync(address: 3, functionIndex: 31, on: true);
+
+        Assert.That(fakeUdp.SentPayloads, Has.Count.EqualTo(1));
+        var packet = fakeUdp.SentPayloads[0];
+        // LAN_X_SET_LOCO_FUNCTION: ... 0xE4 0xF8 Adr_MSB Adr_LSB TTNNNNNN XOR
+        // funcByte = on(0x40) | (31 & 0x3F) = 0x5F
+        Assert.That(packet[4], Is.EqualTo(0xE4), "X-Header should be X_SET_LOCO_FUNCTION");
+        Assert.That(packet[5], Is.EqualTo(0xF8), "DB0 should be 0xF8");
+        Assert.That(packet[8], Is.EqualTo(0x5F), "Function byte should encode F31 with on-bit");
+    }
+
+    [Test]
+    public void SetLocoFunctionAsync_Throws_ForIndexAbove31()
+    {
+        var fakeUdp = new FakeUdpClientWrapper();
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        using var z21 = new Z21(fakeUdp, eventBus);
+
+        Assert.ThrowsAsync<ArgumentOutOfRangeException>(
+            () => z21.SetLocoFunctionAsync(address: 3, functionIndex: 32, on: true));
+    }
 }

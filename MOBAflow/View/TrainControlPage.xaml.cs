@@ -11,7 +11,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using Windows.Foundation;
 
 using Common.Extension;
 using SharedUI.ViewModel;
@@ -262,47 +261,18 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
 
     private void FunctionButton_RightTapped(object sender, RightTappedRoutedEventArgs e)
     {
-        var source = ReferenceEquals(sender, FunctionButtonsGrid)
-            ? ResolveFunctionButtonFromPoint(e.GetPosition(FunctionButtonsGrid))
-            : sender;
-
-        if (source == null)
-        {
-            return;
-        }
-
         e.Handled = true;
-        HandleFunctionButtonRightTappedAsync(source).Observe(ex => _logger?.LogWarning(ex, "Function symbol selection failed"));
-    }
-
-    private FrameworkElement? ResolveFunctionButtonFromPoint(Point position)
-    {
-        foreach (var child in FunctionButtonsGrid.Children)
-        {
-            if (child is not FrameworkElement element || element.Tag is not string)
-            {
-                continue;
-            }
-
-            var bounds = element
-                .TransformToVisual(FunctionButtonsGrid)
-                .TransformBounds(new Rect(0, 0, element.ActualWidth, element.ActualHeight));
-
-            if (position.X >= bounds.Left && position.X <= bounds.Right && position.Y >= bounds.Top && position.Y <= bounds.Bottom)
-            {
-                return element;
-            }
-        }
-
-        return null;
+        HandleFunctionButtonRightTappedAsync(sender).Observe(ex => _logger?.LogWarning(ex, "Function symbol selection failed"));
     }
 
     private async Task HandleFunctionButtonRightTappedAsync(object sender)
     {
         try
         {
-            if (sender is not FrameworkElement fe || fe.Tag is not string tag || !int.TryParse(tag, out var functionIndex) || functionIndex < 0 || functionIndex > 31)
+            if (sender is not FrameworkElement { DataContext: FunctionButtonViewModel function })
                 return;
+
+            var functionIndex = function.Index;
 
             var picker = new FunctionSymbolPickerDialog
             {

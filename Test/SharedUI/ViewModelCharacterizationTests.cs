@@ -69,7 +69,7 @@ internal class ViewModelCharacterizationTests
 
         await viewModel.ToggleFunctionAsync(1);
 
-        Assert.That(viewModel.IsF1On, Is.True);
+        Assert.That(viewModel.Functions[1].IsOn, Is.True);
         mobaRuntimeMock.Verify(client => client.SetLocomotiveFunctionAsync(3, 1, true, It.IsAny<CancellationToken>()), Times.Once);
     }
 

@@ -73,38 +73,6 @@ public sealed partial class TrainControlViewModel : ObservableObject
     /// </summary>
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SetSpeedCommand))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF0Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF1Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF2Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF3Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF4Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF5Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF6Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF7Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF8Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF9Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF10Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF11Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF12Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF13Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF14Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF15Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF16Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF17Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF18Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF19Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF20Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF21Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF22Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF23Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF24Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF25Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF26Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF27Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF28Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF29Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF30Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF31Command))]
     [NotifyCanExecuteChangedFor(nameof(EmergencyStopCommand))]
     private int _locoAddress = 3;
 
@@ -332,103 +300,30 @@ public sealed partial class TrainControlViewModel : ObservableObject
     private bool _isForward = true;
 
     /// <summary>
-    /// Function states F0-F31. Array index corresponds to function number.
+    /// Function buttons F0–F31. Replaces the former 32 IsF#On properties; each item holds its
+    /// index, label, fixed backlight color and on/off state. The symbol (IconAsset) is refreshed
+    /// per locomotive via <see cref="NotifyAllFunctionGlyphsChanged"/>.
     /// </summary>
-    [ObservableProperty]
-    private bool _isF0On;
+    public ObservableCollection<FunctionButtonViewModel> Functions { get; } = CreateFunctionButtons();
 
-    [ObservableProperty]
-    private bool _isF1On;
+    /// <summary>
+    /// Fixed backlight accent colors for F0–F31 (migrated from the former XAML converter parameters).
+    /// </summary>
+    private static readonly string[] FunctionBacklightColors =
+    {
+        "#FFD700", "#0078D4", "#FF8C00", "#E81123", "#107C10", "#00B7C3", "#FFB900", "#767676",
+        "#E81B23", "#7B68EE", "#8764B8", "#038387", "#C239B3", "#FF1493", "#7A7574", "#567C73",
+        "#8E562E", "#847545", "#525E54", "#4A5459", "#69797E", "#69797E", "#69797E", "#69797E",
+        "#69797E", "#69797E", "#69797E", "#69797E", "#69797E", "#69797E", "#69797E", "#69797E"
+    };
 
-    [ObservableProperty]
-    private bool _isF2On;
-
-    [ObservableProperty]
-    private bool _isF3On;
-
-    [ObservableProperty]
-    private bool _isF4On;
-
-    [ObservableProperty]
-    private bool _isF5On;
-
-    [ObservableProperty]
-    private bool _isF6On;
-
-    [ObservableProperty]
-    private bool _isF7On;
-
-    [ObservableProperty]
-    private bool _isF8On;
-
-    [ObservableProperty]
-    private bool _isF9On;
-
-    [ObservableProperty]
-    private bool _isF10On;
-
-    [ObservableProperty]
-    private bool _isF11On;
-
-    [ObservableProperty]
-    private bool _isF12On;
-
-    [ObservableProperty]
-    private bool _isF13On;
-
-    [ObservableProperty]
-    private bool _isF14On;
-
-    [ObservableProperty]
-    private bool _isF15On;
-
-    [ObservableProperty]
-    private bool _isF16On;
-
-    [ObservableProperty]
-    private bool _isF17On;
-
-    [ObservableProperty]
-    private bool _isF18On;
-
-    [ObservableProperty]
-    private bool _isF19On;
-
-    [ObservableProperty]
-    private bool _isF20On;
-
-    [ObservableProperty]
-    private bool _isF21On;
-
-    [ObservableProperty]
-    private bool _isF22On;
-
-    [ObservableProperty]
-    private bool _isF23On;
-
-    [ObservableProperty]
-    private bool _isF24On;
-
-    [ObservableProperty]
-    private bool _isF25On;
-
-    [ObservableProperty]
-    private bool _isF26On;
-
-    [ObservableProperty]
-    private bool _isF27On;
-
-    [ObservableProperty]
-    private bool _isF28On;
-
-    [ObservableProperty]
-    private bool _isF29On;
-
-    [ObservableProperty]
-    private bool _isF30On;
-
-    [ObservableProperty]
-    private bool _isF31On;
+    private static ObservableCollection<FunctionButtonViewModel> CreateFunctionButtons()
+    {
+        var collection = new ObservableCollection<FunctionButtonViewModel>();
+        for (int i = 0; i < FunctionBacklightColors.Length; i++)
+            collection.Add(new FunctionButtonViewModel(i, FunctionBacklightColors[i]));
+        return collection;
+    }
 
     // === Brake (locomotive: parking brake/spring brake) and door release ===
     // Flow: speed 0 → brake on → release door; end: close door → release brake → drive.
@@ -545,72 +440,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
         "", "", "", "", "", "", "", ""
     };
 
-    /// <summary>
-    /// Glyph for function button F0 (e.g. light).
-    /// </summary>
-    public string Function0Glyph => GetFunctionGlyph(0);
-    /// <summary>Glyph for F1.</summary>
-    public string Function1Glyph => GetFunctionGlyph(1);
-    /// <summary>Glyph for F2.</summary>
-    public string Function2Glyph => GetFunctionGlyph(2);
-    /// <summary>Glyph for F3.</summary>
-    public string Function3Glyph => GetFunctionGlyph(3);
-    /// <summary>Glyph for F4.</summary>
-    public string Function4Glyph => GetFunctionGlyph(4);
-    /// <summary>Glyph for F5.</summary>
-    public string Function5Glyph => GetFunctionGlyph(5);
-    /// <summary>Glyph for F6.</summary>
-    public string Function6Glyph => GetFunctionGlyph(6);
-    /// <summary>Glyph for F7.</summary>
-    public string Function7Glyph => GetFunctionGlyph(7);
-    /// <summary>Glyph for F8.</summary>
-    public string Function8Glyph => GetFunctionGlyph(8);
-    /// <summary>Glyph for F9.</summary>
-    public string Function9Glyph => GetFunctionGlyph(9);
-    /// <summary>Glyph for F10.</summary>
-    public string Function10Glyph => GetFunctionGlyph(10);
-    /// <summary>Glyph for F11.</summary>
-    public string Function11Glyph => GetFunctionGlyph(11);
-    /// <summary>Glyph for F12.</summary>
-    public string Function12Glyph => GetFunctionGlyph(12);
-    /// <summary>Glyph for F13.</summary>
-    public string Function13Glyph => GetFunctionGlyph(13);
-    /// <summary>Glyph for F14.</summary>
-    public string Function14Glyph => GetFunctionGlyph(14);
-    /// <summary>Glyph for F15.</summary>
-    public string Function15Glyph => GetFunctionGlyph(15);
-    /// <summary>Glyph for F16.</summary>
-    public string Function16Glyph => GetFunctionGlyph(16);
-    /// <summary>Glyph for F17.</summary>
-    public string Function17Glyph => GetFunctionGlyph(17);
-    /// <summary>Glyph for F18.</summary>
-    public string Function18Glyph => GetFunctionGlyph(18);
-    /// <summary>Glyph for F19.</summary>
-    public string Function19Glyph => GetFunctionGlyph(19);
-    /// <summary>Glyph for F20.</summary>
-    public string Function20Glyph => GetFunctionGlyph(20);
-    /// <summary>Glyph for F21.</summary>
-    public string Function21Glyph => GetFunctionGlyph(21);
-    /// <summary>Glyph for F22.</summary>
-    public string Function22Glyph => GetFunctionGlyph(22);
-    /// <summary>Glyph for F23.</summary>
-    public string Function23Glyph => GetFunctionGlyph(23);
-    /// <summary>Glyph for F24.</summary>
-    public string Function24Glyph => GetFunctionGlyph(24);
-    /// <summary>Glyph for F25.</summary>
-    public string Function25Glyph => GetFunctionGlyph(25);
-    /// <summary>Glyph for F26.</summary>
-    public string Function26Glyph => GetFunctionGlyph(26);
-    /// <summary>Glyph for F27.</summary>
-    public string Function27Glyph => GetFunctionGlyph(27);
-    /// <summary>Glyph for F28.</summary>
-    public string Function28Glyph => GetFunctionGlyph(28);
-    /// <summary>Glyph for F29.</summary>
-    public string Function29Glyph => GetFunctionGlyph(29);
-    /// <summary>Glyph for F30.</summary>
-    public string Function30Glyph => GetFunctionGlyph(30);
-    /// <summary>Glyph for F31.</summary>
-    public string Function31Glyph => GetFunctionGlyph(31);
+    // Per-button symbols are exposed via Functions[i].IconAsset (see NotifyAllFunctionGlyphsChanged).
 
     /// <summary>
     /// Status message for UI feedback.
@@ -623,38 +453,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
     /// </summary>
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SetSpeedCommand))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF0Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF1Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF2Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF3Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF4Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF5Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF6Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF7Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF8Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF9Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF10Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF11Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF12Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF13Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF14Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF15Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF16Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF17Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF18Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF19Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF20Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF21Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF22Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF23Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF24Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF25Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF26Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF27Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF28Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF29Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF30Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF31Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleFunctionCommand))]
     [NotifyCanExecuteChangedFor(nameof(EmergencyStopCommand))]
     [NotifyPropertyChangedFor(nameof(IsSpeedControlEnabled))]
     private bool _isConnected;
@@ -1073,6 +872,9 @@ public sealed partial class TrainControlViewModel : ObservableObject
             // Initialize with current journey if available
             UpdateJourneyFromMainViewModel();
         }
+
+        // Initialize function button symbols for the current locomotive.
+        NotifyAllFunctionGlyphsChanged();
     }
 
     /// <summary>
@@ -1354,12 +1156,12 @@ public sealed partial class TrainControlViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Raises PropertyChanged for all FunctionXGlyph properties (e.g. after address or symbol change).
+    /// Refreshes the symbol (IconAsset) of every function button (e.g. after address or symbol change).
     /// </summary>
     private void NotifyAllFunctionGlyphsChanged()
     {
-        for (int i = 0; i <= 31; i++)
-            OnPropertyChanged($"Function{i}Glyph");
+        for (int i = 0; i < Functions.Count; i++)
+            Functions[i].IconAsset = GetFunctionGlyph(i);
     }
 
     /// <summary>
@@ -1431,38 +1233,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
     private void OnZ21ConnectionChanged(bool isConnected)
     {
         SetSpeedCommand.NotifyCanExecuteChanged();
-        ToggleF0Command.NotifyCanExecuteChanged();
-        ToggleF1Command.NotifyCanExecuteChanged();
-        ToggleF2Command.NotifyCanExecuteChanged();
-        ToggleF3Command.NotifyCanExecuteChanged();
-        ToggleF4Command.NotifyCanExecuteChanged();
-        ToggleF5Command.NotifyCanExecuteChanged();
-        ToggleF6Command.NotifyCanExecuteChanged();
-        ToggleF7Command.NotifyCanExecuteChanged();
-        ToggleF8Command.NotifyCanExecuteChanged();
-        ToggleF9Command.NotifyCanExecuteChanged();
-        ToggleF10Command.NotifyCanExecuteChanged();
-        ToggleF11Command.NotifyCanExecuteChanged();
-        ToggleF12Command.NotifyCanExecuteChanged();
-        ToggleF13Command.NotifyCanExecuteChanged();
-        ToggleF14Command.NotifyCanExecuteChanged();
-        ToggleF15Command.NotifyCanExecuteChanged();
-        ToggleF16Command.NotifyCanExecuteChanged();
-        ToggleF17Command.NotifyCanExecuteChanged();
-        ToggleF18Command.NotifyCanExecuteChanged();
-        ToggleF19Command.NotifyCanExecuteChanged();
-        ToggleF20Command.NotifyCanExecuteChanged();
-        ToggleF21Command.NotifyCanExecuteChanged();
-        ToggleF22Command.NotifyCanExecuteChanged();
-        ToggleF23Command.NotifyCanExecuteChanged();
-        ToggleF24Command.NotifyCanExecuteChanged();
-        ToggleF25Command.NotifyCanExecuteChanged();
-        ToggleF26Command.NotifyCanExecuteChanged();
-        ToggleF27Command.NotifyCanExecuteChanged();
-        ToggleF28Command.NotifyCanExecuteChanged();
-        ToggleF29Command.NotifyCanExecuteChanged();
-        ToggleF30Command.NotifyCanExecuteChanged();
-        ToggleF31Command.NotifyCanExecuteChanged();
+        ToggleFunctionCommand.NotifyCanExecuteChanged();
         EmergencyStopCommand.NotifyCanExecuteChanged();
         StatusMessage = isConnected ? "Z21 Connected" : "Z21 Disconnected";
     }
@@ -1515,6 +1286,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
         }
 
         NotifyAllFunctionGlyphsChanged();
+        ToggleFunctionCommand.NotifyCanExecuteChanged();
     }
 
     private async Task RequestLocoInfoAsync()
@@ -1726,106 +1498,11 @@ public sealed partial class TrainControlViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Toggles F0 (Light) function.
+    /// Toggles the function with the given index (0–31). Parameterized command bound by every
+    /// function button via its <see cref="FunctionButtonViewModel.Index"/>.
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF0Async() => await ToggleFunctionAsync(0);
-
-    /// <summary>
-    /// Toggles F1 (Sound) function.
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF1Async() => await ToggleFunctionAsync(1);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF2Async() => await ToggleFunctionAsync(2);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF3Async() => await ToggleFunctionAsync(3);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF4Async() => await ToggleFunctionAsync(4);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF5Async() => await ToggleFunctionAsync(5);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF6Async() => await ToggleFunctionAsync(6);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF7Async() => await ToggleFunctionAsync(7);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF8Async() => await ToggleFunctionAsync(8);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF9Async() => await ToggleFunctionAsync(9);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF10Async() => await ToggleFunctionAsync(10);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF11Async() => await ToggleFunctionAsync(11);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF12Async() => await ToggleFunctionAsync(12);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF13Async() => await ToggleFunctionAsync(13);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF14Async() => await ToggleFunctionAsync(14);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF15Async() => await ToggleFunctionAsync(15);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF16Async() => await ToggleFunctionAsync(16);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF17Async() => await ToggleFunctionAsync(17);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF18Async() => await ToggleFunctionAsync(18);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF19Async() => await ToggleFunctionAsync(19);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF20Async() => await ToggleFunctionAsync(20);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF21Async() => await ToggleFunctionAsync(21);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF22Async() => await ToggleFunctionAsync(22);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF23Async() => await ToggleFunctionAsync(23);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF24Async() => await ToggleFunctionAsync(24);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF25Async() => await ToggleFunctionAsync(25);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF26Async() => await ToggleFunctionAsync(26);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF27Async() => await ToggleFunctionAsync(27);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF28Async() => await ToggleFunctionAsync(28);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF29Async() => await ToggleFunctionAsync(29);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF30Async() => await ToggleFunctionAsync(30);
-
-    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-    private async Task ToggleF31Async() => await ToggleFunctionAsync(31);
+    private Task ToggleFunction(int index) => ToggleFunctionAsync(index);
 
     /// <summary>
     /// Generic function toggle implementation.
@@ -1856,80 +1533,13 @@ public sealed partial class TrainControlViewModel : ObservableObject
         }
     }
 
-    private bool GetFunctionState(int functionNumber) => functionNumber switch
-    {
-        0 => IsF0On,
-        1 => IsF1On,
-        2 => IsF2On,
-        3 => IsF3On,
-        4 => IsF4On,
-        5 => IsF5On,
-        6 => IsF6On,
-        7 => IsF7On,
-        8 => IsF8On,
-        9 => IsF9On,
-        10 => IsF10On,
-        11 => IsF11On,
-        12 => IsF12On,
-        13 => IsF13On,
-        14 => IsF14On,
-        15 => IsF15On,
-        16 => IsF16On,
-        17 => IsF17On,
-        18 => IsF18On,
-        19 => IsF19On,
-        20 => IsF20On,
-        21 => IsF21On,
-        22 => IsF22On,
-        23 => IsF23On,
-        24 => IsF24On,
-        25 => IsF25On,
-        26 => IsF26On,
-        27 => IsF27On,
-        28 => IsF28On,
-        29 => IsF29On,
-        30 => IsF30On,
-        31 => IsF31On,
-        _ => false
-    };
+    private bool GetFunctionState(int functionNumber) =>
+        functionNumber >= 0 && functionNumber < Functions.Count && Functions[functionNumber].IsOn;
 
     private void SetFunctionState(int functionNumber, bool state)
     {
-        switch (functionNumber)
-        {
-            case 0: IsF0On = state; break;
-            case 1: IsF1On = state; break;
-            case 2: IsF2On = state; break;
-            case 3: IsF3On = state; break;
-            case 4: IsF4On = state; break;
-            case 5: IsF5On = state; break;
-            case 6: IsF6On = state; break;
-            case 7: IsF7On = state; break;
-            case 8: IsF8On = state; break;
-            case 9: IsF9On = state; break;
-            case 10: IsF10On = state; break;
-            case 11: IsF11On = state; break;
-            case 12: IsF12On = state; break;
-            case 13: IsF13On = state; break;
-            case 14: IsF14On = state; break;
-            case 15: IsF15On = state; break;
-            case 16: IsF16On = state; break;
-            case 17: IsF17On = state; break;
-            case 18: IsF18On = state; break;
-            case 19: IsF19On = state; break;
-            case 20: IsF20On = state; break;
-            case 21: IsF21On = state; break;
-            case 22: IsF22On = state; break;
-            case 23: IsF23On = state; break;
-            case 24: IsF24On = state; break;
-            case 25: IsF25On = state; break;
-            case 26: IsF26On = state; break;
-            case 27: IsF27On = state; break;
-            case 28: IsF28On = state; break;
-            case 29: IsF29On = state; break;
-            case 30: IsF30On = state; break;
-            case 31: IsF31On = state; break;
-        }
+        if (functionNumber >= 0 && functionNumber < Functions.Count)
+            Functions[functionNumber].IsOn = state;
     }
 
     /// <summary>

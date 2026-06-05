@@ -17,8 +17,20 @@ public partial class BoolToBacklightBrushConverter : IValueConverter
     public object Convert(object? value, Type targetType, object? parameter, string language)
     {
         bool isOn = value is bool b && b;
+        var hexColor = parameter as string;
+        return CreateBrush(isOn, hexColor);
+    }
 
-        if (parameter is not string hexColor || string.IsNullOrEmpty(hexColor))
+    /// <summary>
+    /// Creates the backlight brush for a function button. Exposed as a static helper so it can be
+    /// used directly from an x:Bind function binding in a data template (where ConverterParameter
+    /// cannot be bound to a per-item color).
+    /// </summary>
+    /// <param name="isOn">Whether the function is currently on.</param>
+    /// <param name="hexColor">Accent color hex (e.g. "#FFD700"). Falls back to neutral gray.</param>
+    public static Brush CreateBrush(bool isOn, string? hexColor)
+    {
+        if (string.IsNullOrEmpty(hexColor))
         {
             // Fallback: use a neutral gray
             hexColor = "#808080";
