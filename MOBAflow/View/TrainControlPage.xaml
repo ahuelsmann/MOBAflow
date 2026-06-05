@@ -747,7 +747,8 @@
                                         CommandParameter="{x:Bind Index}"
                                         IsChecked="{x:Bind IsOn, Mode=OneWay}"
                                         RightTapped="FunctionButton_RightTapped"
-                                        Style="{StaticResource BacklightToggleButtonStyle}">
+                                        Style="{StaticResource BacklightToggleButtonStyle}"
+                                        Tag="{x:Bind Index}">
                                         <StackPanel Spacing="2">
                                             <Image
                                                 Width="20"

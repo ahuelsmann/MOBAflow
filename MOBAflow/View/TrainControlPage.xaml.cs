@@ -269,10 +269,18 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
     {
         try
         {
-            if (sender is not FrameworkElement { DataContext: FunctionButtonViewModel function })
+            if (sender is not FrameworkElement element)
                 return;
 
-            var functionIndex = function.Index;
+            var functionIndex = element switch
+            {
+                { Tag: int tagIndex } => tagIndex,
+                { DataContext: FunctionButtonViewModel function } => function.Index,
+                _ => -1
+            };
+
+            if (functionIndex < 0 || functionIndex > 31)
+                return;
 
             var picker = new FunctionSymbolPickerDialog
             {
