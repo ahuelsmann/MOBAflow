@@ -79,4 +79,10 @@ public class TrainControlSettings
     /// Locomotive presets for quick switching.
     /// </summary>
     public List<LocomotivePreset> Presets { get; set; } = [];
+
+    /// <summary>
+    /// Persisted function states (F0-F31 bitmask) per project locomotive, keyed by locomotive Id.
+    /// Used when a locomotive is controlled via the "Locomotive from project" selection rather than a preset.
+    /// </summary>
+    public Dictionary<Guid, uint> ProjectLocomotiveFunctionStates { get; set; } = [];
 }

@@ -74,6 +74,28 @@ internal class ViewModelCharacterizationTests
     }
 
     [Test]
+    public async Task TrainControlViewModel_TurnOffAllFunctionsAsync_ResetsUiAndCallsRuntime()
+    {
+        var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = true });
+        var settingsServiceMock = CreateSettingsServiceMock();
+        var viewModel = new TrainControlViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object);
+
+        await viewModel.ToggleFunctionAsync(0);
+        await viewModel.ToggleFunctionAsync(5);
+        Assert.That(viewModel.Functions[0].IsOn, Is.True);
+
+        await viewModel.TurnOffAllFunctionsAsync();
+
+        Assert.That(viewModel.Functions.All(f => !f.IsOn), Is.True, "All function buttons should be off");
+        mobaRuntimeMock.Verify(client => client.SetAllLocomotiveFunctionsOffAsync(3, It.IsAny<CancellationToken>()), Times.Once);
+
+        // New all-off state is persisted to the currently selected preset.
+        Assert.That(Enumerable.Range(0, 32).All(i => !viewModel.CurrentPreset.GetFunction(i)), Is.True, "Preset should store all functions off");
+        await Task.Delay(100);
+        settingsServiceMock.Verify(service => service.SaveSettingsAsync(It.IsAny<AppSettings>()), Times.AtLeastOnce);
+    }
+
+    [Test]
     public void TrainControlViewModel_Timetable_ShowsVirtualEventWithSignalAspect()
     {
         var workflowId = Guid.NewGuid();
@@ -214,6 +236,8 @@ internal class ViewModelCharacterizationTests
         mobaRuntimeMock.Setup(client => client.SetLocomotiveDriveAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         mobaRuntimeMock.Setup(client => client.SetLocomotiveFunctionAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        mobaRuntimeMock.Setup(client => client.SetAllLocomotiveFunctionsOffAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         mobaRuntimeMock.Setup(client => client.RequestLocomotiveInfoAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);

@@ -70,6 +70,11 @@ public interface IMobaRuntime
     Task SetLocomotiveFunctionAsync(int address, int functionIndex, bool isOn, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Turns off all locomotive functions F0-F31 for the given address through the runtime.
+    /// </summary>
+    Task SetAllLocomotiveFunctionsOffAsync(int address, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Requests the current state of a locomotive through the runtime.
     /// </summary>
     Task RequestLocomotiveInfoAsync(int address, CancellationToken cancellationToken = default);

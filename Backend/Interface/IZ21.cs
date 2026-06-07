@@ -177,6 +177,15 @@ public interface IZ21 : IDisposable
     Task SetLocoFunctionAsync(int address, int functionIndex, bool on, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Turns off all locomotive functions F0-F31 for the given address.
+    /// Sends an explicit OFF command (TT=00) per function - never a toggle - so the
+    /// resulting state is deterministic regardless of the decoder's previous state.
+    /// </summary>
+    /// <param name="address">DCC locomotive address (1-9999)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    Task SetAllLocoFunctionsOffAsync(int address, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Requests locomotive information and subscribes to updates for this address.
     /// LAN_X_GET_LOCO_INFO: 0xE3 0xF0 Adr_MSB Adr_LSB XOR
     /// Max 16 loco addresses can be subscribed per client (FIFO).

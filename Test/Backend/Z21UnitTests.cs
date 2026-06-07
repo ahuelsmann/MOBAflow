@@ -159,4 +159,37 @@ internal class Z21UnitTests
         Assert.ThrowsAsync<ArgumentOutOfRangeException>(
             () => z21.SetLocoFunctionAsync(address: 3, functionIndex: 32, on: true));
     }
+
+    [Test]
+    public async Task SetAllLocoFunctionsOffAsync_Sends32ExplicitOffPackets()
+    {
+        var fakeUdp = new FakeUdpClientWrapper();
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        using var z21 = new Z21(fakeUdp, eventBus);
+
+        await z21.SetAllLocoFunctionsOffAsync(address: 3);
+
+        Assert.That(fakeUdp.SentPayloads, Has.Count.EqualTo(32), "Should send one OFF packet per function F0-F31");
+
+        for (int i = 0; i < 32; i++)
+        {
+            var packet = fakeUdp.SentPayloads[i];
+            Assert.That(packet[4], Is.EqualTo(0xE4), $"Packet {i}: X-Header should be X_SET_LOCO_FUNCTION");
+            Assert.That(packet[5], Is.EqualTo(0xF8), $"Packet {i}: DB0 should be 0xF8");
+            // funcByte = off(0x00) | (i & 0x3F) => TT=00 (explicit OFF, never toggle 0x80 or on 0x40)
+            Assert.That(packet[8], Is.EqualTo((byte)i), $"Packet {i}: function byte should encode F{i} with TT=00 (off)");
+            Assert.That(packet[8] & 0xC0, Is.EqualTo(0x00), $"Packet {i}: top bits (TT) must be 00 = off");
+        }
+    }
+
+    [Test]
+    public void SetAllLocoFunctionsOffAsync_Throws_ForInvalidAddress()
+    {
+        var fakeUdp = new FakeUdpClientWrapper();
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        using var z21 = new Z21(fakeUdp, eventBus);
+
+        Assert.ThrowsAsync<ArgumentOutOfRangeException>(
+            () => z21.SetAllLocoFunctionsOffAsync(address: 0));
+    }
 }

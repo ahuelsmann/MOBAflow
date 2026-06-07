@@ -146,6 +146,25 @@ public sealed partial class MobaRuntimeService
     }
 
     /// <inheritdoc />
+    public async Task SetAllLocomotiveFunctionsOffAsync(int address, CancellationToken cancellationToken = default)
+    {
+        await _z21.SetAllLocoFunctionsOffAsync(address, cancellationToken).ConfigureAwait(false);
+
+        // Reflect the commanded all-off state in the runtime model so consumers (and the next
+        // snapshot) see Functions=0 immediately, instead of stale decoder bits from earlier info.
+        var existingState = _locomotiveStates.TryGetValue(address, out var current) ? current : null;
+        _locomotiveStates[address] = new Common.Runtime.LocomotiveRuntimeSnapshot
+        {
+            Address = address,
+            Speed = existingState?.Speed ?? 0,
+            IsForward = existingState?.IsForward ?? true,
+            Functions = 0
+        };
+
+        PublishSnapshot();
+    }
+
+    /// <inheritdoc />
     public async Task RequestLocomotiveInfoAsync(int address, CancellationToken cancellationToken = default)
     {
         await _z21.GetLocoInfoAsync(address, cancellationToken).ConfigureAwait(false);

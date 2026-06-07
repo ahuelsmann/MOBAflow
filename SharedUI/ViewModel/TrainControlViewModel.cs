@@ -42,6 +42,11 @@ public sealed partial class TrainControlViewModel : ObservableObject
 
     private bool _isLoadingPreset;
     private bool _isApplyingRuntimeLocomotiveState;
+
+    // When a locomotive is selected we force all functions off. The decoder's loco-info response
+    // may still report the old (on) function bits and race our OFF command, so we ignore incoming
+    // snapshot function bits until the user manually toggles a function again.
+    private bool _suppressSnapshotFunctionState;
     private int _previousSpeed;
     private CancellationTokenSource? _doorReleaseBlinkCts;
 
@@ -110,6 +115,11 @@ public sealed partial class TrainControlViewModel : ObservableObject
             Speed = 0;
             IsForward = true;
             StatusMessage = $"Loco from project: {value.Name} (DCC {LocoAddress})";
+
+            // Turn all function keys off on selection (UI + explicit OFF to Z21).
+            // Set synchronously so an incoming loco-info snapshot cannot re-enable functions.
+            _suppressSnapshotFunctionState = true;
+            QueueBackgroundTask(TurnOffAllFunctionsAsync(), "Turn off all functions");
         }
 
         if (!_isLoadingPreset)
@@ -1077,13 +1087,18 @@ public sealed partial class TrainControlViewModel : ObservableObject
                 "MaxSpeedStep={MaxSpeedStep}, SpeedSteps={SpeedSteps}, SelectedVmax={Vmax}",
                 preset.Name, preset.DccAddress, Speed, SpeedKmh, MaxSpeedStep, SpeedSteps, SelectedVmax);
 
-            // Apply function states from bitmask
+            // Turn all function keys off on selection instead of restoring the saved bitmask.
+            // Set synchronously so an incoming loco-info snapshot cannot re-enable functions.
+            _suppressSnapshotFunctionState = true;
             for (int i = 0; i <= 31; i++)
             {
-                SetFunctionState(i, preset.GetFunction(i));
+                SetFunctionState(i, false);
             }
 
             StatusMessage = $"Loaded: {preset.Name} (DCC {preset.DccAddress})";
+
+            // Turn all function keys off on selection: send explicit OFF for all functions to the Z21.
+            QueueBackgroundTask(TurnOffAllFunctionsAsync(), "Turn off all functions");
             OnPropertyChanged(nameof(CurrentPreset));
             NotifyAllFunctionGlyphsChanged();
         }
@@ -1256,7 +1271,9 @@ public sealed partial class TrainControlViewModel : ObservableObject
 
             for (int functionIndex = 0; functionIndex <= 31; functionIndex++)
             {
-                SetFunctionState(functionIndex, (locomotiveState.Functions & (1u << functionIndex)) != 0);
+                var isOn = !_suppressSnapshotFunctionState
+                    && (locomotiveState.Functions & (1u << functionIndex)) != 0;
+                SetFunctionState(functionIndex, isOn);
             }
 
             StatusMessage = $"Loco {locomotiveState.Address}: {locomotiveState.Speed} {(locomotiveState.IsForward ? "FWD" : "REV")}";
@@ -1512,6 +1529,9 @@ public sealed partial class TrainControlViewModel : ObservableObject
     {
         try
         {
+            // User takes manual control: resume applying decoder function bits from snapshots.
+            _suppressSnapshotFunctionState = false;
+
             var newState = !GetFunctionState(functionNumber);
             SetFunctionState(functionNumber, newState);
 
@@ -1529,6 +1549,43 @@ public sealed partial class TrainControlViewModel : ObservableObject
         catch (Exception ex)
         {
             _logger?.LogError(ex, "Failed to toggle F{Function}", functionNumber);
+            StatusMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Turns off all function buttons F0-F31 in the UI and - when connected - sends an explicit
+    /// OFF command (TT=00, never a toggle) for the current locomotive to the Z21. Snapshot function
+    /// bits are suppressed until the user toggles a function again. When a preset is selected, the
+    /// new (all-off) state is also persisted to the preset. Used when a locomotive is selected.
+    /// </summary>
+    public async Task TurnOffAllFunctionsAsync()
+    {
+        for (int i = 0; i < Functions.Count; i++)
+            Functions[i].IsOn = false;
+        // Ignore decoder-reported function bits from upcoming snapshots until the user toggles again.
+        _suppressSnapshotFunctionState = true;
+
+        // Persist the new (all-off) function state per locomotive when a preset is selected.
+        if (SelectedPresetIndex is >= 0 and <= 2)
+        {
+            for (int i = 0; i <= 31; i++)
+                CurrentPreset.SetFunction(i, false);
+            QueueBackgroundTask(SavePresetsToSettingsAsync(), "Save train control presets");
+        }
+
+        if (!IsConnected || LocoAddress < 1)
+            return;
+
+        try
+        {
+            await _mobaRuntime.SetAllLocomotiveFunctionsOffAsync(LocoAddress);
+            StatusMessage = $"Loco {LocoAddress}: all functions OFF";
+            _logger?.LogDebug("All functions turned off for loco {Address}", LocoAddress);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Failed to turn off all functions for loco {Address}", LocoAddress);
             StatusMessage = $"Error: {ex.Message}";
         }
     }

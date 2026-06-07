@@ -76,6 +76,27 @@ public partial class Z21
     }
 
     /// <summary>
+    /// Turns off all locomotive functions F0-F31 for the given address.
+    /// Sends an explicit OFF command (TT=00) per function - never a toggle - so the
+    /// resulting state is deterministic regardless of the decoder's previous state.
+    /// </summary>
+    /// <param name="address">DCC locomotive address (1-9999)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    public async Task SetAllLocoFunctionsOffAsync(int address, CancellationToken cancellationToken = default)
+    {
+        if (address < 1 || address > 9999)
+            throw new ArgumentOutOfRangeException(nameof(address), "DCC address must be 1-9999");
+
+        for (int functionIndex = 0; functionIndex <= 31; functionIndex++)
+        {
+            var command = Z21Command.BuildSetLocoFunction(address, functionIndex, on: false);
+            await SendAsync(command, cancellationToken).ConfigureAwait(false);
+        }
+
+        _logger?.LogDebug("SetAllLocoFunctionsOff: Address={Address} (F0-F31 OFF)", address);
+    }
+
+    /// <summary>
     /// Requests locomotive information and subscribes to updates for this address.
     /// LAN_X_GET_LOCO_INFO: 0xE3 0xF0 Adr_MSB Adr_LSB XOR
     /// Max 16 loco addresses can be subscribed per client (FIFO).
