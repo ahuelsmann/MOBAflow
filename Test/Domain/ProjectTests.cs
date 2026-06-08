@@ -28,7 +28,7 @@ internal class ProjectTests
     [Test]
     public void Properties_CanBeSet()
     {
-        var locomotives = new List<Locomotive> { new() };
+        var locomotives = new List<Locomotive> { new() { FunctionColors = ["#FFD700"] } };
         var passengerWagons = new List<PassengerWagon> { new() };
         var goodsWagons = new List<GoodsWagon> { new() };
         var trains = new List<Train> { new() };
@@ -50,6 +50,7 @@ internal class ProjectTests
 
         Assert.That(project.Name, Is.EqualTo("Meine Anlage"));
         Assert.That(project.Locomotives, Is.SameAs(locomotives));
+        Assert.That(project.Locomotives[0].FunctionColors, Is.EqualTo(new[] { "#FFD700" }));
         Assert.That(project.PassengerWagons, Is.SameAs(passengerWagons));
         Assert.That(project.GoodsWagons, Is.SameAs(goodsWagons));
         Assert.That(project.Trains, Is.SameAs(trains));

@@ -4,6 +4,7 @@ namespace Moba.WinUI.Controls;
 using System.Globalization;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Windows.UI;
 
 /// <summary>
 /// One symbol entry shown in the picker. Exposes both the bare filename (for persistence/tooltip)
@@ -39,6 +40,8 @@ internal sealed partial class FunctionSymbolPickerDialog
     /// After closing: selected SVG asset filename (e.g. "scheinwerfer.svg") or null on cancel.
     /// </summary>
     public string? SelectedGlyph { get; private set; }
+
+    public string? SelectedColorHex { get; private set; }
 
     /// <summary>
     /// SVG filenames that are not function-button symbols and must be excluded from the library.
@@ -84,9 +87,37 @@ internal sealed partial class FunctionSymbolPickerDialog
         SymbolsItemsControl.ItemsSource = LoadSymbols();
     }
 
+    public void SetInitialColor(string colorHex)
+    {
+        if (!TryParseHexColor(colorHex, out var color))
+            return;
+
+        FunctionColorPicker.Color = color;
+        SelectedColorHex = colorHex;
+    }
+
+    private static bool TryParseHexColor(string? value, out Color color)
+    {
+        color = default;
+        if (string.IsNullOrWhiteSpace(value) || value.Length != 7 || value[0] != '#')
+            return false;
+
+        if (!byte.TryParse(value.AsSpan(1, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var r) ||
+            !byte.TryParse(value.AsSpan(3, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var g) ||
+            !byte.TryParse(value.AsSpan(5, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var b))
+            return false;
+
+        color = Color.FromArgb(255, r, g, b);
+        return true;
+    }
+
+    private static string ToHexColor(Color color) =>
+        string.Create(CultureInfo.InvariantCulture, $"#{color.R:X2}{color.G:X2}{color.B:X2}");
+
     private void ContentDialog_SecondaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
     {
         SelectedGlyph = null;
+        SelectedColorHex = null;
     }
 
     private void SymbolButton_Click(object sender, RoutedEventArgs e)
@@ -94,7 +125,11 @@ internal sealed partial class FunctionSymbolPickerDialog
         if (sender is Button button && button.Tag is string fileName)
         {
             SelectedGlyph = fileName;
-            Hide();
         }
+    }
+
+    private void FunctionColorPicker_ColorChanged(ColorPicker sender, ColorChangedEventArgs args)
+    {
+        SelectedColorHex = ToHexColor(args.NewColor);
     }
 }

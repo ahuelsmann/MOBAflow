@@ -28,7 +28,8 @@ public sealed partial class FunctionButtonViewModel : ObservableObject
     /// Fixed backlight accent color (hex, e.g. "#FFD700") used by the WinUI button background.
     /// Migrated from the previously hard-coded XAML converter parameters.
     /// </summary>
-    public string BacklightColorHex { get; }
+    [ObservableProperty]
+    private string _backlightColorHex;
 
     /// <summary>
     /// Current on/off state of the function.
@@ -51,6 +52,6 @@ public sealed partial class FunctionButtonViewModel : ObservableObject
     {
         Index = index;
         Label = $"F{index}";
-        BacklightColorHex = backlightColorHex;
+        _backlightColorHex = backlightColorHex;
     }
 }

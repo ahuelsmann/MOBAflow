@@ -743,8 +743,7 @@
                                 <DataTemplate x:DataType="vm:FunctionButtonViewModel">
                                     <ToggleButton
                                         Background="{x:Bind converter:BoolToBacklightBrushConverter.CreateBrush(IsOn, BacklightColorHex), Mode=OneWay}"
-                                        Command="{Binding DataContext.ToggleFunctionCommand, ElementName=RootGrid}"
-                                        CommandParameter="{x:Bind Index}"
+                                        Click="FunctionButton_Click"
                                         IsChecked="{x:Bind IsOn, Mode=OneWay}"
                                         RightTapped="FunctionButton_RightTapped"
                                         Style="{StaticResource BacklightToggleButtonStyle}"

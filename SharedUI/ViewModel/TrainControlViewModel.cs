@@ -311,13 +311,13 @@ public sealed partial class TrainControlViewModel : ObservableObject
 
     /// <summary>
     /// Function buttons F0–F31. Replaces the former 32 IsF#On properties; each item holds its
-    /// index, label, fixed backlight color and on/off state. The symbol (IconAsset) is refreshed
-    /// per locomotive via <see cref="NotifyAllFunctionGlyphsChanged"/>.
+    /// index, label, backlight color and on/off state. The symbol and color are refreshed
+    /// per locomotive via <see cref="NotifyAllFunctionAppearanceChanged"/>.
     /// </summary>
     public ObservableCollection<FunctionButtonViewModel> Functions { get; } = CreateFunctionButtons();
 
     /// <summary>
-    /// Fixed backlight accent colors for F0–F31 (migrated from the former XAML converter parameters).
+    /// Default backlight accent colors for F0–F31 (migrated from the former XAML converter parameters).
     /// </summary>
     private static readonly string[] FunctionBacklightColors =
     {
@@ -1147,6 +1147,36 @@ public sealed partial class TrainControlViewModel : ObservableObject
             && value.EndsWith(".svg", StringComparison.OrdinalIgnoreCase);
     }
 
+    private string GetFunctionColor(int functionIndex)
+    {
+        if (functionIndex < 0 || functionIndex > 31)
+            return SignalGrayHex;
+
+        var loco = GetCurrentLocomotive();
+        if (loco?.FunctionColors != null && functionIndex < loco.FunctionColors.Count)
+        {
+            var stored = loco.FunctionColors[functionIndex];
+            if (IsValidHexColor(stored))
+                return stored;
+        }
+
+        return functionIndex < FunctionBacklightColors.Length ? FunctionBacklightColors[functionIndex] : SignalGrayHex;
+    }
+
+    private static bool IsValidHexColor(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value) || value.Length != 7 || value[0] != '#')
+            return false;
+
+        for (var i = 1; i < value.Length; i++)
+        {
+            if (!char.IsAsciiHexDigit(value[i]))
+                return false;
+        }
+
+        return true;
+    }
+
     /// <summary>
     /// Sets the SVG asset filename for the specified function (0–31) for the current locomotive (LocoAddress)
     /// and saves the Solution. Only effective when a locomotive with this digital address exists in the selected project.
@@ -1165,18 +1195,53 @@ public sealed partial class TrainControlViewModel : ObservableObject
         while (loco.FunctionSymbols.Count <= functionIndex)
             loco.FunctionSymbols.Add(string.Empty);
         loco.FunctionSymbols[functionIndex] = glyph;
-        NotifyAllFunctionGlyphsChanged();
+        NotifyAllFunctionAppearanceChanged();
         QueueBackgroundTask(_mainWindowViewModel?.SaveSolutionInternalAsync(), "Auto-save solution");
         return true;
     }
 
-    /// <summary>
-    /// Refreshes the symbol (IconAsset) of every function button (e.g. after address or symbol change).
-    /// </summary>
+    public bool SetFunctionAppearance(int functionIndex, string? glyph, string? colorHex)
+    {
+        if (functionIndex < 0 || functionIndex > 31)
+            return false;
+
+        var loco = GetCurrentLocomotive();
+        if (loco == null)
+            return false;
+
+        if (!string.IsNullOrEmpty(glyph))
+        {
+            loco.FunctionSymbols ??= new List<string>();
+            while (loco.FunctionSymbols.Count <= functionIndex)
+                loco.FunctionSymbols.Add(string.Empty);
+            loco.FunctionSymbols[functionIndex] = glyph;
+        }
+
+        if (IsValidHexColor(colorHex))
+        {
+            loco.FunctionColors ??= new List<string>();
+            while (loco.FunctionColors.Count <= functionIndex)
+                loco.FunctionColors.Add(string.Empty);
+            loco.FunctionColors[functionIndex] = colorHex!;
+        }
+
+        NotifyAllFunctionAppearanceChanged();
+        QueueBackgroundTask(_mainWindowViewModel?.SaveSolutionInternalAsync(), "Auto-save solution");
+        return true;
+    }
+
     private void NotifyAllFunctionGlyphsChanged()
     {
+        NotifyAllFunctionAppearanceChanged();
+    }
+
+    private void NotifyAllFunctionAppearanceChanged()
+    {
         for (int i = 0; i < Functions.Count; i++)
+        {
             Functions[i].IconAsset = GetFunctionGlyph(i);
+            Functions[i].BacklightColorHex = GetFunctionColor(i);
+        }
     }
 
     /// <summary>
@@ -1903,12 +1968,3 @@ public sealed partial class TrainControlViewModel : ObservableObject
             TaskScheduler.Default);
     }
 }
-
-
-
-
-
-
-
-
-

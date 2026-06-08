@@ -66,6 +66,12 @@ public class Locomotive
     public List<string>? FunctionSymbols { get; set; }
 
     /// <summary>
+    /// Custom button colors for function buttons F0-F31 on the Train Control page.
+    /// Each entry is a hex color string (e.g. "#FFD700"). Empty or null entries fall back to the default color.
+    /// </summary>
+    public List<string>? FunctionColors { get; set; }
+
+    /// <summary>
     /// Gets or sets the primary color scheme of the locomotive.
     /// </summary>
     public ColorScheme? ColorPrimary { get; set; }

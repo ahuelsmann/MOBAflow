@@ -10,6 +10,7 @@ using Domain;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 
 using Common.Extension;
@@ -265,6 +266,21 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
         HandleFunctionButtonRightTappedAsync(sender).Observe(ex => _logger?.LogWarning(ex, "Function symbol selection failed"));
     }
 
+    private void FunctionButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: FunctionButtonViewModel functionButton })
+            return;
+
+        if (ViewModel.ToggleFunctionCommand.CanExecute(functionButton.Index))
+        {
+            ViewModel.ToggleFunctionCommand.Execute(functionButton.Index);
+            return;
+        }
+
+        if (sender is ToggleButton toggleButton)
+            toggleButton.IsChecked = functionButton.IsOn;
+    }
+
     private async Task HandleFunctionButtonRightTappedAsync(object sender)
     {
         try
@@ -275,7 +291,7 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
             var functionIndex = element switch
             {
                 { Tag: int tagIndex } => tagIndex,
-                { DataContext: FunctionButtonViewModel function } => function.Index,
+                { DataContext: FunctionButtonViewModel functionFromContext } => functionFromContext.Index,
                 _ => -1
             };
 
@@ -287,11 +303,13 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
                 RequestedTheme = ActualTheme == ElementTheme.Light ? ElementTheme.Light : ElementTheme.Dark,
                 XamlRoot = XamlRoot
             };
+            if (element.DataContext is FunctionButtonViewModel functionButton)
+                picker.SetInitialColor(functionButton.BacklightColorHex);
             await picker.ShowAsync();
 
-            if (picker.SelectedGlyph != null)
+            if (picker.SelectedGlyph != null || picker.SelectedColorHex != null)
             {
-                if (!ViewModel.SetFunctionSymbol(functionIndex, picker.SelectedGlyph))
+                if (!ViewModel.SetFunctionAppearance(functionIndex, picker.SelectedGlyph, picker.SelectedColorHex))
                     ViewModel.StatusMessage = $"No locomotive with address {ViewModel.LocoAddress} in the project. Please create one with this digital address first.";
             }
         }

@@ -5,8 +5,9 @@
     xmlns:controls="using:Moba.WinUI.Controls"
     xmlns:converter="using:Moba.WinUI.Converter"
     Title="Symbol für Funktionstaste auswählen"
+    PrimaryButtonText="Ok"
     SecondaryButtonClick="ContentDialog_SecondaryButtonClick"
-    SecondaryButtonText="Abbrechen">
+    SecondaryButtonText="Cancel">
     <ContentDialog.Resources>
         <Style x:Key="SymbolButtonStyle" TargetType="Button">
             <Setter Property="Width" Value="56" />
@@ -18,15 +19,21 @@
             <Setter Property="CornerRadius" Value="6" />
         </Style>
     </ContentDialog.Resources>
-    <Grid Width="560" Height="480">
-        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <ScrollViewer
+            Grid.Column="0"
+            HorizontalScrollBarVisibility="Disabled"
+            VerticalScrollBarVisibility="Auto">
             <ItemsControl x:Name="SymbolsItemsControl">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <ItemsWrapGrid
                             ItemHeight="60"
                             ItemWidth="60"
-                            MaximumRowsOrColumns="8"
                             Orientation="Horizontal" />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
@@ -46,6 +53,27 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
+        </ScrollViewer>
+        <ScrollViewer
+            Grid.Column="1"
+            HorizontalScrollBarVisibility="Disabled"
+            VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <TextBlock
+                    FontWeight="SemiBold"
+                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                    Text="Farbe" />
+                <ColorPicker
+                    x:Name="FunctionColorPicker"
+                    ColorChanged="FunctionColorPicker_ColorChanged"
+                    IsAlphaEnabled="False"
+                    IsAlphaSliderVisible="False"
+                    IsAlphaTextInputVisible="False"
+                    IsColorChannelTextInputVisible="True"
+                    IsColorSliderVisible="True"
+                    IsHexInputVisible="True"
+                    IsMoreButtonVisible="False" />
+            </StackPanel>
         </ScrollViewer>
     </Grid>
 </ContentDialog>
