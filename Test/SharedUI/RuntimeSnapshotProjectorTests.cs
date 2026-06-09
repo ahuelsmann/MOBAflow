@@ -67,6 +67,22 @@ internal sealed class RuntimeSnapshotProjectorTests
     }
 
     [Test]
+    public void ProjectMaui_ShouldPersistCurrentIpAddressOnlyOnNewConnection()
+    {
+        var snapshot = new MobaRuntimeSnapshot
+        {
+            IsConnected = true,
+            StatusText = "Connected"
+        };
+
+        var alreadyConnected = RuntimeSnapshotProjector.ProjectMaui(snapshot, wasConnected: true);
+        var newlyConnected = RuntimeSnapshotProjector.ProjectMaui(snapshot, wasConnected: false);
+
+        Assert.That(alreadyConnected.ShouldPersistCurrentIpAddress, Is.False);
+        Assert.That(newlyConnected.ShouldPersistCurrentIpAddress, Is.True);
+    }
+
+    [Test]
     public void ProjectTrainControl_ShouldReturnLocomotiveStateForSelectedAddress()
     {
         var locomotiveState = new LocomotiveRuntimeSnapshot
@@ -90,5 +106,23 @@ internal sealed class RuntimeSnapshotProjectorTests
         Assert.That(projection.IsConnected, Is.True);
         Assert.That(projection.ConnectionChanged, Is.True);
         Assert.That(projection.LocomotiveState, Is.SameAs(locomotiveState));
+    }
+
+    [Test]
+    public void ProjectTrainControl_ShouldReturnNullLocomotiveState_WhenAddressIsMissing()
+    {
+        var snapshot = new MobaRuntimeSnapshot
+        {
+            IsConnected = true,
+            LocomotiveStates = new Dictionary<int, LocomotiveRuntimeSnapshot>
+            {
+                [3] = new LocomotiveRuntimeSnapshot { Address = 3, Speed = 40 }
+            }
+        };
+
+        var projection = RuntimeSnapshotProjector.ProjectTrainControl(snapshot, wasConnected: true, locomotiveAddress: 4);
+
+        Assert.That(projection.ConnectionChanged, Is.False);
+        Assert.That(projection.LocomotiveState, Is.Null);
     }
 }

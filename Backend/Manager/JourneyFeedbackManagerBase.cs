@@ -36,9 +36,9 @@ public abstract class JourneyFeedbackManagerBase : IDisposable
     protected readonly Dictionary<uint, DateTime> LastFeedbackTime = [];
 
     /// <summary>
-    /// Optional action execution context used when running workflows in response to feedback.
+    /// Creates isolated action execution contexts when running workflows in response to feedback.
     /// </summary>
-    protected readonly ActionExecutionContext? ExecutionContext;
+    protected readonly IActionExecutionContextFactory ExecutionContextFactory;
 
     /// <summary>
     /// Indicates whether this manager has already been disposed.
@@ -64,10 +64,10 @@ public abstract class JourneyFeedbackManagerBase : IDisposable
 
         Z21.Received += OnFeedbackReceived;
 
-        ExecutionContext = executionContext ?? new ActionExecutionContext
+        ExecutionContextFactory = new ActionExecutionContextFactory(executionContext ?? new ActionExecutionContext
         {
             Z21 = z21
-        };
+        });
     }
 
     /// <summary>

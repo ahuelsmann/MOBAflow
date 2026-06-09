@@ -18,7 +18,7 @@ public sealed class PlatformManager : IDisposable
     private readonly Station _station;
     private readonly Project _project;
     private readonly IWorkflowService _workflowService;
-    private readonly ActionExecutionContext _executionContext;
+    private readonly IActionExecutionContextFactory _executionContextFactory;
     private readonly ILogger<PlatformManager> _logger;
     private readonly Dictionary<Guid, PlatformSessionState> _states = [];
     private bool _disposed;
@@ -40,7 +40,7 @@ public sealed class PlatformManager : IDisposable
         _project = project;
         _station = station;
         _workflowService = workflowService;
-        _executionContext = executionContext ?? new ActionExecutionContext { Z21 = z21 };
+        _executionContextFactory = new ActionExecutionContextFactory(executionContext ?? new ActionExecutionContext { Z21 = z21 });
         _logger = logger ?? NullLogger<PlatformManager>.Instance;
 
         foreach (var platform in station.Platforms)
@@ -144,17 +144,14 @@ public sealed class PlatformManager : IDisposable
             return;
         }
 
-        _executionContext.CurrentStation = _station;
-        _executionContext.CurrentPlatform = platform;
-        try
+        var executionContext = _executionContextFactory.Create(new ActionExecutionContextState
         {
-            await _workflowService.ExecuteAsync(workflow, _executionContext).ConfigureAwait(false);
-        }
-        finally
-        {
-            _executionContext.CurrentStation = null;
-            _executionContext.CurrentPlatform = null;
-        }
+            CurrentProject = _project,
+            CurrentStation = _station,
+            CurrentPlatform = platform
+        });
+
+        await _workflowService.ExecuteAsync(workflow, executionContext).ConfigureAwait(false);
     }
 
     public void Dispose()

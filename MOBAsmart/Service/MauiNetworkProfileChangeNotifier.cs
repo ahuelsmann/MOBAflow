@@ -27,6 +27,18 @@ public sealed class MauiNetworkProfileChangeNotifier : INetworkProfileChangeNoti
         Connectivity.ConnectivityChanged += OnConnectivityChanged;
     }
 
+    /// <inheritdoc />
+    public void StopListening()
+    {
+        if (!_started)
+        {
+            return;
+        }
+
+        Connectivity.ConnectivityChanged -= OnConnectivityChanged;
+        _started = false;
+    }
+
     private void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
     {
         _ = sender;

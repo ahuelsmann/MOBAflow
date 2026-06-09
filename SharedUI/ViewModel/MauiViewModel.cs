@@ -22,7 +22,7 @@ using System.Collections.ObjectModel;
 /// <summary>
 /// Mobile-optimized ViewModel for MAUI - focused on Z21 monitoring and feedback statistics.
 /// </summary>
-public sealed partial class MauiViewModel : ObservableObject
+public sealed partial class MauiViewModel : ObservableObject, IDisposable
 {
     private readonly IMobaRuntime _mobaRuntime;
     private readonly IUiDispatcher _uiDispatcher;
@@ -36,6 +36,7 @@ public sealed partial class MauiViewModel : ObservableObject
     private readonly INetworkProfileChangeNotifier _networkProfileChangeNotifier;
     private readonly ILogger<MauiViewModel> _logger;
     private readonly IEventBus? _eventBus;
+    private readonly List<Guid> _eventBusSubscriptions = [];
 
     private readonly object _networkChangeDebounceLock = new();
     private CancellationTokenSource? _networkChangeDebounceCts;
@@ -66,6 +67,7 @@ public sealed partial class MauiViewModel : ObservableObject
     private Task? _initializationTask;
     private Task? _startupDiscoveryTask;
     private Task? _restApiHealthCheckTask;
+    private bool _isStopping;
 
 
     /// <summary>
@@ -121,8 +123,8 @@ public sealed partial class MauiViewModel : ObservableObject
 
         if (_eventBus != null)
         {
-            _eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged);
-            _eventBus.Subscribe<FeedbackReceivedEvent>(OnFeedbackReceived);
+            _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
+            _eventBusSubscriptions.Add(_eventBus.Subscribe<FeedbackReceivedEvent>(OnFeedbackReceived));
         }
         else
         {
@@ -155,6 +157,8 @@ public sealed partial class MauiViewModel : ObservableObject
 
     private async Task InitializeCoreAsync()
     {
+        await _mobaRuntime.StartAsync(_applicationLifetimeCts.Token).ConfigureAwait(false);
+
         _networkProfileChangeNotifier.NetworkProfilePossiblyChanged += OnNetworkProfilePossiblyChanged;
         _networkProfileChangeNotifier.StartListening();
 
@@ -405,6 +409,13 @@ public sealed partial class MauiViewModel : ObservableObject
     /// </summary>
     public void NotifyApplicationStopping()
     {
+        if (_isStopping)
+        {
+            return;
+        }
+
+        _isStopping = true;
+
         try
         {
             _applicationLifetimeCts.Cancel();
@@ -413,6 +424,38 @@ public sealed partial class MauiViewModel : ObservableObject
         {
             // Already disposed.
         }
+
+        _networkProfileChangeNotifier.NetworkProfilePossiblyChanged -= OnNetworkProfilePossiblyChanged;
+        _networkProfileChangeNotifier.StopListening();
+
+        lock (_networkChangeDebounceLock)
+        {
+            _networkChangeDebounceCts?.Cancel();
+            _networkChangeDebounceCts?.Dispose();
+            _networkChangeDebounceCts = null;
+        }
+
+        if (_eventBus != null)
+        {
+            foreach (var subscriptionId in _eventBusSubscriptions)
+            {
+                _eventBus.Unsubscribe(subscriptionId);
+            }
+
+            _eventBusSubscriptions.Clear();
+        }
+        else
+        {
+            _mobaRuntime.SnapshotChanged -= OnRuntimeSnapshotChanged;
+            _mobaRuntime.FeedbackReceived -= OnFeedbackReceived;
+        }
+    }
+
+    public void Dispose()
+    {
+        NotifyApplicationStopping();
+        _applicationLifetimeCts.Dispose();
+        _initializationLock.Dispose();
     }
 
     private async Task RestApiHealthCheckLoopAsync()

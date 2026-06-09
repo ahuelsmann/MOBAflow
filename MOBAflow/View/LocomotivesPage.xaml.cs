@@ -95,8 +95,7 @@ internal sealed partial class LocomotivesPage
         {
             _propertiesExpandedWidth = new GridLength(layout.PropertiesColumnStarValue, GridUnitType.Star);
         }
-        ViewModel.LayoutColumnWidths.SetColumnWidth("LocomotivesPage", 2, 0);
-        _settings.Layout.ColumnWidths.Remove("LocomotivesPage:2");
+        ViewModel.LayoutColumnWidths.ClearColumnWidth("LocomotivesPage", 2, _settings.Layout);
 
         RestoreColumnState(layout.IsListExpanded, ColList, 0, ref _listExpandedWidth);
         RestoreStarColumnState(layout.IsPropertiesExpanded, ColProperties, _propertiesExpandedWidth);
@@ -124,7 +123,7 @@ internal sealed partial class LocomotivesPage
         layout.PropertiesColumnStarValue = GetCurrentStarValue(ColProperties, _propertiesExpandedWidth);
         ViewModel.LayoutColumnWidths.SetColumnWidth("LocomotivesPage", 0, layout.ListColumnWidth);
         _settings.Layout.ColumnWidths["LocomotivesPage:0"] = layout.ListColumnWidth;
-        _settings.Layout.ColumnWidths.Remove("LocomotivesPage:2");
+        ViewModel.LayoutColumnWidths.ClearColumnWidth("LocomotivesPage", 2, _settings.Layout);
     }
 
     private void ApplyColumnState(bool isExpanded, ColumnDefinition column, int columnIndex, ref double rememberedWidth)

@@ -108,6 +108,60 @@ public sealed class StationPlatformManagerFeedbackTests
         Assert.That(capturedPlatform, Is.SameAs(platform));
     }
 
+    [Test]
+    public async Task ProcessFeedbackAsync_WhenPlatformWorkflowsOverlap_UsesIsolatedExecutionContexts()
+    {
+        var z21Mock = new Mock<IZ21>();
+        var workflowMock = new Mock<IWorkflowService>();
+        var workflowA = new Workflow { Name = "Platform Workflow A" };
+        var workflowB = new Workflow { Name = "Platform Workflow B" };
+        var platformA = new Platform { Name = "Gleis 1", Number = 1, InPort = 9, WorkflowId = workflowA.Id };
+        var platformB = new Platform { Name = "Gleis 2", Number = 2, InPort = 10, WorkflowId = workflowB.Id };
+        var stationA = new Station { Name = "Station A" };
+        var stationB = new Station { Name = "Station B" };
+        stationA.Platforms.Add(platformA);
+        stationB.Platforms.Add(platformB);
+        var project = new Project();
+        project.Stations.Add(stationA);
+        project.Stations.Add(stationB);
+        project.Workflows.Add(workflowA);
+        project.Workflows.Add(workflowB);
+        var sharedContext = new ActionExecutionContext { Z21 = z21Mock.Object };
+        var capturedContexts = new List<ActionExecutionContext>();
+        var enteredWorkflows = new CountdownEvent(2);
+        var releaseWorkflows = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        workflowMock
+            .Setup(service => service.ExecuteAsync(It.IsAny<Workflow>(), It.IsAny<ActionExecutionContext>(), It.IsAny<WorkflowExecutionOptions>()))
+            .Callback<Workflow, ActionExecutionContext, WorkflowExecutionOptions>((_, executionContext, _) =>
+            {
+                lock (capturedContexts)
+                {
+                    capturedContexts.Add(executionContext);
+                }
+
+                enteredWorkflows.Signal();
+            })
+            .Returns(async () => await releaseWorkflows.Task.ConfigureAwait(false));
+
+        using var managerA = new PlatformManager(z21Mock.Object, project, stationA, workflowMock.Object, sharedContext);
+        using var managerB = new PlatformManager(z21Mock.Object, project, stationB, workflowMock.Object, sharedContext);
+
+        var processingA = managerA.ProcessFeedbackAsync(new FeedbackResult(BuildFeedbackPacketForInPort(9)));
+        var processingB = managerB.ProcessFeedbackAsync(new FeedbackResult(BuildFeedbackPacketForInPort(10)));
+
+        Assert.That(enteredWorkflows.Wait(TimeSpan.FromSeconds(1)), Is.True);
+        releaseWorkflows.SetResult();
+        await Task.WhenAll(processingA, processingB).ConfigureAwait(false);
+
+        Assert.That(capturedContexts, Has.Count.EqualTo(2));
+        Assert.That(capturedContexts[0], Is.Not.SameAs(capturedContexts[1]));
+        Assert.That(capturedContexts.Select(context => context.CurrentPlatform), Is.EquivalentTo(new[] { platformA, platformB }));
+        Assert.That(capturedContexts.Select(context => context.CurrentStation), Is.EquivalentTo(new[] { stationA, stationB }));
+        Assert.That(sharedContext.CurrentPlatform, Is.Null);
+        Assert.That(sharedContext.CurrentStation, Is.Null);
+    }
+
     private static byte[] BuildFeedbackPacketForInPort(int inPort)
     {
         var portIndex = Math.Max(inPort - 1, 0);

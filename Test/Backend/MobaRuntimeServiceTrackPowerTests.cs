@@ -62,6 +62,46 @@ internal sealed class MobaRuntimeServiceTrackPowerTests
         z21Mock.Verify(z => z.SetTrackPowerOffAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    [Test]
+    public void Constructor_DoesNotStartZ21AutoConnect()
+    {
+        var z21Mock = CreateZ21Mock();
+
+        using var runtime = CreateRuntime(
+            z21Mock.Object,
+            new AppSettings
+            {
+                Z21 = new Z21Settings { CurrentIpAddress = "192.168.0.111" }
+            });
+
+        z21Mock.Verify(
+            z => z.ConnectAsync(It.IsAny<System.Net.IPAddress>(), It.IsAny<int>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
+    public async Task StartAsync_StartsZ21AutoConnectOnlyOnce()
+    {
+        var z21Mock = CreateZ21Mock();
+        using var runtime = CreateRuntime(
+            z21Mock.Object,
+            new AppSettings
+            {
+                Z21 = new Z21Settings
+                {
+                    CurrentIpAddress = "192.168.0.111",
+                    AutoConnectRetryIntervalSeconds = 60
+                }
+            });
+
+        await runtime.StartAsync();
+        await runtime.StartAsync();
+
+        z21Mock.Verify(
+            z => z.ConnectAsync(It.IsAny<System.Net.IPAddress>(), It.IsAny<int>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
     private static Mock<IZ21> CreateZ21Mock()
     {
         var z21Mock = new Mock<IZ21>();
@@ -75,7 +115,7 @@ internal sealed class MobaRuntimeServiceTrackPowerTests
         return z21Mock;
     }
 
-    private static MobaRuntimeService CreateRuntime(IZ21 z21)
+    private static MobaRuntimeService CreateRuntime(IZ21 z21, AppSettings? settings = null)
     {
         var workflowServiceMock = new Mock<IWorkflowService>();
         var loggerMock = new Mock<ILogger<MobaRuntimeService>>();
@@ -84,7 +124,7 @@ internal sealed class MobaRuntimeServiceTrackPowerTests
             z21,
             workflowServiceMock.Object,
             new ActionExecutionContext { Z21 = z21 },
-            new AppSettings
+            settings ?? new AppSettings
             {
                 // Disable auto-connect during tests to keep behavior deterministic.
                 Z21 = new Z21Settings { CurrentIpAddress = string.Empty }

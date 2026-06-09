@@ -25,7 +25,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
 {
     private readonly IZ21 _z21;
     private readonly IWorkflowService _workflowService;
-    private readonly ActionExecutionContext _executionContext;
+    private readonly IActionExecutionContextFactory _executionContextFactory;
     private readonly AppSettings _settings;
     private readonly ILogger<MobaRuntimeService> _logger;
     private readonly IEventBus? _eventBus;
@@ -33,6 +33,8 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
     private ActiveProjectContext? _activeProjectContext;
     private Timer? _z21AutoConnectTimer;
     private int _autoConnectAttemptInProgress;
+    private readonly SemaphoreSlim _startLock = new(1, 1);
+    private bool _started;
 
     private readonly Dictionary<int, LocomotiveRuntimeSnapshot> _locomotiveStates = [];
 
@@ -70,16 +72,27 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         AppSettings settings,
         ILogger<MobaRuntimeService> logger,
         IEventBus? eventBus = null)
+        : this(z21, workflowService, new ActionExecutionContextFactory(executionContext), settings, logger, eventBus)
+    {
+    }
+
+    public MobaRuntimeService(
+        IZ21 z21,
+        IWorkflowService workflowService,
+        IActionExecutionContextFactory executionContextFactory,
+        AppSettings settings,
+        ILogger<MobaRuntimeService> logger,
+        IEventBus? eventBus = null)
     {
         ArgumentNullException.ThrowIfNull(z21);
         ArgumentNullException.ThrowIfNull(workflowService);
-        ArgumentNullException.ThrowIfNull(executionContext);
+        ArgumentNullException.ThrowIfNull(executionContextFactory);
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(logger);
 
         _z21 = z21;
         _workflowService = workflowService;
-        _executionContext = executionContext;
+        _executionContextFactory = executionContextFactory;
         _settings = settings;
         _logger = logger;
         _eventBus = eventBus;
@@ -98,8 +111,6 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
             _z21.TrafficMonitor.PacketLogged += OnTrafficPacketLogged;
         }
 
-        PublishSnapshot();
-        TryAutoConnectToZ21Async().Observe(ex => _logger.LogError(ex, "Initial Z21 auto-connect failed unexpectedly"));
     }
 
     /// <inheritdoc />
@@ -113,6 +124,28 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
 
     /// <inheritdoc />
     public event EventHandler<FeedbackResult>? FeedbackReceived;
+
+    /// <inheritdoc />
+    public async Task StartAsync(CancellationToken cancellationToken = default)
+    {
+        await _startLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (_started)
+            {
+                return;
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+            PublishSnapshot();
+            await TryAutoConnectToZ21Async().ConfigureAwait(false);
+            _started = true;
+        }
+        finally
+        {
+            _startLock.Release();
+        }
+    }
 
     /// <inheritdoc />
     public void Dispose()
@@ -133,6 +166,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
 
         StopAutoConnectTimer();
         ReplaceActiveProjectContext(null);
+        _startLock.Dispose();
     }
 
     private void ReplaceActiveProjectContext(ActiveProjectContext? nextContext)

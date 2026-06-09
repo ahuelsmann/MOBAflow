@@ -1,8 +1,0 @@
-{
-  "frontMatter": "(^---\\s*$[^]*?^---\\s*$)(\\r\\n|\\r|\\n|$)",
-  "config": {
-    "MD003": false,
-    "MD026": false,
-    "MD041": false
-  }
-}

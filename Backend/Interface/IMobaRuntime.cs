@@ -20,6 +20,11 @@ public interface IMobaRuntime
     MobaRuntimeSnapshot Current { get; }
 
     /// <summary>
+    /// Starts runtime initialization such as publishing the initial snapshot and Z21 auto-connect.
+    /// </summary>
+    Task StartAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Raised whenever a new runtime snapshot is available.
     /// </summary>
     event EventHandler<MobaRuntimeSnapshot>? SnapshotChanged;

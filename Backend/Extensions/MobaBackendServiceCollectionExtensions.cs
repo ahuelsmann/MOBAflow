@@ -8,6 +8,7 @@ using Network;
 using Service;
 
 using Common.Configuration;
+using Common.Events;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -44,7 +45,14 @@ public static class MobaBackendServiceCollectionExtensions
             SpeakerEngine = sp.GetService<ISpeakerEngine>(),
             SoundPlayer = sp.GetService<ISoundPlayer>()
         });
-        services.TryAddSingleton<IMobaRuntime, MobaRuntimeService>();
+        services.TryAddSingleton<IActionExecutionContextFactory, ActionExecutionContextFactory>();
+        services.TryAddSingleton<IMobaRuntime>(sp => new MobaRuntimeService(
+            sp.GetRequiredService<IZ21>(),
+            sp.GetRequiredService<IWorkflowService>(),
+            sp.GetRequiredService<IActionExecutionContextFactory>(),
+            sp.GetRequiredService<AppSettings>(),
+            sp.GetRequiredService<ILogger<MobaRuntimeService>>(),
+            sp.GetService<IEventBus>()));
 
         return services;
     }

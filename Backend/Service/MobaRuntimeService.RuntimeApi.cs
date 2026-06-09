@@ -24,7 +24,7 @@ public sealed partial class MobaRuntimeService
         ArgumentNullException.ThrowIfNull(editableProject);
 
         var activeProject = editableProject;
-        var journeyManager = new JourneyManager(_z21, activeProject, _workflowService, _executionContext);
+        var journeyManager = new JourneyManager(_z21, activeProject, _workflowService, _executionContextFactory.Create());
         journeyManager.StationChanged += OnJourneyRuntimeChanged;
         journeyManager.FeedbackReceived += OnJourneyRuntimeChanged;
 

@@ -407,6 +407,9 @@ public partial class App
     {
         try
         {
+            var runtime = Services.GetRequiredService<IMobaRuntime>();
+            await runtime.StartAsync();
+
             var postStartupService = Services.GetRequiredService<PostStartupInitializationService>();
             var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30)); // 30s timeout
             await postStartupService.InitializeAsync(cts.Token);

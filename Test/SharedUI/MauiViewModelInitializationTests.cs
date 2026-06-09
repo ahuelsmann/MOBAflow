@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Interface;
 using Moba.Common.Configuration;
+using Moba.Common.Events;
 using Moba.Common.Runtime;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
@@ -38,6 +39,7 @@ internal sealed class MauiViewModelInitializationTests
         _ = CreateViewModel(dependencies);
 
         dependencies.NetworkNotifierMock.Verify(notifier => notifier.StartListening(), Times.Never);
+        dependencies.MobaRuntimeMock.Verify(client => client.StartAsync(It.IsAny<CancellationToken>()), Times.Never);
         dependencies.MobaRuntimeMock.Verify(client => client.SetSystemStatePollingInterval(It.IsAny<int>()), Times.Never);
         dependencies.RestDiscoveryMock.Verify(service => service.DiscoverServerAsync(), Times.Never);
         dependencies.Z21DiscoveryMock.Verify(service => service.DiscoverZ21Async(It.IsAny<CancellationToken>()), Times.Never);
@@ -70,6 +72,7 @@ internal sealed class MauiViewModelInitializationTests
         Assert.That(viewModel.Statistics, Has.Count.EqualTo(1));
         Assert.That(settings.Counter.CountOfFeedbackPoints, Is.EqualTo(1));
         dependencies.NetworkNotifierMock.Verify(notifier => notifier.StartListening(), Times.Once);
+        dependencies.MobaRuntimeMock.Verify(client => client.StartAsync(It.IsAny<CancellationToken>()), Times.Once);
         dependencies.MobaRuntimeMock.Verify(client => client.SetSystemStatePollingInterval(5), Times.Once);
         dependencies.RestDiscoveryMock.Verify(service => service.DiscoverServerAsync(), Times.Once);
         dependencies.Z21DiscoveryMock.Verify(service => service.DiscoverZ21Async(It.IsAny<CancellationToken>()), Times.Once);
@@ -98,7 +101,42 @@ internal sealed class MauiViewModelInitializationTests
         });
     }
 
-    private MauiViewModel CreateViewModel(TestDependencies dependencies)
+    [Test]
+    public void NotifyApplicationStopping_UnsubscribesFromEventBusSnapshots()
+    {
+        var dependencies = CreateDependencies();
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var viewModel = CreateViewModel(dependencies, eventBus);
+
+        eventBus.Publish(new RuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot { IsConnected = true, StatusText = "Connected" }));
+        Assert.That(viewModel.IsConnected, Is.True);
+
+        viewModel.NotifyApplicationStopping();
+
+        Assert.That(eventBus.GetSubscriberCount<RuntimeSnapshotChangedEvent>(), Is.EqualTo(0));
+        Assert.That(eventBus.GetSubscriberCount<FeedbackReceivedEvent>(), Is.EqualTo(0));
+
+        eventBus.Publish(new RuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot { IsConnected = false, StatusText = "Disconnected" }));
+        Assert.That(viewModel.IsConnected, Is.True);
+        dependencies.NetworkNotifierMock.Verify(notifier => notifier.StopListening(), Times.Once);
+    }
+
+    [Test]
+    public void Constructor_WithEventBus_DoesNotProcessLegacyRuntimeSnapshotEvents()
+    {
+        var dependencies = CreateDependencies();
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var viewModel = CreateViewModel(dependencies, eventBus);
+
+        dependencies.MobaRuntimeMock.Raise(
+            runtime => runtime.SnapshotChanged += null,
+            dependencies.MobaRuntimeMock.Object,
+            new MobaRuntimeSnapshot { IsConnected = true, StatusText = "Connected" });
+
+        Assert.That(viewModel.IsConnected, Is.False);
+    }
+
+    private MauiViewModel CreateViewModel(TestDependencies dependencies, IEventBus? eventBus = null)
     {
         var viewModel = new MauiViewModel(
             dependencies.MobaRuntimeMock.Object,
@@ -111,7 +149,8 @@ internal sealed class MauiViewModelInitializationTests
             dependencies.PhotoCaptureMock.Object,
             dependencies.NetworkNotifierMock.Object,
             NullLogger<MauiViewModel>.Instance,
-            dependencies.RestApiClientRegistrationMock.Object);
+            dependencies.RestApiClientRegistrationMock.Object,
+            eventBus);
 
         _createdViewModels.Add(viewModel);
         return viewModel;
@@ -131,6 +170,7 @@ internal sealed class MauiViewModelInitializationTests
         var restApiClientRegistrationMock = new Mock<IRestApiClientRegistration>();
 
         mobaRuntimeMock.SetupGet(client => client.Current).Returns(MobaRuntimeSnapshot.Empty);
+        mobaRuntimeMock.Setup(client => client.StartAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         mobaRuntimeMock.Setup(client => client.SetSystemStatePollingInterval(It.IsAny<int>()));
         mobaRuntimeMock.Setup(client => client.ConnectAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         mobaRuntimeMock.Setup(client => client.DisconnectAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);

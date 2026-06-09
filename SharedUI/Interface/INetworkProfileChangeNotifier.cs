@@ -13,6 +13,11 @@ public interface INetworkProfileChangeNotifier
     void StartListening();
 
     /// <summary>
+    /// Unsubscribes from platform connectivity change events. Safe to call more than once.
+    /// </summary>
+    void StopListening();
+
+    /// <summary>
     /// Raised when connectivity changes in a way that may invalidate cached LAN endpoints.
     /// </summary>
     event EventHandler? NetworkProfilePossiblyChanged;

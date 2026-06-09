@@ -66,3 +66,56 @@ public class ActionExecutionContext
     /// </summary>
     public int? CurrentStationIndex { get; set; }
 }
+
+/// <summary>
+/// Per-workflow mutable state used to create an isolated action execution context.
+/// </summary>
+public sealed class ActionExecutionContextState
+{
+    public Project? CurrentProject { get; init; }
+
+    public Journey? CurrentJourney { get; init; }
+
+    public JourneySessionState? CurrentJourneySessionState { get; init; }
+
+    public Station? CurrentStation { get; init; }
+
+    public Platform? CurrentPlatform { get; init; }
+
+    public string? JourneyTemplateText { get; init; }
+
+    public int? CurrentStationIndex { get; init; }
+}
+
+/// <summary>
+/// Creates isolated action execution contexts for individual workflow runs.
+/// </summary>
+public interface IActionExecutionContextFactory
+{
+    ActionExecutionContext Create(ActionExecutionContextState? state = null);
+}
+
+/// <summary>
+/// Copies stable action dependencies into a fresh context for each workflow run.
+/// </summary>
+public sealed class ActionExecutionContextFactory(ActionExecutionContext services) : IActionExecutionContextFactory
+{
+    public ActionExecutionContext Create(ActionExecutionContextState? state = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        return new ActionExecutionContext
+        {
+            Z21 = services.Z21,
+            SpeakerEngine = services.SpeakerEngine,
+            SoundPlayer = services.SoundPlayer,
+            CurrentProject = state?.CurrentProject,
+            CurrentJourney = state?.CurrentJourney,
+            CurrentJourneySessionState = state?.CurrentJourneySessionState,
+            CurrentStation = state?.CurrentStation,
+            CurrentPlatform = state?.CurrentPlatform,
+            JourneyTemplateText = state?.JourneyTemplateText,
+            CurrentStationIndex = state?.CurrentStationIndex
+        };
+    }
+}

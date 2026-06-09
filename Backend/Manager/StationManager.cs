@@ -17,7 +17,7 @@ public sealed class StationManager : IDisposable
     private readonly IZ21 _z21;
     private readonly Project _project;
     private readonly IWorkflowService _workflowService;
-    private readonly ActionExecutionContext _executionContext;
+    private readonly IActionExecutionContextFactory _executionContextFactory;
     private readonly ILogger<StationManager> _logger;
     private readonly Dictionary<Guid, StationSessionState> _states = [];
     private readonly List<PlatformManager> _platformManagers = [];
@@ -38,14 +38,14 @@ public sealed class StationManager : IDisposable
         _z21 = z21;
         _project = project;
         _workflowService = workflowService;
-        _executionContext = executionContext ?? new ActionExecutionContext { Z21 = z21 };
+        _executionContextFactory = new ActionExecutionContextFactory(executionContext ?? new ActionExecutionContext { Z21 = z21 });
         _logger = logger ?? NullLogger<StationManager>.Instance;
 
         foreach (var station in project.Stations)
         {
             _states[station.Id] = new StationSessionState { StationId = station.Id };
             var platformLogger = loggerFactory?.CreateLogger<PlatformManager>();
-            var platformManager = new PlatformManager(z21, project, station, workflowService, _executionContext, platformLogger);
+            var platformManager = new PlatformManager(z21, project, station, workflowService, executionContext, platformLogger);
             platformManager.PlatformChanged += OnPlatformChanged;
             _platformManagers.Add(platformManager);
         }
@@ -147,15 +147,13 @@ public sealed class StationManager : IDisposable
             return;
         }
 
-        _executionContext.CurrentStation = station;
-        try
+        var executionContext = _executionContextFactory.Create(new ActionExecutionContextState
         {
-            await _workflowService.ExecuteAsync(workflow, _executionContext).ConfigureAwait(false);
-        }
-        finally
-        {
-            _executionContext.CurrentStation = null;
-        }
+            CurrentProject = _project,
+            CurrentStation = station
+        });
+
+        await _workflowService.ExecuteAsync(workflow, executionContext).ConfigureAwait(false);
     }
 
     private void OnPlatformChanged(object? sender, PlatformChangedEventArgs e)

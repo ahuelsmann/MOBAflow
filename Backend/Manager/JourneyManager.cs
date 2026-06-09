@@ -273,31 +273,18 @@ public class JourneyManager : JourneyFeedbackManagerBase
             return;
         }
 
-        if (ExecutionContext == null)
-        {
-            return;
-        }
-
-        ExecutionContext.JourneyTemplateText = journey.Text;
-        ExecutionContext.CurrentStation = currentStation;
-        ExecutionContext.CurrentProject = _project;
-        ExecutionContext.CurrentJourney = journey;
-        ExecutionContext.CurrentJourneySessionState = _states[journey.Id];
         var stationIndex = journey.Stations.IndexOf(currentStation) + 1;
-        ExecutionContext.CurrentStationIndex = stationIndex > 0 ? stationIndex : 1;
-        try
+        var executionContext = ExecutionContextFactory.Create(new ActionExecutionContextState
         {
-            await _workflowService.ExecuteAsync(workflow, ExecutionContext).ConfigureAwait(false);
-        }
-        finally
-        {
-            ExecutionContext.JourneyTemplateText = null;
-            ExecutionContext.CurrentStation = null;
-            ExecutionContext.CurrentProject = null;
-            ExecutionContext.CurrentJourney = null;
-            ExecutionContext.CurrentJourneySessionState = null;
-            ExecutionContext.CurrentStationIndex = null;
-        }
+            CurrentProject = _project,
+            CurrentJourney = journey,
+            CurrentJourneySessionState = _states[journey.Id],
+            CurrentStation = currentStation,
+            JourneyTemplateText = journey.Text,
+            CurrentStationIndex = stationIndex > 0 ? stationIndex : 1
+        });
+
+        await _workflowService.ExecuteAsync(workflow, executionContext).ConfigureAwait(false);
     }
 
     private void TryActivateNextJourney(Guid nextJourneyId)

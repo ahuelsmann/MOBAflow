@@ -76,6 +76,22 @@ public sealed class LayoutColumnWidthsViewModel
     }
 
     /// <summary>
+    /// Clears a pixel-persisted column width from the observable state and optional persisted settings.
+    /// Use this for columns whose durable size is represented by structured star settings instead.
+    /// </summary>
+    public void ClearColumnWidth(string pageKey, int columnIndex, LayoutSettings? persistedLayout = null)
+    {
+        if (columnIndex < 0 || columnIndex > MaxColumnIndex)
+            return;
+
+        var page = GetPage(pageKey);
+        if (page != null)
+            page[columnIndex] = 0;
+
+        persistedLayout?.ColumnWidths.Remove(BuildColumnWidthKey(pageKey, columnIndex));
+    }
+
+    /// <summary>
     /// Gets the persisted width for a column. Used when writing back to settings.
     /// </summary>
     public double GetColumnWidth(string pageKey, int columnIndex)
@@ -92,7 +108,7 @@ public sealed class LayoutColumnWidthsViewModel
     {
         for (var i = 0; i <= MaxColumnIndex; i++)
         {
-            var key = $"{keyPrefix}:{i}";
+            var key = BuildColumnWidthKey(keyPrefix, i);
             var defaultVal = i < defaults.Length ? defaults[i] : 0;
             var value = columnWidths.TryGetValue(key, out var w) && w > 0 ? w : defaultVal;
             if (value > 0)
@@ -117,4 +133,6 @@ public sealed class LayoutColumnWidthsViewModel
             _ => null
         };
     }
+
+    private static string BuildColumnWidthKey(string pageKey, int columnIndex) => $"{pageKey}:{columnIndex}";
 }

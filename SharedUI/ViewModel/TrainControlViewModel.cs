@@ -36,16 +36,18 @@ using System.ComponentModel;
 /// 
 /// Cross-platform: Used by WinUI and MAUI.
 /// </summary>
-public sealed partial class TrainControlViewModel : ObservableObject
+public sealed partial class TrainControlViewModel : ObservableObject, IDisposable
 {
     private readonly IMobaRuntime _mobaRuntime;
     private readonly ISettingsService _settingsService;
     private readonly ILogger<TrainControlViewModel>? _logger;
     private readonly IUiDispatcher? _uiDispatcher;
     private readonly IEventBus? _eventBus;
+    private readonly List<Guid> _eventBusSubscriptions = [];
 
     private bool _isLoadingPreset;
     private bool _isApplyingRuntimeLocomotiveState;
+    private bool _disposed;
 
     // When a locomotive is selected we force all functions off. The decoder's loco-info response
     // may still report the old (on) function bits and race our OFF command, so we ignore incoming
@@ -561,6 +563,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
     // === Journey & Station Information (for Timetable Display) ===
 
     private readonly MainWindowViewModel? _mainWindowViewModel;
+    private JourneyViewModel? _observedJourneyViewModel;
 
     /// <summary>
     /// Current journey being executed (if any).
@@ -879,7 +882,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
 
         if (_eventBus != null)
         {
-            _eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged);
+            _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
         }
         else
         {
@@ -900,12 +903,52 @@ public sealed partial class TrainControlViewModel : ObservableObject
         NotifyAllFunctionGlyphsChanged();
     }
 
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+
+        if (_eventBus != null)
+        {
+            foreach (var subscriptionId in _eventBusSubscriptions)
+            {
+                _eventBus.Unsubscribe(subscriptionId);
+            }
+
+            _eventBusSubscriptions.Clear();
+        }
+        else
+        {
+            _mobaRuntime.SnapshotChanged -= OnRuntimeSnapshotChanged;
+        }
+
+        if (_mainWindowViewModel != null)
+        {
+            _mainWindowViewModel.PropertyChanged -= OnMainWindowViewModelPropertyChanged;
+        }
+
+        DetachObservedJourney();
+        CancelRamp();
+        _doorReleaseBlinkCts?.Cancel();
+        _doorReleaseBlinkCts?.Dispose();
+        _doorReleaseBlinkCts = null;
+    }
+
     /// <summary>
     /// Called when MainWindowViewModel properties change.
     /// Updates CurrentJourney when SelectedJourney changes.
     /// </summary>
     private void OnMainWindowViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (_disposed)
+        {
+            return;
+        }
+
         if (e.PropertyName == nameof(MainWindowViewModel.SelectedJourney))
         {
             UpdateJourneyFromMainViewModel();
@@ -924,18 +967,33 @@ public sealed partial class TrainControlViewModel : ObservableObject
     {
         if (_mainWindowViewModel?.SelectedJourney == null)
         {
+            DetachObservedJourney();
             CurrentJourney = null;
             CurrentStationIndex = 0;
             return;
         }
 
         var journeyVm = _mainWindowViewModel.SelectedJourney;
+        if (!ReferenceEquals(_observedJourneyViewModel, journeyVm))
+        {
+            DetachObservedJourney();
+            _observedJourneyViewModel = journeyVm;
+            _observedJourneyViewModel.PropertyChanged += OnJourneyViewModelPropertyChanged;
+        }
+
         CurrentJourney = journeyVm.Model;
         CurrentStationIndex = journeyVm.CurrentPos;
+    }
 
-        // Subscribe to journey CurrentPos changes
-        journeyVm.PropertyChanged -= OnJourneyViewModelPropertyChanged;
-        journeyVm.PropertyChanged += OnJourneyViewModelPropertyChanged;
+    private void DetachObservedJourney()
+    {
+        if (_observedJourneyViewModel == null)
+        {
+            return;
+        }
+
+        _observedJourneyViewModel.PropertyChanged -= OnJourneyViewModelPropertyChanged;
+        _observedJourneyViewModel = null;
     }
 
     /// <summary>
@@ -944,6 +1002,11 @@ public sealed partial class TrainControlViewModel : ObservableObject
     /// </summary>
     private void OnJourneyViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (_disposed)
+        {
+            return;
+        }
+
         if (e.PropertyName == nameof(JourneyViewModel.CurrentPos) && sender is JourneyViewModel journeyVm)
         {
             CurrentStationIndex = journeyVm.CurrentPos;
@@ -1319,6 +1382,11 @@ public sealed partial class TrainControlViewModel : ObservableObject
     {
         _ = sender;
 
+        if (_disposed)
+        {
+            return;
+        }
+
         if (_uiDispatcher != null)
         {
             _uiDispatcher.InvokeOnUi(() => ApplyRuntimeSnapshot(snapshot));
@@ -1330,6 +1398,11 @@ public sealed partial class TrainControlViewModel : ObservableObject
 
     private void OnRuntimeSnapshotChanged(RuntimeSnapshotChangedEvent e)
     {
+        if (_disposed)
+        {
+            return;
+        }
+
         ApplyRuntimeSnapshot(e.Snapshot);
     }
 
@@ -1992,7 +2065,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
 
     private void QueueBackgroundTask(Task? task, string operationName)
     {
-        if (task == null)
+        if (task == null || _disposed)
         {
             return;
         }
