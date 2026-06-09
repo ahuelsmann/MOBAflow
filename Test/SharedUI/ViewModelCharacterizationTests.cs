@@ -28,7 +28,7 @@ internal class ViewModelCharacterizationTests
         var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = true });
         var settingsServiceMock = CreateSettingsServiceMock();
 
-        var viewModel = new TrainControlViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object);
+        var viewModel = new TrainControlViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object, eventBus: CreateEventBus());
 
         Assert.That(viewModel.IsConnected, Is.True);
     }
@@ -38,7 +38,7 @@ internal class ViewModelCharacterizationTests
     {
         var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = true });
         var settingsServiceMock = CreateSettingsServiceMock();
-        var viewModel = new TrainControlViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object);
+        var viewModel = new TrainControlViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object, eventBus: CreateEventBus());
 
         viewModel.Speed = 12;
         await Task.Delay(100);
@@ -51,7 +51,7 @@ internal class ViewModelCharacterizationTests
     {
         var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = false });
         var settingsServiceMock = CreateSettingsServiceMock();
-        var viewModel = new TrainControlViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object);
+        var viewModel = new TrainControlViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object, eventBus: CreateEventBus());
 
         viewModel.Speed = 12;
 
@@ -65,7 +65,7 @@ internal class ViewModelCharacterizationTests
     {
         var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = true });
         var settingsServiceMock = CreateSettingsServiceMock();
-        var viewModel = new TrainControlViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object);
+        var viewModel = new TrainControlViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object, eventBus: CreateEventBus());
 
         await viewModel.ToggleFunctionAsync(1);
 
@@ -78,7 +78,7 @@ internal class ViewModelCharacterizationTests
     {
         var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = true });
         var settingsServiceMock = CreateSettingsServiceMock();
-        var viewModel = new TrainControlViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object);
+        var viewModel = new TrainControlViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object, eventBus: CreateEventBus());
 
         await viewModel.ToggleFunctionAsync(0);
         await viewModel.ToggleFunctionAsync(5);
@@ -130,7 +130,7 @@ internal class ViewModelCharacterizationTests
         mainViewModel.SelectedJourney = mainViewModel.SelectedProject.Journeys.Single();
         mainViewModel.SelectedJourney.UpdateFromSessionState(new JourneySessionState { JourneyId = journey.Id, CurrentPos = 1 });
 
-        var viewModel = new TrainControlViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object, mainViewModel);
+        var viewModel = new TrainControlViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object, mainViewModel, eventBus: CreateEventBus());
 
         Assert.That(viewModel.CurrentStationName, Is.EqualTo("Signal Event"));
         Assert.That(viewModel.CurrentStationIsEvent, Is.True);
@@ -176,7 +176,7 @@ internal class ViewModelCharacterizationTests
         mainViewModel.SelectedProject = mainViewModel.SolutionViewModel?.Projects.Single(viewModel => viewModel.Model == otherProject);
         mainViewModel.SelectedJourney = mainViewModel.SolutionViewModel?.Projects.Single(viewModel => viewModel.Model == project).Journeys.Single();
 
-        var viewModel = new TrainControlViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object, mainViewModel);
+        var viewModel = new TrainControlViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object, mainViewModel, eventBus: CreateEventBus());
 
         Assert.That(viewModel.CurrentStationTrack, Is.EqualTo("Signal: Ks2"));
     }
@@ -254,6 +254,8 @@ internal class ViewModelCharacterizationTests
         settingsServiceMock.Setup(service => service.ResetToDefaultsAsync()).Returns(Task.CompletedTask);
         return settingsServiceMock;
     }
+
+    private static IEventBus CreateEventBus() => new Mock<IEventBus>().Object;
 
     private static MainWindowViewModel CreateMainWindowViewModel(
         IMobaRuntime mobaRuntime,

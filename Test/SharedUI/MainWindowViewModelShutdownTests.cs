@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Interface;
+using Moba.Backend.Events;
 using Moba.Backend.Model;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
@@ -59,24 +60,21 @@ internal class MainWindowViewModelShutdownTests
     }
 
     [Test]
-    public void MainWindowViewModel_IgnoresLegacyRuntimeSnapshotEvents()
+    public async Task PrepareForShutdownAsync_UnsubscribesFromTrafficPackets()
     {
         var mobaRuntimeMock = CreateMobaRuntimeMock();
-        var viewModel = CreateViewModel(mobaRuntimeMock);
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var viewModel = CreateViewModel(mobaRuntimeMock, eventBus);
 
-        mobaRuntimeMock.Raise(
-            client => client.SnapshotChanged += null,
-            mobaRuntimeMock.Object,
-            new MobaRuntimeSnapshot
-            {
-                IsConnected = true,
-                IsTrackPowerOn = true,
-                IsZ21Connecting = false,
-                HasSeenSuccessfulConnection = true,
-                StatusText = "Connected"
-            });
+        eventBus.Publish(new Z21TrafficPacketLoggedEvent(new Z21TrafficPacket()));
+        Assert.That(viewModel.TrafficPackets, Has.Count.EqualTo(1));
 
-        Assert.That(viewModel.IsConnected, Is.False);
+        await viewModel.PrepareForShutdownAsync();
+
+        Assert.That(eventBus.GetSubscriberCount<Z21TrafficPacketLoggedEvent>(), Is.EqualTo(0));
+
+        eventBus.Publish(new Z21TrafficPacketLoggedEvent(new Z21TrafficPacket()));
+        Assert.That(viewModel.TrafficPackets, Has.Count.EqualTo(1));
     }
 
     [Test]

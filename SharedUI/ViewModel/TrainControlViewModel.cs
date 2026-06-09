@@ -5,6 +5,7 @@ using Backend.Interface;
 
 using Common.Configuration;
 using Common.Events;
+using Common.Extension;
 using Common.Runtime;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -42,7 +43,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     private readonly ISettingsService _settingsService;
     private readonly ILogger<TrainControlViewModel>? _logger;
     private readonly IUiDispatcher? _uiDispatcher;
-    private readonly IEventBus? _eventBus;
+    private readonly IEventBus _eventBus;
     private readonly List<Guid> _eventBusSubscriptions = [];
 
     private bool _isLoadingPreset;
@@ -866,10 +867,11 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         MainWindowViewModel? mainWindowViewModel = null,
         ILogger<TrainControlViewModel>? logger = null,
         IUiDispatcher? uiDispatcher = null,
-        IEventBus? eventBus = null)
+        IEventBus eventBus = null!)
     {
         ArgumentNullException.ThrowIfNull(mobaRuntime);
         ArgumentNullException.ThrowIfNull(settingsService);
+        ArgumentNullException.ThrowIfNull(eventBus);
         _mobaRuntime = mobaRuntime;
         _settingsService = settingsService;
         _mainWindowViewModel = mainWindowViewModel;
@@ -880,14 +882,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         // Load presets from settings
         LoadPresetsFromSettings();
 
-        if (_eventBus != null)
-        {
-            _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
-        }
-        else
-        {
-            _mobaRuntime.SnapshotChanged += OnRuntimeSnapshotChanged;
-        }
+        _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
         ApplyRuntimeSnapshot(_mobaRuntime.Current);
 
         // Subscribe to MainWindowViewModel.SelectedJourney changes
@@ -912,19 +907,12 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
         _disposed = true;
 
-        if (_eventBus != null)
+        foreach (var subscriptionId in _eventBusSubscriptions)
         {
-            foreach (var subscriptionId in _eventBusSubscriptions)
-            {
-                _eventBus.Unsubscribe(subscriptionId);
-            }
+            _eventBus.Unsubscribe(subscriptionId);
+        }
 
-            _eventBusSubscriptions.Clear();
-        }
-        else
-        {
-            _mobaRuntime.SnapshotChanged -= OnRuntimeSnapshotChanged;
-        }
+        _eventBusSubscriptions.Clear();
 
         if (_mainWindowViewModel != null)
         {
@@ -1376,24 +1364,6 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     {
         if (value >= 0 && value <= 2)
             ApplyCurrentPreset();
-    }
-
-    private void OnRuntimeSnapshotChanged(object? sender, MobaRuntimeSnapshot snapshot)
-    {
-        _ = sender;
-
-        if (_disposed)
-        {
-            return;
-        }
-
-        if (_uiDispatcher != null)
-        {
-            _uiDispatcher.InvokeOnUi(() => ApplyRuntimeSnapshot(snapshot));
-            return;
-        }
-
-        ApplyRuntimeSnapshot(snapshot);
     }
 
     private void OnRuntimeSnapshotChanged(RuntimeSnapshotChangedEvent e)
@@ -2070,16 +2040,6 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             return;
         }
 
-        task.ContinueWith(
-            t =>
-            {
-                if (t.Exception != null)
-                {
-                    _logger?.LogWarning(t.Exception, "{OperationName} failed", operationName);
-                }
-            },
-            CancellationToken.None,
-            TaskContinuationOptions.OnlyOnFaulted,
-            TaskScheduler.Default);
+        task.Observe(ex => _logger?.LogWarning(ex, "{OperationName} failed", operationName));
     }
 }

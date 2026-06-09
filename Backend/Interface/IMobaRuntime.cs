@@ -25,21 +25,6 @@ public interface IMobaRuntime
     Task StartAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Raised whenever a new runtime snapshot is available.
-    /// </summary>
-    event EventHandler<MobaRuntimeSnapshot>? SnapshotChanged;
-
-    /// <summary>
-    /// Raised whenever a traffic packet is logged by the Z21 monitor.
-    /// </summary>
-    event EventHandler<Z21TrafficPacket>? TrafficPacketLogged;
-
-    /// <summary>
-    /// Raised whenever a feedback event is received from the active Z21 connection.
-    /// </summary>
-    event EventHandler<FeedbackResult>? FeedbackReceived;
-
-    /// <summary>
     /// Activates the specified project for runtime execution.
     /// </summary>
     Task ActivateProjectAsync(Project editableProject, CancellationToken cancellationToken = default);

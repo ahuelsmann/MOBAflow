@@ -117,15 +117,6 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
     public MobaRuntimeSnapshot Current { get; private set; } = MobaRuntimeSnapshot.Empty;
 
     /// <inheritdoc />
-    public event EventHandler<MobaRuntimeSnapshot>? SnapshotChanged;
-
-    /// <inheritdoc />
-    public event EventHandler<Z21TrafficPacket>? TrafficPacketLogged;
-
-    /// <inheritdoc />
-    public event EventHandler<FeedbackResult>? FeedbackReceived;
-
-    /// <inheritdoc />
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
         await _startLock.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -185,7 +176,6 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
     {
         var snapshot = CreateSnapshot();
         Current = snapshot;
-        SnapshotChanged?.Invoke(this, snapshot);
         _eventBus?.Publish(new RuntimeSnapshotChangedEvent(snapshot));
     }
 

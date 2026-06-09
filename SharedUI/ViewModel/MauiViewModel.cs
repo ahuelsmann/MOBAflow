@@ -6,6 +6,7 @@ using Backend.Interface;
 
 using Common.Configuration;
 using Common.Events;
+using Common.Extension;
 using Common.Runtime;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -35,7 +36,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     private readonly IRestApiClientRegistration? _restApiClientRegistration;
     private readonly INetworkProfileChangeNotifier _networkProfileChangeNotifier;
     private readonly ILogger<MauiViewModel> _logger;
-    private readonly IEventBus? _eventBus;
+    private readonly IEventBus _eventBus;
     private readonly List<Guid> _eventBusSubscriptions = [];
 
     private readonly object _networkChangeDebounceLock = new();
@@ -81,9 +82,10 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     /// <param name="z21DiscoveryService">Service used to discover the Z21 on the local network (optional).</param>
     /// <param name="photoUploadService">Service used to upload captured photos to the server.</param>
     /// <param name="photoCaptureService">Service used to capture photos on the device.</param>
-    /// <param name="restApiClientRegistration">Optional: registers this app with the REST API for Overview client list (MAUI).</param>
     /// <param name="networkProfileChangeNotifier">Raises when device connectivity changes so cached LAN REST endpoints can be re-resolved.</param>
     /// <param name="logger">Logger for diagnostics.</param>
+    /// <param name="eventBus">Event bus used to observe runtime and feedback changes.</param>
+    /// <param name="restApiClientRegistration">Optional: registers this app with the REST API for Overview client list (MAUI).</param>
     public MauiViewModel(
         IMobaRuntime mobaRuntime,
         IUiDispatcher uiDispatcher,
@@ -95,8 +97,8 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         IPhotoCaptureService photoCaptureService,
         INetworkProfileChangeNotifier networkProfileChangeNotifier,
         ILogger<MauiViewModel> logger,
-        IRestApiClientRegistration? restApiClientRegistration = null,
-        IEventBus? eventBus = null)
+        IEventBus eventBus,
+        IRestApiClientRegistration? restApiClientRegistration = null)
     {
         ArgumentNullException.ThrowIfNull(mobaRuntime);
         ArgumentNullException.ThrowIfNull(uiDispatcher);
@@ -108,6 +110,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         ArgumentNullException.ThrowIfNull(photoCaptureService);
         ArgumentNullException.ThrowIfNull(networkProfileChangeNotifier);
         ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(eventBus);
         _mobaRuntime = mobaRuntime;
         _uiDispatcher = uiDispatcher;
         _settings = settings;
@@ -121,16 +124,8 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         _restApiClientRegistration = restApiClientRegistration;
         _eventBus = eventBus;
 
-        if (_eventBus != null)
-        {
-            _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
-            _eventBusSubscriptions.Add(_eventBus.Subscribe<FeedbackReceivedEvent>(OnFeedbackReceived));
-        }
-        else
-        {
-            _mobaRuntime.SnapshotChanged += OnRuntimeSnapshotChanged;
-            _mobaRuntime.FeedbackReceived += OnFeedbackReceived;
-        }
+        _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
+        _eventBusSubscriptions.Add(_eventBus.Subscribe<FeedbackReceivedEvent>(OnFeedbackReceived));
     }
 
     /// <summary>
@@ -435,20 +430,12 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             _networkChangeDebounceCts = null;
         }
 
-        if (_eventBus != null)
+        foreach (var subscriptionId in _eventBusSubscriptions)
         {
-            foreach (var subscriptionId in _eventBusSubscriptions)
-            {
-                _eventBus.Unsubscribe(subscriptionId);
-            }
+            _eventBus.Unsubscribe(subscriptionId);
+        }
 
-            _eventBusSubscriptions.Clear();
-        }
-        else
-        {
-            _mobaRuntime.SnapshotChanged -= OnRuntimeSnapshotChanged;
-            _mobaRuntime.FeedbackReceived -= OnFeedbackReceived;
-        }
+        _eventBusSubscriptions.Clear();
     }
 
     public void Dispose()
@@ -796,28 +783,12 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
 
     private void RunInBackground(Task task, string operationName)
     {
-        task.ContinueWith(
-            t =>
-            {
-                if (t.Exception != null)
-                {
-                    _logger.LogWarning(t.Exception.GetBaseException(), "{Operation} failed", operationName);
-                }
-            },
-            CancellationToken.None,
-            TaskContinuationOptions.OnlyOnFaulted,
-            TaskScheduler.Default);
+        task.Observe(ex => _logger.LogWarning(ex, "{Operation} failed", operationName));
     }
 
     #endregion
 
     #region Runtime Event Handlers
-
-    private void OnRuntimeSnapshotChanged(object? sender, MobaRuntimeSnapshot snapshot)
-    {
-        _ = sender;
-        _uiDispatcher.InvokeOnUi(() => ApplyRuntimeSnapshot(snapshot));
-    }
 
     private void OnRuntimeSnapshotChanged(RuntimeSnapshotChangedEvent e)
     {
@@ -843,12 +814,6 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             _settings.Z21.CurrentIpAddress = Z21IpAddress.Trim();
             QueueSaveSettings();
         }
-    }
-
-    private void OnFeedbackReceived(object? sender, FeedbackResult feedback)
-    {
-        _ = sender;
-        _uiDispatcher.InvokeOnUi(() => ApplyFeedbackReceived(feedback.InPort));
     }
 
     private void OnFeedbackReceived(FeedbackReceivedEvent e)

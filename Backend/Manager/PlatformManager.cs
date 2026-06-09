@@ -2,6 +2,8 @@
 
 namespace Moba.Backend.Manager;
 
+using Common.Extension;
+
 using Domain;
 
 using Interface;
@@ -73,9 +75,8 @@ public sealed class PlatformManager : IDisposable
 
     private void OnFeedbackReceived(FeedbackResult feedback)
     {
-        _ = ProcessFeedbackAsync(feedback).ContinueWith(
-            task => _logger.LogWarning(task.Exception, "Platform feedback processing failed for InPort {InPort}", feedback.InPort),
-            TaskContinuationOptions.OnlyOnFaulted);
+        ProcessFeedbackAsync(feedback)
+            .Observe(ex => _logger.LogWarning(ex, "Platform feedback processing failed for InPort {InPort}", feedback.InPort));
     }
 
     public async Task ProcessFeedbackAsync(FeedbackResult feedback)

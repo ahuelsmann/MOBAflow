@@ -37,27 +37,6 @@ internal sealed class TrainControlViewModelCleanupTests
     }
 
     [Test]
-    public void Constructor_WithEventBus_DoesNotProcessLegacyRuntimeSnapshotEvents()
-    {
-        var runtimeMock = new Mock<IMobaRuntime>();
-        runtimeMock.SetupGet(runtime => runtime.Current).Returns(MobaRuntimeSnapshot.Empty);
-        var settingsServiceMock = new Mock<ISettingsService>();
-        settingsServiceMock.Setup(service => service.GetSettings()).Returns(new AppSettings());
-
-        using var viewModel = new TrainControlViewModel(
-            runtimeMock.Object,
-            settingsServiceMock.Object,
-            eventBus: new EventBus(NullLogger<EventBus>.Instance));
-
-        runtimeMock.Raise(
-            runtime => runtime.SnapshotChanged += null,
-            runtimeMock.Object,
-            new MobaRuntimeSnapshot { IsConnected = true });
-
-        Assert.That(viewModel.IsConnected, Is.False);
-    }
-
-    [Test]
     public void SelectedJourneyChange_DetachesOldJourneyPropertyChangedHandler()
     {
         var mainWindowViewModel = CreateMainWindowViewModel();
@@ -97,7 +76,7 @@ internal sealed class TrainControlViewModelCleanupTests
             mainWindowViewModel,
             NullLogger<TrainControlViewModel>.Instance,
             null,
-            eventBus);
+            eventBus ?? new EventBus(NullLogger<EventBus>.Instance));
     }
 
     private static MainWindowViewModel CreateMainWindowViewModel()

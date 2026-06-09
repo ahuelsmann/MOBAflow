@@ -2,11 +2,13 @@
 
 namespace Moba.Backend.Service;
 
+using Common.Events;
 using Common.Runtime;
 
 using Microsoft.Extensions.Logging;
 
 using Backend;
+using Events;
 
 using Model;
 
@@ -103,7 +105,7 @@ public sealed partial class MobaRuntimeService
 
     private void OnZ21FeedbackReceived(FeedbackResult feedback)
     {
-        FeedbackReceived?.Invoke(this, feedback);
+        _eventBus?.Publish(new FeedbackReceivedEvent(feedback.InPort));
     }
 
     private void OnActionExecutionError(object? sender, ActionExecutionErrorEventArgs e)
@@ -116,7 +118,8 @@ public sealed partial class MobaRuntimeService
 
     private void OnTrafficPacketLogged(object? sender, Z21TrafficPacket packet)
     {
-        TrafficPacketLogged?.Invoke(this, packet);
+        _ = sender;
+        _eventBus?.Publish(new Z21TrafficPacketLoggedEvent(packet));
     }
 
     private void TriggerFailSafe(string reason)

@@ -121,21 +121,6 @@ internal sealed class MauiViewModelInitializationTests
         dependencies.NetworkNotifierMock.Verify(notifier => notifier.StopListening(), Times.Once);
     }
 
-    [Test]
-    public void Constructor_WithEventBus_DoesNotProcessLegacyRuntimeSnapshotEvents()
-    {
-        var dependencies = CreateDependencies();
-        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        var viewModel = CreateViewModel(dependencies, eventBus);
-
-        dependencies.MobaRuntimeMock.Raise(
-            runtime => runtime.SnapshotChanged += null,
-            dependencies.MobaRuntimeMock.Object,
-            new MobaRuntimeSnapshot { IsConnected = true, StatusText = "Connected" });
-
-        Assert.That(viewModel.IsConnected, Is.False);
-    }
-
     private MauiViewModel CreateViewModel(TestDependencies dependencies, IEventBus? eventBus = null)
     {
         var viewModel = new MauiViewModel(
@@ -149,8 +134,8 @@ internal sealed class MauiViewModelInitializationTests
             dependencies.PhotoCaptureMock.Object,
             dependencies.NetworkNotifierMock.Object,
             NullLogger<MauiViewModel>.Instance,
-            dependencies.RestApiClientRegistrationMock.Object,
-            eventBus);
+            eventBus ?? new EventBus(NullLogger<EventBus>.Instance),
+            dependencies.RestApiClientRegistrationMock.Object);
 
         _createdViewModels.Add(viewModel);
         return viewModel;

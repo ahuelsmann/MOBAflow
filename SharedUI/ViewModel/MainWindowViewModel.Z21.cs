@@ -2,12 +2,16 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Model;
+using Backend.Events;
 
 using Common.Events;
+using Common.Extension;
 using Common.Runtime;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
+using Microsoft.Extensions.Logging;
 
 using Service;
 
@@ -24,7 +28,7 @@ public partial class MainWindowViewModel
 
     private void InitializeTrafficMonitor()
     {
-        _mobaRuntime.TrafficPacketLogged += OnTrafficPacketLogged;
+        _eventBusSubscriptions.Add(_eventBus.Subscribe<Z21TrafficPacketLoggedEvent>(OnTrafficPacketLogged));
 
         foreach (var packet in _mobaRuntime.GetTrafficPackets())
         {
@@ -32,19 +36,21 @@ public partial class MainWindowViewModel
         }
     }
 
-    private void OnTrafficPacketLogged(object? sender, Z21TrafficPacket packet)
+    private void OnTrafficPacketLogged(Z21TrafficPacketLoggedEvent e)
     {
-        _ = sender;
+        var packet = e.Packet;
 
-        ExecuteOnUiWhenActive(() =>
+        if (_isShuttingDown)
         {
-            TrafficPackets.Insert(0, packet);
+            return;
+        }
 
-            while (TrafficPackets.Count > 100)
-            {
-                TrafficPackets.RemoveAt(TrafficPackets.Count - 1);
-            }
-        });
+        TrafficPackets.Insert(0, packet);
+
+        while (TrafficPackets.Count > 100)
+        {
+            TrafficPackets.RemoveAt(TrafficPackets.Count - 1);
+        }
     }
 
     [RelayCommand]
@@ -117,7 +123,8 @@ public partial class MainWindowViewModel
         // Trigger a status update request to the Z21
         if (IsConnected)
         {
-            _ = _mobaRuntime.RequestSystemStateAsync();
+            _mobaRuntime.RequestSystemStateAsync()
+                .Observe(ex => _logger.LogWarning(ex, "Requesting Z21 system state failed"));
         }
     }
     #endregion
@@ -192,24 +199,6 @@ public partial class MainWindowViewModel
                 journeyVm.ResetRuntimeState();
             }
         }
-    }
-
-    private void ExecuteOnUiWhenActive(System.Action action)
-    {
-        if (_isShuttingDown)
-        {
-            return;
-        }
-
-        _uiDispatcher.InvokeOnUi(() =>
-        {
-            if (_isShuttingDown)
-            {
-                return;
-            }
-
-            action();
-        });
     }
 
     private void NotifyRuntimeCommandStatesChanged()

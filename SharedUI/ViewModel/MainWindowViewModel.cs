@@ -499,8 +499,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
         _eventBusSubscriptions.Clear();
 
-        _mobaRuntime.TrafficPacketLogged -= OnTrafficPacketLogged;
-
         return true;
     }
 
