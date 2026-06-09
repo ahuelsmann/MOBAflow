@@ -3,6 +3,7 @@
 namespace Moba.Backend.Service;
 
 using Common.Configuration;
+using Common.Events;
 using Common.Extension;
 using Common.Runtime;
 
@@ -27,6 +28,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
     private readonly ActionExecutionContext _executionContext;
     private readonly AppSettings _settings;
     private readonly ILogger<MobaRuntimeService> _logger;
+    private readonly IEventBus? _eventBus;
 
     private ActiveProjectContext? _activeProjectContext;
     private Timer? _z21AutoConnectTimer;
@@ -66,7 +68,8 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         IWorkflowService workflowService,
         ActionExecutionContext executionContext,
         AppSettings settings,
-        ILogger<MobaRuntimeService> logger)
+        ILogger<MobaRuntimeService> logger,
+        IEventBus? eventBus = null)
     {
         ArgumentNullException.ThrowIfNull(z21);
         ArgumentNullException.ThrowIfNull(workflowService);
@@ -79,6 +82,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         _executionContext = executionContext;
         _settings = settings;
         _logger = logger;
+        _eventBus = eventBus;
 
         _z21.OnConnectedChanged += OnZ21ConnectedChanged;
         _z21.OnConnectionLost += OnZ21ConnectionLost;
@@ -148,6 +152,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         var snapshot = CreateSnapshot();
         Current = snapshot;
         SnapshotChanged?.Invoke(this, snapshot);
+        _eventBus?.Publish(new RuntimeSnapshotChangedEvent(snapshot));
     }
 
     private MobaRuntimeSnapshot CreateSnapshot()

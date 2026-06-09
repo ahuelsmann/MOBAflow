@@ -307,11 +307,14 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
                 picker.SetInitialColor(functionButton.BacklightColorHex);
             await picker.ShowAsync();
 
-            if (picker.SelectedGlyph != null || picker.SelectedColorHex != null)
-            {
-                if (!ViewModel.SetFunctionAppearance(functionIndex, picker.SelectedGlyph, picker.SelectedColorHex))
-                    ViewModel.StatusMessage = $"No locomotive with address {ViewModel.LocoAddress} in the project. Please create one with this digital address first.";
-            }
+            var applied = picker.IsSelectionCleared
+                ? ViewModel.ClearFunctionAppearance(functionIndex)
+                : picker.SelectedGlyph != null || picker.SelectedColorHex != null
+                    ? ViewModel.SetFunctionAppearance(functionIndex, picker.SelectedGlyph, picker.SelectedColorHex)
+                    : true;
+
+            if (!applied)
+                ViewModel.StatusMessage = $"No locomotive with address {ViewModel.LocoAddress} in the project. Please create one with this digital address first.";
         }
         catch (Exception ex)
         {

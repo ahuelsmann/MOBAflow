@@ -4,6 +4,7 @@ namespace Moba.SharedUI.ViewModel;
 using Backend.Interface;
 
 using Common.Configuration;
+using Common.Events;
 using Common.Runtime;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -15,6 +16,8 @@ using Domain.Enum;
 using Interface;
 
 using Microsoft.Extensions.Logging;
+
+using Service;
 
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -39,6 +42,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
     private readonly ISettingsService _settingsService;
     private readonly ILogger<TrainControlViewModel>? _logger;
     private readonly IUiDispatcher? _uiDispatcher;
+    private readonly IEventBus? _eventBus;
 
     private bool _isLoadingPreset;
     private bool _isApplyingRuntimeLocomotiveState;
@@ -858,7 +862,8 @@ public sealed partial class TrainControlViewModel : ObservableObject
         ISettingsService settingsService,
         MainWindowViewModel? mainWindowViewModel = null,
         ILogger<TrainControlViewModel>? logger = null,
-        IUiDispatcher? uiDispatcher = null)
+        IUiDispatcher? uiDispatcher = null,
+        IEventBus? eventBus = null)
     {
         ArgumentNullException.ThrowIfNull(mobaRuntime);
         ArgumentNullException.ThrowIfNull(settingsService);
@@ -867,11 +872,19 @@ public sealed partial class TrainControlViewModel : ObservableObject
         _mainWindowViewModel = mainWindowViewModel;
         _logger = logger;
         _uiDispatcher = uiDispatcher;
+        _eventBus = eventBus;
 
         // Load presets from settings
         LoadPresetsFromSettings();
 
-        _mobaRuntime.SnapshotChanged += OnRuntimeSnapshotChanged;
+        if (_eventBus != null)
+        {
+            _eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged);
+        }
+        else
+        {
+            _mobaRuntime.SnapshotChanged += OnRuntimeSnapshotChanged;
+        }
         ApplyRuntimeSnapshot(_mobaRuntime.Current);
 
         // Subscribe to MainWindowViewModel.SelectedJourney changes
@@ -1230,6 +1243,30 @@ public sealed partial class TrainControlViewModel : ObservableObject
         return true;
     }
 
+    public bool ClearFunctionAppearance(int functionIndex)
+    {
+        if (functionIndex < 0 || functionIndex > 31)
+            return false;
+
+        var loco = GetCurrentLocomotive();
+        if (loco == null)
+            return false;
+
+        loco.FunctionSymbols ??= new List<string>();
+        while (loco.FunctionSymbols.Count <= functionIndex)
+            loco.FunctionSymbols.Add(string.Empty);
+        loco.FunctionSymbols[functionIndex] = string.Empty;
+
+        loco.FunctionColors ??= new List<string>();
+        while (loco.FunctionColors.Count <= functionIndex)
+            loco.FunctionColors.Add(string.Empty);
+        loco.FunctionColors[functionIndex] = string.Empty;
+
+        NotifyAllFunctionAppearanceChanged();
+        QueueBackgroundTask(_mainWindowViewModel?.SaveSolutionInternalAsync(), "Auto-save solution");
+        return true;
+    }
+
     private void NotifyAllFunctionGlyphsChanged()
     {
         NotifyAllFunctionAppearanceChanged();
@@ -1291,22 +1328,27 @@ public sealed partial class TrainControlViewModel : ObservableObject
         ApplyRuntimeSnapshot(snapshot);
     }
 
+    private void OnRuntimeSnapshotChanged(RuntimeSnapshotChangedEvent e)
+    {
+        ApplyRuntimeSnapshot(e.Snapshot);
+    }
+
     private void ApplyRuntimeSnapshot(MobaRuntimeSnapshot snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
 
-        var previousConnectionState = IsConnected;
-        IsConnected = snapshot.IsConnected;
-        if (previousConnectionState != snapshot.IsConnected)
+        var projection = RuntimeSnapshotProjector.ProjectTrainControl(snapshot, IsConnected, LocoAddress);
+        IsConnected = projection.IsConnected;
+        if (projection.ConnectionChanged)
         {
-            OnZ21ConnectionChanged(snapshot.IsConnected);
+            OnZ21ConnectionChanged(projection.IsConnected);
         }
 
         ApplySystemStateFromRuntime(snapshot);
 
-        if (snapshot.LocomotiveStates.TryGetValue(LocoAddress, out var locomotiveState))
+        if (projection.LocomotiveState != null)
         {
-            ApplyLocomotiveState(locomotiveState);
+            ApplyLocomotiveState(projection.LocomotiveState);
         }
     }
 

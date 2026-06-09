@@ -48,7 +48,13 @@ public sealed class LayoutColumnWidthsViewModel
         LoadPage(TrackPlanPage, "TrackPlanPage", layout.ColumnWidths, 180, 0, 240);
         LoadPage(TrainControlPage, "TrainControlPage", layout.ColumnWidths, 260, 0, 180);
         LoadPage(WorkflowsPage, "WorkflowsPage", layout.ColumnWidths, 300, 0, 400, 0, 350);
-        LoadPage(LocomotivesPage, "LocomotivesPage", layout.ColumnWidths, 250, 0, 400);
+        LoadPage(
+            LocomotivesPage,
+            "LocomotivesPage",
+            layout.ColumnWidths,
+            layout.LocomotivesPage.ListColumnWidth > 0 ? layout.LocomotivesPage.ListColumnWidth : 250,
+            0,
+            0);
         LoadPage(GoodsWagonPage, "GoodsWagonPage", layout.ColumnWidths, 250, 0, 400);
         LoadPage(PassengerWagonPage, "PassengerWagonPage", layout.ColumnWidths, 250, 0, 400);
         LoadPage(SignalBoxPage, "SignalBoxPage", layout.ColumnWidths, 240, 0, 0, 0, 300);

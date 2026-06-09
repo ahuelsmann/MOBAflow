@@ -3,10 +3,13 @@ namespace Moba.SharedUI.ViewModel;
 
 using Backend.Model;
 
+using Common.Events;
 using Common.Runtime;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
+using Service;
 
 using System.Collections.ObjectModel;
 
@@ -120,14 +123,14 @@ public partial class MainWindowViewModel
     #endregion
 
     #region Runtime Snapshot Projection
-    private void OnMobaRuntimeSnapshotChanged(object? sender, MobaRuntimeSnapshot snapshot)
+    private void OnRuntimeSnapshotChanged(RuntimeSnapshotChangedEvent e)
     {
-        _ = sender;
-
-        ExecuteOnUiWhenActive(() =>
+        if (_isShuttingDown)
         {
-            ApplyRuntimeSnapshot(snapshot);
-        });
+            return;
+        }
+
+        ApplyRuntimeSnapshot(e.Snapshot);
     }
 
     private void ApplyRuntimeSnapshot(MobaRuntimeSnapshot snapshot)
@@ -140,26 +143,27 @@ public partial class MainWindowViewModel
         SuppressOperatingStateRecompute = true;
         try
         {
-            IsConnected = snapshot.IsConnected;
-            IsTrackPowerOn = snapshot.IsTrackPowerOn;
-            StatusText = snapshot.StatusText;
-            SerialNumber = snapshot.SerialNumber;
-            FirmwareVersion = snapshot.FirmwareVersion;
-            HardwareType = snapshot.HardwareType;
-            MainCurrent = snapshot.MainCurrent;
-            Temperature = snapshot.Temperature;
-            SupplyVoltage = snapshot.SupplyVoltage;
-            VccVoltage = snapshot.VccVoltage;
+            var status = RuntimeSnapshotProjector.ProjectStatus(snapshot);
+            IsConnected = status.IsConnected;
+            IsTrackPowerOn = status.IsTrackPowerOn;
+            StatusText = status.StatusText;
+            SerialNumber = status.SerialNumber;
+            FirmwareVersion = status.FirmwareVersion;
+            HardwareType = status.HardwareType;
+            MainCurrent = status.MainCurrent;
+            Temperature = status.Temperature;
+            SupplyVoltage = status.SupplyVoltage;
+            VccVoltage = status.VccVoltage;
 
-            _isZ21Connecting = snapshot.IsZ21Connecting;
-            _hasSeenSuccessfulZ21Connection = snapshot.HasSeenSuccessfulConnection;
-            _isManualDisconnectRequested = snapshot.IsManualDisconnectRequested;
-            _isEmergencyStopActive = snapshot.IsEmergencyStopActive;
-            _isShortCircuitActive = snapshot.IsShortCircuitActive;
-            _isProgrammingModeActive = snapshot.IsProgrammingModeActive;
-            _lastFailSafeReason = snapshot.LastFailSafeReason;
-            _lastFailSafeAt = snapshot.LastFailSafeAt;
-            IsOperatorAckRequired = snapshot.IsOperatorAckRequired;
+            _isZ21Connecting = status.IsZ21Connecting;
+            _hasSeenSuccessfulZ21Connection = status.HasSeenSuccessfulConnection;
+            _isManualDisconnectRequested = status.IsManualDisconnectRequested;
+            _isEmergencyStopActive = status.IsEmergencyStopActive;
+            _isShortCircuitActive = status.IsShortCircuitActive;
+            _isProgrammingModeActive = status.IsProgrammingModeActive;
+            _lastFailSafeReason = status.LastFailSafeReason;
+            _lastFailSafeAt = status.LastFailSafeAt;
+            IsOperatorAckRequired = status.IsOperatorAckRequired;
 
             ApplyJourneyRuntimeSnapshots(snapshot.JourneyStates);
         }

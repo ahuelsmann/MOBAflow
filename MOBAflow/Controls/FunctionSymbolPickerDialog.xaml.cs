@@ -1,9 +1,12 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Controls;
 
-using System.Globalization;
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+
+using System.Globalization;
+
 using Windows.UI;
 
 /// <summary>
@@ -42,6 +45,14 @@ internal sealed partial class FunctionSymbolPickerDialog
     public string? SelectedGlyph { get; private set; }
 
     public string? SelectedColorHex { get; private set; }
+
+    /// <summary>
+    /// True when the user explicitly cleared glyph and color via "Auswahl loeschen".
+    /// Distinguishes intentional clear on Ok from Cancel (both leave null selections).
+    /// </summary>
+    public bool IsSelectionCleared { get; private set; }
+
+    private bool _suppressColorSelectionUpdate;
 
     /// <summary>
     /// SVG filenames that are not function-button symbols and must be excluded from the library.
@@ -125,11 +136,35 @@ internal sealed partial class FunctionSymbolPickerDialog
         if (sender is Button button && button.Tag is string fileName)
         {
             SelectedGlyph = fileName;
+            IsSelectionCleared = false;
         }
     }
 
     private void FunctionColorPicker_ColorChanged(ColorPicker sender, ColorChangedEventArgs args)
     {
+        if (_suppressColorSelectionUpdate)
+            return;
+
         SelectedColorHex = ToHexColor(args.NewColor);
+        IsSelectionCleared = false;
+    }
+
+    private void ClearSelectionButton_Click(object sender, RoutedEventArgs e)
+    {
+        SelectedGlyph = null;
+        IsSelectionCleared = true;
+
+        // Reset the color picker visually without persisting black (#000000).
+        _suppressColorSelectionUpdate = true;
+        try
+        {
+            FunctionColorPicker.Color = Colors.Black;
+        }
+        finally
+        {
+            _suppressColorSelectionUpdate = false;
+        }
+
+        SelectedColorHex = null;
     }
 }

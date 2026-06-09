@@ -6,6 +6,7 @@ using Common.Extension;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
 using Moba.SharedUI.ViewModel;
 
@@ -20,7 +21,7 @@ internal sealed partial class LocomotivesPage
     public MainWindowViewModel ViewModel { get; }
 
     private double _listExpandedWidth = 250;
-    private double _propertiesExpandedStarValue = 1;
+    private GridLength _propertiesExpandedWidth = new(1, GridUnitType.Star);
 
     public LocomotivesPage(
         MainWindowViewModel viewModel,
@@ -73,33 +74,11 @@ internal sealed partial class LocomotivesPage
     {
         if (e.PropertyName == nameof(ViewModel.IsLocomotivesListExpanded))
         {
-            if (!ViewModel.IsLocomotivesListExpanded)
-            {
-                if (ColList.Width.IsAbsolute)
-                {
-                    _listExpandedWidth = ColList.Width.Value;
-                }
-                ColList.Width = GridLength.Auto;
-            }
-            else
-            {
-                ColList.Width = new GridLength(_listExpandedWidth);
-            }
+            ApplyColumnState(ViewModel.IsLocomotivesListExpanded, ColList, 0, ref _listExpandedWidth);
         }
         else if (e.PropertyName == nameof(ViewModel.IsLocomotivesPropertiesExpanded))
         {
-            if (!ViewModel.IsLocomotivesPropertiesExpanded)
-            {
-                if (ColProperties.Width.IsStar)
-                {
-                    _propertiesExpandedStarValue = ColProperties.Width.Value;
-                }
-                ColProperties.Width = GridLength.Auto;
-            }
-            else
-            {
-                ColProperties.Width = new GridLength(_propertiesExpandedStarValue, GridUnitType.Star);
-            }
+            ApplyStarColumnState(ViewModel.IsLocomotivesPropertiesExpanded, ColProperties, ref _propertiesExpandedWidth);
         }
     }
 
@@ -110,29 +89,17 @@ internal sealed partial class LocomotivesPage
         if (layout.ListColumnWidth > 0)
         {
             _listExpandedWidth = layout.ListColumnWidth;
+            ViewModel.LayoutColumnWidths.SetColumnWidth("LocomotivesPage", 0, _listExpandedWidth);
         }
         if (layout.PropertiesColumnStarValue > 0)
         {
-            _propertiesExpandedStarValue = layout.PropertiesColumnStarValue;
+            _propertiesExpandedWidth = new GridLength(layout.PropertiesColumnStarValue, GridUnitType.Star);
         }
+        ViewModel.LayoutColumnWidths.SetColumnWidth("LocomotivesPage", 2, 0);
+        _settings.Layout.ColumnWidths.Remove("LocomotivesPage:2");
 
-        if (layout.IsListExpanded)
-        {
-            ColList.Width = new GridLength(_listExpandedWidth);
-        }
-        else
-        {
-            ColList.Width = GridLength.Auto;
-        }
-
-        if (layout.IsPropertiesExpanded)
-        {
-            ColProperties.Width = new GridLength(_propertiesExpandedStarValue, GridUnitType.Star);
-        }
-        else
-        {
-            ColProperties.Width = GridLength.Auto;
-        }
+        RestoreColumnState(layout.IsListExpanded, ColList, 0, ref _listExpandedWidth);
+        RestoreStarColumnState(layout.IsPropertiesExpanded, ColProperties, _propertiesExpandedWidth);
 
         if (ViewModel.IsLocomotivesListExpanded != layout.IsListExpanded)
         {
@@ -151,22 +118,77 @@ internal sealed partial class LocomotivesPage
         layout.IsListExpanded = ViewModel.IsLocomotivesListExpanded;
         layout.IsPropertiesExpanded = ViewModel.IsLocomotivesPropertiesExpanded;
 
-        if (ColList.Width.IsAbsolute)
+        layout.ListColumnWidth = ViewModel.IsLocomotivesListExpanded
+            ? GetCurrentPixelWidth(ColList, _listExpandedWidth)
+            : _listExpandedWidth;
+        layout.PropertiesColumnStarValue = GetCurrentStarValue(ColProperties, _propertiesExpandedWidth);
+        ViewModel.LayoutColumnWidths.SetColumnWidth("LocomotivesPage", 0, layout.ListColumnWidth);
+        _settings.Layout.ColumnWidths["LocomotivesPage:0"] = layout.ListColumnWidth;
+        _settings.Layout.ColumnWidths.Remove("LocomotivesPage:2");
+    }
+
+    private void ApplyColumnState(bool isExpanded, ColumnDefinition column, int columnIndex, ref double rememberedWidth)
+    {
+        if (!isExpanded)
         {
-            layout.ListColumnWidth = ColList.Width.Value;
-        }
-        else if (!ViewModel.IsLocomotivesListExpanded)
-        {
-            layout.ListColumnWidth = _listExpandedWidth;
+            rememberedWidth = GetCurrentPixelWidth(column, rememberedWidth);
+            ViewModel.LayoutColumnWidths.SetColumnWidth("LocomotivesPage", columnIndex, rememberedWidth);
+            column.Width = GridLength.Auto;
+            return;
         }
 
-        if (ColProperties.Width.IsStar)
+        column.Width = new GridLength(rememberedWidth);
+    }
+
+    private static void ApplyStarColumnState(bool isExpanded, ColumnDefinition column, ref GridLength rememberedWidth)
+    {
+        if (!isExpanded)
         {
-            layout.PropertiesColumnStarValue = ColProperties.Width.Value;
+            if (column.Width.IsStar)
+            {
+                rememberedWidth = column.Width;
+            }
+
+            column.Width = GridLength.Auto;
+            return;
         }
-        else if (!ViewModel.IsLocomotivesPropertiesExpanded)
+
+        column.Width = rememberedWidth;
+    }
+
+    private void RestoreColumnState(bool isExpanded, ColumnDefinition column, int columnIndex, ref double rememberedWidth)
+    {
+        var configuredWidth = ViewModel.LayoutColumnWidths.GetColumnWidth("LocomotivesPage", columnIndex);
+        if (configuredWidth > 0)
         {
-            layout.PropertiesColumnStarValue = _propertiesExpandedStarValue;
+            rememberedWidth = configuredWidth;
         }
+
+        column.Width = isExpanded ? new GridLength(rememberedWidth) : GridLength.Auto;
+    }
+
+    private static void RestoreStarColumnState(bool isExpanded, ColumnDefinition column, GridLength rememberedWidth)
+    {
+        column.Width = isExpanded ? rememberedWidth : GridLength.Auto;
+    }
+
+    private static double GetCurrentStarValue(ColumnDefinition column, GridLength fallback)
+    {
+        if (column.Width.IsStar)
+        {
+            return column.Width.Value;
+        }
+
+        return fallback.IsStar ? fallback.Value : 1;
+    }
+
+    private static double GetCurrentPixelWidth(ColumnDefinition column, double fallback)
+    {
+        if (column.Width.IsAbsolute && column.Width.Value > 0)
+        {
+            return column.Width.Value;
+        }
+
+        return column.ActualWidth > 0 ? column.ActualWidth : fallback;
     }
 }

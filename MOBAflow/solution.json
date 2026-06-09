@@ -19,7 +19,7 @@
             "gleis___fahrweg.svg",
             "gps-navigation.svg",
             "",
-            "f0__licht.svg"
+            ""
           ],
           "functionColors": [
             "#F1FF04",
@@ -29,7 +29,7 @@
             "",
             "#FF1901",
             "",
-            "#0D15FF"
+            ""
           ],
           "isPushing": false,
           "photoPath": "photos/latest/10efa2c052214c4d890a2946b9df6bc0.jpg"

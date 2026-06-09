@@ -41,6 +41,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly IIoService _ioService;
     private readonly IMobaRuntime _mobaRuntime;
     private readonly IUiDispatcher _uiDispatcher;
+    private readonly IEventBus _eventBus;
     private readonly ILogger<MainWindowViewModel> _logger;
     private readonly ILoggerFactory? _loggerFactory;
 
@@ -59,6 +60,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     // Layout column widths (observable, bound from grid columns; loaded from settings so UI reflects persisted values)
     private readonly LayoutColumnWidthsViewModel _layoutColumnWidths;
+    private readonly List<Guid> _eventBusSubscriptions = [];
 
     private bool _isShuttingDown;
 
@@ -114,6 +116,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _ioService = ioService ?? new NullIoService();  // Use null object pattern
         _mobaRuntime = mobaRuntime;
         _uiDispatcher = uiDispatcher;
+        _eventBus = eventBus;
         _settings = settings;
         _logger = logger;
         _loggerFactory = loggerFactory;
@@ -127,7 +130,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _dialogService = dialogService;
         _ = photoHubClient;
 
-        _mobaRuntime.SnapshotChanged += OnMobaRuntimeSnapshotChanged;
+        _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
         ApplyRuntimeSnapshot(_mobaRuntime.Current);
 
         Solution = solution;
@@ -139,10 +142,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         IsDarkMode = settings.Application.IsDarkMode;
         InitializeLayoutPanelStates();
 
-        eventBus.Subscribe<FeedbackReceivedEvent>(e => UpdateTrackStatistics((uint)e.InPort));
-        eventBus.Subscribe<PostStartupStatusEvent>(e => UpdatePostStartupInitializationStatus(e.IsRunning, e.StatusText));
-        eventBus.Subscribe<RestApiStatusChangedEvent>(OnRestApiStatusChanged);
-        eventBus.Subscribe<PhotoAssignedEvent>(OnPhotoAssigned);
+        _eventBusSubscriptions.Add(eventBus.Subscribe<FeedbackReceivedEvent>(e => UpdateTrackStatistics((uint)e.InPort)));
+        _eventBusSubscriptions.Add(eventBus.Subscribe<PostStartupStatusEvent>(e => UpdatePostStartupInitializationStatus(e.IsRunning, e.StatusText)));
+        _eventBusSubscriptions.Add(eventBus.Subscribe<RestApiStatusChangedEvent>(OnRestApiStatusChanged));
+        _eventBusSubscriptions.Add(eventBus.Subscribe<PhotoAssignedEvent>(OnPhotoAssigned));
 
         InitializeTrafficMonitor();
 
@@ -490,7 +493,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
 
         _isShuttingDown = true;
-        _mobaRuntime.SnapshotChanged -= OnMobaRuntimeSnapshotChanged;
+        foreach (var subscriptionId in _eventBusSubscriptions)
+        {
+            _eventBus.Unsubscribe(subscriptionId);
+        }
+        _eventBusSubscriptions.Clear();
+
         _mobaRuntime.TrafficPacketLogged -= OnTrafficPacketLogged;
 
         return true;

@@ -192,7 +192,7 @@ public partial class App
         // Logging (required by HealthCheckService and SpeechHealthCheck)
         services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(Log.Logger, dispose: true));
 
-        services.AddUiDispatcher();
+        services.AddSingleton<IUiDispatcher, UiDispatcher>();
 
         services.AddEventBusWithUiDispatch();
 
@@ -213,27 +213,9 @@ public partial class App
         });
 
         services.AddSingleton<Solution>();
-        services.AddSingleton<MasterDataStore>();
-        services.AddSingleton<Z21Monitor>();
-        services.AddSingleton<IUdpClientWrapper, UdpWrapper>();
-        services.AddSingleton<IZ21, Z21>();
-        services.AddSingleton<IProjectValidator, ProjectValidator>();
-        services.AddSingleton<AnnouncementService>();
-        services.AddSingleton<IActionExecutor>(sp => new ActionExecutor(
-            sp.GetRequiredService<AnnouncementService>(),
-            sp.GetService<ITrainDestinationDisplayService>(),
-            sp.GetRequiredService<ILogger<ActionExecutor>>()));
-        services.AddSingleton<IWorkflowService, WorkflowService>();
-        services.AddSingleton(sp => new ActionExecutionContext
-        {
-            Z21 = sp.GetRequiredService<IZ21>(),
-            SpeakerEngine = sp.GetService<ISpeakerEngine>(),
-            SoundPlayer = sp.GetService<ISoundPlayer>()
-        });
-        services.AddSingleton<IMobaRuntime, MobaRuntimeService>();
+        services.AddMobaBackendServices();
 
         services.AddSingleton<IIoService, IoService>();
-        services.AddSingleton<IUiDispatcher, UiDispatcher>();
         services.AddSingleton<PhotoHubClient>();
 
         services.AddHttpClient();
@@ -308,7 +290,8 @@ public partial class App
             sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<MainWindowViewModel>(),
             sp.GetService<ILogger<TrainControlViewModel>>(),
-            sp.GetService<IUiDispatcher>()
+            sp.GetService<IUiDispatcher>(),
+            sp.GetRequiredService<IEventBus>()
         ));
 
         services.AddSingleton<TrackPlan>();

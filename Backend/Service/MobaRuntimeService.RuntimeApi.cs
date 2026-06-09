@@ -2,8 +2,6 @@
 
 namespace Moba.Backend.Service;
 
-using Common.Multiplex;
-
 using Domain;
 
 using Interface;
@@ -254,47 +252,6 @@ public sealed partial class MobaRuntimeService
             return;
         }
 
-        if (signal.BaseAddress <= 0 || signal.BaseAddress > 2044)
-        {
-            _logger.LogWarning(
-                "Signal '{SignalName}': Invalid base address {Address}. Must be 1-2044.",
-                signal.Name,
-                signal.BaseAddress);
-            return;
-        }
-
-        if (signal.BaseAddress % 2 == 0)
-        {
-            _logger.LogWarning(
-                "Signal '{SignalName}': Base address {Address} must be odd (Viessmann DCC multiplexer pairing).",
-                signal.Name,
-                signal.BaseAddress);
-            return;
-        }
-
-        if (!MultiplexerHelper.TryGetMaxAddressOffset(
-                signal.MultiplexerArticleNumber,
-                signal.MainSignalArticleNumber,
-                out var maxOffset))
-        {
-            _logger.LogWarning(
-                "Signal '{SignalName}': No multiplexer address mapping for multiplexer {Mux} and signal article {Article}.",
-                signal.Name,
-                signal.MultiplexerArticleNumber,
-                signal.MainSignalArticleNumber ?? "(default)");
-            return;
-        }
-
-        if (signal.BaseAddress + maxOffset > 2044)
-        {
-            _logger.LogWarning(
-                "Signal '{SignalName}': Base address {Address} with max offset {MaxOffset} exceeds DCC limit 2044.",
-                signal.Name,
-                signal.BaseAddress,
-                maxOffset);
-            return;
-        }
-
         if (!_z21.IsConnected)
         {
             _logger.LogWarning("Signal '{SignalName}': Z21 not connected; skipping command send.", signal.Name);
@@ -303,21 +260,15 @@ public sealed partial class MobaRuntimeService
 
         try
         {
-            if (!MultiplexerHelper.TryGetTurnoutCommand(
-                    signal.MultiplexerArticleNumber,
-                    signal.MainSignalArticleNumber,
-                    signal.SignalAspect,
-                    out var turnoutCommand))
-            {
-                _logger.LogWarning(
-                    "Signal '{SignalName}': Aspect {Aspect} not supported by multiplexer mapping.",
-                    signal.Name,
-                    signal.SignalAspect);
-                return;
-            }
+            var command = MultiplexerCommandResolver.Resolve(
+                signal.BaseAddress,
+                signal.MultiplexerArticleNumber,
+                signal.MainSignalArticleNumber,
+                signal.SignalAspect,
+                _settings.SignalBox);
 
-            // Warn if any signal aspect resolves to a pure deactivate command (likely no-op on hardware)
-            if (!turnoutCommand.Activate)
+            // Warn if any signal aspect resolves to a pure deactivate command before optional polarity inversion.
+            if (!command.OriginalActivate)
             {
                 _logger.LogWarning(
                     "Signal '{SignalName}': Aspect {Aspect} mapped to Activate=false. " +
@@ -326,30 +277,20 @@ public sealed partial class MobaRuntimeService
                     signal.SignalAspect);
             }
 
-            var dccAddress = signal.BaseAddress + turnoutCommand.AddressOffset;
-            if (dccAddress is < 1 or > 2044)
-            {
-                throw new ArgumentOutOfRangeException(
-                    nameof(signal.BaseAddress),
-                    $"Calculated DCC address {dccAddress} is outside the valid range (1-2044).");
-            }
-
-            var activate = turnoutCommand.Activate;
-            if (ShouldInvertPolarityForOffset(turnoutCommand.AddressOffset))
-            {
-                activate = !activate;
-            }
-
             await _z21.SetTurnoutAsync(
-                    dccAddress,
-                    turnoutCommand.Output,
-                    activate,
+                    command.DccAddress,
+                    command.Output,
+                    command.Activate,
                     false,
                     cancellationToken)
                 .ConfigureAwait(false);
 
-            _statusText = $"Signal '{signal.Name}' gestellt: DCC-Adresse {dccAddress}, Ausgang {turnoutCommand.Output}, Activate={activate}";
+            _statusText = $"Signal '{signal.Name}' gestellt: DCC-Adresse {command.DccAddress}, Ausgang {command.Output}, Activate={command.Activate}";
             PublishSnapshot();
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Signal '{SignalName}': Multiplexer command could not be resolved.", signal.Name);
         }
         catch (Exception ex)
         {

@@ -6,11 +6,6 @@ namespace Moba.Backend.Service;
 /// </summary>
 public sealed partial class MobaRuntimeService
 {
-    private bool ShouldInvertPolarityForOffset(int addressOffset)
-    {
-        return _settings.SignalBox.GetInvertPolarityForOffset(addressOffset);
-    }
-
     private string BuildSystemStateStatusText(SystemState systemState)
     {
         List<string> warnings = [];

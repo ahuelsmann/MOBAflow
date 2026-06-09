@@ -73,6 +73,13 @@
                     IsColorSliderVisible="True"
                     IsHexInputVisible="True"
                     IsMoreButtonVisible="False" />
+                <Button
+                    Margin="8,12,8,0"
+                    Width="Auto"
+                    HorizontalAlignment="Stretch"
+                    Click="ClearSelectionButton_Click"
+                    Content="Auswahl löschen"
+                    Style="{StaticResource SymbolButtonStyle}" />
             </StackPanel>
         </ScrollViewer>
     </Grid>

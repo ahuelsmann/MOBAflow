@@ -1,12 +1,15 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI;
 
+using Backend;
 using Backend.Interface;
 using Backend.Service;
 
 using Common.Configuration;
 
 using CommunityToolkit.Maui;
+
+using Microsoft.Extensions.Logging;
 
 using Service;
 
@@ -40,7 +43,7 @@ public static class MauiProgram
             });
 
         // Platform services (MUST be registered before ViewModels that depend on them)
-        builder.Services.AddUiDispatcher();
+        builder.Services.AddSingleton<IUiDispatcher, UiDispatcher>();
         builder.Services.AddSingleton<IBackgroundService, BackgroundService>();
 
         // Event Bus with UI-thread marshalling (required by backend services)
@@ -49,10 +52,12 @@ public static class MauiProgram
         // Configuration (AppSettings + ISettingsService)
         builder.Services.AddSingleton<AppSettings>();
         builder.Services.AddSingleton<ISettingsService, SettingsService>();
+        builder.Services.AddLogging();
 
         // Audio Services (NullObject - MAUI doesn't support audio yet)
         builder.Services.AddSingleton<ISoundPlayer, NullSoundPlayer>();
         builder.Services.AddSingleton<ISpeakerEngine, NullSpeakerEngine>();
+        builder.Services.AddMobaBackendServices();
 
         // REST-API discovery (multicast + subnet HTTP); uses its own HttpClient (no proxy) to avoid LAN issues.
         builder.Services.AddSingleton<RestApiDiscoveryService>(sp =>
@@ -89,8 +94,6 @@ public static class MauiProgram
 
         // ViewModels
         builder.Services.AddSingleton<MauiViewModel>();
-
-        builder.Services.AddSingleton<IMobaRuntime, MobaRuntimeService>();
 
         // Views
         builder.Services.AddTransient<View.SplashPage>();

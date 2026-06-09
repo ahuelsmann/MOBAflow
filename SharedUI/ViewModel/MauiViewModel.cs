@@ -5,6 +5,7 @@ using Backend;
 using Backend.Interface;
 
 using Common.Configuration;
+using Common.Events;
 using Common.Runtime;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -13,6 +14,8 @@ using CommunityToolkit.Mvvm.Input;
 using Interface;
 
 using Microsoft.Extensions.Logging;
+
+using Service;
 
 using System.Collections.ObjectModel;
 
@@ -32,6 +35,7 @@ public sealed partial class MauiViewModel : ObservableObject
     private readonly IRestApiClientRegistration? _restApiClientRegistration;
     private readonly INetworkProfileChangeNotifier _networkProfileChangeNotifier;
     private readonly ILogger<MauiViewModel> _logger;
+    private readonly IEventBus? _eventBus;
 
     private readonly object _networkChangeDebounceLock = new();
     private CancellationTokenSource? _networkChangeDebounceCts;
@@ -89,7 +93,8 @@ public sealed partial class MauiViewModel : ObservableObject
         IPhotoCaptureService photoCaptureService,
         INetworkProfileChangeNotifier networkProfileChangeNotifier,
         ILogger<MauiViewModel> logger,
-        IRestApiClientRegistration? restApiClientRegistration = null)
+        IRestApiClientRegistration? restApiClientRegistration = null,
+        IEventBus? eventBus = null)
     {
         ArgumentNullException.ThrowIfNull(mobaRuntime);
         ArgumentNullException.ThrowIfNull(uiDispatcher);
@@ -112,9 +117,18 @@ public sealed partial class MauiViewModel : ObservableObject
         _networkProfileChangeNotifier = networkProfileChangeNotifier;
         _logger = logger;
         _restApiClientRegistration = restApiClientRegistration;
+        _eventBus = eventBus;
 
-        _mobaRuntime.SnapshotChanged += OnRuntimeSnapshotChanged;
-        _mobaRuntime.FeedbackReceived += OnFeedbackReceived;
+        if (_eventBus != null)
+        {
+            _eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged);
+            _eventBus.Subscribe<FeedbackReceivedEvent>(OnFeedbackReceived);
+        }
+        else
+        {
+            _mobaRuntime.SnapshotChanged += OnRuntimeSnapshotChanged;
+            _mobaRuntime.FeedbackReceived += OnFeedbackReceived;
+        }
     }
 
     /// <summary>
@@ -762,24 +776,26 @@ public sealed partial class MauiViewModel : ObservableObject
         _uiDispatcher.InvokeOnUi(() => ApplyRuntimeSnapshot(snapshot));
     }
 
+    private void OnRuntimeSnapshotChanged(RuntimeSnapshotChangedEvent e)
+    {
+        ApplyRuntimeSnapshot(e.Snapshot);
+    }
+
     private void ApplyRuntimeSnapshot(MobaRuntimeSnapshot snapshot)
     {
         var previousConnectionState = IsConnected;
+        var projection = RuntimeSnapshotProjector.ProjectMaui(snapshot, previousConnectionState);
+        var status = projection.Status;
 
-        IsConnected = snapshot.IsConnected;
-        IsTrackPowerOn = snapshot.IsTrackPowerOn;
-        MainCurrent = snapshot.MainCurrent;
-        Temperature = snapshot.Temperature;
-        SupplyVoltage = snapshot.SupplyVoltage;
-        VccVoltage = snapshot.VccVoltage;
+        IsConnected = status.IsConnected;
+        IsTrackPowerOn = status.IsTrackPowerOn;
+        MainCurrent = status.MainCurrent;
+        Temperature = status.Temperature;
+        SupplyVoltage = status.SupplyVoltage;
+        VccVoltage = status.VccVoltage;
+        Z21ConnectionStatus = projection.Z21ConnectionStatus;
 
-        Z21ConnectionStatus = snapshot.IsConnected
-            ? "Connected"
-            : string.Equals(snapshot.StatusText, "Disconnected", StringComparison.OrdinalIgnoreCase)
-                ? null
-                : snapshot.StatusText;
-
-        if (snapshot.IsConnected && !previousConnectionState)
+        if (projection.ShouldPersistCurrentIpAddress)
         {
             _settings.Z21.CurrentIpAddress = Z21IpAddress.Trim();
             QueueSaveSettings();
@@ -788,37 +804,45 @@ public sealed partial class MauiViewModel : ObservableObject
 
     private void OnFeedbackReceived(object? sender, FeedbackResult feedback)
     {
-        _uiDispatcher.InvokeOnUi(() =>
+        _ = sender;
+        _uiDispatcher.InvokeOnUi(() => ApplyFeedbackReceived(feedback.InPort));
+    }
+
+    private void OnFeedbackReceived(FeedbackReceivedEvent e)
+    {
+        ApplyFeedbackReceived(e.InPort);
+    }
+
+    private void ApplyFeedbackReceived(int inPort)
+    {
+        if (_statisticsByInPort.TryGetValue(inPort, out var stat))
         {
-            if (_statisticsByInPort.TryGetValue(feedback.InPort, out var stat))
+            // Timer filter: Prevent duplicate counts from long trains
+            if (UseTimerFilter)
             {
-                // Timer filter: Prevent duplicate counts from long trains
-                if (UseTimerFilter)
+                if (_lastFeedbackTime.TryGetValue(inPort, out DateTime lastTime))
                 {
-                    if (_lastFeedbackTime.TryGetValue(feedback.InPort, out DateTime lastTime))
+                    var elapsed = (DateTime.Now - lastTime).TotalSeconds;
+                    if (elapsed < TimerIntervalSeconds)
                     {
-                        var elapsed = (DateTime.Now - lastTime).TotalSeconds;
-                        if (elapsed < TimerIntervalSeconds)
-                        {
-                            // Skip: Too soon after last feedback (same train still passing)
-                            return;
-                        }
+                        // Skip: Too soon after last feedback (same train still passing)
+                        return;
                     }
-                    _lastFeedbackTime[feedback.InPort] = DateTime.Now;
                 }
-
-                // Calculate lap time (time between two consecutive feedbacks)
-                DateTime now = DateTime.Now;
-                if (stat.LastFeedbackTime.HasValue)
-                {
-                    stat.LastLapTime = now - stat.LastFeedbackTime.Value;
-                }
-
-                // Update count and timestamp
-                stat.Count++;
-                stat.LastFeedbackTime = now;
+                _lastFeedbackTime[inPort] = DateTime.Now;
             }
-        });
+
+            // Calculate lap time (time between two consecutive feedbacks)
+            DateTime now = DateTime.Now;
+            if (stat.LastFeedbackTime.HasValue)
+            {
+                stat.LastLapTime = now - stat.LastFeedbackTime.Value;
+            }
+
+            // Update count and timestamp
+            stat.Count++;
+            stat.LastFeedbackTime = now;
+        }
     }
 
     #endregion

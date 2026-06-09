@@ -2,6 +2,7 @@
 namespace Moba.Test.SharedUI;
 
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Backend.Interface;
 using Moba.Backend.Model;
@@ -25,6 +26,42 @@ internal class MainWindowViewModelShutdownTests
     public async Task PrepareForShutdownAsync_UnsubscribesFromRuntimeSnapshots()
     {
         var mobaRuntimeMock = CreateMobaRuntimeMock();
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var viewModel = CreateViewModel(mobaRuntimeMock, eventBus);
+
+        eventBus.Publish(
+            new RuntimeSnapshotChangedEvent(
+                new MobaRuntimeSnapshot
+                {
+                    IsConnected = true,
+                    IsTrackPowerOn = true,
+                    IsZ21Connecting = false,
+                    HasSeenSuccessfulConnection = true,
+                    StatusText = "Connected"
+                }));
+
+        await viewModel.PrepareForShutdownAsync();
+
+        Assert.That(eventBus.GetSubscriberCount<RuntimeSnapshotChangedEvent>(), Is.EqualTo(0));
+
+        eventBus.Publish(
+            new RuntimeSnapshotChangedEvent(
+                new MobaRuntimeSnapshot
+                {
+                    IsConnected = false,
+                    IsTrackPowerOn = false,
+                    IsZ21Connecting = false,
+                    HasSeenSuccessfulConnection = true,
+                    StatusText = "Disconnected"
+                }));
+
+        Assert.That(viewModel.IsConnected, Is.True);
+    }
+
+    [Test]
+    public void MainWindowViewModel_IgnoresLegacyRuntimeSnapshotEvents()
+    {
+        var mobaRuntimeMock = CreateMobaRuntimeMock();
         var viewModel = CreateViewModel(mobaRuntimeMock);
 
         mobaRuntimeMock.Raise(
@@ -39,21 +76,7 @@ internal class MainWindowViewModelShutdownTests
                 StatusText = "Connected"
             });
 
-        await viewModel.PrepareForShutdownAsync();
-
-        mobaRuntimeMock.Raise(
-            client => client.SnapshotChanged += null,
-            mobaRuntimeMock.Object,
-            new MobaRuntimeSnapshot
-            {
-                IsConnected = false,
-                IsTrackPowerOn = false,
-                IsZ21Connecting = false,
-                HasSeenSuccessfulConnection = true,
-                StatusText = "Disconnected"
-            });
-
-        Assert.That(viewModel.IsConnected, Is.True);
+        Assert.That(viewModel.IsConnected, Is.False);
     }
 
     [Test]
@@ -77,9 +100,8 @@ internal class MainWindowViewModelShutdownTests
         return mobaRuntimeMock;
     }
 
-    private static MainWindowViewModel CreateViewModel(Mock<IMobaRuntime> mobaRuntimeMock)
+    private static MainWindowViewModel CreateViewModel(Mock<IMobaRuntime> mobaRuntimeMock, IEventBus? eventBus = null)
     {
-        var eventBusMock = new Mock<IEventBus>();
         var uiDispatcherMock = new Mock<IUiDispatcher>();
         var loggerMock = new Mock<ILogger<MainWindowViewModel>>();
 
@@ -90,7 +112,7 @@ internal class MainWindowViewModelShutdownTests
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             mobaRuntimeMock.Object,
-            eventBusMock.Object,
+            eventBus ?? new Mock<IEventBus>().Object,
             uiDispatcherMock.Object,
             new AppSettings(),
             new Solution(),
