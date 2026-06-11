@@ -138,7 +138,7 @@
                 <TextBox
                     Header="Name"
                     PlaceholderText="Station name"
-                    Text="{Binding Name, Mode=TwoWay}" />
+                    Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
                 <!--<TextBox
                     Height="60"

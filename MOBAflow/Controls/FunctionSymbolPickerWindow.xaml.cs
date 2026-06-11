@@ -2,17 +2,20 @@
 namespace Moba.WinUI.Controls;
 
 using Microsoft.UI;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-
+using System;
+using System.Collections.Generic;
 using System.Globalization;
-
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using Windows.UI;
 
 /// <summary>
-/// One symbol entry shown in the picker. Exposes both the bare filename (for persistence/tooltip)
-/// and a packaged <see cref="Uri"/> bound to a monochrome BitmapIcon so the icon adopts the
-/// active theme's text color.
+/// One symbol entry shown in the picker.
 /// </summary>
 internal sealed class FunctionSymbolItem
 {
@@ -33,11 +36,11 @@ internal sealed class FunctionSymbolItem
 }
 
 /// <summary>
-/// Dialog for selecting an SVG symbol from MOBAflow/Assets for a function button (Train Control).
+/// Window for selecting an SVG symbol from MOBAflow/Assets for a function button (Train Control).
 /// Enumerates the deployed Assets folder at runtime so newly added or renamed SVGs are picked up
 /// automatically on the next build.
 /// </summary>
-internal sealed partial class FunctionSymbolPickerDialog
+internal sealed partial class FunctionSymbolPickerWindow : Window
 {
     /// <summary>
     /// After closing: selected SVG asset filename (e.g. "scheinwerfer.svg") or null on cancel.
@@ -52,7 +55,43 @@ internal sealed partial class FunctionSymbolPickerDialog
     /// </summary>
     public bool IsSelectionCleared { get; private set; }
 
+    public bool IsConfirmed { get; private set; }
+
+    public ElementTheme SelectedTheme
+    {
+        get => RootGrid.RequestedTheme;
+        set => RootGrid.RequestedTheme = value;
+    }
+
+    private readonly TaskCompletionSource<bool> _tcs = new();
     private bool _suppressColorSelectionUpdate;
+
+    private const int DefaultWindowWidth = 750;
+    private const int DefaultWindowHeight = 600;
+    private const int MinimumWindowWidth = 700;
+    private const int MinimumWindowHeight = 550;
+    private const int WM_GETMINMAXINFO = 0x0024;
+    private delegate IntPtr SubclassProcDelegate(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam, UIntPtr uIdSubclass, IntPtr dwRefData);
+    private SubclassProcDelegate? _subclassDelegate;
+
+    [DllImport("comctl32.dll", SetLastError = true)]
+    private static extern bool SetWindowSubclass(IntPtr hWnd, SubclassProcDelegate pfnSubclass, UIntPtr uIdSubclass, IntPtr dwRefData);
+
+    [DllImport("comctl32.dll", SetLastError = true)]
+    private static extern IntPtr DefSubclassProc(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam);
+
+    [DllImport("user32.dll")]
+    private static extern uint GetDpiForWindow(IntPtr hwnd);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MINMAXINFO
+    {
+        public int ptReservedX, ptReservedY;
+        public int ptMaxSizeX, ptMaxSizeY;
+        public int ptMaxPositionX, ptMaxPositionY;
+        public int ptMinTrackSizeX, ptMinTrackSizeY;
+        public int ptMaxTrackSizeX, ptMaxTrackSizeY;
+    }
 
     /// <summary>
     /// SVG filenames that are not function-button symbols and must be excluded from the library.
@@ -92,10 +131,69 @@ internal sealed partial class FunctionSymbolPickerDialog
         }
     }
 
-    public FunctionSymbolPickerDialog()
+    public FunctionSymbolPickerWindow()
     {
         InitializeComponent();
         SymbolsItemsControl.ItemsSource = LoadSymbols();
+
+        Title = "Symbol für Funktionstaste auswählen";
+
+        // Setup custom window properties
+        if (AppWindow.Presenter is OverlappedPresenter presenter)
+        {
+            presenter.PreferredMinimumWidth = MinimumWindowWidth;
+            presenter.PreferredMinimumHeight = MinimumWindowHeight;
+            presenter.IsMaximizable = true;
+            presenter.IsMinimizable = true;
+            presenter.IsResizable = true;
+        }
+
+        // Center on parent window (MainWindow)
+        if (App.MainWindow != null)
+        {
+            var parentAppWindow = App.MainWindow.AppWindow;
+            if (parentAppWindow != null)
+            {
+                var parentPos = parentAppWindow.Position;
+                var parentSize = parentAppWindow.Size;
+
+                int width = DefaultWindowWidth;
+                int height = DefaultWindowHeight;
+
+                int x = parentPos.X + (parentSize.Width - width) / 2;
+                int y = parentPos.Y + (parentSize.Height - height) / 2;
+
+                AppWindow.MoveAndResize(new Windows.Graphics.RectInt32(x, y, width, height));
+            }
+        }
+        else
+        {
+            AppWindow.Resize(new Windows.Graphics.SizeInt32(DefaultWindowWidth, DefaultWindowHeight));
+        }
+
+        Closed += (s, e) => _tcs.TrySetResult(false);
+
+        _subclassDelegate = new SubclassProcDelegate(WindowSubclassProc);
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+        SetWindowSubclass(hwnd, _subclassDelegate, 1, IntPtr.Zero);
+    }
+
+    private IntPtr WindowSubclassProc(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam, UIntPtr uIdSubclass, IntPtr dwRefData)
+    {
+        if (uMsg == WM_GETMINMAXINFO)
+        {
+            var dpi = GetDpiForWindow(hWnd);
+            float scalingFactor = dpi / 96f;
+
+            var minMaxInfo = Marshal.PtrToStructure<MINMAXINFO>(lParam);
+            minMaxInfo.ptMinTrackSizeX = (int)(MinimumWindowWidth * scalingFactor);
+            minMaxInfo.ptMinTrackSizeY = (int)(MinimumWindowHeight * scalingFactor);
+            Marshal.StructureToPtr(minMaxInfo, lParam, true);
+
+            return IntPtr.Zero;
+        }
+
+        return DefSubclassProc(hWnd, uMsg, wParam, lParam);
     }
 
     public void SetInitialColor(string colorHex)
@@ -124,12 +222,6 @@ internal sealed partial class FunctionSymbolPickerDialog
 
     private static string ToHexColor(Color color) =>
         string.Create(CultureInfo.InvariantCulture, $"#{color.R:X2}{color.G:X2}{color.B:X2}");
-
-    private void ContentDialog_SecondaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
-    {
-        SelectedGlyph = null;
-        SelectedColorHex = null;
-    }
 
     private void SymbolButton_Click(object sender, RoutedEventArgs e)
     {
@@ -166,5 +258,36 @@ internal sealed partial class FunctionSymbolPickerDialog
         }
 
         SelectedColorHex = null;
+
+        IsConfirmed = true;
+        _tcs.TrySetResult(true);
+        Close();
+    }
+
+    private void OkButton_Click(object sender, RoutedEventArgs e)
+    {
+        IsConfirmed = true;
+        _tcs.TrySetResult(true);
+        Close();
+    }
+
+    private void CancelButton_Click(object sender, RoutedEventArgs e)
+    {
+        IsConfirmed = false;
+        SelectedGlyph = null;
+        SelectedColorHex = null;
+        _tcs.TrySetResult(false);
+        Close();
+    }
+
+    public Task<bool> ShowDialogAsync()
+    {
+        Activate();
+        if (AppWindow.Presenter is OverlappedPresenter presenter)
+        {
+            presenter.Maximize();
+        }
+
+        return _tcs.Task;
     }
 }

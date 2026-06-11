@@ -16,9 +16,9 @@
             "",
             "f9__signalhorn_tief.svg",
             "f2__signalhorn_hoch.svg",
-            "bel\u00FCftung.svg",
-            "",
-            "",
+            "none",
+            "none",
+            "none",
             ""
           ],
           "functionColors": [
@@ -26,9 +26,9 @@
             "#0413FF",
             "#660A00",
             "#FF1206",
-            "#E82207",
-            "",
-            "",
+            "none",
+            "none",
+            "none",
             ""
           ],
           "isPushing": false,
@@ -241,7 +241,7 @@
           "stations": [
             {
               "id": "0284b108-361f-4357-ae1e-7fb8c52aa33e",
-              "name": "Event3a",
+              "name": "Event1",
               "isVirtual": true,
               "inPort": 0,
               "numberOfLapsToStop": 1,
@@ -269,7 +269,7 @@
             },
             {
               "id": "751ad5f3-ee7a-4694-875f-76f7d8461f77",
-              "name": "Event1",
+              "name": "Event2",
               "isVirtual": true,
               "inPort": 0,
               "numberOfLapsToStop": 1,
@@ -297,7 +297,7 @@
             },
             {
               "id": "4eab1740-8f91-4840-9c9b-e2ebd3cdce0e",
-              "name": "Event2",
+              "name": "Event3",
               "isVirtual": true,
               "inPort": 0,
               "numberOfLapsToStop": 1,

@@ -188,6 +188,6 @@ internal sealed partial class GoodsWagonPage
             return column.Width.Value;
         }
 
-        return fallback;
+        return column.ActualWidth > 0 ? column.ActualWidth : fallback;
     }
 }

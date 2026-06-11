@@ -2,11 +2,10 @@
     x:Class="Moba.WinUI.View.LocomotivesPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:behavior="using:Moba.WinUI.Behavior"
     xmlns:controls="using:Moba.WinUI.Controls"
+    xmlns:controls1="using:CommunityToolkit.WinUI.Controls"
     xmlns:converter="using:Moba.WinUI.Converter"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:i="using:Microsoft.Xaml.Interactivity"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:viewmodel="using:Moba.SharedUI.ViewModel"
     DataContext="{x:Bind ViewModel}"
@@ -18,14 +17,10 @@
     </Page.Resources>
 
     <Grid>
-        <i:Interaction.Behaviors>
-            <behavior:GridColumnResizeBehavior PersistenceKey="LocomotivesPage" />
-        </i:Interaction.Behaviors>
-
         <Grid.ColumnDefinitions>
             <ColumnDefinition
                 x:Name="ColList"
-                Width="{x:Bind ViewModel.LayoutColumnWidths.LocomotivesPage.Col0, Mode=OneWay, Converter={StaticResource DoubleToGridLengthConverter}}"
+                Width="250"
                 MinWidth="32" />
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition
@@ -121,12 +116,11 @@
             </controls:CollapsibleColumnCollection.PanelContent>
         </controls:CollapsibleColumnCollection>
 
-        <Border
+        <controls1:GridSplitter
             Grid.Column="1"
             Width="4"
             HorizontalAlignment="Left"
-            behavior:GridColumnResizeBehavior.SplitterMode="Left"
-            Background="{ThemeResource CardStrokeColorDefaultBrush}" />
+            ResizeBehavior="PreviousAndNext" />
 
         <controls:CollapsibleColumnProperties
             Grid.Column="2"

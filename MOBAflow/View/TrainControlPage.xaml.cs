@@ -298,14 +298,15 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
             if (functionIndex < 0 || functionIndex > 31)
                 return;
 
-            var picker = new FunctionSymbolPickerDialog
+            var picker = new FunctionSymbolPickerWindow
             {
-                RequestedTheme = ActualTheme == ElementTheme.Light ? ElementTheme.Light : ElementTheme.Dark,
-                XamlRoot = XamlRoot
+                SelectedTheme = ActualTheme == ElementTheme.Light ? ElementTheme.Light : ElementTheme.Dark
             };
             if (element.DataContext is FunctionButtonViewModel functionButton)
                 picker.SetInitialColor(functionButton.BacklightColorHex);
-            await picker.ShowAsync();
+            var confirmed = await picker.ShowDialogAsync();
+            if (!confirmed || !picker.IsConfirmed)
+                return;
 
             var applied = picker.IsSelectionCleared
                 ? ViewModel.ClearFunctionAppearance(functionIndex)

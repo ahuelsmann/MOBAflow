@@ -1195,6 +1195,8 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         if (loco?.FunctionSymbols != null && functionIndex < loco.FunctionSymbols.Count)
         {
             var stored = loco.FunctionSymbols[functionIndex];
+            if (stored == "none")
+                return string.Empty;
             if (IsValidAssetReference(stored))
                 return stored;
         }
@@ -1220,6 +1222,8 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         if (loco?.FunctionColors != null && functionIndex < loco.FunctionColors.Count)
         {
             var stored = loco.FunctionColors[functionIndex];
+            if (stored == "none")
+                return SignalGrayHex;
             if (IsValidHexColor(stored))
                 return stored;
         }
@@ -1306,12 +1310,12 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         loco.FunctionSymbols ??= new List<string>();
         while (loco.FunctionSymbols.Count <= functionIndex)
             loco.FunctionSymbols.Add(string.Empty);
-        loco.FunctionSymbols[functionIndex] = string.Empty;
+        loco.FunctionSymbols[functionIndex] = "none";
 
         loco.FunctionColors ??= new List<string>();
         while (loco.FunctionColors.Count <= functionIndex)
             loco.FunctionColors.Add(string.Empty);
-        loco.FunctionColors[functionIndex] = string.Empty;
+        loco.FunctionColors[functionIndex] = "none";
 
         NotifyAllFunctionAppearanceChanged();
         QueueBackgroundTask(_mainWindowViewModel?.SaveSolutionInternalAsync(), "Auto-save solution");
