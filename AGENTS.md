@@ -106,14 +106,19 @@ dotnet test Test/Test.csproj --settings Test/coverlet.runsettings \
 
 ### Known issues on Linux Cloud VM
 
-- **System.Speech tests**: 2 tests in `SystemSpeechEngineTest` always fail on Linux (`PlatformNotSupportedException`). This is expected.
+- **Expected `dotnet test Test/Test.csproj` result on Linux:** ~480 pass, ~10 fail. The failures are pre-existing and platform-specific (NOT a setup regression):
+  - `SystemSpeechEngineTest.OutputSpeech_MinimalTest` — `System.Speech` is Windows-only (`PlatformNotSupportedException`).
+  - `PhotoPathHelperTests.ToFullPath_Strips_photos_prefix_backslash` and the whole `SolutionTest` fixture (`Constructor_InitializesWithDefaults`, `LoadAsync_*`, `LoadExampleSolutionJson_ShouldLoadSuccessfully`, `UpdateFrom_WithNull_ThrowsArgumentNullException`) — these assert on Windows backslash (`\`) path separators / file paths, which differ on Linux.
+  - `TrackPlanFeedbackHighlighterTests.Feedback_Respects_IgnoreWindow` — clock/timing-sensitive assertion that does not hold on the Linux VM.
+- **SkiaSharp native library**: `MOBAdisplay` references only the `SkiaSharp` meta-package (Windows natives), not `SkiaSharp.NativeAssets.Linux`. The Linux `libSkiaSharp.so` is provided at the system level (`/usr/lib/x86_64-linux-gnu/libSkiaSharp.so`) so the `MOBAdisplay` SkiaSharp tests load and pass. If that file is missing, those tests crash the test host with a `DllNotFoundException` for `libSkiaSharp`.
+- **Release / warnings-as-errors build fails on Linux**: building any project in `-c Release` (e.g. `Test`, `MOBApi`, `Domain`) currently fails with pre-existing `CS1591` (missing XML doc comment) errors because Release sets `GenerateDocumentationFile=true` + `TreatWarningsAsErrors=true`. Use `-c Debug` for cross-platform build/test on Linux; the analyzer/warning quality gate is enforced via Visual Studio + SonarQube on the Windows CI agent.
 - **Solution-level restore**: `dotnet restore Moba.slnx` fails because the solution contains Windows and Android target frameworks. Restore individual `.csproj` files instead.
 - **MOBAflow desktop app**: `MOBAflow/MOBAflow.csproj` requires Windows/WinUI tooling and cannot be built on Linux.
 - **MOBAsmart**: `MOBAsmart/MOBAsmart.csproj` targets Android and requires MAUI/Android workloads that are not available on the Linux Cloud VM.
 
 ### .NET SDK
 
-The project requires .NET 10 SDK (pinned in `global.json` to 10.0.103 with `latestFeature` rollForward). Installed at `/usr/share/dotnet`.
+The project requires .NET 10 SDK (pinned in `global.json` to `10.0.300-preview` with `latestFeature` rollForward). It is installed under `~/.dotnet` (SDK `10.0.301`) and symlinked to `/usr/local/bin/dotnet`, so `dotnet` is on `PATH` for interactive and non-interactive shells.
 
 ---
 
