@@ -81,7 +81,9 @@ This is a .NET 10 multi-platform solution. On the Linux Cloud VM **only cross-pl
 
 | Buildable on Linux | NOT buildable (platform-specific) |
 | ------------------ | -------------------------------- |
-| Domain, Common, Backend, Sound, SharedUI, SharedUI.Web, TrackLibrary.Base, TrackLibrary.PikoA, TrackPlan.Renderer, MOBApi, Test | MOBAflow (`net10.0-windows10.0.22621.0`), MOBAsmart (`net10.0-android`), MAUI.Controls (`net10.0;net10.0-android`) |
+| Domain, Common, Backend, Sound, SharedUI, SharedUI.Web, TrackLibrary.Base, TrackLibrary.PikoA, TrackPlan.Renderer, MOBAdisplay, MOBApi, Test | MOBAflow (`net10.0-windows10.0.22621.0`), MOBAsmart (`net10.0-android`), MAUI.Controls (`net10.0;net10.0-android`) |
+
+> `MOBApult/` is a FreeCAD CAD model (`.FCStd`/`.FCMacro`), not a buildable .NET project.
 
 ### Build & test commands
 
@@ -106,14 +108,23 @@ dotnet test Test/Test.csproj --settings Test/coverlet.runsettings \
 
 ### Known issues on Linux Cloud VM
 
-- **System.Speech tests**: 2 tests in `SystemSpeechEngineTest` always fail on Linux (`PlatformNotSupportedException`). This is expected.
+- **SkiaSharp native lib**: `MOBAdisplay` uses `SkiaSharp` but the project only references the base `SkiaSharp` package (no `SkiaSharp.NativeAssets.Linux`), so `libSkiaSharp.so` is not deployed on Linux. Without it, `dotnet test Test/Test.csproj` *crashes the test host* (`DllNotFoundException` in a finalizer). The native lib is installed system-wide at `/usr/lib/x86_64-linux-gnu/libSkiaSharp.so` (one-off, persisted in the VM snapshot); do not rely on it being copied into the build output.
+- **Platform-specific test failures (expected on Linux)**: ~10 tests fail because they assume Windows. These are not environment/setup bugs and should not be "fixed" on Linux:
+  - `SystemSpeechEngineTest.OutputSpeech_MinimalTest` — `System.Speech` is Windows-only (`PlatformNotSupportedException`).
+  - `PhotoPathHelper`/`SolutionService` tests that hardcode backslash separators (e.g. `TestFile\solution.json`, `wagons\def.png`) — `\` is a literal char on Linux, not a path separator.
+  - `TrackPlanFeedbackHighlighterTests.Feedback_Respects_IgnoreWindow` — timing-sensitive.
+  - Net result: ~480/490 pass on Linux.
 - **Solution-level restore**: `dotnet restore Moba.slnx` fails because the solution contains Windows and Android target frameworks. Restore individual `.csproj` files instead.
 - **MOBAflow desktop app**: `MOBAflow/MOBAflow.csproj` requires Windows/WinUI tooling and cannot be built on Linux.
 - **MOBAsmart**: `MOBAsmart/MOBAsmart.csproj` targets Android and requires MAUI/Android workloads that are not available on the Linux Cloud VM.
 
+### Running MOBApi (cross-platform host)
+
+`dotnet run --project MOBApi/MOBApi.csproj` starts the REST API on `http://0.0.0.0:5001`. Smoke test: `GET /api/status`, then `POST /api/clients/register` with `{"clientId":"...","deviceName":"..."}`, then `GET /api/status` again to see the client listed.
+
 ### .NET SDK
 
-The project requires .NET 10 SDK (pinned in `global.json` to 10.0.103 with `latestFeature` rollForward). Installed at `/usr/share/dotnet`.
+The project requires .NET 10 SDK (pinned in `global.json` to `10.0.300-preview` with `latestFeature` rollForward; `10.0.301` satisfies it). Installed at `/usr/share/dotnet` and symlinked to `/usr/local/bin/dotnet` (on PATH for all shells).
 
 ---
 
