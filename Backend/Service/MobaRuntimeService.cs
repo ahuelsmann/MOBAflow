@@ -7,7 +7,10 @@ using Common.Events;
 using Common.Extension;
 using Common.Runtime;
 
+using Domain;
+
 using Interface;
+using Manager;
 
 using Microsoft.Extensions.Logging;
 
@@ -26,6 +29,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
     private readonly IZ21 _z21;
     private readonly IWorkflowService _workflowService;
     private readonly IActionExecutionContextFactory _executionContextFactory;
+    private readonly IJourneyManagerFactory _journeyManagerFactory;
     private readonly AppSettings _settings;
     private readonly ILogger<MobaRuntimeService> _logger;
     private readonly IEventBus? _eventBus;
@@ -82,7 +86,8 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         IActionExecutionContextFactory executionContextFactory,
         AppSettings settings,
         ILogger<MobaRuntimeService> logger,
-        IEventBus? eventBus = null)
+        IEventBus? eventBus = null,
+        IJourneyManagerFactory? journeyManagerFactory = null)
     {
         ArgumentNullException.ThrowIfNull(z21);
         ArgumentNullException.ThrowIfNull(workflowService);
@@ -93,6 +98,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         _z21 = z21;
         _workflowService = workflowService;
         _executionContextFactory = executionContextFactory;
+        _journeyManagerFactory = journeyManagerFactory ?? new JourneyManagerFactory(z21, workflowService);
         _settings = settings;
         _logger = logger;
         _eventBus = eventBus;
@@ -129,7 +135,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
 
             cancellationToken.ThrowIfCancellationRequested();
             PublishSnapshot();
-            await TryAutoConnectToZ21Async().ConfigureAwait(false);
+            BeginAutoConnectToZ21();
             _started = true;
         }
         finally
@@ -181,31 +187,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
 
     private MobaRuntimeSnapshot CreateSnapshot()
     {
-        var journeyStates = new Dictionary<Guid, JourneyRuntimeSnapshot>();
-
-        if (_activeProjectContext != null)
-        {
-            foreach (var journey in _activeProjectContext.ActiveProject.Journeys)
-            {
-                var state = _activeProjectContext.JourneyManager.GetState(journey.Id);
-                if (state == null)
-                {
-                    continue;
-                }
-
-                journeyStates[journey.Id] = new JourneyRuntimeSnapshot
-                {
-                    JourneyId = journey.Id,
-                    Counter = state.Counter,
-                    CurrentPos = state.CurrentPos,
-                    CurrentStationName = state.CurrentStationName,
-                    LastFeedbackTime = state.LastFeedbackTime,
-                    IsActive = state.IsActive
-                };
-            }
-        }
-
-        return new MobaRuntimeSnapshot
+        var telemetry = new MobaRuntimeTelemetryState
         {
             IsConnected = _isConnected,
             IsTrackPowerOn = _isTrackPowerOn,
@@ -227,10 +209,14 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
             IsProgrammingModeActive = _isProgrammingModeActive,
             LastFailSafeReason = _lastFailSafeReason,
             LastFailSafeAt = _lastFailSafeAt,
-            IsOperatorAckRequired = _isOperatorAckRequired,
-            JourneyStates = journeyStates,
-            LocomotiveStates = new Dictionary<int, LocomotiveRuntimeSnapshot>(_locomotiveStates),
-            CreatedAt = DateTimeOffset.Now
+            IsOperatorAckRequired = _isOperatorAckRequired
         };
+
+        foreach (var (address, state) in _locomotiveStates)
+        {
+            telemetry.LocomotiveStates[address] = state;
+        }
+
+        return MobaRuntimeSnapshotBuilder.Create(telemetry, _activeProjectContext);
     }
 }

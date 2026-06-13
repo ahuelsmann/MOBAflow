@@ -4,12 +4,14 @@ namespace Moba.WinUI.Service;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
 
+using SharedUI.Interface;
+
 /// <summary>
 /// Real-time SignalR Client for photo notifications.
-/// Connects to WinUI REST Server's PhotoHub for instant photo updates.
+/// Connects to the MOBApi SignalR PhotoHub for instant photo upload notifications.
 /// Uses proper Microsoft.AspNetCore.SignalR.Client (not WebSocket).
 /// </summary>
-public class PhotoHubClient : IAsyncDisposable
+public class PhotoHubClient : IPhotoHubClient
 {
     private HubConnection? _hubConnection;
     private readonly ILogger<PhotoHubClient>? _logger;

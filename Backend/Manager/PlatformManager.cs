@@ -13,7 +13,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 using Service;
 
-public sealed class PlatformManager : IDisposable
+public sealed class PlatformManager : IPlatformManager
 {
     private readonly SemaphoreSlim _processingLock = new(1, 1);
     private readonly IZ21 _z21;

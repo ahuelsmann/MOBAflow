@@ -82,6 +82,11 @@ public partial class EntityTemplateSelector : DataTemplateSelector
     public DataTemplate? SelectSignalAspectActionTemplate { get; set; }
 
     /// <summary>
+    /// DataTemplate for PowerShellActionViewModel
+    /// </summary>
+    public DataTemplate? PowerShellActionTemplate { get; set; }
+
+    /// <summary>
     /// DataTemplate for TrainDestinationDisplayViewModel
     /// </summary>
     public DataTemplate? TrainDestinationDisplayActionTemplate { get; set; }
@@ -108,6 +113,8 @@ public partial class EntityTemplateSelector : DataTemplateSelector
             AudioViewModel => AudioActionTemplate,
             CommandViewModel => CommandActionTemplate,
             SelectSignalAspectViewModel => SelectSignalAspectActionTemplate,
+            PowerShellActionViewModel => PowerShellActionTemplate,
+            TrainDestinationDisplayViewModel => TrainDestinationDisplayActionTemplate,
             WorkflowActionViewModel => ActionTemplate,  // Generic fallback
             WorkflowAction => ActionTemplate,  // Domain object fallback
             _ => DefaultTemplate

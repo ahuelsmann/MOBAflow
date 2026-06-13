@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="Moba.MAUI.View.ControlPage"
+    x:Name="ControlRoot"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Moba.SharedUI.ViewModel;assembly=SharedUI"
+    Title="Control"
+    x:DataType="vm:TrainControlViewModel">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="12">
+            <Border
+                Padding="16"
+                Background="{DynamicResource Surface}"
+                Stroke="{DynamicResource BorderColor}"
+                StrokeShape="RoundRectangle 12"
+                StrokeThickness="1">
+                <VerticalStackLayout Spacing="6">
+                    <Label
+                        Style="{StaticResource TitleLarge}"
+                        Text="Control" />
+                    <Label
+                        Style="{StaticResource BodyMedium}"
+                        Text="Mobile Loksteuerung analog zur TrainControlPage: Preset, DCC-Adresse, Richtung, Geschwindigkeit und Funktionen." />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border
+                Padding="14"
+                Background="{DynamicResource Surface}"
+                Stroke="{DynamicResource BorderColor}"
+                StrokeShape="RoundRectangle 12"
+                StrokeThickness="1">
+                <VerticalStackLayout Spacing="12">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <VerticalStackLayout Grid.Column="0" Spacing="2">
+                            <Label
+                                FontAttributes="Bold"
+                                Text="{Binding LocoAddress, StringFormat='Lok {0}'}"
+                                TextColor="{DynamicResource TextPrimary}" />
+                            <Label
+                                Style="{StaticResource BodySmall}"
+                                Text="{Binding StatusMessage}" />
+                        </VerticalStackLayout>
+                        <Label
+                            Grid.Column="1"
+                            FontAttributes="Bold"
+                            Text="{Binding IsConnected, StringFormat='Z21: {0}'}"
+                            TextColor="{DynamicResource TextSecondary}"
+                            VerticalOptions="Center" />
+                    </Grid>
+
+                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                        <Button
+                            Grid.Column="0"
+                            Command="{Binding SelectPreset1Command}"
+                            Text="Lok 1" />
+                        <Button
+                            Grid.Column="1"
+                            Command="{Binding SelectPreset2Command}"
+                            Text="Lok 2" />
+                        <Button
+                            Grid.Column="2"
+                            Command="{Binding SelectPreset3Command}"
+                            Text="Lok 3" />
+                    </Grid>
+
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <VerticalStackLayout Grid.Column="0" Spacing="4">
+                            <Label
+                                FontAttributes="Bold"
+                                Text="DCC-Adresse"
+                                TextColor="{DynamicResource TextPrimary}" />
+                            <Entry
+                                Keyboard="Numeric"
+                                Text="{Binding LocoAddress, Mode=TwoWay}" />
+                        </VerticalStackLayout>
+                        <Button
+                            Grid.Column="1"
+                            Command="{Binding ToggleDirectionCommand}"
+                            Text="{Binding IsForward, StringFormat='Richtung: {0}'}"
+                            VerticalOptions="End" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <Border
+                Padding="14"
+                Background="{DynamicResource Surface}"
+                Stroke="{DynamicResource BorderColor}"
+                StrokeShape="RoundRectangle 12"
+                StrokeThickness="1">
+                <VerticalStackLayout Spacing="12">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <VerticalStackLayout Grid.Column="0" Spacing="2">
+                            <Label
+                                FontAttributes="Bold"
+                                Text="{Binding Speed, StringFormat='Speed Step {0}'}"
+                                TextColor="{DynamicResource TextPrimary}" />
+                            <Label
+                                Style="{StaticResource BodySmall}"
+                                Text="{Binding SpeedKmh, StringFormat='{0} km/h'}" />
+                        </VerticalStackLayout>
+                        <Button
+                            Grid.Column="1"
+                            BackgroundColor="{DynamicResource RailwayDanger}"
+                            Command="{Binding EmergencyStopCommand}"
+                            Text="STOP" />
+                    </Grid>
+
+                    <Slider
+                        Maximum="{Binding MaxSpeedStep}"
+                        Minimum="0"
+                        Value="{Binding Speed, Mode=TwoWay}" />
+
+                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                        <Button
+                            Grid.Column="0"
+                            Command="{Binding SetSpeedPresetCommand}"
+                            CommandParameter="0"
+                            Text="0" />
+                        <Button
+                            Grid.Column="1"
+                            Command="{Binding SetSpeedPresetCommand}"
+                            CommandParameter="40"
+                            Text="40" />
+                        <Button
+                            Grid.Column="2"
+                            Command="{Binding SetSpeedPresetCommand}"
+                            CommandParameter="80"
+                            Text="80" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <Border
+                Padding="14"
+                Background="{DynamicResource Surface}"
+                Stroke="{DynamicResource BorderColor}"
+                StrokeShape="RoundRectangle 12"
+                StrokeThickness="1">
+                <VerticalStackLayout Spacing="10">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <Label
+                            FontAttributes="Bold"
+                            Text="Funktionen"
+                            TextColor="{DynamicResource TextPrimary}"
+                            VerticalOptions="Center" />
+                        <Button
+                            Grid.Column="1"
+                            Command="{Binding TurnOffAllFunctionsCommand}"
+                            Text="Alle aus" />
+                    </Grid>
+
+                    <CollectionView
+                        HeightRequest="360"
+                        ItemsSource="{Binding Functions}"
+                        SelectionMode="None">
+                        <CollectionView.ItemsLayout>
+                            <GridItemsLayout
+                                Orientation="Vertical"
+                                Span="4"
+                                VerticalItemSpacing="8"
+                                HorizontalItemSpacing="8" />
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="vm:FunctionButtonViewModel">
+                                <Button
+                                    Command="{Binding BindingContext.ToggleFunctionCommand, Source={x:Reference ControlRoot}}"
+                                    CommandParameter="{Binding Index}"
+                                    Text="{Binding Label}" />
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

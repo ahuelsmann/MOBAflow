@@ -158,45 +158,95 @@
                             </ComboBox.ItemTemplate>
                         </ComboBox>
 
-                        <!--  Azure Settings (only shown when Azure engine selected)  -->
-                        <StackPanel Spacing="16" Visibility="{x:Bind ViewModel.IsAzureSpeechEngineSelected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                            <!--  Help Section  -->
+                        <!--  Piper Settings (only shown when Piper engine selected)  -->
+                        <StackPanel Spacing="16" Visibility="{x:Bind ViewModel.IsPiperSpeechEngineSelected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                             <InfoBar
                                 IsClosable="False"
                                 IsOpen="True"
-                                Message="Need an Azure Speech Key? Follow our step-by-step guide to create one."
-                                Severity="Informational">
-                                <InfoBar.ActionButton>
-                                    <Button
-                                        Click="AzureSpeechSetupButton_Click"
-                                        Content=" Setup Guide"
-                                        ToolTipService.ToolTip="Open Azure Speech Setup guide in Help" />
-                                </InfoBar.ActionButton>
-                            </InfoBar>
+                                Message="Configure a local Piper executable and a compatible .onnx voice model. No cloud API key is required."
+                                Severity="Informational" />
 
-                            <TextBox
-                                HorizontalAlignment="Left"
-                                Header="Azure Speech Key"
-                                PlaceholderText="Enter your Azure Speech API key"
-                                Text="{x:Bind ViewModel.SpeechKey, Mode=TwoWay, UpdateSourceTrigger=LostFocus}">
-                                <TextBox.Description>
-                                    <TextBlock>
-                                        <Run Text="Get your key from the " />
-                                        <Hyperlink NavigateUri="https://portal.azure.com">Azure Portal</Hyperlink>
-                                        <Run Text=" → Cognitive Services → Speech" />
-                                    </TextBlock>
-                                </TextBox.Description>
-                            </TextBox>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <ComboBox
+                                    MinWidth="180"
+                                    Header="Language"
+                                    ItemsSource="{x:Bind ViewModel.AvailablePiperLanguages}"
+                                    SelectedItem="{x:Bind ViewModel.SelectedPiperLanguage, Mode=TwoWay}">
+                                    <ComboBox.Description>
+                                        <TextBlock Text="Filter installed Piper voices by language." TextWrapping="Wrap" />
+                                    </ComboBox.Description>
+                                </ComboBox>
 
-                            <TextBox
-                                HorizontalAlignment="Left"
-                                Header="Azure Region"
-                                PlaceholderText="germanywestcentral"
-                                Text="{x:Bind ViewModel.SpeechRegion, Mode=TwoWay, UpdateSourceTrigger=LostFocus}">
-                                <TextBox.Description>
-                                    <TextBlock Text="Azure region for Speech Service (e.g., germanywestcentral, westeurope)" />
-                                </TextBox.Description>
-                            </TextBox>
+                                <ComboBox
+                                    MinWidth="320"
+                                    Header="Voice"
+                                    ItemsSource="{x:Bind ViewModel.AvailablePiperVoices}"
+                                    SelectedItem="{x:Bind ViewModel.SelectedPiperVoiceName, Mode=TwoWay}">
+                                    <ComboBox.Description>
+                                        <TextBlock Text="Select an installed Piper voice. This updates the model and config paths." TextWrapping="Wrap" />
+                                    </ComboBox.Description>
+                                </ComboBox>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBox
+                                    MinWidth="420"
+                                    Header="Piper Executable"
+                                    PlaceholderText="Path to piper.exe"
+                                    Text="{x:Bind ViewModel.PiperExecutablePath, Mode=TwoWay, UpdateSourceTrigger=LostFocus}">
+                                    <TextBox.Description>
+                                        <TextBlock Text="Local Piper CLI executable, for example C:\Tools\piper\piper.exe" TextWrapping="Wrap" />
+                                    </TextBox.Description>
+                                </TextBox>
+                                <Button
+                                    Margin="0,28,0,0"
+                                    Click="BrowsePiperExecutable_Click"
+                                    Content="Browse..." />
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBox
+                                    MinWidth="420"
+                                    Header="Piper Model"
+                                    PlaceholderText="Path to a .onnx voice model"
+                                    Text="{x:Bind ViewModel.PiperModelPath, Mode=TwoWay, UpdateSourceTrigger=LostFocus}">
+                                    <TextBox.Description>
+                                        <TextBlock Text="Piper voice model file, for example de_DE-thorsten-medium.onnx" TextWrapping="Wrap" />
+                                    </TextBox.Description>
+                                </TextBox>
+                                <Button
+                                    Margin="0,28,0,0"
+                                    Click="BrowsePiperModel_Click"
+                                    Content="Browse..." />
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBox
+                                    MinWidth="420"
+                                    Header="Piper Config (optional)"
+                                    PlaceholderText="Path to the model .json file"
+                                    Text="{x:Bind ViewModel.PiperConfigPath, Mode=TwoWay, UpdateSourceTrigger=LostFocus}">
+                                    <TextBox.Description>
+                                        <TextBlock Text="Optional model config file when Piper cannot find it automatically." TextWrapping="Wrap" />
+                                    </TextBox.Description>
+                                </TextBox>
+                                <Button
+                                    Margin="0,28,0,0"
+                                    Click="BrowsePiperConfig_Click"
+                                    Content="Browse..." />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel
+                            Orientation="Horizontal"
+                            Spacing="8"
+                            Visibility="{x:Bind ViewModel.IsPiperSpeechEngineSelected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <HyperlinkButton
+                                Content="Piper install"
+                                NavigateUri="https://github.com/OHF-Voice/piper1-gpl" />
+                            <HyperlinkButton
+                                Content="Piper voices"
+                                NavigateUri="https://huggingface.co/rhasspy/piper-voices" />
                         </StackPanel>
 
                         <NumberBox
@@ -223,17 +273,6 @@
                             </NumberBox.Description>
                         </NumberBox>
 
-                        <ComboBox
-                            HorizontalAlignment="Left"
-                            Header="Voice Name"
-                            ItemsSource="{x:Bind ViewModel.AvailableVoiceNames}"
-                            SelectedItem="{x:Bind ViewModel.VoiceName, Mode=TwoWay}"
-                            Visibility="{x:Bind ViewModel.IsAzureSpeechEngineSelected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                            <ComboBox.Description>
-                                <TextBlock Text="Select Azure voice for speech synthesis (e.g., de-DE-KatjaNeural)" TextWrapping="Wrap" />
-                            </ComboBox.Description>
-                        </ComboBox>
-
                         <!--  Test Message TextBox  -->
                         <TextBox
                             HorizontalAlignment="Left"
@@ -250,7 +289,7 @@
                         <Button
                             Command="{x:Bind ViewModel.TestSpeechCommand}"
                             Content="Test Speech"
-                            ToolTipService.ToolTip="Play a test announcement">
+                            ToolTipService.ToolTip="Play a test message with the selected speech engine">
                             <Button.KeyboardAccelerators>
                                 <KeyboardAccelerator Key="T" Modifiers="Control" />
                             </Button.KeyboardAccelerators>

@@ -16,20 +16,24 @@
             "",
             "f9__signalhorn_tief.svg",
             "f2__signalhorn_hoch.svg",
+            "f4__digitalkupplung.svg",
             "none",
             "none",
+            "",
             "none",
-            ""
+            "none"
           ],
           "functionColors": [
             "#F1FF04",
             "#0413FF",
             "#660A00",
             "#FF1206",
+            "#4FFFFB",
             "none",
             "none",
+            "",
             "none",
-            ""
+            "none"
           ],
           "isPushing": false,
           "photoPath": "photos/latest/10efa2c052214c4d890a2946b9df6bc0.jpg"

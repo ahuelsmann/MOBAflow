@@ -80,9 +80,15 @@ internal sealed class MobaRuntimeServiceTrackPowerTests
     }
 
     [Test]
-    public async Task StartAsync_StartsZ21AutoConnectOnlyOnce()
+    public async Task StartAsync_QueuesZ21AutoConnectWithoutWaitingAndOnlyOnce()
     {
         var z21Mock = CreateZ21Mock();
+        var connectAttempted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var connectRelease = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        z21Mock.Setup(z => z.ConnectAsync(It.IsAny<System.Net.IPAddress>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .Callback(() => connectAttempted.SetResult())
+            .Returns(connectRelease.Task);
+
         using var runtime = CreateRuntime(
             z21Mock.Object,
             new AppSettings
@@ -94,12 +100,20 @@ internal sealed class MobaRuntimeServiceTrackPowerTests
                 }
             });
 
-        await runtime.StartAsync();
+        var startTask = runtime.StartAsync();
+
+        var completedTask = await Task.WhenAny(startTask, Task.Delay(200));
+        Assert.That(completedTask, Is.SameAs(startTask), "Runtime startup must not wait for the first Z21 connection attempt.");
+        await startTask;
+        await connectAttempted.Task;
+
         await runtime.StartAsync();
 
         z21Mock.Verify(
             z => z.ConnectAsync(It.IsAny<System.Net.IPAddress>(), It.IsAny<int>(), It.IsAny<CancellationToken>()),
             Times.Once);
+
+        connectRelease.SetResult();
     }
 
     private static Mock<IZ21> CreateZ21Mock()

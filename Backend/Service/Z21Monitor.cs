@@ -47,7 +47,7 @@ public class Z21Monitor
             IsFeedbackRelated = false  // Sent packets are never feedback-related
         };
 
-        // ✅ Log to Serilog for persistence (Debug level for traffic)
+        // Log to Serilog for persistence (Debug level for traffic)
         _logger.LogDebug("Z21 TX: {PacketType} Bytes={Length} Data={DataHex}",
             packet.PacketType, data.Length, packet.DataHex);
 
@@ -81,7 +81,7 @@ public class Z21Monitor
             }
         }
 
-        // ✅ Log to Serilog for persistence (Debug level for traffic, Info for feedback)
+        // Log to Serilog for persistence (Debug level for traffic, Info for feedback)
         if (packet.IsFeedbackRelated && packet.InPort.HasValue)
         {
             _logger.LogInformation("Z21 RX: {PacketType} InPort={InPort} AllInPorts={AllInPorts} Data={DataHex}",

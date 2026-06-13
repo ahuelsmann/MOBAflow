@@ -4,6 +4,52 @@ namespace Moba.Common.Multiplex;
 
 using Domain;
 
+public interface IMultiplexerProvider
+{
+    MultiplexerDefinition GetDefinition(string articleNumber);
+
+    IEnumerable<MultiplexerDefinition> GetAllDefinitions();
+
+    IEnumerable<string> GetSupportedArticles();
+
+    bool TryGetTurnoutCommand(
+        string multiplexerArticle,
+        string? signalArticleNumber,
+        SignalAspect aspect,
+        out MultiplexerTurnoutCommand command);
+
+    IReadOnlyCollection<SignalAspect> GetSupportedAspects(string multiplexerArticle, string? signalArticleNumber);
+
+    bool SupportsAspect(string multiplexerArticle, string? signalArticleNumber, SignalAspect aspect);
+
+    bool TryGetMaxAddressOffset(string multiplexerArticle, string? signalArticleNumber, out int maxOffset);
+}
+
+public sealed class DefaultMultiplexerProvider : IMultiplexerProvider
+{
+    public MultiplexerDefinition GetDefinition(string articleNumber) => MultiplexerHelper.GetDefinition(articleNumber);
+
+    public IEnumerable<MultiplexerDefinition> GetAllDefinitions() => MultiplexerHelper.GetAllDefinitions();
+
+    public IEnumerable<string> GetSupportedArticles() => MultiplexerHelper.GetSupportedArticles();
+
+    public bool TryGetTurnoutCommand(
+        string multiplexerArticle,
+        string? signalArticleNumber,
+        SignalAspect aspect,
+        out MultiplexerTurnoutCommand command) =>
+        MultiplexerHelper.TryGetTurnoutCommand(multiplexerArticle, signalArticleNumber, aspect, out command);
+
+    public IReadOnlyCollection<SignalAspect> GetSupportedAspects(string multiplexerArticle, string? signalArticleNumber) =>
+        MultiplexerHelper.GetSupportedAspects(multiplexerArticle, signalArticleNumber);
+
+    public bool SupportsAspect(string multiplexerArticle, string? signalArticleNumber, SignalAspect aspect) =>
+        MultiplexerHelper.SupportsAspect(multiplexerArticle, signalArticleNumber, aspect);
+
+    public bool TryGetMaxAddressOffset(string multiplexerArticle, string? signalArticleNumber, out int maxOffset) =>
+        MultiplexerHelper.TryGetMaxAddressOffset(multiplexerArticle, signalArticleNumber, out maxOffset);
+}
+
 /// <summary>
 /// Helper class for managing Viessmann multiplex decoder configurations.
 /// Contains predefined multiplexer definitions and utility methods for address calculation.

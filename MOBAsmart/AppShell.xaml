@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:Moba.MAUI"
+    xmlns:view="clr-namespace:Moba.MAUI.View"
     FlyoutBehavior="Disabled"
     Shell.NavBarIsVisible="True">
 
@@ -15,8 +16,20 @@
         </Style>
     </Shell.Resources>
 
-    <ShellContent
-        Title="MOBAsmart"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+    <TabBar>
+        <ShellContent
+            Title="Counter"
+            ContentTemplate="{DataTemplate local:CounterPage}"
+            Route="CounterPage" />
+
+        <ShellContent
+            Title="SignalBox"
+            ContentTemplate="{DataTemplate view:SignalBoxPage}"
+            Route="SignalBoxPage" />
+
+        <ShellContent
+            Title="Control"
+            ContentTemplate="{DataTemplate view:ControlPage}"
+            Route="ControlPage" />
+    </TabBar>
 </Shell>

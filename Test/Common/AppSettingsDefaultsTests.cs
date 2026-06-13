@@ -38,6 +38,41 @@ internal class AppSettingsDefaultsTests
     }
 
     [Test]
+    public void Speech_Piper_paths_default_to_empty()
+    {
+        var speech = new SpeechSettings();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(speech.PiperExecutablePath, Is.EqualTo(string.Empty));
+            Assert.That(speech.PiperModelPath, Is.EqualTo(string.Empty));
+            Assert.That(speech.PiperConfigPath, Is.EqualTo(string.Empty));
+        });
+    }
+
+    [Test]
+    public void Speech_EnablePronunciationNormalization_default_is_true()
+    {
+        var speech = new SpeechSettings();
+        Assert.That(speech.EnablePronunciationNormalization, Is.True);
+    }
+
+    [Test]
+    public void Speech_PiperSentenceSilenceSeconds_default_is_0_25()
+    {
+        var speech = new SpeechSettings();
+        Assert.That(speech.PiperSentenceSilenceSeconds, Is.EqualTo(0.25));
+    }
+
+    [Test]
+    public void Speech_PronunciationReplacements_default_is_empty()
+    {
+        var speech = new SpeechSettings();
+        Assert.That(speech.PronunciationReplacements, Is.Not.Null);
+        Assert.That(speech.PronunciationReplacements, Is.Empty);
+    }
+
+    [Test]
     public void Z21_DefaultPort_default_is_21105()
     {
         var z21 = new Z21Settings();

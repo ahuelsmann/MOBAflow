@@ -7,7 +7,7 @@ using Moba.Sound;
 
 /// <summary>
 /// Minimal test for Windows SAPI Text-to-Speech.
-/// This is a temporary fallback solution while Microsoft.CognitiveServices.Speech is being repaired.
+/// This is the Windows SAPI fallback for local text-to-speech.
 /// </summary>
 internal class SystemSpeechEngineTest
 {

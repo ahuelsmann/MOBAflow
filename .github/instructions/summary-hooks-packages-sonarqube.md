@@ -21,7 +21,7 @@
 
 ```text
 ✅ JSON-Fehler SOFORT erkannt (vor commit)
-✅ Secrets-Validierung (Speech.Key, Z21 IP nicht leer)
+✅ TTS-Pfad-Validierung (Piper-Pfade, Z21 IP nicht leer)
 ✅ Schema-Validierung (Struktur korrekt)
 ✅ Fehlerbericht mit Zeile + Position
 ✅ Dev kann sofort fixen und erneut committen

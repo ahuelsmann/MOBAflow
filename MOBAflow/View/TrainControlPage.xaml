@@ -15,7 +15,6 @@
         <converter:IntToPresetCheckedConverter x:Key="IntToPresetCheckedConverter" />
         <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
         <converter:MillivoltsToVoltsConverter x:Key="MillivoltsToVoltsConverter" />
-        <converter:AssetNameToUriConverter x:Key="AssetNameToUriConverter" />
     </Page.Resources>
 
     <Grid x:Name="RootGrid" Padding="0">
@@ -752,7 +751,8 @@
                                             <Image
                                                 Width="20"
                                                 Height="20"
-                                                converter:SvgImageBehavior.SvgAssetName="{x:Bind IconAsset, Mode=OneWay}" />
+                                                converter:FunctionSymbolImageBehavior.AssetName="{x:Bind IconAsset, Mode=OneWay}"
+                                                converter:FunctionSymbolImageBehavior.RenderSize="20" />
                                             <TextBlock
                                                 FontSize="9"
                                                 Foreground="{ThemeResource TextFillColorPrimaryBrush}"

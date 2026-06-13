@@ -85,4 +85,32 @@ internal sealed class WorkflowActionJsonConverterTests
         Assert.That(roundTripped.SelectSignalAspect.SignalAspect, Is.EqualTo(SignalAspect.Hp0));
         Assert.That(roundTripped.SelectSignalAspect.MultiplexerArticleNumber, Is.EqualTo("5229"));
         Assert.That(roundTripped.SelectSignalAspect.SignalArticleNumber, Is.EqualTo("4046"));
-    }}
+    }
+
+    [Test]
+    public void SerializeDeserialize_Should_RoundTripPowerShellPayload()
+    {
+        var action = new WorkflowAction
+        {
+            Id = Guid.NewGuid(),
+            Name = "Run Script",
+            Number = 5,
+            Type = ActionType.ExecuteScript,
+            DelayAfterMs = 150,
+            PowerShell = new PowerShellActionPayload
+            {
+                ScriptPath = "scripts/update.ps1",
+                Arguments = "-Verbose"
+            }
+        };
+
+        var json = JsonSerializer.Serialize(action);
+        var roundTripped = JsonSerializer.Deserialize<WorkflowAction>(json);
+
+        Assert.That(roundTripped, Is.Not.Null);
+        Assert.That(roundTripped!.Type, Is.EqualTo(ActionType.ExecuteScript));
+        Assert.That(roundTripped.PowerShell, Is.Not.Null);
+        Assert.That(roundTripped.PowerShell!.ScriptPath, Is.EqualTo("scripts/update.ps1"));
+        Assert.That(roundTripped.PowerShell.Arguments, Is.EqualTo("-Verbose"));
+    }
+}

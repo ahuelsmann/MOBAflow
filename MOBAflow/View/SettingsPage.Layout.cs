@@ -28,6 +28,7 @@ internal sealed partial class SettingsPage
 
         _isUpdatingSectionLayout = true;
         CaptureSectionDefaults();
+        ViewModel.RefreshPiperVoiceOptions();
         SyncSortModeSelection();
         RestoreSectionExpansionStates();
         ApplySectionOrdering();

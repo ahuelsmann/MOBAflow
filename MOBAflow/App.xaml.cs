@@ -22,6 +22,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
+
+using System.Diagnostics;
 
 using Display.Rendering;
 using Display.Runtime;
@@ -55,6 +58,7 @@ using Moba.Backend;
 /// </summary>
 public partial class App
 {
+    private static readonly Stopwatch StartupStopwatch = Stopwatch.StartNew();
     private Window? _window;
     private readonly ILogger<App> _logger;
 
@@ -74,10 +78,13 @@ public partial class App
     {
         try
         {
+            LogStartupCheckpoint("App constructor started");
             Services = ConfigureServices();
             _logger = Services.GetRequiredService<ILogger<App>>();
+            LogStartupCheckpoint("Services configured");
 
             InitializeComponent();
+            LogStartupCheckpoint("App XAML initialized");
 
             // Register global UnhandledException handler for better diagnostics
             UnhandledException += OnUnhandledException;
@@ -124,6 +131,7 @@ public partial class App
     /// </summary>
     private static IServiceProvider ConfigureServices()
     {
+        var configureTimer = Stopwatch.StartNew();
         var services = new ServiceCollection();
 
         // Serilog first so bootstrap diagnostics go to the same sinks as the rest of the app.
@@ -139,9 +147,9 @@ public partial class App
 
         var configBuilder = new ConfigurationBuilder()
             .SetBasePath(basePath)
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
 #if DEBUG
-            .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true)
+            .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: false)
 #endif
             ;
 
@@ -204,7 +212,10 @@ public partial class App
                 sp.GetRequiredService<List<PageMetadata>>(),
                 sp.GetRequiredService<AppSettings>()));
 
+        services.AddSingleton<ISpeakerEngineRegistration, PiperSpeakerEngineRegistration>();
+        services.AddSingleton<ISpeakerEngineRegistration, SystemSpeechEngineRegistration>();
         services.AddSingleton<SpeakerEngineFactory>();
+        services.AddSingleton<ISpeakerEngineFactory>(sp => sp.GetRequiredService<SpeakerEngineFactory>());
 
         services.AddSingleton<ISpeakerEngine>(sp =>
         {
@@ -214,9 +225,16 @@ public partial class App
 
         services.AddSingleton<Solution>();
         services.AddMobaBackendServices();
+        services.AddSingleton(sp => new AnnouncementService(
+            sp.GetRequiredService<ISpeakerEngineFactory>(),
+            sp.GetRequiredService<ILogger<AnnouncementService>>()));
 
         services.AddSingleton<IIoService, IoService>();
+        services.AddSingleton<ISolutionIoService>(sp => sp.GetRequiredService<IIoService>());
+        services.AddSingleton<IFilePickerService>(sp => sp.GetRequiredService<IIoService>());
+        services.AddSingleton<IPhotoStorageService>(sp => sp.GetRequiredService<IIoService>());
         services.AddSingleton<PhotoHubClient>();
+        services.AddSingleton<IPhotoHubClient>(sp => sp.GetRequiredService<PhotoHubClient>());
 
         services.AddHttpClient();
 
@@ -227,7 +245,7 @@ public partial class App
                 factory.CreateClient(),
                 sp.GetRequiredService<AppSettings>(),
                 sp.GetRequiredService<RestApiProcessService>(),
-                sp.GetRequiredService<PhotoHubClient>(),
+                sp.GetRequiredService<IPhotoHubClient>(),
                 sp.GetRequiredService<IEventBus>(),
                 sp.GetRequiredService<ILogger<RestApiStatusService>>());
         });
@@ -273,12 +291,17 @@ public partial class App
             sp.GetRequiredService<ICityService>(),
             sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<AnnouncementService>(),
-            sp.GetRequiredService<PhotoHubClient>(),
-            sp.GetService<IFeatureTogglePageProvider>(),
+            featureTogglePageProvider: sp.GetService<IFeatureTogglePageProvider>(),
             loggerFactory: sp.GetRequiredService<ILoggerFactory>(),
-            dialogService: sp.GetService<IDialogService>()
+            dialogService: sp.GetService<IDialogService>(),
+            speechTestAction: async message =>
+            {
+                var speakerEngine = sp.GetRequiredService<SpeakerEngineFactory>().CreateEngineFromOptions();
+                await speakerEngine.AnnouncementAsync(message, voiceName: null).ConfigureAwait(false);
+            }
         ));
 
+        services.AddSingleton<IJourneySelectionContext>(sp => sp.GetRequiredService<MainWindowViewModel>());
         services.AddSingleton<JourneyMapViewModel>();
         services.AddTransient<MonitorPageViewModel>();
         services.AddSingleton<IFrameRenderer, SkiaFrameRenderer>();
@@ -313,12 +336,20 @@ public partial class App
             sp.GetRequiredService<AppSettings>(),
             sp.GetRequiredService<RestApiStatusService>(),
             sp.GetRequiredService<RestApiProcessService>(),
+            sp.GetRequiredService<ILogger<WindowActivationService>>(),
             sp.GetRequiredService<ILogger<MainWindow>>()));
 
         services.AddSingleton<PostStartupInitializationService>();
         services.AddSingleton<SpeechHealthCheck>();
 
-        return services.BuildServiceProvider();
+        var serviceProvider = services.BuildServiceProvider();
+        Log.Information("[Startup] ConfigureServices completed in {ElapsedMs}ms", configureTimer.ElapsedMilliseconds);
+        return serviceProvider;
+    }
+
+    private static void LogStartupCheckpoint(string checkpoint)
+    {
+        Log.Information("[Startup] {Checkpoint} at {ElapsedMs}ms", checkpoint, StartupStopwatch.ElapsedMilliseconds);
     }
 
     /// <summary>
@@ -354,48 +385,103 @@ public partial class App
     /// <param name="args">Details about the launch request and process.</param>
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
+        SplashWindow? splashWindow = null;
         try
         {
-            // Load settings (including Layout) first so the singleton has persisted values before any View/ViewModel is created
-            _ = Services.GetRequiredService<ISettingsService>();
+            var launchTimer = Stopwatch.StartNew();
+            LogStartupCheckpoint("OnLaunched started");
 
-            var appSettings = Services.GetRequiredService<AppSettings>();
+            splashWindow = new SplashWindow();
+            splashWindow.Activate();
+            splashWindow.PrepareForDisplay();
+            LogStartupCheckpoint("Splash activated");
 
-            PhotoPathToImageConverter.SetPhotoBasePath(appSettings.Application.PhotoStoragePath);
+            // Wait for the first rendered frame before MainWindow construction blocks the UI thread again.
+            var splash = splashWindow;
+            void OnSplashRendered(object? sender, object e)
+            {
+                CompositionTarget.Rendering -= OnSplashRendered;
 
-            // Expose LayoutColumnWidths as app resource before MainWindow so pages can bind to it (e.g. TrackPlanPage with its own ViewModel)
-            var layoutColumnWidths = Services.GetRequiredService<LayoutColumnWidthsViewModel>();
-            Current.Resources["LayoutColumnWidths"] = layoutColumnWidths;
+                try
+                {
+                    CompleteLaunchAfterSplash(splash, launchTimer);
+                }
+                catch (Exception ex)
+                {
+                    CloseSplashWindow(splash);
+                    _logger.LogCritical(ex, "OnLaunched failed");
+                    throw;
+                }
+            }
 
-            _window = Services.GetRequiredService<MainWindow>();
-
-            // Windows App SDK 2.0: Explicit window closing for better resource cleanup
-            _window.Closed += OnWindowClosed;
-
-            // Bridge EditableTrackPlan ↔ Project.TrackPlan (hybrid solution.json persistence).
-            // Must be activated AFTER MainWindow/MainWindowViewModel are materialized.
-            Services.GetRequiredService<TrackPlanSolutionBinder>().Activate();
-
-            // Start listening for Z21 R-Bus feedback so placed tracks with a matching InPort pulse in the UI.
-            Services.GetRequiredService<TrackPlanFeedbackHighlighter>().Activate();
-
-            _window.Activate();
-
-            // DEFERRED INITIALIZATION (async, doesn't block UI):
-            // After MainWindow is visible, start deferred services (incl. RestApi process when Auto-start enabled)
-            InitializePostStartupServicesAsync()
-                .SafeFireAndForget(ex => _logger.LogError(ex, "Post-startup initialization failed unexpectedly"));
-
-            // Auto-load last solution if enabled (async, non-blocking)
-            AutoLoadLastSolutionAsync(((MainWindow)_window).ViewModel)
-                .SafeFireAndForget(ex => _logger.LogError(ex, "Auto-load last solution failed unexpectedly"));
-
-            _logger.LogInformation("Application UI launched (main window activated)");
+            CompositionTarget.Rendering += OnSplashRendered;
         }
         catch (Exception ex)
         {
+            CloseSplashWindow(splashWindow);
             _logger.LogCritical(ex, "OnLaunched failed");
             throw;
+        }
+    }
+
+    private void CompleteLaunchAfterSplash(SplashWindow splashWindow, Stopwatch launchTimer)
+    {
+        // Load settings (including Layout) first so the singleton has persisted values before any View/ViewModel is created
+        _ = Services.GetRequiredService<ISettingsService>();
+        LogStartupCheckpoint("Settings service resolved");
+
+        var appSettings = Services.GetRequiredService<AppSettings>();
+
+        PhotoPathToImageConverter.SetPhotoBasePath(appSettings.Application.PhotoStoragePath);
+
+        // Expose LayoutColumnWidths as app resource before MainWindow so pages can bind to it (e.g. TrackPlanPage with its own ViewModel)
+        var layoutColumnWidths = Services.GetRequiredService<LayoutColumnWidthsViewModel>();
+        Current.Resources["LayoutColumnWidths"] = layoutColumnWidths;
+        LogStartupCheckpoint("Layout resources prepared");
+
+        _window = Services.GetRequiredService<MainWindow>();
+        LogStartupCheckpoint("MainWindow resolved");
+
+        // Windows App SDK 2.0: Explicit window closing for better resource cleanup
+        _window.Closed += OnWindowClosed;
+
+        _window.Activate();
+        LogStartupCheckpoint("MainWindow activated");
+
+        CloseSplashWindow(splashWindow);
+        LogStartupCheckpoint("Splash closed");
+
+        if (_window is MainWindow mainWindow)
+        {
+            mainWindow.ScheduleDeferredUiStartup();
+        }
+
+        // DEFERRED INITIALIZATION (async, doesn't block UI):
+        // After MainWindow is visible, start deferred services (incl. RestApi process when Auto-start enabled)
+        InitializePostStartupServicesAsync()
+            .SafeFireAndForget(ex => _logger.LogError(ex, "Post-startup initialization failed unexpectedly"));
+
+        // Auto-load last solution if enabled (async, non-blocking)
+        AutoLoadLastSolutionAsync(((MainWindow)_window).ViewModel)
+            .SafeFireAndForget(ex => _logger.LogError(ex, "Auto-load last solution failed unexpectedly"));
+
+        _logger.LogInformation("Application UI launched (main window activated) in {ElapsedMs}ms", launchTimer.ElapsedMilliseconds);
+    }
+
+    private static void CloseSplashWindow(SplashWindow? splashWindow)
+    {
+        if (splashWindow == null)
+        {
+            return;
+        }
+
+        try
+        {
+            splashWindow.Close();
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Failed to close splash window");
         }
     }
 
@@ -407,12 +493,22 @@ public partial class App
     {
         try
         {
+            var timer = Stopwatch.StartNew();
+            LogStartupCheckpoint("Post-startup initialization queued");
+
             var runtime = Services.GetRequiredService<IMobaRuntime>();
             await runtime.StartAsync();
+
+            // Bridge EditableTrackPlan ↔ Project.TrackPlan after the first window activation.
+            Services.GetRequiredService<TrackPlanSolutionBinder>().Activate();
+
+            // Start listening for Z21 R-Bus feedback after the visible shell is up.
+            Services.GetRequiredService<TrackPlanFeedbackHighlighter>().Activate();
 
             var postStartupService = Services.GetRequiredService<PostStartupInitializationService>();
             var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30)); // 30s timeout
             await postStartupService.InitializeAsync(cts.Token);
+            _logger.LogInformation("[Startup] Post-startup initialization completed in {ElapsedMs}ms", timer.ElapsedMilliseconds);
         }
         catch (Exception ex)
         {

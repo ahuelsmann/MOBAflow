@@ -29,31 +29,15 @@ public class RestApiDiscoveryService
     /// <summary>
     /// Dedicated LAN probe client: bypasses system proxy/VPN (avoids SOCKS for RFC1918) and avoids contention with the app-wide <see cref="HttpClient"/> singleton.
     /// </summary>
-    private static readonly Lazy<HttpClient> LanProbeHttpClient = new(CreateLanProbeHttpClient);
     private const string MobApiHealthPath = "/api/photos/health";
 
     private readonly AppSettings _appSettings;
+    private readonly HttpClient _lanProbeHttpClient;
 
-    public RestApiDiscoveryService(AppSettings appSettings)
+    public RestApiDiscoveryService(AppSettings appSettings, HttpClient? lanProbeHttpClient = null)
     {
         _appSettings = appSettings;
-    }
-
-    private static HttpClient CreateLanProbeHttpClient()
-    {
-        var handler = new SocketsHttpHandler
-        {
-            UseProxy = false,
-            AutomaticDecompression = DecompressionMethods.None,
-            ConnectTimeout = TimeSpan.FromMilliseconds(600),
-            PooledConnectionLifetime = TimeSpan.FromMinutes(2),
-            MaxConnectionsPerServer = 128,
-        };
-
-        return new HttpClient(handler, disposeHandler: true)
-        {
-            Timeout = TimeSpan.FromSeconds(2),
-        };
+        _lanProbeHttpClient = lanProbeHttpClient ?? MobiLanHttpClientFactory.CreateLanDiscoveryProbeClient();
     }
 
     /// <summary>
@@ -274,7 +258,7 @@ public class RestApiDiscoveryService
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             cts.CancelAfter(SubnetProbeRequestTimeoutMs);
             var url = $"http://{ip}:{port}{MobApiHealthPath}";
-            using var response = await LanProbeHttpClient.Value
+            using var response = await _lanProbeHttpClient
                 .GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cts.Token)
                 .ConfigureAwait(false);
             return response.IsSuccessStatusCode ? ip : null;

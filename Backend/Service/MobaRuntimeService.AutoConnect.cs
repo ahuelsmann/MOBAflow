@@ -14,7 +14,7 @@ using System.Threading;
 /// </summary>
 public sealed partial class MobaRuntimeService
 {
-    private async Task TryAutoConnectToZ21Async()
+    private void BeginAutoConnectToZ21()
     {
         if (string.IsNullOrEmpty(_settings.Z21.CurrentIpAddress))
         {
@@ -28,8 +28,9 @@ public sealed partial class MobaRuntimeService
         _statusText = $"Connecting to {_settings.Z21.CurrentIpAddress}...";
         PublishSnapshot();
 
-        await AttemptZ21ConnectionAsync().ConfigureAwait(false);
         StartAutoConnectTimer();
+        AttemptZ21ConnectionAsync()
+            .Observe(ex => _logger.LogError(ex, "Initial automatic Z21 connection attempt failed unexpectedly"));
     }
 
     private void StartAutoConnectTimer()

@@ -293,23 +293,24 @@ A **solution** is a file (`.mobaflow.json`) that contains all your data:
 
 ---
 
-## 🎙️ Text‑to‑Speech (Azure Cognitive Services)
+## 🎙️ Text‑to‑Speech (Piper TTS)
 
-**Professional announcements using Azure Speech.**
+**Offline announcements using local Piper TTS or Windows Speech.**
 
 ### Setup
 
-1. **Azure account:** Create a free Azure account.  
-2. **Speech service:** Create a Speech resource.  
-3. **Copy API key:** Note down key and region.  
+1. **Piper:** Install [`OHF-Voice/piper1-gpl`](https://github.com/OHF-Voice/piper1-gpl) with `py -m pip install piper-tts`.  
+2. **Executable:** Use the generated `piper.exe`, for example `.venv\Scripts\piper.exe`.  
+3. **Voice model:** Download a compatible German `.onnx` model.  
+4. **Paths:** Keep `piper.exe`, the model and optional `.json` config file locally.  
 
 ### Configure in MOBAflow
 
 1. Open **Settings → Speech**.  
-2. Paste your **API key**.  
-3. Set the **region**, e.g. `germanywestcentral`.  
-4. Choose a **voice**, e.g. `de-DE-ConradNeural` (male) or
-   `de-DE-KatjaNeural` (female).  
+2. Select **Piper TTS**.  
+3. Set **Piper Executable** to `piper.exe`.  
+4. Set **Piper Model** to the `.onnx` voice model.  
+5. Optionally set **Piper Config** to the matching `.json` file.  
 
 ### Test
 
@@ -317,10 +318,10 @@ A **solution** is a file (`.mobaflow.json`) that contains all your data:
 2. Enter some test text, for example `"This is a test"`.  
 3. Click **Play** – the announcement should be spoken.  
 
-### Free quota
+### Cost
 
-- **5 million characters/month** for free (Azure free tier).  
-- More than enough for private model railway usage.
+- Piper runs locally and has no API usage fees.  
+- Windows Speech (SAPI) is available as a local fallback.
 
 ---
 
@@ -344,9 +345,10 @@ A **solution** is a file (`.mobaflow.json`) that contains all your data:
 
 ### Speech
 
-- **API Key:** Azure Speech API key. Default: (empty)
-- **Region:** Azure region. Default: `germanywestcentral`
-- **Voice:** Default voice. Default: `de-DE-ConradNeural`
+- **Speech Engine:** Piper TTS or System Speech (Windows SAPI).
+- **Piper Executable:** Path to `piper.exe`. Default: (empty)
+- **Piper Model:** Path to the `.onnx` voice model. Default: (empty)
+- **Piper Config:** Optional path to the model `.json` file. Default: (empty)
 - **Rate:** Speaking rate (`-10` to `+10`). Default: `-1`
 - **Volume:** Volume (0–100). Default: `90`
 
@@ -371,14 +373,14 @@ A **solution** is a file (`.mobaflow.json`) that contains all your data:
 4. **Restart Z21:** Power cycle the Z21 and wait 10 seconds before
    reconnecting.  
 
-### Problem: Azure Speech does not work
+### Problem: Piper TTS does not work
 
-#### Azure-Speech solution
+#### Piper TTS solution
 
-1. **API key correct?** Verify in the Azure Portal.  
-2. **Region correct?** Must match the key’s region.  
-3. **Internet connection?** Azure Speech requires internet access.  
-4. **Quota exceeded?** Check your Azure usage and quotas.  
+1. **Executable path correct?** Verify that `piper.exe` exists.  
+2. **Model path correct?** Verify that the `.onnx` file exists.  
+3. **CLI starts?** Run `piper.exe --help` in a terminal.  
+4. **Audio device works?** Test System Speech (Windows SAPI) as a fallback.  
 
 ### Problem: Journeys are not counted
 
@@ -470,7 +472,7 @@ Stations:
 **Third‑party components:**
 
 - Roco Z21 protocol  
-- Azure Cognitive Services (Speech)  
+- Piper TTS and Windows Speech
 - AnyRail (import format)  
 - Microsoft WinUI 3 (UI framework)  
 

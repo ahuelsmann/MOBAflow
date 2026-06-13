@@ -37,6 +37,9 @@ TestResults/
 .nuget/
 packages/
 
+# Local external tools and downloaded models
+tools/piper-tts/
+
 # Secrets / appsettings
 appsettings.json
 appsettings.Development.json

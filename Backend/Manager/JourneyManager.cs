@@ -19,7 +19,7 @@ using System.Diagnostics.CodeAnalysis;
 /// Platform-independent: No UI thread dispatching (that's handled by platform-specific ViewModels).
 /// Uses SessionState to separate runtime state from domain objects.
 /// </summary>
-public class JourneyManager : JourneyFeedbackManagerBase
+public class JourneyManager : JourneyFeedbackManagerBase, IJourneyManager
 {
     private readonly SemaphoreSlim _processingLock = new(1, 1);
     private readonly IWorkflowService _workflowService;
@@ -167,7 +167,7 @@ public class JourneyManager : JourneyFeedbackManagerBase
             // Update SessionState with current station
             state.CurrentStationName = currentStation.Name;
 
-            // ✅ Fire StationChanged event FIRST (UI updates immediately)
+            // Fire StationChanged event FIRST (UI updates immediately)
             OnStationChanged(new StationChangedEventArgs
             {
                 JourneyId = journey.Id,
@@ -175,7 +175,7 @@ public class JourneyManager : JourneyFeedbackManagerBase
                 SessionState = state
             });
 
-            // ✅ THEN execute station workflow (async announcements run after UI is updated)
+            // THEN execute station workflow (async announcements run after UI is updated)
             await ExecuteStationWorkflowAsync(journey, currentStation).ConfigureAwait(false);
 
             state.Counter = 0;

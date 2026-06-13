@@ -203,14 +203,25 @@ IZ21 / JourneyManager / WorkflowService
 - Journey-related UI still receives state from snapshots rather than owning
   `JourneyManager` directly
 
-**Transition note (editor vs runtime state):**
+**Editor vs runtime state (done):**
 
-- The active runtime still uses the live `Project` reference from the loaded
-  `Solution`
-- This is still an intentionally incremental refactoring step to keep
-  the migration safe
-- The next architectural step is a true runtime copy so editor state
-  and execution state are fully separated
+- `MobaRuntimeService.ActivateProjectAsync` now executes against an **isolated deep
+  copy** of the editor `Project` (`CloneForRuntime`, JSON round-trip via
+  `JsonOptions.Compact`). Editor edits made after activation no longer leak into the
+  running session, and runtime mutations never touch the live editor model.
+- Entity Ids are preserved by the round-trip, so snapshots and journey reset keep
+  resolving against the Ids the editor exposes.
+- Covered by `Test/Backend/MobaRuntimeServiceProjectIsolationTests.cs`.
+
+**Planned refactoring (`MainWindowViewModel` decomposition):**
+
+- `MainWindowViewModel` is still a large aggregate (~18 partial files, ~17 ctor
+  dependencies). The next maintainability step is extracting cohesive child
+  ViewModels (e.g. a `SystemStatusViewModel` for speech-health / REST-API /
+  post-startup status).
+- This requires updating compile-time `x:Bind` bindings in WinUI and MAUI XAML, so
+  it must be done and verified with the platform UI build (not part of the
+  cross-platform subset).
 
 ---
 

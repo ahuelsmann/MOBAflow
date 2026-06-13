@@ -4,6 +4,7 @@ namespace Moba.Test.SharedUI;
 using Moba.Domain;
 using Moba.Domain.Enum;
 using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.ViewModel.Action;
 
 /// <summary>
 /// Tests for WorkflowViewModel - ViewModel wrapper for Workflow domain model.
@@ -127,6 +128,35 @@ internal class WorkflowViewModelTests
         var vm = new WorkflowViewModel(workflow);
 
         Assert.That(vm.Actions, Has.Count.EqualTo(1));
+    }
+
+    [Test]
+    public void Actions_WithExecuteScriptAction_CreatesPowerShellViewModel()
+    {
+        var workflow = new Workflow();
+        workflow.Actions.Add(new WorkflowAction
+        {
+            Name = "Run script",
+            Type = ActionType.ExecuteScript,
+            Number = 1,
+            PowerShell = new PowerShellActionPayload { ScriptPath = "script.ps1" }
+        });
+
+        var vm = new WorkflowViewModel(workflow);
+
+        Assert.That(vm.Actions.Single(), Is.TypeOf<PowerShellActionViewModel>());
+    }
+
+    [Test]
+    public void AddActionCommand_WithTrainDestinationDisplay_CreatesDisplayViewModel()
+    {
+        var workflow = new Workflow();
+        var vm = new WorkflowViewModel(workflow);
+
+        vm.AddActionCommand.Execute(ActionType.TrainDestinationDisplay);
+
+        Assert.That(workflow.Actions.Single().Type, Is.EqualTo(ActionType.TrainDestinationDisplay));
+        Assert.That(vm.Actions.Single(), Is.TypeOf<TrainDestinationDisplayViewModel>());
     }
 
     [Test]

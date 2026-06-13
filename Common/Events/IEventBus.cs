@@ -71,29 +71,42 @@ public sealed class EventBus : IEventBus
     {
         ArgumentNullException.ThrowIfNull(@event);
 
+        var eventType = typeof(TEvent);
+
+        // Snapshot the live handlers under the lock, then invoke them outside the lock.
+        // Invoking under the lock would (a) block any concurrent Subscribe/Unsubscribe for the
+        // full handler duration and (b) deadlock on re-entrant publishes, because a handler that
+        // publishes another event would re-enter the non-reentrant lock on the same thread.
+        Delegate[] handlersSnapshot;
         lock (_lock)
         {
-            var eventType = typeof(TEvent);
             if (!_subscriptions.TryGetValue(eventType, out var handlers))
                 return;
 
             // Remove dead references (targets that have been garbage collected)
             handlers.RemoveAll(h => h.TargetRef != null && !h.TargetRef.TryGetTarget(out _));
 
-            foreach (var (_, _, handler) in handlers)
+            if (handlers.Count == 0)
+                return;
+
+            handlersSnapshot = new Delegate[handlers.Count];
+            for (var i = 0; i < handlers.Count; i++)
+                handlersSnapshot[i] = handlers[i].Handler;
+        }
+
+        foreach (var handler in handlersSnapshot)
+        {
+            try
             {
-                try
+                ((Action<TEvent>)handler)(@event);
+            }
+            catch (Exception ex)
+            {
+                // Isolate failures so other handlers still run; surface severity for diagnostics.
+                _logger.LogError(ex, "EventBus handler failed for {EventType}", eventType.Name);
+                if (Debugger.IsAttached)
                 {
-                    ((Action<TEvent>)handler)(@event);
-                }
-                catch (Exception ex)
-                {
-                    // Isolate failures so other handlers still run; surface severity for diagnostics.
-                    _logger.LogError(ex, "EventBus handler failed for {EventType}", eventType.Name);
-                    if (Debugger.IsAttached)
-                    {
-                        Debug.WriteLine($"EventBus handler failed for {eventType.Name}: {ex}");
-                    }
+                    Debug.WriteLine($"EventBus handler failed for {eventType.Name}: {ex}");
                 }
             }
         }

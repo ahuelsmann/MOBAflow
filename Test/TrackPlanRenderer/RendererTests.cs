@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 
 using System.Diagnostics;
 
-using TrackLibrary.PikoA;
+using Moba.TrackLibrary.PikoA;
 
 using TrackPlan.Renderer;
 
@@ -28,6 +28,31 @@ internal class RendererTests
         Assert.That(renderResult.Placements.Count, Is.EqualTo(plan.Segments.Count),
             "Platzierungen müssen für jedes Segment erzeugt werden.");
         Assert.That(renderResult.Svg, Does.Contain("<svg"));
+    }
+
+    [TestCase(typeof(WL))]
+    [TestCase(typeof(WY))]
+    [TestCase(typeof(W3))]
+    [TestCase(typeof(BWL))]
+    [TestCase(typeof(BWR))]
+    [TestCase(typeof(DKW))]
+    [TestCase(typeof(K15))]
+    [TestCase(typeof(K30))]
+    public void Render_WithPreviouslySkippedSegmentType_DrawsSegmentPath(Type segmentType)
+    {
+        var segment = (Moba.TrackLibrary.Base.Segment)Activator.CreateInstance(segmentType)!;
+        segment.No = Guid.NewGuid();
+        var plan = new TrackPlanResult
+        {
+            Segments = [segment],
+            Connections = [],
+            StartAngleDegrees = 0
+        };
+
+        var renderResult = new TrackPlanSvgRenderer().Render(plan);
+
+        Assert.That(renderResult.Placements, Has.Count.EqualTo(1));
+        Assert.That(renderResult.Svg, Does.Contain("<path"));
     }
 
     [Test]

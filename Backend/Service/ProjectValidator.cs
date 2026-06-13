@@ -80,7 +80,7 @@ public class ProjectValidator : IProjectValidator
         }
         else
         {
-            result.AddInfo($"[{projectName}] ✓ Locomotives: {project.Locomotives.Count} defined");
+            result.AddInfo($"[{projectName}] Locomotives: {project.Locomotives.Count} defined");
         }
 
         // Check journeys (primary use case)
@@ -90,7 +90,7 @@ public class ProjectValidator : IProjectValidator
         }
         else
         {
-            result.AddInfo($"[{projectName}] ✓ Journeys: {project.Journeys.Count} defined");
+            result.AddInfo($"[{projectName}] Journeys: {project.Journeys.Count} defined");
 
             // Check journey stations
             var totalStations = project.Journeys.Sum(j => j.Stations.Count);
@@ -100,38 +100,38 @@ public class ProjectValidator : IProjectValidator
             }
             else
             {
-                result.AddInfo($"[{projectName}] ✓ Stations: {totalStations} total across journeys");
+                result.AddInfo($"[{projectName}] Stations: {totalStations} total across journeys");
             }
         }
 
         // Check trains (optional but recommended)
         if (project.Trains.Count > 0)
         {
-            result.AddInfo($"[{projectName}] ✓ Trains: {project.Trains.Count} defined");
+            result.AddInfo($"[{projectName}] Trains: {project.Trains.Count} defined");
         }
 
         // Check workflows (optional)
         if (project.Workflows.Count > 0)
         {
-            result.AddInfo($"[{projectName}] ✓ Workflows: {project.Workflows.Count} defined");
+            result.AddInfo($"[{projectName}] Workflows: {project.Workflows.Count} defined");
         }
 
         // Check passenger wagons (optional)
         if (project.PassengerWagons.Count > 0)
         {
-            result.AddInfo($"[{projectName}] ✓ Passenger Wagons: {project.PassengerWagons.Count} defined");
+            result.AddInfo($"[{projectName}] Passenger Wagons: {project.PassengerWagons.Count} defined");
         }
 
         // Check goods wagons (optional)
         if (project.GoodsWagons.Count > 0)
         {
-            result.AddInfo($"[{projectName}] ✓ Goods Wagons: {project.GoodsWagons.Count} defined");
+            result.AddInfo($"[{projectName}] Goods Wagons: {project.GoodsWagons.Count} defined");
         }
 
         // Check signal box plan (optional)
         if (project.SignalBoxPlan != null)
         {
-            result.AddInfo($"[{projectName}] ✓ Signal Box Plan defined");
+            result.AddInfo($"[{projectName}] Signal Box Plan defined");
         }
     }
 }

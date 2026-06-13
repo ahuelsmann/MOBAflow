@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MOBApi.Service;
 
+using Moba.Common.Discovery;
+
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -11,11 +13,6 @@ using System.Text;
 /// </summary>
 internal class UdpDiscoveryService : BackgroundService
 {
-    private const int DiscoveryPort = 21106;
-    private const string DiscoveryRequest = "MOBAFLOW_DISCOVER";
-    private const string DiscoveryResponsePrefix = "MOBAFLOW_REST_API";
-    private const string MulticastAddress = "239.255.42.99";
-
     private readonly ILogger<UdpDiscoveryService> _logger;
     private readonly IConfiguration _configuration;
     private UdpClient? _udpListener;
@@ -28,20 +25,22 @@ internal class UdpDiscoveryService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("UDP Discovery starting on Multicast {MulticastAddress}:{Port}", MulticastAddress, DiscoveryPort);
+        _logger.LogInformation("UDP Discovery starting on Multicast {MulticastAddress}:{Port}",
+            DiscoveryResponseParser.MulticastAddress, DiscoveryResponseParser.MulticastPort);
 
         try
         {
             _udpListener = new UdpClient { ExclusiveAddressUse = false };
 
-            var localEndPoint = new IPEndPoint(IPAddress.Any, DiscoveryPort);
+            var localEndPoint = new IPEndPoint(IPAddress.Any, DiscoveryResponseParser.MulticastPort);
             _udpListener.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
             _udpListener.Client.Bind(localEndPoint);
 
-            var multicastAddress = IPAddress.Parse(MulticastAddress);
+            var multicastAddress = IPAddress.Parse(DiscoveryResponseParser.MulticastAddress);
             _udpListener.JoinMulticastGroup(multicastAddress);
 
-            _logger.LogInformation("Joined Multicast group {MulticastAddress}:{Port}", MulticastAddress, DiscoveryPort);
+            _logger.LogInformation("Joined Multicast group {MulticastAddress}:{Port}",
+                DiscoveryResponseParser.MulticastAddress, DiscoveryResponseParser.MulticastPort);
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -50,7 +49,7 @@ internal class UdpDiscoveryService : BackgroundService
                     var result = await _udpListener.ReceiveAsync(stoppingToken);
                     var message = Encoding.UTF8.GetString(result.Buffer);
 
-                    if (message.Trim() == DiscoveryRequest)
+                    if (message.Trim() == DiscoveryResponseParser.RequestMessage)
                     {
                         _logger.LogInformation("Discovery request from {RemoteEndPoint}", result.RemoteEndPoint);
 
@@ -60,7 +59,7 @@ internal class UdpDiscoveryService : BackgroundService
                         if (Uri.TryCreate(kestrelUrl, UriKind.Absolute, out var uri))
                             restPort = uri.Port;
 
-                        var response = $"{DiscoveryResponsePrefix}|{localIp}|{restPort}";
+                        var response = $"{DiscoveryResponseParser.ResponsePrefix}|{localIp}|{restPort}";
                         var responseBytes = Encoding.UTF8.GetBytes(response);
                         await _udpListener.SendAsync(responseBytes, result.RemoteEndPoint, stoppingToken);
 

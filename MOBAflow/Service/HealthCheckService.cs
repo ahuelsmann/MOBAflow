@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 using Sound;
 
 /// <summary>
-/// Centralized health check service that monitors Azure Speech Service and provides
+/// Centralized health check service that monitors the selected speech service and provides
 /// periodic status updates for UI display.
 /// </summary>
 public partial class HealthCheckService : IDisposable
@@ -37,13 +37,13 @@ public partial class HealthCheckService : IDisposable
     }
 
     /// <summary>
-    /// Current status of Azure Speech Service.
+    /// Current status of the speech service.
     /// Can be bound to UI elements to display health status.
     /// </summary>
     public string SpeechServiceStatus { get; private set; }
 
     /// <summary>
-    /// Indicates whether Azure Speech Service is healthy.
+    /// Indicates whether the speech service is healthy.
     /// </summary>
     public bool IsSpeechServiceHealthy { get; private set; }
 
@@ -96,7 +96,7 @@ public partial class HealthCheckService : IDisposable
 
         try
         {
-            // Check Azure Speech Service
+            // Check local Piper TTS configuration.
             var isConfigured = _speechHealthCheck.IsConfigured();
             var isHealthy = isConfigured && await _speechHealthCheck.TestConnectivityAsync();
 
@@ -107,19 +107,19 @@ public partial class HealthCheckService : IDisposable
             {
                 SpeechServiceStatus = "⚠️ Not Configured";
                 IsSpeechServiceHealthy = false;
-                Console.WriteLine("⚠️ Azure Speech Service: Not Configured");
+                Console.WriteLine("⚠️ Piper TTS: Not Configured");
             }
             else if (isHealthy)
             {
                 SpeechServiceStatus = "✅ Ready";
                 IsSpeechServiceHealthy = true;
-                Console.WriteLine("✅ Azure Speech Service: Ready");
+                Console.WriteLine("✅ Piper TTS: Ready");
             }
             else
             {
                 SpeechServiceStatus = "❌ Connection Failed";
                 IsSpeechServiceHealthy = false;
-                Console.WriteLine("❌ Azure Speech Service: Connection Failed");
+                Console.WriteLine("❌ Piper TTS: Startup Failed");
             }
 
             // Notify if status changed
@@ -129,7 +129,7 @@ public partial class HealthCheckService : IDisposable
                 _logger.LogInformation("Health status changed: {Status}", SpeechServiceStatus);
                 OnHealthStatusChanged(new HealthStatusChangedEventArgs
                 {
-                    ServiceName = "AzureSpeech",
+                    ServiceName = "PiperTts",
                     IsHealthy = IsSpeechServiceHealthy,
                     StatusMessage = SpeechServiceStatus
                 });

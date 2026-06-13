@@ -262,8 +262,8 @@
                                 Text="System Speech (Windows SAPI)" />
                             <MenuFlyoutItem
                                 Command="{x:Bind ViewModel.SelectSpeechEngineCommand}"
-                                CommandParameter="Azure Cognitive Services"
-                                Text="Azure Cognitive Services" />
+                                CommandParameter="Piper TTS"
+                                Text="Piper TTS" />
                         </MenuFlyout>
                     </DropDownButton.Flyout>
                 </DropDownButton>

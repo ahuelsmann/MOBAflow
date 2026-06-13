@@ -1,4 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+    <!--
+      Standalone REST host for MAUI and remote clients.
+      References Common only (shared discovery protocol constants).
+      Backend/SharedUI are intentionally omitted: WinUI starts MOBApi as a separate process.
+    -->
     <PropertyGroup>
         <RootNamespace>Moba.MOBApi</RootNamespace>
         <AssemblyName>MOBApi</AssemblyName>
@@ -7,4 +12,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <OutputType>Exe</OutputType>
     </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Common\Common.csproj" />
+    </ItemGroup>
 </Project>

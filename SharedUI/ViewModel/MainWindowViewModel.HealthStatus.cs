@@ -12,10 +12,10 @@ public partial class MainWindowViewModel
 {
     /// <summary>
     /// Gets the speech status text shown in the status bar.
-    /// Uses Azure health details for Azure engine and a local-ready text for System Speech.
+    /// Uses Piper health details for Piper TTS and a local-ready text for System Speech.
     /// </summary>
     public string SpeechStatusDisplayText =>
-        IsAzureSpeechEngineSelected
+        IsPiperSpeechEngineSelected
             ? SpeechHealthStatus
             : "System Speech: Ready (local)";
 
@@ -25,8 +25,7 @@ public partial class MainWindowViewModel
     /// </summary>
     public void UpdateHealthStatus(string statusMessage)
     {
-        // Prefix with "Azure Speech: " for UI display
-        SpeechHealthStatus = $"Azure Speech: {statusMessage.TrimStart('✅', '❌', '⚠', '️', '⏳', ' ')}";
+        SpeechHealthStatus = $"Piper TTS: {statusMessage.TrimStart('✅', '❌', '⚠', '️', '⏳', ' ')}";
 
         // Update icon and color based on status
         if (statusMessage.Contains("Ready"))

@@ -15,36 +15,23 @@
     <!-- Repository Information -->
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://dev.azure.com/ahuelsmann/MOBAflow/_git/MOBAflow</RepositoryUrl>
-    <!-- Build Configuration -->
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <!-- Platform Configuration -->
     <PlatformTarget Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">x64</PlatformTarget>
 
-    <!-- Build Performance Optimizations -->
-    <SkipAnalyzersOnRestore>true</SkipAnalyzersOnRestore>
-    <!-- Disable analyzers during CLI builds AND Visual Studio builds (except Live Analysis) -->
+    <!-- Keep normal build loops fast; Release remains strict below. -->
     <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
     <RunAnalyzersDuringLiveAnalysis>true</RunAnalyzersDuringLiveAnalysis>
-    <!-- Disable XML documentation in Debug/FastDebug for faster builds -->
     <GenerateDocumentationFile Condition="'$(Configuration)' != 'Release'">false</GenerateDocumentationFile>
-
-    <!-- Additional MSBuild Performance Settings -->
     <UseSharedCompilation>true</UseSharedCompilation>
     <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
     <Deterministic>false</Deterministic>
-    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
-
-    <!-- Disable deterministic builds in Debug/FastDebug for faster incremental builds -->
     <Deterministic Condition="'$(Configuration)' == 'Release'">true</Deterministic>
 
-    <!-- NuGet Package Optimization -->
-    <DisableImplicitNuGetFallbackFolder>true</DisableImplicitNuGetFallbackFolder>
-
     <!-- Code analysis and warnings policy -->
-    <AnalysisMode>All</AnalysisMode>
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisMode Condition="'$(Configuration)' == 'Release'">All</AnalysisMode>
+    <EnforceCodeStyleInBuild Condition="'$(Configuration)' == 'Release'">true</EnforceCodeStyleInBuild>
     <TreatWarningsAsErrors Condition="'$(Configuration)' == 'Release'">true</TreatWarningsAsErrors>
   </PropertyGroup>
 
@@ -65,7 +52,7 @@
     <Optimize>false</Optimize>
     <DebugType>embedded</DebugType>
     <DebugSymbols>true</DebugSymbols>
-    <RunAnalyzers>false</RunAnalyzers>
+    <RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
     <DefineConstants>$(DefineConstants);DEBUG;TRACE</DefineConstants>
   </PropertyGroup>
 

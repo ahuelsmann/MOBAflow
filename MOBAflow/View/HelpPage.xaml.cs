@@ -231,7 +231,7 @@ internal sealed partial class HelpPage : INavigationParameterReceiver
 
         // Configuration
         var config = new TreeViewNode { Content = "Configuration", IsExpanded = false };
-        AddSection(config, "Azure Speech Setup");
+        AddSection(config, "Piper TTS Setup");
         NavigationTreeView.RootNodes.Add(config);
 
         // Troubleshooting
@@ -437,7 +437,7 @@ internal sealed partial class HelpPage : INavigationParameterReceiver
 
                 MOBAflow supports Text-to-Speech (TTS):
                 - Windows Speech API (offline)
-                - Azure Cognitive Services (online, more natural)
+                - Piper TTS (offline, open source)
 
                 Announcement templates:
                 Use placeholders:
@@ -561,46 +561,37 @@ internal sealed partial class HelpPage : INavigationParameterReceiver
                 """,
 
             // Configuration
-            "Azure Speech Setup" => """
-                Setting up Azure Speech Services:
+            "Piper TTS Setup" => """
+                Setting up Piper TTS:
 
-                Azure Speech Services provide high-quality text-to-speech for MOBAflow.
+                Piper TTS provides local text-to-speech for MOBAflow without cloud API keys.
 
-                Step 1: Create Azure Account
-                Visit https://portal.azure.com and sign in with your Microsoft account.
+                Step 1: Install Piper
+                1. Visit https://github.com/OHF-Voice/piper1-gpl
+                2. Install with: py -m pip install piper-tts
+                3. Use the generated piper.exe from your Python environment,
+                   for example .venv\Scripts\piper.exe
 
-                Step 2: Create Speech Resource
-                1. Click "Create a resource"
-                2. Search for "Speech"
-                3. Click "Create"
-                4. Fill in details:
-                   - Resource name: e.g., "mobaflow-speech"
-                   - Region: Choose closest region (e.g., "Germany West Central")
-                   - Pricing tier: Free (S0) or Pay-As-You-Go (Standard)
-                5. Click "Review + Create" → "Create"
+                Step 2: Download a voice model
+                1. Visit https://huggingface.co/rhasspy/piper-voices
+                2. Download a German .onnx voice model
+                3. Keep the matching .json config file if one is provided
 
-                Step 3: Get Your API Key
-                1. Go to your new Speech resource
-                2. Click "Keys and Endpoint" in left menu
-                3. Copy "Key 1" or "Key 2"
-                4. Paste into MOBAflow Settings → Speech Synthesis → Azure Speech Key
+                Step 3: Configure MOBAflow
+                1. Go to Settings → Speech Synthesis
+                2. Select "Piper TTS"
+                3. Set Piper Executable to piper.exe
+                4. Set Piper Model to the .onnx voice model
+                5. Optionally set Piper Config to the .json file
 
-                Step 4: Configure Region
-                1. In the same "Keys and Endpoint" page, copy the Region value
-                   (e.g., "germanywestcentral")
-                2. Paste into MOBAflow Settings → Speech Synthesis → Azure Region
-
-                Step 5: Test
+                Step 4: Test
                 Go to Settings → Speech Synthesis and click "Test Speech" button.
 
-                Pricing:
-                - Free tier: 5,000 characters/month
-                - Standard: Charged per 1,000 characters
-
                 Troubleshooting:
-                - Check API key is correct (no extra spaces)
-                - Verify region matches resource location
-                - Ensure internet connection is active
+                - Check that piper.exe exists
+                - Check that the .onnx model path is correct
+                - Run piper.exe --help in a terminal
+                - Use Windows SAPI as fallback if the audio device fails
                 """,
 
             // Troubleshooting

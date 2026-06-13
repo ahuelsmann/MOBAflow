@@ -20,13 +20,13 @@ public partial class Z21
     /// </summary>
     private async Task SendAsync(byte[] data, CancellationToken cancellationToken = default)
     {
-        // ✅ Validate data BEFORE acquiring lock to fail fast
+        // Validate data BEFORE acquiring lock to fail fast
         ArgumentNullException.ThrowIfNull(data);
 
         await _sendLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            // ✅ Only call ParsePacketType when actually logging (deferred execution)
+            // Only call ParsePacketType when actually logging (deferred execution)
             // This prevents NullReferenceException if ParsePacketType throws
             _trafficMonitor?.LogSentPacket(
                     data,
@@ -118,7 +118,7 @@ public partial class Z21
     /// <param name="cancellationToken">Cancellation token</param>
     public async Task RecoverConnectionAsync(IPAddress address, int port = Z21Protocol.DefaultPort, CancellationToken cancellationToken = default)
     {
-        _logger?.LogWarning("🔄 Attempting Z21 recovery with byte sequence...");
+        _logger?.LogWarning("Attempting Z21 recovery with byte sequence");
 
         try
         {
@@ -183,11 +183,11 @@ public partial class Z21
             // Reset keepalive failure counter on successful recovery
             _keepAliveFailures = 0;
 
-            _logger?.LogInformation("✅ Z21 recovery sequence completed - connection should be alive now");
+            _logger?.LogInformation("Z21 recovery sequence completed - connection should be alive now");
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "❌ Z21 recovery failed: {Message}", ex.Message);
+            _logger?.LogError(ex, "Z21 recovery failed: {Message}", ex.Message);
             throw;
         }
     }

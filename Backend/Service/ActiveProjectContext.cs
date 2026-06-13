@@ -14,7 +14,7 @@ public sealed class ActiveProjectContext : IDisposable
     /// <summary>
     /// Initializes a new instance of the <see cref="ActiveProjectContext"/> class.
     /// </summary>
-    public ActiveProjectContext(Project activeProject, JourneyManager journeyManager)
+    public ActiveProjectContext(Project activeProject, IJourneyManager journeyManager)
     {
         ArgumentNullException.ThrowIfNull(activeProject);
         ArgumentNullException.ThrowIfNull(journeyManager);
@@ -31,7 +31,7 @@ public sealed class ActiveProjectContext : IDisposable
     /// <summary>
     /// Gets the journey manager bound to the active project.
     /// </summary>
-    public JourneyManager JourneyManager { get; }
+    public IJourneyManager JourneyManager { get; }
 
     /// <inheritdoc />
     public void Dispose()

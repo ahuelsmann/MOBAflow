@@ -16,7 +16,7 @@
         │ 🪝 PRE-COMMIT HOOK AKTIVIERT                            │
         ├─────────────────────────────────────────────────────────┤
         │ ✅ JSON Datei-Syntax check                              │
-        │ ✅ Secrets validieren (Speech.Key, Z21 IP nicht leer)  │
+        │ ✅ TTS-Pfade validieren (Piper, Z21 IP nicht leer)    │
         │ ✅ Schema Validierung                                   │
         │ ❌ Falls Fehler: Commit blockiert + Fehlerbericht       │
         └─────────────────────────────────────────────────────────┘

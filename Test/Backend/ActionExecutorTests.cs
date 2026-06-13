@@ -28,7 +28,7 @@ internal class ActionExecutorTests
     [SetUp]
     public void SetUp()
     {
-        _actionExecutor = new ActionExecutor(); // No AnnouncementService for basic tests
+        _actionExecutor = ActionExecutor.CreateWithDefaultHandlers(); // No AnnouncementService for basic tests
         _fakeUdp = new FakeUdpClientWrapper();
         _eventBus = new EventBus(NullLogger<EventBus>.Instance);
         _z21 = new Z21(_fakeUdp, _eventBus);
@@ -125,11 +125,26 @@ internal class ActionExecutorTests
     }
 
     [Test]
+    public void ExecuteAsync_WithExecuteScriptAction_MissingScriptPath_ShouldThrowArgumentException()
+    {
+        var action = new WorkflowAction
+        {
+            Id = Guid.NewGuid(),
+            Number = 5,
+            Name = "Run Script",
+            Type = ActionType.ExecuteScript,
+            PowerShell = new PowerShellActionPayload()
+        };
+
+        Assert.ThrowsAsync<ArgumentException>(async () => await _actionExecutor.ExecuteAsync(action, _context));
+    }
+
+    [Test]
     public async Task ExecuteAsync_WithTrainDestinationDisplayAction_ShouldCallDisplayService()
     {
         var displayDeviceId = Guid.NewGuid();
         var displayService = new RecordingTrainDestinationDisplayService();
-        var actionExecutor = new ActionExecutor(trainDestinationDisplayService: displayService);
+        var actionExecutor = ActionExecutor.CreateWithDefaultHandlers(trainDestinationDisplayService: displayService);
         var action = new WorkflowAction
         {
             Id = Guid.NewGuid(),

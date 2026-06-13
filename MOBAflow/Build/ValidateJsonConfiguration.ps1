@@ -49,8 +49,12 @@ foreach ($fileSpec in $jsonFilesAndSchemas) {
             switch ($fileSpec.Type) {
                 'Configuration' {
                     if ($file.Name -match "Development") {
-                        if (-not $json.speech -or [string]::IsNullOrWhiteSpace($json.speech.key)) {
-                            Write-Host "[WARN] Speech.Key is empty" -ForegroundColor Yellow
+                        if (-not $json.speech -or [string]::IsNullOrWhiteSpace($json.speech.piperExecutablePath)) {
+                            Write-Host "[WARN] Speech.PiperExecutablePath is empty" -ForegroundColor Yellow
+                            $hasWarnings = $true
+                        }
+                        if (-not $json.speech -or [string]::IsNullOrWhiteSpace($json.speech.piperModelPath)) {
+                            Write-Host "[WARN] Speech.PiperModelPath is empty" -ForegroundColor Yellow
                             $hasWarnings = $true
                         }
                         if (-not $json.z21 -or [string]::IsNullOrWhiteSpace($json.z21.currentIpAddress)) {

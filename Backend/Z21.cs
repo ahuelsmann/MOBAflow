@@ -170,7 +170,7 @@ public partial class Z21 : IZ21
             // This prevents overloading the Z21 before connection is established
             // See: SetConnectedIfNotAlready()
 
-            _logger?.LogInformation("🔄 Z21 connection initiated to {Address}:{Port}. Waiting for response...", address, port);
+            _logger?.LogInformation("Z21 connection initiated to {Address}:{Port}. Waiting for response", address, port);
 
             // Note: IsConnected will be set to true when Z21 responds (in OnUdpReceived)
             // This is handled by the _connectionTcs logic in the message handlers

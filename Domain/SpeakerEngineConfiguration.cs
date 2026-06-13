@@ -12,8 +12,8 @@ public class SpeakerEngineConfiguration
     /// </summary>
     public SpeakerEngineConfiguration()
     {
-        Name = "AzureCognitiveSpeech";
-        Type = "Microsoft.CognitiveServices.Speech";
+        Name = "PiperTts";
+        Type = "Moba.Sound.PiperSpeechEngine";
         Settings = [];
     }
 

@@ -108,21 +108,7 @@ public partial class MainWindowViewModel
     {
         if (SelectedWorkflow == null) return;
 
-        var newAction = new WorkflowAction
-        {
-            Name = "New Announcement",
-            Number = (uint)(SelectedWorkflow.Model.Actions.Count + 1),
-            Type = ActionType.Announcement,
-            Announcement = new AnnouncementActionPayload
-            {
-                Message = "Enter announcement text",
-                VoiceName = "de-DE-KatjaNeural"
-            }
-        };
-
-        SelectedWorkflow.Model.Actions.Add(newAction);
-        var viewModel = new AnnouncementViewModel(newAction);
-        SelectedWorkflow.Actions.Add(viewModel);
+        SelectedWorkflow.AddActionCommand.Execute(ActionType.Announcement);
 
         // Trigger auto-save after adding action
         ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
@@ -133,20 +119,7 @@ public partial class MainWindowViewModel
     {
         if (SelectedWorkflow == null) return;
 
-        var newAction = new WorkflowAction
-        {
-            Name = "New Command",
-            Number = (uint)(SelectedWorkflow.Model.Actions.Count + 1),
-            Type = ActionType.Command,
-            Command = new CommandActionPayload
-            {
-                BytesBase64 = Convert.ToBase64String(new byte[] { 0x00 })
-            }
-        };
-
-        SelectedWorkflow.Model.Actions.Add(newAction);
-        var viewModel = new CommandViewModel(newAction, _loggerFactory?.CreateLogger<CommandViewModel>());
-        SelectedWorkflow.Actions.Add(viewModel);
+        SelectedWorkflow.AddActionCommand.Execute(ActionType.Command);
 
         // Trigger auto-save after adding action
         ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
@@ -157,20 +130,7 @@ public partial class MainWindowViewModel
     {
         if (SelectedWorkflow == null) return;
 
-        var newAction = new WorkflowAction
-        {
-            Name = "New Audio",
-            Number = (uint)(SelectedWorkflow.Model.Actions.Count + 1),
-            Type = ActionType.Audio,
-            Audio = new AudioActionPayload
-            {
-                FilePath = "sound.wav"
-            }
-        };
-
-        SelectedWorkflow.Model.Actions.Add(newAction);
-        var viewModel = new AudioViewModel(newAction, _ioService, _executionContext.SoundPlayer);
-        SelectedWorkflow.Actions.Add(viewModel);
+        SelectedWorkflow.AddActionCommand.Execute(ActionType.Audio);
 
         // Trigger auto-save after adding action
         ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
@@ -183,6 +143,26 @@ public partial class MainWindowViewModel
         if (SelectedWorkflow == null) return;
 
         SelectedWorkflow.AddActionCommand.Execute(ActionType.SelectSignalAspect);
+
+        ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
+    }
+
+    [RelayCommand]
+    private void AddExecuteScript()
+    {
+        if (SelectedWorkflow == null) return;
+
+        SelectedWorkflow.AddActionCommand.Execute(ActionType.ExecuteScript);
+
+        ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
+    }
+
+    [RelayCommand]
+    private void AddTrainDestinationDisplay()
+    {
+        if (SelectedWorkflow == null) return;
+
+        SelectedWorkflow.AddActionCommand.Execute(ActionType.TrainDestinationDisplay);
 
         ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
     }

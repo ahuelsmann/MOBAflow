@@ -73,6 +73,7 @@ internal sealed partial class FunctionSymbolPickerWindow : Window
     private const int WM_GETMINMAXINFO = 0x0024;
     private delegate IntPtr SubclassProcDelegate(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam, UIntPtr uIdSubclass, IntPtr dwRefData);
     private SubclassProcDelegate? _subclassDelegate;
+    private static readonly Lazy<IReadOnlyList<FunctionSymbolItem>> Symbols = new(LoadSymbols);
 
     [DllImport("comctl32.dll", SetLastError = true)]
     private static extern bool SetWindowSubclass(IntPtr hWnd, SubclassProcDelegate pfnSubclass, UIntPtr uIdSubclass, IntPtr dwRefData);
@@ -134,7 +135,7 @@ internal sealed partial class FunctionSymbolPickerWindow : Window
     public FunctionSymbolPickerWindow()
     {
         InitializeComponent();
-        SymbolsItemsControl.ItemsSource = LoadSymbols();
+        SymbolsItemsControl.ItemsSource = Symbols.Value;
 
         Title = "Symbol für Funktionstaste auswählen";
 

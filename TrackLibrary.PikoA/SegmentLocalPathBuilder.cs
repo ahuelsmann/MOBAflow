@@ -43,7 +43,7 @@ public static class SegmentLocalPathBuilder
             DKW dkw => GetDkwPath(dkw.LengthInMm, dkw.ArcInDegree, dkw.RadiusInMm),
             K15 k15 => GetCrossingPath(k15.ArcInDegree, k15.LengthInMm),
             K30 k30 => GetCrossingPath(k30.ArcInDegree, k30.LengthInMm),
-            _ => GetStraightPath(100)
+            _ => throw new NotSupportedException($"No local path geometry registered for segment type '{segment.GetType().Name}'.")
         };
     }
 

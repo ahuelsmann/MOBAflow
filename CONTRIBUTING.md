@@ -17,6 +17,16 @@ dotnet restore MOBApi/MOBApi.csproj
 dotnet build MOBAflow/MOBAflow.csproj
 ```
 
+Für schnelle lokale Compile-Checks der WinUI-App kannst du `FastDebug` verwenden:
+
+```bash
+dotnet build MOBAflow/MOBAflow.csproj -c FastDebug --no-restore /p:BuildMOBApiDependency=false /p:CopyMOBApiToOutput=false
+```
+
+Diese Variante ist für Edit/Build-Zyklen gedacht. Für vollständige App-Starts und
+Release-Validierung bleibt der normale Build maßgeblich. Details stehen in
+`docs/BUILD-PERFORMANCE.md`.
+
 ### Tests ausführen
 
 ```bash

@@ -58,11 +58,11 @@ public class WorkflowService(IActionExecutor actionExecutor, ILogger<WorkflowSer
         ArgumentNullException.ThrowIfNull(workflow);
         ArgumentNullException.ThrowIfNull(context);
 
-        logger?.LogInformation("▶ Starting workflow: {WorkflowName} (Mode: {ExecutionMode})", workflow.Name, workflow.ExecutionMode);
+        logger?.LogInformation("Starting workflow: {WorkflowName} (Mode: {ExecutionMode})", workflow.Name, workflow.ExecutionMode);
 
         if (workflow.Actions.Count == 0)
         {
-            logger?.LogWarning("⚠ Workflow '{WorkflowName}' has no actions", workflow.Name);
+            logger?.LogWarning("Workflow '{WorkflowName}' has no actions", workflow.Name);
             return;
         }
 
@@ -75,7 +75,7 @@ public class WorkflowService(IActionExecutor actionExecutor, ILogger<WorkflowSer
             await ExecuteSequentialAsync(workflow, context, options).ConfigureAwait(false);
         }
 
-        logger?.LogInformation("✅ Workflow '{WorkflowName}' completed", workflow.Name);
+        logger?.LogInformation("Workflow '{WorkflowName}' completed", workflow.Name);
     }
 
     /// <summary>
@@ -93,14 +93,14 @@ public class WorkflowService(IActionExecutor actionExecutor, ILogger<WorkflowSer
                 // Apply per-action delay if specified
                 if (action.DelayAfterMs > 0)
                 {
-                    logger?.LogDebug("    ⏱ Waiting {DelayMs}ms after action #{ActionNumber}...", action.DelayAfterMs, action.Number);
+                    logger?.LogDebug("Waiting {DelayMs}ms after action #{ActionNumber}", action.DelayAfterMs, action.Number);
                     await Task.Delay(action.DelayAfterMs).ConfigureAwait(false);
                 }
             }
             catch (FileNotFoundException fnfEx)
             {
                 var errorMsg = $"Audio file not found for action '{action.Name}': {fnfEx.FileName}";
-                logger?.LogError(fnfEx, "❌ {ErrorMessage}", errorMsg);
+                logger?.LogError(fnfEx, "{ErrorMessage}", errorMsg);
                 OnActionExecutionError(action, fnfEx, errorMsg);
                 if (options.StopOnFirstActionFailure)
                     ExceptionDispatchInfo.Capture(fnfEx).Throw();
@@ -108,7 +108,7 @@ public class WorkflowService(IActionExecutor actionExecutor, ILogger<WorkflowSer
             catch (Exception ex)
             {
                 var errorMsg = $"Error executing action #{action.Number} '{action.Name}': {ex.Message}";
-                logger?.LogError(ex, "❌ {ErrorMessage}", errorMsg);
+                logger?.LogError(ex, "{ErrorMessage}", errorMsg);
                 OnActionExecutionError(action, ex, errorMsg);
                 if (options.StopOnFirstActionFailure)
                     ExceptionDispatchInfo.Capture(ex).Throw();
@@ -148,7 +148,7 @@ public class WorkflowService(IActionExecutor actionExecutor, ILogger<WorkflowSer
             // Wait before starting this action (staggered start)
             if (startDelay > 0)
             {
-                logger?.LogDebug("    ⏱ Action #{ActionNumber} waiting {StartDelay}ms before start...", action.Number, startDelay);
+                logger?.LogDebug("Action #{ActionNumber} waiting {StartDelay}ms before start", action.Number, startDelay);
                 await Task.Delay(startDelay).ConfigureAwait(false);
             }
 
@@ -157,13 +157,13 @@ public class WorkflowService(IActionExecutor actionExecutor, ILogger<WorkflowSer
         catch (FileNotFoundException fnfEx)
         {
             var errorMsg = $"Audio file not found for action '{action.Name}': {fnfEx.FileName}";
-            logger?.LogError(fnfEx, "❌ {ErrorMessage}", errorMsg);
+            logger?.LogError(fnfEx, "{ErrorMessage}", errorMsg);
             OnActionExecutionError(action, fnfEx, errorMsg);
         }
         catch (Exception ex)
         {
             var errorMsg = $"Error executing action #{action.Number} '{action.Name}': {ex.Message}";
-            logger?.LogError(ex, "❌ {ErrorMessage}", errorMsg);
+            logger?.LogError(ex, "{ErrorMessage}", errorMsg);
             OnActionExecutionError(action, ex, errorMsg);
         }
     }

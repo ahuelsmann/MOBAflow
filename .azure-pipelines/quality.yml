@@ -18,6 +18,7 @@ variables:
   buildPlatform: 'x64'
   buildConfiguration: 'Release'
   dotnetVersion: '10.0.x'
+  nugetPackages: '$(Pipeline.Workspace)/.nuget/packages'
 
   # SonarQube Cloud configuration (see SonarCloudPrepare inputs in Sonar docs)
   # sonarServiceConnection must match the service connection name in Project Settings > Service connections.
@@ -50,6 +51,15 @@ stages:
               version: '$(dotnetVersion)'
               includePreviewVersions: true
 
+          - task: Cache@2
+            displayName: 'Cache NuGet packages'
+            inputs:
+              key: 'nuget | "$(Agent.OS)" | Directory.Packages.props | **/*.csproj'
+              restoreKeys: |
+                nuget | "$(Agent.OS)" | Directory.Packages.props
+                nuget | "$(Agent.OS)"
+              path: '$(nugetPackages)'
+
           - task: SonarCloudPrepare@4
             displayName: 'Prepare SonarQube Cloud Analysis'
             inputs:
@@ -70,6 +80,8 @@ stages:
                 **/MOBAflow.csproj
                 **/Test.csproj
               feedsToUse: 'select'
+            env:
+              NUGET_PACKAGES: '$(nugetPackages)'
 
           - task: DotNetCoreCLI@2
             displayName: 'Build Projects (MOBAflow + Test)'
@@ -79,6 +91,8 @@ stages:
                 **/MOBAflow.csproj
                 **/Test.csproj
               arguments: '--configuration $(buildConfiguration) --no-restore'
+            env:
+              NUGET_PACKAGES: '$(nugetPackages)'
 
           - task: SonarCloudAnalyze@4
             displayName: 'Run SonarQube Cloud Analysis'
@@ -103,6 +117,8 @@ stages:
                 -o "$(Agent.TempDirectory)/coverage.cobertura.xml" ^
                 "dotnet test Test/Test.csproj --configuration $(buildConfiguration) --no-build --logger trx --results-directory $(Agent.TempDirectory)/TestResults"
             displayName: 'Run Tests with dotnet-coverage (Cobertura)'
+            env:
+              NUGET_PACKAGES: '$(nugetPackages)'
 
           - task: PublishTestResults@2
             displayName: 'Publish Test Results'

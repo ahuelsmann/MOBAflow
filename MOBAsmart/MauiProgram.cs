@@ -6,6 +6,7 @@ using Backend.Interface;
 using Backend.Service;
 
 using Common.Configuration;
+using Common.Events;
 
 using CommunityToolkit.Maui;
 
@@ -94,10 +95,19 @@ public static class MauiProgram
 
         // ViewModels
         builder.Services.AddSingleton<MauiViewModel>();
+        builder.Services.AddSingleton<TrainControlViewModel>(sp => new TrainControlViewModel(
+            sp.GetRequiredService<IMobaRuntime>(),
+            sp.GetRequiredService<ISettingsService>(),
+            logger: sp.GetService<ILogger<TrainControlViewModel>>(),
+            uiDispatcher: sp.GetService<IUiDispatcher>(),
+            eventBus: sp.GetRequiredService<IEventBus>()));
 
         // Views
+        builder.Services.AddTransient<AppShell>();
         builder.Services.AddTransient<View.SplashPage>();
-        builder.Services.AddTransient<MainPage>();
+        builder.Services.AddTransient<CounterPage>();
+        builder.Services.AddTransient<View.SignalBoxPage>();
+        builder.Services.AddTransient<View.ControlPage>();
 
         return builder.Build();
     }

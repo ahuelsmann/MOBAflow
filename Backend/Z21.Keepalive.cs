@@ -58,7 +58,7 @@ public partial class Z21
         if (_isConnected) return;
 
         _isConnected = true;
-        _logger?.LogInformation("✅ Z21 is responding - connection confirmed");
+        _logger?.LogInformation("Z21 is responding - connection confirmed");
 
         // Start SystemState polling timer ONLY if interval > 0
         // Note: Z21 also sends SystemState automatically via broadcast (flag 0x0100)

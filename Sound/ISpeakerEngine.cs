@@ -3,21 +3,21 @@ namespace Moba.Sound;
 
 /// <summary>
 /// Interface for text-to-speech engines.
-/// Implementations include Azure Cognitive Services, Windows System Speech, and NullSpeakerEngine.
+/// Implementations include Piper TTS, Windows System Speech, and NullSpeakerEngine.
 /// </summary>
 public interface ISpeakerEngine
 {
     /// <summary>
-    /// Gets or sets the display name of the speech engine.
+    /// Gets the display name of the speech engine.
     /// Used for identification in configuration and logging.
     /// </summary>
-    string Name { get; set; }
+    string Name { get; }
 
     /// <summary>
     /// Speaks the given message using the specified voice.
     /// </summary>
     /// <param name="message">Text to synthesize and speak.</param>
-    /// <param name="voiceName">Voice identifier (e.g., "de-DE-KatjaNeural" for Azure, null for system default).</param>
+    /// <param name="voiceName">Voice identifier, or <c>null</c> for the configured/default voice.</param>
     /// <returns>Task that completes when the announcement has finished playing.</returns>
     Task AnnouncementAsync(string message, string? voiceName);
 }

@@ -814,6 +814,8 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             _settings.Z21.CurrentIpAddress = Z21IpAddress.Trim();
             QueueSaveSettings();
         }
+
+        RefreshSignalBoxElements(snapshot.SignalBoxElements);
     }
 
     private void OnFeedbackReceived(FeedbackReceivedEvent e)

@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.TrackPlanRenderer;
 
-using TrackLibrary.PikoA;
+using Moba.TrackLibrary.PikoA;
 
 [TestFixture]
 internal class TrackPlanSnapHelperTests

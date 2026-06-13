@@ -29,7 +29,7 @@ public class SystemSpeechEngine : ISpeakerEngine
     /// <summary>
     /// Display name of this speech engine, for example used in UI selection lists.
     /// </summary>
-    public string Name { get; set; } = "System.Speech (Windows SAPI)";
+    public string Name { get; } = "System.Speech (Windows SAPI)";
 
     /// <summary>
     /// Performs a text-to-speech announcement using Windows SAPI.

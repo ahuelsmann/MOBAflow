@@ -20,19 +20,15 @@
         <WindowsPackageType>None</WindowsPackageType>
         <GenerateMsixPackageOnBuild>false</GenerateMsixPackageOnBuild>
         <DisableXamlGeneratedBreakOnUnhandledException>true</DisableXamlGeneratedBreakOnUnhandledException>
+        <BuildMOBApiDependency Condition="'$(BuildMOBApiDependency)' == ''">true</BuildMOBApiDependency>
+        <CopyMOBApiToOutput Condition="'$(CopyMOBApiToOutput)' == ''">true</CopyMOBApiToOutput>
+        <MOBApiTargetFramework Condition="'$(MOBApiTargetFramework)' == ''">net10.0</MOBApiTargetFramework>
+        <ValidateJsonConfiguration Condition="'$(ValidateJsonConfiguration)' == '' and '$(Configuration)' == 'FastDebug'">false</ValidateJsonConfiguration>
+        <ValidateJsonConfiguration Condition="'$(ValidateJsonConfiguration)' == ''">true</ValidateJsonConfiguration>
     </PropertyGroup>
-    <!-- Debug: Performance Optimizations -->
     <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
-        <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
-        <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
-        <GenerateDocumentationFile>false</GenerateDocumentationFile>
-        <!-- Disable MSIX/PRI generation during Debug builds to work around Windows SDK BuildTools issues -->
         <EnableMsixTooling>false</EnableMsixTooling>
         <AppxPackage>false</AppxPackage>
-    </PropertyGroup>
-    <!-- Release: Enable all checks -->
-    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-        <DisableFastUpToDateCheck>false</DisableFastUpToDateCheck>
     </PropertyGroup>
     <!-- Package References -->
     <ItemGroup>
@@ -74,7 +70,7 @@
     <!-- Project References -->
     <ItemGroup>
         <ProjectReference Include="..\Common\Common.csproj" />
-        <ProjectReference Include="..\MOBApi\MOBApi.csproj">
+        <ProjectReference Include="..\MOBApi\MOBApi.csproj" Condition="'$(BuildMOBApiDependency)' == 'true'">
             <!-- Build dependency only: do not load MOBAapi assembly into WinUI; we start it as a separate process -->
             <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
         </ProjectReference>
@@ -87,6 +83,7 @@
     <!-- Assets -->
     <ItemGroup>
         <Content Include="Assets\*.png" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="Assets\FunctionSymbols\**\*.png" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="Assets\*.svg" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="Assets\*.ico" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
@@ -104,9 +101,6 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
         <Content Include="Build\Schemas\*.schema.json" CopyToOutputDirectory="PreserveNewest" Link="Build\Schemas\%(Filename)%(Extension)" />
-    </ItemGroup>
-    <ItemGroup>
-        <Folder Include="Controls\Display\" />
     </ItemGroup>
     <ItemGroup>
         <Page Update="View\DisplayPage.xaml">
@@ -132,17 +126,32 @@
     </ItemGroup>
     <!-- Import custom build targets for configuration validation -->
     <Import Project="Build\ValidateJsonConfiguration.targets" />
-    <!-- Copy MOBAapi build output next to WinUI so RestApiProcessService can start it from a known path -->
-    <Target Name="CopyMOBAapiToOutput" AfterTargets="Build">
-        <MSBuild Projects="..\MOBApi\MOBApi.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration)">
-            <Output TaskParameter="TargetOutputs" PropertyName="_MOBApiTargetPath" />
+    <!-- Copy MOBApi build output next to WinUI so RestApiProcessService can start it from a known path -->
+    <Target Name="ResolveMOBApiOutput" BeforeTargets="CopyMOBApiToOutput" Condition="'$(CopyMOBApiToOutput)' == 'true'">
+        <MSBuild
+            Projects="$(MSBuildProjectDirectory)\..\MOBApi\MOBApi.csproj"
+            Targets="GetTargetPath"
+            Properties="Configuration=$(Configuration);TargetFramework=$(MOBApiTargetFramework);RuntimeIdentifier=">
+            <Output TaskParameter="TargetOutputs" ItemName="_MOBApiTargetPath" />
         </MSBuild>
-        <PropertyGroup>
-            <_MOBAapiOutputDir>$([System.IO.Path]::GetDirectoryName($(_MOBApiTargetPath)))</_MOBAapiOutputDir>
+        <PropertyGroup Condition="'@(_MOBApiTargetPath)' != ''">
+            <_MOBApiTargetDll>@(_MOBApiTargetPath)</_MOBApiTargetDll>
+            <_MOBApiOutputDir>$([System.IO.Path]::GetDirectoryName('$(_MOBApiTargetDll)'))</_MOBApiOutputDir>
         </PropertyGroup>
-        <ItemGroup>
-            <_MOBAapiFiles Include="$(_MOBApiOutputDir)\*.*" />
+        <ItemGroup Condition="'$(_MOBApiOutputDir)' != ''">
+            <_MOBApiFiles Include="$(_MOBApiOutputDir)\*.*" />
         </ItemGroup>
+        <Error
+            Condition="'@(_MOBApiFiles)' == ''"
+            Text="MOBApi build output was not found (Configuration=$(Configuration), TargetFramework=$(MOBApiTargetFramework)). Build MOBApi first or set CopyMOBApiToOutput=false for compile-only MOBAflow builds." />
+    </Target>
+    <Target
+        Name="CopyMOBApiToOutput"
+        AfterTargets="Build"
+        DependsOnTargets="ResolveMOBApiOutput"
+        Condition="'$(CopyMOBApiToOutput)' == 'true'"
+        Inputs="@(_MOBApiFiles)"
+        Outputs="@(_MOBApiFiles->'$(OutputPath)MOBApi\%(Filename)%(Extension)')">
         <MakeDir Directories="$(OutputPath)MOBApi" />
         <Copy SourceFiles="@(_MOBApiFiles)" DestinationFolder="$(OutputPath)MOBApi" SkipUnchangedFiles="true" />
     </Target>

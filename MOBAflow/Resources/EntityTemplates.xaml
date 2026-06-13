@@ -733,6 +733,43 @@
             </StackPanel>
         </ScrollViewer>
     </DataTemplate>
+
+    <DataTemplate x:Key="PowerShellActionTemplate">
+        <ScrollViewer>
+            <StackPanel Padding="0,0,16,16" Spacing="16">
+                <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="PowerShell Script Action" />
+
+                <TextBox
+                    Header="Name"
+                    PlaceholderText="e.g., Run automation script"
+                    Text="{Binding Name, Mode=TwoWay}" />
+
+                <TextBox
+                    Header="Script Path"
+                    PlaceholderText="C:\Scripts\automation.ps1"
+                    Text="{Binding ScriptPath, Mode=TwoWay}" />
+
+                <TextBox
+                    Header="Arguments"
+                    PlaceholderText="-Verbose"
+                    Text="{Binding Arguments, Mode=TwoWay}" />
+
+                <NumberBox
+                    Header="Delay After (ms)"
+                    Maximum="60000"
+                    Minimum="0"
+                    SpinButtonPlacementMode="Inline"
+                    Value="{Binding DelayAfterMs, Mode=TwoWay}" />
+
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    Style="{ThemeResource CaptionTextBlockStyle}"
+                    Text="Executes the configured script when the workflow action runs. Use Drag &amp; Drop to change execution order. DelayAfterMs applies only in Sequential mode."
+                    TextWrapping="Wrap" />
+            </StackPanel>
+        </ScrollViewer>
+    </DataTemplate>
+
     <!--  Train Destination Display Action Template  -->
     <DataTemplate x:Key="TrainDestinationDisplayActionTemplate">
         <ScrollViewer>
@@ -1141,9 +1178,11 @@
         JourneyTemplate="{StaticResource JourneyTemplate}"
         LocomotiveTemplate="{StaticResource LocomotiveTemplate}"
         PlatformTemplate="{StaticResource PlatformTemplate}"
+        PowerShellActionTemplate="{StaticResource PowerShellActionTemplate}"
         ProjectTemplate="{StaticResource ProjectTemplate}"
         SelectSignalAspectActionTemplate="{StaticResource SelectSignalAspectActionTemplate}"
         StationTemplate="{StaticResource StationTemplate}"
+        TrainDestinationDisplayActionTemplate="{StaticResource TrainDestinationDisplayActionTemplate}"
         TrainTemplate="{StaticResource TrainTemplate}"
         WagonTemplate="{StaticResource WagonTemplate}"
         WorkflowTemplate="{StaticResource WorkflowTemplate}" />

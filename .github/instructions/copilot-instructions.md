@@ -23,7 +23,7 @@ applyTo: '**'
 |---------|-------------|
 | **Z21 Direct UDP Control** | Real-time communication with Roco Z21 command station |
 | **Journey Management** | Define train routes with multiple stations |
-| **Text-to-Speech** | Azure Cognitive Services & Windows Speech for announcements |
+| **Text-to-Speech** | Piper TTS & Windows Speech for announcements |
 | **Workflow Automation** | Event-driven action sequences |
 | **MOBAtps Track Plan System** | Visual track layout editor with drag & drop |
 | **Track Libraries** | Extensible track system support (Piko A-Gleis active, more planned) |
@@ -37,7 +37,7 @@ applyTo: '**'
 | **UI / Hosts** | WinUI 3, .NET MAUI, ASP.NET Core REST + SignalR |
 | **MVVM** | CommunityToolkit.Mvvm |
 | **Logging** | Serilog (File + In-Memory Sink) |
-| **Speech** | Azure Cognitive Services, Windows Speech API |
+| **Speech** | Piper TTS, Windows Speech API |
 | **Networking** | Direct UDP to Z21 (no external dependencies) |
 | **Testing** | NUnit |
 

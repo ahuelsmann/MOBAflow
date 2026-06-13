@@ -37,7 +37,7 @@ the Roco Z21 Digital Command Station.
 - 🚂 **Z21 Direct UDP Control** – Real-time communication with Roco Z21
 - 🎯 **Journey Management** – Define train routes with multiple stations
 - 🧭 **Flexible Layout** – Toggle City and Workflow libraries to maximize workspace
-- 🔊 **Text-to-Speech** – Azure Cognitive Services & Windows Speech API
+- 🔊 **Text-to-Speech** – Piper TTS & Windows Speech API
 - ⚡ **Workflow Automation** – Event-driven action sequences
 - 🎨 **Visual Track Plan** – Drag & drop track editor with snap-to-connect
 - 🟢 **Win2D GPU Rendering** – High-performance track visualization
@@ -121,7 +121,7 @@ The Display page also includes an interactive 5x5 LED matrix editor:
 > 📚 **Need Help?** Check out our comprehensive [**Wiki Documentation**](docs/wiki/INDEX.md)
 >
 > - [WinUI User Guide](docs/wiki/MOBAFLOW-USER-GUIDE.md) – Learn how to use MOBAflow
-> - [Azure Speech Setup](docs/wiki/AZURE-SPEECH-SETUP.md) – Configure text-to-speech
+> - [Piper TTS Setup](docs/wiki/PIPER-TTS-SETUP.md) – Configure local text-to-speech
 > - [Installation Guide](docs/wiki/INSTALLATION.md) – Set up MOBAflow,
 >   MOBApi and MOBAsmart
 
@@ -165,6 +165,18 @@ git clone https://github.com/ahuelsmann/MOBAflow.git
 cd MOBAflow
 dotnet build Moba.slnx
 ```
+
+**Fast local WinUI compile check (Windows):**
+
+```bash
+dotnet restore MOBAflow/MOBAflow.csproj
+dotnet build MOBAflow/MOBAflow.csproj -c FastDebug --no-restore /p:BuildMOBApiDependency=false /p:CopyMOBApiToOutput=false
+```
+
+Use the fast command for everyday UI edit/build cycles. It skips the REST API build
+dependency and post-build copy; use the normal build or run command when validating
+the full desktop app startup. See [`docs/BUILD-PERFORMANCE.md`](docs/BUILD-PERFORMANCE.md)
+for build timing and binary log guidance.
 
 **Cross-platform subset (library and backend projects only):**
 
@@ -276,69 +288,26 @@ is maintained in:
 
 ## 🔧 Configuration
 
-MOBAflow uses **Azure Cognitive Services Speech** for text-to-speech
-announcements. Choose your preferred setup method:
+MOBAflow uses **local text-to-speech** for announcements. The recommended
+open-source engine is Piper TTS; Windows Speech API remains available as an
+offline fallback.
 
-### 🎯 Setup Options
+### Piper TTS Setup
 
-| Method | Best For | Complexity |
-| -------- | ---------- | ------------ |
-| **A) Azure App Config** | Teams, shared environments | ⭐⭐⭐ |
-| **B) User Secrets** | Individual developers | ⭐⭐ |
-| **C) Settings UI** | End users, no coding | ⭐ |
+1. Install the recommended Piper distribution from [`OHF-Voice/piper1-gpl`](https://github.com/OHF-Voice/piper1-gpl): `py -m pip install piper-tts`.
+2. Use the generated `piper.exe` from your Python environment, for example `.venv\Scripts\piper.exe`.
+3. Download a compatible German `.onnx` voice model from <https://huggingface.co/rhasspy/piper-voices>.
+4. Launch MOBAflow and open **Settings → Speech Synthesis**.
+5. Select **Piper TTS**.
+6. Configure the path to `piper.exe`, the `.onnx` model and optionally the model `.json` file.
+7. Click **Test Speech**.
 
----
-
-### Option A: Azure App Configuration (Teams)
-
-> 💡 **For Developer Teams:** Centralized configuration shared across all team members.
-
-**Quick Setup:**
-
-```powershell
-# 1. Create Azure resource (once)
-.\scripts\setup-azure-appconfig.ps1 -SpeechKey "YOUR-KEY" -SpeechRegion "germanywestcentral"
-
-# 2. Install on all team systems
-.\scripts\install-appconfig-connection.ps1 -ConnectionString "YOUR-CONNECTION-STRING"
-
-# 3. Restart IDE
-```
-
-📖 **Details:** See [🔧 Setup Scripts](#-setup-scripts-for-teams) section below
-
----
-
-### Option B: User Secrets (Developers)
-
-**1. Get Azure Speech Key:**
-
-- 🌐 Go to [Azure Portal](https://portal.azure.com)
-- ➕ Create: **Cognitive Services** → **Speech**
-- 📋 Copy **Key** and **Region**
-
-**2. Configure Secrets:**
-
-```bash
-cd MOBAflow
-dotnet user-secrets set "Speech:Key" "YOUR-AZURE-SPEECH-KEY"
-dotnet user-secrets set "Speech:Region" "germanywestcentral"
-```
-
-**3. Verify:** Run the app – speech should work ✅
-
----
-
-### Option C: Settings UI (End Users)
+### Windows Speech Setup
 
 **1. Launch** MOBAflow  
 **2. Navigate:** Settings → Speech Synthesis  
-**3. Enter** your Azure Speech Key  
-**4. Select** Region (e.g., `germanywestcentral`)  
-**5. Click** Save
-
-> ⚠️ **Security:** The key is stored locally in `appsettings.json`.
-> Never commit this file to version control.
+**3. Select** System Speech (Windows SAPI)  
+**4. Click** Test Speech
 
 ---
 
@@ -561,7 +530,7 @@ Current scope:
 | **Display rendering** | SkiaSharp RGB565 rendering, UDP transport to ESP32-S3 displays |
 | **MVVM** | CommunityToolkit.Mvvm |
 | **Logging** | Serilog (Async File Sink + In-Memory + Environment/Process/Thread Enrichers) |
-| **Speech** | Azure Cognitive Services, Windows Speech |
+| **Speech** | Piper TTS, Windows Speech |
 | **Networking** | Direct UDP (Z21 Protocol) |
 | **Testing** | NUnit |
 | **Communication** | EventBus with UiThreadEventBusDecorator |
@@ -644,17 +613,15 @@ reading this README.
 
 | Script | Purpose | Run Where |
 | -------- | --------- | ----------- |
-| `setup-azure-appconfig.ps1` | Create resource | **Once** (any system) |
+| `setup-azure-appconfig.ps1` | Create shared app configuration resource | **Once** (any system) |
 | `install-appconfig-connection.ps1` | Set env var | **All systems** |
 
 ### 🚀 Quick Team Setup
 
-**1. Create Azure Resource:**
+**1. Create Azure App Configuration Resource:**
 
 ```powershell
-.\scripts\setup-azure-appconfig.ps1 `
-    -SpeechKey "YOUR-KEY" `
-    -SpeechRegion "germanywestcentral"
+.\scripts\setup-azure-appconfig.ps1
 ```
 
 **Output:** Copy the Connection String ✅
@@ -672,7 +639,7 @@ Close and reopen Visual Studio / VS Code
 
 **4. Verify:**
 
-Speech settings automatically load from Azure – no local config needed! ✅
+Shared app settings automatically load from Azure App Configuration.
 
 ---
 
@@ -684,9 +651,6 @@ Speech settings automatically load from Azure – no local config needed! ✅
 
 **Parameters:**
 
-- `-SpeechKey` (required) – Azure Speech API Key
-- `-SpeechRegion` (required) – Azure region
-  (e.g., `germanywestcentral`)
 - `-ResourceGroupName` (optional) – Default: `MOBAflow-RG`
 - `-ConfigStoreName` (optional) – Default: `mobaflow-config`
 - `-Location` (optional) – Default: `germanywestcentral`
@@ -755,7 +719,7 @@ Speech settings automatically load from Azure – no local config needed! ✅
 | [MOBAFLOW-USER-GUIDE.md](docs/wiki/MOBAFLOW-USER-GUIDE.md) | WinUI desktop app user guide |
 | [MOBASMART-USER-GUIDE.md](docs/wiki/MOBASMART-USER-GUIDE.md) | MOBAsmart Android app user guide |
 | [MOBASMART-WIKI.md](docs/wiki/MOBASMART-WIKI.md) | Detailed MOBAsmart documentation |
-| [AZURE-SPEECH-SETUP.md](docs/wiki/AZURE-SPEECH-SETUP.md) | Azure Speech setup |
+| [PIPER-TTS-SETUP.md](docs/wiki/PIPER-TTS-SETUP.md) | Piper TTS setup |
 | [QUICK-START-TRACK-STATISTICS.md](docs/wiki/QUICK-START-TRACK-STATISTICS.md) | Track statistics quick start |
 | [VIESSMANN-SIGNAL-MAPPING.md](docs/wiki/VIESSMANN-SIGNAL-MAPPING.md) | Viessmann signal mapping |
 | [MOBATPS.md](docs/wiki/MOBATPS.md) | MOBAtps track plan system architecture |

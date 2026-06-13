@@ -7,6 +7,8 @@ using Common.Extension;
 
 using Microsoft.Extensions.Logging;
 
+using SharedUI.Interface;
+
 using System.Text.Json;
 using System.Timers;
 
@@ -23,7 +25,7 @@ public sealed class RestApiStatusService : IDisposable
     private readonly HttpClient _httpClient;
     private readonly AppSettings _appSettings;
     private readonly RestApiProcessService _restApiProcessService;
-    private readonly PhotoHubClient _photoHubClient;
+    private readonly IPhotoHubClient _photoHubClient;
     private readonly IEventBus _eventBus;
     private readonly ILogger<RestApiStatusService> _logger;
     private readonly Timer _timer;
@@ -36,7 +38,7 @@ public sealed class RestApiStatusService : IDisposable
         HttpClient httpClient,
         AppSettings appSettings,
         RestApiProcessService restApiProcessService,
-        PhotoHubClient photoHubClient,
+        IPhotoHubClient photoHubClient,
         IEventBus eventBus,
         ILogger<RestApiStatusService> logger)
     {

@@ -29,7 +29,7 @@ using System.Collections.ObjectModel;
 /// Core ViewModel for main window functionality.
 /// Partial classes handle: Selection, Solution, SolutionAutoSave, Journey, Workflow, Train, Z21, Settings.
 /// </summary>
-public sealed partial class MainWindowViewModel : ObservableObject
+public sealed partial class MainWindowViewModel : ObservableObject, IJourneySelectionContext
 {
     #region Fields
     private const int ShutdownDisconnectTimeoutSeconds = 5;
@@ -52,6 +52,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly ICityService? _cityLibraryService;
     private readonly ISettingsService? _settingsService;
     private readonly AnnouncementService? _announcementService;
+    private readonly Func<string, Task>? _speechTestAction;
     private readonly IFeatureTogglePageProvider? _featureTogglePageProvider;
     private readonly IDialogService? _dialogService;
 
@@ -82,10 +83,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <param name="cityLibraryService">Optional city library service for master data.</param>
     /// <param name="settingsService">Optional settings service used to persist changes.</param>
     /// <param name="announcementService">Optional announcement service for text-to-speech announcements.</param>
-    /// <param name="photoHubClient">Optional PhotoHub client instance (WinUI only, loosely typed as <see cref="object"/>).</param>
     /// <param name="featureTogglePageProvider">Optional provider for feature toggle page metadata.</param>
     /// <param name="loggerFactory">Optional factory used to create loggers for nested view models (e.g. workflow command encoding).</param>
     /// <param name="dialogService">Optional dialog service for showing confirmation dialogs (WinUI only).</param>
+    /// <param name="speechTestAction">Optional direct speech test action for the selected speaker engine.</param>
     public MainWindowViewModel(
         LayoutColumnWidthsViewModel layoutColumnWidths,
         IMobaRuntime mobaRuntime,
@@ -99,10 +100,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ICityService? cityLibraryService = null,
         ISettingsService? settingsService = null,
         AnnouncementService? announcementService = null,
-        object? photoHubClient = null,  // Optional PhotoHubClient (only in WinUI, type is object to avoid assembly reference)
         IFeatureTogglePageProvider? featureTogglePageProvider = null,
         ILoggerFactory? loggerFactory = null,
-        IDialogService? dialogService = null)
+        IDialogService? dialogService = null,
+        Func<string, Task>? speechTestAction = null)
     {
         ArgumentNullException.ThrowIfNull(layoutColumnWidths);
         ArgumentNullException.ThrowIfNull(mobaRuntime);
@@ -125,10 +126,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _cityLibraryService = cityLibraryService;
         _settingsService = settingsService;
         _announcementService = announcementService;
+        _speechTestAction = speechTestAction;
         _executionContext = executionContext;
         _featureTogglePageProvider = featureTogglePageProvider;
         _dialogService = dialogService;
-        _ = photoHubClient;
 
         _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
         ApplyRuntimeSnapshot(_mobaRuntime.Current);
@@ -150,12 +151,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         InitializeTrafficMonitor();
 
         InitializeStatisticsFromFeedbackPoints();
-
-        // Load City Library once on startup (background, non-blocking).
-        if (_cityLibraryService != null)
-        {
-            LoadCityLibraryOnStartupAsync().Observe(ex => _logger.LogWarning(ex, "Load city library failed"));
-        }
 
         InitializeFeatureToggleItems();
     }
@@ -515,11 +510,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private void ObserveBackgroundTask(Task task, string operationName)
     {
         task.Observe(ex => _logger.LogWarning(ex, "{OperationName} failed", operationName));
-    }
-
-    private async Task LoadCityLibraryOnStartupAsync()
-    {
-        await LoadCityLibraryAsync().ConfigureAwait(false);
     }
 
     [RelayCommand]

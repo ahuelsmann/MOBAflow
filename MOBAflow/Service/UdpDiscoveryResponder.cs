@@ -13,7 +13,7 @@ using System.Text;
 /// <summary>
 /// UDP Discovery Responder for MOBAflow REST-API.
 /// Listens for UDP Multicast discovery requests from MAUI clients and responds with server IP + Port.
-/// Runs alongside Kestrel to enable automatic server discovery on local network.
+/// Runs alongside the MOBApi REST host to enable automatic server discovery on the local network.
 /// </summary>
 public sealed partial class UdpDiscoveryResponder : IDisposable
 {

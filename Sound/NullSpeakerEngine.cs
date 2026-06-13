@@ -11,7 +11,7 @@ public class NullSpeakerEngine : ISpeakerEngine
     /// <summary>
     /// Display name of this null speech engine, for example shown in the UI.
     /// </summary>
-    public string Name { get; set; } = "Null Speaker Engine (No Audio)";
+    public string Name { get; } = "Null Speaker Engine (No Audio)";
 
     /// <summary>
     /// Does nothing. Text-to-speech is not supported on this platform.

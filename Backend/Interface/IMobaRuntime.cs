@@ -9,101 +9,85 @@ using Domain;
 using Model;
 
 /// <summary>
-/// Defines the in-process MOBA runtime that owns Z21 connection state and active project execution.
-/// WinUI and MAUI inject this interface directly into SharedUI view models (no separate UI client facade).
+/// Read-only runtime snapshot access.
 /// </summary>
-public interface IMobaRuntime
+public interface IRuntimeSnapshotProvider
 {
-    /// <summary>
-    /// Gets the latest runtime snapshot.
-    /// </summary>
     MobaRuntimeSnapshot Current { get; }
+}
 
-    /// <summary>
-    /// Starts runtime initialization such as publishing the initial snapshot and Z21 auto-connect.
-    /// </summary>
+/// <summary>
+/// Runtime lifecycle and Z21 connection commands.
+/// </summary>
+public interface IConnectionRuntime
+{
     Task StartAsync(CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Activates the specified project for runtime execution.
-    /// </summary>
     Task ActivateProjectAsync(Project editableProject, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Connects to the configured Z21 endpoint.
-    /// </summary>
     Task ConnectAsync(CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Disconnects from the Z21.
-    /// </summary>
     Task DisconnectAsync(CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Enables or disables track power.
-    /// </summary>
     Task SetTrackPowerAsync(bool isOn, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Sets the system-state polling interval in seconds.
-    /// </summary>
-    void SetSystemStatePollingInterval(int intervalSeconds);
-
-    /// <summary>
-    /// Sends a locomotive drive command through the runtime.
-    /// </summary>
-    Task SetLocomotiveDriveAsync(int address, int speed, bool forward, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Sends a locomotive function command through the runtime.
-    /// </summary>
-    Task SetLocomotiveFunctionAsync(int address, int functionIndex, bool isOn, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Turns off all locomotive functions F0-F31 for the given address through the runtime.
-    /// </summary>
-    Task SetAllLocomotiveFunctionsOffAsync(int address, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Requests the current state of a locomotive through the runtime.
-    /// </summary>
-    Task RequestLocomotiveInfoAsync(int address, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Clears a latched fail-safe state after recovery.
-    /// </summary>
     Task AcknowledgeFailSafeAsync(CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Simulates a feedback input for testing purposes.
-    /// </summary>
+    Task RequestSystemStateAsync(CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// Locomotive command role of the runtime.
+/// </summary>
+public interface ILocomotiveRuntime
+{
+    Task SetLocomotiveDriveAsync(int address, int speed, bool forward, CancellationToken cancellationToken = default);
+
+    Task SetLocomotiveFunctionAsync(int address, int functionIndex, bool isOn, CancellationToken cancellationToken = default);
+
+    Task SetAllLocomotiveFunctionsOffAsync(int address, CancellationToken cancellationToken = default);
+
+    Task RequestLocomotiveInfoAsync(int address, CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// Signal, turnout and journey command role of the runtime.
+/// </summary>
+public interface ISignalTurnoutRuntime
+{
     Task SimulateFeedbackAsync(int inPort, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Resets the runtime state of the specified journey.
-    /// </summary>
     Task ResetJourneyAsync(Guid journeyId, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Sets a signal aspect through the runtime.
-    /// </summary>
     Task SetSignalAspectAsync(SbSignal signal, CancellationToken cancellationToken = default);
-    Task SendTurnoutCommandAsync(int decoderAddress, int output, bool activate, bool queue = false, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Gets the current traffic monitor packets.
-    /// </summary>
+    Task SetSignalAspectAsync(Guid signalId, SignalAspect signalAspect, CancellationToken cancellationToken = default);
+
+    Task SendTurnoutCommandAsync(int decoderAddress, int output, bool activate, bool queue = false, CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// Runtime traffic monitoring and polling diagnostics.
+/// </summary>
+public interface ITrafficMonitor
+{
+    void SetSystemStatePollingInterval(int intervalSeconds);
+
     IReadOnlyList<Z21TrafficPacket> GetTrafficPackets();
 
-    /// <summary>
-    /// Clears the traffic monitor.
-    /// </summary>
     void ClearTrafficMonitor();
+}
 
-    /// <summary>
-    /// Requests the current system state from the Z21.
-    /// Called when window is activated to refresh connection status.
-    /// </summary>
-    Task RequestSystemStateAsync(CancellationToken cancellationToken = default);
+/// <summary>
+/// Backward-compatible aggregate facade for existing runtime consumers.
+/// Prefer the narrower role interfaces for new code.
+/// </summary>
+public interface IMobaRuntime :
+    IRuntimeSnapshotProvider,
+    IConnectionRuntime,
+    ILocomotiveRuntime,
+    ISignalTurnoutRuntime,
+    ITrafficMonitor
+{
 }
 

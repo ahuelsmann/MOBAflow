@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Common.Navigation;
 
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Input;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -17,6 +18,7 @@ using Service;
 using SharedUI.Interface;
 
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Reflection;
 
 using MainWindowViewModel = SharedUI.ViewModel.MainWindowViewModel;
@@ -32,10 +34,12 @@ public sealed partial class MainWindow
     private readonly RestApiProcessService _restApiProcessService;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly List<PageMetadata> _pages;
-    private readonly NavigationItemFactory _navigationItemFactory;
+    private readonly MainWindowNavigationBootstrapper _navigationBootstrapper;
     private readonly ILogger<MainWindow> _logger;
     private bool _isClosing;
     private bool _isShutdownInProgress;
+    private bool _deferredUiStartupStarted;
+    private bool _deferredUiStartupCompleted;
 
     // NEU: Window Activation Service für InputActivationListener
     private readonly WindowActivationService _windowActivationService;
@@ -76,42 +80,69 @@ public sealed partial class MainWindow
         AppSettings appSettings,
         RestApiStatusService restApiStatusService,
         RestApiProcessService restApiProcessService,
+        ILogger<WindowActivationService> windowActivationLogger,
         ILogger<MainWindow> logger)
     {
         ArgumentNullException.ThrowIfNull(logger);
         _logger = logger;
         try
         {
+            var timer = Stopwatch.StartNew();
             ViewModel = viewModel;
             _navigationService = navigationService;
             _uiDispatcher = uiDispatcher;
             _restApiStatusService = restApiStatusService;
             _restApiProcessService = restApiProcessService;
             _pages = pages;
-            _navigationItemFactory = new NavigationItemFactory(appSettings);
+            var navigationItemFactory = new NavigationItemFactory(appSettings);
+            _navigationBootstrapper = new MainWindowNavigationBootstrapper(
+                _navigationService,
+                _pages,
+                navigationItemFactory);
 
             InitializeComponent();
+            _logger.LogInformation("[Startup] MainWindow XAML initialized in {ElapsedMs}ms", timer.ElapsedMilliseconds);
 
             // NEU: Window Activation Service initialisieren
-            _windowActivationService = new WindowActivationService(AppWindow,
-                App.Current.Services.GetRequiredService<ILogger<WindowActivationService>>());
+            _windowActivationService = new WindowActivationService(AppWindow, windowActivationLogger);
             SubscribeWindowActivationEvents();
 
             ConfigureWindowChrome();
             ConfigureWindowIconAndSizing();
             InitializeIoService(ioService);
-            InitializeNavigation();
             SubscribeWindowEvents();
             ApplyTheme(ViewModel.IsDarkMode);
             ApplyZ21TrackPowerIconConnectedState();
-
-            _restApiStatusService.Start();
+            _logger.LogInformation("[Startup] MainWindow constructor completed in {ElapsedMs}ms", timer.ElapsedMilliseconds);
         }
         catch (Exception ex)
         {
             _logger.LogCritical(ex, "MainWindow constructor failed");
             throw;
         }
+    }
+
+    public void ScheduleDeferredUiStartup()
+    {
+        if (_deferredUiStartupStarted)
+        {
+            return;
+        }
+
+        _deferredUiStartupStarted = true;
+        if (!DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, RunDeferredUiStartup))
+        {
+            RunDeferredUiStartup();
+        }
+    }
+
+    private void RunDeferredUiStartup()
+    {
+        var timer = Stopwatch.StartNew();
+        InitializeNavigation();
+        _restApiStatusService.Start();
+        _deferredUiStartupCompleted = true;
+        _logger.LogInformation("[Startup] Deferred MainWindow UI startup completed in {ElapsedMs}ms", timer.ElapsedMilliseconds);
     }
 
     private void ConfigureWindowChrome()
@@ -215,12 +246,18 @@ public sealed partial class MainWindow
         {
             // Z21-Status refreshen wenn Fenster aktiv wird
             ViewModel?.RefreshZ21StatusCommand?.Execute(null);
-            _restApiStatusService?.ResumePolling();
+            if (_deferredUiStartupCompleted)
+            {
+                _restApiStatusService?.ResumePolling();
+            }
         }
         else if (e.NewState == InputActivationState.Deactivated)
         {
             // SignalR/Polling pausieren bei Inaktivität
-            _restApiStatusService?.PausePolling();
+            if (_deferredUiStartupCompleted)
+            {
+                _restApiStatusService?.PausePolling();
+            }
         }
     }
 
@@ -252,25 +289,7 @@ public sealed partial class MainWindow
     /// </summary>
     private void BuildNavigationFromRegistry()
     {
-        // Clear existing items (remove hardcoded XAML items)
-        MainNavigation.MenuItems.Clear();
-
-        NavigationCategory? lastCategory = null;
-
-        foreach (var page in _pages)
-        {
-            // Add separator between categories
-            if (lastCategory.HasValue && page.Category != lastCategory.Value)
-            {
-                MainNavigation.MenuItems.Add(_navigationItemFactory.CreateSeparator());
-            }
-
-            // Create and add navigation item
-            var navItem = _navigationItemFactory.CreateItem(page);
-            MainNavigation.MenuItems.Add(navItem);
-
-            lastCategory = page.Category;
-        }
+        _navigationBootstrapper.BuildMenu(MainNavigation);
     }
 
     /// <summary>
@@ -278,9 +297,9 @@ public sealed partial class MainWindow
     /// </summary>
     private async Task InitializeNavigationAsync()
     {
-        await _navigationService.InitializeAsync(ContentFrame);
-        await _navigationService.NavigateToOverviewAsync();
-        ViewModel.UpdateActivePhotoAssignmentPageTag(_navigationService.CurrentPageTag);
+        await _navigationBootstrapper.InitializeAsync(
+            ContentFrame,
+            pageTag => ViewModel.UpdateActivePhotoAssignmentPageTag(pageTag));
     }
 
     #region Event Handlers

@@ -23,9 +23,15 @@ public sealed partial class MobaRuntimeService
     {
         _isConnected = connected;
         _isZ21Connecting = false;
+        if (connected)
+        {
+            _hasSeenSuccessfulZ21Connection = true;
+            _isManualDisconnectRequested = false;
+        }
+
         _statusText = connected
-            ? GetConnectedStatusText()
-            : GetDisconnectedStatusText();
+            ? MobaRuntimeStatusFormatter.GetConnectedStatusText(_settings.Z21.CurrentIpAddress)
+            : MobaRuntimeStatusFormatter.GetDisconnectedStatusText(_isManualDisconnectRequested);
 
         PublishSnapshot();
     }
@@ -59,7 +65,7 @@ public sealed partial class MobaRuntimeService
         _temperature = systemState.Temperature;
         _supplyVoltage = systemState.SupplyVoltage;
         _vccVoltage = systemState.VccVoltage;
-        _statusText = BuildSystemStateStatusText(systemState);
+        _statusText = MobaRuntimeStatusFormatter.BuildSystemStateStatusText(systemState);
 
         PublishSnapshot();
     }
@@ -111,7 +117,7 @@ public sealed partial class MobaRuntimeService
     private void OnActionExecutionError(object? sender, ActionExecutionErrorEventArgs e)
     {
         _ = sender;
-        _statusText = $"❌ Action '{e.Action.Name}' failed: {e.ErrorMessage}";
+        _statusText = $"Action '{e.Action.Name}' failed: {e.ErrorMessage}";
         PublishSnapshot();
         _logger.LogError(e.Exception, "Action '{ActionName}' execution failed: {ErrorMessage}", e.Action.Name, e.ErrorMessage);
     }

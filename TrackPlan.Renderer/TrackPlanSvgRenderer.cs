@@ -28,13 +28,21 @@ public record RenderResult(string Svg, IReadOnlyList<PlacedSegment> Placements);
 /// </summary>
 public class TrackPlanSvgRenderer
 {
+    private readonly ISegmentGeometryProvider _geometryProvider;
     private readonly StringBuilder _svg = new();
     private readonly List<PlacedSegment> _placements = [];
-    private double _minX = double.MaxValue;
-    private double _minY = double.MaxValue;
-    private double _maxX = double.MinValue;
-    private double _maxY = double.MinValue;
+    private readonly TrackPlanSvgBoundsTracker _bounds = new();
     private int _segmentIndex; // Counter for alternating color scheme
+
+    public TrackPlanSvgRenderer() : this(PikoASegmentGeometryProvider.Instance)
+    {
+    }
+
+    public TrackPlanSvgRenderer(ISegmentGeometryProvider geometryProvider)
+    {
+        ArgumentNullException.ThrowIfNull(geometryProvider);
+        _geometryProvider = geometryProvider;
+    }
 
     /// <summary>
     /// Renders a TrackPlan in SVG format and returns placements for Win2D.
@@ -53,10 +61,7 @@ public class TrackPlanSvgRenderer
     {
         _svg.Clear();
         _placements.Clear();
-        _minX = double.MaxValue;
-        _minY = double.MaxValue;
-        _maxX = double.MinValue;
-        _maxY = double.MinValue;
+        _bounds.Reset();
 
         var firstSegment = FindFirstSegment(trackPlan);
         if (firstSegment == null && trackPlan.Segments.Any())
@@ -111,58 +116,11 @@ public class TrackPlanSvgRenderer
         var placed = CreatePlacement(segment, incomingConnection, x, y, angle);
         _placements.Add(placed);
 
-        double nextX;
-        double nextY;
-        double nextAngle;
-
         // Increment segment index for color scheme
         var currentSegmentIndex = _segmentIndex++;
 
-        // Rendera dieses Segment
-        if (segment is WR)
-        {
-            (nextX, nextY, nextAngle) = RenderWr(placed, currentSegmentIndex);
-        }
-        else if (segment is R9)
-        {
-            (nextX, nextY, nextAngle) = RenderR9(entryPort, placed, currentSegmentIndex);
-        }
-        else if (segment is R1)
-        {
-            (nextX, nextY, nextAngle) = RenderR1(entryPort, placed, currentSegmentIndex);
-        }
-        else if (segment is R2)
-        {
-            (nextX, nextY, nextAngle) = RenderR2(entryPort, placed, currentSegmentIndex);
-        }
-        else if (segment is R3)
-        {
-            (nextX, nextY, nextAngle) = RenderR3(entryPort, placed, currentSegmentIndex);
-        }
-        else if (segment is R4)
-        {
-            (nextX, nextY, nextAngle) = RenderR4(entryPort, placed, currentSegmentIndex);
-        }
-        else if (segment is G239)
-        {
-            (nextX, nextY, nextAngle) = RenderG239(entryPort, placed, currentSegmentIndex);
-        }
-        else if (segment is G231)
-        {
-            (nextX, nextY, nextAngle) = RenderG231(entryPort, placed, currentSegmentIndex);
-        }
-        else if (segment is G62)
-        {
-            (nextX, nextY, nextAngle) = RenderG62(entryPort, placed, currentSegmentIndex);
-        }
-        else
-        {
-            nextX = x;
-            nextY = y;
-            nextAngle = angle;
-        }
+        RenderSegment(placed, entryPort, currentSegmentIndex);
 
-        // Add further track types here
         // Finde alle ausgehenden Verbindungen von diesem Segment
         var outgoingConnections = trackPlan.Connections
             .Where(c => c.SourceSegment == segment.No)
@@ -190,22 +148,22 @@ public class TrackPlanSvgRenderer
         return portProperty.Last();
     }
 
-    private static PlacedSegment CreatePlacement(Segment segment, PortConnection? incomingConnection, double x, double y, double angle)
+    private PlacedSegment CreatePlacement(Segment segment, PortConnection? incomingConnection, double x, double y, double angle)
     {
         if (incomingConnection == null)
             return new PlacedSegment(segment, x, y, NormalizeAngle(angle));
 
         var desiredOutwardAngle = NormalizeAngle(angle + 180);
-        var (originX, originY, rotationDegrees) = SegmentPortGeometry.GetPlacementForPort(segment, incomingConnection.TargetPort, x, y, desiredOutwardAngle);
+        var (originX, originY, rotationDegrees) = _geometryProvider.GetPlacementForPort(segment, incomingConnection.TargetPort, x, y, desiredOutwardAngle);
         return new PlacedSegment(segment, originX, originY, rotationDegrees);
     }
 
-    private static void GetOutgoingPortState(PlacedSegment placed, string portName, out double x, out double y, out double angle)
+    private void GetOutgoingPortState(PlacedSegment placed, string portName, out double x, out double y, out double angle)
     {
-        var (worldX, worldY, _) = SegmentPortGeometry.GetPortWorldPosition(placed, portName);
+        var (worldX, worldY, _) = _geometryProvider.GetPortWorldPosition(placed, portName);
         x = worldX;
         y = worldY;
-        angle = SegmentPortGeometry.GetPortOutwardWorldAngleDegrees(placed, portName);
+        angle = _geometryProvider.GetPortOutwardWorldAngleDegrees(placed, portName);
     }
 
     private static double NormalizeAngle(double angle)
@@ -217,10 +175,29 @@ public class TrackPlanSvgRenderer
         return angle;
     }
 
+    private void RenderSegment(PlacedSegment placed, char entryPort, int segmentIndex)
+    {
+        DrawSegmentPath(placed);
+
+        foreach (var port in _geometryProvider.GetPorts(placed.Segment))
+        {
+            var portChar = ExtractPortChar(port.PortName);
+            var (portX, portY, portAngle) = _geometryProvider.GetPortWorldPosition(placed, port.PortName);
+            DrawPortStroke(
+                portX,
+                portY,
+                portAngle,
+                TrackPlanSvgPortColorScheme.GetPortColor(portChar, segmentIndex),
+                portChar,
+                portChar == entryPort);
+            UpdateBounds(portX, portY);
+        }
+    }
+
     /// <summary>Draws a path with shared geometry from SegmentLocalPathBuilder.</summary>
     private void DrawSegmentPath(PlacedSegment placed)
     {
-        var path = SegmentLocalPathBuilder.GetPath(placed.Segment);
+        var path = _geometryProvider.GetPath(placed.Segment);
         var svgPath = PathToSvgConverter.ToSvgPath(path, placed.X, placed.Y, placed.RotationDegrees);
         _svg.AppendLine($"  <path d=\"{svgPath}\" stroke=\"#333\" stroke-width=\"4\" fill=\"none\" />");
     }
@@ -239,7 +216,7 @@ public class TrackPlanSvgRenderer
         // Port A (entry) - physical port A (black)
         double portAx = placed.X;
         double portAy = placed.Y;
-        DrawPortStroke(portAx, portAy, placed.RotationDegrees, GetPortColor('A', segmentIndex), 'A', true);
+        DrawPortStroke(portAx, portAy, placed.RotationDegrees, TrackPlanSvgPortColorScheme.GetPortColor('A', segmentIndex), 'A', true);
         UpdateBounds(portAx, portAy);
 
         // Port B (Gerade) - physischer Port B (rot) am Ende der Geraden
@@ -247,13 +224,13 @@ public class TrackPlanSvgRenderer
 
         DrawSegmentPath(placed);
 
-        DrawPortStroke(portBx, portBy, portBAngle, GetPortColor('B', segmentIndex), 'B', false);
+        DrawPortStroke(portBx, portBy, portBAngle, TrackPlanSvgPortColorScheme.GetPortColor('B', segmentIndex), 'B', false);
         UpdateBounds(portBx, portBy);
 
         // Port C (Kurve) - physischer Port C (grün) am Ende der Kurve
         var (portCx, portCy, portCAngle) = SegmentPortGeometry.GetPortWorldPosition(placed, "PortC");
 
-        DrawPortStroke(portCx, portCy, portCAngle, GetPortColor('C', segmentIndex), 'C', false);
+        DrawPortStroke(portCx, portCy, portCAngle, TrackPlanSvgPortColorScheme.GetPortColor('C', segmentIndex), 'C', false);
         UpdateBounds(portCx, portCy);
 
         // Update position for next track
@@ -393,8 +370,8 @@ public class TrackPlanSvgRenderer
 
         DrawSegmentPath(placed);
 
-        DrawPortStroke(portAx, portAy, portAStrokeAngle, GetPortColor('A', segmentIndex), 'A', entryPort == 'A');
-        DrawPortStroke(portBx, portBy, portBStrokeAngle, GetPortColor('B', segmentIndex), 'B', entryPort == 'B');
+        DrawPortStroke(portAx, portAy, portAStrokeAngle, TrackPlanSvgPortColorScheme.GetPortColor('A', segmentIndex), 'A', entryPort == 'A');
+        DrawPortStroke(portBx, portBy, portBStrokeAngle, TrackPlanSvgPortColorScheme.GetPortColor('B', segmentIndex), 'B', entryPort == 'B');
 
         UpdateBounds(portAx, portAy);
         UpdateBounds(portBx, portBy);
@@ -405,13 +382,7 @@ public class TrackPlanSvgRenderer
     /// <summary>
     /// Updates bounding box (min/max coordinates) for SVG viewBox calculation.
     /// </summary>
-    private void UpdateBounds(double x, double y)
-    {
-        _minX = Math.Min(_minX, x);
-        _minY = Math.Min(_minY, y);
-        _maxX = Math.Max(_maxX, x);
-        _maxY = Math.Max(_maxY, y);
-    }
+    private void UpdateBounds(double x, double y) => _bounds.Include(x, y);
 
     /// <summary>
     /// Finalizes SVG based on bounds collected during rendering.
@@ -426,12 +397,12 @@ public class TrackPlanSvgRenderer
     {
         // Add margin
         double margin = 50;
-        double width = _maxX - _minX + 2 * margin;
-        double height = _maxY - _minY + 2 * margin;
+        double width = _bounds.MaxX - _bounds.MinX + 2 * margin;
+        double height = _bounds.MaxY - _bounds.MinY + 2 * margin;
 
         // viewBox: x, y, width, height (mit den originalen Koordinaten)
-        double viewBoxX = _minX - margin;
-        double viewBoxY = _minY - margin;
+        double viewBoxX = _bounds.MinX - margin;
+        double viewBoxY = _bounds.MinY - margin;
         double viewBoxWidth = width;
         double viewBoxHeight = height;
 
@@ -500,42 +471,5 @@ public class TrackPlanSvgRenderer
 
         _svg.AppendLine($"  <text x=\"{labelX.ToString("F2", CultureInfo.InvariantCulture)}\" y=\"{labelY.ToString("F2", CultureInfo.InvariantCulture)}\" " +
                        $"font-size=\"14\" font-weight=\"bold\" fill=\"{color}\" text-anchor=\"middle\" dominant-baseline=\"middle\">{portLabel}</text>");
-    }
-
-    /// <summary>
-    /// Returns the color for a port based on its name and track index.
-    /// Alternating color scheme per track for better distinction:
-    /// - Even indices (0, 2, 4...): A=black, B=red, C=green, D=blue
-    /// - Odd indices (1, 3, 5...): A=gray, B=magenta, C=yellow, D=cyan
-    /// </summary>
-    /// <param name="port">Port character (A/B/C/D)</param>
-    /// <param name="segmentIndex">Index of track segment (for color alternation)</param>
-    /// <returns>Hex color code</returns>
-    private string GetPortColor(char port, int segmentIndex)
-    {
-        var scheme = segmentIndex % 2; // 0 oder 1
-
-        if (scheme == 0)
-        {
-            // Schema 1: Klassische Farben
-            return port switch
-            {
-                'A' => "#000000", // Schwarz
-                'B' => "#FF0000", // Rot
-                'C' => "#00FF00", // Green
-                'D' => "#0000FF", // Blau
-                _ => "#808080"    // Grau (Fallback)
-            };
-        }
-
-        // Schema 2: Alternative Farben
-        return port switch
-        {
-            'A' => "#808080", // Grau
-            'B' => "#FF00FF", // Magenta
-            'C' => "#FFFF00", // Gelb
-            'D' => "#00FFFF", // Cyan
-            _ => "#808080"    // Grau (Fallback)
-        };
     }
 }

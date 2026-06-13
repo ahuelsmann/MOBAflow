@@ -15,7 +15,7 @@ Digital Command Station.
 - **MVVM:** CommunityToolkit.Mvvm 8.4.2 (source generators)
 - **DI:** Microsoft.Extensions.DependencyInjection
 - **Logging:** Serilog
-- **Speech:** Azure Cognitive Services, System.Speech
+- **Speech:** Piper TTS, System.Speech
 - **Testing:** NUnit 4.5.1, Moq 4.20.72, Coverlet
 
 ## Build & Run

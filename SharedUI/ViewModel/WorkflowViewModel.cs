@@ -30,9 +30,7 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
     private readonly Workflow _model;
 
     // Services
-    private readonly IIoService _ioService;
-    private readonly ISoundPlayer? _soundPlayer;
-    private readonly ILogger<CommandViewModel>? _commandLogger;
+    private readonly IWorkflowActionViewModelFactory _actionViewModelFactory;
     #endregion
 
     /// <summary>
@@ -46,9 +44,10 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
     {
         ArgumentNullException.ThrowIfNull(model);
         _model = model;
-        _ioService = ioService ?? new NullIoService();
-        _soundPlayer = soundPlayer;
-        _commandLogger = loggerFactory?.CreateLogger<CommandViewModel>();
+        _actionViewModelFactory = new WorkflowActionViewModelFactory(
+            ioService ?? new NullIoService(),
+            soundPlayer,
+            loggerFactory?.CreateLogger<CommandViewModel>());
 
         Actions = new ObservableCollection<object>(
             model.Actions
@@ -139,65 +138,9 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
     [RelayCommand]
     private void AddAction(ActionType actionType)
     {
-        WorkflowAction newAction = actionType switch
-        {
-            ActionType.Announcement => new WorkflowAction
-            {
-                Name = "New Announcement",
-                Number = (uint)(_model.Actions.Count + 1),
-                Type = ActionType.Announcement,
-                Announcement = new AnnouncementActionPayload
-                {
-                    Message = "New announcement text",
-                    VoiceName = "de-DE-KatjaNeural"
-                }
-            },
-            ActionType.Audio => new WorkflowAction
-            {
-                Name = "New Audio",
-                Number = (uint)(_model.Actions.Count + 1),
-                Type = ActionType.Audio,
-                Audio = new AudioActionPayload
-                {
-                    FilePath = "path/to/sound.wav"
-                }
-            },
-            ActionType.Command => new WorkflowAction
-            {
-                Name = "New Command",
-                Number = (uint)(_model.Actions.Count + 1),
-                Type = ActionType.Command,
-                Command = new CommandActionPayload
-                {
-                    BytesBase64 = Convert.ToBase64String(new byte[] { 0x00 })
-                }
-            },
-            ActionType.SelectSignalAspect => new WorkflowAction
-            {
-                Name = "New Signal Aspect",
-                Number = (uint)(_model.Actions.Count + 1),
-                Type = ActionType.SelectSignalAspect,
-                SelectSignalAspect = new SelectSignalAspectActionPayload
-                {
-                    BaseAddress = 1,
-                    SignalAspect = SignalAspect.Hp0,
-                    MultiplexerArticleNumber = "5229",
-                    SignalArticleNumber = "4046"
-                }
-            },
-            ActionType.TrainDestinationDisplay => new WorkflowAction
-            {
-                Name = "New Display Output",
-                Number = (uint)(_model.Actions.Count + 1),
-                Type = ActionType.TrainDestinationDisplay,
-                TrainDestinationDisplay = new TrainDestinationDisplayActionPayload
-                {
-                    DisplayDeviceId = Guid.Empty,
-                    ClearBeforeRender = true
-                }
-            },
-            _ => throw new ArgumentException($"Unsupported action type: {actionType}")
-        };
+        WorkflowAction newAction = _actionViewModelFactory.CreateDefaultAction(
+            actionType,
+            (uint)(_model.Actions.Count + 1));
 
         _model.Actions.Add(newAction);
 
@@ -218,16 +161,7 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
     [RelayCommand]
     private void DeleteAction(object actionVm)
     {
-        WorkflowAction? actionModel = actionVm switch
-        {
-            AnnouncementViewModel avm => avm.ToWorkflowAction(),
-            AudioViewModel audvm => audvm.ToWorkflowAction(),
-            CommandViewModel cvm => cvm.ToWorkflowAction(),
-            SelectSignalAspectViewModel savm => savm.ToWorkflowAction(),
-            _ => null
-        };
-
-        if (actionModel != null)
+        if (_actionViewModelFactory.TryGetAction(actionVm, out var actionModel))
         {
             // Unsubscribe from PropertyChanged events before removing
             if (actionVm is WorkflowActionViewModel workflowActionVm)
@@ -285,14 +219,7 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
 
     private object CreateViewModelForAction(WorkflowAction action)
     {
-        return action.Type switch
-        {
-            ActionType.Announcement => new AnnouncementViewModel(action),
-            ActionType.Audio => new AudioViewModel(action, _ioService, _soundPlayer),
-            ActionType.Command => new CommandViewModel(action, _commandLogger),
-            ActionType.SelectSignalAspect => new SelectSignalAspectViewModel(action),
-            _ => throw new NotSupportedException($"Action type {action.Type} is not supported")
-        };
+        return _actionViewModelFactory.CreateViewModel(action);
     }
 
     /// <summary>

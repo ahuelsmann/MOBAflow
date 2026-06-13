@@ -116,19 +116,42 @@ internal sealed partial class SettingsPage
         }
     }
 
-    private void AzureSpeechSetupButton_Click(object sender, RoutedEventArgs e)
+    private void BrowsePiperExecutable_Click(object sender, RoutedEventArgs e)
     {
         _ = sender;
         _ = e;
-        NavigateToAzureSpeechSetupAsync().Observe(ex => _logger?.LogWarning(ex, "Navigate to Azure Speech setup failed"));
+        HandleBrowsePiperFileAsync(".exe", path => ViewModel.PiperExecutablePath = path).Observe(ex => _logger?.LogWarning(ex, "Browse Piper executable failed"));
     }
 
-    private async Task NavigateToAzureSpeechSetupAsync()
+    private void BrowsePiperModel_Click(object sender, RoutedEventArgs e)
     {
-        if (_navigationService != null)
+        _ = sender;
+        _ = e;
+        HandleBrowsePiperFileAsync(".onnx", path => ViewModel.PiperModelPath = path).Observe(ex => _logger?.LogWarning(ex, "Browse Piper model failed"));
+    }
+
+    private void BrowsePiperConfig_Click(object sender, RoutedEventArgs e)
+    {
+        _ = sender;
+        _ = e;
+        HandleBrowsePiperFileAsync(".json", path => ViewModel.PiperConfigPath = path).Observe(ex => _logger?.LogWarning(ex, "Browse Piper config failed"));
+    }
+
+    private static async Task HandleBrowsePiperFileAsync(string fileType, Action<string> applyPath)
+    {
+        var window = App.MainWindow;
+        if (window == null) return;
+
+        var picker = new FileOpenPicker(window.AppWindow.Id)
         {
-            await _navigationService.NavigateToAsync("help", "Azure Speech Setup");
-        }
+            SuggestedStartLocation = PickerLocationId.DocumentsLibrary
+        };
+        picker.FileTypeFilter.Add(fileType);
+
+        var file = await picker.PickSingleFileAsync();
+        if (file == null) return;
+
+        applyPath(file.Path);
     }
 
     private static void ResetPersistedLayouts(AppSettings settings)

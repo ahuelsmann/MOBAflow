@@ -376,7 +376,7 @@ git config core.hooksPath .git/hooks  # Activate hooks
 
 - [x] `System.IO.InvalidDataException` when parsing malformed JSON at runtime
 - [x] Build now fails early with clear error messages (Line number + position)
-- [x] Developers warned about missing Speech.Key or Z21 IP during development
+- [x] Developers warned about missing Piper TTS paths or Z21 IP during development
 
 **Build Integration:**
 
@@ -405,7 +405,7 @@ git config core.hooksPath .git/hooks  # Activate hooks
 
 **Type-Specific Validation:**
 
-- Configuration files: Secrets warnings (Speech.Key, Z21 IP)
+- Configuration files: TTS path warnings (Piper paths, Z21 IP)
 - Solutions: Project count validation
 - Locomotives: Category & epoch validation
 - Stations: Station count validation

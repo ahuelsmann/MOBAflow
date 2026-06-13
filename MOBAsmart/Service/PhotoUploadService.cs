@@ -15,29 +15,13 @@ public class PhotoUploadService
     /// LAN health checks bypass the platform <see cref="HttpClient"/> handler so Android does not route
     /// private IPs through a system proxy/VPN (avoids <c>SocksSocketImpl</c> / failed connects in logs).
     /// </summary>
-    private static readonly Lazy<HttpClient> LanHealthHttpClient = new(CreateLanHealthHttpClient);
-
     private readonly HttpClient _httpClient;
+    private readonly HttpClient _lanHealthHttpClient;
 
-    private static HttpClient CreateLanHealthHttpClient()
-    {
-        var handler = new SocketsHttpHandler
-        {
-            UseProxy = false,
-            AutomaticDecompression = DecompressionMethods.None,
-            ConnectTimeout = TimeSpan.FromSeconds(3),
-            PooledConnectionLifetime = TimeSpan.FromMinutes(2),
-        };
-
-        return new HttpClient(handler, disposeHandler: true)
-        {
-            Timeout = TimeSpan.FromSeconds(6),
-        };
-    }
-
-    public PhotoUploadService(HttpClient httpClient)
+    public PhotoUploadService(HttpClient httpClient, HttpClient? lanHealthHttpClient = null)
     {
         _httpClient = httpClient;
+        _lanHealthHttpClient = lanHealthHttpClient ?? MobiLanHttpClientFactory.CreateLanHealthClient();
     }
 
     /// <summary>
@@ -181,7 +165,7 @@ public class PhotoUploadService
             var url = $"http://{serverIp}:{serverPort}/api/photos/health";
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            using var response = await LanHealthHttpClient.Value
+            using var response = await _lanHealthHttpClient
                 .GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cts.Token)
                 .ConfigureAwait(false);
 

@@ -11,7 +11,7 @@ using SharedUI.ViewModel;
 using System.ComponentModel;
 
 // ReSharper disable once PartialTypeWithSinglePart
-public partial class MainPage
+public partial class CounterPage
 {
     public MauiViewModel ViewModel { get; }
     private readonly ISettingsService _settingsService;
@@ -19,7 +19,7 @@ public partial class MainPage
     private CancellationTokenSource? _pulseAnimationCts;
     private Task? _viewModelInitializationTask;
 
-    public MainPage(
+    public CounterPage(
         MauiViewModel viewModel,
         ISettingsService settingsService,
         AppSettings settings)

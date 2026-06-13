@@ -8,7 +8,7 @@ using Domain;
 /// Provides platform-agnostic file loading, saving, and browsing functionality.
 /// Implementations handle platform-specific file pickers and storage APIs.
 /// </summary>
-public interface IIoService
+public interface ISolutionIoService
 {
     /// <summary>
     /// Creates a new empty solution and updates the DI singleton.
@@ -62,6 +62,10 @@ public interface IIoService
     /// </returns>
     Task<(bool success, string? path, string? error)> SaveAsync(Solution solution, string? currentPath);
 
+}
+
+public interface IFilePickerService
+{
     /// <summary>
     /// Opens a file picker to browse for a JSON file.
     /// </summary>
@@ -99,6 +103,10 @@ public interface IIoService
     /// </summary>
     /// <returns>The selected file path, or null if cancelled.</returns>
     Task<string?> BrowseForPhotoAsync();
+}
+
+public interface IPhotoStorageService
+{
 
     /// <summary>
     /// Saves a photo file to the application's local photos storage.
@@ -115,4 +123,8 @@ public interface IIoService
     /// <param name="relativePath">Relative path (e.g., returned from SavePhotoAsync)</param>
     /// <returns>Absolute file system path, or null if path is invalid</returns>
     string? GetPhotoFullPath(string? relativePath);
+}
+
+public interface IIoService : ISolutionIoService, IFilePickerService, IPhotoStorageService
+{
 }

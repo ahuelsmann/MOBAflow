@@ -418,7 +418,7 @@ Relevant third-party technology areas:
 - Serilog logging packages.
 - NUnit, Moq, Coverlet, Microsoft.NET.Test.Sdk.
 - SkiaSharp for display rendering.
-- Azure Cognitive Services Speech and System.Speech.
+- Piper TTS and System.Speech.
 - UraniumUI and AndroidX Startup for MOBAsmart.
 - External interoperability with Roco Z21, Piko A-Gleis, AnyRail XML, ESP32-S3/TFT_eSPI hardware.
 

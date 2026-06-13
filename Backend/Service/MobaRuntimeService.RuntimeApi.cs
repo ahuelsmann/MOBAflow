@@ -12,6 +12,8 @@ using Microsoft.Extensions.Logging;
 
 using Model;
 
+using System.Text.Json;
+
 /// <summary>
 /// Public <see cref="IMobaRuntime"/> command and query surface for <see cref="MobaRuntimeService"/>.
 /// </summary>
@@ -23,8 +25,13 @@ public sealed partial class MobaRuntimeService
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentNullException.ThrowIfNull(editableProject);
 
-        var activeProject = editableProject;
-        var journeyManager = new JourneyManager(_z21, activeProject, _workflowService, _executionContextFactory.Create());
+        // Runtime executes against an isolated deep copy of the editor project. This keeps editor
+        // and execution state fully separated: edits made in the UI after activation do not leak
+        // into the running session, and runtime mutations never touch the live editor model.
+        // Entity Ids are preserved by the round-trip, so snapshots and journey reset still resolve
+        // against the same Ids the editor exposes.
+        var activeProject = CloneForRuntime(editableProject);
+        var journeyManager = _journeyManagerFactory.Create(activeProject, _executionContextFactory.Create());
         journeyManager.StationChanged += OnJourneyRuntimeChanged;
         journeyManager.FeedbackReceived += OnJourneyRuntimeChanged;
 
@@ -38,6 +45,18 @@ public sealed partial class MobaRuntimeService
 
         PublishSnapshot();
         return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Creates an isolated runtime copy of the editor project using the canonical JSON serialization
+    /// (the same converters used for solution save/load), guaranteeing a deep, structurally identical
+    /// clone with preserved entity Ids.
+    /// </summary>
+    private static Project CloneForRuntime(Project editableProject)
+    {
+        var json = JsonSerializer.Serialize(editableProject, JsonOptions.Compact);
+        var clone = JsonSerializer.Deserialize<Project>(json, JsonOptions.Compact);
+        return clone ?? throw new InvalidOperationException("Failed to create an isolated runtime copy of the project.");
     }
 
     /// <inheritdoc />
@@ -285,7 +304,7 @@ public sealed partial class MobaRuntimeService
                     cancellationToken)
                 .ConfigureAwait(false);
 
-            _statusText = $"Signal '{signal.Name}' gestellt: DCC-Adresse {command.DccAddress}, Ausgang {command.Output}, Activate={command.Activate}";
+            _statusText = $"Signal '{signal.Name}' set: DCC address {command.DccAddress}, output {command.Output}, activate={command.Activate}";
             PublishSnapshot();
         }
         catch (ArgumentException ex)
@@ -294,11 +313,27 @@ public sealed partial class MobaRuntimeService
         }
         catch (Exception ex)
         {
-            _statusText = $"❌ Signal-Fehler: {ex.Message}";
+            _statusText = $"Signal error: {ex.Message}";
             PublishSnapshot();
             _logger.LogError(ex, "Failed to set signal aspect for '{SignalName}'", signal.Name);
             throw;
         }
+    }
+
+    /// <inheritdoc />
+    public async Task SetSignalAspectAsync(Guid signalId, SignalAspect signalAspect, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (_activeProjectContext?.ActiveProject.SignalBoxPlan?.FindElement(signalId) is not SbSignal signal)
+        {
+            _logger.LogWarning("Signal aspect command skipped: signal {SignalId} is not active in the runtime project.", signalId);
+            return;
+        }
+
+        signal.SignalAspect = signalAspect;
+        await SetSignalAspectAsync(signal, cancellationToken).ConfigureAwait(false);
+        PublishSnapshot();
     }
 
     /// <inheritdoc />
@@ -307,13 +342,13 @@ public sealed partial class MobaRuntimeService
         if (!_z21.IsConnected)
         {
             _logger.LogWarning("Raw turnout command skipped because Z21 is not connected");
-            _statusText = "⚠️ Z21 nicht verbunden";
+            _statusText = "Z21 not connected";
             PublishSnapshot();
             return;
         }
 
         await _z21.SetTurnoutAsync(decoderAddress, output, activate, queue, cancellationToken).ConfigureAwait(false);
-        _statusText = $"Turnout gestellt: DCC-Adresse {decoderAddress}, Ausgang {output}, Activate={activate}, Queue={queue}";
+        _statusText = $"Turnout set: DCC address {decoderAddress}, output {output}, activate={activate}, queue={queue}";
         PublishSnapshot();
     }
 

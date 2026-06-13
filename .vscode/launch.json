@@ -5,7 +5,8 @@
       "name": "WinUI 3 Debug (MOBAflow)",
       "type": "coreclr",
       "request": "launch",
-      "program": "${workspaceFolder}/MOBAflow/bin/Debug/MOBAflow.exe",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/MOBAflow/bin/FastDebug/MOBAflow.exe",
       "cwd": "${workspaceFolder}/MOBAflow",
       "console": "internalConsole",
       "stopAtEntry": false

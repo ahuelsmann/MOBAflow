@@ -128,6 +128,12 @@
         <MauiXaml Update="Resources\Styles\LightTheme.xaml">
             <Generator>MSBuild:Compile</Generator>
         </MauiXaml>
+        <MauiXaml Update="View\SignalBoxPage.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </MauiXaml>
+        <MauiXaml Update="View\ControlPage.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </MauiXaml>
         <MauiXaml Update="View\SplashPage.xaml">
             <Generator>MSBuild:Compile</Generator>
         </MauiXaml>

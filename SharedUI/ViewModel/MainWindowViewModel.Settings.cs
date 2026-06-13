@@ -11,6 +11,7 @@ using Domain;
 using Microsoft.Extensions.Logging;
 
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 
@@ -21,6 +22,9 @@ using System.Net.Sockets;
 /// </summary>
 public partial class MainWindowViewModel
 {
+    private readonly List<PiperVoiceOption> _availablePiperVoiceOptions = [];
+    private string _selectedPiperLanguage = string.Empty;
+
     private void PersistSettings()
     {
         PersistSettingsSafely();
@@ -141,16 +145,16 @@ public partial class MainWindowViewModel
     }
 
     /// <summary>
-    /// Gets or sets the API key used for Azure Cognitive Services speech synthesis.
+    /// Gets or sets the path to the local Piper executable.
     /// </summary>
-    public string? SpeechKey
+    public string PiperExecutablePath
     {
-        get => _settings.Speech.Key;
+        get => _settings.Speech.PiperExecutablePath;
         set
         {
-            if (_settings.Speech.Key != value)
+            if (_settings.Speech.PiperExecutablePath != value)
             {
-                _settings.Speech.Key = value ?? string.Empty;
+                _settings.Speech.PiperExecutablePath = value ?? string.Empty;
                 OnPropertyChanged();
                 PersistSettings();
             }
@@ -158,16 +162,40 @@ public partial class MainWindowViewModel
     }
 
     /// <summary>
-    /// Gets or sets the Azure region used for the speech service.
+    /// Gets or sets the path to the local Piper voice model.
     /// </summary>
-    public string SpeechRegion
+    public string PiperModelPath
     {
-        get => _settings.Speech.Region;
+        get => _settings.Speech.PiperModelPath;
         set
         {
-            if (_settings.Speech.Region != value)
+            if (_settings.Speech.PiperModelPath != value)
             {
-                _settings.Speech.Region = value;
+                _settings.Speech.PiperModelPath = value ?? string.Empty;
+                var configPath = $"{_settings.Speech.PiperModelPath}.json";
+                _settings.Speech.PiperConfigPath = File.Exists(configPath) ? configPath : string.Empty;
+                _settings.Speech.VoiceName = Path.GetFileNameWithoutExtension(_settings.Speech.PiperModelPath);
+                RefreshPiperVoiceOptions();
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(PiperConfigPath));
+                OnPropertyChanged(nameof(VoiceName));
+                OnPropertyChanged(nameof(SelectedPiperVoiceName));
+                PersistSettings();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the optional path to the Piper model configuration file.
+    /// </summary>
+    public string PiperConfigPath
+    {
+        get => _settings.Speech.PiperConfigPath;
+        set
+        {
+            if (_settings.Speech.PiperConfigPath != value)
+            {
+                _settings.Speech.PiperConfigPath = value ?? string.Empty;
                 OnPropertyChanged();
                 PersistSettings();
             }
@@ -209,7 +237,7 @@ public partial class MainWindowViewModel
     }
 
     /// <summary>
-    /// Gets or sets the name of the Azure voice used for announcements.
+    /// Gets or sets the voice/model name used for announcements.
     /// </summary>
     public string VoiceName
     {
@@ -222,6 +250,84 @@ public partial class MainWindowViewModel
                 OnPropertyChanged();
                 PersistSettings();
             }
+        }
+    }
+
+    /// <summary>
+    /// Available Piper languages derived from installed voice model file names.
+    /// </summary>
+    public ObservableCollection<string> AvailablePiperLanguages { get; } = [];
+
+    /// <summary>
+    /// Available Piper voices for the selected language.
+    /// </summary>
+    public ObservableCollection<string> AvailablePiperVoices { get; } = [];
+
+    /// <summary>
+    /// Currently selected Piper language, for example de_DE or en_US.
+    /// </summary>
+    public string SelectedPiperLanguage
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(_selectedPiperLanguage))
+            {
+                _selectedPiperLanguage = GetLanguageFromVoiceName(VoiceName);
+            }
+
+            return _selectedPiperLanguage;
+        }
+        set
+        {
+            if (_selectedPiperLanguage == value)
+            {
+                return;
+            }
+
+            _selectedPiperLanguage = value ?? string.Empty;
+            OnPropertyChanged();
+            RefreshFilteredPiperVoices();
+        }
+    }
+
+    /// <summary>
+    /// Currently selected Piper voice option.
+    /// </summary>
+    public string SelectedPiperVoiceName
+    {
+        get
+        {
+            RefreshPiperVoiceOptionsIfNeeded();
+            return _availablePiperVoiceOptions.FirstOrDefault(voice =>
+                voice.ModelPath.Equals(PiperModelPath, StringComparison.OrdinalIgnoreCase))?.Name
+                ?? VoiceName;
+        }
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value) || value.Equals(VoiceName, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            var selectedVoice = _availablePiperVoiceOptions.FirstOrDefault(voice =>
+                voice.Name.Equals(value, StringComparison.OrdinalIgnoreCase));
+            if (selectedVoice == null)
+            {
+                return;
+            }
+
+            _settings.Speech.PiperModelPath = selectedVoice.ModelPath;
+            _settings.Speech.PiperConfigPath = selectedVoice.ConfigPath;
+            _settings.Speech.VoiceName = selectedVoice.Name;
+            _selectedPiperLanguage = selectedVoice.Language;
+
+            RefreshFilteredPiperVoices();
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(SelectedPiperLanguage));
+            OnPropertyChanged(nameof(PiperModelPath));
+            OnPropertyChanged(nameof(PiperConfigPath));
+            OnPropertyChanged(nameof(VoiceName));
+            PersistSettings();
         }
     }
 
@@ -249,29 +355,7 @@ public partial class MainWindowViewModel
     public ObservableCollection<string> AvailableSpeechEngines { get; } =
     [
         "System Speech (Windows SAPI)",
-        "Azure Cognitive Services"
-    ];
-
-    /// <summary>
-    /// List of available Azure Cognitive Services voices (German).
-    /// </summary>
-    public ObservableCollection<string> AvailableVoiceNames { get; } =
-    [
-        "de-DE-KatjaNeural",
-        "de-DE-ConradNeural",
-        "de-DE-AmalaNeural",
-        "de-DE-BerndNeural",
-        "de-DE-ChristophNeural",
-        "de-DE-ElkeNeural",
-        "de-DE-GiselaNeural",
-        "de-DE-KasperNeural",
-        "de-DE-KillianNeural",
-        "de-DE-KlarissaNeural",
-        "de-DE-KlausNeural",
-        "de-DE-LouisaNeural",
-        "de-DE-MajaNeural",
-        "de-DE-RalfNeural",
-        "de-DE-TanjaNeural"
+        "Piper TTS"
     ];
 
     /// <summary>
@@ -286,7 +370,7 @@ public partial class MainWindowViewModel
             {
                 _settings.Speech.SpeakerEngineName = value;
                 OnPropertyChanged();
-                OnPropertyChanged(nameof(IsAzureSpeechEngineSelected));
+                OnPropertyChanged(nameof(IsPiperSpeechEngineSelected));
                 OnPropertyChanged(nameof(SpeechStatusDisplayText));
                 PersistSettings();
             }
@@ -294,11 +378,93 @@ public partial class MainWindowViewModel
     }
 
     /// <summary>
-    /// Returns true if Azure Cognitive Services is selected.
-    /// Used to show/hide Azure-specific settings.
+    /// Returns true if Piper TTS is selected.
+    /// Used to show/hide Piper-specific settings.
     /// </summary>
-    public bool IsAzureSpeechEngineSelected =>
-        SpeechSpeakerEngineSelection.ShouldUseAzureCognitive(SelectedSpeechEngine);
+    public bool IsPiperSpeechEngineSelected =>
+        SpeechSpeakerEngineSelection.ShouldUsePiperTts(SelectedSpeechEngine);
+
+    /// <summary>
+    /// Refreshes installed Piper voice options from the configured model directory.
+    /// </summary>
+    public void RefreshPiperVoiceOptions()
+    {
+        _availablePiperVoiceOptions.Clear();
+        AvailablePiperLanguages.Clear();
+
+        var modelDirectory = Path.GetDirectoryName(PiperModelPath);
+        if (string.IsNullOrWhiteSpace(modelDirectory) || !Directory.Exists(modelDirectory))
+        {
+            AvailablePiperVoices.Clear();
+            return;
+        }
+
+        foreach (var modelPath in Directory.EnumerateFiles(modelDirectory, "*.onnx").OrderBy(Path.GetFileName))
+        {
+            var name = Path.GetFileNameWithoutExtension(modelPath);
+            var language = GetLanguageFromVoiceName(name);
+            var configPath = $"{modelPath}.json";
+            _availablePiperVoiceOptions.Add(new PiperVoiceOption(
+                name,
+                language,
+                modelPath,
+                File.Exists(configPath) ? configPath : string.Empty));
+        }
+
+        foreach (var language in _availablePiperVoiceOptions
+            .Select(voice => voice.Language)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(language => language))
+        {
+            AvailablePiperLanguages.Add(language);
+        }
+
+        var currentLanguage = GetLanguageFromVoiceName(VoiceName);
+        if (string.IsNullOrWhiteSpace(_selectedPiperLanguage) || !AvailablePiperLanguages.Contains(_selectedPiperLanguage))
+        {
+            _selectedPiperLanguage = AvailablePiperLanguages.Contains(currentLanguage)
+                ? currentLanguage
+                : AvailablePiperLanguages.FirstOrDefault() ?? string.Empty;
+        }
+
+        RefreshFilteredPiperVoices();
+        OnPropertyChanged(nameof(SelectedPiperLanguage));
+        OnPropertyChanged(nameof(SelectedPiperVoiceName));
+    }
+
+    private void RefreshPiperVoiceOptionsIfNeeded()
+    {
+        if (_availablePiperVoiceOptions.Count == 0)
+        {
+            RefreshPiperVoiceOptions();
+        }
+    }
+
+    private void RefreshFilteredPiperVoices()
+    {
+        AvailablePiperVoices.Clear();
+
+        foreach (var voice in _availablePiperVoiceOptions
+            .Where(voice => string.IsNullOrWhiteSpace(_selectedPiperLanguage)
+                || voice.Language.Equals(_selectedPiperLanguage, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(voice => voice.Name))
+        {
+            AvailablePiperVoices.Add(voice.Name);
+        }
+    }
+
+    private static string GetLanguageFromVoiceName(string? voiceName)
+    {
+        if (string.IsNullOrWhiteSpace(voiceName))
+        {
+            return string.Empty;
+        }
+
+        var firstDashIndex = voiceName.IndexOf('-', StringComparison.Ordinal);
+        return firstDashIndex > 0
+            ? voiceName[..firstDashIndex]
+            : voiceName;
+    }
 
     /// <summary>
     /// Gets or sets a value indicating whether the last used solution is automatically loaded on startup.
@@ -882,13 +1048,17 @@ public partial class MainWindowViewModel
             OnPropertyChanged(nameof(Port));
             OnPropertyChanged(nameof(Z21AutoConnectRetryInterval));
             OnPropertyChanged(nameof(Z21SystemStatePollingInterval));
-            OnPropertyChanged(nameof(SpeechKey));
-            OnPropertyChanged(nameof(SpeechRegion));
+            OnPropertyChanged(nameof(PiperExecutablePath));
+            OnPropertyChanged(nameof(PiperModelPath));
+            OnPropertyChanged(nameof(PiperConfigPath));
             OnPropertyChanged(nameof(SpeechRate));
             OnPropertyChanged(nameof(SpeechVolume));
             OnPropertyChanged(nameof(VoiceName));
+            RefreshPiperVoiceOptions();
+            OnPropertyChanged(nameof(SelectedPiperLanguage));
+            OnPropertyChanged(nameof(SelectedPiperVoiceName));
             OnPropertyChanged(nameof(SelectedSpeechEngine));
-            OnPropertyChanged(nameof(IsAzureSpeechEngineSelected));
+            OnPropertyChanged(nameof(IsPiperSpeechEngineSelected));
             OnPropertyChanged(nameof(AutoLoadLastSolution));
             OnPropertyChanged(nameof(AutoStartWebApp));
             OnPropertyChanged(nameof(RestApiPort));
@@ -954,6 +1124,18 @@ public partial class MainWindowViewModel
             // Use custom test message from settings (user can modify in UI)
             var testMessage = SpeechTestMessage;
 
+            if (_speechTestAction != null)
+            {
+                await _speechTestAction(testMessage).ConfigureAwait(false);
+
+                _uiDispatcher.InvokeOnUi(() =>
+                {
+                    ShowSuccessMessage = true;
+                    ShowErrorMessage = false;
+                });
+                return;
+            }
+
             // Use the announcement service if available
             if (_announcementService != null)
             {
@@ -962,7 +1144,7 @@ public partial class MainWindowViewModel
                 {
                     _uiDispatcher.InvokeOnUi(() =>
                     {
-                        ErrorMessage = "Speech engine not configured. Please configure Azure Speech Service in Settings or select Windows SAPI engine.";
+                        ErrorMessage = "Speech engine not configured. Please configure Piper TTS in Settings or select Windows SAPI engine.";
                         ShowErrorMessage = true;
                     });
                     return;
@@ -970,7 +1152,12 @@ public partial class MainWindowViewModel
 
                 var testJourney = new Journey { Text = testMessage };
                 var testStation = new Station { Name = "Test", IsExitOnLeft = false };
-                await _announcementService.GenerateAndSpeakAnnouncementAsync(testJourney, testStation, 1).ConfigureAwait(false);
+                await _announcementService.GenerateAndSpeakAnnouncementAsync(
+                    testJourney.Text,
+                    testStation,
+                    1,
+                    templateName: testJourney.Name,
+                    suppressSpeechErrors: false).ConfigureAwait(false);
 
                 // SUCCESS: Show success message on UI thread
                 _uiDispatcher.InvokeOnUi(() =>
@@ -989,4 +1176,16 @@ public partial class MainWindowViewModel
     }
 
     #endregion
+}
+
+/// <summary>
+/// A locally installed Piper voice model.
+/// </summary>
+public sealed record PiperVoiceOption(string Name, string Language, string ModelPath, string ConfigPath)
+{
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        return Name;
+    }
 }

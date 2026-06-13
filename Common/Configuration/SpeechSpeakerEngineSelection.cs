@@ -8,30 +8,44 @@ namespace Moba.Common.Configuration;
 /// </summary>
 public static class SpeechSpeakerEngineSelection
 {
-    /// <summary>Azure Cognitive Speech (engine id stored in settings).</summary>
-    public const string AzureCognitiveServices = "AzureCognitiveServices";
+    /// <summary>Piper TTS engine (engine id stored in settings).</summary>
+    public const string PiperTts = "PiperTts";
 
     /// <summary>Windows system SAPI engine (engine id stored in settings).</summary>
     public const string SystemSpeech = "SystemSpeech";
 
-    /// <summary>Legacy default from appsettings / older builds (exact match only).</summary>
-    public const string LegacyAzureDisplayName = "Azure Cognitive Services";
+    /// <summary>WinUI menu caption for Piper TTS (exact match only).</summary>
+    public const string PiperDisplayName = "Piper TTS";
 
     /// <summary>Legacy WinUI menu caption (exact match only).</summary>
     public const string LegacySystemDisplayName = "System Speech (Windows SAPI)";
 
     /// <summary>
-    /// Returns whether the configured name selects Azure Cognitive Speech (with credential check done separately).
+    /// Returns whether the configured name selects Piper TTS (with path checks done separately).
     /// </summary>
-    public static bool ShouldUseAzureCognitive(string? engineName)
+    public static bool ShouldUsePiperTts(string? engineName)
     {
         if (string.IsNullOrWhiteSpace(engineName))
         {
             return false;
         }
 
-        return engineName.Equals(AzureCognitiveServices, StringComparison.OrdinalIgnoreCase)
-            || engineName.Equals(LegacyAzureDisplayName, StringComparison.OrdinalIgnoreCase);
+        return engineName.Equals(PiperTts, StringComparison.OrdinalIgnoreCase)
+            || engineName.Equals(PiperDisplayName, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Returns whether the configured name selects Windows system speech.
+    /// </summary>
+    public static bool ShouldUseSystemSpeech(string? engineName)
+    {
+        if (string.IsNullOrWhiteSpace(engineName))
+        {
+            return true;
+        }
+
+        return engineName.Equals(SystemSpeech, StringComparison.OrdinalIgnoreCase)
+            || engineName.Equals(LegacySystemDisplayName, StringComparison.OrdinalIgnoreCase);
     }
 
 }

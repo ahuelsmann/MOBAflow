@@ -2,22 +2,28 @@
 namespace Moba.Sound;
 
 /// <summary>
-/// Configuration options for Azure Cognitive Speech Services.
+/// Configuration options for text-to-speech services.
 /// Used with IOptions pattern for dependency injection.
 /// </summary>
 public class SpeechOptions
 {
     /// <summary>
-    /// Azure Speech Service subscription key.
-    /// Can be set via environment variable SPEECH_KEY.
+    /// Path to the local Piper executable.
+    /// Can be set via environment variable PIPER_EXECUTABLE_PATH.
     /// </summary>
-    public string? Key { get; set; }
+    public string? PiperExecutablePath { get; set; }
 
     /// <summary>
-    /// Azure Speech Service region (e.g., "germanywestcentral").
-    /// Can be set via environment variable SPEECH_REGION.
+    /// Path to the local Piper voice model (.onnx).
+    /// Can be set via environment variable PIPER_MODEL_PATH.
     /// </summary>
-    public string? Region { get; set; }
+    public string? PiperModelPath { get; set; }
+
+    /// <summary>
+    /// Optional path to the Piper model configuration (.json).
+    /// Can be set via environment variable PIPER_CONFIG_PATH.
+    /// </summary>
+    public string? PiperConfigPath { get; set; }
 
     /// <summary>
     /// Speech synthesis rate (-10 to 10).
@@ -33,19 +39,40 @@ public class SpeechOptions
     public int Volume { get; set; } = 90;
 
     /// <summary>
-    /// Azure voice name for speech synthesis (e.g., "de-DE-KatjaNeural").
-    /// If empty, a default voice will be used.
+    /// Voice or model name for speech synthesis.
+    /// Piper selects the voice through <see cref="PiperModelPath"/>.
     /// </summary>
     public string? VoiceName { get; set; }
 
     /// <summary>
-    /// Selected speaker engine name (e.g., "Azure Cognitive Services", "System Speech (Windows SAPI)").
+    /// Selected speaker engine name (e.g., "Piper TTS", "System Speech (Windows SAPI)").
     /// Determines which TTS engine to use.
     /// </summary>
     public string? SpeakerEngineName { get; set; }
 
     /// <summary>
-    /// Gets whether the speech service is configured with valid credentials.
+    /// Maximum time in seconds to wait for Piper synthesis.
     /// </summary>
-    public bool IsConfigured => !string.IsNullOrEmpty(Key) && !string.IsNullOrEmpty(Region);
+    public int PiperTimeoutSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Enables Piper-specific pronunciation normalization before synthesis.
+    /// </summary>
+    public bool EnablePronunciationNormalization { get; set; } = true;
+
+    /// <summary>
+    /// Pause in seconds between sentences passed to Piper.
+    /// </summary>
+    public double PiperSentenceSilenceSeconds { get; set; } = 0.25;
+
+    /// <summary>
+    /// Custom phrase replacements for difficult station names or words.
+    /// </summary>
+    public IReadOnlyDictionary<string, string> PronunciationReplacements { get; set; } =
+        new Dictionary<string, string>();
+
+    /// <summary>
+    /// Gets whether Piper is configured with required local paths.
+    /// </summary>
+    public bool IsConfigured => !string.IsNullOrWhiteSpace(PiperExecutablePath) && !string.IsNullOrWhiteSpace(PiperModelPath);
 }

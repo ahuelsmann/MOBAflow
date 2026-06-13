@@ -33,7 +33,7 @@ public static class SegmentPortGeometry
             DKW dkw => GetDkwPorts(dkw.LengthInMm, dkw.ArcInDegree, dkw.RadiusInMm),
             K15 k15 => GetK15Ports(k15.LengthInMm, k15.ArcInDegree),
             K30 k30 => GetK30Ports(k30.LengthInMm, k30.ArcInDegree),
-            _ => GetGenericPorts(segment)
+            _ => throw new NotSupportedException($"No port geometry registered for segment type '{segment.GetType().Name}'.")
         };
     }
 
@@ -332,19 +332,6 @@ public static class SegmentPortGeometry
     private static IReadOnlyList<PortInfo> GetK30Ports(double length, double arcDegree)
     {
         return GetK15Ports(length, arcDegree);
-    }
-
-    private static IReadOnlyList<PortInfo> GetGenericPorts(Segment segment)
-    {
-        var result = new List<PortInfo>();
-        var type = segment.GetType();
-        foreach (var prop in type.GetProperties())
-        {
-            if (prop.Name.StartsWith("Port") && prop.PropertyType == typeof(Guid?))
-                result.Add(new PortInfo(prop.Name, 0, 0, 0));
-        }
-
-        return result;
     }
 
     private static bool IsStartPort(Segment segment, string portName)

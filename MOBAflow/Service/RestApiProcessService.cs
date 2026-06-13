@@ -2,6 +2,7 @@
 namespace Moba.WinUI.Service;
 
 using Common.Configuration;
+using Common.Discovery;
 
 using Microsoft.Extensions.Logging;
 
@@ -9,13 +10,11 @@ using System.Diagnostics;
 
 /// <summary>
 /// Starts the standalone MOBApi project process when "Auto-start REST API" is enabled.
-/// WinUI then uses MOBApi for status, clients, and MAUI discovery instead of hosting its own in-process API.
+/// WinUI then uses the MOBApi process for status, clients, and MAUI discovery.
 /// </summary>
 public sealed class RestApiProcessService : IDisposable
 {
     private const string SolutionFileName = "Moba.slnx";
-    /// <summary>Folder and assembly name under output (must match <c>MOBApi.csproj</c> <c>AssemblyName</c>).</summary>
-    private const string RestApiProjectName = "MOBApi";
 
     /// <summary>
     /// Raised when the REST API has been detected as reachable (either already running or just started).
@@ -262,32 +261,31 @@ public sealed class RestApiProcessService : IDisposable
 
     /// <summary>
     /// Resolves path to MOBApi.dll or MOBApi.csproj and working directory.
-    /// Prefers MOBApi next to the running app (build-copied); falls back to repo-root convention.
+    /// Prefers MOBApi next to the running app (build-copied); falls back to repo-local build output or dotnet run.
     /// Returns (pathToDllOrCsproj, workingDir, usePreBuilt: true if path is DLL, false if path is .csproj).
     /// </summary>
     private static (string? path, string? workingDir, bool usePreBuilt) ResolveMobaApiPaths()
     {
-        // Prefer MOBApi next to WinUI (see MOBAflow.csproj CopyMOBAapiToOutput target)
         var appDir = AppContext.BaseDirectory;
-        var localDll = Path.Combine(appDir, RestApiProjectName, $"{RestApiProjectName}.dll");
-        if (File.Exists(localDll))
-        {
-            var workingDir = Path.GetDirectoryName(localDll);
-            return (localDll, workingDir!, true);
-        }
+        if (MobaApiPathResolver.TryResolveAdjacentToApp(appDir, out var localDll, out var localWorkingDir))
+            return (localDll, localWorkingDir, true);
 
         var repoRoot = FindRepositoryRoot();
         if (string.IsNullOrEmpty(repoRoot))
             return (null, null, false);
 
-        var projectPath = Path.Combine(repoRoot, RestApiProjectName, $"{RestApiProjectName}.csproj");
-        var buildOutputDir = Path.Combine(repoRoot, RestApiProjectName, "bin", "Debug", "net10.0");
-        var repoDll = Path.Combine(buildOutputDir, $"{RestApiProjectName}.dll");
+        if (MobaApiPathResolver.TryResolveBuiltOutput(
+                repoRoot,
+                MobaApiPathResolver.BuildConfigurations,
+                MobaApiPathResolver.DefaultTargetFramework,
+                out var repoDll,
+                out var repoWorkingDir))
+        {
+            return (repoDll, repoWorkingDir, true);
+        }
 
-        if (File.Exists(repoDll))
-            return (repoDll, buildOutputDir, true);
-        if (File.Exists(projectPath))
-            return (projectPath, repoRoot, false);
+        if (MobaApiPathResolver.TryResolveProjectFile(repoRoot, out var projectPath, out var projectWorkingDir))
+            return (projectPath, projectWorkingDir, false);
 
         return (null, null, false);
     }

@@ -24,11 +24,9 @@ internal class NullSpeakerEngineTests
     }
 
     [Test]
-    public void Name_CanBeSet()
+    public void Name_IsStableEngineIdentifier()
     {
-        _engine.Name = "Custom Name";
-
-        Assert.That(_engine.Name, Is.EqualTo("Custom Name"));
+        Assert.That(_engine.Name, Is.EqualTo(new NullSpeakerEngine().Name));
     }
 
     [Test]

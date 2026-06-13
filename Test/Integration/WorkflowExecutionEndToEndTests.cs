@@ -31,7 +31,7 @@ internal class WorkflowExecutionEndToEndTests
         _fakeUdp = new FakeUdpClientWrapper();
         _eventBus = new EventBus(NullLogger<EventBus>.Instance);
         _z21 = new Z21(_fakeUdp, _eventBus);
-        _actionExecutor = new ActionExecutor();
+        _actionExecutor = ActionExecutor.CreateWithDefaultHandlers();
         _workflowService = new WorkflowService(_actionExecutor);
 
         _executionContext = new ActionExecutionContext

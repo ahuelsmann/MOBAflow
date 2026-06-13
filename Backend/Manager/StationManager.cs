@@ -13,7 +13,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 using Service;
 
-public sealed class StationManager : IDisposable
+public sealed class StationManager : IStationManager
 {
     private readonly SemaphoreSlim _processingLock = new(1, 1);
     private readonly IZ21 _z21;
@@ -22,7 +22,7 @@ public sealed class StationManager : IDisposable
     private readonly IActionExecutionContextFactory _executionContextFactory;
     private readonly ILogger<StationManager> _logger;
     private readonly Dictionary<Guid, StationSessionState> _states = [];
-    private readonly List<PlatformManager> _platformManagers = [];
+    private readonly List<IPlatformManager> _platformManagers = [];
     private bool _disposed;
 
     public StationManager(
@@ -31,7 +31,8 @@ public sealed class StationManager : IDisposable
         IWorkflowService workflowService,
         ActionExecutionContext? executionContext = null,
         ILogger<StationManager>? logger = null,
-        ILoggerFactory? loggerFactory = null)
+        ILoggerFactory? loggerFactory = null,
+        IPlatformManagerFactory? platformManagerFactory = null)
     {
         ArgumentNullException.ThrowIfNull(z21);
         ArgumentNullException.ThrowIfNull(project);
@@ -42,12 +43,12 @@ public sealed class StationManager : IDisposable
         _workflowService = workflowService;
         _executionContextFactory = new ActionExecutionContextFactory(executionContext ?? new ActionExecutionContext { Z21 = z21 });
         _logger = logger ?? NullLogger<StationManager>.Instance;
+        platformManagerFactory ??= new PlatformManagerFactory(z21, workflowService, loggerFactory?.CreateLogger<PlatformManager>());
 
         foreach (var station in project.Stations)
         {
             _states[station.Id] = new StationSessionState { StationId = station.Id };
-            var platformLogger = loggerFactory?.CreateLogger<PlatformManager>();
-            var platformManager = new PlatformManager(z21, project, station, workflowService, executionContext, platformLogger);
+            var platformManager = platformManagerFactory.Create(project, station, executionContext);
             platformManager.PlatformChanged += OnPlatformChanged;
             _platformManagers.Add(platformManager);
         }
@@ -61,7 +62,7 @@ public sealed class StationManager : IDisposable
 
     public IReadOnlyDictionary<Guid, StationSessionState> States => _states;
 
-    public IReadOnlyList<PlatformManager> PlatformManagers => _platformManagers;
+    public IReadOnlyList<IPlatformManager> PlatformManagers => _platformManagers;
 
     public StationSessionState? GetState(Guid stationId) => _states.GetValueOrDefault(stationId);
 

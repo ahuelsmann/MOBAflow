@@ -127,7 +127,7 @@ public partial class App
 
     protected override Window CreateWindow(IActivationState? activationState)
     {
-        // ✅ Show SplashPage first, then navigate to MainPage (SplashPage loads settings)
+        // Show SplashPage first, then navigate to the Shell root after settings are loaded.
         var splashPage = _services.GetRequiredService<SplashPage>();
         var window = new Window(splashPage);
 
@@ -138,13 +138,13 @@ public partial class App
     }
 
     /// <summary>
-    /// Creates the main page after splash screen.
-    /// Called from SplashPage after delay.
+    /// Creates the Shell root after the splash screen.
+    /// Called from SplashPage after settings and theme initialization.
     /// </summary>
-    public static Page CreateMainPage()
+    public static Page CreateAppShell()
     {
         var services = ((App)Current!).Services;
-        return services.GetRequiredService<MainPage>();
+        return services.GetRequiredService<AppShell>();
     }
 
     /// <summary>

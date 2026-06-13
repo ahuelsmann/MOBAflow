@@ -7,8 +7,17 @@ namespace Moba.Common.Discovery;
 /// </summary>
 public static class DiscoveryResponseParser
 {
+    /// <summary>UDP multicast discovery request sent by MAUI clients.</summary>
+    public const string RequestMessage = "MOBAFLOW_DISCOVER";
+
     /// <summary>Expected prefix of the discovery response.</summary>
     public const string ResponsePrefix = "MOBAFLOW_REST_API";
+
+    /// <summary>UDP port for MOBAflow REST API discovery (multicast).</summary>
+    public const int MulticastPort = 21106;
+
+    /// <summary>Multicast group address for LAN discovery.</summary>
+    public const string MulticastAddress = "239.255.42.99";
 
     /// <summary>
     /// Tries to parse a discovery response string into IP and port.

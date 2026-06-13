@@ -30,7 +30,7 @@
 - Keep secrets out of source control (tracked
   `MOBAflow/appsettings*.json` files must stay secret-free; use User
   Secrets or environment variables for credentials).
-- Rotate keys after tests with real services (e.g., Azure Speech).
+- Rotate keys after tests with real services.
 - Prefer relative paths for local assets and avoid embedding absolute user paths.
 - Update vulnerable dependencies promptly and document
   security-impacting changes in PR descriptions.

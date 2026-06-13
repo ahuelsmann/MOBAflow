@@ -74,7 +74,7 @@ public class UdpWrapper : IUdpClientWrapper
             var retriesPerSecond = _totalRetryCount / elapsedSeconds;
 
             _logger?.LogInformation(
-                "📊 UDP Performance: {SendCount} total sends, {RetryCount} retries, {SendRate:F2} sends/sec, {RetryRate:F2} retries/sec, {ReceiveCount} receives",
+                "UDP Performance: {SendCount} total sends, {RetryCount} retries, {SendRate:F2} sends/sec, {RetryRate:F2} retries/sec, {ReceiveCount} receives",
                 _totalSendCount, _totalRetryCount, sendsPerSecond, retriesPerSecond, _totalReceiveCount);
         }
     }
@@ -143,7 +143,7 @@ public class UdpWrapper : IUdpClientWrapper
     /// </summary>
     private async Task ReceiverLoopAsync(CancellationToken cancellationToken)
     {
-        _logger?.LogInformation("🔄 UDP Receiver loop started");
+        _logger?.LogInformation("UDP Receiver loop started");
 
         try
         {
@@ -163,7 +163,7 @@ public class UdpWrapper : IUdpClientWrapper
 
                     IncrementReceiveCount();
 
-                    _logger?.LogDebug("📥 Received {Length} bytes from {Endpoint}: {Data}",
+                    _logger?.LogDebug("Received {Length} bytes from {Endpoint}: {Data}",
                         result.Buffer.Length,
                         result.RemoteEndPoint,
                         BitConverter.ToString(result.Buffer).Replace("-", " "));
@@ -175,7 +175,7 @@ public class UdpWrapper : IUdpClientWrapper
                 }
                 catch (SocketException ex)
                 {
-                    _logger?.LogError("❌ Socket error in receiver loop: {Error}", ex.Message);
+                    _logger?.LogError("Socket error in receiver loop: {Error}", ex.Message);
                     break;
                 }
 
@@ -184,7 +184,7 @@ public class UdpWrapper : IUdpClientWrapper
         }
         finally
         {
-            _logger?.LogInformation("🛑 UDP Receiver loop stopped. Stats: {SendCount} sends, {RetryCount} retries, {ReceiveCount} receives",
+            _logger?.LogInformation("UDP Receiver loop stopped. Stats: {SendCount} sends, {RetryCount} retries, {ReceiveCount} receives",
                 _totalSendCount, _totalRetryCount, _totalReceiveCount);
         }
     }
@@ -213,7 +213,7 @@ public class UdpWrapper : IUdpClientWrapper
 
         IncrementSendAndLogStatsIfNeeded();
 
-        _logger?.LogDebug("📤 Sending {Length} bytes (attempt 1/{MaxRetries}): {Data}",
+        _logger?.LogDebug("Sending {Length} bytes (attempt 1/{MaxRetries}): {Data}",
             data.Length, maxRetries, BitConverter.ToString(data).Replace("-", " "));
 
         while (true)
@@ -224,7 +224,7 @@ public class UdpWrapper : IUdpClientWrapper
                 await client.SendAsync(data, cancellationToken).ConfigureAwait(false);
 
                 sendStartTime.Stop();
-                _logger?.LogDebug("✅ Send successful in {ElapsedMs}ms", sendStartTime.ElapsedMilliseconds);
+                _logger?.LogDebug("Send successful in {ElapsedMs}ms", sendStartTime.ElapsedMilliseconds);
 
                 return;
             }
@@ -234,7 +234,7 @@ public class UdpWrapper : IUdpClientWrapper
 
                 IncrementRetryCount();
 
-                _logger?.LogWarning("⚠️ Send attempt {Attempt}/{MaxRetries} failed: {Error}. Retrying in {DelayMs}ms",
+                _logger?.LogWarning("Send attempt {Attempt}/{MaxRetries} failed: {Error}. Retrying in {DelayMs}ms",
                     attempt, maxRetries, ex.Message, delayMs);
                 await Task.Delay(delayMs, cancellationToken).ConfigureAwait(false);
                 delayMs *= 2;

@@ -3,6 +3,8 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
+using Interface;
+
 using System.Collections.Specialized;
 using System.Collections.ObjectModel;
 
@@ -14,28 +16,28 @@ public sealed class JourneyMapViewModel : ObservableObject
 {
     #region Fields
     // Context
-    private readonly MainWindowViewModel _mainViewModel;
+    private readonly IJourneySelectionContext _selectionContext;
     private JourneyViewModel? _observedJourney;
     #endregion
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JourneyMapViewModel"/> class.
     /// </summary>
-    /// <param name="mainViewModel">The main window ViewModel that provides journey and project context.</param>
-    public JourneyMapViewModel(MainWindowViewModel mainViewModel)
+    /// <param name="selectionContext">Selection context that provides journey and project state.</param>
+    public JourneyMapViewModel(IJourneySelectionContext selectionContext)
     {
-        ArgumentNullException.ThrowIfNull(mainViewModel);
-        _mainViewModel = mainViewModel;
+        ArgumentNullException.ThrowIfNull(selectionContext);
+        _selectionContext = selectionContext;
 
         // Subscribe to journey and project changes
-        _mainViewModel.PropertyChanged += (_, e) =>
+        _selectionContext.PropertyChanged += (_, e) =>
         {
             switch (e.PropertyName)
             {
-                case nameof(MainWindowViewModel.SelectedProject):
+                case nameof(IJourneySelectionContext.SelectedProject):
                     OnPropertyChanged(nameof(AvailableJourneys));
                     break;
-                case nameof(MainWindowViewModel.SelectedJourney):
+                case nameof(IJourneySelectionContext.SelectedJourney):
                     AttachToSelectedJourney();
                     OnPropertyChanged(nameof(SelectedJourney));
                     OnPropertyChanged(nameof(HasSelectedJourney));
@@ -56,19 +58,19 @@ public sealed class JourneyMapViewModel : ObservableObject
     /// All available journeys from the current project.
     /// </summary>
     public ObservableCollection<JourneyViewModel>? AvailableJourneys =>
-        _mainViewModel.SelectedProject?.Journeys;
+        _selectionContext.SelectedProject?.Journeys;
 
     /// <summary>
     /// Currently selected/active journey.
     /// </summary>
     public JourneyViewModel? SelectedJourney
     {
-        get => _mainViewModel.SelectedJourney;
+        get => _selectionContext.SelectedJourney;
         set
         {
-            if (_mainViewModel.SelectedJourney != value)
+            if (_selectionContext.SelectedJourney != value)
             {
-                _mainViewModel.SelectedJourney = value;
+                _selectionContext.SelectedJourney = value;
                 AttachToSelectedJourney();
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(HasSelectedJourney));
@@ -150,7 +152,7 @@ public sealed class JourneyMapViewModel : ObservableObject
             _observedJourney.Stations.CollectionChanged -= OnSelectedJourneyStationsChanged;
         }
 
-        _observedJourney = _mainViewModel.SelectedJourney;
+        _observedJourney = _selectionContext.SelectedJourney;
         if (_observedJourney != null)
         {
             _observedJourney.PropertyChanged += OnSelectedJourneyPropertyChanged;

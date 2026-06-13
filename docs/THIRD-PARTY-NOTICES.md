@@ -78,7 +78,7 @@ The following table reflects the direct package and framework references current
 | `Microsoft.AspNetCore.App`, `Microsoft.AspNetCore.SignalR.Client` | `Framework reference`, `10.0.7` | `MOBAflow`, `MOBApi`, `SharedUI.Web` | ASP.NET Core shared framework and SignalR client connectivity. |
 | `Microsoft.Extensions.*` | `10.0.5` to `10.0.7` | `Common`, `Backend`, `SharedUI.Web`, `Sound`, `MOBAsmart`, `Test` | Logging, dependency injection, configuration, options, hosting, and debug output. |
 | `Microsoft.Maui.Controls` | `10.0.60` | `MOBAsmart` | Core .NET MAUI UI framework for the Android client. |
-| `Microsoft.CognitiveServices.Speech`, `System.Speech`, `System.Windows.Extensions` | `1.49.1`, `10.0.7`, `10.0.7` | `Sound` | Azure and Windows text-to-speech plus Windows-specific APIs. |
+| `System.Speech`, `System.Windows.Extensions` | `10.0.7`, `10.0.7` | `Sound` | Windows text-to-speech and Windows-specific audio APIs. |
 | `Serilog`, `Serilog.Extensions.Logging`, `Serilog.Sinks.Debug`, `Serilog.Sinks.File` | `4.3.1`, `10.0.0`, `3.0.0`, `7.0.0` | `Common`, `MOBAflow` | Structured logging, file logging, and debug integration. |
 | `UraniumUI.Material`, `UraniumUI.Icons.MaterialIcons`, `Xamarin.AndroidX.Startup.StartupRuntime` | `2.15.0`, `2.15.0`, `1.2.0.7` | `MOBAsmart` | Material UI components, icon resources, and AndroidX startup integration. |
 | `SkiaSharp`, `System.Drawing.Common` | `3.119.2`, `10.0.7` | `MOBAdisplay` | Display frame rendering and image conversion utilities. |

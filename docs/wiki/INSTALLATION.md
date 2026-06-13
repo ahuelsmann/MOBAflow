@@ -290,12 +290,12 @@ WinUI is Windows only!
 4. Restart Z21 (Power OFF → ON)
 ```
 
-#### Error: "Azure Speech not working"
+#### Error: "Piper TTS not working"
 
 ```text
-1. Check Azure Speech API Key
-2. Region correctly set?
-3. See: docs/wiki/AZURE-SPEECH-SETUP.md
+1. Check piper.exe path
+2. Check .onnx model path
+3. See: docs/wiki/PIPER-TTS-SETUP.md
 ```
 
 ### Performance Issues

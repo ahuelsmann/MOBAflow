@@ -102,6 +102,14 @@ internal class DiscoveryResponseParserTests
     }
 
     [Test]
+    public void Discovery_protocol_constants_match_expected_values()
+    {
+        Assert.That(DiscoveryResponseParser.RequestMessage, Is.EqualTo("MOBAFLOW_DISCOVER"));
+        Assert.That(DiscoveryResponseParser.MulticastPort, Is.EqualTo(21106));
+        Assert.That(DiscoveryResponseParser.MulticastAddress, Is.EqualTo("239.255.42.99"));
+    }
+
+    [Test]
     public void TryParse_Valid_port_65535_returns_true()
     {
         var success = DiscoveryResponseParser.TryParse("MOBAFLOW_REST_API|127.0.0.1|65535", out var ip, out var port);

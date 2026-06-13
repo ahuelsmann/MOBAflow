@@ -46,13 +46,13 @@ Here you'll find all information about three platforms:
 - 🚦 Signal Box and Viessmann multiplex signal testing
 - 🖥️ ESP32-S3 display rendering and UDP frame transport
 - 🎛️ Train Control with F0-F31 functions
-- 🎙️ Text-to-Speech (Azure Cognitive Services)
+- 🎙️ Text-to-Speech (Piper TTS)
 - 🗂️ Solution Management (Project management)
 
 **Setup Guides:**
 
-- [`AZURE-SPEECH-SETUP.md`](AZURE-SPEECH-SETUP.md) - Azure Speech
-  Service setup (free!)
+- [`PIPER-TTS-SETUP.md`](PIPER-TTS-SETUP.md) - local Piper TTS
+  setup
 
 ---
 
@@ -198,7 +198,7 @@ MOBAflow Repository
 │  ├─ SECURITY.md, THIRD-PARTY-NOTICES.md
 │  └─ wiki/ (This Wiki)
 │     ├─ INDEX.md (You are here)
-│     ├─ INSTALLATION.md, AZURE-SPEECH-SETUP.md
+│     ├─ INSTALLATION.md, PIPER-TTS-SETUP.md
 │     ├─ MOBAFLOW-USER-GUIDE.md, MOBASMART-USER-GUIDE.md
 │     └─ MOBASMART-WIKI.md, MOBATPS.md, QUICK-START-TRACK-STATISTICS.md
 └─ .github/ (Development, Instructions, Workflows)

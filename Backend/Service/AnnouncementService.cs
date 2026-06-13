@@ -14,7 +14,7 @@ using Sound;
 /// Purpose:
 /// - Generate announcement text from journey template
 /// - Replace placeholders with station data
-/// - Delegate audio output to ISpeakerEngine (CognitiveSpeechEngine or SystemSpeechEngine)
+/// - Delegate audio output to ISpeakerEngine (PiperSpeechEngine or SystemSpeechEngine)
 /// 
 /// Architecture:
 /// - Template rendering: Pure backend logic (platform-independent)
@@ -36,9 +36,32 @@ using Sound;
 /// - {StationNumber} → Station ordinal position in journey
 /// - {TrackNumber} → Station.Platforms/Station.PlatformId
 /// </summary>
-public class AnnouncementService
+public interface IAnnouncementService
 {
-    private readonly SpeakerEngineFactory? _speakerEngineFactory;
+    bool IsSpeakerEngineAvailable { get; }
+
+    string GenerateAnnouncementText(Journey journey, Station station, int stationIndex);
+
+    string GenerateAnnouncementText(string? templateText, Station station, int stationIndex, string? templateName = null);
+
+    Task GenerateAndSpeakAnnouncementAsync(
+        Journey journey,
+        Station station,
+        int stationIndex,
+        CancellationToken cancellationToken = default);
+
+    Task GenerateAndSpeakAnnouncementAsync(
+        string? templateText,
+        Station station,
+        int stationIndex,
+        CancellationToken cancellationToken = default,
+        string? templateName = null,
+        bool suppressSpeechErrors = true);
+}
+
+public class AnnouncementService : IAnnouncementService
+{
+    private readonly ISpeakerEngineFactory? _speakerEngineFactory;
     private readonly ILogger<AnnouncementService>? _logger;
 
     /// <summary>
@@ -52,7 +75,7 @@ public class AnnouncementService
     /// </summary>
     /// <param name="speakerEngineFactory">Speaker engine factory for creating engines (optional)</param>
     /// <param name="logger">Optional logger for debugging</param>
-    public AnnouncementService(SpeakerEngineFactory? speakerEngineFactory = null, ILogger<AnnouncementService>? logger = null)
+    public AnnouncementService(ISpeakerEngineFactory? speakerEngineFactory = null, ILogger<AnnouncementService>? logger = null)
     {
         _speakerEngineFactory = speakerEngineFactory;
         _logger = logger;
@@ -147,7 +170,8 @@ public class AnnouncementService
         Station station,
         int stationIndex,
         CancellationToken cancellationToken = default,
-        string? templateName = null)
+        string? templateName = null,
+        bool suppressSpeechErrors = true)
     {
         // Generate text
         var announcementText = GenerateAnnouncementText(templateText, station, stationIndex, templateName);
@@ -163,22 +187,25 @@ public class AnnouncementService
         {
             try
             {
-                // ✅ Create engine dynamically based on current settings
+                // Create engine dynamically based on current settings
                 var speakerEngine = _speakerEngineFactory.CreateEngineFromOptions();
 
-                _logger?.LogInformation("🔊 Speaking announcement via {SpeakerEngine} for station '{StationName}'",
+                _logger?.LogInformation("Speaking announcement via {SpeakerEngine} for station '{StationName}'",
                     speakerEngine.Name, station.Name);
                 await speakerEngine.AnnouncementAsync(announcementText, voiceName: null).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "❌ Failed to speak announcement: {Error}", ex.Message);
-                // Don't throw - TTS failure shouldn't break journey execution
+                _logger?.LogError(ex, "Failed to speak announcement: {Error}", ex.Message);
+                if (!suppressSpeechErrors)
+                {
+                    throw;
+                }
             }
         }
         else
         {
-            _logger?.LogInformation("⚠️ No speaker engine configured. Announcement text: \"{Text}\"", announcementText);
+            _logger?.LogInformation("No speaker engine configured. Announcement text: \"{Text}\"", announcementText);
         }
     }
 

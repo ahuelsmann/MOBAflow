@@ -6,6 +6,8 @@ using CommunityToolkit.Mvvm.Input;
 
 using Microsoft.Extensions.Logging;
 
+using Service;
+
 using System.Runtime.InteropServices;
 
 /// <summary>
@@ -240,122 +242,36 @@ public partial class MainWindowViewModel
             return;
         }
 
-        OperatingStateKind nextState;
-        string nextText;
-        string nextDetail;
-        string nextGlyph;
-        bool nextShowInfoBar = false;
-        string nextInfoBarTitle;
-        string nextInfoBarMessage;
-        bool nextFailSafe = false;
-
-        if (!IsConnected)
+        var presentation = OperatingStateEvaluator.Evaluate(new OperatingStateInput
         {
-            if (_isManualDisconnectRequested)
-            {
-                nextState = OperatingStateKind.Recovering;
-                nextText = "Offline";
-                nextDetail = "Z21 manually disconnected.";
-                nextGlyph = "\uE711";
-            }
-            else if (_isZ21Connecting || !_hasSeenSuccessfulZ21Connection || IsPostStartupInitializationRunning)
-            {
-                nextState = OperatingStateKind.Recovering;
-                nextText = "Recovering";
-                nextDetail = string.IsNullOrWhiteSpace(StatusText)
-                    ? "Connecting to the Z21..."
-                    : StatusText;
-                nextGlyph = "\uE895";
-            }
-            else
-            {
-                nextState = OperatingStateKind.FailSafe;
-                nextText = "Fail-Safe Active";
-                nextDetail = string.IsNullOrWhiteSpace(_lastFailSafeReason)
-                    ? "Unexpected loss of the Z21 connection."
-                    : _lastFailSafeReason;
-                nextGlyph = "\uE7BA";
-                nextShowInfoBar = true;
-                nextFailSafe = true;
-            }
-        }
-        else if (IsOperatorAckRequired)
-        {
-            nextState = OperatingStateKind.FailSafe;
-            nextText = "Fail-Safe Active";
-            nextDetail = "Connection recovered. Explicit operator release is required.";
-            nextGlyph = "\uE7BA";
-            nextShowInfoBar = true;
-            nextFailSafe = true;
-        }
-        else
-        {
-            var issues = new List<string>();
+            IsConnected = IsConnected,
+            IsTrackPowerOn = IsTrackPowerOn,
+            StatusText = StatusText,
+            IsManualDisconnectRequested = _isManualDisconnectRequested,
+            IsZ21Connecting = _isZ21Connecting,
+            HasSeenSuccessfulZ21Connection = _hasSeenSuccessfulZ21Connection,
+            IsPostStartupInitializationRunning = IsPostStartupInitializationRunning,
+            IsOperatorAckRequired = IsOperatorAckRequired,
+            IsEmergencyStopActive = _isEmergencyStopActive,
+            IsShortCircuitActive = _isShortCircuitActive,
+            IsProgrammingModeActive = _isProgrammingModeActive,
+            LastFailSafeReason = _lastFailSafeReason,
+            LastFailSafeAt = _lastFailSafeAt,
+            AutoStartWebApp = _settings.Application.AutoStartWebApp,
+            RestApiIsReachable = RestApiIsReachable,
+            SpeechHealthStatus = SpeechHealthStatus
+        });
 
-            if (_isEmergencyStopActive)
-                issues.Add("Emergency stop active");
-
-            if (_isShortCircuitActive)
-                issues.Add("Short circuit detected");
-
-            if (_isProgrammingModeActive)
-                issues.Add("Programming mode active");
-
-            if (_settings.Application.AutoStartWebApp && !RestApiIsReachable)
-                issues.Add("REST API not reachable");
-
-            if (SpeechHealthStatus.Contains("Failed", StringComparison.OrdinalIgnoreCase))
-                issues.Add("Azure Speech unavailable");
-
-            if (issues.Count > 0)
-            {
-                nextState = OperatingStateKind.Degraded;
-                nextText = "Degraded";
-                nextDetail = string.Join(" | ", issues);
-                nextGlyph = "\uE7BA";
-                nextShowInfoBar = _settings.Application.AutoStartWebApp && !RestApiIsReachable;
-            }
-            else
-            {
-                nextState = OperatingStateKind.Normal;
-                nextText = "Normal";
-                nextDetail = IsTrackPowerOn
-                    ? "Z21 connected, track power on."
-                    : "Z21 connected.";
-                nextGlyph = "\uE73E";
-            }
-        }
-
-        nextInfoBarTitle = nextState switch
-        {
-            OperatingStateKind.FailSafe => "Fail-safe mode active",
-            OperatingStateKind.Degraded => "Restricted operation",
-            OperatingStateKind.Recovering => "Recovery in progress",
-            _ => "Normal operation"
-        };
-
-        nextInfoBarMessage = nextState switch
-        {
-            OperatingStateKind.FailSafe => $"{nextDetail} Critical control actions remain blocked until the system is released again.",
-            OperatingStateKind.Degraded => $"{nextDetail} The shell remains usable, but one or more supporting services are degraded.",
-            OperatingStateKind.Recovering => nextDetail,
-            OperatingStateKind.Normal => nextDetail,
-            _ => nextDetail,
-        };
-
-        OperatingState = nextState;
-        OperatingStateText = nextText;
-        OperatingStateDetailText = nextDetail;
-        OperatingStateIconGlyph = nextGlyph;
-        HasOperatingStateDetailText = !string.IsNullOrWhiteSpace(nextDetail);
-        ShowOperatingStateInfoBar = nextShowInfoBar;
-        OperatingStateInfoBarTitle = nextInfoBarTitle;
-        OperatingStateInfoBarMessage = nextInfoBarMessage;
-        IsFailSafeActive = nextFailSafe;
-        IsOperationalControlEnabled = IsConnected && !nextFailSafe && nextState != OperatingStateKind.Recovering;
-
-        OperatingStateTooltipText = _lastFailSafeAt.HasValue && nextFailSafe
-            ? $"{nextInfoBarMessage} Last fail-safe trigger: {_lastFailSafeAt.Value:HH:mm:ss}"
-            : nextInfoBarMessage;
+        OperatingState = presentation.State;
+        OperatingStateText = presentation.Text;
+        OperatingStateDetailText = presentation.DetailText;
+        OperatingStateIconGlyph = presentation.IconGlyph;
+        HasOperatingStateDetailText = presentation.HasDetailText;
+        ShowOperatingStateInfoBar = presentation.ShowInfoBar;
+        OperatingStateInfoBarTitle = presentation.InfoBarTitle;
+        OperatingStateInfoBarMessage = presentation.InfoBarMessage;
+        IsFailSafeActive = presentation.IsFailSafeActive;
+        IsOperationalControlEnabled = presentation.IsOperationalControlEnabled;
+        OperatingStateTooltipText = presentation.TooltipText;
     }
 }

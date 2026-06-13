@@ -24,7 +24,7 @@ public partial class SplashPage
 
         try
         {
-            // Ensure settings are loaded before MainPage (and MauiViewModel) are created.
+            // Ensure settings are loaded before the Shell pages and MauiViewModel are created.
             // This fixes Z21 connection using wrong/default IP when settings load was still in progress.
             if (Application.Current is App app)
             {
@@ -33,12 +33,12 @@ public partial class SplashPage
                 app.ApplyTheme(settings.Application.IsDarkMode, settings.Application.UseSystemTheme);
             }
 
-            // Navigate to main page using the new Windows API (MainPage is deprecated)
+            // Navigate to the Shell root using the new Windows API.
             var windows = Application.Current?.Windows;
             var window = windows != null && windows.Count > 0 ? windows[0] : null;
             if (window is not null)
             {
-                window.Page = App.CreateMainPage();
+                window.Page = App.CreateAppShell();
             }
         }
         catch (Exception)

@@ -6,6 +6,7 @@ using Backend.Data;
 
 using Common.Configuration;
 using Common.Events;
+using Common.Extension;
 
 using Microsoft.Extensions.Logging;
 
@@ -204,13 +205,22 @@ internal class PostStartupInitializationService
                 return;
             }
 
-            _logger.LogInformation("[PostStartup] Starting RestApi process");
-            await _restApiProcessService.StartAsync(cancellationToken).ConfigureAwait(false);
-            _logger.LogInformation("[PostStartup] RestApi process started");
+            _logger.LogInformation("[PostStartup] Queueing RestApi process start");
+            _eventBus.Publish(new PostStartupStatusEvent(true, "Starting REST API..."));
+            StartRestApiProcessAsync(cancellationToken)
+                .Observe(ex => _logger.LogError(ex, "[PostStartup] Failed to start RestApi process"));
+            await Task.CompletedTask.ConfigureAwait(false);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "[PostStartup] Failed to start RestApi process");
         }
+    }
+
+    private async Task StartRestApiProcessAsync(CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("[PostStartup] Starting RestApi process");
+        await _restApiProcessService.StartAsync(cancellationToken).ConfigureAwait(false);
+        _logger.LogInformation("[PostStartup] RestApi process start task completed");
     }
 }

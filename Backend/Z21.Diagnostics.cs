@@ -39,7 +39,7 @@ public partial class Z21
         simulatedContent[5 + byteIndex] = (byte)(1 << bitPosition); // Feedback bit pattern
         // Remaining bytes stay 0; checksum ignored in parser/tests
 
-        _logger?.LogInformation("🔔 SimulateFeedback: InPort={InPort}, Group={Group}, Byte={ByteIndex}, Bit={BitPosition}, Subscribers={Count}",
+        _logger?.LogInformation("SimulateFeedback: InPort={InPort}, Group={Group}, Byte={ByteIndex}, Bit={BitPosition}, Subscribers={Count}",
             inPort, groupNumber, byteIndex, bitPosition, Received?.GetInvocationList().Length ?? 0);
 
         Received?.Invoke(new FeedbackResult(simulatedContent));

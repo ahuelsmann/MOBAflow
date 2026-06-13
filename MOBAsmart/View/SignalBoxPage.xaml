@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="Moba.MAUI.View.SignalBoxPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Moba.SharedUI.ViewModel;assembly=SharedUI"
+    Title="SignalBox"
+    x:DataType="vm:MauiViewModel">
+
+    <Grid Padding="16" RowDefinitions="Auto,*" RowSpacing="12">
+        <Border
+            Grid.Row="0"
+            Padding="16"
+            Background="{DynamicResource Surface}"
+            Stroke="{DynamicResource BorderColor}"
+            StrokeShape="RoundRectangle 12"
+            StrokeThickness="1">
+            <VerticalStackLayout Spacing="6">
+                <Label
+                    Style="{StaticResource TitleLarge}"
+                    Text="SignalBox" />
+                <Label
+                    Style="{StaticResource BodyMedium}"
+                    Text="Signale und Weichen aus dem aktiven Stellwerk. Fuer Signale kann das angezeigte Signalbild direkt ausgewaehlt werden." />
+            </VerticalStackLayout>
+        </Border>
+
+        <CollectionView
+            Grid.Row="1"
+            ItemsSource="{Binding SignalBoxElements}"
+            SelectionMode="None">
+            <CollectionView.EmptyView>
+                <VerticalStackLayout
+                    Padding="16"
+                    HorizontalOptions="Center"
+                    Spacing="8"
+                    VerticalOptions="Center">
+                    <Label
+                        FontAttributes="Bold"
+                        HorizontalTextAlignment="Center"
+                        Text="Keine SignalBox-Elemente aktiv"
+                        TextColor="{DynamicResource TextPrimary}" />
+                    <Label
+                        HorizontalTextAlignment="Center"
+                        Style="{StaticResource BodyMedium}"
+                        Text="Aktiviere in MOBAflow ein Projekt mit Stellwerk, damit Signale und Weichen hier erscheinen." />
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="vm:MauiSignalBoxElementViewModel">
+                    <Border
+                        Margin="0,0,0,10"
+                        Padding="14"
+                        Background="{DynamicResource Surface}"
+                        Stroke="{DynamicResource BorderColor}"
+                        StrokeShape="RoundRectangle 12"
+                        StrokeThickness="1">
+                        <Grid
+                            ColumnDefinitions="*,Auto"
+                            RowDefinitions="Auto,Auto,Auto"
+                            RowSpacing="8">
+                            <Label
+                                Grid.Row="0"
+                                Grid.Column="0"
+                                FontAttributes="Bold"
+                                FontSize="16"
+                                Text="{Binding Name}"
+                                TextColor="{DynamicResource TextPrimary}" />
+                            <Border
+                                Grid.Row="0"
+                                Grid.Column="1"
+                                Padding="8,3"
+                                Background="{DynamicResource SurfaceDark}"
+                                StrokeThickness="0">
+                                <Label
+                                    FontSize="12"
+                                    Text="{Binding KindText}"
+                                    TextColor="{DynamicResource TextSecondary}" />
+                            </Border>
+
+                            <Label
+                                Grid.Row="1"
+                                Grid.Column="0"
+                                Grid.ColumnSpan="2"
+                                Style="{StaticResource BodyMedium}"
+                                Text="{Binding LocationText}" />
+
+                            <Picker
+                                Grid.Row="2"
+                                Grid.Column="0"
+                                Grid.ColumnSpan="2"
+                                IsVisible="{Binding IsSignal}"
+                                ItemsSource="{Binding SignalAspectChoices}"
+                                SelectedItem="{Binding SelectedSignalAspect, Mode=TwoWay}"
+                                Title="Signalbild auswaehlen" />
+
+                            <Label
+                                Grid.Row="2"
+                                Grid.Column="0"
+                                Grid.ColumnSpan="2"
+                                IsVisible="{Binding IsSwitch}"
+                                Style="{StaticResource BodyMedium}"
+                                Text="{Binding DetailText}" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentPage>
