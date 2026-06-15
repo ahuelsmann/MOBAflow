@@ -4,7 +4,6 @@ namespace Moba.WinUI;
 
 using Backend.Data;
 using Backend.Interface;
-using Backend.Network;
 using Backend.Service;
 
 using Common.Configuration;
@@ -15,6 +14,10 @@ using Common.Serilog;
 
 using Converter;
 
+using Display.Rendering;
+using Display.Runtime;
+using Display.Transport;
+
 using Domain;
 
 using Microsoft.Extensions.Configuration;
@@ -22,13 +25,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Media;
 
-using System.Diagnostics;
-
-using Display.Rendering;
-using Display.Runtime;
-using Display.Transport;
+using Moba.Backend;
 
 using Serilog;
 using Serilog.Events;
@@ -43,15 +41,13 @@ using SharedUI.ViewModel;
 
 using Sound;
 
+using System.Diagnostics;
+
 using TrackLibrary.PikoA;
 
 using TrackPlan.Renderer;
 
 using View;
-
-using ViewModel;
-
-using Moba.Backend;
 
 /// <summary>
 /// Provides application-specific behavior to supplement the default Application class.
@@ -377,5 +373,159 @@ public partial class App
                 outputTemplate: "[{Timestamp:HH:mm:ss.fff} {Level:u3}] [{MachineName}] [{ProcessId}:{ProcessName}] [{ThreadId}] [{SourceContext}] {Message:lj}{NewLine}{Exception}"),
                 bufferSize: 1000)  // Bounded buffer for memory safety under high load
             .CreateLogger();
+    }
+
+    protected override void OnLaunched(LaunchActivatedEventArgs args)
+    {
+        _ = args;
+
+        try
+        {
+            var launchTimer = Stopwatch.StartNew();
+            LogStartupCheckpoint("OnLaunched started");
+
+            // Load settings first so the singleton has persisted values before any View/ViewModel is created.
+            _ = Services.GetRequiredService<ISettingsService>();
+            LogStartupCheckpoint("Settings service resolved");
+
+            var appSettings = Services.GetRequiredService<AppSettings>();
+            PhotoPathToImageConverter.SetPhotoBasePath(appSettings.Application.PhotoStoragePath);
+
+            // Expose LayoutColumnWidths before MainWindow so pages can bind to it (e.g. TrackPlanPage).
+            var layoutColumnWidths = Services.GetRequiredService<LayoutColumnWidthsViewModel>();
+            Current.Resources["LayoutColumnWidths"] = layoutColumnWidths;
+            LogStartupCheckpoint("Layout resources prepared");
+
+            _window = Services.GetRequiredService<MainWindow>();
+            LogStartupCheckpoint("MainWindow resolved");
+
+            _window.Closed += OnWindowClosed;
+
+            _window.Activate();
+            LogStartupCheckpoint("MainWindow activated");
+
+            if (_window is MainWindow mainWindow)
+            {
+                mainWindow.ScheduleDeferredUiStartup();
+            }
+
+            InitializePostStartupServicesAsync()
+                .SafeFireAndForget(ex => _logger.LogError(ex, "Post-startup initialization failed unexpectedly"));
+
+            AutoLoadLastSolutionAsync(((MainWindow)_window).ViewModel)
+                .SafeFireAndForget(ex => _logger.LogError(ex, "Auto-load last solution failed unexpectedly"));
+
+            _logger.LogInformation(
+                "Application UI launched (main window activated) in {ElapsedMs}ms",
+                launchTimer.ElapsedMilliseconds);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogCritical(ex, "OnLaunched failed");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Initializes deferred services after MainWindow is visible.
+    /// This runs asynchronously and doesn't block the UI thread.
+    /// </summary>
+    private async Task InitializePostStartupServicesAsync()
+    {
+        try
+        {
+            var timer = Stopwatch.StartNew();
+            LogStartupCheckpoint("Post-startup initialization queued");
+
+            var runtime = Services.GetRequiredService<IMobaRuntime>();
+            await runtime.StartAsync().ConfigureAwait(false);
+
+            // Bridge EditableTrackPlan <-> Project.TrackPlan after the first window activation.
+            Services.GetRequiredService<TrackPlanSolutionBinder>().Activate();
+
+            // Start listening for Z21 R-Bus feedback after the visible shell is up.
+            Services.GetRequiredService<TrackPlanFeedbackHighlighter>().Activate();
+
+            var postStartupService = Services.GetRequiredService<PostStartupInitializationService>();
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            await postStartupService.InitializeAsync(cts.Token).ConfigureAwait(false);
+
+            _logger.LogInformation(
+                "[Startup] Post-startup initialization completed in {ElapsedMs}ms",
+                timer.ElapsedMilliseconds);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Post-startup initialization failed");
+        }
+    }
+
+    /// <summary>
+    /// Automatically loads the last used solution if AutoLoadLastSolution preference is enabled.
+    /// Delegates to MainWindowViewModel.LoadSolutionFromPathAsync() to ensure all initialization happens correctly.
+    /// </summary>
+    private async Task AutoLoadLastSolutionAsync(MainWindowViewModel mainWindowViewModel)
+    {
+        try
+        {
+            var settingsService = Services.GetService<ISettingsService>();
+            if (settingsService == null)
+            {
+                _logger.LogWarning("SettingsService not available - skipping auto-load");
+                return;
+            }
+
+            if (!settingsService.AutoLoadLastSolution)
+            {
+                _logger.LogInformation("Auto-load disabled - skipping");
+                return;
+            }
+
+            var lastPath = settingsService.LastSolutionPath;
+            if (string.IsNullOrEmpty(lastPath))
+            {
+                _logger.LogInformation("No last solution path - skipping auto-load");
+                return;
+            }
+
+            if (!File.Exists(lastPath))
+            {
+                _logger.LogWarning("Last solution file not found: {LastPath}", lastPath);
+                return;
+            }
+
+            _logger.LogInformation("Auto-loading last solution: {LastPath}", lastPath);
+            await mainWindowViewModel.LoadSolutionFromPathAsync(lastPath).ConfigureAwait(false);
+            _logger.LogInformation("Auto-load completed: {LastPath}", lastPath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Auto-load failed");
+        }
+    }
+
+    /// <summary>
+    /// Windows App SDK 2.0: Explicit window closing for better resource cleanup.
+    /// Ensures proper disposal of services and graceful shutdown.
+    /// </summary>
+    private void OnWindowClosed(object sender, WindowEventArgs args)
+    {
+        _ = sender;
+        _ = args;
+        _logger.LogInformation("Window closed - performing cleanup");
+
+        try
+        {
+            if (Services is IDisposable disposableServices)
+            {
+                disposableServices.Dispose();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Service disposal during window close failed");
+        }
+
+        Current.Exit();
     }
 }
