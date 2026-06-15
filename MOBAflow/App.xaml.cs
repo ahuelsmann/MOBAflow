@@ -217,7 +217,7 @@ public partial class App
         services.AddSingleton<SpeakerEngineFactory>();
         services.AddSingleton<ISpeakerEngineFactory>(sp => sp.GetRequiredService<SpeakerEngineFactory>());
 
-        services.AddSingleton<ISpeakerEngine>(sp =>
+        services.AddSingleton(sp =>
         {
             var factory = sp.GetRequiredService<SpeakerEngineFactory>();
             return factory.CreateEngineFromOptions();
@@ -238,7 +238,7 @@ public partial class App
 
         services.AddHttpClient();
 
-        services.AddSingleton<RestApiStatusService>(sp =>
+        services.AddSingleton(sp =>
         {
             var factory = sp.GetRequiredService<IHttpClientFactory>();
             return new RestApiStatusService(
@@ -260,7 +260,7 @@ public partial class App
             sp.GetRequiredService<MasterDataStore>(),
             sp.GetRequiredService<ILogger<LocomotiveService>>()));
 
-        services.AddSingleton<ViessmannSignalService>(sp =>
+        services.AddSingleton(sp =>
             new ViessmannSignalService(sp.GetRequiredService<MasterDataStore>()));
 
         services.AddSingleton<ISettingsService>(sp => new SettingsService(
@@ -377,217 +377,5 @@ public partial class App
                 outputTemplate: "[{Timestamp:HH:mm:ss.fff} {Level:u3}] [{MachineName}] [{ProcessId}:{ProcessName}] [{ThreadId}] [{SourceContext}] {Message:lj}{NewLine}{Exception}"),
                 bufferSize: 1000)  // Bounded buffer for memory safety under high load
             .CreateLogger();
-    }
-
-    /// <summary>
-    /// Invoked when the application is launched.
-    /// </summary>
-    /// <param name="args">Details about the launch request and process.</param>
-    protected override void OnLaunched(LaunchActivatedEventArgs args)
-    {
-        SplashWindow? splashWindow = null;
-        try
-        {
-            var launchTimer = Stopwatch.StartNew();
-            LogStartupCheckpoint("OnLaunched started");
-
-            splashWindow = new SplashWindow();
-            splashWindow.Activate();
-            splashWindow.PrepareForDisplay();
-            LogStartupCheckpoint("Splash activated");
-
-            // Wait for the first rendered frame before MainWindow construction blocks the UI thread again.
-            var splash = splashWindow;
-            void OnSplashRendered(object? sender, object e)
-            {
-                CompositionTarget.Rendering -= OnSplashRendered;
-
-                try
-                {
-                    CompleteLaunchAfterSplash(splash, launchTimer);
-                }
-                catch (Exception ex)
-                {
-                    CloseSplashWindow(splash);
-                    _logger.LogCritical(ex, "OnLaunched failed");
-                    throw;
-                }
-            }
-
-            CompositionTarget.Rendering += OnSplashRendered;
-        }
-        catch (Exception ex)
-        {
-            CloseSplashWindow(splashWindow);
-            _logger.LogCritical(ex, "OnLaunched failed");
-            throw;
-        }
-    }
-
-    private void CompleteLaunchAfterSplash(SplashWindow splashWindow, Stopwatch launchTimer)
-    {
-        // Load settings (including Layout) first so the singleton has persisted values before any View/ViewModel is created
-        _ = Services.GetRequiredService<ISettingsService>();
-        LogStartupCheckpoint("Settings service resolved");
-
-        var appSettings = Services.GetRequiredService<AppSettings>();
-
-        PhotoPathToImageConverter.SetPhotoBasePath(appSettings.Application.PhotoStoragePath);
-
-        // Expose LayoutColumnWidths as app resource before MainWindow so pages can bind to it (e.g. TrackPlanPage with its own ViewModel)
-        var layoutColumnWidths = Services.GetRequiredService<LayoutColumnWidthsViewModel>();
-        Current.Resources["LayoutColumnWidths"] = layoutColumnWidths;
-        LogStartupCheckpoint("Layout resources prepared");
-
-        _window = Services.GetRequiredService<MainWindow>();
-        LogStartupCheckpoint("MainWindow resolved");
-
-        // Windows App SDK 2.0: Explicit window closing for better resource cleanup
-        _window.Closed += OnWindowClosed;
-
-        _window.Activate();
-        LogStartupCheckpoint("MainWindow activated");
-
-        CloseSplashWindow(splashWindow);
-        LogStartupCheckpoint("Splash closed");
-
-        if (_window is MainWindow mainWindow)
-        {
-            mainWindow.ScheduleDeferredUiStartup();
-        }
-
-        // DEFERRED INITIALIZATION (async, doesn't block UI):
-        // After MainWindow is visible, start deferred services (incl. RestApi process when Auto-start enabled)
-        InitializePostStartupServicesAsync()
-            .SafeFireAndForget(ex => _logger.LogError(ex, "Post-startup initialization failed unexpectedly"));
-
-        // Auto-load last solution if enabled (async, non-blocking)
-        AutoLoadLastSolutionAsync(((MainWindow)_window).ViewModel)
-            .SafeFireAndForget(ex => _logger.LogError(ex, "Auto-load last solution failed unexpectedly"));
-
-        _logger.LogInformation("Application UI launched (main window activated) in {ElapsedMs}ms", launchTimer.ElapsedMilliseconds);
-    }
-
-    private static void CloseSplashWindow(SplashWindow? splashWindow)
-    {
-        if (splashWindow == null)
-        {
-            return;
-        }
-
-        try
-        {
-            splashWindow.Close();
-        }
-        catch (Exception ex)
-        {
-            Log.Warning(ex, "Failed to close splash window");
-        }
-    }
-
-    /// <summary>
-    /// Initializes deferred services after MainWindow is visible.
-    /// This runs asynchronously and doesn't block the UI thread.
-    /// </summary>
-    private async Task InitializePostStartupServicesAsync()
-    {
-        try
-        {
-            var timer = Stopwatch.StartNew();
-            LogStartupCheckpoint("Post-startup initialization queued");
-
-            var runtime = Services.GetRequiredService<IMobaRuntime>();
-            await runtime.StartAsync();
-
-            // Bridge EditableTrackPlan ↔ Project.TrackPlan after the first window activation.
-            Services.GetRequiredService<TrackPlanSolutionBinder>().Activate();
-
-            // Start listening for Z21 R-Bus feedback after the visible shell is up.
-            Services.GetRequiredService<TrackPlanFeedbackHighlighter>().Activate();
-
-            var postStartupService = Services.GetRequiredService<PostStartupInitializationService>();
-            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30)); // 30s timeout
-            await postStartupService.InitializeAsync(cts.Token);
-            _logger.LogInformation("[Startup] Post-startup initialization completed in {ElapsedMs}ms", timer.ElapsedMilliseconds);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Post-startup initialization failed");
-            // Continue - app should remain functional
-        }
-    }
-
-    /// <summary>
-    /// Automatically loads the last used solution if AutoLoadLastSolution preference is enabled.
-    /// Delegates to MainWindowViewModel.LoadSolutionFromPathAsync() to ensure all initialization happens correctly.
-    /// </summary>
-    private async Task AutoLoadLastSolutionAsync(MainWindowViewModel mainWindowViewModel)
-    {
-        try
-        {
-            var settingsService = Services.GetService<ISettingsService>();
-            if (settingsService == null)
-            {
-                _logger.LogWarning("SettingsService not available - skipping auto-load");
-                return;
-            }
-
-            if (!settingsService.AutoLoadLastSolution)
-            {
-                _logger.LogInformation("Auto-load disabled - skipping");
-                return;
-            }
-
-            var lastPath = settingsService.LastSolutionPath;
-            if (string.IsNullOrEmpty(lastPath))
-            {
-                _logger.LogInformation("No last solution path - skipping auto-load");
-                return;
-            }
-
-            if (!File.Exists(lastPath))
-            {
-                _logger.LogWarning("Last solution file not found: {LastPath}", lastPath);
-                return;
-            }
-
-            _logger.LogInformation("Auto-loading last solution: {LastPath}", lastPath);
-
-            // Use the SAME code path as manual loading!
-            // This ensures JourneyManager and all other initialization happens correctly.
-            await mainWindowViewModel.LoadSolutionFromPathAsync(lastPath);
-
-            _logger.LogInformation("Auto-load completed: {LastPath}", lastPath);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Auto-load failed");
-        }
-    }
-
-    /// <summary>
-    /// Windows App SDK 2.0: Explicit window closing for better resource cleanup.
-    /// Ensures proper disposal of services and graceful shutdown.
-    /// </summary>
-    private void OnWindowClosed(object sender, WindowEventArgs args)
-    {
-        _ = sender;
-        _logger.LogInformation("Window closed - performing cleanup");
-
-        try
-        {
-            // Dispose services in reverse order of creation
-            if (Services is IDisposable disposableServices)
-            {
-                disposableServices.Dispose();
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Service disposal during window close failed");
-        }
-
-        // Explicit exit for cleaner process termination (WinUI 3 doesn't exit by default)
-        Current.Exit();
     }
 }

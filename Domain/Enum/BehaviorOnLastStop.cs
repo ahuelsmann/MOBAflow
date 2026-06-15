@@ -12,6 +12,6 @@ public enum BehaviorOnLastStop
     /// <summary>Restart the journey from the first station.</summary>
     BeginAgainFromFistStop,
 
-    /// <summary>Switch to another journey identified by <see cref="Moba.Domain.Journey.NextJourneyId"/>.</summary>
+    /// <summary>Switch to another journey identified by <see cref="Journey.NextJourneyId"/>.</summary>
     GotoJourney,
 }

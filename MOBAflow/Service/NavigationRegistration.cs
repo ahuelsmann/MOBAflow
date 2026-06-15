@@ -128,7 +128,7 @@ internal static class NavigationRegistration
 
         // Manual registrations for pages with custom DI requirements
         // JourneysPage: requires AppSettings + ISettingsService injection
-        services.AddTransient<JourneysPage>(sp => new JourneysPage(
+        services.AddTransient(sp => new JourneysPage(
             sp.GetRequiredService<MainWindowViewModel>(),
             sp.GetRequiredService<AppSettings>(),
             sp.GetService<ISettingsService>()));
@@ -145,7 +145,7 @@ internal static class NavigationRegistration
             IsBold: true));
 
         // SignalBoxPage: requires custom runtime services
-        services.AddTransient<SignalBoxPage>(sp => new SignalBoxPage(
+        services.AddTransient(sp => new SignalBoxPage(
             sp.GetRequiredService<MainWindowViewModel>(),
             sp.GetRequiredService<ViessmannSignalService>(),
             sp.GetRequiredService<AppSettings>(),

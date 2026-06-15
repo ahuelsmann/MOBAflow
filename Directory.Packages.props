@@ -46,8 +46,8 @@
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageVersion Include="CommunityToolkit.Maui" Version="14.2.0" />
     <PackageVersion Include="CommunityToolkit.Maui.MediaElement" Version="10.0.0" />
-    <PackageVersion Include="UraniumUI.Material" Version="2.16.0" />
-    <PackageVersion Include="UraniumUI.Icons.MaterialIcons" Version="2.16.0" />
+    <PackageVersion Include="UraniumUI.Material" Version="3.0.0" />
+    <PackageVersion Include="UraniumUI.Icons.MaterialIcons" Version="3.0.0" />
     <PackageVersion Include="Xamarin.AndroidX.Startup.StartupRuntime" Version="1.2.0.7" />
     <PackageVersion Include="Microsoft.WindowsAppSDK" Version="2.2.0" />
     <PackageVersion Include="Microsoft.Graphics.Win2D" Version="1.4.0" />
