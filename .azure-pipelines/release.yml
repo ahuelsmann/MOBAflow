@@ -38,7 +38,7 @@ stages:
               targetType: 'inline'
               script: |
                 # Install MinVer CLI
-                dotnet tool install --global minver-cli --version 5.*
+                dotnet tool install --global minver-cli --version 7.*
                 $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
                 $version = minver
                 Write-Host "Detected version (MinVer): $version"
@@ -50,12 +50,12 @@ stages:
 
                 # Generate/Update CHANGELOG.md
                 cd "$(Build.SourcesDirectory)"
-                if (Test-Path docs\CHANGELOG.md) {
-                  Write-Host "Updating docs/CHANGELOG.md using git-cliff..."
-                  git-cliff -o docs/CHANGELOG.md
+                if (Test-Path CHANGELOG.md) {
+                  Write-Host "Updating CHANGELOG.md using git-cliff..."
+                  git-cliff -o CHANGELOG.md
                 } else {
-                  Write-Host "docs/CHANGELOG.md not found, creating new file..."
-                  git-cliff -o docs/CHANGELOG.md
+                  Write-Host "CHANGELOG.md not found, creating new file..."
+                  git-cliff -o CHANGELOG.md
                 }
                 Write-Host "CHANGELOG updated successfully."
               pwsh: true

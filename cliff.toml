@@ -3,8 +3,8 @@
 #
 # Usage:
 #   git cliff --unreleased          # Preview unreleased changes
-#   git cliff --unreleased -o docs/CHANGELOG.md   # Write to file (prepends)
-#   git cliff -o docs/CHANGELOG.md  # Regenerate full changelog
+#   git cliff --unreleased -o CHANGELOG.md   # Write to file (prepends)
+#   git cliff -o CHANGELOG.md  # Regenerate full changelog
 
 [changelog]
 header = """# Changelog
@@ -59,7 +59,7 @@ commit_parsers = [
 ]
 protect_breaking_commits = false
 filter_commits = false
-tag_pattern = "v[0-9].*"
+tag_pattern = "[0-9].*"
 skip_tags = ""
 ignore_tags = ""
 topo_order = false

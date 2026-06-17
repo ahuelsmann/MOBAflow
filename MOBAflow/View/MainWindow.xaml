@@ -174,14 +174,8 @@
                     Width="18"
                     Height="18"
                     VerticalAlignment="Center"
-                    Opacity="0.4">
-                    <Image.Source>
-                        <SvgImageSource
-                            RasterizePixelHeight="72"
-                            RasterizePixelWidth="72"
-                            UriSource="ms-appx:///Assets/track_power.svg" />
-                    </Image.Source>
-                </Image>
+                    Opacity="0.4"
+                    Source="ms-appx:///Assets/FunctionSymbols/dark/32/track_power.png" />
                 <TextBlock
                     MaxWidth="260"
                     VerticalAlignment="Center"

@@ -182,7 +182,7 @@ required**. Automated setup scripts are planned for future versions.
 - v0.3.0: Commercial plugin marketplace
 - v1.0.0: Feature-complete, production-ready
 
-Siehe [`../CHANGELOG.md`](../CHANGELOG.md) für Änderungen.
+Siehe [`../../CHANGELOG.md`](../../CHANGELOG.md) für Änderungen.
 
 ---
 
@@ -190,18 +190,19 @@ Siehe [`../CHANGELOG.md`](../CHANGELOG.md) für Änderungen.
 
 ```text
 MOBAflow Repository
-├─ README.md (START HERE – einzige MD-Datei im Root)
+├─ README.md, AGENTS.md, CONTRIBUTING.md, CHANGELOG.md, CODE_OF_CONDUCT.md
 ├─ LICENSE (MIT)
 ├─ docs/
-│  ├─ ARCHITECTURE.md, PROJECT-REFERENCE.md, CHANGELOG.md, CLAUDE.md
+│  ├─ ARCHITECTURE.md, PROJECT-REFERENCE.md, CLAUDE.md
 │  ├─ HARDWARE-DISCLAIMER.md, JSON-VALIDATION.md, MINVER-SETUP.md
 │  ├─ SECURITY.md, THIRD-PARTY-NOTICES.md
+│  ├─ archive/ (historical docs, e.g. MOBAdash)
 │  └─ wiki/ (This Wiki)
 │     ├─ INDEX.md (You are here)
 │     ├─ INSTALLATION.md, PIPER-TTS-SETUP.md
 │     ├─ MOBAFLOW-USER-GUIDE.md, MOBASMART-USER-GUIDE.md
 │     └─ MOBASMART-WIKI.md, MOBATPS.md, QUICK-START-TRACK-STATISTICS.md
-└─ .github/ (Development, Instructions, Workflows)
+└─ .github/ (Copilot instructions, Azure Pipelines in .azure-pipelines/)
 ```
 
 ---

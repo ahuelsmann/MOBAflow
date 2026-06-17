@@ -76,15 +76,15 @@
         <MauiIcon Include="Resources\AppIcon\modern_train_backup.png" Color="#512BD4" />
         <!-- Splash image as MauiImage for use in custom SplashPage -->
         <MauiImage Include="Resources\Splash\splash_background.png" />
-        <!-- Images (includes all SVG icons automatically) -->
+        <!-- Function symbol PNGs (shared with MOBAflow/Assets/FunctionSymbols) -->
         <MauiImage Include="Resources\Images\*" />
         <!-- Custom Fonts -->
         <MauiFont Include="Resources\Fonts\*" />
         <!-- Raw Assets -->
         <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
     </ItemGroup>
+    <Import Project="FunctionSymbolMauiImages.props" />
     <ItemGroup>
-        <!-- MAUI Core -->
         <PackageReference Include="Microsoft.Maui.Controls" />
         <!-- CommunityToolkit.Maui (UI features: Expander, Converters, Behaviors) -->
         <PackageReference Include="CommunityToolkit.Maui" />
@@ -128,10 +128,22 @@
         <MauiXaml Update="Resources\Styles\LightTheme.xaml">
             <Generator>MSBuild:Compile</Generator>
         </MauiXaml>
+        <MauiXaml Update="View\AppTabHostPage.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </MauiXaml>
+        <MauiXaml Update="Controls\AppBottomTabBar.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </MauiXaml>
         <MauiXaml Update="View\SignalBoxPage.xaml">
             <Generator>MSBuild:Compile</Generator>
         </MauiXaml>
         <MauiXaml Update="View\ControlPage.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </MauiXaml>
+        <MauiXaml Update="Controls\SpeedGaugeView.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </MauiXaml>
+        <MauiXaml Update="Controls\FunctionToggleView.xaml">
             <Generator>MSBuild:Compile</Generator>
         </MauiXaml>
         <MauiXaml Update="View\SplashPage.xaml">

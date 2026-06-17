@@ -36,14 +36,13 @@ internal sealed class FunctionSymbolItem
 }
 
 /// <summary>
-/// Window for selecting an SVG symbol from MOBAflow/Assets for a function button (Train Control).
-/// Enumerates the deployed Assets folder at runtime so newly added or renamed SVGs are picked up
-/// automatically on the next build.
+/// Window for selecting a PNG symbol from MOBAflow/Assets/FunctionSymbols for a function button (Train Control).
+/// Enumerates the deployed FunctionSymbols catalog at runtime.
 /// </summary>
 internal sealed partial class FunctionSymbolPickerWindow : Window
 {
     /// <summary>
-    /// After closing: selected SVG asset filename (e.g. "scheinwerfer.svg") or null on cancel.
+    /// After closing: selected PNG asset filename (e.g. "headlight.png") or null on cancel.
     /// </summary>
     public string? SelectedGlyph { get; private set; }
 
@@ -95,31 +94,31 @@ internal sealed partial class FunctionSymbolPickerWindow : Window
     }
 
     /// <summary>
-    /// SVG filenames that are not function-button symbols and must be excluded from the library.
+    /// PNG filenames that are not function-button symbols and must be excluded from the library.
     /// Compared case-insensitively.
     /// </summary>
     private static readonly HashSet<string> ExcludedAssets = new(StringComparer.OrdinalIgnoreCase)
     {
-        "DoorClose.svg",
-        "DoorOpen.svg",
-        "IsDoorBlocked.svg",
-        "mobaflow-icon.svg"
+        "door_close.png",
+        "door_open.png",
+        "door_blocked.png",
+        "mobaflow-icon.png"
     };
 
     /// <summary>
-    /// Loads the SVG asset filenames from the deployed Assets folder. Newly added or renamed
-    /// SVG files are picked up automatically on the next build (csproj globs Assets\*.svg).
+    /// Loads PNG asset filenames from the deployed FunctionSymbols catalog (dark/32 preview size).
+    /// New exports from Figma are picked up on the next build (csproj globs FunctionSymbols PNGs).
     /// </summary>
     private static IReadOnlyList<FunctionSymbolItem> LoadSymbols()
     {
         try
         {
-            var assetsDir = Path.Combine(AppContext.BaseDirectory, "Assets");
-            if (!Directory.Exists(assetsDir))
+            var catalogDir = Path.Combine(AppContext.BaseDirectory, "Assets", "FunctionSymbols", "dark", "32");
+            if (!Directory.Exists(catalogDir))
                 return Array.Empty<FunctionSymbolItem>();
 
             var culture = CultureInfo.GetCultureInfo("de-DE");
-            return Directory.EnumerateFiles(assetsDir, "*.svg", SearchOption.TopDirectoryOnly)
+            return Directory.EnumerateFiles(catalogDir, "*.png", SearchOption.TopDirectoryOnly)
                 .Select(Path.GetFileName)
                 .Where(name => !string.IsNullOrEmpty(name) && !ExcludedAssets.Contains(name))
                 .OrderBy(name => name, StringComparer.Create(culture, ignoreCase: true))

@@ -4,16 +4,18 @@
 
 ---
 
-## ❓ "Was bringt mir die Hooks?"
+## Git Hooks (planned)
 
-**In 30 Sekunden:**
+Git hook scripts are **not checked into this repository**. Until they are added:
 
-```text
-❌ OHNE Hooks: Fehler → Commit → Push → Remote broken → Team wartet
-✅ MIT Hooks: Fehler blockiert vor Commit → sofort fixen → sauberer Remote
-
-Praktisch: 7-11 Stunden Einsparung pro Monat (Fehlersuche, Debugging)
+```powershell
+dotnet test Test/Test.csproj
+dotnet build MOBAflow/MOBAflow.csproj -c Release
 ```
+
+JSON validation runs via the MSBuild `ValidateJsonConfiguration` target (Release builds;
+skipped in FastDebug). Planned git hooks are documented in
+[`future-enhancements.instructions.md`](./future-enhancements.instructions.md).
 
 ---
 
@@ -161,50 +163,33 @@ ADR-004: Z21 as Singleton (Connection Pooling)
 **Ordner-Struktur:**
 
 ```text
-.github/instructions/
-├── copilot-instructions.md              ← Copilot Regeln
-├── copilot-tips.instructions.md         ← Copilot Prompts
-├── summary-hooks-packages-sonarqube.md  ← DIESE DATEI (ausführlich)
-├── visual-summary.md                    ← Visuelle Übersicht
-├── future-enhancements.instructions.md  ← Roadmap Sessions 35+
-├── vs-setup.instructions.md             ← VS Extensions
-├── di-pattern-consistency.instructions.md
-├── plan-completion.instructions.md
-├── naming-conventions.instructions.md
-└── todos.instructions.md
+.github/
+├── copilot-instructions.md              ← Primary agent rules (repo root .github/)
+└── instructions/
+    ├── instructions-index.md              ← Index of instruction files
+    ├── quick-reference.md                 ← This file
+    ├── copilot-tips.instructions.md
+    ├── future-enhancements.instructions.md
+    ├── vs-setup.instructions.md
+    └── … (layer-specific *.instructions.md)
 
-.git/hooks/
-├── pre-commit.ps1 / .cmd                ← JSON Validierung
-├── commit-msg.ps1 / .cmd                ← Conventional Commits
-├── pre-push.ps1 / .cmd                  ← Tests + Build
-├── post-checkout.ps1 / .cmd             ← NuGet Restore
-└── README.md                            ← Hooks Doku
+.azure-pipelines/
+├── quality.yml                            ← PR CI (build, test, SonarCloud)
+└── release.yml                            ← Manual release (MinVer, git-cliff)
 ```
 
 ---
 
-## ❓ "Was wenn ich einen Hook umgehen will?"
+## Pre-commit validation (current)
 
-**Git-Befehl:**
+Before committing, run manually:
 
 ```powershell
-# Commit ohne pre-commit Hook
-git commit --no-verify -m "feat: Emergency fix"
-
-# Push ohne pre-push Hook
-git push --no-verify
-
-# ABER: NIEMALS bei JSON-Validation umgehen!
-# Das kann Production brechen.
+dotnet test Test/Test.csproj
+dotnet build MOBAflow/MOBAflow.csproj -c Release
 ```
 
-**Best Practice:**
-
-```text
-✅ OK: --no-verify bei dringenden Hotfixes
-❌ NIEMALS: --no-verify als Standard (bricht den Sinn)
-❌ NIEMALS: --no-verify bei pre-commit (JSON-Fehler!)
-```
+Use Conventional Commits (`feat:`, `fix:`, `docs:`, etc.) for git-cliff changelog generation.
 
 ---
 
@@ -239,84 +224,30 @@ TOTAL: 15-22 Stunden + Major Quality
 
 ---
 
-## ✅ Checkliste: Was ist DONE?
+## Quality checklist (current)
 
 ```text
-SESSIONS 30-34 KOMPLETT:
+Implemented:
+├─ JSON validation (MSBuild ValidateJsonConfiguration.targets)
+├─ Azure DevOps quality.yml (PR build, tests, SonarCloud)
+├─ coverlet / dotnet-coverage runsettings
+└─ Instruction docs (.github/copilot-instructions.md)
 
-Git Hooks (4/4):
-├─ ✅ pre-commit (JSON + Secrets)
-├─ ✅ commit-msg (Conventional Commits)
-├─ ✅ pre-push (Build + Tests + Analysis)
-└─ ✅ post-checkout (NuGet Auto Restore)
-
-Dokumentation (8 Dateien):
-├─ ✅ copilot-instructions.md (Regeln)
-├─ ✅ copilot-tips.instructions.md (Prompts)
-├─ ✅ summary-hooks-packages-sonarqube.md (THIS FILE)
-├─ ✅ visual-summary.md (Visuelle Übersicht)
-├─ ✅ future-enhancements.instructions.md (Roadmap)
-├─ ✅ vs-setup.instructions.md (IDE Config)
-└─ ✅ .git/hooks/README.md (Hook Doku)
-
-Code Quality:
-├─ ✅ .editorconfig (Formatting)
-├─ ✅ Pre-commit Validation
-├─ ✅ Pre-push Testing
-└─ ✅ Copilot Best Practices
-
-BEREIT FÜR:
-├─ 🚀 Session 35: SonarQube Integration
-├─ 🚀 Session 36: Coverage Dashboard
-├─ 🚀 Session 37: Performance Benchmarking
-└─ 🚀 Sessions 38-40: Advanced Tools
+Planned:
+├─ Git hooks (pre-commit, commit-msg, pre-push)
+└─ Optional GitHub Actions workflows
 ```
 
----
-
-## 🎓 Empfehlung für nächste Session
-
-**Session 35 Priorität:**
-
-```text
-1️⃣  SonarQube Community Edition Setup
-    → Docker oder SonarCloud (Cloud kostenlos)
-    
-2️⃣  GitHub Actions CI Integration
-    → Scan bei jedem Push zu main
-    
-3️⃣  Code Coverage Reporting
-    → Coverlet + ReportGenerator
-    → Target: 80%+ Coverage
-
-4️⃣  ADR Templates
-    → docs/adr/ Ordner erstellen
-    → ADR-001 bis ADR-008 schreiben
-
-⏱️  Estimated: 2.5-3 Stunden
-🎯 Impact: 🟢🟢🟢 SEHR HOCH
-💰 Kosten: 💚 KOSTENLOS
-```
+Deprecated detail docs (historical): `visual-summary.md`, `summary-hooks-packages-sonarqube.md`
 
 ---
 
-### Mit diesen Hooks und Tools haben Sie die Grundlagen für ein
+## Next improvements
 
-professionelles, wartbares Projekt geschaffen. Das ist Enterprise-Grade
-Quality! 🏆
+See [`future-enhancements.instructions.md`](./future-enhancements.instructions.md). SonarCloud already runs in
+`.azure-pipelines/quality.yml`; optional GitHub Actions workflows remain planned.
 
 ---
-
-## Q&A
-
-**F: Können wir Hooks deaktivieren?**  
-A: Ja, aber nicht empfohlen. Eher: Für Emergency `--no-verify` nutzen.
-
-**F: Was wenn jemand hook-bypass.exe schreibt?**  
-A: 😄 Dann haben Sie ein Team-Problem, kein Tech-Problem!
-
-**F: Funktioniert das auch auf Mac/Linux?**  
-A: Teils - PowerShell läuft überall, aber besser: Bash-Versionen schreiben.
 
 **F: Kann ich Hooks für alle Devs erzwingen?**  
 A: Ja: `git config core.hooksPath .git/hooks` im Setup-Script.

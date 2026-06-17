@@ -38,7 +38,7 @@ public sealed partial class FunctionButtonViewModel : ObservableObject
     private bool _isOn;
 
     /// <summary>
-    /// SVG asset filename for the button symbol (from FunctionSymbols/defaults). Empty = no symbol.
+    /// PNG asset filename for the button symbol (from FunctionSymbols/defaults). Empty = no symbol.
     /// </summary>
     [ObservableProperty]
     private string _iconAsset = string.Empty;

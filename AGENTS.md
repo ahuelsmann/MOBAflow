@@ -36,7 +36,7 @@ Located in `.github/instructions/`:
 
 | File | Purpose |
 | ---- | ------- |
-| `copilot-instructions.md` | **LOAD THIS FIRST** — EventBus, rules, workflows, MVVM patterns |
+| `instructions-index.md` | Index of all instruction files in `.github/instructions/` |
 | `di-pattern-consistency.instructions.md` | DI registration, singletons, constructor injection |
 | `architecture.instructions.md` | Layer boundaries, data flow, threading model |
 | `backend.instructions.md` | Platform independence, Z21 protocol, action executors |
@@ -53,12 +53,6 @@ Located in `.github/instructions/`:
 | `vs-setup.instructions.md` | ReSharper extensions, project setup |
 
 ---
-
-## 🤖 Available Agents
-
-- **`enterprise-pr-reviewer`** — Structured PR reviews, architecture validation, security checks
-  - Location: `.github/agents/enterprise-pr-reviewer.agent.md`
-  - Use when: Reviewing pull requests, checking enterprise quality, producing PR feedback
 
 ### Optional Windows WinUI tooling
 
@@ -81,7 +75,7 @@ This is a .NET 10 multi-platform solution. On the Linux Cloud VM **only cross-pl
 
 | Buildable on Linux | NOT buildable (platform-specific) |
 | ------------------ | -------------------------------- |
-| Domain, Common, Backend, Sound, SharedUI, SharedUI.Web, TrackLibrary.Base, TrackLibrary.PikoA, TrackPlan.Renderer, MOBApi, Test | MOBAflow (`net10.0-windows10.0.22621.0`), MOBAsmart (`net10.0-android`), MAUI.Controls (`net10.0;net10.0-android`) |
+| Domain, Common, Backend, Sound, SharedUI, TrackLibrary.Base, TrackLibrary.PikoA, TrackPlan.Renderer, MOBApi, Test | MOBAflow (`net10.0-windows10.0.22621.0`), MOBAsmart (`net10.0-android`), MAUI.Controls (`net10.0;net10.0-android`) |
 
 ### Build & test commands
 
@@ -113,7 +107,7 @@ dotnet test Test/Test.csproj --settings Test/coverlet.runsettings \
 
 ### .NET SDK
 
-The project requires .NET 10 SDK (pinned in `global.json` to 10.0.103 with `latestFeature` rollForward). Installed at `/usr/share/dotnet`.
+The project requires .NET 10 SDK (pinned in `global.json` to `10.0.300-preview` with `latestFeature` rollForward). Installed at `/usr/share/dotnet`.
 
 ---
 

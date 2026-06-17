@@ -193,11 +193,18 @@
                             <Button
                                 Command="{Binding CaptureAndUploadPhotoCommand}"
                                 HeightRequest="44"
-                                ImageSource="icon_camera.svg"
                                 IsEnabled="{Binding IsPhotoUploading, Converter={toolkit:BoolToObjectConverter TrueObject=False, FalseObject=True}}"
                                 SemanticProperties.Description="Capture a photo and upload it to MOBAflow"
                                 Style="{DynamicResource AccentButtonStyle}"
-                                WidthRequest="44" />
+                                WidthRequest="44">
+                                <Button.ImageSource>
+                                    <FontImageSource
+                                        FontFamily="MaterialIcons"
+                                        Glyph="&#xE412;"
+                                        Size="24"
+                                        Color="White" />
+                                </Button.ImageSource>
+                            </Button>
                         </HorizontalStackLayout>
                     </Grid>
 

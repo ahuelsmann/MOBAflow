@@ -84,7 +84,6 @@
     <ItemGroup>
         <Content Include="Assets\*.png" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="Assets\FunctionSymbols\**\*.png" CopyToOutputDirectory="PreserveNewest" />
-        <Content Include="Assets\*.svg" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="Assets\*.ico" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
     <!-- Data Files -->

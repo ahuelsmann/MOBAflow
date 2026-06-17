@@ -112,6 +112,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add MatrixImage collection to Project and enhance 5x5 matrix editor UI
 - Add Matrix and Display page feature toggles and reorganize navigation
 - Add display configuration views and reorganize matrix page layout
+- `MasterDataStore` as the CLR type for shared master JSON (`data.json`: cities,
+  locomotives, Viessmann multiplex catalogue). Replaces the former `DataManager`
+  name; JSON shape and keys are unchanged.
+- `WorkflowExecutionOptions` (`StopOnFirstActionFailure`) on
+  `IWorkflowService.ExecuteAsync` for optional fail-fast sequential workflows.
+- `FeatureToggleRegistry` page-availability get/set without reflection on
+  `FeatureToggleSettings`.
+- `WinUiGridInterop` in SharedUI to access WinUI `Grid.ColumnDefinitions` without
+  referencing WinUI from the cross-platform library.
+- `MobaRuntimeService` implemented as a **partial** class split across
+  `MobaRuntimeService.cs`, `MobaRuntimeService.RuntimeApi.cs`,
+  `MobaRuntimeService.Z21Handlers.cs`, `MobaRuntimeService.AutoConnect.cs`, and
+  `MobaRuntimeService.StatusFormatting.cs`.
 
 ### Fixed
 
@@ -171,6 +184,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove unused OverviewPage2.xaml view
 - Move commands to ViewModel and enhance logging infrastructure
 - Standardize layout persistence to use star values and enhance LED matrix interaction
+- **Runtime boundary:** `MainWindowViewModel`, `TrainControlViewModel`, and
+  `MauiViewModel` inject `IMobaRuntime` (`MobaRuntimeService`) directly from DI.
+- **WinUI DI:** City, locomotive, and settings services register without
+  try/catch fallbacks to null implementations; misconfiguration fails at startup.
+- **EventBus:** Handler exceptions are logged at **error** severity; when a
+  debugger is attached, `Debug.WriteLine` includes the failure for visibility.
+- **Column layout:** `ColumnViewModel` builds `GridLength` via the runtime
+  `Width` property type (double ctor) instead of a hard-coded type name string.
+- Runtime projection models `MobaRuntimeSnapshot`, `JourneyRuntimeSnapshot`, and
+  `LocomotiveRuntimeSnapshot` remain the UI-facing state; feedback is forwarded
+  from the runtime for MAUI and WinUI consumers.
+- `JourneyViewModel` continues to consume projected runtime state rather than
+  owning `JourneyManager` directly.
+
+### Removed
+
+- `IMobaClient`, `InProcessMobaClient`.
+- `ProjectRuntimeFactory` (superseded by `MobaRuntimeService.ActivateProjectAsync`
+  and `ActiveProjectContext`).
 
 ### Tests
 

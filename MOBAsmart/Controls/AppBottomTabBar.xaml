@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentView
+    x:Class="Moba.MAUI.Controls.AppBottomTabBar"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Name="Root">
+
+    <Border
+        x:Name="TabBarBorder"
+        Background="{DynamicResource TabBarBackground}"
+        Padding="0"
+        Stroke="{DynamicResource TabBarBorder}"
+        StrokeShape="Rectangle"
+        StrokeThickness="0">
+        <Grid RowDefinitions="Auto,*">
+            <BoxView
+                Grid.Row="0"
+                HeightRequest="1"
+                Color="{DynamicResource TabBarBorder}" />
+
+            <Grid
+                x:Name="TabItemsGrid"
+                Grid.Row="1"
+                ColumnDefinitions="*,*,*"
+                MinimumHeightRequest="48">
+
+                <Grid
+                    x:Name="CounterTab"
+                    Grid.Column="0"
+                    RowDefinitions="Auto,*">
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnCounterTapped" />
+                    </Grid.GestureRecognizers>
+                    <BoxView
+                        x:Name="CounterIndicator"
+                        Grid.Row="0"
+                        HeightRequest="2"
+                        HorizontalOptions="Fill"
+                        IsVisible="False"
+                        Color="{DynamicResource TabBarSelectedForeground}" />
+                    <Label
+                        x:Name="CounterLabel"
+                        Grid.Row="1"
+                        Style="{StaticResource FluentBottomTabBarLabel}"
+                        Text="Counter" />
+                </Grid>
+
+                <Grid
+                    x:Name="SignalBoxTab"
+                    Grid.Column="1"
+                    RowDefinitions="Auto,*">
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnSignalBoxTapped" />
+                    </Grid.GestureRecognizers>
+                    <BoxView
+                        x:Name="SignalBoxIndicator"
+                        Grid.Row="0"
+                        HeightRequest="2"
+                        HorizontalOptions="Fill"
+                        IsVisible="False"
+                        Color="{DynamicResource TabBarSelectedForeground}" />
+                    <Label
+                        x:Name="SignalBoxLabel"
+                        Grid.Row="1"
+                        Style="{StaticResource FluentBottomTabBarLabel}"
+                        Text="SignalBox" />
+                </Grid>
+
+                <Grid
+                    x:Name="ControlTab"
+                    Grid.Column="2"
+                    RowDefinitions="Auto,*">
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnControlTapped" />
+                    </Grid.GestureRecognizers>
+                    <BoxView
+                        x:Name="ControlIndicator"
+                        Grid.Row="0"
+                        HeightRequest="2"
+                        HorizontalOptions="Fill"
+                        IsVisible="False"
+                        Color="{DynamicResource TabBarSelectedForeground}" />
+                    <Label
+                        x:Name="ControlLabel"
+                        Grid.Row="1"
+                        Style="{StaticResource FluentBottomTabBarLabel}"
+                        Text="Control" />
+                </Grid>
+            </Grid>
+        </Grid>
+    </Border>
+</ContentView>

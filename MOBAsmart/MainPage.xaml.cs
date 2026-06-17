@@ -63,6 +63,11 @@ public partial class CounterPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
+        ActivateTab();
+    }
+
+    public void ActivateTab()
+    {
         _viewModelInitializationTask ??= ViewModel.InitializeAsync();
     }
 

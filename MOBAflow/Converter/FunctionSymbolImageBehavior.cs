@@ -9,7 +9,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
 
 /// <summary>
-/// Loads pre-rendered function symbol PNGs for a stored SVG asset filename.
+/// Loads pre-rendered function symbol PNGs for a stored asset filename.
 /// </summary>
 public static class FunctionSymbolImageBehavior
 {
@@ -74,7 +74,7 @@ public static class FunctionSymbolImageBehavior
     private static string ResolvePngPath(string assetName, ElementTheme actualTheme, int renderSize)
     {
         var themeFolder = actualTheme == ElementTheme.Light ? "light" : "dark";
-        var fileName = Path.ChangeExtension(Path.GetFileName(assetName.Trim()), ".png");
+        var fileName = Path.GetFileName(assetName.Trim());
         return Path.Combine(AppContext.BaseDirectory, "Assets", "FunctionSymbols", themeFolder, renderSize.ToString(), fileName);
     }
 }

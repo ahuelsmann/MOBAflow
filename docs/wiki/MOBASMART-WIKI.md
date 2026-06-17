@@ -1,5 +1,9 @@
 # MOBAsmart Wiki
 
+> **Note:** This wiki supplements the main user guide
+> [`MOBASMART-USER-GUIDE.md`](MOBASMART-USER-GUIDE.md). Start there for setup and
+> daily use; use this page for FAQ, troubleshooting depth, and technical details.
+
 **Platform:** Android  
 **Status:** Production  
 **Last Updated:** 2025-12-27

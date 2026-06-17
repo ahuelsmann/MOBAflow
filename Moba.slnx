@@ -15,7 +15,6 @@
   </Folder>
   <Folder Name="/Instructions/">
     <File Path=".github/copilot-instructions.md" />
-    <File Path=".github/instructions/todos.instructions.md" />
     <File Path="AGENTS.md" />
   </Folder>
   <Project Path="Backend/Backend.csproj" />

@@ -12,10 +12,10 @@
           "manufacturer": "Roco",
           "articleNumber": "62550",
           "functionSymbols": [
-            "f0__licht.svg",
+            "f0__light.png",
             "",
-            "f9__signalhorn_tief.svg",
-            "f2__signalhorn_hoch.svg",
+            "f9__horn_low.png",
+            "f2__horn_high.png",
             "none",
             "none",
             "none",

@@ -27,7 +27,7 @@ the Roco Z21 Digital Command Station.
 - [🎵 Audio Library](#-audio-library)
 - [🎨 Control Libraries](#-control-libraries)
 - [📦 Architecture](#-architecture)
-- [🔧 Setup Scripts (For Teams)](#-setup-scripts-for-teams)
+- [🔧 Team Setup (Planned)](#-team-setup-planned)
 - [📚 Documentation](#-documentation)
 
 ---
@@ -144,7 +144,7 @@ MOBAflow controls model train layouts via UDP communication with the
 > - ✅ Liability & disclaimer
 > - ✅ Emergency procedures
 
-**Current Status:** ℹ️ *Azure App Configuration setup scripts are available.
+**Current Status:** ℹ️ *Automated setup scripts are planned for v0.2.0.
 Hardware setup, device pairing, and layout integration are still manual.*
 
 ---
@@ -163,8 +163,12 @@ Hardware setup, device pairing, and layout integration are still manual.*
 ```bash
 git clone https://github.com/ahuelsmann/MOBAflow.git
 cd MOBAflow
-dotnet build Moba.slnx
+dotnet restore MOBAflow/MOBAflow.csproj
+dotnet build MOBAflow/MOBAflow.csproj
 ```
+
+**Optional (full solution):** `dotnet build Moba.slnx` requires Windows with WinUI and
+Android MAUI workloads. Prefer per-project builds when solution restore fails.
 
 **Fast local WinUI compile check (Windows):**
 
@@ -317,7 +321,8 @@ The app loads settings in this order (first found wins):
 
 1. ☁️ **Azure App Configuration** (if `AZURE_APPCONFIG_CONNECTION` env var exists)
 2. 🔐 **User Secrets** (Development mode only)
-3. ⚙️ **Settings UI** (`appsettings.json`)
+3. ⚙️ **Settings UI** – committed defaults in `MOBAflow/appsettings.json`; local overrides in
+   `appsettings.Development.json` (gitignored; use `appsettings.Development.template.json` as a starting point)
 4. 🚫 **Fallback:** Speech features disabled
 
 ---
@@ -410,8 +415,7 @@ MOBAflow/Controls/       ← WinUI 3 XAML controls inside the desktop app
     ↓
 MAUI.Controls/           ← MAUI XAML (Android Mobile)
     ↓
-SharedUI/                ← ViewModels (Platform-agnostic, Desktop)
-SharedUI.Web/            ← ViewModels (Web-compatible subset)
+SharedUI/                ← ViewModels (Platform-agnostic)
     ↓
 Domain/                  ← Business Models
 ```
@@ -422,8 +426,7 @@ Domain/                  ← Business Models
 | --------- | ---------- | ------------ | -------- |
 | **MOBAflow/Controls** | Windows | WinUI 3 XAML | Desktop app control set |
 | **MAUI.Controls** | Android | .NET MAUI XAML | Mobile control library |
-| **SharedUI** | Cross-platform | CommunityToolkit.Mvvm | Desktop ViewModels |
-| **SharedUI.Web** | Cross-platform | CommunityToolkit.Mvvm | Web-compatible ViewModels |
+| **SharedUI** | Cross-platform | CommunityToolkit.Mvvm | Shared ViewModels |
 
 ### 🪟 Windows Controls in MOBAflow
 
@@ -483,7 +486,7 @@ MOBAflow follows **Clean Architecture** principles with strict layer separation.
 ┌─────────────────────────────────────┐
 │  MOBAflow / MOBAsmart / MOBApi      │  ← Platform UI & API
 ├─────────────────────────────────────┤
-│  SharedUI / SharedUI.Web            │  ← MVVM Layer (Desktop + Web)
+│  SharedUI                           │  ← MVVM Layer
 ├─────────────────────────────────────┤
 │  Backend (Services, Logic)          │  ← Business Logic
 ├─────────────────────────────────────┤
@@ -601,89 +604,13 @@ reading this README.
 
 ---
 
-## 🔧 Setup Scripts (For Teams)
+## 🔧 Team Setup (Planned)
 
-> 💡 **For Developer Teams:** Centralized Azure App Configuration for shared
-> environments.
->
-> 👤 **For End Users:** Skip this section and use
-> [Settings UI](#option-c-settings-ui-end-users) instead.
-
-### 📜 Available Scripts
-
-| Script | Purpose | Run Where |
-| -------- | --------- | ----------- |
-| `setup-azure-appconfig.ps1` | Create shared app configuration resource | **Once** (any system) |
-| `install-appconfig-connection.ps1` | Set env var | **All systems** |
-
-### 🚀 Quick Team Setup
-
-**1. Create Azure App Configuration Resource:**
-
-```powershell
-.\scripts\setup-azure-appconfig.ps1
-```
-
-**Output:** Copy the Connection String ✅
-
-**2. Install on Team Systems:**
-
-```powershell
-.\scripts\install-appconfig-connection.ps1 `
-    -ConnectionString "Endpoint=https://...;Id=...;Secret=..."
-```
-
-**3. Restart IDE:**
-
-Close and reopen Visual Studio / VS Code
-
-**4. Verify:**
-
-Shared app settings automatically load from Azure App Configuration.
-
----
-
-### 📖 Script Details
-
-#### setup-azure-appconfig.ps1
-
-**Purpose:** Creates Azure App Configuration resource
-
-**Parameters:**
-
-- `-ResourceGroupName` (optional) – Default: `MOBAflow-RG`
-- `-ConfigStoreName` (optional) – Default: `mobaflow-config`
-- `-Location` (optional) – Default: `germanywestcentral`
-
-**Requirements:**
-
-- Azure CLI installed
-- Logged in (`az login`)
-- Subscription selected (`az account set`)
-
----
-
-#### install-appconfig-connection.ps1
-
-**Purpose:** Sets `AZURE_APPCONFIG_CONNECTION` environment variable
-
-**Parameters:**
-
-- `-ConnectionString` (required) – From previous script output
-
-**Requirements:**
-
-- Run as normal user (not Admin)
-- Restart IDE after running
-
----
-
-### ✅ Benefits
-
-- ✅ Centralized configuration for entire team
-- ✅ No `appsettings.json` commits
-- ✅ Easy key rotation (update once in Azure)
-- ✅ Consistent config on CI/CD pipelines
+> **Planned for v0.2.0:** PowerShell setup scripts for Azure App Configuration
+> (`scripts/setup-azure-appconfig.ps1`, `scripts/install-appconfig-connection.ps1`)
+> are not yet in the repository. Until then, configure MOBAflow via the
+> [Settings UI](#-configuration) or local `appsettings.Development.json`
+> (gitignored; see [Configuration](#-configuration)).
 
 ---
 
@@ -697,16 +624,17 @@ Shared app settings automatically load from Azure App Configuration.
 | ---------- | ------------- |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Architecture & design patterns |
 | [PROJECT-REFERENCE.md](docs/PROJECT-REFERENCE.md) | Repository-wide technical reference and onboarding map |
-| [CHANGELOG.md](docs/CHANGELOG.md) | Version history & release notes |
+| [CHANGELOG.md](CHANGELOG.md) | Version history & release notes |
 | [SECURITY.md](docs/SECURITY.md) | Security policy & reporting |
 | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community conduct guidelines |
 | [JSON-VALIDATION.md](docs/JSON-VALIDATION.md) | Solution JSON validation |
 | [MINVER-SETUP.md](docs/MINVER-SETUP.md) | MinVer versioning setup |
 | [HARDWARE-DISCLAIMER.md](docs/HARDWARE-DISCLAIMER.md) | Hardware safety & liability |
 | [THIRD-PARTY-NOTICES.md](docs/THIRD-PARTY-NOTICES.md) | Third-party licenses |
-| [CURSOR-AZURE-DEVOPS-MCP.md](docs/CURSOR-AZURE-DEVOPS-MCP.md) | Azure DevOps MCP integration |
 | [CLAUDE.md](docs/CLAUDE.md) | AI assistant instructions |
 | [CLA.md](docs/legal/CLA.md) | Contributor License Agreement (CLA) |
+
+Azure DevOps MCP integration is configured in [`.mcp.json`](.mcp.json) at the repository root.
 
 ### 📚 Wiki (User & Feature Guides)
 

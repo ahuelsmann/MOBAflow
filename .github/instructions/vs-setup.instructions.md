@@ -199,19 +199,16 @@ Before committing, run:
 ```powershell
 # Terminal in VS (Ctrl+`)
 
-# 1. Run pre-commit hook manually
-.git/hooks/pre-commit.cmd
+# 1. Run tests
+dotnet test Test/Test.csproj
 
-# 2. Run tests
-dotnet test
-
-# 3. Check code style
+# 2. Check code style
 dotnet format --verify-no-changes
 
-# 4. Check for warnings
+# 3. Check for warnings
 dotnet build /p:EnforceCodeStyleInBuild=true
 
-# If all OK → Commit
+# If all OK -> Commit
 git commit -m "feat(feature): description"
 ```
 

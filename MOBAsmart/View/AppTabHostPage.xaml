@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage
+    x:Class="Moba.MAUI.View.AppTabHostPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:Moba.MAUI.Controls"
+    Shell.NavBarIsVisible="False"
+    Title="MOBAsmart"
+    BackgroundColor="{DynamicResource SurfaceBackground}">
+
+    <Grid RowDefinitions="*,Auto">
+        <ContentView x:Name="PageHost" Grid.Row="0" />
+
+        <controls:AppBottomTabBar
+            x:Name="BottomTabBar"
+            Grid.Row="1"
+            TabSelected="OnTabSelected" />
+    </Grid>
+</ContentPage>

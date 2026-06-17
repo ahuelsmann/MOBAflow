@@ -49,6 +49,9 @@ dotnet test Test/Test.csproj
 
 Bitte lies mindestens `README.md` und `docs/ARCHITECTURE.md`, bevor du größere Änderungen machst.
 
+**Repository:** Code, Issues und Pull Requests auf [GitHub](https://github.com/ahuelsmann/MOBAflow).
+CI und Releases laufen über Azure DevOps (`.azure-pipelines/`).
+
 ## 3. Wie du beitragen kannst
 
 - **Bugs melden / Features vorschlagen**

@@ -20,6 +20,11 @@ public partial class ControlPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
+        ActivateTab();
+    }
+
+    public void ActivateTab()
+    {
         _runtimeInitializationTask ??= _mauiViewModel.InitializeAsync();
     }
 }

@@ -1,35 +1,14 @@
 ﻿<?xml version="1.0" encoding="UTF-8" ?>
+
 <Shell
+
     x:Class="Moba.MAUI.AppShell"
+
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:Moba.MAUI"
-    xmlns:view="clr-namespace:Moba.MAUI.View"
+
     FlyoutBehavior="Disabled"
-    Shell.NavBarIsVisible="True">
 
-    <Shell.Resources>
-        <Style ApplyToDerivedTypes="True" TargetType="Element">
-            <Setter Property="Shell.BackgroundColor" Value="{StaticResource RailwayPrimary}" />
-            <Setter Property="Shell.ForegroundColor" Value="White" />
-            <Setter Property="Shell.TitleColor" Value="White" />
-        </Style>
-    </Shell.Resources>
+    Shell.NavBarIsVisible="False" />
 
-    <TabBar>
-        <ShellContent
-            Title="Counter"
-            ContentTemplate="{DataTemplate local:CounterPage}"
-            Route="CounterPage" />
-
-        <ShellContent
-            Title="SignalBox"
-            ContentTemplate="{DataTemplate view:SignalBoxPage}"
-            Route="SignalBoxPage" />
-
-        <ShellContent
-            Title="Control"
-            ContentTemplate="{DataTemplate view:ControlPage}"
-            Route="ControlPage" />
-    </TabBar>
-</Shell>

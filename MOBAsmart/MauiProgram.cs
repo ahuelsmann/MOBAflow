@@ -24,6 +24,8 @@ using System.Net;
 
 using UraniumUI;
 
+using View;
+
 using Xamarin.Android.Net;
 
 public static class MauiProgram
@@ -105,6 +107,7 @@ public static class MauiProgram
         // Views
         builder.Services.AddTransient<AppShell>();
         builder.Services.AddTransient<View.SplashPage>();
+        builder.Services.AddTransient<AppTabHostPage>();
         builder.Services.AddTransient<CounterPage>();
         builder.Services.AddTransient<View.SignalBoxPage>();
         builder.Services.AddTransient<View.ControlPage>();

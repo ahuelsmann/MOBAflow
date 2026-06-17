@@ -79,7 +79,7 @@ MOBAflow verwendet **Central Package Management (CPM)**:
 ```xml
 <ItemGroup>
   …
-  <PackageVersion Include="MinVer" Version="6.0.0" />
+  <PackageVersion Include="MinVer" Version="7.0.0" />
 </ItemGroup>
 ```
 
@@ -130,7 +130,7 @@ dotnet build -c Release
 **Verification with PowerShell:**
 ```powershell
 # View compiled DLL version
-[System.Reflection.Assembly]::LoadFrom(".\WinUI\bin\Release\net10-windows\WinUI.exe").GetName().Version
+[System.Reflection.Assembly]::LoadFrom(".\MOBAflow\bin\Release\net10.0-windows10.0.22621.0\win-x64\MOBAflow.exe").GetName().Version
 
 # Output should be: 0.1.0.0
 ```
@@ -191,50 +191,21 @@ git tag -s 1.0.0 -m "Release 1.0.0: Major API Redesign"
 
 ---
 
-## 🔗 GitHub & Automation
+## Release automation
 
-### GitHub Actions with MinVer
+MOBAflow uses **Azure DevOps Pipelines** (not GitHub Actions):
 
-**`.github/workflows/release.yml`:**
+- [`.azure-pipelines/quality.yml`](../.azure-pipelines/quality.yml) – PR quality gate (build, tests, SonarCloud)
+- [`.azure-pipelines/release.yml`](../.azure-pipelines/release.yml) – manual release: MinVer version detection and `CHANGELOG.md` update via git-cliff
 
-```yaml
-name: Create Release
+Git tags use **plain SemVer without `v` prefix** (e.g. `0.1.0`). The release pipeline installs `minver-cli` 7.x to match the NuGet package version.
 
-on:
-  push:
-    tags:
-      - 'v*'
+### version.json vs Directory.Build.props
 
-jobs:
-  release:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10'
-      
-      - name: Build
-        run: dotnet build -c Release
-      
-      - name: Get Version
-        id: version
-        run: |
-          VERSION=$(git describe --tags --abbrev=0)
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-      
-      - name: Create GitHub Release
-        uses: actions/create-release@v1
-        with:
-          tag_name: ${{ steps.version.outputs.version }}
-          release_name: Release ${{ steps.version.outputs.version }}
-```
+- [`version.json`](../version.json) sets MinVer defaults: `minimum` `0.1.0`, `prerelease` `preview`
+- [`Directory.Build.props`](../Directory.Build.props) sets `MinVerDefaultPreReleaseIdentifiers` to `alpha.0` for builds without tags
 
----
+Both are intentional; tagged releases use the tag version, commits after a tag use the alpha preview suffix from `Directory.Build.props`.
 
 ## 🐛 MinVer Troubleshooting
 

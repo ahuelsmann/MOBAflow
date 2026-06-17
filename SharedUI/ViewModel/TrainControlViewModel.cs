@@ -441,16 +441,16 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// </summary>
     private bool CanIncreaseSpeed => !IsParkingBrakeEnabled && IsDoorReleaseLocked;
 
-    // === Function button symbols (F0–F31) – per-locomotive SVG asset filenames, from Domain.Locomotive.FunctionSymbols ===
+    // === Function button symbols (F0–F31) – per-locomotive PNG asset filenames, from Domain.Locomotive.FunctionSymbols ===
 
     /// <summary>
-    /// Default SVG asset filenames (relative to MOBAflow/Assets) for F0–F31 when no locomotive
+    /// Default PNG asset filenames (relative to MOBAflow/Assets/FunctionSymbols) for F0–F31 when no locomotive
     /// in project or no customization saved. Empty string = no default symbol for this function.
     /// </summary>
     private static readonly string[] DefaultFunctionAssets =
     {
-        "scheinwerfer.svg",          // F0  – default headlight
-        "f1__fahrgeräusch.svg",      // F1  – default sound
+        "headlight.png",               // F0  – default headlight
+        "f1__driving_sound.png",     // F1  – default sound
         "", "", "", "", "", "",
         "", "", "", "", "", "", "", "",
         "", "", "", "", "", "", "", "",
@@ -471,6 +471,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SetSpeedCommand))]
     [NotifyCanExecuteChangedFor(nameof(ToggleFunctionCommand))]
+    [NotifyCanExecuteChangedFor(nameof(TurnOffAllFunctionsCommand))]
     [NotifyCanExecuteChangedFor(nameof(EmergencyStopCommand))]
     [NotifyPropertyChangedFor(nameof(IsSpeedControlEnabled))]
     private bool _isConnected;
@@ -1183,8 +1184,8 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     }
 
     /// <summary>
-    /// SVG asset filename for the function button with index 0–31. Uses Domain.Locomotive.FunctionSymbols when set
-    /// (and pointing to an .svg asset), otherwise the default asset. Returns empty string when no symbol is configured.
+    /// PNG asset filename for the function button with index 0–31. Uses Domain.Locomotive.FunctionSymbols when set
+    /// (and pointing to a .png asset), otherwise the default asset. Returns empty string when no symbol is configured.
     /// Legacy Unicode-codepoint values from earlier versions are ignored.
     /// </summary>
     private string GetFunctionGlyph(int functionIndex)
@@ -1198,19 +1199,19 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             if (stored == "none")
                 return string.Empty;
             if (IsValidAssetReference(stored))
-                return stored;
+                return stored.Trim();
         }
         return functionIndex < DefaultFunctionAssets.Length ? DefaultFunctionAssets[functionIndex] : string.Empty;
     }
 
     /// <summary>
-    /// Returns true when the stored value is a non-empty SVG asset filename. Filters out legacy
-    /// Segoe MDL2 codepoint strings from earlier versions (single-character entries without .svg suffix).
+    /// Returns true when the stored value is a non-empty PNG asset filename.
+    /// Filters out Segoe MDL2 codepoint strings from earlier versions.
     /// </summary>
     private static bool IsValidAssetReference(string? value)
     {
         return !string.IsNullOrWhiteSpace(value)
-            && value.EndsWith(".svg", StringComparison.OrdinalIgnoreCase);
+            && value.EndsWith(".png", StringComparison.OrdinalIgnoreCase);
     }
 
     private string GetFunctionColor(int functionIndex)
@@ -1246,11 +1247,11 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     }
 
     /// <summary>
-    /// Sets the SVG asset filename for the specified function (0–31) for the current locomotive (LocoAddress)
+    /// Sets the PNG asset filename for the specified function (0–31) for the current locomotive (LocoAddress)
     /// and saves the Solution. Only effective when a locomotive with this digital address exists in the selected project.
     /// </summary>
     /// <param name="functionIndex">Funktionsindex 0–31 (F0–F31).</param>
-    /// <param name="glyph">SVG asset filename relative to Assets/ (e.g. "scheinwerfer.svg").</param>
+    /// <param name="glyph">PNG asset filename relative to Assets/FunctionSymbols/ (e.g. "headlight.png").</param>
     /// <returns>True, wenn gespeichert; False, wenn keine passende Lok im Projekt.</returns>
     public bool SetFunctionSymbol(int functionIndex, string glyph)
     {
@@ -1713,6 +1714,9 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// bits are suppressed until the user toggles a function again. When a preset is selected, the
     /// new (all-off) state is also persisted to the preset. Used when a locomotive is selected.
     /// </summary>
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private Task TurnOffAllFunctions() => TurnOffAllFunctionsAsync();
+
     public async Task TurnOffAllFunctionsAsync()
     {
         for (int i = 0; i < Functions.Count; i++)
@@ -1919,6 +1923,36 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     private void ToggleDirection()
     {
         IsForward = !IsForward;
+    }
+
+    /// <summary>
+    /// Sets direction explicitly (forward or reverse) without toggling when already selected.
+    /// </summary>
+    [RelayCommand]
+    private void SetDirection(object? parameter)
+    {
+        if (!TryParseDirection(parameter, out var forward) || IsForward == forward)
+        {
+            return;
+        }
+
+        IsForward = forward;
+    }
+
+    private static bool TryParseDirection(object? parameter, out bool forward)
+    {
+        switch (parameter)
+        {
+            case bool isForward:
+                forward = isForward;
+                return true;
+            case string text when bool.TryParse(text, out var parsed):
+                forward = parsed;
+                return true;
+            default:
+                forward = false;
+                return false;
+        }
     }
 
     /// <summary>

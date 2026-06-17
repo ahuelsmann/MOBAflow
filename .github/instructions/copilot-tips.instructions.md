@@ -277,7 +277,7 @@ Vor Commit, immer checken:
 - [ ] XML Documentation für public APIs
 - [ ] Unit Tests mit Moq + xUnit
 - [ ] Keine Magic Numbers - Named Constants
-- [ ] Keine TODOs - in `todos.instructions.md`
+- [ ] Keine TODOs im Code – Azure DevOps Work Item stattdessen
 - [ ] Build: `dotnet build` erfolgreich
 - [ ] Tests: `dotnet test` alle green
 - [ ] No ReSharper Warnings

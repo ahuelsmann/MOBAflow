@@ -57,8 +57,8 @@ public class Locomotive
     public LocomotiveSeries? LocomotiveSeriesRef { get; set; }
 
     /// <summary>
-    /// Custom SVG asset filenames for function buttons F0–F31 on the Train Control page.
-    /// Each entry is a filename relative to MOBAflow/Assets (e.g. "scheinwerfer.svg").
+    /// Custom PNG asset filenames for function buttons F0–F31 on the Train Control page.
+    /// Each entry is a filename relative to MOBAflow/Assets/FunctionSymbols (e.g. "headlight.png").
     /// Index 0 = F0, 1 = F1, … 31 = F31. Empty or null entries fall back to the default
     /// asset for that function (only F0/F1 have defaults). Legacy Unicode-codepoint
     /// values from earlier versions are ignored on read.

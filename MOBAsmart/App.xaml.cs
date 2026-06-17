@@ -88,6 +88,11 @@ public partial class App
             resources["Gray300"] = Color.FromArgb("#4A4A4A");
             resources["Gray400"] = Color.FromArgb("#606060");
             resources["Gray600"] = Color.FromArgb("#404040");
+
+            resources["TabBarBackground"] = Color.FromArgb("#383838");
+            resources["TabBarBorder"] = Color.FromArgb("#4D4D4D");
+            resources["TabBarSelectedForeground"] = Color.FromArgb("#64B5F6");
+            resources["TabBarUnselectedForeground"] = Color.FromArgb("#B0B0B0");
         }
         else
         {
@@ -120,6 +125,11 @@ public partial class App
             resources["Gray300"] = Color.FromArgb("#E0E0E0");
             resources["Gray400"] = Color.FromArgb("#BDBDBD");
             resources["Gray600"] = Color.FromArgb("#F5F5F5");
+
+            resources["TabBarBackground"] = Color.FromArgb("#FFFFFF");
+            resources["TabBarBorder"] = Color.FromArgb("#E0E0E0");
+            resources["TabBarSelectedForeground"] = Color.FromArgb("#1976D2");
+            resources["TabBarUnselectedForeground"] = Color.FromArgb("#757575");
         }
 
         Resources = resources;

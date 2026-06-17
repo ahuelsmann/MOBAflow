@@ -21,7 +21,7 @@ MOBAflow/
 ├─ Common/                Configuration, events, validation, discovery, plugins, path helpers
 ├─ Backend/               Z21 protocol, runtime service, workflow execution, journey managers
 ├─ SharedUI/              Cross-platform ViewModels, shell abstractions, UI services
-├─ SharedUI.Web/          Web-facing shared components and abstractions
+├─ SharedUI/              Cross-platform ViewModels
 ├─ Sound/                 Speech engines, sound player abstractions, audio resources
 ├─ MOBAflow/              WinUI 3 desktop app, pages, controls, converters, appsettings, sample JSON
 ├─ MOBApi/                ASP.NET Core REST API and SignalR hub

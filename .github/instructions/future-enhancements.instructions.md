@@ -4,22 +4,12 @@
 
 ## 🎯 Session 35+: Empfohlene Erweiterungen
 
-### 1. **SonarQube Integration** (HIGH PRIORITY)
-**Nutzen:** Automatische Security & Code Smell Detection
+### 1. **SonarQube Integration** (HIGH PRIORITY – planned)
 
-```yaml
-# .github/workflows/sonarqube.yml
-- Analyze code on every push
-- Check security vulnerabilities (OWASP Top 10)
-- Measure maintainability index
-- Track code duplication (DRY)
-- Enforce quality gates before merge
-```
+**Current CI:** SonarCloud analysis runs in [`.azure-pipelines/quality.yml`](../../.azure-pipelines/quality.yml).
 
-**Files:**
-- `sonarqube-project.properties`
-- GitHub Actions Workflow
-- Quality Gate Configuration
+**Optional future:** GitHub Actions workflow (not in repository). Example path if added later:
+`/.github/workflows/sonarqube.yml`
 
 ---
 
