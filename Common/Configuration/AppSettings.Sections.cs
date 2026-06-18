@@ -8,11 +8,10 @@ namespace Moba.Common.Configuration;
 public class RestApiSettings
 {
     /// <summary>
-    /// Current REST-API server IP address (e.g., "192.168.0.79").
-    /// Used by MAUI app to connect to WebApp REST-API.
-    /// Default: 192.168.0.79 (adjust to your PC's actual IP)
+    /// Current REST-API server IP address (e.g., "192.168.0.34").
+    /// Empty until MOBAsmart discovers MOBAflow on the LAN; do not ship a guessed default.
     /// </summary>
-    public string CurrentIpAddress { get; set; } = "192.168.0.79";
+    public string CurrentIpAddress { get; set; } = string.Empty;
 
     /// <summary>
     /// REST-API server port.
@@ -114,7 +113,7 @@ public class SpeechSettings
     /// Test message for speech synthesis (used in Settings test button).
     /// Default: German test message.
     /// </summary>
-    public string TestMessage { get; set; } = "Dies ist ein Test der Sprachsynthese. Nächster Halt: Hauptbahnhof.";
+    public string TestMessage { get; set; } = "This is a speech synthesis test. Next stop: Central Station.";
 
     /// <summary>
     /// Enables Piper-specific pronunciation normalization before synthesis.

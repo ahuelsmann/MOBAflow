@@ -419,7 +419,7 @@ Relevant third-party technology areas:
 - NUnit, Moq, Coverlet, Microsoft.NET.Test.Sdk.
 - SkiaSharp for display rendering.
 - Piper TTS and System.Speech.
-- UraniumUI and AndroidX Startup for MOBAsmart.
+- CommunityToolkit.Maui and AndroidX Startup for MOBAsmart.
 - External interoperability with Roco Z21, Piko A-Gleis, AnyRail XML, ESP32-S3/TFT_eSPI hardware.
 
 Before releases, run `dotnet list <project>.csproj package --include-transitive` for distributable projects and compare licenses against `docs/THIRD-PARTY-NOTICES.md`.

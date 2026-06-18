@@ -67,6 +67,27 @@ internal sealed class RuntimeSnapshotProjectorTests
     }
 
     [Test]
+    public void ProjectStatus_ShouldClearTelemetry_WhenTrackPowerIsOff()
+    {
+        var snapshot = new MobaRuntimeSnapshot
+        {
+            IsConnected = true,
+            IsTrackPowerOn = false,
+            MainCurrent = 250,
+            Temperature = 42,
+            SupplyVoltage = 18000,
+            VccVoltage = 5000
+        };
+
+        var projection = RuntimeSnapshotProjector.ProjectStatus(snapshot);
+
+        Assert.That(projection.MainCurrent, Is.Zero);
+        Assert.That(projection.Temperature, Is.Zero);
+        Assert.That(projection.SupplyVoltage, Is.Zero);
+        Assert.That(projection.VccVoltage, Is.Zero);
+    }
+
+    [Test]
     public void ProjectMaui_ShouldPersistCurrentIpAddressOnlyOnNewConnection()
     {
         var snapshot = new MobaRuntimeSnapshot

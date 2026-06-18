@@ -136,7 +136,7 @@ internal sealed partial class FunctionSymbolPickerWindow : Window
         InitializeComponent();
         SymbolsItemsControl.ItemsSource = Symbols.Value;
 
-        Title = "Symbol für Funktionstaste auswählen";
+        Title = "Select function key symbol";
 
         // Setup custom window properties
         if (AppWindow.Presenter is OverlappedPresenter presenter)

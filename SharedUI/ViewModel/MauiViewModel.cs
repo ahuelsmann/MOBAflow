@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Backend;
 using Backend.Interface;
 
 using Common.Configuration;
@@ -34,6 +33,10 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     private readonly IPhotoUploadService _photoUploadService;
     private readonly IPhotoCaptureService _photoCaptureService;
     private readonly IRestApiClientRegistration? _restApiClientRegistration;
+    private readonly IRuntimeSettingsClient? _runtimeSettingsClient;
+    private readonly ISolutionRemoteLoader? _solutionRemoteLoader;
+    private readonly IRuntimeHubRemoteClient? _runtimeHubRemoteClient;
+    private readonly IRuntimeCommandGateway? _runtimeCommandGateway;
     private readonly INetworkProfileChangeNotifier _networkProfileChangeNotifier;
     private readonly ILogger<MauiViewModel> _logger;
     private readonly IEventBus _eventBus;
@@ -61,6 +64,11 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     private const int RestApiRediscoverIntervalFirst90Seconds = 10;
     private const int RestApiStartupRetryWindowSeconds = 90;
 
+    private const int Z21EndpointSyncIntervalSeconds = 45;
+
+    /// <summary>Last time we requested the Z21 endpoint from MOBAflow via MOBApi.</summary>
+    private DateTime _lastZ21EndpointSyncTime = DateTime.MinValue;
+
     /// <summary>Coalesces rapid platform connectivity notifications before re-running REST discovery.</summary>
     private const int NetworkChangeDebounceMilliseconds = 750;
 
@@ -86,6 +94,10 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     /// <param name="logger">Logger for diagnostics.</param>
     /// <param name="eventBus">Event bus used to observe runtime and feedback changes.</param>
     /// <param name="restApiClientRegistration">Optional: registers this app with the REST API for Overview client list (MAUI).</param>
+    /// <param name="runtimeSettingsClient">Optional: reads Z21 endpoint that MOBAflow pushed to MOBApi.</param>
+    /// <param name="solutionRemoteLoader">Optional: syncs the MOBAflow solution from MOBApi into the local runtime.</param>
+    /// <param name="runtimeHubRemoteClient">Optional: SignalR client for remote runtime snapshots (MOBAsmart).</param>
+    /// <param name="runtimeCommandGateway">Optional: routes control commands to MOBAflow via MOBApi (MOBAsmart).</param>
     public MauiViewModel(
         IMobaRuntime mobaRuntime,
         IUiDispatcher uiDispatcher,
@@ -98,7 +110,11 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         INetworkProfileChangeNotifier networkProfileChangeNotifier,
         ILogger<MauiViewModel> logger,
         IEventBus eventBus,
-        IRestApiClientRegistration? restApiClientRegistration = null)
+        IRestApiClientRegistration? restApiClientRegistration = null,
+        IRuntimeSettingsClient? runtimeSettingsClient = null,
+        ISolutionRemoteLoader? solutionRemoteLoader = null,
+        IRuntimeHubRemoteClient? runtimeHubRemoteClient = null,
+        IRuntimeCommandGateway? runtimeCommandGateway = null)
     {
         ArgumentNullException.ThrowIfNull(mobaRuntime);
         ArgumentNullException.ThrowIfNull(uiDispatcher);
@@ -122,10 +138,20 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         _networkProfileChangeNotifier = networkProfileChangeNotifier;
         _logger = logger;
         _restApiClientRegistration = restApiClientRegistration;
+        _runtimeSettingsClient = runtimeSettingsClient;
+        _solutionRemoteLoader = solutionRemoteLoader;
+        _runtimeHubRemoteClient = runtimeHubRemoteClient;
+        _runtimeCommandGateway = runtimeCommandGateway;
         _eventBus = eventBus;
 
         _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
         _eventBusSubscriptions.Add(_eventBus.Subscribe<FeedbackReceivedEvent>(OnFeedbackReceived));
+
+        if (_runtimeHubRemoteClient != null)
+        {
+            _eventBusSubscriptions.Add(_eventBus.Subscribe<RemoteRuntimeSnapshotChangedEvent>(OnRemoteRuntimeSnapshotChanged));
+            _runtimeHubRemoteClient.SessionStateChanged += OnRuntimeHubSessionStateChangedAsync;
+        }
     }
 
     /// <summary>
@@ -160,7 +186,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         await _uiDispatcher.InvokeOnUiAsync(() =>
         {
             LoadSettingsIntoViewModel();
-            ApplyRuntimeSnapshot(_mobaRuntime.Current);
+            ApplyLocalRuntimeSnapshot(_mobaRuntime.Current);
             InitializeStatistics();
             return Task.CompletedTask;
         }).ConfigureAwait(false);
@@ -183,36 +209,48 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             // Short delay for network stack (especially on Android)
             await Task.Delay(TimeSpan.FromMilliseconds(500)).ConfigureAwait(false);
 
-            // REST: same idea as Z21 — run discovery to completion (retries), in parallel with Z21 lookup
             var restDiscoveryTask = RestDiscoveryLoopAsync();
 
-            // Z21 discovery: wait for result and connect immediately when found (parallel to REST)
-            var z21Ip = await _z21DiscoveryService.DiscoverZ21Async(CancellationToken.None).ConfigureAwait(false);
-            if (!string.IsNullOrEmpty(z21Ip))
+            // Let runtime auto-connect try the saved IP before running multicast discovery.
+            await Task.Delay(TimeSpan.FromMilliseconds(1500)).ConfigureAwait(false);
+
+            if (!_mobaRuntime.Current.IsConnected)
             {
-                _uiDispatcher.InvokeOnUi(() =>
-                {
-                    Z21IpAddress = z21Ip;
-                });
-                await _uiDispatcher.InvokeOnUiAsync(async () =>
-                {
-                    await ConnectCommand.ExecuteAsync(null);
-                }).ConfigureAwait(false);
+                await TryApplyZ21EndpointFromMobaFlowAsync(force: true).ConfigureAwait(false);
             }
-            else
+
+            if (!_mobaRuntime.Current.IsConnected)
             {
-                // Discovery found no Z21: try once with saved/default IP (e.g. app started with delay or Z21 on different subnet)
-                await _uiDispatcher.InvokeOnUiAsync(async () =>
+                var z21Ip = await _z21DiscoveryService
+                    .DiscoverZ21Async(Z21IpAddress, CancellationToken.None)
+                    .ConfigureAwait(false);
+                if (!string.IsNullOrEmpty(z21Ip))
                 {
-                    if (!IsConnected && !string.IsNullOrWhiteSpace(Z21IpAddress))
+                    await _uiDispatcher.InvokeOnUiAsync(async () =>
                     {
-                        _logger.LogInformation("Z21 discovery did not find device; trying saved/default IP");
+                        Z21IpAddress = z21Ip;
                         await ConnectCommand.ExecuteAsync(null).ConfigureAwait(false);
-                    }
-                }).ConfigureAwait(false);
+                    }).ConfigureAwait(false);
+                }
+                else
+                {
+                    await _uiDispatcher.InvokeOnUiAsync(async () =>
+                    {
+                        if (!IsConnected && !string.IsNullOrWhiteSpace(Z21IpAddress))
+                        {
+                            _logger.LogInformation("Z21 discovery did not find device; trying saved/default IP");
+                            await ConnectCommand.ExecuteAsync(null).ConfigureAwait(false);
+                        }
+                    }).ConfigureAwait(false);
+                }
             }
 
             await restDiscoveryTask.ConfigureAwait(false);
+
+            if (!IsRestApiReachable && IsConnected && !string.IsNullOrWhiteSpace(Z21IpAddress))
+            {
+                await DiscoverRestApiWithAnchorAsync(Z21IpAddress).ConfigureAwait(false);
+            }
 
             // First reachability update after startup discovery (avoids ctor-time check against obsolete REST IP)
             await RefreshRestApiReachableAsync().ConfigureAwait(false);
@@ -234,7 +272,8 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             if (delayMs > 0)
                 await Task.Delay(delayMs).ConfigureAwait(false);
 
-            var (ip, port) = await _restDiscoveryService.DiscoverServerAsync().ConfigureAwait(false);
+            var anchor = string.IsNullOrWhiteSpace(Z21IpAddress) ? null : Z21IpAddress.Trim();
+            var (ip, port) = await _restDiscoveryService.DiscoverServerAsync(anchor).ConfigureAwait(false);
             if (!string.IsNullOrEmpty(ip) && port.HasValue)
             {
                 await ApplyDiscoveredRestEndpointAsync(ip, port.Value).ConfigureAwait(false);
@@ -302,7 +341,8 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             _uiDispatcher.InvokeOnUi(() => IsRestApiReachable = false);
             _lastRestApiDiscoverTime = DateTime.MinValue;
 
-            var (ip, port) = await _restDiscoveryService.DiscoverServerAsync().ConfigureAwait(false);
+            var anchor = string.IsNullOrWhiteSpace(Z21IpAddress) ? null : Z21IpAddress.Trim();
+            var (ip, port) = await _restDiscoveryService.DiscoverServerAsync(anchor).ConfigureAwait(false);
             if (!string.IsNullOrEmpty(ip) && port.HasValue)
             {
                 await ApplyDiscoveredRestEndpointAsync(ip, port.Value).ConfigureAwait(false);
@@ -312,6 +352,34 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "REST discovery after network change failed");
+        }
+
+        await RefreshRestApiReachableAsync().ConfigureAwait(false);
+    }
+
+    [RelayCommand]
+    private async Task RetryRestApiDiscoveryAsync()
+    {
+        _lastRestApiDiscoverTime = DateTime.UtcNow;
+        var anchor = string.IsNullOrWhiteSpace(Z21IpAddress) ? null : Z21IpAddress.Trim();
+        _logger.LogInformation("Manual REST discovery started (anchor={Anchor})", anchor ?? "(none)");
+        await DiscoverRestApiWithAnchorAsync(anchor).ConfigureAwait(false);
+    }
+
+    private async Task DiscoverRestApiWithAnchorAsync(string? subnetAnchorIp)
+    {
+        try
+        {
+            var (ip, port) = await _restDiscoveryService.DiscoverServerAsync(subnetAnchorIp).ConfigureAwait(false);
+            if (!string.IsNullOrEmpty(ip) && port.HasValue)
+            {
+                await ApplyDiscoveredRestEndpointAsync(ip, port.Value).ConfigureAwait(false);
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "REST discovery with anchor {Anchor} failed", subnetAnchorIp ?? "(none)");
         }
 
         await RefreshRestApiReachableAsync().ConfigureAwait(false);
@@ -440,6 +508,11 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
 
     public void Dispose()
     {
+        if (_runtimeHubRemoteClient != null)
+        {
+            _runtimeHubRemoteClient.SessionStateChanged -= OnRuntimeHubSessionStateChangedAsync;
+        }
+
         NotifyApplicationStopping();
         _applicationLifetimeCts.Dispose();
         _initializationLock.Dispose();
@@ -466,7 +539,8 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
                     _lastRestApiDiscoverTime = DateTime.UtcNow;
                     try
                     {
-                        var (restIp, restPort) = await _restDiscoveryService.DiscoverServerAsync().ConfigureAwait(false);
+                        var anchor = string.IsNullOrWhiteSpace(Z21IpAddress) ? null : Z21IpAddress.Trim();
+                        var (restIp, restPort) = await _restDiscoveryService.DiscoverServerAsync(anchor).ConfigureAwait(false);
                         if (!string.IsNullOrEmpty(restIp) && restPort.HasValue)
                         {
                             await ApplyDiscoveredRestEndpointAsync(restIp, restPort.Value).ConfigureAwait(false);
@@ -526,10 +600,87 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
                         "REST API client registration");
                 }
             }
+
+            if (reachable && _solutionRemoteLoader != null)
+            {
+                RunInBackground(
+                    _solutionRemoteLoader.SyncIfNeededAsync(
+                        RestApiIpAddress,
+                        RestApiPort,
+                        _applicationLifetimeCts.Token),
+                    "Solution sync from MOBApi");
+            }
+
+            if (reachable && !IsConnected)
+            {
+                RunInBackground(TryApplyZ21EndpointFromMobaFlowAsync(), "Sync Z21 endpoint from MOBAflow");
+            }
+
+            await EnsureRuntimeHubConnectionAsync(reachable).ConfigureAwait(false);
         }
         catch
         {
             _uiDispatcher.InvokeOnUi(() => IsRestApiReachable = false);
+            await EnsureRuntimeHubConnectionAsync(false).ConfigureAwait(false);
+        }
+    }
+
+    private async Task EnsureRuntimeHubConnectionAsync(bool reachable)
+    {
+        if (_runtimeHubRemoteClient == null)
+        {
+            return;
+        }
+
+        if (!reachable || string.IsNullOrWhiteSpace(RestApiIpAddress) || RestApiPort <= 0)
+        {
+            if (_runtimeHubRemoteClient.IsConnected)
+            {
+                try
+                {
+                    await _runtimeHubRemoteClient.DisconnectAsync().ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug(ex, "Runtime hub disconnect failed");
+                }
+            }
+
+            _uiDispatcher.InvokeOnUi(() =>
+            {
+                SetRuntimeHubConnected(false);
+                SetRemoteZ21Connected(false);
+            });
+            return;
+        }
+
+        if (_runtimeHubRemoteClient.IsConnected)
+        {
+            _uiDispatcher.InvokeOnUi(() =>
+            {
+                SetRuntimeHubConnected(true);
+                SetRemoteZ21Connected(_runtimeHubRemoteClient.HasActiveHost);
+            });
+            return;
+        }
+
+        var clientId = _restApiClientRegistration?.ClientId;
+        if (string.IsNullOrWhiteSpace(clientId))
+        {
+            clientId = Guid.NewGuid().ToString("N");
+        }
+
+        try
+        {
+            await _runtimeHubRemoteClient
+                .ConnectAsync(RestApiIpAddress.Trim(), RestApiPort, clientId, _applicationLifetimeCts.Token)
+                .ConfigureAwait(false);
+            _uiDispatcher.InvokeOnUi(() => SetRuntimeHubConnected(true));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Runtime hub connect failed");
+            _uiDispatcher.InvokeOnUi(() => SetRuntimeHubConnected(false));
         }
     }
 
@@ -603,10 +754,81 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         _uiDispatcher.InvokeOnUi(() => Z21ConnectionStatus = null);
     }
 
+    private async Task TryApplyZ21EndpointFromMobaFlowAsync(bool force = false)
+    {
+        if (_runtimeSettingsClient == null || IsConnected || _mobaRuntime.Current.IsConnected)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(RestApiIpAddress) || RestApiPort <= 0)
+        {
+            return;
+        }
+
+        if (!force
+            && _lastZ21EndpointSyncTime != DateTime.MinValue
+            && (DateTime.UtcNow - _lastZ21EndpointSyncTime).TotalSeconds < Z21EndpointSyncIntervalSeconds)
+        {
+            return;
+        }
+
+        _lastZ21EndpointSyncTime = DateTime.UtcNow;
+
+        var (ip, port) = await _runtimeSettingsClient
+            .GetZ21EndpointAsync(RestApiIpAddress, RestApiPort, _applicationLifetimeCts.Token)
+            .ConfigureAwait(false);
+        if (string.IsNullOrWhiteSpace(ip))
+        {
+            return;
+        }
+
+        var trimmedIp = ip.Trim();
+        if (string.Equals(trimmedIp, Z21IpAddress, StringComparison.OrdinalIgnoreCase) && IsConnected)
+        {
+            return;
+        }
+
+        _logger.LogInformation("Applying Z21 endpoint from MOBAflow: {Z21Ip}:{Z21Port}", trimmedIp, port ?? 21105);
+        await _uiDispatcher.InvokeOnUiAsync(async () =>
+        {
+            Z21IpAddress = trimmedIp;
+            if (port.HasValue && port.Value > 0)
+            {
+                _settings.Z21.DefaultPort = port.Value.ToString();
+            }
+
+            if (!IsConnected)
+            {
+                await ConnectCommand.ExecuteAsync(null).ConfigureAwait(false);
+            }
+        }).ConfigureAwait(false);
+    }
+
+    private bool _hideZ21TelemetryUntilTrackPowerOff;
+
     [RelayCommand]
     private async Task SetTrackPowerAsync(bool turnOn)
     {
+        if (!turnOn)
+        {
+            _hideZ21TelemetryUntilTrackPowerOff = true;
+            _uiDispatcher.InvokeOnUi(ClearZ21TelemetryValues);
+        }
+        else
+        {
+            _hideZ21TelemetryUntilTrackPowerOff = false;
+        }
+
         await _mobaRuntime.SetTrackPowerAsync(turnOn).ConfigureAwait(false);
+    }
+
+    private void ClearZ21TelemetryValues()
+    {
+        MainCurrent = 0;
+        Temperature = 0;
+        SupplyVoltage = 0;
+        VccVoltage = 0;
     }
 
     #endregion
@@ -792,10 +1014,21 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
 
     private void OnRuntimeSnapshotChanged(RuntimeSnapshotChangedEvent e)
     {
-        ApplyRuntimeSnapshot(e.Snapshot);
+        ApplyLocalRuntimeSnapshot(e.Snapshot);
     }
 
-    private void ApplyRuntimeSnapshot(MobaRuntimeSnapshot snapshot)
+    private void OnRemoteRuntimeSnapshotChanged(RemoteRuntimeSnapshotChangedEvent e)
+    {
+        ApplyRemoteRuntimeSnapshot(e.Snapshot);
+    }
+
+    private Task OnRuntimeHubSessionStateChangedAsync(bool isOperational)
+    {
+        _uiDispatcher.InvokeOnUi(() => SetRemoteZ21Connected(isOperational));
+        return Task.CompletedTask;
+    }
+
+    private void ApplyLocalRuntimeSnapshot(MobaRuntimeSnapshot snapshot)
     {
         var previousConnectionState = IsConnected;
         var projection = RuntimeSnapshotProjector.ProjectMaui(snapshot, previousConnectionState);
@@ -803,10 +1036,25 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
 
         IsConnected = status.IsConnected;
         IsTrackPowerOn = status.IsTrackPowerOn;
-        MainCurrent = status.MainCurrent;
-        Temperature = status.Temperature;
-        SupplyVoltage = status.SupplyVoltage;
-        VccVoltage = status.VccVoltage;
+
+        if (!status.IsTrackPowerOn)
+        {
+            _hideZ21TelemetryUntilTrackPowerOff = false;
+        }
+
+        var showTelemetry = status.IsTrackPowerOn && !_hideZ21TelemetryUntilTrackPowerOff;
+        if (showTelemetry)
+        {
+            MainCurrent = status.MainCurrent;
+            Temperature = status.Temperature;
+            SupplyVoltage = status.SupplyVoltage;
+            VccVoltage = status.VccVoltage;
+        }
+        else
+        {
+            ClearZ21TelemetryValues();
+        }
+
         Z21ConnectionStatus = projection.Z21ConnectionStatus;
 
         if (projection.ShouldPersistCurrentIpAddress)
@@ -815,6 +1063,14 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             QueueSaveSettings();
         }
 
+        if (_runtimeHubRemoteClient == null)
+        {
+            RefreshSignalBoxElements(snapshot.SignalBoxElements);
+        }
+    }
+
+    private void ApplyRemoteRuntimeSnapshot(MobaRuntimeSnapshot snapshot)
+    {
         RefreshSignalBoxElements(snapshot.SignalBoxElements);
     }
 
@@ -894,7 +1150,8 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             }
             if (string.IsNullOrEmpty(ip) || !port.HasValue)
             {
-                var discovered = await _restDiscoveryService.DiscoverServerAsync().ConfigureAwait(false);
+                var anchor = string.IsNullOrWhiteSpace(Z21IpAddress) ? null : Z21IpAddress.Trim();
+                var discovered = await _restDiscoveryService.DiscoverServerAsync(anchor).ConfigureAwait(false);
                 ip = discovered.ip;
                 port = discovered.port;
             }
@@ -945,13 +1202,3 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
 
     #endregion
 }
-
-
-
-
-
-
-
-
-
-

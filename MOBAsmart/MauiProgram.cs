@@ -1,32 +1,11 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI;
 
-using Backend;
-using Backend.Interface;
-using Backend.Service;
-
-using Common.Configuration;
-using Common.Events;
-
 using CommunityToolkit.Maui;
 
-using Microsoft.Extensions.Logging;
+using Extensions;
 
 using Service;
-
-using SharedUI.Extensions;
-using SharedUI.Interface;
-using SharedUI.ViewModel;
-
-using Sound;
-
-using System.Net;
-
-using UraniumUI;
-
-using View;
-
-using Xamarin.Android.Net;
 
 public static class MauiProgram
 {
@@ -35,83 +14,25 @@ public static class MauiProgram
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()
-            .UseMauiCommunityToolkit() // ← Enable CommunityToolkit.Maui
-            .UseMauiCommunityToolkitMediaElement(isAndroidForegroundServiceEnabled: true) // ← Enable MediaElement with foreground service
-            .UseUraniumUI() // ← Enable UraniumUI Material Design
-            .UseUraniumUIMaterial() // ← Enable Material Components
+            .UseMauiCommunityToolkit()
             .ConfigureFonts(fonts =>
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
             });
 
-        // Platform services (MUST be registered before ViewModels that depend on them)
-        builder.Services.AddSingleton<IUiDispatcher, UiDispatcher>();
-        builder.Services.AddSingleton<IBackgroundService, BackgroundService>();
+        builder.Services
+            .AddMobiPlatformServices()
+            .AddMobiConfiguration()
+            .AddMobiNetworkServices()
+            .AddMobiRemoteRuntimeServices()
+            .AddMobiViewModels()
+            .AddMobiViews()
+            .AddMobiStartupServices();
 
-        // Event Bus with UI-thread marshalling (required by backend services)
-        builder.Services.AddEventBusWithUiDispatch();
-
-        // Configuration (AppSettings + ISettingsService)
-        builder.Services.AddSingleton<AppSettings>();
-        builder.Services.AddSingleton<ISettingsService, SettingsService>();
-        builder.Services.AddLogging();
-
-        // Audio Services (NullObject - MAUI doesn't support audio yet)
-        builder.Services.AddSingleton<ISoundPlayer, NullSoundPlayer>();
-        builder.Services.AddSingleton<ISpeakerEngine, NullSpeakerEngine>();
-        builder.Services.AddMobaBackendServices();
-
-        // REST-API discovery (multicast + subnet HTTP); uses its own HttpClient (no proxy) to avoid LAN issues.
-        builder.Services.AddSingleton<RestApiDiscoveryService>(sp =>
-            new RestApiDiscoveryService(
-                sp.GetRequiredService<AppSettings>()));
-
-        // Configure HttpClient with proper timeout and Android-specific handler
-        builder.Services.AddSingleton<HttpClient>(_ =>
-        {
-#if ANDROID
-            var handler = new AndroidMessageHandler
-            {
-                AllowAutoRedirect = true,
-                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                ServerCertificateCustomValidationCallback = (_, _, _, _) => true,
-                // Route RFC1918 MOBApi/health checks directly; system VPN/proxy often breaks LAN (see SocksSocketImpl in logs).
-                UseProxy = false
-            };
-            var httpClient = new HttpClient(handler);
-#else
-            var httpClient = new HttpClient();
-#endif
-            httpClient.Timeout = TimeSpan.FromMinutes(5);
-            return httpClient;
-        });
-
-        builder.Services.AddSingleton<PhotoUploadService>();
-        builder.Services.AddSingleton<IRestDiscoveryService, RestDiscoveryAdapter>();
-        builder.Services.AddSingleton<IZ21DiscoveryService, Z21DiscoveryService>();
-        builder.Services.AddSingleton<IPhotoUploadService, PhotoUploadAdapter>();
-        builder.Services.AddSingleton<IPhotoCaptureService, PhotoCaptureService>();
-        builder.Services.AddSingleton<IRestApiClientRegistration, RestApiClientRegistrationService>();
-        builder.Services.AddSingleton<INetworkProfileChangeNotifier, MauiNetworkProfileChangeNotifier>();
-
-        // ViewModels
-        builder.Services.AddSingleton<MauiViewModel>();
-        builder.Services.AddSingleton<TrainControlViewModel>(sp => new TrainControlViewModel(
-            sp.GetRequiredService<IMobaRuntime>(),
-            sp.GetRequiredService<ISettingsService>(),
-            logger: sp.GetService<ILogger<TrainControlViewModel>>(),
-            uiDispatcher: sp.GetService<IUiDispatcher>(),
-            eventBus: sp.GetRequiredService<IEventBus>()));
-
-        // Views
-        builder.Services.AddTransient<AppShell>();
-        builder.Services.AddTransient<View.SplashPage>();
-        builder.Services.AddTransient<AppTabHostPage>();
-        builder.Services.AddTransient<CounterPage>();
-        builder.Services.AddTransient<View.SignalBoxPage>();
-        builder.Services.AddTransient<View.ControlPage>();
-
-        return builder.Build();
+        var app = builder.Build();
+        app.Services.GetRequiredService<MobiStartupService>().Initialize();
+        MobiDiContainerValidator.Validate(app.Services);
+        return app;
     }
 }

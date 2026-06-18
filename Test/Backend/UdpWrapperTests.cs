@@ -1,9 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Backend;
 
-using Moba.Backend.Network;
-
 using Microsoft.Extensions.Logging.Abstractions;
+using Moba.Backend.Network;
 
 /// <summary>
 /// Tests for the real <see cref="UdpWrapper"/> lifecycle and guard rails.

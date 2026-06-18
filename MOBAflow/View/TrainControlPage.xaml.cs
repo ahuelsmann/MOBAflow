@@ -2,27 +2,18 @@
 namespace Moba.WinUI.View;
 
 using Common.Configuration;
-
+using Common.Extension;
 using Controls;
-
 using Domain;
-
 using Microsoft.Extensions.Logging;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
-
-using Common.Extension;
-using SharedUI.ViewModel;
-
-using Service;
-
 using SharedUI.Interface;
-
+using SharedUI.ViewModel;
 using System.ComponentModel;
-
-using ViewModel;
 
 /// <summary>
 /// TrainControlPage - train control interface.
@@ -58,6 +49,7 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
     // UI element references
     private SpeedometerControl? _speedometer;
     private AmperemeterControl? _amperemeter;
+    private bool _functionButtonsLoaded;
 
     public TrainControlViewModel ViewModel { get; }
 
@@ -154,6 +146,9 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+
         // Reload templates if needed (if not yet available at startup) and update UI
         LoadIconTemplates();
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BrakeIconTemplate)));
@@ -161,8 +156,8 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DoorBlockedIconTemplate)));
 
         // Find and store references to themed elements
-        _speedometer = FindName("Speedometer") as SpeedometerControl;
-        _amperemeter = FindName("Amperemeter") as AmperemeterControl;
+        _speedometer = Speedometer;
+        _amperemeter = Amperemeter;
 
         // Initialize speedometer scale based on current Vmax
         UpdateSpeedometerScale();
@@ -179,6 +174,41 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
             LocoSeriesBox.Text = ViewModel.SelectedLocoSeries;
             UpdateVmaxDisplay(); // Show Vmax display if a series is loaded from settings
         }
+
+        ScheduleFunctionButtonsLoad();
+    }
+
+    /// <summary>
+    /// Defers creation of 32 function toggle buttons until after the core throttle UI is visible.
+    /// </summary>
+    private void ScheduleFunctionButtonsLoad()
+    {
+        if (_functionButtonsLoaded)
+        {
+            FunctionButtonsLoadingRing.Visibility = Visibility.Collapsed;
+            FunctionButtonsRepeater.Visibility = Visibility.Visible;
+            return;
+        }
+
+        FunctionButtonsLoadingRing.Visibility = Visibility.Visible;
+        FunctionButtonsRepeater.Visibility = Visibility.Collapsed;
+
+        DispatcherQueue.GetForCurrentThread().TryEnqueue(
+            DispatcherQueuePriority.Low,
+            LoadFunctionButtonsDeferred);
+    }
+
+    private void LoadFunctionButtonsDeferred()
+    {
+        if (_functionButtonsLoaded)
+        {
+            return;
+        }
+
+        FunctionButtonsRepeater.ItemsSource = ViewModel.Functions;
+        FunctionButtonsRepeater.Visibility = Visibility.Visible;
+        FunctionButtonsLoadingRing.Visibility = Visibility.Collapsed;
+        _functionButtonsLoaded = true;
     }
 
     /// <summary>

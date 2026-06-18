@@ -746,8 +746,9 @@ public class InPortStatistic
 
 - **Roco Z21** – digital command station & protocol
 - **.NET MAUI** – cross-platform framework (Microsoft)
-- **CommunityToolkit.Mvvm** – MVVM framework
-- **UraniumUI** – material design controls
+- **CommunityToolkit.Mvvm** – MVVM framework (via SharedUI)
+- **CommunityToolkit.Maui** – MAUI helpers and converters
+- **AndroidX Startup** – Android initialization providers
 
 See [`THIRD-PARTY-NOTICES.md`](../THIRD-PARTY-NOTICES.md) for full license information.
 

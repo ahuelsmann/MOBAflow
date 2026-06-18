@@ -2,16 +2,12 @@
 
 namespace Moba.Backend.Service;
 
+using Backend;
 using Common.Events;
 using Common.Runtime;
-
-using Microsoft.Extensions.Logging;
-
-using Backend;
 using Events;
-
+using Microsoft.Extensions.Logging;
 using Model;
-
 using Protocol;
 
 /// <summary>

@@ -6,8 +6,6 @@ using Domain;
 
 using Interface;
 
-using Manager;
-
 using Microsoft.Extensions.Logging;
 
 using Model;
@@ -303,6 +301,12 @@ public sealed partial class MobaRuntimeService
                     false,
                     cancellationToken)
                 .ConfigureAwait(false);
+
+            if (_activeProjectContext?.ActiveProject.SignalBoxPlan?.FindElement(signal.Id) is SbSignal runtimeSignal
+                && !ReferenceEquals(runtimeSignal, signal))
+            {
+                runtimeSignal.SignalAspect = signal.SignalAspect;
+            }
 
             _statusText = $"Signal '{signal.Name}' set: DCC address {command.DccAddress}, output {command.Output}, activate={command.Activate}";
             PublishSnapshot();

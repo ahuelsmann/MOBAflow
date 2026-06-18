@@ -67,7 +67,7 @@ public static class PikoACatalog
     [
         new TrackCatalogEntry("WR", "WR Rechtsweiche 15°", TrackCategory.Switch, typeof(WR)),
         new TrackCatalogEntry("WL", "WL Linksweiche 15°", TrackCategory.Switch, typeof(WL)),
-        new TrackCatalogEntry("WY", "WY Y-Weiche 30°", TrackCategory.Switch, typeof(WY)),
+        new TrackCatalogEntry("WY", "WY Y-Switch 30°", TrackCategory.Switch, typeof(WY)),
         new TrackCatalogEntry("W3", "W3 Dreiwegeweiche", TrackCategory.Switch, typeof(W3)),
         new TrackCatalogEntry("BWL", "BWL Linkskurvenweiche", TrackCategory.Switch, typeof(BWL)),
         new TrackCatalogEntry("BWR", "BWR Rechtskurvenweiche", TrackCategory.Switch, typeof(BWR)),

@@ -55,7 +55,7 @@ internal class SettingsService : ISettingsService
         while (current != null)
         {
             var candidate = Path.Combine(current.FullName, fileName);
-            if (File.Exists(candidate) && File.Exists(Path.Combine(current.FullName, "WinUI.csproj")))
+            if (File.Exists(candidate) && IsWinUiProjectDirectory(current.FullName))
             {
                 return candidate;
             }
@@ -64,6 +64,12 @@ internal class SettingsService : ISettingsService
         }
 
         return null;
+    }
+
+    private static bool IsWinUiProjectDirectory(string directory)
+    {
+        return File.Exists(Path.Combine(directory, "MOBAflow.csproj"))
+            || File.Exists(Path.Combine(directory, "WinUI.csproj"));
     }
 
     /// <summary>

@@ -61,6 +61,34 @@ internal class ViewModelCharacterizationTests
     }
 
     [Test]
+    public void TrainControlViewModel_PresetSwitch_RestoresSpeedAndDirectionPerPreset()
+    {
+        var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = false });
+        var settingsServiceMock = CreateSettingsServiceMock();
+        var viewModel = new TrainControlViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object, eventBus: CreateEventBus());
+
+        viewModel.Preset1.Speed = 60;
+        viewModel.Preset1.IsForward = true;
+        viewModel.Preset2.Speed = 30;
+        viewModel.Preset2.IsForward = false;
+
+        viewModel.SelectedPresetIndex = 1;
+
+        Assert.That(viewModel.Speed, Is.EqualTo(30));
+        Assert.That(viewModel.IsForward, Is.False);
+
+        viewModel.SelectedPresetIndex = 0;
+
+        Assert.That(viewModel.Speed, Is.EqualTo(60));
+        Assert.That(viewModel.IsForward, Is.True);
+
+        viewModel.SelectedPresetIndex = 1;
+
+        Assert.That(viewModel.Speed, Is.EqualTo(30));
+        Assert.That(viewModel.IsForward, Is.False);
+    }
+
+    [Test]
     public async Task TrainControlViewModel_ToggleFunctionAsync_UpdatesStateAndCallsRuntime()
     {
         var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = true });

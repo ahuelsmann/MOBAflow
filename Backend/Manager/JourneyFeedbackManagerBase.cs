@@ -2,14 +2,10 @@
 
 namespace Moba.Backend.Manager;
 
-using Domain;
-
-using Interface;
-
-using Microsoft.Extensions.Logging;
-
 using Common.Extension;
-
+using Domain;
+using Interface;
+using Microsoft.Extensions.Logging;
 using Service;
 
 /// <summary>

@@ -1,20 +1,15 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Backend.Model;
 using Backend.Events;
-
+using Backend.Model;
 using Common.Events;
 using Common.Extension;
 using Common.Runtime;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
 using Microsoft.Extensions.Logging;
-
 using Service;
-
 using System.Collections.ObjectModel;
 
 /// <summary>
@@ -173,6 +168,11 @@ public partial class MainWindowViewModel
             IsOperatorAckRequired = status.IsOperatorAckRequired;
 
             ApplyJourneyRuntimeSnapshots(snapshot.JourneyStates);
+
+            if (SignalBoxRuntimeSync.ApplyToPlan(SelectedProject?.Model.SignalBoxPlan, snapshot.SignalBoxElements))
+            {
+                SignalBoxRuntimeStateChanged?.Invoke(this, EventArgs.Empty);
+            }
         }
         finally
         {

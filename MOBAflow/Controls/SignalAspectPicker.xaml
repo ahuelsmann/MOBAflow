@@ -149,7 +149,7 @@
                 <TextBlock
                     x:Name="AspectKennlichtLabel"
                     HorizontalAlignment="Center"
-                    Text="Kennl." />
+                    Text="Marker" />
             </StackPanel>
         </Border>
 
@@ -176,7 +176,7 @@
                 <TextBlock
                     x:Name="AspectDunkelLabel"
                     HorizontalAlignment="Center"
-                    Text="Dunkel" />
+                    Text="Dark" />
             </StackPanel>
         </Border>
 

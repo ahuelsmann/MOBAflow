@@ -41,7 +41,7 @@
                     <Label
                         x:Name="CounterLabel"
                         Grid.Row="1"
-                        Style="{StaticResource FluentBottomTabBarLabel}"
+                        Style="{DynamicResource FluentBottomTabBarLabel}"
                         Text="Counter" />
                 </Grid>
 
@@ -62,7 +62,7 @@
                     <Label
                         x:Name="SignalBoxLabel"
                         Grid.Row="1"
-                        Style="{StaticResource FluentBottomTabBarLabel}"
+                        Style="{DynamicResource FluentBottomTabBarLabel}"
                         Text="SignalBox" />
                 </Grid>
 
@@ -83,7 +83,7 @@
                     <Label
                         x:Name="ControlLabel"
                         Grid.Row="1"
-                        Style="{StaticResource FluentBottomTabBarLabel}"
+                        Style="{DynamicResource FluentBottomTabBarLabel}"
                         Text="Control" />
                 </Grid>
             </Grid>

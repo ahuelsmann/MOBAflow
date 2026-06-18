@@ -33,26 +33,8 @@
     <!-- Package References -->
     <ItemGroup>
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
-        <PackageReference Include="CommunityToolkit.Labs.WinUI.Controls.DataTable" />
-        <PackageReference Include="CommunityToolkit.Labs.WinUI.Controls.Ribbon" />
-        <PackageReference Include="CommunityToolkit.WinUI.Animations" />
-        <PackageReference Include="CommunityToolkit.WinUI.Behaviors" />
-        <PackageReference Include="CommunityToolkit.WinUI.Collections" />
         <PackageReference Include="CommunityToolkit.WinUI.Controls.ColorPicker" />
-        <PackageReference Include="CommunityToolkit.WinUI.Controls.HeaderedControls" />
-        <PackageReference Include="CommunityToolkit.WinUI.Controls.LayoutTransformControl" />
-        <PackageReference Include="CommunityToolkit.WinUI.Controls.Primitives" />
-        <PackageReference Include="CommunityToolkit.WinUI.Controls.RangeSelector" />
-        <PackageReference Include="CommunityToolkit.WinUI.Controls.Segmented" />
-        <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" />
         <PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" />
-        <PackageReference Include="CommunityToolkit.WinUI.Controls.TabbedCommandBar" />
-        <PackageReference Include="CommunityToolkit.WinUI.Converters" />
-        <PackageReference Include="CommunityToolkit.WinUI.DeveloperTools" />
-        <PackageReference Include="CommunityToolkit.WinUI.Extensions" />
-        <PackageReference Include="CommunityToolkit.WinUI.Helpers" />
-        <PackageReference Include="CommunityToolkit.WinUI.Media" />
-        <PackageReference Include="CommunityToolkit.WinUI.Triggers" />
         <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
         <PackageReference Include="Microsoft.Graphics.Win2D" />
         <PackageReference Include="Microsoft.WindowsAppSDK" />

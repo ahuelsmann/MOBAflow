@@ -6,6 +6,13 @@ applyTo: "MAUI/**/*.cs, MAUI/**/*.xaml"
 
 # MAUI Development Guidelines
 
+## UI Language
+
+- All user-visible strings in MOBAsmart must be **English** (tab labels, control page, signal box page, splash/status messages).
+- SharedUI ViewModels used by MOBAsmart (`MauiViewModel.*`, `TrainControlViewModel.ConnectionStatus`) must expose English UI text.
+- Use proper English spelling (`Forward`, not `Vorwaerts`); avoid ASCII workarounds for German umlauts in UI text.
+- **Exception:** TTS/announcement language remains user-configurable on the desktop host (MOBAflow Settings).
+
 ## Critical Rules (NEVER violate!)
 
 - NEVER use ListView (deprecated). Use CollectionView.

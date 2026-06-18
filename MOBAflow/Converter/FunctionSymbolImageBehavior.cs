@@ -1,18 +1,19 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Converter;
 
-using System;
-using System.IO;
-
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
+using System.Collections.Concurrent;
+using System.IO;
 
 /// <summary>
 /// Loads pre-rendered function symbol PNGs for a stored asset filename.
 /// </summary>
 public static class FunctionSymbolImageBehavior
 {
+    private static readonly ConcurrentDictionary<string, BitmapImage> ImageCache = new();
+
     public static readonly DependencyProperty AssetNameProperty = DependencyProperty.RegisterAttached(
         "AssetName",
         typeof(string),
@@ -66,9 +67,17 @@ public static class FunctionSymbolImageBehavior
         }
 
         var pngPath = ResolvePngPath(assetName, image.ActualTheme, renderSize);
-        image.Source = File.Exists(pngPath)
-            ? new BitmapImage(new Uri(pngPath))
-            : null;
+        image.Source = TryGetCachedImage(pngPath);
+    }
+
+    private static BitmapImage? TryGetCachedImage(string pngPath)
+    {
+        if (!File.Exists(pngPath))
+        {
+            return null;
+        }
+
+        return ImageCache.GetOrAdd(pngPath, static path => new BitmapImage(new Uri(path)));
     }
 
     private static string ResolvePngPath(string assetName, ElementTheme actualTheme, int renderSize)

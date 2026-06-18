@@ -31,10 +31,10 @@ internal class AppSettingsDefaultsTests
     }
 
     [Test]
-    public void RestApi_CurrentIpAddress_default_is_non_empty()
+    public void RestApi_CurrentIpAddress_default_is_empty_until_discovered()
     {
         var rest = new RestApiSettings();
-        Assert.That(rest.CurrentIpAddress, Is.Not.Empty);
+        Assert.That(rest.CurrentIpAddress, Is.EqualTo(string.Empty));
     }
 
     [Test]

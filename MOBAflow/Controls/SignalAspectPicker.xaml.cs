@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Controls;
 
+using Common.Display;
 using Common.Multiplex;
 
 using Domain;
@@ -156,23 +157,24 @@ internal sealed partial class SignalAspectPicker
 
         foreach (var (screen, aspect) in EnumerateAspectSignals())
         {
-            screen.SignalArticleNumber = signalArticleNumber;
-            screen.TopSpeedValue = TopSpeedValue;
-            screen.BottomSpeedValue = BottomSpeedValue;
-            screen.Aspect = aspect.ToString();
+            screen.ApplyVisualState(
+                signalArticleNumber,
+                TopSpeedValue,
+                BottomSpeedValue,
+                KsSignalAspectNames.ToAspectName(aspect));
         }
 
-        AspectHp0Label.Text = "Hp0";
-        AspectKs1Label.Text = "Ks1";
-        AspectKs2Label.Text = is4046 ? "Ks2+K" : "Ks2";
-        AspectKs1BlinkLabel.Text = is4046 ? "Ks2+K+G" : "Ks1 Bl";
-        AspectKennlichtLabel.Text = is4046 ? "K links" : "Kennl.";
-        AspectDunkelLabel.Text = is4046 ? "GrBl+K+G" : "Dunkel";
-        AspectRa12Label.Text = is4046 ? "Hp0+Rg" : "Ra12";
-        AspectZs1Label.Text = is4046 ? "Ks1+G" : "Zs1";
-        AspectZs7Label.Text = "Zs7";
+        AspectHp0Label.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Hp0, is4046);
+        AspectKs1Label.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Ks1, is4046);
+        AspectKs2Label.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Ks2, is4046);
+        AspectKs1BlinkLabel.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Ks1Blink, is4046);
+        AspectKennlichtLabel.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Kennlicht, is4046);
+        AspectDunkelLabel.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Dunkel, is4046);
+        AspectRa12Label.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Ra12, is4046);
+        AspectZs1Label.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Zs1, is4046);
+        AspectZs7Label.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Zs7, is4046);
 
-        ToolTipService.SetToolTip(AspectHp0Button, "Hp 0 - Halt");
+        ToolTipService.SetToolTip(AspectHp0Button, "Hp 0 - Stop");
         ToolTipService.SetToolTip(AspectKs1Button, "Ks 1 - Proceed");
         ToolTipService.SetToolTip(AspectKs2Button, is4046 ? "Ks 2 with white marker light at the top left" : "Ks 2 - Expect stop");
         ToolTipService.SetToolTip(AspectKs1BlinkButton, is4046 ? "Ks 2 with white marker light at the top left and top speed indicator" : "Ks 1 flashing - Proceed with speed pre-indicator");

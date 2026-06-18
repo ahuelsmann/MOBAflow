@@ -174,6 +174,18 @@ public sealed record SignalBoxElementRuntimeSnapshot
 
     /// <summary>Gets the optional selected signal aspect.</summary>
     public SignalAspect? SignalAspect { get; init; }
+
+    /// <summary>Gets the optional Viessmann main signal article number (e.g. 4046).</summary>
+    public string? MainSignalArticleNumber { get; init; }
+
+    /// <summary>Gets the optional multiplexer decoder article number (e.g. 5229).</summary>
+    public string? MultiplexerArticleNumber { get; init; }
+
+    /// <summary>Gets the optional top speed indicator (Zs3).</summary>
+    public string? TopSpeedIndicator { get; init; }
+
+    /// <summary>Gets the optional bottom speed indicator (Zs3v).</summary>
+    public string? BottomSpeedIndicator { get; init; }
 }
 
 /// <summary>
@@ -187,4 +199,3 @@ public enum SignalBoxElementKind
     /// <summary>Switch element.</summary>
     Switch
 }
-

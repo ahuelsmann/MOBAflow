@@ -10,8 +10,6 @@ using Domain.Enum;
 
 using Helper;
 
-using Microsoft.Extensions.Logging;
-
 /// <summary>
 /// MainWindowViewModel - Workflow Management
 /// Handles Workflow CRUD operations and Workflow Actions (Announcement, Command, Audio).
@@ -135,7 +133,7 @@ public partial class MainWindowViewModel
         // Trigger auto-save after adding action
         ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
     }
-    
+
 
     [RelayCommand]
     private void AddSelectSignalAspect()

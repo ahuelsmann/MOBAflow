@@ -241,7 +241,7 @@
                                         x:Name="AspectKs1BlinkLabel"
                                         HorizontalAlignment="Center"
                                         FontSize="9"
-                                        Text="Ks1 Bl" />
+                                        Text="Ks1 blink" />
                                 </StackPanel>
                             </Border>
 
@@ -272,7 +272,7 @@
                                         x:Name="AspectKennlichtLabel"
                                         HorizontalAlignment="Center"
                                         FontSize="9"
-                                        Text="Kennl." />
+                                        Text="Marker" />
                                 </StackPanel>
                             </Border>
 
@@ -303,7 +303,7 @@
                                         x:Name="AspectDunkelLabel"
                                         HorizontalAlignment="Center"
                                         FontSize="9"
-                                        Text="Dunkel" />
+                                        Text="Dark" />
                                 </StackPanel>
                             </Border>
 

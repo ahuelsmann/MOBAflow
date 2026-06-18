@@ -15,11 +15,6 @@
   <!-- Preserve all CommunityToolkit assemblies -->
   <assembly fullname="CommunityToolkit.Maui" preserve="all"/>
   <assembly fullname="CommunityToolkit.Maui.Core" preserve="all"/>
-  <assembly fullname="CommunityToolkit.Maui.MediaElement" preserve="all"/>
-  
-  <!-- Preserve UraniumUI -->
-  <assembly fullname="UraniumUI" preserve="all"/>
-  <assembly fullname="UraniumUI.Material" preserve="all"/>
   
   <!-- Preserve your assemblies -->
   <assembly fullname="Moba.MAUI" preserve="all"/>

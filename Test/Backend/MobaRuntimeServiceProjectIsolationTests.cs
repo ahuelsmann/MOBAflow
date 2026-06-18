@@ -4,7 +4,6 @@ namespace Moba.Test.Backend;
 using Microsoft.Extensions.Logging;
 
 using Moba.Backend.Interface;
-using Moba.Backend.Protocol;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
 using Moba.Domain;

@@ -1,0 +1,88 @@
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+
+
+
+namespace Moba.Test.SharedUI;
+
+
+
+using Domain;
+
+
+
+using Moba.Common.Runtime;
+
+
+
+using NUnit.Framework;
+
+
+
+[TestFixture]
+
+internal sealed class RuntimeJsonSerializerTests
+
+{
+
+    [Test]
+
+    public void SerializeDeserialize_Should_RoundtripSnapshot()
+
+    {
+
+        var snapshot = new MobaRuntimeSnapshot
+
+        {
+
+            IsConnected = true,
+
+            IsTrackPowerOn = true,
+
+            StatusText = "Connected",
+
+            SignalBoxElements =
+
+            [
+
+                new SignalBoxElementRuntimeSnapshot
+
+                {
+
+                    ElementId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+
+                    Name = "Signal 1",
+
+                    Kind = SignalBoxElementKind.Signal
+
+                }
+
+            ]
+
+        };
+
+
+
+        var json = RuntimeJsonSerializer.Serialize(snapshot);
+
+        var restored = RuntimeJsonSerializer.Deserialize(json);
+
+
+
+        Assert.That(restored, Is.Not.Null);
+
+        Assert.That(restored!.IsConnected, Is.True);
+
+        Assert.That(restored.IsTrackPowerOn, Is.True);
+
+        Assert.That(restored.StatusText, Is.EqualTo("Connected"));
+
+        Assert.That(restored.SignalBoxElements, Has.Count.EqualTo(1));
+
+        Assert.That(restored.SignalBoxElements[0].ElementId, Is.EqualTo(snapshot.SignalBoxElements[0].ElementId));
+
+        Assert.That(restored.SignalBoxElements[0].Name, Is.EqualTo("Signal 1"));
+
+    }
+
+}
+

@@ -414,6 +414,7 @@
 
                         <!--  Speedometer  -->
                         <controls:SpeedometerControl
+                            x:Name="Speedometer"
                             Grid.Row="0"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
@@ -593,6 +594,7 @@
 
                         <!--  Amperemeter  -->
                         <controls:AmperemeterControl
+                            x:Name="Amperemeter"
                             Grid.Row="1"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
@@ -729,7 +731,14 @@
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                             Text="FUNCTIONS" />
 
-                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.Functions, Mode=OneWay}">
+                        <ProgressRing
+                            x:Name="FunctionButtonsLoadingRing"
+                            Width="20"
+                            Height="20"
+                            HorizontalAlignment="Center"
+                            IsActive="True" />
+
+                        <ItemsRepeater x:Name="FunctionButtonsRepeater" Visibility="Collapsed">
                             <ItemsRepeater.Layout>
                                 <UniformGridLayout
                                     ItemsStretch="Fill"

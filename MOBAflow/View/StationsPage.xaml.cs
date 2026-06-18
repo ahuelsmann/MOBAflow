@@ -2,16 +2,12 @@
 namespace Moba.WinUI.View;
 
 using Common.Configuration;
-
+using Common.Extension;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-
-using Common.Extension;
-using SharedUI.ViewModel;
-
 using SharedUI.Interface;
-
+using SharedUI.ViewModel;
 using Windows.ApplicationModel.DataTransfer;
 
 internal sealed partial class StationsPage

@@ -12,57 +12,67 @@ using Moba.SharedUI.Interface;
 /// </summary>
 internal class UiDispatcher : IUiDispatcher
 {
-    private readonly DispatcherQueue? _dispatcherQueue;
+    private DispatcherQueue? _dispatcherQueue;
 
-    public UiDispatcher()
-    {
-        _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
-    }
+    /// <summary>
+    /// Resolves the UI-thread dispatcher lazily. The singleton may be created before
+    /// <see cref="DispatcherQueue"/> is available (e.g. during early DI in App constructor).
+    /// </summary>
+    private DispatcherQueue? DispatcherQueue => _dispatcherQueue ??= Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
 
     public void InvokeOnUi(Action action)
     {
-        if (_dispatcherQueue?.HasThreadAccess == true)
-        {
-            action();
-            return;
-        }
-
-        // Normal-Priorität für Standard-Updates
-        if (_dispatcherQueue is not null && _dispatcherQueue.TryEnqueue(
-            DispatcherQueuePriority.Normal, () => action()))
-            return;
-
-        action();
+        InvokeOnUi(action, DispatcherQueuePriority.Normal);
     }
 
     public void InvokeOnUiHighPriority(Action action)
     {
-        if (_dispatcherQueue?.HasThreadAccess == true)
-        {
-            action();
-            return;
-        }
-
-        if (_dispatcherQueue is not null && _dispatcherQueue.TryEnqueue(
-            DispatcherQueuePriority.High, () => action()))
-            return;
-
-        action();
+        InvokeOnUi(action, DispatcherQueuePriority.High);
     }
 
     public void InvokeOnUiLowPriority(Action action)
     {
-        if (_dispatcherQueue?.HasThreadAccess == true)
+        InvokeOnUi(action, DispatcherQueuePriority.Low);
+    }
+
+    private void InvokeOnUi(Action action, DispatcherQueuePriority priority)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+
+        var queue = DispatcherQueue;
+        if (queue?.HasThreadAccess == true)
         {
             action();
             return;
         }
 
-        if (_dispatcherQueue is not null && _dispatcherQueue.TryEnqueue(
-            DispatcherQueuePriority.Low, () => action()))
+        if (queue is null)
+        {
+            action();
             return;
+        }
 
-        action();
+        var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        if (!queue.TryEnqueue(priority, () => InvokeActionOnUiThread(action, tcs)))
+        {
+            action();
+            return;
+        }
+
+        tcs.Task.GetAwaiter().GetResult();
+    }
+
+    private static void InvokeActionOnUiThread(Action action, TaskCompletionSource tcs)
+    {
+        try
+        {
+            action();
+            tcs.TrySetResult();
+        }
+        catch (Exception ex)
+        {
+            tcs.TrySetException(ex);
+        }
     }
 
     public async Task InvokeOnUiAsync(Func<Task> asyncAction)
@@ -77,19 +87,22 @@ internal class UiDispatcher : IUiDispatcher
 
     public async Task<T> InvokeOnUiAsync<T>(Func<Task<T>> asyncFunc, UiPriority priority)
     {
-        if (_dispatcherQueue?.HasThreadAccess == true)
+        ArgumentNullException.ThrowIfNull(asyncFunc);
+
+        var queue = DispatcherQueue;
+        if (queue?.HasThreadAccess == true)
         {
             return await asyncFunc();
         }
 
-        if (_dispatcherQueue is null)
+        if (queue is null)
         {
             return await asyncFunc();
         }
 
         var tcs = new TaskCompletionSource<T>();
         var dispatcherPriority = MapToDispatcherPriority(priority);
-        if (!_dispatcherQueue.TryEnqueue(dispatcherPriority, () => _ = InvokeAsyncInternal(asyncFunc, tcs)))
+        if (!queue.TryEnqueue(dispatcherPriority, () => _ = InvokeAsyncInternal(asyncFunc, tcs)))
         {
             return await asyncFunc();
         }
@@ -99,13 +112,16 @@ internal class UiDispatcher : IUiDispatcher
 
     public async Task InvokeOnUiAsync(Func<Task> asyncAction, UiPriority priority)
     {
-        if (_dispatcherQueue?.HasThreadAccess == true)
+        ArgumentNullException.ThrowIfNull(asyncAction);
+
+        var queue = DispatcherQueue;
+        if (queue?.HasThreadAccess == true)
         {
             await asyncAction();
             return;
         }
 
-        if (_dispatcherQueue is null)
+        if (queue is null)
         {
             await asyncAction();
             return;
@@ -113,7 +129,7 @@ internal class UiDispatcher : IUiDispatcher
 
         var tcs = new TaskCompletionSource();
         var dispatcherPriority = MapToDispatcherPriority(priority);
-        if (!_dispatcherQueue.TryEnqueue(dispatcherPriority, () => _ = InvokeAsyncInternal(asyncAction, tcs)))
+        if (!queue.TryEnqueue(dispatcherPriority, () => _ = InvokeAsyncInternal(asyncAction, tcs)))
         {
             await asyncAction();
             return;

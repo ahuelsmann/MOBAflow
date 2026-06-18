@@ -12,6 +12,10 @@ using System.Windows.Input;
 public partial class FunctionToggleView
 {
     private static readonly FunctionIconSourceConverter IconConverter = new();
+    private string? _appliedLabel;
+    private string? _appliedIconSource;
+    private bool? _appliedIsOn;
+    private string? _appliedBacklightColorHex;
 
     public static readonly BindableProperty FunctionIndexProperty = BindableProperty.Create(
         nameof(FunctionIndex),
@@ -109,31 +113,52 @@ public partial class FunctionToggleView
 
     private void ApplyVisualState()
     {
-        FunctionLabel.Text = Label;
-        SemanticProperties.SetDescription(this, $"Toggle function {Label}");
-
-        var argb = FunctionBacklightColor.ToArgb(IsOn, BacklightColorHex);
-        ToggleBorder.BackgroundColor = Color.FromRgba(
-            ((argb >> 16) & 0xFF) / 255f,
-            ((argb >> 8) & 0xFF) / 255f,
-            (argb & 0xFF) / 255f,
-            ((argb >> 24) & 0xFF) / 255f);
-
-        if (Application.Current?.Resources.TryGetValue(IsOn ? "RailwayAccent" : "BorderColor", out var strokeResource) == true
-            && strokeResource is Color strokeColor)
+        if (_appliedLabel != Label)
         {
-            ToggleBorder.Stroke = strokeColor;
+            FunctionLabel.Text = Label;
+            SemanticProperties.SetDescription(this, $"Toggle function {Label}");
+            _appliedLabel = Label;
+        }
+
+        if (_appliedIsOn != IsOn || _appliedBacklightColorHex != BacklightColorHex)
+        {
+            var argb = FunctionBacklightColor.ToArgb(IsOn, BacklightColorHex);
+            ToggleBorder.BackgroundColor = Color.FromRgba(
+                ((argb >> 16) & 0xFF) / 255f,
+                ((argb >> 8) & 0xFF) / 255f,
+                (argb & 0xFF) / 255f,
+                ((argb >> 24) & 0xFF) / 255f);
+
+            if (Application.Current?.Resources.TryGetValue(IsOn ? "RailwayAccent" : "BorderColor", out var strokeResource) == true
+                && strokeResource is Color strokeColor)
+            {
+                ToggleBorder.Stroke = strokeColor;
+            }
+
+            _appliedIsOn = IsOn;
+            _appliedBacklightColorHex = BacklightColorHex;
         }
 
         var iconSource = IconConverter.Convert(IconAsset, typeof(ImageSource), null, System.Globalization.CultureInfo.CurrentCulture) as string;
         if (string.IsNullOrWhiteSpace(iconSource))
         {
-            IconImage.IsVisible = false;
-            IconImage.Source = null;
+            if (_appliedIconSource != null)
+            {
+                IconImage.IsVisible = false;
+                IconImage.Source = null;
+                _appliedIconSource = null;
+            }
+
+            return;
+        }
+
+        if (string.Equals(_appliedIconSource, iconSource, StringComparison.Ordinal))
+        {
             return;
         }
 
         IconImage.Source = iconSource;
         IconImage.IsVisible = true;
+        _appliedIconSource = iconSource;
     }
 }

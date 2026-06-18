@@ -9,10 +9,13 @@ public interface IRestDiscoveryService
     /// <summary>
     /// Attempts to discover a REST server endpoint (e.g. UDP multicast and LAN fallback on MAUI).
     /// </summary>
+    /// <param name="subnetAnchorIp">
+    /// Optional IPv4 hint (typically the connected Z21 address) whose /24 subnet is scanned first.
+    /// </param>
     /// <returns>
     /// A task that returns the discovered IP address and port, or <c>null</c> values when discovery fails.
     /// </returns>
-    Task<(string? ip, int? port)> DiscoverServerAsync();
+    Task<(string? ip, int? port)> DiscoverServerAsync(string? subnetAnchorIp = null);
 }
 
 /// <summary>
@@ -23,9 +26,10 @@ public interface IZ21DiscoveryService
     /// <summary>
     /// Attempts to discover a Z21 on the local network.
     /// </summary>
+    /// <param name="preferredIpAddress">Optional saved or MOBAflow-provided IP to probe before scanning the subnet.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The IP address of the first responding Z21, or null if none found.</returns>
-    Task<string?> DiscoverZ21Async(CancellationToken cancellationToken = default);
+    Task<string?> DiscoverZ21Async(string? preferredIpAddress = null, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -71,10 +75,26 @@ public interface IPhotoCaptureService
 }
 
 /// <summary>
+/// Reads runtime settings (e.g. Z21 endpoint) that MOBAflow pushed to MOBApi.
+/// </summary>
+public interface IRuntimeSettingsClient
+{
+    /// <summary>
+    /// Fetches the Z21 endpoint configured in MOBAflow when MOBApi has received a push from WinUI.
+    /// </summary>
+    Task<(string? ip, int? port)> GetZ21EndpointAsync(string serverIp, int serverPort, CancellationToken cancellationToken = default);
+}
+
+/// <summary>
 /// Registers the current client (e.g. MOBAsmart) with the REST API so it appears in the Overview "Connected clients" list.
 /// </summary>
 public interface IRestApiClientRegistration
 {
+    /// <summary>
+    /// Stable client id used for REST registration and runtime hub identity.
+    /// </summary>
+    string ClientId { get; }
+
     /// <summary>
     /// Registers this client with the server. Call when the app has discovered the API and health check succeeds.
     /// </summary>
@@ -85,12 +105,23 @@ public interface IRestApiClientRegistration
 }
 
 /// <summary>
+/// Null-object implementation of <see cref="IRuntimeSettingsClient"/> used when runtime settings are unavailable.
+/// </summary>
+public sealed class NullRuntimeSettingsClient : IRuntimeSettingsClient
+{
+    /// <inheritdoc />
+    public Task<(string? ip, int? port)> GetZ21EndpointAsync(string serverIp, int serverPort, CancellationToken cancellationToken = default)
+        => Task.FromResult<(string?, int?)>((null, null));
+}
+
+/// <summary>
 /// Null-object implementation of <see cref="IRestDiscoveryService"/> used when discovery is not available.
 /// </summary>
 public sealed class NullRestDiscoveryService : IRestDiscoveryService
 {
     /// <inheritdoc />
-    public Task<(string? ip, int? port)> DiscoverServerAsync() => Task.FromResult<(string?, int?)>((null, null));
+    public Task<(string? ip, int? port)> DiscoverServerAsync(string? subnetAnchorIp = null)
+        => Task.FromResult<(string?, int?)>((null, null));
 }
 
 /// <summary>
@@ -99,7 +130,8 @@ public sealed class NullRestDiscoveryService : IRestDiscoveryService
 public sealed class NullZ21DiscoveryService : IZ21DiscoveryService
 {
     /// <inheritdoc />
-    public Task<string?> DiscoverZ21Async(CancellationToken cancellationToken = default) => Task.FromResult<string?>(null);
+    public Task<string?> DiscoverZ21Async(string? preferredIpAddress = null, CancellationToken cancellationToken = default)
+        => Task.FromResult<string?>(null);
 }
 
 /// <summary>
@@ -129,6 +161,9 @@ public sealed class NullPhotoCaptureService : IPhotoCaptureService
 /// </summary>
 public sealed class NullRestApiClientRegistration : IRestApiClientRegistration
 {
+    /// <inheritdoc />
+    public string ClientId => "00000000000000000000000000000000";
+
     /// <inheritdoc />
     public Task<bool> RegisterAsync(string serverIp, int serverPort) => Task.FromResult(false);
 }

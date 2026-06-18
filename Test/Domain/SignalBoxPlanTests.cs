@@ -20,7 +20,7 @@ internal class SignalBoxPlanTests
     public void Constructor_InitializesDefaults()
     {
         Assert.That(_plan.Id, Is.Not.EqualTo(Guid.Empty));
-        Assert.That(_plan.Name, Is.EqualTo("Stellwerk"));
+        Assert.That(_plan.Name, Is.EqualTo("Signal box"));
         Assert.That(_plan.Grid, Is.Not.Null);
         Assert.That(_plan.Elements, Is.Not.Null);
         Assert.That(_plan.Elements, Is.Empty);

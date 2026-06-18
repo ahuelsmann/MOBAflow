@@ -120,4 +120,3 @@ internal class SettingsServiceInterfaceTests
         public bool AutoLoadLastSolution { get; set; }
     }
 }
-

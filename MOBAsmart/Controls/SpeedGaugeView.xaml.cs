@@ -9,6 +9,13 @@ using Microsoft.Maui.Graphics;
 public partial class SpeedGaugeView
 {
     private readonly SpeedGaugeDrawable _drawable = new();
+    private bool _themeColorsCached;
+    private CancellationTokenSource? _invalidateThrottleCts;
+    private double _lastDrawnValue = double.NaN;
+    private double _lastDrawnMaximum = double.NaN;
+    private int _lastDrawnDisplayKmh = int.MinValue;
+
+    private const int InvalidateThrottleMs = 16;
 
     public static readonly BindableProperty ValueProperty = BindableProperty.Create(
         nameof(Value),
@@ -58,29 +65,75 @@ public partial class SpeedGaugeView
 
     private void OnLoaded(object? sender, EventArgs e)
     {
-        RefreshDrawable();
+        CacheThemeColors();
+        RefreshDrawable(forceInvalidate: true);
     }
 
     private static void OnGaugePropertyChanged(BindableObject bindable, object oldValue, object newValue)
     {
         if (bindable is SpeedGaugeView view)
         {
-            view.RefreshDrawable();
+            view.ScheduleRefreshDrawable();
         }
     }
 
-    private void RefreshDrawable()
+    private void ScheduleRefreshDrawable()
     {
+        _invalidateThrottleCts?.Cancel();
+        _invalidateThrottleCts?.Dispose();
+        _invalidateThrottleCts = new CancellationTokenSource();
+        var token = _invalidateThrottleCts.Token;
+        _ = ThrottledRefreshAsync(token);
+    }
+
+    private async Task ThrottledRefreshAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(InvalidateThrottleMs, cancellationToken).ConfigureAwait(true);
+            RefreshDrawable(forceInvalidate: false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Superseded by a newer gauge update.
+        }
+    }
+
+    private void RefreshDrawable(bool forceInvalidate)
+    {
+        if (!_themeColorsCached)
+        {
+            CacheThemeColors();
+        }
+
+        var valueChanged = !double.Equals(_lastDrawnValue, Value);
+        var maximumChanged = !double.Equals(_lastDrawnMaximum, Maximum);
+        var displayChanged = _lastDrawnDisplayKmh != DisplayKmh;
+
+        if (!forceInvalidate && !valueChanged && !maximumChanged && !displayChanged)
+        {
+            return;
+        }
+
         _drawable.Value = Value;
         _drawable.Maximum = Maximum;
         _drawable.DisplayKmh = DisplayKmh;
+        GaugeCanvas.Invalidate();
+
+        _lastDrawnValue = Value;
+        _lastDrawnMaximum = Maximum;
+        _lastDrawnDisplayKmh = DisplayKmh;
+    }
+
+    private void CacheThemeColors()
+    {
         _drawable.TrackColor = ResolveColor("BorderColor", Colors.Gray);
         _drawable.AccentColor = ResolveColor("RailwayAccent", Colors.DodgerBlue);
         _drawable.NeedleColor = ResolveColor("RailwayDanger", Colors.Red);
         _drawable.TextPrimary = ResolveColor("TextPrimary", Colors.White);
         _drawable.TextSecondary = ResolveColor("TextSecondary", Colors.LightGray);
         _drawable.SurfaceColor = ResolveColor("Surface", Colors.DarkGray);
-        GaugeCanvas.Invalidate();
+        _themeColorsCached = true;
     }
 
     private static Color ResolveColor(string key, Color fallback)
@@ -109,42 +162,31 @@ public partial class SpeedGaugeView
         public void Draw(ICanvas canvas, RectF dirtyRect)
         {
             var centerX = dirtyRect.Width / 2f;
-            var centerY = dirtyRect.Height * 0.72f;
-            const float radius = 95f;
+            var centerY = dirtyRect.Height * 0.65f;
+            var radius = Math.Min(dirtyRect.Width * 0.38f, dirtyRect.Height * 0.5f);
             const float stroke = 14f;
+            const float startAngleDeg = 180f;
+            const float endAngleDeg = 0f;
 
             var normalized = Maximum > 0 ? Math.Clamp(Value / Maximum, 0, 1) : 0;
 
             canvas.StrokeSize = stroke;
             canvas.StrokeLineCap = LineCap.Round;
             canvas.StrokeColor = TrackColor.WithAlpha(0.55f);
-            canvas.DrawArc(
-                centerX - radius,
-                centerY - radius,
-                radius * 2,
-                radius * 2,
-                180,
-                180,
-                false,
-                false);
+            canvas.DrawPath(CreateArcPath(centerX, centerY, radius, startAngleDeg, endAngleDeg));
 
             if (normalized > 0.001)
             {
+                var speedEndAngle = startAngleDeg - (float)(normalized * 180f);
+                canvas.StrokeSize = stroke;
+                canvas.StrokeLineCap = LineCap.Round;
                 canvas.StrokeColor = InterpolateSpeedColor(normalized);
-                canvas.DrawArc(
-                    centerX - radius,
-                    centerY - radius,
-                    radius * 2,
-                    radius * 2,
-                    180,
-                    (float)(normalized * 180),
-                    false,
-                    false);
+                canvas.DrawPath(CreateArcPath(centerX, centerY, radius, startAngleDeg, speedEndAngle));
             }
 
             DrawTickMarks(canvas, centerX, centerY, radius + 10f);
 
-            var needleAngleDeg = 180f - (float)(normalized * 180f);
+            var needleAngleDeg = startAngleDeg - (float)(normalized * 180f);
             var needleRad = needleAngleDeg * Math.PI / 180d;
             var needleLength = radius - 18f;
             var needleEndX = centerX + (float)(needleLength * Math.Cos(needleRad));
@@ -185,6 +227,35 @@ public partial class SpeedGaugeView
                 VerticalAlignment.Center);
         }
 
+        private static PathF CreateArcPath(
+            float centerX,
+            float centerY,
+            float radius,
+            float startAngleDeg,
+            float endAngleDeg)
+        {
+            var path = new PathF();
+            var (startX, startY) = PointAtAngle(centerX, centerY, radius, startAngleDeg);
+            path.MoveTo(startX, startY);
+            path.AddArc(
+                centerX - radius,
+                centerY - radius,
+                centerX + radius,
+                centerY + radius,
+                startAngleDeg,
+                endAngleDeg,
+                clockwise: true);
+            return path;
+        }
+
+        private static (float x, float y) PointAtAngle(float centerX, float centerY, float radius, float angleDeg)
+        {
+            var angleRad = angleDeg * Math.PI / 180d;
+            return (
+                centerX + (radius * (float)Math.Cos(angleRad)),
+                centerY - (radius * (float)Math.Sin(angleRad)));
+        }
+
         private static Color InterpolateSpeedColor(double normalized)
         {
             if (normalized < 0.5)
@@ -210,13 +281,10 @@ public partial class SpeedGaugeView
 
             for (var i = 0; i <= 4; i++)
             {
-                var normalized = i / 4d;
-                var angleDeg = 180 - (normalized * 180);
-                var angleRad = angleDeg * Math.PI / 180d;
-                var innerX = centerX + (float)((tickRadius - 8) * Math.Cos(angleRad));
-                var innerY = centerY - (float)((tickRadius - 8) * Math.Sin(angleRad));
-                var outerX = centerX + (float)(tickRadius * Math.Cos(angleRad));
-                var outerY = centerY - (float)(tickRadius * Math.Sin(angleRad));
+                var tickNormalized = i / 4d;
+                var angleDeg = 180f - (float)(tickNormalized * 180f);
+                var (outerX, outerY) = PointAtAngle(centerX, centerY, tickRadius, angleDeg);
+                var (innerX, innerY) = PointAtAngle(centerX, centerY, tickRadius - 8f, angleDeg);
                 canvas.DrawLine(innerX, innerY, outerX, outerY);
             }
         }

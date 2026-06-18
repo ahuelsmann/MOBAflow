@@ -2,7 +2,7 @@
 namespace Moba.WinUI.Behavior;
 
 using Common.Configuration;
-
+using Common.Extension;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
@@ -10,12 +10,8 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Xaml.Interactivity;
-
-using Common.Extension;
-using SharedUI.ViewModel;
-
 using SharedUI.Interface;
-
+using SharedUI.ViewModel;
 using Windows.Foundation;
 
 public sealed class GridColumnResizeBehavior : Behavior<Grid>

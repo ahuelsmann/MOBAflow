@@ -25,21 +25,21 @@ internal sealed class TrainClassLibraryTests
                     {
                       "Name": "E 10 / BR 110",
                       "Vmax": 160,
-                      "Type": "Elektrolok",
+                      "Type": "Electric loco",
                       "Epoch": "IV",
                       "Description": "Universal electric locomotive"
                     },
                     {
                       "Name": "BR 103.1",
                       "Vmax": 200,
-                      "Type": "Elektrolok",
+                      "Type": "Electric loco",
                       "Epoch": "IV",
                       "Description": "InterCity locomotive"
                     },
                     {
                       "Name": "BR 218",
                       "Vmax": 140,
-                      "Type": "Diesellok",
+                      "Type": "Diesel loco",
                       "Epoch": "IV",
                       "Description": "Diesel locomotive"
                     }
@@ -68,7 +68,7 @@ internal sealed class TrainClassLibraryTests
         {
             Assert.That(series, Is.Not.Null);
             Assert.That(series!.Name, Does.Contain("110"));
-            Assert.That(series.Type, Is.EqualTo("Elektrolok"));
+            Assert.That(series.Type, Is.EqualTo("Electric loco"));
         });
     }
 
@@ -110,8 +110,8 @@ internal sealed class TrainClassLibraryTests
     [Test]
     public void GetByType_FiltersByLocomotiveCategory()
     {
-        var electric = TrainClassLibrary.GetByType("Elektrolok");
-        var diesel = TrainClassLibrary.GetByType("Diesellok");
+        var electric = TrainClassLibrary.GetByType("Electric loco");
+        var diesel = TrainClassLibrary.GetByType("Diesel loco");
 
         Assert.Multiple(() =>
         {

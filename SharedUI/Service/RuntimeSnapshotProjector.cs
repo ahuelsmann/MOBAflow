@@ -16,6 +16,8 @@ public static class RuntimeSnapshotProjector
     {
         ArgumentNullException.ThrowIfNull(snapshot);
 
+        var showTelemetry = snapshot.IsTrackPowerOn;
+
         return new RuntimeStatusProjection(
             snapshot.IsConnected,
             snapshot.IsTrackPowerOn,
@@ -23,10 +25,10 @@ public static class RuntimeSnapshotProjector
             snapshot.SerialNumber,
             snapshot.FirmwareVersion,
             snapshot.HardwareType,
-            snapshot.MainCurrent,
-            snapshot.Temperature,
-            snapshot.SupplyVoltage,
-            snapshot.VccVoltage,
+            showTelemetry ? snapshot.MainCurrent : 0,
+            showTelemetry ? snapshot.Temperature : 0,
+            showTelemetry ? snapshot.SupplyVoltage : 0,
+            showTelemetry ? snapshot.VccVoltage : 0,
             snapshot.IsZ21Connecting,
             snapshot.HasSeenSuccessfulConnection,
             snapshot.IsManualDisconnectRequested,

@@ -2,12 +2,10 @@
 
 namespace Moba.SharedUI.Service;
 
-using Microsoft.Extensions.Logging;
-
 using Common.Events;
-using TrackLibrary.PikoA;
-
+using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using TrackLibrary.PikoA;
 
 /// <summary>
 /// Visualises Z21 R-Bus feedback events on the track plan canvas.

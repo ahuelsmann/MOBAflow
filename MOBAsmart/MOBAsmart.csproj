@@ -18,7 +18,6 @@
         <!-- Versions -->
         <ApplicationDisplayVersion>1.1</ApplicationDisplayVersion>
         <ApplicationVersion>5</ApplicationVersion>
-        <!-- Android 26+ (Oreo) - required for MediaElement support -->
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">26.0</SupportedOSPlatformVersion>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -52,9 +51,8 @@
         <AndroidLinkSkip>true</AndroidLinkSkip>
         <!-- Faster XAML compilation -->
         <XamlCTask>Compile</XamlCTask>
-        <!-- Enable Hot Reload -->
-        <UseInterpreter>true</UseInterpreter>
-        <EnablePreviewMsixTooling>true</EnablePreviewMsixTooling>
+        <!-- JIT (no interpreter): faster F5 debugging on device. Hot Reload is intentionally disabled. -->
+        <UseInterpreter>false</UseInterpreter>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
         <!-- RELEASE OPTIMIZATIONS -->
@@ -78,6 +76,8 @@
         <MauiImage Include="Resources\Splash\splash_background.png" />
         <!-- Function symbol PNGs (shared with MOBAflow/Assets/FunctionSymbols) -->
         <MauiImage Include="Resources\Images\*" />
+        <!-- logo_train.png is 1024x1024 (~1.4 MB) and froze first layout when decoded on the UI thread -->
+        <MauiImage Remove="Resources\Images\logo_train.png" />
         <!-- Custom Fonts -->
         <MauiFont Include="Resources\Fonts\*" />
         <!-- Raw Assets -->
@@ -88,12 +88,8 @@
         <PackageReference Include="Microsoft.Maui.Controls" />
         <!-- CommunityToolkit.Maui (UI features: Expander, Converters, Behaviors) -->
         <PackageReference Include="CommunityToolkit.Maui" />
-        <!-- CommunityToolkit.Maui.MediaElement (Video/Audio support) -->
-        <PackageReference Include="CommunityToolkit.Maui.MediaElement" />
-        <!-- UraniumUI Material Design Components -->
-        <PackageReference Include="UraniumUI.Material" />
-        <!-- UraniumUI Material Icons -->
-        <PackageReference Include="UraniumUI.Icons.MaterialIcons" />
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
+        <PackageReference Include="Microsoft.Extensions.Http" />
         <!-- AndroidX Startup (required for initialization providers) -->
         <PackageReference Include="Xamarin.AndroidX.Startup.StartupRuntime" />
         <!-- Note: CommunityToolkit.Mvvm comes via SharedUI project reference -->
@@ -125,6 +121,9 @@
         <MauiXaml Update="Resources\Styles\FluentStyles.xaml">
             <Generator>MSBuild:Compile</Generator>
         </MauiXaml>
+        <MauiXaml Update="Resources\Styles\MobaSmartControlStyles.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </MauiXaml>
         <MauiXaml Update="Resources\Styles\LightTheme.xaml">
             <Generator>MSBuild:Compile</Generator>
         </MauiXaml>
@@ -137,6 +136,12 @@
         <MauiXaml Update="View\SignalBoxPage.xaml">
             <Generator>MSBuild:Compile</Generator>
         </MauiXaml>
+        <MauiXaml Update="Controls\KsSignalScreen.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </MauiXaml>
+        <MauiXaml Update="Controls\SignalAspectPicker.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </MauiXaml>
         <MauiXaml Update="View\ControlPage.xaml">
             <Generator>MSBuild:Compile</Generator>
         </MauiXaml>
@@ -144,6 +149,12 @@
             <Generator>MSBuild:Compile</Generator>
         </MauiXaml>
         <MauiXaml Update="Controls\FunctionToggleView.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </MauiXaml>
+        <MauiXaml Update="Controls\ConnectionStatusPanel.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </MauiXaml>
+        <MauiXaml Update="Controls\StatisticsPanel.xaml">
             <Generator>MSBuild:Compile</Generator>
         </MauiXaml>
         <MauiXaml Update="View\SplashPage.xaml">

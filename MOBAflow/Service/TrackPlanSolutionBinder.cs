@@ -2,11 +2,10 @@
 
 namespace Moba.WinUI.Service;
 
-using System.ComponentModel;
-
 using Common.Extension;
 using Domain;
 using Moba.SharedUI.ViewModel;
+using System.ComponentModel;
 using TrackLibrary.PikoA;
 
 /// <summary>

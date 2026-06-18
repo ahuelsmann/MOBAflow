@@ -1,10 +1,13 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Controls.SignalBox;
 
+using Common.Display;
 using Common.Extension;
 using Common.Multiplex;
 
 using Domain;
+
+using Moba.WinUI.Controls;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
@@ -90,6 +93,12 @@ public sealed partial class SignalBoxPropertiesControl
         {
             control.UpdatePropertiesPanel();
         }
+    }
+
+    public void RefreshAspectDisplay()
+    {
+        UpdateAspectButtons();
+        UpdateAspectPresentation(SelectedElement as SbSignal);
     }
 
     private void UpdatePropertiesPanel()
@@ -397,6 +406,7 @@ public sealed partial class SignalBoxPropertiesControl
 
         applySelection(sig, articleNumber);
         UpdateAvailableSignalAspects(sig);
+        RequestVisualRefresh?.Invoke(this, sig);
         QueueSolutionSave();
     }
 
@@ -441,63 +451,45 @@ public sealed partial class SignalBoxPropertiesControl
         var topSpeedIndicator = selectedSignal?.TopSpeedIndicator ?? string.Empty;
         var bottomSpeedIndicator = selectedSignal?.BottomSpeedIndicator ?? string.Empty;
 
-        AspectHp0Signal.SignalArticleNumber = signalArticleNumber;
-        AspectKs1Signal.SignalArticleNumber = signalArticleNumber;
-        AspectKs2Signal.SignalArticleNumber = signalArticleNumber;
-        AspectKs1BlinkSignal.SignalArticleNumber = signalArticleNumber;
-        AspectKennlichtSignal.SignalArticleNumber = signalArticleNumber;
-        AspectDunkelSignal.SignalArticleNumber = signalArticleNumber;
-        AspectRa12Signal.SignalArticleNumber = signalArticleNumber;
-        AspectZs1Signal.SignalArticleNumber = signalArticleNumber;
-        AspectZs7Signal.SignalArticleNumber = signalArticleNumber;
+        foreach (var (screen, aspect) in EnumerateAspectSignals())
+        {
+            screen.ApplyVisualState(
+                signalArticleNumber,
+                topSpeedIndicator,
+                bottomSpeedIndicator,
+                KsSignalAspectNames.ToAspectName(aspect));
+        }
+    }
 
-        AspectHp0Signal.TopSpeedValue = topSpeedIndicator;
-        AspectKs1Signal.TopSpeedValue = topSpeedIndicator;
-        AspectKs2Signal.TopSpeedValue = topSpeedIndicator;
-        AspectKs1BlinkSignal.TopSpeedValue = topSpeedIndicator;
-        AspectKennlichtSignal.TopSpeedValue = topSpeedIndicator;
-        AspectDunkelSignal.TopSpeedValue = topSpeedIndicator;
-        AspectRa12Signal.TopSpeedValue = topSpeedIndicator;
-        AspectZs1Signal.TopSpeedValue = topSpeedIndicator;
-        AspectZs7Signal.TopSpeedValue = topSpeedIndicator;
-
-        AspectHp0Signal.BottomSpeedValue = bottomSpeedIndicator;
-        AspectKs1Signal.BottomSpeedValue = bottomSpeedIndicator;
-        AspectKs2Signal.BottomSpeedValue = bottomSpeedIndicator;
-        AspectKs1BlinkSignal.BottomSpeedValue = bottomSpeedIndicator;
-        AspectKennlichtSignal.BottomSpeedValue = bottomSpeedIndicator;
-        AspectDunkelSignal.BottomSpeedValue = bottomSpeedIndicator;
-        AspectRa12Signal.BottomSpeedValue = bottomSpeedIndicator;
-        AspectZs1Signal.BottomSpeedValue = bottomSpeedIndicator;
-        AspectZs7Signal.BottomSpeedValue = bottomSpeedIndicator;
-
-        AspectHp0Signal.Aspect = nameof(SignalAspect.Hp0);
-        AspectKs1Signal.Aspect = nameof(SignalAspect.Ks1);
-        AspectKs2Signal.Aspect = nameof(SignalAspect.Ks2);
-        AspectKs1BlinkSignal.Aspect = nameof(SignalAspect.Ks1Blink);
-        AspectKennlichtSignal.Aspect = nameof(SignalAspect.Kennlicht);
-        AspectDunkelSignal.Aspect = nameof(SignalAspect.Dunkel);
-        AspectRa12Signal.Aspect = nameof(SignalAspect.Ra12);
-        AspectZs1Signal.Aspect = nameof(SignalAspect.Zs1);
-        AspectZs7Signal.Aspect = nameof(SignalAspect.Zs7);
+    private IEnumerable<(KsSignalScreen Screen, SignalAspect Aspect)> EnumerateAspectSignals()
+    {
+        yield return (AspectHp0Signal, SignalAspect.Hp0);
+        yield return (AspectKs1Signal, SignalAspect.Ks1);
+        yield return (AspectKs2Signal, SignalAspect.Ks2);
+        yield return (AspectKs1BlinkSignal, SignalAspect.Ks1Blink);
+        yield return (AspectKennlichtSignal, SignalAspect.Kennlicht);
+        yield return (AspectDunkelSignal, SignalAspect.Dunkel);
+        yield return (AspectRa12Signal, SignalAspect.Ra12);
+        yield return (AspectZs1Signal, SignalAspect.Zs1);
+        yield return (AspectZs7Signal, SignalAspect.Zs7);
     }
 
     private void ApplyAspectLabels(bool is4046)
     {
-        AspectHp0Label.Text = "Hp0";
-        AspectKs1Label.Text = "Ks1";
-        AspectKs2Label.Text = is4046 ? "Ks2+K" : "Ks2";
-        AspectKs1BlinkLabel.Text = is4046 ? "Ks2+K+G" : "Ks1 Bl";
-        AspectKennlichtLabel.Text = is4046 ? "K links" : "Kennl.";
-        AspectDunkelLabel.Text = is4046 ? "GrBl+K+G" : "Dunkel";
-        AspectRa12Label.Text = is4046 ? "Hp0+Rg" : "Ra12";
-        AspectZs1Label.Text = is4046 ? "Ks1+G" : "Zs1";
-        AspectZs7Label.Text = "Zs7";
+        AspectHp0Label.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Hp0, is4046);
+        AspectKs1Label.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Ks1, is4046);
+        AspectKs2Label.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Ks2, is4046);
+        AspectKs1BlinkLabel.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Ks1Blink, is4046);
+        AspectKennlichtLabel.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Kennlicht, is4046);
+        AspectDunkelLabel.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Dunkel, is4046);
+        AspectRa12Label.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Ra12, is4046);
+        AspectZs1Label.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Zs1, is4046);
+        AspectZs7Label.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Zs7, is4046);
     }
 
     private void ApplyAspectTooltips(bool is4046)
     {
-        ToolTipService.SetToolTip(AspectHp0Button, "Hp 0 - Halt");
+        ToolTipService.SetToolTip(AspectHp0Button, "Hp 0 - Stop");
         ToolTipService.SetToolTip(AspectKs1Button, "Ks 1 - Proceed");
         ToolTipService.SetToolTip(AspectKs2Button, is4046 ? "Ks 2 with white marker light at the top left" : "Ks 2 - Expect stop");
         ToolTipService.SetToolTip(AspectKs1BlinkButton, is4046 ? "Ks 2 with white marker light at the top left and top speed indicator" : "Ks 1 flashing - Proceed with speed pre-indicator");
@@ -737,6 +729,7 @@ public sealed partial class SignalBoxPropertiesControl
         sig.IsMultiplexed = true;
         UpdateSignalArticleComboBoxes(sig);
         UpdateAvailableSignalAspects(sig);
+        RequestVisualRefresh?.Invoke(this, sig);
     }
 
     private void ResetMultiplexerSelection(SbSignal sig)

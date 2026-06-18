@@ -32,21 +32,21 @@
             IsDynamicOverflowEnabled="True">
             <AppBarButton
                 Click="CancelButton_Click"
-                Label="Abbrechen">
+                Label="Cancel">
                 <AppBarButton.Icon>
                     <SymbolIcon Symbol="Cancel" />
                 </AppBarButton.Icon>
             </AppBarButton>
             <AppBarButton
                 Click="OkButton_Click"
-                Label="Übernehmen">
+                Label="Apply">
                 <AppBarButton.Icon>
                     <SymbolIcon Symbol="Accept" />
                 </AppBarButton.Icon>
             </AppBarButton>
             <AppBarButton
                 Click="ClearSelectionButton_Click"
-                Label="Symbol und Farbe löschen">
+                Label="Clear symbol and color">
                 <AppBarButton.Icon>
                     <SymbolIcon Symbol="Delete" />
                 </AppBarButton.Icon>
@@ -104,7 +104,7 @@
                         VerticalAlignment="Center"
                         FontWeight="SemiBold"
                         Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                        Text="Farbe" />
+                        Text="Color" />
                     <ColorPicker
                         x:Name="FunctionColorPicker"
                         ColorChanged="FunctionColorPicker_ColorChanged"

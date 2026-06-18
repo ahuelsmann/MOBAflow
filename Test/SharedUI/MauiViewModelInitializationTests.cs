@@ -41,8 +41,8 @@ internal sealed class MauiViewModelInitializationTests
         dependencies.NetworkNotifierMock.Verify(notifier => notifier.StartListening(), Times.Never);
         dependencies.MobaRuntimeMock.Verify(client => client.StartAsync(It.IsAny<CancellationToken>()), Times.Never);
         dependencies.MobaRuntimeMock.Verify(client => client.SetSystemStatePollingInterval(It.IsAny<int>()), Times.Never);
-        dependencies.RestDiscoveryMock.Verify(service => service.DiscoverServerAsync(), Times.Never);
-        dependencies.Z21DiscoveryMock.Verify(service => service.DiscoverZ21Async(It.IsAny<CancellationToken>()), Times.Never);
+        dependencies.RestDiscoveryMock.Verify(service => service.DiscoverServerAsync(It.IsAny<string?>()), Times.Never);
+        dependencies.Z21DiscoveryMock.Verify(service => service.DiscoverZ21Async(It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]
@@ -53,10 +53,10 @@ internal sealed class MauiViewModelInitializationTests
 
         var dependencies = CreateDependencies(settings);
         dependencies.RestDiscoveryMock
-            .Setup(service => service.DiscoverServerAsync())
+            .Setup(service => service.DiscoverServerAsync(It.IsAny<string?>()))
             .ReturnsAsync(("192.168.0.79", 5001));
         dependencies.Z21DiscoveryMock
-            .Setup(service => service.DiscoverZ21Async(It.IsAny<CancellationToken>()))
+            .Setup(service => service.DiscoverZ21Async(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
         dependencies.PhotoUploadMock
             .Setup(service => service.HealthCheckAsync(It.IsAny<string>(), It.IsAny<int>()))
@@ -66,7 +66,7 @@ internal sealed class MauiViewModelInitializationTests
 
         await viewModel.InitializeAsync();
         await viewModel.InitializeAsync();
-        await Task.Delay(700);
+        await Task.Delay(2200);
 
         Assert.That(viewModel.CountOfFeedbackPoints, Is.EqualTo(1));
         Assert.That(viewModel.Statistics, Has.Count.EqualTo(1));
@@ -74,8 +74,8 @@ internal sealed class MauiViewModelInitializationTests
         dependencies.NetworkNotifierMock.Verify(notifier => notifier.StartListening(), Times.Once);
         dependencies.MobaRuntimeMock.Verify(client => client.StartAsync(It.IsAny<CancellationToken>()), Times.Once);
         dependencies.MobaRuntimeMock.Verify(client => client.SetSystemStatePollingInterval(5), Times.Once);
-        dependencies.RestDiscoveryMock.Verify(service => service.DiscoverServerAsync(), Times.Once);
-        dependencies.Z21DiscoveryMock.Verify(service => service.DiscoverZ21Async(It.IsAny<CancellationToken>()), Times.Once);
+        dependencies.RestDiscoveryMock.Verify(service => service.DiscoverServerAsync(It.IsAny<string?>()), Times.Once);
+        dependencies.Z21DiscoveryMock.Verify(service => service.DiscoverZ21Async(It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
         dependencies.SettingsServiceMock.Verify(service => service.SaveSettingsAsync(settings), Times.AtLeastOnce);
     }
 
@@ -174,14 +174,15 @@ internal sealed class MauiViewModelInitializationTests
         settingsServiceMock.Setup(service => service.ResetToDefaultsAsync()).Returns(Task.CompletedTask);
 
         restDiscoveryMock
-            .Setup(service => service.DiscoverServerAsync())
+            .Setup(service => service.DiscoverServerAsync(It.IsAny<string?>()))
             .ReturnsAsync(CreateNoDiscoveredEndpoint());
-        z21DiscoveryMock.Setup(service => service.DiscoverZ21Async(It.IsAny<CancellationToken>())).ReturnsAsync((string?)null);
+        z21DiscoveryMock.Setup(service => service.DiscoverZ21Async(It.IsAny<string?>(), It.IsAny<CancellationToken>())).ReturnsAsync((string?)null);
         photoUploadMock.Setup(service => service.HealthCheckAsync(It.IsAny<string>(), It.IsAny<int>())).ReturnsAsync(false);
         photoUploadMock
             .Setup(service => service.UploadPhotoAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid>()))
             .ReturnsAsync((false, null, "not configured"));
         photoCaptureMock.Setup(service => service.CapturePhotoAsync()).ReturnsAsync((string?)null);
+        restApiClientRegistrationMock.SetupGet(service => service.ClientId).Returns("test-client");
         restApiClientRegistrationMock.Setup(service => service.RegisterAsync(It.IsAny<string>(), It.IsAny<int>())).ReturnsAsync(false);
 
         return new TestDependencies(

@@ -158,6 +158,8 @@ public partial class MainWindowViewModel
 
             SaveSolutionCommand.NotifyCanExecuteChanged();
             ConnectCommand.NotifyCanExecuteChanged();
+
+            SolutionLoaded?.Invoke(this, EventArgs.Empty);
         }
         finally
         {

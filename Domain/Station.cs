@@ -89,7 +89,7 @@ public class Station
     /// <summary>
     /// Gets or sets the track / platform number as string (e.g. 12A).
     /// </summary>
-    public string PlatformTag  { get; set; }
+    public string PlatformTag { get; set; }
 
     /// <summary>
     /// Upcoming feature: Arrival time.

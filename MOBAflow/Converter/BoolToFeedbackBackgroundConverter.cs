@@ -41,4 +41,3 @@ public partial class BoolToFeedbackBackgroundConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
-

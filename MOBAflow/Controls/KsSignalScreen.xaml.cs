@@ -24,6 +24,7 @@ internal sealed partial class KsSignalScreen
 
     private DispatcherTimer? _blinkTimer;
     private bool _blinkState;
+    private bool _isApplyingVisualState;
 
     public static readonly DependencyProperty AspectProperty = DependencyProperty.Register(
         nameof(Aspect),
@@ -92,10 +93,31 @@ internal sealed partial class KsSignalScreen
 
     private static void OnSignalVisualPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is KsSignalScreen screen)
+        if (d is KsSignalScreen screen && !screen._isApplyingVisualState)
         {
             screen.UpdateAspect();
         }
+    }
+
+    /// <summary>
+    /// Applies all visual inputs atomically and always re-renders, even when individual values are unchanged.
+    /// </summary>
+    internal void ApplyVisualState(string signalArticleNumber, string topSpeedValue, string bottomSpeedValue, string aspect)
+    {
+        _isApplyingVisualState = true;
+        try
+        {
+            SignalArticleNumber = signalArticleNumber;
+            TopSpeedValue = topSpeedValue;
+            BottomSpeedValue = bottomSpeedValue;
+            Aspect = aspect;
+        }
+        finally
+        {
+            _isApplyingVisualState = false;
+        }
+
+        UpdateAspect();
     }
 
     private void UpdateAspect()

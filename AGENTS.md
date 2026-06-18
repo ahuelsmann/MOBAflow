@@ -16,14 +16,20 @@
    - Key files: `Backend/Z21.cs`, `SharedUI/Service/UiThreadEventBusDecorator.cs`, `SharedUI/ViewModel/MainWindowViewModel.cs`
    - See: `.github/copilot-instructions.md` § EventBus Threading Boundary
 
-2. **Absolute Rules (14 rules)**
+2. **Absolute Rules (16 rules)**
    - No `.Result` / `.Wait()` → Always use `await`
    - No hardcoded colors → `ThemeResource` only
    - No `InvokeOnUi` in EventBus handlers → Decorator already marshals
    - Backend/Common platform-independent → Zero WinUI/MAUI references
    - See: `.github/copilot-instructions.md` § Absolute Rules
 
-3. **6-Step Workflow**
+3. **English UI Language**
+   - All user-visible strings in MOBAflow and MOBAsmart must be **English**
+   - Applies to XAML, ViewModels (`SharedUI/`), domain defaults, and shipped master data
+   - TTS/announcement voice and language stay user-configurable in settings
+   - See: `.github/copilot-instructions.md` § Absolute Rules (#16)
+
+4. **6-Step Workflow**
    - **1. ANALYSE** → **2. RESEARCH** → **3. PLAN** (use `plan()` tool) → **4. IMPLEMENT** → **5. VALIDATE** → **6. DOCUMENT**
    - Tests for every new/changed feature (run `dotnet test` before commit)
    - See: `.github/copilot-instructions.md` § 6-Step Workflow

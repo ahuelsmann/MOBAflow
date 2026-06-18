@@ -16,18 +16,25 @@ public sealed class RestApiClientRegistrationService : IRestApiClientRegistratio
 
     private readonly HttpClient _httpClient;
 
-    public RestApiClientRegistrationService(HttpClient httpClient)
+    public RestApiClientRegistrationService(IHttpClientFactory httpClientFactory)
     {
-        _httpClient = httpClient;
+        ArgumentNullException.ThrowIfNull(httpClientFactory);
+        _httpClient = httpClientFactory.CreateClient(MobiHttpClientNames.LanHealth);
+        ClientId = GetOrCreateClientId();
     }
+
+    /// <inheritdoc />
+    public string ClientId { get; }
 
     /// <inheritdoc />
     public async Task<bool> RegisterAsync(string serverIp, int serverPort)
     {
-        var clientId = GetOrCreateClientId();
+        var clientId = ClientId;
         var deviceName = DeviceInfo.Current.Name;
         if (string.IsNullOrWhiteSpace(deviceName))
+        {
             deviceName = DeviceNameDefault;
+        }
 
         var url = $"http://{serverIp}:{serverPort}/api/clients/register";
         var body = JsonSerializer.Serialize(new { clientId, deviceName });
@@ -35,12 +42,8 @@ public sealed class RestApiClientRegistrationService : IRestApiClientRegistratio
 
         try
         {
-            var response = await _httpClient.PostAsync(url, content).ConfigureAwait(false);
-            if (response.IsSuccessStatusCode)
-            {
-                return true;
-            }
-            return false;
+            using var response = await _httpClient.PostAsync(url, content).ConfigureAwait(false);
+            return response.IsSuccessStatusCode;
         }
         catch (Exception)
         {
@@ -52,7 +55,10 @@ public sealed class RestApiClientRegistrationService : IRestApiClientRegistratio
     {
         var existing = Preferences.Default.Get(ClientIdKey, string.Empty);
         if (!string.IsNullOrEmpty(existing))
+        {
             return existing;
+        }
+
         var id = Guid.NewGuid().ToString("N");
         Preferences.Default.Set(ClientIdKey, id);
         return id;

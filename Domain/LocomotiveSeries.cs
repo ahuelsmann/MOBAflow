@@ -18,7 +18,7 @@ public class LocomotiveSeries
     public int Vmax { get; set; }
 
     /// <summary>
-    /// Type classification (e.g., "Elektrolok", "Dampflok", "Triebzug").
+    /// Type classification (e.g., "Electric loco", "Steam loco", "Railcar").
     /// </summary>
     public string Type { get; set; } = string.Empty;
 

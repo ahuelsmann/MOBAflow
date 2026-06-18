@@ -32,21 +32,23 @@ public partial class BoolToBacklightBrushConverter : IValueConverter
     {
         if (string.IsNullOrEmpty(hexColor))
         {
-            // Fallback: use a neutral gray
             hexColor = "#808080";
         }
 
+        var cacheKey = $"{(isOn ? '1' : '0')}:{hexColor}";
+        return BrushCache.GetOrAdd(cacheKey, () => CreateBrushUncached(isOn, hexColor));
+    }
+
+    private static SolidColorBrush CreateBrushUncached(bool isOn, string hexColor)
+    {
         var color = ParseHexColor(hexColor);
 
         if (isOn)
         {
-            // ON: Lighten the color toward white for a "glow" effect
-            // Mix with white at 50% to create a brighter, more vibrant look
             var lightenedColor = LightenColor(color, 0.4);
             return new SolidColorBrush(Color.FromArgb(220, lightenedColor.R, lightenedColor.G, lightenedColor.B));
         }
 
-        // OFF: very subtle tint (almost transparent)
         return new SolidColorBrush(Color.FromArgb(40, color.R, color.G, color.B));
     }
 

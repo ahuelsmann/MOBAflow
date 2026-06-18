@@ -4,16 +4,46 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:controls="clr-namespace:Moba.MAUI.Controls"
+    xmlns:vm="clr-namespace:Moba.SharedUI.ViewModel;assembly=SharedUI"
     Shell.NavBarIsVisible="False"
     Title="MOBAsmart"
     BackgroundColor="{DynamicResource SurfaceBackground}">
 
     <Grid RowDefinitions="*,Auto">
-        <ContentView x:Name="PageHost" Grid.Row="0" />
+        <Grid Grid.Row="0">
+            <ContentView x:Name="PageHost" />
+
+            <Border
+                x:Name="SessionLockOverlay"
+                BackgroundColor="#CC121212"
+                IsVisible="False"
+                StrokeThickness="0"
+                ZIndex="10">
+                <VerticalStackLayout
+                    Padding="24"
+                    HorizontalOptions="Center"
+                    Spacing="12"
+                    VerticalOptions="Center">
+                    <Label
+                        FontAttributes="Bold"
+                        FontSize="20"
+                        HorizontalTextAlignment="Center"
+                        Text="MOBAflow session unavailable"
+                        TextColor="{DynamicResource TextPrimary}" />
+                    <Label
+                        FontSize="14"
+                        HorizontalTextAlignment="Center"
+                        Text="{Binding SessionLockedHint}"
+                        TextColor="{DynamicResource TextSecondary}" />
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
 
         <controls:AppBottomTabBar
             x:Name="BottomTabBar"
             Grid.Row="1"
+            IsControlAvailable="{Binding IsControlAvailable}"
+            IsSignalBoxAvailable="{Binding IsSignalBoxAvailable}"
             TabSelected="OnTabSelected" />
     </Grid>
 </ContentPage>

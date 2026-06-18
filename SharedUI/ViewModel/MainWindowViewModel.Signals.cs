@@ -14,6 +14,11 @@ using Microsoft.Extensions.Logging;
 public partial class MainWindowViewModel
 {
     /// <summary>
+    /// Raised when runtime signal-box state was projected onto the active editor project.
+    /// </summary>
+    public event EventHandler? SignalBoxRuntimeStateChanged;
+
+    /// <summary>
     /// Sets a multiplex signal aspect via Z21 turnout commands.
     /// Automatically calculates the correct DCC address and polarity based on the multiplexer mapping.
     /// </summary>

@@ -6,7 +6,6 @@ using Common.Extension;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 
 using SharedUI.Interface;
 

@@ -39,6 +39,7 @@
                 <ResourceDictionary Source="Resources/Styles/DarkTheme.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
                 <ResourceDictionary Source="Resources/Styles/FluentStyles.xaml" />
+                <ResourceDictionary Source="Resources/Styles/MobaSmartControlStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

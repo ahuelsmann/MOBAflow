@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="Moba.MAUI.Controls.SignalAspectPicker"
+    x:Name="Root"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:Moba.MAUI.Controls"
+    xmlns:display="clr-namespace:Moba.Common.Display;assembly=Common">
+    <Grid
+        ColumnDefinitions="*,*,*"
+        ColumnSpacing="6"
+        RowDefinitions="Auto,Auto,Auto"
+        RowSpacing="6">
+        <Border
+            x:Name="AspectHp0Button"
+            Grid.Row="0"
+            Grid.Column="0"
+            Padding="8"
+            HeightRequest="112"
+            Stroke="{DynamicResource BorderColor}"
+            StrokeShape="RoundRectangle 10"
+            StrokeThickness="1">
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnAspectTapped" CommandParameter="{x:Static display:KsSignalAspectNames.Hp0}" />
+            </Border.GestureRecognizers>
+            <VerticalStackLayout HorizontalOptions="Center" Spacing="6" VerticalOptions="Center">
+                <controls:KsSignalScreen
+                    Aspect="{x:Static display:KsSignalAspectNames.Hp0}"
+                    BottomSpeedValue="{Binding Source={x:Reference Root}, Path=BottomSpeedValue}"
+                    InputTransparent="True"
+                    IsPreviewMode="True"
+                    SignalArticleNumber="{Binding Source={x:Reference Root}, Path=PreviewSignalArticleNumber}"
+                    TopSpeedValue="{Binding Source={x:Reference Root}, Path=TopSpeedValue}" />
+                <Label
+                    x:Name="AspectHp0Label"
+                    FontSize="12"
+                    HorizontalTextAlignment="Center"
+                    Text="Hp0"
+                    TextColor="{DynamicResource TextPrimary}" />
+            </VerticalStackLayout>
+        </Border>
+
+        <Border
+            x:Name="AspectKs1Button"
+            Grid.Row="0"
+            Grid.Column="1"
+            Padding="8"
+            HeightRequest="112"
+            Stroke="{DynamicResource BorderColor}"
+            StrokeShape="RoundRectangle 10"
+            StrokeThickness="1">
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnAspectTapped" CommandParameter="{x:Static display:KsSignalAspectNames.Ks1}" />
+            </Border.GestureRecognizers>
+            <VerticalStackLayout HorizontalOptions="Center" Spacing="6" VerticalOptions="Center">
+                <controls:KsSignalScreen
+                    Aspect="{x:Static display:KsSignalAspectNames.Ks1}"
+                    BottomSpeedValue="{Binding Source={x:Reference Root}, Path=BottomSpeedValue}"
+                    InputTransparent="True"
+                    IsPreviewMode="True"
+                    SignalArticleNumber="{Binding Source={x:Reference Root}, Path=PreviewSignalArticleNumber}"
+                    TopSpeedValue="{Binding Source={x:Reference Root}, Path=TopSpeedValue}" />
+                <Label
+                    x:Name="AspectKs1Label"
+                    FontSize="12"
+                    HorizontalTextAlignment="Center"
+                    Text="Ks1"
+                    TextColor="{DynamicResource TextPrimary}" />
+            </VerticalStackLayout>
+        </Border>
+
+        <Border
+            x:Name="AspectKs2Button"
+            Grid.Row="0"
+            Grid.Column="2"
+            Padding="8"
+            HeightRequest="112"
+            Stroke="{DynamicResource BorderColor}"
+            StrokeShape="RoundRectangle 10"
+            StrokeThickness="1">
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnAspectTapped" CommandParameter="{x:Static display:KsSignalAspectNames.Ks2}" />
+            </Border.GestureRecognizers>
+            <VerticalStackLayout HorizontalOptions="Center" Spacing="6" VerticalOptions="Center">
+                <controls:KsSignalScreen
+                    Aspect="{x:Static display:KsSignalAspectNames.Ks2}"
+                    BottomSpeedValue="{Binding Source={x:Reference Root}, Path=BottomSpeedValue}"
+                    InputTransparent="True"
+                    IsPreviewMode="True"
+                    SignalArticleNumber="{Binding Source={x:Reference Root}, Path=PreviewSignalArticleNumber}"
+                    TopSpeedValue="{Binding Source={x:Reference Root}, Path=TopSpeedValue}" />
+                <Label
+                    x:Name="AspectKs2Label"
+                    FontSize="12"
+                    HorizontalTextAlignment="Center"
+                    Text="Ks2"
+                    TextColor="{DynamicResource TextPrimary}" />
+            </VerticalStackLayout>
+        </Border>
+
+        <Border
+            x:Name="AspectKs1BlinkButton"
+            Grid.Row="1"
+            Grid.Column="0"
+            Padding="8"
+            HeightRequest="112"
+            Stroke="{DynamicResource BorderColor}"
+            StrokeShape="RoundRectangle 10"
+            StrokeThickness="1">
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnAspectTapped" CommandParameter="{x:Static display:KsSignalAspectNames.Ks1Blink}" />
+            </Border.GestureRecognizers>
+            <VerticalStackLayout HorizontalOptions="Center" Spacing="6" VerticalOptions="Center">
+                <controls:KsSignalScreen
+                    Aspect="{x:Static display:KsSignalAspectNames.Ks1Blink}"
+                    BottomSpeedValue="{Binding Source={x:Reference Root}, Path=BottomSpeedValue}"
+                    InputTransparent="True"
+                    IsPreviewMode="True"
+                    SignalArticleNumber="{Binding Source={x:Reference Root}, Path=PreviewSignalArticleNumber}"
+                    TopSpeedValue="{Binding Source={x:Reference Root}, Path=TopSpeedValue}" />
+                <Label
+                    x:Name="AspectKs1BlinkLabel"
+                    FontSize="12"
+                    HorizontalTextAlignment="Center"
+                    Text="Ks1 Bl"
+                    TextColor="{DynamicResource TextPrimary}" />
+            </VerticalStackLayout>
+        </Border>
+
+        <Border
+            x:Name="AspectKennlichtButton"
+            Grid.Row="1"
+            Grid.Column="1"
+            Padding="8"
+            HeightRequest="112"
+            Stroke="{DynamicResource BorderColor}"
+            StrokeShape="RoundRectangle 10"
+            StrokeThickness="1">
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnAspectTapped" CommandParameter="{x:Static display:KsSignalAspectNames.Kennlicht}" />
+            </Border.GestureRecognizers>
+            <VerticalStackLayout HorizontalOptions="Center" Spacing="6" VerticalOptions="Center">
+                <controls:KsSignalScreen
+                    Aspect="{x:Static display:KsSignalAspectNames.Kennlicht}"
+                    BottomSpeedValue="{Binding Source={x:Reference Root}, Path=BottomSpeedValue}"
+                    InputTransparent="True"
+                    IsPreviewMode="True"
+                    SignalArticleNumber="{Binding Source={x:Reference Root}, Path=PreviewSignalArticleNumber}"
+                    TopSpeedValue="{Binding Source={x:Reference Root}, Path=TopSpeedValue}" />
+                <Label
+                    x:Name="AspectKennlichtLabel"
+                    FontSize="12"
+                    HorizontalTextAlignment="Center"
+                    Text="Marker"
+                    TextColor="{DynamicResource TextPrimary}" />
+            </VerticalStackLayout>
+        </Border>
+
+        <Border
+            x:Name="AspectDunkelButton"
+            Grid.Row="1"
+            Grid.Column="2"
+            Padding="8"
+            HeightRequest="112"
+            Stroke="{DynamicResource BorderColor}"
+            StrokeShape="RoundRectangle 10"
+            StrokeThickness="1">
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnAspectTapped" CommandParameter="{x:Static display:KsSignalAspectNames.Dunkel}" />
+            </Border.GestureRecognizers>
+            <VerticalStackLayout HorizontalOptions="Center" Spacing="6" VerticalOptions="Center">
+                <controls:KsSignalScreen
+                    Aspect="{x:Static display:KsSignalAspectNames.Dunkel}"
+                    BottomSpeedValue="{Binding Source={x:Reference Root}, Path=BottomSpeedValue}"
+                    InputTransparent="True"
+                    IsPreviewMode="True"
+                    SignalArticleNumber="{Binding Source={x:Reference Root}, Path=PreviewSignalArticleNumber}"
+                    TopSpeedValue="{Binding Source={x:Reference Root}, Path=TopSpeedValue}" />
+                <Label
+                    x:Name="AspectDunkelLabel"
+                    FontSize="12"
+                    HorizontalTextAlignment="Center"
+                    Text="Dark"
+                    TextColor="{DynamicResource TextPrimary}" />
+            </VerticalStackLayout>
+        </Border>
+
+        <Border
+            x:Name="AspectRa12Button"
+            Grid.Row="2"
+            Grid.Column="0"
+            Padding="8"
+            HeightRequest="112"
+            Stroke="{DynamicResource BorderColor}"
+            StrokeShape="RoundRectangle 10"
+            StrokeThickness="1">
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnAspectTapped" CommandParameter="{x:Static display:KsSignalAspectNames.Ra12}" />
+            </Border.GestureRecognizers>
+            <VerticalStackLayout HorizontalOptions="Center" Spacing="6" VerticalOptions="Center">
+                <controls:KsSignalScreen
+                    Aspect="{x:Static display:KsSignalAspectNames.Ra12}"
+                    BottomSpeedValue="{Binding Source={x:Reference Root}, Path=BottomSpeedValue}"
+                    InputTransparent="True"
+                    IsPreviewMode="True"
+                    SignalArticleNumber="{Binding Source={x:Reference Root}, Path=PreviewSignalArticleNumber}"
+                    TopSpeedValue="{Binding Source={x:Reference Root}, Path=TopSpeedValue}" />
+                <Label
+                    x:Name="AspectRa12Label"
+                    FontSize="12"
+                    HorizontalTextAlignment="Center"
+                    Text="Ra12"
+                    TextColor="{DynamicResource TextPrimary}" />
+            </VerticalStackLayout>
+        </Border>
+
+        <Border
+            x:Name="AspectZs1Button"
+            Grid.Row="2"
+            Grid.Column="1"
+            Padding="8"
+            HeightRequest="112"
+            Stroke="{DynamicResource BorderColor}"
+            StrokeShape="RoundRectangle 10"
+            StrokeThickness="1">
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnAspectTapped" CommandParameter="{x:Static display:KsSignalAspectNames.Zs1}" />
+            </Border.GestureRecognizers>
+            <VerticalStackLayout HorizontalOptions="Center" Spacing="6" VerticalOptions="Center">
+                <controls:KsSignalScreen
+                    Aspect="{x:Static display:KsSignalAspectNames.Zs1}"
+                    BottomSpeedValue="{Binding Source={x:Reference Root}, Path=BottomSpeedValue}"
+                    InputTransparent="True"
+                    IsPreviewMode="True"
+                    SignalArticleNumber="{Binding Source={x:Reference Root}, Path=PreviewSignalArticleNumber}"
+                    TopSpeedValue="{Binding Source={x:Reference Root}, Path=TopSpeedValue}" />
+                <Label
+                    x:Name="AspectZs1Label"
+                    FontSize="12"
+                    HorizontalTextAlignment="Center"
+                    Text="Zs1"
+                    TextColor="{DynamicResource TextPrimary}" />
+            </VerticalStackLayout>
+        </Border>
+
+        <Border
+            x:Name="AspectZs7Button"
+            Grid.Row="2"
+            Grid.Column="2"
+            Padding="8"
+            HeightRequest="112"
+            Stroke="{DynamicResource BorderColor}"
+            StrokeShape="RoundRectangle 10"
+            StrokeThickness="1">
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnAspectTapped" CommandParameter="{x:Static display:KsSignalAspectNames.Zs7}" />
+            </Border.GestureRecognizers>
+            <VerticalStackLayout HorizontalOptions="Center" Spacing="6" VerticalOptions="Center">
+                <controls:KsSignalScreen
+                    Aspect="{x:Static display:KsSignalAspectNames.Zs7}"
+                    BottomSpeedValue="{Binding Source={x:Reference Root}, Path=BottomSpeedValue}"
+                    InputTransparent="True"
+                    IsPreviewMode="True"
+                    SignalArticleNumber="{Binding Source={x:Reference Root}, Path=PreviewSignalArticleNumber}"
+                    TopSpeedValue="{Binding Source={x:Reference Root}, Path=TopSpeedValue}" />
+                <Label
+                    x:Name="AspectZs7Label"
+                    FontSize="12"
+                    HorizontalTextAlignment="Center"
+                    Text="Zs7"
+                    TextColor="{DynamicResource TextPrimary}" />
+            </VerticalStackLayout>
+        </Border>
+    </Grid>
+</ContentView>

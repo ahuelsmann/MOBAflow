@@ -69,18 +69,18 @@ The following table reflects the direct package and framework references current
 
 | Package or family | Version(s) | Used in | Purpose |
 | --- | --- | --- | --- |
-| `CommunityToolkit.Labs.WinUI.Controls.DataTable`, `CommunityToolkit.Labs.WinUI.Controls.Ribbon` | `0.1.251217-build.2433` | `MOBAflow` | Experimental WinUI data table and ribbon controls. |
-| `CommunityToolkit.WinUI.*`, `CommunityToolkit.WinUI.UI.Controls.Markdown` | `8.2.251219`, `7.1.2` | `MOBAflow` | WinUI helpers, behaviors, animations, controls, and Markdown rendering. |
-| `CommunityToolkit.Mvvm` | `8.4.2` | `Domain`, `SharedUI` | MVVM primitives such as observable properties and relay commands. |
-| `CommunityToolkit.Maui`, `CommunityToolkit.Maui.MediaElement` | `14.2.0`, `10.0.0` | `MAUI.Controls`, `MOBAsmart` | MAUI helpers, converters, behaviors, and media playback support. |
+| `CommunityToolkit.WinUI.Controls.ColorPicker`, `CommunityToolkit.WinUI.Controls.Sizers`, `CommunityToolkit.WinUI.UI.Controls.Markdown` | `8.2.251219`, `7.1.2` | `MOBAflow` | WinUI color picker, grid splitters, and Markdown rendering. |
+| `CommunityToolkit.Mvvm` | `8.4.2` | `SharedUI` | MVVM primitives such as observable properties and relay commands. |
+| `CommunityToolkit.Maui` | `14.2.0` | `MAUI.Controls`, `MOBAsmart` | MAUI helpers, converters, and behaviors. |
 | `Microsoft.WindowsAppSDK`, `Microsoft.Graphics.Win2D`, `Microsoft.Xaml.Behaviors.WinUI.Managed` | `2.2.0`, `1.4.0`, `3.0.1` | `MOBAflow` | Windows desktop shell, GPU-accelerated 2D rendering, and XAML behaviors. |
 | `Microsoft.Azure.AppConfiguration.AspNetCore` | `8.5.0` | `MOBAflow` | Centralized runtime configuration from Azure App Configuration. |
 | `Microsoft.AspNetCore.App`, `Microsoft.AspNetCore.SignalR.Client` | `Framework reference`, `10.0.9` | `MOBAflow`, `MOBApi` | ASP.NET Core shared framework and SignalR client connectivity. |
-| `Microsoft.Extensions.*` | `10.0.9` | `Common`, `Backend`, `Sound`, `MOBAsmart`, `Test` | Logging, dependency injection, configuration, options, hosting, and debug output. |
+| `Microsoft.Extensions.*` | `10.0.9` | `Common`, `Backend`, `Sound`, `SharedUI`, `Test` | Logging, dependency injection, and options. |
 | `Microsoft.Maui.Controls` | `10.0.71` | `MOBAsmart` | Core .NET MAUI UI framework for the Android client. |
-| `System.Speech`, `System.Windows.Extensions` | `10.0.9`, `10.0.9` | `Sound` | Windows text-to-speech and Windows-specific audio APIs. |
-| `Serilog`, `Serilog.Extensions.Logging`, `Serilog.Sinks.Debug`, `Serilog.Sinks.File` | `4.3.1`, `10.0.0`, `3.0.0`, `7.0.0` | `Common`, `MOBAflow` | Structured logging, file logging, and debug integration. |
-| `UraniumUI.Material`, `UraniumUI.Icons.MaterialIcons`, `Xamarin.AndroidX.Startup.StartupRuntime` | `3.0.0`, `3.0.0`, `1.2.0.7` | `MOBAsmart` | Material UI components, icon resources, and AndroidX startup integration. |
+| `Xamarin.AndroidX.Startup.StartupRuntime` | `1.2.0.7` | `MOBAsmart` | AndroidX startup integration for MAUI initialization providers. |
+| `System.Speech`, `System.Windows.Extensions` | `10.0.9` | `Sound` | Windows text-to-speech and Windows-specific audio APIs. |
+| `Serilog`, `Serilog.Extensions.Logging`, `Serilog.Sinks.Async`, `Serilog.Sinks.Debug`, `Serilog.Sinks.File`, `Serilog.Enrichers.*` | `4.3.1`, `10.0.0`, `2.1.0`, `3.0.0`, `7.0.0`, `3.0.1`–`4.0.0` | `Common`, `MOBAflow` | Structured logging, async/file/debug sinks, and log enrichment. |
+| `Newtonsoft.Json` | `13.0.4` | `Test` | JSON serialization in selected unit tests. |
 | `SkiaSharp`, `System.Drawing.Common` | `3.119.4`, `10.0.9` | `MOBAdisplay` | Display frame rendering and image conversion utilities. |
 | `coverlet.collector`, `Microsoft.NET.Test.Sdk`, `NUnit`, `NUnit.Analyzers`, `NUnit3TestAdapter`, `Moq` | `10.0.1`, `18.6.0`, `4.6.1`, `4.14.0`, `6.2.0`, `4.20.72` | `Test` | Test execution, coverage collection, analyzers, and mocking. |
 | `MinVer` | `7.0.0` | Build-wide via `Directory.Build.props` | Semantic version generation from git tags during builds. |
@@ -95,7 +95,7 @@ The currently referenced direct dependencies primarily fall under the following 
 | License family | Examples |
 | --- | --- |
 | MIT | Most Microsoft/.NET packages, CommunityToolkit packages, NUnit, coverlet, MinVer, SourceLink |
-| Apache-2.0 | Serilog family, UraniumUI family, AndroidX startup runtime, SkiaSharp |
+| Apache-2.0 | Serilog family, AndroidX startup runtime, SkiaSharp |
 | BSD-3-Clause | Moq |
 
 The authoritative license for a package is the license metadata published by its upstream project or NuGet package page.
@@ -127,6 +127,6 @@ We are grateful to the open-source maintainers and standards authors whose work 
 
 ---
 
-**Last Updated:** 2026-05-02
+**Last Updated:** 2026-06-17
 **Scope:** Current direct dependencies and external interoperability surface  
 **License:** MIT License (see [LICENSE](../LICENSE))

@@ -3,15 +3,13 @@ namespace Moba.WinUI.View;
 
 using Common.Configuration;
 using Common.Extension;
-
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Navigation;
-
-using SharedUI.Interface;
 using Moba.WinUI.Service;
+using SharedUI.Interface;
 
 internal sealed partial class HelpPage : INavigationParameterReceiver
 {

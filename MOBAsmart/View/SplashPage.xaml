@@ -39,12 +39,19 @@
             Grid.Row="3"
             Margin="0,0,0,48"
             HorizontalOptions="Center"
+            Spacing="12"
             VerticalOptions="End">
             <ActivityIndicator
                 HeightRequest="24"
                 IsRunning="True"
                 WidthRequest="24"
                 Color="White" />
+            <Label
+                x:Name="StatusLabel"
+                FontSize="13"
+                HorizontalOptions="Center"
+                Text="Starting..."
+                TextColor="#CCCCCC" />
         </VerticalStackLayout>
     </Grid>
 </ContentPage>

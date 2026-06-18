@@ -7,6 +7,12 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 
+#if ANDROID
+using Android.App;
+using Android.Content;
+using Android.Net;
+#endif
+
 /// <summary>
 /// Resolves local IPv4 addresses used to derive /24 subnet scan lists (Z21 and MOBApi discovery).
 /// </summary>
@@ -23,10 +29,10 @@ internal static class LanIpv4AddressHelper
     /// </summary>
     public static List<IPAddress> GetCandidateLocalIpv4Addresses()
     {
+        var privateAddresses = new List<IPAddress>();
+
         try
         {
-            var privateAddresses = new List<IPAddress>();
-
             foreach (var ni in NetworkInterface.GetAllNetworkInterfaces())
             {
                 if (!IsDiscoveryCapableInterface(ni))
@@ -37,34 +43,108 @@ internal static class LanIpv4AddressHelper
                 var props = ni.GetIPProperties();
                 foreach (var ua in props.UnicastAddresses)
                 {
-                    var address = ua.Address;
-                    if (address.AddressFamily != AddressFamily.InterNetwork || IPAddress.IsLoopback(address))
-                    {
-                        continue;
-                    }
-
-                    if (SubnetCandidateBuilder.IsPrivateIPv4(address))
-                    {
-                        privateAddresses.Add(address);
-                    }
+                    TryAddPrivateAddress(privateAddresses, ua.Address);
                 }
             }
-
-            return privateAddresses;
         }
         catch
         {
             // Ignore: e.g. permission or platform
         }
 
-        return [];
+#if ANDROID
+        TryAddAndroidActiveNetworkAddresses(privateAddresses);
+#endif
+
+        return privateAddresses;
+    }
+
+    private static void TryAddPrivateAddress(List<IPAddress> addresses, IPAddress address)
+    {
+        if (address.AddressFamily != AddressFamily.InterNetwork || IPAddress.IsLoopback(address))
+        {
+            return;
+        }
+
+        if (!SubnetCandidateBuilder.IsPrivateIPv4(address))
+        {
+            return;
+        }
+
+        if (addresses.Any(existing => existing.Equals(address)))
+        {
+            return;
+        }
+
+        addresses.Add(address);
     }
 
     private static bool IsDiscoveryCapableInterface(NetworkInterface ni)
     {
-        // Restrict discovery to active Wi-Fi and wired LAN interfaces.
-        // This avoids scanning VPN, virtual adapters, and tunnel interfaces.
-        return ni.OperationalStatus == OperationalStatus.Up
-               && AllowedInterfaceTypes.Contains(ni.NetworkInterfaceType);
+        if (ni.OperationalStatus != OperationalStatus.Up)
+        {
+            return false;
+        }
+
+#if ANDROID
+        if (ni.NetworkInterfaceType == NetworkInterfaceType.Loopback)
+        {
+            return false;
+        }
+
+        var name = ni.Name ?? string.Empty;
+        if (name.Contains("tun", StringComparison.OrdinalIgnoreCase)
+            || name.Contains("ppp", StringComparison.OrdinalIgnoreCase)
+            || name.Contains("vpn", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return true;
+#else
+        return AllowedInterfaceTypes.Contains(ni.NetworkInterfaceType);
+#endif
     }
+
+#if ANDROID
+    private static void TryAddAndroidActiveNetworkAddresses(List<IPAddress> privateAddresses)
+    {
+        try
+        {
+            var connectivity = (ConnectivityManager?)Application.Context.GetSystemService(Context.ConnectivityService);
+            var activeNetwork = connectivity?.ActiveNetwork;
+            if (activeNetwork == null || connectivity == null)
+            {
+                return;
+            }
+
+            var linkProperties = connectivity.GetLinkProperties(activeNetwork);
+            if (linkProperties?.LinkAddresses == null)
+            {
+                return;
+            }
+
+            foreach (var linkAddress in linkProperties.LinkAddresses)
+            {
+                var javaAddress = linkAddress.Address;
+                if (javaAddress == null)
+                {
+                    continue;
+                }
+
+                var host = javaAddress.HostAddress;
+                if (string.IsNullOrWhiteSpace(host) || !IPAddress.TryParse(host, out var ip))
+                {
+                    continue;
+                }
+
+                TryAddPrivateAddress(privateAddresses, ip);
+            }
+        }
+        catch
+        {
+            // Ignore: ConnectivityManager may be unavailable on some devices.
+        }
+    }
+#endif
 }

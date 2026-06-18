@@ -2,19 +2,14 @@
 namespace Moba.WinUI.View;
 
 using Common.Configuration;
-
+using Common.Extension;
 using Domain;
-
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-
-using Common.Extension;
-using SharedUI.ViewModel;
-
 using SharedUI.Interface;
-
+using SharedUI.ViewModel;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.System;

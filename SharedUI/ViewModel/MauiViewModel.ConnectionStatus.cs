@@ -1,0 +1,55 @@
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+namespace Moba.SharedUI.ViewModel;
+
+/// <summary>
+/// Precomputed connection indicator display values for MAUI bindings (avoids repeated BoolToObjectConverter evaluation).
+/// </summary>
+public sealed partial class MauiViewModel
+{
+    public string Z21StatusText => IsConnected ? "ON" : "OFF";
+
+    public string Z21StatusSemanticDescription => IsConnected ? "Z21 connected" : "Z21 disconnected";
+
+    public string Z21IndicatorResourceKey => IsConnected ? "RailwayAccent" : "RailwayDanger";
+
+    public string RestApiStatusText => IsRestApiReachable ? "ON" : "OFF";
+
+    public string RestApiStatusSemanticDescription =>
+        IsRestApiReachable ? "MOBAflow REST API connected" : "MOBAflow REST API disconnected";
+
+    public string RestApiIndicatorResourceKey => IsRestApiReachable ? "RailwayAccent" : "RailwayDanger";
+
+    public string TrackPowerStatusText => IsTrackPowerOn ? "ON" : "OFF";
+
+    public string TrackPowerStatusResourceKey => IsTrackPowerOn ? "RailwayWarning" : "RailwayDanger";
+
+    partial void OnIsConnectedChanged(bool value)
+    {
+        NotifyConnectionIndicatorProperties();
+        if (value && !IsRestApiReachable && !string.IsNullOrWhiteSpace(Z21IpAddress))
+        {
+            RunInBackground(DiscoverRestApiWithAnchorAsync(Z21IpAddress.Trim()), "REST discovery after Z21 connect");
+        }
+    }
+
+    partial void OnIsRestApiReachableChanged(bool value)
+    {
+        OnPropertyChanged(nameof(RestApiStatusText));
+        OnPropertyChanged(nameof(RestApiStatusSemanticDescription));
+        OnPropertyChanged(nameof(RestApiIndicatorResourceKey));
+        NotifySessionAvailabilityChanged();
+    }
+
+    partial void OnIsTrackPowerOnChanged(bool value)
+    {
+        OnPropertyChanged(nameof(TrackPowerStatusText));
+        OnPropertyChanged(nameof(TrackPowerStatusResourceKey));
+    }
+
+    private void NotifyConnectionIndicatorProperties()
+    {
+        OnPropertyChanged(nameof(Z21StatusText));
+        OnPropertyChanged(nameof(Z21StatusSemanticDescription));
+        OnPropertyChanged(nameof(Z21IndicatorResourceKey));
+    }
+}

@@ -3,11 +3,9 @@
 
 namespace Moba.WinUI.View;
 
-using System;
-
 using Microsoft.UI.Xaml.Controls;
-
 using Moba.SharedUI.ViewModel;
+using System;
 
 /// <summary>
 /// An empty page that can be used on its own or navigated to within a Frame.

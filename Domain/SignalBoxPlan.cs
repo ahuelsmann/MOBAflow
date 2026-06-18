@@ -19,7 +19,7 @@ public class SignalBoxPlan
     /// <summary>
     /// Name of the signal box / station.
     /// </summary>
-    public string Name { get; set; } = "Stellwerk";
+    public string Name { get; set; } = "Signal box";
 
     /// <summary>
     /// Grid configuration (width, height, cell size).

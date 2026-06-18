@@ -40,6 +40,7 @@ using System.ComponentModel;
 public sealed partial class TrainControlViewModel : ObservableObject, IDisposable
 {
     private readonly IMobaRuntime _mobaRuntime;
+    private readonly IRuntimeCommandGateway _runtimeCommandGateway;
     private readonly ISettingsService _settingsService;
     private readonly ILogger<TrainControlViewModel>? _logger;
     private readonly IUiDispatcher? _uiDispatcher;
@@ -49,6 +50,13 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     private bool _isLoadingPreset;
     private bool _isApplyingRuntimeLocomotiveState;
     private bool _disposed;
+    private bool _updatesPaused;
+    private readonly bool _useRemoteRuntimeSnapshots;
+    private CancellationTokenSource? _savePresetsDebounceCts;
+    private CancellationTokenSource? _sendDriveCommandDebounceCts;
+
+    private const int SavePresetsDebounceMs = 400;
+    private const int SendDriveCommandDebounceMs = 75;
 
     // When a locomotive is selected we force all functions off. The decoder's loco-info response
     // may still report the old (on) function bits and race our OFF command, so we ignore incoming
@@ -103,7 +111,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// Either preset (Loco 1/2/3) or a locomotive from this list is controlled.
     /// </summary>
     public ObservableCollection<LocomotiveViewModel> ProjectLocomotives =>
-        _mainWindowViewModel?.SelectedProject?.Locomotives ?? EmptyProjectLocomotives;
+        _projectContext?.SelectedProject?.Locomotives ?? EmptyProjectLocomotives;
 
     /// <summary>
     /// Locomotive selected from project combo box. When set, this one is controlled (SelectedPresetIndex = -1).
@@ -139,19 +147,19 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// First locomotive preset.
     /// </summary>
     [ObservableProperty]
-    private LocomotivePreset _preset1 = new() { Name = "Lok 1", DccAddress = 3 };
+    private LocomotivePreset _preset1 = new() { Name = "Loco 1", DccAddress = 3 };
 
     /// <summary>
     /// Second locomotive preset.
     /// </summary>
     [ObservableProperty]
-    private LocomotivePreset _preset2 = new() { Name = "Lok 2", DccAddress = 4 };
+    private LocomotivePreset _preset2 = new() { Name = "Loco 2", DccAddress = 4 };
 
     /// <summary>
     /// Third locomotive preset.
     /// </summary>
     [ObservableProperty]
-    private LocomotivePreset _preset3 = new() { Name = "Lok 3", DccAddress = 5 };
+    private LocomotivePreset _preset3 = new() { Name = "Loco 3", DccAddress = 5 };
 
     /// <summary>
     /// Gets the currently selected preset.
@@ -564,7 +572,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
     // === Journey & Station Information (for Timetable Display) ===
 
-    private readonly MainWindowViewModel? _mainWindowViewModel;
+    private readonly IProjectContext? _projectContext;
     private JourneyViewModel? _observedJourneyViewModel;
 
     /// <summary>
@@ -824,13 +832,13 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
     private Workflow? ResolveWorkflow(Guid workflowId)
     {
-        var selectedProjectWorkflow = _mainWindowViewModel?.SelectedProject?.Model.Workflows.FirstOrDefault(workflow => workflow.Id == workflowId);
+        var selectedProjectWorkflow = _projectContext?.SelectedProject?.Model.Workflows.FirstOrDefault(workflow => workflow.Id == workflowId);
         if (selectedProjectWorkflow != null)
         {
             return selectedProjectWorkflow;
         }
 
-        return _mainWindowViewModel?.SolutionViewModel?.Projects
+        return _projectContext?.SolutionViewModel?.Projects
             .SelectMany(project => project.Model.Workflows)
             .FirstOrDefault(workflow => workflow.Id == workflowId);
     }
@@ -859,44 +867,83 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// </summary>
     /// <param name="mobaRuntime">In-process MOBA runtime (Z21, locomotive commands, snapshots).</param>
     /// <param name="settingsService">Service used to persist train control presets and options.</param>
-    /// <param name="mainWindowViewModel">Optional main window ViewModel used to access the current project and journey.</param>
+    /// <param name="projectContext">Optional project context used to access the current project and journey.</param>
     /// <param name="logger">Optional logger for diagnostics.</param>
     /// <param name="uiDispatcher">Optional UI dispatcher for updating UI-bound properties.</param>
+    /// <param name="eventBus">Event bus for runtime snapshot updates.</param>
+    /// <param name="runtimeCommandGateway">Optional gateway for locomotive commands (defaults to local runtime).</param>
+    /// <param name="useRemoteRuntimeSnapshots">When true, locomotive state is driven by MOBAflow snapshots via MOBApi.</param>
+    /// <param name="options">Optional host-specific options; overrides <paramref name="useRemoteRuntimeSnapshots"/> when set.</param>
     public TrainControlViewModel(
         IMobaRuntime mobaRuntime,
         ISettingsService settingsService,
-        MainWindowViewModel? mainWindowViewModel = null,
+        IProjectContext? projectContext = null,
         ILogger<TrainControlViewModel>? logger = null,
         IUiDispatcher? uiDispatcher = null,
-        IEventBus eventBus = null!)
+        IEventBus eventBus = null!,
+        IRuntimeCommandGateway? runtimeCommandGateway = null,
+        bool useRemoteRuntimeSnapshots = false,
+        TrainControlViewModelOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(mobaRuntime);
         ArgumentNullException.ThrowIfNull(settingsService);
         ArgumentNullException.ThrowIfNull(eventBus);
         _mobaRuntime = mobaRuntime;
+        _runtimeCommandGateway = runtimeCommandGateway ?? new LocalRuntimeCommandGateway(mobaRuntime);
         _settingsService = settingsService;
-        _mainWindowViewModel = mainWindowViewModel;
+        _projectContext = projectContext;
         _logger = logger;
         _uiDispatcher = uiDispatcher;
         _eventBus = eventBus;
+        _useRemoteRuntimeSnapshots = options?.UseRemoteRuntimeSnapshots ?? useRemoteRuntimeSnapshots;
 
         // Load presets from settings
         LoadPresetsFromSettings();
 
-        _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
-        ApplyRuntimeSnapshot(_mobaRuntime.Current);
-
-        // Subscribe to MainWindowViewModel.SelectedJourney changes
-        if (_mainWindowViewModel != null)
+        if (_useRemoteRuntimeSnapshots)
         {
-            _mainWindowViewModel.PropertyChanged += OnMainWindowViewModelPropertyChanged;
-
-            // Initialize with current journey if available
-            UpdateJourneyFromMainViewModel();
+            _eventBusSubscriptions.Add(_eventBus.Subscribe<RemoteRuntimeSnapshotChangedEvent>(OnRemoteRuntimeSnapshotChanged));
+        }
+        else
+        {
+            _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
         }
 
-        // Initialize function button symbols for the current locomotive.
-        NotifyAllFunctionGlyphsChanged();
+        _eventBusSubscriptions.Add(_eventBus.Subscribe<SolutionSyncedEvent>(_ => OnSolutionSynced()));
+
+        if (!_useRemoteRuntimeSnapshots)
+        {
+            ApplyRuntimeSnapshot(_mobaRuntime.Current);
+        }
+
+        if (_projectContext != null)
+        {
+            _projectContext.PropertyChanged += OnProjectContextPropertyChanged;
+            UpdateJourneyFromProjectContext();
+        }
+    }
+
+    private void OnSolutionSynced()
+    {
+        OnPropertyChanged(nameof(ProjectLocomotives));
+        TryRestoreSelectedLocomotiveFromProject();
+    }
+
+    /// <summary>
+    /// Suppresses runtime snapshot UI updates while the Control tab is not visible.
+    /// </summary>
+    public void PauseUpdates() => _updatesPaused = true;
+
+    /// <summary>
+    /// Re-enables snapshot updates and syncs the current runtime state once.
+    /// </summary>
+    public void ResumeUpdates()
+    {
+        _updatesPaused = false;
+        if (!_useRemoteRuntimeSnapshots)
+        {
+            ApplyRuntimeSnapshot(_mobaRuntime.Current);
+        }
     }
 
     public void Dispose()
@@ -915,9 +962,9 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
         _eventBusSubscriptions.Clear();
 
-        if (_mainWindowViewModel != null)
+        if (_projectContext != null)
         {
-            _mainWindowViewModel.PropertyChanged -= OnMainWindowViewModelPropertyChanged;
+            _projectContext.PropertyChanged -= OnProjectContextPropertyChanged;
         }
 
         DetachObservedJourney();
@@ -925,24 +972,30 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         _doorReleaseBlinkCts?.Cancel();
         _doorReleaseBlinkCts?.Dispose();
         _doorReleaseBlinkCts = null;
+        _savePresetsDebounceCts?.Cancel();
+        _savePresetsDebounceCts?.Dispose();
+        _savePresetsDebounceCts = null;
+        _sendDriveCommandDebounceCts?.Cancel();
+        _sendDriveCommandDebounceCts?.Dispose();
+        _sendDriveCommandDebounceCts = null;
     }
 
     /// <summary>
     /// Called when MainWindowViewModel properties change.
     /// Updates CurrentJourney when SelectedJourney changes.
     /// </summary>
-    private void OnMainWindowViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void OnProjectContextPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (_disposed)
         {
             return;
         }
 
-        if (e.PropertyName == nameof(MainWindowViewModel.SelectedJourney))
+        if (e.PropertyName == nameof(IProjectContext.SelectedJourney))
         {
-            UpdateJourneyFromMainViewModel();
+            UpdateJourneyFromProjectContext();
         }
-        if (e.PropertyName == nameof(MainWindowViewModel.SelectedProject))
+        if (e.PropertyName == nameof(IProjectContext.SelectedProject))
         {
             OnPropertyChanged(nameof(ProjectLocomotives));
             TryRestoreSelectedLocomotiveFromProject();
@@ -950,11 +1003,11 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     }
 
     /// <summary>
-    /// Updates CurrentJourney and CurrentStationIndex from MainWindowViewModel.SelectedJourney.
+    /// Updates CurrentJourney and CurrentStationIndex from the active project context.
     /// </summary>
-    private void UpdateJourneyFromMainViewModel()
+    private void UpdateJourneyFromProjectContext()
     {
-        if (_mainWindowViewModel?.SelectedJourney == null)
+        if (_projectContext?.SelectedJourney == null)
         {
             DetachObservedJourney();
             CurrentJourney = null;
@@ -962,7 +1015,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             return;
         }
 
-        var journeyVm = _mainWindowViewModel.SelectedJourney;
+        var journeyVm = _projectContext.SelectedJourney;
         if (!ReferenceEquals(_observedJourneyViewModel, journeyVm))
         {
             DetachObservedJourney();
@@ -1033,37 +1086,49 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// </summary>
     private void LoadPresetsFromSettings()
     {
-        var settings = _settingsService.GetSettings();
-        var trainControl = settings.TrainControl;
-
-        if (trainControl.Presets.Count >= 3)
+        _isLoadingPreset = true;
+        try
         {
-            Preset1 = trainControl.Presets[0];
-            Preset2 = trainControl.Presets[1];
-            Preset3 = trainControl.Presets[2];
+            var settings = _settingsService.GetSettings();
+            var trainControl = settings.TrainControl;
 
-            // Notify UI about loaded addresses
-            OnPropertyChanged(nameof(Preset1Address));
-            OnPropertyChanged(nameof(Preset2Address));
-            OnPropertyChanged(nameof(Preset3Address));
+            if (trainControl.Presets.Count >= 3)
+            {
+                Preset1 = trainControl.Presets[0];
+                Preset2 = trainControl.Presets[1];
+                Preset3 = trainControl.Presets[2];
+
+                // Notify UI about loaded addresses
+                OnPropertyChanged(nameof(Preset1Address));
+                OnPropertyChanged(nameof(Preset2Address));
+                OnPropertyChanged(nameof(Preset3Address));
+            }
+
+            SelectedPresetIndex = trainControl.SelectedPresetIndex;
+            RampStepSize = trainControl.SpeedRampStepSize;
+            RampIntervalMs = trainControl.SpeedRampIntervalMs;
+            SpeedSteps = trainControl.SpeedSteps;
+
+            // Load locomotive series selection
+            SelectedLocoSeries = trainControl.SelectedLocoSeries;
+            SelectedVmax = trainControl.SelectedVmax;
+
+            // Restore combo box selection "Loco from project" if saved and present in project
+            TryRestoreSelectedLocomotiveFromProject();
+
+            // Apply current preset only when a preset (0–2) is selected; -1 = Combobox-Auswahl
+            if (SelectedPresetIndex >= 0 && SelectedPresetIndex <= 2)
+            {
+                ApplyCurrentPreset();
+            }
+            else
+            {
+                NotifyAllFunctionGlyphsChanged();
+            }
         }
-
-        SelectedPresetIndex = trainControl.SelectedPresetIndex;
-        RampStepSize = trainControl.SpeedRampStepSize;
-        RampIntervalMs = trainControl.SpeedRampIntervalMs;
-        SpeedSteps = trainControl.SpeedSteps;
-
-        // Load locomotive series selection
-        SelectedLocoSeries = trainControl.SelectedLocoSeries;
-        SelectedVmax = trainControl.SelectedVmax;
-
-        // Restore combo box selection "Loco from project" if saved and present in project
-        TryRestoreSelectedLocomotiveFromProject();
-
-        // Apply current preset only when a preset (0–2) is selected; -1 = Combobox-Auswahl
-        if (SelectedPresetIndex >= 0 && SelectedPresetIndex <= 2)
+        finally
         {
-            ApplyCurrentPreset();
+            _isLoadingPreset = false;
         }
     }
 
@@ -1130,7 +1195,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
     /// <summary>
     /// Applies the current preset to the ViewModel state.
-    /// Speed and direction are always reset to safe defaults (0, forward).
+    /// Restores the last speed and direction per preset without sending drive commands.
     /// </summary>
     private void ApplyCurrentPreset()
     {
@@ -1140,17 +1205,14 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             var preset = CurrentPreset;
             LocoAddress = preset.DccAddress;
 
-            // Always start at speed 0 (safety feature - no unexpected movement)
-            Speed = 0;
-            _previousSpeed = 0;
-
-            // Always start in forward direction
-            IsForward = true;
+            Speed = preset.Speed;
+            _previousSpeed = preset.Speed;
+            IsForward = preset.IsForward;
 
             _logger?.LogInformation(
-                "Applied preset: {Name} - DCC={DccAddress}, Speed={Speed} (always 0), SpeedKmh={SpeedKmh}, " +
+                "Applied preset: {Name} - DCC={DccAddress}, Speed={Speed}, Forward={IsForward}, SpeedKmh={SpeedKmh}, " +
                 "MaxSpeedStep={MaxSpeedStep}, SpeedSteps={SpeedSteps}, SelectedVmax={Vmax}",
-                preset.Name, preset.DccAddress, Speed, SpeedKmh, MaxSpeedStep, SpeedSteps, SelectedVmax);
+                preset.Name, preset.DccAddress, Speed, IsForward, SpeedKmh, MaxSpeedStep, SpeedSteps, SelectedVmax);
 
             // Turn all function keys off on selection instead of restoring the saved bitmask.
             // Set synchronously so an incoming loco-info snapshot cannot re-enable functions.
@@ -1178,7 +1240,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// </summary>
     private Locomotive? GetCurrentLocomotive()
     {
-        var project = _mainWindowViewModel?.SelectedProject?.Model;
+        var project = _projectContext?.SelectedProject?.Model;
         if (project?.Locomotives == null) return null;
         return project.Locomotives.FirstOrDefault(l => l.DigitalAddress.HasValue && l.DigitalAddress.Value == LocoAddress);
     }
@@ -1265,7 +1327,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             loco.FunctionSymbols.Add(string.Empty);
         loco.FunctionSymbols[functionIndex] = glyph;
         NotifyAllFunctionAppearanceChanged();
-        QueueBackgroundTask(_mainWindowViewModel?.SaveSolutionInternalAsync(), "Auto-save solution");
+        QueueBackgroundTask(_projectContext?.SaveSolutionInternalAsync(), "Auto-save solution");
         return true;
     }
 
@@ -1295,7 +1357,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         }
 
         NotifyAllFunctionAppearanceChanged();
-        QueueBackgroundTask(_mainWindowViewModel?.SaveSolutionInternalAsync(), "Auto-save solution");
+        QueueBackgroundTask(_projectContext?.SaveSolutionInternalAsync(), "Auto-save solution");
         return true;
     }
 
@@ -1319,7 +1381,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         loco.FunctionColors[functionIndex] = "none";
 
         NotifyAllFunctionAppearanceChanged();
-        QueueBackgroundTask(_mainWindowViewModel?.SaveSolutionInternalAsync(), "Auto-save solution");
+        QueueBackgroundTask(_projectContext?.SaveSolutionInternalAsync(), "Auto-save solution");
         return true;
     }
 
@@ -1332,14 +1394,22 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     {
         for (int i = 0; i < Functions.Count; i++)
         {
-            Functions[i].IconAsset = GetFunctionGlyph(i);
-            Functions[i].BacklightColorHex = GetFunctionColor(i);
+            var glyph = GetFunctionGlyph(i);
+            if (!string.Equals(Functions[i].IconAsset, glyph, StringComparison.Ordinal))
+            {
+                Functions[i].IconAsset = glyph;
+            }
+
+            var color = GetFunctionColor(i);
+            if (!string.Equals(Functions[i].BacklightColorHex, color, StringComparison.Ordinal))
+            {
+                Functions[i].BacklightColorHex = color;
+            }
         }
     }
 
     /// <summary>
-    /// Saves current state to the selected preset.
-    /// Speed and direction are NOT saved (always reset to safe defaults on load).
+    /// Saves current state to the selected preset before switching to another preset.
     /// </summary>
     private void SaveCurrentStateToPreset()
     {
@@ -1347,9 +1417,8 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
         var preset = CurrentPreset;
         preset.DccAddress = LocoAddress;
-
-        // Speed and IsForward are NOT saved - always reset to 0/forward on load
-        // This is a safety feature to prevent unexpected locomotive movement
+        preset.Speed = Speed;
+        preset.IsForward = IsForward;
 
         // Save function states to bitmask
         for (int i = 0; i <= 31; i++)
@@ -1367,13 +1436,30 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// </summary>
     partial void OnSelectedPresetIndexChanged(int value)
     {
+        if (_isLoadingPreset)
+        {
+            return;
+        }
+
         if (value >= 0 && value <= 2)
+        {
             ApplyCurrentPreset();
+        }
     }
 
     private void OnRuntimeSnapshotChanged(RuntimeSnapshotChangedEvent e)
     {
-        if (_disposed)
+        if (_disposed || _updatesPaused)
+        {
+            return;
+        }
+
+        ApplyRuntimeSnapshot(e.Snapshot);
+    }
+
+    private void OnRemoteRuntimeSnapshotChanged(RemoteRuntimeSnapshotChangedEvent e)
+    {
+        if (_disposed || _updatesPaused)
         {
             return;
         }
@@ -1449,7 +1535,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         if (!_isLoadingPreset)
         {
             CurrentPreset.DccAddress = value;
-            QueueBackgroundTask(SavePresetsToSettingsAsync(), "Save train control presets");
+            QueueSavePresetsDebounced();
         }
 
         if (value >= 1 && value <= 9999 && IsConnected)
@@ -1503,11 +1589,38 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
         // Save to current preset
         CurrentPreset.Speed = value;
-        QueueBackgroundTask(SavePresetsToSettingsAsync(), "Save train control presets");
+        QueueSavePresetsDebounced();
 
         if (CanExecuteLocoCommand() && LocoAddress >= 1)
         {
+            QueueSendDriveCommandDebounced();
+        }
+    }
+
+    private void QueueSendDriveCommandDebounced()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _sendDriveCommandDebounceCts?.Cancel();
+        _sendDriveCommandDebounceCts?.Dispose();
+        _sendDriveCommandDebounceCts = new CancellationTokenSource();
+        var token = _sendDriveCommandDebounceCts.Token;
+        _ = DebouncedSendDriveCommandAsync(token);
+    }
+
+    private async Task DebouncedSendDriveCommandAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(SendDriveCommandDebounceMs, cancellationToken).ConfigureAwait(false);
             QueueBackgroundTask(SendDriveCommandAsync(), "Send drive command");
+        }
+        catch (OperationCanceledException)
+        {
+            // Superseded by a newer speed change.
         }
     }
 
@@ -1517,11 +1630,13 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// </summary>
     partial void OnIsForwardChanged(bool value)
     {
+        OnPropertyChanged(nameof(DirectionStatusText));
+
         if (_isLoadingPreset || _isApplyingRuntimeLocomotiveState) return;
 
         // Save to current preset
         CurrentPreset.IsForward = value;
-        QueueBackgroundTask(SavePresetsToSettingsAsync(), "Save train control presets");
+        QueueSavePresetsDebounced();
 
         if (IsConnected && LocoAddress >= 1)
         {
@@ -1563,7 +1678,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             if (token.IsCancellationRequested) return;
 
             // Now at speed 0, send the new direction
-            await _mobaRuntime.SetLocomotiveDriveAsync(LocoAddress, 0, newDirection);
+            await _runtimeCommandGateway.SetLocomotiveDriveAsync(LocoAddress, 0, newDirection);
 
             if (token.IsCancellationRequested) return;
 
@@ -1616,7 +1731,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             _skipSpeedChangeHandler = false;
 
             // Send command to Z21
-            await _mobaRuntime.SetLocomotiveDriveAsync(LocoAddress, currentSpeed, direction);
+            await _runtimeCommandGateway.SetLocomotiveDriveAsync(LocoAddress, currentSpeed, direction);
 
             // Wait before next step
             if (currentSpeed != toSpeed)
@@ -1657,7 +1772,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     {
         try
         {
-            await _mobaRuntime.SetLocomotiveDriveAsync(LocoAddress, Speed, IsForward);
+            await _runtimeCommandGateway.SetLocomotiveDriveAsync(LocoAddress, Speed, IsForward);
             StatusMessage = $"Loco {LocoAddress}: {Speed} {(IsForward ? "FWD" : "REV")}";
             _logger?.LogDebug("Drive command sent: Loco {Address}, Speed {Speed}, Forward {Forward}",
                 LocoAddress, Speed, IsForward);
@@ -1697,7 +1812,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
                 QueueBackgroundTask(SavePresetsToSettingsAsync(), "Save train control presets");
             }
 
-            await _mobaRuntime.SetLocomotiveFunctionAsync(LocoAddress, functionNumber, newState);
+            await _runtimeCommandGateway.SetLocomotiveFunctionAsync(LocoAddress, functionNumber, newState);
             StatusMessage = $"F{functionNumber}: {(newState ? "ON" : "OFF")}";
             _logger?.LogDebug("F{Function} toggled: {State}", functionNumber, newState);
         }
@@ -1753,8 +1868,39 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
     private void SetFunctionState(int functionNumber, bool state)
     {
-        if (functionNumber >= 0 && functionNumber < Functions.Count)
+        if (functionNumber >= 0
+            && functionNumber < Functions.Count
+            && Functions[functionNumber].IsOn != state)
+        {
             Functions[functionNumber].IsOn = state;
+        }
+    }
+
+    private void QueueSavePresetsDebounced()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _savePresetsDebounceCts?.Cancel();
+        _savePresetsDebounceCts?.Dispose();
+        _savePresetsDebounceCts = new CancellationTokenSource();
+        var token = _savePresetsDebounceCts.Token;
+        _ = DebouncedSavePresetsAsync(token);
+    }
+
+    private async Task DebouncedSavePresetsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(SavePresetsDebounceMs, cancellationToken).ConfigureAwait(false);
+            QueueBackgroundTask(SavePresetsToSettingsAsync(), "Save train control presets");
+        }
+        catch (OperationCanceledException)
+        {
+            // Superseded by a newer debounced save request.
+        }
     }
 
     /// <summary>
@@ -1905,7 +2051,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         try
         {
             Speed = 0;
-            await _mobaRuntime.SetLocomotiveDriveAsync(LocoAddress, 0, IsForward);
+            await _runtimeCommandGateway.SetLocomotiveDriveAsync(LocoAddress, 0, IsForward);
             StatusMessage = $"[STOP] Emergency stop - Loco {LocoAddress}";
             _logger?.LogWarning("Emergency stop executed for loco {Address}", LocoAddress);
         }
@@ -1964,7 +2110,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         try
         {
             Speed = 0;
-            await _mobaRuntime.SetLocomotiveDriveAsync(LocoAddress, 0, IsForward);
+            await _runtimeCommandGateway.SetLocomotiveDriveAsync(LocoAddress, 0, IsForward);
             StatusMessage = $"Loco {LocoAddress} stopped";
         }
         catch (Exception ex)
@@ -2054,6 +2200,20 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
     private void ApplySystemStateFromRuntime(MobaRuntimeSnapshot snapshot)
     {
+        if (_updatesPaused)
+        {
+            return;
+        }
+
+        if (MainTrackCurrent == snapshot.MainCurrent
+            && ProgTrackCurrent == snapshot.ProgCurrent
+            && FilteredMainCurrent == snapshot.FilteredMainCurrent
+            && SupplyVoltage == snapshot.SupplyVoltage
+            && Temperature == snapshot.Temperature)
+        {
+            return;
+        }
+
         MainTrackCurrent = snapshot.MainCurrent;
         ProgTrackCurrent = snapshot.ProgCurrent;
         FilteredMainCurrent = snapshot.FilteredMainCurrent;

@@ -1,11 +1,10 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Converter;
 
-using Moba.WinUI.View;
-
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Data;
+using Moba.WinUI.View;
 
 public partial class ResourceKeyToBrushConverter : IValueConverter
 {

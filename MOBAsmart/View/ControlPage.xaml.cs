@@ -26,5 +26,17 @@ public partial class ControlPage
     public void ActivateTab()
     {
         _runtimeInitializationTask ??= _mauiViewModel.InitializeAsync();
+        if (BindingContext is TrainControlViewModel viewModel)
+        {
+            viewModel.ResumeUpdates();
+        }
+    }
+
+    public void DeactivateTab()
+    {
+        if (BindingContext is TrainControlViewModel viewModel)
+        {
+            viewModel.PauseUpdates();
+        }
     }
 }

@@ -29,7 +29,7 @@ using System.Collections.ObjectModel;
 /// Core ViewModel for main window functionality.
 /// Partial classes handle: Selection, Solution, SolutionAutoSave, Journey, Workflow, Train, Z21, Settings.
 /// </summary>
-public sealed partial class MainWindowViewModel : ObservableObject, IJourneySelectionContext
+public sealed partial class MainWindowViewModel : ObservableObject, IProjectContext
 {
     #region Fields
     private const int ShutdownDisconnectTimeoutSeconds = 5;

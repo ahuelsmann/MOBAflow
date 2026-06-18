@@ -3,6 +3,7 @@
     x:Class="Moba.MAUI.View.SignalBoxPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:Moba.MAUI.Controls"
     xmlns:vm="clr-namespace:Moba.SharedUI.ViewModel;assembly=SharedUI"
     Title="SignalBox"
     x:DataType="vm:MauiViewModel">
@@ -17,11 +18,11 @@
             StrokeThickness="1">
             <VerticalStackLayout Spacing="6">
                 <Label
-                    Style="{StaticResource TitleLarge}"
+                    Style="{DynamicResource TitleLarge}"
                     Text="SignalBox" />
                 <Label
-                    Style="{StaticResource BodyMedium}"
-                    Text="Signale und Weichen aus dem aktiven Stellwerk. Fuer Signale kann das angezeigte Signalbild direkt ausgewaehlt werden." />
+                    Style="{DynamicResource BodyMedium}"
+                    Text="Signals and switches from the active signal box. For signals, the displayed aspect can be selected directly." />
             </VerticalStackLayout>
         </Border>
 
@@ -38,12 +39,12 @@
                     <Label
                         FontAttributes="Bold"
                         HorizontalTextAlignment="Center"
-                        Text="Keine SignalBox-Elemente aktiv"
+                        Text="No signal box elements active"
                         TextColor="{DynamicResource TextPrimary}" />
                     <Label
                         HorizontalTextAlignment="Center"
-                        Style="{StaticResource BodyMedium}"
-                        Text="Aktiviere in MOBAflow ein Projekt mit Stellwerk, damit Signale und Weichen hier erscheinen." />
+                        Style="{DynamicResource BodyMedium}"
+                        Text="Open a MOBAflow project with a signal box so signals and switches appear here." />
                 </VerticalStackLayout>
             </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
@@ -82,24 +83,34 @@
                                 Grid.Row="1"
                                 Grid.Column="0"
                                 Grid.ColumnSpan="2"
-                                Style="{StaticResource BodyMedium}"
+                                Style="{DynamicResource BodyMedium}"
                                 Text="{Binding LocationText}" />
 
-                            <Picker
+                            <VerticalStackLayout
                                 Grid.Row="2"
                                 Grid.Column="0"
                                 Grid.ColumnSpan="2"
                                 IsVisible="{Binding IsSignal}"
-                                ItemsSource="{Binding SignalAspectChoices}"
-                                SelectedItem="{Binding SelectedSignalAspect, Mode=TwoWay}"
-                                Title="Signalbild auswaehlen" />
+                                Spacing="8">
+                                <Label
+                                    FontAttributes="Bold"
+                                    FontSize="11"
+                                    Text="SELECT SIGNAL ASPECT"
+                                    TextColor="{DynamicResource TextSecondary}" />
+                                <controls:SignalAspectPicker
+                                    BottomSpeedValue="{Binding BottomSpeedIndicator}"
+                                    MultiplexerArticleNumber="{Binding MultiplexerArticleNumber}"
+                                    SelectedAspect="{Binding SelectedSignalAspect, Mode=TwoWay}"
+                                    SignalArticleNumber="{Binding MainSignalArticleNumber}"
+                                    TopSpeedValue="{Binding TopSpeedIndicator}" />
+                            </VerticalStackLayout>
 
                             <Label
                                 Grid.Row="2"
                                 Grid.Column="0"
                                 Grid.ColumnSpan="2"
                                 IsVisible="{Binding IsSwitch}"
-                                Style="{StaticResource BodyMedium}"
+                                Style="{DynamicResource BodyMedium}"
                                 Text="{Binding DetailText}" />
                         </Grid>
                     </Border>

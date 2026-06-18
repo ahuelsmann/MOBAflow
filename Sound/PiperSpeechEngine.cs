@@ -3,13 +3,11 @@
 namespace Moba.Sound;
 
 using Common.Speech;
-
-using System.Diagnostics;
-using System.Media;
-
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using System.Diagnostics;
+using System.Media;
 
 /// <summary>
 /// Local Piper Text-to-Speech implementation.

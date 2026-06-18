@@ -3,9 +3,8 @@ namespace Moba.Test.SharedUI;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-
-using Moba.Backend.Interface;
 using Moba.Backend.Events;
+using Moba.Backend.Interface;
 using Moba.Backend.Model;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
@@ -14,7 +13,6 @@ using Moba.Common.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
-
 using Moq;
 
 /// <summary>

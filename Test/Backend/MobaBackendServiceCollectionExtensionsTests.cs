@@ -1,15 +1,14 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Backend;
 
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Moba.Backend;
 using Moba.Backend.Interface;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Sound;
-
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// Tests for <see cref="MobaBackendServiceCollectionExtensions.AddMobaBackendServices"/>.

@@ -43,6 +43,7 @@ MainWindowViewModel.OnFeedbackReceived() → IsConnected = true (UI thread safe)
 13. **UserControls are input adapters only** — They may translate XAML events to `ICommand`, but must not own feature behavior
 14. **Persist star layout as star values** — Use `*ColumnStarValue` for star-sized columns; do not mix pixel persistence with star restore
 15. **Validate Light and Dark theme for every UI change** — Use `ThemeResource` / platform theme tokens for foregrounds, backgrounds, borders, icons, selected states, hover states, disabled states, drag/drop visuals, and custom converters. Never encode colors that only work in one theme.
+16. **English UI language** — All user-visible text in UI apps (MOBAflow WinUI, MOBAsmart MAUI) must be English: labels, buttons, status messages, tooltips, empty states, defaults, and shipped master data (`data.json`, `solution.json`). No German (or other non-English) UI strings in XAML, ViewModels, or domain defaults. TTS/announcement language remains user-configurable in settings and is independent of UI language.
 
 ---
 
@@ -245,6 +246,7 @@ dotnet run --project MOBApi      # REST API (Port 5001)
 - [ ] `[ObservableProperty]` for MVVM
 - [ ] XML-docs for public APIs
 - [ ] **Tests for new/changed behavior** — Unit or integration tests added; `dotnet test` passes
+- [ ] **User-visible UI strings are English** (MOBAflow, MOBAsmart, SharedUI ViewModels bound to UI)
 - [ ] Build: `dotnet build`
 - [ ] README updated (if user-facing)
 

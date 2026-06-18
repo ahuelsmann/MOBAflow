@@ -12,12 +12,10 @@ using Microsoft.Extensions.DependencyInjection;
 public static class UiDispatcherServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers the platform-specific IUiDispatcher implementation as a singleton.
-    /// 
-    /// The actual implementation is determined at compile-time based on the target platform:
-    /// - WinUI: Uses Microsoft.UI.Dispatching.DispatcherQueue for thread marshalling
-    /// - MAUI: Uses MainThread API for cross-platform UI thread dispatch
-    /// - Blazor: Uses BlazorUiDispatcher for server-side rendering
+    /// Registers a fallback <see cref="IUiDispatcher"/> that runs actions on the calling thread.
+    /// WinUI and MAUI hosts must register their platform dispatcher explicitly instead
+    /// (see <c>MobaWinUiServiceCollectionExtensions</c> and <c>MobaMauiServiceCollectionExtensions</c>),
+    /// because SharedUI is compiled without platform-specific symbols.
     ///
     /// IMPORTANT: This method MUST be called BEFORE any services that depend on IUiDispatcher.
     /// </summary>

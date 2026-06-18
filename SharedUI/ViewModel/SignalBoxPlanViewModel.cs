@@ -230,6 +230,22 @@ public sealed partial class SignalBoxPlanViewModel : ObservableObject, IViewMode
     }
 
     /// <summary>
+    /// Forces the canvas to recreate the visual for an element.
+    /// Required because signal templates use one-time bindings on plain domain models.
+    /// </summary>
+    public void RefreshElementVisual(SbElement element)
+    {
+        var index = Elements.IndexOf(element);
+        if (index < 0)
+        {
+            return;
+        }
+
+        Elements.RemoveAt(index);
+        Elements.Insert(index, element);
+    }
+
+    /// <summary>
     /// Removes an element from the plan with cascading cleanup of connections and routes.
     /// </summary>
     public void RemoveElement(SbElement element)

@@ -1,18 +1,14 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Controls.SignalBox;
 
+using Common.Extension;
 using Domain;
-
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
-
-using Common.Extension;
 using SharedUI.ViewModel;
-
 using System;
-
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 

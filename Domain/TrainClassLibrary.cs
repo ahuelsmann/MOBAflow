@@ -105,7 +105,7 @@ public static class TrainClassLibrary
     }
 
     /// <summary>
-    /// Gets all locomotive classes by type filter (e.g., "Elektrolok", "Dampflok", "Triebzug").
+    /// Gets all locomotive classes by type filter (e.g., "Electric loco", "Steam loco", "Railcar").
     /// </summary>
     public static IReadOnlyCollection<LocomotiveSeries> GetByType(string type)
     {

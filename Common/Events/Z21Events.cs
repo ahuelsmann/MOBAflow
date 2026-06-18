@@ -636,4 +636,3 @@ public sealed record PostStartupStatusEvent : EventBase
         StatusText = statusText;
     }
 }
-

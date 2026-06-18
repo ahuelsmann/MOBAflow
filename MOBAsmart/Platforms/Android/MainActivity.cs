@@ -2,15 +2,12 @@
 
 namespace Moba.MAUI.Platforms.Android;
 
+using Common.Extension;
 using global::Android.App;
 using global::Android.Content.PM;
 using global::Android.OS;
 using global::Android.Views;
-
 using Microsoft.Extensions.DependencyInjection;
-
-using Common.Extension;
-
 using SharedUI.ViewModel;
 
 [Activity(
@@ -85,5 +82,3 @@ public class MainActivity : MauiAppCompatActivity
     }
 
 }
-
-

@@ -6,6 +6,13 @@ applyTo: 'MOBAflow/**/*.xaml,MOBAflow/**/*.cs'
 
 # WinUI 3 Guidelines
 
+## UI Language
+
+- All user-visible strings in MOBAflow must be **English** (labels, headers, buttons, tooltips, dialogs, empty states, status text).
+- Hardcode English strings inline in XAML and ViewModels; there is no localization framework (no `.resw`/`.resx`).
+- Domain defaults and shipped sample data (`data.json`, `solution.json`) must also use English for user-visible fields.
+- **Exception:** TTS/announcement text and voice selection are user-configurable in Settings and may use any language the user chooses.
+
 ## UI Thread Dispatching
 
 ```csharp

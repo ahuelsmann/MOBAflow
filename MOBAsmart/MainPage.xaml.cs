@@ -13,51 +13,29 @@ using System.ComponentModel;
 // ReSharper disable once PartialTypeWithSinglePart
 public partial class CounterPage
 {
-    public MauiViewModel ViewModel { get; }
+    private readonly IServiceProvider _serviceProvider;
     private readonly ISettingsService _settingsService;
     private readonly AppSettings _settings;
+    private MauiViewModel? _viewModel;
     private CancellationTokenSource? _pulseAnimationCts;
     private Task? _viewModelInitializationTask;
+    private bool _isViewModelHooked;
+
+    public MauiViewModel ViewModel => _viewModel ??= _serviceProvider.GetRequiredService<MauiViewModel>();
 
     public CounterPage(
-        MauiViewModel viewModel,
+        IServiceProvider serviceProvider,
         ISettingsService settingsService,
         AppSettings settings)
     {
-        ViewModel = viewModel;
+        _serviceProvider = serviceProvider;
         _settingsService = settingsService;
         _settings = settings;
-        BindingContext = ViewModel;
         InitializeComponent();
 
-        // Set initial theme switch state based on saved preference
-        // Switch ON = Light theme, Switch OFF = Dark theme
-        var isDarkMode = _settings.Application.IsDarkMode;
-        var useSystemTheme = _settings.Application.UseSystemTheme;
-
-        bool isLightTheme;
-        if (useSystemTheme)
-        {
-            isLightTheme = Application.Current?.RequestedTheme == AppTheme.Light;
-        }
-        else
-        {
-            isLightTheme = !isDarkMode;
-        }
-
-        ThemeSwitch.IsToggled = isLightTheme;
-
-        // Update theme icon based on current state
-        UpdateThemeIcon(isLightTheme);
-
-        // Subscribe to connection changes for pulse animation
-        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
-
-        // Start pulse animation if already connected
-        if (ViewModel.IsConnected)
-        {
-            StartPulseAnimation();
-        }
+        ConnectionHeader.ThemeSwitchToggled += (_, e) => ThemeSwitch_Toggled(ConnectionHeader.ThemeSwitchControl, e);
+        ConnectionHeader.TrackPowerSwitchToggled += (_, e) => TrackPowerSwitch_Toggled(ConnectionHeader.TrackPowerSwitchControl, e);
+        StatisticsSection.ResetCountersClicked += (_, _) => ResetCountersButton_Clicked(StatisticsSection, EventArgs.Empty);
     }
 
     protected override void OnAppearing()
@@ -66,9 +44,58 @@ public partial class CounterPage
         ActivateTab();
     }
 
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+        StopPulseAnimation();
+        if (_isViewModelHooked)
+        {
+            ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+            _isViewModelHooked = false;
+        }
+    }
+
     public void ActivateTab()
     {
+        EnsureViewModelBound();
+
         _viewModelInitializationTask ??= ViewModel.InitializeAsync();
+        ViewModel.ResumeHeavyUpdates();
+    }
+
+    public void DeactivateTab()
+    {
+        StopPulseAnimation();
+    }
+
+    private void EnsureViewModelBound()
+    {
+        if (_viewModel != null)
+        {
+            return;
+        }
+
+        _viewModel = _serviceProvider.GetRequiredService<MauiViewModel>();
+        BindingContext = _viewModel;
+        ConnectionHeader.BindingContext = _viewModel;
+        StatisticsSection.BindingContext = _viewModel;
+
+        var isDarkMode = _settings.Application.IsDarkMode;
+        var useSystemTheme = _settings.Application.UseSystemTheme;
+        var isLightTheme = useSystemTheme
+            ? Application.Current?.RequestedTheme == AppTheme.Light
+            : !isDarkMode;
+
+        ConnectionHeader.ThemeSwitchControl.IsToggled = isLightTheme;
+        UpdateThemeIcon(isLightTheme);
+
+        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+        _isViewModelHooked = true;
+
+        if (ViewModel.IsConnected)
+        {
+            StartPulseAnimation();
+        }
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -88,52 +115,42 @@ public partial class CounterPage
 
     private void TrackPowerSwitch_Toggled(object sender, ToggledEventArgs e)
     {
-        _ = sender; // Suppress unused parameter warning
+        _ = sender;
         HandleTrackPowerSwitchToggledAsync(e.Value).Observe();
     }
 
     private async Task HandleTrackPowerSwitchToggledAsync(bool isTrackPowerOn)
     {
-        // Ignore programmatic toggle updates from runtime snapshots.
         if (isTrackPowerOn == ViewModel.IsTrackPowerOn)
         {
             return;
         }
 
-        // Haptic feedback for track power toggle
         PerformHapticFeedback();
-
         await ViewModel.SetTrackPowerCommand.ExecuteAsync(isTrackPowerOn);
     }
 
     private void ThemeSwitch_Toggled(object sender, ToggledEventArgs e)
     {
-        _ = sender; // Suppress unused parameter warning
+        _ = sender;
         HandleThemeSwitchToggledAsync(e.Value).Observe();
     }
 
     private async Task HandleThemeSwitchToggledAsync(bool isLightTheme)
     {
         if (Application.Current is not App app)
+        {
             return;
+        }
 
-        // Haptic feedback for theme switch
         PerformHapticFeedback();
 
-        // Switch ON = Light, Switch OFF = Dark
         var isDarkMode = !isLightTheme;
-
-        // Disable UseSystemTheme when manually toggling
         _settings.Application.UseSystemTheme = false;
         _settings.Application.IsDarkMode = isDarkMode;
 
-        // Apply theme immediately
         app.ApplyTheme(isDarkMode, useSystemTheme: false);
-
-        // Update the theme icon
         UpdateThemeIcon(isLightTheme);
-
-        // Save preference to settings
         await _settingsService.SaveSettingsAsync(_settings);
     }
 
@@ -146,7 +163,6 @@ public partial class CounterPage
 
     private async Task HandleResetCountersButtonClickedAsync()
     {
-
         PerformHapticFeedback();
 
         var shouldReset = await DisplayAlertAsync(
@@ -163,18 +179,11 @@ public partial class CounterPage
         ViewModel.ResetCountersCommand.Execute(null);
     }
 
-    /// <summary>
-    /// Updates the theme icon label to reflect current theme state.
-    /// </summary>
     private void UpdateThemeIcon(bool isLightTheme)
     {
-        // Update the icon - ☀️ for light, 🌙 for dark
-        ThemeIcon.Text = isLightTheme ? "☀️" : "🌙";
+        ConnectionHeader.ThemeIconLabel.Text = isLightTheme ? "☀️" : "🌙";
     }
 
-    /// <summary>
-    /// Performs haptic feedback (vibration) on user interaction.
-    /// </summary>
     private static void PerformHapticFeedback()
     {
         try
@@ -187,9 +196,6 @@ public partial class CounterPage
         }
     }
 
-    /// <summary>
-    /// Starts a pulsing animation on the connection indicator when connected.
-    /// </summary>
     private void StartPulseAnimation()
     {
         StopPulseAnimation();
@@ -197,19 +203,15 @@ public partial class CounterPage
         RunPulseAnimationAsync(_pulseAnimationCts.Token).Observe();
     }
 
-    /// <summary>
-    /// Stops the pulsing animation on the connection indicator.
-    /// </summary>
     private void StopPulseAnimation()
     {
         _pulseAnimationCts?.Cancel();
         _pulseAnimationCts?.Dispose();
         _pulseAnimationCts = null;
 
-        // Reset scale
         MainThread.BeginInvokeOnMainThread(() =>
         {
-            ConnectionIndicator.Scale = 1.0;
+            ConnectionHeader.ConnectionIndicatorBorder.Opacity = 1.0;
         });
     }
 
@@ -221,13 +223,10 @@ public partial class CounterPage
             {
                 await MainThread.InvokeOnMainThreadAsync(async () =>
                 {
-                    // Pulse: Scale up
-                    await ConnectionIndicator.ScaleToAsync(1.3, 500, Easing.SinInOut);
-                    // Pulse: Scale down
-                    await ConnectionIndicator.ScaleToAsync(1.0, 500, Easing.SinInOut);
+                    await ConnectionHeader.ConnectionIndicatorBorder.FadeToAsync(0.45, 600, Easing.SinInOut);
+                    await ConnectionHeader.ConnectionIndicatorBorder.FadeToAsync(1.0, 600, Easing.SinInOut);
                 });
 
-                // Pause between pulses
                 await Task.Delay(1500, cancellationToken);
             }
             catch (OperationCanceledException)
@@ -236,17 +235,8 @@ public partial class CounterPage
             }
             catch
             {
-                // Animation failed, stop trying
                 break;
             }
         }
     }
-
 }
-
-
-
-
-
-
-

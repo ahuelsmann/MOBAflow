@@ -156,8 +156,9 @@ internal sealed partial class AmperemeterControl
         if (range <= 0) return;
 
         var normalizedValue = Math.Clamp((Value - MinValue) / range, 0, 1);
+        var arcGeometry = GaugeArcGeometryBuilder.CreateSweepArc(normalizedValue);
 
-        if (normalizedValue <= 0.001)
+        if (arcGeometry is null)
         {
             CurrentArc.Data = null;
             CurrentArc.Visibility = Visibility.Collapsed;
@@ -165,39 +166,8 @@ internal sealed partial class AmperemeterControl
         }
 
         CurrentArc.Visibility = Visibility.Visible;
-
-        const double centerX = 130;
-        const double centerY = 130;
-        const double outerRadius = 100;
-        const double innerRadius = 92;
-        const double lineSpacingDeg = 2;
-        const double lineThickness = 2;
-        const double startAngle = 180;
-
-        var sweepAngle = normalizedValue * 180;
-        var endAngle = startAngle - sweepAngle;
-
-        var geometryGroup = new GeometryGroup();
-        for (var angleDeg = startAngle; angleDeg >= endAngle; angleDeg -= lineSpacingDeg)
-        {
-            var angleRad = angleDeg * Math.PI / 180;
-            var cos = Math.Cos(angleRad);
-            var sin = Math.Sin(angleRad);
-
-            var startX = centerX + (innerRadius * cos);
-            var startY = centerY - (innerRadius * sin);
-            var endX = centerX + (outerRadius * cos);
-            var endY = centerY - (outerRadius * sin);
-
-            geometryGroup.Children.Add(new LineGeometry
-            {
-                StartPoint = new Point(startX, startY),
-                EndPoint = new Point(endX, endY)
-            });
-        }
-
-        CurrentArc.StrokeThickness = lineThickness;
-        CurrentArc.Data = geometryGroup;
+        CurrentArc.StrokeThickness = GaugeArcGeometryBuilder.ArcStrokeThickness;
+        CurrentArc.Data = arcGeometry;
 
         UpdateArcColor(normalizedValue);
     }

@@ -20,6 +20,7 @@ using SharedUI.ViewModel;
 using System;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Linq;
 
 sealed partial class SignalBoxPage
 {
@@ -58,9 +59,30 @@ sealed partial class SignalBoxPage
         CanvasControl.AttachLogger(signalBoxCanvasLogger);
 
         ViewModel.SolutionLoaded += OnSolutionLoaded;
+        ViewModel.SignalBoxRuntimeStateChanged += OnSignalBoxRuntimeStateChanged;
 
         Loaded += OnPageLoaded;
         Unloaded += OnPageUnloaded;
+    }
+
+    private void OnSignalBoxRuntimeStateChanged(object? sender, EventArgs e)
+    {
+        DispatcherQueue.TryEnqueue(RefreshSignalBoxRuntimeVisuals);
+    }
+
+    private void RefreshSignalBoxRuntimeVisuals()
+    {
+        PropertiesControl?.RefreshAspectDisplay();
+
+        if (_planViewModel == null)
+        {
+            return;
+        }
+
+        foreach (var signal in _planViewModel.Elements.OfType<SbSignal>().ToList())
+        {
+            _planViewModel.RefreshElementVisual(signal);
+        }
     }
 
     private void OnSolutionLoaded(object? sender, EventArgs e)
@@ -136,6 +158,7 @@ sealed partial class SignalBoxPage
 
         HandlePageUnloadedAsync().Observe(ex => _logger?.LogWarning(ex, "Persist layout on unload failed"));
         ViewModel.SolutionLoaded -= OnSolutionLoaded;
+        ViewModel.SignalBoxRuntimeStateChanged -= OnSignalBoxRuntimeStateChanged;
         DetachPlanViewModel();
     }
 
@@ -244,7 +267,7 @@ sealed partial class SignalBoxPage
 
         project.SignalBoxPlan ??= new SignalBoxPlan
         {
-            Name = "Stellwerk",
+            Name = "Signal box",
             Grid = new(32, 18, 60)
         };
 
@@ -297,6 +320,10 @@ sealed partial class SignalBoxPage
         if (PropertiesControl != null && _planViewModel != null)
         {
             PropertiesControl.SelectedElement = _planViewModel.SelectedElement;
+            if (_planViewModel.SelectedElement is SbSignal signal)
+            {
+                _planViewModel.RefreshElementVisual(signal);
+            }
         }
     }
 
@@ -342,13 +369,7 @@ sealed partial class SignalBoxPage
 
     private void OnPropertyControlVisualRefresh(object sender, SbElement element)
     {
-        var index = _planViewModel?.Elements.IndexOf(element) ?? -1;
-        if (index != -1 && _planViewModel != null)
-        {
-            _planViewModel.Elements.RemoveAt(index);
-            _planViewModel.Elements.Insert(index, element);
-            _planViewModel.SelectedElement = element;
-        }
+        _planViewModel?.RefreshElementVisual(element);
     }
 
     private void OnPropertyControlElementDeletion(object sender, SbElement element)

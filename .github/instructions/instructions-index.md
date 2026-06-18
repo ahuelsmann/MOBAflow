@@ -20,6 +20,7 @@ applyTo: '**'
 - [di-pattern-consistency.instructions.md](./di-pattern-consistency.instructions.md)
 
 ### MVVM and UI
+- UI language policy: see `copilot-instructions.md` Absolute Rule #16 and `winui.instructions.md` / `maui.instructions.md` § UI Language
 - [mvvm-best-practices.instructions.md](./mvvm-best-practices.instructions.md)
 - [winui.instructions.md](./winui.instructions.md)
 - [maui.instructions.md](./maui.instructions.md)

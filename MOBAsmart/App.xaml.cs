@@ -15,11 +15,9 @@ public partial class App
     {
         _services = services;
 
-        // ⚠️ CRITICAL: Load default dark theme resources BEFORE InitializeComponent
-        // Theme will be properly applied after settings are loaded in SplashPage.
-        LoadThemeResources(isDark: true);
-
+        // Load App.xaml merged resource dictionaries first, then apply runtime theme colors.
         InitializeComponent();
+        LoadThemeResources(isDark: true);
     }
 
     /// <summary>
@@ -131,8 +129,6 @@ public partial class App
             resources["TabBarSelectedForeground"] = Color.FromArgb("#1976D2");
             resources["TabBarUnselectedForeground"] = Color.FromArgb("#757575");
         }
-
-        Resources = resources;
     }
 
     protected override Window CreateWindow(IActivationState? activationState)
@@ -148,8 +144,17 @@ public partial class App
     }
 
     /// <summary>
-    /// Creates the Shell root after the splash screen.
-    /// Called from SplashPage after settings and theme initialization.
+    /// Creates the main tab host after the splash screen.
+    /// Kept intentionally light: CounterPage and other tabs load on first tab activation.
+    /// </summary>
+    public static Page CreateMainPage()
+    {
+        var services = ((App)Current!).Services;
+        return services.GetRequiredService<AppTabHostPage>();
+    }
+
+    /// <summary>
+    /// Creates the Shell root (optional wrapper around <see cref="AppTabHostPage"/>).
     /// </summary>
     public static Page CreateAppShell()
     {
@@ -193,5 +198,4 @@ public partial class App
             // Ignore cleanup failures during application shutdown.
         }
     }
-
 }

@@ -1,10 +1,9 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Domain;
 
-using System.Text.Json;
-
 using Moba.Domain;
 using Moba.Domain.Enum;
+using System.Text.Json;
 
 [TestFixture]
 internal sealed class WorkflowActionJsonConverterTests

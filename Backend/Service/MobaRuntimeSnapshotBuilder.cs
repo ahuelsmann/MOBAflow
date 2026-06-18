@@ -6,8 +6,6 @@ using Common.Runtime;
 
 using Domain;
 
-using Model;
-
 /// <summary>
 /// Builds immutable <see cref="MobaRuntimeSnapshot"/> instances from runtime state.
 /// </summary>
@@ -54,7 +52,11 @@ internal static class MobaRuntimeSnapshotBuilder
                             X = signal.X,
                             Y = signal.Y,
                             SignalSystem = signal.SignalSystem,
-                            SignalAspect = signal.SignalAspect
+                            SignalAspect = signal.SignalAspect,
+                            MainSignalArticleNumber = signal.MainSignalArticleNumber,
+                            MultiplexerArticleNumber = signal.MultiplexerArticleNumber,
+                            TopSpeedIndicator = signal.TopSpeedIndicator,
+                            BottomSpeedIndicator = signal.BottomSpeedIndicator
                         });
                         break;
 

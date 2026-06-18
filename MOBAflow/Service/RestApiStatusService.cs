@@ -26,11 +26,13 @@ public sealed class RestApiStatusService : IDisposable
     private readonly AppSettings _appSettings;
     private readonly RestApiProcessService _restApiProcessService;
     private readonly IPhotoHubClient _photoHubClient;
+    private readonly RestApiRuntimeHubService _runtimeHubService;
     private readonly IEventBus _eventBus;
     private readonly ILogger<RestApiStatusService> _logger;
     private readonly Timer _timer;
     private static readonly JsonSerializerOptions SJsonOptions = new() { PropertyNameCaseInsensitive = true };
     private bool _photoHubConnected;
+    private bool _runtimeHubConnected;
     private readonly CancellationTokenSource _disposeCts = new();
     private bool _disposed;
 
@@ -39,6 +41,7 @@ public sealed class RestApiStatusService : IDisposable
         AppSettings appSettings,
         RestApiProcessService restApiProcessService,
         IPhotoHubClient photoHubClient,
+        RestApiRuntimeHubService runtimeHubService,
         IEventBus eventBus,
         ILogger<RestApiStatusService> logger)
     {
@@ -46,6 +49,7 @@ public sealed class RestApiStatusService : IDisposable
         _appSettings = appSettings;
         _restApiProcessService = restApiProcessService;
         _photoHubClient = photoHubClient;
+        _runtimeHubService = runtimeHubService;
         _eventBus = eventBus;
         _logger = logger;
         _httpClient.Timeout = TimeSpan.FromSeconds(5);
@@ -168,6 +172,20 @@ public sealed class RestApiStatusService : IDisposable
                         _logger.LogDebug(ex, "PhotoHub connect failed (will retry on next refresh)");
                     }
                 }
+
+                if (!_runtimeHubConnected)
+                {
+                    try
+                    {
+                        await _runtimeHubService.ConnectHostAsync(port, _disposeCts.Token);
+                        _runtimeHubConnected = true;
+                        _logger.LogInformation("RuntimeHub host connected for MOBAsmart sync");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogDebug(ex, "RuntimeHub host connect failed (will retry on next refresh)");
+                    }
+                }
             }
             else
             {
@@ -176,6 +194,8 @@ public sealed class RestApiStatusService : IDisposable
                 SetPollInterval(_appSettings.Application.AutoStartWebApp
                     ? PollIntervalWhenWaitingMs
                     : PollIntervalWhenReachableMs);
+
+                await DisconnectRuntimeHubHostAsync().ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException)
@@ -191,6 +211,29 @@ public sealed class RestApiStatusService : IDisposable
             SetPollInterval(_appSettings.Application.AutoStartWebApp
                 ? PollIntervalWhenWaitingMs
                 : PollIntervalWhenReachableMs);
+
+            await DisconnectRuntimeHubHostAsync().ConfigureAwait(false);
+        }
+    }
+
+    private async Task DisconnectRuntimeHubHostAsync()
+    {
+        if (!_runtimeHubConnected)
+        {
+            return;
+        }
+
+        try
+        {
+            await _runtimeHubService.DisconnectHostAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "RuntimeHub host disconnect failed");
+        }
+        finally
+        {
+            _runtimeHubConnected = false;
         }
     }
 
@@ -240,6 +283,7 @@ public sealed class RestApiStatusService : IDisposable
         _disposeCts.Dispose();
 
         // Disconnect SignalR so it doesn't keep the process alive on exit
+        DisconnectRuntimeHubHostAsync().Observe(ex => _logger.LogDebug(ex, "RuntimeHub host disconnect during dispose"));
         DisposePhotoHubClientAsync().Observe(ex => _logger.LogDebug(ex, "PhotoHubClient disconnect during dispose"));
     }
 

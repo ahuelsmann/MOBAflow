@@ -2,19 +2,15 @@
 namespace Moba.WinUI.View;
 
 using Common.Configuration;
-
+using Common.Extension;
 using Converter;
-
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Windows.Storage.Pickers;
-
-using Common.Extension;
 using SharedUI.Interface;
 using SharedUI.Shell;
 using SharedUI.ViewModel;
-
 using Windows.ApplicationModel.DataTransfer;
 
 /// <summary>

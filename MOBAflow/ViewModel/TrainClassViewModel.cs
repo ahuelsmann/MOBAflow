@@ -44,7 +44,7 @@ internal sealed partial class TrainClassViewModel : ObservableObject
     private int _vmax;
 
     /// <summary>
-    /// Type of locomotive (e.g., "Elektrolok", "Dampflok", "Triebzug"), or empty if not resolved.
+    /// Type of locomotive (e.g., "Electric loco", "Steam loco", "Railcar"), or empty if not resolved.
     /// </summary>
     [ObservableProperty]
     private string _locomotiveType = string.Empty;

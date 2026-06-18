@@ -1,7 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
 
-using System.Net;
+using Common.Discovery;
+
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Sockets;
@@ -18,10 +19,11 @@ public class PhotoUploadService
     private readonly HttpClient _httpClient;
     private readonly HttpClient _lanHealthHttpClient;
 
-    public PhotoUploadService(HttpClient httpClient, HttpClient? lanHealthHttpClient = null)
+    public PhotoUploadService(IHttpClientFactory httpClientFactory)
     {
-        _httpClient = httpClient;
-        _lanHealthHttpClient = lanHealthHttpClient ?? MobiLanHttpClientFactory.CreateLanHealthClient();
+        ArgumentNullException.ThrowIfNull(httpClientFactory);
+        _httpClient = httpClientFactory.CreateClient(MobiHttpClientNames.Platform);
+        _lanHealthHttpClient = httpClientFactory.CreateClient(MobiHttpClientNames.LanHealth);
     }
 
     /// <summary>
@@ -162,14 +164,20 @@ public class PhotoUploadService
     {
         try
         {
-            var url = $"http://{serverIp}:{serverPort}/api/photos/health";
+            var url = $"http://{serverIp}:{serverPort}{MobApiHealthProbe.HealthPath}";
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
             using var response = await _lanHealthHttpClient
                 .GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cts.Token)
                 .ConfigureAwait(false);
 
-            return response.IsSuccessStatusCode;
+            if (!response.IsSuccessStatusCode)
+            {
+                return false;
+            }
+
+            var body = await response.Content.ReadAsStringAsync(cts.Token).ConfigureAwait(false);
+            return MobApiHealthProbe.IsHealthyResponse(body);
         }
         catch (Exception)
         {

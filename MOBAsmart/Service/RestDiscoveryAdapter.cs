@@ -4,7 +4,7 @@ namespace Moba.MAUI.Service;
 using SharedUI.Interface;
 
 /// <summary>
-/// Exposes REST-API discovery (UDP multicast only; no saved IP fallback).
+/// Adapts <see cref="RestApiDiscoveryService"/> to <see cref="IRestDiscoveryService"/>.
 /// </summary>
 public class RestDiscoveryAdapter : IRestDiscoveryService
 {
@@ -12,5 +12,6 @@ public class RestDiscoveryAdapter : IRestDiscoveryService
     public RestDiscoveryAdapter(RestApiDiscoveryService inner) => _inner = inner;
 
     /// <inheritdoc />
-    public Task<(string? ip, int? port)> DiscoverServerAsync() => _inner.GetServerEndpointByDiscoveryOnlyAsync();
+    public Task<(string? ip, int? port)> DiscoverServerAsync(string? subnetAnchorIp = null) =>
+        _inner.GetServerEndpointByDiscoveryOnlyAsync(subnetAnchorIp);
 }

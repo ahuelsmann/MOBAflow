@@ -2,10 +2,9 @@
 
 namespace Moba.Sound;
 
-using System.Diagnostics;
-
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Diagnostics;
 
 /// <summary>
 /// Health check service for local Piper TTS.

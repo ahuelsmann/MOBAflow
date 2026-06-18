@@ -1,10 +1,9 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Sound;
 
-using Moba.Sound;
-
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Moba.Sound;
 
 /// <summary>
 /// Tests for <see cref="SpeechHealthCheck"/> configuration validation and status messages.

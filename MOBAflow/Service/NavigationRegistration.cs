@@ -50,54 +50,54 @@ internal static class NavigationRegistration
         ArgumentNullException.ThrowIfNull(services);
         var pages = new List<PageMetadata>();
 
-        // Register standard transient pages (these were previously auto-discovered)
-        services.AddTransient<LocomotivesPage>();
+        // Register standard singleton pages (created once, reused on every navigation)
+        services.AddSingleton<LocomotivesPage>();
         pages.Add(new PageMetadata("locomotives", "Locomotives", "\uE7C0", typeof(LocomotivesPage), NavigationCategory.Solution, 25, "IsLocomotivesPageAvailable", "LocomotivesPageLabel", null, false));
 
-        services.AddTransient<PassengerWagonPage>();
+        services.AddSingleton<PassengerWagonPage>();
         pages.Add(new PageMetadata("passengerwagons", "Passenger Wagons", "\uE7C0", typeof(PassengerWagonPage), NavigationCategory.Solution, 26, "IsPassengerWagonsPageAvailable", "PassengerWagonsPageLabel", null, false));
 
-        services.AddTransient<SolutionPage>();
+        services.AddSingleton<SolutionPage>();
         pages.Add(new PageMetadata("solution", "Solution", "\uE8B7", typeof(SolutionPage), NavigationCategory.Solution, 10, "IsSolutionPageAvailable", "SolutionPageLabel", null, false));
 
-        services.AddTransient<HelpPage>();
+        services.AddSingleton<HelpPage>();
         pages.Add(new PageMetadata("help", "Help", "\uE897", typeof(HelpPage), NavigationCategory.Help, 10, null, null, null, false));
 
-        services.AddTransient<SettingsPage>();
+        services.AddSingleton<SettingsPage>();
         pages.Add(new PageMetadata("settings", "Settings", "\uE115", typeof(SettingsPage), NavigationCategory.Help, 30, null, null, null, false));
 
-        services.AddTransient<OverviewPage>();
+        services.AddSingleton<OverviewPage>();
         pages.Add(new PageMetadata("overview", "Overview", "\uE80F", typeof(OverviewPage), NavigationCategory.Core, 10, "IsOverviewPageAvailable", "OverviewPageLabel", null, false));
 
-        services.AddTransient<WorkflowsPage>();
+        services.AddSingleton<WorkflowsPage>();
         pages.Add(new PageMetadata("workflows", "Workflows", "\uE945", typeof(WorkflowsPage), NavigationCategory.Solution, 20, "IsWorkflowsPageAvailable", "WorkflowsPageLabel", null, false));
 
-        services.AddTransient<StationsPage>();
+        services.AddSingleton<StationsPage>();
         pages.Add(new PageMetadata("stations", "Stations", "\uEC06", typeof(StationsPage), NavigationCategory.Solution, 21, null, null, null, false));
 
-        services.AddTransient<GoodsWagonPage>();
+        services.AddSingleton<GoodsWagonPage>();
         pages.Add(new PageMetadata("goodswagons", "Goods Wagons", "\uE7C0", typeof(GoodsWagonPage), NavigationCategory.Solution, 27, "IsGoodsWagonsPageAvailable", "GoodsWagonsPageLabel", null, false));
 
-        services.AddTransient<TrainsPage>();
+        services.AddSingleton<TrainsPage>();
         pages.Add(new PageMetadata("trains", "Trains", "\uE7C0", typeof(TrainsPage), NavigationCategory.Solution, 28, "IsTrainsPageAvailable", "TrainsPageLabel", null, false));
 
-        services.AddTransient<TrackPlanPage>();
+        services.AddSingleton<TrackPlanPage>();
         pages.Add(new PageMetadata("trackplaneditor", "Track Plan", "\uE7F9", typeof(TrackPlanPage), NavigationCategory.TrackManagement, 10, "IsTrackPlanEditorPageAvailable", "TrackPlanEditorPageLabel", null, false));
 
-        services.AddTransient<TrainControlPage>();
+        services.AddSingleton<TrainControlPage>();
         pages.Add(new PageMetadata("traincontrol", "Train Control", "\uEC49", typeof(TrainControlPage), NavigationCategory.TrainControl, 10, "IsTrainControlPageAvailable", "TrainControlPageLabel", null, true));
 
-        services.AddTransient<JourneyMapPage>();
+        services.AddSingleton<JourneyMapPage>();
         pages.Add(new PageMetadata("journeymap", "Journey Map", "\uE81D", typeof(JourneyMapPage), NavigationCategory.Journey, 20, "IsJourneyMapPageAvailable", "JourneyMapPageLabel", null, false));
 
-        services.AddTransient<InfoPage>();
+        services.AddSingleton<InfoPage>();
         pages.Add(new PageMetadata("info", "Info", "\uE946", typeof(InfoPage), NavigationCategory.Help, 20, null, null, null, false));
 
-        services.AddTransient<MonitorPage>();
+        services.AddSingleton<MonitorPage>();
         pages.Add(new PageMetadata("monitor", "Monitor", "\uE7F4", typeof(MonitorPage), NavigationCategory.Monitoring, 10, "IsMonitorPageAvailable", "MonitorPageLabel", null, false));
 
-        services.AddTransient<MatrixPage>();
-        services.AddTransient(sp => new MatrixPageViewModel(
+        services.AddSingleton<MatrixPage>();
+        services.AddSingleton(sp => new MatrixPageViewModel(
             sp.GetRequiredService<MainWindowViewModel>(),
             sp.GetRequiredService<ILogger<MatrixPageViewModel>>()));
         pages.Add(new PageMetadata(
@@ -112,8 +112,8 @@ internal static class NavigationRegistration
             PathIconData: null,
             IsBold: false));
 
-        services.AddTransient<DisplayViewModel>();
-        services.AddTransient<DisplayPage>();
+        services.AddSingleton<DisplayViewModel>();
+        services.AddSingleton<DisplayPage>();
         pages.Add(new PageMetadata(
             Tag: "display",
             Title: "Display Configurations",
@@ -128,7 +128,7 @@ internal static class NavigationRegistration
 
         // Manual registrations for pages with custom DI requirements
         // JourneysPage: requires AppSettings + ISettingsService injection
-        services.AddTransient(sp => new JourneysPage(
+        services.AddSingleton(sp => new JourneysPage(
             sp.GetRequiredService<MainWindowViewModel>(),
             sp.GetRequiredService<AppSettings>(),
             sp.GetService<ISettingsService>()));
@@ -145,7 +145,7 @@ internal static class NavigationRegistration
             IsBold: true));
 
         // SignalBoxPage: requires custom runtime services
-        services.AddTransient(sp => new SignalBoxPage(
+        services.AddSingleton(sp => new SignalBoxPage(
             sp.GetRequiredService<MainWindowViewModel>(),
             sp.GetRequiredService<ViessmannSignalService>(),
             sp.GetRequiredService<AppSettings>(),

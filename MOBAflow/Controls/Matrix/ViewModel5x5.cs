@@ -1,14 +1,12 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Controls.Matrix;
 
-using Moba.Common.Display;
-using Moba.Domain;
-
-using Microsoft.UI;
-using Microsoft.UI.Xaml.Media;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.UI;
+using Microsoft.UI.Xaml.Media;
+using Moba.Common.Display;
+using Moba.Domain;
 
 public partial class ViewModel5x5 : ObservableObject
 {
