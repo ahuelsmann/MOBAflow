@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage
+<ContentView
     x:Class="Moba.MAUI.CounterPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:Moba.SharedUI.ViewModel;assembly=SharedUI"
     xmlns:controls="clr-namespace:Moba.MAUI.Controls"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
-    Title="Counter"
     x:DataType="local:MauiViewModel">
 
-    <ContentPage.Resources>
+    <ContentView.Resources>
         <ResourceDictionary>
             <Style x:Key="StepperButtonStyle" TargetType="Button">
                 <Setter Property="Padding" Value="0" />
@@ -51,7 +50,7 @@
             </Style>
 
         </ResourceDictionary>
-    </ContentPage.Resources>
+    </ContentView.Resources>
 
     <ScrollView>
         <VerticalStackLayout
@@ -265,4 +264,4 @@
                 TextColor="{DynamicResource TextSecondary}" />
         </VerticalStackLayout>
     </ScrollView>
-</ContentPage>
+</ContentView>

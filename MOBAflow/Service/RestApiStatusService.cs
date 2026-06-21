@@ -194,8 +194,6 @@ public sealed class RestApiStatusService : IDisposable
                 SetPollInterval(_appSettings.Application.AutoStartWebApp
                     ? PollIntervalWhenWaitingMs
                     : PollIntervalWhenReachableMs);
-
-                await DisconnectRuntimeHubHostAsync().ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException)
@@ -211,8 +209,6 @@ public sealed class RestApiStatusService : IDisposable
             SetPollInterval(_appSettings.Application.AutoStartWebApp
                 ? PollIntervalWhenWaitingMs
                 : PollIntervalWhenReachableMs);
-
-            await DisconnectRuntimeHubHostAsync().ConfigureAwait(false);
         }
     }
 

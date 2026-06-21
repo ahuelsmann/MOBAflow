@@ -34,7 +34,7 @@ public abstract class JourneyFeedbackManagerBase : IDisposable
     /// <summary>
     /// Creates isolated action execution contexts when running workflows in response to feedback.
     /// </summary>
-    protected readonly IActionExecutionContextFactory ExecutionContextFactory;
+    protected readonly ActionExecutionContextFactory ExecutionContextFactory;
 
     /// <summary>
     /// Indicates whether this manager has already been disposed.

@@ -6,6 +6,7 @@ using Backend;
 using Backend.Interface;
 
 using Common.Configuration;
+using Common.Discovery;
 using Common.Events;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -66,12 +67,10 @@ public static class MobaMauiServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddMobiHttpClients();
-        services.AddSingleton<RestApiDiscoveryService>();
-        services.AddSingleton<PhotoUploadService>();
-        services.AddSingleton<IRestDiscoveryService, RestDiscoveryAdapter>();
-        services.AddSingleton<IZ21DiscoveryService, Z21DiscoveryService>();
-        services.AddSingleton<IPhotoUploadService, PhotoUploadAdapter>();
+        services.AddSingleton<IRestDiscoveryService, RestApiDiscoveryService>();
+        services.AddSingleton<IPhotoUploadService, PhotoUploadService>();
         services.AddSingleton<IPhotoCaptureService, PhotoCaptureService>();
+        services.AddSingleton<IPhotoUriResolver, MauiPhotoUriResolver>();
         services.AddSingleton<IRestApiClientRegistration, RestApiClientRegistrationService>();
         services.AddSingleton<IRuntimeSettingsClient, RuntimeSettingsClient>();
         services.AddSingleton<INetworkProfileChangeNotifier, MauiNetworkProfileChangeNotifier>();
@@ -87,16 +86,26 @@ public static class MobaMauiServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddSingletonWithInterface<MobileSolutionContext, IProjectContext>();
+        services.AddSingleton<IMobileSolutionStore>(sp => new MobileSolutionStore(
+            Path.Combine(FileSystem.AppDataDirectory, "mobile-cache"),
+            sp.GetRequiredService<ILogger<MobileSolutionStore>>()));
+        services.AddSingletonWithInterface<RuntimeHubRemoteClient, IRuntimeHubRemoteClient>();
+        services.AddSingleton<RemoteRuntimeBridge>();
+        services.AddSingleton<MobileRuntimeCoordinator>(sp => new MobileRuntimeCoordinator(
+            sp.GetRequiredService<IMobaRuntime>(),
+            sp.GetRequiredService<IRuntimeHubRemoteClient>()));
+        services.AddSingleton<IRuntimeCommandGateway>(sp => sp.GetRequiredService<MobileRuntimeCoordinator>());
+        services.AddSingleton<IMobileRuntimeCoordinator>(sp => sp.GetRequiredService<MobileRuntimeCoordinator>());
         services.AddSingleton<SolutionRemoteLoader>(sp => new SolutionRemoteLoader(
             sp.GetRequiredService<IMobaRuntime>(),
             sp.GetRequiredService<MobileSolutionContext>(),
             sp.GetRequiredService<IEventBus>(),
             sp.GetRequiredService<ILogger<SolutionRemoteLoader>>(),
-            sp.GetRequiredService<IHttpClientFactory>().CreateClient(MobiHttpClientNames.Platform)));
+            sp.GetRequiredService<IHttpClientFactory>().CreateClient(MobiHttpClientNames.Platform),
+            sp.GetRequiredService<IMobileRuntimeCoordinator>(),
+            sp.GetRequiredService<IUiDispatcher>(),
+            sp.GetRequiredService<IMobileSolutionStore>()));
         services.AddSingleton<ISolutionRemoteLoader>(sp => sp.GetRequiredService<SolutionRemoteLoader>());
-        services.AddSingletonWithInterface<RuntimeHubRemoteClient, IRuntimeHubRemoteClient>();
-        services.AddSingleton<RemoteRuntimeBridge>();
-        services.AddSingletonWithInterface<RemoteRuntimeCommandGateway, IRuntimeCommandGateway>();
 
         return services;
     }
@@ -108,9 +117,45 @@ public static class MobaMauiServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.AddSingleton<MauiViewModel>();
-        services.AddSingleton(new TrainControlViewModelOptions { UseRemoteRuntimeSnapshots = true });
-        services.AddSingleton<TrainControlViewModel>();
+        services.AddSingleton<MauiViewModel>(sp => new MauiViewModel(
+            sp.GetRequiredService<IMobaRuntime>(),
+            sp.GetRequiredService<IUiDispatcher>(),
+            sp.GetRequiredService<AppSettings>(),
+            sp.GetRequiredService<ISettingsService>(),
+            sp.GetRequiredService<IRestDiscoveryService>(),
+            sp.GetRequiredService<IZ21DiscoveryService>(),
+            sp.GetRequiredService<IPhotoUploadService>(),
+            sp.GetRequiredService<IPhotoCaptureService>(),
+            sp.GetRequiredService<INetworkProfileChangeNotifier>(),
+            sp.GetRequiredService<ILogger<MauiViewModel>>(),
+            sp.GetRequiredService<IEventBus>(),
+            sp.GetRequiredService<IRestApiClientRegistration>(),
+            sp.GetRequiredService<IRuntimeSettingsClient>(),
+            sp.GetRequiredService<ISolutionRemoteLoader>(),
+            sp.GetRequiredService<IMobileSolutionStore>(),
+            sp.GetRequiredService<IRuntimeHubRemoteClient>(),
+            sp.GetRequiredService<IRuntimeCommandGateway>(),
+            sp.GetRequiredService<IMobileRuntimeCoordinator>(),
+            sp.GetRequiredService<IProjectContext>(),
+            sp.GetRequiredService<IBackgroundService>()));
+        services.AddSingleton(new TrainControlViewModelOptions
+        {
+            HybridRuntimeSnapshots = true,
+            PreferProjectLocomotives = true
+        });
+        services.AddSingleton<TrainControlViewModel>(sp =>
+        {
+            var coordinator = sp.GetRequiredService<IMobileRuntimeCoordinator>();
+            return new TrainControlViewModel(
+                sp.GetRequiredService<IMobaRuntime>(),
+                sp.GetRequiredService<ISettingsService>(),
+                sp.GetRequiredService<IProjectContext>(),
+                sp.GetRequiredService<ILogger<TrainControlViewModel>>(),
+                sp.GetRequiredService<IUiDispatcher>(),
+                sp.GetRequiredService<IEventBus>(),
+                mobileRuntimeCoordinator: coordinator,
+                options: sp.GetRequiredService<TrainControlViewModelOptions>());
+        });
 
         return services;
     }
@@ -141,15 +186,6 @@ public static class MobaMauiServiceCollectionExtensions
 
         services.AddSingleton<MobiStartupService>();
 
-        return services;
-    }
-
-    private static IServiceCollection AddSingletonWithInterface<TService, TInterface>(this IServiceCollection services)
-        where TService : class, TInterface
-        where TInterface : class
-    {
-        services.AddSingleton<TService>();
-        services.AddSingleton<TInterface>(sp => sp.GetRequiredService<TService>());
         return services;
     }
 }

@@ -29,7 +29,7 @@ public sealed class UiThreadEventBusDecorator : IEventBus
     /// <inheritdoc />
     public void Publish<TEvent>(TEvent @event) where TEvent : class, IEvent
     {
-        _dispatcher.InvokeOnUi(() => _inner.Publish(@event));
+        _dispatcher.InvokeOnUiLowPriority(() => _inner.Publish(@event));
     }
 
     /// <inheritdoc />

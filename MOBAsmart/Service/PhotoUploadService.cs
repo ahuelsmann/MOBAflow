@@ -3,6 +3,8 @@ namespace Moba.MAUI.Service;
 
 using Common.Discovery;
 
+using SharedUI.Interface;
+
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Sockets;
@@ -10,7 +12,7 @@ using System.Net.Sockets;
 /// <summary>
 /// Service for uploading photos to MOBAflow WebApp REST-API.
 /// </summary>
-public class PhotoUploadService
+public class PhotoUploadService : IPhotoUploadService
 {
     /// <summary>
     /// LAN health checks bypass the platform <see cref="HttpClient"/> handler so Android does not route

@@ -16,6 +16,8 @@ using System.Collections.ObjectModel;
 
 public sealed partial class MauiViewModel
 {
+    private readonly Dictionary<Guid, SignalAspect> _pendingSignalAspects = new();
+
     /// <summary>
     /// Gets the active signal-box switches and signals for the mobile SignalBox page.
     /// </summary>
@@ -30,7 +32,11 @@ public sealed partial class MauiViewModel
     {
         if (_heavyUpdatesPaused || !_signalBoxTabActive)
         {
-            _pendingSignalBoxElements = elements;
+            if (elements.Count > 0)
+            {
+                _pendingSignalBoxElements = elements;
+            }
+
             return;
         }
 
@@ -43,14 +49,8 @@ public sealed partial class MauiViewModel
 
         if (ordered.Count == 0)
         {
-            if (SignalBoxElements.Count == 0)
-            {
-                return;
-            }
-
-            DetachAllSignalBoxHandlers();
-            SignalBoxElements.Clear();
-            OnPropertyChanged(nameof(HasSignalBoxElements));
+            // Keep the last known signal-box list when runtime snapshots omit elements
+            // (local Z21 telemetry without project, or transient MOBApi hub gaps).
             return;
         }
 
@@ -65,7 +65,7 @@ public sealed partial class MauiViewModel
                 continue;
             }
 
-            existing.SignalAspectChanged -= OnSignalAspectChanged;
+            existing.UserSignalAspectSelected -= OnUserSignalAspectSelected;
             SignalBoxElements.RemoveAt(index);
         }
 
@@ -73,7 +73,7 @@ public sealed partial class MauiViewModel
 
         for (var index = 0; index < ordered.Count; index++)
         {
-            var snapshot = ordered[index];
+            var snapshot = ApplyPendingSignalAspect(ordered[index]);
             if (existingById.TryGetValue(snapshot.ElementId, out var existing))
             {
                 existing.ApplySnapshot(snapshot);
@@ -86,7 +86,7 @@ public sealed partial class MauiViewModel
             }
 
             var item = new MauiSignalBoxElementViewModel(snapshot);
-            item.SignalAspectChanged += OnSignalAspectChanged;
+            item.UserSignalAspectSelected += OnUserSignalAspectSelected;
             SignalBoxElements.Insert(index, item);
             collectionChanged = true;
         }
@@ -101,31 +101,57 @@ public sealed partial class MauiViewModel
     {
         foreach (var item in SignalBoxElements)
         {
-            item.SignalAspectChanged -= OnSignalAspectChanged;
+            item.UserSignalAspectSelected -= OnUserSignalAspectSelected;
         }
     }
 
-    private void OnSignalAspectChanged(object? sender, MauiSignalBoxElementViewModel item)
+    private void OnUserSignalAspectSelected(object? sender, SignalAspect aspect)
     {
-        SetSignalBoxAspectCommand.Execute(item);
-    }
-
-    [RelayCommand]
-    private async Task SetSignalBoxAspectAsync(MauiSignalBoxElementViewModel? item)
-    {
-        if (item?.SelectedSignalAspect is not { } aspect)
+        if (sender is not MauiSignalBoxElementViewModel item)
         {
             return;
         }
 
-        if (!IsSessionOperational)
+        SetSignalBoxAspectCommand.Execute((item, aspect));
+    }
+
+    [RelayCommand(AllowConcurrentExecutions = true)]
+    private async Task SetSignalBoxAspectAsync((MauiSignalBoxElementViewModel Item, SignalAspect Aspect) request)
+    {
+        var (item, aspect) = request;
+        if (!item.IsSignal)
         {
             return;
         }
 
-        await (_runtimeCommandGateway ?? CreateLocalRuntimeCommandGateway())
-            .SetSignalAspectAsync(item.ElementId, aspect)
+        await SignalBoxAspectCommandDispatcher
+            .DispatchAsync(
+                _runtimeCommandGateway ?? CreateLocalRuntimeCommandGateway(),
+                item.ElementId,
+                aspect,
+                _pendingSignalAspects)
             .ConfigureAwait(false);
+    }
+
+    private SignalBoxElementRuntimeSnapshot ApplyPendingSignalAspect(SignalBoxElementRuntimeSnapshot snapshot)
+    {
+        if (snapshot.Kind != SignalBoxElementKind.Signal)
+        {
+            return snapshot;
+        }
+
+        if (!_pendingSignalAspects.TryGetValue(snapshot.ElementId, out var pending))
+        {
+            return snapshot;
+        }
+
+        if (snapshot.SignalAspect == pending)
+        {
+            _pendingSignalAspects.Remove(snapshot.ElementId);
+            return snapshot;
+        }
+
+        return snapshot with { SignalAspect = pending };
     }
 
     private IRuntimeCommandGateway CreateLocalRuntimeCommandGateway() =>
@@ -135,7 +161,7 @@ public sealed partial class MauiViewModel
 public sealed partial class MauiSignalBoxElementViewModel : ObservableObject
 {
     private static readonly IReadOnlyList<SignalAspect> AllSignalAspects = Enum.GetValues<SignalAspect>();
-    private bool _isApplyingSnapshot;
+    private bool _suppressAspectDispatch;
 
     public MauiSignalBoxElementViewModel(SignalBoxElementRuntimeSnapshot snapshot)
     {
@@ -159,14 +185,14 @@ public sealed partial class MauiSignalBoxElementViewModel : ObservableObject
         TopSpeedIndicator = snapshot.TopSpeedIndicator ?? string.Empty;
         BottomSpeedIndicator = snapshot.BottomSpeedIndicator ?? string.Empty;
 
-        _isApplyingSnapshot = true;
+        _suppressAspectDispatch = true;
         try
         {
             SelectedSignalAspect = snapshot.SignalAspect;
         }
         finally
         {
-            _isApplyingSnapshot = false;
+            _suppressAspectDispatch = false;
         }
 
         OnPropertyChanged(nameof(KindText));
@@ -180,7 +206,7 @@ public sealed partial class MauiSignalBoxElementViewModel : ObservableObject
         OnPropertyChanged(nameof(BottomSpeedIndicator));
     }
 
-    public event EventHandler<MauiSignalBoxElementViewModel>? SignalAspectChanged;
+    public event EventHandler<SignalAspect>? UserSignalAspectSelected;
 
     public Guid ElementId { get; private set; }
     public string Name { get; private set; } = string.Empty;
@@ -217,11 +243,30 @@ public sealed partial class MauiSignalBoxElementViewModel : ObservableObject
 
     public string SelectedSignalAspectText => SelectedSignalAspect?.ToString() ?? "-";
 
+    [RelayCommand]
+    private void SelectSignalAspect(SignalAspect aspect)
+    {
+        if (!IsSignal)
+        {
+            return;
+        }
+
+        if (SelectedSignalAspect != aspect)
+        {
+            SelectedSignalAspect = aspect;
+            return;
+        }
+
+        UserSignalAspectSelected?.Invoke(this, aspect);
+    }
+
     partial void OnSelectedSignalAspectChanged(SignalAspect? value)
     {
-        if (!_isApplyingSnapshot && value.HasValue && IsSignal)
+        if (_suppressAspectDispatch || !IsSignal || value is null)
         {
-            SignalAspectChanged?.Invoke(this, this);
+            return;
         }
+
+        UserSignalAspectSelected?.Invoke(this, value.Value);
     }
 }

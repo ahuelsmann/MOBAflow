@@ -3,6 +3,7 @@
 namespace Moba.Backend.Service;
 
 using Common.Configuration;
+using Common.Discovery;
 using Common.Events;
 using Common.Runtime;
 using Interface;
@@ -18,11 +19,12 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
 {
     private readonly IZ21 _z21;
     private readonly IWorkflowService _workflowService;
-    private readonly IActionExecutionContextFactory _executionContextFactory;
-    private readonly IJourneyManagerFactory _journeyManagerFactory;
+    private readonly ActionExecutionContextFactory _executionContextFactory;
+    private readonly JourneyManagerFactory _journeyManagerFactory;
     private readonly AppSettings _settings;
     private readonly ILogger<MobaRuntimeService> _logger;
     private readonly IEventBus? _eventBus;
+    private readonly IZ21DiscoveryService _z21Discovery;
 
     private ActiveProjectContext? _activeProjectContext;
     private Timer? _z21AutoConnectTimer;
@@ -73,11 +75,12 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
     public MobaRuntimeService(
         IZ21 z21,
         IWorkflowService workflowService,
-        IActionExecutionContextFactory executionContextFactory,
+        ActionExecutionContextFactory executionContextFactory,
         AppSettings settings,
         ILogger<MobaRuntimeService> logger,
         IEventBus? eventBus = null,
-        IJourneyManagerFactory? journeyManagerFactory = null)
+        JourneyManagerFactory? journeyManagerFactory = null,
+        IZ21DiscoveryService? z21Discovery = null)
     {
         ArgumentNullException.ThrowIfNull(z21);
         ArgumentNullException.ThrowIfNull(workflowService);
@@ -92,6 +95,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         _settings = settings;
         _logger = logger;
         _eventBus = eventBus;
+        _z21Discovery = z21Discovery ?? new NullZ21DiscoveryService();
 
         _z21.OnConnectedChanged += OnZ21ConnectedChanged;
         _z21.OnConnectionLost += OnZ21ConnectionLost;

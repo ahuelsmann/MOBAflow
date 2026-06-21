@@ -15,6 +15,8 @@ public interface IRuntimeHubRemoteClient : IAsyncDisposable
 
     event Func<bool, Task>? SessionStateChanged;
 
+    event Func<DateTimeOffset, Task>? SolutionUpdated;
+
     bool IsConnected { get; }
 
     bool HasActiveHost { get; }
@@ -22,6 +24,8 @@ public interface IRuntimeHubRemoteClient : IAsyncDisposable
     Task ConnectAsync(string serverIp, int serverPort, string clientId, CancellationToken cancellationToken = default);
 
     Task DisconnectAsync();
+
+    Task RequestLatestSnapshotAsync(CancellationToken cancellationToken = default);
 
     Task SetSignalAspectAsync(Guid signalId, SignalAspect aspect, CancellationToken cancellationToken = default);
 

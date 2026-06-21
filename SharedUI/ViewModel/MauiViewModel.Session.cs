@@ -35,14 +35,14 @@ public sealed partial class MauiViewModel
     public bool IsCounterAvailable => IsConnected;
 
     /// <summary>
-    /// Gets whether SignalBox tab interaction is allowed.
+    /// Gets whether the SignalBox tab is shown as available (always true; pages stay active regardless of connection).
     /// </summary>
-    public bool IsSignalBoxAvailable => IsSessionOperational;
+    public bool IsSignalBoxAvailable => true;
 
     /// <summary>
-    /// Gets whether Control tab interaction is allowed.
+    /// Gets whether the Control tab is shown as available (always true; pages stay active regardless of connection).
     /// </summary>
-    public bool IsControlAvailable => IsSessionOperational;
+    public bool IsControlAvailable => true;
 
     public string SessionStatusText => IsSessionOperational
         ? "MOBAflow session active"
@@ -61,6 +61,7 @@ public sealed partial class MauiViewModel
         _isRuntimeHubConnected = isConnected;
         OnPropertyChanged(nameof(IsRuntimeHubConnected));
         NotifySessionAvailabilityChanged();
+        UpdateRuntimeCoordinatorState();
     }
 
     internal void SetRemoteZ21Connected(bool isConnected)

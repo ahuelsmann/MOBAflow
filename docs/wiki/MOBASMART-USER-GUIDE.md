@@ -126,17 +126,40 @@ Each feedback point has its own counter:
 
 ---
 
-## 🔋 Important: Keep the app in the foreground
+## 🔋 Background operation and display management
 
-### ⚠️ Why must the app stay open?
+### ✅ Background operation (automatic)
 
-**Android restricts background activity:**
+When MOBAsmart is connected to the **Z21** and/or **MOBAflow**, it
+starts a **foreground service** and shows a persistent notification
+(**MOBAsmart Active**). This keeps lap counting, feedback events, and
+remote control working while the app is in the background.
+
+**What you may need to allow:**
+
+- **Notifications** (Android 13+): required for the foreground-service
+  notification.
+- **Battery optimization** (optional prompt, once): recommended on
+  Samsung, Xiaomi, and similar devices.
+
+Tap **Stop** in the notification to end background operation without
+opening the app.
+
+**Limits:** Some manufacturers still kill background apps despite a
+foreground service. If counters or remote control stop updating, return
+to MOBAsmart or use the options below.
+
+### ⚠️ Fallback: keep the app visible
+
+If background operation is unreliable on your device:
+
+**Android restricts background activity without a foreground service:**
 
 - After ~10 minutes in the background, Android may cut the network connection.
 - UDP packets from the Z21 are no longer received.
 - **Result:** Lap counts will **not** be updated.
 
-### ✅ How to use MOBAsmart correctly
+### ✅ How to use MOBAsmart for long sessions
 
 #### Option 1: Keep app in the foreground (recommended)
 
@@ -212,8 +235,8 @@ Each feedback point has its own counter:
    - Test with the Z21 app: show “Feedbacks”
 3. **Timer filter interval too short?**
    - Increase interval to **15 seconds**
-4. **App in foreground?**
-   - See [Important: Keep the app in the foreground](#-important-keep-the-app-in-the-foreground)
+4. **Background connection active?**
+   - See [Background operation and display management](#-background-operation-and-display-management)
 
 ### Problem: Double counting
 

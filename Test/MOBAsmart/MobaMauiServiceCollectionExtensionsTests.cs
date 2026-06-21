@@ -36,6 +36,14 @@ internal sealed class MobaMauiServiceCollectionExtensionsTests
     }
 
     [Test]
+    public void AddMobiPlatformServices_RegistersBackgroundService()
+    {
+        var provider = CreateNetworkServiceProvider();
+
+        Assert.That(provider.GetRequiredService<IBackgroundService>(), Is.InstanceOf<BackgroundService>());
+    }
+
+    [Test]
     public void AddMobiRemoteRuntimeServices_ResolvesInterfaceAliases()
     {
         var provider = CreateFullServiceProvider();
@@ -45,7 +53,8 @@ internal sealed class MobaMauiServiceCollectionExtensionsTests
             Assert.That(provider.GetRequiredService<IProjectContext>(), Is.InstanceOf<MobileSolutionContext>());
             Assert.That(provider.GetRequiredService<ISolutionRemoteLoader>(), Is.InstanceOf<SolutionRemoteLoader>());
             Assert.That(provider.GetRequiredService<IRuntimeHubRemoteClient>(), Is.InstanceOf<RuntimeHubRemoteClient>());
-            Assert.That(provider.GetRequiredService<IRuntimeCommandGateway>(), Is.InstanceOf<RemoteRuntimeCommandGateway>());
+            Assert.That(provider.GetRequiredService<IRuntimeCommandGateway>(), Is.InstanceOf<MobileRuntimeCoordinator>());
+            Assert.That(provider.GetRequiredService<IMobileRuntimeCoordinator>(), Is.InstanceOf<MobileRuntimeCoordinator>());
         });
     }
 
@@ -71,7 +80,7 @@ internal sealed class MobaMauiServiceCollectionExtensionsTests
     {
         var provider = CreateFullServiceProvider();
 
-        Assert.DoesNotThrow(() => MobiDiContainerValidator.ValidateCoreServices(provider));
+        Assert.DoesNotThrow(() => MobiDiContainerValidator.Validate(provider));
     }
 
     private static ServiceProvider CreateNetworkServiceProvider()

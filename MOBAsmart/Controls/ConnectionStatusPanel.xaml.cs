@@ -12,11 +12,15 @@ public partial class ConnectionStatusPanel
 
     public event EventHandler<ToggledEventArgs>? TrackPowerSwitchToggled;
 
+    public event EventHandler<ToggledEventArgs>? MobaflowSwitchToggled;
+
     public Label ThemeIconLabel => ThemeIcon;
 
     public Switch ThemeSwitchControl => ThemeSwitch;
 
     public Switch TrackPowerSwitchControl => TrackPowerSwitch;
+
+    public Switch MobaflowSwitchControl => MobaflowSwitch;
 
     public Border ConnectionIndicatorBorder => ConnectionIndicator;
 
@@ -25,4 +29,7 @@ public partial class ConnectionStatusPanel
 
     private void TrackPowerSwitch_Toggled(object? sender, ToggledEventArgs e) =>
         TrackPowerSwitchToggled?.Invoke(sender, e);
+
+    private void MobaflowSwitch_Toggled(object? sender, ToggledEventArgs e) =>
+        MobaflowSwitchToggled?.Invoke(sender, e);
 }

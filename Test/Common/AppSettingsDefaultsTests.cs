@@ -38,6 +38,13 @@ internal class AppSettingsDefaultsTests
     }
 
     [Test]
+    public void RestApi_IsConnectionEnabled_default_is_false()
+    {
+        var rest = new RestApiSettings();
+        Assert.That(rest.IsConnectionEnabled, Is.False);
+    }
+
+    [Test]
     public void Speech_Piper_paths_default_to_empty()
     {
         var speech = new SpeechSettings();

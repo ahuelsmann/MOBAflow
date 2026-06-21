@@ -1,5 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
+
+
 namespace Moba.MAUI.View;
 
 
@@ -12,7 +14,7 @@ using SharedUI.ViewModel;
 
 
 
-using System.ComponentModel;
+using MauiView = Microsoft.Maui.Controls.View;
 
 
 
@@ -20,9 +22,15 @@ public partial class AppTabHostPage
 
 {
 
+    private const int TabCount = 3;
+
+
+
     private readonly IServiceProvider _serviceProvider;
 
     private readonly MauiViewModel _mauiViewModel;
+
+    private readonly TrainControlViewModel _trainControlViewModel;
 
     private CounterPage? _counterPage;
 
@@ -30,17 +38,21 @@ public partial class AppTabHostPage
 
     private ControlPage? _controlPage;
 
-    private readonly Microsoft.Maui.Controls.View?[] _tabContents = new Microsoft.Maui.Controls.View?[3];
+    private readonly MauiView?[] _tabViews = new MauiView?[TabCount];
 
     private int _activeTabIndex = AppBottomTabBar.CounterTabIndex;
 
     private bool _initialTabScheduled;
 
-    private int _tabActivationVersion;
 
 
+    public AppTabHostPage(
 
-    public AppTabHostPage(IServiceProvider serviceProvider, MauiViewModel mauiViewModel)
+        IServiceProvider serviceProvider,
+
+        MauiViewModel mauiViewModel,
+
+        TrainControlViewModel trainControlViewModel)
 
     {
 
@@ -48,15 +60,13 @@ public partial class AppTabHostPage
 
         _mauiViewModel = mauiViewModel;
 
+        _trainControlViewModel = trainControlViewModel;
+
 
 
         InitializeComponent();
 
         BindingContext = _mauiViewModel;
-
-        SessionLockOverlay.BindingContext = _mauiViewModel;
-
-        _mauiViewModel.PropertyChanged += OnMauiViewModelPropertyChanged;
 
     }
 
@@ -68,33 +78,18 @@ public partial class AppTabHostPage
 
         base.OnAppearing();
 
-        ScheduleInitialTabIfNeeded();
+        EnsureInitialTabLoaded();
 
     }
 
 
 
-    private void OnMauiViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    /// <summary>
+    /// Mounts and activates the default Counter tab. Called from splash navigation because
+    /// <see cref="OnAppearing" /> is not always raised when <see cref="Window.Page" /> is replaced.
+    /// </summary>
 
-    {
-
-        if (e.PropertyName is nameof(MauiViewModel.IsSessionOperational)
-
-            or nameof(MauiViewModel.IsSignalBoxAvailable)
-
-            or nameof(MauiViewModel.IsControlAvailable))
-
-        {
-
-            UpdateSessionLockOverlay(_activeTabIndex);
-
-        }
-
-    }
-
-
-
-    private void ScheduleInitialTabIfNeeded()
+    public void EnsureInitialTabLoaded()
 
     {
 
@@ -110,7 +105,7 @@ public partial class AppTabHostPage
 
         _initialTabScheduled = true;
 
-        Dispatcher.DispatchAsync(() => ShowTab(AppBottomTabBar.CounterTabIndex));
+        ShowTab(AppBottomTabBar.CounterTabIndex);
 
     }
 
@@ -124,7 +119,7 @@ public partial class AppTabHostPage
 
     {
 
-        if (tabIndex < 0 || tabIndex >= _tabContents.Length)
+        if (tabIndex < 0 || tabIndex >= TabCount)
 
         {
 
@@ -140,33 +135,11 @@ public partial class AppTabHostPage
 
         BottomTabBar.SelectedTab = tabIndex;
 
-        var content = EnsureTabContent(tabIndex);
+        MountTabIfNeeded(tabIndex);
 
-        var activationVersion = ++_tabActivationVersion;
+        UpdateTabVisibility(tabIndex);
 
-
-
-        PageHost.Content = content;
-
-
-
-        Dispatcher.DispatchAsync(() =>
-
-        {
-
-            if (activationVersion != _tabActivationVersion)
-
-            {
-
-                return;
-
-            }
-
-
-
-            FinishTabActivation(tabIndex, content);
-
-        });
+        FinishTabActivation(tabIndex);
 
     }
 
@@ -181,6 +154,8 @@ public partial class AppTabHostPage
         {
 
             _controlPage?.DeactivateTab();
+
+            _trainControlViewModel.PauseUpdates();
 
         }
 
@@ -208,7 +183,7 @@ public partial class AppTabHostPage
 
 
 
-    private void FinishTabActivation(int tabIndex, Microsoft.Maui.Controls.View content)
+    private void FinishTabActivation(int tabIndex)
 
     {
 
@@ -232,37 +207,17 @@ public partial class AppTabHostPage
 
                 _controlPage?.ActivateTab();
 
+                _trainControlViewModel.ResumeUpdates();
+
                 break;
 
         }
 
 
 
-        var bindingContext = GetPageBindingContext(tabIndex);
-
-        PageHost.BindingContext = bindingContext;
-
-        content.BindingContext = bindingContext;
-
-
-
         UpdateMauiViewModelTabState(tabIndex);
 
         _activeTabIndex = tabIndex;
-
-        UpdateSessionLockOverlay(tabIndex);
-
-    }
-
-
-
-    private void UpdateSessionLockOverlay(int tabIndex)
-
-    {
-
-        var isLockedTab = tabIndex is AppBottomTabBar.SignalBoxTabIndex or AppBottomTabBar.ControlTabIndex;
-
-        SessionLockOverlay.IsVisible = isLockedTab && !_mauiViewModel.IsSessionOperational;
 
     }
 
@@ -273,6 +228,8 @@ public partial class AppTabHostPage
     {
 
         _mauiViewModel.SetSignalBoxTabActive(tabIndex == AppBottomTabBar.SignalBoxTabIndex);
+
+        _mauiViewModel.SetControlTabActive(tabIndex == AppBottomTabBar.ControlTabIndex);
 
 
 
@@ -296,101 +253,75 @@ public partial class AppTabHostPage
 
 
 
+    private void MountTabIfNeeded(int tabIndex)
+
+    {
+
+        if (_tabViews[tabIndex] is not null)
+
+        {
+
+            return;
+
+        }
+
+
+
+        var tabView = tabIndex switch
+
+        {
+
+            AppBottomTabBar.SignalBoxTabIndex => (MauiView)(_signalBoxPage ??= _serviceProvider.GetRequiredService<SignalBoxPage>()),
+
+            AppBottomTabBar.ControlTabIndex => (MauiView)(_controlPage ??= _serviceProvider.GetRequiredService<ControlPage>()),
+
+            _ => (MauiView)GetCounterPage()
+
+        };
+
+
+
+        tabView.HorizontalOptions = LayoutOptions.Fill;
+
+        tabView.VerticalOptions = LayoutOptions.Fill;
+
+        tabView.IsVisible = false;
+
+
+
+        TabContentGrid.Children.Add(tabView);
+
+        _tabViews[tabIndex] = tabView;
+
+    }
+
+
+
+    private void UpdateTabVisibility(int activeTabIndex)
+
+    {
+
+        for (var i = 0; i < TabCount; i++)
+
+        {
+
+            if (_tabViews[i] is { } tabView)
+
+            {
+
+                tabView.IsVisible = i == activeTabIndex;
+
+            }
+
+        }
+
+    }
+
+
+
     private CounterPage GetCounterPage() =>
 
         _counterPage ??= _serviceProvider.GetRequiredService<CounterPage>();
-
-
-
-    private Microsoft.Maui.Controls.View EnsureTabContent(int tabIndex)
-
-    {
-
-        if (_tabContents[tabIndex] is { } existing)
-
-        {
-
-            return existing;
-
-        }
-
-
-
-        var page = tabIndex switch
-
-        {
-
-            AppBottomTabBar.SignalBoxTabIndex => (ContentPage)(_signalBoxPage ??= _serviceProvider.GetRequiredService<SignalBoxPage>()),
-
-            AppBottomTabBar.ControlTabIndex => (ContentPage)(_controlPage ??= _serviceProvider.GetRequiredService<ControlPage>()),
-
-            _ => (ContentPage)GetCounterPage()
-
-        };
-
-
-
-        var content = DetachPageContent(page);
-
-        _tabContents[tabIndex] = content;
-
-        return content;
-
-    }
-
-
-
-    private object? GetPageBindingContext(int tabIndex) =>
-
-        tabIndex switch
-
-        {
-
-            AppBottomTabBar.CounterTabIndex => _counterPage?.BindingContext,
-
-            AppBottomTabBar.SignalBoxTabIndex => _signalBoxPage?.BindingContext,
-
-            AppBottomTabBar.ControlTabIndex => _controlPage?.BindingContext,
-
-            _ => null
-
-        };
-
-
-
-    private static Microsoft.Maui.Controls.View DetachPageContent(ContentPage page)
-
-    {
-
-        var content = page.Content ?? throw new InvalidOperationException($"Page {page.GetType().Name} has no content.");
-
-        page.Content = new Grid();
-
-
-
-        if (page.BindingContext is not null)
-
-        {
-
-            content.BindingContext = page.BindingContext;
-
-        }
-
-
-
-        if (page.Resources.Count > 0)
-
-        {
-
-            content.Resources = page.Resources;
-
-        }
-
-
-
-        return content;
-
-    }
 
 }
 

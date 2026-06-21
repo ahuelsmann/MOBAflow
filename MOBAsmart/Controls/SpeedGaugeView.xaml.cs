@@ -61,6 +61,14 @@ public partial class SpeedGaugeView
         InitializeComponent();
         GaugeCanvas.Drawable = _drawable;
         Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
+    }
+
+    private void OnUnloaded(object? sender, EventArgs e)
+    {
+        _invalidateThrottleCts?.Cancel();
+        _invalidateThrottleCts?.Dispose();
+        _invalidateThrottleCts = null;
     }
 
     private void OnLoaded(object? sender, EventArgs e)
@@ -101,6 +109,12 @@ public partial class SpeedGaugeView
 
     private void RefreshDrawable(bool forceInvalidate)
     {
+        if (!MainThread.IsMainThread)
+        {
+            MainThread.BeginInvokeOnMainThread(() => RefreshDrawable(forceInvalidate));
+            return;
+        }
+
         if (!_themeColorsCached)
         {
             CacheThemeColors();

@@ -8,35 +8,27 @@ public partial class ControlPage
     private readonly MauiViewModel _mauiViewModel;
     private Task? _runtimeInitializationTask;
 
-    public ControlPage(
-        TrainControlViewModel viewModel,
-        MauiViewModel mauiViewModel)
+    public ControlPage(TrainControlViewModel viewModel, MauiViewModel mauiViewModel)
     {
         _mauiViewModel = mauiViewModel;
+
+        Resources["SelectLocomotiveCommand"] = viewModel.SelectProjectLocomotiveCommand;
+        Resources["ToggleFunctionCommand"] = viewModel.ToggleFunctionCommand;
+
         BindingContext = viewModel;
         InitializeComponent();
     }
 
-    protected override void OnAppearing()
-    {
-        base.OnAppearing();
-        ActivateTab();
-    }
-
     public void ActivateTab()
     {
-        _runtimeInitializationTask ??= _mauiViewModel.InitializeAsync();
-        if (BindingContext is TrainControlViewModel viewModel)
+        Dispatcher.DispatchAsync(async () =>
         {
-            viewModel.ResumeUpdates();
-        }
+            _runtimeInitializationTask ??= _mauiViewModel.InitializeAsync();
+            await _runtimeInitializationTask.ConfigureAwait(false);
+        });
     }
 
     public void DeactivateTab()
     {
-        if (BindingContext is TrainControlViewModel viewModel)
-        {
-            viewModel.PauseUpdates();
-        }
     }
 }

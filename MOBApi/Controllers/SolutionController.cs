@@ -1,9 +1,14 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MOBApi.Controllers;
 
+using Common.Runtime;
+
 using Common.Validation;
 
+using Hubs;
+
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 using Service;
 
@@ -22,10 +27,12 @@ public class SolutionController : ControllerBase
     private const int SolutionSchemaVersion = 1;
 
     private readonly ISolutionCache _solutionCache;
+    private readonly IHubContext<RuntimeHub> _hubContext;
 
-    public SolutionController(ISolutionCache solutionCache)
+    public SolutionController(ISolutionCache solutionCache, IHubContext<RuntimeHub> hubContext)
     {
         _solutionCache = solutionCache;
+        _hubContext = hubContext;
     }
 
     /// <summary>
@@ -79,13 +86,21 @@ public class SolutionController : ControllerBase
         var sourcePath = Request.Headers.TryGetValue("X-MOBAflow-Solution-Path", out var pathValues)
             ? pathValues.FirstOrDefault()
             : null;
+        var activeProjectName = Request.Headers.TryGetValue("X-MOBAflow-Active-Project", out var projectValues)
+            ? projectValues.FirstOrDefault()
+            : null;
 
-        _solutionCache.Set(json, sourcePath);
+        _solutionCache.Set(json, sourcePath, activeProjectName);
 
         if (!_solutionCache.TryGet(out var entry))
         {
             return StatusCode(StatusCodes.Status500InternalServerError, new { error = "Failed to cache solution." });
         }
+
+        await _hubContext.Clients
+            .Group("runtime-remote")
+            .SendAsync(RuntimeHubMethods.SolutionUpdated, entry.UpdatedAt.ToString("O"), cancellationToken)
+            .ConfigureAwait(false);
 
         return Ok(BuildMetaResponse(entry));
     }
@@ -135,9 +150,10 @@ public class SolutionController : ControllerBase
         {
             updatedAt = entry.UpdatedAt,
             sourcePath = entry.SourcePath,
+            activeProjectName = entry.ActiveProjectName,
             name,
             schemaVersion,
-            firstProjectName
+            firstProjectName = entry.ActiveProjectName ?? firstProjectName
         };
     }
 

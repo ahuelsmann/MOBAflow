@@ -15,6 +15,7 @@ public static class RuntimeHubMethods
     public const string SetLocomotiveFunction = "SetLocomotiveFunction";
     public const string SnapshotUpdated = "SnapshotUpdated";
     public const string SessionStateChanged = "SessionStateChanged";
+    public const string SolutionUpdated = "SolutionUpdated";
     public const string ExecuteSetSignalAspect = "ExecuteSetSignalAspect";
     public const string ExecuteSetLocomotiveDrive = "ExecuteSetLocomotiveDrive";
     public const string ExecuteSetLocomotiveFunction = "ExecuteSetLocomotiveFunction";

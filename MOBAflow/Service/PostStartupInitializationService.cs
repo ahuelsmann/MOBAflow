@@ -27,7 +27,6 @@ internal class PostStartupInitializationService
     private readonly AppSettings _appSettings;
     private readonly MasterDataStore _masterDataStore;
     private readonly RestApiProcessService _restApiProcessService;
-    private readonly RestApiSolutionSyncService _restApiSolutionSyncService;
     private readonly ILogger<PostStartupInitializationService> _logger;
 
     public PostStartupInitializationService(
@@ -37,7 +36,6 @@ internal class PostStartupInitializationService
         AppSettings appSettings,
         MasterDataStore masterDataStore,
         RestApiProcessService restApiProcessService,
-        RestApiSolutionSyncService restApiSolutionSyncService,
         ILogger<PostStartupInitializationService> logger)
     {
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
@@ -46,7 +44,6 @@ internal class PostStartupInitializationService
         _appSettings = appSettings;
         _masterDataStore = masterDataStore ?? throw new ArgumentNullException(nameof(masterDataStore));
         _restApiProcessService = restApiProcessService;
-        _restApiSolutionSyncService = restApiSolutionSyncService;
         _logger = logger;
     }
 
@@ -61,8 +58,6 @@ internal class PostStartupInitializationService
         var completionStatus = "Background services ready";
 
         _logger.LogInformation("[PostStartup] Starting deferred initialization");
-        _restApiSolutionSyncService.QueuePush();
-        _logger.LogInformation("[PostStartup] Status indicator visible");
         _eventBus.Publish(new PostStartupStatusEvent(true, "Initializing background services..."));
 
         try

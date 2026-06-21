@@ -14,10 +14,14 @@ public interface ISolutionCache
     /// <summary>
     /// Stores validated solution JSON in the cache.
     /// </summary>
-    void Set(string json, string? sourcePath = null);
+    void Set(string json, string? sourcePath = null, string? activeProjectName = null);
 }
 
 /// <summary>
 /// Cached solution payload served to MOBAsmart clients.
 /// </summary>
-public sealed record SolutionCacheEntry(string Json, DateTimeOffset UpdatedAt, string? SourcePath);
+public sealed record SolutionCacheEntry(
+    string Json,
+    DateTimeOffset UpdatedAt,
+    string? SourcePath,
+    string? ActiveProjectName = null);

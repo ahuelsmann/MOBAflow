@@ -19,7 +19,7 @@ public sealed class StationManager : IStationManager
     private readonly IZ21 _z21;
     private readonly Project _project;
     private readonly IWorkflowService _workflowService;
-    private readonly IActionExecutionContextFactory _executionContextFactory;
+    private readonly ActionExecutionContextFactory _executionContextFactory;
     private readonly ILogger<StationManager> _logger;
     private readonly Dictionary<Guid, StationSessionState> _states = [];
     private readonly List<IPlatformManager> _platformManagers = [];
@@ -32,7 +32,7 @@ public sealed class StationManager : IStationManager
         ActionExecutionContext? executionContext = null,
         ILogger<StationManager>? logger = null,
         ILoggerFactory? loggerFactory = null,
-        IPlatformManagerFactory? platformManagerFactory = null)
+        PlatformManagerFactory? platformManagerFactory = null)
     {
         ArgumentNullException.ThrowIfNull(z21);
         ArgumentNullException.ThrowIfNull(project);

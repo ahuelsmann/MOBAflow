@@ -28,9 +28,8 @@ public class ActionExecutor : IActionExecutor
     /// </summary>
     public static ActionExecutor CreateWithDefaultHandlers(
         IAnnouncementService? announcementService = null,
-        ITrainDestinationDisplayService? trainDestinationDisplayService = null,
         ILogger<ActionExecutor>? logger = null) =>
-        new(CreateDefaultHandlers(announcementService, trainDestinationDisplayService), logger);
+        new(CreateDefaultHandlers(announcementService), logger);
 
     /// <summary>
     /// Executes a WorkflowAction based on its type.
@@ -49,14 +48,13 @@ public class ActionExecutor : IActionExecutor
     }
 
     private static IEnumerable<IWorkflowActionHandler> CreateDefaultHandlers(
-        IAnnouncementService? announcementService,
-        ITrainDestinationDisplayService? trainDestinationDisplayService) =>
+        IAnnouncementService? announcementService) =>
         [
             new CommandWorkflowActionHandler(),
             new AudioWorkflowActionHandler(),
             new AnnouncementWorkflowActionHandler(announcementService),
             new ExecuteScriptWorkflowActionHandler(),
             new SelectSignalAspectWorkflowActionHandler(),
-            new TrainDestinationDisplayWorkflowActionHandler(trainDestinationDisplayService)
+            new TrainDestinationDisplayWorkflowActionHandler()
         ];
 }

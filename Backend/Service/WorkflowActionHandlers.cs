@@ -124,20 +124,16 @@ public sealed class AnnouncementWorkflowActionHandler(
 /// Sends journey data to a train destination display.
 /// </summary>
 public sealed class TrainDestinationDisplayWorkflowActionHandler(
-    ITrainDestinationDisplayService? trainDestinationDisplayService = null,
     ILogger<TrainDestinationDisplayWorkflowActionHandler>? logger = null) : IWorkflowActionHandler
 {
     public ActionType ActionType => ActionType.TrainDestinationDisplay;
 
-    public async Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context)
+    public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context)
     {
-        if (trainDestinationDisplayService == null)
-        {
-            logger?.LogWarning("Train destination display action '{ActionName}' skipped: TrainDestinationDisplayService not configured", action.Name);
-            return;
-        }
-
-        await trainDestinationDisplayService.UpdateAsync(action, context).ConfigureAwait(false);
+        logger?.LogWarning(
+            "Train destination display action '{ActionName}' skipped: display service not configured",
+            action.Name);
+        return Task.CompletedTask;
     }
 }
 

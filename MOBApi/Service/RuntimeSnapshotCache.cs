@@ -2,6 +2,8 @@
 
 namespace Moba.MOBApi.Service;
 
+using Common.Runtime;
+
 public sealed record RuntimeSnapshotCacheEntry(string Json, DateTimeOffset UpdatedAt, bool IsConnected);
 
 /// <summary>
@@ -38,8 +40,18 @@ public sealed class RuntimeSnapshotCache : IRuntimeSnapshotCache
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(json);
 
+        var snapshot = RuntimeJsonSerializer.Deserialize(json)
+            ?? throw new ArgumentException("Invalid runtime snapshot JSON.", nameof(json));
+
         lock (_lock)
         {
+            if (_entry != null)
+            {
+                var previous = RuntimeJsonSerializer.Deserialize(_entry.Json);
+                snapshot = RuntimeSnapshotPreservation.PreserveProjectElementsFrom(snapshot, previous);
+                json = RuntimeJsonSerializer.Serialize(snapshot);
+            }
+
             _entry = new RuntimeSnapshotCacheEntry(json, DateTimeOffset.UtcNow, isConnected);
         }
     }

@@ -13,3 +13,8 @@ public sealed record RuntimeSnapshotChangedEvent(MobaRuntimeSnapshot Snapshot) :
 /// Published when MOBApi forwards a MOBAflow runtime snapshot to MOBAsmart.
 /// </summary>
 public sealed record RemoteRuntimeSnapshotChangedEvent(MobaRuntimeSnapshot Snapshot) : EventBase;
+
+/// <summary>
+/// Published when the mobile Control tab fleet list was rebuilt from runtime or cached fleet data.
+/// </summary>
+public sealed record LocomotiveFleetUpdatedEvent(IReadOnlyList<LocomotiveFleetSnapshot> Fleet) : EventBase;

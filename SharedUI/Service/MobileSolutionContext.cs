@@ -40,18 +40,35 @@ public sealed class MobileSolutionContext : ObservableObject, IProjectContext
     public JourneyViewModel? SelectedJourney { get; set; }
 
     /// <summary>
-    /// Rebuilds view models from a freshly synced solution and selects the first project.
+    /// Rebuilds view models from a freshly synced solution and selects the active MOBAflow project.
     /// </summary>
-    public void ApplySolution(Solution solution)
+    public void ApplySolution(Solution solution, string? activeProjectName = null)
     {
         ArgumentNullException.ThrowIfNull(solution);
 
         _solutionViewModel = new SolutionViewModel(solution);
-        _selectedProject = _solutionViewModel.Projects.FirstOrDefault();
+        _selectedProject = ResolveProjectViewModel(_solutionViewModel, activeProjectName);
         SelectedJourney = null;
 
         OnPropertyChanged(nameof(SolutionViewModel));
         OnPropertyChanged(nameof(SelectedProject));
+    }
+
+    private static ProjectViewModel? ResolveProjectViewModel(
+        SolutionViewModel solutionViewModel,
+        string? activeProjectName)
+    {
+        if (!string.IsNullOrWhiteSpace(activeProjectName))
+        {
+            var match = solutionViewModel.Projects.FirstOrDefault(project =>
+                string.Equals(project.Name, activeProjectName.Trim(), StringComparison.OrdinalIgnoreCase));
+            if (match != null)
+            {
+                return match;
+            }
+        }
+
+        return solutionViewModel.Projects.FirstOrDefault();
     }
 
     /// <inheritdoc />

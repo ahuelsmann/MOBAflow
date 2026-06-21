@@ -4,6 +4,7 @@ namespace Moba.SharedUI.ViewModel;
 using Backend.Interface;
 
 using Common.Configuration;
+using Common.Display;
 using Common.Events;
 using Common.Extension;
 using Common.Runtime;
@@ -21,6 +22,7 @@ using Microsoft.Extensions.Logging;
 using Service;
 
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 
 /// <summary>
@@ -51,7 +53,11 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     private bool _isApplyingRuntimeLocomotiveState;
     private bool _disposed;
     private bool _updatesPaused;
+    private IReadOnlyList<LocomotiveFleetSnapshot>? _pendingLocomotiveFleet;
     private readonly bool _useRemoteRuntimeSnapshots;
+    private readonly bool _hybridRuntimeSnapshots;
+    private readonly bool _preferProjectLocomotives;
+    private readonly IMobileRuntimeCoordinator? _mobileRuntimeCoordinator;
     private CancellationTokenSource? _savePresetsDebounceCts;
     private CancellationTokenSource? _sendDriveCommandDebounceCts;
 
@@ -104,14 +110,28 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     [ObservableProperty]
     private int _selectedPresetIndex;
 
-    private static readonly ObservableCollection<LocomotiveViewModel> EmptyProjectLocomotives = [];
-
     /// <summary>
     /// Locomotives of the current project for combo box selection.
     /// Either preset (Loco 1/2/3) or a locomotive from this list is controlled.
     /// </summary>
-    public ObservableCollection<LocomotiveViewModel> ProjectLocomotives =>
-        _projectContext?.SelectedProject?.Locomotives ?? EmptyProjectLocomotives;
+    [ObservableProperty]
+    private ObservableCollection<LocomotiveViewModel> _projectLocomotives = [];
+
+    /// <summary>
+    /// Gets whether the synced project exposes locomotives for selection.
+    /// </summary>
+    public bool HasProjectLocomotives => ProjectLocomotives.Count > 0;
+
+    /// <summary>
+    /// Height hint for the non-scrolling locomotive picker list on MAUI.
+    /// </summary>
+    public double ProjectLocomotiveListHeight => ProjectLocomotives.Count * 76d;
+
+    /// <summary>
+    /// Display title for the active locomotive (project name when selected, otherwise address).
+    /// </summary>
+    public string LocomotiveTitle =>
+        SelectedLocomotiveFromProject?.Name ?? $"Loco {LocoAddress}";
 
     /// <summary>
     /// Locomotive selected from project combo box. When set, this one is controlled (SelectedPresetIndex = -1).
@@ -122,6 +142,8 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
     partial void OnSelectedLocomotiveFromProjectChanged(LocomotiveViewModel? value)
     {
+        SyncLocomotivePickerSelection();
+
         if (value != null)
         {
             SelectedPresetIndex = -1;
@@ -129,7 +151,8 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             LocoAddress = addr.HasValue ? (int)addr.Value : 0;
             Speed = 0;
             IsForward = true;
-            StatusMessage = $"Loco from project: {value.Name} (DCC {LocoAddress})";
+            StatusMessage = $"{value.Name}: all functions OFF";
+            OnPropertyChanged(nameof(LocomotiveTitle));
 
             // Turn all function keys off on selection (UI + explicit OFF to Z21).
             // Set synchronously so an incoming loco-info snapshot cannot re-enable functions.
@@ -574,6 +597,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
     private readonly IProjectContext? _projectContext;
     private JourneyViewModel? _observedJourneyViewModel;
+    private ProjectViewModel? _observedProjectForLocomotives;
 
     /// <summary>
     /// Current journey being executed (if any).
@@ -874,6 +898,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// <param name="runtimeCommandGateway">Optional gateway for locomotive commands (defaults to local runtime).</param>
     /// <param name="useRemoteRuntimeSnapshots">When true, locomotive state is driven by MOBAflow snapshots via MOBApi.</param>
     /// <param name="options">Optional host-specific options; overrides <paramref name="useRemoteRuntimeSnapshots"/> when set.</param>
+    /// <param name="mobileRuntimeCoordinator">Optional MOBAsmart coordinator for hybrid local/remote snapshot routing.</param>
     public TrainControlViewModel(
         IMobaRuntime mobaRuntime,
         ISettingsService settingsService,
@@ -883,50 +908,205 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         IEventBus eventBus = null!,
         IRuntimeCommandGateway? runtimeCommandGateway = null,
         bool useRemoteRuntimeSnapshots = false,
-        TrainControlViewModelOptions? options = null)
+        TrainControlViewModelOptions? options = null,
+        IMobileRuntimeCoordinator? mobileRuntimeCoordinator = null)
     {
         ArgumentNullException.ThrowIfNull(mobaRuntime);
         ArgumentNullException.ThrowIfNull(settingsService);
         ArgumentNullException.ThrowIfNull(eventBus);
         _mobaRuntime = mobaRuntime;
-        _runtimeCommandGateway = runtimeCommandGateway ?? new LocalRuntimeCommandGateway(mobaRuntime);
+        if (mobileRuntimeCoordinator != null)
+        {
+            _mobileRuntimeCoordinator = mobileRuntimeCoordinator;
+            _runtimeCommandGateway = mobileRuntimeCoordinator;
+        }
+        else
+        {
+            _mobileRuntimeCoordinator = runtimeCommandGateway as IMobileRuntimeCoordinator;
+            _runtimeCommandGateway = runtimeCommandGateway ?? new LocalRuntimeCommandGateway(mobaRuntime);
+        }
         _settingsService = settingsService;
         _projectContext = projectContext;
         _logger = logger;
         _uiDispatcher = uiDispatcher;
         _eventBus = eventBus;
         _useRemoteRuntimeSnapshots = options?.UseRemoteRuntimeSnapshots ?? useRemoteRuntimeSnapshots;
+        _hybridRuntimeSnapshots = options?.HybridRuntimeSnapshots ?? false;
+        _preferProjectLocomotives = options?.PreferProjectLocomotives ?? false;
 
         // Load presets from settings
         LoadPresetsFromSettings();
 
-        if (_useRemoteRuntimeSnapshots)
+        if (_hybridRuntimeSnapshots)
+        {
+            _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
+            _eventBusSubscriptions.Add(_eventBus.Subscribe<RemoteRuntimeSnapshotChangedEvent>(OnRemoteRuntimeSnapshotChanged));
+            ApplyRuntimeSnapshot(_mobaRuntime.Current);
+        }
+        else if (_useRemoteRuntimeSnapshots)
         {
             _eventBusSubscriptions.Add(_eventBus.Subscribe<RemoteRuntimeSnapshotChangedEvent>(OnRemoteRuntimeSnapshotChanged));
         }
         else
         {
             _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
+            ApplyRuntimeSnapshot(_mobaRuntime.Current);
         }
 
         _eventBusSubscriptions.Add(_eventBus.Subscribe<SolutionSyncedEvent>(_ => OnSolutionSynced()));
-
-        if (!_useRemoteRuntimeSnapshots)
-        {
-            ApplyRuntimeSnapshot(_mobaRuntime.Current);
-        }
+        _eventBusSubscriptions.Add(_eventBus.Subscribe<LocomotiveFleetUpdatedEvent>(OnLocomotiveFleetUpdated));
 
         if (_projectContext != null)
         {
             _projectContext.PropertyChanged += OnProjectContextPropertyChanged;
+            AttachObservedProjectLocomotives();
             UpdateJourneyFromProjectContext();
+            RefreshLocomotiveList();
         }
     }
 
     private void OnSolutionSynced()
     {
-        OnPropertyChanged(nameof(ProjectLocomotives));
-        TryRestoreSelectedLocomotiveFromProject();
+        RefreshLocomotiveList();
+    }
+
+    private void OnLocomotiveFleetUpdated(LocomotiveFleetUpdatedEvent e)
+    {
+        if (_updatesPaused)
+        {
+            if (e.Fleet.Count > 0)
+            {
+                _pendingLocomotiveFleet = e.Fleet;
+            }
+
+            return;
+        }
+
+        RefreshLocomotiveList(e.Fleet);
+    }
+
+    /// <summary>
+    /// Rebuilds the MAUI-bound locomotive list from runtime fleet snapshots or the synced project context.
+    /// </summary>
+    public void RefreshLocomotiveList(IReadOnlyList<LocomotiveFleetSnapshot>? fleetOverride = null)
+    {
+        void ApplyRefresh()
+        {
+            if (fleetOverride is { Count: 0 } && ProjectLocomotives.Count > 0)
+            {
+                return;
+            }
+
+            IReadOnlyList<LocomotiveViewModel> sourceItems;
+            if (fleetOverride is { Count: > 0 })
+            {
+                sourceItems = fleetOverride
+                    .OrderBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
+                    .Select(CreateLocomotiveViewModelFromFleetSnapshot)
+                    .ToList();
+            }
+            else if (_mobaRuntime.Current.LocomotiveFleet.Count > 0)
+            {
+                sourceItems = _mobaRuntime.Current.LocomotiveFleet
+                    .OrderBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
+                    .Select(CreateLocomotiveViewModelFromFleetSnapshot)
+                    .ToList();
+            }
+            else
+            {
+                sourceItems = _projectContext?.SelectedProject?.Locomotives
+                    ?? (IReadOnlyList<LocomotiveViewModel>)[];
+            }
+
+            if (fleetOverride is { Count: > 0 })
+            {
+                ApplyFleetItemsInPlace(fleetOverride);
+                return;
+            }
+
+            ProjectLocomotives = sourceItems.Count == 0
+                ? []
+                : new ObservableCollection<LocomotiveViewModel>(sourceItems);
+            OnPropertyChanged(nameof(HasProjectLocomotives));
+            OnPropertyChanged(nameof(ProjectLocomotiveListHeight));
+            OnPropertyChanged(nameof(LocomotiveTitle));
+            TryRestoreSelectedLocomotiveFromProject();
+        }
+
+        if (_uiDispatcher != null)
+        {
+            _uiDispatcher.InvokeOnUi(ApplyRefresh);
+        }
+        else
+        {
+            ApplyRefresh();
+        }
+    }
+
+    private void ApplyFleetItemsInPlace(IReadOnlyList<LocomotiveFleetSnapshot> fleet)
+    {
+        var ordered = fleet
+            .OrderBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+
+        var existingById = ProjectLocomotives.ToDictionary(item => item.Model.Id);
+        var snapshotById = ordered.ToDictionary(item => item.LocomotiveId);
+
+        for (var index = ProjectLocomotives.Count - 1; index >= 0; index--)
+        {
+            var existing = ProjectLocomotives[index];
+            if (snapshotById.ContainsKey(existing.Model.Id))
+            {
+                continue;
+            }
+
+            ProjectLocomotives.RemoveAt(index);
+        }
+
+        var collectionChanged = ProjectLocomotives.Count != ordered.Count;
+
+        for (var index = 0; index < ordered.Count; index++)
+        {
+            var snapshot = ordered[index];
+            if (existingById.TryGetValue(snapshot.LocomotiveId, out var existing))
+            {
+                existing.ApplyFleetSnapshot(snapshot);
+                if (!ReferenceEquals(ProjectLocomotives[index], existing))
+                {
+                    collectionChanged = true;
+                }
+
+                continue;
+            }
+
+            ProjectLocomotives.Insert(index, CreateLocomotiveViewModelFromFleetSnapshot(snapshot));
+            collectionChanged = true;
+        }
+
+        if (collectionChanged)
+        {
+            OnPropertyChanged(nameof(HasProjectLocomotives));
+            OnPropertyChanged(nameof(ProjectLocomotiveListHeight));
+            OnPropertyChanged(nameof(LocomotiveTitle));
+            TryRestoreSelectedLocomotiveFromProject();
+            SyncLocomotivePickerSelection();
+        }
+    }
+
+    partial void OnProjectLocomotivesChanged(ObservableCollection<LocomotiveViewModel> value)
+    {
+        OnPropertyChanged(nameof(HasProjectLocomotives));
+        OnPropertyChanged(nameof(ProjectLocomotiveListHeight));
+        SyncLocomotivePickerSelection();
+    }
+
+    private void SyncLocomotivePickerSelection()
+    {
+        var selectedId = SelectedLocomotiveFromProject?.Model.Id;
+        foreach (var locomotive in ProjectLocomotives)
+        {
+            locomotive.IsPickerSelected = selectedId.HasValue && locomotive.Model.Id == selectedId.Value;
+        }
     }
 
     /// <summary>
@@ -940,7 +1120,14 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     public void ResumeUpdates()
     {
         _updatesPaused = false;
-        if (!_useRemoteRuntimeSnapshots)
+        if (_pendingLocomotiveFleet is { Count: > 0 })
+        {
+            var pendingFleet = _pendingLocomotiveFleet;
+            _pendingLocomotiveFleet = null;
+            RefreshLocomotiveList(pendingFleet);
+        }
+
+        if (_hybridRuntimeSnapshots || !_useRemoteRuntimeSnapshots)
         {
             ApplyRuntimeSnapshot(_mobaRuntime.Current);
         }
@@ -967,6 +1154,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             _projectContext.PropertyChanged -= OnProjectContextPropertyChanged;
         }
 
+        DetachObservedProjectLocomotives();
         DetachObservedJourney();
         CancelRamp();
         _doorReleaseBlinkCts?.Cancel();
@@ -997,9 +1185,35 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         }
         if (e.PropertyName == nameof(IProjectContext.SelectedProject))
         {
-            OnPropertyChanged(nameof(ProjectLocomotives));
-            TryRestoreSelectedLocomotiveFromProject();
+            AttachObservedProjectLocomotives();
+            RefreshLocomotiveList();
         }
+    }
+
+    private void AttachObservedProjectLocomotives()
+    {
+        DetachObservedProjectLocomotives();
+        _observedProjectForLocomotives = _projectContext?.SelectedProject;
+        if (_observedProjectForLocomotives != null)
+        {
+            _observedProjectForLocomotives.Locomotives.CollectionChanged += OnProjectLocomotivesCollectionChanged;
+        }
+    }
+
+    private void DetachObservedProjectLocomotives()
+    {
+        if (_observedProjectForLocomotives == null)
+        {
+            return;
+        }
+
+        _observedProjectForLocomotives.Locomotives.CollectionChanged -= OnProjectLocomotivesCollectionChanged;
+        _observedProjectForLocomotives = null;
+    }
+
+    private void OnProjectLocomotivesCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        RefreshLocomotiveList();
     }
 
     /// <summary>
@@ -1062,13 +1276,27 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// </summary>
     private void TryRestoreSelectedLocomotiveFromProject()
     {
+        if (ProjectLocomotives.Count == 0 || SelectedLocomotiveFromProject != null)
+        {
+            return;
+        }
+
         var settings = _settingsService.GetSettings();
         var savedId = settings.TrainControl.SelectedLocomotiveFromProjectId;
-        if (!savedId.HasValue || ProjectLocomotives.Count == 0)
+        var match = savedId.HasValue
+            ? ProjectLocomotives.FirstOrDefault(l => l.Model.Id == savedId.Value)
+            : null;
+
+        if (match == null && _preferProjectLocomotives)
+        {
+            match = ProjectLocomotives[0];
+        }
+
+        if (match == null)
+        {
             return;
-        var match = ProjectLocomotives.FirstOrDefault(l => l.Model.Id == savedId.Value);
-        if (match == null || SelectedLocomotiveFromProject != null)
-            return;
+        }
+
         _isLoadingPreset = true;
         try
         {
@@ -1116,8 +1344,10 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             // Restore combo box selection "Loco from project" if saved and present in project
             TryRestoreSelectedLocomotiveFromProject();
 
-            // Apply current preset only when a preset (0–2) is selected; -1 = Combobox-Auswahl
-            if (SelectedPresetIndex >= 0 && SelectedPresetIndex <= 2)
+            // Apply current preset only when a preset (0–2) is selected; -1 = project locomotive
+            if (SelectedPresetIndex >= 0 && SelectedPresetIndex <= 2
+                && SelectedLocomotiveFromProject == null
+                && (!_preferProjectLocomotives || !HasProjectLocomotives))
             {
                 ApplyCurrentPreset();
             }
@@ -1253,60 +1483,32 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     private string GetFunctionGlyph(int functionIndex)
     {
         if (functionIndex < 0 || functionIndex > 31)
-            return string.Empty;
-        var loco = GetCurrentLocomotive();
-        if (loco?.FunctionSymbols != null && functionIndex < loco.FunctionSymbols.Count)
         {
-            var stored = loco.FunctionSymbols[functionIndex];
-            if (stored == "none")
-                return string.Empty;
-            if (IsValidAssetReference(stored))
-                return stored.Trim();
+            return string.Empty;
         }
-        return functionIndex < DefaultFunctionAssets.Length ? DefaultFunctionAssets[functionIndex] : string.Empty;
+
+        return LocomotiveFunctionAppearanceResolver.GetGlyph(GetCurrentLocomotive(), functionIndex);
     }
 
     /// <summary>
     /// Returns true when the stored value is a non-empty PNG asset filename.
     /// Filters out Segoe MDL2 codepoint strings from earlier versions.
     /// </summary>
-    private static bool IsValidAssetReference(string? value)
-    {
-        return !string.IsNullOrWhiteSpace(value)
-            && value.EndsWith(".png", StringComparison.OrdinalIgnoreCase);
-    }
+    private static bool IsValidAssetReference(string? value) =>
+        LocomotiveFunctionAppearanceResolver.IsValidAssetReference(value);
 
     private string GetFunctionColor(int functionIndex)
     {
         if (functionIndex < 0 || functionIndex > 31)
+        {
             return SignalGrayHex;
-
-        var loco = GetCurrentLocomotive();
-        if (loco?.FunctionColors != null && functionIndex < loco.FunctionColors.Count)
-        {
-            var stored = loco.FunctionColors[functionIndex];
-            if (stored == "none")
-                return SignalGrayHex;
-            if (IsValidHexColor(stored))
-                return stored;
         }
 
-        return functionIndex < FunctionBacklightColors.Length ? FunctionBacklightColors[functionIndex] : SignalGrayHex;
+        return LocomotiveFunctionAppearanceResolver.GetColor(GetCurrentLocomotive(), functionIndex);
     }
 
-    private static bool IsValidHexColor(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value) || value.Length != 7 || value[0] != '#')
-            return false;
-
-        for (var i = 1; i < value.Length; i++)
-        {
-            if (!char.IsAsciiHexDigit(value[i]))
-                return false;
-        }
-
-        return true;
-    }
+    private static bool IsValidHexColor(string? value) =>
+        LocomotiveFunctionAppearanceResolver.IsValidHexColor(value);
 
     /// <summary>
     /// Sets the PNG asset filename for the specified function (0–31) for the current locomotive (LocoAddress)
@@ -1454,12 +1656,32 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             return;
         }
 
+        if (_hybridRuntimeSnapshots && _mobileRuntimeCoordinator?.PreferRemoteRuntime == true)
+        {
+            return;
+        }
+
+        if (!_hybridRuntimeSnapshots && _useRemoteRuntimeSnapshots)
+        {
+            return;
+        }
+
         ApplyRuntimeSnapshot(e.Snapshot);
     }
 
     private void OnRemoteRuntimeSnapshotChanged(RemoteRuntimeSnapshotChangedEvent e)
     {
         if (_disposed || _updatesPaused)
+        {
+            return;
+        }
+
+        if (_hybridRuntimeSnapshots && _mobileRuntimeCoordinator?.PreferRemoteRuntime != true)
+        {
+            return;
+        }
+
+        if (!_hybridRuntimeSnapshots && !_useRemoteRuntimeSnapshots)
         {
             return;
         }
@@ -1484,6 +1706,22 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         {
             ApplyLocomotiveState(projection.LocomotiveState);
         }
+
+        if (snapshot.LocomotiveFleet.Count > 0)
+        {
+            RefreshLocomotiveList(snapshot.LocomotiveFleet);
+        }
+    }
+
+    private static LocomotiveViewModel CreateLocomotiveViewModelFromFleetSnapshot(LocomotiveFleetSnapshot snapshot)
+    {
+        return new LocomotiveViewModel(new Locomotive
+        {
+            Id = snapshot.LocomotiveId,
+            Name = snapshot.Name,
+            DigitalAddress = snapshot.DigitalAddress,
+            PhotoPath = snapshot.PhotoPath
+        });
     }
 
     private void OnZ21ConnectionChanged(bool isConnected)
@@ -1536,6 +1774,11 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         {
             CurrentPreset.DccAddress = value;
             QueueSavePresetsDebounced();
+        }
+
+        if (SelectedLocomotiveFromProject == null)
+        {
+            OnPropertyChanged(nameof(LocomotiveTitle));
         }
 
         if (value >= 1 && value <= 9999 && IsConnected)
@@ -2143,6 +2386,29 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         var maxSpeed = CanIncreaseSpeed ? 126 : Speed;
         Speed = Math.Clamp(preset, 0, maxSpeed);
         _logger?.LogDebug("Speed preset set to {Preset}", preset);
+    }
+
+    /// <summary>
+    /// Selects a locomotive from the synced MOBAflow project.
+    /// </summary>
+    [RelayCommand]
+    private void SelectProjectLocomotive(LocomotiveViewModel? locomotive)
+    {
+        if (locomotive == null)
+        {
+            return;
+        }
+
+        if (SelectedPresetIndex is >= 0 and <= 2)
+        {
+            SaveCurrentStateToPreset();
+        }
+
+        SelectedPresetIndex = -1;
+        if (!ReferenceEquals(SelectedLocomotiveFromProject, locomotive))
+        {
+            SelectedLocomotiveFromProject = locomotive;
+        }
     }
 
     /// <summary>

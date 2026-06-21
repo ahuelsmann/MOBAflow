@@ -289,13 +289,4 @@ public static class MobaWinUiServiceCollectionExtensions
 
         return services;
     }
-
-    private static IServiceCollection AddSingletonWithInterface<TService, TInterface>(this IServiceCollection services)
-        where TService : class, TInterface
-        where TInterface : class
-    {
-        services.AddSingleton<TService>();
-        services.AddSingleton<TInterface>(sp => sp.GetRequiredService<TService>());
-        return services;
-    }
 }

@@ -71,7 +71,7 @@ The following table reflects the direct package and framework references current
 | --- | --- | --- | --- |
 | `CommunityToolkit.WinUI.Controls.ColorPicker`, `CommunityToolkit.WinUI.Controls.Sizers`, `CommunityToolkit.WinUI.UI.Controls.Markdown` | `8.2.251219`, `7.1.2` | `MOBAflow` | WinUI color picker, grid splitters, and Markdown rendering. |
 | `CommunityToolkit.Mvvm` | `8.4.2` | `SharedUI` | MVVM primitives such as observable properties and relay commands. |
-| `CommunityToolkit.Maui` | `14.2.0` | `MAUI.Controls`, `MOBAsmart` | MAUI helpers, converters, and behaviors. |
+| `CommunityToolkit.Maui` | `14.2.0` | `MOBAsmart` | MAUI helpers, converters, and behaviors. |
 | `Microsoft.WindowsAppSDK`, `Microsoft.Graphics.Win2D`, `Microsoft.Xaml.Behaviors.WinUI.Managed` | `2.2.0`, `1.4.0`, `3.0.1` | `MOBAflow` | Windows desktop shell, GPU-accelerated 2D rendering, and XAML behaviors. |
 | `Microsoft.Azure.AppConfiguration.AspNetCore` | `8.5.0` | `MOBAflow` | Centralized runtime configuration from Azure App Configuration. |
 | `Microsoft.AspNetCore.App`, `Microsoft.AspNetCore.SignalR.Client` | `Framework reference`, `10.0.9` | `MOBAflow`, `MOBApi` | ASP.NET Core shared framework and SignalR client connectivity. |

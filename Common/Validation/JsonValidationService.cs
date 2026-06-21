@@ -63,19 +63,16 @@ public static class JsonValidationService
             // Step 5: Optional schema version check
             if (requiredSchemaVersion.HasValue)
             {
-                if (!root.TryGetProperty("schemaVersion", out var versionElement))
-                {
-                    return JsonValidationResult.Failure($"Missing schema version. Expected version {requiredSchemaVersion.Value}.");
-                }
-
-                if (versionElement.ValueKind != JsonValueKind.Number || !versionElement.TryGetInt32(out var actualVersion))
+                var actualVersion = ResolveSchemaVersion(root, requiredSchemaVersion.Value);
+                if (actualVersion == null)
                 {
                     return JsonValidationResult.Failure("Schema version must be a number.");
                 }
 
-                if (actualVersion != requiredSchemaVersion.Value)
+                if (actualVersion.Value != requiredSchemaVersion.Value)
                 {
-                    return JsonValidationResult.Failure($"Incompatible schema version. Expected {requiredSchemaVersion.Value}, found {actualVersion}.");
+                    return JsonValidationResult.Failure(
+                        $"Incompatible schema version. Expected {requiredSchemaVersion.Value}, found {actualVersion.Value}.");
                 }
             }
 
@@ -97,6 +94,28 @@ public static class JsonValidationService
         }
 
         return JsonValidationResult.Success();
+    }
+
+    private static int? ResolveSchemaVersion(JsonElement root, int requiredSchemaVersion)
+    {
+        if (!root.TryGetProperty("schemaVersion", out var versionElement))
+        {
+            // Legacy solution files omit schemaVersion; treat as version 1 when that is required.
+            return requiredSchemaVersion == 1 ? 1 : null;
+        }
+
+        if (versionElement.ValueKind != JsonValueKind.Number || !versionElement.TryGetInt32(out var actualVersion))
+        {
+            return null;
+        }
+
+        // Deserialized legacy files may round-trip as 0 before the field was introduced.
+        if (actualVersion == 0 && requiredSchemaVersion == 1)
+        {
+            return 1;
+        }
+
+        return actualVersion;
     }
 }
 

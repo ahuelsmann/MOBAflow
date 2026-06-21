@@ -56,6 +56,24 @@ internal sealed class RuntimeJsonSerializerTests
 
                 }
 
+            ],
+
+            LocomotiveFleet =
+
+            [
+
+                new LocomotiveFleetSnapshot
+
+                {
+
+                    LocomotiveId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+
+                    Name = "BR 110",
+
+                    DigitalAddress = 7
+
+                }
+
             ]
 
         };
@@ -81,6 +99,10 @@ internal sealed class RuntimeJsonSerializerTests
         Assert.That(restored.SignalBoxElements[0].ElementId, Is.EqualTo(snapshot.SignalBoxElements[0].ElementId));
 
         Assert.That(restored.SignalBoxElements[0].Name, Is.EqualTo("Signal 1"));
+
+        Assert.That(restored.LocomotiveFleet, Has.Count.EqualTo(1));
+
+        Assert.That(restored.LocomotiveFleet[0].Name, Is.EqualTo("BR 110"));
 
     }
 

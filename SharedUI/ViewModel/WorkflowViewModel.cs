@@ -30,7 +30,7 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
     private readonly Workflow _model;
 
     // Services
-    private readonly IWorkflowActionViewModelFactory _actionViewModelFactory;
+    private readonly WorkflowActionViewModelFactory _actionViewModelFactory;
     #endregion
 
     /// <summary>

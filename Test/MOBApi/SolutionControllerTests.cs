@@ -1,8 +1,11 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Moba.MOBApi.Controllers;
+using Moba.MOBApi.Hubs;
 using Moba.MOBApi.Service;
+using Moq;
 using System.Net;
 using System.Text;
 
@@ -96,7 +99,18 @@ internal sealed class SolutionControllerTests
 
     private static SolutionController CreateController(ISolutionCache cache, IPAddress remoteIp)
     {
-        var controller = new SolutionController(cache)
+        var clientProxy = new Mock<IClientProxy>();
+        clientProxy
+            .Setup(proxy => proxy.SendCoreAsync(It.IsAny<string>(), It.IsAny<object?[]>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var hubClients = new Mock<IHubClients>();
+        hubClients.Setup(clients => clients.Group("runtime-remote")).Returns(clientProxy.Object);
+
+        var hubContext = new Mock<IHubContext<RuntimeHub>>();
+        hubContext.Setup(context => context.Clients).Returns(hubClients.Object);
+
+        var controller = new SolutionController(cache, hubContext.Object)
         {
             ControllerContext = new ControllerContext
             {

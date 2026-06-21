@@ -1,7 +1,12 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
+using Common.Events;
 using Common.Runtime;
+
+using Interface;
+
+using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// Tab-aware update throttling for the MAUI mobile client.
@@ -11,6 +16,7 @@ public sealed partial class MauiViewModel
     private bool _heavyUpdatesPaused;
     private bool _signalBoxTabActive;
     private IReadOnlyList<SignalBoxElementRuntimeSnapshot>? _pendingSignalBoxElements;
+    private IReadOnlyList<SignalBoxElementRuntimeSnapshot>? _cachedRemoteSignalBoxElements;
 
     /// <summary>
     /// Suppresses non-critical snapshot work (e.g. signal-box list rebuild) while another tab is active.
@@ -29,9 +35,8 @@ public sealed partial class MauiViewModel
             return;
         }
 
-        var elements = _pendingSignalBoxElements ?? _mobaRuntime.Current.SignalBoxElements;
-        _pendingSignalBoxElements = null;
-        RefreshSignalBoxElements(elements);
+        ApplyBestAvailableSignalBoxElements();
+        RequestSignalBoxSnapshotRefreshIfEmpty();
     }
 
     /// <summary>
@@ -46,12 +51,163 @@ public sealed partial class MauiViewModel
             return;
         }
 
-        if (_heavyUpdatesPaused || _pendingSignalBoxElements is not { } pending)
+        if (!_heavyUpdatesPaused)
+        {
+            ApplyBestAvailableSignalBoxElements();
+        }
+
+        RequestSignalBoxSnapshotRefreshIfEmpty();
+    }
+
+    private void CacheRemoteSignalBoxElements(IReadOnlyList<SignalBoxElementRuntimeSnapshot> elements)
+    {
+        if (elements.Count == 0)
         {
             return;
         }
 
+        _cachedRemoteSignalBoxElements = elements;
+
+        if (_mobileSolutionStore != null)
+        {
+            RunInBackground(
+                _mobileSolutionStore.SaveSignalBoxElementsAsync(elements, _applicationLifetimeCts.Token),
+                "Persist mobile signal-box cache");
+        }
+    }
+
+    private void ClearCachedRemoteSignalBoxElements()
+    {
+        _cachedRemoteSignalBoxElements = null;
         _pendingSignalBoxElements = null;
-        RefreshSignalBoxElements(pending);
+    }
+
+    private void ClearSignalBoxElements()
+    {
+        if (SignalBoxElements.Count == 0)
+        {
+            return;
+        }
+
+        DetachAllSignalBoxHandlers();
+        SignalBoxElements.Clear();
+        OnPropertyChanged(nameof(HasSignalBoxElements));
+    }
+
+    private IReadOnlyList<SignalBoxElementRuntimeSnapshot> GetBestAvailableSignalBoxElements()
+    {
+        if (_mobileRuntimeCoordinator?.PreferRemoteRuntime == true
+            && _cachedRemoteSignalBoxElements is { Count: > 0 })
+        {
+            return _cachedRemoteSignalBoxElements;
+        }
+
+        if (_cachedRemoteSignalBoxElements is { Count: > 0 })
+        {
+            var local = _mobaRuntime.Current.SignalBoxElements;
+            if (local.Count > 0)
+            {
+                return SignalBoxSnapshotMerge.MergeAspectsFromCache(local, _cachedRemoteSignalBoxElements);
+            }
+
+            return _cachedRemoteSignalBoxElements;
+        }
+
+        return _mobaRuntime.Current.SignalBoxElements;
+    }
+
+    /// <summary>
+    /// Restores cached signal-box and locomotive fleet data from local storage at app startup.
+    /// </summary>
+    public void RestoreCachedMobileSnapshot(MobileSolutionCacheEntry entry)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+
+        RestoreCachedSignalBoxElements(entry.SignalBoxElements);
+        RestoreCachedLocomotiveFleet(entry.LocomotiveFleet);
+    }
+
+    /// <summary>
+    /// Restores cached signal-box elements loaded from local storage at app startup.
+    /// </summary>
+    public void RestoreCachedSignalBoxElements(IReadOnlyList<SignalBoxElementRuntimeSnapshot> elements)
+    {
+        if (elements.Count == 0)
+        {
+            return;
+        }
+
+        _cachedRemoteSignalBoxElements = elements;
+        RefreshSignalBoxElements(elements);
+    }
+
+    private void ApplyBestAvailableSignalBoxElements()
+    {
+        var elements = _pendingSignalBoxElements is { Count: > 0 } pending
+            ? pending
+            : GetBestAvailableSignalBoxElements();
+        _pendingSignalBoxElements = null;
+        RefreshSignalBoxElements(elements);
+    }
+
+    private void RequestSignalBoxSnapshotRefreshIfEmpty()
+    {
+        if (SignalBoxElements.Count == 0)
+        {
+            RequestSignalBoxSnapshotRefresh();
+        }
+    }
+
+    private bool HasAnySignalBoxElementsAvailable()
+    {
+        if (_cachedRemoteSignalBoxElements is { Count: > 0 })
+        {
+            return true;
+        }
+
+        return _mobaRuntime.Current.SignalBoxElements.Count > 0;
+    }
+
+    private void RequestSignalBoxSnapshotRefresh()
+    {
+        if (!IsMobaflowConnectionEnabled
+            || !IsRestApiReachable
+            || string.IsNullOrWhiteSpace(RestApiIpAddress)
+            || RestApiPort <= 0
+            || _runtimeHubRemoteClient == null)
+        {
+            return;
+        }
+
+        RunInBackground(RequestSignalBoxSnapshotRefreshAsync(), "Fetch runtime snapshot for SignalBox");
+    }
+
+    private async Task RequestSignalBoxSnapshotRefreshAsync()
+    {
+        try
+        {
+            await _runtimeHubRemoteClient!
+                .RequestLatestSnapshotAsync(_applicationLifetimeCts.Token)
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "On-demand runtime snapshot fetch failed");
+        }
+    }
+
+    private void OnSolutionSyncedForSignalBox(SolutionSyncedEvent _)
+    {
+        _uiDispatcher.InvokeOnUi(() =>
+        {
+            if (_mobileRuntimeCoordinator?.PreferRemoteRuntime == true)
+            {
+                // Solution sync updates locomotive metadata only; signal aspects stay on MOBAflow.
+                RequestSignalBoxSnapshotRefresh();
+                return;
+            }
+
+            ApplyBestAvailableSignalBoxElements();
+        });
     }
 }

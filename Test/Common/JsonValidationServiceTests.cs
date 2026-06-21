@@ -80,14 +80,23 @@ internal class JsonValidationServiceTests
     }
 
     [Test]
-    public void Validate_WithRequiredSchemaVersion_MissingVersion_ReturnsFailure()
+    public void Validate_WithRequiredSchemaVersion_MissingVersion_TreatsLegacyAsVersion1()
     {
         var json = """{"name":"Test","projects":[]}""";
 
         var result = JsonValidationService.Validate(json, 1);
 
-        Assert.That(result.IsValid, Is.False);
-        Assert.That(result.ErrorMessage, Does.Contain("schema version"));
+        Assert.That(result.IsValid, Is.True);
+    }
+
+    [Test]
+    public void Validate_WithRequiredSchemaVersion_LegacyZeroVersion_TreatsAsVersion1()
+    {
+        var json = """{"name":"Test","schemaVersion":0,"projects":[]}""";
+
+        var result = JsonValidationService.Validate(json, 1);
+
+        Assert.That(result.IsValid, Is.True);
     }
 
     [Test]

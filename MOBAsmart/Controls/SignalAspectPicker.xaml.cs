@@ -6,6 +6,8 @@ using Common.Multiplex;
 
 using Domain;
 
+using System.Windows.Input;
+
 /// <summary>
 /// Visual grid picker for railway signal aspects, matching the MOBAflow desktop experience.
 /// </summary>
@@ -17,9 +19,14 @@ public partial class SignalAspectPicker
         nameof(SelectedAspect),
         typeof(SignalAspect?),
         typeof(SignalAspectPicker),
-        SignalAspect.Hp0,
+        null,
         BindingMode.TwoWay,
         propertyChanged: OnPickerPropertyChanged);
+
+    public static readonly BindableProperty AspectSelectCommandProperty = BindableProperty.Create(
+        nameof(AspectSelectCommand),
+        typeof(ICommand),
+        typeof(SignalAspectPicker));
 
     public static readonly BindableProperty MultiplexerArticleNumberProperty = BindableProperty.Create(
         nameof(MultiplexerArticleNumber),
@@ -59,6 +66,12 @@ public partial class SignalAspectPicker
     {
         get => (SignalAspect?)GetValue(SelectedAspectProperty);
         set => SetValue(SelectedAspectProperty, value);
+    }
+
+    public ICommand? AspectSelectCommand
+    {
+        get => (ICommand?)GetValue(AspectSelectCommandProperty);
+        set => SetValue(AspectSelectCommandProperty, value);
     }
 
     public string MultiplexerArticleNumber
@@ -141,10 +154,18 @@ public partial class SignalAspectPicker
 
     private void OnAspectTapped(object? sender, TappedEventArgs e)
     {
-        if (e.Parameter is string aspectName && Enum.TryParse<SignalAspect>(aspectName, out var aspect))
+        if (e.Parameter is not string aspectName || !Enum.TryParse<SignalAspect>(aspectName, out var aspect))
         {
-            SelectedAspect = aspect;
+            return;
         }
+
+        if (AspectSelectCommand != null)
+        {
+            AspectSelectCommand.Execute(aspect);
+            return;
+        }
+
+        SelectedAspect = aspect;
     }
 
     private void UpdatePicker()

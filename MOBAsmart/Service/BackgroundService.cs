@@ -1,67 +1,60 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
 
-using Android.OS;
-
 using Platforms.Android.Services;
 
 using SharedUI.Interface;
 
 #if ANDROID
-using Android.Content;
+using global::Android.Content;
+using global::Android.OS;
 
 using Microsoft.Maui.ApplicationModel;
 #endif
 
 /// <summary>
-/// MAUI implementation of IBackgroundService for Android.
+/// MAUI implementation of <see cref="IBackgroundService"/> for Android.
 /// On other platforms, this is a no-op.
 /// </summary>
-public class BackgroundService : IBackgroundService
+public sealed class BackgroundService : IBackgroundService
 {
     private bool _isRunning;
 
     public bool IsRunning => _isRunning;
 
-    public Task StartAsync(string title, string message)
+    public async Task StartAsync(string title, string message)
     {
 #if ANDROID
-        var activity = Platform.CurrentActivity;
-        if (activity == null)
-        {
-            return Task.CompletedTask;
-        }
+        await MainThread.InvokeOnMainThreadAsync(MobiAndroidPermissions.EnsureForegroundServicePermissionsAsync)
+            .ConfigureAwait(false);
 
-        var intent = new Intent(activity, typeof(Z21BackgroundService));
+        var context = Platform.CurrentActivity ?? Platform.AppContext;
+        var intent = new Intent(context, typeof(Z21BackgroundService));
         intent.PutExtra("title", title);
         intent.PutExtra("message", message);
 
         if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
         {
-            activity.StartForegroundService(intent);
+            context.StartForegroundService(intent);
         }
         else
         {
-            activity.StartService(intent);
+            context.StartService(intent);
         }
 
         _isRunning = true;
+#else
+        await Task.CompletedTask.ConfigureAwait(false);
 #endif
-        return Task.CompletedTask;
     }
 
     public Task StopAsync()
     {
 #if ANDROID
-        var activity = Platform.CurrentActivity;
-        if (activity == null)
-        {
-            return Task.CompletedTask;
-        }
-
-        var intent = new Intent(activity, typeof(Z21BackgroundService));
+        var context = Platform.CurrentActivity ?? Platform.AppContext;
+        var intent = new Intent(context, typeof(Z21BackgroundService));
         intent.SetAction("STOP_SERVICE");
-        activity.StartService(intent);
+        context.StartService(intent);
 
         _isRunning = false;
 #endif

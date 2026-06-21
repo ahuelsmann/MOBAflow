@@ -21,38 +21,40 @@
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">26.0</SupportedOSPlatformVersion>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
-        <!-- PERFORMANCE: Skip analyzers in Debug builds -->
+        <!--PERFORMANCE: Skip analyzers in Debug builds-->
         <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
         <RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
-        <!-- PERFORMANCE: Skip XML doc generation -->
+        <!--PERFORMANCE: Skip XML doc generation-->
         <GenerateDocumentationFile>false</GenerateDocumentationFile>
-        <!-- ⚡ FAST DEPLOYMENT: Use shared runtime (faster deploy to physical devices) -->
-        <AndroidUseSharedRuntime>true</AndroidUseSharedRuntime>
+        <!-- Reliable deploy: embed assemblies in APK instead of fast-deploy push -->
+        <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
         <AndroidLinkMode>None</AndroidLinkMode>
-        <EmbedAssembliesIntoApk>false</EmbedAssembliesIntoApk>
-        <!-- ⚡ KEY CHANGE: Don't embed -->
+        <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
         <RunAOTCompilation>false</RunAOTCompilation>
         <AndroidEnableProguard>false</AndroidEnableProguard>
-        <!-- Build only for target device ABI (50% faster!) -->
+        <!--Build only for target device ABI (50% faster!)-->
         <RuntimeIdentifier>android-arm64</RuntimeIdentifier>
-        <!-- INCREMENTAL BUILD -->
+        <!--INCREMENTAL BUILD-->
         <AndroidUseManagedDesignTimeResourceGenerator>true</AndroidUseManagedDesignTimeResourceGenerator>
         <AndroidUseIncrementalNativeLibraryBuild>true</AndroidUseIncrementalNativeLibraryBuild>
-        <AndroidUseIncrementalManifestMerge>true</AndroidUseIncrementalManifestMerge>
-        <!-- Android Build Performance -->
+        <AndroidUseIncrementalManifestMerge>false</AndroidUseIncrementalManifestMerge>
+        <!--Android Build Performance-->
         <AndroidUseAapt2>true</AndroidUseAapt2>
         <AndroidCreatePackagePerAbi>false</AndroidCreatePackagePerAbi>
         <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
-        <!-- Faster Java/DEX compilation -->
+        <!--Faster Java/DEX compilation-->
         <AndroidDexTool>d8</AndroidDexTool>
         <AndroidEnableD8R8>true</AndroidEnableD8R8>
-        <!-- Skip resource shrinking in Debug -->
+        <!--Skip resource shrinking in Debug-->
         <AndroidEnableSGenConcurrent>true</AndroidEnableSGenConcurrent>
         <AndroidLinkSkip>true</AndroidLinkSkip>
-        <!-- Faster XAML compilation -->
+        <!--Faster XAML compilation-->
         <XamlCTask>Compile</XamlCTask>
-        <!-- JIT (no interpreter): faster F5 debugging on device. Hot Reload is intentionally disabled. -->
+        <!--JIT (no interpreter): faster F5 debugging on device. Hot Reload is intentionally disabled.-->
         <UseInterpreter>false</UseInterpreter>
+        <!-- VS Insiders deploy can pass assets/** to FindUnderPath and fail with MSB3541. -->
+        <EnableXamlHotReload>false</EnableXamlHotReload>
+        <XamlDebuggingInformation>false</XamlDebuggingInformation>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
         <!-- RELEASE OPTIMIZATIONS -->
@@ -78,6 +80,8 @@
         <MauiImage Include="Resources\Images\*" />
         <!-- logo_train.png is 1024x1024 (~1.4 MB) and froze first layout when decoded on the UI thread -->
         <MauiImage Remove="Resources\Images\logo_train.png" />
+        <!-- In-app branding logo (downsampled at build time; same asset as MauiIcon) -->
+        <MauiImage Include="Resources\AppIcon\modern_train_backup.png" Link="Resources\Images\app_logo.png" BaseSize="56,56" />
         <!-- Custom Fonts -->
         <MauiFont Include="Resources\Fonts\*" />
         <!-- Raw Assets -->
@@ -140,6 +144,9 @@
             <Generator>MSBuild:Compile</Generator>
         </MauiXaml>
         <MauiXaml Update="Controls\SignalAspectPicker.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </MauiXaml>
+        <MauiXaml Update="Controls\LocomotivePickerItemView.xaml">
             <Generator>MSBuild:Compile</Generator>
         </MauiXaml>
         <MauiXaml Update="View\ControlPage.xaml">

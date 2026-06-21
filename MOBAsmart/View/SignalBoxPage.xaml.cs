@@ -1,36 +1,61 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+
 namespace Moba.MAUI.View;
+
+
 
 using SharedUI.ViewModel;
 
+
+
 public partial class SignalBoxPage
+
 {
-    private readonly IServiceProvider _serviceProvider;
-    private MauiViewModel? _viewModel;
+
+    private readonly MauiViewModel _viewModel;
+
     private Task? _viewModelInitializationTask;
 
-    public SignalBoxPage(IServiceProvider serviceProvider)
+
+
+    public SignalBoxPage(MauiViewModel viewModel)
+
     {
-        _serviceProvider = serviceProvider;
+
+        _viewModel = viewModel;
+
+        BindingContext = _viewModel;
+
         InitializeComponent();
+
     }
 
-    protected override void OnAppearing()
-    {
-        base.OnAppearing();
-        ActivateTab();
-    }
+
 
     public void ActivateTab()
+
     {
-        _viewModel ??= _serviceProvider.GetRequiredService<MauiViewModel>();
-        BindingContext = _viewModel;
-        _viewModel.SetSignalBoxTabActive(true);
-        _viewModelInitializationTask ??= _viewModel.InitializeAsync();
+
+        Dispatcher.DispatchAsync(async () =>
+
+        {
+
+            _viewModelInitializationTask ??= _viewModel.InitializeAsync();
+
+            await _viewModelInitializationTask.ConfigureAwait(false);
+
+        });
+
     }
 
+
+
     public void DeactivateTab()
+
     {
-        _viewModel?.SetSignalBoxTabActive(false);
+
     }
+
 }
+
+

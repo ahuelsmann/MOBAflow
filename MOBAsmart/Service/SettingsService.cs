@@ -111,6 +111,7 @@ public class SettingsService : ISettingsService
                     _settings.RestApi.CurrentIpAddress = loadedRestApi.CurrentIpAddress ?? string.Empty;
                     _settings.RestApi.Port = loadedRestApi.Port;
                     _settings.RestApi.RecentIpAddresses = loadedRestApi.RecentIpAddresses;
+                    _settings.RestApi.IsConnectionEnabled = loadedRestApi.IsConnectionEnabled;
 
                     _isLoaded = true;
                 }

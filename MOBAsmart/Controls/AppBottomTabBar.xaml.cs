@@ -14,38 +14,12 @@ public partial class AppBottomTabBar
         CounterTabIndex,
         propertyChanged: OnSelectedTabChanged);
 
-    public static readonly BindableProperty IsSignalBoxAvailableProperty = BindableProperty.Create(
-        nameof(IsSignalBoxAvailable),
-        typeof(bool),
-        typeof(AppBottomTabBar),
-        false,
-        propertyChanged: OnAvailabilityChanged);
-
-    public static readonly BindableProperty IsControlAvailableProperty = BindableProperty.Create(
-        nameof(IsControlAvailable),
-        typeof(bool),
-        typeof(AppBottomTabBar),
-        false,
-        propertyChanged: OnAvailabilityChanged);
-
     public event EventHandler<int>? TabSelected;
 
     public int SelectedTab
     {
         get => (int)GetValue(SelectedTabProperty);
         set => SetValue(SelectedTabProperty, value);
-    }
-
-    public bool IsSignalBoxAvailable
-    {
-        get => (bool)GetValue(IsSignalBoxAvailableProperty);
-        set => SetValue(IsSignalBoxAvailableProperty, value);
-    }
-
-    public bool IsControlAvailable
-    {
-        get => (bool)GetValue(IsControlAvailableProperty);
-        set => SetValue(IsControlAvailableProperty, value);
     }
 
     public AppBottomTabBar()
@@ -87,14 +61,6 @@ public partial class AppBottomTabBar
         }
     }
 
-    private static void OnAvailabilityChanged(BindableObject bindable, object oldValue, object newValue)
-    {
-        if (bindable is AppBottomTabBar tabBar)
-        {
-            tabBar.UpdateTabVisualState(tabBar.SelectedTab);
-        }
-    }
-
     private void OnCounterTapped(object? sender, TappedEventArgs e) => SelectTab(CounterTabIndex);
 
     private void OnSignalBoxTapped(object? sender, TappedEventArgs e) => SelectTab(SignalBoxTabIndex);
@@ -114,15 +80,15 @@ public partial class AppBottomTabBar
 
     private void UpdateTabVisualState(int selectedTab)
     {
-        UpdateTabItem(CounterIndicator, CounterLabel, selectedTab == CounterTabIndex, isAvailable: true);
-        UpdateTabItem(SignalBoxIndicator, SignalBoxLabel, selectedTab == SignalBoxTabIndex, IsSignalBoxAvailable);
-        UpdateTabItem(ControlIndicator, ControlLabel, selectedTab == ControlTabIndex, IsControlAvailable);
+        UpdateTabItem(CounterIndicator, CounterLabel, selectedTab == CounterTabIndex);
+        UpdateTabItem(SignalBoxIndicator, SignalBoxLabel, selectedTab == SignalBoxTabIndex);
+        UpdateTabItem(ControlIndicator, ControlLabel, selectedTab == ControlTabIndex);
     }
 
-    private static void UpdateTabItem(BoxView indicator, Label label, bool isSelected, bool isAvailable)
+    private static void UpdateTabItem(BoxView indicator, Label label, bool isSelected)
     {
         indicator.IsVisible = isSelected;
-        label.Opacity = isAvailable ? 1.0 : 0.45;
+        label.Opacity = 1.0;
 
         if (Application.Current?.Resources.TryGetValue("TabBarSelectedForeground", out var selectedColor) == true
             && selectedColor is Color selected)

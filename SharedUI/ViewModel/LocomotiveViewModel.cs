@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
+using Common.Runtime;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -178,6 +180,24 @@ public sealed partial class LocomotiveViewModel : ObservableObject, IViewModelWr
     /// Gets a value indicating whether a photo is assigned to this locomotive.
     /// </summary>
     public bool HasPhoto => !string.IsNullOrWhiteSpace(Model.PhotoPath);
+
+    /// <summary>
+    /// Whether this locomotive is highlighted in the MOBAsmart picker list.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isPickerSelected;
+
+    /// <summary>
+    /// Applies fleet snapshot metadata without replacing the view-model instance (CollectionView-safe).
+    /// </summary>
+    public void ApplyFleetSnapshot(LocomotiveFleetSnapshot snapshot)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+
+        Name = snapshot.Name;
+        DigitalAddress = snapshot.DigitalAddress;
+        PhotoPath = snapshot.PhotoPath;
+    }
 
     [ObservableProperty]
     private IAsyncRelayCommand? _browsePhotoCommand;

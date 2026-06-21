@@ -15,4 +15,17 @@ public interface ISolutionRemoteLoader
     /// Fetches the solution from MOBApi when the remote snapshot is newer than the last applied one.
     /// </summary>
     Task SyncIfNeededAsync(string serverIp, int serverPort, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Fetches and applies the solution from MOBApi even when the remote timestamp has not changed.
+    /// </summary>
+    Task ForceSyncAsync(string serverIp, int serverPort, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Loads the last cached solution from local storage when MOBAflow is unavailable.
+    /// </summary>
+    /// <returns><c>true</c> when cached data was applied successfully.</returns>
+    Task<bool> TryLoadFromCacheAsync(
+        MobileSolutionCacheEntry? cachedEntry = null,
+        CancellationToken cancellationToken = default);
 }

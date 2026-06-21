@@ -10,40 +10,11 @@
     BackgroundColor="{DynamicResource SurfaceBackground}">
 
     <Grid RowDefinitions="*,Auto">
-        <Grid Grid.Row="0">
-            <ContentView x:Name="PageHost" />
-
-            <Border
-                x:Name="SessionLockOverlay"
-                BackgroundColor="#CC121212"
-                IsVisible="False"
-                StrokeThickness="0"
-                ZIndex="10">
-                <VerticalStackLayout
-                    Padding="24"
-                    HorizontalOptions="Center"
-                    Spacing="12"
-                    VerticalOptions="Center">
-                    <Label
-                        FontAttributes="Bold"
-                        FontSize="20"
-                        HorizontalTextAlignment="Center"
-                        Text="MOBAflow session unavailable"
-                        TextColor="{DynamicResource TextPrimary}" />
-                    <Label
-                        FontSize="14"
-                        HorizontalTextAlignment="Center"
-                        Text="{Binding SessionLockedHint}"
-                        TextColor="{DynamicResource TextSecondary}" />
-                </VerticalStackLayout>
-            </Border>
-        </Grid>
+        <Grid x:Name="TabContentGrid" Grid.Row="0" />
 
         <controls:AppBottomTabBar
             x:Name="BottomTabBar"
             Grid.Row="1"
-            IsControlAvailable="{Binding IsControlAvailable}"
-            IsSignalBoxAvailable="{Binding IsSignalBoxAvailable}"
             TabSelected="OnTabSelected" />
     </Grid>
 </ContentPage>

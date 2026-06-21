@@ -1,28 +1,25 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.MAUI.Service;
-
-using Common.Discovery;
+namespace Moba.Common.Discovery;
 
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 
-#if ANDROID
-using Android.App;
-using Android.Content;
-using Android.Net;
-#endif
-
 /// <summary>
 /// Resolves local IPv4 addresses used to derive /24 subnet scan lists (Z21 and MOBApi discovery).
 /// </summary>
-internal static class LanIpv4AddressHelper
+public static class LanIpv4AddressHelper
 {
     private static readonly HashSet<NetworkInterfaceType> AllowedInterfaceTypes =
     [
         NetworkInterfaceType.Wireless80211,
         NetworkInterfaceType.Ethernet
     ];
+
+    /// <summary>
+    /// Optional host-specific augmenter (e.g. Android ConnectivityManager fallback) registered at startup.
+    /// </summary>
+    public static Action<List<IPAddress>>? AugmentAddresses { get; set; }
 
     /// <summary>
     /// Gets candidate local IPv4 addresses whose /24 subnets should be scanned on the LAN.
@@ -52,9 +49,7 @@ internal static class LanIpv4AddressHelper
             // Ignore: e.g. permission or platform
         }
 
-#if ANDROID
-        TryAddAndroidActiveNetworkAddresses(privateAddresses);
-#endif
+        AugmentAddresses?.Invoke(privateAddresses);
 
         return privateAddresses;
     }
@@ -86,7 +81,6 @@ internal static class LanIpv4AddressHelper
             return false;
         }
 
-#if ANDROID
         if (ni.NetworkInterfaceType == NetworkInterfaceType.Loopback)
         {
             return false;
@@ -100,51 +94,7 @@ internal static class LanIpv4AddressHelper
             return false;
         }
 
-        return true;
-#else
-        return AllowedInterfaceTypes.Contains(ni.NetworkInterfaceType);
-#endif
+        return AllowedInterfaceTypes.Contains(ni.NetworkInterfaceType)
+               || OperatingSystem.IsAndroid();
     }
-
-#if ANDROID
-    private static void TryAddAndroidActiveNetworkAddresses(List<IPAddress> privateAddresses)
-    {
-        try
-        {
-            var connectivity = (ConnectivityManager?)Application.Context.GetSystemService(Context.ConnectivityService);
-            var activeNetwork = connectivity?.ActiveNetwork;
-            if (activeNetwork == null || connectivity == null)
-            {
-                return;
-            }
-
-            var linkProperties = connectivity.GetLinkProperties(activeNetwork);
-            if (linkProperties?.LinkAddresses == null)
-            {
-                return;
-            }
-
-            foreach (var linkAddress in linkProperties.LinkAddresses)
-            {
-                var javaAddress = linkAddress.Address;
-                if (javaAddress == null)
-                {
-                    continue;
-                }
-
-                var host = javaAddress.HostAddress;
-                if (string.IsNullOrWhiteSpace(host) || !IPAddress.TryParse(host, out var ip))
-                {
-                    continue;
-                }
-
-                TryAddPrivateAddress(privateAddresses, ip);
-            }
-        }
-        catch
-        {
-            // Ignore: ConnectivityManager may be unavailable on some devices.
-        }
-    }
-#endif
 }

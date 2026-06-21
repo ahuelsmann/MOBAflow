@@ -38,6 +38,8 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
 
     public event Func<bool, Task>? SessionStateChanged;
 
+    public event Func<DateTimeOffset, Task>? SolutionUpdated;
+
     public bool IsConnected => _hubConnection?.State == HubConnectionState.Connected;
 
     public bool HasActiveHost => _hasActiveHost;
@@ -75,6 +77,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
 
         _hubConnection.On<string>(RuntimeHubMethods.SnapshotUpdated, OnSnapshotUpdatedAsync);
         _hubConnection.On<bool>(RuntimeHubMethods.SessionStateChanged, OnSessionStateChangedAsync);
+        _hubConnection.On<string>(RuntimeHubMethods.SolutionUpdated, OnSolutionUpdatedAsync);
         _hubConnection.Reconnected += OnReconnectedAsync;
         _hubConnection.Closed += OnClosedAsync;
 
@@ -99,6 +102,9 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
             _logger?.LogDebug(ex, "RuntimeHub remote disconnect failed");
         }
     }
+
+    public Task RequestLatestSnapshotAsync(CancellationToken cancellationToken = default) =>
+        TryFetchInitialSnapshotAsync(cancellationToken);
 
     public async Task SetSignalAspectAsync(Guid signalId, SignalAspect aspect, CancellationToken cancellationToken = default)
     {
@@ -217,6 +223,19 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
         }
     }
 
+    private async Task OnSolutionUpdatedAsync(string updatedAtIso)
+    {
+        if (!DateTimeOffset.TryParse(updatedAtIso, out var updatedAt))
+        {
+            return;
+        }
+
+        if (SolutionUpdated != null)
+        {
+            await SolutionUpdated.Invoke(updatedAt).ConfigureAwait(false);
+        }
+    }
+
     private async Task RegisterRemoteAsync(CancellationToken cancellationToken)
     {
         if (_hubConnection == null || !IsConnected || string.IsNullOrWhiteSpace(_clientId))
@@ -235,6 +254,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
         try
         {
             await RegisterRemoteAsync(CancellationToken.None).ConfigureAwait(false);
+            await TryFetchInitialSnapshotAsync(CancellationToken.None).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

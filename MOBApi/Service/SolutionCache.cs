@@ -26,13 +26,13 @@ public sealed class SolutionCache : ISolutionCache
     }
 
     /// <inheritdoc />
-    public void Set(string json, string? sourcePath = null)
+    public void Set(string json, string? sourcePath = null, string? activeProjectName = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(json);
 
         lock (_lock)
         {
-            _entry = new SolutionCacheEntry(json, DateTimeOffset.UtcNow, sourcePath);
+            _entry = new SolutionCacheEntry(json, DateTimeOffset.UtcNow, sourcePath, activeProjectName);
         }
     }
 }

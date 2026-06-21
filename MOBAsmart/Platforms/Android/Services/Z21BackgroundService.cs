@@ -1,30 +1,25 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 #if ANDROID
 
-
-
-// ← Add MainActivity reference
-
 namespace Moba.MAUI.Platforms.Android.Services;
 
 using AndroidX.Core.App;
 
-using global::Android;
 using global::Android.App;
 using global::Android.Content;
 using global::Android.Content.PM;
 using global::Android.OS;
 
 /// <summary>
-/// Android Foreground Service to keep Z21 UDP connection alive in background.
+/// Android Foreground Service to keep MOBAsmart network connections alive in background.
 /// Shows persistent notification while running.
 /// </summary>
 [Service(ForegroundServiceType = ForegroundService.TypeDataSync)]
 public class Z21BackgroundService : Service
 {
     private const int NotificationId = 1001;
-    private const string ChannelId = "mobasmart_z21_channel";
-    private const string ChannelName = "Z21 Connection";
+    private const string ChannelId = "mobasmart_connection_channel";
+    private const string ChannelName = "MOBAsmart Connection";
 
     public override IBinder? OnBind(Intent? intent) => null;
 
@@ -38,7 +33,7 @@ public class Z21BackgroundService : Service
         }
 
         var title = intent?.GetStringExtra("title") ?? "MOBAsmart Active";
-        var message = intent?.GetStringExtra("message") ?? "Z21 connection maintained";
+        var message = intent?.GetStringExtra("message") ?? "Connection maintained";
 
         CreateNotificationChannel();
         var notification = BuildNotification(title, message);
@@ -53,7 +48,7 @@ public class Z21BackgroundService : Service
         {
             var channel = new NotificationChannel(ChannelId, ChannelName, NotificationImportance.Low)
             {
-                Description = "Keeps Z21 connection active in background"
+                Description = "Keeps MOBAsmart connections active in background"
             };
 
             var notificationManager = (NotificationManager?)GetSystemService(NotificationService);
@@ -83,10 +78,10 @@ public class Z21BackgroundService : Service
         var builder = new NotificationCompat.Builder(this, ChannelId)
             .SetContentTitle(title)
             ?.SetContentText(message)
-            ?.SetSmallIcon(Resource.Drawable.IcMenuInfoDetails)
+            ?.SetSmallIcon(global::Android.Resource.Drawable.IcMenuInfoDetails)
             ?.SetOngoing(true)
             ?.SetContentIntent(pendingIntent)
-            ?.AddAction(Resource.Drawable.IcMenuCloseClearCancel, "Stop", stopPendingIntent)
+            ?.AddAction(global::Android.Resource.Drawable.IcMenuCloseClearCancel, "Stop", stopPendingIntent)
             ?.SetPriority(NotificationCompat.PriorityLow);
 
         return builder?.Build();

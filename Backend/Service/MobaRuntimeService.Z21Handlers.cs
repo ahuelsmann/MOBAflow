@@ -23,6 +23,7 @@ public sealed partial class MobaRuntimeService
         {
             _hasSeenSuccessfulZ21Connection = true;
             _isManualDisconnectRequested = false;
+            _z21ConnectionFailureCount = 0;
         }
 
         _statusText = connected

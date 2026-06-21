@@ -412,8 +412,7 @@ Platform-specific UI control libraries for consistent, reusable components.
 
 ```text
 MOBAflow/Controls/       ← WinUI 3 XAML controls inside the desktop app
-    ↓
-MAUI.Controls/           ← MAUI XAML (Android Mobile)
+MOBAsmart/Controls/      ← MAUI XAML controls inside the Android app
     ↓
 SharedUI/                ← ViewModels (Platform-agnostic)
     ↓
@@ -425,7 +424,7 @@ Domain/                  ← Business Models
 | Project | Platform | Technology | Target |
 | --------- | ---------- | ------------ | -------- |
 | **MOBAflow/Controls** | Windows | WinUI 3 XAML | Desktop app control set |
-| **MAUI.Controls** | Android | .NET MAUI XAML | Mobile control library |
+| **MOBAsmart/Controls** | Android | .NET MAUI XAML | Mobile app control set |
 | **SharedUI** | Cross-platform | CommunityToolkit.Mvvm | Shared ViewModels |
 
 ### 🪟 Windows Controls in MOBAflow
@@ -446,14 +445,11 @@ Domain/                  ← Business Models
 - Use `ThemeResource` for colors/styles
 - Follow Fluent Design System
 
-### 📱 MAUI.Controls (Android)
+### 📱 MOBAsmart Controls (Android)
 
 ```xml
-<ContentPage xmlns:controls="clr-namespace:Moba.MAUI.Controls;assembly=MAUI.Controls">
-    <controls:TrainCard 
-        TrainName="ICE 1" 
-        Speed="120" 
-        IsForward="True" />
+<ContentPage xmlns:controls="clr-namespace:Moba.MAUI.Controls">
+    <controls:SpeedGaugeView />
 </ContentPage>
 ```
 
@@ -466,8 +462,8 @@ Domain/                  ← Business Models
 
 ### ⚖️ Platform Differences
 
-| Feature | MOBAflow/Controls | MAUI.Controls |
-| --------- | ---------------- | --------------- |
+| Feature | MOBAflow/Controls | MOBAsmart/Controls |
+| --------- | ---------------- | ------------------ |
 | Bindable Properties | `DependencyProperty` | `BindableProperty` |
 | Binding Syntax | `{x:Bind}` | `{Binding}` |
 | Base Class | `UserControl` | `ContentView` |

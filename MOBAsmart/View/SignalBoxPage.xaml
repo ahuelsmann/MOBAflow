@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage
+<ContentView
     x:Class="Moba.MAUI.View.SignalBoxPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:controls="clr-namespace:Moba.MAUI.Controls"
     xmlns:vm="clr-namespace:Moba.SharedUI.ViewModel;assembly=SharedUI"
-    Title="SignalBox"
     x:DataType="vm:MauiViewModel">
 
     <Grid Padding="16" RowDefinitions="Auto,*" RowSpacing="12">
@@ -98,6 +97,7 @@
                                     Text="SELECT SIGNAL ASPECT"
                                     TextColor="{DynamicResource TextSecondary}" />
                                 <controls:SignalAspectPicker
+                                    AspectSelectCommand="{Binding SelectSignalAspectCommand}"
                                     BottomSpeedValue="{Binding BottomSpeedIndicator}"
                                     MultiplexerArticleNumber="{Binding MultiplexerArticleNumber}"
                                     SelectedAspect="{Binding SelectedSignalAspect, Mode=TwoWay}"
@@ -118,4 +118,4 @@
             </CollectionView.ItemTemplate>
         </CollectionView>
     </Grid>
-</ContentPage>
+</ContentView>

@@ -8,6 +8,8 @@ using Android.Net.Wifi;
 using Common.Configuration;
 using Common.Discovery;
 
+using SharedUI.Interface;
+
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
@@ -15,9 +17,9 @@ using System.Text;
 
 /// <summary>
 /// Discovers the MOBAflow REST API (MOBApi) on the LAN for MOBAsmart.
-/// Order: quick nearby HTTP probe, UDP multicast/broadcast, then full /24 HTTP scan.
+/// Order: recent/nearby HTTP probe, UDP multicast/broadcast, anchor subnet HTTP, then full /24 HTTP scan.
 /// </summary>
-public class RestApiDiscoveryService
+public class RestApiDiscoveryService : IRestDiscoveryService
 {
     private const int MulticastReceiveTimeoutMs = 2500;
     private const int SubnetProbeBatchSize = 16;
@@ -48,55 +50,14 @@ public class RestApiDiscoveryService
         DiscoverServerAsync(subnetAnchorIp, cancellationToken);
 
     /// <summary>
-    /// Attempts quick HTTP probe, UDP discovery, then scans private /24 subnets for MOBApi health.
+    /// Fast discovery path: recent IPs and UDP only (no full subnet scan).
     /// </summary>
-    /// <param name="subnetAnchorIp">Optional Z21 or other LAN hint; its /24 is scanned first.</param>
-    public async Task<(string? ip, int? port)> DiscoverServerAsync(
+    public async Task<(string? ip, int? port)> DiscoverServerFastAsync(
         string? subnetAnchorIp = null,
         CancellationToken cancellationToken = default)
     {
         var restPort = _appSettings.RestApi.Port > 0 ? _appSettings.RestApi.Port : 5001;
         var localAddresses = LanIpv4AddressHelper.GetCandidateLocalIpv4Addresses();
-
-        if (!string.IsNullOrWhiteSpace(subnetAnchorIp)
-            && IPAddress.TryParse(subnetAnchorIp.Trim(), out var anchor))
-        {
-            try
-            {
-                var anchoredTask = TryDiscoverByAnchorSubnetAsync(anchor, localAddresses, restPort, cancellationToken);
-                var udpTask = TryDiscoverByUdpAsync(cancellationToken);
-                await Task.WhenAll(anchoredTask, udpTask).ConfigureAwait(false);
-
-                var anchored = await anchoredTask.ConfigureAwait(false);
-                if (anchored.ip != null && anchored.port.HasValue)
-                {
-                    return anchored;
-                }
-
-                var udp = await udpTask.ConfigureAwait(false);
-                if (udp.ip != null && udp.port.HasValue)
-                {
-                    return udp;
-                }
-            }
-            catch (Exception)
-            {
-            }
-        }
-        else
-        {
-            try
-            {
-                var udp = await TryDiscoverByUdpAsync(cancellationToken).ConfigureAwait(false);
-                if (udp.ip != null && udp.port.HasValue)
-                {
-                    return udp;
-                }
-            }
-            catch (Exception)
-            {
-            }
-        }
 
         try
         {
@@ -109,6 +70,87 @@ public class RestApiDiscoveryService
         }
         catch (Exception)
         {
+        }
+
+        try
+        {
+            var udp = await TryDiscoverByUdpAsync(cancellationToken).ConfigureAwait(false);
+            if (udp.ip != null && udp.port.HasValue)
+            {
+                return udp;
+            }
+        }
+        catch (Exception)
+        {
+        }
+
+        if (!string.IsNullOrWhiteSpace(subnetAnchorIp)
+            && IPAddress.TryParse(subnetAnchorIp.Trim(), out var anchor))
+        {
+            try
+            {
+                return await TryDiscoverByAnchorSubnetAsync(anchor, localAddresses, restPort, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        return (null, null);
+    }
+
+    /// <summary>
+    /// Attempts recent HTTP probe, UDP discovery, anchor subnet scan, then full /24 HTTP scan.
+    /// </summary>
+    /// <param name="subnetAnchorIp">Optional Z21 or other LAN hint; its /24 is scanned after UDP.</param>
+    public async Task<(string? ip, int? port)> DiscoverServerAsync(
+        string? subnetAnchorIp = null,
+        CancellationToken cancellationToken = default)
+    {
+        var restPort = _appSettings.RestApi.Port > 0 ? _appSettings.RestApi.Port : 5001;
+        var localAddresses = LanIpv4AddressHelper.GetCandidateLocalIpv4Addresses();
+
+        try
+        {
+            var quick = await TryDiscoverByQuickHttpProbeAsync(localAddresses, restPort, cancellationToken)
+                .ConfigureAwait(false);
+            if (quick.ip != null && quick.port.HasValue)
+            {
+                return quick;
+            }
+        }
+        catch (Exception)
+        {
+        }
+
+        try
+        {
+            var udp = await TryDiscoverByUdpAsync(cancellationToken).ConfigureAwait(false);
+            if (udp.ip != null && udp.port.HasValue)
+            {
+                return udp;
+            }
+        }
+        catch (Exception)
+        {
+        }
+
+        if (!string.IsNullOrWhiteSpace(subnetAnchorIp)
+            && IPAddress.TryParse(subnetAnchorIp.Trim(), out var anchor))
+        {
+            try
+            {
+                var anchored = await TryDiscoverByAnchorSubnetAsync(anchor, localAddresses, restPort, cancellationToken)
+                    .ConfigureAwait(false);
+                if (anchored.ip != null && anchored.port.HasValue)
+                {
+                    return anchored;
+                }
+            }
+            catch (Exception)
+            {
+            }
         }
 
         try

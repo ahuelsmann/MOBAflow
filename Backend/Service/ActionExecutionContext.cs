@@ -90,15 +90,7 @@ public sealed class ActionExecutionContextState
 /// <summary>
 /// Creates isolated action execution contexts for individual workflow runs.
 /// </summary>
-public interface IActionExecutionContextFactory
-{
-    ActionExecutionContext Create(ActionExecutionContextState? state = null);
-}
-
-/// <summary>
-/// Copies stable action dependencies into a fresh context for each workflow run.
-/// </summary>
-public sealed class ActionExecutionContextFactory(ActionExecutionContext services) : IActionExecutionContextFactory
+public sealed class ActionExecutionContextFactory(ActionExecutionContext services)
 {
     public ActionExecutionContext Create(ActionExecutionContextState? state = null)
     {

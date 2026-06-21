@@ -17,6 +17,7 @@ internal static class MobaRuntimeSnapshotBuilder
     {
         var journeyStates = new Dictionary<Guid, JourneyRuntimeSnapshot>();
         var signalBoxElements = new List<SignalBoxElementRuntimeSnapshot>();
+        var locomotiveFleet = new List<LocomotiveFleetSnapshot>();
 
         if (activeProjectContext != null)
         {
@@ -74,6 +75,18 @@ internal static class MobaRuntimeSnapshotBuilder
                         break;
                 }
             }
+
+            foreach (var locomotive in activeProjectContext.ActiveProject.Locomotives
+                         .OrderBy(l => l.Name, StringComparer.CurrentCultureIgnoreCase))
+            {
+                locomotiveFleet.Add(new LocomotiveFleetSnapshot
+                {
+                    LocomotiveId = locomotive.Id,
+                    Name = locomotive.Name,
+                    DigitalAddress = locomotive.DigitalAddress,
+                    PhotoPath = locomotive.PhotoPath
+                });
+            }
         }
 
         return new MobaRuntimeSnapshot
@@ -101,6 +114,7 @@ internal static class MobaRuntimeSnapshotBuilder
             IsOperatorAckRequired = telemetry.IsOperatorAckRequired,
             JourneyStates = journeyStates,
             LocomotiveStates = new Dictionary<int, LocomotiveRuntimeSnapshot>(telemetry.LocomotiveStates),
+            LocomotiveFleet = locomotiveFleet,
             SignalBoxElements = signalBoxElements,
             CreatedAt = DateTimeOffset.Now
         };

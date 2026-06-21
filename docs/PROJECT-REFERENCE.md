@@ -21,12 +21,10 @@ MOBAflow/
 ├─ Common/                Configuration, events, validation, discovery, plugins, path helpers
 ├─ Backend/               Z21 protocol, runtime service, workflow execution, journey managers
 ├─ SharedUI/              Cross-platform ViewModels, shell abstractions, UI services
-├─ SharedUI/              Cross-platform ViewModels
 ├─ Sound/                 Speech engines, sound player abstractions, audio resources
 ├─ MOBAflow/              WinUI 3 desktop app, pages, controls, converters, appsettings, sample JSON
 ├─ MOBApi/                ASP.NET Core REST API and SignalR hub
-├─ MOBAsmart/             Android MAUI app and mobile services
-├─ MAUI.Controls/         Reusable MAUI controls
+├─ MOBAsmart/             Android MAUI app, mobile controls, and mobile services
 ├─ MOBAdisplay/           Display rendering, frame transport, ESP32 firmware prototype
 ├─ TrackLibrary.Base/     Track piece abstractions and shared geometry contracts
 ├─ TrackLibrary.PikoA/    Piko A-Gleis track library and snap helpers

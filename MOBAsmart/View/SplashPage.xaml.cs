@@ -81,8 +81,13 @@ public partial class SplashPage
 
 
                 // AppTabHostPage only: skip AppShell + CounterPage until the first tab is shown.
+                var mainPage = App.CreateMainPage();
+                window.Page = mainPage;
 
-                window.Page = App.CreateMainPage();
+                if (mainPage is AppTabHostPage tabHost)
+                {
+                    tabHost.EnsureInitialTabLoaded();
+                }
 
             });
 

@@ -603,10 +603,21 @@ no telemetry.
 
 #### Does the app work in the background?
 
-❌ **No.** Android typically closes the UDP connection after
-~10 minutes in the background.
-**Solution:** keep the app in the foreground (see
-[Display management](#-display-management-long-sessions)).
+✅ **Yes, while connected.** MOBAsmart starts an Android **foreground
+service** with a persistent notification when a Z21 or MOBAflow session
+is active. This keeps UDP and SignalR connections alive when you switch
+to another app.
+
+**Requirements:**
+
+- Grant **notification permission** on Android 13+ when prompted.
+- On some devices, disable battery optimization for MOBAsmart when asked.
+- Aggressive OEM power managers may still stop the app; keep MOBAsmart in
+  the foreground as a fallback (see
+  [Display management](#-display-management-long-sessions)).
+
+**Note:** Higher battery use while the foreground service is running.
+Use **Stop** in the notification to end background operation.
 
 #### Can I monitor multiple Z21 units at once?
 

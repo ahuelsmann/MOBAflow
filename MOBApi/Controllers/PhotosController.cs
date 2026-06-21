@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MOBApi.Controllers;
 
+using Common.Path;
+
 using Hubs;
 
 using Microsoft.AspNetCore.Mvc;
@@ -30,6 +32,45 @@ public class PhotosController : ControllerBase
     public IActionResult Health()
     {
         return Ok(new { service = "MOBAflow MOBAapi", status = "healthy", version = "1.0.0" });
+    }
+
+    /// <summary>
+    /// Serves a photo file by relative storage path (e.g. photos/locomotives/{id}.jpg).
+    /// </summary>
+    [HttpGet("file")]
+    public IActionResult GetFile([FromQuery] string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return BadRequest(new { error = "Path is required" });
+        }
+
+        var normalized = PhotoPathHelper.NormalizeStoredRelativePath(path);
+        if (string.IsNullOrWhiteSpace(normalized))
+        {
+            return BadRequest(new { error = "Invalid path" });
+        }
+
+        var baseDir = Path.GetFullPath(GetPhotoBaseDir());
+        var fullPath = Path.GetFullPath(PhotoPathHelper.ToFullPath(baseDir, normalized));
+        if (!fullPath.StartsWith(baseDir, StringComparison.OrdinalIgnoreCase)
+            || !System.IO.File.Exists(fullPath))
+        {
+            return NotFound();
+        }
+
+        var extension = Path.GetExtension(fullPath).ToLowerInvariant();
+        var contentType = extension switch
+        {
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".bmp" => "image/bmp",
+            ".gif" => "image/gif",
+            ".webp" => "image/webp",
+            _ => "application/octet-stream"
+        };
+
+        return PhysicalFile(fullPath, contentType);
     }
 
     /// <summary>

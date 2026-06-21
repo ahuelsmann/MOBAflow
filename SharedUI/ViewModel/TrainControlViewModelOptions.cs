@@ -12,4 +12,14 @@ public sealed class TrainControlViewModelOptions
     /// When true, locomotive state is driven by MOBAflow snapshots via MOBApi.
     /// </summary>
     public bool UseRemoteRuntimeSnapshots { get; init; }
+
+    /// <summary>
+    /// When true (MOBAsmart), subscribes to local and remote snapshots and picks the active source dynamically.
+    /// </summary>
+    public bool HybridRuntimeSnapshots { get; init; }
+
+    /// <summary>
+    /// When true (MOBAsmart), project locomotives are preferred over manual presets on load and in the UI.
+    /// </summary>
+    public bool PreferProjectLocomotives { get; init; }
 }

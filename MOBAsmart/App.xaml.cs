@@ -15,9 +15,40 @@ public partial class App
     {
         _services = services;
 
+        RegisterCrashLogging();
+
         // Load App.xaml merged resource dictionaries first, then apply runtime theme colors.
         InitializeComponent();
         LoadThemeResources(isDark: true);
+    }
+
+    private static void RegisterCrashLogging()
+    {
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+        {
+            WriteCrashLog(args.ExceptionObject?.ToString() ?? "UnhandledException without details.");
+        };
+
+#if ANDROID
+        Android.Runtime.AndroidEnvironment.UnhandledExceptionRaiser += (_, args) =>
+        {
+            WriteCrashLog(args.Exception?.ToString() ?? "Android unhandled exception.");
+            args.Handled = false;
+        };
+#endif
+    }
+
+    private static void WriteCrashLog(string message)
+    {
+        try
+        {
+            var path = Path.Combine(FileSystem.AppDataDirectory, "last-crash.txt");
+            File.WriteAllText(path, $"{DateTimeOffset.Now:O}{Environment.NewLine}{message}");
+        }
+        catch
+        {
+            // Best-effort only.
+        }
     }
 
     /// <summary>
@@ -166,6 +197,24 @@ public partial class App
     /// Gets the service provider for dependency injection.
     /// </summary>
     public IServiceProvider Services => _services;
+
+    /// <inheritdoc />
+    protected override void OnSleep()
+    {
+        base.OnSleep();
+    }
+
+    /// <inheritdoc />
+    protected override void OnResume()
+    {
+        base.OnResume();
+
+        var viewModel = _services.GetService<MauiViewModel>();
+        if (viewModel != null)
+        {
+            viewModel.OnApplicationResumedAsync().Observe();
+        }
+    }
 
     /// <summary>
     /// Called when the window is being destroyed (app closing).

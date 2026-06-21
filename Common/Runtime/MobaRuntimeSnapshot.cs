@@ -132,6 +132,12 @@ public sealed class MobaRuntimeSnapshot
         = new Dictionary<int, LocomotiveRuntimeSnapshot>();
 
     /// <summary>
+    /// Gets the locomotive fleet from the active runtime project.
+    /// </summary>
+    public IReadOnlyList<LocomotiveFleetSnapshot> LocomotiveFleet { get; init; }
+        = [];
+
+    /// <summary>
     /// Gets the signal-box control elements from the active runtime project.
     /// </summary>
     public IReadOnlyList<SignalBoxElementRuntimeSnapshot> SignalBoxElements { get; init; }

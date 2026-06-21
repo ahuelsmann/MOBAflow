@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Border
+    x:Class="Moba.MAUI.Controls.LocomotivePickerItemView"
+    x:Name="Root"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:vm="clr-namespace:Moba.SharedUI.ViewModel;assembly=SharedUI"
+    Margin="0,0,0,8"
+    Padding="10"
+    StrokeShape="RoundRectangle 12"
+    StrokeThickness="1">
+    <Border.GestureRecognizers>
+        <TapGestureRecognizer Command="{Binding Source={x:Reference Root}, Path=SelectCommand}" CommandParameter="{Binding Source={x:Reference Root}, Path=Locomotive}" />
+    </Border.GestureRecognizers>
+    <Border.Triggers>
+        <DataTrigger
+            Binding="{Binding Source={x:Reference Root}, Path=IsSelected}"
+            TargetType="Border"
+            Value="True">
+            <Setter Property="BackgroundColor" Value="{DynamicResource RailwayPrimary}" />
+            <Setter Property="Stroke" Value="{DynamicResource RailwayPrimary}" />
+        </DataTrigger>
+        <DataTrigger
+            Binding="{Binding Source={x:Reference Root}, Path=IsSelected}"
+            TargetType="Border"
+            Value="False">
+            <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceDark}" />
+            <Setter Property="Stroke" Value="{DynamicResource BorderColor}" />
+        </DataTrigger>
+    </Border.Triggers>
+    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+        <Border
+            BackgroundColor="{DynamicResource Surface}"
+            HeightRequest="56"
+            Stroke="{DynamicResource BorderColor}"
+            StrokeShape="RoundRectangle 8"
+            StrokeThickness="1"
+            VerticalOptions="Center"
+            WidthRequest="56">
+            <Grid>
+                <Image
+                    Aspect="AspectFill"
+                    IsVisible="{Binding Source={x:Reference Root}, Path=Locomotive.HasPhoto}"
+                    Source="{Binding Source={x:Reference Root}, Path=PhotoSource}" />
+                <Label
+                    HorizontalOptions="Center"
+                    IsVisible="{Binding Source={x:Reference Root}, Path=Locomotive.HasPhoto, Converter={toolkit:InvertedBoolConverter}}"
+                    Style="{DynamicResource BodySmall}"
+                    Text="No photo"
+                    VerticalOptions="Center" />
+            </Grid>
+        </Border>
+        <VerticalStackLayout
+            Grid.Column="1"
+            Spacing="2"
+            VerticalOptions="Center">
+            <Label
+                FontAttributes="Bold"
+                FontSize="16"
+                LineBreakMode="TailTruncation"
+                MaxLines="2"
+                Text="{Binding Source={x:Reference Root}, Path=Locomotive.Name}">
+                <Label.Triggers>
+                    <DataTrigger
+                        Binding="{Binding Source={x:Reference Root}, Path=IsSelected}"
+                        TargetType="Label"
+                        Value="True">
+                        <Setter Property="TextColor" Value="{DynamicResource TextOnPrimary}" />
+                    </DataTrigger>
+                    <DataTrigger
+                        Binding="{Binding Source={x:Reference Root}, Path=IsSelected}"
+                        TargetType="Label"
+                        Value="False">
+                        <Setter Property="TextColor" Value="{DynamicResource TextPrimary}" />
+                    </DataTrigger>
+                </Label.Triggers>
+            </Label>
+            <Label
+                Style="{DynamicResource BodySmall}"
+                Text="{Binding Source={x:Reference Root}, Path=Locomotive.DigitalAddress, StringFormat='Digital address {0}'}">
+                <Label.Triggers>
+                    <DataTrigger
+                        Binding="{Binding Source={x:Reference Root}, Path=IsSelected}"
+                        TargetType="Label"
+                        Value="True">
+                        <Setter Property="TextColor" Value="{DynamicResource TextOnPrimary}" />
+                    </DataTrigger>
+                    <DataTrigger
+                        Binding="{Binding Source={x:Reference Root}, Path=IsSelected}"
+                        TargetType="Label"
+                        Value="False">
+                        <Setter Property="TextColor" Value="{DynamicResource TextSecondary}" />
+                    </DataTrigger>
+                </Label.Triggers>
+            </Label>
+        </VerticalStackLayout>
+    </Grid>
+</Border>

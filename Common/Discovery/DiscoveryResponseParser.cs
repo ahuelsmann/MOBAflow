@@ -13,7 +13,7 @@ public static class DiscoveryResponseParser
     /// <summary>Expected prefix of the discovery response.</summary>
     public const string ResponsePrefix = "MOBAFLOW_REST_API";
 
-    /// <summary>UDP port for MOBAflow REST API discovery (multicast).</summary>
+    /// <summary>UDP port for MOBAflow REST API discovery (multicast). Not the Z21 command-station port.</summary>
     public const int MulticastPort = 21106;
 
     /// <summary>Multicast group address for LAN discovery.</summary>

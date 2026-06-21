@@ -50,6 +50,12 @@ internal abstract class ViewModelTestBase
         UiDispatcherMock
             .Setup(d => d.InvokeOnUi(It.IsAny<Action>()))
             .Callback<Action>(action => action());
+        UiDispatcherMock
+            .Setup(d => d.InvokeOnUiHighPriority(It.IsAny<Action>()))
+            .Callback<Action>(action => action());
+        UiDispatcherMock
+            .Setup(d => d.InvokeOnUiLowPriority(It.IsAny<Action>()))
+            .Callback<Action>(action => action());
 
         // Configure default IoService behavior (returns empty solution)
         IoServiceMock

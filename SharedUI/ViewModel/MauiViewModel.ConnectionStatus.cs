@@ -25,8 +25,14 @@ public sealed partial class MauiViewModel
 
     partial void OnIsConnectedChanged(bool value)
     {
+        if (value)
+        {
+            _shouldReconnectLocalZ21OnResume = true;
+        }
+
         NotifyConnectionIndicatorProperties();
-        if (value && !IsRestApiReachable && !string.IsNullOrWhiteSpace(Z21IpAddress))
+        UpdateRuntimeCoordinatorState();
+        if (value && IsMobaflowConnectionEnabled && !IsRestApiReachable && !string.IsNullOrWhiteSpace(Z21IpAddress))
         {
             RunInBackground(DiscoverRestApiWithAnchorAsync(Z21IpAddress.Trim()), "REST discovery after Z21 connect");
         }
@@ -38,6 +44,7 @@ public sealed partial class MauiViewModel
         OnPropertyChanged(nameof(RestApiStatusSemanticDescription));
         OnPropertyChanged(nameof(RestApiIndicatorResourceKey));
         NotifySessionAvailabilityChanged();
+        UpdateRuntimeCoordinatorState();
     }
 
     partial void OnIsTrackPowerOnChanged(bool value)

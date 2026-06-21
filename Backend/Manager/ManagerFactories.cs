@@ -45,25 +45,10 @@ public interface IPlatformManager : IDisposable
     void ResetAll();
 }
 
-public interface IJourneyManagerFactory
-{
-    IJourneyManager Create(Project project, ActionExecutionContext executionContext);
-}
-
-public interface IStationManagerFactory
-{
-    IStationManager Create(Project project, ActionExecutionContext executionContext);
-}
-
-public interface IPlatformManagerFactory
-{
-    IPlatformManager Create(Project project, Station station, ActionExecutionContext? executionContext = null);
-}
-
 public sealed class JourneyManagerFactory(
     IZ21 z21,
     IWorkflowService workflowService,
-    ILogger<JourneyManager>? logger = null) : IJourneyManagerFactory
+    ILogger<JourneyManager>? logger = null)
 {
     public IJourneyManager Create(Project project, ActionExecutionContext executionContext) =>
         new JourneyManager(z21, project, workflowService, executionContext, logger);
@@ -74,7 +59,7 @@ public sealed class StationManagerFactory(
     IWorkflowService workflowService,
     ILogger<StationManager>? logger = null,
     ILoggerFactory? loggerFactory = null,
-    IPlatformManagerFactory? platformManagerFactory = null) : IStationManagerFactory
+    PlatformManagerFactory? platformManagerFactory = null)
 {
     public IStationManager Create(Project project, ActionExecutionContext executionContext) =>
         new StationManager(z21, project, workflowService, executionContext, logger, loggerFactory, platformManagerFactory);
@@ -83,7 +68,7 @@ public sealed class StationManagerFactory(
 public sealed class PlatformManagerFactory(
     IZ21 z21,
     IWorkflowService workflowService,
-    ILogger<PlatformManager>? logger = null) : IPlatformManagerFactory
+    ILogger<PlatformManager>? logger = null)
 {
     public IPlatformManager Create(Project project, Station station, ActionExecutionContext? executionContext = null) =>
         new PlatformManager(z21, project, station, workflowService, executionContext, logger);

@@ -20,7 +20,7 @@ public sealed class PlatformManager : IPlatformManager
     private readonly Station _station;
     private readonly Project _project;
     private readonly IWorkflowService _workflowService;
-    private readonly IActionExecutionContextFactory _executionContextFactory;
+    private readonly ActionExecutionContextFactory _executionContextFactory;
     private readonly ILogger<PlatformManager> _logger;
     private readonly Dictionary<Guid, PlatformSessionState> _states = [];
     private bool _disposed;

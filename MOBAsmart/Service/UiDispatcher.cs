@@ -8,7 +8,14 @@ public class UiDispatcher : IUiDispatcher
     public void InvokeOnUi(Action action)
     {
 #if ANDROID || IOS || MACCATALYST
-        MainThread.BeginInvokeOnMainThread(action);
+        if (MainThread.IsMainThread)
+        {
+            action();
+        }
+        else
+        {
+            MainThread.BeginInvokeOnMainThread(action);
+        }
 #else
         action();
 #endif
@@ -21,7 +28,12 @@ public class UiDispatcher : IUiDispatcher
 
     public void InvokeOnUiLowPriority(Action action)
     {
-        InvokeOnUi(action);
+#if ANDROID || IOS || MACCATALYST
+        // Always queue so connect/snapshot bursts cannot block the current UI frame (critical under debugger).
+        MainThread.BeginInvokeOnMainThread(action);
+#else
+        action();
+#endif
     }
 
     public async Task InvokeOnUiAsync(Func<Task> asyncAction)

@@ -15,21 +15,16 @@ public interface IRestDiscoveryService
     /// <returns>
     /// A task that returns the discovered IP address and port, or <c>null</c> values when discovery fails.
     /// </returns>
-    Task<(string? ip, int? port)> DiscoverServerAsync(string? subnetAnchorIp = null);
-}
+    Task<(string? ip, int? port)> DiscoverServerAsync(
+        string? subnetAnchorIp = null,
+        CancellationToken cancellationToken = default);
 
-/// <summary>
-/// Discovers a Z21 command station on the local network (e.g. by scanning the subnet on port 21105).
-/// </summary>
-public interface IZ21DiscoveryService
-{
     /// <summary>
-    /// Attempts to discover a Z21 on the local network.
+    /// Fast discovery without full /24 HTTP scan (recent IPs, UDP, optional anchor subnet).
     /// </summary>
-    /// <param name="preferredIpAddress">Optional saved or MOBAflow-provided IP to probe before scanning the subnet.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The IP address of the first responding Z21, or null if none found.</returns>
-    Task<string?> DiscoverZ21Async(string? preferredIpAddress = null, CancellationToken cancellationToken = default);
+    Task<(string? ip, int? port)> DiscoverServerFastAsync(
+        string? subnetAnchorIp = null,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -120,18 +115,16 @@ public sealed class NullRuntimeSettingsClient : IRuntimeSettingsClient
 public sealed class NullRestDiscoveryService : IRestDiscoveryService
 {
     /// <inheritdoc />
-    public Task<(string? ip, int? port)> DiscoverServerAsync(string? subnetAnchorIp = null)
+    public Task<(string? ip, int? port)> DiscoverServerAsync(
+        string? subnetAnchorIp = null,
+        CancellationToken cancellationToken = default)
         => Task.FromResult<(string?, int?)>((null, null));
-}
 
-/// <summary>
-/// Null-object implementation of <see cref="IZ21DiscoveryService"/> used when Z21 discovery is not available.
-/// </summary>
-public sealed class NullZ21DiscoveryService : IZ21DiscoveryService
-{
     /// <inheritdoc />
-    public Task<string?> DiscoverZ21Async(string? preferredIpAddress = null, CancellationToken cancellationToken = default)
-        => Task.FromResult<string?>(null);
+    public Task<(string? ip, int? port)> DiscoverServerFastAsync(
+        string? subnetAnchorIp = null,
+        CancellationToken cancellationToken = default)
+        => Task.FromResult<(string?, int?)>((null, null));
 }
 
 /// <summary>

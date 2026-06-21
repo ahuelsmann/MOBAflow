@@ -16,15 +16,18 @@ using System.Net;
 public sealed class RuntimeHub : Hub
 {
     private readonly IRuntimeSnapshotCache _snapshotCache;
+    private readonly ISolutionCache _solutionCache;
     private readonly IRuntimeHostRegistry _hostRegistry;
     private readonly IRuntimeCommandQueue _commandQueue;
 
     public RuntimeHub(
         IRuntimeSnapshotCache snapshotCache,
+        ISolutionCache solutionCache,
         IRuntimeHostRegistry hostRegistry,
         IRuntimeCommandQueue commandQueue)
     {
         _snapshotCache = snapshotCache;
+        _solutionCache = solutionCache;
         _hostRegistry = hostRegistry;
         _commandQueue = commandQueue;
     }
@@ -53,6 +56,13 @@ public sealed class RuntimeHub : Hub
         if (_snapshotCache.TryGet(out var entry))
         {
             await Clients.Caller.SendAsync(RuntimeHubMethods.SnapshotUpdated, entry.Json).ConfigureAwait(false);
+        }
+
+        if (_solutionCache.TryGet(out var solutionEntry) && !string.IsNullOrWhiteSpace(solutionEntry.SourcePath))
+        {
+            await Clients.Caller
+                .SendAsync(RuntimeHubMethods.SolutionUpdated, solutionEntry.UpdatedAt.ToString("O"))
+                .ConfigureAwait(false);
         }
 
         await Clients.Caller.SendAsync(RuntimeHubMethods.SessionStateChanged, BuildSessionOperational()).ConfigureAwait(false);

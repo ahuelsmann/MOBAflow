@@ -19,6 +19,11 @@ public class RestApiSettings
     public int Port { get; set; } = 5001;
 
     /// <summary>
+    /// When false, MOBAsmart does not discover or connect to MOBAflow (user toggle).
+    /// </summary>
+    public bool IsConnectionEnabled { get; set; }
+
+    /// <summary>
     /// List of recently used IP addresses.
     /// </summary>
     public List<string> RecentIpAddresses { get; set; } = [];

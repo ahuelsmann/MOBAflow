@@ -3,10 +3,12 @@
 namespace Moba.Backend;
 
 using Common.Configuration;
+using Common.Discovery;
 using Common.Events;
 using Common.IO;
 using Common.Multiplex;
 using Data;
+using Discovery;
 using Interface;
 using Manager;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,14 +35,8 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton<IMultiplexerProvider, DefaultMultiplexerProvider>();
         services.TryAddSingleton<Z21Monitor>();
         services.TryAddSingleton<IUdpClientWrapper, UdpWrapper>();
+        services.TryAddSingleton<IZ21DiscoveryService, Z21DiscoveryService>();
         services.TryAddSingleton<IZ21, Z21>();
-        services.TryAddSingleton<IZ21Connection>(sp => sp.GetRequiredService<IZ21>());
-        services.TryAddSingleton<ILocoControl>(sp => sp.GetRequiredService<IZ21>());
-        services.TryAddSingleton<IAccessoryControl>(sp => sp.GetRequiredService<IZ21>());
-        services.TryAddSingleton<IZ21Diagnostics>(sp => sp.GetRequiredService<IZ21>());
-        services.TryAddSingleton<IPlatformManagerFactory, PlatformManagerFactory>();
-        services.TryAddSingleton<IStationManagerFactory, StationManagerFactory>();
-        services.TryAddSingleton<IJourneyManagerFactory, JourneyManagerFactory>();
         services.TryAddSingleton<IProjectValidator, ProjectValidator>();
         services.TryAddSingleton<AnnouncementService>();
         services.TryAddSingleton<IAnnouncementService>(sp => sp.GetRequiredService<AnnouncementService>());
@@ -58,20 +54,15 @@ public static class MobaBackendServiceCollectionExtensions
             SpeakerEngine = sp.GetService<ISpeakerEngine>(),
             SoundPlayer = sp.GetService<ISoundPlayer>()
         });
-        services.TryAddSingleton<IActionExecutionContextFactory, ActionExecutionContextFactory>();
+        services.TryAddSingleton<ActionExecutionContextFactory>();
         services.TryAddSingleton<IMobaRuntime>(sp => new MobaRuntimeService(
             sp.GetRequiredService<IZ21>(),
             sp.GetRequiredService<IWorkflowService>(),
-            sp.GetRequiredService<IActionExecutionContextFactory>(),
+            sp.GetRequiredService<ActionExecutionContextFactory>(),
             sp.GetRequiredService<AppSettings>(),
             sp.GetRequiredService<ILogger<MobaRuntimeService>>(),
             sp.GetService<IEventBus>(),
-            sp.GetRequiredService<IJourneyManagerFactory>()));
-        services.TryAddSingleton<IRuntimeSnapshotProvider>(sp => sp.GetRequiredService<IMobaRuntime>());
-        services.TryAddSingleton<IConnectionRuntime>(sp => sp.GetRequiredService<IMobaRuntime>());
-        services.TryAddSingleton<ILocomotiveRuntime>(sp => sp.GetRequiredService<IMobaRuntime>());
-        services.TryAddSingleton<ISignalTurnoutRuntime>(sp => sp.GetRequiredService<IMobaRuntime>());
-        services.TryAddSingleton<ITrafficMonitor>(sp => sp.GetRequiredService<IMobaRuntime>());
+            z21Discovery: sp.GetRequiredService<IZ21DiscoveryService>()));
 
         return services;
     }

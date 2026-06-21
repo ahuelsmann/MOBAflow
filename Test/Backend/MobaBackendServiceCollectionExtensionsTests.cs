@@ -40,21 +40,6 @@ internal sealed class MobaBackendServiceCollectionExtensionsTests
     }
 
     [Test]
-    public void AddMobaBackendServices_RegistersZ21CapabilityAliasesToSameInstance()
-    {
-        var provider = BuildServiceProvider();
-        var z21 = provider.GetRequiredService<IZ21>();
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(provider.GetRequiredService<IZ21Connection>(), Is.SameAs(z21));
-            Assert.That(provider.GetRequiredService<ILocoControl>(), Is.SameAs(z21));
-            Assert.That(provider.GetRequiredService<IAccessoryControl>(), Is.SameAs(z21));
-            Assert.That(provider.GetRequiredService<IZ21Diagnostics>(), Is.SameAs(z21));
-        });
-    }
-
-    [Test]
     public void AddMobaBackendServices_RegistersAllWorkflowActionHandlers()
     {
         var handlers = BuildServiceProvider().GetServices<IWorkflowActionHandler>().ToList();

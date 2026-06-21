@@ -35,6 +35,7 @@ public static class Z21Protocol
 
     /// <summary>
     /// Alternative UDP port for Z21 communication.
+    /// Note: UDP port 21106 is also used by MOBAflow REST API discovery (different protocol).
     /// </summary>
     public const int AlternativePort = 21106;
 

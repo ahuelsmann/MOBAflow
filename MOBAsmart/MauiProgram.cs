@@ -11,6 +11,9 @@ public static class MauiProgram
 {
     public static MauiApp CreateMauiApp()
     {
+#if ANDROID
+        LanIpv4AddressHelperAndroidBootstrap.Register();
+#endif
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()
@@ -32,7 +35,7 @@ public static class MauiProgram
 
         var app = builder.Build();
         app.Services.GetRequiredService<MobiStartupService>().Initialize();
-        MobiDiContainerValidator.Validate(app.Services);
+        MobiDiContainerValidator.ValidateCoreServices(app.Services);
         return app;
     }
 }
