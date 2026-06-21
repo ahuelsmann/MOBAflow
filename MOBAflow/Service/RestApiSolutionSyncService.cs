@@ -67,6 +67,31 @@ public sealed class RestApiSolutionSyncService : IDisposable
     private string? _lastPushedZ21Ip;
 
     private bool _disposed;
+    private readonly object _metricsLock = new();
+    private DateTimeOffset? _lastSolutionPushAt;
+    private bool _lastSolutionPushSucceeded;
+
+    public DateTimeOffset? LastSolutionPushAt
+    {
+        get
+        {
+            lock (_metricsLock)
+            {
+                return _lastSolutionPushAt;
+            }
+        }
+    }
+
+    public bool LastSolutionPushSucceeded
+    {
+        get
+        {
+            lock (_metricsLock)
+            {
+                return _lastSolutionPushSucceeded;
+            }
+        }
+    }
 
 
 
@@ -329,6 +354,8 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
 
 
+        var succeeded = false;
+
         try
 
         {
@@ -338,6 +365,8 @@ public sealed class RestApiSolutionSyncService : IDisposable
             if (response.IsSuccessStatusCode)
 
             {
+
+                succeeded = true;
 
                 _logger.LogDebug("Solution pushed to MOBApi on port {Port}", port);
 
@@ -374,6 +403,30 @@ public sealed class RestApiSolutionSyncService : IDisposable
         {
 
             _logger.LogDebug(ex, "Solution push to MOBApi timed out on port {Port}", port);
+
+        }
+
+        finally
+
+        {
+
+            RecordSolutionPush(succeeded);
+
+        }
+
+    }
+
+    private void RecordSolutionPush(bool succeeded)
+
+    {
+
+        lock (_metricsLock)
+
+        {
+
+            _lastSolutionPushAt = DateTimeOffset.UtcNow;
+
+            _lastSolutionPushSucceeded = succeeded;
 
         }
 

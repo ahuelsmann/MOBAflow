@@ -31,23 +31,15 @@ public partial class Z21
         if (speed < 0 ||
             speed > 126)
             throw new ArgumentOutOfRangeException(nameof(speed), "Speed must be between 0 and 126 (0 = stop)");
-        //if (function < 0 || function > 28)
-        //    throw new ArgumentOutOfRangeException(nameof(function), "Function number must be between 0 and 28");
 
-        // Compute reversed speed value (128-step range)
-        var rv = (byte)(speed == 0 ? 0 : 255 - speed);
+        var packet = Z21Command.BuildSetLocoDrive(address, speed, forward);
 
-        // Extract 14-bit address
-        var adrLsb = (byte)(address & 0x7F);
-        var adrMsb = (byte)((address >> 7) & 0x3F);
-
-        // Compute XOR checksum
-        byte[] packet = { 0xE4, 0x13, adrMsb, adrLsb, rv, 0 };
-        var xor = packet.Aggregate((byte)0, (current, b) => (byte)(current ^ b));
-        packet[packet.Length - 1] = xor;
-
-        _logger?.LogInformation("SetLocoDrive: Addr={Address}, Speed={Speed}, RV={RV}, Packet={Packet}",
-            address, speed, rv, Z21Protocol.ToHex(packet));
+        _logger?.LogInformation(
+            "SetLocoDrive: Addr={Address}, Speed={Speed}, Forward={Forward}, Packet={Packet}",
+            address,
+            speed,
+            forward,
+            Z21Protocol.ToHex(packet));
 
         await SendAsync(packet, cancellationToken).ConfigureAwait(false);
     }

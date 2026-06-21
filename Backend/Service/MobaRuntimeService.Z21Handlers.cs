@@ -95,15 +95,30 @@ public sealed partial class MobaRuntimeService
     {
         ArgumentNullException.ThrowIfNull(locoInfo);
 
+        _locomotiveStates.TryGetValue(locoInfo.Address, out var existingState);
+        var preserveCommandedFunctions = ShouldPreserveCommandedFunctions(locoInfo.Address);
+
         _locomotiveStates[locoInfo.Address] = new LocomotiveRuntimeSnapshot
         {
             Address = locoInfo.Address,
             Speed = locoInfo.Speed,
             IsForward = locoInfo.IsForward,
-            Functions = locoInfo.Functions
+            Functions = preserveCommandedFunctions
+                ? existingState?.Functions ?? locoInfo.Functions
+                : locoInfo.Functions
         };
 
         PublishSnapshot();
+    }
+
+    private bool ShouldPreserveCommandedFunctions(int address)
+    {
+        if (!_lastLocomotiveFunctionCommandAt.TryGetValue(address, out var commandedAt))
+        {
+            return false;
+        }
+
+        return DateTimeOffset.UtcNow - commandedAt.ToUniversalTime() <= LocomotiveFunctionCommandGracePeriod;
     }
 
     private void OnZ21FeedbackReceived(FeedbackResult feedback)

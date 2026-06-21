@@ -192,6 +192,8 @@ public partial class MainWindowViewModel
             SelectedJourney = null;
             SelectedTrain = null;
         }
+
+        UpdateSolutionLoadedStatus();
     }
 
     #endregion

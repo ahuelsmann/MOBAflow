@@ -40,6 +40,8 @@ public partial class CounterPage
 
     private bool _isViewModelHooked;
 
+    private bool _isSyncingMobaflowSwitch;
+
 
 
     public CounterPage(
@@ -166,7 +168,7 @@ public partial class CounterPage
 
         UpdateThemeIcon(isLightTheme);
 
-
+        SyncMobaflowSwitch();
 
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
 
@@ -209,6 +211,40 @@ public partial class CounterPage
                 StopPulseAnimation();
 
             }
+
+        }
+
+        else if (e.PropertyName == nameof(MauiViewModel.IsMobaflowConnectionEnabled))
+
+        {
+
+            SyncMobaflowSwitch();
+
+        }
+
+    }
+
+
+
+    private void SyncMobaflowSwitch()
+
+    {
+
+        _isSyncingMobaflowSwitch = true;
+
+        try
+
+        {
+
+            ConnectionHeader.MobaflowSwitchControl.IsToggled = _viewModel.IsMobaflowConnectionEnabled;
+
+        }
+
+        finally
+
+        {
+
+            _isSyncingMobaflowSwitch = false;
 
         }
 
@@ -256,6 +292,14 @@ public partial class CounterPage
 
         _ = sender;
 
+        if (_isSyncingMobaflowSwitch)
+
+        {
+
+            return;
+
+        }
+
         HandleMobaflowSwitchToggledAsync(e.Value).Observe();
 
     }
@@ -266,19 +310,25 @@ public partial class CounterPage
 
     {
 
-        if (isEnabled == _viewModel.IsMobaflowConnectionEnabled)
+        PerformHapticFeedback();
+
+        if (isEnabled != _viewModel.IsMobaflowConnectionEnabled)
 
         {
+
+            await _viewModel.SetMobaflowConnectionCommand.ExecuteAsync(isEnabled);
 
             return;
 
         }
 
+        if (isEnabled)
 
+        {
 
-        PerformHapticFeedback();
+            await _viewModel.RetryMobaflowConnectionAsync();
 
-        await _viewModel.SetMobaflowConnectionCommand.ExecuteAsync(isEnabled);
+        }
 
     }
 

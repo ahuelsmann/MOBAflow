@@ -146,6 +146,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         _eventBusSubscriptions.Add(eventBus.Subscribe<FeedbackReceivedEvent>(e => UpdateTrackStatistics((uint)e.InPort)));
         _eventBusSubscriptions.Add(eventBus.Subscribe<PostStartupStatusEvent>(e => UpdatePostStartupInitializationStatus(e.IsRunning, e.StatusText)));
         _eventBusSubscriptions.Add(eventBus.Subscribe<RestApiStatusChangedEvent>(OnRestApiStatusChanged));
+        _eventBusSubscriptions.Add(eventBus.Subscribe<MobaflowSyncDiagnosticsChangedEvent>(OnMobaflowSyncDiagnosticsChanged));
         _eventBusSubscriptions.Add(eventBus.Subscribe<PhotoAssignedEvent>(OnPhotoAssigned));
 
         InitializeTrafficMonitor();
@@ -153,6 +154,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         InitializeStatisticsFromFeedbackPoints();
 
         InitializeFeatureToggleItems();
+
+        UpdateSolutionLoadedStatus();
     }
     #endregion
 

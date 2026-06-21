@@ -96,5 +96,55 @@ public static class SignalBoxSnapshotMerge
 
     }
 
+    /// <summary>
+    /// Merges <paramref name="incoming"/> over <paramref name="previous"/> by element id.
+    /// Incoming aspect and switch values win when present; elements only in <paramref name="previous"/> are kept.
+    /// </summary>
+    public static IReadOnlyList<SignalBoxElementRuntimeSnapshot> MergeIncomingOverPrevious(
+        IReadOnlyList<SignalBoxElementRuntimeSnapshot> incoming,
+        IReadOnlyList<SignalBoxElementRuntimeSnapshot>? previous)
+    {
+        ArgumentNullException.ThrowIfNull(incoming);
+
+        if (incoming.Count == 0)
+        {
+            return previous ?? incoming;
+        }
+
+        if (previous is not { Count: > 0 })
+        {
+            return incoming;
+        }
+
+        var previousById = previous.ToDictionary(element => element.ElementId);
+        var incomingIds = incoming.Select(element => element.ElementId).ToHashSet();
+        var merged = new List<SignalBoxElementRuntimeSnapshot>(incoming.Count + previous.Count);
+
+        foreach (var element in incoming)
+        {
+            if (!previousById.TryGetValue(element.ElementId, out var previousElement))
+            {
+                merged.Add(element);
+                continue;
+            }
+
+            merged.Add(element with
+            {
+                SignalAspect = element.SignalAspect ?? previousElement.SignalAspect,
+                SwitchPosition = element.SwitchPosition ?? previousElement.SwitchPosition
+            });
+        }
+
+        foreach (var previousElement in previous)
+        {
+            if (!incomingIds.Contains(previousElement.ElementId))
+            {
+                merged.Add(previousElement);
+            }
+        }
+
+        return merged;
+    }
+
 }
 

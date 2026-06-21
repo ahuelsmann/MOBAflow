@@ -128,6 +128,27 @@ public sealed partial class MauiViewModel
     }
 
     /// <summary>
+    /// Applies restored mobile cache data to bound UI collections, bypassing tab-visibility gates
+    /// used during normal runtime streaming.
+    /// </summary>
+    public void ApplyRestoredMobileCacheToUi()
+    {
+        var signalBoxElements = GetBestAvailableSignalBoxElements();
+        if (signalBoxElements.Count > 0)
+        {
+            _pendingSignalBoxElements = null;
+            RefreshSignalBoxElements(signalBoxElements, forceApply: true);
+        }
+
+        var fleet = GetBestAvailableLocomotiveFleet();
+        if (fleet.Count > 0)
+        {
+            _pendingLocomotiveFleet = null;
+            _eventBus.Publish(new LocomotiveFleetUpdatedEvent(fleet));
+        }
+    }
+
+    /// <summary>
     /// Restores cached signal-box elements loaded from local storage at app startup.
     /// </summary>
     public void RestoreCachedSignalBoxElements(IReadOnlyList<SignalBoxElementRuntimeSnapshot> elements)

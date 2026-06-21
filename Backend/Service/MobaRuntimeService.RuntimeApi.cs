@@ -158,6 +158,28 @@ public sealed partial class MobaRuntimeService
     public async Task SetLocomotiveFunctionAsync(int address, int functionIndex, bool isOn, CancellationToken cancellationToken = default)
     {
         await _z21.SetLocoFunctionAsync(address, functionIndex, isOn, cancellationToken).ConfigureAwait(false);
+
+        var existingState = _locomotiveStates.TryGetValue(address, out var current) ? current : null;
+        var functions = existingState?.Functions ?? 0;
+        if (isOn)
+        {
+            functions |= 1u << functionIndex;
+        }
+        else
+        {
+            functions &= ~(1u << functionIndex);
+        }
+
+        _locomotiveStates[address] = new Common.Runtime.LocomotiveRuntimeSnapshot
+        {
+            Address = address,
+            Speed = existingState?.Speed ?? 0,
+            IsForward = existingState?.IsForward ?? true,
+            Functions = functions
+        };
+
+        MarkLocomotiveFunctionCommand(address);
+        PublishSnapshot();
     }
 
     /// <inheritdoc />
@@ -176,7 +198,13 @@ public sealed partial class MobaRuntimeService
             Functions = 0
         };
 
+        MarkLocomotiveFunctionCommand(address);
         PublishSnapshot();
+    }
+
+    private void MarkLocomotiveFunctionCommand(int address)
+    {
+        _lastLocomotiveFunctionCommandAt[address] = DateTimeOffset.UtcNow;
     }
 
     /// <inheritdoc />
@@ -269,9 +297,13 @@ public sealed partial class MobaRuntimeService
             return;
         }
 
+        ApplySignalAspectToRuntime(signal);
+
         if (!_z21.IsConnected)
         {
             _logger.LogWarning("Signal '{SignalName}': Z21 not connected; skipping command send.", signal.Name);
+            _statusText = $"Signal '{signal.Name}': {signal.SignalAspect} (Z21 offline)";
+            PublishSnapshot();
             return;
         }
 
@@ -302,18 +334,13 @@ public sealed partial class MobaRuntimeService
                     cancellationToken)
                 .ConfigureAwait(false);
 
-            if (_activeProjectContext?.ActiveProject.SignalBoxPlan?.FindElement(signal.Id) is SbSignal runtimeSignal
-                && !ReferenceEquals(runtimeSignal, signal))
-            {
-                runtimeSignal.SignalAspect = signal.SignalAspect;
-            }
-
             _statusText = $"Signal '{signal.Name}' set: DCC address {command.DccAddress}, output {command.Output}, activate={command.Activate}";
             PublishSnapshot();
         }
         catch (ArgumentException ex)
         {
             _logger.LogWarning(ex, "Signal '{SignalName}': Multiplexer command could not be resolved.", signal.Name);
+            PublishSnapshot();
         }
         catch (Exception ex)
         {
@@ -321,6 +348,14 @@ public sealed partial class MobaRuntimeService
             PublishSnapshot();
             _logger.LogError(ex, "Failed to set signal aspect for '{SignalName}'", signal.Name);
             throw;
+        }
+    }
+
+    private void ApplySignalAspectToRuntime(SbSignal signal)
+    {
+        if (_activeProjectContext?.ActiveProject.SignalBoxPlan?.FindElement(signal.Id) is SbSignal runtimeSignal)
+        {
+            runtimeSignal.SignalAspect = signal.SignalAspect;
         }
     }
 
@@ -337,7 +372,6 @@ public sealed partial class MobaRuntimeService
 
         signal.SignalAspect = signalAspect;
         await SetSignalAspectAsync(signal, cancellationToken).ConfigureAwait(false);
-        PublishSnapshot();
     }
 
     /// <inheritdoc />

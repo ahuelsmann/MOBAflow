@@ -81,17 +81,15 @@
 
                     <Label Style="{DynamicResource TitleSmall}" Text="Direction" />
 
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                        <Button
-                            Grid.Column="0"
-                            Command="{Binding SetDirectionCommand}"
-                            CommandParameter="True"
-                            Text="Forward" />
-                        <Button
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <Label
+                            Style="{DynamicResource BodySmall}"
+                            Text="Forward when enabled, backward when disabled"
+                            VerticalOptions="Center" />
+                        <Switch
                             Grid.Column="1"
-                            Command="{Binding SetDirectionCommand}"
-                            CommandParameter="False"
-                            Text="Backward" />
+                            IsToggled="{Binding IsForward, Mode=TwoWay}"
+                            VerticalOptions="Center" />
                     </Grid>
                 </VerticalStackLayout>
             </Border>
@@ -171,29 +169,14 @@
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="vm:FunctionButtonViewModel">
                         <Button
+                            BackgroundColor="{Binding IsOn, Converter={toolkit:BoolToObjectConverter TrueObject={DynamicResource RailwayAccent}, FalseObject={DynamicResource SurfaceDark}}}"
                             Command="{StaticResource ToggleFunctionCommand}"
                             CommandParameter="{Binding Index}"
                             CornerRadius="12"
                             FontSize="12"
                             HeightRequest="52"
-                            Text="{Binding Label}">
-                            <Button.Triggers>
-                                <DataTrigger
-                                    Binding="{Binding IsOn}"
-                                    TargetType="Button"
-                                    Value="True">
-                                    <Setter Property="BackgroundColor" Value="{DynamicResource RailwayAccent}" />
-                                    <Setter Property="TextColor" Value="{DynamicResource TextOnPrimary}" />
-                                </DataTrigger>
-                                <DataTrigger
-                                    Binding="{Binding IsOn}"
-                                    TargetType="Button"
-                                    Value="False">
-                                    <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceDark}" />
-                                    <Setter Property="TextColor" Value="{DynamicResource TextPrimary}" />
-                                </DataTrigger>
-                            </Button.Triggers>
-                        </Button>
+                            Text="{Binding Label}"
+                            TextColor="{Binding IsOn, Converter={toolkit:BoolToObjectConverter TrueObject={DynamicResource TextOnPrimary}, FalseObject={DynamicResource TextPrimary}}}" />
                     </DataTemplate>
                 </BindableLayout.ItemTemplate>
             </VerticalStackLayout>

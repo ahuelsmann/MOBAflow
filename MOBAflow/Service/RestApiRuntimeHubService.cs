@@ -33,6 +33,55 @@ public sealed class RestApiRuntimeHubService : IDisposable
     private CancellationTokenSource? _debounceCts;
     private MobaRuntimeSnapshot? _pendingSnapshot;
     private bool _disposed;
+    private readonly object _metricsLock = new();
+    private DateTimeOffset? _lastHubPushAt;
+    private bool _lastHubPushSucceeded;
+    private DateTimeOffset? _lastRestCachePushAt;
+    private bool _lastRestCachePushSucceeded;
+
+    public DateTimeOffset? LastHubPushAt
+    {
+        get
+        {
+            lock (_metricsLock)
+            {
+                return _lastHubPushAt;
+            }
+        }
+    }
+
+    public bool LastHubPushSucceeded
+    {
+        get
+        {
+            lock (_metricsLock)
+            {
+                return _lastHubPushSucceeded;
+            }
+        }
+    }
+
+    public DateTimeOffset? LastRestCachePushAt
+    {
+        get
+        {
+            lock (_metricsLock)
+            {
+                return _lastRestCachePushAt;
+            }
+        }
+    }
+
+    public bool LastRestCachePushSucceeded
+    {
+        get
+        {
+            lock (_metricsLock)
+            {
+                return _lastRestCachePushSucceeded;
+            }
+        }
+    }
 
     public RestApiRuntimeHubService(
         IRuntimeHubHostClient runtimeHubHostClient,
@@ -140,11 +189,13 @@ public sealed class RestApiRuntimeHubService : IDisposable
 
     private async Task PushSnapshotImmediateAsync(MobaRuntimeSnapshot snapshot, CancellationToken cancellationToken)
     {
+        var hubSucceeded = false;
         if (_runtimeHubHostClient.IsConnected)
         {
             try
             {
                 await _runtimeHubHostClient.PushSnapshotAsync(snapshot, cancellationToken).ConfigureAwait(false);
+                hubSucceeded = true;
             }
             catch (Exception ex)
             {
@@ -152,10 +203,13 @@ public sealed class RestApiRuntimeHubService : IDisposable
             }
         }
 
-        await PushSnapshotRestFallbackAsync(snapshot, cancellationToken).ConfigureAwait(false);
+        RecordHubPush(hubSucceeded);
+
+        var restSucceeded = await PushSnapshotRestFallbackAsync(snapshot, cancellationToken).ConfigureAwait(false);
+        RecordRestCachePush(restSucceeded);
     }
 
-    private async Task PushSnapshotRestFallbackAsync(MobaRuntimeSnapshot snapshot, CancellationToken cancellationToken)
+    private async Task<bool> PushSnapshotRestFallbackAsync(MobaRuntimeSnapshot snapshot, CancellationToken cancellationToken)
     {
         var port = _appSettings.RestApi.Port > 0 ? _appSettings.RestApi.Port : 5001;
         var json = RuntimeJsonSerializer.Serialize(snapshot);
@@ -166,6 +220,27 @@ public sealed class RestApiRuntimeHubService : IDisposable
         if (!response.IsSuccessStatusCode)
         {
             _logger.LogDebug("Runtime REST snapshot push returned {StatusCode}", (int)response.StatusCode);
+            return false;
+        }
+
+        return true;
+    }
+
+    private void RecordHubPush(bool succeeded)
+    {
+        lock (_metricsLock)
+        {
+            _lastHubPushAt = DateTimeOffset.UtcNow;
+            _lastHubPushSucceeded = succeeded;
+        }
+    }
+
+    private void RecordRestCachePush(bool succeeded)
+    {
+        lock (_metricsLock)
+        {
+            _lastRestCachePushAt = DateTimeOffset.UtcNow;
+            _lastRestCachePushSucceeded = succeeded;
         }
     }
 }

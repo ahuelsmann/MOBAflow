@@ -116,5 +116,45 @@ internal sealed class SignalBoxSnapshotMergeTests
 
     }
 
+    [Test]
+    public void MergeIncomingOverPrevious_PrefersIncomingAspect_AndKeepsMissingElements()
+    {
+        var sharedId = Guid.NewGuid();
+        var previousOnlyId = Guid.NewGuid();
+        var incoming = new List<SignalBoxElementRuntimeSnapshot>
+        {
+            new()
+            {
+                ElementId = sharedId,
+                Kind = SignalBoxElementKind.Signal,
+                SignalAspect = SignalAspect.Ks2
+            }
+        };
+        var previous = new List<SignalBoxElementRuntimeSnapshot>
+        {
+            new()
+            {
+                ElementId = sharedId,
+                Kind = SignalBoxElementKind.Signal,
+                SignalAspect = SignalAspect.Hp0
+            },
+            new()
+            {
+                ElementId = previousOnlyId,
+                Kind = SignalBoxElementKind.Signal,
+                SignalAspect = SignalAspect.Ks1
+            }
+        };
+
+        var merged = SignalBoxSnapshotMerge.MergeIncomingOverPrevious(incoming, previous);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(merged, Has.Count.EqualTo(2));
+            Assert.That(merged.Single(element => element.ElementId == sharedId).SignalAspect, Is.EqualTo(SignalAspect.Ks2));
+            Assert.That(merged.Single(element => element.ElementId == previousOnlyId).SignalAspect, Is.EqualTo(SignalAspect.Ks1));
+        });
+    }
+
 }
 

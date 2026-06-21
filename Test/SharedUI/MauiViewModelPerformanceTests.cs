@@ -16,6 +16,7 @@ using Moba.Common.Events;
 using Moba.Common.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
+using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 
 using Moq;
@@ -165,6 +166,46 @@ internal sealed class MauiViewModelPerformanceTests
         PublishSignalBoxSnapshot(eventBus, elementId, aspect: SignalAspect.Ks2);
 
         Assert.That(viewModel.SignalBoxElements[0].SelectedSignalAspect, Is.EqualTo(SignalAspect.Ks2));
+    }
+
+    [Test]
+    public void RemoteSnapshot_AppliesMobaflowAspect_WhenPendingDiffersAndRemoteSessionActive()
+    {
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var hubMock = new Mock<IRuntimeHubRemoteClient>();
+        var coordinator = new MobileRuntimeCoordinator(new Mock<IMobaRuntime>().Object, hubMock.Object);
+
+        var viewModel = CreateViewModel(
+            eventBus,
+            runtimeHubRemoteClient: hubMock.Object,
+            runtimeCommandGateway: coordinator,
+            mobileRuntimeCoordinator: coordinator);
+        viewModel.IsMobaflowConnectionEnabled = true;
+        viewModel.IsRestApiReachable = true;
+        viewModel.SetRuntimeHubConnected(true);
+        viewModel.SetSignalBoxTabActive(true);
+        var elementId = Guid.NewGuid();
+
+        PublishRemoteSignalBoxSnapshot(eventBus, elementId, aspect: SignalAspect.Hp0);
+        viewModel.SignalBoxElements[0].SelectSignalAspectCommand.Execute(SignalAspect.Ks2);
+        PublishRemoteSignalBoxSnapshot(eventBus, elementId, aspect: SignalAspect.Ks1);
+
+        Assert.That(viewModel.SignalBoxElements[0].SelectedSignalAspect, Is.EqualTo(SignalAspect.Ks1));
+    }
+
+    [Test]
+    public void RemoteSnapshot_UpdatesExistingItem_WhenAspectChanges()
+    {
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var hubMock = new Mock<IRuntimeHubRemoteClient>();
+        var viewModel = CreateViewModel(eventBus, runtimeHubRemoteClient: hubMock.Object);
+        viewModel.SetSignalBoxTabActive(true);
+        var elementId = Guid.NewGuid();
+
+        PublishRemoteSignalBoxSnapshot(eventBus, elementId, aspect: SignalAspect.Hp0);
+        PublishRemoteSignalBoxSnapshot(eventBus, elementId, aspect: SignalAspect.Ks1);
+
+        Assert.That(viewModel.SignalBoxElements[0].SelectedSignalAspect, Is.EqualTo(SignalAspect.Ks1));
     }
 
     [Test]
@@ -379,7 +420,8 @@ internal sealed class MauiViewModelPerformanceTests
         IEventBus eventBus,
         AppSettings? settings = null,
         IRuntimeHubRemoteClient? runtimeHubRemoteClient = null,
-        IRuntimeCommandGateway? runtimeCommandGateway = null)
+        IRuntimeCommandGateway? runtimeCommandGateway = null,
+        IMobileRuntimeCoordinator? mobileRuntimeCoordinator = null)
     {
         var appSettings = settings ?? new AppSettings();
         var mobaRuntimeMock = new Mock<IMobaRuntime>();
@@ -414,7 +456,8 @@ internal sealed class MauiViewModelPerformanceTests
             NullLogger<MauiViewModel>.Instance,
             eventBus,
             runtimeHubRemoteClient: runtimeHubRemoteClient,
-            runtimeCommandGateway: runtimeCommandGateway);
+            runtimeCommandGateway: runtimeCommandGateway,
+            mobileRuntimeCoordinator: mobileRuntimeCoordinator);
 
         _createdViewModels.Add(viewModel);
         return viewModel;

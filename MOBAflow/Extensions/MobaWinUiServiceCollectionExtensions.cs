@@ -149,6 +149,9 @@ public static class MobaWinUiServiceCollectionExtensions
                 sp.GetRequiredService<RestApiProcessService>(),
                 sp.GetRequiredService<IPhotoHubClient>(),
                 sp.GetRequiredService<RestApiRuntimeHubService>(),
+                sp.GetRequiredService<RestApiSolutionSyncService>(),
+                sp.GetRequiredService<IRuntimeHubHostClient>(),
+                sp.GetRequiredService<IMobaRuntime>(),
                 sp.GetRequiredService<IEventBus>(),
                 sp.GetRequiredService<ILogger<RestApiStatusService>>());
         });

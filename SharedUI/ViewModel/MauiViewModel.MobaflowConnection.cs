@@ -6,6 +6,8 @@ namespace Moba.SharedUI.ViewModel;
 
 
 
+using Common.Events;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using CommunityToolkit.Mvvm.Input;
@@ -38,6 +40,8 @@ public sealed partial class MauiViewModel
 
     private bool _mobaflowInitialCatalogApplied;
 
+    private CancellationTokenSource? _mobaflowConnectCts;
+
     private readonly SemaphoreSlim _mobaflowCatalogSyncLock = new(1, 1);
 
 
@@ -55,89 +59,111 @@ public sealed partial class MauiViewModel
 
 
     partial void OnIsMobaflowConnectionEnabledChanged(bool value)
-
     {
-
         _settings.RestApi.IsConnectionEnabled = value;
-
+        NotifyMobaflowConnectionStatusProperties();
         UpdateRuntimeCoordinatorState();
 
-
-
         if (_isApplyingLoadedSettings)
-
         {
-
             return;
-
         }
-
-
 
         QueueSaveSettings();
 
-        RunInBackground(ApplyMobaflowConnectionStateAsync(), "Apply MOBAflow connection toggle");
+        _mobaflowConnectCts?.Cancel();
+        _mobaflowConnectCts?.Dispose();
+        _mobaflowConnectCts = null;
 
-    }
-
-
-
-    [RelayCommand]
-
-    private Task SetMobaflowConnectionAsync(bool enabled)
-
-    {
-
-        if (IsMobaflowConnectionEnabled != enabled)
-
+        if (!value)
         {
-
-            IsMobaflowConnectionEnabled = enabled;
-
+            RunInBackground(DisconnectMobaflowAsync(), "Disconnect MOBAflow after toggle off");
+            return;
         }
 
-
-
-        return Task.CompletedTask;
-
+        _mobaflowConnectCts = CancellationTokenSource.CreateLinkedTokenSource(_applicationLifetimeCts.Token);
+        RunInBackground(ApplyMobaflowConnectionStateAsync(_mobaflowConnectCts.Token), "Connect MOBAflow after toggle on");
     }
 
-
-
-    private async Task ApplyMobaflowConnectionStateAsync()
-
+    /// <summary>
+    /// Retries MOBAflow discovery and hub connection while the toggle remains enabled.
+    /// </summary>
+    public Task RetryMobaflowConnectionAsync()
     {
-
         if (!IsMobaflowConnectionEnabled)
-
         {
+            return Task.CompletedTask;
+        }
+
+        _mobaflowConnectCts?.Cancel();
+        _mobaflowConnectCts?.Dispose();
+        _mobaflowConnectCts = CancellationTokenSource.CreateLinkedTokenSource(_applicationLifetimeCts.Token);
+        return ApplyMobaflowConnectionStateAsync(_mobaflowConnectCts.Token);
+    }
+
+    [RelayCommand]
+    private Task SetMobaflowConnectionAsync(bool enabled)
+    {
+        if (IsMobaflowConnectionEnabled != enabled)
+        {
+            IsMobaflowConnectionEnabled = enabled;
+            return Task.CompletedTask;
+        }
+
+        return enabled ? RetryMobaflowConnectionAsync() : Task.CompletedTask;
+    }
+
+    private async Task ApplyMobaflowConnectionStateAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (!_settings.RestApi.IsConnectionEnabled)
+            {
+                _mobaflowInitialCatalogApplied = false;
+                await DisconnectMobaflowAsync().ConfigureAwait(false);
+                return;
+            }
 
             _mobaflowInitialCatalogApplied = false;
 
-            await DisconnectMobaflowAsync().ConfigureAwait(false);
+            foreach (var delayMs in MobaflowConnectAttemptDelaysMs)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
 
-            return;
+                if (delayMs > 0)
+                {
+                    await Task.Delay(delayMs, cancellationToken).ConfigureAwait(false);
+                }
 
+                if (!_settings.RestApi.IsConnectionEnabled)
+                {
+                    return;
+                }
+
+                var reachable = await RefreshRestApiReachableAsync().ConfigureAwait(false);
+                if (!reachable)
+                {
+                    await TryDiscoverMobaflowEndpointsAsync().ConfigureAwait(false);
+                    reachable = await RefreshRestApiReachableAsync().ConfigureAwait(false);
+                }
+
+                if (reachable && (_runtimeHubRemoteClient?.IsConnected ?? false))
+                {
+                    return;
+                }
+            }
         }
-
-
-
-        _mobaflowInitialCatalogApplied = false;
-
-        await RefreshRestApiReachableAsync().ConfigureAwait(false);
-
-
-
-        if (!IsRestApiReachable)
-
+        catch (OperationCanceledException)
         {
-
-            await TryDiscoverMobaflowEndpointsAsync().ConfigureAwait(false);
-
-            await RefreshRestApiReachableAsync().ConfigureAwait(false);
-
+            // Superseded by a newer toggle or app shutdown.
         }
+    }
 
+    private void NotifyMobaflowConnectionStatusProperties()
+    {
+        OnPropertyChanged(nameof(RestApiStatusText));
+        OnPropertyChanged(nameof(RestApiStatusSemanticDescription));
+        OnPropertyChanged(nameof(RestApiIndicatorResourceKey));
     }
 
 
@@ -230,19 +256,14 @@ public sealed partial class MauiViewModel
 
 
 
-        _uiDispatcher.InvokeOnUi(() =>
-
+        await _uiDispatcher.InvokeOnUiAsync(() =>
         {
-
             IsRestApiReachable = false;
-
             SetRuntimeHubConnected(false);
-
             SetRemoteZ21Connected(false);
-
             UpdateRuntimeCoordinatorState();
-
-        });
+            return Task.CompletedTask;
+        }).ConfigureAwait(false);
 
     }
 
@@ -275,6 +296,8 @@ public sealed partial class MauiViewModel
             _mobileRuntimeCoordinator.SetMobaflowSessionActive(mobaflowSessionActive);
 
             _mobileRuntimeCoordinator.SetLocalZ21Connected(IsConnected);
+
+            _eventBus.Publish(new RuntimeCommandAvailabilityChangedEvent());
 
 
 

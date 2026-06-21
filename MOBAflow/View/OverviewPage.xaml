@@ -53,6 +53,86 @@
                             Text="{x:Bind ViewModel.RestApiStatusText, Mode=OneWay}" />
                     </StackPanel>
                     <StackPanel Spacing="8">
+                        <TextBlock Style="{StaticResource CaptionTextBlockStyle}" Text="MOBAsmart sync" />
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Ellipse
+                                Width="12"
+                                Height="12"
+                                VerticalAlignment="Center"
+                                Fill="{x:Bind ViewModel.SolutionLoadedIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}}" />
+                            <TextBlock VerticalAlignment="Center" Style="{StaticResource BodyTextBlockStyle}">
+                                <Run Text="Solution loaded: " />
+                                <Run Text="{x:Bind ViewModel.SolutionLoadedStatusText, Mode=OneWay}" />
+                            </TextBlock>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Ellipse
+                                Width="12"
+                                Height="12"
+                                VerticalAlignment="Center"
+                                Fill="{x:Bind ViewModel.RuntimeHubHostIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}}" />
+                            <TextBlock VerticalAlignment="Center" Style="{StaticResource BodyTextBlockStyle}">
+                                <Run Text="RuntimeHub host: " />
+                                <Run Text="{x:Bind ViewModel.RuntimeHubHostStatusText, Mode=OneWay}" />
+                            </TextBlock>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Ellipse
+                                Width="12"
+                                Height="12"
+                                VerticalAlignment="Center"
+                                Fill="{x:Bind ViewModel.SolutionSyncIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}}" />
+                            <TextBlock VerticalAlignment="Center" Style="{StaticResource BodyTextBlockStyle}">
+                                <Run Text="Solution sync: " />
+                                <Run Text="{x:Bind ViewModel.SolutionSyncStatusText, Mode=OneWay}" />
+                            </TextBlock>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Ellipse
+                                Width="12"
+                                Height="12"
+                                VerticalAlignment="Center"
+                                Fill="{x:Bind ViewModel.RuntimeSnapshotIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}}" />
+                            <TextBlock VerticalAlignment="Center" Style="{StaticResource BodyTextBlockStyle}">
+                                <Run Text="Runtime snapshot: " />
+                                <Run Text="{x:Bind ViewModel.RuntimeSnapshotStatusText, Mode=OneWay}" />
+                            </TextBlock>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Ellipse
+                                Width="12"
+                                Height="12"
+                                VerticalAlignment="Center"
+                                Fill="{x:Bind ViewModel.RestCacheIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}}" />
+                            <TextBlock VerticalAlignment="Center" Style="{StaticResource BodyTextBlockStyle}">
+                                <Run Text="REST cache: " />
+                                <Run Text="{x:Bind ViewModel.RestCacheStatusText, Mode=OneWay}" />
+                            </TextBlock>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Ellipse
+                                Width="12"
+                                Height="12"
+                                VerticalAlignment="Center"
+                                Fill="{x:Bind ViewModel.HubBroadcastIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}}" />
+                            <TextBlock VerticalAlignment="Center" Style="{StaticResource BodyTextBlockStyle}">
+                                <Run Text="Hub broadcast: " />
+                                <Run Text="{x:Bind ViewModel.HubBroadcastStatusText, Mode=OneWay}" />
+                            </TextBlock>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Ellipse
+                                Width="12"
+                                Height="12"
+                                VerticalAlignment="Center"
+                                Fill="{x:Bind ViewModel.RemoteSnapshotIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}}" />
+                            <TextBlock VerticalAlignment="Center" Style="{StaticResource BodyTextBlockStyle}">
+                                <Run Text="Remote snapshot: " />
+                                <Run Text="{x:Bind ViewModel.RemoteSnapshotStatusText, Mode=OneWay}" />
+                            </TextBlock>
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Spacing="8">
                         <TextBlock Style="{StaticResource CaptionTextBlockStyle}" Text="Connected clients" />
                         <ItemsRepeater ItemsSource="{x:Bind ViewModel.RestApiConnectedClients, Mode=OneWay}">
                             <ItemsRepeater.ItemTemplate>

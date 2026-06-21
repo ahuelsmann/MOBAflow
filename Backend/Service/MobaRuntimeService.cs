@@ -33,6 +33,8 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
     private bool _started;
 
     private readonly Dictionary<int, LocomotiveRuntimeSnapshot> _locomotiveStates = [];
+    private readonly Dictionary<int, DateTimeOffset> _lastLocomotiveFunctionCommandAt = [];
+    private static readonly TimeSpan LocomotiveFunctionCommandGracePeriod = TimeSpan.FromSeconds(3);
 
     private bool _isConnected;
     private bool _isTrackPowerOn;

@@ -68,6 +68,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     // may still report the old (on) function bits and race our OFF command, so we ignore incoming
     // snapshot function bits until the user manually toggles a function again.
     private bool _suppressSnapshotFunctionState;
+    private CancellationTokenSource? _allFunctionsOffCts;
     private int _previousSpeed;
     private CancellationTokenSource? _doorReleaseBlinkCts;
 
@@ -157,6 +158,11 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             // Turn all function keys off on selection (UI + explicit OFF to Z21).
             // Set synchronously so an incoming loco-info snapshot cannot re-enable functions.
             _suppressSnapshotFunctionState = true;
+            for (int i = 0; i <= 31; i++)
+            {
+                SetFunctionState(i, false);
+            }
+
             QueueBackgroundTask(TurnOffAllFunctionsAsync(), "Turn off all functions");
         }
 
@@ -507,7 +513,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     [NotifyPropertyChangedFor(nameof(IsSpeedControlEnabled))]
     private bool _isConnected;
 
-    public bool IsSpeedControlEnabled => IsConnected;
+    public bool IsSpeedControlEnabled => CanExecuteLocomotiveControl;
 
     // === Amperemeter / Current Monitoring ===
 
@@ -934,6 +940,12 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         _hybridRuntimeSnapshots = options?.HybridRuntimeSnapshots ?? false;
         _preferProjectLocomotives = options?.PreferProjectLocomotives ?? false;
 
+        if (_hybridRuntimeSnapshots || _useRemoteRuntimeSnapshots)
+        {
+            // MOBAsmart function keys are user-driven; remote snapshots must not overwrite them.
+            _suppressSnapshotFunctionState = true;
+        }
+
         // Load presets from settings
         LoadPresetsFromSettings();
 
@@ -941,11 +953,13 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         {
             _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
             _eventBusSubscriptions.Add(_eventBus.Subscribe<RemoteRuntimeSnapshotChangedEvent>(OnRemoteRuntimeSnapshotChanged));
+            _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeCommandAvailabilityChangedEvent>(OnRuntimeCommandAvailabilityChanged));
             ApplyRuntimeSnapshot(_mobaRuntime.Current);
         }
         else if (_useRemoteRuntimeSnapshots)
         {
             _eventBusSubscriptions.Add(_eventBus.Subscribe<RemoteRuntimeSnapshotChangedEvent>(OnRemoteRuntimeSnapshotChanged));
+            _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeCommandAvailabilityChangedEvent>(OnRuntimeCommandAvailabilityChanged));
         }
         else
         {
@@ -1166,6 +1180,9 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         _sendDriveCommandDebounceCts?.Cancel();
         _sendDriveCommandDebounceCts?.Dispose();
         _sendDriveCommandDebounceCts = null;
+        _allFunctionsOffCts?.Cancel();
+        _allFunctionsOffCts?.Dispose();
+        _allFunctionsOffCts = null;
     }
 
     /// <summary>
@@ -1748,11 +1765,13 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             _previousSpeed = locomotiveState.Speed;
             IsForward = locomotiveState.IsForward;
 
-            for (int functionIndex = 0; functionIndex <= 31; functionIndex++)
+            if (ShouldApplySnapshotFunctionBits())
             {
-                var isOn = !_suppressSnapshotFunctionState
-                    && (locomotiveState.Functions & (1u << functionIndex)) != 0;
-                SetFunctionState(functionIndex, isOn);
+                for (int functionIndex = 0; functionIndex <= 31; functionIndex++)
+                {
+                    var isOn = (locomotiveState.Functions & (1u << functionIndex)) != 0;
+                    SetFunctionState(functionIndex, isOn);
+                }
             }
 
             StatusMessage = $"Loco {locomotiveState.Address}: {locomotiveState.Speed} {(locomotiveState.IsForward ? "FWD" : "REV")}";
@@ -1812,7 +1831,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     {
         if (_skipSpeedChangeHandler || _isLoadingPreset || _isApplyingRuntimeLocomotiveState) return;
 
-        if (!IsConnected && value > _previousSpeed)
+        if (!CanExecuteLocomotiveControl && value > _previousSpeed)
         {
             _skipSpeedChangeHandler = true;
             Speed = _previousSpeed;
@@ -1998,9 +2017,32 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
     /// <summary>
     /// Validates whether locomotive commands can be executed.
-    /// Requires active Z21 connection and valid DCC address (1-9999).
+    /// Requires active MOBAflow session or local Z21 connection and valid DCC address (1-9999).
     /// </summary>
-    private bool CanExecuteLocoCommand() => IsConnected && LocoAddress >= 1 && LocoAddress <= 9999;
+    private bool CanExecuteLocomotiveControl =>
+        LocoAddress >= 1
+        && LocoAddress <= 9999
+        && (IsConnected || (_mobileRuntimeCoordinator?.CanExecuteCommands ?? false));
+
+    /// <summary>
+    /// Refreshes locomotive command CanExecute state after MOBAsmart routing changes.
+    /// </summary>
+    public void RefreshLocomotiveCommandCanExecute()
+    {
+        SetSpeedCommand.NotifyCanExecuteChanged();
+        ToggleFunctionCommand.NotifyCanExecuteChanged();
+        TurnOffAllFunctionsCommand.NotifyCanExecuteChanged();
+        EmergencyStopCommand.NotifyCanExecuteChanged();
+        OnPropertyChanged(nameof(IsSpeedControlEnabled));
+    }
+
+    private void OnRuntimeCommandAvailabilityChanged(RuntimeCommandAvailabilityChangedEvent e)
+    {
+        _ = e;
+        RefreshLocomotiveCommandCanExecute();
+    }
+
+    private bool CanExecuteLocoCommand() => CanExecuteLocomotiveControl;
 
     /// <summary>
     /// Sends the current speed and direction to Z21.
@@ -2042,8 +2084,10 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     {
         try
         {
-            // User takes manual control: resume applying decoder function bits from snapshots.
-            _suppressSnapshotFunctionState = false;
+            CancelAllFunctionsOffOperation();
+
+            // Keep snapshot function bits suppressed while the user drives F-keys manually.
+            _suppressSnapshotFunctionState = true;
 
             var newState = !GetFunctionState(functionNumber);
             SetFunctionState(functionNumber, newState);
@@ -2077,10 +2121,21 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
     public async Task TurnOffAllFunctionsAsync()
     {
-        for (int i = 0; i < Functions.Count; i++)
-            Functions[i].IsOn = false;
-        // Ignore decoder-reported function bits from upcoming snapshots until the user toggles again.
+        CancelAllFunctionsOffOperation();
+        _allFunctionsOffCts = new CancellationTokenSource();
+        var token = _allFunctionsOffCts.Token;
+
+        // Suppress decoder function bits before touching UI so snapshots cannot re-enable keys mid-reset.
         _suppressSnapshotFunctionState = true;
+
+        for (int i = 0; i < Functions.Count; i++)
+        {
+            token.ThrowIfCancellationRequested();
+            if (Functions[i].IsOn)
+            {
+                Functions[i].IsOn = false;
+            }
+        }
 
         // Persist the new (all-off) function state per locomotive when a preset is selected.
         if (SelectedPresetIndex is >= 0 and <= 2)
@@ -2090,20 +2145,71 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             QueueBackgroundTask(SavePresetsToSettingsAsync(), "Save train control presets");
         }
 
-        if (!IsConnected || LocoAddress < 1)
+        if (!CanExecuteLocomotiveControl || LocoAddress < 1)
+        {
             return;
+        }
 
         try
         {
-            await _mobaRuntime.SetAllLocomotiveFunctionsOffAsync(LocoAddress);
+            await SendAllFunctionsOffAsync(token).ConfigureAwait(false);
             StatusMessage = $"Loco {LocoAddress}: all functions OFF";
             _logger?.LogDebug("All functions turned off for loco {Address}", LocoAddress);
+        }
+        catch (OperationCanceledException)
+        {
+            _logger?.LogDebug("All-functions-off cancelled for loco {Address}", LocoAddress);
         }
         catch (Exception ex)
         {
             _logger?.LogError(ex, "Failed to turn off all functions for loco {Address}", LocoAddress);
             StatusMessage = $"Error: {ex.Message}";
         }
+    }
+
+    private bool ShouldApplySnapshotFunctionBits()
+    {
+        if (_suppressSnapshotFunctionState)
+        {
+            return false;
+        }
+
+        if (_hybridRuntimeSnapshots && _mobileRuntimeCoordinator?.PreferRemoteRuntime == true)
+        {
+            return false;
+        }
+
+        if (_useRemoteRuntimeSnapshots && !_hybridRuntimeSnapshots)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private void CancelAllFunctionsOffOperation()
+    {
+        _allFunctionsOffCts?.Cancel();
+        _allFunctionsOffCts?.Dispose();
+        _allFunctionsOffCts = null;
+    }
+
+    private async Task SendAllFunctionsOffAsync(CancellationToken cancellationToken)
+    {
+        if (_mobileRuntimeCoordinator?.PreferRemoteRuntime == true)
+        {
+            for (int functionIndex = 0; functionIndex <= 31; functionIndex++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                await _runtimeCommandGateway
+                    .SetLocomotiveFunctionAsync(LocoAddress, functionIndex, false, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
+            return;
+        }
+
+        await _mobaRuntime.SetAllLocomotiveFunctionsOffAsync(LocoAddress, cancellationToken).ConfigureAwait(false);
     }
 
     private bool GetFunctionState(int functionNumber) =>

@@ -12,12 +12,20 @@ public sealed partial class MauiViewModel
 
     public string Z21IndicatorResourceKey => IsConnected ? "RailwayAccent" : "RailwayDanger";
 
-    public string RestApiStatusText => IsRestApiReachable ? "ON" : "OFF";
+    public string RestApiStatusText =>
+        !IsMobaflowConnectionEnabled ? "OFF"
+        : IsRestApiReachable ? "ON"
+        : "Connecting";
 
     public string RestApiStatusSemanticDescription =>
-        IsRestApiReachable ? "MOBAflow REST API connected" : "MOBAflow REST API disconnected";
+        !IsMobaflowConnectionEnabled ? "MOBAflow connection disabled"
+        : IsRestApiReachable ? "MOBAflow REST API connected"
+        : "MOBAflow connection in progress";
 
-    public string RestApiIndicatorResourceKey => IsRestApiReachable ? "RailwayAccent" : "RailwayDanger";
+    public string RestApiIndicatorResourceKey =>
+        !IsMobaflowConnectionEnabled ? "RailwayDanger"
+        : IsRestApiReachable ? "RailwayAccent"
+        : "RailwayWarning";
 
     public string TrackPowerStatusText => IsTrackPowerOn ? "ON" : "OFF";
 

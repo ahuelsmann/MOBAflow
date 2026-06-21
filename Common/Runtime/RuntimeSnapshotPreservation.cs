@@ -68,7 +68,23 @@ public static class RuntimeSnapshotPreservation
 
         {
 
-            return incoming;
+            if (previous?.SignalBoxElements is not { Count: > 0 })
+
+            {
+
+                return incoming;
+
+            }
+
+
+
+            var mergedElements = SignalBoxSnapshotMerge.MergeIncomingOverPrevious(
+
+                incoming.SignalBoxElements,
+
+                previous.SignalBoxElements);
+
+            return CopyWith(incoming, mergedElements, incoming.LocomotiveFleet);
 
         }
 

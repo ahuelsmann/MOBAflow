@@ -52,6 +52,54 @@ internal sealed class RuntimeSnapshotCacheTests
     }
 
     [Test]
+    public void Set_PreservesUpdatedSignalAspect_WhenTelemetrySnapshotFollows()
+    {
+        var cache = new RuntimeSnapshotCache();
+        var signalId = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc");
+
+        cache.Set(RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot
+        {
+            IsConnected = true,
+            SignalBoxElements =
+            [
+                new SignalBoxElementRuntimeSnapshot
+                {
+                    ElementId = signalId,
+                    Name = "S1",
+                    Kind = SignalBoxElementKind.Signal,
+                    SignalAspect = SignalAspect.Hp0
+                }
+            ]
+        }), isConnected: true);
+
+        cache.Set(RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot
+        {
+            IsConnected = true,
+            SignalBoxElements =
+            [
+                new SignalBoxElementRuntimeSnapshot
+                {
+                    ElementId = signalId,
+                    Name = "S1",
+                    Kind = SignalBoxElementKind.Signal,
+                    SignalAspect = SignalAspect.Ks1
+                }
+            ]
+        }), isConnected: true);
+
+        cache.Set(RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot
+        {
+            IsConnected = true,
+            MainCurrent = 42,
+            SignalBoxElements = []
+        }), isConnected: true);
+
+        Assert.That(cache.TryGet(out var entry), Is.True);
+        var restored = RuntimeJsonSerializer.Deserialize(entry.Json);
+        Assert.That(restored!.SignalBoxElements.Single().SignalAspect, Is.EqualTo(SignalAspect.Ks1));
+    }
+
+    [Test]
     public void Set_PreservesLocomotiveFleet_WhenIncomingSnapshotOmitsIt()
     {
         var cache = new RuntimeSnapshotCache();

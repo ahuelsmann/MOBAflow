@@ -65,6 +65,12 @@ public sealed partial class MauiViewModel
     }
 
     /// <summary>
+    /// Returns the best locomotive fleet available immediately after a mobile cache restore.
+    /// </summary>
+    public IReadOnlyList<LocomotiveFleetSnapshot> GetStartupLocomotiveFleet() =>
+        GetBestAvailableLocomotiveFleet();
+
+    /// <summary>
     /// Publishes the best currently available locomotive fleet to TrainControlViewModel.
     /// </summary>
     public void ApplyBestAvailableLocomotiveFleet()

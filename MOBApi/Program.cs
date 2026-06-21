@@ -12,6 +12,8 @@ builder.Services.AddSingleton<ISolutionCache, SolutionCache>();
 builder.Services.AddSingleton<IRuntimeSettingsCache, RuntimeSettingsCache>();
 builder.Services.AddSingleton<IRuntimeSnapshotCache, RuntimeSnapshotCache>();
 builder.Services.AddSingleton<IRuntimeHostRegistry, RuntimeHostRegistry>();
+builder.Services.AddSingleton<IRuntimeRemoteRegistry, RuntimeRemoteRegistry>();
+builder.Services.AddSingleton<IRuntimeBroadcastMetrics, RuntimeBroadcastMetrics>();
 builder.Services.AddSingleton<IRuntimeCommandQueue, RuntimeCommandQueue>();
 
 // When started by WinUI, discovery runs in WinUI (MOBAFLOW_DISCOVERY_IN_WINUI=1); otherwise run discovery here

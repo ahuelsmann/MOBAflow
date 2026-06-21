@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
+using Backend.Interface;
+
 using Common.Configuration;
 using Common.Events;
 using Common.Extension;
@@ -27,6 +29,9 @@ public sealed class RestApiStatusService : IDisposable
     private readonly RestApiProcessService _restApiProcessService;
     private readonly IPhotoHubClient _photoHubClient;
     private readonly RestApiRuntimeHubService _runtimeHubService;
+    private readonly RestApiSolutionSyncService _solutionSyncService;
+    private readonly IRuntimeHubHostClient _runtimeHubHostClient;
+    private readonly IMobaRuntime _mobaRuntime;
     private readonly IEventBus _eventBus;
     private readonly ILogger<RestApiStatusService> _logger;
     private readonly Timer _timer;
@@ -42,6 +47,9 @@ public sealed class RestApiStatusService : IDisposable
         RestApiProcessService restApiProcessService,
         IPhotoHubClient photoHubClient,
         RestApiRuntimeHubService runtimeHubService,
+        RestApiSolutionSyncService solutionSyncService,
+        IRuntimeHubHostClient runtimeHubHostClient,
+        IMobaRuntime mobaRuntime,
         IEventBus eventBus,
         ILogger<RestApiStatusService> logger)
     {
@@ -50,6 +58,9 @@ public sealed class RestApiStatusService : IDisposable
         _restApiProcessService = restApiProcessService;
         _photoHubClient = photoHubClient;
         _runtimeHubService = runtimeHubService;
+        _solutionSyncService = solutionSyncService;
+        _runtimeHubHostClient = runtimeHubHostClient;
+        _mobaRuntime = mobaRuntime;
         _eventBus = eventBus;
         _logger = logger;
         _httpClient.Timeout = TimeSpan.FromSeconds(5);
@@ -156,6 +167,7 @@ public sealed class RestApiStatusService : IDisposable
 
                 // Publish event - UiThreadEventBusDecorator marshals to UI thread
                 _eventBus.Publish(new RestApiStatusChangedEvent(statusText, isReachable: true, clients));
+                PublishSyncDiagnostics(data, restApiReachable: true);
 
                 SetPollInterval(PollIntervalWhenReachableMs);
 
@@ -191,6 +203,7 @@ public sealed class RestApiStatusService : IDisposable
             {
                 var statusText = BuildUnreachableStatusText(port);
                 _eventBus.Publish(new RestApiStatusChangedEvent(statusText, isReachable: false, clients: null));
+                PublishSyncDiagnostics(data: null, restApiReachable: false);
                 SetPollInterval(_appSettings.Application.AutoStartWebApp
                     ? PollIntervalWhenWaitingMs
                     : PollIntervalWhenReachableMs);
@@ -206,6 +219,7 @@ public sealed class RestApiStatusService : IDisposable
             var portFallback = _appSettings.RestApi.Port > 0 ? _appSettings.RestApi.Port : 5001;
             var statusText = BuildUnreachableStatusText(portFallback);
             _eventBus.Publish(new RestApiStatusChangedEvent(statusText, isReachable: false, clients: null));
+            PublishSyncDiagnostics(data: null, restApiReachable: false);
             SetPollInterval(_appSettings.Application.AutoStartWebApp
                 ? PollIntervalWhenWaitingMs
                 : PollIntervalWhenReachableMs);
@@ -307,7 +321,67 @@ public sealed class RestApiStatusService : IDisposable
         await disposeTask.ConfigureAwait(false);
     }
 
-    private sealed record StatusResponse(int Port, List<ClientDto>? ConnectedClients);
+    private void PublishSyncDiagnostics(StatusResponse? data, bool restApiReachable)
+    {
+        var localSnapshot = _mobaRuntime.Current;
+        var runtime = data?.Runtime;
+        var solution = data?.Solution;
+        var snapshotCache = runtime?.SnapshotCache;
+
+        _eventBus.Publish(new MobaflowSyncDiagnosticsChangedEvent(new MobaflowSyncDiagnostics
+        {
+            RestApiReachable = restApiReachable,
+            HostClientConnected = _runtimeHubHostClient.IsConnected,
+            ServerHasHost = runtime?.HasHost ?? false,
+            LastHubPushAt = _runtimeHubService.LastHubPushAt,
+            LastHubPushSucceeded = _runtimeHubService.LastHubPushSucceeded,
+            LastServerBroadcastAt = runtime?.LastSnapshotBroadcastAt,
+            RemoteClientCount = runtime?.RemoteClientCount ?? 0,
+            SessionOperational = runtime?.SessionOperational ?? false,
+            LocalSnapshotCreatedAt = localSnapshot.CreatedAt,
+            Z21Connected = localSnapshot.IsConnected,
+            HasActiveProject = false,
+            LocalSignalBoxElementCount = localSnapshot.SignalBoxElements.Count,
+            LocalLocomotiveFleetCount = localSnapshot.LocomotiveFleet.Count,
+            RestCacheAvailable = snapshotCache?.Available ?? false,
+            RestCacheUpdatedAt = snapshotCache?.UpdatedAt,
+            RestCacheIsConnected = snapshotCache?.IsConnected ?? false,
+            RestCacheSignalBoxElementCount = snapshotCache?.SignalBoxElementCount ?? 0,
+            RestCacheLocomotiveFleetCount = snapshotCache?.LocomotiveFleetCount ?? 0,
+            LastRestCachePushAt = _runtimeHubService.LastRestCachePushAt,
+            LastRestCachePushSucceeded = _runtimeHubService.LastRestCachePushSucceeded,
+            SolutionAvailable = solution?.Available ?? false,
+            SolutionUpdatedAt = solution?.UpdatedAt,
+            SolutionActiveProjectName = solution?.ActiveProjectName,
+            LastSolutionPushAt = _solutionSyncService.LastSolutionPushAt,
+            LastSolutionPushSucceeded = _solutionSyncService.LastSolutionPushSucceeded
+        }));
+    }
+
+    private sealed record StatusResponse(
+        int Port,
+        List<ClientDto>? ConnectedClients,
+        RuntimeStatusDto? Runtime,
+        SolutionStatusDto? Solution);
+
+    private sealed record RuntimeStatusDto(
+        bool HasHost,
+        int RemoteClientCount,
+        DateTimeOffset? LastSnapshotBroadcastAt,
+        bool SessionOperational,
+        SnapshotCacheStatusDto? SnapshotCache);
+
+    private sealed record SnapshotCacheStatusDto(
+        bool Available,
+        DateTimeOffset? UpdatedAt,
+        bool IsConnected,
+        int SignalBoxElementCount,
+        int LocomotiveFleetCount);
+
+    private sealed record SolutionStatusDto(
+        bool Available,
+        DateTimeOffset? UpdatedAt,
+        string? ActiveProjectName);
 
     /// <summary>REST status payload item; deserialized via primary constructor (avoids unused synthetic property setters).</summary>
     private sealed record ClientDto(string? ClientId, string? DeviceName, DateTime ConnectedAt);

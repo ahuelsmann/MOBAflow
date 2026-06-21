@@ -64,6 +64,27 @@ public sealed partial class MauiViewModel
         UpdateRuntimeCoordinatorState();
     }
 
+    private Task SetRuntimeHubConnectedOnUiAsync(bool isConnected) =>
+        _uiDispatcher.InvokeOnUiAsync(() =>
+        {
+            SetRuntimeHubConnected(isConnected);
+            return Task.CompletedTask;
+        });
+
+    private Task SetRemoteZ21ConnectedOnUiAsync(bool isConnected) =>
+        _uiDispatcher.InvokeOnUiAsync(() =>
+        {
+            SetRemoteZ21Connected(isConnected);
+            return Task.CompletedTask;
+        });
+
+    private Task UpdateRuntimeCoordinatorStateOnUiAsync() =>
+        _uiDispatcher.InvokeOnUiAsync(() =>
+        {
+            UpdateRuntimeCoordinatorState();
+            return Task.CompletedTask;
+        });
+
     internal void SetRemoteZ21Connected(bool isConnected)
     {
         if (_remoteZ21Connected == isConnected)

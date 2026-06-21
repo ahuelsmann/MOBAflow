@@ -67,6 +67,8 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     private const int RestApiRediscoverIntervalSeconds = 25;
     private const int RestApiRediscoverIntervalFirst90Seconds = 10;
     private const int RestApiStartupRetryWindowSeconds = 90;
+    private static readonly int[] MobaflowConnectAttemptDelaysMs = [0, 500, 1500, 3000, 5000, 8000];
+    private static readonly int[] RuntimeHubConnectRetryDelaysMs = [0, 400, 1200, 2500];
 
     private const int Z21EndpointSyncIntervalSeconds = 45;
 
@@ -417,6 +419,10 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         var anchor = string.IsNullOrWhiteSpace(Z21IpAddress) ? null : Z21IpAddress.Trim();
         _logger.LogInformation("Manual REST discovery started (anchor={Anchor})", anchor ?? "(none)");
         await DiscoverRestApiWithAnchorAsync(anchor).ConfigureAwait(false);
+        if (!IsRestApiReachable)
+        {
+            await RetryMobaflowConnectionAsync().ConfigureAwait(false);
+        }
     }
 
     private async Task DiscoverRestApiWithAnchorAsync(string? subnetAnchorIp)
@@ -586,6 +592,9 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         _initializationLock.Dispose();
         _refreshRestApiLock.Dispose();
         _mobaflowCatalogSyncLock.Dispose();
+        _mobaflowConnectCts?.Cancel();
+        _mobaflowConnectCts?.Dispose();
+        _mobaflowConnectCts = null;
     }
 
     private async Task RestApiHealthCheckLoopAsync()
@@ -594,39 +603,13 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         {
             while (!_applicationLifetimeCts.IsCancellationRequested)
             {
-                await Task.Delay(TimeSpan.FromSeconds(30), _applicationLifetimeCts.Token).ConfigureAwait(false);
-
-                if (!IsMobaflowConnectionEnabled)
+                if (_settings.RestApi.IsConnectionEnabled)
                 {
-                    continue;
+                    await RefreshRestApiReachableAsync().ConfigureAwait(false);
+                    await TryPeriodicRestDiscoveryIfNeededAsync().ConfigureAwait(false);
                 }
 
-                await RefreshRestApiReachableAsync().ConfigureAwait(false);
-
-                // When API is unreachable, re-run discovery periodically. Use shorter interval in the first 90s
-                // so we find the server quickly when both apps are started together (e.g. from Visual Studio).
-                var elapsedSinceStart = (DateTime.UtcNow - _appStartTimeUtc).TotalSeconds;
-                var interval = elapsedSinceStart < RestApiStartupRetryWindowSeconds
-                    ? RestApiRediscoverIntervalFirst90Seconds
-                    : RestApiRediscoverIntervalSeconds;
-
-                if (!IsRestApiReachable && IsMobaflowConnectionEnabled && (DateTime.UtcNow - _lastRestApiDiscoverTime).TotalSeconds >= interval)
-                {
-                    _lastRestApiDiscoverTime = DateTime.UtcNow;
-                    try
-                    {
-                        var anchor = string.IsNullOrWhiteSpace(Z21IpAddress) ? null : Z21IpAddress.Trim();
-                        var (restIp, restPort) = await _restDiscoveryService.DiscoverServerAsync(anchor).ConfigureAwait(false);
-                        if (!string.IsNullOrEmpty(restIp) && restPort.HasValue)
-                        {
-                            await ApplyDiscoveredRestEndpointAsync(restIp, restPort.Value).ConfigureAwait(false);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "REST API re-discovery failed");
-                    }
-                }
+                await Task.Delay(GetRestApiHealthCheckDelay(), _applicationLifetimeCts.Token).ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException)
@@ -635,15 +618,69 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         }
     }
 
+    private TimeSpan GetRestApiHealthCheckDelay()
+    {
+        if (!_settings.RestApi.IsConnectionEnabled)
+        {
+            return TimeSpan.FromSeconds(30);
+        }
+
+        if (IsRestApiReachable && (_runtimeHubRemoteClient?.IsConnected ?? false))
+        {
+            return TimeSpan.FromSeconds(30);
+        }
+
+        var elapsedSinceStart = (DateTime.UtcNow - _appStartTimeUtc).TotalSeconds;
+        var seconds = elapsedSinceStart < RestApiStartupRetryWindowSeconds
+            ? RestApiRediscoverIntervalFirst90Seconds
+            : 15;
+        return TimeSpan.FromSeconds(seconds);
+    }
+
+    private async Task TryPeriodicRestDiscoveryIfNeededAsync()
+    {
+        if (!_settings.RestApi.IsConnectionEnabled || IsRestApiReachable)
+        {
+            return;
+        }
+
+        var elapsedSinceStart = (DateTime.UtcNow - _appStartTimeUtc).TotalSeconds;
+        var interval = elapsedSinceStart < RestApiStartupRetryWindowSeconds
+            ? RestApiRediscoverIntervalFirst90Seconds
+            : RestApiRediscoverIntervalSeconds;
+
+        if ((DateTime.UtcNow - _lastRestApiDiscoverTime).TotalSeconds < interval)
+        {
+            return;
+        }
+
+        _lastRestApiDiscoverTime = DateTime.UtcNow;
+        try
+        {
+            var anchor = string.IsNullOrWhiteSpace(_settings.Z21.CurrentIpAddress)
+                ? null
+                : _settings.Z21.CurrentIpAddress.Trim();
+            var (restIp, restPort) = await _restDiscoveryService.DiscoverServerAsync(anchor).ConfigureAwait(false);
+            if (!string.IsNullOrEmpty(restIp) && restPort.HasValue)
+            {
+                await ApplyDiscoveredRestEndpointAsync(restIp, restPort.Value).ConfigureAwait(false);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "REST API re-discovery failed");
+        }
+    }
+
     /// <summary>
     /// Checks REST API reachability and updates IsRestApiReachable on the UI thread.
     /// </summary>
-    private async Task RefreshRestApiReachableAsync()
+    private async Task<bool> RefreshRestApiReachableAsync()
     {
         await _refreshRestApiLock.WaitAsync(_applicationLifetimeCts.Token).ConfigureAwait(false);
         try
         {
-            await RefreshRestApiReachableCoreAsync().ConfigureAwait(false);
+            return await RefreshRestApiReachableCoreAsync().ConfigureAwait(false);
         }
         finally
         {
@@ -651,31 +688,45 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         }
     }
 
-    private async Task RefreshRestApiReachableCoreAsync()
+    private async Task<bool> RefreshRestApiReachableCoreAsync()
     {
-        if (!IsMobaflowConnectionEnabled)
+        if (!_settings.RestApi.IsConnectionEnabled)
         {
-            _uiDispatcher.InvokeOnUi(() =>
+            await _uiDispatcher.InvokeOnUiAsync(() =>
             {
                 IsRestApiReachable = false;
                 UpdateRuntimeCoordinatorState();
-            });
+                return Task.CompletedTask;
+            }).ConfigureAwait(false);
             await EnsureRuntimeHubConnectionAsync(false).ConfigureAwait(false);
-            return;
+            return false;
         }
 
-        if (string.IsNullOrWhiteSpace(RestApiIpAddress) || RestApiPort <= 0)
+        var serverIp = _settings.RestApi.CurrentIpAddress?.Trim() ?? string.Empty;
+        var serverPort = _settings.RestApi.Port;
+        if (string.IsNullOrWhiteSpace(serverIp) || serverPort <= 0)
         {
-            _uiDispatcher.InvokeOnUi(() => IsRestApiReachable = false);
-            return;
+            await _uiDispatcher.InvokeOnUiAsync(() =>
+            {
+                IsRestApiReachable = false;
+                return Task.CompletedTask;
+            }).ConfigureAwait(false);
+            return false;
         }
+
         try
         {
-            var reachable = await _photoUploadService.HealthCheckAsync(RestApiIpAddress, RestApiPort).ConfigureAwait(false);
-            _uiDispatcher.InvokeOnUi(() => IsRestApiReachable = reachable);
+            var reachable = await _photoUploadService.HealthCheckAsync(serverIp, serverPort).ConfigureAwait(false);
+            await _uiDispatcher.InvokeOnUiAsync(() =>
+            {
+                IsRestApiReachable = reachable;
+                RestApiIpAddress = serverIp;
+                RestApiPort = serverPort;
+                return Task.CompletedTask;
+            }).ConfigureAwait(false);
 
             if (reachable
-                && RestApiRecentEndpointHistory.RecordRecentIp(_settings.RestApi, RestApiIpAddress.Trim()))
+                && RestApiRecentEndpointHistory.RecordRecentIp(_settings.RestApi, serverIp))
             {
                 try
                 {
@@ -696,7 +747,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
                 {
                     _lastRestApiRegisterTime = now;
                     RunInBackground(
-                        _restApiClientRegistration.RegisterAsync(RestApiIpAddress, RestApiPort),
+                        _restApiClientRegistration.RegisterAsync(serverIp, serverPort),
                         "REST API client registration");
                 }
             }
@@ -705,8 +756,8 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             {
                 RunInBackground(
                     _solutionRemoteLoader.SyncIfNeededAsync(
-                        RestApiIpAddress,
-                        RestApiPort,
+                        serverIp,
+                        serverPort,
                         _applicationLifetimeCts.Token),
                     "Solution sync from MOBApi");
             }
@@ -717,23 +768,29 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             }
 
             await EnsureRuntimeHubConnectionAsync(reachable).ConfigureAwait(false);
-            _uiDispatcher.InvokeOnUi(UpdateRuntimeCoordinatorState);
+            await UpdateRuntimeCoordinatorStateOnUiAsync().ConfigureAwait(false);
+            return reachable;
         }
         catch
         {
-            _uiDispatcher.InvokeOnUi(() => IsRestApiReachable = false);
+            await _uiDispatcher.InvokeOnUiAsync(() =>
+            {
+                IsRestApiReachable = false;
+                return Task.CompletedTask;
+            }).ConfigureAwait(false);
             await EnsureRuntimeHubConnectionAsync(false).ConfigureAwait(false);
+            return false;
         }
     }
 
-    private async Task EnsureRuntimeHubConnectionAsync(bool reachable)
+    private async Task<bool> EnsureRuntimeHubConnectionAsync(bool reachable)
     {
         if (_runtimeHubRemoteClient == null)
         {
-            return;
+            return false;
         }
 
-        if (!IsMobaflowConnectionEnabled || string.IsNullOrWhiteSpace(RestApiIpAddress) || RestApiPort <= 0)
+        if (!_settings.RestApi.IsConnectionEnabled)
         {
             if (_runtimeHubRemoteClient.IsConnected)
             {
@@ -747,12 +804,18 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
                 }
             }
 
-            _uiDispatcher.InvokeOnUi(() =>
-            {
-                SetRuntimeHubConnected(false);
-                SetRemoteZ21Connected(false);
-            });
-            return;
+            await SetRuntimeHubConnectedOnUiAsync(false).ConfigureAwait(false);
+            await SetRemoteZ21ConnectedOnUiAsync(false).ConfigureAwait(false);
+            return false;
+        }
+
+        var serverIp = _settings.RestApi.CurrentIpAddress?.Trim() ?? string.Empty;
+        var serverPort = _settings.RestApi.Port;
+        if (string.IsNullOrWhiteSpace(serverIp) || serverPort <= 0)
+        {
+            await SetRuntimeHubConnectedOnUiAsync(false).ConfigureAwait(false);
+            await SetRemoteZ21ConnectedOnUiAsync(false).ConfigureAwait(false);
+            return false;
         }
 
         if (!reachable)
@@ -760,26 +823,19 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             // Keep the SignalR session when REST health flickers; SignalR reconnect handles transport gaps.
             if (_runtimeHubRemoteClient.IsConnected)
             {
-                _uiDispatcher.InvokeOnUi(() =>
-                {
-                    SetRuntimeHubConnected(true);
-                    SetRemoteZ21Connected(_runtimeHubRemoteClient.HasActiveHost);
-                    UpdateRuntimeCoordinatorState();
-                });
+                await SetRuntimeHubConnectedOnUiAsync(true).ConfigureAwait(false);
+                await SetRemoteZ21ConnectedOnUiAsync(_runtimeHubRemoteClient.HasActiveHost).ConfigureAwait(false);
+                return true;
             }
 
-            return;
+            return false;
         }
 
         if (_runtimeHubRemoteClient.IsConnected)
         {
-            _uiDispatcher.InvokeOnUi(() =>
-            {
-                SetRuntimeHubConnected(true);
-                SetRemoteZ21Connected(_runtimeHubRemoteClient.HasActiveHost);
-                UpdateRuntimeCoordinatorState();
-            });
-            return;
+            await SetRuntimeHubConnectedOnUiAsync(true).ConfigureAwait(false);
+            await SetRemoteZ21ConnectedOnUiAsync(_runtimeHubRemoteClient.HasActiveHost).ConfigureAwait(false);
+            return true;
         }
 
         var clientId = _restApiClientRegistration?.ClientId;
@@ -788,23 +844,42 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             clientId = Guid.NewGuid().ToString("N");
         }
 
-        try
+        foreach (var delayMs in RuntimeHubConnectRetryDelaysMs)
         {
-            await _runtimeHubRemoteClient
-                .ConnectAsync(RestApiIpAddress.Trim(), RestApiPort, clientId, _applicationLifetimeCts.Token)
-                .ConfigureAwait(false);
-            _uiDispatcher.InvokeOnUi(() =>
+            if (delayMs > 0)
             {
-                SetRuntimeHubConnected(true);
-                SetRemoteZ21Connected(_runtimeHubRemoteClient.HasActiveHost);
-                UpdateRuntimeCoordinatorState();
-            });
+                try
+                {
+                    await Task.Delay(delayMs, _applicationLifetimeCts.Token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    return false;
+                }
+            }
+
+            if (!_settings.RestApi.IsConnectionEnabled)
+            {
+                return false;
+            }
+
+            try
+            {
+                await _runtimeHubRemoteClient
+                    .ConnectAsync(serverIp, serverPort, clientId, _applicationLifetimeCts.Token)
+                    .ConfigureAwait(false);
+                await SetRuntimeHubConnectedOnUiAsync(true).ConfigureAwait(false);
+                await SetRemoteZ21ConnectedOnUiAsync(_runtimeHubRemoteClient.HasActiveHost).ConfigureAwait(false);
+                return true;
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _logger.LogDebug(ex, "Runtime hub connect attempt failed (delay {DelayMs} ms)", delayMs);
+            }
         }
-        catch (Exception ex)
-        {
-            _logger.LogDebug(ex, "Runtime hub connect failed");
-            _uiDispatcher.InvokeOnUi(() => SetRuntimeHubConnected(false));
-        }
+
+        await SetRuntimeHubConnectedOnUiAsync(false).ConfigureAwait(false);
+        return false;
     }
 
     #endregion

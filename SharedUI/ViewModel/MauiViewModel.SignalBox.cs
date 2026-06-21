@@ -28,9 +28,11 @@ public sealed partial class MauiViewModel
     /// </summary>
     public bool HasSignalBoxElements => SignalBoxElements.Count > 0;
 
-    private void RefreshSignalBoxElements(IReadOnlyList<SignalBoxElementRuntimeSnapshot> elements)
+    private void RefreshSignalBoxElements(
+        IReadOnlyList<SignalBoxElementRuntimeSnapshot> elements,
+        bool forceApply = false)
     {
-        if (_heavyUpdatesPaused || !_signalBoxTabActive)
+        if (!forceApply && (_heavyUpdatesPaused || !_signalBoxTabActive))
         {
             if (elements.Count > 0)
             {
@@ -146,6 +148,14 @@ public sealed partial class MauiViewModel
         }
 
         if (snapshot.SignalAspect == pending)
+        {
+            _pendingSignalAspects.Remove(snapshot.ElementId);
+            return snapshot;
+        }
+
+        // MOBAflow runtime snapshots are authoritative while a remote session is active.
+        if (_mobileRuntimeCoordinator?.PreferRemoteRuntime == true
+            && snapshot.SignalAspect.HasValue)
         {
             _pendingSignalAspects.Remove(snapshot.ElementId);
             return snapshot;

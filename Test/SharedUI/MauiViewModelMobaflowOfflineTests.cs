@@ -261,6 +261,94 @@ internal sealed class MauiViewModelMobaflowOfflineTests
 
 
 
+    [Test]
+
+    public void ApplyRestoredMobileCacheToUi_PopulatesSignalBoxWithoutActiveTab()
+
+    {
+
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+
+        var viewModel = CreateViewModel(eventBus);
+
+        var elementId = Guid.NewGuid();
+
+
+
+        viewModel.RestoreCachedMobileSnapshot(new MobileSolutionCacheEntry(
+
+            new Solution
+
+            {
+
+                Name = "Cached",
+
+                Projects = [new Project { Name = "myMOBA" }]
+
+            },
+
+            new SolutionSyncMeta(DateTimeOffset.UtcNow, "Cached", "myMOBA"),
+
+            [
+
+                new SignalBoxElementRuntimeSnapshot
+
+                {
+
+                    ElementId = elementId,
+
+                    Name = "Offline Signal",
+
+                    Kind = SignalBoxElementKind.Signal,
+
+                    X = 2,
+
+                    Y = 3,
+
+                    SignalAspect = SignalAspect.Ks1
+
+                }
+
+            ],
+
+            [
+
+                new LocomotiveFleetSnapshot
+
+                {
+
+                    LocomotiveId = Guid.NewGuid(),
+
+                    Name = "BR 110",
+
+                    DigitalAddress = 7
+
+                }
+
+            ]));
+
+
+
+        viewModel.ApplyRestoredMobileCacheToUi();
+
+
+
+        Assert.Multiple(() =>
+
+        {
+
+            Assert.That(viewModel.SignalBoxElements, Has.Count.EqualTo(1));
+
+            Assert.That(viewModel.SignalBoxElements[0].Name, Is.EqualTo("Offline Signal"));
+
+            Assert.That(viewModel.GetStartupLocomotiveFleet(), Has.Count.EqualTo(1));
+
+        });
+
+    }
+
+
+
     private static void PublishRemoteSignalBoxSnapshot(
 
         EventBus eventBus,
@@ -435,6 +523,20 @@ internal sealed class MauiViewModelMobaflowOfflineTests
         await viewModel.InitializeAsync();
 
         Assert.That(viewModel.IsMobaflowConnectionEnabled, Is.False);
+    }
+
+    [Test]
+    public void MobaflowConnectionEnabled_ShowsConnectingStatusBeforeRestApiIsReachable()
+    {
+        var viewModel = CreateViewModel(new EventBus(NullLogger<EventBus>.Instance));
+
+        viewModel.IsMobaflowConnectionEnabled = true;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel.IsRestApiReachable, Is.False);
+            Assert.That(viewModel.RestApiStatusText, Is.EqualTo("Connecting"));
+        });
     }
 
     private static Mock<ISettingsService> CreateSettingsServiceMock()

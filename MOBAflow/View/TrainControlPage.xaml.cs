@@ -301,14 +301,8 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
         if (sender is not FrameworkElement { DataContext: FunctionButtonViewModel functionButton })
             return;
 
-        if (ViewModel.ToggleFunctionCommand.CanExecute(functionButton.Index))
-        {
-            ViewModel.ToggleFunctionCommand.Execute(functionButton.Index);
-            return;
-        }
-
-        if (sender is ToggleButton toggleButton)
-            toggleButton.IsChecked = functionButton.IsOn;
+        ViewModel.ToggleFunctionAsync(functionButton.Index)
+            .Observe(ex => _logger?.LogWarning(ex, "Function toggle failed for F{FunctionIndex}", functionButton.Index));
     }
 
     private async Task HandleFunctionButtonRightTappedAsync(object sender)

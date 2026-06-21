@@ -18,17 +18,23 @@ public sealed class RuntimeHub : Hub
     private readonly IRuntimeSnapshotCache _snapshotCache;
     private readonly ISolutionCache _solutionCache;
     private readonly IRuntimeHostRegistry _hostRegistry;
+    private readonly IRuntimeRemoteRegistry _remoteRegistry;
+    private readonly IRuntimeBroadcastMetrics _broadcastMetrics;
     private readonly IRuntimeCommandQueue _commandQueue;
 
     public RuntimeHub(
         IRuntimeSnapshotCache snapshotCache,
         ISolutionCache solutionCache,
         IRuntimeHostRegistry hostRegistry,
+        IRuntimeRemoteRegistry remoteRegistry,
+        IRuntimeBroadcastMetrics broadcastMetrics,
         IRuntimeCommandQueue commandQueue)
     {
         _snapshotCache = snapshotCache;
         _solutionCache = solutionCache;
         _hostRegistry = hostRegistry;
+        _remoteRegistry = remoteRegistry;
+        _broadcastMetrics = broadcastMetrics;
         _commandQueue = commandQueue;
     }
 
@@ -52,6 +58,7 @@ public sealed class RuntimeHub : Hub
         }
 
         await Groups.AddToGroupAsync(Context.ConnectionId!, "runtime-remote").ConfigureAwait(false);
+        _remoteRegistry.Register(Context.ConnectionId!, clientId);
 
         if (_snapshotCache.TryGet(out var entry))
         {
@@ -76,8 +83,10 @@ public sealed class RuntimeHub : Hub
             ?? throw new HubException("Invalid runtime snapshot payload.");
 
         _snapshotCache.Set(snapshotJson, snapshot.IsConnected);
-        await Clients.Group("runtime-remote").SendAsync(RuntimeHubMethods.SnapshotUpdated, snapshotJson).ConfigureAwait(false);
+        var broadcastJson = _snapshotCache.TryGet(out var cachedEntry) ? cachedEntry.Json : snapshotJson;
+        await Clients.Group("runtime-remote").SendAsync(RuntimeHubMethods.SnapshotUpdated, broadcastJson).ConfigureAwait(false);
         await Clients.Group("runtime-remote").SendAsync(RuntimeHubMethods.SessionStateChanged, BuildSessionOperational(snapshot.IsConnected)).ConfigureAwait(false);
+        _broadcastMetrics.RecordSnapshotBroadcast();
     }
 
     public async Task SetSignalAspect(string signalId, string aspect)
@@ -144,6 +153,8 @@ public sealed class RuntimeHub : Hub
             _hostRegistry.ClearHost(Context.ConnectionId!);
             await BroadcastSessionStateAsync().ConfigureAwait(false);
         }
+
+        _remoteRegistry.Unregister(Context.ConnectionId!);
 
         await base.OnDisconnectedAsync(exception).ConfigureAwait(false);
     }

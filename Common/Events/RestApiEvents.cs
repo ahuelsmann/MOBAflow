@@ -100,3 +100,73 @@ public enum PhotoAssignmentTarget
     /// </summary>
     GoodsWagon
 }
+
+/// <summary>
+/// MOBAsmart sync diagnostics snapshot for the Overview page.
+/// Published by RestApiStatusService after merging server status with local push metrics.
+/// </summary>
+public sealed record MobaflowSyncDiagnostics
+{
+    public bool RestApiReachable { get; init; }
+
+    public bool HostClientConnected { get; init; }
+
+    public bool ServerHasHost { get; init; }
+
+    public DateTimeOffset? LastHubPushAt { get; init; }
+
+    public bool LastHubPushSucceeded { get; init; }
+
+    public DateTimeOffset? LastServerBroadcastAt { get; init; }
+
+    public int RemoteClientCount { get; init; }
+
+    public bool SessionOperational { get; init; }
+
+    public DateTimeOffset LocalSnapshotCreatedAt { get; init; }
+
+    public bool Z21Connected { get; init; }
+
+    public bool HasActiveProject { get; init; }
+
+    public int LocalSignalBoxElementCount { get; init; }
+
+    public int LocalLocomotiveFleetCount { get; init; }
+
+    public bool RestCacheAvailable { get; init; }
+
+    public DateTimeOffset? RestCacheUpdatedAt { get; init; }
+
+    public bool RestCacheIsConnected { get; init; }
+
+    public int RestCacheSignalBoxElementCount { get; init; }
+
+    public int RestCacheLocomotiveFleetCount { get; init; }
+
+    public DateTimeOffset? LastRestCachePushAt { get; init; }
+
+    public bool LastRestCachePushSucceeded { get; init; }
+
+    public bool SolutionAvailable { get; init; }
+
+    public DateTimeOffset? SolutionUpdatedAt { get; init; }
+
+    public string? SolutionActiveProjectName { get; init; }
+
+    public DateTimeOffset? LastSolutionPushAt { get; init; }
+
+    public bool LastSolutionPushSucceeded { get; init; }
+}
+
+/// <summary>
+/// Fired when MOBAsmart sync diagnostics change.
+/// </summary>
+public sealed record MobaflowSyncDiagnosticsChangedEvent : EventBase
+{
+    public MobaflowSyncDiagnostics Diagnostics { get; init; }
+
+    public MobaflowSyncDiagnosticsChangedEvent(MobaflowSyncDiagnostics diagnostics)
+    {
+        Diagnostics = diagnostics;
+    }
+}

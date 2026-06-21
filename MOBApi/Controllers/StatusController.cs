@@ -14,10 +14,26 @@ public class StatusController : ControllerBase
 {
     private const int ClientExpiryMinutes = 10;
     private readonly IClientRegistry _clientRegistry;
+    private readonly IRuntimeHostRegistry _hostRegistry;
+    private readonly IRuntimeRemoteRegistry _remoteRegistry;
+    private readonly IRuntimeBroadcastMetrics _broadcastMetrics;
+    private readonly IRuntimeSnapshotCache _snapshotCache;
+    private readonly ISolutionCache _solutionCache;
 
-    public StatusController(IClientRegistry clientRegistry)
+    public StatusController(
+        IClientRegistry clientRegistry,
+        IRuntimeHostRegistry hostRegistry,
+        IRuntimeRemoteRegistry remoteRegistry,
+        IRuntimeBroadcastMetrics broadcastMetrics,
+        IRuntimeSnapshotCache snapshotCache,
+        ISolutionCache solutionCache)
     {
         _clientRegistry = clientRegistry;
+        _hostRegistry = hostRegistry;
+        _remoteRegistry = remoteRegistry;
+        _broadcastMetrics = broadcastMetrics;
+        _snapshotCache = snapshotCache;
+        _solutionCache = solutionCache;
     }
 
     /// <summary>
@@ -37,7 +53,13 @@ public class StatusController : ControllerBase
             connectedClients = _clientRegistry.GetAll()
                 .OrderBy(c => c.ConnectedAt)
                 .Select(c => new { c.ClientId, c.DeviceName, c.ConnectedAt })
-                .ToList()
+                .ToList(),
+            runtime = RuntimeStatusBuilder.BuildRuntimeStatus(
+                _hostRegistry,
+                _remoteRegistry,
+                _broadcastMetrics,
+                _snapshotCache),
+            solution = RuntimeStatusBuilder.BuildSolutionStatus(_solutionCache)
         });
     }
 

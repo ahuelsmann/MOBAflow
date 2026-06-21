@@ -18,3 +18,8 @@ public sealed record RemoteRuntimeSnapshotChangedEvent(MobaRuntimeSnapshot Snaps
 /// Published when the mobile Control tab fleet list was rebuilt from runtime or cached fleet data.
 /// </summary>
 public sealed record LocomotiveFleetUpdatedEvent(IReadOnlyList<LocomotiveFleetSnapshot> Fleet) : EventBase;
+
+/// <summary>
+/// Published when MOBAsmart command routing switches between MOBAflow remote and local Z21.
+/// </summary>
+public sealed record RuntimeCommandAvailabilityChangedEvent : EventBase;

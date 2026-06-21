@@ -576,11 +576,6 @@ public sealed partial class SignalBoxPropertiesControl
             return;
         }
 
-        if (!ViewModel.IsConnected)
-        {
-            return;
-        }
-
         await ViewModel.SetSignalAspectAsync(sig).ConfigureAwait(false);
     }
 
