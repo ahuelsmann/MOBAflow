@@ -69,6 +69,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     // snapshot function bits until the user manually toggles a function again.
     private bool _suppressSnapshotFunctionState;
     private CancellationTokenSource? _allFunctionsOffCts;
+    private int _functionControlVersion;
     private int _previousSpeed;
     private CancellationTokenSource? _doorReleaseBlinkCts;
 
@@ -163,7 +164,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
                 SetFunctionState(i, false);
             }
 
-            QueueBackgroundTask(TurnOffAllFunctionsAsync(), "Turn off all functions");
+            QueueBackgroundTask(TurnOffAllFunctionsAsync(resetUi: false), "Turn off all functions");
         }
 
         if (!_isLoadingPreset)
@@ -1472,7 +1473,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             StatusMessage = $"Loaded: {preset.Name} (DCC {preset.DccAddress})";
 
             // Turn all function keys off on selection: send explicit OFF for all functions to the Z21.
-            QueueBackgroundTask(TurnOffAllFunctionsAsync(), "Turn off all functions");
+            QueueBackgroundTask(TurnOffAllFunctionsAsync(resetUi: false), "Turn off all functions");
             OnPropertyChanged(nameof(CurrentPreset));
             NotifyAllFunctionGlyphsChanged();
         }
@@ -1761,9 +1762,12 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
         try
         {
-            Speed = locomotiveState.Speed;
-            _previousSpeed = locomotiveState.Speed;
-            IsForward = locomotiveState.IsForward;
+            if (ShouldApplySnapshotDriveState())
+            {
+                Speed = locomotiveState.Speed;
+                _previousSpeed = locomotiveState.Speed;
+                IsForward = locomotiveState.IsForward;
+            }
 
             if (ShouldApplySnapshotFunctionBits())
             {
@@ -1900,7 +1904,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         CurrentPreset.IsForward = value;
         QueueSavePresetsDebounced();
 
-        if (IsConnected && LocoAddress >= 1)
+        if (CanExecuteLocoCommand() && LocoAddress >= 1)
         {
             QueueBackgroundTask(HandleDirectionChangeAsync(value), "Handle direction change");
         }
@@ -2084,7 +2088,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     {
         try
         {
-            CancelAllFunctionsOffOperation();
+            InvalidatePendingFunctionUiResets();
 
             // Keep snapshot function bits suppressed while the user drives F-keys manually.
             _suppressSnapshotFunctionState = true;
@@ -2119,8 +2123,9 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
     private Task TurnOffAllFunctions() => TurnOffAllFunctionsAsync();
 
-    public async Task TurnOffAllFunctionsAsync()
+    public async Task TurnOffAllFunctionsAsync(bool resetUi = true)
     {
+        var uiResetVersion = _functionControlVersion;
         CancelAllFunctionsOffOperation();
         _allFunctionsOffCts = new CancellationTokenSource();
         var token = _allFunctionsOffCts.Token;
@@ -2128,13 +2133,9 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         // Suppress decoder function bits before touching UI so snapshots cannot re-enable keys mid-reset.
         _suppressSnapshotFunctionState = true;
 
-        for (int i = 0; i < Functions.Count; i++)
+        if (resetUi)
         {
-            token.ThrowIfCancellationRequested();
-            if (Functions[i].IsOn)
-            {
-                Functions[i].IsOn = false;
-            }
+            ResetFunctionUiStates(uiResetVersion, token);
         }
 
         // Persist the new (all-off) function state per locomotive when a preset is selected.
@@ -2167,6 +2168,17 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         }
     }
 
+    private bool ShouldApplySnapshotDriveState()
+    {
+        // MOBAsmart throttle UI is user-driven; stale local/remote snapshots must not revert direction or speed.
+        if (_hybridRuntimeSnapshots)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
     private bool ShouldApplySnapshotFunctionBits()
     {
         if (_suppressSnapshotFunctionState)
@@ -2187,11 +2199,46 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         return true;
     }
 
+    private void InvalidatePendingFunctionUiResets()
+    {
+        _functionControlVersion++;
+        CancelAllFunctionsOffOperation();
+    }
+
     private void CancelAllFunctionsOffOperation()
     {
         _allFunctionsOffCts?.Cancel();
         _allFunctionsOffCts?.Dispose();
         _allFunctionsOffCts = null;
+    }
+
+    private void ResetFunctionUiStates(int uiResetVersion, CancellationToken token)
+    {
+        void ApplyReset()
+        {
+            for (int i = 0; i < Functions.Count; i++)
+            {
+                token.ThrowIfCancellationRequested();
+                if (uiResetVersion != _functionControlVersion)
+                {
+                    return;
+                }
+
+                if (Functions[i].IsOn)
+                {
+                    Functions[i].IsOn = false;
+                }
+            }
+        }
+
+        if (_uiDispatcher != null)
+        {
+            _uiDispatcher.InvokeOnUi(ApplyReset);
+        }
+        else
+        {
+            ApplyReset();
+        }
     }
 
     private async Task SendAllFunctionsOffAsync(CancellationToken cancellationToken)

@@ -67,8 +67,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     private const int RestApiRediscoverIntervalSeconds = 25;
     private const int RestApiRediscoverIntervalFirst90Seconds = 10;
     private const int RestApiStartupRetryWindowSeconds = 90;
-    private static readonly int[] MobaflowConnectAttemptDelaysMs = [0, 500, 1500, 3000, 5000, 8000];
-    private static readonly int[] RuntimeHubConnectRetryDelaysMs = [0, 400, 1200, 2500];
+    private static readonly int[] RuntimeHubConnectRetryDelaysMs = [0];
 
     private const int Z21EndpointSyncIntervalSeconds = 45;
 
@@ -388,41 +387,25 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
                 return;
             }
 
-            _uiDispatcher.InvokeOnUi(() => IsRestApiReachable = false);
-            _lastRestApiDiscoverTime = DateTime.MinValue;
-
-            var anchor = string.IsNullOrWhiteSpace(Z21IpAddress) ? null : Z21IpAddress.Trim();
-            var (ip, port) = await _restDiscoveryService.DiscoverServerAsync(anchor).ConfigureAwait(false);
-            if (!string.IsNullOrEmpty(ip) && port.HasValue)
-            {
-                await ApplyDiscoveredRestEndpointAsync(ip, port.Value).ConfigureAwait(false);
-                return;
-            }
+            await RefreshRestApiReachableAsync().ConfigureAwait(false);
+            await MaybeDisableMobaflowConnectionWhenSessionLostAsync().ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "REST discovery after network change failed");
+            _logger.LogWarning(ex, "REST reachability refresh after network change failed");
         }
-
-        await RefreshRestApiReachableAsync().ConfigureAwait(false);
     }
 
     [RelayCommand]
-    private async Task RetryRestApiDiscoveryAsync()
+    private Task RetryRestApiDiscoveryAsync()
     {
-        if (!IsMobaflowConnectionEnabled)
+        if (IsMobaflowConnectionEnabled)
         {
-            return;
+            return Task.CompletedTask;
         }
 
-        _lastRestApiDiscoverTime = DateTime.UtcNow;
-        var anchor = string.IsNullOrWhiteSpace(Z21IpAddress) ? null : Z21IpAddress.Trim();
-        _logger.LogInformation("Manual REST discovery started (anchor={Anchor})", anchor ?? "(none)");
-        await DiscoverRestApiWithAnchorAsync(anchor).ConfigureAwait(false);
-        if (!IsRestApiReachable)
-        {
-            await RetryMobaflowConnectionAsync().ConfigureAwait(false);
-        }
+        IsMobaflowConnectionEnabled = true;
+        return Task.CompletedTask;
     }
 
     private async Task DiscoverRestApiWithAnchorAsync(string? subnetAnchorIp)
@@ -606,7 +589,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
                 if (_settings.RestApi.IsConnectionEnabled)
                 {
                     await RefreshRestApiReachableAsync().ConfigureAwait(false);
-                    await TryPeriodicRestDiscoveryIfNeededAsync().ConfigureAwait(false);
+                    await MaybeDisableMobaflowConnectionWhenSessionLostAsync().ConfigureAwait(false);
                 }
 
                 await Task.Delay(GetRestApiHealthCheckDelay(), _applicationLifetimeCts.Token).ConfigureAwait(false);
@@ -637,39 +620,9 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         return TimeSpan.FromSeconds(seconds);
     }
 
-    private async Task TryPeriodicRestDiscoveryIfNeededAsync()
+    private Task TryPeriodicRestDiscoveryIfNeededAsync()
     {
-        if (!_settings.RestApi.IsConnectionEnabled || IsRestApiReachable)
-        {
-            return;
-        }
-
-        var elapsedSinceStart = (DateTime.UtcNow - _appStartTimeUtc).TotalSeconds;
-        var interval = elapsedSinceStart < RestApiStartupRetryWindowSeconds
-            ? RestApiRediscoverIntervalFirst90Seconds
-            : RestApiRediscoverIntervalSeconds;
-
-        if ((DateTime.UtcNow - _lastRestApiDiscoverTime).TotalSeconds < interval)
-        {
-            return;
-        }
-
-        _lastRestApiDiscoverTime = DateTime.UtcNow;
-        try
-        {
-            var anchor = string.IsNullOrWhiteSpace(_settings.Z21.CurrentIpAddress)
-                ? null
-                : _settings.Z21.CurrentIpAddress.Trim();
-            var (restIp, restPort) = await _restDiscoveryService.DiscoverServerAsync(anchor).ConfigureAwait(false);
-            if (!string.IsNullOrEmpty(restIp) && restPort.HasValue)
-            {
-                await ApplyDiscoveredRestEndpointAsync(restIp, restPort.Value).ConfigureAwait(false);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "REST API re-discovery failed");
-        }
+        return Task.CompletedTask;
     }
 
     /// <summary>

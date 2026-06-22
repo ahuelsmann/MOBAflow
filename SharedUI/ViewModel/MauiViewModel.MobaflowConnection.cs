@@ -40,6 +40,8 @@ public sealed partial class MauiViewModel
 
     private bool _mobaflowInitialCatalogApplied;
 
+    private bool _mobaflowConnectInProgress;
+
     private CancellationTokenSource? _mobaflowConnectCts;
 
     private readonly SemaphoreSlim _mobaflowCatalogSyncLock = new(1, 1);
@@ -85,32 +87,15 @@ public sealed partial class MauiViewModel
         RunInBackground(ApplyMobaflowConnectionStateAsync(_mobaflowConnectCts.Token), "Connect MOBAflow after toggle on");
     }
 
-    /// <summary>
-    /// Retries MOBAflow discovery and hub connection while the toggle remains enabled.
-    /// </summary>
-    public Task RetryMobaflowConnectionAsync()
-    {
-        if (!IsMobaflowConnectionEnabled)
-        {
-            return Task.CompletedTask;
-        }
-
-        _mobaflowConnectCts?.Cancel();
-        _mobaflowConnectCts?.Dispose();
-        _mobaflowConnectCts = CancellationTokenSource.CreateLinkedTokenSource(_applicationLifetimeCts.Token);
-        return ApplyMobaflowConnectionStateAsync(_mobaflowConnectCts.Token);
-    }
-
     [RelayCommand]
     private Task SetMobaflowConnectionAsync(bool enabled)
     {
         if (IsMobaflowConnectionEnabled != enabled)
         {
             IsMobaflowConnectionEnabled = enabled;
-            return Task.CompletedTask;
         }
 
-        return enabled ? RetryMobaflowConnectionAsync() : Task.CompletedTask;
+        return Task.CompletedTask;
     }
 
     private async Task ApplyMobaflowConnectionStateAsync(CancellationToken cancellationToken)
@@ -125,38 +110,62 @@ public sealed partial class MauiViewModel
             }
 
             _mobaflowInitialCatalogApplied = false;
+            _mobaflowConnectInProgress = true;
 
-            foreach (var delayMs in MobaflowConnectAttemptDelaysMs)
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var reachable = await RefreshRestApiReachableAsync().ConfigureAwait(false);
+            if (!reachable)
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                await TryDiscoverMobaflowOnceAsync(cancellationToken).ConfigureAwait(false);
+                reachable = await RefreshRestApiReachableAsync().ConfigureAwait(false);
+            }
 
-                if (delayMs > 0)
-                {
-                    await Task.Delay(delayMs, cancellationToken).ConfigureAwait(false);
-                }
+            var hubConnected = reachable
+                && await EnsureRuntimeHubConnectionAsync(reachable).ConfigureAwait(false);
 
-                if (!_settings.RestApi.IsConnectionEnabled)
-                {
-                    return;
-                }
-
-                var reachable = await RefreshRestApiReachableAsync().ConfigureAwait(false);
-                if (!reachable)
-                {
-                    await TryDiscoverMobaflowEndpointsAsync().ConfigureAwait(false);
-                    reachable = await RefreshRestApiReachableAsync().ConfigureAwait(false);
-                }
-
-                if (reachable && (_runtimeHubRemoteClient?.IsConnected ?? false))
-                {
-                    return;
-                }
+            if (!reachable || !hubConnected)
+            {
+                await DisableMobaflowConnectionAfterFailedAttemptAsync().ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException)
         {
             // Superseded by a newer toggle or app shutdown.
         }
+        finally
+        {
+            _mobaflowConnectInProgress = false;
+        }
+    }
+
+    internal async Task MaybeDisableMobaflowConnectionWhenSessionLostAsync()
+    {
+        if (_mobaflowConnectInProgress || !_settings.RestApi.IsConnectionEnabled)
+        {
+            return;
+        }
+
+        var sessionActive = IsRestApiReachable && (_runtimeHubRemoteClient?.IsConnected ?? false);
+        if (!sessionActive)
+        {
+            await DisableMobaflowConnectionAfterFailedAttemptAsync().ConfigureAwait(false);
+        }
+    }
+
+    private async Task DisableMobaflowConnectionAfterFailedAttemptAsync()
+    {
+        await DisconnectMobaflowAsync().ConfigureAwait(false);
+
+        await _uiDispatcher.InvokeOnUiAsync(() =>
+        {
+            if (IsMobaflowConnectionEnabled)
+            {
+                IsMobaflowConnectionEnabled = false;
+            }
+
+            return Task.CompletedTask;
+        }).ConfigureAwait(false);
     }
 
     private void NotifyMobaflowConnectionStatusProperties()
@@ -169,61 +178,38 @@ public sealed partial class MauiViewModel
 
 
     /// <summary>
-
-    /// Discovers MOBApi on the LAN and applies the REST endpoint. Does not trigger Z21 discovery.
-
+    /// Single LAN discovery pass for MOBApi when the user enables the MOBAflow connection toggle.
     /// </summary>
-
-    private async Task TryDiscoverMobaflowEndpointsAsync()
-
+    private async Task TryDiscoverMobaflowOnceAsync(CancellationToken cancellationToken)
     {
-
         try
-
         {
+            cancellationToken.ThrowIfCancellationRequested();
 
-            await Task.Delay(TimeSpan.FromMilliseconds(500), _applicationLifetimeCts.Token).ConfigureAwait(false);
-
-
-
+            var anchor = string.IsNullOrWhiteSpace(Z21IpAddress) ? null : Z21IpAddress.Trim();
             var (fastIp, fastPort) = await _restDiscoveryService
-
-                .DiscoverServerFastAsync(string.IsNullOrWhiteSpace(Z21IpAddress) ? null : Z21IpAddress.Trim())
-
+                .DiscoverServerFastAsync(anchor)
                 .ConfigureAwait(false);
-
             if (!string.IsNullOrEmpty(fastIp) && fastPort.HasValue)
-
             {
-
                 await ApplyDiscoveredRestEndpointAsync(fastIp, fastPort.Value).ConfigureAwait(false);
-
                 return;
-
             }
 
-
-
-            await RestDiscoveryLoopAsync().ConfigureAwait(false);
-
+            var (ip, port) = await _restDiscoveryService.DiscoverServerAsync(anchor).ConfigureAwait(false);
+            if (!string.IsNullOrEmpty(ip) && port.HasValue)
+            {
+                await ApplyDiscoveredRestEndpointAsync(ip, port.Value).ConfigureAwait(false);
+            }
         }
-
         catch (OperationCanceledException)
-
         {
-
-            // App shutdown.
-
+            throw;
         }
-
         catch (Exception ex)
-
         {
-
-            _logger.LogDebug(ex, "MOBAflow-only discovery failed");
-
+            _logger.LogDebug(ex, "MOBAflow discovery failed");
         }
-
     }
 
 

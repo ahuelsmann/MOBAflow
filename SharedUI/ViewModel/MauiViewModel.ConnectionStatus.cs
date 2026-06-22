@@ -40,10 +40,6 @@ public sealed partial class MauiViewModel
 
         NotifyConnectionIndicatorProperties();
         UpdateRuntimeCoordinatorState();
-        if (value && IsMobaflowConnectionEnabled && !IsRestApiReachable && !string.IsNullOrWhiteSpace(Z21IpAddress))
-        {
-            RunInBackground(DiscoverRestApiWithAnchorAsync(Z21IpAddress.Trim()), "REST discovery after Z21 connect");
-        }
     }
 
     partial void OnIsRestApiReachableChanged(bool value)

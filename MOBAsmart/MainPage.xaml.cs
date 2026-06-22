@@ -313,23 +313,9 @@ public partial class CounterPage
         PerformHapticFeedback();
 
         if (isEnabled != _viewModel.IsMobaflowConnectionEnabled)
-
         {
-
             await _viewModel.SetMobaflowConnectionCommand.ExecuteAsync(isEnabled);
-
-            return;
-
         }
-
-        if (isEnabled)
-
-        {
-
-            await _viewModel.RetryMobaflowConnectionAsync();
-
-        }
-
     }
 
 

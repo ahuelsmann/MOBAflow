@@ -102,105 +102,86 @@ internal sealed class MauiViewModelMobaflowOfflineTests
 
 
     [Test]
-
     public async Task MobaflowSessionEnd_ActivatesCachedProject()
-
     {
-
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-
         var runtimeMock = new Mock<IMobaRuntime>();
-
         runtimeMock.SetupGet(runtime => runtime.Current).Returns(MobaRuntimeSnapshot.Empty);
+        runtimeMock
+            .Setup(runtime => runtime.ActivateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
+        var settings = new AppSettings
+        {
+            RestApi =
+            {
+                CurrentIpAddress = "192.168.0.100",
+                Port = 5001
+            }
+        };
 
+        var hubMock = new Mock<IRuntimeHubRemoteClient>();
+        hubMock.SetupGet(hub => hub.IsConnected).Returns(true);
+        hubMock
+            .Setup(hub => hub.ConnectAsync(
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var photoUploadMock = new Mock<IPhotoUploadService>();
+        photoUploadMock
+            .Setup(service => service.HealthCheckAsync(It.IsAny<string>(), It.IsAny<int>()))
+            .ReturnsAsync(true);
 
         var projectContext = new MobileSolutionContext();
-
         projectContext.ApplySolution(new Solution
-
         {
-
             Name = "Cached",
-
             Projects =
-
             [
-
                 new Project
-
                 {
-
                     Name = "myMOBA",
-
                     Locomotives =
-
                     [
-
                         new Locomotive
-
                         {
-
                             Id = Guid.NewGuid(),
-
                             Name = "BR 110",
-
                             DigitalAddress = 7
-
                         }
-
                     ]
-
                 }
-
             ]
-
         });
 
-
-
-        var coordinator = new MobileRuntimeCoordinator(runtimeMock.Object, new Mock<IRuntimeHubRemoteClient>().Object);
-
+        var coordinator = new MobileRuntimeCoordinator(runtimeMock.Object, hubMock.Object);
         coordinator.SetMobaflowSessionActive(true);
 
-
-
         var viewModel = CreateViewModel(
-
             eventBus,
-
+            runtimeHubRemoteClient: hubMock.Object,
             runtimeMock: runtimeMock,
-
             projectContext: projectContext,
-
-            mobileRuntimeCoordinator: coordinator);
-
-
+            mobileRuntimeCoordinator: coordinator,
+            settings: settings,
+            photoUploadService: photoUploadMock.Object);
 
         viewModel.IsMobaflowConnectionEnabled = true;
+        await Task.Delay(300);
 
-        viewModel.IsRestApiReachable = true;
-
-        viewModel.SetRuntimeHubConnected(true);
-
-
+        Assert.That(viewModel.IsMobaflowConnectionEnabled, Is.True);
 
         viewModel.IsRestApiReachable = false;
-
         await Task.Delay(200);
 
-
-
         runtimeMock.Verify(
-
             runtime => runtime.ActivateProjectAsync(
-
                 It.Is<Project>(project => project.Name == "myMOBA"),
-
                 It.IsAny<CancellationToken>()),
-
             Times.Once);
-
     }
 
 
@@ -396,83 +377,47 @@ internal sealed class MauiViewModelMobaflowOfflineTests
 
 
     private MauiViewModel CreateViewModel(
-
         EventBus eventBus,
-
         IRuntimeHubRemoteClient? runtimeHubRemoteClient = null,
-
         Mock<IMobaRuntime>? runtimeMock = null,
-
         IProjectContext? projectContext = null,
-
-        IMobileRuntimeCoordinator? mobileRuntimeCoordinator = null)
-
+        IMobileRuntimeCoordinator? mobileRuntimeCoordinator = null,
+        AppSettings? settings = null,
+        IRestDiscoveryService? restDiscoveryService = null,
+        IPhotoUploadService? photoUploadService = null)
     {
-
         runtimeMock ??= new Mock<IMobaRuntime>();
-
         runtimeMock.SetupGet(runtime => runtime.Current).Returns(MobaRuntimeSnapshot.Empty);
 
-
-
         var uiDispatcherMock = new Mock<IUiDispatcher>();
-
         uiDispatcherMock
-
             .Setup(dispatcher => dispatcher.InvokeOnUi(It.IsAny<Action>()))
-
             .Callback<Action>(action => action());
-
         uiDispatcherMock
-
             .Setup(dispatcher => dispatcher.InvokeOnUiLowPriority(It.IsAny<Action>()))
-
             .Callback<Action>(action => action());
-
         uiDispatcherMock
-
             .Setup(dispatcher => dispatcher.InvokeOnUiAsync(It.IsAny<Func<Task>>()))
-
             .Returns<Func<Task>>(asyncAction => asyncAction());
 
-
-
         var viewModel = new MauiViewModel(
-
             runtimeMock.Object,
-
             uiDispatcherMock.Object,
-
-            new AppSettings(),
-
+            settings ?? new AppSettings(),
             CreateSettingsServiceMock().Object,
-
-            new Mock<IRestDiscoveryService>().Object,
-
+            restDiscoveryService ?? new Mock<IRestDiscoveryService>().Object,
             new Mock<IZ21DiscoveryService>().Object,
-
-            new Mock<IPhotoUploadService>().Object,
-
+            photoUploadService ?? new Mock<IPhotoUploadService>().Object,
             new Mock<IPhotoCaptureService>().Object,
-
             new Mock<INetworkProfileChangeNotifier>().Object,
-
             NullLogger<MauiViewModel>.Instance,
-
             eventBus,
-
             runtimeHubRemoteClient: runtimeHubRemoteClient,
-
             mobileRuntimeCoordinator: mobileRuntimeCoordinator,
-
             projectContext: projectContext);
 
-
-
         _createdViewModels.Add(viewModel);
-
         return viewModel;
-
     }
 
 
@@ -526,32 +471,50 @@ internal sealed class MauiViewModelMobaflowOfflineTests
     }
 
     [Test]
-    public void MobaflowConnectionEnabled_ShowsConnectingStatusBeforeRestApiIsReachable()
+    public async Task MobaflowConnectionEnabled_WhenUnreachable_DisablesToggleAfterSingleAttempt()
     {
-        var viewModel = CreateViewModel(new EventBus(NullLogger<EventBus>.Instance));
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var settings = new AppSettings
+        {
+            RestApi =
+            {
+                CurrentIpAddress = "192.168.0.100",
+                Port = 5001
+            }
+        };
+
+        var restDiscoveryMock = new Mock<IRestDiscoveryService>();
+        restDiscoveryMock
+            .Setup(service => service.DiscoverServerFastAsync(It.IsAny<string?>()))
+            .ReturnsAsync((null, null));
+        restDiscoveryMock
+            .Setup(service => service.DiscoverServerAsync(It.IsAny<string?>()))
+            .ReturnsAsync((null, null));
+
+        var photoUploadMock = new Mock<IPhotoUploadService>();
+        photoUploadMock
+            .Setup(service => service.HealthCheckAsync(It.IsAny<string>(), It.IsAny<int>()))
+            .ReturnsAsync(false);
+
+        var viewModel = CreateViewModel(
+            eventBus,
+            settings: settings,
+            restDiscoveryService: restDiscoveryMock.Object,
+            photoUploadService: photoUploadMock.Object);
 
         viewModel.IsMobaflowConnectionEnabled = true;
+        await Task.Delay(500);
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(viewModel.IsRestApiReachable, Is.False);
-            Assert.That(viewModel.RestApiStatusText, Is.EqualTo("Connecting"));
-        });
+        Assert.That(viewModel.IsMobaflowConnectionEnabled, Is.False);
+        restDiscoveryMock.Verify(service => service.DiscoverServerAsync(It.IsAny<string?>()), Times.Once);
     }
 
     private static Mock<ISettingsService> CreateSettingsServiceMock()
-
     {
-
         var settingsServiceMock = new Mock<ISettingsService>();
-
         settingsServiceMock.Setup(service => service.GetSettings()).Returns(new AppSettings());
-
         settingsServiceMock.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
-
         return settingsServiceMock;
-
     }
-
 }
 

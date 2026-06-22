@@ -972,7 +972,7 @@
           {
             "$type": "Signal",
             "signalSystem": "Ks",
-            "signalAspect": "Ks1",
+            "signalAspect": "Hp0",
             "topSpeedIndicator": "8",
             "bottomSpeedIndicator": "6",
             "isMultiplexed": true,
