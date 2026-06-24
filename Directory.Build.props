@@ -19,13 +19,16 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <PlatformTarget Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">x64</PlatformTarget>
+    <!-- Any CPU maps to mismatched bin/obj paths for WinUI + MOBAflow dependencies (WMC1006). -->
+    <Platform Condition="'$(OS)' == 'Windows_NT' and ('$(Platform)' == '' or '$(Platform)' == 'AnyCPU')">x64</Platform>
 
     <!-- Keep normal build loops fast; Release remains strict below. -->
     <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
     <RunAnalyzersDuringLiveAnalysis>true</RunAnalyzersDuringLiveAnalysis>
     <GenerateDocumentationFile Condition="'$(Configuration)' != 'Release'">false</GenerateDocumentationFile>
     <UseSharedCompilation>true</UseSharedCompilation>
-    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+    <!-- Reference assemblies reduce bin-folder DLL locking during parallel solution builds (MSB3026/MSB3061). -->
+    <ProduceReferenceAssembly>true</ProduceReferenceAssembly>
     <Deterministic>false</Deterministic>
     <Deterministic Condition="'$(Configuration)' == 'Release'">true</Deterministic>
 

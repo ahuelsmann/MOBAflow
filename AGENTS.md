@@ -81,7 +81,7 @@ This is a .NET 10 multi-platform solution. On the Linux Cloud VM **only cross-pl
 
 | Buildable on Linux | NOT buildable (platform-specific) |
 | ------------------ | -------------------------------- |
-| Domain, Common, Backend, Sound, SharedUI, TrackLibrary.Base, TrackLibrary.PikoA, TrackPlan.Renderer, MOBApi, Test | MOBAflow (`net10.0-windows10.0.22621.0`), MOBAsmart (`net10.0-android`), MAUI.Controls (`net10.0;net10.0-android`) |
+| Domain, Common, Backend, Sound, SharedUI, TrackLibrary.Base, TrackLibrary.PikoA, TrackPlan.Renderer, MOBApi, Test | MOBAflow (`net10.0-windows10.0.22621.0`), MOBAsmart (`net10.0-android`) |
 
 ### Build & test commands
 

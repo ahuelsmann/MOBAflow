@@ -10,12 +10,14 @@
         <!-- Sound Library - Workflow audio effects -->
         <!-- All .wav files in Resources/Sounds/ will be copied to output directory -->
         <Content Include="Resources\Sounds\**\*.wav">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToOutputDirectory Condition="'$(ExcludeSoundContentFromOutput)' == 'true'">Never</CopyToOutputDirectory>
+            <CopyToOutputDirectory Condition="'$(ExcludeSoundContentFromOutput)' != 'true'">PreserveNewest</CopyToOutputDirectory>
             <Link>Resources\Sounds\%(RecursiveDir)%(Filename)%(Extension)</Link>
         </Content>
         <!-- Sound Library - Documentation -->
         <None Include="Resources\Sounds\**\*.md">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToOutputDirectory Condition="'$(ExcludeSoundContentFromOutput)' == 'true'">Never</CopyToOutputDirectory>
+            <CopyToOutputDirectory Condition="'$(ExcludeSoundContentFromOutput)' != 'true'">PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>
     <ItemGroup>
@@ -29,7 +31,8 @@
     </ItemGroup>
     <ItemGroup>
         <Content Update="Resources\Sounds\273646__gollamar__announcement-06.wav">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToOutputDirectory Condition="'$(ExcludeSoundContentFromOutput)' == 'true'">Never</CopyToOutputDirectory>
+            <CopyToOutputDirectory Condition="'$(ExcludeSoundContentFromOutput)' != 'true'">PreserveNewest</CopyToOutputDirectory>
         </Content>
         <None Update="Resources\Sounds\Station\README.md">
             <CopyToOutputDirectory>Never</CopyToOutputDirectory>

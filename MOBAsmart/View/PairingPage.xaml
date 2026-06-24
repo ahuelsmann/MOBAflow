@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="Moba.MAUI.View.PairingPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:Moba.SharedUI.ViewModel;assembly=SharedUI"
+    xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.Maui.Controls"
+    Title="Pair with MOBAflow"
+    x:DataType="local:MauiViewModel"
+    BackgroundColor="{DynamicResource PageBackgroundColor}">
+
+    <Grid RowDefinitions="Auto,*,Auto" Padding="16" RowSpacing="12">
+        <VerticalStackLayout Grid.Row="0" Spacing="6">
+            <Label
+                FontAttributes="Bold"
+                FontSize="20"
+                Text="Scan QR code"
+                TextColor="{DynamicResource TextPrimary}" />
+            <Label
+                FontSize="14"
+                Text="In MOBAflow, open Settings → REST API and scan the pairing QR code."
+                TextColor="{DynamicResource TextSecondary}"
+                TextType="Text" />
+        </VerticalStackLayout>
+
+        <Border
+            Grid.Row="1"
+            Padding="8"
+            BackgroundColor="{DynamicResource SurfaceCard}"
+            Stroke="{DynamicResource BorderColor}"
+            StrokeShape="RoundRectangle 12"
+            StrokeThickness="1">
+            <Grid>
+                <zxing:CameraBarcodeReaderView
+                    x:Name="BarcodeReader"
+                    BarcodesDetected="OnBarcodesDetected"
+                    CameraLocation="Rear"
+                    HorizontalOptions="Fill"
+                    IsDetecting="True"
+                    IsTorchOn="False"
+                    VerticalOptions="Fill" />
+                <Label
+                    HorizontalOptions="Center"
+                    IsVisible="{Binding IsPairingBusy}"
+                    Text="Connecting..."
+                    TextColor="{DynamicResource TextPrimary}"
+                    VerticalOptions="Center" />
+            </Grid>
+        </Border>
+
+        <VerticalStackLayout Grid.Row="2" Spacing="10">
+            <Label
+                FontSize="12"
+                Text="Or enter pairing key manually"
+                TextColor="{DynamicResource TextSecondary}" />
+            <Entry
+                IsPassword="True"
+                Placeholder="Pairing key from MOBAflow"
+                Text="{Binding RestApiApiKey, Mode=TwoWay}" />
+            <Button
+                Clicked="OnManualPairingClicked"
+                Style="{DynamicResource AccentButtonStyle}"
+                Text="Connect manually" />
+            <Button
+                Clicked="OnCancelClicked"
+                Style="{DynamicResource SecondaryButtonStyle}"
+                Text="Cancel" />
+            <Label
+                FontSize="12"
+                IsVisible="{Binding HasPairingError}"
+                Text="{Binding PairingStatusText}"
+                TextColor="{DynamicResource RailwayDanger}" />
+        </VerticalStackLayout>
+    </Grid>
+</ContentPage>

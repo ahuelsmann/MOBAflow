@@ -3,6 +3,7 @@
 namespace Moba.MOBApi.Hubs;
 
 using Common.Runtime;
+using Common.Security;
 
 using Microsoft.AspNetCore.SignalR;
 
@@ -52,6 +53,8 @@ public sealed class RuntimeHub : Hub
 
     public async Task RegisterRemote(string clientId)
     {
+        EnsureRemoteAuthorized();
+
         if (string.IsNullOrWhiteSpace(clientId))
         {
             throw new HubException("ClientId is required.");
@@ -91,6 +94,8 @@ public sealed class RuntimeHub : Hub
 
     public async Task SetSignalAspect(string signalId, string aspect)
     {
+        EnsureRemoteAuthorized();
+
         if (!Guid.TryParse(signalId, out _))
         {
             throw new HubException("Invalid signal id.");
@@ -116,6 +121,8 @@ public sealed class RuntimeHub : Hub
 
     public async Task SetLocomotiveDrive(int address, int speed, bool forward)
     {
+        EnsureRemoteAuthorized();
+
         if (await TryForwardSetLocomotiveDriveAsync(address, speed, forward).ConfigureAwait(false))
         {
             return;
@@ -132,6 +139,8 @@ public sealed class RuntimeHub : Hub
 
     public async Task SetLocomotiveFunction(int address, int functionIndex, bool isOn)
     {
+        EnsureRemoteAuthorized();
+
         if (await TryForwardSetLocomotiveFunctionAsync(address, functionIndex, isOn).ConfigureAwait(false))
         {
             return;
@@ -227,5 +236,33 @@ public sealed class RuntimeHub : Hub
     {
         var remoteIp = Context.GetHttpContext()?.Connection.RemoteIpAddress;
         return remoteIp != null && IPAddress.IsLoopback(remoteIp);
+    }
+
+    private void EnsureRemoteAuthorized()
+    {
+        var httpContext = Context.GetHttpContext();
+        if (httpContext != null
+            && MobaApiAuth.IsLocalConnection(
+                httpContext.Connection.RemoteIpAddress,
+                httpContext.Connection.LocalIpAddress))
+        {
+            return;
+        }
+
+        if (httpContext?.Items[MobaApiAuth.AuthenticatedItemKey] is true)
+        {
+            return;
+        }
+
+        var configuredApiKey = MobaApiAuth.ReadConfiguredApiKey();
+        if (!string.IsNullOrEmpty(configuredApiKey)
+            && httpContext?.Request.Headers.TryGetValue(MobaApiAuth.ApiKeyHeaderName, out var headerValues) == true
+            && MobaApiAuth.TryGetProvidedApiKey(headerValues.FirstOrDefault(), out var apiKey)
+            && MobaApiAuth.KeysMatch(apiKey, configuredApiKey))
+        {
+            return;
+        }
+
+        throw new HubException("Invalid or missing MOBApi pairing key.");
     }
 }

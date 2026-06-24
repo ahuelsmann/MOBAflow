@@ -3,15 +3,19 @@ namespace Moba.WinUI.View;
 
 using Common.Configuration;
 using Common.Extension;
+using Common.Security;
 using Converter;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.Windows.Storage.Pickers;
+using Moba.WinUI.Service;
 using SharedUI.Interface;
 using SharedUI.Shell;
 using SharedUI.ViewModel;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.Storage.Streams;
 
 /// <summary>
 /// Settings page for application-wide configuration.
@@ -39,12 +43,77 @@ internal sealed partial class SettingsPage
         _logger = logger;
         _navigationService = navigationService;
         InitializeComponent();
+        ViewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is nameof(MainWindowViewModel.LocalIpAddress)
+                or nameof(MainWindowViewModel.RestApiPort)
+                or nameof(MainWindowViewModel.RestApiApiKey))
+            {
+                RefreshPairingQrImage();
+            }
+        };
+        Loaded += async (_, _) => await RefreshPairingQrImageWithRetryAsync().ConfigureAwait(true);
+    }
+
+    private async Task RefreshPairingQrImageWithRetryAsync()
+    {
+        for (var attempt = 0; attempt < 5; attempt++)
+        {
+            await RefreshPairingQrImageAsync().ConfigureAwait(true);
+            if (PairingQrImage.Source != null)
+            {
+                return;
+            }
+
+            if (attempt < 4)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(2)).ConfigureAwait(true);
+            }
+        }
+    }
+
+    private async Task RefreshPairingQrImageAsync()
+    {
+        var ip = ViewModel.LocalIpAddress;
+        if (string.IsNullOrWhiteSpace(ip)
+            || ip.Equals("No network connection", StringComparison.OrdinalIgnoreCase)
+            || string.IsNullOrWhiteSpace(ViewModel.RestApiApiKey)
+            || ViewModel.RestApiPort <= 0)
+        {
+            PairingQrImage.Source = null;
+            return;
+        }
+
+        var payload = MobaPairingPayload.Create(ip, ViewModel.RestApiPort, ViewModel.RestApiApiKey);
+        var png = MobaPairingQrEncoder.TryCreatePng(payload.ToJson());
+        if (png == null || png.Length == 0)
+        {
+            PairingQrImage.Source = null;
+            return;
+        }
+
+        using var stream = new MemoryStream(png);
+        var image = new BitmapImage();
+        await image.SetSourceAsync(stream.AsRandomAccessStream());
+        PairingQrImage.Source = image;
+    }
+
+    private void RefreshPairingQrImage()
+    {
+        _ = RefreshPairingQrImageAsync();
     }
 
     private void CopyIpToClipboard_Click(object sender, RoutedEventArgs e)
     {
         var dataPackage = new DataPackage();
         dataPackage.SetText(ViewModel.LocalIpAddress);
+        Clipboard.SetContent(dataPackage);
+    }
+
+    private void CopyApiKeyToClipboard_Click(object sender, RoutedEventArgs e)
+    {
+        var dataPackage = new DataPackage();
+        dataPackage.SetText(ViewModel.RestApiApiKey);
         Clipboard.SetContent(dataPackage);
     }
 

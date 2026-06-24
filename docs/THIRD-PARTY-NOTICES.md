@@ -69,20 +69,21 @@ The following table reflects the direct package and framework references current
 
 | Package or family | Version(s) | Used in | Purpose |
 | --- | --- | --- | --- |
-| `CommunityToolkit.WinUI.Controls.ColorPicker`, `CommunityToolkit.WinUI.Controls.Sizers`, `CommunityToolkit.WinUI.UI.Controls.Markdown` | `8.2.251219`, `7.1.2` | `MOBAflow` | WinUI color picker, grid splitters, and Markdown rendering. |
+| `CommunityToolkit.WinUI.Controls.ColorPicker`, `CommunityToolkit.WinUI.Controls.Sizers` | `8.2.251219` | `MOBAflow` | WinUI color picker and grid splitters. |
+| `CommunityToolkit.WinUI.UI.Controls.Markdown` | `7.1.2` | `MOBAflow` | Markdown rendering on the Info page. Stays on 7.x because Markdown has not been migrated to the unified `CommunityToolkit.WinUI.Controls.*` 8.x line. |
 | `CommunityToolkit.Mvvm` | `8.4.2` | `SharedUI` | MVVM primitives such as observable properties and relay commands. |
 | `CommunityToolkit.Maui` | `14.2.0` | `MOBAsmart` | MAUI helpers, converters, and behaviors. |
 | `Microsoft.WindowsAppSDK`, `Microsoft.Graphics.Win2D`, `Microsoft.Xaml.Behaviors.WinUI.Managed` | `2.2.0`, `1.4.0`, `3.0.1` | `MOBAflow` | Windows desktop shell, GPU-accelerated 2D rendering, and XAML behaviors. |
-| `Microsoft.Azure.AppConfiguration.AspNetCore` | `8.5.0` | `MOBAflow` | Centralized runtime configuration from Azure App Configuration. |
-| `Microsoft.AspNetCore.App`, `Microsoft.AspNetCore.SignalR.Client` | `Framework reference`, `10.0.9` | `MOBAflow`, `MOBApi` | ASP.NET Core shared framework and SignalR client connectivity. |
+| `Microsoft.Azure.AppConfiguration.AspNetCore` | `8.5.0` | `MOBAflow` | Optional Azure App Configuration source (DEBUG / `AZURE_APPCONFIG_CONNECTION`). |
+| `Microsoft.AspNetCore.SignalR.Client` | `10.0.9` | `MOBAflow`, `MOBAsmart`, `Test` | SignalR client connectivity. |
 | `Microsoft.Extensions.*` | `10.0.9` | `Common`, `Backend`, `Sound`, `SharedUI`, `Test` | Logging, dependency injection, and options. |
 | `Microsoft.Maui.Controls` | `10.0.71` | `MOBAsmart` | Core .NET MAUI UI framework for the Android client. |
 | `Xamarin.AndroidX.Startup.StartupRuntime` | `1.2.0.7` | `MOBAsmart` | AndroidX startup integration for MAUI initialization providers. |
+| `ZXing.Net`, `ZXing.Net.Maui.Controls` | `0.16.11`, `0.10.1` | `MOBAflow`, `MOBAsmart` | QR pairing (WinUI) and barcode scanning (MAUI). |
 | `System.Speech`, `System.Windows.Extensions` | `10.0.9` | `Sound` | Windows text-to-speech and Windows-specific audio APIs. |
 | `Serilog`, `Serilog.Extensions.Logging`, `Serilog.Sinks.Async`, `Serilog.Sinks.Debug`, `Serilog.Sinks.File`, `Serilog.Enrichers.*` | `4.3.1`, `10.0.0`, `2.1.0`, `3.0.0`, `7.0.0`, `3.0.1`–`4.0.0` | `Common`, `MOBAflow` | Structured logging, async/file/debug sinks, and log enrichment. |
-| `Newtonsoft.Json` | `13.0.4` | `Test` | JSON serialization in selected unit tests. |
-| `SkiaSharp`, `System.Drawing.Common` | `3.119.4`, `10.0.9` | `MOBAdisplay` | Display frame rendering and image conversion utilities. |
-| `coverlet.collector`, `Microsoft.NET.Test.Sdk`, `NUnit`, `NUnit.Analyzers`, `NUnit3TestAdapter`, `Moq` | `10.0.1`, `18.6.0`, `4.6.1`, `4.14.0`, `6.2.0`, `4.20.72` | `Test` | Test execution, coverage collection, analyzers, and mocking. |
+| `SkiaSharp`, `System.Drawing.Common` | `4.148.0`, `10.0.9` | `MOBAdisplay`, `MOBAflow` | Display frame rendering, QR encoding, and image conversion utilities. |
+| `coverlet.collector`, `Microsoft.NET.Test.Sdk`, `NUnit`, `NUnit.Analyzers`, `NUnit3TestAdapter`, `Moq` | `10.0.1`, `18.7.0`, `4.6.1`, `4.14.0`, `6.2.0`, `4.20.72` | `Test` | Test execution, coverage collection, analyzers, and mocking. |
 | `MinVer` | `7.0.0` | Build-wide via `Directory.Build.props` | Semantic version generation from git tags during builds. |
 | `Microsoft.SourceLink.AzureRepos.Git` | `10.0.300` | Build-wide via `Directory.Build.targets` | Source link metadata for debugger source navigation. |
 

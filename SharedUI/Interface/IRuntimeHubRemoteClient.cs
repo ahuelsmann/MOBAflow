@@ -21,7 +21,12 @@ public interface IRuntimeHubRemoteClient : IAsyncDisposable
 
     bool HasActiveHost { get; }
 
-    Task ConnectAsync(string serverIp, int serverPort, string clientId, CancellationToken cancellationToken = default);
+    Task ConnectAsync(
+        string serverIp,
+        int serverPort,
+        string clientId,
+        CancellationToken cancellationToken = default,
+        bool forceReconnect = false);
 
     Task DisconnectAsync();
 

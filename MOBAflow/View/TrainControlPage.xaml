@@ -13,7 +13,6 @@
 
     <Page.Resources>
         <converter:BoolToBacklightBrushConverter x:Key="BacklightConverter" />
-        <converter:IntToPresetCheckedConverter x:Key="IntToPresetCheckedConverter" />
         <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
         <converter:MillivoltsToVoltsConverter x:Key="MillivoltsToVoltsConverter" />
     </Page.Resources>
@@ -150,139 +149,99 @@
                             <TextBlock
                                 FontSize="11"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="Select preset and control" />
+                                Text="Select locomotive and control" />
                         </StackPanel>
 
-                        <!--  Locomotive from project (alternative to presets)  -->
                         <StackPanel Spacing="6">
                             <TextBlock
                                 FontSize="11"
                                 FontWeight="SemiBold"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Text="LOCOMOTIVE FROM PROJECT" />
-                            <ComboBox
-                                HorizontalAlignment="Stretch"
-                                ItemsSource="{x:Bind ViewModel.ProjectLocomotives, Mode=OneWay}"
-                                PlaceholderText="Select locomotive from project..."
-                                SelectedItem="{x:Bind ViewModel.SelectedLocomotiveFromProject, Mode=TwoWay}">
-                                <ComboBox.ItemTemplate>
+                                Text="LOCOMOTIVE" />
+                            <ItemsRepeater ItemsSource="{x:Bind ViewModel.ProjectLocomotives, Mode=OneWay}">
+                                <ItemsRepeater.Layout>
+                                    <StackLayout Orientation="Vertical" Spacing="8" />
+                                </ItemsRepeater.Layout>
+                                <ItemsRepeater.ItemTemplate>
                                     <DataTemplate x:DataType="vm:LocomotiveViewModel">
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <FontIcon FontSize="14" Glyph="&#xE7C0;" />
-                                            <TextBlock Text="{x:Bind Name, Mode=OneWay}" />
-                                            <TextBlock Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="{x:Bind DigitalAddress, Mode=OneWay}" />
-                                        </StackPanel>
+                                        <Button
+                                            Padding="0"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Stretch"
+                                            AutomationProperties.Name="{x:Bind Name, Mode=OneWay}"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            Command="{Binding DataContext.SelectProjectLocomotiveCommand, ElementName=PageRoot}"
+                                            CommandParameter="{x:Bind}">
+                                            <Border
+                                                x:Name="PickerItemRoot"
+                                                Padding="8"
+                                                BorderThickness="1"
+                                                CornerRadius="8">
+                                                <VisualStateManager.VisualStateGroups>
+                                                    <VisualStateGroup>
+                                                        <VisualState x:Name="Selected">
+                                                            <VisualState.StateTriggers>
+                                                                <StateTrigger IsActive="{x:Bind IsPickerSelected, Mode=OneWay}" />
+                                                            </VisualState.StateTriggers>
+                                                            <VisualState.Setters>
+                                                                <Setter Target="PickerItemRoot.Background" Value="{ThemeResource AccentFillColorDefaultBrush}" />
+                                                                <Setter Target="PickerItemRoot.BorderBrush" Value="{ThemeResource AccentFillColorDefaultBrush}" />
+                                                                <Setter Target="LocoNameText.Foreground" Value="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
+                                                            </VisualState.Setters>
+                                                        </VisualState>
+                                                        <VisualState x:Name="Normal">
+                                                            <VisualState.Setters>
+                                                                <Setter Target="PickerItemRoot.Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+                                                                <Setter Target="PickerItemRoot.BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+                                                            </VisualState.Setters>
+                                                        </VisualState>
+                                                    </VisualStateGroup>
+                                                </VisualStateManager.VisualStateGroups>
+                                                <Grid ColumnSpacing="12">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border
+                                                        Width="56"
+                                                        Height="56"
+                                                        Background="{ThemeResource LayerFillColorDefaultBrush}"
+                                                        CornerRadius="4">
+                                                        <Grid>
+                                                            <Image
+                                                                Source="{x:Bind PhotoPathWithVersion, Mode=OneWay, Converter={StaticResource PhotoPathToImageConverter}}"
+                                                                Stretch="UniformToFill"
+                                                                Visibility="{x:Bind HasPhoto, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                                            <FontIcon
+                                                                HorizontalAlignment="Center"
+                                                                VerticalAlignment="Center"
+                                                                FontSize="20"
+                                                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                                Glyph="&#xE7C0;"
+                                                                Visibility="{x:Bind HasPhoto, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}" />
+                                                        </Grid>
+                                                    </Border>
+                                                    <TextBlock
+                                                        x:Name="LocoNameText"
+                                                        Grid.Column="1"
+                                                        VerticalAlignment="Center"
+                                                        FontWeight="SemiBold"
+                                                        Text="{x:Bind Name, Mode=OneWay}"
+                                                        TextTrimming="CharacterEllipsis"
+                                                        TextWrapping="NoWrap" />
+                                                </Grid>
+                                            </Border>
+                                        </Button>
                                     </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
-                        </StackPanel>
-
-                        <!--  Locomotive Presets - Compact table layout  -->
-                        <StackPanel Spacing="8">
+                                </ItemsRepeater.ItemTemplate>
+                            </ItemsRepeater>
                             <TextBlock
                                 FontSize="11"
-                                FontWeight="SemiBold"
-                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Text="LOCOMOTIVE PRESET" />
-                            <!--  Preset 1  -->
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="70" />
-                                </Grid.ColumnDefinitions>
-                                <RadioButton
-                                    Grid.Column="0"
-                                    MinWidth="0"
-                                    Padding="0"
-                                    VerticalAlignment="Center"
-                                    Command="{x:Bind ViewModel.SelectPreset1Command}"
-                                    GroupName="LocoPreset"
-                                    IsChecked="{x:Bind ViewModel.SelectedPresetIndex, Mode=OneWay, Converter={StaticResource IntToPresetCheckedConverter}, ConverterParameter=0}" />
-                                <StackPanel
-                                    Grid.Column="1"
-                                    Margin="4,0,8,0"
-                                    VerticalAlignment="Center"
-                                    Orientation="Horizontal"
-                                    Spacing="6">
-                                    <FontIcon FontSize="14" Glyph="&#xE7C0;" />
-                                    <TextBlock FontWeight="SemiBold" Text="Loco 1" />
-                                </StackPanel>
-                                <NumberBox
-                                    Grid.Column="2"
-                                    Height="32"
-                                    VerticalAlignment="Center"
-                                    Maximum="9999"
-                                    Minimum="1"
-                                    SpinButtonPlacementMode="Compact"
-                                    Value="{x:Bind ViewModel.Preset1Address, Mode=TwoWay}" />
-                            </Grid>
-                            <!--  Preset 2  -->
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="70" />
-                                </Grid.ColumnDefinitions>
-                                <RadioButton
-                                    Grid.Column="0"
-                                    MinWidth="0"
-                                    Padding="0"
-                                    VerticalAlignment="Center"
-                                    Command="{x:Bind ViewModel.SelectPreset2Command}"
-                                    GroupName="LocoPreset"
-                                    IsChecked="{x:Bind ViewModel.SelectedPresetIndex, Mode=OneWay, Converter={StaticResource IntToPresetCheckedConverter}, ConverterParameter=1}" />
-                                <StackPanel
-                                    Grid.Column="1"
-                                    Margin="4,0,8,0"
-                                    VerticalAlignment="Center"
-                                    Orientation="Horizontal"
-                                    Spacing="6">
-                                    <FontIcon FontSize="14" Glyph="&#xE7C0;" />
-                                    <TextBlock FontWeight="SemiBold" Text="Loco 2" />
-                                </StackPanel>
-                                <NumberBox
-                                    Grid.Column="2"
-                                    Height="32"
-                                    VerticalAlignment="Center"
-                                    Maximum="9999"
-                                    Minimum="1"
-                                    SpinButtonPlacementMode="Compact"
-                                    Value="{x:Bind ViewModel.Preset2Address, Mode=TwoWay}" />
-                            </Grid>
-                            <!--  Preset 3  -->
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="70" />
-                                </Grid.ColumnDefinitions>
-                                <RadioButton
-                                    Grid.Column="0"
-                                    MinWidth="0"
-                                    Padding="0"
-                                    VerticalAlignment="Center"
-                                    Command="{x:Bind ViewModel.SelectPreset3Command}"
-                                    GroupName="LocoPreset"
-                                    IsChecked="{x:Bind ViewModel.SelectedPresetIndex, Mode=OneWay, Converter={StaticResource IntToPresetCheckedConverter}, ConverterParameter=2}" />
-                                <StackPanel
-                                    Grid.Column="1"
-                                    Margin="4,0,8,0"
-                                    VerticalAlignment="Center"
-                                    Orientation="Horizontal"
-                                    Spacing="6">
-                                    <FontIcon FontSize="14" Glyph="&#xE7C0;" />
-                                    <TextBlock FontWeight="SemiBold" Text="Loco 3" />
-                                </StackPanel>
-                                <NumberBox
-                                    Grid.Column="2"
-                                    Height="32"
-                                    VerticalAlignment="Center"
-                                    Maximum="9999"
-                                    Minimum="1"
-                                    SpinButtonPlacementMode="Compact"
-                                    Value="{x:Bind ViewModel.Preset3Address, Mode=TwoWay}" />
-                            </Grid>
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="No locomotives in project. Add locomotives on the Locomotives page."
+                                TextWrapping="WrapWholeWords"
+                                Visibility="{x:Bind ViewModel.HasProjectLocomotives, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}" />
                         </StackPanel>
 
                         <!--  Direction  -->

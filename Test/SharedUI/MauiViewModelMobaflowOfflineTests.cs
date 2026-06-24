@@ -388,6 +388,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
     {
         runtimeMock ??= new Mock<IMobaRuntime>();
         runtimeMock.SetupGet(runtime => runtime.Current).Returns(MobaRuntimeSnapshot.Empty);
+        runtimeMock.Setup(runtime => runtime.StartAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         var uiDispatcherMock = new Mock<IUiDispatcher>();
         uiDispatcherMock
@@ -423,51 +424,84 @@ internal sealed class MauiViewModelMobaflowOfflineTests
 
 
     [Test]
-    public async Task InitializeAsync_StartsWithMobaflowConnectionDisabled_EvenWhenSettingsEnabled()
+    public async Task InitializeAsync_StartsWithMobaflowConnectionDisabled_WhenNotPairedEvenIfSettingsEnabled()
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var settings = new AppSettings();
         settings.RestApi.IsConnectionEnabled = true;
 
-        var settingsServiceMock = new Mock<ISettingsService>();
-        settingsServiceMock.Setup(service => service.GetSettings()).Returns(settings);
-        settingsServiceMock.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
-
-        var runtimeMock = new Mock<IMobaRuntime>();
-        runtimeMock.SetupGet(runtime => runtime.Current).Returns(MobaRuntimeSnapshot.Empty);
-        runtimeMock.Setup(runtime => runtime.StartAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-
-        var uiDispatcherMock = new Mock<IUiDispatcher>();
-        uiDispatcherMock
-            .Setup(dispatcher => dispatcher.InvokeOnUi(It.IsAny<Action>()))
-            .Callback<Action>(action => action());
-        uiDispatcherMock
-            .Setup(dispatcher => dispatcher.InvokeOnUiLowPriority(It.IsAny<Action>()))
-            .Callback<Action>(action => action());
-        uiDispatcherMock
-            .Setup(dispatcher => dispatcher.InvokeOnUiAsync(It.IsAny<Func<Task>>()))
-            .Returns<Func<Task>>(asyncAction => asyncAction());
-
-        var networkMock = new Mock<INetworkProfileChangeNotifier>();
-
-        var viewModel = new MauiViewModel(
-            runtimeMock.Object,
-            uiDispatcherMock.Object,
-            settings,
-            settingsServiceMock.Object,
-            new Mock<IRestDiscoveryService>().Object,
-            new Mock<IZ21DiscoveryService>().Object,
-            new Mock<IPhotoUploadService>().Object,
-            new Mock<IPhotoCaptureService>().Object,
-            networkMock.Object,
-            NullLogger<MauiViewModel>.Instance,
-            eventBus);
-
-        _createdViewModels.Add(viewModel);
+        var viewModel = CreateViewModel(eventBus, settings: settings);
 
         await viewModel.InitializeAsync();
 
         Assert.That(viewModel.IsMobaflowConnectionEnabled, Is.False);
+    }
+
+    [Test]
+    public async Task InitializeAsync_RestoresPairedSession_WhenCredentialsAndEnabled()
+    {
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var settings = new AppSettings
+        {
+            RestApi =
+            {
+                CurrentIpAddress = "192.168.0.42",
+                Port = 5001,
+                ApiKey = "pair-key-123",
+                IsConnectionEnabled = true
+            }
+        };
+
+        var hubMock = new Mock<IRuntimeHubRemoteClient>();
+        hubMock.SetupGet(hub => hub.IsConnected).Returns(true);
+        hubMock
+            .Setup(hub => hub.ConnectAsync(
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var photoUploadMock = new Mock<IPhotoUploadService>();
+        photoUploadMock
+            .Setup(service => service.HealthCheckAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<TimeSpan?>()))
+            .ReturnsAsync(true);
+
+        var restDiscoveryMock = new Mock<IRestDiscoveryService>();
+        restDiscoveryMock
+            .Setup(service => service.DiscoverServerFastAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((null, null));
+
+        var viewModel = CreateViewModel(
+            eventBus,
+            runtimeHubRemoteClient: hubMock.Object,
+            settings: settings,
+            restDiscoveryService: restDiscoveryMock.Object,
+            photoUploadService: photoUploadMock.Object);
+
+        await viewModel.InitializeAsync();
+        await Task.Delay(300);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel.IsMobaflowConnectionEnabled, Is.True);
+            Assert.That(viewModel.IsRestApiReachable, Is.True);
+        });
+
+        photoUploadMock.Verify(
+            service => service.HealthCheckAsync("192.168.0.42", 5001, It.IsAny<TimeSpan?>()),
+            Times.AtLeastOnce);
+        hubMock.Verify(
+            hub => hub.ConnectAsync(
+                "192.168.0.42",
+                5001,
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>(),
+                It.IsAny<bool>()),
+            Times.AtLeastOnce);
+        restDiscoveryMock.Verify(
+            service => service.DiscoverServerFastAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Test]

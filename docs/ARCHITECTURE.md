@@ -69,7 +69,7 @@ public record Workflow(int Id, string Name, List<WorkflowAction> Actions, ...);
 
 - ✅ **Framework-agnostic** - No dependencies on UI frameworks
 - ✅ **Testable** - Unit tests without mocking UI
-- ✅ **Reusable** - Shared across all platforms (MOBAflow, MOBAsmart, MOBApi)
+- ✅ **Reusable** - Shared across all platforms (MOBAflow, MOBAsmart)
 - ✅ **Serializable** - JSON for configuration files
 
 ---
@@ -163,7 +163,7 @@ public partial class MainWindowViewModel : ObservableObject
 
 **Characteristics:**
 
-- ✅ **Platform-Agnostic** - Used by MOBAflow, MOBAsmart, and MOBApi
+- ✅ **Platform-Agnostic** - Used by MOBAflow and MOBAsmart (MOBApi is a thin REST host with only `Common`)
 - ✅ **MVVM Toolkit** - CommunityToolkit.Mvvm for source generators
 - ✅ **Observable Properties** - Reactive UI updates
 - ✅ **Commands** - RelayCommand for user interactions

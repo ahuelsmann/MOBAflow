@@ -106,6 +106,60 @@ internal sealed class MauiViewModelControlTabTests
 
     [Test]
 
+    public void SetControlTabActive_PublishesFleet_ForEnginesTabLifecycle()
+
+    {
+
+        var runtimeMock = new Mock<IMobaRuntime>();
+
+        runtimeMock.SetupGet(runtime => runtime.Current).Returns(new MobaRuntimeSnapshot
+
+        {
+
+            LocomotiveFleet =
+
+            [
+
+                new LocomotiveFleetSnapshot
+
+                {
+
+                    LocomotiveId = Guid.Parse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff"),
+
+                    Name = "BR 211",
+
+                    DigitalAddress = 12
+
+                }
+
+            ]
+
+        });
+
+
+
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+
+        var trainControl = CreateTrainControlViewModel(eventBus);
+
+        var viewModel = CreateViewModel(mobaRuntime: runtimeMock.Object, eventBus: eventBus);
+
+
+
+        viewModel.SetControlTabActive(true);
+
+
+
+        Assert.That(trainControl.HasProjectLocomotives, Is.True);
+
+        Assert.That(trainControl.ProjectLocomotives[0].Name, Is.EqualTo("BR 211"));
+
+    }
+
+
+
+    [Test]
+
     public void SetControlTabActive_ExposesFleet_FromSyncedProject()
 
     {
@@ -644,7 +698,7 @@ internal sealed class MauiViewModelControlTabTests
 
             eventBus: eventBus,
 
-            options: new TrainControlViewModelOptions { PreferProjectLocomotives = true, HybridRuntimeSnapshots = true });
+            options: new TrainControlViewModelOptions { HybridRuntimeSnapshots = true });
 
     }
 

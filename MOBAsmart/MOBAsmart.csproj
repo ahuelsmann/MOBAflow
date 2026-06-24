@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <!-- .NET 10 with MAUI 10.0 workload -->
@@ -19,42 +20,26 @@
         <ApplicationDisplayVersion>1.1</ApplicationDisplayVersion>
         <ApplicationVersion>5</ApplicationVersion>
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">26.0</SupportedOSPlatformVersion>
+        <!-- MOBAsmart uses NullSoundPlayer; workflow WAV assets are desktop-only -->
+        <ExcludeSoundContentFromOutput>true</ExcludeSoundContentFromOutput>
     </PropertyGroup>
-    <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
-        <!--PERFORMANCE: Skip analyzers in Debug builds-->
-        <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
-        <RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
-        <!--PERFORMANCE: Skip XML doc generation-->
-        <GenerateDocumentationFile>false</GenerateDocumentationFile>
-        <!-- Reliable deploy: embed assemblies in APK instead of fast-deploy push -->
-        <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
-        <AndroidLinkMode>None</AndroidLinkMode>
+    <Import Project="Build\AndroidDevPerformance.props" />
+    <!-- Visual Studio Android Options read Configuration|TargetFramework|Platform -->
+    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0-android|AnyCPU' and '$(MobaReliableDeploy)' != 'true'">
+        <EmbedAssembliesIntoApk>false</EmbedAssembliesIntoApk>
+        <AndroidUseSharedRuntime>true</AndroidUseSharedRuntime>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='FastDebug|net10.0-android|AnyCPU' and '$(MobaReliableDeploy)' != 'true'">
+        <EmbedAssembliesIntoApk>false</EmbedAssembliesIntoApk>
+        <AndroidUseSharedRuntime>true</AndroidUseSharedRuntime>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0-android|AnyCPU' and '$(MobaReliableDeploy)' == 'true'">
         <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
-        <RunAOTCompilation>false</RunAOTCompilation>
-        <AndroidEnableProguard>false</AndroidEnableProguard>
-        <!--Build only for target device ABI (50% faster!)-->
-        <RuntimeIdentifier>android-arm64</RuntimeIdentifier>
-        <!--INCREMENTAL BUILD-->
-        <AndroidUseManagedDesignTimeResourceGenerator>true</AndroidUseManagedDesignTimeResourceGenerator>
-        <AndroidUseIncrementalNativeLibraryBuild>true</AndroidUseIncrementalNativeLibraryBuild>
-        <AndroidUseIncrementalManifestMerge>false</AndroidUseIncrementalManifestMerge>
-        <!--Android Build Performance-->
-        <AndroidUseAapt2>true</AndroidUseAapt2>
-        <AndroidCreatePackagePerAbi>false</AndroidCreatePackagePerAbi>
-        <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
-        <!--Faster Java/DEX compilation-->
-        <AndroidDexTool>d8</AndroidDexTool>
-        <AndroidEnableD8R8>true</AndroidEnableD8R8>
-        <!--Skip resource shrinking in Debug-->
-        <AndroidEnableSGenConcurrent>true</AndroidEnableSGenConcurrent>
-        <AndroidLinkSkip>true</AndroidLinkSkip>
-        <!--Faster XAML compilation-->
-        <XamlCTask>Compile</XamlCTask>
-        <!--JIT (no interpreter): faster F5 debugging on device. Hot Reload is intentionally disabled.-->
-        <UseInterpreter>false</UseInterpreter>
-        <!-- VS Insiders deploy can pass assets/** to FindUnderPath and fail with MSB3541. -->
-        <EnableXamlHotReload>false</EnableXamlHotReload>
-        <XamlDebuggingInformation>false</XamlDebuggingInformation>
+        <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='FastDebug|net10.0-android|AnyCPU' and '$(MobaReliableDeploy)' == 'true'">
+        <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+        <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
         <!-- RELEASE OPTIMIZATIONS -->
@@ -73,11 +58,11 @@
     </ItemGroup>
     <ItemGroup>
         <!-- App Icon - PNG-basiert für bessere Android-Kompatibilität -->
-        <MauiIcon Include="Resources\AppIcon\modern_train_backup.png" Color="#512BD4" />
+        <MauiImage Include="Resources\AppIcon\modern_train_backup.png" Color="#512BD4" />
         <!-- Splash image as MauiImage for use in custom SplashPage -->
         <MauiImage Include="Resources\Splash\splash_background.png" />
-        <!-- Function symbol PNGs (shared with MOBAflow/Assets/FunctionSymbols) -->
-        <MauiImage Include="Resources\Images\*" />
+        <!-- Static images only; function symbols come from FunctionSymbolMauiImages.props -->
+        <MauiImage Include="Resources\Images\icon_camera.svg" />
         <!-- logo_train.png is 1024x1024 (~1.4 MB) and froze first layout when decoded on the UI thread -->
         <MauiImage Remove="Resources\Images\logo_train.png" />
         <!-- In-app branding logo (downsampled at build time; same asset as MauiIcon) -->
@@ -96,27 +81,22 @@
         <PackageReference Include="Microsoft.Extensions.Http" />
         <!-- AndroidX Startup (required for initialization providers) -->
         <PackageReference Include="Xamarin.AndroidX.Startup.StartupRuntime" />
+        <PackageReference Include="ZXing.Net.Maui.Controls" />
         <!-- Note: CommunityToolkit.Mvvm comes via SharedUI project reference -->
     </ItemGroup>
     <ItemGroup>
         <!-- SharedUI provides ViewModels and CommunityToolkit.Mvvm -->
         <ProjectReference Include="..\SharedUI\SharedUI.csproj" />
         <ProjectReference Include="..\Common\Common.csproj" />
+        <ProjectReference Include="..\Sound\Sound.csproj">
+            <AdditionalProperties>ExcludeSoundContentFromOutput=true</AdditionalProperties>
+        </ProjectReference>
     </ItemGroup>
     <ItemGroup>
         <MauiXaml Update="AppShell.xaml">
             <Generator>MSBuild:Compile</Generator>
         </MauiXaml>
-        <MauiXaml Update="App_fixed.xaml">
-            <Generator>MSBuild:Compile</Generator>
-        </MauiXaml>
         <MauiXaml Update="MainPage.xaml">
-            <Generator>MSBuild:Compile</Generator>
-        </MauiXaml>
-        <MauiXaml Update="MainPage_Minimal.xaml">
-            <Generator>MSBuild:Compile</Generator>
-        </MauiXaml>
-        <MauiXaml Update="MainPage_New.xaml">
             <Generator>MSBuild:Compile</Generator>
         </MauiXaml>
         <MauiXaml Update="Resources\Styles\DarkTheme.xaml">
@@ -152,6 +132,9 @@
         <MauiXaml Update="View\ControlPage.xaml">
             <Generator>MSBuild:Compile</Generator>
         </MauiXaml>
+        <MauiXaml Update="View\EnginePage.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </MauiXaml>
         <MauiXaml Update="Controls\SpeedGaugeView.xaml">
             <Generator>MSBuild:Compile</Generator>
         </MauiXaml>
@@ -167,5 +150,14 @@
         <MauiXaml Update="View\SplashPage.xaml">
             <Generator>MSBuild:Compile</Generator>
         </MauiXaml>
+        <MauiXaml Update="View\PairingPage.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </MauiXaml>
     </ItemGroup>
+    <Target
+        Name="RemoveSoundAssetsFromAndroidOutput"
+        AfterTargets="CopyFilesToOutputDirectory"
+        Condition="'$(TargetFramework)' == 'net10.0-android' and '$(ExcludeSoundContentFromOutput)' == 'true'">
+        <RemoveDir Directories="$(OutputPath)Resources\Sounds" Condition="Exists('$(OutputPath)Resources\Sounds')" />
+    </Target>
 </Project>

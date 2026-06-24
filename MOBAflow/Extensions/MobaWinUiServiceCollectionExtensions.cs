@@ -257,6 +257,10 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton<JourneyMapViewModel>();
         services.AddSingleton<MonitorPageViewModel>();
 
+        services.AddSingleton(new TrainControlViewModelOptions
+        {
+            Host = TrainControlHost.WinUi
+        });
         services.AddSingleton(sp => new TrainControlViewModel(
             sp.GetRequiredService<IMobaRuntime>(),
             sp.GetRequiredService<ISettingsService>(),
@@ -265,7 +269,8 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetService<IUiDispatcher>(),
             sp.GetRequiredService<IEventBus>(),
             sp.GetRequiredService<IRuntimeCommandGateway>(),
-            functionAppearancePicker: sp.GetRequiredService<IFunctionAppearancePicker>()));
+            functionAppearancePicker: sp.GetRequiredService<IFunctionAppearancePicker>(),
+            options: sp.GetRequiredService<TrainControlViewModelOptions>()));
 
         services.AddSingleton(sp => new MainWindow(
             sp.GetRequiredService<MainWindowViewModel>(),

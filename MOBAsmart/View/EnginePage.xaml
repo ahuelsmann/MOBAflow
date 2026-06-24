@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="Moba.MAUI.View.EnginePage"
+    x:Name="EngineRoot"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:Moba.MAUI.Controls"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:vm="clr-namespace:Moba.SharedUI.ViewModel;assembly=SharedUI"
+    x:DataType="vm:TrainControlViewModel">
+
+    <ScrollView>
+        <VerticalStackLayout
+            Padding="0"
+            HorizontalOptions="Fill"
+            Spacing="8">
+            <controls:ConnectionStatusPanel x:Name="ConnectionHeader" />
+
+            <Border Style="{DynamicResource MainSectionCard}">
+                <VerticalStackLayout Spacing="8">
+                    <Label Style="{DynamicResource SectionTitleLabel}" Text="Locomotives" />
+
+                    <VerticalStackLayout
+                        BindableLayout.ItemsSource="{Binding ProjectLocomotives}"
+                        Spacing="0">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:LocomotiveViewModel">
+                                <controls:LocomotivePickerItemView
+                                    IsSelected="{Binding IsPickerSelected}"
+                                    Locomotive="{Binding .}"
+                                    PhotoSource="{Binding PhotoPathWithVersion, Converter={StaticResource RemotePhotoSourceConverter}}"
+                                    SelectCommand="{StaticResource SelectLocomotiveCommand}" />
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+
+                    <Label
+                        IsVisible="{Binding HasProjectLocomotives, Converter={toolkit:InvertedBoolConverter}}"
+                        Style="{DynamicResource BodySmall}"
+                        Text="No locomotives available yet. Connect to MOBAflow once to sync your fleet." />
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentView>

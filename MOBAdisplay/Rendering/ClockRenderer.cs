@@ -143,12 +143,11 @@ public sealed class ClockRenderer
                 center.Y + (dy * (outer - markerLength)));
 
             var half = markerWidth / 2f;
-            using var path = new SKPath();
-            path.MoveTo(outerCenter.X + (nx * half), outerCenter.Y + (ny * half));
-            path.LineTo(outerCenter.X - (nx * half), outerCenter.Y - (ny * half));
-            path.LineTo(innerCenter.X - (nx * half), innerCenter.Y - (ny * half));
-            path.LineTo(innerCenter.X + (nx * half), innerCenter.Y + (ny * half));
-            path.Close();
+            using var path = BuildClosedQuad(
+                new SKPoint(outerCenter.X + (nx * half), outerCenter.Y + (ny * half)),
+                new SKPoint(outerCenter.X - (nx * half), outerCenter.Y - (ny * half)),
+                new SKPoint(innerCenter.X - (nx * half), innerCenter.Y - (ny * half)),
+                new SKPoint(innerCenter.X + (nx * half), innerCenter.Y + (ny * half)));
             canvas.DrawPath(path, _hourMarkerPaint);
         }
     }
@@ -177,12 +176,11 @@ public sealed class ClockRenderer
         var tail = new SKPoint(center.X - (dx * tailLength), center.Y - (dy * tailLength));
 
         var half = width / 2f;
-        using var path = new SKPath();
-        path.MoveTo(tip.X + (nx * half), tip.Y + (ny * half));
-        path.LineTo(tip.X - (nx * half), tip.Y - (ny * half));
-        path.LineTo(tail.X - (nx * half), tail.Y - (ny * half));
-        path.LineTo(tail.X + (nx * half), tail.Y + (ny * half));
-        path.Close();
+        using var path = BuildClosedQuad(
+            new SKPoint(tip.X + (nx * half), tip.Y + (ny * half)),
+            new SKPoint(tip.X - (nx * half), tip.Y - (ny * half)),
+            new SKPoint(tail.X - (nx * half), tail.Y - (ny * half)),
+            new SKPoint(tail.X + (nx * half), tail.Y + (ny * half)));
         canvas.DrawPath(path, _handPaint);
     }
 
@@ -213,5 +211,16 @@ public sealed class ClockRenderer
         return new SKPoint(
             center.X + (MathF.Cos(radians) * length),
             center.Y + (MathF.Sin(radians) * length));
+    }
+
+    private static SKPath BuildClosedQuad(SKPoint p1, SKPoint p2, SKPoint p3, SKPoint p4)
+    {
+        var builder = new SKPathBuilder();
+        builder.MoveTo(p1);
+        builder.LineTo(p2);
+        builder.LineTo(p3);
+        builder.LineTo(p4);
+        builder.Close();
+        return builder.Detach();
     }
 }

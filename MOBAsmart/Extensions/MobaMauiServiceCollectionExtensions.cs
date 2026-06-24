@@ -12,6 +12,8 @@ using Common.Events;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
+using View;
+
 using Service;
 
 using SharedUI.Extensions;
@@ -20,8 +22,6 @@ using SharedUI.Service;
 using SharedUI.ViewModel;
 
 using Sound;
-
-using View;
 
 /// <summary>
 /// Dependency injection registrations for the MOBAsmart MAUI host.
@@ -141,7 +141,7 @@ public static class MobaMauiServiceCollectionExtensions
         services.AddSingleton(new TrainControlViewModelOptions
         {
             HybridRuntimeSnapshots = true,
-            PreferProjectLocomotives = true
+            Host = TrainControlHost.Maui
         });
         services.AddSingleton<TrainControlViewModel>(sp =>
         {
@@ -172,7 +172,9 @@ public static class MobaMauiServiceCollectionExtensions
         services.AddTransient<AppTabHostPage>();
         services.AddTransient<CounterPage>();
         services.AddTransient<SignalBoxPage>();
+        services.AddTransient<EnginePage>();
         services.AddTransient<ControlPage>();
+        services.AddTransient<PairingPage>();
 
         return services;
     }

@@ -2,7 +2,7 @@
 //
 // Manual Android profiling checklist (device/emulator):
 // 1. Cold load: Counter tab -> Control tab, measure time until slider responds.
-// 2. Slider: drag 0->126, confirm no visible frame drops and settings save only after release.
+// 2. Slider: drag 0->126, confirm no visible frame drops and drive commands debounce after release.
 // 3. Z21 connected: switch away from Control tab, confirm no UI jank every 5s on Counter tab.
 namespace Moba.Test.SharedUI;
 
@@ -64,33 +64,6 @@ internal sealed class TrainControlViewModelPerformanceTests
         viewModel.Functions[0].IsOn = false;
 
         Assert.That(changeCount, Is.Zero);
-    }
-
-    [Test]
-    public async Task SpeedChange_DebouncesSettingsPersistence()
-    {
-        var settingsServiceMock = new Mock<ISettingsService>();
-        settingsServiceMock.Setup(service => service.GetSettings()).Returns(new AppSettings());
-        settingsServiceMock.Setup(service => service.SaveSettingsAsync(It.IsAny<AppSettings>())).Returns(Task.CompletedTask);
-
-        var runtimeMock = CreateConnectedRuntimeMock();
-        var viewModel = new TrainControlViewModel(
-            runtimeMock.Object,
-            settingsServiceMock.Object,
-            eventBus: new EventBus(NullLogger<EventBus>.Instance));
-
-        await Task.Delay(600);
-        settingsServiceMock.Invocations.Clear();
-
-        viewModel.Speed = 10;
-        viewModel.Speed = 20;
-        viewModel.Speed = 30;
-
-        await Task.Delay(500);
-
-        settingsServiceMock.Verify(
-            service => service.SaveSettingsAsync(It.IsAny<AppSettings>()),
-            Times.Once);
     }
 
     [Test]

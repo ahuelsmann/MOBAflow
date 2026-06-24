@@ -63,34 +63,6 @@ internal class ViewModelCharacterizationTests
     }
 
     [Test]
-    public void TrainControlViewModel_PresetSwitch_RestoresSpeedAndDirectionPerPreset()
-    {
-        var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = false });
-        var settingsServiceMock = CreateSettingsServiceMock();
-        var viewModel = new TrainControlViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object, eventBus: CreateEventBus());
-
-        viewModel.Preset1.Speed = 60;
-        viewModel.Preset1.IsForward = true;
-        viewModel.Preset2.Speed = 30;
-        viewModel.Preset2.IsForward = false;
-
-        viewModel.SelectedPresetIndex = 1;
-
-        Assert.That(viewModel.Speed, Is.EqualTo(30));
-        Assert.That(viewModel.IsForward, Is.False);
-
-        viewModel.SelectedPresetIndex = 0;
-
-        Assert.That(viewModel.Speed, Is.EqualTo(60));
-        Assert.That(viewModel.IsForward, Is.True);
-
-        viewModel.SelectedPresetIndex = 1;
-
-        Assert.That(viewModel.Speed, Is.EqualTo(30));
-        Assert.That(viewModel.IsForward, Is.False);
-    }
-
-    [Test]
     public async Task TrainControlViewModel_ToggleFunctionAsync_UpdatesStateAndCallsRuntime()
     {
         var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = true });
@@ -647,11 +619,6 @@ internal class ViewModelCharacterizationTests
 
         Assert.That(viewModel.Functions.All(f => !f.IsOn), Is.True, "All function buttons should be off");
         mobaRuntimeMock.Verify(client => client.SetAllLocomotiveFunctionsOffAsync(3, It.IsAny<CancellationToken>()), Times.Once);
-
-        // New all-off state is persisted to the currently selected preset.
-        Assert.That(Enumerable.Range(0, 32).All(i => !viewModel.CurrentPreset.GetFunction(i)), Is.True, "Preset should store all functions off");
-        await Task.Delay(100);
-        settingsServiceMock.Verify(service => service.SaveSettingsAsync(It.IsAny<AppSettings>()), Times.AtLeastOnce);
     }
 
     [Test]

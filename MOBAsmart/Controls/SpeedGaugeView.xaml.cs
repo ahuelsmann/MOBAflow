@@ -5,6 +5,7 @@ using Microsoft.Maui.Graphics;
 
 /// <summary>
 /// Semicircle speed gauge with needle for locomotive control on MOBAsmart.
+/// Mirrors WinUI <c>SpeedometerControl</c>: km/h in the center, outer km/h ring, inner DCC step ring.
 /// </summary>
 public partial class SpeedGaugeView
 {
@@ -14,6 +15,8 @@ public partial class SpeedGaugeView
     private double _lastDrawnValue = double.NaN;
     private double _lastDrawnMaximum = double.NaN;
     private int _lastDrawnDisplayKmh = int.MinValue;
+    private int _lastDrawnSpeedSteps = int.MinValue;
+    private int _lastDrawnVmaxKmh = int.MinValue;
 
     private const int InvalidateThrottleMs = 16;
 
@@ -38,6 +41,20 @@ public partial class SpeedGaugeView
         0,
         propertyChanged: OnGaugePropertyChanged);
 
+    public static readonly BindableProperty SpeedStepsProperty = BindableProperty.Create(
+        nameof(SpeedSteps),
+        typeof(int),
+        typeof(SpeedGaugeView),
+        128,
+        propertyChanged: OnGaugePropertyChanged);
+
+    public static readonly BindableProperty VmaxKmhProperty = BindableProperty.Create(
+        nameof(VmaxKmh),
+        typeof(int),
+        typeof(SpeedGaugeView),
+        200,
+        propertyChanged: OnGaugePropertyChanged);
+
     public double Value
     {
         get => (double)GetValue(ValueProperty);
@@ -54,6 +71,20 @@ public partial class SpeedGaugeView
     {
         get => (int)GetValue(DisplayKmhProperty);
         set => SetValue(DisplayKmhProperty, value);
+    }
+
+    /// <summary>DCC speed steps mode: 14, 28, or 128.</summary>
+    public int SpeedSteps
+    {
+        get => (int)GetValue(SpeedStepsProperty);
+        set => SetValue(SpeedStepsProperty, value);
+    }
+
+    /// <summary>Maximum speed in km/h for outer ring markers.</summary>
+    public int VmaxKmh
+    {
+        get => (int)GetValue(VmaxKmhProperty);
+        set => SetValue(VmaxKmhProperty, value);
     }
 
     public SpeedGaugeView()
@@ -123,8 +154,10 @@ public partial class SpeedGaugeView
         var valueChanged = !double.Equals(_lastDrawnValue, Value);
         var maximumChanged = !double.Equals(_lastDrawnMaximum, Maximum);
         var displayChanged = _lastDrawnDisplayKmh != DisplayKmh;
+        var stepsChanged = _lastDrawnSpeedSteps != SpeedSteps;
+        var vmaxChanged = _lastDrawnVmaxKmh != VmaxKmh;
 
-        if (!forceInvalidate && !valueChanged && !maximumChanged && !displayChanged)
+        if (!forceInvalidate && !valueChanged && !maximumChanged && !displayChanged && !stepsChanged && !vmaxChanged)
         {
             return;
         }
@@ -132,11 +165,15 @@ public partial class SpeedGaugeView
         _drawable.Value = Value;
         _drawable.Maximum = Maximum;
         _drawable.DisplayKmh = DisplayKmh;
+        _drawable.SpeedSteps = SpeedSteps;
+        _drawable.VmaxKmh = VmaxKmh > 0 ? VmaxKmh : 200;
         GaugeCanvas.Invalidate();
 
         _lastDrawnValue = Value;
         _lastDrawnMaximum = Maximum;
         _lastDrawnDisplayKmh = DisplayKmh;
+        _lastDrawnSpeedSteps = SpeedSteps;
+        _lastDrawnVmaxKmh = VmaxKmh;
     }
 
     private void CacheThemeColors()
@@ -166,6 +203,8 @@ public partial class SpeedGaugeView
         public double Value { get; set; }
         public double Maximum { get; set; } = 126;
         public int DisplayKmh { get; set; }
+        public int SpeedSteps { get; set; } = 128;
+        public int VmaxKmh { get; set; } = 200;
         public Color TrackColor { get; set; } = Colors.Gray;
         public Color AccentColor { get; set; } = Colors.DodgerBlue;
         public Color NeedleColor { get; set; } = Colors.Red;
@@ -177,7 +216,7 @@ public partial class SpeedGaugeView
         {
             var centerX = dirtyRect.Width / 2f;
             var centerY = dirtyRect.Height * 0.65f;
-            var radius = Math.Min(dirtyRect.Width * 0.38f, dirtyRect.Height * 0.5f);
+            var radius = Math.Min(dirtyRect.Width * 0.34f, dirtyRect.Height * 0.46f);
             const float stroke = 14f;
             const float startAngleDeg = 180f;
             const float endAngleDeg = 0f;
@@ -198,7 +237,8 @@ public partial class SpeedGaugeView
                 canvas.DrawPath(CreateArcPath(centerX, centerY, radius, startAngleDeg, speedEndAngle));
             }
 
-            DrawTickMarks(canvas, centerX, centerY, radius + 10f);
+            DrawKmhMarkers(canvas, centerX, centerY, radius);
+            DrawSpeedStepMarkers(canvas, centerX, centerY, radius);
 
             var needleAngleDeg = startAngleDeg - (float)(normalized * 180f);
             var needleRad = needleAngleDeg * Math.PI / 180d;
@@ -240,6 +280,106 @@ public partial class SpeedGaugeView
                 HorizontalAlignment.Center,
                 VerticalAlignment.Center);
         }
+
+        private void DrawSpeedStepMarkers(ICanvas canvas, float centerX, float centerY, float radius)
+        {
+            const float markerLength = 8f;
+            var arcInnerRadius = radius - 8f;
+            var labelDistance = radius - 25f;
+
+            var (maxStep, stepsToDisplay) = SpeedSteps switch
+            {
+                14 => (13, new[] { 0, 3, 7, 10, 13 }),
+                28 => (27, new[] { 0, 7, 14, 21, 27 }),
+                _ => (126, new[] { 0, 32, 63, 95, 126 })
+            };
+
+            canvas.StrokeSize = 2.5f;
+            canvas.StrokeColor = AccentColor.WithAlpha(0.9f);
+            canvas.FontColor = AccentColor.WithAlpha(0.85f);
+            canvas.FontSize = 9;
+            canvas.Font = Microsoft.Maui.Graphics.Font.Default;
+
+            foreach (var step in stepsToDisplay)
+            {
+                var normalized = maxStep > 0 ? (double)step / maxStep : 0;
+                var angleDeg = 180f - (float)(normalized * 180f);
+
+                var (startX, startY) = PointAtAngle(centerX, centerY, arcInnerRadius, angleDeg);
+                var (endX, endY) = PointAtAngle(centerX, centerY, arcInnerRadius + markerLength, angleDeg);
+                canvas.DrawLine(startX, startY, endX, endY);
+
+                var (labelX, labelY) = PointAtAngle(centerX, centerY, labelDistance, angleDeg);
+                canvas.DrawString(
+                    step.ToString(),
+                    labelX - 8,
+                    labelY - 5,
+                    16,
+                    12,
+                    HorizontalAlignment.Center,
+                    VerticalAlignment.Center);
+            }
+        }
+
+        private void DrawKmhMarkers(ICanvas canvas, float centerX, float centerY, float radius)
+        {
+            const float markerLength = 8f;
+            var arcOuterRadius = radius + 8f;
+            var labelDistance = radius + 25f;
+            var kmhStep = CalculateOptimalKmhStep(VmaxKmh);
+
+            var kmhValues = new List<int>();
+            for (var kmh = 0; kmh <= VmaxKmh; kmh += kmhStep)
+            {
+                kmhValues.Add(kmh);
+            }
+
+            if (kmhValues.Count == 0 || kmhValues[^1] != VmaxKmh)
+            {
+                kmhValues.Add(VmaxKmh);
+            }
+
+            var markerBrush = TextPrimary.WithAlpha(0.78f);
+            var maxBrush = NeedleColor;
+
+            foreach (var kmh in kmhValues)
+            {
+                var isMax = kmh == VmaxKmh;
+                var percentage = VmaxKmh > 0 ? (double)kmh / VmaxKmh : 0;
+                var angleDeg = 180f - (float)(percentage * 180f);
+
+                var (startX, startY) = PointAtAngle(centerX, centerY, arcOuterRadius, angleDeg);
+                var (endX, endY) = PointAtAngle(centerX, centerY, arcOuterRadius - markerLength, angleDeg);
+
+                canvas.StrokeSize = isMax ? 3f : 2.5f;
+                canvas.StrokeColor = isMax ? maxBrush : markerBrush;
+                canvas.DrawLine(startX, startY, endX, endY);
+
+                var (labelX, labelY) = PointAtAngle(centerX, centerY, labelDistance, angleDeg);
+                canvas.FontColor = isMax ? maxBrush : markerBrush;
+                canvas.FontSize = isMax ? 11 : 10;
+                canvas.Font = isMax
+                    ? Microsoft.Maui.Graphics.Font.DefaultBold
+                    : Microsoft.Maui.Graphics.Font.Default;
+                canvas.DrawString(
+                    kmh.ToString(),
+                    labelX - 10,
+                    labelY - 8,
+                    20,
+                    14,
+                    HorizontalAlignment.Center,
+                    VerticalAlignment.Center);
+            }
+        }
+
+        private static int CalculateOptimalKmhStep(int vmax) => vmax switch
+        {
+            <= 50 => 5,
+            <= 100 => 10,
+            <= 200 => 20,
+            <= 300 => 30,
+            _ => 50
+        };
 
         private static PathF CreateArcPath(
             float centerX,
@@ -286,21 +426,6 @@ public partial class SpeedGaugeView
                 1f,
                 (float)(0.4 * (1 - u)),
                 (float)(0.31 * (1 - u)));
-        }
-
-        private void DrawTickMarks(ICanvas canvas, float centerX, float centerY, float tickRadius)
-        {
-            canvas.StrokeSize = 2f;
-            canvas.StrokeColor = TextSecondary.WithAlpha(0.7f);
-
-            for (var i = 0; i <= 4; i++)
-            {
-                var tickNormalized = i / 4d;
-                var angleDeg = 180f - (float)(tickNormalized * 180f);
-                var (outerX, outerY) = PointAtAngle(centerX, centerY, tickRadius, angleDeg);
-                var (innerX, innerY) = PointAtAngle(centerX, centerY, tickRadius - 8f, angleDeg);
-                canvas.DrawLine(innerX, innerY, outerX, outerY);
-            }
         }
     }
 }

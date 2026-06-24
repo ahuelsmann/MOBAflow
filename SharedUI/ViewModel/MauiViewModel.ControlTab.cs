@@ -11,7 +11,7 @@ using Interface;
 using System.ComponentModel;
 
 /// <summary>
-/// MOBAsmart Control tab fleet coordination — resolves fleet sources and publishes updates for TrainControlViewModel.
+/// MOBAsmart Engines/Control tab fleet coordination — resolves fleet sources and publishes updates for TrainControlViewModel.
 /// </summary>
 public sealed partial class MauiViewModel
 {
@@ -31,7 +31,7 @@ public sealed partial class MauiViewModel
     }
 
     /// <summary>
-    /// Tracks whether the Control tab is visible so fleet updates can be deferred like SignalBox.
+    /// Tracks whether the Engines or Control tab is visible so fleet updates can be deferred like SignalBox.
     /// </summary>
     public void SetControlTabActive(bool isActive)
     {

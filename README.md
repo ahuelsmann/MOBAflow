@@ -226,8 +226,13 @@ the same network.
 **📱 MOBAsmart (Android):**
 
 ```bash
-dotnet build MOBAsmart/MOBAsmart.csproj -f net10.0-android
+dotnet restore MOBAsmart/MOBAsmart.csproj -f net10.0-android
+dotnet build MOBAsmart/MOBAsmart.csproj -f net10.0-android -c FastDebug --no-restore
 ```
+
+For faster deploy cycles on a connected device, fast deploy is enabled by default.
+Use `/p:MobaReliableDeploy=true` for a full embedded APK when needed.
+See [`docs/BUILD-PERFORMANCE.md`](docs/BUILD-PERFORMANCE.md) for details.
 
 **🧪 Run Tests:**
 
@@ -513,8 +518,8 @@ Current scope:
   traffic and feedback) back to the shell
 - Project activation is performed inside `MobaRuntimeService.ActivateProjectAsync`,
   which owns `ActiveProjectContext` and a `JourneyManager` per active project
-- The active runtime still uses the live `Project` instance from the loaded
-  `Solution`; a dedicated runtime copy remains a possible future step
+- Active runtime projects are isolated via `CloneForRuntime` (JSON round-trip);
+  the editor works on the live `Solution` graph while execution uses a copy
 - Shared master data (`data.json`) is held in **`MasterDataStore`** (Backend DI);
   WinUI services expose cities and locomotives to the shell
 

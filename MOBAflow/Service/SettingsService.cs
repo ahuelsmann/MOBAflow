@@ -92,17 +92,15 @@ internal class SettingsService : ISettingsService
         _settings.Counter.UseTimerFilter = source.Counter.UseTimerFilter;
         _settings.Counter.TimerIntervalSeconds = source.Counter.TimerIntervalSeconds;
 
-        _settings.TrainControl.SelectedPresetIndex = source.TrainControl.SelectedPresetIndex;
         _settings.TrainControl.SpeedRampStepSize = source.TrainControl.SpeedRampStepSize;
         _settings.TrainControl.SpeedRampIntervalMs = source.TrainControl.SpeedRampIntervalMs;
         _settings.TrainControl.SpeedSteps = source.TrainControl.SpeedSteps;
         _settings.TrainControl.SelectedLocoSeries = source.TrainControl.SelectedLocoSeries;
         _settings.TrainControl.SelectedVmax = source.TrainControl.SelectedVmax;
-        _settings.TrainControl.SelectedLocomotiveFromProjectId = source.TrainControl.SelectedLocomotiveFromProjectId;
-        if (source.TrainControl.Presets.Count >= 3)
-        {
-            _settings.TrainControl.Presets = source.TrainControl.Presets;
-        }
+        _settings.WinUiTrainControlHost.SelectedLocomotiveFromProjectId =
+            source.WinUiTrainControlHost.SelectedLocomotiveFromProjectId;
+        _settings.MauiTrainControlHost.SelectedLocomotiveFromProjectId =
+            source.MauiTrainControlHost.SelectedLocomotiveFromProjectId;
 
         _settings.Layout.SettingsPage = source.Layout.SettingsPage;
         _settings.Layout.ColumnWidths = new Dictionary<string, double>(source.Layout.ColumnWidths);

@@ -253,7 +253,7 @@ internal sealed class SolutionRemoteLoaderTests
             mobileContext,
             NullLogger<TrainControlViewModel>.Instance,
             eventBus: new EventBus(NullLogger<EventBus>.Instance),
-            options: new TrainControlViewModelOptions { PreferProjectLocomotives = true });
+            options: new TrainControlViewModelOptions());
 
         try
         {

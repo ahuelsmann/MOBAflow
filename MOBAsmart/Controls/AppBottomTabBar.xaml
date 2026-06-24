@@ -21,7 +21,7 @@
             <Grid
                 x:Name="TabItemsGrid"
                 Grid.Row="1"
-                ColumnDefinitions="*,*,*"
+                ColumnDefinitions="*,*,*,*"
                 MinimumHeightRequest="48">
 
                 <Grid
@@ -69,8 +69,30 @@
                 </Grid>
 
                 <Grid
-                    x:Name="ControlTab"
+                    x:Name="EnginesTab"
                     Grid.Column="2"
+                    RowDefinitions="Auto,*">
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnEnginesTapped" />
+                    </Grid.GestureRecognizers>
+                    <BoxView
+                        x:Name="EnginesIndicator"
+                        Grid.Row="0"
+                        HeightRequest="2"
+                        HorizontalOptions="Fill"
+                        IsVisible="False"
+                        Color="{DynamicResource TabBarSelectedForeground}" />
+                    <Label
+                        x:Name="EnginesLabel"
+                        Grid.Row="1"
+                        InputTransparent="True"
+                        Style="{DynamicResource FluentBottomTabBarLabel}"
+                        Text="Engines" />
+                </Grid>
+
+                <Grid
+                    x:Name="ControlTab"
+                    Grid.Column="3"
                     RowDefinitions="Auto,*">
                     <Grid.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnControlTapped" />

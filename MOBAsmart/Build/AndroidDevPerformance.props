@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  AndroidDevPerformance.props - MOBAsmart Debug/FastDebug build and deploy speed settings.
+  Fast deploy is the default for Debug/FastDebug (Visual Studio F5 and CLI).
+  Opt-out reliable deploy: dotnet build ... /p:MobaReliableDeploy=true
+-->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug' or '$(Configuration)' == 'FastDebug'">
+    <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
+    <RunAnalyzersDuringLiveAnalysis Condition="'$(Configuration)' == 'Debug'">false</RunAnalyzersDuringLiveAnalysis>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <AndroidLinkMode>None</AndroidLinkMode>
+    <RunAOTCompilation>false</RunAOTCompilation>
+    <AndroidEnableProguard>false</AndroidEnableProguard>
+    <RuntimeIdentifier>android-arm64</RuntimeIdentifier>
+    <AndroidUseManagedDesignTimeResourceGenerator>true</AndroidUseManagedDesignTimeResourceGenerator>
+    <AndroidUseIncrementalNativeLibraryBuild>true</AndroidUseIncrementalNativeLibraryBuild>
+    <AndroidUseIncrementalManifestMerge>true</AndroidUseIncrementalManifestMerge>
+    <AndroidUseAapt2>true</AndroidUseAapt2>
+    <AndroidCreatePackagePerAbi>false</AndroidCreatePackagePerAbi>
+    <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
+    <AndroidDexTool>d8</AndroidDexTool>
+    <AndroidEnableD8R8>true</AndroidEnableD8R8>
+    <AndroidEnableSGenConcurrent>true</AndroidEnableSGenConcurrent>
+    <AndroidLinkSkip>true</AndroidLinkSkip>
+    <XamlCTask>Compile</XamlCTask>
+    <UseInterpreter>false</UseInterpreter>
+    <EnableXamlHotReload>false</EnableXamlHotReload>
+    <XamlDebuggingInformation>false</XamlDebuggingInformation>
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <BuildAndroidLibraryProjectsInParallel>true</BuildAndroidLibraryProjectsInParallel>
+    <AndroidCreateDebugSymbols Condition="'$(Configuration)' == 'FastDebug'">false</AndroidCreateDebugSymbols>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'FastDebug'">
+    <DebugType>embedded</DebugType>
+    <RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
+    <DefineConstants>$(DefineConstants);DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+
+  <!-- Fast deploy (default): pushes changed assemblies over adb instead of rebuilding the full APK -->
+  <PropertyGroup Condition="('$(Configuration)' == 'Debug' or '$(Configuration)' == 'FastDebug') and '$(MobaReliableDeploy)' != 'true'">
+    <AndroidUseSharedRuntime>true</AndroidUseSharedRuntime>
+    <EmbedAssembliesIntoApk>false</EmbedAssembliesIntoApk>
+  </PropertyGroup>
+
+  <!-- Reliable deploy (opt-in): full APK with embedded assemblies -->
+  <PropertyGroup Condition="('$(Configuration)' == 'Debug' or '$(Configuration)' == 'FastDebug') and '$(MobaReliableDeploy)' == 'true'">
+    <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
+    <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+  </PropertyGroup>
+</Project>

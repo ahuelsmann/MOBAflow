@@ -37,9 +37,21 @@ public class AppSettings
     /// </summary>
     public HealthCheckSettings HealthCheck { get; set; } = new();
     /// <summary>
-    /// Train Control settings including locomotive presets for quick switching.
+    /// Shared train control settings (speed ramp, DCC steps, locomotive series).
+    /// Locomotive picker selection is stored per host in <see cref="WinUiTrainControlHost"/>
+    /// and <see cref="MauiTrainControlHost"/>.
     /// </summary>
     public TrainControlSettings TrainControl { get; set; } = new();
+
+    /// <summary>
+    /// MOBAflow-only train control UI state (e.g. active locomotive picker selection).
+    /// </summary>
+    public TrainControlHostSettings WinUiTrainControlHost { get; set; } = new();
+
+    /// <summary>
+    /// MOBAsmart-only train control UI state (e.g. active locomotive picker selection).
+    /// </summary>
+    public TrainControlHostSettings MauiTrainControlHost { get; set; } = new();
     /// <summary>
     /// Feature toggles for experimental/preview features (WinUI only).
     /// This setting is optional - if not present in appsettings.json, defaults to new FeatureToggleSettings().

@@ -2,6 +2,8 @@
 
 namespace Moba.SharedUI.ViewModel;
 
+using Common.Configuration;
+
 /// <summary>
 /// Host-specific options for <see cref="TrainControlViewModel"/>.
 /// MOBAsmart registers remote snapshot mode; WinUI uses the default (local runtime snapshots).
@@ -19,7 +21,7 @@ public sealed class TrainControlViewModelOptions
     public bool HybridRuntimeSnapshots { get; init; }
 
     /// <summary>
-    /// When true (MOBAsmart), project locomotives are preferred over manual presets on load and in the UI.
+    /// Host that owns locomotive picker selection persistence.
     /// </summary>
-    public bool PreferProjectLocomotives { get; init; }
+    public TrainControlHost Host { get; init; } = TrainControlHost.WinUi;
 }

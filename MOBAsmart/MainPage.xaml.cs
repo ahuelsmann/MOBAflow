@@ -16,7 +16,7 @@ using SharedUI.Interface;
 
 using SharedUI.ViewModel;
 
-
+using View;
 
 using System.ComponentModel;
 
@@ -75,6 +75,7 @@ public partial class CounterPage
         ConnectionHeader.TrackPowerSwitchToggled += (_, e) => TrackPowerSwitch_Toggled(ConnectionHeader.TrackPowerSwitchControl, e);
 
         ConnectionHeader.MobaflowSwitchToggled += (_, e) => MobaflowSwitch_Toggled(ConnectionHeader.MobaflowSwitchControl, e);
+        ConnectionHeader.PairingRequested += (_, _) => OnPairingRequested();
 
         StatisticsSection.ResetCountersClicked += (_, _) => ResetCountersButton_Clicked(StatisticsSection, EventArgs.Empty);
 
@@ -82,6 +83,30 @@ public partial class CounterPage
 
         Loaded += OnCounterPageLoaded;
 
+    }
+
+    private async void OnPairingRequested()
+    {
+        try
+        {
+            if (Application.Current is not App app)
+            {
+                return;
+            }
+
+            var pairingPage = app.Services.GetRequiredService<PairingPage>();
+            var hostPage = Application.Current.Windows.FirstOrDefault()?.Page;
+            if (hostPage == null)
+            {
+                return;
+            }
+
+            await hostPage.Navigation.PushModalAsync(new NavigationPage(pairingPage)).ConfigureAwait(true);
+        }
+        catch (Exception)
+        {
+            // Navigation is best-effort; pairing can be retried from the header.
+        }
     }
 
 

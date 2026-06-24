@@ -2,8 +2,8 @@
 namespace Moba.Test.TrackPlanRenderer;
 
 using Moba.TrackLibrary.PikoA;
-using Newtonsoft.Json;
 using System.Diagnostics;
+using System.Text.Json;
 using TrackPlan.Renderer;
 
 [TestFixture]
@@ -63,7 +63,7 @@ internal class RendererTests
                 wr => wr.FromC.ToA<R9>().FromB.ToA<R9>().FromB.ToA<G62>())
             .Create();
 
-        _ = JsonConvert.SerializeObject(plan);
+        _ = JsonSerializer.Serialize(plan);
 
         var renderer = new TrackPlanSvgRenderer();
         var renderResult = renderer.Render(plan);

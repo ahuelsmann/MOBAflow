@@ -97,21 +97,20 @@ public class SettingsService : ISettingsService
                     _settings.Counter.TargetLapCount = loadedSettings.Counter.TargetLapCount;
                     _settings.Counter.UseTimerFilter = loadedSettings.Counter.UseTimerFilter;
                     _settings.Counter.TimerIntervalSeconds = loadedSettings.Counter.TimerIntervalSeconds;
-                    _settings.TrainControl.SelectedPresetIndex = loadedSettings.TrainControl.SelectedPresetIndex;
                     _settings.TrainControl.SpeedRampStepSize = loadedSettings.TrainControl.SpeedRampStepSize;
                     _settings.TrainControl.SpeedRampIntervalMs = loadedSettings.TrainControl.SpeedRampIntervalMs;
                     _settings.TrainControl.SpeedSteps = loadedSettings.TrainControl.SpeedSteps;
                     _settings.TrainControl.SelectedLocoSeries = loadedSettings.TrainControl.SelectedLocoSeries;
                     _settings.TrainControl.SelectedVmax = loadedSettings.TrainControl.SelectedVmax;
-                    _settings.TrainControl.SelectedLocomotiveFromProjectId = loadedSettings.TrainControl.SelectedLocomotiveFromProjectId;
-                    if (loadedSettings.TrainControl.Presets.Count >= 3)
-                    {
-                        _settings.TrainControl.Presets = loadedSettings.TrainControl.Presets;
-                    }
+                    _settings.WinUiTrainControlHost.SelectedLocomotiveFromProjectId =
+                        loadedSettings.WinUiTrainControlHost.SelectedLocomotiveFromProjectId;
+                    _settings.MauiTrainControlHost.SelectedLocomotiveFromProjectId =
+                        loadedSettings.MauiTrainControlHost.SelectedLocomotiveFromProjectId;
                     _settings.RestApi.CurrentIpAddress = loadedRestApi.CurrentIpAddress ?? string.Empty;
                     _settings.RestApi.Port = loadedRestApi.Port;
                     _settings.RestApi.RecentIpAddresses = loadedRestApi.RecentIpAddresses;
                     _settings.RestApi.IsConnectionEnabled = loadedRestApi.IsConnectionEnabled;
+                    _settings.RestApi.ApiKey = loadedRestApi.ApiKey ?? string.Empty;
 
                     _isLoaded = true;
                 }

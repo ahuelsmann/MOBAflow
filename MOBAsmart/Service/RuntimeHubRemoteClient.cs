@@ -2,7 +2,9 @@
 
 namespace Moba.MAUI.Service;
 
+using Common.Configuration;
 using Common.Runtime;
+using Common.Security;
 
 using Domain;
 
@@ -20,17 +22,24 @@ using System.Text.Json;
 public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
 {
     private readonly HttpClient _httpClient;
+    private readonly AppSettings _appSettings;
     private readonly ILogger<RuntimeHubRemoteClient>? _logger;
     private HubConnection? _hubConnection;
     private bool _hasActiveHost;
     private string _serverIp = string.Empty;
     private int _serverPort;
+    private string _connectedApiKey = string.Empty;
     private string _clientId = string.Empty;
 
-    public RuntimeHubRemoteClient(IHttpClientFactory httpClientFactory, ILogger<RuntimeHubRemoteClient>? logger = null)
+    public RuntimeHubRemoteClient(
+        IHttpClientFactory httpClientFactory,
+        AppSettings appSettings,
+        ILogger<RuntimeHubRemoteClient>? logger = null)
     {
         ArgumentNullException.ThrowIfNull(httpClientFactory);
+        ArgumentNullException.ThrowIfNull(appSettings);
         _httpClient = httpClientFactory.CreateClient(MobiHttpClientNames.Platform);
+        _appSettings = appSettings;
         _logger = logger;
     }
 
@@ -44,19 +53,39 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
 
     public bool HasActiveHost => _hasActiveHost;
 
-    public async Task ConnectAsync(string serverIp, int serverPort, string clientId, CancellationToken cancellationToken = default)
+    public async Task ConnectAsync(
+        string serverIp,
+        int serverPort,
+        string clientId,
+        CancellationToken cancellationToken = default,
+        bool forceReconnect = false)
     {
         _serverIp = serverIp;
         _serverPort = serverPort;
         _clientId = clientId;
+        var apiKey = _appSettings.RestApi.ApiKey?.Trim() ?? string.Empty;
 
-        if (_hubConnection != null && IsConnected)
+        if (!forceReconnect
+            && _hubConnection != null
+            && IsConnected
+            && string.Equals(_serverIp, serverIp, StringComparison.OrdinalIgnoreCase)
+            && _serverPort == serverPort
+            && string.Equals(_connectedApiKey, apiKey, StringComparison.Ordinal))
         {
             return;
         }
 
         if (_hubConnection != null)
         {
+            try
+            {
+                await _hubConnection.StopAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogDebug(ex, "RuntimeHub remote stop before reconnect failed");
+            }
+
             await _hubConnection.DisposeAsync().ConfigureAwait(false);
             _hubConnection = null;
         }
@@ -65,7 +94,13 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
         _logger?.LogInformation("Connecting to RuntimeHub remote: {HubUrl}", hubUrl);
 
         _hubConnection = new HubConnectionBuilder()
-            .WithUrl(hubUrl)
+            .WithUrl(hubUrl, options =>
+            {
+                if (!string.IsNullOrEmpty(apiKey))
+                {
+                    options.Headers[MobaApiAuth.ApiKeyHeaderName] = apiKey;
+                }
+            })
             .WithAutomaticReconnect(
             [
                 TimeSpan.Zero,
@@ -82,6 +117,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
         _hubConnection.Closed += OnClosedAsync;
 
         await _hubConnection.StartAsync(cancellationToken).ConfigureAwait(false);
+        _connectedApiKey = apiKey;
         await RegisterRemoteAsync(cancellationToken).ConfigureAwait(false);
         await TryFetchInitialSnapshotAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -101,6 +137,8 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
         {
             _logger?.LogDebug(ex, "RuntimeHub remote disconnect failed");
         }
+
+        _connectedApiKey = string.Empty;
     }
 
     public Task RequestLatestSnapshotAsync(CancellationToken cancellationToken = default) =>

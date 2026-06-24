@@ -43,11 +43,6 @@ public class TrainControlSettings
     public DccSpeedSteps SpeedSteps { get; set; } = DccSpeedSteps.Steps128;
 
     /// <summary>
-    /// Currently selected preset index (0-2).
-    /// </summary>
-    public int SelectedPresetIndex { get; set; }
-
-    /// <summary>
     /// Speed ramp step size (1-20).
     /// </summary>
     public int SpeedRampStepSize { get; set; } = 5;
@@ -68,21 +63,4 @@ public class TrainControlSettings
     /// Default: 200 km/h. Used for SpeedKmh calculation.
     /// </summary>
     public int SelectedVmax { get; set; } = 200;
-
-    /// <summary>
-    /// ID of the locomotive last selected in the "Locomotive from project" ComboBox.
-    /// Restored on load if the locomotive is still in the current project.
-    /// </summary>
-    public Guid? SelectedLocomotiveFromProjectId { get; set; }
-
-    /// <summary>
-    /// Locomotive presets for quick switching.
-    /// </summary>
-    public List<LocomotivePreset> Presets { get; set; } = [];
-
-    /// <summary>
-    /// Persisted function states (F0-F31 bitmask) per project locomotive, keyed by locomotive Id.
-    /// Used when a locomotive is controlled via the "Locomotive from project" selection rather than a preset.
-    /// </summary>
-    public Dictionary<Guid, uint> ProjectLocomotiveFunctionStates { get; set; } = [];
 }

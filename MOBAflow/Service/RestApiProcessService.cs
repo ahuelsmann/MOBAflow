@@ -3,8 +3,11 @@ namespace Moba.WinUI.Service;
 
 using Common.Configuration;
 using Common.Discovery;
+using Common.Security;
 
 using Microsoft.Extensions.Logging;
+
+using SharedUI.Interface;
 
 using System.Diagnostics;
 
@@ -23,6 +26,7 @@ public sealed class RestApiProcessService : IDisposable
     public event EventHandler<int>? ApiBecameReachable;
 
     private readonly AppSettings _appSettings;
+    private readonly ISettingsService? _settingsService;
     private readonly ILogger<RestApiProcessService> _logger;
     private readonly ILogger<UdpDiscoveryResponder> _discoveryLogger;
     private Process? _process;
@@ -33,9 +37,11 @@ public sealed class RestApiProcessService : IDisposable
     public RestApiProcessService(
         AppSettings appSettings,
         ILogger<RestApiProcessService> logger,
-        ILogger<UdpDiscoveryResponder> discoveryLogger)
+        ILogger<UdpDiscoveryResponder> discoveryLogger,
+        ISettingsService? settingsService = null)
     {
         _appSettings = appSettings;
+        _settingsService = settingsService;
         _logger = logger;
         _discoveryLogger = discoveryLogger;
     }
@@ -60,10 +66,28 @@ public sealed class RestApiProcessService : IDisposable
 
             var port = _appSettings.RestApi.Port > 0 ? _appSettings.RestApi.Port : 5001;
 
+            var generatedApiKey = MobaApiAuth.TryEnsureApiKey(_appSettings.RestApi, out var apiKey);
+            if (generatedApiKey && _settingsService != null)
+            {
+                await _settingsService.SaveSettingsAsync(_appSettings).ConfigureAwait(false);
+                _logger.LogInformation("Generated new MOBApi pairing key");
+            }
+
             // If API is already reachable (e.g. run standalone), do not start a second process
             if (await IsApiReachableAsync(port, cancellationToken).ConfigureAwait(false))
             {
-                _logger.LogInformation("MOBApi already running on port {Port} – reusing existing process", port);
+                if (generatedApiKey && !IsRunning)
+                {
+                    _logger.LogWarning(
+                        "MOBApi already running on port {Port} without the new pairing key. " +
+                        "Stop the existing MOBApi process and restart MOBAflow before pairing MOBAsmart.",
+                        port);
+                }
+                else
+                {
+                    _logger.LogInformation("MOBApi already running on port {Port} – reusing existing process", port);
+                }
+
                 StartDiscoveryResponder(port);
                 ApiBecameReachable?.Invoke(this, port);
                 return;
@@ -114,6 +138,7 @@ public sealed class RestApiProcessService : IDisposable
                 _process.StartInfo.EnvironmentVariables["MOBAFLOW_DISCOVERY_IN_WINUI"] = "1";
                 _process.StartInfo.EnvironmentVariables["MOBAFLOW_PHOTOS_PATH"] =
                     Common.Path.PhotoPathHelper.ResolvePhotoBaseDirectory(_appSettings.Application.PhotoStoragePath);
+                _process.StartInfo.EnvironmentVariables[MobaApiAuth.ApiKeyEnvironmentVariable] = apiKey;
 
                 _process.Exited += (sender, _) =>
                 {

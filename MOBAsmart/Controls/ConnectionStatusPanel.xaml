@@ -158,6 +158,19 @@
                     VerticalOptions="Center" />
             </Grid>
 
+            <VerticalStackLayout Spacing="6">
+                <Button
+                    Clicked="OnPairingClicked"
+                    SemanticProperties.Description="Pair with MOBAflow via QR code"
+                    Style="{DynamicResource AccentButtonStyle}"
+                    Text="Pair with MOBAflow" />
+                <Label
+                    FontSize="11"
+                    HorizontalTextAlignment="Center"
+                    Text="Pairing QR code is in MOBAflow under Settings → REST API"
+                    TextColor="{DynamicResource TextSecondary}" />
+            </VerticalStackLayout>
+
             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                 <HorizontalStackLayout
                     Grid.Column="0"

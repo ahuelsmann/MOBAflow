@@ -76,6 +76,55 @@
       ],
       "dependsOn": "restore",
       "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "restore:mobasmart",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "restore",
+        "${workspaceFolder}/MOBAsmart/MOBAsmart.csproj",
+        "-f",
+        "net10.0-android"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "build:mobasmart",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/MOBAsmart/MOBAsmart.csproj",
+        "-f",
+        "net10.0-android",
+        "-c",
+        "FastDebug",
+        "--no-restore",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary;ForceNoAlign"
+      ],
+      "dependsOn": "restore:mobasmart",
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "build:mobasmart:reliable-deploy",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/MOBAsmart/MOBAsmart.csproj",
+        "-f",
+        "net10.0-android",
+        "-c",
+        "FastDebug",
+        "--no-restore",
+        "/p:MobaReliableDeploy=true",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary;ForceNoAlign"
+      ],
+      "dependsOn": "restore:mobasmart",
+      "problemMatcher": "$msCompile"
     }
   ]
 }

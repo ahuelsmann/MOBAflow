@@ -43,12 +43,13 @@
 
                     <Label Style="{DynamicResource TitleSmall}" Text="Speed" />
 
-                    <Label
-                        FontAttributes="Bold"
-                        FontSize="36"
-                        HorizontalOptions="Center"
-                        Text="{Binding SpeedKmh, StringFormat='{0} km/h'}"
-                        TextColor="{DynamicResource RailwayAccent}" />
+                    <controls:SpeedGaugeView
+                        DisplayKmh="{Binding SpeedKmh}"
+                        Maximum="{Binding MaxSpeedStep}"
+                        SemanticProperties.Description="{Binding SpeedKmh, StringFormat='Current speed {0} kilometers per hour'}"
+                        SpeedSteps="{Binding SpeedSteps}"
+                        VmaxKmh="{Binding SelectedVmax}"
+                        Value="{Binding Speed}" />
 
                     <Label
                         HorizontalOptions="Center"
@@ -95,64 +96,11 @@
                 </VerticalStackLayout>
             </Border>
 
-            <Border
-                Padding="16"
-                BackgroundColor="{DynamicResource Surface}"
-                Stroke="{DynamicResource BorderColor}"
-                StrokeShape="RoundRectangle 16"
-                StrokeThickness="1">
-                <VerticalStackLayout Spacing="8">
-                    <Label Style="{DynamicResource TitleSmall}" Text="Locomotives" />
-
-                    <VerticalStackLayout
-                        BindableLayout.ItemsSource="{Binding ProjectLocomotives}"
-                        Spacing="0">
-                        <BindableLayout.ItemTemplate>
-                            <DataTemplate x:DataType="vm:LocomotiveViewModel">
-                                <Border
-                                    Margin="0,0,0,8"
-                                    Padding="12"
-                                    Stroke="{DynamicResource BorderColor}"
-                                    StrokeShape="RoundRectangle 12"
-                                    StrokeThickness="1">
-                                    <Border.GestureRecognizers>
-                                        <TapGestureRecognizer Command="{StaticResource SelectLocomotiveCommand}" CommandParameter="{Binding .}" />
-                                    </Border.GestureRecognizers>
-                                    <Border.Triggers>
-                                        <DataTrigger
-                                            Binding="{Binding IsPickerSelected}"
-                                            TargetType="Border"
-                                            Value="True">
-                                            <Setter Property="BackgroundColor" Value="{DynamicResource RailwayPrimary}" />
-                                            <Setter Property="Stroke" Value="{DynamicResource RailwayPrimary}" />
-                                        </DataTrigger>
-                                        <DataTrigger
-                                            Binding="{Binding IsPickerSelected}"
-                                            TargetType="Border"
-                                            Value="False">
-                                            <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceDark}" />
-                                        </DataTrigger>
-                                    </Border.Triggers>
-                                    <VerticalStackLayout Spacing="2">
-                                        <Label
-                                            FontAttributes="Bold"
-                                            FontSize="16"
-                                            Text="{Binding Name}" />
-                                        <Label
-                                            Style="{DynamicResource BodySmall}"
-                                            Text="{Binding DigitalAddress, StringFormat='Digital address {0}'}" />
-                                    </VerticalStackLayout>
-                                </Border>
-                            </DataTemplate>
-                        </BindableLayout.ItemTemplate>
-                    </VerticalStackLayout>
-
-                    <Label
-                        IsVisible="{Binding HasProjectLocomotives, Converter={toolkit:InvertedBoolConverter}}"
-                        Style="{DynamicResource BodySmall}"
-                        Text="No locomotives available yet. Connect to MOBAflow once to sync your fleet." />
-                </VerticalStackLayout>
-            </Border>
+            <Button
+                Command="{Binding Source={x:Reference ControlRoot}, Path=ChangeLocomotiveCommand}"
+                HorizontalOptions="Start"
+                Style="{DynamicResource OutlinedButton}"
+                Text="Change locomotive" />
 
             <Grid ColumnDefinitions="*,Auto">
                 <Label

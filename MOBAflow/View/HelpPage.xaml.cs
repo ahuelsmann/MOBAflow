@@ -334,7 +334,7 @@ internal sealed partial class HelpPage : INavigationParameterReceiver
                 
                 Operation:
                 - Slider for smooth control
-                - Presets: Stop, Slow, Normal, Fast
+                - Select a project locomotive from the list
                 - Mouse wheel for fine adjustment
 
                 DCC Speed Steps:

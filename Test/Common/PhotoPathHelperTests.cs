@@ -181,4 +181,55 @@ internal class PhotoPathHelperTests
 
         Assert.That(result, Is.EqualTo(bundledBase));
     }
+
+    [Test]
+    public void NormalizeStoredRelativePath_RejectsAbsolutePaths()
+    {
+        var result = PhotoPathHelper.NormalizeStoredRelativePath(@"C:\secret\file.jpg");
+
+        Assert.That(result, Is.Empty);
+    }
+
+    [Test]
+    public void TryResolvePhotoFullPathUnderBase_RejectsTraversal()
+    {
+        var baseDir = Path.Combine(Path.GetTempPath(), "mobaflow-photo-test", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(baseDir);
+
+        try
+        {
+            var success = PhotoPathHelper.TryResolvePhotoFullPathUnderBase(
+                baseDir,
+                "photos/../../outside.jpg",
+                out var fullPath);
+
+            Assert.That(success, Is.False);
+            Assert.That(fullPath, Is.Null);
+        }
+        finally
+        {
+            if (Directory.Exists(baseDir))
+            {
+                Directory.Delete(baseDir, recursive: true);
+            }
+        }
+    }
+
+    [Test]
+    public void TryBuildPhotoUploadFullPath_RejectsInvalidCategory()
+    {
+        var baseDir = Path.Combine(Path.GetTempPath(), "mobaflow-photo-test", Guid.NewGuid().ToString("N"));
+
+        var success = PhotoPathHelper.TryBuildPhotoUploadFullPath(
+            baseDir,
+            "../../evil",
+            Guid.NewGuid(),
+            ".jpg",
+            out var fullPath,
+            out var relativePath);
+
+        Assert.That(success, Is.False);
+        Assert.That(fullPath, Is.Null);
+        Assert.That(relativePath, Is.Null);
+    }
 }

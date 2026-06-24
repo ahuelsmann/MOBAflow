@@ -1,131 +1,131 @@
 <Project>
   <ItemGroup>
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\acceleration.png" Link="Resources\Images\acceleration.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\air_brake.png" Link="Resources\Images\air_brake.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\air_conditioning.png" Link="Resources\Images\air_conditioning.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\battery.png" Link="Resources\Images\battery.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\brake_active.png" Link="Resources\Images\brake_active.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\brake_released.png" Link="Resources\Images\brake_released.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\brake_warning.png" Link="Resources\Images\brake_warning.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\cable_connected.png" Link="Resources\Images\cable_connected.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\caution.png" Link="Resources\Images\caution.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\charging.png" Link="Resources\Images\charging.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\clock.png" Link="Resources\Images\clock.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\command_input.png" Link="Resources\Images\command_input.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\compass.png" Link="Resources\Images\compass.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\control_center.png" Link="Resources\Images\control_center.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\coupled.png" Link="Resources\Images\coupled.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\deceleration.png" Link="Resources\Images\deceleration.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\diesel_level.png" Link="Resources\Images\diesel_level.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\distant_signal.png" Link="Resources\Images\distant_signal.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\door_interlock.png" Link="Resources\Images\door_interlock.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\doors_closed.png" Link="Resources\Images\doors_closed.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\doors_left.png" Link="Resources\Images\doors_left.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\doors_locked.png" Link="Resources\Images\doors_locked.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\doors_open.png" Link="Resources\Images\doors_open.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\doors_right.png" Link="Resources\Images\doors_right.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\doors_unlocked.png" Link="Resources\Images\doors_unlocked.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\electrical_systems.png" Link="Resources\Images\electrical_systems.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\emergency_brake.png" Link="Resources\Images\emergency_brake.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\engine.png" Link="Resources\Images\engine.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\entry_signal.png" Link="Resources\Images\entry_signal.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\exit_signal.png" Link="Resources\Images\exit_signal.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f0__light.png" Link="Resources\Images\f0__light.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f1__driving_sound.png" Link="Resources\Images\f1__driving_sound.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f10__traction_motor_fan.png" Link="Resources\Images\f10__traction_motor_fan.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f11__brake_function.png" Link="Resources\Images\f11__brake_function.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f12__shunting_radio.png" Link="Resources\Images\f12__shunting_radio.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f13__heavy_load.png" Link="Resources\Images\f13__heavy_load.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f14__desk_lighting.png" Link="Resources\Images\f14__desk_lighting.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f15__bell.png" Link="Resources\Images\f15__bell.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f16__train_brake.png" Link="Resources\Images\f16__train_brake.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f17__hand_brake.png" Link="Resources\Images\f17__hand_brake.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f18__station_announcement.png" Link="Resources\Images\f18__station_announcement.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f19__coasting.png" Link="Resources\Images\f19__coasting.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f2__horn_high.png" Link="Resources\Images\f2__horn_high.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f20__sanding.png" Link="Resources\Images\f20__sanding.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f21__compressor.png" Link="Resources\Images\f21__compressor.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f22__switch_squeal.png" Link="Resources\Images\f22__switch_squeal.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f23__light_change.png" Link="Resources\Images\f23__light_change.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f24__release_air_pressure.png" Link="Resources\Images\f24__release_air_pressure.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f25__train_heating.png" Link="Resources\Images\f25__train_heating.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f26__curve_squeal.png" Link="Resources\Images\f26__curve_squeal.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f27__conductor_whistle.png" Link="Resources\Images\f27__conductor_whistle.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f28__auxiliary_diesel.png" Link="Resources\Images\f28__auxiliary_diesel.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f29__shunting_radio_alt.png" Link="Resources\Images\f29__shunting_radio_alt.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f3__smoke_generator.png" Link="Resources\Images\f3__smoke_generator.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f30__sound_fader.png" Link="Resources\Images\f30__sound_fader.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f31__disable_brake_sound.png" Link="Resources\Images\f31__disable_brake_sound.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f4__digital_coupling.png" Link="Resources\Images\f4__digital_coupling.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f5__light_off_cab1.png" Link="Resources\Images\f5__light_off_cab1.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f6__light_off_cab2.png" Link="Resources\Images\f6__light_off_cab2.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f7__cab_light.png" Link="Resources\Images\f7__cab_light.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f8__shunting_gear.png" Link="Resources\Images\f8__shunting_gear.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f9__horn_low.png" Link="Resources\Images\f9__horn_low.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\forward.png" Link="Resources\Images\forward.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\gps_navigation.png" Link="Resources\Images\gps_navigation.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\headlight_off.png" Link="Resources\Images\headlight_off.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\headlight.png" Link="Resources\Images\headlight.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\heating.png" Link="Resources\Images\heating.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\high_voltage.png" Link="Resources\Images\high_voltage.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\humidity.png" Link="Resources\Images\humidity.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\interior_lighting.png" Link="Resources\Images\interior_lighting.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\interlocking_computer.png" Link="Resources\Images\interlocking_computer.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\kilometer_marker.png" Link="Resources\Images\kilometer_marker.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\lever_desk.png" Link="Resources\Images\lever_desk.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\lighting_off.png" Link="Resources\Images\lighting_off.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\main_power_off.png" Link="Resources\Images\main_power_off.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\main_power_on.png" Link="Resources\Images\main_power_on.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\main_signal_light.png" Link="Resources\Images\main_signal_light.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\merge.png" Link="Resources\Images\merge.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\microphone_off.png" Link="Resources\Images\microphone_off.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\microphone_on.png" Link="Resources\Images\microphone_on.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\pantograph_lowered.png" Link="Resources\Images\pantograph_lowered.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\pantograph_raised.png" Link="Resources\Images\pantograph_raised.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\plug.png" Link="Resources\Images\plug.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\position.png" Link="Resources\Images\position.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\power_diagram.png" Link="Resources\Images\power_diagram.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\power_output.png" Link="Resources\Images\power_output.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\radio_signal.png" Link="Resources\Images\radio_signal.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\relay_group.png" Link="Resources\Images\relay_group.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\reverse.png" Link="Resources\Images\reverse.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\route_lock.png" Link="Resources\Images\route_lock.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\route.png" Link="Resources\Images\route.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\safety_warning.png" Link="Resources\Images\safety_warning.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\service_brake.png" Link="Resources\Images\service_brake.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\settings.png" Link="Resources\Images\settings.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\signal_bell.png" Link="Resources\Images\signal_bell.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\signal_board.png" Link="Resources\Images\signal_board.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\signal.png" Link="Resources\Images\signal.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\slow_speed_section.png" Link="Resources\Images\slow_speed_section.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\speaker_off.png" Link="Resources\Images\speaker_off.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\speaker_on.png" Link="Resources\Images\speaker_on.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\speedometer.png" Link="Resources\Images\speedometer.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\split.png" Link="Resources\Images\split.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\start.png" Link="Resources\Images\start.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\stop_indicating.png" Link="Resources\Images\stop_indicating.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\stop.png" Link="Resources\Images\stop.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\strong_signal.png" Link="Resources\Images\strong_signal.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\switch_off.png" Link="Resources\Images\switch_off.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\switch_on.png" Link="Resources\Images\switch_on.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\system_fault.png" Link="Resources\Images\system_fault.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\system_ok.png" Link="Resources\Images\system_ok.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\tachometer.png" Link="Resources\Images\tachometer.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\timer.png" Link="Resources\Images\timer.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\track_power.png" Link="Resources\Images\track_power.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\track_route.png" Link="Resources\Images\track_route.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\traction_off.png" Link="Resources\Images\traction_off.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\traction_on.png" Link="Resources\Images\traction_on.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\train_radio.png" Link="Resources\Images\train_radio.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\turnout_diverging.png" Link="Resources\Images\turnout_diverging.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\turnout_straight.png" Link="Resources\Images\turnout_straight.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\uncoupled.png" Link="Resources\Images\uncoupled.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\ventilation.png" Link="Resources\Images\ventilation.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\warning.png" Link="Resources\Images\warning.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\waypoints.png" Link="Resources\Images\waypoints.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\weak_signal.png" Link="Resources\Images\weak_signal.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\wifi_active.png" Link="Resources\Images\wifi_active.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\wifi_inactive.png" Link="Resources\Images\wifi_inactive.png" />
-    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\windshield_wiper.png" Link="Resources\Images\windshield_wiper.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\acceleration.png" BaseSize="32,32" Link="Resources\Images\acceleration.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\air_brake.png" BaseSize="32,32" Link="Resources\Images\air_brake.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\air_conditioning.png" BaseSize="32,32" Link="Resources\Images\air_conditioning.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\battery.png" BaseSize="32,32" Link="Resources\Images\battery.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\brake_active.png" BaseSize="32,32" Link="Resources\Images\brake_active.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\brake_released.png" BaseSize="32,32" Link="Resources\Images\brake_released.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\brake_warning.png" BaseSize="32,32" Link="Resources\Images\brake_warning.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\cable_connected.png" BaseSize="32,32" Link="Resources\Images\cable_connected.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\caution.png" BaseSize="32,32" Link="Resources\Images\caution.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\charging.png" BaseSize="32,32" Link="Resources\Images\charging.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\clock.png" BaseSize="32,32" Link="Resources\Images\clock.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\command_input.png" BaseSize="32,32" Link="Resources\Images\command_input.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\compass.png" BaseSize="32,32" Link="Resources\Images\compass.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\control_center.png" BaseSize="32,32" Link="Resources\Images\control_center.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\coupled.png" BaseSize="32,32" Link="Resources\Images\coupled.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\deceleration.png" BaseSize="32,32" Link="Resources\Images\deceleration.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\diesel_level.png" BaseSize="32,32" Link="Resources\Images\diesel_level.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\distant_signal.png" BaseSize="32,32" Link="Resources\Images\distant_signal.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\door_interlock.png" BaseSize="32,32" Link="Resources\Images\door_interlock.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\doors_closed.png" BaseSize="32,32" Link="Resources\Images\doors_closed.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\doors_left.png" BaseSize="32,32" Link="Resources\Images\doors_left.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\doors_locked.png" BaseSize="32,32" Link="Resources\Images\doors_locked.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\doors_open.png" BaseSize="32,32" Link="Resources\Images\doors_open.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\doors_right.png" BaseSize="32,32" Link="Resources\Images\doors_right.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\doors_unlocked.png" BaseSize="32,32" Link="Resources\Images\doors_unlocked.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\electrical_systems.png" BaseSize="32,32" Link="Resources\Images\electrical_systems.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\emergency_brake.png" BaseSize="32,32" Link="Resources\Images\emergency_brake.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\engine.png" BaseSize="32,32" Link="Resources\Images\engine.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\entry_signal.png" BaseSize="32,32" Link="Resources\Images\entry_signal.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\exit_signal.png" BaseSize="32,32" Link="Resources\Images\exit_signal.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f0__light.png" BaseSize="32,32" Link="Resources\Images\f0__light.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f1__driving_sound.png" BaseSize="32,32" Link="Resources\Images\f1__driving_sound.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f10__traction_motor_fan.png" BaseSize="32,32" Link="Resources\Images\f10__traction_motor_fan.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f11__brake_function.png" BaseSize="32,32" Link="Resources\Images\f11__brake_function.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f12__shunting_radio.png" BaseSize="32,32" Link="Resources\Images\f12__shunting_radio.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f13__heavy_load.png" BaseSize="32,32" Link="Resources\Images\f13__heavy_load.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f14__desk_lighting.png" BaseSize="32,32" Link="Resources\Images\f14__desk_lighting.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f15__bell.png" BaseSize="32,32" Link="Resources\Images\f15__bell.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f16__train_brake.png" BaseSize="32,32" Link="Resources\Images\f16__train_brake.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f17__hand_brake.png" BaseSize="32,32" Link="Resources\Images\f17__hand_brake.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f18__station_announcement.png" BaseSize="32,32" Link="Resources\Images\f18__station_announcement.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f19__coasting.png" BaseSize="32,32" Link="Resources\Images\f19__coasting.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f2__horn_high.png" BaseSize="32,32" Link="Resources\Images\f2__horn_high.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f20__sanding.png" BaseSize="32,32" Link="Resources\Images\f20__sanding.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f21__compressor.png" BaseSize="32,32" Link="Resources\Images\f21__compressor.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f22__switch_squeal.png" BaseSize="32,32" Link="Resources\Images\f22__switch_squeal.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f23__light_change.png" BaseSize="32,32" Link="Resources\Images\f23__light_change.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f24__release_air_pressure.png" BaseSize="32,32" Link="Resources\Images\f24__release_air_pressure.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f25__train_heating.png" BaseSize="32,32" Link="Resources\Images\f25__train_heating.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f26__curve_squeal.png" BaseSize="32,32" Link="Resources\Images\f26__curve_squeal.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f27__conductor_whistle.png" BaseSize="32,32" Link="Resources\Images\f27__conductor_whistle.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f28__auxiliary_diesel.png" BaseSize="32,32" Link="Resources\Images\f28__auxiliary_diesel.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f29__shunting_radio_alt.png" BaseSize="32,32" Link="Resources\Images\f29__shunting_radio_alt.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f3__smoke_generator.png" BaseSize="32,32" Link="Resources\Images\f3__smoke_generator.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f30__sound_fader.png" BaseSize="32,32" Link="Resources\Images\f30__sound_fader.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f31__disable_brake_sound.png" BaseSize="32,32" Link="Resources\Images\f31__disable_brake_sound.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f4__digital_coupling.png" BaseSize="32,32" Link="Resources\Images\f4__digital_coupling.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f5__light_off_cab1.png" BaseSize="32,32" Link="Resources\Images\f5__light_off_cab1.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f6__light_off_cab2.png" BaseSize="32,32" Link="Resources\Images\f6__light_off_cab2.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f7__cab_light.png" BaseSize="32,32" Link="Resources\Images\f7__cab_light.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f8__shunting_gear.png" BaseSize="32,32" Link="Resources\Images\f8__shunting_gear.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\f9__horn_low.png" BaseSize="32,32" Link="Resources\Images\f9__horn_low.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\forward.png" BaseSize="32,32" Link="Resources\Images\forward.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\gps_navigation.png" BaseSize="32,32" Link="Resources\Images\gps_navigation.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\headlight_off.png" BaseSize="32,32" Link="Resources\Images\headlight_off.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\headlight.png" BaseSize="32,32" Link="Resources\Images\headlight.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\heating.png" BaseSize="32,32" Link="Resources\Images\heating.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\high_voltage.png" BaseSize="32,32" Link="Resources\Images\high_voltage.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\humidity.png" BaseSize="32,32" Link="Resources\Images\humidity.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\interior_lighting.png" BaseSize="32,32" Link="Resources\Images\interior_lighting.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\interlocking_computer.png" BaseSize="32,32" Link="Resources\Images\interlocking_computer.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\kilometer_marker.png" BaseSize="32,32" Link="Resources\Images\kilometer_marker.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\lever_desk.png" BaseSize="32,32" Link="Resources\Images\lever_desk.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\lighting_off.png" BaseSize="32,32" Link="Resources\Images\lighting_off.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\main_power_off.png" BaseSize="32,32" Link="Resources\Images\main_power_off.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\main_power_on.png" BaseSize="32,32" Link="Resources\Images\main_power_on.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\main_signal_light.png" BaseSize="32,32" Link="Resources\Images\main_signal_light.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\merge.png" BaseSize="32,32" Link="Resources\Images\merge.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\microphone_off.png" BaseSize="32,32" Link="Resources\Images\microphone_off.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\microphone_on.png" BaseSize="32,32" Link="Resources\Images\microphone_on.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\pantograph_lowered.png" BaseSize="32,32" Link="Resources\Images\pantograph_lowered.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\pantograph_raised.png" BaseSize="32,32" Link="Resources\Images\pantograph_raised.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\plug.png" BaseSize="32,32" Link="Resources\Images\plug.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\position.png" BaseSize="32,32" Link="Resources\Images\position.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\power_diagram.png" BaseSize="32,32" Link="Resources\Images\power_diagram.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\power_output.png" BaseSize="32,32" Link="Resources\Images\power_output.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\radio_signal.png" BaseSize="32,32" Link="Resources\Images\radio_signal.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\relay_group.png" BaseSize="32,32" Link="Resources\Images\relay_group.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\reverse.png" BaseSize="32,32" Link="Resources\Images\reverse.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\route_lock.png" BaseSize="32,32" Link="Resources\Images\route_lock.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\route.png" BaseSize="32,32" Link="Resources\Images\route.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\safety_warning.png" BaseSize="32,32" Link="Resources\Images\safety_warning.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\service_brake.png" BaseSize="32,32" Link="Resources\Images\service_brake.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\settings.png" BaseSize="32,32" Link="Resources\Images\settings.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\signal_bell.png" BaseSize="32,32" Link="Resources\Images\signal_bell.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\signal_board.png" BaseSize="32,32" Link="Resources\Images\signal_board.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\signal.png" BaseSize="32,32" Link="Resources\Images\signal.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\slow_speed_section.png" BaseSize="32,32" Link="Resources\Images\slow_speed_section.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\speaker_off.png" BaseSize="32,32" Link="Resources\Images\speaker_off.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\speaker_on.png" BaseSize="32,32" Link="Resources\Images\speaker_on.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\speedometer.png" BaseSize="32,32" Link="Resources\Images\speedometer.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\split.png" BaseSize="32,32" Link="Resources\Images\split.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\start.png" BaseSize="32,32" Link="Resources\Images\start.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\stop_indicating.png" BaseSize="32,32" Link="Resources\Images\stop_indicating.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\stop.png" BaseSize="32,32" Link="Resources\Images\stop.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\strong_signal.png" BaseSize="32,32" Link="Resources\Images\strong_signal.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\switch_off.png" BaseSize="32,32" Link="Resources\Images\switch_off.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\switch_on.png" BaseSize="32,32" Link="Resources\Images\switch_on.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\system_fault.png" BaseSize="32,32" Link="Resources\Images\system_fault.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\system_ok.png" BaseSize="32,32" Link="Resources\Images\system_ok.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\tachometer.png" BaseSize="32,32" Link="Resources\Images\tachometer.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\timer.png" BaseSize="32,32" Link="Resources\Images\timer.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\track_power.png" BaseSize="32,32" Link="Resources\Images\track_power.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\track_route.png" BaseSize="32,32" Link="Resources\Images\track_route.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\traction_off.png" BaseSize="32,32" Link="Resources\Images\traction_off.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\traction_on.png" BaseSize="32,32" Link="Resources\Images\traction_on.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\train_radio.png" BaseSize="32,32" Link="Resources\Images\train_radio.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\turnout_diverging.png" BaseSize="32,32" Link="Resources\Images\turnout_diverging.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\turnout_straight.png" BaseSize="32,32" Link="Resources\Images\turnout_straight.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\uncoupled.png" BaseSize="32,32" Link="Resources\Images\uncoupled.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\ventilation.png" BaseSize="32,32" Link="Resources\Images\ventilation.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\warning.png" BaseSize="32,32" Link="Resources\Images\warning.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\waypoints.png" BaseSize="32,32" Link="Resources\Images\waypoints.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\weak_signal.png" BaseSize="32,32" Link="Resources\Images\weak_signal.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\wifi_active.png" BaseSize="32,32" Link="Resources\Images\wifi_active.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\wifi_inactive.png" BaseSize="32,32" Link="Resources\Images\wifi_inactive.png" />
+    <MauiImage Include="..\MOBAflow\Assets\FunctionSymbols\dark\32\windshield_wiper.png" BaseSize="32,32" Link="Resources\Images\windshield_wiper.png" />
   </ItemGroup>
 </Project>

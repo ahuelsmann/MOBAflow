@@ -57,6 +57,7 @@ public static class MobiDiContainerValidator
         _ = services.GetRequiredService<AppTabHostPage>();
         _ = services.GetRequiredService<CounterPage>();
         _ = services.GetRequiredService<SignalBoxPage>();
+        _ = services.GetRequiredService<EnginePage>();
         _ = services.GetRequiredService<ControlPage>();
         _ = services.GetRequiredService<AppShell>();
     }

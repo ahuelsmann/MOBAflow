@@ -42,9 +42,16 @@ public sealed partial class MauiViewModel
 
     private bool _mobaflowConnectInProgress;
 
+    private bool _suppressMobaflowAutoConnect;
+
     private CancellationTokenSource? _mobaflowConnectCts;
 
     private readonly SemaphoreSlim _mobaflowCatalogSyncLock = new(1, 1);
+
+    private bool HasPairedMobaflowSession() =>
+        !string.IsNullOrWhiteSpace(_settings.RestApi.ApiKey)
+        && !string.IsNullOrWhiteSpace(_settings.RestApi.CurrentIpAddress)
+        && _settings.RestApi.Port > 0;
 
 
 
@@ -73,6 +80,11 @@ public sealed partial class MauiViewModel
 
         QueueSaveSettings();
 
+        if (_suppressMobaflowAutoConnect)
+        {
+            return;
+        }
+
         _mobaflowConnectCts?.Cancel();
         _mobaflowConnectCts?.Dispose();
         _mobaflowConnectCts = null;
@@ -96,6 +108,48 @@ public sealed partial class MauiViewModel
         }
 
         return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Connects using the paired endpoint without UDP discovery overwriting host/port.
+    /// </summary>
+    internal async Task<bool> ConnectAfterPairingAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _mobaflowConnectInProgress = true;
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (_runtimeHubRemoteClient?.IsConnected == true)
+            {
+                try
+                {
+                    await _runtimeHubRemoteClient.DisconnectAsync().ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug(ex, "Runtime hub disconnect before re-pairing failed");
+                }
+            }
+
+            // Pairing may repeat with unchanged credentials; use the normal health-check timeout.
+            var reachable = await RefreshRestApiReachableAsync(useConnectTimeout: false).ConfigureAwait(false);
+            if (!reachable)
+            {
+                return false;
+            }
+
+            return await EnsureRuntimeHubConnectionAsync(reachable, forceReconnect: true).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
+        }
+        finally
+        {
+            _mobaflowConnectInProgress = false;
+        }
     }
 
     private async Task ApplyMobaflowConnectionStateAsync(CancellationToken cancellationToken)

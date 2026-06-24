@@ -216,7 +216,7 @@ internal sealed class TrainControlViewModelLocomotiveListTests
             projectContext,
             NullLogger<TrainControlViewModel>.Instance,
             eventBus: new EventBus(NullLogger<EventBus>.Instance),
-            options: new TrainControlViewModelOptions { PreferProjectLocomotives = true });
+            options: new TrainControlViewModelOptions());
     }
 
     private static TrainControlViewModel CreateRemoteViewModel()
@@ -234,8 +234,7 @@ internal sealed class TrainControlViewModelLocomotiveListTests
             eventBus: new EventBus(NullLogger<EventBus>.Instance),
             options: new TrainControlViewModelOptions
             {
-                UseRemoteRuntimeSnapshots = true,
-                PreferProjectLocomotives = true
+                UseRemoteRuntimeSnapshots = true
             });
     }
 }

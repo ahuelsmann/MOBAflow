@@ -517,6 +517,24 @@ public partial class MainWindowViewModel
     }
 
     /// <summary>
+    /// Pairing key remote clients must send to access MOBApi.
+    /// </summary>
+    public string RestApiApiKey
+    {
+        get => _settings.RestApi.ApiKey;
+        set
+        {
+            var trimmed = value?.Trim() ?? string.Empty;
+            if (_settings.RestApi.ApiKey != trimmed)
+            {
+                _settings.RestApi.ApiKey = trimmed;
+                OnPropertyChanged();
+                PersistSettings();
+            }
+        }
+    }
+
+    /// <summary>
     /// Gets or sets the base folder for MOBAflow photos (e.g. OneDrive path). Empty = My Documents\MOBAflow\Photos.
     /// </summary>
     public string PhotoStoragePath

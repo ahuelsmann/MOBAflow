@@ -32,7 +32,6 @@
     </PropertyGroup>
     <!-- Package References -->
     <ItemGroup>
-        <FrameworkReference Include="Microsoft.AspNetCore.App" />
         <PackageReference Include="CommunityToolkit.WinUI.Controls.ColorPicker" />
         <PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" />
         <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
@@ -48,6 +47,8 @@
         <PackageReference Include="Serilog.Enrichers.Process" />
         <PackageReference Include="Serilog.Enrichers.Thread" />
         <PackageReference Include="CommunityToolkit.WinUI.UI.Controls.Markdown" />
+        <PackageReference Include="SkiaSharp" />
+        <PackageReference Include="ZXing.Net" />
     </ItemGroup>
     <!-- Project References -->
     <ItemGroup>

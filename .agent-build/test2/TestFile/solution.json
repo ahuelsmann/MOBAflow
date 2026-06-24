@@ -1,0 +1,92 @@
+{
+  "Name": "ExampleSolution",
+  "Projects": [
+    {
+      "Name": "Demo Project",
+      "Locomotives": [],
+      "PassengerWagons": [],
+      "GoodsWagons": [],
+      "Trains": [
+        {
+          "Name": "RE 78"
+        }
+      ],
+      "Workflows": [
+        {
+          "Id": "00000000-0000-0000-0000-000000000001",
+          "Name": "Platform Announcement",
+          "Description": "Announce train arrival at platform",
+          "Actions": [
+            {
+              "Id": "10000000-0000-0000-0000-000000000001",
+              "Name": "Announcement Action",
+              "Number": 1,
+              "Type": 2,
+              "Parameters": {
+                "Message": "Train RE 78 is arriving at platform 3",
+                "VoiceName": "de-DE-KatjaNeural"
+              }
+            }
+          ],
+          "InPort": 1,
+          "IsUsingTimerToIgnoreFeedbacks": false,
+          "IntervalForTimerToIgnoreFeedbacks": 0.0
+        },
+        {
+          "Id": "00000000-0000-0000-0000-000000000002",
+          "Name": "Departure",
+          "Description": "Handle train departure sequence",
+          "Actions": [
+            {
+              "Id": "20000000-0000-0000-0000-000000000001",
+              "Name": "Departure Command",
+              "Number": 1,
+              "Type": 0,
+              "Parameters": {
+                "Bytes": []
+              }
+            }
+          ],
+          "InPort": 2,
+          "IsUsingTimerToIgnoreFeedbacks": false,
+          "IntervalForTimerToIgnoreFeedbacks": 0.0
+        }
+      ],
+      "Journeys": [
+        {
+          "Name": "RE 78 (Porta-Express)",
+          "Description": "Regional Express from Bielefeld to Minden",
+          "Text": "RE 78 - Porta Westfalica Express",
+          "Stations": [
+            {
+              "Name": "Bielefeld Hauptbahnhof",
+              "Description": "Main station",
+              "Platforms": [
+                {
+                  "InPort": 0,
+                  "Number": 3,
+                  "WorkflowId": null,
+                  "Name": "Gleis 3"
+                }
+              ],
+              "InPort": 1,
+              "NumberOfLapsToStop": 0,
+              "WorkflowId": "00000000-0000-0000-0000-000000000001",
+              "Arrival": null,
+              "Departure": null,
+              "IsExitOnLeft": false
+            }
+          ],
+          "InPort": 1,
+          "IsUsingTimerToIgnoreFeedbacks": false,
+          "IntervalForTimerToIgnoreFeedbacks": 0.0,
+          "BehaviorOnLastStop": 0,
+          "CurrentPos": 0,
+          "CurrentCounter": 0,
+          "FirstPos": 0
+        }
+      ],
+      "Cities": []
+    }
+  ]
+}

@@ -7,7 +7,7 @@
     VerticalOptions="Center">
     <GraphicsView
         x:Name="GaugeCanvas"
-        HeightRequest="190"
+        HeightRequest="210"
         HorizontalOptions="Center"
-        WidthRequest="280" />
+        WidthRequest="300" />
 </ContentView>

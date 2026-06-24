@@ -28,6 +28,26 @@ internal sealed class PhotosControllerTests
     }
 
     [Test]
+    public void GetFile_ReturnsBadRequest_WhenPathUsesTraversal()
+    {
+        var controller = new PhotosController();
+
+        var result = controller.GetFile("photos/../../windows/win.ini");
+
+        Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+    }
+
+    [Test]
+    public void GetFile_ReturnsBadRequest_WhenPathIsAbsolute()
+    {
+        var controller = new PhotosController();
+
+        var result = controller.GetFile(@"C:\Windows\win.ini");
+
+        Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+    }
+
+    [Test]
     public void GetFile_ReturnsPhysicalFile_WhenPhotoExists()
     {
         var tempDir = Path.Combine(Path.GetTempPath(), "mobaflow-photo-test", Guid.NewGuid().ToString("N"));

@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Backend.Manager;
 using Backend.Service;
 
 using Common.Runtime;
@@ -30,7 +29,6 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
 
     // Services
     private readonly IUiDispatcher? _dispatcher;
-    private readonly JourneyManager? _journeyManager;
 
     // Runtime State
     private readonly JourneySessionState _state;
@@ -40,13 +38,11 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JourneyViewModel"/> class with a runtime session state.
-    /// Use this constructor when the journey is actively executed by a <see cref="JourneyManager"/>.
     /// </summary>
     public JourneyViewModel(
         Journey journey,
         Project project,
         JourneySessionState state,
-        JourneyManager? journeyManager = null,
         IUiDispatcher? dispatcher = null)
     {
         ArgumentNullException.ThrowIfNull(journey);
@@ -55,17 +51,10 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
         _journey = journey;
         _project = project;
         _state = state;
-        _journeyManager = journeyManager;
         _dispatcher = dispatcher;
 
         // Initialize Stations collection
         RefreshStations();
-
-        // Subscribe to JourneyManager.StationChanged event
-        if (_journeyManager != null && _dispatcher != null)
-        {
-            _journeyManager.StationChanged += OnStationChanged;
-        }
     }
 
     /// <summary>
@@ -73,20 +62,8 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     /// A dummy session state is created that does not receive runtime updates.
     /// </summary>
     public JourneyViewModel(Journey journey, Project project, IUiDispatcher? dispatcher = null)
-        : this(journey, project, new JourneySessionState { JourneyId = journey.Id }, null, dispatcher)
+        : this(journey, project, new JourneySessionState { JourneyId = journey.Id }, dispatcher)
     {
-    }
-
-    private void OnStationChanged(object? sender, StationChangedEventArgs e)
-    {
-        if (e.JourneyId != _journey.Id) return; // Only react to THIS journey
-
-        _dispatcher?.InvokeOnUi(() =>
-        {
-            OnPropertyChanged(nameof(CurrentStation));
-            OnPropertyChanged(nameof(CurrentCounter));
-            OnPropertyChanged(nameof(CurrentPos));
-        });
     }
 
     /// <summary>
@@ -239,21 +216,20 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
 
     /// <summary>
     /// Gets the current lap or repetition counter from the runtime session state.
-    /// Read-only from the ViewModel perspective – managed by <see cref="JourneyManager"/>.
+    /// Read-only from the ViewModel perspective – updated via runtime snapshots.
     /// </summary>
     public int CurrentCounter => _state.Counter;
 
     /// <summary>
     /// Gets the current station index within the journey from the runtime session state.
-    /// Read-only from the ViewModel perspective – managed by <see cref="JourneyManager"/>.
+    /// Read-only from the ViewModel perspective – updated via runtime snapshots.
     /// </summary>
     public int CurrentPos => _state.CurrentPos;
 
     /// <summary>
-    /// Updates the local SessionState from the JourneyManager's state and notifies UI.
-    /// Called by MainWindowViewModel when JourneyManager.StationChanged fires.
+    /// Updates the local SessionState from a runtime projection and notifies UI.
     /// </summary>
-    /// <param name="state">The updated SessionState from JourneyManager</param>
+    /// <param name="state">The updated session state from the runtime projection</param>
     public void UpdateFromSessionState(JourneySessionState state)
     {
         _state.Counter = state.Counter;

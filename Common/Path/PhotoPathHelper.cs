@@ -55,7 +55,7 @@ public static class PhotoPathHelper
 
         var trimmed = path.Trim();
         if (Path.IsPathRooted(trimmed))
-            return trimmed;
+            return string.Empty;
 
         var subPath = trimmed.StartsWith(PhotosPrefixSlash, StringComparison.OrdinalIgnoreCase)
             ? trimmed.Substring(PhotosPrefixSlash.Length)
@@ -64,7 +64,12 @@ public static class PhotoPathHelper
                 : trimmed;
 
         var normalized = subPath.Replace("\\", "/").TrimStart('/');
-        return string.IsNullOrEmpty(normalized) ? string.Empty : $"photos/{normalized}";
+        if (string.IsNullOrEmpty(normalized) || normalized.Contains("..", StringComparison.Ordinal))
+        {
+            return string.Empty;
+        }
+
+        return $"photos/{normalized}";
     }
 
     public static bool TryGetStorageRelativePath(string baseDir, string fullPath, out string? relativePath)
@@ -125,12 +130,6 @@ public static class PhotoPathHelper
             return null;
         }
 
-        if (Path.IsPathRooted(relativePhotoPath))
-        {
-            var rooted = Path.GetFullPath(StripQuery(relativePhotoPath));
-            return File.Exists(rooted) ? rooted : null;
-        }
-
         var normalized = NormalizeStoredRelativePath(StripQuery(relativePhotoPath));
         if (string.IsNullOrWhiteSpace(normalized))
         {
@@ -139,16 +138,93 @@ public static class PhotoPathHelper
 
         foreach (var baseDir in EnumeratePhotoBaseDirectoryCandidates(configuredPhotoStoragePath))
         {
-            foreach (var candidate in BuildPhotoFullPathCandidates(baseDir, normalized))
+            if (TryResolvePhotoFullPathUnderBase(baseDir, normalized, out var existing))
             {
-                if (File.Exists(candidate))
-                {
-                    return candidate;
-                }
+                return existing;
             }
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Resolves a stored relative photo path to a full path that must exist under <paramref name="baseDir"/>.
+    /// </summary>
+    public static bool TryResolvePhotoFullPathUnderBase(string baseDir, string normalizedRelativePath, out string? fullPath)
+    {
+        ArgumentNullException.ThrowIfNull(baseDir);
+        ArgumentNullException.ThrowIfNull(normalizedRelativePath);
+
+        fullPath = null;
+        if (string.IsNullOrWhiteSpace(normalizedRelativePath))
+        {
+            return false;
+        }
+
+        foreach (var candidate in BuildPhotoFullPathCandidates(baseDir, normalizedRelativePath))
+        {
+            var resolved = Path.GetFullPath(candidate);
+            if (!IsPathUnderDirectory(baseDir, resolved) || !File.Exists(resolved))
+            {
+                continue;
+            }
+
+            fullPath = resolved;
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Builds the destination full path for a photo upload under the storage root.
+    /// </summary>
+    public static bool TryBuildPhotoUploadFullPath(
+        string baseDir,
+        string category,
+        Guid entityId,
+        string extension,
+        out string? fullPath,
+        out string? storageRelativePath)
+    {
+        ArgumentNullException.ThrowIfNull(baseDir);
+
+        fullPath = null;
+        storageRelativePath = null;
+
+        string normalizedCategory;
+        try
+        {
+            normalizedCategory = NormalizeCategory(category);
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+
+        storageRelativePath = ToStorageRelativePath(normalizedCategory, entityId, extension);
+        var candidate = Path.GetFullPath(ToFullPath(baseDir, storageRelativePath));
+        if (!IsPathUnderDirectory(baseDir, candidate))
+        {
+            storageRelativePath = null;
+            return false;
+        }
+
+        fullPath = candidate;
+        return true;
+    }
+
+    private static bool IsPathUnderDirectory(string baseDir, string fullPath)
+    {
+        var normalizedBaseDir = Path.GetFullPath(baseDir)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var normalizedFullPath = Path.GetFullPath(fullPath);
+        var relative = Path.GetRelativePath(normalizedBaseDir, normalizedFullPath);
+
+        return !relative.Equals("..", StringComparison.Ordinal)
+               && !relative.StartsWith($"..{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
+               && !relative.StartsWith($"..{Path.AltDirectorySeparatorChar}", StringComparison.Ordinal)
+               && !Path.IsPathRooted(relative);
     }
 
     private static IEnumerable<string> BuildPhotoFullPathCandidates(string baseDir, string normalizedRelativePath)
