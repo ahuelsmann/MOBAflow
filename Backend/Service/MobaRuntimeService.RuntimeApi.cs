@@ -152,6 +152,17 @@ public sealed partial class MobaRuntimeService
     public async Task SetLocomotiveDriveAsync(int address, int speed, bool forward, CancellationToken cancellationToken = default)
     {
         await _z21.SetLocoDriveAsync(address, speed, forward, cancellationToken).ConfigureAwait(false);
+
+        var existingState = _locomotiveStates.TryGetValue(address, out var current) ? current : null;
+        _locomotiveStates[address] = new Common.Runtime.LocomotiveRuntimeSnapshot
+        {
+            Address = address,
+            Speed = speed,
+            IsForward = forward,
+            Functions = existingState?.Functions ?? 0
+        };
+
+        PublishSnapshot();
     }
 
     /// <inheritdoc />

@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Common.Configuration;
 
+using Moba.Domain.Enum;
+
 /// <summary>
 /// REST-API server connection settings (MAUI client to MOBApi hosted by MOBAflow).
 /// MOBAsmart uses multicast and LAN HTTP discovery; saved IP and recent addresses are probed first.
@@ -607,6 +609,11 @@ public class JourneysPageLayoutSettings
     public bool IsJourneyListExpanded { get; set; } = true;
 
     public bool IsStationListExpanded { get; set; } = true;
+
+    /// <summary>
+    /// Default filter for the station list on JourneysPage.
+    /// </summary>
+    public StationListViewMode StationListViewMode { get; set; } = StationListViewMode.StopsOnly;
 
     /// <summary>
     /// Is City Library panel expanded?

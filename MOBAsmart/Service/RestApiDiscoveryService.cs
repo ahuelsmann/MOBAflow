@@ -21,7 +21,7 @@ using System.Text;
 /// </summary>
 public class RestApiDiscoveryService : IRestDiscoveryService
 {
-    private const int MulticastReceiveTimeoutMs = 2500;
+    private const int MulticastReceiveTimeoutMs = 1200;
     private const int SubnetProbeBatchSize = 16;
     private const int QuickProbeTimeoutMs = 350;
 #if ANDROID
@@ -59,29 +59,22 @@ public class RestApiDiscoveryService : IRestDiscoveryService
         var restPort = _appSettings.RestApi.Port > 0 ? _appSettings.RestApi.Port : 5001;
         var localAddresses = LanIpv4AddressHelper.GetCandidateLocalIpv4Addresses();
 
-        try
+        var quickTask = TryDiscoverByQuickHttpProbeAsync(localAddresses, restPort, cancellationToken);
+        var udpTask = TryDiscoverByUdpAsync(cancellationToken);
+
+        var firstFinished = await Task.WhenAny(quickTask, udpTask).ConfigureAwait(false);
+        var firstResult = await firstFinished.ConfigureAwait(false);
+        if (firstResult.ip != null && firstResult.port.HasValue)
         {
-            var quick = await TryDiscoverByQuickHttpProbeAsync(localAddresses, restPort, cancellationToken)
-                .ConfigureAwait(false);
-            if (quick.ip != null && quick.port.HasValue)
-            {
-                return quick;
-            }
-        }
-        catch (Exception)
-        {
+            return firstResult;
         }
 
-        try
+        var secondResult = firstFinished == quickTask
+            ? await udpTask.ConfigureAwait(false)
+            : await quickTask.ConfigureAwait(false);
+        if (secondResult.ip != null && secondResult.port.HasValue)
         {
-            var udp = await TryDiscoverByUdpAsync(cancellationToken).ConfigureAwait(false);
-            if (udp.ip != null && udp.port.HasValue)
-            {
-                return udp;
-            }
-        }
-        catch (Exception)
-        {
+            return secondResult;
         }
 
         if (!string.IsNullOrWhiteSpace(subnetAnchorIp)

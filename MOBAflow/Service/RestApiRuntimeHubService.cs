@@ -20,7 +20,7 @@ using System.Text.Json;
 /// </summary>
 public sealed class RestApiRuntimeHubService : IDisposable
 {
-    private const int PushDebounceMilliseconds = 250;
+    private const int PushDebounceMilliseconds = 75;
 
     private readonly IRuntimeHubHostClient _runtimeHubHostClient;
     private readonly IMobaRuntime _mobaRuntime;

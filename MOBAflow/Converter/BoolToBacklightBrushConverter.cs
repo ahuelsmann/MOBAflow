@@ -1,16 +1,16 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Converter;
 
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
+
+using Moba.Common.Display;
 
 using Windows.UI;
 
 /// <summary>
-/// Converts a boolean to a backlight brush for function buttons.
-/// When ON: Returns a lightened version of the accent color (glow effect).
-/// When OFF: Returns a subtle tint of the color.
-/// Pass the accent color hex as ConverterParameter (e.g., "#FFD700").
+/// Converts function on-state and accent hex to theme-aware backlight brushes.
 /// </summary>
 public partial class BoolToBacklightBrushConverter : IValueConverter
 {
@@ -22,12 +22,8 @@ public partial class BoolToBacklightBrushConverter : IValueConverter
     }
 
     /// <summary>
-    /// Creates the backlight brush for a function button. Exposed as a static helper so it can be
-    /// used directly from an x:Bind function binding in a data template (where ConverterParameter
-    /// cannot be bound to a per-item color).
+    /// Creates the backlight brush for a function button.
     /// </summary>
-    /// <param name="isOn">Whether the function is currently on.</param>
-    /// <param name="hexColor">Accent color hex (e.g. "#FFD700"). Falls back to neutral gray.</param>
     public static Brush CreateBrush(bool isOn, string? hexColor)
     {
         if (string.IsNullOrEmpty(hexColor))
@@ -35,64 +31,44 @@ public partial class BoolToBacklightBrushConverter : IValueConverter
             hexColor = "#808080";
         }
 
-        var cacheKey = $"{(isOn ? '1' : '0')}:{hexColor}";
-        return BrushCache.GetOrAdd(cacheKey, () => CreateBrushUncached(isOn, hexColor));
+        var theme = GetAppearanceTheme();
+        var cacheKey = $"{theme}:{(isOn ? '1' : '0')}:{hexColor}";
+        return BrushCache.GetOrAdd(cacheKey, () => CreateBrushUncached(isOn, hexColor, theme));
     }
 
-    private static SolidColorBrush CreateBrushUncached(bool isOn, string hexColor)
-    {
-        var color = ParseHexColor(hexColor);
+    public static Color CreatePrimaryTextColor(bool isOn, string? hexColor)
+        => ToWinColor(FunctionBacklightColor.Resolve(isOn, hexColor, GetAppearanceTheme()).PrimaryTextArgb);
 
-        if (isOn)
-        {
-            var lightenedColor = LightenColor(color, 0.4);
-            return new SolidColorBrush(Color.FromArgb(220, lightenedColor.R, lightenedColor.G, lightenedColor.B));
-        }
-
-        return new SolidColorBrush(Color.FromArgb(40, color.R, color.G, color.B));
-    }
+    public static Color CreateSecondaryTextColor(bool isOn, string? hexColor)
+        => ToWinColor(FunctionBacklightColor.Resolve(isOn, hexColor, GetAppearanceTheme()).SecondaryTextArgb);
 
     public object ConvertBack(object? value, Type targetType, object? parameter, string language)
     {
         throw new NotImplementedException();
     }
 
-    /// <summary>
-    /// Lightens a color by mixing it with white.
-    /// </summary>
-    /// <param name="color">The base color</param>
-    /// <param name="amount">How much to lighten (0.0 = no change, 1.0 = pure white)</param>
-    private static Color LightenColor(Color color, double amount)
+    private static SolidColorBrush CreateBrushUncached(
+        bool isOn,
+        string hexColor,
+        FunctionBacklightColor.AppearanceTheme theme)
     {
-        amount = Math.Clamp(amount, 0, 1);
-
-        byte r = (byte)(color.R + ((255 - color.R) * amount));
-        byte g = (byte)(color.G + ((255 - color.G) * amount));
-        byte b = (byte)(color.B + ((255 - color.B) * amount));
-
-        return Color.FromArgb(255, r, g, b);
+        var appearance = FunctionBacklightColor.Resolve(isOn, hexColor, theme);
+        return new SolidColorBrush(ToWinColor(appearance.BackgroundArgb));
     }
 
-    private static Color ParseHexColor(string hex)
+    private static FunctionBacklightColor.AppearanceTheme GetAppearanceTheme()
     {
-        hex = hex.TrimStart('#');
+        return Application.Current?.RequestedTheme == ApplicationTheme.Light
+            ? FunctionBacklightColor.AppearanceTheme.Light
+            : FunctionBacklightColor.AppearanceTheme.Dark;
+    }
 
-        byte r = 128, g = 128, b = 128;
-
-        if (hex.Length == 6)
-        {
-            r = System.Convert.ToByte(hex[..2], 16);
-            g = System.Convert.ToByte(hex.Substring(2, 2), 16);
-            b = System.Convert.ToByte(hex.Substring(4, 2), 16);
-        }
-        else if (hex.Length == 8)
-        {
-            // Skip alpha, use RGB
-            r = System.Convert.ToByte(hex.Substring(2, 2), 16);
-            g = System.Convert.ToByte(hex.Substring(4, 2), 16);
-            b = System.Convert.ToByte(hex.Substring(6, 2), 16);
-        }
-
-        return Color.FromArgb(255, r, g, b);
+    private static Color ToWinColor(uint argb)
+    {
+        return Color.FromArgb(
+            (byte)((argb >> 24) & 0xFF),
+            (byte)((argb >> 16) & 0xFF),
+            (byte)((argb >> 8) & 0xFF),
+            (byte)(argb & 0xFF));
     }
 }

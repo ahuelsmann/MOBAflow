@@ -135,4 +135,50 @@ internal class PhotoPathHelperTests
         Assert.That(success, Is.False);
         Assert.That(relativePath, Is.Null);
     }
+
+    [Test]
+    public void TryResolveExistingPhotoFullPath_WhenPhotoIsNextToSolutionFile_ReturnsFullPath()
+    {
+        var temp = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var photosDir = Path.Combine(temp, "photos", "locomotives");
+        Directory.CreateDirectory(photosDir);
+        var photoFile = Path.Combine(photosDir, "abc.jpg");
+        File.WriteAllText(photoFile, "test");
+
+        try
+        {
+            PhotoPathHelper.SetSolutionDirectory(Path.Combine(temp, "solution.json"));
+            var result = PhotoPathHelper.TryResolveExistingPhotoFullPath(null, "photos/locomotives/abc.jpg");
+
+            Assert.That(result, Is.EqualTo(photoFile));
+        }
+        finally
+        {
+            PhotoPathHelper.SetSolutionDirectory(null);
+            Directory.Delete(temp, recursive: true);
+        }
+    }
+
+    [Test]
+    public void ResolvePhotoBaseDirectory_WhenConfigured_ReturnsConfiguredPath()
+    {
+        var result = PhotoPathHelper.ResolvePhotoBaseDirectory(@"C:\Custom\Photos");
+
+        Assert.That(result, Is.EqualTo(@"C:\Custom\Photos"));
+    }
+
+    [Test]
+    public void ResolvePhotoBaseDirectory_WhenBundledPhotosExist_ReturnsAppBaseDirectory()
+    {
+        var bundledBase = AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var photosDir = Path.Combine(bundledBase, "photos");
+        if (!Directory.Exists(photosDir))
+        {
+            Assert.Ignore("Bundled photos folder is not present in this test runtime.");
+        }
+
+        var result = PhotoPathHelper.ResolvePhotoBaseDirectory(null);
+
+        Assert.That(result, Is.EqualTo(bundledBase));
+    }
 }

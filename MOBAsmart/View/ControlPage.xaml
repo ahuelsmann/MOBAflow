@@ -4,11 +4,12 @@
     x:Name="ControlRoot"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:Moba.MAUI.Controls"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:vm="clr-namespace:Moba.SharedUI.ViewModel;assembly=SharedUI"
     x:DataType="vm:TrainControlViewModel">
 
-    <!-- No CollectionView at all: ScrollView + BindableLayout only (<=32 function rows). -->
+    <!-- Fixed F0-F31 rows: no BindableLayout/CollectionView recycling (<=32 keys per DCC loco). -->
     <ScrollView>
         <VerticalStackLayout Padding="16,12,16,24" Spacing="12">
 
@@ -165,36 +166,41 @@
                     Text="All off" />
             </Grid>
 
-            <VerticalStackLayout BindableLayout.ItemsSource="{Binding Functions}" Spacing="8">
-                <BindableLayout.ItemTemplate>
-                    <DataTemplate x:DataType="vm:FunctionButtonViewModel">
-                        <Button
-                            Command="{StaticResource ToggleFunctionCommand}"
-                            CommandParameter="{Binding Index}"
-                            CornerRadius="12"
-                            FontSize="12"
-                            HeightRequest="52"
-                            Text="{Binding Label}">
-                            <Button.Triggers>
-                                <DataTrigger
-                                    Binding="{Binding IsOn}"
-                                    TargetType="Button"
-                                    Value="True">
-                                    <Setter Property="BackgroundColor" Value="{DynamicResource RailwayAccent}" />
-                                    <Setter Property="TextColor" Value="{DynamicResource TextOnPrimary}" />
-                                </DataTrigger>
-                                <DataTrigger
-                                    Binding="{Binding IsOn}"
-                                    TargetType="Button"
-                                    Value="False">
-                                    <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceDark}" />
-                                    <Setter Property="TextColor" Value="{DynamicResource TextPrimary}" />
-                                </DataTrigger>
-                            </Button.Triggers>
-                        </Button>
-                    </DataTemplate>
-                </BindableLayout.ItemTemplate>
+            <VerticalStackLayout Spacing="8">
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[0].BacklightColorHex}" FunctionIndex="0" IconAsset="{Binding Functions[0].IconAsset}" IsOn="{Binding Functions[0].IsOn}" Description="{Binding Functions[0].Description}" Label="{Binding Functions[0].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[1].BacklightColorHex}" FunctionIndex="1" IconAsset="{Binding Functions[1].IconAsset}" IsOn="{Binding Functions[1].IsOn}" Description="{Binding Functions[1].Description}" Label="{Binding Functions[1].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[2].BacklightColorHex}" FunctionIndex="2" IconAsset="{Binding Functions[2].IconAsset}" IsOn="{Binding Functions[2].IsOn}" Description="{Binding Functions[2].Description}" Label="{Binding Functions[2].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[3].BacklightColorHex}" FunctionIndex="3" IconAsset="{Binding Functions[3].IconAsset}" IsOn="{Binding Functions[3].IsOn}" Description="{Binding Functions[3].Description}" Label="{Binding Functions[3].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[4].BacklightColorHex}" FunctionIndex="4" IconAsset="{Binding Functions[4].IconAsset}" IsOn="{Binding Functions[4].IsOn}" Description="{Binding Functions[4].Description}" Label="{Binding Functions[4].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[5].BacklightColorHex}" FunctionIndex="5" IconAsset="{Binding Functions[5].IconAsset}" IsOn="{Binding Functions[5].IsOn}" Description="{Binding Functions[5].Description}" Label="{Binding Functions[5].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[6].BacklightColorHex}" FunctionIndex="6" IconAsset="{Binding Functions[6].IconAsset}" IsOn="{Binding Functions[6].IsOn}" Description="{Binding Functions[6].Description}" Label="{Binding Functions[6].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[7].BacklightColorHex}" FunctionIndex="7" IconAsset="{Binding Functions[7].IconAsset}" IsOn="{Binding Functions[7].IsOn}" Description="{Binding Functions[7].Description}" Label="{Binding Functions[7].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[8].BacklightColorHex}" FunctionIndex="8" IconAsset="{Binding Functions[8].IconAsset}" IsOn="{Binding Functions[8].IsOn}" Description="{Binding Functions[8].Description}" Label="{Binding Functions[8].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[9].BacklightColorHex}" FunctionIndex="9" IconAsset="{Binding Functions[9].IconAsset}" IsOn="{Binding Functions[9].IsOn}" Description="{Binding Functions[9].Description}" Label="{Binding Functions[9].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[10].BacklightColorHex}" FunctionIndex="10" IconAsset="{Binding Functions[10].IconAsset}" IsOn="{Binding Functions[10].IsOn}" Description="{Binding Functions[10].Description}" Label="{Binding Functions[10].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[11].BacklightColorHex}" FunctionIndex="11" IconAsset="{Binding Functions[11].IconAsset}" IsOn="{Binding Functions[11].IsOn}" Description="{Binding Functions[11].Description}" Label="{Binding Functions[11].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[12].BacklightColorHex}" FunctionIndex="12" IconAsset="{Binding Functions[12].IconAsset}" IsOn="{Binding Functions[12].IsOn}" Description="{Binding Functions[12].Description}" Label="{Binding Functions[12].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[13].BacklightColorHex}" FunctionIndex="13" IconAsset="{Binding Functions[13].IconAsset}" IsOn="{Binding Functions[13].IsOn}" Description="{Binding Functions[13].Description}" Label="{Binding Functions[13].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[14].BacklightColorHex}" FunctionIndex="14" IconAsset="{Binding Functions[14].IconAsset}" IsOn="{Binding Functions[14].IsOn}" Description="{Binding Functions[14].Description}" Label="{Binding Functions[14].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[15].BacklightColorHex}" FunctionIndex="15" IconAsset="{Binding Functions[15].IconAsset}" IsOn="{Binding Functions[15].IsOn}" Description="{Binding Functions[15].Description}" Label="{Binding Functions[15].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[16].BacklightColorHex}" FunctionIndex="16" IconAsset="{Binding Functions[16].IconAsset}" IsOn="{Binding Functions[16].IsOn}" Description="{Binding Functions[16].Description}" Label="{Binding Functions[16].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[17].BacklightColorHex}" FunctionIndex="17" IconAsset="{Binding Functions[17].IconAsset}" IsOn="{Binding Functions[17].IsOn}" Description="{Binding Functions[17].Description}" Label="{Binding Functions[17].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[18].BacklightColorHex}" FunctionIndex="18" IconAsset="{Binding Functions[18].IconAsset}" IsOn="{Binding Functions[18].IsOn}" Description="{Binding Functions[18].Description}" Label="{Binding Functions[18].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[19].BacklightColorHex}" FunctionIndex="19" IconAsset="{Binding Functions[19].IconAsset}" IsOn="{Binding Functions[19].IsOn}" Description="{Binding Functions[19].Description}" Label="{Binding Functions[19].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[20].BacklightColorHex}" FunctionIndex="20" IconAsset="{Binding Functions[20].IconAsset}" IsOn="{Binding Functions[20].IsOn}" Description="{Binding Functions[20].Description}" Label="{Binding Functions[20].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[21].BacklightColorHex}" FunctionIndex="21" IconAsset="{Binding Functions[21].IconAsset}" IsOn="{Binding Functions[21].IsOn}" Description="{Binding Functions[21].Description}" Label="{Binding Functions[21].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[22].BacklightColorHex}" FunctionIndex="22" IconAsset="{Binding Functions[22].IconAsset}" IsOn="{Binding Functions[22].IsOn}" Description="{Binding Functions[22].Description}" Label="{Binding Functions[22].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[23].BacklightColorHex}" FunctionIndex="23" IconAsset="{Binding Functions[23].IconAsset}" IsOn="{Binding Functions[23].IsOn}" Description="{Binding Functions[23].Description}" Label="{Binding Functions[23].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[24].BacklightColorHex}" FunctionIndex="24" IconAsset="{Binding Functions[24].IconAsset}" IsOn="{Binding Functions[24].IsOn}" Description="{Binding Functions[24].Description}" Label="{Binding Functions[24].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[25].BacklightColorHex}" FunctionIndex="25" IconAsset="{Binding Functions[25].IconAsset}" IsOn="{Binding Functions[25].IsOn}" Description="{Binding Functions[25].Description}" Label="{Binding Functions[25].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[26].BacklightColorHex}" FunctionIndex="26" IconAsset="{Binding Functions[26].IconAsset}" IsOn="{Binding Functions[26].IsOn}" Description="{Binding Functions[26].Description}" Label="{Binding Functions[26].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[27].BacklightColorHex}" FunctionIndex="27" IconAsset="{Binding Functions[27].IconAsset}" IsOn="{Binding Functions[27].IsOn}" Description="{Binding Functions[27].Description}" Label="{Binding Functions[27].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[28].BacklightColorHex}" FunctionIndex="28" IconAsset="{Binding Functions[28].IconAsset}" IsOn="{Binding Functions[28].IsOn}" Description="{Binding Functions[28].Description}" Label="{Binding Functions[28].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[29].BacklightColorHex}" FunctionIndex="29" IconAsset="{Binding Functions[29].IconAsset}" IsOn="{Binding Functions[29].IsOn}" Description="{Binding Functions[29].Description}" Label="{Binding Functions[29].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[30].BacklightColorHex}" FunctionIndex="30" IconAsset="{Binding Functions[30].IconAsset}" IsOn="{Binding Functions[30].IsOn}" Description="{Binding Functions[30].Description}" Label="{Binding Functions[30].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
+                <controls:FunctionToggleView BacklightColorHex="{Binding Functions[31].BacklightColorHex}" FunctionIndex="31" IconAsset="{Binding Functions[31].IconAsset}" IsOn="{Binding Functions[31].IsOn}" Description="{Binding Functions[31].Description}" Label="{Binding Functions[31].Label}" ToggleCommand="{Binding ToggleFunctionCommand}" />
             </VerticalStackLayout>
         </VerticalStackLayout>
     </ScrollView>
 </ContentView>
+

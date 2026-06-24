@@ -39,6 +39,7 @@ public partial class MainWindowViewModel
             value.PropertyChanged += OnViewModelPropertyChanged;
         }
 
+        SyncStationListViewMode();
         ResetJourneyCommand.NotifyCanExecuteChanged();
     }
 

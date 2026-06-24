@@ -35,9 +35,21 @@
                 "articleNumber": { "type": ["string", "null"] },
                 "functionSymbols": {
                   "type": ["array", "null"],
-                  "description": "Unicode glyphs for Train Control function buttons F0–F20 (index 0–20)",
+                  "description": "PNG asset filenames for Train Control function buttons F0–F31 (index 0–31)",
                   "items": { "type": "string" },
-                  "maxItems": 21
+                  "maxItems": 32
+                },
+                "functionColors": {
+                  "type": ["array", "null"],
+                  "description": "Hex colors for Train Control function buttons F0–F31 (index 0–31)",
+                  "items": { "type": "string" },
+                  "maxItems": 32
+                },
+                "functionLabels": {
+                  "type": ["array", "null"],
+                  "description": "Manufacturer handbook labels for function buttons F0–F31 (index 0–31)",
+                  "items": { "type": "string" },
+                  "maxItems": 32
                 },
                 "colorPrimary": { "type": ["integer", "null"] },
                 "colorSecondary": { "type": ["integer", "null"] },

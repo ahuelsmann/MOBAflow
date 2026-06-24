@@ -4,29 +4,39 @@
     x:Name="Root"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    HeightRequest="72"
-    MinimumHeightRequest="48">
+    MinimumHeightRequest="40">
     <Border
         x:Name="ToggleBorder"
-        Padding="6"
+        Padding="8,6"
         StrokeShape="RoundRectangle 12"
         StrokeThickness="1">
         <Border.GestureRecognizers>
             <TapGestureRecognizer Command="{Binding ToggleCommand, Source={x:Reference Root}}" CommandParameter="{Binding FunctionIndex, Source={x:Reference Root}}" />
         </Border.GestureRecognizers>
-        <VerticalStackLayout Spacing="4" VerticalOptions="Center">
+        <Grid ColumnDefinitions="Auto,Auto,*" ColumnSpacing="8">
             <Image
                 x:Name="IconImage"
-                HeightRequest="22"
-                HorizontalOptions="Center"
+                Grid.Column="0"
+                HeightRequest="20"
                 IsVisible="False"
-                WidthRequest="22" />
+                VerticalOptions="Center"
+                WidthRequest="20" />
             <Label
-                x:Name="FunctionLabel"
+                x:Name="FunctionKeyLabel"
+                Grid.Column="1"
                 FontAttributes="Bold"
-                FontSize="10"
-                HorizontalTextAlignment="Center"
-                TextColor="{DynamicResource TextPrimary}" />
-        </VerticalStackLayout>
+                FontSize="12"
+                LineBreakMode="NoWrap"
+                MinimumWidthRequest="28"
+                VerticalOptions="Center" />
+            <Label
+                x:Name="DescriptionLabel"
+                Grid.Column="2"
+                FontSize="11"
+                IsVisible="False"
+                LineBreakMode="TailTruncation"
+                MaxLines="1"
+                VerticalOptions="Center" />
+        </Grid>
     </Border>
 </ContentView>

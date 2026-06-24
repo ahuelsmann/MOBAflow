@@ -72,6 +72,12 @@ public class Locomotive
     public List<string>? FunctionColors { get; set; }
 
     /// <summary>
+    /// Manufacturer handbook labels for function buttons F0–F31 (e.g. decoder function mapping from ESU manual).
+    /// Index 0 = F0, 1 = F1, … 31 = F31. Empty or null entries have no stored label.
+    /// </summary>
+    public List<string>? FunctionLabels { get; set; }
+
+    /// <summary>
     /// Gets or sets the primary color scheme of the locomotive.
     /// </summary>
     public ColorScheme? ColorPrimary { get; set; }

@@ -70,7 +70,13 @@ internal sealed class RuntimeJsonSerializerTests
 
                     Name = "BR 110",
 
-                    DigitalAddress = 7
+                    DigitalAddress = 7,
+
+                    FunctionSymbols = ["headlight.png"],
+
+                    FunctionColors = ["#FFD700"],
+
+                    FunctionLabels = ["Directional headlight change"]
 
                 }
 
@@ -103,6 +109,12 @@ internal sealed class RuntimeJsonSerializerTests
         Assert.That(restored.LocomotiveFleet, Has.Count.EqualTo(1));
 
         Assert.That(restored.LocomotiveFleet[0].Name, Is.EqualTo("BR 110"));
+
+        Assert.That(restored.LocomotiveFleet[0].FunctionSymbols, Is.EqualTo(new[] { "headlight.png" }));
+
+        Assert.That(restored.LocomotiveFleet[0].FunctionColors, Is.EqualTo(new[] { "#FFD700" }));
+
+        Assert.That(restored.LocomotiveFleet[0].FunctionLabels, Is.EqualTo(new[] { "Directional headlight change" }));
 
     }
 

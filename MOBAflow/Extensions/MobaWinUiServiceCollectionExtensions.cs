@@ -199,6 +199,7 @@ public static class MobaWinUiServiceCollectionExtensions
 
         // DialogService resolves XamlRoot lazily to avoid startup deadlocks.
         services.AddSingleton<IDialogService, DialogService>();
+        services.AddSingleton<IFunctionAppearancePicker, WinUiFunctionAppearancePicker>();
 
         services.AddSingleton<ISoundPlayer, WindowsSoundPlayer>();
         services.AddSingleton<HealthCheckService>();
@@ -263,7 +264,8 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetService<ILogger<TrainControlViewModel>>(),
             sp.GetService<IUiDispatcher>(),
             sp.GetRequiredService<IEventBus>(),
-            sp.GetRequiredService<IRuntimeCommandGateway>()));
+            sp.GetRequiredService<IRuntimeCommandGateway>(),
+            functionAppearancePicker: sp.GetRequiredService<IFunctionAppearancePicker>()));
 
         services.AddSingleton(sp => new MainWindow(
             sp.GetRequiredService<MainWindowViewModel>(),

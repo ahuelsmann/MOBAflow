@@ -84,7 +84,10 @@ internal static class MobaRuntimeSnapshotBuilder
                     LocomotiveId = locomotive.Id,
                     Name = locomotive.Name,
                     DigitalAddress = locomotive.DigitalAddress,
-                    PhotoPath = locomotive.PhotoPath
+                    PhotoPath = locomotive.PhotoPath,
+                    FunctionSymbols = locomotive.FunctionSymbols,
+                    FunctionColors = locomotive.FunctionColors,
+                    FunctionLabels = locomotive.FunctionLabels
                 });
             }
         }

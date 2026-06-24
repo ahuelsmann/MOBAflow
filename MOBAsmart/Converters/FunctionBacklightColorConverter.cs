@@ -19,7 +19,10 @@ public sealed class FunctionBacklightColorConverter : IMultiValueConverter
 
         var isOn = values[0] is bool on && on;
         var hexColor = values[1] as string;
-        var argb = FunctionBacklightColor.ToArgb(isOn, hexColor);
+        var theme = Application.Current?.RequestedTheme == AppTheme.Light
+            ? FunctionBacklightColor.AppearanceTheme.Light
+            : FunctionBacklightColor.AppearanceTheme.Dark;
+        var argb = FunctionBacklightColor.ToArgb(isOn, hexColor, theme);
 
         return Color.FromRgba(
             ((argb >> 16) & 0xFF) / 255f,

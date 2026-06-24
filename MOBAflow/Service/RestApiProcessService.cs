@@ -112,8 +112,8 @@ public sealed class RestApiProcessService : IDisposable
                 };
                 // Discovery runs in WinUI so MAUI can find the server (same as former in-process setup)
                 _process.StartInfo.EnvironmentVariables["MOBAFLOW_DISCOVERY_IN_WINUI"] = "1";
-                if (!string.IsNullOrWhiteSpace(_appSettings.Application.PhotoStoragePath))
-                    _process.StartInfo.EnvironmentVariables["MOBAFLOW_PHOTOS_PATH"] = _appSettings.Application.PhotoStoragePath.Trim();
+                _process.StartInfo.EnvironmentVariables["MOBAFLOW_PHOTOS_PATH"] =
+                    Common.Path.PhotoPathHelper.ResolvePhotoBaseDirectory(_appSettings.Application.PhotoStoragePath);
 
                 _process.Exited += (sender, _) =>
                 {

@@ -2,29 +2,68 @@
 namespace Moba.Common.Display;
 
 /// <summary>
-/// Platform-neutral backlight color calculation for locomotive function buttons (F0-F31).
-/// When ON: lightened accent color with high opacity. When OFF: subtle tint.
+/// Platform-neutral colors for locomotive function buttons (F0-F31).
+/// Supports light and dark themes with readable text contrast.
 /// </summary>
 public static class FunctionBacklightColor
 {
     private const uint FallbackGrayArgb = 0xFF808080;
 
-    /// <summary>
-    /// Returns an ARGB color for a function button background.
-    /// </summary>
-    /// <param name="isOn">Whether the function is currently active.</param>
-    /// <param name="hexColor">Accent color hex (e.g. "#FFD700"). Falls back to neutral gray.</param>
-    public static uint ToArgb(bool isOn, string? hexColor)
+    /// <summary>Light or dark application theme.</summary>
+    public enum AppearanceTheme
     {
-        var baseColor = ParseHexColor(hexColor);
+        Light,
+        Dark
+    }
 
-        if (isOn)
+    /// <summary>Resolved function button colors for one visual state.</summary>
+    public readonly record struct Appearance(
+        uint BackgroundArgb,
+        uint PrimaryTextArgb,
+        uint SecondaryTextArgb);
+
+    /// <summary>
+    /// Returns an ARGB background color (legacy API for simple bindings).
+    /// </summary>
+    public static uint ToArgb(bool isOn, string? hexColor, AppearanceTheme theme = AppearanceTheme.Dark)
+        => Resolve(isOn, hexColor, theme).BackgroundArgb;
+
+    /// <summary>
+    /// Resolves background and text colors for a function button in the given theme.
+    /// </summary>
+    public static Appearance Resolve(bool isOn, string? hexColor, AppearanceTheme theme)
+    {
+        var accent = ParseHexColor(hexColor);
+
+        if (!isOn)
         {
-            var lightened = LightenColor(baseColor, 0.4);
-            return 0xDC000000u | ((uint)lightened.R << 16) | ((uint)lightened.G << 8) | lightened.B;
+            return theme == AppearanceTheme.Dark
+                ? new Appearance(0xFF2C2C2C, 0xFFFFFFFF, 0xFFB8B8B8)
+                : new Appearance(0xFFEEEEEE, 0xFF212121, 0xFF616161);
         }
 
-        return 0x28000000u | ((uint)baseColor.R << 16) | ((uint)baseColor.G << 8) | baseColor.B;
+        var canvas = theme == AppearanceTheme.Dark
+            ? (R: (byte)30, G: (byte)30, B: (byte)30)
+            : (R: (byte)255, G: (byte)255, B: (byte)255);
+
+        var mix = theme == AppearanceTheme.Dark ? 0.62 : 0.42;
+        var background = BlendRgb(accent, canvas, mix);
+        var luminance = GetRelativeLuminance(background);
+
+        // Gray accents must not produce a mid-gray "on" plate with gray text.
+        if (theme == AppearanceTheme.Dark && luminance is > 0.18 and < 0.42)
+        {
+            background = BlendRgb(accent, (R: (byte)56, G: (byte)56, B: (byte)56), 0.72);
+            luminance = GetRelativeLuminance(background);
+        }
+
+        var primaryText = luminance > 0.58 ? 0xFF121212u : 0xFFFFFFFFu;
+        var secondaryText = luminance > 0.58 ? 0xFF3D3D3Du : 0xFFE8E8E8u;
+
+        return new Appearance(
+            0xFF000000u | ((uint)background.R << 16) | ((uint)background.G << 8) | background.B,
+            primaryText,
+            secondaryText);
     }
 
     private static (byte R, byte G, byte B) ParseHexColor(string? hexColor)
@@ -59,12 +98,30 @@ public static class FunctionBacklightColor
         return ((byte)((argb >> 16) & 0xFF), (byte)((argb >> 8) & 0xFF), (byte)(argb & 0xFF));
     }
 
-    private static (byte R, byte G, byte B) LightenColor((byte R, byte G, byte B) color, double amount)
+    private static (byte R, byte G, byte B) BlendRgb(
+        (byte R, byte G, byte B) accent,
+        (byte R, byte G, byte B) canvas,
+        double accentWeight)
     {
-        amount = Math.Clamp(amount, 0, 1);
+        accentWeight = Math.Clamp(accentWeight, 0, 1);
+        var canvasWeight = 1 - accentWeight;
         return (
-            (byte)(color.R + ((255 - color.R) * amount)),
-            (byte)(color.G + ((255 - color.G) * amount)),
-            (byte)(color.B + ((255 - color.B) * amount)));
+            (byte)Math.Clamp((accent.R * accentWeight) + (canvas.R * canvasWeight), 0, 255),
+            (byte)Math.Clamp((accent.G * accentWeight) + (canvas.G * canvasWeight), 0, 255),
+            (byte)Math.Clamp((accent.B * accentWeight) + (canvas.B * canvasWeight), 0, 255));
+    }
+
+    private static double GetRelativeLuminance((byte R, byte G, byte B) color)
+    {
+        static double Channel(byte value)
+        {
+            var s = value / 255d;
+            return s <= 0.03928 ? s / 12.92 : Math.Pow((s + 0.055) / 1.055, 2.4);
+        }
+
+        var r = Channel(color.R);
+        var g = Channel(color.G);
+        var b = Channel(color.B);
+        return (0.2126 * r) + (0.7152 * g) + (0.0722 * b);
     }
 }

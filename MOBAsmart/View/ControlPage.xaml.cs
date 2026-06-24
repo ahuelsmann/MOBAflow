@@ -13,7 +13,6 @@ public partial class ControlPage
         _mauiViewModel = mauiViewModel;
 
         Resources["SelectLocomotiveCommand"] = viewModel.SelectProjectLocomotiveCommand;
-        Resources["ToggleFunctionCommand"] = viewModel.ToggleFunctionCommand;
 
         BindingContext = viewModel;
         InitializeComponent();

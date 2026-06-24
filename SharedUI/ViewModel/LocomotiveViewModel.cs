@@ -197,6 +197,9 @@ public sealed partial class LocomotiveViewModel : ObservableObject, IViewModelWr
         Name = snapshot.Name;
         DigitalAddress = snapshot.DigitalAddress;
         PhotoPath = snapshot.PhotoPath;
+        Model.FunctionSymbols = snapshot.FunctionSymbols?.ToList();
+        Model.FunctionColors = snapshot.FunctionColors?.ToList();
+        Model.FunctionLabels = snapshot.FunctionLabels?.ToList();
     }
 
     [ObservableProperty]

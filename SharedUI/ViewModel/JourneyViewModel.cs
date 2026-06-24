@@ -35,6 +35,7 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     // Runtime State
     private readonly JourneySessionState _state;
     private ObservableCollection<StationViewModel>? _stations;
+    private StationListViewMode _stationListViewMode = StationListViewMode.StopsOnly;
     #endregion
 
     /// <summary>
@@ -164,16 +165,48 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     } = string.Empty;
 
     /// <summary>
-    /// Gets the filtered stations based on search text.
-    /// Returns all stations if search is empty.
+    /// Gets or sets how stations are displayed in the Journeys page list.
+    /// </summary>
+    public StationListViewMode StationListViewMode
+    {
+        get => _stationListViewMode;
+        set
+        {
+            if (_stationListViewMode == value)
+            {
+                return;
+            }
+
+            _stationListViewMode = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsTimelineView));
+            OnPropertyChanged(nameof(FilteredStations));
+            UpdateStationHighlights();
+        }
+    }
+
+    /// <summary>
+    /// Indicates whether the full journey timeline (including events) is shown.
+    /// </summary>
+    public bool IsTimelineView => StationListViewMode == StationListViewMode.FullTimeline;
+
+    /// <summary>
+    /// Gets the filtered stations based on search text and view mode.
     /// </summary>
     public List<StationViewModel> FilteredStations
     {
         get
         {
-            return string.IsNullOrWhiteSpace(StationSearchText)
-                ? [.. Stations]
-                : [.. Stations.Where(s => s.Name.Contains(StationSearchText, StringComparison.OrdinalIgnoreCase))];
+            var stations = string.IsNullOrWhiteSpace(StationSearchText)
+                ? Stations
+                : Stations.Where(s => s.Name.Contains(StationSearchText, StringComparison.OrdinalIgnoreCase));
+
+            if (StationListViewMode == StationListViewMode.StopsOnly)
+            {
+                stations = stations.Where(s => s.IsRealStation);
+            }
+
+            return [.. stations];
         }
     }
 
@@ -229,11 +262,7 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
         _state.LastFeedbackTime = state.LastFeedbackTime;
         _state.IsActive = state.IsActive;
 
-        // Update station highlighting based on CurrentPos
-        for (int i = 0; i < Stations.Count; i++)
-        {
-            Stations[i].IsCurrentStation = i == state.CurrentPos;
-        }
+        UpdateStationHighlights();
 
         // Notify UI about property changes
         OnPropertyChanged(nameof(CurrentStation));
@@ -254,10 +283,7 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
         _state.LastFeedbackTime = snapshot.LastFeedbackTime;
         _state.IsActive = snapshot.IsActive;
 
-        for (int i = 0; i < Stations.Count; i++)
-        {
-            Stations[i].IsCurrentStation = i == snapshot.CurrentPos;
-        }
+        UpdateStationHighlights(snapshot.CurrentPos);
 
         OnPropertyChanged(nameof(CurrentStation));
         OnPropertyChanged(nameof(CurrentCounter));
@@ -389,19 +415,50 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
         {
             var vm = new StationViewModel(station, _project)
             {
-                Position = index + 1,  // 1-based position
-
-                // Mark current station based on SessionState
-                IsCurrentStation = index == _state.CurrentPos
+                Position = index + 1  // 1-based position
             };
 
             _stations.Add(vm);
             index++;
         }
 
+        UpdateStationHighlights();
+
         // Notify UI
         OnPropertyChanged(nameof(Stations));
         OnPropertyChanged(nameof(FilteredStations));
+    }
+
+    private void UpdateStationHighlights() => UpdateStationHighlights(_state.CurrentPos);
+
+    private void UpdateStationHighlights(int currentPos)
+    {
+        for (var i = 0; i < Stations.Count; i++)
+        {
+            Stations[i].IsCurrentStation = StationListViewMode == StationListViewMode.FullTimeline
+                ? i == currentPos
+                : Stations[i].IsRealStation && IsApproachSegmentActive(i, currentPos);
+        }
+    }
+
+    private bool IsApproachSegmentActive(int realStationIndex, int currentPos)
+    {
+        if (realStationIndex < 0 || realStationIndex >= Stations.Count || !Stations[realStationIndex].IsRealStation)
+        {
+            return false;
+        }
+
+        var segmentStart = 0;
+        for (var j = realStationIndex - 1; j >= 0; j--)
+        {
+            if (Stations[j].IsRealStation)
+            {
+                segmentStart = j + 1;
+                break;
+            }
+        }
+
+        return currentPos >= segmentStart && currentPos <= realStationIndex;
     }
 
     /// <summary>

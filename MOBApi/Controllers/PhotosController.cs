@@ -51,10 +51,10 @@ public class PhotosController : ControllerBase
             return BadRequest(new { error = "Invalid path" });
         }
 
-        var baseDir = Path.GetFullPath(GetPhotoBaseDir());
-        var fullPath = Path.GetFullPath(PhotoPathHelper.ToFullPath(baseDir, normalized));
-        if (!fullPath.StartsWith(baseDir, StringComparison.OrdinalIgnoreCase)
-            || !System.IO.File.Exists(fullPath))
+        var fullPath = PhotoPathHelper.TryResolveExistingPhotoFullPath(
+            Environment.GetEnvironmentVariable("MOBAFLOW_PHOTOS_PATH"),
+            normalized);
+        if (string.IsNullOrWhiteSpace(fullPath))
         {
             return NotFound();
         }
@@ -119,11 +119,6 @@ public class PhotosController : ControllerBase
 
     private static string GetPhotoBaseDir()
     {
-        var configured = Environment.GetEnvironmentVariable("MOBAFLOW_PHOTOS_PATH");
-        if (!string.IsNullOrWhiteSpace(configured))
-            return configured.Trim();
-        return Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-            "MOBAflow", "Photos");
+        return PhotoPathHelper.ResolvePhotoBaseDirectory(Environment.GetEnvironmentVariable("MOBAFLOW_PHOTOS_PATH"));
     }
 }

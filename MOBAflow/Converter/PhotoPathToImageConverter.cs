@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Converter;
 
+using Common.Path;
+
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media.Imaging;
 
@@ -28,9 +30,8 @@ public partial class PhotoPathToImageConverter : IValueConverter
 
         try
         {
-            var normalizedPath = StripQuery(path);
-            var absolutePath = Path.IsPathRooted(normalizedPath) ? normalizedPath : GetAbsolutePath(normalizedPath);
-            if (!File.Exists(absolutePath))
+            var absolutePath = PhotoPathHelper.TryResolveExistingPhotoFullPath(_sPhotoBasePath, path);
+            if (string.IsNullOrWhiteSpace(absolutePath))
                 return null;
 
             // Add query string to force cache refresh
@@ -50,25 +51,4 @@ public partial class PhotoPathToImageConverter : IValueConverter
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, string language) => value;
-
-    private static string GetAbsolutePath(string relativePath)
-    {
-        var baseDir = !string.IsNullOrWhiteSpace(_sPhotoBasePath)
-            ? _sPhotoBasePath
-            : Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                "MOBAflow", "Photos");
-        var subPath = relativePath.TrimStart().StartsWith("photos/", StringComparison.OrdinalIgnoreCase)
-            ? relativePath.Substring(7)
-            : relativePath.TrimStart().StartsWith("photos\\", StringComparison.OrdinalIgnoreCase)
-                ? relativePath.Substring(8)
-                : relativePath;
-        return Path.Combine(baseDir, subPath.Replace("/", "\\"));
-    }
-
-    private static string StripQuery(string path)
-    {
-        var idx = path.IndexOf('?', StringComparison.Ordinal);
-        return idx >= 0 ? path[..idx] : path;
-    }
 }

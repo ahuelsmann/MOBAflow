@@ -138,6 +138,71 @@ internal sealed class TrainControlViewModelLocomotiveListTests
         Assert.That(viewModel.ProjectLocomotives[0].Name, Is.EqualTo("BR 110 Ocean Blue"));
     }
 
+    [Test]
+    public void SelectProjectLocomotive_AppliesFunctionAppearance_FromFleetSnapshot()
+    {
+        var fleet =
+            new List<LocomotiveFleetSnapshot>
+            {
+                new()
+                {
+                    LocomotiveId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+                    Name = "BR 218",
+                    DigitalAddress = 3,
+                    FunctionSymbols = ["headlight.png"],
+                    FunctionColors = ["#E81123"]
+                }
+            };
+
+        var viewModel = CreateRemoteViewModel();
+        viewModel.RefreshLocomotiveList(fleet);
+        viewModel.SelectProjectLocomotiveCommand.Execute(viewModel.ProjectLocomotives[0]);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel.Functions[0].IconAsset, Is.EqualTo("headlight.png"));
+            Assert.That(viewModel.Functions[0].BacklightColorHex, Is.EqualTo("#E81123"));
+        });
+    }
+
+    [Test]
+    public void RefreshLocomotiveList_UpdatesFunctionAppearance_WhenFleetMetadataChanges()
+    {
+        var locomotiveId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+        var viewModel = CreateRemoteViewModel();
+
+        viewModel.RefreshLocomotiveList(
+        [
+            new LocomotiveFleetSnapshot
+            {
+                LocomotiveId = locomotiveId,
+                Name = "BR 218",
+                DigitalAddress = 3,
+                FunctionSymbols = ["headlight.png"],
+                FunctionColors = ["#FFD700"]
+            }
+        ]);
+        viewModel.SelectProjectLocomotiveCommand.Execute(viewModel.ProjectLocomotives[0]);
+
+        viewModel.RefreshLocomotiveList(
+        [
+            new LocomotiveFleetSnapshot
+            {
+                LocomotiveId = locomotiveId,
+                Name = "BR 218",
+                DigitalAddress = 3,
+                FunctionSymbols = ["f1__driving_sound.png"],
+                FunctionColors = ["#0078D4"]
+            }
+        ]);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel.Functions[0].IconAsset, Is.EqualTo("f1__driving_sound.png"));
+            Assert.That(viewModel.Functions[0].BacklightColorHex, Is.EqualTo("#0078D4"));
+        });
+    }
+
     private static TrainControlViewModel CreateViewModel(IProjectContext projectContext)
     {
         var runtimeMock = new Mock<IMobaRuntime>();
@@ -152,5 +217,25 @@ internal sealed class TrainControlViewModelLocomotiveListTests
             NullLogger<TrainControlViewModel>.Instance,
             eventBus: new EventBus(NullLogger<EventBus>.Instance),
             options: new TrainControlViewModelOptions { PreferProjectLocomotives = true });
+    }
+
+    private static TrainControlViewModel CreateRemoteViewModel()
+    {
+        var runtimeMock = new Mock<IMobaRuntime>();
+        runtimeMock.SetupGet(runtime => runtime.Current).Returns(MobaRuntimeSnapshot.Empty);
+        var settingsMock = new Mock<ISettingsService>();
+        settingsMock.Setup(service => service.GetSettings()).Returns(new AppSettings());
+
+        return new TrainControlViewModel(
+            runtimeMock.Object,
+            settingsMock.Object,
+            projectContext: null,
+            NullLogger<TrainControlViewModel>.Instance,
+            eventBus: new EventBus(NullLogger<EventBus>.Instance),
+            options: new TrainControlViewModelOptions
+            {
+                UseRemoteRuntimeSnapshots = true,
+                PreferProjectLocomotives = true
+            });
     }
 }

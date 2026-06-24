@@ -114,10 +114,15 @@ public sealed partial class MauiViewModel
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            var reachable = await RefreshRestApiReachableAsync().ConfigureAwait(false);
+            var anchor = string.IsNullOrWhiteSpace(Z21IpAddress) ? null : Z21IpAddress.Trim();
+            var reachabilityTask = RefreshRestApiReachableAsync();
+            var discoveryTask = TryDiscoverMobaflowFastAsync(anchor, cancellationToken);
+
+            await Task.WhenAll(reachabilityTask, discoveryTask).ConfigureAwait(false);
+
+            var reachable = await reachabilityTask.ConfigureAwait(false);
             if (!reachable)
             {
-                await TryDiscoverMobaflowOnceAsync(cancellationToken).ConfigureAwait(false);
                 reachable = await RefreshRestApiReachableAsync().ConfigureAwait(false);
             }
 
@@ -178,28 +183,21 @@ public sealed partial class MauiViewModel
 
 
     /// <summary>
-    /// Single LAN discovery pass for MOBApi when the user enables the MOBAflow connection toggle.
+    /// Fast LAN discovery when the user enables MOBAflow (UDP + recent IPs; no full /24 scan).
+    /// Full subnet scan continues in the background startup discovery loop.
     /// </summary>
-    private async Task TryDiscoverMobaflowOnceAsync(CancellationToken cancellationToken)
+    private async Task TryDiscoverMobaflowFastAsync(string? anchor, CancellationToken cancellationToken)
     {
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var anchor = string.IsNullOrWhiteSpace(Z21IpAddress) ? null : Z21IpAddress.Trim();
-            var (fastIp, fastPort) = await _restDiscoveryService
-                .DiscoverServerFastAsync(anchor)
+            var (ip, port) = await _restDiscoveryService
+                .DiscoverServerFastAsync(anchor, cancellationToken)
                 .ConfigureAwait(false);
-            if (!string.IsNullOrEmpty(fastIp) && fastPort.HasValue)
-            {
-                await ApplyDiscoveredRestEndpointAsync(fastIp, fastPort.Value).ConfigureAwait(false);
-                return;
-            }
-
-            var (ip, port) = await _restDiscoveryService.DiscoverServerAsync(anchor).ConfigureAwait(false);
             if (!string.IsNullOrEmpty(ip) && port.HasValue)
             {
-                await ApplyDiscoveredRestEndpointAsync(ip, port.Value).ConfigureAwait(false);
+                await ApplyDiscoveredRestEndpointAsync(ip, port.Value, skipHealthCheck: true).ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException)
@@ -208,7 +206,7 @@ public sealed partial class MauiViewModel
         }
         catch (Exception ex)
         {
-            _logger.LogDebug(ex, "MOBAflow discovery failed");
+            _logger.LogDebug(ex, "MOBAflow fast discovery failed");
         }
     }
 

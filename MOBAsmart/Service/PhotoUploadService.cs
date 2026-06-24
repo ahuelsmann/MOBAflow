@@ -162,13 +162,13 @@ public class PhotoUploadService : IPhotoUploadService
     /// <summary>
     /// Health check to verify server is reachable.
     /// </summary>
-    public async Task<bool> HealthCheckAsync(string serverIp, int serverPort)
+    public async Task<bool> HealthCheckAsync(string serverIp, int serverPort, TimeSpan? timeout = null)
     {
         try
         {
             var url = $"http://{serverIp}:{serverPort}{MobApiHealthProbe.HealthPath}";
 
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            using var cts = new CancellationTokenSource(timeout ?? TimeSpan.FromSeconds(5));
             using var response = await _lanHealthHttpClient
                 .GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cts.Token)
                 .ConfigureAwait(false);

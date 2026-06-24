@@ -298,6 +298,12 @@ internal sealed partial class JourneysPage
 
     private void StationListView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
     {
+        if (!ViewModel.IsStationTimelineView)
+        {
+            e.Cancel = true;
+            return;
+        }
+
         if (e.Items.FirstOrDefault() is StationViewModel station)
         {
             e.Data.Properties.Add("Station", station);
@@ -313,6 +319,14 @@ internal sealed partial class JourneysPage
         // Windows App SDK 2.0 Drag/Drop Visual Enhancements
         if (e.DataView.Properties.ContainsKey("Station"))
         {
+            if (!ViewModel.IsStationTimelineView)
+            {
+                e.AcceptedOperation = DataPackageOperation.None;
+                e.DragUIOverride.Caption = "Switch to Advanced View to reorder";
+                e.DragUIOverride.IsCaptionVisible = true;
+                return;
+            }
+
             if (!string.IsNullOrWhiteSpace(ViewModel.SelectedJourney?.StationSearchText))
             {
                 e.AcceptedOperation = DataPackageOperation.None;
@@ -347,7 +361,8 @@ internal sealed partial class JourneysPage
     {
         if (e.DataView.Properties.TryGetValue("Station", out object? stationObj) && stationObj is StationViewModel station)
         {
-            if (!string.IsNullOrWhiteSpace(ViewModel.SelectedJourney?.StationSearchText))
+            if (!ViewModel.IsStationTimelineView
+                || !string.IsNullOrWhiteSpace(ViewModel.SelectedJourney?.StationSearchText))
             {
                 return;
             }

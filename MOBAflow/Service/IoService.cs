@@ -91,6 +91,7 @@ internal class IoService : IIoService
         {
             var sol = JsonSerializer.Deserialize<Solution>(json, JsonOptions.Default) ?? new Solution();
             NormalizeLoadedPhotoPaths(sol);
+            PhotoPathHelper.SetSolutionDirectory(result.Path);
 
             // ✅ Validate project completeness after loading
             var completenessResult = _projectValidator.ValidateCompleteness(sol);
@@ -151,6 +152,7 @@ internal class IoService : IIoService
 
             var sol = JsonSerializer.Deserialize<Solution>(json, JsonOptions.Default) ?? new Solution();
             NormalizeLoadedPhotoPaths(sol);
+            PhotoPathHelper.SetSolutionDirectory(filePath);
 
             // Save last solution path to settings
             _settingsService.LastSolutionPath = filePath;
@@ -436,24 +438,14 @@ internal class IoService : IIoService
     /// </summary>
     public string? GetPhotoFullPath(string? relativePath)
     {
-        if (string.IsNullOrWhiteSpace(relativePath))
-            return null;
-
-        // If already absolute, return as-is
-        if (Path.IsPathRooted(relativePath))
-            return relativePath;
-
-        var baseDir = GetPhotoBaseDir();
-        return PhotoPathHelper.ToFullPath(baseDir, relativePath);
+        return PhotoPathHelper.TryResolveExistingPhotoFullPath(
+            _appSettings.Application.PhotoStoragePath,
+            relativePath);
     }
 
     private string GetPhotoBaseDir()
     {
-        if (!string.IsNullOrWhiteSpace(_appSettings.Application.PhotoStoragePath))
-            return _appSettings.Application.PhotoStoragePath.Trim();
-        return Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-            "MOBAflow", "Photos");
+        return PhotoPathHelper.ResolvePhotoBaseDirectory(_appSettings.Application.PhotoStoragePath);
     }
 
     private static string GetLegacyPhotoBaseDir()

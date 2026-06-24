@@ -6,10 +6,8 @@ using Common.Extension;
 using Controls;
 using Domain;
 using Microsoft.Extensions.Logging;
-using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using SharedUI.Interface;
 using SharedUI.ViewModel;
@@ -49,7 +47,6 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
     // UI element references
     private SpeedometerControl? _speedometer;
     private AmperemeterControl? _amperemeter;
-    private bool _functionButtonsLoaded;
 
     public TrainControlViewModel ViewModel { get; }
 
@@ -174,41 +171,6 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
             LocoSeriesBox.Text = ViewModel.SelectedLocoSeries;
             UpdateVmaxDisplay(); // Show Vmax display if a series is loaded from settings
         }
-
-        ScheduleFunctionButtonsLoad();
-    }
-
-    /// <summary>
-    /// Defers creation of 32 function toggle buttons until after the core throttle UI is visible.
-    /// </summary>
-    private void ScheduleFunctionButtonsLoad()
-    {
-        if (_functionButtonsLoaded)
-        {
-            FunctionButtonsLoadingRing.Visibility = Visibility.Collapsed;
-            FunctionButtonsRepeater.Visibility = Visibility.Visible;
-            return;
-        }
-
-        FunctionButtonsLoadingRing.Visibility = Visibility.Visible;
-        FunctionButtonsRepeater.Visibility = Visibility.Collapsed;
-
-        DispatcherQueue.GetForCurrentThread().TryEnqueue(
-            DispatcherQueuePriority.Low,
-            LoadFunctionButtonsDeferred);
-    }
-
-    private void LoadFunctionButtonsDeferred()
-    {
-        if (_functionButtonsLoaded)
-        {
-            return;
-        }
-
-        FunctionButtonsRepeater.ItemsSource = ViewModel.Functions;
-        FunctionButtonsRepeater.Visibility = Visibility.Visible;
-        FunctionButtonsLoadingRing.Visibility = Visibility.Collapsed;
-        _functionButtonsLoaded = true;
     }
 
     /// <summary>
@@ -287,63 +249,6 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
 
             // Update AutoSuggestBox text to show full series name
             sender.Text = selected.Name;
-        }
-    }
-
-    private void FunctionButton_RightTapped(object sender, RightTappedRoutedEventArgs e)
-    {
-        e.Handled = true;
-        HandleFunctionButtonRightTappedAsync(sender).Observe(ex => _logger?.LogWarning(ex, "Function symbol selection failed"));
-    }
-
-    private void FunctionButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not FrameworkElement { DataContext: FunctionButtonViewModel functionButton })
-            return;
-
-        ViewModel.ToggleFunctionAsync(functionButton.Index)
-            .Observe(ex => _logger?.LogWarning(ex, "Function toggle failed for F{FunctionIndex}", functionButton.Index));
-    }
-
-    private async Task HandleFunctionButtonRightTappedAsync(object sender)
-    {
-        try
-        {
-            if (sender is not FrameworkElement element)
-                return;
-
-            var functionIndex = element switch
-            {
-                { Tag: int tagIndex } => tagIndex,
-                { DataContext: FunctionButtonViewModel functionFromContext } => functionFromContext.Index,
-                _ => -1
-            };
-
-            if (functionIndex < 0 || functionIndex > 31)
-                return;
-
-            var picker = new FunctionSymbolPickerWindow
-            {
-                SelectedTheme = ActualTheme == ElementTheme.Light ? ElementTheme.Light : ElementTheme.Dark
-            };
-            if (element.DataContext is FunctionButtonViewModel functionButton)
-                picker.SetInitialColor(functionButton.BacklightColorHex);
-            var confirmed = await picker.ShowDialogAsync();
-            if (!confirmed || !picker.IsConfirmed)
-                return;
-
-            var applied = picker.IsSelectionCleared
-                ? ViewModel.ClearFunctionAppearance(functionIndex)
-                : picker.SelectedGlyph != null || picker.SelectedColorHex != null
-                    ? ViewModel.SetFunctionAppearance(functionIndex, picker.SelectedGlyph, picker.SelectedColorHex)
-                    : true;
-
-            if (!applied)
-                ViewModel.StatusMessage = $"No locomotive with address {ViewModel.LocoAddress} in the project. Please create one with this digital address first.";
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogWarning(ex, "Function symbol selection failed");
         }
     }
 

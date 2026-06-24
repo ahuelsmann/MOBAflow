@@ -173,10 +173,28 @@ internal sealed class MauiViewModelPerformanceTests
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var hubMock = new Mock<IRuntimeHubRemoteClient>();
+        hubMock.SetupGet(hub => hub.IsConnected).Returns(true);
+        hubMock
+            .Setup(hub => hub.ConnectAsync(
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
         var coordinator = new MobileRuntimeCoordinator(new Mock<IMobaRuntime>().Object, hubMock.Object);
+
+        var settings = new AppSettings
+        {
+            RestApi =
+            {
+                CurrentIpAddress = "192.168.0.100",
+                Port = 5001
+            }
+        };
 
         var viewModel = CreateViewModel(
             eventBus,
+            settings: settings,
             runtimeHubRemoteClient: hubMock.Object,
             runtimeCommandGateway: coordinator,
             mobileRuntimeCoordinator: coordinator);
@@ -440,7 +458,7 @@ internal sealed class MauiViewModelPerformanceTests
 
         var photoUploadMock = new Mock<IPhotoUploadService>();
         photoUploadMock
-            .Setup(service => service.HealthCheckAsync(It.IsAny<string>(), It.IsAny<int>()))
+            .Setup(service => service.HealthCheckAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<TimeSpan?>()))
             .ReturnsAsync(true);
 
         var viewModel = new MauiViewModel(

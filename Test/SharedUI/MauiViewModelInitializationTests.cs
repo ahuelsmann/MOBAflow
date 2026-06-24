@@ -43,7 +43,7 @@ internal sealed class MauiViewModelInitializationTests
         dependencies.MobaRuntimeMock.Verify(client => client.StartAsync(It.IsAny<CancellationToken>()), Times.Never);
         dependencies.MobaRuntimeMock.Verify(client => client.SetSystemStatePollingInterval(It.IsAny<int>()), Times.Never);
         dependencies.RestDiscoveryMock.Verify(service => service.DiscoverServerAsync(It.IsAny<string?>()), Times.Never);
-        dependencies.RestDiscoveryMock.Verify(service => service.DiscoverServerFastAsync(It.IsAny<string?>()), Times.Never);
+        dependencies.RestDiscoveryMock.Verify(service => service.DiscoverServerFastAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
         dependencies.Z21DiscoveryMock.Verify(service => service.DiscoverZ21Async(It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -55,7 +55,7 @@ internal sealed class MauiViewModelInitializationTests
 
         var dependencies = CreateDependencies(settings);
         dependencies.RestDiscoveryMock
-            .Setup(service => service.DiscoverServerFastAsync(It.IsAny<string?>()))
+            .Setup(service => service.DiscoverServerFastAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(("192.168.0.79", 5001));
         dependencies.RestDiscoveryMock
             .Setup(service => service.DiscoverServerAsync(It.IsAny<string?>()))
@@ -64,7 +64,7 @@ internal sealed class MauiViewModelInitializationTests
             .Setup(service => service.DiscoverZ21Async(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
         dependencies.PhotoUploadMock
-            .Setup(service => service.HealthCheckAsync(It.IsAny<string>(), It.IsAny<int>()))
+            .Setup(service => service.HealthCheckAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<TimeSpan?>()))
             .ReturnsAsync(false);
 
         var viewModel = CreateViewModel(dependencies);
@@ -79,8 +79,8 @@ internal sealed class MauiViewModelInitializationTests
         dependencies.NetworkNotifierMock.Verify(notifier => notifier.StartListening(), Times.Once);
         dependencies.MobaRuntimeMock.Verify(client => client.StartAsync(It.IsAny<CancellationToken>()), Times.Once);
         dependencies.MobaRuntimeMock.Verify(client => client.SetSystemStatePollingInterval(5), Times.Once);
-        dependencies.RestDiscoveryMock.Verify(service => service.DiscoverServerFastAsync(It.IsAny<string?>()), Times.Once);
-        dependencies.RestDiscoveryMock.Verify(service => service.DiscoverServerAsync(It.IsAny<string?>()), Times.Once);
+        dependencies.RestDiscoveryMock.Verify(service => service.DiscoverServerFastAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
+        dependencies.RestDiscoveryMock.Verify(service => service.DiscoverServerAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
         dependencies.Z21DiscoveryMock.Verify(service => service.DiscoverZ21Async(It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
         dependencies.SettingsServiceMock.Verify(service => service.SaveSettingsAsync(settings), Times.AtLeastOnce);
     }
@@ -183,13 +183,13 @@ internal sealed class MauiViewModelInitializationTests
         settingsServiceMock.Setup(service => service.ResetToDefaultsAsync()).Returns(Task.CompletedTask);
 
         restDiscoveryMock
-            .Setup(service => service.DiscoverServerFastAsync(It.IsAny<string?>()))
+            .Setup(service => service.DiscoverServerFastAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateNoDiscoveredEndpoint());
         restDiscoveryMock
-            .Setup(service => service.DiscoverServerAsync(It.IsAny<string?>()))
+            .Setup(service => service.DiscoverServerAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateNoDiscoveredEndpoint());
         z21DiscoveryMock.Setup(service => service.DiscoverZ21Async(It.IsAny<string?>(), It.IsAny<CancellationToken>())).ReturnsAsync((string?)null);
-        photoUploadMock.Setup(service => service.HealthCheckAsync(It.IsAny<string>(), It.IsAny<int>())).ReturnsAsync(false);
+        photoUploadMock.Setup(service => service.HealthCheckAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<TimeSpan?>())).ReturnsAsync(false);
         photoUploadMock
             .Setup(service => service.UploadPhotoAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid>()))
             .ReturnsAsync((false, null, "not configured"));

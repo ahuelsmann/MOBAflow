@@ -132,7 +132,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
 
         var photoUploadMock = new Mock<IPhotoUploadService>();
         photoUploadMock
-            .Setup(service => service.HealthCheckAsync(It.IsAny<string>(), It.IsAny<int>()))
+            .Setup(service => service.HealthCheckAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<TimeSpan?>()))
             .ReturnsAsync(true);
 
         var projectContext = new MobileSolutionContext();
@@ -485,15 +485,15 @@ internal sealed class MauiViewModelMobaflowOfflineTests
 
         var restDiscoveryMock = new Mock<IRestDiscoveryService>();
         restDiscoveryMock
-            .Setup(service => service.DiscoverServerFastAsync(It.IsAny<string?>()))
+            .Setup(service => service.DiscoverServerFastAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((null, null));
         restDiscoveryMock
-            .Setup(service => service.DiscoverServerAsync(It.IsAny<string?>()))
+            .Setup(service => service.DiscoverServerAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((null, null));
 
         var photoUploadMock = new Mock<IPhotoUploadService>();
         photoUploadMock
-            .Setup(service => service.HealthCheckAsync(It.IsAny<string>(), It.IsAny<int>()))
+            .Setup(service => service.HealthCheckAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<TimeSpan?>()))
             .ReturnsAsync(false);
 
         var viewModel = CreateViewModel(
@@ -506,7 +506,8 @@ internal sealed class MauiViewModelMobaflowOfflineTests
         await Task.Delay(500);
 
         Assert.That(viewModel.IsMobaflowConnectionEnabled, Is.False);
-        restDiscoveryMock.Verify(service => service.DiscoverServerAsync(It.IsAny<string?>()), Times.Once);
+        restDiscoveryMock.Verify(service => service.DiscoverServerFastAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+        restDiscoveryMock.Verify(service => service.DiscoverServerAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     private static Mock<ISettingsService> CreateSettingsServiceMock()

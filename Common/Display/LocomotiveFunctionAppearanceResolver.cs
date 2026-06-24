@@ -73,6 +73,21 @@ public static class LocomotiveFunctionAppearanceResolver
         return functionIndex < DefaultBacklightColors.Length ? DefaultBacklightColors[functionIndex] : SignalGrayHex;
     }
 
+    public static string GetDescription(Locomotive? locomotive, int functionIndex)
+    {
+        if (functionIndex < 0 || functionIndex > 31)
+        {
+            return string.Empty;
+        }
+
+        if (locomotive?.FunctionLabels != null && functionIndex < locomotive.FunctionLabels.Count)
+        {
+            return locomotive.FunctionLabels[functionIndex]?.Trim() ?? string.Empty;
+        }
+
+        return string.Empty;
+    }
+
     public static bool IsValidAssetReference(string? value) =>
         !string.IsNullOrWhiteSpace(value)
         && value.EndsWith(".png", StringComparison.OrdinalIgnoreCase);

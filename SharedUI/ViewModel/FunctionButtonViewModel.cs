@@ -44,6 +44,12 @@ public sealed partial class FunctionButtonViewModel : ObservableObject
     private string _iconAsset = string.Empty;
 
     /// <summary>
+    /// Manufacturer handbook description for this function (from Domain.Locomotive.FunctionLabels). Empty when not configured.
+    /// </summary>
+    [ObservableProperty]
+    private string _description = string.Empty;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="FunctionButtonViewModel"/> class.
     /// </summary>
     /// <param name="index">DCC function index (0–31).</param>

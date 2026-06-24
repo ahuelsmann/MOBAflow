@@ -67,6 +67,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     private const int RestApiRediscoverIntervalSeconds = 25;
     private const int RestApiRediscoverIntervalFirst90Seconds = 10;
     private const int RestApiStartupRetryWindowSeconds = 90;
+    private static readonly TimeSpan RestApiConnectHealthCheckTimeout = TimeSpan.FromSeconds(2);
     private static readonly int[] RuntimeHubConnectRetryDelaysMs = [0];
 
     private const int Z21EndpointSyncIntervalSeconds = 45;
@@ -328,7 +329,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     /// <summary>
     /// Applies a discovered REST endpoint to the UI, settings, recent-IP history, and reachability state.
     /// </summary>
-    private async Task ApplyDiscoveredRestEndpointAsync(string ip, int port)
+    private async Task ApplyDiscoveredRestEndpointAsync(string ip, int port, bool skipHealthCheck = false)
     {
         _lastRestApiDiscoverTime = DateTime.UtcNow;
         var trimmedIp = ip.Trim();
@@ -347,6 +348,16 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         catch
         {
             // Ignore persistence errors (e.g. read-only storage); in-memory state still applies for this session.
+        }
+
+        if (skipHealthCheck)
+        {
+            await _uiDispatcher.InvokeOnUiAsync(() =>
+            {
+                IsRestApiReachable = true;
+                return Task.CompletedTask;
+            }).ConfigureAwait(false);
+            return;
         }
 
         await RefreshRestApiReachableAsync().ConfigureAwait(false);
@@ -669,7 +680,12 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
 
         try
         {
-            var reachable = await _photoUploadService.HealthCheckAsync(serverIp, serverPort).ConfigureAwait(false);
+            var reachable = await _photoUploadService
+                .HealthCheckAsync(
+                    serverIp,
+                    serverPort,
+                    _mobaflowConnectInProgress ? RestApiConnectHealthCheckTimeout : null)
+                .ConfigureAwait(false);
             await _uiDispatcher.InvokeOnUiAsync(() =>
             {
                 IsRestApiReachable = reachable;

@@ -104,6 +104,111 @@ internal class ViewModelCharacterizationTests
     }
 
     [Test]
+    public async Task TrainControlViewModel_ToggleFunctionCommand_UpdatesUiWhenDisconnected()
+    {
+        var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = false });
+        var settingsServiceMock = CreateSettingsServiceMock();
+        var viewModel = new TrainControlViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object, eventBus: CreateEventBus());
+
+        Assert.That(viewModel.ToggleFunctionCommand.CanExecute(0), Is.True);
+        await viewModel.ToggleFunctionCommand.ExecuteAsync(0);
+
+        Assert.That(viewModel.Functions[0].IsOn, Is.True);
+    }
+
+    [Test]
+    public async Task TrainControlViewModel_EditFunctionAppearanceCommand_AppliesPickerResult()
+    {
+        var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = true });
+        var settingsServiceMock = CreateSettingsServiceMock();
+        var project = new Project
+        {
+            Locomotives =
+            [
+                new Locomotive
+                {
+                    Name = "BR 218",
+                    DigitalAddress = 3,
+                    FunctionSymbols = ["none"],
+                    FunctionColors = ["#FFD700"]
+                }
+            ]
+        };
+        var mainViewModel = CreateMainWindowViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object, new AppSettings());
+        mainViewModel.SelectedProject = new ProjectViewModel(project);
+        var picker = new FakeFunctionAppearancePicker(new FunctionAppearancePickerResult(
+            IsConfirmed: true,
+            IsSelectionCleared: false,
+            Glyph: "headlight.png",
+            ColorHex: "#E81123"));
+        var viewModel = new TrainControlViewModel(
+            mobaRuntimeMock.Object,
+            settingsServiceMock.Object,
+            mainViewModel,
+            eventBus: CreateEventBus(),
+            functionAppearancePicker: picker);
+
+        await viewModel.EditFunctionAppearanceCommand.ExecuteAsync(0);
+
+        Assert.That(picker.LastRequest?.InitialColorHex, Is.EqualTo("#FFD700"));
+        Assert.That(viewModel.Functions[0].IconAsset, Is.EqualTo("headlight.png"));
+        Assert.That(viewModel.Functions[0].BacklightColorHex, Is.EqualTo("#E81123"));
+        Assert.That(project.Locomotives[0].FunctionSymbols![0], Is.EqualTo("headlight.png"));
+        Assert.That(project.Locomotives[0].FunctionColors![0], Is.EqualTo("#E81123"));
+    }
+
+    [Test]
+    public async Task TrainControlViewModel_EditFunctionAppearanceCommand_ClearsAppearanceWhenPickerClearsSelection()
+    {
+        var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = true });
+        var settingsServiceMock = CreateSettingsServiceMock();
+        var project = new Project
+        {
+            Locomotives =
+            [
+                new Locomotive
+                {
+                    Name = "BR 218",
+                    DigitalAddress = 3,
+                    FunctionSymbols = ["headlight.png"],
+                    FunctionColors = ["#E81123"]
+                }
+            ]
+        };
+        var mainViewModel = CreateMainWindowViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object, new AppSettings());
+        mainViewModel.SelectedProject = new ProjectViewModel(project);
+        var picker = new FakeFunctionAppearancePicker(new FunctionAppearancePickerResult(
+            IsConfirmed: true,
+            IsSelectionCleared: true,
+            Glyph: null,
+            ColorHex: null));
+        var viewModel = new TrainControlViewModel(
+            mobaRuntimeMock.Object,
+            settingsServiceMock.Object,
+            mainViewModel,
+            eventBus: CreateEventBus(),
+            functionAppearancePicker: picker);
+
+        await viewModel.EditFunctionAppearanceCommand.ExecuteAsync(0);
+
+        Assert.That(project.Locomotives[0].FunctionSymbols![0], Is.EqualTo("none"));
+        Assert.That(project.Locomotives[0].FunctionColors![0], Is.EqualTo("none"));
+    }
+
+    [Test]
+    public async Task TrainControlViewModel_EditFunctionAppearanceCommand_NoPicker_IsNoOp()
+    {
+        var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = true });
+        var settingsServiceMock = CreateSettingsServiceMock();
+        var viewModel = new TrainControlViewModel(mobaRuntimeMock.Object, settingsServiceMock.Object, eventBus: CreateEventBus());
+        var iconBefore = viewModel.Functions[0].IconAsset;
+
+        await viewModel.EditFunctionAppearanceCommand.ExecuteAsync(0);
+
+        Assert.That(viewModel.Functions[0].IconAsset, Is.EqualTo(iconBefore));
+    }
+
+    [Test]
     public async Task TrainControlViewModel_SuppressedSnapshotFunctionState_DoesNotClearManualFunctionToggles()
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
@@ -239,7 +344,7 @@ internal class ViewModelCharacterizationTests
     }
 
     [Test]
-    public void TrainControlViewModel_HybridRemoteSnapshots_DoNotApplyFunctionBitsFromSnapshots()
+    public void TrainControlViewModel_HybridRemoteSnapshots_ApplyFunctionBitsForCurrentLocomotive()
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = true });
@@ -268,7 +373,187 @@ internal class ViewModelCharacterizationTests
             }
         }));
 
-        Assert.That(viewModel.Functions.Count(f => f.IsOn), Is.EqualTo(0), "Remote snapshots must not drive function buttons on MOBAsmart");
+        Assert.That(viewModel.Functions[1].IsOn, Is.True, "Remote snapshot should drive F1 for the active locomotive");
+        Assert.That(viewModel.Functions[3].IsOn, Is.True, "Remote snapshot should drive F3 for the active locomotive");
+        Assert.That(viewModel.Functions[0].IsOn, Is.False);
+    }
+
+    [Test]
+    public void TrainControlViewModel_ProjectLocomotiveSwitch_PreservesFunctionStatesPerAddress()
+    {
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot
+        {
+            IsConnected = true,
+            LocomotiveStates = new Dictionary<int, LocomotiveRuntimeSnapshot>
+            {
+                [110] = new LocomotiveRuntimeSnapshot { Address = 110, Functions = 0b1 },
+                [211] = new LocomotiveRuntimeSnapshot { Address = 211, Functions = 0b100 }
+            }
+        });
+        var settingsServiceMock = CreateSettingsServiceMock();
+        var viewModel = new TrainControlViewModel(
+            mobaRuntimeMock.Object,
+            settingsServiceMock.Object,
+            eventBus: eventBus);
+
+        viewModel.LocoAddress = 110;
+        Assert.That(viewModel.Functions[0].IsOn, Is.True);
+
+        viewModel.LocoAddress = 211;
+        Assert.That(viewModel.Functions[0].IsOn, Is.False);
+        Assert.That(viewModel.Functions[2].IsOn, Is.True);
+
+        viewModel.LocoAddress = 110;
+        Assert.That(viewModel.Functions[0].IsOn, Is.True, "Function state for loco 110 should be restored after switching back");
+        Assert.That(viewModel.Functions[2].IsOn, Is.False);
+    }
+
+    [Test]
+    public async Task TrainControlViewModel_HybridRemoteSnapshot_UpdatesOtherFunctionsDuringLocalGrace()
+    {
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = true });
+        var coordinator = new MobileRuntimeCoordinator(mobaRuntimeMock.Object, new Mock<IRuntimeHubRemoteClient>().Object);
+        coordinator.SetMobaflowSessionActive(true);
+
+        var viewModel = new TrainControlViewModel(
+            mobaRuntimeMock.Object,
+            CreateSettingsServiceMock().Object,
+            eventBus: eventBus,
+            mobileRuntimeCoordinator: coordinator,
+            options: new TrainControlViewModelOptions { HybridRuntimeSnapshots = true });
+
+        viewModel.LocoAddress = 211;
+        await viewModel.ToggleFunctionAsync(0);
+
+        eventBus.Publish(new RemoteRuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
+        {
+            IsConnected = true,
+            LocomotiveStates = new Dictionary<int, LocomotiveRuntimeSnapshot>
+            {
+                [211] = new LocomotiveRuntimeSnapshot
+                {
+                    Address = 211,
+                    Functions = 0b100
+                }
+            }
+        }));
+
+        Assert.That(viewModel.Functions[0].IsOn, Is.True, "Locally toggled F0 stays protected during grace");
+        Assert.That(viewModel.Functions[2].IsOn, Is.True, "Remote F2 update must apply while another function is in grace");
+    }
+
+    [Test]
+    public void TrainControlViewModel_HybridRemoteSnapshots_DoNotOverwriteManualStatusMessage()
+    {
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = true });
+        var coordinator = new MobileRuntimeCoordinator(mobaRuntimeMock.Object, new Mock<IRuntimeHubRemoteClient>().Object);
+        coordinator.SetMobaflowSessionActive(true);
+
+        var viewModel = new TrainControlViewModel(
+            mobaRuntimeMock.Object,
+            CreateSettingsServiceMock().Object,
+            eventBus: eventBus,
+            mobileRuntimeCoordinator: coordinator,
+            options: new TrainControlViewModelOptions { HybridRuntimeSnapshots = true });
+
+        viewModel.StatusMessage = "F0: ON";
+
+        eventBus.Publish(new RemoteRuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
+        {
+            IsConnected = true,
+            LocomotiveStates = new Dictionary<int, LocomotiveRuntimeSnapshot>
+            {
+                [3] = new LocomotiveRuntimeSnapshot
+                {
+                    Address = 3,
+                    Speed = 42,
+                    IsForward = false,
+                    Functions = 0
+                }
+            }
+        }));
+
+        Assert.That(viewModel.StatusMessage, Is.EqualTo("F0: ON"));
+        Assert.That(viewModel.Speed, Is.EqualTo(42), "Remote drive state should sync to MOBAsmart");
+        Assert.That(viewModel.IsForward, Is.False, "Remote direction should sync to MOBAsmart");
+    }
+
+    [Test]
+    public void TrainControlViewModel_HybridRemoteSnapshots_ApplyDriveStateFromMobaflow()
+    {
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = true });
+        var coordinator = new MobileRuntimeCoordinator(mobaRuntimeMock.Object, new Mock<IRuntimeHubRemoteClient>().Object);
+        coordinator.SetMobaflowSessionActive(true);
+
+        var viewModel = new TrainControlViewModel(
+            mobaRuntimeMock.Object,
+            CreateSettingsServiceMock().Object,
+            eventBus: eventBus,
+            mobileRuntimeCoordinator: coordinator,
+            options: new TrainControlViewModelOptions { HybridRuntimeSnapshots = true });
+
+        viewModel.Speed = 0;
+        viewModel.IsForward = true;
+
+        eventBus.Publish(new RemoteRuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
+        {
+            IsConnected = true,
+            LocomotiveStates = new Dictionary<int, LocomotiveRuntimeSnapshot>
+            {
+                [3] = new LocomotiveRuntimeSnapshot
+                {
+                    Address = 3,
+                    Speed = 18,
+                    IsForward = false,
+                    Functions = 0
+                }
+            }
+        }));
+
+        Assert.That(viewModel.Speed, Is.EqualTo(18));
+        Assert.That(viewModel.IsForward, Is.False);
+    }
+
+    [Test]
+    public async Task TrainControlViewModel_HybridRemoteSnapshots_PreserveLocalDriveDuringGrace()
+    {
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = true });
+        var coordinator = new MobileRuntimeCoordinator(mobaRuntimeMock.Object, new Mock<IRuntimeHubRemoteClient>().Object);
+        coordinator.SetMobaflowSessionActive(true);
+
+        var viewModel = new TrainControlViewModel(
+            mobaRuntimeMock.Object,
+            CreateSettingsServiceMock().Object,
+            eventBus: eventBus,
+            mobileRuntimeCoordinator: coordinator,
+            options: new TrainControlViewModelOptions { HybridRuntimeSnapshots = true });
+
+        viewModel.Speed = 5;
+        viewModel.IsForward = true;
+        await viewModel.SetSpeedCommand.ExecuteAsync(null);
+
+        eventBus.Publish(new RemoteRuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
+        {
+            IsConnected = true,
+            LocomotiveStates = new Dictionary<int, LocomotiveRuntimeSnapshot>
+            {
+                [3] = new LocomotiveRuntimeSnapshot
+                {
+                    Address = 3,
+                    Speed = 40,
+                    IsForward = false,
+                    Functions = 0
+                }
+            }
+        }));
+
+        Assert.That(viewModel.Speed, Is.EqualTo(5), "Local throttle change must win during grace period");
+        Assert.That(viewModel.IsForward, Is.True, "Local direction must win during grace period");
     }
 
     [Test]
@@ -558,5 +843,19 @@ internal class ViewModelCharacterizationTests
             },
             loggerMock.Object,
             settingsService: settingsService);
+    }
+
+    private sealed class FakeFunctionAppearancePicker(FunctionAppearancePickerResult? result) : IFunctionAppearancePicker
+    {
+        public FunctionAppearancePickerRequest? LastRequest { get; private set; }
+
+        public Task<FunctionAppearancePickerResult?> PickAsync(
+            FunctionAppearancePickerRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            LastRequest = request;
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(result);
+        }
     }
 }

@@ -36,4 +36,17 @@ internal sealed class LocomotiveFunctionAppearanceResolverTests
 
         Assert.That(LocomotiveFunctionAppearanceResolver.GetColor(locomotive, 0), Is.EqualTo("#AABBCC"));
     }
+
+    [Test]
+    public void GetDescription_UsesLocomotiveLabel_WhenConfigured()
+    {
+        var locomotive = new Locomotive
+        {
+            FunctionLabels = ["Headlight", "", "Horn"]
+        };
+
+        Assert.That(LocomotiveFunctionAppearanceResolver.GetDescription(locomotive, 0), Is.EqualTo("Headlight"));
+        Assert.That(LocomotiveFunctionAppearanceResolver.GetDescription(locomotive, 1), Is.EqualTo(string.Empty));
+        Assert.That(LocomotiveFunctionAppearanceResolver.GetDescription(locomotive, 2), Is.EqualTo("Horn"));
+    }
 }

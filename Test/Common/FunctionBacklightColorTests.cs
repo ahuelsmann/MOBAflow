@@ -4,59 +4,82 @@ namespace Moba.Test.Common;
 using Moba.Common.Display;
 
 /// <summary>
-/// Tests for function button backlight color calculation used by MOBAsmart ControlPage.
+/// Tests for function button appearance used by MOBAsmart and MOBAflow.
 /// </summary>
 [TestFixture]
 internal sealed class FunctionBacklightColorTests
 {
     [Test]
-    public void ToArgb_WhenOff_ReturnsLowAlphaTint()
+    public void Resolve_WhenOff_DarkTheme_UsesOpaqueSurfaceBackground()
     {
-        var argb = FunctionBacklightColor.ToArgb(isOn: false, hexColor: "#FFD700");
+        var appearance = FunctionBacklightColor.Resolve(false, "#FFD700", FunctionBacklightColor.AppearanceTheme.Dark);
 
-        var alpha = (argb >> 24) & 0xFF;
-        Assert.That(alpha, Is.EqualTo(0x28));
+        Assert.That((appearance.BackgroundArgb >> 24) & 0xFF, Is.EqualTo(0xFF));
+        Assert.That(appearance.BackgroundArgb & 0xFFFFFF, Is.EqualTo(0x2C2C2C));
+        Assert.That(appearance.PrimaryTextArgb, Is.EqualTo(0xFFFFFFFF));
     }
 
     [Test]
-    public void ToArgb_WhenOn_ReturnsHigherAlphaLightenedColor()
+    public void Resolve_WhenOff_LightTheme_UsesReadableDarkText()
     {
-        var argb = FunctionBacklightColor.ToArgb(isOn: true, hexColor: "#FFD700");
+        var appearance = FunctionBacklightColor.Resolve(false, "#FFD700", FunctionBacklightColor.AppearanceTheme.Light);
 
-        var alpha = (argb >> 24) & 0xFF;
-        Assert.That(alpha, Is.EqualTo(0xDC));
+        Assert.That(appearance.BackgroundArgb & 0xFFFFFF, Is.EqualTo(0xEEEEEE));
+        Assert.That(appearance.PrimaryTextArgb, Is.EqualTo(0xFF212121));
     }
 
     [Test]
-    public void ToArgb_WhenOn_IsBrighterThanOff()
+    public void Resolve_WhenOn_DarkTheme_IsBrighterThanOff_ForGrayAccent()
     {
-        var off = FunctionBacklightColor.ToArgb(isOn: false, "#804040");
-        var on = FunctionBacklightColor.ToArgb(isOn: true, "#804040");
+        var off = FunctionBacklightColor.Resolve(false, "#808080", FunctionBacklightColor.AppearanceTheme.Dark);
+        var on = FunctionBacklightColor.Resolve(true, "#808080", FunctionBacklightColor.AppearanceTheme.Dark);
 
-        var offR = (off >> 16) & 0xFF;
-        var onR = (on >> 16) & 0xFF;
-        Assert.That(onR, Is.GreaterThan(offR));
+        var offLuminance = GetLuminance(off.BackgroundArgb);
+        var onLuminance = GetLuminance(on.BackgroundArgb);
+        Assert.That(onLuminance, Is.GreaterThan(offLuminance));
+    }
+
+    [Test]
+    public void Resolve_WhenOn_DarkTheme_UsesHighContrastText_OnGrayAccent()
+    {
+        var appearance = FunctionBacklightColor.Resolve(true, "#888888", FunctionBacklightColor.AppearanceTheme.Dark);
+
+        Assert.That(appearance.PrimaryTextArgb, Is.EqualTo(0xFFFFFFFF));
+        Assert.That(appearance.SecondaryTextArgb, Is.EqualTo(0xFFE8E8E8));
+    }
+
+    [Test]
+    public void Resolve_WhenOn_LightTheme_UsesDarkText_OnBrightAccent()
+    {
+        var appearance = FunctionBacklightColor.Resolve(true, "#FFD700", FunctionBacklightColor.AppearanceTheme.Light);
+
+        Assert.That(appearance.PrimaryTextArgb, Is.EqualTo(0xFF121212));
     }
 
     [Test]
     public void ToArgb_WithNullHex_UsesFallbackGray()
     {
-        var argb = FunctionBacklightColor.ToArgb(isOn: false, hexColor: null);
+        var argb = FunctionBacklightColor.ToArgb(false, null, FunctionBacklightColor.AppearanceTheme.Dark);
         var r = (argb >> 16) & 0xFF;
         var g = (argb >> 8) & 0xFF;
         var b = argb & 0xFF;
 
-        Assert.That(r, Is.EqualTo(0x80));
-        Assert.That(g, Is.EqualTo(0x80));
-        Assert.That(b, Is.EqualTo(0x80));
+        Assert.That(r, Is.EqualTo(0x2C));
+        Assert.That(g, Is.EqualTo(0x2C));
+        Assert.That(b, Is.EqualTo(0x2C));
     }
 
-    [Test]
-    public void ToArgb_WithEightDigitHex_ParsesRgb()
+    private static double GetLuminance(uint argb)
     {
-        var argb = FunctionBacklightColor.ToArgb(isOn: true, "#FF00FF00");
-        var g = (argb >> 8) & 0xFF;
+        static double Channel(uint value)
+        {
+            var s = value / 255d;
+            return s <= 0.03928 ? s / 12.92 : Math.Pow((s + 0.055) / 1.055, 2.4);
+        }
 
-        Assert.That(g, Is.EqualTo(0xFF));
+        var r = Channel((argb >> 16) & 0xFF);
+        var g = Channel((argb >> 8) & 0xFF);
+        var b = Channel(argb & 0xFF);
+        return (0.2126 * r) + (0.7152 * g) + (0.0722 * b);
     }
 }

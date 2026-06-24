@@ -73,6 +73,7 @@
         <Content Include="..\README.md" Link="README.md" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="solution.json" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="photos\**\*" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="data.json" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
     <!-- JSON Schema Files -->

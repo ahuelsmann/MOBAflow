@@ -51,8 +51,9 @@ public interface IPhotoUploadService
     /// </summary>
     /// <param name="serverIp">The server IP address.</param>
     /// <param name="serverPort">The server TCP port.</param>
+    /// <param name="timeout">Optional probe timeout; default is a few seconds for periodic checks.</param>
     /// <returns>A task that returns <c>true</c> when the server appears healthy; otherwise <c>false</c>.</returns>
-    Task<bool> HealthCheckAsync(string serverIp, int serverPort);
+    Task<bool> HealthCheckAsync(string serverIp, int serverPort, TimeSpan? timeout = null);
 }
 
 /// <summary>
@@ -137,7 +138,7 @@ public sealed class NullPhotoUploadService : IPhotoUploadService
         => Task.FromResult<(bool, string?, string?)>((false, null, "Upload not supported on this platform"));
 
     /// <inheritdoc />
-    public Task<bool> HealthCheckAsync(string serverIp, int serverPort) => Task.FromResult(false);
+    public Task<bool> HealthCheckAsync(string serverIp, int serverPort, TimeSpan? timeout = null) => Task.FromResult(false);
 }
 
 /// <summary>
