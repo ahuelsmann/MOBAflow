@@ -143,12 +143,13 @@ public sealed class ClockRenderer
                 center.Y + (dy * (outer - markerLength)));
 
             var half = markerWidth / 2f;
-            using var path = new SKPath();
-            path.MoveTo(outerCenter.X + (nx * half), outerCenter.Y + (ny * half));
-            path.LineTo(outerCenter.X - (nx * half), outerCenter.Y - (ny * half));
-            path.LineTo(innerCenter.X - (nx * half), innerCenter.Y - (ny * half));
-            path.LineTo(innerCenter.X + (nx * half), innerCenter.Y + (ny * half));
-            path.Close();
+            using var builder = new SKPathBuilder();
+            builder.MoveTo(outerCenter.X + (nx * half), outerCenter.Y + (ny * half));
+            builder.LineTo(outerCenter.X - (nx * half), outerCenter.Y - (ny * half));
+            builder.LineTo(innerCenter.X - (nx * half), innerCenter.Y - (ny * half));
+            builder.LineTo(innerCenter.X + (nx * half), innerCenter.Y + (ny * half));
+            builder.Close();
+            using var path = builder.Detach();
             canvas.DrawPath(path, _hourMarkerPaint);
         }
     }
@@ -177,12 +178,13 @@ public sealed class ClockRenderer
         var tail = new SKPoint(center.X - (dx * tailLength), center.Y - (dy * tailLength));
 
         var half = width / 2f;
-        using var path = new SKPath();
-        path.MoveTo(tip.X + (nx * half), tip.Y + (ny * half));
-        path.LineTo(tip.X - (nx * half), tip.Y - (ny * half));
-        path.LineTo(tail.X - (nx * half), tail.Y - (ny * half));
-        path.LineTo(tail.X + (nx * half), tail.Y + (ny * half));
-        path.Close();
+        using var builder = new SKPathBuilder();
+        builder.MoveTo(tip.X + (nx * half), tip.Y + (ny * half));
+        builder.LineTo(tip.X - (nx * half), tip.Y - (ny * half));
+        builder.LineTo(tail.X - (nx * half), tail.Y - (ny * half));
+        builder.LineTo(tail.X + (nx * half), tail.Y + (ny * half));
+        builder.Close();
+        using var path = builder.Detach();
         canvas.DrawPath(path, _handPaint);
     }
 
