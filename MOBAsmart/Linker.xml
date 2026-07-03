@@ -16,8 +16,10 @@
   <assembly fullname="CommunityToolkit.Maui" preserve="all"/>
   <assembly fullname="CommunityToolkit.Maui.Core" preserve="all"/>
   
-  <!-- Preserve your assemblies -->
-  <assembly fullname="Moba.MAUI" preserve="all"/>
-  <assembly fullname="Moba.SharedUI" preserve="all"/>
-  <assembly fullname="Moba.Backend" preserve="all"/>
+  <!-- Preserve project assemblies (names match output DLLs, not RootNamespace). -->
+  <assembly fullname="MOBAsmart" preserve="all"/>
+  <assembly fullname="SharedUI" preserve="all"/>
+  <assembly fullname="Backend" preserve="all"/>
+  <assembly fullname="Common" preserve="all"/>
+  <assembly fullname="Domain" preserve="all"/>
 </linker>

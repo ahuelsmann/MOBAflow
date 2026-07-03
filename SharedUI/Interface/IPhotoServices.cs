@@ -12,6 +12,7 @@ public interface IRestDiscoveryService
     /// <param name="subnetAnchorIp">
     /// Optional IPv4 hint (typically the connected Z21 address) whose /24 subnet is scanned first.
     /// </param>
+    /// <param name="cancellationToken">Cancellation token for the discovery operation.</param>
     /// <returns>
     /// A task that returns the discovered IP address and port, or <c>null</c> values when discovery fails.
     /// </returns>

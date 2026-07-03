@@ -50,14 +50,27 @@ internal sealed partial class AmperemeterControl
     {
         InitializeComponent();
         Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        ActualThemeChanged -= OnActualThemeChanged;
+    }
+
+    private void OnActualThemeChanged(FrameworkElement sender, object args)
+    {
+        UpdateGaugeColors();
+        RenderMilliampereMarkers();
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        ActualThemeChanged += OnActualThemeChanged;
         UpdateNeedle();
         UpdateCurrentArc();
         UpdateDisplayText();
-        ApplyAccentColor();
+        UpdateGaugeColors();
         RenderMilliampereMarkers();
     }
 
@@ -95,8 +108,8 @@ internal sealed partial class AmperemeterControl
             control.UpdateNeedle();
             control.UpdateCurrentArc();
             control.UpdateDisplayText();
+            control.UpdateGaugeColors();
 
-            // Update mA markers when MaxValue changes
             if (e.Property == MaxValueProperty)
             {
                 control.RenderMilliampereMarkers();
@@ -108,27 +121,27 @@ internal sealed partial class AmperemeterControl
     {
         if (d is AmperemeterControl control)
         {
-            control.ApplyAccentColor();
+            control.UpdateGaugeColors();
         }
     }
 
-    private void ApplyAccentColor()
+    private void UpdateGaugeColors()
     {
-        if (AccentColor is not { } color)
-            return;
+        var range = (double)(MaxValue - MinValue);
+        var normalized = range > 0 ? Math.Clamp((Value - MinValue) / range, 0, 1) : 0;
+        var isIdle = Value <= MinValue;
+        var isDanger = normalized > GaugeVisualRules.DangerNormalizedThreshold;
 
-        var brush = new SolidColorBrush(color);
+        var brushes = GaugeVisualRules.ResolveNeedleBrushes(this, isIdle, isDanger, AccentColor);
 
-        // Apply to needle
         if (Needle is { } needle)
         {
-            needle.Fill = brush;
+            needle.Fill = brushes.Needle;
         }
 
-        // Apply to center circle stroke
         if (CenterCircle is { } circle)
         {
-            circle.Stroke = brush;
+            circle.Stroke = brushes.HubRing;
         }
     }
 
@@ -136,13 +149,10 @@ internal sealed partial class AmperemeterControl
     {
         if (NeedleRotation is null) return;
 
-        // Calculate angle: -90 deg (left, current=0) to +90 deg (right, current=max)
         var range = (double)(MaxValue - MinValue);
         if (range <= 0) return;
 
         var normalizedValue = Math.Clamp((Value - MinValue) / range, 0, 1);
-
-        // Angle goes from -90 deg (left) to +90 deg (right)
         var angle = -90 + (normalizedValue * 180);
 
         NeedleRotation.Angle = angle;
@@ -176,42 +186,8 @@ internal sealed partial class AmperemeterControl
     {
         if (CurrentArc is null) return;
 
-        Color color;
-
-        // Color coding for current load:
-        // 0-50%: Green (low load)
-        // 50-80%: Yellow (medium load)
-        // 80-100%: Red (high load/overload warning)
-
-        if (normalizedValue < 0.5)
-        {
-            // Green to Yellow (0-50%)
-            var t = normalizedValue * 2;
-            color = Color.FromArgb(255,
-                (byte)(76 + (t * 179)),   // 76 to 255 (green to yellow R)
-                (byte)(175 - (t * 75)),   // 175 to 100 (green to yellow G)
-                80);                      // Blue stays low
-        }
-        else if (normalizedValue < 0.8)
-        {
-            // Yellow to Orange (50-80%)
-            var t = (normalizedValue - 0.5) / 0.3;
-            color = Color.FromArgb(255,
-                255,                      // Red stays max
-                (byte)(100 - (t * 40)),   // 100 to 60 (yellow to orange)
-                (byte)(80 - (t * 80)));   // Blue goes to 0
-        }
-        else
-        {
-            // Orange to Red (80-100%)
-            var t = (normalizedValue - 0.8) / 0.2;
-            color = Color.FromArgb(255,
-                255,                      // Red stays max
-                (byte)(60 - (t * 60)),    // 60 to 0 (orange to red)
-                0);                       // Blue stays 0
-        }
-
-        CurrentArc.Stroke = new SolidColorBrush(color);
+        CurrentArc.Stroke = new SolidColorBrush(
+            GaugeVisualRules.ResolveCurrentArcColor(this, normalizedValue));
     }
 
     private void UpdateDisplayText()
@@ -224,19 +200,15 @@ internal sealed partial class AmperemeterControl
     /// Calculates the optimal mA step for marker display.
     /// Goal: Display 8-10 markers on the gauge (never overloaded).
     /// </summary>
-    private int CalculateOptimalMilliampereStep(int maxCurrent)
+    private static int CalculateOptimalMilliampereStep(int maxCurrent) => maxCurrent switch
     {
-        // Adaptive step sizing based on max current
-        return maxCurrent switch
-        {
-            <= 500 => 50,      // 0, 50, 100, 150... 500 (10 markers)
-            <= 1000 => 100,    // 0, 100, 200, 300... 1000 (10 markers)
-            <= 2000 => 200,    // 0, 200, 400, 600... 2000 (10 markers)
-            <= 3000 => 250,    // 0, 250, 500, 750... 3000 (12 markers)
-            <= 5000 => 500,    // 0, 500, 1000, 1500... 5000 (10 markers)
-            _ => 1000          // 0, 1000, 2000, 3000... (flexible)
-        };
-    }
+        <= 500 => 50,
+        <= 1000 => 100,
+        <= 2000 => 200,
+        <= 3000 => 250,
+        <= 5000 => 500,
+        _ => 1000
+    };
 
     /// <summary>
     /// Renders mA markers dynamically based on MaxValue with adaptive step sizing.
@@ -246,42 +218,33 @@ internal sealed partial class AmperemeterControl
         if (MilliampereMarkersCanvas is null)
             return;
 
-        // Clear existing markers
         MilliampereMarkersCanvas.Children.Clear();
 
-        // Arc parameters
-        const double centerX = 130;
-        const double centerY = 130;
-        const double arcOuterRadius = 108;
+        const double centerX = GaugeVisualRules.GaugeCenterX;
+        const double centerY = GaugeVisualRules.GaugeCenterY;
+        const double arcOuterRadius = GaugeVisualRules.OuterArcRadius;
         const double markerLength = 8;
 
-        // Calculate adaptive step size
         var mAStep = CalculateOptimalMilliampereStep(MaxValue);
 
-        // Generate mA values
         var mAValues = new List<int>();
         for (int mA = 0; mA <= MaxValue; mA += mAStep)
         {
             mAValues.Add(mA);
         }
 
-        // Ensure we include MaxValue if it's not a multiple of step
         if (mAValues.Count == 0 || mAValues[^1] != MaxValue)
         {
             mAValues.Add(MaxValue);
         }
 
-        var markerBrush = new SolidColorBrush(Color.FromArgb(200, 255, 255, 255));
-        var maxBrush = new SolidColorBrush(Color.FromArgb(255, 232, 17, 35)); // Red for MAX
+        var markerBrush = GaugeVisualRules.CreatePrimaryMarkerBrush(this);
 
         foreach (var mA in mAValues)
         {
             var isMax = mA == MaxValue;
-
-            // Normalize position
             var percentage = MaxValue > 0 ? (double)mA / MaxValue : 0;
 
-            // Angle: 180° (left, 0 mA) to 0° (right, max)
             var angleDeg = 180 - (percentage * 180);
             var angleRad = angleDeg * Math.PI / 180;
 
@@ -300,27 +263,34 @@ internal sealed partial class AmperemeterControl
                 Y1 = startY,
                 X2 = endX,
                 Y2 = endY,
-                Stroke = isMax ? maxBrush : markerBrush,
-                StrokeThickness = isMax ? 3.0 : 2.5
+                Stroke = markerBrush,
+                StrokeThickness = isMax ? 2.8 : 1.8
             };
             MilliampereMarkersCanvas.Children.Add(line);
 
-            // Label position
-            const double labelDistance = 125;
-            var labelX = centerX + (labelDistance * radialX);
-            var labelY = centerY + (labelDistance * radialY);
+            var labelText = mA.ToString();
+            var labelWidth = GaugeVisualRules.CalculateMarkerLabelWidth(labelText);
 
+            var labelHeight = GaugeVisualRules.OuterMarkerLabelHeight;
             var label = new TextBlock
             {
-                Text = mA.ToString(),
-                FontSize = isMax ? 11 : 10,
+                Text = labelText,
+                Width = labelWidth,
+                Height = labelHeight,
+                FontSize = isMax
+                    ? GaugeVisualRules.OuterMajorMarkerFontSize
+                    : GaugeVisualRules.OuterMinorMarkerFontSize,
                 FontWeight = isMax ? FontWeights.Bold : FontWeights.Normal,
-                Foreground = isMax ? maxBrush : markerBrush,
-                TextAlignment = TextAlignment.Center
+                Foreground = markerBrush,
+                TextAlignment = TextAlignment.Center,
+                TextWrapping = TextWrapping.NoWrap,
+                VerticalAlignment = VerticalAlignment.Center
             };
 
-            Canvas.SetLeft(label, labelX - 10);
-            Canvas.SetTop(label, labelY - 8);
+            var (_, _, left, top) = GaugeVisualRules.CalculateOuterScaleLabelPosition(
+                angleDeg, labelWidth, labelHeight);
+            Canvas.SetLeft(label, left);
+            Canvas.SetTop(label, top);
 
             MilliampereMarkersCanvas.Children.Add(label);
         }

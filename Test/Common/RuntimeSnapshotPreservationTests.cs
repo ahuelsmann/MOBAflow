@@ -69,9 +69,48 @@ internal sealed class RuntimeSnapshotPreservationTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(merged.SignalBoxElements, Has.Count.EqualTo(2));
-            Assert.That(merged.SignalBoxElements.Any(element => element.ElementId == incomingId), Is.True);
-            Assert.That(merged.SignalBoxElements.Any(element => element.ElementId == previousId), Is.True);
+            Assert.That(merged.SignalBoxElements, Has.Count.EqualTo(1));
+            Assert.That(merged.SignalBoxElements[0].ElementId, Is.EqualTo(incomingId));
+        });
+    }
+
+    [Test]
+    public void PreserveSignalBoxElementsFrom_BorrowsPreviousAspect_WhenIncomingOmitsAspectOnSameElement()
+    {
+        var signalId = Guid.NewGuid();
+        var previous = new MobaRuntimeSnapshot
+        {
+            SignalBoxElements =
+            [
+                new SignalBoxElementRuntimeSnapshot
+                {
+                    ElementId = signalId,
+                    Name = "S1",
+                    Kind = SignalBoxElementKind.Signal,
+                    SignalAspect = SignalAspect.Ks1
+                }
+            ]
+        };
+
+        var incoming = new MobaRuntimeSnapshot
+        {
+            SignalBoxElements =
+            [
+                new SignalBoxElementRuntimeSnapshot
+                {
+                    ElementId = signalId,
+                    Name = "S1",
+                    Kind = SignalBoxElementKind.Signal
+                }
+            ]
+        };
+
+        var merged = RuntimeSnapshotPreservation.PreserveSignalBoxElementsFrom(incoming, previous);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(merged.SignalBoxElements, Has.Count.EqualTo(1));
+            Assert.That(merged.SignalBoxElements[0].SignalAspect, Is.EqualTo(SignalAspect.Ks1));
         });
     }
 

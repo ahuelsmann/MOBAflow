@@ -43,8 +43,11 @@ internal static class SegmentPlanPathBuilder
         if (isGhost)
         {
             path.Fill = null;
-            var accent = (SolidColorBrush)Application.Current.Resources["AccentFillColorDefaultBrush"]!;
-            path.Stroke = new SolidColorBrush(Color.FromArgb(180, accent.Color.R, accent.Color.G, accent.Color.B));
+            var accentColor = ThemeResourceResolver.ResolveColor(
+                ThemeResourceResolver.GetDefaultThemeRoot(),
+                "AccentFillColorDefaultBrush",
+                Color.FromArgb(255, 0, 120, 212));
+            path.Stroke = new SolidColorBrush(Color.FromArgb(180, accentColor.R, accentColor.G, accentColor.B));
         }
         else
         {
@@ -130,15 +133,17 @@ internal static class SegmentPlanPathBuilder
 
     private static Brush ResolveTrackStrokeBrush()
     {
-        if (Application.Current.Resources.TryGetValue("TrackPlanStrokeBrush", out var obj) && obj is Brush brush)
-            return brush;
-        return new SolidColorBrush(Color.FromArgb(255, 26, 26, 26));
+        return ThemeResourceResolver.ResolveBrush(
+            ThemeResourceResolver.GetDefaultThemeRoot(),
+            "TrackPlanStrokeBrush",
+            Color.FromArgb(255, 26, 26, 26));
     }
 
     private static Brush ResolveTrackStrokeSelectedBrush()
     {
-        if (Application.Current.Resources.TryGetValue("TrackPlanStrokeSelectedBrush", out var obj) && obj is Brush brush)
-            return brush;
-        return new SolidColorBrush(Color.FromArgb(255, 0, 120, 215));
+        return ThemeResourceResolver.ResolveBrush(
+            ThemeResourceResolver.GetDefaultThemeRoot(),
+            "TrackPlanStrokeSelectedBrush",
+            Color.FromArgb(255, 0, 120, 215));
     }
 }

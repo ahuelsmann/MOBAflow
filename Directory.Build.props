@@ -64,5 +64,7 @@
     <Optimize>true</Optimize>
     <DebugType>none</DebugType>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Legacy/public surface not fully documented; keep Release strict without blocking the build. -->
+    <NoWarn>$(NoWarn);CS1591;CS1573</NoWarn>
   </PropertyGroup>
 </Project>

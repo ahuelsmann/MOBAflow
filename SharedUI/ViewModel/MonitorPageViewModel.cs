@@ -196,5 +196,4 @@ public sealed partial class MonitorPageViewModel : ObservableObject, IDisposable
         _batchUpdateCts?.Cancel();
         _batchUpdateCts?.Dispose();
     }
-
 }

@@ -14,7 +14,6 @@ using SharedUI.Interface;
 /// callers receive no-op implementations that safely do nothing.
 /// Used when features are disabled, data is unavailable, or during testing.
 /// </summary>
-
 /// <summary>
 /// No-op implementation of <see cref="ICityService"/>.
 /// Returns empty collections and null for lookups.

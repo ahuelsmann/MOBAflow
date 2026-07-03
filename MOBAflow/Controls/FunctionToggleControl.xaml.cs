@@ -1,14 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-
-
 namespace Moba.WinUI.Controls;
 
-
-
 using Converter;
-
-
 
 using Microsoft.UI.Xaml;
 
@@ -18,16 +12,10 @@ using Microsoft.UI.Xaml.Input;
 
 using Microsoft.UI.Xaml.Media;
 
-
-
 using System.Windows.Input;
 
-
-
 /// <summary>
-
 /// WinUI function key tile for Train Control. Forwards tap and right-tap to ViewModel commands.
-
 /// </summary>
 
 public sealed partial class FunctionToggleControl : UserControl
@@ -38,49 +26,33 @@ public sealed partial class FunctionToggleControl : UserControl
 
         DependencyProperty.Register(nameof(FunctionIndex), typeof(int), typeof(FunctionToggleControl), new PropertyMetadata(0));
 
-
-
     public static readonly DependencyProperty IsOnProperty =
 
         DependencyProperty.Register(nameof(IsOn), typeof(bool), typeof(FunctionToggleControl), new PropertyMetadata(false, OnAppearancePropertyChanged));
-
-
 
     public static readonly DependencyProperty BacklightColorHexProperty =
 
         DependencyProperty.Register(nameof(BacklightColorHex), typeof(string), typeof(FunctionToggleControl), new PropertyMetadata(string.Empty, OnAppearancePropertyChanged));
 
-
-
     public static readonly DependencyProperty IconAssetProperty =
 
         DependencyProperty.Register(nameof(IconAsset), typeof(string), typeof(FunctionToggleControl), new PropertyMetadata(string.Empty));
-
-
 
     public static readonly DependencyProperty LabelProperty =
 
         DependencyProperty.Register(nameof(Label), typeof(string), typeof(FunctionToggleControl), new PropertyMetadata(string.Empty));
 
-
-
     public static readonly DependencyProperty DescriptionProperty =
 
         DependencyProperty.Register(nameof(Description), typeof(string), typeof(FunctionToggleControl), new PropertyMetadata(string.Empty));
-
-
 
     public static readonly DependencyProperty ToggleCommandProperty =
 
         DependencyProperty.Register(nameof(ToggleCommand), typeof(ICommand), typeof(FunctionToggleControl), new PropertyMetadata(null));
 
-
-
     public static readonly DependencyProperty EditAppearanceCommandProperty =
 
         DependencyProperty.Register(nameof(EditAppearanceCommand), typeof(ICommand), typeof(FunctionToggleControl), new PropertyMetadata(null));
-
-
 
     public int FunctionIndex
 
@@ -92,8 +64,6 @@ public sealed partial class FunctionToggleControl : UserControl
 
     }
 
-
-
     public bool IsOn
 
     {
@@ -103,8 +73,6 @@ public sealed partial class FunctionToggleControl : UserControl
         set => SetValue(IsOnProperty, value);
 
     }
-
-
 
     public string BacklightColorHex
 
@@ -116,8 +84,6 @@ public sealed partial class FunctionToggleControl : UserControl
 
     }
 
-
-
     public string IconAsset
 
     {
@@ -127,8 +93,6 @@ public sealed partial class FunctionToggleControl : UserControl
         set => SetValue(IconAssetProperty, value);
 
     }
-
-
 
     public string Label
 
@@ -140,8 +104,6 @@ public sealed partial class FunctionToggleControl : UserControl
 
     }
 
-
-
     public string Description
 
     {
@@ -151,8 +113,6 @@ public sealed partial class FunctionToggleControl : UserControl
         set => SetValue(DescriptionProperty, value);
 
     }
-
-
 
     public ICommand? ToggleCommand
 
@@ -164,8 +124,6 @@ public sealed partial class FunctionToggleControl : UserControl
 
     }
 
-
-
     public ICommand? EditAppearanceCommand
 
     {
@@ -175,8 +133,6 @@ public sealed partial class FunctionToggleControl : UserControl
         set => SetValue(EditAppearanceCommandProperty, value);
 
     }
-
-
 
     public FunctionToggleControl()
 
@@ -192,8 +148,6 @@ public sealed partial class FunctionToggleControl : UserControl
 
     }
 
-
-
     private void OnLoaded(object sender, RoutedEventArgs e)
 
     {
@@ -201,8 +155,6 @@ public sealed partial class FunctionToggleControl : UserControl
         ActualThemeChanged += OnActualThemeChanged;
 
     }
-
-
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
 
@@ -212,8 +164,6 @@ public sealed partial class FunctionToggleControl : UserControl
 
     }
 
-
-
     private void OnActualThemeChanged(FrameworkElement sender, object args)
 
     {
@@ -221,8 +171,6 @@ public sealed partial class FunctionToggleControl : UserControl
         ApplyAppearance();
 
     }
-
-
 
     private static void OnAppearancePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
 
@@ -235,28 +183,21 @@ public sealed partial class FunctionToggleControl : UserControl
             control.ApplyAppearance();
 
         }
-
     }
-
-
 
     private void ApplyAppearance()
 
     {
 
-        FunctionToggleButton.Background = BoolToBacklightBrushConverter.CreateBrush(IsOn, BacklightColorHex);
+        FunctionToggleButton.Background = BoolToBacklightBrushConverter.CreateBrush(IsOn, BacklightColorHex, this);
 
         FunctionLabelText.Foreground = new SolidColorBrush(
-
-            BoolToBacklightBrushConverter.CreatePrimaryTextColor(IsOn, BacklightColorHex));
+            BoolToBacklightBrushConverter.CreatePrimaryTextColor(IsOn, BacklightColorHex, this));
 
         DescriptionText.Foreground = new SolidColorBrush(
-
-            BoolToBacklightBrushConverter.CreateSecondaryTextColor(IsOn, BacklightColorHex));
+            BoolToBacklightBrushConverter.CreateSecondaryTextColor(IsOn, BacklightColorHex, this));
 
     }
-
-
 
     private void FunctionToggleButton_RightTapped(object sender, RightTappedRoutedEventArgs e)
 
@@ -271,9 +212,6 @@ public sealed partial class FunctionToggleControl : UserControl
             EditAppearanceCommand?.Execute(FunctionIndex);
 
         }
-
     }
-
 }
-
 

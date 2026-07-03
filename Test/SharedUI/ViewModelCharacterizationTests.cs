@@ -316,12 +316,13 @@ internal class ViewModelCharacterizationTests
     }
 
     [Test]
-    public void TrainControlViewModel_HybridRemoteSnapshots_ApplyFunctionBitsForCurrentLocomotive()
+    public void TrainControlViewModel_HybridRemoteSnapshots_ApplyFunctionBitsFromLocalZ21WhenConnected()
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = true });
         var coordinator = new MobileRuntimeCoordinator(mobaRuntimeMock.Object, new Mock<IRuntimeHubRemoteClient>().Object);
         coordinator.SetMobaflowSessionActive(true);
+        coordinator.SetLocalZ21Connected(true);
 
         var viewModel = new TrainControlViewModel(
             mobaRuntimeMock.Object,
@@ -330,7 +331,7 @@ internal class ViewModelCharacterizationTests
             mobileRuntimeCoordinator: coordinator,
             options: new TrainControlViewModelOptions { HybridRuntimeSnapshots = true });
 
-        eventBus.Publish(new RemoteRuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
+        eventBus.Publish(new RuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
         {
             IsConnected = true,
             LocomotiveStates = new Dictionary<int, LocomotiveRuntimeSnapshot>
@@ -345,9 +346,63 @@ internal class ViewModelCharacterizationTests
             }
         }));
 
-        Assert.That(viewModel.Functions[1].IsOn, Is.True, "Remote snapshot should drive F1 for the active locomotive");
-        Assert.That(viewModel.Functions[3].IsOn, Is.True, "Remote snapshot should drive F3 for the active locomotive");
+        Assert.That(viewModel.Functions[1].IsOn, Is.True, "Local Z21 snapshot should drive F1 during MOBAflow session");
+        Assert.That(viewModel.Functions[3].IsOn, Is.True, "Local Z21 snapshot should drive F3 during MOBAflow session");
         Assert.That(viewModel.Functions[0].IsOn, Is.False);
+    }
+
+    [Test]
+    public void TrainControlViewModel_HybridRemoteSnapshots_IgnoreSlimRemoteLocomotiveStatesWhenConnected()
+    {
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = true });
+        var coordinator = new MobileRuntimeCoordinator(mobaRuntimeMock.Object, new Mock<IRuntimeHubRemoteClient>().Object);
+        coordinator.SetMobaflowSessionActive(true);
+        coordinator.SetLocalZ21Connected(true);
+
+        var viewModel = new TrainControlViewModel(
+            mobaRuntimeMock.Object,
+            CreateSettingsServiceMock().Object,
+            eventBus: eventBus,
+            mobileRuntimeCoordinator: coordinator,
+            options: new TrainControlViewModelOptions { HybridRuntimeSnapshots = true });
+
+        eventBus.Publish(new RuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
+        {
+            IsConnected = true,
+            LocomotiveStates = new Dictionary<int, LocomotiveRuntimeSnapshot>
+            {
+                [3] = new LocomotiveRuntimeSnapshot
+                {
+                    Address = 3,
+                    Speed = 12,
+                    IsForward = false,
+                    Functions = 0
+                }
+            }
+        }));
+
+        eventBus.Publish(new RemoteRuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
+        {
+            IsConnected = true,
+            LocomotiveStates = new Dictionary<int, LocomotiveRuntimeSnapshot>
+            {
+                [3] = new LocomotiveRuntimeSnapshot
+                {
+                    Address = 3,
+                    Speed = 80,
+                    IsForward = true,
+                    Functions = 0b1111
+                }
+            }
+        }));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel.Speed, Is.EqualTo(12), "Slim remote snapshots must not override local Z21 drive state");
+            Assert.That(viewModel.IsForward, Is.False);
+            Assert.That(viewModel.Functions[0].IsOn, Is.False, "Remote locomotive states are omitted from MOBAsmart broadcasts");
+        });
     }
 
     [Test]
@@ -388,6 +443,7 @@ internal class ViewModelCharacterizationTests
         var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = true });
         var coordinator = new MobileRuntimeCoordinator(mobaRuntimeMock.Object, new Mock<IRuntimeHubRemoteClient>().Object);
         coordinator.SetMobaflowSessionActive(true);
+        coordinator.SetLocalZ21Connected(true);
 
         var viewModel = new TrainControlViewModel(
             mobaRuntimeMock.Object,
@@ -399,7 +455,7 @@ internal class ViewModelCharacterizationTests
         viewModel.LocoAddress = 211;
         await viewModel.ToggleFunctionAsync(0);
 
-        eventBus.Publish(new RemoteRuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
+        eventBus.Publish(new RuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
         {
             IsConnected = true,
             LocomotiveStates = new Dictionary<int, LocomotiveRuntimeSnapshot>
@@ -413,14 +469,14 @@ internal class ViewModelCharacterizationTests
         }));
 
         Assert.That(viewModel.Functions[0].IsOn, Is.True, "Locally toggled F0 stays protected during grace");
-        Assert.That(viewModel.Functions[2].IsOn, Is.True, "Remote F2 update must apply while another function is in grace");
+        Assert.That(viewModel.Functions[2].IsOn, Is.True, "Local Z21 F2 update must apply while another function is in grace");
     }
 
     [Test]
     public void TrainControlViewModel_HybridRemoteSnapshots_DoNotOverwriteManualStatusMessage()
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = true });
+        var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = false });
         var coordinator = new MobileRuntimeCoordinator(mobaRuntimeMock.Object, new Mock<IRuntimeHubRemoteClient>().Object);
         coordinator.SetMobaflowSessionActive(true);
 
@@ -430,6 +486,21 @@ internal class ViewModelCharacterizationTests
             eventBus: eventBus,
             mobileRuntimeCoordinator: coordinator,
             options: new TrainControlViewModelOptions { HybridRuntimeSnapshots = true });
+
+        eventBus.Publish(new RemoteRuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
+        {
+            IsConnected = true,
+            LocomotiveStates = new Dictionary<int, LocomotiveRuntimeSnapshot>
+            {
+                [3] = new LocomotiveRuntimeSnapshot
+                {
+                    Address = 3,
+                    Speed = 42,
+                    IsForward = false,
+                    Functions = 0
+                }
+            }
+        }));
 
         viewModel.StatusMessage = "F0: ON";
 
@@ -449,15 +520,15 @@ internal class ViewModelCharacterizationTests
         }));
 
         Assert.That(viewModel.StatusMessage, Is.EqualTo("F0: ON"));
-        Assert.That(viewModel.Speed, Is.EqualTo(42), "Remote drive state should sync to MOBAsmart");
-        Assert.That(viewModel.IsForward, Is.False, "Remote direction should sync to MOBAsmart");
+        Assert.That(viewModel.Speed, Is.EqualTo(42), "Remote drive state should sync when local Z21 is offline");
+        Assert.That(viewModel.IsForward, Is.False, "Remote direction should sync when local Z21 is offline");
     }
 
     [Test]
-    public void TrainControlViewModel_HybridRemoteSnapshots_ApplyDriveStateFromMobaflow()
+    public void TrainControlViewModel_HybridRemoteSnapshots_ApplyDriveStateFromMobaflowWhenZ21Offline()
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = true });
+        var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot { IsConnected = false });
         var coordinator = new MobileRuntimeCoordinator(mobaRuntimeMock.Object, new Mock<IRuntimeHubRemoteClient>().Object);
         coordinator.SetMobaflowSessionActive(true);
 

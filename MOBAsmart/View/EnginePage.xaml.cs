@@ -12,8 +12,6 @@ public partial class EnginePage
     private readonly TrainControlViewModel _viewModel;
     private Task? _runtimeInitializationTask;
 
-    public event EventHandler? NavigateToControlTabRequested;
-
     public EnginePage(
         TrainControlViewModel viewModel,
         MauiViewModel mauiViewModel,
@@ -27,7 +25,6 @@ public partial class EnginePage
 
         BindingContext = viewModel;
         InitializeComponent();
-        ConnectionHeader.BindingContext = mauiViewModel;
     }
 
     public void ActivateTab()
@@ -51,6 +48,5 @@ public partial class EnginePage
         }
 
         _viewModel.SelectProjectLocomotiveCommand.Execute(locomotive);
-        NavigateToControlTabRequested?.Invoke(this, EventArgs.Empty);
     }
 }

@@ -5,117 +5,99 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:controls="clr-namespace:Moba.MAUI.Controls"
     xmlns:vm="clr-namespace:Moba.SharedUI.ViewModel;assembly=SharedUI"
-    x:DataType="vm:MauiViewModel">
+    x:DataType="vm:MauiViewModel"
+    Padding="16">
 
-    <Grid Padding="16" RowDefinitions="Auto,*" RowSpacing="12">
-        <Border
-            Grid.Row="0"
-            Padding="16"
-            Background="{DynamicResource Surface}"
-            Stroke="{DynamicResource BorderColor}"
-            StrokeShape="RoundRectangle 12"
-            StrokeThickness="1">
-            <VerticalStackLayout Spacing="6">
+    <CollectionView
+        x:Name="SignalBoxList"
+        ItemsSource="{Binding SignalBoxElements}"
+        SelectionMode="None">
+        <CollectionView.EmptyView>
+            <VerticalStackLayout
+                Padding="16"
+                HorizontalOptions="Center"
+                Spacing="8"
+                VerticalOptions="Center">
                 <Label
-                    Style="{DynamicResource TitleLarge}"
-                    Text="SignalBox" />
+                    FontAttributes="Bold"
+                    HorizontalTextAlignment="Center"
+                    Text="No signal box elements active"
+                    TextColor="{DynamicResource TextPrimary}" />
                 <Label
+                    HorizontalTextAlignment="Center"
                     Style="{DynamicResource BodyMedium}"
-                    Text="Signals and switches from the active signal box. For signals, the displayed aspect can be selected directly." />
+                    Text="Open a MOBAflow project with a signal box so signals and switches appear here." />
             </VerticalStackLayout>
-        </Border>
-
-        <CollectionView
-            Grid.Row="1"
-            ItemsSource="{Binding SignalBoxElements}"
-            SelectionMode="None">
-            <CollectionView.EmptyView>
-                <VerticalStackLayout
-                    Padding="16"
-                    HorizontalOptions="Center"
-                    Spacing="8"
-                    VerticalOptions="Center">
-                    <Label
-                        FontAttributes="Bold"
-                        HorizontalTextAlignment="Center"
-                        Text="No signal box elements active"
-                        TextColor="{DynamicResource TextPrimary}" />
-                    <Label
-                        HorizontalTextAlignment="Center"
-                        Style="{DynamicResource BodyMedium}"
-                        Text="Open a MOBAflow project with a signal box so signals and switches appear here." />
-                </VerticalStackLayout>
-            </CollectionView.EmptyView>
-            <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="vm:MauiSignalBoxElementViewModel">
-                    <Border
-                        Margin="0,0,0,10"
-                        Padding="14"
-                        Background="{DynamicResource Surface}"
-                        Stroke="{DynamicResource BorderColor}"
-                        StrokeShape="RoundRectangle 12"
-                        StrokeThickness="1">
-                        <Grid
-                            ColumnDefinitions="*,Auto"
-                            RowDefinitions="Auto,Auto,Auto"
-                            RowSpacing="8">
+        </CollectionView.EmptyView>
+        <CollectionView.ItemTemplate>
+            <DataTemplate x:DataType="vm:MauiSignalBoxElementViewModel">
+                <Border
+                    Margin="0,0,0,10"
+                    Padding="14"
+                    BackgroundColor="{DynamicResource Surface}"
+                    Stroke="{DynamicResource BorderColor}"
+                    StrokeShape="RoundRectangle 12"
+                    StrokeThickness="1">
+                    <Grid
+                        ColumnDefinitions="*,Auto"
+                        RowDefinitions="Auto,Auto,Auto"
+                        RowSpacing="8">
+                        <Label
+                            Grid.Row="0"
+                            Grid.Column="0"
+                            FontAttributes="Bold"
+                            FontSize="16"
+                            Text="{Binding Name}"
+                            TextColor="{DynamicResource TextPrimary}" />
+                        <Border
+                            Grid.Row="0"
+                            Grid.Column="1"
+                            Padding="8,3"
+                            BackgroundColor="{DynamicResource SurfaceDark}"
+                            StrokeThickness="0">
                             <Label
-                                Grid.Row="0"
-                                Grid.Column="0"
+                                FontSize="12"
+                                Text="{Binding KindText}"
+                                TextColor="{DynamicResource TextSecondary}" />
+                        </Border>
+
+                        <Label
+                            Grid.Row="1"
+                            Grid.Column="0"
+                            Grid.ColumnSpan="2"
+                            Style="{DynamicResource BodyMedium}"
+                            Text="{Binding LocationText}" />
+
+                        <VerticalStackLayout
+                            Grid.Row="2"
+                            Grid.Column="0"
+                            Grid.ColumnSpan="2"
+                            IsVisible="{Binding IsSignal}"
+                            Spacing="8">
+                            <Label
                                 FontAttributes="Bold"
-                                FontSize="16"
-                                Text="{Binding Name}"
-                                TextColor="{DynamicResource TextPrimary}" />
-                            <Border
-                                Grid.Row="0"
-                                Grid.Column="1"
-                                Padding="8,3"
-                                Background="{DynamicResource SurfaceDark}"
-                                StrokeThickness="0">
-                                <Label
-                                    FontSize="12"
-                                    Text="{Binding KindText}"
-                                    TextColor="{DynamicResource TextSecondary}" />
-                            </Border>
+                                FontSize="11"
+                                Text="SELECT SIGNAL ASPECT"
+                                TextColor="{DynamicResource TextSecondary}" />
+                            <controls:SignalAspectPicker
+                                AspectSelectCommand="{Binding SelectSignalAspectCommand}"
+                                BottomSpeedValue="{Binding BottomSpeedIndicator}"
+                                MultiplexerArticleNumber="{Binding MultiplexerArticleNumber}"
+                                SelectedAspect="{Binding SelectedSignalAspect, Mode=TwoWay}"
+                                SignalArticleNumber="{Binding MainSignalArticleNumber}"
+                                TopSpeedValue="{Binding TopSpeedIndicator}" />
+                        </VerticalStackLayout>
 
-                            <Label
-                                Grid.Row="1"
-                                Grid.Column="0"
-                                Grid.ColumnSpan="2"
-                                Style="{DynamicResource BodyMedium}"
-                                Text="{Binding LocationText}" />
-
-                            <VerticalStackLayout
-                                Grid.Row="2"
-                                Grid.Column="0"
-                                Grid.ColumnSpan="2"
-                                IsVisible="{Binding IsSignal}"
-                                Spacing="8">
-                                <Label
-                                    FontAttributes="Bold"
-                                    FontSize="11"
-                                    Text="SELECT SIGNAL ASPECT"
-                                    TextColor="{DynamicResource TextSecondary}" />
-                                <controls:SignalAspectPicker
-                                    AspectSelectCommand="{Binding SelectSignalAspectCommand}"
-                                    BottomSpeedValue="{Binding BottomSpeedIndicator}"
-                                    MultiplexerArticleNumber="{Binding MultiplexerArticleNumber}"
-                                    SelectedAspect="{Binding SelectedSignalAspect, Mode=TwoWay}"
-                                    SignalArticleNumber="{Binding MainSignalArticleNumber}"
-                                    TopSpeedValue="{Binding TopSpeedIndicator}" />
-                            </VerticalStackLayout>
-
-                            <Label
-                                Grid.Row="2"
-                                Grid.Column="0"
-                                Grid.ColumnSpan="2"
-                                IsVisible="{Binding IsSwitch}"
-                                Style="{DynamicResource BodyMedium}"
-                                Text="{Binding DetailText}" />
-                        </Grid>
-                    </Border>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
-    </Grid>
+                        <Label
+                            Grid.Row="2"
+                            Grid.Column="0"
+                            Grid.ColumnSpan="2"
+                            IsVisible="{Binding IsSwitch}"
+                            Style="{DynamicResource BodyMedium}"
+                            Text="{Binding DetailText}" />
+                    </Grid>
+                </Border>
+            </DataTemplate>
+        </CollectionView.ItemTemplate>
+    </CollectionView>
 </ContentView>

@@ -100,7 +100,15 @@ public partial class MainWindowViewModel
             var saved = await _ioService.SavePhotoAsync(photoPath, "wagons", wagonVm.Model.Id);
             if (saved != null)
             {
-                wagonVm.PhotoPath = saved;
+                if (wagonVm.PhotoPath == saved)
+                {
+                    wagonVm.InvalidatePhotoBinding();
+                }
+                else
+                {
+                    wagonVm.PhotoPath = saved;
+                }
+
                 _logger.LogInformation("Photo saved for wagon: {Name}", wagonVm.Name);
             }
         });
@@ -147,7 +155,15 @@ public partial class MainWindowViewModel
             var saved = await _ioService.SavePhotoAsync(photoPath, "locomotives", locoVm.Model.Id);
             if (saved != null)
             {
-                locoVm.PhotoPath = saved;
+                if (locoVm.PhotoPath == saved)
+                {
+                    locoVm.InvalidatePhotoBinding();
+                }
+                else
+                {
+                    locoVm.PhotoPath = saved;
+                }
+
                 _logger.LogInformation("Photo saved for locomotive: {Name}", locoVm.Name);
             }
         });

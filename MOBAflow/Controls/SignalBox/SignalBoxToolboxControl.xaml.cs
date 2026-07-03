@@ -6,6 +6,8 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 
+using Moba.WinUI.View;
+
 using Windows.ApplicationModel.DataTransfer;
 
 public sealed partial class SignalBoxToolboxControl
@@ -19,7 +21,7 @@ public sealed partial class SignalBoxToolboxControl
     {
         if (sender is Border border)
         {
-            border.Background = (Brush)Application.Current.Resources["SubtleFillColorTertiaryBrush"];
+            border.Background = ThemeResourceResolver.ResolveBrush(this, "SubtleFillColorTertiaryBrush", Microsoft.UI.Colors.Gray);
         }
     }
 
@@ -27,7 +29,7 @@ public sealed partial class SignalBoxToolboxControl
     {
         if (sender is Border border)
         {
-            border.Background = (Brush)Application.Current.Resources["SubtleFillColorSecondaryBrush"];
+            border.Background = ThemeResourceResolver.ResolveBrush(this, "SubtleFillColorSecondaryBrush", Microsoft.UI.Colors.LightGray);
         }
     }
 

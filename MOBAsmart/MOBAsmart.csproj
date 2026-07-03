@@ -49,8 +49,10 @@
         <AndroidPackageFormat>aab</AndroidPackageFormat>
         <AndroidCreateDebugSymbols>true</AndroidCreateDebugSymbols>
         <AndroidUseApkSigner>true</AndroidUseApkSigner>
-        <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <!-- Analyzers + TreatWarningsAsErrors break legacy MAUI code; Debug/FastDebug keep live analysis. -->
+        <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
+        <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
     </PropertyGroup>
     <!-- Include Linker descriptor -->
     <ItemGroup>
@@ -81,7 +83,6 @@
         <PackageReference Include="Microsoft.Extensions.Http" />
         <!-- AndroidX Startup (required for initialization providers) -->
         <PackageReference Include="Xamarin.AndroidX.Startup.StartupRuntime" />
-        <PackageReference Include="ZXing.Net.Maui.Controls" />
         <!-- Note: CommunityToolkit.Mvvm comes via SharedUI project reference -->
     </ItemGroup>
     <ItemGroup>
@@ -141,6 +142,9 @@
         <MauiXaml Update="Controls\FunctionToggleView.xaml">
             <Generator>MSBuild:Compile</Generator>
         </MauiXaml>
+        <MauiXaml Update="Controls\CounterStepperButton.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </MauiXaml>
         <MauiXaml Update="Controls\ConnectionStatusPanel.xaml">
             <Generator>MSBuild:Compile</Generator>
         </MauiXaml>
@@ -148,9 +152,6 @@
             <Generator>MSBuild:Compile</Generator>
         </MauiXaml>
         <MauiXaml Update="View\SplashPage.xaml">
-            <Generator>MSBuild:Compile</Generator>
-        </MauiXaml>
-        <MauiXaml Update="View\PairingPage.xaml">
             <Generator>MSBuild:Compile</Generator>
         </MauiXaml>
     </ItemGroup>

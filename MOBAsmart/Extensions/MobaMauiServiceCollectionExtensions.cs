@@ -174,7 +174,6 @@ public static class MobaMauiServiceCollectionExtensions
         services.AddTransient<SignalBoxPage>();
         services.AddTransient<EnginePage>();
         services.AddTransient<ControlPage>();
-        services.AddTransient<PairingPage>();
 
         return services;
     }

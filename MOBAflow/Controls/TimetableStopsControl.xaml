@@ -128,7 +128,7 @@
                                 <StackPanel Orientation="Horizontal" Spacing="4">
                                     <TextBlock
                                         FontSize="10"
-                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                        Foreground="{ThemeResource MobaTextLabelMutedBrush}"
                                         Text="Arr:" />
                                     <TextBlock
                                         FontSize="10"
@@ -138,7 +138,7 @@
                                 <StackPanel Orientation="Horizontal" Spacing="4">
                                     <TextBlock
                                         FontSize="10"
-                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                        Foreground="{ThemeResource MobaTextLabelMutedBrush}"
                                         Text="Dep:" />
                                     <TextBlock
                                         FontSize="10"
@@ -359,14 +359,14 @@
                                 <StackPanel Orientation="Horizontal" Spacing="4">
                                     <TextBlock
                                         FontSize="10"
-                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                        Foreground="{ThemeResource MobaTextLabelMutedBrush}"
                                         Text="Arr:" />
                                     <TextBlock FontSize="10" Text="{x:Bind NextStationArrivalValue, Mode=OneWay}" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Spacing="4">
                                     <TextBlock
                                         FontSize="10"
-                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                        Foreground="{ThemeResource MobaTextLabelMutedBrush}"
                                         Text="Dep:" />
                                     <TextBlock FontSize="10" Text="{x:Bind NextStationDepartureValue, Mode=OneWay}" />
                                 </StackPanel>

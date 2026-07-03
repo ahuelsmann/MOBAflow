@@ -1,5 +1,6 @@
 <Page
     x:Class="Moba.WinUI.View.MonitorPage"
+    x:Name="PageRoot"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:Moba.WinUI.Controls"
@@ -128,7 +129,7 @@
                                 <DataTemplate x:DataType="model:Z21TrafficPacket">
                                     <Grid
                                         Padding="12,4"
-                                        Background="{x:Bind IsFeedbackRelated, Converter={StaticResource BoolToFeedbackBackgroundConverter}}"
+                                        Background="{x:Bind IsFeedbackRelated, Converter={StaticResource BoolToFeedbackBackgroundConverter}, ConverterParameter={Binding ElementName=PageRoot}}"
                                         ColumnSpacing="12">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="90" />

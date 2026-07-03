@@ -60,7 +60,7 @@ public class TrainControlSettings
 
     /// <summary>
     /// Maximum speed (Vmax) of the selected locomotive in km/h.
-    /// Default: 200 km/h. Used for SpeedKmh calculation.
+    /// Default: 200 km/h. Used for the Vmax marker on the speed gauge, not the slider full scale.
     /// </summary>
     public int SelectedVmax { get; set; } = 200;
 }

@@ -24,20 +24,16 @@ public static class MobiHttpClientServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.AddTransient<MobaApiKeyDelegatingHandler>();
-
         services.AddHttpClient(MobiHttpClientNames.Platform, client =>
         {
             client.Timeout = TimeSpan.FromMinutes(5);
         })
-        .AddHttpMessageHandler<MobaApiKeyDelegatingHandler>()
         .ConfigurePrimaryHttpMessageHandler(CreatePlatformHandler);
 
         services.AddHttpClient(MobiHttpClientNames.LanHealth, client =>
         {
             client.Timeout = TimeSpan.FromSeconds(6);
         })
-        .AddHttpMessageHandler<MobaApiKeyDelegatingHandler>()
         .ConfigurePrimaryHttpMessageHandler(MobiLanHttpClientFactory.CreateLanHealthHandler);
 
         services.AddHttpClient(MobiHttpClientNames.LanDiscovery, client =>

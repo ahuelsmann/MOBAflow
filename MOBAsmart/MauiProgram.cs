@@ -3,8 +3,6 @@ namespace Moba.MAUI;
 
 using CommunityToolkit.Maui;
 
-using ZXing.Net.Maui.Controls;
-
 using Extensions;
 
 using Service;
@@ -20,7 +18,6 @@ public static class MauiProgram
         builder
             .UseMauiApp<App>()
             .UseMauiCommunityToolkit()
-            .UseBarcodeReader()
             .ConfigureFonts(fonts =>
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");

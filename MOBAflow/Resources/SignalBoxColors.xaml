@@ -1,8 +1,7 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!--  Signal Box Track Colors  -->
-    <SolidColorBrush x:Key="SignalBoxTrackColor" Color="#C8C8C8" />
-    <!--  Gray: RGB(200, 200, 200) for normal tracks  -->
+    <!--  Signal Box Track Colors (theme-neutral semantic colors)  -->
+    <!--  Normal track stroke: see SignalBoxTrackBrush in App.xaml ThemeDictionaries  -->
 
     <SolidColorBrush x:Key="SignalBoxTrackActiveColor" Color="#00C800" />
     <!--  Green: RGB(0, 200, 0) for active/occupied tracks  -->
@@ -26,8 +25,7 @@
     <SolidColorBrush x:Key="SignalBoxSelectionHighlightColor" Color="#FFFF00" />
     <!--  Yellow for selected element highlight  -->
 
-    <!--  Signal preview / dark UI surface (replaces hardcoded #1E1E1E)  -->
-    <SolidColorBrush x:Key="SignalPreviewBackgroundBrush" Color="#1E1E1E" />
+    <!--  Signal preview / dark UI surface (theme: SignalPreviewBackgroundBrush in App.xaml)  -->
 
     <!--  TrackPlan section palette (replaces hardcoded hex in section color picker)  -->
     <SolidColorBrush x:Key="TrackPlanSectionColor1" Color="#FF5733" />

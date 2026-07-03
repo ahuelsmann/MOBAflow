@@ -358,7 +358,6 @@ public sealed partial class TrackPlanPage
                     e.Handled = true;
                     return;
                 }
-
             }
 
             if (e.Key != VirtualKey.Delete && e.Key != VirtualKey.Back)
@@ -1245,9 +1244,9 @@ public sealed partial class TrackPlanPage
             Width = r * 2,
             Height = r * 2,
             Fill = highlight
-                ? (Brush)Application.Current.Resources["SystemFillColorSuccessBrush"]!
-                : (Brush)Application.Current.Resources["SubtleFillColorTertiaryBrush"]!,
-            Stroke = (Brush)Application.Current.Resources["AccentFillColorDefaultBrush"]!,
+                ? ThemeResourceResolver.ResolveBrush(this, "SystemFillColorSuccessBrush", Microsoft.UI.Colors.Green)
+                : ThemeResourceResolver.ResolveBrush(this, "SubtleFillColorTertiaryBrush", Microsoft.UI.Colors.Gray),
+            Stroke = ThemeResourceResolver.ResolveBrush(this, "AccentFillColorDefaultBrush", Microsoft.UI.Colors.Blue),
             StrokeThickness = highlight ? 2 : 1
         };
         Canvas.SetLeft(el, xPx - r);
@@ -1637,8 +1636,8 @@ public sealed partial class TrackPlanPage
             Width = RotationHandleRadiusPx * 2,
             Height = RotationHandleRadiusPx * 2,
             CornerRadius = new CornerRadius(RotationHandleRadiusPx),
-            Background = (Brush)Application.Current.Resources["SystemFillColorSuccessBrush"]!,
-            BorderBrush = (Brush)Application.Current.Resources["AccentFillColorDefaultBrush"]!,
+            Background = ThemeResourceResolver.ResolveBrush(this, "SystemFillColorSuccessBrush", Microsoft.UI.Colors.Green),
+            BorderBrush = ThemeResourceResolver.ResolveBrush(this, "AccentFillColorDefaultBrush", Microsoft.UI.Colors.Blue),
             BorderThickness = new Thickness(1.5)
         };
         ToolTipService.SetToolTip(handle, "Drag to rotate");
@@ -1650,7 +1649,7 @@ public sealed partial class TrackPlanPage
             Y1 = pivotY,
             X2 = pivotX,
             Y2 = handleCenterY,
-            Stroke = (Brush)Application.Current.Resources["TextFillColorTertiaryBrush"]!,
+            Stroke = ThemeResourceResolver.ResolveBrush(this, "TextFillColorTertiaryBrush", Microsoft.UI.Colors.Gray),
             StrokeThickness = 1,
             StrokeDashArray = new DoubleCollection { 4, 4 }
         };

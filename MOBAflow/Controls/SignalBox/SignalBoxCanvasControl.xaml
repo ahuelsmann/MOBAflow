@@ -24,7 +24,7 @@
                         <RotateTransform Angle="{x:Bind Rotation, Mode=OneTime}" />
                     </Canvas.RenderTransform>
                     <Line
-                        Stroke="{ThemeResource SignalBoxTrackColor}"
+                        Stroke="{ThemeResource SignalBoxTrackBrush}"
                         StrokeThickness="4"
                         X1="0"
                         X2="60"
@@ -50,7 +50,7 @@
                     </Canvas.RenderTransform>
                     <Path
                         Data="M 0,30 Q 30,30 30,60"
-                        Stroke="{ThemeResource SignalBoxTrackColor}"
+                        Stroke="{ThemeResource SignalBoxTrackBrush}"
                         StrokeThickness="4" />
                 </Canvas>
             </Canvas>
@@ -71,21 +71,21 @@
                         <RotateTransform Angle="{x:Bind Rotation, Mode=OneTime}" />
                     </Canvas.RenderTransform>
                     <Line
-                        Stroke="{ThemeResource SignalBoxTrackColor}"
+                        Stroke="{ThemeResource SignalBoxTrackBrush}"
                         StrokeThickness="4"
                         X1="0"
                         X2="60"
                         Y1="30"
                         Y2="30" />
                     <Line
-                        Stroke="{ThemeResource SignalBoxTrackColor}"
+                        Stroke="{ThemeResource SignalBoxTrackBrush}"
                         StrokeThickness="4"
                         X1="30"
                         X2="60"
                         Y1="30"
                         Y2="0" />
                     <Line
-                        Stroke="{ThemeResource SignalBoxTrackColor}"
+                        Stroke="{ThemeResource SignalBoxTrackBrush}"
                         StrokeThickness="4"
                         X1="30"
                         X2="60"
@@ -144,7 +144,7 @@
                         <RotateTransform Angle="{x:Bind Rotation, Mode=OneTime}" />
                     </Canvas.RenderTransform>
                     <Line
-                        Stroke="{ThemeResource SignalBoxTrackColor}"
+                        Stroke="{ThemeResource SignalBoxTrackBrush}"
                         StrokeThickness="4"
                         X1="0"
                         X2="60"

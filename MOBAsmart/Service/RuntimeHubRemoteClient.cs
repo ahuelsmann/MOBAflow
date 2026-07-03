@@ -4,7 +4,6 @@ namespace Moba.MAUI.Service;
 
 using Common.Configuration;
 using Common.Runtime;
-using Common.Security;
 
 using Domain;
 
@@ -28,7 +27,6 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
     private bool _hasActiveHost;
     private string _serverIp = string.Empty;
     private int _serverPort;
-    private string _connectedApiKey = string.Empty;
     private string _clientId = string.Empty;
 
     public RuntimeHubRemoteClient(
@@ -63,14 +61,12 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
         _serverIp = serverIp;
         _serverPort = serverPort;
         _clientId = clientId;
-        var apiKey = _appSettings.RestApi.ApiKey?.Trim() ?? string.Empty;
 
         if (!forceReconnect
             && _hubConnection != null
             && IsConnected
             && string.Equals(_serverIp, serverIp, StringComparison.OrdinalIgnoreCase)
-            && _serverPort == serverPort
-            && string.Equals(_connectedApiKey, apiKey, StringComparison.Ordinal))
+            && _serverPort == serverPort)
         {
             return;
         }
@@ -96,10 +92,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
         _hubConnection = new HubConnectionBuilder()
             .WithUrl(hubUrl, options =>
             {
-                if (!string.IsNullOrEmpty(apiKey))
-                {
-                    options.Headers[MobaApiAuth.ApiKeyHeaderName] = apiKey;
-                }
+                options.HttpMessageHandlerFactory = _ => MobiLanHttpClientFactory.CreateLanSignalRHandler();
             })
             .WithAutomaticReconnect(
             [
@@ -117,7 +110,6 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
         _hubConnection.Closed += OnClosedAsync;
 
         await _hubConnection.StartAsync(cancellationToken).ConfigureAwait(false);
-        _connectedApiKey = apiKey;
         await RegisterRemoteAsync(cancellationToken).ConfigureAwait(false);
         await TryFetchInitialSnapshotAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -137,8 +129,6 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
         {
             _logger?.LogDebug(ex, "RuntimeHub remote disconnect failed");
         }
-
-        _connectedApiKey = string.Empty;
     }
 
     public Task RequestLatestSnapshotAsync(CancellationToken cancellationToken = default) =>

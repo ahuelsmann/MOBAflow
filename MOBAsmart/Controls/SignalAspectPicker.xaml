@@ -16,7 +16,7 @@
             Grid.Row="0"
             Grid.Column="0"
             Padding="8"
-            HeightRequest="112"
+            MinimumHeightRequest="120"
             Stroke="{DynamicResource BorderColor}"
             StrokeShape="RoundRectangle 10"
             StrokeThickness="1">
@@ -28,7 +28,7 @@
                     Aspect="{x:Static display:KsSignalAspectNames.Hp0}"
                     BottomSpeedValue="{Binding Source={x:Reference Root}, Path=BottomSpeedValue}"
                     InputTransparent="True"
-                    IsPreviewMode="True"
+                    IsStaticPreview="True"
                     SignalArticleNumber="{Binding Source={x:Reference Root}, Path=PreviewSignalArticleNumber}"
                     TopSpeedValue="{Binding Source={x:Reference Root}, Path=TopSpeedValue}" />
                 <Label
@@ -45,7 +45,7 @@
             Grid.Row="0"
             Grid.Column="1"
             Padding="8"
-            HeightRequest="112"
+            MinimumHeightRequest="120"
             Stroke="{DynamicResource BorderColor}"
             StrokeShape="RoundRectangle 10"
             StrokeThickness="1">
@@ -57,7 +57,7 @@
                     Aspect="{x:Static display:KsSignalAspectNames.Ks1}"
                     BottomSpeedValue="{Binding Source={x:Reference Root}, Path=BottomSpeedValue}"
                     InputTransparent="True"
-                    IsPreviewMode="True"
+                    IsStaticPreview="True"
                     SignalArticleNumber="{Binding Source={x:Reference Root}, Path=PreviewSignalArticleNumber}"
                     TopSpeedValue="{Binding Source={x:Reference Root}, Path=TopSpeedValue}" />
                 <Label
@@ -74,7 +74,7 @@
             Grid.Row="0"
             Grid.Column="2"
             Padding="8"
-            HeightRequest="112"
+            MinimumHeightRequest="120"
             Stroke="{DynamicResource BorderColor}"
             StrokeShape="RoundRectangle 10"
             StrokeThickness="1">
@@ -86,7 +86,7 @@
                     Aspect="{x:Static display:KsSignalAspectNames.Ks2}"
                     BottomSpeedValue="{Binding Source={x:Reference Root}, Path=BottomSpeedValue}"
                     InputTransparent="True"
-                    IsPreviewMode="True"
+                    IsStaticPreview="True"
                     SignalArticleNumber="{Binding Source={x:Reference Root}, Path=PreviewSignalArticleNumber}"
                     TopSpeedValue="{Binding Source={x:Reference Root}, Path=TopSpeedValue}" />
                 <Label
@@ -103,7 +103,7 @@
             Grid.Row="1"
             Grid.Column="0"
             Padding="8"
-            HeightRequest="112"
+            MinimumHeightRequest="120"
             Stroke="{DynamicResource BorderColor}"
             StrokeShape="RoundRectangle 10"
             StrokeThickness="1">
@@ -115,7 +115,7 @@
                     Aspect="{x:Static display:KsSignalAspectNames.Ks1Blink}"
                     BottomSpeedValue="{Binding Source={x:Reference Root}, Path=BottomSpeedValue}"
                     InputTransparent="True"
-                    IsPreviewMode="True"
+                    IsStaticPreview="True"
                     SignalArticleNumber="{Binding Source={x:Reference Root}, Path=PreviewSignalArticleNumber}"
                     TopSpeedValue="{Binding Source={x:Reference Root}, Path=TopSpeedValue}" />
                 <Label
@@ -132,7 +132,7 @@
             Grid.Row="1"
             Grid.Column="1"
             Padding="8"
-            HeightRequest="112"
+            MinimumHeightRequest="120"
             Stroke="{DynamicResource BorderColor}"
             StrokeShape="RoundRectangle 10"
             StrokeThickness="1">
@@ -144,7 +144,7 @@
                     Aspect="{x:Static display:KsSignalAspectNames.Kennlicht}"
                     BottomSpeedValue="{Binding Source={x:Reference Root}, Path=BottomSpeedValue}"
                     InputTransparent="True"
-                    IsPreviewMode="True"
+                    IsStaticPreview="True"
                     SignalArticleNumber="{Binding Source={x:Reference Root}, Path=PreviewSignalArticleNumber}"
                     TopSpeedValue="{Binding Source={x:Reference Root}, Path=TopSpeedValue}" />
                 <Label
@@ -161,7 +161,7 @@
             Grid.Row="1"
             Grid.Column="2"
             Padding="8"
-            HeightRequest="112"
+            MinimumHeightRequest="120"
             Stroke="{DynamicResource BorderColor}"
             StrokeShape="RoundRectangle 10"
             StrokeThickness="1">
@@ -173,7 +173,7 @@
                     Aspect="{x:Static display:KsSignalAspectNames.Dunkel}"
                     BottomSpeedValue="{Binding Source={x:Reference Root}, Path=BottomSpeedValue}"
                     InputTransparent="True"
-                    IsPreviewMode="True"
+                    IsStaticPreview="True"
                     SignalArticleNumber="{Binding Source={x:Reference Root}, Path=PreviewSignalArticleNumber}"
                     TopSpeedValue="{Binding Source={x:Reference Root}, Path=TopSpeedValue}" />
                 <Label
@@ -190,7 +190,7 @@
             Grid.Row="2"
             Grid.Column="0"
             Padding="8"
-            HeightRequest="112"
+            MinimumHeightRequest="120"
             Stroke="{DynamicResource BorderColor}"
             StrokeShape="RoundRectangle 10"
             StrokeThickness="1">
@@ -202,7 +202,7 @@
                     Aspect="{x:Static display:KsSignalAspectNames.Ra12}"
                     BottomSpeedValue="{Binding Source={x:Reference Root}, Path=BottomSpeedValue}"
                     InputTransparent="True"
-                    IsPreviewMode="True"
+                    IsStaticPreview="True"
                     SignalArticleNumber="{Binding Source={x:Reference Root}, Path=PreviewSignalArticleNumber}"
                     TopSpeedValue="{Binding Source={x:Reference Root}, Path=TopSpeedValue}" />
                 <Label
@@ -219,7 +219,7 @@
             Grid.Row="2"
             Grid.Column="1"
             Padding="8"
-            HeightRequest="112"
+            MinimumHeightRequest="120"
             Stroke="{DynamicResource BorderColor}"
             StrokeShape="RoundRectangle 10"
             StrokeThickness="1">
@@ -231,7 +231,7 @@
                     Aspect="{x:Static display:KsSignalAspectNames.Zs1}"
                     BottomSpeedValue="{Binding Source={x:Reference Root}, Path=BottomSpeedValue}"
                     InputTransparent="True"
-                    IsPreviewMode="True"
+                    IsStaticPreview="True"
                     SignalArticleNumber="{Binding Source={x:Reference Root}, Path=PreviewSignalArticleNumber}"
                     TopSpeedValue="{Binding Source={x:Reference Root}, Path=TopSpeedValue}" />
                 <Label
@@ -248,7 +248,7 @@
             Grid.Row="2"
             Grid.Column="2"
             Padding="8"
-            HeightRequest="112"
+            MinimumHeightRequest="120"
             Stroke="{DynamicResource BorderColor}"
             StrokeShape="RoundRectangle 10"
             StrokeThickness="1">
@@ -260,7 +260,7 @@
                     Aspect="{x:Static display:KsSignalAspectNames.Zs7}"
                     BottomSpeedValue="{Binding Source={x:Reference Root}, Path=BottomSpeedValue}"
                     InputTransparent="True"
-                    IsPreviewMode="True"
+                    IsStaticPreview="True"
                     SignalArticleNumber="{Binding Source={x:Reference Root}, Path=PreviewSignalArticleNumber}"
                     TopSpeedValue="{Binding Source={x:Reference Root}, Path=TopSpeedValue}" />
                 <Label

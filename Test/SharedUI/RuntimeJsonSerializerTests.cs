@@ -1,22 +1,12 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-
-
 namespace Moba.Test.SharedUI;
-
-
 
 using Domain;
 
-
-
 using Moba.Common.Runtime;
 
-
-
 using NUnit.Framework;
-
-
 
 [TestFixture]
 
@@ -84,13 +74,9 @@ internal sealed class RuntimeJsonSerializerTests
 
         };
 
-
-
         var json = RuntimeJsonSerializer.Serialize(snapshot);
 
         var restored = RuntimeJsonSerializer.Deserialize(json);
-
-
 
         Assert.That(restored, Is.Not.Null);
 
@@ -117,6 +103,5 @@ internal sealed class RuntimeJsonSerializerTests
         Assert.That(restored.LocomotiveFleet[0].FunctionLabels, Is.EqualTo(new[] { "Directional headlight change" }));
 
     }
-
 }
 

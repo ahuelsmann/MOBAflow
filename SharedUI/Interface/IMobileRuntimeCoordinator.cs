@@ -23,6 +23,11 @@ public interface IMobileRuntimeCoordinator : IRuntimeCommandGateway
     void SetMobaflowSessionActive(bool isActive);
 
     /// <summary>
+    /// Gets whether the handset has an active direct Z21 UDP connection.
+    /// </summary>
+    bool IsLocalZ21Connected { get; }
+
+    /// <summary>
     /// Updates local Z21 connection state for fallback command routing.
     /// </summary>
     void SetLocalZ21Connected(bool isConnected);

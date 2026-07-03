@@ -100,6 +100,55 @@ internal sealed class RuntimeSnapshotCacheTests
     }
 
     [Test]
+    public void Set_ReplacesStaleSignalBoxElements_WhenIncomingProjectChanges()
+    {
+        var cache = new RuntimeSnapshotCache();
+        var staleId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+        var currentId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+
+        cache.Set(RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot
+        {
+            IsConnected = true,
+            SignalBoxElements =
+            [
+                new SignalBoxElementRuntimeSnapshot
+                {
+                    ElementId = staleId,
+                    Name = "Cached Signal",
+                    Kind = SignalBoxElementKind.Signal,
+                    X = 0,
+                    Y = 0
+                }
+            ]
+        }), isConnected: true);
+
+        cache.Set(RuntimeJsonSerializer.Serialize(new MobaRuntimeSnapshot
+        {
+            IsConnected = true,
+            SignalBoxElements =
+            [
+                new SignalBoxElementRuntimeSnapshot
+                {
+                    ElementId = currentId,
+                    Name = "G2HBFA1",
+                    Kind = SignalBoxElementKind.Signal,
+                    X = 6,
+                    Y = 4
+                }
+            ]
+        }), isConnected: true);
+
+        Assert.That(cache.TryGet(out var entry), Is.True);
+        var restored = RuntimeJsonSerializer.Deserialize(entry.Json);
+        Assert.Multiple(() =>
+        {
+            Assert.That(restored!.SignalBoxElements, Has.Count.EqualTo(1));
+            Assert.That(restored.SignalBoxElements[0].ElementId, Is.EqualTo(currentId));
+            Assert.That(restored.SignalBoxElements[0].Name, Is.EqualTo("G2HBFA1"));
+        });
+    }
+
+    [Test]
     public void Set_PreservesLocomotiveFleet_WhenIncomingSnapshotOmitsIt()
     {
         var cache = new RuntimeSnapshotCache();

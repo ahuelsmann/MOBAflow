@@ -15,6 +15,8 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 
+using Moba.WinUI.View;
+
 using Service;
 
 using SharedUI.ViewModel;
@@ -414,8 +416,8 @@ public sealed partial class SignalBoxPropertiesControl
     {
         if (SelectedElement is not SbSignal sig) return;
 
-        var accentBrush = (Brush)Application.Current.Resources["AccentFillColorDefaultBrush"];
-        var normalBrush = (Brush)Application.Current.Resources["SubtleFillColorSecondaryBrush"];
+        var accentBrush = ThemeResourceResolver.ResolveBrush(this, "AccentFillColorDefaultBrush", Microsoft.UI.Colors.Blue);
+        var normalBrush = ThemeResourceResolver.ResolveBrush(this, "SubtleFillColorSecondaryBrush", Microsoft.UI.Colors.Gray);
 
         foreach (var (button, aspect) in EnumerateAspectButtons())
         {
@@ -823,5 +825,4 @@ public sealed partial class SignalBoxPropertiesControl
                 break;
         }
     }
-
 }

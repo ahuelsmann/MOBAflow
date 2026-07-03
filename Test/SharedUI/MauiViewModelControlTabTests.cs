@@ -1,14 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-
-
 using Microsoft.Extensions.Logging.Abstractions;
 
-
-
 using Moba.Backend.Interface;
-
-
 
 using Moba.Common.Configuration;
 
@@ -18,31 +12,17 @@ using Moba.Common.Events;
 
 using Moba.Common.Runtime;
 
-
-
 using Moba.Domain;
-
-
 
 using Moba.SharedUI.Interface;
 
-
-
 using Moba.SharedUI.Service;
-
-
 
 using Moba.SharedUI.ViewModel;
 
-
-
 using Moq;
 
-
-
 namespace Moba.Test.SharedUI;
-
-
 
 [TestFixture]
 
@@ -82,27 +62,19 @@ internal sealed class MauiViewModelControlTabTests
 
         });
 
-
-
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
 
         var trainControl = CreateTrainControlViewModel(eventBus);
 
         var viewModel = CreateViewModel(mobaRuntime: runtimeMock.Object, eventBus: eventBus);
 
-
-
         viewModel.SetControlTabActive(true);
-
-
 
         Assert.That(trainControl.HasProjectLocomotives, Is.True);
 
         Assert.That(trainControl.ProjectLocomotives[0].Name, Is.EqualTo("BR 110 Verkehrsrot"));
 
     }
-
-
 
     [Test]
 
@@ -136,27 +108,19 @@ internal sealed class MauiViewModelControlTabTests
 
         });
 
-
-
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
 
         var trainControl = CreateTrainControlViewModel(eventBus);
 
         var viewModel = CreateViewModel(mobaRuntime: runtimeMock.Object, eventBus: eventBus);
 
-
-
         viewModel.SetControlTabActive(true);
-
-
 
         Assert.That(trainControl.HasProjectLocomotives, Is.True);
 
         Assert.That(trainControl.ProjectLocomotives[0].Name, Is.EqualTo("BR 211"));
 
     }
-
-
 
     [Test]
 
@@ -192,8 +156,6 @@ internal sealed class MauiViewModelControlTabTests
 
         };
 
-
-
         var projectContext = new MobileSolutionContext();
 
         projectContext.ApplySolution(solution, "myMOBA");
@@ -204,11 +166,7 @@ internal sealed class MauiViewModelControlTabTests
 
         var viewModel = CreateViewModel(projectContext, eventBus: eventBus);
 
-
-
         viewModel.SetControlTabActive(true);
-
-
 
         Assert.That(trainControl.HasProjectLocomotives, Is.True);
 
@@ -217,8 +175,6 @@ internal sealed class MauiViewModelControlTabTests
         Assert.That(trainControl.ProjectLocomotives[0].Name, Is.EqualTo("BR 110 Verkehrsrot"));
 
     }
-
-
 
     [Test]
 
@@ -233,8 +189,6 @@ internal sealed class MauiViewModelControlTabTests
         var trainControl = CreateTrainControlViewModel(eventBus, projectContext);
 
         var viewModel = CreateViewModel(projectContext, eventBus: eventBus);
-
-
 
         var solution = new Solution
 
@@ -258,23 +212,17 @@ internal sealed class MauiViewModelControlTabTests
 
         };
 
-
-
         projectContext.ApplySolution(solution, "myMOBA");
 
         eventBus.Publish(new SolutionSyncedEvent(DateTimeOffset.UtcNow, solution.Name, "myMOBA"));
 
         viewModel.SetControlTabActive(true);
 
-
-
         Assert.That(trainControl.HasProjectLocomotives, Is.True);
 
         Assert.That(trainControl.ProjectLocomotives[0].Name, Is.EqualTo("BR 218"));
 
     }
-
-
 
     [Test]
 
@@ -289,8 +237,6 @@ internal sealed class MauiViewModelControlTabTests
         var viewModel = CreateViewModel(eventBus: eventBus);
 
         viewModel.SetControlTabActive(true);
-
-
 
         var fleet =
 
@@ -309,28 +255,19 @@ internal sealed class MauiViewModelControlTabTests
                     DigitalAddress = 7
 
                 }
-
             };
-
-
 
         eventBus.Publish(new LocomotiveFleetUpdatedEvent(fleet));
 
         Assert.That(trainControl.ProjectLocomotives, Has.Count.EqualTo(1));
 
-
-
         eventBus.Publish(new LocomotiveFleetUpdatedEvent([]));
-
-
 
         Assert.That(trainControl.ProjectLocomotives, Has.Count.EqualTo(1));
 
         Assert.That(trainControl.ProjectLocomotives[0].Name, Is.EqualTo("BR 110 Verkehrsrot"));
 
     }
-
-
 
     [Test]
 
@@ -351,8 +288,6 @@ internal sealed class MauiViewModelControlTabTests
             runtimeHubRemoteClient: runtimeHubMock.Object);
 
         viewModel.SetControlTabActive(true);
-
-
 
         eventBus.Publish(new RemoteRuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
 
@@ -378,15 +313,101 @@ internal sealed class MauiViewModelControlTabTests
 
         }));
 
-
-
         Assert.That(trainControl.HasProjectLocomotives, Is.True);
 
         Assert.That(trainControl.ProjectLocomotives[0].Name, Is.EqualTo("BR 218"));
 
     }
 
+    [Test]
 
+    public void RemoteSnapshot_DoesNotReplaceProjectFleet_WhenRemoteFleetIsIncomplete()
+
+    {
+
+        var br110Id = Guid.Parse("bb15c10a-5b78-451f-8f2f-2d4e3efa74af");
+
+        var br211Id = Guid.Parse("f8a91b2c-3d4e-5f60-a211-279170442317");
+
+        var projectContext = new MobileSolutionContext();
+
+        projectContext.ApplySolution(new Solution
+
+        {
+
+            Projects =
+
+            [
+
+                new Project
+
+                {
+
+                    Name = "myMOBA",
+
+                    Locomotives =
+
+                    [
+
+                        new Locomotive { Id = br110Id, Name = "BR 110 Verkehrsrot", DigitalAddress = 7 },
+
+                        new Locomotive { Id = br211Id, Name = "BR 211", DigitalAddress = 211 }
+
+                    ]
+
+                }
+
+            ]
+
+        }, "myMOBA");
+
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+
+        var trainControl = CreateTrainControlViewModel(eventBus, projectContext);
+
+        var viewModel = CreateViewModel(projectContext, eventBus: eventBus);
+
+        viewModel.SetControlTabActive(true);
+
+        eventBus.Publish(new RemoteRuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
+
+        {
+
+            LocomotiveFleet =
+
+            [
+
+                new LocomotiveFleetSnapshot
+
+                {
+
+                    LocomotiveId = br110Id,
+
+                    Name = "BR 110 Verkehrsrot",
+
+                    DigitalAddress = 7,
+
+                    PhotoPath = "photos/latest/stale.jpg"
+
+                }
+
+            ]
+
+        }));
+
+        Assert.Multiple(() =>
+
+        {
+
+            Assert.That(trainControl.ProjectLocomotives, Has.Count.EqualTo(2));
+
+            Assert.That(trainControl.ProjectLocomotives[0].Name, Is.EqualTo("BR 110 Verkehrsrot"));
+
+            Assert.That(trainControl.ProjectLocomotives[1].Name, Is.EqualTo("BR 211"));
+
+        });
+
+    }
 
     [Test]
 
@@ -403,8 +424,6 @@ internal sealed class MauiViewModelControlTabTests
         var viewModel = CreateViewModel(eventBus: eventBus);
 
         viewModel.SetControlTabActive(true);
-
-
 
         eventBus.Publish(new LocomotiveFleetUpdatedEvent(
 
@@ -424,11 +443,7 @@ internal sealed class MauiViewModelControlTabTests
 
         ]));
 
-
-
         var originalInstance = trainControl.ProjectLocomotives[0];
-
-
 
         eventBus.Publish(new LocomotiveFleetUpdatedEvent(
 
@@ -448,8 +463,6 @@ internal sealed class MauiViewModelControlTabTests
 
         ]));
 
-
-
         Assert.That(trainControl.ProjectLocomotives, Has.Count.EqualTo(1));
 
         Assert.That(trainControl.ProjectLocomotives[0], Is.SameAs(originalInstance));
@@ -457,8 +470,6 @@ internal sealed class MauiViewModelControlTabTests
         Assert.That(trainControl.ProjectLocomotives[0].Name, Is.EqualTo("BR 110 Ocean Blue"));
 
     }
-
-
 
     [Test]
 
@@ -496,19 +507,13 @@ internal sealed class MauiViewModelControlTabTests
 
         Assert.That(trainControl.HasProjectLocomotives, Is.False);
 
-
-
         viewModel.SetControlTabActive(true);
-
-
 
         Assert.That(trainControl.HasProjectLocomotives, Is.True);
 
         Assert.That(trainControl.ProjectLocomotives[0].Name, Is.EqualTo("BR 218"));
 
     }
-
-
 
     [Test]
 
@@ -528,8 +533,6 @@ internal sealed class MauiViewModelControlTabTests
 
         coordinator.SetMobaflowSessionActive(true);
 
-
-
         var trainControl = CreateTrainControlViewModel(eventBus, projectContext);
 
         var viewModel = CreateViewModel(
@@ -539,8 +542,6 @@ internal sealed class MauiViewModelControlTabTests
             eventBus: eventBus,
 
             mobileRuntimeCoordinator: coordinator);
-
-
 
         var solution = new Solution
 
@@ -564,15 +565,11 @@ internal sealed class MauiViewModelControlTabTests
 
         };
 
-
-
         projectContext.ApplySolution(solution, "myMOBA");
 
         eventBus.Publish(new SolutionSyncedEvent(DateTimeOffset.UtcNow, solution.Name, "myMOBA"));
 
         viewModel.SetControlTabActive(true);
-
-
 
         Assert.That(trainControl.HasProjectLocomotives, Is.True);
 
@@ -580,7 +577,267 @@ internal sealed class MauiViewModelControlTabTests
 
     }
 
+    [Test]
 
+    public void SetControlTabActive_PrefersProjectFleet_WhenRemoteSessionAndStaleFleetCacheExists()
+
+    {
+
+        var br110Id = Guid.Parse("bb15c10a-5b78-451f-8f2f-2d4e3efa74af");
+
+        var br211Id = Guid.Parse("f8a91b2c-3d4e-5f60-a211-279170442317");
+
+        var projectContext = new MobileSolutionContext();
+
+        projectContext.ApplySolution(new Solution
+
+        {
+
+            Projects =
+
+            [
+
+                new Project
+
+                {
+
+                    Name = "myMOBA",
+
+                    Locomotives =
+
+                    [
+
+                        new Locomotive
+
+                        {
+
+                            Id = br110Id,
+
+                            Name = "BR 110 Verkehrsrot",
+
+                            DigitalAddress = 7,
+
+                            PhotoPath = "photos/locomotives/bb15c10a-5b78-451f-8f2f-2d4e3efa74af.jpg"
+
+                        },
+
+                        new Locomotive
+
+                        {
+
+                            Id = br211Id,
+
+                            Name = "BR 211",
+
+                            DigitalAddress = 211,
+
+                            PhotoPath = "photos/locomotives/f8a91b2c-3d4e-5f60-a211-279170442317.jpg"
+
+                        }
+
+                    ]
+
+                }
+
+            ]
+
+        }, "myMOBA");
+
+        var coordinator = new MobileRuntimeCoordinator(
+
+            new Mock<IMobaRuntime>().Object,
+
+            new Mock<IRuntimeHubRemoteClient>().Object);
+
+        coordinator.SetMobaflowSessionActive(true);
+
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+
+        var trainControl = CreateTrainControlViewModel(eventBus, projectContext);
+
+        var viewModel = CreateViewModel(projectContext, eventBus: eventBus, mobileRuntimeCoordinator: coordinator);
+
+        viewModel.RestoreCachedLocomotiveFleet(
+
+        [
+
+            new LocomotiveFleetSnapshot
+
+            {
+
+                LocomotiveId = br110Id,
+
+                Name = "BR 110 Verkehrsrot",
+
+                DigitalAddress = 7,
+
+                PhotoPath = "photos/latest/stale.jpg"
+
+            }
+
+        ]);
+
+        viewModel.SetControlTabActive(true);
+
+        Assert.Multiple(() =>
+
+        {
+
+            Assert.That(trainControl.ProjectLocomotives, Has.Count.EqualTo(2));
+
+            Assert.That(trainControl.ProjectLocomotives[0].Name, Is.EqualTo("BR 110 Verkehrsrot"));
+
+            Assert.That(trainControl.ProjectLocomotives[0].PhotoPath, Is.EqualTo("photos/locomotives/bb15c10a-5b78-451f-8f2f-2d4e3efa74af.jpg"));
+
+            Assert.That(trainControl.ProjectLocomotives[1].Name, Is.EqualTo("BR 211"));
+
+        });
+
+    }
+
+    [Test]
+
+    public void RemoteSnapshot_ReplacesStaleProjectPhotos_WhenPreferRemoteRuntime()
+
+    {
+
+        var br110Id = Guid.Parse("bb15c10a-5b78-451f-8f2f-2d4e3efa74af");
+
+        var br211Id = Guid.Parse("f8a91b2c-3d4e-5f60-a211-279170442317");
+
+        var projectContext = new MobileSolutionContext();
+
+        projectContext.ApplySolution(new Solution
+
+        {
+
+            Projects =
+
+            [
+
+                new Project
+
+                {
+
+                    Name = "myMOBA",
+
+                    Locomotives =
+
+                    [
+
+                        new Locomotive
+
+                        {
+
+                            Id = br110Id,
+
+                            Name = "BR 110 Verkehrsrot",
+
+                            DigitalAddress = 7,
+
+                            PhotoPath = "photos/locomotives/stale-project.jpg"
+
+                        },
+
+                        new Locomotive
+
+                        {
+
+                            Id = br211Id,
+
+                            Name = "BR 211",
+
+                            DigitalAddress = 211,
+
+                            PhotoPath = "photos/locomotives/stale-project-211.jpg"
+
+                        }
+
+                    ]
+
+                }
+
+            ]
+
+        }, "myMOBA");
+
+        var coordinator = new MobileRuntimeCoordinator(
+
+            new Mock<IMobaRuntime>().Object,
+
+            new Mock<IRuntimeHubRemoteClient>().Object);
+
+        coordinator.SetMobaflowSessionActive(true);
+
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+
+        var trainControl = CreateTrainControlViewModel(eventBus, projectContext);
+
+        var viewModel = CreateViewModel(
+
+            projectContext,
+
+            eventBus: eventBus,
+
+            runtimeHubRemoteClient: new Mock<IRuntimeHubRemoteClient>().Object,
+
+            mobileRuntimeCoordinator: coordinator);
+
+        viewModel.SetControlTabActive(true);
+
+        eventBus.Publish(new RemoteRuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
+
+        {
+
+            LocomotiveFleet =
+
+            [
+
+                new LocomotiveFleetSnapshot
+
+                {
+
+                    LocomotiveId = br110Id,
+
+                    Name = "BR 110 Verkehrsrot",
+
+                    DigitalAddress = 7,
+
+                    PhotoPath = "photos/locomotives/bb15c10a-5b78-451f-8f2f-2d4e3efa74af.jpg"
+
+                },
+
+                new LocomotiveFleetSnapshot
+
+                {
+
+                    LocomotiveId = br211Id,
+
+                    Name = "BR 211",
+
+                    DigitalAddress = 211,
+
+                    PhotoPath = "photos/locomotives/f8a91b2c-3d4e-5f60-a211-279170442317.jpg"
+
+                }
+
+            ]
+
+        }));
+
+        Assert.Multiple(() =>
+
+        {
+
+            Assert.That(trainControl.ProjectLocomotives, Has.Count.EqualTo(2));
+
+            Assert.That(trainControl.ProjectLocomotives[0].PhotoPath, Is.EqualTo("photos/locomotives/bb15c10a-5b78-451f-8f2f-2d4e3efa74af.jpg"));
+
+            Assert.That(trainControl.ProjectLocomotives[1].PhotoPath, Is.EqualTo("photos/locomotives/f8a91b2c-3d4e-5f60-a211-279170442317.jpg"));
+
+        });
+
+    }
 
     [Test]
 
@@ -628,8 +885,6 @@ internal sealed class MauiViewModelControlTabTests
 
         }, "myMOBA");
 
-
-
         var coordinator = new MobileRuntimeCoordinator(
 
             new Mock<IMobaRuntime>().Object,
@@ -638,8 +893,6 @@ internal sealed class MauiViewModelControlTabTests
 
         coordinator.SetMobaflowSessionActive(true);
 
-
-
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
 
         var trainControl = CreateTrainControlViewModel(eventBus, projectContext);
@@ -647,8 +900,6 @@ internal sealed class MauiViewModelControlTabTests
         var viewModel = CreateViewModel(projectContext, eventBus: eventBus, mobileRuntimeCoordinator: coordinator);
 
         viewModel.SetControlTabActive(true);
-
-
 
         Assert.Multiple(() =>
 
@@ -666,8 +917,6 @@ internal sealed class MauiViewModelControlTabTests
 
     }
 
-
-
     private static TrainControlViewModel CreateTrainControlViewModel(
 
         EventBus eventBus,
@@ -684,8 +933,6 @@ internal sealed class MauiViewModelControlTabTests
 
         settingsMock.Setup(service => service.GetSettings()).Returns(new AppSettings());
 
-
-
         return new TrainControlViewModel(
 
             runtimeMock.Object,
@@ -701,8 +948,6 @@ internal sealed class MauiViewModelControlTabTests
             options: new TrainControlViewModelOptions { HybridRuntimeSnapshots = true });
 
     }
-
-
 
     private static MauiViewModel CreateViewModel(
 
@@ -728,8 +973,6 @@ internal sealed class MauiViewModelControlTabTests
 
         }
 
-
-
         var uiDispatcherMock = new Mock<IUiDispatcher>();
 
         uiDispatcherMock
@@ -743,8 +986,6 @@ internal sealed class MauiViewModelControlTabTests
             .Setup(dispatcher => dispatcher.InvokeOnUiLowPriority(It.IsAny<Action>()))
 
             .Callback<Action>(action => action());
-
-
 
         return new MauiViewModel(
 
@@ -777,7 +1018,5 @@ internal sealed class MauiViewModelControlTabTests
             mobileRuntimeCoordinator: mobileRuntimeCoordinator);
 
     }
-
 }
-
 

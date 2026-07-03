@@ -1,5 +1,6 @@
 <Page
     x:Class="Moba.WinUI.View.OverviewPage"
+    x:Name="PageRoot"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:common="using:Moba.Common.Events"
@@ -46,7 +47,7 @@
                             Width="12"
                             Height="12"
                             VerticalAlignment="Center"
-                            Fill="{x:Bind ViewModel.RestApiIsReachable, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}}" />
+                            Fill="{x:Bind ViewModel.RestApiIsReachable, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}, ConverterParameter={Binding ElementName=PageRoot}}" />
                         <TextBlock
                             VerticalAlignment="Center"
                             Style="{StaticResource BodyTextBlockStyle}"
@@ -59,7 +60,7 @@
                                 Width="12"
                                 Height="12"
                                 VerticalAlignment="Center"
-                                Fill="{x:Bind ViewModel.SolutionLoadedIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}}" />
+                                Fill="{x:Bind ViewModel.SolutionLoadedIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}, ConverterParameter={Binding ElementName=PageRoot}}" />
                             <TextBlock VerticalAlignment="Center" Style="{StaticResource BodyTextBlockStyle}">
                                 <Run Text="Solution loaded: " />
                                 <Run Text="{x:Bind ViewModel.SolutionLoadedStatusText, Mode=OneWay}" />
@@ -70,7 +71,7 @@
                                 Width="12"
                                 Height="12"
                                 VerticalAlignment="Center"
-                                Fill="{x:Bind ViewModel.RuntimeHubHostIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}}" />
+                                Fill="{x:Bind ViewModel.RuntimeHubHostIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}, ConverterParameter={Binding ElementName=PageRoot}}" />
                             <TextBlock VerticalAlignment="Center" Style="{StaticResource BodyTextBlockStyle}">
                                 <Run Text="RuntimeHub host: " />
                                 <Run Text="{x:Bind ViewModel.RuntimeHubHostStatusText, Mode=OneWay}" />
@@ -81,7 +82,7 @@
                                 Width="12"
                                 Height="12"
                                 VerticalAlignment="Center"
-                                Fill="{x:Bind ViewModel.SolutionSyncIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}}" />
+                                Fill="{x:Bind ViewModel.SolutionSyncIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}, ConverterParameter={Binding ElementName=PageRoot}}" />
                             <TextBlock VerticalAlignment="Center" Style="{StaticResource BodyTextBlockStyle}">
                                 <Run Text="Solution sync: " />
                                 <Run Text="{x:Bind ViewModel.SolutionSyncStatusText, Mode=OneWay}" />
@@ -92,7 +93,7 @@
                                 Width="12"
                                 Height="12"
                                 VerticalAlignment="Center"
-                                Fill="{x:Bind ViewModel.RuntimeSnapshotIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}}" />
+                                Fill="{x:Bind ViewModel.RuntimeSnapshotIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}, ConverterParameter={Binding ElementName=PageRoot}}" />
                             <TextBlock VerticalAlignment="Center" Style="{StaticResource BodyTextBlockStyle}">
                                 <Run Text="Runtime snapshot: " />
                                 <Run Text="{x:Bind ViewModel.RuntimeSnapshotStatusText, Mode=OneWay}" />
@@ -103,7 +104,7 @@
                                 Width="12"
                                 Height="12"
                                 VerticalAlignment="Center"
-                                Fill="{x:Bind ViewModel.RestCacheIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}}" />
+                                Fill="{x:Bind ViewModel.RestCacheIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}, ConverterParameter={Binding ElementName=PageRoot}}" />
                             <TextBlock VerticalAlignment="Center" Style="{StaticResource BodyTextBlockStyle}">
                                 <Run Text="REST cache: " />
                                 <Run Text="{x:Bind ViewModel.RestCacheStatusText, Mode=OneWay}" />
@@ -114,7 +115,7 @@
                                 Width="12"
                                 Height="12"
                                 VerticalAlignment="Center"
-                                Fill="{x:Bind ViewModel.HubBroadcastIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}}" />
+                                Fill="{x:Bind ViewModel.HubBroadcastIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}, ConverterParameter={Binding ElementName=PageRoot}}" />
                             <TextBlock VerticalAlignment="Center" Style="{StaticResource BodyTextBlockStyle}">
                                 <Run Text="Hub broadcast: " />
                                 <Run Text="{x:Bind ViewModel.HubBroadcastStatusText, Mode=OneWay}" />
@@ -125,7 +126,7 @@
                                 Width="12"
                                 Height="12"
                                 VerticalAlignment="Center"
-                                Fill="{x:Bind ViewModel.RemoteSnapshotIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}}" />
+                                Fill="{x:Bind ViewModel.RemoteSnapshotIsHealthy, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}, ConverterParameter={Binding ElementName=PageRoot}}" />
                             <TextBlock VerticalAlignment="Center" Style="{StaticResource BodyTextBlockStyle}">
                                 <Run Text="Remote snapshot: " />
                                 <Run Text="{x:Bind ViewModel.RemoteSnapshotStatusText, Mode=OneWay}" />
@@ -428,14 +429,14 @@
                                     <TextBlock
                                         Grid.Row="0"
                                         FontWeight="Bold"
-                                        Foreground="White"
+                                        Foreground="{ThemeResource MobaFeedbackCardForegroundBrush}"
                                         Style="{StaticResource SubtitleTextBlockStyle}"
                                         Text="{x:Bind DisplayName, Mode=OneWay}" />
 
                                     <!--  Subtitle: InPort number  -->
                                     <TextBlock
                                         Grid.Row="1"
-                                        Foreground="White"
+                                        Foreground="{ThemeResource MobaFeedbackCardForegroundBrush}"
                                         Opacity="0.8"
                                         Style="{StaticResource CaptionTextBlockStyle}">
                                         <Run Text="InPort " />
@@ -445,7 +446,7 @@
                                     <TextBlock
                                         Grid.Row="2"
                                         Margin="0,4,0,0"
-                                        Foreground="White"
+                                        Foreground="{ThemeResource MobaFeedbackCardForegroundBrush}"
                                         Style="{StaticResource BodyTextBlockStyle}"
                                         Text="{x:Bind LapCountFormatted, Mode=OneWay}" />
 
@@ -469,12 +470,12 @@
                                             Spacing="4">
                                             <FontIcon
                                                 FontSize="12"
-                                                Foreground="White"
+                                                Foreground="{ThemeResource MobaFeedbackCardForegroundBrush}"
                                                 Glyph="&#xE916;" />
-                                            <TextBlock Foreground="White" Text="Last lap:" />
+                                            <TextBlock Foreground="{ThemeResource MobaFeedbackCardForegroundBrush}" Text="Last lap:" />
                                             <TextBlock
                                                 FontWeight="SemiBold"
-                                                Foreground="White"
+                                                Foreground="{ThemeResource MobaFeedbackCardForegroundBrush}"
                                                 Text="{x:Bind LastLapTimeFormatted, Mode=OneWay}" />
                                         </StackPanel>
 
@@ -484,12 +485,12 @@
                                             Spacing="4">
                                             <FontIcon
                                                 FontSize="12"
-                                                Foreground="White"
+                                                Foreground="{ThemeResource MobaFeedbackCardForegroundBrush}"
                                                 Glyph="&#xE890;" />
-                                            <TextBlock Foreground="White" Text="Last seen:" />
+                                            <TextBlock Foreground="{ThemeResource MobaFeedbackCardForegroundBrush}" Text="Last seen:" />
                                             <TextBlock
                                                 FontWeight="SemiBold"
-                                                Foreground="White"
+                                                Foreground="{ThemeResource MobaFeedbackCardForegroundBrush}"
                                                 Text="{x:Bind LastFeedbackTimeFormatted, Mode=OneWay}" />
                                         </StackPanel>
                                     </Grid>

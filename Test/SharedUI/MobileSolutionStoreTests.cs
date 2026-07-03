@@ -10,11 +10,7 @@ using Moba.SharedUI.Interface;
 
 using Moba.SharedUI.Service;
 
-
-
 namespace Moba.Test.SharedUI;
-
-
 
 [TestFixture]
 
@@ -23,8 +19,6 @@ internal sealed class MobileSolutionStoreTests
 {
 
     private string _tempDirectory = null!;
-
-
 
     [SetUp]
 
@@ -35,8 +29,6 @@ internal sealed class MobileSolutionStoreTests
         _tempDirectory = Path.Combine(Path.GetTempPath(), "mobasmart-cache-" + Guid.NewGuid().ToString("N"));
 
     }
-
-
 
     [TearDown]
 
@@ -51,10 +43,7 @@ internal sealed class MobileSolutionStoreTests
             Directory.Delete(_tempDirectory, recursive: true);
 
         }
-
     }
-
-
 
     [Test]
 
@@ -91,10 +80,7 @@ internal sealed class MobileSolutionStoreTests
                 SignalAspect = SignalAspect.Hp0
 
             }
-
         };
-
-
 
         await store.SaveAsync(solution, meta);
 
@@ -113,8 +99,6 @@ internal sealed class MobileSolutionStoreTests
         await store.SaveLocomotiveFleetAsync(locomotiveFleet);
 
         var loaded = await store.TryLoadAsync();
-
-
 
         Assert.That(loaded, Is.Not.Null);
 
@@ -142,8 +126,6 @@ internal sealed class MobileSolutionStoreTests
 
     }
 
-
-
     [Test]
 
     public async Task TryLoadAsync_ReturnsNull_WhenSolutionJsonIsInvalid()
@@ -160,23 +142,15 @@ internal sealed class MobileSolutionStoreTests
 
             """{"updatedAt":"2026-01-01T00:00:00Z","solutionName":"x","activeProjectName":"y"}""");
 
-
-
         var loaded = await CreateStore().TryLoadAsync();
-
-
 
         Assert.That(loaded, Is.Null);
 
     }
 
-
-
     private MobileSolutionStore CreateStore() =>
 
         new(_tempDirectory, NullLogger<MobileSolutionStore>.Instance);
-
-
 
     private static Solution CreateSolution() =>
 

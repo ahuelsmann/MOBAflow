@@ -2,26 +2,16 @@
 
 namespace Moba.MOBApi.Controllers;
 
-
-
 using Common.Path;
 
-
-
 using Hubs;
-
-
 
 using Microsoft.AspNetCore.Mvc;
 
 using Microsoft.AspNetCore.SignalR;
 
-
-
 /// <summary>
-
 /// REST API for photo health check and upload (MAUI compatibility).
-
 /// </summary>
 
 [ApiController]
@@ -36,11 +26,7 @@ public class PhotosController : ControllerBase
 
     private const long MaxFileSize = 10 * 1024 * 1024; // 10 MB
 
-
-
     private readonly IHubContext<PhotoHub>? _hubContext;
-
-
 
     public PhotosController(IHubContext<PhotoHub>? hubContext = null)
 
@@ -50,12 +36,8 @@ public class PhotosController : ControllerBase
 
     }
 
-
-
     /// <summary>
-
     /// Health check endpoint for MAUI app. Returns OK when REST API is running.
-
     /// </summary>
 
     [HttpGet("health")]
@@ -68,12 +50,8 @@ public class PhotosController : ControllerBase
 
     }
 
-
-
     /// <summary>
-
     /// Serves a photo file by relative storage path (e.g. photos/locomotives/{id}.jpg).
-
     /// </summary>
 
     [HttpGet("file")]
@@ -90,8 +68,6 @@ public class PhotosController : ControllerBase
 
         }
 
-
-
         var normalized = PhotoPathHelper.NormalizeStoredRelativePath(path);
 
         if (string.IsNullOrWhiteSpace(normalized))
@@ -101,8 +77,6 @@ public class PhotosController : ControllerBase
             return BadRequest(new { error = "Invalid path" });
 
         }
-
-
 
         var fullPath = PhotoPathHelper.TryResolveExistingPhotoFullPath(
             Environment.GetEnvironmentVariable("MOBAFLOW_PHOTOS_PATH"),
@@ -114,8 +88,6 @@ public class PhotosController : ControllerBase
             return NotFound();
 
         }
-
-
 
         var extension = Path.GetExtension(fullPath).ToLowerInvariant();
 
@@ -137,18 +109,12 @@ public class PhotosController : ControllerBase
 
         };
 
-
-
         return PhysicalFile(fullPath, contentType);
 
     }
 
-
-
     /// <summary>
-
     /// Upload a photo (e.g. from MAUI). Saves to MOBAflow Photos folder under My Documents.
-
     /// </summary>
 
     [HttpPost("upload")]
@@ -171,15 +137,11 @@ public class PhotosController : ControllerBase
 
             return BadRequest(new { error = "No file uploaded" });
 
-
-
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
 
         if (!AllowedExtensions.Contains(extension))
 
             return BadRequest(new { error = $"Invalid type. Allowed: {string.Join(", ", AllowedExtensions)}" });
-
-
 
         var baseDir = GetPhotoBaseDir();
 
@@ -207,8 +169,6 @@ public class PhotosController : ControllerBase
 
         }
 
-
-
         var categoryDir = Path.GetDirectoryName(fullPath);
 
         if (!string.IsNullOrWhiteSpace(categoryDir))
@@ -219,13 +179,9 @@ public class PhotosController : ControllerBase
 
         }
 
-
-
         await using (var stream = System.IO.File.Create(fullPath))
 
             await file.CopyToAsync(stream, cancellationToken);
-
-
 
         if (_hubContext != null)
 
@@ -246,16 +202,11 @@ public class PhotosController : ControllerBase
                 // Ignore if no clients connected
 
             }
-
         }
-
-
 
         return Ok(new { success = true, photoPath = relativePath });
 
     }
-
-
 
     private static string GetPhotoBaseDir()
 
@@ -264,6 +215,5 @@ public class PhotosController : ControllerBase
         return PhotoPathHelper.ResolvePhotoBaseDirectory(Environment.GetEnvironmentVariable("MOBAFLOW_PHOTOS_PATH"));
 
     }
-
 }
 

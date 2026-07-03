@@ -155,20 +155,23 @@ public sealed partial class LocomotiveViewModel : ObservableObject, IViewModelWr
         get => Model.PhotoPath;
         set
         {
-            // Always update photoVersion even if path hasn't changed (e.g., file overwrite)
             if (SetProperty(Model.PhotoPath, value, Model, (m, v) => m.PhotoPath = v))
             {
                 _photoVersion++;
                 OnPropertyChanged(nameof(PhotoPathWithVersion));
                 OnPropertyChanged(nameof(HasPhoto));
             }
-            else if (value != null)
-            {
-                // Path didn't change but we still want to refresh the image (cache busting)
-                _photoVersion++;
-                OnPropertyChanged(nameof(PhotoPathWithVersion));
-            }
         }
+    }
+
+    /// <summary>
+    /// Forces photo bindings to reload (e.g. after MOBApi endpoint becomes available).
+    /// </summary>
+    public void InvalidatePhotoBinding()
+    {
+        _photoVersion++;
+        OnPropertyChanged(nameof(PhotoPathWithVersion));
+        OnPropertyChanged(nameof(HasPhoto));
     }
 
     /// <summary>
@@ -188,11 +191,37 @@ public sealed partial class LocomotiveViewModel : ObservableObject, IViewModelWr
     private bool _isPickerSelected;
 
     /// <summary>
+    /// Returns true when the view-model already reflects the given fleet snapshot metadata.
+    /// </summary>
+    public bool MatchesFleetSnapshot(LocomotiveFleetSnapshot snapshot)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+
+        return LocomotiveFleetSnapshotComparer.ContentEquals(
+            snapshot,
+            new LocomotiveFleetSnapshot
+            {
+                LocomotiveId = Model.Id,
+                Name = Name,
+                DigitalAddress = DigitalAddress,
+                PhotoPath = Model.PhotoPath,
+                FunctionSymbols = Model.FunctionSymbols,
+                FunctionColors = Model.FunctionColors,
+                FunctionLabels = Model.FunctionLabels
+            });
+    }
+
+    /// <summary>
     /// Applies fleet snapshot metadata without replacing the view-model instance (CollectionView-safe).
     /// </summary>
     public void ApplyFleetSnapshot(LocomotiveFleetSnapshot snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
+
+        if (MatchesFleetSnapshot(snapshot))
+        {
+            return;
+        }
 
         Name = snapshot.Name;
         DigitalAddress = snapshot.DigitalAddress;

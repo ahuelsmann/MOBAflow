@@ -11,7 +11,7 @@
 
     <!-- Fixed F0-F31 rows: no BindableLayout/CollectionView recycling (<=32 keys per DCC loco). -->
     <ScrollView>
-        <VerticalStackLayout Padding="16,12,16,24" Spacing="12">
+        <VerticalStackLayout Padding="16,12,16,80" Spacing="12">
 
             <Border
                 Padding="16"
@@ -28,6 +28,7 @@
                                 Text="{Binding LocomotiveTitle}"
                                 TextColor="{DynamicResource TextPrimary}" />
                             <Label
+                                IsVisible="{Binding StatusMessage, Converter={toolkit:IsStringNotNullOrEmptyConverter}}"
                                 LineBreakMode="TailTruncation"
                                 MaxLines="2"
                                 Style="{DynamicResource BodySmall}"
@@ -43,43 +44,126 @@
 
                     <Label Style="{DynamicResource TitleSmall}" Text="Speed" />
 
-                    <controls:SpeedGaugeView
-                        DisplayKmh="{Binding SpeedKmh}"
-                        Maximum="{Binding MaxSpeedStep}"
-                        SemanticProperties.Description="{Binding SpeedKmh, StringFormat='Current speed {0} kilometers per hour'}"
-                        SpeedSteps="{Binding SpeedSteps}"
-                        VmaxKmh="{Binding SelectedVmax}"
-                        Value="{Binding Speed}" />
+                    <VerticalStackLayout Spacing="16">
+                    <Border
+                        Padding="8,4"
+                        BackgroundColor="Transparent"
+                        HorizontalOptions="Center"
+                        StrokeThickness="0">
+                        <controls:SpeedGaugeView
+                            DisplayKmh="{Binding SpeedKmh}"
+                            GaugeMaxKmh="400"
+                            Maximum="{Binding MaxSpeedStep}"
+                            SpeedSteps="{Binding SpeedSteps}"
+                            VmaxKmh="{Binding SelectedVmax}"
+                            Value="{Binding Speed}" />
+                    </Border>
 
                     <Label
                         HorizontalOptions="Center"
-                        Style="{DynamicResource LabelSmall}"
-                        Text="{Binding Speed, StringFormat='Step {0}'}" />
+                        Style="{DynamicResource BodySmall}"
+                        Text="DCC steps" />
 
-                    <Slider
-                        IsEnabled="{Binding IsSpeedControlEnabled}"
-                        Maximum="{Binding MaxSpeedStep}"
-                        Minimum="0"
-                        Style="{DynamicResource LocomotiveSpeedSliderStyle}"
-                        Value="{Binding Speed, Mode=TwoWay}" />
-
-                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
-                        <Button
-                            Grid.Column="0"
-                            Command="{Binding SetSpeedPresetCommand}"
-                            CommandParameter="0"
-                            Text="0" />
-                        <Button
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                        <Label
+                            FontSize="12"
+                            Text="0"
+                            TextColor="{DynamicResource TextSecondary}"
+                            VerticalOptions="Center" />
+                        <Slider
                             Grid.Column="1"
-                            Command="{Binding SetSpeedPresetCommand}"
-                            CommandParameter="40"
-                            Text="40" />
-                        <Button
+                            IsEnabled="{Binding IsSpeedControlEnabled}"
+                            Maximum="{Binding MaxSpeedStep}"
+                            Minimum="0"
+                            Style="{DynamicResource LocomotiveSpeedSliderStyle}"
+                            Value="{Binding Speed, Mode=TwoWay}" />
+                        <Label
                             Grid.Column="2"
-                            Command="{Binding SetSpeedPresetCommand}"
-                            CommandParameter="80"
-                            Text="80" />
+                            FontSize="12"
+                            Text="{Binding MaxSpeedStep}"
+                            TextColor="{DynamicResource TextSecondary}"
+                            VerticalOptions="Center" />
                     </Grid>
+
+                    <VerticalStackLayout Spacing="4">
+                        <Grid ColumnDefinitions="*,*,*,*,*,*" ColumnSpacing="4">
+                            <Button
+                                Grid.Column="0"
+                                Command="{Binding SetSpeedPresetCommand}"
+                                CommandParameter="0"
+                                Style="{DynamicResource SpeedPresetButton}"
+                                Text="0" />
+                            <Button
+                                Grid.Column="1"
+                                Command="{Binding SetSpeedPresetCommand}"
+                                CommandParameter="20"
+                                Style="{DynamicResource SpeedPresetButton}"
+                                Text="20" />
+                            <Button
+                                Grid.Column="2"
+                                Command="{Binding SetSpeedPresetCommand}"
+                                CommandParameter="40"
+                                Style="{DynamicResource SpeedPresetButton}"
+                                Text="40" />
+                            <Button
+                                Grid.Column="3"
+                                Command="{Binding SetSpeedPresetCommand}"
+                                CommandParameter="60"
+                                Style="{DynamicResource SpeedPresetButton}"
+                                Text="60" />
+                            <Button
+                                Grid.Column="4"
+                                Command="{Binding SetSpeedPresetCommand}"
+                                CommandParameter="80"
+                                Style="{DynamicResource SpeedPresetButton}"
+                                Text="80" />
+                            <Button
+                                Grid.Column="5"
+                                Command="{Binding SetSpeedPresetCommand}"
+                                CommandParameter="100"
+                                Style="{DynamicResource SpeedPresetButton}"
+                                Text="100" />
+                        </Grid>
+                        <Grid ColumnDefinitions="*,*,*,*,*,*" ColumnSpacing="4">
+                            <Button
+                                Grid.Column="0"
+                                Command="{Binding SetSpeedPresetCommand}"
+                                CommandParameter="120"
+                                Style="{DynamicResource SpeedPresetButton}"
+                                Text="120" />
+                            <Button
+                                Grid.Column="1"
+                                Command="{Binding SetSpeedPresetCommand}"
+                                CommandParameter="140"
+                                Style="{DynamicResource SpeedPresetButton}"
+                                Text="140" />
+                            <Button
+                                Grid.Column="2"
+                                Command="{Binding SetSpeedPresetCommand}"
+                                CommandParameter="160"
+                                Style="{DynamicResource SpeedPresetButton}"
+                                Text="160" />
+                            <Button
+                                Grid.Column="3"
+                                Command="{Binding SetSpeedPresetCommand}"
+                                CommandParameter="180"
+                                Style="{DynamicResource SpeedPresetButton}"
+                                Text="180" />
+                            <Button
+                                Grid.Column="4"
+                                Command="{Binding SetSpeedPresetCommand}"
+                                CommandParameter="200"
+                                Style="{DynamicResource SpeedPresetButton}"
+                                Text="200" />
+                            <Button
+                                Grid.Column="5"
+                                Command="{Binding SetSpeedPresetCommand}"
+                                CommandParameter="250"
+                                Style="{DynamicResource SpeedPresetButton}"
+                                Text="250" />
+                        </Grid>
+                    </VerticalStackLayout>
+                    </VerticalStackLayout>
 
                     <Label Style="{DynamicResource TitleSmall}" Text="Direction" />
 
@@ -95,12 +179,6 @@
                     </Grid>
                 </VerticalStackLayout>
             </Border>
-
-            <Button
-                Command="{Binding Source={x:Reference ControlRoot}, Path=ChangeLocomotiveCommand}"
-                HorizontalOptions="Start"
-                Style="{DynamicResource OutlinedButton}"
-                Text="Change locomotive" />
 
             <Grid ColumnDefinitions="*,Auto">
                 <Label

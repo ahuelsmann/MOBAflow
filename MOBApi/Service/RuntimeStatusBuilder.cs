@@ -23,6 +23,8 @@ public static class RuntimeStatusBuilder
             hasHost = hostRegistry.HasHost,
             remoteClientCount = remoteRegistry.Count,
             lastSnapshotBroadcastAt = broadcastMetrics.LastSnapshotBroadcastAt,
+            lastSnapshotPayloadBytes = broadcastMetrics.LastSnapshotPayloadBytes,
+            totalSnapshotBroadcastCount = broadcastMetrics.TotalSnapshotBroadcastCount,
             sessionOperational = hostRegistry.HasHost && isConnected,
             snapshotCache = snapshotCacheInfo
         };

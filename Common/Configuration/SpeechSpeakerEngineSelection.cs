@@ -47,5 +47,4 @@ public static class SpeechSpeakerEngineSelection
         return engineName.Equals(SystemSpeech, StringComparison.OrdinalIgnoreCase)
             || engineName.Equals(LegacySystemDisplayName, StringComparison.OrdinalIgnoreCase);
     }
-
 }

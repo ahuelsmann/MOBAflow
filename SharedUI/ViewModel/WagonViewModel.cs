@@ -149,20 +149,23 @@ public partial class WagonViewModel : ObservableObject, IViewModelWrapper<Wagon>
         get => Model.PhotoPath;
         set
         {
-            // Always update photoVersion even if path hasn't changed (e.g., file overwrite)
             if (SetProperty(Model.PhotoPath, value, Model, (m, v) => m.PhotoPath = v))
             {
                 _photoVersion++;
                 OnPropertyChanged(nameof(PhotoPathWithVersion));
                 OnPropertyChanged(nameof(HasPhoto));
             }
-            else if (value != null)
-            {
-                // Path didn't change but we still want to refresh the image (cache busting)
-                _photoVersion++;
-                OnPropertyChanged(nameof(PhotoPathWithVersion));
-            }
         }
+    }
+
+    /// <summary>
+    /// Forces photo bindings to reload (e.g. after replacing the image file at the same path).
+    /// </summary>
+    public void InvalidatePhotoBinding()
+    {
+        _photoVersion++;
+        OnPropertyChanged(nameof(PhotoPathWithVersion));
+        OnPropertyChanged(nameof(HasPhoto));
     }
 
     /// <summary>

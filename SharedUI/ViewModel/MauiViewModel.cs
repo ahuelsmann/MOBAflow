@@ -57,7 +57,6 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
 
     private const int RestApiReregisterIntervalSeconds = 120;
 
-
     /// <summary>Last time we ran REST API discovery (for re-discovery when unreachable).</summary>
     private DateTime _lastRestApiDiscoverTime = DateTime.MinValue;
 
@@ -67,8 +66,8 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     private const int RestApiRediscoverIntervalSeconds = 25;
     private const int RestApiRediscoverIntervalFirst90Seconds = 10;
     private const int RestApiStartupRetryWindowSeconds = 90;
-    private static readonly TimeSpan RestApiConnectHealthCheckTimeout = TimeSpan.FromSeconds(2);
-    private static readonly int[] RuntimeHubConnectRetryDelaysMs = [0];
+    private static readonly TimeSpan RestApiConnectHealthCheckTimeout = TimeSpan.FromSeconds(4);
+    private static readonly int[] RuntimeHubConnectRetryDelaysMs = [0, 500, 1500, 3000];
 
     private const int Z21EndpointSyncIntervalSeconds = 45;
 
@@ -85,7 +84,6 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     private Task? _restApiHealthCheckTask;
     private bool _isApplyingLoadedSettings;
     private bool _isStopping;
-
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MauiViewModel"/> class for the MAUI mobile client.
@@ -219,12 +217,12 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         _startupDiscoveryTask ??= TryAutoDiscoverEndpointsAsync();
         _restApiHealthCheckTask ??= RestApiHealthCheckLoopAsync();
 
-        if (IsMobaflowConnectionEnabled && HasPairedMobaflowSession())
+        if (IsMobaflowConnectionEnabled && HasStoredMobaflowEndpoint())
         {
             _mobaflowConnectCts = CancellationTokenSource.CreateLinkedTokenSource(_applicationLifetimeCts.Token);
             RunInBackground(
-                ConnectAfterPairingAsync(_mobaflowConnectCts.Token),
-                "Restore paired MOBAflow session on startup");
+                ConnectToStoredEndpointAsync(_mobaflowConnectCts.Token),
+                "Restore MOBAflow session on startup");
         }
 
         _mobaRuntime.SetSystemStatePollingInterval(5);
@@ -243,7 +241,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             await Task.Delay(TimeSpan.FromMilliseconds(500)).ConfigureAwait(false);
 
             Task? restDiscoveryTask = null;
-            if (IsMobaflowConnectionEnabled && !HasPairedMobaflowSession())
+            if (IsMobaflowConnectionEnabled && !HasStoredMobaflowEndpoint())
             {
                 restDiscoveryTask = RestDiscoveryLoopAsync();
 
@@ -297,7 +295,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             }
 
             if (IsMobaflowConnectionEnabled
-                && !HasPairedMobaflowSession()
+                && !HasStoredMobaflowEndpoint()
                 && !IsRestApiReachable
                 && IsConnected
                 && !string.IsNullOrWhiteSpace(Z21IpAddress))
@@ -419,13 +417,26 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private Task RetryRestApiDiscoveryAsync()
     {
-        if (IsMobaflowConnectionEnabled)
+        if (!IsMobaflowConnectionEnabled)
         {
+            IsMobaflowConnectionEnabled = true;
             return Task.CompletedTask;
         }
 
-        IsMobaflowConnectionEnabled = true;
+        RunInBackground(RetryMobaflowDiscoveryCoreAsync(), "Manual MOBAflow discovery retry");
         return Task.CompletedTask;
+    }
+
+    private async Task RetryMobaflowDiscoveryCoreAsync()
+    {
+        _lastRestApiDiscoverTime = DateTime.MinValue;
+        var anchor = !string.IsNullOrWhiteSpace(Z21IpAddress) ? Z21IpAddress.Trim() : null;
+        await DiscoverMobaflowEndpointAsync(fullScan: true, anchor, _applicationLifetimeCts.Token).ConfigureAwait(false);
+        await RefreshRestApiReachableAsync(useConnectTimeout: false).ConfigureAwait(false);
+        if (IsRestApiReachable)
+        {
+            await EnsureRuntimeHubConnectionAsync(true, forceReconnect: true).ConfigureAwait(false);
+        }
     }
 
     private async Task DiscoverRestApiWithAnchorAsync(string? subnetAnchorIp)
@@ -482,9 +493,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
                 RestApiPort = _settings.RestApi.Port;
             }
 
-            RestApiApiKey = _settings.RestApi.ApiKey ?? string.Empty;
-
-            if (HasPairedMobaflowSession() && _settings.RestApi.IsConnectionEnabled)
+            if (HasStoredMobaflowEndpoint() && _settings.RestApi.IsConnectionEnabled)
             {
                 IsMobaflowConnectionEnabled = true;
             }
@@ -524,9 +533,6 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private int _restApiPort = 5001;
 
-    [ObservableProperty]
-    private string _restApiApiKey = string.Empty;
-
     /// <summary>
     /// True when the REST API (WebApp/WinUI) is reachable via HealthCheck.
     /// </summary>
@@ -543,17 +549,6 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     {
         _ = value;
         RunInBackground(RefreshRestApiReachableAsync(), "Refresh REST reachability (port changed)");
-    }
-
-    partial void OnRestApiApiKeyChanged(string value)
-    {
-        if (_isApplyingLoadedSettings)
-        {
-            return;
-        }
-
-        _settings.RestApi.ApiKey = value?.Trim() ?? string.Empty;
-        QueueSaveSettings();
     }
 
     /// <summary>
@@ -632,6 +627,11 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             {
                 if (_settings.RestApi.IsConnectionEnabled)
                 {
+                    if (!IsRestApiReachable)
+                    {
+                        await TryPeriodicRestDiscoveryIfNeededAsync().ConfigureAwait(false);
+                    }
+
                     await RefreshRestApiReachableAsync().ConfigureAwait(false);
                     await MaybeDisableMobaflowConnectionWhenSessionLostAsync().ConfigureAwait(false);
                 }
@@ -664,9 +664,56 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         return TimeSpan.FromSeconds(seconds);
     }
 
-    private Task TryPeriodicRestDiscoveryIfNeededAsync()
+    private async Task TryPeriodicRestDiscoveryIfNeededAsync()
     {
-        return Task.CompletedTask;
+        if (!IsMobaflowConnectionEnabled || IsRestApiReachable)
+        {
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+        var intervalSeconds = (now - _appStartTimeUtc).TotalSeconds < RestApiStartupRetryWindowSeconds
+            ? RestApiRediscoverIntervalFirst90Seconds
+            : RestApiRediscoverIntervalSeconds;
+
+        if (_lastRestApiDiscoverTime != DateTime.MinValue
+            && (now - _lastRestApiDiscoverTime).TotalSeconds < intervalSeconds)
+        {
+            return;
+        }
+
+        _lastRestApiDiscoverTime = now;
+        var anchor = IsConnected && !string.IsNullOrWhiteSpace(Z21IpAddress)
+            ? Z21IpAddress.Trim()
+            : null;
+
+        try
+        {
+            var (ip, port) = await _restDiscoveryService
+                .DiscoverServerFastAsync(anchor, _applicationLifetimeCts.Token)
+                .ConfigureAwait(false);
+            if (!string.IsNullOrEmpty(ip) && port.HasValue)
+            {
+                await ApplyDiscoveredRestEndpointAsync(ip, port.Value, skipHealthCheck: false).ConfigureAwait(false);
+                return;
+            }
+
+            (ip, port) = await _restDiscoveryService
+                .DiscoverServerAsync(anchor, _applicationLifetimeCts.Token)
+                .ConfigureAwait(false);
+            if (!string.IsNullOrEmpty(ip) && port.HasValue)
+            {
+                await ApplyDiscoveredRestEndpointAsync(ip, port.Value).ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Periodic REST discovery failed");
+        }
     }
 
     /// <summary>
@@ -708,12 +755,23 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         var serverPort = _settings.RestApi.Port;
         if (string.IsNullOrWhiteSpace(serverIp) || serverPort <= 0)
         {
-            await _uiDispatcher.InvokeOnUiAsync(() =>
+            if (_settings.RestApi.IsConnectionEnabled && !_mobaflowConnectInProgress)
             {
-                IsRestApiReachable = false;
-                return Task.CompletedTask;
-            }).ConfigureAwait(false);
-            return false;
+                var anchor = !string.IsNullOrWhiteSpace(Z21IpAddress) ? Z21IpAddress.Trim() : null;
+                await DiscoverMobaflowEndpointAsync(false, anchor, _applicationLifetimeCts.Token).ConfigureAwait(false);
+                serverIp = _settings.RestApi.CurrentIpAddress?.Trim() ?? string.Empty;
+                serverPort = _settings.RestApi.Port;
+            }
+
+            if (string.IsNullOrWhiteSpace(serverIp) || serverPort <= 0)
+            {
+                await _uiDispatcher.InvokeOnUiAsync(() =>
+                {
+                    IsRestApiReachable = false;
+                    return Task.CompletedTask;
+                }).ConfigureAwait(false);
+                return false;
+            }
         }
 
         try
@@ -1085,6 +1143,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         _logger.LogTrace("OnCountOfFeedbackPointsChanged: {Value}", value);
         _settings.Counter.CountOfFeedbackPoints = value;
         InitializeStatistics();
+        DecrementFeedbackPointsCommand.NotifyCanExecuteChanged();
         QueueSaveSettings();
     }
 
@@ -1099,6 +1158,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             stat.TargetLapCount = value;
         }
 
+        DecrementTargetLapCountCommand.NotifyCanExecuteChanged();
         QueueSaveSettings();
     }
 
@@ -1106,6 +1166,8 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     {
         _logger.LogTrace("OnUseTimerFilterChanged: {Value}", value);
         _settings.Counter.UseTimerFilter = value;
+        DecrementTimerIntervalCommand.NotifyCanExecuteChanged();
+        IncrementTimerIntervalCommand.NotifyCanExecuteChanged();
         QueueSaveSettings();
     }
 
@@ -1113,6 +1175,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     {
         _logger.LogTrace("OnTimerIntervalSecondsChanged: {Value}", value);
         _settings.Counter.TimerIntervalSeconds = value;
+        DecrementTimerIntervalCommand.NotifyCanExecuteChanged();
         QueueSaveSettings();
     }
 
@@ -1151,6 +1214,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             stat.Count = 0;
             stat.LastFeedbackTime = null;
             stat.LastLapTime = TimeSpan.Zero;
+            stat.HasReceivedFirstLap = false;
         }
     }
 
@@ -1197,13 +1261,15 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         }
     }
 
-    private bool CanDecrementTimerInterval() => TimerIntervalSeconds > 1.0;
+    private bool CanDecrementTimerInterval() => UseTimerFilter && TimerIntervalSeconds > 1.0;
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanIncrementTimerInterval))]
     private void IncrementTimerInterval()
     {
         TimerIntervalSeconds = Math.Round(TimerIntervalSeconds + 1.0, 1);
     }
+
+    private bool CanIncrementTimerInterval() => UseTimerFilter;
 
     /// <summary>
     /// Saves all settings to persistent storage.
@@ -1359,14 +1425,26 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     {
         if (snapshot.SignalBoxElements.Count > 0)
         {
-            CacheRemoteSignalBoxElements(snapshot.SignalBoxElements);
-            RefreshSignalBoxElements(snapshot.SignalBoxElements);
+            var filteredElements = FilterSignalBoxElementsToPlan(snapshot.SignalBoxElements);
+            if (ShouldCacheRemoteSignalBoxElements(filteredElements))
+            {
+                CacheRemoteSignalBoxElements(filteredElements);
+            }
+
+            ApplyBestAvailableSignalBoxElements();
         }
 
         if (snapshot.LocomotiveFleet.Count > 0)
         {
-            CacheRemoteLocomotiveFleet(snapshot.LocomotiveFleet);
-            PublishFleetUpdate(snapshot.LocomotiveFleet);
+            if (_mobileRuntimeCoordinator?.PreferRemoteRuntime == true)
+            {
+                ApplyLiveRemoteLocomotiveFleet(snapshot.LocomotiveFleet);
+            }
+            else if (ShouldCacheRemoteLocomotiveFleet(snapshot.LocomotiveFleet))
+            {
+                CacheRemoteLocomotiveFleet(snapshot.LocomotiveFleet);
+                ApplyBestAvailableLocomotiveFleet();
+            }
         }
         else if (_controlTabActive)
         {

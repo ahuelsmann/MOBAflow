@@ -142,7 +142,6 @@ public partial class HealthCheckService : IDisposable
             SpeechServiceStatus = "❌ Check Failed";
             IsSpeechServiceHealthy = false;
         }
-
     }
 
     /// <summary>

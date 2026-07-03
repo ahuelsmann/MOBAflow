@@ -1,27 +1,15 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-
-
 namespace Moba.SharedUI.Service;
-
-
 
 using Backend.Interface;
 
-
-
 using Domain;
-
-
 
 using Interface;
 
-
-
 /// <summary>
-
 /// Routes MOBAsmart control commands to MOBAflow (remote) or the local Z21 connection.
-
 /// </summary>
 
 public sealed class MobileRuntimeCoordinator : IRuntimeCommandGateway, IMobileRuntimeCoordinator
@@ -36,8 +24,6 @@ public sealed class MobileRuntimeCoordinator : IRuntimeCommandGateway, IMobileRu
 
     private bool _localZ21Connected;
 
-
-
     public MobileRuntimeCoordinator(IMobaRuntime mobaRuntime, IRuntimeHubRemoteClient remoteClient)
 
     {
@@ -46,39 +32,31 @@ public sealed class MobileRuntimeCoordinator : IRuntimeCommandGateway, IMobileRu
 
         ArgumentNullException.ThrowIfNull(remoteClient);
 
-
-
         _localGateway = new LocalRuntimeCommandGateway(mobaRuntime);
 
         _remoteClient = remoteClient;
 
     }
 
-
-
     /// <inheritdoc />
 
     public bool PreferRemoteRuntime => _mobaflowSessionActive;
-
-
 
     /// <inheritdoc />
 
     public bool CanExecuteCommands => _mobaflowSessionActive || _localZ21Connected;
 
+    /// <inheritdoc />
 
+    public bool IsLocalZ21Connected => _localZ21Connected;
 
     /// <inheritdoc />
 
     public void SetMobaflowSessionActive(bool isActive) => _mobaflowSessionActive = isActive;
 
-
-
     /// <inheritdoc />
 
     public void SetLocalZ21Connected(bool isConnected) => _localZ21Connected = isConnected;
-
-
 
     /// <inheritdoc />
 
@@ -94,8 +72,6 @@ public sealed class MobileRuntimeCoordinator : IRuntimeCommandGateway, IMobileRu
 
         }
 
-
-
         if (_localZ21Connected)
 
         {
@@ -104,13 +80,9 @@ public sealed class MobileRuntimeCoordinator : IRuntimeCommandGateway, IMobileRu
 
         }
 
-
-
         return NoOpRuntimeCommandGateway.Instance.SetSignalAspectAsync(signalId, aspect, cancellationToken);
 
     }
-
-
 
     /// <inheritdoc />
 
@@ -126,8 +98,6 @@ public sealed class MobileRuntimeCoordinator : IRuntimeCommandGateway, IMobileRu
 
         }
 
-
-
         if (_localZ21Connected)
 
         {
@@ -136,13 +106,9 @@ public sealed class MobileRuntimeCoordinator : IRuntimeCommandGateway, IMobileRu
 
         }
 
-
-
         return NoOpRuntimeCommandGateway.Instance.SetLocomotiveDriveAsync(address, speed, forward, cancellationToken);
 
     }
-
-
 
     /// <inheritdoc />
 
@@ -158,8 +124,6 @@ public sealed class MobileRuntimeCoordinator : IRuntimeCommandGateway, IMobileRu
 
         }
 
-
-
         if (_localZ21Connected)
 
         {
@@ -168,12 +132,8 @@ public sealed class MobileRuntimeCoordinator : IRuntimeCommandGateway, IMobileRu
 
         }
 
-
-
         return NoOpRuntimeCommandGateway.Instance.SetLocomotiveFunctionAsync(address, functionIndex, isOn, cancellationToken);
 
     }
-
 }
-
 

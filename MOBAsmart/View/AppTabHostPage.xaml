@@ -9,12 +9,20 @@
     Title="MOBAsmart"
     BackgroundColor="{DynamicResource SurfaceBackground}">
 
-    <Grid RowDefinitions="*,Auto">
+    <Grid RowDefinitions="*,Auto,Auto">
         <Grid x:Name="TabContentGrid" Grid.Row="0" />
+
+        <Label
+            Grid.Row="1"
+            Margin="0,4,0,4"
+            FontSize="10"
+            HorizontalOptions="Center"
+            Text="© 2026 Andreas Huelsmann"
+            TextColor="{DynamicResource TextSecondary}" />
 
         <controls:AppBottomTabBar
             x:Name="BottomTabBar"
-            Grid.Row="1"
+            Grid.Row="2"
             TabSelected="OnTabSelected" />
     </Grid>
 </ContentPage>

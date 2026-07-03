@@ -509,6 +509,15 @@ UI Re-renders
 
 ---
 
+## MOBAsmart / MOBAflow runtime sync
+
+MOBAsmart and MOBAflow coordinate through MOBApi (solution catalog, RuntimeHub snapshots,
+remote commands). Z21 LAN broadcasts do not replace this layer because they carry DCC-level
+state only. See [Z21-MOBAFLOW-SYNC.md](Z21-MOBAFLOW-SYNC.md) for the full decision record,
+slim snapshot profile, and observability endpoints.
+
+---
+
 ## 🚀 Future Extensibility
 
 The architecture supports:

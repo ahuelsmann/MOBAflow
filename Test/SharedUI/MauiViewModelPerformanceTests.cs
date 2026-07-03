@@ -198,9 +198,7 @@ internal sealed class MauiViewModelPerformanceTests
             runtimeHubRemoteClient: hubMock.Object,
             runtimeCommandGateway: coordinator,
             mobileRuntimeCoordinator: coordinator);
-        viewModel.IsMobaflowConnectionEnabled = true;
-        viewModel.IsRestApiReachable = true;
-        viewModel.SetRuntimeHubConnected(true);
+        coordinator.SetMobaflowSessionActive(true);
         viewModel.SetSignalBoxTabActive(true);
         var elementId = Guid.NewGuid();
 
@@ -478,6 +476,7 @@ internal sealed class MauiViewModelPerformanceTests
             mobileRuntimeCoordinator: mobileRuntimeCoordinator);
 
         _createdViewModels.Add(viewModel);
+        viewModel.NotifySignalBoxPageLoaded();
         return viewModel;
     }
 

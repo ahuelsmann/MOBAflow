@@ -11,27 +11,26 @@ public partial class SignalBoxPage
     public SignalBoxPage(MauiViewModel viewModel)
     {
         _viewModel = viewModel;
-
         BindingContext = _viewModel;
-
         InitializeComponent();
+        Loaded += OnLoaded;
     }
 
     public void ActivateTab()
     {
-
         Dispatcher.DispatchAsync(async () =>
         {
-
             _viewModelInitializationTask ??= _viewModel.InitializeAsync();
-
-            await _viewModelInitializationTask.ConfigureAwait(false);
-
+            await _viewModelInitializationTask;
         });
     }
 
     public void DeactivateTab()
     {
+    }
 
+    private void OnLoaded(object? sender, EventArgs e)
+    {
+        _viewModel.NotifySignalBoxPageLoaded();
     }
 }

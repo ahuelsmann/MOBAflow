@@ -13,6 +13,9 @@
 
     <Page.Resources>
         <converter:BoolToBacklightBrushConverter x:Key="BacklightConverter" />
+        <converter:BoolToPickerStateBrushConverter x:Key="PickerBackgroundConverter" Role="Background" />
+        <converter:BoolToPickerStateBrushConverter x:Key="PickerBorderConverter" Role="Border" />
+        <converter:BoolToPickerStateBrushConverter x:Key="PickerForegroundConverter" Role="Foreground" />
         <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
         <converter:MillivoltsToVoltsConverter x:Key="MillivoltsToVoltsConverter" />
     </Page.Resources>
@@ -105,13 +108,13 @@
                     <StackPanel Orientation="Horizontal" Spacing="12">
                         <FontIcon
                             FontSize="18"
-                            Foreground="White"
+                            Foreground="{ThemeResource MobaDangerButtonForegroundBrush}"
                             Glyph="&#xE711;" />
                         <TextBlock
                             VerticalAlignment="Center"
                             FontSize="14"
                             FontWeight="Bold"
-                            Foreground="White"
+                            Foreground="{ThemeResource MobaDangerButtonForegroundBrush}"
                             Text="EMERGENCY STOP" />
                     </StackPanel>
                 </Button>
@@ -176,28 +179,10 @@
                                             <Border
                                                 x:Name="PickerItemRoot"
                                                 Padding="8"
+                                                Background="{x:Bind IsPickerSelected, Mode=OneWay, Converter={StaticResource PickerBackgroundConverter}, ConverterParameter={Binding ElementName=PageRoot}}"
+                                                BorderBrush="{x:Bind IsPickerSelected, Mode=OneWay, Converter={StaticResource PickerBorderConverter}, ConverterParameter={Binding ElementName=PageRoot}}"
                                                 BorderThickness="1"
                                                 CornerRadius="8">
-                                                <VisualStateManager.VisualStateGroups>
-                                                    <VisualStateGroup>
-                                                        <VisualState x:Name="Selected">
-                                                            <VisualState.StateTriggers>
-                                                                <StateTrigger IsActive="{x:Bind IsPickerSelected, Mode=OneWay}" />
-                                                            </VisualState.StateTriggers>
-                                                            <VisualState.Setters>
-                                                                <Setter Target="PickerItemRoot.Background" Value="{ThemeResource AccentFillColorDefaultBrush}" />
-                                                                <Setter Target="PickerItemRoot.BorderBrush" Value="{ThemeResource AccentFillColorDefaultBrush}" />
-                                                                <Setter Target="LocoNameText.Foreground" Value="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
-                                                            </VisualState.Setters>
-                                                        </VisualState>
-                                                        <VisualState x:Name="Normal">
-                                                            <VisualState.Setters>
-                                                                <Setter Target="PickerItemRoot.Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
-                                                                <Setter Target="PickerItemRoot.BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
-                                                            </VisualState.Setters>
-                                                        </VisualState>
-                                                    </VisualStateGroup>
-                                                </VisualStateManager.VisualStateGroups>
                                                 <Grid ColumnSpacing="12">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="Auto" />
@@ -227,6 +212,7 @@
                                                         Grid.Column="1"
                                                         VerticalAlignment="Center"
                                                         FontWeight="SemiBold"
+                                                        Foreground="{x:Bind IsPickerSelected, Mode=OneWay, Converter={StaticResource PickerForegroundConverter}, ConverterParameter={Binding ElementName=PageRoot}}"
                                                         Text="{x:Bind Name, Mode=OneWay}"
                                                         TextTrimming="CharacterEllipsis"
                                                         TextWrapping="NoWrap" />
@@ -376,6 +362,7 @@
                         <controls:SpeedometerControl
                             x:Name="Speedometer"
                             Grid.Row="0"
+                            GaugeMaxKmh="400"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             DisplayValue="{x:Bind ViewModel.SpeedKmh, Mode=OneWay}"

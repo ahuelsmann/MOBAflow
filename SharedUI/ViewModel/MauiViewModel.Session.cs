@@ -95,6 +95,7 @@ public sealed partial class MauiViewModel
         _remoteZ21Connected = isConnected;
         OnPropertyChanged(nameof(IsRemoteZ21Connected));
         NotifySessionAvailabilityChanged();
+        UpdateRuntimeCoordinatorState();
     }
 
     private void NotifySessionAvailabilityChanged()

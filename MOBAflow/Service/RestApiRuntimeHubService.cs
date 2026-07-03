@@ -189,12 +189,13 @@ public sealed class RestApiRuntimeHubService : IDisposable
 
     private async Task PushSnapshotImmediateAsync(MobaRuntimeSnapshot snapshot, CancellationToken cancellationToken)
     {
+        var remoteSnapshot = RuntimeSnapshotRemoteFilter.ForMobasmartBroadcast(snapshot);
         var hubSucceeded = false;
         if (_runtimeHubHostClient.IsConnected)
         {
             try
             {
-                await _runtimeHubHostClient.PushSnapshotAsync(snapshot, cancellationToken).ConfigureAwait(false);
+                await _runtimeHubHostClient.PushSnapshotAsync(remoteSnapshot, cancellationToken).ConfigureAwait(false);
                 hubSucceeded = true;
             }
             catch (Exception ex)
@@ -205,7 +206,7 @@ public sealed class RestApiRuntimeHubService : IDisposable
 
         RecordHubPush(hubSucceeded);
 
-        var restSucceeded = await PushSnapshotRestFallbackAsync(snapshot, cancellationToken).ConfigureAwait(false);
+        var restSucceeded = await PushSnapshotRestFallbackAsync(remoteSnapshot, cancellationToken).ConfigureAwait(false);
         RecordRestCachePush(restSucceeded);
     }
 

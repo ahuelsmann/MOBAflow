@@ -18,35 +18,37 @@ public partial class ViewModel5x5 : ObservableObject
 
     public IRelayCommand<ViewModel5x5?>? DeleteCommand { get; set; }
 
-    [ObservableProperty] private SolidColorBrush cell11 = new(Colors.LightGray);
-    [ObservableProperty] private SolidColorBrush cell12 = new(Colors.LightGray);
-    [ObservableProperty] private SolidColorBrush cell13 = new(Colors.LightGray);
-    [ObservableProperty] private SolidColorBrush cell14 = new(Colors.LightGray);
-    [ObservableProperty] private SolidColorBrush cell15 = new(Colors.LightGray);
+    [ObservableProperty] private SolidColorBrush cell11 = OffCellBrush();
+    [ObservableProperty] private SolidColorBrush cell12 = OffCellBrush();
+    [ObservableProperty] private SolidColorBrush cell13 = OffCellBrush();
+    [ObservableProperty] private SolidColorBrush cell14 = OffCellBrush();
+    [ObservableProperty] private SolidColorBrush cell15 = OffCellBrush();
 
-    [ObservableProperty] private SolidColorBrush cell21 = new(Colors.LightGray);
-    [ObservableProperty] private SolidColorBrush cell22 = new(Colors.LightGray);
-    [ObservableProperty] private SolidColorBrush cell23 = new(Colors.LightGray);
-    [ObservableProperty] private SolidColorBrush cell24 = new(Colors.LightGray);
-    [ObservableProperty] private SolidColorBrush cell25 = new(Colors.LightGray);
+    [ObservableProperty] private SolidColorBrush cell21 = OffCellBrush();
+    [ObservableProperty] private SolidColorBrush cell22 = OffCellBrush();
+    [ObservableProperty] private SolidColorBrush cell23 = OffCellBrush();
+    [ObservableProperty] private SolidColorBrush cell24 = OffCellBrush();
+    [ObservableProperty] private SolidColorBrush cell25 = OffCellBrush();
 
-    [ObservableProperty] private SolidColorBrush cell31 = new(Colors.LightGray);
-    [ObservableProperty] private SolidColorBrush cell32 = new(Colors.LightGray);
-    [ObservableProperty] private SolidColorBrush cell33 = new(Colors.LightGray);
-    [ObservableProperty] private SolidColorBrush cell34 = new(Colors.LightGray);
-    [ObservableProperty] private SolidColorBrush cell35 = new(Colors.LightGray);
+    [ObservableProperty] private SolidColorBrush cell31 = OffCellBrush();
+    [ObservableProperty] private SolidColorBrush cell32 = OffCellBrush();
+    [ObservableProperty] private SolidColorBrush cell33 = OffCellBrush();
+    [ObservableProperty] private SolidColorBrush cell34 = OffCellBrush();
+    [ObservableProperty] private SolidColorBrush cell35 = OffCellBrush();
 
-    [ObservableProperty] private SolidColorBrush cell41 = new(Colors.LightGray);
-    [ObservableProperty] private SolidColorBrush cell42 = new(Colors.LightGray);
-    [ObservableProperty] private SolidColorBrush cell43 = new(Colors.LightGray);
-    [ObservableProperty] private SolidColorBrush cell44 = new(Colors.LightGray);
-    [ObservableProperty] private SolidColorBrush cell45 = new(Colors.LightGray);
+    [ObservableProperty] private SolidColorBrush cell41 = OffCellBrush();
+    [ObservableProperty] private SolidColorBrush cell42 = OffCellBrush();
+    [ObservableProperty] private SolidColorBrush cell43 = OffCellBrush();
+    [ObservableProperty] private SolidColorBrush cell44 = OffCellBrush();
+    [ObservableProperty] private SolidColorBrush cell45 = OffCellBrush();
 
-    [ObservableProperty] private SolidColorBrush cell51 = new(Colors.LightGray);
-    [ObservableProperty] private SolidColorBrush cell52 = new(Colors.LightGray);
-    [ObservableProperty] private SolidColorBrush cell53 = new(Colors.LightGray);
-    [ObservableProperty] private SolidColorBrush cell54 = new(Colors.LightGray);
-    [ObservableProperty] private SolidColorBrush cell55 = new(Colors.LightGray);
+    [ObservableProperty] private SolidColorBrush cell51 = OffCellBrush();
+    [ObservableProperty] private SolidColorBrush cell52 = OffCellBrush();
+    [ObservableProperty] private SolidColorBrush cell53 = OffCellBrush();
+    [ObservableProperty] private SolidColorBrush cell54 = OffCellBrush();
+    [ObservableProperty] private SolidColorBrush cell55 = OffCellBrush();
+
+    private static SolidColorBrush OffCellBrush() => FromArgb(LedMatrix5x5State.OffColorArgb);
 
     private readonly LedMatrix5x5State state = new();
 
@@ -82,7 +84,7 @@ public partial class ViewModel5x5 : ObservableObject
             22 => Cell53,
             23 => Cell54,
             24 => Cell55,
-            _ => new SolidColorBrush(Colors.LightGray)
+            _ => OffCellBrush()
         };
     }
 

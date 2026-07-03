@@ -112,7 +112,9 @@ public sealed class RuntimeHubHostClient : IRuntimeHubHostClient
         try
         {
             await RegisterHostAsync(CancellationToken.None).ConfigureAwait(false);
-            await PushSnapshotAsync(_mobaRuntime.Current, CancellationToken.None).ConfigureAwait(false);
+            await PushSnapshotAsync(
+                RuntimeSnapshotRemoteFilter.ForMobasmartBroadcast(_mobaRuntime.Current),
+                CancellationToken.None).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

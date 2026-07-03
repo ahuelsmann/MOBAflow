@@ -10,6 +10,8 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Markup;
 using Microsoft.UI.Xaml.Media;
 
+using Moba.WinUI.View;
+
 /// <summary>
 /// Factory for creating NavigationViewItems from PageMetadata.
 /// Handles icon creation, badge rendering, and Feature Toggle visibility binding.
@@ -136,15 +138,17 @@ public sealed class NavigationItemFactory
         Brush backgroundColor;
         Brush foregroundColor;
 
+        var themeRoot = ThemeResourceResolver.GetDefaultThemeRoot();
+
         if (isPreviewBadge)
         {
-            backgroundColor = (Brush)Application.Current.Resources["AccentFillColorDefaultBrush"];
-            foregroundColor = (Brush)Application.Current.Resources["TextFillColorInverseBrush"];
+            backgroundColor = ThemeResourceResolver.ResolveBrush(themeRoot, "AccentFillColorDefaultBrush", Microsoft.UI.Colors.Blue);
+            foregroundColor = ThemeResourceResolver.ResolveBrush(themeRoot, "TextFillColorInverseBrush", Microsoft.UI.Colors.White);
         }
         else
         {
-            backgroundColor = (Brush)Application.Current.Resources["SystemFillColorCautionBackgroundBrush"];
-            foregroundColor = (Brush)Application.Current.Resources["SystemFillColorCautionBrush"];
+            backgroundColor = ThemeResourceResolver.ResolveBrush(themeRoot, "SystemFillColorCautionBackgroundBrush", Microsoft.UI.Colors.Orange);
+            foregroundColor = ThemeResourceResolver.ResolveBrush(themeRoot, "SystemFillColorCautionBrush", Microsoft.UI.Colors.Orange);
         }
 
         var badge = new Border

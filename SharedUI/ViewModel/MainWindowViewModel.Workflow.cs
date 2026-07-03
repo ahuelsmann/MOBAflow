@@ -134,7 +134,6 @@ public partial class MainWindowViewModel
         ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
     }
 
-
     [RelayCommand]
     private void AddSelectSignalAspect()
     {

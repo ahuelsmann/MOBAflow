@@ -37,7 +37,8 @@
                     x:Name="AspectHp0Signal"
                     Width="64"
                     Height="70"
-                    IsHitTestVisible="False" />
+                    IsHitTestVisible="False"
+                    IsStaticPreview="True" />
                 <TextBlock
                     x:Name="AspectHp0Label"
                     HorizontalAlignment="Center"
@@ -64,7 +65,8 @@
                     x:Name="AspectKs1Signal"
                     Width="64"
                     Height="70"
-                    IsHitTestVisible="False" />
+                    IsHitTestVisible="False"
+                    IsStaticPreview="True" />
                 <TextBlock
                     x:Name="AspectKs1Label"
                     HorizontalAlignment="Center"
@@ -91,7 +93,8 @@
                     x:Name="AspectKs2Signal"
                     Width="64"
                     Height="70"
-                    IsHitTestVisible="False" />
+                    IsHitTestVisible="False"
+                    IsStaticPreview="True" />
                 <TextBlock
                     x:Name="AspectKs2Label"
                     HorizontalAlignment="Center"
@@ -118,7 +121,8 @@
                     x:Name="AspectKs1BlinkSignal"
                     Width="64"
                     Height="70"
-                    IsHitTestVisible="False" />
+                    IsHitTestVisible="False"
+                    IsStaticPreview="True" />
                 <TextBlock
                     x:Name="AspectKs1BlinkLabel"
                     HorizontalAlignment="Center"
@@ -145,7 +149,8 @@
                     x:Name="AspectKennlichtSignal"
                     Width="64"
                     Height="70"
-                    IsHitTestVisible="False" />
+                    IsHitTestVisible="False"
+                    IsStaticPreview="True" />
                 <TextBlock
                     x:Name="AspectKennlichtLabel"
                     HorizontalAlignment="Center"
@@ -172,7 +177,8 @@
                     x:Name="AspectDunkelSignal"
                     Width="64"
                     Height="70"
-                    IsHitTestVisible="False" />
+                    IsHitTestVisible="False"
+                    IsStaticPreview="True" />
                 <TextBlock
                     x:Name="AspectDunkelLabel"
                     HorizontalAlignment="Center"
@@ -199,7 +205,8 @@
                     x:Name="AspectRa12Signal"
                     Width="64"
                     Height="70"
-                    IsHitTestVisible="False" />
+                    IsHitTestVisible="False"
+                    IsStaticPreview="True" />
                 <TextBlock
                     x:Name="AspectRa12Label"
                     HorizontalAlignment="Center"
@@ -226,7 +233,8 @@
                     x:Name="AspectZs1Signal"
                     Width="64"
                     Height="70"
-                    IsHitTestVisible="False" />
+                    IsHitTestVisible="False"
+                    IsStaticPreview="True" />
                 <TextBlock
                     x:Name="AspectZs1Label"
                     HorizontalAlignment="Center"
@@ -253,7 +261,8 @@
                     x:Name="AspectZs7Signal"
                     Width="64"
                     Height="70"
-                    IsHitTestVisible="False" />
+                    IsHitTestVisible="False"
+                    IsStaticPreview="True" />
                 <TextBlock
                     x:Name="AspectZs7Label"
                     HorizontalAlignment="Center"

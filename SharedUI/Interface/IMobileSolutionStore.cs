@@ -2,20 +2,12 @@
 
 namespace Moba.SharedUI.Interface;
 
-
-
 using Common.Runtime;
-
-
 
 using Domain;
 
-
-
 /// <summary>
-
 /// Metadata for a solution snapshot synced from MOBApi and cached on the mobile device.
-
 /// </summary>
 
 public sealed record SolutionSyncMeta(
@@ -26,12 +18,8 @@ public sealed record SolutionSyncMeta(
 
     string? ActiveProjectName);
 
-
-
 /// <summary>
-
 /// Cached MOBAflow solution and optional signal-box runtime state for offline MOBAsmart use.
-
 /// </summary>
 
 public sealed record MobileSolutionCacheEntry(
@@ -40,12 +28,8 @@ public sealed record MobileSolutionCacheEntry(
     IReadOnlyList<SignalBoxElementRuntimeSnapshot> SignalBoxElements,
     IReadOnlyList<LocomotiveFleetSnapshot> LocomotiveFleet);
 
-
-
 /// <summary>
-
 /// Persists MOBAsmart solution and signal-box data locally so the app works without MOBAflow.
-
 /// </summary>
 
 public interface IMobileSolutionStore
@@ -53,19 +37,13 @@ public interface IMobileSolutionStore
 {
 
     /// <summary>
-
     /// Saves the solution and sync metadata to local storage.
-
     /// </summary>
 
     Task SaveAsync(Solution solution, SolutionSyncMeta meta, CancellationToken cancellationToken = default);
 
-
-
     /// <summary>
-
     /// Updates the cached signal-box element list without changing the solution payload.
-
     /// </summary>
 
     Task SaveSignalBoxElementsAsync(

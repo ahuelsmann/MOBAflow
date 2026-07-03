@@ -112,7 +112,6 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         {
             _z21.TrafficMonitor.PacketLogged += OnTrafficPacketLogged;
         }
-
     }
 
     /// <inheritdoc />

@@ -19,11 +19,7 @@ using Moba.SharedUI.ViewModel;
 
 using Moq;
 
-
-
 namespace Moba.Test.SharedUI;
-
-
 
 [TestFixture]
 
@@ -32,8 +28,6 @@ internal sealed class MauiViewModelMobaflowOfflineTests
 {
 
     private readonly List<MauiViewModel> _createdViewModels = [];
-
-
 
     [TearDown]
 
@@ -49,13 +43,9 @@ internal sealed class MauiViewModelMobaflowOfflineTests
 
         }
 
-
-
         _createdViewModels.Clear();
 
     }
-
-
 
     [Test]
 
@@ -73,19 +63,13 @@ internal sealed class MauiViewModelMobaflowOfflineTests
 
         var elementId = Guid.NewGuid();
 
-
-
         PublishRemoteSignalBoxSnapshot(eventBus, elementId, "Remote Signal");
 
         Assert.That(viewModel.SignalBoxElements, Has.Count.EqualTo(1));
 
-
-
         viewModel.IsMobaflowConnectionEnabled = false;
 
         await Task.Delay(200);
-
-
 
         Assert.Multiple(() =>
 
@@ -98,8 +82,6 @@ internal sealed class MauiViewModelMobaflowOfflineTests
         });
 
     }
-
-
 
     [Test]
     public async Task MobaflowSessionEnd_ActivatesCachedProject()
@@ -170,7 +152,10 @@ internal sealed class MauiViewModelMobaflowOfflineTests
             photoUploadService: photoUploadMock.Object);
 
         viewModel.IsMobaflowConnectionEnabled = true;
-        await Task.Delay(300);
+        viewModel.IsRestApiReachable = true;
+        viewModel.SetRuntimeHubConnected(true);
+        viewModel.SetRemoteZ21Connected(true);
+        await Task.Delay(100);
 
         Assert.That(viewModel.IsMobaflowConnectionEnabled, Is.True);
 
@@ -183,8 +168,6 @@ internal sealed class MauiViewModelMobaflowOfflineTests
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
-
-
 
     [Test]
 
@@ -199,8 +182,6 @@ internal sealed class MauiViewModelMobaflowOfflineTests
         viewModel.SetSignalBoxTabActive(true);
 
         var elementId = Guid.NewGuid();
-
-
 
         viewModel.RestoreCachedSignalBoxElements(
 
@@ -226,7 +207,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
 
         ]);
 
-
+        viewModel.ApplyRestoredMobileCacheToUi();
 
         Assert.Multiple(() =>
 
@@ -240,7 +221,138 @@ internal sealed class MauiViewModelMobaflowOfflineTests
 
     }
 
+    [Test]
 
+    public void StaleSignalCache_DoesNotReplaceProjectPlan_WhenRemoteSessionActive()
+
+    {
+
+        var signalId = Guid.Parse("3d6c0ace-dde2-4329-95d5-8e474b65828f");
+
+        var projectContext = new MobileSolutionContext();
+
+        projectContext.ApplySolution(new Solution
+
+        {
+
+            Projects =
+
+            [
+
+                new Project
+
+                {
+
+                    Name = "myMOBA",
+
+                    SignalBoxPlan = new SignalBoxPlan
+
+                    {
+
+                        Elements =
+
+                        [
+
+                            new SbSignal
+
+                            {
+
+                                Id = signalId,
+
+                                Name = "G2HBFA1",
+
+                                X = 6,
+
+                                Y = 4,
+
+                                SignalAspect = SignalAspect.Hp0
+
+                            }
+
+                        ]
+
+                    }
+                }
+
+            ]
+
+        }, "myMOBA");
+
+        var coordinator = new MobileRuntimeCoordinator(
+
+            new Mock<IMobaRuntime>().Object,
+
+            new Mock<IRuntimeHubRemoteClient>().Object);
+
+        coordinator.SetMobaflowSessionActive(true);
+
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+
+        var viewModel = CreateViewModel(
+
+            eventBus,
+
+            projectContext: projectContext,
+
+            mobileRuntimeCoordinator: coordinator);
+
+        viewModel.SetSignalBoxTabActive(true);
+
+        viewModel.RestoreCachedSignalBoxElements(
+
+        [
+
+            new SignalBoxElementRuntimeSnapshot
+
+            {
+
+                ElementId = Guid.NewGuid(),
+
+                Name = "Cached Signal",
+
+                Kind = SignalBoxElementKind.Signal,
+
+                X = 0,
+
+                Y = 0
+
+            },
+
+            new SignalBoxElementRuntimeSnapshot
+
+            {
+
+                ElementId = Guid.NewGuid(),
+
+                Name = "E2E Signal",
+
+                Kind = SignalBoxElementKind.Signal,
+
+                X = 0,
+
+                Y = 0
+
+            }
+
+        ]);
+
+        viewModel.ApplyRestoredMobileCacheToUi();
+
+        Assert.Multiple(() =>
+
+        {
+
+            Assert.That(viewModel.SignalBoxElements, Has.Count.EqualTo(1));
+
+            Assert.That(viewModel.SignalBoxElements[0].Name, Is.EqualTo("G2HBFA1"));
+
+            Assert.That(viewModel.SignalBoxElements[0].X, Is.EqualTo(6));
+
+            Assert.That(viewModel.SignalBoxElements[0].Y, Is.EqualTo(4));
+
+        });
+
+    }
 
     [Test]
 
@@ -253,8 +365,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
         var viewModel = CreateViewModel(eventBus);
 
         var elementId = Guid.NewGuid();
-
-
+        var locomotiveId = Guid.NewGuid();
 
         viewModel.RestoreCachedMobileSnapshot(new MobileSolutionCacheEntry(
 
@@ -264,7 +375,22 @@ internal sealed class MauiViewModelMobaflowOfflineTests
 
                 Name = "Cached",
 
-                Projects = [new Project { Name = "myMOBA" }]
+                Projects =
+                [
+                    new Project
+                    {
+                        Name = "myMOBA",
+                        Locomotives =
+                        [
+                            new Locomotive
+                            {
+                                Id = locomotiveId,
+                                Name = "BR 110",
+                                DigitalAddress = 7
+                            }
+                        ]
+                    }
+                ]
 
             },
 
@@ -298,7 +424,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
 
                 {
 
-                    LocomotiveId = Guid.NewGuid(),
+                    LocomotiveId = locomotiveId,
 
                     Name = "BR 110",
 
@@ -308,27 +434,43 @@ internal sealed class MauiViewModelMobaflowOfflineTests
 
             ]));
 
-
-
         viewModel.ApplyRestoredMobileCacheToUi();
 
+        Assert.That(viewModel.SignalBoxElements, Has.Count.EqualTo(0));
 
+        viewModel.SetSignalBoxTabActive(true);
 
         Assert.Multiple(() =>
-
         {
-
             Assert.That(viewModel.SignalBoxElements, Has.Count.EqualTo(1));
-
             Assert.That(viewModel.SignalBoxElements[0].Name, Is.EqualTo("Offline Signal"));
-
             Assert.That(viewModel.GetStartupLocomotiveFleet(), Has.Count.EqualTo(1));
-
         });
 
     }
 
-
+    private static void PublishLocalSignalBoxSnapshot(
+        EventBus eventBus,
+        Guid elementId,
+        string name = "Signal",
+        SignalAspect aspect = SignalAspect.Hp0)
+    {
+        eventBus.Publish(new RuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
+        {
+            SignalBoxElements =
+            [
+                new SignalBoxElementRuntimeSnapshot
+                {
+                    ElementId = elementId,
+                    Name = name,
+                    Kind = SignalBoxElementKind.Signal,
+                    X = 1,
+                    Y = 2,
+                    SignalAspect = aspect
+                }
+            ]
+        }));
+    }
 
     private static void PublishRemoteSignalBoxSnapshot(
 
@@ -374,7 +516,190 @@ internal sealed class MauiViewModelMobaflowOfflineTests
 
     }
 
+    [Test]
+    public void MobaflowHubReachableWithoutRemoteHost_RoutesCommandsToLocalZ21()
+    {
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var runtimeMock = new Mock<IMobaRuntime>();
+        runtimeMock.SetupGet(runtime => runtime.Current).Returns(MobaRuntimeSnapshot.Empty);
+        runtimeMock
+            .Setup(runtime => runtime.SetLocomotiveDriveAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
+        var hubMock = new Mock<IRuntimeHubRemoteClient>();
+        var coordinator = new MobileRuntimeCoordinator(runtimeMock.Object, hubMock.Object);
+        var viewModel = CreateViewModel(eventBus, hubMock.Object, runtimeMock: runtimeMock, mobileRuntimeCoordinator: coordinator);
+
+        viewModel.IsMobaflowConnectionEnabled = true;
+        viewModel.IsRestApiReachable = true;
+        viewModel.SetRuntimeHubConnected(true);
+        viewModel.SetRemoteZ21Connected(false);
+
+        eventBus.Publish(new RuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
+        {
+            IsConnected = true,
+            StatusText = "Connected"
+        }));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(coordinator.PreferRemoteRuntime, Is.False);
+            Assert.That(coordinator.CanExecuteCommands, Is.True);
+            Assert.That(coordinator.IsLocalZ21Connected, Is.True);
+        });
+    }
+
+    [Test]
+    public async Task MobaflowDisabled_LocalZ21Connected_RoutesSignalAspectToLocalRuntime()
+    {
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var runtimeMock = new Mock<IMobaRuntime>();
+        runtimeMock.SetupGet(runtime => runtime.Current).Returns(MobaRuntimeSnapshot.Empty);
+        runtimeMock
+            .Setup(runtime => runtime.SetSignalAspectAsync(It.IsAny<Guid>(), It.IsAny<SignalAspect>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var hubMock = new Mock<IRuntimeHubRemoteClient>();
+        var coordinator = new MobileRuntimeCoordinator(runtimeMock.Object, hubMock.Object);
+        var viewModel = CreateViewModel(
+            eventBus,
+            hubMock.Object,
+            runtimeMock: runtimeMock,
+            mobileRuntimeCoordinator: coordinator);
+
+        viewModel.IsMobaflowConnectionEnabled = false;
+        viewModel.SetSignalBoxTabActive(true);
+        var elementId = Guid.NewGuid();
+
+        PublishLocalSignalBoxSnapshot(eventBus, elementId, aspect: SignalAspect.Ks1);
+
+        eventBus.Publish(new RuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
+        {
+            IsConnected = true,
+            StatusText = "Connected"
+        }));
+
+        viewModel.SignalBoxElements[0].SelectSignalAspectCommand.Execute(SignalAspect.Hp0);
+        await Task.Delay(100);
+
+        runtimeMock.Verify(
+            runtime => runtime.SetSignalAspectAsync(elementId, SignalAspect.Hp0, It.IsAny<CancellationToken>()),
+            Times.Once);
+        hubMock.Verify(
+            client => client.SetSignalAspectAsync(It.IsAny<Guid>(), It.IsAny<SignalAspect>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
+    public async Task MobaflowHubReachableWithoutRemoteHost_RoutesSignalAspectToLocalZ21()
+    {
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var runtimeMock = new Mock<IMobaRuntime>();
+        runtimeMock.SetupGet(runtime => runtime.Current).Returns(MobaRuntimeSnapshot.Empty);
+        runtimeMock
+            .Setup(runtime => runtime.SetSignalAspectAsync(It.IsAny<Guid>(), It.IsAny<SignalAspect>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var hubMock = new Mock<IRuntimeHubRemoteClient>();
+        var coordinator = new MobileRuntimeCoordinator(runtimeMock.Object, hubMock.Object);
+        var viewModel = CreateViewModel(
+            eventBus,
+            hubMock.Object,
+            runtimeMock: runtimeMock,
+            mobileRuntimeCoordinator: coordinator);
+
+        viewModel.IsMobaflowConnectionEnabled = true;
+        viewModel.IsRestApiReachable = true;
+        viewModel.SetRuntimeHubConnected(true);
+        viewModel.SetRemoteZ21Connected(false);
+        viewModel.SetSignalBoxTabActive(true);
+        var elementId = Guid.NewGuid();
+
+        PublishLocalSignalBoxSnapshot(eventBus, elementId, aspect: SignalAspect.Ks1);
+
+        eventBus.Publish(new RuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
+        {
+            IsConnected = true,
+            StatusText = "Connected"
+        }));
+
+        viewModel.SignalBoxElements[0].SelectSignalAspectCommand.Execute(SignalAspect.Ks2);
+        await Task.Delay(100);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(coordinator.PreferRemoteRuntime, Is.False);
+            Assert.That(coordinator.CanExecuteCommands, Is.True);
+        });
+
+        runtimeMock.Verify(
+            runtime => runtime.SetSignalAspectAsync(elementId, SignalAspect.Ks2, It.IsAny<CancellationToken>()),
+            Times.Once);
+        hubMock.Verify(
+            client => client.SetSignalAspectAsync(It.IsAny<Guid>(), It.IsAny<SignalAspect>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
+    public async Task MobaflowDisabled_LocalZ21Connected_EnablesTrainControlCommands()
+    {
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var runtimeMock = new Mock<IMobaRuntime>();
+        runtimeMock.SetupGet(runtime => runtime.Current).Returns(MobaRuntimeSnapshot.Empty);
+        runtimeMock
+            .Setup(runtime => runtime.SetLocomotiveFunctionAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var hubMock = new Mock<IRuntimeHubRemoteClient>();
+        var coordinator = new MobileRuntimeCoordinator(runtimeMock.Object, hubMock.Object);
+        var viewModel = CreateViewModel(eventBus, hubMock.Object, runtimeMock: runtimeMock, mobileRuntimeCoordinator: coordinator);
+
+        viewModel.IsMobaflowConnectionEnabled = false;
+
+        var trainControlViewModel = new TrainControlViewModel(
+            runtimeMock.Object,
+            CreateSettingsServiceMock().Object,
+            eventBus: eventBus,
+            mobileRuntimeCoordinator: coordinator,
+            options: new TrainControlViewModelOptions { HybridRuntimeSnapshots = true });
+
+        eventBus.Publish(new RuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
+        {
+            IsConnected = true,
+            StatusText = "Connected"
+        }));
+
+        await trainControlViewModel.ToggleFunctionAsync(1);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(trainControlViewModel.IsSpeedControlEnabled, Is.True);
+            Assert.That(trainControlViewModel.Functions[1].IsOn, Is.True);
+        });
+
+        runtimeMock.Verify(
+            runtime => runtime.SetLocomotiveFunctionAsync(3, 1, true, It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Test]
+    public void MobaflowOperationalSession_PrefersRemoteRuntime()
+    {
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var coordinator = new MobileRuntimeCoordinator(new Mock<IMobaRuntime>().Object, new Mock<IRuntimeHubRemoteClient>().Object);
+        var viewModel = CreateViewModel(eventBus, mobileRuntimeCoordinator: coordinator);
+
+        viewModel.IsMobaflowConnectionEnabled = true;
+        viewModel.IsRestApiReachable = true;
+        viewModel.SetRuntimeHubConnected(true);
+        viewModel.SetRemoteZ21Connected(true);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(coordinator.PreferRemoteRuntime, Is.True);
+            Assert.That(coordinator.CanExecuteCommands, Is.True);
+        });
+    }
 
     private MauiViewModel CreateViewModel(
         EventBus eventBus,
@@ -382,6 +707,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
         Mock<IMobaRuntime>? runtimeMock = null,
         IProjectContext? projectContext = null,
         IMobileRuntimeCoordinator? mobileRuntimeCoordinator = null,
+        IRuntimeCommandGateway? runtimeCommandGateway = null,
         AppSettings? settings = null,
         IRestDiscoveryService? restDiscoveryService = null,
         IPhotoUploadService? photoUploadService = null)
@@ -414,17 +740,17 @@ internal sealed class MauiViewModelMobaflowOfflineTests
             NullLogger<MauiViewModel>.Instance,
             eventBus,
             runtimeHubRemoteClient: runtimeHubRemoteClient,
+            runtimeCommandGateway: runtimeCommandGateway ?? mobileRuntimeCoordinator,
             mobileRuntimeCoordinator: mobileRuntimeCoordinator,
             projectContext: projectContext);
 
         _createdViewModels.Add(viewModel);
+        viewModel.NotifySignalBoxPageLoaded();
         return viewModel;
     }
 
-
-
     [Test]
-    public async Task InitializeAsync_StartsWithMobaflowConnectionDisabled_WhenNotPairedEvenIfSettingsEnabled()
+    public async Task InitializeAsync_StartsWithMobaflowConnectionDisabled_WhenNoEndpointEvenIfSettingsEnabled()
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var settings = new AppSettings();
@@ -438,7 +764,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
     }
 
     [Test]
-    public async Task InitializeAsync_RestoresPairedSession_WhenCredentialsAndEnabled()
+    public async Task InitializeAsync_RestoresStoredSession_WhenEndpointAndEnabled()
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var settings = new AppSettings
@@ -447,7 +773,6 @@ internal sealed class MauiViewModelMobaflowOfflineTests
             {
                 CurrentIpAddress = "192.168.0.42",
                 Port = 5001,
-                ApiKey = "pair-key-123",
                 IsConnectionEnabled = true
             }
         };
@@ -505,7 +830,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
     }
 
     [Test]
-    public async Task MobaflowConnectionEnabled_WhenUnreachable_DisablesToggleAfterSingleAttempt()
+    public async Task MobaflowConnectionEnabled_WhenUnreachable_KeepsToggleAndRetriesDiscovery()
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var settings = new AppSettings
@@ -537,11 +862,66 @@ internal sealed class MauiViewModelMobaflowOfflineTests
             photoUploadService: photoUploadMock.Object);
 
         viewModel.IsMobaflowConnectionEnabled = true;
-        await Task.Delay(500);
+        await Task.Delay(3500);
 
-        Assert.That(viewModel.IsMobaflowConnectionEnabled, Is.False);
-        restDiscoveryMock.Verify(service => service.DiscoverServerFastAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
-        restDiscoveryMock.Verify(service => service.DiscoverServerAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.That(viewModel.IsMobaflowConnectionEnabled, Is.True);
+        restDiscoveryMock.Verify(
+            service => service.DiscoverServerAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()),
+            Times.AtLeastOnce);
+        photoUploadMock.Verify(
+            service => service.HealthCheckAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<TimeSpan?>()),
+            Times.AtLeast(2));
+    }
+
+    [Test]
+    public async Task MobaflowConnectionEnabled_WhenReachableButHubFails_KeepsToggleEnabled()
+    {
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var settings = new AppSettings
+        {
+            RestApi =
+            {
+                CurrentIpAddress = "192.168.0.100",
+                Port = 5001
+            }
+        };
+
+        var restDiscoveryMock = new Mock<IRestDiscoveryService>();
+        restDiscoveryMock
+            .Setup(service => service.DiscoverServerFastAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((null, null));
+
+        var photoUploadMock = new Mock<IPhotoUploadService>();
+        photoUploadMock
+            .Setup(service => service.HealthCheckAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<TimeSpan?>()))
+            .ReturnsAsync(true);
+
+        var hubMock = new Mock<IRuntimeHubRemoteClient>();
+        hubMock.SetupGet(hub => hub.IsConnected).Returns(false);
+        hubMock
+            .Setup(hub => hub.ConnectAsync(
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>(),
+                It.IsAny<bool>()))
+            .ThrowsAsync(new InvalidOperationException("SignalR connect failed"));
+
+        var viewModel = CreateViewModel(
+            eventBus,
+            runtimeHubRemoteClient: hubMock.Object,
+            settings: settings,
+            restDiscoveryService: restDiscoveryMock.Object,
+            photoUploadService: photoUploadMock.Object);
+
+        viewModel.IsMobaflowConnectionEnabled = true;
+        await Task.Delay(3500);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel.IsMobaflowConnectionEnabled, Is.True);
+            Assert.That(viewModel.IsRestApiReachable, Is.True);
+        });
     }
 
     private static Mock<ISettingsService> CreateSettingsServiceMock()

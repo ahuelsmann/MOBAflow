@@ -10,8 +10,6 @@ using Microsoft.Extensions.Logging;
 
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Net;
-using System.Net.Sockets;
 
 /// <summary>
 /// MainWindowViewModel - Settings Management
@@ -517,24 +515,6 @@ public partial class MainWindowViewModel
     }
 
     /// <summary>
-    /// Pairing key remote clients must send to access MOBApi.
-    /// </summary>
-    public string RestApiApiKey
-    {
-        get => _settings.RestApi.ApiKey;
-        set
-        {
-            var trimmed = value?.Trim() ?? string.Empty;
-            if (_settings.RestApi.ApiKey != trimmed)
-            {
-                _settings.RestApi.ApiKey = trimmed;
-                OnPropertyChanged();
-                PersistSettings();
-            }
-        }
-    }
-
-    /// <summary>
     /// Gets or sets the base folder for MOBAflow photos (e.g. OneDrive path). Empty = My Documents\MOBAflow\Photos.
     /// </summary>
     public string PhotoStoragePath
@@ -548,45 +528,6 @@ public partial class MainWindowViewModel
                 _settings.Application.PhotoStoragePath = v;
                 OnPropertyChanged();
                 PersistSettings();
-            }
-        }
-    }
-
-    /// <summary>
-    /// Gets the recommended local IPv4 for the REST API (MOBAsmart hint).
-    /// Uses the same preference as UDP discovery: 192.168.x.x, then 10.x.x.x, then any other IPv4.
-    /// Virtual adapters (WSL2/Docker vEthernet) often add extra 172.16–31.x addresses; those are not listed first.
-    /// </summary>
-    public string LocalIpAddress
-    {
-        get
-        {
-            try
-            {
-                var host = Dns.GetHostEntry(Dns.GetHostName());
-                var ipv4 = host.AddressList
-                    .Where(ip => ip.AddressFamily == AddressFamily.InterNetwork)
-                    .ToList();
-
-                if (ipv4.Count == 0)
-                    return "No network connection";
-
-                var s192 = ipv4.FirstOrDefault(ip => ip.ToString().StartsWith("192.168.", StringComparison.Ordinal));
-                if (s192 is not null)
-                    return s192.ToString();
-
-                var s10 = ipv4.FirstOrDefault(ip => ip.ToString().StartsWith("10.", StringComparison.Ordinal));
-                if (s10 is not null)
-                    return s10.ToString();
-
-                return ipv4[0].ToString();
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = ex.Message;
-                ShowErrorMessage = true;
-
-                return $"Unable to determine {ex.Message}";
             }
         }
     }

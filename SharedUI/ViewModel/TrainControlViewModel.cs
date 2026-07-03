@@ -4,10 +4,11 @@ namespace Moba.SharedUI.ViewModel;
 using Backend.Interface;
 
 using Common.Configuration;
+
+using Common.Runtime;
 using Common.Display;
 using Common.Events;
 using Common.Extension;
-using Common.Runtime;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -54,6 +55,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     private bool _disposed;
     private bool _updatesPaused;
     private IReadOnlyList<LocomotiveFleetSnapshot>? _pendingLocomotiveFleet;
+    private IReadOnlyList<LocomotiveFleetSnapshot>? _lastAppliedLocomotiveFleet;
     private readonly bool _useRemoteRuntimeSnapshots;
     private readonly bool _hybridRuntimeSnapshots;
     private readonly TrainControlHost _trainControlHost;
@@ -150,7 +152,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             LocoAddress = addr.HasValue ? (int)addr.Value : 0;
             Speed = 0;
             IsForward = true;
-            StatusMessage = value.Name;
+            StatusMessage = addr.HasValue ? $"DCC {addr.Value}" : string.Empty;
             OnPropertyChanged(nameof(LocomotiveTitle));
         }
 
@@ -179,7 +181,6 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// Persisted in settings.
     /// </summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(SpeedKmh))]
     private string _selectedLocoSeries = string.Empty;
 
     partial void OnSelectedLocoSeriesChanged(string value)
@@ -190,10 +191,9 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
     /// <summary>
     /// Maximum speed (Vmax) of the selected locomotive series in km/h.
-    /// Default: 200 km/h. Persisted in settings.
+    /// Default: 200 km/h. Persisted in settings. Shown as Vmax marker on the gauge only.
     /// </summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(SpeedKmh))]
     private int _selectedVmax = 200;
 
     partial void OnSelectedVmaxChanged(int value)
@@ -203,38 +203,35 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     }
 
     /// <summary>
-    /// Calculated speed in km/h based on current speed step and selected Vmax.
-    /// Always calculates even without selected locomotive series.
-    /// Uses SelectedVmax (default 200 km/h if not set).
-    /// Calculation: (Speed / MaxSpeedStep) * Vmax
-    /// Example (128 Steps, Vmax 200 km/h):
-    /// - Step 126 (max): (126/126) * 200 = 200 km/h
-    /// - Step 63 (50%): (63/126) * 200 = 100 km/h
+    /// Full-scale maximum on the speed gauge and slider (km/h), aligned with tachometer <c>GaugeMaxKmh</c>.
+    /// </summary>
+    public int SpeedGaugeMaxKmh => TrainControlDccSpeed.DefaultSpeedGaugeMaxKmh;
+
+    /// <summary>
+    /// Calculated speed in km/h based on current DCC step and gauge full scale (<see cref="SpeedGaugeMaxKmh"/>).
+    /// Locomotive <see cref="SelectedVmax"/> is shown on the gauge as a separate Vmax marker only.
+    /// Example (128 steps, gauge 400 km/h):
+    /// - Step 126 (max): (126/126) * 400 = 400 km/h
+    /// - Step 63 (50%): (63/126) * 400 = 200 km/h
     /// </summary>
     public int SpeedKmh
     {
         get
         {
-            // Use SelectedVmax (which defaults to 200 if not explicitly set)
-            var vmax = SelectedVmax > 0 ? SelectedVmax : 200;
-
-            // Avoid division by zero
             if (MaxSpeedStep == 0)
             {
                 _logger?.LogWarning("MaxSpeedStep is 0! Returning 0 km/h. SpeedSteps={SpeedSteps}", SpeedSteps);
                 return 0;
             }
 
-            // Calculate: (Speed / MaxSpeedStep) * Vmax
-            var result = (int)Math.Round((double)Speed / MaxSpeedStep * vmax);
+            var result = TrainControlDccSpeed.SpeedStepToKmh(Speed, MaxSpeedStep, SpeedGaugeMaxKmh);
 
-            // VALIDATION: Check for unrealistic values (debugging aid)
-            if (result > 500)
+            if (result > SpeedGaugeMaxKmh + 1)
             {
                 _logger?.LogWarning(
                     "SpeedKmh calculation resulted in unrealistic value: {Result} km/h. " +
-                    "Speed={Speed}, MaxSpeedStep={MaxSpeedStep}, SelectedVmax={Vmax}, SpeedSteps={SpeedSteps}",
-                    result, Speed, MaxSpeedStep, vmax, SpeedSteps);
+                    "Speed={Speed}, MaxSpeedStep={MaxSpeedStep}, SpeedGaugeMaxKmh={GaugeMax}, SpeedSteps={SpeedSteps}",
+                    result, Speed, MaxSpeedStep, SpeedGaugeMaxKmh, SpeedSteps);
             }
 
             return result;
@@ -799,6 +796,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// <param name="useRemoteRuntimeSnapshots">When true, locomotive state is driven by MOBAflow snapshots via MOBApi.</param>
     /// <param name="options">Optional host-specific options; overrides <paramref name="useRemoteRuntimeSnapshots"/> when set.</param>
     /// <param name="mobileRuntimeCoordinator">Optional MOBAsmart coordinator for hybrid local/remote snapshot routing.</param>
+    /// <param name="functionAppearancePicker">Optional WinUI picker for locomotive function appearance editing.</param>
     public TrainControlViewModel(
         IMobaRuntime mobaRuntime,
         ISettingsService settingsService,
@@ -866,6 +864,11 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             UpdateJourneyFromProjectContext();
             RefreshLocomotiveList();
         }
+
+        if (_mobileRuntimeCoordinator != null)
+        {
+            RefreshLocomotiveCommandCanExecute();
+        }
     }
 
     private void OnSolutionSynced()
@@ -923,13 +926,24 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
             if (fleetOverride is { Count: > 0 })
             {
-                ApplyFleetItemsInPlace(fleetOverride);
+                var orderedFleet = fleetOverride
+                    .OrderBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
+                    .ToList();
+                if (_lastAppliedLocomotiveFleet is not null
+                    && LocomotiveFleetSnapshotComparer.OrderedContentEquals(orderedFleet, _lastAppliedLocomotiveFleet))
+                {
+                    return;
+                }
+
+                ApplyFleetItemsInPlace(orderedFleet);
+                _lastAppliedLocomotiveFleet = orderedFleet;
                 return;
             }
 
             ProjectLocomotives = sourceItems.Count == 0
                 ? []
                 : new ObservableCollection<LocomotiveViewModel>(sourceItems);
+            _lastAppliedLocomotiveFleet = null;
             OnPropertyChanged(nameof(HasProjectLocomotives));
             OnPropertyChanged(nameof(ProjectLocomotiveListHeight));
             OnPropertyChanged(nameof(LocomotiveTitle));
@@ -971,13 +985,19 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         }
 
         var collectionChanged = ProjectLocomotives.Count != ordered.Count;
+        var metadataChanged = false;
 
         for (var index = 0; index < ordered.Count; index++)
         {
             var snapshot = ordered[index];
             if (existingById.TryGetValue(snapshot.LocomotiveId, out var existing))
             {
-                existing.ApplyFleetSnapshot(snapshot);
+                if (!existing.MatchesFleetSnapshot(snapshot))
+                {
+                    existing.ApplyFleetSnapshot(snapshot);
+                    metadataChanged = true;
+                }
+
                 if (!ReferenceEquals(ProjectLocomotives[index], existing))
                 {
                     collectionChanged = true;
@@ -988,6 +1008,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
             ProjectLocomotives.Insert(index, CreateLocomotiveViewModelFromFleetSnapshot(snapshot));
             collectionChanged = true;
+            metadataChanged = true;
         }
 
         if (collectionChanged)
@@ -999,7 +1020,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             SyncLocomotivePickerSelection();
         }
 
-        if (GetCurrentLocomotive() != null)
+        if (metadataChanged && GetCurrentLocomotive() != null)
         {
             NotifyAllFunctionAppearanceChanged();
         }
@@ -1018,6 +1039,17 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         foreach (var locomotive in ProjectLocomotives)
         {
             locomotive.IsPickerSelected = selectedId.HasValue && locomotive.Model.Id == selectedId.Value;
+        }
+    }
+
+    /// <summary>
+    /// Refreshes remote photo bindings for the MOBAsmart locomotive list.
+    /// </summary>
+    public void RefreshLocomotivePhotoBindings()
+    {
+        foreach (var locomotive in ProjectLocomotives)
+        {
+            locomotive.InvalidatePhotoBinding();
         }
     }
 
@@ -1497,6 +1529,10 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         return LocomotiveFunctionAppearanceResolver.GetDescription(GetCurrentLocomotive(), functionIndex);
     }
 
+    private bool UsesLocalZ21LocomotiveFeedback =>
+        !_hybridRuntimeSnapshots
+        || (_mobileRuntimeCoordinator?.IsLocalZ21Connected ?? IsConnected);
+
     private void OnRuntimeSnapshotChanged(RuntimeSnapshotChangedEvent e)
     {
         if (_disposed || _updatesPaused)
@@ -1506,6 +1542,12 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
         if (_hybridRuntimeSnapshots && _mobileRuntimeCoordinator?.PreferRemoteRuntime == true)
         {
+            // Slim remote sync: locomotive state comes from local Z21 feedback when connected.
+            if (UsesLocalZ21LocomotiveFeedback)
+            {
+                ApplyLocalLocomotiveStateFromSnapshot(e.Snapshot);
+            }
+
             return;
         }
 
@@ -1535,7 +1577,10 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         }
 
         _lastRemoteRuntimeSnapshot = e.Snapshot;
-        ApplyRuntimeSnapshot(e.Snapshot);
+        var snapshotToApply = _hybridRuntimeSnapshots && UsesLocalZ21LocomotiveFeedback
+            ? RuntimeSnapshotRemoteFilter.ForMobasmartBroadcast(e.Snapshot)
+            : e.Snapshot;
+        ApplyRuntimeSnapshot(snapshotToApply);
     }
 
     private void ApplyRuntimeSnapshot(MobaRuntimeSnapshot snapshot)
@@ -1580,9 +1625,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
     private void OnZ21ConnectionChanged(bool isConnected)
     {
-        SetSpeedCommand.NotifyCanExecuteChanged();
-        ToggleFunctionCommand.NotifyCanExecuteChanged();
-        EmergencyStopCommand.NotifyCanExecuteChanged();
+        RefreshLocomotiveCommandCanExecute();
         StatusMessage = isConnected ? "Z21 Connected" : "Z21 Disconnected";
     }
 
@@ -2030,13 +2073,29 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             return true;
         }
 
-        // MOBAsmart ignores local Z21 snapshots; drive state comes from MOBAflow when connected.
+        // Slim remote sync: prefer local Z21 locomotive feedback when directly connected.
+        if (UsesLocalZ21LocomotiveFeedback)
+        {
+            return !ShouldPreserveLocalDriveCommand(address);
+        }
+
         if (_mobileRuntimeCoordinator?.PreferRemoteRuntime != true)
         {
             return false;
         }
 
         return !ShouldPreserveLocalDriveCommand(address);
+    }
+
+    private void ApplyLocalLocomotiveStateFromSnapshot(MobaRuntimeSnapshot snapshot)
+    {
+        var projection = RuntimeSnapshotProjector.ProjectTrainControl(snapshot, IsConnected, LocoAddress);
+        ApplyLocomotiveStatesFromSnapshot(snapshot);
+
+        if (projection.LocomotiveState != null)
+        {
+            ApplyLocomotiveState(projection.LocomotiveState);
+        }
     }
 
     private bool ShouldApplySnapshotFunctionBits()
@@ -2220,6 +2279,11 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
     private MobaRuntimeSnapshot GetActiveRuntimeSnapshot()
     {
+        if (_hybridRuntimeSnapshots && UsesLocalZ21LocomotiveFeedback)
+        {
+            return _mobaRuntime.Current;
+        }
+
         if (_hybridRuntimeSnapshots
             && _mobileRuntimeCoordinator?.PreferRemoteRuntime == true
             && _lastRemoteRuntimeSnapshot != null)
@@ -2523,28 +2587,23 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     }
 
     /// <summary>
-    /// Sets speed to a preset value.
-    /// Preset values based on typical railway speed limits:
-    /// - 20: Shunting/Rangieren (~25 km/h)
-    /// - 40: Slow/Station (~50 km/h)
-    /// - 60: Normal (~80 km/h)
-    /// - 80: Fast (~120 km/h)
-    /// - 100: Express (~160 km/h)
-    /// - 126: Maximum
+    /// Sets speed to a preset km/h value (converted to the nearest DCC speed step).
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
     private void SetSpeedPreset(object? presetParam)
     {
-        var preset = presetParam switch
+        var presetKmh = presetParam switch
         {
             int i => i,
             string s when int.TryParse(s, out var parsed) => parsed,
             _ => 0
         };
 
-        var maxSpeed = CanIncreaseSpeed ? 126 : Speed;
-        Speed = Math.Clamp(preset, 0, maxSpeed);
-        _logger?.LogDebug("Speed preset set to {Preset}", preset);
+        var clampedKmh = Math.Clamp(presetKmh, 0, SpeedGaugeMaxKmh);
+        var targetStep = TrainControlDccSpeed.KmhToSpeedStep(clampedKmh, SpeedGaugeMaxKmh, MaxSpeedStep);
+        var maxSpeed = CanIncreaseSpeed ? MaxSpeedStep : Speed;
+        Speed = Math.Clamp(targetStep, 0, maxSpeed);
+        _logger?.LogDebug("Speed preset set to {PresetKmh} km/h (step {Step})", clampedKmh, Speed);
     }
 
     /// <summary>

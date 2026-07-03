@@ -165,6 +165,7 @@ public class AnnouncementService : IAnnouncementService
     /// <param name="stationIndex">Station position (1-based).</param>
     /// <param name="cancellationToken">Cancellation token for async operation.</param>
     /// <param name="templateName">Optional template name used for logging context.</param>
+    /// <param name="suppressSpeechErrors">When true, speech engine failures are logged but not rethrown.</param>
     public async Task GenerateAndSpeakAnnouncementAsync(
         string? templateText,
         Station station,

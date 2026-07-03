@@ -75,7 +75,7 @@ internal sealed class StatusControllerTests
         remoteRegistry.Register("remote-conn", "mobasmart");
 
         var broadcastMetrics = new RuntimeBroadcastMetrics();
-        broadcastMetrics.RecordSnapshotBroadcast();
+        broadcastMetrics.RecordSnapshotBroadcast(842);
 
         var controller = new StatusController(
             new ClientRegistry(),
@@ -107,6 +107,8 @@ internal sealed class StatusControllerTests
         {
             Assert.That(runtimeJson.GetProperty("hasHost").GetBoolean(), Is.True);
             Assert.That(runtimeJson.GetProperty("remoteClientCount").GetInt32(), Is.EqualTo(1));
+            Assert.That(runtimeJson.GetProperty("lastSnapshotPayloadBytes").GetInt32(), Is.EqualTo(842));
+            Assert.That(runtimeJson.GetProperty("totalSnapshotBroadcastCount").GetInt64(), Is.EqualTo(1));
             Assert.That(runtimeJson.GetProperty("sessionOperational").GetBoolean(), Is.True);
             Assert.That(snapshotCacheJson.GetProperty("available").GetBoolean(), Is.True);
             Assert.That(snapshotCacheJson.GetProperty("signalBoxElementCount").GetInt32(), Is.EqualTo(1));

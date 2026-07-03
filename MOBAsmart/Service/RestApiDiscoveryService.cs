@@ -21,9 +21,14 @@ using System.Text;
 /// </summary>
 public class RestApiDiscoveryService : IRestDiscoveryService
 {
-    private const int MulticastReceiveTimeoutMs = 1200;
-    private const int SubnetProbeBatchSize = 16;
     private const int QuickProbeTimeoutMs = 350;
+    private const int SubnetProbeBatchSize = 16;
+#if ANDROID
+    private const int MulticastReceiveTimeoutMs = 2500;
+    private const int AndroidQuickProbeTimeoutMs = 900;
+#else
+    private const int MulticastReceiveTimeoutMs = 1200;
+#endif
 #if ANDROID
     private const int SubnetProbeRequestTimeoutMs = 1200;
 #else
@@ -238,9 +243,18 @@ public class RestApiDiscoveryService : IRestDiscoveryService
             return (null, null);
         }
 
-        var found = await ProbeFirstHealthyHostAsync(candidates, restPort, QuickProbeTimeoutMs, cancellationToken)
+        var found = await ProbeFirstHealthyHostAsync(candidates, restPort, GetQuickProbeTimeoutMs(), cancellationToken)
             .ConfigureAwait(false);
         return found != null ? (found, restPort) : (null, null);
+    }
+
+    private static int GetQuickProbeTimeoutMs()
+    {
+#if ANDROID
+        return AndroidQuickProbeTimeoutMs;
+#else
+        return QuickProbeTimeoutMs;
+#endif
     }
 
     private async Task<(string? ip, int? port)> TryDiscoverByUdpAsync(CancellationToken cancellationToken)

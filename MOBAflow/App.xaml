@@ -19,6 +19,25 @@
                 <ResourceDictionary x:Key="Light">
                     <SolidColorBrush x:Key="SurfaceSecondaryBrush" Color="#FFF3F3F3" />
                     <SolidColorBrush x:Key="SurfaceBackgroundFillColorDefaultBrush" Color="#FFFFFFFF" />
+                    <SolidColorBrush x:Key="MobaTextLabelMutedBrush" Color="#FF616161" />
+                    <SolidColorBrush x:Key="FunctionButtonOffBackgroundBrush" Color="#FFEEEEEE" />
+                    <SolidColorBrush x:Key="FunctionButtonOffBorderBrush" Color="#FFD0D0D0" />
+                    <SolidColorBrush x:Key="SignalHousingBackgroundBrush" Color="#FFE8E8E8" />
+                    <SolidColorBrush x:Key="SignalLampOffBrush" Color="#663C4040" />
+                    <SolidColorBrush x:Key="SignalBoxTrackBrush" Color="#FFC8C8C8" />
+                    <SolidColorBrush x:Key="SignalPreviewBackgroundBrush" Color="#FFE8E8E8" />
+                    <SolidColorBrush x:Key="MobaDangerButtonBackgroundBrush" Color="#FFE81123" />
+                    <SolidColorBrush x:Key="MobaDangerButtonForegroundBrush" Color="#FFFFFFFF" />
+                    <SolidColorBrush x:Key="MobaDangerButtonBorderBrush" Color="#FFC41019" />
+                    <SolidColorBrush x:Key="MobaDangerButtonBackgroundPointerOverBrush" Color="#FFFF1C2C" />
+                    <SolidColorBrush x:Key="MobaDangerButtonBackgroundPressedBrush" Color="#FFC41019" />
+                    <SolidColorBrush x:Key="MobaDangerButtonBackgroundDisabledBrush" Color="#FF7A0B11" />
+                    <SolidColorBrush x:Key="MobaDangerButtonForegroundDisabledBrush" Color="#80FFFFFF" />
+                    <SolidColorBrush x:Key="MobaPreviewBadgeBackgroundBrush" Color="#30FF8A00" />
+                    <SolidColorBrush x:Key="MobaPreviewBadgeBorderBrush" Color="#80FF8A00" />
+                    <SolidColorBrush x:Key="MobaPreviewBadgeForegroundBrush" Color="#FFCC7000" />
+                    <SolidColorBrush x:Key="MobaFeedbackCardForegroundBrush" Color="#FFFFFFFF" />
+                    <SolidColorBrush x:Key="MatrixCellOffBrush" Color="#FFD3D3D3" />
                     <!--  TrackPlan: strong dark stroke on light background (Fluent: good contrast)  -->
                     <SolidColorBrush x:Key="TrackPlanStrokeBrush" Color="#FF121212" />
                     <SolidColorBrush x:Key="TrackPlanStrokeSelectedBrush" Color="#FF0078D4" />
@@ -31,6 +50,25 @@
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="SurfaceSecondaryBrush" Color="#FF1F1F1F" />
                     <SolidColorBrush x:Key="SurfaceBackgroundFillColorDefaultBrush" Color="#FF202020" />
+                    <SolidColorBrush x:Key="MobaTextLabelMutedBrush" Color="#FF9A9A9A" />
+                    <SolidColorBrush x:Key="FunctionButtonOffBackgroundBrush" Color="#FF2C2C2C" />
+                    <SolidColorBrush x:Key="FunctionButtonOffBorderBrush" Color="#FF404040" />
+                    <SolidColorBrush x:Key="SignalHousingBackgroundBrush" Color="#FF1E1E1E" />
+                    <SolidColorBrush x:Key="SignalLampOffBrush" Color="#663C4040" />
+                    <SolidColorBrush x:Key="SignalBoxTrackBrush" Color="#FF505050" />
+                    <SolidColorBrush x:Key="SignalPreviewBackgroundBrush" Color="#FF1E1E1E" />
+                    <SolidColorBrush x:Key="MobaDangerButtonBackgroundBrush" Color="#FFE81123" />
+                    <SolidColorBrush x:Key="MobaDangerButtonForegroundBrush" Color="#FFFFFFFF" />
+                    <SolidColorBrush x:Key="MobaDangerButtonBorderBrush" Color="#FFC41019" />
+                    <SolidColorBrush x:Key="MobaDangerButtonBackgroundPointerOverBrush" Color="#FFFF1C2C" />
+                    <SolidColorBrush x:Key="MobaDangerButtonBackgroundPressedBrush" Color="#FFC41019" />
+                    <SolidColorBrush x:Key="MobaDangerButtonBackgroundDisabledBrush" Color="#FF7A0B11" />
+                    <SolidColorBrush x:Key="MobaDangerButtonForegroundDisabledBrush" Color="#80FFFFFF" />
+                    <SolidColorBrush x:Key="MobaPreviewBadgeBackgroundBrush" Color="#30FF8A00" />
+                    <SolidColorBrush x:Key="MobaPreviewBadgeBorderBrush" Color="#80FF8A00" />
+                    <SolidColorBrush x:Key="MobaPreviewBadgeForegroundBrush" Color="#FFFF8A00" />
+                    <SolidColorBrush x:Key="MobaFeedbackCardForegroundBrush" Color="#FFFFFFFF" />
+                    <SolidColorBrush x:Key="MatrixCellOffBrush" Color="#FF404040" />
                     <!--  TrackPlan: heller Strich auf dunklem Hintergrund (Fluent: Lesbarkeit im Dark Mode)  -->
                     <SolidColorBrush x:Key="TrackPlanStrokeBrush" Color="#FFEBEBEB" />
                     <SolidColorBrush x:Key="TrackPlanStrokeSelectedBrush" Color="#FF60CDFF" />

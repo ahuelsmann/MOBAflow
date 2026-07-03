@@ -110,7 +110,6 @@ public class SettingsService : ISettingsService
                     _settings.RestApi.Port = loadedRestApi.Port;
                     _settings.RestApi.RecentIpAddresses = loadedRestApi.RecentIpAddresses;
                     _settings.RestApi.IsConnectionEnabled = loadedRestApi.IsConnectionEnabled;
-                    _settings.RestApi.ApiKey = loadedRestApi.ApiKey ?? string.Empty;
 
                     _isLoaded = true;
                 }

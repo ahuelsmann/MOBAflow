@@ -206,12 +206,40 @@ public static class Z21MessageParser
     }
 
     /// <summary>
+    /// Determines whether the given packet is a turnout info response (LAN_X_TURNOUT_INFO).
+    /// </summary>
+    public static bool IsTurnoutInfo(byte[] data)
+        => data.Length >= 9 && IsLanXHeader(data) && data[4] == Z21Protocol.XHeader.X_TURNOUT_INFO;
+
+    /// <summary>
     /// Determines whether the given packet is a loco info response (LAN_X_LOCO_INFO).
     /// </summary>
     /// <param name="data">Raw Z21 packet bytes.</param>
     /// <returns><c>true</c> if the packet contains loco info, otherwise <c>false</c>.</returns>
     public static bool IsLocoInfo(byte[] data)
         => data.Length >= 7 && IsLanXHeader(data) && data[4] == Z21Protocol.XHeader.X_LOCO_INFO;
+
+    /// <summary>
+    /// Parses LAN_X_TURNOUT_INFO (0x43). ZZ=00 not switched, 01=P=0, 10=P=1 per Z21 spec section 5.3.
+    /// </summary>
+    public static bool TryParseTurnoutInfo(byte[] data, out TurnoutInfo? turnoutInfo)
+    {
+        turnoutInfo = null;
+        if (!IsTurnoutInfo(data))
+        {
+            return false;
+        }
+
+        var functionAddress = (data[5] << 8) | data[6];
+        var state = data[7] & 0x03;
+        turnoutInfo = new TurnoutInfo
+        {
+            FunctionAddress = functionAddress,
+            IsSwitched = state != 0,
+            OutputPosition = state == 2
+        };
+        return true;
+    }
 
     /// <summary>
     /// Parses the LAN_X_LOCO_INFO response (X-Bus Loco Information).

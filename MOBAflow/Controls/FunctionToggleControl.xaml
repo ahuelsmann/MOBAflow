@@ -7,7 +7,7 @@
     <ToggleButton
         x:Name="FunctionToggleButton"
         MinHeight="36"
-        Background="{x:Bind converter:BoolToBacklightBrushConverter.CreateBrush(IsOn, BacklightColorHex), Mode=OneWay}"
+        Background="{x:Bind converter:BoolToBacklightBrushConverter.CreateBrush(IsOn, BacklightColorHex, Root), Mode=OneWay}"
         Command="{x:Bind ToggleCommand, Mode=OneWay}"
         CommandParameter="{x:Bind FunctionIndex, Mode=OneWay}"
         IsChecked="{x:Bind IsOn, Mode=OneWay}"

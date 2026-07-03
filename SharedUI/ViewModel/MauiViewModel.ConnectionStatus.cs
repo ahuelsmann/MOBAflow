@@ -15,12 +15,12 @@ public sealed partial class MauiViewModel
     public string RestApiStatusText =>
         !IsMobaflowConnectionEnabled ? "OFF"
         : IsRestApiReachable ? "ON"
-        : "Connecting";
+        : "Search";
 
     public string RestApiStatusSemanticDescription =>
         !IsMobaflowConnectionEnabled ? "MOBAflow connection disabled"
         : IsRestApiReachable ? "MOBAflow REST API connected"
-        : "MOBAflow connection in progress";
+        : "MOBAflow not found yet. Tap status to search the network.";
 
     public string RestApiIndicatorResourceKey =>
         !IsMobaflowConnectionEnabled ? "RailwayDanger"

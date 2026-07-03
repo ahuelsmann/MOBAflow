@@ -2,25 +2,15 @@
 
 namespace Moba.WinUI.Service;
 
-
-
 using Common.Configuration;
 
 using Common.Events;
 
-
-
 using Domain;
-
-
 
 using Microsoft.Extensions.Logging;
 
-
-
 using SharedUI.ViewModel;
-
-
 
 using System.ComponentModel;
 
@@ -28,14 +18,9 @@ using System.Text;
 
 using System.Text.Json;
 
-
-
 /// <summary>
-
 /// Pushes the in-memory <see cref="Solution"/> to the MOBApi cache whenever it changes or MOBApi becomes reachable.
-
 /// Also pushes Z21 runtime settings when the Z21 connection is established or the endpoint changes.
-
 /// </summary>
 
 public sealed class RestApiSolutionSyncService : IDisposable
@@ -43,8 +28,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
 {
 
     private const int DebounceMilliseconds = 500;
-
-
 
     private readonly Solution _solution;
 
@@ -93,8 +76,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
         }
     }
 
-
-
     public RestApiSolutionSyncService(
 
         Solution solution,
@@ -127,8 +108,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         ArgumentNullException.ThrowIfNull(logger);
 
-
-
         _solution = solution;
 
         _appSettings = appSettings;
@@ -140,8 +119,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
         _eventBus = eventBus;
 
         _logger = logger;
-
-
 
         mainWindowViewModel.SolutionLoaded += OnSolutionChanged;
 
@@ -155,8 +132,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
     }
 
-
-
     private void OnSolutionChanged(object? sender, EventArgs e) => QueuePush();
 
     private void OnMainWindowViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -167,8 +142,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
         }
     }
 
-
-
     private void OnApiBecameReachable(object? sender, int port)
     {
         _ = port;
@@ -177,12 +150,8 @@ public sealed class RestApiSolutionSyncService : IDisposable
         QueueRuntimeSettingsPush();
     }
 
-
-
     /// <summary>
-
     /// Schedules a debounced push of the current solution to MOBApi.
-
     /// </summary>
 
     public void QueuePush()
@@ -196,8 +165,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
             return;
 
         }
-
-
 
         CancellationToken token;
 
@@ -215,18 +182,12 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         }
 
-
-
         _ = PushDebouncedAsync(token);
 
     }
 
-
-
     /// <summary>
-
     /// Schedules a push of the current Z21 endpoint to MOBApi runtime settings.
-
     /// </summary>
 
     public void QueueRuntimeSettingsPush()
@@ -241,13 +202,9 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         }
 
-
-
         _ = PushRuntimeSettingsDebouncedAsync();
 
     }
-
-
 
     private async Task PushRuntimeSettingsDebouncedAsync()
 
@@ -272,10 +229,7 @@ public sealed class RestApiSolutionSyncService : IDisposable
             _logger.LogDebug(ex, "Debounced runtime settings push failed");
 
         }
-
     }
-
-
 
     private async Task PushDebouncedAsync(CancellationToken cancellationToken)
 
@@ -306,10 +260,7 @@ public sealed class RestApiSolutionSyncService : IDisposable
             _logger.LogWarning(ex, "Debounced solution push failed");
 
         }
-
     }
-
-
 
     private async Task PushAsync(CancellationToken cancellationToken)
 
@@ -321,8 +272,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
             solutionPath = "mobaflow://in-memory";
         }
 
-
-
         var port = _appSettings.RestApi.Port > 0 ? _appSettings.RestApi.Port : 5001;
 
         if (_solution.SchemaVersion != Solution.CurrentSchemaVersion)
@@ -333,8 +282,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
         var json = JsonSerializer.Serialize(_solution, JsonOptions.Default);
 
         using var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-
 
         using var request = new HttpRequestMessage(HttpMethod.Put, $"http://127.0.0.1:{port}/api/solution")
 
@@ -351,8 +298,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
         {
             request.Headers.TryAddWithoutValidation("X-MOBAflow-Active-Project", activeProjectName);
         }
-
-
 
         var succeeded = false;
 
@@ -375,8 +320,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
                 return;
 
             }
-
-
 
             var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 
@@ -413,7 +356,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
             RecordSolutionPush(succeeded);
 
         }
-
     }
 
     private void RecordSolutionPush(bool succeeded)
@@ -429,10 +371,7 @@ public sealed class RestApiSolutionSyncService : IDisposable
             _lastSolutionPushSucceeded = succeeded;
 
         }
-
     }
-
-
 
     private async Task PushRuntimeSettingsAsync(int port, CancellationToken cancellationToken)
 
@@ -448,8 +387,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         }
 
-
-
         if (string.Equals(_lastPushedZ21Ip, z21Ip, StringComparison.Ordinal))
 
         {
@@ -457,8 +394,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
             return;
 
         }
-
-
 
         var z21Port = 21105;
 
@@ -474,8 +409,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         }
 
-
-
         var body = JsonSerializer.Serialize(new { z21IpAddress = z21Ip, z21Port });
 
         using var content = new StringContent(body, Encoding.UTF8, "application/json");
@@ -487,8 +420,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
             Content = content
 
         };
-
-
 
         try
 
@@ -507,8 +438,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
                 return;
 
             }
-
-
 
             var responseBody = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 
@@ -537,10 +466,7 @@ public sealed class RestApiSolutionSyncService : IDisposable
             _logger.LogDebug(ex, "Runtime settings push to MOBApi timed out on port {Port}", port);
 
         }
-
     }
-
-
 
     public void Dispose()
 
@@ -554,8 +480,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         }
 
-
-
         _disposed = true;
 
         foreach (var subscriptionId in _eventSubscriptions)
@@ -565,8 +489,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
             _eventBus.Unsubscribe(subscriptionId);
 
         }
-
-
 
         _eventSubscriptions.Clear();
 
@@ -581,8 +503,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
             _debounceCts = null;
 
         }
-
     }
-
 }
 

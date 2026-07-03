@@ -10,7 +10,7 @@
     </Style>
 
     <Style TargetType="Border">
-        <Setter Property="Stroke" Value="{DynamicResource Gray200}" />
+        <Setter Property="Stroke" Value="{DynamicResource Border}" />
         <Setter Property="StrokeThickness" Value="1" />
         <Setter Property="StrokeShape" Value="RoundRectangle 8" />
         <Setter Property="BackgroundColor" Value="{DynamicResource FrameBackgroundColor}" />
@@ -36,20 +36,20 @@
     </Style>
 
     <Style TargetType="Entry">
-        <Setter Property="TextColor" Value="{DynamicResource White}" />
-        <Setter Property="BackgroundColor" Value="{DynamicResource Gray600}" />
-        <Setter Property="PlaceholderColor" Value="{DynamicResource Gray400}" />
+        <Setter Property="TextColor" Value="{DynamicResource InputText}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource InputBackground}" />
+        <Setter Property="PlaceholderColor" Value="{DynamicResource TextLabelMuted}" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
                     <VisualState x:Name="Normal">
                         <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{DynamicResource Gray600}" />
+                            <Setter Property="BackgroundColor" Value="{DynamicResource InputBackground}" />
                         </VisualState.Setters>
                     </VisualState>
                     <VisualState x:Name="Focused">
                         <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{DynamicResource Gray600}" />
+                            <Setter Property="BackgroundColor" Value="{DynamicResource InputBackground}" />
                         </VisualState.Setters>
                     </VisualState>
                 </VisualStateGroup>
@@ -58,20 +58,20 @@
     </Style>
 
     <Style TargetType="Editor">
-        <Setter Property="TextColor" Value="{DynamicResource White}" />
-        <Setter Property="BackgroundColor" Value="{DynamicResource Gray600}" />
-        <Setter Property="PlaceholderColor" Value="{DynamicResource Gray400}" />
+        <Setter Property="TextColor" Value="{DynamicResource InputText}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource InputBackground}" />
+        <Setter Property="PlaceholderColor" Value="{DynamicResource TextLabelMuted}" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
                     <VisualState x:Name="Normal">
                         <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{DynamicResource Gray600}" />
+                            <Setter Property="BackgroundColor" Value="{DynamicResource InputBackground}" />
                         </VisualState.Setters>
                     </VisualState>
                     <VisualState x:Name="Focused">
                         <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{DynamicResource Gray600}" />
+                            <Setter Property="BackgroundColor" Value="{DynamicResource InputBackground}" />
                         </VisualState.Setters>
                     </VisualState>
                 </VisualStateGroup>
@@ -80,20 +80,20 @@
     </Style>
 
     <Style TargetType="Picker">
-        <Setter Property="TextColor" Value="{DynamicResource White}" />
-        <Setter Property="BackgroundColor" Value="{DynamicResource Gray600}" />
-        <Setter Property="TitleColor" Value="{DynamicResource Gray400}" />
+        <Setter Property="TextColor" Value="{DynamicResource InputText}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource InputBackground}" />
+        <Setter Property="TitleColor" Value="{DynamicResource TextLabelMuted}" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
                     <VisualState x:Name="Normal">
                         <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{DynamicResource Gray600}" />
+                            <Setter Property="BackgroundColor" Value="{DynamicResource InputBackground}" />
                         </VisualState.Setters>
                     </VisualState>
                     <VisualState x:Name="Focused">
                         <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{DynamicResource Gray600}" />
+                            <Setter Property="BackgroundColor" Value="{DynamicResource InputBackground}" />
                         </VisualState.Setters>
                     </VisualState>
                 </VisualStateGroup>
@@ -102,19 +102,19 @@
     </Style>
 
     <Style TargetType="DatePicker">
-        <Setter Property="TextColor" Value="{DynamicResource White}" />
-        <Setter Property="BackgroundColor" Value="{DynamicResource Gray600}" />
+        <Setter Property="TextColor" Value="{DynamicResource InputText}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource InputBackground}" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
                     <VisualState x:Name="Normal">
                         <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{DynamicResource Gray600}" />
+                            <Setter Property="BackgroundColor" Value="{DynamicResource InputBackground}" />
                         </VisualState.Setters>
                     </VisualState>
                     <VisualState x:Name="Focused">
                         <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{DynamicResource Gray600}" />
+                            <Setter Property="BackgroundColor" Value="{DynamicResource InputBackground}" />
                         </VisualState.Setters>
                     </VisualState>
                 </VisualStateGroup>
@@ -123,19 +123,19 @@
     </Style>
 
     <Style TargetType="TimePicker">
-        <Setter Property="TextColor" Value="{DynamicResource White}" />
-        <Setter Property="BackgroundColor" Value="{DynamicResource Gray600}" />
+        <Setter Property="TextColor" Value="{DynamicResource InputText}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource InputBackground}" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
                     <VisualState x:Name="Normal">
                         <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{DynamicResource Gray600}" />
+                            <Setter Property="BackgroundColor" Value="{DynamicResource InputBackground}" />
                         </VisualState.Setters>
                     </VisualState>
                     <VisualState x:Name="Focused">
                         <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{DynamicResource Gray600}" />
+                            <Setter Property="BackgroundColor" Value="{DynamicResource InputBackground}" />
                         </VisualState.Setters>
                     </VisualState>
                 </VisualStateGroup>
@@ -154,14 +154,14 @@
     <Style x:Key="DisplayLarge" TargetType="Label">
         <Setter Property="FontSize" Value="57" />
         <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+        <Setter Property="TextColor" Value="{DynamicResource TextPrimary}" />
         <Setter Property="LineHeight" Value="1.2" />
     </Style>
 
     <Style x:Key="DisplayMedium" TargetType="Label">
         <Setter Property="FontSize" Value="45" />
         <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+        <Setter Property="TextColor" Value="{DynamicResource TextPrimary}" />
         <Setter Property="LineHeight" Value="1.2" />
     </Style>
 
@@ -169,80 +169,80 @@
     <Style x:Key="HeadlineLarge" TargetType="Label">
         <Setter Property="FontSize" Value="32" />
         <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+        <Setter Property="TextColor" Value="{DynamicResource TextPrimary}" />
     </Style>
 
     <Style x:Key="HeadlineMedium" TargetType="Label">
         <Setter Property="FontSize" Value="28" />
         <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+        <Setter Property="TextColor" Value="{DynamicResource TextPrimary}" />
     </Style>
 
     <Style x:Key="HeadlineSmall" TargetType="Label">
         <Setter Property="FontSize" Value="24" />
         <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+        <Setter Property="TextColor" Value="{DynamicResource TextPrimary}" />
     </Style>
 
     <!--  Title (Card/Component titles)  -->
     <Style x:Key="TitleLarge" TargetType="Label">
         <Setter Property="FontSize" Value="22" />
         <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+        <Setter Property="TextColor" Value="{DynamicResource TextPrimary}" />
     </Style>
 
     <Style x:Key="TitleMedium" TargetType="Label">
         <Setter Property="FontSize" Value="18" />
         <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+        <Setter Property="TextColor" Value="{DynamicResource TextPrimary}" />
     </Style>
 
     <Style x:Key="TitleSmall" TargetType="Label">
         <Setter Property="FontSize" Value="16" />
         <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+        <Setter Property="TextColor" Value="{DynamicResource TextPrimary}" />
     </Style>
 
     <!--  Body (Main content)  -->
     <Style x:Key="BodyLarge" TargetType="Label">
         <Setter Property="FontSize" Value="16" />
-        <Setter Property="TextColor" Value="{StaticResource TextSecondary}" />
+        <Setter Property="TextColor" Value="{DynamicResource TextSecondary}" />
     </Style>
 
     <Style x:Key="BodyMedium" TargetType="Label">
         <Setter Property="FontSize" Value="14" />
-        <Setter Property="TextColor" Value="{StaticResource TextSecondary}" />
+        <Setter Property="TextColor" Value="{DynamicResource TextSecondary}" />
     </Style>
 
     <Style x:Key="BodySmall" TargetType="Label">
         <Setter Property="FontSize" Value="12" />
-        <Setter Property="TextColor" Value="{StaticResource TextSecondary}" />
+        <Setter Property="TextColor" Value="{DynamicResource TextSecondary}" />
     </Style>
 
     <!--  Label/Caption (Small labels, metadata)  -->
     <Style x:Key="LabelLarge" TargetType="Label">
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="TextColor" Value="{StaticResource TextSecondary}" />
+        <Setter Property="TextColor" Value="{DynamicResource TextSecondary}" />
     </Style>
 
     <Style x:Key="LabelMedium" TargetType="Label">
         <Setter Property="FontSize" Value="12" />
         <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="TextColor" Value="{StaticResource TextSecondary}" />
+        <Setter Property="TextColor" Value="{DynamicResource TextSecondary}" />
     </Style>
 
     <Style x:Key="LabelSmall" TargetType="Label">
         <Setter Property="FontSize" Value="11" />
         <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="TextColor" Value="{StaticResource TextDisabled}" />
+        <Setter Property="TextColor" Value="{DynamicResource TextDisabled}" />
     </Style>
 
     <!--  Card Styles - Material Design 3  -->
 
     <!--  Elevated Card (with shadow)  -->
     <Style x:Key="ElevatedCard" TargetType="Border">
-        <Setter Property="BackgroundColor" Value="{StaticResource SurfaceCard}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceCard}" />
         <Setter Property="Stroke" Value="Transparent" />
         <Setter Property="StrokeShape" Value="RoundRectangle 16" />
         <Setter Property="Padding" Value="16" />
@@ -260,7 +260,7 @@
 
     <!--  Filled Card (no shadow, slight background)  -->
     <Style x:Key="FilledCard" TargetType="Border">
-        <Setter Property="BackgroundColor" Value="{StaticResource SurfaceElevated}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceElevated}" />
         <Setter Property="Stroke" Value="Transparent" />
         <Setter Property="StrokeShape" Value="RoundRectangle 16" />
         <Setter Property="Padding" Value="16" />
@@ -270,7 +270,7 @@
     <!--  Outlined Card (border only)  -->
     <Style x:Key="OutlinedCard" TargetType="Border">
         <Setter Property="BackgroundColor" Value="Transparent" />
-        <Setter Property="Stroke" Value="{StaticResource BorderColor}" />
+        <Setter Property="Stroke" Value="{DynamicResource BorderColor}" />
         <Setter Property="StrokeShape" Value="RoundRectangle 16" />
         <Setter Property="Padding" Value="16" />
         <Setter Property="Margin" Value="16,8" />
@@ -280,8 +280,8 @@
 
     <!--  Primary Button (Filled/Contained)  -->
     <Style x:Key="PrimaryButton" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource RailwayPrimary}" />
-        <Setter Property="TextColor" Value="{StaticResource TextOnPrimary}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource RailwayPrimary}" />
+        <Setter Property="TextColor" Value="{DynamicResource TextOnPrimary}" />
         <Setter Property="FontSize" Value="16" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="CornerRadius" Value="24" />
@@ -312,7 +312,7 @@
         x:Key="SecondaryButton"
         BasedOn="{StaticResource PrimaryButton}"
         TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource RailwaySecondary}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource RailwaySecondary}" />
     </Style>
 
     <!--  Accent Button (Success/Go)  -->
@@ -320,7 +320,7 @@
         x:Key="AccentButton"
         BasedOn="{StaticResource PrimaryButton}"
         TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource RailwayAccent}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource RailwayAccent}" />
     </Style>
 
     <!--  Danger Button (Error/Stop)  -->
@@ -328,14 +328,14 @@
         x:Key="DangerButton"
         BasedOn="{StaticResource PrimaryButton}"
         TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource RailwayDanger}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource RailwayDanger}" />
     </Style>
 
     <!--  Outlined Button (Border only)  -->
     <Style x:Key="OutlinedButton" TargetType="Button">
         <Setter Property="BackgroundColor" Value="Transparent" />
-        <Setter Property="TextColor" Value="{StaticResource RailwayPrimary}" />
-        <Setter Property="BorderColor" Value="{StaticResource RailwayPrimary}" />
+        <Setter Property="TextColor" Value="{DynamicResource RailwayPrimary}" />
+        <Setter Property="BorderColor" Value="{DynamicResource RailwayPrimary}" />
         <Setter Property="BorderWidth" Value="2" />
         <Setter Property="FontSize" Value="16" />
         <Setter Property="FontAttributes" Value="Bold" />
@@ -347,7 +347,7 @@
     <!--  Text Button (No background)  -->
     <Style x:Key="TextButton" TargetType="Button">
         <Setter Property="BackgroundColor" Value="Transparent" />
-        <Setter Property="TextColor" Value="{StaticResource RailwayPrimary}" />
+        <Setter Property="TextColor" Value="{DynamicResource RailwayPrimary}" />
         <Setter Property="FontSize" Value="16" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="Padding" Value="16,12" />
@@ -364,21 +364,21 @@
         x:Key="SuccessBadge"
         BasedOn="{StaticResource StatusBadge}"
         TargetType="Border">
-        <Setter Property="BackgroundColor" Value="{StaticResource RailwayAccent}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource RailwayAccent}" />
     </Style>
 
     <Style
         x:Key="DangerBadge"
         BasedOn="{StaticResource StatusBadge}"
         TargetType="Border">
-        <Setter Property="BackgroundColor" Value="{StaticResource RailwayDanger}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource RailwayDanger}" />
     </Style>
 
     <Style
         x:Key="WarningBadge"
         BasedOn="{StaticResource StatusBadge}"
         TargetType="Border">
-        <Setter Property="BackgroundColor" Value="{StaticResource RailwayWarning}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource RailwayWarning}" />
     </Style>
 
 </ResourceDictionary>

@@ -4,18 +4,20 @@ namespace Moba.WinUI.Converter;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Data;
+
 using Moba.WinUI.View;
 
 public partial class ResourceKeyToBrushConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {
+        var element = parameter as FrameworkElement ?? ThemeResourceResolver.GetDefaultThemeRoot();
         if (value is string resourceKey)
         {
-            return ThemeResourceResolver.ResolveBrush(App.MainWindow?.Content as FrameworkElement, resourceKey, Colors.Black);
+            return ThemeResourceResolver.ResolveBrush(element, resourceKey, Colors.Black);
         }
 
-        return ThemeResourceResolver.ResolveBrush(App.MainWindow?.Content as FrameworkElement, "TextFillColorPrimaryBrush", Colors.Black);
+        return ThemeResourceResolver.ResolveBrush(element, "TextFillColorPrimaryBrush", Colors.Black);
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)

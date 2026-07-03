@@ -32,6 +32,13 @@ public sealed partial class MauiViewModel
         IReadOnlyList<SignalBoxElementRuntimeSnapshot> elements,
         bool forceApply = false)
     {
+        _uiDispatcher.InvokeOnUiLowPriority(() => RefreshSignalBoxElementsCore(elements, forceApply));
+    }
+
+    private void RefreshSignalBoxElementsCore(
+        IReadOnlyList<SignalBoxElementRuntimeSnapshot> elements,
+        bool forceApply = false)
+    {
         if (!forceApply && (_heavyUpdatesPaused || !_signalBoxTabActive))
         {
             if (elements.Count > 0)
@@ -57,39 +64,48 @@ public sealed partial class MauiViewModel
         }
 
         var existingById = SignalBoxElements.ToDictionary(item => item.ElementId);
-        var snapshotById = ordered.ToDictionary(item => item.ElementId);
+        var targetItems = new List<MauiSignalBoxElementViewModel>(ordered.Count);
+
+        foreach (var snapshot in ordered)
+        {
+            var resolvedSnapshot = ApplyPendingSignalAspect(snapshot);
+            if (existingById.TryGetValue(resolvedSnapshot.ElementId, out var existing))
+            {
+                existing.ApplySnapshot(resolvedSnapshot);
+                targetItems.Add(existing);
+                continue;
+            }
+
+            var item = new MauiSignalBoxElementViewModel(resolvedSnapshot);
+            item.UserSignalAspectSelected += OnUserSignalAspectSelected;
+            targetItems.Add(item);
+        }
+
+        var targetIds = targetItems.Select(item => item.ElementId).ToHashSet();
+        var collectionChanged = false;
 
         for (var index = SignalBoxElements.Count - 1; index >= 0; index--)
         {
             var existing = SignalBoxElements[index];
-            if (snapshotById.ContainsKey(existing.ElementId))
+            if (targetIds.Contains(existing.ElementId))
             {
                 continue;
             }
 
             existing.UserSignalAspectSelected -= OnUserSignalAspectSelected;
             SignalBoxElements.RemoveAt(index);
+            collectionChanged = true;
         }
 
-        var collectionChanged = SignalBoxElements.Count != ordered.Count;
-
-        for (var index = 0; index < ordered.Count; index++)
+        var existingIds = SignalBoxElements.Select(item => item.ElementId).ToHashSet();
+        foreach (var target in targetItems)
         {
-            var snapshot = ApplyPendingSignalAspect(ordered[index]);
-            if (existingById.TryGetValue(snapshot.ElementId, out var existing))
+            if (existingIds.Contains(target.ElementId))
             {
-                existing.ApplySnapshot(snapshot);
-                if (!ReferenceEquals(SignalBoxElements[index], existing))
-                {
-                    collectionChanged = true;
-                }
-
                 continue;
             }
 
-            var item = new MauiSignalBoxElementViewModel(snapshot);
-            item.UserSignalAspectSelected += OnUserSignalAspectSelected;
-            SignalBoxElements.Insert(index, item);
+            SignalBoxElements.Add(target);
             collectionChanged = true;
         }
 
@@ -128,12 +144,17 @@ public sealed partial class MauiViewModel
 
         await SignalBoxAspectCommandDispatcher
             .DispatchAsync(
-                _runtimeCommandGateway ?? CreateLocalRuntimeCommandGateway(),
+                ResolveRuntimeCommandGateway(),
                 item.ElementId,
                 aspect,
                 _pendingSignalAspects)
             .ConfigureAwait(false);
     }
+
+    private IRuntimeCommandGateway ResolveRuntimeCommandGateway() =>
+        _mobileRuntimeCoordinator
+        ?? _runtimeCommandGateway
+        ?? CreateLocalRuntimeCommandGateway();
 
     private SignalBoxElementRuntimeSnapshot ApplyPendingSignalAspect(SignalBoxElementRuntimeSnapshot snapshot)
     {

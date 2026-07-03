@@ -5,6 +5,10 @@ namespace Moba.MAUI.Service;
 using System.Net;
 using System.Net.Http;
 
+#if ANDROID
+using Xamarin.Android.Net;
+#endif
+
 /// <summary>
 /// Named HTTP client identifiers and factory helpers for MOBAsmart LAN traffic.
 /// </summary>
@@ -77,5 +81,23 @@ public static class MobiLanHttpClientFactory
         {
             Timeout = TimeSpan.FromSeconds(2),
         };
+    }
+
+    /// <summary>
+    /// SignalR transport handler for MOBApi on the LAN. Mirrors REST health probes: no system proxy/VPN routing.
+    /// </summary>
+    public static HttpMessageHandler CreateLanSignalRHandler()
+    {
+#if ANDROID
+        return new AndroidMessageHandler
+        {
+            AllowAutoRedirect = true,
+            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+            ServerCertificateCustomValidationCallback = (_, _, _, _) => true,
+            UseProxy = false,
+        };
+#else
+        return CreateLanHealthHandler();
+#endif
     }
 }

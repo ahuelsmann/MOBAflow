@@ -209,9 +209,9 @@
                                     <Button Style="{StaticResource DangerButtonStyle}" Content="EMERGENCY STOP" />
     -->
     <Style x:Key="DangerButtonStyle" TargetType="Button">
-        <Setter Property="Background" Value="#E81123" />
-        <Setter Property="Foreground" Value="White" />
-        <Setter Property="BorderBrush" Value="#C41019" />
+        <Setter Property="Background" Value="{ThemeResource MobaDangerButtonBackgroundBrush}" />
+        <Setter Property="Foreground" Value="{ThemeResource MobaDangerButtonForegroundBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource MobaDangerButtonBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="24,12" />
         <Setter Property="HorizontalAlignment" Value="Center" />
@@ -238,24 +238,24 @@
                                 <VisualState x:Name="PointerOver">
                                     <Storyboard>
                                         <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="Background">
-                                            <DiscreteObjectKeyFrame KeyTime="0" Value="#FF1C2C" />
+                                            <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource MobaDangerButtonBackgroundPointerOverBrush}" />
                                         </ObjectAnimationUsingKeyFrames>
                                     </Storyboard>
                                 </VisualState>
                                 <VisualState x:Name="Pressed">
                                     <Storyboard>
                                         <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="Background">
-                                            <DiscreteObjectKeyFrame KeyTime="0" Value="#C41019" />
+                                            <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource MobaDangerButtonBackgroundPressedBrush}" />
                                         </ObjectAnimationUsingKeyFrames>
                                     </Storyboard>
                                 </VisualState>
                                 <VisualState x:Name="Disabled">
                                     <Storyboard>
                                         <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="Background">
-                                            <DiscreteObjectKeyFrame KeyTime="0" Value="#7A0B11" />
+                                            <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource MobaDangerButtonBackgroundDisabledBrush}" />
                                         </ObjectAnimationUsingKeyFrames>
                                         <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="Foreground">
-                                            <DiscreteObjectKeyFrame KeyTime="0" Value="#80FFFFFF" />
+                                            <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource MobaDangerButtonForegroundDisabledBrush}" />
                                         </ObjectAnimationUsingKeyFrames>
                                     </Storyboard>
                                 </VisualState>
@@ -271,15 +271,15 @@
         <Setter Property="Padding" Value="8,3,8,4" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="CornerRadius" Value="10" />
-        <Setter Property="Background" Value="#30FF8A00" />
-        <Setter Property="BorderBrush" Value="#80FF8A00" />
+        <Setter Property="Background" Value="{ThemeResource MobaPreviewBadgeBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource MobaPreviewBadgeBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
     </Style>
 
     <Style x:Key="PreviewBadgeTextStyle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="10" />
         <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Foreground" Value="#FF8A00" />
+        <Setter Property="Foreground" Value="{ThemeResource MobaPreviewBadgeForegroundBrush}" />
         <Setter Property="CharacterSpacing" Value="20" />
     </Style>
 
@@ -290,7 +290,7 @@
         <Setter Property="Height" Value="56" />
         <Setter Property="Padding" Value="4" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Foreground" Value="#FFFFFFFF" />
+        <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">

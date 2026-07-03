@@ -14,8 +14,6 @@ public partial class ConnectionStatusPanel
 
     public event EventHandler<ToggledEventArgs>? MobaflowSwitchToggled;
 
-    public event EventHandler? PairingRequested;
-
     public Label ThemeIconLabel => ThemeIcon;
 
     public Switch ThemeSwitchControl => ThemeSwitch;
@@ -34,7 +32,4 @@ public partial class ConnectionStatusPanel
 
     private void MobaflowSwitch_Toggled(object? sender, ToggledEventArgs e) =>
         MobaflowSwitchToggled?.Invoke(sender, e);
-
-    private void OnPairingClicked(object? sender, EventArgs e) =>
-        PairingRequested?.Invoke(this, EventArgs.Empty);
 }

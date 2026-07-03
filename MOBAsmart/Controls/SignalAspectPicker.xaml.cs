@@ -149,7 +149,7 @@ public partial class SignalAspectPicker
             return;
         }
 
-        Dispatcher.Dispatch(UpdatePicker);
+        Dispatcher?.Dispatch(UpdatePicker);
     }
 
     private void OnAspectTapped(object? sender, TappedEventArgs e)
@@ -182,18 +182,28 @@ public partial class SignalAspectPicker
 
     private void UpdateSelectionVisuals()
     {
+        if (!_isLoaded)
+        {
+            return;
+        }
+
         var selected = SelectedAspect ?? SignalAspect.Hp0;
-        var accentColor = ResolveColor("Primary", Color.FromArgb("#64B5F6"));
-        var normalColor = ResolveColor("SurfaceVariant", Color.FromArgb("#2C2C2C"));
-        var accentBorder = ResolveColor("Primary", Color.FromArgb("#64B5F6"));
-        var selectedLabelColor = ResolveColor("TextOnPrimary", Colors.Black);
-        var normalLabelColor = ResolveColor("TextPrimary", Colors.White);
+        var accentColor = ResolveColor("Primary");
+        var normalColor = ResolveColor("SurfaceVariant");
+        var accentBorder = ResolveColor("Primary");
+        var selectedLabelColor = ResolveColor("TextOnPrimary");
+        var normalLabelColor = ResolveColor("TextPrimary");
 
         foreach (var (button, label, aspect) in EnumerateAspectButtonsWithLabels())
         {
+            if (button == null || label == null)
+            {
+                continue;
+            }
+
             var isSelected = selected == aspect;
             button.BackgroundColor = isSelected ? accentColor : normalColor;
-            button.Stroke = isSelected ? accentBorder : ResolveColor("BorderColor", Colors.Gray);
+            button.Stroke = isSelected ? accentBorder : ResolveColor("BorderColor");
             button.StrokeThickness = isSelected ? 2 : 1;
             label.TextColor = isSelected ? selectedLabelColor : normalLabelColor;
         }
@@ -220,7 +230,7 @@ public partial class SignalAspectPicker
                 SetAllAspectButtonsVisibility(true);
             }
         }
-        catch (ArgumentException)
+        catch (Exception)
         {
             SetAllAspectButtonsVisibility(true);
         }
@@ -228,6 +238,11 @@ public partial class SignalAspectPicker
 
     private void UpdateAspectLabels()
     {
+        if (!_isLoaded)
+        {
+            return;
+        }
+
         var is4046 = KsSignalAspectNames.Is4046Signal(SignalArticleNumber);
 
         AspectHp0Label.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Hp0, is4046);
@@ -249,14 +264,14 @@ public partial class SignalAspectPicker
         }
     }
 
-    private static Color ResolveColor(string key, Color fallback)
+    private static Color ResolveColor(string key)
     {
         if (Application.Current?.Resources.TryGetValue(key, out var resource) == true && resource is Color color)
         {
             return color;
         }
 
-        return fallback;
+        return Application.Current?.RequestedTheme == AppTheme.Light ? Colors.Black : Colors.White;
     }
 
     private IEnumerable<(Border Button, Label Label, SignalAspect Aspect)> EnumerateAspectButtonsWithLabels()

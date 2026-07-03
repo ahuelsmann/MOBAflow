@@ -122,6 +122,16 @@ public partial class App
             resources["TabBarBorder"] = Color.FromArgb("#4D4D4D");
             resources["TabBarSelectedForeground"] = Color.FromArgb("#64B5F6");
             resources["TabBarUnselectedForeground"] = Color.FromArgb("#B0B0B0");
+
+            resources["TextLabelMuted"] = Color.FromArgb("#9A9A9A");
+            resources["InputBackground"] = Color.FromArgb("#404040");
+            resources["InputText"] = Color.FromArgb("#FFFFFF");
+            resources["SignalHousingBackground"] = Color.FromArgb("#1E1E1E");
+            resources["SignalLampOff"] = Color.FromArgb("#663C4040");
+            resources["Border"] = Color.FromArgb("#4D4D4D");
+            resources["SplashBackground"] = Color.FromArgb("#0D0D1A");
+            resources["SplashTextPrimary"] = Colors.White;
+            resources["SplashTextSecondary"] = Color.FromArgb("#CCCCCC");
         }
         else
         {
@@ -159,6 +169,16 @@ public partial class App
             resources["TabBarBorder"] = Color.FromArgb("#E0E0E0");
             resources["TabBarSelectedForeground"] = Color.FromArgb("#1976D2");
             resources["TabBarUnselectedForeground"] = Color.FromArgb("#757575");
+
+            resources["TextLabelMuted"] = Color.FromArgb("#757575");
+            resources["InputBackground"] = Color.FromArgb("#F5F5F5");
+            resources["InputText"] = Color.FromArgb("#212121");
+            resources["SignalHousingBackground"] = Color.FromArgb("#E8E8E8");
+            resources["SignalLampOff"] = Color.FromArgb("#663C4040");
+            resources["Border"] = Color.FromArgb("#E0E0E0");
+            resources["SplashBackground"] = Color.FromArgb("#0D0D1A");
+            resources["SplashTextPrimary"] = Colors.White;
+            resources["SplashTextSecondary"] = Color.FromArgb("#CCCCCC");
         }
     }
 

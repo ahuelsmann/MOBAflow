@@ -1,36 +1,41 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Controls;
 
+using Common.Display;
+
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 
+using Moba.WinUI.View;
+
 using Windows.UI;
 
 /// <summary>
-/// KsSignalScreen - German Ks signal system display control.
-/// Shows signal aspect with realistic LED arrangement per German railway standards.
-/// Supports all Ks signal aspects: Hp0, Ks1, Ks2, Ks1Blink, Kennlicht, Dunkel, Ra12, Zs1, Zs7.
-/// Automatically blinks for Ks1Blink and Zs1 aspects.
+/// Ks signal screen: fixed grid, aspect changes only lamp colors and speed indicators.
 /// </summary>
 internal sealed partial class KsSignalScreen
 {
-    private static readonly SolidColorBrush OffColor = new(Color.FromArgb(60, 64, 64, 64));
     private static readonly SolidColorBrush RedOn = new(Color.FromArgb(255, 255, 0, 0));
     private static readonly SolidColorBrush GreenOn = new(Color.FromArgb(255, 0, 200, 0));
     private static readonly SolidColorBrush YellowOn = new(Color.FromArgb(255, 255, 200, 0));
     private static readonly SolidColorBrush WhiteOn = new(Colors.White);
 
+    private SolidColorBrush OffColor => _offColor ??= CreateOffBrush();
+    private SolidColorBrush? _offColor;
+
     private DispatcherTimer? _blinkTimer;
     private bool _blinkState;
     private bool _isApplyingVisualState;
+    private Ellipse? _blinkingLed;
+    private SolidColorBrush? _blinkingOnColor;
 
     public static readonly DependencyProperty AspectProperty = DependencyProperty.Register(
         nameof(Aspect),
         typeof(string),
         typeof(KsSignalScreen),
-        new PropertyMetadata("Hp0", OnSignalVisualPropertyChanged));
+        new PropertyMetadata(KsSignalAspectNames.Hp0, OnSignalVisualPropertyChanged));
 
     public static readonly DependencyProperty SignalArticleNumberProperty = DependencyProperty.Register(
         nameof(SignalArticleNumber),
@@ -49,6 +54,12 @@ internal sealed partial class KsSignalScreen
         typeof(string),
         typeof(KsSignalScreen),
         new PropertyMetadata(string.Empty, OnSignalVisualPropertyChanged));
+
+    public static readonly DependencyProperty IsStaticPreviewProperty = DependencyProperty.Register(
+        nameof(IsStaticPreview),
+        typeof(bool),
+        typeof(KsSignalScreen),
+        new PropertyMetadata(false, OnSignalVisualPropertyChanged));
 
     public string Aspect
     {
@@ -74,6 +85,12 @@ internal sealed partial class KsSignalScreen
         set => SetValue(BottomSpeedValueProperty, value);
     }
 
+    public bool IsStaticPreview
+    {
+        get => (bool)GetValue(IsStaticPreviewProperty);
+        set => SetValue(IsStaticPreviewProperty, value);
+    }
+
     public KsSignalScreen()
     {
         InitializeComponent();
@@ -83,12 +100,26 @@ internal sealed partial class KsSignalScreen
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        ActualThemeChanged += OnActualThemeChanged;
         UpdateAspect();
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
+        ActualThemeChanged -= OnActualThemeChanged;
         StopBlinking();
+    }
+
+    private void OnActualThemeChanged(FrameworkElement sender, object args)
+    {
+        _offColor = null;
+        UpdateAspect();
+    }
+
+    private SolidColorBrush CreateOffBrush()
+    {
+        var color = ThemeResourceResolver.ResolveColor(this, "SignalLampOffBrush", Color.FromArgb(60, 64, 64, 64));
+        return new SolidColorBrush(color);
     }
 
     private static void OnSignalVisualPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -120,145 +151,126 @@ internal sealed partial class KsSignalScreen
         UpdateAspect();
     }
 
+    private bool CanUpdateVisuals() =>
+        W1 != null
+        && Hp0 != null
+        && Ks1 != null
+        && Ks2 != null
+        && TopSpeedBox != null
+        && BottomSpeedBox != null
+        && TopSpeedIndicator != null
+        && BottomSpeedIndicator != null
+        && TopSpeedRow != null
+        && BottomSpeedRow != null;
+
     private void UpdateAspect()
     {
+        if (!CanUpdateVisuals())
+        {
+            return;
+        }
+
         StopBlinking();
 
-        // Default: all LEDs off
-        W1.Fill = OffColor;
-        Hp0.Fill = OffColor;
-        Ks1.Fill = OffColor;
-        Ks2.Fill = OffColor;
-        W2.Fill = OffColor;
-        Zs7Center.Fill = OffColor;
-        Zs7Right.Fill = OffColor;
-        W3.Fill = OffColor;
-        Ra12Right.Fill = OffColor;
-        TopSpeedIndicator.Text = string.Empty;
-        TopSpeedIndicator.Visibility = Visibility.Collapsed;
-        BottomSpeedIndicator.Text = string.Empty;
-        BottomSpeedIndicator.Visibility = Visibility.Collapsed;
+        var state = KsSignalScreenVisualState.Create(
+            SignalArticleNumber,
+            Aspect,
+            TopSpeedValue,
+            BottomSpeedValue);
 
-        if (string.Equals(SignalArticleNumber, "4046", StringComparison.Ordinal) && Render4046Aspect())
-            return;
+        ApplyLamp(W1, state.W1);
+        ApplyLamp(Hp0, state.Hp0);
+        ApplyLamp(Ks1, state.Ks1);
+        ApplyLamp(Ks2, state.Ks2);
+        ApplyLamp(W2, state.W2);
+        ApplyLamp(Zs7Center, state.Zs7Center);
+        ApplyLamp(Zs7Right, state.Zs7Right);
+        ApplyLamp(W3, state.W3);
+        ApplyLamp(Ra12Right, state.Ra12Right);
 
-        switch (Aspect)
+        ApplySpeedIndicators(state);
+
+        StartBlinkingIfNeeded(state);
+    }
+
+    private void ApplySpeedIndicators(KsSignalScreenVisualState state)
+    {
+        TopSpeedRow.Height = new GridLength(state.ShowTopSpeed ? KsSignalScreenLayout.SpeedRowHeight : 0);
+        BottomSpeedRow.Height = new GridLength(state.ShowBottomSpeed ? KsSignalScreenLayout.SpeedRowHeight : 0);
+
+        TopSpeedBox.Visibility = state.ShowTopSpeed ? Visibility.Visible : Visibility.Collapsed;
+        TopSpeedIndicator.Text = state.ShowTopSpeed ? state.TopSpeedText : string.Empty;
+
+        BottomSpeedBox.Visibility = state.ShowBottomSpeed ? Visibility.Visible : Visibility.Collapsed;
+        BottomSpeedIndicator.Text = state.ShowBottomSpeed ? state.BottomSpeedText : string.Empty;
+    }
+
+    private void ApplyLamp(Ellipse led, KsSignalLampColor color)
+    {
+        led.Fill = color switch
         {
-            case "Hp0":
-                Hp0.Fill = RedOn;
-                break;
-            case "Ks1":
-                Ks1.Fill = GreenOn;
-                break;
-            case "Ks2":
-                Ks2.Fill = YellowOn;
-                break;
-            case "Ks1Blink":
-                Ks1.Fill = GreenOn;
-                StartBlinking(Ks1, GreenOn);
-                break;
-            case "Kennlicht":
-                W1.Fill = WhiteOn;
-                break;
-            case "Dunkel":
-                // All off - already set above
-                break;
-            case "Ra12":
-                W3.Fill = WhiteOn;
-                Ra12Right.Fill = WhiteOn;
-                break;
-            case "Zs1":
-                W1.Fill = WhiteOn;
-                StartBlinking(W1, WhiteOn);
-                break;
-            case "Zs7":
-                W2.Fill = YellowOn;
-                Zs7Center.Fill = YellowOn;
-                Zs7Right.Fill = YellowOn;
-                break;
-        }
-    }
-
-    private bool Render4046Aspect()
-    {
-        switch (Aspect)
-        {
-            case "Hp0":
-                Hp0.Fill = RedOn;
-                return true;
-            case "Ks1":
-                Ks1.Fill = GreenOn;
-                return true;
-            case "Ra12":
-                Hp0.Fill = RedOn;
-                // Hp0 + Rg for 4046: single white light below the red main signal.
-                Zs7Center.Fill = WhiteOn;
-                return true;
-            case "Zs1":
-                Ks1.Fill = GreenOn;
-                ShowTopSpeedIndicator(FormatSpeedIndicatorValue(TopSpeedValue));
-                return true;
-            case "Ks2":
-                Ks2.Fill = YellowOn;
-                W1.Fill = WhiteOn;
-                return true;
-            case "Ks1Blink":
-                Ks2.Fill = YellowOn;
-                W1.Fill = WhiteOn;
-                ShowTopSpeedIndicator(FormatSpeedIndicatorValue(TopSpeedValue));
-                return true;
-            case "Kennlicht":
-                W1.Fill = WhiteOn;
-                return true;
-            case "Dunkel":
-                W1.Fill = WhiteOn;
-                Ks1.Fill = GreenOn;
-                StartBlinking(Ks1, GreenOn);
-                ShowTopSpeedIndicator(FormatSpeedIndicatorValue(TopSpeedValue));
-                ShowBottomSpeedIndicator(FormatSpeedIndicatorValue(BottomSpeedValue));
-                return true;
-            case "Zs7":
-                W2.Fill = YellowOn;
-                Zs7Center.Fill = YellowOn;
-                Zs7Right.Fill = YellowOn;
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    private void ShowTopSpeedIndicator(string text)
-    {
-        TopSpeedIndicator.Text = text;
-        TopSpeedIndicator.Visibility = Visibility.Visible;
-    }
-
-    private void ShowBottomSpeedIndicator(string text)
-    {
-        BottomSpeedIndicator.Text = text;
-        BottomSpeedIndicator.Visibility = Visibility.Visible;
-    }
-
-    private static string FormatSpeedIndicatorValue(string? speedCode)
-    {
-        return string.IsNullOrWhiteSpace(speedCode) ? "--" : speedCode;
-    }
-
-    private void StartBlinking(Ellipse led, SolidColorBrush onColor)
-    {
-        _blinkTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
-        _blinkTimer.Tick += (_, _) =>
-        {
-            _blinkState = !_blinkState;
-            led.Fill = _blinkState ? onColor : OffColor;
+            KsSignalLampColor.Red => RedOn,
+            KsSignalLampColor.Green => GreenOn,
+            KsSignalLampColor.Yellow => YellowOn,
+            KsSignalLampColor.White => WhiteOn,
+            _ => OffColor
         };
+    }
+
+    private void StartBlinkingIfNeeded(KsSignalScreenVisualState state)
+    {
+        if (state.BlinkLamp == KsSignalBlinkLamp.None)
+        {
+            return;
+        }
+
+        var (led, onColor) = state.BlinkLamp switch
+        {
+            KsSignalBlinkLamp.Ks1 => (Ks1, GreenOn),
+            KsSignalBlinkLamp.W1 => (W1, WhiteOn),
+            _ => (null, null)
+        };
+
+        if (led == null || onColor == null)
+        {
+            return;
+        }
+
+        if (IsStaticPreview)
+        {
+            led.Fill = onColor;
+            return;
+        }
+
+        _blinkingLed = led;
+        _blinkingOnColor = onColor;
+        _blinkTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+        _blinkTimer.Tick += OnBlinkTick;
         _blinkTimer.Start();
+    }
+
+    private void OnBlinkTick(object? sender, object e)
+    {
+        if (_blinkingLed == null || _blinkingOnColor == null)
+        {
+            return;
+        }
+
+        _blinkState = !_blinkState;
+        _blinkingLed.Fill = _blinkState ? _blinkingOnColor : OffColor;
     }
 
     private void StopBlinking()
     {
-        _blinkTimer?.Stop();
-        _blinkTimer = null;
+        if (_blinkTimer != null)
+        {
+            _blinkTimer.Tick -= OnBlinkTick;
+            _blinkTimer.Stop();
+            _blinkTimer = null;
+        }
+
         _blinkState = false;
+        _blinkingLed = null;
+        _blinkingOnColor = null;
     }
 }

@@ -1,10 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-
-
 namespace Moba.SharedUI.ViewModel;
-
-
 
 using Common.Events;
 
@@ -12,24 +8,14 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 using CommunityToolkit.Mvvm.Input;
 
-
-
 using Domain;
-
-
 
 using Interface;
 
-
-
 using Microsoft.Extensions.Logging;
 
-
-
 /// <summary>
-
 /// MOBAsmart MOBAflow connection toggle and coordinator synchronization.
-
 /// </summary>
 
 public sealed partial class MauiViewModel
@@ -42,30 +28,23 @@ public sealed partial class MauiViewModel
 
     private bool _mobaflowConnectInProgress;
 
-    private bool _suppressMobaflowAutoConnect;
+    private const int MobaflowConnectMaxAttempts = 3;
 
     private CancellationTokenSource? _mobaflowConnectCts;
 
     private readonly SemaphoreSlim _mobaflowCatalogSyncLock = new(1, 1);
 
-    private bool HasPairedMobaflowSession() =>
-        !string.IsNullOrWhiteSpace(_settings.RestApi.ApiKey)
-        && !string.IsNullOrWhiteSpace(_settings.RestApi.CurrentIpAddress)
+    private bool HasStoredMobaflowEndpoint() =>
+        !string.IsNullOrWhiteSpace(_settings.RestApi.CurrentIpAddress)
         && _settings.RestApi.Port > 0;
 
-
-
     /// <summary>
-
     /// Gets or sets whether MOBAsmart should discover and connect to MOBAflow.
-
     /// </summary>
 
     [ObservableProperty]
 
     private bool _isMobaflowConnectionEnabled;
-
-
 
     partial void OnIsMobaflowConnectionEnabledChanged(bool value)
     {
@@ -79,11 +58,6 @@ public sealed partial class MauiViewModel
         }
 
         QueueSaveSettings();
-
-        if (_suppressMobaflowAutoConnect)
-        {
-            return;
-        }
 
         _mobaflowConnectCts?.Cancel();
         _mobaflowConnectCts?.Dispose();
@@ -111,9 +85,9 @@ public sealed partial class MauiViewModel
     }
 
     /// <summary>
-    /// Connects using the paired endpoint without UDP discovery overwriting host/port.
+    /// Connects using the saved endpoint without UDP discovery overwriting host/port.
     /// </summary>
-    internal async Task<bool> ConnectAfterPairingAsync(CancellationToken cancellationToken = default)
+    internal async Task<bool> ConnectToStoredEndpointAsync(CancellationToken cancellationToken = default)
     {
         try
         {
@@ -129,12 +103,19 @@ public sealed partial class MauiViewModel
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogDebug(ex, "Runtime hub disconnect before re-pairing failed");
+                    _logger.LogDebug(ex, "Runtime hub disconnect before reconnect failed");
                 }
             }
 
-            // Pairing may repeat with unchanged credentials; use the normal health-check timeout.
+            // Reconnect may repeat with unchanged endpoint; use the normal health-check timeout.
             var reachable = await RefreshRestApiReachableAsync(useConnectTimeout: false).ConfigureAwait(false);
+            if (!reachable)
+            {
+                var anchor = string.IsNullOrWhiteSpace(Z21IpAddress) ? null : Z21IpAddress.Trim();
+                await TryDiscoverMobaflowFastAsync(anchor, cancellationToken).ConfigureAwait(false);
+                reachable = await RefreshRestApiReachableAsync(useConnectTimeout: false).ConfigureAwait(false);
+            }
+
             if (!reachable)
             {
                 return false;
@@ -169,23 +150,48 @@ public sealed partial class MauiViewModel
             cancellationToken.ThrowIfCancellationRequested();
 
             var anchor = string.IsNullOrWhiteSpace(Z21IpAddress) ? null : Z21IpAddress.Trim();
-            var reachabilityTask = RefreshRestApiReachableAsync();
-            var discoveryTask = TryDiscoverMobaflowFastAsync(anchor, cancellationToken);
 
-            await Task.WhenAll(reachabilityTask, discoveryTask).ConfigureAwait(false);
+            // Discovery must finish before health-check; parallel probes often hit a stale saved IP first.
+            await TryDiscoverMobaflowFastAsync(anchor, cancellationToken).ConfigureAwait(false);
 
-            var reachable = await reachabilityTask.ConfigureAwait(false);
-            if (!reachable)
+            var reachable = false;
+            for (var attempt = 0; attempt < MobaflowConnectMaxAttempts && !reachable; attempt++)
             {
-                reachable = await RefreshRestApiReachableAsync().ConfigureAwait(false);
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (attempt > 0)
+                {
+                    await Task.Delay(TimeSpan.FromMilliseconds(400 * attempt), cancellationToken).ConfigureAwait(false);
+                    await TryDiscoverMobaflowFastAsync(anchor, cancellationToken).ConfigureAwait(false);
+                }
+
+                reachable = await RefreshRestApiReachableAsync(useConnectTimeout: attempt == 0)
+                    .ConfigureAwait(false);
             }
 
-            var hubConnected = reachable
-                && await EnsureRuntimeHubConnectionAsync(reachable).ConfigureAwait(false);
-
-            if (!reachable || !hubConnected)
+            if (!reachable)
             {
-                await DisableMobaflowConnectionAfterFailedAttemptAsync().ConfigureAwait(false);
+                await DiscoverMobaflowEndpointAsync(fullScan: true, anchor, cancellationToken).ConfigureAwait(false);
+                reachable = await RefreshRestApiReachableAsync(useConnectTimeout: false).ConfigureAwait(false);
+            }
+
+            var hubConnected = !reachable
+                || (_runtimeHubRemoteClient?.IsConnected ?? false)
+                || await EnsureRuntimeHubConnectionAsync(true, forceReconnect: true).ConfigureAwait(false);
+
+            if (!reachable)
+            {
+                _logger.LogDebug(
+                    "MOBAflow not reachable after discovery; health loop will keep retrying (endpoint {Ip}:{Port})",
+                    _settings.RestApi.CurrentIpAddress,
+                    _settings.RestApi.Port);
+            }
+            else if (!hubConnected)
+            {
+                _logger.LogDebug(
+                    "MOBAflow REST reachable at {Ip}:{Port} but RuntimeHub connect failed; health loop will retry",
+                    _settings.RestApi.CurrentIpAddress,
+                    _settings.RestApi.Port);
             }
         }
         catch (OperationCanceledException)
@@ -200,16 +206,12 @@ public sealed partial class MauiViewModel
 
     internal async Task MaybeDisableMobaflowConnectionWhenSessionLostAsync()
     {
-        if (_mobaflowConnectInProgress || !_settings.RestApi.IsConnectionEnabled)
+        if (_mobaflowConnectInProgress || !_settings.RestApi.IsConnectionEnabled || IsRestApiReachable)
         {
             return;
         }
 
-        var sessionActive = IsRestApiReachable && (_runtimeHubRemoteClient?.IsConnected ?? false);
-        if (!sessionActive)
-        {
-            await DisableMobaflowConnectionAfterFailedAttemptAsync().ConfigureAwait(false);
-        }
+        await TryPeriodicRestDiscoveryIfNeededAsync().ConfigureAwait(false);
     }
 
     private async Task DisableMobaflowConnectionAfterFailedAttemptAsync()
@@ -234,24 +236,39 @@ public sealed partial class MauiViewModel
         OnPropertyChanged(nameof(RestApiIndicatorResourceKey));
     }
 
-
+    /// <summary>
+    /// Fast LAN discovery when the user enables MOBAflow (UDP + recent IPs; optional full /24 scan).
+    /// </summary>
+    private Task TryDiscoverMobaflowFastAsync(string? anchor, CancellationToken cancellationToken) =>
+        DiscoverMobaflowEndpointAsync(fullScan: false, anchor, cancellationToken);
 
     /// <summary>
-    /// Fast LAN discovery when the user enables MOBAflow (UDP + recent IPs; no full /24 scan).
-    /// Full subnet scan continues in the background startup discovery loop.
+    /// Resolves the MOBApi endpoint on the LAN and persists it when found.
     /// </summary>
-    private async Task TryDiscoverMobaflowFastAsync(string? anchor, CancellationToken cancellationToken)
+    private async Task DiscoverMobaflowEndpointAsync(
+        bool fullScan,
+        string? anchor,
+        CancellationToken cancellationToken)
     {
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
+            _lastRestApiDiscoverTime = DateTime.UtcNow;
 
             var (ip, port) = await _restDiscoveryService
                 .DiscoverServerFastAsync(anchor, cancellationToken)
                 .ConfigureAwait(false);
+
+            if ((string.IsNullOrEmpty(ip) || !port.HasValue) && fullScan)
+            {
+                (ip, port) = await _restDiscoveryService
+                    .DiscoverServerAsync(anchor, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
             if (!string.IsNullOrEmpty(ip) && port.HasValue)
             {
-                await ApplyDiscoveredRestEndpointAsync(ip, port.Value, skipHealthCheck: true).ConfigureAwait(false);
+                await ApplyDiscoveredRestEndpointAsync(ip, port.Value, skipHealthCheck: false).ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException)
@@ -260,11 +277,9 @@ public sealed partial class MauiViewModel
         }
         catch (Exception ex)
         {
-            _logger.LogDebug(ex, "MOBAflow fast discovery failed");
+            _logger.LogDebug(ex, "MOBAflow LAN discovery failed (fullScan={FullScan})", fullScan);
         }
     }
-
-
 
     private async Task DisconnectMobaflowAsync()
 
@@ -289,10 +304,7 @@ public sealed partial class MauiViewModel
                 _logger.LogDebug(ex, "Runtime hub disconnect failed during MOBAflow toggle off");
 
             }
-
         }
-
-
 
         await _uiDispatcher.InvokeOnUiAsync(() =>
         {
@@ -305,21 +317,23 @@ public sealed partial class MauiViewModel
 
     }
 
-
+    /// <summary>
+    /// Uses runtime snapshot connection state so coordinator routing stays accurate before UI properties catch up.
+    /// </summary>
+    private bool ResolveLocalZ21ConnectedForCoordinator() =>
+        IsConnected || _mobaRuntime.Current.IsConnected;
 
     private void UpdateRuntimeCoordinatorState()
-
     {
-
         if (_mobileRuntimeCoordinator != null)
 
         {
 
+            // Require an operational MOBAflow host (remote Z21), not just REST/SignalR reachability.
             var mobaflowSessionActive = IsMobaflowConnectionEnabled
-
                 && IsRestApiReachable
-
-                && IsRuntimeHubConnected;
+                && IsRuntimeHubConnected
+                && IsRemoteZ21Connected;
 
             var wasActive = _mobaflowSessionWasActive;
 
@@ -329,15 +343,11 @@ public sealed partial class MauiViewModel
 
             _mobaflowSessionWasActive = mobaflowSessionActive;
 
-
-
             _mobileRuntimeCoordinator.SetMobaflowSessionActive(mobaflowSessionActive);
 
-            _mobileRuntimeCoordinator.SetLocalZ21Connected(IsConnected);
+            _mobileRuntimeCoordinator.SetLocalZ21Connected(ResolveLocalZ21ConnectedForCoordinator());
 
             _eventBus.Publish(new RuntimeCommandAvailabilityChangedEvent());
-
-
 
             if (sessionEnded)
 
@@ -353,17 +363,17 @@ public sealed partial class MauiViewModel
 
             }
 
-
-
             if (sessionStarted)
 
             {
 
+                ClearCachedRemoteLocomotiveFleet();
+
+                RequestSignalBoxSnapshotRefresh();
+
                 RunInBackground(ApplyInitialMobaflowCatalogAsync(), "Initial MOBAflow catalog import");
 
             }
-
-
 
             if (mobaflowSessionActive
 
@@ -376,16 +386,11 @@ public sealed partial class MauiViewModel
                 RequestSignalBoxSnapshotRefresh();
 
             }
-
         }
-
-
 
         RequestBackgroundServiceSync();
 
     }
-
-
 
     private async Task ActivateLocalProjectForZ21OnlyAsync()
 
@@ -398,8 +403,6 @@ public sealed partial class MauiViewModel
             return;
 
         }
-
-
 
         try
 
@@ -420,10 +423,7 @@ public sealed partial class MauiViewModel
             _logger.LogDebug(ex, "Local project activation after MOBAflow session ended failed");
 
         }
-
     }
-
-
 
     private Task OnRuntimeHubSolutionUpdatedAsync(DateTimeOffset updatedAt)
 
@@ -439,8 +439,6 @@ public sealed partial class MauiViewModel
 
         }
 
-
-
         if (string.IsNullOrWhiteSpace(RestApiIpAddress) || RestApiPort <= 0)
 
         {
@@ -449,8 +447,6 @@ public sealed partial class MauiViewModel
 
         }
 
-
-
         if (_mobaflowInitialCatalogApplied)
 
         {
@@ -458,8 +454,6 @@ public sealed partial class MauiViewModel
             return Task.CompletedTask;
 
         }
-
-
 
         RunInBackground(
 
@@ -477,8 +471,6 @@ public sealed partial class MauiViewModel
 
     }
 
-
-
     private async Task SyncSolutionAfterHubConnectAsync()
 
     {
@@ -491,8 +483,6 @@ public sealed partial class MauiViewModel
 
         }
 
-
-
         if (string.IsNullOrWhiteSpace(RestApiIpAddress) || RestApiPort <= 0)
 
         {
@@ -500,8 +490,6 @@ public sealed partial class MauiViewModel
             return;
 
         }
-
-
 
         try
 
@@ -522,17 +510,11 @@ public sealed partial class MauiViewModel
             _logger.LogDebug(ex, "Initial solution sync after hub connect failed");
 
         }
-
     }
 
-
-
     /// <summary>
-
     /// One-time catalog import (signals + locomotives) after a MOBAflow session is established.
-
     /// Live snapshot streaming for aspects and locomotive state continues afterward.
-
     /// </summary>
 
     private async Task ApplyInitialMobaflowCatalogAsync()
@@ -579,12 +561,8 @@ public sealed partial class MauiViewModel
         }
     }
 
-
-
     /// <summary>
-
     /// Re-fetches the MOBAflow solution for train control when the Control tab becomes active.
-
     /// </summary>
 
     public async Task RequestSolutionSyncAsync(CancellationToken cancellationToken = default)
@@ -616,10 +594,7 @@ public sealed partial class MauiViewModel
                 _logger.LogDebug(ex, "On-demand cached solution load failed");
 
             }
-
         }
-
-
 
         if (!IsMobaflowConnectionEnabled
 
@@ -634,8 +609,6 @@ public sealed partial class MauiViewModel
             return;
 
         }
-
-
 
         if (!_mobaflowInitialCatalogApplied)
 
@@ -660,10 +633,7 @@ public sealed partial class MauiViewModel
                 _logger.LogDebug(ex, "On-demand solution sync failed");
 
             }
-
         }
-
-
 
         _uiDispatcher.InvokeOnUi(() =>
 
@@ -678,11 +648,8 @@ public sealed partial class MauiViewModel
                 RequestSignalBoxSnapshotRefresh();
 
             }
-
         });
 
     }
-
 }
-
 

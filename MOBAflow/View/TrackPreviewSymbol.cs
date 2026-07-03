@@ -110,5 +110,4 @@ internal static class TrackPreviewSymbol
 
         return pg;
     }
-
 }

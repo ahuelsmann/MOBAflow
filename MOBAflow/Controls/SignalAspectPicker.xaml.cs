@@ -11,6 +11,8 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 
+using Moba.WinUI.View;
+
 internal sealed partial class SignalAspectPicker
 {
     public static readonly DependencyProperty SelectedAspectProperty = DependencyProperty.Register(
@@ -77,6 +79,17 @@ internal sealed partial class SignalAspectPicker
     {
         InitializeComponent();
         Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        ActualThemeChanged -= OnActualThemeChanged;
+    }
+
+    private void OnActualThemeChanged(FrameworkElement sender, object args)
+    {
+        UpdateSelectionVisuals();
     }
 
     private static void OnPickerPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -89,6 +102,7 @@ internal sealed partial class SignalAspectPicker
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        ActualThemeChanged += OnActualThemeChanged;
         UpdatePicker();
     }
 
@@ -114,11 +128,16 @@ internal sealed partial class SignalAspectPicker
 
     private void UpdateSelectionVisuals()
     {
-        var accentBrush = (Brush)Application.Current.Resources["AccentFillColorDefaultBrush"];
-        var normalBrush = (Brush)Application.Current.Resources["SubtleFillColorSecondaryBrush"];
+        var accentBrush = ThemeResourceResolver.ResolveBrush(this, "AccentFillColorDefaultBrush", Microsoft.UI.Colors.Blue);
+        var normalBrush = ThemeResourceResolver.ResolveBrush(this, "SubtleFillColorSecondaryBrush", Microsoft.UI.Colors.Gray);
 
         foreach (var (button, aspect) in EnumerateAspectButtons())
         {
+            if (button == null)
+            {
+                continue;
+            }
+
             button.Background = SelectedAspect == aspect ? accentBrush : normalBrush;
         }
     }

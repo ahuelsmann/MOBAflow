@@ -14,8 +14,6 @@
             Padding="0"
             HorizontalOptions="Fill"
             Spacing="8">
-            <controls:ConnectionStatusPanel x:Name="ConnectionHeader" />
-
             <Border Style="{DynamicResource MainSectionCard}">
                 <VerticalStackLayout Spacing="8">
                     <Label Style="{DynamicResource SectionTitleLabel}" Text="Locomotives" />

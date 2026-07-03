@@ -2,34 +2,20 @@
 
 namespace Moba.SharedUI.Service;
 
-
-
 using Common.Runtime;
 
 using Common.Validation;
 
-
-
 using Domain;
-
-
 
 using Interface;
 
-
-
 using Microsoft.Extensions.Logging;
-
-
 
 using System.Text.Json;
 
-
-
 /// <summary>
-
 /// File-based cache for MOBAsmart solution and signal-box data under a platform-provided directory.
-
 /// </summary>
 
 public sealed class MobileSolutionStore : IMobileSolutionStore
@@ -37,8 +23,6 @@ public sealed class MobileSolutionStore : IMobileSolutionStore
 {
 
     private const int SolutionSchemaVersion = 1;
-
-
 
     private static readonly JsonSerializerOptions SignalBoxJsonOptions = new()
 
@@ -50,15 +34,11 @@ public sealed class MobileSolutionStore : IMobileSolutionStore
 
     };
 
-
-
     private readonly string _storageDirectory;
 
     private readonly ILogger<MobileSolutionStore> _logger;
 
     private readonly SemaphoreSlim _writeLock = new(1, 1);
-
-
 
     public MobileSolutionStore(string storageDirectory, ILogger<MobileSolutionStore> logger)
 
@@ -68,15 +48,11 @@ public sealed class MobileSolutionStore : IMobileSolutionStore
 
         ArgumentNullException.ThrowIfNull(logger);
 
-
-
         _storageDirectory = storageDirectory;
 
         _logger = logger;
 
     }
-
-
 
     /// <inheritdoc />
 
@@ -87,8 +63,6 @@ public sealed class MobileSolutionStore : IMobileSolutionStore
         ArgumentNullException.ThrowIfNull(solution);
 
         ArgumentNullException.ThrowIfNull(meta);
-
-
 
         var solutionJson = JsonSerializer.Serialize(solution, JsonOptions.Default);
 
@@ -104,8 +78,6 @@ public sealed class MobileSolutionStore : IMobileSolutionStore
 
         }
 
-
-
         await _writeLock.WaitAsync(cancellationToken).ConfigureAwait(false);
 
         try
@@ -114,8 +86,6 @@ public sealed class MobileSolutionStore : IMobileSolutionStore
 
             Directory.CreateDirectory(_storageDirectory);
 
-
-
             await WriteTextAtomicAsync(
 
                 GetSolutionPath(),
@@ -123,8 +93,6 @@ public sealed class MobileSolutionStore : IMobileSolutionStore
                 solutionJson,
 
                 cancellationToken).ConfigureAwait(false);
-
-
 
             var metaJson = JsonSerializer.Serialize(meta, JsonOptions.Compact);
 
@@ -135,8 +103,6 @@ public sealed class MobileSolutionStore : IMobileSolutionStore
                 metaJson,
 
                 cancellationToken).ConfigureAwait(false);
-
-
 
             _logger.LogDebug(
 
@@ -155,10 +121,7 @@ public sealed class MobileSolutionStore : IMobileSolutionStore
             _writeLock.Release();
 
         }
-
     }
-
-
 
     /// <inheritdoc />
 
@@ -172,8 +135,6 @@ public sealed class MobileSolutionStore : IMobileSolutionStore
 
         ArgumentNullException.ThrowIfNull(elements);
 
-
-
         if (elements.Count == 0)
 
         {
@@ -182,11 +143,7 @@ public sealed class MobileSolutionStore : IMobileSolutionStore
 
         }
 
-
-
         var json = JsonSerializer.Serialize(elements, SignalBoxJsonOptions);
-
-
 
         await _writeLock.WaitAsync(cancellationToken).ConfigureAwait(false);
 
@@ -209,10 +166,7 @@ public sealed class MobileSolutionStore : IMobileSolutionStore
             _writeLock.Release();
 
         }
-
     }
-
-
 
     /// <inheritdoc />
     public async Task SaveLocomotiveFleetAsync(
@@ -241,8 +195,6 @@ public sealed class MobileSolutionStore : IMobileSolutionStore
         }
     }
 
-
-
     /// <inheritdoc />
 
     public async Task<MobileSolutionCacheEntry?> TryLoadAsync(CancellationToken cancellationToken = default)
@@ -253,8 +205,6 @@ public sealed class MobileSolutionStore : IMobileSolutionStore
 
         var metaPath = GetMetaPath();
 
-
-
         if (!File.Exists(solutionPath) || !File.Exists(metaPath))
 
         {
@@ -262,8 +212,6 @@ public sealed class MobileSolutionStore : IMobileSolutionStore
             return null;
 
         }
-
-
 
         try
 
@@ -283,8 +231,6 @@ public sealed class MobileSolutionStore : IMobileSolutionStore
 
             }
 
-
-
             var solution = JsonSerializer.Deserialize<Solution>(solutionJson, JsonOptions.Default);
 
             if (solution == null || solution.Projects.Count == 0)
@@ -296,8 +242,6 @@ public sealed class MobileSolutionStore : IMobileSolutionStore
                 return null;
 
             }
-
-
 
             var metaJson = await File.ReadAllTextAsync(metaPath, cancellationToken).ConfigureAwait(false);
 
@@ -312,8 +256,6 @@ public sealed class MobileSolutionStore : IMobileSolutionStore
                 return null;
 
             }
-
-
 
             var signalBoxElements = await TryLoadSignalBoxElementsAsync(cancellationToken).ConfigureAwait(false)
                 ?? [];
@@ -334,10 +276,7 @@ public sealed class MobileSolutionStore : IMobileSolutionStore
             return null;
 
         }
-
     }
-
-
 
     private async Task<IReadOnlyList<SignalBoxElementRuntimeSnapshot>?> TryLoadSignalBoxElementsAsync(
 
@@ -354,8 +293,6 @@ public sealed class MobileSolutionStore : IMobileSolutionStore
             return null;
 
         }
-
-
 
         try
 
@@ -376,10 +313,7 @@ public sealed class MobileSolutionStore : IMobileSolutionStore
             return null;
 
         }
-
     }
-
-
 
     private async Task<IReadOnlyList<LocomotiveFleetSnapshot>?> TryLoadLocomotiveFleetAsync(
         CancellationToken cancellationToken)
@@ -402,21 +336,13 @@ public sealed class MobileSolutionStore : IMobileSolutionStore
         }
     }
 
-
-
     private string GetSolutionPath() => Path.Combine(_storageDirectory, "mobile-solution.json");
 
-
-
     private string GetMetaPath() => Path.Combine(_storageDirectory, "mobile-solution-meta.json");
-
-
 
     private string GetSignalBoxPath() => Path.Combine(_storageDirectory, "mobile-signalbox-snapshot.json");
 
     private string GetLocomotiveFleetPath() => Path.Combine(_storageDirectory, "mobile-locomotive-fleet.json");
-
-
 
     private static async Task WriteTextAtomicAsync(string targetPath, string content, CancellationToken cancellationToken)
 
@@ -426,8 +352,6 @@ public sealed class MobileSolutionStore : IMobileSolutionStore
 
         await File.WriteAllTextAsync(tempPath, content, cancellationToken).ConfigureAwait(false);
 
-
-
         if (File.Exists(targetPath))
 
         {
@@ -436,11 +360,8 @@ public sealed class MobileSolutionStore : IMobileSolutionStore
 
         }
 
-
-
         File.Move(tempPath, targetPath);
 
     }
-
 }
 

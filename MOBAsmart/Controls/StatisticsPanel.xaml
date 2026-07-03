@@ -4,9 +4,17 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:Moba.SharedUI.ViewModel;assembly=SharedUI"
+    xmlns:converters="clr-namespace:Moba.MAUI.Converters"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     x:DataType="local:MauiViewModel"
     x:Name="StatisticsRoot">
+
+    <ContentView.Resources>
+        <ResourceDictionary>
+            <converters:LapTimeDisplayConverter x:Key="LapTimeDisplayConverter" />
+            <converters:LapTimeColorConverter x:Key="LapTimeColorConverter" />
+        </ResourceDictionary>
+    </ContentView.Resources>
 
     <Border x:Name="LapsSectionCard" Style="{DynamicResource MainSectionCard}">
         <VerticalStackLayout Spacing="8">
@@ -52,6 +60,7 @@
                             StrokeThickness="0">
                             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
                                 <Border
+                                    x:Name="CountBadge"
                                     Grid.Column="0"
                                     BackgroundColor="{Binding HasReceivedFirstLap, Converter={toolkit:BoolToObjectConverter TrueObject={DynamicResource RailwayAccent}, FalseObject={DynamicResource RailwayPrimary}}}"
                                     HeightRequest="32"
@@ -59,13 +68,33 @@
                                     StrokeThickness="0"
                                     VerticalOptions="Center"
                                     WidthRequest="32">
+                                    <Border.Triggers>
+                                        <MultiTrigger TargetType="Border">
+                                            <MultiTrigger.Conditions>
+                                                <BindingCondition Binding="{Binding Count}" Value="0" />
+                                                <BindingCondition Binding="{Binding HasReceivedFirstLap}" Value="False" />
+                                            </MultiTrigger.Conditions>
+                                            <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceVariant}" />
+                                        </MultiTrigger>
+                                    </Border.Triggers>
                                     <Label
+                                        x:Name="CountLabel"
                                         FontAttributes="Bold"
                                         FontSize="14"
                                         HorizontalOptions="Center"
                                         Text="{Binding Count}"
-                                        TextColor="White"
-                                        VerticalOptions="Center" />
+                                        TextColor="{DynamicResource TextOnPrimary}"
+                                        VerticalOptions="Center">
+                                        <Label.Triggers>
+                                            <MultiTrigger TargetType="Label">
+                                                <MultiTrigger.Conditions>
+                                                    <BindingCondition Binding="{Binding Count}" Value="0" />
+                                                    <BindingCondition Binding="{Binding HasReceivedFirstLap}" Value="False" />
+                                                </MultiTrigger.Conditions>
+                                                <Setter Property="TextColor" Value="{DynamicResource TextPrimary}" />
+                                            </MultiTrigger>
+                                        </Label.Triggers>
+                                    </Label>
                                 </Border>
 
                                 <Grid
@@ -94,8 +123,8 @@
                                             <Label
                                                 FontAttributes="Bold"
                                                 FontSize="11"
-                                                Text="{Binding LastLapTimeFormatted}"
-                                                TextColor="{DynamicResource RailwaySecondary}" />
+                                                Text="{Binding LastLapTime, Converter={StaticResource LapTimeDisplayConverter}}"
+                                                TextColor="{Binding LastLapTime, Converter={StaticResource LapTimeColorConverter}}" />
                                             <Label
                                                 FontSize="11"
                                                 Text="@"

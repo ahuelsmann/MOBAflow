@@ -4,11 +4,7 @@ using Moba.Common.Runtime;
 
 using Moba.Domain;
 
-
-
 namespace Moba.Test.Common;
-
-
 
 [TestFixture]
 
@@ -41,7 +37,6 @@ internal sealed class SignalBoxSnapshotMergeTests
                     Kind = SignalBoxElementKind.Signal
 
                 }
-
             };
 
         var cached =
@@ -63,20 +58,13 @@ internal sealed class SignalBoxSnapshotMergeTests
                     SignalAspect = SignalAspect.Ks1
 
                 }
-
             };
 
-
-
         var merged = SignalBoxSnapshotMerge.MergeAspectsFromCache(incoming, cached);
-
-
 
         Assert.That(merged[0].SignalAspect, Is.EqualTo(SignalAspect.Ks1));
 
     }
-
-
 
     [Test]
 
@@ -103,14 +91,9 @@ internal sealed class SignalBoxSnapshotMergeTests
                     SignalAspect = SignalAspect.Hp0
 
                 }
-
             };
 
-
-
         var merged = SignalBoxSnapshotMerge.MergeAspectsFromCache([], cached);
-
-
 
         Assert.That(merged, Is.SameAs(cached));
 
@@ -155,6 +138,5 @@ internal sealed class SignalBoxSnapshotMergeTests
             Assert.That(merged.Single(element => element.ElementId == previousOnlyId).SignalAspect, Is.EqualTo(SignalAspect.Ks1));
         });
     }
-
 }
 

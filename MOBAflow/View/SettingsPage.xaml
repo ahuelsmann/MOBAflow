@@ -321,7 +321,7 @@
                             <TextBlock
                                 Margin="28,0,0,0"
                                 Style="{StaticResource CaptionTextBlockStyle}"
-                                Text="Starts an in-process server for photo uploads from MOBAsmart"
+                                Text="Starts the MOBApi server so MOBAsmart can connect automatically on the LAN"
                                 TextWrapping="Wrap" />
                         </StackPanel>
 
@@ -333,47 +333,9 @@
                             SpinButtonPlacementMode="Inline"
                             Value="{x:Bind ViewModel.RestApiPort, Mode=TwoWay}">
                             <NumberBox.Description>
-                                <TextBlock Text="Service port for photo upload (default: 5001)" TextWrapping="Wrap" />
+                                <TextBlock Text="MOBApi listen port (default: 5001). MOBAsmart discovers this port on the LAN." TextWrapping="Wrap" />
                             </NumberBox.Description>
                         </NumberBox>
-
-                        <StackPanel Spacing="4">
-                            <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Pairing with MOBAsmart" />
-                            <TextBlock
-                                Style="{StaticResource CaptionTextBlockStyle}"
-                                Text="Scan this QR code in MOBAsmart under &quot;Pair with MOBAflow&quot;."
-                                TextWrapping="Wrap" />
-                            <Image
-                                x:Name="PairingQrImage"
-                                Width="220"
-                                Height="220"
-                                HorizontalAlignment="Left" />
-                        </StackPanel>
-
-                        <StackPanel Spacing="4">
-                            <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Pairing key" />
-                            <Grid ColumnSpacing="8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBox
-                                    Grid.Column="0"
-                                    IsReadOnly="True"
-                                    Text="{x:Bind ViewModel.RestApiApiKey, Mode=OneWay}" />
-                                <Button
-                                    Grid.Column="1"
-                                    VerticalAlignment="Stretch"
-                                    Click="CopyApiKeyToClipboard_Click"
-                                    ToolTipService.ToolTip="Copy pairing key to clipboard">
-                                    <FontIcon FontSize="16" Glyph="&#xE8C8;" />
-                                </Button>
-                            </Grid>
-                            <TextBlock
-                                Style="{StaticResource CaptionTextBlockStyle}"
-                                Text="Enter this key in MOBAsmart to authorize remote access to MOBApi."
-                                TextWrapping="Wrap" />
-                        </StackPanel>
 
                         <!--  Photo storage folder (e.g. OneDrive)  -->
                         <StackPanel Spacing="4">
@@ -396,32 +358,6 @@
                             <TextBlock
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 Text="Leave empty for default. Use a folder on OneDrive to sync photos across devices."
-                                TextWrapping="Wrap" />
-                        </StackPanel>
-
-                        <!--  Local IP Address Display  -->
-                        <StackPanel Spacing="4">
-                            <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Local IP Address" />
-                            <Grid ColumnSpacing="8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBox
-                                    Grid.Column="0"
-                                    IsReadOnly="True"
-                                    Text="{x:Bind ViewModel.LocalIpAddress, Mode=OneWay}" />
-                                <Button
-                                    Grid.Column="1"
-                                    VerticalAlignment="Stretch"
-                                    Click="CopyIpToClipboard_Click"
-                                    ToolTipService.ToolTip="Copy IP address to clipboard">
-                                    <FontIcon FontSize="16" Glyph="&#xE8C8;" />
-                                </Button>
-                            </Grid>
-                            <TextBlock
-                                Style="{StaticResource CaptionTextBlockStyle}"
-                                Text="Use this IP address in MOBAsmart to connect to the REST API"
                                 TextWrapping="Wrap" />
                         </StackPanel>
                     </StackPanel>

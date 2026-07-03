@@ -3,7 +3,7 @@
     x:Class="Moba.MAUI.View.SplashPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    BackgroundColor="#0d0d1a"
+    BackgroundColor="{DynamicResource SplashBackground}"
     Shell.NavBarIsVisible="False">
 
     <Grid HorizontalOptions="Fill" VerticalOptions="Fill">
@@ -14,7 +14,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!--  Logo Image  -->
+        <!--  Brand splash: fixed dark canvas for logo contrast in both app themes  -->
         <Image
             Grid.Row="1"
             Aspect="AspectFit"
@@ -23,7 +23,6 @@
             Source="splash_background.png"
             VerticalOptions="End" />
 
-        <!--  App Name Text  -->
         <Label
             Grid.Row="2"
             Margin="0,24,0,0"
@@ -31,10 +30,9 @@
             FontSize="32"
             HorizontalOptions="Center"
             Text="MOBAsmart"
-            TextColor="White"
+            TextColor="{DynamicResource SplashTextPrimary}"
             VerticalOptions="Start" />
 
-        <!--  Optional: Loading indicator or version  -->
         <VerticalStackLayout
             Grid.Row="3"
             Margin="0,0,0,48"
@@ -45,13 +43,13 @@
                 HeightRequest="24"
                 IsRunning="True"
                 WidthRequest="24"
-                Color="White" />
+                Color="{DynamicResource SplashTextPrimary}" />
             <Label
                 x:Name="StatusLabel"
                 FontSize="13"
                 HorizontalOptions="Center"
                 Text="Starting..."
-                TextColor="#CCCCCC" />
+                TextColor="{DynamicResource SplashTextSecondary}" />
         </VerticalStackLayout>
     </Grid>
 </ContentPage>

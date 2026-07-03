@@ -19,6 +19,8 @@ public sealed partial class MauiViewModel
     private bool _controlTabActive;
     private IReadOnlyList<LocomotiveFleetSnapshot>? _pendingLocomotiveFleet;
     private IReadOnlyList<LocomotiveFleetSnapshot>? _cachedRemoteLocomotiveFleet;
+    private IReadOnlyList<LocomotiveFleetSnapshot>? _lastPublishedLocomotiveFleet;
+    private bool _remoteLocomotiveFleetIsLive;
 
     private void WireProjectContextForControlTab()
     {
@@ -42,8 +44,16 @@ public sealed partial class MauiViewModel
             return;
         }
 
+        if (_mobileRuntimeCoordinator?.PreferRemoteRuntime == true)
+        {
+            RequestSignalBoxSnapshotRefresh();
+        }
+        else
+        {
+            RequestLocomotiveFleetSnapshotRefreshIfEmpty();
+        }
+
         ApplyBestAvailableLocomotiveFleet();
-        RequestLocomotiveFleetSnapshotRefreshIfEmpty();
 
         if (!HasAnyLocomotiveFleetAvailable())
         {
@@ -62,6 +72,7 @@ public sealed partial class MauiViewModel
         }
 
         _cachedRemoteLocomotiveFleet = fleet;
+        _remoteLocomotiveFleetIsLive = false;
     }
 
     /// <summary>
@@ -89,13 +100,23 @@ public sealed partial class MauiViewModel
             return;
         }
 
-        if (!_controlTabActive)
+        var orderedFleet = fleet
+            .OrderBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+        if (_lastPublishedLocomotiveFleet is not null
+            && LocomotiveFleetSnapshotComparer.OrderedContentEquals(orderedFleet, _lastPublishedLocomotiveFleet))
         {
-            _pendingLocomotiveFleet = fleet;
             return;
         }
 
-        _eventBus.Publish(new LocomotiveFleetUpdatedEvent(fleet));
+        if (!_controlTabActive)
+        {
+            _pendingLocomotiveFleet = orderedFleet;
+            return;
+        }
+
+        _lastPublishedLocomotiveFleet = orderedFleet;
+        _eventBus.Publish(new LocomotiveFleetUpdatedEvent(orderedFleet));
     }
 
     private void CacheRemoteLocomotiveFleet(IReadOnlyList<LocomotiveFleetSnapshot> fleet)
@@ -106,6 +127,7 @@ public sealed partial class MauiViewModel
         }
 
         _cachedRemoteLocomotiveFleet = fleet;
+        _remoteLocomotiveFleetIsLive = true;
 
         if (_mobileSolutionStore != null)
         {
@@ -115,22 +137,121 @@ public sealed partial class MauiViewModel
         }
     }
 
+    private void ClearCachedRemoteLocomotiveFleet()
+    {
+        _cachedRemoteLocomotiveFleet = null;
+        _remoteLocomotiveFleetIsLive = false;
+        _pendingLocomotiveFleet = null;
+        _lastPublishedLocomotiveFleet = null;
+    }
+
+    /// <summary>
+    /// Applies a live locomotive fleet snapshot received from MOBAflow, replacing stale mobile cache data.
+    /// </summary>
+    internal void ApplyLiveRemoteLocomotiveFleet(IReadOnlyList<LocomotiveFleetSnapshot> remoteFleet)
+    {
+        if (remoteFleet.Count == 0)
+        {
+            return;
+        }
+
+        var fleet = ResolveAuthoritativeLocomotiveFleet(remoteFleet);
+        if (fleet.Count == 0)
+        {
+            return;
+        }
+
+        CacheRemoteLocomotiveFleet(fleet);
+        PublishFleetUpdate(fleet);
+    }
+
+    private IReadOnlyList<LocomotiveFleetSnapshot> ResolveAuthoritativeLocomotiveFleet(
+        IReadOnlyList<LocomotiveFleetSnapshot> remoteFleet)
+    {
+        var filtered = FilterFleetToCurrentProject(remoteFleet);
+        if (filtered.Count == 0)
+        {
+            return [];
+        }
+
+        var projectFleet = BuildFleetSnapshotsFromProjectContext();
+        if (projectFleet.Count == 0)
+        {
+            return filtered
+                .OrderBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
+                .ToList();
+        }
+
+        var projectIds = projectFleet.Select(item => item.LocomotiveId).ToHashSet();
+        if (filtered.Count >= projectFleet.Count
+            && filtered.All(item => projectIds.Contains(item.LocomotiveId)))
+        {
+            return filtered
+                .OrderBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
+                .ToList();
+        }
+
+        var remoteById = filtered.ToDictionary(item => item.LocomotiveId);
+        return projectFleet
+            .Select(item => remoteById.TryGetValue(item.LocomotiveId, out var remote)
+                ? remote
+                : item)
+            .ToList();
+    }
+
+    private IReadOnlyList<LocomotiveFleetSnapshot> FilterFleetToCurrentProject(
+        IReadOnlyList<LocomotiveFleetSnapshot> fleet)
+    {
+        var project = _projectContext?.SelectedProject?.Model;
+        if (project == null || fleet.Count == 0)
+        {
+            return fleet;
+        }
+
+        var projectIds = project.Locomotives.Select(loco => loco.Id).ToHashSet();
+        return fleet
+            .Where(item => projectIds.Contains(item.LocomotiveId))
+            .ToList();
+    }
+
+    private bool ShouldCacheRemoteLocomotiveFleet(IReadOnlyList<LocomotiveFleetSnapshot> remoteFleet)
+    {
+        var projectFleet = BuildFleetSnapshotsFromProjectContext();
+        if (projectFleet.Count == 0)
+        {
+            return true;
+        }
+
+        var projectIds = projectFleet.Select(item => item.LocomotiveId).ToHashSet();
+        return remoteFleet.Count >= projectFleet.Count
+               && remoteFleet.All(item => projectIds.Contains(item.LocomotiveId));
+    }
+
     private IReadOnlyList<LocomotiveFleetSnapshot> GetBestAvailableLocomotiveFleet()
     {
-        if (_mobileRuntimeCoordinator?.PreferRemoteRuntime == true
-            && _cachedRemoteLocomotiveFleet is { Count: > 0 })
+        if (_mobileRuntimeCoordinator?.PreferRemoteRuntime == true)
         {
-            return _cachedRemoteLocomotiveFleet;
+            if (_remoteLocomotiveFleetIsLive
+                && _cachedRemoteLocomotiveFleet is { Count: > 0 })
+            {
+                return _cachedRemoteLocomotiveFleet;
+            }
+
+            var liveRuntimeFleet = _mobaRuntime.Current.LocomotiveFleet;
+            if (liveRuntimeFleet.Count > 0)
+            {
+                return liveRuntimeFleet;
+            }
+        }
+
+        var projectFleet = BuildFleetSnapshotsFromProjectContext();
+        if (projectFleet.Count > 0)
+        {
+            return projectFleet;
         }
 
         if (_cachedRemoteLocomotiveFleet is { Count: > 0 })
         {
-            var local = _mobaRuntime.Current.LocomotiveFleet;
-            if (local.Count > 0)
-            {
-                return local;
-            }
-
             return _cachedRemoteLocomotiveFleet;
         }
 
@@ -140,13 +261,7 @@ public sealed partial class MauiViewModel
             return localFleet;
         }
 
-        var projectFleet = BuildFleetSnapshotsFromProjectContext();
-        if (projectFleet.Count > 0)
-        {
-            return projectFleet;
-        }
-
-        return _cachedRemoteLocomotiveFleet ?? [];
+        return [];
     }
 
     private void RequestLocomotiveFleetSnapshotRefreshIfEmpty()

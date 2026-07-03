@@ -46,4 +46,72 @@ public static class SignalBoxRuntimeSync
 
         return changed;
     }
+
+    /// <summary>
+    /// Keeps only cached runtime elements that still exist in the active signal-box plan.
+    /// </summary>
+    public static IReadOnlyList<SignalBoxElementRuntimeSnapshot> FilterToPlan(
+        SignalBoxPlan? plan,
+        IReadOnlyList<SignalBoxElementRuntimeSnapshot> elements)
+    {
+        if (plan == null || elements.Count == 0)
+        {
+            return elements;
+        }
+
+        return elements
+            .Where(element => plan.FindElement(element.ElementId) != null)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Builds runtime snapshots from the editable signal-box plan (membership and layout metadata).
+    /// </summary>
+    public static IReadOnlyList<SignalBoxElementRuntimeSnapshot> BuildSnapshotsFromPlan(SignalBoxPlan? plan)
+    {
+        if (plan == null || plan.Elements.Count == 0)
+        {
+            return [];
+        }
+
+        var snapshots = new List<SignalBoxElementRuntimeSnapshot>(plan.Elements.Count);
+
+        foreach (var element in plan.Elements)
+        {
+            switch (element)
+            {
+                case SbSignal signal:
+                    snapshots.Add(new SignalBoxElementRuntimeSnapshot
+                    {
+                        ElementId = signal.Id,
+                        Name = signal.Name,
+                        Kind = SignalBoxElementKind.Signal,
+                        X = signal.X,
+                        Y = signal.Y,
+                        SignalSystem = signal.SignalSystem,
+                        SignalAspect = signal.SignalAspect,
+                        MainSignalArticleNumber = signal.MainSignalArticleNumber,
+                        MultiplexerArticleNumber = signal.MultiplexerArticleNumber,
+                        TopSpeedIndicator = signal.TopSpeedIndicator,
+                        BottomSpeedIndicator = signal.BottomSpeedIndicator
+                    });
+                    break;
+
+                case SbSwitch sw:
+                    snapshots.Add(new SignalBoxElementRuntimeSnapshot
+                    {
+                        ElementId = sw.Id,
+                        Name = sw.Name,
+                        Kind = SignalBoxElementKind.Switch,
+                        X = sw.X,
+                        Y = sw.Y,
+                        Address = sw.Address,
+                        SwitchPosition = sw.SwitchPosition
+                    });
+                    break;
+            }
+        }
+
+        return snapshots;
+    }
 }

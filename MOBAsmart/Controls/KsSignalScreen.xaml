@@ -3,8 +3,8 @@
     x:Class="Moba.MAUI.Controls.KsSignalScreen"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    HeightRequest="70"
-    WidthRequest="64">
+    MinimumHeightRequest="70"
+    MinimumWidthRequest="64">
     <Grid
         x:Name="ScaleHost"
         HorizontalOptions="Fill"
@@ -14,41 +14,65 @@
             AnchorX="0.5"
             AnchorY="0.5"
             Padding="6"
-            BackgroundColor="#1E1E1E"
             ColumnSpacing="3"
             HorizontalOptions="Center"
             RowSpacing="3"
             VerticalOptions="Center"
             WidthRequest="90">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
+                <RowDefinition x:Name="TopSpeedRow" Height="0" />
+                <RowDefinition Height="15" />
+                <RowDefinition Height="21" />
+                <RowDefinition Height="21" />
+                <RowDefinition Height="15" />
+                <RowDefinition Height="15" />
+                <RowDefinition x:Name="BottomSpeedRow" Height="0" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="17.25" />
+                <ColumnDefinition Width="17.25" />
+                <ColumnDefinition Width="17.25" />
+                <ColumnDefinition Width="17.25" />
             </Grid.ColumnDefinitions>
 
-            <Label
-                x:Name="TopSpeedIndicator"
-                Grid.Row="0"
+            <Border
+                Grid.Row="1"
+                Grid.RowSpan="5"
                 Grid.Column="0"
                 Grid.ColumnSpan="4"
-                FontAttributes="Bold"
-                FontSize="38"
-                HeightRequest="40"
-                HorizontalTextAlignment="Center"
+                BackgroundColor="{DynamicResource SignalHousingBackground}"
+                StrokeThickness="0">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="4" />
+                </Border.StrokeShape>
+            </Border>
+
+            <Border
+                x:Name="TopSpeedBox"
+                Grid.Row="0"
+                Grid.Column="1"
+                Grid.ColumnSpan="2"
+                BackgroundColor="{DynamicResource SignalHousingBackground}"
+                HeightRequest="32"
+                HorizontalOptions="Center"
                 IsVisible="False"
-                Text=""
-                TextColor="White"
-                VerticalTextAlignment="Center" />
+                StrokeThickness="0"
+                VerticalOptions="Center"
+                WidthRequest="44">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="2" />
+                </Border.StrokeShape>
+                <Label
+                    x:Name="TopSpeedIndicator"
+                    FontAttributes="Bold"
+                    FontSize="20"
+                    HorizontalOptions="Center"
+                    HorizontalTextAlignment="Center"
+                    Text=""
+                    TextColor="{DynamicResource TextPrimary}"
+                    VerticalOptions="Center"
+                    VerticalTextAlignment="Center" />
+            </Border>
 
             <Ellipse
                 x:Name="W1"
@@ -56,6 +80,8 @@
                 Grid.Column="0"
                 Fill="#3C404040"
                 HeightRequest="12"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
                 WidthRequest="12" />
 
             <Ellipse
@@ -64,6 +90,8 @@
                 Grid.Column="2"
                 Fill="#3C404040"
                 HeightRequest="18"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
                 WidthRequest="18" />
 
             <Ellipse
@@ -72,6 +100,8 @@
                 Grid.Column="1"
                 Fill="#3C404040"
                 HeightRequest="18"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
                 WidthRequest="18" />
             <Ellipse
                 x:Name="Ks2"
@@ -79,6 +109,8 @@
                 Grid.Column="3"
                 Fill="#3C404040"
                 HeightRequest="18"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
                 WidthRequest="18" />
 
             <Ellipse
@@ -87,6 +119,8 @@
                 Grid.Column="1"
                 Fill="#3C404040"
                 HeightRequest="12"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
                 WidthRequest="12" />
             <Ellipse
                 x:Name="Zs7Center"
@@ -94,6 +128,8 @@
                 Grid.Column="2"
                 Fill="#3C404040"
                 HeightRequest="12"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
                 WidthRequest="12" />
             <Ellipse
                 x:Name="Zs7Right"
@@ -101,6 +137,8 @@
                 Grid.Column="3"
                 Fill="#3C404040"
                 HeightRequest="12"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
                 WidthRequest="12" />
 
             <Ellipse
@@ -109,6 +147,8 @@
                 Grid.Column="0"
                 Fill="#3C404040"
                 HeightRequest="12"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
                 WidthRequest="12" />
             <Ellipse
                 x:Name="Ra12Right"
@@ -116,21 +156,36 @@
                 Grid.Column="1"
                 Fill="#3C404040"
                 HeightRequest="12"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
                 WidthRequest="12" />
 
-            <Label
-                x:Name="BottomSpeedIndicator"
+            <Border
+                x:Name="BottomSpeedBox"
                 Grid.Row="6"
-                Grid.Column="0"
-                Grid.ColumnSpan="4"
-                FontAttributes="Bold"
-                FontSize="38"
-                HeightRequest="40"
-                HorizontalTextAlignment="Center"
+                Grid.Column="1"
+                Grid.ColumnSpan="2"
+                BackgroundColor="{DynamicResource SignalHousingBackground}"
+                HeightRequest="32"
+                HorizontalOptions="Center"
                 IsVisible="False"
-                Text=""
-                TextColor="White"
-                VerticalTextAlignment="Center" />
+                StrokeThickness="0"
+                VerticalOptions="Center"
+                WidthRequest="44">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="2" />
+                </Border.StrokeShape>
+                <Label
+                    x:Name="BottomSpeedIndicator"
+                    FontAttributes="Bold"
+                    FontSize="20"
+                    HorizontalOptions="Center"
+                    HorizontalTextAlignment="Center"
+                    Text=""
+                    TextColor="{DynamicResource RailwayWarning}"
+                    VerticalOptions="Center"
+                    VerticalTextAlignment="Center" />
+            </Border>
         </Grid>
     </Grid>
 </ContentView>

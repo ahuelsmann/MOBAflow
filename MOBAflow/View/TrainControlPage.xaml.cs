@@ -128,17 +128,20 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
 
         // Update speedometer scale based on:
         // 1. MaxSpeedStep: Controls DCC speed step range (13/27/126)
-        // 2. SelectedVmax: Controls km/h display range (e.g., 200 km/h)
+        // 2. GaugeMaxKmh: Controls km/h display range on the outer ring (400 km/h)
 
-        // Set the DCC speed step range (for needle positioning)
+        // Set the DCC speed step range (for inner step markers)
         _speedometer.MaxValue = ViewModel.MaxSpeedStep;
 
-        // Set Vmax for km/h markers display
+        // Full-scale km/h ring for needle, arc, and outer markers
+        _speedometer.GaugeMaxKmh = ViewModel.SpeedGaugeMaxKmh;
+
+        // Locomotive Vmax marker (arc color threshold), not the gauge full scale
         _speedometer.VmaxKmh = ViewModel.SelectedVmax > 0
             ? ViewModel.SelectedVmax
-            : 200; // Default fallback
+            : 200;
 
-        // Note: DisplayValue shows km/h calculated as (Speed/MaxSpeedStep) * Vmax
+        // DisplayValue (SpeedKmh) uses gauge full scale via ViewModel, not SelectedVmax
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
@@ -289,5 +292,4 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
         // Update speedometer SpeedSteps property to trigger marker re-rendering
         _speedometer.SpeedSteps = (int)ViewModel.SpeedSteps;
     }
-
 }

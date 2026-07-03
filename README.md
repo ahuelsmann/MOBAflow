@@ -9,6 +9,11 @@ the Roco Z21 Digital Command Station.
 > See [THIRD-PARTY-NOTICES.md](docs/THIRD-PARTY-NOTICES.md) for details on
 > third-party software, formats, and trademarks (AnyRail, Piko, Roco).
 
+> **Private network only:** MOBAflow, MOBAsmart, and MOBApi are designed for use on
+> **private networks only** (e.g. home LAN). Do not expose MOBApi or Z21 control to the
+> public internet. MOBApi does not use API-key authentication; network isolation is the
+> operator's responsibility.
+
 ---
 
 ## 📑 Table of Contents
@@ -212,7 +217,8 @@ dotnet run --project MOBApi/MOBApi.csproj
 ```
 
 MOBApi listens on **port 5001** (all interfaces). It provides the REST API for
-the MOBAflow Overview status and for MOBAsmart (client list, health).
+the MOBAflow Overview status and for MOBAsmart (client list, health). Use it only on a
+private network (see notice at the top of this README).
 
 You can **start MOBApi in two ways**:
 
@@ -220,8 +226,8 @@ You can **start MOBApi in two ways**:
 2. **Together with MOBAflow** – enable "Auto-start REST API with MOBAflow"
    in MOBAflow Settings so MOBAflow starts the MOBApi process automatically.
 
-MOBAsmart discovers the server via UDP multicast; ensure PC and phone are on
-the same network.
+MOBAsmart discovers the server via UDP multicast on the same private network; ensure PC
+and phone are on the same LAN.
 
 **📱 MOBAsmart (Android):**
 

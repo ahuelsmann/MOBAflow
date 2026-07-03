@@ -119,7 +119,6 @@ public sealed partial class MatrixPageViewModel : ObservableObject, IDisposable
                     Matrices.Add(matrix);
                 }
             }
-
         }
         finally
         {

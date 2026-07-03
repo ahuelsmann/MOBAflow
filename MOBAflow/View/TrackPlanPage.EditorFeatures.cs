@@ -412,5 +412,4 @@ public sealed partial class TrackPlanPage
     {
         return InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control).HasFlag(CoreVirtualKeyStates.Down);
     }
-
 }

@@ -139,6 +139,31 @@ internal sealed class TrainControlViewModelLocomotiveListTests
     }
 
     [Test]
+    public void RefreshLocomotiveList_KeepsPhotoBinding_WhenFleetSnapshotIsUnchanged()
+    {
+        var locomotiveId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+        var viewModel = CreateRemoteViewModel();
+        var fleet =
+            new List<LocomotiveFleetSnapshot>
+            {
+                new()
+                {
+                    LocomotiveId = locomotiveId,
+                    Name = "BR 211",
+                    DigitalAddress = 3,
+                    PhotoPath = "photos/locomotives/br211.jpg"
+                }
+            };
+
+        viewModel.RefreshLocomotiveList(fleet);
+        var photoPathWithVersion = viewModel.ProjectLocomotives[0].PhotoPathWithVersion;
+
+        viewModel.RefreshLocomotiveList(fleet);
+
+        Assert.That(viewModel.ProjectLocomotives[0].PhotoPathWithVersion, Is.EqualTo(photoPathWithVersion));
+    }
+
+    [Test]
     public void SelectProjectLocomotive_AppliesFunctionAppearance_FromFleetSnapshot()
     {
         var fleet =

@@ -38,6 +38,14 @@ internal sealed class MobiLanHttpClientFactoryTests
     }
 
     [Test]
+    public void CreateLanSignalRHandler_ShouldReturnHandler()
+    {
+        using var handler = MobiLanHttpClientFactory.CreateLanSignalRHandler();
+
+        Assert.That(handler, Is.Not.Null);
+    }
+
+    [Test]
     public void MobiHttpClientNames_ShouldExposeExpectedClientNames()
     {
         Assert.Multiple(() =>

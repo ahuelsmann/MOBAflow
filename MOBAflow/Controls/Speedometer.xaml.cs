@@ -1,245 +1,501 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+
 namespace Moba.WinUI.Controls;
 
 using Microsoft.UI.Text;
+
 using Microsoft.UI.Xaml;
+
 using Microsoft.UI.Xaml.Controls;
+
 using Microsoft.UI.Xaml.Media;
+
 using Microsoft.UI.Xaml.Shapes;
 
 using Windows.Foundation;
+
 using Windows.UI;
 
 /// <summary>
+
 /// A modern speedometer control for displaying locomotive speed.
+
 /// Features an arc-based gauge with animated needle and digital display.
+
 /// Supports dynamic theme colors via AccentColor property.
+
 /// </summary>
+
 internal sealed partial class SpeedometerControl
+
 {
+
     /// <summary>
+
     /// Minimum speed value (typically 0).
+
     /// </summary>
+
     public static readonly DependencyProperty MinValueProperty =
+
         DependencyProperty.Register(nameof(MinValue), typeof(int), typeof(SpeedometerControl),
+
             new PropertyMetadata(0, OnValueChanged));
 
     /// <summary>
+
     /// Maximum speed value (typically 126 for DCC 128 speed steps).
+
     /// </summary>
+
     public static readonly DependencyProperty MaxValueProperty =
+
         DependencyProperty.Register(nameof(MaxValue), typeof(int), typeof(SpeedometerControl),
+
             new PropertyMetadata(126, OnValueChanged));
 
     /// <summary>
+
     /// Current speed value.
+
     /// </summary>
+
     public static readonly DependencyProperty ValueProperty =
+
         DependencyProperty.Register(nameof(Value), typeof(int), typeof(SpeedometerControl),
+
             new PropertyMetadata(0, OnValueChanged));
 
     /// <summary>
+
     /// Display value (e.g., km/h instead of speed steps).
+
     /// </summary>
+
     public static readonly DependencyProperty DisplayValueProperty =
+
         DependencyProperty.Register(nameof(DisplayValue), typeof(int), typeof(SpeedometerControl),
+
             new PropertyMetadata(0, OnDisplayValueChanged));
 
     /// <summary>
+
     /// Accent color for needle and center circle. When set, overrides ThemeResource.
+
     /// </summary>
+
     public static readonly DependencyProperty AccentColorProperty =
+
         DependencyProperty.Register(nameof(AccentColor), typeof(Color?), typeof(SpeedometerControl),
+
             new PropertyMetadata(null, OnAccentColorChanged));
 
     /// <summary>
+
     /// DCC speed steps configuration (14, 28, or 128).
+
     /// Controls how many speed step markers are displayed.
+
     /// </summary>
+
     public static readonly DependencyProperty SpeedStepsProperty =
+
         DependencyProperty.Register(nameof(SpeedSteps), typeof(int), typeof(SpeedometerControl),
+
             new PropertyMetadata(128, OnSpeedStepsChanged));
 
     /// <summary>
+
     /// Maximum speed in km/h (Vmax) for displaying km/h markers.
+
     /// This is separate from MaxValue which represents DCC speed steps.
+
     /// </summary>
+
     public static readonly DependencyProperty VmaxKmhProperty =
+
         DependencyProperty.Register(nameof(VmaxKmh), typeof(int), typeof(SpeedometerControl),
+
             new PropertyMetadata(200, OnVmaxKmhChanged));
 
+    /// <summary>
+
+    /// Full-scale maximum on the km/h ring (needle, arc, and outer markers).
+
+    /// </summary>
+
+    public static readonly DependencyProperty GaugeMaxKmhProperty =
+
+        DependencyProperty.Register(nameof(GaugeMaxKmh), typeof(int), typeof(SpeedometerControl),
+
+            new PropertyMetadata(400, OnGaugeMaxKmhChanged));
+
     public SpeedometerControl()
+
     {
+
         InitializeComponent();
+
         Loaded += OnLoaded;
+
+        Unloaded += OnUnloaded;
+
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+
+    {
+
+        ActualThemeChanged -= OnActualThemeChanged;
+
+    }
+
+    private void OnActualThemeChanged(FrameworkElement sender, object args)
+
+    {
+
+        UpdateGaugeColors();
+
+        RenderKmhMarkers();
+
+        RenderSpeedStepMarkers();
+
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
+
     {
+
+        ActualThemeChanged += OnActualThemeChanged;
+
         UpdateNeedle();
+
         UpdateSpeedArc();
+
         UpdateDisplayText();
-        ApplyAccentColor();
+
+        UpdateGaugeColors();
+
         RenderKmhMarkers();
+
         RenderSpeedStepMarkers();
+
     }
 
     public int MinValue
+
     {
+
         get => (int)GetValue(MinValueProperty);
+
         set => SetValue(MinValueProperty, value);
+
     }
 
     public int MaxValue
+
     {
+
         get => (int)GetValue(MaxValueProperty);
+
         set => SetValue(MaxValueProperty, value);
+
     }
 
     public int Value
+
     {
+
         get => (int)GetValue(ValueProperty);
+
         set => SetValue(ValueProperty, value);
+
     }
 
     public int DisplayValue
+
     {
+
         get => (int)GetValue(DisplayValueProperty);
+
         set => SetValue(DisplayValueProperty, value);
+
     }
 
     /// <summary>
+
     /// Gets or sets the accent color for the needle. Null uses default ThemeResource.
+
     /// </summary>
+
     public Color? AccentColor
+
     {
+
         get => (Color?)GetValue(AccentColorProperty);
+
         set => SetValue(AccentColorProperty, value);
+
     }
 
     /// <summary>
+
     /// Gets or sets the number of DCC speed steps (14, 28, or 128).
+
     /// </summary>
+
     public int SpeedSteps
+
     {
+
         get => (int)GetValue(SpeedStepsProperty);
+
         set => SetValue(SpeedStepsProperty, value);
+
     }
 
     /// <summary>
+
     /// Gets or sets the maximum speed in km/h (Vmax).
+
     /// Used for displaying km/h markers on the outer ring.
+
     /// </summary>
+
     public int VmaxKmh
+
     {
+
         get => (int)GetValue(VmaxKmhProperty);
+
         set => SetValue(VmaxKmhProperty, value);
+
+    }
+
+    public int GaugeMaxKmh
+
+    {
+
+        get => (int)GetValue(GaugeMaxKmhProperty);
+
+        set => SetValue(GaugeMaxKmhProperty, value);
+
     }
 
     private static void OnValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-    {
-        if (d is SpeedometerControl control)
-        {
-            control.UpdateNeedle();
-            control.UpdateSpeedArc();
 
-            // Update km/h markers when MaxValue changes (Vmax)
-            if (e.Property == MaxValueProperty)
-            {
-                control.RenderKmhMarkers();
-            }
+    {
+
+        if (d is not SpeedometerControl control)
+
+        {
+
+            return;
+
         }
+
+        if (e.Property == MaxValueProperty)
+
+        {
+
+            control.RenderSpeedStepMarkers();
+
+        }
+
+        control.UpdateGaugeColors();
+
     }
 
     private static void OnDisplayValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+
     {
+
         if (d is SpeedometerControl control)
+
         {
+
             control.UpdateDisplayText();
+
+            control.UpdateNeedle();
+
+            control.UpdateSpeedArc();
+
+            control.UpdateGaugeColors();
+
         }
     }
 
     private static void OnAccentColorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+
     {
+
         if (d is SpeedometerControl control)
+
         {
-            control.ApplyAccentColor();
+
+            control.UpdateGaugeColors();
+
         }
     }
 
     private static void OnSpeedStepsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+
     {
+
         if (d is SpeedometerControl control)
+
         {
+
             control.RenderSpeedStepMarkers();
+
         }
     }
 
     private static void OnVmaxKmhChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+
     {
+
+        _ = e;
+
         if (d is SpeedometerControl control)
+
         {
+
             control.RenderKmhMarkers();
+
+            control.UpdateGaugeColors();
+
         }
     }
 
-    private void ApplyAccentColor()
+    private static void OnGaugeMaxKmhChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+
     {
-        if (AccentColor is not { } color)
-            return;
 
-        var brush = new SolidColorBrush(color);
+        if (d is SpeedometerControl control)
 
-        // Apply to needle
-        if (Needle is { } needle)
         {
-            needle.Fill = brush;
+
+            control.RenderKmhMarkers();
+
+            control.UpdateNeedle();
+
+            control.UpdateSpeedArc();
+
+            control.UpdateGaugeColors();
+
+        }
+    }
+
+    private void UpdateGaugeColors()
+
+    {
+
+        var gaugeMax = GaugeMaxKmh > 0 ? GaugeMaxKmh : 400;
+
+        var normalized = gaugeMax > 0 ? Math.Clamp((double)DisplayValue / gaugeMax, 0, 1) : 0;
+
+        var isIdle = DisplayValue == 0 && Value <= 0;
+
+        var isOverVmax = DisplayValue > VmaxKmh && VmaxKmh > 0;
+
+        var isDanger = isOverVmax || normalized > GaugeVisualRules.DangerNormalizedThreshold;
+
+        var brushes = GaugeVisualRules.ResolveNeedleBrushes(this, isIdle, isDanger, AccentColor);
+
+        if (Needle is { } needle)
+
+        {
+
+            needle.Fill = brushes.Needle;
+
         }
 
-        // Apply to center circle stroke
         if (CenterCircle is { } circle)
+
         {
-            circle.Stroke = brush;
+
+            circle.Stroke = brushes.HubRing;
+
         }
     }
 
     private void UpdateNeedle()
+
     {
+
         if (NeedleRotation is null) return;
 
-        // Calculate angle: -90 deg (left, speed=0) to +90 deg (right, speed=max)
-        var range = (double)(MaxValue - MinValue);
-        if (range <= 0) return;
+        var gaugeMax = GaugeMaxKmh > 0 ? GaugeMaxKmh : 400;
 
-        var normalizedValue = Math.Clamp((Value - MinValue) / range, 0, 1);
+        if (gaugeMax <= 0) return;
+
+        var normalizedValue = Math.Clamp((double)DisplayValue / gaugeMax, 0, 1);
 
         // Angle goes from -90 deg (left) to +90 deg (right)
+
         var angle = -90 + (normalizedValue * 180);
 
         NeedleRotation.Angle = angle;
+
     }
 
     private void UpdateSpeedArc()
+
     {
+
         if (SpeedArc is null) return;
 
-        var range = (double)(MaxValue - MinValue);
-        if (range <= 0) return;
+        var gaugeMax = GaugeMaxKmh > 0 ? GaugeMaxKmh : 400;
 
-        var normalizedValue = Math.Clamp((Value - MinValue) / range, 0, 1);
+        if (gaugeMax <= 0) return;
+
+        var normalizedValue = Math.Clamp((double)DisplayValue / gaugeMax, 0, 1);
+
         var arcGeometry = GaugeArcGeometryBuilder.CreateSweepArc(normalizedValue);
 
         if (arcGeometry is null)
+
         {
+
             SpeedArc.Data = null;
+
             SpeedArc.Visibility = Visibility.Collapsed;
+
+            if (SpeedArcGlow is { } glowHidden)
+
+            {
+
+                glowHidden.Data = null;
+
+                glowHidden.Visibility = Visibility.Collapsed;
+
+            }
+
             return;
+
         }
 
+        // WinUI Path.Data can only parent a geometry once; glow needs its own instance.
+        var glowGeometry = GaugeArcGeometryBuilder.CreateSweepArc(normalizedValue);
+
         SpeedArc.Visibility = Visibility.Visible;
+
         SpeedArc.StrokeThickness = GaugeArcGeometryBuilder.ArcStrokeThickness;
+
         SpeedArc.Data = arcGeometry;
 
+        if (SpeedArcGlow is { } glow)
+
+        {
+
+            glow.Visibility = Visibility.Visible;
+
+            glow.StrokeThickness = GaugeArcGeometryBuilder.ArcStrokeThickness + 6;
+
+            glow.Data = glowGeometry;
+
+        }
         UpdateArcColor(normalizedValue);
     }
 
@@ -247,234 +503,316 @@ internal sealed partial class SpeedometerControl
     {
         if (SpeedArc is null) return;
 
-        Color color;
+        var gaugeMax = GaugeMaxKmh > 0 ? GaugeMaxKmh : 400;
 
-        if (normalizedValue < 0.5)
-        {
-            // Green to Yellow (0-50%)
-            var t = normalizedValue * 2;
-            color = Color.FromArgb(255,
-                (byte)(76 + (t * 179)),   // 76 to 255 (green to yellow R)
-                (byte)(175 - (t * 75)),   // 175 to 100 (green to yellow G)
-                80);                     // Blue stays low
-        }
-        else
-        {
-            // Yellow to Red (50-100%)
-            var t = (normalizedValue - 0.5) * 2;
-            color = Color.FromArgb(255,
-                255,                     // Red stays max
-                (byte)(100 - (t * 100)),  // 100 to 0 (yellow to red G)
-                (byte)(80 - (t * 80)));   // Blue goes to 0
-        }
+        var vmaxRatio = gaugeMax > 0 ? Math.Clamp((double)VmaxKmh / gaugeMax, 0, 1) : 0.5;
 
-        SpeedArc.Stroke = new SolidColorBrush(color);
+        var arcColor = GaugeVisualRules.ResolveSpeedArcColor(this, normalizedValue, vmaxRatio);
+
+        SpeedArc.Stroke = new SolidColorBrush(arcColor);
+
+        if (SpeedArcGlow is { } glow)
+
+        {
+
+            glow.Stroke = new SolidColorBrush(GaugeVisualRules.WithAlpha(arcColor, GaugeVisualRules.ArcGlowAlpha));
+
+        }
     }
 
     private void UpdateDisplayText()
+
     {
+
         if (SpeedText is null) return;
+
         SpeedText.Text = DisplayValue.ToString();
+
     }
 
     /// <summary>
+
     /// Calculates the optimal km/h step for marker display.
+
     /// Goal: Display 8-10 markers on the gauge (never overloaded).
+
     /// </summary>
-    private int CalculateOptimalKmhStep(int vmax)
+
+    private static int CalculateOptimalKmhStep(int vmax) => vmax switch
+
     {
-        // Adaptive step sizing based on max speed
-        return vmax switch
-        {
-            <= 50 => 5,      // 0, 5, 10, 15... 50 (10 markers)
-            <= 100 => 10,    // 0, 10, 20, 30... 100 (10 markers)
-            <= 200 => 20,    // 0, 20, 40, 60... 200 (10 markers)
-            <= 300 => 30,    // 0, 30, 60, 90... 300 (10 markers)
-            _ => 50          // 0, 50, 100, 150... 330+ (7 markers)
-        };
-    }
+
+        <= 50 => 5,
+
+        <= 100 => 10,
+
+        <= 200 => 20,
+
+        <= 300 => 30,
+
+        <= 400 => 50,
+
+        _ => 50
+
+    };
 
     /// <summary>
+
     /// Renders DCC speed step markers dynamically based on SpeedSteps configuration.
-    /// Markers are displayed as radial strokes starting from the inner edge of the arc.
-    /// Uses AccentColor from current skin palette for visual consistency.
-    /// Strokes: 8px long (starting at inner edge 92, extending to 100).
+
     /// </summary>
+
     private void RenderSpeedStepMarkers()
+
     {
+
         if (SpeedStepMarkersCanvas is null)
+
             return;
 
-        // Clear existing markers
         SpeedStepMarkersCanvas.Children.Clear();
 
-        // Arc parameters
-        const double centerX = 130;
-        const double centerY = 130;
-        const double arcInnerRadius = 92;    // Inner edge of arc (100 - 8)
-        const double markerLength = 8;       // 8px long strokes
+        const double centerX = GaugeVisualRules.GaugeCenterX;
+        const double centerY = GaugeVisualRules.GaugeCenterY;
+        const double arcInnerRadius = 92;
+        const double markerLength = 8;
 
-        // Determine actual max step value and strategic positions
         var (maxStep, stepsToDisplay) = SpeedSteps switch
+
         {
+
             14 => (13, new[] { 0, 3, 7, 10, 13 }),
+
             28 => (27, new[] { 0, 7, 14, 21, 27 }),
+
             _ => (126, [0, 32, 63, 95, 126])
+
         };
 
-        // Use AccentColor from accent brush (matching speedometer needle)
-        var accentBrush = AccentColor.HasValue
-            ? new SolidColorBrush(AccentColor.Value)
-            : (Brush)Application.Current.Resources["AccentFillColorTertiaryBrush"];
+        var tertiaryBrush = GaugeVisualRules.CreateAccentSecondaryMarkerBrush(this);
 
         foreach (var step in stepsToDisplay)
+
         {
-            // Calculate normalized position
+
+            if (step == 0)
+
+            {
+
+                continue;
+
+            }
+
             var normalized = maxStep > 0 ? (double)step / maxStep : 0;
 
-            // Angle calculation: 180° (left, 0) to 0° (right, max)
             var angleDeg = 180 - (normalized * 180);
+
             var angleRad = angleDeg * Math.PI / 180;
 
-            // Radial direction (from center outward)
             var radialX = Math.Cos(angleRad);
+
             var radialY = -Math.Sin(angleRad);
 
-            // Start point at inner edge of arc (92), end point 8px outward (100)
             var startX = centerX + (arcInnerRadius * radialX);
+
             var startY = centerY + (arcInnerRadius * radialY);
 
             var endX = centerX + ((arcInnerRadius + markerLength) * radialX);
+
             var endY = centerY + ((arcInnerRadius + markerLength) * radialY);
 
-            // Create radial stroke - single sharp line with accent color
             var line = new Line
+
             {
+
                 X1 = startX,
+
                 Y1 = startY,
+
                 X2 = endX,
+
                 Y2 = endY,
-                Stroke = accentBrush,
-                StrokeThickness = 2.5
+
+                Stroke = tertiaryBrush,
+
+                StrokeThickness = 2
+
             };
+
             SpeedStepMarkersCanvas.Children.Add(line);
 
-            // Label position (offset radially inward for speed steps)
-            const double labelDistance = 75;
+            // Max step shares the 3 o'clock radial with the outer gauge-max label; tick only avoids overlap.
+            if (step == maxStep)
+            {
+                continue;
+            }
+
+            var labelDistance = GaugeVisualRules.SecondaryMarkerLabelDistance;
             var labelX = centerX + (labelDistance * radialX);
             var labelY = centerY + (labelDistance * radialY);
 
-            // Create step number label
+            const double stepLabelWidth = 28;
+            var labelHeight = GaugeVisualRules.SecondaryMarkerLabelHeight;
             var label = new TextBlock
             {
                 Text = step.ToString(),
-                FontSize = 9,
-                Foreground = accentBrush,
-                Opacity = 0.85,
-                TextAlignment = TextAlignment.Center
+                Width = stepLabelWidth,
+                Height = labelHeight,
+                FontSize = GaugeVisualRules.SecondaryMarkerFontSize,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = tertiaryBrush,
+                TextAlignment = TextAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
             };
 
-            // Center the label
-            Canvas.SetLeft(label, labelX - 8);
-            Canvas.SetTop(label, labelY - 5);
+            Canvas.SetLeft(label, labelX - (stepLabelWidth / 2));
+            Canvas.SetTop(label, GaugeVisualRules.CalculateMarkerLabelTop(labelY, labelHeight));
 
             SpeedStepMarkersCanvas.Children.Add(label);
+
         }
     }
 
     /// <summary>
-    /// Renders km/h markers dynamically based on VmaxKmh with adaptive step-sizing.
-    /// Markers are displayed as radial strokes starting from the outer edge of the arc.
-    /// Uses AccentLight color from current skin palette for visual consistency.
-    /// Strokes: 6px long (starting at outer edge 108, extending to 100).
+
+    /// Renders km/h markers dynamically based on GaugeMaxKmh with adaptive step-sizing.
+
     /// </summary>
+
     private void RenderKmhMarkers()
+
     {
+
         if (KmhMarkersCanvas is null)
+
             return;
 
-        // Clear existing markers
         KmhMarkersCanvas.Children.Clear();
 
-        // Arc parameters
-        const double centerX = 130;
-        const double centerY = 130;
-        const double arcOuterRadius = 108;   // Outer edge of arc (100 + 8)
-        const double markerLength = 8;       // 8px long strokes
+        const double centerX = GaugeVisualRules.GaugeCenterX;
+        const double centerY = GaugeVisualRules.GaugeCenterY;
+        const double arcOuterRadius = GaugeVisualRules.OuterArcRadius;
+        const double markerLength = 8;
 
-        // Calculate adaptive step size (goal: 8-10 markers)
-        var kmhStep = CalculateOptimalKmhStep(VmaxKmh);
+        var gaugeMax = GaugeMaxKmh > 0 ? GaugeMaxKmh : 400;
 
-        // Generate km/h values: 0, step, 2*step, ... up to Vmax
+        var kmhStep = CalculateOptimalKmhStep(gaugeMax);
+
         var kmhValues = new List<int>();
-        for (int kmh = 0; kmh <= VmaxKmh; kmh += kmhStep)
+
+        for (int kmh = 0; kmh <= gaugeMax; kmh += kmhStep)
+
         {
+
             kmhValues.Add(kmh);
-        }
-        // Ensure we include Vmax if it's not a multiple of step
-        if (kmhValues.Count == 0 || kmhValues[^1] != VmaxKmh)
-        {
-            kmhValues.Add(VmaxKmh);
+
         }
 
-        // Use AccentLight from current skin for markers (bright, visible color)
-        var markerBrush = new SolidColorBrush(Color.FromArgb(200, 255, 255, 255)); // Bright white with transparency
-        var maxBrush = new SolidColorBrush(Color.FromArgb(255, 232, 17, 35)); // Red for MAX (constant)
+        if (kmhValues.Count == 0 || kmhValues[^1] != gaugeMax)
+
+        {
+
+            kmhValues.Add(gaugeMax);
+
+        }
+
+        var markerBrush = GaugeVisualRules.CreatePrimaryMarkerBrush(this);
 
         foreach (var kmh in kmhValues)
+
         {
-            var isMax = kmh == VmaxKmh;
 
-            // Normalize position: 0 km/h = left (180°), Vmax = right (0°)
-            var percentage = VmaxKmh > 0 ? (double)kmh / VmaxKmh : 0;
+            var isMajor = IsMajorKmhTick(kmh, gaugeMax, kmhStep);
 
-            // Angle goes from 180 deg (left, 0 km/h) to 0 deg (right, Vmax)
+            var percentage = gaugeMax > 0 ? (double)kmh / gaugeMax : 0;
+
             var angleDeg = 180 - (percentage * 180);
+
             var angleRad = angleDeg * Math.PI / 180;
 
-            // Radial direction (from center outward)
             var radialX = Math.Cos(angleRad);
+
             var radialY = -Math.Sin(angleRad);
 
-            // Start point at outer edge of arc (108), end point 8px inward (100)
             var startX = centerX + (arcOuterRadius * radialX);
+
             var startY = centerY + (arcOuterRadius * radialY);
 
             var endX = centerX + ((arcOuterRadius - markerLength) * radialX);
+
             var endY = centerY + ((arcOuterRadius - markerLength) * radialY);
 
-            // Create radial stroke - single sharp line with luminous color
             var line = new Line
+
             {
+
                 X1 = startX,
+
                 Y1 = startY,
+
                 X2 = endX,
+
                 Y2 = endY,
-                Stroke = isMax ? maxBrush : markerBrush,
-                StrokeThickness = isMax ? 3.0 : 2.5
+
+                Stroke = markerBrush,
+
+                StrokeThickness = isMajor ? 2.8 : 1.8
+
             };
+
             KmhMarkersCanvas.Children.Add(line);
 
-            // Label position (offset radially outward, beyond the stroke)
-            const double labelDistance = 125;
-            var labelX = centerX + (labelDistance * radialX);
-            var labelY = centerY + (labelDistance * radialY);
+            if (!isMajor && kmh % kmhStep != 0)
 
-            // Create km/h number label
+            {
+
+                continue;
+
+            }
+
+            var labelText = kmh.ToString();
+            var labelWidth = GaugeVisualRules.CalculateMarkerLabelWidth(labelText);
+
+            var labelHeight = GaugeVisualRules.OuterMarkerLabelHeight;
             var label = new TextBlock
             {
-                Text = kmh.ToString(),
-                FontSize = isMax ? 11 : 10,
-                FontWeight = isMax ? FontWeights.Bold : FontWeights.Normal,
-                Foreground = isMax ? maxBrush : markerBrush,
-                TextAlignment = TextAlignment.Center
+                Text = labelText,
+                Width = labelWidth,
+                Height = labelHeight,
+                FontSize = isMajor
+                    ? GaugeVisualRules.OuterMajorMarkerFontSize
+                    : GaugeVisualRules.OuterMinorMarkerFontSize,
+                FontWeight = isMajor ? FontWeights.Bold : FontWeights.SemiBold,
+                Foreground = markerBrush,
+                TextAlignment = TextAlignment.Center,
+                TextWrapping = TextWrapping.NoWrap,
+                VerticalAlignment = VerticalAlignment.Center
             };
 
-            // Center the label
-            Canvas.SetLeft(label, labelX - 10);
-            Canvas.SetTop(label, labelY - 8);
+            var (_, _, left, top) = GaugeVisualRules.CalculateOuterScaleLabelPosition(
+                angleDeg, labelWidth, labelHeight);
+            Canvas.SetLeft(label, left);
+            Canvas.SetTop(label, top);
 
             KmhMarkersCanvas.Children.Add(label);
+
         }
     }
+
+    private static bool IsMajorKmhTick(int kmh, int gaugeMax, int step)
+
+    {
+
+        if (kmh == 0 || kmh == gaugeMax)
+
+        {
+
+            return true;
+
+        }
+
+        return step >= 50 ? kmh % 100 == 0 : step > 0 && kmh % (step * 2) == 0;
+
+    }
 }
+
