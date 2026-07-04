@@ -600,6 +600,55 @@ internal class ViewModelCharacterizationTests
     }
 
     [Test]
+    public void TrainControlViewModel_DirectionChange_PreservesFunctionStatesDuringDriveGrace()
+    {
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var mobaRuntimeMock = CreateMobaRuntimeMock(new MobaRuntimeSnapshot
+        {
+            IsConnected = true,
+            LocomotiveStates = new Dictionary<int, LocomotiveRuntimeSnapshot>
+            {
+                [3] = new LocomotiveRuntimeSnapshot
+                {
+                    Address = 3,
+                    Speed = 0,
+                    IsForward = true,
+                    Functions = 0
+                }
+            }
+        });
+
+        var viewModel = new TrainControlViewModel(
+            mobaRuntimeMock.Object,
+            CreateSettingsServiceMock().Object,
+            eventBus: eventBus);
+
+        viewModel.IsForward = false;
+
+        eventBus.Publish(new RuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
+        {
+            IsConnected = true,
+            LocomotiveStates = new Dictionary<int, LocomotiveRuntimeSnapshot>
+            {
+                [3] = new LocomotiveRuntimeSnapshot
+                {
+                    Address = 3,
+                    Speed = 0,
+                    IsForward = false,
+                    Functions = 0b101010
+                }
+            }
+        }));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel.Functions[1].IsOn, Is.False, "F1 must not flip on from Z21 feedback after direction change");
+            Assert.That(viewModel.Functions[3].IsOn, Is.False, "F3 must not flip on from Z21 feedback after direction change");
+            Assert.That(viewModel.Functions[5].IsOn, Is.False, "F5 must not flip on from Z21 feedback after direction change");
+        });
+    }
+
+    [Test]
     public async Task TrainControlViewModel_CanExecuteFunctions_WhenLocalZ21CoordinatorReadyWithoutSnapshotConnection()
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);

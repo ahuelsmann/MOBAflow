@@ -34,7 +34,9 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
 
     private readonly Dictionary<int, LocomotiveRuntimeSnapshot> _locomotiveStates = [];
     private readonly Dictionary<int, DateTimeOffset> _lastLocomotiveFunctionCommandAt = [];
+    private readonly Dictionary<int, DateTimeOffset> _lastLocomotiveDriveCommandAt = [];
     private static readonly TimeSpan LocomotiveFunctionCommandGracePeriod = TimeSpan.FromSeconds(3);
+    private static readonly TimeSpan LocomotiveDriveCommandGracePeriod = TimeSpan.FromSeconds(3);
 
     private bool _isConnected;
     private bool _isTrackPowerOn;

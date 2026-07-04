@@ -2219,6 +2219,13 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             return;
         }
 
+        // Z21 LAN_X_LOCO_INFO broadcasts after drive commands can carry stale or decoder-specific
+        // function bits; keep the UI stable while local throttle/direction changes are in flight.
+        if (ShouldPreserveLocalDriveCommand(address))
+        {
+            return;
+        }
+
         for (int functionIndex = 0; functionIndex <= 31; functionIndex++)
         {
             if (ShouldPreserveLocalFunctionCommand(address, functionIndex))

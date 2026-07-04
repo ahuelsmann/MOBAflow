@@ -243,7 +243,7 @@ public static class Z21MessageParser
 
     /// <summary>
     /// Parses the LAN_X_LOCO_INFO response (X-Bus Loco Information).
-    /// Format: 40-00-EF + Adr_MSB Adr_LSB + Speedsteps(1) + Speed(1) + Functions0-4(1) + Functions5-8(1) + Functions9-12(1) + Functions13-20(1) + Functions21-28(1)
+    /// Format: 40-00-EF + Adr_MSB Adr_LSB + DB2 + DB3 + DB4..DB8 (F0-F31) + XOR
     /// Speed encoding: 0=stop, 1=e-stop, 2-127=speed 1-126 (for 128 speed steps)
     /// </summary>
     public static bool TryParseLocoInfo(byte[] data, out LocoInfo? locoInfo)
@@ -271,61 +271,67 @@ public static class Z21MessageParser
             // Decode speed: 0=stop, 1=e-stop, 2-127=speed 1-126
             if (speed > 1) speed--; // Adjust encoding
 
-            // Parse function status (F0-F28 in 5 bytes) as bitmask (uint)
+            // Parse function status per Z21 LAN spec v1.13 section 4.4 (DB4-DB8).
+            // DB4: 0DSLFGHJ (L=F0, J=F1, H=F2, G=F3, F=F4)
+            // DB5: F5-F12, DB6: F13-F20, DB7: F21-F28, DB8: F29-F31
             uint functions = 0;
-
-            if (data.Length >= 9)
-            {
-                byte f04 = data[9];
-                if ((f04 & 0x10) != 0) functions |= 0x01; // F0 (light)
-                if ((f04 & 0x01) != 0) functions |= 0x02; // F1
-                if ((f04 & 0x02) != 0) functions |= 0x04; // F2
-                if ((f04 & 0x04) != 0) functions |= 0x08; // F3
-                if ((f04 & 0x08) != 0) functions |= 0x10; // F4
-            }
 
             if (data.Length >= 10)
             {
-                byte f58 = data[10];
-                if ((f58 & 0x01) != 0) functions |= 0x20; // F5
-                if ((f58 & 0x02) != 0) functions |= 0x40; // F6
-                if ((f58 & 0x04) != 0) functions |= 0x80; // F7
-                if ((f58 & 0x08) != 0) functions |= 0x100; // F8
+                byte db4 = data[9];
+                if ((db4 & 0x10) != 0) functions |= 1u << 0; // F0 (L)
+                if ((db4 & 0x01) != 0) functions |= 1u << 1; // F1 (J)
+                if ((db4 & 0x02) != 0) functions |= 1u << 2; // F2 (H)
+                if ((db4 & 0x04) != 0) functions |= 1u << 3; // F3 (G)
+                if ((db4 & 0x08) != 0) functions |= 1u << 4; // F4 (F)
             }
 
             if (data.Length >= 11)
             {
-                byte f912 = data[11];
-                if ((f912 & 0x01) != 0) functions |= 0x200; // F9
-                if ((f912 & 0x02) != 0) functions |= 0x400; // F10
-                if ((f912 & 0x04) != 0) functions |= 0x800; // F11
-                if ((f912 & 0x08) != 0) functions |= 0x1000; // F12
+                byte db5 = data[10];
+                for (int bit = 0; bit < 8; bit++)
+                {
+                    if ((db5 & (1 << bit)) != 0)
+                    {
+                        functions |= 1u << (5 + bit);
+                    }
+                }
             }
 
             if (data.Length >= 12)
             {
-                byte f1320 = data[12];
-                if ((f1320 & 0x01) != 0) functions |= 0x2000; // F13
-                if ((f1320 & 0x02) != 0) functions |= 0x4000; // F14
-                if ((f1320 & 0x04) != 0) functions |= 0x8000; // F15
-                if ((f1320 & 0x08) != 0) functions |= 0x10000; // F16
-                if ((f1320 & 0x10) != 0) functions |= 0x20000; // F17
-                if ((f1320 & 0x20) != 0) functions |= 0x40000; // F18
-                if ((f1320 & 0x40) != 0) functions |= 0x80000; // F19
-                if ((f1320 & 0x80) != 0) functions |= 0x100000; // F20
+                byte db6 = data[11];
+                for (int bit = 0; bit < 8; bit++)
+                {
+                    if ((db6 & (1 << bit)) != 0)
+                    {
+                        functions |= 1u << (13 + bit);
+                    }
+                }
             }
 
             if (data.Length >= 13)
             {
-                byte f2128 = data[13];
-                if ((f2128 & 0x01) != 0) functions |= 0x200000; // F21
-                if ((f2128 & 0x02) != 0) functions |= 0x400000; // F22
-                if ((f2128 & 0x04) != 0) functions |= 0x800000; // F23
-                if ((f2128 & 0x08) != 0) functions |= 0x1000000; // F24
-                if ((f2128 & 0x10) != 0) functions |= 0x2000000; // F25
-                if ((f2128 & 0x20) != 0) functions |= 0x4000000; // F26
-                if ((f2128 & 0x40) != 0) functions |= 0x8000000; // F27
-                if ((f2128 & 0x80) != 0) functions |= 0x10000000; // F28
+                byte db7 = data[12];
+                for (int bit = 0; bit < 8; bit++)
+                {
+                    if ((db7 & (1 << bit)) != 0)
+                    {
+                        functions |= 1u << (21 + bit);
+                    }
+                }
+            }
+
+            if (data.Length >= 14)
+            {
+                byte db8 = data[13];
+                for (int bit = 0; bit < 3; bit++)
+                {
+                    if ((db8 & (1 << bit)) != 0)
+                    {
+                        functions |= 1u << (29 + bit);
+                    }
+                }
             }
 
             locoInfo = new LocoInfo

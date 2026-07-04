@@ -162,6 +162,7 @@ public sealed partial class MobaRuntimeService
             Functions = existingState?.Functions ?? 0
         };
 
+        MarkLocomotiveDriveCommand(address);
         PublishSnapshot();
     }
 
@@ -216,6 +217,11 @@ public sealed partial class MobaRuntimeService
     private void MarkLocomotiveFunctionCommand(int address)
     {
         _lastLocomotiveFunctionCommandAt[address] = DateTimeOffset.UtcNow;
+    }
+
+    private void MarkLocomotiveDriveCommand(int address)
+    {
+        _lastLocomotiveDriveCommandAt[address] = DateTimeOffset.UtcNow;
     }
 
     /// <inheritdoc />

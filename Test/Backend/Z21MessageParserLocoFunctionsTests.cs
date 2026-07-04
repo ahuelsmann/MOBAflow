@@ -45,10 +45,11 @@ internal sealed class Z21MessageParserLocoFunctionsTests
     [Test]
     public void TryParseLocoInfo_HigherFunctionBits_DecodeThroughF20()
     {
+        // DB5=0x81 (F5 + F12), DB6=0x42 (F14 + F19), DB7=0x01 (F21)
         var data = BuildLocoPacket(
             speedStepsNibble: 0x03,
             speedByte: 0x00,
-            functions: [0x00, 0x01, 0x08, 0xC8, 0x00]);
+            functions: [0x00, 0x81, 0x42, 0x01, 0x00]);
 
         var ok = Z21MessageParser.TryParseLocoInfo(data, out var loco);
 
@@ -57,9 +58,56 @@ internal sealed class Z21MessageParserLocoFunctionsTests
             Assert.That(ok, Is.True);
             Assert.That(loco!.GetFunction(5), Is.True);
             Assert.That(loco.GetFunction(12), Is.True);
-            Assert.That(loco.GetFunction(16), Is.True);
+            Assert.That(loco.GetFunction(14), Is.True);
             Assert.That(loco.GetFunction(19), Is.True);
-            Assert.That(loco.GetFunction(20), Is.True);
+            Assert.That(loco.GetFunction(21), Is.True);
+            Assert.That(loco.GetFunction(10), Is.False, "F10 must stay off when DB6 carries F14");
+        });
+    }
+
+    [Test]
+    public void TryParseLocoInfo_F14On_DoesNotActivateF10()
+    {
+        // DB6 bit1 = F14 per Z21 spec section 4.4
+        var data = BuildLocoPacket(
+            speedStepsNibble: 0x04,
+            speedByte: 0x00,
+            functions: [0x00, 0x00, 0x02, 0x00, 0x00]);
+
+        var ok = Z21MessageParser.TryParseLocoInfo(data, out var loco);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(ok, Is.True);
+            Assert.That(loco!.GetFunction(14), Is.True);
+            Assert.That(loco.GetFunction(10), Is.False);
+            Assert.That(loco.GetFunction(15), Is.False);
+        });
+    }
+
+    [Test]
+    public void TryParseLocoInfo_F15OffAfterF14On_ReflectsIndependentBits()
+    {
+        var data = BuildLocoPacket(
+            speedStepsNibble: 0x04,
+            speedByte: 0x00,
+            functions: [0x00, 0x00, 0x02, 0x00, 0x00]);
+
+        Z21MessageParser.TryParseLocoInfo(data, out var withF14);
+
+        data = BuildLocoPacket(
+            speedStepsNibble: 0x04,
+            speedByte: 0x00,
+            functions: [0x00, 0x00, 0x00, 0x00, 0x00]);
+
+        Z21MessageParser.TryParseLocoInfo(data, out var allOff);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(withF14!.GetFunction(14), Is.True);
+            Assert.That(withF14.GetFunction(15), Is.False);
+            Assert.That(allOff!.GetFunction(14), Is.False);
+            Assert.That(allOff.GetFunction(15), Is.False);
         });
     }
 

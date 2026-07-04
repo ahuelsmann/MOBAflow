@@ -48,6 +48,40 @@ internal sealed class MobileRuntimeCoordinatorTests
     }
 
     [Test]
+    public async Task RoutesLocomotiveCommandsToLocalZ21_WhenMobaflowSessionAndZ21Connected()
+    {
+        var mobaRuntime = new Mock<IMobaRuntime>();
+        mobaRuntime
+            .Setup(runtime => runtime.SetLocomotiveFunctionAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        mobaRuntime
+            .Setup(runtime => runtime.SetLocomotiveDriveAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var remoteClient = new Mock<IRuntimeHubRemoteClient>();
+        var coordinator = new MobileRuntimeCoordinator(mobaRuntime.Object, remoteClient.Object);
+
+        coordinator.SetMobaflowSessionActive(true);
+        coordinator.SetLocalZ21Connected(true);
+
+        await coordinator.SetLocomotiveFunctionAsync(3, 14, true);
+        await coordinator.SetLocomotiveDriveAsync(3, 20, true);
+
+        mobaRuntime.Verify(
+            runtime => runtime.SetLocomotiveFunctionAsync(3, 14, true, It.IsAny<CancellationToken>()),
+            Times.Once);
+        mobaRuntime.Verify(
+            runtime => runtime.SetLocomotiveDriveAsync(3, 20, true, It.IsAny<CancellationToken>()),
+            Times.Once);
+        remoteClient.Verify(
+            client => client.SetLocomotiveFunctionAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        remoteClient.Verify(
+            client => client.SetLocomotiveDriveAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
     public async Task RoutesToLocalGateway_WhenMobaflowInactiveAndZ21Connected()
     {
         var mobaRuntime = new Mock<IMobaRuntime>();

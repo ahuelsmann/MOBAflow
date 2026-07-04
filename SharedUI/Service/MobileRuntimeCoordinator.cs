@@ -6,7 +6,7 @@ using Domain;
 using Interface;
 
 /// <summary>
-/// Routes MOBAsmart control commands to MOBAflow (remote) or the local Z21 connection.
+/// Routes MOBAsmart control commands to the local Z21 (locomotives) or MOBAflow (signals/domain).
 /// </summary>
 public sealed class MobileRuntimeCoordinator : IRuntimeCommandGateway, IMobileRuntimeCoordinator
 {
@@ -56,14 +56,15 @@ public sealed class MobileRuntimeCoordinator : IRuntimeCommandGateway, IMobileRu
     /// <inheritdoc />
     public Task SetLocomotiveDriveAsync(int address, int speed, bool forward, CancellationToken cancellationToken = default)
     {
-        if (_mobaflowSessionActive)
-        {
-            return _remoteClient.SetLocomotiveDriveAsync(address, speed, forward, cancellationToken);
-        }
-
+        // Locomotive I/O is always direct to the local Z21 when connected; MOBAflow sync is domain-only.
         if (_localZ21Connected)
         {
             return _localGateway.SetLocomotiveDriveAsync(address, speed, forward, cancellationToken);
+        }
+
+        if (_mobaflowSessionActive)
+        {
+            return _remoteClient.SetLocomotiveDriveAsync(address, speed, forward, cancellationToken);
         }
 
         return NoOpRuntimeCommandGateway.Instance.SetLocomotiveDriveAsync(address, speed, forward, cancellationToken);
@@ -72,14 +73,14 @@ public sealed class MobileRuntimeCoordinator : IRuntimeCommandGateway, IMobileRu
     /// <inheritdoc />
     public Task SetLocomotiveFunctionAsync(int address, int functionIndex, bool isOn, CancellationToken cancellationToken = default)
     {
-        if (_mobaflowSessionActive)
-        {
-            return _remoteClient.SetLocomotiveFunctionAsync(address, functionIndex, isOn, cancellationToken);
-        }
-
         if (_localZ21Connected)
         {
             return _localGateway.SetLocomotiveFunctionAsync(address, functionIndex, isOn, cancellationToken);
+        }
+
+        if (_mobaflowSessionActive)
+        {
+            return _remoteClient.SetLocomotiveFunctionAsync(address, functionIndex, isOn, cancellationToken);
         }
 
         return NoOpRuntimeCommandGateway.Instance.SetLocomotiveFunctionAsync(address, functionIndex, isOn, cancellationToken);
