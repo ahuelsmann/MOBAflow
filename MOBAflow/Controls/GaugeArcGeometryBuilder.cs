@@ -2,6 +2,7 @@
 namespace Moba.WinUI.Controls;
 using Microsoft.UI.Xaml.Media;
 using Windows.Foundation;
+
 /// <summary>
 /// Builds a single semicircle arc path for gauge value indicators.
 /// Matches the background track geometry: center (171,130), radius 100, left to right over the top.
@@ -25,6 +26,7 @@ internal static class GaugeArcGeometryBuilder
         {
             return false;
         }
+
         var clamped = Math.Clamp(normalizedValue, 0, 1);
         var sweepAngle = clamped * 180;
         var endAngleRad = (180 - sweepAngle) * Math.PI / 180;
@@ -34,6 +36,7 @@ internal static class GaugeArcGeometryBuilder
         {
             return false;
         }
+
         definition = new SweepArcDefinition(
             new Point(CenterX - Radius, CenterY),
             new Point(endX, endY),
@@ -41,12 +44,14 @@ internal static class GaugeArcGeometryBuilder
             sweepAngle > 180);
         return true;
     }
+
     public static PathGeometry? CreateSweepArc(double normalizedValue)
     {
         if (!TryGetSweepArcDefinition(normalizedValue, out var definition))
         {
             return null;
         }
+
         var figure = new PathFigure
         {
             StartPoint = definition.StartPoint,
@@ -63,6 +68,7 @@ internal static class GaugeArcGeometryBuilder
         geometry.Figures.Add(figure);
         return geometry;
     }
+
     internal static bool IsRenderableNormalizedValue(double normalizedValue) =>
         !double.IsNaN(normalizedValue)
         && !double.IsInfinity(normalizedValue)

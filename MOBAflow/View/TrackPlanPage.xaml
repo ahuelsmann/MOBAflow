@@ -16,6 +16,23 @@
             Key="Y"
             Invoked="OnRedoAccelerator"
             Modifiers="Control" />
+        <KeyboardAccelerator
+            Key="Add"
+            Invoked="OnZoomInAccelerator"
+            Modifiers="Control" />
+        <KeyboardAccelerator
+            Key="Subtract"
+            Invoked="OnZoomOutAccelerator"
+            Modifiers="Control" />
+        <KeyboardAccelerator
+            Key="Number0"
+            Invoked="OnFitAccelerator"
+            Modifiers="Control" />
+        <KeyboardAccelerator
+            Key="Number1"
+            Invoked="OnResetZoomAccelerator"
+            Modifiers="Control" />
+        <KeyboardAccelerator Key="R" Invoked="OnDisconnectAccelerator" />
     </Page.KeyboardAccelerators>
     <Grid>
         <Grid.RowDefinitions>
@@ -71,12 +88,22 @@
             <AppBarButton
                 x:Name="FitButton"
                 Icon="ZoomIn"
-                Label="Fit" />
+                Label="Fit"
+                ToolTipService.ToolTip="Fit track plan to viewport (Ctrl+0)" />
             <AppBarButton
                 x:Name="ResetZoomButton"
                 Icon="Zoom"
-                Label="100%" />
+                Label="100%"
+                ToolTipService.ToolTip="Reset zoom to 100% (Ctrl+1)" />
             <AppBarSeparator />
+            <AppBarToggleButton
+                x:Name="PanToggle"
+                Label="Pan"
+                ToolTipService.ToolTip="Pan viewport with left drag (also middle-click, Space+drag, or right-drag)">
+                <AppBarToggleButton.Icon>
+                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xECE9;" />
+                </AppBarToggleButton.Icon>
+            </AppBarToggleButton>
             <AppBarToggleButton
                 x:Name="SnapToggle"
                 Icon="Trim"
@@ -87,6 +114,11 @@
                 Icon="Remove"
                 Label="Disconnect"
                 ToolTipService.ToolTip="Disconnect selected track connections (R)" />
+            <AppBarButton
+                x:Name="DeleteButton"
+                Icon="Delete"
+                Label="Delete"
+                ToolTipService.ToolTip="Delete selected track (Del)" />
             <AppBarToggleButton
                 x:Name="GridToggle"
                 Icon="ViewAll"
@@ -169,18 +201,18 @@
                         VerticalScrollBarVisibility="Auto"
                         VerticalScrollMode="Enabled"
                         ZoomMode="Enabled">
-                        <Grid Width="3000" Height="2000">
+                        <Grid x:Name="CanvasContainer" Width="2000" Height="1500">
                             <canvas:CanvasControl
                                 x:Name="GraphCanvasControl"
-                                Width="3000"
-                                Height="2000"
+                                Width="2000"
+                                Height="1500"
                                 Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
                                 CreateResources="GraphCanvasControl_CreateResources"
                                 Draw="GraphCanvasControl_Draw" />
                             <Canvas
                                 x:Name="OverlayCanvas"
-                                Width="3000"
-                                Height="2000"
+                                Width="2000"
+                                Height="1500"
                                 AllowDrop="True"
                                 Background="Transparent"
                                 IsTabStop="True" />
@@ -477,8 +509,8 @@
                                         <Ellipse
                                             Width="12"
                                             Height="12"
-                                            Fill="#FFB900"
-                                            Stroke="#FF8C00"
+                                            Fill="{ThemeResource TrackPlanValidationOpenEndFillBrush}"
+                                            Stroke="{ThemeResource TrackPlanValidationOpenEndStrokeBrush}"
                                             StrokeThickness="1.5" />
                                         <TextBlock VerticalAlignment="Center" Text="Open ends" />
                                     </StackPanel>
@@ -486,8 +518,8 @@
                                         <Ellipse
                                             Width="16"
                                             Height="16"
-                                            Fill="#E81123"
-                                            Stroke="#B40014"
+                                            Fill="{ThemeResource TrackPlanValidationOverlapFillBrush}"
+                                            Stroke="{ThemeResource TrackPlanValidationOverlapStrokeBrush}"
                                             StrokeThickness="1.5" />
                                         <TextBlock VerticalAlignment="Center" Text="Disconnected, overlapping ports" />
                                     </StackPanel>
@@ -497,7 +529,7 @@
                                             Height="12"
                                             RadiusX="2"
                                             RadiusY="2"
-                                            Stroke="#0078D7"
+                                            Stroke="{ThemeResource TrackPlanValidationGroupStrokeBrush}"
                                             StrokeDashArray="4,2"
                                             StrokeThickness="1.5" />
                                         <TextBlock VerticalAlignment="Center" Text="Disconnected groups" />

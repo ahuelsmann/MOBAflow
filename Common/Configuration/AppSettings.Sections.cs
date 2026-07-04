@@ -721,6 +721,7 @@ public class TrackPlanPageLayoutSettings
 {
     public bool IsToolboxExpanded { get; set; } = true;
     public bool IsPropertiesExpanded { get; set; } = true;
+    public bool FitOnLoad { get; set; } = true;
     public double ToolboxColumnWidth { get; set; } = 180;
     public double PropertiesColumnWidth { get; set; } = 240;
     public double PropertiesColumnStarValue { get; set; } = 1;

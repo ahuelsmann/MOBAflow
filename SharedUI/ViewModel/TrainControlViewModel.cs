@@ -2038,19 +2038,19 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         // Suppress decoder function bits before touching UI so snapshots cannot re-enable keys mid-reset.
         _suppressSnapshotFunctionState = true;
 
-        if (resetUi)
-        {
-            ResetFunctionUiStates(uiResetVersion, token);
-            SaveFunctionStatesToCache(LocoAddress);
-        }
-
-        if (!CanExecuteLocomotiveControl || LocoAddress < 1)
-        {
-            return;
-        }
-
         try
         {
+            if (resetUi)
+            {
+                ResetFunctionUiStates(uiResetVersion, token);
+                SaveFunctionStatesToCache(LocoAddress);
+            }
+
+            if (!CanExecuteLocomotiveControl || LocoAddress < 1)
+            {
+                return;
+            }
+
             await SendAllFunctionsOffAsync(token).ConfigureAwait(false);
             StatusMessage = $"Loco {LocoAddress}: all functions OFF";
             _logger?.LogDebug("All functions turned off for loco {Address}", LocoAddress);
@@ -2063,6 +2063,10 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         {
             _logger?.LogError(ex, "Failed to turn off all functions for loco {Address}", LocoAddress);
             StatusMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            _suppressSnapshotFunctionState = false;
         }
     }
 

@@ -232,4 +232,20 @@ internal class PhotoPathHelperTests
         Assert.That(fullPath, Is.Null);
         Assert.That(relativePath, Is.Null);
     }
+
+    [Test]
+    public void TryExtractVersionQuery_ReturnsVersion_WhenBindingPathHasVersion()
+    {
+        var version = PhotoPathHelper.TryExtractVersionQuery("photos/locomotives/abc.jpg?v=3");
+
+        Assert.That(version, Is.EqualTo("3"));
+    }
+
+    [Test]
+    public void TryExtractVersionQuery_ReturnsNull_WhenBindingPathHasNoVersion()
+    {
+        var version = PhotoPathHelper.TryExtractVersionQuery("photos/locomotives/abc.jpg");
+
+        Assert.That(version, Is.Null);
+    }
 }

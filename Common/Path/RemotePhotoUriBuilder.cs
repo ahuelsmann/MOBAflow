@@ -23,7 +23,14 @@ public static class RemotePhotoUriBuilder
             return null;
         }
 
-        return $"http://{serverIp.Trim()}:{serverPort}/api/photos/file?path={Uri.EscapeDataString(normalized)}";
+        var uri = $"http://{serverIp.Trim()}:{serverPort}/api/photos/file?path={Uri.EscapeDataString(normalized)}";
+        var version = PhotoPathHelper.TryExtractVersionQuery(relativePhotoPath);
+        if (!string.IsNullOrWhiteSpace(version))
+        {
+            uri += $"&v={Uri.EscapeDataString(version)}";
+        }
+
+        return uri;
     }
 
     private static string StripQuery(string path)

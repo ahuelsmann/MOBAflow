@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 #if WINDOWS
 namespace Moba.Test.WinUI;
+
 using Moba.WinUI.Controls;
 [TestFixture]
 internal sealed class GaugeVisualRulesTests
@@ -20,6 +21,7 @@ internal sealed class GaugeVisualRulesTests
         Assert.That(centerY, Is.EqualTo(anchorY).Within(0.5));
         Assert.That(left, Is.GreaterThanOrEqualTo(GaugeVisualRules.LabelCanvasEdgeInset));
     }
+
     [Test]
     public void CalculateOuterScaleLabelPosition_MaxValue_IsCenteredOnRadialAnchor()
     {
@@ -35,6 +37,7 @@ internal sealed class GaugeVisualRulesTests
         Assert.That(centerY, Is.EqualTo(anchorY).Within(0.5));
         Assert.That(left + labelWidth, Is.LessThanOrEqualTo(GaugeVisualRules.GaugeCanvasWidth));
     }
+
     [Test]
     public void CalculateOuterScaleLabelPosition_MilliampereMax_ClearsArcAndStaysRadial()
     {
@@ -47,6 +50,7 @@ internal sealed class GaugeVisualRulesTests
         Assert.That(left, Is.GreaterThanOrEqualTo(arcOuterEdge + GaugeVisualRules.LabelArcClearance));
         Assert.That(centerX, Is.EqualTo(anchorX).Within(0.5));
     }
+
     [TestCase(50, 400)]
     [TestCase(100, 400)]
     [TestCase(250, 400)]
@@ -69,6 +73,7 @@ internal sealed class GaugeVisualRulesTests
         Assert.That(centerY, Is.EqualTo(anchorY).Within(0.5),
             $"{labelText} must stay vertically centered on its radial anchor.");
     }
+
     [Test]
     public void CalculateMarkerLabelLeft_DoesNotNudgeOffRadialAnchor()
     {
@@ -78,6 +83,7 @@ internal sealed class GaugeVisualRulesTests
         Assert.That(GaugeVisualRules.CalculateMarkerLabelCenterX(left, labelWidth),
             Is.EqualTo(anchorX).Within(0.5));
     }
+
     [Test]
     public void CalculateMarkerLabelTop_CentersLabelOnRadialAnchor()
     {
@@ -87,16 +93,20 @@ internal sealed class GaugeVisualRulesTests
         var centerY = top + (labelHeight / 2);
         Assert.That(centerY, Is.EqualTo(anchorY).Within(0.01));
     }
+
     [Test]
     public void GaugeCenterX_IsCanvasHorizontalCenter()
     {
         Assert.That(GaugeVisualRules.GaugeCenterX, Is.EqualTo(GaugeVisualRules.GaugeCanvasWidth / 2));
     }
+
     [Test]
     public void SecondaryMarkerLabelDistance_IsInsideOuterScaleLabels()
     {
         Assert.That(GaugeVisualRules.SecondaryMarkerLabelDistance,
             Is.LessThan(GaugeVisualRules.OuterMarkerLabelDistance),
             "Inner DCC labels must sit radially inward of outer scale labels.");
-    }}
+    }
+}
+
 #endif

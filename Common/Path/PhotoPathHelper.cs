@@ -274,6 +274,33 @@ public static class PhotoPathHelper
     }
 
     /// <summary>
+    /// Extracts the cache-busting version from a photo binding path (e.g. <c>photos/a.jpg?v=3</c>).
+    /// </summary>
+    public static string? TryExtractVersionQuery(string? relativePhotoPath)
+    {
+        if (string.IsNullOrWhiteSpace(relativePhotoPath))
+        {
+            return null;
+        }
+
+        var queryIndex = relativePhotoPath.IndexOf('?', StringComparison.Ordinal);
+        if (queryIndex < 0)
+        {
+            return null;
+        }
+
+        foreach (var segment in relativePhotoPath[(queryIndex + 1)..].Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (segment.StartsWith("v=", StringComparison.OrdinalIgnoreCase))
+            {
+                return segment[2..];
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
     /// Combines the photo storage base directory with a relative path (e.g. from API "photos/locomotives/abc.jpg").
     /// Strips leading "photos/" or "photos\" and normalizes forward slashes to the platform separator.
     /// </summary>

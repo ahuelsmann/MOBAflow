@@ -74,8 +74,9 @@ public partial class App
             effectiveIsDark = isDarkMode;
         }
 
-        UserAppTheme = targetTheme;
+        // Update resource tokens before RequestedThemeChanged so drawable controls read the new palette.
         LoadThemeResources(effectiveIsDark);
+        UserAppTheme = targetTheme;
 
     }
 

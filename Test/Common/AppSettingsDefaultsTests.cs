@@ -168,6 +168,7 @@ internal class AppSettingsDefaultsTests
         Assert.That(layout.SignalBoxPage.IsPropertiesExpanded, Is.True);
         Assert.That(layout.TrackPlanPage.IsToolboxExpanded, Is.True);
         Assert.That(layout.TrackPlanPage.IsPropertiesExpanded, Is.True);
+        Assert.That(layout.TrackPlanPage.FitOnLoad, Is.True);
         Assert.That(layout.MonitorPage.IsTrafficExpanded, Is.True);
         Assert.That(layout.MonitorPage.IsActivityLogExpanded, Is.True);
     }

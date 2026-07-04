@@ -6,12 +6,16 @@ using Common.Path;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media.Imaging;
 
+using System.Collections.Concurrent;
+
 /// <summary>
-/// Converts a relative photo path ("photos/...") into a BitmapImage that bypasses the image cache.
+/// Converts a relative photo path ("photos/...") into a cached <see cref="BitmapImage"/>.
 /// Uses configurable base path when set via SetPhotoBasePath (e.g. from AppSettings); otherwise My Documents\MOBAflow\Photos.
+/// Cache invalidation follows the binding version query from <see cref="SharedUI.ViewModel.LocomotiveViewModel.PhotoPathWithVersion"/>.
 /// </summary>
 public partial class PhotoPathToImageConverter : IValueConverter
 {
+    private static readonly ConcurrentDictionary<string, BitmapImage> ImageCache = new();
     private static string? _sPhotoBasePath;
 
     /// <summary>
@@ -20,7 +24,12 @@ public partial class PhotoPathToImageConverter : IValueConverter
     /// </summary>
     public static void SetPhotoBasePath(string? path)
     {
-        _sPhotoBasePath = string.IsNullOrWhiteSpace(path) ? null : path.Trim();
+        var normalized = string.IsNullOrWhiteSpace(path) ? null : path.Trim();
+        if (!string.Equals(_sPhotoBasePath, normalized, StringComparison.Ordinal))
+        {
+            _sPhotoBasePath = normalized;
+            ImageCache.Clear();
+        }
     }
 
     public object? Convert(object value, Type targetType, object parameter, string language)
@@ -34,15 +43,14 @@ public partial class PhotoPathToImageConverter : IValueConverter
             if (string.IsNullOrWhiteSpace(absolutePath))
                 return null;
 
-            // Add query string to force cache refresh
-            var uriWithCacheBust = new Uri(absolutePath + "?" + DateTime.UtcNow.Ticks);
-            var bitmap = new BitmapImage
+            var cacheKey = BuildCacheKey(absolutePath, path);
+            return ImageCache.GetOrAdd(cacheKey, static key =>
             {
-                CreateOptions = BitmapCreateOptions.IgnoreImageCache,
-                UriSource = uriWithCacheBust
-            };
-
-            return bitmap;
+                var absolute = key.IndexOf('?', StringComparison.Ordinal) >= 0
+                    ? key[..key.IndexOf('?', StringComparison.Ordinal)]
+                    : key;
+                return new BitmapImage { UriSource = new Uri(absolute) };
+            });
         }
         catch
         {
@@ -51,4 +59,10 @@ public partial class PhotoPathToImageConverter : IValueConverter
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, string language) => value;
+
+    private static string BuildCacheKey(string absolutePath, string bindingPath)
+    {
+        var version = PhotoPathHelper.TryExtractVersionQuery(bindingPath);
+        return string.IsNullOrWhiteSpace(version) ? absolutePath : $"{absolutePath}?v={version}";
+    }
 }

@@ -44,6 +44,11 @@
                     <!--  TrackPlan grid lines  -->
                     <SolidColorBrush x:Key="TrackPlanGridMinorBrush" Color="#FFECECEC" />
                     <SolidColorBrush x:Key="TrackPlanGridMajorBrush" Color="#FFD0D0D0" />
+                    <SolidColorBrush x:Key="TrackPlanValidationOpenEndFillBrush" Color="#FFFFB900" />
+                    <SolidColorBrush x:Key="TrackPlanValidationOpenEndStrokeBrush" Color="#FFFF8C00" />
+                    <SolidColorBrush x:Key="TrackPlanValidationOverlapFillBrush" Color="#FFE81123" />
+                    <SolidColorBrush x:Key="TrackPlanValidationOverlapStrokeBrush" Color="#FFB40014" />
+                    <SolidColorBrush x:Key="TrackPlanValidationGroupStrokeBrush" Color="#FF0078D7" />
                     <!--  Icons (Icons.xaml): schwarz im Light-Theme  -->
                     <SolidColorBrush x:Key="IconStrokeBrush" Color="#FF000000" />
                 </ResourceDictionary>
@@ -75,6 +80,11 @@
                     <!--  TrackPlan grid lines (gedämpftes Grau auf dunklem Canvas)  -->
                     <SolidColorBrush x:Key="TrackPlanGridMinorBrush" Color="#FF2A2A2A" />
                     <SolidColorBrush x:Key="TrackPlanGridMajorBrush" Color="#FF3F3F3F" />
+                    <SolidColorBrush x:Key="TrackPlanValidationOpenEndFillBrush" Color="#FFFFB900" />
+                    <SolidColorBrush x:Key="TrackPlanValidationOpenEndStrokeBrush" Color="#FFFF8C00" />
+                    <SolidColorBrush x:Key="TrackPlanValidationOverlapFillBrush" Color="#FFE81123" />
+                    <SolidColorBrush x:Key="TrackPlanValidationOverlapStrokeBrush" Color="#FFB40014" />
+                    <SolidColorBrush x:Key="TrackPlanValidationGroupStrokeBrush" Color="#FF60CDFF" />
                     <!--  Icons (Icons.xaml): white in dark theme  -->
                     <SolidColorBrush x:Key="IconStrokeBrush" Color="#FFFFFFFF" />
                 </ResourceDictionary>

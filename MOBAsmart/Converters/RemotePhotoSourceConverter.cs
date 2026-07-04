@@ -3,6 +3,7 @@ namespace Moba.MAUI.Converters;
 
 using SharedUI.Interface;
 
+using System.Collections.Concurrent;
 using System.Globalization;
 
 /// <summary>
@@ -10,6 +11,7 @@ using System.Globalization;
 /// </summary>
 public sealed class RemotePhotoSourceConverter : IValueConverter
 {
+    private static readonly ConcurrentDictionary<string, ImageSource> ImageCache = new();
     private readonly IPhotoUriResolver _photoUriResolver;
 
     public RemotePhotoSourceConverter(IPhotoUriResolver photoUriResolver)
@@ -33,7 +35,7 @@ public sealed class RemotePhotoSourceConverter : IValueConverter
 
         try
         {
-            return ImageSource.FromUri(new Uri(uri, UriKind.Absolute));
+            return ImageCache.GetOrAdd(path, _ => ImageSource.FromUri(new Uri(uri, UriKind.Absolute)));
         }
         catch (UriFormatException)
         {

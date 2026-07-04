@@ -81,6 +81,9 @@ resharper_csharp_wrap_chained_method_calls = chop_if_long
 dotnet_sort_system_directives_first = false
 dotnet_style_operator_placement_when_wrapping = beginning_of_line
 
+# Blank line preferences (experimental analyzers; pair with scripts/normalize-csharp-blank-lines.ps1 for bulk cleanup)
+dotnet_style_allow_multiple_blank_lines_experimental = false:warning
+
 # Inspection severity (ReSharper 0-warnings policy)
 dotnet_diagnostic.CS0169.severity = warning   # Unused field
 dotnet_diagnostic.CS0168.severity = warning   # Unused variable

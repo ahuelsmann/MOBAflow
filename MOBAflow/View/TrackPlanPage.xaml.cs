@@ -43,6 +43,12 @@ public sealed partial class TrackPlanPage
     /// <summary>Margin in mm, damit der gesamte Plan sichtbar ist (auch bei negativen Koordinaten).</summary>
     private const double ContentMarginMm = 50.0;
 
+    private bool _isPanning;
+    private bool _isSpaceKeyDown;
+    private Point _panStartPoint;
+    private double _panStartHorizontalOffset;
+    private double _panStartVerticalOffset;
+
     private readonly AppSettings _settings;
     private readonly ISettingsService? _settingsService;
 
@@ -95,6 +101,7 @@ public sealed partial class TrackPlanPage
         InitializeEditorFeatures();
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
+        KeyUp += Page_KeyUp;
 
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
 
@@ -169,7 +176,10 @@ public sealed partial class TrackPlanPage
         RestoreLayout();
 
         RecalculateDrawOffset();
+        UpdateCanvasSize();
         RefreshCanvas();
+        TryInitialFitOnLoad();
+        UpdatePanCursor();
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
@@ -180,6 +190,7 @@ public sealed partial class TrackPlanPage
         HandlePageUnloadedAsync().Observe(ex => _logger?.LogWarning(ex, "Persist layout on unload failed"));
         _plan.PlanChanged -= OnPlanChanged;
         KeyDown -= Page_KeyDown;
+        KeyUp -= Page_KeyUp;
         _feedbackHighlighter.HighlightsChanged -= OnFeedbackHighlightsChanged;
     }
 
@@ -339,10 +350,31 @@ public sealed partial class TrackPlanPage
         CommitHistorySnapshot(before);
     }
 
+    private void Page_KeyUp(object sender, KeyRoutedEventArgs e)
+    {
+        _ = sender;
+        if (e.Key != VirtualKey.Space)
+            return;
+
+        _isSpaceKeyDown = false;
+        UpdatePanCursor();
+    }
+
     private async Task HandlePageKeyDownAsync(KeyRoutedEventArgs e)
     {
         try
         {
+            if (FocusManager.GetFocusedElement(XamlRoot) is TextBox or NumberBox)
+                return;
+
+            if (e.Key == VirtualKey.Space)
+            {
+                _isSpaceKeyDown = true;
+                UpdatePanCursor();
+                e.Handled = true;
+                return;
+            }
+
             if (IsCtrlPressed())
             {
                 if (e.Key == VirtualKey.Z)
@@ -358,6 +390,41 @@ public sealed partial class TrackPlanPage
                     e.Handled = true;
                     return;
                 }
+
+                if (e.Key is VirtualKey.Add or (VirtualKey)107)
+                {
+                    ZoomSlider.Value = Math.Min(3, ZoomSlider.Value + 0.25);
+                    e.Handled = true;
+                    return;
+                }
+
+                if (e.Key is VirtualKey.Subtract or (VirtualKey)109)
+                {
+                    ZoomSlider.Value = Math.Max(0.1, ZoomSlider.Value - 0.25);
+                    e.Handled = true;
+                    return;
+                }
+
+                if (e.Key is VirtualKey.Number0 or (VirtualKey)0x60)
+                {
+                    FitToContent();
+                    e.Handled = true;
+                    return;
+                }
+
+                if (e.Key is VirtualKey.Number1 or (VirtualKey)0x61)
+                {
+                    ResetZoom();
+                    e.Handled = true;
+                    return;
+                }
+            }
+
+            if (e.Key == VirtualKey.R && _selectedSegmentId != null && DisconnectButton.IsEnabled)
+            {
+                DisconnectSelectedSegment();
+                e.Handled = true;
+                return;
             }
 
             if (e.Key != VirtualKey.Delete && e.Key != VirtualKey.Back)
@@ -373,6 +440,8 @@ public sealed partial class TrackPlanPage
         {
             _logger?.LogWarning(ex, "Keyboard handler failed");
         }
+
+        await Task.CompletedTask;
     }
 
     private void OnPlanChanged(object? sender, EventArgs e)
@@ -581,7 +650,14 @@ public sealed partial class TrackPlanPage
         OverlayCanvas.Focus(FocusState.Pointer);
 
         var ptr = e.GetCurrentPoint(OverlayCanvas);
-        if (!ptr.Properties.IsLeftButtonPressed)
+
+        if (TryBeginPan(e.Pointer, ptr))
+        {
+            e.Handled = true;
+            return;
+        }
+
+        if (!ptr.Properties.IsLeftButtonPressed || IsPanToolActive())
             return;
 
         var pos = ptr.Position;
@@ -599,6 +675,70 @@ public sealed partial class TrackPlanPage
         {
             BeginCanvasDrag(hit, pos, e.Pointer);
         }
+    }
+
+    private bool TryBeginPan(Pointer pointer, PointerPoint ptr)
+    {
+        var isRightButton = ptr.Properties.IsRightButtonPressed;
+        var isMiddleButton = ptr.Properties.IsMiddleButtonPressed;
+        var isLeftButtonPan = ptr.Properties.IsLeftButtonPressed
+            && (IsPanToolActive() || _isSpaceKeyDown);
+
+        if (!isRightButton && !isMiddleButton && !isLeftButtonPan)
+            return false;
+
+        _isPanning = true;
+        _panStartPoint = ptr.Position;
+        _panStartHorizontalOffset = CanvasScrollViewer.HorizontalOffset;
+        _panStartVerticalOffset = CanvasScrollViewer.VerticalOffset;
+        OverlayCanvas.PointerMoved += Canvas_PointerMoved_Pan;
+        OverlayCanvas.PointerReleased += Canvas_PointerReleased_Pan;
+        OverlayCanvas.CapturePointer(pointer);
+        UpdatePanCursor();
+        return true;
+    }
+
+    private bool IsPanToolActive() => PanToggle.IsChecked == true;
+
+    private void Canvas_PointerMoved_Pan(object sender, PointerRoutedEventArgs e)
+    {
+        if (!_isPanning)
+            return;
+
+        var point = e.GetCurrentPoint(OverlayCanvas).Position;
+        var deltaX = point.X - _panStartPoint.X;
+        var deltaY = point.Y - _panStartPoint.Y;
+
+        CanvasScrollViewer.ChangeView(
+            _panStartHorizontalOffset - deltaX,
+            _panStartVerticalOffset - deltaY,
+            null,
+            disableAnimation: true);
+    }
+
+    private void Canvas_PointerReleased_Pan(object sender, PointerRoutedEventArgs e)
+    {
+        if (!_isPanning)
+            return;
+
+        EndPan(e.Pointer);
+    }
+
+    private void EndPan(Pointer pointer)
+    {
+        _isPanning = false;
+        OverlayCanvas.PointerMoved -= Canvas_PointerMoved_Pan;
+        OverlayCanvas.PointerReleased -= Canvas_PointerReleased_Pan;
+        OverlayCanvas.ReleasePointerCapture(pointer);
+        UpdatePanCursor();
+    }
+
+    private void UpdatePanCursor()
+    {
+        var showHand = _isPanning || _isSpaceKeyDown || IsPanToolActive();
+        ProtectedCursor = showHand
+            ? InputSystemCursor.Create(InputSystemCursorShape.Hand)
+            : null;
     }
 
     private void BeginCanvasDrag(PlacedSegment hit, Point pointerPosition, Pointer pointer)
@@ -759,6 +899,9 @@ public sealed partial class TrackPlanPage
 
     private void Canvas_PointerMoved_UpdateCoords(object sender, PointerRoutedEventArgs e)
     {
+        if (_isPanning)
+            return;
+
         var (worldX, worldY) = ToWorldCoordinates(e.GetCurrentPoint(OverlayCanvas).Position);
         CoordinatesText.Text = $"X: {worldX:F0} mm  Y: {worldY:F0} mm";
     }
@@ -1257,6 +1400,7 @@ public sealed partial class TrackPlanPage
 
     private void RefreshCanvas()
     {
+        UpdateCanvasSize();
         var (offsetX, offsetY) = GetDrawOffset();
         if (_ghostLayer != null)
         {
@@ -1487,6 +1631,7 @@ public sealed partial class TrackPlanPage
     {
         ZoomSlider.ValueChanged += OnZoomSliderValueChanged;
         CanvasScrollViewer.ViewChanged += OnCanvasScrollViewerViewChanged;
+        CanvasScrollViewer.SizeChanged += (_, _) => TryInitialFitOnLoad();
         ZoomInButton.Click += OnZoomInButtonClick;
         ZoomOutButton.Click += OnZoomOutButtonClick;
     }
@@ -1503,7 +1648,7 @@ public sealed partial class TrackPlanPage
         }
 
         _zoomSyncing = true;
-        CanvasScrollViewer.ChangeView(null, null, (float)ZoomSlider.Value);
+        CanvasScrollViewer.ChangeView(null, null, (float)ZoomSlider.Value, disableAnimation: true);
         _zoomSyncing = false;
     }
 

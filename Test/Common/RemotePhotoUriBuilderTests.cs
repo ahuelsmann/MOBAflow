@@ -12,9 +12,20 @@ internal sealed class RemotePhotoUriBuilderTests
         var uri = RemotePhotoUriBuilder.BuildHttpUri(
             "192.168.0.10",
             5001,
-            "photos/latest/abc.jpg?v=2");
+            "photos/latest/abc.jpg");
 
         Assert.That(uri, Is.EqualTo("http://192.168.0.10:5001/api/photos/file?path=photos%2Flatest%2Fabc.jpg"));
+    }
+
+    [Test]
+    public void BuildHttpUri_AppendsVersionQuery_WhenBindingPathHasVersion()
+    {
+        var uri = RemotePhotoUriBuilder.BuildHttpUri(
+            "192.168.0.10",
+            5001,
+            "photos/latest/abc.jpg?v=2");
+
+        Assert.That(uri, Is.EqualTo("http://192.168.0.10:5001/api/photos/file?path=photos%2Flatest%2Fabc.jpg&v=2"));
     }
 
     [Test]
