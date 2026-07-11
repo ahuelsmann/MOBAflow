@@ -72,7 +72,7 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private async Task SimulateFeedback()
     {
-        uint? selectedInPort = SelectedJourney?.InPort;
+        uint? selectedInPort = SelectedJourney?.NextFeedbackInPort;
 
         int inPort;
         if (selectedInPort.HasValue)

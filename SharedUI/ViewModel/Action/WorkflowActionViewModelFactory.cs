@@ -153,7 +153,17 @@ internal static class WorkflowActionViewModelDescriptors
                         ClearBeforeRender = true
                     }
                 },
-                action => new TrainDestinationDisplayViewModel(action))
+                action => new TrainDestinationDisplayViewModel(action)),
+            new(
+                ActionType.ChangeJourneyStop,
+                number => new WorkflowAction
+                {
+                    Name = "Change Journey Stop",
+                    Number = number,
+                    Type = ActionType.ChangeJourneyStop,
+                    ChangeJourneyStop = new ChangeJourneyStopActionPayload()
+                },
+                action => new ChangeJourneyStopViewModel(action))
         ];
 
         return descriptors.ToDictionary(descriptor => descriptor.ActionType);

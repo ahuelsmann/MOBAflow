@@ -13,6 +13,12 @@ public sealed class TrackPlanDocument
     /// <summary>Schema version of this track plan document.</summary>
     public int Version { get; set; } = 1;
 
+    /// <summary>
+    /// Default library for legacy segments that do not specify an explicit library.
+    /// Existing documents remain valid and are interpreted as PIKO A layouts.
+    /// </summary>
+    public string LibraryId { get; set; } = "piko-a";
+
     /// <summary>Optional cached draw offset X (mm) for viewport stability.</summary>
     public double? OffsetX { get; set; }
 
@@ -37,6 +43,12 @@ public sealed class TrackPlanSegment
 
     /// <summary>Catalog code (e.g. "WR", "R9", "G239") – resolved against PikoACatalog on load.</summary>
     public string Code { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Optional library override. Empty values inherit <see cref="TrackPlanDocument.LibraryId"/>
+    /// for compatibility with version 1 documents.
+    /// </summary>
+    public string? LibraryId { get; set; }
 
     /// <summary>X position in mm.</summary>
     public double X { get; set; }

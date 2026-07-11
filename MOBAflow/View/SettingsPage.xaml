@@ -166,6 +166,11 @@
                                 Message="Configure a local Piper executable and a compatible .onnx voice model. No cloud API key is required."
                                 Severity="Informational" />
 
+                            <TextBlock
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="{x:Bind ViewModel.PiperConfigurationStatus, Mode=OneWay}"
+                                TextWrapping="Wrap" />
+
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <ComboBox
                                     MinWidth="180"
@@ -235,6 +240,24 @@
                                     Click="BrowsePiperConfig_Click"
                                     Content="Browse..." />
                             </StackPanel>
+
+                            <NumberBox
+                                HorizontalAlignment="Left"
+                                Header="Sentence pause"
+                                Maximum="2"
+                                Minimum="0"
+                                SmallChange="0.05"
+                                SpinButtonPlacementMode="Inline"
+                                Value="{x:Bind ViewModel.PiperSentenceSilenceSeconds, Mode=TwoWay}">
+                                <NumberBox.Description>
+                                    <TextBlock Text="Optional silence between sentences. Keep at 0 to avoid added announcement tails." TextWrapping="Wrap" />
+                                </NumberBox.Description>
+                            </NumberBox>
+
+                            <CheckBox
+                                Content="Keep last Piper WAV for diagnostics"
+                                IsChecked="{x:Bind ViewModel.EnablePiperAudioDiagnostics, Mode=TwoWay}"
+                                ToolTipService.ToolTip="Saves the processed WAV under LocalAppData\MOBAflow\PiperDiagnostics for playback in another audio player." />
                         </StackPanel>
 
                         <StackPanel

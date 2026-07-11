@@ -33,9 +33,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
 {
     #region Fields
     private const int ShutdownDisconnectTimeoutSeconds = 5;
-    private const uint DefaultStationLapsToStop = 1;
-    private const uint DefaultEventLapsToStop = 1;
-    private const string EventLibraryName = "Event";
 
     // Core Services (required)
     private readonly IIoService _ioService;
@@ -233,7 +230,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(AddStationCommand))]
-    [NotifyCanExecuteChangedFor(nameof(AddEventCommand))]
     [NotifyCanExecuteChangedFor(nameof(AddStationFromCityCommand))]
     private JourneyViewModel? _selectedJourney;
 
@@ -534,7 +530,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         if (_cityLibraryService == null) return;
 
         var filtered = _cityLibraryService.FilterCities(value);
-        CityLibrary = new ObservableCollection<City>(BuildCityLibraryWithEvent(filtered, value));
+        CityLibrary = new ObservableCollection<City>(filtered);
     }
 
     [RelayCommand(CanExecute = nameof(CanAddStationFromCity))]
@@ -544,7 +540,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
 
         if (city.IsVirtual)
         {
-            AddEventToSelectedJourney();
             return;
         }
 
@@ -556,10 +551,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         var newStation = new Station
         {
             Name = cityStation.Name,
-            InPort = 0,
             IsExitOnLeft = false,
-            NumberOfLapsToStop = DefaultStationLapsToStop,
-            WorkflowId = null,
             IsVirtual = false
         };
 
@@ -592,41 +584,10 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         // Ensure collection update happens on UI thread (WinUI requirement)
         _uiDispatcher.InvokeOnUi(() =>
         {
-            CityLibrary = new ObservableCollection<City>(BuildCityLibraryWithEvent(cities, CitySearchText));
+            CityLibrary = new ObservableCollection<City>(cities);
         });
     }
 
-    private static IEnumerable<City> BuildCityLibraryWithEvent(IEnumerable<City> cities, string searchText)
-    {
-        if (string.IsNullOrWhiteSpace(searchText) || EventLibraryName.Contains(searchText, StringComparison.OrdinalIgnoreCase))
-        {
-            yield return CreateEventCity();
-        }
-
-        foreach (var city in cities)
-        {
-            yield return city;
-        }
-    }
-
-    private static City CreateEventCity()
-    {
-        return new City
-        {
-            Name = EventLibraryName,
-            IsVirtual = true,
-            Stations =
-            [
-                new Station
-                {
-                    Name = EventLibraryName,
-                    InPort = 0,
-                    NumberOfLapsToStop = DefaultEventLapsToStop,
-                    IsVirtual = true
-                }
-            ]
-        };
-    }
     #endregion
 
     #region Wagon Libraries
@@ -644,25 +605,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         new PassengerWagon { Name = "Passenger Wagon 1st Class", WagonClass = PassengerClass.First },
         new PassengerWagon { Name = "Passenger Wagon 2nd Class", WagonClass = PassengerClass.Second }
     ];
-    #endregion
-
-    #region Drag & Drop Commands
-    [RelayCommand(CanExecute = nameof(CanAssignWorkflowToStation))]
-    private void AssignWorkflowToStation(WorkflowViewModel? workflow)
-    {
-        AssignWorkflowToStation(workflow, SelectedStation);
-    }
-
-    public void AssignWorkflowToStation(WorkflowViewModel? workflow, StationViewModel? station)
-    {
-        if (station == null || workflow == null) return;
-
-        station.WorkflowId = workflow.Model.Id;
-        SelectedStation = station;
-    }
-
-    private bool CanAssignWorkflowToStation() => SelectedStation != null;
-
     #endregion
 
     #region Signal Box / Viessmann Multiplex Signals (binding for Settings page)

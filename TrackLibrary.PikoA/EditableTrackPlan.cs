@@ -2,13 +2,15 @@
 namespace Moba.TrackLibrary.PikoA;
 
 using Base;
+using Domain;
 
 /// <summary>
 /// Editable track plan model with placed segments and connections.
 /// Supports drag and drop, snapping, and group movement.
 /// </summary>
-public sealed class EditableTrackPlan
+public sealed class EditableTrackPlan : ITrackFeedbackLookup
 {
+    public sealed record PlanMutation(Guid? SegmentId, PlacedSegment? Previous, PlacedSegment? Current, bool RequiresFullRebuild = false);
     private readonly List<PlacedSegment> _segments = [];
     private readonly List<PortConnection> _connections = [];
 
@@ -21,6 +23,8 @@ public sealed class EditableTrackPlan
     /// <summary>Event raised when segments or connections change.</summary>
     public event EventHandler? PlanChanged;
 
+    public event EventHandler<PlanMutation>? PlanMutated;
+
     /// <summary>Adds a new placed segment.</summary>
     public void AddSegment(PlacedSegment placed)
     {
@@ -28,15 +32,16 @@ public sealed class EditableTrackPlan
             return;
 
         _segments.Add(placed);
-        PlanChanged?.Invoke(this, EventArgs.Empty);
+        NotifyChanged(new PlanMutation(placed.Segment.No, null, placed));
     }
 
     /// <summary>Removes a segment and all associated connections.</summary>
     public void RemoveSegment(Guid segmentNo)
     {
+        var previous = _segments.FirstOrDefault(s => s.Segment.No == segmentNo);
         _segments.RemoveAll(s => s.Segment.No == segmentNo);
         _connections.RemoveAll(c => c.SourceSegment == segmentNo || c.TargetSegment == segmentNo);
-        PlanChanged?.Invoke(this, EventArgs.Empty);
+        NotifyChanged(new PlanMutation(segmentNo, previous, null));
     }
 
     /// <summary>Updates the position of a segment.</summary>
@@ -48,7 +53,7 @@ public sealed class EditableTrackPlan
 
         var old = _segments[idx];
         _segments[idx] = old.WithPosition(x, y, rotationDegrees);
-        PlanChanged?.Invoke(this, EventArgs.Empty);
+        NotifyChanged(new PlanMutation(segmentNo, old, _segments[idx]));
     }
 
     /// <summary>
@@ -65,6 +70,9 @@ public sealed class EditableTrackPlan
         }
     }
 
+    /// <inheritdoc />
+    public IEnumerable<Guid> GetTrackIdsByFeedbackInPort(int inPort) => GetSegmentIdsByInPort(inPort);
+
     /// <summary>Updates the Z21 InPort feedback address of a placed segment.</summary>
     public void UpdateSegmentInPort(Guid segmentNo, int? inPort)
     {
@@ -77,7 +85,7 @@ public sealed class EditableTrackPlan
             return;
 
         _segments[idx] = old.WithInPort(inPort);
-        PlanChanged?.Invoke(this, EventArgs.Empty);
+        NotifyChanged(new PlanMutation(segmentNo, old, _segments[idx]));
     }
 
     /// <summary>Moves all segments in the connected group by the specified delta.</summary>
@@ -229,5 +237,11 @@ public sealed class EditableTrackPlan
     {
         var prop = segment.GetType().GetProperty(portName);
         prop?.SetValue(segment, value);
+    }
+
+    private void NotifyChanged(PlanMutation mutation)
+    {
+        PlanMutated?.Invoke(this, mutation);
+        PlanChanged?.Invoke(this, EventArgs.Empty);
     }
 }

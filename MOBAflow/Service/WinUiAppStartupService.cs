@@ -183,6 +183,7 @@ internal sealed class WinUiAppStartupService
 
             services.GetRequiredService<TrackPlanSolutionBinder>().Activate();
             services.GetRequiredService<TrackPlanFeedbackHighlighter>().Activate();
+            services.GetRequiredService<TrackPlanRailroadStateProjector>().Activate();
 
             _ = services.GetRequiredService<RestApiRuntimeCommandConsumerService>();
             _ = services.GetRequiredService<RestApiRuntimeHubService>();

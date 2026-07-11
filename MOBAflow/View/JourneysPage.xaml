@@ -128,13 +128,6 @@
                         </Button>
                         <Button
                             Padding="4"
-                            Command="{x:Bind ViewModel.AddEventCommand}"
-                            ToolTipService.ToolTip="Add a new event to this journey"
-                            Visibility="{x:Bind ViewModel.IsStationTimelineView, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                            <FontIcon FontSize="14" Glyph="&#xE945;" />
-                        </Button>
-                        <Button
-                            Padding="4"
                             Command="{x:Bind ViewModel.DeleteStationCommand}"
                             ToolTipService.ToolTip="Remove the selected station">
                             <FontIcon FontSize="14" Glyph="&#xE74D;" />
@@ -145,19 +138,11 @@
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
-                        <ToggleSwitch
-                            Grid.Row="0"
-                            Margin="0,0,0,8"
-                            IsOn="{x:Bind ViewModel.IsStationTimelineView, Mode=TwoWay}"
-                            OffContent="Normal View"
-                            OnContent="Advanced View" />
-
                         <AutoSuggestBox
-                            Grid.Row="1"
+                            Grid.Row="0"
                             Margin="0,0,0,8"
                             PlaceholderText="Search stations..."
                             QueryIcon="Find"
@@ -165,9 +150,9 @@
 
                         <ListView
                             x:Name="StationListView"
-                            Grid.Row="2"
+                            Grid.Row="1"
                             AllowDrop="True"
-                            CanDragItems="{x:Bind ViewModel.IsStationTimelineView, Mode=OneWay}"
+                            CanDragItems="True"
                             DragItemsStarting="StationListView_DragItemsStarting"
                             DragOver="StationListView_DragOver"
                             Drop="StationListView_Drop"

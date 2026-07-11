@@ -5,6 +5,7 @@ namespace Moba.WinUI.Extensions;
 using Backend.Data;
 using Backend.Interface;
 using Backend.Service;
+using Backend.Service.TrackPlan;
 
 using Common.Configuration;
 using Common.Events;
@@ -210,11 +211,23 @@ public static class MobaWinUiServiceCollectionExtensions
 
         services.AddSingleton<TrackPlan>();
         services.AddSingleton<EditableTrackPlan>();
+        services.AddSingleton<TrackPlanInteractionService>();
+        services.AddSingleton<ITrackFeedbackLookup>(sp => sp.GetRequiredService<EditableTrackPlan>());
+        services.AddSingleton<RailroadState>();
+        services.AddSingleton<TrackPlanRailroadStateProjector>();
+        services.AddSingleton<ITrackLibrary, PikoATrackLibrary>();
+        services.AddSingleton<TrackLibraryRegistry>();
+        services.AddSingleton<LayoutService>();
+        services.AddSingleton<GraphService>();
+        services.AddSingleton<SelectionService>();
+        services.AddSingleton<UndoRedoService<TrackPlanEditorDocument>>();
         services.AddSingleton<TrackPlanSolutionBinder>();
         services.AddSingleton<TrackPlanFeedbackHighlighter>();
 
         services.AddSingleton(sp => new TrackPlanViewModel(
             sp.GetRequiredService<TrackPlan>(),
+            sp.GetRequiredService<EditableTrackPlan>(),
+            sp.GetRequiredService<SelectionService>(),
             sp.GetRequiredService<AppSettings>(),
             sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<ILogger<TrackPlanViewModel>>()));

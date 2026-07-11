@@ -375,12 +375,6 @@ internal sealed partial class JourneysPage
         {
             ViewModel.AddStationFromCityCommand.Execute(city);
         }
-        // Handle Workflow drop (assign to selected Station)
-        else if (e.DataView.Properties.TryGetValue("Workflow", out object? workflowObj) && workflowObj is WorkflowViewModel workflow)
-        {
-            var targetStation = GetStationAtPosition(e.GetPosition(StationListView));
-            ViewModel.AssignWorkflowToStation(workflow, targetStation ?? ViewModel.SelectedStation);
-        }
     }
 
     private StationViewModel? GetStationAtPosition(Point position)

@@ -137,7 +137,7 @@ public sealed class JourneyMapViewModel : ObservableObject
     {
         get
         {
-            return SelectedJourney == null ? "-" : SelectedJourney.InPort.ToString();
+            return SelectedJourney?.NextFeedbackInPort?.ToString() ?? "-";
         }
     }
     #endregion

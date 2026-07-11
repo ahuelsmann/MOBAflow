@@ -32,10 +32,10 @@ public sealed class PlacedTrackPlanSvgRenderer
         if (showGrid)
             AppendGrid(builder, minX, minY, maxX, maxY);
 
-        foreach (var placed in placements)
+        var scene = TrackPlanRenderSceneBuilder.Build(placements);
+        foreach (var (placed, item) in placements.Zip(scene.Items))
         {
-            var path = SegmentLocalPathBuilder.GetPath(placed.Segment);
-            var svgPath = PathToSvgConverter.ToSvgPath(path, placed.X, placed.Y, placed.RotationDegrees);
+            var svgPath = PathToSvgConverter.ToSvgPath(item.Path, item.X, item.Y, item.RotationDegrees);
             builder.AppendLine($"  <path d=\"{svgPath}\" stroke=\"#333333\" stroke-width=\"4\" stroke-opacity=\"{trackOpacity.ToString("F2", CultureInfo.InvariantCulture)}\" fill=\"none\" />");
 
             if (!showPorts)

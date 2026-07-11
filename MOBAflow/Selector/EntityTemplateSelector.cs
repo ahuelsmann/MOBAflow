@@ -91,6 +91,8 @@ public partial class EntityTemplateSelector : DataTemplateSelector
     /// </summary>
     public DataTemplate? TrainDestinationDisplayActionTemplate { get; set; }
 
+    public DataTemplate? ChangeJourneyStopActionTemplate { get; set; }
+
     /// <summary>
     /// Fallback DataTemplate for unknown types
     /// </summary>
@@ -115,6 +117,7 @@ public partial class EntityTemplateSelector : DataTemplateSelector
             SelectSignalAspectViewModel => SelectSignalAspectActionTemplate,
             PowerShellActionViewModel => PowerShellActionTemplate,
             TrainDestinationDisplayViewModel => TrainDestinationDisplayActionTemplate,
+            ChangeJourneyStopViewModel => ChangeJourneyStopActionTemplate,
             WorkflowActionViewModel => ActionTemplate,  // Generic fallback
             WorkflowAction => ActionTemplate,  // Domain object fallback
             _ => DefaultTemplate

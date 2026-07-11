@@ -24,8 +24,6 @@ using Path = Path;
 
 public sealed partial class TrackPlanPage
 {
-    private readonly Stack<TrackPlanEditorDocument> _undoStack = [];
-    private readonly Stack<TrackPlanEditorDocument> _redoStack = [];
     private TrackPlanEditorDocument? _pendingDragSnapshot;
     private TrackPlanEditorDocument? _pendingRotationSnapshot;
     private bool _showGrid;
@@ -123,16 +121,15 @@ public sealed partial class TrackPlanPage
         if (beforeJson == afterJson)
             return;
 
-        _undoStack.Push(beforeSnapshot);
-        _redoStack.Clear();
+        _undoRedoService.Record(beforeSnapshot);
         UpdateHistoryButtons();
         UpdateCommandStates();
     }
 
     private void UpdateHistoryButtons()
     {
-        UndoButton.IsEnabled = _undoStack.Count > 0;
-        RedoButton.IsEnabled = _redoStack.Count > 0;
+        UndoButton.IsEnabled = _undoRedoService.CanUndo;
+        RedoButton.IsEnabled = _undoRedoService.CanRedo;
     }
 
     private void UpdateCommandStates()
@@ -156,8 +153,7 @@ public sealed partial class TrackPlanPage
         if (placed == null)
             return false;
 
-        var segmentNo = placed.Segment.No;
-        return _plan.Connections.All(c => c.SourceSegment != segmentNo && c.TargetSegment != segmentNo);
+        return ViewModel.CanRotateSelectedTrack;
     }
 
     private void RotateSelectedSegment(double deltaDegrees)
@@ -171,7 +167,8 @@ public sealed partial class TrackPlanPage
 
         var before = CaptureDocumentState();
         var newRotation = NormalizeAngle(placed.RotationDegrees + deltaDegrees);
-        _plan.UpdateSegmentPosition(placed.Segment.No, placed.X, placed.Y, newRotation);
+        ViewModel.SelectTrack(_selectedSegmentId);
+        ViewModel.RotateSelectedTrack(deltaDegrees);
         CommitHistorySnapshot(before);
         StatusText.Text = $"Rotation set to {newRotation:F0}°.";
         UpdateSelectionInfo();
@@ -213,8 +210,7 @@ public sealed partial class TrackPlanPage
 
         if (clearHistory)
         {
-            _undoStack.Clear();
-            _redoStack.Clear();
+            _undoRedoService.Clear();
         }
 
         if (document.ZoomFactor.HasValue)
@@ -236,12 +232,9 @@ public sealed partial class TrackPlanPage
 
     private void Undo()
     {
-        if (_undoStack.Count == 0)
-            return;
-
         var current = CaptureDocumentState();
-        var previous = _undoStack.Pop();
-        _redoStack.Push(current);
+        if (!_undoRedoService.TryUndo(current, out var previous))
+            return;
         ApplyEditorDocument(previous, clearHistory: false);
         UpdateHistoryButtons();
         StatusText.Text = "Undo executed.";
@@ -249,12 +242,9 @@ public sealed partial class TrackPlanPage
 
     private void Redo()
     {
-        if (_redoStack.Count == 0)
-            return;
-
         var current = CaptureDocumentState();
-        var next = _redoStack.Pop();
-        _undoStack.Push(current);
+        if (!_undoRedoService.TryRedo(current, out var next))
+            return;
         ApplyEditorDocument(next, clearHistory: false);
         UpdateHistoryButtons();
         StatusText.Text = "Redo executed.";
@@ -266,7 +256,8 @@ public sealed partial class TrackPlanPage
             return;
 
         var before = CaptureDocumentState();
-        _plan.RemoveSegment(_selectedSegmentId.Value);
+        ViewModel.SelectTrack(_selectedSegmentId);
+        ViewModel.DeleteSelectedTrack();
         _selectedSegmentId = null;
         UpdateSelectionInfo();
         CommitHistorySnapshot(before);

@@ -65,10 +65,6 @@
                             <Grid Padding="6">
                                 <StackPanel Spacing="2">
                                     <TextBlock Text="{x:Bind Name, Mode=OneWay}" />
-                                    <TextBlock
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        Style="{ThemeResource CaptionTextBlockStyle}"
-                                        Text="{x:Bind InPort, Mode=OneWay}" />
                                 </StackPanel>
                             </Grid>
                         </DataTemplate>

@@ -130,7 +130,12 @@ public class SpeechSettings
     /// <summary>
     /// Pause in seconds between sentences passed to Piper.
     /// </summary>
-    public double PiperSentenceSilenceSeconds { get; set; } = 0.25;
+    public double PiperSentenceSilenceSeconds { get; set; }
+
+    /// <summary>
+    /// Keeps the last generated Piper WAV file in the local diagnostics folder.
+    /// </summary>
+    public bool EnablePiperAudioDiagnostics { get; set; }
 
     /// <summary>
     /// Custom phrase replacements for difficult station names or words.

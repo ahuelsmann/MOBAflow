@@ -20,6 +20,12 @@ public class JourneySessionState
     /// </summary>
     public string CurrentStationName { get; set; } = string.Empty;
 
+    /// <summary>Identifier of the current stop. This is stable when stop names or ordering change.</summary>
+    public Guid? CurrentStationId { get; set; }
+
+    /// <summary>Zero-based index of the next expected feedback sequence step.</summary>
+    public int CurrentFeedbackIndex { get; set; }
+
     /// <summary>
     /// Counter for tracking journey progress (e.g., lap number, station visits).
     /// Incremented by JourneyManager when feedback is received.
@@ -44,6 +50,9 @@ public class JourneySessionState
     /// </summary>
     public bool IsActive { get; set; }
 
+    /// <summary>Signals that a next-stop action reached the end of the stop list.</summary>
+    public bool IsJourneyCompletionRequested { get; set; }
+
     /// <summary>
     /// Resets the session state to initial values.
     /// </summary>
@@ -53,7 +62,10 @@ public class JourneySessionState
         Counter = 0;
         CurrentPos = firstPos;
         CurrentStationName = string.Empty;
+        CurrentStationId = null;
+        CurrentFeedbackIndex = 0;
         LastFeedbackTime = null;
         IsActive = true;
+        IsJourneyCompletionRequested = false;
     }
 }

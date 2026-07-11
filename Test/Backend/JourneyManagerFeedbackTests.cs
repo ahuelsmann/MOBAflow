@@ -38,7 +38,7 @@ public sealed class JourneyManagerFeedbackTests
     {
         var z21Mock = new Mock<IZ21>();
         var workflowMock = new Mock<IWorkflowService>();
-        var journey = new Journey { InPort = 1, Stations = [] };
+        var journey = new Journey { FeedbackSequence = [new JourneyFeedbackStep { InPort = 1 }], Stations = [] };
         var project = new Project();
         project.Journeys.Add(journey);
 
@@ -61,8 +61,8 @@ public sealed class JourneyManagerFeedbackTests
         var workflowMock = new Mock<IWorkflowService>();
         var journey = new Journey
         {
-            InPort = 1,
-            Stations = [new Station { Name = "A", NumberOfLapsToStop = 1 }],
+            FeedbackSequence = [new JourneyFeedbackStep { InPort = 1 }],
+            Stations = [new Station { Name = "A" }],
             FirstPos = 0
         };
         var project = new Project();
@@ -83,11 +83,11 @@ public sealed class JourneyManagerFeedbackTests
     }
 
     [Test]
-    public async Task ProcessFeedbackAsync_JourneyInPortZero_DoesNotIncrementCounter()
+    public async Task ProcessFeedbackAsync_UnexpectedInPort_DoesNotAdvanceSequence()
     {
         var z21Mock = new Mock<IZ21>();
         var workflowMock = new Mock<IWorkflowService>();
-        var journey = new Journey { InPort = 0, Stations = [] };
+        var journey = new Journey { FeedbackSequence = [new JourneyFeedbackStep { InPort = 1 }], Stations = [] };
         var project = new Project();
         project.Journeys.Add(journey);
 
@@ -104,26 +104,16 @@ public sealed class JourneyManagerFeedbackTests
     }
 
     [Test]
-    public async Task ProcessFeedbackAsync_VirtualStation_ExecutesWorkflow()
+    public async Task ProcessFeedbackAsync_FeedbackStep_ExecutesWorkflowForCurrentStop()
     {
         var z21Mock = new Mock<IZ21>();
         var workflowMock = new Mock<IWorkflowService>();
         var workflowId = Guid.NewGuid();
-        var eventStation = new Station
-        {
-            Name = "Event1",
-            IsVirtual = true,
-            NumberOfLapsToStop = 1,
-            WorkflowId = workflowId
-        };
+        var currentStop = new Station { Name = "Bielefeld" };
         var journey = new Journey
         {
-            InPort = 1,
-            Stations =
-            [
-                eventStation,
-                new Station { Name = "Bielefeld", NumberOfLapsToStop = 1 }
-            ]
+            FeedbackSequence = [new JourneyFeedbackStep { InPort = 1, WorkflowId = workflowId }],
+            Stations = [currentStop]
         };
         var project = new Project();
         project.Workflows.Add(new Workflow { Id = workflowId, Name = "Event workflow" });
@@ -145,7 +135,7 @@ public sealed class JourneyManagerFeedbackTests
                 It.IsAny<ActionExecutionContext>(),
                 It.IsAny<WorkflowExecutionOptions>()),
             Times.Once);
-        Assert.That(capturedStation, Is.SameAs(eventStation));
+        Assert.That(capturedStation, Is.SameAs(currentStop));
     }
 
     [Test]
@@ -155,11 +145,10 @@ public sealed class JourneyManagerFeedbackTests
         var workflowMock = new Mock<IWorkflowService>();
         var journey = new Journey
         {
-            InPort = 1,
+            FeedbackSequence = [new JourneyFeedbackStep { InPort = 1 }],
             Stations =
             [
-                new Station { Name = "Event1", IsVirtual = true, NumberOfLapsToStop = 1 },
-                new Station { Name = "Bielefeld", NumberOfLapsToStop = 1 }
+                new Station { Name = "Bielefeld" }
             ]
         };
         var project = new Project();
@@ -176,8 +165,8 @@ public sealed class JourneyManagerFeedbackTests
 
         await manager.RunProcessFeedbackAsync(new FeedbackResult(BuildFeedbackPacketForInPort(1))).ConfigureAwait(false);
 
-        Assert.That(feedbackPositions, Is.EqualTo(new[] { 0, 1 }));
-        Assert.That(feedbackCounters, Is.EqualTo(new[] { 1, 0 }));
+        Assert.That(feedbackPositions, Is.EqualTo(new[] { 0, 0 }));
+        Assert.That(feedbackCounters, Is.EqualTo(new[] { 1, 1 }));
     }
 
     /// <summary>

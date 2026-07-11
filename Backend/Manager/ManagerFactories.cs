@@ -21,19 +21,6 @@ public interface IJourneyManager : IDisposable
     void Reset(Journey journey);
 }
 
-public interface IStationManager : IDisposable
-{
-    event EventHandler<StationFeedbackEventArgs>? StationChanged;
-
-    event EventHandler<PlatformChangedEventArgs>? PlatformChanged;
-
-    IReadOnlyDictionary<Guid, StationSessionState> States { get; }
-
-    StationSessionState? GetState(Guid stationId);
-
-    void ResetAll();
-}
-
 public interface IPlatformManager : IDisposable
 {
     event EventHandler<PlatformChangedEventArgs>? PlatformChanged;
@@ -52,17 +39,6 @@ public sealed class JourneyManagerFactory(
 {
     public IJourneyManager Create(Project project, ActionExecutionContext executionContext) =>
         new JourneyManager(z21, project, workflowService, executionContext, logger);
-}
-
-public sealed class StationManagerFactory(
-    IZ21 z21,
-    IWorkflowService workflowService,
-    ILogger<StationManager>? logger = null,
-    ILoggerFactory? loggerFactory = null,
-    PlatformManagerFactory? platformManagerFactory = null)
-{
-    public IStationManager Create(Project project, ActionExecutionContext executionContext) =>
-        new StationManager(z21, project, workflowService, executionContext, logger, loggerFactory, platformManagerFactory);
 }
 
 public sealed class PlatformManagerFactory(

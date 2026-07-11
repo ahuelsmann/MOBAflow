@@ -137,13 +137,7 @@ public partial class MainWindowViewModel
 
         // Note: This creates a placeholder station.
         // In practice, stations should be added from City Library via drag & drop.
-        AddStationToSelectedJourney(CreateStation("New Station", DefaultStationLapsToStop));
-    }
-
-    [RelayCommand(CanExecute = nameof(CanAddStation))]
-    private void AddEvent()
-    {
-        AddEventToSelectedJourney();
+        AddStationToSelectedJourney(CreateStation("New Station"));
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteStation))]
@@ -190,7 +184,6 @@ public partial class MainWindowViewModel
 
         if (SelectedCity.IsVirtual)
         {
-            AddEventToSelectedJourney();
             return;
         }
 
@@ -199,49 +192,20 @@ public partial class MainWindowViewModel
         if (cityStation != null)
         {
             // Create NEW Station (copy name from City Library)
-            AddStationToSelectedJourney(CreateStation(cityStation.Name, DefaultStationLapsToStop, false));
+            AddStationToSelectedJourney(CreateStation(cityStation.Name));
         }
     }
 
     private bool CanAddStationToJourney() => true;
     #endregion
 
-    private Station CreateStation(string name, uint lapsToStop, bool isVirtual = false)
+    private Station CreateStation(string name)
     {
         return new Station
         {
             Name = name,
-            InPort = 0,
-            NumberOfLapsToStop = lapsToStop,
-            IsExitOnLeft = false,
-            IsVirtual = isVirtual
+            IsExitOnLeft = false
         };
-    }
-
-    private void AddEventToSelectedJourney()
-    {
-        if (SelectedJourney == null)
-        {
-            return;
-        }
-
-        AddStationToSelectedJourney(CreateStation(GetNextEventName(), DefaultEventLapsToStop, true));
-    }
-
-    private string GetNextEventName()
-    {
-        if (SelectedJourney == null)
-        {
-            return "Event1";
-        }
-
-        var nextNumber = 1;
-        while (SelectedJourney.Model.Stations.Any(station => station.IsVirtual && station.Name.Equals($"Event{nextNumber}", StringComparison.OrdinalIgnoreCase)))
-        {
-            nextNumber++;
-        }
-
-        return $"Event{nextNumber}";
     }
 
     private void AddStationToSelectedJourney(Station station)

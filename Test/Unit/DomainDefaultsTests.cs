@@ -22,9 +22,8 @@ internal class JourneyDefaultsTests
         Assert.That(journey.BehaviorOnLastStop, Is.EqualTo(BehaviorOnLastStop.None));
         Assert.That(journey.NextJourneyId, Is.Null);
         Assert.That(journey.FirstPos, Is.EqualTo(0u));
-        Assert.That(journey.InPort, Is.EqualTo(0u));
-        Assert.That(journey.IsUsingTimerToIgnoreFeedbacks, Is.False);
-        Assert.That(journey.IntervalForTimerToIgnoreFeedbacks, Is.EqualTo(0d));
+        Assert.That(journey.FeedbackSequence, Is.Not.Null);
+        Assert.That(journey.FeedbackSequence, Is.Empty);
     }
 }
 
@@ -42,9 +41,6 @@ internal class StationDefaultsTests
         Assert.That(station.Name, Is.EqualTo("New Station"));
         Assert.That(station.Connections, Is.Not.Null);
         Assert.That(station.Connections, Is.Empty);
-        Assert.That(station.NumberOfLapsToStop, Is.EqualTo(1u));
-        Assert.That(station.InPort, Is.EqualTo(0u));
-        Assert.That(station.WorkflowId, Is.Null);
         Assert.That(station.Platforms, Is.Not.Null);
         Assert.That(station.Platforms, Is.Empty);
         Assert.That(station.Arrival, Is.Null);

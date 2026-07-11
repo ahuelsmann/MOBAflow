@@ -152,6 +152,7 @@ public partial class MainWindowViewModel
             {
                 _settings.Speech.PiperExecutablePath = value ?? string.Empty;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(PiperConfigurationStatus));
                 PersistSettings();
             }
         }
@@ -176,6 +177,7 @@ public partial class MainWindowViewModel
                 OnPropertyChanged(nameof(PiperConfigPath));
                 OnPropertyChanged(nameof(VoiceName));
                 OnPropertyChanged(nameof(SelectedPiperVoiceName));
+                OnPropertyChanged(nameof(PiperConfigurationStatus));
                 PersistSettings();
             }
         }
@@ -193,6 +195,7 @@ public partial class MainWindowViewModel
             {
                 _settings.Speech.PiperConfigPath = value ?? string.Empty;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(PiperConfigurationStatus));
                 PersistSettings();
             }
         }
@@ -212,6 +215,67 @@ public partial class MainWindowViewModel
                 OnPropertyChanged();
                 PersistSettings();
             }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the optional pause inserted between Piper sentences.
+    /// </summary>
+    public double PiperSentenceSilenceSeconds
+    {
+        get => _settings.Speech.PiperSentenceSilenceSeconds;
+        set
+        {
+            var clampedValue = Math.Clamp(value, 0, 2);
+            if (_settings.Speech.PiperSentenceSilenceSeconds != clampedValue)
+            {
+                _settings.Speech.PiperSentenceSilenceSeconds = clampedValue;
+                OnPropertyChanged();
+                PersistSettings();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets whether the last Piper WAV is preserved for external playback diagnostics.
+    /// </summary>
+    public bool EnablePiperAudioDiagnostics
+    {
+        get => _settings.Speech.EnablePiperAudioDiagnostics;
+        set
+        {
+            if (_settings.Speech.EnablePiperAudioDiagnostics != value)
+            {
+                _settings.Speech.EnablePiperAudioDiagnostics = value;
+                OnPropertyChanged();
+                PersistSettings();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Describes whether the Piper executable, voice model, and optional configuration are usable.
+    /// </summary>
+    public string PiperConfigurationStatus
+    {
+        get
+        {
+            if (!File.Exists(PiperExecutablePath))
+            {
+                return "Piper executable path is missing or invalid.";
+            }
+
+            if (!File.Exists(PiperModelPath))
+            {
+                return "Piper voice model path is missing or invalid.";
+            }
+
+            if (!string.IsNullOrWhiteSpace(PiperConfigPath) && !File.Exists(PiperConfigPath))
+            {
+                return "Optional Piper configuration path is invalid.";
+            }
+
+            return $"Piper is ready with voice model '{Path.GetFileNameWithoutExtension(PiperModelPath)}'.";
         }
     }
 

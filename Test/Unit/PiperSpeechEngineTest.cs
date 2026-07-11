@@ -123,6 +123,12 @@ internal class PiperSpeechEngineTest
     }
 
     [Test]
+    public void PiperProcessRunner_Should_UseCurrentSentenceSilenceOption()
+    {
+        Assert.That(PiperProcessRunner.SentenceSilenceOption, Is.EqualTo("--sentence-silence"));
+    }
+
+    [Test]
     public async Task AnnouncementAsync_Should_MapSpeechRateToPiperLengthScale()
     {
         var executablePath = CreateTempFile();
@@ -248,8 +254,37 @@ internal class PiperSpeechEngineTest
         public Task<PiperProcessResult> SynthesizeAsync(PiperSynthesisRequest request)
         {
             LastRequest = request;
-            File.WriteAllText(request.OutputPath, "fake wav");
+            WritePcmWave(request.OutputPath, [0, 1000, 0, 0]);
             return Task.FromResult(new PiperProcessResult(0, string.Empty, string.Empty));
+        }
+    }
+
+    private static void WritePcmWave(string path, short[] samples)
+    {
+        const int sampleRate = 16_000;
+        const short channels = 1;
+        const short bitsPerSample = 16;
+        const short blockAlign = channels * (bitsPerSample / 8);
+        var dataLength = samples.Length * blockAlign;
+
+        using var stream = File.Create(path);
+        using var writer = new BinaryWriter(stream);
+        writer.Write("RIFF".ToCharArray());
+        writer.Write(36 + dataLength);
+        writer.Write("WAVE".ToCharArray());
+        writer.Write("fmt ".ToCharArray());
+        writer.Write(16);
+        writer.Write((short)1);
+        writer.Write(channels);
+        writer.Write(sampleRate);
+        writer.Write(sampleRate * blockAlign);
+        writer.Write(blockAlign);
+        writer.Write(bitsPerSample);
+        writer.Write("data".ToCharArray());
+        writer.Write(dataLength);
+        foreach (var sample in samples)
+        {
+            writer.Write(sample);
         }
     }
 

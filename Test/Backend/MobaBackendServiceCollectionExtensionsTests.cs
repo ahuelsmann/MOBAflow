@@ -44,7 +44,7 @@ internal sealed class MobaBackendServiceCollectionExtensionsTests
     {
         var handlers = BuildServiceProvider().GetServices<IWorkflowActionHandler>().ToList();
 
-        Assert.That(handlers, Has.Count.EqualTo(6));
+        Assert.That(handlers, Has.Count.EqualTo(7));
         Assert.That(handlers.Select(h => h.GetType().Name), Is.Unique);
     }
 

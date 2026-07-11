@@ -160,6 +160,11 @@
                             Icon="Flag"
                             Label="Signal"
                             ToolTipService.ToolTip="Add a signal aspect action" />
+                        <AppBarButton
+                            Command="{x:Bind ViewModel.AddChangeJourneyStopCommand}"
+                            Icon="Forward"
+                            Label="Journey stop"
+                            ToolTipService.ToolTip="Add a journey stop transition action" />
                         <AppBarSeparator />
                         <AppBarButton
                             Command="{x:Bind ViewModel.DeleteActionCommand}"
@@ -214,6 +219,11 @@
                                 <MenuFlyoutItem Command="{x:Bind ViewModel.AddTrainDestinationDisplayCommand}" Text="Add Display Output">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE7F4;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Command="{x:Bind ViewModel.AddChangeJourneyStopCommand}" Text="Add Journey Stop Change">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE72A;" />
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
                                 <MenuFlyoutSeparator />

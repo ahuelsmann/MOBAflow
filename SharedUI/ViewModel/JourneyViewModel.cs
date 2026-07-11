@@ -33,6 +33,7 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     // Runtime State
     private readonly JourneySessionState _state;
     private ObservableCollection<StationViewModel>? _stations;
+    private ObservableCollection<JourneyFeedbackStepViewModel>? _feedbackSteps;
     private StationListViewMode _stationListViewMode = StationListViewMode.StopsOnly;
     #endregion
 
@@ -55,6 +56,7 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
 
         // Initialize Stations collection
         RefreshStations();
+        RefreshFeedbackSteps();
     }
 
     /// <summary>
@@ -70,33 +72,6 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     /// Gets the unique identifier of the journey.
     /// </summary>
     public Guid Id => _journey.Id;
-
-    /// <summary>
-    /// Gets or sets the feedback input port that starts the journey.
-    /// </summary>
-    public uint InPort
-    {
-        get => _journey.InPort;
-        set => SetProperty(_journey.InPort, value, _journey, (m, v) => m.InPort = v);
-    }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether a timer-based window is used to ignore feedback events.
-    /// </summary>
-    public bool IsUsingTimerToIgnoreFeedbacks
-    {
-        get => _journey.IsUsingTimerToIgnoreFeedbacks;
-        set => SetProperty(_journey.IsUsingTimerToIgnoreFeedbacks, value, _journey, (m, v) => m.IsUsingTimerToIgnoreFeedbacks = v);
-    }
-
-    /// <summary>
-    /// Gets or sets the duration in seconds of the timer window used to ignore feedback events.
-    /// </summary>
-    public double IntervalForTimerToIgnoreFeedbacks
-    {
-        get => _journey.IntervalForTimerToIgnoreFeedbacks;
-        set => SetProperty(_journey.IntervalForTimerToIgnoreFeedbacks, value, _journey, (m, v) => m.IntervalForTimerToIgnoreFeedbacks = v);
-    }
 
     /// <summary>
     /// Gets or sets the display name of the journey.
@@ -203,6 +178,33 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
         }
     }
 
+    /// <summary>Gets the ordered feedback sequence configured for this journey.</summary>
+    public ObservableCollection<JourneyFeedbackStepViewModel> FeedbackSteps
+    {
+        get
+        {
+            if (_feedbackSteps == null)
+            {
+                RefreshFeedbackSteps();
+            }
+            return _feedbackSteps!;
+        }
+    }
+
+    [RelayCommand]
+    private void AddFeedbackStep()
+    {
+        _journey.FeedbackSequence.Add(new JourneyFeedbackStep { InPort = 1 });
+        RefreshFeedbackSteps();
+    }
+
+    [RelayCommand]
+    private void DeleteFeedbackStep(JourneyFeedbackStepViewModel step)
+    {
+        _journey.FeedbackSequence.Remove(step.Model);
+        RefreshFeedbackSteps();
+    }
+
     /// <summary>
     /// Gets the possible values for <see cref="BehaviorOnLastStop"/> for ComboBox binding.
     /// </summary>
@@ -226,6 +228,12 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     /// </summary>
     public int CurrentPos => _state.CurrentPos;
 
+    /// <summary>Gets the index of the next expected feedback sequence entry.</summary>
+    public int CurrentFeedbackIndex => _state.CurrentFeedbackIndex;
+
+    /// <summary>Gets the InPort expected by the next feedback sequence entry, if any.</summary>
+    public uint? NextFeedbackInPort => _journey.FeedbackSequence.ElementAtOrDefault(_state.CurrentFeedbackIndex)?.InPort;
+
     /// <summary>
     /// Updates the local SessionState from a runtime projection and notifies UI.
     /// </summary>
@@ -235,6 +243,8 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
         _state.Counter = state.Counter;
         _state.CurrentPos = state.CurrentPos;
         _state.CurrentStationName = state.CurrentStationName;
+        _state.CurrentStationId = state.CurrentStationId;
+        _state.CurrentFeedbackIndex = state.CurrentFeedbackIndex;
         _state.LastFeedbackTime = state.LastFeedbackTime;
         _state.IsActive = state.IsActive;
 
@@ -244,6 +254,8 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
         OnPropertyChanged(nameof(CurrentStation));
         OnPropertyChanged(nameof(CurrentCounter));
         OnPropertyChanged(nameof(CurrentPos));
+        OnPropertyChanged(nameof(CurrentFeedbackIndex));
+        OnPropertyChanged(nameof(NextFeedbackInPort));
     }
 
     /// <summary>
@@ -256,6 +268,8 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
         _state.Counter = snapshot.Counter;
         _state.CurrentPos = snapshot.CurrentPos;
         _state.CurrentStationName = snapshot.CurrentStationName;
+        _state.CurrentStationId = snapshot.CurrentStationId;
+        _state.CurrentFeedbackIndex = snapshot.CurrentFeedbackIndex;
         _state.LastFeedbackTime = snapshot.LastFeedbackTime;
         _state.IsActive = snapshot.IsActive;
 
@@ -264,6 +278,8 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
         OnPropertyChanged(nameof(CurrentStation));
         OnPropertyChanged(nameof(CurrentCounter));
         OnPropertyChanged(nameof(CurrentPos));
+        OnPropertyChanged(nameof(CurrentFeedbackIndex));
+        OnPropertyChanged(nameof(NextFeedbackInPort));
     }
 
     /// <summary>
@@ -281,6 +297,8 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
         OnPropertyChanged(nameof(CurrentStation));
         OnPropertyChanged(nameof(CurrentCounter));
         OnPropertyChanged(nameof(CurrentPos));
+        OnPropertyChanged(nameof(CurrentFeedbackIndex));
+        OnPropertyChanged(nameof(NextFeedbackInPort));
     }
 
     /// <summary>
@@ -339,12 +357,7 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
         // Note: AddStation creates a generic station.
         // In practice, stations should be added from City Library (drag & drop).
         // This is mainly for testing or quick prototyping.
-        var newStation = new Station
-        {
-            Name = "New Station",
-            NumberOfLapsToStop = 2,
-            IsExitOnLeft = false
-        };
+        var newStation = new Station { Name = "New Station", IsExitOnLeft = false };
 
         // Add Station to Journey
         _journey.Stations.Add(newStation);
@@ -403,6 +416,19 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
         // Notify UI
         OnPropertyChanged(nameof(Stations));
         OnPropertyChanged(nameof(FilteredStations));
+    }
+
+    public void RefreshFeedbackSteps()
+    {
+        _feedbackSteps ??= [];
+        _feedbackSteps.Clear();
+        foreach (var step in _journey.FeedbackSequence)
+        {
+            _feedbackSteps.Add(new JourneyFeedbackStepViewModel(step, _project));
+        }
+
+        OnPropertyChanged(nameof(FeedbackSteps));
+        OnPropertyChanged(nameof(NextFeedbackInPort));
     }
 
     private void UpdateStationHighlights() => UpdateStationHighlights(_state.CurrentPos);

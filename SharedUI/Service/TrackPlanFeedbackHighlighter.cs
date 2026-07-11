@@ -3,16 +3,16 @@
 namespace Moba.SharedUI.Service;
 
 using Common.Events;
+using Domain;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
-using TrackLibrary.PikoA;
 
 /// <summary>
 /// Visualises Z21 R-Bus feedback events on the track plan canvas.
 ///
 /// Flow:
 /// 1. Subscribes to <see cref="FeedbackReceivedEvent"/> on the shared <see cref="IEventBus"/>.
-/// 2. Resolves the 1-based Z21 InPort onto all <c>PlacedSegment</c>s via <see cref="EditableTrackPlan.GetSegmentIdsByInPort(int)"/>.
+/// 2. Resolves the 1-based Z21 InPort through <see cref="ITrackFeedbackLookup"/>.
 /// 3. Starts/keeps a per-segment pulse that <c>TrackPlanPage.GraphCanvasControl_Draw</c> queries
 ///    via <see cref="GetPulseIntensity(Guid)"/>.
 /// 4. A lightweight background timer raises <see cref="HighlightsChanged"/> at ~30 fps while at
@@ -24,7 +24,7 @@ using TrackLibrary.PikoA;
 public sealed class TrackPlanFeedbackHighlighter : IDisposable
 {
     private readonly IEventBus _eventBus;
-    private readonly EditableTrackPlan _plan;
+    private readonly ITrackFeedbackLookup _feedbackLookup;
     private readonly ILogger<TrackPlanFeedbackHighlighter>? _logger;
 
     private readonly object _gate = new();
@@ -49,11 +49,11 @@ public sealed class TrackPlanFeedbackHighlighter : IDisposable
 
     public TrackPlanFeedbackHighlighter(
         IEventBus eventBus,
-        EditableTrackPlan plan,
+        ITrackFeedbackLookup feedbackLookup,
         ILogger<TrackPlanFeedbackHighlighter>? logger = null)
     {
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
-        _plan = plan ?? throw new ArgumentNullException(nameof(plan));
+        _feedbackLookup = feedbackLookup ?? throw new ArgumentNullException(nameof(feedbackLookup));
         _logger = logger;
     }
 
@@ -126,7 +126,7 @@ public sealed class TrackPlanFeedbackHighlighter : IDisposable
 
             lock (_gate)
             {
-                foreach (var segmentId in _plan.GetSegmentIdsByInPort(e.InPort))
+                foreach (var segmentId in _feedbackLookup.GetTrackIdsByFeedbackInPort(e.InPort))
                 {
                     if (_pulseStartTicks.TryGetValue(segmentId, out long startTicks)
                         && nowTicks - startTicks < ignoreTicks)

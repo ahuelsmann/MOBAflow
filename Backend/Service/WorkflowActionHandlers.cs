@@ -229,3 +229,39 @@ public sealed class ExecuteScriptWorkflowActionHandler(
 
     private static string Quote(string value) => $"\"{value.Replace("\"", "\\\"", StringComparison.Ordinal)}\"";
 }
+
+/// <summary>Moves the active journey to the next or an explicitly configured stop.</summary>
+public sealed class ChangeJourneyStopWorkflowActionHandler : IWorkflowActionHandler
+{
+    public ActionType ActionType => ActionType.ChangeJourneyStop;
+
+    public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context)
+    {
+        var payload = action.ChangeJourneyStop ?? throw new ArgumentException("Change journey stop action requires a payload");
+        var journey = context.CurrentJourney ?? throw new InvalidOperationException("Change journey stop action requires a journey context");
+        var state = context.CurrentJourneySessionState ?? throw new InvalidOperationException("Change journey stop action requires a journey state");
+
+        var targetIndex = payload.MoveToNextStop
+            ? journey.Stations.FindIndex(station => station.Id == state.CurrentStationId) + 1
+            : journey.Stations.FindIndex(station => station.Id == payload.TargetStationId);
+
+        if (targetIndex >= journey.Stations.Count && payload.MoveToNextStop)
+        {
+            state.IsJourneyCompletionRequested = true;
+            return Task.CompletedTask;
+        }
+
+        if (targetIndex < 0 || targetIndex >= journey.Stations.Count)
+        {
+            throw new InvalidOperationException("The configured target stop does not exist in the current journey");
+        }
+
+        var target = journey.Stations[targetIndex];
+        state.CurrentStationId = target.Id;
+        state.CurrentStationName = target.Name;
+        state.CurrentPos = targetIndex;
+        context.CurrentStation = target;
+        context.CurrentStationIndex = targetIndex + 1;
+        return Task.CompletedTask;
+    }
+}

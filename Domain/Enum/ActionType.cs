@@ -26,4 +26,7 @@ public enum ActionType
 
     /// <summary>Refresh train destination display.</summary>
     TrainDestinationDisplay,
+
+    /// <summary>Changes the current stop of the active journey.</summary>
+    ChangeJourneyStop,
 }

@@ -17,6 +17,7 @@ public class Journey
         Name = "New Journey";
         Description = string.Empty;
         Stations = [];
+        FeedbackSequence = [];
         Text = string.Empty;
     }
 
@@ -46,19 +47,10 @@ public class Journey
     public List<Station> Stations { get; set; }
 
     /// <summary>
-    /// Gets or sets the hardware feedback input port used to detect arrival at the first station.
+    /// Gets or sets the ordered feedback occurrences relevant for this journey.
+    /// Each occurrence is intentionally explicit so a route may change to another track at any time.
     /// </summary>
-    public uint InPort { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether feedbacks are ignored for a certain time after arrival.
-    /// </summary>
-    public bool IsUsingTimerToIgnoreFeedbacks { get; set; }
-
-    /// <summary>
-    /// Gets or sets the interval in seconds for which feedbacks are ignored after arrival.
-    /// </summary>
-    public double IntervalForTimerToIgnoreFeedbacks { get; set; }
+    public List<JourneyFeedbackStep> FeedbackSequence { get; set; }
 
     /// <summary>
     /// Gets or sets the behavior when the last station of the journey is reached.

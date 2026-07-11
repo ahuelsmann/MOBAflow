@@ -9,6 +9,9 @@ public sealed class TrackPlanEditorDocument
 {
     public int Version { get; init; } = 1;
 
+    /// <summary>Library represented by this PIKO editor document.</summary>
+    public string LibraryId { get; init; } = PikoATrackLibrary.Id;
+
     public double? OffsetX { get; init; }
 
     public double? OffsetY { get; init; }
@@ -51,7 +54,7 @@ public sealed class TrackPlanEditorDocument
 
     public (List<PlacedSegment> Placements, List<PortConnection> Connections) ToEditableTrackPlanData()
     {
-        var placements = Segments.Select(CreatePlacedSegment).ToList();
+        var placements = Segments.Select(segment => CreatePlacedSegment(segment, LibraryId)).ToList();
         return (placements, Connections.ToList());
     }
 
@@ -64,6 +67,7 @@ public sealed class TrackPlanEditorDocument
         return new TrackPlanDocument
         {
             Version = Version,
+            LibraryId = LibraryId,
             OffsetX = OffsetX,
             OffsetY = OffsetY,
             ZoomFactor = ZoomFactor,
@@ -71,6 +75,7 @@ public sealed class TrackPlanEditorDocument
             {
                 Id = s.Id,
                 Code = s.Code,
+                LibraryId = s.LibraryId,
                 X = s.X,
                 Y = s.Y,
                 RotationDegrees = s.RotationDegrees,
@@ -97,6 +102,7 @@ public sealed class TrackPlanEditorDocument
         return new TrackPlanEditorDocument
         {
             Version = document.Version,
+            LibraryId = string.IsNullOrWhiteSpace(document.LibraryId) ? PikoATrackLibrary.Id : document.LibraryId,
             OffsetX = document.OffsetX,
             OffsetY = document.OffsetY,
             ZoomFactor = document.ZoomFactor,
@@ -104,6 +110,7 @@ public sealed class TrackPlanEditorDocument
             {
                 Id = s.Id,
                 Code = s.Code,
+                LibraryId = string.IsNullOrWhiteSpace(s.LibraryId) ? document.LibraryId : s.LibraryId,
                 X = s.X,
                 Y = s.Y,
                 RotationDegrees = s.RotationDegrees,
@@ -125,6 +132,7 @@ public sealed class TrackPlanEditorDocument
         {
             Id = placed.Segment.No,
             Code = entry.Code,
+            LibraryId = PikoATrackLibrary.Id,
             X = placed.X,
             Y = placed.Y,
             RotationDegrees = placed.RotationDegrees,
@@ -132,8 +140,14 @@ public sealed class TrackPlanEditorDocument
         };
     }
 
-    private static PlacedSegment CreatePlacedSegment(TrackPlanEditorSegment segmentSnapshot)
+    private static PlacedSegment CreatePlacedSegment(TrackPlanEditorSegment segmentSnapshot, string documentLibraryId)
     {
+        var libraryId = string.IsNullOrWhiteSpace(segmentSnapshot.LibraryId)
+            ? (string.IsNullOrWhiteSpace(documentLibraryId) ? PikoATrackLibrary.Id : documentLibraryId)
+            : segmentSnapshot.LibraryId;
+        if (!string.Equals(libraryId, PikoATrackLibrary.Id, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException($"Track library '{libraryId}' is not available in the PIKO editor.");
+
         var entry = PikoACatalog.All.FirstOrDefault(c => string.Equals(c.Code, segmentSnapshot.Code, StringComparison.OrdinalIgnoreCase));
         if (entry == null)
             throw new InvalidOperationException($"Unknown track code '{segmentSnapshot.Code}'.");
@@ -149,6 +163,9 @@ public sealed class TrackPlanEditorSegment
     public required Guid Id { get; init; }
 
     public required string Code { get; init; }
+
+    /// <summary>Optional per-instance library override; empty values inherit the document library.</summary>
+    public string? LibraryId { get; init; }
 
     public double X { get; init; }
 

@@ -9,6 +9,26 @@ using System.Text.Json;
 internal sealed class WorkflowActionJsonConverterTests
 {
     [Test]
+    public void RoundTrip_ChangeJourneyStopPayload_PreservesConfiguredTarget()
+    {
+        var targetId = Guid.NewGuid();
+        var action = new WorkflowAction
+        {
+            Type = ActionType.ChangeJourneyStop,
+            ChangeJourneyStop = new ChangeJourneyStopActionPayload
+            {
+                MoveToNextStop = false,
+                TargetStationId = targetId
+            }
+        };
+
+        var roundTripped = JsonSerializer.Deserialize<WorkflowAction>(JsonSerializer.Serialize(action));
+
+        Assert.That(roundTripped?.ChangeJourneyStop?.TargetStationId, Is.EqualTo(targetId));
+        Assert.That(roundTripped?.ChangeJourneyStop?.MoveToNextStop, Is.False);
+    }
+
+    [Test]
     public void SerializeDeserialize_Should_RoundTripTrainDestinationDisplayPayload()
     {
         var displayDeviceId = Guid.NewGuid();

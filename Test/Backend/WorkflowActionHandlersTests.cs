@@ -18,6 +18,41 @@ using Moq;
 internal sealed class WorkflowActionHandlersTests
 {
     [Test]
+    public async Task ChangeJourneyStopHandler_MovesToNextStop()
+    {
+        var first = new Station { Name = "Porta Westfalica" };
+        var second = new Station { Name = "Minden" };
+        var journey = new Journey { Stations = [first, second] };
+        var state = new JourneySessionState
+        {
+            JourneyId = journey.Id,
+            CurrentStationId = first.Id,
+            CurrentStationName = first.Name,
+            CurrentPos = 0
+        };
+        var action = new WorkflowAction
+        {
+            Type = ActionType.ChangeJourneyStop,
+            ChangeJourneyStop = new ChangeJourneyStopActionPayload { MoveToNextStop = true }
+        };
+        var context = new ActionExecutionContext
+        {
+            Z21 = new Mock<IZ21>().Object,
+            CurrentJourney = journey,
+            CurrentJourneySessionState = state
+        };
+
+        await new ChangeJourneyStopWorkflowActionHandler().ExecuteAsync(action, context);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(state.CurrentStationId, Is.EqualTo(second.Id));
+            Assert.That(state.CurrentStationName, Is.EqualTo("Minden"));
+            Assert.That(state.CurrentPos, Is.EqualTo(1));
+        });
+    }
+
+    [Test]
     public async Task CommandHandler_WithValidBytes_SendsThroughZ21()
     {
         var z21 = new Mock<IZ21>();

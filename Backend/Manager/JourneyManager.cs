@@ -2,6 +2,7 @@
 
 namespace Moba.Backend.Manager;
 
+using Common.Extension;
 using Domain;
 using Domain.Enum;
 
@@ -19,13 +20,16 @@ using System.Diagnostics.CodeAnalysis;
 /// Platform-independent: No UI thread dispatching (that's handled by platform-specific ViewModels).
 /// Uses SessionState to separate runtime state from domain objects.
 /// </summary>
-public class JourneyManager : JourneyFeedbackManagerBase, IJourneyManager
+public class JourneyManager : IJourneyManager
 {
     private readonly SemaphoreSlim _processingLock = new(1, 1);
+    private readonly IZ21 _z21;
+    private readonly ActionExecutionContextFactory _executionContextFactory;
     private readonly IWorkflowService _workflowService;
     private readonly Dictionary<Guid, JourneySessionState> _states = [];
     private readonly Project _project;
     private readonly ILogger<JourneyManager> _logger;
+    private bool _disposed;
 
     /// <summary>
     /// Event raised when a journey reaches a new station.
@@ -69,11 +73,13 @@ public class JourneyManager : JourneyFeedbackManagerBase, IJourneyManager
         IWorkflowService workflowService,
         ActionExecutionContext? executionContext = null,
         ILogger<JourneyManager>? logger = null)
-    : base(z21, project.Journeys, executionContext, logger)
     {
+        _z21 = z21;
         _project = project;
         _workflowService = workflowService;
         _logger = logger ?? NullLogger<JourneyManager>.Instance;
+        _executionContextFactory = new ActionExecutionContextFactory(executionContext ?? new ActionExecutionContext { Z21 = z21 });
+        _z21.Received += OnZ21FeedbackReceived;
 
         // Initialize SessionState for all journeys
         foreach (var journey in project.Journeys)
@@ -82,6 +88,8 @@ public class JourneyManager : JourneyFeedbackManagerBase, IJourneyManager
             {
                 JourneyId = journey.Id,
                 CurrentPos = (int)journey.FirstPos,
+                CurrentStationId = journey.Stations.ElementAtOrDefault((int)journey.FirstPos)?.Id,
+                CurrentStationName = journey.Stations.ElementAtOrDefault((int)journey.FirstPos)?.Name ?? string.Empty,
                 Counter = 0,
                 IsActive = true
             };
@@ -89,9 +97,14 @@ public class JourneyManager : JourneyFeedbackManagerBase, IJourneyManager
     }
 
     /// <inheritdoc/>
-    protected override async Task ProcessFeedbackAsync(FeedbackResult feedback)
+    private void OnZ21FeedbackReceived(FeedbackResult feedback)
     {
-        if (Disposed)
+        ProcessFeedbackAsync(feedback).Observe(ex => _logger.LogWarning(ex, "Journey feedback processing failed for InPort {InPort}", feedback.InPort));
+    }
+
+    protected virtual async Task ProcessFeedbackAsync(FeedbackResult feedback)
+    {
+        if (_disposed)
         {
             _logger.LogWarning("JourneyManager already disposed - ignoring feedback");
             return;
@@ -103,7 +116,7 @@ public class JourneyManager : JourneyFeedbackManagerBase, IJourneyManager
 
             try
             {
-                if (Disposed)
+                if (_disposed)
                 {
                     _logger.LogWarning("JourneyManager disposed during lock acquisition");
                     return;
@@ -111,24 +124,25 @@ public class JourneyManager : JourneyFeedbackManagerBase, IJourneyManager
 
                 _logger.LogInformation("Feedback received: InPort {InPort}", feedback.InPort);
 
-                foreach (var journey in Journeys)
+                foreach (var journey in _project.Journeys)
                 {
-                    if (GetInPort(journey) != 0 && GetInPort(journey) == feedback.InPort)
+                    if (!_states.TryGetValue(journey.Id, out var state) || !state.IsActive)
                     {
-                        if (ShouldIgnoreFeedback(journey))
-                        {
-                            _logger.LogInformation("Feedback for journey '{Journey}' ignored (timer active)", GetEntityName(journey));
-                            continue;
-                        }
-
-                        await HandleFeedbackAsync(journey).ConfigureAwait(false);
-                        UpdateLastFeedbackTime(GetInPort(journey));
+                        continue;
                     }
+
+                    var expectedStep = journey.FeedbackSequence.ElementAtOrDefault(state.CurrentFeedbackIndex);
+                    if (expectedStep == null || expectedStep.InPort != feedback.InPort)
+                    {
+                        continue;
+                    }
+
+                    await HandleFeedbackAsync(journey, expectedStep).ConfigureAwait(false);
                 }
             }
             finally
             {
-                if (!Disposed)
+                if (!_disposed)
                 {
                     _processingLock.Release();
                 }
@@ -140,13 +154,17 @@ public class JourneyManager : JourneyFeedbackManagerBase, IJourneyManager
         }
     }
 
-    private async Task HandleFeedbackAsync(Journey journey)
+    private async Task HandleFeedbackAsync(Journey journey, JourneyFeedbackStep feedbackStep)
     {
         var state = _states[journey.Id];
 
         state.Counter++;
         state.LastFeedbackTime = DateTime.Now;
-        _logger.LogInformation("Journey '{Journey}': Round {Counter}, Position {Position}", journey.Name, state.Counter, state.CurrentPos);
+        _logger.LogInformation(
+            "Journey '{Journey}': Feedback step {FeedbackIndex} at InPort {InPort}",
+            journey.Name,
+            state.CurrentFeedbackIndex,
+            feedbackStep.InPort);
 
         // Fire FeedbackReceived event on every feedback (for UI counter updates)
         OnFeedbackReceived(new JourneyFeedbackEventArgs
@@ -155,48 +173,20 @@ public class JourneyManager : JourneyFeedbackManagerBase, IJourneyManager
             SessionState = state
         });
 
-        if (!TryGetCurrentStation(journey, state, out var currentStation))
+        if (feedbackStep.WorkflowId.HasValue)
         {
-            return;
+            await ExecuteFeedbackWorkflowAsync(journey, feedbackStep).ConfigureAwait(false);
         }
 
-        if (state.Counter >= currentStation.NumberOfLapsToStop)
+        state.CurrentFeedbackIndex++;
+
+        if (state.IsJourneyCompletionRequested)
         {
-            _logger.LogInformation("Station reached: {Station}", currentStation.Name);
-
-            // Update SessionState with current station
-            state.CurrentStationName = currentStation.Name;
-
-            // Fire StationChanged event FIRST (UI updates immediately)
-            OnStationChanged(new StationChangedEventArgs
-            {
-                JourneyId = journey.Id,
-                Station = currentStation,
-                SessionState = state
-            });
-
-            // THEN execute station workflow (async announcements run after UI is updated)
-            await ExecuteStationWorkflowAsync(journey, currentStation).ConfigureAwait(false);
-
-            state.Counter = 0;
-
-            bool isLastStation = state.CurrentPos == journey.Stations.Count - 1;
-
-            if (isLastStation)
-            {
-                await HandleLastStationAsync(journey).ConfigureAwait(false);
-            }
-            else
-            {
-                state.CurrentPos++;
-            }
-
-            OnFeedbackReceived(new JourneyFeedbackEventArgs
-            {
-                JourneyId = journey.Id,
-                SessionState = state
-            });
+            state.IsJourneyCompletionRequested = false;
+            await HandleLastStationAsync(journey).ConfigureAwait(false);
         }
+
+        OnFeedbackReceived(new JourneyFeedbackEventArgs { JourneyId = journey.Id, SessionState = state });
     }
 
     private async Task HandleLastStationAsync(Journey journey)
@@ -210,6 +200,8 @@ public class JourneyManager : JourneyFeedbackManagerBase, IJourneyManager
             case BehaviorOnLastStop.BeginAgainFromFistStop:
                 _logger.LogInformation("Journey will restart from beginning");
                 state.CurrentPos = 0;
+                state.CurrentStationId = journey.Stations.FirstOrDefault()?.Id;
+                state.CurrentStationName = journey.Stations.FirstOrDefault()?.Name ?? string.Empty;
                 break;
 
             case BehaviorOnLastStop.GotoJourney:
@@ -244,37 +236,38 @@ public class JourneyManager : JourneyFeedbackManagerBase, IJourneyManager
             return false;
         }
 
-        if (state.CurrentPos < 0 || state.CurrentPos >= journey.Stations.Count)
+        var currentStationIndex = state.CurrentStationId.HasValue
+            ? journey.Stations.FindIndex(station => station.Id == state.CurrentStationId!.Value)
+            : state.CurrentPos;
+        if (currentStationIndex < 0 || currentStationIndex >= journey.Stations.Count)
         {
             _logger.LogWarning(
                 "CurrentPos {CurrentPos} is out of range for journey '{Journey}' (station count: {Count})",
-                state.CurrentPos,
+                currentStationIndex,
                 journey.Name,
                 journey.Stations.Count);
             currentStation = null;
             return false;
         }
 
-        currentStation = journey.Stations[state.CurrentPos];
+        currentStation = journey.Stations[currentStationIndex];
         return true;
     }
 
-    private async Task ExecuteStationWorkflowAsync(Journey journey, Station currentStation)
+    private async Task ExecuteFeedbackWorkflowAsync(Journey journey, JourneyFeedbackStep feedbackStep)
     {
-        if (!currentStation.WorkflowId.HasValue)
-        {
-            return;
-        }
-
-        var workflow = _project.Workflows.FirstOrDefault(w => w.Id == currentStation.WorkflowId.Value);
+        var workflowId = feedbackStep.WorkflowId ?? throw new InvalidOperationException("A feedback workflow requires an identifier.");
+        var workflow = _project.Workflows.FirstOrDefault(w => w.Id == workflowId);
         if (workflow == null)
         {
-            _logger.LogWarning("Workflow with ID {WorkflowId} not found", currentStation.WorkflowId.Value);
+            _logger.LogWarning("Workflow with ID {WorkflowId} not found", workflowId);
             return;
         }
 
-        var stationIndex = journey.Stations.IndexOf(currentStation) + 1;
-        var executionContext = ExecutionContextFactory.Create(new ActionExecutionContextState
+        TryGetCurrentStation(journey, _states[journey.Id], out var currentStation);
+
+        var stationIndex = currentStation == null ? 0 : journey.Stations.IndexOf(currentStation) + 1;
+        var executionContext = _executionContextFactory.Create(new ActionExecutionContextState
         {
             CurrentProject = _project,
             CurrentJourney = journey,
@@ -298,6 +291,10 @@ public class JourneyManager : JourneyFeedbackManagerBase, IJourneyManager
 
         _logger.LogInformation("Switching to journey: {Journey}", nextJourney.Name);
         nextState.CurrentPos = (int)nextJourney.FirstPos;
+        nextState.CurrentStationId = nextJourney.Stations.ElementAtOrDefault((int)nextJourney.FirstPos)?.Id;
+        nextState.CurrentStationName = nextJourney.Stations.ElementAtOrDefault((int)nextJourney.FirstPos)?.Name ?? string.Empty;
+        nextState.CurrentFeedbackIndex = 0;
+        nextState.IsActive = true;
         _logger.LogInformation("Journey '{Journey}' activated at position {Position}", nextJourney.Name, nextState.CurrentPos);
     }
 
@@ -311,6 +308,10 @@ public class JourneyManager : JourneyFeedbackManagerBase, IJourneyManager
         {
             state.Counter = 0;
             state.CurrentPos = (int)journey.FirstPos;
+            state.CurrentStationId = journey.Stations.ElementAtOrDefault((int)journey.FirstPos)?.Id;
+            state.CurrentStationName = journey.Stations.ElementAtOrDefault((int)journey.FirstPos)?.Name ?? string.Empty;
+            state.CurrentFeedbackIndex = 0;
+            state.IsJourneyCompletionRequested = false;
             state.IsActive = true;
             _logger.LogInformation("Journey '{Journey}' reset to position {Position}", journey.Name, state.CurrentPos);
         }
@@ -327,35 +328,25 @@ public class JourneyManager : JourneyFeedbackManagerBase, IJourneyManager
     }
 
     /// <inheritdoc/>
-    public override void ResetAll()
+    public void ResetAll()
     {
-        foreach (var journey in Journeys)
+        foreach (var journey in _project.Journeys)
         {
             Reset(journey);
         }
-        base.ResetAll();
         _logger.LogInformation("All journeys reset");
     }
 
-    /// <inheritdoc/>
-    protected override uint GetInPort(Journey entity) => entity.InPort;
-
-    /// <inheritdoc/>
-    protected override bool IsUsingTimerToIgnoreFeedbacks(Journey entity) => entity.IsUsingTimerToIgnoreFeedbacks;
-
-    /// <inheritdoc/>
-    protected override double GetIntervalForTimerToIgnoreFeedbacks(Journey entity) => entity.IntervalForTimerToIgnoreFeedbacks;
-
-    /// <inheritdoc/>
-    protected override string GetEntityName(Journey entity) => entity.Name;
-
-    /// <inheritdoc/>
-    protected override void Dispose(bool disposing)
+    public void Dispose()
     {
-        if (disposing)
+        if (_disposed)
         {
-            _processingLock.Dispose();
+            return;
         }
-        base.Dispose(disposing);
+
+        _z21.Received -= OnZ21FeedbackReceived;
+        _processingLock.Dispose();
+        _disposed = true;
+        GC.SuppressFinalize(this);
     }
 }

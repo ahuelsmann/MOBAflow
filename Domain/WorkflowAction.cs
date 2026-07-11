@@ -76,4 +76,7 @@ public class WorkflowAction
     /// Payload for <see cref="ActionType.TrainDestinationDisplay"/> actions.
     /// </summary>
     public TrainDestinationDisplayActionPayload? TrainDestinationDisplay { get; set; }
+
+    /// <summary>Payload for <see cref="ActionType.ChangeJourneyStop"/> actions.</summary>
+    public ChangeJourneyStopActionPayload? ChangeJourneyStop { get; set; }
 }

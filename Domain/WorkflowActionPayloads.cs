@@ -130,3 +130,14 @@ public sealed class TrainDestinationDisplayActionPayload
     /// </summary>
     public bool ClearBeforeRender { get; set; } = true;
 }
+
+/// <summary>Typed payload for a journey stop transition.</summary>
+public sealed class ChangeJourneyStopActionPayload
+{
+    /// <summary>Gets or sets whether the next stop in the journey order is selected.</summary>
+    public bool MoveToNextStop { get; set; } = true;
+
+    /// <summary>Gets or sets the explicit target stop when <see cref="MoveToNextStop"/> is false.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Guid? TargetStationId { get; set; }
+}

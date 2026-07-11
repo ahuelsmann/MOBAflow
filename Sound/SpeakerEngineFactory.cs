@@ -108,6 +108,7 @@ public class SpeakerEngineFactory : ISpeakerEngineFactory
             PiperTimeoutSeconds = configuredOptions.PiperTimeoutSeconds,
             EnablePronunciationNormalization = settings.EnablePronunciationNormalization,
             PiperSentenceSilenceSeconds = settings.PiperSentenceSilenceSeconds,
+            EnablePiperAudioDiagnostics = settings.EnablePiperAudioDiagnostics,
             PronunciationReplacements = settings.PronunciationReplacements
         };
     }
@@ -174,6 +175,7 @@ public interface ISpeakerEngineRegistration
 /// </summary>
 public sealed class PiperSpeakerEngineRegistration(
     ILogger<PiperSpeechEngine> logger,
+    ISoundPlayer? soundPlayer = null,
     bool isFallback = false) : ISpeakerEngineRegistration
 {
     public string EngineName => SpeechSpeakerEngineSelection.PiperDisplayName;
@@ -184,7 +186,11 @@ public sealed class PiperSpeakerEngineRegistration(
         SpeechSpeakerEngineSelection.ShouldUsePiperTts(engineName);
 
     public ISpeakerEngine Create(SpeechOptions options) =>
-        new PiperSpeechEngine(new CurrentSpeechOptionsMonitor(options), logger);
+        new PiperSpeechEngine(
+            new CurrentSpeechOptionsMonitor(options),
+            logger,
+            new PiperProcessRunner(),
+            soundPlayer is null ? new PiperAudioPlayer() : new PiperAudioPlayer(soundPlayer));
 
     private sealed class CurrentSpeechOptionsMonitor(SpeechOptions value) : IOptionsMonitor<SpeechOptions>
     {

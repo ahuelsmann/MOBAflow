@@ -17,9 +17,8 @@ internal class JourneyTests
         Assert.That(journey.Text, Is.EqualTo(string.Empty));
         Assert.That(journey.Stations, Is.Not.Null);
         Assert.That(journey.Stations, Is.Empty);
-        Assert.That(journey.InPort, Is.EqualTo(0u));
-        Assert.That(journey.IsUsingTimerToIgnoreFeedbacks, Is.False);
-        Assert.That(journey.IntervalForTimerToIgnoreFeedbacks, Is.EqualTo(0.0));
+        Assert.That(journey.FeedbackSequence, Is.Not.Null);
+        Assert.That(journey.FeedbackSequence, Is.Empty);
         Assert.That(journey.BehaviorOnLastStop, Is.EqualTo(BehaviorOnLastStop.None));
         Assert.That(journey.NextJourneyId, Is.Null);
         Assert.That(journey.FirstPos, Is.EqualTo(0u));
@@ -39,9 +38,7 @@ internal class JourneyTests
             Description = "Test Description",
             Text = "Some text",
             Stations = stations,
-            InPort = 42,
-            IsUsingTimerToIgnoreFeedbacks = true,
-            IntervalForTimerToIgnoreFeedbacks = 1500.0,
+            FeedbackSequence = [new JourneyFeedbackStep { InPort = 42 }],
             BehaviorOnLastStop = BehaviorOnLastStop.GotoJourney,
             NextJourneyId = nextJourneyId,
             FirstPos = 2
@@ -52,9 +49,7 @@ internal class JourneyTests
         Assert.That(journey.Description, Is.EqualTo("Test Description"));
         Assert.That(journey.Text, Is.EqualTo("Some text"));
         Assert.That(journey.Stations, Is.SameAs(stations));
-        Assert.That(journey.InPort, Is.EqualTo(42u));
-        Assert.That(journey.IsUsingTimerToIgnoreFeedbacks, Is.True);
-        Assert.That(journey.IntervalForTimerToIgnoreFeedbacks, Is.EqualTo(1500.0));
+        Assert.That(journey.FeedbackSequence.Single().InPort, Is.EqualTo(42u));
         Assert.That(journey.BehaviorOnLastStop, Is.EqualTo(BehaviorOnLastStop.GotoJourney));
         Assert.That(journey.NextJourneyId, Is.EqualTo(nextJourneyId));
         Assert.That(journey.FirstPos, Is.EqualTo(2u));

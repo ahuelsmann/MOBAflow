@@ -1,5 +1,14 @@
 # MOBAtps - Track Plan System
 
+> Status note (2026-07): This page formerly described planned `TrackPlan`,
+> `TrackPlan.Domain`, `TrackPlan.Geometry`, and `TrackPlan.Editor` projects.
+> Those projects are not part of the active solution. The implemented editor is
+> currently `Domain` + `TrackLibrary.Base` + `TrackLibrary.PikoA` +
+> `TrackPlan.Renderer` + `SharedUI` + `MOBAflow`. The target architecture is
+> being introduced evolutionarily through the library-neutral contracts in
+> `Domain/TrackLayout.cs`; this document must not be used as evidence that the
+> historical projects still exist.
+
 > Last Updated: 2026-01-09
 
 ## Overview

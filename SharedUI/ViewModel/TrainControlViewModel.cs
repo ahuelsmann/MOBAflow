@@ -731,24 +731,10 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
         if (station.IsVirtual)
         {
-            return ResolveEventSignalText(station);
+            return "Event";
         }
 
         return ResolvePlatformText(station);
-    }
-
-    private string ResolveEventSignalText(Station station)
-    {
-        var workflow = station.WorkflowId.HasValue
-            ? ResolveWorkflow(station.WorkflowId.Value)
-            : null;
-        var signalAction = workflow?.Actions
-            .OrderBy(action => action.Number)
-            .FirstOrDefault(action => action.Type == ActionType.SelectSignalAspect && action.SelectSignalAspect != null);
-
-        return signalAction?.SelectSignalAspect != null
-            ? $"Signal: {signalAction.SelectSignalAspect.SignalAspect}"
-            : "Event";
     }
 
     private Workflow? ResolveWorkflow(Guid workflowId)

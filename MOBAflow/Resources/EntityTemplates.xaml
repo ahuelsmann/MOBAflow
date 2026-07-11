@@ -37,24 +37,24 @@
                         <TextBlock
                             Grid.Row="0"
                             Grid.Column="0"
-                            Text="Counter:" />
+                            Text="Feedback index:" />
                         <TextBlock
                             Grid.Row="0"
                             Grid.Column="1"
                             FontWeight="SemiBold"
                             Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                            Text="{Binding CurrentCounter, Mode=OneWay}" />
+                            Text="{Binding CurrentFeedbackIndex, Mode=OneWay}" />
 
                         <TextBlock
                             Grid.Row="1"
                             Grid.Column="0"
-                            Text="Position:" />
+                            Text="Next InPort:" />
                         <TextBlock
                             Grid.Row="1"
                             Grid.Column="1"
                             FontWeight="SemiBold"
                             Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                            Text="{Binding CurrentPos, Mode=OneWay}" />
+                            Text="{Binding NextFeedbackInPort, Mode=OneWay}" />
 
                         <TextBlock
                             Grid.Row="2"
@@ -84,12 +84,31 @@
                     Text="{Binding Description, Mode=TwoWay}"
                     TextWrapping="Wrap" />
 
-                <!--  InPort  -->
-                <NumberBox
-                    Header="InPort"
-                    Minimum="0"
-                    SpinButtonPlacementMode="Inline"
-                    Value="{Binding InPort, Mode=TwoWay}" />
+                <StackPanel Spacing="8">
+                    <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Feedback Sequence" />
+                    <Button Command="{Binding AddFeedbackStepCommand}" Content="Add feedback step" />
+                    <ListView x:Name="FeedbackStepList" ItemsSource="{Binding FeedbackSteps}">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="4" ColumnSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="2*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <NumberBox Grid.Column="0" Header="InPort" Minimum="1" Value="{Binding InPort, Mode=TwoWay}" />
+                                    <ComboBox Grid.Column="1" Header="Workflow" DisplayMemberPath="Name" ItemsSource="{Binding AvailableWorkflows}" SelectedValue="{Binding WorkflowId, Mode=TwoWay}" SelectedValuePath="Id" />
+                                    <Button
+                                        Grid.Column="2"
+                                        VerticalAlignment="Bottom"
+                                        Command="{Binding DataContext.DeleteFeedbackStepCommand, ElementName=FeedbackStepList}"
+                                        CommandParameter="{Binding}"
+                                        Content="Delete" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </StackPanel>
 
                 <!--  FirstPos  -->
                 <NumberBox
@@ -105,17 +124,6 @@
                     ItemsSource="{Binding BehaviorOnLastStopValues}"
                     SelectedItem="{Binding BehaviorOnLastStop, Mode=TwoWay}" />
 
-                <!--  Timer Settings  -->
-                <StackPanel Spacing="12">
-                    <CheckBox Content="Use Timer To Ignore Feedbacks" IsChecked="{Binding IsUsingTimerToIgnoreFeedbacks, Mode=TwoWay}" />
-
-                    <NumberBox
-                        Header="Timer Interval (seconds)"
-                        IsEnabled="{Binding IsUsingTimerToIgnoreFeedbacks, Mode=OneWay}"
-                        Minimum="1"
-                        SpinButtonPlacementMode="Inline"
-                        Value="{Binding IntervalForTimerToIgnoreFeedbacks, Mode=TwoWay}" />
-                </StackPanel>
 
                 <!--  Text-to-Speech Template  -->
                 <TextBox
@@ -148,65 +156,10 @@
                     Text="{Binding Description, Mode=TwoWay}"
                     TextWrapping="Wrap" />-->
 
-                <NumberBox
-                    Header="InPort"
-                    Minimum="0"
-                    SpinButtonPlacementMode="Inline"
-                    Value="{Binding InPort, Mode=TwoWay}" />
-
-                <NumberBox
-                    Header="Number Of Laps To Stop"
-                    Minimum="1"
-                    SpinButtonPlacementMode="Inline"
-                    Value="{Binding NumberOfLapsToStop, Mode=TwoWay}" />
-
                 <CheckBox
                     Content="Exit On Left Side"
                     IsChecked="{Binding IsExitOnLeft, Mode=TwoWay}"
                     Visibility="{Binding IsRealStation, Converter={StaticResource BoolToVisibilityConverter}}" />
-
-                <!--  Workflow Assignment (Drop Target)  -->
-                <TextBlock
-                    Margin="0,8,0,4"
-                    Style="{ThemeResource BaseTextBlockStyle}"
-                    Text="Workflow" />
-                <Grid Background="Transparent">
-                    <i:Interaction.Behaviors>
-                        <behavior:WorkflowDropBehavior Command="{Binding AssignWorkflowCommand}" />
-                    </i:Interaction.Behaviors>
-                    <!--  Dashed Border Background  -->
-                    <Rectangle
-                        RadiusX="6"
-                        RadiusY="6"
-                        Stroke="{ThemeResource AccentFillColorDefaultBrush}"
-                        StrokeDashArray="4,2"
-                        StrokeThickness="1.5" />
-                    <!--  Content  -->
-                    <Grid Margin="12">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
-                        <TextBlock
-                            Grid.Column="0"
-                            VerticalAlignment="Center"
-                            Text="{Binding WorkflowName, Mode=OneWay, TargetNullValue='Drop workflow here...'}"
-                            TextTrimming="CharacterEllipsis" />
-                        <Button
-                            Grid.Column="1"
-                            MinWidth="32"
-                            Padding="4"
-                            Command="{Binding RemoveWorkflowCommand}"
-                            ToolTipService.ToolTip="Remove workflow assignment"
-                            Visibility="{Binding HasWorkflow, Converter={StaticResource BoolToVisibilityConverter}}">
-                            <FontIcon
-                                FontSize="14"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Glyph="&#xE711;" />
-                        </Button>
-                    </Grid>
-                </Grid>
 
                 <!--  Schedule  -->
                 <!--<TextBlock
@@ -817,6 +770,19 @@
         </ScrollViewer>
     </DataTemplate>
 
+    <DataTemplate x:Key="ChangeJourneyStopActionTemplate">
+        <StackPanel Padding="0,0,16,16" Spacing="16">
+            <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Change Journey Stop" />
+            <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
+            <ToggleSwitch Header="Move to next stop" IsOn="{Binding MoveToNextStop, Mode=TwoWay}" />
+            <TextBox
+                Header="Target stop ID"
+                PlaceholderText="GUID of the target stop"
+                Text="{Binding TargetStationId, Mode=TwoWay}" />
+            <NumberBox Header="Delay After (ms)" Minimum="0" SpinButtonPlacementMode="Inline" Value="{Binding DelayAfterMs, Mode=TwoWay}" />
+        </StackPanel>
+    </DataTemplate>
+
     <!--  Generic Action Template (Fallback)  -->
     <DataTemplate x:Key="ActionTemplate">
         <ScrollViewer>
@@ -1183,6 +1149,7 @@
         SelectSignalAspectActionTemplate="{StaticResource SelectSignalAspectActionTemplate}"
         StationTemplate="{StaticResource StationTemplate}"
         TrainDestinationDisplayActionTemplate="{StaticResource TrainDestinationDisplayActionTemplate}"
+        ChangeJourneyStopActionTemplate="{StaticResource ChangeJourneyStopActionTemplate}"
         TrainTemplate="{StaticResource TrainTemplate}"
         WagonTemplate="{StaticResource WagonTemplate}"
         WorkflowTemplate="{StaticResource WorkflowTemplate}" />

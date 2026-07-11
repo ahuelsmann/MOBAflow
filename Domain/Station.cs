@@ -50,23 +50,6 @@ public class Station
     public string? Description { get; set; }
 
     /// <summary>
-    /// Hardware feedback address (Z21 InPort).
-    /// Used for feedback detection on the physical model railroad.
-    /// </summary>
-    public uint InPort { get; set; }
-
-    /// <summary>
-    /// Number of laps before stopping at this station.
-    /// </summary>
-    public uint NumberOfLapsToStop { get; set; } = 1;
-
-    /// <summary>
-    /// Workflow ID for this station in this journey.
-    /// Different journeys can trigger different workflows at the same station.
-    /// </summary>
-    public Guid? WorkflowId { get; set; }
-
-    /// <summary>
     /// Exit orientation - true if exit is on left side.
     /// </summary>
     public bool IsExitOnLeft { get; set; }

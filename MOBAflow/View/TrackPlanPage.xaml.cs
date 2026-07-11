@@ -2,6 +2,9 @@
 
 namespace Moba.WinUI.View;
 
+using TrackPlan.Renderer;
+
+using Backend.Service.TrackPlan;
 using Common.Configuration;
 using Common.Extension;
 
@@ -55,7 +58,9 @@ public sealed partial class TrackPlanPage
     public TrackPlanViewModel ViewModel { get; }
     public MainWindowViewModel MainViewModel { get; }
     private readonly EditableTrackPlan _plan;
+    private readonly TrackPlanInteractionService _interactionService;
     private readonly TrackPlanFeedbackHighlighter _feedbackHighlighter;
+    private readonly UndoRedoService<TrackPlanEditorDocument> _undoRedoService;
     private readonly ILogger<TrackPlanPage>? _logger;
 
     private Canvas? _ghostLayer;
@@ -85,7 +90,9 @@ public sealed partial class TrackPlanPage
         TrackPlanViewModel viewModel,
         MainWindowViewModel mainViewModel,
         EditableTrackPlan plan,
+        TrackPlanInteractionService interactionService,
         TrackPlanFeedbackHighlighter feedbackHighlighter,
+        UndoRedoService<TrackPlanEditorDocument> undoRedoService,
         AppSettings settings,
         ISettingsService? settingsService = null,
         ILogger<TrackPlanPage>? logger = null)
@@ -93,7 +100,9 @@ public sealed partial class TrackPlanPage
         ViewModel = viewModel;
         MainViewModel = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
         _plan = plan ?? throw new ArgumentNullException(nameof(plan));
+        _interactionService = interactionService ?? throw new ArgumentNullException(nameof(interactionService));
         _feedbackHighlighter = feedbackHighlighter ?? throw new ArgumentNullException(nameof(feedbackHighlighter));
+        _undoRedoService = undoRedoService ?? throw new ArgumentNullException(nameof(undoRedoService));
         _settings = settings;
         _settingsService = settingsService;
         _logger = logger;
@@ -346,7 +355,8 @@ public sealed partial class TrackPlanPage
             return;
 
         var before = CaptureDocumentState();
-        _plan.UpdateSegmentInPort(_selectedSegmentId.Value, newInPort);
+        ViewModel.SelectTrack(_selectedSegmentId);
+        ViewModel.AssignSelectedTrackFeedback(newInPort);
         CommitHistorySnapshot(before);
     }
 
@@ -458,6 +468,8 @@ public sealed partial class TrackPlanPage
             _selectedSegmentId = null;
         }
 
+        ViewModel.SelectTrack(_selectedSegmentId);
+        ViewModel.RefreshEditorState();
         UpdateSelectionInfo();
         UpdateCommandStates();
         RefreshCanvas();
@@ -955,12 +967,7 @@ public sealed partial class TrackPlanPage
     private (PlacedSegment Placed, string SourcePort, Guid TargetSegmentId, string TargetPort)? FindBestSnap(PlacedSegment placed, Guid? excludeSegmentId)
     {
         var movingGroup = _draggedSegmentId == placed.Segment.No ? _draggingGroup : null;
-        var snap = TrackPlanSnapHelper.FindBestSnap(
-            placed,
-            _plan.Segments,
-            _plan.Connections,
-            excludeSegmentId,
-            movingGroup);
+        var snap = _interactionService.FindBestSnap(placed, excludeSegmentId, movingGroup);
 
         return snap == null
             ? null
@@ -979,8 +986,12 @@ public sealed partial class TrackPlanPage
 
     private void ApplySnapAdd((PlacedSegment Placed, string SourcePort, Guid TargetSegmentId, string TargetPort) snap)
     {
-        _plan.AddSegment(snap.Placed);
-        _plan.AddConnection(snap.Placed.Segment.No, snap.SourcePort, snap.TargetSegmentId, snap.TargetPort);
+        _interactionService.AddWithSnap(new TrackPlanSnapHelper.SnapResult(
+            snap.Placed,
+            snap.SourcePort,
+            snap.TargetSegmentId,
+            snap.TargetPort,
+            0));
     }
 
     private void AddSegmentWithoutSnap(PlacedSegment placed)
@@ -993,17 +1004,11 @@ public sealed partial class TrackPlanPage
         PlacedSegment originalPlaced,
         (PlacedSegment Placed, string SourcePort, Guid TargetSegmentId, string TargetPort) snap)
     {
-        var deltaX = snap.Placed.X - originalPlaced.X;
-        var deltaY = snap.Placed.Y - originalPlaced.Y;
-
-        // Keep connected group movement rigid before final position/rotation update.
-        if (_draggingGroup.Count > 1)
-        {
-            _plan.MoveGroup(_draggingGroup, deltaX, deltaY);
-        }
-
-        _plan.UpdateSegmentPosition(movedSegmentId, snap.Placed.X, snap.Placed.Y, snap.Placed.RotationDegrees);
-        _plan.AddConnection(movedSegmentId, snap.SourcePort, snap.TargetSegmentId, snap.TargetPort);
+        _interactionService.MoveWithSnap(
+            movedSegmentId,
+            originalPlaced,
+            new TrackPlanSnapHelper.SnapResult(snap.Placed, snap.SourcePort, snap.TargetSegmentId, snap.TargetPort, 0),
+            _draggingGroup);
     }
 
     private static double NormalizeAngle(double degrees)
@@ -1077,35 +1082,18 @@ public sealed partial class TrackPlanPage
 
     private HashSet<(double X, double Y)> CalculatePortsToHighlight(List<(string PortName, double X, double Y)> draggedPorts)
     {
-        var portsToHighlight = new HashSet<(double X, double Y)>();
         if (_draggedPlaced == null)
         {
-            return portsToHighlight;
+            ViewModel.SetSnapPreview(new HashSet<(double X, double Y)>());
+            return [];
         }
 
-        foreach (var placed in EnumerateSnapTargetSegments())
-        {
-            foreach (var (targetPortName, px, py, _) in SegmentPortGeometry.GetAllPortWorldPositions(placed))
-            {
-                if (IsPortConnected(placed.Segment.No, targetPortName))
-                {
-                    continue;
-                }
-
-                foreach (var (sourcePortName, dx, dy) in draggedPorts)
-                {
-                    var dist = Math.Sqrt((px - dx) * (px - dx) + (py - dy) * (py - dy));
-                    if (dist < PortHighlightRadiusMm && CanRigidlySnapToTargetPort(_draggedPlaced, sourcePortName, placed, targetPortName))
-                    {
-                        portsToHighlight.Add((px, py));
-                        portsToHighlight.Add((dx, dy));
-                        break;
-                    }
-                }
-            }
-        }
-
-        return portsToHighlight;
+        _ = draggedPorts;
+        var preview = _interactionService
+            .GetSnapPreview(_draggedPlaced, _draggingGroup, PortHighlightRadiusMm)
+            .HighlightedPorts;
+        ViewModel.SetSnapPreview(preview);
+        return preview.ToHashSet();
     }
 
     private void RenderTargetPortIndicators(double offsetX, double offsetY, HashSet<(double X, double Y)> portsToHighlight)
@@ -1162,6 +1150,7 @@ public sealed partial class TrackPlanPage
 
     private void ClearPortHighlights()
     {
+        ViewModel.SetSnapPreview(new HashSet<(double X, double Y)>());
         foreach (var el in _highlightedPorts)
             OverlayCanvas.Children.Remove(el);
         _highlightedPorts.Clear();
@@ -1172,19 +1161,7 @@ public sealed partial class TrackPlanPage
 
     private PlacedSegment? HitTestSegment(double xMm, double yMm)
     {
-        const double hitToleranceMm = 12;
-        PlacedSegment? best = null;
-        var bestDist = double.MaxValue;
-
-        foreach (var placed in _plan.Segments)
-        {
-            var ports = SegmentPortGeometry.GetAllPortWorldPositions(placed).ToList();
-            TryHitTestPorts(placed, ports, xMm, yMm, hitToleranceMm, ref best, ref bestDist);
-            TryHitTestNeighborPortSegments(placed, ports, xMm, yMm, hitToleranceMm, ref best, ref bestDist);
-            TryHitTestFirstToLastPortSegment(placed, ports, xMm, yMm, hitToleranceMm, ref best, ref bestDist);
-        }
-
-        return best;
+        return _interactionService.HitTest(xMm, yMm);
     }
 
     private static void TryHitTestPorts(
@@ -1448,12 +1425,17 @@ public sealed partial class TrackPlanPage
         var strokeBrush = ResolveTrackPlanStrokeBrush();
         var selectedBrush = ResolveTrackPlanStrokeSelectedBrush();
 
-        foreach (var placed in _plan.Segments)
+        var renderScene = TrackPlanRenderSceneBuilder.Build(_plan.Segments);
+        foreach (var (placed, renderItem) in _plan.Segments.Zip(renderScene.Items))
         {
             var isSelected = placed.Segment.No == _selectedSegmentId;
-            var pathCommands = SegmentLocalPathBuilder.GetPath(placed.Segment);
             var worldGeometry = PathToCanvasGeometryConverter.ToCanvasGeometryInWorldCoords(
-                resourceCreator, pathCommands, placed.X + offsetX, placed.Y + offsetY, placed.RotationDegrees, ScaleMmToPx);
+                resourceCreator,
+                renderItem.Path,
+                renderItem.X + offsetX,
+                renderItem.Y + offsetY,
+                renderItem.RotationDegrees,
+                ScaleMmToPx);
 
             // Z21 feedback pulse: draw a yellow/orange glow BEFORE the track stroke so the track
             // itself stays on top and remains readable.
@@ -1692,12 +1674,14 @@ public sealed partial class TrackPlanPage
         if (_selectedSegmentId == null)
             return;
         var before = CaptureDocumentState();
-        _plan.DisconnectSegmentFromGroup(_selectedSegmentId.Value);
+        ViewModel.SelectTrack(_selectedSegmentId);
+        ViewModel.DisconnectSelectedTrack();
         CommitHistorySnapshot(before);
     }
 
     private void UpdateSelectionInfo()
     {
+        ViewModel.SelectTrack(_selectedSegmentId);
         if (_selectedSegmentId == null)
         {
             SelectionInfoText.Text = "No selection";

@@ -164,6 +164,14 @@ public partial class MainWindowViewModel
         ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
     }
 
+    [RelayCommand]
+    private void AddChangeJourneyStop()
+    {
+        if (SelectedWorkflow == null) return;
+        SelectedWorkflow.AddActionCommand.Execute(ActionType.ChangeJourneyStop);
+        ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
+    }
+
     [RelayCommand(CanExecute = nameof(CanDeleteAction))]
     private void DeleteAction()
     {

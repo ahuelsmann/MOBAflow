@@ -46,6 +46,7 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IWorkflowActionHandler, ExecuteScriptWorkflowActionHandler>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IWorkflowActionHandler, SelectSignalAspectWorkflowActionHandler>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IWorkflowActionHandler, TrainDestinationDisplayWorkflowActionHandler>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IWorkflowActionHandler, ChangeJourneyStopWorkflowActionHandler>());
         services.TryAddSingleton<IActionExecutor, ActionExecutor>();
         services.TryAddSingleton<IWorkflowService, WorkflowService>();
         services.TryAddSingleton(sp => new ActionExecutionContext

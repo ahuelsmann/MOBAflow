@@ -110,6 +110,27 @@ public class PiperSpeechEngine : ISpeakerEngine
                 throw new InvalidOperationException("Piper did not create an output WAV file.");
             }
 
+            var postProcessResult = PcmWavePostProcessor.Process(outputPath);
+            if (postProcessResult.SampleRate == 0)
+            {
+                _logger.LogWarning("Piper generated a WAV format that cannot be analyzed: {OutputPath}", outputPath);
+            }
+            else
+            {
+                _logger.LogInformation(
+                    "Piper WAV diagnostics: {SampleRate}Hz, {Channels} channel(s), {DurationMilliseconds}ms, tail peak {TailPeak}, trimmed {TrimmedFrames} frame(s)",
+                    postProcessResult.SampleRate,
+                    postProcessResult.Channels,
+                    GetWaveDurationMilliseconds(outputPath, postProcessResult.SampleRate, postProcessResult.Channels),
+                    postProcessResult.TailPeak,
+                    postProcessResult.TrimmedFrameCount);
+            }
+
+            if (options.EnablePiperAudioDiagnostics)
+            {
+                CopyDiagnosticWav(outputPath);
+            }
+
             await _audioPlayer.PlayAsync(outputPath).ConfigureAwait(false);
             _logger.LogInformation("Piper speech synthesized successfully for text: {Message}", message);
         }
@@ -143,6 +164,31 @@ public class PiperSpeechEngine : ISpeakerEngine
     {
         var clampedRate = Math.Clamp(rate, -10, 10);
         return Math.Clamp(1.0 - (clampedRate * 0.05), 0.5, 1.5);
+    }
+
+    private static long GetWaveDurationMilliseconds(string wavPath, int sampleRate, int channels)
+    {
+        var bytesPerSecond = sampleRate * channels * sizeof(short);
+        return bytesPerSecond == 0 ? 0 : (new FileInfo(wavPath).Length - 44) * 1000 / bytesPerSecond;
+    }
+
+    private void CopyDiagnosticWav(string outputPath)
+    {
+        try
+        {
+            var diagnosticsDirectory = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "MOBAflow",
+                "PiperDiagnostics");
+            Directory.CreateDirectory(diagnosticsDirectory);
+            var diagnosticPath = Path.Combine(diagnosticsDirectory, "last-piper-announcement.wav");
+            File.Copy(outputPath, diagnosticPath, overwrite: true);
+            _logger.LogInformation("Piper diagnostic WAV saved to {DiagnosticPath}", diagnosticPath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Unable to save Piper diagnostic WAV");
+        }
     }
 
     private static void TryDeleteTempFile(string outputPath)
@@ -212,6 +258,11 @@ public sealed record PiperProcessResult(int ExitCode, string StandardOutput, str
 /// </summary>
 public sealed class PiperProcessRunner : IPiperProcessRunner
 {
+    /// <summary>
+    /// Piper CLI option for a pause between sentences.
+    /// </summary>
+    public const string SentenceSilenceOption = "--sentence-silence";
+
     /// <inheritdoc />
     public async Task<PiperProcessResult> SynthesizeAsync(PiperSynthesisRequest request)
     {
@@ -235,7 +286,7 @@ public sealed class PiperProcessRunner : IPiperProcessRunner
 
         if (request.SentenceSilenceSeconds > 0)
         {
-            process.StartInfo.ArgumentList.Add("--sentence_silence");
+            process.StartInfo.ArgumentList.Add(SentenceSilenceOption);
             process.StartInfo.ArgumentList.Add(request.SentenceSilenceSeconds.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture));
         }
 
@@ -286,11 +337,16 @@ public sealed class PiperProcessRunner : IPiperProcessRunner
 /// <summary>
 /// Default WAV playback for Piper output.
 /// </summary>
-public sealed class PiperAudioPlayer : IPiperAudioPlayer
+public sealed class PiperAudioPlayer(ISoundPlayer? soundPlayer = null) : IPiperAudioPlayer
 {
     /// <inheritdoc />
     public Task PlayAsync(string wavPath)
     {
+        if (soundPlayer is not null)
+        {
+            return soundPlayer.PlayAsync(wavPath);
+        }
+
         return Task.Run(() =>
         {
             using var player = new SoundPlayer(wavPath);

@@ -85,7 +85,15 @@ internal static class WorkflowActionPayloadDescriptors
             (writer, action, options) => JsonSerializer.Serialize(writer, action.TrainDestinationDisplay!, options),
             action => action.TrainDestinationDisplay != null,
             (writer, options) => JsonSerializer.Serialize(writer, new TrainDestinationDisplayActionPayload(), options),
-            MergeTrainDestinationDisplayLegacy)
+            MergeTrainDestinationDisplayLegacy),
+        new(
+            ActionType.ChangeJourneyStop,
+            "changeJourneyStop",
+            (action, element, options) => action.ChangeJourneyStop = JsonSerializer.Deserialize<ChangeJourneyStopActionPayload>(element.GetRawText(), options),
+            (writer, action, options) => JsonSerializer.Serialize(writer, action.ChangeJourneyStop!, options),
+            action => action.ChangeJourneyStop != null,
+            (writer, options) => JsonSerializer.Serialize(writer, new ChangeJourneyStopActionPayload(), options),
+            NoLegacyMerge)
     ];
 
     public static WorkflowActionPayloadDescriptor? Find(ActionType actionType) =>

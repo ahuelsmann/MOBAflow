@@ -17,6 +17,12 @@ public sealed class JourneyRuntimeSnapshot
     /// </summary>
     public string CurrentStationName { get; init; } = string.Empty;
 
+    /// <summary>Gets the stable identifier of the current stop, if one is selected.</summary>
+    public Guid? CurrentStationId { get; init; }
+
+    /// <summary>Gets the zero-based index of the next expected feedback sequence entry.</summary>
+    public int CurrentFeedbackIndex { get; init; }
+
     /// <summary>
     /// Gets the current counter value.
     /// </summary>

@@ -65,10 +65,10 @@ internal class AppSettingsDefaultsTests
     }
 
     [Test]
-    public void Speech_PiperSentenceSilenceSeconds_default_is_0_25()
+    public void Speech_PiperSentenceSilenceSeconds_default_is_zero()
     {
         var speech = new SpeechSettings();
-        Assert.That(speech.PiperSentenceSilenceSeconds, Is.EqualTo(0.25));
+        Assert.That(speech.PiperSentenceSilenceSeconds, Is.Zero);
     }
 
     [Test]

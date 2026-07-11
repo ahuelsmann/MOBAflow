@@ -35,6 +35,8 @@ internal static class MobaRuntimeSnapshotBuilder
                     Counter = state.Counter,
                     CurrentPos = state.CurrentPos,
                     CurrentStationName = state.CurrentStationName,
+                    CurrentStationId = state.CurrentStationId,
+                    CurrentFeedbackIndex = state.CurrentFeedbackIndex,
                     LastFeedbackTime = state.LastFeedbackTime,
                     IsActive = state.IsActive
                 };
