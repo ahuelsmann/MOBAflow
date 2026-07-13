@@ -10,7 +10,11 @@ public sealed class TrackPlanRailroadStateProjector : IDisposable
     private readonly IEventBus _eventBus;
     private readonly ITrackFeedbackLookup _feedbackLookup;
     private readonly RailroadState _state;
-    private Guid _subscriptionId;
+    private readonly List<Guid> _subscriptionIds = [];
+    private Timer? _feedbackExpiryTimer;
+
+    /// <summary>Maximum time a feedback occupancy remains active without another feedback event.</summary>
+    public TimeSpan FeedbackTimeout { get; set; } = TimeSpan.FromSeconds(5);
 
     public TrackPlanRailroadStateProjector(IEventBus eventBus, ITrackFeedbackLookup feedbackLookup, RailroadState state)
     {
@@ -21,8 +25,13 @@ public sealed class TrackPlanRailroadStateProjector : IDisposable
 
     public void Activate()
     {
-        if (_subscriptionId == Guid.Empty)
-            _subscriptionId = _eventBus.Subscribe<FeedbackReceivedEvent>(OnFeedbackReceived);
+        if (_subscriptionIds.Count != 0)
+            return;
+
+        _subscriptionIds.Add(_eventBus.Subscribe<FeedbackReceivedEvent>(OnFeedbackReceived));
+        _subscriptionIds.Add(_eventBus.Subscribe<SwitchPositionChangedEvent>(OnSwitchPositionChanged));
+        _subscriptionIds.Add(_eventBus.Subscribe<SignalAspectChangedEvent>(OnSignalAspectChanged));
+        _feedbackExpiryTimer = new Timer(_ => ExpireFeedbackNow(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
     }
 
     private void OnFeedbackReceived(FeedbackReceivedEvent feedback)
@@ -32,11 +41,21 @@ public sealed class TrackPlanRailroadStateProjector : IDisposable
             _state.MarkFeedback(trackId, timestamp);
     }
 
+    private void OnSwitchPositionChanged(SwitchPositionChangedEvent switchPosition) =>
+        _state.SetSwitchPosition(switchPosition.SwitchId, switchPosition.IsLeft);
+
+    private void OnSignalAspectChanged(SignalAspectChangedEvent signalAspect) =>
+        _state.SetSignalAspect(signalAspect.SignalId, signalAspect.Aspect);
+
+    /// <summary>Expires stale feedback explicitly; exposed for deterministic tests and controlled shutdown.</summary>
+    public void ExpireFeedbackNow() => _state.ExpireFeedback(DateTimeOffset.UtcNow, FeedbackTimeout);
+
     public void Dispose()
     {
-        if (_subscriptionId == Guid.Empty)
-            return;
-        _eventBus.Unsubscribe(_subscriptionId);
-        _subscriptionId = Guid.Empty;
+        foreach (var subscriptionId in _subscriptionIds)
+            _eventBus.Unsubscribe(subscriptionId);
+        _subscriptionIds.Clear();
+        _feedbackExpiryTimer?.Dispose();
+        _feedbackExpiryTimer = null;
     }
 }

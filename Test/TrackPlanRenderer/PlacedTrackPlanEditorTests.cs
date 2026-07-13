@@ -136,4 +136,24 @@ internal class PlacedTrackPlanEditorTests
         Assert.That(svg, Does.Contain("<circle"));
         Assert.That(svg, Does.Contain("<text"));
     }
+
+    [Test]
+    public void PlacedTrackPlanSvgRenderer_Renders_RenderSceneLabelsFeedbackAndValidationMarkers()
+    {
+        var placement = new PlacedSegment(new G62(), 0, 0, 0);
+        var scene = TrackPlanRenderSceneBuilder.Build(
+            [placement],
+            new HashSet<Guid> { placement.Segment.No },
+            new Dictionary<Guid, double> { [placement.Segment.No] = 0.5 },
+            [new TrackPlanValidationMarker(placement.Segment.No, 20, 10, "Open port")]);
+
+        var svg = new PlacedTrackPlanSvgRenderer().Render(scene);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(svg, Does.Contain("#0078D4"));
+            Assert.That(svg, Does.Contain("#FFB400"));
+            Assert.That(svg, Does.Contain("Open port"));
+        });
+    }
 }

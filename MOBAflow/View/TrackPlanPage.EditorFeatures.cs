@@ -43,8 +43,6 @@ public sealed partial class TrackPlanPage
         FitButton.Click += (_, _) => FitToContent();
         ResetZoomButton.Click += (_, _) => ResetZoom();
         DeleteButton.Click += (_, _) => DeleteSelectedSegment();
-        PanToggle.Checked += (_, _) => UpdatePanCursor();
-        PanToggle.Unchecked += (_, _) => UpdatePanCursor();
         RotateLeftButton.Click += (_, _) => RotateSelectedSegment(-15);
         RotateRightButton.Click += (_, _) => RotateSelectedSegment(15);
         GridToggle.Checked += (_, _) => ToggleGrid(true);
@@ -353,7 +351,7 @@ public sealed partial class TrackPlanPage
         if (FocusManager.GetFocusedElement(XamlRoot) is TextBox or NumberBox)
             return;
 
-        ZoomSlider.Value = Math.Min(3, ZoomSlider.Value + 0.25);
+        AdjustZoom(ZoomStep);
         args.Handled = true;
     }
 
@@ -363,7 +361,7 @@ public sealed partial class TrackPlanPage
         if (FocusManager.GetFocusedElement(XamlRoot) is TextBox or NumberBox)
             return;
 
-        ZoomSlider.Value = Math.Max(0.1, ZoomSlider.Value - 0.25);
+        AdjustZoom(-ZoomStep);
         args.Handled = true;
     }
 
@@ -509,7 +507,8 @@ public sealed partial class TrackPlanPage
             return;
         }
 
-        var svg = new PlacedTrackPlanSvgRenderer().Render(_plan.Segments, showGrid: _showGrid);
+        var scene = TrackPlanRenderSceneBuilder.Build(_plan.Segments);
+        var svg = new PlacedTrackPlanSvgRenderer().Render(scene, showGrid: _showGrid);
         var path = Path.Combine(Path.GetTempPath(), "trackplan-current.html");
         new SvgExporter().Export(svg, path);
 
@@ -522,5 +521,10 @@ public sealed partial class TrackPlanPage
     private bool IsCtrlPressed()
     {
         return InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control).HasFlag(CoreVirtualKeyStates.Down);
+    }
+
+    private bool IsShiftPressed()
+    {
+        return InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Shift).HasFlag(CoreVirtualKeyStates.Down);
     }
 }

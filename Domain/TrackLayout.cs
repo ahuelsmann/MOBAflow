@@ -147,8 +147,9 @@ public interface ITrackFeedbackLookup
 public sealed class RailroadState
 {
     private readonly Dictionary<Guid, bool> _occupancyByTrack = [];
-
     private readonly Dictionary<Guid, DateTimeOffset> _lastFeedbackByTrack = [];
+    private readonly Dictionary<int, bool> _switchPositionsByAddress = [];
+    private readonly Dictionary<int, string> _signalAspectsByAddress = [];
 
     public bool IsOccupied(Guid trackId) => _occupancyByTrack.TryGetValue(trackId, out var occupied) && occupied;
 
@@ -160,5 +161,39 @@ public sealed class RailroadState
     {
         _lastFeedbackByTrack[trackId] = timestamp;
         _occupancyByTrack[trackId] = true;
+    }
+
+    /// <summary>Clears occupancy that has not received feedback within the supplied timeout.</summary>
+    public void ExpireFeedback(DateTimeOffset now, TimeSpan timeout)
+    {
+        if (timeout < TimeSpan.Zero)
+            throw new ArgumentOutOfRangeException(nameof(timeout));
+
+        foreach (var trackId in _lastFeedbackByTrack
+                     .Where(entry => now - entry.Value >= timeout)
+                     .Select(entry => entry.Key)
+                     .ToList())
+        {
+            _occupancyByTrack[trackId] = false;
+            _lastFeedbackByTrack.Remove(trackId);
+        }
+    }
+
+    public void ClearFeedback(Guid trackId)
+    {
+        _occupancyByTrack[trackId] = false;
+        _lastFeedbackByTrack.Remove(trackId);
+    }
+
+    public bool? GetSwitchPosition(int address) => _switchPositionsByAddress.TryGetValue(address, out var isLeft) ? isLeft : null;
+
+    public void SetSwitchPosition(int address, bool isLeft) => _switchPositionsByAddress[address] = isLeft;
+
+    public string? GetSignalAspect(int address) => _signalAspectsByAddress.TryGetValue(address, out var aspect) ? aspect : null;
+
+    public void SetSignalAspect(int address, string aspect)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(aspect);
+        _signalAspectsByAddress[address] = aspect;
     }
 }

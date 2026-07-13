@@ -41,16 +41,18 @@ public sealed partial class TrackPlanPage
 {
     private const string DragFormatTrackCatalog = "application/x-moba-track-catalog";
     private const double ScaleMmToPx = 1.0;
+    private const double MouseWheelScrollStep = 80.0;
+    private const double ZoomStep = 0.05;
     private const double PortHighlightRadiusMm = 25.0;
     private const double RigidGroupSnapAngleToleranceDegrees = 1.0;
     /// <summary>Margin in mm, damit der gesamte Plan sichtbar ist (auch bei negativen Koordinaten).</summary>
     private const double ContentMarginMm = 50.0;
 
     private bool _isPanning;
-    private bool _isSpaceKeyDown;
     private Point _panStartPoint;
     private double _panStartHorizontalOffset;
     private double _panStartVerticalOffset;
+    private Pointer? _panningPointer;
 
     private readonly AppSettings _settings;
     private readonly ISettingsService? _settingsService;
@@ -110,7 +112,6 @@ public sealed partial class TrackPlanPage
         InitializeEditorFeatures();
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
-        KeyUp += Page_KeyUp;
 
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
 
@@ -199,7 +200,6 @@ public sealed partial class TrackPlanPage
         HandlePageUnloadedAsync().Observe(ex => _logger?.LogWarning(ex, "Persist layout on unload failed"));
         _plan.PlanChanged -= OnPlanChanged;
         KeyDown -= Page_KeyDown;
-        KeyUp -= Page_KeyUp;
         _feedbackHighlighter.HighlightsChanged -= OnFeedbackHighlightsChanged;
     }
 
@@ -360,30 +360,12 @@ public sealed partial class TrackPlanPage
         CommitHistorySnapshot(before);
     }
 
-    private void Page_KeyUp(object sender, KeyRoutedEventArgs e)
-    {
-        _ = sender;
-        if (e.Key != VirtualKey.Space)
-            return;
-
-        _isSpaceKeyDown = false;
-        UpdatePanCursor();
-    }
-
     private async Task HandlePageKeyDownAsync(KeyRoutedEventArgs e)
     {
         try
         {
             if (FocusManager.GetFocusedElement(XamlRoot) is TextBox or NumberBox)
                 return;
-
-            if (e.Key == VirtualKey.Space)
-            {
-                _isSpaceKeyDown = true;
-                UpdatePanCursor();
-                e.Handled = true;
-                return;
-            }
 
             if (IsCtrlPressed())
             {
@@ -403,14 +385,14 @@ public sealed partial class TrackPlanPage
 
                 if (e.Key is VirtualKey.Add or (VirtualKey)107)
                 {
-                    ZoomSlider.Value = Math.Min(3, ZoomSlider.Value + 0.25);
+                    AdjustZoom(ZoomStep);
                     e.Handled = true;
                     return;
                 }
 
                 if (e.Key is VirtualKey.Subtract or (VirtualKey)109)
                 {
-                    ZoomSlider.Value = Math.Max(0.1, ZoomSlider.Value - 0.25);
+                    AdjustZoom(-ZoomStep);
                     e.Handled = true;
                     return;
                 }
@@ -607,6 +589,7 @@ public sealed partial class TrackPlanPage
         OverlayCanvas.DragOver += Canvas_DragOver;
         OverlayCanvas.Drop += Canvas_Drop;
         OverlayCanvas.PointerMoved += Canvas_PointerMoved_UpdateCoords;
+        OverlayCanvas.PointerWheelChanged += Canvas_PointerWheelChanged;
         OverlayCanvas.PointerPressed += Canvas_PointerPressed;
         OverlayCanvas.PointerReleased += Canvas_PointerReleased;
         OverlayCanvas.PointerExited += Canvas_PointerExited;
@@ -658,25 +641,28 @@ public sealed partial class TrackPlanPage
 
     private void Canvas_PointerPressed(object sender, PointerRoutedEventArgs e)
     {
+        // Prevent ScrollViewer direct manipulation before routing this gesture to selection, drag, or pan.
+        OverlayCanvas.CancelDirectManipulations();
+
         // OverlayCanvas has IsTabStop=true, so Focus() sticks here and KeyboardAccelerators on the page fire.
         OverlayCanvas.Focus(FocusState.Pointer);
 
         var ptr = e.GetCurrentPoint(OverlayCanvas);
 
-        if (TryBeginPan(e.Pointer, ptr))
+        if (TryBeginPan(e.Pointer, e.GetCurrentPoint(CanvasScrollViewer)))
         {
             e.Handled = true;
             return;
         }
 
-        if (!ptr.Properties.IsLeftButtonPressed || IsPanToolActive())
+        if (!ptr.Properties.IsLeftButtonPressed)
             return;
 
         var pos = ptr.Position;
         var (xMm, yMm) = ToWorldCoordinates(pos);
 
-        var hit = HitTestSegment(xMm, yMm);
-        if (hit == null)
+        var dragSelection = _interactionService.SelectForDrag(xMm, yMm);
+        if (dragSelection == null)
         {
             _draggingGroup = [];
             _selectedSegmentId = null;
@@ -685,39 +671,73 @@ public sealed partial class TrackPlanPage
         }
         else
         {
-            BeginCanvasDrag(hit, pos, e.Pointer);
+            BeginCanvasDrag(dragSelection.Placement, dragSelection.MovingGroup, pos, e.Pointer);
         }
     }
 
     private bool TryBeginPan(Pointer pointer, PointerPoint ptr)
     {
-        var isRightButton = ptr.Properties.IsRightButtonPressed;
-        var isMiddleButton = ptr.Properties.IsMiddleButtonPressed;
-        var isLeftButtonPan = ptr.Properties.IsLeftButtonPressed
-            && (IsPanToolActive() || _isSpaceKeyDown);
+        if (!ptr.Properties.IsRightButtonPressed)
+            return false;
 
-        if (!isRightButton && !isMiddleButton && !isLeftButtonPan)
+        if (!OverlayCanvas.CapturePointer(pointer))
             return false;
 
         _isPanning = true;
+        _panningPointer = pointer;
         _panStartPoint = ptr.Position;
         _panStartHorizontalOffset = CanvasScrollViewer.HorizontalOffset;
         _panStartVerticalOffset = CanvasScrollViewer.VerticalOffset;
         OverlayCanvas.PointerMoved += Canvas_PointerMoved_Pan;
         OverlayCanvas.PointerReleased += Canvas_PointerReleased_Pan;
-        OverlayCanvas.CapturePointer(pointer);
+        OverlayCanvas.PointerCanceled += Canvas_PointerCanceled_Pan;
+        OverlayCanvas.PointerCaptureLost += Canvas_PointerCaptureLost_Pan;
         UpdatePanCursor();
         return true;
     }
 
-    private bool IsPanToolActive() => PanToggle.IsChecked == true;
+    private void Canvas_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
+    {
+        _ = sender;
+        var pointerPoint = e.GetCurrentPoint(CanvasScrollViewer);
+        var wheelDelta = pointerPoint.Properties.MouseWheelDelta;
+        if (wheelDelta == 0)
+            return;
+
+        var scrollDelta = -(wheelDelta / 120.0) * MouseWheelScrollStep;
+        var horizontalOffset = CanvasScrollViewer.HorizontalOffset;
+        var verticalOffset = CanvasScrollViewer.VerticalOffset;
+
+        if (IsShiftPressed())
+            horizontalOffset = Math.Clamp(horizontalOffset + scrollDelta, 0, CanvasScrollViewer.ScrollableWidth);
+        else
+            verticalOffset = Math.Clamp(verticalOffset + scrollDelta, 0, CanvasScrollViewer.ScrollableHeight);
+
+        CanvasScrollViewer.ChangeView(horizontalOffset, verticalOffset, null, disableAnimation: true);
+
+        if (_isPanning)
+        {
+            _panStartPoint = pointerPoint.Position;
+            _panStartHorizontalOffset = horizontalOffset;
+            _panStartVerticalOffset = verticalOffset;
+        }
+
+        e.Handled = true;
+    }
 
     private void Canvas_PointerMoved_Pan(object sender, PointerRoutedEventArgs e)
     {
         if (!_isPanning)
             return;
 
-        var point = e.GetCurrentPoint(OverlayCanvas).Position;
+        var pointerPoint = e.GetCurrentPoint(CanvasScrollViewer);
+        if (!pointerPoint.Properties.IsRightButtonPressed)
+        {
+            EndPan(e.Pointer);
+            return;
+        }
+
+        var point = pointerPoint.Position;
         var deltaX = point.X - _panStartPoint.X;
         var deltaY = point.Y - _panStartPoint.Y;
 
@@ -726,6 +746,7 @@ public sealed partial class TrackPlanPage
             _panStartVerticalOffset - deltaY,
             null,
             disableAnimation: true);
+        e.Handled = true;
     }
 
     private void Canvas_PointerReleased_Pan(object sender, PointerRoutedEventArgs e)
@@ -733,27 +754,45 @@ public sealed partial class TrackPlanPage
         if (!_isPanning)
             return;
 
-        EndPan(e.Pointer);
+        if (e.Pointer == _panningPointer)
+            EndPan(e.Pointer);
+    }
+
+    private void Canvas_PointerCanceled_Pan(object sender, PointerRoutedEventArgs e)
+    {
+        _ = sender;
+        if (e.Pointer == _panningPointer)
+            EndPan(e.Pointer);
+    }
+
+    private void Canvas_PointerCaptureLost_Pan(object sender, PointerRoutedEventArgs e)
+    {
+        _ = sender;
+        if (e.Pointer == _panningPointer)
+            EndPan(e.Pointer);
     }
 
     private void EndPan(Pointer pointer)
     {
         _isPanning = false;
+        _panningPointer = null;
         OverlayCanvas.PointerMoved -= Canvas_PointerMoved_Pan;
         OverlayCanvas.PointerReleased -= Canvas_PointerReleased_Pan;
+        OverlayCanvas.PointerCanceled -= Canvas_PointerCanceled_Pan;
+        OverlayCanvas.PointerCaptureLost -= Canvas_PointerCaptureLost_Pan;
         OverlayCanvas.ReleasePointerCapture(pointer);
         UpdatePanCursor();
     }
 
     private void UpdatePanCursor()
     {
-        var showHand = _isPanning || _isSpaceKeyDown || IsPanToolActive();
+        var showHand = _isPanning;
         ProtectedCursor = showHand
             ? InputSystemCursor.Create(InputSystemCursorShape.Hand)
             : null;
     }
 
-    private void BeginCanvasDrag(PlacedSegment hit, Point pointerPosition, Pointer pointer)
+    private void BeginCanvasDrag(PlacedSegment hit, IReadOnlySet<Guid> movingGroup, Point pointerPosition, Pointer pointer)
     {
         _selectedSegmentId = hit.Segment.No;
         UpdateSelectionInfo();
@@ -762,7 +801,7 @@ public sealed partial class TrackPlanPage
         _toolboxDragBaseRotationDegrees = null;
         _draggedSegmentId = hit.Segment.No;
         _draggedPlaced = hit;
-        _draggingGroup = [.. _plan.GetConnectedGroup(hit.Segment.No)];
+        _draggingGroup = [.. movingGroup];
         _pendingDragSnapshot = CaptureDocumentState();
         _dragStartCanvasPoint = pointerPosition;
         _dragHasMoved = false;
@@ -800,7 +839,7 @@ public sealed partial class TrackPlanPage
 
     private void UpdateDraggedGroupPosition(double deltaMmX, double deltaMmY)
     {
-        _plan.MoveGroup(_draggingGroup, deltaMmX, deltaMmY);
+        _interactionService.MoveGroup(_draggingGroup, deltaMmX, deltaMmY);
 
         if (_ghostShape != null && _draggedPlaced != null)
         {
@@ -1425,10 +1464,15 @@ public sealed partial class TrackPlanPage
         var strokeBrush = ResolveTrackPlanStrokeBrush();
         var selectedBrush = ResolveTrackPlanStrokeSelectedBrush();
 
-        var renderScene = TrackPlanRenderSceneBuilder.Build(_plan.Segments);
+        var feedbackIntensities = _plan.Segments.ToDictionary(
+            placed => placed.Segment.No,
+            placed => _feedbackHighlighter.GetPulseIntensity(placed.Segment.No));
+        var selectedTrackIds = _selectedSegmentId is Guid selectedTrackId
+            ? new HashSet<Guid> { selectedTrackId }
+            : null;
+        var renderScene = TrackPlanRenderSceneBuilder.Build(_plan.Segments, selectedTrackIds, feedbackIntensities);
         foreach (var (placed, renderItem) in _plan.Segments.Zip(renderScene.Items))
         {
-            var isSelected = placed.Segment.No == _selectedSegmentId;
             var worldGeometry = PathToCanvasGeometryConverter.ToCanvasGeometryInWorldCoords(
                 resourceCreator,
                 renderItem.Path,
@@ -1439,7 +1483,7 @@ public sealed partial class TrackPlanPage
 
             // Z21 feedback pulse: draw a yellow/orange glow BEFORE the track stroke so the track
             // itself stays on top and remains readable.
-            var pulseIntensity = _feedbackHighlighter.GetPulseIntensity(placed.Segment.No);
+            var pulseIntensity = renderItem.FeedbackIntensity;
             if (pulseIntensity > 0)
             {
                 var outerAlpha = (byte)Math.Clamp(160 * pulseIntensity, 0, 255);
@@ -1450,8 +1494,8 @@ public sealed partial class TrackPlanPage
                 ds.DrawGeometry(worldGeometry, innerGlow, 8f, strokeStyle);
             }
 
-            var strokeWidth = (float)(isSelected ? 10 : 4);
-            var color = isSelected ? selectedBrush : strokeBrush;
+            var strokeWidth = (float)(renderItem.IsSelected ? 10 : 4);
+            var color = renderItem.IsSelected ? selectedBrush : strokeBrush;
             ds.DrawGeometry(worldGeometry, color, strokeWidth, strokeStyle);
         }
 
@@ -1659,14 +1703,19 @@ public sealed partial class TrackPlanPage
     {
         _ = sender;
         _ = e;
-        ZoomSlider.Value = Math.Min(3, ZoomSlider.Value + 0.25);
+        AdjustZoom(ZoomStep);
     }
 
     private void OnZoomOutButtonClick(object sender, RoutedEventArgs e)
     {
         _ = sender;
         _ = e;
-        ZoomSlider.Value = Math.Max(0.1, ZoomSlider.Value - 0.25);
+        AdjustZoom(-ZoomStep);
+    }
+
+    private void AdjustZoom(double delta)
+    {
+        ZoomSlider.Value = Math.Clamp(ZoomSlider.Value + delta, ZoomSlider.Minimum, ZoomSlider.Maximum);
     }
 
     private void DisconnectSelectedSegment()

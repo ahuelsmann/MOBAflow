@@ -98,6 +98,7 @@ public sealed class EditableTrackPlan : ITrackFeedbackLookup
 
             var p = _segments[i];
             _segments[i] = p.WithPosition(p.X + deltaX, p.Y + deltaY, p.RotationDegrees);
+            PlanMutated?.Invoke(this, new PlanMutation(p.Segment.No, p, _segments[i]));
         }
 
         PlanChanged?.Invoke(this, EventArgs.Empty);
@@ -120,7 +121,7 @@ public sealed class EditableTrackPlan : ITrackFeedbackLookup
             SetPortValue(tgt, targetPort, src.No);
         }
 
-        PlanChanged?.Invoke(this, EventArgs.Empty);
+        NotifyChanged(new PlanMutation(null, null, null));
     }
 
     /// <summary>Disconnects a segment from the group – removes all connections to this segment without deleting the segment.</summary>
@@ -149,7 +150,7 @@ public sealed class EditableTrackPlan : ITrackFeedbackLookup
         if (tgt != null)
             SetPortValue(tgt, targetPort, null);
 
-        PlanChanged?.Invoke(this, EventArgs.Empty);
+        NotifyChanged(new PlanMutation(null, null, null));
     }
 
     /// <summary>
@@ -175,7 +176,7 @@ public sealed class EditableTrackPlan : ITrackFeedbackLookup
             }
         }
 
-        PlanChanged?.Invoke(this, EventArgs.Empty);
+        NotifyChanged(new PlanMutation(null, null, null, RequiresFullRebuild: true));
     }
 
     /// <summary>

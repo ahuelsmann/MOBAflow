@@ -52,6 +52,7 @@
     </ItemGroup>
     <!-- Project References -->
     <ItemGroup>
+        <ProjectReference Include="..\Backend\Backend.csproj" />
         <ProjectReference Include="..\Common\Common.csproj" />
         <ProjectReference Include="..\MOBApi\MOBApi.csproj" Condition="'$(BuildMOBApiDependency)' == 'true'">
             <!-- Build dependency only: do not load MOBAapi assembly into WinUI; we start it as a separate process -->

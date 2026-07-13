@@ -87,7 +87,7 @@
                 Label="Validate" />
             <AppBarButton
                 x:Name="FitButton"
-                Icon="ZoomIn"
+                Icon="FullScreen"
                 Label="Fit"
                 ToolTipService.ToolTip="Fit track plan to viewport (Ctrl+0)" />
             <AppBarButton
@@ -96,14 +96,6 @@
                 Label="100%"
                 ToolTipService.ToolTip="Reset zoom to 100% (Ctrl+1)" />
             <AppBarSeparator />
-            <AppBarToggleButton
-                x:Name="PanToggle"
-                Label="Pan"
-                ToolTipService.ToolTip="Pan viewport with left drag (also middle-click, Space+drag, or right-drag)">
-                <AppBarToggleButton.Icon>
-                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xECE9;" />
-                </AppBarToggleButton.Icon>
-            </AppBarToggleButton>
             <AppBarToggleButton
                 x:Name="SnapToggle"
                 Icon="Trim"
@@ -194,13 +186,14 @@
                 <Grid>
                     <ScrollViewer
                         x:Name="CanvasScrollViewer"
-                        HorizontalScrollBarVisibility="Auto"
+                        HorizontalScrollBarVisibility="Hidden"
                         HorizontalScrollMode="Enabled"
+                        IsScrollInertiaEnabled="False"
                         MaxZoomFactor="3.0"
                         MinZoomFactor="0.1"
-                        VerticalScrollBarVisibility="Auto"
+                        VerticalScrollBarVisibility="Hidden"
                         VerticalScrollMode="Enabled"
-                        ZoomMode="Enabled">
+                        ZoomMode="Disabled">
                         <Grid x:Name="CanvasContainer" Width="2000" Height="1500">
                             <canvas:CanvasControl
                                 x:Name="GraphCanvasControl"
@@ -215,7 +208,8 @@
                                 Height="1500"
                                 AllowDrop="True"
                                 Background="Transparent"
-                                IsTabStop="True" />
+                                IsTabStop="True"
+                                ManipulationMode="None" />
                         </Grid>
                     </ScrollViewer>
                     <!--  Zoom Control Overlay (Bottom-Right)  -->
@@ -243,6 +237,7 @@
                             VerticalAlignment="Center"
                             Maximum="3.0"
                             Minimum="0.1"
+                            StepFrequency="0.05"
                             Value="1.0" />
                         <Button
                             x:Name="ZoomInButton"

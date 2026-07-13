@@ -15,10 +15,23 @@ public sealed class PlacedTrackPlanSvgRenderer
     {
         ArgumentNullException.ThrowIfNull(placements);
 
-        if (placements.Count == 0)
+        var scene = TrackPlanRenderSceneBuilder.Build(placements);
+        return Render(scene, trackOpacity, showGrid, showPorts ? placements : null);
+    }
+
+    /// <summary>Renders only the renderer-neutral scene used by Win2D and future adapters.</summary>
+    public string Render(TrackPlanRenderScene scene, double trackOpacity = 0.8, bool showGrid = false)
+    {
+        ArgumentNullException.ThrowIfNull(scene);
+        return Render(scene, trackOpacity, showGrid, null);
+    }
+
+    private string Render(TrackPlanRenderScene scene, double trackOpacity, bool showGrid, IReadOnlyList<PlacedSegment>? placementsForPorts)
+    {
+        if (scene.Items.Count == 0)
             return "<svg></svg>";
 
-        var bounds = ComputeBounds(placements);
+        var bounds = ComputeBounds(scene.Items, scene.Markers);
         var minX = bounds.MinX - Margin;
         var minY = bounds.MinY - Margin;
         var maxX = bounds.MaxX + Margin;
@@ -32,21 +45,35 @@ public sealed class PlacedTrackPlanSvgRenderer
         if (showGrid)
             AppendGrid(builder, minX, minY, maxX, maxY);
 
-        var scene = TrackPlanRenderSceneBuilder.Build(placements);
-        foreach (var (placed, item) in placements.Zip(scene.Items))
+        foreach (var item in scene.Items)
         {
             var svgPath = PathToSvgConverter.ToSvgPath(item.Path, item.X, item.Y, item.RotationDegrees);
-            builder.AppendLine($"  <path d=\"{svgPath}\" stroke=\"#333333\" stroke-width=\"4\" stroke-opacity=\"{trackOpacity.ToString("F2", CultureInfo.InvariantCulture)}\" fill=\"none\" />");
+            var stroke = item.IsSelected ? "#0078D4" : "#333333";
+            if (item.FeedbackIntensity > 0)
+                builder.AppendLine($"  <path d=\"{svgPath}\" stroke=\"#FFB400\" stroke-width=\"14\" stroke-opacity=\"{F(item.FeedbackIntensity)}\" fill=\"none\" />");
+            builder.AppendLine($"  <path d=\"{svgPath}\" stroke=\"{stroke}\" stroke-width=\"{(item.IsSelected ? 10 : 4)}\" stroke-opacity=\"{trackOpacity.ToString("F2", CultureInfo.InvariantCulture)}\" fill=\"none\" />");
 
-            if (!showPorts)
-                continue;
+            if (!string.IsNullOrWhiteSpace(item.Label))
+                builder.AppendLine($"  <text x=\"{F(item.X)}\" y=\"{F(item.Y - 12)}\" font-size=\"12\" fill=\"#333333\">{Escape(item.Label)}</text>");
+        }
 
+        if (placementsForPorts != null)
+        {
+            foreach (var placed in placementsForPorts)
+            {
             foreach (var (portName, x, y, _) in SegmentPortGeometry.GetAllPortWorldPositions(placed))
             {
                 var color = GetPortColor(portName);
                 builder.AppendLine($"  <circle cx=\"{F(x)}\" cy=\"{F(y)}\" r=\"6\" fill=\"{color}\" fill-opacity=\"0.9\" />");
                 builder.AppendLine($"  <text x=\"{F(x + 10)}\" y=\"{F(y - 10)}\" font-size=\"12\" font-weight=\"bold\" fill=\"{color}\">{portName[^1]}</text>");
             }
+            }
+        }
+
+        foreach (var marker in scene.Markers)
+        {
+            builder.AppendLine($"  <circle cx=\"{F(marker.X)}\" cy=\"{F(marker.Y)}\" r=\"8\" fill=\"#E81123\" fill-opacity=\"0.7\" />");
+            builder.AppendLine($"  <text x=\"{F(marker.X + 10)}\" y=\"{F(marker.Y - 10)}\" font-size=\"12\" fill=\"#A80000\">{Escape(marker.Message)}</text>");
         }
 
         builder.AppendLine("</svg>");
@@ -73,19 +100,20 @@ public sealed class PlacedTrackPlanSvgRenderer
         }
     }
 
-    private static (double MinX, double MinY, double MaxX, double MaxY) ComputeBounds(IReadOnlyList<PlacedSegment> placements)
+    private static (double MinX, double MinY, double MaxX, double MaxY) ComputeBounds(
+        IReadOnlyList<TrackPlanRenderItem> items,
+        IReadOnlyList<TrackPlanValidationMarker> markers)
     {
         double minX = double.MaxValue;
         double minY = double.MaxValue;
         double maxX = double.MinValue;
         double maxY = double.MinValue;
 
-        foreach (var placed in placements)
+        foreach (var item in items)
         {
-            var path = SegmentLocalPathBuilder.GetPath(placed.Segment);
-            var (localMinX, localMinY, localMaxX, localMaxY) = SegmentLocalPathBuilder.GetBounds(path);
+            var (localMinX, localMinY, localMaxX, localMaxY) = SegmentLocalPathBuilder.GetBounds(item.Path);
 
-            var angleRad = placed.RotationDegrees * Math.PI / 180;
+            var angleRad = item.RotationDegrees * Math.PI / 180;
             var cos = Math.Cos(angleRad);
             var sin = Math.Sin(angleRad);
 
@@ -94,10 +122,10 @@ public sealed class PlacedTrackPlanSvgRenderer
 
             var corners = new[]
             {
-                (Tx(placed.X, localMinX, localMinY, cos, sin), Ty(placed.Y, localMinX, localMinY, cos, sin)),
-                (Tx(placed.X, localMaxX, localMinY, cos, sin), Ty(placed.Y, localMaxX, localMinY, cos, sin)),
-                (Tx(placed.X, localMinX, localMaxY, cos, sin), Ty(placed.Y, localMinX, localMaxY, cos, sin)),
-                (Tx(placed.X, localMaxX, localMaxY, cos, sin), Ty(placed.Y, localMaxX, localMaxY, cos, sin))
+                (Tx(item.X, localMinX, localMinY, cos, sin), Ty(item.Y, localMinX, localMinY, cos, sin)),
+                (Tx(item.X, localMaxX, localMinY, cos, sin), Ty(item.Y, localMaxX, localMinY, cos, sin)),
+                (Tx(item.X, localMinX, localMaxY, cos, sin), Ty(item.Y, localMinX, localMaxY, cos, sin)),
+                (Tx(item.X, localMaxX, localMaxY, cos, sin), Ty(item.Y, localMaxX, localMaxY, cos, sin))
             };
 
             foreach (var (x, y) in corners)
@@ -107,6 +135,14 @@ public sealed class PlacedTrackPlanSvgRenderer
                 maxX = Math.Max(maxX, x);
                 maxY = Math.Max(maxY, y);
             }
+        }
+
+        foreach (var marker in markers)
+        {
+            minX = Math.Min(minX, marker.X);
+            minY = Math.Min(minY, marker.Y);
+            maxX = Math.Max(maxX, marker.X);
+            maxY = Math.Max(maxY, marker.Y);
         }
 
         return (minX, minY, maxX, maxY);
@@ -125,4 +161,6 @@ public sealed class PlacedTrackPlanSvgRenderer
     }
 
     private static string F(double value) => value.ToString("F2", CultureInfo.InvariantCulture);
+
+    private static string Escape(string value) => System.Security.SecurityElement.Escape(value) ?? string.Empty;
 }

@@ -152,6 +152,28 @@ internal sealed class TrackLayoutArchitectureTests
     }
 
     [Test]
+    public void InteractionService_SelectForDrag_ResolvesRigidConnectedGroupAndMovesIt()
+    {
+        var plan = new EditableTrackPlan();
+        var first = new PlacedSegment(new G231(), 0, 0, 0);
+        var second = new PlacedSegment(new G231(), 230.93, 0, 0);
+        plan.AddSegment(first);
+        plan.AddSegment(second);
+        plan.AddConnection(first.Segment.No, "PortB", second.Segment.No, "PortA");
+        var service = new TrackPlanInteractionService(plan);
+
+        var selection = service.SelectForDrag(115, 0);
+        Assert.That(selection, Is.Not.Null);
+        service.MoveGroup(selection!.MovingGroup, 10, 5);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(selection.MovingGroup, Is.EquivalentTo([first.Segment.No, second.Segment.No]));
+            Assert.That(plan.Segments.Select(segment => segment.X), Is.EquivalentTo([10, 240.93]));
+        });
+    }
+
+    [Test]
     public void SpatialIndex_RefreshesAfterPlanMutation()
     {
         var plan = new EditableTrackPlan();
@@ -167,6 +189,27 @@ internal sealed class TrackLayoutArchitectureTests
     }
 
     [Test]
+    public void SpatialIndex_RemainsAccurateAfterGroupMoveAndConnectionMutation()
+    {
+        var plan = new EditableTrackPlan();
+        var first = new PlacedSegment(new G231(), 0, 0, 0);
+        var second = new PlacedSegment(new G231(), 230.93, 0, 0);
+        plan.AddSegment(first);
+        plan.AddSegment(second);
+        var index = new TrackPlanSpatialIndex(plan);
+
+        plan.AddConnection(first.Segment.No, "PortB", second.Segment.No, "PortA");
+        plan.MoveGroup(new HashSet<Guid> { first.Segment.No, second.Segment.No }, 500, 0);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(index.Query(0, 0, 10), Is.Empty);
+            Assert.That(index.Query(500, 0, 10), Does.Contain(plan.Segments.First()));
+            Assert.That(index.Query(730.93, 0, 10), Does.Contain(plan.Segments.Last()));
+        });
+    }
+
+    [Test]
     public void RenderSceneBuilder_ProjectsPlacementWithoutRendererSpecificState()
     {
         var placement = new PlacedSegment(new G231(), 12, 34, 15);
@@ -177,6 +220,23 @@ internal sealed class TrackLayoutArchitectureTests
         Assert.That(scene.Items[0].Id, Is.EqualTo(placement.Segment.No));
         Assert.That(scene.Items[0].X, Is.EqualTo(12));
         Assert.That(scene.Items[0].Path, Is.Not.Empty);
+    }
+
+    [Test]
+    public void RenderSceneBuilder_ProjectsSelectionFeedbackAndLabelForAllRenderers()
+    {
+        var placement = new PlacedSegment(new G231(), 12, 34, 15);
+        var selected = new HashSet<Guid> { placement.Segment.No };
+        var feedback = new Dictionary<Guid, double> { [placement.Segment.No] = 2 };
+
+        var scene = TrackPlanRenderSceneBuilder.Build([placement], selected, feedback);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(scene.Items[0].Label, Is.EqualTo(nameof(G231)));
+            Assert.That(scene.Items[0].IsSelected, Is.True);
+            Assert.That(scene.Items[0].FeedbackIntensity, Is.EqualTo(1));
+        });
     }
 
     [Test]
@@ -210,6 +270,65 @@ internal sealed class TrackLayoutArchitectureTests
     }
 
     [Test]
+    public void RailroadState_ExpiresFeedbackAndKeepsRuntimeSwitchAndSignalStateOutOfLayout()
+    {
+        var trackId = Guid.NewGuid();
+        var timestamp = DateTimeOffset.UtcNow;
+        var state = new RailroadState();
+
+        state.MarkFeedback(trackId, timestamp);
+        state.SetSwitchPosition(11, isLeft: true);
+        state.SetSignalAspect(12, "Proceed");
+        state.ExpireFeedback(timestamp.AddSeconds(2), TimeSpan.FromSeconds(1));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(state.IsOccupied(trackId), Is.False);
+            Assert.That(state.GetLastFeedback(trackId), Is.Null);
+            Assert.That(state.GetSwitchPosition(11), Is.True);
+            Assert.That(state.GetSignalAspect(12), Is.EqualTo("Proceed"));
+        });
+    }
+
+    [Test]
+    public void RailroadStateProjector_ProjectsSwitchAndSignalEvents()
+    {
+        var bus = new EventBus(Mock.Of<ILogger<EventBus>>());
+        var state = new RailroadState();
+        using var projector = new TrackPlanRailroadStateProjector(bus, Mock.Of<ITrackFeedbackLookup>(), state);
+        projector.Activate();
+
+        bus.Publish(new SwitchPositionChangedEvent(4, isLeft: false));
+        bus.Publish(new SignalAspectChangedEvent(5, "Stop"));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(state.GetSwitchPosition(4), Is.False);
+            Assert.That(state.GetSignalAspect(5), Is.EqualTo("Stop"));
+        });
+    }
+
+    [Test]
+    public void RailroadStateProjector_ExpiresFeedbackUsingConfiguredTimeout()
+    {
+        var plan = new EditableTrackPlan();
+        var segment = new PlacedSegment(new G231(), 0, 0, 0, InPort: 8);
+        plan.AddSegment(segment);
+        var bus = new EventBus(Mock.Of<ILogger<EventBus>>());
+        var state = new RailroadState();
+        using var projector = new TrackPlanRailroadStateProjector(bus, plan, state)
+        {
+            FeedbackTimeout = TimeSpan.Zero
+        };
+        projector.Activate();
+
+        bus.Publish(new FeedbackReceivedEvent(8));
+        projector.ExpireFeedbackNow();
+
+        Assert.That(state.IsOccupied(segment.Segment.No), Is.False);
+    }
+
+    [Test]
     public void TrackLibraryRegistry_ResolvesDefinitionsByPersistedLibraryId()
     {
         var registry = new TrackLibraryRegistry([new PikoATrackLibrary()]);
@@ -232,5 +351,22 @@ internal sealed class TrackLayoutArchitectureTests
 
         Assert.That(candidates, Is.Not.Empty);
         Assert.That(candidates.Count, Is.LessThan(10));
+    }
+
+    [Test]
+    public void InteractionService_UpdatesAndQueriesLocalCandidates_ForTenThousandTracks()
+    {
+        var plan = new EditableTrackPlan();
+        for (var index = 0; index < 10_000; index++)
+            plan.AddSegment(new PlacedSegment(new G231(), index * 250, 0, 0));
+
+        var service = new TrackPlanInteractionService(plan);
+        var selection = service.SelectForDrag(1_250_115, 0);
+        Assert.That(selection, Is.Not.Null);
+
+        service.MoveGroup(selection!.MovingGroup, 100, 0);
+        var moved = service.HitTest(1_250_215, 0);
+
+        Assert.That(moved?.Segment.No, Is.EqualTo(selection.SelectedSegmentId));
     }
 }

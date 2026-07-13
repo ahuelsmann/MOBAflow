@@ -8,6 +8,7 @@ namespace Moba.TrackLibrary.PikoA;
 public sealed class TrackPlanInteractionService
 {
     public sealed record SnapPreview(IReadOnlySet<(double X, double Y)> HighlightedPorts);
+    public sealed record DragSelection(Guid SelectedSegmentId, PlacedSegment Placement, IReadOnlySet<Guid> MovingGroup);
     private readonly EditableTrackPlan _plan;
     private readonly TrackPlanSpatialIndex _spatialIndex;
 
@@ -32,6 +33,22 @@ public sealed class TrackPlanInteractionService
             _plan.Connections,
             excludeSegmentId,
             movingGroup);
+    }
+
+    /// <summary>Resolves the selected segment and its rigid connected group from world coordinates.</summary>
+    public DragSelection? SelectForDrag(double worldX, double worldY, double toleranceMm = 12)
+    {
+        var placement = HitTest(worldX, worldY, toleranceMm);
+        return placement == null
+            ? null
+            : new DragSelection(placement.Segment.No, placement, _plan.GetConnectedGroup(placement.Segment.No));
+    }
+
+    /// <summary>Moves a rigid group without exposing editor topology mutations to the UI layer.</summary>
+    public void MoveGroup(IReadOnlySet<Guid> movingGroup, double deltaX, double deltaY)
+    {
+        ArgumentNullException.ThrowIfNull(movingGroup);
+        _plan.MoveGroup(movingGroup, deltaX, deltaY);
     }
 
     public void AddWithSnap(TrackPlanSnapHelper.SnapResult snap)
