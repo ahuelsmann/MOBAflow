@@ -81,11 +81,11 @@ This is a .NET 10 multi-platform solution. On the Linux Cloud VM **only cross-pl
 
 | Buildable on Linux | NOT buildable (platform-specific) |
 | ------------------ | -------------------------------- |
-| Domain, Common, Backend, Sound, SharedUI, TrackLibrary.Base, TrackLibrary.PikoA, TrackPlan.Renderer, MOBApi, Test | MOBAflow (`net10.0-windows10.0.22621.0`), MOBAsmart (`net10.0-android`) |
+| Domain, Common, Backend, Sound, SharedUI, TrackLibrary.Base, TrackLibrary.PikoA, TrackPlan.Renderer, MOBAdisplay, MOBApi, Test | MOBAflow (`net10.0-windows10.0.22621.0`), MOBAsmart (`net10.0-android`) |
 
 ### Build & test commands
 
-Standard commands are documented in `docs/CLAUDE.md` and `README.md`. Key cross-platform commands:
+Standard commands are documented in `README.md`, `docs/BUILD-PERFORMANCE.md`, and `docs/PROJECT-REFERENCE.md`. Key cross-platform commands:
 
 ```bash
 # Restore & build individual projects (solution-level restore fails due to Windows/Android TFMs)
@@ -96,17 +96,54 @@ dotnet build <project>.csproj
 dotnet build MOBApi/MOBApi.csproj
 dotnet run --project MOBApi/MOBApi.csproj   # REST API host (default port 5001)
 
+# Display library build (ESP32 firmware lives under MOBAdisplay/esp32)
+dotnet build MOBAdisplay/MOBAdisplay.csproj
+
 # Run tests
 dotnet test Test/Test.csproj
 
 # Collect coverage locally
 dotnet test Test/Test.csproj --settings Test/coverlet.runsettings \
   --results-directory TestResults
+
+# Alternative coverage collection matching the Azure DevOps quality pipeline
+dotnet tool install --global dotnet-coverage
+dotnet-coverage collect \
+  -s Test/dotnet-coverage.runsettings \
+  -f cobertura \
+  -o TestResults/coverage.cobertura.xml \
+  "dotnet test Test/Test.csproj --logger trx --results-directory TestResults"
 ```
+
+### Windows local build/deploy loops
+
+Use these only on Windows with the required WinUI/MAUI workloads installed:
+
+```bash
+# Fast WinUI compile check for everyday UI iteration
+dotnet restore MOBAflow/MOBAflow.csproj
+dotnet build MOBAflow/MOBAflow.csproj -c FastDebug --no-restore \
+  /p:BuildMOBApiDependency=false /p:CopyMOBApiToOutput=false
+
+# Run the WinUI app while editing
+dotnet watch run --project MOBAflow/MOBAflow.csproj -c FastDebug
+
+# Fast MOBAsmart Android build
+dotnet restore MOBAsmart/MOBAsmart.csproj -f net10.0-android
+dotnet build MOBAsmart/MOBAsmart.csproj -f net10.0-android -c FastDebug --no-restore
+
+# Reliable Android device deploy when fast deploy is inconsistent
+dotnet build MOBAsmart/MOBAsmart.csproj -f net10.0-android -c FastDebug --no-restore \
+  /p:MobaReliableDeploy=true -t:Run
+```
+
+- VS Code tasks mirror these workflows: `restore`, `build`, `build:full`, `publish`, `watch`, `restore:mobasmart`, `build:mobasmart`, and `build:mobasmart:reliable-deploy`.
+- For local build timing, capture a binary log with `dotnet build <project>.csproj -bl:build.binlog` and inspect it with MSBuild Structured Log Viewer.
+- TODO: Document the exact agent-safe PlatformIO command for `MOBAdisplay/esp32` firmware once it is established in repo docs.
 
 ### Known issues on Linux Cloud VM
 
-- **System.Speech tests**: 2 tests in `SystemSpeechEngineTest` always fail on Linux (`PlatformNotSupportedException`). This is expected.
+- **System.Speech tests**: `SystemSpeechEngineTest` covers Windows SAPI; on non-Windows/headless agents it may be ignored or fail with platform/audio-device limitations. This is expected.
 - **Solution-level restore**: `dotnet restore Moba.slnx` fails because the solution contains Windows and Android target frameworks. Restore individual `.csproj` files instead.
 - **MOBAflow desktop app**: `MOBAflow/MOBAflow.csproj` requires Windows/WinUI tooling and cannot be built on Linux.
 - **MOBAsmart**: `MOBAsmart/MOBAsmart.csproj` targets Android and requires MAUI/Android workloads that are not available on the Linux Cloud VM.
