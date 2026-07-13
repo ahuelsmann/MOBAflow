@@ -193,10 +193,13 @@ git tag -s 1.0.0 -m "Release 1.0.0: Major API Redesign"
 
 ## Release automation
 
-MOBAflow uses **Azure DevOps Pipelines** (not GitHub Actions):
+MOBAflow provides two deliberate release paths while the GitHub-native workflow is being evaluated:
 
 - [`.azure-pipelines/quality.yml`](../.azure-pipelines/quality.yml) – PR quality gate (build, tests, SonarCloud)
 - [`.azure-pipelines/release.yml`](../.azure-pipelines/release.yml) – manual release: MinVer version detection and `CHANGELOG.md` update via git-cliff
+- [`.github/workflows/release-studio.yml`](../.github/workflows/release-studio.yml) – validates an existing signed tag, builds and tests MOBAflow, and creates a draft GitHub Release
+
+See [`RELEASE-STUDIO.md`](RELEASE-STUDIO.md) for the maintainer checklist and safety model. The GitHub workflow does not create tags or publish releases automatically.
 
 Git tags use **plain SemVer without `v` prefix** (e.g. `0.1.0`). The release pipeline installs `minver-cli` 7.x to match the NuGet package version.
 
