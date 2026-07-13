@@ -1,18 +1,63 @@
+<div align="center">
+
 # MOBAflow
 
-**MOBAflow** is an event-driven automation solution for model railroads.
-The system enables complex workflow sequences, train control with station
-announcements, and real-time feedback monitoring via direct UDP connection to
-the Roco Z21 Digital Command Station.
+### Event-driven automation for model railroads
 
-> ⚖️ **Legal Notice:** MOBAflow is an independent open-source project.
-> See [THIRD-PARTY-NOTICES.md](docs/THIRD-PARTY-NOTICES.md) for details on
-> third-party software, formats, and trademarks (AnyRail, Piko, Roco).
+Control trains, compose journeys, automate workflows, monitor live feedback and
+design track plans around the Roco Z21 ecosystem.
 
-> **Private network only:** MOBAflow, MOBAsmart, and MOBApi are designed for use on
-> **private networks only** (e.g. home LAN). Do not expose MOBApi or Z21 control to the
-> public internet. MOBApi does not use API-key authentication; network isolation is the
-> operator's responsibility.
+[![License: MIT](https://img.shields.io/badge/license-MIT-2ea44f?style=flat-square)](LICENSE)
+[![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?style=flat-square&logo=dotnet)](global.json)
+[![Windows](https://img.shields.io/badge/desktop-Windows-0078D4?style=flat-square&logo=windows)](#-quick-start)
+[![Android](https://img.shields.io/badge/mobile-Android-3DDC84?style=flat-square&logo=android&logoColor=white)](#run-applications)
+[![Project status](https://img.shields.io/badge/status-active%20development-f59e0b?style=flat-square)](CHANGELOG.md)
+[![GitHub stars](https://img.shields.io/github/stars/ahuelsmann/MOBAflow?style=flat-square)](https://github.com/ahuelsmann/MOBAflow/stargazers)
+
+[Explore features](#-features) ·
+[View screenshots](#-screenshots) ·
+[Get started](#-quick-start) ·
+[Read the docs](docs/wiki/INDEX.md) ·
+[Contribute](CONTRIBUTING.md)
+
+<a href="docs/images/mobaflow-overview.png">
+  <img src="docs/images/mobaflow-overview.png" alt="MOBAflow desktop application showing live railroad state and journey automation" width="900" />
+</a>
+
+</div>
+
+## Why MOBAflow?
+
+MOBAflow turns a model railroad into an event-driven system instead of a
+collection of isolated controls. It combines live Z21 communication, reusable
+workflow automation, timetable-aware journeys, local station announcements and
+visual layout tooling in one open-source solution.
+
+- **Operate in real time** — control locomotives, functions, switches and feedback over direct Z21 UDP.
+- **Automate repeatably** — build reusable workflows for journeys, announcements, sounds and layout events.
+- **Keep control local** — run speech, project data and railroad communication inside your private network.
+- **Extend the system** — use shared domain and runtime layers across Windows, Android, REST and ESP32 displays.
+
+## The ecosystem at a glance
+
+| Component | Platform | Purpose |
+| --- | --- | --- |
+| **MOBAflow** | Windows / WinUI 3 | Main control center, journey editor, workflow automation and track plan |
+| **MOBAsmart** | Android / .NET MAUI | Mobile train control and runtime access on the layout |
+| **MOBApi** | ASP.NET Core | Local REST and SignalR bridge for clients and status information |
+| **MOBAdisplay** | Windows + ESP32-S3 | Render and stream clocks, track numbers and LED matrix content |
+| **Shared runtime** | .NET 10 | Domain models, project activation, Z21 communication and event processing |
+
+> [!IMPORTANT]
+> **Private network only.** MOBAflow, MOBAsmart and MOBApi are designed for a
+> trusted home LAN. Do not expose MOBApi or Z21 control directly to the public
+> internet. MOBApi currently relies on network isolation rather than API-key
+> authentication.
+
+> [!NOTE]
+> MOBAflow is an independent open-source project. Product names and trademarks
+> belong to their respective owners. See
+> [THIRD-PARTY-NOTICES.md](docs/THIRD-PARTY-NOTICES.md).
 
 ---
 
@@ -39,17 +84,23 @@ the Roco Z21 Digital Command Station.
 
 ## ✨ Features
 
-- 🚂 **Z21 Direct UDP Control** – Real-time communication with Roco Z21
-- 🎯 **Journey Management** – Define train routes with multiple stations
-- 🧭 **Flexible Layout** – Toggle City and Workflow libraries to maximize workspace
-- 🔊 **Text-to-Speech** – Piper TTS & Windows Speech API
-- ⚡ **Workflow Automation** – Event-driven action sequences
-- 🎨 **Visual Track Plan** – Drag & drop track editor with snap-to-connect
-- 🟢 **Win2D GPU Rendering** – High-performance track visualization
-- 🛤️ **Track Libraries** – Extensible support (Piko A-Gleis, Roco Line,
-  Tillig, Märklin)
-- 📱 **Multi-Host** – MOBAflow (Windows), MOBAsmart (Android), MOBApi (REST)
-- 🟢 **Status Monitoring** – Real-time startup progress with log streaming
+| Area | What MOBAflow provides |
+| --- | --- |
+| 🚂 **Train control** | Locomotive presets, direction, speed and F0–F31 function control |
+| 🔌 **Z21 integration** | Direct UDP communication, live feedback and switch position events |
+| 🎯 **Journey management** | Multi-stop journeys, timetable data and runtime state |
+| ⚡ **Workflow automation** | Event-driven sequences for railroad actions, audio and announcements |
+| 🛤️ **Track plan** | Drag-and-drop editing, snap-to-connect, topology, validation and Undo/Redo |
+| 🔊 **Local speech** | Piper TTS and Windows Speech for station announcements |
+| 📱 **Multiple hosts** | Windows control center, Android companion, REST API and ESP32 displays |
+| 🎨 **Visualization** | Win2D track rendering, SkiaSharp displays and live operating-state feedback |
+| 🧩 **Extensibility** | Shared .NET domain/runtime layers and pluggable track libraries |
+
+### Built for real layouts
+
+MOBAflow focuses on the complete operating loop: plan the layout, connect it to
+the digital command station, compose journeys, react to feedback and keep the
+operator informed across desktop, mobile and remote displays.
 
 ---
 
@@ -489,18 +540,19 @@ MOBAflow follows **Clean Architecture** principles with strict layer separation.
 
 ### 🏗️ Layer Structure
 
-```text
-┌─────────────────────────────────────┐
-│  MOBAflow / MOBAsmart / MOBApi      │  ← Platform UI & API
-├─────────────────────────────────────┤
-│  SharedUI                           │  ← MVVM Layer
-├─────────────────────────────────────┤
-│  Backend (Services, Logic)          │  ← Business Logic
-├─────────────────────────────────────┤
-│  Common (Configuration, Events)     │  ← Shared Infrastructure
-├─────────────────────────────────────┤
-│  Domain (Models, POCOs)             │  ← Core Entities
-└─────────────────────────────────────┘
+```mermaid
+flowchart TB
+    Hosts["MOBAflow · MOBAsmart · MOBApi"]
+    SharedUI["SharedUI<br/>ViewModels and presentation logic"]
+    Backend["Backend<br/>Runtime, services and Z21 integration"]
+    Common["Common<br/>Configuration and events"]
+    Domain["Domain<br/>Core models and entities"]
+
+    Hosts --> SharedUI
+    SharedUI --> Backend
+    Backend --> Common
+    Common --> Domain
+    Backend --> Domain
 ```
 
 ### Runtime Boundary (Current Status)
@@ -668,4 +720,13 @@ See [LICENSE](LICENSE) for details.
 
 ---
 
-Made with ❤️ and ai for model railroad enthusiasts.
+<div align="center">
+
+**Built with ❤️, .NET and a passion for model railroads.**
+
+If MOBAflow is useful or interesting to you, consider
+[starring the repository](https://github.com/ahuelsmann/MOBAflow),
+[opening an issue](https://github.com/ahuelsmann/MOBAflow/issues) or
+[contributing](CONTRIBUTING.md).
+
+</div>
