@@ -1,0 +1,142 @@
+name: Release Studio
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing signed SemVer tag (for example 0.2.0)
+        required: true
+        type: string
+      prerelease:
+        description: Mark the draft as a prerelease
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  build-draft:
+    name: Validate, package, and draft release
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out the requested tag
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: refs/tags/${{ inputs.tag }}
+
+      - name: Validate signed release tag
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: >-
+          ./scripts/Validate-ReleaseTag.ps1
+          -Tag $env:RELEASE_TAG
+          -Repository '${{ github.repository }}'
+          -Token $env:GH_TOKEN
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore release projects
+        shell: pwsh
+        run: |
+          dotnet restore MOBAflow/MOBAflow.csproj
+          dotnet restore Test/Test.csproj
+
+      - name: Build MOBAflow
+        shell: pwsh
+        run: >-
+          dotnet build MOBAflow/MOBAflow.csproj
+          --configuration Release
+          --no-restore
+
+      - name: Run tests
+        shell: pwsh
+        run: >-
+          dotnet test Test/Test.csproj
+          --configuration Release
+          --no-restore
+          --logger trx
+          --results-directory artifacts/TestResults
+
+      - name: Publish MOBAflow
+        shell: pwsh
+        run: >-
+          dotnet publish MOBAflow/MOBAflow.csproj
+          --configuration Release
+          --runtime win-x64
+          --self-contained true
+          --no-restore
+          --output artifacts/MOBAflow-win-x64
+
+      - name: Package artifacts and checksums
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          $tag = $env:RELEASE_TAG
+          $archive = "artifacts/MOBAflow-$tag-win-x64.zip"
+          Compress-Archive -Path artifacts/MOBAflow-win-x64/* -DestinationPath $archive -CompressionLevel Optimal
+          $hash = (Get-FileHash -Path $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $(Split-Path -Leaf $archive)" | Set-Content artifacts/SHA256SUMS.txt -Encoding utf8NoBOM
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: MOBAflow-${{ inputs.tag }}-release-candidate
+          path: |
+            artifacts/MOBAflow-${{ inputs.tag }}-win-x64.zip
+            artifacts/SHA256SUMS.txt
+            artifacts/TestResults/**/*.trx
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Create or update draft GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+          RELEASE_PRERELEASE: ${{ inputs.prerelease }}
+        run: |
+          $tag = $env:RELEASE_TAG
+          $assets = @(
+            "artifacts/MOBAflow-$tag-win-x64.zip",
+            "artifacts/SHA256SUMS.txt"
+          )
+
+          gh release view $tag --repo '${{ github.repository }}' *> $null
+          if ($LASTEXITCODE -eq 0) {
+            $release = gh release view $tag --repo '${{ github.repository }}' --json isDraft | ConvertFrom-Json
+            if (-not $release.isDraft) {
+              throw "Release $tag is already published. Release Studio will not modify it."
+            }
+
+            gh release upload $tag @assets --clobber --repo '${{ github.repository }}'
+            if ($LASTEXITCODE -ne 0) { throw "Could not update draft release assets." }
+          }
+          else {
+            $arguments = @(
+              'release', 'create', $tag,
+              '--draft',
+              '--verify-tag',
+              '--generate-notes',
+              '--title', "MOBAflow $tag",
+              '--repo', '${{ github.repository }}'
+            )
+            if ($env:RELEASE_PRERELEASE -eq 'true') { $arguments += '--prerelease' }
+            $arguments += $assets
+            gh @arguments
+            if ($LASTEXITCODE -ne 0) { throw "Could not create draft release." }
+          }
