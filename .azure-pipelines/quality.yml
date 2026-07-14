@@ -120,8 +120,7 @@ stages:
                 -p:CollectCoverage=true `
                 "-p:CoverletOutput=$coveragePath" `
                 -p:CoverletOutputFormat=cobertura `
-                -p:ExcludeAssembliesWithoutSources=MissingAll `
-                '-p:Exclude=[Test]*' `
+                '-p:Exclude=[Test]*%2c[Microsoft.InteractiveExperiences.Projection]*' `
                 --logger trx `
                 --results-directory "$(Agent.TempDirectory)\TestResults"
               $testExitCode = $LASTEXITCODE
