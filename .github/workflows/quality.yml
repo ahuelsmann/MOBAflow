@@ -39,6 +39,8 @@ jobs:
           --framework net10.0-windows10.0.22621.0
           --no-restore
           -p:IncludeMobaSmartTests=false
+          -p:DebugType=portable
+          -p:DebugSymbols=true
 
       - name: Run desktop tests with Cobertura coverage
         shell: pwsh
@@ -51,6 +53,8 @@ jobs:
             --framework net10.0-windows10.0.22621.0 `
             --no-build `
             -p:IncludeMobaSmartTests=false `
+            -p:DebugType=portable `
+            -p:DebugSymbols=true `
             -p:CollectCoverage=true `
             "-p:CoverletOutput=$coveragePath" `
             -p:CoverletOutputFormat=cobertura `
