@@ -430,9 +430,16 @@ internal sealed class TrackLayoutArchitectureTests
 
         state.MarkFeedback(segment.Segment.No, DateTimeOffset.UtcNow);
         projector.ExpireFeedbackNow();
+        var occupiedAfterExpiryAttempt = state.IsOccupied(segment.Segment.No);
+
+        state.ClearFeedback(segment.Segment.No);
         bus.Publish(new FeedbackReceivedEvent(8));
 
-        Assert.That(state.IsOccupied(segment.Segment.No), Is.True);
+        Assert.Multiple(() =>
+        {
+            Assert.That(occupiedAfterExpiryAttempt, Is.True);
+            Assert.That(state.IsOccupied(segment.Segment.No), Is.False);
+        });
     }
 
 }
