@@ -1,5 +1,5 @@
 # Azure DevOps Pipeline: PR Validation (Build + Tests + Coverage)
-# Nutzt .NET 10, dotnet-coverage und SonarQube Cloud für statische Codeanalyse.
+# Nutzt .NET 10, Coverlet-MSBuild und SonarQube Cloud für statische Codeanalyse.
 # MAUI bleibt explizit außen vor (dieses Quality Gate prüft nur MOBAflow Desktop und Tests).
 
 trigger:
@@ -43,7 +43,7 @@ stages:
     displayName: 'PR Quality Gate: Build, Tests, Coverage'
     jobs:
       - job: BuildTestAnalyze
-        displayName: 'Build projects and run tests with dotnet-coverage'
+        displayName: 'Build projects and run tests with Coverlet'
         timeoutInMinutes: 60
 
         steps:
@@ -98,7 +98,7 @@ stages:
               projects: |
                 **/MOBAflow.csproj
                 **/Test.csproj
-              arguments: '--configuration $(buildConfiguration) --no-restore -p:IncludeMobaSmartTests=false'
+              arguments: '--configuration $(buildConfiguration) --no-restore -p:IncludeMobaSmartTests=false -p:DebugType=portable -p:DebugSymbols=true'
             env:
               NUGET_PACKAGES: '$(nugetPackages)'
 
@@ -110,21 +110,35 @@ stages:
             inputs:
               pollingTimeoutSec: '300'
               
-          - task: DotNetCoreCLI@2
-            displayName: 'Install dotnet-coverage'
-            inputs:
-              command: 'custom'
-              custom: 'tool'
-              arguments: 'install --global dotnet-coverage'
+          - powershell: |
+              $coveragePath = "$(Agent.TempDirectory)\coverage.cobertura.xml"
+              dotnet test Test/Test.csproj `
+                --configuration $(buildConfiguration) `
+                --framework net10.0-windows10.0.22621.0 `
+                --no-build `
+                -p:IncludeMobaSmartTests=false `
+                -p:DebugType=portable `
+                -p:DebugSymbols=true `
+                --logger trx `
+                --collect:"XPlat Code Coverage" `
+                --settings Test/coverlet.runsettings `
+                --results-directory "$(Agent.TempDirectory)\TestResults"
+              $testExitCode = $LASTEXITCODE
 
-          - script: |
-              cd "$(Build.SourcesDirectory)"
-              dotnet-coverage collect ^
-                -s Test/dotnet-coverage.runsettings ^
-                -f cobertura ^
-                -o "$(Agent.TempDirectory)/coverage.cobertura.xml" ^
-                "dotnet test Test/Test.csproj --configuration $(buildConfiguration) --framework net10.0-windows10.0.22621.0 --no-build -p:IncludeMobaSmartTests=false --logger trx --results-directory $(Agent.TempDirectory)/TestResults"
-            displayName: 'Run Tests with dotnet-coverage (Cobertura)'
+              $generatedCoverage = Get-ChildItem "$(Agent.TempDirectory)\TestResults" -Recurse -Filter coverage.cobertura.xml |
+                Select-Object -First 1
+              if (-not $generatedCoverage) {
+                throw 'Coverlet did not produce a Cobertura report.'
+              }
+              Copy-Item $generatedCoverage.FullName $coveragePath -Force
+
+              [xml]$coverage = Get-Content $coveragePath
+              if ([int64]$coverage.coverage.'lines-valid' -le 0) {
+                throw 'Cobertura report contains no instrumented lines.'
+              }
+
+              exit $testExitCode
+            displayName: 'Run Tests with Coverlet collector (Cobertura)'
             env:
               NUGET_PACKAGES: '$(nugetPackages)'
 
@@ -135,7 +149,7 @@ stages:
               testResultsFormat: 'VSTest'
               testResultsFiles: '$(Agent.TempDirectory)/TestResults/**/*.trx'
               mergeTestResults: true
-              testRunTitle: 'Unit Tests (dotnet-coverage)'
+              testRunTitle: 'Unit Tests (Coverlet)'
 
           - task: PublishCodeCoverageResults@2
             displayName: 'Publish Code Coverage (Cobertura)'
