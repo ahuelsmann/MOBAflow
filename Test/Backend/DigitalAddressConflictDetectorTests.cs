@@ -104,8 +104,8 @@ internal sealed class DigitalAddressConflictDetectorTests
         var report = _detector.Detect(project);
 
         Assert.That(
-            report.Findings.Where(finding => finding.Kind == DigitalAddressFindingKind.OutOfRange),
-            Has.Count.EqualTo(2));
+            report.Findings.Where(finding => finding.Kind == DigitalAddressFindingKind.OutOfRange).ToArray(),
+            Has.Length.EqualTo(2));
     }
 
     [Test]
