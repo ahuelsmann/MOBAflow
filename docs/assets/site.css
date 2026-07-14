@@ -12,6 +12,7 @@
   --accent-strong: #ffd36e;
   --cyan: #55d6c2;
   --blue: #6fb7ff;
+  --violet: #c084fc;
   --shell: min(1180px, calc(100% - 40px));
   --radius: 22px;
   --shadow: 0 28px 80px rgba(0, 0, 0, .35);
@@ -95,6 +96,7 @@ button { font: inherit; }
 h1, h2, h3, p { margin-top: 0; }
 h1 { margin-bottom: 25px; font-size: clamp(52px, 6vw, 82px); line-height: .98; letter-spacing: -.055em; font-weight: 760; }
 h1 em { color: var(--accent); font-style: normal; }
+.hero-flow { color: var(--violet); }
 .hero-lead { max-width: 600px; margin-bottom: 32px; color: #b8c9cf; font-size: 19px; line-height: 1.72; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
 .button {
