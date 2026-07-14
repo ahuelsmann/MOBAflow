@@ -35,6 +35,25 @@ internal sealed class LocomotiveLibraryServiceTests
     }
 
     [Test]
+    public void BuildLibrary_UsesStableIdAsTieBreaker()
+    {
+        var earlierId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+        var laterId = Guid.Parse("22222222-2222-2222-2222-222222222222");
+        var project = new Project
+        {
+            Locomotives =
+            [
+                new Locomotive { Id = laterId, Name = "Same" },
+                new Locomotive { Id = earlierId, Name = "Same" }
+            ]
+        };
+
+        var entries = _service.BuildLibrary(project);
+
+        Assert.That(entries.Select(entry => entry.LocomotiveId), Is.EqualTo(new[] { earlierId, laterId }));
+    }
+
+    [Test]
     public void BuildPassport_HandlesMissingOptionalData()
     {
         var locomotive = new Locomotive
