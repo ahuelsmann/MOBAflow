@@ -112,4 +112,17 @@ public class Locomotive
     /// Example: "locomotives/{id}.jpg"
     /// </summary>
     public string? PhotoPath { get; set; }
+
+    /// <summary>
+    /// Optional maintenance history, counters and recurring service plans.
+    /// Missing data remains valid for projects created before this feature.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public LocomotiveMaintenanceData? Maintenance { get; set; }
+
+    /// <summary>
+    /// Optional installed decoder profile and validated CV backup snapshots.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public LocomotiveDecoderProfile? Decoder { get; set; }
 }
