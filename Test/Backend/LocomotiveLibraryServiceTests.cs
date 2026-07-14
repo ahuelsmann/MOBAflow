@@ -112,7 +112,7 @@ internal sealed class LocomotiveLibraryServiceTests
         {
             Assert.That(json, Does.Not.Contain("private.jpg"));
             Assert.That(json, Does.Not.Contain("http"));
-            Assert.That(json, Does.Not.Contain("qr", StringComparison.OrdinalIgnoreCase));
+            Assert.That(json.ToLowerInvariant(), Does.Not.Contain("qr"));
         });
     }
 }
