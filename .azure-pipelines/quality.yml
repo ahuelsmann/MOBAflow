@@ -2,7 +2,14 @@
 # Nutzt .NET 10, dotnet-coverage und SonarQube Cloud für statische Codeanalyse.
 # MAUI bleibt explizit außen vor (dieses Quality Gate prüft nur MOBAflow Desktop und Tests).
 
-trigger: none
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    exclude:
+      - '**/*.md'
+      - 'docs/**'
 
 pr:
   branches:
@@ -80,6 +87,7 @@ stages:
                 **/MOBAflow.csproj
                 **/Test.csproj
               feedsToUse: 'select'
+              arguments: '-p:IncludeMobaSmartTests=false'
             env:
               NUGET_PACKAGES: '$(nugetPackages)'
 
@@ -90,7 +98,7 @@ stages:
               projects: |
                 **/MOBAflow.csproj
                 **/Test.csproj
-              arguments: '--configuration $(buildConfiguration) --no-restore'
+              arguments: '--configuration $(buildConfiguration) --no-restore -p:IncludeMobaSmartTests=false'
             env:
               NUGET_PACKAGES: '$(nugetPackages)'
 
@@ -115,7 +123,7 @@ stages:
                 -s Test/dotnet-coverage.runsettings ^
                 -f cobertura ^
                 -o "$(Agent.TempDirectory)/coverage.cobertura.xml" ^
-                "dotnet test Test/Test.csproj --configuration $(buildConfiguration) --no-build --logger trx --results-directory $(Agent.TempDirectory)/TestResults"
+                "dotnet test Test/Test.csproj --configuration $(buildConfiguration) --framework net10.0-windows10.0.22621.0 --no-build -p:IncludeMobaSmartTests=false --logger trx --results-directory $(Agent.TempDirectory)/TestResults"
             displayName: 'Run Tests with dotnet-coverage (Cobertura)'
             env:
               NUGET_PACKAGES: '$(nugetPackages)'
@@ -136,3 +144,11 @@ stages:
               codeCoverageTool: 'Cobertura'
               summaryFileLocation: '$(Agent.TempDirectory)/coverage.cobertura.xml'
               reportDirectory: '$(Agent.TempDirectory)/coverage-report'
+
+          - task: PublishPipelineArtifact@1
+            displayName: 'Archive Cobertura coverage source'
+            condition: succeededOrFailed()
+            inputs:
+              targetPath: '$(Agent.TempDirectory)/coverage.cobertura.xml'
+              artifact: 'coverage-cobertura'
+              publishLocation: 'pipeline'
