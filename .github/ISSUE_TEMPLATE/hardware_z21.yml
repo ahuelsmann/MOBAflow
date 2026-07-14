@@ -1,0 +1,89 @@
+name: Hardware- oder Z21-Problem
+description: Melde Probleme mit Z21, Rückmeldern, Weichen, Netzwerk oder realer Anlagenhardware.
+title: "[Hardware/Z21]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Sicherheit zuerst:** Stoppe Züge und trenne bei unkontrolliertem Verhalten die Gleisspannung, bevor du weiter testest.
+        Veröffentliche keine WLAN-Passwörter, Zugangsdaten oder vollständigen privaten Netzwerkkonfigurationen.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Betroffene Komponente
+      options:
+        - Z21-Verbindung
+        - Loksteuerung oder Funktionen
+        - Weiche oder Signal
+        - Rückmelder
+        - MOBAsmart-Verbindung
+        - MOBAdisplay oder ESP32
+        - Netzwerk oder Erkennung
+        - Andere Hardware
+    validations:
+      required: true
+
+  - type: input
+    id: hardware
+    attributes:
+      label: Hardware und Firmware
+      description: Nenne Modell, Firmware und relevante Schnittstellen.
+      placeholder: "z. B. schwarze Z21, Firmware 1.xx, R-BUS"
+    validations:
+      required: true
+
+  - type: input
+    id: software
+    attributes:
+      label: MOBAflow-Version und Umgebung
+      placeholder: "z. B. 0.2.0, Windows 11; MOBAsmart auf Android 16"
+    validations:
+      required: true
+
+  - type: textarea
+    id: topology
+    attributes:
+      label: Anlagen- und Netzwerkaufbau
+      description: Beschreibe nur die für das Problem nötigen Verbindungen. Kürze IP-Adressen bei Bedarf.
+      placeholder: "PC und Z21 per LAN am selben Router; Smartphone im lokalen WLAN"
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Beobachtetes Verhalten
+      description: Was passiert an Software und Anlage?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Schritte zum Reproduzieren
+      placeholder: |
+        1. Anlage in sicheren Ausgangszustand bringen
+        2. ...
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnoseinformationen
+      description: Bereinigte Logs, Z21-Telegramme, Screenshots oder Statusanzeigen.
+      render: shell
+
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Sicherheitsbestätigung
+      options:
+        - label: Die Anlage befindet sich in einem sicheren Zustand und kann keine unkontrollierte Fahrt ausführen.
+          required: true
+        - label: Ich habe Zugangsdaten und unnötige private Netzwerkdaten entfernt.
+          required: true
+        - label: Ich habe die Hardware- und Sicherheitshinweise gelesen.
+          required: true
