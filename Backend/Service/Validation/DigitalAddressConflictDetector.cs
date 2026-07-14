@@ -88,6 +88,7 @@ public interface IDigitalAddressConflictDetector
 
 /// <summary>
 /// Platform-neutral address validation. It deliberately has no UI dependency.
+/// UI consumers should render <see cref="DigitalAddressConflictReport"/> and use owner IDs for navigation.
 /// </summary>
 public sealed class DigitalAddressConflictDetector : IDigitalAddressConflictDetector
 {
