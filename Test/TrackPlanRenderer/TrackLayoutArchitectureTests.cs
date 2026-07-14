@@ -442,4 +442,23 @@ internal sealed class TrackLayoutArchitectureTests
         });
     }
 
+    [Test]
+    public void RendererAssembly_DoesNotReferenceConcretePikoLibrary()
+    {
+        var references = typeof(PlacedTrackPlanSvgRenderer).Assembly
+            .GetReferencedAssemblies()
+            .Select(reference => reference.Name);
+
+        Assert.That(references, Does.Not.Contain("TrackLibrary.PikoA"));
+        Assert.That(references, Does.Contain("TrackLibrary.Base"));
+    }
+
+    [Test]
+    public void RailroadStateProjector_IsOwnedByBackendAssembly()
+    {
+        Assert.That(
+            typeof(TrackPlanRailroadStateProjector).Assembly,
+            Is.EqualTo(typeof(LayoutService).Assembly));
+    }
+
 }
