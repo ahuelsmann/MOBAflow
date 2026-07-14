@@ -120,7 +120,7 @@ stages:
                 -p:CollectCoverage=true `
                 "-p:CoverletOutput=$coveragePath" `
                 -p:CoverletOutputFormat=cobertura `
-                '-p:Include=[Domain]*%2c[Common]*%2c[Backend]*%2c[SharedUI]*%2c[TrackLibrary.Base]*%2c[TrackLibrary.PikoA]*%2c[TrackPlan.Renderer]*%2c[Sound]*%2c[MOBAdisplay]*%2c[MOBApi]*%2c[MOBAflow]*' `
+                -p:ExcludeAssembliesWithoutSources=MissingAll `
                 '-p:Exclude=[Test]*' `
                 --logger trx `
                 --results-directory "$(Agent.TempDirectory)\TestResults"
