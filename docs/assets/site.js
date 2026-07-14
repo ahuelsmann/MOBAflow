@@ -27,18 +27,25 @@
     node.textContent = String(new Date().getFullYear());
   });
 
+  const revealNodes = document.querySelectorAll(".reveal");
   if ("IntersectionObserver" in window && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("visible");
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.14 });
-    document.querySelectorAll(".reveal").forEach(node => observer.observe(node));
+    try {
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.14 });
+      document.documentElement.classList.add("reveal-enhanced");
+      revealNodes.forEach(node => observer.observe(node));
+    } catch {
+      document.documentElement.classList.remove("reveal-enhanced");
+      revealNodes.forEach(node => node.classList.add("visible"));
+    }
   } else {
-    document.querySelectorAll(".reveal").forEach(node => node.classList.add("visible"));
+    revealNodes.forEach(node => node.classList.add("visible"));
   }
 
   document.querySelectorAll("[data-image]").forEach(button => {
