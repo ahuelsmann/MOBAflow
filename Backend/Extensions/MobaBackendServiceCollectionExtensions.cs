@@ -33,6 +33,7 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton<MasterDataStore>();
         services.TryAddSingleton<IFileSystem>(SystemFileSystem.Instance);
         services.TryAddSingleton<IMultiplexerProvider, DefaultMultiplexerProvider>();
+        services.TryAddSingleton<ILocomotiveLibraryService, LocomotiveLibraryService>();
         services.TryAddSingleton<Z21Monitor>();
         services.TryAddSingleton<IUdpClientWrapper, UdpWrapper>();
         services.TryAddSingleton<IZ21DiscoveryService, Z21DiscoveryService>();
