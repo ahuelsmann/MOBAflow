@@ -29,7 +29,7 @@ public sealed record LocomotiveMaintenanceSummary(
 
 /// <summary>
 /// Structured passport content. It intentionally contains neither URLs nor QR payloads.
-/// The locomotive ID is the only navigation identity.
+/// The locomotive ID is the only navigation identity; filesystem paths and transport URLs are deliberately excluded.
 /// </summary>
 public sealed record LocomotivePassport(
     Guid LocomotiveId,
