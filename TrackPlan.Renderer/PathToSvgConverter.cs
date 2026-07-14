@@ -4,10 +4,10 @@ namespace Moba.TrackPlan.Renderer;
 using System.Globalization;
 using System.Text;
 
-using TrackLibrary.PikoA;
+using TrackLibrary.Base;
 
 /// <summary>
-/// Konvertiert Pfad-Befehle aus <see cref="SegmentLocalPathBuilder"/> in SVG-Pfad-Strings.
+/// Konvertiert Pfad-Befehle aus einer Gleisbibliothek in SVG-Pfad-Strings.
 /// Transformiert lokale Koordinaten (Port A = Ursprung) in Weltkoordinaten.
 /// </summary>
 public static class PathToSvgConverter
@@ -21,7 +21,7 @@ public static class PathToSvgConverter
     /// <param name="angleDegrees">Rotation in Grad (0 = +X)</param>
     /// <returns>SVG path "d"-Attribut (ohne das d="-Zeichen)</returns>
     public static string ToSvgPath(
-        IReadOnlyList<SegmentLocalPathBuilder.PathCommand> commands,
+        IReadOnlyList<ITrackPathCommand> commands,
         double originX,
         double originY,
         double angleDegrees)
@@ -40,11 +40,11 @@ public static class PathToSvgConverter
         {
             switch (cmd)
             {
-                case SegmentLocalPathBuilder.MoveTo move:
+                case ITrackMoveTo move:
                     x = move.X;
                     y = move.Y;
                     break;
-                case SegmentLocalPathBuilder.LineTo line:
+                case ITrackLineTo line:
                     {
                         var x1 = Tx(x, y);
                         var y1 = Ty(x, y);
@@ -55,7 +55,7 @@ public static class PathToSvgConverter
                         y = line.Y;
                         break;
                     }
-                case SegmentLocalPathBuilder.ArcTo arc:
+                case ITrackArcTo arc:
                     {
                         var x1 = Tx(x, y);
                         var y1 = Ty(x, y);
@@ -79,7 +79,7 @@ public static class PathToSvgConverter
     /// Format ist kompatibel mit WinUI Path.Data und SVG path "d".
     /// </summary>
     public static string ToPathDataString(
-        IReadOnlyList<SegmentLocalPathBuilder.PathCommand> commands,
+        IReadOnlyList<ITrackPathCommand> commands,
         double scale = 1.0,
         double offsetX = 0,
         double offsetY = 0)
@@ -94,16 +94,16 @@ public static class PathToSvgConverter
         {
             switch (cmd)
             {
-                case SegmentLocalPathBuilder.MoveTo move:
+                case ITrackMoveTo move:
                     x = move.X;
                     y = move.Y;
                     break;
-                case SegmentLocalPathBuilder.LineTo line:
+                case ITrackLineTo line:
                     sb.Append($"M {F(Tx(x))},{F(Ty(y))} L {F(Tx(line.X))},{F(Ty(line.Y))} ");
                     x = line.X;
                     y = line.Y;
                     break;
-                case SegmentLocalPathBuilder.ArcTo arc:
+                case ITrackArcTo arc:
                     {
                         var rx = arc.Radius * scale;
                         var ry = arc.Radius * scale;
