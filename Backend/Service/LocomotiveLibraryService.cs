@@ -65,7 +65,7 @@ public sealed class LocomotiveLibraryService : ILocomotiveLibraryService
                 locomotive.ArticleNumber,
                 locomotive.Decoder is not null,
                 locomotive.Maintenance?.Entries.Count > 0))
-            .OrderBy(entry => entry.Name, StringComparer.CurrentCultureIgnoreCase)
+            .OrderBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
             .ThenBy(entry => entry.LocomotiveId)
             .ToArray();
     }
