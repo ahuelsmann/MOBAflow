@@ -111,9 +111,8 @@ The currently referenced direct dependencies primarily fall under the following 
 
 | License family | Examples |
 | --- | --- |
-| MIT | Most Microsoft/.NET packages, CommunityToolkit packages, NUnit, coverlet, MinVer, SourceLink |
+| MIT | Most Microsoft/.NET packages, CommunityToolkit packages, NUnit, coverlet, MinVer, SourceLink, SkiaSharp and its native binaries |
 | Apache-2.0 | AndroidX startup runtime |
-| MIT | SkiaSharp and its distributed native binaries |
 | BSD-3-Clause | Moq |
 
 The authoritative license for a package is the license metadata published by its upstream project or NuGet package page.
