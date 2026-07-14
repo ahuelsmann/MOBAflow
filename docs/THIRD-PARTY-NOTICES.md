@@ -65,7 +65,7 @@ Some package versions may exist in `Directory.Packages.props` for future or cond
 
 ## Direct Package Inventory
 
-The following table reflects the direct package and framework references currently present in the repository's active project files.
+The following table is regenerated from the centrally managed versions in [`Directory.Packages.props`](../Directory.Packages.props) and reconciled with active project references. Versions in this section must not be edited independently of the central package catalog.
 
 | Package or family | Version(s) | Used in | Purpose |
 | --- | --- | --- | --- |
@@ -77,15 +77,31 @@ The following table reflects the direct package and framework references current
 | `Microsoft.Azure.AppConfiguration.AspNetCore` | `8.5.0` | `MOBAflow` | Optional Azure App Configuration source (DEBUG / `AZURE_APPCONFIG_CONNECTION`). |
 | `Microsoft.AspNetCore.SignalR.Client` | `10.0.9` | `MOBAflow`, `MOBAsmart`, `Test` | SignalR client connectivity. |
 | `Microsoft.Extensions.*` | `10.0.9` | `Common`, `Backend`, `Sound`, `SharedUI`, `Test` | Logging, dependency injection, and options. |
-| `Microsoft.Maui.Controls` | `10.0.71` | `MOBAsmart` | Core .NET MAUI UI framework for the Android client. |
-| `Xamarin.AndroidX.Startup.StartupRuntime` | `1.2.0.7` | `MOBAsmart` | AndroidX startup integration for MAUI initialization providers. |
+| `Microsoft.Maui.Controls` | `10.0.80` | `MOBAsmart` | Core .NET MAUI UI framework for the Android client. |
+| `Xamarin.AndroidX.Startup.StartupRuntime` | `1.2.0.8` | `MOBAsmart` | AndroidX startup integration for MAUI initialization providers. |
 | `ZXing.Net`, `ZXing.Net.Maui.Controls` | `0.16.11`, `0.10.1` | `MOBAflow`, `MOBAsmart` | QR pairing (WinUI) and barcode scanning (MAUI). |
 | `System.Speech`, `System.Windows.Extensions` | `10.0.9` | `Sound` | Windows text-to-speech and Windows-specific audio APIs. |
-| `Serilog`, `Serilog.Extensions.Logging`, `Serilog.Sinks.Async`, `Serilog.Sinks.Debug`, `Serilog.Sinks.File`, `Serilog.Enrichers.*` | `4.3.1`, `10.0.0`, `2.1.0`, `3.0.0`, `7.0.0`, `3.0.1`–`4.0.0` | `Common`, `MOBAflow` | Structured logging, async/file/debug sinks, and log enrichment. |
-| `SkiaSharp`, `System.Drawing.Common` | `4.148.0`, `10.0.9` | `MOBAdisplay`, `MOBAflow` | Display frame rendering, QR encoding, and image conversion utilities. |
+| `Serilog`, `Serilog.Extensions.Logging`, `Serilog.Sinks.Async`, `Serilog.Sinks.Debug`, `Serilog.Sinks.File`, `Serilog.Enrichers.*` | `4.4.0`, `10.0.0`, `2.1.0`, `3.0.0`, `7.0.0`, `3.0.1`–`4.0.0` | `Common`, `MOBAflow` | Structured logging, async/file/debug sinks, and log enrichment. |
+| `SkiaSharp`, `System.Drawing.Common` | `4.150.0`, `10.0.9` | `MOBAdisplay`, `MOBAflow` | Display frame rendering, QR encoding, and image conversion utilities. |
 | `coverlet.collector`, `Microsoft.NET.Test.Sdk`, `NUnit`, `NUnit.Analyzers`, `NUnit3TestAdapter`, `Moq` | `10.0.1`, `18.7.0`, `4.6.1`, `4.14.0`, `6.2.0`, `4.20.72` | `Test` | Test execution, coverage collection, analyzers, and mocking. |
 | `MinVer` | `7.0.0` | Build-wide via `Directory.Build.props` | Semantic version generation from git tags during builds. |
 | `Microsoft.SourceLink.AzureRepos.Git` | `10.0.300` | Build-wide via `Directory.Build.targets` | Source link metadata for debugger source navigation. |
+
+---
+
+## Native and Platform Components
+
+Native assets are tracked separately because their redistribution and platform behavior cannot be inferred from managed assembly references alone.
+
+| Component | Version source | License | Distribution context |
+| --- | --- | --- | --- |
+| SkiaSharp native binaries | `SkiaSharp 4.150.0` in `Directory.Packages.props` | MIT | Native graphics binaries used by MOBAdisplay and image/QR rendering. |
+| Windows App SDK runtime | `Microsoft.WindowsAppSDK 2.2.0` in `Directory.Packages.props` | MIT | Windows desktop runtime and deployment components. |
+| Win2D native components | `Microsoft.Graphics.Win2D 1.4.0` in `Directory.Packages.props` | MIT | GPU-accelerated Windows 2D rendering. |
+| AndroidX Startup runtime | `Xamarin.AndroidX.Startup.StartupRuntime 1.2.0.8` in `Directory.Packages.props` | Apache-2.0 | Android initialization runtime distributed with MOBAsmart. |
+| .NET / MAUI platform runtimes | Selected by the pinned .NET SDK and installed workloads | MIT and platform-specific notices | Framework/runtime files are supplied by Microsoft workloads and must be reviewed again when the SDK or workload changes. |
+
+The authoritative SkiaSharp license is the upstream [MIT license](https://github.com/mono/SkiaSharp/blob/main/LICENSE.md).
 
 ---
 
@@ -96,7 +112,8 @@ The currently referenced direct dependencies primarily fall under the following 
 | License family | Examples |
 | --- | --- |
 | MIT | Most Microsoft/.NET packages, CommunityToolkit packages, NUnit, coverlet, MinVer, SourceLink |
-| Apache-2.0 | Serilog family, AndroidX startup runtime, SkiaSharp |
+| Apache-2.0 | AndroidX startup runtime |
+| MIT | SkiaSharp and its distributed native binaries |
 | BSD-3-Clause | Moq |
 
 The authoritative license for a package is the license metadata published by its upstream project or NuGet package page.
@@ -128,6 +145,6 @@ We are grateful to the open-source maintainers and standards authors whose work 
 
 ---
 
-**Last Updated:** 2026-06-17
+**Last Updated:** 2026-07-14
 **Scope:** Current direct dependencies and external interoperability surface  
 **License:** MIT License (see [LICENSE](../LICENSE))
