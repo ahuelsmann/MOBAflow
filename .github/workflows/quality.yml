@@ -55,22 +55,18 @@ jobs:
             -p:IncludeMobaSmartTests=false `
             -p:DebugType=portable `
             -p:DebugSymbols=true `
-            -p:CollectCoverage=true `
-            "-p:CoverletOutput=$coveragePath" `
-            -p:CoverletOutputFormat=cobertura `
-            '-p:Exclude=[Test]*%2c[Microsoft.InteractiveExperiences.Projection]*' `
             --logger trx `
+            --collect:"XPlat Code Coverage" `
+            --settings Test/coverlet.runsettings `
             --results-directory artifacts/TestResults
           $testExitCode = $LASTEXITCODE
 
-          $generatedCoverage = Get-ChildItem artifacts -Filter 'coverage.cobertura*.xml' |
+          $generatedCoverage = Get-ChildItem artifacts/TestResults -Recurse -Filter coverage.cobertura.xml |
             Select-Object -First 1
           if (-not $generatedCoverage) {
             throw 'Coverlet did not produce a Cobertura report.'
           }
-          if ($generatedCoverage.FullName -ne $coveragePath) {
-            Copy-Item $generatedCoverage.FullName $coveragePath -Force
-          }
+          Copy-Item $generatedCoverage.FullName $coveragePath -Force
 
           [xml]$coverage = Get-Content $coveragePath
           if ([int64]$coverage.coverage.'lines-valid' -le 0) {
