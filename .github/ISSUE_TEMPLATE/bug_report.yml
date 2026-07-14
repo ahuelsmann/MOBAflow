@@ -1,0 +1,91 @@
+name: Fehler melden
+description: Melde ein reproduzierbares Problem in MOBAflow oder einer zugehörigen Anwendung.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Danke für deinen Fehlerbericht. Bitte teile keine Zugangsdaten, privaten Schlüssel oder vollständigen privaten Netzwerkkonfigurationen.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Betroffener Bereich
+      description: Wo tritt das Problem auf?
+      options:
+        - MOBAflow (Windows)
+        - MOBAsmart (Android)
+        - MOBApi
+        - MOBAdisplay
+        - Gleisplan
+        - Z21-Kommunikation
+        - Dokumentation oder Infrastruktur
+        - Nicht sicher
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version oder Commit
+      description: Gib die Release-Version oder den Commit an, mit dem du getestet hast.
+      placeholder: "z. B. 0.2.0 oder abc1234"
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Umgebung
+      description: Betriebssystem, .NET-Version und gegebenenfalls Gerät.
+      placeholder: "z. B. Windows 11 24H2, .NET 10; Android 16"
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Fehlerbeschreibung
+      description: Was ist passiert?
+      placeholder: Beschreibe das Problem möglichst konkret.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Schritte zum Reproduzieren
+      description: Welche Schritte führen zuverlässig zum Fehler?
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Erwartetes Verhalten
+      description: Was hätte stattdessen passieren sollen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Protokolle und zusätzliche Informationen
+      description: Füge relevante, bereinigte Logauszüge, Screenshots oder weitere Hinweise ein.
+      render: shell
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Vor dem Absenden
+      options:
+        - label: Ich habe nach bestehenden Issues mit demselben Problem gesucht.
+          required: true
+        - label: Ich habe Zugangsdaten, private Schlüssel und unnötige private Netzwerkdaten entfernt.
+          required: true
+        - label: Bei einem Hardwareproblem habe ich die Anlage in einen sicheren Zustand versetzt.
+          required: true
