@@ -16,6 +16,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Network;
 using Service;
+using Service.Validation;
 using Sound;
 
 /// <summary>
@@ -33,6 +34,7 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton<MasterDataStore>();
         services.TryAddSingleton<IFileSystem>(SystemFileSystem.Instance);
         services.TryAddSingleton<IMultiplexerProvider, DefaultMultiplexerProvider>();
+        services.TryAddSingleton<IDigitalAddressConflictDetector, DigitalAddressConflictDetector>();
         services.TryAddSingleton<Z21Monitor>();
         services.TryAddSingleton<IUdpClientWrapper, UdpWrapper>();
         services.TryAddSingleton<IZ21DiscoveryService, Z21DiscoveryService>();
