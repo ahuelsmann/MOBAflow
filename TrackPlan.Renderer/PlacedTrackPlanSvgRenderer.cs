@@ -4,34 +4,21 @@ namespace Moba.TrackPlan.Renderer;
 using System.Globalization;
 using System.Text;
 
-using TrackLibrary.PikoA;
+using TrackLibrary.Base;
 
+/// <summary>Renders a track-library-neutral scene as SVG.</summary>
 public sealed class PlacedTrackPlanSvgRenderer
 {
     private const double Margin = 50.0;
     private const double GridSpacingMm = 100.0;
 
-    public string Render(IReadOnlyList<PlacedSegment> placements, double trackOpacity = 0.8, bool showGrid = false, bool showPorts = false)
-    {
-        ArgumentNullException.ThrowIfNull(placements);
-
-        var scene = TrackPlanRenderSceneBuilder.Build(placements);
-        return Render(scene, trackOpacity, showGrid, showPorts ? placements : null);
-    }
-
-    /// <summary>Renders only the renderer-neutral scene used by Win2D and future adapters.</summary>
     public string Render(TrackPlanRenderScene scene, double trackOpacity = 0.8, bool showGrid = false)
     {
         ArgumentNullException.ThrowIfNull(scene);
-        return Render(scene, trackOpacity, showGrid, null);
-    }
-
-    private string Render(TrackPlanRenderScene scene, double trackOpacity, bool showGrid, IReadOnlyList<PlacedSegment>? placementsForPorts)
-    {
         if (scene.Items.Count == 0)
             return "<svg></svg>";
 
-        var bounds = ComputeBounds(scene.Items, scene.Markers);
+        var bounds = ComputeBounds(scene.Items, scene.Markers, scene.Ports);
         var minX = bounds.MinX - Margin;
         var minY = bounds.MinY - Margin;
         var maxX = bounds.MaxX + Margin;
@@ -57,17 +44,11 @@ public sealed class PlacedTrackPlanSvgRenderer
                 builder.AppendLine($"  <text x=\"{F(item.X)}\" y=\"{F(item.Y - 12)}\" font-size=\"12\" fill=\"#333333\">{Escape(item.Label)}</text>");
         }
 
-        if (placementsForPorts != null)
+        foreach (var port in scene.Ports)
         {
-            foreach (var placed in placementsForPorts)
-            {
-            foreach (var (portName, x, y, _) in SegmentPortGeometry.GetAllPortWorldPositions(placed))
-            {
-                var color = GetPortColor(portName);
-                builder.AppendLine($"  <circle cx=\"{F(x)}\" cy=\"{F(y)}\" r=\"6\" fill=\"{color}\" fill-opacity=\"0.9\" />");
-                builder.AppendLine($"  <text x=\"{F(x + 10)}\" y=\"{F(y - 10)}\" font-size=\"12\" font-weight=\"bold\" fill=\"{color}\">{portName[^1]}</text>");
-            }
-            }
+            var color = GetPortColor(port.Name);
+            builder.AppendLine($"  <circle cx=\"{F(port.X)}\" cy=\"{F(port.Y)}\" r=\"6\" fill=\"{color}\" fill-opacity=\"0.9\" />");
+            builder.AppendLine($"  <text x=\"{F(port.X + 10)}\" y=\"{F(port.Y - 10)}\" font-size=\"12\" font-weight=\"bold\" fill=\"{color}\">{Escape(port.Name[^1..])}</text>");
         }
 
         foreach (var marker in scene.Markers)
@@ -102,7 +83,8 @@ public sealed class PlacedTrackPlanSvgRenderer
 
     private static (double MinX, double MinY, double MaxX, double MaxY) ComputeBounds(
         IReadOnlyList<TrackPlanRenderItem> items,
-        IReadOnlyList<TrackPlanValidationMarker> markers)
+        IReadOnlyList<TrackPlanValidationMarker> markers,
+        IReadOnlyList<TrackPlanPortMarker> ports)
     {
         double minX = double.MaxValue;
         double minY = double.MaxValue;
@@ -111,8 +93,7 @@ public sealed class PlacedTrackPlanSvgRenderer
 
         foreach (var item in items)
         {
-            var (localMinX, localMinY, localMaxX, localMaxY) = SegmentLocalPathBuilder.GetBounds(item.Path);
-
+            var (localMinX, localMinY, localMaxX, localMaxY) = TrackPathGeometry.GetBounds(item.Path);
             var angleRad = item.RotationDegrees * Math.PI / 180;
             var cos = Math.Cos(angleRad);
             var sin = Math.Sin(angleRad);
@@ -145,20 +126,25 @@ public sealed class PlacedTrackPlanSvgRenderer
             maxY = Math.Max(maxY, marker.Y);
         }
 
+        foreach (var port in ports)
+        {
+            minX = Math.Min(minX, port.X);
+            minY = Math.Min(minY, port.Y);
+            maxX = Math.Max(maxX, port.X);
+            maxY = Math.Max(maxY, port.Y);
+        }
+
         return (minX, minY, maxX, maxY);
     }
 
-    private static string GetPortColor(string portName)
+    private static string GetPortColor(string portName) => portName switch
     {
-        return portName switch
-        {
-            "PortA" => "#000000",
-            "PortB" => "#FF0000",
-            "PortC" => "#00AA00",
-            "PortD" => "#0000FF",
-            _ => "#666666"
-        };
-    }
+        "PortA" => "#000000",
+        "PortB" => "#FF0000",
+        "PortC" => "#00AA00",
+        "PortD" => "#0000FF",
+        _ => "#666666"
+    };
 
     private static string F(double value) => value.ToString("F2", CultureInfo.InvariantCulture);
 
