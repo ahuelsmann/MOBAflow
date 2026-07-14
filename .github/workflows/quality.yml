@@ -41,18 +41,27 @@ jobs:
           --no-restore
           -p:IncludeMobaSmartTests=false
 
-      - name: Install dotnet-coverage
-        shell: pwsh
-        run: dotnet tool install --global dotnet-coverage
-
       - name: Run desktop tests with Cobertura coverage
         shell: pwsh
-        run: >-
-          dotnet-coverage collect
-          -s Test/dotnet-coverage.runsettings
-          -f cobertura
-          -o artifacts/coverage.cobertura.xml
-          "dotnet test Test/Test.csproj --configuration Release --framework net10.0-windows10.0.22621.0 --no-build -p:IncludeMobaSmartTests=false --logger trx --results-directory artifacts/TestResults"
+        run: |
+          dotnet test Test/Test.csproj `
+            --configuration Release `
+            --framework net10.0-windows10.0.22621.0 `
+            --no-build `
+            -p:IncludeMobaSmartTests=false `
+            --logger trx `
+            --collect:"XPlat Code Coverage" `
+            --settings Test/coverlet.runsettings `
+            --results-directory artifacts/TestResults
+          $testExitCode = $LASTEXITCODE
+
+          $coverage = Get-ChildItem artifacts/TestResults -Recurse -Filter coverage.cobertura.xml |
+            Select-Object -First 1
+          if ($coverage) {
+            Copy-Item $coverage.FullName artifacts/coverage.cobertura.xml -Force
+          }
+
+          exit $testExitCode
 
       - name: Add measured coverage to job summary
         if: always()
