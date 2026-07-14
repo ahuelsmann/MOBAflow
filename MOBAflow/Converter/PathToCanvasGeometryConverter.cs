@@ -9,10 +9,10 @@ using Microsoft.Graphics.Canvas.Geometry;
 
 using System.Numerics;
 
-using TrackLibrary.PikoA;
+using TrackLibrary.Base;
 
 /// <summary>
-/// Konvertiert Pfad-Befehle aus <see cref="SegmentLocalPathBuilder"/> in Win2D <see cref="CanvasGeometry"/>.
+/// Konvertiert Pfad-Befehle aus einer Gleisbibliothek in Win2D <see cref="CanvasGeometry"/>.
 /// Geometrie in lokalen Koordinaten (mm) – keine Platzierungs-Transform.
 /// </summary>
 public static class PathToCanvasGeometryConverter
@@ -23,7 +23,7 @@ public static class PathToCanvasGeometryConverter
     /// </summary>
     public static CanvasGeometry ToCanvasGeometryInWorldCoords(
         ICanvasResourceCreator resourceCreator,
-        IReadOnlyList<SegmentLocalPathBuilder.PathCommand> commands,
+        IReadOnlyList<ITrackPathCommand> commands,
         double originX, double originY, double angleDegrees, double scale)
     {
         var angleRad = angleDegrees * Math.PI / 180;
@@ -40,7 +40,7 @@ public static class PathToCanvasGeometryConverter
         {
             switch (cmd)
             {
-                case SegmentLocalPathBuilder.MoveTo move:
+                case ITrackMoveTo move:
                     if (figureOpen)
                         pathBuilder.EndFigure(CanvasFigureLoop.Open);
                     pathBuilder.BeginFigure(Tx(move.X, move.Y), Ty(move.X, move.Y));
@@ -48,7 +48,7 @@ public static class PathToCanvasGeometryConverter
                     x = move.X;
                     y = move.Y;
                     break;
-                case SegmentLocalPathBuilder.LineTo line:
+                case ITrackLineTo line:
                     if (!figureOpen)
                     {
                         pathBuilder.BeginFigure(Tx(x, y), Ty(x, y));
@@ -58,7 +58,7 @@ public static class PathToCanvasGeometryConverter
                     x = line.X;
                     y = line.Y;
                     break;
-                case SegmentLocalPathBuilder.ArcTo arc:
+                case ITrackArcTo arc:
                     if (!figureOpen)
                     {
                         pathBuilder.BeginFigure(Tx(x, y), Ty(x, y));
@@ -88,7 +88,7 @@ public static class PathToCanvasGeometryConverter
     /// <param name="resourceCreator">CanvasControl or DrawingSession (for ICanvasResourceCreator)</param>
     /// <param name="commands">Pfad-Befehle in lokalen Koordinaten (Port A = Ursprung)</param>
     /// <returns>CanvasGeometry in mm</returns>
-    public static CanvasGeometry ToCanvasGeometry(ICanvasResourceCreator resourceCreator, IReadOnlyList<SegmentLocalPathBuilder.PathCommand> commands)
+    public static CanvasGeometry ToCanvasGeometry(ICanvasResourceCreator resourceCreator, IReadOnlyList<ITrackPathCommand> commands)
     {
         var pathBuilder = new CanvasPathBuilder(resourceCreator);
         var figureOpen = false;
@@ -98,7 +98,7 @@ public static class PathToCanvasGeometryConverter
         {
             switch (cmd)
             {
-                case SegmentLocalPathBuilder.MoveTo move:
+                case ITrackMoveTo move:
                     if (figureOpen)
                         pathBuilder.EndFigure(CanvasFigureLoop.Open);
                     pathBuilder.BeginFigure((float)move.X, (float)move.Y);
@@ -107,7 +107,7 @@ public static class PathToCanvasGeometryConverter
                     y = move.Y;
                     break;
 
-                case SegmentLocalPathBuilder.LineTo line:
+                case ITrackLineTo line:
                     if (!figureOpen)
                     {
                         pathBuilder.BeginFigure((float)x, (float)y);
@@ -118,7 +118,7 @@ public static class PathToCanvasGeometryConverter
                     y = line.Y;
                     break;
 
-                case SegmentLocalPathBuilder.ArcTo arc:
+                case ITrackArcTo arc:
                     if (!figureOpen)
                     {
                         pathBuilder.BeginFigure((float)x, (float)y);
