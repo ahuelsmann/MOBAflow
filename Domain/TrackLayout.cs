@@ -146,21 +146,37 @@ public interface ITrackFeedbackLookup
 /// </summary>
 public sealed class RailroadState
 {
+    private readonly object _gate = new();
     private readonly Dictionary<Guid, bool> _occupancyByTrack = [];
     private readonly Dictionary<Guid, DateTimeOffset> _lastFeedbackByTrack = [];
     private readonly Dictionary<int, bool> _switchPositionsByAddress = [];
     private readonly Dictionary<int, string> _signalAspectsByAddress = [];
 
-    public bool IsOccupied(Guid trackId) => _occupancyByTrack.TryGetValue(trackId, out var occupied) && occupied;
+    public bool IsOccupied(Guid trackId)
+    {
+        lock (_gate)
+            return _occupancyByTrack.TryGetValue(trackId, out var occupied) && occupied;
+    }
 
-    public void SetOccupied(Guid trackId, bool occupied) => _occupancyByTrack[trackId] = occupied;
+    public void SetOccupied(Guid trackId, bool occupied)
+    {
+        lock (_gate)
+            _occupancyByTrack[trackId] = occupied;
+    }
 
-    public DateTimeOffset? GetLastFeedback(Guid trackId) => _lastFeedbackByTrack.TryGetValue(trackId, out var timestamp) ? timestamp : null;
+    public DateTimeOffset? GetLastFeedback(Guid trackId)
+    {
+        lock (_gate)
+            return _lastFeedbackByTrack.TryGetValue(trackId, out var timestamp) ? timestamp : null;
+    }
 
     public void MarkFeedback(Guid trackId, DateTimeOffset timestamp)
     {
-        _lastFeedbackByTrack[trackId] = timestamp;
-        _occupancyByTrack[trackId] = true;
+        lock (_gate)
+        {
+            _lastFeedbackByTrack[trackId] = timestamp;
+            _occupancyByTrack[trackId] = true;
+        }
     }
 
     /// <summary>Clears occupancy that has not received feedback within the supplied timeout.</summary>
@@ -169,31 +185,50 @@ public sealed class RailroadState
         if (timeout < TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(timeout));
 
-        foreach (var trackId in _lastFeedbackByTrack
-                     .Where(entry => now - entry.Value >= timeout)
-                     .Select(entry => entry.Key)
-                     .ToList())
+        lock (_gate)
+        {
+            foreach (var trackId in _lastFeedbackByTrack
+                         .Where(entry => now - entry.Value >= timeout)
+                         .Select(entry => entry.Key)
+                         .ToList())
+            {
+                _occupancyByTrack[trackId] = false;
+                _lastFeedbackByTrack.Remove(trackId);
+            }
+        }
+    }
+
+    public void ClearFeedback(Guid trackId)
+    {
+        lock (_gate)
         {
             _occupancyByTrack[trackId] = false;
             _lastFeedbackByTrack.Remove(trackId);
         }
     }
 
-    public void ClearFeedback(Guid trackId)
+    public bool? GetSwitchPosition(int address)
     {
-        _occupancyByTrack[trackId] = false;
-        _lastFeedbackByTrack.Remove(trackId);
+        lock (_gate)
+            return _switchPositionsByAddress.TryGetValue(address, out var isLeft) ? isLeft : null;
     }
 
-    public bool? GetSwitchPosition(int address) => _switchPositionsByAddress.TryGetValue(address, out var isLeft) ? isLeft : null;
+    public void SetSwitchPosition(int address, bool isLeft)
+    {
+        lock (_gate)
+            _switchPositionsByAddress[address] = isLeft;
+    }
 
-    public void SetSwitchPosition(int address, bool isLeft) => _switchPositionsByAddress[address] = isLeft;
-
-    public string? GetSignalAspect(int address) => _signalAspectsByAddress.TryGetValue(address, out var aspect) ? aspect : null;
+    public string? GetSignalAspect(int address)
+    {
+        lock (_gate)
+            return _signalAspectsByAddress.TryGetValue(address, out var aspect) ? aspect : null;
+    }
 
     public void SetSignalAspect(int address, string aspect)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(aspect);
-        _signalAspectsByAddress[address] = aspect;
+        lock (_gate)
+            _signalAspectsByAddress[address] = aspect;
     }
 }
