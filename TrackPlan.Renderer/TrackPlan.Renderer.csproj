@@ -8,6 +8,6 @@
         <Description>Visualisierung, WorldTransform, Layout-Export.</Description>
     </PropertyGroup>
     <ItemGroup>
-        <ProjectReference Include="..\TrackLibrary.PikoA\TrackLibrary.PikoA.csproj" />
+        <ProjectReference Include="..\TrackLibrary.Base\TrackLibrary.Base.csproj" />
     </ItemGroup>
 </Project>

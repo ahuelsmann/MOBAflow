@@ -5,8 +5,9 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <DefaultItemExcludes>$(DefaultItemExcludes);Analysis\obj\**;Analysis\bin\**</DefaultItemExcludes>
-        <!-- Skip tests that trigger MAUI/Android SDK on machines without Android SDK -->
-        <DefineConstants Condition="'$(ANDROID_SDK_ROOT)' == ''">$(DefineConstants);SKIP_ANDROID_TESTS</DefineConstants>
+        <!-- Desktop validation is deterministic: Android/MOBAsmart participates only when explicitly requested. -->
+        <IncludeMobaSmartTests Condition="'$(IncludeMobaSmartTests)' == ''">false</IncludeMobaSmartTests>
+        <DefineConstants Condition="'$(IncludeMobaSmartTests)' != 'true'">$(DefineConstants);SKIP_ANDROID_TESTS</DefineConstants>
     </PropertyGroup>
     <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.22621.0'">
         <RuntimeIdentifier>win-x64</RuntimeIdentifier>
@@ -43,7 +44,7 @@
         <ProjectReference Include="..\Sound\Sound.csproj" />
         <ProjectReference Include="..\MOBAdisplay\MOBAdisplay.csproj" />
         <ProjectReference Include="..\MOBApi\MOBApi.csproj" />
-        <ProjectReference Condition="'$(ANDROID_SDK_ROOT)' != ''" Include="..\MOBAsmart\MOBAsmart.csproj" />
+        <ProjectReference Condition="'$(IncludeMobaSmartTests)' == 'true'" Include="..\MOBAsmart\MOBAsmart.csproj" />
         <ProjectReference Condition="'$(TargetFramework)' == 'net10.0-windows10.0.22621.0'" Include="..\MOBAflow\MOBAflow.csproj" />
     </ItemGroup>
     <ItemGroup>

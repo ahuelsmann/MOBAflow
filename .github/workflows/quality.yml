@@ -1,0 +1,108 @@
+name: Quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  desktop:
+    name: Windows desktop build, tests, and coverage
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore desktop test graph
+        shell: pwsh
+        run: dotnet restore Test/Test.csproj -p:IncludeMobaSmartTests=false
+
+      - name: Build desktop test graph
+        shell: pwsh
+        run: >-
+          dotnet build Test/Test.csproj
+          --configuration Release
+          --framework net10.0-windows10.0.22621.0
+          --no-restore
+          -p:IncludeMobaSmartTests=false
+          -p:DebugType=portable
+          -p:DebugSymbols=true
+
+      - name: Run desktop tests with Cobertura coverage
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force artifacts | Out-Null
+          $coveragePath = Join-Path (Resolve-Path artifacts) 'coverage.cobertura.xml'
+
+          dotnet test Test/Test.csproj `
+            --configuration Release `
+            --framework net10.0-windows10.0.22621.0 `
+            --no-build `
+            -p:IncludeMobaSmartTests=false `
+            -p:DebugType=portable `
+            -p:DebugSymbols=true `
+            --logger trx `
+            --collect:"XPlat Code Coverage" `
+            --settings Test/coverlet.runsettings `
+            --results-directory artifacts/TestResults
+          $testExitCode = $LASTEXITCODE
+
+          $generatedCoverage = Get-ChildItem artifacts/TestResults -Recurse -Filter coverage.cobertura.xml |
+            Select-Object -First 1
+          if (-not $generatedCoverage) {
+            throw 'Coverlet did not produce a Cobertura report.'
+          }
+          Copy-Item $generatedCoverage.FullName $coveragePath -Force
+
+          [xml]$coverage = Get-Content $coveragePath
+          if ([int64]$coverage.coverage.'lines-valid' -le 0) {
+            throw 'Cobertura report contains no instrumented lines.'
+          }
+
+          exit $testExitCode
+
+      - name: Add measured coverage to job summary
+        if: always()
+        shell: pwsh
+        run: |
+          $coveragePath = 'artifacts/coverage.cobertura.xml'
+          if (-not (Test-Path $coveragePath)) {
+            '## Coverage' | Add-Content $env:GITHUB_STEP_SUMMARY
+            'No valid Cobertura report was produced.' | Add-Content $env:GITHUB_STEP_SUMMARY
+            exit 0
+          }
+
+          [xml]$coverage = Get-Content $coveragePath
+          $lineRate = [double]::Parse(
+            $coverage.coverage.'line-rate',
+            [Globalization.CultureInfo]::InvariantCulture)
+          $percentage = ($lineRate * 100).ToString('F2', [Globalization.CultureInfo]::InvariantCulture)
+          '## Coverage' | Add-Content $env:GITHUB_STEP_SUMMARY
+          "Measured line coverage: **$percentage%**" | Add-Content $env:GITHUB_STEP_SUMMARY
+          "Instrumented lines: $($coverage.coverage.'lines-valid')" | Add-Content $env:GITHUB_STEP_SUMMARY
+          "Commit: ${{ github.sha }}" | Add-Content $env:GITHUB_STEP_SUMMARY
+
+      - name: Archive test results and Cobertura report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-quality-${{ github.run_number }}
+          path: |
+            artifacts/TestResults/**/*.trx
+            artifacts/coverage.cobertura.xml
+          if-no-files-found: warn
+          retention-days: 90

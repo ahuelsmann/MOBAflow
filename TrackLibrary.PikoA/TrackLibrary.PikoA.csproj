@@ -10,5 +10,6 @@
     <ItemGroup>
         <ProjectReference Include="..\TrackLibrary.Base\TrackLibrary.Base.csproj" />
         <ProjectReference Include="..\Domain\Domain.csproj" />
+        <ProjectReference Include="..\TrackPlan.Renderer\TrackPlan.Renderer.csproj" />
     </ItemGroup>
 </Project>
