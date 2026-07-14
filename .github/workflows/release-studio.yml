@@ -25,8 +25,25 @@ jobs:
     name: Validate, package, and draft release
     runs-on: windows-latest
     timeout-minutes: 60
+    env:
+      # Release Studio only builds the Windows desktop/test surface.
+      ANDROID_SDK_ROOT: ""
+      ANDROID_HOME: ""
 
     steps:
+      - name: Check out trusted release validator
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          ref: ${{ github.event.repository.default_branch }}
+          path: trusted-workflow
+          sparse-checkout: scripts/Validate-ReleaseTag.ps1
+          sparse-checkout-cone-mode: false
+
+      - name: Stage trusted release validator
+        shell: pwsh
+        run: Copy-Item trusted-workflow/scripts/Validate-ReleaseTag.ps1 "$env:RUNNER_TEMP/Validate-ReleaseTag.ps1"
+
       - name: Check out the requested tag
         uses: actions/checkout@v4
         with:
@@ -39,7 +56,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.tag }}
         run: >-
-          ./scripts/Validate-ReleaseTag.ps1
+          & "$env:RUNNER_TEMP/Validate-ReleaseTag.ps1"
           -Tag $env:RELEASE_TAG
           -Repository '${{ github.repository }}'
           -Token $env:GH_TOKEN
@@ -80,6 +97,28 @@ jobs:
           --self-contained true
           --no-restore
           --output artifacts/MOBAflow-win-x64
+
+      - name: Publish bundled MOBApi
+        shell: pwsh
+        run: >-
+          dotnet publish MOBApi/MOBApi.csproj
+          --configuration Release
+          --runtime win-x64
+          --self-contained true
+          --output artifacts/MOBAflow-win-x64/MOBApi
+
+      - name: Sanitize release configuration
+        shell: pwsh
+        run: |
+          $settingsPath = 'artifacts/MOBAflow-win-x64/appsettings.json'
+          $settings = Get-Content $settingsPath -Raw | ConvertFrom-Json
+          $settings.Z21.CurrentIpAddress = ''
+          $settings.Speech.PiperExecutablePath = ''
+          $settings.Speech.PiperModelPath = ''
+          $settings.Speech.PiperConfigPath = ''
+          $settings.Application.LastSolutionPath = $null
+          $settings.Application.PhotoStoragePath = ''
+          $settings | ConvertTo-Json -Depth 20 | Set-Content $settingsPath -Encoding utf8NoBOM
 
       - name: Package artifacts and checksums
         shell: pwsh
