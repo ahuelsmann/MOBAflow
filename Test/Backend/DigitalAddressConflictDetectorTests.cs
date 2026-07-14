@@ -61,6 +61,32 @@ internal sealed class DigitalAddressConflictDetectorTests
     }
 
     [Test]
+    public void Detect_IgnoresUnconfiguredAddresses()
+    {
+        var project = new Project
+        {
+            Locomotives = [new Locomotive { Name = "Unconfigured", DigitalAddress = null }],
+            SignalBoxPlan = new SignalBoxPlan
+            {
+                Elements =
+                [
+                    new SbSwitch { Name = "Switch", Address = 0 },
+                    new SbSignal { Name = "Signal", BaseAddress = 0 },
+                    new SbDetector { Name = "Detector", FeedbackAddress = 0 }
+                ]
+            }
+        };
+
+        var report = _detector.Detect(project);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(report.Allocations, Is.Empty);
+            Assert.That(report.Findings, Is.Empty);
+        });
+    }
+
+    [Test]
     public void Detect_UsesEntireMultiplexerRange()
     {
         var signal = new SbSignal
