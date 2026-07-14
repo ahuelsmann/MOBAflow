@@ -110,6 +110,12 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
             .AddMobaWinUiDomainServices()
             .AddMobaWinUiShellServices()
             .AddMobaWinUiViewModelsAndWindow();
+
+        // The container test validates registrations, not WinUI COM activation.
+        // Last-registration-wins keeps production DI intact while preventing a
+        // headless runner from touching DispatcherQueue during ViewModel creation.
+        services.AddSingleton(Moq.Mock.Of<IUiDispatcher>());
+
         return services.BuildServiceProvider();
     }
 
