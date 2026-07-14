@@ -83,7 +83,7 @@ The following table is regenerated from the centrally managed versions in [`Dire
 | `System.Speech`, `System.Windows.Extensions` | `10.0.9` | `Sound` | Windows text-to-speech and Windows-specific audio APIs. |
 | `Serilog`, `Serilog.Extensions.Logging`, `Serilog.Sinks.Async`, `Serilog.Sinks.Debug`, `Serilog.Sinks.File`, `Serilog.Enrichers.*` | `4.4.0`, `10.0.0`, `2.1.0`, `3.0.0`, `7.0.0`, `3.0.1`–`4.0.0` | `Common`, `MOBAflow` | Structured logging, async/file/debug sinks, and log enrichment. |
 | `SkiaSharp`, `System.Drawing.Common` | `4.150.0`, `10.0.9` | `MOBAdisplay`, `MOBAflow` | Display frame rendering, QR encoding, and image conversion utilities. |
-| `coverlet.collector`, `Microsoft.NET.Test.Sdk`, `NUnit`, `NUnit.Analyzers`, `NUnit3TestAdapter`, `Moq` | `10.0.1`, `18.7.0`, `4.6.1`, `4.14.0`, `6.2.0`, `4.20.72` | `Test` | Test execution, coverage collection, analyzers, and mocking. |
+| `coverlet.collector`, `coverlet.msbuild`, `Microsoft.NET.Test.Sdk`, `NUnit`, `NUnit.Analyzers`, `NUnit3TestAdapter`, `Moq` | `10.0.1`, `10.0.1`, `18.7.0`, `4.6.1`, `4.14.0`, `6.2.0`, `4.20.72` | `Test` | Test execution, coverage instrumentation/collection, analyzers, and mocking. |
 | `MinVer` | `7.0.0` | Build-wide via `Directory.Build.props` | Semantic version generation from git tags during builds. |
 | `Microsoft.SourceLink.AzureRepos.Git` | `10.0.300` | Build-wide via `Directory.Build.targets` | Source link metadata for debugger source navigation. |
 
