@@ -369,4 +369,70 @@ internal sealed class TrackLayoutArchitectureTests
 
         Assert.That(moved?.Segment.No, Is.EqualTo(selection.SelectedSegmentId));
     }
+    [Test]
+    public void RailroadState_ConcurrentFeedbackAndExpiry_RemainsConsistent()
+    {
+        var state = new RailroadState();
+        var trackIds = Enumerable.Range(0, 32).Select(_ => Guid.NewGuid()).ToArray();
+        var start = DateTimeOffset.UtcNow;
+
+        Assert.DoesNotThrow(() => Parallel.For(0, 10_000, index =>
+        {
+            var trackId = trackIds[index % trackIds.Length];
+            if ((index & 1) == 0)
+                state.MarkFeedback(trackId, start.AddTicks(index));
+            else
+                state.ExpireFeedback(start.AddSeconds(1), TimeSpan.Zero);
+        }));
+
+        foreach (var trackId in trackIds)
+            state.MarkFeedback(trackId, start.AddSeconds(2));
+
+        Assert.That(trackIds.All(state.IsOccupied), Is.True);
+    }
+
+    [Test]
+    public void RailroadStateProjector_DisposeIsSafeDuringConcurrentFeedbackAndExpiry()
+    {
+        var plan = new EditableTrackPlan();
+        var segment = new PlacedSegment(new G231(), 0, 0, 0, InPort: 8);
+        plan.AddSegment(segment);
+        var bus = new EventBus(Mock.Of<ILogger<EventBus>>());
+        var state = new RailroadState();
+        var projector = new TrackPlanRailroadStateProjector(bus, plan, state)
+        {
+            FeedbackTimeout = TimeSpan.Zero
+        };
+        projector.Activate();
+
+        Assert.DoesNotThrow(() => Parallel.Invoke(
+            () => Parallel.For(0, 1_000, _ => bus.Publish(new FeedbackReceivedEvent(8))),
+            () => Parallel.For(0, 1_000, _ => projector.ExpireFeedbackNow()),
+            projector.Dispose));
+
+        projector.Dispose();
+    }
+
+    [Test]
+    public void RailroadStateProjector_DisposePreventsFutureFeedbackAndExpiry()
+    {
+        var plan = new EditableTrackPlan();
+        var segment = new PlacedSegment(new G231(), 0, 0, 0, InPort: 8);
+        plan.AddSegment(segment);
+        var bus = new EventBus(Mock.Of<ILogger<EventBus>>());
+        var state = new RailroadState();
+        var projector = new TrackPlanRailroadStateProjector(bus, plan, state)
+        {
+            FeedbackTimeout = TimeSpan.Zero
+        };
+        projector.Activate();
+        projector.Dispose();
+
+        state.MarkFeedback(segment.Segment.No, DateTimeOffset.UtcNow);
+        projector.ExpireFeedbackNow();
+        bus.Publish(new FeedbackReceivedEvent(8));
+
+        Assert.That(state.IsOccupied(segment.Segment.No), Is.True);
+    }
+
 }
