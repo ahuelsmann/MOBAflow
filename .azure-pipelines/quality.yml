@@ -98,7 +98,7 @@ stages:
               projects: |
                 **/MOBAflow.csproj
                 **/Test.csproj
-              arguments: '--configuration $(buildConfiguration) --no-restore -p:IncludeMobaSmartTests=false'
+              arguments: '--configuration $(buildConfiguration) --no-restore -p:IncludeMobaSmartTests=false -p:DebugType=portable -p:DebugSymbols=true'
             env:
               NUGET_PACKAGES: '$(nugetPackages)'
 
@@ -117,23 +117,20 @@ stages:
                 --framework net10.0-windows10.0.22621.0 `
                 --no-build `
                 -p:IncludeMobaSmartTests=false `
-                -p:CollectCoverage=true `
-                "-p:CoverletOutput=$coveragePath" `
-                -p:CoverletOutputFormat=cobertura `
-                '-p:Include=[Domain]*%2c[Common]*%2c[Backend]*%2c[SharedUI]*%2c[TrackLibrary.Base]*%2c[TrackLibrary.PikoA]*%2c[TrackPlan.Renderer]*%2c[Sound]*%2c[MOBAdisplay]*%2c[MOBApi]*%2c[MOBAflow]*' `
-                '-p:Exclude=[Test]*' `
+                -p:DebugType=portable `
+                -p:DebugSymbols=true `
                 --logger trx `
+                --collect:"XPlat Code Coverage" `
+                --settings Test/coverlet.runsettings `
                 --results-directory "$(Agent.TempDirectory)\TestResults"
               $testExitCode = $LASTEXITCODE
 
-              $generatedCoverage = Get-ChildItem "$(Agent.TempDirectory)" -Filter 'coverage.cobertura*.xml' |
+              $generatedCoverage = Get-ChildItem "$(Agent.TempDirectory)\TestResults" -Recurse -Filter coverage.cobertura.xml |
                 Select-Object -First 1
               if (-not $generatedCoverage) {
                 throw 'Coverlet did not produce a Cobertura report.'
               }
-              if ($generatedCoverage.FullName -ne $coveragePath) {
-                Copy-Item $generatedCoverage.FullName $coveragePath -Force
-              }
+              Copy-Item $generatedCoverage.FullName $coveragePath -Force
 
               [xml]$coverage = Get-Content $coveragePath
               if ([int64]$coverage.coverage.'lines-valid' -le 0) {
@@ -141,7 +138,7 @@ stages:
               }
 
               exit $testExitCode
-            displayName: 'Run Tests with Coverlet (Cobertura)'
+            displayName: 'Run Tests with Coverlet collector (Cobertura)'
             env:
               NUGET_PACKAGES: '$(nugetPackages)'
 
