@@ -10,16 +10,16 @@ using Base;
 public static class SegmentLocalPathBuilder
 {
     /// <summary>Command in path (platform-independent).</summary>
-    public abstract record PathCommand;
+    public abstract record PathCommand : ITrackPathCommand;
 
     /// <summary>Moves to position without drawing (start of new subpath).</summary>
-    public sealed record MoveTo(double X, double Y) : PathCommand;
+    public sealed record MoveTo(double X, double Y) : PathCommand, ITrackMoveTo;
 
     /// <summary>Line to the specified point.</summary>
-    public sealed record LineTo(double X, double Y) : PathCommand;
+    public sealed record LineTo(double X, double Y) : PathCommand, ITrackLineTo;
 
     /// <summary>Arc to endpoint (radius in mm, Clockwise = sweep direction, LargeArc = arc &gt; 180°).</summary>
-    public sealed record ArcTo(double EndX, double EndY, double Radius, bool Clockwise, bool LargeArc = false) : PathCommand;
+    public sealed record ArcTo(double EndX, double EndY, double Radius, bool Clockwise, bool LargeArc = false) : PathCommand, ITrackArcTo;
 
     /// <summary>
     /// Returns the path commands for a segment in local coordinates.
