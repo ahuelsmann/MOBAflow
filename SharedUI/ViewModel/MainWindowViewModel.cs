@@ -3,6 +3,7 @@ namespace Moba.SharedUI.ViewModel;
 
 using Backend.Interface;
 using Backend.Service;
+using Backend.Service.Validation;
 
 using Common.Configuration;
 using Common.Events;
@@ -102,7 +103,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         ILoggerFactory? loggerFactory = null,
         IDialogService? dialogService = null,
         Func<string, Task>? speechTestAction = null,
-        ILocomotiveWhistleAutomationService? locomotiveWhistleAutomation = null)
+        ILocomotiveWhistleAutomationService? locomotiveWhistleAutomation = null,
+        IProjectDiagnosticsService? projectDiagnosticsService = null)
     {
         ArgumentNullException.ThrowIfNull(layoutColumnWidths);
         ArgumentNullException.ThrowIfNull(mobaRuntime);
@@ -130,6 +132,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         _featureTogglePageProvider = featureTogglePageProvider;
         _dialogService = dialogService;
         _locomotiveWhistleAutomation = locomotiveWhistleAutomation;
+        _projectDiagnosticsService = projectDiagnosticsService;
 
         _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
         ApplyRuntimeSnapshot(_mobaRuntime.Current);

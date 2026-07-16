@@ -131,19 +131,6 @@
             <controls:CollapsibleColumnProperties.PanelContent>
                 <ScrollViewer>
                     <StackPanel Spacing="12">
-                        <InfoBar
-                            IsClosable="False"
-                            IsOpen="{x:Bind Management.HasAddressFindings, Mode=OneWay}"
-                            Message="{x:Bind Management.AddressFindingSummary, Mode=OneWay}"
-                            Severity="Warning"
-                            Title="Digital address findings" />
-                        <ItemsControl ItemsSource="{x:Bind Management.AddressFindings, Mode=OneWay}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="viewmodel:AddressFindingViewModel">
-                                    <TextBlock Margin="8,2" Text="{x:Bind Message}" TextWrapping="Wrap" />
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
                         <ContentControl
                             HorizontalContentAlignment="Stretch"
                             Content="{x:Bind ViewModel.SelectedLocomotive, Mode=OneWay}"

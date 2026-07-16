@@ -40,6 +40,7 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton<ILocomotiveLibraryService, LocomotiveLibraryService>();
         services.TryAddSingleton<ILocomotivePassportHtmlRenderer, LocomotivePassportHtmlRenderer>();
         services.TryAddSingleton<IDigitalAddressConflictDetector, DigitalAddressConflictDetector>();
+        services.TryAddSingleton<IProjectDiagnosticsService, ProjectDiagnosticsService>();
         services.TryAddSingleton<Z21Monitor>();
         services.TryAddSingleton<IUdpClientWrapper, UdpWrapper>();
         services.TryAddSingleton<IZ21DiscoveryService, Z21DiscoveryService>();

@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Moba.Backend;
 using Moba.Backend.Interface;
 using Moba.Backend.Service;
+using Moba.Backend.Service.Validation;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Sound;
@@ -36,6 +37,7 @@ internal sealed class MobaBackendServiceCollectionExtensionsTests
             Assert.That(provider.GetService<IMobaRuntime>(), Is.InstanceOf<MobaRuntimeService>());
             Assert.That(provider.GetService<IWorkflowService>(), Is.InstanceOf<WorkflowService>());
             Assert.That(provider.GetService<IProjectValidator>(), Is.InstanceOf<ProjectValidator>());
+            Assert.That(provider.GetService<IProjectDiagnosticsService>(), Is.InstanceOf<ProjectDiagnosticsService>());
         });
     }
 

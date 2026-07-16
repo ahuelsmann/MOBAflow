@@ -40,8 +40,9 @@ This plan turns the seven open issues into independently reviewable slices. Shar
 - Treat locomotive primary addresses as exclusive, including locomotives assigned to a double-traction train.
 - Deliberately allow passenger and goods wagon function decoders to share an address so coach lighting can be grouped.
 - Model coordinated multiple traction at train/command level instead of inferring it from duplicate locomotive addresses.
-- Add a dedicated locomotive-management view model that converts findings into deterministic warning rows with stable target IDs.
-- Display a compact summary on the existing Locomotives page; the UI must not duplicate conflict rules.
+- Aggregate current project findings in a shell-level message panel above the status bar, separate from continuous application and Z21 logs.
+- Keep errors, warnings and information independently filterable and retain stable target IDs for future page navigation.
+- Treat ordinary locomotive/accessory address duplication as a warning; invalid ranges and duplicate feedback InPorts remain errors.
 
 ### Acceptance and tests
 
@@ -49,6 +50,7 @@ This plan turns the seven open issues into independently reviewable slices. Shar
 - Ordering is deterministic and findings retain navigation targets.
 - Existing domain/range tests remain green; view-model tests cover refresh after project edits.
 - Tests prove that shared wagon addresses are accepted and duplicate locomotive addresses remain visible in double traction.
+- Signal-box feedback points require an assigned, unique InPort; configured track-plan feedback points require positive, unique InPorts.
 
 ## Issue #13 — Maintenance history and reminders
 

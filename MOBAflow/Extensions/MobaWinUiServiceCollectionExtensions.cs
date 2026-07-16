@@ -5,6 +5,7 @@ namespace Moba.WinUI.Extensions;
 using Backend.Data;
 using Backend.Interface;
 using Backend.Service;
+using Backend.Service.Validation;
 using Backend.Service.TrackPlan;
 
 using Common.Configuration;
@@ -265,7 +266,8 @@ public static class MobaWinUiServiceCollectionExtensions
                 var speakerEngine = sp.GetRequiredService<ISpeakerEngine>();
                 await speakerEngine.AnnouncementAsync(message, voiceName: null).ConfigureAwait(false);
             },
-            locomotiveWhistleAutomation: sp.GetService<ILocomotiveWhistleAutomationService>()));
+            locomotiveWhistleAutomation: sp.GetService<ILocomotiveWhistleAutomationService>(),
+            projectDiagnosticsService: sp.GetRequiredService<IProjectDiagnosticsService>()));
 
         services.AddSingleton<IJourneySelectionContext>(sp => sp.GetRequiredService<MainWindowViewModel>());
         services.AddSingleton<IProjectContext>(sp => sp.GetRequiredService<MainWindowViewModel>());
