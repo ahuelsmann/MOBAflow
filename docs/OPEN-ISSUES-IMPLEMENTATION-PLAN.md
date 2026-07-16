@@ -37,6 +37,9 @@ This plan turns the seven open issues into independently reviewable slices. Shar
 ### Scope
 
 - Keep `DigitalAddressConflictDetector` as the single platform-neutral source of truth.
+- Treat locomotive primary addresses as exclusive, including locomotives assigned to a double-traction train.
+- Deliberately allow passenger and goods wagon function decoders to share an address so coach lighting can be grouped.
+- Model coordinated multiple traction at train/command level instead of inferring it from duplicate locomotive addresses.
 - Add a dedicated locomotive-management view model that converts findings into deterministic warning rows with stable target IDs.
 - Display a compact summary on the existing Locomotives page; the UI must not duplicate conflict rules.
 
@@ -45,6 +48,7 @@ This plan turns the seven open issues into independently reviewable slices. Shar
 - Empty, single and multiple-conflict states are represented explicitly.
 - Ordering is deterministic and findings retain navigation targets.
 - Existing domain/range tests remain green; view-model tests cover refresh after project edits.
+- Tests prove that shared wagon addresses are accepted and duplicate locomotive addresses remain visible in double traction.
 
 ## Issue #13 — Maintenance history and reminders
 
