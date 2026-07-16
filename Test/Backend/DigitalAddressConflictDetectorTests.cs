@@ -32,7 +32,72 @@ internal sealed class DigitalAddressConflictDetectorTests
             Assert.That(conflict.Start, Is.EqualTo(7));
             Assert.That(conflict.End, Is.EqualTo(7));
             Assert.That(conflict.Owners.Select(owner => owner.Id), Is.EquivalentTo(project.Locomotives.Select(locomotive => locomotive.Id)));
+            Assert.That(conflict.Message, Does.Contain("traction group"));
         });
+    }
+
+    [Test]
+    public void Detect_AllowsWagonsToShareAFunctionDecoderAddress()
+    {
+        var project = new Project
+        {
+            PassengerWagons =
+            [
+                new PassengerWagon { Name = "Coach one", DigitalAddress = 24 },
+                new PassengerWagon { Name = "Coach two", DigitalAddress = 24 }
+            ],
+            GoodsWagons =
+            [
+                new GoodsWagon { Name = "Guard van", DigitalAddress = 24 }
+            ]
+        };
+
+        var report = _detector.Detect(project);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(report.Allocations, Is.Empty);
+            Assert.That(report.Findings, Is.Empty);
+            Assert.That(report.IsValid, Is.True);
+        });
+    }
+
+    [Test]
+    public void Detect_ReportsDuplicateLocomotivePrimaryAddressesInDoubleTraction()
+    {
+        var first = new Locomotive { Name = "Lead", DigitalAddress = 31 };
+        var second = new Locomotive { Name = "Helper", DigitalAddress = 31 };
+        var project = new Project
+        {
+            Locomotives = [first, second],
+            Trains =
+            [
+                new Train
+                {
+                    Name = "Double traction",
+                    IsDoubleTraction = true,
+                    Vehicles =
+                    [
+                        new Vehicle
+                        {
+                            VehicleId = first.Id,
+                            VehicleKind = global::Moba.Domain.Enum.TrainVehicleKind.Locomotive
+                        },
+                        new Vehicle
+                        {
+                            VehicleId = second.Id,
+                            VehicleKind = global::Moba.Domain.Enum.TrainVehicleKind.Locomotive
+                        }
+                    ]
+                }
+            ]
+        };
+
+        var report = _detector.Detect(project);
+
+        Assert.That(
+            report.Findings.Single(finding => finding.Kind == DigitalAddressFindingKind.Conflict).Domain,
+            Is.EqualTo(DigitalAddressDomain.Locomotive));
     }
 
     [Test]
