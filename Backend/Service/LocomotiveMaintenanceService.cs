@@ -85,7 +85,7 @@ public sealed class LocomotiveMaintenanceService : ILocomotiveMaintenanceService
         LocomotiveMaintenanceData maintenance,
         DateTimeOffset now)
     {
-        var dueAt = plan.IntervalDays is { } intervalDays && plan.LastCompletedAt is { } completedAt
+        DateTimeOffset? dueAt = plan.IntervalDays is { } intervalDays && plan.LastCompletedAt is { } completedAt
             ? completedAt.AddDays(intervalDays)
             : null;
         var remainingHours = Remaining(maintenance.OperatingHours, plan.OperatingHoursAtLastCompletion, plan.IntervalOperatingHours);

@@ -105,7 +105,7 @@ public sealed class LocomotiveLibraryService : ILocomotiveLibraryService
                 latestEntry.PerformedAt,
                 latestEntry.Category,
                 latestEntry.Description);
-        var maintenanceState = locomotive.Maintenance is { Plans.Count: > 0 } maintenanceData
+        MaintenanceDueState? maintenanceState = locomotive.Maintenance is { Plans.Count: > 0 } maintenanceData
             && _maintenanceService.Validate(maintenanceData).Count == 0
                 ? _maintenanceService.Evaluate(maintenanceData, _timeProvider.GetUtcNow())
                     .Select(status => status.State)
