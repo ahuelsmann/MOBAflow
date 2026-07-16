@@ -35,7 +35,8 @@ public class Locomotive
     public uint Pos { get; set; } = 1;
 
     /// <summary>
-    /// Gets or sets the digital address of the locomotive (DCC address).
+    /// Gets or sets the unique primary digital address of the locomotive (DCC address).
+    /// Multiple traction should coordinate locomotives as a train while retaining separate primary addresses.
     /// </summary>
     public uint? DigitalAddress { get; set; }
 
