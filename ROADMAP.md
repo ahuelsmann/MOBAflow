@@ -24,4 +24,3 @@ MOBAflow evolves in small, testable slices. GitHub issues are the source of trut
 - Contributor-focused examples, screenshots and hardware compatibility reports.
 
 See the [open issues](https://github.com/ahuelsmann/MOBAflow/issues), [quality runs](https://github.com/ahuelsmann/MOBAflow/actions/workflows/quality.yml), [releases](https://github.com/ahuelsmann/MOBAflow/releases) and [changelog](CHANGELOG.md) for the current state.
-
