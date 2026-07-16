@@ -243,6 +243,7 @@ public static class MobaWinUiServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddSingleton<LayoutColumnWidthsViewModel>();
+        services.AddSingleton<LocomotiveManagementViewModel>();
         services.AddSingleton(sp => new MainWindowViewModel(
             sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
             sp.GetRequiredService<IMobaRuntime>(),
@@ -263,7 +264,8 @@ public static class MobaWinUiServiceCollectionExtensions
             {
                 var speakerEngine = sp.GetRequiredService<ISpeakerEngine>();
                 await speakerEngine.AnnouncementAsync(message, voiceName: null).ConfigureAwait(false);
-            }));
+            },
+            locomotiveWhistleAutomation: sp.GetService<ILocomotiveWhistleAutomationService>()));
 
         services.AddSingleton<IJourneySelectionContext>(sp => sp.GetRequiredService<MainWindowViewModel>());
         services.AddSingleton<IProjectContext>(sp => sp.GetRequiredService<MainWindowViewModel>());

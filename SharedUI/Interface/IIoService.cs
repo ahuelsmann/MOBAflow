@@ -79,6 +79,9 @@ public interface IFilePickerService
     /// <returns>The selected file path, or null if cancelled.</returns>
     Task<string?> SaveJsonFileAsync(string suggestedFileName);
 
+    /// <summary>Opens a file save picker for a printable HTML document.</summary>
+    Task<string?> SaveHtmlFileAsync(string suggestedFileName);
+
     /// <summary>
     /// Opens a file picker to browse for an XML file (e.g., AnyRail layout).
     /// </summary>

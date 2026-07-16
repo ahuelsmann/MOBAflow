@@ -1,7 +1,7 @@
 # MOBAflow Project Reference
 
 **Scope:** current repository structure, runtime architecture, data models, workflows, display pipeline, firmware notes, configuration, build, deployment, and documentation findings.  
-**Last updated:** May 2026
+**Last updated:** July 2026
 
 ## Purpose
 
@@ -28,11 +28,11 @@ MOBAflow/
 ├─ MOBAdisplay/           Display rendering, frame transport, ESP32 firmware prototype
 ├─ TrackLibrary.Base/     Track piece abstractions and shared geometry contracts
 ├─ TrackLibrary.PikoA/    Piko A-Gleis track library and snap helpers
-├─ TrackPlan.Renderer/    Track plan SVG/rendering helpers
+├─ TrackPlan.Renderer/    Platform-neutral track plan rendering primitives
 ├─ Test/                  NUnit tests and analysis utilities
 ├─ docs/                  User, architecture, legal, security, and developer documentation
 ├─ .azure-pipelines/      Azure DevOps CI/release pipeline definitions
-├─ .github/               Copilot instructions, issue templates, agents
+├─ .github/               GitHub quality/release workflows, issue templates, instructions
 └─ .windsurf/             Windsurf rules and local workflows
 ```
 
@@ -66,6 +66,10 @@ flowchart TD
 | Platform hosts | `MOBAflow/`, `MOBAsmart/`, `MOBApi/` | WinUI pages, Android UI, REST API, SignalR, OS-specific services. |
 | Display | `MOBAdisplay/` | Skia rendering to RGB565 frames and UDP line transport to ESP32-S3 displays. |
 | Track | `TrackLibrary.*`, `TrackPlan.Renderer/` | Track geometry, catalogues, snapping, rendering and export. |
+
+The track dependency direction is `TrackLibrary.Base → TrackPlan.Renderer → platform adapters`.
+`TrackLibrary.PikoA` supplies catalogue-specific geometry but is not referenced by the neutral renderer.
+Feedback/timer projection into runtime railroad state lives in `Backend/Service/TrackPlan`.
 
 ## Runtime and threading model
 
@@ -322,7 +326,7 @@ Feature toggles are stored under `AppSettings.FeatureToggles` and registered in 
 
 | File | Purpose |
 | --- | --- |
-| `global.json` | Pins .NET SDK to `10.0.300-preview` with `latestFeature` roll-forward. |
+| `global.json` | Pins .NET SDK to `10.0.302` with `latestFeature` roll-forward. |
 | `Directory.Packages.props` | Central NuGet package versions. |
 | `Directory.Build.props` | Common metadata, MinVer, language version, nullable, analyzer and release policies. |
 | `Directory.Build.targets` | Build-wide SourceLink package reference. |

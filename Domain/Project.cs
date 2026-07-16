@@ -20,6 +20,7 @@ public class Project
         Workflows = [];
         Journeys = [];
         Stations = [];
+        LocomotiveWhistleRules = [];
     }
 
     /// <summary>
@@ -66,6 +67,12 @@ public class Project
     /// Gets or sets the stations defined in this project.
     /// </summary>
     public List<Station> Stations { get; set; }
+
+    /// <summary>
+    /// Optional feedback-triggered locomotive function rules.
+    /// Empty by default so projects created before the feature remain compatible.
+    /// </summary>
+    public List<LocomotiveWhistleRule> LocomotiveWhistleRules { get; set; }
 
     /// <summary>
     /// Signal box plan - Topological representation with signals, switches, and routes.

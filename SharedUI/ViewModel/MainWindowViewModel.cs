@@ -52,6 +52,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
     private readonly Func<string, Task>? _speechTestAction;
     private readonly IFeatureTogglePageProvider? _featureTogglePageProvider;
     private readonly IDialogService? _dialogService;
+    private readonly ILocomotiveWhistleAutomationService? _locomotiveWhistleAutomation;
 
     // Execution Context (contains all action execution dependencies)
     private readonly ActionExecutionContext _executionContext;
@@ -100,7 +101,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         IFeatureTogglePageProvider? featureTogglePageProvider = null,
         ILoggerFactory? loggerFactory = null,
         IDialogService? dialogService = null,
-        Func<string, Task>? speechTestAction = null)
+        Func<string, Task>? speechTestAction = null,
+        ILocomotiveWhistleAutomationService? locomotiveWhistleAutomation = null)
     {
         ArgumentNullException.ThrowIfNull(layoutColumnWidths);
         ArgumentNullException.ThrowIfNull(mobaRuntime);
@@ -127,6 +129,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         _executionContext = executionContext;
         _featureTogglePageProvider = featureTogglePageProvider;
         _dialogService = dialogService;
+        _locomotiveWhistleAutomation = locomotiveWhistleAutomation;
 
         _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
         ApplyRuntimeSnapshot(_mobaRuntime.Current);

@@ -14,7 +14,12 @@
     <Copyright>Copyright © $([System.DateTime]::Now.Year) Andreas Huelsmann</Copyright>
     <!-- Repository Information -->
     <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://dev.azure.com/ahuelsmann/MOBAflow/_git/MOBAflow</RepositoryUrl>
+    <RepositoryUrl>https://github.com/ahuelsmann/MOBAflow</RepositoryUrl>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <WarningsAsErrors>$(WarningsAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsAsErrors>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>

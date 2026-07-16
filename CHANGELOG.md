@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Validated locomotive maintenance reminders, atomic decoder CV backups, a privacy-safe printable locomotive passport and feedback-triggered whistle automation.
+- GitHub-native roadmap, release acceptance template and archived transitive NuGet vulnerability reports.
+- Updated .NET 10.0.302 SDK and 10.0.10 servicing packages.
+
 - GitHub migration, docs, MVVM & skin refactor
 - add JSON solution file validation & schema
 - Entferne appsettings.Development.json
@@ -545,4 +549,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Versionserkennung & Anzeige in UI integriert
 - Software-Recovery-Funktion und Journey-Zähler
 - Zuverlässige Verbindung, Auto-Reconnect & Feature-Labels
-

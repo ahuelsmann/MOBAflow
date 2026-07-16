@@ -20,16 +20,20 @@ internal sealed partial class LocomotivesPage
 
     public MainWindowViewModel ViewModel { get; }
 
+    public LocomotiveManagementViewModel Management { get; }
+
     private double _listExpandedWidth = 250;
     private GridLength _propertiesExpandedWidth = new(1, GridUnitType.Star);
 
     public LocomotivesPage(
         MainWindowViewModel viewModel,
+        LocomotiveManagementViewModel management,
         AppSettings settings,
         ISettingsService? settingsService = null,
         ILogger<LocomotivesPage>? logger = null)
     {
         ViewModel = viewModel;
+        Management = management;
         _settings = settings;
         _settingsService = settingsService;
         _logger = logger;
@@ -43,6 +47,7 @@ internal sealed partial class LocomotivesPage
     {
         ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+        RefreshManagement();
         RestoreLayout();
     }
 
@@ -80,7 +85,14 @@ internal sealed partial class LocomotivesPage
         {
             ApplyStarColumnState(ViewModel.IsLocomotivesPropertiesExpanded, ColProperties, ref _propertiesExpandedWidth);
         }
+        else if (e.PropertyName is nameof(ViewModel.SelectedProject) or nameof(ViewModel.SelectedLocomotive))
+        {
+            RefreshManagement();
+        }
     }
+
+    private void RefreshManagement()
+        => Management.SetContext(ViewModel.SelectedProject?.Model, ViewModel.SelectedLocomotive?.Model);
 
     private void RestoreLayout()
     {

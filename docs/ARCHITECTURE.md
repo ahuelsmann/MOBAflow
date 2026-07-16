@@ -46,6 +46,18 @@ separation of concerns:
 
 ## 🏗️ Architecture Layers
 
+### Track-plan dependency rule
+
+Track-plan code follows an explicit inward dependency direction:
+
+`TrackLibrary.Base contracts → TrackPlan.Renderer → platform adapters`
+
+`TrackLibrary.PikoA` implements catalogue-specific geometry and may depend on
+`TrackLibrary.Base`; the neutral renderer must never reference Piko A. Win2D
+conversion stays in the Windows host. Runtime projection of EventBus feedback,
+timers and railroad state belongs to `Backend/Service/TrackPlan`, not `SharedUI`.
+`Test/TrackPlanRenderer/TrackLayoutArchitectureTests.cs` protects these rules.
+
 ### 1. **Domain Layer** (`Domain/`)
 
 **Purpose:** Pure business logic, independent from UI or infrastructure.
