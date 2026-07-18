@@ -16,3 +16,6 @@
 - name: blocked
   color: "B60205"
   description: Cannot progress until a named dependency is resolved
+- name: stale
+  color: "E4E669"
+  description: Inactive work that needs review but will not be closed automatically

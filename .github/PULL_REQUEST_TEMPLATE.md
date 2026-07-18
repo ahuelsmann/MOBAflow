@@ -4,7 +4,7 @@
 
 ## Related work
 
-<!-- Link the issue or Control Center work package, for example: Closes #123 -->
+<!-- Link the issue or Kanban work item, for example: Closes #123 -->
 
 ## What changed
 

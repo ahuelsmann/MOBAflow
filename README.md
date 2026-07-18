@@ -11,7 +11,8 @@ design track plans around the Roco Z21 ecosystem.
 [![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?style=flat-square&logo=dotnet)](global.json)
 [![Windows](https://img.shields.io/badge/desktop-Windows-0078D4?style=flat-square&logo=windows)](#-quick-start)
 [![Android](https://img.shields.io/badge/mobile-Android-3DDC84?style=flat-square&logo=android&logoColor=white)](#run-applications)
-[![Project status](https://img.shields.io/badge/status-active%20development-f59e0b?style=flat-square)](CHANGELOG.md)
+[![Quality](https://github.com/ahuelsmann/MOBAflow/actions/workflows/quality.yml/badge.svg?branch=main)](https://github.com/ahuelsmann/MOBAflow/actions/workflows/quality.yml)
+[![Latest release](https://img.shields.io/github/v/release/ahuelsmann/MOBAflow?display_name=tag&sort=semver&style=flat-square)](https://github.com/ahuelsmann/MOBAflow/releases/latest)
 [![GitHub stars](https://img.shields.io/github/stars/ahuelsmann/MOBAflow?style=flat-square)](https://github.com/ahuelsmann/MOBAflow/stargazers)
 
 [Visit the website](https://ahuelsmann.github.io/MOBAflow/) ·
@@ -27,8 +28,9 @@ design track plans around the Roco Z21 ecosystem.
 [Releases](https://github.com/ahuelsmann/MOBAflow/releases) ·
 [Changelog](CHANGELOG.md)
 
-Maintainers can find the one-time board setup and operating rules in the
-[GitHub Control Center guide](docs/CONTROL-CENTER.md).
+The public [Kanban](https://github.com/users/ahuelsmann/projects/1) shows planned,
+active, and completed work. Its fields, views, and operating rules are documented
+in the [Kanban guide](docs/KANBAN.md).
 
 <a href="docs/images/mobaflow-overview.png">
   <img src="docs/images/mobaflow-overview.png" alt="MOBAflow desktop application showing live railroad state and journey automation" width="900" />
@@ -74,6 +76,7 @@ visual layout tooling in one open-source solution.
 ## 📑 Table of Contents
 
 - [✨ Features](#-features)
+- [📍 Project status](#-project-status)
 - [📸 Screenshots](#-screenshots)
 - [⚠️ Hardware & Safety](#️-hardware--safety)
 - [🚀 Quick Start](#-quick-start)
@@ -89,6 +92,28 @@ visual layout tooling in one open-source solution.
 - [📦 Architecture](#-architecture)
 - [🔧 Team Setup (Planned)](#-team-setup-planned)
 - [📚 Documentation](#-documentation)
+
+---
+
+## 📍 Project status
+
+MOBAflow is under active development. The GitHub-native project resources below
+are the source of truth; this README deliberately does not duplicate changing
+counts, percentages, or delivery dates.
+
+| Find | Source |
+| --- | --- |
+| Next user-facing goals | [Public roadmap](ROADMAP.md) |
+| Planned and active work | [Kanban](https://github.com/users/ahuelsmann/projects/1) |
+| Bugs and feature requests | [Open issues](https://github.com/ahuelsmann/MOBAflow/issues) |
+| Published versions | [GitHub Releases](https://github.com/ahuelsmann/MOBAflow/releases) |
+| Build and test health | [Quality workflow](https://github.com/ahuelsmann/MOBAflow/actions/workflows/quality.yml) |
+| User and developer guides | [Documentation index](docs/wiki/INDEX.md) |
+| Ways to help | [Contributing guide](CONTRIBUTING.md) |
+
+The next planned release target is **0.2.0**. Its scope is controlled by the
+[0.2.0 milestone](https://github.com/ahuelsmann/MOBAflow/milestone/1), while the
+roadmap explains the outcome in user-facing language.
 
 ---
 
