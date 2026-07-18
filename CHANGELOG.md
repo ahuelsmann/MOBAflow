@@ -1,11 +1,24 @@
 # Changelog
 
+Published versions and downloadable artifacts are available through
+[GitHub Releases](https://github.com/ahuelsmann/MOBAflow/releases). Release
+milestones define scope; this file records the notable changes delivered by
+those versions.
+
 All notable changes to MOBAflow will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Documentation
+
+- Link the README, roadmap, changelog, releases, and public Kanban as one GitHub-native project overview.
+
+### Automation
+
+- Mark inactive issues and pull requests for review without automatically closing them.
 
 ### Added
 
