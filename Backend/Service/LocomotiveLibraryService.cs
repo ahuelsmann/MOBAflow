@@ -38,7 +38,9 @@ public sealed record LocomotivePassport(
     string? Manufacturer,
     string? ArticleNumber,
     LocomotiveDecoderSummary? Decoder,
-    LocomotiveMaintenanceSummary? LatestMaintenance);
+    LocomotiveMaintenanceSummary? LatestMaintenance,
+    int DecoderSnapshotCount,
+    MaintenanceDueState? MaintenanceState);
 
 public interface ILocomotiveLibraryService
 {
@@ -52,6 +54,17 @@ public interface ILocomotiveLibraryService
 /// </summary>
 public sealed class LocomotiveLibraryService : ILocomotiveLibraryService
 {
+    private readonly ILocomotiveMaintenanceService _maintenanceService;
+    private readonly TimeProvider _timeProvider;
+
+    public LocomotiveLibraryService(
+        ILocomotiveMaintenanceService? maintenanceService = null,
+        TimeProvider? timeProvider = null)
+    {
+        _maintenanceService = maintenanceService ?? new LocomotiveMaintenanceService();
+        _timeProvider = timeProvider ?? TimeProvider.System;
+    }
+
     public IReadOnlyList<LocomotiveLibraryEntry> BuildLibrary(Project project)
     {
         ArgumentNullException.ThrowIfNull(project);
@@ -92,6 +105,13 @@ public sealed class LocomotiveLibraryService : ILocomotiveLibraryService
                 latestEntry.PerformedAt,
                 latestEntry.Category,
                 latestEntry.Description);
+        MaintenanceDueState? maintenanceState = locomotive.Maintenance is { Plans.Count: > 0 } maintenanceData
+            && _maintenanceService.Validate(maintenanceData).Count == 0
+                ? _maintenanceService.Evaluate(maintenanceData, _timeProvider.GetUtcNow())
+                    .Select(status => status.State)
+                    .DefaultIfEmpty(MaintenanceDueState.NotScheduled)
+                    .Max()
+                : null;
 
         return new LocomotivePassport(
             locomotive.Id,
@@ -100,6 +120,8 @@ public sealed class LocomotiveLibraryService : ILocomotiveLibraryService
             locomotive.Manufacturer,
             locomotive.ArticleNumber,
             decoder,
-            maintenance);
+            maintenance,
+            locomotive.Decoder?.CvSnapshots.Count ?? 0,
+            maintenanceState);
     }
 }

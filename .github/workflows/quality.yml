@@ -20,10 +20,10 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install .NET SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
 
@@ -41,6 +41,18 @@ jobs:
           -p:IncludeMobaSmartTests=false
           -p:DebugType=portable
           -p:DebugSymbols=true
+
+      - name: Audit resolved NuGet dependency graph
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force artifacts | Out-Null
+          dotnet list Test/Test.csproj package `
+            --framework net10.0-windows10.0.22621.0 `
+            --include-transitive `
+            --vulnerable `
+            --format json `
+            --output-version 1 `
+            --no-restore | Set-Content artifacts/nuget-vulnerabilities.json -Encoding utf8NoBOM
 
       - name: Run desktop tests with Cobertura coverage
         shell: pwsh
@@ -98,11 +110,12 @@ jobs:
 
       - name: Archive test results and Cobertura report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: desktop-quality-${{ github.run_number }}
           path: |
             artifacts/TestResults/**/*.trx
             artifacts/coverage.cobertura.xml
+            artifacts/nuget-vulnerabilities.json
           if-no-files-found: warn
           retention-days: 90

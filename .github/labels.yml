@@ -1,0 +1,18 @@
+- name: product
+  color: "1D76DB"
+  description: User-facing MOBAflow product work
+- name: quality
+  color: "0E8A16"
+  description: Tests, architecture, reliability, performance or CI
+- name: release
+  color: "5319E7"
+  description: Release preparation, packaging or acceptance
+- name: documentation
+  color: "0075CA"
+  description: Documentation and public project communication
+- name: needs-specification
+  color: "FBCA04"
+  description: Acceptance criteria or design decisions are still missing
+- name: blocked
+  color: "B60205"
+  description: Cannot progress until a named dependency is resolved

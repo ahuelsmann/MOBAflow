@@ -150,7 +150,7 @@ dotnet build MOBAsmart/MOBAsmart.csproj -f net10.0-android -c FastDebug --no-res
 
 ### .NET SDK
 
-The project requires .NET 10 SDK (pinned in `global.json` to `10.0.300-preview` with `latestFeature` rollForward). Installed at `/usr/share/dotnet`.
+The project requires .NET 10 SDK (pinned in `global.json` to `10.0.302` with `latestFeature` rollForward). Installed at `/usr/share/dotnet`.
 
 ---
 

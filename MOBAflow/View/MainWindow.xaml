@@ -14,6 +14,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <!--  TitleBar  -->
@@ -122,9 +123,110 @@
             </Grid>
         </NavigationView>
 
+        <!--  Structured project diagnostics (state-based, unlike the continuous Monitor logs)  -->
+        <Expander
+            Grid.Row="2"
+            HorizontalAlignment="Stretch"
+            HorizontalContentAlignment="Stretch"
+            IsExpanded="{x:Bind ViewModel.IsDiagnosticsExpanded, Mode=TwoWay}">
+            <Expander.Header>
+                <Grid MinHeight="36" Padding="8,0,12,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock
+                        Grid.Column="0"
+                        VerticalAlignment="Center"
+                        FontWeight="SemiBold"
+                        Text="Messages" />
+                    <TextBlock
+                        Grid.Column="1"
+                        Margin="12,0"
+                        VerticalAlignment="Center"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{x:Bind ViewModel.DiagnosticsSummary, Mode=OneWay}" />
+                    <ToggleButton
+                        Grid.Column="2"
+                        Margin="4,0"
+                        IsChecked="{x:Bind ViewModel.ShowDiagnosticErrors, Mode=TwoWay}"
+                        ToolTipService.ToolTip="Show or hide errors">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon FontSize="12" Glyph="&#xEA39;" />
+                            <TextBlock Text="Errors" />
+                            <TextBlock Text="{x:Bind ViewModel.DiagnosticErrorCount, Mode=OneWay}" />
+                        </StackPanel>
+                    </ToggleButton>
+                    <ToggleButton
+                        Grid.Column="3"
+                        Margin="4,0"
+                        IsChecked="{x:Bind ViewModel.ShowDiagnosticWarnings, Mode=TwoWay}"
+                        ToolTipService.ToolTip="Show or hide warnings">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon FontSize="12" Glyph="&#xE7BA;" />
+                            <TextBlock Text="Warnings" />
+                            <TextBlock Text="{x:Bind ViewModel.DiagnosticWarningCount, Mode=OneWay}" />
+                        </StackPanel>
+                    </ToggleButton>
+                    <ToggleButton
+                        Grid.Column="4"
+                        Margin="4,0"
+                        IsChecked="{x:Bind ViewModel.ShowDiagnosticInformation, Mode=TwoWay}"
+                        ToolTipService.ToolTip="Show or hide information">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon FontSize="12" Glyph="&#xE946;" />
+                            <TextBlock Text="Information" />
+                            <TextBlock Text="{x:Bind ViewModel.DiagnosticInformationCount, Mode=OneWay}" />
+                        </StackPanel>
+                    </ToggleButton>
+                    <Button
+                        Grid.Column="5"
+                        Margin="8,0,0,0"
+                        Command="{x:Bind ViewModel.RefreshProjectDiagnosticsCommand}"
+                        Content="Refresh"
+                        ToolTipService.ToolTip="Analyze the selected project again" />
+                </Grid>
+            </Expander.Header>
+            <Border
+                MaxHeight="240"
+                Background="{ThemeResource LayerFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                BorderThickness="0,1,0,0">
+                <ListView ItemsSource="{x:Bind ViewModel.VisibleProjectDiagnostics, Mode=OneWay}">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Padding="8,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="100" />
+                                    <ColumnDefinition Width="140" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    FontWeight="SemiBold"
+                                    Text="{Binding SeverityLabel}" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="{Binding Source}" />
+                                <TextBlock
+                                    Grid.Column="2"
+                                    Text="{Binding Message}"
+                                    TextWrapping="Wrap" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Border>
+        </Expander>
+
         <!--  StatusBar (classic segmented layout)  -->
         <Grid
-            Grid.Row="2"
+            Grid.Row="3"
             MinHeight="36"
             Padding="12,0"
             Background="{ThemeResource LayerFillColorDefaultBrush}"

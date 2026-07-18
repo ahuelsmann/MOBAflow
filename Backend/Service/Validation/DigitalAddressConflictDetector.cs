@@ -88,6 +88,9 @@ public interface IDigitalAddressConflictDetector
 
 /// <summary>
 /// Platform-neutral address validation. It deliberately has no UI dependency.
+/// Locomotive primary addresses are exclusive. Wagon function-decoder addresses are deliberately
+/// not allocated here because sharing one address is a supported way to control coach lighting.
+/// Multiple traction should keep unique locomotive primary addresses and group commands at train level.
 /// UI consumers should render <see cref="DigitalAddressConflictReport"/> and use owner IDs for navigation.
 /// </summary>
 public sealed class DigitalAddressConflictDetector : IDigitalAddressConflictDetector
@@ -272,6 +275,11 @@ public sealed class DigitalAddressConflictDetector : IDigitalAddressConflictDete
                         .OrderBy(owner => owner.Id)
                         .ToArray();
 
+                    var message = domainGroup.Key == DigitalAddressDomain.Locomotive
+                        ? $"Locomotive primary address {overlapStart} is assigned to multiple locomotives. " +
+                          "Keep primary addresses unique and use a train-level traction group for coordinated control."
+                        : $"Address range {overlapStart}-{overlapEnd} is used by multiple {domainGroup.Key} objects.";
+
                     findings.Add(new DigitalAddressFinding(
                         FindingId(
                             DigitalAddressFindingKind.Conflict,
@@ -284,7 +292,7 @@ public sealed class DigitalAddressConflictDetector : IDigitalAddressConflictDete
                         overlapStart,
                         overlapEnd,
                         owners,
-                        $"Address range {overlapStart}-{overlapEnd} is used by multiple {domainGroup.Key} objects."));
+                        message));
                 }
             }
         }

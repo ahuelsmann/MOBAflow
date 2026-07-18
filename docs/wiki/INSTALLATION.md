@@ -1,20 +1,21 @@
 # 🚀 Installation & Setup Guide
 
-**Status:** ℹ️ Automated setup scripts are planned for future releases  
-**Last Updated:** February 2026
+**Status:** Source builds are supported; verified binaries are produced by Release Studio
+**Last Updated:** July 2026
 
 ---
 
 ## ⚠️ Current Status: Manual Installation Required
 
 ```text
-❌ Windows Setup.exe (planned)
+✅ Release Studio ZIP (after signed-tag acceptance)
 ❌ Automated PowerShell setup scripts (planned)
 ❌ Docker containers (planned)
 ✅ Manual dotnet build & run (current)
 ```
 
-**Currently you must compile MOBAflow manually from source code.**
+Contributors can compile MOBAflow from source. End users should prefer a signed,
+checksum-verified Release Studio ZIP once the first public release is accepted.
 
 ---
 
@@ -22,8 +23,8 @@
 
 ### Software Requirements
 
-- **.NET SDK:** Minimum `10.0`, recommended `10.0+`
-- **Visual Studio:** Minimum `2022 v17.10`, recommended `2026`
+- **.NET SDK:** `10.0.302` as pinned by `global.json`
+- **Visual Studio:** a release with the .NET 10 SDK and WinUI 3 workload, or the `dotnet` CLI
 - **Windows:** Minimum `10 (1809+)`, recommended `11`
 - **Git:** Minimum `2.30+`, recommended `Latest`
 
@@ -75,11 +76,8 @@ brew install dotnet
 ### Step 2: Clone Repository
 
 ```bash
-# GitHub Public Repo (after migration)
+# GitHub is the canonical source repository
 git clone https://github.com/ahuelsmann/MOBAflow.git
-
-# OR currently: Azure DevOps
-git clone https://dev.azure.com/ahuelsmann/MOBAflow/_git/MOBAflow
 
 cd MOBAflow
 ```

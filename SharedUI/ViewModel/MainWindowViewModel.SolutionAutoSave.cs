@@ -73,6 +73,7 @@ public partial class MainWindowViewModel
             return;
         }
 
+        RefreshProjectDiagnostics();
         SaveSolutionInternalAsync().Observe(ex => _logger.LogWarning(ex, "Auto-save solution failed"));
     }
 

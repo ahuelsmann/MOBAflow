@@ -34,6 +34,7 @@ public class Wagon
 
     /// <summary>
     /// Gets or sets the digital address of the wagon (for function decoders).
+    /// Multiple wagons may intentionally share this address, for example to switch all coach lights together.
     /// </summary>
     public uint? DigitalAddress { get; set; }
 

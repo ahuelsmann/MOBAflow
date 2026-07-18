@@ -34,8 +34,13 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton<MasterDataStore>();
         services.TryAddSingleton<IFileSystem>(SystemFileSystem.Instance);
         services.TryAddSingleton<IMultiplexerProvider, DefaultMultiplexerProvider>();
+        services.TryAddSingleton(TimeProvider.System);
+        services.TryAddSingleton<ILocomotiveMaintenanceService, LocomotiveMaintenanceService>();
+        services.TryAddSingleton<IDecoderCvService, DecoderCvService>();
         services.TryAddSingleton<ILocomotiveLibraryService, LocomotiveLibraryService>();
+        services.TryAddSingleton<ILocomotivePassportHtmlRenderer, LocomotivePassportHtmlRenderer>();
         services.TryAddSingleton<IDigitalAddressConflictDetector, DigitalAddressConflictDetector>();
+        services.TryAddSingleton<IProjectDiagnosticsService, ProjectDiagnosticsService>();
         services.TryAddSingleton<Z21Monitor>();
         services.TryAddSingleton<IUdpClientWrapper, UdpWrapper>();
         services.TryAddSingleton<IZ21DiscoveryService, Z21DiscoveryService>();
@@ -67,6 +72,8 @@ public static class MobaBackendServiceCollectionExtensions
             sp.GetRequiredService<ILogger<MobaRuntimeService>>(),
             sp.GetService<IEventBus>(),
             z21Discovery: sp.GetRequiredService<IZ21DiscoveryService>()));
+        services.TryAddSingleton<ILocomotiveFunctionCommandGateway, MobaRuntimeLocomotiveFunctionCommandGateway>();
+        services.TryAddSingleton<ILocomotiveWhistleAutomationService, LocomotiveWhistleAutomationService>();
 
         return services;
     }

@@ -303,6 +303,25 @@ internal class IoService : IIoService
         return result?.Path;
     }
 
+    public async Task<string?> SaveHtmlFileAsync(string suggestedFileName)
+    {
+        EnsureInitialized();
+
+        var picker = new FileSavePicker(_windowId.GetValueOrDefault())
+        {
+            SettingsIdentifier = "MobaHtmlSaver",
+            SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
+            SuggestedFileName = suggestedFileName,
+            DefaultFileExtension = ".html",
+            ShowOverwritePrompt = true,
+            Title = "Save Locomotive Passport",
+            FileTypeChoices = { { "HTML Documents (*.html)", new List<string> { ".html" } } }
+        };
+
+        var result = await picker.PickSaveFileAsync();
+        return result?.Path;
+    }
+
     /// <summary>
     /// Opens a file picker to browse for an XML file (e.g., AnyRail layout).
     /// </summary>

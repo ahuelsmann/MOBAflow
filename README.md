@@ -21,6 +21,15 @@ design track plans around the Roco Z21 ecosystem.
 [Read the docs](docs/wiki/INDEX.md) ·
 [Contribute](CONTRIBUTING.md)
 
+[Project roadmap](ROADMAP.md) ·
+[Open issues](https://github.com/ahuelsmann/MOBAflow/issues) ·
+[Quality checks](https://github.com/ahuelsmann/MOBAflow/actions/workflows/quality.yml) ·
+[Releases](https://github.com/ahuelsmann/MOBAflow/releases) ·
+[Changelog](CHANGELOG.md)
+
+Maintainers can find the one-time board setup and operating rules in the
+[GitHub Control Center guide](docs/CONTROL-CENTER.md).
+
 <a href="docs/images/mobaflow-overview.png">
   <img src="docs/images/mobaflow-overview.png" alt="MOBAflow desktop application showing live railroad state and journey automation" width="900" />
 </a>
@@ -412,7 +421,7 @@ Design your model railroad layout with MOBAflow's visual track planning system.
 | --------- | -------- | ------------- |
 | **TrackLibrary.PikoA** | ✅ Active | Piko A-Gleis |
 | TrackLibrary.Base | ✅ Active | Base classes and geometry primitives |
-| TrackPlan.Renderer | ✅ Active | Win2D-based track plan rendering |
+| TrackPlan.Renderer | ✅ Active | Platform-neutral track-plan geometry and render primitives |
 | TrackLibrary.RocoLine | 🚧 Planned | Roco Line |
 | TrackLibrary.Tillig | 🚧 Planned | Tillig |
 | TrackLibrary.Maerklin | 🚧 Planned | Märklin |

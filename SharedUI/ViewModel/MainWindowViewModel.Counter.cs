@@ -144,6 +144,9 @@ public partial class MainWindowViewModel
     /// </summary>
     partial void OnSelectedProjectChanged(ProjectViewModel? value)
     {
+        _locomotiveWhistleAutomation?.Activate(value?.Model);
+        RefreshProjectDiagnostics();
+
         // Statistics are replaced (new ObservableCollection), not mutated in place,
         // so no Enqueue needed – only one PropertyChanged, no CollectionChanged during binding.
         InitializeStatisticsFromFeedbackPoints();
