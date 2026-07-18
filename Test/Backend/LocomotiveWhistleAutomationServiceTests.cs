@@ -61,6 +61,47 @@ internal sealed class LocomotiveWhistleAutomationServiceTests
     }
 
     [Test]
+    public async Task HandleFeedbackAsync_CoalescesRulesForSameLocomotiveFunction()
+    {
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var gateway = new RecordingGateway();
+        using var service = new LocomotiveWhistleAutomationService(
+            eventBus, gateway, NullLogger<LocomotiveWhistleAutomationService>.Instance);
+        var locomotive = new Locomotive { DigitalAddress = 12 };
+        service.Activate(new Project
+        {
+            Locomotives = [locomotive],
+            LocomotiveWhistleRules =
+            [
+                new LocomotiveWhistleRule
+                {
+                    LocomotiveId = locomotive.Id,
+                    InPort = 1,
+                    FunctionIndex = 2,
+                    ActiveDurationMilliseconds = 200
+                },
+                new LocomotiveWhistleRule
+                {
+                    LocomotiveId = locomotive.Id,
+                    InPort = 2,
+                    FunctionIndex = 2,
+                    ActiveDurationMilliseconds = 20
+                }
+            ]
+        });
+
+        var longPulse = service.HandleFeedbackAsync(1);
+        await gateway.FunctionOn.Task.WaitAsync(TimeSpan.FromSeconds(1));
+        var shortPulse = service.HandleFeedbackAsync(2);
+        await Task.Delay(75);
+
+        Assert.That(gateway.Commands, Is.EqualTo(new[] { (12, 2, true) }));
+
+        await Task.WhenAll(longPulse, shortPulse);
+        Assert.That(gateway.Commands, Is.EqualTo(new[] { (12, 2, true), (12, 2, false) }));
+    }
+
+    [Test]
     public void Validate_EnforcesFunctionAndTimingBoundaries()
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
@@ -82,11 +123,16 @@ internal sealed class LocomotiveWhistleAutomationServiceTests
     private sealed class RecordingGateway : ILocomotiveFunctionCommandGateway
     {
         public List<(int Address, int Function, bool IsOn)> Commands { get; } = [];
+        public TaskCompletionSource FunctionOn { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public bool IsConnected { get; set; } = true;
 
         public Task SetFunctionAsync(int address, int functionIndex, bool isOn, CancellationToken cancellationToken = default)
         {
             Commands.Add((address, functionIndex, isOn));
+            if (isOn)
+            {
+                FunctionOn.TrySetResult();
+            }
             return Task.CompletedTask;
         }
     }

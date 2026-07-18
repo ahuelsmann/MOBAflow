@@ -71,7 +71,7 @@ internal sealed class LocomotiveManagementViewModelTests
     }
 
     [Test]
-    public void ManagementCommands_AddPersistedMaintenanceAndWhistleConfiguration()
+    public async Task ManagementCommands_AddPersistedMaintenanceAndDisabledWhistleConfiguration()
     {
         var detector = new Mock<IDigitalAddressConflictDetector>();
         detector.Setup(candidate => candidate.Detect(It.IsAny<Project>()))
@@ -79,23 +79,36 @@ internal sealed class LocomotiveManagementViewModelTests
         var project = new Project();
         var locomotive = new Locomotive();
         project.Locomotives.Add(locomotive);
+        var projectContext = new Mock<IProjectContext>();
+        projectContext.Setup(candidate => candidate.SaveSolutionInternalAsync()).Returns(Task.CompletedTask);
         var viewModel = new LocomotiveManagementViewModel(
             detector.Object,
             new LocomotiveMaintenanceService(),
-            new LocomotiveLibraryService());
+            new LocomotiveLibraryService(),
+            projectContext: projectContext.Object);
         viewModel.SetContext(project, locomotive);
 
-        viewModel.AddMaintenancePlanCommand.Execute(null);
-        viewModel.AddMaintenanceEntryCommand.Execute(null);
-        viewModel.AddWhistleRuleCommand.Execute(null);
+        await viewModel.AddMaintenancePlanCommand.ExecuteAsync(null);
+        await viewModel.AddMaintenanceEntryCommand.ExecuteAsync(null);
+        await viewModel.AddWhistleRuleCommand.ExecuteAsync(null);
 
         Assert.Multiple(() =>
         {
             Assert.That(locomotive.Maintenance!.Plans, Has.Count.EqualTo(1));
             Assert.That(locomotive.Maintenance.Entries, Has.Count.EqualTo(1));
             Assert.That(project.LocomotiveWhistleRules.Single().LocomotiveId, Is.EqualTo(locomotive.Id));
+            Assert.That(project.LocomotiveWhistleRules.Single().Enabled, Is.False);
             Assert.That(viewModel.WhistleRules, Has.Count.EqualTo(1));
         });
+
+        await viewModel.DeleteSelectedWhistleRuleCommand.ExecuteAsync(null);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(project.LocomotiveWhistleRules, Is.Empty);
+            Assert.That(viewModel.WhistleRules, Is.Empty);
+        });
+        projectContext.Verify(candidate => candidate.SaveSolutionInternalAsync(), Times.Exactly(4));
     }
 
     [Test]
@@ -182,6 +195,44 @@ internal sealed class LocomotiveManagementViewModelTests
                 Assert.That(viewModel.Passport!.DecoderSnapshotCount, Is.EqualTo(1));
                 Assert.That(viewModel.OperationStatus, Is.EqualTo("CV backup imported."));
             });
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Test]
+    public async Task ImportCvSnapshot_DoesNotCreateDecoder_WhenImportIsInvalid()
+    {
+        var detector = new Mock<IDigitalAddressConflictDetector>();
+        detector.Setup(candidate => candidate.Detect(It.IsAny<Project>()))
+            .Returns(new DigitalAddressConflictReport([], []));
+        var path = Path.Combine(Path.GetTempPath(), $"cv-import-{Guid.NewGuid():N}.json");
+        await File.WriteAllTextAsync(path, "{\"name\":\"Invalid\",\"values\":[{\"number\":1,\"value\":7},{\"number\":1,\"value\":8}]}");
+        var picker = new Mock<IFilePickerService>();
+        picker.Setup(candidate => candidate.BrowseForJsonFileAsync()).ReturnsAsync(path);
+        var projectContext = new Mock<IProjectContext>();
+        var locomotive = new Locomotive();
+        var viewModel = new LocomotiveManagementViewModel(
+            detector.Object,
+            new LocomotiveMaintenanceService(),
+            new LocomotiveLibraryService(),
+            decoderCvService: new DecoderCvService(),
+            filePicker: picker.Object,
+            projectContext: projectContext.Object);
+        viewModel.SetContext(new Project { Locomotives = [locomotive] }, locomotive);
+
+        try
+        {
+            await viewModel.ImportCvSnapshotCommand.ExecuteAsync(null);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(locomotive.Decoder, Is.Null);
+                Assert.That(viewModel.OperationStatus, Does.StartWith("CV import failed:"));
+            });
+            projectContext.Verify(candidate => candidate.SaveSolutionInternalAsync(), Times.Never);
         }
         finally
         {

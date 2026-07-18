@@ -23,7 +23,7 @@ public sealed class LocomotiveWhistleAutomationService : ILocomotiveWhistleAutom
     private readonly ILocomotiveFunctionCommandGateway _gateway;
     private readonly TimeProvider _timeProvider;
     private readonly ILogger<LocomotiveWhistleAutomationService> _logger;
-    private readonly Dictionary<Guid, RuleExecution> _executions = [];
+    private readonly Dictionary<FunctionKey, FunctionExecution> _executions = [];
     private readonly Guid _subscriptionId;
     private CancellationTokenSource _lifetime = new();
     private Project? _project;
@@ -112,28 +112,41 @@ public sealed class LocomotiveWhistleAutomationService : ILocomotiveWhistleAutom
             return Task.CompletedTask;
         }
 
-        RuleExecution execution;
+        FunctionExecution execution;
         lock (_gate)
         {
-            if (!_executions.TryGetValue(rule.Id, out execution!))
+            var key = new FunctionKey(address, rule.FunctionIndex);
+            if (!_executions.TryGetValue(key, out execution!))
             {
-                execution = new RuleExecution(rule.Id, address, rule.FunctionIndex);
-                _executions.Add(rule.Id, execution);
+                execution = new FunctionExecution(key, rule.Id);
+                _executions.Add(key, execution);
             }
 
             var now = _timeProvider.GetUtcNow();
-            execution.ActivateAt = now.AddMilliseconds(rule.DelayMilliseconds);
-            execution.ActiveUntil = execution.ActivateAt.AddMilliseconds(rule.ActiveDurationMilliseconds);
-            execution.Pulse.Cancel();
-            execution.Pulse.Dispose();
-            execution.Pulse = new CancellationTokenSource();
+            var requestedActivateAt = now.AddMilliseconds(rule.DelayMilliseconds);
+            var requestedActiveUntil = requestedActivateAt.AddMilliseconds(rule.ActiveDurationMilliseconds);
+            var previousActivateAt = execution.ActivateAt;
+            var previousActiveUntil = execution.ActiveUntil;
+            execution.ActivateAt = execution.IsFunctionOn
+                ? execution.ActivateAt
+                : requestedActivateAt;
+            execution.ActiveUntil = execution.ActiveUntil > requestedActiveUntil
+                ? execution.ActiveUntil
+                : requestedActiveUntil;
+            execution.LatestRuleId = rule.Id;
+            if (execution.ActivateAt != previousActivateAt || execution.ActiveUntil != previousActiveUntil)
+            {
+                execution.Pulse.Cancel();
+                execution.Pulse.Dispose();
+                execution.Pulse = new CancellationTokenSource();
+            }
             if (execution.Runner is null || execution.Runner.IsCompleted)
                 execution.Runner = RunExecutionAsync(execution, lifetimeToken, callerToken);
             return execution.Runner;
         }
     }
 
-    private async Task RunExecutionAsync(RuleExecution execution, CancellationToken lifetimeToken, CancellationToken callerToken)
+    private async Task RunExecutionAsync(FunctionExecution execution, CancellationToken lifetimeToken, CancellationToken callerToken)
     {
         using var linkedLifetime = CancellationTokenSource.CreateLinkedTokenSource(lifetimeToken, callerToken);
         var functionOn = false;
@@ -159,11 +172,15 @@ public sealed class LocomotiveWhistleAutomationService : ILocomotiveWhistleAutom
                     }
                     if (!_gateway.IsConnected)
                     {
-                        _logger.LogWarning("Whistle rule {RuleId} was skipped because the runtime is disconnected", execution.RuleId);
+                        _logger.LogWarning("Whistle rule {RuleId} was skipped because the runtime is disconnected", execution.LatestRuleId);
                         return;
                     }
                     await _gateway.SetFunctionAsync(execution.Address, execution.FunctionIndex, true, linkedLifetime.Token).ConfigureAwait(false);
                     functionOn = true;
+                    lock (_gate)
+                    {
+                        execution.IsFunctionOn = true;
+                    }
                 }
 
                 DateTimeOffset activeUntil;
@@ -180,6 +197,10 @@ public sealed class LocomotiveWhistleAutomationService : ILocomotiveWhistleAutom
                 }
                 await _gateway.SetFunctionAsync(execution.Address, execution.FunctionIndex, false, CancellationToken.None).ConfigureAwait(false);
                 functionOn = false;
+                lock (_gate)
+                {
+                    execution.IsFunctionOn = false;
+                }
                 return;
             }
         }
@@ -196,13 +217,14 @@ public sealed class LocomotiveWhistleAutomationService : ILocomotiveWhistleAutom
                 }
                 catch (Exception exception)
                 {
-                    _logger.LogError(exception, "Failed to turn off locomotive function for whistle rule {RuleId}", execution.RuleId);
+                    _logger.LogError(exception, "Failed to turn off locomotive function for whistle rule {RuleId}", execution.LatestRuleId);
                 }
             }
             lock (_gate)
             {
-                if (_executions.TryGetValue(execution.RuleId, out var current) && ReferenceEquals(current, execution))
-                    _executions.Remove(execution.RuleId);
+                execution.IsFunctionOn = false;
+                if (_executions.TryGetValue(execution.Key, out var current) && ReferenceEquals(current, execution))
+                    _executions.Remove(execution.Key);
             }
         }
     }
@@ -255,11 +277,15 @@ public sealed class LocomotiveWhistleAutomationService : ILocomotiveWhistleAutom
         lifetime.Dispose();
     }
 
-    private sealed class RuleExecution(Guid ruleId, int address, int functionIndex)
+    private readonly record struct FunctionKey(int Address, int FunctionIndex);
+
+    private sealed class FunctionExecution(FunctionKey key, Guid ruleId)
     {
-        public Guid RuleId { get; } = ruleId;
-        public int Address { get; } = address;
-        public int FunctionIndex { get; } = functionIndex;
+        public FunctionKey Key { get; } = key;
+        public Guid LatestRuleId { get; set; } = ruleId;
+        public int Address => Key.Address;
+        public int FunctionIndex => Key.FunctionIndex;
+        public bool IsFunctionOn { get; set; }
         public DateTimeOffset ActivateAt { get; set; }
         public DateTimeOffset ActiveUntil { get; set; }
         public CancellationTokenSource Pulse { get; set; } = new();
