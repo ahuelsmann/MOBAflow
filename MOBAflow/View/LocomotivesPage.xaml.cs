@@ -17,6 +17,7 @@ internal sealed partial class LocomotivesPage
     private readonly AppSettings _settings;
     private readonly ISettingsService? _settingsService;
     private readonly ILogger<LocomotivesPage>? _logger;
+    private LocomotiveViewModel? _observedLocomotive;
 
     public MainWindowViewModel ViewModel { get; }
 
@@ -47,6 +48,7 @@ internal sealed partial class LocomotivesPage
     {
         ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+        ObserveSelectedLocomotive();
         RefreshManagement();
         RestoreLayout();
     }
@@ -63,6 +65,7 @@ internal sealed partial class LocomotivesPage
         try
         {
             ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+            StopObservingSelectedLocomotive();
             SaveLayout();
             if (_settingsService != null)
             {
@@ -86,6 +89,41 @@ internal sealed partial class LocomotivesPage
             ApplyStarColumnState(ViewModel.IsLocomotivesPropertiesExpanded, ColProperties, ref _propertiesExpandedWidth);
         }
         else if (e.PropertyName is nameof(ViewModel.SelectedProject) or nameof(ViewModel.SelectedLocomotive))
+        {
+            ObserveSelectedLocomotive();
+            RefreshManagement();
+        }
+    }
+
+    private void ObserveSelectedLocomotive()
+    {
+        if (ReferenceEquals(_observedLocomotive, ViewModel.SelectedLocomotive))
+        {
+            return;
+        }
+
+        StopObservingSelectedLocomotive();
+        _observedLocomotive = ViewModel.SelectedLocomotive;
+        if (_observedLocomotive is not null)
+        {
+            _observedLocomotive.PropertyChanged += SelectedLocomotive_PropertyChanged;
+        }
+    }
+
+    private void StopObservingSelectedLocomotive()
+    {
+        if (_observedLocomotive is not null)
+        {
+            _observedLocomotive.PropertyChanged -= SelectedLocomotive_PropertyChanged;
+            _observedLocomotive = null;
+        }
+    }
+
+    private void SelectedLocomotive_PropertyChanged(
+        object? sender,
+        System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(LocomotiveViewModel.DigitalAddress) or nameof(LocomotiveViewModel.Name))
         {
             RefreshManagement();
         }

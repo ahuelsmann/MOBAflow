@@ -28,6 +28,7 @@ public sealed partial class LocomotiveManagementViewModel : ObservableObject
     private readonly ILocomotivePassportHtmlRenderer? _passportRenderer;
     private readonly IDecoderCvService? _decoderCvService;
     private readonly IFilePickerService? _filePicker;
+    private readonly IProjectContext? _projectContext;
     private Project? _project;
     private Locomotive? _locomotive;
 
@@ -37,7 +38,8 @@ public sealed partial class LocomotiveManagementViewModel : ObservableObject
         ILocomotiveLibraryService libraryService,
         ILocomotivePassportHtmlRenderer? passportRenderer = null,
         IDecoderCvService? decoderCvService = null,
-        IFilePickerService? filePicker = null)
+        IFilePickerService? filePicker = null,
+        IProjectContext? projectContext = null)
     {
         _conflictDetector = conflictDetector ?? throw new ArgumentNullException(nameof(conflictDetector));
         _maintenanceService = maintenanceService ?? throw new ArgumentNullException(nameof(maintenanceService));
@@ -45,6 +47,7 @@ public sealed partial class LocomotiveManagementViewModel : ObservableObject
         _passportRenderer = passportRenderer;
         _decoderCvService = decoderCvService;
         _filePicker = filePicker;
+        _projectContext = projectContext;
     }
 
     public ObservableCollection<AddressFindingViewModel> AddressFindings { get; } = [];
@@ -134,7 +137,7 @@ public sealed partial class LocomotiveManagementViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void AddMaintenancePlan()
+    private async Task AddMaintenancePlanAsync()
     {
         if (_locomotive is null)
             return;
@@ -147,11 +150,12 @@ public sealed partial class LocomotiveManagementViewModel : ObservableObject
             IntervalDays = 365
         });
         SetContext(_project, _locomotive);
+        await SaveChangesAsync();
         OperationStatus = "Maintenance reminder added.";
     }
 
     [RelayCommand]
-    private void AddMaintenanceEntry()
+    private async Task AddMaintenanceEntryAsync()
     {
         if (_locomotive is null)
             return;
@@ -163,11 +167,12 @@ public sealed partial class LocomotiveManagementViewModel : ObservableObject
             PerformedAt = DateTimeOffset.UtcNow
         });
         SetContext(_project, _locomotive);
+        await SaveChangesAsync();
         OperationStatus = "Maintenance entry added.";
     }
 
     [RelayCommand]
-    private void AddWhistleRule()
+    private async Task AddWhistleRuleAsync()
     {
         if (_project is null || _locomotive is null)
             return;
@@ -177,22 +182,25 @@ public sealed partial class LocomotiveManagementViewModel : ObservableObject
             LocomotiveId = _locomotive.Id,
             InPort = 1,
             FunctionIndex = 2,
-            ActiveDurationMilliseconds = 1000
+            ActiveDurationMilliseconds = 1000,
+            Enabled = false
         };
         _project.LocomotiveWhistleRules.Add(rule);
         WhistleRules.Add(rule);
         SelectedWhistleRule = rule;
+        await SaveChangesAsync();
         OperationStatus = "Whistle rule added. Configure its feedback input and timing.";
     }
 
     [RelayCommand]
-    private void DeleteSelectedWhistleRule()
+    private async Task DeleteSelectedWhistleRuleAsync()
     {
         if (_project is null || SelectedWhistleRule is null)
             return;
         _project.LocomotiveWhistleRules.Remove(SelectedWhistleRule);
         WhistleRules.Remove(SelectedWhistleRule);
         SelectedWhistleRule = null;
+        await SaveChangesAsync();
         OperationStatus = "Whistle rule removed.";
     }
 
@@ -245,13 +253,19 @@ public sealed partial class LocomotiveManagementViewModel : ObservableObject
             var path = await _filePicker.BrowseForJsonFileAsync();
             if (path is null)
                 return;
-            _locomotive.Decoder ??= new LocomotiveDecoderProfile { Protocol = DecoderProtocol.Dcc };
-            var decoder = _locomotive.Decoder;
             var json = await File.ReadAllTextAsync(path);
-            var snapshot = _decoderCvService.Import(json, decoder.Protocol);
+            var decoder = _locomotive.Decoder;
+            var protocol = decoder?.Protocol ?? DecoderProtocol.Dcc;
+            var snapshot = _decoderCvService.Import(json, protocol);
+            if (decoder is null)
+            {
+                decoder = new LocomotiveDecoderProfile { Protocol = protocol };
+                _locomotive.Decoder = decoder;
+            }
             decoder.CvSnapshots.Add(snapshot);
             DecoderSnapshots.Insert(0, snapshot);
             Passport = _libraryService.BuildPassport(_locomotive);
+            await SaveChangesAsync();
             OperationStatus = "CV backup imported.";
         }
         catch (Exception exception)
@@ -259,6 +273,9 @@ public sealed partial class LocomotiveManagementViewModel : ObservableObject
             OperationStatus = $"CV import failed: {exception.Message}";
         }
     }
+
+    private Task SaveChangesAsync()
+        => _projectContext?.SaveSolutionInternalAsync() ?? Task.CompletedTask;
 
     private static string SafeFileName(string value)
     {
