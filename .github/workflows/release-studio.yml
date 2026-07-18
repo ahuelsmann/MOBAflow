@@ -69,7 +69,7 @@ jobs:
       - name: Restore release projects
         shell: pwsh
         run: |
-          dotnet restore MOBAflow/MOBAflow.csproj
+          dotnet restore MOBAflow/MOBAflow.csproj --runtime win-x64
           dotnet restore Test/Test.csproj
 
       - name: Build MOBAflow
