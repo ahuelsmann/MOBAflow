@@ -438,7 +438,6 @@
             {
               "id": "01c6cdc6-5d82-4b15-ad61-3d1cb5864148",
               "inPort": 1,
-              "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
               "repeatCount": 1,
               "delayMs": 0,
               "enabled": true,
@@ -656,7 +655,19 @@
               "connections": []
             }
           ],
-          "feedbackSequence": [],
+          "feedbackSequence": [
+            {
+              "id": "d3cea651-a285-478f-886f-a93d30d5a56d",
+              "inPort": 1,
+              "repeatCount": 1,
+              "delayMs": 0,
+              "enabled": true,
+              "stopTransition": {
+                "mode": 0
+              },
+              "conditions": []
+            }
+          ],
           "behaviorOnLastStop": 0,
           "firstPos": 0
         }
