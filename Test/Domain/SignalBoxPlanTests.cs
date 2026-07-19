@@ -139,6 +139,64 @@ internal class SignalBoxPlanTests
         Assert.That(_plan.Routes, Is.Empty);
     }
 
+    [Test]
+    public void RemoveElement_WhenElementIsRouteStartSignal_ThenOnlyReferencingRouteIsDeleted()
+    {
+        var removedSignal = new SbSignal { X = 0, Y = 0 };
+        var sharedEndSignal = new SbSignal { X = 1, Y = 0 };
+        var unrelatedStartSignal = new SbSignal { X = 2, Y = 0 };
+        _plan.Elements.AddRange([removedSignal, sharedEndSignal, unrelatedStartSignal]);
+        var referencingRoute = new SignalBoxRoute
+        {
+            StartSignalId = removedSignal.Id,
+            EndSignalId = sharedEndSignal.Id
+        };
+        var unrelatedRoute = new SignalBoxRoute
+        {
+            StartSignalId = unrelatedStartSignal.Id,
+            EndSignalId = sharedEndSignal.Id
+        };
+        _plan.Routes.AddRange([referencingRoute, unrelatedRoute]);
+
+        var removed = _plan.RemoveElement(removedSignal.Id);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(removed, Is.True);
+            Assert.That(_plan.Routes, Does.Not.Contain(referencingRoute));
+            Assert.That(_plan.Routes, Does.Contain(unrelatedRoute));
+        });
+    }
+
+    [Test]
+    public void RemoveElement_WhenElementIsRouteEndSignal_ThenOnlyReferencingRouteIsDeleted()
+    {
+        var sharedStartSignal = new SbSignal { X = 0, Y = 0 };
+        var removedSignal = new SbSignal { X = 1, Y = 0 };
+        var unrelatedEndSignal = new SbSignal { X = 2, Y = 0 };
+        _plan.Elements.AddRange([sharedStartSignal, removedSignal, unrelatedEndSignal]);
+        var referencingRoute = new SignalBoxRoute
+        {
+            StartSignalId = sharedStartSignal.Id,
+            EndSignalId = removedSignal.Id
+        };
+        var unrelatedRoute = new SignalBoxRoute
+        {
+            StartSignalId = sharedStartSignal.Id,
+            EndSignalId = unrelatedEndSignal.Id
+        };
+        _plan.Routes.AddRange([referencingRoute, unrelatedRoute]);
+
+        var removed = _plan.RemoveElement(removedSignal.Id);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(removed, Is.True);
+            Assert.That(_plan.Routes, Does.Not.Contain(referencingRoute));
+            Assert.That(_plan.Routes, Does.Contain(unrelatedRoute));
+        });
+    }
+
     // ═══════════════════════════════════════════════════════════════════════
     // AddConnection - Referential Integrity
     // ═══════════════════════════════════════════════════════════════════════
@@ -194,6 +252,12 @@ internal class SignalBoxPlanTests
                 .With.Message.Contains("Target element"));
     }
 
+    [Test]
+    public void AddConnection_WhenNull_ThenThrowsArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(() => _plan.AddConnection(null!));
+    }
+
     // ═══════════════════════════════════════════════════════════════════════
     // RemoveConnection
     // ═══════════════════════════════════════════════════════════════════════
@@ -219,6 +283,41 @@ internal class SignalBoxPlanTests
         var result = _plan.RemoveConnection(Guid.NewGuid(), Guid.NewGuid());
 
         Assert.That(result, Is.False);
+    }
+
+    [Test]
+    public void RemoveConnection_WhenConnectionsShareEndpoints_ThenRemovesOnlyExactPair()
+    {
+        var sourceA = new SbTrackStraight();
+        var sourceB = new SbTrackStraight();
+        var targetA = new SbTrackStraight();
+        var targetB = new SbTrackStraight();
+        var sameSource = new SignalBoxConnection
+        {
+            FromElementId = sourceA.Id,
+            ToElementId = targetB.Id
+        };
+        var sameTarget = new SignalBoxConnection
+        {
+            FromElementId = sourceB.Id,
+            ToElementId = targetA.Id
+        };
+        var exact = new SignalBoxConnection
+        {
+            FromElementId = sourceA.Id,
+            ToElementId = targetA.Id
+        };
+        _plan.Connections.AddRange([sameSource, sameTarget, exact]);
+
+        var removed = _plan.RemoveConnection(sourceA.Id, targetA.Id);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(removed, Is.True);
+            Assert.That(_plan.Connections, Does.Contain(sameSource));
+            Assert.That(_plan.Connections, Does.Contain(sameTarget));
+            Assert.That(_plan.Connections, Does.Not.Contain(exact));
+        });
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -282,22 +381,65 @@ internal class SignalBoxPlanTests
     }
 
     [Test]
+    public void AddRoute_WhenEndSignalMissing_ThenThrowsWithSignalId()
+    {
+        var startSignal = new SbSignal { X = 0, Y = 0 };
+        var missingEndSignalId = Guid.NewGuid();
+        _plan.AddElement(startSignal);
+        var route = new SignalBoxRoute
+        {
+            StartSignalId = startSignal.Id,
+            EndSignalId = missingEndSignalId
+        };
+
+        var exception = Assert.Throws<InvalidOperationException>(() => _plan.AddRoute(route));
+
+        Assert.That(exception!.Message, Is.EqualTo(
+            $"End signal {missingEndSignalId} does not exist or is not a signal element."));
+    }
+
+    [Test]
+    public void AddRoute_WhenEndIsNotSignal_ThenThrowsInvalidOperationException()
+    {
+        var startSignal = new SbSignal { X = 0, Y = 0 };
+        var endTrack = new SbTrackStraight { X = 1, Y = 0 };
+        _plan.AddElement(startSignal);
+        _plan.AddElement(endTrack);
+
+        var exception = Assert.Throws<InvalidOperationException>(() => _plan.AddRoute(new SignalBoxRoute
+        {
+            StartSignalId = startSignal.Id,
+            EndSignalId = endTrack.Id
+        }));
+
+        Assert.That(exception!.Message, Does.Contain(endTrack.Id.ToString()));
+    }
+
+    [Test]
+    public void AddRoute_WhenNull_ThenThrowsArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(() => _plan.AddRoute(null!));
+    }
+
+    [Test]
     public void AddRoute_WhenRouteReferencesNonExistentElement_ThenThrowsInvalidOperationException()
     {
         var signalA = new SbSignal { X = 0, Y = 0 };
         var signalB = new SbSignal { X = 5, Y = 0 };
+        var missingElementId = Guid.NewGuid();
+        var secondMissingElementId = Guid.NewGuid();
         _plan.AddElement(signalA);
         _plan.AddElement(signalB);
 
-        Assert.That(
-            () => _plan.AddRoute(new SignalBoxRoute
-            {
-                StartSignalId = signalA.Id,
-                EndSignalId = signalB.Id,
-                ElementIds = [Guid.NewGuid()]
-            }),
-            Throws.TypeOf<InvalidOperationException>()
-                .With.Message.Contains("non-existent elements"));
+        var exception = Assert.Throws<InvalidOperationException>(() => _plan.AddRoute(new SignalBoxRoute
+        {
+            StartSignalId = signalA.Id,
+            EndSignalId = signalB.Id,
+            ElementIds = [missingElementId, secondMissingElementId]
+        }));
+
+        Assert.That(exception!.Message, Is.EqualTo(
+            $"Route references non-existent elements: {missingElementId}, {secondMissingElementId}"));
     }
 
     [Test]
@@ -306,19 +448,24 @@ internal class SignalBoxPlanTests
         var signalA = new SbSignal { X = 0, Y = 0 };
         var signalB = new SbSignal { X = 5, Y = 0 };
         var track = new SbTrackStraight { X = 2, Y = 0 };
+        var missingSwitchId = Guid.NewGuid();
         _plan.AddElement(signalA);
         _plan.AddElement(signalB);
         _plan.AddElement(track);
 
-        Assert.That(
-            () => _plan.AddRoute(new SignalBoxRoute
+        var exception = Assert.Throws<InvalidOperationException>(() => _plan.AddRoute(new SignalBoxRoute
+        {
+            StartSignalId = signalA.Id,
+            EndSignalId = signalB.Id,
+            SwitchPositions = new Dictionary<Guid, SwitchPosition>
             {
-                StartSignalId = signalA.Id,
-                EndSignalId = signalB.Id,
-                SwitchPositions = new Dictionary<Guid, SwitchPosition> { [track.Id] = SwitchPosition.Straight }
-            }),
-            Throws.TypeOf<InvalidOperationException>()
-                .With.Message.Contains("non-switch elements"));
+                [track.Id] = SwitchPosition.Straight,
+                [missingSwitchId] = SwitchPosition.DivergingLeft
+            }
+        }));
+
+        Assert.That(exception!.Message, Is.EqualTo(
+            $"Route references non-existent or non-switch elements for switch positions: {track.Id}, {missingSwitchId}"));
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -392,5 +539,77 @@ internal class SignalBoxPlanTests
         Assert.That(_plan.Elements, Is.Empty);
         Assert.That(_plan.Connections, Is.Empty);
         Assert.That(_plan.Routes, Is.Empty);
+    }
+
+    [Test]
+    public void SignalBoxTypes_InitializeBehavioralDefaults()
+    {
+        var element = new SbTrackStraight();
+        var signal = new SbSignal();
+        var route = new SignalBoxRoute();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(element.Name, Is.EqualTo(string.Empty));
+            Assert.That(signal.IsMultiplexed, Is.False);
+            Assert.That(route.Name, Is.EqualTo(string.Empty));
+        });
+    }
+
+    [Test]
+    public void GridConfig_WhenValuesArePositive_PreservesValues()
+    {
+        var grid = new GridConfig(1, 2, 3);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(grid.Width, Is.EqualTo(1));
+            Assert.That(grid.Height, Is.EqualTo(2));
+            Assert.That(grid.CellSize, Is.EqualTo(3));
+        });
+    }
+
+    [TestCase(0, 1, 1, "Width")]
+    [TestCase(-1, 1, 1, "Width")]
+    [TestCase(1, 0, 1, "Height")]
+    [TestCase(1, -1, 1, "Height")]
+    [TestCase(1, 1, 0, "CellSize")]
+    [TestCase(1, 1, -1, "CellSize")]
+    public void GridConfig_WhenValueIsNotPositive_ThrowsForParameter(
+        int width,
+        int height,
+        int cellSize,
+        string expectedParameter)
+    {
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            _ = new GridConfig(width, height, cellSize));
+
+        Assert.That(exception!.ParamName, Is.EqualTo(expectedParameter));
+    }
+
+    [TestCase(0, 0)]
+    [TestCase(1, 2)]
+    public void GridPosition_WhenCoordinatesAreNonNegative_PreservesValues(int x, int y)
+    {
+        var position = new GridPosition(x, y);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(position.X, Is.EqualTo(x));
+            Assert.That(position.Y, Is.EqualTo(y));
+        });
+    }
+
+    [TestCase(-1, 0, "X")]
+    [TestCase(0, -1, "Y")]
+    public void GridPosition_WhenCoordinateIsNegative_ThrowsForParameter(
+        int x,
+        int y,
+        string expectedParameter)
+    {
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            _ = new GridPosition(x, y));
+
+        Assert.That(exception!.ParamName, Is.EqualTo(expectedParameter));
     }
 }

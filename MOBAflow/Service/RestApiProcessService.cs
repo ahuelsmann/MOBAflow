@@ -17,6 +17,7 @@ using System.Diagnostics;
 public sealed class RestApiProcessService : IDisposable
 {
     private const string SolutionFileName = "Moba.slnx";
+    private const string RuntimeDirectoryName = "MOBApi";
 
     /// <summary>
     /// Raised when the REST API has been detected as reachable (either already running or just started).
@@ -29,6 +30,7 @@ public sealed class RestApiProcessService : IDisposable
     private readonly ILogger<RestApiProcessService> _logger;
     private readonly ILogger<UdpDiscoveryResponder> _discoveryLogger;
     private Process? _process;
+    private MobaApiRuntimeDeployment? _runtimeDeployment;
     private UdpDiscoveryResponder? _udpResponder;
     private bool _disposed;
     private readonly SemaphoreSlim _startLock = new(1, 1);
@@ -63,6 +65,10 @@ public sealed class RestApiProcessService : IDisposable
             if (IsRunning)
                 return;
 
+            _process?.Dispose();
+            _process = null;
+            DisposeRuntimeDeployment();
+
             var port = _appSettings.RestApi.Port > 0 ? _appSettings.RestApi.Port : 5001;
 
             // If API is already reachable (e.g. run standalone), do not start a second process
@@ -90,9 +96,12 @@ public sealed class RestApiProcessService : IDisposable
             string arguments;
             if (usePreBuilt)
             {
+                _runtimeDeployment = MobaApiRuntimeDeployment.Create(dllPath, GetRuntimeRootDirectory());
+                dllPath = _runtimeDeployment.AssemblyPath;
+                workingDir = _runtimeDeployment.WorkingDirectory;
                 fileName = "dotnet";
                 arguments = $"\"{dllPath}\" --urls \"http://0.0.0.0:{port}\"";
-                _logger.LogDebug("Starting MOBApi from {Path}", dllPath);
+                _logger.LogDebug("Starting MOBApi from isolated runtime path {Path}", dllPath);
             }
             else
             {
@@ -167,8 +176,7 @@ public sealed class RestApiProcessService : IDisposable
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to start MOBApi process");
-                _process?.Dispose();
-                _process = null;
+                Stop();
             }
         }
         finally
@@ -228,26 +236,51 @@ public sealed class RestApiProcessService : IDisposable
             _logger.LogDebug(ex, "Error stopping UDP Discovery responder");
         }
 
-        if (_process == null)
+        if (_process != null)
+        {
+            try
+            {
+                if (!_process.HasExited)
+                {
+                    _process.Kill(entireProcessTree: true);
+                    if (!_process.WaitForExit(TimeSpan.FromSeconds(2)))
+                        _logger.LogDebug("MOBApi process did not exit within 2s");
+                    _logger.LogInformation("MOBApi process stopped");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error stopping MOBApi process");
+            }
+            finally
+            {
+                _process.Dispose();
+                _process = null;
+            }
+        }
+
+        DisposeRuntimeDeployment();
+    }
+
+    private static string GetRuntimeRootDirectory()
+        => Path.Combine(Path.GetTempPath(), "MOBAflow", RuntimeDirectoryName);
+
+    private void DisposeRuntimeDeployment()
+    {
+        if (_runtimeDeployment == null)
             return;
+
         try
         {
-            if (!_process.HasExited)
-            {
-                _process.Kill(entireProcessTree: true);
-                if (!_process.WaitForExit(TimeSpan.FromSeconds(2)))
-                    _logger.LogDebug("MOBApi process did not exit within 2s");
-                _logger.LogInformation("MOBApi process stopped");
-            }
+            _runtimeDeployment.Dispose();
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Error stopping MOBApi process");
+            _logger.LogDebug(ex, "MOBApi isolated runtime directory could not be deleted");
         }
         finally
         {
-            _process?.Dispose();
-            _process = null;
+            _runtimeDeployment = null;
         }
     }
 

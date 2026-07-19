@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Domain;
 
-using System.Text.Json;
 using System.Text;
+using System.Text.Json;
 
 /// <summary>
 /// Loads German locomotive classes from the master data file (data.json) and provides lookup/parsing functionality.
