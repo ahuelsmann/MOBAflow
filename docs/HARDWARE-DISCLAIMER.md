@@ -74,7 +74,7 @@ The following points **MUST** be checked by the user before use:
 
 ```text
 [ ] Z21 hardware is functional and tested
-[ ] Z21 has current firmware (current version: X.X)
+[ ] Z21 firmware is current according to the hardware vendor
 [ ] Power supply is stable and tested
 [ ] Network connection is stable (ping to Z21 <10ms)
 [ ] Windows/Android device is connected to Z21 via LAN/WLAN

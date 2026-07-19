@@ -8,7 +8,7 @@ It does not create tags and it never publishes a release automatically.
 
 - The release commit is on the remote repository.
 - `CHANGELOG.md` describes the release-worthy changes.
-- The plain Semantic Version tag exists without a `v` prefix, for example `0.2.0`.
+- The plain Semantic Version tag exists without a `v` prefix, for example `0.2.1`.
 - The tag is annotated and signed with a key that GitHub recognizes as verified.
 
 Create and push the tag from a trusted maintainer workstation:
@@ -16,8 +16,8 @@ Create and push the tag from a trusted maintainer workstation:
 ```powershell
 git switch main
 git pull --ff-only
-git tag -s 0.2.0 -m "Release 0.2.0"
-git push origin 0.2.0
+git tag -s 0.2.1 -m "Release 0.2.1"
+git push origin 0.2.1
 ```
 
 ## Create a release candidate

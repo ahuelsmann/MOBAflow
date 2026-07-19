@@ -353,7 +353,6 @@ internal sealed class WorkflowServiceTests
   - `MobaRuntimeService.RuntimeApi.cs` (public IMobaRuntime API)
   - `MobaRuntimeService.Z21Handlers.cs` (Z21 event callbacks, journey projection)
   - `MobaRuntimeService.AutoConnect.cs` (auto-connect timer, endpoint resolution)
-  - `MobaRuntimeService.StatusFormatting.cs` (status text helpers, signal polarity)
 
 **Master Data & Configuration:**
 

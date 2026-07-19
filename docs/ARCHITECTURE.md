@@ -10,39 +10,22 @@ configuration files, build/deploy commands, and documentation findings, see
 MOBAflow is built on **Clean Architecture** principles with a clear
 separation of concerns:
 
-```text
-┌──────────────────────────────────────────────┐
-│                   Presentation Layer         │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
-│  │MOBAflow  │  │MOBAsmart │  │  MOBApi  │    │
-│  │(Windows) │  │(Android) │  │  (REST)  │    │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘    │
-└─────────┼────────────┼────────────┼──────────┘
-          │            │            │ 
-          └────────────┼────────────┼
-                       │            │
-          ┌────────────┴────────────┴────────────┐
-          │        Presentation Layer            │
-          │     (SharedUI ViewModels)            │
-          │  MVVM, Commands, Observable Props    │
-          └────────────┬────────────┬────────────┘
-                       │            │
-┌──────────────────────┴────────────┴─────────────────────┐
-│              Domain & Business Logic Layer              │
-│  ┌────────────┐  ┌──────────────┐  ┌──────────────┐     │
-│  │  Domain    │  │   Backend    │  │  TrackPlan   │     │
-│  │ (Models)   │  │  (Services)  │  │  (Geometry)  │     │
-│  └────────────┘  └──────────────┘  └──────────────┘     │
-└──────────────────────┬──────────────────────────────────┘
-                       │
-            ┌──────────┴──────────┐
-            │                     │
-        ┌───────────┐        ┌────────────┐
-        │ External  │        │ Logging &  │
-        │ Services  │        │ Config     │
-        │ (Z21 UDP) │        │ (Serilog)  │
-        └───────────┘        └────────────┘
+```mermaid
+flowchart TD
+    WinUI["MOBAflow Desktop"] --> SharedUI
+    MAUI["MOBAsmart"] --> SharedUI
+    SharedUI --> Runtime["Backend / IMobaRuntime"]
+    Runtime --> Domain
+    Runtime --> Z21["Z21 UDP"]
+    WinUI <-->|"REST + SignalR"| API["MOBApi caches and bridge"]
+    MAUI <-->|"REST + SignalR"| API
+    MAUI -->|"direct UDP"| Z21
+    API --> Common
 ```
+
+MOBApi is deliberately a thin standalone host that references `Common`, not
+`SharedUI` or `Backend`. MOBAflow publishes the current solution and runtime
+snapshots to it and consumes remote commands from it.
 
 ## 🏗️ Architecture Layers
 
@@ -70,12 +53,9 @@ timers and railroad state belongs to `Backend/Service/TrackPlan`, not `SharedUI`
 
 **Key Classes:**
 
-```csharp
-// Immutable domain models
-public record Solution(string Name, List<Project> Projects, ...);
-public record Journey(int Id, string Name, List<Station> Stations, ...);
-public record Workflow(int Id, string Name, List<WorkflowAction> Actions, ...);
-```
+The persisted domain uses mutable POCO classes such as `Solution`, `Project`,
+`Journey`, `Station`, `Workflow` and `WorkflowAction`. Runtime snapshots are the
+immutable boundary exposed to UI consumers.
 
 **Characteristics:**
 
@@ -105,25 +85,21 @@ public record Workflow(int Id, string Name, List<WorkflowAction> Actions, ...);
 **Key Interfaces:**
 
 ```csharp
-public interface IZ21
+public interface IZ21 : IZ21Connection, ILocoControl, IAccessoryControl, IZ21Diagnostics
 {
-    Task ConnectAsync(string ipAddress);
-    Task SetTrackPowerAsync(bool on);
-    Task SetLocomotiveSpeedAsync(int address, int speed);
-    event EventHandler<FeedbackReceivedEventArgs> FeedbackReceived;
 }
 
 public interface IMobaRuntime
 {
     MobaRuntimeSnapshot Current { get; }
-    Task ActivateProjectAsync(Project editableProject);
-    Task ConnectAsync();
-    Task SetTrackPowerAsync(bool isOn);
+    Task ActivateProjectAsync(Project editableProject, CancellationToken cancellationToken = default);
+    Task ConnectAsync(CancellationToken cancellationToken = default);
+    Task SetTrackPowerAsync(bool isOn, CancellationToken cancellationToken = default);
 }
 
 public interface IActionExecutor
 {
-    Task ExecuteActionAsync(WorkflowAction action, ExecutionContext context);
+    Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context);
 }
 ```
 
@@ -205,7 +181,7 @@ IZ21 / JourneyManager / WorkflowService
 - Publishes immutable runtime projections via `MobaRuntimeSnapshot`
   (system, journeys, locomotives) and raises `FeedbackReceived` for UI consumers
 - Implementation is split into partial files under `Backend/Service/`
-  (`RuntimeApi`, `Z21Handlers`, `AutoConnect`, `StatusFormatting`, core snapshot/ctor)
+  (`RuntimeApi`, `Z21Handlers`, `AutoConnect`, and the core snapshot/constructor file)
 
 **ViewModel wiring:**
 
@@ -543,4 +519,4 @@ The architecture supports:
 
 ---
 
-**Last Updated:** May 2026
+**Last Updated:** July 2026

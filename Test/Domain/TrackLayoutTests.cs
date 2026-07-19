@@ -97,10 +97,11 @@ internal sealed class TrackLayoutTests
             Assert.That(layout.TryGetTrack(original.Id, out var resolved), Is.True);
             Assert.That(resolved, Is.EqualTo(replacement));
             Assert.That(() => layout.ReplaceTrack(null!), Throws.ArgumentNullException);
-            Assert.That(
-                () => layout.ReplaceTrack(CreateTrack()),
-                Throws.InstanceOf<KeyNotFoundException>());
         });
+
+        var missingTrack = CreateTrack();
+        var exception = Assert.Throws<KeyNotFoundException>(() => layout.ReplaceTrack(missingTrack));
+        Assert.That(exception!.Message, Does.Contain(missingTrack.Id.ToString()));
     }
 
     [Test]
@@ -112,15 +113,18 @@ internal sealed class TrackLayoutTests
         layout.AddTrack(existing);
 
         // Act and assert
+        Assert.That(() => layout.Connect(null!), Throws.ArgumentNullException);
+
+        var missingTargetException = Assert.Throws<InvalidOperationException>(() =>
+            layout.Connect(new Connection(existing.Id, "A", Guid.NewGuid(), "B")));
+        var missingSourceException = Assert.Throws<InvalidOperationException>(() =>
+            layout.Connect(new Connection(Guid.NewGuid(), "A", existing.Id, "B")));
+
+        const string expectedMessage = "Both track instances must exist before they can be connected.";
         Assert.Multiple(() =>
         {
-            Assert.That(() => layout.Connect(null!), Throws.ArgumentNullException);
-            Assert.That(
-                () => layout.Connect(new Connection(existing.Id, "A", Guid.NewGuid(), "B")),
-                Throws.InvalidOperationException);
-            Assert.That(
-                () => layout.Connect(new Connection(Guid.NewGuid(), "A", existing.Id, "B")),
-                Throws.InvalidOperationException);
+            Assert.That(missingTargetException!.Message, Is.EqualTo(expectedMessage));
+            Assert.That(missingSourceException!.Message, Is.EqualTo(expectedMessage));
         });
     }
 
@@ -169,6 +173,34 @@ internal sealed class TrackLayoutTests
     }
 
     [Test]
+    public void DisconnectConnector_Should_PreserveConnectionsThatOnlyShareTrackOrConnector()
+    {
+        // Arrange
+        var layout = new Layout();
+        var selectedTrack = CreateTrack();
+        var second = CreateTrack();
+        var third = CreateTrack();
+        var fourth = CreateTrack();
+        var fifth = CreateTrack();
+        foreach (var track in new[] { selectedTrack, second, third, fourth, fifth })
+            layout.AddTrack(track);
+
+        var sameSourceTrack = new Connection(selectedTrack.Id, "Y", second.Id, "Q");
+        var sameTargetTrack = new Connection(third.Id, "R", selectedTrack.Id, "Z");
+        var sameTargetConnector = new Connection(fourth.Id, "S", fifth.Id, "X");
+        layout.Connect(sameSourceTrack);
+        layout.Connect(sameTargetTrack);
+        layout.Connect(sameTargetConnector);
+
+        // Act
+        layout.DisconnectConnector(selectedTrack.Id, "X");
+
+        // Assert
+        Assert.That(layout.Connections,
+            Is.EquivalentTo(new[] { sameSourceTrack, sameTargetTrack, sameTargetConnector }));
+    }
+
+    [Test]
     public void TrackLibraryRegistry_Should_ResolveCaseInsensitiveLibraryAndTemplate()
     {
         // Arrange
@@ -197,9 +229,12 @@ internal sealed class TrackLayoutTests
         var library = new StubTrackLibrary("piko-a", []);
 
         // Act and assert
+        var nullException = Assert.Throws<ArgumentNullException>(() =>
+            _ = new TrackLibraryRegistry(null!));
+
         Assert.Multiple(() =>
         {
-            Assert.That(() => new TrackLibraryRegistry(null!), Throws.ArgumentNullException);
+            Assert.That(nullException!.ParamName, Is.EqualTo("libraries"));
             Assert.That(
                 () => new TrackLibraryRegistry([library, library]),
                 Throws.InstanceOf<ArgumentException>());
@@ -270,6 +305,26 @@ internal sealed class TrackLayoutTests
             Assert.That(
                 () => state.ExpireFeedback(timestamp, TimeSpan.FromMilliseconds(-1)),
                 Throws.InstanceOf<ArgumentOutOfRangeException>());
+        });
+    }
+
+    [Test]
+    public void ExpireFeedback_Should_AcceptZeroTimeoutAndExpireImmediately()
+    {
+        // Arrange
+        var state = new RailroadState();
+        var trackId = Guid.NewGuid();
+        var timestamp = DateTimeOffset.UtcNow;
+        state.MarkFeedback(trackId, timestamp);
+
+        // Act
+        state.ExpireFeedback(timestamp, TimeSpan.Zero);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(state.IsOccupied(trackId), Is.False);
+            Assert.That(state.GetLastFeedback(trackId), Is.Null);
         });
     }
 

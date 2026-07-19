@@ -1,53 +1,47 @@
 # MOBAflow roadmap
 
-This roadmap describes intended user outcomes. GitHub issues, milestones, and
-the public [Kanban](https://github.com/users/ahuelsmann/projects/1) remain the
-source of truth for scope and progress. Priorities may move when testing,
-hardware safety, or maintainability requires it.
+This roadmap describes intended user outcomes. The public
+[Kanban](https://github.com/users/ahuelsmann/projects/1),
+[issues](https://github.com/ahuelsmann/MOBAflow/issues) and
+[milestones](https://github.com/ahuelsmann/MOBAflow/milestones) remain the source
+of truth for committed scope and progress.
 
-## Now: reliable locomotive operations (target 0.2.0)
+## Current foundation
 
-The next release target focuses on making everyday locomotive operation easier
-to prepare, verify, and maintain:
+The `0.2.0` milestone established reliable locomotive management and
+GitHub-native project visibility. The current apps now cover:
 
-- manage locomotives as a reusable digital library;
-- detect conflicting digital addresses before they disrupt a layout;
-- keep decoder profiles, CV backups, and maintenance information together;
-- produce reviewable Windows release candidates through GitHub Releases; and
-- keep build, test, roadmap, and release status discoverable from the repository.
+- desktop operation, rolling-stock management, journeys, workflows, feedback
+  sequences, track plans, signal boxes and displays;
+- Android lap counting, locomotive control, synchronized fleet data and mobile
+  signal-box operation;
+- local REST and SignalR synchronization through MOBApi; and
+- preview tooling for event management, journey maps, track planning and
+  monitoring.
 
-Follow the live [0.2.0 milestone](https://github.com/ahuelsmann/MOBAflow/milestone/1)
-for its exact scope and the [open issues](https://github.com/ahuelsmann/MOBAflow/issues)
-for individual work items.
+## Next: simpler operating sessions
 
-## Next: safer and simpler layout setup
+The next iteration should make the existing apps easier to use together:
 
-After the current target, planned outcomes include:
+- guide first-time setup for the Z21, MOBAflow and MOBAsmart;
+- make connection state, discovery and recovery easier to understand;
+- continue refining feedback-sequence and journey editing;
+- improve the mobile operating experience and offline cache behavior; and
+- turn preview pages into dependable everyday tools.
 
-- guided setup for local configuration and Z21 connectivity;
-- clearer diagnostics for hardware, network, and feedback problems;
-- a more complete mobile operating experience in MOBAsmart; and
-- broader track-plan libraries and validation support.
+These are directions, not a promised release scope. Work becomes committed only
+when it is represented by an issue and assigned to a milestone.
 
-These outcomes are direction, not committed release scope. They become release
-commitments only after assignment to a GitHub milestone.
+## Later: broader layouts and displays
 
-## Later: connected operating sessions
+Longer-term exploration includes additional track libraries, richer
+multi-device operating sessions, timetable-aware automation and broader ESP32
+display-model/configuration support.
 
-Longer-term exploration includes richer multi-device status, display workflows,
-and timetable-aware automation. New proposals should start with the operating
-problem and user benefit in a
-[feature request](https://github.com/ahuelsmann/MOBAflow/issues/new?template=feature_request.yml).
+## Follow progress
 
-## How progress is maintained
-
-- [Kanban](https://github.com/users/ahuelsmann/projects/1) shows planned, active, and completed work.
-- [GitHub issues](https://github.com/ahuelsmann/MOBAflow/issues) contain concrete work.
-- [Milestones](https://github.com/ahuelsmann/MOBAflow/milestones) define actual release scope.
-- [GitHub Releases](https://github.com/ahuelsmann/MOBAflow/releases) contain published versions.
-- [CHANGELOG.md](CHANGELOG.md) records notable repository changes.
-- [Quality workflow](https://github.com/ahuelsmann/MOBAflow/actions/workflows/quality.yml)
-  reports current build and test health.
-
-No progress percentages or copied issue counts are maintained here, so the
-roadmap cannot silently disagree with GitHub.
+- [Kanban](https://github.com/users/ahuelsmann/projects/1)
+- [Issues](https://github.com/ahuelsmann/MOBAflow/issues)
+- [Milestones](https://github.com/ahuelsmann/MOBAflow/milestones)
+- [Tags](https://github.com/ahuelsmann/MOBAflow/tags)
+- [Changelog](CHANGELOG.md)

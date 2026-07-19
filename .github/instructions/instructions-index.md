@@ -7,7 +7,7 @@ applyTo: '**'
 
 **Primary rules:** [`.github/copilot-instructions.md`](../copilot-instructions.md) (always loaded).
 
-**Open work:** Azure DevOps project MOBAflow (authoritative).
+**Open work:** GitHub issues, milestones, and the public Kanban are authoritative.
 
 ---
 
@@ -43,7 +43,8 @@ applyTo: '**'
 - [instructions.instructions.md](./instructions.instructions.md)
 
 ### CI/CD
-- Azure DevOps pipelines: [`.azure-pipelines/`](../../.azure-pipelines/) (`quality.yml`, `release.yml`)
+- GitHub Actions: [`.github/workflows/`](../workflows/) (public quality and release workflows)
+- Azure DevOps: [`.azure-pipelines/`](../../.azure-pipelines/) (additional quality and release pipelines)
 
 ### Deprecated summaries (use quick-reference.md instead)
 - [visual-summary.md](./visual-summary.md)
@@ -52,4 +53,3 @@ applyTo: '**'
 ### Project documentation
 - [README.md](../../README.md)
 - [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md)
-- [docs/CLAUDE.md](../../docs/CLAUDE.md)

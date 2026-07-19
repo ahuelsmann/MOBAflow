@@ -97,6 +97,38 @@ internal sealed class WorkflowActionLegacyParameterMigratorTests
     }
 
     [Test]
+    public void Deserialize_LegacyCommandBytes_FillsExistingEmptyPayload()
+    {
+        const string json = """
+            {
+              "type": 2,
+              "command": { "bytesBase64": "" },
+              "parameters": { "Bytes": [1, 2, 3] }
+            }
+            """;
+
+        var action = JsonSerializer.Deserialize<WorkflowAction>(json);
+
+        Assert.That(action?.Command?.BytesBase64, Is.EqualTo(Convert.ToBase64String([1, 2, 3])));
+    }
+
+    [Test]
+    public void Deserialize_LegacyCommandBytes_DoesNotOverwriteExistingBytes()
+    {
+        const string json = """
+            {
+              "type": 2,
+              "command": { "bytesBase64": "CQgH" },
+              "parameters": { "Bytes": [1, 2, 3] }
+            }
+            """;
+
+        var action = JsonSerializer.Deserialize<WorkflowAction>(json);
+
+        Assert.That(action?.Command?.BytesBase64, Is.EqualTo("CQgH"));
+    }
+
+    [Test]
     public void Deserialize_LegacyCommandWithFilePath_UpgradesToAudioAction()
     {
         const string json = """
@@ -132,6 +164,39 @@ internal sealed class WorkflowActionLegacyParameterMigratorTests
         var action = JsonSerializer.Deserialize<WorkflowAction>(json);
 
         Assert.That(action?.Audio?.FilePath, Is.EqualTo("announcements/station.mp3"));
+    }
+
+    [Test]
+    public void Deserialize_LegacyAudio_NonStringFilePathFallsBackToAudioFileAlias()
+    {
+        const string json = """
+            {
+              "type": 1,
+              "parameters": {
+                "FilePath": 42,
+                "AudioFile": "announcements/fallback.mp3"
+              }
+            }
+            """;
+
+        var action = JsonSerializer.Deserialize<WorkflowAction>(json);
+
+        Assert.That(action?.Audio?.FilePath, Is.EqualTo("announcements/fallback.mp3"));
+    }
+
+    [Test]
+    public void Deserialize_LegacyAudio_NonStringAudioFileLeavesPathUnset()
+    {
+        const string json = """
+            {
+              "type": 1,
+              "parameters": { "AudioFile": 42 }
+            }
+            """;
+
+        var action = JsonSerializer.Deserialize<WorkflowAction>(json);
+
+        Assert.That(action?.Audio?.FilePath, Is.Null);
     }
 
     [Test]
@@ -191,6 +256,26 @@ internal sealed class WorkflowActionLegacyParameterMigratorTests
     }
 
     [Test]
+    public void Deserialize_LegacyAnnouncementParameters_PreserveExistingPayloadInstanceValues()
+    {
+        const string json = """
+            {
+              "type": 0,
+              "announcement": { "message": "Current message" },
+              "parameters": { "VoiceName": "Legacy voice" }
+            }
+            """;
+
+        var action = JsonSerializer.Deserialize<WorkflowAction>(json);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(action?.Announcement?.Message, Is.EqualTo("Current message"));
+            Assert.That(action?.Announcement?.VoiceName, Is.EqualTo("Legacy voice"));
+        });
+    }
+
+    [Test]
     public void Deserialize_LegacyPowerShellParameters_MergesScriptPathAndArguments()
     {
         const string json = """
@@ -209,6 +294,26 @@ internal sealed class WorkflowActionLegacyParameterMigratorTests
         {
             Assert.That(action!.PowerShell?.ScriptPath, Is.EqualTo("scripts/run.ps1"));
             Assert.That(action.PowerShell?.Arguments, Is.EqualTo("-WhatIf"));
+        });
+    }
+
+    [Test]
+    public void Deserialize_LegacyPowerShellParameters_PreserveExistingPayloadInstanceValues()
+    {
+        const string json = """
+            {
+              "type": 3,
+              "powerShell": { "scriptPath": "scripts/current.ps1" },
+              "parameters": { "Arguments": "-Legacy" }
+            }
+            """;
+
+        var action = JsonSerializer.Deserialize<WorkflowAction>(json);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(action?.PowerShell?.ScriptPath, Is.EqualTo("scripts/current.ps1"));
+            Assert.That(action?.PowerShell?.Arguments, Is.EqualTo("-Legacy"));
         });
     }
 
@@ -233,6 +338,61 @@ internal sealed class WorkflowActionLegacyParameterMigratorTests
             Assert.That(action!.TrainDestinationDisplay?.DisplayDeviceId, Is.EqualTo(deviceId));
             Assert.That(action.TrainDestinationDisplay?.ClearBeforeRender, Is.True);
         });
+    }
+
+    [Test]
+    public void Deserialize_LegacyTrainDestinationDisplay_PreservesExistingDeviceId()
+    {
+        var currentDeviceId = Guid.Parse("11111111-2222-3333-4444-555555555555");
+        var json = $$"""
+            {
+              "type": 6,
+              "trainDestinationDisplay": {
+                "displayDeviceId": "{{currentDeviceId}}",
+                "clearBeforeRender": true
+              },
+              "parameters": { "ClearBeforeRender": false }
+            }
+            """;
+
+        var action = JsonSerializer.Deserialize<WorkflowAction>(json);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(action?.TrainDestinationDisplay?.DisplayDeviceId, Is.EqualTo(currentDeviceId));
+            Assert.That(action?.TrainDestinationDisplay?.ClearBeforeRender, Is.False);
+        });
+    }
+
+    [Test]
+    public void Deserialize_LegacyTrainDestinationDisplay_NonBooleanClearFlagIsIgnored()
+    {
+        const string json = """
+            {
+              "type": 6,
+              "parameters": { "ClearBeforeRender": "false" }
+            }
+            """;
+
+        var action = JsonSerializer.Deserialize<WorkflowAction>(json);
+
+        Assert.That(action?.TrainDestinationDisplay?.ClearBeforeRender, Is.True);
+    }
+
+    [TestCase(ActionType.SelectSignalAspect)]
+    [TestCase(ActionType.ChangeJourneyStop)]
+    public void Deserialize_ActionWithoutLegacyMigration_IgnoresLegacyParameters(ActionType actionType)
+    {
+        var json = $$"""
+            {
+              "type": {{(int)actionType}},
+              "parameters": { "unsupported": "value" }
+            }
+            """;
+
+        var action = JsonSerializer.Deserialize<WorkflowAction>(json);
+
+        Assert.That(action?.Type, Is.EqualTo(actionType));
     }
 
     [Test]
