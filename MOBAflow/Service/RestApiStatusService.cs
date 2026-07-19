@@ -19,7 +19,7 @@ using System.Timers;
 /// When the API is reachable, connects PhotoHubClient so WinUI receives photo upload notifications.
 /// Uses EventBus for UI decoupling - no direct dispatcher or view model dependencies.
 /// </summary>
-public sealed class RestApiStatusService : IDisposable
+public sealed class RestApiStatusService : IAsyncDisposable
 {
     private const int PollIntervalWhenReachableMs = 30_000;  // 30 s when API is up
     private const int PollIntervalWhenWaitingMs = 2_000;      // 2 s while "Waiting for the REST API to start..."
@@ -39,7 +39,11 @@ public sealed class RestApiStatusService : IDisposable
     private bool _photoHubConnected;
     private bool _runtimeHubConnected;
     private readonly CancellationTokenSource _disposeCts = new();
-    private bool _disposed;
+    private readonly object _refreshTasksLock = new();
+    private readonly HashSet<Task> _refreshTasks = [];
+    private readonly object _disposeLock = new();
+    private Task? _disposeTask;
+    private int _disposeState;
 
     public RestApiStatusService(
         HttpClient httpClient,
@@ -81,7 +85,7 @@ public sealed class RestApiStatusService : IDisposable
     /// </summary>
     public void Start()
     {
-        if (_disposed)
+        if (IsDisposed)
         {
             return;
         }
@@ -95,7 +99,7 @@ public sealed class RestApiStatusService : IDisposable
     /// </summary>
     public void Stop()
     {
-        if (_disposed)
+        if (IsDisposed)
         {
             return;
         }
@@ -109,7 +113,7 @@ public sealed class RestApiStatusService : IDisposable
     /// </summary>
     public void PausePolling()
     {
-        if (_disposed)
+        if (IsDisposed)
         {
             return;
         }
@@ -123,7 +127,7 @@ public sealed class RestApiStatusService : IDisposable
     /// </summary>
     public void ResumePolling()
     {
-        if (_disposed)
+        if (IsDisposed)
         {
             return;
         }
@@ -137,10 +141,34 @@ public sealed class RestApiStatusService : IDisposable
     /// Fetches REST API status and publishes events for status changes.
     /// EventBus subscribers (e.g., MainWindowViewModel) receive updates via UiThreadEventBusDecorator.
     /// </summary>
-    public async Task RefreshAsync()
+    public Task RefreshAsync()
     {
-        if (_disposed)
-            return;
+        lock (_refreshTasksLock)
+        {
+            if (IsDisposed)
+            {
+                return Task.CompletedTask;
+            }
+
+            var refreshTask = RefreshCoreAsync();
+            _refreshTasks.Add(refreshTask);
+            _ = refreshTask.ContinueWith(
+                completedTask =>
+                {
+                    lock (_refreshTasksLock)
+                    {
+                        _refreshTasks.Remove(completedTask);
+                    }
+                },
+                CancellationToken.None,
+                TaskContinuationOptions.ExecuteSynchronously,
+                TaskScheduler.Default);
+            return refreshTask;
+        }
+    }
+
+    private async Task RefreshCoreAsync()
+    {
         if (_disposeCts.Token.IsCancellationRequested)
             return;
         var port = _appSettings.RestApi.Port;
@@ -228,7 +256,7 @@ public sealed class RestApiStatusService : IDisposable
 
     private async Task DisconnectRuntimeHubHostAsync()
     {
-        if (!_runtimeHubConnected)
+        if (!_runtimeHubConnected && !_runtimeHubHostClient.IsConnected)
         {
             return;
         }
@@ -249,7 +277,7 @@ public sealed class RestApiStatusService : IDisposable
 
     private void SetPollInterval(int intervalMs)
     {
-        if (_disposed)
+        if (IsDisposed)
         {
             return;
         }
@@ -277,29 +305,59 @@ public sealed class RestApiStatusService : IDisposable
     /// Stops periodic refresh and disconnects PhotoHub (SignalR) so the process can exit cleanly.
     /// Call this before stopping the RestApi process so SignalR disconnects cleanly and does not start reconnect timers.
     /// </summary>
-    public void Dispose()
+    /// <inheritdoc />
+    public ValueTask DisposeAsync()
     {
-        if (_disposed)
+        lock (_disposeLock)
         {
-            return;
-        }
+            if (_disposeTask == null)
+            {
+                Volatile.Write(ref _disposeState, 1);
+                _disposeTask = DisposeCoreAsync();
+            }
 
-        _disposed = true;
+            return new ValueTask(_disposeTask);
+        }
+    }
+
+    private async Task DisposeCoreAsync()
+    {
         _restApiProcessService.ApiBecameReachable -= OnRestApiBecameReachable;
         _photoHubClient.PhotoUploaded -= OnPhotoUploadedAsync;
         _timer.Stop();
         _timer.Dispose();
         try { _disposeCts.Cancel(); } catch (ObjectDisposedException) { /* already disposed */ }
-        _disposeCts.Dispose();
 
-        // Disconnect SignalR so it doesn't keep the process alive on exit
-        DisconnectRuntimeHubHostAsync().Observe(ex => _logger.LogDebug(ex, "RuntimeHub host disconnect during dispose"));
-        DisposePhotoHubClientAsync().Observe(ex => _logger.LogDebug(ex, "PhotoHubClient disconnect during dispose"));
+        Task[] refreshTasks;
+        lock (_refreshTasksLock)
+        {
+            refreshTasks = [.. _refreshTasks];
+        }
+
+        try
+        {
+            try
+            {
+                await Task.WhenAll(refreshTasks).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "REST API refresh failed while stopping");
+            }
+
+            await DisconnectRuntimeHubHostAsync().ConfigureAwait(false);
+            await DisconnectPhotoHubClientAsync().ConfigureAwait(false);
+        }
+        finally
+        {
+            _disposeCts.Dispose();
+            GC.SuppressFinalize(this);
+        }
     }
 
     private void QueueRefresh(string operationName)
     {
-        if (_disposed)
+        if (IsDisposed)
         {
             return;
         }
@@ -307,19 +365,37 @@ public sealed class RestApiStatusService : IDisposable
         RefreshAsync().Observe(ex => _logger.LogDebug(ex, "{OperationName} failed", operationName));
     }
 
-    private async Task DisposePhotoHubClientAsync()
+    private async Task DisconnectPhotoHubClientAsync()
     {
-        var disposeTask = _photoHubClient.DisposeAsync().AsTask();
-        var completedTask = await Task.WhenAny(disposeTask, Task.Delay(TimeSpan.FromSeconds(3))).ConfigureAwait(false);
-
-        if (completedTask != disposeTask)
+        if (!_photoHubConnected && !_photoHubClient.IsConnected)
         {
-            _logger.LogDebug("PhotoHubClient disconnect timed out during app exit");
             return;
         }
 
-        await disposeTask.ConfigureAwait(false);
+        try
+        {
+            var disconnectTask = _photoHubClient.DisconnectAsync();
+            var completedTask = await Task.WhenAny(disconnectTask, Task.Delay(TimeSpan.FromSeconds(3))).ConfigureAwait(false);
+
+            if (completedTask != disconnectTask)
+            {
+                _logger.LogDebug("PhotoHubClient disconnect timed out during app exit");
+                return;
+            }
+
+            await disconnectTask.ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "PhotoHubClient disconnect failed");
+        }
+        finally
+        {
+            _photoHubConnected = false;
+        }
     }
+
+    private bool IsDisposed => Volatile.Read(ref _disposeState) != 0;
 
     private void PublishSyncDiagnostics(StatusResponse? data, bool restApiReachable)
     {

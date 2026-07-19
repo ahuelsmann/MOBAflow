@@ -6,6 +6,8 @@ using CommunityToolkit.Mvvm.Input;
 
 using Microsoft.Extensions.Logging;
 
+using Service;
+
 using System.Collections.ObjectModel;
 
 /// <summary>
@@ -68,8 +70,7 @@ public partial class MainWindowViewModel
     [ObservableProperty]
     private int _vccVoltage;
 
-    // Last feedback time tracking for timer filter
-    private readonly Dictionary<int, DateTime> _lastFeedbackTime = [];
+    private readonly FeedbackCounterEngine _feedbackCounterEngine = new();
 
     #endregion
 
@@ -213,7 +214,6 @@ public partial class MainWindowViewModel
             stat.LastFeedbackTime = null;
             stat.HasReceivedFirstLap = false;
         }
-        _lastFeedbackTime.Clear();
         _logger.LogInformation("All counters reset");
     }
 
@@ -232,33 +232,16 @@ public partial class MainWindowViewModel
         var stat = Statistics.FirstOrDefault(s => s.InPort == inPort);
         if (stat == null) return;
 
-        // Timer filter: Ignore if feedback was received recently
-        if (UseTimerFilter)
+        var update = _feedbackCounterEngine.ApplyFeedback(stat, UseTimerFilter, TimerIntervalSeconds);
+        if (!update.IsAccepted)
         {
-            if (_lastFeedbackTime.TryGetValue((int)inPort, out var lastTime))
-            {
-                var elapsed = DateTime.Now - lastTime;
-                if (elapsed.TotalSeconds < TimerIntervalSeconds)
-                {
-                    _logger.LogDebug("InPort {InPort}: Ignored (timer filter: {Elapsed:F1}s < {Threshold}s)",
-                        inPort, elapsed.TotalSeconds, TimerIntervalSeconds);
-                    return;
-                }
-            }
+            _logger.LogDebug(
+                "InPort {InPort}: Ignored (timer filter: {Elapsed:F1}s < {Threshold}s)",
+                inPort,
+                update.ElapsedSincePrevious?.TotalSeconds,
+                TimerIntervalSeconds);
+            return;
         }
-
-        // Update last feedback time
-        _lastFeedbackTime[(int)inPort] = DateTime.Now;
-
-        // Calculate lap time
-        if (stat.LastFeedbackTime.HasValue)
-        {
-            stat.LastLapTime = DateTime.Now - stat.LastFeedbackTime.Value;
-        }
-
-        // Update statistics
-        stat.Count++;
-        stat.LastFeedbackTime = DateTime.Now;
 
         _logger.LogInformation("InPort {InPort}: Lap {Count}/{Target} | Lap time: {LapTime}",
             inPort, stat.Count, stat.TargetLapCount, stat.LastLapTimeFormatted);

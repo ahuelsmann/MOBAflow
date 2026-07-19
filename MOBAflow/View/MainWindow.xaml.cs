@@ -21,6 +21,8 @@ public sealed partial class MainWindow
     #region Fields
     public MainWindowViewModel ViewModel { get; }
 
+    internal event EventHandler? ShutdownRequested;
+
     private readonly NavigationService _navigationService;
     private HealthCheckService? _healthCheckService;
     private readonly RestApiStatusService _restApiStatusService;
@@ -30,7 +32,6 @@ public sealed partial class MainWindow
     private readonly MainWindowNavigationBootstrapper _navigationBootstrapper;
     private readonly ILogger<MainWindow> _logger;
     private bool _isClosing;
-    private bool _isShutdownInProgress;
     private bool _deferredUiStartupStarted;
     private bool _deferredUiStartupCompleted;
 
@@ -220,7 +221,6 @@ public sealed partial class MainWindow
         ViewModel.NavigationRequested += OnNavigationRequested;
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
         _navigationService.Navigated += OnNavigationServiceNavigated;
-        Closed += MainWindow_Closed;
 
         if (AppWindow is not null)
         {
@@ -324,14 +324,7 @@ public sealed partial class MainWindow
         RootGrid.RequestedTheme = isDarkMode ? ElementTheme.Dark : ElementTheme.Light;
     }
 
-    private void MainWindow_Closed(object sender, WindowEventArgs args)
-    {
-        _ = sender;
-        _ = args;
-        HandleMainWindowClosedAsync().Observe(ex => _logger.LogWarning(ex, "Main window closed handler failed"));
-    }
-
-    private async Task HandleMainWindowClosedAsync()
+    internal async Task PrepareForShutdownAsync()
     {
         if (_isClosing)
         {
@@ -341,21 +334,35 @@ public sealed partial class MainWindow
         _isClosing = true;
         UnsubscribeWindowEvents();
 
-        // 1) Stop status polling and cancel any in-flight HTTP requests
         _restApiStatusService.Stop();
 
-        // 2) Disconnect PhotoHub (SignalR) and dispose status service BEFORE stopping the RestApi process,
-        //    so SignalR shuts down cleanly and does not start reconnect timers after the server is killed.
         try
         {
-            _restApiStatusService.Dispose();
+            await ViewModel.SaveSolutionInternalAsync();
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "RestApiStatusService.Dispose failed");
+            _logger.LogWarning(ex, "Solution auto-save during shutdown failed");
         }
 
-        // 3) Stop RestApi child process so it doesn't outlive the app
+        try
+        {
+            await ViewModel.PrepareForShutdownAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "ViewModel shutdown workflow failed");
+        }
+
+        try
+        {
+            await _restApiStatusService.DisposeAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "RestApiStatusService.DisposeAsync failed");
+        }
+
         try
         {
             _restApiProcessService.Stop();
@@ -379,21 +386,7 @@ public sealed partial class MainWindow
             }
         }
 
-        try
-        {
-            await ViewModel.PrepareForShutdownAsync();
-            DetachWindowBindings();
-
-            // Auto-save solution before closing to prevent data loss
-            await ViewModel.SaveSolutionInternalAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Shutdown workflow failed");
-        }
-
-        // WinUI 3 does not exit the process when the window is closed; we must exit explicitly.
-        Application.Current.Exit();
+        DetachWindowBindings();
     }
 
     private void UnsubscribeWindowEvents()
@@ -402,7 +395,11 @@ public sealed partial class MainWindow
         ViewModel.NavigationRequested -= OnNavigationRequested;
         ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
         _navigationService.Navigated -= OnNavigationServiceNavigated;
-        Closed -= MainWindow_Closed;
+
+        if (AppWindow is not null)
+        {
+            AppWindow.Closing -= OnAppWindowClosing;
+        }
 
         // NEU: Window Activation Service cleanup
         _windowActivationService?.Dispose();
@@ -424,9 +421,11 @@ public sealed partial class MainWindow
         }
     }
 
-    private static void OnExitApplicationRequested(object? sender, EventArgs e)
+    private void OnExitApplicationRequested(object? sender, EventArgs e)
     {
-        Application.Current.Exit();
+        _ = sender;
+        _ = e;
+        RequestShutdown();
     }
 
     private void OnNavigationRequested(object? sender, string tag)
@@ -509,35 +508,16 @@ public sealed partial class MainWindow
         ApplyTheme(ViewModel.IsDarkMode);
     }
 
-    // Ensure only one AppWindow.Closing subscription exists and it is inside the MainWindow constructor.
     private void OnAppWindowClosing(AppWindow sender, AppWindowClosingEventArgs args)
     {
-        if (_isShutdownInProgress)
-        {
-            return;
-        }
-
-        // Cancel the synchronous closing to allow async shutdown logic
+        _ = sender;
         args.Cancel = true;
-        _isShutdownInProgress = true;
-        HandleAppWindowClosingAsync(sender).Observe(ex => _logger.LogWarning(ex, "App window closing failed"));
+        RequestShutdown();
     }
 
-    private async Task HandleAppWindowClosingAsync(AppWindow sender)
+    private void RequestShutdown()
     {
-        try
-        {
-            await ViewModel.PrepareForShutdownAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "AppWindow closing workflow failed");
-        }
-        finally
-        {
-            sender.Closing -= OnAppWindowClosing;
-            Application.Current.Exit();
-        }
+        ShutdownRequested?.Invoke(this, EventArgs.Empty);
     }
     #endregion
 }
