@@ -88,5 +88,6 @@
       ],
       "Cities": []
     }
-  ]
+  ],
+  "SchemaVersion": 3
 }

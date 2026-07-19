@@ -176,6 +176,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Keep Journeys focused on physical stations and manage feedback events in the separate Event Manager.
 - Plugin-System entfernt, Navigation modernisiert
 - XAML vereinfacht, Layout & SVG verbessert
 - Formatierung für bessere Lesbarkeit

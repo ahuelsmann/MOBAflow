@@ -630,19 +630,9 @@ public class JourneysPageLayoutSettings
     public bool IsStationListExpanded { get; set; } = true;
 
     /// <summary>
-    /// Default filter for the station list on JourneysPage.
-    /// </summary>
-    public StationListViewMode StationListViewMode { get; set; } = StationListViewMode.StopsOnly;
-
-    /// <summary>
     /// Is City Library panel expanded?
     /// </summary>
     public bool IsCityLibraryExpanded { get; set; } = true;
-
-    /// <summary>
-    /// Is Workflow Library panel expanded?
-    /// </summary>
-    public bool IsWorkflowLibraryExpanded { get; set; } = true;
 
     public bool IsJourneyPropertiesExpanded { get; set; } = true;
 
@@ -652,7 +642,6 @@ public class JourneysPageLayoutSettings
 
     public double CityLibraryColumnWidth { get; set; } = 250;
 
-    public double WorkflowLibraryColumnWidth { get; set; } = 250;
 }
 
 public class EventManagerPageLayoutSettings

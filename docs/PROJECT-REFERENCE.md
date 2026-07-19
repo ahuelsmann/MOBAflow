@@ -302,7 +302,7 @@ Current WinUI pages under `MOBAflow/View/` include:
 | --- | --- |
 | `OverviewPage` | Runtime overview and connected client status. |
 | `SolutionPage` | Solution/project management and persisted model editing. |
-| `JourneysPage` | Journey, station, city library, workflow library, and properties editing. |
+| `JourneysPage` | Journey, station, city library, and properties editing. |
 | `WorkflowsPage` | Workflow and workflow action editing. |
 | `TrackPlanPage` | Visual track plan editor with snapping and rendering. |
 | `SignalBoxPage` | Signal/turnout control panel and Viessmann multiplex signal work. |

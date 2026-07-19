@@ -142,7 +142,7 @@ public sealed class WorkflowActionJsonConverter : JsonConverter<WorkflowAction>
 
     private static int ReadInt32(JsonElement root, string name)
     {
-        if (!TryGetPropertyInsensitive(root, name, out var el))
+        if (!TryGetPropertyInsensitive(root, name, out var el) || el.ValueKind != JsonValueKind.Number)
             return 0;
         return el.TryGetInt32(out var i) ? i : 0;
     }

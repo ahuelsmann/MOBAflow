@@ -27,6 +27,10 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Validate mutation test lane registry
+        shell: pwsh
+        run: ./scripts/Test-MutationLaneCoverage.ps1
+
       - name: Restore desktop test graph
         shell: pwsh
         run: dotnet restore Test/Test.csproj -p:IncludeMobaSmartTests=false
@@ -87,6 +91,12 @@ jobs:
 
           exit $testExitCode
 
+      - name: Enforce coverage ratchet
+        shell: pwsh
+        run: >-
+          ./scripts/Test-CoverageThresholds.ps1
+          -CoveragePath artifacts/coverage.cobertura.xml
+
       - name: Add measured coverage to job summary
         if: always()
         shell: pwsh
@@ -117,5 +127,38 @@ jobs:
             artifacts/TestResults/**/*.trx
             artifacts/coverage.cobertura.xml
             artifacts/nuget-vulnerabilities.json
+          if-no-files-found: warn
+          retention-days: 90
+
+  mutation-domain:
+    name: Domain mutation testing
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Restore local tools and Domain mutation test graph
+        shell: pwsh
+        run: |
+          dotnet tool restore
+          dotnet restore MutationTest/Domain.MutationTests.csproj
+
+      - name: Run Domain mutation tests
+        shell: pwsh
+        working-directory: MutationTest
+        run: dotnet stryker --skip-version-check
+
+      - name: Archive Domain mutation report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: domain-mutation-${{ github.run_number }}
+          path: MutationTest/StrykerOutput/**/reports/*
           if-no-files-found: warn
           retention-days: 90

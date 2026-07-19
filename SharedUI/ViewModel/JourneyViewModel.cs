@@ -121,7 +121,7 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
         get
         {
             return string.IsNullOrWhiteSpace(StationSearchText)
-                ? Stations
+                ? [.. Stations]
                 : [.. Stations.Where(s => s.Name.Contains(StationSearchText, StringComparison.OrdinalIgnoreCase))];
         }
     }

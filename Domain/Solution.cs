@@ -71,44 +71,8 @@ public class Solution
 
         var json = await File.ReadAllTextAsync(filePath).ConfigureAwait(false);
         var loaded = JsonSerializer.Deserialize<Solution>(json, JsonOptions.Default) ?? throw new InvalidOperationException("Failed to deserialize solution file");
-        SolutionMigrator.MigrateToCurrent(loaded);
+        if (loaded.SchemaVersion != CurrentSchemaVersion)
+            throw new InvalidOperationException($"Solution schema {loaded.SchemaVersion} is incompatible with required schema {CurrentSchemaVersion}.");
         UpdateFrom(loaded);
-    }
-}
-
-/// <summary>Applies safe in-memory defaults when opening older solution schemas.</summary>
-public static class SolutionMigrator
-{
-    public static void MigrateToCurrent(Solution solution)
-    {
-        ArgumentNullException.ThrowIfNull(solution);
-        if (solution.SchemaVersion > Solution.CurrentSchemaVersion)
-            throw new InvalidOperationException($"Solution schema {solution.SchemaVersion} is newer than supported schema {Solution.CurrentSchemaVersion}.");
-
-        foreach (var project in solution.Projects)
-        {
-            if (project.Id == Guid.Empty) project.Id = Guid.NewGuid();
-            foreach (var journey in project.Journeys)
-            {
-                journey.Stations ??= [];
-                var firstStationIndex = journey.Stations
-                    .Take(Math.Clamp((int)journey.FirstPos, 0, journey.Stations.Count))
-                    .Count(station => !station.IsLegacyEventPlaceholder);
-                journey.Stations.RemoveAll(station => station.IsLegacyEventPlaceholder);
-                journey.FirstPos = journey.Stations.Count == 0
-                    ? 0
-                    : (uint)Math.Clamp(firstStationIndex, 0, journey.Stations.Count - 1);
-
-                journey.FeedbackSequence ??= [];
-                foreach (var step in journey.FeedbackSequence)
-                {
-                    if (step.RepeatCount == 0) step.RepeatCount = 1;
-                    step.StopTransition ??= new JourneyStopTransition();
-                    step.Conditions ??= [];
-                }
-            }
-        }
-
-        solution.SchemaVersion = Solution.CurrentSchemaVersion;
     }
 }

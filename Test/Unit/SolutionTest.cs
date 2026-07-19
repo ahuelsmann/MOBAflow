@@ -88,4 +88,25 @@ internal class SolutionTest
         Assert.That(solution.Projects, Is.Not.Null);
         Assert.That(solution.Projects, Is.Empty);
     }
+
+    [Test]
+    public void LoadAsync_WithOlderSchema_ThrowsInvalidOperationException()
+    {
+        var path = Path.Combine(TestContext.CurrentContext.WorkDirectory, $"solution-{Guid.NewGuid():N}.json");
+        File.WriteAllText(path, """{"name":"Test","projects":[],"schemaVersion":2}""");
+
+        try
+        {
+            var solution = new Solution();
+
+            var exception = Assert.ThrowsAsync<InvalidOperationException>(async () => await solution.LoadAsync(path));
+
+            Assert.That(exception!.Message, Does.Contain("incompatible"));
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
 }

@@ -114,7 +114,6 @@ public sealed class SolutionRemoteLoader : ISolutionRemoteLoader, IDisposable
             }
 
             var solution = JsonSerializer.Deserialize<Solution>(json, JsonOptions.Default);
-            if (solution != null) SolutionMigrator.MigrateToCurrent(solution);
             if (solution == null || solution.Projects.Count == 0)
             {
                 _logger.LogWarning("Remote solution deserialized empty or without projects");

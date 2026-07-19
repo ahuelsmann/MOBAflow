@@ -2,6 +2,7 @@
 namespace Moba.Domain;
 
 using System.Text.Json;
+using System.Text;
 
 /// <summary>
 /// Loads German locomotive classes from the master data file (data.json) and provides lookup/parsing functionality.
@@ -19,16 +20,10 @@ public static class TrainClassLibrary
     /// <param name="jsonPath">Path to data.json</param>
     public static void Initialize(string jsonPath)
     {
-        if (_isInitialized)
-            return;
-
         try
         {
-            if (!File.Exists(jsonPath))
-                throw new FileNotFoundException($"Master data file not found at: {jsonPath}");
-
             var json = File.ReadAllText(jsonPath);
-            var root = JsonDocument.Parse(json);
+            using var root = JsonDocument.Parse(json);
             // data.json uses lowercase "locomotives"; accept both for compatibility.
             if (!root.RootElement.TryGetProperty("Locomotives", out var locomotivesProp))
                 root.RootElement.TryGetProperty("locomotives", out locomotivesProp);
@@ -36,6 +31,7 @@ public static class TrainClassLibrary
             if (locomotivesProp.ValueKind != JsonValueKind.Array)
                 return;
 
+            var loadedLocomotives = new List<LocomotiveSeries>();
             foreach (var categoryElement in locomotivesProp.EnumerateArray())
             {
                 if (!categoryElement.TryGetProperty("Series", out var seriesProp))
@@ -51,10 +47,11 @@ public static class TrainClassLibrary
                         Description = seriesElement.TryGetProperty("Description", out var d) ? d.GetString() ?? string.Empty : string.Empty
                     };
 
-                    _allLocomotives.Add(locomotive);
+                    loadedLocomotives.Add(locomotive);
                 }
             }
 
+            _allLocomotives = loadedLocomotives;
             _isInitialized = true;
         }
         catch (Exception ex)
@@ -88,9 +85,11 @@ public static class TrainClassLibrary
         if (prefix != null)
             return prefix;
 
-        // Try fuzzy/partial match
-        var fuzzy = FindFuzzyMatch(classNumber);
-        return fuzzy;
+        // Fuzzy matching is intended for textual designations. Applying it to
+        // unmatched numbers would turn unrelated repeated digits into a match.
+        return ExtractNumeric(classNumber).Length == 0
+            ? FindFuzzyMatch(classNumber)
+            : null;
     }
 
     /// <summary>
@@ -124,16 +123,13 @@ public static class TrainClassLibrary
     /// </summary>
     private static LocomotiveSeries? FindExactMatch(string input)
     {
-        var normalized = NormalizeInput(input);
+        var numericPart = ExtractNumeric(input);
 
-        // Extract just the numeric part
-        var numericPart = ExtractNumeric(normalized);
-        if (string.IsNullOrEmpty(numericPart))
-            return null;
-
-        // Look for locomotives containing this number
+        // Compare complete numeric designations so a query for "11" does not
+        // accidentally become an exact match for "211" before prefix matching runs.
         return _allLocomotives.FirstOrDefault(l =>
-            l.Name.Contains(numericPart, StringComparison.OrdinalIgnoreCase));
+            ExtractAllNumbers(l.Name).Any(number =>
+                number.Equals(numericPart, StringComparison.OrdinalIgnoreCase)));
     }
 
     /// <summary>
@@ -177,20 +173,7 @@ public static class TrainClassLibrary
     /// </summary>
     private static string NormalizeInput(string input)
     {
-        // Remove whitespace and convert to uppercase
-        var cleaned = input.Trim().ToUpperInvariant().Replace(" ", "");
-
-        // Remove common prefixes (BR, E, V, VT, ET, etc.)
-        foreach (var prefix in new[] { "BR", "E", "V", "VT", "ET" })
-        {
-            if (cleaned.StartsWith(prefix))
-            {
-                cleaned = cleaned[prefix.Length..];
-                break;
-            }
-        }
-
-        return cleaned;
+        return input.Trim().ToUpperInvariant().Replace(" ", "");
     }
 
     /// <summary>
@@ -200,23 +183,23 @@ public static class TrainClassLibrary
     private static List<string> ExtractAllNumbers(string text)
     {
         var numbers = new List<string>();
-        var current = string.Empty;
+        var current = new StringBuilder();
 
         foreach (var c in text)
         {
             if (char.IsDigit(c) || c == '.')
             {
-                current += c;
+                current.Append(c);
             }
-            else if (!string.IsNullOrEmpty(current))
+            else if (current.Length > 0)
             {
-                numbers.Add(current);
-                current = string.Empty;
+                numbers.Add(current.ToString());
+                current.Clear();
             }
         }
 
-        if (!string.IsNullOrEmpty(current))
-            numbers.Add(current);
+        if (current.Length > 0)
+            numbers.Add(current.ToString());
 
         return numbers;
     }
@@ -232,7 +215,7 @@ public static class TrainClassLibrary
         {
             if (char.IsDigit(c) || c == '.')
                 result += c;
-            else if (!string.IsNullOrEmpty(result))
+            else if (result.Length > 0)
                 break;
         }
 
@@ -253,8 +236,8 @@ public static class TrainClassLibrary
                 matched++;
         }
 
-        // Match at least 50% of input characters
-        return matched >= (input.Length / 2);
+        // Match at least 50% of input characters, rounding up for odd lengths.
+        return matched >= ((input.Length + 1) / 2);
     }
 
     /// <summary>

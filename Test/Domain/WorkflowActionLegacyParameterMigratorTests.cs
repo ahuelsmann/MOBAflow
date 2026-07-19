@@ -61,6 +61,42 @@ internal sealed class WorkflowActionLegacyParameterMigratorTests
     }
 
     [Test]
+    public void Deserialize_LegacyCommandByteArray_KeepsBoundaryBytesAndIgnoresInvalidItems()
+    {
+        const string json = """
+            {
+              "type": 2,
+              "parameters": {
+                "Bytes": [0, -1, 255, 256, "invalid"]
+              }
+            }
+            """;
+
+        var action = JsonSerializer.Deserialize<WorkflowAction>(json);
+
+        Assert.That(action?.Command?.BytesBase64, Is.EqualTo(Convert.ToBase64String([0, 255])));
+    }
+
+    [TestCase("\"not-base64\"")]
+    [TestCase("[]")]
+    [TestCase("[256]")]
+    public void Deserialize_LegacyCommandInvalidBytes_LeavesBytesUnset(string bytesJson)
+    {
+        var json = $$"""
+            {
+              "type": 2,
+              "parameters": {
+                "Bytes": {{bytesJson}}
+              }
+            }
+            """;
+
+        var action = JsonSerializer.Deserialize<WorkflowAction>(json);
+
+        Assert.That(action?.Command?.BytesBase64, Is.Null);
+    }
+
+    [Test]
     public void Deserialize_LegacyCommandWithFilePath_UpgradesToAudioAction()
     {
         const string json = """
@@ -96,6 +132,37 @@ internal sealed class WorkflowActionLegacyParameterMigratorTests
         var action = JsonSerializer.Deserialize<WorkflowAction>(json);
 
         Assert.That(action?.Audio?.FilePath, Is.EqualTo("announcements/station.mp3"));
+    }
+
+    [Test]
+    public void Deserialize_LegacyAudioParameters_DoNotOverwriteExistingFilePath()
+    {
+        const string json = """
+            {
+              "type": 1,
+              "audio": { "filePath": "current.wav" },
+              "parameters": { "FilePath": "legacy.wav" }
+            }
+            """;
+
+        var action = JsonSerializer.Deserialize<WorkflowAction>(json);
+
+        Assert.That(action?.Audio?.FilePath, Is.EqualTo("current.wav"));
+    }
+
+    [Test]
+    public void Deserialize_LegacyTrainDestinationDisplayFalseFlag_PreservesFalse()
+    {
+        const string json = """
+            {
+              "type": 6,
+              "parameters": { "ClearBeforeRender": false }
+            }
+            """;
+
+        var action = JsonSerializer.Deserialize<WorkflowAction>(json);
+
+        Assert.That(action?.TrainDestinationDisplay?.ClearBeforeRender, Is.False);
     }
 
     [Test]

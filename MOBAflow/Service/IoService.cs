@@ -90,7 +90,6 @@ internal class IoService : IIoService
         try
         {
             var sol = JsonSerializer.Deserialize<Solution>(json, JsonOptions.Default) ?? new Solution();
-            SolutionMigrator.MigrateToCurrent(sol);
             NormalizeLoadedPhotoPaths(sol);
             PhotoPathHelper.SetSolutionDirectory(result.Path);
 
@@ -152,7 +151,6 @@ internal class IoService : IIoService
             }
 
             var sol = JsonSerializer.Deserialize<Solution>(json, JsonOptions.Default) ?? new Solution();
-            SolutionMigrator.MigrateToCurrent(sol);
             NormalizeLoadedPhotoPaths(sol);
             PhotoPathHelper.SetSolutionDirectory(filePath);
 

@@ -52,7 +52,6 @@ public sealed class FeedbackSequencesController(ISolutionCache solutionCache) : 
         entry = cached;
         solution = JsonSerializer.Deserialize<Solution>(cached.Json, Moba.Domain.JsonOptions.Default);
         if (solution == null) { error = StatusCode(500, new { error = "Cached solution is invalid." }); return false; }
-        SolutionMigrator.MigrateToCurrent(solution);
         return true;
     }
 

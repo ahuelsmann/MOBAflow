@@ -139,7 +139,6 @@
               "properties": {
                 "id": { "type": "string", "format": "uuid" },
                 "name": { "type": "string" },
-                "isVirtual": { "type": "boolean" },
                 "inPort": { "type": "integer", "minimum": 0 },
                 "numberOfLapsToStop": { "type": "integer", "minimum": 0 },
                 "workflowId": { "type": ["string", "null"], "format": "uuid" },
@@ -186,7 +185,6 @@
                     "required": ["name"],
                     "properties": {
                       "name": { "type": "string" },
-                      "isVirtual": { "type": "boolean" },
                       "number": { "type": "integer", "minimum": 0 },
                       "inPort": { "type": "integer", "minimum": 0 },
                       "platformId": { "type": ["string", "null"], "format": "uuid" },

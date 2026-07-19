@@ -206,7 +206,9 @@ internal static class WorkflowActionPayloadDescriptors
         var list = new List<byte>();
         foreach (var item in el.EnumerateArray())
         {
-            if (item.TryGetInt32(out var b) && b is >= 0 and <= 255)
+            if (item.ValueKind == JsonValueKind.Number &&
+                item.TryGetInt32(out var b) &&
+                b is >= 0 and <= 255)
                 list.Add((byte)b);
         }
 

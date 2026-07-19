@@ -21,7 +21,7 @@ internal sealed class SolutionRemoteLoaderTests
         """
         {
           "name": "Remote Solution",
-          "schemaVersion": 1,
+          "schemaVersion": 3,
           "projects": [
             {
               "name": "Other Project",
@@ -303,12 +303,12 @@ internal sealed class SolutionRemoteLoaderTests
     }
 
     [Test]
-    public async Task SyncIfNeededAsync_AcceptsLegacySolutionJson_WithoutSchemaVersion()
+    public async Task SyncIfNeededAsync_RejectsSolutionJson_WithoutSchemaVersion()
     {
-        const string legacySolutionJson =
+        const string invalidSolutionJson =
             """
             {
-              "name": "Legacy Solution",
+              "name": "Invalid Solution",
               "projects": [
                 {
                   "name": "myMOBA",
@@ -328,7 +328,7 @@ internal sealed class SolutionRemoteLoaderTests
             """;
 
         var updatedAt = DateTimeOffset.UtcNow;
-        var handler = new FakeSolutionHttpHandler(updatedAt, legacySolutionJson, "C:/demo/solution.json", "myMOBA");
+        var handler = new FakeSolutionHttpHandler(updatedAt, invalidSolutionJson, "C:/demo/solution.json", "myMOBA");
         var httpClient = new HttpClient(handler);
         var mobileContext = new MobileSolutionContext();
         var loader = new SolutionRemoteLoader(
@@ -340,8 +340,7 @@ internal sealed class SolutionRemoteLoaderTests
 
         await loader.ForceSyncAsync("192.168.0.10", 5001);
 
-        Assert.That(mobileContext.SelectedProject?.Locomotives, Has.Count.EqualTo(1));
-        Assert.That(mobileContext.SelectedProject?.Locomotives[0].Name, Is.EqualTo("BR 110 Verkehrsrot"));
+        Assert.That(mobileContext.SelectedProject, Is.Null);
     }
 
     private sealed class FakeSolutionHttpHandler(

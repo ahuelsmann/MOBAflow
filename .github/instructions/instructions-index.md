@@ -37,6 +37,7 @@ applyTo: '**'
 ### Tooling and workflow
 - [vs-setup.instructions.md](./vs-setup.instructions.md)
 - [copilot-tips.instructions.md](./copilot-tips.instructions.md)
+- [Spec Kit workflow](../../docs/SPEC-KIT.md) — specification-driven feature workflow and CLI setup
 - [quick-reference.md](./quick-reference.md)
 - [future-enhancements.instructions.md](./future-enhancements.instructions.md)
 - [instructions.instructions.md](./instructions.instructions.md)

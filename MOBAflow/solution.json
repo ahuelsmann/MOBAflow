@@ -401,19 +401,8 @@
           "text": "N\u00E4chster Halt: {StationName}. Ausstieg: {StationIsExitOnLeft}.",
           "stations": [
             {
-              "id": "0284b108-361f-4357-ae1e-7fb8c52aa33e",
-              "name": "Event1",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "d1e2f3a4-b5c6-7890-1234-567890abcdef",
               "name": "Bielefeld Central Station",
-              "isVirtual": false,
               "isExitOnLeft": true,
               "platforms": [],
               "platformNumber": 0,
@@ -423,19 +412,8 @@
               "connections": []
             },
             {
-              "id": "751ad5f3-ee7a-4694-875f-76f7d8461f77",
-              "name": "Event2",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "d2e3f4a5-b6c7-8901-2345-678901bcdef0",
               "name": "Herford",
-              "isVirtual": false,
               "isExitOnLeft": false,
               "platforms": [],
               "platformNumber": 0,
@@ -445,19 +423,8 @@
               "connections": []
             },
             {
-              "id": "4eab1740-8f91-4840-9c9b-e2ebd3cdce0e",
-              "name": "Event3",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "d3e4f5a6-b7c8-9012-3456-789012cdef01",
               "name": "Minden (Westf)",
-              "isVirtual": false,
               "isExitOnLeft": true,
               "platforms": [],
               "platformNumber": 0,
@@ -502,19 +469,8 @@
           "text": "N\u00E4chster Halt: {StationName}. Ausstieg: {StationIsExitOnLeft}.",
           "stations": [
             {
-              "id": "e1200001-1200-4000-8000-000000000001",
-              "name": "Event1",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "e1200002-1200-4000-8000-000000000002",
               "name": "Flensburg",
-              "isVirtual": false,
               "isExitOnLeft": true,
               "platforms": [],
               "platformNumber": 0,
@@ -524,19 +480,8 @@
               "connections": []
             },
             {
-              "id": "e1200003-1200-4000-8000-000000000003",
-              "name": "Event2",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "e1200004-1200-4000-8000-000000000004",
               "name": "Hamburg Central Station",
-              "isVirtual": false,
               "isExitOnLeft": false,
               "platforms": [],
               "platformNumber": 0,
@@ -546,19 +491,8 @@
               "connections": []
             },
             {
-              "id": "e1200005-1200-4000-8000-000000000005",
-              "name": "Event3",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "e1200006-1200-4000-8000-000000000006",
               "name": "Hannover Central Station",
-              "isVirtual": false,
               "isExitOnLeft": true,
               "platforms": [],
               "platformNumber": 0,
@@ -568,19 +502,8 @@
               "connections": []
             },
             {
-              "id": "e1200007-1200-4000-8000-000000000007",
-              "name": "Event4",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "d1e2f3a4-b5c6-7890-1234-567890abcdef",
               "name": "Bielefeld Central Station",
-              "isVirtual": false,
               "isExitOnLeft": true,
               "platforms": [],
               "platformNumber": 0,
@@ -590,19 +513,8 @@
               "connections": []
             },
             {
-              "id": "e1200009-1200-4000-8000-000000000009",
-              "name": "Event5",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "e1200010-1200-4000-8000-000000000010",
               "name": "G\u00F6ttingen",
-              "isVirtual": false,
               "isExitOnLeft": false,
               "platforms": [],
               "platformNumber": 0,
@@ -612,19 +524,8 @@
               "connections": []
             },
             {
-              "id": "e1200011-1200-4000-8000-000000000011",
-              "name": "Event6",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "e1200012-1200-4000-8000-000000000012",
               "name": "Kassel Central Station",
-              "isVirtual": false,
               "isExitOnLeft": true,
               "platforms": [],
               "platformNumber": 0,
@@ -634,19 +535,8 @@
               "connections": []
             },
             {
-              "id": "e1200013-1200-4000-8000-000000000013",
-              "name": "Event7",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "e1200014-1200-4000-8000-000000000014",
               "name": "Fulda",
-              "isVirtual": false,
               "isExitOnLeft": true,
               "platforms": [],
               "platformNumber": 0,
@@ -667,19 +557,8 @@
           "text": "N\u00E4chster Halt: {StationName}. Ausstieg: {StationIsExitOnLeft}.",
           "stations": [
             {
-              "id": "e1400001-1400-4000-8000-000000000001",
-              "name": "Event1",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "e1400002-1400-4000-8000-000000000002",
               "name": "Norddeich Mole",
-              "isVirtual": false,
               "isExitOnLeft": true,
               "platforms": [],
               "platformNumber": 0,
@@ -689,19 +568,8 @@
               "connections": []
             },
             {
-              "id": "e1400003-1400-4000-8000-000000000003",
-              "name": "Event2",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "e1400004-1400-4000-8000-000000000004",
               "name": "Emden",
-              "isVirtual": false,
               "isExitOnLeft": false,
               "platforms": [],
               "platformNumber": 0,
@@ -711,19 +579,8 @@
               "connections": []
             },
             {
-              "id": "e1400005-1400-4000-8000-000000000005",
-              "name": "Event3",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "e1400006-1400-4000-8000-000000000006",
               "name": "Oldenburg (Oldb) Central Station",
-              "isVirtual": false,
               "isExitOnLeft": true,
               "platforms": [],
               "platformNumber": 0,
@@ -733,19 +590,8 @@
               "connections": []
             },
             {
-              "id": "e1400007-1400-4000-8000-000000000007",
-              "name": "Event4",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "e1400008-1400-4000-8000-000000000008",
               "name": "Bremen Central Station",
-              "isVirtual": false,
               "isExitOnLeft": false,
               "platforms": [],
               "platformNumber": 0,
@@ -755,19 +601,8 @@
               "connections": []
             },
             {
-              "id": "e1400009-1400-4000-8000-000000000009",
-              "name": "Event5",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "e1400010-1400-4000-8000-000000000010",
               "name": "Hannover Central Station",
-              "isVirtual": false,
               "isExitOnLeft": true,
               "platforms": [],
               "platformNumber": 0,
@@ -777,19 +612,8 @@
               "connections": []
             },
             {
-              "id": "e1400011-1400-4000-8000-000000000011",
-              "name": "Event6",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "d1e2f3a4-b5c6-7890-1234-567890abcdef",
               "name": "Bielefeld Central Station",
-              "isVirtual": false,
               "isExitOnLeft": true,
               "platforms": [],
               "platformNumber": 0,
@@ -799,19 +623,8 @@
               "connections": []
             },
             {
-              "id": "e1400013-1400-4000-8000-000000000013",
-              "name": "Event7",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "d3e4f5a6-b7c8-9012-3456-789012cdef01",
               "name": "Minden (Westf)",
-              "isVirtual": false,
               "isExitOnLeft": true,
               "platforms": [],
               "platformNumber": 0,
@@ -821,19 +634,8 @@
               "connections": []
             },
             {
-              "id": "e1400015-1400-4000-8000-000000000015",
-              "name": "Event8",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "e1400016-1400-4000-8000-000000000016",
               "name": "Stendal",
-              "isVirtual": false,
               "isExitOnLeft": false,
               "platforms": [],
               "platformNumber": 0,
@@ -843,19 +645,8 @@
               "connections": []
             },
             {
-              "id": "e1400017-1400-4000-8000-000000000017",
-              "name": "Event9",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "e1400018-1400-4000-8000-000000000018",
               "name": "Berlin Central Station",
-              "isVirtual": false,
               "isExitOnLeft": true,
               "platforms": [],
               "platformNumber": 0,
@@ -874,7 +665,6 @@
         {
           "id": "d1e2f3a4-b5c6-7890-1234-567890abcdef",
           "name": "Bielefeld Central Station",
-          "isVirtual": false,
           "isExitOnLeft": false,
           "platforms": [
             {
@@ -892,7 +682,6 @@
         {
           "id": "d2e3f4a5-b6c7-8901-2345-678901bcdef0",
           "name": "Herford",
-          "isVirtual": false,
           "isExitOnLeft": false,
           "platforms": [
             {
@@ -909,7 +698,6 @@
         {
           "id": "d3e4f5a6-b7c8-9012-3456-789012cdef01",
           "name": "Minden (Westf)",
-          "isVirtual": false,
           "isExitOnLeft": false,
           "platforms": [
             {
@@ -2225,5 +2013,5 @@
       }
     }
   ],
-  "schemaVersion": 2
+  "schemaVersion": 3
 }

@@ -59,14 +59,14 @@ User gets a clear error message
 
 ### Current
 
-**Constant:** `Solution.CurrentSchemaVersion = 1`
+**Constant:** `Solution.CurrentSchemaVersion = 3`
 
 ### JSON example
 
 ```json
 {
   "name": "My Model Railroad",
-  "schemaVersion": 1,
+  "schemaVersion": 3,
   "projects": [
     {
       "name": "Main Project",
@@ -79,9 +79,8 @@ User gets a clear error message
 
 ### Version checks
 
-- **Missing `schemaVersion`:** Warning, but allowed (for legacy files)
+- **Missing `schemaVersion`:** Error, file will **not** be loaded
 - **Wrong version:** Error, file will **not** be loaded
-- **Future versions:** Auto-migration or upgrade hint (planned)
 
 ---
 
@@ -165,9 +164,9 @@ if (requiredSchemaVersion.HasValue)
 **Error examples:**
 
 ```text
-❌ Missing schema version. Expected version 1.
+❌ Missing required property: 'schemaVersion'.
 ❌ Schema version must be a number.
-❌ Incompatible schema version. Expected 1, found 999.
+❌ Incompatible schema version. Expected 3, found 999.
 ```
 
 ### 6. Project structure
@@ -326,44 +325,6 @@ Test summary: total: 16; failed: 0; succeeded: 16; skipped: 0
 
 ---
 
-## Migration (future)
-
-### When schema version 2 is introduced
-
-1. **Update `Solution.CurrentSchemaVersion`:**
-
-   ```csharp
-   public const int CurrentSchemaVersion = 2;
-   ```
-
-2. **Migration implementieren:**
-
-   ```csharp
-   public static Solution MigrateFromV1(Solution oldSolution)
-   {
-       // Add new fields, transform data
-       return newSolution;
-   }
-   ```
-
-3. **In `IoService`:**
-
-   ```csharp
-   if (solution.SchemaVersion == 1)
-   {
-       solution = Solution.MigrateFromV1(solution);
-   }
-   ```
-
-4. **Extend tests:**
-
-   ```csharp
-   [Test]
-   public void MigrateFromV1_ShouldConvertCorrectly() { ... }
-   ```
-
----
-
 ## Best practices
 
 ### ✅ DO
@@ -372,7 +333,6 @@ Test summary: total: 16; failed: 0; succeeded: 16; skipped: 0
 - Return clear error messages to the user
 - Validate **before** deserialization
 - Increment the version on breaking changes
-- Offer migration paths for legacy files
 
 ### ❌ DON'T
 
@@ -396,7 +356,7 @@ MOBAflow's JSON validation protects against:
 
 - ✅ Better error handling
 - ✅ Clear user-facing error messages
-- ✅ Future-proof migration support
+- ✅ Explicit current-schema enforcement
 - ✅ High test coverage for validation
 
 ---

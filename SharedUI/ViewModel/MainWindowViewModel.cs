@@ -544,11 +544,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
     {
         if (SelectedJourney == null) return;
 
-        if (city.IsVirtual)
-        {
-            return;
-        }
-
         // Get City's first station (Hauptbahnhof) - only the NAME
         var cityStation = city.Stations.FirstOrDefault();
         if (cityStation == null) return;

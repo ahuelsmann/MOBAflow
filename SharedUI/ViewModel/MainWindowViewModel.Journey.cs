@@ -45,7 +45,7 @@ public partial class MainWindowViewModel
     }
 
     /// <summary>
-    /// Controls whether the Workflow Library panel is visible on JourneysPage.
+    /// Controls whether the Workflow Library panel is visible on StationsPage.
     /// </summary>
     private bool _isWorkflowLibraryVisible = true;
 
@@ -55,7 +55,7 @@ public partial class MainWindowViewModel
         set
         {
             if (SetProperty(ref _isWorkflowLibraryVisible, value))
-                PersistLayoutState(layout => layout.JourneysPage.IsWorkflowLibraryExpanded = value);
+                PersistLayoutState(layout => layout.StationsPage.IsWorkflowLibraryExpanded = value);
         }
     }
 
@@ -181,11 +181,6 @@ public partial class MainWindowViewModel
     {
         if (SelectedCity == null || SelectedJourney == null)
             return;
-
-        if (SelectedCity.IsVirtual)
-        {
-            return;
-        }
 
         // Take the first station from the selected city (name only!)
         var cityStation = SelectedCity.Stations.FirstOrDefault();

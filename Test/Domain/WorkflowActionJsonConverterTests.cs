@@ -9,6 +9,156 @@ using System.Text.Json;
 internal sealed class WorkflowActionJsonConverterTests
 {
     [Test]
+    public void Deserialize_NullToken_ReturnsNull()
+    {
+        var action = JsonSerializer.Deserialize<WorkflowAction>("null");
+
+        Assert.That(action, Is.Null);
+    }
+
+    [Test]
+    public void Deserialize_CaseInsensitiveMetadata_PreservesEveryValue()
+    {
+        // Arrange
+        var id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+        var json = $$"""
+            {
+              "ID": "{{id}}",
+              "NAME": "Play horn",
+              "NUMBER": 42,
+              "TYPE": "Audio",
+              "DELAYAFTERMS": 125,
+              "AUDIO": { "FILEPATH": "sounds/horn.wav" }
+            }
+            """;
+
+        // Act
+        var action = JsonSerializer.Deserialize<WorkflowAction>(json);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(action, Is.Not.Null);
+            Assert.That(action!.Id, Is.EqualTo(id));
+            Assert.That(action.Name, Is.EqualTo("Play horn"));
+            Assert.That(action.Number, Is.EqualTo(42));
+            Assert.That(action.Type, Is.EqualTo(ActionType.Audio));
+            Assert.That(action.DelayAfterMs, Is.EqualTo(125));
+            Assert.That(action.Audio?.FilePath, Is.EqualTo("sounds/horn.wav"));
+        });
+    }
+
+    [Test]
+    public void Deserialize_InvalidMetadata_UsesSafeDefaults()
+    {
+        const string json = """
+            {
+              "id": "not-a-guid",
+              "name": 12,
+              "number": -1,
+              "type": "unknown",
+              "delayAfterMs": "later"
+            }
+            """;
+
+        var action = JsonSerializer.Deserialize<WorkflowAction>(json);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(action, Is.Not.Null);
+            Assert.That(action!.Id, Is.Not.EqualTo(Guid.Empty));
+            Assert.That(action.Name, Is.Empty);
+            Assert.That(action.Number, Is.Zero);
+            Assert.That(action.Type, Is.EqualTo(ActionType.Command));
+            Assert.That(action.DelayAfterMs, Is.Zero);
+        });
+    }
+
+    [Test]
+    public void Serialize_NullAction_WritesNullToken()
+    {
+        var json = JsonSerializer.Serialize<WorkflowAction?>(null);
+
+        Assert.That(json, Is.EqualTo("null"));
+    }
+
+    [TestCase(ActionType.Command, "command")]
+    [TestCase(ActionType.Audio, "audio")]
+    [TestCase(ActionType.Announcement, "announcement")]
+    [TestCase(ActionType.ExecuteScript, "powerShell")]
+    [TestCase(ActionType.SelectSignalAspect, "selectSignalAspect")]
+    [TestCase(ActionType.TrainDestinationDisplay, "trainDestinationDisplay")]
+    [TestCase(ActionType.ChangeJourneyStop, "changeJourneyStop")]
+    public void Serialize_DeclaredTypeWithoutPayload_WritesDefaultPayload(ActionType type, string payloadProperty)
+    {
+        // Arrange
+        var id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+        var action = new WorkflowAction
+        {
+            Id = id,
+            Name = "Configured action",
+            Number = 7,
+            Type = type,
+            DelayAfterMs = 250
+        };
+
+        // Act
+        using var document = JsonDocument.Parse(JsonSerializer.Serialize(action));
+        var root = document.RootElement;
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(root.GetProperty("id").GetGuid(), Is.EqualTo(id));
+            Assert.That(root.GetProperty("name").GetString(), Is.EqualTo("Configured action"));
+            Assert.That(root.GetProperty("number").GetUInt32(), Is.EqualTo(7));
+            Assert.That(root.GetProperty("type").GetInt32(), Is.EqualTo((int)type));
+            Assert.That(root.GetProperty("delayAfterMs").GetInt32(), Is.EqualTo(250));
+            Assert.That(root.GetProperty(payloadProperty).ValueKind, Is.EqualTo(JsonValueKind.Object));
+        });
+    }
+
+    [Test]
+    public void Serialize_TypeWithoutDescriptor_WritesEveryPresentPayloadOnly()
+    {
+        // Arrange
+        var action = new WorkflowAction
+        {
+            Type = ActionType.Matrix,
+            Command = new CommandActionPayload { Address = 3 },
+            Audio = new AudioActionPayload { FilePath = "sounds/horn.wav" }
+        };
+
+        // Act
+        using var document = JsonDocument.Parse(JsonSerializer.Serialize(action));
+        var root = document.RootElement;
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(root.GetProperty("command").GetProperty("address").GetInt32(), Is.EqualTo(3));
+            Assert.That(root.GetProperty("audio").GetProperty("filePath").GetString(), Is.EqualTo("sounds/horn.wav"));
+            Assert.That(root.TryGetProperty("announcement", out _), Is.False);
+        });
+    }
+
+    [Test]
+    public void Deserialize_NonObjectPayloadAndLegacyParameters_AreIgnored()
+    {
+        const string json = """
+            {
+              "type": 1,
+              "audio": "sounds/horn.wav",
+              "parameters": []
+            }
+            """;
+
+        var action = JsonSerializer.Deserialize<WorkflowAction>(json);
+
+        Assert.That(action?.Audio, Is.Null);
+    }
+
+    [Test]
     public void RoundTrip_ChangeJourneyStopPayload_PreservesConfiguredTarget()
     {
         var targetId = Guid.NewGuid();

@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="NUnit" />
     <PackageReference Include="NUnit3TestAdapter" />
   </ItemGroup>
@@ -19,7 +20,17 @@
   <ItemGroup>
     <Compile Include="..\Test\Domain\**\*.cs"
              Link="Domain\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="..\Test\Unit\DomainDefaultsTests.cs" Link="Unit\DomainDefaultsTests.cs" />
+    <Compile Include="..\Test\Unit\NewSolutionTests.cs" Link="Unit\NewSolutionTests.cs" />
+    <Compile Include="..\Test\Unit\SolutionInstanceTests.cs" Link="Unit\SolutionInstanceTests.cs" />
+    <Compile Include="..\Test\Unit\SolutionTest.cs" Link="Unit\SolutionTest.cs" />
     <Using Include="Moba.Domain" />
     <Using Include="NUnit.Framework" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\Test\TestFile\**"
+          Link="TestFile\%(RecursiveDir)%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

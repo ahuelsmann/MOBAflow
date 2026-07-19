@@ -232,7 +232,6 @@ public sealed class MobileSolutionStore : IMobileSolutionStore
             }
 
             var solution = JsonSerializer.Deserialize<Solution>(solutionJson, JsonOptions.Default);
-            if (solution != null) SolutionMigrator.MigrateToCurrent(solution);
 
             if (solution == null || solution.Projects.Count == 0)
 

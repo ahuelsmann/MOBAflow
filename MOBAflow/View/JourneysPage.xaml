@@ -280,93 +280,21 @@
                     </controls:CollapsibleColumnHelper.PanelContent>
                 </controls:CollapsibleColumnHelper>
 
-                <Grid Grid.Column="2">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition
-                            x:Name="ColWorkflowLib"
-                            Width="250"
-                            MinWidth="32" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <!--  Workflow Library  -->
-                    <controls:CollapsibleColumnHelper
-                        Grid.Column="0"
-                        Margin="0"
-                        Glyph="&#xE945;"
-                        Header="Workflow Library"
-                        IsExpanded="{x:Bind ViewModel.IsWorkflowLibraryVisible, Mode=TwoWay}">
-                        <controls:CollapsibleColumnHelper.PanelContent>
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="*" />
-                                </Grid.RowDefinitions>
-
-                                <AutoSuggestBox
-                                    Grid.Row="0"
-                                    Margin="0,0,0,8"
-                                    PlaceholderText="Search workflows..."
-                                    QueryIcon="Find"
-                                    Text="{x:Bind ViewModel.WorkflowSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-
-                                <ScrollViewer
-                                    Grid.Row="1"
-                                    VerticalScrollBarVisibility="Auto"
-                                    VerticalScrollMode="Auto">
-                                    <StackPanel Spacing="8">
-                                        <TextBlock
-                                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                            Style="{StaticResource CaptionTextBlockStyle}"
-                                            Text="Drag to station to assign" />
-                                        <ListView
-                                            CanDragItems="True"
-                                            DragItemsStarting="WorkflowListView_DragItemsStarting"
-                                            ItemsSource="{x:Bind ViewModel.FilteredWorkflows, Mode=OneWay}"
-                                            SelectionMode="Single">
-                                            <ListView.ItemTemplate>
-                                                <DataTemplate x:DataType="viewmodel:WorkflowViewModel">
-                                                    <Grid Padding="6">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*" />
-                                                        </Grid.ColumnDefinitions>
-                                                        <TextBlock
-                                                            Grid.Column="0"
-                                                            VerticalAlignment="Center"
-                                                            Text="{x:Bind Name, Mode=OneWay}" />
-                                                    </Grid>
-                                                </DataTemplate>
-                                            </ListView.ItemTemplate>
-                                        </ListView>
-                                    </StackPanel>
-                                </ScrollViewer>
-                            </Grid>
-                        </controls:CollapsibleColumnHelper.PanelContent>
-                    </controls:CollapsibleColumnHelper>
-
-                    <!--  Properties Panel  -->
-                    <controls:CollapsibleColumnProperties
-                        Grid.Column="2"
-                        Margin="0"
-                        Glyph="&#xE946;"
-                        Header="{x:Bind ViewModel.JourneysPagePropertiesTitle, Mode=OneWay}"
-                        IsExpanded="{x:Bind ViewModel.IsJourneyPropertiesExpanded, Mode=TwoWay}">
-                        <controls:CollapsibleColumnProperties.PanelContent>
-                            <ContentControl
-                                HorizontalContentAlignment="Stretch"
-                                VerticalContentAlignment="Stretch"
-                                Content="{x:Bind ViewModel.JourneysPageSelectedObject, Mode=OneWay}"
-                                ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
-                        </controls:CollapsibleColumnProperties.PanelContent>
-                    </controls:CollapsibleColumnProperties>
-
-                    <controls1:GridSplitter
-                        Grid.Column="1"
-                        Width="4"
-                        HorizontalAlignment="Left"
-                        ResizeBehavior="PreviousAndNext"
-                        Visibility="{x:Bind ViewModel.IsWorkflowLibraryVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
-                </Grid>
+                <!--  Properties Panel  -->
+                <controls:CollapsibleColumnProperties
+                    Grid.Column="2"
+                    Margin="0"
+                    Glyph="&#xE946;"
+                    Header="{x:Bind ViewModel.JourneysPagePropertiesTitle, Mode=OneWay}"
+                    IsExpanded="{x:Bind ViewModel.IsJourneyPropertiesExpanded, Mode=TwoWay}">
+                    <controls:CollapsibleColumnProperties.PanelContent>
+                        <ContentControl
+                            HorizontalContentAlignment="Stretch"
+                            VerticalContentAlignment="Stretch"
+                            Content="{x:Bind ViewModel.JourneysPageSelectedObject, Mode=OneWay}"
+                            ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
+                    </controls:CollapsibleColumnProperties.PanelContent>
+                </controls:CollapsibleColumnProperties>
 
                 <controls1:GridSplitter
                     Grid.Column="1"

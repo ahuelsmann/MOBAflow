@@ -21,4 +21,5 @@ public class City : Station
     /// City is NOT part of Project aggregate - it's a selection helper for Journey creation.
     /// </summary>
     public List<Station> Stations { get; set; }
+
 }

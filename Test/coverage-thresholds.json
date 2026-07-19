@@ -1,0 +1,19 @@
+{
+  "global": {
+    "minimum-line-percent": 38.5,
+    "minimum-branch-percent": 30.0
+  },
+  "projects": {
+    "Backend": 64.5,
+    "Common": 71.0,
+    "Domain": 87.5,
+    "MOBAdisplay": 77.0,
+    "MOBAflow": 4.5,
+    "MOBApi": 41.0,
+    "SharedUI": 44.0,
+    "Sound": 64.5,
+    "TrackLibrary.Base": 99.0,
+    "TrackLibrary.PikoA": 89.0,
+    "TrackPlan.Renderer": 94.0
+  }
+}

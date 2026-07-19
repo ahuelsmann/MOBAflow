@@ -99,3 +99,26 @@ It builds the explicit Windows desktop graph with `IncludeMobaSmartTests=false`,
 runs NUnit with Cobertura coverage, audits the resolved transitive NuGet graph
 and retains all reports for 90 days. Android/MAUI validation is a separate,
 explicit opt-in graph with `IncludeMobaSmartTests=true`.
+
+The workflow enforces a coverage ratchet from `Test/coverage-thresholds.json`.
+The thresholds are per production assembly as well as global, so an improvement
+in one project cannot hide a regression in another. Generated `obj` sources are
+excluded; handwritten application code remains part of the measurement.
+
+Run the same checks locally after producing a Release Cobertura report:
+
+```powershell
+./scripts/Test-CoverageThresholds.ps1 -CoveragePath <coverage.cobertura.xml>
+./scripts/Test-MutationLaneCoverage.ps1
+```
+
+The mutation lane registry is `MutationTest/mutation-lanes.json`. It fails when
+a test fixture is added outside a registered lane. Lanes marked `planned` are
+visible but do not yet claim mutation coverage. The active Domain lane runs in
+CI with a 60 percent break threshold:
+
+```powershell
+dotnet tool restore
+Set-Location MutationTest
+dotnet stryker --skip-version-check
+```

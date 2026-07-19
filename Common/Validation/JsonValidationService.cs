@@ -63,16 +63,20 @@ public static class JsonValidationService
             // Step 5: Optional schema version check
             if (requiredSchemaVersion.HasValue)
             {
-                var actualVersion = ResolveSchemaVersion(root, requiredSchemaVersion.Value);
-                if (actualVersion == null)
+                if (!root.TryGetProperty("schemaVersion", out var versionElement))
+                {
+                    return JsonValidationResult.Failure("Missing required property: 'schemaVersion'.");
+                }
+
+                if (versionElement.ValueKind != JsonValueKind.Number || !versionElement.TryGetInt32(out var actualVersion))
                 {
                     return JsonValidationResult.Failure("Schema version must be a number.");
                 }
 
-                if (actualVersion.Value < 1 || actualVersion.Value > requiredSchemaVersion.Value)
+                if (actualVersion != requiredSchemaVersion.Value)
                 {
                     return JsonValidationResult.Failure(
-                        $"Incompatible schema version. Supports up to {requiredSchemaVersion.Value}, found {actualVersion.Value}.");
+                        $"Incompatible schema version. Expected {requiredSchemaVersion.Value}, found {actualVersion}.");
                 }
             }
 
@@ -96,26 +100,6 @@ public static class JsonValidationService
         return JsonValidationResult.Success();
     }
 
-    private static int? ResolveSchemaVersion(JsonElement root, int requiredSchemaVersion)
-    {
-        if (!root.TryGetProperty("schemaVersion", out var versionElement))
-        {
-            return 1;
-        }
-
-        if (versionElement.ValueKind != JsonValueKind.Number || !versionElement.TryGetInt32(out var actualVersion))
-        {
-            return null;
-        }
-
-        // Deserialized legacy files may round-trip as 0 before the field was introduced.
-        if (actualVersion == 0)
-        {
-            return 1;
-        }
-
-        return actualVersion;
-    }
 }
 
 /// <summary>

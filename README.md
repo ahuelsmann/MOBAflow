@@ -184,7 +184,7 @@ resolution.
 
 <p align="center">
   <a href="docs/images/journey-management.png">
-    <img src="docs/images/journey-management.png" alt="Journey editor with stations, city library, workflow library and journey properties" width="800" />
+    <img src="docs/images/journey-management.png" alt="Journey editor with stations, city library and journey properties" width="800" />
   </a>
   <br />
   <em>Compose journeys from stations, cities and workflows with live runtime state.</em>
@@ -663,18 +663,18 @@ MOBAflow uses **System.Text.Json** with schema validation.
 ```json
 {
   "name": "My Model Railroad",
-  "schemaVersion": 1,
+  "schemaVersion": 3,
   "projects": [...]
 }
 ```
 
-**Current Schema Version:** `1`
+**Current Schema Version:** `3`
 
 #### Validation Rules
 
 - ✅ **JSON Structure** – Valid syntax
 - ✅ **Required Properties** – `name`, `projects`
-- ✅ **Schema Version** – Compatibility check
+- ✅ **Schema Version** – Exact version check
 - ✅ **Project Integrity** – Valid structure
 
 ### 📊 Logging Infrastructure

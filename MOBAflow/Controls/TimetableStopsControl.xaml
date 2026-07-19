@@ -70,15 +70,10 @@
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     Text="{x:Bind PreviousStationNameValue, Mode=OneWay}"
                                     TextTrimming="CharacterEllipsis" />
-                                <FontIcon
-                                    FontSize="12"
-                                    Foreground="{ThemeResource SystemFillColorCautionBrush}"
-                                    Glyph="&#xE945;"
-                                    Visibility="{x:Bind PreviousStationIsEvent, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
                                 <StackPanel
                                     Orientation="Horizontal"
                                     Spacing="2"
-                                    Visibility="{x:Bind PreviousStationShowsExitDirection, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    Visibility="{x:Bind PreviousStationHasValue, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                                     <StackPanel
                                         Orientation="Horizontal"
                                         Spacing="2"
@@ -123,8 +118,7 @@
                                 Grid.Column="0"
                                 Grid.ColumnSpan="2"
                                 Orientation="Horizontal"
-                                Spacing="12"
-                                Visibility="{x:Bind PreviousStationIsEvent, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
+                                Spacing="12">
                                 <StackPanel Orientation="Horizontal" Spacing="4">
                                     <TextBlock
                                         FontSize="10"
@@ -180,15 +174,10 @@
                                     Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                                     Text="{x:Bind CurrentStationNameValue, Mode=OneWay}"
                                     TextTrimming="CharacterEllipsis" />
-                                <FontIcon
-                                    FontSize="13"
-                                    Foreground="{ThemeResource SystemFillColorCautionBrush}"
-                                    Glyph="&#xE945;"
-                                    Visibility="{x:Bind CurrentStationIsEvent, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
                                 <StackPanel
                                     Orientation="Horizontal"
                                     Spacing="2"
-                                    Visibility="{x:Bind CurrentStationShowsExitDirection, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    Visibility="{x:Bind CurrentStationHasValue, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                                     <StackPanel
                                         Orientation="Horizontal"
                                         Spacing="2"
@@ -241,8 +230,7 @@
                                 Grid.Column="0"
                                 Grid.ColumnSpan="2"
                                 Orientation="Horizontal"
-                                Spacing="12"
-                                Visibility="{x:Bind CurrentStationIsEvent, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
+                                Spacing="12">
                                 <StackPanel Orientation="Horizontal" Spacing="4">
                                     <TextBlock
                                         FontSize="11"
@@ -301,15 +289,10 @@
                                     FontWeight="SemiBold"
                                     Text="{x:Bind NextStationNameValue, Mode=OneWay}"
                                     TextTrimming="CharacterEllipsis" />
-                                <FontIcon
-                                    FontSize="12"
-                                    Foreground="{ThemeResource SystemFillColorCautionBrush}"
-                                    Glyph="&#xE945;"
-                                    Visibility="{x:Bind NextStationIsEvent, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
                                 <StackPanel
                                     Orientation="Horizontal"
                                     Spacing="2"
-                                    Visibility="{x:Bind NextStationShowsExitDirection, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    Visibility="{x:Bind NextStationHasValue, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                                     <StackPanel
                                         Orientation="Horizontal"
                                         Spacing="2"
@@ -354,8 +337,7 @@
                                 Grid.Column="0"
                                 Grid.ColumnSpan="2"
                                 Orientation="Horizontal"
-                                Spacing="12"
-                                Visibility="{x:Bind NextStationIsEvent, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
+                                Spacing="12">
                                 <StackPanel Orientation="Horizontal" Spacing="4">
                                     <TextBlock
                                         FontSize="10"
