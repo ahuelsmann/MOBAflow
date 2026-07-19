@@ -299,7 +299,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         get
         {
             if (JourneysPageSelectedObject is JourneyViewModel) return "Journey Properties";
-            if (JourneysPageSelectedObject is StationViewModel station) return station.IsVirtual ? "Event Properties" : "Station Properties";
+            if (JourneysPageSelectedObject is StationViewModel) return "Station Properties";
             return "Properties";
         }
     }
@@ -558,7 +558,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         {
             Name = cityStation.Name,
             IsExitOnLeft = false,
-            IsVirtual = false
         };
 
         // Add JourneyStation to Journey

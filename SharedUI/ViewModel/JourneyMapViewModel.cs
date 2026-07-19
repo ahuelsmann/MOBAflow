@@ -88,7 +88,7 @@ public sealed class JourneyMapViewModel : ObservableObject
     /// Stations of the selected journey for route display.
     /// </summary>
     public IReadOnlyList<StationViewModel> RouteStations =>
-        SelectedJourney?.Stations.Where(station => station.IsRealStation).ToList() ?? [];
+        SelectedJourney?.Stations ?? [];
     #endregion
 
     #region Status Bar Properties
@@ -101,9 +101,7 @@ public sealed class JourneyMapViewModel : ObservableObject
         {
             if (SelectedJourney == null) return "-";
             var total = RouteStations.Count;
-            var currentIndex = SelectedJourney.Stations
-                .Take(Math.Clamp(SelectedJourney.CurrentPos + 1, 0, SelectedJourney.Stations.Count))
-                .Count(station => station.IsRealStation);
+            var currentIndex = Math.Clamp(SelectedJourney.CurrentPos + 1, 0, total);
             return $"Station {currentIndex} of {total}";
         }
     }

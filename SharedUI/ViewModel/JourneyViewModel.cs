@@ -33,8 +33,6 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     // Runtime State
     private readonly JourneySessionState _state;
     private ObservableCollection<StationViewModel>? _stations;
-    private ObservableCollection<JourneyFeedbackStepViewModel>? _feedbackSteps;
-    private StationListViewMode _stationListViewMode = StationListViewMode.StopsOnly;
     #endregion
 
     /// <summary>
@@ -56,7 +54,6 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
 
         // Initialize Stations collection
         RefreshStations();
-        RefreshFeedbackSteps();
     }
 
     /// <summary>
@@ -117,48 +114,15 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     } = string.Empty;
 
     /// <summary>
-    /// Gets or sets how stations are displayed in the Journeys page list.
-    /// </summary>
-    public StationListViewMode StationListViewMode
-    {
-        get => _stationListViewMode;
-        set
-        {
-            if (_stationListViewMode == value)
-            {
-                return;
-            }
-
-            _stationListViewMode = value;
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(IsTimelineView));
-            OnPropertyChanged(nameof(FilteredStations));
-            UpdateStationHighlights();
-        }
-    }
-
-    /// <summary>
-    /// Indicates whether the full journey timeline (including events) is shown.
-    /// </summary>
-    public bool IsTimelineView => StationListViewMode == StationListViewMode.FullTimeline;
-
-    /// <summary>
-    /// Gets the filtered stations based on search text and view mode.
+    /// Gets the stations matching the current search text.
     /// </summary>
     public List<StationViewModel> FilteredStations
     {
         get
         {
-            var stations = string.IsNullOrWhiteSpace(StationSearchText)
+            return string.IsNullOrWhiteSpace(StationSearchText)
                 ? Stations
-                : Stations.Where(s => s.Name.Contains(StationSearchText, StringComparison.OrdinalIgnoreCase));
-
-            if (StationListViewMode == StationListViewMode.StopsOnly)
-            {
-                stations = stations.Where(s => s.IsRealStation);
-            }
-
-            return [.. stations];
+                : [.. Stations.Where(s => s.Name.Contains(StationSearchText, StringComparison.OrdinalIgnoreCase))];
         }
     }
 
@@ -176,33 +140,6 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
             }
             return _stations!;
         }
-    }
-
-    /// <summary>Gets the ordered feedback sequence configured for this journey.</summary>
-    public ObservableCollection<JourneyFeedbackStepViewModel> FeedbackSteps
-    {
-        get
-        {
-            if (_feedbackSteps == null)
-            {
-                RefreshFeedbackSteps();
-            }
-            return _feedbackSteps!;
-        }
-    }
-
-    [RelayCommand]
-    private void AddFeedbackStep()
-    {
-        _journey.FeedbackSequence.Add(new JourneyFeedbackStep { InPort = 1 });
-        RefreshFeedbackSteps();
-    }
-
-    [RelayCommand]
-    private void DeleteFeedbackStep(JourneyFeedbackStepViewModel step)
-    {
-        _journey.FeedbackSequence.Remove(step.Model);
-        RefreshFeedbackSteps();
     }
 
     /// <summary>
@@ -421,49 +358,14 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
         OnPropertyChanged(nameof(FilteredStations));
     }
 
-    public void RefreshFeedbackSteps()
-    {
-        _feedbackSteps ??= [];
-        _feedbackSteps.Clear();
-        foreach (var step in _journey.FeedbackSequence)
-        {
-            _feedbackSteps.Add(new JourneyFeedbackStepViewModel(step, _project));
-        }
-
-        OnPropertyChanged(nameof(FeedbackSteps));
-        OnPropertyChanged(nameof(NextFeedbackInPort));
-    }
-
     private void UpdateStationHighlights() => UpdateStationHighlights(_state.CurrentPos);
 
     private void UpdateStationHighlights(int currentPos)
     {
         for (var i = 0; i < Stations.Count; i++)
         {
-            Stations[i].IsCurrentStation = StationListViewMode == StationListViewMode.FullTimeline
-                ? i == currentPos
-                : Stations[i].IsRealStation && IsApproachSegmentActive(i, currentPos);
+            Stations[i].IsCurrentStation = i == currentPos;
         }
-    }
-
-    private bool IsApproachSegmentActive(int realStationIndex, int currentPos)
-    {
-        if (realStationIndex < 0 || realStationIndex >= Stations.Count || !Stations[realStationIndex].IsRealStation)
-        {
-            return false;
-        }
-
-        var segmentStart = 0;
-        for (var j = realStationIndex - 1; j >= 0; j--)
-        {
-            if (Stations[j].IsRealStation)
-            {
-                segmentStart = j + 1;
-                break;
-            }
-        }
-
-        return currentPos >= segmentStart && currentPos <= realStationIndex;
     }
 
     /// <summary>

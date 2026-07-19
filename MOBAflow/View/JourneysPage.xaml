@@ -199,8 +199,8 @@
                                             VerticalAlignment="Center"
                                             FontSize="14"
                                             Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                                            Glyph="{x:Bind StationIconGlyph, Mode=OneWay}"
-                                            ToolTipService.ToolTip="{x:Bind StationKindText, Mode=OneWay}" />
+                                            Glyph="&#xEC06;"
+                                            ToolTipService.ToolTip="Station" />
                                         <TextBlock
                                             Grid.Column="1"
                                             VerticalAlignment="Center"
