@@ -1,61 +1,62 @@
-name: Fehler melden
-description: Melde ein reproduzierbares Problem in MOBAflow oder einer zugehörigen Anwendung.
+name: Report a bug
+description: Report a reproducible problem in MOBAflow or a related application.
 title: "[Bug]: "
+labels: ["product"]
 body:
   - type: markdown
     attributes:
       value: |
-        Danke für deinen Fehlerbericht. Bitte teile keine Zugangsdaten, privaten Schlüssel oder vollständigen privaten Netzwerkkonfigurationen.
+        Thank you for reporting a bug. Do not include credentials, private keys, or complete private network configurations.
 
   - type: dropdown
     id: area
     attributes:
-      label: Betroffener Bereich
-      description: Wo tritt das Problem auf?
+      label: Affected area
+      description: Where does the problem occur?
       options:
         - MOBAflow (Windows)
         - MOBAsmart (Android)
         - MOBApi
         - MOBAdisplay
-        - Gleisplan
-        - Z21-Kommunikation
-        - Dokumentation oder Infrastruktur
-        - Nicht sicher
+        - Track plan
+        - Z21 communication
+        - Documentation or infrastructure
+        - Not sure
     validations:
       required: true
 
   - type: input
     id: version
     attributes:
-      label: Version oder Commit
-      description: Gib die Release-Version oder den Commit an, mit dem du getestet hast.
-      placeholder: "z. B. 0.2.0 oder abc1234"
+      label: Version or commit
+      description: Provide the release version or commit you tested.
+      placeholder: "For example, 0.2.0 or abc1234"
     validations:
       required: true
 
   - type: input
     id: environment
     attributes:
-      label: Umgebung
-      description: Betriebssystem, .NET-Version und gegebenenfalls Gerät.
-      placeholder: "z. B. Windows 11 24H2, .NET 10; Android 16"
+      label: Environment
+      description: Include the operating system, .NET version, and device where applicable.
+      placeholder: "For example, Windows 11 24H2, .NET 10; Android 16"
     validations:
       required: true
 
   - type: textarea
     id: problem
     attributes:
-      label: Fehlerbeschreibung
-      description: Was ist passiert?
-      placeholder: Beschreibe das Problem möglichst konkret.
+      label: Problem description
+      description: What happened?
+      placeholder: Describe the problem as precisely as possible.
     validations:
       required: true
 
   - type: textarea
     id: reproduce
     attributes:
-      label: Schritte zum Reproduzieren
-      description: Welche Schritte führen zuverlässig zum Fehler?
+      label: Steps to reproduce
+      description: Which steps reliably reproduce the problem?
       placeholder: |
         1. ...
         2. ...
@@ -66,26 +67,26 @@ body:
   - type: textarea
     id: expected
     attributes:
-      label: Erwartetes Verhalten
-      description: Was hätte stattdessen passieren sollen?
+      label: Expected behavior
+      description: What should have happened instead?
     validations:
       required: true
 
   - type: textarea
     id: diagnostics
     attributes:
-      label: Protokolle und zusätzliche Informationen
-      description: Füge relevante, bereinigte Logauszüge, Screenshots oder weitere Hinweise ein.
+      label: Logs and additional information
+      description: Add relevant sanitized logs, screenshots, or other context.
       render: shell
 
   - type: checkboxes
     id: checks
     attributes:
-      label: Vor dem Absenden
+      label: Before submitting
       options:
-        - label: Ich habe nach bestehenden Issues mit demselben Problem gesucht.
+        - label: I searched for existing issues describing the same problem.
           required: true
-        - label: Ich habe Zugangsdaten, private Schlüssel und unnötige private Netzwerkdaten entfernt.
+        - label: I removed credentials, private keys, and unnecessary private network data.
           required: true
-        - label: Bei einem Hardwareproblem habe ich die Anlage in einen sicheren Zustand versetzt.
+        - label: For hardware-related problems, I put the railroad layout into a safe state.
           required: true

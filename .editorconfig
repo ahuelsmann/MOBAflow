@@ -10,6 +10,10 @@ end_of_line = crlf
 max_line_length = 140
 insert_final_newline = false
 
+# Unix shell scripts must remain executable across platforms.
+[*.sh]
+end_of_line = lf
+
 # ReSharper team-shared settings file
 [Moba.sln.DotSettings]
 indent_style = tab
