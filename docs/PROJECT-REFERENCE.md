@@ -31,6 +31,7 @@ TrackPlan.Renderer/     Platform-neutral render and SVG primitives
 Test/                   NUnit test project
 MutationTest/           Focused Stryker.NET lanes
 docs/                   User, developer, legal and protocol documentation
+plans/                  Standalone project, quality, refactoring and roadmap plans
 .github/workflows/      Public quality, pages and release workflows
 .azure-pipelines/       Additional Azure DevOps quality/release workflows
 ```

@@ -146,7 +146,7 @@ information on dependencies and third-party software.
 If you:
 
 - **Find bugs in MOBAflow** → Create GitHub Issue
-- **Discover security issues** → See [`SECURITY.md`](SECURITY.md)
+- **Discover security issues** → See [`SECURITY.md`](../SECURITY.md)
 - **Test Z21 compatibility** → Please test and report!
 - **Improve documentation** → Pull requests welcome!
 

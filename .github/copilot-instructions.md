@@ -44,6 +44,7 @@ MainWindowViewModel.OnFeedbackReceived() → IsConnected = true (UI thread safe)
 14. **Persist star layout as star values** — Use `*ColumnStarValue` for star-sized columns; do not mix pixel persistence with star restore
 15. **Validate Light and Dark theme for every UI change** — Use `ThemeResource` / platform theme tokens for foregrounds, backgrounds, borders, icons, selected states, hover states, disabled states, drag/drop visuals, and custom converters. Never encode colors that only work in one theme.
 16. **English UI language** — All user-visible text in UI apps (MOBAflow WinUI, MOBAsmart MAUI) must be English: labels, buttons, status messages, tooltips, empty states, defaults, and shipped master data (`data.json`, `solution.json`). No German (or other non-English) UI strings in XAML, ViewModels, or domain defaults. TTS/announcement language remains user-configurable in settings and is independent of UI language.
+17. **Standalone Markdown plans belong in `plans/`** — Keep project, quality, refactoring, and roadmap planning files out of `docs/`. Delete completed plans; Git history and closed GitHub work items retain the record. `docs/` contains current reference and user documentation. Spec Kit artifacts such as `specs/*/plan.md` remain in their feature directory. GitHub issues, milestones, and Kanban remain authoritative for active work and progress.
 
 ---
 

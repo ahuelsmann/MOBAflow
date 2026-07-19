@@ -102,6 +102,10 @@ Kurz zusammengefasst:
   - `README.md` und/oder passende Seite unter `docs/wiki/` aktualisieren
 - Technische Änderungen:
   - Gegebenenfalls `docs/ARCHITECTURE.md`, `docs/JSON-VALIDATION.md` usw. ergänzen
+- Eigenständige Projekt-, Qualitäts-, Refactoring- und Roadmap-Pläne:
+  - Als Markdown-Dateien unter `plans/` ablegen, nicht unter `docs/`
+  - Abgeschlossene Pläne löschen; Git-Historie und geschlossene GitHub-Vorgänge bewahren den Verlauf
+  - GitHub Issues, Milestones und Kanban bleiben für Status und Fortschritt maßgeblich
 - Drittanbieter / neue Pakete:
   - `docs/THIRD-PARTY-NOTICES.md` mit Lizenzinformationen nachziehen
 

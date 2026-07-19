@@ -16,7 +16,7 @@ Android, with an evolving ESP32-S3 display stack.
 [Features](#features) ·
 [Screenshots](#screenshots) ·
 [User guides](docs/wiki/INDEX.md) ·
-[Roadmap](ROADMAP.md) ·
+[Roadmap](plans/ROADMAP.md) ·
 [Contribute](CONTRIBUTING.md)
 
 <a href="docs/images/mobaflow-overview.png">
@@ -133,7 +133,7 @@ project information:
 
 - [Tags](https://github.com/ahuelsmann/MOBAflow/tags) and
   [changelog](CHANGELOG.md) for versions
-- [Roadmap](ROADMAP.md), [Kanban](https://github.com/users/ahuelsmann/projects/1)
+- [Roadmap](plans/ROADMAP.md), [Kanban](https://github.com/users/ahuelsmann/projects/1)
   and [issues](https://github.com/ahuelsmann/MOBAflow/issues) for planned work
 - [User documentation](docs/wiki/INDEX.md) for installation and app guides
 - [Project reference](docs/PROJECT-REFERENCE.md) and

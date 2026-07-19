@@ -16,11 +16,13 @@
    - Key files: `Backend/Z21.cs`, `SharedUI/Service/UiThreadEventBusDecorator.cs`, `SharedUI/ViewModel/MainWindowViewModel.cs`
    - See: `.github/copilot-instructions.md` § EventBus Threading Boundary
 
-2. **Absolute Rules (16 rules)**
+2. **Absolute Rules (17 rules)**
    - No `.Result` / `.Wait()` → Always use `await`
    - No hardcoded colors → `ThemeResource` only
    - No `InvokeOnUi` in EventBus handlers → Decorator already marshals
    - Backend/Common platform-independent → Zero WinUI/MAUI references
+   - Standalone Markdown plans → `plans/`, not `docs/`
+   - Delete completed plans; use Git history and closed GitHub work items as the record
    - See: `.github/copilot-instructions.md` § Absolute Rules
 
 3. **English UI Language**

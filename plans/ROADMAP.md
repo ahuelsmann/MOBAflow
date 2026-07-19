@@ -44,4 +44,4 @@ display-model/configuration support.
 - [Issues](https://github.com/ahuelsmann/MOBAflow/issues)
 - [Milestones](https://github.com/ahuelsmann/MOBAflow/milestones)
 - [Tags](https://github.com/ahuelsmann/MOBAflow/tags)
-- [Changelog](CHANGELOG.md)
+- [Changelog](../CHANGELOG.md)
