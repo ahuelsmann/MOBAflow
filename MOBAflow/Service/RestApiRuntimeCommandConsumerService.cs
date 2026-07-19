@@ -120,6 +120,10 @@ public sealed class RestApiRuntimeCommandConsumerService : IDisposable
                     .ConfigureAwait(false);
                 break;
 
+            case RuntimeCommandType.ResetJourney when command.JourneyId.HasValue:
+                await _mobaRuntime.ResetJourneyAsync(command.JourneyId.Value, cancellationToken).ConfigureAwait(false);
+                break;
+
             default:
                 _logger.LogDebug("Skipping unsupported runtime command {Type}", command.Type);
                 break;

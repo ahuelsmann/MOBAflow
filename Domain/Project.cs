@@ -12,6 +12,7 @@ public class Project
     /// </summary>
     public Project()
     {
+        Id = Guid.NewGuid();
         Locomotives = [];
         PassengerWagons = [];
         GoodsWagons = [];
@@ -22,6 +23,9 @@ public class Project
         Stations = [];
         LocomotiveWhistleRules = [];
     }
+
+    /// <summary>Gets or sets the stable project identifier.</summary>
+    public Guid Id { get; set; }
 
     /// <summary>
     /// Gets or sets the project name.
@@ -83,4 +87,5 @@ public class Project
     /// Physical track plan for this project (Piko A-Gleis segments + port connections).
     /// </summary>
     public TrackPlanDocument? TrackPlan { get; set; }
+
 }

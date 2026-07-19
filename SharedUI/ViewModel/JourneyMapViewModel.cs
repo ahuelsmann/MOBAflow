@@ -115,7 +115,7 @@ public sealed class JourneyMapViewModel : ObservableObject
     {
         get
         {
-            return SelectedJourney == null ? "-" : $"Lap {SelectedJourney.CurrentCounter}";
+            return SelectedJourney == null ? "-" : $"Step {SelectedJourney.CurrentFeedbackIndex + 1}";
         }
     }
 
@@ -167,7 +167,7 @@ public sealed class JourneyMapViewModel : ObservableObject
             OnPropertyChanged(nameof(ProgressText));
         }
 
-        if (e.PropertyName == nameof(JourneyViewModel.CurrentCounter))
+        if (e.PropertyName == nameof(JourneyViewModel.CurrentFeedbackIndex))
         {
             OnPropertyChanged(nameof(CounterText));
         }

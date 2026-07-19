@@ -69,10 +69,10 @@ public static class JsonValidationService
                     return JsonValidationResult.Failure("Schema version must be a number.");
                 }
 
-                if (actualVersion.Value != requiredSchemaVersion.Value)
+                if (actualVersion.Value < 1 || actualVersion.Value > requiredSchemaVersion.Value)
                 {
                     return JsonValidationResult.Failure(
-                        $"Incompatible schema version. Expected {requiredSchemaVersion.Value}, found {actualVersion.Value}.");
+                        $"Incompatible schema version. Supports up to {requiredSchemaVersion.Value}, found {actualVersion.Value}.");
                 }
             }
 
@@ -100,8 +100,7 @@ public static class JsonValidationService
     {
         if (!root.TryGetProperty("schemaVersion", out var versionElement))
         {
-            // Legacy solution files omit schemaVersion; treat as version 1 when that is required.
-            return requiredSchemaVersion == 1 ? 1 : null;
+            return 1;
         }
 
         if (versionElement.ValueKind != JsonValueKind.Number || !versionElement.TryGetInt32(out var actualVersion))
@@ -110,7 +109,7 @@ public static class JsonValidationService
         }
 
         // Deserialized legacy files may round-trip as 0 before the field was introduced.
-        if (actualVersion == 0 && requiredSchemaVersion == 1)
+        if (actualVersion == 0)
         {
             return 1;
         }

@@ -22,7 +22,7 @@ public sealed class MobileSolutionStore : IMobileSolutionStore
 
 {
 
-    private const int SolutionSchemaVersion = 1;
+    private const int SolutionSchemaVersion = Solution.CurrentSchemaVersion;
 
     private static readonly JsonSerializerOptions SignalBoxJsonOptions = new()
 
@@ -232,6 +232,7 @@ public sealed class MobileSolutionStore : IMobileSolutionStore
             }
 
             var solution = JsonSerializer.Deserialize<Solution>(solutionJson, JsonOptions.Default);
+            if (solution != null) SolutionMigrator.MigrateToCurrent(solution);
 
             if (solution == null || solution.Projects.Count == 0)
 

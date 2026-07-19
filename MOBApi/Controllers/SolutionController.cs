@@ -4,6 +4,7 @@ namespace Moba.MOBApi.Controllers;
 using Common.Runtime;
 
 using Common.Validation;
+using Domain;
 
 using Hubs;
 
@@ -23,8 +24,7 @@ using System.Text.Json;
 [Route("api/[controller]")]
 public class SolutionController : ControllerBase
 {
-    /// <summary>Must match Domain.Solution.CurrentSchemaVersion (1).</summary>
-    private const int SolutionSchemaVersion = 1;
+    private const int SolutionSchemaVersion = Solution.CurrentSchemaVersion;
 
     private readonly ISolutionCache _solutionCache;
     private readonly IHubContext<RuntimeHub> _hubContext;

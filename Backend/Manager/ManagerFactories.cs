@@ -35,10 +35,12 @@ public interface IPlatformManager : IDisposable
 public sealed class JourneyManagerFactory(
     IZ21 z21,
     IWorkflowService workflowService,
+    IJourneyStopTransitionService? stopTransitionService = null,
+    IJourneyRuntimeStateStore? runtimeStateStore = null,
     ILogger<JourneyManager>? logger = null)
 {
     public IJourneyManager Create(Project project, ActionExecutionContext executionContext) =>
-        new JourneyManager(z21, project, workflowService, executionContext, logger);
+        new JourneyManager(z21, project, workflowService, executionContext, logger, stopTransitionService, runtimeStateStore);
 }
 
 public sealed class PlatformManagerFactory(

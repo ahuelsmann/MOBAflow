@@ -2,6 +2,7 @@
   "name": "Example Solution",
   "projects": [
     {
+      "id": "ff8c1442-da0b-4b81-9c99-ef7b6fd73a58",
       "name": "myMOBA",
       "locomotives": [
         {
@@ -466,7 +467,31 @@
               "connections": []
             }
           ],
-          "feedbackSequence": [],
+          "feedbackSequence": [
+            {
+              "id": "01c6cdc6-5d82-4b15-ad61-3d1cb5864148",
+              "inPort": 1,
+              "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+              "repeatCount": 1,
+              "delayMs": 0,
+              "enabled": true,
+              "stopTransition": {
+                "mode": 0
+              },
+              "conditions": []
+            },
+            {
+              "id": "d17a434a-534a-4605-9c39-f86300ca7199",
+              "inPort": 1,
+              "repeatCount": 10,
+              "delayMs": 0,
+              "enabled": true,
+              "stopTransition": {
+                "mode": 0
+              },
+              "conditions": []
+            }
+          ],
           "behaviorOnLastStop": 0,
           "firstPos": 0
         },
@@ -899,6 +924,7 @@
           "connections": []
         }
       ],
+      "locomotiveWhistleRules": [],
       "signalBoxPlan": {
         "id": "f1d3dd73-dcd5-4faa-b180-e687659598ea",
         "name": "Signal box",
@@ -2199,5 +2225,5 @@
       }
     }
   ],
-  "schemaVersion": 1
+  "schemaVersion": 2
 }

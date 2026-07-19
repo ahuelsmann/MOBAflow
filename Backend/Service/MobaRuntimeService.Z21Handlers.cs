@@ -138,11 +138,6 @@ public sealed partial class MobaRuntimeService
         return true;
     }
 
-    private void OnZ21FeedbackReceived(FeedbackResult feedback)
-    {
-        _eventBus?.Publish(new FeedbackReceivedEvent(feedback.InPort));
-    }
-
     private void OnActionExecutionError(object? sender, ActionExecutionErrorEventArgs e)
     {
         _ = sender;

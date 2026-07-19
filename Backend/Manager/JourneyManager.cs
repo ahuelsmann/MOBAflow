@@ -29,6 +29,8 @@ public class JourneyManager : IJourneyManager
     private readonly Dictionary<Guid, JourneySessionState> _states = [];
     private readonly Project _project;
     private readonly ILogger<JourneyManager> _logger;
+    private readonly IJourneyStopTransitionService _stopTransitionService;
+    private readonly IJourneyRuntimeStateStore _runtimeStateStore;
     private bool _disposed;
 
     /// <summary>
@@ -72,12 +74,16 @@ public class JourneyManager : IJourneyManager
         Project project,
         IWorkflowService workflowService,
         ActionExecutionContext? executionContext = null,
-        ILogger<JourneyManager>? logger = null)
+        ILogger<JourneyManager>? logger = null,
+        IJourneyStopTransitionService? stopTransitionService = null,
+        IJourneyRuntimeStateStore? runtimeStateStore = null)
     {
         _z21 = z21;
         _project = project;
         _workflowService = workflowService;
         _logger = logger ?? NullLogger<JourneyManager>.Instance;
+        _stopTransitionService = stopTransitionService ?? new JourneyStopTransitionService();
+        _runtimeStateStore = runtimeStateStore ?? new NullJourneyRuntimeStateStore();
         _executionContextFactory = new ActionExecutionContextFactory(executionContext ?? new ActionExecutionContext { Z21 = z21 });
         _z21.Received += OnZ21FeedbackReceived;
 
@@ -90,9 +96,14 @@ public class JourneyManager : IJourneyManager
                 CurrentPos = (int)journey.FirstPos,
                 CurrentStationId = journey.Stations.ElementAtOrDefault((int)journey.FirstPos)?.Id,
                 CurrentStationName = journey.Stations.ElementAtOrDefault((int)journey.FirstPos)?.Name ?? string.Empty,
-                Counter = 0,
                 IsActive = true
             };
+            var checkpoint = _runtimeStateStore.Load(project.Id, journey.Id);
+            if (checkpoint != null)
+            {
+                _states[journey.Id].CurrentFeedbackIndex = Math.Clamp(checkpoint.CurrentFeedbackIndex, 0, journey.FeedbackSequence.Count);
+                _states[journey.Id].CurrentStepOccurrence = checkpoint.CurrentStepOccurrence;
+            }
         }
     }
 
@@ -131,7 +142,7 @@ public class JourneyManager : IJourneyManager
                         continue;
                     }
 
-                    var expectedStep = journey.FeedbackSequence.ElementAtOrDefault(state.CurrentFeedbackIndex);
+                    var expectedStep = GetExpectedStep(journey, state);
                     if (expectedStep == null || expectedStep.InPort != feedback.InPort)
                     {
                         continue;
@@ -158,7 +169,8 @@ public class JourneyManager : IJourneyManager
     {
         var state = _states[journey.Id];
 
-        state.Counter++;
+        state.CurrentStepOccurrence++;
+        _runtimeStateStore.Save(_project.Id, state);
         state.LastFeedbackTime = DateTime.Now;
         _logger.LogInformation(
             "Journey '{Journey}': Feedback step {FeedbackIndex} at InPort {InPort}",
@@ -173,12 +185,26 @@ public class JourneyManager : IJourneyManager
             SessionState = state
         });
 
+        if (state.CurrentStepOccurrence < Math.Max(feedbackStep.RepeatCount, 1u))
+        {
+            return;
+        }
+
+        ApplyStopTransition(journey, feedbackStep, state);
+
+        if (feedbackStep.DelayMs > 0)
+        {
+            await Task.Delay(feedbackStep.DelayMs).ConfigureAwait(false);
+        }
+
         if (feedbackStep.WorkflowId.HasValue)
         {
             await ExecuteFeedbackWorkflowAsync(journey, feedbackStep).ConfigureAwait(false);
         }
 
         state.CurrentFeedbackIndex++;
+        state.CurrentStepOccurrence = 0;
+        _runtimeStateStore.Save(_project.Id, state);
 
         if (state.IsJourneyCompletionRequested)
         {
@@ -187,6 +213,44 @@ public class JourneyManager : IJourneyManager
         }
 
         OnFeedbackReceived(new JourneyFeedbackEventArgs { JourneyId = journey.Id, SessionState = state });
+    }
+
+    private JourneyFeedbackStep? GetExpectedStep(Journey journey, JourneySessionState state)
+    {
+        while (state.CurrentFeedbackIndex < journey.FeedbackSequence.Count)
+        {
+            var step = journey.FeedbackSequence[state.CurrentFeedbackIndex];
+            if (step.Enabled)
+            {
+                return ConditionsMatch(step, state) ? step : null;
+            }
+
+            state.CurrentFeedbackIndex++;
+            state.CurrentStepOccurrence = 0;
+        }
+
+        return null;
+    }
+
+    private static bool ConditionsMatch(JourneyFeedbackStep step, JourneySessionState state) =>
+        step.Conditions.All(condition => condition.Type switch
+        {
+            JourneyFeedbackConditionType.CurrentStationIs => condition.StationId == state.CurrentStationId,
+            _ => false
+        });
+
+    private void ApplyStopTransition(Journey journey, JourneyFeedbackStep step, JourneySessionState state)
+    {
+        var result = _stopTransitionService.Apply(journey, state, step.StopTransition);
+        if (result.Changed && result.CurrentStation != null)
+        {
+            OnStationChanged(new StationChangedEventArgs
+            {
+                JourneyId = journey.Id,
+                Station = result.CurrentStation,
+                SessionState = state
+            });
+        }
     }
 
     private async Task HandleLastStationAsync(Journey journey)
@@ -306,13 +370,14 @@ public class JourneyManager : IJourneyManager
     {
         if (_states.TryGetValue(journey.Id, out var state))
         {
-            state.Counter = 0;
             state.CurrentPos = (int)journey.FirstPos;
             state.CurrentStationId = journey.Stations.ElementAtOrDefault((int)journey.FirstPos)?.Id;
             state.CurrentStationName = journey.Stations.ElementAtOrDefault((int)journey.FirstPos)?.Name ?? string.Empty;
             state.CurrentFeedbackIndex = 0;
+            state.CurrentStepOccurrence = 0;
             state.IsJourneyCompletionRequested = false;
             state.IsActive = true;
+            _runtimeStateStore.Reset(_project.Id, journey.Id);
             _logger.LogInformation("Journey '{Journey}' reset to position {Position}", journey.Name, state.CurrentPos);
         }
     }

@@ -332,6 +332,28 @@ See [`docs/BUILD-PERFORMANCE.md`](docs/BUILD-PERFORMANCE.md) for details.
 dotnet test Test/Test.csproj
 ```
 
+**Run mutation tests:**
+
+Stryker.NET is installed as a repository-local .NET tool. Restore the tool,
+then run it from the dedicated mutation test project directory. The initial
+configuration mutates `Domain.csproj` on `net10.0` and reuses the Domain tests
+from `Test/Domain/`. The HTML report is written below
+`MutationTest/StrykerOutput/`.
+
+```bash
+dotnet tool restore
+cd MutationTest
+dotnet stryker
+```
+
+The dedicated project deliberately references only `Domain.csproj`. This keeps
+mutation runs cross-platform and avoids building the multi-target WinUI test
+graph. Add similarly focused mutation test projects for other production
+assemblies instead of adding several production references to this project.
+
+The initial break threshold is intentionally disabled. Establish a stable
+mutation-score baseline before enabling a non-zero CI quality gate.
+
 ---
 
 ## 🔐 Trust Model & Signatures

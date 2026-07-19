@@ -82,6 +82,7 @@ public partial class Z21 : IZ21
     // 2. _sendLock (protects individual UDP send operations)
     private readonly SemaphoreSlim _sendLock = new(1, 1);
     private readonly SemaphoreSlim _connectionLock = new(1, 1);
+    private readonly Dictionary<int, HashSet<int>> _feedbackStatesByGroup = [];
 
     private bool _disposed;
     private bool _isConnected;

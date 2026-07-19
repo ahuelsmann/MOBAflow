@@ -271,6 +271,18 @@ public class FeatureToggleSettings
     /// </summary>
     public string JourneysPageLabel { get; set; } = string.Empty;
 
+    /// <summary>Enable the feedback-sequence event manager page.</summary>
+    public bool IsEventManagerPageAvailable { get; set; } = true;
+
+    /// <summary>Gets or sets an optional label suffix for the Event Manager page.</summary>
+    public string EventManagerPageLabel { get; set; } = "Preview";
+
+    /// <summary>Enable feedback-sequence V2 runtime behavior.</summary>
+    public bool UseFeedbackSequenceV2Runtime { get; set; } = true;
+
+    /// <summary>Enable the visual timeline editor on the Event Manager page.</summary>
+    public bool IsEventManagerVisualEditorAvailable { get; set; } = true;
+
     /// <summary>
     /// Enable Workflows page (Automation workflows for actions).
     /// </summary>
@@ -462,6 +474,8 @@ public class LayoutSettings
     /// </summary>
     public JourneysPageLayoutSettings JourneysPage { get; set; } = new();
 
+    public EventManagerPageLayoutSettings EventManagerPage { get; set; } = new();
+
     public GoodsWagonPageLayoutSettings GoodsWagonPage { get; set; } = new();
 
     public LocomotivesPageLayoutSettings LocomotivesPage { get; set; } = new();
@@ -639,6 +653,16 @@ public class JourneysPageLayoutSettings
     public double CityLibraryColumnWidth { get; set; } = 250;
 
     public double WorkflowLibraryColumnWidth { get; set; } = 250;
+}
+
+public class EventManagerPageLayoutSettings
+{
+    public bool IsToolboxExpanded { get; set; } = true;
+    public bool IsValuesExpanded { get; set; } = true;
+    public bool IsPropertiesExpanded { get; set; } = true;
+    public double ToolboxColumnWidth { get; set; } = 220;
+    public double ValuesColumnWidth { get; set; } = 260;
+    public double PropertiesColumnWidth { get; set; } = 300;
 }
 
 public class GoodsWagonPageLayoutSettings

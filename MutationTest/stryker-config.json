@@ -1,0 +1,17 @@
+{
+  "stryker-config": {
+    "project": "Domain.csproj",
+    "target-framework": "net10.0",
+    "configuration": "Debug",
+    "mutation-level": "Standard",
+    "reporters": [
+      "progress",
+      "html"
+    ],
+    "thresholds": {
+      "high": 80,
+      "low": 60,
+      "break": 0
+    }
+  }
+}

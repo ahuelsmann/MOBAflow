@@ -34,7 +34,7 @@ public sealed class JourneyManagerFeedbackTests
     }
 
     [Test]
-    public async Task ProcessFeedbackAsync_JourneyWithNoStations_DoesNotThrowAndIncrementsCounter()
+    public async Task ProcessFeedbackAsync_JourneyWithNoStations_DoesNotThrowAndAdvancesSequence()
     {
         var z21Mock = new Mock<IZ21>();
         var workflowMock = new Mock<IWorkflowService>();
@@ -51,11 +51,12 @@ public sealed class JourneyManagerFeedbackTests
 
         var state = manager.GetState(journey.Id);
         Assert.That(state, Is.Not.Null);
-        Assert.That(state!.Counter, Is.EqualTo(1));
+        Assert.That(state!.CurrentFeedbackIndex, Is.EqualTo(1));
+        Assert.That(state.CurrentStepOccurrence, Is.Zero);
     }
 
     [Test]
-    public async Task ProcessFeedbackAsync_CurrentPosOutOfRange_DoesNotThrowAndIncrementsCounter()
+    public async Task ProcessFeedbackAsync_CurrentPosOutOfRange_DoesNotThrowAndAdvancesSequence()
     {
         var z21Mock = new Mock<IZ21>();
         var workflowMock = new Mock<IWorkflowService>();
@@ -79,7 +80,7 @@ public sealed class JourneyManagerFeedbackTests
         var feedback = new FeedbackResult(BuildFeedbackPacketForInPort(1));
         await manager.RunProcessFeedbackAsync(feedback).ConfigureAwait(false);
 
-        Assert.That(state.Counter, Is.EqualTo(1));
+        Assert.That(state.CurrentFeedbackIndex, Is.EqualTo(1));
     }
 
     [Test]
@@ -100,7 +101,8 @@ public sealed class JourneyManagerFeedbackTests
 
         var state = manager.GetState(journey.Id);
         Assert.That(state, Is.Not.Null);
-        Assert.That(state!.Counter, Is.EqualTo(0));
+        Assert.That(state!.CurrentFeedbackIndex, Is.Zero);
+        Assert.That(state.CurrentStepOccurrence, Is.Zero);
     }
 
     [Test]
@@ -156,17 +158,66 @@ public sealed class JourneyManagerFeedbackTests
         var context = new ActionExecutionContext { Z21 = z21Mock.Object };
         using var manager = new TestableJourneyManager(z21Mock.Object, project, workflowMock.Object, context);
         var feedbackPositions = new List<int>();
-        var feedbackCounters = new List<int>();
+        var feedbackOccurrences = new List<uint>();
         manager.FeedbackReceived += (_, args) =>
         {
             feedbackPositions.Add(args.SessionState.CurrentPos);
-            feedbackCounters.Add(args.SessionState.Counter);
+            feedbackOccurrences.Add(args.SessionState.CurrentStepOccurrence);
         };
 
         await manager.RunProcessFeedbackAsync(new FeedbackResult(BuildFeedbackPacketForInPort(1))).ConfigureAwait(false);
 
         Assert.That(feedbackPositions, Is.EqualTo(new[] { 0, 0 }));
-        Assert.That(feedbackCounters, Is.EqualTo(new[] { 1, 1 }));
+        Assert.That(feedbackOccurrences, Is.EqualTo(new uint[] { 1, 0 }));
+    }
+
+    [Test]
+    public async Task ProcessFeedbackAsync_RepeatStep_ExecutesWorkflowOnlyOnFinalOccurrence()
+    {
+        var z21Mock = new Mock<IZ21>();
+        var workflowMock = new Mock<IWorkflowService>();
+        var workflowId = Guid.NewGuid();
+        var journey = new Journey
+        {
+            FeedbackSequence = [new JourneyFeedbackStep { InPort = 2, RepeatCount = 3, WorkflowId = workflowId }]
+        };
+        var project = new Project { Journeys = [journey], Workflows = [new Workflow { Id = workflowId }] };
+        using var manager = new TestableJourneyManager(z21Mock.Object, project, workflowMock.Object);
+
+        await manager.RunProcessFeedbackAsync(new FeedbackResult(BuildFeedbackPacketForInPort(2)));
+        await manager.RunProcessFeedbackAsync(new FeedbackResult(BuildFeedbackPacketForInPort(2)));
+
+        Assert.That(manager.GetState(journey.Id)!.CurrentStepOccurrence, Is.EqualTo(2));
+        workflowMock.Verify(service => service.ExecuteAsync(It.IsAny<Workflow>(), It.IsAny<ActionExecutionContext>(), It.IsAny<WorkflowExecutionOptions>()), Times.Never);
+
+        await manager.RunProcessFeedbackAsync(new FeedbackResult(BuildFeedbackPacketForInPort(2)));
+
+        Assert.That(manager.GetState(journey.Id)!.CurrentFeedbackIndex, Is.EqualTo(1));
+        workflowMock.Verify(service => service.ExecuteAsync(It.IsAny<Workflow>(), It.IsAny<ActionExecutionContext>(), It.IsAny<WorkflowExecutionOptions>()), Times.Once);
+    }
+
+    [Test]
+    public async Task ProcessFeedbackAsync_StopTransition_IsAppliedBeforeWorkflow()
+    {
+        var z21Mock = new Mock<IZ21>();
+        var workflowMock = new Mock<IWorkflowService>();
+        var first = new Station { Name = "Bielefeld" };
+        var target = new Station { Name = "Herford" };
+        var workflowId = Guid.NewGuid();
+        var step = new JourneyFeedbackStep { InPort = 2, WorkflowId = workflowId };
+        step.StopTransition = new JourneyStopTransition { Mode = Moba.Domain.Enum.JourneyStopTransitionMode.SpecificStation, StationId = target.Id };
+        var journey = new Journey { Stations = [first, target], FeedbackSequence = [step] };
+        var project = new Project { Journeys = [journey], Workflows = [new Workflow { Id = workflowId }] };
+        Station? workflowStation = null;
+        workflowMock.Setup(service => service.ExecuteAsync(It.IsAny<Workflow>(), It.IsAny<ActionExecutionContext>(), It.IsAny<WorkflowExecutionOptions>()))
+            .Callback<Workflow, ActionExecutionContext, WorkflowExecutionOptions>((_, context, _) => workflowStation = context.CurrentStation)
+            .Returns(Task.CompletedTask);
+        using var manager = new TestableJourneyManager(z21Mock.Object, project, workflowMock.Object);
+
+        await manager.RunProcessFeedbackAsync(new FeedbackResult(BuildFeedbackPacketForInPort(2)));
+
+        Assert.That(workflowStation, Is.SameAs(target));
+        Assert.That(manager.GetState(journey.Id)!.CurrentStationId, Is.EqualTo(target.Id));
     }
 
     /// <summary>

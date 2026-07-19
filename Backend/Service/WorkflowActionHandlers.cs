@@ -231,8 +231,10 @@ public sealed class ExecuteScriptWorkflowActionHandler(
 }
 
 /// <summary>Moves the active journey to the next or an explicitly configured stop.</summary>
-public sealed class ChangeJourneyStopWorkflowActionHandler : IWorkflowActionHandler
+public sealed class ChangeJourneyStopWorkflowActionHandler(IJourneyStopTransitionService? transitionService = null) : IWorkflowActionHandler
 {
+    private readonly IJourneyStopTransitionService _transitionService = transitionService ?? new JourneyStopTransitionService();
+
     public ActionType ActionType => ActionType.ChangeJourneyStop;
 
     public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context)
@@ -241,27 +243,13 @@ public sealed class ChangeJourneyStopWorkflowActionHandler : IWorkflowActionHand
         var journey = context.CurrentJourney ?? throw new InvalidOperationException("Change journey stop action requires a journey context");
         var state = context.CurrentJourneySessionState ?? throw new InvalidOperationException("Change journey stop action requires a journey state");
 
-        var targetIndex = payload.MoveToNextStop
-            ? journey.Stations.FindIndex(station => station.Id == state.CurrentStationId) + 1
-            : journey.Stations.FindIndex(station => station.Id == payload.TargetStationId);
-
-        if (targetIndex >= journey.Stations.Count && payload.MoveToNextStop)
+        var result = _transitionService.Apply(journey, state, new JourneyStopTransition
         {
-            state.IsJourneyCompletionRequested = true;
-            return Task.CompletedTask;
-        }
-
-        if (targetIndex < 0 || targetIndex >= journey.Stations.Count)
-        {
-            throw new InvalidOperationException("The configured target stop does not exist in the current journey");
-        }
-
-        var target = journey.Stations[targetIndex];
-        state.CurrentStationId = target.Id;
-        state.CurrentStationName = target.Name;
-        state.CurrentPos = targetIndex;
-        context.CurrentStation = target;
-        context.CurrentStationIndex = targetIndex + 1;
+            Mode = payload.MoveToNextStop ? JourneyStopTransitionMode.Next : JourneyStopTransitionMode.SpecificStation,
+            StationId = payload.TargetStationId
+        });
+        context.CurrentStation = result.CurrentStation;
+        context.CurrentStationIndex = result.CurrentStation == null ? null : journey.Stations.IndexOf(result.CurrentStation) + 1;
         return Task.CompletedTask;
     }
 }

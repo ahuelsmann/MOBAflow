@@ -144,6 +144,24 @@ internal static class NavigationRegistration
             PathIconData: null,
             IsBold: true));
 
+        services.AddSingleton<EventManagerViewModel>();
+        services.AddSingleton(sp => new EventManagerPage(
+            sp.GetRequiredService<EventManagerViewModel>(),
+            sp.GetRequiredService<AppSettings>(),
+            sp.GetService<ISettingsService>(),
+            sp.GetService<ILogger<EventManagerPage>>()));
+        pages.Add(new PageMetadata(
+            Tag: "eventmanager",
+            Title: "Event Manager",
+            Icon: "\uE945",
+            PageType: typeof(EventManagerPage),
+            Category: NavigationCategory.Journey,
+            Order: 15,
+            FeatureToggleKey: "IsEventManagerPageAvailable",
+            BadgeLabelKey: "EventManagerPageLabel",
+            PathIconData: null,
+            IsBold: false));
+
         // SignalBoxPage: requires custom runtime services
         services.AddSingleton(sp => new SignalBoxPage(
             sp.GetRequiredService<MainWindowViewModel>(),

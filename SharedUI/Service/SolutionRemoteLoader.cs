@@ -20,7 +20,7 @@ using System.Text.Json;
 /// </summary>
 public sealed class SolutionRemoteLoader : ISolutionRemoteLoader, IDisposable
 {
-    private const int SolutionSchemaVersion = 1;
+    private const int SolutionSchemaVersion = Solution.CurrentSchemaVersion;
 
     private static readonly JsonSerializerOptions MetaJsonOptions = new() { PropertyNameCaseInsensitive = true };
 
@@ -114,6 +114,7 @@ public sealed class SolutionRemoteLoader : ISolutionRemoteLoader, IDisposable
             }
 
             var solution = JsonSerializer.Deserialize<Solution>(json, JsonOptions.Default);
+            if (solution != null) SolutionMigrator.MigrateToCurrent(solution);
             if (solution == null || solution.Projects.Count == 0)
             {
                 _logger.LogWarning("Remote solution deserialized empty or without projects");

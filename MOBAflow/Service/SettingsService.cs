@@ -108,6 +108,7 @@ internal class SettingsService : ISettingsService
         _settings.Layout.JourneysPage.IsCityLibraryExpanded = source.Layout.JourneysPage.IsCityLibraryExpanded;
         _settings.Layout.JourneysPage.IsWorkflowLibraryExpanded = source.Layout.JourneysPage.IsWorkflowLibraryExpanded;
         _settings.Layout.JourneysPage.IsJourneyPropertiesExpanded = source.Layout.JourneysPage.IsJourneyPropertiesExpanded;
+        _settings.Layout.EventManagerPage = source.Layout.EventManagerPage;
         _settings.Layout.GoodsWagonPage = source.Layout.GoodsWagonPage;
         _settings.Layout.LocomotivesPage = source.Layout.LocomotivesPage;
         _settings.Layout.PassengerWagonPage = source.Layout.PassengerWagonPage;

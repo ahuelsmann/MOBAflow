@@ -107,7 +107,6 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         _z21.OnXBusStatusChanged += OnZ21XBusStatusChanged;
         _z21.OnVersionInfoChanged += OnZ21VersionInfoChanged;
         _z21.OnLocoInfoChanged += OnZ21LocomotiveInfoChanged;
-        _z21.Received += OnZ21FeedbackReceived;
         _workflowService.ActionExecutionError += OnActionExecutionError;
 
         if (_z21.TrafficMonitor != null)
@@ -150,7 +149,6 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         _z21.OnXBusStatusChanged -= OnZ21XBusStatusChanged;
         _z21.OnVersionInfoChanged -= OnZ21VersionInfoChanged;
         _z21.OnLocoInfoChanged -= OnZ21LocomotiveInfoChanged;
-        _z21.Received -= OnZ21FeedbackReceived;
         _workflowService.ActionExecutionError -= OnActionExecutionError;
 
         if (_z21.TrafficMonitor != null)

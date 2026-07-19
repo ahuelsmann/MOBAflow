@@ -32,11 +32,13 @@ internal static class MobaRuntimeSnapshotBuilder
                 journeyStates[journey.Id] = new JourneyRuntimeSnapshot
                 {
                     JourneyId = journey.Id,
-                    Counter = state.Counter,
                     CurrentPos = state.CurrentPos,
                     CurrentStationName = state.CurrentStationName,
                     CurrentStationId = state.CurrentStationId,
                     CurrentFeedbackIndex = state.CurrentFeedbackIndex,
+                    CurrentStepOccurrence = state.CurrentStepOccurrence,
+                    CurrentStepRepeatCount = journey.FeedbackSequence.ElementAtOrDefault(state.CurrentFeedbackIndex)?.RepeatCount ?? 1,
+                    ExpectedInPort = journey.FeedbackSequence.ElementAtOrDefault(state.CurrentFeedbackIndex)?.InPort,
                     LastFeedbackTime = state.LastFeedbackTime,
                     IsActive = state.IsActive
                 };

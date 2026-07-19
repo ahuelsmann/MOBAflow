@@ -26,11 +26,8 @@ public class JourneySessionState
     /// <summary>Zero-based index of the next expected feedback sequence step.</summary>
     public int CurrentFeedbackIndex { get; set; }
 
-    /// <summary>
-    /// Counter for tracking journey progress (e.g., lap number, station visits).
-    /// Incremented by JourneyManager when feedback is received.
-    /// </summary>
-    public int Counter { get; set; }
+    /// <summary>Number of matching activations already accepted by the current feedback step.</summary>
+    public uint CurrentStepOccurrence { get; set; }
 
     /// <summary>
     /// Current position (index) in the journey's station list.
@@ -59,11 +56,11 @@ public class JourneySessionState
     /// <param name="firstPos">The initial position to reset to (from Journey.FirstPos)</param>
     public void Reset(int firstPos = 0)
     {
-        Counter = 0;
         CurrentPos = firstPos;
         CurrentStationName = string.Empty;
         CurrentStationId = null;
         CurrentFeedbackIndex = 0;
+        CurrentStepOccurrence = 0;
         LastFeedbackTime = null;
         IsActive = true;
         IsJourneyCompletionRequested = false;

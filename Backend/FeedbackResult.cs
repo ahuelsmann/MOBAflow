@@ -19,6 +19,12 @@ public class FeedbackResult
     /// </summary>
     public int InPort { get; }
 
+    /// <summary>Gets all active InPorts represented by the received group state.</summary>
+    public IReadOnlyList<int> ActiveInPorts { get; }
+
+    /// <summary>Gets the zero-based R-BUS group number.</summary>
+    public int GroupNumber { get; }
+
     /// <summary>
     /// Raw feedback packet data (for debugging/logging).
     /// </summary>
@@ -36,12 +42,19 @@ public class FeedbackResult
             throw new ArgumentException("Invalid feedback packet: must be at least 6 bytes", nameof(content));
 
         RawData = content;
-        InPort = Z21FeedbackParser.ExtractFirstInPort(content);
+        ActiveInPorts = Z21FeedbackParser.ExtractAllInPorts(content);
+        InPort = ActiveInPorts.FirstOrDefault();
+        GroupNumber = Z21FeedbackParser.GetGroupNumber(content);
 
         if (InPort == 0)
         {
             // This should not happen in normal operation - Z21 only sends feedback when bits are set.
             // Logging is handled by the caller context where ILogger is available.
         }
+    }
+
+    internal FeedbackResult(byte[] content, int inPort) : this(content)
+    {
+        InPort = inPort;
     }
 }

@@ -184,15 +184,20 @@ public partial class Z21
         // Parse RBusFeedback (0x80) - occupancy detection
         if (Z21MessageParser.IsRBusFeedback(content))
         {
-            // Parse feedback to get InPort
-            var feedback = new FeedbackResult(content);
+            var groupNumber = Z21FeedbackParser.GetGroupNumber(content);
+            var activeInPorts = Z21FeedbackParser.ExtractAllInPorts(content).ToHashSet();
+            _feedbackStatesByGroup.TryGetValue(groupNumber, out var previousState);
+            previousState ??= [];
 
-            // Invoke legacy Received event
-            Received?.Invoke(feedback);
+            foreach (var inPort in activeInPorts.Except(previousState).Order())
+            {
+                var feedback = new FeedbackResult(content, inPort);
+                Received?.Invoke(feedback);
+                PublishEventAsync(new FeedbackReceivedEvent(inPort));
+                _logger?.LogDebug("R-Bus Feedback activated: InPort={InPort}", inPort);
+            }
 
-            PublishEventAsync(new FeedbackReceivedEvent(feedback.InPort));
-
-            _logger?.LogDebug("R-Bus Feedback: InPort={InPort}", feedback.InPort);
+            _feedbackStatesByGroup[groupNumber] = activeInPorts;
             return;
         }
 

@@ -31,7 +31,13 @@ public class Station
     /// </summary>
     public string Name { get; set; }
 
-    public bool IsVirtual { get; set; }
+    /// <summary>
+    /// Gets or sets whether this entry is a legacy event placeholder.
+    /// Current solutions store events in <see cref="Journey.FeedbackSequence"/> and remove these placeholders during migration.
+    /// </summary>
+    [JsonPropertyName("isVirtual")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool IsLegacyEventPlaceholder { get; set; }
 
     /// <summary>
     /// Id of the city this station belongs to (for persistence).

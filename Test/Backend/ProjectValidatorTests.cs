@@ -4,6 +4,7 @@ namespace Moba.Test.Backend;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Backend.Service;
 using Moba.Domain;
+using Moba.Domain.Enum;
 
 /// <summary>
 /// Tests for <see cref="ProjectValidator"/> and its <see cref="ProjectValidationResult"/>.
@@ -122,6 +123,39 @@ internal sealed class ProjectValidatorTests
         var result = validator.ValidateCompleteness(solution);
 
         Assert.That(result.Messages.Any(m => m.Text.Contains("Project[0]")), Is.True);
+    }
+
+    [Test]
+    public void ValidateCompleteness_InvalidFeedbackStep_ProducesErrors()
+    {
+        var project = CreateMinimalValidProject();
+        project.Journeys[0].FeedbackSequence.Add(new JourneyFeedbackStep { InPort = 0, RepeatCount = 0, DelayMs = -1 });
+        var solution = new Solution { Projects = [project] };
+
+        var result = CreateValidator().ValidateCompleteness(solution);
+
+        Assert.That(result.Messages.Count(message => message.Level == ValidationLevel.Error), Is.EqualTo(3));
+    }
+
+    [Test]
+    public void ValidateCompleteness_DirectAndWorkflowStopTransitions_Conflict()
+    {
+        var project = CreateMinimalValidProject();
+        var workflow = new Workflow
+        {
+            Actions = [new WorkflowAction { Type = ActionType.ChangeJourneyStop, ChangeJourneyStop = new ChangeJourneyStopActionPayload() }]
+        };
+        project.Workflows.Add(workflow);
+        project.Journeys[0].FeedbackSequence.Add(new JourneyFeedbackStep
+        {
+            InPort = 2,
+            WorkflowId = workflow.Id,
+            StopTransition = new JourneyStopTransition { Mode = JourneyStopTransitionMode.Next }
+        });
+
+        var result = CreateValidator().ValidateCompleteness(new Solution { Projects = [project] });
+
+        Assert.That(result.Messages.Any(message => message.Level == ValidationLevel.Error && message.Text.Contains("conflicts")), Is.True);
     }
 
     [Test]

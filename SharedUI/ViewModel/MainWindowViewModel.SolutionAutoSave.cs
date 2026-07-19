@@ -68,7 +68,7 @@ public partial class MainWindowViewModel
         // Ignore UI-only or runtime-backed properties that must not persist the whole solution.
         if (e.PropertyName is { } name &&
             (name is "IsSelected" or "IsExpanded" or "IsHighlighted" or "IsCurrentStation"
-             or "CurrentStation" or "CurrentCounter" or "CurrentPos"))
+             or "CurrentStation" or "CurrentStepOccurrence" or "CurrentPos"))
         {
             return;
         }

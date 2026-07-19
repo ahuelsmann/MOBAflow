@@ -3,6 +3,7 @@
 namespace Moba.Backend.Service;
 
 using Domain;
+using Domain.Enum;
 
 using Microsoft.Extensions.Logging;
 
@@ -102,6 +103,11 @@ public class ProjectValidator : IProjectValidator
             {
                 result.AddInfo($"[{projectName}] Stations: {totalStations} total across journeys");
             }
+
+            foreach (var journey in project.Journeys)
+            {
+                ValidateFeedbackSequence(project, journey, projectName, result);
+            }
         }
 
         // Check trains (optional but recommended)
@@ -132,6 +138,44 @@ public class ProjectValidator : IProjectValidator
         if (project.SignalBoxPlan != null)
         {
             result.AddInfo($"[{projectName}] Signal Box Plan defined");
+        }
+    }
+
+    private static void ValidateFeedbackSequence(Project project, Journey journey, string projectName, ProjectValidationResult result)
+    {
+        for (var index = 0; index < journey.FeedbackSequence.Count; index++)
+        {
+            var step = journey.FeedbackSequence[index];
+            var prefix = $"[{projectName}/{journey.Name}/FeedbackStep {index + 1}]";
+            if (step.InPort is < 1 or > 512)
+                result.AddError($"{prefix} InPort must be between 1 and 512.");
+            if (step.RepeatCount < 1)
+                result.AddError($"{prefix} RepeatCount must be at least 1.");
+            if (step.DelayMs < 0)
+                result.AddError($"{prefix} DelayMs cannot be negative.");
+
+            var workflow = step.WorkflowId.HasValue
+                ? project.Workflows.FirstOrDefault(candidate => candidate.Id == step.WorkflowId.Value)
+                : null;
+            if (step.WorkflowId.HasValue && workflow == null)
+                result.AddError($"{prefix} Assigned workflow does not exist.");
+
+            if (step.StopTransition.Mode == JourneyStopTransitionMode.SpecificStation
+                && (!step.StopTransition.StationId.HasValue
+                    || journey.Stations.All(station => station.Id != step.StopTransition.StationId.Value)))
+                result.AddError($"{prefix} Target stop does not exist in this journey.");
+
+            if (step.StopTransition.Mode != JourneyStopTransitionMode.None
+                && workflow?.Actions.Any(action => action.Type == ActionType.ChangeJourneyStop) == true)
+                result.AddError($"{prefix} Direct stop transition conflicts with a ChangeJourneyStop workflow action.");
+
+            foreach (var condition in step.Conditions)
+            {
+                if (condition.Type == JourneyFeedbackConditionType.CurrentStationIs
+                    && (!condition.StationId.HasValue
+                        || journey.Stations.All(station => station.Id != condition.StationId.Value)))
+                    result.AddError($"{prefix} Condition references a stop outside this journey.");
+            }
         }
     }
 }
