@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Dokumentation und Installation
+  - name: Documentation and installation
     url: https://github.com/ahuelsmann/MOBAflow/blob/main/docs/wiki/INDEX.md
-    about: Antworten zu Installation, Einrichtung und Bedienung finden.
-  - name: Sicherheitslücke vertraulich melden
-    url: https://github.com/ahuelsmann/MOBAflow/blob/main/docs/SECURITY.md
-    about: Bitte keine Sicherheitslücken oder Zugangsdaten in öffentlichen Issues veröffentlichen.
+    about: Find guidance for installation, configuration, and operation.
+  - name: Report a security vulnerability privately
+    url: https://github.com/ahuelsmann/MOBAflow/security/advisories/new
+    about: Do not disclose vulnerabilities or credentials in public issues.

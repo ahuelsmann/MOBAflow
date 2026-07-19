@@ -1,71 +1,72 @@
-name: Funktion vorschlagen
-description: Schlage eine Verbesserung für den Modellbahnbetrieb oder die Entwicklung vor.
+name: Suggest a feature
+description: Suggest an improvement for model railroad operation or development.
 title: "[Feature]: "
+labels: ["product"]
 body:
   - type: markdown
     attributes:
       value: |
-        Gute Vorschläge beginnen mit dem Problem, das sie für Modellbahner oder Mitwirkende lösen.
+        Good proposals begin with the problem they solve for model railroad operators or contributors.
 
   - type: dropdown
     id: area
     attributes:
-      label: Produktbereich
+      label: Product area
       options:
         - MOBAflow
         - MOBAsmart
         - MOBApi
         - MOBAdisplay
-        - Gleisplan
+        - Track plan
         - Z21
-        - Dokumentation
-        - Infrastruktur
-        - Bereichsübergreifend
+        - Documentation
+        - Infrastructure
+        - Cross-cutting
     validations:
       required: true
 
   - type: textarea
     id: problem
     attributes:
-      label: Ausgangssituation
-      description: Welches konkrete Problem oder Bedürfnis besteht heute?
+      label: Current situation
+      description: What concrete problem or need exists today?
     validations:
       required: true
 
   - type: textarea
     id: proposal
     attributes:
-      label: Vorgeschlagene Lösung
-      description: Wie sollte sich MOBAflow aus Sicht des Nutzers verhalten?
+      label: Proposed solution
+      description: How should MOBAflow behave from the user's perspective?
     validations:
       required: true
 
   - type: textarea
     id: benefit
     attributes:
-      label: Nutzen für den Modellbahnbetrieb
-      description: Wer profitiert davon und in welcher Betriebssituation?
+      label: Benefit to model railroad operation
+      description: Who benefits, and in which operating situation?
     validations:
       required: true
 
   - type: textarea
     id: alternatives
     attributes:
-      label: Alternativen
-      description: Welche anderen Lösungen oder Arbeitsabläufe hast du erwogen?
+      label: Alternatives
+      description: Which other solutions or workflows have you considered?
 
   - type: textarea
     id: context
     attributes:
-      label: Zusätzlicher Kontext
-      description: Skizzen, Beispiele oder Links, die den Vorschlag verständlicher machen.
+      label: Additional context
+      description: Add sketches, examples, or links that clarify the proposal.
 
   - type: checkboxes
     id: checks
     attributes:
-      label: Vor dem Absenden
+      label: Before submitting
       options:
-        - label: Ich habe nach bestehenden Issues mit demselben Vorschlag gesucht.
+        - label: I searched for existing issues containing the same proposal.
           required: true
-        - label: Der Vorschlag beschreibt ein Ziel und schreibt keine bestimmte technische Umsetzung zwingend vor.
+        - label: The proposal describes an outcome without prescribing a mandatory technical implementation.
           required: true

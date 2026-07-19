@@ -1,69 +1,70 @@
-name: Hardware- oder Z21-Problem
-description: Melde Probleme mit Z21, Rückmeldern, Weichen, Netzwerk oder realer Anlagenhardware.
+name: Hardware or Z21 problem
+description: Report problems involving Z21, feedback modules, turnouts, networking, or physical layout hardware.
 title: "[Hardware/Z21]: "
+labels: ["product"]
 body:
   - type: markdown
     attributes:
       value: |
-        **Sicherheit zuerst:** Stoppe Züge und trenne bei unkontrolliertem Verhalten die Gleisspannung, bevor du weiter testest.
-        Veröffentliche keine WLAN-Passwörter, Zugangsdaten oder vollständigen privaten Netzwerkkonfigurationen.
+        **Safety first:** Stop all trains and disconnect track power before further testing if behavior becomes uncontrolled.
+        Do not disclose Wi-Fi passwords, credentials, or complete private network configurations.
 
   - type: dropdown
     id: component
     attributes:
-      label: Betroffene Komponente
+      label: Affected component
       options:
-        - Z21-Verbindung
-        - Loksteuerung oder Funktionen
-        - Weiche oder Signal
-        - Rückmelder
-        - MOBAsmart-Verbindung
-        - MOBAdisplay oder ESP32
-        - Netzwerk oder Erkennung
-        - Andere Hardware
+        - Z21 connection
+        - Locomotive control or functions
+        - Turnout or signal
+        - Feedback module
+        - MOBAsmart connection
+        - MOBAdisplay or ESP32
+        - Network or discovery
+        - Other hardware
     validations:
       required: true
 
   - type: input
     id: hardware
     attributes:
-      label: Hardware und Firmware
-      description: Nenne Modell, Firmware und relevante Schnittstellen.
-      placeholder: "z. B. schwarze Z21, Firmware 1.xx, R-BUS"
+      label: Hardware and firmware
+      description: Provide the model, firmware, and relevant interfaces.
+      placeholder: "For example, black Z21, firmware 1.xx, R-BUS"
     validations:
       required: true
 
   - type: input
     id: software
     attributes:
-      label: MOBAflow-Version und Umgebung
-      placeholder: "z. B. 0.2.0, Windows 11; MOBAsmart auf Android 16"
+      label: MOBAflow version and environment
+      placeholder: "For example, 0.2.0, Windows 11; MOBAsmart on Android 16"
     validations:
       required: true
 
   - type: textarea
     id: topology
     attributes:
-      label: Anlagen- und Netzwerkaufbau
-      description: Beschreibe nur die für das Problem nötigen Verbindungen. Kürze IP-Adressen bei Bedarf.
-      placeholder: "PC und Z21 per LAN am selben Router; Smartphone im lokalen WLAN"
+      label: Layout and network topology
+      description: Describe only the connections needed to understand the problem. Redact IP addresses where appropriate.
+      placeholder: "PC and Z21 connected by LAN to the same router; smartphone on the local Wi-Fi network"
     validations:
       required: true
 
   - type: textarea
     id: problem
     attributes:
-      label: Beobachtetes Verhalten
-      description: Was passiert an Software und Anlage?
+      label: Observed behavior
+      description: What happens in the software and on the physical layout?
     validations:
       required: true
 
   - type: textarea
     id: reproduce
     attributes:
-      label: Schritte zum Reproduzieren
+      label: Steps to reproduce
       placeholder: |
-        1. Anlage in sicheren Ausgangszustand bringen
+        1. Put the layout into a safe initial state
         2. ...
         3. ...
     validations:
@@ -72,18 +73,18 @@ body:
   - type: textarea
     id: diagnostics
     attributes:
-      label: Diagnoseinformationen
-      description: Bereinigte Logs, Z21-Telegramme, Screenshots oder Statusanzeigen.
+      label: Diagnostic information
+      description: Add sanitized logs, Z21 packets, screenshots, or status displays.
       render: shell
 
   - type: checkboxes
     id: safety
     attributes:
-      label: Sicherheitsbestätigung
+      label: Safety confirmation
       options:
-        - label: Die Anlage befindet sich in einem sicheren Zustand und kann keine unkontrollierte Fahrt ausführen.
+        - label: The layout is in a safe state and cannot perform uncontrolled movement.
           required: true
-        - label: Ich habe Zugangsdaten und unnötige private Netzwerkdaten entfernt.
+        - label: I removed credentials and unnecessary private network data.
           required: true
-        - label: Ich habe die Hardware- und Sicherheitshinweise gelesen.
+        - label: I read the hardware and safety guidance.
           required: true
