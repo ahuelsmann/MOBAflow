@@ -80,7 +80,14 @@ internal sealed class WinUiAppStartupService
         var mainWindow = services.GetRequiredService<MainWindow>();
         LogStartupCheckpoint("MainWindow resolved");
 
-        mainWindow.Closed += (_, _) => HandleWindowClosed(services, logger);
+        var shutdownCoordinator = new WinUiShutdownCoordinator(
+            mainWindow.PrepareForShutdownAsync,
+            () => DisposeServicesAsync(services),
+            () => Application.Current.Exit(),
+            services.GetRequiredService<ILogger<WinUiShutdownCoordinator>>());
+        mainWindow.ShutdownRequested += (_, _) => shutdownCoordinator
+            .ShutdownAsync()
+            .SafeFireAndForget(ex => logger.LogWarning(ex, "Application shutdown failed unexpectedly"));
 
         mainWindow.Activate();
         CloseStartupSplashDismissWindow();
@@ -248,22 +255,19 @@ internal sealed class WinUiAppStartupService
         }
     }
 
-    private static void HandleWindowClosed(IServiceProvider services, ILogger<App> logger)
+    internal static async ValueTask DisposeServicesAsync(IServiceProvider services)
     {
-        logger.LogInformation("Window closed - performing cleanup");
+        ArgumentNullException.ThrowIfNull(services);
 
-        try
+        if (services is IAsyncDisposable asyncDisposableServices)
         {
-            if (services is IDisposable disposableServices)
-            {
-                disposableServices.Dispose();
-            }
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "Service disposal during window close failed");
+            await asyncDisposableServices.DisposeAsync();
+            return;
         }
 
-        Application.Current.Exit();
+        if (services is IDisposable disposableServices)
+        {
+            disposableServices.Dispose();
+        }
     }
 }

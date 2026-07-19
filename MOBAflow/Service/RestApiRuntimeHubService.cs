@@ -18,7 +18,7 @@ using System.Text.Json;
 /// <summary>
 /// Connects the MOBAflow runtime host to MOBApi RuntimeHub and pushes snapshot updates.
 /// </summary>
-public sealed class RestApiRuntimeHubService : IDisposable
+public sealed class RestApiRuntimeHubService : IAsyncDisposable
 {
     private const int PushDebounceMilliseconds = 75;
 
@@ -31,8 +31,9 @@ public sealed class RestApiRuntimeHubService : IDisposable
     private readonly object _debounceLock = new();
     private readonly Guid _subscriptionId;
     private CancellationTokenSource? _debounceCts;
+    private Task _debounceTask = Task.CompletedTask;
     private MobaRuntimeSnapshot? _pendingSnapshot;
-    private bool _disposed;
+    private int _disposeState;
     private readonly object _metricsLock = new();
     private DateTimeOffset? _lastHubPushAt;
     private bool _lastHubPushSucceeded;
@@ -115,23 +116,31 @@ public sealed class RestApiRuntimeHubService : IDisposable
         await _runtimeHubHostClient.DisconnectAsync().ConfigureAwait(false);
     }
 
-    public void Dispose()
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
     {
-        if (_disposed)
+        if (Interlocked.Exchange(ref _disposeState, 1) != 0)
         {
             return;
         }
 
-        _disposed = true;
         _eventBus.Unsubscribe(_subscriptionId);
+        CancellationTokenSource? debounceCts;
+        Task debounceTask;
         lock (_debounceLock)
         {
-            _debounceCts?.Cancel();
-            _debounceCts?.Dispose();
+            debounceCts = _debounceCts;
             _debounceCts = null;
+            debounceTask = _debounceTask;
+            _pendingSnapshot = null;
         }
 
-        DisconnectHostAsync().GetAwaiter().GetResult();
+        debounceCts?.Cancel();
+        debounceCts?.Dispose();
+
+        await debounceTask.ConfigureAwait(false);
+        await DisconnectHostAsync().ConfigureAwait(false);
+        GC.SuppressFinalize(this);
     }
 
     private void OnRuntimeSnapshotChanged(RuntimeSnapshotChangedEvent e)
@@ -141,7 +150,7 @@ public sealed class RestApiRuntimeHubService : IDisposable
 
     private void QueuePush(MobaRuntimeSnapshot snapshot)
     {
-        if (_disposed)
+        if (Volatile.Read(ref _disposeState) != 0)
         {
             return;
         }
@@ -149,14 +158,18 @@ public sealed class RestApiRuntimeHubService : IDisposable
         CancellationToken token;
         lock (_debounceLock)
         {
+            if (_disposeState != 0)
+            {
+                return;
+            }
+
             _pendingSnapshot = snapshot;
             _debounceCts?.Cancel();
             _debounceCts?.Dispose();
             _debounceCts = new CancellationTokenSource();
             token = _debounceCts.Token;
+            _debounceTask = PushDebouncedAsync(token);
         }
-
-        _ = PushDebouncedAsync(token);
     }
 
     private async Task PushDebouncedAsync(CancellationToken cancellationToken)

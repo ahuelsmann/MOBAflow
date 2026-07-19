@@ -1135,8 +1135,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     // O(1) lookup for high-frequency feedback updates.
     private Dictionary<int, InPortStatistic> _statisticsByInPort = [];
 
-    // Last feedback time tracking for timer filter
-    private readonly Dictionary<int, DateTime> _lastFeedbackTime = [];
+    private readonly FeedbackCounterEngine _feedbackCounterEngine = new();
 
     partial void OnCountOfFeedbackPointsChanged(int value)
     {
@@ -1203,7 +1202,6 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             _statisticsByInPort = updatedByInPort;
         });
 
-        _lastFeedbackTime.Clear();
     }
 
     [RelayCommand]
@@ -1471,31 +1469,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     {
         if (_statisticsByInPort.TryGetValue(inPort, out var stat))
         {
-            // Timer filter: Prevent duplicate counts from long trains
-            if (UseTimerFilter)
-            {
-                if (_lastFeedbackTime.TryGetValue(inPort, out DateTime lastTime))
-                {
-                    var elapsed = (DateTime.Now - lastTime).TotalSeconds;
-                    if (elapsed < TimerIntervalSeconds)
-                    {
-                        // Skip: Too soon after last feedback (same train still passing)
-                        return;
-                    }
-                }
-                _lastFeedbackTime[inPort] = DateTime.Now;
-            }
-
-            // Calculate lap time (time between two consecutive feedbacks)
-            DateTime now = DateTime.Now;
-            if (stat.LastFeedbackTime.HasValue)
-            {
-                stat.LastLapTime = now - stat.LastFeedbackTime.Value;
-            }
-
-            // Update count and timestamp
-            stat.Count++;
-            stat.LastFeedbackTime = now;
+            _feedbackCounterEngine.ApplyFeedback(stat, UseTimerFilter, TimerIntervalSeconds);
         }
     }
 

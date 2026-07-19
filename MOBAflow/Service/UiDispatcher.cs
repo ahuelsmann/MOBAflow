@@ -7,18 +7,22 @@ using Moba.SharedUI.Interface;
 
 /// <summary>
 /// WinUI implementation of IUiDispatcher. Uses the DispatcherQueue of the thread
-/// on which the instance was created (typically UI thread on first DI resolution).
+/// on which the instance is created (the UI thread during application startup).
 /// Supports priorities for critical vs. background updates with Windows App SDK 2.0.
 /// </summary>
-internal class UiDispatcher : IUiDispatcher
+internal sealed class UiDispatcher : IUiDispatcher
 {
-    private DispatcherQueue? _dispatcherQueue;
+    private readonly IWinUiDispatcherQueue _dispatcherQueue;
 
-    /// <summary>
-    /// Resolves the UI-thread dispatcher lazily. The singleton may be created before
-    /// <see cref="DispatcherQueue"/> is available (e.g. during early DI in App constructor).
-    /// </summary>
-    private DispatcherQueue? DispatcherQueue => _dispatcherQueue ??= Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
+    public UiDispatcher()
+        : this(WinUiDispatcherQueue.CreateForCurrentThread())
+    {
+    }
+
+    internal UiDispatcher(IWinUiDispatcherQueue dispatcherQueue)
+    {
+        _dispatcherQueue = dispatcherQueue ?? throw new ArgumentNullException(nameof(dispatcherQueue));
+    }
 
     public void InvokeOnUi(Action action)
     {
@@ -39,39 +43,15 @@ internal class UiDispatcher : IUiDispatcher
     {
         ArgumentNullException.ThrowIfNull(action);
 
-        var queue = DispatcherQueue;
-        if (queue?.HasThreadAccess == true)
+        if (_dispatcherQueue.HasThreadAccess)
         {
             action();
             return;
         }
 
-        if (queue is null)
+        if (!_dispatcherQueue.TryEnqueue(priority, action))
         {
-            action();
-            return;
-        }
-
-        var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        if (!queue.TryEnqueue(priority, () => InvokeActionOnUiThread(action, tcs)))
-        {
-            action();
-            return;
-        }
-
-        tcs.Task.GetAwaiter().GetResult();
-    }
-
-    private static void InvokeActionOnUiThread(Action action, TaskCompletionSource tcs)
-    {
-        try
-        {
-            action();
-            tcs.TrySetResult();
-        }
-        catch (Exception ex)
-        {
-            tcs.TrySetException(ex);
+            throw new InvalidOperationException("The UI dispatcher queue is shutting down.");
         }
     }
 
@@ -89,22 +69,16 @@ internal class UiDispatcher : IUiDispatcher
     {
         ArgumentNullException.ThrowIfNull(asyncFunc);
 
-        var queue = DispatcherQueue;
-        if (queue?.HasThreadAccess == true)
+        if (_dispatcherQueue.HasThreadAccess)
         {
             return await asyncFunc();
         }
 
-        if (queue is null)
-        {
-            return await asyncFunc();
-        }
-
-        var tcs = new TaskCompletionSource<T>();
+        var tcs = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
         var dispatcherPriority = MapToDispatcherPriority(priority);
-        if (!queue.TryEnqueue(dispatcherPriority, () => _ = InvokeAsyncInternal(asyncFunc, tcs)))
+        if (!_dispatcherQueue.TryEnqueue(dispatcherPriority, () => _ = InvokeAsyncInternal(asyncFunc, tcs)))
         {
-            return await asyncFunc();
+            throw new InvalidOperationException("The UI dispatcher queue is shutting down.");
         }
 
         return await tcs.Task;
@@ -114,25 +88,17 @@ internal class UiDispatcher : IUiDispatcher
     {
         ArgumentNullException.ThrowIfNull(asyncAction);
 
-        var queue = DispatcherQueue;
-        if (queue?.HasThreadAccess == true)
+        if (_dispatcherQueue.HasThreadAccess)
         {
             await asyncAction();
             return;
         }
 
-        if (queue is null)
-        {
-            await asyncAction();
-            return;
-        }
-
-        var tcs = new TaskCompletionSource();
+        var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var dispatcherPriority = MapToDispatcherPriority(priority);
-        if (!queue.TryEnqueue(dispatcherPriority, () => _ = InvokeAsyncInternal(asyncAction, tcs)))
+        if (!_dispatcherQueue.TryEnqueue(dispatcherPriority, () => _ = InvokeAsyncInternal(asyncAction, tcs)))
         {
-            await asyncAction();
-            return;
+            throw new InvalidOperationException("The UI dispatcher queue is shutting down.");
         }
 
         await tcs.Task;
@@ -172,5 +138,42 @@ internal class UiDispatcher : IUiDispatcher
         {
             tcs.SetException(ex);
         }
+    }
+}
+
+internal interface IWinUiDispatcherQueue
+{
+    bool HasThreadAccess { get; }
+
+    bool TryEnqueue(DispatcherQueuePriority priority, Action action);
+}
+
+internal sealed class WinUiDispatcherQueue : IWinUiDispatcherQueue
+{
+    private readonly DispatcherQueue? _dispatcherQueue;
+
+    public WinUiDispatcherQueue(DispatcherQueue? dispatcherQueue)
+    {
+        _dispatcherQueue = dispatcherQueue;
+    }
+
+    public static WinUiDispatcherQueue CreateForCurrentThread()
+    {
+        try
+        {
+            return new WinUiDispatcherQueue(DispatcherQueue.GetForCurrentThread());
+        }
+        catch (System.Runtime.InteropServices.COMException)
+        {
+            // Headless test hosts do not activate the Windows App SDK runtime.
+            return new WinUiDispatcherQueue(dispatcherQueue: null);
+        }
+    }
+
+    public bool HasThreadAccess => _dispatcherQueue?.HasThreadAccess ?? true;
+
+    public bool TryEnqueue(DispatcherQueuePriority priority, Action action)
+    {
+        return _dispatcherQueue?.TryEnqueue(priority, () => action()) ?? false;
     }
 }
