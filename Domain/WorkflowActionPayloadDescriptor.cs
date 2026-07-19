@@ -13,7 +13,7 @@ internal sealed class WorkflowActionPayloadDescriptor(
     Action<Utf8JsonWriter, WorkflowAction, JsonSerializerOptions> write,
     Func<WorkflowAction, bool> hasPayload,
     Action<Utf8JsonWriter, JsonSerializerOptions> writeDefault,
-    Action<WorkflowAction, JsonElement> mergeLegacy)
+    Action<WorkflowAction, JsonElement>? mergeLegacy)
 {
     public ActionType ActionType { get; } = actionType;
 
@@ -31,7 +31,7 @@ internal sealed class WorkflowActionPayloadDescriptor(
         writeDefault(writer, options);
 
     public void MergeLegacy(WorkflowAction action, JsonElement legacyParams) =>
-        mergeLegacy(action, legacyParams);
+        mergeLegacy?.Invoke(action, legacyParams);
 }
 
 internal static class WorkflowActionPayloadDescriptors
@@ -77,7 +77,7 @@ internal static class WorkflowActionPayloadDescriptors
             (writer, action, options) => JsonSerializer.Serialize(writer, action.SelectSignalAspect!, options),
             action => action.SelectSignalAspect != null,
             (writer, options) => JsonSerializer.Serialize(writer, new SelectSignalAspectActionPayload(), options),
-            NoLegacyMerge),
+            null),
         new(
             ActionType.TrainDestinationDisplay,
             "trainDestinationDisplay",
@@ -93,14 +93,11 @@ internal static class WorkflowActionPayloadDescriptors
             (writer, action, options) => JsonSerializer.Serialize(writer, action.ChangeJourneyStop!, options),
             action => action.ChangeJourneyStop != null,
             (writer, options) => JsonSerializer.Serialize(writer, new ChangeJourneyStopActionPayload(), options),
-            NoLegacyMerge)
+            null)
     ];
 
     public static WorkflowActionPayloadDescriptor? Find(ActionType actionType) =>
         All.FirstOrDefault(descriptor => descriptor.ActionType == actionType);
-
-    public static WorkflowActionPayloadDescriptor? FindByPropertyName(string propertyName) =>
-        All.FirstOrDefault(descriptor => descriptor.JsonPropertyName.Equals(propertyName, StringComparison.OrdinalIgnoreCase));
 
     private static void MergeCommandLegacy(WorkflowAction action, JsonElement legacyParams)
     {
@@ -170,12 +167,6 @@ internal static class WorkflowActionPayloadDescriptors
         }
     }
 
-    private static void NoLegacyMerge(WorkflowAction action, JsonElement legacyParams)
-    {
-        _ = action;
-        _ = legacyParams;
-    }
-
     private static byte[]? TryDecodeCommandBytes(JsonElement el)
     {
         return el.ValueKind switch
@@ -191,14 +182,10 @@ internal static class WorkflowActionPayloadDescriptors
         if (string.IsNullOrWhiteSpace(value))
             return null;
 
-        try
-        {
-            return Convert.FromBase64String(value);
-        }
-        catch (FormatException)
-        {
-            return null;
-        }
+        var buffer = new byte[value.Length];
+        return Convert.TryFromBase64String(value, buffer, out var bytesWritten)
+            ? buffer[..bytesWritten]
+            : null;
     }
 
     private static byte[]? TryDecodeByteArray(JsonElement el)
@@ -212,7 +199,7 @@ internal static class WorkflowActionPayloadDescriptors
                 list.Add((byte)b);
         }
 
-        return list.Count > 0 ? list.ToArray() : null;
+        return list.ToArray();
     }
 
     private static bool TryGetInsensitive(JsonElement obj, string name, out JsonElement value)

@@ -51,14 +51,8 @@ public sealed class WorkflowActionJsonConverter : JsonConverter<WorkflowAction>
     }
 
     /// <inheritdoc />
-    public override void Write(Utf8JsonWriter writer, WorkflowAction? value, JsonSerializerOptions options)
+    public override void Write(Utf8JsonWriter writer, WorkflowAction value, JsonSerializerOptions options)
     {
-        if (value == null)
-        {
-            writer.WriteNullValue();
-            return;
-        }
-
         writer.WriteStartObject();
 
         writer.WriteString("id", value.Id);
@@ -133,11 +127,7 @@ public sealed class WorkflowActionJsonConverter : JsonConverter<WorkflowAction>
     {
         if (!TryGetPropertyInsensitive(root, name, out var el))
             return 0;
-        if (el.TryGetUInt32(out var u))
-            return u;
-        if (el.TryGetInt32(out var i) && i >= 0)
-            return (uint)i;
-        return 0;
+        return el.TryGetUInt32(out var value) ? value : 0;
     }
 
     private static int ReadInt32(JsonElement root, string name)

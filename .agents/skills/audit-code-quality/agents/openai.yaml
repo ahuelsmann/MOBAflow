@@ -1,0 +1,4 @@
+interface:
+  display_name: "Code Quality Auditor"
+  short_description: "Audit code against official quality standards"
+  default_prompt: "Use $audit-code-quality to assess this repository against official code-quality standards and produce an evidence-backed report."

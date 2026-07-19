@@ -36,17 +36,18 @@ display row:
 New firmware should prefer the line-based protocol because it carries row
 positions and display metadata.
 
-## Verhalten ESP32
+## ESP32 implementation
 
-The current `MobaDisplay.ino` is a TFT_eSPI smoke test only. It initializes the
-display and cycles red, green, blue, and white screens. UDP receive handling is
-not implemented there yet.
+The current PlatformIO firmware in `MOBAdisplay/esp32/src/main.cpp` listens on
+UDP port `4210`, allocates a 240x280 RGB565 framebuffer, accepts indexed line
+packets and presents complete or explicitly finished frames on the ST7789 TFT.
+It also accepts legacy unindexed 480-byte rows.
 
-Required firmware behavior for the line protocol:
+`HOST_VER` is shown as host-version metadata. `FRAME_START` resets capture and
+`FRAME_DONE` presents the captured frame. `DISPLAY_META` is currently ignored;
+the firmware dimensions are compiled for 240x280.
 
-- Listen on UDP port `4210`.
-- Accept optional `HOST_VER` and `DISPLAY_META` packets.
-- Allocate or validate a framebuffer matching `width * height * 2`.
-- On `FRAME_START`, reset frame assembly state.
-- For each row packet, copy the RGB565 payload into `framebuffer[row]`.
-- On `FRAME_DONE`, flush the framebuffer to the TFT.
+The same firmware exposes a local HTTP Wi-Fi setup/status API on port `80` and
+stores credentials in ESP32 preferences/NVS. The older
+`MOBAdisplay/MobaDisplay/MobaDisplay.ino` file remains a TFT color-cycle smoke
+test without networking.

@@ -75,6 +75,34 @@ internal sealed class WorkflowActionJsonConverterTests
     }
 
     [Test]
+    public void Deserialize_MaximumUnsignedNumber_PreservesValueBeyondInt32Range()
+    {
+        const string json = """
+            {
+              "number": 4294967295
+            }
+            """;
+
+        var action = JsonSerializer.Deserialize<WorkflowAction>(json);
+
+        Assert.That(action?.Number, Is.EqualTo(uint.MaxValue));
+    }
+
+    [Test]
+    public void Deserialize_LowercaseActionTypeName_ParsesCaseInsensitively()
+    {
+        const string json = """
+            {
+              "type": "audio"
+            }
+            """;
+
+        var action = JsonSerializer.Deserialize<WorkflowAction>(json);
+
+        Assert.That(action?.Type, Is.EqualTo(ActionType.Audio));
+    }
+
+    [Test]
     public void Serialize_NullAction_WritesNullToken()
     {
         var json = JsonSerializer.Serialize<WorkflowAction?>(null);
@@ -140,6 +168,26 @@ internal sealed class WorkflowActionJsonConverterTests
             Assert.That(root.GetProperty("audio").GetProperty("filePath").GetString(), Is.EqualTo("sounds/horn.wav"));
             Assert.That(root.TryGetProperty("announcement", out _), Is.False);
         });
+    }
+
+    [Test]
+    public void Serialize_DeclaredType_WritesOnlyDeclaredPayloadExactlyOnce()
+    {
+        var action = new WorkflowAction
+        {
+            Type = ActionType.Command,
+            Command = new CommandActionPayload { Address = 3 },
+            Audio = new AudioActionPayload { FilePath = "sounds/horn.wav" }
+        };
+
+        using var document = JsonDocument.Parse(JsonSerializer.Serialize(action));
+        var payloadProperties = document.RootElement
+            .EnumerateObject()
+            .Where(property => property.Name is "command" or "audio")
+            .Select(property => property.Name)
+            .ToArray();
+
+        Assert.That(payloadProperties, Is.EqualTo(new[] { "command" }));
     }
 
     [Test]
