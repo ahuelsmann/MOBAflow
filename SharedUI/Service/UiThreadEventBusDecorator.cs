@@ -10,7 +10,7 @@ using Interface;
 /// ViewModels for EventBus subscriptions no longer need a dispatcher –
 /// the thread boundary is handled centrally here.
 /// </summary>
-public sealed class UiThreadEventBusDecorator : IEventBus
+public sealed class UiThreadEventBusDecorator : IEventBus, IEventBusDiagnostics
 {
     private readonly IEventBus _inner;
     private readonly IUiDispatcher _dispatcher;
@@ -25,6 +25,9 @@ public sealed class UiThreadEventBusDecorator : IEventBus
         _inner = inner ?? throw new ArgumentNullException(nameof(inner));
         _dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
     }
+
+    /// <inheritdoc />
+    public long HandlerFailureCount => (_inner as IEventBusDiagnostics)?.HandlerFailureCount ?? 0;
 
     /// <inheritdoc />
     /// <remarks>
