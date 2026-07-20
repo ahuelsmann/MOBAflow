@@ -10,7 +10,7 @@
 
 ## Outcome
 
-Produce the same unsigned MOBAsmart Android Release AAB from a clean checkout locally and in a mandatory pull-request CI job while preserving the existing WinUI x64 build and cross-platform output layout.
+Produce the same unsigned MOBAsmart Android Release AAB from a clean checkout locally and in a mandatory pull-request CI job while preserving the existing WinUI x64 build and cross-platform deliverables.
 
 ## Analysis
 
@@ -33,12 +33,12 @@ Repository documentation incorrectly uses `dotnet restore -f net10.0-android`. F
 | Surface | Command or assertion | Expected result |
 | --- | --- | --- |
 | Property precedence | `dotnet msbuild MOBAsmart/MOBAsmart.csproj -p:Configuration=Release -getProperty:Platform,PlatformTarget,RuntimeIdentifiers,AndroidPackageFormats` | `AnyCPU`, `AnyCPU`, `android-arm64;android-x64`, `aab` |
-| Android workload | `dotnet workload restore MOBAsmart/MOBAsmart.csproj` | Required MAUI Android workload is available |
-| Clean Android restore | `dotnet restore MOBAsmart/MOBAsmart.csproj --force-evaluate` | Android dependency graph restores without platform mismatch |
-| Release AAB | `dotnet publish MOBAsmart/MOBAsmart.csproj --framework net10.0-android --configuration Release --no-restore` | A Release AAB is produced |
+| Android workload | `dotnet workload restore MOBAsmart/MOBAsmart.csproj --skip-manifest-update` | Required MAUI Android workload is available from the pinned SDK manifests |
+| Clean Android restore | `dotnet restore MOBAsmart/MOBAsmart.csproj --property:Configuration=Release --force-evaluate` | Both Release RID dependency graphs restore without platform mismatch |
+| Release AAB | `dotnet publish MOBAsmart/MOBAsmart.csproj --framework net10.0-android --configuration Release --no-restore -m:1` | A Release AAB is produced without parallel multi-RID output collisions |
 | AAB contents | `./scripts/Test-AndroidAppBundle.ps1 -BundlePath <bundle.aab>` | Required base entries exist; ABIs are exactly `arm64-v8a` and `x86_64` |
 | WinUI | Existing Windows Release/FastDebug restore and build commands | `Platform=x64`, `PlatformTarget=x64`, output paths unchanged |
-| Cross-platform | Existing MOBApi build and `Test/Test.csproj` test commands | Output paths and test behavior unchanged |
+| Cross-platform | Existing MOBApi build and `Test/Test.csproj` test commands | AnyCPU deliverables build and test behavior remains unchanged |
 | CI | Required Quality workflow matrix | Desktop, mutation, and Android Release jobs are green |
 
 The local Android publish is required when the MAUI Android workload is available. GitHub Actions remains the clean hosted-runner evidence for the complete Android lane. No analyzer-baseline or XAML-binding cleanup is permitted to make the lane green; such failures remain RF-06 or RF-08 work.
@@ -53,6 +53,7 @@ The local Android publish is required when the MAUI Android workload is availabl
 
 - **MSBuild import precedence:** command-line and project-local properties can override shared defaults. Validate evaluated properties directly for Android, WinUI, and a platform-neutral project.
 - **Hosted workload drift:** pin the SDK through `global.json`, restore the workload from the project, and do not cache workload installations.
+- **Parallel multi-RID output collisions:** publish the shared project graph on one MSBuild node while Android packages both Release RIDs.
 - **False-positive AAB success:** fail if the bundle is missing, ambiguous, structurally incomplete, or contains an unexpected ABI.
 - **Unsigned CI artifact:** CI validates build reproducibility and bundle structure only. Production signing remains outside this issue and no keystore or password is introduced.
 - **Scope creep:** do not change analyzer policy, MAUI XAML bindings, UI behavior, or release signing.

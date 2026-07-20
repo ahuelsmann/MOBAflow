@@ -268,15 +268,18 @@ Important application sections are `Z21`, `RestApi`, `Speech`, `Application`,
 
 ```powershell
 dotnet build MOBAflow/MOBAflow.csproj
-dotnet build MOBAsmart/MOBAsmart.csproj -f net10.0-android
+dotnet restore MOBAsmart/MOBAsmart.csproj
+dotnet build MOBAsmart/MOBAsmart.csproj --framework net10.0-android
 dotnet build MOBApi/MOBApi.csproj
 dotnet test Test/Test.csproj
 ```
 
 The WinUI project requires Windows tooling and MOBAsmart requires the Android
 MAUI workload. Cross-platform projects and most tests can be built separately.
-See `docs/BUILD-PERFORMANCE.md` for fast local configurations and coverage
-commands.
+See `docs/BUILD-PERFORMANCE.md` for the clean Android Release AAB workflow,
+fast local configurations, and coverage commands. For `dotnet restore`, `-f`
+means `--force`; use `--framework` with `dotnet build` or `dotnet publish` when
+framework selection is required.
 
 Public checks are defined in `.github/workflows/`; additional Azure DevOps
 pipelines remain under `.azure-pipelines/`.
