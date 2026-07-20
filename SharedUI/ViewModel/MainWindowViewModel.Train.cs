@@ -57,6 +57,17 @@ public partial class MainWindowViewModel
         }
 
         ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
+        ObserveBackgroundTask(RefreshActiveProjectRuntimeAsync(), "Refresh active train runtime");
+    }
+
+    private async Task RefreshActiveProjectRuntimeAsync()
+    {
+        if (SelectedProject == null)
+        {
+            return;
+        }
+
+        await _mobaRuntime.ActivateProjectAsync(SelectedProject.Model).ConfigureAwait(false);
     }
 
     partial void OnTrainSearchTextChanged(string value)

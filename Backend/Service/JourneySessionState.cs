@@ -9,6 +9,9 @@ namespace Moba.Backend.Service;
 /// </summary>
 public class JourneySessionState
 {
+    /// <summary>Stable identity for the current execution of this journey.</summary>
+    public Guid RunId { get; set; } = Guid.NewGuid();
+
     /// <summary>
     /// Unique identifier of the journey this state belongs to.
     /// </summary>
@@ -56,6 +59,7 @@ public class JourneySessionState
     /// <param name="firstPos">The initial position to reset to (from Journey.FirstPos)</param>
     public void Reset(int firstPos = 0)
     {
+        RunId = Guid.NewGuid();
         CurrentPos = firstPos;
         CurrentStationName = string.Empty;
         CurrentStationId = null;
