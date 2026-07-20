@@ -2,9 +2,9 @@
 
 ## Document status
 
-- Status: Proposed
+- Status: Ready
 - Primary issue: https://github.com/ahuelsmann/MOBAflow/issues/32
-- Runtime integration gate: https://github.com/ahuelsmann/MOBAflow/issues/43
+- Runtime integration prerequisite: Satisfied by https://github.com/ahuelsmann/MOBAflow/issues/43
 - Status and acceptance criteria source: GitHub issue #32
 
 ## Purpose
@@ -212,11 +212,9 @@ Create typed step ViewModels and a factory for property editing. Nested ViewMode
 - Do not add a Workflow 1.x deserializer, migration layer, or dual executor.
 - Remove legacy converter behavior that is superseded by the Workflow 2.0 current schema; retain only typed action serialization still required by action steps.
 
-### 14. Gate feedback integration on issue #43
+### 14. Consume the ordered event boundary delivered by issue #43
 
-Domain, validator, executor, dry-run, lifecycle events, trace storage, and shared editor work may proceed before issue #43.
-
-Feedback-to-workflow runtime integration and final end-to-end acceptance wait until #43 establishes ordered Z21 delivery. The Workflow 2.0 integration then removes long-running delay and workflow execution from `JourneyManager`'s global feedback-processing critical section while preserving per-source ordering through a workflow execution coordinator.
+Issue #43 is merged and establishes ordered Z21 delivery. Workflow 2.0 removes long-running delay and workflow execution from `JourneyManager`'s global feedback-processing critical section while preserving per-source ordering through a workflow execution coordinator.
 
 Issue #32 must consume the ordered event boundary from #43 and must not implement a second Z21 queue.
 
@@ -245,7 +243,7 @@ Exact file grouping may be adjusted during implementation, but platform-neutral 
 
 | Dependency | Type | Required handling |
 | --- | --- | --- |
-| Issue #43 / RF-04 ordered Z21 pipeline | Hard gate for feedback runtime integration and final end-to-end acceptance | Merge before the runtime-integration slice; consume its ordering boundary without duplicating it |
+| Issue #43 / RF-04 ordered Z21 pipeline | Satisfied prerequisite for feedback runtime integration and final end-to-end acceptance | Consume the merged ordering boundary without duplicating it |
 | RF-03 authenticated MOBApi control plane | Conditional | Required before exposing remote workflow-control writes; not required for the local EventManager MVP |
 | RF-06 analyzer gate | Quality coordination | Do not block model research; ensure public contracts are clean under the active analyzer baseline |
 | RF-09 coverage and mutation ratchets | Quality coordination | Add Workflow 2.0 tests in a form that Backend/Common/SharedUI mutation lanes can consume |
@@ -337,7 +335,7 @@ Deliverables:
 
 ### Slice 4: Ordered feedback integration
 
-Prerequisite: issue #43 merged.
+Prerequisite satisfied: issue #43 is merged.
 
 Primary affected files:
 
@@ -405,7 +403,7 @@ Deliverables:
 | 2 | Slice 1 graph model, schema, sample, validator | Schema and round-trip tests green together |
 | 3 | Slice 2 cancellation and effect-planning contracts | Every action type has validation, resource, live, and dry-run tests |
 | 4 | Slice 3 executor and lifecycle core | Branch/retry/nesting/cancellation/EventBus suites green |
-| 5 | Slice 4 feedback integration | Issue #43 merged; ordering and shutdown suites green |
+| 5 | Slice 4 feedback integration | Existing #43 ordering boundary consumed; ordering and shutdown suites green |
 | 6 | Slice 5 shared editor ViewModels | CRUD, identity, autosave, reference, and reopen tests green |
 | 7 | Slice 6 WinUI integration and consolidation | WinUI build plus accessibility/theme checklist complete |
 
@@ -467,7 +465,7 @@ Before issue closure:
 | Parallel branches write the same controlled object | Require resource descriptors and reject exclusive-write overlap before execution |
 | Retry, graph, or nested cycles create unbounded execution | Forbid graph cycles, validate nested call cycles, cap retries at 10 and nesting depth at 16, retain runtime guards |
 | Completion order makes parallel results nondeterministic | Reduce results in persisted branch order and serialize trace sequencing through one execution trace sink |
-| Long workflows block feedback processing | Merge #43 first, capture immutable requests, and execute through a per-source coordinator outside the global feedback critical section |
+| Long workflows block feedback processing | Consume the pipeline delivered by #43, capture immutable requests, and execute through a per-source coordinator outside the global feedback critical section |
 | EventBus traces overwhelm UI subscribers | Publish structured lifecycle transitions only, keep bounded retention, and let trace ViewModels project filtered updates |
 | EventManagerPage and WorkflowsPage mutate different wrappers | Reuse `ProjectViewModel.Workflows` and one singleton library/editor ViewModel; test reference identity across navigation |
 | Autosave captures a partially edited graph | Apply graph mutations as commands, update model and wrapper atomically, validate snapshots, and serialize saves through the existing save semaphore |
@@ -491,6 +489,6 @@ Before issue closure:
 - Record stakeholder decisions, status, scope changes, and acceptance evidence in issue #32.
 - Update `docs/ARCHITECTURE.md`, `docs/PROJECT-REFERENCE.md`, JSON schema documentation, and user guidance when the corresponding behavior is implemented.
 - Document workflow graph semantics, error-policy precedence, cancellation, dry-run guarantees, correlation fields, trace retention, and resource-conflict rules as current reference documentation before closure.
-- Add the `plan-required` label and link this plan from issue #32 before implementation starts.
+- Maintain the existing `plan-required` label and one-to-one plan link in issue #32 throughout implementation.
 - Close issue #32 only after its GitHub acceptance criteria and all affected validation gates pass.
 - Delete this plan after issue #32 is complete and merged; the closed issue, pull requests, tests, current documentation, and Git history retain the permanent record.

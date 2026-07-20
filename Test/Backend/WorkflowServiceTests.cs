@@ -179,4 +179,88 @@ internal class WorkflowServiceTests
 #pragma warning restore CS8625
         });
     }
+
+    [Test]
+    public async Task ExecuteAsync_Sequential_ExecutesByNumberAndContinuesAfterFailureByDefault()
+    {
+        // Arrange
+        var executedNumbers = new List<uint>();
+        var executorMock = new Mock<IActionExecutor>();
+        executorMock
+            .Setup(executor => executor.ExecuteAsync(It.IsAny<WorkflowAction>(), It.IsAny<ActionExecutionContext>()))
+            .Returns<WorkflowAction, ActionExecutionContext>((action, _) =>
+            {
+                executedNumbers.Add(action.Number);
+                return action.Number == 1
+                    ? Task.FromException(new InvalidOperationException("Expected failure"))
+                    : Task.CompletedTask;
+            });
+        var service = new WorkflowService(executorMock.Object);
+        var errors = new List<ActionExecutionErrorEventArgs>();
+        service.ActionExecutionError += (_, args) => errors.Add(args);
+        var workflow = new Workflow
+        {
+            ExecutionMode = WorkflowExecutionMode.Sequential,
+            Actions =
+            [
+                new WorkflowAction { Number = 2, Name = "Second", Type = ActionType.Command },
+                new WorkflowAction { Number = 1, Name = "First", Type = ActionType.Command }
+            ]
+        };
+
+        // Act
+        await service.ExecuteAsync(workflow, _context);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(executedNumbers, Is.EqualTo(new uint[] { 1, 2 }));
+            Assert.That(errors, Has.Count.EqualTo(1));
+            Assert.That(errors[0].Action.Number, Is.EqualTo(1));
+            Assert.That(errors[0].Exception.Message, Is.EqualTo("Expected failure"));
+        });
+    }
+
+    [Test]
+    public async Task ExecuteAsync_Parallel_IgnoresStopOnFirstFailureAndAttemptsEveryAction()
+    {
+        // Arrange
+        var executedNumbers = new System.Collections.Concurrent.ConcurrentBag<uint>();
+        var executorMock = new Mock<IActionExecutor>();
+        executorMock
+            .Setup(executor => executor.ExecuteAsync(It.IsAny<WorkflowAction>(), It.IsAny<ActionExecutionContext>()))
+            .Returns<WorkflowAction, ActionExecutionContext>((action, _) =>
+            {
+                executedNumbers.Add(action.Number);
+                return action.Number == 1
+                    ? Task.FromException(new InvalidOperationException("Expected failure"))
+                    : Task.CompletedTask;
+            });
+        var service = new WorkflowService(executorMock.Object);
+        var errors = new List<ActionExecutionErrorEventArgs>();
+        service.ActionExecutionError += (_, args) => errors.Add(args);
+        var workflow = new Workflow
+        {
+            ExecutionMode = WorkflowExecutionMode.Parallel,
+            Actions =
+            [
+                new WorkflowAction { Number = 1, Name = "First", Type = ActionType.Command },
+                new WorkflowAction { Number = 2, Name = "Second", Type = ActionType.Command }
+            ]
+        };
+
+        // Act
+        await service.ExecuteAsync(
+            workflow,
+            _context,
+            new WorkflowExecutionOptions { StopOnFirstActionFailure = true });
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(executedNumbers, Is.EquivalentTo(new uint[] { 1, 2 }));
+            Assert.That(errors, Has.Count.EqualTo(1));
+            Assert.That(errors[0].Action.Number, Is.EqualTo(1));
+        });
+    }
 }

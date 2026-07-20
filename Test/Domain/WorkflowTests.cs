@@ -131,4 +131,60 @@ internal class WorkflowTests
         Assert.That(action.Audio, Is.Not.Null);
         Assert.That(action.Audio!.FilePath, Is.EqualTo(@"C:\sounds\gong.wav"));
     }
+
+    [Test]
+    public void SerializeDeserialize_PreservesWorkflowMetadataAndPersistedActionOrder()
+    {
+        // Arrange
+        var workflowId = Guid.NewGuid();
+        var firstPersistedActionId = Guid.NewGuid();
+        var secondPersistedActionId = Guid.NewGuid();
+        var workflow = new Workflow
+        {
+            Id = workflowId,
+            Name = "Arrival workflow",
+            Description = "Runs when the train arrives",
+            ExecutionMode = WorkflowExecutionMode.Parallel,
+            InPort = 12,
+            IsUsingTimerToIgnoreFeedbacks = true,
+            IntervalForTimerToIgnoreFeedbacks = 1.5,
+            Actions =
+            [
+                new WorkflowAction
+                {
+                    Id = firstPersistedActionId,
+                    Name = "Persisted first",
+                    Number = 20,
+                    Type = ActionType.Command
+                },
+                new WorkflowAction
+                {
+                    Id = secondPersistedActionId,
+                    Name = "Persisted second",
+                    Number = 10,
+                    Type = ActionType.Audio,
+                    Audio = new AudioActionPayload { FilePath = "sounds/arrival.wav" }
+                }
+            ]
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(workflow, JsonOptions.Default);
+        var roundTripped = JsonSerializer.Deserialize<Workflow>(json, JsonOptions.Default);
+
+        // Assert
+        Assert.That(roundTripped, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(roundTripped!.Id, Is.EqualTo(workflowId));
+            Assert.That(roundTripped.Name, Is.EqualTo("Arrival workflow"));
+            Assert.That(roundTripped.Description, Is.EqualTo("Runs when the train arrives"));
+            Assert.That(roundTripped.ExecutionMode, Is.EqualTo(WorkflowExecutionMode.Parallel));
+            Assert.That(roundTripped.InPort, Is.EqualTo(12));
+            Assert.That(roundTripped.IsUsingTimerToIgnoreFeedbacks, Is.True);
+            Assert.That(roundTripped.IntervalForTimerToIgnoreFeedbacks, Is.EqualTo(1.5));
+            Assert.That(roundTripped.Actions.Select(action => action.Id),
+                Is.EqualTo(new[] { firstPersistedActionId, secondPersistedActionId }));
+        });
+    }
 }

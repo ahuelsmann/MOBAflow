@@ -173,4 +173,56 @@ internal class WorkflowViewModelTests
 
         Assert.That(propertyChangedRaised, Is.True);
     }
+
+    [Test]
+    public void ChildActionPropertyChanged_UpdatesModelAndRaisesActionsChanged()
+    {
+        // Arrange
+        var action = new WorkflowAction
+        {
+            Name = "Original action",
+            Number = 1,
+            Type = ActionType.Command,
+            Command = new CommandActionPayload()
+        };
+        var workflow = new Workflow { Actions = [action] };
+        var viewModel = new WorkflowViewModel(workflow);
+        var actionsChanged = 0;
+        viewModel.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(WorkflowViewModel.Actions))
+                actionsChanged++;
+        };
+        var actionViewModel = (WorkflowActionViewModel)viewModel.Actions.Single();
+
+        // Act
+        actionViewModel.Name = "Updated action";
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(action.Name, Is.EqualTo("Updated action"));
+            Assert.That(actionsChanged, Is.EqualTo(1));
+        });
+    }
+
+    [Test]
+    public void ProjectViewModel_WorkflowsExposeStableWrappersForProjectModels()
+    {
+        // Arrange
+        var workflow = new Workflow { Name = "Shared workflow" };
+        var project = new Project { Workflows = [workflow] };
+
+        // Act
+        var projectViewModel = new ProjectViewModel(project);
+        var firstAccess = projectViewModel.Workflows.Single();
+        var secondAccess = projectViewModel.Workflows.Single();
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(firstAccess, Is.SameAs(secondAccess));
+            Assert.That(firstAccess.Model, Is.SameAs(workflow));
+        });
+    }
 }

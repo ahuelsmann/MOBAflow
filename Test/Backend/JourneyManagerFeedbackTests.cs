@@ -220,6 +220,58 @@ public sealed class JourneyManagerFeedbackTests
         Assert.That(manager.GetState(journey.Id)!.CurrentStationId, Is.EqualTo(target.Id));
     }
 
+    [Test]
+    public async Task ProcessFeedbackAsync_BlocksOtherFeedbackUntilRunningWorkflowCompletes()
+    {
+        // Arrange
+        var z21Mock = new Mock<IZ21>();
+        var workflowMock = new Mock<IWorkflowService>();
+        var blockingWorkflowId = Guid.NewGuid();
+        var workflowStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseWorkflow = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        workflowMock
+            .Setup(service => service.ExecuteAsync(
+                It.Is<Workflow>(workflow => workflow.Id == blockingWorkflowId),
+                It.IsAny<ActionExecutionContext>(),
+                It.IsAny<WorkflowExecutionOptions>()))
+            .Returns(async () =>
+            {
+                workflowStarted.TrySetResult();
+                await releaseWorkflow.Task.ConfigureAwait(false);
+            });
+        var blockingJourney = new Journey
+        {
+            FeedbackSequence = [new JourneyFeedbackStep { InPort = 1, WorkflowId = blockingWorkflowId }]
+        };
+        var independentJourney = new Journey
+        {
+            FeedbackSequence = [new JourneyFeedbackStep { InPort = 2 }]
+        };
+        var project = new Project
+        {
+            Journeys = [blockingJourney, independentJourney],
+            Workflows = [new Workflow { Id = blockingWorkflowId }]
+        };
+        using var manager = new TestableJourneyManager(z21Mock.Object, project, workflowMock.Object);
+
+        // Act
+        var blockingFeedback = manager.RunProcessFeedbackAsync(new FeedbackResult(BuildFeedbackPacketForInPort(1)));
+        await workflowStarted.Task.WaitAsync(TimeSpan.FromSeconds(1));
+        var independentFeedback = manager.RunProcessFeedbackAsync(new FeedbackResult(BuildFeedbackPacketForInPort(2)));
+        await Task.Delay(25);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(independentFeedback.IsCompleted, Is.False);
+            Assert.That(manager.GetState(independentJourney.Id)!.CurrentFeedbackIndex, Is.Zero);
+        });
+
+        releaseWorkflow.TrySetResult();
+        await Task.WhenAll(blockingFeedback, independentFeedback).WaitAsync(TimeSpan.FromSeconds(1));
+        Assert.That(manager.GetState(independentJourney.Id)!.CurrentFeedbackIndex, Is.EqualTo(1));
+    }
+
     /// <summary>
     /// Builds a minimal LAN_RMBUS_DATACHANGED packet with a single active bit for the given 1-based InPort.
     /// </summary>
