@@ -23,7 +23,7 @@ public sealed record AddressFindingViewModel(
 public sealed partial class LocomotiveManagementViewModel : ObservableObject
 {
     private readonly IDigitalAddressConflictDetector _conflictDetector;
-    private readonly ILocomotiveMaintenanceService _maintenanceService;
+    private readonly IVehicleMaintenanceService _maintenanceService;
     private readonly ILocomotiveLibraryService _libraryService;
     private readonly ILocomotivePassportHtmlRenderer? _passportRenderer;
     private readonly IDecoderCvService? _decoderCvService;
@@ -34,7 +34,7 @@ public sealed partial class LocomotiveManagementViewModel : ObservableObject
 
     public LocomotiveManagementViewModel(
         IDigitalAddressConflictDetector conflictDetector,
-        ILocomotiveMaintenanceService maintenanceService,
+        IVehicleMaintenanceService maintenanceService,
         ILocomotiveLibraryService libraryService,
         ILocomotivePassportHtmlRenderer? passportRenderer = null,
         IDecoderCvService? decoderCvService = null,
@@ -132,7 +132,7 @@ public sealed partial class LocomotiveManagementViewModel : ObservableObject
             return;
         }
 
-        foreach (var status in _maintenanceService.Evaluate(maintenance, now ?? DateTimeOffset.UtcNow))
+        foreach (var status in _maintenanceService.Evaluate(maintenance, locomotive.Usage, now ?? DateTimeOffset.UtcNow))
             MaintenancePlans.Add(status);
     }
 
@@ -141,8 +141,8 @@ public sealed partial class LocomotiveManagementViewModel : ObservableObject
     {
         if (_locomotive is null)
             return;
-        _locomotive.Maintenance ??= new LocomotiveMaintenanceData();
-        _locomotive.Maintenance.Plans.Add(new LocomotiveMaintenancePlan
+        _locomotive.Maintenance ??= new VehicleMaintenanceData();
+        _locomotive.Maintenance.Plans.Add(new VehicleMaintenancePlan
         {
             Name = "New maintenance reminder",
             Category = MaintenanceCategory.Inspection,
@@ -159,8 +159,8 @@ public sealed partial class LocomotiveManagementViewModel : ObservableObject
     {
         if (_locomotive is null)
             return;
-        _locomotive.Maintenance ??= new LocomotiveMaintenanceData();
-        _locomotive.Maintenance.Entries.Add(new LocomotiveMaintenanceEntry
+        _locomotive.Maintenance ??= new VehicleMaintenanceData();
+        _locomotive.Maintenance.Entries.Add(new VehicleMaintenanceEntry
         {
             Description = "Maintenance performed",
             Category = MaintenanceCategory.Inspection,

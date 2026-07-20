@@ -54,14 +54,14 @@ public interface ILocomotiveLibraryService
 /// </summary>
 public sealed class LocomotiveLibraryService : ILocomotiveLibraryService
 {
-    private readonly ILocomotiveMaintenanceService _maintenanceService;
+    private readonly IVehicleMaintenanceService _maintenanceService;
     private readonly TimeProvider _timeProvider;
 
     public LocomotiveLibraryService(
-        ILocomotiveMaintenanceService? maintenanceService = null,
+        IVehicleMaintenanceService? maintenanceService = null,
         TimeProvider? timeProvider = null)
     {
-        _maintenanceService = maintenanceService ?? new LocomotiveMaintenanceService();
+        _maintenanceService = maintenanceService ?? new VehicleMaintenanceService();
         _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
@@ -107,7 +107,7 @@ public sealed class LocomotiveLibraryService : ILocomotiveLibraryService
                 latestEntry.Description);
         MaintenanceDueState? maintenanceState = locomotive.Maintenance is { Plans.Count: > 0 } maintenanceData
             && _maintenanceService.Validate(maintenanceData).Count == 0
-                ? _maintenanceService.Evaluate(maintenanceData, _timeProvider.GetUtcNow())
+                ? _maintenanceService.Evaluate(maintenanceData, locomotive.Usage, _timeProvider.GetUtcNow())
                     .Select(status => status.State)
                     .DefaultIfEmpty(MaintenanceDueState.NotScheduled)
                     .Max()
