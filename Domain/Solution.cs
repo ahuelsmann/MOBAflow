@@ -12,7 +12,7 @@ public class Solution
     /// Current schema version for Solution JSON format.
     /// Increment this when breaking changes are made to the schema.
     /// </summary>
-    public const int CurrentSchemaVersion = 3;
+    public const int CurrentSchemaVersion = 4;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Solution"/> class with default name and empty project list.

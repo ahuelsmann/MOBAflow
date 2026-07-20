@@ -12,6 +12,9 @@ public sealed class JourneyRuntimeSnapshot
     /// </summary>
     public required Guid JourneyId { get; init; }
 
+    /// <summary>Gets the stable identity of the current journey execution.</summary>
+    public Guid JourneyRunId { get; init; }
+
     /// <summary>
     /// Gets the current station name.
     /// </summary>

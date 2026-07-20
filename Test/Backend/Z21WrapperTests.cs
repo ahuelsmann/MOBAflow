@@ -71,12 +71,15 @@ internal class Z21WrapperTests
     }
 
     [Test]
-    public void Received_RaisesOnlyForRisingEdges_AndSupportsReactivation()
+    public async Task Received_RaisesOnlyForRisingEdges_AndSupportsReactivation()
     {
         var fake = new FakeUdpClientWrapper();
-        var z21 = new Z21(fake, new EventBus(NullLogger<EventBus>.Instance));
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var z21 = new Z21(fake, eventBus);
         var activations = new List<int>();
+        var publishedActivations = new List<int>();
         z21.Received += feedback => activations.Add(feedback.InPort);
+        eventBus.Subscribe<FeedbackReceivedEvent>(@event => publishedActivations.Add(@event.InPort));
 
         fake.RaiseReceived(Z21Packets.RBusFeedbackInPort5);
         fake.RaiseReceived(Z21Packets.RBusFeedbackInPort5);
@@ -84,8 +87,13 @@ internal class Z21WrapperTests
         Array.Clear(released, 5, Math.Min(8, released.Length - 5));
         fake.RaiseReceived(released);
         fake.RaiseReceived(Z21Packets.RBusFeedbackInPort5);
+        await z21.DisposeAsync();
 
-        Assert.That(activations, Is.EqualTo(new[] { 5, 5 }));
+        Assert.Multiple(() =>
+        {
+            Assert.That(activations, Is.EqualTo(new[] { 5, 5 }));
+            Assert.That(publishedActivations, Is.EqualTo(new[] { 5, 5 }));
+        });
     }
 
     [Test]

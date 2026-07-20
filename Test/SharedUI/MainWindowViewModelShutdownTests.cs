@@ -11,6 +11,7 @@ using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Common.Runtime;
 using Moba.Domain;
+using Moba.Domain.Enum;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
 using Moq;
@@ -87,12 +88,52 @@ internal class MainWindowViewModelShutdownTests
         mobaRuntimeMock.Verify(client => client.DisconnectAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    [Test]
+    public void UsageCheckpointEvent_SynchronizesAuthoritativeCountersIntoEditorProject()
+    {
+        var locomotive = new Locomotive();
+        var project = new Project { Locomotives = [locomotive] };
+        var runtimeSnapshot = new MobaRuntimeSnapshot
+        {
+            VehicleUsage = new Dictionary<Guid, VehicleUsageRuntimeSnapshot>
+            {
+                [locomotive.Id] = new()
+                {
+                    VehicleId = locomotive.Id,
+                    VehicleKind = TrainVehicleKind.Locomotive,
+                    TrackedOperatingSeconds = 42,
+                    TrackedCompletedTrips = 3
+                }
+            }
+        };
+        var mobaRuntimeMock = CreateMobaRuntimeMock();
+        mobaRuntimeMock.SetupGet(runtime => runtime.Current).Returns(runtimeSnapshot);
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var viewModel = CreateViewModel(mobaRuntimeMock, eventBus);
+        viewModel.SelectedProject = new ProjectViewModel(project);
+
+        eventBus.Publish(new VehicleUsageCheckpointCommittedEvent(
+            project.Id,
+            DateTimeOffset.UtcNow,
+            runtimeSnapshot.VehicleUsage));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(locomotive.Usage, Is.Not.Null);
+            Assert.That(locomotive.Usage!.TrackedOperatingSeconds, Is.EqualTo(42));
+            Assert.That(locomotive.Usage.TrackedCompletedTrips, Is.EqualTo(3));
+        });
+    }
+
     private static Mock<IMobaRuntime> CreateMobaRuntimeMock()
     {
         var mobaRuntimeMock = new Mock<IMobaRuntime>();
         mobaRuntimeMock.SetupGet(client => client.Current).Returns(MobaRuntimeSnapshot.Empty);
         mobaRuntimeMock.Setup(client => client.GetTrafficPackets()).Returns(Array.Empty<Z21TrafficPacket>());
         mobaRuntimeMock.Setup(client => client.DisconnectAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        mobaRuntimeMock.Setup(client => client.CheckpointUsageAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        mobaRuntimeMock.Setup(client => client.ActivateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        mobaRuntimeMock.Setup(client => client.SetActiveTrainAsync(It.IsAny<Guid?>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         return mobaRuntimeMock;
     }
 

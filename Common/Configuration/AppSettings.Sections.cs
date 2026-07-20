@@ -271,6 +271,12 @@ public class FeatureToggleSettings
     /// </summary>
     public string JourneysPageLabel { get; set; } = string.Empty;
 
+    /// <summary>Enable the timetable planning and operations page.</summary>
+    public bool IsTimetablePageAvailable { get; set; } = true;
+
+    /// <summary>Gets or sets an optional label suffix for the Timetable page.</summary>
+    public string TimetablePageLabel { get; set; } = "Preview";
+
     /// <summary>Enable the feedback-sequence event manager page.</summary>
     public bool IsEventManagerPageAvailable { get; set; } = true;
 
@@ -499,6 +505,18 @@ public class LayoutSettings
     public MonitorPageLayoutSettings MonitorPage { get; set; } = new();
 
     public StationsPageLayoutSettings StationsPage { get; set; } = new();
+
+    public TimetablePageLayoutSettings TimetablePage { get; set; } = new();
+}
+
+/// <summary>Persists the relative widths of the Timetable page master-detail columns.</summary>
+public class TimetablePageLayoutSettings
+{
+    /// <summary>Gets or sets the services column star value.</summary>
+    public double ServicesColumnStarValue { get; set; } = 2;
+
+    /// <summary>Gets or sets the details column star value.</summary>
+    public double DetailsColumnStarValue { get; set; } = 3;
 }
 
 /// <summary>

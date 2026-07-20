@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Common;
 
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using Moba.Common.Events;
@@ -43,6 +44,25 @@ internal class EventBusTests
         bus.Publish(new FeedbackReceivedEvent(1));
 
         Assert.That(count, Is.EqualTo(11));
+    }
+
+    [Test]
+    public void Publish_RecordsFailingSubscriberAndContinuesWithRemainingHandlers()
+    {
+        var logger = new RecordingLogger<EventBus>();
+        var bus = new EventBus(logger);
+        var laterHandlerInvoked = false;
+        bus.Subscribe<FeedbackReceivedEvent>(_ => throw new InvalidOperationException("Expected test failure"));
+        bus.Subscribe<FeedbackReceivedEvent>(_ => laterHandlerInvoked = true);
+
+        bus.Publish(new FeedbackReceivedEvent(1));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(laterHandlerInvoked, Is.True);
+            Assert.That(logger.Levels, Does.Contain(LogLevel.Error));
+            Assert.That(bus.HandlerFailureCount, Is.EqualTo(1));
+        });
     }
 
     [Test]
@@ -169,5 +189,24 @@ internal class EventBusTests
 
         Assert.That(captured, Is.SameAs(evt));
         Assert.That(captured!.InPort, Is.EqualTo(42));
+    }
+
+    private sealed class RecordingLogger<T> : ILogger<T>
+    {
+        public List<LogLevel> Levels { get; } = [];
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(
+            LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception? exception,
+            Func<TState, Exception?, string> formatter)
+        {
+            Levels.Add(logLevel);
+        }
     }
 }

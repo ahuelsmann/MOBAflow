@@ -138,6 +138,22 @@ public sealed class MobaRuntimeSnapshot
         = [];
 
     /// <summary>
+    /// Gets runtime-derived usage keyed by stable vehicle identifier.
+    /// </summary>
+    public IReadOnlyDictionary<Guid, VehicleUsageRuntimeSnapshot> VehicleUsage { get; init; }
+        = new Dictionary<Guid, VehicleUsageRuntimeSnapshot>();
+
+    /// <summary>
+    /// Gets the train whose consist currently receives wagon usage, if any.
+    /// </summary>
+    public Guid? ActiveTrainId { get; init; }
+
+    /// <summary>
+    /// Gets diagnostics owned by the vehicle-usage pipeline.
+    /// </summary>
+    public VehicleUsageRuntimeDiagnosticsSnapshot VehicleUsageDiagnostics { get; init; } = new();
+
+    /// <summary>
     /// Gets the signal-box control elements from the active runtime project.
     /// </summary>
     public IReadOnlyList<SignalBoxElementRuntimeSnapshot> SignalBoxElements { get; init; }

@@ -18,26 +18,13 @@ public partial class Z21
 {
     #region Message Receiving & Parsing
     /// <summary>
-    /// Publishes an event asynchronously without blocking the UDP receiver.
-    /// Events are queued to a background task so the UDP callback returns immediately.
+    /// Queues an event without blocking the UDP receiver.
     /// </summary>
     /// <typeparam name="TEvent">The event type</typeparam>
     /// <param name="event">The event instance to publish</param>
-    private void PublishEventAsync<TEvent>(TEvent @event) where TEvent : class, IEvent
+    private void QueueEvent<TEvent>(TEvent @event) where TEvent : class, IEvent
     {
-        // Fire-and-forget: publish on thread pool without awaiting
-        // This allows OnUdpReceived to return immediately
-        _ = Task.Run(() =>
-        {
-            try
-            {
-                _eventBus.Publish(@event);
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogWarning(ex, "Error publishing event {EventType}", typeof(TEvent).Name);
-            }
-        });
+        _eventPipeline.TryEnqueue(@event);
     }
 
     private void UpdateAndPublishVersionInfo(Action<Z21VersionInfo> updateAction)
@@ -45,7 +32,7 @@ public partial class Z21
         VersionInfo ??= new Z21VersionInfo();
         updateAction(VersionInfo);
         OnVersionInfoChanged?.Invoke(VersionInfo);
-        PublishEventAsync(new VersionInfoChangedEvent(
+        QueueEvent(new VersionInfoChangedEvent(
             VersionInfo.SerialNumber,
             (int)VersionInfo.HardwareTypeCode,
             (int)VersionInfo.FirmwareVersionCode));
@@ -80,7 +67,7 @@ public partial class Z21
                 SetConnectedIfNotAlready();
 
                 OnXBusStatusChanged?.Invoke(xStatus);
-                PublishEventAsync(new XBusStatusChangedEvent(
+                QueueEvent(new XBusStatusChangedEvent(
                     xStatus.EmergencyStop,
                     xStatus.TrackOff,
                     xStatus.ShortCircuit,
@@ -95,7 +82,7 @@ public partial class Z21
                 SetConnectedIfNotAlready();
 
                 OnLocoInfoChanged?.Invoke(locoInfo);
-                PublishEventAsync(new LocomotiveInfoChangedEvent(
+                QueueEvent(new LocomotiveInfoChangedEvent(
                     locoInfo.Address,
                     locoInfo.Speed,
                     locoInfo.IsForward,
@@ -164,7 +151,7 @@ public partial class Z21
                 _logger?.LogInformation("SystemState received: MainCurrent={MainCurrent}mA, Temp={Temp}C, Voltage={Voltage}mV",
                     mainCurrent, temperature, supplyVoltage);
                 OnSystemStateChanged?.Invoke(CurrentSystemState);
-                PublishEventAsync(new SystemStateChangedEvent(
+                QueueEvent(new SystemStateChangedEvent(
                     CurrentSystemState.MainCurrent,
                     CurrentSystemState.ProgCurrent,
                     CurrentSystemState.FilteredMainCurrent,
@@ -193,7 +180,7 @@ public partial class Z21
             {
                 var feedback = new FeedbackResult(content, inPort);
                 Received?.Invoke(feedback);
-                PublishEventAsync(new FeedbackReceivedEvent(inPort));
+                QueueEvent(new FeedbackReceivedEvent(inPort));
                 _logger?.LogDebug("R-Bus Feedback activated: InPort={InPort}", inPort);
             }
 

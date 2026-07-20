@@ -2,7 +2,7 @@
 
 **Scope:** current repository structure, app boundaries, runtime behavior,
 persisted data, integrations and build entry points.
-**Last reviewed:** 2026-07-19
+**Last reviewed:** 2026-07-20
 
 ## Products
 
@@ -106,7 +106,7 @@ also connects to `/runtime-hub` and the MOBApi REST surface:
 
 ## Persisted model
 
-`Solution.CurrentSchemaVersion` is currently `3`. A solution contains projects;
+`Solution.CurrentSchemaVersion` is currently `4`. A solution contains projects;
 each project can contain:
 
 - locomotives, passenger wagons, goods wagons and train consists;
@@ -115,7 +115,8 @@ each project can contain:
 - workflows;
 - journeys with ordered stations and explicit `FeedbackSequence` steps;
 - a `TrackPlanDocument`;
-- a `SignalBoxPlan`; and
+- a `SignalBoxPlan`;
+- dated timetable services and their project-wide turnaround policy; and
 - 5x5 matrix images.
 
 The current sample is `MOBAflow/solution.json`. `MOBAflow/data.json` contains
@@ -127,6 +128,12 @@ shared master data loaded through `MasterDataStore`.
 `JourneyFeedbackStep` represents an ordered feedback occurrence and its stop
 transition behavior. Runtime progress is stored separately by
 `JourneyRuntimeStateStore` and exposed through snapshots and MOBApi.
+
+Timetable definitions remain part of the solution. Operator holds,
+cancellations, actual times and live train/journey assignments are stored in a
+separate project-scoped timetable session file. Runtime journey snapshots can
+infer arrivals only when exactly one nonterminal service owns that journey;
+departures remain manual dispatcher decisions.
 
 The high-level flow is:
 
@@ -236,7 +243,7 @@ cleanup do not race the running process.
 ### MOBAflow navigation
 
 The current page registration includes Overview, Solution, Locomotives,
-Passenger Wagons, Goods Wagons, Trains, Workflows, Stations, Journeys, Event
+Passenger Wagons, Goods Wagons, Trains, Workflows, Stations, Journeys, Timetable, Event
 Manager, Journey Map, Train Control, Track Plan, Signal Box, Display
 Configurations, Matrix Images, Monitor, Help, Info and Settings.
 
@@ -268,15 +275,18 @@ Important application sections are `Z21`, `RestApi`, `Speech`, `Application`,
 
 ```powershell
 dotnet build MOBAflow/MOBAflow.csproj
-dotnet build MOBAsmart/MOBAsmart.csproj -f net10.0-android
+dotnet restore MOBAsmart/MOBAsmart.csproj
+dotnet build MOBAsmart/MOBAsmart.csproj --framework net10.0-android
 dotnet build MOBApi/MOBApi.csproj
 dotnet test Test/Test.csproj
 ```
 
 The WinUI project requires Windows tooling and MOBAsmart requires the Android
 MAUI workload. Cross-platform projects and most tests can be built separately.
-See `docs/BUILD-PERFORMANCE.md` for fast local configurations and coverage
-commands.
+See `docs/BUILD-PERFORMANCE.md` for the clean Android Release AAB workflow,
+fast local configurations, and coverage commands. For `dotnet restore`, `-f`
+means `--force`; use `--framework` with `dotnet build` or `dotnet publish` when
+framework selection is required.
 
 Public checks are defined in `.github/workflows/`; additional Azure DevOps
 pipelines remain under `.azure-pipelines/`.

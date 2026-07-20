@@ -45,6 +45,9 @@ public class JourneyManager : IJourneyManager
     /// </summary>
     public event EventHandler<JourneyFeedbackEventArgs>? FeedbackReceived;
 
+    /// <summary>Raised exactly once when a journey run reaches its terminal stop.</summary>
+    public event EventHandler<JourneyCompletedEventArgs>? JourneyCompleted;
+
     /// <summary>
     /// Raises the StationChanged event. Protected for testing purposes.
     /// </summary>
@@ -103,6 +106,9 @@ public class JourneyManager : IJourneyManager
             {
                 _states[journey.Id].CurrentFeedbackIndex = Math.Clamp(checkpoint.CurrentFeedbackIndex, 0, journey.FeedbackSequence.Count);
                 _states[journey.Id].CurrentStepOccurrence = checkpoint.CurrentStepOccurrence;
+                _states[journey.Id].RunId = checkpoint.JourneyRunId == Guid.Empty
+                    ? Guid.NewGuid()
+                    : checkpoint.JourneyRunId;
             }
         }
     }
@@ -259,10 +265,17 @@ public class JourneyManager : IJourneyManager
 
         _logger.LogInformation("Last station of journey '{Journey}' reached", journey.Name);
 
+        JourneyCompleted?.Invoke(this, new JourneyCompletedEventArgs
+        {
+            JourneyId = journey.Id,
+            JourneyRunId = state.RunId
+        });
+
         switch (journey.BehaviorOnLastStop)
         {
             case BehaviorOnLastStop.BeginAgainFromFistStop:
                 _logger.LogInformation("Journey will restart from beginning");
+                state.RunId = Guid.NewGuid();
                 state.CurrentPos = 0;
                 state.CurrentStationId = journey.Stations.FirstOrDefault()?.Id;
                 state.CurrentStationName = journey.Stations.FirstOrDefault()?.Name ?? string.Empty;
@@ -284,6 +297,8 @@ public class JourneyManager : IJourneyManager
                 state.IsActive = false;
                 break;
         }
+
+        _runtimeStateStore.Save(_project.Id, state);
 
         await Task.CompletedTask.ConfigureAwait(false);
     }
@@ -358,6 +373,8 @@ public class JourneyManager : IJourneyManager
         nextState.CurrentStationId = nextJourney.Stations.ElementAtOrDefault((int)nextJourney.FirstPos)?.Id;
         nextState.CurrentStationName = nextJourney.Stations.ElementAtOrDefault((int)nextJourney.FirstPos)?.Name ?? string.Empty;
         nextState.CurrentFeedbackIndex = 0;
+        nextState.CurrentStepOccurrence = 0;
+        nextState.RunId = Guid.NewGuid();
         nextState.IsActive = true;
         _logger.LogInformation("Journey '{Journey}' activated at position {Position}", nextJourney.Name, nextState.CurrentPos);
     }
@@ -375,6 +392,7 @@ public class JourneyManager : IJourneyManager
             state.CurrentStationName = journey.Stations.ElementAtOrDefault((int)journey.FirstPos)?.Name ?? string.Empty;
             state.CurrentFeedbackIndex = 0;
             state.CurrentStepOccurrence = 0;
+            state.RunId = Guid.NewGuid();
             state.IsJourneyCompletionRequested = false;
             state.IsActive = true;
             _runtimeStateStore.Reset(_project.Id, journey.Id);

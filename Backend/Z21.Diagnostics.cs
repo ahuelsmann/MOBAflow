@@ -43,7 +43,7 @@ public partial class Z21
             inPort, groupNumber, byteIndex, bitPosition, Received?.GetInvocationList().Length ?? 0);
 
         Received?.Invoke(new FeedbackResult(simulatedContent));
-        PublishEventAsync(new FeedbackReceivedEvent(inPort));
+        QueueEvent(new FeedbackReceivedEvent(inPort));
 
         _logger?.LogDebug("SimulateFeedback event invoked for InPort={InPort}", inPort);
     }

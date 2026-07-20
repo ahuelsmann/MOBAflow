@@ -34,7 +34,7 @@ using System.Net;
 /// <item><description><c>Z21.Diagnostics.cs</c> — simulation, debugging and RailCom helpers.</description></item>
 /// </list>
 /// </summary>
-public partial class Z21 : IZ21
+public partial class Z21 : IZ21, IAsyncDisposable
 {
     /// <summary>
     /// Raised when a feedback packet has been parsed into a <see cref="FeedbackResult"/>.
@@ -67,7 +67,7 @@ public partial class Z21 : IZ21
     public event Action<bool>? OnConnectedChanged;
 
     private readonly IUdpClientWrapper _udp;
-    private readonly IEventBus _eventBus;
+    private readonly Z21EventPipeline _eventPipeline;
     private readonly ILogger<Z21>? _logger;
     private readonly Z21Monitor? _trafficMonitor;
     private CancellationTokenSource? _cancellationTokenSource;
@@ -109,9 +109,9 @@ public partial class Z21 : IZ21
         ArgumentNullException.ThrowIfNull(udp);
         ArgumentNullException.ThrowIfNull(eventBus);
         _udp = udp;
-        _eventBus = eventBus;
         _logger = logger;
         _trafficMonitor = trafficMonitor;
+        _eventPipeline = new Z21EventPipeline(eventBus, logger);
         _udp.Received += OnUdpReceived;
     }
 
@@ -125,6 +125,9 @@ public partial class Z21 : IZ21
     /// Only returns true after Z21 has sent a valid response (SystemState, XBusStatus, or VersionInfo).
     /// </summary>
     public bool IsConnected => _isConnected;
+
+    /// <inheritdoc />
+    public Z21EventPipelineSnapshot EventPipelineSnapshot => _eventPipeline.GetSnapshot();
 
     /// <summary>
     /// Connect to Z21.
@@ -235,7 +238,7 @@ public partial class Z21 : IZ21
             if (wasConnected)
             {
                 OnConnectedChanged?.Invoke(false);
-                PublishEventAsync(new Z21ConnectionLostEvent());
+                QueueEvent(new Z21ConnectionLostEvent());
             }
 
             // Step 6: Stop UDP (this sets _client = null)
@@ -257,16 +260,50 @@ public partial class Z21 : IZ21
     {
         if (_disposed) return;
 
+        _disposed = true;
+        _udp.Received -= OnUdpReceived;
+
         StopKeepaliveTimer();
         StopSystemStatePollingTimer();
 
         _cancellationTokenSource?.Cancel();
         _cancellationTokenSource?.Dispose();
+        _cancellationTokenSource = null;
+
+        _eventPipeline.Cancel();
 
         _sendLock.Dispose();
         _connectionLock.Dispose();
 
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Drains accepted application events before releasing Z21 resources.
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed) return;
+
         _disposed = true;
+        _udp.Received -= OnUdpReceived;
+
+        StopKeepaliveTimer();
+        StopSystemStatePollingTimer();
+
+        if (_cancellationTokenSource != null)
+        {
+            await _cancellationTokenSource.CancelAsync().ConfigureAwait(false);
+            _cancellationTokenSource.Dispose();
+            _cancellationTokenSource = null;
+        }
+
+        await _eventPipeline.DisposeAsync().ConfigureAwait(false);
+
+        _sendLock.Dispose();
+        _connectionLock.Dispose();
+
+        GC.SuppressFinalize(this);
     }
 
     #endregion
