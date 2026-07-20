@@ -9,7 +9,6 @@ using System.Text.Json.Serialization;
 /// <summary>
 /// Serializes <see cref="WorkflowAction"/> as a flat JSON object with typed payload properties
 /// instead of a loose <c>parameters</c> map.
-/// Migrates legacy <c>parameters</c> on read.
 /// </summary>
 public sealed class WorkflowActionJsonConverter : JsonConverter<WorkflowAction>
 {
@@ -43,9 +42,6 @@ public sealed class WorkflowActionJsonConverter : JsonConverter<WorkflowAction>
             if (TryGetPropertyInsensitive(root, descriptor.JsonPropertyName, out var payloadEl) && payloadEl.ValueKind == JsonValueKind.Object)
                 descriptor.Read(action, payloadEl, NestedOptions);
         }
-
-        if (TryGetPropertyInsensitive(root, "parameters", out var legacyParams) && legacyParams.ValueKind == JsonValueKind.Object)
-            WorkflowActionLegacyParameterMigrator.Merge(action, legacyParams);
 
         return action;
     }

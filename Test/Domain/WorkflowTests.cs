@@ -111,7 +111,7 @@ internal class WorkflowTests
     }
 
     [Test]
-    public void WorkflowAction_LegacyParametersJson_MigratesToTypedPayload()
+    public void WorkflowAction_LegacyParametersJson_DoesNotCreateTypedPayload()
     {
         const string json = """
             {
@@ -126,44 +126,39 @@ internal class WorkflowTests
 
         var action = JsonSerializer.Deserialize<WorkflowAction>(json, JsonOptions.Default);
         Assert.That(action, Is.Not.Null);
-        Assert.That(action!.Type, Is.EqualTo(ActionType.Audio));
+        Assert.That(action!.Type, Is.EqualTo(ActionType.Command));
         Assert.That(action.DelayAfterMs, Is.EqualTo(100));
-        Assert.That(action.Audio, Is.Not.Null);
-        Assert.That(action.Audio!.FilePath, Is.EqualTo(@"C:\sounds\gong.wav"));
+        Assert.That(action.Audio, Is.Null);
     }
 
     [Test]
-    public void SerializeDeserialize_PreservesWorkflowMetadataAndPersistedActionOrder()
+    public void SerializeDeserialize_PreservesWorkflowMetadataAndPersistedStepOrder()
     {
         // Arrange
         var workflowId = Guid.NewGuid();
-        var firstPersistedActionId = Guid.NewGuid();
-        var secondPersistedActionId = Guid.NewGuid();
+        var firstPersistedStepId = Guid.NewGuid();
+        var secondPersistedStepId = Guid.NewGuid();
         var workflow = new Workflow
         {
             Id = workflowId,
             Name = "Arrival workflow",
             Description = "Runs when the train arrives",
-            ExecutionMode = WorkflowExecutionMode.Parallel,
-            InPort = 12,
-            IsUsingTimerToIgnoreFeedbacks = true,
-            IntervalForTimerToIgnoreFeedbacks = 1.5,
-            Actions =
+            EntryStepId = firstPersistedStepId,
+            DefaultErrorPolicy = new WorkflowErrorPolicy { Behavior = WorkflowFailureBehavior.Stop },
+            Steps =
             [
-                new WorkflowAction
+                new WorkflowDelayStep
                 {
-                    Id = firstPersistedActionId,
+                    Id = firstPersistedStepId,
                     Name = "Persisted first",
-                    Number = 20,
-                    Type = ActionType.Command
+                    DelayMs = 20,
+                    NextStepId = secondPersistedStepId
                 },
-                new WorkflowAction
+                new WorkflowTerminateStep
                 {
-                    Id = secondPersistedActionId,
+                    Id = secondPersistedStepId,
                     Name = "Persisted second",
-                    Number = 10,
-                    Type = ActionType.Audio,
-                    Audio = new AudioActionPayload { FilePath = "sounds/arrival.wav" }
+                    Result = WorkflowTerminationResult.Succeeded
                 }
             ]
         };
@@ -179,12 +174,12 @@ internal class WorkflowTests
             Assert.That(roundTripped!.Id, Is.EqualTo(workflowId));
             Assert.That(roundTripped.Name, Is.EqualTo("Arrival workflow"));
             Assert.That(roundTripped.Description, Is.EqualTo("Runs when the train arrives"));
-            Assert.That(roundTripped.ExecutionMode, Is.EqualTo(WorkflowExecutionMode.Parallel));
-            Assert.That(roundTripped.InPort, Is.EqualTo(12));
-            Assert.That(roundTripped.IsUsingTimerToIgnoreFeedbacks, Is.True);
-            Assert.That(roundTripped.IntervalForTimerToIgnoreFeedbacks, Is.EqualTo(1.5));
-            Assert.That(roundTripped.Actions.Select(action => action.Id),
-                Is.EqualTo(new[] { firstPersistedActionId, secondPersistedActionId }));
+            Assert.That(roundTripped.EntryStepId, Is.EqualTo(firstPersistedStepId));
+            Assert.That(roundTripped.Steps!.Select(step => step.Id),
+                Is.EqualTo(new[] { firstPersistedStepId, secondPersistedStepId }));
+            Assert.That(json, Does.Not.Contain("\"actions\""));
+            Assert.That(json, Does.Not.Contain("\"executionMode\""));
+            Assert.That(json, Does.Not.Contain("\"inPort\""));
         });
     }
 }
