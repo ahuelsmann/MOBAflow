@@ -2,7 +2,7 @@
 
 ## Document status
 
-- Status: In progress - Slice 1 design only
+- Status: Slice 1 design complete - implementation pending
 - Primary issue: https://github.com/ahuelsmann/MOBAflow/issues/50
 - Parent programme: https://github.com/ahuelsmann/MOBAflow/issues/47
 - Security design record: [MOBApi Security Design](../docs/MOBAPI-SECURITY-DESIGN.md)
@@ -12,7 +12,7 @@
 
 This is the single implementation plan for RF-03. It sequences the work required to authenticate, authorize, validate, rate-limit, queue, and observe MOBApi control-plane traffic without combining the change into one broad server/client delivery.
 
-The current delivery is Slice 1 only: a security design record. It changes no REST, SignalR, MOBAflow, or MOBAsmart runtime behavior.
+The current delivery is Slice 1 only: a security design record. It changes no REST, SignalR, MOBAflow, or MOBAsmart runtime behavior. Slices 2 through 6 have not started.
 
 ## Scope boundaries
 
