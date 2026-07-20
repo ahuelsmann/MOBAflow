@@ -2,7 +2,7 @@
 
 ## Document status
 
-- Status: Draft
+- Status: Ready
 - Primary issue: https://github.com/ahuelsmann/MOBAflow/issues/49
 - Parent programme: https://github.com/ahuelsmann/MOBAflow/issues/47
 - Status and acceptance criteria source: GitHub issue #49
