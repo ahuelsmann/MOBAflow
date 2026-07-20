@@ -2,13 +2,38 @@
 
 ## Document status
 
-- Status: Proposed
+- Status: In progress
 - Primary work item: [GitHub issue #36 - Define a common ESP32 SPI display firmware interface](https://github.com/ahuelsmann/MOBAflow/issues/36)
 - Recommended priority: P1
 - Required label: `plan-required`
 - Plan ownership: one-to-one with issue #36
 - Implementation baseline: `codex/issue-36-esp32-display-interface` at `68449c60` in `C:\Repo\ahuelsmann\MOBAflow-issue-36`
 - Lifecycle: delete this plan after issue #36 is complete; the closed issue, pull requests, and Git history remain the permanent record
+
+## Implementation progress
+
+Status on 2026-07-20:
+
+- WP0 local readiness is complete: the assigned branch and worktree were
+  revalidated, all files read for this slice passed the deterministic per-file
+  secret scan, and the RF-01/RF-02 firmware gates remain unchanged.
+- WP1 has a normative v1.0 protocol draft covering the fixed envelope, version
+  negotiation, capabilities, health, frame transactions, controls, structured
+  results, reliability, security boundaries, and the canonical hello vector.
+- WP1 remains open until the payload codecs add shared golden vectors for every
+  message and representative error plus the deterministic test-pattern hash.
+- WP2 has immutable envelope/version models, strict network-byte-order packet
+  encoding/decoding, CRC32 validation, and boundary/golden-vector tests.
+- WP2 remains open for typed payload models/codecs, identifier generation,
+  response correlation, fake endpoint behavior, bounded retry, cancellation,
+  and anomaly conformance tests.
+- No firmware, provisioning, UI, configuration, legacy-sender, or RF-owned code
+  has been changed in this slice.
+- Validation: `dotnet build MOBAdisplay/MOBAdisplay.csproj` completed with zero
+  warnings and errors; 19 focused protocol tests passed; the full net10.0 suite
+  passed 1,066 tests with 4 existing skips and no failures. The local Preview
+  SDK required `MSBuildEnableWorkloadResolver=false` for the final test process
+  because its installed workload set is missing manifests.
 
 ## Purpose
 
