@@ -101,6 +101,18 @@ internal class AppSettingsDefaultsTests
     }
 
     [Test]
+    public void FeatureToggles_Timetable_defaults_to_preview_and_available()
+    {
+        var toggles = new FeatureToggleSettings();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(toggles.IsTimetablePageAvailable, Is.True);
+            Assert.That(toggles.TimetablePageLabel, Is.EqualTo("Preview"));
+        });
+    }
+
+    [Test]
     public void Counter_TimerIntervalSeconds_default_is_10()
     {
         var counter = new CounterSettings();
@@ -209,5 +221,7 @@ internal class AppSettingsDefaultsTests
         Assert.That(layout.TrackPlanPage.PropertiesColumnWidth, Is.GreaterThan(0));
         Assert.That(layout.MonitorPage.TrafficColumnStarValue, Is.GreaterThan(0));
         Assert.That(layout.MonitorPage.ActivityLogColumnStarValue, Is.GreaterThan(0));
+        Assert.That(layout.TimetablePage.ServicesColumnStarValue, Is.GreaterThan(0));
+        Assert.That(layout.TimetablePage.DetailsColumnStarValue, Is.GreaterThan(0));
     }
 }
