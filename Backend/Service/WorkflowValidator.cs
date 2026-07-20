@@ -13,6 +13,15 @@ using Interface;
 public sealed class WorkflowValidator : IWorkflowValidator
 {
     private const int MaximumAdditionalAttempts = 10;
+    private readonly IWorkflowEffectPlanner _effectPlanner;
+
+    /// <summary>
+    /// Creates a workflow validator with the pure effect planner used for action payload validation.
+    /// </summary>
+    public WorkflowValidator(IWorkflowEffectPlanner? effectPlanner = null)
+    {
+        _effectPlanner = effectPlanner ?? new WorkflowEffectPlanner();
+    }
 
     /// <inheritdoc />
     public WorkflowValidationResult Validate(Project project)
@@ -28,7 +37,7 @@ public sealed class WorkflowValidator : IWorkflowValidator
             .ToDictionary(group => group.Key, group => group.First());
 
         foreach (var workflow in project.Workflows.Where(workflow => workflow.Steps != null))
-            ValidateWorkflow(workflow, workflowsById, result);
+            ValidateWorkflow(workflow, workflowsById, _effectPlanner, result);
 
         ValidateNestedWorkflowCycles(project, workflowsById, result);
         return result;
@@ -54,6 +63,7 @@ public sealed class WorkflowValidator : IWorkflowValidator
     private static void ValidateWorkflow(
         Workflow workflow,
         IReadOnlyDictionary<Guid, Workflow> workflowsById,
+        IWorkflowEffectPlanner effectPlanner,
         WorkflowValidationResult result)
     {
         var steps = workflow.Steps ?? [];
@@ -76,11 +86,12 @@ public sealed class WorkflowValidator : IWorkflowValidator
 
         ValidateErrorPolicy(workflow.Id, null, "defaultErrorPolicy", workflow.DefaultErrorPolicy, stepsById, result);
         foreach (var step in steps)
-            ValidateStep(workflow, step, stepsById, workflowsById, result);
+            ValidateStep(workflow, step, stepsById, workflowsById, effectPlanner, result);
 
         ValidateReachability(workflow, stepsById, result);
         ValidateGraphCycles(workflow, stepsById, result);
         ValidateParallelBranches(workflow, stepsById, result);
+        ValidateParallelResourceConflicts(workflow, stepsById, effectPlanner, result);
     }
 
     private static void ValidateStepIds(Workflow workflow, IReadOnlyCollection<WorkflowStep> steps, WorkflowValidationResult result)
@@ -104,6 +115,7 @@ public sealed class WorkflowValidator : IWorkflowValidator
         WorkflowStep step,
         IReadOnlyDictionary<Guid, WorkflowStep> stepsById,
         IReadOnlyDictionary<Guid, Workflow> workflowsById,
+        IWorkflowEffectPlanner effectPlanner,
         WorkflowValidationResult result)
     {
         ValidateErrorPolicy(workflow.Id, step.Id, "errorPolicy", step.ErrorPolicy, stepsById, result);
@@ -111,7 +123,7 @@ public sealed class WorkflowValidator : IWorkflowValidator
         switch (step)
         {
             case WorkflowActionStep actionStep:
-                ValidateActionStep(workflow.Id, actionStep, result);
+                ValidateActionStep(workflow.Id, actionStep, effectPlanner, result);
                 ValidateRequiredReference(workflow.Id, step.Id, "nextStepId", step.NextStepId, stepsById, result);
                 break;
             case WorkflowDelayStep delayStep:
@@ -137,25 +149,29 @@ public sealed class WorkflowValidator : IWorkflowValidator
         }
     }
 
-    private static void ValidateActionStep(Guid workflowId, WorkflowActionStep step, WorkflowValidationResult result)
+    private static void ValidateActionStep(
+        Guid workflowId,
+        WorkflowActionStep step,
+        IWorkflowEffectPlanner effectPlanner,
+        WorkflowValidationResult result)
     {
-        if (step.Action == null || !HasSupportedPayload(step.Action))
+        if (step.Action == null)
         {
             AddInvalidPayload(result, workflowId, step.Id, "action", "Action step must contain a supported typed payload.");
+            return;
+        }
+
+        var plan = effectPlanner.Plan(step.Action);
+        foreach (var issue in plan.Issues)
+        {
+            AddInvalidPayload(
+                result,
+                workflowId,
+                step.Id,
+                $"action.{issue.FieldPath}",
+                issue.Message);
         }
     }
-
-    private static bool HasSupportedPayload(WorkflowAction action) => action.Type switch
-    {
-        ActionType.Command => action.Command != null,
-        ActionType.Audio => action.Audio != null,
-        ActionType.Announcement => action.Announcement != null,
-        ActionType.ExecuteScript => action.PowerShell != null,
-        ActionType.SelectSignalAspect => action.SelectSignalAspect != null,
-        ActionType.TrainDestinationDisplay => action.TrainDestinationDisplay != null,
-        ActionType.ChangeJourneyStop => action.ChangeJourneyStop != null,
-        _ => false
-    };
 
     private static void ValidateConditionStep(
         Guid workflowId,
@@ -339,6 +355,54 @@ public sealed class WorkflowValidator : IWorkflowValidator
                     }
 
                     branchOwnership[ownedStepId] = branchIndex;
+                }
+            }
+        }
+    }
+
+    private static void ValidateParallelResourceConflicts(
+        Workflow workflow,
+        IReadOnlyDictionary<Guid, WorkflowStep> stepsById,
+        IWorkflowEffectPlanner effectPlanner,
+        WorkflowValidationResult result)
+    {
+        foreach (var parallel in stepsById.Values.OfType<WorkflowParallelStep>())
+        {
+            if (!stepsById.ContainsKey(parallel.JoinStepId))
+                continue;
+
+            var resourceOwners = new Dictionary<string, int>(StringComparer.Ordinal);
+            for (var branchIndex = 0; branchIndex < parallel.Branches.Count; branchIndex++)
+            {
+                foreach (var stepId in CollectUntilJoin(
+                             parallel.Branches[branchIndex].EntryStepId,
+                             parallel.JoinStepId,
+                             stepsById))
+                {
+                    if (!stepsById.TryGetValue(stepId, out var step) || step is not WorkflowActionStep { Action: { } action })
+                        continue;
+
+                    var plan = effectPlanner.Plan(action);
+                    if (!plan.IsValid)
+                        continue;
+
+                    foreach (var resource in plan.Effect!.Resources.Where(resource =>
+                                 resource.Access == WorkflowResourceAccess.ExclusiveWrite))
+                    {
+                        if (resourceOwners.TryGetValue(resource.Key, out var owner) && owner != branchIndex)
+                        {
+                            AddError(
+                                result,
+                                WorkflowValidationCodes.ConflictingParallelResource,
+                                workflow.Id,
+                                parallel.Id,
+                                "branches",
+                                $"Parallel branches cannot write exclusive resource '{resource.Key}' concurrently.");
+                            break;
+                        }
+
+                        resourceOwners[resource.Key] = branchIndex;
+                    }
                 }
             }
         }

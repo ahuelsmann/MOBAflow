@@ -157,6 +157,44 @@ internal sealed class WorkflowValidatorTests
         Assert.That(result.Issues.Any(issue => issue.Code == WorkflowValidationCodes.InvalidStepPayload), Is.True);
     }
 
+    [Test]
+    public void Validate_ParallelBranchesWriteSameExclusiveResource_ReturnsConflictIssue()
+    {
+        // Arrange
+        var parallelId = Guid.NewGuid();
+        var firstBranchId = Guid.NewGuid();
+        var secondBranchId = Guid.NewGuid();
+        var joinId = Guid.NewGuid();
+        var workflow = new Workflow
+        {
+            EntryStepId = parallelId,
+            Steps =
+            [
+                new WorkflowParallelStep
+                {
+                    Id = parallelId,
+                    JoinStepId = joinId,
+                    Branches =
+                    [
+                        new WorkflowParallelBranch { EntryStepId = firstBranchId },
+                        new WorkflowParallelBranch { EntryStepId = secondBranchId }
+                    ]
+                },
+                CreateAudioStep(firstBranchId, joinId, "first.wav"),
+                CreateAnnouncementStep(secondBranchId, joinId),
+                new WorkflowTerminateStep { Id = joinId }
+            ]
+        };
+
+        // Act
+        var result = _validator.Validate(new Project { Workflows = [workflow] });
+
+        // Assert
+        Assert.That(result.Issues.Any(issue =>
+            issue.Code == WorkflowValidationCodes.ConflictingParallelResource &&
+            issue.StepId == parallelId), Is.True);
+    }
+
     private static Workflow CreateValidWorkflow()
     {
         var actionId = Guid.NewGuid();
@@ -174,7 +212,7 @@ internal sealed class WorkflowValidatorTests
                     Action = new WorkflowAction
                     {
                         Type = ActionType.Command,
-                        Command = new CommandActionPayload { Address = 3 }
+                        Command = new CommandActionPayload { BytesBase64 = "AQID" }
                     }
                 },
                 new WorkflowTerminateStep
@@ -186,6 +224,30 @@ internal sealed class WorkflowValidatorTests
             ]
         };
     }
+
+    private static WorkflowActionStep CreateAudioStep(Guid id, Guid nextStepId, string filePath) =>
+        new()
+        {
+            Id = id,
+            NextStepId = nextStepId,
+            Action = new WorkflowAction
+            {
+                Type = ActionType.Audio,
+                Audio = new AudioActionPayload { FilePath = filePath }
+            }
+        };
+
+    private static WorkflowActionStep CreateAnnouncementStep(Guid id, Guid nextStepId) =>
+        new()
+        {
+            Id = id,
+            NextStepId = nextStepId,
+            Action = new WorkflowAction
+            {
+                Type = ActionType.Announcement,
+                Announcement = new AnnouncementActionPayload { Message = "Next stop" }
+            }
+        };
 
     private static Workflow CreateNestedWorkflow()
     {

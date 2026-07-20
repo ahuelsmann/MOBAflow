@@ -29,4 +29,17 @@ public interface IWorkflowService
     /// <param name="options">Optional execution behavior (e.g. stop after first failure in sequential mode).</param>
     /// <exception cref="ArgumentNullException">Thrown when workflow or context is null</exception>
     Task ExecuteAsync(Workflow workflow, ActionExecutionContext context, WorkflowExecutionOptions options = default);
+
+    /// <summary>
+    /// Executes a workflow while propagating cancellation through orchestration and external effects.
+    /// </summary>
+    /// <param name="workflow">The workflow to execute.</param>
+    /// <param name="context">Execution context containing dependencies and state.</param>
+    /// <param name="options">Execution behavior.</param>
+    /// <param name="cancellationToken">Cancellation token for the complete workflow run.</param>
+    Task ExecuteAsync(
+        Workflow workflow,
+        ActionExecutionContext context,
+        WorkflowExecutionOptions options,
+        CancellationToken cancellationToken);
 }

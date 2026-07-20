@@ -57,7 +57,7 @@
                 "name": "Departure Command",
                 "type": 2,
                 "command": {
-                  "bytesBase64": ""
+                  "bytesBase64": "AQID"
                 }
               }
             },

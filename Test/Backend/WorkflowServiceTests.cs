@@ -129,7 +129,10 @@ internal class WorkflowServiceTests
     {
         var executorMock = new Mock<IActionExecutor>();
         executorMock
-            .Setup(e => e.ExecuteAsync(It.IsAny<WorkflowAction>(), It.IsAny<ActionExecutionContext>()))
+            .Setup(e => e.ExecuteAsync(
+                It.IsAny<WorkflowAction>(),
+                It.IsAny<ActionExecutionContext>(),
+                It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("first action failed"));
 
         var service = new WorkflowService(executorMock.Object);
@@ -156,7 +159,10 @@ internal class WorkflowServiceTests
         }
 
         executorMock.Verify(
-            e => e.ExecuteAsync(It.IsAny<WorkflowAction>(), It.IsAny<ActionExecutionContext>()),
+            e => e.ExecuteAsync(
+                It.IsAny<WorkflowAction>(),
+                It.IsAny<ActionExecutionContext>(),
+                It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -187,8 +193,11 @@ internal class WorkflowServiceTests
         var executedNumbers = new List<uint>();
         var executorMock = new Mock<IActionExecutor>();
         executorMock
-            .Setup(executor => executor.ExecuteAsync(It.IsAny<WorkflowAction>(), It.IsAny<ActionExecutionContext>()))
-            .Returns<WorkflowAction, ActionExecutionContext>((action, _) =>
+            .Setup(executor => executor.ExecuteAsync(
+                It.IsAny<WorkflowAction>(),
+                It.IsAny<ActionExecutionContext>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<WorkflowAction, ActionExecutionContext, CancellationToken>((action, _, _) =>
             {
                 executedNumbers.Add(action.Number);
                 return action.Number == 1
@@ -228,8 +237,11 @@ internal class WorkflowServiceTests
         var executedNumbers = new System.Collections.Concurrent.ConcurrentBag<uint>();
         var executorMock = new Mock<IActionExecutor>();
         executorMock
-            .Setup(executor => executor.ExecuteAsync(It.IsAny<WorkflowAction>(), It.IsAny<ActionExecutionContext>()))
-            .Returns<WorkflowAction, ActionExecutionContext>((action, _) =>
+            .Setup(executor => executor.ExecuteAsync(
+                It.IsAny<WorkflowAction>(),
+                It.IsAny<ActionExecutionContext>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<WorkflowAction, ActionExecutionContext, CancellationToken>((action, _, _) =>
             {
                 executedNumbers.Add(action.Number);
                 return action.Number == 1
@@ -262,5 +274,75 @@ internal class WorkflowServiceTests
             Assert.That(errors, Has.Count.EqualTo(1));
             Assert.That(errors[0].Action.Number, Is.EqualTo(1));
         });
+    }
+
+    [Test]
+    public void ExecuteAsync_CancelledDuringDelay_UsesInjectedTimeProviderAndStopsBeforeNextAction()
+    {
+        // Arrange
+        var timeProvider = new NeverCompletingTimeProvider();
+        var executorMock = new Mock<IActionExecutor>();
+        executorMock
+            .Setup(executor => executor.ExecuteAsync(
+                It.IsAny<WorkflowAction>(),
+                It.IsAny<ActionExecutionContext>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        var service = new WorkflowService(executorMock.Object, timeProvider);
+        var workflow = new Workflow
+        {
+            ExecutionMode = WorkflowExecutionMode.Sequential,
+            Actions =
+            [
+                new WorkflowAction { Number = 1, DelayAfterMs = 1000, Type = ActionType.Command },
+                new WorkflowAction { Number = 2, Type = ActionType.Command }
+            ]
+        };
+        using var cancellation = new CancellationTokenSource();
+
+        // Act
+        var execution = service.ExecuteAsync(workflow, _context, default, cancellation.Token);
+        cancellation.Cancel();
+
+        // Assert
+        Assert.CatchAsync<OperationCanceledException>(async () => await execution);
+        Assert.Multiple(() =>
+        {
+            Assert.That(timeProvider.CreatedTimers, Is.EqualTo(1));
+            executorMock.Verify(executor => executor.ExecuteAsync(
+                It.IsAny<WorkflowAction>(),
+                It.IsAny<ActionExecutionContext>(),
+                cancellation.Token), Times.Once);
+        });
+    }
+
+    private sealed class NeverCompletingTimeProvider : TimeProvider
+    {
+        public int CreatedTimers { get; private set; }
+
+        public override ITimer CreateTimer(
+            TimerCallback callback,
+            object? state,
+            TimeSpan dueTime,
+            TimeSpan period)
+        {
+            _ = callback;
+            _ = state;
+            _ = dueTime;
+            _ = period;
+            CreatedTimers++;
+            return new NeverCompletingTimer();
+        }
+    }
+
+    private sealed class NeverCompletingTimer : ITimer
+    {
+        public bool Change(TimeSpan dueTime, TimeSpan period) => true;
+
+        public void Dispose()
+        {
+        }
+
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 }

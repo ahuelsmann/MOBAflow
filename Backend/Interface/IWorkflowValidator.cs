@@ -43,6 +43,8 @@ public static class WorkflowValidationCodes
     public const string InvalidParallelJoin = "WF114";
     /// <summary>Parallel branches overlap before their join.</summary>
     public const string OverlappingParallelBranches = "WF115";
+    /// <summary>Parallel branches write the same exclusive resource.</summary>
+    public const string ConflictingParallelResource = "WF116";
 }
 
 /// <summary>

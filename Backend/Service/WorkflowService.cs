@@ -36,8 +36,35 @@ public class ActionExecutionErrorEventArgs : EventArgs
 /// Orchestrates the execution of workflows and their actions.
 /// Platform-independent: No UI thread dispatching.
 /// </summary>
-public class WorkflowService(IActionExecutor actionExecutor, ILogger<WorkflowService>? logger = null) : IWorkflowService
+public class WorkflowService : IWorkflowService
 {
+    private readonly IActionExecutor _actionExecutor;
+    private readonly TimeProvider _timeProvider;
+    private readonly ILogger<WorkflowService>? _logger;
+
+    /// <summary>
+    /// Creates a workflow service that uses system time.
+    /// </summary>
+    public WorkflowService(IActionExecutor actionExecutor, ILogger<WorkflowService>? logger = null)
+        : this(actionExecutor, TimeProvider.System, logger)
+    {
+    }
+
+    /// <summary>
+    /// Creates a workflow service with an injectable time source for deterministic orchestration.
+    /// </summary>
+    public WorkflowService(
+        IActionExecutor actionExecutor,
+        TimeProvider timeProvider,
+        ILogger<WorkflowService>? logger = null)
+    {
+        ArgumentNullException.ThrowIfNull(actionExecutor);
+        ArgumentNullException.ThrowIfNull(timeProvider);
+        _actionExecutor = actionExecutor;
+        _timeProvider = timeProvider;
+        _logger = logger;
+    }
+
     /// <summary>
     /// Raised when an action execution fails.
     /// Subscribe to this event to display error messages in UI.
@@ -53,54 +80,79 @@ public class WorkflowService(IActionExecutor actionExecutor, ILogger<WorkflowSer
     /// <param name="context">Execution context containing dependencies and state</param>
     /// <param name="options">Execution options controlling workflow failure behavior.</param>
     /// <exception cref="ArgumentNullException">Thrown when workflow or context is null</exception>
-    public async Task ExecuteAsync(Workflow workflow, ActionExecutionContext context, WorkflowExecutionOptions options = default)
+    public Task ExecuteAsync(
+        Workflow workflow,
+        ActionExecutionContext context,
+        WorkflowExecutionOptions options = default) =>
+        ExecuteAsync(workflow, context, options, CancellationToken.None);
+
+    /// <inheritdoc />
+    public async Task ExecuteAsync(
+        Workflow workflow,
+        ActionExecutionContext context,
+        WorkflowExecutionOptions options,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(workflow);
         ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
 
-        logger?.LogInformation("Starting workflow: {WorkflowName} (Mode: {ExecutionMode})", workflow.Name, workflow.ExecutionMode);
+        _logger?.LogInformation("Starting workflow: {WorkflowName} (Mode: {ExecutionMode})", workflow.Name, workflow.ExecutionMode);
 
         if (workflow.Actions.Count == 0)
         {
-            logger?.LogWarning("Workflow '{WorkflowName}' has no actions", workflow.Name);
+            _logger?.LogWarning("Workflow '{WorkflowName}' has no actions", workflow.Name);
             return;
         }
 
         if (workflow.ExecutionMode == WorkflowExecutionMode.Parallel)
         {
-            await ExecuteParallelAsync(workflow, context).ConfigureAwait(false);
+            await ExecuteParallelAsync(workflow, context, cancellationToken).ConfigureAwait(false);
         }
         else  // Sequential (default)
         {
-            await ExecuteSequentialAsync(workflow, context, options).ConfigureAwait(false);
+            await ExecuteSequentialAsync(workflow, context, options, cancellationToken).ConfigureAwait(false);
         }
 
-        logger?.LogInformation("Workflow '{WorkflowName}' completed", workflow.Name);
+        _logger?.LogInformation("Workflow '{WorkflowName}' completed", workflow.Name);
     }
 
     /// <summary>
     /// Executes actions sequentially, waiting for each to complete.
     /// Respects DelayAfterMs property for precise timing control.
     /// </summary>
-    private async Task ExecuteSequentialAsync(Workflow workflow, ActionExecutionContext context, WorkflowExecutionOptions options)
+    private async Task ExecuteSequentialAsync(
+        Workflow workflow,
+        ActionExecutionContext context,
+        WorkflowExecutionOptions options,
+        CancellationToken cancellationToken)
     {
         foreach (var action in workflow.Actions.OrderBy(a => a.Number))
         {
+            cancellationToken.ThrowIfCancellationRequested();
             try
             {
-                await actionExecutor.ExecuteAsync(action, context).ConfigureAwait(false);
+                await _actionExecutor.ExecuteAsync(action, context, cancellationToken).ConfigureAwait(false);
 
                 // Apply per-action delay if specified
                 if (action.DelayAfterMs > 0)
                 {
-                    logger?.LogDebug("Waiting {DelayMs}ms after action #{ActionNumber}", action.DelayAfterMs, action.Number);
-                    await Task.Delay(action.DelayAfterMs).ConfigureAwait(false);
+                    _logger?.LogDebug("Waiting {DelayMs}ms after action #{ActionNumber}", action.DelayAfterMs, action.Number);
+                    await Task.Delay(
+                            TimeSpan.FromMilliseconds(action.DelayAfterMs),
+                            _timeProvider,
+                            cancellationToken)
+                        .ConfigureAwait(false);
                 }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (FileNotFoundException fnfEx)
             {
                 var errorMsg = $"Audio file not found for action '{action.Name}': {fnfEx.FileName}";
-                logger?.LogError(fnfEx, "{ErrorMessage}", errorMsg);
+                _logger?.LogError(fnfEx, "{ErrorMessage}", errorMsg);
                 OnActionExecutionError(action, fnfEx, errorMsg);
                 if (options.StopOnFirstActionFailure)
                     ExceptionDispatchInfo.Capture(fnfEx).Throw();
@@ -108,7 +160,7 @@ public class WorkflowService(IActionExecutor actionExecutor, ILogger<WorkflowSer
             catch (Exception ex)
             {
                 var errorMsg = $"Error executing action #{action.Number} '{action.Name}': {ex.Message}";
-                logger?.LogError(ex, "{ErrorMessage}", errorMsg);
+                _logger?.LogError(ex, "{ErrorMessage}", errorMsg);
                 OnActionExecutionError(action, ex, errorMsg);
                 if (options.StopOnFirstActionFailure)
                     ExceptionDispatchInfo.Capture(ex).Throw();
@@ -122,7 +174,10 @@ public class WorkflowService(IActionExecutor actionExecutor, ILogger<WorkflowSer
     /// Example: Action1 (DelayAfterMs=0) starts at t=0, Action2 (DelayAfterMs=500) starts at t=500.
     /// Waits for all actions to complete before returning.
     /// </summary>
-    private async Task ExecuteParallelAsync(Workflow workflow, ActionExecutionContext context)
+    private async Task ExecuteParallelAsync(
+        Workflow workflow,
+        ActionExecutionContext context,
+        CancellationToken cancellationToken)
     {
         var tasks = new List<Task>();
         int cumulativeDelay = 0;
@@ -132,7 +187,7 @@ public class WorkflowService(IActionExecutor actionExecutor, ILogger<WorkflowSer
             // Capture delay for this action's task
             var startDelay = cumulativeDelay;
 
-            tasks.Add(ExecuteParallelActionAsync(action, startDelay, context));
+            tasks.Add(ExecuteParallelActionAsync(action, startDelay, context, cancellationToken));
 
             // Accumulate delay for next action
             cumulativeDelay += action.DelayAfterMs;
@@ -141,29 +196,42 @@ public class WorkflowService(IActionExecutor actionExecutor, ILogger<WorkflowSer
         await Task.WhenAll(tasks).ConfigureAwait(false);  // Wait for all actions to complete
     }
 
-    private async Task ExecuteParallelActionAsync(WorkflowAction action, int startDelay, ActionExecutionContext context)
+    private async Task ExecuteParallelActionAsync(
+        WorkflowAction action,
+        int startDelay,
+        ActionExecutionContext context,
+        CancellationToken cancellationToken)
     {
         try
         {
+            cancellationToken.ThrowIfCancellationRequested();
             // Wait before starting this action (staggered start)
             if (startDelay > 0)
             {
-                logger?.LogDebug("Action #{ActionNumber} waiting {StartDelay}ms before start", action.Number, startDelay);
-                await Task.Delay(startDelay).ConfigureAwait(false);
+                _logger?.LogDebug("Action #{ActionNumber} waiting {StartDelay}ms before start", action.Number, startDelay);
+                await Task.Delay(
+                        TimeSpan.FromMilliseconds(startDelay),
+                        _timeProvider,
+                        cancellationToken)
+                    .ConfigureAwait(false);
             }
 
-            await actionExecutor.ExecuteAsync(action, context).ConfigureAwait(false);
+            await _actionExecutor.ExecuteAsync(action, context, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (FileNotFoundException fnfEx)
         {
             var errorMsg = $"Audio file not found for action '{action.Name}': {fnfEx.FileName}";
-            logger?.LogError(fnfEx, "{ErrorMessage}", errorMsg);
+            _logger?.LogError(fnfEx, "{ErrorMessage}", errorMsg);
             OnActionExecutionError(action, fnfEx, errorMsg);
         }
         catch (Exception ex)
         {
             var errorMsg = $"Error executing action #{action.Number} '{action.Name}': {ex.Message}";
-            logger?.LogError(ex, "{ErrorMessage}", errorMsg);
+            _logger?.LogError(ex, "{ErrorMessage}", errorMsg);
             OnActionExecutionError(action, ex, errorMsg);
         }
     }
