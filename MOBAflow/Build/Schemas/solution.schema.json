@@ -53,7 +53,9 @@
                 },
                 "colorPrimary": { "type": ["integer", "null"] },
                 "colorSecondary": { "type": ["integer", "null"] },
-                "isPushing": { "type": "boolean" }
+                "isPushing": { "type": "boolean" },
+                "usage": { "$ref": "#/definitions/vehicleUsage" },
+                "maintenance": { "$ref": "#/definitions/vehicleMaintenance" }
               }
             }
           },
@@ -66,7 +68,9 @@
               "required": ["id", "name"],
               "properties": {
                 "id": { "type": "string", "format": "uuid" },
-                "name": { "type": "string" }
+                "name": { "type": "string" },
+                "usage": { "$ref": "#/definitions/vehicleUsage" },
+                "maintenance": { "$ref": "#/definitions/vehicleMaintenance" }
               }
             }
           },
@@ -79,7 +83,9 @@
               "required": ["id", "name"],
               "properties": {
                 "id": { "type": "string", "format": "uuid" },
-                "name": { "type": "string" }
+                "name": { "type": "string" },
+                "usage": { "$ref": "#/definitions/vehicleUsage" },
+                "maintenance": { "$ref": "#/definitions/vehicleMaintenance" }
               }
             }
           },
@@ -207,6 +213,93 @@
           }
         }
       }
+    }
+  },
+  "definitions": {
+    "vehicleUsage": {
+      "type": "object",
+      "required": ["trackedOperatingSeconds", "trackedCompletedTrips", "corrections"],
+      "properties": {
+        "trackedOperatingSeconds": { "type": "integer", "minimum": 0 },
+        "trackedCompletedTrips": { "type": "integer", "minimum": 0 },
+        "trackedDistanceKilometres": { "type": ["number", "null"], "minimum": 0 },
+        "corrections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "recordedAt", "operatingSecondsDelta", "completedTripsDelta", "reason"],
+            "properties": {
+              "id": { "type": "string", "format": "uuid" },
+              "recordedAt": { "type": "string", "format": "date-time" },
+              "operatingSecondsDelta": { "type": "integer" },
+              "completedTripsDelta": { "type": "integer" },
+              "distanceKilometresDelta": { "type": ["number", "null"] },
+              "reason": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    },
+    "vehicleMaintenance": {
+      "type": "object",
+      "required": ["entries", "plans"],
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/vehicleMaintenanceEntry" }
+        },
+        "plans": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/vehicleMaintenancePlan" }
+        }
+      }
+    },
+    "vehicleMaintenanceEntry": {
+      "type": "object",
+      "required": ["id", "performedAt", "category", "description"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "performedAt": { "type": "string", "format": "date-time" },
+        "category": { "$ref": "#/definitions/maintenanceCategory" },
+        "description": { "type": "string", "minLength": 1 },
+        "operatingSecondsAtService": { "type": ["integer", "null"], "minimum": 0 },
+        "completedTripsAtService": { "type": ["integer", "null"], "minimum": 0 },
+        "distanceKilometresAtService": { "type": ["number", "null"], "minimum": 0 },
+        "cost": {
+          "type": ["object", "null"],
+          "properties": {
+            "amount": { "type": "number" },
+            "currency": { "type": "string", "pattern": "^[A-Z]{3}$" }
+          }
+        },
+        "notes": { "type": ["string", "null"] }
+      }
+    },
+    "vehicleMaintenancePlan": {
+      "type": "object",
+      "required": ["id", "category", "name"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "category": { "$ref": "#/definitions/maintenanceCategory" },
+        "name": { "type": "string", "minLength": 1 },
+        "intervalDays": { "type": ["integer", "null"], "minimum": 1 },
+        "intervalOperatingSeconds": { "type": ["integer", "null"], "minimum": 1 },
+        "intervalCompletedTrips": { "type": ["integer", "null"], "minimum": 1 },
+        "intervalDistanceKilometres": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+        "lastCompletedAt": { "type": ["string", "null"], "format": "date-time" },
+        "operatingSecondsAtLastCompletion": { "type": ["integer", "null"], "minimum": 0 },
+        "completedTripsAtLastCompletion": { "type": ["integer", "null"], "minimum": 0 },
+        "distanceKilometresAtLastCompletion": { "type": ["number", "null"], "minimum": 0 }
+      },
+      "anyOf": [
+        { "required": ["intervalDays"] },
+        { "required": ["intervalOperatingSeconds"] },
+        { "required": ["intervalCompletedTrips"] },
+        { "required": ["intervalDistanceKilometres"] }
+      ]
+    },
+    "maintenanceCategory": {
+      "enum": ["Inspection", "Cleaning", "Lubrication", "Repair", "Decoder", "WheelService", "Other"]
     }
   }
 }

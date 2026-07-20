@@ -115,7 +115,24 @@
             ""
           ],
           "isPushing": false,
-          "photoPath": "photos/locomotives/bb15c10a-5b78-451f-8f2f-2d4e3efa74af.jpg"
+          "photoPath": "photos/locomotives/bb15c10a-5b78-451f-8f2f-2d4e3efa74af.jpg",
+          "usage": {
+            "trackedOperatingSeconds": 14400,
+            "trackedCompletedTrips": 8,
+            "corrections": []
+          },
+          "maintenance": {
+            "entries": [],
+            "plans": [
+              {
+                "id": "0b2eea9f-7398-4e67-ac78-833118fc3001",
+                "category": "Lubrication",
+                "name": "Lubrication",
+                "intervalOperatingSeconds": 36000,
+                "intervalCompletedTrips": 20
+              }
+            ]
+          }
         },
         {
           "id": "f8a91b2c-3d4e-5f60-a211-279170442317",
@@ -213,7 +230,23 @@
             "railroadCompany": "DB Regio",
             "description": "First class passenger coach"
           },
-          "photoPath": "photos/latest/242e53cced544362951dbc39e4fea39e.jpg"
+          "photoPath": "photos/latest/242e53cced544362951dbc39e4fea39e.jpg",
+          "usage": {
+            "trackedOperatingSeconds": 10800,
+            "trackedCompletedTrips": 6,
+            "corrections": []
+          },
+          "maintenance": {
+            "entries": [],
+            "plans": [
+              {
+                "id": "0b2eea9f-7398-4e67-ac78-833118fc3002",
+                "category": "Cleaning",
+                "name": "Wheel cleaning",
+                "intervalCompletedTrips": 15
+              }
+            ]
+          }
         }
       ],
       "goodsWagons": [
@@ -232,7 +265,23 @@
             "railroadCompany": "DB Cargo",
             "description": "Container flat wagon"
           },
-          "photoPath": "photos/latest/82680c4a10b14db9bef80ea45e297662.jpg"
+          "photoPath": "photos/latest/82680c4a10b14db9bef80ea45e297662.jpg",
+          "usage": {
+            "trackedOperatingSeconds": 7200,
+            "trackedCompletedTrips": 4,
+            "corrections": []
+          },
+          "maintenance": {
+            "entries": [],
+            "plans": [
+              {
+                "id": "0b2eea9f-7398-4e67-ac78-833118fc3003",
+                "category": "Other",
+                "name": "Coupler inspection",
+                "intervalCompletedTrips": 12
+              }
+            ]
+          }
         }
       ],
       "trains": [

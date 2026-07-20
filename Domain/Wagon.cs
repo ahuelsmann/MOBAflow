@@ -2,6 +2,7 @@
 namespace Moba.Domain;
 
 using Enum;
+using System.Text.Json.Serialization;
 
 /// <summary>
 /// Upcoming feature: Represents a railroad wagon.
@@ -83,4 +84,16 @@ public class Wagon
     /// Example: "locomotives/{id}.jpg" or "wagons/{id}.png"
     /// </summary>
     public string? PhotoPath { get; set; }
+
+    /// <summary>
+    /// Gets or sets optional lifetime usage and its auditable correction history.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public VehicleUsageData? Usage { get; set; }
+
+    /// <summary>
+    /// Gets or sets optional maintenance history and recurring service plans.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public VehicleMaintenanceData? Maintenance { get; set; }
 }

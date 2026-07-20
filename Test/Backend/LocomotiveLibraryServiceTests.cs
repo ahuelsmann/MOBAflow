@@ -85,18 +85,18 @@ internal sealed class LocomotiveLibraryServiceTests
                 FirmwareVersion = "1.2",
                 Protocol = DecoderProtocol.Dcc
             },
-            Maintenance = new LocomotiveMaintenanceData
+            Maintenance = new VehicleMaintenanceData
             {
                 Entries =
                 [
-                    new LocomotiveMaintenanceEntry
+                    new VehicleMaintenanceEntry
                     {
                         Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
                         PerformedAt = new DateTimeOffset(2026, 6, 1, 0, 0, 0, TimeSpan.Zero),
                         Category = MaintenanceCategory.Cleaning,
                         Description = "Old"
                     },
-                    new LocomotiveMaintenanceEntry
+                    new VehicleMaintenanceEntry
                     {
                         Id = Guid.Parse("22222222-2222-2222-2222-222222222222"),
                         PerformedAt = new DateTimeOffset(2026, 7, 1, 0, 0, 0, TimeSpan.Zero),

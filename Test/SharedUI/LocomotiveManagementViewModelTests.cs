@@ -17,14 +17,14 @@ internal sealed class LocomotiveManagementViewModelTests
     {
         var multiplexer = new Mock<IMultiplexerProvider>();
         var detector = new DigitalAddressConflictDetector(multiplexer.Object);
-        var maintenanceService = new LocomotiveMaintenanceService();
+        var maintenanceService = new VehicleMaintenanceService();
         var locomotive = new Locomotive
         {
             Name = "First",
             DigitalAddress = 5,
-            Maintenance = new LocomotiveMaintenanceData
+            Maintenance = new VehicleMaintenanceData
             {
-                Plans = [new LocomotiveMaintenancePlan { Name = "Annual", LastCompletedAt = new DateTimeOffset(2025, 7, 16, 0, 0, 0, TimeSpan.Zero), IntervalDays = 365 }]
+                Plans = [new VehicleMaintenancePlan { Name = "Annual", LastCompletedAt = new DateTimeOffset(2025, 7, 16, 0, 0, 0, TimeSpan.Zero), IntervalDays = 365 }]
             },
             Decoder = new LocomotiveDecoderProfile
             {
@@ -55,7 +55,7 @@ internal sealed class LocomotiveManagementViewModelTests
             .Returns(new DigitalAddressConflictReport([], []));
         var viewModel = new LocomotiveManagementViewModel(
             detector.Object,
-            new LocomotiveMaintenanceService(),
+            new VehicleMaintenanceService(),
             new LocomotiveLibraryService());
 
         viewModel.SetContext(new Project(), new Locomotive());
@@ -83,7 +83,7 @@ internal sealed class LocomotiveManagementViewModelTests
         projectContext.Setup(candidate => candidate.SaveSolutionInternalAsync()).Returns(Task.CompletedTask);
         var viewModel = new LocomotiveManagementViewModel(
             detector.Object,
-            new LocomotiveMaintenanceService(),
+            new VehicleMaintenanceService(),
             new LocomotiveLibraryService(),
             projectContext: projectContext.Object);
         viewModel.SetContext(project, locomotive);
@@ -134,7 +134,7 @@ internal sealed class LocomotiveManagementViewModelTests
         var project = new Project { Locomotives = [locomotive] };
         var viewModel = new LocomotiveManagementViewModel(
             detector.Object,
-            new LocomotiveMaintenanceService(),
+            new VehicleMaintenanceService(),
             new LocomotiveLibraryService(),
             new LocomotivePassportHtmlRenderer(),
             new DecoderCvService(),
@@ -179,7 +179,7 @@ internal sealed class LocomotiveManagementViewModelTests
         var project = new Project { Locomotives = [locomotive] };
         var viewModel = new LocomotiveManagementViewModel(
             detector.Object,
-            new LocomotiveMaintenanceService(),
+            new VehicleMaintenanceService(),
             new LocomotiveLibraryService(),
             decoderCvService: cvService,
             filePicker: picker.Object);
@@ -216,7 +216,7 @@ internal sealed class LocomotiveManagementViewModelTests
         var locomotive = new Locomotive();
         var viewModel = new LocomotiveManagementViewModel(
             detector.Object,
-            new LocomotiveMaintenanceService(),
+            new VehicleMaintenanceService(),
             new LocomotiveLibraryService(),
             decoderCvService: new DecoderCvService(),
             filePicker: picker.Object,

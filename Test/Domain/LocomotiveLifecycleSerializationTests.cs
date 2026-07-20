@@ -42,13 +42,11 @@ internal sealed class LocomotiveLifecycleSerializationTests
             Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
             Name = "BR 218",
             DigitalAddress = 18,
-            Maintenance = new LocomotiveMaintenanceData
+            Maintenance = new VehicleMaintenanceData
             {
-                OperatingHours = 12.5m,
-                DistanceKilometres = 42m,
                 Entries =
                 [
-                    new LocomotiveMaintenanceEntry
+                    new VehicleMaintenanceEntry
                     {
                         Id = maintenanceEntryId,
                         PerformedAt = new DateTimeOffset(2026, 7, 1, 12, 0, 0, TimeSpan.Zero),
@@ -59,7 +57,7 @@ internal sealed class LocomotiveLifecycleSerializationTests
                 ],
                 Plans =
                 [
-                    new LocomotiveMaintenancePlan
+                    new VehicleMaintenancePlan
                     {
                         Id = planId,
                         Name = "Annual inspection",
