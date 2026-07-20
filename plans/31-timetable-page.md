@@ -5,7 +5,7 @@
 - Status: Implemented; awaiting review
 - Primary issue: https://github.com/ahuelsmann/MOBAflow/issues/31
 - Completed prerequisite for live projection: https://github.com/ahuelsmann/MOBAflow/issues/43
-- Implementation baseline: `main` at `0f8d2547346bcf7e8672bf543a6ae6529eba6a3c`
+- Implementation baseline: `main` at `84b1deda5774b35842768e8981658c518d1e6375`
 - Status and acceptance criteria source: GitHub issue #31
 
 Issue #31 carries the `plan-required` label and links this plan. RF-04 in issue #43 is merged, its regression guards are on `main`, and the implementation prerequisites are satisfied.
