@@ -14,6 +14,7 @@
 #include <esp_heap_caps.h>
 #include <esp_log.h>
 #include <inttypes.h>
+#include <UdpPacketParser.h>
 
 #include <cstdio>
 #include <cstring>
@@ -45,12 +46,9 @@ constexpr uint16_t kLineBytes = static_cast<uint16_t>(kTftWidth * 2);
 constexpr uint16_t kIndexedLineBytes = static_cast<uint16_t>(kLineBytes + 2);
 constexpr uint32_t kFramePixels = static_cast<uint32_t>(kTftWidth * kTftHeight);
 constexpr size_t kFrameBytes = static_cast<size_t>(kFramePixels * sizeof(uint16_t));
-
-constexpr const char kFrameStart[] = "FRAME_START";
-constexpr const char kFrameDone[] = "FRAME_DONE";
-constexpr uint8_t kFrameStartLen = 11;
-constexpr uint8_t kFrameDoneLen = 9;
-constexpr const char kHostVersionPrefix[] = "HOST_VER:";
+static_assert(kLineBytes == MobaDisplay::Udp::kLegacyLineBytes, "Legacy row size must match the UDP parser.");
+static_assert(kIndexedLineBytes == MobaDisplay::Udp::kIndexedLineBytes, "Indexed row size must match the UDP parser.");
+static_assert(kTftHeight == MobaDisplay::Udp::kDisplayHeight, "Display height must match the UDP parser.");
 
 TFT_eSPI tft;
 WiFiUDP udp;
@@ -58,7 +56,7 @@ WebServer server(kConfigHttpPort);
 Preferences preferences;
 
 uint16_t* gFb = nullptr;
-uint8_t pktBuf[768];
+uint8_t pktBuf[MobaDisplay::Udp::kMaxPacketBytes];
 
 volatile uint16_t linesReceivedCurrentFrame = 0;
 volatile uint32_t framesOk = 0;
@@ -458,30 +456,42 @@ void loop()
     if (rd <= 0)
         return;
 
-    if (rd == static_cast<int>(kFrameStartLen) && memcmp(pktBuf, kFrameStart, kFrameStartLen) == 0)
+    // A partial WiFiUDP read retains the rest of the packet and blocks parsePacket() until it is consumed.
+    while (udp.available() > 0)
+        udp.read();
+
+    const MobaDisplay::Udp::PacketView packet = MobaDisplay::Udp::ClassifyPacket(
+        pktBuf,
+        static_cast<size_t>(rd),
+        static_cast<size_t>(pktSize));
+
+    if (packet.kind == MobaDisplay::Udp::PacketKind::FrameStart)
     {
         resetCapture();
         return;
     }
 
-    if (rd > static_cast<int>(strlen(kHostVersionPrefix))
-        && memcmp(pktBuf, kHostVersionPrefix, strlen(kHostVersionPrefix)) == 0)
+    if (packet.kind == MobaDisplay::Udp::PacketKind::HostVersion)
     {
-        gHostProjectVersion = String(reinterpret_cast<char*>(pktBuf) + strlen(kHostVersionPrefix));
-        if (gHostProjectVersion.length() > 28)
-            gHostProjectVersion = gHostProjectVersion.substring(0, 28);
+        const size_t displayedLength = packet.payloadLength > MobaDisplay::Udp::kDisplayedHostVersionBytes
+            ? MobaDisplay::Udp::kDisplayedHostVersionBytes
+            : packet.payloadLength;
+        char displayedVersion[MobaDisplay::Udp::kDisplayedHostVersionBytes + 1];
+        memcpy(displayedVersion, packet.payload, displayedLength);
+        displayedVersion[displayedLength] = '\0';
+        gHostProjectVersion = String(displayedVersion);
         // Keep waiting screen untouched here to avoid misleading flicker when only meta packets arrive.
         return;
     }
 
-    if (rd == static_cast<int>(kFrameDoneLen) && memcmp(pktBuf, kFrameDone, kFrameDoneLen) == 0)
+    if (packet.kind == MobaDisplay::Udp::PacketKind::FrameDone)
     {
         presentCapturedFrameIfAny();
         resetCapture();
         return;
     }
 
-    if (static_cast<size_t>(rd) == kLineBytes)
+    if (packet.kind == MobaDisplay::Udp::PacketKind::LegacyLine)
     {
         // Legacy packet format: pure 480-byte line stream (order dependent).
         if (linesReceivedCurrentFrame < kTftHeight && gFb)
@@ -493,14 +503,12 @@ void loop()
         return;
     }
 
-    if (static_cast<size_t>(rd) != kIndexedLineBytes)
+    if (packet.kind != MobaDisplay::Udp::PacketKind::IndexedLine)
         return;
 
     if (gFb)
     {
-        const uint16_t rowIndex = static_cast<uint16_t>((static_cast<uint16_t>(pktBuf[0]) << 8) | pktBuf[1]);
-        if (rowIndex >= kTftHeight)
-            return;
+        const uint16_t rowIndex = packet.rowIndex;
 
         // Row 0 is a strong start-of-frame signal for indexed packets, even if FRAME_START was dropped.
         if (rowIndex == 0 && linesReceivedCurrentFrame > 0)
@@ -510,7 +518,7 @@ void loop()
         }
 
         uint16_t* row = gFb + (static_cast<uint32_t>(rowIndex) * kTftWidth);
-        unpackLineBigEndianRgb565IntoRow(pktBuf + 2, row);
+        unpackLineBigEndianRgb565IntoRow(packet.payload, row);
         if (gRowReceived[rowIndex] == 0)
         {
             gRowReceived[rowIndex] = 1;
