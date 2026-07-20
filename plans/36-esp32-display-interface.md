@@ -7,8 +7,7 @@
 - Recommended priority: P1
 - Required label: `plan-required`
 - Plan ownership: one-to-one with issue #36
-- Baseline reviewed: GitHub default branch on 2026-07-20
-- Local-worktree review: Pending because the required local secret scanner was not authenticated
+- Implementation baseline: `codex/issue-36-esp32-display-interface` at `68449c60` in `C:\Repo\ahuelsmann\MOBAflow-issue-36`
 - Lifecycle: delete this plan after issue #36 is complete; the closed issue, pull requests, and Git history remain the permanent record
 
 ## Purpose
@@ -553,4 +552,3 @@ Issue #36 is complete only when:
 - each pull request references issue #36 and uses Conventional Commits;
 - issue #36 contains or links the automated and hardware acceptance evidence;
 - this completed plan is deleted.
-
