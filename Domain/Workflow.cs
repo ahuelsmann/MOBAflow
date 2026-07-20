@@ -61,4 +61,19 @@ public class Workflow
     /// Gets or sets the interval in seconds for which feedbacks are ignored after triggering.
     /// </summary>
     public double IntervalForTimerToIgnoreFeedbacks { get; set; }
+
+    /// <summary>
+    /// Gets or sets the entry step for the Workflow 2.0 graph during the direct schema cutover.
+    /// </summary>
+    public Guid? EntryStepId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the ordered Workflow 2.0 graph nodes during the direct schema cutover.
+    /// </summary>
+    public List<WorkflowStep>? Steps { get; set; }
+
+    /// <summary>
+    /// Gets or sets the workflow-level error policy inherited by steps without an override.
+    /// </summary>
+    public WorkflowErrorPolicy? DefaultErrorPolicy { get; set; }
 }

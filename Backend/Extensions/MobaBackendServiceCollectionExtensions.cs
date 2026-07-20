@@ -46,6 +46,7 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton<IUdpClientWrapper, UdpWrapper>();
         services.TryAddSingleton<IZ21DiscoveryService, Z21DiscoveryService>();
         services.TryAddSingleton<IZ21, Z21>();
+        services.TryAddSingleton<IWorkflowValidator, WorkflowValidator>();
         services.TryAddSingleton<IProjectValidator, ProjectValidator>();
         services.TryAddSingleton<IJourneyStopTransitionService, JourneyStopTransitionService>();
         services.TryAddSingleton<IJourneyRuntimeStateStore, FileJourneyRuntimeStateStore>();

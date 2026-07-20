@@ -5,6 +5,8 @@ namespace Moba.Backend.Service;
 using Domain;
 using Domain.Enum;
 
+using Interface;
+
 using Microsoft.Extensions.Logging;
 
 using System.Text;
@@ -29,15 +31,18 @@ public interface IProjectValidator
 public class ProjectValidator : IProjectValidator
 {
     private readonly ILogger<ProjectValidator> _logger;
+    private readonly IWorkflowValidator _workflowValidator;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ProjectValidator"/> class.
     /// </summary>
     /// <param name="logger">Logger used for diagnostic output during validation.</param>
-    public ProjectValidator(ILogger<ProjectValidator> logger)
+    /// <param name="workflowValidator">Optional Workflow 2.0 validator.</param>
+    public ProjectValidator(ILogger<ProjectValidator> logger, IWorkflowValidator? workflowValidator = null)
     {
         ArgumentNullException.ThrowIfNull(logger);
         _logger = logger;
+        _workflowValidator = workflowValidator ?? new WorkflowValidator();
     }
 
     /// <summary>
@@ -120,6 +125,16 @@ public class ProjectValidator : IProjectValidator
         if (project.Workflows.Count > 0)
         {
             result.AddInfo($"[{projectName}] Workflows: {project.Workflows.Count} defined");
+        }
+
+        foreach (var issue in _workflowValidator.Validate(project).Issues)
+        {
+            var step = issue.StepId.HasValue ? $"/Step {issue.StepId}" : string.Empty;
+            var message = $"[{projectName}/Workflow {issue.WorkflowId}{step}] {issue.Code}: {issue.Message} ({issue.FieldPath})";
+            if (issue.Severity == WorkflowValidationSeverity.Error)
+                result.AddError(message);
+            else
+                result.AddWarning(message);
         }
 
         // Check passenger wagons (optional)
