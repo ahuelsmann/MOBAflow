@@ -75,7 +75,7 @@ public partial class Z21
         }
 
         OnConnectedChanged?.Invoke(true);
-        PublishEventAsync(new Z21ConnectionEstablishedEvent());
+        QueueEvent(new Z21ConnectionEstablishedEvent());
     }
 
     /// <summary>

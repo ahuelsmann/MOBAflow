@@ -39,6 +39,31 @@ internal class Z21UnitTests
     }
 
     [Test]
+    public async Task SimulateFeedback_PublishesApplicationEventsInFifoOrder()
+    {
+        var fakeUdp = new FakeUdpClientWrapper();
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var z21 = new Z21(fakeUdp, eventBus);
+        var receivedInPorts = new List<int>();
+        eventBus.Subscribe<FeedbackReceivedEvent>(@event => receivedInPorts.Add(@event.InPort));
+
+        for (var inPort = 1; inPort <= 500; inPort++)
+        {
+            z21.SimulateFeedback(inPort);
+        }
+
+        await z21.DisposeAsync();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(receivedInPorts, Is.EqualTo(Enumerable.Range(1, 500)));
+            Assert.That(z21.EventPipelineSnapshot.EnqueuedEvents, Is.EqualTo(500));
+            Assert.That(z21.EventPipelineSnapshot.PublishedEvents, Is.EqualTo(500));
+            Assert.That(z21.EventPipelineSnapshot.RejectedEvents, Is.Zero);
+        });
+    }
+
+    [Test]
     public async Task ConnectAsync_StartsKeepaliveTimer()
     {
         var fakeUdp = new FakeUdpClientWrapper();
