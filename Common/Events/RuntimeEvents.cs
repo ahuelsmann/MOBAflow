@@ -10,6 +10,15 @@ using Runtime;
 public sealed record RuntimeSnapshotChangedEvent(MobaRuntimeSnapshot Snapshot) : EventBase;
 
 /// <summary>
+/// Published after an atomic local vehicle-usage checkpoint has been committed.
+/// Consumers may use this coalesced signal to persist the editable solution.
+/// </summary>
+public sealed record VehicleUsageCheckpointCommittedEvent(
+    Guid ProjectId,
+    DateTimeOffset CommittedAt,
+    IReadOnlyDictionary<Guid, VehicleUsageRuntimeSnapshot> Usage) : EventBase;
+
+/// <summary>
 /// Published when MOBApi forwards a MOBAflow runtime snapshot to MOBAsmart.
 /// </summary>
 public sealed record RemoteRuntimeSnapshotChangedEvent(MobaRuntimeSnapshot Snapshot) : EventBase;

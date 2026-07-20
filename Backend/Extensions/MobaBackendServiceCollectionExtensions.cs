@@ -49,6 +49,7 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton<IProjectValidator, ProjectValidator>();
         services.TryAddSingleton<IJourneyStopTransitionService, JourneyStopTransitionService>();
         services.TryAddSingleton<IJourneyRuntimeStateStore, FileJourneyRuntimeStateStore>();
+        services.TryAddSingleton<IVehicleUsageCheckpointStore, FileVehicleUsageCheckpointStore>();
         services.TryAddSingleton<AnnouncementService>();
         services.TryAddSingleton<IAnnouncementService>(sp => sp.GetRequiredService<AnnouncementService>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IWorkflowActionHandler, CommandWorkflowActionHandler>());
@@ -80,7 +81,9 @@ public static class MobaBackendServiceCollectionExtensions
                 sp.GetRequiredService<IJourneyStopTransitionService>(),
                 sp.GetRequiredService<IJourneyRuntimeStateStore>(),
                 sp.GetService<ILogger<JourneyManager>>()),
-            z21Discovery: sp.GetRequiredService<IZ21DiscoveryService>()));
+            z21Discovery: sp.GetRequiredService<IZ21DiscoveryService>(),
+            vehicleUsageCheckpointStore: sp.GetRequiredService<IVehicleUsageCheckpointStore>(),
+            timeProvider: sp.GetRequiredService<TimeProvider>()));
         services.TryAddSingleton<ILocomotiveFunctionCommandGateway, MobaRuntimeLocomotiveFunctionCommandGateway>();
         services.TryAddSingleton<ILocomotiveWhistleAutomationService, LocomotiveWhistleAutomationService>();
 
