@@ -2,7 +2,9 @@
 
 ## Document status
 
-- Status: Proposed
+- Status: In progress
+- Completed delivery slice: WP1 journal model, canonical format, defensive import, filtering, tests, and format documentation
+- Next delivery slice: WP2 recording state machine and bounded ingestion
 - Primary issue: https://github.com/ahuelsmann/MOBAflow/issues/30
 - Status and acceptance criteria source: GitHub issue #30
 - Recommended priority: P1 after the P0 boundary work

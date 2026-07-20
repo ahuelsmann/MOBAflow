@@ -1,0 +1,43 @@
+# MOBAflow recording format
+
+Recorder artifacts use the `.mobarecording.json` extension and are independent of solution files. Version 1 uses the format identifier
+`mobaflow-recording` and accepts exactly `formatVersion` `1.0`.
+
+## Canonical representation
+
+The dedicated writer emits UTF-8 JSON with LF line endings and a fixed property order. Entity references are sorted by stable kind and GUID. Payload object
+properties are sorted ordinally, numeric values are normalized, timestamps use UTC ISO-8601 with seven fractional digits, GUIDs and SHA-256 values use lowercase
+text, and journal order is preserved.
+
+`integrity.entriesSha256` is the lowercase SHA-256 of the compact canonical `entries` array. Session metadata, application version, project identity, options,
+summary, and formatting whitespace are intentionally excluded from that hash.
+
+## Payload allow-list
+
+Only explicitly registered recording mappers may create persisted payloads. A mapper owns a stable lowercase dotted type key and a compact JSON object containing
+only fields approved for that event. Payloads must never contain arbitrary event or runtime objects, raw Z21 packets, credentials, tokens, network endpoints, file
+paths or contents, audio, scripts, photos, exception messages, or stack traces.
+
+Known imported type keys are checked by their registered `IRecordingPayloadValidator`. The importer never resolves a CLR type name from JSON. Unknown type keys are
+retained for display but are always marked `displayOnly`; they cannot become replay operations.
+
+Free-text filtering searches mapper-provided `displayText`, not raw payload JSON.
+
+## Defensive limits
+
+| Limit | Version 1 value |
+| --- | ---: |
+| JSON nesting depth | 32 |
+| Session name or type key | 128 characters |
+| Category, source, severity, or entity kind | 64 characters |
+| Application version | 64 characters |
+| Project display name | 256 characters |
+| Display text, marker, or note | 4 KiB characters |
+| Canonical payload per entry | 16 KiB |
+| Entity references per entry | 64 |
+| Default entries per session/import | 250,000 |
+| Default artifact/import byte ceiling | 64 MiB |
+
+Import limits may be configured below these ceilings for constrained hosts. The byte ceiling is checked before parsing. Entry count is checked before allocating the
+entry collection. The importer also rejects duplicate or unknown envelope fields, noncanonical IDs and timestamps, invalid or decreasing sequences and elapsed
+offsets, inconsistent summaries, invalid known payloads, and integrity mismatches.

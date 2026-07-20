@@ -55,6 +55,9 @@
         <None Update="TestFile\**">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+        <None Update="TestData\Recording\**">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
         <None Include="..\MOBAdisplay\test.png" Link="TestFile\MOBAdisplay\test.png">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
