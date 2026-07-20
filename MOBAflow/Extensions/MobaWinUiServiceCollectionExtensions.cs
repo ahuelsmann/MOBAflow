@@ -245,6 +245,7 @@ public static class MobaWinUiServiceCollectionExtensions
 
         services.AddSingleton<LayoutColumnWidthsViewModel>();
         services.AddSingleton<LocomotiveManagementViewModel>();
+        services.AddTransient<RollingStockMaintenanceViewModel>();
         services.AddSingleton(sp => new MainWindowViewModel(
             sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
             sp.GetRequiredService<IMobaRuntime>(),

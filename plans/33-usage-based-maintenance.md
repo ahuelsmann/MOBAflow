@@ -47,8 +47,8 @@ This plan defines the technical sequence for extending locomotive maintenance in
 
 - Slices 1-2 merged via PR #44: shared lifetime counters, auditable corrections, rolling-stock-neutral maintenance, completed-trip intervals, deterministic combined-plan evaluation, schema coverage, DI registration, and sample data.
 - Issue #43 was completed via PR #45; the ordered bounded Z21 event pipeline prerequisite is fulfilled.
-- Slices 3-5 are implemented and validated on the follow-up branch: runtime attribution, durable checkpoints/recovery, and authoritative runtime projection.
-- Slice 6 has not started; shared UI integration follows the runtime and checkpoint contracts so all three pages consume one authoritative projection.
+- Slices 3-5 merged via PR #57: runtime attribution, durable checkpoints/recovery, and authoritative runtime projection.
+- Slice 6 is implemented and automated validation is complete on a fresh follow-up branch from `main`; the follow-up PR remains to be reviewed and merged.
 
 ## Delivery sequence
 
@@ -156,6 +156,8 @@ dotnet test Test/Test.csproj
 Later runtime slices add deterministic tests for attribution, duplicate transitions, reconnect, consist changes, checkpoint recovery, cancellation, and shutdown. UI slices require the focused ViewModel tests, the WinUI FastDebug build, and manual Light, Dark, High Contrast, keyboard, and Narrator validation.
 
 Runtime-slice validation completed with the focused attribution/Journey/SharedUI tests, the full multi-target `dotnet test Test/Test.csproj` run, and the WinUI FastDebug build. Slice 6 retains its own UI behavior and accessibility validation.
+
+Slice 6 validation completed with seven focused shared-ViewModel tests, the post-rebase full multi-target test suite (2,296 passed, 4 expected skips), the WinUI FastDebug build (0 warnings, 0 errors), targeted formatter verification, and static Light/Dark/High Contrast, keyboard, and automation-name review. An interactive `winapp` launch was not available because the repository's existing package manifest references missing splash and wide-tile assets; this packaging baseline is outside issue #33.
 
 ## Rollback strategy
 
