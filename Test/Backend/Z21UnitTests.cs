@@ -123,12 +123,12 @@ internal class Z21UnitTests
         await z21.ConnectAsync(address);
 
         z21.Dispose();
+        var payloadCountAfterDispose = fakeUdp.SentPayloads.Count;
 
         // Wait to verify timer doesn't fire after dispose
         await Task.Delay(200);
 
-        // If timer wasn't stopped properly, it would throw exceptions
-        // No assertion needed - test passes if no exception occurs
+        Assert.That(fakeUdp.SentPayloads, Has.Count.EqualTo(payloadCountAfterDispose));
     }
 
     [Test]

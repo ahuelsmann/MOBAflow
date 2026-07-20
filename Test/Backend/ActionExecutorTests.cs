@@ -140,7 +140,7 @@ internal class ActionExecutorTests
     }
 
     [Test]
-    public async Task ExecuteAsync_WithTrainDestinationDisplayAction_ShouldCompleteWithoutError()
+    public void ExecuteAsync_WithTrainDestinationDisplayAction_ShouldCompleteWithoutError()
     {
         var action = new WorkflowAction
         {
@@ -154,7 +154,7 @@ internal class ActionExecutorTests
             }
         };
 
-        await _actionExecutor.ExecuteAsync(action, _context);
+        Assert.DoesNotThrowAsync(() => _actionExecutor.ExecuteAsync(action, _context));
     }
     public async Task ExecuteAsync_WithSelectSignalAspectAction_ShouldSendTurnoutCommand()
     {

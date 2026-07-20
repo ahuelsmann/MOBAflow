@@ -145,7 +145,7 @@ jobs:
         run: >-
           ./scripts/Test-ReleasePackage.ps1
           -PublishDirectory artifacts/MOBAflow-win-x64
-          -Archive artifacts/MOBAflow-${{ inputs.tag }}-win-x64.zip
+          -Archive "artifacts/MOBAflow-$env:RELEASE_TAG-win-x64.zip"
           -ChecksumFile artifacts/SHA256SUMS.txt
 
       - name: Upload workflow artifacts

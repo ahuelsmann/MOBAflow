@@ -72,6 +72,12 @@ internal class RendererTests
         var outputPath = Path.Combine(Path.GetTempPath(), "trackplan3.html");
         exporter.Export(renderResult.Svg, outputPath);
 
+        Assert.Multiple(() =>
+        {
+            Assert.That(renderResult.Svg, Does.Contain("<svg"));
+            Assert.That(File.Exists(outputPath), Is.True);
+        });
+
         Console.WriteLine($"Track plan exported to: {outputPath}");
 
         if (OperatingSystem.IsWindows())

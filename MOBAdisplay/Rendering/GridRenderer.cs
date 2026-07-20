@@ -32,7 +32,7 @@ public sealed class GridRenderer
         return result;
     }
 
-    public void DrawGrid(SKCanvas canvas, SKRect[,] cells)
+    internal void DrawGrid(SKCanvas canvas, SKRect[,] cells)
     {
         ArgumentNullException.ThrowIfNull(canvas);
         ArgumentNullException.ThrowIfNull(cells);

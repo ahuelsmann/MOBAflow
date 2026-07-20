@@ -1,43 +1,29 @@
 [mcp_servers.azure-devops]
 command = "npx"
-args = [
-    "-y",
-    "@azure-devops/mcp@latest",
-    "ahuelsmann",
-    "-d",
-    "all",
-    "-a",
-    "interactive",
-]
+args = [ "-y", "@azure-devops/mcp@latest", "ahuelsmann", "-d", "all", "-a", "interactive" ]
 
 [mcp_servers.azure-devops.env]
 AZURE_DEVOPS_ORG_URL = "https://dev.azure.com/ahuelsmann"
 
 [mcp_servers.fetch]
 command = "python"
-args = [
-    "-m",
-    "mcp_server_fetch",
-]
+args = [ "-m", "mcp_server_fetch" ]
 
 [mcp_servers.fetch.env]
 PYTHONIOENCODING = "utf-8"
 
 [mcp_servers.filesystem]
 command = "npx"
-args = [
-    "-y",
-    "@modelcontextprotocol/server-filesystem@latest",
-    'C:\Repo\ahuelsmann\MOBAflow',
-]
+args = [ "-y", "@modelcontextprotocol/server-filesystem@latest", "C:\\Repo\\ahuelsmann\\MOBAflow" ]
 
 [mcp_servers.filesystem.env]
-MCP_FILESYSTEM_ROOT = 'C:\Repo\ahuelsmann\MOBAflow'
+MCP_FILESYSTEM_ROOT = "C:\\Repo\\ahuelsmann\\MOBAflow"
 MCP_FILESYSTEM_ENABLE_DELETE = "false"
 
 [mcp_servers.ripgrep]
 command = "npx"
-args = [
-    "-y",
-    "mcp-ripgrep@latest",
-]
+args = [ "-y", "mcp-ripgrep@latest" ]
+
+[mcp_servers.sonarqube]
+command = "sonar.exe"
+args = [ "run", "mcp", "--project", "ahuelsmann_MOBAflow2" ]
