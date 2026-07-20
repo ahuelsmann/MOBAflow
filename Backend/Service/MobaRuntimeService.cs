@@ -180,7 +180,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
     {
         if (_activeProjectContext != null)
         {
-            _activeProjectContext.JourneyManager.StationChanged -= OnJourneyRuntimeChanged;
+            _activeProjectContext.JourneyManager.StationChanged -= OnJourneyStationChanged;
             _activeProjectContext.JourneyManager.FeedbackReceived -= OnJourneyRuntimeChanged;
             _activeProjectContext.JourneyManager.JourneyCompleted -= OnJourneyCompleted;
             _activeProjectContext.Dispose();

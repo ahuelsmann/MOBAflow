@@ -144,6 +144,9 @@ internal sealed class TimetablePageViewModelTests
         context.ViewModel.FilterText = string.Empty;
         context.ViewModel.TimeWindowHours = 2;
         Assert.That(context.ViewModel.Services.Select(row => row.ServiceNumber), Is.EqualTo(new[] { "R100" }));
+
+        context.ViewModel.TimeWindowHours = double.NaN;
+        Assert.That(context.ViewModel.Services.Select(row => row.ServiceNumber), Is.EqualTo(new[] { "R100" }));
     }
 
     [Test]
@@ -214,10 +217,21 @@ internal sealed class TimetablePageViewModelTests
         SelectFirstServiceAndCall(context.ViewModel);
         await context.ViewModel.ReassignSelectedPlatformCommand.ExecuteAsync(null);
         SelectFirstServiceAndCall(context.ViewModel);
+        Assert.Multiple(() =>
+        {
+            Assert.That(context.ViewModel.RecordArrivalCommand.CanExecute(null), Is.True);
+            Assert.That(context.ViewModel.RecordDepartureCommand.CanExecute(null), Is.False);
+        });
         await context.ViewModel.RecordArrivalCommand.ExecuteAsync(null);
         SelectFirstServiceAndCall(context.ViewModel);
+        Assert.Multiple(() =>
+        {
+            Assert.That(context.ViewModel.RecordArrivalCommand.CanExecute(null), Is.False);
+            Assert.That(context.ViewModel.RecordDepartureCommand.CanExecute(null), Is.True);
+        });
         await context.ViewModel.RecordDepartureCommand.ExecuteAsync(null);
         SelectFirstServiceAndCall(context.ViewModel);
+        Assert.That(context.ViewModel.RecordDepartureCommand.CanExecute(null), Is.False);
         await context.ViewModel.ShiftSelectedCallEarlierCommand.ExecuteAsync(null);
         Assert.That(context.ViewModel.SelectedCall!.Model.ScheduledArrival, Is.EqualTo(originalArrival.AddMinutes(-5)));
         await context.ViewModel.ShiftSelectedCallLaterCommand.ExecuteAsync(null);
@@ -262,7 +276,7 @@ internal sealed class TimetablePageViewModelTests
     }
 
     [Test]
-    public async Task RuntimeEvent_Should_ProjectRefreshAndPreserveSelection()
+    public async Task StationReachedEvent_Should_ProjectRefreshAndPreserveSelection()
     {
         // Arrange
         var project = CreateProject();
@@ -277,7 +291,12 @@ internal sealed class TimetablePageViewModelTests
         var selectedCallId = context.ViewModel.SelectedCall!.Id;
 
         // Act
-        context.EventBus.Publish(new RuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot { CreatedAt = OperatingTime }));
+        context.EventBus.Publish(new JourneyStationReachedEvent(
+            project.Id,
+            project.Journeys[0].Id,
+            Guid.NewGuid(),
+            project.Journeys[0].Stations[0].Id,
+            OperatingTime));
 
         // Assert
         Assert.Multiple(() =>
@@ -290,19 +309,55 @@ internal sealed class TimetablePageViewModelTests
     }
 
     [Test]
+    public async Task RuntimeSnapshotEvent_Should_UpdateProgressWithoutProjecting()
+    {
+        // Arrange
+        var project = CreateProject();
+        var projection = new RecordingProjectionService();
+        using var context = CreateContext(project, new RecordingOperations(), projection: projection);
+        await context.ViewModel.RefreshAsync();
+
+        // Act
+        context.EventBus.Publish(new RuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
+        {
+            JourneyStates = new Dictionary<Guid, JourneyRuntimeSnapshot>
+            {
+                [project.Journeys[0].Id] = new JourneyRuntimeSnapshot
+                {
+                    JourneyId = project.Journeys[0].Id,
+                    CurrentStationName = "Central stop",
+                    CurrentFeedbackIndex = 2
+                }
+            }
+        }));
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(context.ViewModel.Services.Single().ProgressText, Is.EqualTo("Central stop (step 3)"));
+            Assert.That(projection.CallCount, Is.Zero);
+        });
+    }
+
+    [Test]
     public void Dispose_Should_UnsubscribeExactlyOnce()
     {
         // Arrange
         var project = CreateProject();
         var context = CreateContext(project, new RecordingOperations());
-        var subscriptionsBefore = context.EventBus.GetSubscriberCount<RuntimeSnapshotChangedEvent>();
+        var runtimeSubscriptionsBefore = context.EventBus.GetSubscriberCount<RuntimeSnapshotChangedEvent>();
+        var stationSubscriptionsBefore = context.EventBus.GetSubscriberCount<JourneyStationReachedEvent>();
 
         // Act
         context.ViewModel.Dispose();
         context.ViewModel.Dispose();
 
         // Assert
-        Assert.That(context.EventBus.GetSubscriberCount<RuntimeSnapshotChangedEvent>(), Is.EqualTo(subscriptionsBefore - 1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(context.EventBus.GetSubscriberCount<RuntimeSnapshotChangedEvent>(), Is.EqualTo(runtimeSubscriptionsBefore - 1));
+            Assert.That(context.EventBus.GetSubscriberCount<JourneyStationReachedEvent>(), Is.EqualTo(stationSubscriptionsBefore - 1));
+        });
     }
 
     [Test]
@@ -442,10 +497,10 @@ internal sealed class TimetablePageViewModelTests
 
         public TimetableProjectionResult Result { get; init; } = new(0, []);
 
-        public Task<TimetableProjectionResult> ProjectAsync(Project project, MobaRuntimeSnapshot snapshot, CancellationToken cancellationToken = default)
+        public Task<TimetableProjectionResult> ProjectAsync(Project project, JourneyStationReachedEvent transition, CancellationToken cancellationToken = default)
         {
             _ = project;
-            _ = snapshot;
+            _ = transition;
             cancellationToken.ThrowIfCancellationRequested();
             CallCount++;
             return Task.FromResult(Result);

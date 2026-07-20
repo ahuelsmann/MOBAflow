@@ -2,13 +2,13 @@
 
 ## Document status
 
-- Status: Implemented; awaiting review
+- Status: Post-merge review hardening in progress
 - Primary issue: https://github.com/ahuelsmann/MOBAflow/issues/31
 - Completed prerequisite for live projection: https://github.com/ahuelsmann/MOBAflow/issues/43
-- Implementation baseline: `main` at `84b1deda5774b35842768e8981658c518d1e6375`
+- Implementation baseline: merged PR #56 at `8c00578a3f9715e1c1e71ea0b0b1cd8480827f9e`
 - Status and acceptance criteria source: GitHub issue #31
 
-Issue #31 carries the `plan-required` label and links this plan. RF-04 in issue #43 is merged, its regression guards are on `main`, and the implementation prerequisites are satisfied.
+Issue #31 carries the `plan-required` label and links this plan. RF-04 in issue #43 is merged, its regression guards are on `main`, and the implementation prerequisites are satisfied. Issue #31 was reopened after PR #56 merged so the remaining actionable review findings can be completed in the same issue scope.
 
 ## Purpose
 
@@ -42,7 +42,7 @@ The MVP remains advisory. No timetable state transition or dispatcher action may
 9. Represent hold as an advisory overlay on a non-terminal service state. Holding a service never pauses journey processing or sends a hardware command.
 10. Treat cancellation and completion as terminal states. Repeated manual commands and repeated runtime projections must be idempotent.
 11. Infer actual arrival only from an unambiguous journey transition to a configured stop. Keep actual departure manual in the MVP because the current runtime does not expose a reliable departure event.
-12. Allow at most one non-terminal timetable service to own live projection for a `JourneyId` at a time. Ambiguous overlapping assignments produce a conflict and suppress automatic projection until the operator resolves the assignment.
+12. Prefer one explicitly running or held service as the live owner for a `JourneyId`; otherwise select the uniquely schedule-relevant non-terminal service. Equal operational or schedule ownership remains ambiguous and suppresses automatic projection until the operator resolves the assignment.
 13. Evaluate occupancy windows as half-open intervals so one service may release a platform exactly when another begins using it. Planned calls must satisfy `Arrival <= Departure` when both values are present.
 14. Store a project-level minimum-turnaround duration with an explicit default. Turnaround conflicts use the effective train assignment and this persisted policy; they are not hardcoded in the UI.
 15. Recalculate conflicts from immutable effective inputs after every definition edit, operator decision, clock tick that crosses a relevant boundary, and accepted runtime transition. Do not incrementally mutate conflict results.
@@ -212,11 +212,12 @@ Prerequisite satisfied by `main` commit `08c196878c5d5ee30b7765638a1f535e64a3e01
 
 Deliverables:
 
-- consume `RuntimeSnapshotChangedEvent` through the existing decorated EventBus;
-- detect unambiguous journey-stop transitions and project actual arrivals idempotently;
+- consume the dedicated post-transition `JourneyStationReachedEvent` through the existing decorated EventBus;
+- use broad `RuntimeSnapshotChangedEvent` notifications only for lightweight visible progress updates;
+- project actual arrivals idempotently only after an authoritative journey-stop transition with a feedback timestamp;
 - suppress automatic updates for ambiguous journey assignments and explain the conflict;
 - preserve manual departure semantics until an explicit departure runtime contract exists;
-- recover correctly after reconnect, project activation, journey reset, and repeated snapshots;
+- recover correctly after reconnect, project activation, journey reset, and repeated transition events;
 - focused operational timeline, status refresh, accessibility, and Light/Dark/High Contrast validation.
 
 ## Dependency and coordination rules
@@ -228,6 +229,22 @@ Deliverables:
 - Coordinate the `TimeProvider` abstraction with issue #35 to avoid parallel virtual-clock frameworks, but neither issue blocks the other's platform-neutral model.
 - Issue #33's schema foundation is present on the implementation baseline. Preserve its rolling-stock usage and maintenance additions while extending the current schema.
 - Avoid combining implementation slices with RF-10 repository-wide formatting to reduce merge noise.
+
+## Post-merge review hardening
+
+The follow-up to PR #56 stays within issue #31 and covers the approved actionable review findings:
+
+- publish a dedicated station-transition event only after `JourneyManager` has applied the stop transition and observed feedback;
+- avoid persistence and full collection refreshes for telemetry-only runtime snapshots;
+- select the uniquely running, held, or schedule-relevant service when sequential services share a journey;
+- expire advisory holds back to their prior scheduled or running state;
+- serialize state reads with mutations and quarantine malformed session JSON;
+- reject departure without a recorded arrival;
+- ignore completed services in live resource-conflict evaluation and report duplicate call IDs;
+- register the Timetable availability toggle and badge in the explicit feature registry;
+- normalize non-finite time-window input before date arithmetic.
+
+The request to load solution schema version 3 is intentionally not implemented because issue #31 explicitly requires direct use of the current schema without a compatibility migration.
 
 ## Expected affected files
 
