@@ -2,7 +2,7 @@
 
 ## Document status
 
-- Status: Slice 1 design complete - implementation pending
+- Status: Slice 2 authentication and credential foundation ready for review
 - Primary issue: https://github.com/ahuelsmann/MOBAflow/issues/50
 - Parent programme: https://github.com/ahuelsmann/MOBAflow/issues/47
 - Security design record: [MOBApi Security Design](../docs/MOBAPI-SECURITY-DESIGN.md)
@@ -12,7 +12,7 @@
 
 This is the single implementation plan for RF-03. It sequences the work required to authenticate, authorize, validate, rate-limit, queue, and observe MOBApi control-plane traffic without combining the change into one broad server/client delivery.
 
-The current delivery is Slice 1 only: a security design record. It changes no REST, SignalR, MOBAflow, or MOBAsmart runtime behavior. Slices 2 through 6 have not started.
+Slice 1 delivered the security design record without runtime changes. Slice 2 now provides an additive authentication and credential foundation. Existing REST and SignalR control paths remain unmigrated until later slices.
 
 ## Scope boundaries
 
@@ -44,7 +44,7 @@ Out of scope:
 
 ## Delivery sequence
 
-### Slice 1: Security design record (current delivery)
+### Slice 1: Security design record (complete)
 
 Affected files:
 
@@ -72,13 +72,44 @@ Validation:
 
 ### Slice 2: Authentication and credential foundation
 
-Planned boundary:
+Current boundary:
 
 - protected server identity and credential registry;
 - short-lived access tokens plus rotating device refresh credentials;
 - pairing, refresh, rotation, and revocation endpoints;
-- deny-by-default authentication middleware and named capability policies;
+- authentication middleware and named capability policies ready for deny-by-default migration;
 - focused unit and integration tests, with no control-path migration yet.
+
+Implementation decisions:
+
+- use an ASP.NET Core authentication scheme backed by purpose-isolated Data Protection rather than introducing an external token package;
+- issue five-minute opaque bearer access tokens containing credential identity, role, capability version, and capabilities;
+- validate every access token against live credential state so revocation and role changes invalidate already-issued tokens;
+- persist only protected registry and server-identity documents, and store refresh credentials as keyed hashes;
+- rotate refresh credentials on every successful exchange and revoke the credential family when a consumed refresh credential is replayed;
+- keep one in-memory, two-minute pairing window with explicit approval, single-use claims, bounded failed attempts, and cooldown;
+- require HTTPS for every endpoint that accepts or returns a pairing or refresh secret;
+- register named capability policies without applying them to existing runtime controllers or hubs in this slice.
+
+Explicit exclusions:
+
+- no fallback policy and no authorization attributes on existing runtime controllers or hubs;
+- no Kestrel transport migration, host bootstrap, MOBAsmart secure-storage work, or client changes;
+- no command validation, rate limiting, bounded command admission, telemetry expansion, or feature work from issues #30 through #36.
+
+Validation evidence:
+
+- thirteen focused security tests cover capability templates, named policies, query-token path restrictions, token expiry, live role/revocation invalidation, refresh rotation/replay/inactivity, protected storage, pairing approval/single claim/cooldown, and server-identity persistence;
+- `dotnet build MOBApi/MOBApi.csproj -c Release --no-restore` passes with zero warnings and zero errors;
+- `dotnet test Test/Test.csproj --no-restore` passes on both test targets with 2,282 passed, 4 skipped, and 0 failed tests;
+- scoped `dotnet format ... whitespace --verify-no-changes` checks and `git diff --check` pass for all changed C# files.
+
+Storage and rollback notes:
+
+- the registry and ECDSA P-256 server identity are written as purpose-protected documents below `%LOCALAPPDATA%/MOBAflow/security` by default; `ControlPlaneSecurity:StorageDirectory` provides an environment-specific override;
+- this slice adds no committed secret, database schema, client credential, or Kestrel binding change;
+- rollback removes the additive endpoints, services, and middleware registration. Existing runtime controllers and hubs continue to use their prior behavior because no control-path authorization attribute or fallback policy is enabled yet;
+- protected local files may be retained for re-upgrade or removed by an operator after rollback because no existing runtime path reads them.
 
 ### Slice 3: Host enrollment and protected publication paths
 
