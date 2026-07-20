@@ -43,10 +43,11 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
         <!-- RELEASE OPTIMIZATIONS -->
+        <RuntimeIdentifiers>android-arm64;android-x64</RuntimeIdentifiers>
         <AndroidLinkMode>SdkOnly</AndroidLinkMode>
         <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
         <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
-        <AndroidPackageFormat>aab</AndroidPackageFormat>
+        <AndroidPackageFormats>aab</AndroidPackageFormats>
         <AndroidCreateDebugSymbols>true</AndroidCreateDebugSymbols>
         <AndroidUseApkSigner>true</AndroidUseApkSigner>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
