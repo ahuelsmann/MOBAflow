@@ -2,12 +2,13 @@
 
 ## Document status
 
-- Status: Proposed
+- Status: Implemented; awaiting review
 - Primary issue: https://github.com/ahuelsmann/MOBAflow/issues/31
-- Blocking issue for live projection: https://github.com/ahuelsmann/MOBAflow/issues/43
+- Completed prerequisite for live projection: https://github.com/ahuelsmann/MOBAflow/issues/43
+- Implementation baseline: `main` at `0f8d2547346bcf7e8672bf543a6ae6529eba6a3c`
 - Status and acceptance criteria source: GitHub issue #31
 
-Issue #31 must carry the `plan-required` label and link this plan before implementation begins. The plan remains `Proposed` until that traceability gate and the technical decisions below are accepted.
+Issue #31 carries the `plan-required` label and links this plan. RF-04 in issue #43 is merged, its regression guards are on `main`, and the implementation prerequisites are satisfied.
 
 ## Purpose
 
@@ -26,7 +27,7 @@ The MVP remains advisory. No timetable state transition or dispatcher action may
 - `MobaRuntimeService` executes against an isolated clone of the editable project. Durable operator state therefore needs an explicit synchronization and persistence boundary.
 - Runtime snapshots already reach SharedUI through `RuntimeSnapshotChangedEvent` and the UI-dispatched EventBus decorator.
 - `NavigationRegistration` provides the established singleton page registration and navigation metadata pattern.
-- RF-04 in issue #43 will replace per-event `Task.Run` publication with an ordered bounded pipeline.
+- RF-04 in issue #43 replaced per-event `Task.Run` publication with the ordered bounded `Z21EventPipeline` and deterministic asynchronous shutdown.
 
 ## Technical decisions
 
@@ -207,7 +208,7 @@ Deliverables:
 
 ### Slice 6: Live journey projection and operational polish
 
-Prerequisite: issue #43 merged and its ordering regression tests green.
+Prerequisite satisfied by `main` commit `08c196878c5d5ee30b7765638a1f535e64a3e01c`.
 
 Deliverables:
 
@@ -220,13 +221,12 @@ Deliverables:
 
 ## Dependency and coordination rules
 
-- Slices 1 through 3 are platform-neutral and do not require issue #43 technically, but repository quality priorities should be reviewed before starting a large feature while P0 RF work remains open.
-- Slice 6 must not begin until issue #43 is complete. Do not implement RF-04 inside issue #31.
+- RF-04 is complete. Consume the ordered pipeline as an existing boundary and do not modify its capacity, overload policy, metrics, or shutdown behavior in issue #31.
 - Workflow 2.0 in issue #32 is optional. Timetable state may later observe workflow lifecycle events, but the MVP cannot depend on them.
 - Route, block, and interlocking work in issue #34 is optional. The MVP detects planned station, platform, train, and journey conflicts without controlling routes or signals.
 - RecorderPage in issue #30 may later consume timetable transitions; recording support is not part of the MVP.
 - Coordinate the `TimeProvider` abstraction with issue #35 to avoid parallel virtual-clock frameworks, but neither issue blocks the other's platform-neutral model.
-- Rebase implementation work after issue #33 schema changes are merged. Do not overwrite or duplicate its rolling-stock usage additions.
+- Issue #33's schema foundation is present on the implementation baseline. Preserve its rolling-stock usage and maintenance additions while extending the current schema.
 - Avoid combining implementation slices with RF-10 repository-wide formatting to reduce merge noise.
 
 ## Expected affected files

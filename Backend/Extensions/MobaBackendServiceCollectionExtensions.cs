@@ -42,6 +42,11 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton<ILocomotivePassportHtmlRenderer, LocomotivePassportHtmlRenderer>();
         services.TryAddSingleton<IDigitalAddressConflictDetector, DigitalAddressConflictDetector>();
         services.TryAddSingleton<IProjectDiagnosticsService, ProjectDiagnosticsService>();
+        services.TryAddSingleton<ITimetableEvaluationService, TimetableEvaluationService>();
+        services.TryAddSingleton<ITimetableTimingService, TimetableTimingService>();
+        services.TryAddSingleton<ITimetableStateStore, FileTimetableStateStore>();
+        services.TryAddSingleton<ITimetableOperationsService, TimetableOperationsService>();
+        services.TryAddSingleton<ITimetableRuntimeProjectionService, TimetableRuntimeProjectionService>();
         services.TryAddSingleton<Z21Monitor>();
         services.TryAddSingleton<IUdpClientWrapper, UdpWrapper>();
         services.TryAddSingleton<IZ21DiscoveryService, Z21DiscoveryService>();

@@ -21,7 +21,7 @@ internal sealed class SolutionRemoteLoaderTests
         """
         {
           "name": "Remote Solution",
-          "schemaVersion": 3,
+          "schemaVersion": 4,
           "projects": [
             {
               "name": "Other Project",
