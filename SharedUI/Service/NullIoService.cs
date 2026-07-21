@@ -75,6 +75,18 @@ public class NullIoService : IIoService
         return Task.FromResult<string?>(null);
     }
 
+    /// <summary>Always returns <see langword="null"/> because recording files are not supported.</summary>
+    public Task<string?> BrowseForRecordingFileAsync()
+    {
+        return Task.FromResult<string?>(null);
+    }
+
+    /// <summary>Always returns <see langword="null"/> because recording files are not supported.</summary>
+    public Task<string?> SaveRecordingFileAsync(string suggestedFileName)
+    {
+        return Task.FromResult<string?>(null);
+    }
+
     public Task<string?> SaveJsonFileAsync(string suggestedFileName)
     {
         return Task.FromResult<string?>(null);

@@ -3,15 +3,15 @@
 ## Document status
 
 - Status: In progress
-- Completed delivery slices: WP1 journal model/format/filtering, WP2 recording state machine/bounded ingestion, and WP3 producer capture
-- Next delivery slice: WP4 command capture and Workflow 2.0 mappers after issue #32
+- Completed delivery slices: WP1 journal model/format/filtering, WP2 recording state machine/bounded ingestion, WP3 producer capture, and WP5 RecorderPage/file operations
+- Next delivery slice: WP6 isolated replay; the Workflow 2.0 portion of WP4 remains gated by issue #32
 - Resolved dependency: issue #43 merged through PR #45 and is present in the branch baseline
 - Primary issue: https://github.com/ahuelsmann/MOBAflow/issues/30
 - Status and acceptance criteria source: GitHub issue #30
 - Recommended priority: P1 after the P0 boundary work
 - Required label before implementation: `plan-required`
 - Plan ownership: one-to-one with issue #30
-- Related blocking issue: https://github.com/ahuelsmann/MOBAflow/issues/43
+- Resolved ordering dependency: https://github.com/ahuelsmann/MOBAflow/issues/43
 - Related workflow issue: https://github.com/ahuelsmann/MOBAflow/issues/32
 - Related isolation consumer: https://github.com/ahuelsmann/MOBAflow/issues/35
 - Lifecycle: delete this plan after issue #30 is completed; the closed issue, pull requests, and Git history remain the permanent record
@@ -26,7 +26,7 @@ GitHub owns committed scope, priority, status, and acceptance criteria. This pla
 
 | Principle | Design response | Gate |
 | --- | --- | --- |
-| Architecture and threading boundaries | Recording models, serialization, filtering, capture, and replay remain platform-neutral. The RecorderPage ViewModel consumes UI-dispatched notifications without manual dispatcher calls. | Pass |
+| Architecture and threading boundaries | Recording models, serialization, filtering, capture, and replay remain platform-neutral. The RecorderPage ViewModel marshals the non-EventBus recording status callback through `IUiDispatcher`; EventBus handlers retain the decorator-owned UI boundary. | Pass |
 | Async and UI correctness | Channel processing, import/export, and replay are asynchronous and cancellation-aware. Page code-behind remains an input adapter. | Pass |
 | Tests are required | Every state transition, ordering rule, serializer branch, mapper, and safety boundary has automated coverage; UI-only behavior has focused manual checks. | Pass |
 | Testable and compatible specifications | The recording artifact is separate from `solution.json`; the current format is introduced directly and has explicit compatibility rules. | Pass |
@@ -36,18 +36,17 @@ No constitutional exception or complexity waiver is required. Re-run this check 
 
 ## Current verified foundation
 
-- `IEventBus` provides typed `Publish<TEvent>` and `Subscribe<TEvent>` operations but no global event stream or untyped observer hook.
-- `UiThreadEventBusDecorator` marshals the complete publish call to the UI thread. A recorder subscribed to the decorated bus would therefore capture after UI dispatch rather than at the producer boundary.
-- `Backend/Z21.Receive.cs` currently schedules one `Task.Run` per published event. Issue #43 owns replacement with an ordered, bounded FIFO pipeline.
+- `IEventBus` remains typed and has no global reflective observer hook. `RecordingEventBusDecorator` now captures an exact mapper allow-list before `UiThreadEventBusDecorator` marshals the original event to UI subscribers.
+- Issue #43 is merged; its ordered bounded Z21 FIFO is the producer-order foundation used by recording capture.
 - EventBus events inherit `EventBase`, whose `CreatedUtc` value uses `DateTime.UtcNow`; events do not carry a sequence number, correlation ID, source, severity, or stable serialized type key.
 - Z21 exposes typed events for connection, power, status, locomotive state, feedback, signal, switch, and health changes. Raw traffic packets are available separately and are not safe recording payloads by default.
-- `JourneyManager` emits mutable .NET event arguments for feedback and station changes. `MobaRuntimeService` projects those changes into broad immutable runtime snapshots, but there is no structured journey lifecycle EventBus contract.
+- `JourneyManager` now publishes immutable journey feedback, station, completion, restart/activation, stopped, and reset EventBus transitions before its legacy mutable callbacks.
 - `WorkflowService` logs workflow start/completion and exposes an `ActionExecutionError` .NET event. Issue #32 owns deterministic Workflow 2.0 execution and structured lifecycle EventBus events for RecorderPage.
 - Explicit user commands use both `IMobaRuntime` and `IRuntimeCommandGateway`. Runtime snapshots describe resulting state but cannot reliably reconstruct operator intent, correlation, or command failure.
 - `MobaRuntimeService.ActivateProjectAsync` already executes against a deep-cloned project. This is useful isolation groundwork but is not a replay boundary because the same runtime still owns live `IZ21` services.
-- `TimeProvider.System` is already registered in backend DI and can be replaced in tests.
-- `NavigationRegistration` centralizes WinUI page registration. `IIoService` and `IFilePickerService` already separate platform file pickers from shared ViewModels, but their JSON operations are solution-oriented and need recording-specific methods.
-- `MonitorPageViewModel` demonstrates bounded UI log projection, but RecorderPage needs typed, filterable rows and must not derive its journal from log strings.
+- `TimeProvider.System` is registered in backend DI and can be replaced in tests. The bounded session service exposes ordered immutable journal pages for batched UI projection.
+- `NavigationRegistration` now registers RecorderPage after MonitorPage. `IFilePickerService` has recording-specific open/save operations and `IRecordingFileService` owns validated, atomic artifact import/export.
+- `RecorderPageViewModel` owns lifecycle commands, annotations, status, filtering, selection, and batched timeline loading; page code-behind only initializes the view.
 
 ## Scope boundaries
 
@@ -284,6 +283,7 @@ Exact file names must be revalidated immediately before implementation, but the 
 
 - `SharedUI/Interface/IRuntimeCommandGateway.cs` or narrower command gateway interfaces after command-path inventory
 - `SharedUI/Interface/IIoService.cs`
+- `SharedUI/Interface/IRecordingFileService.cs`
 - `SharedUI/Service/LocalRuntimeCommandGateway.cs`
 - `SharedUI/Service/RecordingRuntimeCommandGatewayDecorator.cs`
 - `SharedUI/ViewModel/RecorderPageViewModel.cs`
@@ -375,6 +375,8 @@ Exit: the complete event coverage required by issue #30 is represented by stable
 - keep all user-visible text English and validate Light, Dark, and High Contrast themes.
 
 Exit: a user can record, annotate, stop, export, import, and inspect the same ordered timeline without replay enabled.
+
+Completed on 2026-07-21. Evidence: RecorderPage is registered under Monitoring after MonitorPage and resolves through production DI. The shared ViewModel owns lifecycle commands, annotations, selection, active filters, errors, and 512-entry journal paging; the virtualized WinUI timeline uses theme resources and accessible command names. Recording-specific pickers produce the `.mobarecording.json` convention, and `RecordingFileService` validates imports and exports atomically. Focused tests cover ViewModel lifecycle/filtering, bounded journal pages, import failures, file round trips, DI, and navigation. The full suite passes on both targets (1,213 cross-platform tests and 1,161 Windows tests, with four environment-dependent skips), the FastDebug WinUI build passes with zero warnings, and scoped format verification passes.
 
 ### WP6: Isolated replay engine
 

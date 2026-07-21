@@ -266,6 +266,40 @@ internal sealed class RecordingSessionServiceTests
     }
 
     [Test]
+    public async Task ReadEntries_Should_ReturnBoundedOrderedJournalPages()
+    {
+        await using var service = new RecordingSessionService(new MutableTimeProvider(StartTime));
+        service.Start(new RecordingSessionStartRequest("Paged", "1.0"));
+        service.AddMarker("First");
+        service.AddNote("Second");
+
+        var firstPage = service.ReadEntries(0, 2);
+        var secondPage = service.ReadEntries(firstPage[^1].Sequence, 2);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(firstPage, Has.Count.EqualTo(2));
+            Assert.That(firstPage.Select(entry => entry.Sequence), Is.Ordered.And.Unique);
+            Assert.That(secondPage, Has.Count.EqualTo(1));
+            Assert.That(secondPage[0].TypeKey, Is.EqualTo("recorder.note"));
+            Assert.That(secondPage[0].Sequence, Is.GreaterThan(firstPage[^1].Sequence));
+        });
+    }
+
+    [Test]
+    public async Task ReadEntries_Should_RejectInvalidBounds()
+    {
+        await using var service = new RecordingSessionService(new MutableTimeProvider(StartTime));
+
+        Assert.Multiple(() =>
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => service.ReadEntries(-1, 1));
+            Assert.Throws<ArgumentOutOfRangeException>(() => service.ReadEntries(0, 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => service.ReadEntries(0, 10_001));
+        });
+    }
+
+    [Test]
     public async Task BackendRegistration_Should_ResolveOneServiceAsSessionAndStatusContracts()
     {
         var services = new ServiceCollection();

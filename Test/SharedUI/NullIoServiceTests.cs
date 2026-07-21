@@ -70,6 +70,19 @@ internal class NullIoServiceTests
     }
 
     [Test]
+    public async Task RecordingPickers_ReturnNull()
+    {
+        var openResult = await _service.BrowseForRecordingFileAsync();
+        var saveResult = await _service.SaveRecordingFileAsync("recording");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(openResult, Is.Null);
+            Assert.That(saveResult, Is.Null);
+        });
+    }
+
+    [Test]
     public async Task SaveJsonFileAsync_ReturnsNull()
     {
         var result = await _service.SaveJsonFileAsync("track-plan.json");

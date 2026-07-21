@@ -84,6 +84,30 @@ public sealed class RecordingSessionService : IRecordingSessionService
     }
 
     /// <inheritdoc />
+    public IReadOnlyList<RecordingEntry> ReadEntries(long afterSequence, int maxCount)
+    {
+        if (afterSequence < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(afterSequence));
+        }
+
+        if (maxCount is < 1 or > 10_000)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maxCount));
+        }
+
+        lock (_gate)
+        {
+            IEnumerable<RecordingEntry> source = _artifact is null ? _entries : _artifact.Entries;
+            return source
+                .Where(entry => entry.Sequence > afterSequence)
+                .OrderBy(entry => entry.Sequence)
+                .Take(maxCount)
+                .ToArray();
+        }
+    }
+
+    /// <inheritdoc />
     public RecordingOperationResult Start(RecordingSessionStartRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);

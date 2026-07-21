@@ -3,7 +3,6 @@
 namespace Moba.Test.MOBAflow;
 
 using Moba.Backend.Interface;
-using Moba.Common.Configuration;
 using Moba.Common.Events;
 
 using Microsoft.Extensions.Configuration;
@@ -11,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 using Moba.SharedUI.Interface;
+using Moba.SharedUI.ViewModel;
 using Moba.WinUI.Extensions;
 using Moba.WinUI.Service;
 
@@ -29,6 +29,13 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         {
             Assert.That(provider.GetRequiredService<IUiDispatcher>(), Is.Not.Null);
             Assert.That(provider.GetRequiredService<IEventBus>(), Is.Not.Null);
+            Assert.That(
+                provider.GetRequiredService<List<PageMetadata>>(),
+                Has.One.Matches<PageMetadata>(page =>
+                    page.Tag == "recorder"
+                    && page.Title == "Recorder"
+                    && page.Category == global::Moba.Common.Navigation.NavigationCategory.Monitoring
+                    && page.Order == 20));
         });
     }
 
@@ -50,6 +57,7 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
             var ioService = provider.GetRequiredService<IIoService>();
             Assert.That(ioService, Is.Not.Null);
             Assert.That(provider.GetRequiredService<ISolutionIoService>(), Is.SameAs(ioService));
+            Assert.That(provider.GetRequiredService<IRecordingFileService>(), Is.Not.Null);
             Assert.That(provider.GetRequiredService<IRuntimeCommandGateway>(), Is.Not.Null);
         });
     }
@@ -60,6 +68,7 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         var provider = CreateValidatorServiceProvider();
 
         Assert.DoesNotThrow(() => WinUiDiContainerValidator.ValidateCoreServices(provider));
+        Assert.That(provider.GetRequiredService<RecorderPageViewModel>(), Is.Not.Null);
     }
 
     private static ServiceProvider CreatePlatformServiceProvider()

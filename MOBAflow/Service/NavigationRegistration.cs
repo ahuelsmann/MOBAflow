@@ -96,6 +96,19 @@ internal static class NavigationRegistration
         services.AddSingleton<MonitorPage>();
         pages.Add(new PageMetadata("monitor", "Monitor", "\uE7F4", typeof(MonitorPage), NavigationCategory.Monitoring, 10, "IsMonitorPageAvailable", "MonitorPageLabel", null, false));
 
+        services.AddSingleton<RecorderPage>();
+        pages.Add(new PageMetadata(
+            Tag: "recorder",
+            Title: "Recorder",
+            Icon: "\uE7C8",
+            PageType: typeof(RecorderPage),
+            Category: NavigationCategory.Monitoring,
+            Order: 20,
+            FeatureToggleKey: null,
+            BadgeLabelKey: null,
+            PathIconData: null,
+            IsBold: false));
+
         services.AddSingleton<MatrixPage>();
         services.AddSingleton(sp => new MatrixPageViewModel(
             sp.GetRequiredService<MainWindowViewModel>(),

@@ -24,6 +24,14 @@ public interface IRecordingSessionService : IRecordingStatusSource, IAsyncDispos
     /// <summary>Gets the immutable completed or imported artifact, when available.</summary>
     RecordingArtifact? CurrentArtifact { get; }
 
+    /// <summary>
+    /// Reads an ordered, immutable journal page after the supplied sequence without exposing mutable session state.
+    /// </summary>
+    /// <param name="afterSequence">Exclusive lower sequence boundary. Use zero to read from the beginning.</param>
+    /// <param name="maxCount">Maximum number of entries to return.</param>
+    /// <returns>An ordered snapshot containing at most <paramref name="maxCount"/> entries.</returns>
+    IReadOnlyList<RecordingEntry> ReadEntries(long afterSequence, int maxCount);
+
     /// <summary>Starts a new session when no session is active.</summary>
     RecordingOperationResult Start(RecordingSessionStartRequest request);
 
