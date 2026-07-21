@@ -8,35 +8,35 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <WiFiUdp.h>
-#include <WebServer.h>
 #include <Preferences.h>
 #include <TFT_eSPI.h>
+#include <esp_random.h>
 #include <esp_heap_caps.h>
 #include <esp_log.h>
 #include <inttypes.h>
 #include <UdpPacketParser.h>
+#include <ProvisioningState.h>
+#include <Security2Transport.h>
 
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
-
-#ifndef WIFI_SSID
-#define WIFI_SSID "KBS"
-#endif
-
-#ifndef WIFI_PASSWORD
-#define WIFI_PASSWORD ""
-#endif
 
 #ifndef APP_VERSION
 #define APP_VERSION "dev"
 #endif
 
 static constexpr uint32_t kDiagnosticSerialBaud = 115200;
-static constexpr uint16_t kConfigHttpPort = 80;
 static constexpr uint32_t kWifiConnectTimeoutMs = 20000;
+static constexpr uint32_t kActivationHoldMs = 5000;
+static constexpr uint32_t kFactoryResetHoldMs = 12000;
+static constexpr uint8_t kActivationButtonPin = 0;
+static constexpr uint8_t kSetupSecretBytes = 16;
 static constexpr char kWifiPrefsNamespace[] = "wifi";
 static constexpr char kWifiPrefsSsidKey[] = "ssid";
 static constexpr char kWifiPrefsPasswordKey[] = "pwd";
+static constexpr char kWifiPrefsOwnerKey[] = "owner";
+static constexpr char kWifiPrefsOwnerPublicKey[] = "owner_pk";
 
 constexpr int kTftWidth = 240;
 constexpr int kTftHeight = 280;
@@ -52,8 +52,9 @@ static_assert(kTftHeight == MobaDisplay::Udp::kDisplayHeight, "Display height mu
 
 TFT_eSPI tft;
 WiFiUDP udp;
-WebServer server(kConfigHttpPort);
 Preferences preferences;
+MobaDisplay::Provisioning::StateMachine provisioningState;
+MobaDisplay::Provisioning::Security2Transport provisioningTransport;
 
 uint16_t* gFb = nullptr;
 uint8_t pktBuf[MobaDisplay::Udp::kMaxPacketBytes];
@@ -63,12 +64,15 @@ volatile uint32_t framesOk = 0;
 volatile uint32_t framesIncomplete = 0;
 uint8_t gRowReceived[kTftHeight] = {0};
 
-bool gIsApMode = false;
 bool gUdpReady = false;
 String gConnectedSsid;
-String gConfigApSsid;
 int gLastWifiStatus = WL_IDLE_STATUS;
 String gHostProjectVersion = "n/a";
+String gProvisioningSsid;
+String gProvisioningPassphrase;
+uint32_t gButtonPressedAtMs = 0;
+bool gButtonLongActionHandled = false;
+bool gFactoryResetAuthorized = false;
 
 void splashStatic();
 void drawBootScreen(const char* line1, const char* line2, const char* line3);
@@ -79,15 +83,16 @@ inline void unpackLineBigEndianRgb565IntoRow(const uint8_t* packet480, uint16_t*
 
 bool loadSavedWifiCredentials(String* ssidOut, String* passwordOut);
 void saveWifiCredentials(const String& ssid, const String& password);
+bool loadOwnerBinding();
+bool saveOwnerBinding(const uint8_t* publicKey, size_t publicKeyLength);
 bool connectWifiStation(const String& ssid, const String& password);
-void startWifiSetupAp();
-void startConfigAccessPoint();
-void connectWifiOrEnterSetupMode();
-String getCurrentIpString();
-
-void configureHttpApi();
-void handleWifiStatus();
-void handleWifiConfigPost();
+void connectWifiOrWaitForActivation();
+bool startProvisioningWindow();
+void closeProvisioningWindow(bool keepActiveNetwork);
+void updateActivationButton();
+esp_err_t handleProvisioningRequest(uint32_t sessionId, const uint8_t* input, ssize_t inputLength,
+    uint8_t** output, ssize_t* outputLength, void* privateData);
+bool createSetupPassphrase(String* passphraseOut);
 const char* wifiStatusToText(int status);
 
 bool allocateFramebuffer()
@@ -187,7 +192,7 @@ bool connectWifiStation(const String& ssid, const String& password)
     if (ssid.length() == 0)
         return false;
 
-    WiFi.mode(WIFI_AP_STA);
+    WiFi.mode(WIFI_STA);
     WiFi.begin(ssid.c_str(), password.c_str());
 
     const uint32_t startMs = millis();
@@ -208,104 +213,172 @@ bool connectWifiStation(const String& ssid, const String& password)
     }
 
     WiFi.setSleep(false);
-    gIsApMode = false;
     gConnectedSsid = ssid;
-    startConfigAccessPoint();
     return true;
 }
 
-void startConfigAccessPoint()
+bool loadOwnerBinding()
 {
-    const uint32_t chipSuffix = static_cast<uint32_t>(ESP.getEfuseMac() & 0xFFFFFFu);
+    preferences.begin(kWifiPrefsNamespace, true);
+    const bool ownerBound = preferences.getBool(kWifiPrefsOwnerKey, false);
+    preferences.end();
+    provisioningState.Boot(loadSavedWifiCredentials(nullptr, nullptr), ownerBound);
+    return ownerBound;
+}
 
+bool saveOwnerBinding(const uint8_t* publicKey, size_t publicKeyLength)
+{
+    if (publicKey == nullptr || publicKeyLength != 65)
+        return false;
+
+    preferences.begin(kWifiPrefsNamespace, false);
+    const size_t written = preferences.putBytes(kWifiPrefsOwnerPublicKey, publicKey, publicKeyLength);
+    preferences.putBool(kWifiPrefsOwnerKey, written == publicKeyLength);
+    preferences.end();
+    return written == publicKeyLength;
+}
+
+bool createSetupPassphrase(String* passphraseOut)
+{
+    if (passphraseOut == nullptr)
+        return false;
+
+    static constexpr char alphabet[] = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    uint8_t randomBytes[kSetupSecretBytes] = {};
+    esp_fill_random(randomBytes, sizeof(randomBytes));
+
+    String passphrase;
+    passphrase.reserve(22);
+    for (uint8_t index = 0; index < 20; ++index)
+        passphrase += alphabet[randomBytes[index % sizeof(randomBytes)] % (sizeof(alphabet) - 1)];
+
+    memset(randomBytes, 0, sizeof(randomBytes));
+    *passphraseOut = passphrase;
+    return passphrase.length() >= 16;
+}
+
+bool startProvisioningWindow()
+{
+    if (!provisioningState.BeginActivation(millis()))
+        return false;
+
+    if (!createSetupPassphrase(&gProvisioningPassphrase))
+        return false;
+
+    const uint32_t chipSuffix = static_cast<uint32_t>(ESP.getEfuseMac() & 0xFFFFFFu);
     char apName[32];
     snprintf(apName, sizeof(apName), "MOBAflow-Setup-%06lX", static_cast<unsigned long>(chipSuffix));
-    WiFi.softAP(apName);
-    gConfigApSsid = apName;
-    Serial.printf("Config AP: %s @ %s\r\n", apName, WiFi.softAPIP().toString().c_str());
-}
-
-void startWifiSetupAp()
-{
+    gProvisioningSsid = apName;
     WiFi.mode(WIFI_AP);
-    startConfigAccessPoint();
-    gIsApMode = true;
-    gConnectedSsid = gConfigApSsid;
+    if (!WiFi.softAP(gProvisioningSsid.c_str(), gProvisioningPassphrase.c_str()))
+    {
+        closeProvisioningWindow(false);
+        return false;
+    }
 
-    const String apIp = WiFi.softAPIP().toString();
-    drawBootScreen("Setup AP active", gConfigApSsid.c_str(), apIp.c_str());
+    const char* setupSecret = gProvisioningPassphrase.c_str();
+    if (provisioningTransport.Start(setupSecret, handleProvisioningRequest, nullptr) != ESP_OK)
+    {
+        closeProvisioningWindow(false);
+        return false;
+    }
+
+    drawBootScreen("Protected setup active", gProvisioningSsid.c_str(), gProvisioningPassphrase.c_str());
+    return true;
 }
 
-void connectWifiOrEnterSetupMode()
+void closeProvisioningWindow(bool keepActiveNetwork)
 {
-    String savedSsid;
-    String savedPassword;
-    const bool hasSavedCredentials = loadSavedWifiCredentials(&savedSsid, &savedPassword);
+    provisioningTransport.Stop();
+    WiFi.softAPdisconnect(true);
+    WiFi.mode(keepActiveNetwork ? WIFI_STA : WIFI_OFF);
+    gProvisioningPassphrase = String();
+    gProvisioningSsid = String();
+    gFactoryResetAuthorized = false;
 
-    if (hasSavedCredentials)
+    if (keepActiveNetwork)
     {
-        drawBootScreen("Connecting saved", savedSsid.c_str(), nullptr);
-        if (connectWifiStation(savedSsid, savedPassword))
-            return;
-
-        // Saved credentials exist but failed: stay in setup mode so the user can fix Wi-Fi config.
-        startWifiSetupAp();
+        drawBootScreen("Wi-Fi ready", gConnectedSsid.c_str(), "Protected setup closed");
         return;
     }
 
-    const String fallbackSsid = WIFI_SSID;
-    const String fallbackPassword = WIFI_PASSWORD;
-    if (fallbackSsid.length() > 0)
+    drawBootScreen("Setup unavailable", "Hold BOOT for setup", "AP is off");
+}
+
+void connectWifiOrWaitForActivation()
+{
+    String savedSsid;
+    String savedPassword;
+    if (loadSavedWifiCredentials(&savedSsid, &savedPassword))
     {
-        drawBootScreen("Connecting default", fallbackSsid.c_str(), nullptr);
-        if (connectWifiStation(fallbackSsid, fallbackPassword))
+        drawBootScreen("Connecting saved", "Wi-Fi credentials", nullptr);
+        if (connectWifiStation(savedSsid, savedPassword))
         {
-            saveWifiCredentials(fallbackSsid, fallbackPassword);
+            drawListeningScreen("Wi-Fi client mode", gConnectedSsid.c_str(), WiFi.localIP().toString().c_str(),
+                static_cast<uint16_t>(kUdpPort));
             return;
         }
     }
 
-    startWifiSetupAp();
+    WiFi.mode(WIFI_OFF);
+    drawBootScreen("Waiting for activation", "Hold BOOT for 5 seconds", "AP is off");
 }
 
-String getCurrentIpString()
+void updateActivationButton()
 {
-    return gIsApMode ? WiFi.softAPIP().toString() : WiFi.localIP().toString();
+    const uint32_t nowMs = millis();
+    const bool pressed = digitalRead(kActivationButtonPin) == LOW;
+    if (!pressed)
+    {
+        gButtonPressedAtMs = 0;
+        gButtonLongActionHandled = false;
+        return;
+    }
+
+    if (gButtonPressedAtMs == 0)
+        gButtonPressedAtMs = nowMs;
+
+    const uint32_t heldMs = nowMs - gButtonPressedAtMs;
+    if (!gButtonLongActionHandled && heldMs >= kFactoryResetHoldMs)
+    {
+        gButtonLongActionHandled = true;
+        drawBootScreen("Owner approval required", "Factory reset is protected", "Release BOOT");
+        return;
+    }
+
+    if (!gButtonLongActionHandled && heldMs >= kActivationHoldMs)
+    {
+        gButtonLongActionHandled = true;
+        startProvisioningWindow();
+    }
 }
 
-void handleWifiStatus()
+esp_err_t handleProvisioningRequest(uint32_t, const uint8_t* input, ssize_t inputLength,
+    uint8_t** output, ssize_t* outputLength, void*)
 {
-    const wifi_mode_t mode = WiFi.getMode();
-    const char* modeText = "sta";
-    if (mode == WIFI_MODE_AP)
-        modeText = "ap";
-    else if (mode == WIFI_MODE_APSTA)
-        modeText = "ap+sta";
+    if (input == nullptr || inputLength < 1 || output == nullptr || outputLength == nullptr)
+        return ESP_ERR_INVALID_ARG;
 
-    String payload = "{";
-    payload += "\"mode\":\"";
-    payload += modeText;
-    payload += "\",\"ssid\":\"";
-    payload += gConnectedSsid;
-    payload += "\",\"ip\":\"";
-    payload += getCurrentIpString();
-    payload += "\",\"stationIp\":\"";
-    payload += WiFi.localIP().toString();
-    payload += "\",\"configApSsid\":\"";
-    payload += gConfigApSsid;
-    payload += "\",\"configApIp\":\"";
-    payload += WiFi.softAPIP().toString();
-    payload += "\",\"lastWifiStatusCode\":";
-    payload += String(gLastWifiStatus);
-    payload += ",\"lastWifiStatus\":\"";
-    payload += wifiStatusToText(gLastWifiStatus);
-    payload += "\",\"udpPort\":";
-    payload += String(kUdpPort);
-    payload += ",\"configPort\":";
-    payload += String(kConfigHttpPort);
-    payload += "}";
+    if (!provisioningState.SessionAuthenticated())
+        return ESP_ERR_INVALID_STATE;
 
-    server.send(200, "application/json", payload);
+    // RF-02 endpoint requests are deliberately bounded binary messages. The only
+    // implemented response is a redacted state snapshot; mutating operations fail
+    // closed until the owner-signature verifier is wired to the reviewed client contract.
+    if (input[0] != 0)
+        return ESP_ERR_NOT_SUPPORTED;
+
+    uint8_t* response = static_cast<uint8_t*>(std::malloc(4));
+    if (response == nullptr)
+        return ESP_ERR_NO_MEM;
+
+    response[0] = static_cast<uint8_t>(provisioningState.GetState());
+    response[1] = provisioningState.HasOwner() ? 1 : 0;
+    response[2] = provisioningState.HasActiveCredentials() ? 1 : 0;
+    response[3] = provisioningState.AuthenticationFailures();
+    *output = response;
+    *outputLength = 4;
+    return ESP_OK;
 }
 
 const char* wifiStatusToText(int status)
@@ -331,32 +404,6 @@ const char* wifiStatusToText(int status)
     }
 }
 
-void handleWifiConfigPost()
-{
-    String ssid = server.hasArg("ssid") ? server.arg("ssid") : String();
-    String password = server.hasArg("password") ? server.arg("password") : String();
-    ssid.trim();
-
-    if (ssid.length() == 0)
-    {
-        server.send(400, "application/json", "{\"ok\":false,\"message\":\"SSID is required.\"}");
-        return;
-    }
-
-    saveWifiCredentials(ssid, password);
-    server.send(200, "application/json", "{\"ok\":true,\"message\":\"Saved. Device will reboot.\"}");
-    delay(300);
-    ESP.restart();
-}
-
-void configureHttpApi()
-{
-    server.on("/api/wifi/status", HTTP_GET, handleWifiStatus);
-    server.on("/api/wifi/config", HTTP_POST, handleWifiConfigPost);
-    server.begin();
-    Serial.printf("Config API ready on :%u\r\n", static_cast<unsigned>(kConfigHttpPort));
-}
-
 void setup()
 {
     Serial.begin(kDiagnosticSerialBaud);
@@ -373,6 +420,7 @@ void setup()
     tft.setRotation(0);
     tft.setSwapBytes(true);
     splashStatic();
+    pinMode(kActivationButtonPin, INPUT_PULLUP);
 
     const size_t psram = ESP.getPsramSize();
     Serial.printf("PSRAM: %zu bytes\r\n", static_cast<size_t>(psram));
@@ -386,8 +434,8 @@ void setup()
         return;
     }
 
-    connectWifiOrEnterSetupMode();
-    configureHttpApi();
+    loadOwnerBinding();
+    connectWifiOrWaitForActivation();
 
     if (!udp.begin(kUdpPort))
     {
@@ -397,20 +445,7 @@ void setup()
     }
 
     gUdpReady = true;
-    const String ip = getCurrentIpString();
-    if (!gIsApMode)
-    {
-        Serial.print(F("Wi-Fi OK, IP address: "));
-        Serial.println(ip);
-    }
-    else
-    {
-        Serial.print(F("AP mode IP address: "));
-        Serial.println(ip);
-    }
     Serial.printf("UDP frame port: %u\r\n", static_cast<unsigned>(kUdpPort));
-        const char* modeText = gIsApMode ? "AP Setup Mode" : "Wi-Fi Client Mode";
-        drawListeningScreen(modeText, gConnectedSsid.c_str(), ip.c_str(), static_cast<uint16_t>(kUdpPort));
 }
 
 void resetCapture()
@@ -439,7 +474,17 @@ void presentCapturedFrameIfAny()
 
 void loop()
 {
-    server.handleClient();
+    updateActivationButton();
+    provisioningState.Tick(millis());
+    const auto state = provisioningState.GetState();
+    if (provisioningTransport.IsRunning()
+        && state != MobaDisplay::Provisioning::State::WindowOpen
+        && state != MobaDisplay::Provisioning::State::PendingConnection
+        && state != MobaDisplay::Provisioning::State::AwaitingHandover
+        && state != MobaDisplay::Provisioning::State::PromotionPending)
+    {
+        closeProvisioningWindow(provisioningState.HasActiveCredentials());
+    }
 
     if (!gUdpReady)
     {

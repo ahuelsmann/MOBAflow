@@ -1,0 +1,20 @@
+idf_component_register(
+    SRCS
+        "main.cpp"
+        "../lib/MobaUdpPacketParser/src/UdpPacketParser.cpp"
+        "../lib/MobaProvisioning/src/ProvisioningState.cpp"
+        "../lib/MobaProvisioning/src/Security2Transport.cpp"
+        "../lib/TFT_eSPI/TFT_eSPI.cpp"
+    INCLUDE_DIRS
+        "."
+        "../lib/MobaUdpPacketParser/src"
+        "../lib/MobaProvisioning/src"
+        "../lib/TFT_eSPI"
+    REQUIRES
+        arduino-esp32
+        esp_event
+        esp_netif
+        esp_wifi
+        nvs_flash
+        protocomm
+)
