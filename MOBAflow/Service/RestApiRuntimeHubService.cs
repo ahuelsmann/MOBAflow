@@ -4,7 +4,6 @@ namespace Moba.WinUI.Service;
 
 using Backend.Interface;
 
-using Common.Configuration;
 using Common.Events;
 using Common.Runtime;
 
@@ -25,8 +24,6 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
     private readonly IRuntimeHubHostClient _runtimeHubHostClient;
     private readonly IMobaRuntime _mobaRuntime;
     private readonly IEventBus _eventBus;
-    private readonly AppSettings _appSettings;
-    private readonly HttpClient _httpClient;
     private readonly ILogger<RestApiRuntimeHubService> _logger;
     private readonly HostControlPlaneSession? _hostSession;
     private readonly object _debounceLock = new();
@@ -89,16 +86,12 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
         IRuntimeHubHostClient runtimeHubHostClient,
         IMobaRuntime mobaRuntime,
         IEventBus eventBus,
-        AppSettings appSettings,
-        IHttpClientFactory httpClientFactory,
         ILogger<RestApiRuntimeHubService> logger,
         HostControlPlaneSession? hostSession = null)
     {
         _runtimeHubHostClient = runtimeHubHostClient;
         _mobaRuntime = mobaRuntime;
         _eventBus = eventBus;
-        _appSettings = appSettings;
-        _httpClient = httpClientFactory.CreateClient(nameof(RestApiRuntimeHubService));
         _logger = logger;
         _hostSession = hostSession;
         _subscriptionId = _eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged);

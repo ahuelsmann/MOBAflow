@@ -4,7 +4,6 @@ namespace Moba.WinUI.Service;
 
 using Backend.Interface;
 
-using Common.Configuration;
 using Common.Runtime;
 
 using Domain;
@@ -17,8 +16,6 @@ using Microsoft.Extensions.Logging;
 public sealed class RestApiRuntimeCommandConsumerService : IDisposable
 {
     private readonly IMobaRuntime _mobaRuntime;
-    private readonly AppSettings _appSettings;
-    private readonly HttpClient _httpClient;
     private readonly ILogger<RestApiRuntimeCommandConsumerService> _logger;
     private readonly HostControlPlaneSession? _hostSession;
     private readonly PeriodicTimer _timer;
@@ -27,14 +24,10 @@ public sealed class RestApiRuntimeCommandConsumerService : IDisposable
 
     public RestApiRuntimeCommandConsumerService(
         IMobaRuntime mobaRuntime,
-        AppSettings appSettings,
-        IHttpClientFactory httpClientFactory,
         ILogger<RestApiRuntimeCommandConsumerService> logger,
         HostControlPlaneSession? hostSession = null)
     {
         _mobaRuntime = mobaRuntime;
-        _appSettings = appSettings;
-        _httpClient = httpClientFactory.CreateClient(nameof(RestApiRuntimeCommandConsumerService));
         _logger = logger;
         _hostSession = hostSession;
         _timer = new PeriodicTimer(TimeSpan.FromMilliseconds(500));

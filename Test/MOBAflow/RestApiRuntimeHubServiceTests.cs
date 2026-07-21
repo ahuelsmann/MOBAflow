@@ -31,19 +31,10 @@ internal sealed class RestApiRuntimeHubServiceTests
             .Returns(MobaRuntimeSnapshot.Empty);
 
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        var requestHandler = new CountingHttpMessageHandler();
-        using var httpClient = new HttpClient(requestHandler);
-        var httpClientFactory = new Mock<IHttpClientFactory>();
-        httpClientFactory
-            .Setup(factory => factory.CreateClient(nameof(RestApiRuntimeHubService)))
-            .Returns(httpClient);
-
         var service = new RestApiRuntimeHubService(
             runtimeHubHostClient.Object,
             mobaRuntime.Object,
             eventBus,
-            new AppSettings(),
-            httpClientFactory.Object,
             NullLogger<RestApiRuntimeHubService>.Instance);
 
         eventBus.Publish(new RuntimeSnapshotChangedEvent(MobaRuntimeSnapshot.Empty));
@@ -56,7 +47,6 @@ internal sealed class RestApiRuntimeHubServiceTests
         Assert.Multiple(() =>
         {
             Assert.That(eventBus.GetSubscriberCount<RuntimeSnapshotChangedEvent>(), Is.Zero);
-            Assert.That(requestHandler.RequestCount, Is.Zero);
         });
         runtimeHubHostClient.Verify(client => client.DisconnectAsync(), Times.Once);
     }
@@ -76,19 +66,6 @@ internal sealed class RestApiRuntimeHubServiceTests
             Assert.That(services.AsyncDisposeCount, Is.EqualTo(1));
             Assert.That(services.SyncDisposeCount, Is.Zero);
         });
-    }
-
-    private sealed class CountingHttpMessageHandler : HttpMessageHandler
-    {
-        public int RequestCount { get; private set; }
-
-        protected override Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request,
-            CancellationToken cancellationToken)
-        {
-            RequestCount++;
-            return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK));
-        }
     }
 
     private sealed class TrackingServiceProvider : IServiceProvider, IDisposable, IAsyncDisposable

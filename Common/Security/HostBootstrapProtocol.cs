@@ -75,7 +75,7 @@ public sealed class HostBootstrapParentChannel : IAsyncDisposable
         var request = new HostBootstrapPipeRequest(_secret, Environment.ProcessId);
         await JsonSerializer.SerializeAsync(_requestPipe, request, cancellationToken: cancellationToken).ConfigureAwait(false);
         await _requestPipe.FlushAsync(cancellationToken).ConfigureAwait(false);
-        _requestPipe.Dispose();
+        await _requestPipe.DisposeAsync().ConfigureAwait(false);
 
         var response = await JsonSerializer.DeserializeAsync<HostBootstrapPipeResponse>(
             _responsePipe,
@@ -136,7 +136,7 @@ public sealed class HostBootstrapChildChannel : IAsyncDisposable
     {
         await JsonSerializer.SerializeAsync(_responsePipe, response, cancellationToken: cancellationToken).ConfigureAwait(false);
         await _responsePipe.FlushAsync(cancellationToken).ConfigureAwait(false);
-        _responsePipe.Dispose();
+        await _responsePipe.DisposeAsync().ConfigureAwait(false);
     }
 
     public async ValueTask DisposeAsync()
