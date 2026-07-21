@@ -294,8 +294,22 @@ public sealed class InterlockingDefinitionValidator : IInterlockingDefinitionVal
         AddMissingReferences(route.Id, route.PathElementIds, operationalIds, "route.path.missing", findings);
         AddDuplicateIds(route.Id, route.ProtectedBlockIds, "route.block.duplicate", findings);
         AddMissingReferences(route.Id, route.ProtectedBlockIds, definition.Blocks.Select(block => block.Id).ToHashSet(), "route.block.missing", findings);
-        AddDuplicateIds(route.Id, route.ProtectedSignalIds, "route.signal.duplicate", findings);
-        AddMissingReferences(route.Id, route.ProtectedSignalIds, definition.Signals.Select(signal => signal.Id).ToHashSet(), "route.signal.missing", findings);
+        AddDuplicateIds(route.Id, route.SignalRequirements.Select(requirement => requirement.SignalId), "route.signal.duplicate", findings);
+        AddMissingReferences(
+            route.Id,
+            route.SignalRequirements.Select(requirement => requirement.SignalId),
+            definition.Signals.Select(signal => signal.Id).ToHashSet(),
+            "route.signal.missing",
+            findings);
+        var signals = definition.Signals.ToDictionary(signal => signal.Id);
+        foreach (var requirement in route.SignalRequirements)
+        {
+            if (!Enum.IsDefined(requirement.ProceedAspect))
+                Add(findings, "route.signal.aspect.invalid", route.Id, "A route signal requirement contains an unknown proceed aspect.", [requirement.SignalId]);
+            else if (signals.TryGetValue(requirement.SignalId, out var signal)
+                     && requirement.ProceedAspect == signal.SafeAspect)
+                Add(findings, "route.signal.proceed.safe", route.Id, "A route proceed aspect must differ from the signal's safe stop aspect.", [requirement.SignalId]);
+        }
         AddDuplicateIds(route.Id, route.ConflictingRouteIds, "route.conflict.duplicate", findings);
         AddMissingReferences(route.Id, route.ConflictingRouteIds, routeIds, "route.conflict.missing", findings);
 

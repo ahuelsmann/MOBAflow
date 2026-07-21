@@ -5,6 +5,8 @@ namespace Moba.Backend.Service;
 using Domain;
 using Domain.Enum;
 
+using Validation;
+
 using Microsoft.Extensions.Logging;
 
 using System.Text;
@@ -29,15 +31,21 @@ public interface IProjectValidator
 public class ProjectValidator : IProjectValidator
 {
     private readonly ILogger<ProjectValidator> _logger;
+    private readonly IInterlockingDefinitionValidator _interlockingValidator;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ProjectValidator"/> class.
     /// </summary>
     /// <param name="logger">Logger used for diagnostic output during validation.</param>
-    public ProjectValidator(ILogger<ProjectValidator> logger)
+    /// <param name="interlockingValidator">Validator for the shared operational definition.</param>
+    public ProjectValidator(
+        ILogger<ProjectValidator> logger,
+        IInterlockingDefinitionValidator interlockingValidator)
     {
         ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(interlockingValidator);
         _logger = logger;
+        _interlockingValidator = interlockingValidator;
     }
 
     /// <summary>
@@ -139,6 +147,19 @@ public class ProjectValidator : IProjectValidator
         {
             result.AddInfo($"[{projectName}] Signal Box Plan defined");
         }
+
+        var interlockingReport = _interlockingValidator.Validate(project);
+        foreach (var finding in interlockingReport.Findings)
+        {
+            var message = $"[{projectName}/Interlocking/{finding.Code}] {finding.Message}";
+            if (finding.Severity == InterlockingValidationSeverity.Error)
+                result.AddError(message);
+            else
+                result.AddWarning(message);
+        }
+
+        if (interlockingReport.IsValid)
+            result.AddInfo($"[{projectName}] Interlocking definition valid");
     }
 
     private static void ValidateFeedbackSequence(Project project, Journey journey, string projectName, ProjectValidationResult result)

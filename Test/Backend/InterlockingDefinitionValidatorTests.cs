@@ -77,6 +77,36 @@ internal sealed class InterlockingDefinitionValidatorTests
             Is.SupersetOf(new[] { "route.path.disconnected", "block.feedback.clear.missing" }));
     }
 
+    [Test]
+    public void Validate_InvalidRouteSignalRequirements_ReturnsActionableFindings()
+    {
+        var project = CreateValidProject();
+        var route = project.Interlocking.Routes.Single();
+        var signalRequirement = route.SignalRequirements.Single();
+        signalRequirement.ProceedAspect = SignalAspect.Hp0;
+        route.SignalRequirements.Add(new RouteSignalRequirement
+        {
+            SignalId = signalRequirement.SignalId,
+            ProceedAspect = SignalAspect.Ks1
+        });
+        route.SignalRequirements.Add(new RouteSignalRequirement
+        {
+            SignalId = Guid.Parse("00000000-0000-0000-0000-000000000099"),
+            ProceedAspect = SignalAspect.Ks1
+        });
+
+        var report = _validator.Validate(project);
+
+        Assert.That(
+            report.Findings.Select(finding => finding.Code),
+            Is.SupersetOf(new[]
+            {
+                "route.signal.duplicate",
+                "route.signal.missing",
+                "route.signal.proceed.safe"
+            }));
+    }
+
     private static Project CreateValidProject()
     {
         var turnoutId = Guid.Parse("00000000-0000-0000-0000-000000000001");
@@ -171,7 +201,14 @@ internal sealed class InterlockingDefinitionValidatorTests
                             }
                         ],
                         ProtectedBlockIds = [blockId],
-                        ProtectedSignalIds = [signalId]
+                        SignalRequirements =
+                        [
+                            new RouteSignalRequirement
+                            {
+                                SignalId = signalId,
+                                ProceedAspect = SignalAspect.Ks1
+                            }
+                        ]
                     }
                 ],
                 Bindings =

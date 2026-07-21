@@ -167,7 +167,7 @@ public sealed class RouteDefinition
 
     public List<Guid> ProtectedBlockIds { get; set; } = [];
 
-    public List<Guid> ProtectedSignalIds { get; set; } = [];
+    public List<RouteSignalRequirement> SignalRequirements { get; set; } = [];
 
     public List<Guid> ConflictingRouteIds { get; set; } = [];
 }
@@ -180,6 +180,16 @@ public sealed class RouteTurnoutRequirement
     public Guid TurnoutId { get; set; }
 
     public TurnoutPosition Position { get; set; }
+}
+
+/// <summary>
+/// Configured proceed aspect for one signal protected by a route.
+/// </summary>
+public sealed class RouteSignalRequirement
+{
+    public Guid SignalId { get; set; }
+
+    public SignalAspect ProceedAspect { get; set; }
 }
 
 /// <summary>

@@ -4,7 +4,7 @@ namespace Moba.Domain;
 using System.Text.Json.Serialization;
 
 /// <summary>
-/// SignalBoxPlan (track diagram) - Aggregate Root for railway interlocking topology.
+/// SignalBoxPlan (track diagram) - Aggregate root for the logical signal-box presentation.
 /// Provides validated mutation methods (AddElement, RemoveElement, etc.) that enforce
 /// invariants such as cell uniqueness, referential integrity, and cascading deletes.
 /// Symbol-based approach following DB (Deutsche Bahn) standards.
@@ -38,12 +38,6 @@ public class SignalBoxPlan
     /// </summary>
     public List<SignalBoxConnection> Connections { get; set; } = [];
 
-    /// <summary>
-    /// Routes defined for this plan.
-    /// Prefer AddRoute/RemoveRoute for validated mutations.
-    /// </summary>
-    public List<SignalBoxRoute> Routes { get; set; } = [];
-
     // ═══════════════════════════════════════════════════════════════════════
     // Aggregate Methods - Validated mutations with invariant protection
     // ═══════════════════════════════════════════════════════════════════════
@@ -68,7 +62,7 @@ public class SignalBoxPlan
     }
 
     /// <summary>
-    /// Removes an element and cascades deletion to all connections and routes referencing it.
+    /// Removes an element and cascades deletion to all connections referencing it.
     /// </summary>
     /// <param name="elementId">The ID of the element to remove</param>
     /// <returns>True if the element was found and removed, false otherwise</returns>
@@ -82,13 +76,6 @@ public class SignalBoxPlan
 
         // Cascade: remove all connections referencing this element
         Connections.RemoveAll(c => c.FromElementId == elementId || c.ToElementId == elementId);
-
-        // Cascade: remove routes that reference this element
-        Routes.RemoveAll(r =>
-            r.StartSignalId == elementId ||
-            r.EndSignalId == elementId ||
-            r.ElementIds.Contains(elementId) ||
-            r.SwitchPositions.ContainsKey(elementId));
 
         return true;
     }
@@ -143,70 +130,12 @@ public class SignalBoxPlan
     }
 
     /// <summary>
-    /// Adds a route to the plan. Validates that start/end signals exist and are SbSignal elements,
-    /// and that all referenced elements and switches exist.
-    /// </summary>
-    /// <param name="route">The route to add</param>
-    /// <exception cref="ArgumentNullException">Thrown when route is null</exception>
-    /// <exception cref="InvalidOperationException">Thrown when referenced elements are missing or invalid</exception>
-    public void AddRoute(SignalBoxRoute route)
-    {
-        ArgumentNullException.ThrowIfNull(route);
-
-        if (FindElement(route.StartSignalId) is not SbSignal)
-        {
-            throw new InvalidOperationException(
-                $"Start signal {route.StartSignalId} does not exist or is not a signal element.");
-        }
-
-        if (FindElement(route.EndSignalId) is not SbSignal)
-        {
-            throw new InvalidOperationException(
-                $"End signal {route.EndSignalId} does not exist or is not a signal element.");
-        }
-
-        var missingElementIds = route.ElementIds
-            .Where(id => !ElementExists(id))
-            .ToList();
-
-        if (missingElementIds.Count > 0)
-        {
-            throw new InvalidOperationException(
-                $"Route references non-existent elements: {string.Join(", ", missingElementIds)}");
-        }
-
-        var missingSwitchIds = route.SwitchPositions.Keys
-            .Where(id => FindElement(id) is not SbSwitch)
-            .ToList();
-
-        if (missingSwitchIds.Count > 0)
-        {
-            throw new InvalidOperationException(
-                $"Route references non-existent or non-switch elements for switch positions: {string.Join(", ", missingSwitchIds)}");
-        }
-
-        Routes.Add(route);
-    }
-
-    /// <summary>
-    /// Removes a route by its ID.
-    /// </summary>
-    /// <param name="routeId">The ID of the route to remove</param>
-    /// <returns>True if the route was found and removed, false otherwise</returns>
-    public bool RemoveRoute(Guid routeId)
-    {
-        var route = Routes.FirstOrDefault(r => r.Id == routeId);
-        return route is not null && Routes.Remove(route);
-    }
-
-    /// <summary>
-    /// Removes all elements, connections, and routes from the plan.
+    /// Removes all elements and connections from the plan.
     /// </summary>
     public void Clear()
     {
         Elements.Clear();
         Connections.Clear();
-        Routes.Clear();
     }
 
     private bool ElementExists(Guid elementId)
@@ -280,6 +209,7 @@ public abstract record SbElement
     public string Name { get; set; } = string.Empty;
 
     /// <summary>Current state of the element (free, occupied, route set).</summary>
+    [JsonIgnore]
     public SignalBoxElementState State { get; set; } = SignalBoxElementState.Free;
 }
 
@@ -303,6 +233,7 @@ public sealed record SbSwitch : SbElement
     public int Address { get; set; }
 
     /// <summary>Current switch position.</summary>
+    [JsonIgnore]
     public SwitchPosition SwitchPosition { get; set; } = SwitchPosition.Straight;
 }
 
@@ -316,6 +247,7 @@ public sealed record SbSignal : SbElement
     public SignalSystemType SignalSystem { get; set; } = SignalSystemType.Ks;
 
     /// <summary>Current signal aspect (traditional aspect-based display).</summary>
+    [JsonIgnore]
     public SignalAspect SignalAspect { get; set; } = SignalAspect.Hp0;
 
     /// <summary>
@@ -379,7 +311,7 @@ public sealed record SbSignal : SbElement
     /// Last computed turnout activation (1 = green (+), 0 = red (-)).
     /// This is derived from the multiplexer mapping for status display.
     /// </summary>
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    [JsonIgnore]
     public int ExtendedAccessoryValue { get; set; } = 0;
 }
 
@@ -417,43 +349,6 @@ public class SignalBoxConnection
     /// Target connection point (directional).
     /// </summary>
     public ConnectionPointDirection ToDirection { get; set; } = ConnectionPointDirection.North;
-}
-
-/// <summary>
-/// A route in the signal box.
-/// </summary>
-public class SignalBoxRoute
-{
-    /// <summary>
-    /// Gets or sets the unique identifier of the route.
-    /// </summary>
-    public Guid Id { get; set; } = Guid.NewGuid();
-
-    /// <summary>
-    /// Route name (e.g., "F1" for route 1).
-    /// </summary>
-    public string Name { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Start signal ID.
-    /// </summary>
-    public Guid StartSignalId { get; set; }
-
-    /// <summary>
-    /// End signal or destination ID.
-    /// </summary>
-    public Guid EndSignalId { get; set; }
-
-    /// <summary>
-    /// List of element IDs that are part of this route.
-    /// </summary>
-    public List<Guid> ElementIds { get; set; } = [];
-
-    /// <summary>
-    /// Switch positions required for this route.
-    /// Key: Switch element ID, Value: Position (Straight/Diverging).
-    /// </summary>
-    public Dictionary<Guid, SwitchPosition> SwitchPositions { get; set; } = [];
 }
 
 /// <summary>

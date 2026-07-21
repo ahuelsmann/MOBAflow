@@ -59,19 +59,27 @@ User gets a clear error message
 
 ### Current
 
-**Constant:** `Solution.CurrentSchemaVersion = 3`
+**Constant:** `Solution.CurrentSchemaVersion = 4`
 
 ### JSON example
 
 ```json
 {
   "name": "My Model Railroad",
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "projects": [
     {
       "name": "Main Project",
       "workflows": [],
-      "trains": []
+      "trains": [],
+      "interlocking": {
+        "turnouts": [],
+        "signals": [],
+        "blocks": [],
+        "connections": [],
+        "routes": [],
+        "bindings": []
+      }
     }
   ]
 }
@@ -166,7 +174,7 @@ if (requiredSchemaVersion.HasValue)
 ```text
 ❌ Missing required property: 'schemaVersion'.
 ❌ Schema version must be a number.
-❌ Incompatible schema version. Expected 3, found 999.
+❌ Incompatible schema version. Expected 4, found 999.
 ```
 
 ### 6. Project structure

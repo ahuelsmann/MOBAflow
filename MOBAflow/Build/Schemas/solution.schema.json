@@ -3,19 +3,20 @@
   "title": "MOBAflow Solution Schema (Complete)",
   "description": "Complete JSON Schema for MOBAflow projects - ensures all Domain model types are represented",
   "type": "object",
-  "required": ["name", "projects"],
+  "required": ["name", "projects", "schemaVersion"],
   "properties": {
     "name": {
       "type": "string",
       "minLength": 1,
       "maxLength": 256
     },
+    "schemaVersion": { "const": 4 },
     "projects": {
       "type": "array",
       "minItems": 1,
       "items": {
         "type": "object",
-        "required": ["name"],
+        "required": ["name", "interlocking"],
         "properties": {
           "name": { "type": "string", "minLength": 1 },
           
@@ -210,12 +211,216 @@
           "signalBoxPlan": {
             "type": ["object", "null"],
             "description": "Signal box plan (electronic signal box - MOBAesb)"
+          },
+
+          "interlocking": {
+            "$ref": "#/definitions/interlockingDefinition"
           }
         }
       }
     }
   },
   "definitions": {
+    "interlockingDefinition": {
+      "type": "object",
+      "required": ["turnouts", "signals", "blocks", "connections", "routes", "bindings"],
+      "properties": {
+        "turnouts": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/turnoutDefinition" }
+        },
+        "signals": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/interlockingSignalDefinition" }
+        },
+        "blocks": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/blockDefinition" }
+        },
+        "connections": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/operationalConnection" }
+        },
+        "routes": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/routeDefinition" }
+        },
+        "bindings": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/operationalBinding" }
+        }
+      }
+    },
+    "turnoutDefinition": {
+      "type": "object",
+      "required": ["id", "name", "decoderAddress", "kind", "commands", "confirmations"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string", "minLength": 1 },
+        "decoderAddress": { "type": "integer", "minimum": 1, "maximum": 2044 },
+        "kind": { "enum": ["TwoWay", "ThreeWay"] },
+        "commands": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["position", "commands"],
+            "properties": {
+              "position": { "$ref": "#/definitions/turnoutPosition" },
+              "commands": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["addressOffset", "output", "activate", "queue"],
+                  "properties": {
+                    "addressOffset": { "type": "integer", "minimum": 0 },
+                    "output": { "type": "integer", "minimum": 0, "maximum": 1 },
+                    "activate": { "type": "boolean" },
+                    "queue": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "confirmations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["position", "conditions"],
+            "properties": {
+              "position": { "$ref": "#/definitions/turnoutPosition" },
+              "conditions": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["functionAddress", "outputPosition"],
+                  "properties": {
+                    "functionAddress": { "type": "integer", "minimum": 1, "maximum": 2044 },
+                    "outputPosition": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "interlockingSignalDefinition": {
+      "type": "object",
+      "required": ["id", "name", "safeAspect", "signalSystem", "isMultiplexed", "baseAddress"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string", "minLength": 1 },
+        "safeAspect": { "$ref": "#/definitions/signalAspect" },
+        "signalSystem": { "enum": ["Ks", "Hv", "Hl", "Form", "Sv"] },
+        "isMultiplexed": { "type": "boolean" },
+        "multiplexerArticleNumber": { "type": ["string", "null"] },
+        "mainSignalArticleNumber": { "type": ["string", "null"] },
+        "distantSignalArticleNumber": { "type": ["string", "null"] },
+        "baseAddress": { "type": "integer", "minimum": 1, "maximum": 2044 }
+      }
+    },
+    "blockDefinition": {
+      "type": "object",
+      "required": ["id", "name", "direction", "boundaryElementIds", "feedbackInputs"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string", "minLength": 1 },
+        "direction": { "enum": ["Bidirectional", "Forward", "Reverse"] },
+        "boundaryElementIds": {
+          "type": "array",
+          "items": { "type": "string", "format": "uuid" }
+        },
+        "feedbackInputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["inPort", "role", "activeState"],
+            "properties": {
+              "inPort": { "type": "integer", "minimum": 1, "maximum": 512 },
+              "role": { "enum": ["Occupied", "Clear"] },
+              "activeState": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    },
+    "operationalConnection": {
+      "type": "object",
+      "required": ["fromOperationalId", "toOperationalId", "isBidirectional"],
+      "properties": {
+        "fromOperationalId": { "type": "string", "format": "uuid" },
+        "toOperationalId": { "type": "string", "format": "uuid" },
+        "isBidirectional": { "type": "boolean" }
+      }
+    },
+    "routeDefinition": {
+      "type": "object",
+      "required": ["id", "name", "entryElementId", "exitElementId", "pathElementIds", "turnoutRequirements", "protectedBlockIds", "signalRequirements", "conflictingRouteIds"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string", "minLength": 1 },
+        "entryElementId": { "type": "string", "format": "uuid" },
+        "exitElementId": { "type": "string", "format": "uuid" },
+        "pathElementIds": {
+          "type": "array",
+          "items": { "type": "string", "format": "uuid" }
+        },
+        "turnoutRequirements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["turnoutId", "position"],
+            "properties": {
+              "turnoutId": { "type": "string", "format": "uuid" },
+              "position": { "$ref": "#/definitions/turnoutPosition" }
+            }
+          }
+        },
+        "protectedBlockIds": {
+          "type": "array",
+          "items": { "type": "string", "format": "uuid" }
+        },
+        "signalRequirements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["signalId", "proceedAspect"],
+            "properties": {
+              "signalId": { "type": "string", "format": "uuid" },
+              "proceedAspect": { "$ref": "#/definitions/signalAspect" }
+            }
+          }
+        },
+        "conflictingRouteIds": {
+          "type": "array",
+          "items": { "type": "string", "format": "uuid" }
+        }
+      }
+    },
+    "operationalBinding": {
+      "type": "object",
+      "required": ["operationalId", "trackSegmentIds", "signalBoxElementIds"],
+      "properties": {
+        "operationalId": { "type": "string", "format": "uuid" },
+        "trackSegmentIds": {
+          "type": "array",
+          "items": { "type": "string", "format": "uuid" }
+        },
+        "signalBoxElementIds": {
+          "type": "array",
+          "items": { "type": "string", "format": "uuid" }
+        }
+      }
+    },
+    "signalAspect": {
+      "enum": ["Hp0", "Ks1", "Ks2", "Ks1Blink", "Kennlicht", "Dunkel", "Ra12", "Zs1", "Zs7"]
+    },
+    "turnoutPosition": {
+      "enum": ["Straight", "DivergingLeft", "DivergingRight"]
+    },
     "vehicleUsage": {
       "type": "object",
       "required": ["trackedOperatingSeconds", "trackedCompletedTrips", "corrections"],

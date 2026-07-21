@@ -39,11 +39,15 @@ public interface IProjectDiagnosticsService
 /// Aggregates platform-neutral project validation into one structured output model.
 /// Additional page-specific analyzers can be composed here without coupling the shell to those pages.
 /// </summary>
-public sealed class ProjectDiagnosticsService(IDigitalAddressConflictDetector addressDetector)
+public sealed class ProjectDiagnosticsService(
+    IDigitalAddressConflictDetector addressDetector,
+    IInterlockingDefinitionValidator interlockingValidator)
     : IProjectDiagnosticsService
 {
     private readonly IDigitalAddressConflictDetector _addressDetector =
         addressDetector ?? throw new ArgumentNullException(nameof(addressDetector));
+    private readonly IInterlockingDefinitionValidator _interlockingValidator =
+        interlockingValidator ?? throw new ArgumentNullException(nameof(interlockingValidator));
 
     public IReadOnlyList<ProjectDiagnostic> Analyze(Project? project)
     {
@@ -52,7 +56,7 @@ public sealed class ProjectDiagnosticsService(IDigitalAddressConflictDetector ad
 
         var diagnostics = new List<ProjectDiagnostic>();
         AddAddressDiagnostics(project, diagnostics);
-        AddSignalBoxFeedbackDiagnostics(project, diagnostics);
+        AddInterlockingDiagnostics(project, diagnostics);
         AddTrackPlanFeedbackDiagnostics(project, diagnostics);
 
         return diagnostics
@@ -85,21 +89,20 @@ public sealed class ProjectDiagnosticsService(IDigitalAddressConflictDetector ad
         }
     }
 
-    private static void AddSignalBoxFeedbackDiagnostics(
+    private void AddInterlockingDiagnostics(
         Project project,
         List<ProjectDiagnostic> diagnostics)
     {
-        foreach (var detector in project.SignalBoxPlan?.Elements.OfType<SbDetector>() ?? [])
+        foreach (var finding in _interlockingValidator.Validate(project).Findings)
         {
-            if (detector.FeedbackAddress != 0)
-                continue;
-
             diagnostics.Add(new ProjectDiagnostic(
-                $"signal-box:feedback:missing:{detector.Id:N}",
-                ProjectDiagnosticSeverity.Error,
-                "Signal box",
-                $"Feedback point '{detector.Name}' has no InPort assigned.",
-                [detector.Id]));
+                $"interlocking:{finding.Id}",
+                finding.Severity == InterlockingValidationSeverity.Error
+                    ? ProjectDiagnosticSeverity.Error
+                    : ProjectDiagnosticSeverity.Warning,
+                "Interlocking",
+                finding.Message,
+                new[] { finding.EntityId }.Concat(finding.RelatedIds).Distinct().Order().ToArray()));
         }
     }
 
@@ -140,8 +143,8 @@ public sealed class ProjectDiagnosticsService(IDigitalAddressConflictDetector ad
     private static string SourceFor(DigitalAddressDomain domain) => domain switch
     {
         DigitalAddressDomain.Locomotive => "Locomotives",
-        DigitalAddressDomain.Accessory => "Signal box",
-        DigitalAddressDomain.Feedback => "Signal box",
+        DigitalAddressDomain.Accessory => "Interlocking",
+        DigitalAddressDomain.Feedback => "Interlocking",
         _ => "Project"
     };
 

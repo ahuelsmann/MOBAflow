@@ -84,7 +84,12 @@ public static class InterlockingConflictAnalyzer
             reasons.Add(RouteConflictReason.Explicit);
 
         AddShared(first.ProtectedBlockIds, second.ProtectedBlockIds, RouteConflictReason.SharedBlock, reasons, resources);
-        AddShared(first.ProtectedSignalIds, second.ProtectedSignalIds, RouteConflictReason.SharedSignal, reasons, resources);
+        AddShared(
+            first.SignalRequirements.Select(requirement => requirement.SignalId),
+            second.SignalRequirements.Select(requirement => requirement.SignalId),
+            RouteConflictReason.SharedSignal,
+            reasons,
+            resources);
 
         var firstPath = new[] { first.EntryElementId }.Concat(first.PathElementIds).Append(first.ExitElementId);
         var secondPath = new[] { second.EntryElementId }.Concat(second.PathElementIds).Append(second.ExitElementId);

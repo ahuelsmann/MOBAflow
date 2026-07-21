@@ -25,6 +25,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
     private readonly ILogger<MobaRuntimeService> _logger;
     private readonly IEventBus? _eventBus;
     private readonly IZ21DiscoveryService _z21Discovery;
+    private readonly IInterlockingRuntime? _interlockingRuntime;
 
     private ActiveProjectContext? _activeProjectContext;
     private Timer? _z21AutoConnectTimer;
@@ -71,8 +72,16 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         ActionExecutionContext executionContext,
         AppSettings settings,
         ILogger<MobaRuntimeService> logger,
-        IEventBus? eventBus = null)
-        : this(z21, workflowService, new ActionExecutionContextFactory(executionContext), settings, logger, eventBus)
+        IEventBus? eventBus = null,
+        IInterlockingRuntime? interlockingRuntime = null)
+        : this(
+            z21,
+            workflowService,
+            new ActionExecutionContextFactory(executionContext),
+            settings,
+            logger,
+            eventBus,
+            interlockingRuntime: interlockingRuntime)
     {
     }
 
@@ -84,7 +93,8 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         ILogger<MobaRuntimeService> logger,
         IEventBus? eventBus = null,
         JourneyManagerFactory? journeyManagerFactory = null,
-        IZ21DiscoveryService? z21Discovery = null)
+        IZ21DiscoveryService? z21Discovery = null,
+        IInterlockingRuntime? interlockingRuntime = null)
     {
         ArgumentNullException.ThrowIfNull(z21);
         ArgumentNullException.ThrowIfNull(workflowService);
@@ -100,6 +110,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         _logger = logger;
         _eventBus = eventBus;
         _z21Discovery = z21Discovery ?? new NullZ21DiscoveryService();
+        _interlockingRuntime = interlockingRuntime;
 
         _z21.OnConnectedChanged += OnZ21ConnectedChanged;
         _z21.OnConnectionLost += OnZ21ConnectionLost;

@@ -71,6 +71,8 @@ public sealed record RouteRuntimeState(
 /// </summary>
 public sealed record InterlockingRuntimeState
 {
+    public static InterlockingRuntimeState Empty { get; } = Create(0, [], [], [], [], []);
+
     public required long Revision { get; init; }
 
     public required IReadOnlyDictionary<Guid, TurnoutRuntimeState> Turnouts { get; init; }

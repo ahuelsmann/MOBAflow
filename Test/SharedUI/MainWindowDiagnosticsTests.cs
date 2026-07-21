@@ -28,13 +28,14 @@ internal sealed class MainWindowDiagnosticsTests
                 new Locomotive { Name = "One", DigitalAddress = 9 },
                 new Locomotive { Name = "Two", DigitalAddress = 9 }
             ],
-            SignalBoxPlan = new SignalBoxPlan
+            Interlocking = new InterlockingDefinition
             {
-                Elements = [new SbDetector { Name = "Missing", FeedbackAddress = 0 }]
+                Blocks = [CreateBlockWithMissingClearObservation()]
             }
         };
         var diagnostics = new ProjectDiagnosticsService(
-            new DigitalAddressConflictDetector(new DefaultMultiplexerProvider()));
+            new DigitalAddressConflictDetector(new DefaultMultiplexerProvider()),
+            new InterlockingDefinitionValidator());
         var viewModel = CreateViewModel(new Solution { Projects = [project] }, diagnostics);
 
         Assert.Multiple(() =>
@@ -59,13 +60,11 @@ internal sealed class MainWindowDiagnosticsTests
     {
         var project = new Project { Name = "Test" };
         var diagnostics = new ProjectDiagnosticsService(
-            new DigitalAddressConflictDetector(new DefaultMultiplexerProvider()));
+            new DigitalAddressConflictDetector(new DefaultMultiplexerProvider()),
+            new InterlockingDefinitionValidator());
         var viewModel = CreateViewModel(new Solution { Projects = [project] }, diagnostics);
 
-        project.SignalBoxPlan = new SignalBoxPlan
-        {
-            Elements = [new SbDetector { Name = "Missing", FeedbackAddress = 0 }]
-        };
+        project.Interlocking.Blocks.Add(CreateBlockWithMissingClearObservation());
 
         Assert.That(viewModel.ProjectDiagnostics, Is.Empty);
 
@@ -73,6 +72,16 @@ internal sealed class MainWindowDiagnosticsTests
 
         Assert.That(viewModel.ProjectDiagnostics.Single().Severity, Is.EqualTo(ProjectDiagnosticSeverity.Error));
     }
+
+    private static BlockDefinition CreateBlockWithMissingClearObservation() =>
+        new()
+        {
+            Name = "Missing clear",
+            FeedbackInputs =
+            [
+                new BlockFeedbackInput { InPort = 1, Role = BlockFeedbackRole.Occupied }
+            ]
+        };
 
     private static MainWindowViewModel CreateViewModel(
         Solution solution,

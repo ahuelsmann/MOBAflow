@@ -117,6 +117,44 @@ internal sealed class InterlockingSafetyEngineTests
     }
 
     [Test]
+    public void ClearRouteSignals_BeforeRouteEstablished_RejectsAndKeepsSafeAspect()
+    {
+        var (engine, ids) = CreateSingleRouteEngine();
+        var state = PrepareSettingRoute(engine, ids);
+
+        var rejected = engine.ClearRouteSignals(state, ids.Route1, Guid.NewGuid(), state.Revision);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(rejected.Code, Is.EqualTo("route.signal.invalid-state"));
+            Assert.That(rejected.State.Signals[ids.Signal1].Aspect, Is.EqualTo(SignalAspect.Hp0));
+        });
+    }
+
+    [Test]
+    public void ClearRouteSignals_EstablishedRoute_UsesConfiguredAspectAndOccupancyRestoresStop()
+    {
+        var (engine, ids) = CreateSingleRouteEngine();
+        var state = EstablishRoute(engine, ids);
+
+        var cleared = engine.ClearRouteSignals(state, ids.Route1, Guid.NewGuid(), state.Revision);
+        var occupied = engine.ObserveBlock(
+            cleared.State,
+            ids.Block1,
+            BlockOccupancy.Occupied,
+            Guid.NewGuid(),
+            cleared.State.Revision);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(cleared.IsAccepted, Is.True);
+            Assert.That(cleared.State.Signals[ids.Signal1].Aspect, Is.EqualTo(SignalAspect.Ks1));
+            Assert.That(occupied.State.Routes[ids.Route1].Lifecycle, Is.EqualTo(RouteLifecycle.Occupied));
+            Assert.That(occupied.State.Signals[ids.Signal1].Aspect, Is.EqualTo(SignalAspect.Hp0));
+        });
+    }
+
+    [Test]
     public void ObserveBlock_OccupiedAfterEstablishment_TransitionsRouteToOccupied()
     {
         var (engine, ids) = CreateSingleRouteEngine();
@@ -166,6 +204,23 @@ internal sealed class InterlockingSafetyEngineTests
             Assert.That(cancelled.Code, Is.EqualTo("route.cancel.reconciliation"));
             Assert.That(cancelled.State.Routes[ids.Route1].Lifecycle, Is.EqualTo(RouteLifecycle.Failed));
             Assert.That(cancelled.State.Blocks[ids.Block1].ReservationOwnerRouteId, Is.EqualTo(ids.Route1));
+            Assert.That(cancelled.State.Signals[ids.Signal1].LockOwnerRouteId, Is.EqualTo(ids.Route1));
+        });
+    }
+
+    [Test]
+    public void CancelRoute_AfterSignalProceed_RestoresSafeAspectAndRetainsLocks()
+    {
+        var (engine, ids) = CreateSingleRouteEngine();
+        var state = EstablishRoute(engine, ids);
+        state = engine.ClearRouteSignals(state, ids.Route1, Guid.NewGuid(), state.Revision).State;
+
+        var cancelled = engine.CancelRoute(state, ids.Route1, Guid.NewGuid(), state.Revision);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(cancelled.State.Routes[ids.Route1].Lifecycle, Is.EqualTo(RouteLifecycle.Failed));
+            Assert.That(cancelled.State.Signals[ids.Signal1].Aspect, Is.EqualTo(SignalAspect.Hp0));
             Assert.That(cancelled.State.Signals[ids.Signal1].LockOwnerRouteId, Is.EqualTo(ids.Route1));
         });
     }
@@ -320,7 +375,10 @@ internal sealed class InterlockingSafetyEngineTests
             ExitElementId = blockId,
             PathElementIds = [turnoutId],
             ProtectedBlockIds = [blockId],
-            ProtectedSignalIds = [signalId],
+            SignalRequirements =
+            [
+                new RouteSignalRequirement { SignalId = signalId, ProceedAspect = SignalAspect.Ks1 }
+            ],
             TurnoutRequirements = [new RouteTurnoutRequirement { TurnoutId = turnoutId, Position = position }]
         };
 

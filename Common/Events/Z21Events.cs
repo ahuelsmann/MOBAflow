@@ -636,3 +636,20 @@ public sealed record PostStartupStatusEvent : EventBase
         StatusText = statusText;
     }
 }
+
+/// <summary>
+/// Ordered state transition of one 1-based Z21 feedback input.
+/// </summary>
+public sealed record FeedbackStateChangedEvent(
+    int InPort,
+    bool IsActive,
+    Guid CorrelationId) : EventBase;
+
+/// <summary>
+/// Ordered raw turnout observation received from Z21.
+/// </summary>
+public sealed record TurnoutInfoChangedEvent(
+    int FunctionAddress,
+    bool OutputPosition,
+    Guid CorrelationId,
+    bool IsSwitched = true) : EventBase;

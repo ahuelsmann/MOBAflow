@@ -16,7 +16,12 @@ GitHub owns scope, status, and acceptance criteria. This plan owns technical seq
 
 - Slice 1 completed on 2026-07-20: shared definitions and bindings, operational topology, schema version 4, structured validation, canonical address allocation, sample data, and serialization/characterization coverage.
 - Slice 2 completed on 2026-07-20: derived conflict matrix, immutable revisioned state, atomic resource reservation, fail-safe observations, deterministic transitions, conservative full-route release, and cancellation lock retention.
-- Slice 3 in progress: semantic turnout command sequences, live Z21 effect boundary, and recording/simulation adapter are implemented; confirmation timeout orchestration remains part of the next coordinator increment.
+- Slice 3 completed on 2026-07-20: semantic turnout command sequences, live Z21 effect boundary, recording/simulation adapter, correlated lifecycle state, confirmation reconciliation, deterministic timeout handling, cancellation, disconnect, duplicate/out-of-order handling, and stale-completion protection.
+- Slice 4 completed on 2026-07-20: serialized preview, select, set, cancel, safe-stop, release, reconciliation, disconnect, timeout, and shutdown operations; atomic reservation before effects; semantic turnout confirmation before signal clearance; configurable route-specific proceed aspects; conservative recovery with retained locks; late-feedback reconciliation without implicit route reactivation; structured correlated lifecycle events for internal and final transitions; and in-flight shutdown cancellation without deadlock.
+- Slice 5 completed on 2026-07-21: RF-04 FIFO observations now project turnout and R-Bus active/inactive state into a narrow `IInterlockingRuntime`; immutable correlated snapshots are published through the existing EventBus boundary; project activation, DI, initial/reconnect queries, synchronization gating, duplicate handling, disconnect/not-switched invalidation, shutdown, and subscription disposal are covered. Live turnout and configured Viessmann multiplexer signal effects reuse the production coordinator and fail closed when offline or unmapped.
+- Integration checkpoint on 2026-07-20: restored the missing `Project.Interlocking` persistence boundary, removed duplicate persisted signal-box route/runtime state, and reconnected schema, sample data, validation, diagnostics, dependency injection, and canonical address allocation. The complete `net10.0` and Windows test targets pass.
+- Slice 5 validation on 2026-07-21: `net10.0` passed 1,099 tests with 4 expected skips; the Windows target passed all 1,149 tests; the MOBAflow FastDebug build completed with 0 warnings and 0 errors; deterministic per-file Sonar secret scans passed for every Slice 5 file read or changed.
+- Slice 6/7 gate check on 2026-07-21: GitHub Issue #47 still lists only RF-01 through RF-05 child work and states that later RF packages receive individual issues only when their dependency gates are satisfied. No RF-13 or RF-14 child is listed yet, so TrackPlanPage and SignalBoxPage integration must not start from Issue #34 at this checkpoint.
 
 ## Outcome
 
@@ -488,9 +493,9 @@ Risk: Workflow 2.0, timetable, recorder, or testbench concerns delay the safety 
 
 Mitigation: expose stable events and interfaces, but keep their UI and orchestration integrations in their own issues.
 
-## Maintainer decisions required before live integration
+## Maintainer decisions required before hardware acceptance
 
-These decisions do not block the pure domain slices, but they block Slice 5 and hardware acceptance:
+Slice 5 uses conservative configuration-driven defaults and remains fail closed. These layout-specific decisions may be refined while trying the system, but they must be settled before hardware acceptance:
 
 1. Which installed feedback modules provide explicit occupied and clear states, and which are pulse-only?
 2. Which turnouts provide trustworthy position confirmation, including any three-way turnout wiring?
@@ -498,7 +503,7 @@ These decisions do not block the pure domain slices, but they block Slice 5 and 
 4. Which representative real routes and conflicts form the acceptance fixture?
 5. Is full-route release acceptable for the first version? This plan assumes yes.
 
-Record the answers in Issue #34 or an approved linked design record before Slice 5 begins.
+Record all answers in Issue #34 or an approved linked design record before Slice 8 hardware acceptance.
 
 ## Definition of done
 
