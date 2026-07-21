@@ -23,6 +23,24 @@ retained for display but are always marked `displayOnly`; they cannot become rep
 
 Free-text filtering searches mapper-provided `displayText`, not raw payload JSON.
 
+### Initial replay-applicable event schemas
+
+The first capture slice registers these exact type keys. Property names are case-sensitive; missing, duplicate, unknown, or incorrectly typed properties make a known payload invalid.
+
+| Type key | Allowed payload properties |
+| --- | --- |
+| `z21.connection.established`, `z21.connection.lost` | `connected` |
+| `z21.track-power.changed` | `isOn` |
+| `z21.xbus-status.changed` | `emergencyStop`, `trackOff`, `shortCircuit`, `programming` |
+| `z21.system-state.changed` | current, temperature, voltage, and central-state scalar values |
+| `z21.feedback.activated` | `inPort` |
+| `z21.signal-aspect.changed` | `signalId`, `aspect`, `previousAspect` |
+| `z21.switch-position.changed` | `switchId`, `isLeft`, `previousPosition` |
+| `runtime.state.changed` | connection, track-power, connection-attempt, disconnect, emergency, short-circuit, programming, and acknowledgement booleans only |
+| `journey.transition` | project/journey/run IDs, transition kind, feedback progress, optional input/station, station index, and active state |
+
+The runtime mapper intentionally excludes broad snapshot collections, operator status text, serial/firmware values, endpoints, and mutable domain/runtime objects. Journey entries originate from immutable events published at authoritative `JourneyManager` transitions before legacy mutable callbacks.
+
 ## Defensive limits
 
 | Limit | Version 1 value |

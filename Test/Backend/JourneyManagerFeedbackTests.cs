@@ -2,12 +2,13 @@
 
 namespace Moba.Test.Backend;
 
+using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Backend;
 using Moba.Backend.Interface;
 using Moba.Backend.Manager;
 using Moba.Backend.Service;
+using Moba.Common.Events;
 using Moba.Domain;
-
 using Moq;
 
 /// <summary>
@@ -25,8 +26,9 @@ public sealed class JourneyManagerFeedbackTests
             IZ21 z21,
             Project project,
             IWorkflowService workflowService,
-            ActionExecutionContext? executionContext = null)
-            : base(z21, project, workflowService, executionContext)
+            ActionExecutionContext? executionContext = null,
+            IEventBus? eventBus = null)
+            : base(z21, project, workflowService, executionContext, eventBus: eventBus)
         {
         }
 
@@ -212,12 +214,18 @@ public sealed class JourneyManagerFeedbackTests
         workflowMock.Setup(service => service.ExecuteAsync(It.IsAny<Workflow>(), It.IsAny<ActionExecutionContext>(), It.IsAny<WorkflowExecutionOptions>()))
             .Callback<Workflow, ActionExecutionContext, WorkflowExecutionOptions>((_, context, _) => workflowStation = context.CurrentStation)
             .Returns(Task.CompletedTask);
-        using var manager = new TestableJourneyManager(z21Mock.Object, project, workflowMock.Object);
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var transitions = new List<JourneyRuntimeTransitionKind>();
+        eventBus.Subscribe<JourneyRuntimeTransitionEvent>(transition => transitions.Add(transition.Kind));
+        using var manager = new TestableJourneyManager(z21Mock.Object, project, workflowMock.Object, eventBus: eventBus);
 
         await manager.RunProcessFeedbackAsync(new FeedbackResult(BuildFeedbackPacketForInPort(2)));
 
         Assert.That(workflowStation, Is.SameAs(target));
         Assert.That(manager.GetState(journey.Id)!.CurrentStationId, Is.EqualTo(target.Id));
+        Assert.That(
+            transitions,
+            Is.EqualTo(new[] { JourneyRuntimeTransitionKind.FeedbackAccepted, JourneyRuntimeTransitionKind.StopChanged }));
     }
 
     [Test]
@@ -228,6 +236,7 @@ public sealed class JourneyManagerFeedbackTests
         var journey = new Journey
         {
             Stations = [new Station { Name = "Bielefeld" }],
+            BehaviorOnLastStop = Moba.Domain.Enum.BehaviorOnLastStop.None,
             FeedbackSequence =
             [
                 new JourneyFeedbackStep
@@ -241,7 +250,10 @@ public sealed class JourneyManagerFeedbackTests
             ]
         };
         var project = new Project { Journeys = [journey] };
-        using var manager = new TestableJourneyManager(z21Mock.Object, project, workflowMock.Object);
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var transitions = new List<JourneyRuntimeTransitionKind>();
+        eventBus.Subscribe<JourneyRuntimeTransitionEvent>(transition => transitions.Add(transition.Kind));
+        using var manager = new TestableJourneyManager(z21Mock.Object, project, workflowMock.Object, eventBus: eventBus);
         var completions = new List<Guid>();
         manager.JourneyCompleted += (_, args) => completions.Add(args.JourneyRunId);
         var initialRunId = manager.GetState(journey.Id)!.RunId;
@@ -259,6 +271,61 @@ public sealed class JourneyManagerFeedbackTests
         {
             Assert.That(resetRunId, Is.Not.EqualTo(initialRunId));
             Assert.That(completions, Is.EqualTo(new[] { initialRunId, resetRunId }));
+            Assert.That(
+                transitions,
+                Is.EqualTo(new[]
+                {
+                    JourneyRuntimeTransitionKind.FeedbackAccepted,
+                    JourneyRuntimeTransitionKind.Completed,
+                    JourneyRuntimeTransitionKind.Stopped,
+                    JourneyRuntimeTransitionKind.Reset,
+                    JourneyRuntimeTransitionKind.FeedbackAccepted,
+                    JourneyRuntimeTransitionKind.Completed,
+                    JourneyRuntimeTransitionKind.Stopped
+                }));
+        });
+    }
+
+    [Test]
+    public async Task ProcessFeedbackAsync_Should_PublishStructuredTransitionBeforeLegacyCallback()
+    {
+        var z21Mock = new Mock<IZ21>();
+        var workflowMock = new Mock<IWorkflowService>();
+        var station = new Station { Name = "Bielefeld" };
+        var step = new JourneyFeedbackStep
+        {
+            InPort = 5,
+            RepeatCount = 2,
+            StopTransition = new JourneyStopTransition
+            {
+                Mode = Moba.Domain.Enum.JourneyStopTransitionMode.SpecificStation,
+                StationId = station.Id
+            }
+        };
+        var journey = new Journey { Stations = [station], FeedbackSequence = [step] };
+        var project = new Project { Journeys = [journey] };
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var deliveryOrder = new List<string>();
+        var transitions = new List<JourneyRuntimeTransitionEvent>();
+        eventBus.Subscribe<JourneyRuntimeTransitionEvent>(transition =>
+        {
+            deliveryOrder.Add("structured");
+            transitions.Add(transition);
+        });
+        using var manager = new TestableJourneyManager(z21Mock.Object, project, workflowMock.Object, eventBus: eventBus);
+        manager.FeedbackReceived += (_, _) => deliveryOrder.Add("legacy");
+
+        await manager.RunProcessFeedbackAsync(new FeedbackResult(BuildFeedbackPacketForInPort(5)));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(deliveryOrder.Take(2), Is.EqualTo(new[] { "structured", "legacy" }));
+            Assert.That(transitions, Has.Count.EqualTo(1));
+            Assert.That(transitions[0].Kind, Is.EqualTo(JourneyRuntimeTransitionKind.FeedbackAccepted));
+            Assert.That(transitions[0].JourneyRunId, Is.EqualTo(manager.GetState(journey.Id)!.RunId));
+            Assert.That(transitions[0].CurrentOccurrence, Is.EqualTo(1));
+            Assert.That(transitions[0].RequiredOccurrences, Is.EqualTo(2));
+            Assert.That(transitions[0].InPort, Is.EqualTo(5));
         });
     }
 

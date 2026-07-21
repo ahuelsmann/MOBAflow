@@ -3,8 +3,8 @@
 ## Document status
 
 - Status: In progress
-- Completed delivery slices: WP1 journal model/format/filtering and WP2 recording state machine/bounded ingestion
-- Next delivery slice: WP3 producer capture on the ordered #43 pipeline
+- Completed delivery slices: WP1 journal model/format/filtering, WP2 recording state machine/bounded ingestion, and WP3 producer capture
+- Next delivery slice: WP4 command capture and Workflow 2.0 mappers after issue #32
 - Resolved dependency: issue #43 merged through PR #45 and is present in the branch baseline
 - Primary issue: https://github.com/ahuelsmann/MOBAflow/issues/30
 - Status and acceptance criteria source: GitHub issue #30
@@ -351,6 +351,8 @@ Prerequisite: #43 merged.
 - stress-test end-to-end producer order, capture overload, reconnect, duplicates, and UI dispatch behavior.
 
 Exit: live producer events reach the journal in defined order while ViewModels still receive them on the UI thread.
+
+Completed on 2026-07-21. Evidence: the recording decorator captures an exact mapper allow-list outside the UI-thread decorator while forwarding original events unchanged. The #43 pipeline order, overload gaps, duplicates, reconnect events, mapper/subscriber isolation, UI dispatch order, runtime-field exclusion, and known-schema round trips have focused coverage. `JourneyManager` publishes immutable feedback, station, completion, restart/activation, stopped, and reset transitions before legacy mutable callbacks. All focused recording/journey/DI tests, the full `net10.0` suite, and Windows-target integration tests pass.
 
 ### WP4: Explicit user-command and Workflow 2.0 capture
 

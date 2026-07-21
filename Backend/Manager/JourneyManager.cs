@@ -2,6 +2,7 @@
 
 namespace Moba.Backend.Manager;
 
+using Common.Events;
 using Common.Extension;
 using Domain;
 using Domain.Enum;
@@ -31,6 +32,7 @@ public class JourneyManager : IJourneyManager
     private readonly ILogger<JourneyManager> _logger;
     private readonly IJourneyStopTransitionService _stopTransitionService;
     private readonly IJourneyRuntimeStateStore _runtimeStateStore;
+    private readonly IEventBus? _eventBus;
     private bool _disposed;
 
     /// <summary>
@@ -79,7 +81,8 @@ public class JourneyManager : IJourneyManager
         ActionExecutionContext? executionContext = null,
         ILogger<JourneyManager>? logger = null,
         IJourneyStopTransitionService? stopTransitionService = null,
-        IJourneyRuntimeStateStore? runtimeStateStore = null)
+        IJourneyRuntimeStateStore? runtimeStateStore = null,
+        IEventBus? eventBus = null)
     {
         _z21 = z21;
         _project = project;
@@ -87,6 +90,7 @@ public class JourneyManager : IJourneyManager
         _logger = logger ?? NullLogger<JourneyManager>.Instance;
         _stopTransitionService = stopTransitionService ?? new JourneyStopTransitionService();
         _runtimeStateStore = runtimeStateStore ?? new NullJourneyRuntimeStateStore();
+        _eventBus = eventBus;
         _executionContextFactory = new ActionExecutionContextFactory(executionContext ?? new ActionExecutionContext { Z21 = z21 });
         _z21.Received += OnZ21FeedbackReceived;
 
@@ -184,6 +188,13 @@ public class JourneyManager : IJourneyManager
             state.CurrentFeedbackIndex,
             feedbackStep.InPort);
 
+        PublishTransition(
+            journey,
+            state,
+            JourneyRuntimeTransitionKind.FeedbackAccepted,
+            feedbackStep,
+            checked((int)feedbackStep.InPort));
+
         // Fire FeedbackReceived event on every feedback (for UI counter updates)
         OnFeedbackReceived(new JourneyFeedbackEventArgs
         {
@@ -250,6 +261,7 @@ public class JourneyManager : IJourneyManager
         var result = _stopTransitionService.Apply(journey, state, step.StopTransition);
         if (result.Changed && result.CurrentStation != null)
         {
+            PublishTransition(journey, state, JourneyRuntimeTransitionKind.StopChanged, step);
             OnStationChanged(new StationChangedEventArgs
             {
                 JourneyId = journey.Id,
@@ -265,6 +277,8 @@ public class JourneyManager : IJourneyManager
 
         _logger.LogInformation("Last station of journey '{Journey}' reached", journey.Name);
 
+        PublishTransition(journey, state, JourneyRuntimeTransitionKind.Completed);
+
         JourneyCompleted?.Invoke(this, new JourneyCompletedEventArgs
         {
             JourneyId = journey.Id,
@@ -279,6 +293,7 @@ public class JourneyManager : IJourneyManager
                 state.CurrentPos = 0;
                 state.CurrentStationId = journey.Stations.FirstOrDefault()?.Id;
                 state.CurrentStationName = journey.Stations.FirstOrDefault()?.Name ?? string.Empty;
+                PublishTransition(journey, state, JourneyRuntimeTransitionKind.Restarted);
                 break;
 
             case BehaviorOnLastStop.GotoJourney:
@@ -295,6 +310,7 @@ public class JourneyManager : IJourneyManager
             case BehaviorOnLastStop.None:
                 _logger.LogInformation("Journey stops");
                 state.IsActive = false;
+                PublishTransition(journey, state, JourneyRuntimeTransitionKind.Stopped);
                 break;
         }
 
@@ -377,6 +393,7 @@ public class JourneyManager : IJourneyManager
         nextState.RunId = Guid.NewGuid();
         nextState.IsActive = true;
         _logger.LogInformation("Journey '{Journey}' activated at position {Position}", nextJourney.Name, nextState.CurrentPos);
+        PublishTransition(nextJourney, nextState, JourneyRuntimeTransitionKind.Activated);
     }
 
     /// <summary>
@@ -397,7 +414,34 @@ public class JourneyManager : IJourneyManager
             state.IsActive = true;
             _runtimeStateStore.Reset(_project.Id, journey.Id);
             _logger.LogInformation("Journey '{Journey}' reset to position {Position}", journey.Name, state.CurrentPos);
+            PublishTransition(journey, state, JourneyRuntimeTransitionKind.Reset);
         }
+    }
+
+    private void PublishTransition(
+        Journey journey,
+        JourneySessionState state,
+        JourneyRuntimeTransitionKind kind,
+        JourneyFeedbackStep? feedbackStep = null,
+        int? inPort = null)
+    {
+        if (_eventBus is null) return;
+
+        var stationIndex = state.CurrentStationId is Guid stationId
+            ? journey.Stations.FindIndex(station => station.Id == stationId)
+            : state.CurrentPos;
+        _eventBus.Publish(new JourneyRuntimeTransitionEvent(
+            _project.Id,
+            journey.Id,
+            state.RunId,
+            kind,
+            state.CurrentFeedbackIndex,
+            state.CurrentStepOccurrence,
+            feedbackStep is null ? 0u : Math.Max(feedbackStep.RepeatCount, 1u),
+            inPort,
+            state.CurrentStationId,
+            stationIndex >= 0 && stationIndex < journey.Stations.Count ? stationIndex : -1,
+            state.IsActive));
     }
 
     /// <summary>

@@ -52,6 +52,19 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton<RecorderOptions>();
         services.TryAddSingleton<IRecordingSessionService, RecordingSessionService>();
         services.TryAddSingleton<IRecordingStatusSource>(sp => sp.GetRequiredService<IRecordingSessionService>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IRecordingEventMapper, Z21RecordingEventMapper>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IRecordingEventMapper, RuntimeSnapshotRecordingEventMapper>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IRecordingEventMapper, JourneyRecordingEventMapper>());
+        services.TryAddSingleton<RecordingEventMapperRegistry>();
+        if (services.All(descriptor => descriptor.ServiceType != typeof(CoreRecordingPayloadValidatorRegistrationMarker)))
+        {
+            services.AddSingleton<CoreRecordingPayloadValidatorRegistrationMarker>();
+            foreach (var validator in CoreRecordingPayloadValidators.Create())
+            {
+                services.AddSingleton(validator);
+            }
+        }
+        services.TryAddSingleton<RecordingArtifactSerializer>();
         services.TryAddSingleton<Z21Monitor>();
         services.TryAddSingleton<IUdpClientWrapper, UdpWrapper>();
         services.TryAddSingleton<IZ21DiscoveryService, Z21DiscoveryService>();
@@ -90,7 +103,8 @@ public static class MobaBackendServiceCollectionExtensions
                 sp.GetRequiredService<IWorkflowService>(),
                 sp.GetRequiredService<IJourneyStopTransitionService>(),
                 sp.GetRequiredService<IJourneyRuntimeStateStore>(),
-                sp.GetService<ILogger<JourneyManager>>()),
+                sp.GetService<ILogger<JourneyManager>>(),
+                sp.GetService<IEventBus>()),
             z21Discovery: sp.GetRequiredService<IZ21DiscoveryService>(),
             vehicleUsageCheckpointStore: sp.GetRequiredService<IVehicleUsageCheckpointStore>(),
             timeProvider: sp.GetRequiredService<TimeProvider>()));

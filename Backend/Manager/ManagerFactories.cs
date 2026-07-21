@@ -2,6 +2,8 @@
 
 namespace Moba.Backend.Manager;
 
+using Common.Events;
+
 using Domain;
 
 using Interface;
@@ -39,10 +41,11 @@ public sealed class JourneyManagerFactory(
     IWorkflowService workflowService,
     IJourneyStopTransitionService? stopTransitionService = null,
     IJourneyRuntimeStateStore? runtimeStateStore = null,
-    ILogger<JourneyManager>? logger = null)
+    ILogger<JourneyManager>? logger = null,
+    IEventBus? eventBus = null)
 {
     public IJourneyManager Create(Project project, ActionExecutionContext executionContext) =>
-        new JourneyManager(z21, project, workflowService, executionContext, logger, stopTransitionService, runtimeStateStore);
+        new JourneyManager(z21, project, workflowService, executionContext, logger, stopTransitionService, runtimeStateStore, eventBus);
 }
 
 public sealed class PlatformManagerFactory(
