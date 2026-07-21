@@ -9,7 +9,10 @@ using Domain;
 using Hubs;
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+
+using Moba.MOBApi.Security;
 
 using Service;
 
@@ -67,6 +70,7 @@ public class SolutionController : ControllerBase
     /// Receives solution JSON from MOBAflow WinUI (localhost only).
     /// </summary>
     [HttpPut]
+    [Authorize(Policy = ControlPlaneCapabilities.HostPublish)]
     public async Task<IActionResult> PutSolution(CancellationToken cancellationToken)
     {
         if (!IsLocalhostRequest())

@@ -23,6 +23,12 @@ public sealed class ControlPlaneSecurityOptions
 
     public int PairingMaximumFailedAttempts { get; set; } = 5;
 
+    public TimeSpan HostBootstrapLifetime { get; set; } = TimeSpan.FromSeconds(30);
+
+    public int HostBootstrapMaximumFailedAttempts { get; set; } = 5;
+
+    public TimeSpan HostDisconnectGrace { get; set; } = TimeSpan.FromSeconds(30);
+
     internal string ResolveStorageDirectory()
     {
         if (!string.IsNullOrWhiteSpace(StorageDirectory))

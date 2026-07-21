@@ -4,8 +4,10 @@ namespace Moba.MOBApi.Hubs;
 
 using Common.Runtime;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
+using Moba.MOBApi.Security;
 using Moba.MOBApi.Service;
 
 using System.Net;
@@ -21,6 +23,7 @@ public sealed class RuntimeHub : Hub
     private readonly IRuntimeRemoteRegistry _remoteRegistry;
     private readonly IRuntimeBroadcastMetrics _broadcastMetrics;
     private readonly IRuntimeCommandQueue _commandQueue;
+    private readonly IHostCredentialService? _hostCredentialService;
 
     public RuntimeHub(
         IRuntimeSnapshotCache snapshotCache,
@@ -28,7 +31,8 @@ public sealed class RuntimeHub : Hub
         IRuntimeHostRegistry hostRegistry,
         IRuntimeRemoteRegistry remoteRegistry,
         IRuntimeBroadcastMetrics broadcastMetrics,
-        IRuntimeCommandQueue commandQueue)
+        IRuntimeCommandQueue commandQueue,
+        IHostCredentialService? hostCredentialService = null)
     {
         _snapshotCache = snapshotCache;
         _solutionCache = solutionCache;
@@ -36,8 +40,10 @@ public sealed class RuntimeHub : Hub
         _remoteRegistry = remoteRegistry;
         _broadcastMetrics = broadcastMetrics;
         _commandQueue = commandQueue;
+        _hostCredentialService = hostCredentialService;
     }
 
+    [Authorize(Policy = ControlPlaneCapabilities.HostConsume)]
     public async Task RegisterHost()
     {
         if (!IsLocalhostConnection())
@@ -46,6 +52,7 @@ public sealed class RuntimeHub : Hub
         }
 
         _hostRegistry.SetHost(Context.ConnectionId!);
+        _hostCredentialService?.ConfirmHostConnection();
         await Groups.AddToGroupAsync(Context.ConnectionId!, "runtime-host").ConfigureAwait(false);
         await BroadcastSessionStateAsync().ConfigureAwait(false);
     }
@@ -75,6 +82,7 @@ public sealed class RuntimeHub : Hub
         await Clients.Caller.SendAsync(RuntimeHubMethods.SessionStateChanged, BuildSessionOperational()).ConfigureAwait(false);
     }
 
+    [Authorize(Policy = ControlPlaneCapabilities.HostPublish)]
     public async Task PushSnapshot(string snapshotJson)
     {
         EnsureHost();
@@ -151,6 +159,7 @@ public sealed class RuntimeHub : Hub
         if (_hostRegistry.IsHost(Context.ConnectionId!))
         {
             _hostRegistry.ClearHost(Context.ConnectionId!);
+            _hostCredentialService?.BeginDisconnectGrace();
             await BroadcastSessionStateAsync().ConfigureAwait(false);
         }
 

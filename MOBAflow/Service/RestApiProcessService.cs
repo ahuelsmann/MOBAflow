@@ -3,6 +3,7 @@ namespace Moba.WinUI.Service;
 
 using Common.Configuration;
 using Common.Discovery;
+using Common.Security;
 
 using Microsoft.Extensions.Logging;
 
@@ -29,6 +30,7 @@ public sealed class RestApiProcessService : IDisposable
     private readonly ISettingsService? _settingsService;
     private readonly ILogger<RestApiProcessService> _logger;
     private readonly ILogger<UdpDiscoveryResponder> _discoveryLogger;
+    private readonly HostControlPlaneSession? _hostSession;
     private Process? _process;
     private MobaApiRuntimeDeployment? _runtimeDeployment;
     private UdpDiscoveryResponder? _udpResponder;
@@ -39,12 +41,14 @@ public sealed class RestApiProcessService : IDisposable
         AppSettings appSettings,
         ILogger<RestApiProcessService> logger,
         ILogger<UdpDiscoveryResponder> discoveryLogger,
-        ISettingsService? settingsService = null)
+        ISettingsService? settingsService = null,
+        HostControlPlaneSession? hostSession = null)
     {
         _appSettings = appSettings;
         _settingsService = settingsService;
         _logger = logger;
         _discoveryLogger = discoveryLogger;
+        _hostSession = hostSession;
     }
 
     /// <summary>
@@ -112,6 +116,7 @@ public sealed class RestApiProcessService : IDisposable
 
             try
             {
+                await using var bootstrapChannel = _hostSession is null ? null : new HostBootstrapParentChannel();
                 _process = new Process
                 {
                     StartInfo = new ProcessStartInfo
@@ -129,6 +134,11 @@ public sealed class RestApiProcessService : IDisposable
                 _process.StartInfo.EnvironmentVariables["MOBAFLOW_DISCOVERY_IN_WINUI"] = "1";
                 _process.StartInfo.EnvironmentVariables["MOBAFLOW_PHOTOS_PATH"] =
                     Common.Path.PhotoPathHelper.ResolvePhotoBaseDirectory(_appSettings.Application.PhotoStoragePath);
+                _process.StartInfo.EnvironmentVariables["MOBAFLOW_HTTP_PORT"] = port.ToString(
+                    System.Globalization.CultureInfo.InvariantCulture);
+                _process.StartInfo.EnvironmentVariables["MOBAFLOW_HOST_HTTPS_PORT"] = (port + 1).ToString(
+                    System.Globalization.CultureInfo.InvariantCulture);
+                bootstrapChannel?.Configure(_process.StartInfo);
 
                 _process.Exited += (sender, _) =>
                 {
@@ -151,7 +161,16 @@ public sealed class RestApiProcessService : IDisposable
                 };
 
                 _process.Start();
+                bootstrapChannel?.CompleteHandleTransfer();
                 _logger.LogInformation("MOBApi process started (port {Port}), PID {Pid}", port, _process.Id);
+
+                (string Secret, HostBootstrapPipeResponse Response)? bootstrap = null;
+                if (bootstrapChannel is not null)
+                {
+                    using var bootstrapTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                    bootstrapTimeout.CancelAfter(TimeSpan.FromSeconds(15));
+                    bootstrap = await bootstrapChannel.ExchangeAsync(bootstrapTimeout.Token).ConfigureAwait(false);
+                }
 
                 StartDiscoveryResponder(port);
 
@@ -165,6 +184,14 @@ public sealed class RestApiProcessService : IDisposable
                     waited += pollIntervalMs;
                     if (await IsApiReachableAsync(port, cancellationToken).ConfigureAwait(false))
                     {
+                        if (bootstrap.HasValue && _hostSession is not null)
+                        {
+                            await _hostSession.EnrollAsync(
+                                port + 1,
+                                bootstrap.Value.Response.PublicKeyFingerprint,
+                                bootstrap.Value.Secret,
+                                cancellationToken).ConfigureAwait(false);
+                        }
                         _logger.LogInformation("MOBApi became reachable after {Ms}ms", waited);
                         ApiBecameReachable?.Invoke(this, port);
                         break;
@@ -260,6 +287,7 @@ public sealed class RestApiProcessService : IDisposable
         }
 
         DisposeRuntimeDeployment();
+        _hostSession?.Reset();
     }
 
     private static string GetRuntimeRootDirectory()

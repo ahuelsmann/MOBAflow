@@ -20,23 +20,46 @@ public sealed class RuntimeHubHostClient : IRuntimeHubHostClient
 {
     private readonly IMobaRuntime _mobaRuntime;
     private readonly ILogger<RuntimeHubHostClient>? _logger;
+    private readonly HostControlPlaneSession? _hostSession;
     private HubConnection? _hubConnection;
 
-    public RuntimeHubHostClient(IMobaRuntime mobaRuntime, ILogger<RuntimeHubHostClient>? logger = null)
+    public RuntimeHubHostClient(
+        IMobaRuntime mobaRuntime,
+        ILogger<RuntimeHubHostClient>? logger = null,
+        HostControlPlaneSession? hostSession = null)
     {
         _mobaRuntime = mobaRuntime;
         _logger = logger;
+        _hostSession = hostSession;
     }
 
     public bool IsConnected => _hubConnection?.State == HubConnectionState.Connected;
 
     public async Task ConnectAsync(string serverIp, int serverPort, CancellationToken cancellationToken = default)
     {
-        var hubUrl = $"http://{serverIp}:{serverPort}/runtime-hub";
+        _ = serverIp;
+        _ = serverPort;
+        if (_hostSession?.IsEnrolled != true)
+        {
+            _logger?.LogDebug("RuntimeHub host connection skipped because local host enrollment is unavailable");
+            return;
+        }
+
+        var hubUrl = new Uri(_hostSession.BaseUri, "runtime-hub");
         _logger?.LogInformation("Connecting to RuntimeHub: {HubUrl}", hubUrl);
 
         _hubConnection = new HubConnectionBuilder()
-            .WithUrl(hubUrl)
+            .WithUrl(hubUrl, options =>
+            {
+                options.AccessTokenProvider = async () =>
+                    await _hostSession.GetAccessTokenAsync(CancellationToken.None).ConfigureAwait(false);
+                options.HttpMessageHandlerFactory = _ => _hostSession.CreatePinnedHttpMessageHandler();
+                options.WebSocketConfiguration = socketOptions =>
+                {
+                    socketOptions.RemoteCertificateValidationCallback = (_, certificate, _, _) =>
+                        _hostSession.ValidateServerCertificate(certificate);
+                };
+            })
             .WithAutomaticReconnect(
             [
                 TimeSpan.Zero,
