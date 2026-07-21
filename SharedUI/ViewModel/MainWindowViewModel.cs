@@ -134,6 +134,13 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         _locomotiveWhistleAutomation = locomotiveWhistleAutomation;
         _projectDiagnosticsService = projectDiagnosticsService;
 
+        WorkflowLibrary = new WorkflowLibraryViewModel(
+            this,
+            dialogService,
+            new WorkflowValidator(),
+            loggerFactory?.CreateLogger<WorkflowLibraryViewModel>());
+        WorkflowLibrary.PropertyChanged += OnWorkflowLibraryPropertyChanged;
+
         _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
         ApplyRuntimeSnapshot(_mobaRuntime.Current);
 
@@ -177,6 +184,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
     /// (from loaded settings or from the resize behavior), the UI updates via binding.
     /// </summary>
     public LayoutColumnWidthsViewModel LayoutColumnWidths => _layoutColumnWidths;
+
+    /// <summary>Gets the singleton workflow catalog and editor state shared by workflow surfaces.</summary>
+    public WorkflowLibraryViewModel WorkflowLibrary { get; }
 
     /// <summary>
     /// Application settings model shared with the shell. Exposed for UI behaviors that walk the visual tree
@@ -493,6 +503,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         }
 
         _isShuttingDown = true;
+        WorkflowLibrary.PropertyChanged -= OnWorkflowLibraryPropertyChanged;
+        WorkflowLibrary.Dispose();
         foreach (var subscriptionId in _eventBusSubscriptions)
         {
             _eventBus.Unsubscribe(subscriptionId);
