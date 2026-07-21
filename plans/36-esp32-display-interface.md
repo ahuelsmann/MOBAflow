@@ -12,28 +12,36 @@
 
 ## Implementation progress
 
-Status on 2026-07-20:
+Status on 2026-07-21:
 
 - WP0 local readiness is complete: the assigned branch and worktree were
-  revalidated, all files read for this slice passed the deterministic per-file
-  secret scan, and the RF-01/RF-02 firmware gates remain unchanged.
-- WP1 has a normative v1.0 protocol draft covering the fixed envelope, version
-  negotiation, capabilities, health, frame transactions, controls, structured
-  results, reliability, security boundaries, and the canonical hello vector.
-- WP1 remains open until the payload codecs add shared golden vectors for every
-  message and representative error plus the deterministic test-pattern hash.
-- WP2 has immutable envelope/version models, strict network-byte-order packet
-  encoding/decoding, CRC32 validation, and boundary/golden-vector tests.
-- WP2 remains open for typed payload models/codecs, identifier generation,
-  response correlation, fake endpoint behavior, bounded retry, cancellation,
-  and anomaly conformance tests.
+  synchronized non-destructively with current `main`; the single protocol-doc
+  conflict retained both the normative v1 contract and RF-01 parser guidance.
+  All files read or changed for this slice passed the deterministic per-file
+  secret scan.
+- RF-01 / issue #49 is merged and the authoritative native-test and ESP32-S3
+  PlatformIO commands are now documented. RF-02 / issue #48 remains open, so
+  firmware decomposition and v1 dispatcher integration remain gated.
+- WP1 is complete: the normative v1.0 specification now has exact valid and
+  invalid golden payloads for all twelve message types, complete envelope
+  fixtures, and a deterministic 5 by 4 conformance-pattern RGB565 vector with
+  CRC32 and SHA-256 hashes.
+- WP2 now has immutable envelope, version, capability, health, frame, region,
+  command, and result models plus strict network-byte-order envelope and payload
+  codecs. Validation covers lengths, reserved fields, enums, flags, UTF-8,
+  metadata consistency, CRC32, immutable region bytes, and deterministic
+  arbitrary-byte input for every message type.
+- WP2 remains open for identifier generation, response correlation, fake
+  endpoint behavior, bounded retry, cancellation, and transport anomaly tests.
 - No firmware, provisioning, UI, configuration, legacy-sender, or RF-owned code
   has been changed in this slice.
 - Validation: `dotnet build MOBAdisplay/MOBAdisplay.csproj` completed with zero
-  warnings and errors; 19 focused protocol tests passed; the full net10.0 suite
-  passed 1,066 tests with 4 existing skips and no failures. The local Preview
-  SDK required `MSBuildEnableWorkloadResolver=false` for the final test process
-  because its installed workload set is missing manifests.
+  warnings and errors; the full net10.0 suite passed 1,179 tests with 4 existing
+  skips and no failures. The local SDK required
+  `MSBuildEnableWorkloadResolver=false` for the test process because its
+  installed workload set is missing manifests. Optional Sonar agentic analysis
+  could not start because no Sonar project is configured for this worktree; the
+  mandatory per-file Sonar secrets scans completed successfully.
 
 ## Purpose
 

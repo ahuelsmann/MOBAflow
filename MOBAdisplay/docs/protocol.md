@@ -402,31 +402,105 @@ remote access.
 Protocol diagnostics MUST use an allow-list and MUST NOT include Wi-Fi
 credentials, HTTP provisioning secrets, tokens, or raw frame payloads.
 
-## Golden conformance vector
+## Golden conformance vectors
 
-The canonical v1.0 hello request uses:
+Each fixture below contains an exact 32-byte header followed by its exact
+payload. Concatenating the two lines after each label produces the complete UDP
+datagram. Empty payload means that only the header is transmitted. Unless shown
+otherwise, packet index is zero and packet count is one.
 
-- request ID `01020304`;
-- acknowledgement-required flag;
-- packet index zero and packet count one;
-- payload `0100010004D00000` (v1.0 through v1.0, maximum datagram 1232,
-  reserved zero);
-- payload CRC32 `603FAE35`.
-
-The complete datagram is:
+The fixtures use session `0A0B0C0D`, frame `11223344`, RGB565 big-endian pixel
+data, and the representative identities `esp32-s3`, `1.2.3`, and `st7789`.
 
 ```text
-4D4F4241010001020020000801020304000000000000000000000001603FAE35
+HelloRequest
+4D4F4241010001020020000801020301000000000000000000000001603FAE35
 0100010004D00000
+
+CapabilitiesResponse
+4D4F4241010002010020002A01020301000000000000000000000001CDDF16EF
+010000F0011804D004A000010F0707000A0B0C0D0865737033322D733305312E322E3306737437373839
+
+HealthRequest
+4D4F4241010003020020000001020302000000000A0B0C0D0000000100000000
+
+HealthResponse
+4D4F4241010004010020001801020302000000000A0B0C0D00000001DF3B4548
+000000000000003C000200000000000A0000000201020304
+
+BeginFrame
+4D4F4241010010020020001001020303112233440A0B0C0D00000001D047C929
+000200020100000000000008D521D143
+
+FrameRegion
+4D4F4241010011080020001401020304112233440A0B0C0D0000000123DC1FAE
+00000000000200010000000000000004F80007E0
+
+CompleteFrame
+4D4F4241010012020020000401020305112233440A0B0C0D000000017EB75E14
+D521D143
+
+AbortFrame
+4D4F4241010013020020000401020306112233440A0B0C0D0000000199F8B879
+01000000
+
+Clear
+4D4F4241010020020020000201020307000000000A0B0C0D00000001CCD11F0A
+001F
+
+SetBrightness
+4D4F4241010021020020000101020308000000000A0B0C0D0000000198DD4ACC
+64
+
+RenderTestPattern
+4D4F4241010022020020000401020309000000000A0B0C0D0000000199F8B879
+01000000
+
+Result (Incomplete, retryable, missing bytes 4 through 7)
+4D4F424101007F010020001001020305112233440A0B0C0D000000013322A028
+05040001000000320000000400000004
 ```
 
-A conforming encoder MUST produce these bytes exactly. A conforming decoder
-MUST accept them and MUST reject variants with invalid magic, header length,
-declared payload length, packet sequence, reserved flags, or payload CRC.
+The corresponding invalid payload fixtures and required decode results are:
 
-Further message-specific golden vectors are added with their payload codecs so
-that specification, .NET implementation, and firmware harness share the same
-fixtures.
+```text
+HelloRequest 0100010004D00001 => ReservedFieldNotZero
+CapabilitiesResponse 010000F0011804D004A080010F0707000A0B0C0D0865737033322D733305312E322E3306737437373839 => UnsupportedFlags
+HealthRequest 00 => InvalidLength
+HealthResponse FF0000000000003C000200000000000A0000000201020304 => UnknownEnumValue
+BeginFrame 000200020100000000000006D521D143 => InvalidValue
+FrameRegion 00000000000200010000000000000006F80007E0 => InvalidLength
+CompleteFrame D521D1 => InvalidLength
+AbortFrame 01000001 => ReservedFieldNotZero
+Clear 00 => InvalidLength
+SetBrightness 65 => InvalidValue
+RenderTestPattern 01000001 => ReservedFieldNotZero
+Result 05040001000000320000000400000000 => InvalidValue
+```
+
+The `BeginFrame` and `CompleteFrame` fixtures use this 2 by 2 pixel stream:
+
+```text
+F80007E0001FFFFF
+```
+
+Its CRC32 is `D521D143`. A conforming encoder MUST produce all fixture bytes
+exactly. A conforming decoder MUST accept them and reject variants with invalid
+lengths, reserved values, enum values, flags, UTF-8, metadata, or checksums.
+
+### Conformance-pattern reference frame
+
+For odd dimensions, earlier bands receive the remainder pixel or row. The
+canonical 5 by 4 frame therefore contains two rows of red-red-green-green-blue
+and two rows of white-white-white-black-black. Its exact RGB565 byte stream is:
+
+```text
+F800F80007E007E0001FF800F80007E007E0001F
+FFFFFFFFFFFF00000000FFFFFFFFFFFF00000000
+```
+
+- CRC32: `6491200A`
+- SHA-256: `C66E9742B685AE94F7914BEF06AEFFB648DA2BF85380E1A46B42A64922EC445A`
 
 ## References
 
