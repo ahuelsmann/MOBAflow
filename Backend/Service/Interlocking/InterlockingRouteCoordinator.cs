@@ -399,14 +399,14 @@ public sealed class InterlockingRouteCoordinator : IAsyncDisposable
                     correlationId);
             }
 
-            foreach (var state in transitions.Select(transition => transition.State))
+            foreach (var turnoutId in transitions.Select(transition => transition.State.TurnoutId))
             {
                 var observed = _engine.ObserveTurnout(
                     Snapshot,
-                    state.TurnoutId,
+                    turnoutId,
                     null,
                     true,
-                    StepCorrelation(correlationId, $"timeout:{state.TurnoutId:N}"),
+                    StepCorrelation(correlationId, $"timeout:{turnoutId:N}"),
                     Snapshot.Revision);
                 ApplyDecision(observed, correlationId);
             }
@@ -450,14 +450,14 @@ public sealed class InterlockingRouteCoordinator : IAsyncDisposable
         try
         {
             var transitions = _turnoutRuntime.MarkDisconnected(correlationId);
-            foreach (var state in transitions.Select(transition => transition.State))
+            foreach (var turnoutId in transitions.Select(transition => transition.State.TurnoutId))
             {
                 var observed = _engine.ObserveTurnout(
                     Snapshot,
-                    state.TurnoutId,
+                    turnoutId,
                     null,
                     false,
-                    StepCorrelation(correlationId, $"disconnect:{state.TurnoutId:N}"),
+                    StepCorrelation(correlationId, $"disconnect:{turnoutId:N}"),
                     Snapshot.Revision);
                 ApplyDecision(observed, correlationId);
             }
@@ -516,14 +516,14 @@ public sealed class InterlockingRouteCoordinator : IAsyncDisposable
         {
             var transitions = _turnoutRuntime.MarkDisconnected(
                 StepCorrelation(correlationId, "shutdown-turnouts"));
-            foreach (var state in transitions.Select(transition => transition.State))
+            foreach (var turnoutId in transitions.Select(transition => transition.State.TurnoutId))
             {
                 var observed = _engine.ObserveTurnout(
                     Snapshot,
-                    state.TurnoutId,
+                    turnoutId,
                     null,
                     false,
-                    StepCorrelation(correlationId, $"shutdown-turnout:{state.TurnoutId:N}"),
+                    StepCorrelation(correlationId, $"shutdown-turnout:{turnoutId:N}"),
                     Snapshot.Revision);
                 ApplyDecision(observed, correlationId);
             }
