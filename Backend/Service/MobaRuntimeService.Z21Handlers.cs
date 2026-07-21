@@ -35,6 +35,7 @@ public sealed partial class MobaRuntimeService
 
     private void OnZ21ConnectionLost()
     {
+        _activeProjectContext?.JourneyManager.CancelPendingWork();
         _isConnected = false;
         _isTrackPowerOn = false;
         _isEmergencyStopActive = false;

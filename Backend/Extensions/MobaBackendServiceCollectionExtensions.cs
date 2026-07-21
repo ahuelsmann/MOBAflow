@@ -83,7 +83,8 @@ public static class MobaBackendServiceCollectionExtensions
                 sp.GetRequiredService<IWorkflowService>(),
                 sp.GetRequiredService<IJourneyStopTransitionService>(),
                 sp.GetRequiredService<IJourneyRuntimeStateStore>(),
-                sp.GetService<ILogger<JourneyManager>>()),
+                sp.GetService<ILogger<JourneyManager>>(),
+                sp.GetRequiredService<TimeProvider>()),
             z21Discovery: sp.GetRequiredService<IZ21DiscoveryService>()));
         services.TryAddSingleton<ILocomotiveFunctionCommandGateway, MobaRuntimeLocomotiveFunctionCommandGateway>();
         services.TryAddSingleton<ILocomotiveWhistleAutomationService, LocomotiveWhistleAutomationService>();

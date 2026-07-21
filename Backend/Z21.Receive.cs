@@ -180,7 +180,7 @@ public partial class Z21
             {
                 var feedback = new FeedbackResult(content, inPort);
                 Received?.Invoke(feedback);
-                QueueEvent(new FeedbackReceivedEvent(inPort));
+                QueueEvent(new FeedbackReceivedEvent(inPort, feedback.CorrelationId));
                 _logger?.LogDebug("R-Bus Feedback activated: InPort={InPort}", inPort);
             }
 

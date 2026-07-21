@@ -100,6 +100,7 @@ public sealed partial class MobaRuntimeService
 
         try
         {
+            _activeProjectContext?.JourneyManager.CancelPendingWork();
             _isManualDisconnectRequested = true;
             _isZ21Connecting = false;
             _isOperatorAckRequired = false;

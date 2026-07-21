@@ -25,7 +25,7 @@ public class JourneyManager : IJourneyManager
     private readonly SemaphoreSlim _processingLock = new(1, 1);
     private readonly IZ21 _z21;
     private readonly ActionExecutionContextFactory _executionContextFactory;
-    private readonly IWorkflowService _workflowService;
+    private readonly IWorkflowExecutionCoordinator _executionCoordinator;
     private readonly Dictionary<Guid, JourneySessionState> _states = [];
     private readonly Project _project;
     private readonly ILogger<JourneyManager> _logger;
@@ -76,15 +76,18 @@ public class JourneyManager : IJourneyManager
         ActionExecutionContext? executionContext = null,
         ILogger<JourneyManager>? logger = null,
         IJourneyStopTransitionService? stopTransitionService = null,
-        IJourneyRuntimeStateStore? runtimeStateStore = null)
+        IJourneyRuntimeStateStore? runtimeStateStore = null,
+        TimeProvider? timeProvider = null,
+        IWorkflowExecutionCoordinator? executionCoordinator = null)
     {
         _z21 = z21;
         _project = project;
-        _workflowService = workflowService;
         _logger = logger ?? NullLogger<JourneyManager>.Instance;
         _stopTransitionService = stopTransitionService ?? new JourneyStopTransitionService();
         _runtimeStateStore = runtimeStateStore ?? new NullJourneyRuntimeStateStore();
         _executionContextFactory = new ActionExecutionContextFactory(executionContext ?? new ActionExecutionContext { Z21 = z21 });
+        _executionCoordinator = executionCoordinator
+            ?? new WorkflowExecutionCoordinator(workflowService, timeProvider ?? TimeProvider.System);
         _z21.Received += OnZ21FeedbackReceived;
 
         // Initialize SessionState for all journeys
@@ -121,6 +124,7 @@ public class JourneyManager : IJourneyManager
             return;
         }
 
+        var queuedExecutions = new List<Task<WorkflowExecutionResult>>();
         try
         {
             await _processingLock.WaitAsync().ConfigureAwait(false);
@@ -148,7 +152,11 @@ public class JourneyManager : IJourneyManager
                         continue;
                     }
 
-                    await HandleFeedbackAsync(journey, expectedStep).ConfigureAwait(false);
+                    var queuedExecution = HandleFeedback(journey, expectedStep, feedback);
+                    if (queuedExecution != null)
+                    {
+                        queuedExecutions.Add(queuedExecution);
+                    }
                 }
             }
             finally
@@ -163,9 +171,17 @@ public class JourneyManager : IJourneyManager
         {
             _logger.LogWarning("JourneyManager SemaphoreSlim disposed during feedback processing");
         }
+
+        if (queuedExecutions.Count > 0)
+        {
+            await Task.WhenAll(queuedExecutions).ConfigureAwait(false);
+        }
     }
 
-    private async Task HandleFeedbackAsync(Journey journey, JourneyFeedbackStep feedbackStep)
+    private Task<WorkflowExecutionResult>? HandleFeedback(
+        Journey journey,
+        JourneyFeedbackStep feedbackStep,
+        FeedbackResult feedback)
     {
         var state = _states[journey.Id];
 
@@ -187,20 +203,14 @@ public class JourneyManager : IJourneyManager
 
         if (state.CurrentStepOccurrence < Math.Max(feedbackStep.RepeatCount, 1u))
         {
-            return;
+            return null;
         }
 
         ApplyStopTransition(journey, feedbackStep, state);
 
-        if (feedbackStep.DelayMs > 0)
-        {
-            await Task.Delay(feedbackStep.DelayMs).ConfigureAwait(false);
-        }
-
-        if (feedbackStep.WorkflowId.HasValue)
-        {
-            await ExecuteFeedbackWorkflowAsync(journey, feedbackStep).ConfigureAwait(false);
-        }
+        var queuedExecution = feedbackStep.WorkflowId.HasValue
+            ? QueueFeedbackWorkflow(journey, feedbackStep, feedback)
+            : null;
 
         state.CurrentFeedbackIndex++;
         state.CurrentStepOccurrence = 0;
@@ -209,10 +219,11 @@ public class JourneyManager : IJourneyManager
         if (state.IsJourneyCompletionRequested)
         {
             state.IsJourneyCompletionRequested = false;
-            await HandleLastStationAsync(journey).ConfigureAwait(false);
+            HandleLastStation(journey);
         }
 
         OnFeedbackReceived(new JourneyFeedbackEventArgs { JourneyId = journey.Id, SessionState = state });
+        return queuedExecution;
     }
 
     private JourneyFeedbackStep? GetExpectedStep(Journey journey, JourneySessionState state)
@@ -253,7 +264,7 @@ public class JourneyManager : IJourneyManager
         }
     }
 
-    private async Task HandleLastStationAsync(Journey journey)
+    private void HandleLastStation(Journey journey)
     {
         var state = _states[journey.Id];
 
@@ -284,8 +295,6 @@ public class JourneyManager : IJourneyManager
                 state.IsActive = false;
                 break;
         }
-
-        await Task.CompletedTask.ConfigureAwait(false);
     }
 
     private bool TryGetCurrentStation(
@@ -318,14 +327,17 @@ public class JourneyManager : IJourneyManager
         return true;
     }
 
-    private async Task ExecuteFeedbackWorkflowAsync(Journey journey, JourneyFeedbackStep feedbackStep)
+    private Task<WorkflowExecutionResult>? QueueFeedbackWorkflow(
+        Journey journey,
+        JourneyFeedbackStep feedbackStep,
+        FeedbackResult feedback)
     {
         var workflowId = feedbackStep.WorkflowId ?? throw new InvalidOperationException("A feedback workflow requires an identifier.");
         var workflow = _project.Workflows.FirstOrDefault(w => w.Id == workflowId);
         if (workflow == null)
         {
             _logger.LogWarning("Workflow with ID {WorkflowId} not found", workflowId);
-            return;
+            return null;
         }
 
         TryGetCurrentStation(journey, _states[journey.Id], out var currentStation);
@@ -338,10 +350,24 @@ public class JourneyManager : IJourneyManager
             CurrentJourneySessionState = _states[journey.Id],
             CurrentStation = currentStation,
             JourneyTemplateText = journey.Text,
-            CurrentStationIndex = stationIndex > 0 ? stationIndex : 1
+            CurrentStationIndex = stationIndex > 0 ? stationIndex : 1,
+            FeedbackInPort = feedbackStep.InPort
         });
 
-        await _workflowService.ExecuteAsync(workflow, executionContext).ConfigureAwait(false);
+        return _executionCoordinator.EnqueueAsync(new QueuedWorkflowExecution
+        {
+            SourceKey = $"z21-feedback:{feedback.InPort}",
+            OwnerId = journey.Id,
+            Delay = TimeSpan.FromMilliseconds(Math.Max(feedbackStep.DelayMs, 0)),
+            Request = new WorkflowExecutionRequest
+            {
+                Project = _project,
+                Workflow = workflow,
+                Context = executionContext,
+                Mode = WorkflowRunMode.Live,
+                SourceCorrelationId = feedback.CorrelationId
+            }
+        });
     }
 
     private void TryActivateNextJourney(Guid nextJourneyId)
@@ -368,6 +394,7 @@ public class JourneyManager : IJourneyManager
     /// <param name="journey">The journey to reset</param>
     public void Reset(Journey journey)
     {
+        _executionCoordinator.CancelOwner(journey.Id);
         if (_states.TryGetValue(journey.Id, out var state))
         {
             state.CurrentPos = (int)journey.FirstPos;
@@ -402,6 +429,12 @@ public class JourneyManager : IJourneyManager
         _logger.LogInformation("All journeys reset");
     }
 
+    /// <inheritdoc />
+    public void CancelPendingWork()
+    {
+        _executionCoordinator.CancelPending();
+    }
+
     public void Dispose()
     {
         if (_disposed)
@@ -410,6 +443,7 @@ public class JourneyManager : IJourneyManager
         }
 
         _z21.Received -= OnZ21FeedbackReceived;
+        _executionCoordinator.Dispose();
         _processingLock.Dispose();
         _disposed = true;
         GC.SuppressFinalize(this);
