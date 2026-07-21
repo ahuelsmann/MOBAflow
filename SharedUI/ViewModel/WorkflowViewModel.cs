@@ -281,6 +281,38 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
         OnPropertyChanged(nameof(Steps));
     }
 
+    /// <summary>Moves a node one position toward the start of the persisted editor order.</summary>
+    [RelayCommand]
+    private void MoveStepUp(WorkflowStepViewModel? step)
+    {
+        if (step == null)
+        {
+            return;
+        }
+
+        var index = Steps.IndexOf(step);
+        if (index > 0)
+        {
+            MoveStep(step, index - 1);
+        }
+    }
+
+    /// <summary>Moves a node one position toward the end of the persisted editor order.</summary>
+    [RelayCommand]
+    private void MoveStepDown(WorkflowStepViewModel? step)
+    {
+        if (step == null)
+        {
+            return;
+        }
+
+        var index = Steps.IndexOf(step);
+        if (index >= 0 && index < Steps.Count - 1)
+        {
+            MoveStep(step, index + 1);
+        }
+    }
+
     /// <summary>Synchronizes the persisted editor order after a view-level reorder operation.</summary>
     public void UpdateStepOrder()
     {

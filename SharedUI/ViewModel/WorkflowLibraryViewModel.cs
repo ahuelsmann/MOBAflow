@@ -404,6 +404,27 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
         }
     }
 
+    /// <summary>Selects the workflow and step identified by one validation issue.</summary>
+    [RelayCommand]
+    private void NavigateToValidationIssue(WorkflowValidationIssue? issue)
+    {
+        if (issue == null)
+        {
+            return;
+        }
+
+        var workflow = Workflows?.FirstOrDefault(candidate => candidate.Id == issue.WorkflowId);
+        if (workflow == null)
+        {
+            return;
+        }
+
+        SelectedWorkflow = workflow;
+        SelectedStep = issue.StepId.HasValue
+            ? workflow.Steps.FirstOrDefault(step => step.Id == issue.StepId.Value)
+            : null;
+    }
+
     /// <inheritdoc />
     public void Dispose()
     {

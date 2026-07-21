@@ -5,6 +5,7 @@ using Common.Configuration;
 using Common.Extension;
 
 using Microsoft.Extensions.Logging;
+using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -16,6 +17,7 @@ using SharedUI.Interface;
 
 using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
+using Windows.UI.Core;
 
 /// <summary>
 /// Workflows page displaying workflows and actions with properties panel.
@@ -269,7 +271,24 @@ internal sealed partial class WorkflowsPage
     {
         var workflow = ViewModel.WorkflowLibrary.SelectedWorkflow;
         var step = ViewModel.WorkflowLibrary.SelectedStep;
-        if (e.Key == VirtualKey.Delete && workflow?.DeleteStepCommand.CanExecute(step) == true)
+        if (workflow == null || step == null)
+        {
+            return;
+        }
+
+        var altDown = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Menu)
+            .HasFlag(CoreVirtualKeyStates.Down);
+        if (altDown && e.Key == VirtualKey.Up)
+        {
+            workflow.MoveStepUpCommand.Execute(step);
+            e.Handled = true;
+        }
+        else if (altDown && e.Key == VirtualKey.Down)
+        {
+            workflow.MoveStepDownCommand.Execute(step);
+            e.Handled = true;
+        }
+        else if (e.Key == VirtualKey.Delete && workflow.DeleteStepCommand.CanExecute(step))
         {
             workflow.DeleteStepCommand.Execute(step);
             e.Handled = true;

@@ -302,6 +302,25 @@ internal class WorkflowViewModelTests
     }
 
     [Test]
+    public void MoveStepCommands_ReorderPersistedGraphWithinBounds()
+    {
+        var first = new WorkflowDelayStep { Name = "First" };
+        var second = new WorkflowDelayStep { Name = "Second" };
+        var third = new WorkflowTerminateStep { Name = "Third" };
+        var workflow = new Workflow { EntryStepId = first.Id, Steps = [first, second, third] };
+        var viewModel = new WorkflowViewModel(workflow);
+
+        viewModel.MoveStepUpCommand.Execute(viewModel.Steps[1]);
+        viewModel.MoveStepDownCommand.Execute(viewModel.Steps[1]);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(workflow.Steps, Is.EqualTo(new WorkflowStep[] { second, third, first }));
+            Assert.That(viewModel.Steps.Select(step => step.Model), Is.EqualTo(workflow.Steps));
+        });
+    }
+
+    [Test]
     public void ProjectViewModel_RefreshPreservesAuthoritativeWorkflowWrapper()
     {
         var workflow = new Workflow { Name = "Shared workflow" };

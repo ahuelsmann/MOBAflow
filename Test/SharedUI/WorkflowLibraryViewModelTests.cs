@@ -287,6 +287,41 @@ public sealed class WorkflowLibraryViewModelTests
         Assert.That(library.TraceEntries.Select(entry => entry.Sequence), Is.EqualTo(new long[] { 2 }));
     }
 
+    [Test]
+    public void NavigateToValidationIssueCommand_SelectsAffectedWorkflowAndStep()
+    {
+        var firstWorkflow = new Workflow { Name = "First" };
+        var affectedStep = new WorkflowDelayStep { Name = "Affected" };
+        var affectedWorkflow = new Workflow
+        {
+            Name = "Affected workflow",
+            EntryStepId = affectedStep.Id,
+            Steps = [affectedStep]
+        };
+        var projectViewModel = new ProjectViewModel(new Project
+        {
+            Workflows = [firstWorkflow, affectedWorkflow]
+        });
+        using var library = new WorkflowLibraryViewModel(
+            new TestProjectContext(projectViewModel),
+            new TestDialogService(true));
+        var issue = new WorkflowValidationIssue(
+            WorkflowValidationCodes.InvalidStepPayload,
+            WorkflowValidationSeverity.Error,
+            affectedWorkflow.Id,
+            affectedStep.Id,
+            "steps[0].delayMs",
+            "Delay is invalid.");
+
+        library.NavigateToValidationIssueCommand.Execute(issue);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(library.SelectedWorkflow!.Model, Is.SameAs(affectedWorkflow));
+            Assert.That(library.SelectedStep!.Model, Is.SameAs(affectedStep));
+        });
+    }
+
     private static WorkflowLifecycleEvent CreateLifecycleEvent(Guid workflowId, long sequence) => new()
     {
         Kind = WorkflowLifecycleKind.WorkflowCompleted,

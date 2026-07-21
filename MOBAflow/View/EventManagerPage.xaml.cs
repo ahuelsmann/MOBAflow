@@ -166,4 +166,32 @@ internal sealed partial class EventManagerPage
         else ViewModel.DeleteStepCommand.Execute(ViewModel.SelectedStep);
         e.Handled = true;
     }
+
+    private void WorkflowSteps_KeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        var workflow = ViewModel.WorkflowLibrary.SelectedWorkflow;
+        var step = ViewModel.WorkflowLibrary.SelectedStep;
+        if (workflow == null || step == null)
+        {
+            return;
+        }
+
+        var altDown = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Menu)
+            .HasFlag(CoreVirtualKeyStates.Down);
+        if (altDown && e.Key == VirtualKey.Up)
+        {
+            workflow.MoveStepUpCommand.Execute(step);
+            e.Handled = true;
+        }
+        else if (altDown && e.Key == VirtualKey.Down)
+        {
+            workflow.MoveStepDownCommand.Execute(step);
+            e.Handled = true;
+        }
+        else if (e.Key == VirtualKey.Delete)
+        {
+            workflow.DeleteStepCommand.Execute(step);
+            e.Handled = true;
+        }
+    }
 }

@@ -141,12 +141,18 @@
                         <AppBarButton Icon="Play" Label="Add action" Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.AddStepCommand}" CommandParameter="{x:Bind steps:WorkflowStepKind.Action}" />
                         <AppBarButton Icon="Clock" Label="Add delay" Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.AddStepCommand}" CommandParameter="{x:Bind steps:WorkflowStepKind.Delay}" />
                         <AppBarButton Icon="Filter" Label="Add condition" Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.AddStepCommand}" CommandParameter="{x:Bind steps:WorkflowStepKind.Condition}" />
+                        <AppBarButton Icon="Switch" Label="Add parallel" Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.AddStepCommand}" CommandParameter="{x:Bind steps:WorkflowStepKind.Parallel}" />
+                        <AppBarButton Icon="OpenFile" Label="Add nested workflow" Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.AddStepCommand}" CommandParameter="{x:Bind steps:WorkflowStepKind.NestedWorkflow}" />
                         <AppBarButton Icon="Stop" Label="Add termination" Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.AddStepCommand}" CommandParameter="{x:Bind steps:WorkflowStepKind.Terminate}" />
+                        <AppBarSeparator />
+                        <AppBarButton Icon="Up" Label="Move step up" Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.MoveStepUpCommand}" CommandParameter="{x:Bind ViewModel.WorkflowLibrary.SelectedStep}" />
+                        <AppBarButton Icon="Down" Label="Move step down" Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.MoveStepDownCommand}" CommandParameter="{x:Bind ViewModel.WorkflowLibrary.SelectedStep}" />
                     </CommandBar>
                     <ListView
                         Grid.Row="3"
                         AutomationProperties.Name="Contextual workflow steps"
                         ItemsSource="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.Steps, Mode=OneWay}"
+                        KeyDown="WorkflowSteps_KeyDown"
                         SelectedItem="{x:Bind ViewModel.WorkflowLibrary.SelectedStep, Mode=TwoWay}"
                         SelectionMode="Single">
                         <ListView.ItemTemplate>
@@ -196,13 +202,45 @@
                             Content="{x:Bind ViewModel.WorkflowLibrary.SelectedEditorObject, Mode=OneWay}"
                             ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
                         <Grid ColumnSpacing="8">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <Button Content="Dry run" Style="{StaticResource AccentButtonStyle}" Command="{x:Bind ViewModel.WorkflowLibrary.DryRunSelectedWorkflowCommand}" />
-                            <Button Grid.Column="1" Content="Validate" Command="{x:Bind ViewModel.WorkflowLibrary.ValidateCommand}" />
+                            <Button Grid.Column="1" Content="Cancel" Command="{x:Bind ViewModel.WorkflowLibrary.CancelDryRunCommand}" />
+                            <Button Grid.Column="2" Content="Validate" Command="{x:Bind ViewModel.WorkflowLibrary.ValidateCommand}" />
                         </Grid>
+                        <TextBlock AutomationProperties.LiveSetting="Polite" Text="{x:Bind ViewModel.WorkflowLibrary.LastDryRunStatus, Mode=OneWay}" />
                         <ItemsControl ItemsSource="{x:Bind ViewModel.WorkflowLibrary.ValidationIssues, Mode=OneWay}">
                             <ItemsControl.ItemTemplate>
-                                <DataTemplate><TextBlock Margin="0,2" Text="{Binding Message}" TextWrapping="Wrap" /></DataTemplate>
+                                <DataTemplate>
+                                    <Button
+                                        HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Stretch"
+                                        AutomationProperties.Name="Open validation issue"
+                                        Command="{Binding DataContext.WorkflowLibrary.NavigateToValidationIssueCommand, ElementName=PageRoot}"
+                                        CommandParameter="{Binding}">
+                                        <StackPanel Margin="0,2">
+                                            <TextBlock FontWeight="SemiBold" Text="{Binding Code}" />
+                                            <TextBlock Text="{Binding FieldPath}" />
+                                            <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Planned effects" />
+                        <ItemsControl ItemsSource="{x:Bind ViewModel.WorkflowLibrary.PlannedEffects, Mode=OneWay}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate><TextBlock Margin="0,2" Text="{Binding Description}" TextWrapping="Wrap" /></DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Recent trace" />
+                        <ItemsControl ItemsSource="{x:Bind ViewModel.WorkflowLibrary.TraceEntries, Mode=OneWay}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="0,2">
+                                        <TextBlock FontWeight="SemiBold" Text="{Binding Kind}" />
+                                        <TextBlock Text="{Binding Detail}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </StackPanel>
