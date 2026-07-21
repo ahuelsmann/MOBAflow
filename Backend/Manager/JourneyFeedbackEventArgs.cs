@@ -21,3 +21,13 @@ public class JourneyFeedbackEventArgs : EventArgs
     /// </summary>
     public required JourneySessionState SessionState { get; init; }
 }
+
+/// <summary>
+/// Event arguments for one authoritative journey-run completion transition.
+/// </summary>
+public sealed class JourneyCompletedEventArgs : EventArgs
+{
+    public required Guid JourneyId { get; init; }
+
+    public required Guid JourneyRunId { get; init; }
+}

@@ -28,13 +28,18 @@ public sealed partial class MobaRuntimeService
         // into the running session, and runtime mutations never touch the live editor model.
         // Entity Ids are preserved by the round-trip, so snapshots and journey reset still resolve
         // against the same Ids the editor exposes.
+        CheckpointVehicleUsage(publishSnapshot: true);
         var activeProject = CloneForRuntime(editableProject);
         var journeyManager = _journeyManagerFactory.Create(activeProject, _executionContextFactory.Create());
-        journeyManager.StationChanged += OnJourneyRuntimeChanged;
+        journeyManager.StationChanged += OnJourneyStationChanged;
         journeyManager.FeedbackReceived += OnJourneyRuntimeChanged;
+        journeyManager.JourneyCompleted += OnJourneyCompleted;
 
         var nextContext = new ActiveProjectContext(activeProject, journeyManager);
         ReplaceActiveProjectContext(nextContext);
+        _vehicleUsageTracker.Activate(activeProject);
+        UpdateVehicleUsageRuntimeState();
+        StartVehicleUsageCheckpointTimer();
 
         if (_interlockingRuntime != null)
         {
@@ -49,6 +54,7 @@ public sealed partial class MobaRuntimeService
             activeProject.Journeys.Count);
 
         PublishSnapshot();
+        CheckpointVehicleUsage(publishSnapshot: false);
     }
 
     /// <summary>
@@ -106,6 +112,7 @@ public sealed partial class MobaRuntimeService
 
         try
         {
+            CheckpointVehicleUsage(publishSnapshot: true);
             _isManualDisconnectRequested = true;
             _isZ21Connecting = false;
             _isOperatorAckRequired = false;
@@ -116,6 +123,7 @@ public sealed partial class MobaRuntimeService
 
             _isConnected = false;
             _isTrackPowerOn = false;
+            UpdateVehicleUsageRuntimeState();
             _statusText = "Disconnected";
             PublishSnapshot();
         }
@@ -169,6 +177,8 @@ public sealed partial class MobaRuntimeService
         };
 
         MarkLocomotiveDriveCommand(address);
+        SelectActiveTrainForLocomotive(address, speed);
+        UpdateVehicleUsageRuntimeState();
         PublishSnapshot();
     }
 
@@ -234,6 +244,23 @@ public sealed partial class MobaRuntimeService
     public async Task RequestLocomotiveInfoAsync(int address, CancellationToken cancellationToken = default)
     {
         await _z21.GetLocoInfoAsync(address, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public Task SetActiveTrainAsync(Guid? trainId, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        _vehicleUsageTracker.SetActiveTrain(trainId);
+        PublishSnapshot();
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public Task CheckpointUsageAsync(CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        CheckpointVehicleUsage(publishSnapshot: true);
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />

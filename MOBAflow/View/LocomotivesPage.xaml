@@ -55,6 +55,7 @@
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
@@ -65,10 +66,18 @@
                         QueryIcon="Find"
                         Text="{x:Bind ViewModel.LocomotiveSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-                    <ListView
+                    <ComboBox
                         Grid.Row="1"
+                        Margin="0,0,0,8"
+                        AutomationProperties.Name="Maintenance status filter"
+                        DisplayMemberPath="Label"
+                        ItemsSource="{x:Bind Maintenance.FilterOptions, Mode=OneWay}"
+                        SelectedItem="{x:Bind Maintenance.SelectedFilter, Mode=TwoWay}" />
+
+                    <ListView
+                        Grid.Row="2"
                         IsItemClickEnabled="True"
-                        ItemsSource="{x:Bind ViewModel.SelectedProject.Locomotives, Mode=OneWay}"
+                        ItemsSource="{x:Bind Maintenance.VisibleLocomotives, Mode=OneWay}"
                         SelectedItem="{x:Bind ViewModel.SelectedLocomotive, Mode=TwoWay}"
                         SelectionMode="Single">
                         <ListView.ContextFlyout>
@@ -136,24 +145,7 @@
                             Content="{x:Bind ViewModel.SelectedLocomotive, Mode=OneWay}"
                             ContentTemplateSelector="{StaticResource EntityTemplateSelector}"
                             Visibility="{x:Bind ViewModel.SelectedLocomotive, Mode=OneWay, Converter={StaticResource NullableConverter}}" />
-                        <Expander Header="Maintenance reminders">
-                            <StackPanel Spacing="8">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <Button Command="{x:Bind Management.AddMaintenancePlanCommand}" Content="Add reminder" />
-                                    <Button Command="{x:Bind Management.AddMaintenanceEntryCommand}" Content="Record maintenance" />
-                                </StackPanel>
-                                <ItemsControl ItemsSource="{x:Bind Management.MaintenancePlans, Mode=OneWay}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Margin="8,4" Orientation="Horizontal" Spacing="8">
-                                            <TextBlock Text="{Binding Name}" />
-                                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{Binding State}" />
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </Expander>
+                        <controls:RollingStockMaintenancePanel ViewModel="{x:Bind Maintenance, Mode=OneWay}" />
                         <Expander Header="Decoder CV backups">
                             <StackPanel Spacing="8">
                                 <StackPanel Orientation="Horizontal" Spacing="8">

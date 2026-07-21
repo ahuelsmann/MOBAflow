@@ -207,6 +207,46 @@
               }
             }
           },
+
+          "timetablePolicy": {
+            "type": "object",
+            "description": "Project-wide timetable validation policy",
+            "properties": {
+              "minimumTurnaround": { "type": "string", "description": "Minimum train turnaround as a TimeSpan value" }
+            }
+          },
+
+          "timetableServices": {
+            "type": "array",
+            "description": "Dated timetable service instances",
+            "items": {
+              "type": "object",
+              "required": ["id", "serviceNumber", "journeyId", "serviceDate", "calls"],
+              "properties": {
+                "id": { "type": "string", "format": "uuid" },
+                "serviceNumber": { "type": "string", "minLength": 1 },
+                "name": { "type": "string" },
+                "journeyId": { "type": "string", "format": "uuid" },
+                "trainId": { "type": ["string", "null"], "format": "uuid" },
+                "serviceDate": { "type": "string", "format": "date" },
+                "calls": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["id", "journeyStopId", "stationId", "platformId", "scheduledArrival", "scheduledDeparture"],
+                    "properties": {
+                      "id": { "type": "string", "format": "uuid" },
+                      "journeyStopId": { "type": "string", "format": "uuid" },
+                      "stationId": { "type": "string", "format": "uuid" },
+                      "platformId": { "type": "string", "format": "uuid" },
+                      "scheduledArrival": { "type": "string", "format": "date-time" },
+                      "scheduledDeparture": { "type": "string", "format": "date-time" }
+                    }
+                  }
+                }
+              }
+            }
+          },
           
           "signalBoxPlan": {
             "type": ["object", "null"],

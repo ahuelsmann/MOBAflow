@@ -144,6 +144,25 @@ internal static class NavigationRegistration
             PathIconData: null,
             IsBold: true));
 
+        services.AddSingleton<TimetablePageViewModel>();
+        // A transient page owns WinUI layout lifecycle while the singleton ViewModel preserves timetable state.
+        services.AddTransient(sp => new TimetablePage(
+            sp.GetRequiredService<TimetablePageViewModel>(),
+            sp.GetRequiredService<AppSettings>(),
+            sp.GetService<ISettingsService>(),
+            sp.GetService<ILogger<TimetablePage>>()));
+        pages.Add(new PageMetadata(
+            Tag: "timetable",
+            Title: "Timetable",
+            Icon: "\uE787",
+            PageType: typeof(TimetablePage),
+            Category: NavigationCategory.Journey,
+            Order: 12,
+            FeatureToggleKey: "IsTimetablePageAvailable",
+            BadgeLabelKey: "TimetablePageLabel",
+            PathIconData: null,
+            IsBold: false));
+
         services.AddSingleton<EventManagerViewModel>();
         services.AddSingleton(sp => new EventManagerPage(
             sp.GetRequiredService<EventManagerViewModel>(),

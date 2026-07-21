@@ -2,7 +2,7 @@
 
 **Scope:** Solution JSON file validation  
 **Status:** Production  
-**Last Updated:** 2026-07-19
+**Last Updated:** 2026-07-20
 
 ---
 
@@ -386,6 +386,9 @@ is not shown in the minimal examples above:
 - Workflow actions use typed payload objects such as `announcement`, `audio`,
   `command`, `executeScript`, `selectSignalAspect`, `changeJourneyStop`, and
   `trainDestinationDisplay`.
+- `Project.TimetableServices` stores dated service definitions and references
+  existing journeys, trains, stations, platforms and journey stops. Mutable
+  operator decisions are persisted separately by the timetable state store.
 
 See [`PROJECT-REFERENCE.md`](PROJECT-REFERENCE.md) for the full current data
 model overview.

@@ -131,12 +131,19 @@ dotnet build MOBAflow/MOBAflow.csproj -c FastDebug --no-restore \
 dotnet watch run --project MOBAflow/MOBAflow.csproj -c FastDebug
 
 # Fast MOBAsmart Android build
-dotnet restore MOBAsmart/MOBAsmart.csproj -f net10.0-android
+dotnet restore MOBAsmart/MOBAsmart.csproj
 dotnet build MOBAsmart/MOBAsmart.csproj -f net10.0-android -c FastDebug --no-restore
 
 # Reliable Android device deploy when fast deploy is inconsistent
 dotnet build MOBAsmart/MOBAsmart.csproj -f net10.0-android -c FastDebug --no-restore \
   /p:MobaReliableDeploy=true -t:Run
+
+# Clean MOBAsmart Release AAB (requires the MAUI Android workload)
+dotnet workload restore MOBAsmart/MOBAsmart.csproj --skip-manifest-update
+dotnet restore MOBAsmart/MOBAsmart.csproj -p:Configuration=Release --force-evaluate
+dotnet publish MOBAsmart/MOBAsmart.csproj -f net10.0-android -c Release --no-restore -m:1
+./scripts/Test-AndroidAppBundle.ps1 \
+  -BundlePath MOBAsmart/bin/Release/net10.0-android/com.mobaflow.mobasmart.aab
 ```
 
 - VS Code tasks mirror these workflows: `restore`, `build`, `build:full`, `publish`, `watch`, `restore:mobasmart`, `build:mobasmart`, and `build:mobasmart:reliable-deploy`.

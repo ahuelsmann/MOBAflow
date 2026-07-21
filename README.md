@@ -36,10 +36,13 @@ and layout communication stay on the local network.
 The Windows control center is where layouts are created, operated and monitored.
 
 - Control locomotive speed, direction and functions F0-F31.
-- Manage locomotives, passenger and goods wagons, train consists, maintenance
-  plans, decoder snapshots and printable locomotive passports.
+- Manage locomotives, passenger and goods wagons, train consists, usage-based
+  maintenance plans, auditable counter corrections, decoder snapshots and
+  printable locomotive passports.
 - Create stations, journeys and ordered feedback sequences; inspect progress in
   the Journey Map and edit feedback behavior in the Event Manager.
+- Coordinate dated services, delays, conflicts and dispatcher decisions in the
+  preview Timetable page.
 - Build reusable workflows for commands, audio, announcements, signals, scripts,
   journey transitions and destination displays.
 - Draw or import track plans, connect Piko A track pieces, validate topology and
@@ -93,9 +96,10 @@ older standalone Arduino sketch remains a hardware color-test only.
 | --- | --- |
 | Z21 integration | Direct UDP control, feedback events, track power and live telemetry |
 | Journeys | Ordered stations, feedback sequences, progress persistence and end-of-journey behavior |
+| Timetable | Dated services, live progress, deterministic delays, conflict explanations and dispatcher decisions |
 | Event Manager | Visual editing of feedback steps and stop transitions |
 | Workflows | Sequential or parallel actions triggered by layout events |
-| Rolling stock | Locomotives, wagons, consists, photos, maintenance and decoder records |
+| Rolling stock | Locomotives, wagons, consists, photos, runtime-derived usage, maintenance history and decoder records |
 | Track plan | AnyRail import, drag and drop, snapping, topology validation, Undo/Redo and SVG export |
 | Signal box | Signals, switches, routes and Viessmann aspect control |
 | Mobile operation | Lap counter, locomotive control, signal box and synchronized project data |

@@ -83,9 +83,7 @@
       "type": "process",
       "args": [
         "restore",
-        "${workspaceFolder}/MOBAsmart/MOBAsmart.csproj",
-        "-f",
-        "net10.0-android"
+        "${workspaceFolder}/MOBAsmart/MOBAsmart.csproj"
       ],
       "problemMatcher": "$msCompile"
     },
