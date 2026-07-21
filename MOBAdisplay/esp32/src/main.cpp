@@ -10,6 +10,7 @@
 #include <WiFiUdp.h>
 #include <Preferences.h>
 #include <TFT_eSPI.h>
+#include <BoardConfig.h>
 #include <esp_random.h>
 #include <esp_heap_caps.h>
 #include <esp_log.h>
@@ -30,7 +31,6 @@ static constexpr uint32_t kDiagnosticSerialBaud = 115200;
 static constexpr uint32_t kWifiConnectTimeoutMs = 20000;
 static constexpr uint32_t kActivationHoldMs = 5000;
 static constexpr uint32_t kFactoryResetHoldMs = 12000;
-static constexpr uint8_t kActivationButtonPin = 0;
 static constexpr uint8_t kSetupSecretBytes = 16;
 static constexpr char kWifiPrefsNamespace[] = "wifi";
 static constexpr char kWifiPrefsSsidKey[] = "ssid";
@@ -263,7 +263,10 @@ bool startProvisioningWindow()
         return false;
 
     if (!createSetupPassphrase(&gProvisioningPassphrase))
+    {
+        closeProvisioningWindow(false);
         return false;
+    }
 
     const uint32_t chipSuffix = static_cast<uint32_t>(ESP.getEfuseMac() & 0xFFFFFFu);
     char apName[32];
@@ -327,7 +330,8 @@ void connectWifiOrWaitForActivation()
 void updateActivationButton()
 {
     const uint32_t nowMs = millis();
-    const bool pressed = digitalRead(kActivationButtonPin) == LOW;
+    const int pressedLevel = MobaDisplay::Board::kBootButtonActiveLow ? LOW : HIGH;
+    const bool pressed = digitalRead(MobaDisplay::Board::kBootButtonPin) == pressedLevel;
     if (!pressed)
     {
         gButtonPressedAtMs = 0;
@@ -420,7 +424,8 @@ void setup()
     tft.setRotation(0);
     tft.setSwapBytes(true);
     splashStatic();
-    pinMode(kActivationButtonPin, INPUT_PULLUP);
+    pinMode(MobaDisplay::Board::kBootButtonPin,
+        MobaDisplay::Board::kBootButtonActiveLow ? INPUT_PULLUP : INPUT_PULLDOWN);
 
     const size_t psram = ESP.getPsramSize();
     Serial.printf("PSRAM: %zu bytes\r\n", static_cast<size_t>(psram));
