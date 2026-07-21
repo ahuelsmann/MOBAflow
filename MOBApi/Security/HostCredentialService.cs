@@ -222,7 +222,6 @@ internal sealed class HostCredentialService : IHostCredentialService, IDisposabl
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             // Expected when the host reconnects or the credential is revoked during the grace period.
-            return;
         }
     }
 
