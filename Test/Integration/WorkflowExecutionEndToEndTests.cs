@@ -118,6 +118,97 @@ internal sealed class WorkflowExecutionEndToEndTests
         });
     }
 
+    [Test]
+    public async Task NestedWorkflow_WithRetry_PreservesCompleteFakeZ21CorrelationChain()
+    {
+        // Arrange
+        var traceStore = new WorkflowTraceStore();
+        _workflowService = new WorkflowService(
+            ActionExecutor.CreateWithDefaultHandlers(),
+            new WorkflowValidator(),
+            new WorkflowEffectPlanner(),
+            new WorkflowConditionEvaluator(),
+            new EventBus(NullLogger<EventBus>.Instance),
+            traceStore,
+            TimeProvider.System);
+        var child = CreateCommandWorkflow([new byte[] { 0x21, 0x81, 0x00, 0xA0 }]);
+        child.DefaultErrorPolicy = new WorkflowErrorPolicy
+        {
+            Retry = new WorkflowRetryPolicy { AdditionalAttempts = 1 }
+        };
+        var nestedStepId = Guid.NewGuid();
+        var parentTerminalId = Guid.NewGuid();
+        var parent = new Workflow
+        {
+            EntryStepId = nestedStepId,
+            Steps =
+            [
+                new WorkflowNestedStep
+                {
+                    Id = nestedStepId,
+                    WorkflowId = child.Id,
+                    NextStepId = parentTerminalId
+                },
+                new WorkflowTerminateStep { Id = parentTerminalId }
+            ]
+        };
+        var project = new Project { Workflows = [parent, child] };
+        var sourceCorrelationId = Guid.NewGuid();
+        var childActionId = child.EntryStepId!.Value;
+        _fakeUdp.SendFailuresRemaining = 1;
+
+        // Act
+        var result = await _workflowService.ExecuteAsync(new WorkflowExecutionRequest
+        {
+            Project = project,
+            Workflow = parent,
+            Context = new ActionExecutionContext { Z21 = _z21, CurrentProject = project },
+            Mode = WorkflowRunMode.Live,
+            SourceCorrelationId = sourceCorrelationId
+        });
+
+        // Assert
+        var entries = traceStore.GetEntries();
+        var childStarted = entries.Single(entry =>
+            entry.Kind == WorkflowLifecycleKind.WorkflowStarted && entry.WorkflowId == child.Id);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Status, Is.EqualTo(WorkflowExecutionStatus.Succeeded));
+            Assert.That(result.SourceCorrelationId, Is.EqualTo(sourceCorrelationId));
+            Assert.That(_fakeUdp.SendFailuresRemaining, Is.Zero);
+            Assert.That(_fakeUdp.SentPayloads, Is.Not.Empty);
+            Assert.That(entries, Is.All.Matches<WorkflowLifecycleEvent>(entry =>
+                entry.SourceCorrelationId == sourceCorrelationId));
+            Assert.That(entries.Select(entry => entry.Sequence),
+                Is.EqualTo(Enumerable.Range(1, entries.Count).Select(value => (long)value)));
+            Assert.That(childStarted.ParentExecutionId, Is.EqualTo(result.ExecutionId));
+            Assert.That(entries.Any(entry =>
+                entry.Kind == WorkflowLifecycleKind.NestedWorkflowEntered &&
+                entry.ExecutionId == result.ExecutionId &&
+                entry.WorkflowId == parent.Id &&
+                entry.StepId == nestedStepId), Is.True);
+            Assert.That(entries.Where(entry =>
+                    entry.Kind == WorkflowLifecycleKind.StepStarted &&
+                    entry.WorkflowId == child.Id &&
+                    entry.StepId == childActionId)
+                .Select(entry => entry.Attempt), Is.EqualTo(new[] { 1, 2 }));
+            Assert.That(entries.Any(entry =>
+                entry.Kind == WorkflowLifecycleKind.RetryScheduled &&
+                entry.WorkflowId == child.Id &&
+                entry.StepId == childActionId &&
+                entry.Attempt == 2), Is.True);
+            Assert.That(entries.Count(entry =>
+                entry.Kind == WorkflowLifecycleKind.WorkflowCompleted &&
+                (entry.WorkflowId == parent.Id || entry.WorkflowId == child.Id)), Is.EqualTo(2));
+            Assert.That(entries.Any(entry =>
+                entry.Kind == WorkflowLifecycleKind.NestedWorkflowExited &&
+                entry.ExecutionId == result.ExecutionId &&
+                entry.WorkflowId == parent.Id &&
+                entry.StepId == nestedStepId &&
+                entry.Result == nameof(WorkflowExecutionStatus.Succeeded)), Is.True);
+        });
+    }
+
     private async Task<WorkflowExecutionResult> ExecuteAsync(Workflow workflow)
     {
         var project = new Project { Workflows = [workflow] };

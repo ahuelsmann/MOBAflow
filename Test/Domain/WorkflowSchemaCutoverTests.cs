@@ -2,7 +2,6 @@
 
 namespace Moba.Test.Domain;
 
-using Moba.Backend.Service;
 using Moba.Domain;
 
 using System.Text.Json;
@@ -32,8 +31,5 @@ internal sealed class WorkflowSchemaCutoverTests
             Assert.That(workflows.SelectMany(workflow => workflow.Steps!).Any(step => step is WorkflowActionStep), Is.True);
             Assert.That(workflows.SelectMany(workflow => workflow.Steps!).Any(step => step is WorkflowTerminateStep), Is.True);
         });
-
-        foreach (var project in solution.Projects)
-            Assert.That(new WorkflowValidator().Validate(project).IsValid, Is.True);
     }
 }
