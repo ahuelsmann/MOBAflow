@@ -135,6 +135,7 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton<IFilePickerService>(sp => sp.GetRequiredService<IIoService>());
         services.AddSingleton<IPhotoStorageService>(sp => sp.GetRequiredService<IIoService>());
         services.AddSingletonWithInterface<PhotoHubClient, IPhotoHubClient>();
+        services.AddSingleton<HostControlPlaneSession>();
         services.AddSingletonWithInterface<RuntimeHubHostClient, IRuntimeHubHostClient>();
         services.AddSingleton<RestApiRuntimeHubService>();
         services.AddSingleton<RestApiRuntimeCommandConsumerService>();
