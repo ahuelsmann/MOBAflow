@@ -2,7 +2,7 @@
 
 ## Document status
 
-- Status: In progress (Slices 0-5 complete)
+- Status: In progress (Slices 0-6 complete)
 - Primary issue: https://github.com/ahuelsmann/MOBAflow/issues/32
 - Runtime integration prerequisite: Satisfied by https://github.com/ahuelsmann/MOBAflow/issues/43
 - Status and acceptance criteria source: GitHub issue #32

@@ -81,6 +81,9 @@ public abstract class WorkflowStepViewModel : ObservableObject
         set => SetProperty(Model.NextStepId, value, Model, static (step, id) => step.NextStepId = id);
     }
 
+    /// <summary>Gets failure behaviors available to the editor.</summary>
+    public IEnumerable<WorkflowFailureBehavior> FailureBehaviors => Enum.GetValues<WorkflowFailureBehavior>();
+
     /// <summary>Gets whether this node overrides the workflow error policy.</summary>
     public bool HasErrorPolicy
     {
@@ -225,6 +228,9 @@ public sealed class WorkflowConditionStepViewModel(WorkflowConditionStep model) 
 {
     /// <inheritdoc />
     public override WorkflowStepKind Kind => WorkflowStepKind.Condition;
+
+    /// <summary>Gets typed condition kinds available to the editor.</summary>
+    public IEnumerable<WorkflowConditionKind> ConditionKinds => Enum.GetValues<WorkflowConditionKind>();
 
     /// <summary>Gets or sets the condition discriminator.</summary>
     public WorkflowConditionKind ConditionKind
@@ -444,6 +450,9 @@ public sealed class WorkflowTerminateStepViewModel(WorkflowTerminateStep model) 
 {
     /// <inheritdoc />
     public override WorkflowStepKind Kind => WorkflowStepKind.Terminate;
+
+    /// <summary>Gets terminal results available to the editor.</summary>
+    public IEnumerable<WorkflowTerminationResult> Results => Enum.GetValues<WorkflowTerminationResult>();
 
     /// <summary>Gets or sets the terminal result.</summary>
     public WorkflowTerminationResult Result

@@ -10,6 +10,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 
 using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.ViewModel.WorkflowSteps;
 
 using SharedUI.Interface;
 
@@ -235,18 +236,18 @@ internal sealed partial class WorkflowsPage
 
     private void WorkflowListView_KeyDown(object sender, KeyRoutedEventArgs e)
     {
-        if (e.Key == VirtualKey.Delete && ViewModel.DeleteWorkflowCommand.CanExecute(null))
+        if (e.Key == VirtualKey.Delete && ViewModel.WorkflowLibrary.DeleteSelectedWorkflowCommand.CanExecute(null))
         {
-            ViewModel.DeleteWorkflowCommand.Execute(null);
+            ViewModel.WorkflowLibrary.DeleteSelectedWorkflowCommand.Execute(null);
             e.Handled = true;
         }
     }
 
     private void ActionListView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
     {
-        if (e.Items.FirstOrDefault() is { } action)
+        if (e.Items.FirstOrDefault() is WorkflowStepViewModel step)
         {
-            e.Data.Properties.Add("Action", action);
+            e.Data.Properties.Add("WorkflowStep", step);
             e.Data.RequestedOperation = DataPackageOperation.Move;
         }
     }
@@ -261,15 +262,16 @@ internal sealed partial class WorkflowsPage
     {
         if (ViewModel.SelectedWorkflow == null) return;
 
-        // Update action numbers and save after drag & drop completes
-        ViewModel.SelectedWorkflow.UpdateActionNumbers();
+        ViewModel.SelectedWorkflow.UpdateStepOrder();
     }
 
     private void ActionListView_KeyDown(object sender, KeyRoutedEventArgs e)
     {
-        if (e.Key == VirtualKey.Delete && ViewModel.DeleteActionCommand.CanExecute(null))
+        var workflow = ViewModel.WorkflowLibrary.SelectedWorkflow;
+        var step = ViewModel.WorkflowLibrary.SelectedStep;
+        if (e.Key == VirtualKey.Delete && workflow?.DeleteStepCommand.CanExecute(step) == true)
         {
-            ViewModel.DeleteActionCommand.Execute(null);
+            workflow.DeleteStepCommand.Execute(step);
             e.Handled = true;
         }
     }

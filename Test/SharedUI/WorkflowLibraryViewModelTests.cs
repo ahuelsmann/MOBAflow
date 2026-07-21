@@ -3,11 +3,15 @@
 namespace Moba.Test.SharedUI;
 
 using Moba.Backend.Interface;
+using Moba.Backend.Service;
+using Moba.Common.Events;
 using Moba.Domain;
 using Moba.Domain.Enum;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
 using Moba.SharedUI.ViewModel.WorkflowSteps;
+
+using Moq;
 
 using System.ComponentModel;
 using System.Text.Json;
@@ -204,6 +208,95 @@ public sealed class WorkflowLibraryViewModelTests
             Assert.That(reopenedViewModel.Steps[0].NextStepId, Is.EqualTo(reopenedViewModel.Steps[1].Id));
         });
     }
+
+    [Test]
+    public async Task DryRunSelectedWorkflowCommand_PlansWithoutRequestingLiveExecution()
+    {
+        var terminate = new WorkflowTerminateStep { Name = "Done" };
+        var workflow = new Workflow { Name = "Preview", EntryStepId = terminate.Id, Steps = [terminate] };
+        var project = new Project { Workflows = [workflow] };
+        var projectViewModel = new ProjectViewModel(project);
+        var plannedEffect = new WorkflowPlannedEffect(
+            ActionType.Command,
+            WorkflowEffectCategory.CommandStation,
+            "Send command",
+            []);
+        WorkflowExecutionRequest? capturedRequest = null;
+        var workflowService = new Mock<IWorkflowService>();
+        workflowService
+            .Setup(service => service.ExecuteAsync(
+                It.IsAny<WorkflowExecutionRequest>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<WorkflowExecutionRequest, CancellationToken>((request, _) => capturedRequest = request)
+            .ReturnsAsync(new WorkflowExecutionResult
+            {
+                ExecutionId = Guid.NewGuid(),
+                WorkflowId = workflow.Id,
+                SourceCorrelationId = Guid.NewGuid(),
+                Status = WorkflowExecutionStatus.Succeeded,
+                PlannedEffects = [plannedEffect]
+            });
+        var executionContext = new ActionExecutionContext { Z21 = Mock.Of<IZ21>() };
+        using var library = new WorkflowLibraryViewModel(
+            new TestProjectContext(projectViewModel),
+            new TestDialogService(true),
+            workflowService: workflowService.Object,
+            executionContext: executionContext);
+
+        await library.DryRunSelectedWorkflowCommand.ExecuteAsync(null);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(capturedRequest, Is.Not.Null);
+            Assert.That(capturedRequest!.Mode, Is.EqualTo(WorkflowRunMode.DryRun));
+            Assert.That(capturedRequest.Project, Is.SameAs(project));
+            Assert.That(capturedRequest.Workflow, Is.SameAs(workflow));
+            Assert.That(library.PlannedEffects, Is.EqualTo(new[] { plannedEffect }));
+            Assert.That(library.LastDryRunStatus, Is.EqualTo(nameof(WorkflowExecutionStatus.Succeeded)));
+            Assert.That(library.IsDryRunRunning, Is.False);
+        });
+        workflowService.Verify(
+            service => service.ExecuteAsync(
+                It.IsAny<WorkflowExecutionRequest>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Test]
+    public void TraceProjection_FiltersSelectedWorkflowAndOrdersNewestFirst()
+    {
+        var firstWorkflow = new Workflow { Name = "First" };
+        var secondWorkflow = new Workflow { Name = "Second" };
+        var projectViewModel = new ProjectViewModel(new Project
+        {
+            Workflows = [firstWorkflow, secondWorkflow]
+        });
+        var traceStore = new WorkflowTraceStore();
+        traceStore.Append(CreateLifecycleEvent(firstWorkflow.Id, 1));
+        traceStore.Append(CreateLifecycleEvent(secondWorkflow.Id, 2));
+        traceStore.Append(CreateLifecycleEvent(firstWorkflow.Id, 3));
+        using var library = new WorkflowLibraryViewModel(
+            new TestProjectContext(projectViewModel),
+            new TestDialogService(true),
+            traceStore: traceStore);
+
+        Assert.That(library.TraceEntries.Select(entry => entry.Sequence), Is.EqualTo(new long[] { 3, 1 }));
+
+        library.SelectWorkflowCommand.Execute(projectViewModel.Workflows[1]);
+
+        Assert.That(library.TraceEntries.Select(entry => entry.Sequence), Is.EqualTo(new long[] { 2 }));
+    }
+
+    private static WorkflowLifecycleEvent CreateLifecycleEvent(Guid workflowId, long sequence) => new()
+    {
+        Kind = WorkflowLifecycleKind.WorkflowCompleted,
+        SourceCorrelationId = Guid.NewGuid(),
+        ExecutionId = Guid.NewGuid(),
+        WorkflowId = workflowId,
+        Sequence = sequence,
+        Mode = WorkflowLifecycleMode.DryRun,
+        TimestampUtc = DateTimeOffset.UtcNow
+    };
 
     private sealed class TestProjectContext(ProjectViewModel selectedProject) : IProjectContext
     {

@@ -5,6 +5,7 @@
     xmlns:controls="using:Moba.WinUI.Controls"
     xmlns:converter="using:Moba.WinUI.Converter"
     xmlns:i="using:Microsoft.Xaml.Interactivity"
+    xmlns:steps="using:Moba.SharedUI.ViewModel.WorkflowSteps"
     xmlns:selector="using:Moba.WinUI.Selector">
 
     <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
@@ -271,62 +272,84 @@
     <!--  Workflow Template (Fluent Design 2)  -->
     <!--  ============================================  -->
     <DataTemplate x:Key="WorkflowTemplate">
-        <ScrollViewer>
-            <StackPanel Padding="0,0,16,16" Spacing="16">
-                <!--  Header  -->
-                <TextBlock
-                    Margin="0,0,0,8"
-                    Style="{ThemeResource SubtitleTextBlockStyle}"
-                    Text="Workflow Properties" />
+        <StackPanel Padding="0,0,16,16" Spacing="12">
+            <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Workflow properties" />
+            <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
+            <TextBox AcceptsReturn="True" Header="Description" Text="{Binding Description, Mode=TwoWay}" TextWrapping="Wrap" />
+            <TextBox Header="Entry step ID" Text="{Binding EntryStepId, Mode=TwoWay}" />
+            <ComboBox Header="Default failure behavior" ItemsSource="{Binding FailureBehaviors}" SelectedItem="{Binding DefaultFailureBehavior, Mode=TwoWay}" />
+            <TextBox Header="Default failure step ID" Text="{Binding DefaultFailureStepId, Mode=TwoWay}" />
+            <NumberBox Header="Default retry attempts" Minimum="0" Maximum="10" Value="{Binding DefaultRetryAdditionalAttempts, Mode=TwoWay}" />
+            <NumberBox Header="Default retry delay (ms)" Minimum="0" Value="{Binding DefaultRetryDelayMs, Mode=TwoWay}" />
+        </StackPanel>
+    </DataTemplate>
 
-                <!--  Name  -->
-                <TextBox
-                    Header="Name"
-                    PlaceholderText="Enter workflow name"
-                    Text="{Binding Name, Mode=TwoWay}" />
+    <DataTemplate x:Key="WorkflowActionStepTemplate">
+        <StackPanel Padding="0,0,16,16" Spacing="12">
+            <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Action step" />
+            <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
+            <TextBox Header="Next step ID" Text="{Binding NextStepId, Mode=TwoWay}" />
+            <ContentControl Content="{Binding Action}" ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
+        </StackPanel>
+    </DataTemplate>
 
-                <!--  Description  -->
-                <TextBox
-                    Height="80"
-                    AcceptsReturn="True"
-                    Header="Description"
-                    PlaceholderText="Enter description"
-                    Text="{Binding Description, Mode=TwoWay}"
-                    TextWrapping="Wrap" />
+    <DataTemplate x:Key="WorkflowDelayStepTemplate">
+        <StackPanel Padding="0,0,16,16" Spacing="12">
+            <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Delay step" />
+            <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
+            <NumberBox Header="Delay (ms)" Minimum="0" Value="{Binding DelayMs, Mode=TwoWay}" />
+            <TextBox Header="Next step ID" Text="{Binding NextStepId, Mode=TwoWay}" />
+        </StackPanel>
+    </DataTemplate>
 
-                <!--  InPort  -->
-                <NumberBox
-                    Header="InPort (Trigger)"
-                    Minimum="0"
-                    SpinButtonPlacementMode="Inline"
-                    Value="{Binding InPort, Mode=TwoWay}" />
+    <DataTemplate x:Key="WorkflowConditionStepTemplate">
+        <StackPanel Padding="0,0,16,16" Spacing="12">
+            <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Condition step" />
+            <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
+            <ComboBox Header="Condition" ItemsSource="{Binding ConditionKinds}" SelectedItem="{Binding ConditionKind, Mode=TwoWay}" />
+            <NumberBox Header="Feedback InPort" Minimum="1" Maximum="512" Value="{Binding FeedbackInPort, Mode=TwoWay}" />
+            <TextBox Header="Journey or station ID" Text="{Binding ContextEntityId, Mode=TwoWay}" />
+            <TextBox Header="True step ID" Text="{Binding TrueStepId, Mode=TwoWay}" />
+            <TextBox Header="False step ID" Text="{Binding FalseStepId, Mode=TwoWay}" />
+        </StackPanel>
+    </DataTemplate>
 
-                <!--  Timer Settings  -->
-                <StackPanel Spacing="12">
-                    <CheckBox Content="Use Timer To Ignore Feedbacks" IsChecked="{Binding IsUsingTimerToIgnoreFeedbacks, Mode=TwoWay}" />
+    <DataTemplate x:Key="WorkflowParallelStepTemplate">
+        <StackPanel Padding="0,0,16,16" Spacing="12">
+            <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Parallel step" />
+            <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
+            <TextBox Header="Join step ID" Text="{Binding JoinStepId, Mode=TwoWay}" />
+            <Button Content="Add branch" Command="{Binding AddBranchCommand}" />
+            <ItemsControl x:Name="ParallelBranches" ItemsSource="{Binding Branches}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Padding="0,4" ColumnSpacing="8">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBox Header="Branch name" Text="{Binding Name, Mode=TwoWay}" />
+                            <TextBox Grid.Column="1" Header="Entry step ID" Text="{Binding EntryStepId, Mode=TwoWay}" />
+                            <Button Grid.Column="2" VerticalAlignment="Bottom" Content="Delete" Command="{Binding DataContext.DeleteBranchCommand, ElementName=ParallelBranches}" CommandParameter="{Binding}" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </DataTemplate>
 
-                    <NumberBox
-                        Header="Timer Interval (seconds)"
-                        IsEnabled="{Binding IsUsingTimerToIgnoreFeedbacks, Mode=OneWay}"
-                        Minimum="1"
-                        SpinButtonPlacementMode="Inline"
-                        Value="{Binding IntervalForTimerToIgnoreFeedbacks, Mode=TwoWay}" />
-                </StackPanel>
+    <DataTemplate x:Key="WorkflowNestedStepTemplate">
+        <StackPanel Padding="0,0,16,16" Spacing="12">
+            <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Nested workflow step" />
+            <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
+            <TextBox Header="Workflow ID" Text="{Binding WorkflowId, Mode=TwoWay}" />
+            <TextBox Header="Next step ID" Text="{Binding NextStepId, Mode=TwoWay}" />
+        </StackPanel>
+    </DataTemplate>
 
-                <!--  Execution Mode  -->
-                <ComboBox
-                    HorizontalAlignment="Stretch"
-                    Header="Execution Mode"
-                    ItemsSource="{Binding ExecutionModeValues, Mode=OneWay}"
-                    SelectedItem="{Binding ExecutionMode, Mode=TwoWay}" />
-
-                <TextBlock
-                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                    Style="{ThemeResource CaptionTextBlockStyle}"
-                    Text="Sequential: Actions run one-by-one, DelayAfterMs adds pause after completion. Parallel: Actions start staggered, DelayAfterMs controls start offset (cumulative)."
-                    TextWrapping="Wrap" />
-            </StackPanel>
-        </ScrollViewer>
+    <DataTemplate x:Key="WorkflowTerminateStepTemplate">
+        <StackPanel Padding="0,0,16,16" Spacing="12">
+            <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Termination step" />
+            <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
+            <ComboBox Header="Result" ItemsSource="{Binding Results}" SelectedItem="{Binding Result, Mode=TwoWay}" />
+        </StackPanel>
     </DataTemplate>
 
     <DataTemplate x:Key="TrainTemplate">
@@ -1147,6 +1170,12 @@
         StationTemplate="{StaticResource StationTemplate}"
         TrainDestinationDisplayActionTemplate="{StaticResource TrainDestinationDisplayActionTemplate}"
         ChangeJourneyStopActionTemplate="{StaticResource ChangeJourneyStopActionTemplate}"
+        WorkflowActionStepTemplate="{StaticResource WorkflowActionStepTemplate}"
+        WorkflowDelayStepTemplate="{StaticResource WorkflowDelayStepTemplate}"
+        WorkflowConditionStepTemplate="{StaticResource WorkflowConditionStepTemplate}"
+        WorkflowParallelStepTemplate="{StaticResource WorkflowParallelStepTemplate}"
+        WorkflowNestedStepTemplate="{StaticResource WorkflowNestedStepTemplate}"
+        WorkflowTerminateStepTemplate="{StaticResource WorkflowTerminateStepTemplate}"
         TrainTemplate="{StaticResource TrainTemplate}"
         WagonTemplate="{StaticResource WagonTemplate}"
         WorkflowTemplate="{StaticResource WorkflowTemplate}" />

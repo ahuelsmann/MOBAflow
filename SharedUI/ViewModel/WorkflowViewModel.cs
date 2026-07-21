@@ -149,6 +149,9 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
     /// <summary>Gets the authoritative ordered Workflow 2.0 graph-node wrappers.</summary>
     public ObservableCollection<WorkflowStepViewModel> Steps { get; }
 
+    /// <summary>Gets workflow-level failure behaviors available to the editor.</summary>
+    public IEnumerable<WorkflowFailureBehavior> FailureBehaviors => Enum.GetValues<WorkflowFailureBehavior>();
+
     /// <summary>Gets or sets the Workflow 2.0 entry node.</summary>
     public Guid? EntryStepId
     {
@@ -275,6 +278,13 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
         var model = _model.Steps![sourceIndex];
         _model.Steps.RemoveAt(sourceIndex);
         _model.Steps.Insert(targetIndex, model);
+        OnPropertyChanged(nameof(Steps));
+    }
+
+    /// <summary>Synchronizes the persisted editor order after a view-level reorder operation.</summary>
+    public void UpdateStepOrder()
+    {
+        _model.Steps = Steps.Select(step => step.Model).ToList();
         OnPropertyChanged(nameof(Steps));
     }
 

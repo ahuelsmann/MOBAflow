@@ -104,7 +104,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         IDialogService? dialogService = null,
         Func<string, Task>? speechTestAction = null,
         ILocomotiveWhistleAutomationService? locomotiveWhistleAutomation = null,
-        IProjectDiagnosticsService? projectDiagnosticsService = null)
+        IProjectDiagnosticsService? projectDiagnosticsService = null,
+        IWorkflowService? workflowService = null,
+        IWorkflowTraceStore? workflowTraceStore = null)
     {
         ArgumentNullException.ThrowIfNull(layoutColumnWidths);
         ArgumentNullException.ThrowIfNull(mobaRuntime);
@@ -138,7 +140,11 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
             this,
             dialogService,
             new WorkflowValidator(),
-            loggerFactory?.CreateLogger<WorkflowLibraryViewModel>());
+            loggerFactory?.CreateLogger<WorkflowLibraryViewModel>(),
+            workflowService,
+            workflowTraceStore,
+            executionContext,
+            eventBus);
         WorkflowLibrary.PropertyChanged += OnWorkflowLibraryPropertyChanged;
 
         _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));

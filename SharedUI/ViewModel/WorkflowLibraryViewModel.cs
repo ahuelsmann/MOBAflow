@@ -6,6 +6,7 @@ using Backend.Interface;
 using Backend.Service;
 
 using Common.Extension;
+using Common.Events;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -37,6 +38,12 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     private readonly IDialogService _dialogService;
     private readonly IWorkflowValidator _validator;
     private readonly ILogger<WorkflowLibraryViewModel>? _logger;
+    private readonly IWorkflowService? _workflowService;
+    private readonly IWorkflowTraceStore? _traceStore;
+    private readonly ActionExecutionContext? _executionContext;
+    private readonly IEventBus? _eventBus;
+    private readonly Guid? _traceSubscriptionId;
+    private CancellationTokenSource? _dryRunCancellation;
     private ProjectViewModel? _subscribedProject;
     private bool _suppressAutoSave;
     private bool _disposed;
@@ -53,20 +60,39 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     [ObservableProperty]
     private string _lastDeletionBlockMessage = string.Empty;
 
+    [ObservableProperty]
+    private bool _isDryRunRunning;
+
+    [ObservableProperty]
+    private string _lastDryRunStatus = "Not run";
+
     /// <summary>Creates a shared workflow-library coordinator.</summary>
     public WorkflowLibraryViewModel(
         IProjectContext projectContext,
         IDialogService? dialogService = null,
         IWorkflowValidator? validator = null,
-        ILogger<WorkflowLibraryViewModel>? logger = null)
+        ILogger<WorkflowLibraryViewModel>? logger = null,
+        IWorkflowService? workflowService = null,
+        IWorkflowTraceStore? traceStore = null,
+        ActionExecutionContext? executionContext = null,
+        IEventBus? eventBus = null)
     {
         ArgumentNullException.ThrowIfNull(projectContext);
         _projectContext = projectContext;
         _dialogService = dialogService ?? new NullDialogService();
         _validator = validator ?? new WorkflowValidator();
         _logger = logger;
+        _workflowService = workflowService;
+        _traceStore = traceStore;
+        _executionContext = executionContext;
+        _eventBus = eventBus;
+        if (_eventBus != null)
+        {
+            _traceSubscriptionId = _eventBus.Subscribe<WorkflowLifecycleEvent>(OnWorkflowLifecycleEvent);
+        }
         _projectContext.PropertyChanged += OnProjectContextPropertyChanged;
         AttachProject(_projectContext.SelectedProject);
+        RefreshTrace();
     }
 
     /// <summary>Gets the authoritative wrappers owned by the selected project.</summary>
@@ -83,6 +109,18 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     /// <summary>Gets references that prevented the last deletion attempt.</summary>
     public ObservableCollection<WorkflowReference> DeletionReferences { get; } = [];
 
+    /// <summary>Gets the selected workflow's retained lifecycle entries in newest-first order.</summary>
+    public ObservableCollection<WorkflowLifecycleEvent> TraceEntries { get; } = [];
+
+    /// <summary>Gets the last dry run's planned external effects in deterministic order.</summary>
+    public ObservableCollection<WorkflowPlannedEffect> PlannedEffects { get; } = [];
+
+    /// <summary>Gets whether a dry run is available in the current host.</summary>
+    public bool CanDryRun => _workflowService != null && _executionContext != null && SelectedWorkflow != null;
+
+    /// <summary>Gets the node editor target, or the workflow when no node is selected.</summary>
+    public object? SelectedEditorObject => SelectedStep is not null ? SelectedStep : SelectedWorkflow;
+
     partial void OnSearchTextChanged(string value)
     {
         _ = value;
@@ -94,9 +132,14 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
         _ = oldValue;
         SelectedStep = newValue?.Steps.FirstOrDefault();
         Validate();
+        RefreshTrace();
+        OnPropertyChanged(nameof(CanDryRun));
+        DryRunSelectedWorkflowCommand.NotifyCanExecuteChanged();
+        CancelDryRunCommand.NotifyCanExecuteChanged();
         DuplicateSelectedWorkflowCommand.NotifyCanExecuteChanged();
         DeleteSelectedWorkflowCommand.NotifyCanExecuteChanged();
         AssignSelectedWorkflowCommand.NotifyCanExecuteChanged();
+        OnPropertyChanged(nameof(SelectedEditorObject));
     }
 
     /// <summary>Creates a valid minimal workflow and selects its authoritative wrapper.</summary>
@@ -132,7 +175,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
             _suppressAutoSave = false;
         }
 
-        await SaveAsync().ConfigureAwait(false);
+        await SaveAsync();
     }
 
     /// <summary>Selects one authoritative project workflow wrapper.</summary>
@@ -179,7 +222,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
             _suppressAutoSave = false;
         }
 
-        await SaveAsync().ConfigureAwait(false);
+        await SaveAsync();
     }
 
     /// <summary>Deletes an unreferenced workflow after confirmation; referenced workflows remain intact.</summary>
@@ -208,7 +251,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
                 LastDeletionBlockMessage,
                 "OK",
                 "Cancel",
-                false).ConfigureAwait(false);
+                false);
             return;
         }
 
@@ -217,7 +260,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
             "Delete workflow",
             $"Delete workflow '{selected.Name}'?",
             "Delete",
-            "Cancel").ConfigureAwait(false);
+            "Cancel");
         if (!confirmed)
         {
             return;
@@ -239,7 +282,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
             _suppressAutoSave = false;
         }
 
-        await SaveAsync().ConfigureAwait(false);
+        await SaveAsync();
     }
 
     /// <summary>Assigns the selected workflow to one journey feedback occurrence.</summary>
@@ -252,7 +295,93 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
         }
 
         feedbackStep.WorkflowId = SelectedWorkflow.Id;
-        await SaveAsync().ConfigureAwait(false);
+        await SaveAsync();
+    }
+
+    /// <summary>Plans the selected workflow without invoking live action handlers or waiting.</summary>
+    [RelayCommand(CanExecute = nameof(CanStartDryRun))]
+    private async Task DryRunSelectedWorkflowAsync()
+    {
+        var project = _projectContext.SelectedProject?.Model;
+        var workflow = SelectedWorkflow?.Model;
+        if (project == null || workflow == null || _workflowService == null || _executionContext == null)
+        {
+            return;
+        }
+
+        _dryRunCancellation?.Dispose();
+        _dryRunCancellation = new CancellationTokenSource();
+        IsDryRunRunning = true;
+        LastDryRunStatus = "Planning...";
+        PlannedEffects.Clear();
+        DryRunSelectedWorkflowCommand.NotifyCanExecuteChanged();
+        CancelDryRunCommand.NotifyCanExecuteChanged();
+        try
+        {
+            var context = new ActionExecutionContextFactory(_executionContext).Create(new ActionExecutionContextState
+            {
+                CurrentProject = project
+            });
+            var result = await _workflowService.ExecuteAsync(new WorkflowExecutionRequest
+            {
+                Project = project,
+                Workflow = workflow,
+                Context = context,
+                Mode = WorkflowRunMode.DryRun,
+                SourceCorrelationId = Guid.NewGuid()
+            }, _dryRunCancellation.Token);
+
+            foreach (var effect in result.PlannedEffects)
+            {
+                PlannedEffects.Add(effect);
+            }
+
+            LastDryRunStatus = result.Status.ToString();
+        }
+        catch (OperationCanceledException)
+        {
+            LastDryRunStatus = "Cancelled";
+        }
+        finally
+        {
+            IsDryRunRunning = false;
+            RefreshTrace();
+            DryRunSelectedWorkflowCommand.NotifyCanExecuteChanged();
+            CancelDryRunCommand.NotifyCanExecuteChanged();
+        }
+    }
+
+    partial void OnSelectedStepChanged(WorkflowStepViewModel? value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(SelectedEditorObject));
+    }
+
+    /// <summary>Cancels the active dry run.</summary>
+    [RelayCommand(CanExecute = nameof(IsDryRunRunning))]
+    private void CancelDryRun()
+    {
+        _dryRunCancellation?.Cancel();
+    }
+
+    /// <summary>Refreshes the bounded read-only trace projection for the selected workflow.</summary>
+    [RelayCommand]
+    private void RefreshTrace()
+    {
+        TraceEntries.Clear();
+        if (_traceStore == null)
+        {
+            return;
+        }
+
+        var workflowId = SelectedWorkflow?.Id;
+        foreach (var entry in _traceStore.GetEntries()
+                     .Where(entry => !workflowId.HasValue || entry.WorkflowId == workflowId.Value)
+                     .TakeLast(200)
+                     .Reverse())
+        {
+            TraceEntries.Add(entry);
+        }
     }
 
     /// <summary>Refreshes project validation and returns the selected workflow's issues.</summary>
@@ -284,12 +413,20 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
         }
 
         _disposed = true;
+        _dryRunCancellation?.Cancel();
+        _dryRunCancellation?.Dispose();
+        if (_eventBus != null && _traceSubscriptionId.HasValue)
+        {
+            _eventBus.Unsubscribe(_traceSubscriptionId.Value);
+        }
         _projectContext.PropertyChanged -= OnProjectContextPropertyChanged;
         AttachProject(null);
         GC.SuppressFinalize(this);
     }
 
     private bool HasSelectedWorkflow() => SelectedWorkflow != null;
+
+    private bool CanStartDryRun() => CanDryRun && !IsDryRunRunning;
 
     private void AttachProject(ProjectViewModel? project)
     {
@@ -374,6 +511,14 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
         if (!_suppressAutoSave)
         {
             SaveAsync().Observe(ex => _logger?.LogWarning(ex, "Workflow auto-save failed"));
+        }
+    }
+
+    private void OnWorkflowLifecycleEvent(WorkflowLifecycleEvent lifecycleEvent)
+    {
+        if (SelectedWorkflow == null || lifecycleEvent.WorkflowId == SelectedWorkflow.Id)
+        {
+            RefreshTrace();
         }
     }
 
