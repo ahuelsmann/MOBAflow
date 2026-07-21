@@ -187,7 +187,20 @@ Before committing, run manually:
 ```powershell
 dotnet test Test/Test.csproj
 dotnet build MOBAflow/MOBAflow.csproj -c Release
+sonar auth status
+sonar analyze --base <remote>/main --force --format json -p ahuelsmann_MOBAflow2
 ```
+
+If local agentic analysis is unavailable for the organization, document the reported
+capability limitation and create the PR as a draft. Every PR starts as a draft. Require the
+SonarCloud check to pass and verify the remote PR result before marking it ready:
+
+```powershell
+sonar list issues -p ahuelsmann_MOBAflow2 --format toon --statuses OPEN,CONFIRMED --pull-request <number>
+```
+
+The result must report `total: 0` before review and merge. See
+[`sonarqube-pre-pr.instructions.md`](./sonarqube-pre-pr.instructions.md) for the complete policy.
 
 Use Conventional Commits (`feat:`, `fix:`, `docs:`, etc.) for git-cliff changelog generation.
 
