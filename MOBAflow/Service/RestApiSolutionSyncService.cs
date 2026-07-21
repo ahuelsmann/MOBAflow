@@ -35,8 +35,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
     private readonly MainWindowViewModel _mainWindowViewModel;
 
-    private readonly HttpClient _httpClient;
-
     private readonly IEventBus _eventBus;
 
     private readonly ILogger<RestApiSolutionSyncService> _logger;
@@ -84,8 +82,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         AppSettings appSettings,
 
-        IHttpClientFactory httpClientFactory,
-
         MainWindowViewModel mainWindowViewModel,
 
         RestApiProcessService restApiProcessService,
@@ -102,8 +98,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         ArgumentNullException.ThrowIfNull(appSettings);
 
-        ArgumentNullException.ThrowIfNull(httpClientFactory);
-
         ArgumentNullException.ThrowIfNull(mainWindowViewModel);
 
         ArgumentNullException.ThrowIfNull(restApiProcessService);
@@ -117,8 +111,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
         _appSettings = appSettings;
 
         _mainWindowViewModel = mainWindowViewModel;
-
-        _httpClient = httpClientFactory.CreateClient(nameof(RestApiSolutionSyncService));
 
         _eventBus = eventBus;
 
