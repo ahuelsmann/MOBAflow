@@ -9,7 +9,8 @@ using global::Moba.Domain;
 internal sealed class ProjectDiagnosticsServiceTests
 {
     private readonly ProjectDiagnosticsService _service = new(
-        new DigitalAddressConflictDetector(new DefaultMultiplexerProvider()));
+        new DigitalAddressConflictDetector(new DefaultMultiplexerProvider()),
+        new InterlockingDefinitionValidator());
 
     [Test]
     public void Analyze_AllowsSharedWagonFunctionDecoderAddresses()
@@ -50,17 +51,24 @@ internal sealed class ProjectDiagnosticsServiceTests
     }
 
     [Test]
-    public void Analyze_RequiresSignalBoxFeedbackPointsToHaveUniqueInPorts()
+    public void Analyze_RequiresCanonicalBlockFeedbackToBeCompleteAndUnique()
     {
         var project = new Project
         {
-            SignalBoxPlan = new SignalBoxPlan
+            Interlocking = new InterlockingDefinition
             {
-                Elements =
+                Blocks =
                 [
-                    new SbDetector { Name = "Missing", FeedbackAddress = 0 },
-                    new SbDetector { Name = "Block one", FeedbackAddress = 5 },
-                    new SbDetector { Name = "Block two", FeedbackAddress = 5 }
+                    new BlockDefinition
+                    {
+                        Name = "Missing clear",
+                        FeedbackInputs =
+                        [
+                            new BlockFeedbackInput { InPort = 6, Role = BlockFeedbackRole.Occupied }
+                        ]
+                    },
+                    CreateBlock("Block one", 5),
+                    CreateBlock("Block two", 5)
                 ]
             }
         };
@@ -72,7 +80,7 @@ internal sealed class ProjectDiagnosticsServiceTests
             Assert.That(diagnostics, Has.Count.EqualTo(2));
             Assert.That(diagnostics.All(
                 diagnostic => diagnostic.Severity == ProjectDiagnosticSeverity.Error), Is.True);
-            Assert.That(diagnostics.Any(diagnostic => diagnostic.Message.Contains("no InPort", StringComparison.Ordinal)), Is.True);
+            Assert.That(diagnostics.Any(diagnostic => diagnostic.Id.Contains("block.feedback.clear.missing", StringComparison.Ordinal)), Is.True);
             Assert.That(diagnostics.Any(diagnostic => diagnostic.TargetIds.Count == 2), Is.True);
         });
     }
@@ -114,7 +122,7 @@ internal sealed class ProjectDiagnosticsServiceTests
     {
         var locomotiveId = Guid.Parse("00000000-0000-0000-0000-000000000001");
         var secondLocomotiveId = Guid.Parse("00000000-0000-0000-0000-000000000002");
-        var detectorId = Guid.Parse("00000000-0000-0000-0000-000000000003");
+        var blockId = Guid.Parse("00000000-0000-0000-0000-000000000003");
         var project = new Project
         {
             Locomotives =
@@ -122,9 +130,20 @@ internal sealed class ProjectDiagnosticsServiceTests
                 new Locomotive { Id = locomotiveId, Name = "One", DigitalAddress = 8 },
                 new Locomotive { Id = secondLocomotiveId, Name = "Two", DigitalAddress = 8 }
             ],
-            SignalBoxPlan = new SignalBoxPlan
+            Interlocking = new InterlockingDefinition
             {
-                Elements = [new SbDetector { Id = detectorId, Name = "Missing", FeedbackAddress = 0 }]
+                Blocks =
+                [
+                    new BlockDefinition
+                    {
+                        Id = blockId,
+                        Name = "Missing clear",
+                        FeedbackInputs =
+                        [
+                            new BlockFeedbackInput { InPort = 3, Role = BlockFeedbackRole.Occupied }
+                        ]
+                    }
+                ]
             }
         };
 
@@ -141,4 +160,15 @@ internal sealed class ProjectDiagnosticsServiceTests
             Assert.That(second.Select(item => item.Id), Is.EqualTo(first.Select(item => item.Id)));
         });
     }
+
+    private static BlockDefinition CreateBlock(string name, int inPort) =>
+        new()
+        {
+            Name = name,
+            FeedbackInputs =
+            [
+                new BlockFeedbackInput { InPort = inPort, Role = BlockFeedbackRole.Occupied },
+                new BlockFeedbackInput { InPort = inPort, Role = BlockFeedbackRole.Clear, ActiveState = false }
+            ]
+        };
 }

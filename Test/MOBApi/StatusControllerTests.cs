@@ -66,7 +66,7 @@ internal sealed class StatusControllerTests
             isConnected: true);
 
         var solutionCache = new SolutionCache();
-        solutionCache.Set("{\"name\":\"Test\",\"schemaVersion\":3,\"projects\":[]}", "test.json", "myMOBA");
+        solutionCache.Set("{\"name\":\"Test\",\"schemaVersion\":4,\"projects\":[]}", "test.json", "myMOBA");
 
         var hostRegistry = new RuntimeHostRegistry();
         hostRegistry.SetHost("host-conn");

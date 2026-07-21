@@ -61,6 +61,30 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
     }
 
     [Test]
+    public async Task ActivateProjectAsync_ActivatesClonedInterlockingDefinition()
+    {
+        var z21Mock = CreateZ21Mock();
+        var interlockingRuntime = new Mock<IInterlockingRuntime>();
+        interlockingRuntime
+            .Setup(runtime => runtime.ActivateAsync(It.IsAny<InterlockingDefinition>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        using var runtime = CreateRuntime(
+            z21Mock.Object,
+            interlockingRuntime: interlockingRuntime.Object);
+        var project = new Project { Name = "Editor" };
+        project.Interlocking.Routes.Add(new RouteDefinition { Name = "R1" });
+
+        await runtime.ActivateProjectAsync(project);
+
+        interlockingRuntime.Verify(item => item.ActivateAsync(
+            It.Is<InterlockingDefinition>(definition =>
+                !ReferenceEquals(definition, project.Interlocking)
+                && definition.Routes.Count == 1
+                && definition.Routes[0].Name == "R1"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
     public async Task StationTransition_Should_PublishReachedEventOnlyAfterFeedbackAppliesTransition()
     {
         // Arrange
@@ -116,7 +140,10 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
         return z21Mock;
     }
 
-    private static MobaRuntimeService CreateRuntime(IZ21 z21, IEventBus? eventBus = null)
+    private static MobaRuntimeService CreateRuntime(
+        IZ21 z21,
+        IEventBus? eventBus = null,
+        IInterlockingRuntime? interlockingRuntime = null)
     {
         var workflowServiceMock = new Mock<IWorkflowService>();
         var loggerMock = new Mock<ILogger<MobaRuntimeService>>();
@@ -131,7 +158,8 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
                 Z21 = new Z21Settings { CurrentIpAddress = string.Empty }
             },
             loggerMock.Object,
-            eventBus);
+            eventBus,
+            interlockingRuntime: interlockingRuntime);
     }
 
     private static byte[] BuildFeedbackPacketForInPort(int inPort)

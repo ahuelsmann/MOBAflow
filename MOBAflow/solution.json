@@ -788,8 +788,7 @@
             "x": 2,
             "y": 3,
             "rotation": 270,
-            "name": "",
-            "state": "Free"
+            "name": ""
           },
           {
             "$type": "TrackStraight",
@@ -797,8 +796,7 @@
             "x": 3,
             "y": 3,
             "rotation": 0,
-            "name": "",
-            "state": "Free"
+            "name": ""
           },
           {
             "$type": "TrackStraight",
@@ -806,8 +804,7 @@
             "x": 4,
             "y": 3,
             "rotation": 0,
-            "name": "",
-            "state": "Free"
+            "name": ""
           },
           {
             "$type": "TrackCurve",
@@ -815,8 +812,7 @@
             "x": 5,
             "y": 3,
             "rotation": 0,
-            "name": "",
-            "state": "Free"
+            "name": ""
           },
           {
             "$type": "Detector",
@@ -825,8 +821,7 @@
             "x": 2,
             "y": 4,
             "rotation": 90,
-            "name": "",
-            "state": "Free"
+            "name": ""
           },
           {
             "$type": "TrackStraight",
@@ -834,8 +829,7 @@
             "x": 5,
             "y": 4,
             "rotation": 90,
-            "name": "",
-            "state": "Free"
+            "name": ""
           },
           {
             "$type": "TrackCurve",
@@ -843,8 +837,7 @@
             "x": 5,
             "y": 5,
             "rotation": 90,
-            "name": "",
-            "state": "Free"
+            "name": ""
           },
           {
             "$type": "TrackStraight",
@@ -852,8 +845,7 @@
             "x": 4,
             "y": 5,
             "rotation": 0,
-            "name": "",
-            "state": "Free"
+            "name": ""
           },
           {
             "$type": "TrackStraight",
@@ -861,8 +853,7 @@
             "x": 3,
             "y": 5,
             "rotation": 0,
-            "name": "",
-            "state": "Free"
+            "name": ""
           },
           {
             "$type": "TrackCurve",
@@ -870,13 +861,11 @@
             "x": 2,
             "y": 5,
             "rotation": 180,
-            "name": "",
-            "state": "Free"
+            "name": ""
           },
           {
             "$type": "Signal",
             "signalSystem": "Ks",
-            "signalAspect": "Hp0",
             "topSpeedIndicator": "8",
             "bottomSpeedIndicator": "6",
             "isMultiplexed": true,
@@ -884,17 +873,166 @@
             "mainSignalArticleNumber": "4046",
             "distantSignalArticleNumber": "4040",
             "baseAddress": 201,
-            "extendedAccessoryValue": 1,
             "id": "3d6c0ace-dde2-4329-95d5-8e474b65828f",
             "x": 6,
             "y": 4,
             "rotation": 0,
-            "name": "G2HBFA1",
-            "state": "Free"
+            "name": "G2HBFA1"
           }
         ],
-        "connections": [],
-        "routes": []
+        "connections": []
+      },
+      "interlocking": {
+        "turnouts": [
+          {
+            "id": "11111111-1111-4111-8111-111111111101",
+            "name": "W1",
+            "decoderAddress": 100,
+            "kind": "TwoWay",
+            "commands": [
+              {
+                "position": "Straight",
+                "commands": [
+                  {
+                    "addressOffset": 0,
+                    "output": 0,
+                    "activate": true,
+                    "queue": false
+                  }
+                ]
+              },
+              {
+                "position": "DivergingLeft",
+                "commands": [
+                  {
+                    "addressOffset": 0,
+                    "output": 1,
+                    "activate": true,
+                    "queue": false
+                  }
+                ]
+              }
+            ],
+            "confirmations": [
+              {
+                "position": "Straight",
+                "conditions": [
+                  {
+                    "functionAddress": 100,
+                    "outputPosition": false
+                  }
+                ]
+              },
+              {
+                "position": "DivergingLeft",
+                "conditions": [
+                  {
+                    "functionAddress": 100,
+                    "outputPosition": true
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "signals": [
+          {
+            "id": "11111111-1111-4111-8111-111111111102",
+            "name": "G2HBFA1",
+            "safeAspect": "Hp0",
+            "signalSystem": "Ks",
+            "isMultiplexed": true,
+            "multiplexerArticleNumber": "5229",
+            "mainSignalArticleNumber": "4046",
+            "distantSignalArticleNumber": "4040",
+            "baseAddress": 201
+          }
+        ],
+        "blocks": [
+          {
+            "id": "11111111-1111-4111-8111-111111111103",
+            "name": "Main line block",
+            "direction": "Bidirectional",
+            "boundaryElementIds": [
+              "11111111-1111-4111-8111-111111111101",
+              "11111111-1111-4111-8111-111111111102"
+            ],
+            "feedbackInputs": [
+              {
+                "inPort": 1,
+                "role": "Occupied",
+                "activeState": true
+              },
+              {
+                "inPort": 1,
+                "role": "Clear",
+                "activeState": false
+              }
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "fromOperationalId": "11111111-1111-4111-8111-111111111102",
+            "toOperationalId": "11111111-1111-4111-8111-111111111101",
+            "isBidirectional": true
+          },
+          {
+            "fromOperationalId": "11111111-1111-4111-8111-111111111101",
+            "toOperationalId": "11111111-1111-4111-8111-111111111103",
+            "isBidirectional": true
+          }
+        ],
+        "routes": [
+          {
+            "id": "11111111-1111-4111-8111-111111111104",
+            "name": "G2HBFA1 to main line",
+            "entryElementId": "11111111-1111-4111-8111-111111111102",
+            "exitElementId": "11111111-1111-4111-8111-111111111103",
+            "pathElementIds": [
+              "11111111-1111-4111-8111-111111111101"
+            ],
+            "turnoutRequirements": [
+              {
+                "turnoutId": "11111111-1111-4111-8111-111111111101",
+                "position": "Straight"
+              }
+            ],
+            "protectedBlockIds": [
+              "11111111-1111-4111-8111-111111111103"
+            ],
+            "signalRequirements": [
+              {
+                "signalId": "11111111-1111-4111-8111-111111111102",
+                "proceedAspect": "Ks1"
+              }
+            ],
+            "conflictingRouteIds": []
+          }
+        ],
+        "bindings": [
+          {
+            "operationalId": "11111111-1111-4111-8111-111111111101",
+            "trackSegmentIds": [
+              "d0f74455-6b51-4c54-9af0-b710b6224e1e"
+            ],
+            "signalBoxElementIds": []
+          },
+          {
+            "operationalId": "11111111-1111-4111-8111-111111111102",
+            "trackSegmentIds": [],
+            "signalBoxElementIds": [
+              "3d6c0ace-dde2-4329-95d5-8e474b65828f"
+            ]
+          },
+          {
+            "operationalId": "11111111-1111-4111-8111-111111111103",
+            "trackSegmentIds": [
+              "3924429b-bb7c-483d-a8b2-e165db764044"
+            ],
+            "signalBoxElementIds": []
+          }
+        ]
       },
       "trackPlan": {
         "version": 1,

@@ -16,6 +16,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Network;
 using Service;
+using Service.Interlocking;
 using Service.Validation;
 using Sound;
 
@@ -41,6 +42,7 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton<ILocomotiveLibraryService, LocomotiveLibraryService>();
         services.TryAddSingleton<ILocomotivePassportHtmlRenderer, LocomotivePassportHtmlRenderer>();
         services.TryAddSingleton<IDigitalAddressConflictDetector, DigitalAddressConflictDetector>();
+        services.TryAddSingleton<IInterlockingDefinitionValidator, InterlockingDefinitionValidator>();
         services.TryAddSingleton<IProjectDiagnosticsService, ProjectDiagnosticsService>();
         services.TryAddSingleton<ITimetableEvaluationService, TimetableEvaluationService>();
         services.TryAddSingleton<ITimetableTimingService, TimetableTimingService>();
@@ -51,6 +53,7 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton<IUdpClientWrapper, UdpWrapper>();
         services.TryAddSingleton<IZ21DiscoveryService, Z21DiscoveryService>();
         services.TryAddSingleton<IZ21, Z21>();
+        services.TryAddSingleton<IInterlockingRuntime, InterlockingRuntimeService>();
         services.TryAddSingleton<IProjectValidator, ProjectValidator>();
         services.TryAddSingleton<IJourneyStopTransitionService, JourneyStopTransitionService>();
         services.TryAddSingleton<IJourneyRuntimeStateStore, FileJourneyRuntimeStateStore>();
@@ -88,7 +91,8 @@ public static class MobaBackendServiceCollectionExtensions
                 sp.GetService<ILogger<JourneyManager>>()),
             z21Discovery: sp.GetRequiredService<IZ21DiscoveryService>(),
             vehicleUsageCheckpointStore: sp.GetRequiredService<IVehicleUsageCheckpointStore>(),
-            timeProvider: sp.GetRequiredService<TimeProvider>()));
+            timeProvider: sp.GetRequiredService<TimeProvider>(),
+            interlockingRuntime: sp.GetRequiredService<IInterlockingRuntime>()));
         services.TryAddSingleton<ILocomotiveFunctionCommandGateway, MobaRuntimeLocomotiveFunctionCommandGateway>();
         services.TryAddSingleton<ILocomotiveWhistleAutomationService, LocomotiveWhistleAutomationService>();
 

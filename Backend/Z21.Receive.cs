@@ -125,6 +125,16 @@ public partial class Z21
                 });
             }
 
+            if (Z21MessageParser.TryParseTurnoutInfo(content, out var turnoutInfo) && turnoutInfo != null)
+            {
+                SetConnectedIfNotAlready();
+                QueueEvent(new TurnoutInfoChangedEvent(
+                    turnoutInfo.FunctionAddress,
+                    turnoutInfo.OutputPosition,
+                    Guid.NewGuid(),
+                    turnoutInfo.IsSwitched));
+            }
+
             return;
         }
 
@@ -176,12 +186,25 @@ public partial class Z21
             _feedbackStatesByGroup.TryGetValue(groupNumber, out var previousState);
             previousState ??= [];
 
-            foreach (var inPort in activeInPorts.Except(previousState).Order())
+            var changedInPorts = activeInPorts
+                .Union(previousState)
+                .Where(inPort => activeInPorts.Contains(inPort) != previousState.Contains(inPort))
+                .Order();
+            foreach (var inPort in changedInPorts)
             {
-                var feedback = new FeedbackResult(content, inPort);
-                Received?.Invoke(feedback);
-                QueueEvent(new FeedbackReceivedEvent(inPort));
-                _logger?.LogDebug("R-Bus Feedback activated: InPort={InPort}", inPort);
+                var isActive = activeInPorts.Contains(inPort);
+                if (isActive)
+                {
+                    var feedback = new FeedbackResult(content, inPort);
+                    Received?.Invoke(feedback);
+                    QueueEvent(new FeedbackReceivedEvent(inPort));
+                }
+
+                QueueEvent(new FeedbackStateChangedEvent(inPort, isActive, Guid.NewGuid()));
+                _logger?.LogDebug(
+                    "R-Bus Feedback changed: InPort={InPort}, IsActive={IsActive}",
+                    inPort,
+                    isActive);
             }
 
             _feedbackStatesByGroup[groupNumber] = activeInPorts;
