@@ -95,6 +95,24 @@ public sealed partial class MobaRuntimeService
         PublishSnapshot();
     }
 
+    private void OnJourneyStationChanged(object? sender, Moba.Backend.Manager.StationChangedEventArgs args)
+    {
+        _ = sender;
+        PublishSnapshot();
+
+        if (_activeProjectContext is null || args.SessionState.LastFeedbackTime is not DateTime occurredAt)
+        {
+            return;
+        }
+
+        _eventBus?.Publish(new JourneyStationReachedEvent(
+            _activeProjectContext.ActiveProject.Id,
+            args.JourneyId,
+            args.SessionState.RunId,
+            args.Station.Id,
+            new DateTimeOffset(occurredAt)));
+    }
+
     private void OnJourneyCompleted(object? sender, Moba.Backend.Manager.JourneyCompletedEventArgs args)
     {
         _ = sender;

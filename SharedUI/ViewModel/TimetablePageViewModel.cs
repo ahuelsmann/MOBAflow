@@ -30,6 +30,8 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
     private readonly ILogger<TimetablePageViewModel> _logger;
     private readonly TimeProvider _timeProvider;
     private readonly Guid _runtimeSubscription;
+    private readonly Guid _stationReachedSubscription;
+    private readonly SemaphoreSlim _projectionGate = new(1, 1);
     private bool _disposed;
     private List<TimetableServiceRowViewModel> _allRows = [];
     private MobaRuntimeSnapshot _latestSnapshot = MobaRuntimeSnapshot.Empty;
@@ -56,6 +58,7 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
 
         _mainWindow.PropertyChanged += OnMainWindowPropertyChanged;
         _runtimeSubscription = _eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged);
+        _stationReachedSubscription = _eventBus.Subscribe<JourneyStationReachedEvent>(OnJourneyStationReached);
     }
 
     public ObservableCollection<TimetableServiceRowViewModel> Services { get; } = [];
@@ -83,6 +86,8 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
     [NotifyCanExecuteChangedFor(nameof(CompleteSelectedServiceCommand))]
     [NotifyCanExecuteChangedFor(nameof(ReassignSelectedTrainCommand))]
     [NotifyCanExecuteChangedFor(nameof(ReassignSelectedJourneyCommand))]
+    [NotifyCanExecuteChangedFor(nameof(RecordArrivalCommand))]
+    [NotifyCanExecuteChangedFor(nameof(RecordDepartureCommand))]
     private TimetableServiceRowViewModel? _selectedService;
 
     [ObservableProperty]
@@ -252,7 +257,7 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
         StatusText = $"Journey reassigned to {journey.Name}";
     }
 
-    [RelayCommand(CanExecute = nameof(HasSelectedCall))]
+    [RelayCommand(CanExecute = nameof(CanRecordArrival))]
     private async Task RecordArrivalAsync()
     {
         if (CurrentProject is null || SelectedService is null || SelectedCall is null) return;
@@ -261,7 +266,7 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
         StatusText = "Arrival recorded";
     }
 
-    [RelayCommand(CanExecute = nameof(HasSelectedCall))]
+    [RelayCommand(CanExecute = nameof(CanRecordDeparture))]
     private async Task RecordDepartureAsync()
     {
         if (CurrentProject is null || SelectedService is null || SelectedCall is null) return;
@@ -351,6 +356,7 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
         _disposed = true;
         _mainWindow.PropertyChanged -= OnMainWindowPropertyChanged;
         _eventBus.Unsubscribe(_runtimeSubscription);
+        _eventBus.Unsubscribe(_stationReachedSubscription);
     }
 
     private Project? CurrentProject => _mainWindow.SelectedProject?.Model;
@@ -360,6 +366,13 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
     private bool HasSelectedCall() => SelectedService is not null
         && SelectedCall is not null
         && SelectedService.State?.Status is not (TimetableServiceStatus.Completed or TimetableServiceStatus.Cancelled);
+
+    private bool CanRecordArrival() => HasSelectedCall()
+        && SelectedCall!.State?.ActualArrival is null;
+
+    private bool CanRecordDeparture() => HasSelectedCall()
+        && SelectedCall!.State?.ActualArrival is not null
+        && SelectedCall.State.ActualDeparture is null;
 
     private bool CanHoldSelectedService() => SelectedService is not null
         && SelectedService.State?.Status is not (TimetableServiceStatus.Completed or TimetableServiceStatus.Cancelled);
@@ -400,7 +413,8 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
         else if (SelectedFocus == "Time window")
         {
             var start = _timeProvider.GetLocalNow().AddHours(-1);
-            var end = _timeProvider.GetLocalNow().AddHours(Math.Max(1, TimeWindowHours));
+            var windowHours = double.IsFinite(TimeWindowHours) ? Math.Max(1, TimeWindowHours) : 1;
+            var end = _timeProvider.GetLocalNow().AddHours(windowHours);
             filtered = filtered.Where(row => row.Model.Calls.Any(call => call.ScheduledDeparture >= start && call.ScheduledArrival <= end));
         }
         else if (text.Length > 0)
@@ -423,25 +437,36 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
     private void OnRuntimeSnapshotChanged(RuntimeSnapshotChangedEvent @event)
     {
         _latestSnapshot = @event.Snapshot;
-        _ = ProjectRuntimeSafelyAsync(@event);
+        foreach (var row in _allRows)
+        {
+            row.UpdateProgress(@event.Snapshot);
+        }
     }
 
-    private async Task ProjectRuntimeSafelyAsync(RuntimeSnapshotChangedEvent @event)
+    private void OnJourneyStationReached(JourneyStationReachedEvent @event)
+        => _ = ProjectRuntimeSafelyAsync(@event);
+
+    private async Task ProjectRuntimeSafelyAsync(JourneyStationReachedEvent @event)
     {
-        var project = CurrentProject;
-        if (project is null) return;
-        var selectedServiceId = SelectedService?.Id;
-        var selectedCallId = SelectedCall?.Id;
+        await _projectionGate.WaitAsync();
         try
         {
-            var result = await _projection.ProjectAsync(project, @event.Snapshot);
+            var project = CurrentProject;
+            if (project is null || project.Id != @event.ProjectId) return;
+            var selectedServiceId = SelectedService?.Id;
+            var selectedCallId = SelectedCall?.Id;
+            var result = await _projection.ProjectAsync(project, @event);
             await RefreshAndReselectAsync(selectedServiceId, selectedCallId);
-            if (result.SuppressedJourneyIds.Count > 0) StatusText = "Live projection suppressed because a journey has multiple active services.";
+            if (result.SuppressedJourneyIds.Count > 0) StatusText = "Live projection suppressed because a journey has multiple eligible services.";
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to project runtime state into timetable state");
             StatusText = "Live timetable update failed";
+        }
+        finally
+        {
+            _projectionGate.Release();
         }
     }
 
@@ -476,9 +501,8 @@ public sealed partial class TimetableServiceRowViewModel : ObservableObject
         TrainName = trainId is Guid effectiveTrainId
             ? project.Trains.FirstOrDefault(train => train.Id == effectiveTrainId)?.Name ?? "Missing train"
             : "No train assigned";
-        ProgressText = snapshot.JourneyStates.TryGetValue(journeyId, out var journeyState)
-            ? $"{journeyState.CurrentStationName} (step {journeyState.CurrentFeedbackIndex + 1})"
-            : "No live progress";
+        _journeyId = journeyId;
+        _progressText = FormatProgress(snapshot, journeyId);
         _serviceNumber = model.ServiceNumber;
         _name = model.Name;
     }
@@ -493,7 +517,10 @@ public sealed partial class TimetableServiceRowViewModel : ObservableObject
 
     public string ServiceDateText => Model.ServiceDate.ToString("yyyy-MM-dd");
 
-    public string ProgressText { get; }
+    private readonly Guid _journeyId;
+
+    [ObservableProperty]
+    private string _progressText;
 
     public string JourneyName { get; }
 
@@ -525,6 +552,14 @@ public sealed partial class TimetableServiceRowViewModel : ObservableObject
 
     [ObservableProperty]
     private string _name;
+
+    public void UpdateProgress(MobaRuntimeSnapshot snapshot)
+        => ProgressText = FormatProgress(snapshot, _journeyId);
+
+    private static string FormatProgress(MobaRuntimeSnapshot snapshot, Guid journeyId)
+        => snapshot.JourneyStates.TryGetValue(journeyId, out var journeyState)
+            ? $"{journeyState.CurrentStationName} (step {journeyState.CurrentFeedbackIndex + 1})"
+            : "No live progress";
 
     partial void OnServiceNumberChanged(string value) => Model.ServiceNumber = value;
 

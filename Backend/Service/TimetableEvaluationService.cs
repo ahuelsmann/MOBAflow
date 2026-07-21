@@ -42,6 +42,18 @@ public sealed class TimetableEvaluationService : ITimetableEvaluationService
             }
         }
 
+
+        foreach (var duplicate in project.TimetableServices
+            .SelectMany(service => service.Calls.Select(call => (Service: service, Call: call)))
+            .GroupBy(item => item.Call.Id)
+            .Where(group => group.Count() > 1))
+        {
+            foreach (var service in duplicate.Select(item => item.Service).DistinctBy(service => service.Id))
+            {
+                Add(issues, TimetableIssueKind.DuplicateIdentifier, service, null, $"Timetable call id {duplicate.Key} is duplicated.");
+            }
+        }
+
         foreach (var service in project.TimetableServices)
         {
             var state = stateByService.GetValueOrDefault(service.Id);
@@ -120,7 +132,7 @@ public sealed class TimetableEvaluationService : ITimetableEvaluationService
     {
         var services = project.TimetableServices
             .Where(service => service.Calls.Count > 0)
-            .Where(service => stateByService.GetValueOrDefault(service.Id)?.Status != TimetableServiceStatus.Cancelled)
+            .Where(service => stateByService.GetValueOrDefault(service.Id)?.Status is not (TimetableServiceStatus.Completed or TimetableServiceStatus.Cancelled))
             .OrderBy(service => service.Calls.Min(call => call.ScheduledArrival))
             .ThenBy(service => service.Id)
             .ToArray();

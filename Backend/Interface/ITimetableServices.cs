@@ -2,7 +2,7 @@
 namespace Moba.Backend.Interface;
 
 using Domain;
-using Common.Runtime;
+using Common.Events;
 
 /// <summary>Validates timetable definitions and effective session assignments.</summary>
 public interface ITimetableEvaluationService
@@ -65,8 +65,8 @@ public interface ITimetableTimingService
 /// <summary>Projects unambiguous runtime journey progress into timetable state.</summary>
 public interface ITimetableRuntimeProjectionService
 {
-    /// <summary>Projects one immutable runtime snapshot into the operating session.</summary>
-    Task<TimetableProjectionResult> ProjectAsync(Project project, MobaRuntimeSnapshot snapshot, CancellationToken cancellationToken = default);
+    /// <summary>Projects one authoritative station transition into the operating session.</summary>
+    Task<TimetableProjectionResult> ProjectAsync(Project project, JourneyStationReachedEvent transition, CancellationToken cancellationToken = default);
 }
 
 /// <summary>Classifies timetable validation and conflict findings.</summary>
