@@ -7,6 +7,7 @@ using Common.Discovery;
 using Common.Events;
 using Common.IO;
 using Common.Multiplex;
+using Common.Recording;
 using Data;
 using Discovery;
 using Interface;
@@ -16,6 +17,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Network;
 using Service;
+using Service.Recording;
 using Service.Validation;
 using Sound;
 
@@ -47,6 +49,9 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton<ITimetableStateStore, FileTimetableStateStore>();
         services.TryAddSingleton<ITimetableOperationsService, TimetableOperationsService>();
         services.TryAddSingleton<ITimetableRuntimeProjectionService, TimetableRuntimeProjectionService>();
+        services.TryAddSingleton<RecorderOptions>();
+        services.TryAddSingleton<IRecordingSessionService, RecordingSessionService>();
+        services.TryAddSingleton<IRecordingStatusSource>(sp => sp.GetRequiredService<IRecordingSessionService>());
         services.TryAddSingleton<Z21Monitor>();
         services.TryAddSingleton<IUdpClientWrapper, UdpWrapper>();
         services.TryAddSingleton<IZ21DiscoveryService, Z21DiscoveryService>();

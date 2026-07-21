@@ -3,8 +3,8 @@
 ## Document status
 
 - Status: In progress
-- Completed delivery slice: WP1 journal model, canonical format, defensive import, filtering, tests, and format documentation
-- Next delivery slice: WP2 recording state machine and bounded ingestion
+- Completed delivery slices: WP1 journal model/format/filtering and WP2 recording state machine/bounded ingestion
+- Next delivery slice: WP3 producer capture on the ordered #43 pipeline
 - Resolved dependency: issue #43 merged through PR #45 and is present in the branch baseline
 - Primary issue: https://github.com/ahuelsmann/MOBAflow/issues/30
 - Status and acceptance criteria source: GitHub issue #30
@@ -337,6 +337,8 @@ Exit: the same in-memory artifact serializes byte-for-byte identically, reopens 
 - add concurrency, identical-timestamp, saturation, stop/drain, limit, cancellation, and invalid-transition tests.
 
 Exit: the platform-neutral service produces a complete deterministic artifact without EventBus or UI integration.
+
+Completed on 2026-07-21. Evidence: the DI-registered platform-neutral session service covers lifecycle and import transitions, atomic sequence assignment, a single-consumer bounded channel, deterministic overload gaps, count/payload limits, bounded stop/drain with terminal cancellation/timeout faults, and immutable artifact completion. Eleven focused tests pass on both `net10.0` and the Windows target; all 30 recording tests and the full `net10.0` suite pass.
 
 ### WP3: Producer capture after issue #43
 
