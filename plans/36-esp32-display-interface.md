@@ -7,7 +7,7 @@
 - Recommended priority: P1
 - Required label: `plan-required`
 - Plan ownership: one-to-one with issue #36
-- Implementation baseline: `codex/issue-36-esp32-display-interface` at `68449c60` in `C:\Repo\ahuelsmann\MOBAflow-issue-36`
+- Implementation baseline: `codex/issue-36-host-transport` from merged PR #69 commit `f8c7f116` in `C:\Repo\ahuelsmann\MOBAflow-issue-36`
 - Lifecycle: delete this plan after issue #36 is complete; the closed issue, pull requests, and Git history remain the permanent record
 
 ## Implementation progress
@@ -26,13 +26,25 @@ Status on 2026-07-21:
   invalid golden payloads for all twelve message types, complete envelope
   fixtures, and a deterministic 5 by 4 conformance-pattern RGB565 vector with
   CRC32 and SHA-256 hashes.
-- WP2 now has immutable envelope, version, capability, health, frame, region,
-  command, and result models plus strict network-byte-order envelope and payload
-  codecs. Validation covers lengths, reserved fields, enums, flags, UTF-8,
-  metadata consistency, CRC32, immutable region bytes, and deterministic
-  arbitrary-byte input for every message type.
-- WP2 remains open for identifier generation, response correlation, fake
-  endpoint behavior, bounded retry, cancellation, and transport anomaly tests.
+- PR #69 merged the immutable envelope, version, capability, health, frame,
+  region, command, and result models plus strict network-byte-order codecs.
+  Validation covers lengths, reserved fields, enums, flags, UTF-8, metadata
+  consistency, CRC32, immutable region bytes, and deterministic arbitrary-byte
+  input for every message type.
+- WP2 is complete: non-zero thread-safe identifier sequences, an independent
+  datagram transport boundary, parallel response correlation, structured host
+  outcomes, bounded timeout/retry/cancellation behavior, safe anomaly events,
+  and transport-exception translation are implemented. The deterministic fake
+  endpoint negotiates capabilities, reports health, stages and validates frame
+  regions, presents complete frames at most once, and simulates delayed,
+  dropped, duplicated, reordered/held, rejected, corrupted, wrong-correlation,
+  transport-failure, conflict, and reboot paths.
+- WP2 tests use an injected `TimeProvider` and manual clock, so timeout and
+  retry-delay coverage contains no long real waits. Focused MOBAdisplay tests
+  pass 117 cases with no failures. The complete net10.0 suite passes 1,291
+  tests with one existing skip and no failures; the Windows/WinUI suite passes
+  1,338 tests without skips or failures. Production and test-source format
+  verification also passes.
 - No firmware, provisioning, UI, configuration, legacy-sender, or RF-owned code
   has been changed in this slice.
 - Validation: `dotnet build MOBAdisplay/MOBAdisplay.csproj` completed with zero
