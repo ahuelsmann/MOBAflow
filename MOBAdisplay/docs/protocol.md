@@ -21,6 +21,37 @@ Firmware integration of this specification remains gated by RF-01 (length-safe
 UDP parsing) and RF-02 (stable provisioning boundary). The host envelope and
 golden vectors can be implemented and tested independently of those gates.
 
+## Legacy v0 parser behavior
+
+The current firmware classifies each legacy datagram using both the original
+datagram length and the number of bytes copied into its fixed 768-byte receive
+buffer. It does not assume that UDP payloads are null-terminated.
+
+| Datagram | Result |
+| --- | --- |
+| Empty | Ignored as empty |
+| Supported control-prefix fragment | Ignored as truncated |
+| Larger than 768 bytes or not copied completely | Drained and ignored |
+| `HOST_VER:` without a value or with non-printable bytes | Ignored as malformed |
+| Unknown length or content, including obsolete `DISPLAY_META` | Ignored as unknown |
+| Exact `FRAME_START` / `FRAME_DONE` | Capture reset / frame completion |
+| Exact 480-byte legacy row | Accepted in receive order |
+| Exact 482-byte indexed row with index 0 through 279 | Accepted at its row index |
+| Indexed row outside 0 through 279 | Ignored as malformed |
+
+Valid `HOST_VER:` payloads are parsed with an explicit payload length. The
+displayed value remains limited to 28 characters for compatibility, and the
+portable parser performs no allocation. This RF-01 behavior does not implement
+the v1 envelope or capability protocol.
+
+The boundary and deterministic fuzz suite run on the host, while the production
+integration is compiled for ESP32-S3:
+
+```powershell
+python -m platformio test -d MOBAdisplay/esp32 -e native
+python -m platformio run -d MOBAdisplay/esp32 -e esp32s3
+```
+
 ## Transport limits
 
 - UDP is used on the explicitly configured endpoint; the default device port is

@@ -23,9 +23,10 @@
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <PlatformTarget Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">x64</PlatformTarget>
+    <_MobaTargetPlatformIdentifier>$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)'))</_MobaTargetPlatformIdentifier>
+    <PlatformTarget Condition="'$(_MobaTargetPlatformIdentifier)' == 'windows'">x64</PlatformTarget>
     <!-- Any CPU maps to mismatched bin/obj paths for WinUI + MOBAflow dependencies (WMC1006). -->
-    <Platform Condition="'$(OS)' == 'Windows_NT' and ('$(Platform)' == '' or '$(Platform)' == 'AnyCPU')">x64</Platform>
+    <Platform Condition="'$(_MobaTargetPlatformIdentifier)' == 'windows' and ('$(Platform)' == '' or '$(Platform)' == 'AnyCPU')">x64</Platform>
 
     <!-- Keep normal build loops fast; Release remains strict below. -->
     <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>

@@ -17,6 +17,9 @@ using System.Threading;
 /// </summary>
 public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
 {
+    /// <summary>Maximum operating-time loss after an abrupt process termination.</summary>
+    public static readonly TimeSpan VehicleUsageCheckpointInterval = TimeSpan.FromSeconds(30);
+
     private readonly IZ21 _z21;
     private readonly IWorkflowService _workflowService;
     private readonly ActionExecutionContextFactory _executionContextFactory;
@@ -25,9 +28,12 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
     private readonly ILogger<MobaRuntimeService> _logger;
     private readonly IEventBus? _eventBus;
     private readonly IZ21DiscoveryService _z21Discovery;
+    private readonly TimeProvider _timeProvider;
+    private readonly VehicleUsageRuntimeTracker _vehicleUsageTracker;
 
     private ActiveProjectContext? _activeProjectContext;
     private Timer? _z21AutoConnectTimer;
+    private ITimer? _vehicleUsageCheckpointTimer;
     private int _autoConnectAttemptInProgress;
     private readonly SemaphoreSlim _startLock = new(1, 1);
     private bool _started;
@@ -84,7 +90,9 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         ILogger<MobaRuntimeService> logger,
         IEventBus? eventBus = null,
         JourneyManagerFactory? journeyManagerFactory = null,
-        IZ21DiscoveryService? z21Discovery = null)
+        IZ21DiscoveryService? z21Discovery = null,
+        IVehicleUsageCheckpointStore? vehicleUsageCheckpointStore = null,
+        TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(z21);
         ArgumentNullException.ThrowIfNull(workflowService);
@@ -100,6 +108,11 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         _logger = logger;
         _eventBus = eventBus;
         _z21Discovery = z21Discovery ?? new NullZ21DiscoveryService();
+        _timeProvider = timeProvider ?? TimeProvider.System;
+        _vehicleUsageTracker = new VehicleUsageRuntimeTracker(
+            _timeProvider,
+            vehicleUsageCheckpointStore ?? new NullVehicleUsageCheckpointStore(),
+            logger);
 
         _z21.OnConnectedChanged += OnZ21ConnectedChanged;
         _z21.OnConnectionLost += OnZ21ConnectionLost;
@@ -157,6 +170,8 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         }
 
         StopAutoConnectTimer();
+        _vehicleUsageCheckpointTimer?.Dispose();
+        _vehicleUsageTracker.Checkpoint();
         ReplaceActiveProjectContext(null);
         _startLock.Dispose();
     }
@@ -167,6 +182,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         {
             _activeProjectContext.JourneyManager.StationChanged -= OnJourneyRuntimeChanged;
             _activeProjectContext.JourneyManager.FeedbackReceived -= OnJourneyRuntimeChanged;
+            _activeProjectContext.JourneyManager.JourneyCompleted -= OnJourneyCompleted;
             _activeProjectContext.Dispose();
         }
 
@@ -182,6 +198,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
 
     private MobaRuntimeSnapshot CreateSnapshot()
     {
+        var usage = _vehicleUsageTracker.GetSnapshot();
         var telemetry = new MobaRuntimeTelemetryState
         {
             IsConnected = _isConnected,
@@ -212,6 +229,92 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
             telemetry.LocomotiveStates[address] = state;
         }
 
-        return MobaRuntimeSnapshotBuilder.Create(telemetry, _activeProjectContext);
+        return MobaRuntimeSnapshotBuilder.Create(
+            telemetry,
+            _activeProjectContext,
+            usage.ActiveTrainId,
+            usage.Usage,
+            usage.Diagnostics);
+    }
+
+    private void UpdateVehicleUsageRuntimeState()
+    {
+        _vehicleUsageTracker.UpdateRuntimeState(
+            _isConnected,
+            _isTrackPowerOn,
+            _isEmergencyStopActive,
+            _isShortCircuitActive,
+            _isProgrammingModeActive,
+            _locomotiveStates);
+    }
+
+    private void SelectActiveTrainForLocomotive(int address, int speed)
+    {
+        if (speed <= 0 || _activeProjectContext == null)
+        {
+            return;
+        }
+
+        var locomotive = _activeProjectContext.ActiveProject.Locomotives.FirstOrDefault(candidate =>
+            candidate.DigitalAddress == (uint)address);
+        if (locomotive == null)
+        {
+            return;
+        }
+
+        var candidates = _activeProjectContext.ActiveProject.Trains
+            .Where(train => train.Vehicles.Any(vehicle =>
+                vehicle.VehicleKind == Domain.Enum.TrainVehicleKind.Locomotive
+                && vehicle.VehicleId == locomotive.Id))
+            .Select(train => train.Id)
+            .Distinct()
+            .ToList();
+        var currentTrainId = _vehicleUsageTracker.GetSnapshot().ActiveTrainId;
+        if (currentTrainId.HasValue && candidates.Contains(currentTrainId.Value))
+        {
+            return;
+        }
+
+        _vehicleUsageTracker.SetActiveTrain(candidates.Count == 1 ? candidates[0] : null);
+    }
+
+    private void StartVehicleUsageCheckpointTimer()
+    {
+        _vehicleUsageCheckpointTimer?.Dispose();
+        _vehicleUsageCheckpointTimer = _timeProvider.CreateTimer(
+            _ => CheckpointVehicleUsage(publishSnapshot: false),
+            null,
+            VehicleUsageCheckpointInterval,
+            VehicleUsageCheckpointInterval);
+    }
+
+    private bool CheckpointVehicleUsage(bool publishSnapshot)
+    {
+        var committed = _vehicleUsageTracker.Checkpoint();
+        if (!committed)
+        {
+            return false;
+        }
+
+        if (publishSnapshot)
+        {
+            PublishSnapshot();
+        }
+
+        PublishVehicleUsageCheckpointCommitted();
+
+        return true;
+    }
+
+    private void PublishVehicleUsageCheckpointCommitted()
+    {
+        if (_activeProjectContext != null)
+        {
+            var usage = _vehicleUsageTracker.GetSnapshot().Usage;
+            _eventBus?.Publish(new VehicleUsageCheckpointCommittedEvent(
+                _activeProjectContext.ActiveProject.Id,
+                _timeProvider.GetUtcNow(),
+                usage));
+        }
     }
 }

@@ -4,7 +4,7 @@ namespace Moba.Backend.Service;
 using Domain;
 using System.Text.Json;
 
-public sealed record JourneyRuntimeCheckpoint(int CurrentFeedbackIndex, uint CurrentStepOccurrence);
+public sealed record JourneyRuntimeCheckpoint(int CurrentFeedbackIndex, uint CurrentStepOccurrence, Guid JourneyRunId);
 
 public interface IJourneyRuntimeStateStore
 {
@@ -43,7 +43,7 @@ public sealed class FileJourneyRuntimeStateStore : IJourneyRuntimeStateStore
         lock (_lock)
         {
             var data = Read();
-            data[Key(projectId, state.JourneyId)] = new(state.CurrentFeedbackIndex, state.CurrentStepOccurrence);
+            data[Key(projectId, state.JourneyId)] = new(state.CurrentFeedbackIndex, state.CurrentStepOccurrence, state.RunId);
             Write(data);
         }
     }

@@ -18,7 +18,7 @@ internal sealed class SolutionControllerTests
         """
         {
           "name": "Test Solution",
-          "schemaVersion": 3,
+          "schemaVersion": 4,
           "projects": [
             {
               "name": "Project A"

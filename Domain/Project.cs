@@ -21,6 +21,7 @@ public class Project
         Workflows = [];
         Journeys = [];
         Stations = [];
+        TimetableServices = [];
         LocomotiveWhistleRules = [];
     }
 
@@ -71,6 +72,16 @@ public class Project
     /// Gets or sets the stations defined in this project.
     /// </summary>
     public List<Station> Stations { get; set; }
+
+    /// <summary>
+    /// Gets or sets the dated timetable service definitions for this project.
+    /// </summary>
+    public List<TimetableService> TimetableServices { get; set; }
+
+    /// <summary>
+    /// Gets or sets project-wide timetable validation policy.
+    /// </summary>
+    public TimetablePolicy TimetablePolicy { get; set; } = new();
 
     /// <summary>
     /// Optional feedback-triggered locomotive function rules.
