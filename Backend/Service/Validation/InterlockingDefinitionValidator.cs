@@ -78,8 +78,8 @@ public sealed class InterlockingDefinitionValidator : IInterlockingDefinitionVal
             .Concat(definition.Routes.Select(item => (item.Id, "route")))
             .ToArray();
 
-        foreach (var entity in entities.Where(entity => entity.Id == Guid.Empty))
-            Add(findings, $"{entity.Item2}.id.empty", Guid.Empty, $"Every {entity.Item2} requires a stable non-empty ID.");
+        foreach (var entityType in entities.Where(entity => entity.Id == Guid.Empty).Select(entity => entity.Item2))
+            Add(findings, $"{entityType}.id.empty", Guid.Empty, $"Every {entityType} requires a stable non-empty ID.");
 
         foreach (var duplicate in entities.Where(entity => entity.Id != Guid.Empty).GroupBy(entity => entity.Id).Where(group => group.Count() > 1))
             Add(findings, "operational.id.duplicate", duplicate.Key, "An operational ID is assigned to multiple definitions.");
@@ -116,6 +116,16 @@ public sealed class InterlockingDefinitionValidator : IInterlockingDefinitionVal
         foreach (var duplicate in turnout.Commands.GroupBy(command => command.Position).Where(group => group.Count() > 1))
             Add(findings, "turnout.command.duplicate", turnout.Id, $"Turnout position {duplicate.Key} has multiple command mappings.");
 
+        ValidateTurnoutCommandSequences(turnout, findings);
+
+        if (turnout.Kind == TurnoutKind.TwoWay && turnout.Commands.Any(command => command.Position == TurnoutPosition.DivergingRight))
+            Add(findings, "turnout.command.unsupported", turnout.Id, "A two-way turnout cannot define DivergingRight.");
+    }
+
+    private static void ValidateTurnoutCommandSequences(
+        TurnoutDefinition turnout,
+        List<InterlockingValidationFinding> findings)
+    {
         foreach (var mapping in turnout.Commands)
         {
             if (mapping.Commands.Count == 0)
@@ -130,9 +140,6 @@ public sealed class InterlockingDefinitionValidator : IInterlockingDefinitionVal
                     Add(findings, "turnout.command.output", turnout.Id, $"Turnout output for {mapping.Position} must be 0 or 1.");
             }
         }
-
-        if (turnout.Kind == TurnoutKind.TwoWay && turnout.Commands.Any(command => command.Position == TurnoutPosition.DivergingRight))
-            Add(findings, "turnout.command.unsupported", turnout.Id, "A two-way turnout cannot define DivergingRight.");
     }
 
     private static void ValidateTurnoutConfirmations(
@@ -186,8 +193,11 @@ public sealed class InterlockingDefinitionValidator : IInterlockingDefinitionVal
                 Add(findings, "block.feedback.clear.missing", block.Id, "A protected block requires an explicit clear observation.");
             foreach (var input in block.FeedbackInputs.Where(input => input.InPort is < 1 or > 512))
                 Add(findings, "block.feedback.range", block.Id, $"Feedback input {input.InPort} must be between 1 and 512.");
-            foreach (var duplicate in block.FeedbackInputs.GroupBy(input => (input.InPort, input.Role)).Where(group => group.Count() > 1))
-                Add(findings, "block.feedback.duplicate", block.Id, $"Feedback input {duplicate.Key.InPort} with role {duplicate.Key.Role} is duplicated.");
+            foreach (var duplicate in block.FeedbackInputs
+                         .GroupBy(input => (input.InPort, input.Role))
+                         .Where(group => group.Count() > 1)
+                         .Select(group => group.Key))
+                Add(findings, "block.feedback.duplicate", block.Id, $"Feedback input {duplicate.InPort} with role {duplicate.Role} is duplicated.");
             foreach (var contradiction in block.FeedbackInputs
                          .GroupBy(input => (input.InPort, input.ActiveState))
                          .Where(group => group.Select(input => input.Role).Distinct().Count() > 1))
@@ -235,14 +245,15 @@ public sealed class InterlockingDefinitionValidator : IInterlockingDefinitionVal
 
         foreach (var duplicate in connections
                      .GroupBy(ConnectionKey)
-                     .Where(group => group.Count() > 1))
+                     .Where(group => group.Count() > 1)
+                     .Select(group => group.Key))
         {
             Add(
                 findings,
                 "connection.duplicate",
-                duplicate.Key.From,
+                duplicate.From,
                 "The same operational connection is defined more than once.",
-                [duplicate.Key.To]);
+                [duplicate.To]);
         }
     }
 

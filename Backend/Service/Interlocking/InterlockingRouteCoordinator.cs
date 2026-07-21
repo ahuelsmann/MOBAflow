@@ -60,8 +60,12 @@ public interface IInterlockingLifecycleEventSink
 /// <summary>
 /// Serializes pure interlocking decisions and replaceable turnout and signal effects.
 /// </summary>
-public sealed class InterlockingRouteCoordinator
+public sealed class InterlockingRouteCoordinator : IAsyncDisposable
 {
+    private const string RouteMissingCode = "route.missing";
+    private const string RouteMissingMessage = "The route does not exist.";
+    private const string SafeStopFailedCode = "route.signal.safe-stop-failed";
+
     private readonly object _stateSync = new();
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly CancellationTokenSource _shutdownCancellation = new();
@@ -72,6 +76,7 @@ public sealed class InterlockingRouteCoordinator
     private readonly IReadOnlyDictionary<Guid, RouteDefinition> _routes;
     private readonly IReadOnlyDictionary<Guid, SignalAspect> _safeSignalAspects;
     private int _shutdownStarted;
+    private int _disposeStarted;
     private InterlockingRuntimeState _state;
 
     public InterlockingRouteCoordinator(
@@ -145,7 +150,7 @@ public sealed class InterlockingRouteCoordinator
                     ApplyDecision(failed, correlationId);
                     return Result(
                         RouteCoordinatorStatus.Failed,
-                        "route.signal.safe-stop-failed",
+                        SafeStopFailedCode,
                         "A route signal could not be restored to its safe aspect.",
                         correlationId);
                 }
@@ -178,7 +183,7 @@ public sealed class InterlockingRouteCoordinator
         try
         {
             if (!_routes.TryGetValue(routeId, out var route))
-                return Result(RouteCoordinatorStatus.Rejected, "route.missing", "The route does not exist.", correlationId);
+                return Result(RouteCoordinatorStatus.Rejected, RouteMissingCode, RouteMissingMessage, correlationId);
 
             if (Snapshot.Routes[routeId].Lifecycle == RouteLifecycle.Available)
             {
@@ -327,16 +332,17 @@ public sealed class InterlockingRouteCoordinator
         try
         {
             var transitions = _turnoutRuntime.ObserveFeedback(functionAddress, outputPosition, correlationId);
-            foreach (var transition in transitions.Where(transition =>
+            foreach (var state in transitions.Where(transition =>
                          transition.Status == TurnoutRuntimeTransitionStatus.Accepted
-                         && transition.State.Lifecycle == TurnoutLifecycle.Confirmed))
+                         && transition.State.Lifecycle == TurnoutLifecycle.Confirmed)
+                     .Select(transition => transition.State))
             {
                 var observed = _engine.ObserveTurnout(
                     Snapshot,
-                    transition.State.TurnoutId,
-                    transition.State.ConfirmedPosition,
+                    state.TurnoutId,
+                    state.ConfirmedPosition,
                     false,
-                    StepCorrelation(correlationId, $"confirm:{transition.State.TurnoutId:N}"),
+                    StepCorrelation(correlationId, $"confirm:{state.TurnoutId:N}"),
                     Snapshot.Revision);
                 ApplyDecision(observed, correlationId);
             }
@@ -393,14 +399,14 @@ public sealed class InterlockingRouteCoordinator
                     correlationId);
             }
 
-            foreach (var transition in transitions)
+            foreach (var state in transitions.Select(transition => transition.State))
             {
                 var observed = _engine.ObserveTurnout(
                     Snapshot,
-                    transition.State.TurnoutId,
+                    state.TurnoutId,
                     null,
                     true,
-                    StepCorrelation(correlationId, $"timeout:{transition.State.TurnoutId:N}"),
+                    StepCorrelation(correlationId, $"timeout:{state.TurnoutId:N}"),
                     Snapshot.Revision);
                 ApplyDecision(observed, correlationId);
             }
@@ -416,7 +422,7 @@ public sealed class InterlockingRouteCoordinator
             var first = transitions[0];
             return Result(
                 RouteCoordinatorStatus.Failed,
-                safe ? first.Code : "route.signal.safe-stop-failed",
+                safe ? first.Code : SafeStopFailedCode,
                 safe ? first.Message : "A timed-out route signal could not be restored to its safe aspect.",
                 correlationId);
         }
@@ -444,14 +450,14 @@ public sealed class InterlockingRouteCoordinator
         try
         {
             var transitions = _turnoutRuntime.MarkDisconnected(correlationId);
-            foreach (var transition in transitions)
+            foreach (var state in transitions.Select(transition => transition.State))
             {
                 var observed = _engine.ObserveTurnout(
                     Snapshot,
-                    transition.State.TurnoutId,
+                    state.TurnoutId,
                     null,
                     false,
-                    StepCorrelation(correlationId, $"disconnect:{transition.State.TurnoutId:N}"),
+                    StepCorrelation(correlationId, $"disconnect:{state.TurnoutId:N}"),
                     Snapshot.Revision);
                 ApplyDecision(observed, correlationId);
             }
@@ -462,13 +468,14 @@ public sealed class InterlockingRouteCoordinator
                     or RouteLifecycle.Occupied
                     or RouteLifecycle.Releasing
                     or RouteLifecycle.Failed).ToArray();
-            foreach (var route in affectedRoutes.Where(route =>
-                         Snapshot.Routes[route.Id].Lifecycle != RouteLifecycle.Failed))
+            foreach (var routeId in affectedRoutes.Where(route =>
+                         Snapshot.Routes[route.Id].Lifecycle != RouteLifecycle.Failed)
+                     .Select(route => route.Id))
             {
                 var failed = _engine.CancelRoute(
                     Snapshot,
-                    route.Id,
-                    StepCorrelation(correlationId, $"disconnect-route:{route.Id:N}"),
+                    routeId,
+                    StepCorrelation(correlationId, $"disconnect-route:{routeId:N}"),
                     Snapshot.Revision);
                 ApplyDecision(failed, correlationId);
             }
@@ -503,20 +510,20 @@ public sealed class InterlockingRouteCoordinator
                 correlationId);
         }
 
-        _shutdownCancellation.Cancel();
+        await _shutdownCancellation.CancelAsync().ConfigureAwait(false);
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             var transitions = _turnoutRuntime.MarkDisconnected(
                 StepCorrelation(correlationId, "shutdown-turnouts"));
-            foreach (var transition in transitions)
+            foreach (var state in transitions.Select(transition => transition.State))
             {
                 var observed = _engine.ObserveTurnout(
                     Snapshot,
-                    transition.State.TurnoutId,
+                    state.TurnoutId,
                     null,
                     false,
-                    StepCorrelation(correlationId, $"shutdown-turnout:{transition.State.TurnoutId:N}"),
+                    StepCorrelation(correlationId, $"shutdown-turnout:{state.TurnoutId:N}"),
                     Snapshot.Revision);
                 ApplyDecision(observed, correlationId);
             }
@@ -528,13 +535,14 @@ public sealed class InterlockingRouteCoordinator
                     or RouteLifecycle.Occupied
                     or RouteLifecycle.Releasing
                     or RouteLifecycle.Failed).ToArray();
-            foreach (var route in affectedRoutes.Where(route =>
-                         Snapshot.Routes[route.Id].Lifecycle != RouteLifecycle.Failed))
+            foreach (var routeId in affectedRoutes.Where(route =>
+                         Snapshot.Routes[route.Id].Lifecycle != RouteLifecycle.Failed)
+                     .Select(route => route.Id))
             {
                 var stopped = _engine.CancelRoute(
                     Snapshot,
-                    route.Id,
-                    StepCorrelation(correlationId, $"shutdown-route:{route.Id:N}"),
+                    routeId,
+                    StepCorrelation(correlationId, $"shutdown-route:{routeId:N}"),
                     Snapshot.Revision);
                 ApplyDecision(stopped, correlationId);
             }
@@ -560,6 +568,16 @@ public sealed class InterlockingRouteCoordinator
         }
     }
 
+    public async ValueTask DisposeAsync()
+    {
+        if (Interlocked.Exchange(ref _disposeStarted, 1) != 0)
+            return;
+
+        await ShutdownAsync(Guid.NewGuid()).ConfigureAwait(false);
+        _shutdownCancellation.Dispose();
+        _gate.Dispose();
+    }
+
     public async Task<RouteCoordinatorResult> CancelRouteAsync(
         Guid routeId,
         Guid correlationId,
@@ -579,7 +597,7 @@ public sealed class InterlockingRouteCoordinator
         try
         {
             if (!_routes.TryGetValue(routeId, out var route))
-                return Result(RouteCoordinatorStatus.Rejected, "route.missing", "The route does not exist.", correlationId);
+                return Result(RouteCoordinatorStatus.Rejected, RouteMissingCode, RouteMissingMessage, correlationId);
 
             var cancelled = _engine.CancelRoute(
                 Snapshot,
@@ -592,7 +610,7 @@ public sealed class InterlockingRouteCoordinator
 
             var safe = await SetSignalsSafeAsync(route, correlationId, cancellationToken).ConfigureAwait(false);
             if (!safe)
-                return Result(RouteCoordinatorStatus.Failed, "route.signal.safe-stop-failed", "Cancellation could not confirm every safe signal effect.", correlationId);
+                return Result(RouteCoordinatorStatus.Failed, SafeStopFailedCode, "Cancellation could not confirm every safe signal effect.", correlationId);
 
             var status = Snapshot.Routes[routeId].Lifecycle == RouteLifecycle.Failed
                 ? RouteCoordinatorStatus.Failed
@@ -624,7 +642,7 @@ public sealed class InterlockingRouteCoordinator
         try
         {
             if (!_routes.TryGetValue(routeId, out var route))
-                return Result(RouteCoordinatorStatus.Rejected, "route.missing", "The route does not exist.", correlationId);
+                return Result(RouteCoordinatorStatus.Rejected, RouteMissingCode, RouteMissingMessage, correlationId);
             if (Snapshot.Routes[routeId].Lifecycle == RouteLifecycle.Available)
             {
                 return Result(
@@ -649,7 +667,7 @@ public sealed class InterlockingRouteCoordinator
             var safe = await SetSignalsSafeAsync(route, correlationId, cancellationToken).ConfigureAwait(false);
             return Result(
                 safe ? RouteCoordinatorStatus.Accepted : RouteCoordinatorStatus.Failed,
-                safe ? "route.safe-stopped" : "route.signal.safe-stop-failed",
+                safe ? "route.safe-stopped" : SafeStopFailedCode,
                 safe
                     ? "The route was placed in its fail-safe state and uncertain locks were retained."
                     : "The route retained its locks, but a protected signal could not be confirmed safe.",
@@ -680,7 +698,7 @@ public sealed class InterlockingRouteCoordinator
         try
         {
             if (!_routes.TryGetValue(routeId, out var route))
-                return Result(RouteCoordinatorStatus.Rejected, "route.missing", "The route does not exist.", correlationId);
+                return Result(RouteCoordinatorStatus.Rejected, RouteMissingCode, RouteMissingMessage, correlationId);
 
             var safe = await SetSignalsSafeAsync(route, correlationId, cancellationToken).ConfigureAwait(false);
             if (!safe)
@@ -725,7 +743,7 @@ public sealed class InterlockingRouteCoordinator
         try
         {
             if (!_routes.TryGetValue(routeId, out var route))
-                return Result(RouteCoordinatorStatus.Rejected, "route.missing", "The route does not exist.", correlationId);
+                return Result(RouteCoordinatorStatus.Rejected, RouteMissingCode, RouteMissingMessage, correlationId);
 
             var releasing = _engine.BeginRelease(
                 Snapshot,
@@ -738,7 +756,7 @@ public sealed class InterlockingRouteCoordinator
 
             var safe = await SetSignalsSafeAsync(route, correlationId, cancellationToken).ConfigureAwait(false);
             if (!safe)
-                return Result(RouteCoordinatorStatus.Failed, "route.signal.safe-stop-failed", "Route locks were retained because a safe signal effect failed.", correlationId);
+                return Result(RouteCoordinatorStatus.Failed, SafeStopFailedCode, "Route locks were retained because a safe signal effect failed.", correlationId);
 
             var released = _engine.CompleteRelease(
                 Snapshot,
@@ -819,14 +837,14 @@ public sealed class InterlockingRouteCoordinator
         CancellationToken cancellationToken)
     {
         var succeeded = true;
-        foreach (var requirement in route.SignalRequirements)
+        foreach (var signalId in route.SignalRequirements.Select(requirement => requirement.SignalId))
         {
             var effect = await ExecuteSignalEffectAsync(
                 new SignalEffectCommand(
                     route.Id,
-                    requirement.SignalId,
-                    _safeSignalAspects[requirement.SignalId],
-                    StepCorrelation(correlationId, $"signal-safe:{requirement.SignalId:N}")),
+                    signalId,
+                    _safeSignalAspects[signalId],
+                    StepCorrelation(correlationId, $"signal-safe:{signalId:N}")),
                 cancellationToken).ConfigureAwait(false);
             succeeded &= effect.Status == SignalEffectStatus.Succeeded;
         }

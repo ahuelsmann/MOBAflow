@@ -282,10 +282,10 @@ public sealed class SemanticTurnoutRuntimeCoordinator
                 return [];
 
             var transitions = new List<TurnoutRuntimeTransition>(_states.Count);
-            foreach (var current in _states.Values.ToArray())
+            foreach (var turnoutId in _states.Values.Select(current => current.TurnoutId).ToArray())
             {
-                var unknown = UnknownState(current.TurnoutId);
-                _states[current.TurnoutId] = unknown;
+                var unknown = UnknownState(turnoutId);
+                _states[turnoutId] = unknown;
                 transitions.Add(Transition(
                     TurnoutRuntimeTransitionStatus.Accepted,
                     "turnout.disconnected",

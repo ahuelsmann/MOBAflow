@@ -9,6 +9,9 @@ using Domain;
 /// </summary>
 public sealed class InterlockingSafetyEngine
 {
+    private const string RouteMissingCode = "route.missing";
+    private const string RouteMissingMessage = "The route does not exist.";
+
     private readonly IReadOnlyDictionary<Guid, RouteResources> _routes;
     private readonly IReadOnlyDictionary<Guid, SignalAspect> _safeSignalAspects;
 
@@ -77,7 +80,7 @@ public sealed class InterlockingSafetyEngine
             }
         }
 
-        return Accept(state, turnouts: null, blocks, signals, routes, correlationId, "block.observed", "Block observation accepted.", [blockId]);
+        return Accept(state, new RuntimeStateChanges(Blocks: blocks, Signals: signals, Routes: routes), correlationId, "block.observed", "Block observation accepted.", [blockId]);
     }
 
     public InterlockingDecision ObserveTurnout(
@@ -96,9 +99,12 @@ public sealed class InterlockingSafetyEngine
         var turnouts = state.Turnouts.ToDictionary();
         var signals = state.Signals.ToDictionary();
         var routes = state.Routes.ToDictionary();
-        var lifecycle = isFaulted
-            ? TurnoutLifecycle.Failed
-            : confirmedPosition.HasValue ? TurnoutLifecycle.Confirmed : TurnoutLifecycle.Unknown;
+        var lifecycle = (isFaulted, confirmedPosition.HasValue) switch
+        {
+            (true, _) => TurnoutLifecycle.Failed,
+            (false, true) => TurnoutLifecycle.Confirmed,
+            _ => TurnoutLifecycle.Unknown
+        };
         turnouts[turnoutId] = turnout with
         {
             Lifecycle = lifecycle,
@@ -116,7 +122,7 @@ public sealed class InterlockingSafetyEngine
             SetSignalsSafe(signals, ownerResources);
         }
 
-        return Accept(state, turnouts, blocks: null, signals, routes, correlationId, "turnout.observed", "Turnout observation accepted.", [turnoutId]);
+        return Accept(state, new RuntimeStateChanges(Turnouts: turnouts, Signals: signals, Routes: routes), correlationId, "turnout.observed", "Turnout observation accepted.", [turnoutId]);
     }
 
     public InterlockingDecision ReserveRoute(
@@ -128,12 +134,11 @@ public sealed class InterlockingSafetyEngine
         if (TryRejectInput(state, correlationId, expectedRevision) is { } rejected)
             return rejected;
         if (!_routes.TryGetValue(routeId, out var resources) || !state.Routes.TryGetValue(routeId, out var route))
-            return Reject(state, "route.missing", "The requested route does not exist.", [routeId]);
+            return Reject(state, RouteMissingCode, "The requested route does not exist.", [routeId]);
         if (route.Lifecycle != RouteLifecycle.Available)
             return Reject(state, "route.unavailable", "The requested route is not available.", [routeId]);
 
-        var activeConflict = state.Routes.Values.FirstOrDefault(candidate =>
-            HoldsResources(candidate.Lifecycle) && ConflictMatrix.AreConflicting(routeId, candidate.RouteId));
+        var activeConflict = FindActiveConflict(state, routeId);
         if (activeConflict != null)
             return Reject(state, "route.conflict", "A conflicting route already holds safety resources.", [routeId, activeConflict.RouteId]);
 
@@ -174,7 +179,7 @@ public sealed class InterlockingSafetyEngine
             signals[signalId] = signals[signalId] with { LockOwnerRouteId = routeId };
         routes[routeId] = route with { Lifecycle = RouteLifecycle.Selected, FailureCode = null };
 
-        return Accept(state, turnouts, blocks, signals, routes, correlationId, "route.reserved", "Route resources reserved atomically.", [routeId]);
+        return Accept(state, new RuntimeStateChanges(turnouts, blocks, signals, routes), correlationId, "route.reserved", "Route resources reserved atomically.", [routeId]);
     }
 
     public InterlockingDecision BeginSetting(
@@ -200,7 +205,7 @@ public sealed class InterlockingSafetyEngine
         }
 
         routes[routeId] = route! with { Lifecycle = RouteLifecycle.Setting };
-        return Accept(state, turnouts, blocks: null, signals: null, routes, correlationId, "route.setting", "Route entered setting state.", [routeId]);
+        return Accept(state, new RuntimeStateChanges(Turnouts: turnouts, Routes: routes), correlationId, "route.setting", "Route entered setting state.", [routeId]);
     }
 
     public InterlockingDecision EstablishRoute(
@@ -226,7 +231,7 @@ public sealed class InterlockingSafetyEngine
 
         var routes = state.Routes.ToDictionary();
         routes[routeId] = route! with { Lifecycle = RouteLifecycle.Established };
-        return Accept(state, turnouts: null, blocks: null, signals: null, routes, correlationId, "route.established", "Route established after all safety prerequisites were confirmed.", [routeId]);
+        return Accept(state, new RuntimeStateChanges(Routes: routes), correlationId, "route.established", "Route established after all safety prerequisites were confirmed.", [routeId]);
     }
 
     public InterlockingDecision ClearRouteSignals(
@@ -238,7 +243,7 @@ public sealed class InterlockingSafetyEngine
         if (TryRejectInput(state, correlationId, expectedRevision) is { } rejected)
             return rejected;
         if (!_routes.TryGetValue(routeId, out var resources) || !state.Routes.TryGetValue(routeId, out var route))
-            return Reject(state, "route.missing", "The route does not exist.", [routeId]);
+            return Reject(state, RouteMissingCode, RouteMissingMessage, [routeId]);
         if (route.Lifecycle != RouteLifecycle.Established)
             return Reject(state, "route.signal.invalid-state", "Route signals can only show proceed for an established route.", [routeId]);
 
@@ -251,7 +256,7 @@ public sealed class InterlockingSafetyEngine
             signals[requirement.Key] = signal with { Aspect = requirement.Value };
         }
 
-        return Accept(state, turnouts: null, blocks: null, signals, routes: null, correlationId, "route.signal.proceed", "Configured route signal aspects accepted.", [routeId]);
+        return Accept(state, new RuntimeStateChanges(Signals: signals), correlationId, "route.signal.proceed", "Configured route signal aspects accepted.", [routeId]);
     }
 
     public InterlockingDecision BeginRelease(
@@ -263,7 +268,7 @@ public sealed class InterlockingSafetyEngine
         if (TryRejectInput(state, correlationId, expectedRevision) is { } rejected)
             return rejected;
         if (!_routes.TryGetValue(routeId, out var resources) || !state.Routes.TryGetValue(routeId, out var route))
-            return Reject(state, "route.missing", "The route does not exist.", [routeId]);
+            return Reject(state, RouteMissingCode, RouteMissingMessage, [routeId]);
         if (route.Lifecycle is not (RouteLifecycle.Established or RouteLifecycle.Occupied))
             return Reject(state, "route.release.invalid-state", "Only an established or occupied route can begin release.", [routeId]);
 
@@ -275,7 +280,7 @@ public sealed class InterlockingSafetyEngine
         var signals = state.Signals.ToDictionary();
         SetSignalsSafe(signals, resources);
         routes[routeId] = route with { Lifecycle = RouteLifecycle.Releasing };
-        return Accept(state, turnouts: null, blocks: null, signals, routes, correlationId, "route.releasing", "Route entered conservative full-route release.", [routeId]);
+        return Accept(state, new RuntimeStateChanges(Signals: signals, Routes: routes), correlationId, "route.releasing", "Route entered conservative full-route release.", [routeId]);
     }
 
     public InterlockingDecision CompleteRelease(
@@ -301,7 +306,7 @@ public sealed class InterlockingSafetyEngine
         if (TryRejectInput(state, correlationId, expectedRevision) is { } rejected)
             return rejected;
         if (!_routes.TryGetValue(routeId, out var resources) || !state.Routes.TryGetValue(routeId, out var route))
-            return Reject(state, "route.missing", "The route does not exist.", [routeId]);
+            return Reject(state, RouteMissingCode, RouteMissingMessage, [routeId]);
 
         if (route.Lifecycle == RouteLifecycle.Selected)
             return ReleaseResources(state, route, resources, correlationId, "route.cancelled", "Selected route cancelled before hardware dispatch.");
@@ -311,7 +316,7 @@ public sealed class InterlockingSafetyEngine
             var signals = state.Signals.ToDictionary();
             SetSignalsSafe(signals, resources);
             routes[routeId] = route with { Lifecycle = RouteLifecycle.Failed, FailureCode = "route.cancel.reconciliation" };
-            return Accept(state, turnouts: null, blocks: null, signals, routes, correlationId, "route.cancel.reconciliation", "Cancellation after setting began requires explicit reconciliation; locks were retained.", [routeId]);
+            return Accept(state, new RuntimeStateChanges(Signals: signals, Routes: routes), correlationId, "route.cancel.reconciliation", "Cancellation after setting began requires explicit reconciliation; locks were retained.", [routeId]);
         }
 
         return Reject(state, "route.cancel.invalid-state", "The route cannot be cancelled from its current state.", [routeId]);
@@ -326,7 +331,7 @@ public sealed class InterlockingSafetyEngine
         if (TryRejectInput(state, correlationId, expectedRevision) is { } rejected)
             return rejected;
         if (!_routes.TryGetValue(routeId, out var resources) || !state.Routes.TryGetValue(routeId, out var route))
-            return Reject(state, "route.missing", "The route does not exist.", [routeId]);
+            return Reject(state, RouteMissingCode, RouteMissingMessage, [routeId]);
         if (route.Lifecycle != RouteLifecycle.Failed)
             return Reject(state, "route.reconcile.invalid-state", "Only a failed route can be reconciled.", [routeId]);
 
@@ -379,7 +384,7 @@ public sealed class InterlockingSafetyEngine
             signals[signalId] = signals[signalId] with { LockOwnerRouteId = null, Aspect = _safeSignalAspects[signalId] };
         routes[route.RouteId] = route with { Lifecycle = RouteLifecycle.Available, FailureCode = null };
 
-        return Accept(state, turnouts, blocks, signals, routes, correlationId, code, message, [route.RouteId]);
+        return Accept(state, new RuntimeStateChanges(turnouts, blocks, signals, routes), correlationId, code, message, [route.RouteId]);
     }
 
     private bool TryGetRouteInState(
@@ -394,7 +399,7 @@ public sealed class InterlockingSafetyEngine
         resources = null;
         if (!_routes.TryGetValue(routeId, out resources) || !state.Routes.TryGetValue(routeId, out route))
         {
-            invalid = Reject(state, "route.missing", "The route does not exist.", [routeId]);
+            invalid = Reject(state, RouteMissingCode, RouteMissingMessage, [routeId]);
             return false;
         }
 
@@ -415,6 +420,11 @@ public sealed class InterlockingSafetyEngine
             or RouteLifecycle.Occupied
             or RouteLifecycle.Releasing
             or RouteLifecycle.Failed;
+
+    private RouteRuntimeState? FindActiveConflict(InterlockingRuntimeState state, Guid routeId) =>
+        state.Routes.Values.FirstOrDefault(candidate =>
+            HoldsResources(candidate.Lifecycle)
+            && ConflictMatrix.AreConflicting(routeId, candidate.RouteId));
 
     private void SetSignalsSafe(
         IDictionary<Guid, SignalRuntimeState> signals,
@@ -443,10 +453,7 @@ public sealed class InterlockingSafetyEngine
 
     private static InterlockingDecision Accept(
         InterlockingRuntimeState state,
-        IReadOnlyDictionary<Guid, TurnoutRuntimeState>? turnouts,
-        IReadOnlyDictionary<Guid, BlockRuntimeState>? blocks,
-        IReadOnlyDictionary<Guid, SignalRuntimeState>? signals,
-        IReadOnlyDictionary<Guid, RouteRuntimeState>? routes,
+        RuntimeStateChanges changes,
         Guid correlationId,
         string code,
         string message,
@@ -454,10 +461,10 @@ public sealed class InterlockingSafetyEngine
     {
         var nextState = InterlockingRuntimeState.Create(
             state.Revision + 1,
-            turnouts?.Values ?? state.Turnouts.Values,
-            blocks?.Values ?? state.Blocks.Values,
-            signals?.Values ?? state.Signals.Values,
-            routes?.Values ?? state.Routes.Values,
+            changes.Turnouts?.Values ?? state.Turnouts.Values,
+            changes.Blocks?.Values ?? state.Blocks.Values,
+            changes.Signals?.Values ?? state.Signals.Values,
+            changes.Routes?.Values ?? state.Routes.Values,
             state.ProcessedCorrelationIds.Append(correlationId));
         return new InterlockingDecision(InterlockingDecisionStatus.Accepted, code, message, affectedIds, nextState);
     }
@@ -474,4 +481,10 @@ public sealed class InterlockingSafetyEngine
         IReadOnlyList<Guid> BlockIds,
         IReadOnlyDictionary<Guid, SignalAspect> SignalRequirements,
         IReadOnlyDictionary<Guid, TurnoutPosition> TurnoutRequirements);
+
+    private sealed record RuntimeStateChanges(
+        IReadOnlyDictionary<Guid, TurnoutRuntimeState>? Turnouts = null,
+        IReadOnlyDictionary<Guid, BlockRuntimeState>? Blocks = null,
+        IReadOnlyDictionary<Guid, SignalRuntimeState>? Signals = null,
+        IReadOnlyDictionary<Guid, RouteRuntimeState>? Routes = null);
 }

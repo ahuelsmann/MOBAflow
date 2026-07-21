@@ -27,17 +27,19 @@ public sealed record RouteConflict(
 public sealed class InterlockingConflictMatrix
 {
     private readonly IReadOnlyDictionary<(Guid First, Guid Second), RouteConflict> _conflicts;
+    private readonly IReadOnlyList<RouteConflict> _orderedConflicts;
 
     internal InterlockingConflictMatrix(IEnumerable<RouteConflict> conflicts)
     {
         _conflicts = conflicts.ToFrozenDictionary(
             conflict => Key(conflict.FirstRouteId, conflict.SecondRouteId));
+        _orderedConflicts = _conflicts.Values
+            .OrderBy(conflict => conflict.FirstRouteId)
+            .ThenBy(conflict => conflict.SecondRouteId)
+            .ToArray();
     }
 
-    public IReadOnlyList<RouteConflict> Conflicts => _conflicts.Values
-        .OrderBy(conflict => conflict.FirstRouteId)
-        .ThenBy(conflict => conflict.SecondRouteId)
-        .ToArray();
+    public IReadOnlyList<RouteConflict> Conflicts => _orderedConflicts;
 
     public bool AreConflicting(Guid firstRouteId, Guid secondRouteId) =>
         _conflicts.ContainsKey(Key(firstRouteId, secondRouteId));

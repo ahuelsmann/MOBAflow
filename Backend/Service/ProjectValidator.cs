@@ -92,31 +92,7 @@ public class ProjectValidator : IProjectValidator
             result.AddInfo($"[{projectName}] Locomotives: {project.Locomotives.Count} defined");
         }
 
-        // Check journeys (primary use case)
-        if (project.Journeys.Count == 0)
-        {
-            result.AddWarning($"[{projectName}] No journeys defined. This project cannot execute any routes.");
-        }
-        else
-        {
-            result.AddInfo($"[{projectName}] Journeys: {project.Journeys.Count} defined");
-
-            // Check journey stations
-            var totalStations = project.Journeys.Sum(j => j.Stations.Count);
-            if (totalStations == 0)
-            {
-                result.AddWarning($"[{projectName}] Journeys defined but no stations assigned.");
-            }
-            else
-            {
-                result.AddInfo($"[{projectName}] Stations: {totalStations} total across journeys");
-            }
-
-            foreach (var journey in project.Journeys)
-            {
-                ValidateFeedbackSequence(project, journey, projectName, result);
-            }
-        }
+        ValidateJourneys(project, projectName, result);
 
         // Check trains (optional but recommended)
         if (project.Trains.Count > 0)
@@ -160,6 +136,34 @@ public class ProjectValidator : IProjectValidator
 
         if (interlockingReport.IsValid)
             result.AddInfo($"[{projectName}] Interlocking definition valid");
+    }
+
+    private static void ValidateJourneys(Project project, string projectName, ProjectValidationResult result)
+    {
+        if (project.Journeys.Count == 0)
+        {
+            result.AddWarning($"[{projectName}] No journeys defined. This project cannot execute any routes.");
+        }
+        else
+        {
+            result.AddInfo($"[{projectName}] Journeys: {project.Journeys.Count} defined");
+
+            // Check journey stations
+            var totalStations = project.Journeys.Sum(j => j.Stations.Count);
+            if (totalStations == 0)
+            {
+                result.AddWarning($"[{projectName}] Journeys defined but no stations assigned.");
+            }
+            else
+            {
+                result.AddInfo($"[{projectName}] Stations: {totalStations} total across journeys");
+            }
+
+            foreach (var journey in project.Journeys)
+            {
+                ValidateFeedbackSequence(project, journey, projectName, result);
+            }
+        }
     }
 
     private static void ValidateFeedbackSequence(Project project, Journey journey, string projectName, ProjectValidationResult result)

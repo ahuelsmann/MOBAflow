@@ -100,7 +100,7 @@ public sealed class InterlockingRuntimeService : IInterlockingRuntime, IInterloc
         try
         {
             if (_coordinator != null)
-                await _coordinator.ShutdownAsync(Guid.NewGuid(), cancellationToken).ConfigureAwait(false);
+                await _coordinator.DisposeAsync().ConfigureAwait(false);
 
             var turnoutGateway = new Z21TurnoutEffectGateway(_z21);
             var commandService = new SemanticTurnoutCommandService(definition, turnoutGateway);
@@ -222,8 +222,8 @@ public sealed class InterlockingRuntimeService : IInterlockingRuntime, IInterloc
         await _consumerTask.ConfigureAwait(false);
 
         if (_coordinator != null)
-            await _coordinator.ShutdownAsync(Guid.NewGuid()).ConfigureAwait(false);
-        _disposeCancellation.Cancel();
+            await _coordinator.DisposeAsync().ConfigureAwait(false);
+        await _disposeCancellation.CancelAsync().ConfigureAwait(false);
         _disposeCancellation.Dispose();
         _activationGate.Dispose();
     }

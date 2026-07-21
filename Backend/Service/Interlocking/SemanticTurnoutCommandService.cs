@@ -94,34 +94,8 @@ public sealed class SemanticTurnoutCommandService
         Guid correlationId,
         CancellationToken cancellationToken = default)
     {
-        if (correlationId == Guid.Empty)
-            return Rejected("turnout.correlation.empty", "A semantic turnout command requires a non-empty correlation ID.");
-        if (!_turnouts.TryGetValue(turnoutId, out var turnout))
-            return Rejected("turnout.missing", "The requested turnout does not exist.");
-        if (!turnout.Commands.TryGetValue(position, out var positionDefinition) || positionDefinition.Commands.Length == 0)
-            return Rejected("turnout.mapping.missing", "The requested semantic turnout position has no command mapping.");
-        if (positionDefinition.IsAmbiguous)
-            return Rejected("turnout.mapping.ambiguous", "The requested semantic turnout position has multiple competing mappings.");
-
-        var commandDefinitions = positionDefinition.Commands;
-        var commands = new List<TurnoutEffectCommand>(commandDefinitions.Length);
-        for (var index = 0; index < commandDefinitions.Length; index++)
-        {
-            var definition = commandDefinitions[index];
-            var address = (long)turnout.DecoderAddress + definition.AddressOffset;
-            if (definition.AddressOffset < 0 || address is < 1 or > 2044 || definition.Output is < 0 or > 1)
-                return Rejected("turnout.mapping.invalid", "The semantic turnout mapping contains an unsupported address or output.");
-
-            commands.Add(new TurnoutEffectCommand(
-                turnoutId,
-                position,
-                (int)address,
-                definition.Output,
-                definition.Activate,
-                definition.Queue,
-                index,
-                correlationId));
-        }
+        if (!TryCreateCommands(turnoutId, position, correlationId, out var commands, out var rejected))
+            return rejected!;
 
         var dispatched = new List<TurnoutEffectCommand>(commands.Count);
         try
@@ -172,6 +146,61 @@ public sealed class SemanticTurnoutCommandService
             "turnout.command.succeeded",
             "The semantic turnout command sequence completed.",
             dispatched);
+    }
+
+    private bool TryCreateCommands(
+        Guid turnoutId,
+        TurnoutPosition position,
+        Guid correlationId,
+        out List<TurnoutEffectCommand> commands,
+        out TurnoutCommandExecutionResult? rejected)
+    {
+        commands = [];
+        rejected = null;
+        if (correlationId == Guid.Empty)
+            rejected = Rejected("turnout.correlation.empty", "A semantic turnout command requires a non-empty correlation ID.");
+        else if (!_turnouts.TryGetValue(turnoutId, out var turnout))
+            rejected = Rejected("turnout.missing", "The requested turnout does not exist.");
+        else if (!turnout.Commands.TryGetValue(position, out var positionDefinition)
+                 || positionDefinition.Commands.Length == 0)
+            rejected = Rejected("turnout.mapping.missing", "The requested semantic turnout position has no command mapping.");
+        else if (positionDefinition.IsAmbiguous)
+            rejected = Rejected("turnout.mapping.ambiguous", "The requested semantic turnout position has multiple competing mappings.");
+        else if (positionDefinition.Commands.Any(command =>
+                     command.AddressOffset < 0
+                     || (long)turnout.DecoderAddress + command.AddressOffset is < 1 or > 2044
+                     || command.Output is < 0 or > 1))
+            rejected = Rejected("turnout.mapping.invalid", "The semantic turnout mapping contains an unsupported address or output.");
+        else
+            commands = CreateCommands(turnout, positionDefinition, position, correlationId);
+
+        return rejected == null;
+    }
+
+    private static List<TurnoutEffectCommand> CreateCommands(
+        TurnoutCommandDefinition turnout,
+        PositionCommandDefinition positionDefinition,
+        TurnoutPosition position,
+        Guid correlationId)
+    {
+        var commandDefinitions = positionDefinition.Commands;
+        var commands = new List<TurnoutEffectCommand>(commandDefinitions.Length);
+        for (var index = 0; index < commandDefinitions.Length; index++)
+        {
+            var definition = commandDefinitions[index];
+            var address = (long)turnout.DecoderAddress + definition.AddressOffset;
+            commands.Add(new TurnoutEffectCommand(
+                turnout.TurnoutId,
+                position,
+                (int)address,
+                definition.Output,
+                definition.Activate,
+                definition.Queue,
+                index,
+                correlationId));
+        }
+
+        return commands;
     }
 
     private static TurnoutCommandExecutionResult Rejected(string code, string message) =>
