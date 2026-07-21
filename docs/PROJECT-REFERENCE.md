@@ -141,7 +141,31 @@ Z21 feedback
 
 ## Workflows
 
-`ActionExecutor` dispatches actions to `IWorkflowActionHandler` implementations.
+Workflow 2.0 persists an ordered directed graph. `Workflow.EntryStepId` selects
+the first node, `Workflow.Steps` preserves editor and JSON order, and stable IDs
+form explicit edges. The supported node kinds are action, delay, typed
+condition, parallel branch/join, nested workflow, and explicit termination.
+General graph cycles are invalid; retry and nesting are separately bounded.
+
+`WorkflowValidator` is the mandatory gate for both live and dry-run execution.
+It checks graph/reference integrity, reachability and termination, retry/depth
+limits, typed payloads, nested recursion, parallel ownership, and conflicting
+exclusive resource writes. A step error policy overrides the workflow default;
+`Stop`, `Continue`, and `FailureBranch` are the terminal behaviors, with an
+optional retry of at most 10 additional attempts.
+
+`WorkflowService` traverses valid graphs deterministically and propagates
+`CancellationToken` through delays, nested calls, and every action handler.
+Parallel branches launch in persisted order and join explicitly. Nested calls
+are limited to a depth of 16. `WorkflowExecutionCoordinator` preserves FIFO
+execution per feedback source outside JourneyManager's global feedback lock and
+cancels queued/running work on reset, project replacement, disconnect, loss, or
+shutdown.
+
+Dry-run uses `WorkflowEffectPlanner`; it never calls an
+`IWorkflowActionHandler`, waits for a delay, or performs network, hardware,
+audio, script, display, filesystem-script, or mutable journey effects. Live
+execution dispatches action nodes through `ActionExecutor` to typed handlers:
 
 | Action type | Current runtime behavior |
 | --- | --- |
@@ -154,8 +178,19 @@ Z21 feedback
 | `ChangeJourneyStop` | Move the active journey to the next or selected station |
 | `Matrix` | Persisted enum value; no handler is registered |
 
-Sequential workflows await each action before the next. Parallel workflows use
-cumulative `DelayAfterMs` start offsets and await the group.
+Every run publishes correlated `WorkflowLifecycleEvent` records with source,
+execution, optional parent, workflow and step IDs; mode; monotonic sequence;
+attempt; timestamp; elapsed duration; and sanitized result/detail. The
+in-memory `WorkflowTraceStore` retains at most 100 executions and 10,000 entries
+by default. Trace persistence is deliberately outside `solution.json`.
+
+EventManagerPage and WorkflowsPage use the same `WorkflowLibraryViewModel` and
+the authoritative wrappers from `ProjectViewModel.Workflows`. Both surfaces
+therefore share selection, create/duplicate/delete, typed step editing,
+validation, dry-run, trace, autosave, and reference-safe assignment state.
+Deleting a workflow is blocked while any feedback or nested-workflow reference
+remains. The current JSON schema is the direct Workflow 2.0 shape; there is no
+Workflow 1.x compatibility executor or migration layer.
 
 ## Track plan
 

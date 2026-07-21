@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "MOBAflow Solution Schema (Complete)",
-  "description": "Complete JSON Schema for MOBAflow projects - ensures all Domain model types are represented",
+  "description": "Complete JSON Schema for MOBAflow projects, including the direct Workflow 2.0 graph format. Workflow 1.x action lists are not accepted.",
   "type": "object",
   "required": ["name", "projects"],
   "properties": {
@@ -206,6 +206,7 @@
   "definitions": {
     "workflow": {
       "type": "object",
+      "description": "Validated Workflow 2.0 graph with stable step IDs, an explicit entry, deterministic list order, and optional default error policy.",
       "additionalProperties": false,
       "required": ["id", "name", "entryStepId", "steps"],
       "properties": {
@@ -215,6 +216,7 @@
         "entryStepId": { "type": "string", "format": "uuid" },
         "steps": {
           "type": "array",
+          "description": "Canonical editor and serialization order. Runtime traversal follows step-ID edges rather than array position.",
           "minItems": 1,
           "items": { "$ref": "#/definitions/workflowStep" }
         },
@@ -222,6 +224,7 @@
       }
     },
     "workflowStep": {
+      "description": "Typed Workflow 2.0 graph node. The kind discriminator selects exactly one node shape.",
       "oneOf": [
         { "$ref": "#/definitions/workflowActionStep" },
         { "$ref": "#/definitions/workflowDelayStep" },
@@ -354,6 +357,7 @@
     },
     "workflowErrorPolicy": {
       "type": "object",
+      "description": "Failure behavior for a workflow or step. Step policies override the workflow default; retry is bounded to 10 additional attempts.",
       "additionalProperties": false,
       "required": ["behavior"],
       "properties": {
