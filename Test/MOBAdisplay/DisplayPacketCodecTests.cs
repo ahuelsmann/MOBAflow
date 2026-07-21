@@ -139,7 +139,7 @@ internal sealed class DisplayPacketCodecTests
     {
         var packet = new DisplayProtocolPacket(
             CreateHelloPacket().Header,
-            new byte[DisplayProtocol.MaxPayloadLength + 1]);
+            new byte[DisplayProtocol.MAX_PAYLOAD_LENGTH + 1]);
 
         var exception = Assert.Throws<ArgumentException>(() => DisplayPacketCodec.Encode(packet));
 

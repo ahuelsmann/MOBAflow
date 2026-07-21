@@ -9,6 +9,11 @@ using System.Buffers.Binary;
 public static class DisplayPacketCodec
 {
     /// <summary>
+    /// Computes the IEEE CRC32 value used by envelope and frame integrity fields.
+    /// </summary>
+    public static uint ComputeCrc32(ReadOnlySpan<byte> payload) => DisplayCrc32.Compute(payload);
+
+    /// <summary>
     /// Encodes a packet and derives its payload length and CRC32 integrity field.
     /// </summary>
     public static byte[] Encode(DisplayProtocolPacket packet)
@@ -19,14 +24,14 @@ public static class DisplayPacketCodec
             throw new ArgumentException($"Invalid display packet header: {error}.", nameof(packet));
         }
 
-        if (packet.Payload.Length > DisplayProtocol.MaxPayloadLength)
+        if (packet.Payload.Length > DisplayProtocol.MAX_PAYLOAD_LENGTH)
         {
             throw new ArgumentException("Display packet payload exceeds the protocol limit.", nameof(packet));
         }
 
-        var datagram = new byte[DisplayProtocol.HeaderLength + packet.Payload.Length];
+        var datagram = new byte[DisplayProtocol.HEADER_LENGTH + packet.Payload.Length];
         WriteHeader(datagram, packet.Header, (ushort)packet.Payload.Length, DisplayCrc32.Compute(packet.Payload.Span));
-        packet.Payload.Span.CopyTo(datagram.AsSpan(DisplayProtocol.HeaderLength));
+        packet.Payload.Span.CopyTo(datagram.AsSpan(DisplayProtocol.HEADER_LENGTH));
         return datagram;
     }
 
@@ -49,7 +54,7 @@ public static class DisplayPacketCodec
             return false;
         }
 
-        var payload = datagram.Slice(DisplayProtocol.HeaderLength, payloadLength);
+        var payload = datagram.Slice(DisplayProtocol.HEADER_LENGTH, payloadLength);
         if (DisplayCrc32.Compute(payload) != payloadCrc32)
         {
             error = DisplayPacketDecodeError.PayloadChecksumMismatch;
@@ -71,26 +76,26 @@ public static class DisplayPacketCodec
         payloadLength = 0;
         payloadCrc32 = 0;
         error = DisplayPacketDecodeError.None;
-        if (datagram.Length < DisplayProtocol.HeaderLength)
+        if (datagram.Length < DisplayProtocol.HEADER_LENGTH)
         {
             error = DisplayPacketDecodeError.PacketTooShort;
             return false;
         }
 
-        if (BinaryPrimitives.ReadUInt32BigEndian(datagram) != DisplayProtocol.Magic)
+        if (BinaryPrimitives.ReadUInt32BigEndian(datagram) != DisplayProtocol.MAGIC)
         {
             error = DisplayPacketDecodeError.InvalidMagic;
             return false;
         }
 
-        if (BinaryPrimitives.ReadUInt16BigEndian(datagram[8..]) != DisplayProtocol.HeaderLength)
+        if (BinaryPrimitives.ReadUInt16BigEndian(datagram[8..]) != DisplayProtocol.HEADER_LENGTH)
         {
             error = DisplayPacketDecodeError.InvalidHeaderLength;
             return false;
         }
 
         payloadLength = BinaryPrimitives.ReadUInt16BigEndian(datagram[10..]);
-        if (datagram.Length != DisplayProtocol.HeaderLength + payloadLength)
+        if (datagram.Length != DisplayProtocol.HEADER_LENGTH + payloadLength)
         {
             error = DisplayPacketDecodeError.PayloadLengthMismatch;
             return false;
@@ -132,7 +137,7 @@ public static class DisplayPacketCodec
             return false;
         }
 
-        if ((header.Flags & ~DisplayProtocol.SupportedFlags) != 0)
+        if ((header.Flags & ~DisplayProtocol.SUPPORTED_FLAGS) != 0)
         {
             error = DisplayPacketDecodeError.UnsupportedFlags;
             return false;
@@ -154,12 +159,12 @@ public static class DisplayPacketCodec
         ushort payloadLength,
         uint payloadCrc32)
     {
-        BinaryPrimitives.WriteUInt32BigEndian(destination, DisplayProtocol.Magic);
+        BinaryPrimitives.WriteUInt32BigEndian(destination, DisplayProtocol.MAGIC);
         destination[4] = header.Version.Major;
         destination[5] = header.Version.Minor;
         destination[6] = (byte)header.MessageType;
         destination[7] = (byte)header.Flags;
-        BinaryPrimitives.WriteUInt16BigEndian(destination[8..], DisplayProtocol.HeaderLength);
+        BinaryPrimitives.WriteUInt16BigEndian(destination[8..], DisplayProtocol.HEADER_LENGTH);
         BinaryPrimitives.WriteUInt16BigEndian(destination[10..], payloadLength);
         BinaryPrimitives.WriteUInt32BigEndian(destination[12..], header.RequestId);
         BinaryPrimitives.WriteUInt32BigEndian(destination[16..], header.FrameId);

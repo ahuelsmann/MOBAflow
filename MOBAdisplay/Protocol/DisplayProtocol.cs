@@ -6,14 +6,14 @@ namespace Moba.Display.Protocol;
 /// </summary>
 public static class DisplayProtocol
 {
-    public const uint Magic = 0x4D4F4241;
-    public const ushort HeaderLength = 32;
-    public const int DefaultMaxDatagramLength = 1232;
-    public const int DefaultMaxPayloadLength = DefaultMaxDatagramLength - HeaderLength;
-    public const int MaxPayloadLength = ushort.MaxValue;
-    public const byte CurrentMajorVersion = 1;
-    public const byte CurrentMinorVersion = 0;
-    public const DisplayProtocolFlags SupportedFlags =
+    public const uint MAGIC = 0x4D4F4241;
+    public const ushort HEADER_LENGTH = 32;
+    public const int DEFAULT_MAX_DATAGRAM_LENGTH = 1232;
+    public const int DEFAULT_MAX_PAYLOAD_LENGTH = DEFAULT_MAX_DATAGRAM_LENGTH - HEADER_LENGTH;
+    public const int MAX_PAYLOAD_LENGTH = ushort.MaxValue;
+    public const byte CURRENT_MAJOR_VERSION = 1;
+    public const byte CURRENT_MINOR_VERSION = 0;
+    public const DisplayProtocolFlags SUPPORTED_FLAGS =
         DisplayProtocolFlags.Response
         | DisplayProtocolFlags.AcknowledgementRequired
         | DisplayProtocolFlags.Retry
@@ -23,7 +23,7 @@ public static class DisplayProtocol
     /// Gets the protocol version emitted by this host implementation.
     /// </summary>
     public static DisplayProtocolVersion CurrentVersion =>
-        new(CurrentMajorVersion, CurrentMinorVersion);
+        new(CURRENT_MAJOR_VERSION, CURRENT_MINOR_VERSION);
 }
 
 /// <summary>
