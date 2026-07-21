@@ -406,6 +406,48 @@ public sealed class JourneyManagerFeedbackTests
         Status = WorkflowExecutionStatus.Succeeded
     };
 
+    [Test]
+    public async Task ProcessFeedbackAsync_TerminalTransition_RaisesOneStableRunCompletion()
+    {
+        var z21Mock = new Mock<IZ21>();
+        var workflowMock = new Mock<IWorkflowService>();
+        var journey = new Journey
+        {
+            Stations = [new Station { Name = "Bielefeld" }],
+            FeedbackSequence =
+            [
+                new JourneyFeedbackStep
+                {
+                    InPort = 3,
+                    StopTransition = new JourneyStopTransition
+                    {
+                        Mode = Moba.Domain.Enum.JourneyStopTransitionMode.Next
+                    }
+                }
+            ]
+        };
+        var project = new Project { Journeys = [journey] };
+        using var manager = new TestableJourneyManager(z21Mock.Object, project, workflowMock.Object);
+        var completions = new List<Guid>();
+        manager.JourneyCompleted += (_, args) => completions.Add(args.JourneyRunId);
+        var initialRunId = manager.GetState(journey.Id)!.RunId;
+
+        await manager.RunProcessFeedbackAsync(new FeedbackResult(BuildFeedbackPacketForInPort(3)));
+        await manager.RunProcessFeedbackAsync(new FeedbackResult(BuildFeedbackPacketForInPort(3)));
+
+        Assert.That(completions, Is.EqualTo(new[] { initialRunId }));
+
+        manager.Reset(journey);
+        var resetRunId = manager.GetState(journey.Id)!.RunId;
+        await manager.RunProcessFeedbackAsync(new FeedbackResult(BuildFeedbackPacketForInPort(3)));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(resetRunId, Is.Not.EqualTo(initialRunId));
+            Assert.That(completions, Is.EqualTo(new[] { initialRunId, resetRunId }));
+        });
+    }
+
     /// <summary>
     /// Builds a minimal LAN_RMBUS_DATACHANGED packet with a single active bit for the given 1-based InPort.
     /// </summary>

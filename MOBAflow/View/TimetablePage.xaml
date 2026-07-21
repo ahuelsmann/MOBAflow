@@ -1,0 +1,236 @@
+<Page
+    x:Class="Moba.WinUI.View.TimetablePage"
+    x:Name="PageRoot"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:Moba.SharedUI.ViewModel"
+    DataContext="{x:Bind ViewModel}"
+    mc:Ignorable="d">
+
+    <Grid Padding="24" RowSpacing="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Grid ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Timetable" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Plan dated services and manage the current operating session." />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                <Button Command="{x:Bind ViewModel.RefreshCommand}" Content="Refresh" />
+                <Button Command="{x:Bind ViewModel.AddServiceCommand}" Content="Add service" Style="{StaticResource AccentButtonStyle}" />
+            </StackPanel>
+        </Grid>
+
+        <InfoBar
+            Grid.Row="1"
+            IsClosable="False"
+            IsOpen="True"
+            Message="{x:Bind ViewModel.ValidationSummary, Mode=OneWay}"
+            Severity="Informational" />
+
+        <Grid Grid.Row="2" ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="ServicesColumn" Width="2*" MinWidth="280" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition x:Name="DetailsColumn" Width="3*" MinWidth="360" />
+            </Grid.ColumnDefinitions>
+
+            <Grid
+                Padding="16"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                CornerRadius="8"
+                RowSpacing="12">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Services" />
+                <Grid Grid.Row="1" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="130" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="100" />
+                    </Grid.ColumnDefinitions>
+                    <ComboBox
+                        ItemsSource="{x:Bind ViewModel.FocusOptions}"
+                        SelectedItem="{x:Bind ViewModel.SelectedFocus, Mode=TwoWay}" />
+                    <TextBox
+                        Grid.Column="1"
+                        PlaceholderText="Filter by service, station, or train"
+                        Text="{x:Bind ViewModel.FilterText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <NumberBox
+                        Grid.Column="2"
+                        Header="Hours"
+                        Minimum="1"
+                        Value="{x:Bind ViewModel.TimeWindowHours, Mode=TwoWay}" />
+                </Grid>
+                <ListView
+                    Grid.Row="2"
+                    ItemsSource="{x:Bind ViewModel.Services, Mode=OneWay}"
+                    SelectedItem="{x:Bind ViewModel.SelectedService, Mode=TwoWay}">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="vm:TimetableServiceRowViewModel">
+                            <Grid Padding="4" ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="90" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock VerticalAlignment="Center" Text="{x:Bind ServiceNumber, Mode=OneWay}" />
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock FontWeight="SemiBold" Text="{x:Bind Name, Mode=OneWay}" />
+                                    <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind Schedule, Mode=OneWay}" />
+                                    <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind TrainName, Mode=OneWay}" />
+                                    <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind JourneyName, Mode=OneWay}" />
+                                    <TextBlock Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="{x:Bind ProgressText, Mode=OneWay}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" HorizontalAlignment="Right">
+                                    <TextBlock Text="{x:Bind ServiceDateText, Mode=OneWay}" />
+                                    <TextBlock Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Text="{x:Bind BoardStatus, Mode=OneWay}" />
+                                    <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind DelayText, Mode=OneWay}" />
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+                <CommandBar Grid.Row="3" DefaultLabelPosition="Right" OverflowButtonVisibility="Auto">
+                    <AppBarButton Command="{x:Bind ViewModel.HoldSelectedServiceCommand}" Label="Hold 5 min" />
+                    <AppBarButton Command="{x:Bind ViewModel.ReleaseSelectedServiceCommand}" Label="Release" />
+                    <AppBarButton Command="{x:Bind ViewModel.CompleteSelectedServiceCommand}" Label="Complete" />
+                    <AppBarButton Command="{x:Bind ViewModel.ReassignSelectedTrainCommand}" Label="Next train" />
+                    <AppBarButton Command="{x:Bind ViewModel.ReassignSelectedJourneyCommand}" Label="Next journey" />
+                    <CommandBar.SecondaryCommands>
+                        <AppBarButton Command="{x:Bind ViewModel.CancelSelectedServiceCommand}" Label="Cancel service" />
+                        <AppBarButton Command="{x:Bind ViewModel.DeleteSelectedServiceCommand}" Label="Delete definition" />
+                    </CommandBar.SecondaryCommands>
+                </CommandBar>
+            </Grid>
+
+            <Grid
+                Grid.Column="2"
+                Padding="16"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                CornerRadius="8"
+                RowSpacing="12">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Selected service" />
+                <Grid Grid.Row="1" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox Header="Service number" Text="{x:Bind ViewModel.SelectedService.ServiceNumber, Mode=TwoWay}" />
+                    <TextBox Grid.Column="1" Header="Name" Text="{x:Bind ViewModel.SelectedService.Name, Mode=TwoWay}" />
+                    <Button
+                        Grid.Column="2"
+                        VerticalAlignment="Bottom"
+                        Command="{x:Bind ViewModel.SaveDefinitionCommand}"
+                        Content="Save definition" />
+                </Grid>
+                <ListView
+                    Grid.Row="2"
+                    ItemsSource="{x:Bind ViewModel.Calls, Mode=OneWay}"
+                    SelectedItem="{x:Bind ViewModel.SelectedCall, Mode=TwoWay}">
+                    <ListView.Header>
+                        <Grid Padding="8" ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="100" />
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="80" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock FontWeight="SemiBold" Text="Station" />
+                            <TextBlock Grid.Column="1" FontWeight="SemiBold" Text="Platform" />
+                            <TextBlock Grid.Column="2" FontWeight="SemiBold" Text="Arrival" />
+                            <TextBlock Grid.Column="3" FontWeight="SemiBold" Text="Departure" />
+                            <TextBlock Grid.Column="4" FontWeight="SemiBold" Text="Actual in" />
+                            <TextBlock Grid.Column="5" FontWeight="SemiBold" Text="Actual out" />
+                        </Grid>
+                    </ListView.Header>
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="vm:TimetableCallRowViewModel">
+                            <Grid Padding="8" ColumnSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="100" />
+                                    <ColumnDefinition Width="70" />
+                                    <ColumnDefinition Width="70" />
+                                    <ColumnDefinition Width="80" />
+                                    <ColumnDefinition Width="80" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{x:Bind StationName}" />
+                                <TextBlock Grid.Column="1" Text="{x:Bind PlatformName}" />
+                                <TextBlock Grid.Column="2" Text="{x:Bind ScheduledArrival}" />
+                                <TextBlock Grid.Column="3" Text="{x:Bind ScheduledDeparture}" />
+                                <TextBlock Grid.Column="4" Text="{x:Bind ActualArrival}" />
+                                <TextBlock Grid.Column="5" Text="{x:Bind ActualDeparture}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+                <CommandBar Grid.Row="3" DefaultLabelPosition="Right" OverflowButtonVisibility="Auto">
+                    <AppBarButton Command="{x:Bind ViewModel.RecordArrivalCommand}" Label="Record arrival" />
+                    <AppBarButton Command="{x:Bind ViewModel.RecordDepartureCommand}" Label="Record departure" />
+                    <AppBarButton Command="{x:Bind ViewModel.ReassignSelectedPlatformCommand}" Label="Next platform" />
+                    <CommandBar.SecondaryCommands>
+                        <AppBarButton Command="{x:Bind ViewModel.ShiftSelectedCallEarlierCommand}" Label="Shift 5 min earlier" />
+                        <AppBarButton Command="{x:Bind ViewModel.ShiftSelectedCallLaterCommand}" Label="Shift 5 min later" />
+                    </CommandBar.SecondaryCommands>
+                </CommandBar>
+            </Grid>
+
+            <controls:GridSplitter
+                Grid.Column="1"
+                Width="4"
+                HorizontalAlignment="Stretch"
+                ResizeBehavior="PreviousAndNext" />
+        </Grid>
+
+        <ItemsControl Grid.Row="3" ItemsSource="{x:Bind ViewModel.Issues, Mode=OneWay}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:TimetableIssueRowViewModel">
+                    <Grid Padding="8,4" ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="140" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock FontWeight="SemiBold" Text="{x:Bind Kind}" />
+                        <TextBlock Grid.Column="1" Text="{x:Bind Message}" TextWrapping="Wrap" />
+                        <TextBlock Grid.Column="2" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind Reference}" />
+                    </Grid>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <TextBlock
+            Grid.Row="4"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+            Text="{x:Bind ViewModel.StatusText, Mode=OneWay}" />
+    </Grid>
+</Page>

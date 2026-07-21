@@ -7,7 +7,9 @@ using Moba.Backend;
 using Moba.Backend.Interface;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
+using Moba.Common.Events;
 using Moba.Domain;
+using Moba.Domain.Enum;
 
 using Moq;
 
@@ -107,6 +109,78 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
         await cancelled.Task.WaitAsync(TimeSpan.FromSeconds(1));
     }
 
+    [Test]
+    public async Task ActivateProjectAsync_ActivatesClonedInterlockingDefinition()
+    {
+        var z21Mock = CreateZ21Mock();
+        var interlockingRuntime = new Mock<IInterlockingRuntime>();
+        interlockingRuntime
+            .Setup(runtime => runtime.ActivateAsync(It.IsAny<InterlockingDefinition>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        using var runtime = CreateRuntime(
+            z21Mock.Object,
+            interlockingRuntime: interlockingRuntime.Object);
+        var project = new Project { Name = "Editor" };
+        project.Interlocking.Routes.Add(new RouteDefinition { Name = "R1" });
+
+        await runtime.ActivateProjectAsync(project);
+
+        interlockingRuntime.Verify(item => item.ActivateAsync(
+            It.Is<InterlockingDefinition>(definition =>
+                !ReferenceEquals(definition, project.Interlocking)
+                && definition.Routes.Count == 1
+                && definition.Routes[0].Name == "R1"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task StationTransition_Should_PublishReachedEventOnlyAfterFeedbackAppliesTransition()
+    {
+        // Arrange
+        var z21Mock = CreateZ21Mock();
+        var eventBus = new EventBus(Mock.Of<ILogger<EventBus>>());
+        using var runtime = CreateRuntime(z21Mock.Object, eventBus: eventBus);
+        var first = new Station { Id = Guid.NewGuid(), Name = "First" };
+        var reached = new Station { Id = Guid.NewGuid(), Name = "Reached" };
+        var journey = new Journey
+        {
+            Id = Guid.NewGuid(),
+            Stations = [first, reached],
+            FeedbackSequence =
+            [
+                new JourneyFeedbackStep
+                {
+                    InPort = 1,
+                    StopTransition = new JourneyStopTransition
+                    {
+                        Mode = JourneyStopTransitionMode.SpecificStation,
+                        StationId = reached.Id
+                    }
+                }
+            ]
+        };
+        var project = new Project { Id = Guid.NewGuid(), Name = "Runtime event", Journeys = [journey] };
+        var reachedEvent = new TaskCompletionSource<JourneyStationReachedEvent>(TaskCreationOptions.RunContinuationsAsynchronously);
+        eventBus.Subscribe<JourneyStationReachedEvent>(@event => reachedEvent.TrySetResult(@event));
+        await runtime.ActivateProjectAsync(project);
+
+        // Act
+        Assert.That(reachedEvent.Task.IsCompleted, Is.False);
+        z21Mock.Raise(z21 => z21.Received += null, new FeedbackResult(BuildFeedbackPacketForInPort(1)));
+        var published = await reachedEvent.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(published.ProjectId, Is.EqualTo(project.Id));
+            Assert.That(published.JourneyId, Is.EqualTo(journey.Id));
+            Assert.That(published.JourneyRunId, Is.Not.EqualTo(Guid.Empty));
+            Assert.That(published.StationId, Is.EqualTo(reached.Id));
+            Assert.That(published.OccurredAt, Is.Not.EqualTo(default(DateTimeOffset)));
+            Assert.That(runtime.Current.JourneyStates[journey.Id].CurrentStationId, Is.EqualTo(reached.Id));
+        });
+    }
+
     private static Mock<IZ21> CreateZ21Mock()
     {
         var z21Mock = new Mock<IZ21>();
@@ -115,7 +189,11 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
         return z21Mock;
     }
 
-    private static MobaRuntimeService CreateRuntime(IZ21 z21, IWorkflowService? workflowService = null)
+    private static MobaRuntimeService CreateRuntime(
+        IZ21 z21,
+        IWorkflowService? workflowService = null,
+        IEventBus? eventBus = null,
+        IInterlockingRuntime? interlockingRuntime = null)
     {
         var loggerMock = new Mock<ILogger<MobaRuntimeService>>();
 
@@ -128,7 +206,9 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
                 // Disable auto-connect during tests to keep behavior deterministic.
                 Z21 = new Z21Settings { CurrentIpAddress = string.Empty }
             },
-            loggerMock.Object);
+            loggerMock.Object,
+            eventBus,
+            interlockingRuntime: interlockingRuntime);
     }
 
     private static (Mock<IWorkflowService> Service, TaskCompletionSource Started, TaskCompletionSource Cancelled)
@@ -188,7 +268,7 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
 
     private static byte[] BuildFeedbackPacketForInPort(int inPort)
     {
-        var portIndex = inPort - 1;
+        var portIndex = Math.Max(inPort - 1, 0);
         var content = new byte[15];
         content[0] = 0x0F;
         content[2] = 0x80;

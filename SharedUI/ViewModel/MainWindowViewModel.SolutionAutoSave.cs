@@ -2,7 +2,9 @@
 
 namespace Moba.SharedUI.ViewModel;
 
+using Common.Events;
 using Common.Extension;
+using Common.Runtime;
 
 using Microsoft.Extensions.Logging;
 
@@ -74,6 +76,54 @@ public partial class MainWindowViewModel
 
         RefreshProjectDiagnostics();
         SaveSolutionInternalAsync().Observe(ex => _logger.LogWarning(ex, "Auto-save solution failed"));
+    }
+
+    private void OnVehicleUsageCheckpointCommitted(VehicleUsageCheckpointCommittedEvent checkpoint)
+    {
+        if (SelectedProject?.Model.Id != checkpoint.ProjectId || _isShuttingDown)
+        {
+            return;
+        }
+
+        SynchronizeVehicleUsage(checkpoint.Usage);
+        SaveSolutionInternalAsync().Observe(ex =>
+            _logger.LogWarning(ex, "Persisting vehicle usage checkpoint to the solution failed"));
+    }
+
+    private void SynchronizeVehicleUsageFromRuntime() => SynchronizeVehicleUsage(_mobaRuntime.Current.VehicleUsage);
+
+    private void SynchronizeVehicleUsage(IReadOnlyDictionary<Guid, VehicleUsageRuntimeSnapshot> runtimeUsage)
+    {
+        var project = SelectedProject?.Model;
+        if (project == null)
+        {
+            return;
+        }
+
+        foreach (var (vehicleId, usageSnapshot) in runtimeUsage)
+        {
+            Domain.VehicleUsageData? usage = null;
+            if (project.Locomotives.FirstOrDefault(vehicle => vehicle.Id == vehicleId) is { } locomotive)
+            {
+                usage = locomotive.Usage ??= new Domain.VehicleUsageData();
+            }
+            else if (project.PassengerWagons.FirstOrDefault(vehicle => vehicle.Id == vehicleId) is { } passengerWagon)
+            {
+                usage = passengerWagon.Usage ??= new Domain.VehicleUsageData();
+            }
+            else if (project.GoodsWagons.FirstOrDefault(vehicle => vehicle.Id == vehicleId) is { } goodsWagon)
+            {
+                usage = goodsWagon.Usage ??= new Domain.VehicleUsageData();
+            }
+
+            if (usage == null)
+            {
+                continue;
+            }
+
+            usage.TrackedOperatingSeconds = usageSnapshot.TrackedOperatingSeconds;
+            usage.TrackedCompletedTrips = usageSnapshot.TrackedCompletedTrips;
+        }
     }
 
     /// <summary>

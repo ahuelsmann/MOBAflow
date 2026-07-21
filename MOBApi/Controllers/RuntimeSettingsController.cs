@@ -1,7 +1,10 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MOBApi.Controllers;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+
+using Moba.MOBApi.Security;
 
 using Models;
 using Service;
@@ -41,6 +44,7 @@ public class RuntimeSettingsController : ControllerBase
     /// Receives runtime settings from MOBAflow WinUI (localhost only).
     /// </summary>
     [HttpPut]
+    [Authorize(Policy = ControlPlaneCapabilities.HostPublish)]
     public IActionResult PutRuntimeSettings([FromBody] RuntimeSettingsRequest? request)
     {
         if (!IsLocalhostRequest())

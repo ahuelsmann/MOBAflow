@@ -130,6 +130,96 @@ jobs:
           if-no-files-found: warn
           retention-days: 90
 
+  android-release:
+    name: Android Release AAB
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .nuget/packages
+          key: >-
+            nuget-${{ runner.os }}-android-${{ hashFiles('global.json', 'NuGet.Config',
+            'Directory.Packages.props', 'Directory.Build.props', '**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-android-
+
+      - name: Restore MAUI Android workload
+        shell: pwsh
+        run: dotnet workload restore MOBAsmart/MOBAsmart.csproj --skip-manifest-update
+
+      - name: Restore Android dependency graph
+        shell: pwsh
+        run: >-
+          dotnet restore MOBAsmart/MOBAsmart.csproj
+          --property:Configuration=Release
+          --force-evaluate
+
+      - name: Verify Android build properties
+        shell: pwsh
+        run: |
+          $properties = dotnet msbuild MOBAsmart/MOBAsmart.csproj `
+            -nologo `
+            -p:Configuration=Release `
+            -getProperty:Platform,PlatformTarget,RuntimeIdentifiers,AndroidPackageFormats |
+            ConvertFrom-Json
+          if ($properties.Properties.Platform -ne 'AnyCPU') {
+            throw "Expected Platform=AnyCPU; found $($properties.Properties.Platform)."
+          }
+          if ($properties.Properties.PlatformTarget -ne 'AnyCPU') {
+            throw "Expected PlatformTarget=AnyCPU; found $($properties.Properties.PlatformTarget)."
+          }
+          if ($properties.Properties.RuntimeIdentifiers -ne 'android-arm64;android-x64') {
+            throw "Unexpected Android RuntimeIdentifiers: $($properties.Properties.RuntimeIdentifiers)"
+          }
+          if ($properties.Properties.AndroidPackageFormats -ne 'aab') {
+            throw "Expected AndroidPackageFormats=aab; found $($properties.Properties.AndroidPackageFormats)."
+          }
+
+      - name: Publish Android Release AAB
+        shell: pwsh
+        run: >-
+          dotnet publish MOBAsmart/MOBAsmart.csproj
+          --framework net10.0-android
+          --configuration Release
+          --no-restore
+          -m:1
+
+      - name: Validate Android Release AAB
+        shell: pwsh
+        run: |
+          $bundleRoot = 'MOBAsmart/bin/Release/net10.0-android/publish'
+          $bundles = @(Get-ChildItem -LiteralPath $bundleRoot -Recurse -File -Filter *.aab)
+          if ($bundles.Count -eq 0) {
+            throw 'Android Release publish did not produce an AAB.'
+          }
+          $apks = @(Get-ChildItem -LiteralPath $bundleRoot -Recurse -File -Filter *.apk)
+          if ($apks.Count -ne 0) {
+            throw "Android Release publish produced unexpected APK files: $($apks.Name -join ', ')"
+          }
+          New-Item -ItemType Directory -Force artifacts/MOBAsmart-Release | Out-Null
+          foreach ($bundle in $bundles) {
+            ./scripts/Test-AndroidAppBundle.ps1 -BundlePath $bundle.FullName
+            Copy-Item -LiteralPath $bundle.FullName -Destination artifacts/MOBAsmart-Release
+          }
+
+      - name: Archive Android Release AAB
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: MOBAsmart-android-release-${{ github.run_number }}
+          path: artifacts/MOBAsmart-Release/*.aab
+          if-no-files-found: error
+          retention-days: 30
+
   mutation-domain:
     name: Domain mutation testing
     runs-on: ubuntu-latest

@@ -148,6 +148,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         WorkflowLibrary.PropertyChanged += OnWorkflowLibraryPropertyChanged;
 
         _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
+        _eventBusSubscriptions.Add(_eventBus.Subscribe<VehicleUsageCheckpointCommittedEvent>(OnVehicleUsageCheckpointCommitted));
         ApplyRuntimeSnapshot(_mobaRuntime.Current);
 
         Solution = solution;
@@ -474,6 +475,15 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
     /// </summary>
     public async Task PrepareForShutdownAsync()
     {
+        if (_isShuttingDown)
+        {
+            return;
+        }
+
+        await _mobaRuntime.CheckpointUsageAsync().ConfigureAwait(false);
+        SynchronizeVehicleUsageFromRuntime();
+        await SaveSolutionInternalAsync().ConfigureAwait(false);
+
         if (!TryBeginShutdown())
         {
             return;

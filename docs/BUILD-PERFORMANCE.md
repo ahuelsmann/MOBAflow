@@ -34,9 +34,13 @@ dotnet build MOBAflow/MOBAflow.csproj -c FastDebug --no-restore \
 **Fast daily build (recommended):**
 
 ```bash
-dotnet restore MOBAsmart/MOBAsmart.csproj -f net10.0-android
+dotnet restore MOBAsmart/MOBAsmart.csproj
 dotnet build MOBAsmart/MOBAsmart.csproj -f net10.0-android -c FastDebug --no-restore
 ```
+
+`dotnet restore` has no framework selector: its `-f` option means `--force`.
+MOBAsmart targets only `net10.0-android`, so the project-scoped restore selects
+the Android graph without an additional option.
 
 Fast deploy is enabled by default for Debug and FastDebug (Visual Studio F5 and CLI).
 Assemblies are pushed over adb on incremental deploys instead of rebuilding a full APK.
@@ -49,6 +53,31 @@ dotnet build MOBAsmart/MOBAsmart.csproj -f net10.0-android -c FastDebug --no-res
 ```
 
 Use reliable deploy when fast deploy behaves inconsistently on a device.
+
+**Clean Release AAB:**
+
+The pinned .NET SDK and the MAUI Android workload are prerequisites. From a
+clean checkout, run the same restore, publish, and bundle validation used by CI:
+
+```powershell
+dotnet workload restore MOBAsmart/MOBAsmart.csproj --skip-manifest-update
+dotnet restore MOBAsmart/MOBAsmart.csproj `
+  --property:Configuration=Release `
+  --force-evaluate
+dotnet publish MOBAsmart/MOBAsmart.csproj `
+  --framework net10.0-android `
+  --configuration Release `
+  --no-restore `
+  -m:1
+./scripts/Test-AndroidAppBundle.ps1 `
+  -BundlePath MOBAsmart/bin/Release/net10.0-android/com.mobaflow.mobasmart.aab
+```
+
+Release produces an AAB for the `android-arm64` and `android-x64` runtime
+identifiers. The validation script requires the corresponding `arm64-v8a` and
+`x86_64` native libraries and the base manifest, resources, and DEX entries.
+The Release property on restore is required so both RID graphs are present;
+single-node publish avoids concurrent writes from their shared project graph.
 
 **Visual Studio**
 
@@ -96,9 +125,10 @@ coverage. That pipeline is intentionally slower than local FastDebug iteration.
 
 The public, authoritative pull-request check is `.github/workflows/quality.yml`.
 It builds the explicit Windows desktop graph with `IncludeMobaSmartTests=false`,
-runs NUnit with Cobertura coverage, audits the resolved transitive NuGet graph
-and retains all reports for 90 days. Android/MAUI validation is a separate,
-explicit opt-in graph with `IncludeMobaSmartTests=true`.
+runs NUnit with Cobertura coverage, audits the resolved transitive NuGet graph,
+builds and validates the MOBAsmart Release AAB in a separate mandatory job, and
+retains the reports and packages. Mobile tests remain an explicit opt-in graph
+with `IncludeMobaSmartTests=true`.
 
 The workflow enforces a coverage ratchet from `Test/coverage-thresholds.json`.
 The thresholds are per production assembly as well as global, so an improvement

@@ -4,7 +4,6 @@ namespace Moba.WinUI.Service;
 
 using Backend.Interface;
 
-using Common.Configuration;
 using Common.Runtime;
 
 using Domain;
@@ -17,23 +16,20 @@ using Microsoft.Extensions.Logging;
 public sealed class RestApiRuntimeCommandConsumerService : IDisposable
 {
     private readonly IMobaRuntime _mobaRuntime;
-    private readonly AppSettings _appSettings;
-    private readonly HttpClient _httpClient;
     private readonly ILogger<RestApiRuntimeCommandConsumerService> _logger;
+    private readonly HostControlPlaneSession? _hostSession;
     private readonly PeriodicTimer _timer;
     private readonly CancellationTokenSource _cts = new();
     private bool _disposed;
 
     public RestApiRuntimeCommandConsumerService(
         IMobaRuntime mobaRuntime,
-        AppSettings appSettings,
-        IHttpClientFactory httpClientFactory,
-        ILogger<RestApiRuntimeCommandConsumerService> logger)
+        ILogger<RestApiRuntimeCommandConsumerService> logger,
+        HostControlPlaneSession? hostSession = null)
     {
         _mobaRuntime = mobaRuntime;
-        _appSettings = appSettings;
-        _httpClient = httpClientFactory.CreateClient(nameof(RestApiRuntimeCommandConsumerService));
         _logger = logger;
+        _hostSession = hostSession;
         _timer = new PeriodicTimer(TimeSpan.FromMilliseconds(500));
         _ = ConsumeLoopAsync(_cts.Token);
     }
@@ -59,10 +55,11 @@ public sealed class RestApiRuntimeCommandConsumerService : IDisposable
 
     private async Task ProcessNextCommandAsync(CancellationToken cancellationToken)
     {
-        var port = _appSettings.RestApi.Port > 0 ? _appSettings.RestApi.Port : 5001;
-        using var response = await _httpClient
-            .GetAsync($"http://127.0.0.1:{port}/api/runtime/commands/pending", cancellationToken)
-            .ConfigureAwait(false);
+        if (_hostSession?.IsEnrolled != true)
+            return;
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, "api/runtime/commands/pending");
+        using var response = await _hostSession.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
         if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
         {

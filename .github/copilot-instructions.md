@@ -45,6 +45,7 @@ MainWindowViewModel.OnFeedbackReceived() → IsConnected = true (UI thread safe)
 15. **Validate Light and Dark theme for every UI change** — Use `ThemeResource` / platform theme tokens for foregrounds, backgrounds, borders, icons, selected states, hover states, disabled states, drag/drop visuals, and custom converters. Never encode colors that only work in one theme.
 16. **English UI language** — All user-visible text in UI apps (MOBAflow WinUI, MOBAsmart MAUI) must be English: labels, buttons, status messages, tooltips, empty states, defaults, and shipped master data (`data.json`, `solution.json`). No German (or other non-English) UI strings in XAML, ViewModels, or domain defaults. TTS/announcement language remains user-configurable in settings and is independent of UI language.
 17. **Standalone Markdown plans belong in `plans/`** — Keep project, quality, refactoring, and roadmap planning files out of `docs/`. Delete completed plans; Git history and closed GitHub work items retain the record. `docs/` contains current reference and user documentation. Spec Kit artifacts such as `specs/*/plan.md` remain in their feature directory. GitHub issues, milestones, and Kanban remain authoritative for active work and progress.
+18. **SonarQube before PR review** — Attempt local Sonar analysis against the actual PR base, then create every PR as a draft. Do not mark it ready for review until the remote SonarCloud check is green and the PR has zero `OPEN`/`CONFIRMED` Sonar issues. Do not lower quality gates, suppress valid findings, or exclude changed files to make the analysis pass. See `.github/instructions/sonarqube-pre-pr.instructions.md`.
 
 ---
 
@@ -78,6 +79,8 @@ MainWindowViewModel.OnFeedbackReceived() → IsConnected = true (UI thread safe)
 - `run_build()` at end
 - `run_tests()` for relevant projects
 - `.editorconfig` compliance
+- Attempt local SonarQube analysis against the actual base branch
+- Create the PR as a draft, then verify the remote SonarCloud result and PR issue count before review
 
 ### 6. DOCUMENTATION
 - `README.md` updated (if user-facing)
@@ -248,6 +251,8 @@ dotnet run --project MOBApi      # REST API (Port 5001)
 - [ ] XML-docs for public APIs
 - [ ] **Tests for new/changed behavior** — Unit or integration tests added; `dotnet test` passes
 - [ ] **User-visible UI strings are English** (MOBAflow, MOBAsmart, SharedUI ViewModels bound to UI)
+- [ ] Local Sonar analysis completed, or its documented capability limitation was recorded on the draft PR
+- [ ] PR was created as a draft and stayed draft until SonarCloud was green with zero `OPEN`/`CONFIRMED` issues
 - [ ] Build: `dotnet build`
 - [ ] README updated (if user-facing)
 

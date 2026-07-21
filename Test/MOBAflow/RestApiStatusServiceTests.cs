@@ -76,12 +76,6 @@ internal sealed class RestApiStatusServiceTests
             .Setup(client => client.DisconnectAsync())
             .Returns(Task.CompletedTask);
 
-        var sharedHttpClient = new HttpClient(new ImmediateHttpMessageHandler());
-        var httpClientFactory = new Mock<IHttpClientFactory>();
-        httpClientFactory
-            .Setup(factory => factory.CreateClient(It.IsAny<string>()))
-            .Returns(sharedHttpClient);
-
         var restApiProcessService = new RestApiProcessService(
             appSettings,
             NullLogger<RestApiProcessService>.Instance,
@@ -90,15 +84,12 @@ internal sealed class RestApiStatusServiceTests
             runtimeHubHostClient.Object,
             mobaRuntime.Object,
             eventBus,
-            appSettings,
-            httpClientFactory.Object,
             NullLogger<RestApiRuntimeHubService>.Instance);
 
         var mainWindowViewModel = CreateMainWindowViewModel(appSettings, mobaRuntime, eventBus);
         var solutionSyncService = new RestApiSolutionSyncService(
             new Solution(),
             appSettings,
-            httpClientFactory.Object,
             mainWindowViewModel,
             restApiProcessService,
             eventBus,
@@ -123,7 +114,6 @@ internal sealed class RestApiStatusServiceTests
             solutionSyncService,
             restApiProcessService,
             statusHttpClient,
-            sharedHttpClient,
             photoHubClient,
             runtimeHubHostClient);
     }
@@ -182,7 +172,6 @@ internal sealed class RestApiStatusServiceTests
         RestApiSolutionSyncService SolutionSyncService,
         RestApiProcessService RestApiProcessService,
         HttpClient StatusHttpClient,
-        HttpClient SharedHttpClient,
         Mock<IPhotoHubClient> PhotoHubClient,
         Mock<IRuntimeHubHostClient> RuntimeHubHostClient) : IAsyncDisposable
     {
@@ -193,7 +182,6 @@ internal sealed class RestApiStatusServiceTests
             SolutionSyncService.Dispose();
             RestApiProcessService.Dispose();
             StatusHttpClient.Dispose();
-            SharedHttpClient.Dispose();
         }
     }
 }
