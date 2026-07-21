@@ -11,6 +11,8 @@ public static class WorkflowValidationCodes
 {
     /// <summary>Two workflows use the same identifier.</summary>
     public const string DuplicateWorkflowId = "WF001";
+    /// <summary>An execution request references a workflow outside its project snapshot.</summary>
+    public const string MissingWorkflow = "WF002";
     /// <summary>A workflow contains no steps.</summary>
     public const string EmptyWorkflow = "WF100";
     /// <summary>The entry step is absent or unresolved.</summary>
@@ -45,6 +47,8 @@ public static class WorkflowValidationCodes
     public const string OverlappingParallelBranches = "WF115";
     /// <summary>Parallel branches write the same exclusive resource.</summary>
     public const string ConflictingParallelResource = "WF116";
+    /// <summary>A nested workflow chain exceeds the runtime depth bound.</summary>
+    public const string NestedWorkflowDepth = "WF117";
 }
 
 /// <summary>

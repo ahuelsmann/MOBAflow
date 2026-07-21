@@ -4,6 +4,7 @@ namespace Moba.Test.Integration;
 
 using Microsoft.Extensions.Logging.Abstractions;
 
+using Moba.Backend.Interface;
 using Moba.Backend.Service;
 using Moba.Common.Events;
 using Moba.Domain;
@@ -11,33 +12,20 @@ using Moba.Domain.Enum;
 
 using Mocks;
 
-/// <summary>
-/// End-to-end workflow execution tests.
-/// Tests complete workflow: Station reached → Workflow trigger → Actions executed.
-/// </summary>
+/// <summary>End-to-end Workflow 2.0 execution tests through a fake Z21 transport.</summary>
 [TestFixture]
-internal class WorkflowExecutionEndToEndTests
+internal sealed class WorkflowExecutionEndToEndTests
 {
     private FakeUdpClientWrapper _fakeUdp = null!;
     private Z21 _z21 = null!;
-    private IEventBus _eventBus = null!;
-    private ActionExecutor _actionExecutor = null!;
     private WorkflowService _workflowService = null!;
-    private ActionExecutionContext _executionContext = null!;
 
     [SetUp]
     public void SetUp()
     {
         _fakeUdp = new FakeUdpClientWrapper();
-        _eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        _z21 = new Z21(_fakeUdp, _eventBus);
-        _actionExecutor = ActionExecutor.CreateWithDefaultHandlers();
-        _workflowService = new WorkflowService(_actionExecutor);
-
-        _executionContext = new ActionExecutionContext
-        {
-            Z21 = _z21
-        };
+        _z21 = new Z21(_fakeUdp, new EventBus(NullLogger<EventBus>.Instance));
+        _workflowService = new WorkflowService(ActionExecutor.CreateWithDefaultHandlers());
     }
 
     [TearDown]
@@ -50,163 +38,120 @@ internal class WorkflowExecutionEndToEndTests
     [Test]
     public async Task SimpleWorkflow_WithOneCommand_ShouldExecute()
     {
-        // Arrange
-        var workflow = new Workflow
+        var workflow = CreateCommandWorkflow([new byte[] { 0x40, 0x00, 0x00, 0x00 }]);
+
+        var result = await ExecuteAsync(workflow);
+
+        Assert.Multiple(() =>
         {
-            Id = Guid.NewGuid(),
-            Name = "Simple Workflow",
-            Actions =
-            [
-                new WorkflowAction
-                {
-                    Id = Guid.NewGuid(),
-                    Number = 1,
-                    Name = "Stop Train",
-                    Type = ActionType.Command,
-                    Command = new CommandActionPayload
-                    {
-                        BytesBase64 = Convert.ToBase64String(new byte[] { 0x40, 0x00, 0x00, 0x00 })
-                    }
-                }
-            ]
-        };
-
-        // Act
-        await _workflowService.ExecuteAsync(workflow, _executionContext);
-
-        // Assert
-        Assert.That(_fakeUdp.SentPayloads.Count, Is.GreaterThanOrEqualTo(1), "At least one command should be sent");
+            Assert.That(result.Status, Is.EqualTo(WorkflowExecutionStatus.Succeeded));
+            Assert.That(_fakeUdp.SentPayloads.Count, Is.GreaterThanOrEqualTo(1));
+        });
     }
 
     [Test]
     public async Task ComplexWorkflow_WithMultipleActions_ShouldExecuteSequentially()
     {
-        // Arrange
-        var workflow = new Workflow
+        var workflow = CreateCommandWorkflow([new byte[] { 0x01 }, new byte[] { 0x02 }, new byte[] { 0x03 }]);
+
+        var result = await ExecuteAsync(workflow);
+
+        Assert.Multiple(() =>
         {
-            Id = Guid.NewGuid(),
-            Name = "Complex Workflow",
-            Actions =
-            [
-                new WorkflowAction
-                {
-                    Id = Guid.NewGuid(),
-                    Number = 1,
-                    Name = "Action 1",
-                    Type = ActionType.Command,
-                    Command = new CommandActionPayload
-                    {
-                        BytesBase64 = Convert.ToBase64String(new byte[] { 0x01 })
-                    }
-                },
-                new WorkflowAction
-                {
-                    Id = Guid.NewGuid(),
-                    Number = 2,
-                    Name = "Action 2",
-                    Type = ActionType.Audio,
-                    Audio = new AudioActionPayload { FilePath = "test.mp3" }
-                },
-                new WorkflowAction
-                {
-                    Id = Guid.NewGuid(),
-                    Number = 3,
-                    Name = "Action 3",
-                    Type = ActionType.Command,
-                    Command = new CommandActionPayload
-                    {
-                        BytesBase64 = Convert.ToBase64String(new byte[] { 0x03 })
-                    }
-                }
-            ]
-        };
-
-        // Act
-        await _workflowService.ExecuteAsync(workflow, _executionContext);
-
-        // Assert
-        var sentCommands = _fakeUdp.SentPayloads.Count;
-        Assert.That(sentCommands, Is.GreaterThanOrEqualTo(2), "At least 2 commands should be sent (Action 1 + 3)");
+            Assert.That(result.Status, Is.EqualTo(WorkflowExecutionStatus.Succeeded));
+            Assert.That(_fakeUdp.SentPayloads.Count, Is.GreaterThanOrEqualTo(3));
+        });
     }
 
     [Test]
-    public async Task WorkflowWithoutActions_ShouldComplete()
+    public async Task EmptyWorkflow_IsRejectedBeforeExecution()
     {
-        // Arrange
-        var workflow = new Workflow
-        {
-            Id = Guid.NewGuid(),
-            Name = "Empty Workflow",
-            Actions = []
-        };
-
+        var workflow = new Workflow { EntryStepId = Guid.NewGuid(), Steps = [] };
         var initialPayloadCount = _fakeUdp.SentPayloads.Count;
 
-        // Act
-        await _workflowService.ExecuteAsync(workflow, _executionContext);
+        var result = await ExecuteAsync(workflow);
 
-        // Assert
-        Assert.That(_fakeUdp.SentPayloads, Has.Count.EqualTo(initialPayloadCount), "No commands should be sent");
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Status, Is.EqualTo(WorkflowExecutionStatus.NotStarted));
+            Assert.That(_fakeUdp.SentPayloads, Has.Count.EqualTo(initialPayloadCount));
+        });
     }
 
     [Test]
-    public Task WorkflowExecution_ShouldHandleErrors()
+    public async Task UnsupportedAction_IsRejectedBeforeExecution()
     {
-        // Arrange
+        var actionId = Guid.NewGuid();
+        var terminalId = Guid.NewGuid();
         var workflow = new Workflow
         {
-            Id = Guid.NewGuid(),
-            Name = "Error Workflow",
-            Actions =
+            EntryStepId = actionId,
+            Steps =
             [
-                new WorkflowAction
+                new WorkflowActionStep
                 {
-                    Id = Guid.NewGuid(),
-                    Number = 1,
-                    Name = "Invalid Action",
-                    Type = (ActionType)999 // Invalid type
-                }
+                    Id = actionId,
+                    NextStepId = terminalId,
+                    Action = new WorkflowAction { Type = (ActionType)999 }
+                },
+                new WorkflowTerminateStep { Id = terminalId }
             ]
         };
 
-        // Act & Assert
-        // Note: WorkflowService catches exceptions from ActionExecutor and logs them
-        // but continues executing remaining actions. No exception is rethrown.
-        // This is by design - workflow should be resilient to action failures.
-        Assert.DoesNotThrowAsync(async () => await _workflowService.ExecuteAsync(workflow, _executionContext));
-        return Task.CompletedTask;
+        var result = await ExecuteAsync(workflow);
+
+        Assert.That(result.Status, Is.EqualTo(WorkflowExecutionStatus.NotStarted));
     }
 
     [Test]
-    public async Task WorkflowCommandExecution_ShouldUpdateZ21State()
+    public async Task WorkflowCommandExecution_ShouldUpdateZ21Transport()
     {
-        // Arrange
-        var workflow = new Workflow
-        {
-            Id = Guid.NewGuid(),
-            Name = "Z21 State Workflow",
-            Actions =
-            [
-                new WorkflowAction
-                {
-                    Id = Guid.NewGuid(),
-                    Number = 1,
-                    Name = "Set Track Power",
-                    Type = ActionType.Command,
-                    Command = new CommandActionPayload
-                    {
-                        BytesBase64 = Convert.ToBase64String(new byte[] { 0x21, 0x81, 0x00, 0xA0 })
-                    }
-                }
-            ]
-        };
-
+        var workflow = CreateCommandWorkflow([new byte[] { 0x21, 0x81, 0x00, 0xA0 }]);
         var initialPayloads = _fakeUdp.SentPayloads.Count;
 
-        // Act
-        await _workflowService.ExecuteAsync(workflow, _executionContext);
+        var result = await ExecuteAsync(workflow);
 
-        // Assert
-        Assert.That(_fakeUdp.SentPayloads, Has.Count.GreaterThan(initialPayloads), "Z21 command should be sent");
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Status, Is.EqualTo(WorkflowExecutionStatus.Succeeded));
+            Assert.That(_fakeUdp.SentPayloads, Has.Count.GreaterThan(initialPayloads));
+        });
+    }
+
+    private async Task<WorkflowExecutionResult> ExecuteAsync(Workflow workflow)
+    {
+        var project = new Project { Workflows = [workflow] };
+        return await _workflowService.ExecuteAsync(new WorkflowExecutionRequest
+        {
+            Project = project,
+            Workflow = workflow,
+            Context = new ActionExecutionContext { Z21 = _z21, CurrentProject = project },
+            Mode = WorkflowRunMode.Live
+        });
+    }
+
+    private static Workflow CreateCommandWorkflow(IReadOnlyList<byte[]> commands)
+    {
+        var terminalId = Guid.NewGuid();
+        var actionIds = commands.Select(_ => Guid.NewGuid()).ToArray();
+        var steps = commands
+            .Select((bytes, index) => (WorkflowStep)new WorkflowActionStep
+            {
+                Id = actionIds[index],
+                NextStepId = index + 1 < actionIds.Length ? actionIds[index + 1] : terminalId,
+                Action = new WorkflowAction
+                {
+                    Name = $"Command {index + 1}",
+                    Type = ActionType.Command,
+                    Command = new CommandActionPayload { BytesBase64 = Convert.ToBase64String(bytes) }
+                }
+            })
+            .ToList();
+        steps.Add(new WorkflowTerminateStep { Id = terminalId });
+        return new Workflow
+        {
+            EntryStepId = actionIds[0],
+            Steps = steps
+        };
     }
 }

@@ -53,6 +53,8 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton<AnnouncementService>();
         services.TryAddSingleton<IAnnouncementService>(sp => sp.GetRequiredService<AnnouncementService>());
         services.TryAddSingleton<IWorkflowEffectPlanner, WorkflowEffectPlanner>();
+        services.TryAddSingleton<IWorkflowConditionEvaluator, WorkflowConditionEvaluator>();
+        services.TryAddSingleton<IWorkflowTraceStore, WorkflowTraceStore>();
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IWorkflowActionHandler, CommandWorkflowActionHandler>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IWorkflowActionHandler, AudioWorkflowActionHandler>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IWorkflowActionHandler, AnnouncementWorkflowActionHandler>());

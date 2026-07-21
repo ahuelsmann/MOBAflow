@@ -13,6 +13,7 @@ using Interface;
 public sealed class WorkflowValidator : IWorkflowValidator
 {
     private const int MaximumAdditionalAttempts = 10;
+    private const int MaximumNestedWorkflowDepth = 16;
     private readonly IWorkflowEffectPlanner _effectPlanner;
 
     /// <summary>
@@ -470,9 +471,10 @@ public sealed class WorkflowValidator : IWorkflowValidator
     {
         var graph = project.Workflows
             .Where(workflow => workflow.Steps != null && workflow.Id != Guid.Empty)
+            .GroupBy(workflow => workflow.Id)
             .ToDictionary(
-                workflow => workflow.Id,
-                workflow => workflow.Steps!
+                group => group.Key,
+                group => group.First().Steps!
                     .OfType<WorkflowNestedStep>()
                     .Select(step => step.WorkflowId)
                     .Where(workflowsById.ContainsKey)
@@ -488,6 +490,32 @@ public sealed class WorkflowValidator : IWorkflowValidator
                 return;
             }
         }
+
+        foreach (var workflowId in graph.Keys)
+        {
+            if (ExceedsNestedDepth(workflowId, graph, 1))
+            {
+                AddError(
+                    result,
+                    WorkflowValidationCodes.NestedWorkflowDepth,
+                    workflowId,
+                    null,
+                    "steps",
+                    "Nested workflow depth cannot exceed 16 workflows including the root.");
+                return;
+            }
+        }
+    }
+
+    private static bool ExceedsNestedDepth(
+        Guid workflowId,
+        IReadOnlyDictionary<Guid, Guid[]> graph,
+        int depth)
+    {
+        if (depth > MaximumNestedWorkflowDepth)
+            return true;
+        return graph.TryGetValue(workflowId, out var children) &&
+               children.Any(child => ExceedsNestedDepth(child, graph, depth + 1));
     }
 
     private static bool HasNestedCycle(

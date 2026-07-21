@@ -27,6 +27,21 @@ internal sealed class WorkflowValidatorTests
     }
 
     [Test]
+    public void Validate_DuplicateWorkflowIdentifiers_ReturnsIssueWithoutThrowing()
+    {
+        // Arrange
+        var first = CreateValidWorkflow();
+        var duplicate = CreateValidWorkflow();
+        duplicate.Id = first.Id;
+
+        // Act
+        var result = _validator.Validate(new Project { Workflows = [first, duplicate] });
+
+        // Assert
+        Assert.That(result.Issues.Any(issue => issue.Code == WorkflowValidationCodes.DuplicateWorkflowId), Is.True);
+    }
+
+    [Test]
     public void Validate_MissingSuccessorAndUnreachableStep_ReturnsNavigationReadyIssues()
     {
         // Arrange
@@ -103,6 +118,23 @@ internal sealed class WorkflowValidatorTests
 
         // Assert
         Assert.That(result.Issues.Any(issue => issue.Code == WorkflowValidationCodes.NestedWorkflowCycle), Is.True);
+    }
+
+    [Test]
+    public void Validate_NestedWorkflowChainExceedsMaximumDepth_ReturnsDepthIssue()
+    {
+        // Arrange
+        var workflows = Enumerable.Range(0, 17).Select(_ => CreateNestedWorkflow()).ToArray();
+        for (var index = 0; index < workflows.Length - 1; index++)
+            ((WorkflowNestedStep)workflows[index].Steps![0]).WorkflowId = workflows[index + 1].Id;
+        workflows[^1] = CreateValidWorkflow();
+        ((WorkflowNestedStep)workflows[^2].Steps![0]).WorkflowId = workflows[^1].Id;
+
+        // Act
+        var result = _validator.Validate(new Project { Workflows = [.. workflows] });
+
+        // Assert
+        Assert.That(result.Issues.Any(issue => issue.Code == WorkflowValidationCodes.NestedWorkflowDepth), Is.True);
     }
 
     [Test]
