@@ -265,7 +265,7 @@ Validation rejects contradictory, missing, deleted, or unsupported references be
 - typed payload appropriate to the kind
 - optional label
 
-Ordering key: `At`, then `Order`, then stable list position captured at validation time. Duplicate full ordering keys are validation errors rather than sources of nondeterminism.
+Ordering key: `At`, then `Order`. Each (`At`, `Order`) pair must be unique within a scenario; validation rejects duplicates rather than using mutable list position as an implicit tie-breaker.
 
 ### CapturedWorkflowEffect
 
@@ -439,7 +439,7 @@ Goal: make the existing execution behavior explicit before changing seams.
 - Rebase after RF-03/#50 closes the final programme gate, then re-verify every affected file against current `main`.
 - Add the pre-change characterization coverage listed above for live parallel lifecycle ordering, shallow context sharing, action planning/effect paths, journey transitions, controlled whistle time, EventBus ordering assumptions, and DI multiplicity.
 - Finalize `IWorkflowEffectSink`, time, correlation, and cancellation contracts without changing user-visible behavior.
-- Verify that every external action type has exactly one effect-boundary path.
+- Inventory every external action type and document its current production effect path plus the approved target sink operation.
 - Reconcile the contracts with RecorderPage's merged recording payload, command-correlation, replay-delay, and safety vocabulary; do not reuse its projection runtime as a workflow engine.
 
 Exit criteria:
@@ -447,16 +447,16 @@ Exit criteria:
 - contracts are reviewed;
 - production behavior is characterized;
 - no second workflow engine exists;
-- no external effect remains hidden inside a handler.
+- every external action has one reviewed planner-to-production-to-recording mapping for Slice 3.
 
 ### Slice 2: Scenario model and validation
 
-Goal: persist and validate scenario definitions without executing them.
+Goal: define and validate scenario types without executing or persisting them.
 
-- Add domain entities and collection initialization.
+- Add standalone domain entities and in-memory collection behavior without adding `Project.AutomationTestScenarios` or changing solution JSON/schema files.
 - Add pure validation for references, ordering, ranges, contradictory initial state, malformed assertions, and unsupported event/effect types.
 - Add a canonical runtime-project projection for deep clone/fingerprint that excludes all scenarios and fingerprint metadata.
-- Retain the confirmed version-4 additive classification and repeat it immediately before the persistence slice; do not assume a version increment.
+- Record the provisional version-4 additive classification; repeat it under G4 immediately before Slice 6, where persistence is introduced atomically.
 
 Exit criteria:
 
@@ -479,6 +479,7 @@ Exit criteria:
 - repeated schedules produce byte-for-byte-equivalent normalized traces;
 - cancellation clears pending operations;
 - script actions are captured without process creation;
+- no external effect remains hidden inside a workflow handler or feedback-triggered command gateway;
 - existing workflow tests remain green.
 
 ### Slice 4: Isolated runner and production service integration
