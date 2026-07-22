@@ -763,13 +763,16 @@ public sealed partial class RecordingArtifactSerializer
 
     private static void RequireOnlyProperties(JsonElement element, string path, FrozenSet<string> allowedProperties)
     {
-        foreach (var property in element.EnumerateObject().Where(property => !allowedProperties.Contains(property.Name)))
-        {
-            throw Invalid(
-                "unknown-property",
-                $"{path}.{property.Name}",
-                $"Property '{property.Name}' is not part of recording format 1.0.");
-        }
+        var unknownProperty = element
+            .EnumerateObject()
+            .Select(property => property.Name)
+            .FirstOrDefault(propertyName => !allowedProperties.Contains(propertyName));
+        if (unknownProperty is null) return;
+
+        throw Invalid(
+            "unknown-property",
+            $"{path}.{unknownProperty}",
+            $"Property '{unknownProperty}' is not part of recording format 1.0.");
     }
 
     private static FrozenSet<string> CreatePropertySet(params string[] properties)
