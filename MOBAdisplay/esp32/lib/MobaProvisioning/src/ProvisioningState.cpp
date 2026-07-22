@@ -2,18 +2,26 @@
 
 namespace MobaDisplay::Provisioning
 {
+constexpr State kAwaitingActivationState = static_cast<State>(1);
+constexpr State kOperationalState = static_cast<State>(2);
+constexpr State kWindowOpenState = static_cast<State>(3);
+constexpr State kPendingConnectionState = static_cast<State>(4);
+constexpr State kAwaitingHandoverState = static_cast<State>(5);
+constexpr State kPromotionPendingState = static_cast<State>(6);
+constexpr State kOfflineState = static_cast<State>(7);
+
 void StateMachine::Boot(bool hasActiveCredentials, bool hasOwner)
 {
     activeCredentials_ = hasActiveCredentials;
     ownerBound_ = hasOwner;
     pendingCredentials_ = false;
     ClearSession();
-    state_ = hasActiveCredentials ? State::Operational : State::AwaitingActivation;
+    state_ = hasActiveCredentials ? kOperationalState : kAwaitingActivationState;
 }
 
 bool StateMachine::BeginActivation(uint32_t nowMs)
 {
-    if ((state_ != State::AwaitingActivation && state_ != State::Operational && state_ != State::Offline)
+    if ((state_ != kAwaitingActivationState && state_ != kOperationalState && state_ != kOfflineState)
         || (cooldownUntilMs_ != 0 && IsBefore(nowMs, cooldownUntilMs_)))
         return false;
 
@@ -21,13 +29,13 @@ bool StateMachine::BeginActivation(uint32_t nowMs)
     authenticationFailures_ = 0;
     pendingCredentials_ = false;
     ClearSession();
-    state_ = State::WindowOpen;
+    state_ = kWindowOpenState;
     return true;
 }
 
 bool StateMachine::AuthenticateSession()
 {
-    if (state_ != State::WindowOpen)
+    if (state_ != kWindowOpenState)
         return false;
 
     sessionAuthenticated_ = true;
@@ -36,12 +44,12 @@ bool StateMachine::AuthenticateSession()
 
 bool StateMachine::SessionAuthenticated() const
 {
-    return state_ == State::WindowOpen && sessionAuthenticated_;
+    return state_ == kWindowOpenState && sessionAuthenticated_;
 }
 
 bool StateMachine::EnrollOwner()
 {
-    if (state_ != State::WindowOpen || !sessionAuthenticated_ || ownerBound_)
+    if (state_ != kWindowOpenState || !sessionAuthenticated_ || ownerBound_)
         return false;
 
     ownerBound_ = true;
@@ -50,50 +58,50 @@ bool StateMachine::EnrollOwner()
 
 bool StateMachine::SubmitCredentials(const CredentialView& credentials)
 {
-    if (state_ != State::WindowOpen || !sessionAuthenticated_ || !ownerBound_ || !IsValidCredentials(credentials))
+    if (state_ != kWindowOpenState || !sessionAuthenticated_ || !ownerBound_ || !IsValidCredentials(credentials))
         return false;
 
     pendingCredentials_ = true;
-    state_ = State::PendingConnection;
+    state_ = kPendingConnectionState;
     return true;
 }
 
 bool StateMachine::MarkStationUsable(uint32_t nowMs)
 {
-    if (state_ != State::PendingConnection || !pendingCredentials_)
+    if (state_ != kPendingConnectionState || !pendingCredentials_)
         return false;
 
     handoverStartedAtMs_ = nowMs;
-    state_ = State::AwaitingHandover;
+    state_ = kAwaitingHandoverState;
     return true;
 }
 
 bool StateMachine::ConfirmHandover(uint32_t nowMs)
 {
-    if (state_ != State::AwaitingHandover
+    if (state_ != kAwaitingHandoverState
         || IsBefore(nowMs, handoverStartedAtMs_)
         || HasElapsed(nowMs, handoverStartedAtMs_, kHandoverDurationMs))
         return false;
 
-    state_ = State::PromotionPending;
+    state_ = kPromotionPendingState;
     return true;
 }
 
 bool StateMachine::CompletePromotion()
 {
-    if (state_ != State::PromotionPending || !pendingCredentials_)
+    if (state_ != kPromotionPendingState || !pendingCredentials_)
         return false;
 
     activeCredentials_ = true;
     pendingCredentials_ = false;
     ClearSession();
-    state_ = State::Operational;
+    state_ = kOperationalState;
     return true;
 }
 
 bool StateMachine::RecordAuthenticationFailure(uint32_t nowMs)
 {
-    if (state_ != State::WindowOpen)
+    if (state_ != kWindowOpenState)
         return false;
 
     if (authenticationFailures_ < kMaxAuthenticationFailures)
@@ -110,7 +118,7 @@ bool StateMachine::RecordAuthenticationFailure(uint32_t nowMs)
 
 bool StateMachine::AuthorizeOwnerAction(bool signatureValid) const
 {
-    return state_ == State::WindowOpen && sessionAuthenticated_ && ownerBound_ && signatureValid;
+    return state_ == kWindowOpenState && sessionAuthenticated_ && ownerBound_ && signatureValid;
 }
 
 void StateMachine::CloseWindow(bool activeNetworkVerified)
@@ -121,9 +129,9 @@ void StateMachine::CloseWindow(bool activeNetworkVerified)
 
 void StateMachine::Tick(uint32_t nowMs)
 {
-    if ((state_ == State::WindowOpen || state_ == State::PendingConnection || state_ == State::AwaitingHandover)
+    if ((state_ == kWindowOpenState || state_ == kPendingConnectionState || state_ == kAwaitingHandoverState)
         && (HasElapsed(nowMs, windowStartedAtMs_, kWindowDurationMs)
-            || (state_ == State::AwaitingHandover && HasElapsed(nowMs, handoverStartedAtMs_, kHandoverDurationMs))))
+            || (state_ == kAwaitingHandoverState && HasElapsed(nowMs, handoverStartedAtMs_, kHandoverDurationMs))))
     {
         pendingCredentials_ = false;
         CloseToStableState(activeCredentials_);
@@ -156,6 +164,6 @@ void StateMachine::ClearSession()
 void StateMachine::CloseToStableState(bool activeNetworkVerified)
 {
     ClearSession();
-    state_ = activeNetworkVerified ? State::Operational : State::AwaitingActivation;
+    state_ = activeNetworkVerified ? kOperationalState : kAwaitingActivationState;
 }
 }

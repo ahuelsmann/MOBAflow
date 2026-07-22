@@ -25,27 +25,23 @@ CredentialView Credentials()
 
 uint8_t StateValue(State value)
 {
-    switch (value)
-    {
-    case State::Unprovisioned:
-        return 0;
-    case State::AwaitingActivation:
-        return 1;
-    case State::Operational:
-        return 2;
-    case State::WindowOpen:
-        return 3;
-    case State::PendingConnection:
-        return 4;
-    case State::AwaitingHandover:
-        return 5;
-    case State::PromotionPending:
-        return 6;
-    case State::Offline:
-        return 7;
-    }
-
-    return 0;
+    if (value == State::Unprovisioned)
+        return 0U;
+    if (value == State::AwaitingActivation)
+        return 1U;
+    if (value == State::Operational)
+        return 2U;
+    if (value == State::WindowOpen)
+        return 3U;
+    if (value == State::PendingConnection)
+        return 4U;
+    if (value == State::AwaitingHandover)
+        return 5U;
+    if (value == State::PromotionPending)
+        return 6U;
+    if (value == State::Offline)
+        return 7U;
+    return 0U;
 }
 }
 
