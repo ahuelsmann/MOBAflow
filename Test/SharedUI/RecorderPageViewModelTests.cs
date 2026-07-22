@@ -162,6 +162,36 @@ internal sealed class RecorderPageViewModelTests
         });
     }
 
+    [Test]
+    public async Task LargeImportedTimeline_Should_DrainAllBoundedBatchesWithoutReordering()
+    {
+        const int entryCount = 1_200;
+        var artifact = CreateLargeTimelineArtifact(entryCount);
+        await using var session = new RecordingSessionService(TimeProvider.System);
+        var fileService = new StubRecordingFileService
+        {
+            ImportResult = new RecordingFileImportResult(true, false, "large.json", artifact, null)
+        };
+        using var viewModel = CreateViewModel(session, fileService);
+
+        await viewModel.ImportCommand.ExecuteAsync(null);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel.TimelineEntries, Has.Count.EqualTo(entryCount));
+            Assert.That(viewModel.TimelineEntries.Select(entry => entry.Sequence), Is.Ordered.And.Unique);
+            Assert.That(viewModel.TimelineEntries[0].Sequence, Is.EqualTo(1));
+            Assert.That(viewModel.TimelineEntries[^1].Sequence, Is.EqualTo(entryCount));
+        });
+
+        viewModel.SearchText = "Entry 1199";
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel.TimelineEntries, Has.Count.EqualTo(1));
+            Assert.That(viewModel.TimelineEntries[0].Sequence, Is.EqualTo(1_200));
+        });
+    }
+
     private static RecorderPageViewModel CreateViewModel(
         RecordingSessionService session,
         StubRecordingFileService? fileService = null,
@@ -211,6 +241,32 @@ internal sealed class RecorderPageViewModelTests
             "1.0",
             null,
             new RecordingArtifactOptions(100, 1_000_000),
+            entries);
+    }
+
+    private static RecordingArtifact CreateLargeTimelineArtifact(int entryCount)
+    {
+        var started = new DateTimeOffset(2026, 7, 22, 10, 0, 0, TimeSpan.Zero);
+        var entries = Enumerable.Range(0, entryCount)
+            .Select(index => new RecordingEntry(
+                index + 1,
+                started.AddMilliseconds(index),
+                TimeSpan.FromMilliseconds(index),
+                "runtime",
+                "throughput-test",
+                "runtime.test",
+                "information",
+                null,
+                [],
+                JsonSerializer.SerializeToElement(new { index }),
+                $"Entry {index}",
+                RecordingReplayApplicability.DisplayOnly))
+            .ToArray();
+        return new RecordingArtifact(
+            new RecordingSessionMetadata(Guid.NewGuid(), "Large timeline", started, started.AddMilliseconds(entryCount - 1)),
+            "1.0",
+            null,
+            new RecordingArtifactOptions(entryCount, 1_000_000),
             entries);
     }
 

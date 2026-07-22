@@ -296,6 +296,39 @@ internal sealed class RecordingArtifactSerializerTests
         Assert.That(result.Errors.Single().Code, Is.EqualTo("artifact-too-large"));
     }
 
+    [Test]
+    public void Import_Should_RejectMalformedMutationCorpusWithoutThrowing()
+    {
+        // Arrange
+        var serializer = new RecordingArtifactSerializer();
+        var validArtifact = serializer.SerializeToUtf8(CreateGoldenArtifact());
+        var mutations = new (string Name, byte[] Content)[]
+        {
+            ("empty", []),
+            ("whitespace", Encoding.UTF8.GetBytes(" \r\n\t")),
+            ("null-root", Encoding.UTF8.GetBytes("null")),
+            ("array-root", Encoding.UTF8.GetBytes("[]")),
+            ("opening-brace-only", validArtifact[..1]),
+            ("truncated-halfway", validArtifact[..(validArtifact.Length / 2)]),
+            ("invalid-utf8", [0xc3, 0x28]),
+            ("trailing-data", [.. validArtifact, 0x00])
+        };
+
+        foreach (var mutation in mutations)
+        {
+            // Act
+            var result = serializer.Import(mutation.Content);
+
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.IsValid, Is.False, mutation.Name);
+                Assert.That(result.Artifact, Is.Null, mutation.Name);
+                Assert.That(result.Errors, Is.Not.Empty, mutation.Name);
+            });
+        }
+    }
+
     private static RecordingArtifact CreateGoldenArtifact(RecordingArtifactOptions? options = null)
     {
         using var payload = JsonDocument.Parse("""{"label":"Start"}""");

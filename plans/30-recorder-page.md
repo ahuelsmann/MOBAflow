@@ -4,7 +4,7 @@
 
 - Status: In progress
 - Completed delivery slices: WP1 journal model/format/filtering, WP2 recording state machine/bounded ingestion, WP3 producer capture, WP4a explicit command capture, WP5 RecorderPage/file operations, and WP6 isolated replay
-- Next unblocked delivery slice: WP7 integration, resilience, and acceptance evidence; the remaining WP4b Workflow 2.0 capture stays gated by issue #32
+- Next unblocked delivery slice: WP7 interactive WinUI accessibility/theme acceptance evidence; the remaining WP4b Workflow 2.0 capture stays gated by issue #32
 - Resolved dependency: issue #43 merged through PR #45 and is present in the branch baseline
 - Primary issue: https://github.com/ahuelsmann/MOBAflow/issues/30
 - Status and acceptance criteria source: GitHub issue #30
@@ -395,6 +395,8 @@ Exit: replay behavior is deterministic at every supported speed and cannot reach
 Completed on 2026-07-22. Evidence: `IRecordingReplayService` provides non-blocking play, pause, single-step, absolute seek through reset/reapply, reset/cancel, position reporting, and 0.25x through 8x timing over an injected scheduler. Display-only entries advance as skips, supported entries project only into a fresh in-memory runtime, speed changes affect future waits, and pause/cancel cannot apply the waiting entry. The isolated runtime and factory have no live dependencies and reject non-allow-listed replay types. A read-only safety gate blocks play, step, and seek while Z21 is connected and rechecks after every delay. RecorderPage exposes position, elapsed time, current entry, speed, seek, and accessible controls. The full suite passes on both targets (1,172 platform-neutral tests with four environment-dependent skips and 1,224 Windows tests), the FastDebug WinUI build passes with zero warnings, and scoped format verification passes. Authenticated local Sonar analysis was attempted against the freshly fetched `github/main` base: secret analysis reported zero findings, while Vortex agentic analysis was unavailable for the organization with `403 Forbidden`; this capability limitation must remain in any later draft PR validation section.
 
 ### WP7: Integration, resilience, and acceptance evidence
+
+Automated WP7 resilience coverage completed on 2026-07-22. The importer now has a deterministic malformed-mutation corpus covering empty/whitespace input, invalid roots, truncation, invalid UTF-8, and trailing data without unhandled exceptions. RecorderPage drains and filters a 1,200-entry imported timeline across multiple bounded 512-entry UI batches while preserving total order. Architecture and recording-format documentation describe the shipped capture and isolation boundaries. Interactive keyboard, Narrator, text-scaling, and Light/Dark/High Contrast checks remain pending because the documented `winapp` CLI is not available in this session's PATH; no visual acceptance claim is made without that evidence.
 
 - run full malformed/fuzz-style importer coverage within bounded resource limits;
 - run ordering and UI-throughput stress scenarios at configured limits;
