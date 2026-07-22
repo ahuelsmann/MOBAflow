@@ -55,8 +55,6 @@ static_assert(kTftHeight == MobaDisplay::Udp::kDisplayHeight, "Display height mu
 TFT_eSPI tft;
 WiFiUDP udp;
 Preferences preferences;
-MobaDisplay::Provisioning::StateMachine provisioningState;
-MobaDisplay::Provisioning::Security2Transport provisioningTransport;
 
 uint16_t* gFb = nullptr;
 uint8_t pktBuf[MobaDisplay::Udp::kMaxPacketBytes];
@@ -70,35 +68,47 @@ bool gUdpReady = false;
 String gConnectedSsid;
 int gLastWifiStatus = WL_IDLE_STATUS;
 String gHostProjectVersion = "n/a";
-String gProvisioningSsid;
-String gProvisioningPassphrase;
-uint32_t gButtonPressedAtMs = 0;
-bool gButtonLongActionHandled = false;
-bool gFactoryResetAuthorized = false;
+struct ProvisioningRuntime
+{
+    MobaDisplay::Provisioning::StateMachine state;
+    MobaDisplay::Provisioning::Security2Transport transport;
+    String ssid;
+    String passphrase;
+    uint32_t buttonPressedAtMs = 0;
+    bool buttonLongActionHandled = false;
+};
+
+ProvisioningRuntime& provisioningRuntime()
+{
+    static ProvisioningRuntime runtime;
+    return runtime;
+}
 
 uint8_t StateValue(MobaDisplay::Provisioning::State value)
 {
-    switch (value)
-    {
-    case MobaDisplay::Provisioning::State::Unprovisioned:
-        return 0;
-    case MobaDisplay::Provisioning::State::AwaitingActivation:
-        return 1;
-    case MobaDisplay::Provisioning::State::Operational:
-        return 2;
-    case MobaDisplay::Provisioning::State::WindowOpen:
-        return 3;
-    case MobaDisplay::Provisioning::State::PendingConnection:
-        return 4;
-    case MobaDisplay::Provisioning::State::AwaitingHandover:
-        return 5;
-    case MobaDisplay::Provisioning::State::PromotionPending:
-        return 6;
-    case MobaDisplay::Provisioning::State::Offline:
-        return 7;
-    }
+    if (value == MobaDisplay::Provisioning::State::Unprovisioned)
+        return 0U;
+    if (value == MobaDisplay::Provisioning::State::AwaitingActivation)
+        return 1U;
+    if (value == MobaDisplay::Provisioning::State::Operational)
+        return 2U;
+    if (value == MobaDisplay::Provisioning::State::WindowOpen)
+        return 3U;
+    if (value == MobaDisplay::Provisioning::State::PendingConnection)
+        return 4U;
+    if (value == MobaDisplay::Provisioning::State::AwaitingHandover)
+        return 5U;
+    if (value == MobaDisplay::Provisioning::State::PromotionPending)
+        return 6U;
+    if (value == MobaDisplay::Provisioning::State::Offline)
+        return 7U;
+    return 0U;
+}
 
-    return 0;
+bool IsProvisioningWindowState(MobaDisplay::Provisioning::State value)
+{
+    const uint8_t stateCode = StateValue(value);
+    return stateCode >= 3U && stateCode <= 6U;
 }
 
 void splashStatic();
@@ -121,6 +131,8 @@ esp_err_t handleProvisioningRequest(uint32_t sessionId, const uint8_t* input, ss
     uint8_t** output, ssize_t* outputLength, void* privateData);
 bool createSetupPassphrase(String* passphraseOut);
 const char* wifiStatusToText(int status);
+void handleUdpPacket(const MobaDisplay::Udp::PacketView& packet);
+void processUdpPacket();
 
 bool allocateFramebuffer()
 {
@@ -249,7 +261,7 @@ bool loadOwnerBinding()
     preferences.begin(kWifiPrefsNamespace, true);
     const bool ownerBound = preferences.getBool(kWifiPrefsOwnerKey, false);
     preferences.end();
-    provisioningState.Boot(loadSavedWifiCredentials(nullptr, nullptr), ownerBound);
+    provisioningRuntime().state.Boot(loadSavedWifiCredentials(nullptr, nullptr), ownerBound);
     return ownerBound;
 }
 
@@ -288,10 +300,11 @@ bool createSetupPassphrase(String* passphraseOut)
 
 bool startProvisioningWindow()
 {
-    if (!provisioningState.BeginActivation(millis()))
+    ProvisioningRuntime& runtime = provisioningRuntime();
+    if (!runtime.state.BeginActivation(millis()))
         return false;
 
-    if (!createSetupPassphrase(&gProvisioningPassphrase))
+    if (!createSetupPassphrase(&runtime.passphrase))
     {
         closeProvisioningWindow(false);
         return false;
@@ -302,33 +315,33 @@ bool startProvisioningWindow()
     while (suffix.length() < 6)
         suffix = String("0") + suffix;
     suffix.toUpperCase();
-    gProvisioningSsid = String("MOBAflow-Setup-") + suffix;
+    runtime.ssid = String("MOBAflow-Setup-") + suffix;
     WiFi.mode(WIFI_AP);
-    if (!WiFi.softAP(gProvisioningSsid.c_str(), gProvisioningPassphrase.c_str()))
+    if (!WiFi.softAP(runtime.ssid.c_str(), runtime.passphrase.c_str()))
     {
         closeProvisioningWindow(false);
         return false;
     }
 
-    const char* setupSecret = gProvisioningPassphrase.c_str();
-    if (provisioningTransport.Start(setupSecret, handleProvisioningRequest) != ESP_OK)
+    const char* setupSecret = runtime.passphrase.c_str();
+    if (runtime.transport.Start(setupSecret, handleProvisioningRequest) != ESP_OK)
     {
         closeProvisioningWindow(false);
         return false;
     }
 
-    drawBootScreen("Protected setup active", gProvisioningSsid.c_str(), gProvisioningPassphrase.c_str());
+    drawBootScreen("Protected setup active", runtime.ssid.c_str(), runtime.passphrase.c_str());
     return true;
 }
 
 void closeProvisioningWindow(bool keepActiveNetwork)
 {
-    provisioningTransport.Stop();
+    ProvisioningRuntime& runtime = provisioningRuntime();
+    runtime.transport.Stop();
     WiFi.softAPdisconnect(true);
     WiFi.mode(keepActiveNetwork ? WIFI_STA : WIFI_OFF);
-    gProvisioningPassphrase = String();
-    gProvisioningSsid = String();
-    gFactoryResetAuthorized = false;
+    runtime.passphrase = String();
+    runtime.ssid = String();
 
     if (keepActiveNetwork)
     {
@@ -365,25 +378,27 @@ void updateActivationButton()
     const bool pressed = digitalRead(MobaDisplay::Board::kBootButtonPin) == pressedLevel;
     if (!pressed)
     {
-        gButtonPressedAtMs = 0;
-        gButtonLongActionHandled = false;
+        ProvisioningRuntime& runtime = provisioningRuntime();
+        runtime.buttonPressedAtMs = 0;
+        runtime.buttonLongActionHandled = false;
         return;
     }
 
-    if (gButtonPressedAtMs == 0)
-        gButtonPressedAtMs = nowMs;
+    ProvisioningRuntime& runtime = provisioningRuntime();
+    if (runtime.buttonPressedAtMs == 0)
+        runtime.buttonPressedAtMs = nowMs;
 
-    const uint32_t heldMs = nowMs - gButtonPressedAtMs;
-    if (!gButtonLongActionHandled && heldMs >= kFactoryResetHoldMs)
+    const uint32_t heldMs = nowMs - runtime.buttonPressedAtMs;
+    if (!runtime.buttonLongActionHandled && heldMs >= kFactoryResetHoldMs)
     {
-        gButtonLongActionHandled = true;
+        runtime.buttonLongActionHandled = true;
         drawBootScreen("Owner approval required", "Factory reset is protected", "Release BOOT");
         return;
     }
 
-    if (!gButtonLongActionHandled && heldMs >= kActivationHoldMs)
+    if (!runtime.buttonLongActionHandled && heldMs >= kActivationHoldMs)
     {
-        gButtonLongActionHandled = true;
+        runtime.buttonLongActionHandled = true;
         startProvisioningWindow();
     }
 }
@@ -397,7 +412,7 @@ esp_err_t handleProvisioningRequest(uint32_t, const uint8_t* input, ssize_t inpu
     // Protocomm invokes this handler only after Security 2 has authenticated the
     // client. Mark that boundary explicitly; the read-only state query must not
     // be able to grant authentication as a side effect.
-    if (!provisioningState.AuthenticateSession())
+    if (!provisioningRuntime().state.AuthenticateSession())
         return ESP_ERR_INVALID_STATE;
 
     // RF-02 endpoint requests are deliberately bounded binary messages. The only
@@ -410,10 +425,11 @@ esp_err_t handleProvisioningRequest(uint32_t, const uint8_t* input, ssize_t inpu
     if (response == nullptr)
         return ESP_ERR_NO_MEM;
 
-    response[0] = StateValue(provisioningState.GetState());
-    response[1] = provisioningState.HasOwner() ? 1 : 0;
-    response[2] = provisioningState.HasActiveCredentials() ? 1 : 0;
-    response[3] = provisioningState.AuthenticationFailures();
+    const auto& state = provisioningRuntime().state;
+    response[0] = StateValue(state.GetState());
+    response[1] = state.HasOwner() ? 1 : 0;
+    response[2] = state.HasActiveCredentials() ? 1 : 0;
+    response[3] = state.AuthenticationFailures();
     *output = response;
     *outputLength = 4;
     return ESP_OK;
@@ -511,44 +527,8 @@ void presentCapturedFrameIfAny()
     }
 }
 
-void loop()
+void handleUdpPacket(const MobaDisplay::Udp::PacketView& packet)
 {
-    updateActivationButton();
-    provisioningState.Tick(millis());
-    const auto state = provisioningState.GetState();
-    if (provisioningTransport.IsRunning()
-        && state != MobaDisplay::Provisioning::State::WindowOpen
-        && state != MobaDisplay::Provisioning::State::PendingConnection
-        && state != MobaDisplay::Provisioning::State::AwaitingHandover
-        && state != MobaDisplay::Provisioning::State::PromotionPending)
-    {
-        closeProvisioningWindow(provisioningState.HasActiveCredentials());
-    }
-
-    if (!gUdpReady)
-    {
-        delay(2);
-        return;
-    }
-
-    const int pktSize = udp.parsePacket();
-    if (pktSize <= 0)
-        return;
-
-    const int cap = pktSize > static_cast<int>(sizeof(pktBuf)) ? static_cast<int>(sizeof(pktBuf)) : pktSize;
-    const int rd = udp.read(reinterpret_cast<unsigned char*>(pktBuf), cap);
-    if (rd <= 0)
-        return;
-
-    // A partial WiFiUDP read retains the rest of the packet and blocks parsePacket() until it is consumed.
-    while (udp.available() > 0)
-        udp.read();
-
-    const MobaDisplay::Udp::PacketView packet = MobaDisplay::Udp::ClassifyPacket(
-        pktBuf,
-        static_cast<size_t>(rd),
-        static_cast<size_t>(pktSize));
-
     if (packet.kind == MobaDisplay::Udp::PacketKind::FrameStart)
     {
         resetCapture();
@@ -564,7 +544,6 @@ void loop()
         memcpy(displayedVersion, packet.payload, displayedLength);
         displayedVersion[displayedLength] = '\0';
         gHostProjectVersion = String(displayedVersion);
-        // Keep waiting screen untouched here to avoid misleading flicker when only meta packets arrive.
         return;
     }
 
@@ -577,7 +556,6 @@ void loop()
 
     if (packet.kind == MobaDisplay::Udp::PacketKind::LegacyLine)
     {
-        // Legacy packet format: pure 480-byte line stream (order dependent).
         if (linesReceivedCurrentFrame < kTftHeight && gFb)
         {
             uint16_t* row = gFb + (static_cast<uint32_t>(linesReceivedCurrentFrame) * kTftWidth);
@@ -587,31 +565,67 @@ void loop()
         return;
     }
 
-    if (packet.kind != MobaDisplay::Udp::PacketKind::IndexedLine)
+    if (packet.kind != MobaDisplay::Udp::PacketKind::IndexedLine || !gFb)
         return;
 
-    if (gFb)
+    const uint16_t rowIndex = packet.rowIndex;
+    if (rowIndex == 0 && linesReceivedCurrentFrame > 0)
     {
-        const uint16_t rowIndex = packet.rowIndex;
+        presentCapturedFrameIfAny();
+        resetCapture();
+    }
 
-        // Row 0 is a strong start-of-frame signal for indexed packets, even if FRAME_START was dropped.
-        if (rowIndex == 0 && linesReceivedCurrentFrame > 0)
+    uint16_t* row = gFb + (static_cast<uint32_t>(rowIndex) * kTftWidth);
+    unpackLineBigEndianRgb565IntoRow(packet.payload, row);
+    if (gRowReceived[rowIndex] == 0)
+    {
+        gRowReceived[rowIndex] = 1;
+        ++linesReceivedCurrentFrame;
+        if (linesReceivedCurrentFrame == kTftHeight)
         {
             presentCapturedFrameIfAny();
             resetCapture();
         }
-
-        uint16_t* row = gFb + (static_cast<uint32_t>(rowIndex) * kTftWidth);
-        unpackLineBigEndianRgb565IntoRow(packet.payload, row);
-        if (gRowReceived[rowIndex] == 0)
-        {
-            gRowReceived[rowIndex] = 1;
-            ++linesReceivedCurrentFrame;
-            if (linesReceivedCurrentFrame == kTftHeight)
-            {
-                presentCapturedFrameIfAny();
-                resetCapture();
-            }
-        }
     }
+}
+
+void processUdpPacket()
+{
+    const int pktSize = udp.parsePacket();
+    if (pktSize <= 0)
+        return;
+
+    const int cap = pktSize > static_cast<int>(sizeof(pktBuf)) ? static_cast<int>(sizeof(pktBuf)) : pktSize;
+    const int rd = udp.read(reinterpret_cast<unsigned char*>(pktBuf), cap);
+    if (rd <= 0)
+        return;
+
+    while (udp.available() > 0)
+        udp.read();
+
+    const MobaDisplay::Udp::PacketView packet = MobaDisplay::Udp::ClassifyPacket(
+        pktBuf,
+        static_cast<size_t>(rd),
+        static_cast<size_t>(pktSize));
+    handleUdpPacket(packet);
+}
+
+void loop()
+{
+    updateActivationButton();
+    ProvisioningRuntime& runtime = provisioningRuntime();
+    runtime.state.Tick(millis());
+    const auto state = runtime.state.GetState();
+    if (runtime.transport.IsRunning() && !IsProvisioningWindowState(state))
+    {
+        closeProvisioningWindow(runtime.state.HasActiveCredentials());
+    }
+
+    if (!gUdpReady)
+    {
+        delay(2);
+        return;
+    }
+
+    processUdpPacket();
 }

@@ -15,14 +15,14 @@ constexpr uint32_t kHandoverDurationMs = 60U * 1000U;
 
 enum class State : uint8_t
 {
-    Unprovisioned,
-    AwaitingActivation,
-    Operational,
-    WindowOpen,
-    PendingConnection,
-    AwaitingHandover,
-    PromotionPending,
-    Offline
+    Unprovisioned = 0,
+    AwaitingActivation = 1,
+    Operational = 2,
+    WindowOpen = 3,
+    PendingConnection = 4,
+    AwaitingHandover = 5,
+    PromotionPending = 6,
+    Offline = 7
 };
 
 struct CredentialView
