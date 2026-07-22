@@ -24,10 +24,21 @@ internal static class FirewallHelper
     /// <returns>True if rules were created or verified successfully; false if an error occurred.</returns>
     public static bool EnsureFirewallRulesExist(int httpPort, ILogger? logger = null)
     {
+        return EnsureFirewallRulesExistCore(httpPort, null, logger);
+    }
+
+    /// <summary>
+    /// Ensures Windows Firewall rules exist for discovery and both LAN API transports.
+    /// </summary>
+    public static bool EnsureFirewallRulesExist(int httpPort, int httpsPort, ILogger? logger = null)
+    {
+        return EnsureFirewallRulesExistCore(httpPort, httpsPort, logger);
+    }
+
+    private static bool EnsureFirewallRulesExistCore(int httpPort, int? httpsPort, ILogger? logger)
+    {
         try
         {
-            var httpRuleName = $"{RuleNameHttpPrefix} (Port {httpPort})";
-
             // Check and create UDP Discovery rule (Port 21106 Inbound)
             // Delete and recreate to ensure correct profile=any is applied
             if (FirewallRuleExists(RuleNameUdp))
@@ -36,24 +47,34 @@ internal static class FirewallHelper
             }
             CreateUdpFirewallRule();
 
-            // Check and create HTTP REST-API rule (Port httpPort Inbound)
-            // Delete and recreate to ensure correct profile=any is applied
-            if (FirewallRuleExists(httpRuleName))
-            {
-                DeleteFirewallRule(httpRuleName);
-            }
-            CreateHttpFirewallRule(httpRuleName, httpPort);
+            EnsureTcpFirewallRule(httpPort, "HTTP");
+            if (httpsPort.HasValue)
+                EnsureTcpFirewallRule(httpsPort.Value, "HTTPS");
 
             return true;
         }
         catch (Exception ex)
         {
             logger?.LogWarning(ex,
-                "Failed to create or verify Windows Firewall rules for REST API (port {HttpPort}). " +
+                "Failed to create or verify Windows Firewall rules for REST API (HTTP {HttpPort}, HTTPS {HttpsPort}). " +
                 "This is normal without admin rights; create rules manually or run once as Administrator.",
-                httpPort);
+                httpPort,
+                httpsPort);
             return false;
         }
+    }
+
+    private static void EnsureTcpFirewallRule(int port, string transport)
+    {
+        if (port <= 0 || port >= 65536)
+            throw new ArgumentOutOfRangeException(nameof(port));
+
+        var ruleName = string.Equals(transport, "HTTP", StringComparison.Ordinal)
+            ? $"{RuleNameHttpPrefix} (Port {port})"
+            : $"{RuleNameHttpPrefix} {transport} (Port {port})";
+        if (FirewallRuleExists(ruleName))
+            DeleteFirewallRule(ruleName);
+        CreateHttpFirewallRule(ruleName, port);
     }
 
     /// <summary>

@@ -184,8 +184,13 @@ internal sealed class ControlPlaneSecurityTests
         try
         {
             string firstFingerprint;
+            string firstInstanceId;
             using (var first = SecurityTestContext.Create(root: root))
-                firstFingerprint = (await first.GetRequiredService<IServerIdentityProvider>().GetAsync()).PublicKeyFingerprint;
+            {
+                var firstIdentity = await first.GetRequiredService<IServerIdentityProvider>().GetAsync();
+                firstFingerprint = firstIdentity.PublicKeyFingerprint;
+                firstInstanceId = firstIdentity.InstanceId;
+            }
 
             using var second = SecurityTestContext.Create(root: root);
             var secondIdentity = await second.GetRequiredService<IServerIdentityProvider>().GetAsync();
@@ -193,6 +198,8 @@ internal sealed class ControlPlaneSecurityTests
             Assert.Multiple(() =>
             {
                 Assert.That(secondIdentity.PublicKeyFingerprint, Is.EqualTo(firstFingerprint));
+                Assert.That(secondIdentity.InstanceId, Is.EqualTo(firstInstanceId));
+                Assert.That(secondIdentity.InstanceId, Does.Match("^[a-f0-9]{32}$"));
                 Assert.That(secondIdentity.Certificate.HasPrivateKey, Is.True);
             });
         }

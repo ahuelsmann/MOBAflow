@@ -19,12 +19,12 @@ if (hostBootstrapChannel is not null)
 }
 
 var httpPort = ResolveHttpPort(builder.Configuration);
-var hostHttpsPort = ResolveHostHttpsPort(builder.Configuration, httpPort);
+var httpsPort = ResolveHttpsPort(builder.Configuration, httpPort);
 ServerIdentity? serverIdentity = null;
 builder.WebHost.ConfigureKestrel(options =>
 {
     options.Listen(IPAddress.Any, httpPort);
-    options.Listen(IPAddress.Loopback, hostHttpsPort, listenOptions =>
+    options.Listen(IPAddress.Any, httpsPort, listenOptions =>
     {
         listenOptions.UseHttps(httpsOptions =>
         {
@@ -56,7 +56,7 @@ if (hostBootstrapChannel is not null)
 {
     using var bootstrapTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
     await hostBootstrapChannel.WriteResponseAsync(
-        new HostBootstrapPipeResponse(serverIdentity.PublicKeyFingerprint),
+        new HostBootstrapPipeResponse(serverIdentity.PublicKeyFingerprint, serverIdentity.InstanceId),
         bootstrapTimeout.Token).ConfigureAwait(false);
 }
 
@@ -91,12 +91,13 @@ static int ResolveHttpPort(IConfiguration configuration)
     return 5001;
 }
 
-static int ResolveHostHttpsPort(IConfiguration configuration, int httpPort)
+static int ResolveHttpsPort(IConfiguration configuration, int httpPort)
 {
-    var configuredPort = configuration.GetValue<int?>("MOBAFLOW_HOST_HTTPS_PORT");
+    var configuredPort = configuration.GetValue<int?>("MOBAFLOW_HTTPS_PORT") ??
+                         configuration.GetValue<int?>("MOBAFLOW_HOST_HTTPS_PORT");
     if (configuredPort is > 0 and < 65536 && configuredPort != httpPort)
         return configuredPort.Value;
     if (httpPort >= 65535)
-        throw new InvalidOperationException("MOBApi cannot allocate a host HTTPS port after the configured HTTP port.");
+        throw new InvalidOperationException("MOBApi cannot allocate an HTTPS port after the configured HTTP port.");
     return httpPort + 1;
 }
