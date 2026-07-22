@@ -4,7 +4,7 @@
 
 - Status: In progress
 - Completed delivery slices: WP1 journal model/format/filtering, WP2 recording state machine/bounded ingestion, WP3 producer capture, WP4 explicit command and Workflow 2.0 lifecycle capture, WP5 RecorderPage/file operations, and WP6 isolated replay
-- Next unblocked delivery slice: WP7 interactive WinUI accessibility/theme acceptance evidence
+- Next unblocked delivery slice: finish WP7 High Contrast, keyboard, Narrator, and OS text-scaling acceptance evidence
 - Resolved dependency: issue #43 merged through PR #45 and is present in the branch baseline
 - Primary issue: https://github.com/ahuelsmann/MOBAflow/issues/30
 - Status and acceptance criteria source: GitHub issue #30
@@ -396,7 +396,11 @@ Completed on 2026-07-22. Evidence: `IRecordingReplayService` provides non-blocki
 
 ### WP7: Integration, resilience, and acceptance evidence
 
-Automated WP7 resilience coverage completed on 2026-07-22. The importer now has a deterministic malformed-mutation corpus covering empty/whitespace input, invalid roots, truncation, invalid UTF-8, and trailing data without unhandled exceptions. RecorderPage drains and filters a 1,200-entry imported timeline across multiple bounded 512-entry UI batches while preserving total order. Architecture and recording-format documentation describe the shipped capture and isolation boundaries. `winapp` 0.3.1 can navigate to RecorderPage and exposes accessible names for session input, recording controls, replay status, progress, and replay commands. Full keyboard, Narrator, text-scaling, and Light/Dark/High Contrast checks remain pending: loose-package registration fails because the FastDebug layout lacks the manifest splash-screen path, while direct launch uses the configured production runtime and auto-connects to Z21. No further interactive or replay action is permitted until an explicitly offline UI-test configuration is available, and no full visual acceptance claim is made without that evidence.
+Automated WP7 resilience coverage completed on 2026-07-22. The importer now has a deterministic malformed-mutation corpus covering empty/whitespace input, invalid roots, truncation, invalid UTF-8, and trailing data without unhandled exceptions. RecorderPage drains and filters a 1,200-entry imported timeline across multiple bounded 512-entry UI batches while preserving total order. Architecture and recording-format documentation describe the shipped capture and isolation boundaries. `winapp` 0.3.1 can navigate to RecorderPage and exposes accessible names for session input, recording controls, replay status, progress, and replay commands.
+
+Interactive offline acceptance advanced on 2026-07-22 using an unversioned Release-layout configuration with an intentionally invalid Z21 hostname, automatic project loading disabled, MOBApi startup disabled, and health checks disabled. Release startup logs confirmed no Z21 send and no MOBApi launch; only the expected failed loopback status probe occurred. In Dark mode, the page completed start, marker, note, pause, resume, stop, and one isolated replay step with six ordered timeline entries. In Light mode, it completed a named start/stop session and applied the `recorder` category filter while preserving both lifecycle entries. Both modes rendered the complete RecorderPage layout and the disconnected/offline status without errors or warnings. The temporary configuration and packaging workaround existed only in build/test output and are not product changes.
+
+High Contrast, full keyboard focus-order traversal, actual Narrator speech, and OS text-scaling checks remain pending because they require controlled user-profile accessibility settings. UI Automation accessible-name discovery is evidence of screen-reader readiness, but is not treated as Narrator-output validation. WP7 and the issue therefore remain incomplete.
 
 - run full malformed/fuzz-style importer coverage within bounded resource limits;
 - run ordering and UI-throughput stress scenarios at configured limits;
