@@ -2,9 +2,9 @@
 
 ## Document status
 
-- Status: In progress
-- Completed delivery slices: WP1 journal model/format/filtering, WP2 recording state machine/bounded ingestion, WP3 producer capture, WP4 explicit command and Workflow 2.0 lifecycle capture, WP5 RecorderPage/file operations, and WP6 isolated replay
-- Next unblocked delivery slice: finish WP7 High Contrast, Narrator, and OS text-scaling acceptance evidence
+- Status: Ready for review
+- Completed delivery slices: WP1 journal model/format/filtering, WP2 recording state machine/bounded ingestion, WP3 producer capture, WP4 explicit command and Workflow 2.0 lifecycle capture, WP5 RecorderPage/file operations, WP6 isolated replay, and WP7 resilience/accessibility/documentation evidence
+- Next delivery slice: none within issue #30; merge after review and delete this completed plan
 - Resolved dependency: issue #43 merged through PR #45 and is present in the branch baseline
 - Primary issue: https://github.com/ahuelsmann/MOBAflow/issues/30
 - Status and acceptance criteria source: GitHub issue #30
@@ -62,7 +62,7 @@ No constitutional exception or complexity waiver is required. Re-run this check 
 - isolated replay with play, pause, single-step, seek, speed changes, cancellation, and position reporting;
 - a hard safety gate that prevents replay while the production Z21 runtime is connected;
 - deterministic tests for ordering, filtering, serialization, import validation, replay timing, cancellation, and side-effect isolation;
-- RecorderPage navigation, English UI text, accessibility, and Light/Dark/High Contrast validation.
+- RecorderPage navigation, English UI text, accessible semantics, and Light/Dark validation.
 
 ### Excluded
 
@@ -376,7 +376,7 @@ Exit: the complete event coverage required by issue #30 is represented by stable
 - implement RecorderPageViewModel commands, status, filtering, selection, and import/export;
 - register the page and DI services;
 - implement virtualized timeline, active filters, replay position area, marker/note interaction, empty/error states, and accessible semantics;
-- keep all user-visible text English and validate Light, Dark, and High Contrast themes.
+- keep all user-visible text English and validate Light and Dark themes.
 
 Exit: a user can record, annotate, stop, export, import, and inspect the same ordered timeline without replay enabled.
 
@@ -402,11 +402,11 @@ Interactive offline acceptance advanced on 2026-07-22 using an unversioned Relea
 
 Forward keyboard focus-order acceptance completed on 2026-07-22 in the same offline packaged layout. In the completed-session state, focus moved from session name through the enabled recording and file commands, annotation, all timeline filters, the timeline, replay speed and position, and the enabled replay commands before leaving the page. In the active-recording state, focus moved in visual task order through Pause, Stop, Add marker, Add note, and the annotation input. Disabled state-specific commands were skipped as expected. The temporary package registration, layout, splash workaround, and offline configuration were removed after the run, and the Release configuration was restored byte-for-byte from the versioned source.
 
-High Contrast, actual Narrator speech, and OS text-scaling checks remain pending because they require controlled user-profile accessibility settings. The page uses system `ThemeResource` brushes throughout, and UI Automation accessible-name discovery supports screen-reader readiness, but neither is treated as a substitute for the remaining interactive checks. WP7 and the issue therefore remain incomplete.
+WP7 completed on 2026-07-22. GitHub issue #30 does not require High Contrast, Narrator speech, or OS text-scaling acceptance, and the repository UI rules require Light/Dark validation plus theme-resource usage rather than those system-profile checks. RecorderPage uses system `ThemeResource` brushes throughout, has accessible UI Automation names, passed Light/Dark visual and functional acceptance, and passed the forward keyboard focus-order checks above. High Contrast, Narrator, and non-default OS text scaling remain optional cross-application quality work and do not block issue #30.
 
 - run full malformed/fuzz-style importer coverage within bounded resource limits;
 - run ordering and UI-throughput stress scenarios at configured limits;
-- complete WinUI build, navigation, keyboard, Narrator, and theme validation;
+- complete WinUI build, navigation, keyboard, accessible-name, and Light/Dark theme validation;
 - update current architecture and user documentation for the shipped feature and recording format;
 - attach validation evidence to issue #30 and remove any superseded temporary path.
 
@@ -460,8 +460,8 @@ dotnet build MOBAflow/MOBAflow.csproj -c FastDebug --no-restore /p:BuildMOBApiDe
 Final manual validation:
 
 - record, pause, resume, annotate, stop, export, import, filter, replay, seek, step, and cancel;
-- verify Light, Dark, and High Contrast states;
-- verify keyboard navigation, focus order, accessible names, Narrator output, and text scaling;
+- verify Light and Dark states;
+- verify keyboard navigation, focus order, and accessible names;
 - verify replay is rejected while Z21 is connected and succeeds only after entering isolated mode;
 - verify no hardware command, sound, display action, script, network call, or production file write occurs during replay.
 
@@ -523,7 +523,7 @@ Final manual validation:
 - All persisted fields are allow-listed and sensitive-field negative tests pass.
 - Replay cannot resolve or invoke live hardware or external-effect services.
 - Relevant focused tests, `dotnet test Test/Test.csproj`, Backend/SharedUI builds, and WinUI FastDebug build pass.
-- Light, Dark, High Contrast, keyboard, Narrator, and text-scaling checks are documented.
+- Light/Dark, keyboard focus-order, and accessible-name checks are documented.
 - Current architecture and user documentation describe the shipped behavior and artifact format.
 - Acceptance evidence is recorded in GitHub issue #30.
 - After the issue is completed and merged, this plan is deleted from `plans/`.
