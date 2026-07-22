@@ -206,7 +206,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     [RelayCommand]
     private void SelectStep(WorkflowStepViewModel? step)
     {
-        if (step == null || SelectedWorkflow?.Steps.Contains(step) == true)
+        if (step == null || (SelectedWorkflow != null && SelectedWorkflow.Steps.Contains(step)))
         {
             SelectedStep = step;
         }
@@ -529,7 +529,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
             }
         }
 
-        if (SelectedWorkflow != null && Workflows?.Contains(SelectedWorkflow) is not true)
+        if (SelectedWorkflow != null && (Workflows == null || !Workflows.Contains(SelectedWorkflow)))
         {
             SelectedWorkflow = Workflows?.FirstOrDefault();
         }

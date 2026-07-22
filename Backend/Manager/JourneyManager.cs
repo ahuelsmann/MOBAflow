@@ -234,7 +234,7 @@ public class JourneyManager : IJourneyManager
         queuedExecution = null;
         if (feedbackStep.WorkflowId.HasValue)
         {
-            TryQueueFeedbackWorkflow(journey, feedbackStep, feedback, out queuedExecution);
+            QueueFeedbackWorkflow(journey, feedbackStep, feedback, out queuedExecution);
         }
 
         state.CurrentFeedbackIndex++;
@@ -360,11 +360,11 @@ public class JourneyManager : IJourneyManager
         return true;
     }
 
-    private bool TryQueueFeedbackWorkflow(
+    private void QueueFeedbackWorkflow(
         Journey journey,
         JourneyFeedbackStep feedbackStep,
         FeedbackResult feedback,
-        [NotNullWhen(true)] out Task<WorkflowExecutionResult>? queuedExecution)
+        out Task<WorkflowExecutionResult>? queuedExecution)
     {
         var workflowId = feedbackStep.WorkflowId ?? throw new InvalidOperationException("A feedback workflow requires an identifier.");
         var workflow = _project.Workflows.FirstOrDefault(w => w.Id == workflowId);
@@ -372,7 +372,7 @@ public class JourneyManager : IJourneyManager
         {
             _logger.LogWarning("Workflow with ID {WorkflowId} not found", workflowId);
             queuedExecution = null;
-            return false;
+            return;
         }
 
         TryGetCurrentStation(journey, _states[journey.Id], out var currentStation);
@@ -403,7 +403,6 @@ public class JourneyManager : IJourneyManager
                 SourceCorrelationId = feedback.CorrelationId
             }
         });
-        return true;
     }
 
     private void TryActivateNextJourney(Guid nextJourneyId)
