@@ -107,8 +107,8 @@ uint8_t StateValue(MobaDisplay::Provisioning::State value)
 
 bool IsProvisioningWindowState(MobaDisplay::Provisioning::State value)
 {
-    const uint8_t encoded = StateValue(value);
-    return encoded >= 3U && encoded <= 6U;
+    const uint8_t stateCode = StateValue(value);
+    return stateCode >= 3U && stateCode <= 6U;
 }
 
 void splashStatic();
