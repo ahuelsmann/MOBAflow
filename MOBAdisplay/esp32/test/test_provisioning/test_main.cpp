@@ -25,9 +25,27 @@ CredentialView Credentials()
 
 uint8_t StateValue(State value)
 {
-    uint8_t result = 0;
-    std::memcpy(&result, &value, sizeof(result));
-    return result;
+    switch (value)
+    {
+    case State::Unprovisioned:
+        return 0;
+    case State::AwaitingActivation:
+        return 1;
+    case State::Operational:
+        return 2;
+    case State::WindowOpen:
+        return 3;
+    case State::PendingConnection:
+        return 4;
+    case State::AwaitingHandover:
+        return 5;
+    case State::PromotionPending:
+        return 6;
+    case State::Offline:
+        return 7;
+    }
+
+    return 0;
 }
 }
 

@@ -137,7 +137,8 @@ bool StateMachine::HasElapsed(uint32_t nowMs, uint32_t startMs, uint32_t duratio
 
 bool StateMachine::IsBefore(uint32_t nowMs, uint32_t deadlineMs)
 {
-    return (nowMs - deadlineMs) > 0x7FFFFFFFU;
+    const uint32_t elapsed = nowMs - deadlineMs;
+    return (elapsed & 0x80000000U) != 0U;
 }
 
 bool StateMachine::IsValidCredentials(const CredentialView& credentials)

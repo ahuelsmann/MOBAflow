@@ -76,9 +76,27 @@ bool gFactoryResetAuthorized = false;
 
 uint8_t StateValue(MobaDisplay::Provisioning::State value)
 {
-    uint8_t result = 0;
-    std::memcpy(&result, &value, sizeof(result));
-    return result;
+    switch (value)
+    {
+    case MobaDisplay::Provisioning::State::Unprovisioned:
+        return 0;
+    case MobaDisplay::Provisioning::State::AwaitingActivation:
+        return 1;
+    case MobaDisplay::Provisioning::State::Operational:
+        return 2;
+    case MobaDisplay::Provisioning::State::WindowOpen:
+        return 3;
+    case MobaDisplay::Provisioning::State::PendingConnection:
+        return 4;
+    case MobaDisplay::Provisioning::State::AwaitingHandover:
+        return 5;
+    case MobaDisplay::Provisioning::State::PromotionPending:
+        return 6;
+    case MobaDisplay::Provisioning::State::Offline:
+        return 7;
+    }
+
+    return 0;
 }
 
 void splashStatic();
@@ -250,7 +268,7 @@ bool createSetupPassphrase(String* passphraseOut)
     if (passphraseOut == nullptr)
         return false;
 
-    static constexpr char alphabet[] = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    static constexpr const char* alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     uint8_t randomBytes[kSetupSecretBytes] = {};
     esp_fill_random(randomBytes, sizeof(randomBytes));
 
@@ -278,7 +296,7 @@ bool startProvisioningWindow()
     }
 
     const uint32_t chipSuffix = static_cast<uint32_t>(ESP.getEfuseMac() & 0xFFFFFFu);
-    String suffix = String(chipSuffix, HEX);
+    auto suffix = String(chipSuffix, HEX);
     while (suffix.length() < 6)
         suffix = String("0") + suffix;
     suffix.toUpperCase();
