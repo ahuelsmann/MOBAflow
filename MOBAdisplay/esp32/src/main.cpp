@@ -22,7 +22,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <type_traits>
 
 #ifndef APP_VERSION
 #define APP_VERSION "dev"
@@ -75,10 +74,9 @@ uint32_t gButtonPressedAtMs = 0;
 bool gButtonLongActionHandled = false;
 bool gFactoryResetAuthorized = false;
 
-template <typename T>
-typename std::underlying_type<T>::type UnderlyingValue(T value)
+uint8_t StateValue(MobaDisplay::Provisioning::State value)
 {
-    typename std::underlying_type<T>::type result = 0;
+    uint8_t result = 0;
     std::memcpy(&result, &value, sizeof(result));
     return result;
 }
@@ -392,7 +390,7 @@ esp_err_t handleProvisioningRequest(uint32_t, const uint8_t* input, ssize_t inpu
     if (response == nullptr)
         return ESP_ERR_NO_MEM;
 
-    response[0] = UnderlyingValue(provisioningState.GetState());
+    response[0] = StateValue(provisioningState.GetState());
     response[1] = provisioningState.HasOwner() ? 1 : 0;
     response[2] = provisioningState.HasActiveCredentials() ? 1 : 0;
     response[3] = provisioningState.AuthenticationFailures();
