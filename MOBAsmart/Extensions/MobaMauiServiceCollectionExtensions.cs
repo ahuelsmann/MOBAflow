@@ -4,24 +4,20 @@ namespace Moba.MAUI.Extensions;
 
 using Backend;
 using Backend.Interface;
-
 using Common.Configuration;
 using Common.Discovery;
 using Common.Events;
-
+using Common.Security;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-
-using View;
-
+using Microsoft.Maui.Storage;
 using Service;
-
 using SharedUI.Extensions;
 using SharedUI.Interface;
 using SharedUI.Service;
 using SharedUI.ViewModel;
-
 using Sound;
+using View;
 
 /// <summary>
 /// Dependency injection registrations for the MOBAsmart MAUI host.
@@ -67,7 +63,13 @@ public static class MobaMauiServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddMobiHttpClients();
-        services.AddSingleton<IRestDiscoveryService, RestApiDiscoveryService>();
+        services.AddSingleton<RestApiDiscoveryService>();
+        services.AddSingleton<IRestDiscoveryService>(sp => sp.GetRequiredService<RestApiDiscoveryService>());
+        services.AddSingleton<IAuthenticatedRestDiscoveryService>(sp => sp.GetRequiredService<RestApiDiscoveryService>());
+        services.AddSingleton<ISecureStorage>(_ => SecureStorage.Default);
+        services.AddSingleton<IRemoteControlCredentialStore, MauiRemoteControlCredentialStore>();
+        services.AddSingleton<IRemoteControlTransport, PinnedRemoteControlTransport>();
+        services.AddSingleton<RemoteControlSessionService>();
         services.AddSingleton<IPhotoUploadService, PhotoUploadService>();
         services.AddSingleton<IPhotoCaptureService, PhotoCaptureService>();
         services.AddSingleton<IPhotoUriResolver, MauiPhotoUriResolver>();

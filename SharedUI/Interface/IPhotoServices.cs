@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.Interface;
 
+using Moba.Common.Discovery;
+
 /// <summary>
 /// Discovers a REST server that can be used by the application.
 /// </summary>
@@ -25,6 +27,15 @@ public interface IRestDiscoveryService
     /// </summary>
     Task<(string? ip, int? port)> DiscoverServerFastAsync(
         string? subnetAnchorIp = null,
+        CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// Discovers the versioned HTTPS identity metadata required for authenticated MOBApi communication.
+/// </summary>
+public interface IAuthenticatedRestDiscoveryService
+{
+    Task<MobApiDiscoveryEndpoint?> DiscoverAuthenticatedServerAsync(
         CancellationToken cancellationToken = default);
 }
 
@@ -127,6 +138,16 @@ public sealed class NullRestDiscoveryService : IRestDiscoveryService
         string? subnetAnchorIp = null,
         CancellationToken cancellationToken = default)
         => Task.FromResult<(string?, int?)>((null, null));
+}
+
+/// <summary>
+/// Null-object implementation used when authenticated discovery is unavailable.
+/// </summary>
+public sealed class NullAuthenticatedRestDiscoveryService : IAuthenticatedRestDiscoveryService
+{
+    public Task<MobApiDiscoveryEndpoint?> DiscoverAuthenticatedServerAsync(
+        CancellationToken cancellationToken = default) =>
+        Task.FromResult<MobApiDiscoveryEndpoint?>(null);
 }
 
 /// <summary>
