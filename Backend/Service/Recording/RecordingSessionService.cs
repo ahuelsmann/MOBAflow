@@ -18,6 +18,7 @@ public sealed class RecordingSessionService : IRecordingSessionService
     private const string InformationSeverity = "information";
     private const string WarningSeverity = "warning";
     private const string ErrorSeverity = "error";
+    private const string LimitReachedMessage = "The recording session limit has been reached.";
     private const int ReservedTerminalEntryCount = 3;
 
     private readonly object _gate = new();
@@ -434,12 +435,12 @@ public sealed class RecordingSessionService : IRecordingSessionService
     {
         if (_limitReached)
         {
-            return FailLocked(RecordingFailureCode.LimitReached, "The recording session limit has been reached.");
+            return FailLocked(RecordingFailureCode.LimitReached, LimitReachedMessage);
         }
 
         if (!TryEmitRecoveredGapLocked())
         {
-            return FailLocked(RecordingFailureCode.LimitReached, "The recording session limit has been reached.");
+            return FailLocked(RecordingFailureCode.LimitReached, LimitReachedMessage);
         }
 
         if (!CanAcceptEntryLocked(estimatedPayloadBytes))
@@ -448,7 +449,7 @@ public sealed class RecordingSessionService : IRecordingSessionService
                 _estimatedPayloadBytes + estimatedPayloadBytes > _options.EstimatedPayloadByteLimit
                     ? "estimated-payload-bytes"
                     : "entry-count");
-            return FailLocked(RecordingFailureCode.LimitReached, "The recording session limit has been reached.");
+            return FailLocked(RecordingFailureCode.LimitReached, LimitReachedMessage);
         }
 
         _entries.Add(CreateEntryLocked(typeKey, severity, payload, displayText, timestampUtc: timestampUtc));
@@ -481,6 +482,7 @@ public sealed class RecordingSessionService : IRecordingSessionService
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
+            // Cancellation is the normal shutdown signal for the single consumer.
         }
         catch (Exception exception)
         {
@@ -528,7 +530,7 @@ public sealed class RecordingSessionService : IRecordingSessionService
 
         if (stopFailure != RecordingFailureCode.None)
         {
-            consumerCancellation.Cancel();
+            await consumerCancellation.CancelAsync().ConfigureAwait(false);
         }
 
         RecordingStopResult result;
@@ -691,7 +693,7 @@ public sealed class RecordingSessionService : IRecordingSessionService
         ClearPendingDroppedLocked();
         _limitReached = true;
         _lastFailureCode = RecordingFailureCode.LimitReached;
-        _lastFailureMessage = "The recording session limit has been reached.";
+        _lastFailureMessage = LimitReachedMessage;
     }
 
     private void TrackDroppedSequenceLocked(long sequence)
@@ -709,6 +711,10 @@ public sealed class RecordingSessionService : IRecordingSessionService
         _lastPendingDroppedSequence = 0;
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Design",
+        "S107:Methods should not have too many parameters",
+        Justification = "This private factory mirrors the immutable recording entry contract and centralizes sequence and timestamp assignment.")]
     private RecordingEntry CreateEntryLocked(
         string typeKey,
         string severity,
@@ -748,7 +754,7 @@ public sealed class RecordingSessionService : IRecordingSessionService
     private bool HasNonTerminalEntryRoomLocked() =>
         _entries.Count + _pendingEntries.Count < _options.EntryLimit - ReservedTerminalEntryCount;
 
-    private RecordingOperationResult? ValidateStartRequest(RecordingSessionStartRequest request)
+    private static RecordingOperationResult? ValidateStartRequest(RecordingSessionStartRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Trim().Length > RecordingFormat.MaxSessionNameLength)
         {
@@ -826,7 +832,7 @@ public sealed class RecordingSessionService : IRecordingSessionService
         var handlers = StatusChanged;
         if (handlers is null) return;
 
-        foreach (Action<RecordingSessionSnapshot> handler in handlers.GetInvocationList())
+        foreach (var handler in handlers.GetInvocationList().Cast<Action<RecordingSessionSnapshot>>())
         {
             try
             {

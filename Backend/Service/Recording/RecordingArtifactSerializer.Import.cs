@@ -11,7 +11,12 @@ using System.Text.RegularExpressions;
 
 public sealed partial class RecordingArtifactSerializer
 {
-    private static readonly Regex StableKeyPattern = new("^[a-z0-9]+(?:[.-][a-z0-9]+)*$", RegexOptions.CultureInvariant);
+    private const string EntriesPath = "$.entries";
+    private static readonly TimeSpan StableKeyRegexTimeout = TimeSpan.FromMilliseconds(100);
+    private static readonly Regex StableKeyPattern = new(
+        "^[a-z0-9]+(?:[.-][a-z0-9]+)*$",
+        RegexOptions.CultureInvariant,
+        StableKeyRegexTimeout);
     private static readonly FrozenSet<string> RootProperties = CreatePropertySet(
         "format",
         "formatVersion",
@@ -121,11 +126,11 @@ public sealed partial class RecordingArtifactSerializer
         var options = ReadOptions(RequireProperty(root, "options", "$"));
 
         var entriesElement = RequireProperty(root, "entries", "$");
-        RequireKind(entriesElement, JsonValueKind.Array, "$.entries", "Entries must be an array.");
+        RequireKind(entriesElement, JsonValueKind.Array, EntriesPath, "Entries must be an array.");
         var entryCount = entriesElement.GetArrayLength();
         if (entryCount > options.EntryLimit || entryCount > _importLimits.MaxEntries)
         {
-            throw Invalid("entry-limit", "$.entries", "Recording exceeds its declared or supported entry limit.");
+            throw Invalid("entry-limit", EntriesPath, "Recording exceeds its declared or supported entry limit.");
         }
 
         var entries = new List<RecordingEntry>(entryCount);
@@ -142,7 +147,7 @@ public sealed partial class RecordingArtifactSerializer
             payloadBytes = checked(payloadBytes + canonicalPayloadBytes);
             if (payloadBytes > options.EstimatedPayloadByteLimit)
             {
-                throw Invalid("payload-total-limit", "$.entries", "Canonical payloads exceed the declared byte limit.");
+                throw Invalid("payload-total-limit", EntriesPath, "Canonical payloads exceed the declared byte limit.");
             }
 
             index++;
@@ -403,14 +408,29 @@ public sealed partial class RecordingArtifactSerializer
 
     private static RecordingValidationError? ValidateArtifactEnvelope(RecordingArtifact artifact)
     {
-        if (artifact.Metadata.SessionId == Guid.Empty)
+        var error = ValidateMetadataEnvelope(artifact.Metadata);
+        if (error is not null) return error;
+
+        error = ValidateApplicationEnvelope(artifact.SourceApplicationVersion);
+        if (error is not null) return error;
+
+        error = ValidateProjectEnvelope(artifact.Project);
+        if (error is not null) return error;
+
+        error = ValidateOptionsEnvelope(artifact.Options);
+        return error ?? ValidateEntriesEnvelope(artifact);
+    }
+
+    private static RecordingValidationError? ValidateMetadataEnvelope(RecordingSessionMetadata metadata)
+    {
+        if (metadata.SessionId == Guid.Empty)
         {
             return Error("invalid-id", "$.metadata.sessionId", "Session ID cannot be empty.");
         }
 
-        if (string.IsNullOrWhiteSpace(artifact.Metadata.Name)
-            || artifact.Metadata.Name != artifact.Metadata.Name.Trim()
-            || artifact.Metadata.Name.Length > RecordingFormat.MaxSessionNameLength)
+        if (string.IsNullOrWhiteSpace(metadata.Name)
+            || metadata.Name != metadata.Name.Trim()
+            || metadata.Name.Length > RecordingFormat.MaxSessionNameLength)
         {
             return Error(
                 "invalid-session-name",
@@ -418,16 +438,21 @@ public sealed partial class RecordingArtifactSerializer
                 "Session name must be non-empty, trimmed, and within the format limit.");
         }
 
-        if (artifact.Metadata.StartedUtc.Offset != TimeSpan.Zero
-            || artifact.Metadata.CompletedUtc is null
-            || artifact.Metadata.CompletedUtc.Value.Offset != TimeSpan.Zero
-            || artifact.Metadata.CompletedUtc < artifact.Metadata.StartedUtc)
+        if (metadata.StartedUtc.Offset != TimeSpan.Zero
+            || metadata.CompletedUtc is null
+            || metadata.CompletedUtc.Value.Offset != TimeSpan.Zero
+            || metadata.CompletedUtc < metadata.StartedUtc)
         {
             return Error("invalid-session-time", "$.metadata", "Session timestamps must be valid UTC completion boundaries.");
         }
 
-        if (string.IsNullOrWhiteSpace(artifact.SourceApplicationVersion)
-            || artifact.SourceApplicationVersion.Length > RecordingFormat.MaxApplicationVersionLength)
+        return null;
+    }
+
+    private static RecordingValidationError? ValidateApplicationEnvelope(string applicationVersion)
+    {
+        if (string.IsNullOrWhiteSpace(applicationVersion)
+            || applicationVersion.Length > RecordingFormat.MaxApplicationVersionLength)
         {
             return Error(
                 "invalid-application-version",
@@ -435,21 +460,31 @@ public sealed partial class RecordingArtifactSerializer
                 "Application version is required and within the format limit.");
         }
 
-        if (artifact.Project is not null
-            && (artifact.Project.ProjectId == Guid.Empty
-                || string.IsNullOrWhiteSpace(artifact.Project.Name)
-                || artifact.Project.Name.Length > RecordingFormat.MaxProjectNameLength))
+        return null;
+    }
+
+    private static RecordingValidationError? ValidateProjectEnvelope(RecordingProjectIdentity? project)
+    {
+        if (project is not null
+            && (project.ProjectId == Guid.Empty
+                || string.IsNullOrWhiteSpace(project.Name)
+                || project.Name.Length > RecordingFormat.MaxProjectNameLength))
         {
             return Error("invalid-project", "$.project", "Project identity is invalid.");
         }
 
-        if (artifact.Options.EntryLimit <= 0 || artifact.Options.EntryLimit > RecordingFormat.DefaultMaxEntries)
+        return null;
+    }
+
+    private static RecordingValidationError? ValidateOptionsEnvelope(RecordingArtifactOptions options)
+    {
+        if (options.EntryLimit <= 0 || options.EntryLimit > RecordingFormat.DefaultMaxEntries)
         {
             return Error("invalid-entry-limit", "$.options.entryLimit", "Entry limit is outside the supported range.");
         }
 
-        if (artifact.Options.EstimatedPayloadByteLimit <= 0
-            || artifact.Options.EstimatedPayloadByteLimit > RecordingFormat.DefaultMaxArtifactBytes)
+        if (options.EstimatedPayloadByteLimit <= 0
+            || options.EstimatedPayloadByteLimit > RecordingFormat.DefaultMaxArtifactBytes)
         {
             return Error(
                 "invalid-byte-limit",
@@ -457,9 +492,14 @@ public sealed partial class RecordingArtifactSerializer
                 "Estimated payload byte limit is outside the supported range.");
         }
 
+        return null;
+    }
+
+    private static RecordingValidationError? ValidateEntriesEnvelope(RecordingArtifact artifact)
+    {
         if (artifact.Entries.Length > artifact.Options.EntryLimit)
         {
-            return Error("entry-limit", "$.entries", "Artifact exceeds its entry limit.");
+            return Error("entry-limit", EntriesPath, "Artifact exceeds its entry limit.");
         }
 
         long previousSequence = 0;
@@ -468,78 +508,117 @@ public sealed partial class RecordingArtifactSerializer
         for (var index = 0; index < artifact.Entries.Length; index++)
         {
             var entry = artifact.Entries[index];
-            var path = $"$.entries[{index}]";
-            if (entry.Sequence <= previousSequence)
-            {
-                return Error("invalid-sequence", $"{path}.sequence", "Entry sequences must be positive and strictly increasing.");
-            }
-
-            if (entry.TimestampUtc.Offset != TimeSpan.Zero)
-            {
-                return Error("invalid-timestamp", $"{path}.timestampUtc", "Entry timestamp must be UTC.");
-            }
-
-            if (entry.Elapsed.Ticks < 0 || entry.Elapsed.Ticks < previousElapsed)
-            {
-                return Error("invalid-elapsed", $"{path}.elapsedTicks", "Elapsed offsets must be non-negative and nondecreasing.");
-            }
-
-            foreach (var (value, property, limit) in new[]
-                     {
-                         (entry.Category, "category", RecordingFormat.MaxKeyLength),
-                         (entry.Source, "source", RecordingFormat.MaxKeyLength),
-                         (entry.TypeKey, "typeKey", RecordingFormat.MaxTypeKeyLength),
-                         (entry.Severity, "severity", RecordingFormat.MaxKeyLength)
-                     })
-            {
-                if (!IsStableKey(value, limit))
-                {
-                    return Error("invalid-key", $"{path}.{property}", "Stable key is empty, too long, or has an invalid shape.");
-                }
-            }
-
-            if (entry.CorrelationId == Guid.Empty)
-            {
-                return Error("invalid-id", $"{path}.correlationId", "Correlation ID cannot be empty.");
-            }
-
-            if (entry.EntityReferences.Length > RecordingFormat.MaxEntityReferencesPerEntry
-                || entry.EntityReferences.Any(reference =>
-                    reference.Id == Guid.Empty || !IsStableKey(reference.Kind, RecordingFormat.MaxKeyLength)))
-            {
-                return Error(
-                    "invalid-entity-reference",
-                    $"{path}.entityReferences",
-                    "Entity reference is invalid or exceeds the supported count.");
-            }
-
-            if (entry.Payload.ValueKind != JsonValueKind.Object)
-            {
-                return Error("invalid-payload", $"{path}.payload", "Payload must be an object within the canonical byte limit.");
-            }
-
-            var canonicalPayloadBytes = WriteCanonicalPayload(entry.Payload).Length;
-            if (canonicalPayloadBytes > RecordingFormat.MaxPayloadBytes)
-            {
-                return Error("invalid-payload", $"{path}.payload", "Payload must be an object within the canonical byte limit.");
-            }
-
-            payloadBytes = checked(payloadBytes + canonicalPayloadBytes);
-            if (payloadBytes > artifact.Options.EstimatedPayloadByteLimit)
-            {
-                return Error("payload-total-limit", "$.entries", "Canonical payloads exceed the declared byte limit.");
-            }
-
-            if (entry.DisplayText.Length > RecordingFormat.MaxDisplayTextLength)
-            {
-                return Error("display-text-limit", $"{path}.displayText", "Display text exceeds the format limit.");
-            }
+            var error = ValidateEntryEnvelope(
+                entry,
+                index,
+                previousSequence,
+                previousElapsed,
+                ref payloadBytes,
+                artifact.Options.EstimatedPayloadByteLimit);
+            if (error is not null) return error;
 
             previousSequence = entry.Sequence;
             previousElapsed = entry.Elapsed.Ticks;
         }
 
         return null;
+    }
+
+    private static RecordingValidationError? ValidateEntryEnvelope(
+        RecordingEntry entry,
+        int index,
+        long previousSequence,
+        long previousElapsed,
+        ref long payloadBytes,
+        long payloadByteLimit)
+    {
+        var path = $"{EntriesPath}[{index}]";
+        if (entry.Sequence <= previousSequence)
+        {
+            return Error("invalid-sequence", $"{path}.sequence", "Entry sequences must be positive and strictly increasing.");
+        }
+
+        if (entry.TimestampUtc.Offset != TimeSpan.Zero)
+        {
+            return Error("invalid-timestamp", $"{path}.timestampUtc", "Entry timestamp must be UTC.");
+        }
+
+        if (entry.Elapsed.Ticks < 0 || entry.Elapsed.Ticks < previousElapsed)
+        {
+            return Error("invalid-elapsed", $"{path}.elapsedTicks", "Elapsed offsets must be non-negative and nondecreasing.");
+        }
+
+        var error = ValidateEntryStableKeys(entry, path);
+        if (error is not null) return error;
+
+        if (entry.CorrelationId == Guid.Empty)
+        {
+            return Error("invalid-id", $"{path}.correlationId", "Correlation ID cannot be empty.");
+        }
+
+        error = ValidateEntryReferences(entry, path);
+        if (error is not null) return error;
+
+        error = ValidateEntryPayload(entry, path, out var canonicalPayloadBytes);
+        if (error is not null) return error;
+
+        payloadBytes = checked(payloadBytes + canonicalPayloadBytes);
+        if (payloadBytes > payloadByteLimit)
+        {
+            return Error("payload-total-limit", EntriesPath, "Canonical payloads exceed the declared byte limit.");
+        }
+
+        return entry.DisplayText.Length > RecordingFormat.MaxDisplayTextLength
+            ? Error("display-text-limit", $"{path}.displayText", "Display text exceeds the format limit.")
+            : null;
+    }
+
+    private static RecordingValidationError? ValidateEntryStableKeys(RecordingEntry entry, string path)
+    {
+        foreach (var (value, property, limit) in new[]
+                 {
+                     (entry.Category, "category", RecordingFormat.MaxKeyLength),
+                     (entry.Source, "source", RecordingFormat.MaxKeyLength),
+                     (entry.TypeKey, "typeKey", RecordingFormat.MaxTypeKeyLength),
+                     (entry.Severity, "severity", RecordingFormat.MaxKeyLength)
+                 })
+        {
+            if (!IsStableKey(value, limit))
+            {
+                return Error("invalid-key", $"{path}.{property}", "Stable key is empty, too long, or has an invalid shape.");
+            }
+        }
+
+        return null;
+    }
+
+    private static RecordingValidationError? ValidateEntryReferences(RecordingEntry entry, string path)
+    {
+        return entry.EntityReferences.Length > RecordingFormat.MaxEntityReferencesPerEntry
+               || entry.EntityReferences.Any(reference =>
+                   reference.Id == Guid.Empty || !IsStableKey(reference.Kind, RecordingFormat.MaxKeyLength))
+            ? Error(
+                "invalid-entity-reference",
+                $"{path}.entityReferences",
+                "Entity reference is invalid or exceeds the supported count.")
+            : null;
+    }
+
+    private static RecordingValidationError? ValidateEntryPayload(
+        RecordingEntry entry,
+        string path,
+        out int canonicalPayloadBytes)
+    {
+        canonicalPayloadBytes = 0;
+        if (entry.Payload.ValueKind != JsonValueKind.Object)
+        {
+            return Error("invalid-payload", $"{path}.payload", "Payload must be an object within the canonical byte limit.");
+        }
+
+        canonicalPayloadBytes = WriteCanonicalPayload(entry.Payload).Length;
+        return canonicalPayloadBytes > RecordingFormat.MaxPayloadBytes
+            ? Error("invalid-payload", $"{path}.payload", "Payload must be an object within the canonical byte limit.")
+            : null;
     }
 
     private static JsonElement RequireProperty(JsonElement element, string propertyName, string parentPath)
@@ -684,15 +763,12 @@ public sealed partial class RecordingArtifactSerializer
 
     private static void RequireOnlyProperties(JsonElement element, string path, FrozenSet<string> allowedProperties)
     {
-        foreach (var property in element.EnumerateObject())
+        foreach (var property in element.EnumerateObject().Where(property => !allowedProperties.Contains(property.Name)))
         {
-            if (!allowedProperties.Contains(property.Name))
-            {
-                throw Invalid(
-                    "unknown-property",
-                    $"{path}.{property.Name}",
-                    $"Property '{property.Name}' is not part of recording format 1.0.");
-            }
+            throw Invalid(
+                "unknown-property",
+                $"{path}.{property.Name}",
+                $"Property '{property.Name}' is not part of recording format 1.0.");
         }
     }
 
@@ -710,6 +786,10 @@ public sealed partial class RecordingArtifactSerializer
 
     private static InvalidRecordingException Invalid(string code, string path, string message) => new(code, path, message);
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Design",
+        "S3871:Exception types should be public",
+        Justification = "This private exception is an internal validation control-flow carrier and is always converted to a public result.")]
     private sealed class InvalidRecordingException(string code, string path, string message) : Exception(message)
     {
         public string Code { get; } = code;

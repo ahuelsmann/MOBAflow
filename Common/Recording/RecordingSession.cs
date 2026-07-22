@@ -144,6 +144,10 @@ public sealed record RecordingSessionStartRequest(
 public sealed class RecordingEntryProjection
 {
     /// <summary>Initializes a safe recording projection.</summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Design",
+        "S107:Methods should not have too many parameters",
+        Justification = "The immutable projection explicitly carries the complete allow-listed mapper output across the recording boundary.")]
     public RecordingEntryProjection(
         string category,
         string source,

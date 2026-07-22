@@ -24,6 +24,10 @@ public sealed record RecordingEntityReference(string Kind, Guid Id);
 /// </summary>
 public sealed class RecordingEntry
 {
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Design",
+        "S107:Methods should not have too many parameters",
+        Justification = "The constructor makes every field of the immutable versioned recording entry explicit at its trust boundary.")]
     public RecordingEntry(
         long sequence,
         DateTimeOffset timestampUtc,

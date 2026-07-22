@@ -7,6 +7,8 @@ using System.Text.Json;
 
 internal static class CoreRecordingPayloadValidators
 {
+    private const string OutcomeProperty = "outcome";
+
     public static IReadOnlyList<IRecordingPayloadValidator> Create() =>
     [
         Schema("z21.connection.established", ("connected", IsBoolean)),
@@ -82,20 +84,20 @@ internal static class CoreRecordingPayloadValidators
             ("output", IsNonNegativeInt32),
             ("activate", IsBoolean),
             ("queue", IsBoolean)),
-        DisplaySchema("command.track-power.result", ("outcome", IsSucceededOutcome)),
-        DisplaySchema("command.track-power.failure", ("outcome", IsFailureOutcome)),
-        DisplaySchema("command.simulate-feedback.result", ("outcome", IsSucceededOutcome)),
-        DisplaySchema("command.simulate-feedback.failure", ("outcome", IsFailureOutcome)),
-        DisplaySchema("command.journey-reset.result", ("outcome", IsSucceededOutcome)),
-        DisplaySchema("command.journey-reset.failure", ("outcome", IsFailureOutcome)),
-        DisplaySchema("command.signal-aspect.result", ("outcome", IsSucceededOutcome)),
-        DisplaySchema("command.signal-aspect.failure", ("outcome", IsFailureOutcome)),
-        DisplaySchema("command.locomotive-drive.result", ("outcome", IsSucceededOutcome)),
-        DisplaySchema("command.locomotive-drive.failure", ("outcome", IsFailureOutcome)),
-        DisplaySchema("command.locomotive-function.result", ("outcome", IsSucceededOutcome)),
-        DisplaySchema("command.locomotive-function.failure", ("outcome", IsFailureOutcome)),
-        DisplaySchema("command.turnout.result", ("outcome", IsSucceededOutcome)),
-        DisplaySchema("command.turnout.failure", ("outcome", IsFailureOutcome))
+        DisplaySchema("command.track-power.result", (OutcomeProperty, IsSucceededOutcome)),
+        DisplaySchema("command.track-power.failure", (OutcomeProperty, IsFailureOutcome)),
+        DisplaySchema("command.simulate-feedback.result", (OutcomeProperty, IsSucceededOutcome)),
+        DisplaySchema("command.simulate-feedback.failure", (OutcomeProperty, IsFailureOutcome)),
+        DisplaySchema("command.journey-reset.result", (OutcomeProperty, IsSucceededOutcome)),
+        DisplaySchema("command.journey-reset.failure", (OutcomeProperty, IsFailureOutcome)),
+        DisplaySchema("command.signal-aspect.result", (OutcomeProperty, IsSucceededOutcome)),
+        DisplaySchema("command.signal-aspect.failure", (OutcomeProperty, IsFailureOutcome)),
+        DisplaySchema("command.locomotive-drive.result", (OutcomeProperty, IsSucceededOutcome)),
+        DisplaySchema("command.locomotive-drive.failure", (OutcomeProperty, IsFailureOutcome)),
+        DisplaySchema("command.locomotive-function.result", (OutcomeProperty, IsSucceededOutcome)),
+        DisplaySchema("command.locomotive-function.failure", (OutcomeProperty, IsFailureOutcome)),
+        DisplaySchema("command.turnout.result", (OutcomeProperty, IsSucceededOutcome)),
+        DisplaySchema("command.turnout.failure", (OutcomeProperty, IsFailureOutcome))
     ];
 
     private static IRecordingPayloadValidator Schema(
@@ -200,4 +202,8 @@ internal static class CoreRecordingPayloadValidators
     }
 }
 
+[System.Diagnostics.CodeAnalysis.SuppressMessage(
+    "Design",
+    "S2094:Classes should not be empty",
+    Justification = "The DI marker prevents duplicate registration without introducing runtime behavior.")]
 internal sealed class CoreRecordingPayloadValidatorRegistrationMarker;

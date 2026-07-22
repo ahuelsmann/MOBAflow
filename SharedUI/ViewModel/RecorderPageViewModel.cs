@@ -148,16 +148,16 @@ public sealed partial class RecorderPageViewModel : ObservableObject, IDisposabl
     }
 
     /// <summary>Gets whether at least one filtered timeline entry is visible.</summary>
-    public bool HasEntries => TimelineEntries.Count > 0;
+    public bool HasEntries => this.TimelineEntries.Count > 0;
 
     /// <summary>Gets whether an actionable error message is available.</summary>
-    public bool HasError => !string.IsNullOrWhiteSpace(ErrorMessage);
+    public bool HasError => !string.IsNullOrWhiteSpace(this.ErrorMessage);
 
     /// <summary>Gets whether a session is actively recording.</summary>
-    public bool IsRecording => State == RecordingSessionState.Recording;
+    public bool IsRecording => this.State == RecordingSessionState.Recording;
 
     /// <summary>Gets whether a session is paused.</summary>
-    public bool IsPaused => State == RecordingSessionState.Paused;
+    public bool IsPaused => this.State == RecordingSessionState.Paused;
 
     /// <summary>Gets whether a completed or imported artifact can be exported.</summary>
     public bool CanExportArtifact => _recordingSessionService.CurrentArtifact is not null;
@@ -215,21 +215,21 @@ public sealed partial class RecorderPageViewModel : ObservableObject, IDisposabl
     }
 
     private bool CanStart() =>
-        !IsBusy
-        && !string.IsNullOrWhiteSpace(SessionName)
-        && State is not RecordingSessionState.Recording
+        !this.IsBusy
+        && !string.IsNullOrWhiteSpace(this.SessionName)
+        && this.State is not RecordingSessionState.Recording
         and not RecordingSessionState.Paused
         and not RecordingSessionState.Stopping;
 
     [RelayCommand(CanExecute = nameof(CanPause))]
     private void Pause() => ApplyOperationResult(_recordingSessionService.Pause());
 
-    private bool CanPause() => !IsBusy && State == RecordingSessionState.Recording;
+    private bool CanPause() => !this.IsBusy && this.State == RecordingSessionState.Recording;
 
     [RelayCommand(CanExecute = nameof(CanResume))]
     private void Resume() => ApplyOperationResult(_recordingSessionService.Resume());
 
-    private bool CanResume() => !IsBusy && State == RecordingSessionState.Paused;
+    private bool CanResume() => !this.IsBusy && this.State == RecordingSessionState.Paused;
 
     [RelayCommand(CanExecute = nameof(CanStop))]
     private async Task StopAsync()
@@ -260,7 +260,7 @@ public sealed partial class RecorderPageViewModel : ObservableObject, IDisposabl
     }
 
     private bool CanStop() =>
-        !IsBusy && State is RecordingSessionState.Recording or RecordingSessionState.Paused;
+        !this.IsBusy && this.State is RecordingSessionState.Recording or RecordingSessionState.Paused;
 
     [RelayCommand(CanExecute = nameof(CanAddAnnotation))]
     private void AddMarker()
@@ -277,9 +277,9 @@ public sealed partial class RecorderPageViewModel : ObservableObject, IDisposabl
     }
 
     private bool CanAddAnnotation() =>
-        !IsBusy
-        && !string.IsNullOrWhiteSpace(AnnotationText)
-        && State is RecordingSessionState.Recording or RecordingSessionState.Paused;
+        !this.IsBusy
+        && !string.IsNullOrWhiteSpace(this.AnnotationText)
+        && this.State is RecordingSessionState.Recording or RecordingSessionState.Paused;
 
     [RelayCommand(CanExecute = nameof(CanExport))]
     private async Task ExportAsync(CancellationToken cancellationToken)
@@ -359,7 +359,7 @@ public sealed partial class RecorderPageViewModel : ObservableObject, IDisposabl
     }
 
     private bool CanImport() =>
-        !IsBusy && State is not RecordingSessionState.Recording
+        !this.IsBusy && this.State is not RecordingSessionState.Recording
         and not RecordingSessionState.Paused
         and not RecordingSessionState.Stopping;
 
@@ -382,7 +382,7 @@ public sealed partial class RecorderPageViewModel : ObservableObject, IDisposabl
     }
 
     private bool CanPauseReplay() =>
-        !IsReplayBusy && ReplayState == RecordingReplayState.Playing;
+        !this.IsReplayBusy && this.ReplayState == RecordingReplayState.Playing;
 
     [RelayCommand(CanExecute = nameof(CanStepReplay))]
     private async Task StepReplayAsync(CancellationToken cancellationToken)
@@ -559,15 +559,15 @@ public sealed partial class RecorderPageViewModel : ObservableObject, IDisposabl
 
     private RecordingFilter CreateFilter()
     {
-        var entityValue = string.IsNullOrWhiteSpace(EntityFilter) ? null : EntityFilter.Trim();
+        var entityValue = string.IsNullOrWhiteSpace(this.EntityFilter) ? null : this.EntityFilter.Trim();
         var hasEntityId = Guid.TryParse(entityValue, out var entityId);
         return new RecordingFilter(
-            categories: ToFilterValues(CategoryFilter),
-            sources: ToFilterValues(SourceFilter),
-            severities: ToFilterValues(SeverityFilter),
+            categories: ToFilterValues(this.CategoryFilter),
+            sources: ToFilterValues(this.SourceFilter),
+            severities: ToFilterValues(this.SeverityFilter),
             entityKind: hasEntityId ? null : entityValue,
             entityId: hasEntityId ? entityId : null,
-            text: SearchText);
+            text: this.SearchText);
     }
 
     private static IEnumerable<string> ToFilterValues(string value) =>
@@ -647,7 +647,7 @@ public sealed partial class RecorderPageViewModel : ObservableObject, IDisposabl
         }
     }
 
-    private void ClearError() => ErrorMessage = null;
+    private void ClearError() => this.ErrorMessage = null;
 
     private async Task ReportUnexpectedErrorAsync(string message, Exception exception)
     {
@@ -661,23 +661,23 @@ public sealed partial class RecorderPageViewModel : ObservableObject, IDisposabl
 
     private void RefreshCommandStates()
     {
-        StartCommand.NotifyCanExecuteChanged();
-        PauseCommand.NotifyCanExecuteChanged();
-        ResumeCommand.NotifyCanExecuteChanged();
-        StopCommand.NotifyCanExecuteChanged();
-        AddMarkerCommand.NotifyCanExecuteChanged();
-        AddNoteCommand.NotifyCanExecuteChanged();
-        ExportCommand.NotifyCanExecuteChanged();
-        ImportCommand.NotifyCanExecuteChanged();
+        this.StartCommand.NotifyCanExecuteChanged();
+        this.PauseCommand.NotifyCanExecuteChanged();
+        this.ResumeCommand.NotifyCanExecuteChanged();
+        this.StopCommand.NotifyCanExecuteChanged();
+        this.AddMarkerCommand.NotifyCanExecuteChanged();
+        this.AddNoteCommand.NotifyCanExecuteChanged();
+        this.ExportCommand.NotifyCanExecuteChanged();
+        this.ImportCommand.NotifyCanExecuteChanged();
     }
 
     private void RefreshReplayCommandStates()
     {
-        PlayReplayCommand.NotifyCanExecuteChanged();
-        PauseReplayCommand.NotifyCanExecuteChanged();
-        StepReplayCommand.NotifyCanExecuteChanged();
-        SeekReplayCommand.NotifyCanExecuteChanged();
-        CancelReplayCommand.NotifyCanExecuteChanged();
+        this.PlayReplayCommand.NotifyCanExecuteChanged();
+        this.PauseReplayCommand.NotifyCanExecuteChanged();
+        this.StepReplayCommand.NotifyCanExecuteChanged();
+        this.SeekReplayCommand.NotifyCanExecuteChanged();
+        this.CancelReplayCommand.NotifyCanExecuteChanged();
     }
 
     /// <summary>Releases the session status subscription owned by this ViewModel.</summary>

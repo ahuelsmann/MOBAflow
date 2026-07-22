@@ -11,6 +11,7 @@ using System.Text.Json;
 /// </summary>
 public sealed class Z21RecordingEventMapper : IRecordingEventMapper
 {
+    private const string InformationSeverity = "information";
     private static readonly Type[] SupportedEventTypes =
     [
         typeof(Z21ConnectionEstablishedEvent),
@@ -31,7 +32,7 @@ public sealed class Z21RecordingEventMapper : IRecordingEventMapper
     {
         Z21ConnectionEstablishedEvent => Create(
             "z21.connection.established",
-            "information",
+            InformationSeverity,
             JsonSerializer.SerializeToElement(new { connected = true }),
             "Z21 connection established"),
         Z21ConnectionLostEvent => Create(
@@ -41,12 +42,12 @@ public sealed class Z21RecordingEventMapper : IRecordingEventMapper
             "Z21 connection lost"),
         Z21TrackPowerChangedEvent power => Create(
             "z21.track-power.changed",
-            "information",
+            InformationSeverity,
             JsonSerializer.SerializeToElement(new { isOn = power.IsOn }),
             power.IsOn ? "Track power on" : "Track power off"),
         XBusStatusChangedEvent status => Create(
             "z21.xbus-status.changed",
-            status.EmergencyStop || status.ShortCircuit ? "error" : "information",
+            status.EmergencyStop || status.ShortCircuit ? "error" : InformationSeverity,
             JsonSerializer.SerializeToElement(new
             {
                 emergencyStop = status.EmergencyStop,
@@ -57,7 +58,7 @@ public sealed class Z21RecordingEventMapper : IRecordingEventMapper
             BuildXBusDisplayText(status)),
         SystemStateChangedEvent state => Create(
             "z21.system-state.changed",
-            "information",
+            InformationSeverity,
             JsonSerializer.SerializeToElement(new
             {
                 mainCurrent = state.MainCurrent,
@@ -72,12 +73,12 @@ public sealed class Z21RecordingEventMapper : IRecordingEventMapper
             "Z21 system state updated"),
         FeedbackReceivedEvent feedback => Create(
             "z21.feedback.activated",
-            "information",
+            InformationSeverity,
             JsonSerializer.SerializeToElement(new { inPort = feedback.InPort }),
             $"Feedback input {feedback.InPort} activated"),
         SignalAspectChangedEvent signal => Create(
             "z21.signal-aspect.changed",
-            "information",
+            InformationSeverity,
             JsonSerializer.SerializeToElement(new
             {
                 signalId = signal.SignalId,
@@ -87,7 +88,7 @@ public sealed class Z21RecordingEventMapper : IRecordingEventMapper
             $"Signal {signal.SignalId} changed to {signal.Aspect}"),
         SwitchPositionChangedEvent @switch => Create(
             "z21.switch-position.changed",
-            "information",
+            InformationSeverity,
             JsonSerializer.SerializeToElement(new
             {
                 switchId = @switch.SwitchId,

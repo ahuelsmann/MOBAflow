@@ -17,7 +17,7 @@ internal sealed class RecordingArtifactSerializerTests
         // Arrange
         var serializer = new RecordingArtifactSerializer();
         var expectedPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "Recording", "recording-v1-golden.json");
-        var expected = File.ReadAllText(expectedPath).TrimEnd();
+        var expected = File.ReadAllText(expectedPath).ReplaceLineEndings("\n").TrimEnd();
 
         // Act
         var actual = serializer.Serialize(CreateGoldenArtifact());

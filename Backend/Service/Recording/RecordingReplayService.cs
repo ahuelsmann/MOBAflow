@@ -228,10 +228,16 @@ public sealed class RecordingReplayService : IRecordingReplayService
     public async Task<RecordingReplayOperationResult> CancelAsync(CancellationToken cancellationToken = default)
     {
         Task? playbackTask;
+        CancellationTokenSource? playbackCancellation;
         lock (_gate)
         {
             playbackTask = _playbackTask;
-            _playbackCancellation?.Cancel();
+            playbackCancellation = _playbackCancellation;
+        }
+
+        if (playbackCancellation is not null)
+        {
+            await playbackCancellation.CancelAsync().ConfigureAwait(false);
         }
 
         if (playbackTask is not null)
@@ -271,45 +277,17 @@ public sealed class RecordingReplayService : IRecordingReplayService
         {
             while (true)
             {
-                var delay = TimeSpan.Zero;
-                RecordingReplaySnapshot? completedSnapshot = null;
-                lock (_gate)
+                if (!TryPrepareNextDelay(out var delay, out var completedSnapshot))
                 {
-                    if (_state != RecordingReplayState.Playing || _artifact is null) return;
-                    if (_position >= _artifact.Entries.Length)
-                    {
-                        CompleteLocked(out completedSnapshot);
-                    }
-                    else
-                    {
-                        var entry = _artifact.Entries[_position];
-                        var unscaledDelay = entry.Elapsed - _elapsed;
-                        if (unscaledDelay < TimeSpan.Zero) unscaledDelay = TimeSpan.Zero;
-                        delay = TimeSpan.FromTicks((long)(unscaledDelay.Ticks / _speed));
-                    }
-                }
-
-                if (completedSnapshot is not null)
-                {
-                    NotifyStatusChanged(completedSnapshot);
+                    if (completedSnapshot is not null) NotifyStatusChanged(completedSnapshot);
                     return;
                 }
 
-                var safety = _safetyGate.GetStatus();
-                if (!safety.CanReplay)
-                {
-                    SetBlocked(safety.BlockingReason);
-                    return;
-                }
+                if (!EnsureReplayIsSafe()) return;
 
                 await _delayScheduler.DelayAsync(delay, cancellationToken).ConfigureAwait(false);
                 cancellationToken.ThrowIfCancellationRequested();
-                safety = _safetyGate.GetStatus();
-                if (!safety.CanReplay)
-                {
-                    SetBlocked(safety.BlockingReason);
-                    return;
-                }
+                if (!EnsureReplayIsSafe()) return;
 
                 var result = ApplyNextEntry(requirePlaying: true);
                 if (!result.Succeeded) return;
@@ -332,6 +310,38 @@ public sealed class RecordingReplayService : IRecordingReplayService
 
             NotifyStatusChanged(snapshot);
         }
+    }
+
+    private bool TryPrepareNextDelay(
+        out TimeSpan delay,
+        out RecordingReplaySnapshot? completedSnapshot)
+    {
+        delay = TimeSpan.Zero;
+        completedSnapshot = null;
+        lock (_gate)
+        {
+            if (_state != RecordingReplayState.Playing || _artifact is null) return false;
+            if (_position >= _artifact.Entries.Length)
+            {
+                CompleteLocked(out completedSnapshot);
+                return false;
+            }
+
+            var entry = _artifact.Entries[_position];
+            var unscaledDelay = entry.Elapsed - _elapsed;
+            if (unscaledDelay < TimeSpan.Zero) unscaledDelay = TimeSpan.Zero;
+            delay = TimeSpan.FromTicks((long)(unscaledDelay.Ticks / _speed));
+            return true;
+        }
+    }
+
+    private bool EnsureReplayIsSafe()
+    {
+        var safety = _safetyGate.GetStatus();
+        if (safety.CanReplay) return true;
+
+        SetBlocked(safety.BlockingReason);
+        return false;
     }
 
     private RecordingReplayOperationResult ApplyNextEntry(bool requirePlaying = false)
@@ -392,11 +402,15 @@ public sealed class RecordingReplayService : IRecordingReplayService
         _position++;
         _elapsed = entry.Elapsed;
         _currentEntry = entry;
-        _state = _position >= _artifact!.Entries.Length
-            ? RecordingReplayState.Completed
-            : _state == RecordingReplayState.Playing
-                ? RecordingReplayState.Playing
-                : RecordingReplayState.Paused;
+        if (_position >= _artifact!.Entries.Length)
+        {
+            _state = RecordingReplayState.Completed;
+        }
+        else if (_state != RecordingReplayState.Playing)
+        {
+            _state = RecordingReplayState.Paused;
+        }
+
         ClearFailureLocked();
         return RecordingReplayOperationResult.Success();
     }
@@ -490,7 +504,7 @@ public sealed class RecordingReplayService : IRecordingReplayService
     {
         var handlers = StatusChanged;
         if (handlers is null) return;
-        foreach (Action<RecordingReplaySnapshot> handler in handlers.GetInvocationList())
+        foreach (var handler in handlers.GetInvocationList().Cast<Action<RecordingReplaySnapshot>>())
         {
             try
             {
