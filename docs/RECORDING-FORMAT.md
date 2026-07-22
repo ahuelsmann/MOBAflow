@@ -41,6 +41,14 @@ The first capture slice registers these exact type keys. Property names are case
 
 The runtime mapper intentionally excludes broad snapshot collections, operator status text, serial/firmware values, endpoints, and mutable domain/runtime objects. Journey entries originate from immutable events published at authoritative `JourneyManager` transitions before legacy mutable callbacks.
 
+## Isolated replay
+
+RecorderPage replays validated artifacts only through `IRecordingReplayService`. The service creates a fresh `IIsolatedReplayRuntime` directly; that runtime has no production service-provider scope and no dependency on `IMobaRuntime`, `IZ21`, the root EventBus, network clients, speakers, displays, scripts, or production file services. It projects allow-listed payloads into private in-memory state only.
+
+`IRecordingReplaySafetyGate` reads the production runtime snapshot but is not an execution target. Play, single-step, and seek fail closed while a live Z21 connection is active, and playback rechecks the gate after every scheduled wait before applying the next entry.
+
+Replay preserves journal order and supports 0.25x, 0.5x, 1x, 2x, 4x, and 8x speeds. A speed change affects future waits only. Display-only and unknown entries advance position as visible skips but are never applied. Seek resets the isolated runtime and reapplies from the beginning with delays suppressed. Pause cancels the current wait before the next entry, while reset/cancel discards projected state and returns the loaded artifact to position zero.
+
 ## Defensive limits
 
 | Limit | Version 1 value |

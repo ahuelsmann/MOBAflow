@@ -43,8 +43,14 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
     public void AddMobaWinUiBackendServices_ResolvesIMobaRuntime()
     {
         var provider = CreateBackendServiceProvider();
+        var replayService = provider.GetRequiredService<IRecordingReplayService>();
 
-        Assert.That(provider.GetRequiredService<IMobaRuntime>(), Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(provider.GetRequiredService<IMobaRuntime>(), Is.Not.Null);
+            Assert.That(replayService, Is.Not.Null);
+            Assert.That(provider.GetRequiredService<IRecordingReplayStatusSource>(), Is.SameAs(replayService));
+        });
     }
 
     [Test]

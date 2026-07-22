@@ -411,6 +411,15 @@ MainWindowViewModel(
 - Failures are logged at **error** level; when a debugger is attached, an extra
   `Debug.WriteLine` aids local diagnosis (see `Common/Events/IEventBus.cs`).
 
+### Recorder isolation boundary
+
+- Live capture occurs in `RecordingEventBusDecorator` before UI dispatch and persists only explicitly mapped payloads.
+- Replay never publishes recorded events to the root EventBus and never calls `IMobaRuntime` or `IZ21`.
+- `RecordingReplayService` schedules journal entries against a freshly constructed, in-memory `IsolatedReplayRuntime`.
+- The isolated runtime factory does not receive the production service provider or any external-effect adapter.
+- A separate read-only safety gate blocks play, step, and seek while the production runtime reports an active Z21 connection and rechecks before each application.
+- Pause cancels the current scheduled wait; seek and reset rebuild isolated state from position zero without changing production state.
+
 ### Graceful Degradation
 
 ```text

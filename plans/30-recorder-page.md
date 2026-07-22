@@ -3,8 +3,8 @@
 ## Document status
 
 - Status: In progress
-- Completed delivery slices: WP1 journal model/format/filtering, WP2 recording state machine/bounded ingestion, WP3 producer capture, and WP5 RecorderPage/file operations
-- Next delivery slice: WP6 isolated replay; the Workflow 2.0 portion of WP4 remains gated by issue #32
+- Completed delivery slices: WP1 journal model/format/filtering, WP2 recording state machine/bounded ingestion, WP3 producer capture, WP5 RecorderPage/file operations, and WP6 isolated replay
+- Next delivery slice: WP4 explicit command capture; its Workflow 2.0 portion remains gated by issue #32
 - Resolved dependency: issue #43 merged through PR #45 and is present in the branch baseline
 - Primary issue: https://github.com/ahuelsmann/MOBAflow/issues/30
 - Status and acceptance criteria source: GitHub issue #30
@@ -47,6 +47,7 @@ No constitutional exception or complexity waiver is required. Re-run this check 
 - `TimeProvider.System` is registered in backend DI and can be replaced in tests. The bounded session service exposes ordered immutable journal pages for batched UI projection.
 - `NavigationRegistration` now registers RecorderPage after MonitorPage. `IFilePickerService` has recording-specific open/save operations and `IRecordingFileService` owns validated, atomic artifact import/export.
 - `RecorderPageViewModel` owns lifecycle commands, annotations, status, filtering, selection, and batched timeline loading; page code-behind only initializes the view.
+- `RecordingReplayService` schedules validated entries against a dependency-free `IsolatedReplayRuntime`; a read-only production snapshot gate blocks play, step, and seek while Z21 is connected.
 
 ## Scope boundaries
 
@@ -259,15 +260,16 @@ Exact file names must be revalidated immediately before implementation, but the 
 - `Common/Recording/RecordingSessionMetadata.cs`
 - `Common/Recording/RecordingFilter.cs`
 - `Common/Recording/RecordingFormat.cs`
+- `Common/Recording/RecordingReplay.cs`
 - `Common/Recording/RecordingValidationResult.cs`
 - `Common/Events/JourneyRuntimeEvents.cs`
+- `Backend/Interface/IRecordingReplayService.cs`
 - `Backend/Interface/IRecordingSessionService.cs`
-- `Backend/Interface/IReplayRuntime.cs`
 - `Backend/Service/Recording/RecordingSessionService.cs`
 - `Backend/Service/Recording/RecordingEventBusDecorator.cs`
 - `Backend/Service/Recording/RecordingEventMapperRegistry.cs`
 - `Backend/Service/Recording/RecordingArtifactSerializer.cs`
-- `Backend/Service/Recording/ReplayEngine.cs`
+- `Backend/Service/Recording/RecordingReplayService.cs`
 - `Backend/Service/Recording/IsolatedReplayRuntime.cs`
 
 ### Existing platform-neutral integration points
@@ -387,6 +389,8 @@ Completed on 2026-07-21. Evidence: RecorderPage is registered under Monitoring a
 - verify production runtime snapshots, commands, and external effects remain unchanged/zero.
 
 Exit: replay behavior is deterministic at every supported speed and cannot reach live hardware or external-effect services.
+
+Completed on 2026-07-22. Evidence: `IRecordingReplayService` provides non-blocking play, pause, single-step, absolute seek through reset/reapply, reset/cancel, position reporting, and 0.25x through 8x timing over an injected scheduler. Display-only entries advance as skips, supported entries project only into a fresh in-memory runtime, speed changes affect future waits, and pause/cancel cannot apply the waiting entry. The isolated runtime and factory have no live dependencies and reject non-allow-listed replay types. A read-only safety gate blocks play, step, and seek while Z21 is connected and rechecks after every delay. RecorderPage exposes position, elapsed time, current entry, speed, seek, and accessible controls. The full suite passes on both targets (1,172 platform-neutral tests with four environment-dependent skips and 1,224 Windows tests), the FastDebug WinUI build passes with zero warnings, and scoped format verification passes. Authenticated local Sonar analysis was attempted against the freshly fetched `github/main` base: secret analysis reported zero findings, while Vortex agentic analysis was unavailable for the organization with `403 Forbidden`; this capability limitation must remain in any later draft PR validation section.
 
 ### WP7: Integration, resilience, and acceptance evidence
 

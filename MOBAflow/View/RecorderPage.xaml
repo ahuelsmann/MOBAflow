@@ -168,14 +168,17 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <Grid ColumnSpacing="8">
+                    <Grid ColumnSpacing="8" RowSpacing="8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" MinWidth="120" />
                             <ColumnDefinition Width="*" MinWidth="120" />
                             <ColumnDefinition Width="*" MinWidth="120" />
-                            <ColumnDefinition Width="2*" MinWidth="180" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
                         <TextBox
                             Header="Category"
                             PlaceholderText="All categories"
@@ -191,12 +194,20 @@
                             PlaceholderText="All severities"
                             Text="{x:Bind ViewModel.SeverityFilter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         <TextBox
-                            Grid.Column="3"
+                            Grid.Row="1"
+                            Grid.ColumnSpan="2"
                             Header="Search"
                             PlaceholderText="Search timeline text"
                             Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBox
+                            Grid.Row="1"
+                            Grid.Column="2"
+                            Header="Entity"
+                            PlaceholderText="Entity kind or ID"
+                            Text="{x:Bind ViewModel.EntityFilter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         <Button
-                            Grid.Column="4"
+                            Grid.Row="1"
+                            Grid.Column="3"
                             VerticalAlignment="Bottom"
                             AutomationProperties.Name="Clear timeline filters"
                             Command="{x:Bind ViewModel.ClearFiltersCommand}"
@@ -306,10 +317,68 @@
                     CornerRadius="8">
                     <StackPanel Spacing="8">
                         <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Isolated replay" />
-                        <ProgressBar IsEnabled="False" Value="0" />
                         <TextBlock
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Text="Replay controls remain disabled until isolated replay support is available."
+                            Text="{x:Bind ViewModel.ReplayStatusText, Mode=OneWay}"
+                            TextWrapping="Wrap" />
+                        <ProgressBar
+                            AutomationProperties.Name="Isolated replay position"
+                            Maximum="{x:Bind ViewModel.ReplayMaximum, Mode=OneWay}"
+                            Value="{x:Bind ViewModel.ReplayPosition, Mode=OneWay}" />
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" MinWidth="100" />
+                                <ColumnDefinition Width="*" MinWidth="100" />
+                            </Grid.ColumnDefinitions>
+                            <ComboBox
+                                Header="Speed"
+                                ItemsSource="{x:Bind ViewModel.ReplaySpeeds}"
+                                SelectedItem="{x:Bind ViewModel.SelectedReplaySpeed, Mode=TwoWay}" />
+                            <NumberBox
+                                Grid.Column="1"
+                                Header="Seek position"
+                                Maximum="{x:Bind ViewModel.ReplayMaximum, Mode=OneWay}"
+                                Minimum="0"
+                                SmallChange="1"
+                                SpinButtonPlacementMode="Inline"
+                                Value="{x:Bind ViewModel.ReplaySeekPosition, Mode=TwoWay}" />
+                        </Grid>
+                        <CommandBar
+                            DefaultLabelPosition="Right"
+                            OverflowButtonVisibility="Auto">
+                            <AppBarButton
+                                AutomationProperties.Name="Play isolated replay"
+                                Command="{x:Bind ViewModel.PlayReplayCommand}"
+                                Icon="Play"
+                                Label="Play" />
+                            <AppBarButton
+                                AutomationProperties.Name="Pause isolated replay"
+                                Command="{x:Bind ViewModel.PauseReplayCommand}"
+                                Icon="Pause"
+                                Label="Pause" />
+                            <AppBarButton
+                                AutomationProperties.Name="Apply next replay entry"
+                                Command="{x:Bind ViewModel.StepReplayCommand}"
+                                Icon="Forward"
+                                Label="Step" />
+                            <AppBarButton
+                                AutomationProperties.Name="Seek isolated replay"
+                                Command="{x:Bind ViewModel.SeekReplayCommand}"
+                                Icon="Go"
+                                Label="Seek" />
+                            <AppBarButton
+                                AutomationProperties.Name="Cancel and reset isolated replay"
+                                Command="{x:Bind ViewModel.CancelReplayCommand}"
+                                Icon="Cancel"
+                                Label="Reset" />
+                        </CommandBar>
+                        <TextBlock
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="{x:Bind ViewModel.ReplayElapsedText, Mode=OneWay}" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="{x:Bind ViewModel.CurrentReplayEntry.DisplayText, Mode=OneWay}"
+                            TextTrimming="CharacterEllipsis"
                             TextWrapping="Wrap" />
                     </StackPanel>
                 </Border>
