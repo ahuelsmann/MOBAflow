@@ -141,10 +141,13 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
             dialogService,
             new WorkflowValidator(),
             loggerFactory?.CreateLogger<WorkflowLibraryViewModel>(),
-            workflowService,
-            workflowTraceStore,
-            executionContext,
-            eventBus);
+            new WorkflowLibraryRuntimeServices
+            {
+                WorkflowService = workflowService,
+                TraceStore = workflowTraceStore,
+                ExecutionContext = executionContext,
+                EventBus = eventBus
+            });
         WorkflowLibrary.PropertyChanged += OnWorkflowLibraryPropertyChanged;
 
         _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));

@@ -32,6 +32,14 @@ public partial class WorkflowService
             ? Guid.NewGuid()
             : request.SourceCorrelationId;
         var sequence = new WorkflowTraceSequence();
+        var frame = new WorkflowExecutionFrame(
+            sourceCorrelationId,
+            executionId,
+            null,
+            request.Mode,
+            sequence,
+            1,
+            new HashSet<Guid>());
         var validation = _workflowValidator.Validate(request.Project);
         if (!request.Project.Workflows.Any(workflow => workflow.Id == request.Workflow.Id))
         {
@@ -49,14 +57,13 @@ public partial class WorkflowService
             {
                 PublishLifecycle(
                     WorkflowLifecycleKind.ValidationFailed,
-                    sourceCorrelationId,
-                    executionId,
-                    null,
+                    frame,
                     issue.WorkflowId,
-                    issue.StepId,
-                    sequence,
-                    request.Mode,
-                    detail: $"{issue.Code}: {issue.Message}");
+                    new WorkflowLifecycleDetails
+                    {
+                        StepId = issue.StepId,
+                        Detail = $"{issue.Code}: {issue.Message}"
+                    });
             }
 
             return new WorkflowExecutionResult
@@ -71,14 +78,6 @@ public partial class WorkflowService
 
         var executionWorkflow = request.Project.Workflows.Single(workflow => workflow.Id == request.Workflow.Id);
         var plannedEffects = new List<WorkflowPlannedEffect>();
-        var frame = new WorkflowExecutionFrame(
-            sourceCorrelationId,
-            executionId,
-            null,
-            request.Mode,
-            sequence,
-            1,
-            new HashSet<Guid>());
         var internalResult = await ExecuteWorkflowGraphAsync(
                 request.Project,
                 executionWorkflow,
@@ -111,8 +110,7 @@ public partial class WorkflowService
         PublishLifecycle(
             WorkflowLifecycleKind.WorkflowStarted,
             frame,
-            workflow.Id,
-            mode: frame.Mode);
+            workflow.Id);
 
         InternalWorkflowResult result;
         try
@@ -125,14 +123,16 @@ public partial class WorkflowService
             else
             {
                 var callStack = new HashSet<Guid>(frame.CallStack) { workflow.Id };
+                var graphContext = new WorkflowGraphContext(
+                    project,
+                    workflow,
+                    context,
+                    frame with { CallStack = callStack },
+                    plannedEffects);
                 result = await TraverseAsync(
-                        project,
-                        workflow,
+                        graphContext,
                         workflow.EntryStepId!.Value,
                         null,
-                        context,
-                        frame with { CallStack = callStack },
-                        plannedEffects,
                         cancellationToken)
                     .ConfigureAwait(false);
             }
@@ -157,24 +157,22 @@ public partial class WorkflowService
             terminalKind,
             frame,
             workflow.Id,
-            elapsed: _timeProvider.GetElapsedTime(startedTimestamp),
-            result: result.Status.ToString(),
-            detail: result.FailureDetail,
-            mode: frame.Mode);
+            new WorkflowLifecycleDetails
+            {
+                Elapsed = _timeProvider.GetElapsedTime(startedTimestamp),
+                Result = result.Status.ToString(),
+                Detail = result.FailureDetail
+            });
         return result;
     }
 
     private async Task<InternalWorkflowResult> TraverseAsync(
-        Project project,
-        Workflow workflow,
+        WorkflowGraphContext graphContext,
         Guid entryStepId,
         Guid? stopBeforeStepId,
-        ActionExecutionContext context,
-        WorkflowExecutionFrame frame,
-        List<WorkflowPlannedEffect> plannedEffects,
         CancellationToken cancellationToken)
     {
-        var steps = workflow.Steps!.ToDictionary(step => step.Id);
+        var steps = graphContext.Workflow.Steps!.ToDictionary(step => step.Id);
         var currentStepId = entryStepId;
         while (true)
         {
@@ -184,12 +182,8 @@ public partial class WorkflowService
 
             var step = steps[currentStepId];
             var outcome = await ExecuteStepWithPolicyAsync(
-                    project,
-                    workflow,
+                    graphContext,
                     step,
-                    context,
-                    frame,
-                    plannedEffects,
                     cancellationToken)
                 .ConfigureAwait(false);
             if (outcome.TerminalResult != null)
@@ -202,14 +196,12 @@ public partial class WorkflowService
     }
 
     private async Task<WorkflowStepOutcome> ExecuteStepWithPolicyAsync(
-        Project project,
-        Workflow workflow,
+        WorkflowGraphContext graphContext,
         WorkflowStep step,
-        ActionExecutionContext context,
-        WorkflowExecutionFrame frame,
-        List<WorkflowPlannedEffect> plannedEffects,
         CancellationToken cancellationToken)
     {
+        var workflow = graphContext.Workflow;
+        var frame = graphContext.Frame;
         var policy = step.ErrorPolicy ?? workflow.DefaultErrorPolicy ?? new WorkflowErrorPolicy();
         var maximumAttempts = 1 + (policy.Retry?.AdditionalAttempts ?? 0);
         for (var attempt = 1; attempt <= maximumAttempts; attempt++)
@@ -220,30 +212,30 @@ public partial class WorkflowService
                 WorkflowLifecycleKind.StepStarted,
                 frame,
                 workflow.Id,
-                step.Id,
-                attempt,
-                mode: frame.Mode);
+                new WorkflowLifecycleDetails
+                {
+                    StepId = step.Id,
+                    Attempt = attempt
+                });
             try
             {
                 var outcome = await ExecuteStepOnceAsync(
-                        project,
-                        workflow,
+                        graphContext,
                         step,
-                        context,
-                        frame,
-                        plannedEffects,
                         cancellationToken)
                     .ConfigureAwait(false);
                 PublishLifecycle(
                     WorkflowLifecycleKind.StepCompleted,
                     frame,
                     workflow.Id,
-                    step.Id,
-                    attempt,
-                    _timeProvider.GetElapsedTime(startedTimestamp),
-                    result: outcome.TerminalResult?.Status.ToString(),
-                    detail: outcome.Detail,
-                    mode: frame.Mode);
+                    new WorkflowLifecycleDetails
+                    {
+                        StepId = step.Id,
+                        Attempt = attempt,
+                        Elapsed = _timeProvider.GetElapsedTime(startedTimestamp),
+                        Result = outcome.TerminalResult?.Status.ToString(),
+                        Detail = outcome.Detail
+                    });
                 return outcome;
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -252,242 +244,285 @@ public partial class WorkflowService
             }
             catch (Exception ex)
             {
-                var failure = SanitizeFailure(ex);
-                PublishLifecycle(
-                    WorkflowLifecycleKind.StepFailed,
-                    frame,
-                    workflow.Id,
-                    step.Id,
-                    attempt,
-                    _timeProvider.GetElapsedTime(startedTimestamp),
-                    detail: failure,
-                    mode: frame.Mode);
-
-                if (attempt < maximumAttempts)
+                var resolution = await HandleStepFailureAsync(
+                        graphContext,
+                        new WorkflowStepAttempt(step, policy, attempt, maximumAttempts, startedTimestamp),
+                        ex,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+                if (resolution.ShouldRetry)
                 {
-                    PublishLifecycle(
-                        WorkflowLifecycleKind.RetryScheduled,
-                        frame,
-                        workflow.Id,
-                        step.Id,
-                        attempt + 1,
-                        detail: $"Retry after {policy.Retry!.DelayMs} ms.",
-                        mode: frame.Mode);
-                    if (frame.Mode == WorkflowRunMode.Live && policy.Retry.DelayMs > 0)
-                    {
-                        await Task.Delay(
-                                TimeSpan.FromMilliseconds(policy.Retry.DelayMs),
-                                _timeProvider,
-                                cancellationToken)
-                            .ConfigureAwait(false);
-                    }
                     continue;
                 }
 
-                return policy.Behavior switch
-                {
-                    WorkflowFailureBehavior.Continue when step.NextStepId.HasValue =>
-                        WorkflowStepOutcome.ContinueAt(step.NextStepId.Value),
-                    WorkflowFailureBehavior.FailureBranch when policy.FailureStepId.HasValue =>
-                        WorkflowStepOutcome.ContinueAt(policy.FailureStepId.Value),
-                    _ => WorkflowStepOutcome.Terminate(InternalWorkflowResult.Failed(failure))
-                };
+                return resolution.Outcome!;
             }
         }
 
         return WorkflowStepOutcome.Terminate(InternalWorkflowResult.Failed("Retry policy exhausted."));
     }
 
-    private async Task<WorkflowStepOutcome> ExecuteStepOnceAsync(
-        Project project,
-        Workflow workflow,
-        WorkflowStep step,
-        ActionExecutionContext context,
-        WorkflowExecutionFrame frame,
-        List<WorkflowPlannedEffect> plannedEffects,
+    private async Task<StepFailureResolution> HandleStepFailureAsync(
+        WorkflowGraphContext graphContext,
+        WorkflowStepAttempt stepAttempt,
+        Exception exception,
         CancellationToken cancellationToken)
     {
-        switch (step)
+        var failure = SanitizeFailure(exception);
+        PublishLifecycle(
+            WorkflowLifecycleKind.StepFailed,
+            graphContext.Frame,
+            graphContext.Workflow.Id,
+            new WorkflowLifecycleDetails
+            {
+                StepId = stepAttempt.Step.Id,
+                Attempt = stepAttempt.Attempt,
+                Elapsed = _timeProvider.GetElapsedTime(stepAttempt.StartedTimestamp),
+                Detail = failure
+            });
+
+        if (stepAttempt.Attempt < stepAttempt.MaximumAttempts)
         {
-            case WorkflowActionStep { Action: { } action }:
-                if (frame.Mode == WorkflowRunMode.DryRun)
+            var retryDelay = stepAttempt.Policy.Retry!.DelayMs;
+            PublishLifecycle(
+                WorkflowLifecycleKind.RetryScheduled,
+                graphContext.Frame,
+                graphContext.Workflow.Id,
+                new WorkflowLifecycleDetails
                 {
-                    var plan = _effectPlanner.Plan(action);
-                    var effect = plan.Effect ?? throw new InvalidOperationException("Validated action did not produce an effect plan.");
-                    plannedEffects.Add(effect);
-                    PublishLifecycle(
-                        WorkflowLifecycleKind.PlannedEffect,
-                        frame,
-                        workflow.Id,
-                        step.Id,
-                        detail: effect.Description,
-                        mode: frame.Mode);
-                }
-                else
-                {
-                    await _actionExecutor.ExecuteAsync(action, context, cancellationToken).ConfigureAwait(false);
-                }
-                return WorkflowStepOutcome.ContinueAt(step.NextStepId!.Value);
-
-            case WorkflowDelayStep delay:
-                if (frame.Mode == WorkflowRunMode.Live && delay.DelayMs > 0)
-                {
-                    await Task.Delay(
-                            TimeSpan.FromMilliseconds(delay.DelayMs),
-                            _timeProvider,
-                            cancellationToken)
-                        .ConfigureAwait(false);
-                }
-                return WorkflowStepOutcome.ContinueAt(
-                    step.NextStepId!.Value,
-                    frame.Mode == WorkflowRunMode.DryRun ? $"Planned delay: {delay.DelayMs} ms." : null);
-
-            case WorkflowConditionStep conditionStep:
-                var decision = await _conditionEvaluator.EvaluateAsync(
-                        conditionStep.Condition!,
-                        context,
+                    StepId = stepAttempt.Step.Id,
+                    Attempt = stepAttempt.Attempt + 1,
+                    Detail = $"Retry after {retryDelay} ms."
+                });
+            if (graphContext.Frame.Mode == WorkflowRunMode.Live && retryDelay > 0)
+            {
+                await Task.Delay(
+                        TimeSpan.FromMilliseconds(retryDelay),
+                        _timeProvider,
                         cancellationToken)
                     .ConfigureAwait(false);
-                PublishLifecycle(
-                    WorkflowLifecycleKind.ConditionDecided,
-                    frame,
-                    workflow.Id,
-                    step.Id,
-                    result: decision.ToString(),
-                    mode: frame.Mode);
-                return WorkflowStepOutcome.ContinueAt(decision ? conditionStep.TrueStepId : conditionStep.FalseStepId);
-
-            case WorkflowParallelStep parallel:
-                var branchEffects = parallel.Branches.Select(_ => new List<WorkflowPlannedEffect>()).ToArray();
-                var branchTasks = parallel.Branches
-                    .Select((branch, index) => TraverseAsync(
-                        project,
-                        workflow,
-                        branch.EntryStepId,
-                        parallel.JoinStepId,
-                        context,
-                        frame,
-                        branchEffects[index],
-                        cancellationToken))
-                    .ToArray();
-                var branchResults = await Task.WhenAll(branchTasks).ConfigureAwait(false);
-                foreach (var effects in branchEffects)
-                    plannedEffects.AddRange(effects);
-                var failedBranch = branchResults.FirstOrDefault(result => result.Status != WorkflowExecutionStatus.Succeeded);
-                if (failedBranch != null)
-                    throw new ParallelWorkflowExecutionException(failedBranch.Status);
-                return WorkflowStepOutcome.ContinueAt(parallel.JoinStepId);
-
-            case WorkflowNestedStep nested:
-            {
-                var childWorkflow = project.Workflows.Single(candidate => candidate.Id == nested.WorkflowId);
-                var childExecutionId = Guid.NewGuid();
-                PublishLifecycle(
-                    WorkflowLifecycleKind.NestedWorkflowEntered,
-                    frame,
-                    workflow.Id,
-                    step.Id,
-                    detail: childWorkflow.Id.ToString("D"),
-                    mode: frame.Mode);
-                var childFrame = frame with
-                {
-                    ExecutionId = childExecutionId,
-                    ParentExecutionId = frame.ExecutionId,
-                    Depth = frame.Depth + 1
-                };
-                using var childCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                var childResult = await ExecuteWorkflowGraphAsync(
-                        project,
-                        childWorkflow,
-                        context,
-                        childFrame,
-                        plannedEffects,
-                        childCancellation.Token)
-                    .ConfigureAwait(false);
-                PublishLifecycle(
-                    WorkflowLifecycleKind.NestedWorkflowExited,
-                    frame,
-                    workflow.Id,
-                    step.Id,
-                    result: childResult.Status.ToString(),
-                    mode: frame.Mode);
-                if (childResult.Status == WorkflowExecutionStatus.Cancelled && cancellationToken.IsCancellationRequested)
-                    cancellationToken.ThrowIfCancellationRequested();
-                if (childResult.Status != WorkflowExecutionStatus.Succeeded)
-                    throw new NestedWorkflowExecutionException(childResult.Status);
-                return WorkflowStepOutcome.ContinueAt(step.NextStepId!.Value);
             }
 
-            case WorkflowTerminateStep terminal:
-                return WorkflowStepOutcome.Terminate(terminal.Result switch
-                {
-                    WorkflowTerminationResult.Succeeded => InternalWorkflowResult.Succeeded(),
-                    WorkflowTerminationResult.Cancelled => InternalWorkflowResult.Cancelled(),
-                    _ => InternalWorkflowResult.Failed("Workflow reached an explicit failed termination.")
-                });
-
-            default:
-                throw new NotSupportedException($"Workflow step type '{step.GetType().Name}' is not supported.");
+            return StepFailureResolution.Retry();
         }
+
+        var outcome = stepAttempt.Policy.Behavior switch
+        {
+            WorkflowFailureBehavior.Continue when stepAttempt.Step.NextStepId.HasValue =>
+                WorkflowStepOutcome.ContinueAt(stepAttempt.Step.NextStepId.Value),
+            WorkflowFailureBehavior.FailureBranch when stepAttempt.Policy.FailureStepId.HasValue =>
+                WorkflowStepOutcome.ContinueAt(stepAttempt.Policy.FailureStepId.Value),
+            _ => WorkflowStepOutcome.Terminate(InternalWorkflowResult.Failed(failure))
+        };
+        return StepFailureResolution.Complete(outcome);
     }
+
+    private async Task<WorkflowStepOutcome> ExecuteStepOnceAsync(
+        WorkflowGraphContext graphContext,
+        WorkflowStep step,
+        CancellationToken cancellationToken)
+    {
+        return step switch
+        {
+            WorkflowActionStep { Action: { } } actionStep =>
+                await ExecuteActionStepAsync(graphContext, actionStep, cancellationToken).ConfigureAwait(false),
+            WorkflowDelayStep delayStep =>
+                await ExecuteDelayStepAsync(graphContext, delayStep, cancellationToken).ConfigureAwait(false),
+            WorkflowConditionStep conditionStep =>
+                await ExecuteConditionStepAsync(graphContext, conditionStep, cancellationToken).ConfigureAwait(false),
+            WorkflowParallelStep parallelStep =>
+                await ExecuteParallelStepAsync(graphContext, parallelStep, cancellationToken).ConfigureAwait(false),
+            WorkflowNestedStep nestedStep =>
+                await ExecuteNestedStepAsync(graphContext, nestedStep, cancellationToken).ConfigureAwait(false),
+            WorkflowTerminateStep terminalStep => ExecuteTerminateStep(terminalStep),
+            _ => throw new NotSupportedException($"Workflow step type '{step.GetType().Name}' is not supported.")
+        };
+    }
+
+    private async Task<WorkflowStepOutcome> ExecuteActionStepAsync(
+        WorkflowGraphContext graphContext,
+        WorkflowActionStep step,
+        CancellationToken cancellationToken)
+    {
+        var action = step.Action!;
+        if (graphContext.Frame.Mode == WorkflowRunMode.DryRun)
+        {
+            var plan = _effectPlanner.Plan(action);
+            var effect = plan.Effect ?? throw new InvalidOperationException("Validated action did not produce an effect plan.");
+            graphContext.PlannedEffects.Add(effect);
+            PublishLifecycle(
+                WorkflowLifecycleKind.PlannedEffect,
+                graphContext.Frame,
+                graphContext.Workflow.Id,
+                new WorkflowLifecycleDetails
+                {
+                    StepId = step.Id,
+                    Detail = effect.Description
+                });
+        }
+        else
+        {
+            await _actionExecutor.ExecuteAsync(action, graphContext.ActionContext, cancellationToken).ConfigureAwait(false);
+        }
+
+        return WorkflowStepOutcome.ContinueAt(step.NextStepId!.Value);
+    }
+
+    private async Task<WorkflowStepOutcome> ExecuteDelayStepAsync(
+        WorkflowGraphContext graphContext,
+        WorkflowDelayStep step,
+        CancellationToken cancellationToken)
+    {
+        if (graphContext.Frame.Mode == WorkflowRunMode.Live && step.DelayMs > 0)
+        {
+            await Task.Delay(
+                    TimeSpan.FromMilliseconds(step.DelayMs),
+                    _timeProvider,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        return WorkflowStepOutcome.ContinueAt(
+            step.NextStepId!.Value,
+            graphContext.Frame.Mode == WorkflowRunMode.DryRun ? $"Planned delay: {step.DelayMs} ms." : null);
+    }
+
+    private async Task<WorkflowStepOutcome> ExecuteConditionStepAsync(
+        WorkflowGraphContext graphContext,
+        WorkflowConditionStep step,
+        CancellationToken cancellationToken)
+    {
+        var decision = await _conditionEvaluator.EvaluateAsync(
+                step.Condition!,
+                graphContext.ActionContext,
+                cancellationToken)
+            .ConfigureAwait(false);
+        PublishLifecycle(
+            WorkflowLifecycleKind.ConditionDecided,
+            graphContext.Frame,
+            graphContext.Workflow.Id,
+            new WorkflowLifecycleDetails
+            {
+                StepId = step.Id,
+                Result = decision.ToString()
+            });
+        return WorkflowStepOutcome.ContinueAt(decision ? step.TrueStepId : step.FalseStepId);
+    }
+
+    private async Task<WorkflowStepOutcome> ExecuteParallelStepAsync(
+        WorkflowGraphContext graphContext,
+        WorkflowParallelStep step,
+        CancellationToken cancellationToken)
+    {
+        var branchEffects = step.Branches.Select(_ => new List<WorkflowPlannedEffect>()).ToArray();
+        var branchTasks = step.Branches
+            .Select((branch, index) => TraverseAsync(
+                graphContext with { PlannedEffects = branchEffects[index] },
+                branch.EntryStepId,
+                step.JoinStepId,
+                cancellationToken))
+            .ToArray();
+        var branchResults = await Task.WhenAll(branchTasks).ConfigureAwait(false);
+        foreach (var effects in branchEffects)
+        {
+            graphContext.PlannedEffects.AddRange(effects);
+        }
+
+        var failedBranch = branchResults.FirstOrDefault(result => result.Status != WorkflowExecutionStatus.Succeeded);
+        if (failedBranch != null)
+        {
+            throw new ParallelWorkflowExecutionException(failedBranch.Status);
+        }
+
+        return WorkflowStepOutcome.ContinueAt(step.JoinStepId);
+    }
+
+    private async Task<WorkflowStepOutcome> ExecuteNestedStepAsync(
+        WorkflowGraphContext graphContext,
+        WorkflowNestedStep step,
+        CancellationToken cancellationToken)
+    {
+        var childWorkflow = graphContext.Project.Workflows.Single(candidate => candidate.Id == step.WorkflowId);
+        PublishLifecycle(
+            WorkflowLifecycleKind.NestedWorkflowEntered,
+            graphContext.Frame,
+            graphContext.Workflow.Id,
+            new WorkflowLifecycleDetails
+            {
+                StepId = step.Id,
+                Detail = childWorkflow.Id.ToString("D")
+            });
+        var childFrame = graphContext.Frame with
+        {
+            ExecutionId = Guid.NewGuid(),
+            ParentExecutionId = graphContext.Frame.ExecutionId,
+            Depth = graphContext.Frame.Depth + 1
+        };
+        using var childCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        var childResult = await ExecuteWorkflowGraphAsync(
+                graphContext.Project,
+                childWorkflow,
+                graphContext.ActionContext,
+                childFrame,
+                graphContext.PlannedEffects,
+                childCancellation.Token)
+            .ConfigureAwait(false);
+        PublishLifecycle(
+            WorkflowLifecycleKind.NestedWorkflowExited,
+            graphContext.Frame,
+            graphContext.Workflow.Id,
+            new WorkflowLifecycleDetails
+            {
+                StepId = step.Id,
+                Result = childResult.Status.ToString()
+            });
+        if (childResult.Status == WorkflowExecutionStatus.Cancelled && cancellationToken.IsCancellationRequested)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+
+        if (childResult.Status != WorkflowExecutionStatus.Succeeded)
+        {
+            throw new NestedWorkflowExecutionException(childResult.Status);
+        }
+
+        return WorkflowStepOutcome.ContinueAt(step.NextStepId!.Value);
+    }
+
+    private static WorkflowStepOutcome ExecuteTerminateStep(WorkflowTerminateStep step) =>
+        WorkflowStepOutcome.Terminate(step.Result switch
+        {
+            WorkflowTerminationResult.Succeeded => InternalWorkflowResult.Succeeded(),
+            WorkflowTerminationResult.Cancelled => InternalWorkflowResult.Cancelled(),
+            _ => InternalWorkflowResult.Failed("Workflow reached an explicit failed termination.")
+        });
 
     private void PublishLifecycle(
         WorkflowLifecycleKind kind,
         WorkflowExecutionFrame frame,
         Guid workflowId,
-        Guid? stepId = null,
-        int attempt = 0,
-        TimeSpan? elapsed = null,
-        string? result = null,
-        string? detail = null,
-        WorkflowRunMode? mode = null) =>
-        PublishLifecycle(
-            kind,
-            frame.SourceCorrelationId,
-            frame.ExecutionId,
-            frame.ParentExecutionId,
-            workflowId,
-            stepId,
-            frame.Sequence,
-            mode ?? frame.Mode,
-            attempt,
-            elapsed,
-            result,
-            detail);
-
-    private void PublishLifecycle(
-        WorkflowLifecycleKind kind,
-        Guid sourceCorrelationId,
-        Guid executionId,
-        Guid? parentExecutionId,
-        Guid workflowId,
-        Guid? stepId,
-        WorkflowTraceSequence sequence,
-        WorkflowRunMode mode,
-        int attempt = 0,
-        TimeSpan? elapsed = null,
-        string? result = null,
-        string? detail = null)
+        WorkflowLifecycleDetails? details = null)
     {
-        lock (sequence.SyncRoot)
+        details ??= new WorkflowLifecycleDetails();
+        lock (frame.Sequence.SyncRoot)
         {
             var lifecycleEvent = new WorkflowLifecycleEvent
             {
                 Kind = kind,
-                SourceCorrelationId = sourceCorrelationId,
-                ExecutionId = executionId,
-                ParentExecutionId = parentExecutionId,
+                SourceCorrelationId = frame.SourceCorrelationId,
+                ExecutionId = frame.ExecutionId,
+                ParentExecutionId = frame.ParentExecutionId,
                 WorkflowId = workflowId,
-                StepId = stepId,
-                Sequence = sequence.Next(),
-                Attempt = attempt,
-                Mode = mode == WorkflowRunMode.Live
+                StepId = details.StepId,
+                Sequence = frame.Sequence.Next(),
+                Attempt = details.Attempt,
+                Mode = frame.Mode == WorkflowRunMode.Live
                     ? WorkflowLifecycleMode.Live
                     : WorkflowLifecycleMode.DryRun,
                 TimestampUtc = _timeProvider.GetUtcNow(),
-                Elapsed = elapsed,
-                Result = result,
-                Detail = detail
+                Elapsed = details.Elapsed,
+                Result = details.Result,
+                Detail = details.Detail
             };
             _traceStore.Append(lifecycleEvent);
             _eventBus?.Publish(lifecycleEvent);
@@ -521,6 +556,35 @@ public partial class WorkflowService
         int Depth,
         IReadOnlySet<Guid> CallStack);
 
+    private sealed record WorkflowGraphContext(
+        Project Project,
+        Workflow Workflow,
+        ActionExecutionContext ActionContext,
+        WorkflowExecutionFrame Frame,
+        List<WorkflowPlannedEffect> PlannedEffects);
+
+    private sealed record WorkflowStepAttempt(
+        WorkflowStep Step,
+        WorkflowErrorPolicy Policy,
+        int Attempt,
+        int MaximumAttempts,
+        long StartedTimestamp);
+
+    private sealed record StepFailureResolution(bool ShouldRetry, WorkflowStepOutcome? Outcome)
+    {
+        public static StepFailureResolution Retry() => new(true, null);
+        public static StepFailureResolution Complete(WorkflowStepOutcome outcome) => new(false, outcome);
+    }
+
+    private sealed class WorkflowLifecycleDetails
+    {
+        public Guid? StepId { get; init; }
+        public int Attempt { get; init; }
+        public TimeSpan? Elapsed { get; init; }
+        public string? Result { get; init; }
+        public string? Detail { get; init; }
+    }
+
     private sealed record InternalWorkflowResult(WorkflowExecutionStatus Status, string? FailureDetail)
     {
         public static InternalWorkflowResult Succeeded() => new(WorkflowExecutionStatus.Succeeded, null);
@@ -537,13 +601,29 @@ public partial class WorkflowService
         public static WorkflowStepOutcome Terminate(InternalWorkflowResult result) => new(null, result, null);
     }
 
-    private sealed class NestedWorkflowExecutionException(WorkflowExecutionStatus status) : Exception
+    /// <summary>Signals that a nested workflow ended without succeeding.</summary>
+    public sealed class NestedWorkflowExecutionException : Exception
     {
-        public WorkflowExecutionStatus Status { get; } = status;
+        /// <summary>Creates an exception for the terminal nested-workflow status.</summary>
+        public NestedWorkflowExecutionException(WorkflowExecutionStatus status)
+        {
+            Status = status;
+        }
+
+        /// <summary>Gets the terminal status returned by the nested workflow.</summary>
+        public WorkflowExecutionStatus Status { get; }
     }
 
-    private sealed class ParallelWorkflowExecutionException(WorkflowExecutionStatus status) : Exception
+    /// <summary>Signals that at least one parallel branch ended without succeeding.</summary>
+    public sealed class ParallelWorkflowExecutionException : Exception
     {
-        public WorkflowExecutionStatus Status { get; } = status;
+        /// <summary>Creates an exception for the terminal parallel-branch status.</summary>
+        public ParallelWorkflowExecutionException(WorkflowExecutionStatus status)
+        {
+            Status = status;
+        }
+
+        /// <summary>Gets the terminal status returned by the failed parallel branch.</summary>
+        public WorkflowExecutionStatus Status { get; }
     }
 }

@@ -240,8 +240,11 @@ public sealed class WorkflowLibraryViewModelTests
         using var library = new WorkflowLibraryViewModel(
             new TestProjectContext(projectViewModel),
             new TestDialogService(true),
-            workflowService: workflowService.Object,
-            executionContext: executionContext);
+            runtimeServices: new WorkflowLibraryRuntimeServices
+            {
+                WorkflowService = workflowService.Object,
+                ExecutionContext = executionContext
+            });
 
         await library.DryRunSelectedWorkflowCommand.ExecuteAsync(null);
 
@@ -278,7 +281,10 @@ public sealed class WorkflowLibraryViewModelTests
         using var library = new WorkflowLibraryViewModel(
             new TestProjectContext(projectViewModel),
             new TestDialogService(true),
-            traceStore: traceStore);
+            runtimeServices: new WorkflowLibraryRuntimeServices
+            {
+                TraceStore = traceStore
+            });
 
         Assert.That(library.TraceEntries.Select(entry => entry.Sequence), Is.EqualTo(new long[] { 3, 1 }));
 

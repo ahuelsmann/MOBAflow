@@ -21,7 +21,6 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
     public static readonly TimeSpan VehicleUsageCheckpointInterval = TimeSpan.FromSeconds(30);
 
     private readonly IZ21 _z21;
-    private readonly IWorkflowService _workflowService;
     private readonly ActionExecutionContextFactory _executionContextFactory;
     private readonly JourneyManagerFactory _journeyManagerFactory;
     private readonly AppSettings _settings;
@@ -111,7 +110,6 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         ArgumentNullException.ThrowIfNull(logger);
 
         _z21 = z21;
-        _workflowService = workflowService;
         _executionContextFactory = executionContextFactory;
         _journeyManagerFactory = journeyManagerFactory ?? new JourneyManagerFactory(z21, workflowService);
         _settings = settings;

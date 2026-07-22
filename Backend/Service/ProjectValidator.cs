@@ -87,7 +87,15 @@ public class ProjectValidator : IProjectValidator
     {
         var projectName = string.IsNullOrEmpty(project.Name) ? $"Project[{projectIndex}]" : project.Name;
 
-        // Check locomotives (required for any meaningful journey)
+        ValidateLocomotives(project, projectName, result);
+        ValidateJourneys(project, projectName, result);
+        AddOptionalInventorySummary(project, projectName, result);
+        ValidateWorkflows(project, projectName, result);
+        ValidateInterlocking(project, projectName, result);
+    }
+
+    private static void ValidateLocomotives(Project project, string projectName, ProjectValidationResult result)
+    {
         if (project.Locomotives.Count == 0)
         {
             result.AddWarning($"[{projectName}] No locomotives defined. Journey execution will fail.");
@@ -96,16 +104,33 @@ public class ProjectValidator : IProjectValidator
         {
             result.AddInfo($"[{projectName}] Locomotives: {project.Locomotives.Count} defined");
         }
+    }
 
-        ValidateJourneys(project, projectName, result);
-
-        // Check trains (optional but recommended)
+    private static void AddOptionalInventorySummary(Project project, string projectName, ProjectValidationResult result)
+    {
         if (project.Trains.Count > 0)
         {
             result.AddInfo($"[{projectName}] Trains: {project.Trains.Count} defined");
         }
 
-        // Check workflows (optional)
+        if (project.PassengerWagons.Count > 0)
+        {
+            result.AddInfo($"[{projectName}] Passenger Wagons: {project.PassengerWagons.Count} defined");
+        }
+
+        if (project.GoodsWagons.Count > 0)
+        {
+            result.AddInfo($"[{projectName}] Goods Wagons: {project.GoodsWagons.Count} defined");
+        }
+
+        if (project.SignalBoxPlan != null)
+        {
+            result.AddInfo($"[{projectName}] Signal Box Plan defined");
+        }
+    }
+
+    private void ValidateWorkflows(Project project, string projectName, ProjectValidationResult result)
+    {
         if (project.Workflows.Count > 0)
         {
             result.AddInfo($"[{projectName}] Workflows: {project.Workflows.Count} defined");
@@ -116,41 +141,36 @@ public class ProjectValidator : IProjectValidator
             var step = issue.StepId.HasValue ? $"/Step {issue.StepId}" : string.Empty;
             var message = $"[{projectName}/Workflow {issue.WorkflowId}{step}] {issue.Code}: {issue.Message} ({issue.FieldPath})";
             if (issue.Severity == WorkflowValidationSeverity.Error)
+            {
                 result.AddError(message);
+            }
             else
+            {
                 result.AddWarning(message);
+            }
         }
+    }
 
-        // Check passenger wagons (optional)
-        if (project.PassengerWagons.Count > 0)
-        {
-            result.AddInfo($"[{projectName}] Passenger Wagons: {project.PassengerWagons.Count} defined");
-        }
-
-        // Check goods wagons (optional)
-        if (project.GoodsWagons.Count > 0)
-        {
-            result.AddInfo($"[{projectName}] Goods Wagons: {project.GoodsWagons.Count} defined");
-        }
-
-        // Check signal box plan (optional)
-        if (project.SignalBoxPlan != null)
-        {
-            result.AddInfo($"[{projectName}] Signal Box Plan defined");
-        }
-
+    private void ValidateInterlocking(Project project, string projectName, ProjectValidationResult result)
+    {
         var interlockingReport = _interlockingValidator.Validate(project);
         foreach (var finding in interlockingReport.Findings)
         {
             var message = $"[{projectName}/Interlocking/{finding.Code}] {finding.Message}";
             if (finding.Severity == InterlockingValidationSeverity.Error)
+            {
                 result.AddError(message);
+            }
             else
+            {
                 result.AddWarning(message);
+            }
         }
 
         if (interlockingReport.IsValid)
+        {
             result.AddInfo($"[{projectName}] Interlocking definition valid");
+        }
     }
 
     private static void ValidateJourneys(Project project, string projectName, ProjectValidationResult result)

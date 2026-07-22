@@ -16,6 +16,24 @@ using Service;
 using System.Diagnostics.CodeAnalysis;
 
 /// <summary>
+/// Groups optional journey runtime collaborators so the manager constructor stays focused on required dependencies.
+/// </summary>
+public sealed class JourneyManagerDependencies
+{
+    /// <summary>Gets the service that applies stop transitions.</summary>
+    public IJourneyStopTransitionService? StopTransitionService { get; init; }
+
+    /// <summary>Gets the store used to persist journey runtime checkpoints.</summary>
+    public IJourneyRuntimeStateStore? RuntimeStateStore { get; init; }
+
+    /// <summary>Gets the time source used by workflow coordination.</summary>
+    public TimeProvider? TimeProvider { get; init; }
+
+    /// <summary>Gets an optional pre-composed workflow execution coordinator.</summary>
+    public IWorkflowExecutionCoordinator? ExecutionCoordinator { get; init; }
+}
+
+/// <summary>
 /// Manages the execution of workflows and their actions related to a journey or stop (station) based on feedback events (track feedback points).
 /// Platform-independent: No UI thread dispatching (that's handled by platform-specific ViewModels).
 /// Uses SessionState to separate runtime state from domain objects.
@@ -78,19 +96,17 @@ public class JourneyManager : IJourneyManager
         IWorkflowService workflowService,
         ActionExecutionContext? executionContext = null,
         ILogger<JourneyManager>? logger = null,
-        IJourneyStopTransitionService? stopTransitionService = null,
-        IJourneyRuntimeStateStore? runtimeStateStore = null,
-        TimeProvider? timeProvider = null,
-        IWorkflowExecutionCoordinator? executionCoordinator = null)
+        JourneyManagerDependencies? dependencies = null)
     {
+        dependencies ??= new JourneyManagerDependencies();
         _z21 = z21;
         _project = project;
         _logger = logger ?? NullLogger<JourneyManager>.Instance;
-        _stopTransitionService = stopTransitionService ?? new JourneyStopTransitionService();
-        _runtimeStateStore = runtimeStateStore ?? new NullJourneyRuntimeStateStore();
+        _stopTransitionService = dependencies.StopTransitionService ?? new JourneyStopTransitionService();
+        _runtimeStateStore = dependencies.RuntimeStateStore ?? new NullJourneyRuntimeStateStore();
         _executionContextFactory = new ActionExecutionContextFactory(executionContext ?? new ActionExecutionContext { Z21 = z21 });
-        _executionCoordinator = executionCoordinator
-            ?? new WorkflowExecutionCoordinator(workflowService, timeProvider ?? TimeProvider.System);
+        _executionCoordinator = dependencies.ExecutionCoordinator
+            ?? new WorkflowExecutionCoordinator(workflowService, dependencies.TimeProvider ?? TimeProvider.System);
         _z21.Received += OnZ21FeedbackReceived;
 
         // Initialize SessionState for all journeys
@@ -158,8 +174,7 @@ public class JourneyManager : IJourneyManager
                         continue;
                     }
 
-                    var queuedExecution = HandleFeedback(journey, expectedStep, feedback);
-                    if (queuedExecution != null)
+                    if (TryHandleFeedback(journey, expectedStep, feedback, out var queuedExecution))
                     {
                         queuedExecutions.Add(queuedExecution);
                     }
@@ -184,10 +199,11 @@ public class JourneyManager : IJourneyManager
         }
     }
 
-    private Task<WorkflowExecutionResult>? HandleFeedback(
+    private bool TryHandleFeedback(
         Journey journey,
         JourneyFeedbackStep feedbackStep,
-        FeedbackResult feedback)
+        FeedbackResult feedback,
+        [NotNullWhen(true)] out Task<WorkflowExecutionResult>? queuedExecution)
     {
         var state = _states[journey.Id];
 
@@ -209,14 +225,17 @@ public class JourneyManager : IJourneyManager
 
         if (state.CurrentStepOccurrence < Math.Max(feedbackStep.RepeatCount, 1u))
         {
-            return null;
+            queuedExecution = null;
+            return false;
         }
 
         ApplyStopTransition(journey, feedbackStep, state);
 
-        var queuedExecution = feedbackStep.WorkflowId.HasValue
-            ? QueueFeedbackWorkflow(journey, feedbackStep, feedback)
-            : null;
+        queuedExecution = null;
+        if (feedbackStep.WorkflowId.HasValue)
+        {
+            TryQueueFeedbackWorkflow(journey, feedbackStep, feedback, out queuedExecution);
+        }
 
         state.CurrentFeedbackIndex++;
         state.CurrentStepOccurrence = 0;
@@ -229,7 +248,7 @@ public class JourneyManager : IJourneyManager
         }
 
         OnFeedbackReceived(new JourneyFeedbackEventArgs { JourneyId = journey.Id, SessionState = state });
-        return queuedExecution;
+        return queuedExecution != null;
     }
 
     private JourneyFeedbackStep? GetExpectedStep(Journey journey, JourneySessionState state)
@@ -341,17 +360,19 @@ public class JourneyManager : IJourneyManager
         return true;
     }
 
-    private Task<WorkflowExecutionResult>? QueueFeedbackWorkflow(
+    private bool TryQueueFeedbackWorkflow(
         Journey journey,
         JourneyFeedbackStep feedbackStep,
-        FeedbackResult feedback)
+        FeedbackResult feedback,
+        [NotNullWhen(true)] out Task<WorkflowExecutionResult>? queuedExecution)
     {
         var workflowId = feedbackStep.WorkflowId ?? throw new InvalidOperationException("A feedback workflow requires an identifier.");
         var workflow = _project.Workflows.FirstOrDefault(w => w.Id == workflowId);
         if (workflow == null)
         {
             _logger.LogWarning("Workflow with ID {WorkflowId} not found", workflowId);
-            return null;
+            queuedExecution = null;
+            return false;
         }
 
         TryGetCurrentStation(journey, _states[journey.Id], out var currentStation);
@@ -368,7 +389,7 @@ public class JourneyManager : IJourneyManager
             FeedbackInPort = feedbackStep.InPort
         });
 
-        return _executionCoordinator.EnqueueAsync(new QueuedWorkflowExecution
+        queuedExecution = _executionCoordinator.EnqueueAsync(new QueuedWorkflowExecution
         {
             SourceKey = $"z21-feedback:{feedback.InPort}",
             OwnerId = journey.Id,
@@ -382,6 +403,7 @@ public class JourneyManager : IJourneyManager
                 SourceCorrelationId = feedback.CorrelationId
             }
         });
+        return true;
     }
 
     private void TryActivateNextJourney(Guid nextJourneyId)

@@ -150,7 +150,7 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
     public ObservableCollection<WorkflowStepViewModel> Steps { get; }
 
     /// <summary>Gets workflow-level failure behaviors available to the editor.</summary>
-    public IEnumerable<WorkflowFailureBehavior> FailureBehaviors => Enum.GetValues<WorkflowFailureBehavior>();
+    public IEnumerable<WorkflowFailureBehavior> FailureBehaviors { get; } = Enum.GetValues<WorkflowFailureBehavior>();
 
     /// <summary>Gets or sets the Workflow 2.0 entry node.</summary>
     public Guid? EntryStepId
@@ -226,7 +226,7 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
         var step = _stepViewModelFactory.CreateDefaultStep(kind);
         var steps = _model.Steps ??= [];
         var previous = steps.LastOrDefault();
-        if (previous != null && previous is not WorkflowConditionStep and not WorkflowParallelStep and not WorkflowTerminateStep)
+        if (previous is WorkflowActionStep or WorkflowDelayStep or WorkflowNestedStep)
         {
             previous.NextStepId = step.Id;
         }
@@ -433,32 +433,47 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
     {
         foreach (var graphStep in _model.Steps!)
         {
-            if (graphStep.NextStepId == deletedStepId)
-            {
-                graphStep.NextStepId = null;
-            }
-
-            if (graphStep.ErrorPolicy?.FailureStepId == deletedStepId)
-            {
-                graphStep.ErrorPolicy.FailureStepId = null;
-            }
-
-            switch (graphStep)
-            {
-                case WorkflowConditionStep condition:
-                    if (condition.TrueStepId == deletedStepId) condition.TrueStepId = Guid.Empty;
-                    if (condition.FalseStepId == deletedStepId) condition.FalseStepId = Guid.Empty;
-                    break;
-                case WorkflowParallelStep parallel:
-                    parallel.Branches.RemoveAll(branch => branch.EntryStepId == deletedStepId);
-                    if (parallel.JoinStepId == deletedStepId) parallel.JoinStepId = Guid.Empty;
-                    break;
-            }
+            ClearStepReference(graphStep, deletedStepId);
         }
 
-        if (_model.DefaultErrorPolicy?.FailureStepId == deletedStepId)
+        ClearFailureStepReference(_model.DefaultErrorPolicy, deletedStepId);
+    }
+
+    private static void ClearStepReference(WorkflowStep graphStep, Guid deletedStepId)
+    {
+        if (graphStep.NextStepId == deletedStepId)
         {
-            _model.DefaultErrorPolicy.FailureStepId = null;
+            graphStep.NextStepId = null;
+        }
+
+        ClearFailureStepReference(graphStep.ErrorPolicy, deletedStepId);
+        switch (graphStep)
+        {
+            case WorkflowConditionStep condition:
+                if (condition.TrueStepId == deletedStepId)
+                {
+                    condition.TrueStepId = Guid.Empty;
+                }
+                if (condition.FalseStepId == deletedStepId)
+                {
+                    condition.FalseStepId = Guid.Empty;
+                }
+                break;
+            case WorkflowParallelStep parallel:
+                parallel.Branches.RemoveAll(branch => branch.EntryStepId == deletedStepId);
+                if (parallel.JoinStepId == deletedStepId)
+                {
+                    parallel.JoinStepId = Guid.Empty;
+                }
+                break;
+        }
+    }
+
+    private static void ClearFailureStepReference(WorkflowErrorPolicy? policy, Guid deletedStepId)
+    {
+        if (policy?.FailureStepId == deletedStepId)
+        {
+            policy.FailureStepId = null;
         }
     }
 

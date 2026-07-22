@@ -51,9 +51,12 @@ public sealed class JourneyManagerFactory(
             workflowService,
             executionContext,
             logger,
-            stopTransitionService,
-            runtimeStateStore,
-            timeProvider);
+            new JourneyManagerDependencies
+            {
+                StopTransitionService = stopTransitionService,
+                RuntimeStateStore = runtimeStateStore,
+                TimeProvider = timeProvider
+            });
 }
 
 public sealed class PlatformManagerFactory(

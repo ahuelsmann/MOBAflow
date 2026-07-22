@@ -29,6 +29,22 @@ using WorkflowSteps;
 /// <summary>Describes one project reference that prevents silent workflow deletion.</summary>
 public sealed record WorkflowReference(string OwnerType, Guid OwnerId, string OwnerName, string Location);
 
+/// <summary>Groups optional services used by workflow dry runs and retained lifecycle traces.</summary>
+public sealed class WorkflowLibraryRuntimeServices
+{
+    /// <summary>Gets the optional workflow execution service.</summary>
+    public IWorkflowService? WorkflowService { get; init; }
+
+    /// <summary>Gets the optional retained lifecycle trace store.</summary>
+    public IWorkflowTraceStore? TraceStore { get; init; }
+
+    /// <summary>Gets the optional base action execution context.</summary>
+    public ActionExecutionContext? ExecutionContext { get; init; }
+
+    /// <summary>Gets the optional lifecycle event bus.</summary>
+    public IEventBus? EventBus { get; init; }
+}
+
 /// <summary>
 /// Owns the shared workflow catalog, editor selection, validation, reference safety, and save coordination.
 /// </summary>
@@ -72,20 +88,18 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
         IDialogService? dialogService = null,
         IWorkflowValidator? validator = null,
         ILogger<WorkflowLibraryViewModel>? logger = null,
-        IWorkflowService? workflowService = null,
-        IWorkflowTraceStore? traceStore = null,
-        ActionExecutionContext? executionContext = null,
-        IEventBus? eventBus = null)
+        WorkflowLibraryRuntimeServices? runtimeServices = null)
     {
         ArgumentNullException.ThrowIfNull(projectContext);
+        runtimeServices ??= new WorkflowLibraryRuntimeServices();
         _projectContext = projectContext;
         _dialogService = dialogService ?? new NullDialogService();
         _validator = validator ?? new WorkflowValidator();
         _logger = logger;
-        _workflowService = workflowService;
-        _traceStore = traceStore;
-        _executionContext = executionContext;
-        _eventBus = eventBus;
+        _workflowService = runtimeServices.WorkflowService;
+        _traceStore = runtimeServices.TraceStore;
+        _executionContext = runtimeServices.ExecutionContext;
+        _eventBus = runtimeServices.EventBus;
         if (_eventBus != null)
         {
             _traceSubscriptionId = _eventBus.Subscribe<WorkflowLifecycleEvent>(OnWorkflowLifecycleEvent);
@@ -119,7 +133,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     public bool CanDryRun => _workflowService != null && _executionContext != null && SelectedWorkflow != null;
 
     /// <summary>Gets the node editor target, or the workflow when no node is selected.</summary>
-    public object? SelectedEditorObject => SelectedStep is not null ? SelectedStep : SelectedWorkflow;
+    public object? SelectedEditorObject => (object?)_selectedStep ?? _selectedWorkflow;
 
     partial void OnSearchTextChanged(string value)
     {
@@ -182,7 +196,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     [RelayCommand]
     private void SelectWorkflow(WorkflowViewModel? workflow)
     {
-        if (workflow == null || Workflows?.Contains(workflow) == true)
+        if (workflow == null || Workflows?.Contains(workflow) is true)
         {
             SelectedWorkflow = workflow;
         }
@@ -445,7 +459,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
         GC.SuppressFinalize(this);
     }
 
-    private bool HasSelectedWorkflow() => SelectedWorkflow != null;
+    private bool HasSelectedWorkflow() => _selectedWorkflow != null;
 
     private bool CanStartDryRun() => CanDryRun && !IsDryRunRunning;
 
@@ -515,7 +529,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
             }
         }
 
-        if (SelectedWorkflow != null && Workflows?.Contains(SelectedWorkflow) != true)
+        if (SelectedWorkflow != null && Workflows?.Contains(SelectedWorkflow) is not true)
         {
             SelectedWorkflow = Workflows?.FirstOrDefault();
         }

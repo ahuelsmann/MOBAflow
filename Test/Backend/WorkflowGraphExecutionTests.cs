@@ -385,12 +385,15 @@ internal sealed class WorkflowGraphExecutionTests
         IWorkflowTraceStore? traceStore = null) =>
         new(
             executor,
-            new WorkflowValidator(),
-            new WorkflowEffectPlanner(),
-            new WorkflowConditionEvaluator(),
-            new EventBus(NullLogger<EventBus>.Instance),
-            traceStore ?? new WorkflowTraceStore(),
-            TimeProvider.System);
+            new WorkflowServiceDependencies
+            {
+                Validator = new WorkflowValidator(),
+                EffectPlanner = new WorkflowEffectPlanner(),
+                ConditionEvaluator = new WorkflowConditionEvaluator(),
+                EventBus = new EventBus(NullLogger<EventBus>.Instance),
+                TraceStore = traceStore ?? new WorkflowTraceStore(),
+                TimeProvider = TimeProvider.System
+            });
 
     private static ActionExecutionContext CreateContext(Project project) =>
         new()

@@ -65,10 +65,7 @@ public partial class MainWindowViewModel
 
     partial void OnSelectedWorkflowChanged(WorkflowViewModel? value)
     {
-        if (WorkflowLibrary.SelectedWorkflow != value)
-        {
-            WorkflowLibrary.SelectedWorkflow = value;
-        }
+        WorkflowLibrary.SelectedWorkflow = value;
     }
 
     private void OnWorkflowLibraryPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

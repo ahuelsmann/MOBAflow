@@ -75,6 +75,7 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
         await runtime.ActivateProjectAsync(new Project { Name = "Replacement" });
 
         await cancelled.Task.WaitAsync(TimeSpan.FromSeconds(1));
+        Assert.That(cancelled.Task.IsCompletedSuccessfully, Is.True);
     }
 
     [Test]
@@ -91,6 +92,7 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
         await runtime.DisconnectAsync();
 
         await cancelled.Task.WaitAsync(TimeSpan.FromSeconds(1));
+        Assert.That(cancelled.Task.IsCompletedSuccessfully, Is.True);
     }
 
     [Test]
@@ -107,6 +109,7 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
         runtime.Dispose();
 
         await cancelled.Task.WaitAsync(TimeSpan.FromSeconds(1));
+        Assert.That(cancelled.Task.IsCompletedSuccessfully, Is.True);
     }
 
     [Test]

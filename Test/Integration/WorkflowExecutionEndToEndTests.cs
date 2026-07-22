@@ -125,12 +125,15 @@ internal sealed class WorkflowExecutionEndToEndTests
         var traceStore = new WorkflowTraceStore();
         _workflowService = new WorkflowService(
             ActionExecutor.CreateWithDefaultHandlers(),
-            new WorkflowValidator(),
-            new WorkflowEffectPlanner(),
-            new WorkflowConditionEvaluator(),
-            new EventBus(NullLogger<EventBus>.Instance),
-            traceStore,
-            TimeProvider.System);
+            new WorkflowServiceDependencies
+            {
+                Validator = new WorkflowValidator(),
+                EffectPlanner = new WorkflowEffectPlanner(),
+                ConditionEvaluator = new WorkflowConditionEvaluator(),
+                EventBus = new EventBus(NullLogger<EventBus>.Instance),
+                TraceStore = traceStore,
+                TimeProvider = TimeProvider.System
+            });
         var child = CreateCommandWorkflow([new byte[] { 0x21, 0x81, 0x00, 0xA0 }]);
         child.DefaultErrorPolicy = new WorkflowErrorPolicy
         {

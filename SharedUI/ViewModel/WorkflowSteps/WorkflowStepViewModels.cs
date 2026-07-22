@@ -82,7 +82,7 @@ public abstract class WorkflowStepViewModel : ObservableObject
     }
 
     /// <summary>Gets failure behaviors available to the editor.</summary>
-    public IEnumerable<WorkflowFailureBehavior> FailureBehaviors => Enum.GetValues<WorkflowFailureBehavior>();
+    public IEnumerable<WorkflowFailureBehavior> FailureBehaviors { get; } = Enum.GetValues<WorkflowFailureBehavior>();
 
     /// <summary>Gets whether this node overrides the workflow error policy.</summary>
     public bool HasErrorPolicy
@@ -230,7 +230,7 @@ public sealed class WorkflowConditionStepViewModel(WorkflowConditionStep model) 
     public override WorkflowStepKind Kind => WorkflowStepKind.Condition;
 
     /// <summary>Gets typed condition kinds available to the editor.</summary>
-    public IEnumerable<WorkflowConditionKind> ConditionKinds => Enum.GetValues<WorkflowConditionKind>();
+    public IEnumerable<WorkflowConditionKind> ConditionKinds { get; } = Enum.GetValues<WorkflowConditionKind>();
 
     /// <summary>Gets or sets the condition discriminator.</summary>
     public WorkflowConditionKind ConditionKind
@@ -452,7 +452,7 @@ public sealed class WorkflowTerminateStepViewModel(WorkflowTerminateStep model) 
     public override WorkflowStepKind Kind => WorkflowStepKind.Terminate;
 
     /// <summary>Gets terminal results available to the editor.</summary>
-    public IEnumerable<WorkflowTerminationResult> Results => Enum.GetValues<WorkflowTerminationResult>();
+    public IEnumerable<WorkflowTerminationResult> Results { get; } = Enum.GetValues<WorkflowTerminationResult>();
 
     /// <summary>Gets or sets the terminal result.</summary>
     public WorkflowTerminationResult Result
