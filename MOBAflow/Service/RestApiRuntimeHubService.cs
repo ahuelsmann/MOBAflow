@@ -4,7 +4,6 @@ namespace Moba.WinUI.Service;
 
 using Backend.Interface;
 
-using Common.Configuration;
 using Common.Events;
 using Common.Runtime;
 
@@ -25,9 +24,8 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
     private readonly IRuntimeHubHostClient _runtimeHubHostClient;
     private readonly IMobaRuntime _mobaRuntime;
     private readonly IEventBus _eventBus;
-    private readonly AppSettings _appSettings;
-    private readonly HttpClient _httpClient;
     private readonly ILogger<RestApiRuntimeHubService> _logger;
+    private readonly HostControlPlaneSession? _hostSession;
     private readonly object _debounceLock = new();
     private readonly Guid _subscriptionId;
     private CancellationTokenSource? _debounceCts;
@@ -88,16 +86,14 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
         IRuntimeHubHostClient runtimeHubHostClient,
         IMobaRuntime mobaRuntime,
         IEventBus eventBus,
-        AppSettings appSettings,
-        IHttpClientFactory httpClientFactory,
-        ILogger<RestApiRuntimeHubService> logger)
+        ILogger<RestApiRuntimeHubService> logger,
+        HostControlPlaneSession? hostSession = null)
     {
         _runtimeHubHostClient = runtimeHubHostClient;
         _mobaRuntime = mobaRuntime;
         _eventBus = eventBus;
-        _appSettings = appSettings;
-        _httpClient = httpClientFactory.CreateClient(nameof(RestApiRuntimeHubService));
         _logger = logger;
+        _hostSession = hostSession;
         _subscriptionId = _eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged);
     }
 
@@ -225,12 +221,13 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
 
     private async Task<bool> PushSnapshotRestFallbackAsync(MobaRuntimeSnapshot snapshot, CancellationToken cancellationToken)
     {
-        var port = _appSettings.RestApi.Port > 0 ? _appSettings.RestApi.Port : 5001;
+        if (_hostSession?.IsEnrolled != true)
+            return false;
+
         var json = RuntimeJsonSerializer.Serialize(snapshot);
         using var content = new StringContent(json, Encoding.UTF8, "application/json");
-        using var response = await _httpClient
-            .PutAsync($"http://127.0.0.1:{port}/api/runtime/snapshot", content, cancellationToken)
-            .ConfigureAwait(false);
+        using var request = new HttpRequestMessage(HttpMethod.Put, "api/runtime/snapshot") { Content = content };
+        using var response = await _hostSession.SendAsync(request, cancellationToken).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
             _logger.LogDebug("Runtime REST snapshot push returned {StatusCode}", (int)response.StatusCode);

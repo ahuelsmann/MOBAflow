@@ -55,6 +55,7 @@
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
@@ -65,10 +66,18 @@
                         QueryIcon="Find"
                         Text="{x:Bind ViewModel.PassengerWagonSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-                    <ListView
+                    <ComboBox
                         Grid.Row="1"
+                        Margin="0,0,0,8"
+                        AutomationProperties.Name="Maintenance status filter"
+                        DisplayMemberPath="Label"
+                        ItemsSource="{x:Bind Maintenance.FilterOptions, Mode=OneWay}"
+                        SelectedItem="{x:Bind Maintenance.SelectedFilter, Mode=TwoWay}" />
+
+                    <ListView
+                        Grid.Row="2"
                         IsItemClickEnabled="True"
-                        ItemsSource="{x:Bind ViewModel.SelectedProject.PassengerWagons, Mode=OneWay}"
+                        ItemsSource="{x:Bind Maintenance.VisiblePassengerWagons, Mode=OneWay}"
                         SelectedItem="{x:Bind ViewModel.SelectedPassengerWagon, Mode=TwoWay}"
                         SelectionMode="Single">
                         <ListView.ContextFlyout>
@@ -129,12 +138,16 @@
             Header="Properties"
             IsExpanded="{x:Bind ViewModel.IsPassengerWagonPropertiesExpanded, Mode=TwoWay}">
             <controls:CollapsibleColumnProperties.PanelContent>
-                <ContentControl
-                    HorizontalContentAlignment="Stretch"
-                    VerticalContentAlignment="Stretch"
-                    Content="{x:Bind ViewModel.SelectedPassengerWagon, Mode=OneWay}"
-                    ContentTemplateSelector="{StaticResource EntityTemplateSelector}"
-                    Visibility="{x:Bind ViewModel.SelectedPassengerWagon, Mode=OneWay, Converter={StaticResource NullableConverter}}" />
+                <ScrollViewer>
+                    <StackPanel Spacing="12">
+                        <ContentControl
+                            HorizontalContentAlignment="Stretch"
+                            Content="{x:Bind ViewModel.SelectedPassengerWagon, Mode=OneWay}"
+                            ContentTemplateSelector="{StaticResource EntityTemplateSelector}"
+                            Visibility="{x:Bind ViewModel.SelectedPassengerWagon, Mode=OneWay, Converter={StaticResource NullableConverter}}" />
+                        <controls:RollingStockMaintenancePanel ViewModel="{x:Bind Maintenance, Mode=OneWay}" />
+                    </StackPanel>
+                </ScrollViewer>
             </controls:CollapsibleColumnProperties.PanelContent>
         </controls:CollapsibleColumnProperties>
     </Grid>

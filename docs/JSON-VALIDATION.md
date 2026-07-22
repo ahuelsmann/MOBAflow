@@ -71,7 +71,15 @@ User gets a clear error message
     {
       "name": "Main Project",
       "workflows": [],
-      "trains": []
+      "trains": [],
+      "interlocking": {
+        "turnouts": [],
+        "signals": [],
+        "blocks": [],
+        "connections": [],
+        "routes": [],
+        "bindings": []
+      }
     }
   ]
 }

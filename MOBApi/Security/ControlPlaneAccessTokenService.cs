@@ -30,6 +30,7 @@ internal sealed class ControlPlaneAccessTokenService : IControlPlaneAccessTokenS
     private const string Audience = "mobapi";
     private static readonly TimeSpan ClockSkew = TimeSpan.FromSeconds(30);
     private readonly ICredentialRegistry _credentialRegistry;
+    private readonly IHostCredentialService? _hostCredentialService;
     private readonly IDataProtector _protector;
     private readonly ControlPlaneSecurityOptions _options;
     private readonly TimeProvider _timeProvider;
@@ -38,19 +39,21 @@ internal sealed class ControlPlaneAccessTokenService : IControlPlaneAccessTokenS
         ICredentialRegistry credentialRegistry,
         IDataProtectionProvider dataProtectionProvider,
         IOptions<ControlPlaneSecurityOptions> options,
-        TimeProvider timeProvider)
+        TimeProvider timeProvider,
+        IHostCredentialService? hostCredentialService = null)
     {
         _credentialRegistry = credentialRegistry;
         _protector = dataProtectionProvider.CreateProtector(TokenPurpose);
         _options = options.Value;
         _timeProvider = timeProvider;
+        _hostCredentialService = hostCredentialService;
     }
 
     public async Task<IssuedAccessToken?> IssueAsync(
         string credentialId,
         CancellationToken cancellationToken = default)
     {
-        var state = await _credentialRegistry.GetAuthorizationStateAsync(credentialId, cancellationToken).ConfigureAwait(false);
+        var state = await GetAuthorizationStateAsync(credentialId, cancellationToken).ConfigureAwait(false);
         if (state is null)
             return null;
 
@@ -81,13 +84,29 @@ internal sealed class ControlPlaneAccessTokenService : IControlPlaneAccessTokenS
         if (payload is null || !HasValidEnvelope(payload, _timeProvider.GetUtcNow()))
             return null;
 
-        var state = await _credentialRegistry
-            .GetAuthorizationStateAsync(payload.CredentialId, cancellationToken)
-            .ConfigureAwait(false);
+        var state = await GetAuthorizationStateAsync(payload.CredentialId, cancellationToken).ConfigureAwait(false);
         if (!MatchesLiveState(payload, state))
             return null;
 
         return CreatePrincipal(payload);
+    }
+
+    private async Task<CredentialAuthorizationState?> GetAuthorizationStateAsync(
+        string credentialId,
+        CancellationToken cancellationToken)
+    {
+        if (_hostCredentialService is not null)
+        {
+            var hostState = await _hostCredentialService
+                .GetAuthorizationStateAsync(credentialId, cancellationToken)
+                .ConfigureAwait(false);
+            if (hostState is not null)
+                return hostState;
+        }
+
+        return await _credentialRegistry
+            .GetAuthorizationStateAsync(credentialId, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     private AccessTokenPayload? Unprotect(string token)

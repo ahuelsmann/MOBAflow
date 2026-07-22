@@ -16,6 +16,9 @@
 
 - [ ] Relevant build completed
 - [ ] Relevant automated tests passed
+- [ ] Local Sonar analysis was attempted against the actual PR base; any capability limitation is documented below
+- [ ] This PR remained a draft until all new actionable Sonar findings were resolved
+- [ ] SonarCloud is green and reports zero `OPEN`/`CONFIRMED` issues before review
 - [ ] Manual validation completed or documented as not applicable
 
 ## Impact and risk

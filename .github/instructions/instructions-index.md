@@ -30,6 +30,7 @@ applyTo: '**'
 
 ### Code quality
 - [test.instructions.md](./test.instructions.md)
+- [sonarqube-pre-pr.instructions.md](./sonarqube-pre-pr.instructions.md)
 - [naming-conventions.instructions.md](./naming-conventions.instructions.md)
 - [self-explanatory-code-commenting.instructions.md](./self-explanatory-code-commenting.instructions.md)
 - [no-special-chars.instructions.md](./no-special-chars.instructions.md)

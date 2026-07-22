@@ -12,7 +12,8 @@ public static class ControlPlaneSecurityServiceCollectionExtensions
 {
     public static IServiceCollection AddControlPlaneSecurity(
         this IServiceCollection services,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        HostBootstrapMaterial? hostBootstrapMaterial = null)
     {
         services.AddOptions<ControlPlaneSecurityOptions>()
             .Bind(configuration.GetSection(ControlPlaneSecurityOptions.SectionName))
@@ -20,6 +21,8 @@ public static class ControlPlaneSecurityServiceCollectionExtensions
             .ValidateOnStart();
         services.AddDataProtection().SetApplicationName("MOBApi.ControlPlane");
         services.AddSingleton(TimeProvider.System);
+        services.AddSingleton(hostBootstrapMaterial ?? HostBootstrapMaterial.Unavailable);
+        services.AddSingleton<IHostCredentialService, HostCredentialService>();
         services.AddSingleton<ICredentialRegistry, CredentialRegistry>();
         services.AddSingleton<IControlPlaneAccessTokenService, ControlPlaneAccessTokenService>();
         services.AddSingleton<IServerIdentityProvider, ServerIdentityProvider>();
@@ -43,5 +46,8 @@ public static class ControlPlaneSecurityServiceCollectionExtensions
         options.RefreshAbsoluteLifetime > TimeSpan.Zero &&
         options.PairingWindowLifetime > TimeSpan.Zero &&
         options.PairingCooldown > TimeSpan.Zero &&
-        options.PairingMaximumFailedAttempts > 0;
+        options.PairingMaximumFailedAttempts > 0 &&
+        options.HostBootstrapLifetime > TimeSpan.Zero &&
+        options.HostBootstrapMaximumFailedAttempts > 0 &&
+        options.HostDisconnectGrace > TimeSpan.Zero;
 }

@@ -165,6 +165,51 @@ internal sealed class TimetableEvaluationServiceTests
         });
     }
 
+    [Test]
+    public void Evaluate_Should_IgnoreCompletedServiceForResourceConflicts()
+    {
+        // Arrange
+        var project = CreateProject();
+        var first = CreateService(project, new DateTimeOffset(2026, 8, 1, 10, 0, 0, TimeSpan.Zero), TimeSpan.FromMinutes(15));
+        var completed = CreateService(project, new DateTimeOffset(2026, 8, 1, 10, 5, 0, TimeSpan.Zero), TimeSpan.FromMinutes(15));
+        project.TimetableServices = [first, completed];
+        var states = new[]
+        {
+            new TimetableServiceState
+            {
+                ServiceId = completed.Id,
+                Status = TimetableServiceStatus.Completed
+            }
+        };
+
+        // Act
+        var result = _service.Evaluate(project, states);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Issues, Has.None.Matches<TimetableIssue>(issue => issue.Kind == TimetableIssueKind.PlatformConflict));
+            Assert.That(result.Issues, Has.None.Matches<TimetableIssue>(issue => issue.Kind == TimetableIssueKind.JourneyConflict));
+        });
+    }
+
+    [Test]
+    public void Evaluate_Should_ReportDuplicateCallIdentifiers()
+    {
+        // Arrange
+        var project = CreateProject();
+        var first = CreateService(project, new DateTimeOffset(2026, 8, 1, 10, 0, 0, TimeSpan.Zero), TimeSpan.FromMinutes(5));
+        var second = CreateService(project, new DateTimeOffset(2026, 8, 1, 11, 0, 0, TimeSpan.Zero), TimeSpan.FromMinutes(5));
+        second.Calls[0].Id = first.Calls[0].Id;
+        project.TimetableServices = [first, second];
+
+        // Act
+        var result = _service.Evaluate(project);
+
+        // Assert
+        Assert.That(result.Issues.Count(issue => issue.Kind == TimetableIssueKind.DuplicateIdentifier), Is.EqualTo(2));
+    }
+
     private static Project CreateProject()
     {
         var platform = new Platform { Id = Guid.NewGuid(), Number = 1 };

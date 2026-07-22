@@ -6,8 +6,10 @@ using Common.Runtime;
 
 using Domain;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+using Moba.MOBApi.Security;
 using Moba.MOBApi.Service;
 
 using System.Net;
@@ -83,6 +85,7 @@ public class RuntimeCommandsController : ControllerBase
     }
 
     [HttpGet("pending")]
+    [Authorize(Policy = ControlPlaneCapabilities.HostConsume)]
     public IActionResult DequeuePending()
     {
         if (!IsLocalhostRequest())
