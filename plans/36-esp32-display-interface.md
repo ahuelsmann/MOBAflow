@@ -23,16 +23,23 @@ Status on 2026-07-22:
   allocation-free deterministic frame assembler, matching IEEE CRC32, and a
   recording backend with a configurable capability profile.
 - The assembler validates frame metadata, geometry, byte offsets, packet
-  metadata, region limits, duplicate bytes, coverage, CRC, timeout, abort,
-  explicit replacement, reboot reset, and at-most-once completion before it
-  calls `Present`. Conflicting overlap and every incomplete or invalid terminal
-  path leave the visible backend untouched.
+  metadata, the complete packet-index set, region limits, duplicate bytes,
+  coverage, CRC, timeout, abort, explicit replacement, reboot reset, and
+  session-wide at-most-once completion before it calls `Present`. Conflicting
+  overlap and every incomplete or invalid terminal path leave the visible
+  backend untouched.
+- The PR review follow-up preserves rotation in the backend presentation call,
+  retains staged data for structured retryable backend failures, rejects frame
+  ID zero before duplicate handling, prevents completed-frame resurrection and
+  older-frame replay, and normalizes a zero inactivity timeout to a bounded
+  minimum. Packet receipt uses a second allocation-free bit field alongside
+  pixel coverage.
 - Two distinct native adapters exercise the same backend contract with different
-  capability profiles. The complete native PlatformIO matrix passes 26 tests:
-  10 display-core cases, 8 RF-01 parser cases including deterministic arbitrary
+  capability profiles. The complete native PlatformIO matrix passes 30 tests:
+  14 display-core cases, 8 RF-01 parser cases including deterministic arbitrary
   input, and 8 RF-02 provisioning regressions.
 - `MOBAdisplay` builds with zero warnings and errors. The complete .NET test
-  matrix passes 1,402 net10.0 tests with four existing skips and 1,455 Windows
+  matrix passes 1,408 net10.0 tests with four existing skips and 1,461 Windows
   tests without failures or skips.
 - The v2 UDP dispatcher and TFT_eSPI reference adapter remain WP4 work; the
   legacy `main.cpp` frame path is intentionally unchanged in this slice.
@@ -42,10 +49,11 @@ Status on 2026-07-22:
   missing configuration belongs to the RF-02/firmware-build boundary.
 - Local Sonar branch analysis was attempted against `github/main` after explicit
   authorization. Its secret phase reported zero findings; its agentic phase
-  failed for all nine changed files with `Vortex agentic analysis is not
+  still fails for all nine changed files with `Vortex agentic analysis is not
   available for this organization (403 Forbidden)`. Per the repository gate,
-  this capability limitation is recorded on the draft pull request and remote
-  SonarCloud must still pass with zero open or confirmed pull-request findings.
+  this capability limitation remains recorded on draft PR #82. The source-level
+  C++11-compatible findings have been corrected; remote SonarCloud must still
+  rerun and report zero open or confirmed pull-request findings.
 
 Prior status on 2026-07-21:
 
