@@ -164,6 +164,29 @@ Planned boundary:
 
 This slice does not include unrelated MOBAsmart decomposition.
 
+#### Slice 4a: Authenticated LAN discovery contract
+
+This independently reviewable prerequisite exposes the persistent MOBApi server instance,
+LAN HTTPS port, and SHA-256 public-key fingerprint through discovery. The version 2 response
+retains the legacy IP and HTTP port fields so existing clients continue to work during the
+compatibility window. MOBApi serves the persistent certificate on the LAN HTTPS endpoint;
+discovery remains untrusted candidate metadata until a client verifies the pinned fingerprint.
+
+Pairing UI, MOBAsmart secure credential storage, authenticated client requests, and anonymous-read
+enforcement remain in the following Slice 4 deliveries. No credential is transmitted by this slice.
+
+Validation evidence:
+
+- version 2 discovery parsing, legacy fallback, invalid identity metadata, persistent instance ID,
+  and host bootstrap metadata are covered by 40 focused tests;
+- the full test suite passes for both targets with 2,869 tests passed and four expected skips;
+- `dotnet build MOBApi/MOBApi.csproj -c Release --no-restore` and the documented MOBAflow
+  FastDebug compile check pass with zero warnings and zero errors;
+- changed-file secret scanning reports zero issues;
+- local agentic Sonar analysis was attempted against `github/main` and returned the organization
+  capability error `Vortex agentic analysis is not available for this organization (403 Forbidden)`;
+  the draft PR therefore remains gated on the remote SonarCloud result.
+
 ### Slice 5: Unified control admission
 
 Planned boundary:

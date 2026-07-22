@@ -18,7 +18,10 @@ public interface IServerIdentityProvider
 /// <summary>
 /// Exposes the server certificate and its SHA-256 public-key fingerprint.
 /// </summary>
-public sealed record ServerIdentity(X509Certificate2 Certificate, string PublicKeyFingerprint);
+public sealed record ServerIdentity(
+    X509Certificate2 Certificate,
+    string PublicKeyFingerprint,
+    string InstanceId);
 
 internal sealed class ServerIdentityProvider : IServerIdentityProvider, IDisposable
 {
@@ -65,13 +68,22 @@ internal sealed class ServerIdentityProvider : IServerIdentityProvider, IDisposa
     {
         var document = await _store.LoadAsync(cancellationToken).ConfigureAwait(false);
         if (!string.IsNullOrWhiteSpace(document.Pkcs12))
-            return FromPkcs12(Convert.FromBase64String(document.Pkcs12));
+        {
+            if (!Guid.TryParseExact(document.InstanceId, "N", out _))
+            {
+                document.InstanceId = CreateInstanceId();
+                await _store.SaveAsync(document, cancellationToken).ConfigureAwait(false);
+            }
+
+            return FromPkcs12(Convert.FromBase64String(document.Pkcs12), document.InstanceId);
+        }
 
         using var certificate = CreateCertificate();
         var pkcs12 = certificate.Export(X509ContentType.Pkcs12);
         document.Pkcs12 = Convert.ToBase64String(pkcs12);
+        document.InstanceId = CreateInstanceId();
         await _store.SaveAsync(document, cancellationToken).ConfigureAwait(false);
-        return FromPkcs12(pkcs12);
+        return FromPkcs12(pkcs12, document.InstanceId);
     }
 
     private X509Certificate2 CreateCertificate()
@@ -88,7 +100,7 @@ internal sealed class ServerIdentityProvider : IServerIdentityProvider, IDisposa
         return request.CreateSelfSigned(now.AddMinutes(-5), now.AddYears(10));
     }
 
-    private static ServerIdentity FromPkcs12(byte[] pkcs12)
+    private static ServerIdentity FromPkcs12(byte[] pkcs12, string instanceId)
     {
         var certificate = X509CertificateLoader.LoadPkcs12(
             pkcs12,
@@ -97,11 +109,15 @@ internal sealed class ServerIdentityProvider : IServerIdentityProvider, IDisposa
         using var publicKey = certificate.GetECDsaPublicKey() ??
                               throw new InvalidDataException("Server identity does not contain an ECDSA public key.");
         var fingerprint = Convert.ToHexString(SHA256.HashData(publicKey.ExportSubjectPublicKeyInfo()));
-        return new ServerIdentity(certificate, fingerprint);
+        return new ServerIdentity(certificate, fingerprint, instanceId);
     }
+
+    private static string CreateInstanceId() => Guid.NewGuid().ToString("N");
 
     private sealed class ServerIdentityDocument
     {
         public string Pkcs12 { get; set; } = string.Empty;
+
+        public string InstanceId { get; set; } = string.Empty;
     }
 }

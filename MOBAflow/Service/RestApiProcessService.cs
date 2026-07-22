@@ -79,14 +79,13 @@ public sealed class RestApiProcessService : IDisposable
             if (await IsApiReachableAsync(port, cancellationToken).ConfigureAwait(false))
             {
                 _logger.LogInformation("MOBApi already running on port {Port} – reusing existing process", port);
-
                 StartDiscoveryResponder(port);
                 ApiBecameReachable?.Invoke(this, port);
                 return;
             }
 
             // Ensure Windows Firewall allows UDP discovery (21106) and REST API (TCP port) so MAUI can connect
-            FirewallHelper.EnsureFirewallRulesExist(port, _logger);
+            FirewallHelper.EnsureFirewallRulesExist(port, port + 1, _logger);
 
             // Prefer MOBApi next to WinUI (copied by build); fall back to repo-root convention
             var (dllPath, workingDir, usePreBuilt) = ResolveMobaApiPaths();
@@ -172,7 +171,18 @@ public sealed class RestApiProcessService : IDisposable
                     bootstrap = await bootstrapChannel.ExchangeAsync(bootstrapTimeout.Token).ConfigureAwait(false);
                 }
 
-                StartDiscoveryResponder(port);
+                if (bootstrap.HasValue)
+                {
+                    StartDiscoveryResponder(
+                        port,
+                        port + 1,
+                        bootstrap.Value.Response.ServerInstanceId,
+                        bootstrap.Value.Response.PublicKeyFingerprint);
+                }
+                else
+                {
+                    StartDiscoveryResponder(port);
+                }
 
                 // Wait for the REST API to become reachable (poll up to 30s) so WinUI continues only when the server is ready
                 const int pollIntervalMs = 300;
@@ -224,6 +234,30 @@ public sealed class RestApiProcessService : IDisposable
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "UDP Discovery responder could not start");
+        }
+    }
+
+    private void StartDiscoveryResponder(
+        int httpPort,
+        int httpsPort,
+        string serverInstanceId,
+        string serverPublicKeyFingerprint)
+    {
+        try
+        {
+            _udpResponder?.Stop();
+            _udpResponder?.Dispose();
+            _udpResponder = new UdpDiscoveryResponder(
+                _discoveryLogger,
+                httpPort,
+                httpsPort,
+                serverInstanceId,
+                serverPublicKeyFingerprint);
+            _udpResponder.Start();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to start authenticated UDP discovery responder");
         }
     }
 

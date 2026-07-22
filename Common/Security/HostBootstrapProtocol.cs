@@ -25,7 +25,7 @@ public static class HostBootstrapProtocol
 
 public sealed record HostBootstrapPipeRequest(string Secret, int ParentProcessId);
 
-public sealed record HostBootstrapPipeResponse(string PublicKeyFingerprint);
+public sealed record HostBootstrapPipeResponse(string PublicKeyFingerprint, string ServerInstanceId);
 
 public sealed record HostBootstrapRequest(string Secret);
 
