@@ -2,6 +2,8 @@
 #include <unity.h>
 
 #include <cstdint>
+#include <cstring>
+#include <type_traits>
 
 using MobaDisplay::Provisioning::CredentialView;
 using MobaDisplay::Provisioning::State;
@@ -12,28 +14,44 @@ namespace
 CredentialView Credentials()
 {
     static const uint8_t ssid[] = "MOBAflow-test";
-    static const uint8_t passphrase[] = "correct-horse";
+    // Deterministic non-secret bytes keep state-machine tests independent of real credentials.
+    static const uint8_t passphrase[] = {1, 2, 3, 4, 5, 6, 7, 8};
     CredentialView credentials;
     credentials.ssid = ssid;
     credentials.ssidLength = sizeof(ssid) - 1;
     credentials.passphrase = passphrase;
-    credentials.passphraseLength = sizeof(passphrase) - 1;
+    credentials.passphraseLength = sizeof(passphrase);
     return credentials;
+}
+
+template <typename T>
+typename std::underlying_type<T>::type UnderlyingValue(T value)
+{
+    typename std::underlying_type<T>::type result = 0;
+    std::memcpy(&result, &value, sizeof(result));
+    return result;
 }
 }
 
-void setUp() {}
-void tearDown() {}
+void setUp()
+{
+    // Unity requires these hooks even though the provisioning tests need no fixture setup.
+}
+
+void tearDown()
+{
+    // Unity requires these hooks even though the provisioning tests need no fixture cleanup.
+}
 
 void TestBootRequiresPhysicalActivation()
 {
     StateMachine machine;
     machine.Boot(false, false);
 
-    TEST_ASSERT_EQUAL_UINT8(static_cast<uint8_t>(State::AwaitingActivation), static_cast<uint8_t>(machine.GetState()));
+    TEST_ASSERT_EQUAL_UINT8(UnderlyingValue(State::AwaitingActivation), UnderlyingValue(machine.GetState()));
     TEST_ASSERT_FALSE(machine.SessionAuthenticated());
     TEST_ASSERT_TRUE(machine.BeginActivation(100));
-    TEST_ASSERT_EQUAL_UINT8(static_cast<uint8_t>(State::WindowOpen), static_cast<uint8_t>(machine.GetState()));
+    TEST_ASSERT_EQUAL_UINT8(UnderlyingValue(State::WindowOpen), UnderlyingValue(machine.GetState()));
     TEST_ASSERT_FALSE(machine.SessionAuthenticated());
 }
 
@@ -51,7 +69,7 @@ void TestEnrollmentPrecedesCredentialPromotion()
     TEST_ASSERT_FALSE(machine.ConfirmHandover(199));
     TEST_ASSERT_TRUE(machine.ConfirmHandover(200));
     TEST_ASSERT_TRUE(machine.CompletePromotion());
-    TEST_ASSERT_EQUAL_UINT8(static_cast<uint8_t>(State::Operational), static_cast<uint8_t>(machine.GetState()));
+    TEST_ASSERT_EQUAL_UINT8(UnderlyingValue(State::Operational), UnderlyingValue(machine.GetState()));
 }
 
 void TestOwnerAuthorizationCannotUsePhysicalActivationAlone()
@@ -74,7 +92,7 @@ void TestFailedRotationRetainsActiveNetwork()
     TEST_ASSERT_TRUE(machine.AuthenticateSession());
     TEST_ASSERT_TRUE(machine.SubmitCredentials(Credentials()));
     machine.CloseWindow(true);
-    TEST_ASSERT_EQUAL_UINT8(static_cast<uint8_t>(State::Operational), static_cast<uint8_t>(machine.GetState()));
+    TEST_ASSERT_EQUAL_UINT8(UnderlyingValue(State::Operational), UnderlyingValue(machine.GetState()));
     TEST_ASSERT_TRUE(machine.HasActiveCredentials());
     TEST_ASSERT_FALSE(machine.HasPendingCredentials());
 }
@@ -99,7 +117,7 @@ void TestWindowTimeoutClosesWithoutOpeningAccess()
     TEST_ASSERT_TRUE(machine.BeginActivation(0xFFFFFF00U));
     TEST_ASSERT_TRUE(machine.AuthenticateSession());
     machine.Tick(0xFFFFFF00U + 600000U);
-    TEST_ASSERT_EQUAL_UINT8(static_cast<uint8_t>(State::AwaitingActivation), static_cast<uint8_t>(machine.GetState()));
+    TEST_ASSERT_EQUAL_UINT8(UnderlyingValue(State::AwaitingActivation), UnderlyingValue(machine.GetState()));
     TEST_ASSERT_FALSE(machine.IsSessionAuthenticated());
 }
 
@@ -122,14 +140,14 @@ void TestCredentialsRequireWpa2MinimumPassphraseLength()
     TEST_ASSERT_TRUE(machine.EnrollOwner());
 
     static const uint8_t ssid[] = "MOBAflow-test";
-    static const uint8_t shortPassphrase[] = "1234567";
+    static const uint8_t shortPassphrase[] = {1, 2, 3, 4, 5, 6, 7};
     CredentialView credentials;
     credentials.ssid = ssid;
     credentials.ssidLength = sizeof(ssid) - 1;
     credentials.passphrase = shortPassphrase;
     credentials.passphraseLength = sizeof(shortPassphrase) - 1;
     TEST_ASSERT_FALSE(machine.SubmitCredentials(credentials));
-    TEST_ASSERT_EQUAL_UINT8(static_cast<uint8_t>(State::WindowOpen), static_cast<uint8_t>(machine.GetState()));
+    TEST_ASSERT_EQUAL_UINT8(UnderlyingValue(State::WindowOpen), UnderlyingValue(machine.GetState()));
 }
 
 int main(int, char**)

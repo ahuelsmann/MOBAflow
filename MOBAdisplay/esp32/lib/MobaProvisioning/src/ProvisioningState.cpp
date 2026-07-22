@@ -121,14 +121,12 @@ void StateMachine::CloseWindow(bool activeNetworkVerified)
 
 void StateMachine::Tick(uint32_t nowMs)
 {
-    if (state_ == State::WindowOpen || state_ == State::PendingConnection || state_ == State::AwaitingHandover)
+    if ((state_ == State::WindowOpen || state_ == State::PendingConnection || state_ == State::AwaitingHandover)
+        && (HasElapsed(nowMs, windowStartedAtMs_, kWindowDurationMs)
+            || (state_ == State::AwaitingHandover && HasElapsed(nowMs, handoverStartedAtMs_, kHandoverDurationMs))))
     {
-        if (HasElapsed(nowMs, windowStartedAtMs_, kWindowDurationMs)
-            || (state_ == State::AwaitingHandover && HasElapsed(nowMs, handoverStartedAtMs_, kHandoverDurationMs)))
-        {
-            pendingCredentials_ = false;
-            CloseToStableState(activeCredentials_);
-        }
+        pendingCredentials_ = false;
+        CloseToStableState(activeCredentials_);
     }
 }
 
@@ -139,7 +137,7 @@ bool StateMachine::HasElapsed(uint32_t nowMs, uint32_t startMs, uint32_t duratio
 
 bool StateMachine::IsBefore(uint32_t nowMs, uint32_t deadlineMs)
 {
-    return static_cast<int32_t>(nowMs - deadlineMs) < 0;
+    return (nowMs - deadlineMs) > 0x7FFFFFFFU;
 }
 
 bool StateMachine::IsValidCredentials(const CredentialView& credentials)

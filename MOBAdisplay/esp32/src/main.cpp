@@ -22,6 +22,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <type_traits>
 
 #ifndef APP_VERSION
 #define APP_VERSION "dev"
@@ -73,6 +74,14 @@ String gProvisioningPassphrase;
 uint32_t gButtonPressedAtMs = 0;
 bool gButtonLongActionHandled = false;
 bool gFactoryResetAuthorized = false;
+
+template <typename T>
+typename std::underlying_type<T>::type UnderlyingValue(T value)
+{
+    typename std::underlying_type<T>::type result = 0;
+    std::memcpy(&result, &value, sizeof(result));
+    return result;
+}
 
 void splashStatic();
 void drawBootScreen(const char* line1, const char* line2, const char* line3);
@@ -252,7 +261,9 @@ bool createSetupPassphrase(String* passphraseOut)
     for (uint8_t index = 0; index < 20; ++index)
         passphrase += alphabet[randomBytes[index % sizeof(randomBytes)] % (sizeof(alphabet) - 1)];
 
-    memset(randomBytes, 0, sizeof(randomBytes));
+    volatile uint8_t* sensitiveBytes = randomBytes;
+    for (size_t index = 0; index < sizeof(randomBytes); ++index)
+        sensitiveBytes[index] = 0;
     *passphraseOut = passphrase;
     return passphrase.length() >= 16;
 }
@@ -269,9 +280,11 @@ bool startProvisioningWindow()
     }
 
     const uint32_t chipSuffix = static_cast<uint32_t>(ESP.getEfuseMac() & 0xFFFFFFu);
-    char apName[32];
-    snprintf(apName, sizeof(apName), "MOBAflow-Setup-%06lX", static_cast<unsigned long>(chipSuffix));
-    gProvisioningSsid = apName;
+    String suffix = String(chipSuffix, HEX);
+    while (suffix.length() < 6)
+        suffix = String("0") + suffix;
+    suffix.toUpperCase();
+    gProvisioningSsid = String("MOBAflow-Setup-") + suffix;
     WiFi.mode(WIFI_AP);
     if (!WiFi.softAP(gProvisioningSsid.c_str(), gProvisioningPassphrase.c_str()))
     {
@@ -375,11 +388,11 @@ esp_err_t handleProvisioningRequest(uint32_t, const uint8_t* input, ssize_t inpu
     if (input[0] != 0)
         return ESP_ERR_NOT_SUPPORTED;
 
-    uint8_t* response = static_cast<uint8_t*>(std::malloc(4));
+    auto* response = static_cast<uint8_t*>(std::malloc(4));
     if (response == nullptr)
         return ESP_ERR_NO_MEM;
 
-    response[0] = static_cast<uint8_t>(provisioningState.GetState());
+    response[0] = UnderlyingValue(provisioningState.GetState());
     response[1] = provisioningState.HasOwner() ? 1 : 0;
     response[2] = provisioningState.HasActiveCredentials() ? 1 : 0;
     response[3] = provisioningState.AuthenticationFailures();
