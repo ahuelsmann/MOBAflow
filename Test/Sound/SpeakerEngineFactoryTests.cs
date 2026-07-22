@@ -120,5 +120,14 @@ internal sealed class SpeakerEngineFactoryTests
 
         public Task AnnouncementAsync(string message, string? voiceName = null)
             => Task.CompletedTask;
+
+        public Task AnnouncementAsync(
+            string message,
+            string? voiceName,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return AnnouncementAsync(message, voiceName);
+        }
     }
 }

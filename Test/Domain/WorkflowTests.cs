@@ -111,7 +111,7 @@ internal class WorkflowTests
     }
 
     [Test]
-    public void WorkflowAction_LegacyParametersJson_MigratesToTypedPayload()
+    public void WorkflowAction_LegacyParametersJson_DoesNotCreateTypedPayload()
     {
         const string json = """
             {
@@ -126,9 +126,60 @@ internal class WorkflowTests
 
         var action = JsonSerializer.Deserialize<WorkflowAction>(json, JsonOptions.Default);
         Assert.That(action, Is.Not.Null);
-        Assert.That(action!.Type, Is.EqualTo(ActionType.Audio));
+        Assert.That(action!.Type, Is.EqualTo(ActionType.Command));
         Assert.That(action.DelayAfterMs, Is.EqualTo(100));
-        Assert.That(action.Audio, Is.Not.Null);
-        Assert.That(action.Audio!.FilePath, Is.EqualTo(@"C:\sounds\gong.wav"));
+        Assert.That(action.Audio, Is.Null);
+    }
+
+    [Test]
+    public void SerializeDeserialize_PreservesWorkflowMetadataAndPersistedStepOrder()
+    {
+        // Arrange
+        var workflowId = Guid.NewGuid();
+        var firstPersistedStepId = Guid.NewGuid();
+        var secondPersistedStepId = Guid.NewGuid();
+        var workflow = new Workflow
+        {
+            Id = workflowId,
+            Name = "Arrival workflow",
+            Description = "Runs when the train arrives",
+            EntryStepId = firstPersistedStepId,
+            DefaultErrorPolicy = new WorkflowErrorPolicy { Behavior = WorkflowFailureBehavior.Stop },
+            Steps =
+            [
+                new WorkflowDelayStep
+                {
+                    Id = firstPersistedStepId,
+                    Name = "Persisted first",
+                    DelayMs = 20,
+                    NextStepId = secondPersistedStepId
+                },
+                new WorkflowTerminateStep
+                {
+                    Id = secondPersistedStepId,
+                    Name = "Persisted second",
+                    Result = WorkflowTerminationResult.Succeeded
+                }
+            ]
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(workflow, JsonOptions.Default);
+        var roundTripped = JsonSerializer.Deserialize<Workflow>(json, JsonOptions.Default);
+
+        // Assert
+        Assert.That(roundTripped, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(roundTripped!.Id, Is.EqualTo(workflowId));
+            Assert.That(roundTripped.Name, Is.EqualTo("Arrival workflow"));
+            Assert.That(roundTripped.Description, Is.EqualTo("Runs when the train arrives"));
+            Assert.That(roundTripped.EntryStepId, Is.EqualTo(firstPersistedStepId));
+            Assert.That(roundTripped.Steps!.Select(step => step.Id),
+                Is.EqualTo(new[] { firstPersistedStepId, secondPersistedStepId }));
+            Assert.That(json, Does.Not.Contain("\"actions\""));
+            Assert.That(json, Does.Not.Contain("\"executionMode\""));
+            Assert.That(json, Does.Not.Contain("\"inPort\""));
+        });
     }
 }

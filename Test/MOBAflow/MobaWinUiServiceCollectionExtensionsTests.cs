@@ -4,6 +4,7 @@ namespace Moba.Test.MOBAflow;
 
 using Moba.Backend.Interface;
 using Moba.Common.Events;
+using Moba.Domain;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -77,6 +78,19 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
 
         Assert.DoesNotThrow(() => WinUiDiContainerValidator.ValidateCoreServices(provider));
         Assert.That(provider.GetRequiredService<RecorderPageViewModel>(), Is.Not.Null);
+    }
+
+    [Test]
+    public void AddMobaWinUiViewModelsAndWindow_WiresWorkflowDryRunServices()
+    {
+        var provider = CreateValidatorServiceProvider();
+        var viewModel = provider.GetRequiredService<MainWindowViewModel>();
+        viewModel.SelectedProject = new ProjectViewModel(new Project
+        {
+            Workflows = [new Workflow { Name = "Preview" }]
+        });
+
+        Assert.That(viewModel.WorkflowLibrary.CanDryRun, Is.True);
     }
 
     private static ServiceProvider CreatePlatformServiceProvider()

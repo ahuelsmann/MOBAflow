@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "MOBAflow Solution Schema (Complete)",
-  "description": "Complete JSON Schema for MOBAflow projects - ensures all Domain model types are represented",
+  "description": "Complete JSON Schema for MOBAflow projects, including the direct Workflow 2.0 graph format. Workflow 1.x action lists are not accepted.",
   "type": "object",
   "required": ["name", "projects", "schemaVersion"],
   "properties": {
@@ -121,20 +121,8 @@
           
           "workflows": {
             "type": "array",
-            "description": "Workflows (automation sequences)",
-            "items": {
-              "type": "object",
-              "required": ["id", "name"],
-              "properties": {
-                "id": { "type": "string", "format": "uuid" },
-                "name": { "type": "string" },
-                "description": { "type": ["string", "null"] },
-                "actions": {
-                  "type": "array",
-                  "items": { "type": "object" }
-                }
-              }
-            }
+            "description": "Reusable validated Workflow 2.0 graphs",
+            "items": { "$ref": "#/definitions/workflow" }
           },
 
           "stations": {
@@ -261,6 +249,176 @@
     }
   },
   "definitions": {
+    "workflow": {
+      "type": "object",
+      "description": "Validated Workflow 2.0 graph with stable step IDs, an explicit entry, deterministic list order, and optional default error policy.",
+      "additionalProperties": false,
+      "required": ["id", "name", "entryStepId", "steps"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": ["string", "null"] },
+        "entryStepId": { "type": "string", "format": "uuid" },
+        "steps": {
+          "type": "array",
+          "description": "Canonical editor and serialization order. Runtime traversal follows step-ID edges rather than array position.",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/workflowStep" }
+        },
+        "defaultErrorPolicy": { "$ref": "#/definitions/workflowErrorPolicy" }
+      }
+    },
+    "workflowStep": {
+      "description": "Typed Workflow 2.0 graph node. The kind discriminator selects exactly one node shape.",
+      "oneOf": [
+        { "$ref": "#/definitions/workflowActionStep" },
+        { "$ref": "#/definitions/workflowDelayStep" },
+        { "$ref": "#/definitions/workflowConditionStep" },
+        { "$ref": "#/definitions/workflowParallelStep" },
+        { "$ref": "#/definitions/workflowNestedStep" },
+        { "$ref": "#/definitions/workflowTerminateStep" }
+      ]
+    },
+    "workflowActionStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "name", "nextStepId", "action"],
+      "properties": {
+        "kind": { "const": "action" },
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "nextStepId": { "type": "string", "format": "uuid" },
+        "errorPolicy": { "$ref": "#/definitions/workflowErrorPolicy" },
+        "action": { "$ref": "#/definitions/workflowAction" }
+      }
+    },
+    "workflowDelayStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "name", "nextStepId", "delayMs"],
+      "properties": {
+        "kind": { "const": "delay" },
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "nextStepId": { "type": "string", "format": "uuid" },
+        "errorPolicy": { "$ref": "#/definitions/workflowErrorPolicy" },
+        "delayMs": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "workflowConditionStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "name", "condition", "trueStepId", "falseStepId"],
+      "properties": {
+        "kind": { "const": "condition" },
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "errorPolicy": { "$ref": "#/definitions/workflowErrorPolicy" },
+        "condition": { "$ref": "#/definitions/workflowCondition" },
+        "trueStepId": { "type": "string", "format": "uuid" },
+        "falseStepId": { "type": "string", "format": "uuid" }
+      }
+    },
+    "workflowParallelStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "name", "branches", "joinStepId"],
+      "properties": {
+        "kind": { "const": "parallel" },
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "errorPolicy": { "$ref": "#/definitions/workflowErrorPolicy" },
+        "branches": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "entryStepId"],
+            "properties": {
+              "name": { "type": "string" },
+              "entryStepId": { "type": "string", "format": "uuid" }
+            }
+          }
+        },
+        "joinStepId": { "type": "string", "format": "uuid" }
+      }
+    },
+    "workflowNestedStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "name", "nextStepId", "workflowId"],
+      "properties": {
+        "kind": { "const": "nestedWorkflow" },
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "nextStepId": { "type": "string", "format": "uuid" },
+        "errorPolicy": { "$ref": "#/definitions/workflowErrorPolicy" },
+        "workflowId": { "type": "string", "format": "uuid" }
+      }
+    },
+    "workflowTerminateStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "name", "result"],
+      "properties": {
+        "kind": { "const": "terminate" },
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "errorPolicy": { "$ref": "#/definitions/workflowErrorPolicy" },
+        "result": { "type": "integer", "minimum": 0, "maximum": 2 }
+      }
+    },
+    "workflowCondition": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "inPort"],
+          "properties": {
+            "kind": { "const": "feedbackSource" },
+            "inPort": { "type": "integer", "minimum": 1, "maximum": 512 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "journeyId"],
+          "properties": {
+            "kind": { "const": "currentJourney" },
+            "journeyId": { "type": "string", "format": "uuid" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "stationId"],
+          "properties": {
+            "kind": { "const": "currentStation" },
+            "stationId": { "type": "string", "format": "uuid" }
+          }
+        }
+      ]
+    },
+    "workflowErrorPolicy": {
+      "type": "object",
+      "description": "Failure behavior for a workflow or step. Step policies override the workflow default; retry is bounded to 10 additional attempts.",
+      "additionalProperties": false,
+      "required": ["behavior"],
+      "properties": {
+        "behavior": { "type": "integer", "minimum": 0, "maximum": 2 },
+        "failureStepId": { "type": ["string", "null"], "format": "uuid" },
+        "retry": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["additionalAttempts", "delayMs"],
+          "properties": {
+            "additionalAttempts": { "type": "integer", "minimum": 0, "maximum": 10 },
+            "delayMs": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
     "interlockingDefinition": {
       "type": "object",
       "required": ["turnouts", "signals", "blocks", "connections", "routes", "bindings"],
@@ -345,6 +503,22 @@
             }
           }
         }
+      }
+    },
+    "workflowAction": {
+      "type": "object",
+      "required": ["id", "name", "type"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "type": { "enum": [0, 1, 2, 3, 5, 6, 7] },
+        "command": { "type": "object" },
+        "audio": { "type": "object" },
+        "announcement": { "type": "object" },
+        "powerShell": { "type": "object" },
+        "selectSignalAspect": { "type": "object" },
+        "trainDestinationDisplay": { "type": "object" },
+        "changeJourneyStop": { "type": "object" }
       }
     },
     "interlockingSignalDefinition": {

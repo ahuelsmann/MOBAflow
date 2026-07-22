@@ -66,8 +66,16 @@ depending on its configured behavior.
 
 ### Workflows
 
-Workflows run ordered actions either sequentially or in parallel. Available
-action types in the current runtime are:
+Workflow 2.0 represents automation as a graph of typed steps:
+
+- **Action** performs one configured action and continues to its next step.
+- **Delay** waits for the configured milliseconds before continuing.
+- **Condition** selects a true or false target from feedback, journey, or station context.
+- **Parallel** runs named branches and waits at an explicit join step.
+- **Nested workflow** calls another workflow and then continues.
+- **Terminate** ends the run as succeeded, cancelled, or failed.
+
+Action steps currently support:
 
 - spoken announcement;
 - WAV audio playback;
@@ -80,9 +88,29 @@ action types in the current runtime are:
 The matrix action type exists in the data model but does not currently have a
 runtime handler.
 
-In **Sequential** mode each action completes before the next action starts. In
-**Parallel** mode the action delays are used as cumulative start offsets and the
-group is awaited together.
+Use **Workflows** for library-focused authoring. Create or duplicate a workflow,
+add and reorder steps, select a step, and edit its typed properties in the
+editor pane. Set every successor, branch, join, nested-workflow, and failure
+target to a valid step or workflow ID. The first step is the workflow entry by
+default. Deleting a referenced workflow is blocked until every Event Manager or
+nested-workflow reference is removed or reassigned.
+
+Use **Event Manager** when authoring in journey context. It exposes the same
+workflow collection and selection, so edits made on either page are immediately
+visible on the other. Select a journey feedback occurrence and choose **Assign
+selected workflow to feedback step** to link it.
+
+Choose **Validate** before operating a workflow. Validation reports structural,
+reference, payload, retry, recursion, and parallel-resource conflicts without
+running the graph. Choose **Dry run** to traverse a valid graph and list planned
+effects without waiting or contacting Z21, audio, speech, scripts, displays, or
+journey mutation handlers. **Recent trace** shows correlated lifecycle entries
+for the selected workflow; traces are memory-only and reset with the process.
+
+Execution stops safely when it is cancelled, the project changes, the runtime
+disconnects, or the application shuts down. A step-specific failure policy
+overrides the workflow default and can stop, continue, follow a failure branch,
+or retry a bounded number of times.
 
 ### Track Plan
 
@@ -182,10 +210,13 @@ global shortcuts are not currently defined.
 
 ### A workflow fails
 
-- Confirm that its payload and referenced files exist.
-- Verify that the current station/journey context required by the action is
-  available.
-- Check **Monitor** and the **Messages** panel for the recorded action error.
+- Run **Validate** and resolve every reported step/reference issue first.
+- Use **Dry run** to confirm the selected branch and planned effects without
+  contacting external systems.
+- Confirm that payloads and referenced files exist and that required
+  station/journey/feedback context is available.
+- Review **Recent trace** for the failing workflow and step, then check
+  **Monitor** and **Messages** for the corresponding external-system error.
 
 ## More documentation
 

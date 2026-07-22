@@ -264,7 +264,9 @@ public static class MobaWinUiServiceCollectionExtensions
             },
             locomotiveWhistleAutomation: sp.GetService<ILocomotiveWhistleAutomationService>(),
             projectDiagnosticsService: sp.GetRequiredService<IProjectDiagnosticsService>(),
-            runtimeCommandGateway: sp.GetRequiredService<IRuntimeCommandGateway>()));
+            runtimeCommandGateway: sp.GetRequiredService<IRuntimeCommandGateway>(),
+            workflowService: sp.GetRequiredService<IWorkflowService>(),
+            workflowTraceStore: sp.GetRequiredService<IWorkflowTraceStore>()));
 
         services.AddSingleton<IJourneySelectionContext>(sp => sp.GetRequiredService<MainWindowViewModel>());
         services.AddSingleton<IProjectContext>(sp => sp.GetRequiredService<MainWindowViewModel>());

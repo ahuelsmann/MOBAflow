@@ -451,13 +451,25 @@ public sealed record FeedbackReceivedEvent : EventBase
     /// </summary>
     public int InPort { get; init; }
 
+    /// <summary>Gets the correlation identifier shared with downstream workflow execution.</summary>
+    public Guid CorrelationId { get; init; }
+
     /// <summary>
     /// Initializes a new instance of the <see cref="FeedbackReceivedEvent"/> record.
     /// </summary>
     /// <param name="inPort">1-based feedback input port number.</param>
     public FeedbackReceivedEvent(int inPort)
+        : this(inPort, Guid.NewGuid())
+    {
+    }
+
+    /// <summary>Initializes a correlated feedback event.</summary>
+    /// <param name="inPort">1-based feedback input port number.</param>
+    /// <param name="correlationId">Correlation identifier propagated from the parsed source activation.</param>
+    public FeedbackReceivedEvent(int inPort, Guid correlationId)
     {
         InPort = inPort;
+        CorrelationId = correlationId == Guid.Empty ? Guid.NewGuid() : correlationId;
     }
 }
 
@@ -636,7 +648,6 @@ public sealed record PostStartupStatusEvent : EventBase
         StatusText = statusText;
     }
 }
-
 /// <summary>
 /// Ordered state transition of one 1-based Z21 feedback input.
 /// </summary>

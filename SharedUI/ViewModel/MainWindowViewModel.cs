@@ -107,7 +107,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         Func<string, Task>? speechTestAction = null,
         ILocomotiveWhistleAutomationService? locomotiveWhistleAutomation = null,
         IProjectDiagnosticsService? projectDiagnosticsService = null,
-        IRuntimeCommandGateway? runtimeCommandGateway = null)
+        IRuntimeCommandGateway? runtimeCommandGateway = null,
+        IWorkflowService? workflowService = null,
+        IWorkflowTraceStore? workflowTraceStore = null)
     {
         ArgumentNullException.ThrowIfNull(layoutColumnWidths);
         ArgumentNullException.ThrowIfNull(mobaRuntime);
@@ -137,6 +139,20 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         _dialogService = dialogService;
         _locomotiveWhistleAutomation = locomotiveWhistleAutomation;
         _projectDiagnosticsService = projectDiagnosticsService;
+
+        WorkflowLibrary = new WorkflowLibraryViewModel(
+            this,
+            dialogService,
+            new WorkflowValidator(),
+            loggerFactory?.CreateLogger<WorkflowLibraryViewModel>(),
+            new WorkflowLibraryRuntimeServices
+            {
+                WorkflowService = workflowService,
+                TraceStore = workflowTraceStore,
+                ExecutionContext = executionContext,
+                EventBus = eventBus
+            });
+        WorkflowLibrary.PropertyChanged += OnWorkflowLibraryPropertyChanged;
 
         _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
         _eventBusSubscriptions.Add(_eventBus.Subscribe<VehicleUsageCheckpointCommittedEvent>(OnVehicleUsageCheckpointCommitted));
@@ -182,6 +198,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
     /// (from loaded settings or from the resize behavior), the UI updates via binding.
     /// </summary>
     public LayoutColumnWidthsViewModel LayoutColumnWidths => _layoutColumnWidths;
+
+    /// <summary>Gets the singleton workflow catalog and editor state shared by workflow surfaces.</summary>
+    public WorkflowLibraryViewModel WorkflowLibrary { get; }
 
     /// <summary>
     /// Application settings model shared with the shell. Exposed for UI behaviors that walk the visual tree
@@ -507,6 +526,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         }
 
         _isShuttingDown = true;
+        WorkflowLibrary.PropertyChanged -= OnWorkflowLibraryPropertyChanged;
+        WorkflowLibrary.Dispose();
         foreach (var subscriptionId in _eventBusSubscriptions)
         {
             _eventBus.Unsubscribe(subscriptionId);

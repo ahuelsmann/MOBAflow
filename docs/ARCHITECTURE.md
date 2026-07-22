@@ -54,8 +54,10 @@ timers and railroad state belongs to `Backend/Service/TrackPlan`, not `SharedUI`
 **Key Classes:**
 
 The persisted domain uses mutable POCO classes such as `Solution`, `Project`,
-`Journey`, `Station`, `Workflow` and `WorkflowAction`. Runtime snapshots are the
-immutable boundary exposed to UI consumers.
+`Journey`, `Station`, `Workflow`, the typed `WorkflowStep` hierarchy, and
+`WorkflowAction`. A Workflow 2.0 graph stores a stable entry-step ID, explicit
+step-ID edges, and a deterministic editor/serialization order. Runtime snapshots
+are the immutable boundary exposed to UI consumers.
 
 **Characteristics:**
 
@@ -74,8 +76,11 @@ immutable boundary exposed to UI consumers.
 
 - IZ21 (Z21 Control Station Communication)
 - IMobaRuntime / MobaRuntimeService (authoritative runtime owner)
-- WorkflowService (Action Execution)
-- ActionExecutor (Action Implementation)
+- `WorkflowService` (validated graph execution and dry-run planning)
+- `WorkflowValidator`, `WorkflowConditionEvaluator`, and `WorkflowEffectPlanner`
+- `WorkflowExecutionCoordinator` (per-feedback-source FIFO execution)
+- `WorkflowTraceStore` (bounded in-memory lifecycle projection)
+- `ActionExecutor` and typed action handlers (live effects only)
 - `MasterDataStore` (shared cities/locomotives/multiplex master JSON, e.g. `data.json`)
 - `ActiveProjectContext` (runtime project activation inside `MobaRuntimeService`)
 - Runtime Snapshots (MobaRuntimeSnapshot, JourneyRuntimeSnapshot)
@@ -99,7 +104,17 @@ public interface IMobaRuntime
 
 public interface IActionExecutor
 {
-    Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context);
+    Task ExecuteAsync(
+        WorkflowAction action,
+        ActionExecutionContext context,
+        CancellationToken cancellationToken = default);
+}
+
+public interface IWorkflowService
+{
+    Task<WorkflowExecutionResult> ExecuteAsync(
+        WorkflowExecutionRequest request,
+        CancellationToken cancellationToken = default);
 }
 ```
 
@@ -200,6 +215,42 @@ IZ21 / JourneyManager / WorkflowService
 - Entity Ids are preserved by the round-trip, so snapshots and journey reset keep
   resolving against the Ids the editor exposes.
 - Covered by `Test/Backend/MobaRuntimeServiceProjectIsolationTests.cs`.
+
+### Workflow 2.0 execution boundary
+
+Workflow execution is a validation-gated, cancellable graph traversal:
+
+```text
+ordered Z21 feedback
+  -> JourneyManager captures immutable execution context and correlation
+  -> WorkflowExecutionCoordinator (FIFO per feedback source)
+  -> WorkflowValidator
+  -> WorkflowService
+       -> condition / delay / parallel / nested / terminate steps
+       -> WorkflowEffectPlanner (dry run) OR ActionExecutor (live)
+  -> correlated WorkflowLifecycleEvent records
+  -> WorkflowTraceStore -> WorkflowLibraryViewModel
+```
+
+- General graph cycles and nested-workflow recursion are rejected. Retries are
+  bounded to 10 additional attempts and nested execution to 16 levels.
+- Step error policy overrides the workflow default. The terminal behaviors are
+  `Stop`, `Continue`, and `FailureBranch`; retry is an optional bounded modifier.
+- Parallel branches launch in persisted order, join explicitly, and reduce
+  results deterministically. Validation rejects ambiguous exclusive writes to
+  the same described resource.
+- Dry-run traverses the same validated graph but calls `WorkflowEffectPlanner`
+  and never a live action handler. Delay steps do not wait in dry-run mode.
+- Cancellation propagates through graph traversal, delays, handlers, nested
+  workflows, queued feedback execution, reset, project replacement, disconnect,
+  and shutdown.
+- Lifecycle events carry source correlation, execution/parent IDs, workflow and
+  step IDs, monotonic sequence, mode, attempt, timestamp, elapsed time, and a
+  sanitized result/detail. The trace store retains at most 100 executions and
+  10,000 entries by default and is not persisted in `solution.json`.
+- `WorkflowLibraryViewModel` is the single workflow catalog/editor state shared
+  by EventManagerPage and WorkflowsPage. It reuses the authoritative wrappers in
+  `ProjectViewModel.Workflows`; page code-behind only adapts WinUI input.
 
 **Planned refactoring (`MainWindowViewModel` decomposition):**
 
@@ -336,9 +387,11 @@ User clicks Button (MOBAflow/MOBAsmart)
   ↓
 IMobaRuntime (e.g. ConnectAsync, SetTrackPowerAsync, SetLocomotiveDriveAsync)
   ↓
-IZ21 / JourneyManager / WorkflowService as appropriate
+IZ21 / JourneyManager / WorkflowExecutionCoordinator / WorkflowService as appropriate
   ↓
-ActionExecutor.ExecuteAsync() (workflow actions)
+WorkflowValidator (mandatory execution gate)
+  ↓
+WorkflowEffectPlanner (dry run) OR ActionExecutor.ExecuteAsync() (live actions)
   ├─ Set Track Power
   ├─ Control Locomotive
   ├─ Play Sound
@@ -369,6 +422,8 @@ services.AddSingleton<MasterDataStore>();    // Master data (data.json)
 services.AddSingleton<IZ21>(/* z21 impl */); // Backend Service
 services.AddSingleton<IMobaRuntime, MobaRuntimeService>();
 services.AddSingleton<IWorkflowService, WorkflowService>();
+services.AddSingleton<IWorkflowExecutionCoordinator, WorkflowExecutionCoordinator>();
+services.AddSingleton<IWorkflowTraceStore, WorkflowTraceStore>();
 
 // Presentation Layer
 services.AddSingleton<MainWindowViewModel>(); // Shared ViewModel

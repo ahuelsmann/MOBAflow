@@ -17,7 +17,12 @@ public class NullSpeakerEngine : ISpeakerEngine
     /// Does nothing. Text-to-speech is not supported on this platform.
     /// </summary>
     public Task AnnouncementAsync(string message, string? voiceName)
+        => AnnouncementAsync(message, voiceName, CancellationToken.None);
+
+    /// <inheritdoc />
+    public Task AnnouncementAsync(string message, string? voiceName, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         // Silent no-op - platform doesn't support TTS
         return Task.CompletedTask;
     }

@@ -2,6 +2,7 @@
 namespace Moba.Test.Backend;
 
 using Microsoft.Extensions.Logging.Abstractions;
+using Moba.Backend.Interface;
 using Moba.Backend.Service;
 using Moba.Backend.Service.Validation;
 using Moba.Domain;
@@ -165,6 +166,36 @@ internal sealed class ProjectValidatorTests
         var result = CreateValidator().ValidateCompleteness(new Solution { Projects = [project] });
 
         Assert.That(result.Messages.Any(message => message.Level == ValidationLevel.Error && message.Text.Contains("conflicts")), Is.True);
+    }
+
+    [Test]
+    public void ValidateCompleteness_InvalidWorkflowGraph_IncludesStableWorkflowCodeAndStep()
+    {
+        // Arrange
+        var project = CreateMinimalValidProject();
+        var stepId = Guid.NewGuid();
+        project.Workflows.Add(new Workflow
+        {
+            EntryStepId = stepId,
+            Steps =
+            [
+                new WorkflowDelayStep
+                {
+                    Id = stepId,
+                    DelayMs = -1,
+                    NextStepId = Guid.NewGuid()
+                }
+            ]
+        });
+
+        // Act
+        var result = CreateValidator().ValidateCompleteness(new Solution { Projects = [project] });
+
+        // Assert
+        Assert.That(result.Messages.Any(message =>
+            message.Level == ValidationLevel.Error &&
+            message.Text.Contains(WorkflowValidationCodes.InvalidStepPayload) &&
+            message.Text.Contains(stepId.ToString())), Is.True);
     }
 
     [Test]

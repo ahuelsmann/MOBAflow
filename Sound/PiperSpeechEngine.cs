@@ -50,9 +50,17 @@ public class PiperSpeechEngine : ISpeakerEngine
     /// <summary>
     /// Synthesizes speech with the configured local Piper executable and voice model.
     /// </summary>
-    public async Task AnnouncementAsync(string message, string? voiceName)
+    public Task AnnouncementAsync(string message, string? voiceName) =>
+        AnnouncementAsync(message, voiceName, CancellationToken.None);
+
+    /// <inheritdoc />
+    public async Task AnnouncementAsync(
+        string message,
+        string? voiceName,
+        CancellationToken cancellationToken)
     {
         _ = voiceName;
+        cancellationToken.ThrowIfCancellationRequested();
 
         if (string.IsNullOrWhiteSpace(message))
         {
@@ -98,7 +106,7 @@ public class PiperSpeechEngine : ISpeakerEngine
                 request.LengthScale,
                 request.SentenceSilenceSeconds);
 
-            var result = await _processRunner.SynthesizeAsync(request).ConfigureAwait(false);
+            var result = await _processRunner.SynthesizeAsync(request, cancellationToken).ConfigureAwait(false);
             if (!result.Succeeded)
             {
                 throw new InvalidOperationException(
@@ -131,7 +139,7 @@ public class PiperSpeechEngine : ISpeakerEngine
                 CopyDiagnosticWav(outputPath);
             }
 
-            await _audioPlayer.PlayAsync(outputPath).ConfigureAwait(false);
+            await _audioPlayer.PlayAsync(outputPath, cancellationToken).ConfigureAwait(false);
             _logger.LogInformation("Piper speech synthesized successfully for text: {Message}", message);
         }
         finally
@@ -215,7 +223,9 @@ public interface IPiperProcessRunner
     /// <summary>
     /// Runs Piper and returns process output.
     /// </summary>
-    Task<PiperProcessResult> SynthesizeAsync(PiperSynthesisRequest request);
+    Task<PiperProcessResult> SynthesizeAsync(
+        PiperSynthesisRequest request,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -226,7 +236,7 @@ public interface IPiperAudioPlayer
     /// <summary>
     /// Plays a WAV file and completes when playback has finished.
     /// </summary>
-    Task PlayAsync(string wavPath);
+    Task PlayAsync(string wavPath, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -256,15 +266,19 @@ public sealed record PiperProcessResult(int ExitCode, string StandardOutput, str
 /// <summary>
 /// Default Piper process runner.
 /// </summary>
-public sealed class PiperProcessRunner : IPiperProcessRunner
+public sealed class PiperProcessRunner(TimeProvider? timeProvider = null) : IPiperProcessRunner
 {
+    private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
+
     /// <summary>
     /// Piper CLI option for a pause between sentences.
     /// </summary>
     public const string SentenceSilenceOption = "--sentence-silence";
 
     /// <inheritdoc />
-    public async Task<PiperProcessResult> SynthesizeAsync(PiperSynthesisRequest request)
+    public async Task<PiperProcessResult> SynthesizeAsync(
+        PiperSynthesisRequest request,
+        CancellationToken cancellationToken = default)
     {
         using var process = new Process();
         process.StartInfo = new ProcessStartInfo
@@ -296,21 +310,29 @@ public sealed class PiperProcessRunner : IPiperProcessRunner
             process.StartInfo.ArgumentList.Add(request.ConfigPath);
         }
 
+        cancellationToken.ThrowIfCancellationRequested();
         process.Start();
+        using var cancellationRegistration = cancellationToken.Register(
+            static state => TryKill((Process)state!),
+            process);
 
-        await process.StandardInput.WriteLineAsync(request.Text).ConfigureAwait(false);
+        await process.StandardInput.WriteLineAsync(request.Text.AsMemory(), cancellationToken).ConfigureAwait(false);
         process.StandardInput.Close();
 
-        var standardOutputTask = process.StandardOutput.ReadToEndAsync();
-        var errorOutputTask = process.StandardError.ReadToEndAsync();
-        var exitedTask = process.WaitForExitAsync();
-        var completedTask = await Task.WhenAny(exitedTask, Task.Delay(request.Timeout)).ConfigureAwait(false);
+        var standardOutputTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
+        var errorOutputTask = process.StandardError.ReadToEndAsync(cancellationToken);
+        var exitedTask = process.WaitForExitAsync(cancellationToken);
+        var timeoutTask = Task.Delay(request.Timeout, _timeProvider, cancellationToken);
+        var completedTask = await Task.WhenAny(exitedTask, timeoutTask).ConfigureAwait(false);
 
         if (completedTask != exitedTask)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             TryKill(process);
             return new PiperProcessResult(-1, string.Empty, $"Piper timed out after {request.Timeout.TotalSeconds:0} seconds.");
         }
+
+        await exitedTask.ConfigureAwait(false);
 
         return new PiperProcessResult(
             process.ExitCode,
@@ -340,17 +362,19 @@ public sealed class PiperProcessRunner : IPiperProcessRunner
 public sealed class PiperAudioPlayer(ISoundPlayer? soundPlayer = null) : IPiperAudioPlayer
 {
     /// <inheritdoc />
-    public Task PlayAsync(string wavPath)
+    public Task PlayAsync(string wavPath, CancellationToken cancellationToken = default)
     {
         if (soundPlayer is not null)
         {
-            return soundPlayer.PlayAsync(wavPath);
+            return soundPlayer.PlayAsync(wavPath, cancellationToken);
         }
 
         return Task.Run(() =>
         {
             using var player = new SoundPlayer(wavPath);
+            using var cancellationRegistration = cancellationToken.Register(player.Stop);
             player.PlaySync();
-        });
+            cancellationToken.ThrowIfCancellationRequested();
+        }, cancellationToken);
     }
 }

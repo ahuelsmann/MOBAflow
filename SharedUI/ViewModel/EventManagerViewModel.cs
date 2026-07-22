@@ -39,8 +39,8 @@ public sealed partial class EventManagerViewModel : ObservableObject
     public ObservableCollection<JourneyFeedbackStepViewModel> Steps { get; } = [];
     public IReadOnlyList<EventElementDescriptor> ToolboxElements { get; }
     public IEnumerable<JourneyViewModel> Journeys => _main.SelectedProject?.Journeys ?? [];
-    public IEnumerable<WorkflowViewModel> Workflows => (_main.SelectedProject?.Workflows ?? [])
-        .Where(workflow => string.IsNullOrWhiteSpace(WorkflowSearchText) || workflow.Name.Contains(WorkflowSearchText, StringComparison.OrdinalIgnoreCase));
+    public WorkflowLibraryViewModel WorkflowLibrary => _main.WorkflowLibrary;
+    public IEnumerable<WorkflowViewModel> Workflows => WorkflowLibrary.FilteredWorkflows;
     public IEnumerable<StationAssignmentOption> Stations
     {
         get
@@ -66,7 +66,17 @@ public sealed partial class EventManagerViewModel : ObservableObject
         OnPropertyChanged(nameof(Stations));
     }
 
-    partial void OnWorkflowSearchTextChanged(string value) { _ = value; OnPropertyChanged(nameof(Workflows)); }
+    partial void OnSelectedStepChanged(JourneyFeedbackStepViewModel? value)
+    {
+        _ = value;
+        WorkflowLibrary.SelectedStep = null;
+    }
+
+    partial void OnWorkflowSearchTextChanged(string value)
+    {
+        WorkflowLibrary.SearchText = value;
+        OnPropertyChanged(nameof(Workflows));
+    }
     partial void OnStationSearchTextChanged(string value) { _ = value; OnPropertyChanged(nameof(Stations)); }
 
     [RelayCommand]
