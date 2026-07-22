@@ -23,6 +23,21 @@ public sealed partial class UdpDiscoveryResponder : IDisposable
         _responder = new MobApiUdpDiscoveryResponder(restApiPort);
     }
 
+    public UdpDiscoveryResponder(
+        ILogger<UdpDiscoveryResponder> logger,
+        int restApiPort,
+        int httpsPort,
+        string serverInstanceId,
+        string serverPublicKeyFingerprint)
+    {
+        _logger = logger;
+        _responder = new MobApiUdpDiscoveryResponder(
+            restApiPort,
+            httpsPort,
+            serverInstanceId,
+            serverPublicKeyFingerprint);
+    }
+
     /// <summary>
     /// Starts the UDP Discovery responder.
     /// </summary>

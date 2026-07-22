@@ -13,6 +13,9 @@ using System.Text;
 public sealed class MobApiUdpDiscoveryResponder : IDisposable
 {
     private readonly int _restApiPort;
+    private readonly int? _httpsPort;
+    private readonly string? _serverInstanceId;
+    private readonly string? _serverPublicKeyFingerprint;
     private UdpClient? _udpListener;
     private CancellationTokenSource? _cts;
     private Task? _listenerTask;
@@ -29,6 +32,31 @@ public sealed class MobApiUdpDiscoveryResponder : IDisposable
         }
 
         _restApiPort = restApiPort;
+    }
+
+    /// <summary>
+    /// Creates a responder that advertises the legacy HTTP endpoint plus authenticated HTTPS metadata.
+    /// </summary>
+    public MobApiUdpDiscoveryResponder(
+        int restApiPort,
+        int httpsPort,
+        string serverInstanceId,
+        string serverPublicKeyFingerprint)
+        : this(restApiPort)
+    {
+        if (httpsPort <= 0 || httpsPort >= 65536)
+            throw new ArgumentOutOfRangeException(nameof(httpsPort));
+
+        _httpsPort = httpsPort;
+        _serverInstanceId = serverInstanceId;
+        _serverPublicKeyFingerprint = serverPublicKeyFingerprint;
+
+        _ = DiscoveryResponseParser.CreateResponse(
+            "127.0.0.1",
+            restApiPort,
+            httpsPort,
+            serverInstanceId,
+            serverPublicKeyFingerprint);
     }
 
     /// <summary>
@@ -86,7 +114,7 @@ public sealed class MobApiUdpDiscoveryResponder : IDisposable
                     }
 
                     var advertisedIp = MobApiDiscoveryAddressResolver.GetLocalIpAddressForRemote(result.RemoteEndPoint);
-                    var response = $"{DiscoveryResponseParser.ResponsePrefix}|{advertisedIp}|{_restApiPort}";
+                    var response = CreateResponse(advertisedIp);
                     var responseBytes = Encoding.UTF8.GetBytes(response);
                     await _udpListener.SendAsync(responseBytes, result.RemoteEndPoint, cancellationToken)
                         .ConfigureAwait(false);
@@ -106,6 +134,18 @@ public sealed class MobApiUdpDiscoveryResponder : IDisposable
             _udpListener?.Close();
         }
     }
+
+    private string CreateResponse(string advertisedIp) =>
+        _httpsPort.HasValue &&
+        _serverInstanceId is not null &&
+        _serverPublicKeyFingerprint is not null
+            ? DiscoveryResponseParser.CreateResponse(
+                advertisedIp,
+                _restApiPort,
+                _httpsPort.Value,
+                _serverInstanceId,
+                _serverPublicKeyFingerprint)
+            : $"{DiscoveryResponseParser.ResponsePrefix}|{advertisedIp}|{_restApiPort}";
 
     public void Dispose()
     {

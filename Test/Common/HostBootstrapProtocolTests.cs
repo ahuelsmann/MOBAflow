@@ -76,7 +76,9 @@ internal sealed class HostBootstrapProtocolTests
             async () => await child!.ReadRequestAsync(canceled.Token),
             Throws.InstanceOf<OperationCanceledException>());
         Assert.That(
-            async () => await child.WriteResponseAsync(new HostBootstrapPipeResponse("fingerprint"), canceled.Token),
+            async () => await child.WriteResponseAsync(
+                new HostBootstrapPipeResponse("fingerprint", "instance"),
+                canceled.Token),
             Throws.InstanceOf<OperationCanceledException>());
     }
 
