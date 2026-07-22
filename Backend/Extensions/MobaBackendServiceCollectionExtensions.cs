@@ -53,6 +53,7 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton<IUdpClientWrapper, UdpWrapper>();
         services.TryAddSingleton<IZ21DiscoveryService, Z21DiscoveryService>();
         services.TryAddSingleton<IZ21, Z21>();
+        services.TryAddSingleton<IWorkflowValidator, WorkflowValidator>();
         services.TryAddSingleton<IInterlockingRuntime, InterlockingRuntimeService>();
         services.TryAddSingleton<IProjectValidator, ProjectValidator>();
         services.TryAddSingleton<IJourneyStopTransitionService, JourneyStopTransitionService>();
@@ -60,6 +61,19 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton<IVehicleUsageCheckpointStore, FileVehicleUsageCheckpointStore>();
         services.TryAddSingleton<AnnouncementService>();
         services.TryAddSingleton<IAnnouncementService>(sp => sp.GetRequiredService<AnnouncementService>());
+        services.TryAddSingleton<IWorkflowEffectPlanner, WorkflowEffectPlanner>();
+        services.TryAddSingleton<IWorkflowConditionEvaluator, WorkflowConditionEvaluator>();
+        services.TryAddSingleton<IWorkflowTraceStore, WorkflowTraceStore>();
+        services.TryAddSingleton(sp => new WorkflowServiceDependencies
+        {
+            Validator = sp.GetRequiredService<IWorkflowValidator>(),
+            EffectPlanner = sp.GetRequiredService<IWorkflowEffectPlanner>(),
+            ConditionEvaluator = sp.GetRequiredService<IWorkflowConditionEvaluator>(),
+            EventBus = sp.GetService<IEventBus>(),
+            TraceStore = sp.GetRequiredService<IWorkflowTraceStore>(),
+            TimeProvider = sp.GetRequiredService<TimeProvider>(),
+            Logger = sp.GetService<ILogger<WorkflowService>>()
+        });
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IWorkflowActionHandler, CommandWorkflowActionHandler>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IWorkflowActionHandler, AudioWorkflowActionHandler>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IWorkflowActionHandler, AnnouncementWorkflowActionHandler>());
@@ -68,7 +82,9 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IWorkflowActionHandler, TrainDestinationDisplayWorkflowActionHandler>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IWorkflowActionHandler, ChangeJourneyStopWorkflowActionHandler>());
         services.TryAddSingleton<IActionExecutor, ActionExecutor>();
-        services.TryAddSingleton<IWorkflowService, WorkflowService>();
+        services.TryAddSingleton<IWorkflowService>(sp => new WorkflowService(
+            sp.GetRequiredService<IActionExecutor>(),
+            sp.GetRequiredService<WorkflowServiceDependencies>()));
         services.TryAddSingleton(sp => new ActionExecutionContext
         {
             Z21 = sp.GetRequiredService<IZ21>(),
@@ -88,7 +104,8 @@ public static class MobaBackendServiceCollectionExtensions
                 sp.GetRequiredService<IWorkflowService>(),
                 sp.GetRequiredService<IJourneyStopTransitionService>(),
                 sp.GetRequiredService<IJourneyRuntimeStateStore>(),
-                sp.GetService<ILogger<JourneyManager>>()),
+                sp.GetService<ILogger<JourneyManager>>(),
+                sp.GetRequiredService<TimeProvider>()),
             z21Discovery: sp.GetRequiredService<IZ21DiscoveryService>(),
             vehicleUsageCheckpointStore: sp.GetRequiredService<IVehicleUsageCheckpointStore>(),
             timeProvider: sp.GetRequiredService<TimeProvider>(),

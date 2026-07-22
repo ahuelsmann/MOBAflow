@@ -42,8 +42,9 @@ public partial class Z21
         _logger?.LogInformation("SimulateFeedback: InPort={InPort}, Group={Group}, Byte={ByteIndex}, Bit={BitPosition}, Subscribers={Count}",
             inPort, groupNumber, byteIndex, bitPosition, Received?.GetInvocationList().Length ?? 0);
 
-        Received?.Invoke(new FeedbackResult(simulatedContent));
-        QueueEvent(new FeedbackReceivedEvent(inPort));
+        var feedback = new FeedbackResult(simulatedContent);
+        Received?.Invoke(feedback);
+        QueueEvent(new FeedbackReceivedEvent(inPort, feedback.CorrelationId));
 
         _logger?.LogDebug("SimulateFeedback event invoked for InPort={InPort}", inPort);
     }

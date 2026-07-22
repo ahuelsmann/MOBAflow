@@ -36,6 +36,7 @@ public sealed partial class MobaRuntimeService
 
     private void OnZ21ConnectionLost()
     {
+        _activeProjectContext?.JourneyManager.CancelPendingWork();
         _isConnected = false;
         _isTrackPowerOn = false;
         _isEmergencyStopActive = false;
@@ -170,14 +171,6 @@ public sealed partial class MobaRuntimeService
         }
 
         return true;
-    }
-
-    private void OnActionExecutionError(object? sender, ActionExecutionErrorEventArgs e)
-    {
-        _ = sender;
-        _statusText = $"Action '{e.Action.Name}' failed: {e.ErrorMessage}";
-        PublishSnapshot();
-        _logger.LogError(e.Exception, "Action '{ActionName}' execution failed: {ErrorMessage}", e.Action.Name, e.ErrorMessage);
     }
 
     private void OnTrafficPacketLogged(object? sender, Z21TrafficPacket packet)

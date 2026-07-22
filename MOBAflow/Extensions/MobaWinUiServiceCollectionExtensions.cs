@@ -269,7 +269,9 @@ public static class MobaWinUiServiceCollectionExtensions
                 await speakerEngine.AnnouncementAsync(message, voiceName: null).ConfigureAwait(false);
             },
             locomotiveWhistleAutomation: sp.GetService<ILocomotiveWhistleAutomationService>(),
-            projectDiagnosticsService: sp.GetRequiredService<IProjectDiagnosticsService>()));
+            projectDiagnosticsService: sp.GetRequiredService<IProjectDiagnosticsService>(),
+            workflowService: sp.GetRequiredService<IWorkflowService>(),
+            workflowTraceStore: sp.GetRequiredService<IWorkflowTraceStore>()));
 
         services.AddSingleton<IJourneySelectionContext>(sp => sp.GetRequiredService<MainWindowViewModel>());
         services.AddSingleton<IProjectContext>(sp => sp.GetRequiredService<MainWindowViewModel>());

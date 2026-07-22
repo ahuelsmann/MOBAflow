@@ -5,6 +5,7 @@ namespace Moba.Test.Backend;
 using Microsoft.Extensions.Logging;
 
 using Moba.Backend.Service;
+using Moba.Sound;
 
 using Moq;
 
@@ -215,5 +216,37 @@ internal class AnnouncementServiceTests
 
         // Assert
         Assert.That(result, Does.Contain("rechts"), "Should contain 'rechts' for right exit");
+    }
+
+    [Test]
+    public void GenerateAndSpeakAnnouncementAsync_CancelledSpeech_IsNotSuppressed()
+    {
+        // Arrange
+        using var cancellation = new CancellationTokenSource();
+        var speaker = new Mock<ISpeakerEngine>();
+        speaker
+            .Setup(engine => engine.AnnouncementAsync(
+                It.IsAny<string>(),
+                It.IsAny<string?>(),
+                cancellation.Token))
+            .Returns(() =>
+            {
+                cancellation.Cancel();
+                return Task.FromCanceled(cancellation.Token);
+            });
+        var factory = new Mock<ISpeakerEngineFactory>();
+        factory.Setup(value => value.CreateEngineFromOptions()).Returns(speaker.Object);
+        var service = new AnnouncementService(factory.Object, _mockLogger.Object);
+
+        // Act & Assert
+        Assert.CatchAsync<OperationCanceledException>(() => service.GenerateAndSpeakAnnouncementAsync(
+            "Next stop {StationName}",
+            new Station { Name = "Minden" },
+            1,
+            cancellation.Token));
+        speaker.Verify(engine => engine.AnnouncementAsync(
+            It.IsAny<string>(),
+            null,
+            cancellation.Token), Times.Once);
     }
 }

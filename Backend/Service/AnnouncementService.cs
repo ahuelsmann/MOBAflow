@@ -174,6 +174,7 @@ public class AnnouncementService : IAnnouncementService
         string? templateName = null,
         bool suppressSpeechErrors = true)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         // Generate text
         var announcementText = GenerateAnnouncementText(templateText, station, stationIndex, templateName);
 
@@ -193,7 +194,15 @@ public class AnnouncementService : IAnnouncementService
 
                 _logger?.LogInformation("Speaking announcement via {SpeakerEngine} for station '{StationName}'",
                     speakerEngine.Name, station.Name);
-                await speakerEngine.AnnouncementAsync(announcementText, voiceName: null).ConfigureAwait(false);
+                await speakerEngine.AnnouncementAsync(
+                        announcementText,
+                        voiceName: null,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex)
             {

@@ -34,17 +34,25 @@ public class ActionExecutor : IActionExecutor
     /// <summary>
     /// Executes a WorkflowAction based on its type.
     /// </summary>
-    public async Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context)
+    public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context) =>
+        ExecuteAsync(action, context, CancellationToken.None);
+
+    /// <inheritdoc />
+    public async Task ExecuteAsync(
+        WorkflowAction action,
+        ActionExecutionContext context,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(action);
         ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
 
         _logger?.LogDebug("Executing action #{Number}: {Name} (Type: {Type})", action.Number, action.Name, action.Type);
 
         if (!_handlers.TryGetValue(action.Type, out var handler))
             throw new NotSupportedException($"Action type '{action.Type}' is not supported");
 
-        await handler.ExecuteAsync(action, context).ConfigureAwait(false);
+        await handler.ExecuteAsync(action, context, cancellationToken).ConfigureAwait(false);
     }
 
     private static IEnumerable<IWorkflowActionHandler> CreateDefaultHandlers(

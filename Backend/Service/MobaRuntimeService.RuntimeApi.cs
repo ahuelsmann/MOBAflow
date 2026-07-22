@@ -112,6 +112,7 @@ public sealed partial class MobaRuntimeService
 
         try
         {
+            _activeProjectContext?.JourneyManager.CancelPendingWork();
             CheckpointVehicleUsage(publishSnapshot: true);
             _isManualDisconnectRequested = true;
             _isZ21Connecting = false;

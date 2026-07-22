@@ -193,14 +193,16 @@ public partial class Z21
             foreach (var inPort in changedInPorts)
             {
                 var isActive = activeInPorts.Contains(inPort);
+                var correlationId = Guid.NewGuid();
                 if (isActive)
                 {
                     var feedback = new FeedbackResult(content, inPort);
+                    correlationId = feedback.CorrelationId;
                     Received?.Invoke(feedback);
-                    QueueEvent(new FeedbackReceivedEvent(inPort));
+                    QueueEvent(new FeedbackReceivedEvent(inPort, correlationId));
                 }
 
-                QueueEvent(new FeedbackStateChangedEvent(inPort, isActive, Guid.NewGuid()));
+                QueueEvent(new FeedbackStateChangedEvent(inPort, isActive, correlationId));
                 _logger?.LogDebug(
                     "R-Bus Feedback changed: InPort={InPort}, IsActive={IsActive}",
                     inPort,
