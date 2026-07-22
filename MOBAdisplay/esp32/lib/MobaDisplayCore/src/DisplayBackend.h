@@ -20,36 +20,24 @@ enum class Rotation : uint8_t
     Degrees270 = 3
 };
 
-enum PixelFormatFlags : uint16_t
-{
-    PixelFormatNone = 0,
-    PixelFormatRgb565BigEndian = 1U << 0
-};
+constexpr uint16_t PixelFormatNone = 0;
+constexpr uint16_t PixelFormatRgb565BigEndian = 1U << 0;
 
-enum RotationFlags : uint8_t
-{
-    RotationNone = 0,
-    RotationDegrees0 = 1U << 0,
-    RotationDegrees90 = 1U << 1,
-    RotationDegrees180 = 1U << 2,
-    RotationDegrees270 = 1U << 3
-};
+constexpr uint8_t RotationNone = 0;
+constexpr uint8_t RotationDegrees0 = 1U << 0;
+constexpr uint8_t RotationDegrees90 = 1U << 1;
+constexpr uint8_t RotationDegrees180 = 1U << 2;
+constexpr uint8_t RotationDegrees270 = 1U << 3;
 
-enum OptionalCommandFlags : uint8_t
-{
-    OptionalCommandNone = 0,
-    OptionalCommandClear = 1U << 0,
-    OptionalCommandSetBrightness = 1U << 1,
-    OptionalCommandRenderTestPattern = 1U << 2
-};
+constexpr uint8_t OptionalCommandNone = 0;
+constexpr uint8_t OptionalCommandClear = 1U << 0;
+constexpr uint8_t OptionalCommandSetBrightness = 1U << 1;
+constexpr uint8_t OptionalCommandRenderTestPattern = 1U << 2;
 
-enum FrameCapabilityFlags : uint8_t
-{
-    FrameCapabilityNone = 0,
-    FrameCapabilityFullFrameStaging = 1U << 0,
-    FrameCapabilityRegionTransfer = 1U << 1,
-    FrameCapabilityAtomicPresentation = 1U << 2
-};
+constexpr uint8_t FrameCapabilityNone = 0;
+constexpr uint8_t FrameCapabilityFullFrameStaging = 1U << 0;
+constexpr uint8_t FrameCapabilityRegionTransfer = 1U << 1;
+constexpr uint8_t FrameCapabilityAtomicPresentation = 1U << 2;
 
 enum class TestPattern : uint8_t
 {
@@ -71,13 +59,10 @@ enum class ResultCode : uint8_t
     Conflict = 0x0A
 };
 
-enum ResultFlags : uint8_t
-{
-    ResultFlagNone = 0,
-    ResultFlagPresented = 1U << 0,
-    ResultFlagDuplicate = 1U << 1,
-    ResultFlagRetryable = 1U << 2
-};
+constexpr uint8_t ResultFlagNone = 0;
+constexpr uint8_t ResultFlagPresented = 1U << 0;
+constexpr uint8_t ResultFlagDuplicate = 1U << 1;
+constexpr uint8_t ResultFlagRetryable = 1U << 2;
 
 struct DisplayResult
 {
@@ -115,7 +100,10 @@ public:
 
     virtual const DisplayCapabilities& GetCapabilities() const noexcept = 0;
     virtual DisplayResult Initialize() noexcept = 0;
-    virtual DisplayResult Present(const uint8_t* frameBytes, size_t frameByteCount) noexcept = 0;
+    virtual DisplayResult Present(
+        const uint8_t* frameBytes,
+        size_t frameByteCount,
+        Rotation rotation) noexcept = 0;
 
     virtual DisplayResult Clear(uint16_t) noexcept
     {

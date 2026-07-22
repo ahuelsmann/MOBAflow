@@ -40,18 +40,7 @@ FrameAssembler::FrameAssembler(
       _stagingBufferLength(stagingBufferLength),
       _coverageBuffer(coverageBuffer),
       _coverageBufferLength(coverageBufferLength),
-      _inactivityTimeoutMilliseconds(inactivityTimeoutMilliseconds),
-      _metadata(),
-      _activeFrameId(0),
-      _lastActivityMilliseconds(0),
-      _coveredPixelCount(0),
-      _packetCount(0),
-      _lastCompletedFrameId(0),
-      _lastCompletedFrameCrc32(0),
-      _acceptedFrameCount(0),
-      _rejectedFrameCount(0),
-      _lastResult(MakeResult(ResultCode::Ok)),
-      _hasActiveFrame(false)
+      _inactivityTimeoutMilliseconds(inactivityTimeoutMilliseconds == 0 ? 1 : inactivityTimeoutMilliseconds)
 {
 }
 
@@ -66,6 +55,12 @@ size_t FrameAssembler::CoverageByteCount(uint16_t width, uint16_t height) noexce
     const uint64_t pixelCount = static_cast<uint64_t>(width) * height;
     const uint64_t byteCount = (pixelCount + 7U) / 8U;
     return byteCount > SIZE_MAX ? 0 : static_cast<size_t>(byteCount);
+}
+
+size_t FrameAssembler::TrackingByteCount(uint16_t width, uint16_t height) noexcept
+{
+    const size_t coverageBytes = CoverageByteCount(width, height);
+    return coverageBytes > SIZE_MAX / 2U ? 0 : coverageBytes * 2U;
 }
 
 uint32_t FrameAssembler::ComputeCrc32(const uint8_t* bytes, size_t byteCount) noexcept
@@ -93,24 +88,37 @@ DisplayResult FrameAssembler::BeginFrame(
     if (frameId == 0 || !IsMetadataSupported(metadata))
         return Record(MakeResult(ResultCode::Invalid));
 
+    if (_hasCompletedFrame)
+    {
+        if (frameId == _lastCompletedFrameId)
+        {
+            return Record(MetadataMatches(metadata, _lastCompletedMetadata)
+                ? MakeResult(ResultCode::Ok, ResultFlagPresented | ResultFlagDuplicate)
+                : MakeResult(ResultCode::Conflict));
+        }
+
+        if (!IsNewerFrameId(frameId, _lastCompletedFrameId))
+            return Record(MakeResult(ResultCode::Conflict));
+    }
+
     if (_hasActiveFrame)
     {
         if (_activeFrameId != frameId)
             return Record(MakeResult(ResultCode::Busy, ResultFlagRetryable));
 
-        if (!MetadataMatches(metadata))
+        if (!MetadataMatches(metadata, _metadata))
             return Record(MakeResult(ResultCode::Conflict));
 
         _lastActivityMilliseconds = nowMilliseconds;
         return Record(MakeResult(ResultCode::Ok, ResultFlagDuplicate));
     }
 
-    const size_t coverageBytes = CoverageByteCount(metadata.width, metadata.height);
-    std::memset(_coverageBuffer, 0, coverageBytes);
+    std::memset(_coverageBuffer, 0, TrackingByteCount(metadata.width, metadata.height));
     _metadata = metadata;
     _activeFrameId = frameId;
     _lastActivityMilliseconds = nowMilliseconds;
     _coveredPixelCount = 0;
+    _receivedPacketCount = 0;
     _packetCount = 0;
     _hasActiveFrame = true;
     return Record(MakeResult(ResultCode::Ok));
@@ -135,6 +143,14 @@ DisplayResult FrameAssembler::WriteRegion(
     }
 
     if (_packetCount != 0 && _packetCount != region.packetCount)
+    {
+        ++_rejectedFrameCount;
+        DiscardActiveFrame();
+        return Record(MakeResult(ResultCode::Conflict));
+    }
+
+    const bool duplicatePacket = IsPacketReceived(region.packetIndex);
+    if (duplicatePacket && RegionContainsUncoveredPixel(region))
     {
         ++_rejectedFrameCount;
         DiscardActiveFrame();
@@ -183,6 +199,12 @@ DisplayResult FrameAssembler::WriteRegion(
     }
 
     _packetCount = region.packetCount;
+    if (!duplicatePacket)
+    {
+        MarkPacketReceived(region.packetIndex);
+        ++_receivedPacketCount;
+    }
+
     _lastActivityMilliseconds = nowMilliseconds;
     return Record(MakeResult(ResultCode::Ok));
 }
@@ -192,12 +214,18 @@ DisplayResult FrameAssembler::CompleteFrame(
     uint32_t frameCrc32,
     uint32_t nowMilliseconds) noexcept
 {
-    if (frameId == _lastCompletedFrameId)
+    if (frameId == 0)
+        return Record(MakeResult(ResultCode::Invalid));
+
+    if (_hasCompletedFrame && frameId == _lastCompletedFrameId)
     {
         return Record(frameCrc32 == _lastCompletedFrameCrc32
             ? MakeResult(ResultCode::Ok, ResultFlagPresented | ResultFlagDuplicate)
             : MakeResult(ResultCode::Conflict));
     }
+
+    if (_hasCompletedFrame && !IsNewerFrameId(frameId, _lastCompletedFrameId))
+        return Record(MakeResult(ResultCode::Conflict));
 
     if (ExpireIfNeeded(nowMilliseconds))
         return _lastResult;
@@ -213,6 +241,12 @@ DisplayResult FrameAssembler::CompleteFrame(
         return Record(MakeResult(ResultCode::Incomplete, ResultFlagNone, missingByteOffset, missingByteCount));
     }
 
+    if (_packetCount == 0 || _receivedPacketCount != _packetCount)
+    {
+        ++_rejectedFrameCount;
+        return Record(MakeResult(ResultCode::Incomplete));
+    }
+
     if (frameCrc32 != _metadata.frameCrc32
         || ComputeCrc32(_stagingBuffer, _metadata.expectedPixelByteCount) != frameCrc32)
     {
@@ -221,16 +255,25 @@ DisplayResult FrameAssembler::CompleteFrame(
         return Record(MakeResult(ResultCode::ChecksumMismatch));
     }
 
-    const DisplayResult presentResult = _backend.Present(_stagingBuffer, _metadata.expectedPixelByteCount);
+    const DisplayResult presentResult =
+        _backend.Present(_stagingBuffer, _metadata.expectedPixelByteCount, _metadata.rotation);
     if (presentResult.code != ResultCode::Ok)
     {
+        if ((presentResult.flags & ResultFlagRetryable) != 0)
+        {
+            _lastActivityMilliseconds = nowMilliseconds;
+            return Record(presentResult);
+        }
+
         ++_rejectedFrameCount;
         DiscardActiveFrame();
-        return Record(MakeResult(ResultCode::HardwareFailure));
+        return Record(presentResult);
     }
 
     _lastCompletedFrameId = frameId;
     _lastCompletedFrameCrc32 = frameCrc32;
+    _lastCompletedMetadata = _metadata;
+    _hasCompletedFrame = true;
     ++_acceptedFrameCount;
     DiscardActiveFrame();
     return Record(MakeResult(ResultCode::Ok, ResultFlagPresented));
@@ -254,6 +297,8 @@ void FrameAssembler::ResetForReboot() noexcept
     DiscardActiveFrame();
     _lastCompletedFrameId = 0;
     _lastCompletedFrameCrc32 = 0;
+    _lastCompletedMetadata = {};
+    _hasCompletedFrame = false;
     _lastResult = MakeResult(ResultCode::Ok);
 }
 
@@ -291,35 +336,43 @@ bool FrameAssembler::IsMetadataSupported(const FrameMetadata& metadata) const no
 {
     const DisplayCapabilities& capabilities = _backend.GetCapabilities();
     const size_t frameBytes = FrameByteCount(metadata.width, metadata.height);
-    const size_t coverageBytes = CoverageByteCount(metadata.width, metadata.height);
+    const size_t trackingBytes = TrackingByteCount(metadata.width, metadata.height);
     return metadata.width == capabilities.width
         && metadata.height == capabilities.height
         && metadata.pixelFormat == PixelFormat::Rgb565BigEndian
         && (capabilities.pixelFormats & PixelFormatRgb565BigEndian) != 0
         && (capabilities.rotations & RotationFlag(metadata.rotation)) != 0
         && frameBytes != 0
-        && coverageBytes != 0
+        && trackingBytes != 0
         && frameBytes == metadata.expectedPixelByteCount
         && frameBytes <= _stagingBufferLength
-        && coverageBytes <= _coverageBufferLength
+        && trackingBytes <= _coverageBufferLength
         && _stagingBuffer
         && _coverageBuffer;
 }
 
-bool FrameAssembler::MetadataMatches(const FrameMetadata& metadata) const noexcept
+bool FrameAssembler::MetadataMatches(const FrameMetadata& left, const FrameMetadata& right) noexcept
 {
-    return metadata.width == _metadata.width
-        && metadata.height == _metadata.height
-        && metadata.pixelFormat == _metadata.pixelFormat
-        && metadata.rotation == _metadata.rotation
-        && metadata.expectedPixelByteCount == _metadata.expectedPixelByteCount
-        && metadata.frameCrc32 == _metadata.frameCrc32;
+    return left.width == right.width
+        && left.height == right.height
+        && left.pixelFormat == right.pixelFormat
+        && left.rotation == right.rotation
+        && left.expectedPixelByteCount == right.expectedPixelByteCount
+        && left.frameCrc32 == right.frameCrc32;
+}
+
+bool FrameAssembler::IsNewerFrameId(uint32_t candidate, uint32_t reference) noexcept
+{
+    const uint32_t difference = candidate - reference;
+    return difference != 0 && difference < 0x80000000U;
 }
 
 bool FrameAssembler::ValidateRegion(const FrameRegion& region) const noexcept
 {
+    const uint32_t pixelCount = static_cast<uint32_t>(_metadata.width) * _metadata.height;
     if (!region.pixelBytes || region.width == 0 || region.height == 0
         || region.packetCount == 0 || region.packetIndex >= region.packetCount
+        || region.packetCount > pixelCount
         || region.finalPacket != (region.packetIndex + 1U == region.packetCount))
     {
         return false;
@@ -347,6 +400,36 @@ void FrameAssembler::MarkPixelCovered(size_t pixelIndex) noexcept
     _coverageBuffer[pixelIndex / 8U] |= static_cast<uint8_t>(1U << (pixelIndex % 8U));
 }
 
+bool FrameAssembler::IsPacketReceived(uint16_t packetIndex) const noexcept
+{
+    const size_t packetCoverageOffset = CoverageByteCount(_metadata.width, _metadata.height);
+    return (_coverageBuffer[packetCoverageOffset + packetIndex / 8U]
+        & static_cast<uint8_t>(1U << (packetIndex % 8U))) != 0;
+}
+
+void FrameAssembler::MarkPacketReceived(uint16_t packetIndex) noexcept
+{
+    const size_t packetCoverageOffset = CoverageByteCount(_metadata.width, _metadata.height);
+    _coverageBuffer[packetCoverageOffset + packetIndex / 8U] |=
+        static_cast<uint8_t>(1U << (packetIndex % 8U));
+}
+
+bool FrameAssembler::RegionContainsUncoveredPixel(const FrameRegion& region) const noexcept
+{
+    for (uint16_t row = 0; row < region.height; ++row)
+    {
+        const size_t firstPixel =
+            static_cast<size_t>(region.y + row) * _metadata.width + region.x;
+        for (uint16_t column = 0; column < region.width; ++column)
+        {
+            if (!IsPixelCovered(firstPixel + column))
+                return true;
+        }
+    }
+
+    return false;
+}
+
 bool FrameAssembler::TryGetMissingRange(uint32_t* byteOffset, uint32_t* byteCount) const noexcept
 {
     const size_t pixelCount = static_cast<size_t>(_metadata.width) * _metadata.height;
@@ -368,8 +451,8 @@ bool FrameAssembler::TryGetMissingRange(uint32_t* byteOffset, uint32_t* byteCoun
 
 bool FrameAssembler::ExpireIfNeeded(uint32_t nowMilliseconds) noexcept
 {
-    if (!_hasActiveFrame || _inactivityTimeoutMilliseconds == 0
-        || static_cast<uint32_t>(nowMilliseconds - _lastActivityMilliseconds) < _inactivityTimeoutMilliseconds)
+    if (!_hasActiveFrame
+        || nowMilliseconds - _lastActivityMilliseconds < _inactivityTimeoutMilliseconds)
     {
         return false;
     }
@@ -392,6 +475,7 @@ void FrameAssembler::DiscardActiveFrame() noexcept
     _activeFrameId = 0;
     _lastActivityMilliseconds = 0;
     _coveredPixelCount = 0;
+    _receivedPacketCount = 0;
     _packetCount = 0;
 }
 }

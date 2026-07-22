@@ -12,16 +12,7 @@ RecordingDisplayBackend::RecordingDisplayBackend(
     size_t presentedFrameBufferLength) noexcept
     : _capabilities(capabilities),
       _presentedFrameBuffer(presentedFrameBuffer),
-      _presentedFrameBufferLength(presentedFrameBufferLength),
-      _initializeCallCount(0),
-      _presentCallCount(0),
-      _presentedFrameByteCount(0),
-      _clearCallCount(0),
-      _lastClearColor(0),
-      _brightnessCallCount(0),
-      _lastBrightnessPercentage(0),
-      _testPatternCallCount(0),
-      _lastTestPattern(TestPattern::Conformance)
+      _presentedFrameBufferLength(presentedFrameBufferLength)
 {
 }
 
@@ -36,13 +27,17 @@ DisplayResult RecordingDisplayBackend::Initialize() noexcept
     return MakeResult(ResultCode::Ok);
 }
 
-DisplayResult RecordingDisplayBackend::Present(const uint8_t* frameBytes, size_t frameByteCount) noexcept
+DisplayResult RecordingDisplayBackend::Present(
+    const uint8_t* frameBytes,
+    size_t frameByteCount,
+    Rotation rotation) noexcept
 {
     if (!frameBytes || !_presentedFrameBuffer || frameByteCount == 0 || frameByteCount > _presentedFrameBufferLength)
         return MakeResult(ResultCode::HardwareFailure);
 
     std::memcpy(_presentedFrameBuffer, frameBytes, frameByteCount);
     _presentedFrameByteCount = frameByteCount;
+    _lastPresentedRotation = rotation;
     ++_presentCallCount;
     return MakeResult(ResultCode::Ok, ResultFlagPresented);
 }
@@ -96,6 +91,11 @@ size_t RecordingDisplayBackend::PresentCallCount() const noexcept
 size_t RecordingDisplayBackend::PresentedFrameByteCount() const noexcept
 {
     return _presentedFrameByteCount;
+}
+
+Rotation RecordingDisplayBackend::LastPresentedRotation() const noexcept
+{
+    return _lastPresentedRotation;
 }
 
 size_t RecordingDisplayBackend::ClearCallCount() const noexcept

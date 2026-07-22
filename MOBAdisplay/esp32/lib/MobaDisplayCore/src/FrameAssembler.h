@@ -43,6 +43,7 @@ public:
 
     static size_t FrameByteCount(uint16_t width, uint16_t height) noexcept;
     static size_t CoverageByteCount(uint16_t width, uint16_t height) noexcept;
+    static size_t TrackingByteCount(uint16_t width, uint16_t height) noexcept;
     static uint32_t ComputeCrc32(const uint8_t* bytes, size_t byteCount) noexcept;
 
     DisplayResult BeginFrame(uint32_t frameId, const FrameMetadata& metadata, uint32_t nowMilliseconds) noexcept;
@@ -61,10 +62,14 @@ public:
 
 private:
     bool IsMetadataSupported(const FrameMetadata& metadata) const noexcept;
-    bool MetadataMatches(const FrameMetadata& metadata) const noexcept;
+    static bool MetadataMatches(const FrameMetadata& left, const FrameMetadata& right) noexcept;
+    static bool IsNewerFrameId(uint32_t candidate, uint32_t reference) noexcept;
     bool ValidateRegion(const FrameRegion& region) const noexcept;
     bool IsPixelCovered(size_t pixelIndex) const noexcept;
     void MarkPixelCovered(size_t pixelIndex) noexcept;
+    bool IsPacketReceived(uint16_t packetIndex) const noexcept;
+    void MarkPacketReceived(uint16_t packetIndex) noexcept;
+    bool RegionContainsUncoveredPixel(const FrameRegion& region) const noexcept;
     bool TryGetMissingRange(uint32_t* byteOffset, uint32_t* byteCount) const noexcept;
     bool ExpireIfNeeded(uint32_t nowMilliseconds) noexcept;
     DisplayResult Record(const DisplayResult& result) noexcept;
@@ -76,17 +81,20 @@ private:
     uint8_t* _coverageBuffer;
     size_t _coverageBufferLength;
     uint32_t _inactivityTimeoutMilliseconds;
-    FrameMetadata _metadata;
-    uint32_t _activeFrameId;
-    uint32_t _lastActivityMilliseconds;
-    uint32_t _coveredPixelCount;
-    uint16_t _packetCount;
-    uint32_t _lastCompletedFrameId;
-    uint32_t _lastCompletedFrameCrc32;
-    uint32_t _acceptedFrameCount;
-    uint32_t _rejectedFrameCount;
-    DisplayResult _lastResult;
-    bool _hasActiveFrame;
+    FrameMetadata _metadata{};
+    FrameMetadata _lastCompletedMetadata{};
+    uint32_t _activeFrameId = 0;
+    uint32_t _lastActivityMilliseconds = 0;
+    uint32_t _coveredPixelCount = 0;
+    uint32_t _receivedPacketCount = 0;
+    uint16_t _packetCount = 0;
+    uint32_t _lastCompletedFrameId = 0;
+    uint32_t _lastCompletedFrameCrc32 = 0;
+    uint32_t _acceptedFrameCount = 0;
+    uint32_t _rejectedFrameCount = 0;
+    DisplayResult _lastResult = MakeResult(ResultCode::Ok);
+    bool _hasActiveFrame = false;
+    bool _hasCompletedFrame = false;
 };
 }
 }

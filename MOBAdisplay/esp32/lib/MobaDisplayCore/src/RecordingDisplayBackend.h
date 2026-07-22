@@ -16,7 +16,10 @@ public:
 
     const DisplayCapabilities& GetCapabilities() const noexcept override;
     DisplayResult Initialize() noexcept override;
-    DisplayResult Present(const uint8_t* frameBytes, size_t frameByteCount) noexcept override;
+    DisplayResult Present(
+        const uint8_t* frameBytes,
+        size_t frameByteCount,
+        Rotation rotation) noexcept override;
     DisplayResult Clear(uint16_t rgb565Color) noexcept override;
     DisplayResult SetBrightness(uint8_t percentage) noexcept override;
     DisplayResult RenderTestPattern(TestPattern pattern) noexcept override;
@@ -24,6 +27,7 @@ public:
     size_t InitializeCallCount() const noexcept;
     size_t PresentCallCount() const noexcept;
     size_t PresentedFrameByteCount() const noexcept;
+    Rotation LastPresentedRotation() const noexcept;
     size_t ClearCallCount() const noexcept;
     uint16_t LastClearColor() const noexcept;
     size_t BrightnessCallCount() const noexcept;
@@ -37,15 +41,16 @@ private:
     DisplayCapabilities _capabilities;
     uint8_t* _presentedFrameBuffer;
     size_t _presentedFrameBufferLength;
-    size_t _initializeCallCount;
-    size_t _presentCallCount;
-    size_t _presentedFrameByteCount;
-    size_t _clearCallCount;
-    uint16_t _lastClearColor;
-    size_t _brightnessCallCount;
-    uint8_t _lastBrightnessPercentage;
-    size_t _testPatternCallCount;
-    TestPattern _lastTestPattern;
+    size_t _initializeCallCount = 0;
+    size_t _presentCallCount = 0;
+    size_t _presentedFrameByteCount = 0;
+    Rotation _lastPresentedRotation = Rotation::Degrees0;
+    size_t _clearCallCount = 0;
+    uint16_t _lastClearColor = 0;
+    size_t _brightnessCallCount = 0;
+    uint8_t _lastBrightnessPercentage = 0;
+    size_t _testPatternCallCount = 0;
+    TestPattern _lastTestPattern = TestPattern::Conformance;
 };
 }
 }
