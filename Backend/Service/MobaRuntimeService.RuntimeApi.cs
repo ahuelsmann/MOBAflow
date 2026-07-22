@@ -18,7 +18,7 @@ using System.Text.Json;
 public sealed partial class MobaRuntimeService
 {
     /// <inheritdoc />
-    public Task ActivateProjectAsync(Project editableProject, CancellationToken cancellationToken = default)
+    public async Task ActivateProjectAsync(Project editableProject, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentNullException.ThrowIfNull(editableProject);
@@ -31,7 +31,7 @@ public sealed partial class MobaRuntimeService
         CheckpointVehicleUsage(publishSnapshot: true);
         var activeProject = CloneForRuntime(editableProject);
         var journeyManager = _journeyManagerFactory.Create(activeProject, _executionContextFactory.Create());
-        journeyManager.StationChanged += OnJourneyRuntimeChanged;
+        journeyManager.StationChanged += OnJourneyStationChanged;
         journeyManager.FeedbackReceived += OnJourneyRuntimeChanged;
         journeyManager.JourneyCompleted += OnJourneyCompleted;
 
@@ -41,6 +41,13 @@ public sealed partial class MobaRuntimeService
         UpdateVehicleUsageRuntimeState();
         StartVehicleUsageCheckpointTimer();
 
+        if (_interlockingRuntime != null)
+        {
+            await _interlockingRuntime.ActivateAsync(activeProject.Interlocking, cancellationToken).ConfigureAwait(false);
+            if (_z21.IsConnected)
+                await _interlockingRuntime.SynchronizeAsync(cancellationToken).ConfigureAwait(false);
+        }
+
         _logger.LogInformation(
             "Activated project '{ProjectName}' for runtime with {JourneyCount} journeys",
             activeProject.Name,
@@ -48,7 +55,6 @@ public sealed partial class MobaRuntimeService
 
         PublishSnapshot();
         CheckpointVehicleUsage(publishSnapshot: false);
-        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -106,6 +112,7 @@ public sealed partial class MobaRuntimeService
 
         try
         {
+            _activeProjectContext?.JourneyManager.CancelPendingWork();
             CheckpointVehicleUsage(publishSnapshot: true);
             _isManualDisconnectRequested = true;
             _isZ21Connecting = false;

@@ -38,16 +38,25 @@ public class SystemSpeechEngine : ISpeakerEngine
     /// <param name="voiceName">Optional: Name of the voice to use (can be full name like "Microsoft Hedda Desktop" or partial name like "Hedda")</param>
     /// <returns>A task representing the asynchronous operation</returns>
     /// <exception cref="ArgumentNullException">Thrown when message is null or empty</exception>
-    public async Task AnnouncementAsync(string message, string? voiceName)
+    public Task AnnouncementAsync(string message, string? voiceName) =>
+        AnnouncementAsync(message, voiceName, CancellationToken.None);
+
+    /// <inheritdoc />
+    public async Task AnnouncementAsync(
+        string message,
+        string? voiceName,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(message))
         {
             throw new ArgumentNullException(nameof(message));
         }
 
+        cancellationToken.ThrowIfCancellationRequested();
         await Task.Run(() =>
         {
             using var synthesizer = new SpeechSynthesizer();
+            using var cancellationRegistration = cancellationToken.Register(synthesizer.SpeakAsyncCancelAll);
 
             // Configure output to default audio device
             synthesizer.SetOutputToDefaultAudioDevice();
@@ -83,6 +92,7 @@ public class SystemSpeechEngine : ISpeakerEngine
                 _logger.LogInformation("Synthesizing speech: {Message}", message);
 
                 synthesizer.Speak(message);
+                cancellationToken.ThrowIfCancellationRequested();
 
                 _logger.LogInformation("Speech synthesized successfully for text: {Message}", message);
             }
@@ -91,7 +101,7 @@ public class SystemSpeechEngine : ISpeakerEngine
                 _logger.LogError(ex, "ERROR during speech synthesis for message: {Message}", message);
                 throw;
             }
-        }).ConfigureAwait(false);
+        }, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>

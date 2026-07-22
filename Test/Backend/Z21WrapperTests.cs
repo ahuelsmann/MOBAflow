@@ -78,8 +78,18 @@ internal class Z21WrapperTests
         var z21 = new Z21(fake, eventBus);
         var activations = new List<int>();
         var publishedActivations = new List<int>();
-        z21.Received += feedback => activations.Add(feedback.InPort);
-        eventBus.Subscribe<FeedbackReceivedEvent>(@event => publishedActivations.Add(@event.InPort));
+        var sourceCorrelations = new List<Guid>();
+        var publishedCorrelations = new List<Guid>();
+        z21.Received += feedback =>
+        {
+            activations.Add(feedback.InPort);
+            sourceCorrelations.Add(feedback.CorrelationId);
+        };
+        eventBus.Subscribe<FeedbackReceivedEvent>(@event =>
+        {
+            publishedActivations.Add(@event.InPort);
+            publishedCorrelations.Add(@event.CorrelationId);
+        });
 
         fake.RaiseReceived(Z21Packets.RBusFeedbackInPort5);
         fake.RaiseReceived(Z21Packets.RBusFeedbackInPort5);
@@ -93,6 +103,8 @@ internal class Z21WrapperTests
         {
             Assert.That(activations, Is.EqualTo(new[] { 5, 5 }));
             Assert.That(publishedActivations, Is.EqualTo(new[] { 5, 5 }));
+            Assert.That(sourceCorrelations, Is.EqualTo(publishedCorrelations));
+            Assert.That(sourceCorrelations, Has.All.Not.EqualTo(Guid.Empty));
         });
     }
 

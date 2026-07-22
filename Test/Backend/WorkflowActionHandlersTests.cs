@@ -68,7 +68,7 @@ internal sealed class WorkflowActionHandlersTests
 
         await handler.ExecuteAsync(action, context);
 
-        z21.Verify(z => z.SendCommandAsync(bytes), Times.Once);
+        z21.Verify(z => z.SendCommandAsync(bytes, CancellationToken.None), Times.Once);
     }
 
     [Test]
@@ -84,7 +84,7 @@ internal sealed class WorkflowActionHandlersTests
 
         await handler.ExecuteAsync(action, new ActionExecutionContext { Z21 = z21.Object });
 
-        z21.Verify(z => z.SendCommandAsync(It.IsAny<byte[]>()), Times.Never);
+        z21.Verify(z => z.SendCommandAsync(It.IsAny<byte[]>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]
@@ -214,6 +214,114 @@ internal sealed class WorkflowActionHandlersTests
             handler.ExecuteAsync(action, new ActionExecutionContext { Z21 = Mock.Of<IZ21>() }));
     }
 
+    [Test]
+    public async Task CommandHandler_PropagatesCancellationTokenToZ21()
+    {
+        var z21 = new Mock<IZ21>();
+        var action = new WorkflowAction
+        {
+            Type = ActionType.Command,
+            Command = new CommandActionPayload { BytesBase64 = "AQID" }
+        };
+        using var cancellation = new CancellationTokenSource();
+
+        await new CommandWorkflowActionHandler().ExecuteAsync(
+            action,
+            new ActionExecutionContext { Z21 = z21.Object },
+            cancellation.Token);
+
+        z21.Verify(z => z.SendCommandAsync(It.IsAny<byte[]>(), cancellation.Token), Times.Once);
+    }
+
+    [Test]
+    public async Task AudioHandler_PropagatesCancellationTokenToSoundPlayer()
+    {
+        const string path = "gong.wav";
+        var player = new RecordingSoundPlayer();
+        var action = new WorkflowAction
+        {
+            Type = ActionType.Audio,
+            Audio = new AudioActionPayload { FilePath = path }
+        };
+        using var cancellation = new CancellationTokenSource();
+
+        await new AudioWorkflowActionHandler(fileSystem: new FakeFileSystem(path)).ExecuteAsync(
+            action,
+            new ActionExecutionContext { Z21 = Mock.Of<IZ21>(), SoundPlayer = player },
+            cancellation.Token);
+
+        Assert.That(player.LastCancellationToken, Is.EqualTo(cancellation.Token));
+    }
+
+    [Test]
+    public async Task AnnouncementHandler_PropagatesCancellationTokenToSpeechService()
+    {
+        var service = new RecordingAnnouncementService();
+        var action = new WorkflowAction
+        {
+            Type = ActionType.Announcement,
+            Announcement = new AnnouncementActionPayload { Message = "Next stop" }
+        };
+        using var cancellation = new CancellationTokenSource();
+
+        await new AnnouncementWorkflowActionHandler(service).ExecuteAsync(
+            action,
+            new ActionExecutionContext
+            {
+                Z21 = Mock.Of<IZ21>(),
+                CurrentStation = new Station { Name = "Minden" }
+            },
+            cancellation.Token);
+
+        Assert.That(service.LastCancellationToken, Is.EqualTo(cancellation.Token));
+    }
+
+    [Test]
+    public void MutatingHandlers_PreCancelledToken_DoesNotStartEffect()
+    {
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        var state = new JourneySessionState { CurrentPos = 0 };
+        var first = new Station { Name = "First" };
+        var second = new Station { Name = "Second" };
+        var journey = new Journey { Stations = [first, second] };
+        state.CurrentStationId = first.Id;
+        var context = new ActionExecutionContext
+        {
+            Z21 = Mock.Of<IZ21>(),
+            CurrentJourney = journey,
+            CurrentJourneySessionState = state
+        };
+        var action = new WorkflowAction
+        {
+            Type = ActionType.ChangeJourneyStop,
+            ChangeJourneyStop = new ChangeJourneyStopActionPayload { MoveToNextStop = true }
+        };
+
+        Assert.ThrowsAsync<OperationCanceledException>(() =>
+            new ChangeJourneyStopWorkflowActionHandler().ExecuteAsync(action, context, cancellation.Token));
+        Assert.That(state.CurrentStationId, Is.EqualTo(first.Id));
+    }
+
+    [Test]
+    public void ExecuteScriptHandler_PreCancelledToken_DoesNotStartProcess()
+    {
+        const string path = "existing.ps1";
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        var action = new WorkflowAction
+        {
+            Type = ActionType.ExecuteScript,
+            PowerShell = new PowerShellActionPayload { ScriptPath = path }
+        };
+
+        Assert.ThrowsAsync<OperationCanceledException>(() =>
+            new ExecuteScriptWorkflowActionHandler(fileSystem: new FakeFileSystem(path)).ExecuteAsync(
+                action,
+                new ActionExecutionContext { Z21 = Mock.Of<IZ21>() },
+                cancellation.Token));
+    }
+
     private sealed class FakeFileSystem : IFileSystem
     {
         private readonly HashSet<string> _files;
@@ -230,9 +338,12 @@ internal sealed class WorkflowActionHandlersTests
     {
         public string? LastPath { get; private set; }
 
+        public CancellationToken LastCancellationToken { get; private set; }
+
         public Task PlayAsync(string waveFile, CancellationToken cancellationToken = default)
         {
             LastPath = waveFile;
+            LastCancellationToken = cancellationToken;
             return Task.CompletedTask;
         }
     }
@@ -244,6 +355,8 @@ internal sealed class WorkflowActionHandlersTests
         public Station? LastStation { get; private set; }
 
         public int LastStationIndex { get; private set; }
+
+        public CancellationToken LastCancellationToken { get; private set; }
 
         public bool IsSpeakerEngineAvailable => true;
 
@@ -265,12 +378,12 @@ internal sealed class WorkflowActionHandlersTests
             bool suppressSpeechErrors = true)
         {
             _ = templateText;
-            _ = cancellationToken;
             _ = templateName;
             _ = suppressSpeechErrors;
             SpeakCalls++;
             LastStation = station;
             LastStationIndex = stationIndex;
+            LastCancellationToken = cancellationToken;
             return Task.CompletedTask;
         }
     }

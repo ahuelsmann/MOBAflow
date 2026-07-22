@@ -128,40 +128,48 @@ public sealed class DigitalAddressConflictDetector : IDigitalAddressConflictDete
             }
         }
 
-        foreach (var element in project.SignalBoxPlan?.Elements ?? [])
+        foreach (var turnout in project.Interlocking.Turnouts)
         {
-            switch (element)
+            var addresses = turnout.Commands
+                .SelectMany(mapping => mapping.Commands)
+                .Select(command => (long)turnout.DecoderAddress + command.AddressOffset)
+                .Append(turnout.DecoderAddress)
+                .Distinct();
+            foreach (var address in addresses)
             {
-                case SbSwitch sbSwitch when sbSwitch.Address != 0:
-                    AddAllocation(
-                        DigitalAddressDomain.Accessory,
-                        sbSwitch.Address,
-                        sbSwitch.Address,
-                        Owner(sbSwitch),
-                        allocations,
-                        findings);
-                    break;
+                AddAllocation(
+                    DigitalAddressDomain.Accessory,
+                    address,
+                    address,
+                    Owner(turnout),
+                    allocations,
+                    findings);
+            }
+        }
 
-                case SbSignal signal when signal.BaseAddress != 0:
-                    var maximumOffset = ResolveSignalMaximumOffset(signal, findings);
-                    AddAllocation(
-                        DigitalAddressDomain.Accessory,
-                        signal.BaseAddress,
-                        (long)signal.BaseAddress + maximumOffset,
-                        Owner(signal),
-                        allocations,
-                        findings);
-                    break;
+        foreach (var signal in project.Interlocking.Signals)
+        {
+            var maximumOffset = ResolveSignalMaximumOffset(signal, findings);
+            AddAllocation(
+                DigitalAddressDomain.Accessory,
+                signal.BaseAddress,
+                (long)signal.BaseAddress + maximumOffset,
+                Owner(signal),
+                allocations,
+                findings);
+        }
 
-                case SbDetector detector when detector.FeedbackAddress != 0:
-                    AddAllocation(
-                        DigitalAddressDomain.Feedback,
-                        detector.FeedbackAddress,
-                        detector.FeedbackAddress,
-                        Owner(detector),
-                        allocations,
-                        findings);
-                    break;
+        foreach (var block in project.Interlocking.Blocks)
+        {
+            foreach (var input in block.FeedbackInputs.Select(input => input.InPort).Distinct())
+            {
+                AddAllocation(
+                    DigitalAddressDomain.Feedback,
+                    input,
+                    input,
+                    Owner(block),
+                    allocations,
+                    findings);
             }
         }
 
@@ -184,7 +192,7 @@ public sealed class DigitalAddressConflictDetector : IDigitalAddressConflictDete
         return new DigitalAddressConflictReport(orderedAllocations, orderedFindings);
     }
 
-    private int ResolveSignalMaximumOffset(SbSignal signal, List<DigitalAddressFinding> findings)
+    private int ResolveSignalMaximumOffset(SignalDefinition signal, List<DigitalAddressFinding> findings)
     {
         if (!signal.IsMultiplexed)
             return 0;
@@ -298,8 +306,14 @@ public sealed class DigitalAddressConflictDetector : IDigitalAddressConflictDete
         }
     }
 
-    private static DigitalAddressOwner Owner(SbElement element) =>
-        new(element.Id, element.Name, element.GetType().Name);
+    private static DigitalAddressOwner Owner(TurnoutDefinition turnout) =>
+        new(turnout.Id, turnout.Name, nameof(TurnoutDefinition));
+
+    private static DigitalAddressOwner Owner(SignalDefinition signal) =>
+        new(signal.Id, signal.Name, nameof(SignalDefinition));
+
+    private static DigitalAddressOwner Owner(BlockDefinition block) =>
+        new(block.Id, block.Name, nameof(BlockDefinition));
 
     private static string FindingId(
         DigitalAddressFindingKind kind,

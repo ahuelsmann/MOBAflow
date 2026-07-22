@@ -112,6 +112,8 @@ public interface IZ21Diagnostics
 
     Task SendCommandAsync(byte[] sendBytes);
 
+    Task SendCommandAsync(byte[] sendBytes, CancellationToken cancellationToken);
+
     Task GetRailComDataAsync(int address, CancellationToken cancellationToken = default);
 
     void SimulateFeedback(int inPort);

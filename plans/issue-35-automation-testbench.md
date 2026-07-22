@@ -7,8 +7,9 @@
 - Priority: P1
 - Plan/issue relationship: one plan for one actionable issue
 - Delete this plan after Issue #35 is accepted and closed; Git history and the closed issue remain the record
-- Planning baseline: versioned repository state on `main` as inspected on 2026-07-20
-- Local inspection: pending because the mandatory Sonar secrets scan is unavailable without authentication
+- Planning baseline: clean `main` synchronized with `github/main`, inspected locally on 2026-07-21
+- Local inspection: completed for the Slice 1 instruction, execution, effect, event, DI, and test seams listed below; every file was scanned individually before reading
+- Secrets scan: `sonar analyze secrets <path>` works non-interactively and reported no findings for every inspected file
 - Review follow-up: incorporates all ten actionable comments from merged planning PR #52
 
 ## Outcome
@@ -75,6 +76,45 @@ The repository quality plan places RF-01 through RF-05 before broad feature deve
 - Issue #34 interlocking: consume the testbench as the preferred simulation and safety-regression surface before hardware-active interlocking acceptance.
 - Issue #36 display interface: capture current display intents in the MVP, then extend typed capability-aware assertions after the interface stabilizes.
 - Issues #31 and #33: future scenario consumers; no MVP dependency.
+
+## Local Slice 1 baseline (2026-07-21)
+
+This baseline is analysis only. It does not release product implementation while G1 or G2 remains open.
+
+### Confirmed execution and isolation seams
+
+- `IWorkflowService.ExecuteAsync` has no `CancellationToken` or time abstraction. `WorkflowService` uses wall-clock `Task.Delay` for sequential and staggered parallel actions, starts parallel work with `Task.WhenAll`, and exposes failures through `ActionExecutionError`.
+- `ActionExecutionContext` requires the live `IZ21` service and carries optional live speaker and sound-player services. `ActionExecutionContextFactory` isolates mutable journey/project fields per run but deliberately reuses those live service instances.
+- Workflow handlers perform effects directly: raw commands and signal aspects call `context.Z21`, audio calls `ISoundPlayer`, announcements call `IAnnouncementService`, and scripts perform file checks and start a PowerShell process.
+- Audio and script handlers call `IFileSystem.FileExists` before the effect. This confirms that environment-dependent checks must move behind the production effect boundary for zero-filesystem testbench runs.
+- `JourneyManager` subscribes directly to `IZ21.Received`, serializes feedback processing with a `SemaphoreSlim`, records `DateTime.Now`, uses `Task.Delay`, builds workflow contexts from production services, and defaults to a file-backed runtime state store through production DI.
+- `LocomotiveWhistleAutomationService` already accepts `TimeProvider` and cancellation, but its production `ILocomotiveFunctionCommandGateway` delegates to the root `IMobaRuntime`. The isolated scope therefore needs a recording gateway registration, not a second whistle implementation.
+- `EventBase.CreatedUtc` is initialized from `DateTime.UtcNow`. Synthetic production-facing events need an explicit timestamp/time-provider construction path.
+- `AddMobaBackendServices` registers production Z21, file stores, handlers, runtime, action context, locomotive gateway, and whistle automation as one root service graph. The testbench factory must build a separate fail-closed graph instead of decorating this provider with a mode flag.
+- `Project` and `Solution` currently contain no automation-scenario collection. The additive persistence decision remains compatible with the current schema policy and must be rechecked after #32.
+
+### Existing regression coverage to preserve
+
+- `WorkflowServiceTests`: empty workflows, sequential execution, null arguments, and stop-on-first-failure behavior.
+- `WorkflowExecutionEndToEndTests`: single and multi-action command execution plus workflow completion behavior.
+- `WorkflowActionHandlersTests`: command, audio, announcement, signal-aspect, script-file, and journey-stop behavior.
+- `JourneyManagerFeedbackTests`: unexpected inputs, repeats, workflow timing relative to stop transitions, stable completion, and sequence advancement.
+- `LocomotiveWhistleAutomationServiceTests`: virtual-time delay, cancellation on project activation, pulse coalescing, and validation bounds.
+- `EventBusTests`: subscriber order/failure isolation, subscription lifecycle, and event-instance delivery.
+- `MobaBackendServiceCollectionExtensionsTests`: core registrations, handler completeness, and singleton idempotence.
+
+### Characterization tests required before changing contracts
+
+1. Sequential workflow ordering, delay placement, error publication, and both failure-policy branches.
+2. Parallel workflow start-order semantics, same-time effects, deterministic merge inputs, and multiple failures.
+3. One inventory test proving every external workflow action has exactly one production effect path.
+4. Audio/script tests separating platform-neutral payload validation from production-only file/process behavior.
+5. Journey feedback ordering across state persistence, stop transition, delay, workflow execution, index advancement, cancellation, and completion.
+6. Isolated locomotive-whistle registration proving feedback-triggered function commands cannot resolve the root runtime.
+7. Event construction tests proving production defaults retain current timestamps while synthetic events use virtual time.
+8. DI-negative tests that reject live Z21, root runtime, file state stores, process, audio, MOBApi, and physical display adapters in an isolated scope.
+
+The tests above are design-ready but must be reconciled with #32's final executor and lifecycle contracts before implementation to avoid characterizing a superseded API.
 
 ## Architecture decisions
 
@@ -606,9 +646,9 @@ During delivery:
 - [ ] RF-01 through RF-05 complete, including RF-04
 - [ ] Issue #32 executor/lifecycle contracts stable
 - [ ] Current schema baseline and additive-versus-breaking compatibility classification confirmed
-- [ ] Mandatory local secret scan succeeds
-- [ ] Local instruction and plan consolidation reconciled
-- [ ] Plan reviewed and linked from Issue #35
-- [ ] `plan-required` present
-- [ ] Slice 1 affected files re-verified against current code
-- [ ] No unrelated working-tree changes overlap the slice
+- [x] Mandatory local secret scan succeeds
+- [x] Local instruction and plan consolidation reconciled
+- [x] Plan reviewed and linked from Issue #35
+- [x] `plan-required` present
+- [x] Slice 1 affected files re-verified against current code
+- [x] No unrelated working-tree changes overlap the slice

@@ -8,8 +8,6 @@ using CommunityToolkit.Mvvm.Input;
 using Domain;
 using Domain.Enum;
 
-using Helper;
-
 /// <summary>
 /// MainWindowViewModel - Workflow Management
 /// Handles Workflow CRUD operations and Workflow Actions (Announcement, Command, Audio).
@@ -27,6 +25,7 @@ public partial class MainWindowViewModel
         {
             if (SetProperty(ref field, value))
             {
+                WorkflowLibrary.SearchText = value;
                 OnPropertyChanged(nameof(FilteredWorkflows));
             }
         }
@@ -43,11 +42,7 @@ public partial class MainWindowViewModel
             if (SelectedProject == null)
                 return [];
 
-            var workflows = SelectedProject.Workflows;
-
-            return string.IsNullOrWhiteSpace(WorkflowSearchText)
-                ? [.. workflows]
-                : [.. workflows.Where(w => w.Name.Contains(WorkflowSearchText, StringComparison.OrdinalIgnoreCase))];
+            return [.. WorkflowLibrary.FilteredWorkflows];
         }
     }
     #endregion
@@ -56,48 +51,38 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private void AddWorkflow()
     {
-        if (SelectedProject == null) return;
-
-        var workflow = EntityEditorHelper.AddEntity(
-            SelectedProject.Model.Workflows,
-            SelectedProject.Workflows,
-            () => new Workflow { Name = "New Workflow" },
-            model => new WorkflowViewModel(model, ioService: _ioService, soundPlayer: _executionContext.SoundPlayer, loggerFactory: _loggerFactory));
-
-        // Subscribe to PropertyChanged for auto-save (consistent with other ViewModels)
-        workflow.PropertyChanged += OnViewModelPropertyChanged;
-
-        SelectedWorkflow = workflow;
-        OnPropertyChanged(nameof(FilteredWorkflows));
-
-        // Trigger auto-save after adding workflow
-        ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
+        WorkflowLibrary.CreateWorkflowCommand.Execute(null);
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteWorkflow))]
     private void DeleteWorkflow()
     {
-        if (SelectedProject == null) return;
-
-        // Unsubscribe from PropertyChanged events before deleting
-        if (SelectedWorkflow != null)
-        {
-            SelectedWorkflow.PropertyChanged -= OnViewModelPropertyChanged;
-        }
-
-        EntityEditorHelper.DeleteEntity(
-            SelectedWorkflow,
-            SelectedProject.Model.Workflows,
-            SelectedProject.Workflows,
-            () => SelectedWorkflow = null);
-
-        OnPropertyChanged(nameof(FilteredWorkflows));
-
-        // Trigger auto-save after deleting workflow
-        ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
+        WorkflowLibrary.SelectedWorkflow = SelectedWorkflow;
+        WorkflowLibrary.DeleteSelectedWorkflowCommand.Execute(null);
     }
 
     private bool CanDeleteWorkflow() => SelectedWorkflow != null;
+
+    partial void OnSelectedWorkflowChanged(WorkflowViewModel? value)
+    {
+        WorkflowLibrary.SelectedWorkflow = value;
+    }
+
+    private void OnWorkflowLibraryPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        _ = sender;
+        if (e.PropertyName == nameof(WorkflowLibraryViewModel.SelectedWorkflow)
+            && SelectedWorkflow != WorkflowLibrary.SelectedWorkflow)
+        {
+            SelectedWorkflow = WorkflowLibrary.SelectedWorkflow;
+        }
+
+        if (e.PropertyName is nameof(WorkflowLibraryViewModel.FilteredWorkflows)
+            or nameof(WorkflowLibraryViewModel.Workflows))
+        {
+            OnPropertyChanged(nameof(FilteredWorkflows));
+        }
+    }
     #endregion
 
     #region Workflow Actions Commands

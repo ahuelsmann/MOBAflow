@@ -11,7 +11,7 @@ using System.Collections.ObjectModel;
 
 /// <summary>
 /// ViewModel wrapper for SignalBoxPlan domain model.
-/// Provides observable collections for elements, connections, and routes.
+/// Provides observable state for the signal-box presentation.
 /// </summary>
 public sealed partial class SignalBoxPlanViewModel : ObservableObject, IViewModelWrapper<SignalBoxPlan>
 {
@@ -80,19 +80,9 @@ public sealed partial class SignalBoxPlanViewModel : ObservableObject, IViewMode
     public ObservableCollection<SbElement> Elements { get; } = [];
 
     /// <summary>
-    /// Observable collection of route ViewModels.
-    /// </summary>
-    public ObservableCollection<SignalBoxRouteViewModel> Routes { get; } = [];
-
-    /// <summary>
     /// Gets the count of elements.
     /// </summary>
     public int ElementCount => Elements.Count;
-
-    /// <summary>
-    /// Gets the count of routes.
-    /// </summary>
-    public int RouteCount => Routes.Count;
 
     /// <summary>
     /// Refreshes all collections from the underlying model.
@@ -103,12 +93,7 @@ public sealed partial class SignalBoxPlanViewModel : ObservableObject, IViewMode
         foreach (var element in _model.Elements)
             Elements.Add(element);
 
-        Routes.Clear();
-        foreach (var route in _model.Routes)
-            Routes.Add(new SignalBoxRouteViewModel(route));
-
         OnPropertyChanged(nameof(ElementCount));
-        OnPropertyChanged(nameof(RouteCount));
     }
 
     /// <summary>
@@ -246,7 +231,7 @@ public sealed partial class SignalBoxPlanViewModel : ObservableObject, IViewMode
     }
 
     /// <summary>
-    /// Removes an element from the plan with cascading cleanup of connections and routes.
+    /// Removes an element from the plan with cascading cleanup of connections.
     /// </summary>
     public void RemoveElement(SbElement element)
     {
@@ -257,11 +242,6 @@ public sealed partial class SignalBoxPlanViewModel : ObservableObject, IViewMode
         Elements.Remove(element);
         OnPropertyChanged(nameof(ElementCount));
 
-        // Refresh routes since cascading removal may have removed some
-        Routes.Clear();
-        foreach (var route in _model.Routes)
-            Routes.Add(new SignalBoxRouteViewModel(route));
-        OnPropertyChanged(nameof(RouteCount));
     }
 
     /// <summary>
@@ -273,91 +253,4 @@ public sealed partial class SignalBoxPlanViewModel : ObservableObject, IViewMode
             RemoveElement(SelectedElement);
     }
 
-    /// <summary>
-    /// Adds a new route to the plan.
-    /// </summary>
-    public SignalBoxRouteViewModel AddRoute(string name, Guid startSignalId, Guid endSignalId)
-    {
-        var route = new SignalBoxRoute
-        {
-            Name = name,
-            StartSignalId = startSignalId,
-            EndSignalId = endSignalId
-        };
-        _model.AddRoute(route);
-        var vm = new SignalBoxRouteViewModel(route);
-        Routes.Add(vm);
-        OnPropertyChanged(nameof(RouteCount));
-        return vm;
-    }
-
-    /// <summary>
-    /// Removes a route from the plan.
-    /// </summary>
-    public void RemoveRoute(SignalBoxRouteViewModel routeVm)
-    {
-        _model.RemoveRoute(routeVm.Id);
-        Routes.Remove(routeVm);
-        OnPropertyChanged(nameof(RouteCount));
-    }
-}
-
-/// <summary>
-/// ViewModel wrapper for SignalBoxRoute.
-/// </summary>
-public sealed class SignalBoxRouteViewModel : ObservableObject, IViewModelWrapper<SignalBoxRoute>
-{
-    private readonly SignalBoxRoute _model;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="SignalBoxRouteViewModel"/> class.
-    /// </summary>
-    /// <param name="model">The underlying route domain model.</param>
-    public SignalBoxRouteViewModel(SignalBoxRoute model)
-    {
-        ArgumentNullException.ThrowIfNull(model);
-        _model = model;
-    }
-
-    /// <summary>
-    /// Gets the underlying route domain model.
-    /// </summary>
-    public SignalBoxRoute Model => _model;
-
-    /// <summary>
-    /// Gets the unique identifier of this route.
-    /// </summary>
-    public Guid Id => _model.Id;
-
-    /// <summary>
-    /// Gets or sets the display name of this route.
-    /// </summary>
-    public string Name
-    {
-        get => _model.Name;
-        set => SetProperty(_model.Name, value, _model, (m, v) => m.Name = v);
-    }
-
-    /// <summary>
-    /// Gets or sets the identifier of the start signal for this route.
-    /// </summary>
-    public Guid StartSignalId
-    {
-        get => _model.StartSignalId;
-        set => SetProperty(_model.StartSignalId, value, _model, (m, v) => m.StartSignalId = v);
-    }
-
-    /// <summary>
-    /// Gets or sets the identifier of the end signal for this route.
-    /// </summary>
-    public Guid EndSignalId
-    {
-        get => _model.EndSignalId;
-        set => SetProperty(_model.EndSignalId, value, _model, (m, v) => m.EndSignalId = v);
-    }
-
-    /// <summary>
-    /// Gets the ordered list of element identifiers that belong to this route.
-    /// </summary>
-    public List<Guid> ElementIds => _model.ElementIds;
 }

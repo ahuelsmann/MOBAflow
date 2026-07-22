@@ -3,12 +3,10 @@ namespace Moba.WinUI.View;
 
 using Common.Configuration;
 using Common.Extension;
-
+using Domain.Enum;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
-
 using Moba.SharedUI.ViewModel;
-
 using SharedUI.Interface;
 
 internal sealed partial class PassengerWagonPage
@@ -19,16 +17,20 @@ internal sealed partial class PassengerWagonPage
 
     public MainWindowViewModel ViewModel { get; }
 
+    public RollingStockMaintenanceViewModel Maintenance { get; }
+
     private double _listExpandedWidth = 250;
     private double _propertiesExpandedStarValue = 1;
 
     public PassengerWagonPage(
         MainWindowViewModel viewModel,
+        RollingStockMaintenanceViewModel maintenance,
         AppSettings settings,
         ISettingsService? settingsService = null,
         ILogger<PassengerWagonPage>? logger = null)
     {
         ViewModel = viewModel;
+        Maintenance = maintenance;
         _settings = settings;
         _settingsService = settingsService;
         _logger = logger;
@@ -42,6 +44,8 @@ internal sealed partial class PassengerWagonPage
     {
         ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+        Maintenance.Activate();
+        RefreshMaintenance();
         RestoreLayout();
     }
 
@@ -49,6 +53,7 @@ internal sealed partial class PassengerWagonPage
     {
         _ = sender;
         _ = e;
+        Maintenance.Deactivate();
         HandlePageUnloadedAsync().Observe(ex => _logger?.LogWarning(ex, "Persist layout on unload failed"));
     }
 
@@ -73,35 +78,52 @@ internal sealed partial class PassengerWagonPage
     {
         if (e.PropertyName == nameof(ViewModel.IsPassengerWagonListExpanded))
         {
-            if (!ViewModel.IsPassengerWagonListExpanded)
-            {
-                if (ColList.Width.IsAbsolute)
-                {
-                    _listExpandedWidth = ColList.Width.Value;
-                }
-                ColList.Width = GridLength.Auto;
-            }
-            else
-            {
-                ColList.Width = new GridLength(_listExpandedWidth);
-            }
+            ApplyListColumnState();
         }
         else if (e.PropertyName == nameof(ViewModel.IsPassengerWagonPropertiesExpanded))
         {
-            if (!ViewModel.IsPassengerWagonPropertiesExpanded)
-            {
-                if (ColProperties.Width.IsStar)
-                {
-                    _propertiesExpandedStarValue = ColProperties.Width.Value;
-                }
-                ColProperties.Width = GridLength.Auto;
-            }
-            else
-            {
-                ColProperties.Width = new GridLength(_propertiesExpandedStarValue, GridUnitType.Star);
-            }
+            ApplyPropertiesColumnState();
+        }
+        else if (e.PropertyName is nameof(ViewModel.SelectedProject)
+                 or nameof(ViewModel.SelectedPassengerWagon)
+                 or nameof(ViewModel.PassengerWagonSearchText))
+        {
+            RefreshMaintenance();
         }
     }
+
+    private void ApplyListColumnState()
+    {
+        if (!ViewModel.IsPassengerWagonListExpanded)
+        {
+            if (ColList.Width.IsAbsolute)
+                _listExpandedWidth = ColList.Width.Value;
+            ColList.Width = GridLength.Auto;
+            return;
+        }
+
+        ColList.Width = new GridLength(_listExpandedWidth);
+    }
+
+    private void ApplyPropertiesColumnState()
+    {
+        if (!ViewModel.IsPassengerWagonPropertiesExpanded)
+        {
+            if (ColProperties.Width.IsStar)
+                _propertiesExpandedStarValue = ColProperties.Width.Value;
+            ColProperties.Width = GridLength.Auto;
+            return;
+        }
+
+        ColProperties.Width = new GridLength(_propertiesExpandedStarValue, GridUnitType.Star);
+    }
+
+    private void RefreshMaintenance()
+        => Maintenance.SetContext(
+            ViewModel.SelectedProject,
+            TrainVehicleKind.PassengerWagon,
+            ViewModel.SelectedPassengerWagon,
+            ViewModel.PassengerWagonSearchText);
 
     private void RestoreLayout()
     {

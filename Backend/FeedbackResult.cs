@@ -12,6 +12,9 @@ using Protocol;
 /// </summary>
 public class FeedbackResult
 {
+    /// <summary>Gets the correlation identifier shared by every downstream effect of this activation.</summary>
+    public Guid CorrelationId { get; }
+
     /// <summary>
     /// Feedback point from the feedback module (R-BUS).
     /// 1-based InPort number extracted from the first set bit in the feedback data.
@@ -37,10 +40,19 @@ public class FeedbackResult
     /// <param name="content">Raw LAN_RMBUS_DATACHANGED packet bytes received from the Z21.</param>
     /// <exception cref="ArgumentException">Thrown when the packet is shorter than 6 bytes.</exception>
     public FeedbackResult(byte[] content)
+        : this(content, Guid.NewGuid())
+    {
+    }
+
+    /// <summary>Creates parsed feedback with an explicit source correlation identifier.</summary>
+    /// <param name="content">Raw LAN_RMBUS_DATACHANGED packet bytes received from the Z21.</param>
+    /// <param name="correlationId">Correlation identifier propagated to workflow lifecycle events.</param>
+    public FeedbackResult(byte[] content, Guid correlationId)
     {
         if (content.Length < 6)
             throw new ArgumentException("Invalid feedback packet: must be at least 6 bytes", nameof(content));
 
+        CorrelationId = correlationId == Guid.Empty ? Guid.NewGuid() : correlationId;
         RawData = content;
         ActiveInPorts = Z21FeedbackParser.ExtractAllInPorts(content);
         InPort = ActiveInPorts.FirstOrDefault();

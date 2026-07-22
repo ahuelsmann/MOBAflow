@@ -16,7 +16,7 @@
    - Key files: `Backend/Z21.cs`, `SharedUI/Service/UiThreadEventBusDecorator.cs`, `SharedUI/ViewModel/MainWindowViewModel.cs`
    - See: `.github/copilot-instructions.md` § EventBus Threading Boundary
 
-2. **Absolute Rules (17 rules)**
+2. **Absolute Rules (18 rules)**
    - No `.Result` / `.Wait()` → Always use `await`
    - No hardcoded colors → `ThemeResource` only
    - No `InvokeOnUi` in EventBus handlers → Decorator already marshals
@@ -35,6 +35,12 @@
    - **1. ANALYSE** → **2. RESEARCH** → **3. PLAN** (use `plan()` tool) → **4. IMPLEMENT** → **5. VALIDATE** → **6. DOCUMENT**
    - Tests for every new/changed feature (run `dotnet test` before commit)
    - See: `.github/copilot-instructions.md` § 6-Step Workflow
+
+5. **SonarQube Pre-PR Gate**
+   - Attempt local Sonar analysis against the actual PR base before publication
+   - Create every PR as a draft; do not mark it ready while Sonar findings remain
+   - Require a green SonarCloud check and zero `OPEN`/`CONFIRMED` PR issues before review
+   - See: `.github/instructions/sonarqube-pre-pr.instructions.md`
 
 ---
 
@@ -56,6 +62,7 @@ Located in `.github/instructions/`:
 | `naming-conventions.instructions.md` | PascalCase, `_camelCase`, UPPER_SNAKE_CASE (Z21 constants) |
 | `self-explanatory-code-commenting.instructions.md` | Why, not What — document intent |
 | `no-special-chars.instructions.md` | ASCII-only identifiers |
+| `sonarqube-pre-pr.instructions.md` | Mandatory local and remote Sonar gates for every PR |
 | `z21-backend.instructions.md` | Z21 UDP protocol, handler patterns |
 | `maui.instructions.md` | MAUI-specific patterns for MOBAsmart |
 | `vs-setup.instructions.md` | ReSharper extensions, project setup |
@@ -131,12 +138,19 @@ dotnet build MOBAflow/MOBAflow.csproj -c FastDebug --no-restore \
 dotnet watch run --project MOBAflow/MOBAflow.csproj -c FastDebug
 
 # Fast MOBAsmart Android build
-dotnet restore MOBAsmart/MOBAsmart.csproj -f net10.0-android
+dotnet restore MOBAsmart/MOBAsmart.csproj
 dotnet build MOBAsmart/MOBAsmart.csproj -f net10.0-android -c FastDebug --no-restore
 
 # Reliable Android device deploy when fast deploy is inconsistent
 dotnet build MOBAsmart/MOBAsmart.csproj -f net10.0-android -c FastDebug --no-restore \
   /p:MobaReliableDeploy=true -t:Run
+
+# Clean MOBAsmart Release AAB (requires the MAUI Android workload)
+dotnet workload restore MOBAsmart/MOBAsmart.csproj --skip-manifest-update
+dotnet restore MOBAsmart/MOBAsmart.csproj -p:Configuration=Release --force-evaluate
+dotnet publish MOBAsmart/MOBAsmart.csproj -f net10.0-android -c Release --no-restore -m:1
+./scripts/Test-AndroidAppBundle.ps1 \
+  -BundlePath MOBAsmart/bin/Release/net10.0-android/com.mobaflow.mobasmart.aab
 ```
 
 - VS Code tasks mirror these workflows: `restore`, `build`, `build:full`, `publish`, `watch`, `restore:mobasmart`, `build:mobasmart`, and `build:mobasmart:reliable-deploy`.

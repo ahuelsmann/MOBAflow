@@ -2,7 +2,7 @@
 
 ## Document status
 
-- Status: Slice 1 design complete - implementation pending
+- Status: Slice 3 host enrollment and protected publication paths ready for review
 - Primary issue: https://github.com/ahuelsmann/MOBAflow/issues/50
 - Parent programme: https://github.com/ahuelsmann/MOBAflow/issues/47
 - Security design record: [MOBApi Security Design](../docs/MOBAPI-SECURITY-DESIGN.md)
@@ -12,7 +12,7 @@
 
 This is the single implementation plan for RF-03. It sequences the work required to authenticate, authorize, validate, rate-limit, queue, and observe MOBApi control-plane traffic without combining the change into one broad server/client delivery.
 
-The current delivery is Slice 1 only: a security design record. It changes no REST, SignalR, MOBAflow, or MOBAsmart runtime behavior. Slices 2 through 6 have not started.
+Slice 1 delivered the security design record without runtime changes. Slice 2 provides the additive authentication and credential foundation. Slice 3 now migrates only the trusted MOBAflow host paths; remote and read-only clients remain unmigrated until later slices.
 
 ## Scope boundaries
 
@@ -44,7 +44,7 @@ Out of scope:
 
 ## Delivery sequence
 
-### Slice 1: Security design record (current delivery)
+### Slice 1: Security design record (complete)
 
 Affected files:
 
@@ -72,22 +72,86 @@ Validation:
 
 ### Slice 2: Authentication and credential foundation
 
-Planned boundary:
+Current boundary:
 
 - protected server identity and credential registry;
 - short-lived access tokens plus rotating device refresh credentials;
 - pairing, refresh, rotation, and revocation endpoints;
-- deny-by-default authentication middleware and named capability policies;
+- authentication middleware and named capability policies ready for deny-by-default migration;
 - focused unit and integration tests, with no control-path migration yet.
+
+Implementation decisions:
+
+- use an ASP.NET Core authentication scheme backed by purpose-isolated Data Protection rather than introducing an external token package;
+- issue five-minute opaque bearer access tokens containing credential identity, role, capability version, and capabilities;
+- validate every access token against live credential state so revocation and role changes invalidate already-issued tokens;
+- persist only protected registry and server-identity documents, and store refresh credentials as keyed hashes;
+- rotate refresh credentials on every successful exchange and revoke the credential family when a consumed refresh credential is replayed;
+- keep one in-memory, two-minute pairing window with explicit approval, single-use claims, bounded failed attempts, and cooldown;
+- require HTTPS for every endpoint that accepts or returns a pairing or refresh secret;
+- register named capability policies without applying them to existing runtime controllers or hubs in this slice.
+
+Explicit exclusions:
+
+- no fallback policy and no authorization attributes on existing runtime controllers or hubs;
+- no Kestrel transport migration, host bootstrap, MOBAsmart secure-storage work, or client changes;
+- no command validation, rate limiting, bounded command admission, telemetry expansion, or feature work from issues #30 through #36.
+
+Validation evidence:
+
+- thirteen focused security tests cover capability templates, named policies, query-token path restrictions, token expiry, live role/revocation invalidation, refresh rotation/replay/inactivity, protected storage, pairing approval/single claim/cooldown, and server-identity persistence;
+- `dotnet build MOBApi/MOBApi.csproj -c Release --no-restore` passes with zero warnings and zero errors;
+- `dotnet test Test/Test.csproj --no-restore` passes on both test targets with 2,282 passed, 4 skipped, and 0 failed tests;
+- scoped `dotnet format ... whitespace --verify-no-changes` checks and `git diff --check` pass for all changed C# files.
+
+Storage and rollback notes:
+
+- the registry and ECDSA P-256 server identity are written as purpose-protected documents below `%LOCALAPPDATA%/MOBAflow/security` by default; `ControlPlaneSecurity:StorageDirectory` provides an environment-specific override;
+- this slice adds no committed secret, database schema, client credential, or Kestrel binding change;
+- rollback removes the additive endpoints, services, and middleware registration. Existing runtime controllers and hubs continue to use their prior behavior because no control-path authorization attribute or fallback policy is enabled yet;
+- protected local files may be retained for re-upgrade or removed by an operator after rollback because no existing runtime path reads them.
 
 ### Slice 3: Host enrollment and protected publication paths
 
-Planned boundary:
+Current boundary:
 
 - per-launch MOBAflow host bootstrap over loopback using an injected one-time secret;
 - host capability enforcement for solution, runtime settings, snapshots, command consumption, and host hub registration;
 - removal of loopback as the sole authorization decision;
 - host reconnect, token refresh, restart, and rollback tests.
+
+Implementation decisions:
+
+- create a fresh 256-bit bootstrap secret for each MOBApi child launch and transfer it through an inherited anonymous-pipe handle; command-line arguments, committed configuration, and ordinary environment variables never carry the secret;
+- bind a dedicated HTTPS loopback endpoint alongside the unchanged HTTP LAN endpoint, using the protected server identity introduced in Slice 2;
+- return the expected server-certificate fingerprint through the bootstrap channel so MOBAflow can pin the HTTPS endpoint before sending the secret;
+- keep the host access token and rotating renewal credential in memory in both processes; they are not added to the persistent device registry and become invalid when the MOBApi process or host session ends;
+- require `host.publish` for solution, runtime-settings, and snapshot writes, and `host.consume` for command consumption and host hub registration;
+- retain loopback checks as an additional transport constraint, never as an authorization substitute;
+- supply the same bearer token to host REST requests and SignalR through a refresh-aware in-memory session service;
+- do not reuse a separately started MOBApi process as an implicitly trusted host: without the inherited bootstrap channel, host publication remains disabled.
+
+Validation evidence:
+
+- `dotnet build MOBApi/MOBApi.csproj -c Release --no-restore` passes with zero warnings and zero errors;
+- `dotnet test Test/Test.csproj --no-build --disable-build-servers -m:1` passes with 2,292 tests and 4 expected skips across both targets;
+- five focused host credential tests cover single-use bootstrap, bounded failed attempts, renewal replay revocation, process-restart invalidation, and shared REST/SignalR capability attributes;
+- `git diff --cached --check` passes; scoped formatter normalization was applied to changed files. The unscoped MOBApi formatter still reports pre-existing final-newline issues in untouched files.
+
+Explicit exclusions:
+
+- no remote/MOBAsmart pairing or secure-storage migration and no anonymous-read enforcement;
+- no unified command validation, rate limiting, bounded admission queue, or telemetry expansion;
+- no feature work from issues #30 through #36.
+
+Validation targets:
+
+- wrong, expired, replayed, non-loopback, and non-HTTPS bootstrap attempts fail closed;
+- renewal rotates on every use and replay or host-session termination invalidates the host credential family;
+- protected REST actions and SignalR host registration reject missing or insufficient capabilities with matching policies;
+- SignalR reconnect and access-token renewal preserve host operation without persisting secrets;
+- MOBApi restart generates a new bootstrap secret and invalidates prior host credentials;
+- rollback removes the dedicated host endpoint and host authorization attributes while leaving the Slice 2 protected identity and device registry compatible.
 
 ### Slice 4: Remote pairing and read-only migration
 

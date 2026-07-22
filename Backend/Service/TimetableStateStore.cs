@@ -32,8 +32,16 @@ public sealed class FileTimetableStateStore : ITimetableStateStore
         var path = GetPath(projectId);
         if (!File.Exists(path)) return [];
 
-        await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.Asynchronous);
-        return await JsonSerializer.DeserializeAsync<List<TimetableServiceState>>(stream, SerializerOptions, cancellationToken).ConfigureAwait(false) ?? [];
+        try
+        {
+            await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.Asynchronous);
+            return await JsonSerializer.DeserializeAsync<List<TimetableServiceState>>(stream, SerializerOptions, cancellationToken).ConfigureAwait(false) ?? [];
+        }
+        catch (Exception exception) when (exception is JsonException or NotSupportedException)
+        {
+            File.Move(path, path + $".corrupt-{Guid.NewGuid():N}");
+            return [];
+        }
     }
 
     /// <inheritdoc />
@@ -78,8 +86,24 @@ public sealed class TimetableOperationsService : ITimetableOperationsService, ID
     }
 
     /// <inheritdoc />
-    public Task<IReadOnlyList<TimetableServiceState>> GetStatesAsync(Guid projectId, CancellationToken cancellationToken = default)
-        => _store.LoadAsync(projectId, cancellationToken);
+    public async Task<IReadOnlyList<TimetableServiceState>> GetStatesAsync(Guid projectId, CancellationToken cancellationToken = default)
+    {
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var states = (await _store.LoadAsync(projectId, cancellationToken).ConfigureAwait(false)).ToList();
+            if (ReleaseExpiredHolds(states))
+            {
+                await _store.SaveAsync(projectId, states, cancellationToken).ConfigureAwait(false);
+            }
+
+            return states;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
 
     /// <inheritdoc />
     public Task<TimetableServiceState> HoldAsync(Guid projectId, Guid serviceId, DateTimeOffset heldUntil, string reason, CancellationToken cancellationToken = default)
@@ -89,6 +113,10 @@ public sealed class TimetableOperationsService : ITimetableOperationsService, ID
         return MutateAsync(projectId, serviceId, state =>
         {
             EnsureNonTerminal(state);
+            if (state.Status != TimetableServiceStatus.Held)
+            {
+                state.StatusBeforeHold = state.Status;
+            }
             state.Status = TimetableServiceStatus.Held;
             state.HeldUntil = heldUntil;
             state.HoldReason = reason.Trim();
@@ -101,8 +129,7 @@ public sealed class TimetableOperationsService : ITimetableOperationsService, ID
         {
             if (state.Status == TimetableServiceStatus.Completed) throw new InvalidOperationException("A completed service cannot be cancelled.");
             state.Status = TimetableServiceStatus.Cancelled;
-            state.HeldUntil = null;
-            state.HoldReason = null;
+            ClearHold(state);
         }, cancellationToken);
 
     /// <inheritdoc />
@@ -110,11 +137,7 @@ public sealed class TimetableOperationsService : ITimetableOperationsService, ID
         => MutateAsync(projectId, serviceId, state =>
         {
             if (state.Status != TimetableServiceStatus.Held) throw new InvalidOperationException("Only a held service can be released.");
-            state.Status = state.Calls.Any(call => call.ActualArrival is not null || call.ActualDeparture is not null)
-                ? TimetableServiceStatus.Running
-                : TimetableServiceStatus.Scheduled;
-            state.HeldUntil = null;
-            state.HoldReason = null;
+            RestoreStatusAfterHold(state);
         }, cancellationToken);
 
     /// <inheritdoc />
@@ -123,8 +146,7 @@ public sealed class TimetableOperationsService : ITimetableOperationsService, ID
         {
             if (state.Status == TimetableServiceStatus.Cancelled) throw new InvalidOperationException("A cancelled service cannot be completed.");
             state.Status = TimetableServiceStatus.Completed;
-            state.HeldUntil = null;
-            state.HoldReason = null;
+            ClearHold(state);
         }, cancellationToken);
 
     /// <inheritdoc />
@@ -154,27 +176,41 @@ public sealed class TimetableOperationsService : ITimetableOperationsService, ID
 
     /// <inheritdoc />
     public Task<TimetableServiceState> RecordArrivalAsync(Guid projectId, Guid serviceId, Guid callId, DateTimeOffset? occurredAt = null, CancellationToken cancellationToken = default)
-        => MutateCallAsync(projectId, serviceId, callId, call => call.ActualArrival ??= occurredAt ?? _timeProvider.GetUtcNow(), cancellationToken);
-
-    /// <inheritdoc />
-    public Task<TimetableServiceState> RecordDepartureAsync(Guid projectId, Guid serviceId, Guid callId, DateTimeOffset? occurredAt = null, CancellationToken cancellationToken = default)
-        => MutateCallAsync(projectId, serviceId, callId, call => call.ActualDeparture ??= occurredAt ?? _timeProvider.GetUtcNow(), cancellationToken);
-
-    /// <inheritdoc />
-    public void Dispose() => _gate.Dispose();
-
-    private Task<TimetableServiceState> MutateCallAsync(Guid projectId, Guid serviceId, Guid callId, Action<TimetableCallState> mutation, CancellationToken cancellationToken)
         => MutateAsync(projectId, serviceId, state =>
         {
             EnsureNonTerminal(state);
-            state.Status = TimetableServiceStatus.Running;
             var call = GetOrAddCallState(state, callId);
-            mutation(call);
-            if (call.ActualArrival is DateTimeOffset arrival
-                && call.ActualDeparture is DateTimeOffset departure
-                && departure < arrival)
-                throw new InvalidOperationException("Actual departure cannot be earlier than actual arrival.");
+            if (call.ActualArrival is null)
+            {
+                var arrival = occurredAt ?? _timeProvider.GetUtcNow();
+                if (call.ActualDeparture is DateTimeOffset departure && departure < arrival)
+                    throw new InvalidOperationException("Actual departure cannot be earlier than actual arrival.");
+                call.ActualArrival = arrival;
+            }
+
+            MarkRunning(state);
         }, cancellationToken);
+
+    /// <inheritdoc />
+    public Task<TimetableServiceState> RecordDepartureAsync(Guid projectId, Guid serviceId, Guid callId, DateTimeOffset? occurredAt = null, CancellationToken cancellationToken = default)
+        => MutateAsync(projectId, serviceId, state =>
+        {
+            EnsureNonTerminal(state);
+            var call = state.Calls.FirstOrDefault(candidate => candidate.CallId == callId);
+            if (call?.ActualArrival is not DateTimeOffset arrival) throw new InvalidOperationException("An arrival must be recorded before departure.");
+            if (call.ActualDeparture is null)
+            {
+                var departure = occurredAt ?? _timeProvider.GetUtcNow();
+                if (departure < arrival)
+                    throw new InvalidOperationException("Actual departure cannot be earlier than actual arrival.");
+                call.ActualDeparture = departure;
+            }
+
+            MarkRunning(state);
+        }, cancellationToken);
+
+    /// <inheritdoc />
+    public void Dispose() => _gate.Dispose();
 
     private static TimetableCallState GetOrAddCallState(TimetableServiceState state, Guid callId)
     {
@@ -192,6 +228,7 @@ public sealed class TimetableOperationsService : ITimetableOperationsService, ID
         try
         {
             var states = (await _store.LoadAsync(projectId, cancellationToken).ConfigureAwait(false)).ToList();
+            ReleaseExpiredHolds(states);
             var state = states.FirstOrDefault(candidate => candidate.ServiceId == serviceId);
             if (state is null)
             {
@@ -213,5 +250,41 @@ public sealed class TimetableOperationsService : ITimetableOperationsService, ID
     {
         if (state.Status is TimetableServiceStatus.Completed or TimetableServiceStatus.Cancelled)
             throw new InvalidOperationException("A terminal timetable service cannot be changed.");
+    }
+
+    private bool ReleaseExpiredHolds(IEnumerable<TimetableServiceState> states)
+    {
+        var now = _timeProvider.GetUtcNow();
+        var changed = false;
+        foreach (var state in states.Where(state => state.Status == TimetableServiceStatus.Held && state.HeldUntil <= now))
+        {
+            RestoreStatusAfterHold(state);
+            changed = true;
+        }
+
+        return changed;
+    }
+
+    private static void RestoreStatusAfterHold(TimetableServiceState state)
+    {
+        state.Status = state.StatusBeforeHold is TimetableServiceStatus.Scheduled or TimetableServiceStatus.Running
+            ? state.StatusBeforeHold.Value
+            : state.Calls.Any(call => call.ActualArrival is not null || call.ActualDeparture is not null)
+                ? TimetableServiceStatus.Running
+                : TimetableServiceStatus.Scheduled;
+        ClearHold(state);
+    }
+
+    private static void ClearHold(TimetableServiceState state)
+    {
+        state.HeldUntil = null;
+        state.HoldReason = null;
+        state.StatusBeforeHold = null;
+    }
+
+    private static void MarkRunning(TimetableServiceState state)
+    {
+        state.Status = TimetableServiceStatus.Running;
+        ClearHold(state);
     }
 }

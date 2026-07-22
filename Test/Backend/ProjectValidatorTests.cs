@@ -2,7 +2,9 @@
 namespace Moba.Test.Backend;
 
 using Microsoft.Extensions.Logging.Abstractions;
+using Moba.Backend.Interface;
 using Moba.Backend.Service;
+using Moba.Backend.Service.Validation;
 using Moba.Domain;
 using Moba.Domain.Enum;
 
@@ -15,7 +17,7 @@ using Moba.Domain.Enum;
 internal sealed class ProjectValidatorTests
 {
     private static ProjectValidator CreateValidator()
-        => new(NullLogger<ProjectValidator>.Instance);
+        => new(NullLogger<ProjectValidator>.Instance, new InterlockingDefinitionValidator());
 
     private static Project CreateMinimalValidProject()
     {
@@ -30,7 +32,15 @@ internal sealed class ProjectValidatorTests
     [Test]
     public void Constructor_NullLogger_Throws()
     {
-        Assert.Throws<ArgumentNullException>(() => new ProjectValidator(null!));
+        Assert.Throws<ArgumentNullException>(() =>
+            new ProjectValidator(null!, new InterlockingDefinitionValidator()));
+    }
+
+    [Test]
+    public void Constructor_NullInterlockingValidator_Throws()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            new ProjectValidator(NullLogger<ProjectValidator>.Instance, null!));
     }
 
     [Test]
@@ -156,6 +166,55 @@ internal sealed class ProjectValidatorTests
         var result = CreateValidator().ValidateCompleteness(new Solution { Projects = [project] });
 
         Assert.That(result.Messages.Any(message => message.Level == ValidationLevel.Error && message.Text.Contains("conflicts")), Is.True);
+    }
+
+    [Test]
+    public void ValidateCompleteness_InvalidWorkflowGraph_IncludesStableWorkflowCodeAndStep()
+    {
+        // Arrange
+        var project = CreateMinimalValidProject();
+        var stepId = Guid.NewGuid();
+        project.Workflows.Add(new Workflow
+        {
+            EntryStepId = stepId,
+            Steps =
+            [
+                new WorkflowDelayStep
+                {
+                    Id = stepId,
+                    DelayMs = -1,
+                    NextStepId = Guid.NewGuid()
+                }
+            ]
+        });
+
+        // Act
+        var result = CreateValidator().ValidateCompleteness(new Solution { Projects = [project] });
+
+        // Assert
+        Assert.That(result.Messages.Any(message =>
+            message.Level == ValidationLevel.Error &&
+            message.Text.Contains(WorkflowValidationCodes.InvalidStepPayload) &&
+            message.Text.Contains(stepId.ToString())), Is.True);
+    }
+
+    [Test]
+    public void ValidateCompleteness_InvalidInterlocking_ProducesStructuredError()
+    {
+        var project = CreateMinimalValidProject();
+        project.Interlocking.Turnouts.Add(new TurnoutDefinition
+        {
+            Name = "W1",
+            DecoderAddress = 0
+        });
+
+        var result = CreateValidator().ValidateCompleteness(new Solution { Projects = [project] });
+
+        Assert.That(
+            result.Messages.Any(message =>
+                message.Level == ValidationLevel.Error
+                && message.Text.Contains("Interlocking/turnout.address.range", StringComparison.Ordinal)),
+            Is.True);
     }
 
     [Test]

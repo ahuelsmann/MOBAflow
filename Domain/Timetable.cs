@@ -87,6 +87,9 @@ public sealed class TimetableServiceState
     /// <summary>Gets or sets the current operating status.</summary>
     public TimetableServiceStatus Status { get; set; }
 
+    /// <summary>Gets or sets the operating status to restore when an advisory hold ends.</summary>
+    public TimetableServiceStatus? StatusBeforeHold { get; set; }
+
     /// <summary>Gets or sets the advisory hold deadline.</summary>
     public DateTimeOffset? HeldUntil { get; set; }
 

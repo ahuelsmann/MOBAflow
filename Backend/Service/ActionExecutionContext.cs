@@ -65,6 +65,9 @@ public class ActionExecutionContext
     /// Optional and used for announcement placeholder rendering.
     /// </summary>
     public int? CurrentStationIndex { get; set; }
+
+    /// <summary>Gets or sets the one-based feedback input that triggered the workflow.</summary>
+    public uint? FeedbackInPort { get; set; }
 }
 
 /// <summary>
@@ -85,6 +88,9 @@ public sealed class ActionExecutionContextState
     public string? JourneyTemplateText { get; init; }
 
     public int? CurrentStationIndex { get; init; }
+
+    /// <summary>Gets the one-based feedback input that triggered the workflow.</summary>
+    public uint? FeedbackInPort { get; init; }
 }
 
 /// <summary>
@@ -107,7 +113,8 @@ public sealed class ActionExecutionContextFactory(ActionExecutionContext service
             CurrentStation = state?.CurrentStation,
             CurrentPlatform = state?.CurrentPlatform,
             JourneyTemplateText = state?.JourneyTemplateText,
-            CurrentStationIndex = state?.CurrentStationIndex
+            CurrentStationIndex = state?.CurrentStationIndex,
+            FeedbackInPort = state?.FeedbackInPort
         };
     }
 }

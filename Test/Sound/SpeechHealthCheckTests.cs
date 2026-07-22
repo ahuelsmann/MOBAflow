@@ -74,6 +74,21 @@ internal sealed class SpeechHealthCheckTests
     }
 
     [Test]
+    public void GetStatusMessage_WhenModelMissing_ReturnsModelNotFoundMessage()
+    {
+        File.WriteAllText(_executablePath, "stub");
+        var healthCheck = CreateHealthCheck(new SpeechOptions
+        {
+            PiperExecutablePath = _executablePath,
+            PiperModelPath = _modelPath
+        });
+
+        var message = healthCheck.GetStatusMessage();
+
+        Assert.That(message, Does.Contain("model not found"));
+    }
+
+    [Test]
     public void GetStatusMessage_WhenConfigured_ReturnsSuccessSummary()
     {
         File.WriteAllText(_executablePath, "stub");
@@ -103,6 +118,39 @@ internal sealed class SpeechHealthCheckTests
         var result = await healthCheck.TestConnectivityAsync();
 
         Assert.That(result, Is.False);
+    }
+
+    [Test]
+    public async Task TestConnectivityAsync_WhenExecutableCannotStart_ReturnsFalse()
+    {
+        File.WriteAllText(_executablePath, "not a native executable");
+        File.WriteAllText(_modelPath, "stub");
+        var healthCheck = CreateHealthCheck(new SpeechOptions
+        {
+            PiperExecutablePath = _executablePath,
+            PiperModelPath = _modelPath
+        });
+
+        var result = await healthCheck.TestConnectivityAsync();
+
+        Assert.That(result, Is.False);
+    }
+
+    [TestCase("piper.exe", "model.onnx", true)]
+    [TestCase("", "model.onnx", false)]
+    [TestCase("piper.exe", " ", false)]
+    public void SpeechOptions_IsConfigured_RequiresExecutableAndModel(
+        string executablePath,
+        string modelPath,
+        bool expected)
+    {
+        var options = new SpeechOptions
+        {
+            PiperExecutablePath = executablePath,
+            PiperModelPath = modelPath
+        };
+
+        Assert.That(options.IsConfigured, Is.EqualTo(expected));
     }
 
     private static SpeechHealthCheck CreateHealthCheck(SpeechOptions options)

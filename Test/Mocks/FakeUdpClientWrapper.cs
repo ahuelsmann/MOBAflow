@@ -13,6 +13,7 @@ internal sealed class FakeUdpClientWrapper : IUdpClientWrapper
     public bool Connected { get; private set; }
     public bool IsConnected => Connected;
     public List<byte[]> SentPayloads { get; } = [];
+    public int SendFailuresRemaining { get; set; }
 
     public Task ConnectAsync(IPAddress address, int port = 21105, CancellationToken cancellationToken = default)
     {
@@ -22,6 +23,13 @@ internal sealed class FakeUdpClientWrapper : IUdpClientWrapper
 
     public Task SendAsync(byte[] data, CancellationToken cancellationToken = default, int maxRetries = 3)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (SendFailuresRemaining > 0)
+        {
+            SendFailuresRemaining--;
+            throw new InvalidOperationException("Expected fake UDP send failure.");
+        }
+
         SentPayloads.Add(data);
         return Task.CompletedTask;
     }

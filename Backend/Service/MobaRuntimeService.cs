@@ -21,13 +21,13 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
     public static readonly TimeSpan VehicleUsageCheckpointInterval = TimeSpan.FromSeconds(30);
 
     private readonly IZ21 _z21;
-    private readonly IWorkflowService _workflowService;
     private readonly ActionExecutionContextFactory _executionContextFactory;
     private readonly JourneyManagerFactory _journeyManagerFactory;
     private readonly AppSettings _settings;
     private readonly ILogger<MobaRuntimeService> _logger;
     private readonly IEventBus? _eventBus;
     private readonly IZ21DiscoveryService _z21Discovery;
+    private readonly IInterlockingRuntime? _interlockingRuntime;
     private readonly TimeProvider _timeProvider;
     private readonly VehicleUsageRuntimeTracker _vehicleUsageTracker;
 
@@ -77,8 +77,16 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         ActionExecutionContext executionContext,
         AppSettings settings,
         ILogger<MobaRuntimeService> logger,
-        IEventBus? eventBus = null)
-        : this(z21, workflowService, new ActionExecutionContextFactory(executionContext), settings, logger, eventBus)
+        IEventBus? eventBus = null,
+        IInterlockingRuntime? interlockingRuntime = null)
+        : this(
+            z21,
+            workflowService,
+            new ActionExecutionContextFactory(executionContext),
+            settings,
+            logger,
+            eventBus,
+            interlockingRuntime: interlockingRuntime)
     {
     }
 
@@ -92,7 +100,8 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         JourneyManagerFactory? journeyManagerFactory = null,
         IZ21DiscoveryService? z21Discovery = null,
         IVehicleUsageCheckpointStore? vehicleUsageCheckpointStore = null,
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null,
+        IInterlockingRuntime? interlockingRuntime = null)
     {
         ArgumentNullException.ThrowIfNull(z21);
         ArgumentNullException.ThrowIfNull(workflowService);
@@ -101,13 +110,13 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         ArgumentNullException.ThrowIfNull(logger);
 
         _z21 = z21;
-        _workflowService = workflowService;
         _executionContextFactory = executionContextFactory;
         _journeyManagerFactory = journeyManagerFactory ?? new JourneyManagerFactory(z21, workflowService);
         _settings = settings;
         _logger = logger;
         _eventBus = eventBus;
         _z21Discovery = z21Discovery ?? new NullZ21DiscoveryService();
+        _interlockingRuntime = interlockingRuntime;
         _timeProvider = timeProvider ?? TimeProvider.System;
         _vehicleUsageTracker = new VehicleUsageRuntimeTracker(
             _timeProvider,
@@ -120,7 +129,6 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         _z21.OnXBusStatusChanged += OnZ21XBusStatusChanged;
         _z21.OnVersionInfoChanged += OnZ21VersionInfoChanged;
         _z21.OnLocoInfoChanged += OnZ21LocomotiveInfoChanged;
-        _workflowService.ActionExecutionError += OnActionExecutionError;
 
         if (_z21.TrafficMonitor != null)
         {
@@ -162,7 +170,6 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         _z21.OnXBusStatusChanged -= OnZ21XBusStatusChanged;
         _z21.OnVersionInfoChanged -= OnZ21VersionInfoChanged;
         _z21.OnLocoInfoChanged -= OnZ21LocomotiveInfoChanged;
-        _workflowService.ActionExecutionError -= OnActionExecutionError;
 
         if (_z21.TrafficMonitor != null)
         {
@@ -180,7 +187,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
     {
         if (_activeProjectContext != null)
         {
-            _activeProjectContext.JourneyManager.StationChanged -= OnJourneyRuntimeChanged;
+            _activeProjectContext.JourneyManager.StationChanged -= OnJourneyStationChanged;
             _activeProjectContext.JourneyManager.FeedbackReceived -= OnJourneyRuntimeChanged;
             _activeProjectContext.JourneyManager.JourneyCompleted -= OnJourneyCompleted;
             _activeProjectContext.Dispose();

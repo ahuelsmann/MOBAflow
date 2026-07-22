@@ -64,6 +64,49 @@ internal class Z21UnitTests
     }
 
     [Test]
+    public async Task RBusChanges_PublishActiveAndInactiveDeltasInFifoOrder()
+    {
+        var fakeUdp = new FakeUdpClientWrapper();
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var z21 = new Z21(fakeUdp, eventBus);
+        var observations = new List<(int InPort, bool IsActive)>();
+        eventBus.Subscribe<FeedbackStateChangedEvent>(@event =>
+            observations.Add((@event.InPort, @event.IsActive)));
+
+        fakeUdp.RaiseReceived(CreateRBusPacket(0x01));
+        fakeUdp.RaiseReceived(CreateRBusPacket(0x00));
+        await z21.DisposeAsync();
+
+        Assert.That(observations, Is.EqualTo(new[] { (1, true), (1, false) }));
+    }
+
+    [Test]
+    public async Task TurnoutInfo_PublishesOrderedRawObservation()
+    {
+        var fakeUdp = new FakeUdpClientWrapper();
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var z21 = new Z21(fakeUdp, eventBus);
+        TurnoutInfoChangedEvent? observation = null;
+        eventBus.Subscribe<TurnoutInfoChangedEvent>(@event => observation = @event);
+
+        fakeUdp.RaiseReceived([
+            0x09, 0x00, 0x40, 0x00,
+            0x43, 0x00, 0x04, 0x02,
+            0x45
+        ]);
+        await z21.DisposeAsync();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(observation, Is.Not.Null);
+            Assert.That(observation!.FunctionAddress, Is.EqualTo(4));
+            Assert.That(observation.OutputPosition, Is.True);
+            Assert.That(observation.IsSwitched, Is.True);
+            Assert.That(observation.CorrelationId, Is.Not.EqualTo(Guid.Empty));
+        });
+    }
+
+    [Test]
     public async Task ConnectAsync_StartsKeepaliveTimer()
     {
         var fakeUdp = new FakeUdpClientWrapper();
@@ -217,4 +260,11 @@ internal class Z21UnitTests
         Assert.ThrowsAsync<ArgumentOutOfRangeException>(
             () => z21.SetAllLocoFunctionsOffAsync(address: 0));
     }
+
+    private static byte[] CreateRBusPacket(byte firstStateByte) =>
+    [
+        0x0F, 0x00, 0x80, 0x00, 0x00,
+        firstStateByte, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00
+    ];
 }

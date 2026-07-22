@@ -135,6 +135,7 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton<IFilePickerService>(sp => sp.GetRequiredService<IIoService>());
         services.AddSingleton<IPhotoStorageService>(sp => sp.GetRequiredService<IIoService>());
         services.AddSingletonWithInterface<PhotoHubClient, IPhotoHubClient>();
+        services.AddSingleton<HostControlPlaneSession>();
         services.AddSingletonWithInterface<RuntimeHubHostClient, IRuntimeHubHostClient>();
         services.AddSingleton<RestApiRuntimeHubService>();
         services.AddSingleton<RestApiRuntimeCommandConsumerService>();
@@ -245,6 +246,7 @@ public static class MobaWinUiServiceCollectionExtensions
 
         services.AddSingleton<LayoutColumnWidthsViewModel>();
         services.AddSingleton<LocomotiveManagementViewModel>();
+        services.AddTransient<RollingStockMaintenanceViewModel>();
         services.AddSingleton(sp => new MainWindowViewModel(
             sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
             sp.GetRequiredService<IMobaRuntime>(),
@@ -267,7 +269,9 @@ public static class MobaWinUiServiceCollectionExtensions
                 await speakerEngine.AnnouncementAsync(message, voiceName: null).ConfigureAwait(false);
             },
             locomotiveWhistleAutomation: sp.GetService<ILocomotiveWhistleAutomationService>(),
-            projectDiagnosticsService: sp.GetRequiredService<IProjectDiagnosticsService>()));
+            projectDiagnosticsService: sp.GetRequiredService<IProjectDiagnosticsService>(),
+            workflowService: sp.GetRequiredService<IWorkflowService>(),
+            workflowTraceStore: sp.GetRequiredService<IWorkflowTraceStore>()));
 
         services.AddSingleton<IJourneySelectionContext>(sp => sp.GetRequiredService<MainWindowViewModel>());
         services.AddSingleton<IProjectContext>(sp => sp.GetRequiredService<MainWindowViewModel>());

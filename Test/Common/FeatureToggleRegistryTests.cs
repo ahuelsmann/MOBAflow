@@ -140,6 +140,32 @@ internal sealed class FeatureToggleRegistryTests
     }
 
     [Test]
+    public void TimetableToggleAndBadge_Should_BeRegistered()
+    {
+        // Arrange
+        var settings = new FeatureToggleSettings
+        {
+            IsTimetablePageAvailable = false,
+            TimetablePageLabel = "Preview"
+        };
+
+        // Act
+        var found = FeatureToggleRegistry.TryGetPageAvailability(
+            settings,
+            nameof(FeatureToggleSettings.IsTimetablePageAvailable),
+            out var available);
+        var label = FeatureToggleRegistry.GetBadgeLabel(settings, nameof(FeatureToggleSettings.TimetablePageLabel));
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(found, Is.True);
+            Assert.That(available, Is.False);
+            Assert.That(label, Is.EqualTo("Preview"));
+        });
+    }
+
+    [Test]
     public void GetBadgeLabel_KnownButWhitespaceLabel_ReturnsNull()
     {
         var settings = new FeatureToggleSettings { OverviewPageLabel = "   " };
