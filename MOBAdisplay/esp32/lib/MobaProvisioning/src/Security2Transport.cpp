@@ -19,12 +19,11 @@ Security2Transport::~Security2Transport()
     Stop();
 }
 
-esp_err_t Security2Transport::Start(const char* setupSecret, protocomm_req_handler_t requestHandler, void* privateData)
+esp_err_t Security2Transport::Start(const char* setupSecret, protocomm_req_handler_t requestHandler)
 {
 #if !defined(ESP_PLATFORM)
     (void)setupSecret;
     (void)requestHandler;
-    (void)privateData;
     return ESP_ERR_NOT_SUPPORTED;
 #else
     if (protocomm_ != nullptr || setupSecret == nullptr || requestHandler == nullptr)
@@ -63,7 +62,7 @@ esp_err_t Security2Transport::Start(const char* setupSecret, protocomm_req_handl
     if (result == ESP_OK)
         result = protocomm_set_version(protocomm_, "rf02-version", "v1");
     if (result == ESP_OK)
-        result = protocomm_add_endpoint(protocomm_, "rf02-v1", requestHandler, privateData);
+        result = protocomm_add_endpoint(protocomm_, "rf02-v1", requestHandler, nullptr);
     if (result == ESP_OK)
     {
         protocomm_httpd_config_t httpConfiguration = {};

@@ -311,7 +311,7 @@ bool startProvisioningWindow()
     }
 
     const char* setupSecret = gProvisioningPassphrase.c_str();
-    if (provisioningTransport.Start(setupSecret, handleProvisioningRequest, nullptr) != ESP_OK)
+    if (provisioningTransport.Start(setupSecret, handleProvisioningRequest) != ESP_OK)
     {
         closeProvisioningWindow(false);
         return false;
@@ -406,7 +406,7 @@ esp_err_t handleProvisioningRequest(uint32_t, const uint8_t* input, ssize_t inpu
     if (input[0] != 0)
         return ESP_ERR_NOT_SUPPORTED;
 
-    auto* response = static_cast<uint8_t*>(std::malloc(4));
+    auto* response = static_cast<uint8_t*>(heap_caps_malloc(4, MALLOC_CAP_8BIT));
     if (response == nullptr)
         return ESP_ERR_NO_MEM;
 

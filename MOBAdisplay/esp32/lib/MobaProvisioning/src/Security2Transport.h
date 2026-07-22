@@ -30,7 +30,7 @@ public:
     Security2Transport(const Security2Transport&) = delete;
     Security2Transport& operator=(const Security2Transport&) = delete;
 
-    esp_err_t Start(const char* setupSecret, protocomm_req_handler_t requestHandler, void* privateData);
+    esp_err_t Start(const char* setupSecret, protocomm_req_handler_t requestHandler);
     esp_err_t Stop();
     bool IsRunning() const { return protocomm_ != nullptr; }
 
