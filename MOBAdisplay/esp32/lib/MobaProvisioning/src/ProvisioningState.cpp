@@ -132,7 +132,7 @@ void StateMachine::Tick(uint32_t nowMs)
 
 bool StateMachine::HasElapsed(uint32_t nowMs, uint32_t startMs, uint32_t durationMs)
 {
-    return static_cast<uint32_t>(nowMs - startMs) >= durationMs;
+    return nowMs - startMs >= durationMs;
 }
 
 bool StateMachine::IsBefore(uint32_t nowMs, uint32_t deadlineMs)

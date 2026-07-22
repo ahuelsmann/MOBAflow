@@ -22,6 +22,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <string>
 
 #ifndef APP_VERSION
 #define APP_VERSION "dev"
@@ -268,14 +269,14 @@ bool createSetupPassphrase(String* passphraseOut)
     if (passphraseOut == nullptr)
         return false;
 
-    static constexpr const char* alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    static const std::string alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     uint8_t randomBytes[kSetupSecretBytes] = {};
     esp_fill_random(randomBytes, sizeof(randomBytes));
 
     String passphrase;
     passphrase.reserve(22);
     for (uint8_t index = 0; index < 20; ++index)
-        passphrase += alphabet[randomBytes[index % sizeof(randomBytes)] % (sizeof(alphabet) - 1)];
+        passphrase += alphabet[randomBytes[index % sizeof(randomBytes)] % alphabet.size()];
 
     volatile uint8_t* sensitiveBytes = randomBytes;
     for (size_t index = 0; index < sizeof(randomBytes); ++index)
