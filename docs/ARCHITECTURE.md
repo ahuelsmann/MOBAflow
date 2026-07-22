@@ -414,6 +414,8 @@ MainWindowViewModel(
 ### Recorder isolation boundary
 
 - Live capture occurs in `RecordingEventBusDecorator` before UI dispatch and persists only explicitly mapped payloads.
+- Explicit WinUI, MOBAsmart, RuntimeHub, and REST-fallback commands pass through `IRuntimeCommandGateway`; `RecordingRuntimeCommandGateway` records sanitized correlated request/outcome entries around the concrete local or mobile gateway.
+- Command failures retain only the bounded outcome `failed` or `cancelled`; exception messages, stack traces, paths, endpoints, credentials, and raw payloads never cross the recording boundary.
 - Replay never publishes recorded events to the root EventBus and never calls `IMobaRuntime` or `IZ21`.
 - `RecordingReplayService` schedules journal entries against a freshly constructed, in-memory `IsolatedReplayRuntime`.
 - The isolated runtime factory does not receive the production service provider or any external-effect adapter.

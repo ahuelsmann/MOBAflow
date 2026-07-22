@@ -128,7 +128,12 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingletonWithInterface<RuntimeHubHostClient, IRuntimeHubHostClient>();
         services.AddSingleton<RestApiRuntimeHubService>();
         services.AddSingleton<RestApiRuntimeCommandConsumerService>();
-        services.AddSingletonWithInterface<LocalRuntimeCommandGateway, IRuntimeCommandGateway>();
+        services.AddSingleton<LocalRuntimeCommandGateway>();
+        // The explicit factory keeps the production command route as the decorator's concrete inner gateway.
+        services.AddSingleton(sp => new RecordingRuntimeCommandGateway(
+            sp.GetRequiredService<LocalRuntimeCommandGateway>(),
+            sp.GetRequiredService<IRecordingSessionService>()));
+        services.AddSingleton<IRuntimeCommandGateway>(sp => sp.GetRequiredService<RecordingRuntimeCommandGateway>());
 
         services.AddHttpClient();
 
@@ -258,7 +263,8 @@ public static class MobaWinUiServiceCollectionExtensions
                 await speakerEngine.AnnouncementAsync(message, voiceName: null).ConfigureAwait(false);
             },
             locomotiveWhistleAutomation: sp.GetService<ILocomotiveWhistleAutomationService>(),
-            projectDiagnosticsService: sp.GetRequiredService<IProjectDiagnosticsService>()));
+            projectDiagnosticsService: sp.GetRequiredService<IProjectDiagnosticsService>(),
+            runtimeCommandGateway: sp.GetRequiredService<IRuntimeCommandGateway>()));
 
         services.AddSingleton<IJourneySelectionContext>(sp => sp.GetRequiredService<MainWindowViewModel>());
         services.AddSingleton<IProjectContext>(sp => sp.GetRequiredService<MainWindowViewModel>());

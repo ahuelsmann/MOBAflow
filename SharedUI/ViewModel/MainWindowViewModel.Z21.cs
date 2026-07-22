@@ -85,7 +85,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        await _mobaRuntime.SimulateFeedbackAsync(inPort).ConfigureAwait(false);
+        await _runtimeCommandGateway.SimulateFeedbackAsync(inPort).ConfigureAwait(false);
     }
 
     private bool CanResetJourney() => SelectedJourney != null;
@@ -96,13 +96,13 @@ public partial class MainWindowViewModel
         if (SelectedJourney == null) return;
 
         SelectedJourney.ResetCommand.Execute(null);
-        await _mobaRuntime.ResetJourneyAsync(SelectedJourney.Model.Id).ConfigureAwait(false);
+        await _runtimeCommandGateway.ResetJourneyAsync(SelectedJourney.Model.Id).ConfigureAwait(false);
     }
 
     [RelayCommand(CanExecute = nameof(CanToggleTrackPower))]
     private async Task SetTrackPowerAsync(bool turnOn)
     {
-        await _mobaRuntime.SetTrackPowerAsync(turnOn).ConfigureAwait(false);
+        await _runtimeCommandGateway.SetTrackPowerAsync(turnOn).ConfigureAwait(false);
     }
 
     private bool CanConnect() => !IsConnected;

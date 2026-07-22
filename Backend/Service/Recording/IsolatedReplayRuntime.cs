@@ -25,7 +25,14 @@ public sealed class IsolatedReplayRuntime : IIsolatedReplayRuntime
         "z21.signal-aspect.changed",
         "z21.switch-position.changed",
         "runtime.state.changed",
-        "journey.transition"
+        "journey.transition",
+        "command.track-power.request",
+        "command.simulate-feedback.request",
+        "command.journey-reset.request",
+        "command.signal-aspect.request",
+        "command.locomotive-drive.request",
+        "command.locomotive-function.request",
+        "command.turnout.request"
     }.ToFrozenSet(StringComparer.Ordinal);
 
     private readonly Dictionary<string, JsonElement> _latestPayloads = new(StringComparer.Ordinal);

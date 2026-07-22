@@ -94,8 +94,12 @@ public static class MobaMauiServiceCollectionExtensions
         services.AddSingleton<MobileRuntimeCoordinator>(sp => new MobileRuntimeCoordinator(
             sp.GetRequiredService<IMobaRuntime>(),
             sp.GetRequiredService<IRuntimeHubRemoteClient>()));
-        services.AddSingleton<IRuntimeCommandGateway>(sp => sp.GetRequiredService<MobileRuntimeCoordinator>());
         services.AddSingleton<IMobileRuntimeCoordinator>(sp => sp.GetRequiredService<MobileRuntimeCoordinator>());
+        // The mobile coordinator remains the mode owner while recording wraps only explicit command execution.
+        services.AddSingleton(sp => new RecordingRuntimeCommandGateway(
+            sp.GetRequiredService<MobileRuntimeCoordinator>(),
+            sp.GetRequiredService<IRecordingSessionService>()));
+        services.AddSingleton<IRuntimeCommandGateway>(sp => sp.GetRequiredService<RecordingRuntimeCommandGateway>());
         services.AddSingleton<SolutionRemoteLoader>(sp => new SolutionRemoteLoader(
             sp.GetRequiredService<IMobaRuntime>(),
             sp.GetRequiredService<MobileSolutionContext>(),
@@ -153,6 +157,7 @@ public static class MobaMauiServiceCollectionExtensions
                 sp.GetRequiredService<ILogger<TrainControlViewModel>>(),
                 sp.GetRequiredService<IUiDispatcher>(),
                 sp.GetRequiredService<IEventBus>(),
+                runtimeCommandGateway: sp.GetRequiredService<IRuntimeCommandGateway>(),
                 mobileRuntimeCoordinator: coordinator,
                 options: sp.GetRequiredService<TrainControlViewModelOptions>());
         });

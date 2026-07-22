@@ -61,13 +61,52 @@ internal static class CoreRecordingPayloadValidators
             ("inPort", IsNullablePositiveInt32),
             ("stationId", IsNullableGuid),
             ("stationIndex", IsStationIndex),
-            ("isActive", IsBoolean))
+            ("isActive", IsBoolean)),
+        Schema("command.track-power.request", ("isOn", IsBoolean)),
+        Schema("command.simulate-feedback.request", ("inPort", IsPositiveInt32)),
+        Schema("command.journey-reset.request", ("journeyId", IsGuid)),
+        Schema("command.signal-aspect.request", ("signalId", IsGuid), ("aspect", IsBoundedString)),
+        Schema(
+            "command.locomotive-drive.request",
+            ("address", IsPositiveInt32),
+            ("speed", IsNonNegativeInt32),
+            ("forward", IsBoolean)),
+        Schema(
+            "command.locomotive-function.request",
+            ("address", IsPositiveInt32),
+            ("functionIndex", IsNonNegativeInt32),
+            ("isOn", IsBoolean)),
+        Schema(
+            "command.turnout.request",
+            ("decoderAddress", IsPositiveInt32),
+            ("output", IsNonNegativeInt32),
+            ("activate", IsBoolean),
+            ("queue", IsBoolean)),
+        DisplaySchema("command.track-power.result", ("outcome", IsSucceededOutcome)),
+        DisplaySchema("command.track-power.failure", ("outcome", IsFailureOutcome)),
+        DisplaySchema("command.simulate-feedback.result", ("outcome", IsSucceededOutcome)),
+        DisplaySchema("command.simulate-feedback.failure", ("outcome", IsFailureOutcome)),
+        DisplaySchema("command.journey-reset.result", ("outcome", IsSucceededOutcome)),
+        DisplaySchema("command.journey-reset.failure", ("outcome", IsFailureOutcome)),
+        DisplaySchema("command.signal-aspect.result", ("outcome", IsSucceededOutcome)),
+        DisplaySchema("command.signal-aspect.failure", ("outcome", IsFailureOutcome)),
+        DisplaySchema("command.locomotive-drive.result", ("outcome", IsSucceededOutcome)),
+        DisplaySchema("command.locomotive-drive.failure", ("outcome", IsFailureOutcome)),
+        DisplaySchema("command.locomotive-function.result", ("outcome", IsSucceededOutcome)),
+        DisplaySchema("command.locomotive-function.failure", ("outcome", IsFailureOutcome)),
+        DisplaySchema("command.turnout.result", ("outcome", IsSucceededOutcome)),
+        DisplaySchema("command.turnout.failure", ("outcome", IsFailureOutcome))
     ];
 
     private static IRecordingPayloadValidator Schema(
         string typeKey,
         params (string Name, Func<JsonElement, bool> Validate)[] properties) =>
-        new RecordingPayloadSchemaValidator(typeKey, properties);
+        new RecordingPayloadSchemaValidator(typeKey, RecordingReplayApplicability.ReplayApplicable, properties);
+
+    private static IRecordingPayloadValidator DisplaySchema(
+        string typeKey,
+        params (string Name, Func<JsonElement, bool> Validate)[] properties) =>
+        new RecordingPayloadSchemaValidator(typeKey, RecordingReplayApplicability.DisplayOnly, properties);
 
     private static bool IsBoolean(JsonElement value) =>
         value.ValueKind is JsonValueKind.True or JsonValueKind.False;
@@ -108,21 +147,29 @@ internal static class CoreRecordingPayloadValidators
         value.ValueKind == JsonValueKind.String &&
         Enum.TryParse<Moba.Common.Events.JourneyRuntimeTransitionKind>(value.GetString(), ignoreCase: false, out _);
 
+    private static bool IsSucceededOutcome(JsonElement value) =>
+        value.ValueKind == JsonValueKind.String && value.GetString() == "succeeded";
+
+    private static bool IsFailureOutcome(JsonElement value) =>
+        value.ValueKind == JsonValueKind.String && value.GetString() is "cancelled" or "failed";
+
     private sealed class RecordingPayloadSchemaValidator : IRecordingPayloadValidator
     {
         private readonly IReadOnlyDictionary<string, Func<JsonElement, bool>> _properties;
 
         public RecordingPayloadSchemaValidator(
             string typeKey,
+            RecordingReplayApplicability replayApplicability,
             IEnumerable<(string Name, Func<JsonElement, bool> Validate)> properties)
         {
             TypeKey = typeKey;
+            ReplayApplicability = replayApplicability;
             _properties = properties.ToDictionary(property => property.Name, property => property.Validate, StringComparer.Ordinal);
         }
 
         public string TypeKey { get; }
 
-        public RecordingReplayApplicability ReplayApplicability => RecordingReplayApplicability.ReplayApplicable;
+        public RecordingReplayApplicability ReplayApplicability { get; }
 
         public RecordingPayloadValidationResult Validate(JsonElement payload)
         {

@@ -3,8 +3,8 @@
 ## Document status
 
 - Status: In progress
-- Completed delivery slices: WP1 journal model/format/filtering, WP2 recording state machine/bounded ingestion, WP3 producer capture, WP5 RecorderPage/file operations, and WP6 isolated replay
-- Next delivery slice: WP4 explicit command capture; its Workflow 2.0 portion remains gated by issue #32
+- Completed delivery slices: WP1 journal model/format/filtering, WP2 recording state machine/bounded ingestion, WP3 producer capture, WP4a explicit command capture, WP5 RecorderPage/file operations, and WP6 isolated replay
+- Next unblocked delivery slice: WP7 integration, resilience, and acceptance evidence; the remaining WP4b Workflow 2.0 capture stays gated by issue #32
 - Resolved dependency: issue #43 merged through PR #45 and is present in the branch baseline
 - Primary issue: https://github.com/ahuelsmann/MOBAflow/issues/30
 - Status and acceptance criteria source: GitHub issue #30
@@ -359,6 +359,8 @@ Completed on 2026-07-21. Evidence: the recording decorator captures an exact map
 ### WP4: Explicit user-command and Workflow 2.0 capture
 
 Prerequisite for workflow portion: issue #32 lifecycle events available.
+
+WP4a explicit command capture completed on 2026-07-22. `RecordingRuntimeCommandGateway` wraps the concrete local and mobile command routes and is used by WinUI, MOBAsmart, RuntimeHub, and the REST fallback consumer. Track power, simulated feedback, journey reset, signal aspect, locomotive drive/function, and turnout commands emit correlated allow-listed request/result/failure entries. Outcome payloads are bounded and negative tests prove that exception details, tokens, paths, and endpoints are not persisted. Focused command/coordinator tests (7 platform-neutral) and DI/RuntimeHub tests (6 Windows) pass; the full suites pass with 1,347 platform-neutral tests plus four environment-dependent skips and 1,399 Windows tests. WinUI FastDebug builds with zero warnings/errors, while MOBAsmart FastDebug builds with zero errors and 45 XamlC warnings in unchanged XAML controls. Scoped formatting and the 22-file secret scan pass. The agentic Sonar attempt against `github/main` was blocked before upload by the execution policy for unpublished-code export; no workaround was attempted. WP4b remains intentionally deferred until #32 owns stable Workflow 2.0 lifecycle contracts.
 
 - route or decorate explicit runtime command paths;
 - capture correlated request/result/failure entries with sanitized payloads;

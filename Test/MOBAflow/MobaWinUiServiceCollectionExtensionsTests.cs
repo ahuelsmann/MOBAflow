@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 using Moba.SharedUI.Interface;
+using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 using Moba.WinUI.Extensions;
 using Moba.WinUI.Service;
@@ -64,7 +65,8 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
             Assert.That(ioService, Is.Not.Null);
             Assert.That(provider.GetRequiredService<ISolutionIoService>(), Is.SameAs(ioService));
             Assert.That(provider.GetRequiredService<IRecordingFileService>(), Is.Not.Null);
-            Assert.That(provider.GetRequiredService<IRuntimeCommandGateway>(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<IRuntimeCommandGateway>(), Is.InstanceOf<RecordingRuntimeCommandGateway>());
+            Assert.That(provider.GetRequiredService<LocalRuntimeCommandGateway>(), Is.Not.Null);
         });
     }
 

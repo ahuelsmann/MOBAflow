@@ -41,6 +41,22 @@ The first capture slice registers these exact type keys. Property names are case
 
 The runtime mapper intentionally excludes broad snapshot collections, operator status text, serial/firmware values, endpoints, and mutable domain/runtime objects. Journey entries originate from immutable events published at authoritative `JourneyManager` transitions before legacy mutable callbacks.
 
+### Explicit command schemas
+
+`RecordingRuntimeCommandGateway` records each explicit command as a correlated request followed by either a result or failure. Request entries are replay-applicable only to the private isolated projection; replay never sends them to production runtime or hardware. Result and failure entries are display-only.
+
+| Request type key | Allowed payload properties |
+| --- | --- |
+| `command.track-power.request` | `isOn` |
+| `command.simulate-feedback.request` | `inPort` |
+| `command.journey-reset.request` | `journeyId` |
+| `command.signal-aspect.request` | `signalId`, `aspect` |
+| `command.locomotive-drive.request` | `address`, `speed`, `forward` |
+| `command.locomotive-function.request` | `address`, `functionIndex`, `isOn` |
+| `command.turnout.request` | `decoderAddress`, `output`, `activate`, `queue` |
+
+For every request type key, the matching `.result` payload is exactly `{ "outcome": "succeeded" }`. The matching `.failure` payload contains only `outcome`, with either `failed` or `cancelled`. Request and outcome share a non-empty `correlationId`. Exception details, paths, endpoints, tokens, raw transport payloads, and credentials are never persisted.
+
 ## Isolated replay
 
 RecorderPage replays validated artifacts only through `IRecordingReplayService`. The service creates a fresh `IIsolatedReplayRuntime` directly; that runtime has no production service-provider scope and no dependency on `IMobaRuntime`, `IZ21`, the root EventBus, network clients, speakers, displays, scripts, or production file services. It projects allow-listed payloads into private in-memory state only.
