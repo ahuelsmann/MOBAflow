@@ -1102,7 +1102,14 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             _hideZ21TelemetryUntilTrackPowerOff = false;
         }
 
-        await _mobaRuntime.SetTrackPowerAsync(turnOn).ConfigureAwait(false);
+        if (_runtimeCommandGateway is not null)
+        {
+            await _runtimeCommandGateway.SetTrackPowerAsync(turnOn).ConfigureAwait(false);
+        }
+        else
+        {
+            await _mobaRuntime.SetTrackPowerAsync(turnOn).ConfigureAwait(false);
+        }
     }
 
     private void ClearZ21TelemetryValues()

@@ -38,6 +38,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
     // Core Services (required)
     private readonly IIoService _ioService;
     private readonly IMobaRuntime _mobaRuntime;
+    private readonly IRuntimeCommandGateway _runtimeCommandGateway;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly IEventBus _eventBus;
     private readonly ILogger<MainWindowViewModel> _logger;
@@ -83,6 +84,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
     /// <param name="settingsService">Optional settings service used to persist changes.</param>
     /// <param name="announcementService">Optional announcement service for text-to-speech announcements.</param>
     /// <param name="featureTogglePageProvider">Optional provider for feature toggle page metadata.</param>
+    /// <param name="runtimeCommandGateway">Optional explicit command route used by UI control actions.</param>
     /// <param name="loggerFactory">Optional factory used to create loggers for nested view models (e.g. workflow command encoding).</param>
     /// <param name="dialogService">Optional dialog service for showing confirmation dialogs (WinUI only).</param>
     /// <param name="speechTestAction">Optional direct speech test action for the selected speaker engine.</param>
@@ -105,6 +107,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         Func<string, Task>? speechTestAction = null,
         ILocomotiveWhistleAutomationService? locomotiveWhistleAutomation = null,
         IProjectDiagnosticsService? projectDiagnosticsService = null,
+        IRuntimeCommandGateway? runtimeCommandGateway = null,
         IWorkflowService? workflowService = null,
         IWorkflowTraceStore? workflowTraceStore = null)
     {
@@ -119,6 +122,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
 
         _ioService = ioService ?? new NullIoService();  // Use null object pattern
         _mobaRuntime = mobaRuntime;
+        _runtimeCommandGateway = runtimeCommandGateway ?? new LocalRuntimeCommandGateway(mobaRuntime);
         _uiDispatcher = uiDispatcher;
         _eventBus = eventBus;
         _settings = settings;

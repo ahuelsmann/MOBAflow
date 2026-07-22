@@ -17,6 +17,12 @@ internal sealed class NoOpRuntimeCommandGateway : IRuntimeCommandGateway
     {
     }
 
+    public Task SetTrackPowerAsync(bool isOn, CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+    public Task SimulateFeedbackAsync(int inPort, CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+    public Task ResetJourneyAsync(Guid journeyId, CancellationToken cancellationToken = default) => Task.CompletedTask;
+
     public Task SetSignalAspectAsync(Guid signalId, SignalAspect aspect, CancellationToken cancellationToken = default) =>
         Task.CompletedTask;
 
@@ -24,5 +30,13 @@ internal sealed class NoOpRuntimeCommandGateway : IRuntimeCommandGateway
         Task.CompletedTask;
 
     public Task SetLocomotiveFunctionAsync(int address, int functionIndex, bool isOn, CancellationToken cancellationToken = default) =>
+        Task.CompletedTask;
+
+    public Task SendTurnoutCommandAsync(
+        int decoderAddress,
+        int output,
+        bool activate,
+        bool queue = false,
+        CancellationToken cancellationToken = default) =>
         Task.CompletedTask;
 }

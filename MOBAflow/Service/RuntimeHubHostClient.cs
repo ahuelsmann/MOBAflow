@@ -19,16 +19,19 @@ using SharedUI.Interface;
 public sealed class RuntimeHubHostClient : IRuntimeHubHostClient
 {
     private readonly IMobaRuntime _mobaRuntime;
+    private readonly IRuntimeCommandGateway _runtimeCommandGateway;
     private readonly ILogger<RuntimeHubHostClient>? _logger;
     private readonly HostControlPlaneSession? _hostSession;
     private HubConnection? _hubConnection;
 
     public RuntimeHubHostClient(
         IMobaRuntime mobaRuntime,
+        IRuntimeCommandGateway runtimeCommandGateway,
         ILogger<RuntimeHubHostClient>? logger = null,
         HostControlPlaneSession? hostSession = null)
     {
         _mobaRuntime = mobaRuntime;
+        _runtimeCommandGateway = runtimeCommandGateway;
         _logger = logger;
         _hostSession = hostSession;
     }
@@ -152,16 +155,16 @@ public sealed class RuntimeHubHostClient : IRuntimeHubHostClient
             return;
         }
 
-        await _mobaRuntime.SetSignalAspectAsync(id, parsedAspect).ConfigureAwait(false);
+        await _runtimeCommandGateway.SetSignalAspectAsync(id, parsedAspect).ConfigureAwait(false);
     }
 
     private async Task OnExecuteSetLocomotiveDriveAsync(int address, int speed, bool forward)
     {
-        await _mobaRuntime.SetLocomotiveDriveAsync(address, speed, forward).ConfigureAwait(false);
+        await _runtimeCommandGateway.SetLocomotiveDriveAsync(address, speed, forward).ConfigureAwait(false);
     }
 
     private async Task OnExecuteSetLocomotiveFunctionAsync(int address, int functionIndex, bool isOn)
     {
-        await _mobaRuntime.SetLocomotiveFunctionAsync(address, functionIndex, isOn).ConfigureAwait(false);
+        await _runtimeCommandGateway.SetLocomotiveFunctionAsync(address, functionIndex, isOn).ConfigureAwait(false);
     }
 }

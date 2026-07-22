@@ -2,6 +2,8 @@
 
 namespace Moba.Backend.Manager;
 
+using Common.Events;
+
 using Domain;
 
 using Interface;
@@ -42,7 +44,8 @@ public sealed class JourneyManagerFactory(
     IJourneyStopTransitionService? stopTransitionService = null,
     IJourneyRuntimeStateStore? runtimeStateStore = null,
     ILogger<JourneyManager>? logger = null,
-    TimeProvider? timeProvider = null)
+    TimeProvider? timeProvider = null,
+    IEventBus? eventBus = null)
 {
     public IJourneyManager Create(Project project, ActionExecutionContext executionContext) =>
         new JourneyManager(
@@ -55,7 +58,8 @@ public sealed class JourneyManagerFactory(
             {
                 StopTransitionService = stopTransitionService,
                 RuntimeStateStore = runtimeStateStore,
-                TimeProvider = timeProvider
+                TimeProvider = timeProvider,
+                EventBus = eventBus
             });
 }
 

@@ -169,7 +169,7 @@ public partial class MainWindowViewModel
         if (SelectedJourney == null) return;
 
         SelectedJourney.ResetCommand.Execute(null);
-        await _mobaRuntime.ResetJourneyAsync(SelectedJourney.Model.Id).ConfigureAwait(false);
+        await _runtimeCommandGateway.ResetJourneyAsync(SelectedJourney.Model.Id).ConfigureAwait(false);
     }
 
     private bool CanResetJourneyCounter() => SelectedJourney != null;

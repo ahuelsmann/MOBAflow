@@ -5,42 +5,30 @@ namespace Moba.WinUI.Extensions;
 using Backend.Data;
 using Backend.Interface;
 using Backend.Service;
-using Backend.Service.Validation;
 using Backend.Service.TrackPlan;
-
+using Backend.Service.Validation;
 using Common.Configuration;
 using Common.Events;
 using Common.Navigation;
-
 using Display.Rendering;
 using Display.Runtime;
 using Display.Transport;
-
 using Domain;
-
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-
 using Moba.Backend;
-
 using Serilog;
-
 using Service;
-
 using SharedUI.Extensions;
 using SharedUI.Interface;
 using SharedUI.Service;
 using SharedUI.Shell;
 using SharedUI.ViewModel;
-
 using Sound;
-
 using TrackLibrary.PikoA;
-
 using TrackPlan.Renderer;
-
 using View;
 
 /// <summary>
@@ -134,12 +122,18 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton<ISolutionIoService>(sp => sp.GetRequiredService<IIoService>());
         services.AddSingleton<IFilePickerService>(sp => sp.GetRequiredService<IIoService>());
         services.AddSingleton<IPhotoStorageService>(sp => sp.GetRequiredService<IIoService>());
+        services.AddSingleton<IRecordingFileService, RecordingFileService>();
         services.AddSingletonWithInterface<PhotoHubClient, IPhotoHubClient>();
         services.AddSingleton<HostControlPlaneSession>();
         services.AddSingletonWithInterface<RuntimeHubHostClient, IRuntimeHubHostClient>();
         services.AddSingleton<RestApiRuntimeHubService>();
         services.AddSingleton<RestApiRuntimeCommandConsumerService>();
-        services.AddSingletonWithInterface<LocalRuntimeCommandGateway, IRuntimeCommandGateway>();
+        services.AddSingleton<LocalRuntimeCommandGateway>();
+        // The explicit factory keeps the production command route as the decorator's concrete inner gateway.
+        services.AddSingleton(sp => new RecordingRuntimeCommandGateway(
+            sp.GetRequiredService<LocalRuntimeCommandGateway>(),
+            sp.GetRequiredService<IRecordingSessionService>()));
+        services.AddSingleton<IRuntimeCommandGateway>(sp => sp.GetRequiredService<RecordingRuntimeCommandGateway>());
 
         services.AddHttpClient();
 
@@ -270,13 +264,16 @@ public static class MobaWinUiServiceCollectionExtensions
             },
             locomotiveWhistleAutomation: sp.GetService<ILocomotiveWhistleAutomationService>(),
             projectDiagnosticsService: sp.GetRequiredService<IProjectDiagnosticsService>(),
+            runtimeCommandGateway: sp.GetRequiredService<IRuntimeCommandGateway>(),
             workflowService: sp.GetRequiredService<IWorkflowService>(),
             workflowTraceStore: sp.GetRequiredService<IWorkflowTraceStore>()));
 
         services.AddSingleton<IJourneySelectionContext>(sp => sp.GetRequiredService<MainWindowViewModel>());
         services.AddSingleton<IProjectContext>(sp => sp.GetRequiredService<MainWindowViewModel>());
+        services.AddSingleton<IRecordingContextProvider, WinUiRecordingContextProvider>();
         services.AddSingleton<JourneyMapViewModel>();
         services.AddSingleton<MonitorPageViewModel>();
+        services.AddSingleton<RecorderPageViewModel>();
 
         services.AddSingleton(new TrainControlViewModelOptions
         {

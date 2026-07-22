@@ -38,6 +38,18 @@ public sealed class MobileRuntimeCoordinator : IRuntimeCommandGateway, IMobileRu
     public void SetLocalZ21Connected(bool isConnected) => _localZ21Connected = isConnected;
 
     /// <inheritdoc />
+    public Task SetTrackPowerAsync(bool isOn, CancellationToken cancellationToken = default) =>
+        _localGateway.SetTrackPowerAsync(isOn, cancellationToken);
+
+    /// <inheritdoc />
+    public Task SimulateFeedbackAsync(int inPort, CancellationToken cancellationToken = default) =>
+        _localGateway.SimulateFeedbackAsync(inPort, cancellationToken);
+
+    /// <inheritdoc />
+    public Task ResetJourneyAsync(Guid journeyId, CancellationToken cancellationToken = default) =>
+        _localGateway.ResetJourneyAsync(journeyId, cancellationToken);
+
+    /// <inheritdoc />
     public Task SetSignalAspectAsync(Guid signalId, SignalAspect aspect, CancellationToken cancellationToken = default)
     {
         if (_mobaflowSessionActive)
@@ -85,4 +97,13 @@ public sealed class MobileRuntimeCoordinator : IRuntimeCommandGateway, IMobileRu
 
         return NoOpRuntimeCommandGateway.Instance.SetLocomotiveFunctionAsync(address, functionIndex, isOn, cancellationToken);
     }
+
+    /// <inheritdoc />
+    public Task SendTurnoutCommandAsync(
+        int decoderAddress,
+        int output,
+        bool activate,
+        bool queue = false,
+        CancellationToken cancellationToken = default) =>
+        _localGateway.SendTurnoutCommandAsync(decoderAddress, output, activate, queue, cancellationToken);
 }

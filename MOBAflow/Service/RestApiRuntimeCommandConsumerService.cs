@@ -10,12 +10,14 @@ using Domain;
 
 using Microsoft.Extensions.Logging;
 
+using SharedUI.Interface;
+
 /// <summary>
 /// Polls MOBApi for queued runtime commands when SignalR host forwarding is unavailable.
 /// </summary>
 public sealed class RestApiRuntimeCommandConsumerService : IDisposable
 {
-    private readonly IMobaRuntime _mobaRuntime;
+    private readonly IRuntimeCommandGateway _runtimeCommandGateway;
     private readonly ILogger<RestApiRuntimeCommandConsumerService> _logger;
     private readonly HostControlPlaneSession? _hostSession;
     private readonly PeriodicTimer _timer;
@@ -23,11 +25,11 @@ public sealed class RestApiRuntimeCommandConsumerService : IDisposable
     private bool _disposed;
 
     public RestApiRuntimeCommandConsumerService(
-        IMobaRuntime mobaRuntime,
+        IRuntimeCommandGateway runtimeCommandGateway,
         ILogger<RestApiRuntimeCommandConsumerService> logger,
         HostControlPlaneSession? hostSession = null)
     {
-        _mobaRuntime = mobaRuntime;
+        _runtimeCommandGateway = runtimeCommandGateway;
         _logger = logger;
         _hostSession = hostSession;
         _timer = new PeriodicTimer(TimeSpan.FromMilliseconds(500));
@@ -90,14 +92,14 @@ public sealed class RestApiRuntimeCommandConsumerService : IDisposable
         {
             case RuntimeCommandType.SetSignalAspect
                 when command.SignalId.HasValue && command.SignalAspect.HasValue:
-                await _mobaRuntime
+                await _runtimeCommandGateway
                     .SetSignalAspectAsync(command.SignalId.Value, command.SignalAspect.Value, cancellationToken)
                     .ConfigureAwait(false);
                 break;
 
             case RuntimeCommandType.SetLocomotiveDrive
                 when command.LocomotiveAddress.HasValue && command.Speed.HasValue && command.Forward.HasValue:
-                await _mobaRuntime
+                await _runtimeCommandGateway
                     .SetLocomotiveDriveAsync(
                         command.LocomotiveAddress.Value,
                         command.Speed.Value,
@@ -108,7 +110,7 @@ public sealed class RestApiRuntimeCommandConsumerService : IDisposable
 
             case RuntimeCommandType.SetLocomotiveFunction
                 when command.LocomotiveAddress.HasValue && command.FunctionIndex.HasValue && command.FunctionIsOn.HasValue:
-                await _mobaRuntime
+                await _runtimeCommandGateway
                     .SetLocomotiveFunctionAsync(
                         command.LocomotiveAddress.Value,
                         command.FunctionIndex.Value,
@@ -118,7 +120,7 @@ public sealed class RestApiRuntimeCommandConsumerService : IDisposable
                 break;
 
             case RuntimeCommandType.ResetJourney when command.JourneyId.HasValue:
-                await _mobaRuntime.ResetJourneyAsync(command.JourneyId.Value, cancellationToken).ConfigureAwait(false);
+                await _runtimeCommandGateway.ResetJourneyAsync(command.JourneyId.Value, cancellationToken).ConfigureAwait(false);
                 break;
 
             default:

@@ -7,6 +7,7 @@ using Common.Discovery;
 using Common.Events;
 using Common.IO;
 using Common.Multiplex;
+using Common.Recording;
 using Data;
 using Discovery;
 using Interface;
@@ -17,6 +18,7 @@ using Microsoft.Extensions.Logging;
 using Network;
 using Service;
 using Service.Interlocking;
+using Service.Recording;
 using Service.Validation;
 using Sound;
 
@@ -49,6 +51,24 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton<ITimetableStateStore, FileTimetableStateStore>();
         services.TryAddSingleton<ITimetableOperationsService, TimetableOperationsService>();
         services.TryAddSingleton<ITimetableRuntimeProjectionService, TimetableRuntimeProjectionService>();
+        services.TryAddSingleton<RecorderOptions>();
+        services.TryAddSingleton<IRecordingSessionService, RecordingSessionService>();
+        services.TryAddSingleton<IRecordingStatusSource>(sp => sp.GetRequiredService<IRecordingSessionService>());
+        services.TryAddSingleton<IIsolatedReplayRuntimeFactory, IsolatedReplayRuntimeFactory>();
+        services.TryAddSingleton<IRecordingReplayDelayScheduler, TimeProviderRecordingReplayDelayScheduler>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IRecordingEventMapper, Z21RecordingEventMapper>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IRecordingEventMapper, RuntimeSnapshotRecordingEventMapper>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IRecordingEventMapper, JourneyRecordingEventMapper>());
+        services.TryAddSingleton<RecordingEventMapperRegistry>();
+        if (services.All(descriptor => descriptor.ServiceType != typeof(CoreRecordingPayloadValidatorRegistrationMarker)))
+        {
+            services.AddSingleton<CoreRecordingPayloadValidatorRegistrationMarker>();
+            foreach (var validator in CoreRecordingPayloadValidators.Create())
+            {
+                services.AddSingleton(validator);
+            }
+        }
+        services.TryAddSingleton<RecordingArtifactSerializer>();
         services.TryAddSingleton<Z21Monitor>();
         services.TryAddSingleton<IUdpClientWrapper, UdpWrapper>();
         services.TryAddSingleton<IZ21DiscoveryService, Z21DiscoveryService>();
@@ -105,11 +125,16 @@ public static class MobaBackendServiceCollectionExtensions
                 sp.GetRequiredService<IJourneyStopTransitionService>(),
                 sp.GetRequiredService<IJourneyRuntimeStateStore>(),
                 sp.GetService<ILogger<JourneyManager>>(),
-                sp.GetRequiredService<TimeProvider>()),
+                timeProvider: sp.GetRequiredService<TimeProvider>(),
+                eventBus: sp.GetService<IEventBus>()),
             z21Discovery: sp.GetRequiredService<IZ21DiscoveryService>(),
             vehicleUsageCheckpointStore: sp.GetRequiredService<IVehicleUsageCheckpointStore>(),
             timeProvider: sp.GetRequiredService<TimeProvider>(),
             interlockingRuntime: sp.GetRequiredService<IInterlockingRuntime>()));
+        services.TryAddSingleton<IRuntimeSnapshotProvider>(sp => sp.GetRequiredService<IMobaRuntime>());
+        services.TryAddSingleton<IRecordingReplaySafetyGate, RecordingReplaySafetyGate>();
+        services.TryAddSingleton<IRecordingReplayService, RecordingReplayService>();
+        services.TryAddSingleton<IRecordingReplayStatusSource>(sp => sp.GetRequiredService<IRecordingReplayService>());
         services.TryAddSingleton<ILocomotiveFunctionCommandGateway, MobaRuntimeLocomotiveFunctionCommandGateway>();
         services.TryAddSingleton<ILocomotiveWhistleAutomationService, LocomotiveWhistleAutomationService>();
 

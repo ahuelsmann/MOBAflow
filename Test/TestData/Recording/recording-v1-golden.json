@@ -1,0 +1,57 @@
+{
+  "format": "mobaflow-recording",
+  "formatVersion": "1.0",
+  "metadata": {
+    "sessionId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    "name": "Golden session",
+    "startedUtc": "2026-01-02T03:04:05.0000000Z",
+    "completedUtc": "2026-01-02T03:05:05.0000000Z"
+  },
+  "application": {
+    "version": "1.2.3"
+  },
+  "project": {
+    "id": "22222222-2222-2222-2222-222222222222",
+    "name": "Demo"
+  },
+  "options": {
+    "entryLimit": 250000,
+    "estimatedPayloadByteLimit": 67108864
+  },
+  "entries": [
+    {
+      "sequence": 1,
+      "timestampUtc": "2026-01-02T03:04:05.0000000Z",
+      "elapsedTicks": 0,
+      "category": "recorder",
+      "source": "operator",
+      "typeKey": "recorder.marker",
+      "severity": "information",
+      "correlationId": null,
+      "entityReferences": [
+        {
+          "kind": "locomotive",
+          "id": "11111111-1111-1111-1111-111111111111"
+        }
+      ],
+      "payload": {
+        "label": "Start"
+      },
+      "displayText": "Start",
+      "replayApplicability": "displayOnly"
+    }
+  ],
+  "summary": {
+    "entryCount": 1,
+    "replayApplicableEntryCount": 0,
+    "displayOnlyEntryCount": 1,
+    "markerCount": 1,
+    "noteCount": 0,
+    "firstSequence": 1,
+    "lastSequence": 1,
+    "durationTicks": 0
+  },
+  "integrity": {
+    "entriesSha256": "0b671d094f34eeb9746be66415c46f8f81fd186a0e9889f45c793614620ced26"
+  }
+}

@@ -281,6 +281,43 @@ internal class IoService : IIoService
         return result?.Path;
     }
 
+    /// <inheritdoc />
+    public async Task<string?> BrowseForRecordingFileAsync()
+    {
+        EnsureInitialized();
+
+        var picker = new FileOpenPicker(_windowId.GetValueOrDefault())
+        {
+            SettingsIdentifier = "MobaRecordingPicker",
+            SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
+            Title = "Open MOBAflow Recording",
+            FileTypeChoices = { { "MOBAflow Recording (*.mobarecording.json)", new List<string> { ".json" } } }
+        };
+
+        var result = await picker.PickSingleFileAsync();
+        return result?.Path;
+    }
+
+    /// <inheritdoc />
+    public async Task<string?> SaveRecordingFileAsync(string suggestedFileName)
+    {
+        EnsureInitialized();
+
+        var picker = new FileSavePicker(_windowId.GetValueOrDefault())
+        {
+            SettingsIdentifier = "MobaRecordingSaver",
+            SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
+            SuggestedFileName = $"{suggestedFileName}.mobarecording",
+            DefaultFileExtension = ".json",
+            ShowOverwritePrompt = true,
+            Title = "Save MOBAflow Recording",
+            FileTypeChoices = { { "MOBAflow Recording (*.mobarecording.json)", new List<string> { ".json" } } }
+        };
+
+        var result = await picker.PickSaveFileAsync();
+        return result?.Path;
+    }
+
     /// <summary>
     /// Opens a file save picker for saving a JSON file.
     /// </summary>

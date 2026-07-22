@@ -66,6 +66,15 @@ public interface ISolutionIoService
 
 public interface IFilePickerService
 {
+    /// <summary>Opens a file picker for a MOBAflow recording artifact.</summary>
+    /// <returns>The selected recording path, or <see langword="null"/> when cancelled.</returns>
+    Task<string?> BrowseForRecordingFileAsync();
+
+    /// <summary>Opens a file save picker for a MOBAflow recording artifact.</summary>
+    /// <param name="suggestedFileName">Suggested base file name without the recording suffix.</param>
+    /// <returns>The selected recording path, or <see langword="null"/> when cancelled.</returns>
+    Task<string?> SaveRecordingFileAsync(string suggestedFileName);
+
     /// <summary>
     /// Opens a file picker to browse for a JSON file.
     /// </summary>
