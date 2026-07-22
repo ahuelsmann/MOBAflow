@@ -2,19 +2,24 @@
 
 ## Document status
 
-- Status: Proposed security design; PR #53 review findings incorporated; approval required
+- Status: Approved security design; production implementation in progress
 - Primary issue: [#48](https://github.com/ahuelsmann/MOBAflow/issues/48)
 - Parent programme: [#47](https://github.com/ahuelsmann/MOBAflow/issues/47)
 - Recommended implementation prerequisite: [RF-01 / #49](https://github.com/ahuelsmann/MOBAflow/issues/49)
-- Follow-up baseline: `main` at `fa55bff7e7f90decf6b6c97e567158f74b5382d5`
+- Design approval: [PR #60](https://github.com/ahuelsmann/MOBAflow/pull/60), merged 2026-07-20
+- Framework approval: [#48 decision record](https://github.com/ahuelsmann/MOBAflow/issues/48#issuecomment-5027094805), approved 2026-07-20
 - Scope owner: RF-02 only
 
-This plan is the single issue-specific plan for #48. This revision authorizes threat modelling and security design only. It does not authorize production firmware changes.
+This plan is the single issue-specific plan for #48. Threat modelling and security design were approved through PR #60. Production implementation is authorized on a dedicated branch and remains constrained to RF-02.
 
-Production implementation remains blocked until both conditions are true:
+The original production gates are satisfied:
 
-1. RF-01 defines and tests the length-safe parser contract that every network decoder can reuse.
-2. The activation, credential, storage, recovery, and factory-reset decisions in this plan are reviewed and approved in #48.
+1. RF-01 defines and tests the length-safe parser contract that every network decoder can reuse; PR #58 is merged and #49 is closed.
+2. The activation, credential, storage, recovery, and factory-reset decisions in this plan were reviewed and approved through PR #60 and #48.
+
+Implementation research found that the former PlatformIO Arduino stack resolved to Arduino-ESP32 2.0.17 / ESP-IDF 4.4.7 and did not contain Protocomm Security 2. Following the plan's stop rule, no fallback was implemented. The approved resolution is ESP-IDF 5.5 with Arduino-ESP32 3.3.x as an official Espressif component. The existing PlatformIO native environment remains available for portable parser and state-machine tests.
+
+Current implementation checkpoint: the dedicated branch contains the first fail-closed slice (physical activation isolated behind board configuration, per-window WPA2 SoftAP credential, AP-off recovery, Security 2 transport scaffold, bounded state transitions, and removal of the legacy anonymous HTTP surface). The session boundary now separates the read-only authentication query from the explicit Security 2-authenticated callback, credential validation enforces the WPA2 passphrase minimum, and setup-secret/test-fixture cleanup avoids compiler-elidable wipes and password literals. The PR diff excludes the unrelated vendored TFT macro refactor. Credential mutation, owner-signature verification, transactional storage, STA handover, factory reset, and production eFuse configuration remain intentionally disabled until their reviewed protocol and hardware gates are implemented. The ESP-IDF 5.5/Arduino-ESP32 3.3.x PlatformIO build is currently blocked by Arduino's public managed-component dependency graph, which still pulls optional components that generate a duplicated `https_server.crt.S` path on Windows; no generated artifact or workaround is accepted as a production fix.
 
 ## Outcome
 
@@ -42,7 +47,7 @@ Out of scope:
 - MOBApi authentication and authorization from RF-03;
 - general Wi-Fi feature expansion or automatic hardware discovery;
 - implementation of the RF-01 parser contract;
-- production firmware changes in this design-only pull request.
+- changes to display transport or capability behavior owned by #36.
 
 RF-02 may define only the secure readiness assumption consumed by #36: a device is either operational with no provisioning surface, or it is in an explicitly activated provisioning window. It must not define #36 protocol messages or capabilities.
 
@@ -277,11 +282,11 @@ RF-02 production work may begin only after #49 supplies a reviewed parser seam w
 
 RF-02 will add credential-message and state-transition tests to that seam. It will not modify the #36 frame/capability protocol.
 
-## Planned implementation slices after approval
+## Approved implementation slices
 
-No slice below is authorized by this design-only change. After the gates are met, implementation should remain independently reviewable:
+Implementation remains independently reviewable and follows this order:
 
-1. Extract a host-native provisioning state machine and bounded request model using the RF-01 parser contract.
+1. Extract a host-native provisioning state machine and bounded request model using the RF-01 parser contract. The state machine now requires an explicit post-transport authentication mark and rejects passphrases shorter than WPA2's 8-byte minimum.
 2. Add physical activation and TFT-only setup credential presentation behind board configuration.
 3. Integrate the reviewed protected provisioning transport, SRP golden vectors, owner enrollment/signatures, and single-session policy.
 4. Add transactional active/pending encrypted storage, authenticated STA handover, active-network restoration, rotation, and rollback.
@@ -353,9 +358,9 @@ Record board revision, module marking, firmware commit, PlatformIO platform vers
 - A failed field rotation rolls back credentials transactionally to the last-known-good active record, not firmware.
 - If the protected transport or storage cannot meet resource and recovery acceptance, stop rollout and return to design review. Do not restore the open AP/endpoints as a fallback.
 
-## Review decisions required before implementation
+## Approved implementation decisions
 
-Reviewers must explicitly approve or revise:
+The following decisions were reviewed through PR #60 and approved for implementation in #48:
 
 1. BOOT-button timings, first-boot trust-on-first-use custody, owner-key enrollment/rotation, and lost-key service recovery for the actual enclosure and client.
 2. The 10-minute window, 10-attempt cap, and 60-second cooldown.
@@ -364,7 +369,7 @@ Reviewers must explicitly approve or revise:
 5. Encrypted NVS, Secure Boot v2, Flash Encryption Release mode, hardware anti-rollback floor, UART/JTAG restrictions, and the manufacturing/recovery key procedure.
 6. The hardware variants, packet-capture scope, and evidence required by the acceptance matrix.
 
-Approval must be recorded in #48. Until then, the current firmware remains unchanged.
+The additional framework decision recorded in #48 selects ESP-IDF 5.5 with Arduino-ESP32 3.3.x as an official component. Security 2 remains mandatory; Security 1, custom cryptography, and community framework forks are not fallback paths.
 
 ## Authoritative references
 
@@ -381,12 +386,12 @@ Approval must be recorded in #48. Until then, the current firmware remains uncha
 
 ## Completion criteria
 
-This design task is complete when:
+RF-02 is complete when:
 
-- the plan is linked from #48 and reviewed;
-- all six review decisions have an explicit disposition;
-- RF-01's parser contract is stable enough to reference from RF-02 implementation;
+- the plan remains linked from #48 and all approved controls are implemented;
+- RF-01's parser contract remains the bounded network-input seam;
+- host-native, ESP32-S3 build, security, recovery, and hardware acceptance gates pass;
 - reviewers confirm that no #36 scope was absorbed;
-- a later implementation task is authorized with the agreed hardware and security gates.
+- production eFuse enablement remains separately rehearsed and explicitly signed off.
 
 The plan remains active until #48 is complete, then it is deleted according to repository policy; Git history and the closed issue retain the decision record.
