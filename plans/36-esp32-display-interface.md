@@ -50,10 +50,11 @@ Status on 2026-07-22:
 - Local Sonar branch analysis was attempted against `github/main` after explicit
   authorization. Its secret phase reported zero findings; its agentic phase
   still fails for all nine changed files with `Vortex agentic analysis is not
-  available for this organization (403 Forbidden)`. Per the repository gate,
-  this capability limitation remains recorded on draft PR #82. The source-level
-  C++11-compatible findings have been corrected; remote SonarCloud must still
-  rerun and report zero open or confirmed pull-request findings.
+  available for this organization (403 Forbidden)`. Remote SonarCloud passed on
+  corrected commit `a453a056`: all applicable findings were fixed and the 38
+  remaining C++17/20-only suggestions were accepted individually with their
+  C++11 compatibility rationale. PR #82 reports zero open or confirmed Sonar
+  findings, and all required GitHub checks are green.
 
 Prior status on 2026-07-21:
 
