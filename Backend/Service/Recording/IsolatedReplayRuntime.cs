@@ -26,6 +26,7 @@ public sealed class IsolatedReplayRuntime : IIsolatedReplayRuntime
         "z21.switch-position.changed",
         "runtime.state.changed",
         "journey.transition",
+        "workflow.lifecycle",
         "command.track-power.request",
         "command.simulate-feedback.request",
         "command.journey-reset.request",

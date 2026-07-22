@@ -59,6 +59,7 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IRecordingEventMapper, Z21RecordingEventMapper>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IRecordingEventMapper, RuntimeSnapshotRecordingEventMapper>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IRecordingEventMapper, JourneyRecordingEventMapper>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IRecordingEventMapper, WorkflowLifecycleRecordingEventMapper>());
         services.TryAddSingleton<RecordingEventMapperRegistry>();
         if (services.All(descriptor => descriptor.ServiceType != typeof(CoreRecordingPayloadValidatorRegistrationMarker)))
         {

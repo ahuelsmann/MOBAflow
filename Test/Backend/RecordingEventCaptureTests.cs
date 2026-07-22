@@ -205,6 +205,70 @@ internal sealed class RecordingEventCaptureTests
     }
 
     [Test]
+    public void WorkflowMapper_Should_CaptureCorrelatedLifecycleWithoutFreeFormDetail()
+    {
+        var mapper = new WorkflowLifecycleRecordingEventMapper();
+        var sourceCorrelationId = Guid.NewGuid();
+        var executionId = Guid.NewGuid();
+        var workflowId = Guid.NewGuid();
+        var stepId = Guid.NewGuid();
+        var lifecycleEvent = new WorkflowLifecycleEvent
+        {
+            Kind = WorkflowLifecycleKind.StepFailed,
+            SourceCorrelationId = sourceCorrelationId,
+            ExecutionId = executionId,
+            WorkflowId = workflowId,
+            StepId = stepId,
+            Sequence = 7,
+            Attempt = 2,
+            Mode = WorkflowLifecycleMode.Live,
+            TimestampUtc = StartTime,
+            Elapsed = TimeSpan.FromMilliseconds(125),
+            Result = "Failed",
+            Detail = "token=must-not-be-recorded"
+        };
+
+        var projection = mapper.Map(lifecycleEvent);
+        var payload = projection.Payload.GetRawText();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(projection.Category, Is.EqualTo("workflow"));
+            Assert.That(projection.TypeKey, Is.EqualTo("workflow.lifecycle"));
+            Assert.That(projection.Severity, Is.EqualTo("error"));
+            Assert.That(projection.CorrelationId, Is.EqualTo(sourceCorrelationId));
+            Assert.That(projection.ReplayApplicability, Is.EqualTo(RecordingReplayApplicability.ReplayApplicable));
+            Assert.That(projection.EntityReferences, Has.Some.EqualTo(new RecordingEntityReference("execution", executionId)));
+            Assert.That(projection.EntityReferences, Has.Some.EqualTo(new RecordingEntityReference("workflow", workflowId)));
+            Assert.That(projection.EntityReferences, Has.Some.EqualTo(new RecordingEntityReference("step", stepId)));
+            Assert.That(projection.Payload.GetProperty("sourceSequence").GetInt64(), Is.EqualTo(7));
+            Assert.That(projection.Payload.GetProperty("elapsedTicks").GetInt64(), Is.EqualTo(TimeSpan.FromMilliseconds(125).Ticks));
+            Assert.That(payload, Does.Not.Contain(lifecycleEvent.Detail));
+        });
+    }
+
+    [Test]
+    public void WorkflowMapper_Should_DiscardUnrecognizedResultText()
+    {
+        var mapper = new WorkflowLifecycleRecordingEventMapper();
+        var lifecycleEvent = new WorkflowLifecycleEvent
+        {
+            Kind = WorkflowLifecycleKind.ConditionDecided,
+            SourceCorrelationId = Guid.NewGuid(),
+            ExecutionId = Guid.NewGuid(),
+            WorkflowId = Guid.NewGuid(),
+            Sequence = 1,
+            Mode = WorkflowLifecycleMode.DryRun,
+            TimestampUtc = StartTime,
+            Result = "endpoint=https://private.invalid"
+        };
+
+        var projection = mapper.Map(lifecycleEvent);
+
+        Assert.That(projection.Payload.GetProperty("result").ValueKind, Is.EqualTo(System.Text.Json.JsonValueKind.Null));
+    }
+
+    [Test]
     public async Task UiRegistration_Should_PlaceRecordingDecoratorOutsideUiDecorator()
     {
         var services = new ServiceCollection();
@@ -219,6 +283,17 @@ internal sealed class RecordingEventCaptureTests
         var session = provider.GetRequiredService<IRecordingSessionService>();
         session.Start(new RecordingSessionStartRequest("DI capture", "1.0"));
         eventBus.Publish(new FeedbackReceivedEvent(11));
+        eventBus.Publish(new WorkflowLifecycleEvent
+        {
+            Kind = WorkflowLifecycleKind.WorkflowCompleted,
+            SourceCorrelationId = Guid.NewGuid(),
+            ExecutionId = Guid.NewGuid(),
+            WorkflowId = Guid.NewGuid(),
+            Sequence = 1,
+            Mode = WorkflowLifecycleMode.Live,
+            TimestampUtc = StartTime,
+            Result = "Succeeded"
+        });
         var artifact = (await session.StopAsync()).Artifact!;
         var serializer = provider.GetRequiredService<RecordingArtifactSerializer>();
         var imported = serializer.Import(serializer.SerializeToUtf8(artifact));
@@ -226,10 +301,13 @@ internal sealed class RecordingEventCaptureTests
         Assert.Multiple(() =>
         {
             Assert.That(eventBus, Is.InstanceOf<RecordingEventBusDecorator>());
-            Assert.That(provider.GetServices<IRecordingEventMapper>().Count(), Is.EqualTo(3));
+            Assert.That(provider.GetServices<IRecordingEventMapper>().Count(), Is.EqualTo(4));
             Assert.That(imported.IsValid, Is.True);
             Assert.That(
                 imported.Artifact!.Entries.Single(entry => entry.TypeKey == "z21.feedback.activated").ReplayApplicability,
+                Is.EqualTo(RecordingReplayApplicability.ReplayApplicable));
+            Assert.That(
+                imported.Artifact.Entries.Single(entry => entry.TypeKey == "workflow.lifecycle").ReplayApplicability,
                 Is.EqualTo(RecordingReplayApplicability.ReplayApplicable));
         });
     }
@@ -247,7 +325,8 @@ internal sealed class RecordingEventCaptureTests
             [
                 new Z21RecordingEventMapper(),
                 new RuntimeSnapshotRecordingEventMapper(),
-                new JourneyRecordingEventMapper()
+                new JourneyRecordingEventMapper(),
+                new WorkflowLifecycleRecordingEventMapper()
             ]),
             NullLogger<RecordingEventBusDecorator>.Instance);
 

@@ -213,7 +213,7 @@ internal sealed class RecordingReplayServiceTests
     public void IsolatedRuntime_Should_ApplyOnlyAllowListedReplayEntries()
     {
         var runtime = new IsolatedReplayRuntime();
-        var known = CreateEntry(1, 0, RecordingReplayApplicability.ReplayApplicable, "z21.feedback.activated");
+        var known = CreateEntry(1, 0, RecordingReplayApplicability.ReplayApplicable, "workflow.lifecycle");
         var unknown = CreateEntry(2, 0, RecordingReplayApplicability.ReplayApplicable, "unknown.event");
         var displayOnly = CreateEntry(3, 0, RecordingReplayApplicability.DisplayOnly, "recorder.note");
 
