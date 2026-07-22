@@ -4,7 +4,7 @@
 
 - Status: In progress
 - Completed delivery slices: WP1 journal model/format/filtering, WP2 recording state machine/bounded ingestion, WP3 producer capture, WP4 explicit command and Workflow 2.0 lifecycle capture, WP5 RecorderPage/file operations, and WP6 isolated replay
-- Next unblocked delivery slice: finish WP7 High Contrast, keyboard, Narrator, and OS text-scaling acceptance evidence
+- Next unblocked delivery slice: finish WP7 High Contrast, Narrator, and OS text-scaling acceptance evidence
 - Resolved dependency: issue #43 merged through PR #45 and is present in the branch baseline
 - Primary issue: https://github.com/ahuelsmann/MOBAflow/issues/30
 - Status and acceptance criteria source: GitHub issue #30
@@ -400,7 +400,9 @@ Automated WP7 resilience coverage completed on 2026-07-22. The importer now has 
 
 Interactive offline acceptance advanced on 2026-07-22 using an unversioned Release-layout configuration with an intentionally invalid Z21 hostname, automatic project loading disabled, MOBApi startup disabled, and health checks disabled. Release startup logs confirmed no Z21 send and no MOBApi launch; only the expected failed loopback status probe occurred. In Dark mode, the page completed start, marker, note, pause, resume, stop, and one isolated replay step with six ordered timeline entries. In Light mode, it completed a named start/stop session and applied the `recorder` category filter while preserving both lifecycle entries. Both modes rendered the complete RecorderPage layout and the disconnected/offline status without errors or warnings. The temporary configuration and packaging workaround existed only in build/test output and are not product changes.
 
-High Contrast, full keyboard focus-order traversal, actual Narrator speech, and OS text-scaling checks remain pending because they require controlled user-profile accessibility settings. UI Automation accessible-name discovery is evidence of screen-reader readiness, but is not treated as Narrator-output validation. WP7 and the issue therefore remain incomplete.
+Forward keyboard focus-order acceptance completed on 2026-07-22 in the same offline packaged layout. In the completed-session state, focus moved from session name through the enabled recording and file commands, annotation, all timeline filters, the timeline, replay speed and position, and the enabled replay commands before leaving the page. In the active-recording state, focus moved in visual task order through Pause, Stop, Add marker, Add note, and the annotation input. Disabled state-specific commands were skipped as expected. The temporary package registration, layout, splash workaround, and offline configuration were removed after the run, and the Release configuration was restored byte-for-byte from the versioned source.
+
+High Contrast, actual Narrator speech, and OS text-scaling checks remain pending because they require controlled user-profile accessibility settings. The page uses system `ThemeResource` brushes throughout, and UI Automation accessible-name discovery supports screen-reader readiness, but neither is treated as a substitute for the remaining interactive checks. WP7 and the issue therefore remain incomplete.
 
 - run full malformed/fuzz-style importer coverage within bounded resource limits;
 - run ordering and UI-throughput stress scenarios at configured limits;
