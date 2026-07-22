@@ -1,12 +1,15 @@
 idf_component_register(
     SRCS
         "main.cpp"
+        "../lib/MobaDisplayCore/src/FrameAssembler.cpp"
+        "../lib/MobaDisplayCore/src/RecordingDisplayBackend.cpp"
         "../lib/MobaUdpPacketParser/src/UdpPacketParser.cpp"
         "../lib/MobaProvisioning/src/ProvisioningState.cpp"
         "../lib/MobaProvisioning/src/Security2Transport.cpp"
         "../lib/TFT_eSPI/TFT_eSPI.cpp"
     INCLUDE_DIRS
         "."
+        "../lib/MobaDisplayCore/src"
         "../lib/MobaUdpPacketParser/src"
         "../lib/MobaProvisioning/src"
         "../lib/TFT_eSPI"
