@@ -19,7 +19,7 @@ using System.Text;
 /// Discovers the MOBAflow REST API (MOBApi) on the LAN for MOBAsmart.
 /// Order: recent/nearby HTTP probe, UDP multicast/broadcast, anchor subnet HTTP, then full /24 HTTP scan.
 /// </summary>
-public class RestApiDiscoveryService : IRestDiscoveryService
+public class RestApiDiscoveryService : IRestDiscoveryService, IAuthenticatedRestDiscoveryService
 {
     private const int QuickProbeTimeoutMs = 350;
     private const int SubnetProbeBatchSize = 16;
@@ -53,6 +53,22 @@ public class RestApiDiscoveryService : IRestDiscoveryService
         string? subnetAnchorIp = null,
         CancellationToken cancellationToken = default) =>
         DiscoverServerAsync(subnetAnchorIp, cancellationToken);
+
+    /// <inheritdoc />
+    public async Task<MobApiDiscoveryEndpoint?> DiscoverAuthenticatedServerAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var endpoint = await TryDiscoverEndpointByUdpAsync(cancellationToken).ConfigureAwait(false);
+        return endpoint is
+        {
+            ProtocolVersion: >= DiscoveryResponseParser.CurrentProtocolVersion,
+            HttpsPort: > 0,
+            ServerInstanceId: not null,
+            ServerPublicKeyFingerprint: not null
+        }
+            ? endpoint
+            : null;
+    }
 
     /// <summary>
     /// Fast discovery path: recent IPs and UDP only (no full subnet scan).
@@ -259,6 +275,12 @@ public class RestApiDiscoveryService : IRestDiscoveryService
 
     private async Task<(string? ip, int? port)> TryDiscoverByUdpAsync(CancellationToken cancellationToken)
     {
+        var endpoint = await TryDiscoverEndpointByUdpAsync(cancellationToken).ConfigureAwait(false);
+        return endpoint is null ? (null, null) : (endpoint.IpAddress, endpoint.HttpPort);
+    }
+
+    private async Task<MobApiDiscoveryEndpoint?> TryDiscoverEndpointByUdpAsync(CancellationToken cancellationToken)
+    {
 #if ANDROID
         AcquireMulticastLock();
 #endif
@@ -296,13 +318,12 @@ public class RestApiDiscoveryService : IRestDiscoveryService
                     var result = await udpClient.ReceiveAsync(cts.Token).ConfigureAwait(false);
                     var response = Encoding.UTF8.GetString(result.Buffer).TrimEnd('\0').Trim();
 
-                    if (DiscoveryResponseParser.TryParse(response, out var ip, out var portVal)
-                        && ip != null
-                        && portVal.HasValue
-                        && await ProbeMobApiHealthAsync(ip, portVal.Value, SubnetProbeRequestTimeoutMs, cts.Token)
+                    if (DiscoveryResponseParser.TryParse(response, out MobApiDiscoveryEndpoint? endpoint)
+                        && endpoint != null
+                        && await ProbeMobApiHealthAsync(endpoint.IpAddress, endpoint.HttpPort, SubnetProbeRequestTimeoutMs, cts.Token)
                             .ConfigureAwait(false) != null)
                     {
-                        return (ip, portVal);
+                        return endpoint;
                     }
                 }
             }
@@ -326,7 +347,7 @@ public class RestApiDiscoveryService : IRestDiscoveryService
         }
 #endif
 
-        return (null, null);
+        return null;
     }
 
     private async Task<(string? ip, int? port)> TryDiscoverBySubnetHttpProbeAsync(

@@ -2,7 +2,7 @@
 
 ## Document status
 
-- Status: Slice 3 host enrollment and protected publication paths ready for review
+- Status: Slices 1 through 4a merged; Slice 4b MOBAsmart security foundation ready for draft review
 - Primary issue: https://github.com/ahuelsmann/MOBAflow/issues/50
 - Parent programme: https://github.com/ahuelsmann/MOBAflow/issues/47
 - Security design record: [MOBApi Security Design](../docs/MOBAPI-SECURITY-DESIGN.md)
@@ -12,7 +12,7 @@
 
 This is the single implementation plan for RF-03. It sequences the work required to authenticate, authorize, validate, rate-limit, queue, and observe MOBApi control-plane traffic without combining the change into one broad server/client delivery.
 
-Slice 1 delivered the security design record without runtime changes. Slice 2 provides the additive authentication and credential foundation. Slice 3 now migrates only the trusted MOBAflow host paths; remote and read-only clients remain unmigrated until later slices.
+Slice 1 delivered the security design record without runtime changes. Slice 2 delivered the additive authentication and credential foundation. Slice 3 migrated only the trusted MOBAflow host paths. Slice 4a added authenticated LAN discovery metadata, and Slice 4b now establishes the pinning and protected mobile credential foundation without yet enforcing authenticated reads.
 
 ## Scope boundaries
 
@@ -26,7 +26,7 @@ In scope:
 
 Out of scope:
 
-- implementation in this design-only slice;
+- implementation outside the explicitly named RF-03 slices;
 - ESP32 provisioning credentials owned by RF-02;
 - feature work from issues #30 through #36;
 - broad `MauiViewModel` decomposition or unrelated MOBApi features;
@@ -186,6 +186,34 @@ Validation evidence:
 - local agentic Sonar analysis was attempted against `github/main` and returned the organization
   capability error `Vortex agentic analysis is not available for this organization (403 Forbidden)`;
   the draft PR therefore remains gated on the remote SonarCloud result.
+
+#### Slice 4b: MOBAsmart pinned pairing and credential foundation
+
+This additive client slice consumes only version 2 discovery metadata for authenticated setup,
+pins MOBApi HTTPS to the advertised SHA-256 subject-public-key fingerprint, and provides the
+pairing/claim/refresh state machine required by a later explicit UI flow. Refresh credentials are
+stored through MAUI `ISecureStorage`; access tokens and pending claim secrets remain process-only.
+Refresh rotation persists the successor before the in-memory access session changes, and a rejected
+stored credential is cleared so the client returns to an unpaired state.
+
+Android backup and device-transfer rules keep the MAUI SecureStorage shared-preference file outside
+the file-only backup allowlist. Legacy discovery and anonymous read paths remain available during
+this slice; they cannot be used to create a pinned session, and no existing runtime client starts
+sending bearer credentials yet.
+
+Validation evidence:
+
+- certificate-pin matching, legacy-discovery rejection, nonce generation, pending approval,
+  protected refresh storage, atomic rotation failure, revocation recovery, and diagnostic redaction
+  are covered by 11 focused platform-neutral tests;
+- the full test suite passes for both targets with 2,891 tests passed and four expected skips;
+- the documented MOBAsmart FastDebug Android compile check passes with zero errors without starting
+  the app; its 45 existing XAML compiled-binding warnings remain unchanged;
+- `dotnet format --verify-no-changes` passes for all changed C# files, and changed-file secret
+  scanning reports zero issues;
+- local agentic Sonar analysis against `github/main` was attempted but not authorized to export the
+  private changed-file contents; the draft PR remains gated on a green remote SonarCloud check and
+  zero open or confirmed PR findings.
 
 ### Slice 5: Unified control admission
 

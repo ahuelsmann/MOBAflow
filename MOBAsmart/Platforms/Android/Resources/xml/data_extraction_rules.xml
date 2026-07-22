@@ -3,9 +3,11 @@
     <cloud-backup>
         <!-- Include app data directory (where appsettings.json is stored) -->
         <include domain="file" path="." />
+        <exclude domain="sharedpref" path="com.mobaflow.mobasmart.microsoft.maui.essentials.preferences.xml" />
     </cloud-backup>
     <device-transfer>
         <!-- Include app data directory for device-to-device transfer -->
         <include domain="file" path="." />
+        <exclude domain="sharedpref" path="com.mobaflow.mobasmart.microsoft.maui.essentials.preferences.xml" />
     </device-transfer>
 </data-extraction-rules>
