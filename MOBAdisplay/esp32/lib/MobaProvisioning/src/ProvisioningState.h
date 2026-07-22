@@ -6,6 +6,7 @@
 namespace MobaDisplay::Provisioning
 {
 constexpr size_t kMaxSsidBytes = 32;
+constexpr size_t kMinPassphraseBytes = 8;
 constexpr size_t kMaxPassphraseBytes = 63;
 constexpr uint32_t kWindowDurationMs = 10U * 60U * 1000U;
 constexpr uint8_t kMaxAuthenticationFailures = 10;
@@ -39,7 +40,8 @@ public:
 
     void Boot(bool hasActiveCredentials, bool hasOwner);
     bool BeginActivation(uint32_t nowMs);
-    bool SessionAuthenticated();
+    bool AuthenticateSession();
+    bool SessionAuthenticated() const;
     bool EnrollOwner();
     bool SubmitCredentials(const CredentialView& credentials);
     bool MarkStationUsable(uint32_t nowMs);

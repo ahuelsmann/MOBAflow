@@ -363,7 +363,10 @@ esp_err_t handleProvisioningRequest(uint32_t, const uint8_t* input, ssize_t inpu
     if (input == nullptr || inputLength < 1 || output == nullptr || outputLength == nullptr)
         return ESP_ERR_INVALID_ARG;
 
-    if (!provisioningState.SessionAuthenticated())
+    // Protocomm invokes this handler only after Security 2 has authenticated the
+    // client. Mark that boundary explicitly; the read-only state query must not
+    // be able to grant authentication as a side effect.
+    if (!provisioningState.AuthenticateSession())
         return ESP_ERR_INVALID_STATE;
 
     // RF-02 endpoint requests are deliberately bounded binary messages. The only

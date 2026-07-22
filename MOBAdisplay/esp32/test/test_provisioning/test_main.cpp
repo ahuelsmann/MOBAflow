@@ -34,6 +34,7 @@ void TestBootRequiresPhysicalActivation()
     TEST_ASSERT_FALSE(machine.SessionAuthenticated());
     TEST_ASSERT_TRUE(machine.BeginActivation(100));
     TEST_ASSERT_EQUAL_UINT8(static_cast<uint8_t>(State::WindowOpen), static_cast<uint8_t>(machine.GetState()));
+    TEST_ASSERT_FALSE(machine.SessionAuthenticated());
 }
 
 void TestEnrollmentPrecedesCredentialPromotion()
@@ -41,6 +42,7 @@ void TestEnrollmentPrecedesCredentialPromotion()
     StateMachine machine;
     machine.Boot(false, false);
     TEST_ASSERT_TRUE(machine.BeginActivation(100));
+    TEST_ASSERT_TRUE(machine.AuthenticateSession());
     TEST_ASSERT_TRUE(machine.SessionAuthenticated());
     TEST_ASSERT_FALSE(machine.SubmitCredentials(Credentials()));
     TEST_ASSERT_TRUE(machine.EnrollOwner());
@@ -57,6 +59,7 @@ void TestOwnerAuthorizationCannotUsePhysicalActivationAlone()
     StateMachine machine;
     machine.Boot(true, true);
     TEST_ASSERT_TRUE(machine.BeginActivation(100));
+    TEST_ASSERT_TRUE(machine.AuthenticateSession());
     TEST_ASSERT_FALSE(machine.AuthorizeOwnerAction(false));
     TEST_ASSERT_TRUE(machine.SessionAuthenticated());
     TEST_ASSERT_FALSE(machine.AuthorizeOwnerAction(false));
@@ -68,7 +71,7 @@ void TestFailedRotationRetainsActiveNetwork()
     StateMachine machine;
     machine.Boot(true, true);
     TEST_ASSERT_TRUE(machine.BeginActivation(100));
-    TEST_ASSERT_TRUE(machine.SessionAuthenticated());
+    TEST_ASSERT_TRUE(machine.AuthenticateSession());
     TEST_ASSERT_TRUE(machine.SubmitCredentials(Credentials()));
     machine.CloseWindow(true);
     TEST_ASSERT_EQUAL_UINT8(static_cast<uint8_t>(State::Operational), static_cast<uint8_t>(machine.GetState()));
@@ -94,10 +97,39 @@ void TestWindowTimeoutClosesWithoutOpeningAccess()
     StateMachine machine;
     machine.Boot(false, false);
     TEST_ASSERT_TRUE(machine.BeginActivation(0xFFFFFF00U));
-    TEST_ASSERT_TRUE(machine.SessionAuthenticated());
+    TEST_ASSERT_TRUE(machine.AuthenticateSession());
     machine.Tick(0xFFFFFF00U + 600000U);
     TEST_ASSERT_EQUAL_UINT8(static_cast<uint8_t>(State::AwaitingActivation), static_cast<uint8_t>(machine.GetState()));
     TEST_ASSERT_FALSE(machine.IsSessionAuthenticated());
+}
+
+void TestSessionReadDoesNotGrantAuthentication()
+{
+    StateMachine machine;
+    machine.Boot(false, false);
+    TEST_ASSERT_TRUE(machine.BeginActivation(100));
+    TEST_ASSERT_FALSE(machine.SessionAuthenticated());
+    TEST_ASSERT_TRUE(machine.AuthenticateSession());
+    TEST_ASSERT_TRUE(machine.SessionAuthenticated());
+}
+
+void TestCredentialsRequireWpa2MinimumPassphraseLength()
+{
+    StateMachine machine;
+    machine.Boot(false, false);
+    TEST_ASSERT_TRUE(machine.BeginActivation(100));
+    TEST_ASSERT_TRUE(machine.AuthenticateSession());
+    TEST_ASSERT_TRUE(machine.EnrollOwner());
+
+    static const uint8_t ssid[] = "MOBAflow-test";
+    static const uint8_t shortPassphrase[] = "1234567";
+    CredentialView credentials;
+    credentials.ssid = ssid;
+    credentials.ssidLength = sizeof(ssid) - 1;
+    credentials.passphrase = shortPassphrase;
+    credentials.passphraseLength = sizeof(shortPassphrase) - 1;
+    TEST_ASSERT_FALSE(machine.SubmitCredentials(credentials));
+    TEST_ASSERT_EQUAL_UINT8(static_cast<uint8_t>(State::WindowOpen), static_cast<uint8_t>(machine.GetState()));
 }
 
 int main(int, char**)
@@ -109,5 +141,7 @@ int main(int, char**)
     RUN_TEST(TestFailedRotationRetainsActiveNetwork);
     RUN_TEST(TestAuthenticationLimitEnforcesCooldown);
     RUN_TEST(TestWindowTimeoutClosesWithoutOpeningAccess);
+    RUN_TEST(TestSessionReadDoesNotGrantAuthentication);
+    RUN_TEST(TestCredentialsRequireWpa2MinimumPassphraseLength);
     return UNITY_END();
 }

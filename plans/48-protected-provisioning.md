@@ -19,7 +19,7 @@ The original production gates are satisfied:
 
 Implementation research found that the former PlatformIO Arduino stack resolved to Arduino-ESP32 2.0.17 / ESP-IDF 4.4.7 and did not contain Protocomm Security 2. Following the plan's stop rule, no fallback was implemented. The approved resolution is ESP-IDF 5.5 with Arduino-ESP32 3.3.x as an official Espressif component. The existing PlatformIO native environment remains available for portable parser and state-machine tests.
 
-Current implementation checkpoint: the dedicated branch contains the first fail-closed slice (physical activation isolated behind board configuration, per-window WPA2 SoftAP credential, AP-off recovery, Security 2 transport scaffold, bounded state transitions, and removal of the legacy anonymous HTTP surface). Credential mutation, owner-signature verification, transactional storage, STA handover, factory reset, and production eFuse configuration remain intentionally disabled until their reviewed protocol and hardware gates are implemented. The ESP-IDF 5.5/Arduino-ESP32 3.3.x PlatformIO build is currently blocked by Arduino's public managed-component dependency graph, which still pulls optional components that generate a duplicated `https_server.crt.S` path on Windows; no generated artifact or workaround is accepted as a production fix.
+Current implementation checkpoint: the dedicated branch contains the first fail-closed slice (physical activation isolated behind board configuration, per-window WPA2 SoftAP credential, AP-off recovery, Security 2 transport scaffold, bounded state transitions, and removal of the legacy anonymous HTTP surface). The session boundary now separates the read-only authentication query from the explicit Security 2-authenticated callback, and credential validation enforces the WPA2 passphrase minimum. Credential mutation, owner-signature verification, transactional storage, STA handover, factory reset, and production eFuse configuration remain intentionally disabled until their reviewed protocol and hardware gates are implemented. The ESP-IDF 5.5/Arduino-ESP32 3.3.x PlatformIO build is currently blocked by Arduino's public managed-component dependency graph, which still pulls optional components that generate a duplicated `https_server.crt.S` path on Windows; no generated artifact or workaround is accepted as a production fix.
 
 ## Outcome
 
@@ -286,7 +286,7 @@ RF-02 will add credential-message and state-transition tests to that seam. It wi
 
 Implementation remains independently reviewable and follows this order:
 
-1. Extract a host-native provisioning state machine and bounded request model using the RF-01 parser contract.
+1. Extract a host-native provisioning state machine and bounded request model using the RF-01 parser contract. The state machine now requires an explicit post-transport authentication mark and rejects passphrases shorter than WPA2's 8-byte minimum.
 2. Add physical activation and TFT-only setup credential presentation behind board configuration.
 3. Integrate the reviewed protected provisioning transport, SRP golden vectors, owner enrollment/signatures, and single-session policy.
 4. Add transactional active/pending encrypted storage, authenticated STA handover, active-network restoration, rotation, and rollback.

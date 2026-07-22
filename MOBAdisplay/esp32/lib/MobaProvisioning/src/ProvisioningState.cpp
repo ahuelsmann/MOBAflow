@@ -25,13 +25,18 @@ bool StateMachine::BeginActivation(uint32_t nowMs)
     return true;
 }
 
-bool StateMachine::SessionAuthenticated()
+bool StateMachine::AuthenticateSession()
 {
     if (state_ != State::WindowOpen)
         return false;
 
     sessionAuthenticated_ = true;
     return true;
+}
+
+bool StateMachine::SessionAuthenticated() const
+{
+    return state_ == State::WindowOpen && sessionAuthenticated_;
 }
 
 bool StateMachine::EnrollOwner()
@@ -140,7 +145,8 @@ bool StateMachine::IsBefore(uint32_t nowMs, uint32_t deadlineMs)
 bool StateMachine::IsValidCredentials(const CredentialView& credentials)
 {
     return credentials.ssid != nullptr && credentials.ssidLength > 0 && credentials.ssidLength <= kMaxSsidBytes
-        && credentials.passphrase != nullptr && credentials.passphraseLength <= kMaxPassphraseBytes;
+        && credentials.passphrase != nullptr && credentials.passphraseLength >= kMinPassphraseBytes
+        && credentials.passphraseLength <= kMaxPassphraseBytes;
 }
 
 void StateMachine::ClearSession()
