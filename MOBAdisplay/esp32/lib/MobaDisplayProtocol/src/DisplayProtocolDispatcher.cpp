@@ -106,6 +106,20 @@ bool IsCommandMessage(MessageType messageType) noexcept
         || messageType == MessageType::RenderTestPattern;
 }
 
+bool IsVersionSupported(
+    uint8_t minimumMajor,
+    uint8_t minimumMinor,
+    uint8_t maximumMajor,
+    uint8_t maximumMinor,
+    uint8_t currentMajor,
+    uint8_t currentMinor) noexcept
+{
+    return minimumMajor == currentMajor
+        && maximumMajor == currentMajor
+        && minimumMinor <= currentMinor
+        && maximumMinor >= currentMinor;
+}
+
 Core::Rotation ToRotation(uint8_t value) noexcept
 {
     switch (value)
@@ -135,7 +149,9 @@ bool TryWriteString(
     if (!destination || !offset || !value)
         return false;
 
-    const size_t length = std::strlen(value);
+    size_t length = 0;
+    while (length <= UINT8_MAX && value[length] != '\0')
+        ++length;
     if (length == 0 || length > UINT8_MAX || *offset > destinationLength
         || destinationLength - *offset < length + 1U)
     {
@@ -159,7 +175,9 @@ DisplayProtocolDispatcher::DisplayProtocolDispatcher(
     : _frameAssembler(frameAssembler),
       _displayBackend(displayBackend),
       _sessionId(sessionId == 0 ? 1 : sessionId),
-      _maximumDatagramLength(
+      _deviceMaximumDatagramLength(
+          maximumDatagramLength < kHeaderLength ? kHeaderLength : maximumDatagramLength),
+      _negotiatedMaximumDatagramLength(
           maximumDatagramLength < kHeaderLength ? kHeaderLength : maximumDatagramLength),
       _deviceIdentity(deviceIdentity),
       _firmwareVersion(firmwareVersion)
@@ -200,15 +218,6 @@ DispatchResult DisplayProtocolDispatcher::Dispatch(
             responseBufferLength);
     }
 
-    if (!ValidateRequestFingerprint(header))
-    {
-        return WriteResultResponse(
-            header,
-            Core::MakeResult(Core::ResultCode::Invalid),
-            responseBuffer,
-            responseBufferLength);
-    }
-
     if (header.messageType == MessageType::HelloRequest)
         return HandleHello(header, payload, responseBuffer, responseBufferLength);
 
@@ -221,17 +230,32 @@ DispatchResult DisplayProtocolDispatcher::Dispatch(
         responseBufferLength);
 }
 
+Core::DisplayResult DisplayProtocolDispatcher::Tick(uint32_t nowMilliseconds) noexcept
+{
+    const Core::DisplayResult result = _frameAssembler.Tick(nowMilliseconds);
+    if (result.code != Core::ResultCode::Ok)
+        _lastOperationResult = result;
+    return result;
+}
+
 void DisplayProtocolDispatcher::ResetForReboot(uint32_t sessionId) noexcept
 {
     _sessionId = sessionId == 0 ? 1 : sessionId;
     _frameAssembler.ResetForReboot();
-    std::memset(_requestHistory, 0, sizeof(_requestHistory));
-    _nextRequestHistoryIndex = 0;
+    _negotiatedMaximumDatagramLength = _deviceMaximumDatagramLength;
+    _lastOperationResult = Core::MakeResult(Core::ResultCode::Ok);
+    _isNegotiated = false;
+    ResetRequestHistory();
 }
 
 uint32_t DisplayProtocolDispatcher::SessionId() const noexcept
 {
     return _sessionId;
+}
+
+bool DisplayProtocolDispatcher::IsNegotiated() const noexcept
+{
+    return _isNegotiated;
 }
 
 bool DisplayProtocolDispatcher::TryDecodePacket(
@@ -240,8 +264,11 @@ bool DisplayProtocolDispatcher::TryDecodePacket(
     PacketHeader* header,
     const uint8_t** payload) const noexcept
 {
+    const uint16_t maximumDatagramLength = _isNegotiated
+        ? _negotiatedMaximumDatagramLength
+        : _deviceMaximumDatagramLength;
     if (!datagram || !header || !payload || datagramLength < kHeaderLength
-        || datagramLength > _maximumDatagramLength || ReadUInt32(datagram) != kMagic
+        || datagramLength > maximumDatagramLength || ReadUInt32(datagram) != kMagic
         || ReadUInt16(datagram + 8) != kHeaderLength)
     {
         return false;
@@ -277,8 +304,15 @@ bool DisplayProtocolDispatcher::TryDecodePacket(
         && ComputeCrc32(*payload, payloadLength) == header->payloadCrc32;
 }
 
-bool DisplayProtocolDispatcher::ValidateRequestFingerprint(const PacketHeader& header) noexcept
+DisplayProtocolDispatcher::RequestFingerprintState
+DisplayProtocolDispatcher::InspectRequestFingerprint(
+    const PacketHeader& header,
+    RequestFingerprint** fingerprint,
+    bool recordWhenNew) noexcept
 {
+    if (!fingerprint)
+        return RequestFingerprintState::Conflict;
+
     const uint8_t logicalFlags =
         header.flags & static_cast<uint8_t>(FlagAcknowledgementRequired | FlagFinalPacket);
     for (size_t index = 0; index < kRequestHistoryLength; ++index)
@@ -287,16 +321,27 @@ bool DisplayProtocolDispatcher::ValidateRequestFingerprint(const PacketHeader& h
         if (!previous.occupied || previous.requestId != header.requestId)
             continue;
 
-        return previous.frameId == header.frameId
+        *fingerprint = &_requestHistory[index];
+        const bool matches = previous.frameId == header.frameId
             && previous.sessionId == header.sessionId
             && previous.payloadCrc32 == header.payloadCrc32
             && previous.packetIndex == header.packetIndex
             && previous.packetCount == header.packetCount
             && previous.messageType == header.messageType
             && previous.logicalFlags == logicalFlags;
+        return matches
+            ? RequestFingerprintState::Duplicate
+            : RequestFingerprintState::Conflict;
     }
 
-    _requestHistory[_nextRequestHistoryIndex] = {
+    if (!recordWhenNew)
+    {
+        *fingerprint = nullptr;
+        return RequestFingerprintState::New;
+    }
+
+    RequestFingerprint& newFingerprint = _requestHistory[_nextRequestHistoryIndex];
+    newFingerprint = {
         header.requestId,
         header.frameId,
         header.sessionId,
@@ -305,9 +350,18 @@ bool DisplayProtocolDispatcher::ValidateRequestFingerprint(const PacketHeader& h
         header.packetCount,
         header.messageType,
         logicalFlags,
+        Core::MakeResult(Core::ResultCode::Ok),
+        false,
         true};
+    *fingerprint = &newFingerprint;
     _nextRequestHistoryIndex = (_nextRequestHistoryIndex + 1U) % kRequestHistoryLength;
-    return true;
+    return RequestFingerprintState::New;
+}
+
+void DisplayProtocolDispatcher::ResetRequestHistory() noexcept
+{
+    std::memset(_requestHistory, 0, sizeof(_requestHistory));
+    _nextRequestHistoryIndex = 0;
 }
 
 DispatchResult DisplayProtocolDispatcher::HandleHello(
@@ -337,10 +391,13 @@ DispatchResult DisplayProtocolDispatcher::HandleHello(
     const uint8_t minimumMinor = payload[1];
     const uint8_t maximumMajor = payload[2];
     const uint8_t maximumMinor = payload[3];
-    const bool versionSupported = minimumMajor == kCurrentMajorVersion
-        && maximumMajor == kCurrentMajorVersion
-        && (minimumMinor < kCurrentMinorVersion
-            || (minimumMinor == kCurrentMinorVersion && maximumMinor >= kCurrentMinorVersion));
+    const bool versionSupported = IsVersionSupported(
+        minimumMajor,
+        minimumMinor,
+        maximumMajor,
+        maximumMinor,
+        kCurrentMajorVersion,
+        kCurrentMinorVersion);
     if (!versionSupported)
     {
         return WriteResultResponse(
@@ -351,9 +408,43 @@ DispatchResult DisplayProtocolDispatcher::HandleHello(
     }
 
     const uint16_t hostMaximumDatagramLength = ReadUInt16(payload + 4);
-    if (hostMaximumDatagramLength < _maximumDatagramLength)
-        _maximumDatagramLength = hostMaximumDatagramLength;
-    return WriteCapabilitiesResponse(header, responseBuffer, responseBufferLength);
+    RequestFingerprint* fingerprint = nullptr;
+    const RequestFingerprintState fingerprintState =
+        InspectRequestFingerprint(header, &fingerprint, false);
+    if (fingerprintState == RequestFingerprintState::Conflict
+        || ((header.flags & FlagRetry) != 0
+            && fingerprintState != RequestFingerprintState::Duplicate))
+    {
+        return WriteResultResponse(
+            header,
+            Core::MakeResult(Core::ResultCode::Invalid),
+            responseBuffer,
+            responseBufferLength);
+    }
+
+    if (fingerprintState == RequestFingerprintState::Duplicate)
+        return WriteCapabilitiesResponse(header, responseBuffer, responseBufferLength);
+
+    const uint16_t previousMaximumDatagramLength = _negotiatedMaximumDatagramLength;
+    _negotiatedMaximumDatagramLength =
+        hostMaximumDatagramLength < _deviceMaximumDatagramLength
+        ? hostMaximumDatagramLength
+        : _deviceMaximumDatagramLength;
+    const DispatchResult response =
+        WriteCapabilitiesResponse(header, responseBuffer, responseBufferLength);
+    if (!response.hasResponse)
+    {
+        _negotiatedMaximumDatagramLength = previousMaximumDatagramLength;
+        return response;
+    }
+
+    if (_frameAssembler.HasActiveFrame())
+        _frameAssembler.AbortFrame(_frameAssembler.ActiveFrameId());
+    ResetRequestHistory();
+    InspectRequestFingerprint(header, &fingerprint, true);
+
+    _isNegotiated = true;
+    return response;
 }
 
 DispatchResult DisplayProtocolDispatcher::HandleNegotiatedRequest(
@@ -373,26 +464,10 @@ DispatchResult DisplayProtocolDispatcher::HandleNegotiatedRequest(
             responseBufferLength);
     }
 
-    if (header.messageType == MessageType::HealthRequest)
-    {
-        const bool valid = header.frameId == 0
-            && header.payloadLength == 0
-            && header.packetIndex == 0
-            && header.packetCount == 1
-            && (header.flags & FlagFinalPacket) == 0;
-        return valid
-            ? WriteHealthResponse(header, diagnostics, responseBuffer, responseBufferLength)
-            : WriteResultResponse(
-                header,
-                Core::MakeResult(Core::ResultCode::Invalid),
-                responseBuffer,
-                responseBufferLength);
-    }
-
-    const bool expectedFrameId = IsFrameMessage(header.messageType)
-        ? header.frameId != 0
-        : IsCommandMessage(header.messageType) && header.frameId == 0;
-    if (!expectedFrameId)
+    RequestFingerprint* fingerprint = nullptr;
+    const RequestFingerprintState fingerprintState =
+        InspectRequestFingerprint(header, &fingerprint, true);
+    if (fingerprintState == RequestFingerprintState::Conflict)
     {
         return WriteResultResponse(
             header,
@@ -401,8 +476,46 @@ DispatchResult DisplayProtocolDispatcher::HandleNegotiatedRequest(
             responseBufferLength);
     }
 
-    const Core::DisplayResult result =
-        DispatchFrameOrCommand(header, payload, nowMilliseconds);
+    const bool duplicate = fingerprintState == RequestFingerprintState::Duplicate;
+    if (header.messageType == MessageType::HealthRequest)
+    {
+        const bool valid = header.frameId == 0
+            && header.payloadLength == 0
+            && header.packetIndex == 0
+            && header.packetCount == 1
+            && (header.flags & FlagFinalPacket) == 0;
+        if (valid)
+            return WriteHealthResponse(header, diagnostics, responseBuffer, responseBufferLength);
+
+        const Core::DisplayResult result = ResolveTrackedResult(
+            *fingerprint,
+            duplicate,
+            Core::MakeResult(Core::ResultCode::Invalid));
+        return WriteResultResponse(header, result, responseBuffer, responseBufferLength);
+    }
+
+    const bool expectedFrameId = IsFrameMessage(header.messageType)
+        ? header.frameId != 0
+        : IsCommandMessage(header.messageType) && header.frameId == 0;
+    if (!expectedFrameId)
+    {
+        const Core::DisplayResult result = ResolveTrackedResult(
+            *fingerprint,
+            duplicate,
+            Core::MakeResult(Core::ResultCode::Invalid));
+        return WriteResultResponse(
+            header,
+            result,
+            responseBuffer,
+            responseBufferLength);
+    }
+
+    const Core::DisplayResult result = ResolveTrackedResult(
+        *fingerprint,
+        duplicate,
+        duplicate && fingerprint->hasCachedResult
+            ? fingerprint->cachedResult
+            : DispatchFrameOrCommand(header, payload, nowMilliseconds));
     if (header.messageType == MessageType::FrameRegion
         && result.code == Core::ResultCode::Ok
         && (header.flags & FlagAcknowledgementRequired) == 0)
@@ -500,6 +613,24 @@ Core::DisplayResult DisplayProtocolDispatcher::DispatchFrameOrCommand(
     }
 }
 
+Core::DisplayResult DisplayProtocolDispatcher::ResolveTrackedResult(
+    RequestFingerprint& fingerprint,
+    bool duplicate,
+    const Core::DisplayResult& currentResult) noexcept
+{
+    if (duplicate && fingerprint.hasCachedResult)
+    {
+        Core::DisplayResult result = fingerprint.cachedResult;
+        result.flags |= Core::ResultFlagDuplicate;
+        return result;
+    }
+
+    fingerprint.cachedResult = currentResult;
+    fingerprint.hasCachedResult = true;
+    _lastOperationResult = currentResult;
+    return currentResult;
+}
+
 DispatchResult DisplayProtocolDispatcher::WriteCapabilitiesResponse(
     const PacketHeader& request,
     uint8_t* responseBuffer,
@@ -511,10 +642,11 @@ DispatchResult DisplayProtocolDispatcher::WriteCapabilitiesResponse(
     payload[1] = kCurrentMinorVersion;
     WriteUInt16(payload + 2, capabilities.width);
     WriteUInt16(payload + 4, capabilities.height);
-    WriteUInt16(payload + 6, _maximumDatagramLength);
+    WriteUInt16(payload + 6, _negotiatedMaximumDatagramLength);
     const uint16_t envelopeLimitedRegionLength =
-        _maximumDatagramLength > kHeaderLength + kFrameRegionMetadataLength
-        ? static_cast<uint16_t>(_maximumDatagramLength - kHeaderLength - kFrameRegionMetadataLength)
+        _negotiatedMaximumDatagramLength > kHeaderLength + kFrameRegionMetadataLength
+        ? static_cast<uint16_t>(
+            _negotiatedMaximumDatagramLength - kHeaderLength - kFrameRegionMetadataLength)
         : 0;
     const uint16_t maximumRegionPayloadLength =
         capabilities.maximumRegionPayloadLength < envelopeLimitedRegionLength
@@ -558,8 +690,10 @@ DispatchResult DisplayProtocolDispatcher::WriteHealthResponse(
     size_t responseBufferLength) const noexcept
 {
     uint8_t payload[24] = {};
-    payload[0] = _frameAssembler.HasActiveFrame() ? 1 : 0;
-    payload[1] = static_cast<uint8_t>(_frameAssembler.LastResult().code);
+    payload[0] = _frameAssembler.HasActiveFrame()
+        ? 1
+        : _lastOperationResult.code == Core::ResultCode::HardwareFailure ? 2 : 0;
+    payload[1] = static_cast<uint8_t>(_lastOperationResult.code);
     WriteUInt32(payload + 4, diagnostics.uptimeSeconds);
     WriteUInt32(payload + 8, diagnostics.freeHeapBytes);
     WriteUInt32(payload + 12, _frameAssembler.AcceptedFrameCount());
@@ -624,7 +758,7 @@ DispatchResult DisplayProtocolDispatcher::WriteResponse(
     if (!responseBuffer || (!payload && payloadLength != 0)
         || payloadLength > UINT16_MAX
         || datagramLength > responseBufferLength
-        || datagramLength > _maximumDatagramLength)
+        || datagramLength > _negotiatedMaximumDatagramLength)
     {
         return NoResponse();
     }

@@ -30,14 +30,25 @@ Status on 2026-07-23:
   deterministic conformance pattern, bounded regions, full-frame staging, and
   atomic presentation; board pins and driver configuration remain outside the
   portable contract.
+- The PR review remediation is implemented locally. A successful v1
+  negotiation now locks out the shared-buffer legacy path, duplicate operations
+  return cached results without executing display commands again, exact
+  duplicated Hello datagrams preserve the retry cache, and a fresh Hello starts
+  a new request epoch with a newly calculated datagram limit.
+- Default host request-ID sequences now start in process-unique randomized
+  ranges, while explicitly seeded sequences retain deterministic wrap behavior
+  for tests. Firmware health reports the last frame or command result, including
+  background frame timeouts, and reboot clears negotiation state.
 - All 51 versioned ESP32 files passed deterministic per-file secret scanning
-  before local inspection. All 13 changed or new files passed the same scan
+  before local inspection. All 17 changed or new files passed the same scan
   after implementation.
-- The native PlatformIO matrix passes 38 tests: 14 display-core cases, 7 new
+- The native PlatformIO matrix passes 41 tests: 14 display-core cases, 10
   versioned-dispatcher cases, 8 RF-02 provisioning regressions, and 9 RF-01
   parser cases including deterministic arbitrary input.
-- The complete .NET test matrix passes 1,421 net10.0 tests with four existing
-  skips and 1,474 Windows tests without failures or skips.
+- The focused net10.0 request-ID and display-client suite passes 22 tests after
+  the host reconnect hardening. The complete .NET matrix passes 1,422 net10.0
+  tests with four existing skips and 1,475 Windows tests without failures or
+  skips.
 - The authoritative ESP32-S3 build still cannot be claimed. Commit `442d2c39`
   from RF-02 introduced an explicit reference to an absent
   `MOBAdisplay/esp32/sdkconfig.defaults`. A scanned temporary local file moved

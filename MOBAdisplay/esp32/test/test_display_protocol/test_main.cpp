@@ -97,9 +97,13 @@ std::vector<uint8_t> MakePacket(
 
 std::vector<uint8_t> MakeHelloPayload(
     uint8_t minimumMajor = 1,
-    uint8_t maximumMajor = 1)
+    uint8_t maximumMajor = 1,
+    uint16_t hostMaximumDatagramLength =
+        MobaDisplay::Protocol::kDefaultMaximumDatagramLength)
 {
-    return {minimumMajor, 0, maximumMajor, 0, 0x04, 0xD0, 0, 0};
+    std::vector<uint8_t> payload = {minimumMajor, 0, maximumMajor, 0, 0, 0, 0, 0};
+    WriteUInt16(payload.data() + 4, hostMaximumDatagramLength);
+    return payload;
 }
 
 std::vector<uint8_t> MakeBeginPayload()
@@ -226,6 +230,7 @@ struct Fixture
 void TestHelloNegotiatesCapabilitiesWithoutLeakingSessionIntoEnvelope()
 {
     Fixture fixture;
+    TEST_ASSERT_FALSE(fixture.dispatcher.IsNegotiated());
     const DispatchResult result = fixture.Dispatch(
         MakePacket(MessageType::HelloRequest, 1, 0, 0, MakeHelloPayload()));
 
@@ -245,6 +250,7 @@ void TestHelloNegotiatesCapabilitiesWithoutLeakingSessionIntoEnvelope()
     TEST_ASSERT_EQUAL_UINT32(kSessionId, ReadUInt32(payload + 16));
     TEST_ASSERT_EQUAL_UINT8(12, payload[20]);
     TEST_ASSERT_EQUAL_MEMORY("esp32s3-test", payload + 21, 12);
+    TEST_ASSERT_TRUE(fixture.dispatcher.IsNegotiated());
 }
 
 void TestFullFrameTransactionPresentsExactlyOnce()
@@ -343,6 +349,86 @@ void TestWrongSessionAndChangedRequestIdReuseFailClosed()
     TEST_ASSERT_EQUAL_size_t(1, fixture.backend.ClearCallCount());
 }
 
+void TestIdenticalCommandRetryReturnsCachedResultWithoutExecutingAgain()
+{
+    Fixture fixture;
+    DispatchResult result = fixture.Dispatch(
+        MakePacket(MessageType::Clear, 22, 0, kSessionId, {0x12, 0x34}));
+    AssertResponse(MessageType::Result, 22, 0, kSessionId, result, fixture.response);
+    TEST_ASSERT_EQUAL_size_t(1, fixture.backend.ClearCallCount());
+
+    result = fixture.Dispatch(
+        MakePacket(
+            MessageType::Clear,
+            22,
+            0,
+            kSessionId,
+            {0x12, 0x34},
+            static_cast<uint8_t>(
+                kAcknowledgementRequired | MobaDisplay::Protocol::FlagRetry)));
+    AssertResponse(MessageType::Result, 22, 0, kSessionId, result, fixture.response);
+    TEST_ASSERT_BITS_HIGH(
+        MobaDisplay::Core::ResultFlagDuplicate,
+        fixture.response[MobaDisplay::Protocol::kHeaderLength + 1]);
+    TEST_ASSERT_EQUAL_size_t(1, fixture.backend.ClearCallCount());
+}
+
+void TestFreshHelloStartsNewRequestEpochAndRestoresDeviceDatagramLimit()
+{
+    Fixture fixture;
+    DispatchResult result = fixture.Dispatch(
+        MakePacket(
+            MessageType::HelloRequest,
+            1,
+            0,
+            0,
+            MakeHelloPayload(1, 1, 256)));
+    AssertResponse(MessageType::CapabilitiesResponse, 1, 0, 0, result, fixture.response);
+    TEST_ASSERT_EQUAL_UINT16(
+        256,
+        ReadUInt16(fixture.response.data() + MobaDisplay::Protocol::kHeaderLength + 6));
+
+    result = fixture.Dispatch(
+        MakePacket(MessageType::HealthRequest, 2, 0, kSessionId, {}));
+    AssertResponse(MessageType::HealthResponse, 2, 0, kSessionId, result, fixture.response);
+
+    result = fixture.Dispatch(
+        MakePacket(MessageType::HelloRequest, 100, 0, 0, MakeHelloPayload()));
+    AssertResponse(MessageType::CapabilitiesResponse, 100, 0, 0, result, fixture.response);
+    TEST_ASSERT_EQUAL_UINT16(
+        MobaDisplay::Protocol::kDefaultMaximumDatagramLength,
+        ReadUInt16(fixture.response.data() + MobaDisplay::Protocol::kHeaderLength + 6));
+
+    result = fixture.Dispatch(
+        MakePacket(MessageType::Clear, 2, 0, kSessionId, {0x12, 0x34}));
+    AssertResponse(MessageType::Result, 2, 0, kSessionId, result, fixture.response);
+    TEST_ASSERT_EQUAL_size_t(1, fixture.backend.ClearCallCount());
+}
+
+void TestDuplicatedHelloPreservesTheCurrentRequestHistory()
+{
+    Fixture fixture;
+    DispatchResult result = fixture.Dispatch(
+        MakePacket(MessageType::HelloRequest, 1, 0, 0, MakeHelloPayload()));
+    AssertResponse(MessageType::CapabilitiesResponse, 1, 0, 0, result, fixture.response);
+
+    result = fixture.Dispatch(
+        MakePacket(MessageType::HealthRequest, 2, 0, kSessionId, {}));
+    AssertResponse(MessageType::HealthResponse, 2, 0, kSessionId, result, fixture.response);
+
+    result = fixture.Dispatch(
+        MakePacket(MessageType::HelloRequest, 1, 0, 0, MakeHelloPayload()));
+    AssertResponse(MessageType::CapabilitiesResponse, 1, 0, 0, result, fixture.response);
+
+    result = fixture.Dispatch(
+        MakePacket(MessageType::Clear, 2, 0, kSessionId, {0x12, 0x34}));
+    AssertResponse(MessageType::Result, 2, 0, kSessionId, result, fixture.response);
+    TEST_ASSERT_EQUAL_UINT8(
+        static_cast<uint8_t>(MobaDisplay::Core::ResultCode::Invalid),
+        fixture.response[MobaDisplay::Protocol::kHeaderLength]);
+    TEST_ASSERT_EQUAL_size_t(0, fixture.backend.ClearCallCount());
+}
+
 void TestOptionalCommandsReflectBackendCapabilities()
 {
     Fixture fixture;
@@ -436,8 +522,38 @@ void TestHealthAndRebootExposeOnlySafeSessionState()
     TEST_ASSERT_EQUAL_UINT32(5, ReadUInt32(payload + 4));
     TEST_ASSERT_EQUAL_UINT32(123456, ReadUInt32(payload + 8));
 
+    result = fixture.Dispatch(
+        MakePacket(MessageType::SetBrightness, 62, 0, kSessionId, {50}),
+        5001);
+    AssertResponse(MessageType::Result, 62, 0, kSessionId, result, fixture.response);
+    result = fixture.Dispatch(
+        MakePacket(MessageType::HealthRequest, 63, 0, kSessionId, {}),
+        5002);
+    AssertResponse(MessageType::HealthResponse, 63, 0, kSessionId, result, fixture.response);
+    payload = fixture.response.data() + MobaDisplay::Protocol::kHeaderLength;
+    TEST_ASSERT_EQUAL_UINT8(
+        static_cast<uint8_t>(MobaDisplay::Core::ResultCode::Unsupported),
+        payload[1]);
+
+    result = fixture.Dispatch(
+        MakePacket(MessageType::BeginFrame, 64, 300, kSessionId, MakeBeginPayload()),
+        5003);
+    AssertResponse(MessageType::Result, 64, 300, kSessionId, result, fixture.response);
+    TEST_ASSERT_EQUAL_UINT8(
+        static_cast<uint8_t>(MobaDisplay::Core::ResultCode::Timeout),
+        static_cast<uint8_t>(fixture.dispatcher.Tick(6004).code));
+    result = fixture.Dispatch(
+        MakePacket(MessageType::HealthRequest, 65, 0, kSessionId, {}),
+        6005);
+    AssertResponse(MessageType::HealthResponse, 65, 0, kSessionId, result, fixture.response);
+    payload = fixture.response.data() + MobaDisplay::Protocol::kHeaderLength;
+    TEST_ASSERT_EQUAL_UINT8(
+        static_cast<uint8_t>(MobaDisplay::Core::ResultCode::Timeout),
+        payload[1]);
+
     constexpr uint32_t newSessionId = 0x55667788U;
     fixture.dispatcher.ResetForReboot(newSessionId);
+    TEST_ASSERT_FALSE(fixture.dispatcher.IsNegotiated());
     result = fixture.Dispatch(
         MakePacket(MessageType::HealthRequest, 61, 0, kSessionId, {}),
         6000);
@@ -455,6 +571,9 @@ int main(int, char**)
     RUN_TEST(TestHelloNegotiatesCapabilitiesWithoutLeakingSessionIntoEnvelope);
     RUN_TEST(TestFullFrameTransactionPresentsExactlyOnce);
     RUN_TEST(TestWrongSessionAndChangedRequestIdReuseFailClosed);
+    RUN_TEST(TestIdenticalCommandRetryReturnsCachedResultWithoutExecutingAgain);
+    RUN_TEST(TestFreshHelloStartsNewRequestEpochAndRestoresDeviceDatagramLimit);
+    RUN_TEST(TestDuplicatedHelloPreservesTheCurrentRequestHistory);
     RUN_TEST(TestOptionalCommandsReflectBackendCapabilities);
     RUN_TEST(TestMalformedPacketsAreDroppedAndUnsupportedVersionIsStructured);
     RUN_TEST(TestRegionAcknowledgementCanBeOmittedOnlyAfterSuccess);

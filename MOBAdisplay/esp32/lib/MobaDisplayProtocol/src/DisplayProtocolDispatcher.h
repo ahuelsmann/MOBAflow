@@ -70,8 +70,10 @@ public:
         uint8_t* responseBuffer,
         size_t responseBufferLength) noexcept;
 
+    Core::DisplayResult Tick(uint32_t nowMilliseconds) noexcept;
     void ResetForReboot(uint32_t sessionId) noexcept;
     uint32_t SessionId() const noexcept;
+    bool IsNegotiated() const noexcept;
 
 private:
     struct PacketHeader
@@ -99,7 +101,16 @@ private:
         uint16_t packetCount;
         MessageType messageType;
         uint8_t logicalFlags;
+        Core::DisplayResult cachedResult;
+        bool hasCachedResult;
         bool occupied;
+    };
+
+    enum class RequestFingerprintState : uint8_t
+    {
+        New,
+        Duplicate,
+        Conflict
     };
 
     static constexpr size_t kRequestHistoryLength = 16;
@@ -109,7 +120,11 @@ private:
         size_t datagramLength,
         PacketHeader* header,
         const uint8_t** payload) const noexcept;
-    bool ValidateRequestFingerprint(const PacketHeader& header) noexcept;
+    RequestFingerprintState InspectRequestFingerprint(
+        const PacketHeader& header,
+        RequestFingerprint** fingerprint,
+        bool recordWhenNew) noexcept;
+    void ResetRequestHistory() noexcept;
     DispatchResult HandleHello(
         const PacketHeader& header,
         const uint8_t* payload,
@@ -126,6 +141,10 @@ private:
         const PacketHeader& header,
         const uint8_t* payload,
         uint32_t nowMilliseconds) noexcept;
+    Core::DisplayResult ResolveTrackedResult(
+        RequestFingerprint& fingerprint,
+        bool duplicate,
+        const Core::DisplayResult& currentResult) noexcept;
     DispatchResult WriteCapabilitiesResponse(
         const PacketHeader& request,
         uint8_t* responseBuffer,
@@ -152,9 +171,12 @@ private:
     Core::FrameAssembler& _frameAssembler;
     Core::IDisplayBackend& _displayBackend;
     uint32_t _sessionId;
-    uint16_t _maximumDatagramLength;
+    uint16_t _deviceMaximumDatagramLength;
+    uint16_t _negotiatedMaximumDatagramLength;
     const char* _deviceIdentity;
     const char* _firmwareVersion;
+    Core::DisplayResult _lastOperationResult = Core::MakeResult(Core::ResultCode::Ok);
+    bool _isNegotiated = false;
     RequestFingerprint _requestHistory[kRequestHistoryLength]{};
     size_t _nextRequestHistoryIndex = 0;
 };

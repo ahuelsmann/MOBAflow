@@ -57,4 +57,24 @@ internal sealed class DisplayIdentifierSequenceTests
             Assert.That(identifiers.Distinct().Count(), Is.EqualTo(identifiers.Length));
         });
     }
+
+    [Test]
+    public void Next_Should_UseDistinctRanges_For_DefaultSequences()
+    {
+        // Arrange
+        var firstSequence = new DisplayIdentifierSequence();
+        var secondSequence = new DisplayIdentifierSequence();
+
+        // Act
+        var first = firstSequence.Next();
+        var second = secondSequence.Next();
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(first, Is.Not.Zero);
+            Assert.That(second, Is.Not.Zero);
+            Assert.That(second, Is.Not.EqualTo(first));
+        });
+    }
 }

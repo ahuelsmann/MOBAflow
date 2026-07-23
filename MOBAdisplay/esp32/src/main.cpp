@@ -77,9 +77,9 @@ MobaDisplay::Core::FrameAssembler* gFrameAssembler = nullptr;
 MobaDisplay::Protocol::DisplayProtocolDispatcher* gProtocolDispatcher = nullptr;
 char gDeviceIdentity[24] = {};
 
-volatile uint16_t linesReceivedCurrentFrame = 0;
-volatile uint32_t framesOk = 0;
-volatile uint32_t framesIncomplete = 0;
+uint16_t linesReceivedCurrentFrame = 0;
+uint32_t framesOk = 0;
+uint32_t framesIncomplete = 0;
 uint8_t gRowReceived[kTftHeight] = {0};
 
 bool gUdpReady = false;
@@ -716,6 +716,9 @@ void processUdpPacket()
         return;
     }
 
+    if (gProtocolDispatcher && gProtocolDispatcher->IsNegotiated())
+        return;
+
     handleUdpPacket(packet);
 }
 
@@ -730,7 +733,9 @@ void loop()
         closeProvisioningWindow(runtime.state.HasActiveCredentials());
     }
 
-    if (gFrameAssembler)
+    if (gProtocolDispatcher)
+        gProtocolDispatcher->Tick(millis());
+    else if (gFrameAssembler)
         gFrameAssembler->Tick(millis());
 
     if (!gUdpReady)
