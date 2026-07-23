@@ -7,6 +7,7 @@ public partial class AppBottomTabBar
     public const int SignalBoxTabIndex = 1;
     public const int EnginesTabIndex = 2;
     public const int ControlTabIndex = 3;
+    public const int PairingTabIndex = 4;
 
     public static readonly BindableProperty SelectedTabProperty = BindableProperty.Create(
         nameof(SelectedTab),
@@ -70,6 +71,8 @@ public partial class AppBottomTabBar
 
     private void OnControlTapped(object? sender, TappedEventArgs e) => SelectTab(ControlTabIndex);
 
+    private void OnPairingTapped(object? sender, TappedEventArgs e) => SelectTab(PairingTabIndex);
+
     private void SelectTab(int tabIndex)
     {
         if (SelectedTab == tabIndex)
@@ -87,6 +90,7 @@ public partial class AppBottomTabBar
         UpdateTabItem(SignalBoxIndicator, SignalBoxLabel, selectedTab == SignalBoxTabIndex);
         UpdateTabItem(EnginesIndicator, EnginesLabel, selectedTab == EnginesTabIndex);
         UpdateTabItem(ControlIndicator, ControlLabel, selectedTab == ControlTabIndex);
+        UpdateTabItem(PairingIndicator, PairingLabel, selectedTab == PairingTabIndex);
     }
 
     private static void UpdateTabItem(BoxView indicator, Label label, bool isSelected)

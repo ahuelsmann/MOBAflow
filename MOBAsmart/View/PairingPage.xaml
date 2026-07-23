@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentView
+    x:Class="Moba.MAUI.View.PairingPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Moba.SharedUI.ViewModel;assembly=SharedUI"
+    x:DataType="vm:RemotePairingViewModel">
+
+    <ScrollView>
+        <VerticalStackLayout
+            Padding="0,12,0,24"
+            Spacing="8">
+            <Border Style="{DynamicResource MainSectionCard}">
+                <VerticalStackLayout Spacing="12">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <VerticalStackLayout Grid.Column="0" Spacing="4">
+                            <Label
+                                Style="{DynamicResource SectionTitleLabel}"
+                                Text="Secure pairing" />
+                            <Label
+                                FontSize="13"
+                                Text="Pair this device with MOBAflow before protected remote access is enabled."
+                                TextColor="{DynamicResource TextSecondary}" />
+                        </VerticalStackLayout>
+                        <ActivityIndicator
+                            Grid.Column="1"
+                            HeightRequest="32"
+                            IsRunning="{Binding IsBusy}"
+                            IsVisible="{Binding IsBusy}"
+                            VerticalOptions="Center"
+                            WidthRequest="32"
+                            Color="{DynamicResource RailwayPrimary}" />
+                    </Grid>
+
+                    <Label
+                        FontSize="14"
+                        SemanticProperties.Description="{Binding StatusMessage}"
+                        Text="{Binding StatusMessage}"
+                        TextColor="{DynamicResource TextPrimary}" />
+
+                    <Button
+                        Command="{Binding DiscoverCommand}"
+                        SemanticProperties.Description="Discover an authenticated MOBAflow server"
+                        Style="{DynamicResource PrimaryButton}"
+                        Text="Discover MOBAflow" />
+
+                    <Button
+                        Command="{Binding CancelCommand}"
+                        IsVisible="{Binding IsBusy}"
+                        SemanticProperties.Description="Cancel the current pairing operation"
+                        Style="{DynamicResource OutlinedButton}"
+                        Text="Cancel" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border
+                IsVisible="{Binding HasDiscoveredServer}"
+                Style="{DynamicResource MainSectionCard}">
+                <VerticalStackLayout Spacing="12">
+                    <Label
+                        Style="{DynamicResource SectionTitleLabel}"
+                        Text="Verify server identity" />
+
+                    <Grid
+                        ColumnDefinitions="Auto,*"
+                        ColumnSpacing="12"
+                        RowDefinitions="Auto,Auto">
+                        <Label
+                            Grid.Row="0"
+                            Grid.Column="0"
+                            FontAttributes="Bold"
+                            Text="Endpoint"
+                            TextColor="{DynamicResource TextSecondary}" />
+                        <Label
+                            Grid.Row="0"
+                            Grid.Column="1"
+                            Text="{Binding ServerAddress}"
+                            TextColor="{DynamicResource TextPrimary}" />
+                        <Label
+                            Grid.Row="1"
+                            Grid.Column="0"
+                            FontAttributes="Bold"
+                            Text="Instance"
+                            TextColor="{DynamicResource TextSecondary}" />
+                        <Label
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            LineBreakMode="CharacterWrap"
+                            Text="{Binding ServerInstanceId}"
+                            TextColor="{DynamicResource TextPrimary}" />
+                    </Grid>
+
+                    <Label
+                        FontAttributes="Bold"
+                        Text="SHA-256 public-key fingerprint"
+                        TextColor="{DynamicResource TextSecondary}" />
+                    <Border
+                        Padding="12"
+                        BackgroundColor="{DynamicResource SurfaceDark}"
+                        Stroke="{DynamicResource Border}"
+                        StrokeShape="RoundRectangle 8"
+                        StrokeThickness="1">
+                        <Label
+                            FontFamily="monospace"
+                            FontSize="13"
+                            LineBreakMode="CharacterWrap"
+                            SemanticProperties.Description="{Binding Fingerprint, StringFormat='Server fingerprint {0}'}"
+                            Text="{Binding Fingerprint}"
+                            TextColor="{DynamicResource TextPrimary}" />
+                    </Border>
+
+                    <Grid ColumnDefinitions="44,*" ColumnSpacing="8">
+                        <CheckBox
+                            Grid.Column="0"
+                            IsChecked="{Binding IsFingerprintConfirmed}"
+                            SemanticProperties.Description="Confirm that the server fingerprint matches MOBAflow"
+                            VerticalOptions="Start"
+                            Color="{DynamicResource RailwayPrimary}" />
+                        <Label
+                            Grid.Column="1"
+                            Text="I compared this fingerprint with MOBAflow and it matches."
+                            TextColor="{DynamicResource TextPrimary}"
+                            VerticalOptions="Center" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <Border
+                IsVisible="{Binding ShowPairingForm}"
+                Style="{DynamicResource MainSectionCard}">
+                <VerticalStackLayout Spacing="12">
+                    <Label
+                        Style="{DynamicResource SectionTitleLabel}"
+                        Text="Request access" />
+
+                    <Label
+                        FontAttributes="Bold"
+                        Text="Device name"
+                        TextColor="{DynamicResource TextSecondary}" />
+                    <Entry
+                        MaxLength="100"
+                        Placeholder="MOBAsmart"
+                        SemanticProperties.Description="Device name shown in MOBAflow"
+                        Text="{Binding DisplayName}" />
+
+                    <Label
+                        FontAttributes="Bold"
+                        Text="Access level"
+                        TextColor="{DynamicResource TextSecondary}" />
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <RadioButton
+                            Grid.Column="0"
+                            Content="Remote control"
+                            GroupName="PairingRole"
+                            IsChecked="{Binding IsRemoteControlSelected}"
+                            SemanticProperties.Description="Request permission to control the layout" />
+                        <RadioButton
+                            Grid.Column="1"
+                            Content="Read only"
+                            GroupName="PairingRole"
+                            IsChecked="{Binding IsReadOnlySelected}"
+                            SemanticProperties.Description="Request read-only access" />
+                    </Grid>
+
+                    <Label
+                        FontAttributes="Bold"
+                        Text="Pairing secret"
+                        TextColor="{DynamicResource TextSecondary}" />
+                    <Entry
+                        IsPassword="True"
+                        MaxLength="43"
+                        Placeholder="Enter the 43-character secret"
+                        SemanticProperties.Description="Pairing secret shown by MOBAflow"
+                        Text="{Binding PairingSecret}" />
+
+                    <Button
+                        Command="{Binding StartPairingCommand}"
+                        SemanticProperties.Description="Submit the pairing request"
+                        Style="{DynamicResource AccentButton}"
+                        Text="Request pairing" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border
+                IsVisible="{Binding IsWaitingForApproval}"
+                Style="{DynamicResource MainSectionCard}">
+                <VerticalStackLayout Spacing="12">
+                    <Label
+                        Style="{DynamicResource SectionTitleLabel}"
+                        Text="Approve in MOBAflow" />
+                    <Label
+                        Text="Confirm that this code matches the pending request shown by MOBAflow."
+                        TextColor="{DynamicResource TextSecondary}" />
+                    <Label
+                        FontAttributes="Bold"
+                        FontSize="32"
+                        HorizontalTextAlignment="Center"
+                        SemanticProperties.Description="{Binding ConfirmationCode, StringFormat='Confirmation code {0}'}"
+                        Text="{Binding ConfirmationCode}"
+                        TextColor="{DynamicResource RailwayPrimary}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border
+                IsVisible="{Binding IsPaired}"
+                Style="{DynamicResource MainSectionCard}">
+                <VerticalStackLayout Spacing="12">
+                    <Label
+                        Style="{DynamicResource SectionTitleLabel}"
+                        Text="Paired device" />
+                    <Label
+                        Text="{Binding PairedRole, StringFormat='Access level: {0}'}"
+                        TextColor="{DynamicResource TextPrimary}" />
+                    <Label
+                        Text="The refresh credential is protected by this device. Access tokens remain in memory only."
+                        TextColor="{DynamicResource TextSecondary}" />
+                    <Button
+                        Command="{Binding ForgetCommand}"
+                        SemanticProperties.Description="Remove protected MOBAsmart credentials from this device"
+                        Style="{DynamicResource DangerButton}"
+                        Text="Forget this device" />
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentView>
