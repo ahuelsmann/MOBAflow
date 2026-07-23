@@ -133,7 +133,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     public bool CanDryRun => _workflowService != null && _executionContext != null && SelectedWorkflow != null;
 
     /// <summary>Gets the node editor target, or the workflow when no node is selected.</summary>
-    public object? SelectedEditorObject => (object?)_selectedStep ?? _selectedWorkflow;
+    public object? SelectedEditorObject => (object?)SelectedStep ?? SelectedWorkflow;
 
     partial void OnSearchTextChanged(string value)
     {
@@ -459,7 +459,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
         GC.SuppressFinalize(this);
     }
 
-    private bool HasSelectedWorkflow() => _selectedWorkflow != null;
+    private bool HasSelectedWorkflow() => SelectedWorkflow != null;
 
     private bool CanStartDryRun() => CanDryRun && !IsDryRunRunning;
 

@@ -156,6 +156,14 @@
     {
       "project": "Backend",
       "targetFramework": "net10.0",
+      "ruleId": "CA1014",
+      "path": "<no-location>",
+      "message": "Assemblys mit CLSCompliant markieren",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
       "ruleId": "CA1031",
       "path": "Backend/Discovery/Z21DiscoveryService.cs",
       "message": "Ändern Sie \"DiscoverZ21Async\", um spezifischere zulässige Ausnahmetypen abzufangen, oder lösen Sie die Ausnahme erneut aus.",
@@ -2828,14 +2836,6 @@
     {
       "project": "Backend",
       "targetFramework": "net10.0",
-      "ruleId": "CA2016",
-      "path": "Backend/Service/Interlocking/SemanticTurnoutRuntimeCoordinator.cs",
-      "message": "Leiten Sie den Parameter \"cancellationToken\" an die Methode \"WaitAsync\" weiter, oder übergeben Sie explizit \"CancellationToken.None\", um festzulegen, dass das Token nicht verteilt werden soll.",
-      "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
       "ruleId": "CA2213",
       "path": "Backend/Service/Z21EventPipeline.cs",
       "message": "\"Z21EventPipeline\" enthält das Feld \"_consumerCancellation\", das den IDisposable-Typ \"CancellationTokenSource\" aufweist, aber nie verworfen wird. Ändern Sie die Dispose-Methode in \"Z21EventPipeline\", um \"Close\" oder \"Dispose\" für dieses Feld aufzurufen.",
@@ -3311,6 +3311,14 @@
       "ruleId": "CA1008",
       "path": "Common/Security/RemoteControlClientSecurity.cs",
       "message": "Fügen Sie \"RemoteControlRole\" einen Member mit einem Wert von null und dem vorgeschlagenen Namen \"None\" hinzu.",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1014",
+      "path": "<no-location>",
+      "message": "Assemblys mit CLSCompliant markieren",
       "count": 1
     },
     {
@@ -4220,6 +4228,14 @@
     {
       "project": "Domain",
       "targetFramework": "net10.0",
+      "ruleId": "CA1014",
+      "path": "<no-location>",
+      "message": "Assemblys mit CLSCompliant markieren",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
       "ruleId": "CA1062",
       "path": "Domain/JsonOptions.cs",
       "message": "Validieren Sie in der extern sichtbaren Methode „void JsonOptions.InitializeConverters(JsonConverter[] converters)“, dass der Parameter \"converters\" ungleich NULL ist, bevor Sie ihn verwenden. Lösen Sie gegebenenfalls eine „ArgumentNullException“ aus, wenn das Argument NULL ist.",
@@ -4852,6 +4868,14 @@
     {
       "project": "MOBAdisplay",
       "targetFramework": "net10.0",
+      "ruleId": "CA1014",
+      "path": "<no-location>",
+      "message": "Assemblys mit CLSCompliant markieren",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
       "ruleId": "CA1028",
       "path": "MOBAdisplay/Protocol/DisplayProtocol.cs",
       "message": "Legen Sie nach Möglichkeit den zugrunde liegenden Typ von \"DisplayMessageType\" auf \"System.Int32\" statt auf \"byte\" fest.",
@@ -5343,6 +5367,14 @@
       "ruleId": "CA1002",
       "path": "MOBApi/Controllers/FeedbackSequencesController.cs",
       "message": "Ändern Sie \"List<JourneyFeedbackStep>\" in \"FeedbackSequencesController.Put(Guid, Guid, List<JourneyFeedbackStep>)\", um \"Collection<T>\", \"ReadOnlyCollection<T>\" oder \"KeyedCollection<K,V>\" zu verwenden.",
+      "count": 1
+    },
+    {
+      "project": "MOBApi",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1014",
+      "path": "<no-location>",
+      "message": "Assemblys mit CLSCompliant markieren",
       "count": 1
     },
     {
@@ -6012,14 +6044,6 @@
     {
       "project": "MOBApi",
       "targetFramework": "net10.0",
-      "ruleId": "CA2016",
-      "path": "MOBApi/Controllers/PhotosController.cs",
-      "message": "Leiten Sie den Parameter \"cancellationToken\" an die Methode \"SendAsync\" weiter, oder übergeben Sie explizit \"CancellationToken.None\", um festzulegen, dass das Token nicht verteilt werden soll.",
-      "count": 1
-    },
-    {
-      "project": "MOBApi",
-      "targetFramework": "net10.0",
       "ruleId": "CA3003",
       "path": "MOBApi/Controllers/PhotosController.cs",
       "message": "Es wurde ein potenzielles Sicherheitsrisiko durch Dateipfadeinschleusung gefunden. \"FileStream File.Create(string path)\" in der Methode \"Task<IActionResult> PhotosController.Upload(IFormFile? file, string? category, Guid entityId, CancellationToken cancellationToken = default(CancellationToken))\" wurde möglicherweise durch benutzergesteuerte Daten aus \"Guid entityId\" in Methode \"Task<IActionResult> PhotosController.Upload(IFormFile? file, string? category, Guid entityId, CancellationToken cancellationToken = default(CancellationToken))\" verändert.",
@@ -6383,6 +6407,14 @@
       "ruleId": "CA1003",
       "path": "SharedUI/ViewModel/MauiViewModel.SignalBox.cs",
       "message": "Ändern Sie das Ereignis \"UserSignalAspectSelected\", um den Typ \"System.EventHandler<Moba.Domain.SignalAspect>?\" durch einen generischen EventHandler zu ersetzen, z. B. EventHandler<T>, wobei T einem gültigen EventArgs-Wert entspricht.",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1014",
+      "path": "<no-location>",
+      "message": "Assemblys mit CLSCompliant markieren",
       "count": 1
     },
     {
@@ -8544,22 +8576,6 @@
       "path": "SharedUI/ViewModel/SignalBoxPlanViewModel.cs",
       "message": "Aufeinanderfolgende geschweifte Klammern dürfen keine leere Zeile einschließen.",
       "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "MVVMTK0034",
-      "path": "SharedUI/ViewModel/WorkflowLibraryViewModel.cs",
-      "message": "The field Moba.SharedUI.ViewModel.WorkflowLibraryViewModel._selectedStep is annotated with [ObservableProperty] and should not be directly referenced (use the generated property instead)",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "MVVMTK0034",
-      "path": "SharedUI/ViewModel/WorkflowLibraryViewModel.cs",
-      "message": "The field Moba.SharedUI.ViewModel.WorkflowLibraryViewModel._selectedWorkflow is annotated with [ObservableProperty] and should not be directly referenced (use the generated property instead)",
-      "count": 2
     },
     {
       "project": "SharedUI",
@@ -10844,6 +10860,14 @@
     {
       "project": "Sound",
       "targetFramework": "net10.0",
+      "ruleId": "CA1014",
+      "path": "<no-location>",
+      "message": "Assemblys mit CLSCompliant markieren",
+      "count": 1
+    },
+    {
+      "project": "Sound",
+      "targetFramework": "net10.0",
       "ruleId": "CA1031",
       "path": "Sound/PiperSpeechEngine.cs",
       "message": "Ändern Sie \"CopyDiagnosticWav\", um spezifischere zulässige Ausnahmetypen abzufangen, oder lösen Sie die Ausnahme erneut aus.",
@@ -11151,6 +11175,14 @@
       "ruleId": "CA1001",
       "path": "Test/Integration/WorkflowExecutionEndToEndTests.cs",
       "message": "Der Typ \"WorkflowExecutionEndToEndTests\" besitzt verwerfbare Felder \"_fakeUdp', '_z21\", ist jedoch nicht verwerfbar.",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1014",
+      "path": "<no-location>",
+      "message": "Assemblys mit CLSCompliant markieren",
       "count": 1
     },
     {
@@ -14876,22 +14908,6 @@
     {
       "project": "Test",
       "targetFramework": "net10.0",
-      "ruleId": "CS8602",
-      "path": "Test/Backend/WorkflowSchemaCutoverValidationTests.cs",
-      "message": "Dereferenzierung eines möglichen Nullverweises.",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CS8602",
-      "path": "Test/Common/HostBootstrapProtocolTests.cs",
-      "message": "Dereferenzierung eines möglichen Nullverweises.",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
       "ruleId": "IDE0005",
       "path": "Test/Backend/MobaRuntimeServiceAutoConnectDiscoveryTests.cs",
       "message": "Using-Direktive ist unnötig.",
@@ -15191,14 +15207,6 @@
       "ruleId": "NUnit1028",
       "path": "Test/Backend/ActionExecutorTests.cs",
       "message": "Only test methods should be public",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit1033",
-      "path": "Test/Common/RuntimeSnapshotRemoteFilterTests.cs",
-      "message": "The Write methods are wrappers on TestContext.Out",
       "count": 1
     },
     {
@@ -16884,6 +16892,14 @@
     {
       "project": "TrackLibrary.Base",
       "targetFramework": "net10.0",
+      "ruleId": "CA1014",
+      "path": "<no-location>",
+      "message": "Assemblys mit CLSCompliant markieren",
+      "count": 1
+    },
+    {
+      "project": "TrackLibrary.Base",
+      "targetFramework": "net10.0",
       "ruleId": "CA1040",
       "path": "TrackLibrary.Base/TrackPathGeometry.cs",
       "message": "Leere Schnittstellen vermeiden",
@@ -16935,6 +16951,14 @@
       "ruleId": "CA1003",
       "path": "TrackLibrary.PikoA/EditableTrackPlan.cs",
       "message": "Ändern Sie das Ereignis \"PlanMutated\", um den Typ \"System.EventHandler<Moba.TrackLibrary.PikoA.EditableTrackPlan.PlanMutation>?\" durch einen generischen EventHandler zu ersetzen, z. B. EventHandler<T>, wobei T einem gültigen EventArgs-Wert entspricht.",
+      "count": 1
+    },
+    {
+      "project": "TrackLibrary.PikoA",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1014",
+      "path": "<no-location>",
+      "message": "Assemblys mit CLSCompliant markieren",
       "count": 1
     },
     {
@@ -17216,6 +17240,14 @@
       "path": "TrackLibrary.PikoA/TrackPlan.cs",
       "message": "Die Initialisierung der Sammlung kann vereinfacht werden.",
       "count": 2
+    },
+    {
+      "project": "TrackPlan.Renderer",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1014",
+      "path": "<no-location>",
+      "message": "Assemblys mit CLSCompliant markieren",
+      "count": 1
     },
     {
       "project": "TrackPlan.Renderer",

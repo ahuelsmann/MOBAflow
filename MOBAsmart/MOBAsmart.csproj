@@ -51,9 +51,6 @@
         <AndroidCreateDebugSymbols>true</AndroidCreateDebugSymbols>
         <AndroidUseApkSigner>true</AndroidUseApkSigner>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <!-- Analyzers + TreatWarningsAsErrors break legacy MAUI code; Debug/FastDebug keep live analysis. -->
-        <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
-        <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
     </PropertyGroup>
     <!-- Include Linker descriptor -->
     <ItemGroup>

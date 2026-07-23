@@ -21,7 +21,7 @@ internal sealed class WorkflowSchemaCutoverValidationTests
         Assert.That(solution, Is.Not.Null);
 
         // Act
-        var validationResults = solution.Projects
+        var validationResults = solution!.Projects
             .Select(project => new WorkflowValidator().Validate(project))
             .ToArray();
 

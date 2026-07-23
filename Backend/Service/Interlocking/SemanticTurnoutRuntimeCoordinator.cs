@@ -96,7 +96,9 @@ public sealed class SemanticTurnoutRuntimeCoordinator
         Guid correlationId,
         CancellationToken cancellationToken = default)
     {
-        await _commandGate.WaitAsync().ConfigureAwait(false);
+        // Enter the state machine even for an already-cancelled command so the failed
+        // transition remains observable and can be reconciled by the caller.
+        await _commandGate.WaitAsync(CancellationToken.None).ConfigureAwait(false);
         try
         {
             lock (_stateSync)

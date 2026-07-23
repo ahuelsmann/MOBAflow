@@ -110,7 +110,11 @@ public class PhotosController : ControllerBase
         {
             try
             {
-                await _hubContext.Clients.All.SendAsync("PhotoUploaded", relativePath, DateTime.UtcNow);
+                await _hubContext.Clients.All.SendAsync(
+                    "PhotoUploaded",
+                    relativePath,
+                    DateTime.UtcNow,
+                    cancellationToken);
             }
 
             catch

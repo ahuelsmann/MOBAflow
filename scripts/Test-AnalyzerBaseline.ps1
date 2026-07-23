@@ -1,5 +1,5 @@
 param(
-    [string] $SarifRoot = ".",
+    [string] $SarifRoot = "artifacts/analyzers/Release/net10.0",
 
     [string] $BaselinePath = "quality/analyzer-baseline.json",
 
@@ -91,9 +91,6 @@ function Test-IsGeneratedPath([string] $Path) {
 function Get-SarifFiles([string] $ResolvedSarifRoot) {
     $sarifFiles = @(
         Get-ChildItem -LiteralPath $ResolvedSarifRoot -Recurse -Filter "*.sarif" -File |
-            Where-Object {
-                $_.FullName -match "[/\\]obj[/\\]analyzers[/\\]"
-            } |
             Sort-Object FullName
     )
 
