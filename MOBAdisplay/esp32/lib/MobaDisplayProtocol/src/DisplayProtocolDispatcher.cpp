@@ -315,13 +315,12 @@ DisplayProtocolDispatcher::InspectRequestFingerprint(
 
     const uint8_t logicalFlags =
         header.flags & static_cast<uint8_t>(FlagAcknowledgementRequired | FlagFinalPacket);
-    for (size_t index = 0; index < kRequestHistoryLength; ++index)
+    for (RequestFingerprint& previous : _requestHistory)
     {
-        const RequestFingerprint& previous = _requestHistory[index];
         if (!previous.occupied || previous.requestId != header.requestId)
             continue;
 
-        *fingerprint = &_requestHistory[index];
+        *fingerprint = &previous;
         const bool matches = previous.frameId == header.frameId
             && previous.sessionId == header.sessionId
             && previous.payloadCrc32 == header.payloadCrc32
@@ -690,9 +689,12 @@ DispatchResult DisplayProtocolDispatcher::WriteHealthResponse(
     size_t responseBufferLength) const noexcept
 {
     uint8_t payload[24] = {};
-    payload[0] = _frameAssembler.HasActiveFrame()
-        ? 1
-        : _lastOperationResult.code == Core::ResultCode::HardwareFailure ? 2 : 0;
+    uint8_t healthState = 0;
+    if (_frameAssembler.HasActiveFrame())
+        healthState = 1;
+    else if (_lastOperationResult.code == Core::ResultCode::HardwareFailure)
+        healthState = 2;
+    payload[0] = healthState;
     payload[1] = static_cast<uint8_t>(_lastOperationResult.code);
     WriteUInt32(payload + 4, diagnostics.uptimeSeconds);
     WriteUInt32(payload + 8, diagnostics.freeHeapBytes);

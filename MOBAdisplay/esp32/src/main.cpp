@@ -196,7 +196,7 @@ bool initializeDisplayProtocol()
     if (!gFrameAssembler)
         return false;
 
-    const uint32_t chipSuffix = static_cast<uint32_t>(ESP.getEfuseMac() & 0xFFFFFFu);
+    const auto chipSuffix = static_cast<uint32_t>(ESP.getEfuseMac() & 0xFFFFFFu);
     snprintf(gDeviceIdentity, sizeof(gDeviceIdentity), "esp32s3-%06" PRIX32, chipSuffix);
     uint32_t sessionId = esp_random();
     if (sessionId == 0)

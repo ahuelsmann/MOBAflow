@@ -17,10 +17,12 @@ using MobaDisplay::Protocol::MessageType;
 
 void setUp()
 {
+    // Unity requires this hook even when the fixture has no per-test setup.
 }
 
 void tearDown()
 {
+    // Unity requires this hook even when the fixture has no per-test cleanup.
 }
 
 namespace
