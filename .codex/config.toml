@@ -1,3 +1,5 @@
+sandbox_mode = "workspace-write"
+
 [mcp_servers.azure-devops]
 command = "npx"
 args = [ "-y", "@azure-devops/mcp@latest", "ahuelsmann", "-d", "all", "-a", "interactive" ]
@@ -27,3 +29,6 @@ args = [ "-y", "mcp-ripgrep@latest" ]
 [mcp_servers.sonarqube]
 command = "sonar.exe"
 args = [ "run", "mcp", "--project", "ahuelsmann_MOBAflow2" ]
+
+[sandbox_workspace_write]
+network_access = true
