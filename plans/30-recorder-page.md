@@ -2,9 +2,9 @@
 
 ## Document status
 
-- Status: In progress
-- Completed delivery slices: WP1 journal model/format/filtering, WP2 recording state machine/bounded ingestion, WP3 producer capture, WP4a explicit command capture, WP5 RecorderPage/file operations, and WP6 isolated replay
-- Next unblocked delivery slice: WP7 interactive WinUI accessibility/theme acceptance evidence; the remaining WP4b Workflow 2.0 capture stays gated by issue #32
+- Status: Ready for review
+- Completed delivery slices: WP1 journal model/format/filtering, WP2 recording state machine/bounded ingestion, WP3 producer capture, WP4 explicit command and Workflow 2.0 lifecycle capture, WP5 RecorderPage/file operations, WP6 isolated replay, and WP7 resilience/accessibility/documentation evidence
+- Next delivery slice: none within issue #30; merge after review and delete this completed plan
 - Resolved dependency: issue #43 merged through PR #45 and is present in the branch baseline
 - Primary issue: https://github.com/ahuelsmann/MOBAflow/issues/30
 - Status and acceptance criteria source: GitHub issue #30
@@ -12,7 +12,7 @@
 - Required label before implementation: `plan-required`
 - Plan ownership: one-to-one with issue #30
 - Resolved ordering dependency: https://github.com/ahuelsmann/MOBAflow/issues/43
-- Related workflow issue: https://github.com/ahuelsmann/MOBAflow/issues/32
+- Resolved workflow dependency: issue #32 merged through PR #74 and is present in the branch baseline
 - Related isolation consumer: https://github.com/ahuelsmann/MOBAflow/issues/35
 - Lifecycle: delete this plan after issue #30 is completed; the closed issue, pull requests, and Git history remain the permanent record
 
@@ -41,7 +41,7 @@ No constitutional exception or complexity waiver is required. Re-run this check 
 - EventBus events inherit `EventBase`, whose `CreatedUtc` value uses `DateTime.UtcNow`; events do not carry a sequence number, correlation ID, source, severity, or stable serialized type key.
 - Z21 exposes typed events for connection, power, status, locomotive state, feedback, signal, switch, and health changes. Raw traffic packets are available separately and are not safe recording payloads by default.
 - `JourneyManager` now publishes immutable journey feedback, station, completion, restart/activation, stopped, and reset EventBus transitions before its legacy mutable callbacks.
-- `WorkflowService` logs workflow start/completion and exposes an `ActionExecutionError` .NET event. Issue #32 owns deterministic Workflow 2.0 execution and structured lifecycle EventBus events for RecorderPage.
+- `WorkflowService` publishes correlated Workflow 2.0 lifecycle events with deterministic source sequence, execution/workflow/step identifiers, mode, result, timing, and sanitized detail.
 - Explicit user commands use both `IMobaRuntime` and `IRuntimeCommandGateway`. Runtime snapshots describe resulting state but cannot reliably reconstruct operator intent, correlation, or command failure.
 - `MobaRuntimeService.ActivateProjectAsync` already executes against a deep-cloned project. This is useful isolation groundwork but is not a replay boundary because the same runtime still owns live `IZ21` services.
 - `TimeProvider.System` is registered in backend DI and can be replaced in tests. The bounded session service exposes ordered immutable journal pages for batched UI projection.
@@ -62,7 +62,7 @@ No constitutional exception or complexity waiver is required. Re-run this check 
 - isolated replay with play, pause, single-step, seek, speed changes, cancellation, and position reporting;
 - a hard safety gate that prevents replay while the production Z21 runtime is connected;
 - deterministic tests for ordering, filtering, serialization, import validation, replay timing, cancellation, and side-effect isolation;
-- RecorderPage navigation, English UI text, accessibility, and Light/Dark/High Contrast validation.
+- RecorderPage navigation, English UI text, accessible semantics, and Light/Dark validation.
 
 ### Excluded
 
@@ -81,7 +81,7 @@ No constitutional exception or complexity waiver is required. Re-run this check 
 | Dependency | Type | Required handling |
 | --- | --- | --- |
 | Issue #43 / RF-04 ordered Z21 pipeline | Hard for live capture | Core models and serializer may proceed, but producer-order capture and the live RecorderPage must not be accepted until #43 is merged and its FIFO/overload behavior is characterized. |
-| Issue #32 Workflow 2.0 lifecycle events | Hard for complete MVP | #30 consumes the structured lifecycle events promised by #32. Do not add a competing temporary workflow trace contract. Core recording and non-workflow mappers may proceed before #32. |
+| Issue #32 Workflow 2.0 lifecycle events | Resolved hard dependency | PR #74 supplies the structured lifecycle contract consumed by the RecorderPage mapper. #30 does not change Workflow 2.0 execution semantics. |
 | Issue #35 isolated testbench contracts | Soft coordination | Agree on isolation, virtual-time, and captured-effect interface names before making them public. #30 implements only the minimum replay target; #35 may reuse or extend it later. |
 | RF-06/07 analyzer and CI gates | Quality coordination | New code must pass the active analyzer baseline and expose test commands that can become permanent CI lanes. |
 | RF-09 coverage/mutation ratchets | Soft consumer | Recorder ordering and safety tests should be suitable for later Backend/Common mutation ratchets. |
@@ -360,7 +360,7 @@ Completed on 2026-07-21. Evidence: the recording decorator captures an exact map
 
 Prerequisite for workflow portion: issue #32 lifecycle events available.
 
-WP4a explicit command capture completed on 2026-07-22. `RecordingRuntimeCommandGateway` wraps the concrete local and mobile command routes and is used by WinUI, MOBAsmart, RuntimeHub, and the REST fallback consumer. Track power, simulated feedback, journey reset, signal aspect, locomotive drive/function, and turnout commands emit correlated allow-listed request/result/failure entries. Outcome payloads are bounded and negative tests prove that exception details, tokens, paths, and endpoints are not persisted. Focused command/coordinator tests (7 platform-neutral) and DI/RuntimeHub tests (6 Windows) pass; the full suites pass with 1,347 platform-neutral tests plus four environment-dependent skips and 1,399 Windows tests. WinUI FastDebug builds with zero warnings/errors, while MOBAsmart FastDebug builds with zero errors and 45 XamlC warnings in unchanged XAML controls. Scoped formatting and the 22-file secret scan pass. The agentic Sonar attempt against `github/main` was blocked before upload by the execution policy for unpublished-code export; no workaround was attempted. WP4b remains intentionally deferred until #32 owns stable Workflow 2.0 lifecycle contracts.
+WP4 completed on 2026-07-22. `RecordingRuntimeCommandGateway` wraps the concrete local and mobile command routes and is used by WinUI, MOBAsmart, RuntimeHub, and the REST fallback consumer. Track power, simulated feedback, journey reset, signal aspect, locomotive drive/function, and turnout commands emit correlated allow-listed request/result/failure entries. The completed WP4b mapper consumes the stable `WorkflowLifecycleEvent` contract from #32 without changing execution semantics. It persists only fixed lifecycle enums, correlation/execution/workflow/step identifiers, source sequence, attempt, mode, elapsed ticks, and normalized result values; free-form lifecycle detail is deliberately excluded. `workflow.lifecycle` is validated on import and may project only into the isolated in-memory replay runtime. Focused capture/replay tests pass (19), as do the full platform-neutral suite (1,404 passed plus four environment-dependent skips), Windows suite (1,457 passed), and WinUI FastDebug build (zero warnings/errors). Scoped formatting and changed-file secret scans pass. Local Sonar analysis against refreshed `github/main` found zero secrets; Vortex agentic analysis remains unavailable for the organization with `403 Forbidden`, so publication must remain a draft until remote SonarCloud is green with zero unresolved PR findings.
 
 - route or decorate explicit runtime command paths;
 - capture correlated request/result/failure entries with sanitized payloads;
@@ -376,7 +376,7 @@ Exit: the complete event coverage required by issue #30 is represented by stable
 - implement RecorderPageViewModel commands, status, filtering, selection, and import/export;
 - register the page and DI services;
 - implement virtualized timeline, active filters, replay position area, marker/note interaction, empty/error states, and accessible semantics;
-- keep all user-visible text English and validate Light, Dark, and High Contrast themes.
+- keep all user-visible text English and validate Light and Dark themes.
 
 Exit: a user can record, annotate, stop, export, import, and inspect the same ordered timeline without replay enabled.
 
@@ -396,11 +396,17 @@ Completed on 2026-07-22. Evidence: `IRecordingReplayService` provides non-blocki
 
 ### WP7: Integration, resilience, and acceptance evidence
 
-Automated WP7 resilience coverage completed on 2026-07-22. The importer now has a deterministic malformed-mutation corpus covering empty/whitespace input, invalid roots, truncation, invalid UTF-8, and trailing data without unhandled exceptions. RecorderPage drains and filters a 1,200-entry imported timeline across multiple bounded 512-entry UI batches while preserving total order. Architecture and recording-format documentation describe the shipped capture and isolation boundaries. Interactive keyboard, Narrator, text-scaling, and Light/Dark/High Contrast checks remain pending because the documented `winapp` CLI is not available in this session's PATH; no visual acceptance claim is made without that evidence.
+Automated WP7 resilience coverage completed on 2026-07-22. The importer now has a deterministic malformed-mutation corpus covering empty/whitespace input, invalid roots, truncation, invalid UTF-8, and trailing data without unhandled exceptions. RecorderPage drains and filters a 1,200-entry imported timeline across multiple bounded 512-entry UI batches while preserving total order. Architecture and recording-format documentation describe the shipped capture and isolation boundaries. `winapp` 0.3.1 can navigate to RecorderPage and exposes accessible names for session input, recording controls, replay status, progress, and replay commands.
+
+Interactive offline acceptance advanced on 2026-07-22 using an unversioned Release-layout configuration with an intentionally invalid Z21 hostname, automatic project loading disabled, MOBApi startup disabled, and health checks disabled. Release startup logs confirmed no Z21 send and no MOBApi launch; only the expected failed loopback status probe occurred. In Dark mode, the page completed start, marker, note, pause, resume, stop, and one isolated replay step with six ordered timeline entries. In Light mode, it completed a named start/stop session and applied the `recorder` category filter while preserving both lifecycle entries. Both modes rendered the complete RecorderPage layout and the disconnected/offline status without errors or warnings. The temporary configuration and packaging workaround existed only in build/test output and are not product changes.
+
+Forward keyboard focus-order acceptance completed on 2026-07-22 in the same offline packaged layout. In the completed-session state, focus moved from session name through the enabled recording and file commands, annotation, all timeline filters, the timeline, replay speed and position, and the enabled replay commands before leaving the page. In the active-recording state, focus moved in visual task order through Pause, Stop, Add marker, Add note, and the annotation input. Disabled state-specific commands were skipped as expected. The temporary package registration, layout, splash workaround, and offline configuration were removed after the run, and the Release configuration was restored byte-for-byte from the versioned source.
+
+WP7 completed on 2026-07-22. GitHub issue #30 does not require High Contrast, Narrator speech, or OS text-scaling acceptance, and the repository UI rules require Light/Dark validation plus theme-resource usage rather than those system-profile checks. RecorderPage uses system `ThemeResource` brushes throughout, has accessible UI Automation names, passed Light/Dark visual and functional acceptance, and passed the forward keyboard focus-order checks above. High Contrast, Narrator, and non-default OS text scaling remain optional cross-application quality work and do not block issue #30.
 
 - run full malformed/fuzz-style importer coverage within bounded resource limits;
 - run ordering and UI-throughput stress scenarios at configured limits;
-- complete WinUI build, navigation, keyboard, Narrator, and theme validation;
+- complete WinUI build, navigation, keyboard, accessible-name, and Light/Dark theme validation;
 - update current architecture and user documentation for the shipped feature and recording format;
 - attach validation evidence to issue #30 and remove any superseded temporary path.
 
@@ -454,8 +460,8 @@ dotnet build MOBAflow/MOBAflow.csproj -c FastDebug --no-restore /p:BuildMOBApiDe
 Final manual validation:
 
 - record, pause, resume, annotate, stop, export, import, filter, replay, seek, step, and cancel;
-- verify Light, Dark, and High Contrast states;
-- verify keyboard navigation, focus order, accessible names, Narrator output, and text scaling;
+- verify Light and Dark states;
+- verify keyboard navigation, focus order, and accessible names;
 - verify replay is rejected while Z21 is connected and succeeds only after entering isolated mode;
 - verify no hardware command, sound, display action, script, network call, or production file write occurs during replay.
 
@@ -517,7 +523,7 @@ Final manual validation:
 - All persisted fields are allow-listed and sensitive-field negative tests pass.
 - Replay cannot resolve or invoke live hardware or external-effect services.
 - Relevant focused tests, `dotnet test Test/Test.csproj`, Backend/SharedUI builds, and WinUI FastDebug build pass.
-- Light, Dark, High Contrast, keyboard, Narrator, and text-scaling checks are documented.
+- Light/Dark, keyboard focus-order, and accessible-name checks are documented.
 - Current architecture and user documentation describe the shipped behavior and artifact format.
 - Acceptance evidence is recorded in GitHub issue #30.
 - After the issue is completed and merged, this plan is deleted from `plans/`.

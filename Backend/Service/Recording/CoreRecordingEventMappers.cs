@@ -3,6 +3,7 @@
 namespace Moba.Backend.Service.Recording;
 
 using Common.Events;
+using Moba.Backend.Interface;
 using Moba.Common.Recording;
 using System.Text.Json;
 
@@ -225,5 +226,87 @@ public sealed class JourneyRecordingEventMapper : IRecordingEventMapper
             }),
             $"Journey {transition.JourneyId}: {transition.Kind}",
             RecordingReplayApplicability.ReplayApplicable);
+    }
+}
+
+/// <summary>
+/// Maps correlated Workflow 2.0 lifecycle events without persisting free-form details.
+/// </summary>
+public sealed class WorkflowLifecycleRecordingEventMapper : IRecordingEventMapper
+{
+    private static readonly Type[] SupportedEventTypes = [typeof(WorkflowLifecycleEvent)];
+
+    /// <inheritdoc />
+    public IReadOnlyCollection<Type> EventTypes => SupportedEventTypes;
+
+    /// <inheritdoc />
+    public RecordingEntryProjection Map(IEvent sourceEvent)
+    {
+        if (sourceEvent is not WorkflowLifecycleEvent lifecycleEvent)
+        {
+            throw new ArgumentException($"Unsupported workflow event '{sourceEvent.GetType().Name}'.", nameof(sourceEvent));
+        }
+
+        var references = new List<RecordingEntityReference>
+        {
+            new("execution", lifecycleEvent.ExecutionId),
+            new("workflow", lifecycleEvent.WorkflowId)
+        };
+        if (lifecycleEvent.ParentExecutionId is Guid parentExecutionId)
+        {
+            references.Add(new RecordingEntityReference("parent-execution", parentExecutionId));
+        }
+
+        if (lifecycleEvent.StepId is Guid stepId)
+        {
+            references.Add(new RecordingEntityReference("step", stepId));
+        }
+
+        return new RecordingEntryProjection(
+            "workflow",
+            "workflow-service",
+            "workflow.lifecycle",
+            GetSeverity(lifecycleEvent.Kind),
+            lifecycleEvent.SourceCorrelationId,
+            references,
+            JsonSerializer.SerializeToElement(new
+            {
+                kind = lifecycleEvent.Kind.ToString(),
+                sourceCorrelationId = lifecycleEvent.SourceCorrelationId,
+                executionId = lifecycleEvent.ExecutionId,
+                parentExecutionId = lifecycleEvent.ParentExecutionId,
+                workflowId = lifecycleEvent.WorkflowId,
+                stepId = lifecycleEvent.StepId,
+                sourceSequence = lifecycleEvent.Sequence,
+                attempt = lifecycleEvent.Attempt,
+                mode = lifecycleEvent.Mode.ToString(),
+                elapsedTicks = lifecycleEvent.Elapsed?.Ticks,
+                result = NormalizeResult(lifecycleEvent.Result)
+            }),
+            $"Workflow {lifecycleEvent.WorkflowId}: {lifecycleEvent.Kind}",
+            RecordingReplayApplicability.ReplayApplicable);
+    }
+
+    private static string GetSeverity(WorkflowLifecycleKind kind) => kind switch
+    {
+        WorkflowLifecycleKind.WorkflowFailed or
+        WorkflowLifecycleKind.ValidationFailed or
+        WorkflowLifecycleKind.StepFailed => "error",
+        WorkflowLifecycleKind.WorkflowCancelled or
+        WorkflowLifecycleKind.RetryScheduled => "warning",
+        _ => "information"
+    };
+
+    private static string? NormalizeResult(string? result)
+    {
+        if (result is "True" or "False")
+        {
+            return result;
+        }
+
+        return Enum.TryParse<WorkflowExecutionStatus>(result, ignoreCase: false, out var status) &&
+               Enum.IsDefined(status)
+            ? status.ToString()
+            : null;
     }
 }

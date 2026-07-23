@@ -64,6 +64,19 @@ internal static class CoreRecordingPayloadValidators
             ("stationId", IsNullableGuid),
             ("stationIndex", IsStationIndex),
             ("isActive", IsBoolean)),
+        Schema(
+            "workflow.lifecycle",
+            ("kind", IsWorkflowLifecycleKind),
+            ("sourceCorrelationId", IsGuid),
+            ("executionId", IsGuid),
+            ("parentExecutionId", IsNullableGuid),
+            ("workflowId", IsGuid),
+            ("stepId", IsNullableGuid),
+            ("sourceSequence", IsPositiveInt64),
+            ("attempt", IsNonNegativeInt32),
+            ("mode", IsWorkflowLifecycleMode),
+            ("elapsedTicks", IsNullableNonNegativeInt64),
+            ("result", IsNullableWorkflowResult)),
         Schema("command.track-power.request", ("isOn", IsBoolean)),
         Schema("command.simulate-feedback.request", ("inPort", IsPositiveInt32)),
         Schema("command.journey-reset.request", ("journeyId", IsGuid)),
@@ -124,8 +137,15 @@ internal static class CoreRecordingPayloadValidators
     private static bool IsPositiveInt32(JsonElement value) =>
         value.TryGetInt32(out var number) && number > 0;
 
+    private static bool IsPositiveInt64(JsonElement value) =>
+        value.TryGetInt64(out var number) && number > 0;
+
     private static bool IsNullablePositiveInt32(JsonElement value) =>
         value.ValueKind == JsonValueKind.Null || IsPositiveInt32(value);
+
+    private static bool IsNullableNonNegativeInt64(JsonElement value) =>
+        value.ValueKind == JsonValueKind.Null ||
+        value.TryGetInt64(out var number) && number >= 0;
 
     private static bool IsStationIndex(JsonElement value) =>
         value.TryGetInt32(out var number) && number >= -1;
@@ -148,6 +168,25 @@ internal static class CoreRecordingPayloadValidators
     private static bool IsJourneyTransitionKind(JsonElement value) =>
         value.ValueKind == JsonValueKind.String &&
         Enum.TryParse<Moba.Common.Events.JourneyRuntimeTransitionKind>(value.GetString(), ignoreCase: false, out _);
+
+    private static bool IsWorkflowLifecycleKind(JsonElement value) =>
+        value.ValueKind == JsonValueKind.String &&
+        Enum.TryParse<Moba.Common.Events.WorkflowLifecycleKind>(value.GetString(), ignoreCase: false, out var kind) &&
+        Enum.IsDefined(kind);
+
+    private static bool IsWorkflowLifecycleMode(JsonElement value) =>
+        value.ValueKind == JsonValueKind.String &&
+        Enum.TryParse<Moba.Common.Events.WorkflowLifecycleMode>(value.GetString(), ignoreCase: false, out var mode) &&
+        Enum.IsDefined(mode);
+
+    private static bool IsNullableWorkflowResult(JsonElement value) =>
+        value.ValueKind == JsonValueKind.Null ||
+        value.ValueKind == JsonValueKind.String &&
+        (value.GetString() is "True" or "False" ||
+         Enum.TryParse<Moba.Backend.Interface.WorkflowExecutionStatus>(
+             value.GetString(),
+             ignoreCase: false,
+             out var status) && Enum.IsDefined(status));
 
     private static bool IsSucceededOutcome(JsonElement value) =>
         value.ValueKind == JsonValueKind.String && value.GetString() == "succeeded";
