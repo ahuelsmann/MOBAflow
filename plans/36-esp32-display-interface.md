@@ -16,7 +16,7 @@ Status on 2026-07-23:
 
 - WP3 and PR #82 are merged. RF-01 and RF-02 are closed, so the versioned
   firmware-dispatcher entrance gates are satisfied.
-- The WP4 firmware slice is implemented locally: an allocation-free v1.0
+- The WP4 firmware slice is implemented in draft PR #89: an allocation-free v1.0
   dispatcher validates the fixed envelope, CRC32, request/session/frame
   correlation, retry fingerprints, typed payloads, packet sequences, optional
   commands, and structured responses before it calls `FrameAssembler` or the
@@ -30,12 +30,12 @@ Status on 2026-07-23:
   deterministic conformance pattern, bounded regions, full-frame staging, and
   atomic presentation; board pins and driver configuration remain outside the
   portable contract.
-- The PR review remediation is implemented locally. A successful v1
+- The PR review remediation is pushed in commit `56fe74d7`. A successful v1
   negotiation now locks out the shared-buffer legacy path, duplicate operations
   return cached results without executing display commands again, exact
   duplicated Hello datagrams preserve the retry cache, and a fresh Hello starts
   a new request epoch with a newly calculated datagram limit.
-- Default host request-ID sequences now start in process-unique randomized
+- Default host request-ID sequences now start in process-randomized
   ranges, while explicitly seeded sequences retain deterministic wrap behavior
   for tests. Firmware health reports the last frame or command result, including
   background frame timeouts, and reboot clears negotiation state.
@@ -58,14 +58,17 @@ Status on 2026-07-23:
   terminated. Both generated `sdkconfig` files were removed, and issue #36 does
   not invent or commit RF-02 security/build defaults.
 - Local Sonar code analysis against `github/main` was requested but blocked by
-  the execution policy because it would transmit changed repository code to an
-  external service. This is not a successful analysis. Per-file local secret
-  scans remain green; remote PR analysis and the required zero-open-finding gate
-  remain pending.
+  execution policy because it would transmit changed repository code to an
+  external service; it is not counted as validation. Remote SonarCloud analysis
+  for PR #89 passes. Five C++11-compatible findings were fixed in commit
+  `332d05a7`; the remaining 93 findings were individually accepted with narrow
+  rationales covering newer-language-only recommendations and intentional
+  allocation-free or process-lifetime embedded design. The final direct query
+  reports zero `OPEN` or `CONFIRMED` PR issues.
 - Current-hardware negotiation, conformance-pattern, loss, reconnect, and reboot
   smoke tests remain pending. WP4 is therefore not complete and must stay in a
-  draft pull request until the build baseline, remote Sonar gate, and hardware
-  evidence are resolved.
+  draft pull request until the ESP32-S3 build baseline and hardware evidence are
+  resolved.
 
 Status on 2026-07-22:
 
