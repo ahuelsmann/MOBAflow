@@ -92,9 +92,21 @@ try {
     if (@($baseline.diagnostics).Count -ne 1) {
         throw "Expected generated diagnostics to be excluded from the baseline."
     }
+    if ($null -ne $baseline.diagnostics[0].PSObject.Properties["message"]) {
+        throw "Expected the baseline identity to exclude localized diagnostic messages."
+    }
     Assert-Succeeds {
         & $scriptPath -SarifRoot $testRoot -BaselinePath $baselinePath
     } "matching baseline"
+
+    $localizedResult = New-SampleResult `
+        -RuleId "CA1001" `
+        -Path (Join-Path $repositoryRoot "Common/Sample.cs") `
+        -Message "Die Ressource muss verworfen werden."
+    Write-SampleSarif @($localizedResult)
+    Assert-Succeeds {
+        & $scriptPath -SarifRoot $testRoot -BaselinePath $baselinePath
+    } "localized diagnostic message"
 
     Write-SampleSarif @($firstResult, $firstResult)
     Assert-Fails {
