@@ -7,12 +7,56 @@
 - Recommended priority: P1
 - Required label: `plan-required`
 - Plan ownership: one-to-one with issue #36
-- Implementation baseline: `codex/issue-36-host-transport` from merged PR #69 commit `f8c7f116` in `C:\Repo\ahuelsmann\MOBAflow-issue-36`
+- Implementation baseline: `codex/issue-36-firmware-contract` from merged RF-02 cleanup commit `677ba975` in `C:\Repo\ahuelsmann\MOBAflow-issue-36`
 - Lifecycle: delete this plan after issue #36 is complete; the closed issue, pull requests, and Git history remain the permanent record
 
 ## Implementation progress
 
-Status on 2026-07-21:
+Status on 2026-07-22:
+
+- RF-02's protected-provisioning boundary and UDP-loop cleanup are merged in
+  commits `442d2c` and `677ba975`. WP3 therefore started from current `main`
+  without changing provisioning state, credentials, NVS, Wi-Fi, board pins, or
+  Security 2 transport.
+- The portable WP3 core slice is implemented in `MobaDisplayCore`: shared
+  capabilities and structured result types, a display-backend interface, an
+  allocation-free deterministic frame assembler, matching IEEE CRC32, and a
+  recording backend with a configurable capability profile.
+- The assembler validates frame metadata, geometry, byte offsets, packet
+  metadata, the complete packet-index set, region limits, duplicate bytes,
+  coverage, CRC, timeout, abort, explicit replacement, reboot reset, and
+  session-wide at-most-once completion before it calls `Present`. Conflicting
+  overlap and every incomplete or invalid terminal path leave the visible
+  backend untouched.
+- The PR review follow-up preserves rotation in the backend presentation call,
+  retains staged data for structured retryable backend failures, rejects frame
+  ID zero before duplicate handling, prevents completed-frame resurrection and
+  older-frame replay, and normalizes a zero inactivity timeout to a bounded
+  minimum. Packet receipt uses a second allocation-free bit field alongside
+  pixel coverage.
+- Two distinct native adapters exercise the same backend contract with different
+  capability profiles. The complete native PlatformIO matrix passes 30 tests:
+  14 display-core cases, 8 RF-01 parser cases including deterministic arbitrary
+  input, and 8 RF-02 provisioning regressions.
+- `MOBAdisplay` builds with zero warnings and errors. The complete .NET test
+  matrix passes 1,408 net10.0 tests with four existing skips and 1,461 Windows
+  tests without failures or skips.
+- The v2 UDP dispatcher and TFT_eSPI reference adapter remain WP4 work; the
+  legacy `main.cpp` frame path is intentionally unchanged in this slice.
+- The ESP32-S3 build is blocked before compiling WP3 code because current
+  `main` references an absent `MOBAdisplay/esp32/sdkconfig.defaults`. This
+  pre-existing build-baseline defect is not repaired in issue #36 because the
+  missing configuration belongs to the RF-02/firmware-build boundary.
+- Local Sonar branch analysis was attempted against `github/main` after explicit
+  authorization. Its secret phase reported zero findings; its agentic phase
+  still fails for all nine changed files with `Vortex agentic analysis is not
+  available for this organization (403 Forbidden)`. Remote SonarCloud passed on
+  corrected commit `a453a056`: all applicable findings were fixed and the 38
+  remaining C++17/20-only suggestions were accepted individually with their
+  C++11 compatibility rationale. PR #82 reports zero open or confirmed Sonar
+  findings, and all required GitHub checks are green.
+
+Prior status on 2026-07-21:
 
 - WP0 local readiness is complete: the assigned branch and worktree were
   synchronized non-destructively with current `main`; the single protocol-doc
