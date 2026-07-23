@@ -2,7 +2,6 @@
 namespace Moba.Test.TrackPlanRenderer;
 
 using Moba.TrackLibrary.PikoA;
-using System.Diagnostics;
 using System.Text.Json;
 using TrackPlan.Renderer;
 
@@ -79,14 +78,5 @@ internal class RendererTests
         });
 
         Console.WriteLine($"Track plan exported to: {outputPath}");
-
-        if (OperatingSystem.IsWindows())
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = outputPath,
-                UseShellExecute = true
-            });
-        }
     }
 }
