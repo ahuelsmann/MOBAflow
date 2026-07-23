@@ -7,7 +7,8 @@ namespace MobaDisplay
 {
 namespace Udp
 {
-constexpr size_t kMaxPacketBytes = 768;
+constexpr size_t kMaxPacketBytes = 1232;
+constexpr size_t kLegacyMaxPacketBytes = 768;
 constexpr size_t kLegacyLineBytes = 480;
 constexpr size_t kIndexedLineBytes = 482;
 constexpr uint16_t kDisplayHeight = 280;
@@ -19,6 +20,7 @@ enum class PacketKind : uint8_t
     FrameStart,
     FrameDone,
     HostVersion,
+    Versioned,
     LegacyLine,
     IndexedLine,
     Truncated,

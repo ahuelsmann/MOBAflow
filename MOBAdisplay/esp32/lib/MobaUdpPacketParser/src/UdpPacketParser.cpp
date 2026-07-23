@@ -11,10 +11,12 @@ namespace
 constexpr char kFrameStart[] = "FRAME_START";
 constexpr char kFrameDone[] = "FRAME_DONE";
 constexpr char kHostVersionPrefix[] = "HOST_VER:";
+constexpr uint8_t kVersionedMagic[] = {0x4D, 0x4F, 0x42, 0x41};
 
 constexpr size_t kFrameStartLength = sizeof(kFrameStart) - 1;
 constexpr size_t kFrameDoneLength = sizeof(kFrameDone) - 1;
 constexpr size_t kHostVersionPrefixLength = sizeof(kHostVersionPrefix) - 1;
+constexpr size_t kVersionedMagicLength = sizeof(kVersionedMagic);
 
 PacketView MakePacket(PacketKind kind) noexcept
 {
@@ -65,6 +67,21 @@ PacketView ClassifyPacket(const uint8_t* buffer, size_t copiedLength, size_t dat
 
     if (copiedLength > datagramLength)
         return MakePacket(PacketKind::Malformed);
+
+    if (datagramLength >= kVersionedMagicLength
+        && std::memcmp(buffer, kVersionedMagic, kVersionedMagicLength) == 0)
+    {
+        return {PacketKind::Versioned, buffer, datagramLength, 0};
+    }
+
+    if (datagramLength < kVersionedMagicLength
+        && std::memcmp(buffer, kVersionedMagic, datagramLength) == 0)
+    {
+        return MakePacket(PacketKind::Truncated);
+    }
+
+    if (datagramLength > kLegacyMaxPacketBytes)
+        return MakePacket(PacketKind::Oversized);
 
     if (Matches(buffer, datagramLength, kFrameStart, kFrameStartLength))
         return MakePacket(PacketKind::FrameStart);

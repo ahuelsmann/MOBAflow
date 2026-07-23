@@ -58,6 +58,7 @@ public:
     uint32_t CoveredPixelCount() const noexcept;
     uint32_t AcceptedFrameCount() const noexcept;
     uint32_t RejectedFrameCount() const noexcept;
+    uint32_t LastCompletedFrameId() const noexcept;
     const DisplayResult& LastResult() const noexcept;
 
 private:

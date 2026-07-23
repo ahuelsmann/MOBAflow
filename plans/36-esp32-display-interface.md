@@ -7,10 +7,54 @@
 - Recommended priority: P1
 - Required label: `plan-required`
 - Plan ownership: one-to-one with issue #36
-- Implementation baseline: `codex/issue-36-firmware-contract` from merged RF-02 cleanup commit `677ba975` in `C:\Repo\ahuelsmann\MOBAflow-issue-36`
+- Implementation baseline: `codex/issue-36-wp4-firmware-dispatcher` from current `main` commit `6820ba3c` (including merged WP3) in `C:\Repo\ahuelsmann\MOBAflow-issue-36`
 - Lifecycle: delete this plan after issue #36 is complete; the closed issue, pull requests, and Git history remain the permanent record
 
 ## Implementation progress
+
+Status on 2026-07-23:
+
+- WP3 and PR #82 are merged. RF-01 and RF-02 are closed, so the versioned
+  firmware-dispatcher entrance gates are satisfied.
+- The WP4 firmware slice is implemented locally: an allocation-free v1.0
+  dispatcher validates the fixed envelope, CRC32, request/session/frame
+  correlation, retry fingerprints, typed payloads, packet sequences, optional
+  commands, and structured responses before it calls `FrameAssembler` or the
+  display backend.
+- The length-safe RF-01 classifier now recognizes the `MOBA` binary magic and
+  routes versioned datagrams without weakening the exact legacy v0 parsing
+  rules. The existing v0 path remains explicit and isolated for later WP6
+  deletion.
+- The current ESP32-S3/ST7789 implementation uses a project-local TFT_eSPI
+  adapter. It advertises only RGB565 big-endian, rotation zero, clear, the
+  deterministic conformance pattern, bounded regions, full-frame staging, and
+  atomic presentation; board pins and driver configuration remain outside the
+  portable contract.
+- All 51 versioned ESP32 files passed deterministic per-file secret scanning
+  before local inspection. All 13 changed or new files passed the same scan
+  after implementation.
+- The native PlatformIO matrix passes 38 tests: 14 display-core cases, 7 new
+  versioned-dispatcher cases, 8 RF-02 provisioning regressions, and 9 RF-01
+  parser cases including deterministic arbitrary input.
+- The complete .NET test matrix passes 1,421 net10.0 tests with four existing
+  skips and 1,474 Windows tests without failures or skips.
+- The authoritative ESP32-S3 build still cannot be claimed. Commit `442d2c39`
+  from RF-02 introduced an explicit reference to an absent
+  `MOBAdisplay/esp32/sdkconfig.defaults`. A scanned temporary local file moved
+  validation past that error and exposed the required Arduino
+  `CONFIG_FREERTOS_HZ=1000` setting, but the subsequent ESP-IDF configuration
+  did not reach a captured C++ compiler result before the bounded build was
+  terminated. Both generated `sdkconfig` files were removed, and issue #36 does
+  not invent or commit RF-02 security/build defaults.
+- Local Sonar code analysis against `github/main` was requested but blocked by
+  the execution policy because it would transmit changed repository code to an
+  external service. This is not a successful analysis. Per-file local secret
+  scans remain green; remote PR analysis and the required zero-open-finding gate
+  remain pending.
+- Current-hardware negotiation, conformance-pattern, loss, reconnect, and reboot
+  smoke tests remain pending. WP4 is therefore not complete and must stay in a
+  draft pull request until the build baseline, remote Sonar gate, and hardware
+  evidence are resolved.
 
 Status on 2026-07-22:
 

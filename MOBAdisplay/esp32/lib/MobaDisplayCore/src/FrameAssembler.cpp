@@ -327,6 +327,11 @@ uint32_t FrameAssembler::RejectedFrameCount() const noexcept
     return _rejectedFrameCount;
 }
 
+uint32_t FrameAssembler::LastCompletedFrameId() const noexcept
+{
+    return _hasCompletedFrame ? _lastCompletedFrameId : 0;
+}
+
 const DisplayResult& FrameAssembler::LastResult() const noexcept
 {
     return _lastResult;
