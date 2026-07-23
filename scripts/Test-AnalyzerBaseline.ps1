@@ -88,9 +88,7 @@ function Test-IsGeneratedPath([string] $Path) {
         $Path.EndsWith(".generated.cs", [StringComparison]::OrdinalIgnoreCase)
 }
 
-function Get-SarifDiagnostics(
-    [string] $RepositoryRoot,
-    [string] $ResolvedSarifRoot) {
+function Get-SarifFiles([string] $ResolvedSarifRoot) {
     $sarifFiles = @(
         Get-ChildItem -LiteralPath $ResolvedSarifRoot -Recurse -Filter "*.sarif" -File |
             Where-Object {
@@ -103,67 +101,105 @@ function Get-SarifDiagnostics(
         throw "No analyzer SARIF files were found below '$ResolvedSarifRoot'."
     }
 
-    $diagnostics = foreach ($sarifFile in $sarifFiles) {
-        try {
-            $document = Get-Content -Raw -LiteralPath $sarifFile.FullName | ConvertFrom-Json
-        }
-        catch {
-            throw "Invalid SARIF file '$($sarifFile.FullName)': $($_.Exception.Message)"
-        }
+    return $sarifFiles
+}
 
+function Read-SarifDocument([IO.FileInfo] $SarifFile) {
+    try {
+        return Get-Content -Raw -LiteralPath $SarifFile.FullName | ConvertFrom-Json
+    }
+    catch {
+        throw "Invalid SARIF file '$($SarifFile.FullName)': $($_.Exception.Message)"
+    }
+}
+
+function Get-SarifRuns(
+    [object] $Document,
+    [string] $SarifFilePath) {
+    $runsProperty = $Document.PSObject.Properties["runs"]
+    if ($null -eq $runsProperty -or @($runsProperty.Value).Count -eq 0) {
+        throw "SARIF file '$SarifFilePath' has no runs."
+    }
+
+    return @($runsProperty.Value)
+}
+
+function Get-SarifRunResults(
+    [object] $Run,
+    [string] $SarifFilePath) {
+    if ($null -eq $Run) {
+        throw "SARIF file '$SarifFilePath' contains an empty run."
+    }
+
+    $resultsProperty = $Run.PSObject.Properties["results"]
+    if ($null -eq $resultsProperty) {
+        return @()
+    }
+
+    return @($resultsProperty.Value)
+}
+
+function ConvertTo-SarifDiagnostic(
+    [object] $Result,
+    [string] $SarifFilePath,
+    [string] $RepositoryRoot,
+    [string] $Project,
+    [string] $TargetFramework) {
+    if ($null -eq $Result) {
+        throw "SARIF file '$SarifFilePath' contains an empty result."
+    }
+
+    $path = Get-RepositoryRelativePath `
+        -RepositoryRoot $RepositoryRoot `
+        -ArtifactUri (Get-ResultArtifactUri $Result)
+    if (Test-IsGeneratedPath $path) {
+        return $null
+    }
+
+    if ([string]::IsNullOrWhiteSpace([string] $Result.ruleId)) {
+        throw "SARIF result in '$SarifFilePath' has no rule id."
+    }
+
+    $messageObject = $Result.PSObject.Properties["message"]
+    if ($null -eq $messageObject -or $null -eq $messageObject.Value) {
+        throw "SARIF result '$($Result.ruleId)' in '$SarifFilePath' has no message."
+    }
+
+    $messageProperty = $messageObject.Value.PSObject.Properties["text"]
+    if ($null -eq $messageProperty -or
+        [string]::IsNullOrWhiteSpace([string] $messageProperty.Value)) {
+        throw "SARIF result '$($Result.ruleId)' in '$SarifFilePath' has no text message."
+    }
+
+    return [pscustomobject]@{
+        project = $Project
+        targetFramework = $TargetFramework
+        ruleId = [string] $Result.ruleId
+        path = $path
+        message = Normalize-Message `
+            -Message ([string] $messageProperty.Value) `
+            -RepositoryRoot $RepositoryRoot
+    }
+}
+
+function Get-SarifDiagnostics(
+    [string] $RepositoryRoot,
+    [string] $ResolvedSarifRoot) {
+    $diagnostics = foreach ($sarifFile in Get-SarifFiles $ResolvedSarifRoot) {
+        $document = Read-SarifDocument $sarifFile
         $targetFramework = $sarifFile.Directory.Name
         $project = $sarifFile.BaseName
 
-        $runsProperty = $document.PSObject.Properties["runs"]
-        if ($null -eq $runsProperty -or @($runsProperty.Value).Count -eq 0) {
-            throw "SARIF file '$($sarifFile.FullName)' has no runs."
-        }
-
-        foreach ($run in @($runsProperty.Value)) {
-            if ($null -eq $run) {
-                throw "SARIF file '$($sarifFile.FullName)' contains an empty run."
-            }
-
-            $resultsProperty = $run.PSObject.Properties["results"]
-            if ($null -eq $resultsProperty) {
-                continue
-            }
-
-            foreach ($result in @($resultsProperty.Value)) {
-                if ($null -eq $result) {
-                    throw "SARIF file '$($sarifFile.FullName)' contains an empty result."
-                }
-
-                $path = Get-RepositoryRelativePath `
+        foreach ($run in Get-SarifRuns -Document $document -SarifFilePath $sarifFile.FullName) {
+            foreach ($result in Get-SarifRunResults -Run $run -SarifFilePath $sarifFile.FullName) {
+                $diagnostic = ConvertTo-SarifDiagnostic `
+                    -Result $result `
+                    -SarifFilePath $sarifFile.FullName `
                     -RepositoryRoot $RepositoryRoot `
-                    -ArtifactUri (Get-ResultArtifactUri $result)
-                if (Test-IsGeneratedPath $path) {
-                    continue
-                }
-
-                if ([string]::IsNullOrWhiteSpace([string] $result.ruleId)) {
-                    throw "SARIF result in '$($sarifFile.FullName)' has no rule id."
-                }
-
-                $messageObject = $result.PSObject.Properties["message"]
-                if ($null -eq $messageObject -or $null -eq $messageObject.Value) {
-                    throw "SARIF result '$($result.ruleId)' in '$($sarifFile.FullName)' has no message."
-                }
-
-                $messageProperty = $messageObject.Value.PSObject.Properties["text"]
-                if ($null -eq $messageProperty -or
-                    [string]::IsNullOrWhiteSpace([string] $messageProperty.Value)) {
-                    throw "SARIF result '$($result.ruleId)' in '$($sarifFile.FullName)' has no text message."
-                }
-
-                [pscustomobject]@{
-                    project = $project
-                    targetFramework = $targetFramework
-                    ruleId = [string] $result.ruleId
-                    path = $path
-                    message = Normalize-Message `
-                        -Message ([string] $messageProperty.Value) `
-                        -RepositoryRoot $RepositoryRoot
+                    -Project $project `
+                    -TargetFramework $targetFramework
+                if ($null -ne $diagnostic) {
+                    $diagnostic
                 }
             }
         }
@@ -199,6 +235,39 @@ function Get-EntryKey([object] $Entry) {
     return "$($Entry.project)|$($Entry.targetFramework)|$($Entry.ruleId)|$($Entry.path)|$($Entry.message)"
 }
 
+function ConvertTo-EntryCountMap([object[]] $Entries) {
+    $countsByKey = @{}
+    foreach ($entry in $Entries) {
+        $countsByKey[(Get-EntryKey $entry)] = [int] $entry.count
+    }
+
+    return $countsByKey
+}
+
+function Get-EntryCount(
+    [hashtable] $CountsByKey,
+    [string] $Key) {
+    if ($CountsByKey.ContainsKey($Key)) {
+        return $CountsByKey[$Key]
+    }
+
+    return 0
+}
+
+function Get-BaselineMismatch(
+    [string] $Key,
+    [hashtable] $ExpectedByKey,
+    [hashtable] $CurrentByKey) {
+    $expected = Get-EntryCount -CountsByKey $ExpectedByKey -Key $Key
+    $current = Get-EntryCount -CountsByKey $CurrentByKey -Key $Key
+    if ($expected -eq $current) {
+        return $null
+    }
+
+    $direction = if ($current -gt $expected) { "new or increased" } else { "removed or decreased" }
+    return "$direction diagnostic: expected=$expected current=$current $Key"
+}
+
 function Write-Baseline(
     [string] $ResolvedBaselinePath,
     [object[]] $Entries) {
@@ -230,25 +299,20 @@ function Compare-Baseline(
         throw "Unsupported analyzer baseline schema version '$($baseline.schemaVersion)'."
     }
 
-    $expectedByKey = @{}
-    foreach ($entry in @($baseline.diagnostics)) {
-        $expectedByKey[(Get-EntryKey $entry)] = [int] $entry.count
-    }
-
-    $currentByKey = @{}
-    foreach ($entry in $CurrentEntries) {
-        $currentByKey[(Get-EntryKey $entry)] = [int] $entry.count
-    }
-
-    $failures = [Collections.Generic.List[string]]::new()
-    foreach ($key in @($expectedByKey.Keys + $currentByKey.Keys | Sort-Object -Unique)) {
-        $expected = if ($expectedByKey.ContainsKey($key)) { $expectedByKey[$key] } else { 0 }
-        $current = if ($currentByKey.ContainsKey($key)) { $currentByKey[$key] } else { 0 }
-        if ($expected -ne $current) {
-            $direction = if ($current -gt $expected) { "new or increased" } else { "removed or decreased" }
-            $failures.Add("$direction diagnostic: expected=$expected current=$current $key")
+    $expectedByKey = ConvertTo-EntryCountMap @($baseline.diagnostics)
+    $currentByKey = ConvertTo-EntryCountMap $CurrentEntries
+    $keys = @($expectedByKey.Keys + $currentByKey.Keys | Sort-Object -Unique)
+    $failures = @(
+        foreach ($key in $keys) {
+            $mismatch = Get-BaselineMismatch `
+                -Key $key `
+                -ExpectedByKey $expectedByKey `
+                -CurrentByKey $currentByKey
+            if ($null -ne $mismatch) {
+                $mismatch
+            }
         }
-    }
+    )
 
     if ($failures.Count -gt 0) {
         throw "Analyzer baseline mismatch. Refresh the baseline in the same reviewed change:`n - $($failures -join "`n - ")"
