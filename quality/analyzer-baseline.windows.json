@@ -40,13 +40,6 @@
       "project": "MOBAflow",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1003",
-      "path": "MOBAflow/Controls/SignalBox/SignalBoxPropertiesControl.xaml.cs",
-      "count": 2
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1003",
       "path": "MOBAflow/Service/RestApiProcessService.cs",
       "count": 1
     },
@@ -69,13 +62,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1031",
       "path": "MOBAflow/Controls/SignalBox/SignalBoxCanvasControl.xaml.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1031",
-      "path": "MOBAflow/Controls/SignalBox/SignalBoxPropertiesControl.xaml.cs",
       "count": 1
     },
     {
@@ -406,13 +392,6 @@
       "ruleId": "CA1305",
       "path": "MOBAflow/Controls/Amperemeter.xaml.cs",
       "count": 2
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1305",
-      "path": "MOBAflow/Controls/SignalBox/SignalBoxPropertiesControl.xaml.cs",
-      "count": 1
     },
     {
       "project": "MOBAflow",
@@ -1064,13 +1043,6 @@
       "ruleId": "CA1848",
       "path": "MOBAflow/Controls/SignalBox/SignalBoxCanvasControl.xaml.cs",
       "count": 2
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1848",
-      "path": "MOBAflow/Controls/SignalBox/SignalBoxPropertiesControl.xaml.cs",
-      "count": 3
     },
     {
       "project": "MOBAflow",
@@ -1944,13 +1916,6 @@
       "project": "MOBAflow",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CsWinRT1030",
-      "path": "MOBAflow/Controls/SignalBox/SignalBoxPropertiesControl.xaml.cs",
-      "count": 2
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1030",
       "path": "MOBAflow/Service/CityService.cs",
       "count": 1
     },
@@ -2050,13 +2015,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "IDE0005",
       "path": "MOBAflow/Controls/SignalAspectPicker.xaml.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "IDE0005",
-      "path": "MOBAflow/Controls/SignalBox/SignalBoxPropertiesControl.xaml.cs",
       "count": 1
     },
     {
@@ -3918,7 +3876,7 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
-      "path": "Test/TrackPlanRenderer/TrackLayoutArchitectureTests.cs",
+      "path": "Test/SharedUI/SignalBoxPropertiesViewModelTests.cs",
       "count": 1
     },
     {

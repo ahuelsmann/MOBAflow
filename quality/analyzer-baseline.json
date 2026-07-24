@@ -6172,7 +6172,7 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/TrackPlanRenderer/TrackLayoutArchitectureTests.cs",
+      "path": "Test/SharedUI/SignalBoxPropertiesViewModelTests.cs",
       "count": 1
     },
     {

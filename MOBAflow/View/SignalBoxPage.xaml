@@ -100,10 +100,7 @@
                 IsExpanded="{x:Bind ViewModel.IsSignalBoxPropertiesExpanded, Mode=TwoWay}">
                 <controls:CollapsibleColumnProperties.PanelContent>
                     <signalbox:SignalBoxPropertiesControl
-                        x:Name="PropertiesControl"
-                        RequestElementDeletion="OnPropertyControlElementDeletion"
-                        RequestVisualRefresh="OnPropertyControlVisualRefresh"
-                        ViewModel="{x:Bind ViewModel, Mode=OneWay}" />
+                        x:Name="PropertiesControl" />
                 </controls:CollapsibleColumnProperties.PanelContent>
             </controls:CollapsibleColumnProperties>
         </Grid>
