@@ -61,9 +61,9 @@ function Get-IssueGovernanceErrors([string] $EventPath) {
         throw "IssueEventPath is required in Issue mode."
     }
 
-    $event = Get-Content -Raw -LiteralPath $EventPath | ConvertFrom-Json
-    $title = [string] $event.issue.title
-    $body = [string] $event.issue.body
+    $issueEvent = Get-Content -Raw -LiteralPath $EventPath | ConvertFrom-Json
+    $title = [string] $issueEvent.issue.title
+    $body = [string] $issueEvent.issue.body
 
     if ($title -match "^T\d{3}:") {
         return @()
@@ -146,6 +146,51 @@ function Get-StandalonePlanErrors(
     return @($errors)
 }
 
+function Add-FeatureSpecificationErrors(
+    [string] $Text,
+    [string] $RelativePath,
+    [Collections.Generic.List[string]] $Errors) {
+    if (-not (Test-GitHubIssueMetadata $Text)) {
+        $Errors.Add("$RelativePath must reference its source GitHub issue.")
+    }
+    if ($Text -notmatch "(?m)^## Governance and Traceability") {
+        $Errors.Add("$RelativePath is missing the Governance and Traceability section.")
+    }
+    if ($Text -notmatch "(?im)^\*\*Spec Kit\*\*:\s*Required\s*$") {
+        $Errors.Add("$RelativePath must declare Spec Kit as required.")
+    }
+}
+
+function Add-FeaturePlanErrors(
+    [string] $Text,
+    [string] $RelativePath,
+    [Collections.Generic.List[string]] $Errors) {
+    if (-not (Test-GitHubIssueMetadata $Text)) {
+        $Errors.Add("$RelativePath must reference its authoritative GitHub issue.")
+    }
+    if ($Text -notmatch "(?m)^## Constitution Check") {
+        $Errors.Add("$RelativePath is missing the Constitution Check.")
+    }
+    if ($Text -notmatch "(?m)^## Validation Strategy") {
+        $Errors.Add("$RelativePath is missing the Validation Strategy.")
+    }
+    if ($Text -notmatch "(?im)^\*\*Spec Kit\*\*:\s*Required\s*$") {
+        $Errors.Add("$RelativePath must declare Spec Kit as required.")
+    }
+}
+
+function Add-FeatureTaskErrors(
+    [string] $Text,
+    [string] $RelativePath,
+    [Collections.Generic.List[string]] $Errors) {
+    if ($Text -notmatch "(?im)^- \[[ xX]\] T\d{3}.*\b(?:test|tests|testing|validate|validation)\b") {
+        $Errors.Add("$RelativePath must contain an explicit automated test or validation task.")
+    }
+    if ($Text -notmatch "(?im)^- \[[ xX]\] T\d{3}.*\bSonar\b") {
+        $Errors.Add("$RelativePath must contain an explicit Sonar quality-gate task.")
+    }
+}
+
 function Get-FeatureArtifactErrors(
     [string] $Root,
     [string] $RelativePath) {
@@ -160,37 +205,22 @@ function Get-FeatureArtifactErrors(
     $fileName = $segments[-1]
     switch ($fileName) {
         "spec.md" {
-            if (-not (Test-GitHubIssueMetadata $text)) {
-                $errors.Add("$RelativePath must reference its source GitHub issue.")
-            }
-            if ($text -notmatch "(?m)^## Governance and Traceability") {
-                $errors.Add("$RelativePath is missing the Governance and Traceability section.")
-            }
-            if ($text -notmatch "(?im)^\*\*Spec Kit\*\*:\s*Required\s*$") {
-                $errors.Add("$RelativePath must declare Spec Kit as required.")
-            }
+            Add-FeatureSpecificationErrors `
+                -Text $text `
+                -RelativePath $RelativePath `
+                -Errors $errors
         }
         "plan.md" {
-            if (-not (Test-GitHubIssueMetadata $text)) {
-                $errors.Add("$RelativePath must reference its authoritative GitHub issue.")
-            }
-            if ($text -notmatch "(?m)^## Constitution Check") {
-                $errors.Add("$RelativePath is missing the Constitution Check.")
-            }
-            if ($text -notmatch "(?m)^## Validation Strategy") {
-                $errors.Add("$RelativePath is missing the Validation Strategy.")
-            }
-            if ($text -notmatch "(?im)^\*\*Spec Kit\*\*:\s*Required\s*$") {
-                $errors.Add("$RelativePath must declare Spec Kit as required.")
-            }
+            Add-FeaturePlanErrors `
+                -Text $text `
+                -RelativePath $RelativePath `
+                -Errors $errors
         }
         "tasks.md" {
-            if ($text -notmatch "(?im)^- \[[ xX]\] T\d{3}.*\b(?:test|tests|testing|validate|validation)\b") {
-                $errors.Add("$RelativePath must contain an explicit automated test or validation task.")
-            }
-            if ($text -notmatch "(?im)^- \[[ xX]\] T\d{3}.*\bSonar\b") {
-                $errors.Add("$RelativePath must contain an explicit Sonar quality-gate task.")
-            }
+            Add-FeatureTaskErrors `
+                -Text $text `
+                -RelativePath $RelativePath `
+                -Errors $errors
         }
     }
 
