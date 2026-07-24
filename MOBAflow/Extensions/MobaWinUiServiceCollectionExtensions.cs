@@ -217,13 +217,14 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton<GraphService>();
         services.AddSingleton<SelectionService>();
         services.AddSingleton<UndoRedoService<TrackPlanEditorDocument>>();
+        services.AddSingleton<TrackPlanEditorService>();
         services.AddSingleton<TrackPlanSolutionBinder>();
         services.AddSingleton<TrackPlanFeedbackHighlighter>();
 
         services.AddSingleton(sp => new TrackPlanViewModel(
             sp.GetRequiredService<TrackPlan>(),
-            sp.GetRequiredService<EditableTrackPlan>(),
-            sp.GetRequiredService<SelectionService>(),
+            sp.GetRequiredService<TrackPlanEditorService>(),
+            sp.GetRequiredService<IDialogService>(),
             sp.GetRequiredService<AppSettings>(),
             sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<ILogger<TrackPlanViewModel>>()));

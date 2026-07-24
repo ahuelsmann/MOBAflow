@@ -1035,7 +1035,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1822",
       "path": "MOBAflow/View/TrackPlanPage.EditorFeatures.cs",
-      "count": 3
+      "count": 2
     },
     {
       "project": "MOBAflow",
@@ -1715,13 +1715,6 @@
       "ruleId": "CA2007",
       "path": "MOBAflow/View/TimetablePage.xaml.cs",
       "count": 2
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA2007",
-      "path": "MOBAflow/View/TrackPlanPage.EditorFeatures.cs",
-      "count": 1
     },
     {
       "project": "MOBAflow",
@@ -5534,13 +5527,6 @@
     {
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "IDE0005",
-      "path": "Test/TrackPlanRenderer/TrackLayoutArchitectureTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "IDE0007",
       "path": "Test/Backend/Z21UnitTests.cs",
       "count": 1
@@ -5683,13 +5669,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "IDE0330",
       "path": "Test/MOBAdisplay/ManualTimeProvider.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "IDE2002",
-      "path": "Test/TrackPlanRenderer/TrackLayoutArchitectureTests.cs",
       "count": 1
     },
     {

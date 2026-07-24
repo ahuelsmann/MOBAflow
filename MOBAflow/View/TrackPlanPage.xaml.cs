@@ -4,7 +4,6 @@ namespace Moba.WinUI.View;
 
 using TrackPlan.Renderer;
 
-using Backend.Service.TrackPlan;
 using Common.Configuration;
 using Common.Extension;
 
@@ -44,7 +43,6 @@ public sealed partial class TrackPlanPage
     private const double MouseWheelScrollStep = 80.0;
     private const double ZoomStep = 0.05;
     private const double PortHighlightRadiusMm = 25.0;
-    private const double RigidGroupSnapAngleToleranceDegrees = 1.0;
     /// <summary>Margin in mm, damit der gesamte Plan sichtbar ist (auch bei negativen Koordinaten).</summary>
     private const double ContentMarginMm = 50.0;
 
@@ -60,9 +58,7 @@ public sealed partial class TrackPlanPage
     public TrackPlanViewModel ViewModel { get; }
     public MainWindowViewModel MainViewModel { get; }
     private readonly EditableTrackPlan _plan;
-    private readonly TrackPlanInteractionService _interactionService;
     private readonly TrackPlanFeedbackHighlighter _feedbackHighlighter;
-    private readonly UndoRedoService<TrackPlanEditorDocument> _undoRedoService;
     private readonly ILogger<TrackPlanPage>? _logger;
 
     private Canvas? _ghostLayer;
@@ -80,7 +76,6 @@ public sealed partial class TrackPlanPage
     private readonly List<Ellipse> _portIndicators = [];
     private readonly List<Ellipse> _highlightedPorts = [];
     private bool _snapEnabled = true;
-    private Guid? _selectedSegmentId;
     private bool _isSyncingSelectedTrackInPort;
     private double _rotationDragStartAngleRad;
     private double _rotationDragStartSegmentDegrees;
@@ -92,9 +87,7 @@ public sealed partial class TrackPlanPage
         TrackPlanViewModel viewModel,
         MainWindowViewModel mainViewModel,
         EditableTrackPlan plan,
-        TrackPlanInteractionService interactionService,
         TrackPlanFeedbackHighlighter feedbackHighlighter,
-        UndoRedoService<TrackPlanEditorDocument> undoRedoService,
         AppSettings settings,
         ISettingsService? settingsService = null,
         ILogger<TrackPlanPage>? logger = null)
@@ -102,9 +95,7 @@ public sealed partial class TrackPlanPage
         ViewModel = viewModel;
         MainViewModel = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
         _plan = plan ?? throw new ArgumentNullException(nameof(plan));
-        _interactionService = interactionService ?? throw new ArgumentNullException(nameof(interactionService));
         _feedbackHighlighter = feedbackHighlighter ?? throw new ArgumentNullException(nameof(feedbackHighlighter));
-        _undoRedoService = undoRedoService ?? throw new ArgumentNullException(nameof(undoRedoService));
         _settings = settings;
         _settingsService = settingsService;
         _logger = logger;
@@ -117,7 +108,6 @@ public sealed partial class TrackPlanPage
 
         SnapToggle.Checked += (_, _) => { _snapEnabled = true; };
         SnapToggle.Unchecked += (_, _) => { _snapEnabled = false; };
-        DisconnectButton.Click += (_, _) => DisconnectSelectedSegment();
         ExportSvgInBrowserMenuItem.Click += (_, _) => OpenSvgInBrowser();
     }
 
@@ -322,42 +312,39 @@ public sealed partial class TrackPlanPage
         if (FocusManager.GetFocusedElement(XamlRoot) is TextBox or NumberBox)
             return;
 
-        if (_selectedSegmentId == null)
+        if (!ViewModel.CanDeleteSelectedTrack)
             return;
 
-        DeleteSelectedSegment();
+        ViewModel.DeleteSelectedTrackCommand.Execute(null);
         args.Handled = true;
     }
 
     private void OnUndoAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
     {
         _ = sender;
-        Undo();
+        ViewModel.UndoCommand.Execute(null);
         args.Handled = true;
     }
 
     private void OnRedoAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
     {
         _ = sender;
-        Redo();
+        ViewModel.RedoCommand.Execute(null);
         args.Handled = true;
     }
 
     private void OnSelectedTrackInPortChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
     {
         _ = sender;
-        if (_selectedSegmentId == null || _isSyncingSelectedTrackInPort)
+        if (ViewModel.SelectedTrackId == null || _isSyncingSelectedTrackInPort)
             return;
 
         int? newInPort = double.IsNaN(args.NewValue) ? null : (int)args.NewValue;
-        var placed = _plan.Segments.FirstOrDefault(s => s.Segment.No == _selectedSegmentId.Value);
+        var placed = ViewModel.SelectedTrack;
         if (placed == null || placed.InPort == newInPort)
             return;
 
-        var before = CaptureDocumentState();
-        ViewModel.SelectTrack(_selectedSegmentId);
-        ViewModel.AssignSelectedTrackFeedback(newInPort);
-        CommitHistorySnapshot(before);
+        ViewModel.AssignSelectedTrackFeedbackCommand.Execute(newInPort);
     }
 
     private async Task HandlePageKeyDownAsync(KeyRoutedEventArgs e)
@@ -371,14 +358,14 @@ public sealed partial class TrackPlanPage
             {
                 if (e.Key == VirtualKey.Z)
                 {
-                    Undo();
+                    ViewModel.UndoCommand.Execute(null);
                     e.Handled = true;
                     return;
                 }
 
                 if (e.Key == VirtualKey.Y)
                 {
-                    Redo();
+                    ViewModel.RedoCommand.Execute(null);
                     e.Handled = true;
                     return;
                 }
@@ -412,9 +399,9 @@ public sealed partial class TrackPlanPage
                 }
             }
 
-            if (e.Key == VirtualKey.R && _selectedSegmentId != null && DisconnectButton.IsEnabled)
+            if (e.Key == VirtualKey.R && ViewModel.CanDisconnectSelectedTrack)
             {
-                DisconnectSelectedSegment();
+                ViewModel.DisconnectSelectedTrackCommand.Execute(null);
                 e.Handled = true;
                 return;
             }
@@ -422,10 +409,10 @@ public sealed partial class TrackPlanPage
             if (e.Key != VirtualKey.Delete && e.Key != VirtualKey.Back)
                 return;
 
-            if (_selectedSegmentId == null)
+            if (!ViewModel.CanDeleteSelectedTrack)
                 return;
 
-            DeleteSelectedSegment();
+            ViewModel.DeleteSelectedTrackCommand.Execute(null);
             e.Handled = true;
         }
         catch (Exception ex)
@@ -445,12 +432,6 @@ public sealed partial class TrackPlanPage
             _drawOffsetInitialized = true;
         }
 
-        if (_selectedSegmentId.HasValue && _plan.Segments.All(s => s.Segment.No != _selectedSegmentId.Value))
-        {
-            _selectedSegmentId = null;
-        }
-
-        ViewModel.SelectTrack(_selectedSegmentId);
         ViewModel.RefreshEditorState();
         UpdateSelectionInfo();
         UpdateCommandStates();
@@ -661,11 +642,10 @@ public sealed partial class TrackPlanPage
         var pos = ptr.Position;
         var (xMm, yMm) = ToWorldCoordinates(pos);
 
-        var dragSelection = _interactionService.SelectForDrag(xMm, yMm);
+        var dragSelection = ViewModel.SelectForDrag(xMm, yMm);
         if (dragSelection == null)
         {
             _draggingGroup = [];
-            _selectedSegmentId = null;
             UpdateSelectionInfo();
             RefreshCanvas();
         }
@@ -794,7 +774,7 @@ public sealed partial class TrackPlanPage
 
     private void BeginCanvasDrag(PlacedSegment hit, IReadOnlySet<Guid> movingGroup, Point pointerPosition, Pointer pointer)
     {
-        _selectedSegmentId = hit.Segment.No;
+        ViewModel.SelectTrack(hit.Segment.No);
         UpdateSelectionInfo();
         RefreshCanvas();
 
@@ -802,7 +782,7 @@ public sealed partial class TrackPlanPage
         _draggedSegmentId = hit.Segment.No;
         _draggedPlaced = hit;
         _draggingGroup = [.. movingGroup];
-        _pendingDragSnapshot = CaptureDocumentState();
+        ViewModel.BeginGesture();
         _dragStartCanvasPoint = pointerPosition;
         _dragHasMoved = false;
         CreateGhost(hit);
@@ -839,7 +819,7 @@ public sealed partial class TrackPlanPage
 
     private void UpdateDraggedGroupPosition(double deltaMmX, double deltaMmY)
     {
-        _interactionService.MoveGroup(_draggingGroup, deltaMmX, deltaMmY);
+        ViewModel.MoveGroup(_draggingGroup, deltaMmX, deltaMmY);
 
         if (_ghostShape != null && _draggedPlaced != null)
         {
@@ -879,7 +859,6 @@ public sealed partial class TrackPlanPage
         var (xMm, yMm) = ToWorldCoordinates(canvasPoint);
         UpdateToolboxDragPlacement(xMm, yMm);
         TrySnapAndPlace(_draggedPlaced, null);
-        _plan.HealImplicitConnections();
     }
 
     private void Canvas_PointerReleased_CanvasDrag(object sender, PointerRoutedEventArgs e)
@@ -900,29 +879,13 @@ public sealed partial class TrackPlanPage
 
     private void CompleteCanvasDrop()
     {
-        if (ShouldSnapDraggedSegmentOnDrop())
+        if (_draggedSegmentId.HasValue)
         {
-            TrySnapOnDrop(_draggedSegmentId!.Value);
+            ViewModel.CompleteMove(
+                _draggedSegmentId.Value,
+                _draggingGroup,
+                snapEnabled: _snapEnabled && _dragHasMoved);
         }
-
-        _plan.HealImplicitConnections();
-        CommitPendingDragSnapshot();
-    }
-
-    private bool ShouldSnapDraggedSegmentOnDrop()
-    {
-        return _draggedSegmentId.HasValue && _dragHasMoved;
-    }
-
-    private void CommitPendingDragSnapshot()
-    {
-        if (_pendingDragSnapshot == null)
-        {
-            return;
-        }
-
-        CommitHistorySnapshot(_pendingDragSnapshot);
-        _pendingDragSnapshot = null;
     }
 
     private void ResetDragState()
@@ -975,79 +938,19 @@ public sealed partial class TrackPlanPage
 
     private void TrySnapAndPlace(PlacedSegment placed, Guid? excludeSegmentId)
     {
-        var before = CaptureDocumentState();
-        var snap = FindSnapWhenEnabled(placed, excludeSegmentId);
-        if (snap != null)
-        {
-            ApplySnapAdd(snap.Value);
-            UpdateStats();
-            CommitHistorySnapshot(before);
-            return;
-        }
-
-        AddSegmentWithoutSnap(placed);
+        _ = excludeSegmentId;
+        ViewModel.PlaceSegment(placed, _snapEnabled);
         UpdateStats();
-        CommitHistorySnapshot(before);
-    }
-
-    private void TrySnapOnDrop(Guid movedSegmentId)
-    {
-        var placed = _plan.Segments.FirstOrDefault(s => s.Segment.No == movedSegmentId);
-        if (placed == null)
-            return;
-
-        var snap = FindSnapWhenEnabled(placed, movedSegmentId);
-        if (snap == null)
-            return;
-
-        ApplySnapMove(movedSegmentId, placed, snap.Value);
     }
 
     private (PlacedSegment Placed, string SourcePort, Guid TargetSegmentId, string TargetPort)? FindBestSnap(PlacedSegment placed, Guid? excludeSegmentId)
     {
         var movingGroup = _draggedSegmentId == placed.Segment.No ? _draggingGroup : null;
-        var snap = _interactionService.FindBestSnap(placed, excludeSegmentId, movingGroup);
+        var snap = ViewModel.FindBestSnap(placed, excludeSegmentId, movingGroup);
 
         return snap == null
             ? null
             : (snap.Placed, snap.SourcePort, snap.TargetSegmentId, snap.TargetPort);
-    }
-
-    private (PlacedSegment Placed, string SourcePort, Guid TargetSegmentId, string TargetPort)? FindSnapWhenEnabled(PlacedSegment placed, Guid? excludeSegmentId)
-    {
-        if (!_snapEnabled)
-        {
-            return null;
-        }
-
-        return FindBestSnap(placed, excludeSegmentId);
-    }
-
-    private void ApplySnapAdd((PlacedSegment Placed, string SourcePort, Guid TargetSegmentId, string TargetPort) snap)
-    {
-        _interactionService.AddWithSnap(new TrackPlanSnapHelper.SnapResult(
-            snap.Placed,
-            snap.SourcePort,
-            snap.TargetSegmentId,
-            snap.TargetPort,
-            0));
-    }
-
-    private void AddSegmentWithoutSnap(PlacedSegment placed)
-    {
-        _plan.AddSegment(placed);
-    }
-
-    private void ApplySnapMove(
-        Guid movedSegmentId,
-        PlacedSegment originalPlaced,
-        (PlacedSegment Placed, string SourcePort, Guid TargetSegmentId, string TargetPort) snap)
-    {
-        _interactionService.MoveWithSnap(
-            movedSegmentId,
-            originalPlaced,
-            new TrackPlanSnapHelper.SnapResult(snap.Placed, snap.SourcePort, snap.TargetSegmentId, snap.TargetPort, 0),
-            _draggingGroup);
     }
 
     private static double NormalizeAngle(double degrees)
@@ -1062,29 +965,6 @@ public sealed partial class TrackPlanPage
         return _plan.Connections.Any(connection =>
             (connection.SourceSegment == segmentId && connection.SourcePort == portName)
             || (connection.TargetSegment == segmentId && connection.TargetPort == portName));
-    }
-
-    private bool IsRigidDraggingGroup(PlacedSegment placed)
-    {
-        return _draggedSegmentId == placed.Segment.No && _draggingGroup.Count > 1 && _draggingGroup.Contains(placed.Segment.No);
-    }
-
-    private bool CanRigidlySnapToTargetPort(PlacedSegment movingSegment, string sourcePort, PlacedSegment targetSegment, string targetPort)
-    {
-        if (!IsRigidDraggingGroup(movingSegment))
-            return true;
-
-        var desiredOutwardAngle = NormalizeAngle(SegmentPortGeometry.GetPortOutwardWorldAngleDegrees(targetSegment, targetPort) + 180);
-        var currentOutwardAngle = SegmentPortGeometry.GetPortOutwardWorldAngleDegrees(movingSegment, sourcePort);
-        return GetAngleDeltaDegrees(currentOutwardAngle, desiredOutwardAngle) <= RigidGroupSnapAngleToleranceDegrees;
-    }
-
-    private static double GetAngleDeltaDegrees(double leftDegrees, double rightDegrees)
-    {
-        var delta = NormalizeAngle(leftDegrees - rightDegrees);
-        if (delta > 180)
-            delta = 360 - delta;
-        return Math.Abs(delta);
     }
 
     private void UpdatePortHighlights()
@@ -1128,7 +1008,7 @@ public sealed partial class TrackPlanPage
         }
 
         _ = draggedPorts;
-        var preview = _interactionService
+        var preview = ViewModel
             .GetSnapPreview(_draggedPlaced, _draggingGroup, PortHighlightRadiusMm)
             .HighlightedPorts;
         ViewModel.SetSnapPreview(preview);
@@ -1196,92 +1076,6 @@ public sealed partial class TrackPlanPage
         foreach (var el in _portIndicators)
             OverlayCanvas.Children.Remove(el);
         _portIndicators.Clear();
-    }
-
-    private PlacedSegment? HitTestSegment(double xMm, double yMm)
-    {
-        return _interactionService.HitTest(xMm, yMm);
-    }
-
-    private static void TryHitTestPorts(
-        PlacedSegment placed,
-        IReadOnlyList<(string PortName, double X, double Y, double AngleDegrees)> ports,
-        double xMm,
-        double yMm,
-        double hitToleranceMm,
-        ref PlacedSegment? best,
-        ref double bestDist)
-    {
-        foreach (var (_, px, py, _) in ports)
-        {
-            var dist = Math.Sqrt((xMm - px) * (xMm - px) + (yMm - py) * (yMm - py));
-            UpdateBestHitCandidate(placed, dist, hitToleranceMm, ref best, ref bestDist);
-        }
-    }
-
-    private static void TryHitTestNeighborPortSegments(
-        PlacedSegment placed,
-        IReadOnlyList<(string PortName, double X, double Y, double AngleDegrees)> ports,
-        double xMm,
-        double yMm,
-        double hitToleranceMm,
-        ref PlacedSegment? best,
-        ref double bestDist)
-    {
-        for (var i = 0; i < ports.Count - 1; i++)
-        {
-            var (_, x1, y1, _) = ports[i];
-            var (_, x2, y2, _) = ports[i + 1];
-            var dist = DistanceToSegment(xMm, yMm, x1, y1, x2, y2);
-            UpdateBestHitCandidate(placed, dist, hitToleranceMm, ref best, ref bestDist);
-        }
-    }
-
-    private static void TryHitTestFirstToLastPortSegment(
-        PlacedSegment placed,
-        IReadOnlyList<(string PortName, double X, double Y, double AngleDegrees)> ports,
-        double xMm,
-        double yMm,
-        double hitToleranceMm,
-        ref PlacedSegment? best,
-        ref double bestDist)
-    {
-        if (ports.Count < 2)
-        {
-            return;
-        }
-
-        var (_, x1, y1, _) = ports[0];
-        var (_, x2, y2, _) = ports[ports.Count - 1];
-        var dist = DistanceToSegment(xMm, yMm, x1, y1, x2, y2);
-        UpdateBestHitCandidate(placed, dist, hitToleranceMm, ref best, ref bestDist);
-    }
-
-    private static void UpdateBestHitCandidate(
-        PlacedSegment placed,
-        double dist,
-        double hitToleranceMm,
-        ref PlacedSegment? best,
-        ref double bestDist)
-    {
-        if (dist < hitToleranceMm && dist < bestDist)
-        {
-            bestDist = dist;
-            best = placed;
-        }
-    }
-
-    private static double DistanceToSegment(double px, double py, double x1, double y1, double x2, double y2)
-    {
-        var dx = x2 - x1;
-        var dy = y2 - y1;
-        var lenSq = dx * dx + dy * dy;
-        if (lenSq < 1e-10)
-            return Math.Sqrt((px - x1) * (px - x1) + (py - y1) * (py - y1));
-        var t = Math.Clamp(((px - x1) * dx + (py - y1) * dy) / lenSq, 0.0, 1.0);
-        var projX = x1 + t * dx;
-        var projY = y1 + t * dy;
-        return Math.Sqrt((px - projX) * (px - projX) + (py - projY) * (py - projY));
     }
 
     /// <summary>
@@ -1467,7 +1261,7 @@ public sealed partial class TrackPlanPage
         var feedbackIntensities = _plan.Segments.ToDictionary(
             placed => placed.Segment.No,
             placed => _feedbackHighlighter.GetPulseIntensity(placed.Segment.No));
-        var selectedTrackIds = _selectedSegmentId is Guid selectedTrackId
+        var selectedTrackIds = ViewModel.SelectedTrackId is Guid selectedTrackId
             ? new HashSet<Guid> { selectedTrackId }
             : null;
         var renderScene = TrackPlanRenderSceneBuilder.Build(_plan.Segments, selectedTrackIds, feedbackIntensities);
@@ -1718,49 +1512,27 @@ public sealed partial class TrackPlanPage
         ZoomSlider.Value = Math.Clamp(ZoomSlider.Value + delta, ZoomSlider.Minimum, ZoomSlider.Maximum);
     }
 
-    private void DisconnectSelectedSegment()
-    {
-        if (_selectedSegmentId == null)
-            return;
-        var before = CaptureDocumentState();
-        ViewModel.SelectTrack(_selectedSegmentId);
-        ViewModel.DisconnectSelectedTrack();
-        CommitHistorySnapshot(before);
-    }
-
     private void UpdateSelectionInfo()
     {
-        ViewModel.SelectTrack(_selectedSegmentId);
-        if (_selectedSegmentId == null)
+        if (!ViewModel.HasSelectedTrack)
         {
-            SelectionInfoText.Text = "No selection";
-            DisconnectButton.IsEnabled = false;
             HideSelectedTrackPropertiesPanel();
             UpdateRotationHandle(null);
             UpdateCommandStates();
             return;
         }
 
-        var placed = _plan.Segments.FirstOrDefault(s => s.Segment.No == _selectedSegmentId);
+        var placed = ViewModel.SelectedTrack;
         if (placed == null)
         {
-            SelectionInfoText.Text = "No selection";
-            DisconnectButton.IsEnabled = false;
             HideSelectedTrackPropertiesPanel();
             UpdateRotationHandle(null);
             UpdateCommandStates();
             return;
         }
 
-        var entry = PikoACatalog.All.FirstOrDefault(e => e.SegmentType == placed.Segment.GetType());
-        var code = entry?.Code ?? placed.Segment.GetType().Name;
-        var displayName = entry?.DisplayName ?? code;
-        var connCount = _plan.Connections.Count(c => c.SourceSegment == placed.Segment.No || c.TargetSegment == placed.Segment.No);
-
-        SelectionInfoText.Text = $"{code}\n{displayName}\n\nPosition: X={placed.X:F0} mm, Y={placed.Y:F0} mm\nRotation: {placed.RotationDegrees:F0}°\nConnections: {connCount}";
-        DisconnectButton.IsEnabled = connCount > 0;
         ShowSelectedTrackPropertiesPanel(placed);
-        UpdateRotationHandle(connCount == 0 ? placed : null);
+        UpdateRotationHandle(ViewModel.CanRotateSelectedTrack ? placed : null);
         UpdateCommandStates();
     }
 
@@ -1850,7 +1622,7 @@ public sealed partial class TrackPlanPage
 
         _rotationDragStartAngleRad = CalculatePointerAngleRad(placed, e);
         _rotationDragStartSegmentDegrees = placed.RotationDegrees;
-        _pendingRotationSnapshot = CaptureDocumentState();
+        ViewModel.BeginGesture();
 
         AttachRotationDragHandlers(e.Pointer);
         e.Handled = true;
@@ -1867,14 +1639,13 @@ public sealed partial class TrackPlanPage
         var deltaDeg = deltaRad * 180.0 / Math.PI;
         // Im Bildschirm-KS: Uhrzeigersinn = negativer Winkel → Segment soll mitdrehen
         var newRotation = NormalizeAngle(_rotationDragStartSegmentDegrees - deltaDeg);
-        _plan.UpdateSegmentPosition(placed.Segment.No, placed.X, placed.Y, newRotation);
+        ViewModel.SetSelectedTrackRotation(newRotation);
     }
 
     private void RotationHandle_PointerReleased(object sender, PointerRoutedEventArgs e)
     {
         DetachRotationDragHandlers(e.Pointer);
-        CommitHistorySnapshot(_pendingRotationSnapshot);
-        _pendingRotationSnapshot = null;
+        ViewModel.CompleteGesture();
         UpdateSelectionInfo();
     }
 
@@ -1901,7 +1672,7 @@ public sealed partial class TrackPlanPage
         }
 
         var selectedPlaced = GetSelectedSegment();
-        if (selectedPlaced == null || HasConnections(selectedPlaced.Segment.No))
+        if (selectedPlaced == null || !ViewModel.CanRotateSelectedTrack)
         {
             return false;
         }
@@ -1912,17 +1683,7 @@ public sealed partial class TrackPlanPage
 
     private PlacedSegment? GetSelectedSegment()
     {
-        if (_selectedSegmentId == null)
-        {
-            return null;
-        }
-
-        return _plan.Segments.FirstOrDefault(s => s.Segment.No == _selectedSegmentId);
-    }
-
-    private bool HasConnections(Guid segmentId)
-    {
-        return _plan.Connections.Any(c => c.SourceSegment == segmentId || c.TargetSegment == segmentId);
+        return ViewModel.SelectedTrack;
     }
 
     private double CalculatePointerAngleRad(PlacedSegment placed, PointerRoutedEventArgs e)

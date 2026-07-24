@@ -7564,13 +7564,6 @@
     {
       "project": "Test",
       "targetFramework": "net10.0",
-      "ruleId": "IDE0005",
-      "path": "Test/TrackPlanRenderer/TrackLayoutArchitectureTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
       "ruleId": "IDE0007",
       "path": "Test/Backend/Z21UnitTests.cs",
       "count": 1
@@ -7692,13 +7685,6 @@
       "targetFramework": "net10.0",
       "ruleId": "IDE0330",
       "path": "Test/MOBAdisplay/ManualTimeProvider.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE2002",
-      "path": "Test/TrackPlanRenderer/TrackLayoutArchitectureTests.cs",
       "count": 1
     },
     {

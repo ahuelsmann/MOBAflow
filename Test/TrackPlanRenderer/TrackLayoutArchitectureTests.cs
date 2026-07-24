@@ -2,18 +2,18 @@
 namespace Moba.Test.TrackPlanRenderer;
 
 using global::Moba.Backend.Service.TrackPlan;
-using global::Moba.Domain;
-using global::Moba.TrackLibrary.PikoA;
-using global::Moba.SharedUI.Interface;
-using global::Moba.SharedUI.ViewModel;
-using global::Moba.SharedUI.Service;
-using global::Moba.Common.Events;
-using global::Moba.TrackPlan.Renderer;
 using global::Moba.Common.Configuration;
+using global::Moba.Common.Events;
+using global::Moba.Domain;
+using global::Moba.SharedUI.Interface;
+using global::Moba.SharedUI.Service;
+using global::Moba.SharedUI.ViewModel;
+using global::Moba.TrackLibrary.PikoA;
+using global::Moba.TrackPlan.Renderer;
 using Microsoft.Extensions.Logging;
 using Moq;
 
-internal sealed class TrackLayoutArchitectureTests
+internal sealed partial class TrackLayoutArchitectureTests
 {
     [Test]
     public void PikoATrackLibrary_ExposesStableDefinitionsAndConnectors()
@@ -99,10 +99,15 @@ internal sealed class TrackLayoutArchitectureTests
         var segment = new PlacedSegment(new G231(), 0, 0, 0);
         plan.AddSegment(segment);
         var settingsService = new Mock<ISettingsService>();
+        using var editorService = new TrackPlanEditorService(
+            plan,
+            new TrackPlanInteractionService(plan),
+            new SelectionService(),
+            new UndoRedoService<TrackPlanEditorDocument>());
         var viewModel = new TrackPlanViewModel(
             new TrackPlan(),
-            plan,
-            new SelectionService(),
+            editorService,
+            Mock.Of<IDialogService>(),
             new AppSettings(),
             settingsService.Object,
             Mock.Of<ILogger<TrackPlanViewModel>>());
@@ -141,6 +146,7 @@ internal sealed class TrackLayoutArchitectureTests
     public void InteractionService_HitTest_ReturnsNearestTrackInWorldCoordinates()
     {
         var plan = new EditableTrackPlan();
+
         var near = new PlacedSegment(new G231(), 0, 0, 0);
         var far = new PlacedSegment(new G231(), 500, 0, 0);
         plan.AddSegment(near);
@@ -461,4 +467,61 @@ internal sealed class TrackLayoutArchitectureTests
             Is.EqualTo(typeof(LayoutService).Assembly));
     }
 
+    [Test]
+    public void TrackPlanPage_CodeBehind_RemainsAPlatformAdapter()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var codeBehind = string.Join(
+            Environment.NewLine,
+            File.ReadAllText(Path.Combine(repositoryRoot, "MOBAflow", "View", "TrackPlanPage.xaml.cs")),
+            File.ReadAllText(Path.Combine(repositoryRoot, "MOBAflow", "View", "TrackPlanPage.EditorFeatures.cs")));
+        string[] forbiddenPatterns =
+        [
+            "_plan.AddSegment(",
+            "_plan.RemoveSegment(",
+            "_plan.UpdateSegmentPosition(",
+            "_plan.UpdateSegmentInPort(",
+            "_plan.DisconnectSegmentFromGroup(",
+            "_plan.AddConnection(",
+            "_plan.RemoveConnection(",
+            "_plan.MoveGroup(",
+            "_plan.LoadFromPlacements(",
+            "_plan.HealImplicitConnections(",
+            "_interactionService",
+            "_undoRedoService",
+            "_selectedSegmentId",
+            "new ContentDialog",
+            "CollectValidationMessages",
+            "UndoButton.Click",
+            "RedoButton.Click",
+            "ValidateButton.Click",
+            "DisconnectButton.Click",
+            "DeleteButton.Click",
+            "RotateLeftButton.Click",
+            "RotateRightButton.Click"
+        ];
+
+        using (Assert.EnterMultipleScope())
+        {
+            foreach (var forbiddenPattern in forbiddenPatterns)
+            {
+                Assert.That(
+                    codeBehind,
+                    Does.Not.Contain(forbiddenPattern),
+                    $"TrackPlanPage code-behind must not own editor behavior matching '{forbiddenPattern}'.");
+            }
+        }
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        var directory = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
+        while (directory != null && !File.Exists(Path.Combine(directory.FullName, "Moba.slnx")))
+        {
+            directory = directory.Parent;
+        }
+
+        return directory?.FullName
+            ?? throw new DirectoryNotFoundException("Could not locate the MOBAflow repository root.");
+    }
 }
