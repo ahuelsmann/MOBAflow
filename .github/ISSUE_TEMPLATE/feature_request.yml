@@ -61,6 +61,25 @@ body:
       label: Additional context
       description: Add sketches, examples, or links that clarify the proposal.
 
+  - type: dropdown
+    id: spec_kit
+    attributes:
+      label: Spec Kit workflow
+      description: Classify how this proposal enters the specification workflow.
+      options:
+        - Required before implementation
+        - Existing Spec Kit feature
+        - Not applicable - documentation or infrastructure only
+    validations:
+      required: true
+
+  - type: input
+    id: spec_kit_reference
+    attributes:
+      label: Spec Kit reference
+      description: For an existing feature, provide its specs/NNN-feature-name path or linked issue.
+      placeholder: "For example, specs/001-safe-routing or #123"
+
   - type: checkboxes
     id: checks
     attributes:

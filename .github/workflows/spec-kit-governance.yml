@@ -1,0 +1,106 @@
+name: Spec Kit governance
+
+on:
+  issues:
+    types: [opened, edited, reopened]
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "plans/**"
+      - "docs/**"
+      - "specs/**"
+      - ".specify/**"
+      - ".github/ISSUE_TEMPLATE/**"
+      - ".github/instructions/spec-kit-governance.instructions.md"
+      - ".github/workflows/spec-kit-governance.yml"
+      - "scripts/Test-SpecKitGovernance.ps1"
+      - "scripts/Test-SpecKitGovernance.Tests.ps1"
+
+permissions:
+  contents: read
+
+jobs:
+  issue-governance:
+    name: Validate issue traceability
+    if: github.event_name == 'issues'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Validate Spec Kit issue metadata
+        id: governance
+        continue-on-error: true
+        shell: pwsh
+        run: >-
+          ./scripts/Test-SpecKitGovernance.ps1
+          -Mode Issue
+          -IssueEventPath $env:GITHUB_EVENT_PATH
+
+      - name: Mark invalid issue
+        if: steps.governance.outcome == 'failure'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          gh label create needs-specification `
+            --repo $env:REPOSITORY `
+            --color D4C5F9 `
+            --description "Issue needs a valid Spec Kit classification or reference." `
+            --force
+          gh issue edit $env:ISSUE_NUMBER `
+            --repo $env:REPOSITORY `
+            --add-label needs-specification
+
+          $marker = "<!-- spec-kit-governance -->"
+          $comments = gh api "repos/$env:REPOSITORY/issues/$env:ISSUE_NUMBER/comments" |
+            ConvertFrom-Json
+          if (-not ($comments | Where-Object { $_.body.StartsWith($marker) })) {
+            gh issue comment $env:ISSUE_NUMBER `
+              --repo $env:REPOSITORY `
+              --body "$marker`nThis issue does not satisfy the repository's Spec Kit governance. Select a **Spec Kit workflow** value and add a valid `specs/NNN-feature-name` or GitHub issue reference when existing Spec Kit work is selected."
+          }
+
+          throw "Issue failed Spec Kit governance validation."
+
+      - name: Remove resolved governance label
+        if: steps.governance.outcome == 'success'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          gh api `
+            --method DELETE `
+            "repos/$env:REPOSITORY/issues/$env:ISSUE_NUMBER/labels/needs-specification" `
+            --silent 2>$null
+          exit 0
+
+  plan-governance:
+    name: Validate plans and Spec Kit artifacts
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Run governance self-tests
+        shell: pwsh
+        run: ./scripts/Test-SpecKitGovernance.Tests.ps1
+
+      - name: Validate changed plans and Spec Kit artifacts
+        shell: pwsh
+        run: >-
+          ./scripts/Test-SpecKitGovernance.ps1
+          -Mode PullRequest
+          -BaseRef "origin/${{ github.base_ref }}"

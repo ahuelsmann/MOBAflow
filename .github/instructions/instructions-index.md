@@ -39,6 +39,7 @@ applyTo: '**'
 - [vs-setup.instructions.md](./vs-setup.instructions.md)
 - [copilot-tips.instructions.md](./copilot-tips.instructions.md)
 - [Spec Kit workflow](../../docs/SPEC-KIT.md) — specification-driven feature workflow and CLI setup
+- [spec-kit-governance.instructions.md](./spec-kit-governance.instructions.md)
 - [quick-reference.md](./quick-reference.md)
 - [future-enhancements.instructions.md](./future-enhancements.instructions.md)
 - [instructions.instructions.md](./instructions.instructions.md)
