@@ -2,13 +2,9 @@
 
 namespace Moba.WinUI.View;
 
-using TrackPlan.Renderer;
-
 using Common.Configuration;
 using Common.Extension;
-
 using Converter;
-
 using Microsoft.Extensions.Logging;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Geometry;
@@ -24,13 +20,11 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
-
 using SharedUI.Interface;
 using SharedUI.Service;
 using SharedUI.ViewModel;
-
 using TrackLibrary.PikoA;
-
+using TrackPlan.Renderer;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.System;
@@ -56,6 +50,7 @@ public sealed partial class TrackPlanPage
     private readonly ISettingsService? _settingsService;
 
     public TrackPlanViewModel ViewModel { get; }
+    public InterlockingControlViewModel InterlockingViewModel { get; }
     public MainWindowViewModel MainViewModel { get; }
     private readonly EditableTrackPlan _plan;
     private readonly TrackPlanFeedbackHighlighter _feedbackHighlighter;
@@ -85,6 +80,7 @@ public sealed partial class TrackPlanPage
 
     public TrackPlanPage(
         TrackPlanViewModel viewModel,
+        InterlockingControlViewModel interlockingViewModel,
         MainWindowViewModel mainViewModel,
         EditableTrackPlan plan,
         TrackPlanFeedbackHighlighter feedbackHighlighter,
@@ -93,6 +89,7 @@ public sealed partial class TrackPlanPage
         ILogger<TrackPlanPage>? logger = null)
     {
         ViewModel = viewModel;
+        InterlockingViewModel = interlockingViewModel ?? throw new ArgumentNullException(nameof(interlockingViewModel));
         MainViewModel = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
         _plan = plan ?? throw new ArgumentNullException(nameof(plan));
         _feedbackHighlighter = feedbackHighlighter ?? throw new ArgumentNullException(nameof(feedbackHighlighter));
@@ -113,7 +110,11 @@ public sealed partial class TrackPlanPage
 
     private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(ViewModel.IsToolboxExpanded))
+        if (e.PropertyName == nameof(ViewModel.SelectedTrackId))
+        {
+            InterlockingViewModel.SelectTrackRepresentation(ViewModel.SelectedTrackId);
+        }
+        else if (e.PropertyName == nameof(ViewModel.IsToolboxExpanded))
         {
             if (!ViewModel.IsToolboxExpanded)
             {
@@ -159,6 +160,9 @@ public sealed partial class TrackPlanPage
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+        ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+        InterlockingViewModel.StartObserving();
         SegmentPlanPathBuilder.ScaleMmToPx = ScaleMmToPx;
         PopulateToolbox();
         SetupCanvas();
@@ -191,6 +195,7 @@ public sealed partial class TrackPlanPage
         _plan.PlanChanged -= OnPlanChanged;
         KeyDown -= Page_KeyDown;
         _feedbackHighlighter.HighlightsChanged -= OnFeedbackHighlightsChanged;
+        InterlockingViewModel.StopObserving();
     }
 
     private async Task HandlePageUnloadedAsync()

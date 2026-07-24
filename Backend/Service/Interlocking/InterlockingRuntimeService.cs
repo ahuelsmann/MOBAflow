@@ -2,17 +2,13 @@
 
 namespace Moba.Backend.Service.Interlocking;
 
-using System.Threading.Channels;
-
 using Common.Configuration;
 using Common.Events;
-
 using Domain;
-
 using Events;
 using Interface;
-
 using Microsoft.Extensions.Logging;
+using System.Threading.Channels;
 
 /// <summary>
 /// Projects ordered Z21 observations into the same safety engine used by route commands.
@@ -133,6 +129,25 @@ public sealed class InterlockingRuntimeService : IInterlockingRuntime, IInterloc
             new RuntimeWorkItem(SynchronizeCoreAsync, completion),
             cancellationToken).ConfigureAwait(false);
         await completion.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<TurnoutCoordinatorResult> SetTurnoutAsync(
+        Guid turnoutId,
+        TurnoutPosition position,
+        Guid correlationId,
+        CancellationToken cancellationToken = default)
+    {
+        await WhenIdleAsync(cancellationToken).ConfigureAwait(false);
+        var coordinator = _coordinator;
+        if (coordinator == null)
+            return TurnoutRejected("interlocking.inactive", "No interlocking definition is active.", correlationId);
+        if (!IsSynchronized)
+            return TurnoutRejected("interlocking.unsynchronized", "Turnout commands require a complete live interlocking snapshot.", correlationId);
+        return await coordinator.SetTurnoutAsync(
+            turnoutId,
+            position,
+            correlationId,
+            cancellationToken).ConfigureAwait(false);
     }
 
     public Task<RouteCoordinatorResult> PreviewRouteAsync(
@@ -456,6 +471,9 @@ public sealed class InterlockingRuntimeService : IInterlockingRuntime, IInterloc
     }
 
     private RouteCoordinatorResult Rejected(string code, string message, Guid correlationId) =>
+        new(RouteCoordinatorStatus.Rejected, code, message, correlationId, Current);
+
+    private TurnoutCoordinatorResult TurnoutRejected(string code, string message, Guid correlationId) =>
         new(RouteCoordinatorStatus.Rejected, code, message, correlationId, Current);
 
     private void ThrowIfDisposed()

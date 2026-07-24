@@ -275,6 +275,7 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton<IJourneySelectionContext>(sp => sp.GetRequiredService<MainWindowViewModel>());
         services.AddSingleton<IProjectContext>(sp => sp.GetRequiredService<MainWindowViewModel>());
         services.AddSingleton<IRecordingContextProvider, WinUiRecordingContextProvider>();
+        services.AddTransient<InterlockingControlViewModel>();
         services.AddSingleton<JourneyMapViewModel>();
         services.AddSingleton<MonitorPageViewModel>();
         services.AddSingleton<RecorderPageViewModel>();

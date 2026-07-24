@@ -197,6 +197,7 @@ internal static class NavigationRegistration
         // SignalBoxPage: requires custom runtime services
         services.AddSingleton(sp => new SignalBoxPage(
             sp.GetRequiredService<MainWindowViewModel>(),
+            sp.GetRequiredService<InterlockingControlViewModel>(),
             sp.GetRequiredService<SignalBoxPropertiesViewModel>(),
             sp.GetRequiredService<AppSettings>(),
             sp.GetService<ISettingsService>(),
