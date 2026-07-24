@@ -419,7 +419,7 @@ public sealed class TrackPlanEditorService : IDisposable
     }
 
     private static void IncrementPortUsage(
-        IDictionary<(Guid SegmentId, string PortName), int> usage,
+        Dictionary<(Guid SegmentId, string PortName), int> usage,
         (Guid SegmentId, string PortName) key)
     {
         usage[key] = usage.TryGetValue(key, out var count) ? count + 1 : 1;

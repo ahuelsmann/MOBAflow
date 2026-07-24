@@ -94,7 +94,7 @@ public sealed partial class TrackPlanViewModel : ObservableObject, IViewModelWra
     public IReadOnlyList<string> ValidationMessages { get; private set; } = [];
 
     [ObservableProperty]
-    private string _statusText = "Ready.";
+    public partial string StatusText { get; set; } = "Ready.";
 
     [RelayCommand]
     public void SelectTrack(Guid? trackId) => _editorService.Select(trackId);
@@ -238,7 +238,7 @@ public sealed partial class TrackPlanViewModel : ObservableObject, IViewModelWra
             message,
             "OK",
             "Cancel",
-            isCancelDefault: false);
+            isCancelDefault: false).ConfigureAwait(true);
 
         StatusText = result.IsValid
             ? "Validation successful."

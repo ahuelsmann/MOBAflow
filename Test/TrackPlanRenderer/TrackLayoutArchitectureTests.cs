@@ -2,18 +2,18 @@
 namespace Moba.Test.TrackPlanRenderer;
 
 using global::Moba.Backend.Service.TrackPlan;
-using global::Moba.Domain;
-using global::Moba.TrackLibrary.PikoA;
-using global::Moba.SharedUI.Interface;
-using global::Moba.SharedUI.ViewModel;
-using global::Moba.SharedUI.Service;
-using global::Moba.Common.Events;
-using global::Moba.TrackPlan.Renderer;
 using global::Moba.Common.Configuration;
+using global::Moba.Common.Events;
+using global::Moba.Domain;
+using global::Moba.SharedUI.Interface;
+using global::Moba.SharedUI.Service;
+using global::Moba.SharedUI.ViewModel;
+using global::Moba.TrackLibrary.PikoA;
+using global::Moba.TrackPlan.Renderer;
 using Microsoft.Extensions.Logging;
 using Moq;
 
-internal sealed class TrackLayoutArchitectureTests
+internal sealed partial class TrackLayoutArchitectureTests
 {
     [Test]
     public void PikoATrackLibrary_ExposesStableDefinitionsAndConnectors()
@@ -99,7 +99,7 @@ internal sealed class TrackLayoutArchitectureTests
         var segment = new PlacedSegment(new G231(), 0, 0, 0);
         plan.AddSegment(segment);
         var settingsService = new Mock<ISettingsService>();
-        var editorService = new TrackPlanEditorService(
+        using var editorService = new TrackPlanEditorService(
             plan,
             new TrackPlanInteractionService(plan),
             new SelectionService(),
@@ -146,6 +146,7 @@ internal sealed class TrackLayoutArchitectureTests
     public void InteractionService_HitTest_ReturnsNearestTrackInWorldCoordinates()
     {
         var plan = new EditableTrackPlan();
+
         var near = new PlacedSegment(new G231(), 0, 0, 0);
         var far = new PlacedSegment(new G231(), 500, 0, 0);
         plan.AddSegment(near);
@@ -500,7 +501,7 @@ internal sealed class TrackLayoutArchitectureTests
             "RotateRightButton.Click"
         ];
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             foreach (var forbiddenPattern in forbiddenPatterns)
             {
@@ -509,7 +510,7 @@ internal sealed class TrackLayoutArchitectureTests
                     Does.Not.Contain(forbiddenPattern),
                     $"TrackPlanPage code-behind must not own editor behavior matching '{forbiddenPattern}'.");
             }
-        });
+        }
     }
 
     private static string FindRepositoryRoot()
@@ -523,5 +524,4 @@ internal sealed class TrackLayoutArchitectureTests
         return directory?.FullName
             ?? throw new DirectoryNotFoundException("Could not locate the MOBAflow repository root.");
     }
-
 }

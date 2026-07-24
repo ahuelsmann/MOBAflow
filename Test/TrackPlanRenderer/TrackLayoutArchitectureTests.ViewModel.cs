@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.Test.SharedUI;
+namespace Moba.Test.TrackPlanRenderer;
 
 using global::Moba.Backend.Service.TrackPlan;
 using global::Moba.Common.Configuration;
@@ -14,43 +14,47 @@ using Microsoft.Extensions.Logging;
 
 using Moq;
 
-internal sealed class TrackPlanViewModelTests
+internal sealed partial class TrackLayoutArchitectureTests
 {
     [Test]
     public void Selection_Should_ProjectSummaryAndCommandAvailability()
     {
-        var (viewModel, plan) = CreateViewModel();
+        using var context = CreateViewModel();
+        var viewModel = context.ViewModel;
+        var plan = context.Plan;
         var segment = new PlacedSegment(new G231(), 12, 34, 15);
         plan.AddSegment(segment);
 
         viewModel.SelectTrack(segment.Segment.No);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(viewModel.SelectedTrackId, Is.EqualTo(segment.Segment.No));
             Assert.That(viewModel.SelectionSummary, Does.Contain("G231"));
             Assert.That(viewModel.SelectionSummary, Does.Contain("X=12 mm"));
             Assert.That(viewModel.CanDeleteSelectedTrack, Is.True);
             Assert.That(viewModel.CanRotateSelectedTrack, Is.True);
-        });
+        }
     }
 
     [Test]
     public void UndoAndRedoCommands_Should_UpdateStatusAndHistoryState()
     {
-        var (viewModel, plan) = CreateViewModel();
+        using var context = CreateViewModel();
+        var viewModel = context.ViewModel;
+        var plan = context.Plan;
         viewModel.PlaceSegment(new PlacedSegment(new G231(), 0, 0, 0), snapEnabled: false);
 
         viewModel.Undo();
         var undoStatus = viewModel.StatusText;
         viewModel.Redo();
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(undoStatus, Is.EqualTo("Undo executed."));
             Assert.That(viewModel.StatusText, Is.EqualTo("Redo executed."));
             Assert.That(plan.Segments, Has.Count.EqualTo(1));
-        });
+        }
     }
 
     [Test]
@@ -65,12 +69,14 @@ internal sealed class TrackPlanViewModelTests
                 It.IsAny<string>(),
                 It.IsAny<bool>()))
             .ReturnsAsync(false);
-        var (viewModel, plan) = CreateViewModel(dialogService.Object);
+        using var context = CreateViewModel(dialogService.Object);
+        var viewModel = context.ViewModel;
+        var plan = context.Plan;
         plan.AddSegment(new PlacedSegment(new G231(), 0, 0, 0));
 
-        await viewModel.ValidateAsync();
+        await viewModel.ValidateAsync().ConfigureAwait(false);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(viewModel.ValidationMessages, Has.Some.Contains("open track ends"));
             Assert.That(viewModel.StatusText, Does.StartWith("Validation completed:"));
@@ -80,10 +86,10 @@ internal sealed class TrackPlanViewModelTests
                 "OK",
                 "Cancel",
                 false), Times.Once);
-        });
+        }
     }
 
-    private static (TrackPlanViewModel ViewModel, EditableTrackPlan Plan) CreateViewModel(
+    private static ViewModelTestContext CreateViewModel(
         IDialogService? dialogService = null)
     {
         var plan = new EditableTrackPlan();
@@ -99,6 +105,18 @@ internal sealed class TrackPlanViewModelTests
             new AppSettings(),
             Mock.Of<ISettingsService>(),
             Mock.Of<ILogger<TrackPlanViewModel>>());
-        return (viewModel, plan);
+        return new ViewModelTestContext(viewModel, plan, editorService);
+    }
+
+    private sealed partial class ViewModelTestContext(
+        TrackPlanViewModel viewModel,
+        EditableTrackPlan plan,
+        TrackPlanEditorService editorService) : IDisposable
+    {
+        public TrackPlanViewModel ViewModel { get; } = viewModel;
+
+        public EditableTrackPlan Plan { get; } = plan;
+
+        public void Dispose() => editorService.Dispose();
     }
 }
