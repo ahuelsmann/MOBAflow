@@ -9,6 +9,12 @@ using Microsoft.Extensions.Logging;
 /// </summary>
 internal sealed class WinUiShutdownCoordinator
 {
+    private static readonly Action<ILogger, Exception?> LogShutdownCancelled =
+        LoggerMessage.Define(
+            LogLevel.Information,
+            new EventId(1, nameof(LogShutdownCancelled)),
+            "Application shutdown cancelled");
+
     private readonly Func<Task<bool>> _prepareApplicationAsync;
     private readonly Func<ValueTask> _disposeServicesAsync;
     private readonly Action _exitApplication;
@@ -50,7 +56,7 @@ internal sealed class WinUiShutdownCoordinator
         {
             if (!await _prepareApplicationAsync())
             {
-                _logger.LogInformation("Application shutdown cancelled");
+                LogShutdownCancelled(_logger, null);
                 return false;
             }
         }

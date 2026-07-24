@@ -194,7 +194,7 @@ internal class IoService : IIoService
         var result = await picker.PickSaveFileAsync();
         return result == null
             ? (false, null, null)
-            : await SaveToPathAsync(solution, result.Path);
+            : await SaveToPathAsync(solution, result.Path).ConfigureAwait(false);
     }
 
     private async Task<(bool success, string? path, string? error)> SaveToPathAsync(Solution solution, string path)

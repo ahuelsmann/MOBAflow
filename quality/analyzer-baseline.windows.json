@@ -258,7 +258,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1031",
       "path": "MOBAflow/View/MainWindow.xaml.cs",
-      "count": 7
+      "count": 6
     },
     {
       "project": "MOBAflow",
@@ -1245,7 +1245,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1848",
       "path": "MOBAflow/View/MainWindow.xaml.cs",
-      "count": 14
+      "count": 13
     },
     {
       "project": "MOBAflow",
@@ -1658,7 +1658,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2007",
       "path": "MOBAflow/View/MainWindow.xaml.cs",
-      "count": 6
+      "count": 5
     },
     {
       "project": "MOBAflow",
@@ -2190,13 +2190,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "IDE0007",
       "path": "MOBAflow/Converter/BoolToBacklightBrushConverter.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "IDE0007",
-      "path": "MOBAflow/Service/IoService.cs",
       "count": 1
     },
     {

@@ -29,13 +29,13 @@ internal sealed class MobaRuntimeServiceVehicleUsageTests
             new MemoryCheckpointStore(),
             eventBus.Object);
 
-        await runtime.ActivateProjectAsync(new Project());
+        await runtime.ActivateProjectAsync(new Project()).ConfigureAwait(false);
 
         eventBus.Verify(
             candidate => candidate.Publish(It.IsAny<VehicleUsageCheckpointCommittedEvent>()),
             Times.Never);
 
-        await runtime.CheckpointUsageAsync();
+        await runtime.CheckpointUsageAsync().ConfigureAwait(false);
 
         eventBus.Verify(
             candidate => candidate.Publish(It.IsAny<VehicleUsageCheckpointCommittedEvent>()),

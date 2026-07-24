@@ -18,8 +18,10 @@ using Moba.SharedUI.ViewModel;
 
 using Moq;
 
-[TestFixture]
-internal sealed class MainWindowViewModelAutoSaveTests
+/// <summary>
+/// Regression tests for startup, autosave, and shutdown persistence behavior.
+/// </summary>
+internal partial class MainWindowViewModelShutdownTests
 {
     [Test]
     public void Constructor_DoesNotSaveUnnamedSolution_WhenInitialRuntimeActivationCommitsUsageCheckpoint()
@@ -55,7 +57,7 @@ internal sealed class MainWindowViewModelAutoSaveTests
         var ioService = new Mock<IIoService>();
         var viewModel = CreateViewModel(runtime.Object, eventBus, ioService.Object);
 
-        await viewModel.SaveSolutionInternalAsync();
+        await viewModel.SaveSolutionInternalAsync().ConfigureAwait(false);
 
         Assert.That(viewModel.HasUnsavedChanges, Is.True);
         ioService.Verify(
@@ -76,15 +78,15 @@ internal sealed class MainWindowViewModelAutoSaveTests
             .Setup(candidate => candidate.SaveAsAsync(It.IsAny<Solution>()))
             .ReturnsAsync((true, "selected.json", null));
         var viewModel = CreateViewModel(runtime.Object, eventBus, ioService.Object);
-        await viewModel.SaveSolutionInternalAsync();
+        await viewModel.SaveSolutionInternalAsync().ConfigureAwait(false);
 
-        await viewModel.SaveSolutionCommand.ExecuteAsync(null);
+        await viewModel.SaveSolutionCommand.ExecuteAsync(null).ConfigureAwait(false);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(viewModel.CurrentSolutionPath, Is.EqualTo("selected.json"));
             Assert.That(viewModel.HasUnsavedChanges, Is.False);
-        });
+        }
         ioService.Verify(
             candidate => candidate.SaveAsAsync(It.IsAny<Solution>()),
             Times.Once);
@@ -119,12 +121,12 @@ internal sealed class MainWindowViewModelAutoSaveTests
                 }
             }));
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(locomotive.Usage!.TrackedOperatingSeconds, Is.EqualTo(42));
             Assert.That(locomotive.Usage.TrackedCompletedTrips, Is.EqualTo(3));
             Assert.That(viewModel.HasUnsavedChanges, Is.False);
-        });
+        }
         ioService.Verify(
             candidate => candidate.SaveAsync(solution, "existing.json"),
             Times.Once);
@@ -143,9 +145,9 @@ internal sealed class MainWindowViewModelAutoSaveTests
             .Setup(candidate => candidate.SaveAsAsync(It.IsAny<Solution>()))
             .ReturnsAsync((false, null, null));
         var viewModel = CreateViewModel(runtime.Object, eventBus, ioService.Object);
-        await viewModel.SaveSolutionInternalAsync();
+        await viewModel.SaveSolutionInternalAsync().ConfigureAwait(false);
 
-        var result = await viewModel.PrepareForShutdownAsync();
+        var result = await viewModel.PrepareForShutdownAsync().ConfigureAwait(false);
 
         Assert.That(result, Is.False);
         runtime.Verify(
@@ -186,7 +188,7 @@ internal sealed class MainWindowViewModelAutoSaveTests
         var viewModel = CreateViewModel(runtime.Object, eventBus, ioService.Object, solution);
         viewModel.CurrentSolutionPath = "existing.json";
 
-        var result = await viewModel.PrepareForShutdownAsync();
+        var result = await viewModel.PrepareForShutdownAsync().ConfigureAwait(false);
 
         Assert.That(result, Is.True);
         ioService.Verify(
