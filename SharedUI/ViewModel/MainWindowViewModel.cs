@@ -194,7 +194,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
     /// Indicates whether the in-memory solution contains changes that have not been persisted.
     /// </summary>
     [ObservableProperty]
-    private bool _hasUnsavedChanges;
+    public partial bool HasUnsavedChanges { get; set; }
 
     [ObservableProperty]
     private bool _isDarkMode = true;  // Dark theme is default for WinUI

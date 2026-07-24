@@ -9,6 +9,8 @@ using Moba.WinUI.Service;
 [TestFixture]
 internal sealed class WinUiShutdownCoordinatorTests
 {
+    private static readonly string[] ExpectedRetrySequence = ["dispose", "exit"];
+
     [Test]
     public async Task ShutdownAsync_ShouldRunSequenceOnlyOnce_WhenRequestedConcurrently()
     {
@@ -45,8 +47,11 @@ internal sealed class WinUiShutdownCoordinatorTests
 
         preparationGate.SetResult();
         var results = await Task.WhenAll(firstShutdown, secondShutdown);
-        Assert.That(sequence, Is.EqualTo(new[] { "prepare", "dispose", "exit" }));
-        Assert.That(results, Is.All.True);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(sequence, Is.EqualTo(new[] { "prepare", "dispose", "exit" }));
+            Assert.That(results, Is.All.True);
+        }
     }
 
     [Test]
@@ -68,8 +73,11 @@ internal sealed class WinUiShutdownCoordinatorTests
         var result = await coordinator.ShutdownAsync();
 
         // Assert
-        Assert.That(sequence, Is.EqualTo(new[] { "dispose", "exit" }));
-        Assert.That(result, Is.True);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(sequence, Is.EqualTo(new[] { "dispose", "exit" }));
+            Assert.That(result, Is.True);
+        }
     }
 
     [Test]
@@ -87,16 +95,16 @@ internal sealed class WinUiShutdownCoordinatorTests
             () => sequence.Add("exit"),
             NullLogger<WinUiShutdownCoordinator>.Instance);
 
-        var firstResult = await coordinator.ShutdownAsync();
-        var secondResult = await coordinator.ShutdownAsync();
+        var firstResult = await coordinator.ShutdownAsync().ConfigureAwait(false);
+        var secondResult = await coordinator.ShutdownAsync().ConfigureAwait(false);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(firstResult, Is.False);
             Assert.That(secondResult, Is.True);
             Assert.That(prepareAttempts, Is.EqualTo(2));
-            Assert.That(sequence, Is.EqualTo(new[] { "dispose", "exit" }));
-        });
+            Assert.That(sequence, Is.EqualTo(ExpectedRetrySequence));
+        }
     }
 }
 #endif

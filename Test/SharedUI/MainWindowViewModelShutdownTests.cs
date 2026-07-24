@@ -20,7 +20,7 @@ using Moq;
 /// Regression tests for MainWindowViewModel shutdown behavior.
 /// </summary>
 [TestFixture]
-internal class MainWindowViewModelShutdownTests
+internal partial class MainWindowViewModelShutdownTests
 {
     [Test]
     public async Task PrepareForShutdownAsync_UnsubscribesFromRuntimeSnapshots()
