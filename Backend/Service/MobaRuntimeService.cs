@@ -295,7 +295,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
             VehicleUsageCheckpointInterval);
     }
 
-    private bool CheckpointVehicleUsage(bool publishSnapshot)
+    private bool CheckpointVehicleUsage(bool publishSnapshot, bool publishCommittedEvent = true)
     {
         var committed = _vehicleUsageTracker.Checkpoint();
         if (!committed)
@@ -308,7 +308,10 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
             PublishSnapshot();
         }
 
-        PublishVehicleUsageCheckpointCommitted();
+        if (publishCommittedEvent)
+        {
+            PublishVehicleUsageCheckpointCommitted();
+        }
 
         return true;
     }

@@ -57,21 +57,34 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanSaveSolution))]
     private async Task SaveSolutionAsync()
     {
-        await SaveSolutionInternalAsync();
+        await SaveSolutionCoreAsync(CurrentSolutionPath, allowPathSelection: true);
     }
 
     /// <summary>
-    /// Internal save method that can be called directly for auto-save.
+    /// Marks the solution as changed and persists it without opening a file picker.
     /// </summary>
     public async Task SaveSolutionInternalAsync()
     {
+        MarkSolutionDirty();
+
         // Skip if IoService not available (WebApp/MAUI)
         if (_ioService is NullIoService)
             return;
 
-        if (_isShuttingDown)
+        var currentPath = CurrentSolutionPath;
+        if (_isShuttingDown || string.IsNullOrWhiteSpace(currentPath))
         {
             return;
+        }
+
+        await SaveSolutionCoreAsync(currentPath, allowPathSelection: false).ConfigureAwait(false);
+    }
+
+    private async Task<bool> SaveSolutionCoreAsync(string? currentPath, bool allowPathSelection)
+    {
+        if (_ioService is NullIoService || _isShuttingDown)
+        {
+            return false;
         }
 
         var lockTaken = false;
@@ -83,7 +96,7 @@ public partial class MainWindowViewModel
             }
             catch (ObjectDisposedException)
             {
-                return;
+                return false;
             }
 
             lockTaken = true;
@@ -91,19 +104,28 @@ public partial class MainWindowViewModel
             // Notify subscribers to sync their data before saving
             SolutionSaving?.Invoke(this, EventArgs.Empty);
 
-            var (success, path, error) = await _ioService.SaveAsync(Solution, CurrentSolutionPath).ConfigureAwait(false);
+            var (success, path, error) = string.IsNullOrWhiteSpace(currentPath)
+                ? allowPathSelection
+                    ? await _ioService.SaveAsAsync(Solution).ConfigureAwait(false)
+                    : (false, null, null)
+                : await _ioService.SaveAsync(Solution, currentPath).ConfigureAwait(false);
             if (success && path != null)
             {
                 // Marshal to UI thread to update observable properties bound to UI
                 _uiDispatcher.InvokeOnUi(() =>
                 {
                     CurrentSolutionPath = path;
+                    HasUnsavedChanges = false;
                 });
+                return true;
             }
-            else if (!string.IsNullOrEmpty(error))
+
+            if (!string.IsNullOrEmpty(error))
             {
                 throw new InvalidOperationException($"Failed to save solution: {error}");
             }
+
+            return false;
         }
         finally
         {
@@ -121,13 +143,18 @@ public partial class MainWindowViewModel
         }
     }
 
+    private void MarkSolutionDirty()
+    {
+        _uiDispatcher.InvokeOnUi(() => HasUnsavedChanges = true);
+    }
+
     [RelayCommand]
     private async Task NewSolutionAsync()
     {
-        // Skip file operations if IoService not available (WebApp/MAUI)
-        if (_ioService is not NullIoService && SaveSolutionCommand.CanExecute(null))
+        if (HasUnsavedChanges &&
+            !await SaveSolutionCoreAsync(CurrentSolutionPath, allowPathSelection: true))
         {
-            await SaveSolutionCommand.ExecuteAsync(null);
+            return;
         }
 
         BeginSuppressSolutionAutoSave();
@@ -150,6 +177,7 @@ public partial class MainWindowViewModel
             SolutionViewModel?.Refresh();
 
             CurrentSolutionPath = null;
+            MarkSolutionDirty();
 
             // ✅ Clear all selections to reset property panels across all pages
             ClearAllSelections();
@@ -234,6 +262,7 @@ public partial class MainWindowViewModel
             SolutionViewModel?.Refresh();
 
             CurrentSolutionPath = path;
+            HasUnsavedChanges = false;
             HasSolution = Solution.Projects.Count > 0;
 
             if (Solution.Projects.Count > 0)

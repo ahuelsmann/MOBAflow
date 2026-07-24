@@ -62,6 +62,16 @@ internal class NullIoServiceTests
     }
 
     [Test]
+    public async Task SaveAsAsync_ReturnsNotSupported()
+    {
+        var result = await _service.SaveAsAsync(new Solution());
+
+        Assert.That(result.success, Is.False);
+        Assert.That(result.path, Is.Null);
+        Assert.That(result.error, Does.Contain("not supported"));
+    }
+
+    [Test]
     public async Task BrowseForJsonFileAsync_ReturnsNull()
     {
         var result = await _service.BrowseForJsonFileAsync();

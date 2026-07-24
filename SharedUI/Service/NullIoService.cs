@@ -58,11 +58,19 @@ public class NullIoService : IIoService
     /// Always reports that saving a solution is not supported on this platform.
     /// </summary>
     /// <param name="solution">The solution that would normally be saved.</param>
-    /// <param name="currentPath">The current file path of the solution, if any.</param>
+    /// <param name="currentPath">The current file path of the solution.</param>
     /// <returns>
     /// A task that always returns <c>false</c> for success, <c>null</c> for path and an explanatory error message.
     /// </returns>
-    public Task<(bool success, string? path, string? error)> SaveAsync(Solution solution, string? currentPath)
+    public Task<(bool success, string? path, string? error)> SaveAsync(Solution solution, string currentPath)
+    {
+        return Task.FromResult<(bool, string?, string?)>((false, null, "File operations not supported on this platform"));
+    }
+
+    /// <summary>
+    /// Always reports that selecting a solution destination is not supported on this platform.
+    /// </summary>
+    public Task<(bool success, string? path, string? error)> SaveAsAsync(Solution solution)
     {
         return Task.FromResult<(bool, string?, string?)>((false, null, "File operations not supported on this platform"));
     }

@@ -16,10 +16,11 @@ internal sealed class WinUiShutdownCoordinatorTests
         var sequence = new List<string>();
         var preparationGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        async Task PrepareApplicationAsync()
+        async Task<bool> PrepareApplicationAsync()
         {
             sequence.Add("prepare");
             await preparationGate.Task;
+            return true;
         }
 
         ValueTask DisposeServicesAsync()
@@ -43,8 +44,9 @@ internal sealed class WinUiShutdownCoordinatorTests
         Assert.That(sequence, Is.EqualTo(new[] { "prepare" }));
 
         preparationGate.SetResult();
-        await Task.WhenAll(firstShutdown, secondShutdown);
+        var results = await Task.WhenAll(firstShutdown, secondShutdown);
         Assert.That(sequence, Is.EqualTo(new[] { "prepare", "dispose", "exit" }));
+        Assert.That(results, Is.All.True);
     }
 
     [Test]
@@ -53,7 +55,7 @@ internal sealed class WinUiShutdownCoordinatorTests
         // Arrange
         var sequence = new List<string>();
         var coordinator = new WinUiShutdownCoordinator(
-            () => Task.FromException(new InvalidOperationException("Preparation failed")),
+            () => Task.FromException<bool>(new InvalidOperationException("Preparation failed")),
             () =>
             {
                 sequence.Add("dispose");
@@ -63,10 +65,38 @@ internal sealed class WinUiShutdownCoordinatorTests
             NullLogger<WinUiShutdownCoordinator>.Instance);
 
         // Act
-        await coordinator.ShutdownAsync();
+        var result = await coordinator.ShutdownAsync();
 
         // Assert
         Assert.That(sequence, Is.EqualTo(new[] { "dispose", "exit" }));
+        Assert.That(result, Is.True);
+    }
+
+    [Test]
+    public async Task ShutdownAsync_ShouldAllowRetry_WhenPreparationIsCancelled()
+    {
+        var prepareAttempts = 0;
+        var sequence = new List<string>();
+        var coordinator = new WinUiShutdownCoordinator(
+            () => Task.FromResult(++prepareAttempts > 1),
+            () =>
+            {
+                sequence.Add("dispose");
+                return ValueTask.CompletedTask;
+            },
+            () => sequence.Add("exit"),
+            NullLogger<WinUiShutdownCoordinator>.Instance);
+
+        var firstResult = await coordinator.ShutdownAsync();
+        var secondResult = await coordinator.ShutdownAsync();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(firstResult, Is.False);
+            Assert.That(secondResult, Is.True);
+            Assert.That(prepareAttempts, Is.EqualTo(2));
+            Assert.That(sequence, Is.EqualTo(new[] { "dispose", "exit" }));
+        });
     }
 }
 #endif

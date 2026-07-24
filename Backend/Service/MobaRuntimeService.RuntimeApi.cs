@@ -54,7 +54,7 @@ public sealed partial class MobaRuntimeService
             activeProject.Journeys.Count);
 
         PublishSnapshot();
-        CheckpointVehicleUsage(publishSnapshot: false);
+        CheckpointVehicleUsage(publishSnapshot: false, publishCommittedEvent: false);
     }
 
     /// <summary>

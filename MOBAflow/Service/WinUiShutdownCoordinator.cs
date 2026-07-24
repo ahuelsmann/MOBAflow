@@ -9,15 +9,16 @@ using Microsoft.Extensions.Logging;
 /// </summary>
 internal sealed class WinUiShutdownCoordinator
 {
-    private readonly Func<Task> _prepareApplicationAsync;
+    private readonly Func<Task<bool>> _prepareApplicationAsync;
     private readonly Func<ValueTask> _disposeServicesAsync;
     private readonly Action _exitApplication;
     private readonly ILogger<WinUiShutdownCoordinator> _logger;
     private readonly object _syncRoot = new();
-    private Task? _shutdownTask;
+    private Task<bool>? _shutdownTask;
+    private bool _shutdownCompleted;
 
     public WinUiShutdownCoordinator(
-        Func<Task> prepareApplicationAsync,
+        Func<Task<bool>> prepareApplicationAsync,
         Func<ValueTask> disposeServicesAsync,
         Action exitApplication,
         ILogger<WinUiShutdownCoordinator> logger)
@@ -28,21 +29,30 @@ internal sealed class WinUiShutdownCoordinator
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public Task ShutdownAsync()
+    public Task<bool> ShutdownAsync()
     {
         lock (_syncRoot)
         {
+            if (_shutdownTask is { IsCompleted: true } && !_shutdownCompleted)
+            {
+                _shutdownTask = null;
+            }
+
             return _shutdownTask ??= ShutdownCoreAsync();
         }
     }
 
-    private async Task ShutdownCoreAsync()
+    private async Task<bool> ShutdownCoreAsync()
     {
         _logger.LogInformation("Application shutdown started");
 
         try
         {
-            await _prepareApplicationAsync();
+            if (!await _prepareApplicationAsync())
+            {
+                _logger.LogInformation("Application shutdown cancelled");
+                return false;
+            }
         }
         catch (Exception ex)
         {
@@ -59,5 +69,11 @@ internal sealed class WinUiShutdownCoordinator
         }
 
         _exitApplication();
+        lock (_syncRoot)
+        {
+            _shutdownCompleted = true;
+        }
+
+        return true;
     }
 }
