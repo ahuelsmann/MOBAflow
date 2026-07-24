@@ -209,6 +209,13 @@ function Get-FeatureArtifactErrors(
                 -Text $text `
                 -RelativePath $RelativePath `
                 -Errors $errors
+            }
+            if ($text -notmatch "(?m)^## Governance and Traceability") {
+                $errors.Add("$RelativePath is missing the Governance and Traceability section.")
+            }
+            if ($text -notmatch "(?im)^\*\*Spec Kit\*\*:\s*Required\s*$") {
+                $errors.Add("$RelativePath must declare Spec Kit as required.")
+            }
         }
         "plan.md" {
             Add-FeaturePlanErrors `
