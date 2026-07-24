@@ -1,3 +1,26 @@
+<!--
+Sync Impact Report
+- Version change: 1.0.0 -> 1.1.0
+- Modified principles:
+  - IV. Specifications Must Be Testable and Compatible ->
+    IV. Specifications, Plans, and Issues Must Be Traceable
+- Added principles:
+  - VI. Quality Gates Protect the Main Branch
+- Added governance:
+  - standalone plan location and lifecycle
+  - GitHub issue traceability
+  - balanced secrets scanning
+  - local Sonar and remote SonarCloud PR gates
+- Templates updated:
+  - ✅ .specify/templates/overrides/spec-template.md
+  - ✅ .specify/templates/overrides/plan-template.md
+  - ✅ .specify/templates/overrides/tasks-template.md
+- Runtime guidance updated:
+  - ✅ AGENTS.md
+  - ✅ .github/copilot-instructions.md
+  - ✅ docs/SPEC-KIT.md
+- Follow-up TODOs: none
+-->
 # MOBAflow Constitution
 
 ## Core Principles
@@ -31,15 +54,19 @@ not practical. `dotnet test Test/Test.csproj` MUST pass before a feature is
 considered complete; platform-specific build limitations MUST be stated rather
 than silently skipped.
 
-### IV. Specifications Must Be Testable and Compatible
+### IV. Specifications, Plans, and Issues Must Be Traceable
 
 Each feature specification MUST define independently testable user scenarios,
 explicit acceptance criteria, edge cases, measurable outcomes, and the affected
-platforms. Plans MUST identify compatibility effects on existing JSON data,
-configuration defaults, public APIs, Z21 behavior, and persisted layouts.
-Breaking changes require an explicit migration path and justification. Existing
-defaults and serialized data MUST remain compatible unless the approved
-specification deliberately changes them.
+platforms. Every specification and implementation plan MUST reference its
+authoritative GitHub issue. Spec Kit feature artifacts remain together below
+`specs/NNN-feature-name/`; standalone project, quality, refactoring, and roadmap
+plans belong in `plans/`. Completed standalone plans MUST be deleted because Git
+history and closed GitHub issues retain the record. Plans MUST identify
+compatibility effects on existing JSON data, configuration defaults, public
+APIs, Z21 behavior, and persisted layouts. Breaking changes require an explicit
+migration path and justification. Existing defaults and serialized data MUST
+remain compatible unless the approved specification deliberately changes them.
 
 ### V. Prefer Simple, Traceable Changes
 
@@ -49,6 +76,17 @@ executors; do not duplicate established behavior. Dependencies use constructor
 injection and established singleton/transient lifetimes. Public APIs require XML
 documentation. Comments explain intent or constraints, not obvious mechanics.
 Identifiers are ASCII-only and follow the repository naming conventions.
+
+### VI. Quality Gates Protect the Main Branch
+
+Changed files likely to contain secrets MUST pass `sonar analyze secrets` before
+they are read, and all changed files MUST pass a secrets scan before commit and
+PR publication. Ordinary source, tests, Markdown, schemas, and checked-in
+templates do not require individual pre-read scans unless context indicates
+secret material. Every PR MUST be created as a draft. Local Sonar analysis MUST
+be attempted against the actual PR base, and the PR MUST remain a draft until
+the remote SonarCloud check is green with zero `OPEN` or `CONFIRMED` issues.
+Valid findings MUST NOT be suppressed, excluded, or hidden by lowering a gate.
 
 ## Technical and Product Constraints
 
@@ -63,7 +101,10 @@ Identifiers are ASCII-only and follow the repository naming conventions.
   widths are reserved for intentionally fixed UI regions.
 - UI resources MUST meet the repository's Fluent Design and accessibility rules.
 - No source-code TODO comments are permitted. Follow-up work belongs in the
-  project's authoritative Azure DevOps backlog.
+  project's authoritative GitHub issues, milestones, and Kanban.
+- New issues MUST declare whether Spec Kit is required, already exists, or is
+  not applicable. Spec Kit-generated task issues use the canonical `TNNN:`
+  title and inherit traceability from the active feature task list.
 
 ## Development Workflow and Quality Gates
 
@@ -77,10 +118,15 @@ implement, validate, and document. Spec Kit maps to it as follows:
 4. `$speckit-tasks` creates traceable implementation and mandatory test tasks.
 5. `$speckit-analyze` checks cross-artifact consistency before implementation.
 6. `$speckit-implement` executes tasks without bypassing repository rules.
-7. Validation includes relevant targeted builds, `dotnet test Test/Test.csproj`,
-   formatting/static checks, and Light/Dark theme checks for UI changes.
-8. Documentation and changelog updates are included whenever behavior or the
-   contributor workflow changes.
+7. `$speckit-taskstoissues` creates dependency-ordered GitHub issues from the
+   approved task list when issue-level execution tracking is needed.
+8. Validation includes relevant targeted builds, `dotnet test Test/Test.csproj`,
+   formatting/static checks, Light/Dark theme checks, changed-file secrets
+   scanning, and local Sonar analysis against the actual PR base.
+9. Every PR is created as a draft and remains draft until SonarCloud is green
+   with zero `OPEN` or `CONFIRMED` issues.
+10. Documentation and changelog updates are included whenever behavior or the
+    contributor workflow changes.
 
 The Constitution Check in every plan MUST pass before research and again after
 design. Any exception MUST be recorded in the plan's Complexity Tracking table
@@ -98,4 +144,4 @@ semantic versioning: MAJOR for incompatible governance changes, MINOR for new or
 materially expanded principles, and PATCH for clarifications. Every plan and
 review MUST verify compliance; unresolved violations block implementation.
 
-**Version**: 1.0.0 | **Ratified**: 2026-07-19 | **Last Amended**: 2026-07-19
+**Version**: 1.1.0 | **Ratified**: 2026-07-19 | **Last Amended**: 2026-07-24

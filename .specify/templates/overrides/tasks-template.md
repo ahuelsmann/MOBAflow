@@ -98,6 +98,10 @@ description: "MOBAflow task list template for feature implementation"
 - [ ] TXXX [P] Validate Light and Dark themes for changed UI
 - [ ] TXXX [P] Verify compatibility for JSON, configuration defaults, APIs, protocols, and persisted layouts as applicable
 - [ ] TXXX Update root documentation, changelog, and public API XML documentation as applicable
+- [ ] TXXX Run `sonar analyze secrets` over all changed files
+- [ ] TXXX Attempt local Sonar analysis against the actual PR base
+- [ ] TXXX Create the pull request as a draft and verify a green SonarCloud result with zero `OPEN` or `CONFIRMED` issues before review
+- [ ] TXXX Create dependency-ordered GitHub task issues with `$speckit-taskstoissues` when issue-level tracking is required
 - [ ] TXXX Re-run the Constitution Check and record any approved exceptions
 
 ## Dependencies and Execution Order
@@ -112,5 +116,7 @@ description: "MOBAflow task list template for feature implementation"
 
 - Reuse existing helpers, services, DI registrations, serializers, and test fakes.
 - Never add `.Result`, `.Wait()`, redundant UI dispatch, hardcoded UI colors, source-code TODO comments, or non-English UI strings.
-- Keep follow-up work in Azure DevOps rather than code comments.
+- Keep follow-up work in GitHub issues rather than code comments.
+- Every feature artifact and standalone plan must reference its authoritative GitHub issue.
+- Standalone plans belong in `plans/` and must be deleted after completion.
 - Use Conventional Commits for commits created from these tasks.
