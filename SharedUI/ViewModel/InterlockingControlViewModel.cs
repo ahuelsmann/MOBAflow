@@ -20,6 +20,9 @@ using System.ComponentModel;
 /// </summary>
 public sealed partial class InterlockingControlViewModel : ObservableObject
 {
+    private const string UnknownStateText = "Unknown";
+    private const string NoRuntimeStateText = "No runtime state";
+
     private readonly IInterlockingRuntime _runtime;
     private readonly IEventBus _eventBus;
     private readonly IProjectContext _projectContext;
@@ -72,12 +75,9 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
     public IReadOnlyList<string> ValidationMessages { get; private set; } = [];
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CanOperateTurnout))]
     private InterlockingItemViewState? _selectedTurnout;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CanOperateRoute))]
-    [NotifyPropertyChangedFor(nameof(HasSelectedRoute))]
     private InterlockingItemViewState? _selectedRoute;
 
     [ObservableProperty]
@@ -90,17 +90,19 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
     private OperationalElementOption? _selectedOperationalElement;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CanOperateTurnout))]
-    [NotifyPropertyChangedFor(nameof(CanOperateRoute))]
     private bool _isSynchronized;
+
+    private bool _canOperateTurnout;
+
+    private bool _canOperateRoute;
+
+    private bool _hasSelectedRoute;
 
     [ObservableProperty]
     private long _revision;
 
-    [ObservableProperty]
     private string _statusText = "Interlocking is not synchronized.";
 
-    [ObservableProperty]
     private string _statusCode = "interlocking.unsynchronized";
 
     [ObservableProperty]
@@ -115,11 +117,35 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
     [ObservableProperty]
     private string _draftSummary = "No route draft.";
 
-    public bool CanOperateTurnout => IsSynchronized && SelectedTurnout != null && !SelectedTurnout.IsLocked;
+    public bool CanOperateTurnout
+    {
+        get => _canOperateTurnout;
+        private set => SetProperty(ref _canOperateTurnout, value);
+    }
 
-    public bool CanOperateRoute => IsSynchronized && SelectedRoute != null;
+    public bool CanOperateRoute
+    {
+        get => _canOperateRoute;
+        private set => SetProperty(ref _canOperateRoute, value);
+    }
 
-    public bool HasSelectedRoute => SelectedRoute != null;
+    public bool HasSelectedRoute
+    {
+        get => _hasSelectedRoute;
+        private set => SetProperty(ref _hasSelectedRoute, value);
+    }
+
+    public string StatusText
+    {
+        get => _statusText;
+        private set => SetProperty(ref _statusText, value);
+    }
+
+    public string StatusCode
+    {
+        get => _statusCode;
+        private set => SetProperty(ref _statusCode, value);
+    }
 
     /// <summary>
     /// Begins observing project selection and runtime snapshot events.
@@ -371,6 +397,31 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
 
     private Project? CurrentProject => _projectContext.SelectedProject?.Model;
 
+    partial void OnSelectedTurnoutChanged(InterlockingItemViewState? value)
+    {
+        _ = value;
+        UpdateCommandAvailability();
+    }
+
+    partial void OnSelectedRouteChanged(InterlockingItemViewState? value)
+    {
+        _ = value;
+        UpdateCommandAvailability();
+    }
+
+    partial void OnIsSynchronizedChanged(bool value)
+    {
+        _ = value;
+        UpdateCommandAvailability();
+    }
+
+    private void UpdateCommandAvailability()
+    {
+        CanOperateTurnout = IsSynchronized && SelectedTurnout != null && !SelectedTurnout.IsLocked;
+        CanOperateRoute = IsSynchronized && SelectedRoute != null;
+        HasSelectedRoute = SelectedRoute != null;
+    }
+
     private async Task SetTurnoutAsync(TurnoutPosition position)
     {
         if (SelectedTurnout == null)
@@ -591,7 +642,7 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
         InterlockingRuntimeState state)
     {
         if (!state.Turnouts.TryGetValue(definition.Id, out var runtime))
-            return new(definition.Id, definition.Name, "Turnout", "Unknown", "No runtime state", true, false);
+            return new(definition.Id, definition.Name, "Turnout", UnknownStateText, NoRuntimeStateText, true, false);
 
         var position = runtime.ConfirmedPosition?.ToString()
             ?? runtime.RequestedPosition?.ToString()
@@ -611,7 +662,7 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
         InterlockingRuntimeState state)
     {
         if (!state.Blocks.TryGetValue(definition.Id, out var runtime))
-            return new(definition.Id, definition.Name, "Block", "Unknown", "No runtime state", true, false);
+            return new(definition.Id, definition.Name, "Block", UnknownStateText, NoRuntimeStateText, true, false);
 
         return new(
             definition.Id,
@@ -628,7 +679,7 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
         InterlockingRuntimeState state)
     {
         if (!state.Signals.TryGetValue(definition.Id, out var runtime))
-            return new(definition.Id, definition.Name, "Signal", "Unknown", "No runtime state", true, false);
+            return new(definition.Id, definition.Name, "Signal", UnknownStateText, NoRuntimeStateText, true, false);
 
         return new(
             definition.Id,
@@ -645,7 +696,7 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
         InterlockingRuntimeState state)
     {
         if (!state.Routes.TryGetValue(definition.Id, out var runtime))
-            return new(definition.Id, definition.Name, "Route", "Unknown", "No runtime state", true, false);
+            return new(definition.Id, definition.Name, "Route", UnknownStateText, NoRuntimeStateText, true, false);
 
         return new(
             definition.Id,

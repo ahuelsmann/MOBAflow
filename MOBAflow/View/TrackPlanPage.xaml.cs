@@ -79,8 +79,7 @@ public sealed partial class TrackPlanPage
     private double _propertiesExpandedWidth = 240;
 
     public TrackPlanPage(
-        TrackPlanViewModel viewModel,
-        InterlockingControlViewModel interlockingViewModel,
+        TrackPlanPageViewModels viewModels,
         MainWindowViewModel mainViewModel,
         EditableTrackPlan plan,
         TrackPlanFeedbackHighlighter feedbackHighlighter,
@@ -88,8 +87,9 @@ public sealed partial class TrackPlanPage
         ISettingsService? settingsService = null,
         ILogger<TrackPlanPage>? logger = null)
     {
-        ViewModel = viewModel;
-        InterlockingViewModel = interlockingViewModel ?? throw new ArgumentNullException(nameof(interlockingViewModel));
+        ArgumentNullException.ThrowIfNull(viewModels);
+        ViewModel = viewModels.TrackPlan;
+        InterlockingViewModel = viewModels.Interlocking;
         MainViewModel = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
         _plan = plan ?? throw new ArgumentNullException(nameof(plan));
         _feedbackHighlighter = feedbackHighlighter ?? throw new ArgumentNullException(nameof(feedbackHighlighter));
@@ -113,41 +113,45 @@ public sealed partial class TrackPlanPage
         if (e.PropertyName == nameof(ViewModel.SelectedTrackId))
         {
             InterlockingViewModel.SelectTrackRepresentation(ViewModel.SelectedTrackId);
+            return;
         }
-        else if (e.PropertyName == nameof(ViewModel.IsToolboxExpanded))
+
+        if (e.PropertyName == nameof(ViewModel.IsToolboxExpanded))
         {
-            if (!ViewModel.IsToolboxExpanded)
-            {
-                if (ColToolbox.Width.IsAbsolute)
-                {
-                    _toolboxExpandedWidth = ColToolbox.Width.Value;
-                }
-                ColToolbox.Width = GridLength.Auto;
-            }
-            else
-            {
-                ColToolbox.Width = new GridLength(_toolboxExpandedWidth);
-            }
+            UpdateToolboxColumn();
         }
         else if (e.PropertyName == nameof(ViewModel.IsPropertiesExpanded))
         {
-            if (!ViewModel.IsPropertiesExpanded)
-            {
-                if (ColProperties.ActualWidth > 0)
-                {
-                    _propertiesExpandedWidth = ColProperties.ActualWidth;
-                }
-                else if (ColProperties.Width.IsAbsolute)
-                {
-                    _propertiesExpandedWidth = ColProperties.Width.Value;
-                }
-                ColProperties.Width = GridLength.Auto;
-            }
-            else
-            {
-                ColProperties.Width = new GridLength(_propertiesExpandedWidth);
-            }
+            UpdatePropertiesColumn();
         }
+    }
+
+    private void UpdateToolboxColumn()
+    {
+        if (ViewModel.IsToolboxExpanded)
+        {
+            ColToolbox.Width = new GridLength(_toolboxExpandedWidth);
+            return;
+        }
+
+        if (ColToolbox.Width.IsAbsolute)
+            _toolboxExpandedWidth = ColToolbox.Width.Value;
+        ColToolbox.Width = GridLength.Auto;
+    }
+
+    private void UpdatePropertiesColumn()
+    {
+        if (ViewModel.IsPropertiesExpanded)
+        {
+            ColProperties.Width = new GridLength(_propertiesExpandedWidth);
+            return;
+        }
+
+        if (ColProperties.ActualWidth > 0)
+            _propertiesExpandedWidth = ColProperties.ActualWidth;
+        else if (ColProperties.Width.IsAbsolute)
+            _propertiesExpandedWidth = ColProperties.Width.Value;
+        ColProperties.Width = GridLength.Auto;
     }
 
     /// <summary>
@@ -1715,3 +1719,10 @@ public sealed partial class TrackPlanPage
         ZoomLevelText.Text = $"{ZoomSlider.Value * 100:F0}%";
     }
 }
+
+/// <summary>
+/// Cohesive ViewModel dependencies used by the physical plan page.
+/// </summary>
+public sealed record TrackPlanPageViewModels(
+    TrackPlanViewModel TrackPlan,
+    InterlockingControlViewModel Interlocking);
