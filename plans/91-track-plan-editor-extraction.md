@@ -25,8 +25,8 @@ layout, and drawing API calls.
 
 ### WP1 - Characterize and coordinate editor state
 
-- Add a platform-neutral `TrackPlanEditorService` under
-  `Backend/Service/TrackPlan`.
+- Add a platform-neutral `TrackPlanEditorService` under `SharedUI/Service`,
+  above the generic Backend services and the concrete PIKO track library.
 - Make it own selection coordination, document snapshots, bounded undo/redo,
   dirty-state transitions, validation, and all `EditableTrackPlan` mutations
   used by the editor.
