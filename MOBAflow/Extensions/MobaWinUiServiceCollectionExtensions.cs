@@ -9,6 +9,7 @@ using Backend.Service.TrackPlan;
 using Backend.Service.Validation;
 using Common.Configuration;
 using Common.Events;
+using Common.Multiplex;
 using Common.Navigation;
 using Display.Rendering;
 using Display.Runtime;
@@ -174,8 +175,10 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<MasterDataStore>(),
             sp.GetRequiredService<ILogger<LocomotiveService>>()));
 
-        services.AddSingleton(sp =>
+        services.AddSingleton<IMultiplexerProvider, DefaultMultiplexerProvider>();
+        services.AddSingleton<ISignalArticleCatalog>(sp =>
             new ViessmannSignalService(sp.GetRequiredService<MasterDataStore>()));
+        services.AddTransient<SignalBoxPropertiesViewModel>();
 
         services.AddSingleton<ISettingsService>(sp => new SettingsService(
             sp.GetRequiredService<AppSettings>(),

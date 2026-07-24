@@ -2,110 +2,84 @@
 namespace Moba.WinUI.Controls.SignalBox;
 
 using Common.Display;
-using Common.Extension;
-using Common.Multiplex;
 
 using Domain;
 
 using Moba.WinUI.Controls;
+using Moba.WinUI.View;
 
-using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
 
-using Moba.WinUI.View;
-
-using Service;
-
+using SharedUI.Interface;
 using SharedUI.ViewModel;
 
-using System;
-using System.Linq;
-using System.Threading.Tasks;
+using System.ComponentModel;
 
 public sealed partial class SignalBoxPropertiesControl
 {
-    private ViessmannSignalService? _viessmannSignalService;
-    private ILogger<SignalBoxPropertiesControl>? _logger;
-    private bool _isUpdatingSpeedIndicatorControls;
-    private bool _isUpdatingNameBox;
+    private bool _isUpdatingControls;
 
-    public static readonly DependencyProperty ViewModelProperty = DependencyProperty.Register(
-        nameof(ViewModel),
-        typeof(MainWindowViewModel),
+    public static readonly DependencyProperty EditorViewModelProperty = DependencyProperty.Register(
+        nameof(EditorViewModel),
+        typeof(SignalBoxPropertiesViewModel),
         typeof(SignalBoxPropertiesControl),
-        new PropertyMetadata(null));
+        new PropertyMetadata(null, OnEditorViewModelChanged));
 
-    public MainWindowViewModel? ViewModel
+    public SignalBoxPropertiesViewModel? EditorViewModel
     {
-        get => (MainWindowViewModel?)GetValue(ViewModelProperty);
-        set => SetValue(ViewModelProperty, value);
+        get => (SignalBoxPropertiesViewModel?)GetValue(EditorViewModelProperty);
+        set => SetValue(EditorViewModelProperty, value);
     }
-
-    public static readonly DependencyProperty PlanViewModelProperty = DependencyProperty.Register(
-        nameof(PlanViewModel),
-        typeof(SignalBoxPlanViewModel),
-        typeof(SignalBoxPropertiesControl),
-        new PropertyMetadata(null));
-
-    public SignalBoxPlanViewModel PlanViewModel
-    {
-        get => (SignalBoxPlanViewModel)GetValue(PlanViewModelProperty);
-        set => SetValue(PlanViewModelProperty, value);
-    }
-
-    public static readonly DependencyProperty SelectedElementProperty = DependencyProperty.Register(
-        nameof(SelectedElement),
-        typeof(SbElement),
-        typeof(SignalBoxPropertiesControl),
-        new PropertyMetadata(null, OnSelectedElementChanged));
-
-    public SbElement? SelectedElement
-    {
-        get => (SbElement?)GetValue(SelectedElementProperty);
-        set => SetValue(SelectedElementProperty, value);
-    }
-
-    public event EventHandler<SbElement>? RequestVisualRefresh;
-    public event EventHandler<SbElement>? RequestElementDeletion;
 
     public SignalBoxPropertiesControl()
     {
         InitializeComponent();
     }
 
-    /// <summary>
-    /// Wires runtime services from the hosting page. Required because WinUI instantiates this control from XAML
-    /// before constructor injection can supply dependencies.
-    /// </summary>
-    /// <param name="viessmannSignalService">Viessmann signal catalog and aspect helpers.</param>
-    /// <param name="logger">Optional logger for diagnostics.</param>
-    internal void AttachRuntimeServices(ViessmannSignalService viessmannSignalService, ILogger<SignalBoxPropertiesControl>? logger = null)
-    {
-        ArgumentNullException.ThrowIfNull(viessmannSignalService);
-        _viessmannSignalService = viessmannSignalService;
-        _logger = logger;
-    }
-
-    private static void OnSelectedElementChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-    {
-        if (d is SignalBoxPropertiesControl control)
-        {
-            control.UpdatePropertiesPanel();
-        }
-    }
-
     public void RefreshAspectDisplay()
     {
         UpdateAspectButtons();
-        UpdateAspectPresentation(SelectedElement as SbSignal);
+        UpdateAspectPresentation(EditorViewModel?.SelectedElement as SbSignal);
+    }
+
+    private static void OnEditorViewModelChanged(
+        DependencyObject dependencyObject,
+        DependencyPropertyChangedEventArgs args)
+    {
+        if (dependencyObject is not SignalBoxPropertiesControl control)
+        {
+            return;
+        }
+
+        if (args.OldValue is SignalBoxPropertiesViewModel oldViewModel)
+        {
+            oldViewModel.PropertyChanged -= control.OnEditorViewModelPropertyChanged;
+        }
+
+        if (args.NewValue is SignalBoxPropertiesViewModel newViewModel)
+        {
+            newViewModel.PropertyChanged += control.OnEditorViewModelPropertyChanged;
+        }
+
+        control.UpdatePropertiesPanel();
+    }
+
+    private void OnEditorViewModelPropertyChanged(
+        object? sender,
+        PropertyChangedEventArgs args)
+    {
+        _ = sender;
+        _ = args;
+        UpdatePropertiesPanel();
     }
 
     private void UpdatePropertiesPanel()
     {
-        if (SelectedElement == null)
+        var viewModel = EditorViewModel;
+        var selectedElement = viewModel?.SelectedElement;
+        if (viewModel == null || selectedElement == null)
         {
             NoSelectionInfo.Visibility = Visibility.Visible;
             ElementPropertiesPanel.Visibility = Visibility.Collapsed;
@@ -115,313 +89,153 @@ public sealed partial class SignalBoxPropertiesControl
         NoSelectionInfo.Visibility = Visibility.Collapsed;
         ElementPropertiesPanel.Visibility = Visibility.Visible;
 
-        _isUpdatingNameBox = true;
-        try
+        RunWhileUpdatingControls(() =>
         {
-            ElementNameBox.Text = SelectedElement.Name;
-        }
-        finally
-        {
-            _isUpdatingNameBox = false;
-        }
+            ElementNameBox.Text = viewModel.ElementName;
+            AddressPanel.Visibility = viewModel.IsAddressVisible
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+            ElementAddressBox.Header = viewModel.AddressHeader;
+            ElementAddressBox.Value = viewModel.ElementAddress ?? double.NaN;
 
-        if (SelectedElement is SbSwitch sw)
-        {
-            ElementAddressBox.Header = "DCC address (switch)";
-            ElementAddressBox.Value = sw.Address;
-            ElementAddressBox.Visibility = Visibility.Visible;
-            AddressPanel.Visibility = Visibility.Visible;
-        }
-        else if (SelectedElement is SbDetector det)
-        {
-            ElementAddressBox.Header = "Feedback address";
-            ElementAddressBox.Value = det.FeedbackAddress;
-            ElementAddressBox.Visibility = Visibility.Visible;
-            AddressPanel.Visibility = Visibility.Visible;
-        }
-        else if (SelectedElement is SbSignal)
-        {
-            AddressPanel.Visibility = Visibility.Collapsed;
-        }
-        else
-        {
-            AddressPanel.Visibility = Visibility.Collapsed;
-        }
+            SignalAspectPanel.Visibility = viewModel.IsSignalSelected
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+            MultiplexConfigPanel.Visibility = viewModel.IsSignalSelected
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+            SwitchPositionPanel.Visibility = viewModel.IsSwitchSelected
+                ? Visibility.Visible
+                : Visibility.Collapsed;
 
-        SignalAspectPanel.Visibility = SelectedElement is SbSignal ? Visibility.Visible : Visibility.Collapsed;
-        UpdateMultiplexConfigPanel();
-        SwitchPositionPanel.Visibility = SelectedElement is SbSwitch ? Visibility.Visible : Visibility.Collapsed;
-        UpdateAspectButtons();
-        UpdateAspectPresentation(SelectedElement as SbSignal);
+            if (selectedElement is SbSignal signal)
+            {
+                UpdateMultiplexerOptions(viewModel);
+                UpdateSignalArticleOptions(viewModel);
+                BaseAddressBox.Value = viewModel.BaseAddress is { } baseAddress
+                    ? baseAddress
+                    : double.NaN;
+                SpeedIndicatorConfigPanel.Visibility = viewModel.IsSpeedIndicatorVisible
+                    ? Visibility.Visible
+                    : Visibility.Collapsed;
+                TopSpeedIndicatorBox.Value = viewModel.TopSpeedIndicator is { } topSpeed
+                    ? topSpeed
+                    : double.NaN;
+                BottomSpeedIndicatorBox.Value = viewModel.BottomSpeedIndicator is { } bottomSpeed
+                    ? bottomSpeed
+                    : double.NaN;
+                ApplySupportedAspectVisibility(viewModel);
+                UpdateAspectButtons();
+                UpdateAspectPresentation(signal);
+            }
 
-        if (SelectedElement is SbSwitch)
-        {
-            UpdateSwitchButtons();
-        }
+            if (selectedElement is SbSwitch)
+            {
+                UpdateSwitchButtons();
+            }
+        });
     }
 
-    private void UpdateMultiplexConfigPanel()
+    private void UpdateMultiplexerOptions(SignalBoxPropertiesViewModel viewModel)
     {
-        if (SelectedElement is not SbSignal sig)
-        {
-            MultiplexConfigPanel.Visibility = Visibility.Collapsed;
-            return;
-        }
-
-        MultiplexConfigPanel.Visibility = Visibility.Visible;
-        EnsureMultiplexerComboBoxItems();
-        RestoreMultiplexerSelection(sig);
-        ApplySignalConfigToMultiplexPanel(sig);
-    }
-
-    private void EnsureMultiplexerComboBoxItems()
-    {
-        if (MultiplexerComboBox.Items.Count > 0)
-        {
-            return;
-        }
-
-        MultiplexerComboBox.SelectionChanged -= OnMultiplexerSelected;
-        foreach (var def in MultiplexerHelper.GetAllDefinitions())
+        MultiplexerComboBox.Items.Clear();
+        foreach (var option in viewModel.MultiplexerOptions)
         {
             MultiplexerComboBox.Items.Add(new ComboBoxItem
             {
-                Content = def.DisplayName,
-                Tag = def.ArticleNumber
+                Content = option.DisplayName,
+                Tag = option.ArticleNumber
             });
         }
-        MultiplexerComboBox.SelectionChanged += OnMultiplexerSelected;
+
+        MultiplexerComboBox.SelectedItem = FindOption(
+            MultiplexerComboBox,
+            viewModel.SelectedMultiplexerArticleNumber);
     }
 
-    private void RestoreMultiplexerSelection(SbSignal sig)
+    private void UpdateSignalArticleOptions(SignalBoxPropertiesViewModel viewModel)
     {
-        if (string.IsNullOrEmpty(sig.MultiplexerArticleNumber))
+        PopulateSignalArticleOptions(
+            MainSignalComboBox,
+            viewModel.MainSignalOptions,
+            viewModel.SelectedMainSignalArticleNumber);
+        PopulateSignalArticleOptions(
+            DistantSignalComboBox,
+            viewModel.DistantSignalOptions,
+            viewModel.SelectedDistantSignalArticleNumber);
+    }
+
+    private static void PopulateSignalArticleOptions(
+        ComboBox comboBox,
+        IReadOnlyList<SignalArticleOption> options,
+        string? selectedArticle)
+    {
+        comboBox.Items.Clear();
+        foreach (var option in options)
         {
-            return;
+            comboBox.Items.Add(new ComboBoxItem
+            {
+                Content = option.DisplayName,
+                Tag = option.ArticleNumber
+            });
         }
 
-        var selectedItem = MultiplexerComboBox.Items
+        comboBox.SelectedItem = FindOption(comboBox, selectedArticle);
+    }
+
+    private static ComboBoxItem? FindOption(ComboBox comboBox, string? articleNumber)
+    {
+        if (string.IsNullOrWhiteSpace(articleNumber))
+        {
+            return null;
+        }
+
+        return comboBox.Items
             .OfType<ComboBoxItem>()
-            .FirstOrDefault(x => x.Tag?.ToString() == sig.MultiplexerArticleNumber);
-        if (selectedItem != null)
-        {
-            MultiplexerComboBox.SelectedItem = selectedItem;
-        }
+            .FirstOrDefault(item =>
+                string.Equals(
+                    item.Tag?.ToString(),
+                    articleNumber,
+                    StringComparison.Ordinal));
     }
 
-    private void ApplySignalConfigToMultiplexPanel(SbSignal sig)
+    private void ApplySupportedAspectVisibility(SignalBoxPropertiesViewModel viewModel)
     {
-        UpdateSignalArticleComboBoxes(sig);
-        BaseAddressBox.Value = sig.BaseAddress > 0 ? sig.BaseAddress : 1;
-        UpdateSpeedIndicatorConfig(sig);
-        UpdateAvailableSignalAspects(sig);
+        AspectHp0Button.Visibility = ToVisibility(viewModel.IsAspectAvailable(SignalAspect.Hp0));
+        AspectKs1Button.Visibility = ToVisibility(viewModel.IsAspectAvailable(SignalAspect.Ks1));
+        AspectKs2Button.Visibility = ToVisibility(viewModel.IsAspectAvailable(SignalAspect.Ks2));
+        AspectKs1BlinkButton.Visibility = ToVisibility(viewModel.IsAspectAvailable(SignalAspect.Ks1Blink));
+        AspectKennlichtButton.Visibility = ToVisibility(viewModel.IsAspectAvailable(SignalAspect.Kennlicht));
+        AspectDunkelButton.Visibility = ToVisibility(viewModel.IsAspectAvailable(SignalAspect.Dunkel));
+        AspectRa12Button.Visibility = ToVisibility(viewModel.IsAspectAvailable(SignalAspect.Ra12));
+        AspectZs1Button.Visibility = ToVisibility(viewModel.IsAspectAvailable(SignalAspect.Zs1));
+        AspectZs7Button.Visibility = ToVisibility(viewModel.IsAspectAvailable(SignalAspect.Zs7));
     }
 
-    private void UpdateSpeedIndicatorConfig(SbSignal sig)
-    {
-        var is4046 = string.Equals(sig.MainSignalArticleNumber, "4046", StringComparison.Ordinal);
-        SpeedIndicatorConfigPanel.Visibility = is4046 ? Visibility.Visible : Visibility.Collapsed;
-
-        _isUpdatingSpeedIndicatorControls = true;
-        try
-        {
-            TopSpeedIndicatorBox.Value = ParseNullableSpeedIndicator(sig.TopSpeedIndicator) ?? double.NaN;
-            BottomSpeedIndicatorBox.Value = ParseNullableSpeedIndicator(sig.BottomSpeedIndicator) ?? double.NaN;
-        }
-        finally
-        {
-            _isUpdatingSpeedIndicatorControls = false;
-        }
-    }
-
-    private void UpdateAvailableSignalAspects(SbSignal sig)
-    {
-        UpdateAspectPresentation(sig);
-
-        if (string.IsNullOrEmpty(sig.MultiplexerArticleNumber))
-        {
-            SetAllAspectButtonsVisibility(Visibility.Visible);
-            return;
-        }
-
-        if (!TryGetSupportedAspects(sig, out var supportedAspects))
-        {
-            SetAllAspectButtonsVisibility(Visibility.Visible);
-            return;
-        }
-
-        ApplySupportedAspectVisibility(supportedAspects);
-        if (supportedAspects.Count == 0)
-        {
-            SetAllAspectButtonsVisibility(Visibility.Visible);
-        }
-    }
-
-    private static bool TryGetSupportedAspects(SbSignal sig, out IReadOnlyCollection<SignalAspect> supportedAspects)
-    {
-        try
-        {
-            supportedAspects = MultiplexerHelper.GetSupportedAspects(
-                sig.MultiplexerArticleNumber!,
-                sig.MainSignalArticleNumber);
-            return true;
-        }
-        catch (ArgumentException)
-        {
-            supportedAspects = Array.Empty<SignalAspect>();
-            return false;
-        }
-    }
-
-    private void ApplySupportedAspectVisibility(IReadOnlyCollection<SignalAspect> supportedAspects)
-    {
-        AspectHp0Button.Visibility = ToVisibility(supportedAspects.Contains(SignalAspect.Hp0));
-        AspectKs1Button.Visibility = ToVisibility(supportedAspects.Contains(SignalAspect.Ks1));
-        AspectKs2Button.Visibility = ToVisibility(supportedAspects.Contains(SignalAspect.Ks2));
-        AspectKs1BlinkButton.Visibility = ToVisibility(supportedAspects.Contains(SignalAspect.Ks1Blink));
-        AspectKennlichtButton.Visibility = ToVisibility(supportedAspects.Contains(SignalAspect.Kennlicht));
-        AspectDunkelButton.Visibility = ToVisibility(supportedAspects.Contains(SignalAspect.Dunkel));
-        AspectRa12Button.Visibility = ToVisibility(supportedAspects.Contains(SignalAspect.Ra12));
-        AspectZs1Button.Visibility = ToVisibility(supportedAspects.Contains(SignalAspect.Zs1));
-        AspectZs7Button.Visibility = ToVisibility(supportedAspects.Contains(SignalAspect.Zs7));
-    }
-
-    private static Visibility ToVisibility(bool isVisible)
-    {
-        return isVisible ? Visibility.Visible : Visibility.Collapsed;
-    }
-
-    private void SetAllAspectButtonsVisibility(Visibility visibility)
-    {
-        AspectHp0Button.Visibility = visibility;
-        AspectKs1Button.Visibility = visibility;
-        AspectKs2Button.Visibility = visibility;
-        AspectKs1BlinkButton.Visibility = visibility;
-        AspectKennlichtButton.Visibility = visibility;
-        AspectDunkelButton.Visibility = visibility;
-        AspectRa12Button.Visibility = visibility;
-        AspectZs1Button.Visibility = visibility;
-        AspectZs7Button.Visibility = visibility;
-    }
-
-    private void UpdateSignalArticleComboBoxes(SbSignal sig)
-    {
-        var viessmann = _viessmannSignalService;
-        if (viessmann == null)
-        {
-            return;
-        }
-
-        if (string.IsNullOrEmpty(sig.MultiplexerArticleNumber))
-        {
-            MainSignalComboBox.Items.Clear();
-            DistantSignalComboBox.Items.Clear();
-            return;
-        }
-
-        try
-        {
-            var def = MultiplexerHelper.GetDefinition(sig.MultiplexerArticleNumber);
-            UpdateMainSignalComboBox(sig, def.MainSignalArticleNumber, viessmann);
-            UpdateDistantSignalComboBox(sig, viessmann);
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogWarning(ex, "Error updating signal article ComboBoxes");
-        }
-    }
-
-    private void UpdateMainSignalComboBox(SbSignal sig, string defaultMainSignalArticleNumber, ViessmannSignalService viessmann)
-    {
-        MainSignalComboBox.SelectionChanged -= OnMainSignalSelected;
-        MainSignalComboBox.Items.Clear();
-        foreach (var (articleNumber, displayName) in viessmann.GetMainSignalOptions(sig.MultiplexerArticleNumber!))
-        {
-            MainSignalComboBox.Items.Add(new ComboBoxItem { Content = displayName, Tag = articleNumber });
-        }
-        MainSignalComboBox.SelectionChanged += OnMainSignalSelected;
-
-        var mainSelected = MainSignalComboBox.Items
-            .OfType<ComboBoxItem>()
-            .FirstOrDefault(x => x.Tag?.ToString() == sig.MainSignalArticleNumber);
-        if (mainSelected != null)
-        {
-            MainSignalComboBox.SelectedItem = mainSelected;
-            return;
-        }
-
-        if (MainSignalComboBox.Items.Count > 0)
-        {
-            MainSignalComboBox.SelectedIndex = 0;
-            sig.MainSignalArticleNumber = (MainSignalComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? defaultMainSignalArticleNumber;
-        }
-    }
-
-    private void UpdateDistantSignalComboBox(SbSignal sig, ViessmannSignalService viessmann)
-    {
-        DistantSignalComboBox.SelectionChanged -= OnDistantSignalSelected;
-        DistantSignalComboBox.Items.Clear();
-        foreach (var (articleNumber, displayName) in viessmann.GetDistantSignalOptions(sig.MultiplexerArticleNumber!))
-        {
-            DistantSignalComboBox.Items.Add(new ComboBoxItem { Content = displayName, Tag = articleNumber });
-        }
-        DistantSignalComboBox.SelectionChanged += OnDistantSignalSelected;
-
-        if (DistantSignalComboBox.Items.Count == 0)
-        {
-            return;
-        }
-
-        var distantSelected = DistantSignalComboBox.Items
-            .OfType<ComboBoxItem>()
-            .FirstOrDefault(x => x.Tag?.ToString() == sig.DistantSignalArticleNumber);
-        if (distantSelected != null)
-        {
-            DistantSignalComboBox.SelectedItem = distantSelected;
-            return;
-        }
-
-        DistantSignalComboBox.SelectedIndex = 0;
-        sig.DistantSignalArticleNumber = (DistantSignalComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString();
-    }
-
-    private void OnMainSignalSelected(object sender, SelectionChangedEventArgs e)
-    {
-        _ = sender;
-        _ = e;
-        TryApplySignalArticleSelection(MainSignalComboBox, static (sig, articleNumber) => sig.MainSignalArticleNumber = articleNumber);
-    }
-
-    private void OnDistantSignalSelected(object sender, SelectionChangedEventArgs e)
-    {
-        _ = sender;
-        _ = e;
-        TryApplySignalArticleSelection(DistantSignalComboBox, static (sig, articleNumber) => sig.DistantSignalArticleNumber = articleNumber);
-    }
-
-    private void TryApplySignalArticleSelection(ComboBox comboBox, Action<SbSignal, string> applySelection)
-    {
-        if (SelectedElement is not SbSignal sig || comboBox.SelectedItem is not ComboBoxItem { Tag: string articleNumber })
-        {
-            return;
-        }
-
-        applySelection(sig, articleNumber);
-        UpdateAvailableSignalAspects(sig);
-        RequestVisualRefresh?.Invoke(this, sig);
-        QueueSolutionSave();
-    }
+    private static Visibility ToVisibility(bool isVisible) =>
+        isVisible ? Visibility.Visible : Visibility.Collapsed;
 
     private void UpdateAspectButtons()
     {
-        if (SelectedElement is not SbSignal sig) return;
+        if (EditorViewModel?.SelectedElement is not SbSignal signal)
+        {
+            return;
+        }
 
-        var accentBrush = ThemeResourceResolver.ResolveBrush(this, "AccentFillColorDefaultBrush", Microsoft.UI.Colors.Blue);
-        var normalBrush = ThemeResourceResolver.ResolveBrush(this, "SubtleFillColorSecondaryBrush", Microsoft.UI.Colors.Gray);
+        var accentBrush = ThemeResourceResolver.ResolveBrush(
+            this,
+            "AccentFillColorDefaultBrush",
+            Microsoft.UI.Colors.Blue);
+        var normalBrush = ThemeResourceResolver.ResolveBrush(
+            this,
+            "SubtleFillColorSecondaryBrush",
+            Microsoft.UI.Colors.Gray);
 
         foreach (var (button, aspect) in EnumerateAspectButtons())
         {
-            button.Background = sig.SignalAspect == aspect ? accentBrush : normalBrush;
+            button.Background = signal.SignalAspect == aspect
+                ? accentBrush
+                : normalBrush;
         }
     }
 
@@ -438,17 +252,23 @@ public sealed partial class SignalBoxPropertiesControl
         yield return (AspectZs7Button, SignalAspect.Zs7);
     }
 
-    private void UpdateAspectPresentation(SbSignal? sig)
+    private void UpdateAspectPresentation(SbSignal? signal)
     {
-        var is4046 = sig is not null && string.Equals(sig.MainSignalArticleNumber, "4046", StringComparison.Ordinal);
-        var signalArticleNumber = is4046 ? "4046" : string.Empty;
+        var isSpeedIndicatorSignal = signal is not null &&
+            string.Equals(
+                signal.MainSignalArticleNumber,
+                "4046",
+                StringComparison.Ordinal);
+        var signalArticleNumber = isSpeedIndicatorSignal ? "4046" : string.Empty;
 
-        ApplyAspectPreviewSignals(signalArticleNumber, sig);
-        ApplyAspectLabels(is4046);
-        ApplyAspectTooltips(is4046);
+        ApplyAspectPreviewSignals(signalArticleNumber, signal);
+        ApplyAspectLabels(isSpeedIndicatorSignal);
+        ApplyAspectTooltips(isSpeedIndicatorSignal);
     }
 
-    private void ApplyAspectPreviewSignals(string signalArticleNumber, SbSignal? selectedSignal)
+    private void ApplyAspectPreviewSignals(
+        string signalArticleNumber,
+        SbSignal? selectedSignal)
     {
         var topSpeedIndicator = selectedSignal?.TopSpeedIndicator ?? string.Empty;
         var bottomSpeedIndicator = selectedSignal?.BottomSpeedIndicator ?? string.Empty;
@@ -476,35 +296,82 @@ public sealed partial class SignalBoxPropertiesControl
         yield return (AspectZs7Signal, SignalAspect.Zs7);
     }
 
-    private void ApplyAspectLabels(bool is4046)
+    private void ApplyAspectLabels(bool isSpeedIndicatorSignal)
     {
-        AspectHp0Label.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Hp0, is4046);
-        AspectKs1Label.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Ks1, is4046);
-        AspectKs2Label.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Ks2, is4046);
-        AspectKs1BlinkLabel.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Ks1Blink, is4046);
-        AspectKennlichtLabel.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Kennlicht, is4046);
-        AspectDunkelLabel.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Dunkel, is4046);
-        AspectRa12Label.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Ra12, is4046);
-        AspectZs1Label.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Zs1, is4046);
-        AspectZs7Label.Text = KsSignalAspectNames.GetAspectLabel(SignalAspect.Zs7, is4046);
+        AspectHp0Label.Text = KsSignalAspectNames.GetAspectLabel(
+            SignalAspect.Hp0,
+            isSpeedIndicatorSignal);
+        AspectKs1Label.Text = KsSignalAspectNames.GetAspectLabel(
+            SignalAspect.Ks1,
+            isSpeedIndicatorSignal);
+        AspectKs2Label.Text = KsSignalAspectNames.GetAspectLabel(
+            SignalAspect.Ks2,
+            isSpeedIndicatorSignal);
+        AspectKs1BlinkLabel.Text = KsSignalAspectNames.GetAspectLabel(
+            SignalAspect.Ks1Blink,
+            isSpeedIndicatorSignal);
+        AspectKennlichtLabel.Text = KsSignalAspectNames.GetAspectLabel(
+            SignalAspect.Kennlicht,
+            isSpeedIndicatorSignal);
+        AspectDunkelLabel.Text = KsSignalAspectNames.GetAspectLabel(
+            SignalAspect.Dunkel,
+            isSpeedIndicatorSignal);
+        AspectRa12Label.Text = KsSignalAspectNames.GetAspectLabel(
+            SignalAspect.Ra12,
+            isSpeedIndicatorSignal);
+        AspectZs1Label.Text = KsSignalAspectNames.GetAspectLabel(
+            SignalAspect.Zs1,
+            isSpeedIndicatorSignal);
+        AspectZs7Label.Text = KsSignalAspectNames.GetAspectLabel(
+            SignalAspect.Zs7,
+            isSpeedIndicatorSignal);
     }
 
-    private void ApplyAspectTooltips(bool is4046)
+    private void ApplyAspectTooltips(bool isSpeedIndicatorSignal)
     {
         ToolTipService.SetToolTip(AspectHp0Button, "Hp 0 - Stop");
         ToolTipService.SetToolTip(AspectKs1Button, "Ks 1 - Proceed");
-        ToolTipService.SetToolTip(AspectKs2Button, is4046 ? "Ks 2 with white marker light at the top left" : "Ks 2 - Expect stop");
-        ToolTipService.SetToolTip(AspectKs1BlinkButton, is4046 ? "Ks 2 with white marker light at the top left and top speed indicator" : "Ks 1 flashing - Proceed with speed pre-indicator");
-        ToolTipService.SetToolTip(AspectKennlichtButton, is4046 ? "Only white marker light at the top left" : "Marker light - Signal disabled for operations");
-        ToolTipService.SetToolTip(AspectDunkelButton, is4046 ? "Green flashing with white marker light at the top left and top/bottom speed indicators" : "Dark mode - Signal inactive");
-        ToolTipService.SetToolTip(AspectRa12Button, is4046 ? "Hp0 with white marker light at the bottom for shunting movements" : "Sh 1/Ra 12 - Shunting allowed");
-        ToolTipService.SetToolTip(AspectZs1Button, is4046 ? "Ks 1 with top speed indicator" : "Zs 1 - Substitute signal (white flashing)");
-        ToolTipService.SetToolTip(AspectZs7Button, "Zs 7 - Caution signal (3x yellow)");
+        ToolTipService.SetToolTip(
+            AspectKs2Button,
+            isSpeedIndicatorSignal
+                ? "Ks 2 with white marker light at the top left"
+                : "Ks 2 - Expect stop");
+        ToolTipService.SetToolTip(
+            AspectKs1BlinkButton,
+            isSpeedIndicatorSignal
+                ? "Ks 2 with white marker light at the top left and top speed indicator"
+                : "Ks 1 flashing - Proceed with speed pre-indicator");
+        ToolTipService.SetToolTip(
+            AspectKennlichtButton,
+            isSpeedIndicatorSignal
+                ? "Only white marker light at the top left"
+                : "Marker light - Signal disabled for operations");
+        ToolTipService.SetToolTip(
+            AspectDunkelButton,
+            isSpeedIndicatorSignal
+                ? "Green flashing with white marker light at the top left and top/bottom speed indicators"
+                : "Dark mode - Signal inactive");
+        ToolTipService.SetToolTip(
+            AspectRa12Button,
+            isSpeedIndicatorSignal
+                ? "Hp0 with white marker light at the bottom for shunting movements"
+                : "Sh 1/Ra 12 - Shunting allowed");
+        ToolTipService.SetToolTip(
+            AspectZs1Button,
+            isSpeedIndicatorSignal
+                ? "Ks 1 with top speed indicator"
+                : "Zs 1 - Substitute signal (white flashing)");
+        ToolTipService.SetToolTip(
+            AspectZs7Button,
+            "Zs 7 - Caution signal (3x yellow)");
     }
 
     private void UpdateSwitchButtons()
     {
-        if (SelectedElement is not SbSwitch sw) return;
+        if (EditorViewModel?.SelectedElement is not SbSwitch sw)
+        {
+            return;
+        }
 
         ThirdSwitchColumn.Width = new GridLength(1, GridUnitType.Star);
         SwitchRightButton.Visibility = Visibility.Visible;
@@ -512,142 +379,175 @@ public sealed partial class SignalBoxPropertiesControl
 
         var accentStyle = (Style)Application.Current.Resources["AccentButtonStyle"];
         var defaultStyle = (Style)Application.Current.Resources["DefaultButtonStyle"];
-        ApplySwitchButtonStyle(SwitchStraightButton, sw.SwitchPosition == SwitchPosition.Straight, accentStyle, defaultStyle);
-        ApplySwitchButtonStyle(SwitchLeftButton, sw.SwitchPosition == SwitchPosition.DivergingLeft, accentStyle, defaultStyle);
-        ApplySwitchButtonStyle(SwitchRightButton, sw.SwitchPosition == SwitchPosition.DivergingRight, accentStyle, defaultStyle);
+        ApplySwitchButtonStyle(
+            SwitchStraightButton,
+            sw.SwitchPosition == SwitchPosition.Straight,
+            accentStyle,
+            defaultStyle);
+        ApplySwitchButtonStyle(
+            SwitchLeftButton,
+            sw.SwitchPosition == SwitchPosition.DivergingLeft,
+            accentStyle,
+            defaultStyle);
+        ApplySwitchButtonStyle(
+            SwitchRightButton,
+            sw.SwitchPosition == SwitchPosition.DivergingRight,
+            accentStyle,
+            defaultStyle);
     }
 
-    private static void ApplySwitchButtonStyle(Button button, bool isActive, Style accentStyle, Style defaultStyle)
+    private static void ApplySwitchButtonStyle(
+        Button button,
+        bool isActive,
+        Style accentStyle,
+        Style defaultStyle)
     {
         button.Style = isActive ? accentStyle : defaultStyle;
     }
 
-    private void OnElementNameChanged(object sender, TextChangedEventArgs e)
+    private void OnElementNameChanged(object sender, TextChangedEventArgs args)
     {
         _ = sender;
-        _ = e;
-        if (_isUpdatingNameBox || SelectedElement == null)
+        _ = args;
+        if (!_isUpdatingControls)
+        {
+            EditorViewModel?.SetElementName(ElementNameBox.Text);
+        }
+    }
+
+    private void OnRotateClicked(object sender, RoutedEventArgs args)
+    {
+        _ = args;
+        if (TryGetButtonTag(sender, out var rotationTag) &&
+            int.TryParse(rotationTag, out var rotation))
+        {
+            EditorViewModel?.RotateCommand.Execute(rotation);
+        }
+    }
+
+    private void OnAspectClicked(object sender, PointerRoutedEventArgs args)
+    {
+        _ = args;
+        if (sender is Border { Tag: string aspectName } &&
+            Enum.TryParse<SignalAspect>(aspectName, out var aspect))
+        {
+            EditorViewModel?.SetSignalAspectCommand.Execute(aspect);
+        }
+    }
+
+    private void OnSwitchPositionClicked(object sender, RoutedEventArgs args)
+    {
+        _ = args;
+        if (TryGetButtonTag(sender, out var positionTag) &&
+            Enum.TryParse<SwitchPosition>(positionTag, out var position))
+        {
+            EditorViewModel?.SetSwitchPositionCommand.Execute(position);
+        }
+    }
+
+    private void OnAddressChanged(
+        NumberBox sender,
+        NumberBoxValueChangedEventArgs args)
+    {
+        _ = sender;
+        if (!_isUpdatingControls && TryGetNumberBoxIntValue(args, out var value))
+        {
+            EditorViewModel?.SetElementAddress(value);
+        }
+    }
+
+    private void OnDeleteElementClicked(object sender, RoutedEventArgs args)
+    {
+        _ = sender;
+        _ = args;
+        EditorViewModel?.DeleteSelectedElementCommand.Execute(null);
+    }
+
+    private void OnMultiplexerSelected(object sender, SelectionChangedEventArgs args)
+    {
+        _ = sender;
+        _ = args;
+        if (_isUpdatingControls)
         {
             return;
         }
 
-        SelectedElement.Name = ElementNameBox.Text;
-        QueueSolutionSave();
+        var articleNumber = (MultiplexerComboBox.SelectedItem as ComboBoxItem)?
+            .Tag?
+            .ToString();
+        EditorViewModel?.SelectMultiplexer(articleNumber);
     }
 
-    private void OnRotateClicked(object sender, RoutedEventArgs e)
+    private void OnMainSignalSelected(object sender, SelectionChangedEventArgs args)
     {
-        _ = e;
-        if (SelectedElement == null || !TryGetButtonTag(sender, out var rotationTag) || !int.TryParse(rotationTag, out var rotation))
+        _ = sender;
+        _ = args;
+        if (!_isUpdatingControls &&
+            MainSignalComboBox.SelectedItem is ComboBoxItem { Tag: string articleNumber })
+        {
+            EditorViewModel?.SelectMainSignalArticle(articleNumber);
+        }
+    }
+
+    private void OnDistantSignalSelected(object sender, SelectionChangedEventArgs args)
+    {
+        _ = sender;
+        _ = args;
+        if (_isUpdatingControls)
         {
             return;
         }
 
-        SelectedElement.Rotation = rotation;
-        RequestVisualRefresh?.Invoke(this, SelectedElement);
+        var articleNumber = (DistantSignalComboBox.SelectedItem as ComboBoxItem)?
+            .Tag?
+            .ToString();
+        EditorViewModel?.SelectDistantSignalArticle(articleNumber);
     }
 
-    private void OnAspectClicked(object sender, PointerRoutedEventArgs e)
+    private void OnBaseAddressChanged(
+        NumberBox sender,
+        NumberBoxValueChangedEventArgs args)
     {
-        if (SelectedElement is not SbSignal sig || sender is not Border { Tag: string aspectStr }) return;
-
-        if (Enum.TryParse<SignalAspect>(aspectStr, out var aspect))
+        _ = sender;
+        if (!_isUpdatingControls && TryGetNumberBoxIntValue(args, out var value))
         {
-            sig.SignalAspect = aspect;
-            RequestVisualRefresh?.Invoke(this, sig);
-            UpdateAspectButtons();
-            SetSignalAspectAutomaticallyAsync(sig).Observe(
-                ex => _logger?.LogWarning(ex, "Set signal aspect failed"));
+            EditorViewModel?.SetBaseAddress(value);
         }
     }
 
-    private async Task SetSignalAspectAutomaticallyAsync(SbSignal sig)
+    private void OnTopSpeedIndicatorChanged(
+        NumberBox sender,
+        NumberBoxValueChangedEventArgs args)
     {
-        if (!TryValidateAspectSetRequest(sig))
+        _ = sender;
+        if (!_isUpdatingControls)
         {
-            return;
+            EditorViewModel?.SetTopSpeedIndicator(ParseNullableNumber(args.NewValue));
         }
-
-        if (!TryApplyTurnoutCommand(sig))
-        {
-            return;
-        }
-
-        if (ViewModel == null)
-        {
-            return;
-        }
-
-        await ViewModel.SetSignalAspectAsync(sig).ConfigureAwait(false);
     }
 
-    private static bool TryValidateAspectSetRequest(SbSignal sig)
+    private void OnBottomSpeedIndicatorChanged(
+        NumberBox sender,
+        NumberBoxValueChangedEventArgs args)
     {
-        if (!sig.IsMultiplexed)
+        _ = sender;
+        if (!_isUpdatingControls)
         {
-            return false;
+            EditorViewModel?.SetBottomSpeedIndicator(ParseNullableNumber(args.NewValue));
         }
-
-        if (string.IsNullOrEmpty(sig.MultiplexerArticleNumber))
-        {
-            return false;
-        }
-
-        if (sig.BaseAddress <= 0 || sig.BaseAddress > 2044)
-        {
-            return false;
-        }
-
-        if (sig.BaseAddress % 2 == 0)
-        {
-            return false;
-        }
-
-        if (!MultiplexerHelper.TryGetMaxAddressOffset(
-                sig.MultiplexerArticleNumber,
-                sig.MainSignalArticleNumber,
-                out var maxOffset))
-        {
-            return false;
-        }
-
-        return sig.BaseAddress + maxOffset <= 2044;
     }
 
-    private static bool TryApplyTurnoutCommand(SbSignal sig)
+    private void RunWhileUpdatingControls(Action update)
     {
+        _isUpdatingControls = true;
         try
         {
-            if (!MultiplexerHelper.TryGetTurnoutCommand(
-                    sig.MultiplexerArticleNumber!,
-                    sig.MainSignalArticleNumber,
-                    sig.SignalAspect,
-                    out var resolvedTurnoutCommand))
-            {
-                return false;
-            }
-
-            sig.ExtendedAccessoryValue = resolvedTurnoutCommand.Activate ? 1 : 0;
-            return true;
+            update();
         }
-        catch (ArgumentException)
+        finally
         {
-            return false;
+            _isUpdatingControls = false;
         }
-    }
-
-    private void OnSwitchPositionClicked(object sender, RoutedEventArgs e)
-    {
-        _ = e;
-        if (SelectedElement is not SbSwitch sw || !TryGetButtonTag(sender, out var positionTag))
-        {
-            return;
-        }
-
-        sw.SwitchPosition = ParseSwitchPosition(positionTag);
-
-        RequestVisualRefresh?.Invoke(this, sw);
-        UpdateSwitchButtons();
     }
 
     private static bool TryGetButtonTag(object sender, out string tag)
@@ -662,146 +562,9 @@ public sealed partial class SignalBoxPropertiesControl
         return false;
     }
 
-    private static SwitchPosition ParseSwitchPosition(string positionTag)
-    {
-        return positionTag switch
-        {
-            "Straight" => SwitchPosition.Straight,
-            "DivergingLeft" => SwitchPosition.DivergingLeft,
-            "DivergingRight" => SwitchPosition.DivergingRight,
-            _ => SwitchPosition.Straight
-        };
-    }
-
-    private void OnAddressChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
-    {
-        _ = sender;
-        if (!TryGetNumberBoxIntValue(args, out var value) || SelectedElement == null)
-        {
-            return;
-        }
-
-        ApplyAddressValue(SelectedElement, value);
-    }
-
-    private void OnDeleteElementClicked(object sender, RoutedEventArgs e)
-    {
-        if (SelectedElement != null)
-        {
-            RequestElementDeletion?.Invoke(this, SelectedElement);
-        }
-    }
-
-    private void OnMultiplexerSelected(object sender, SelectionChangedEventArgs e)
-    {
-        _ = sender;
-        _ = e;
-        if (SelectedElement is not SbSignal sig) return;
-
-        if (TryGetSelectedMultiplexerArticle(out var articleNumber))
-        {
-            ApplyMultiplexerSelection(sig, articleNumber);
-        }
-        else
-        {
-            ResetMultiplexerSelection(sig);
-        }
-    }
-
-    private bool TryGetSelectedMultiplexerArticle(out string articleNumber)
-    {
-        if (MultiplexerComboBox.SelectedItem is ComboBoxItem { Tag: string selectedArticleNumber })
-        {
-            articleNumber = selectedArticleNumber;
-            return true;
-        }
-
-        articleNumber = string.Empty;
-        return false;
-    }
-
-    private void ApplyMultiplexerSelection(SbSignal sig, string articleNumber)
-    {
-        sig.MultiplexerArticleNumber = articleNumber;
-        sig.IsMultiplexed = true;
-        UpdateSignalArticleComboBoxes(sig);
-        UpdateAvailableSignalAspects(sig);
-        RequestVisualRefresh?.Invoke(this, sig);
-    }
-
-    private void ResetMultiplexerSelection(SbSignal sig)
-    {
-        sig.MultiplexerArticleNumber = string.Empty;
-        sig.IsMultiplexed = false;
-        MainSignalComboBox.Items.Clear();
-        DistantSignalComboBox.Items.Clear();
-        SetAllAspectButtonsVisibility(Visibility.Visible);
-    }
-
-    private void OnBaseAddressChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
-    {
-        _ = sender;
-        if (!TryGetNumberBoxIntValue(args, out var value) || SelectedElement is not SbSignal sig)
-        {
-            return;
-        }
-
-        sig.BaseAddress = value;
-        QueueSolutionSave();
-    }
-
-    private void OnTopSpeedIndicatorChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
-    {
-        _ = sender;
-        if (_isUpdatingSpeedIndicatorControls || SelectedElement is not SbSignal sig)
-        {
-            return;
-        }
-
-        sig.TopSpeedIndicator = ParseSpeedIndicatorInput(args.NewValue);
-        RequestVisualRefresh?.Invoke(this, sig);
-        UpdateAspectPresentation(sig);
-        QueueSolutionSave();
-    }
-
-    private void OnBottomSpeedIndicatorChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
-    {
-        _ = sender;
-        if (_isUpdatingSpeedIndicatorControls || SelectedElement is not SbSignal sig)
-        {
-            return;
-        }
-
-        sig.BottomSpeedIndicator = ParseSpeedIndicatorInput(args.NewValue);
-        RequestVisualRefresh?.Invoke(this, sig);
-        UpdateAspectPresentation(sig);
-        QueueSolutionSave();
-    }
-
-    private static string? ParseSpeedIndicatorInput(double newValue)
-    {
-        return double.IsNaN(newValue) ? null : ((int)newValue).ToString();
-    }
-
-    private static double? ParseNullableSpeedIndicator(string? rawValue)
-    {
-        if (string.IsNullOrWhiteSpace(rawValue))
-        {
-            return null;
-        }
-
-        return int.TryParse(rawValue, out var parsedValue)
-            ? parsedValue
-            : null;
-    }
-
-    private void QueueSolutionSave()
-    {
-        ViewModel?.SaveSolutionInternalAsync().Observe(
-            ex => _logger?.LogWarning(ex, "Failed to persist signal box properties"));
-    }
-
-    private static bool TryGetNumberBoxIntValue(NumberBoxValueChangedEventArgs args, out int value)
+    private static bool TryGetNumberBoxIntValue(
+        NumberBoxValueChangedEventArgs args,
+        out int value)
     {
         if (double.IsNaN(args.NewValue))
         {
@@ -813,16 +576,6 @@ public sealed partial class SignalBoxPropertiesControl
         return true;
     }
 
-    private static void ApplyAddressValue(SbElement element, int value)
-    {
-        switch (element)
-        {
-            case SbSwitch sw:
-                sw.Address = value;
-                break;
-            case SbDetector det:
-                det.FeedbackAddress = value;
-                break;
-        }
-    }
+    private static int? ParseNullableNumber(double value) =>
+        double.IsNaN(value) ? null : (int)value;
 }

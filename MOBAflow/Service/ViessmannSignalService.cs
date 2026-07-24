@@ -5,12 +5,14 @@ using Backend.Data;
 
 using Common.Multiplex;
 
+using SharedUI.Interface;
+
 /// <summary>
 /// Provides the selectable Viessmann Multiplex signals (main and distant signal) from master data (data.json).
 /// Main-signal articles follow Viessmann manual section 7 (&quot;Verwendbare Signale&quot;), captured in data.json
 /// (Ks 4042/4043/4045/4046; Lichtsignale 4721–4728; Signalköpfe 4751–4753; Ks-Vorsignal 4040 as distant).
 /// </summary>
-internal sealed class ViessmannSignalService
+internal sealed class ViessmannSignalService : ISignalArticleCatalog
 {
     private readonly MasterDataStore _masterDataStore;
 
@@ -24,16 +26,25 @@ internal sealed class ViessmannSignalService
     /// Uses role "main" from master data (data.json). Articles without a turnout mapping in
     /// <see cref="MultiplexerHelper"/> still appear but aspect commands fail until mappings are added.
     /// </summary>
-    public IReadOnlyList<(string ArticleNumber, string DisplayName)> GetMainSignalOptions(string multiplexerArticleNumber)
+    public IReadOnlyList<SignalArticleOption> GetMainSignalOptions(string multiplexerArticleNumber)
     {
         _ = MultiplexerHelper.GetDefinition(multiplexerArticleNumber);
         var fromData = _masterDataStore.MultiplexSignals;
         var main = fromData
             .Where(s => string.Equals(s.Role, "main", StringComparison.OrdinalIgnoreCase))
-            .Select(s => (s.ArticleNumber, $"{s.ArticleNumber} - {s.DisplayName}"))
+            .Select(s => new SignalArticleOption(
+                s.ArticleNumber,
+                $"{s.ArticleNumber} - {s.DisplayName}"))
             .ToList();
         if (main.Count == 0)
-            return MultiplexerHelper.GetMainSignalOptions(multiplexerArticleNumber);
+        {
+            return MultiplexerHelper.GetMainSignalOptions(multiplexerArticleNumber)
+                .Select(option => new SignalArticleOption(
+                    option.ArticleNumber,
+                    option.DisplayName))
+                .ToArray();
+        }
+
         main.Sort((a, b) =>
         {
             if (a.ArticleNumber == "4046") return -1;
@@ -46,7 +57,7 @@ internal sealed class ViessmannSignalService
     /// <summary>
     /// Returns all entries selectable as distant signal for the specified multiplexer.
     /// </summary>
-    public IReadOnlyList<(string ArticleNumber, string DisplayName)> GetDistantSignalOptions(string multiplexerArticleNumber)
+    public IReadOnlyList<SignalArticleOption> GetDistantSignalOptions(string multiplexerArticleNumber)
     {
         var definition = MultiplexerHelper.GetDefinition(multiplexerArticleNumber);
         if (definition.DistantSignalArticleNumber == null)
@@ -55,10 +66,19 @@ internal sealed class ViessmannSignalService
         var fromData = _masterDataStore.MultiplexSignals;
         var distant = fromData
             .Where(s => string.Equals(s.Role, "distant", StringComparison.OrdinalIgnoreCase) && supportedArticles.Contains(s.ArticleNumber))
-            .Select(s => (s.ArticleNumber, $"{s.ArticleNumber} - {s.DisplayName}"))
+            .Select(s => new SignalArticleOption(
+                s.ArticleNumber,
+                $"{s.ArticleNumber} - {s.DisplayName}"))
             .ToList();
         if (distant.Count == 0)
-            return MultiplexerHelper.GetDistantSignalOptions(multiplexerArticleNumber);
+        {
+            return MultiplexerHelper.GetDistantSignalOptions(multiplexerArticleNumber)
+                .Select(option => new SignalArticleOption(
+                    option.ArticleNumber,
+                    option.DisplayName))
+                .ToArray();
+        }
+
         return distant;
     }
 }
