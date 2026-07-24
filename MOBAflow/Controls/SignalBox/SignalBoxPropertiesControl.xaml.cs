@@ -19,18 +19,32 @@ using System.ComponentModel;
 
 public sealed partial class SignalBoxPropertiesControl
 {
+    private SignalBoxPropertiesViewModel? _editorViewModel;
     private bool _isUpdatingControls;
-
-    public static readonly DependencyProperty EditorViewModelProperty = DependencyProperty.Register(
-        nameof(EditorViewModel),
-        typeof(SignalBoxPropertiesViewModel),
-        typeof(SignalBoxPropertiesControl),
-        new PropertyMetadata(null, OnEditorViewModelChanged));
 
     public SignalBoxPropertiesViewModel? EditorViewModel
     {
-        get => (SignalBoxPropertiesViewModel?)GetValue(EditorViewModelProperty);
-        set => SetValue(EditorViewModelProperty, value);
+        get => _editorViewModel;
+        set
+        {
+            if (ReferenceEquals(_editorViewModel, value))
+            {
+                return;
+            }
+
+            if (_editorViewModel is not null)
+            {
+                _editorViewModel.PropertyChanged -= OnEditorViewModelPropertyChanged;
+            }
+
+            _editorViewModel = value;
+            if (_editorViewModel is not null)
+            {
+                _editorViewModel.PropertyChanged += OnEditorViewModelPropertyChanged;
+            }
+
+            UpdatePropertiesPanel();
+        }
     }
 
     public SignalBoxPropertiesControl()
@@ -42,28 +56,6 @@ public sealed partial class SignalBoxPropertiesControl
     {
         UpdateAspectButtons();
         UpdateAspectPresentation(EditorViewModel?.SelectedElement as SbSignal);
-    }
-
-    private static void OnEditorViewModelChanged(
-        DependencyObject dependencyObject,
-        DependencyPropertyChangedEventArgs args)
-    {
-        if (dependencyObject is not SignalBoxPropertiesControl control)
-        {
-            return;
-        }
-
-        if (args.OldValue is SignalBoxPropertiesViewModel oldViewModel)
-        {
-            oldViewModel.PropertyChanged -= control.OnEditorViewModelPropertyChanged;
-        }
-
-        if (args.NewValue is SignalBoxPropertiesViewModel newViewModel)
-        {
-            newViewModel.PropertyChanged += control.OnEditorViewModelPropertyChanged;
-        }
-
-        control.UpdatePropertiesPanel();
     }
 
     private void OnEditorViewModelPropertyChanged(
@@ -81,59 +73,78 @@ public sealed partial class SignalBoxPropertiesControl
         var selectedElement = viewModel?.SelectedElement;
         if (viewModel == null || selectedElement == null)
         {
-            NoSelectionInfo.Visibility = Visibility.Visible;
-            ElementPropertiesPanel.Visibility = Visibility.Collapsed;
+            SetSelectionVisibility(this, hasSelection: false);
             return;
         }
 
-        NoSelectionInfo.Visibility = Visibility.Collapsed;
-        ElementPropertiesPanel.Visibility = Visibility.Visible;
-
+        SetSelectionVisibility(this, hasSelection: true);
         RunWhileUpdatingControls(() =>
+            UpdateSelectedElementProperties(this, viewModel, selectedElement));
+    }
+
+    private static void SetSelectionVisibility(
+        SignalBoxPropertiesControl control,
+        bool hasSelection)
+    {
+        control.NoSelectionInfo.Visibility = hasSelection
+            ? Visibility.Collapsed
+            : Visibility.Visible;
+        control.ElementPropertiesPanel.Visibility = hasSelection
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+    }
+
+    private static void UpdateSelectedElementProperties(
+        SignalBoxPropertiesControl control,
+        SignalBoxPropertiesViewModel viewModel,
+        SbElement selectedElement)
+    {
+        UpdateGeneralProperties(control, viewModel);
+
+        if (selectedElement is SbSignal signal)
         {
-            ElementNameBox.Text = viewModel.ElementName;
-            AddressPanel.Visibility = viewModel.IsAddressVisible
-                ? Visibility.Visible
-                : Visibility.Collapsed;
-            ElementAddressBox.Header = viewModel.AddressHeader;
-            ElementAddressBox.Value = viewModel.ElementAddress ?? double.NaN;
+            UpdateSignalProperties(control, viewModel, signal);
+        }
 
-            SignalAspectPanel.Visibility = viewModel.IsSignalSelected
-                ? Visibility.Visible
-                : Visibility.Collapsed;
-            MultiplexConfigPanel.Visibility = viewModel.IsSignalSelected
-                ? Visibility.Visible
-                : Visibility.Collapsed;
-            SwitchPositionPanel.Visibility = viewModel.IsSwitchSelected
-                ? Visibility.Visible
-                : Visibility.Collapsed;
+        if (selectedElement is SbSwitch)
+        {
+            control.UpdateSwitchButtons();
+        }
+    }
 
-            if (selectedElement is SbSignal signal)
-            {
-                UpdateMultiplexerOptions(viewModel);
-                UpdateSignalArticleOptions(viewModel);
-                BaseAddressBox.Value = viewModel.BaseAddress is { } baseAddress
-                    ? baseAddress
-                    : double.NaN;
-                SpeedIndicatorConfigPanel.Visibility = viewModel.IsSpeedIndicatorVisible
-                    ? Visibility.Visible
-                    : Visibility.Collapsed;
-                TopSpeedIndicatorBox.Value = viewModel.TopSpeedIndicator is { } topSpeed
-                    ? topSpeed
-                    : double.NaN;
-                BottomSpeedIndicatorBox.Value = viewModel.BottomSpeedIndicator is { } bottomSpeed
-                    ? bottomSpeed
-                    : double.NaN;
-                ApplySupportedAspectVisibility(viewModel);
-                UpdateAspectButtons();
-                UpdateAspectPresentation(signal);
-            }
+    private static void UpdateGeneralProperties(
+        SignalBoxPropertiesControl control,
+        SignalBoxPropertiesViewModel viewModel)
+    {
+        control.ElementNameBox.Text = viewModel.ElementName;
+        control.AddressPanel.Visibility = ToVisibility(viewModel.IsAddressVisible);
+        control.ElementAddressBox.Header = viewModel.AddressHeader;
+        control.ElementAddressBox.Value = viewModel.ElementAddress ?? double.NaN;
+        control.SignalAspectPanel.Visibility = ToVisibility(viewModel.IsSignalSelected);
+        control.MultiplexConfigPanel.Visibility = ToVisibility(viewModel.IsSignalSelected);
+        control.SwitchPositionPanel.Visibility = ToVisibility(viewModel.IsSwitchSelected);
+    }
 
-            if (selectedElement is SbSwitch)
-            {
-                UpdateSwitchButtons();
-            }
-        });
+    private static void UpdateSignalProperties(
+        SignalBoxPropertiesControl control,
+        SignalBoxPropertiesViewModel viewModel,
+        SbSignal signal)
+    {
+        control.UpdateMultiplexerOptions(viewModel);
+        UpdateSignalArticleOptions(control, viewModel);
+        control.BaseAddressBox.Value = viewModel.BaseAddress is { } baseAddress
+            ? baseAddress
+            : double.NaN;
+        control.SpeedIndicatorConfigPanel.Visibility = ToVisibility(viewModel.IsSpeedIndicatorVisible);
+        control.TopSpeedIndicatorBox.Value = viewModel.TopSpeedIndicator is { } topSpeed
+            ? topSpeed
+            : double.NaN;
+        control.BottomSpeedIndicatorBox.Value = viewModel.BottomSpeedIndicator is { } bottomSpeed
+            ? bottomSpeed
+            : double.NaN;
+        ApplySupportedAspectVisibility(control, viewModel);
+        control.UpdateAspectButtons();
+        control.UpdateAspectPresentation(signal);
     }
 
     private void UpdateMultiplexerOptions(SignalBoxPropertiesViewModel viewModel)
@@ -153,14 +164,16 @@ public sealed partial class SignalBoxPropertiesControl
             viewModel.SelectedMultiplexerArticleNumber);
     }
 
-    private void UpdateSignalArticleOptions(SignalBoxPropertiesViewModel viewModel)
+    private static void UpdateSignalArticleOptions(
+        SignalBoxPropertiesControl control,
+        SignalBoxPropertiesViewModel viewModel)
     {
         PopulateSignalArticleOptions(
-            MainSignalComboBox,
+            control.MainSignalComboBox,
             viewModel.MainSignalOptions,
             viewModel.SelectedMainSignalArticleNumber);
         PopulateSignalArticleOptions(
-            DistantSignalComboBox,
+            control.DistantSignalComboBox,
             viewModel.DistantSignalOptions,
             viewModel.SelectedDistantSignalArticleNumber);
     }
@@ -199,17 +212,19 @@ public sealed partial class SignalBoxPropertiesControl
                     StringComparison.Ordinal));
     }
 
-    private void ApplySupportedAspectVisibility(SignalBoxPropertiesViewModel viewModel)
+    private static void ApplySupportedAspectVisibility(
+        SignalBoxPropertiesControl control,
+        SignalBoxPropertiesViewModel viewModel)
     {
-        AspectHp0Button.Visibility = ToVisibility(viewModel.IsAspectAvailable(SignalAspect.Hp0));
-        AspectKs1Button.Visibility = ToVisibility(viewModel.IsAspectAvailable(SignalAspect.Ks1));
-        AspectKs2Button.Visibility = ToVisibility(viewModel.IsAspectAvailable(SignalAspect.Ks2));
-        AspectKs1BlinkButton.Visibility = ToVisibility(viewModel.IsAspectAvailable(SignalAspect.Ks1Blink));
-        AspectKennlichtButton.Visibility = ToVisibility(viewModel.IsAspectAvailable(SignalAspect.Kennlicht));
-        AspectDunkelButton.Visibility = ToVisibility(viewModel.IsAspectAvailable(SignalAspect.Dunkel));
-        AspectRa12Button.Visibility = ToVisibility(viewModel.IsAspectAvailable(SignalAspect.Ra12));
-        AspectZs1Button.Visibility = ToVisibility(viewModel.IsAspectAvailable(SignalAspect.Zs1));
-        AspectZs7Button.Visibility = ToVisibility(viewModel.IsAspectAvailable(SignalAspect.Zs7));
+        control.AspectHp0Button.Visibility = ToVisibility(viewModel.IsAspectAvailable(SignalAspect.Hp0));
+        control.AspectKs1Button.Visibility = ToVisibility(viewModel.IsAspectAvailable(SignalAspect.Ks1));
+        control.AspectKs2Button.Visibility = ToVisibility(viewModel.IsAspectAvailable(SignalAspect.Ks2));
+        control.AspectKs1BlinkButton.Visibility = ToVisibility(viewModel.IsAspectAvailable(SignalAspect.Ks1Blink));
+        control.AspectKennlichtButton.Visibility = ToVisibility(viewModel.IsAspectAvailable(SignalAspect.Kennlicht));
+        control.AspectDunkelButton.Visibility = ToVisibility(viewModel.IsAspectAvailable(SignalAspect.Dunkel));
+        control.AspectRa12Button.Visibility = ToVisibility(viewModel.IsAspectAvailable(SignalAspect.Ra12));
+        control.AspectZs1Button.Visibility = ToVisibility(viewModel.IsAspectAvailable(SignalAspect.Zs1));
+        control.AspectZs7Button.Visibility = ToVisibility(viewModel.IsAspectAvailable(SignalAspect.Zs7));
     }
 
     private static Visibility ToVisibility(bool isVisible) =>
@@ -262,8 +277,8 @@ public sealed partial class SignalBoxPropertiesControl
         var signalArticleNumber = isSpeedIndicatorSignal ? "4046" : string.Empty;
 
         ApplyAspectPreviewSignals(signalArticleNumber, signal);
-        ApplyAspectLabels(isSpeedIndicatorSignal);
-        ApplyAspectTooltips(isSpeedIndicatorSignal);
+        ApplyAspectLabels(this, isSpeedIndicatorSignal);
+        ApplyAspectTooltips(this, isSpeedIndicatorSignal);
     }
 
     private void ApplyAspectPreviewSignals(
@@ -296,73 +311,77 @@ public sealed partial class SignalBoxPropertiesControl
         yield return (AspectZs7Signal, SignalAspect.Zs7);
     }
 
-    private void ApplyAspectLabels(bool isSpeedIndicatorSignal)
+    private static void ApplyAspectLabels(
+        SignalBoxPropertiesControl control,
+        bool isSpeedIndicatorSignal)
     {
-        AspectHp0Label.Text = KsSignalAspectNames.GetAspectLabel(
+        control.AspectHp0Label.Text = KsSignalAspectNames.GetAspectLabel(
             SignalAspect.Hp0,
             isSpeedIndicatorSignal);
-        AspectKs1Label.Text = KsSignalAspectNames.GetAspectLabel(
+        control.AspectKs1Label.Text = KsSignalAspectNames.GetAspectLabel(
             SignalAspect.Ks1,
             isSpeedIndicatorSignal);
-        AspectKs2Label.Text = KsSignalAspectNames.GetAspectLabel(
+        control.AspectKs2Label.Text = KsSignalAspectNames.GetAspectLabel(
             SignalAspect.Ks2,
             isSpeedIndicatorSignal);
-        AspectKs1BlinkLabel.Text = KsSignalAspectNames.GetAspectLabel(
+        control.AspectKs1BlinkLabel.Text = KsSignalAspectNames.GetAspectLabel(
             SignalAspect.Ks1Blink,
             isSpeedIndicatorSignal);
-        AspectKennlichtLabel.Text = KsSignalAspectNames.GetAspectLabel(
+        control.AspectKennlichtLabel.Text = KsSignalAspectNames.GetAspectLabel(
             SignalAspect.Kennlicht,
             isSpeedIndicatorSignal);
-        AspectDunkelLabel.Text = KsSignalAspectNames.GetAspectLabel(
+        control.AspectDunkelLabel.Text = KsSignalAspectNames.GetAspectLabel(
             SignalAspect.Dunkel,
             isSpeedIndicatorSignal);
-        AspectRa12Label.Text = KsSignalAspectNames.GetAspectLabel(
+        control.AspectRa12Label.Text = KsSignalAspectNames.GetAspectLabel(
             SignalAspect.Ra12,
             isSpeedIndicatorSignal);
-        AspectZs1Label.Text = KsSignalAspectNames.GetAspectLabel(
+        control.AspectZs1Label.Text = KsSignalAspectNames.GetAspectLabel(
             SignalAspect.Zs1,
             isSpeedIndicatorSignal);
-        AspectZs7Label.Text = KsSignalAspectNames.GetAspectLabel(
+        control.AspectZs7Label.Text = KsSignalAspectNames.GetAspectLabel(
             SignalAspect.Zs7,
             isSpeedIndicatorSignal);
     }
 
-    private void ApplyAspectTooltips(bool isSpeedIndicatorSignal)
+    private static void ApplyAspectTooltips(
+        SignalBoxPropertiesControl control,
+        bool isSpeedIndicatorSignal)
     {
-        ToolTipService.SetToolTip(AspectHp0Button, "Hp 0 - Stop");
-        ToolTipService.SetToolTip(AspectKs1Button, "Ks 1 - Proceed");
+        ToolTipService.SetToolTip(control.AspectHp0Button, "Hp 0 - Stop");
+        ToolTipService.SetToolTip(control.AspectKs1Button, "Ks 1 - Proceed");
         ToolTipService.SetToolTip(
-            AspectKs2Button,
+            control.AspectKs2Button,
             isSpeedIndicatorSignal
                 ? "Ks 2 with white marker light at the top left"
                 : "Ks 2 - Expect stop");
         ToolTipService.SetToolTip(
-            AspectKs1BlinkButton,
+            control.AspectKs1BlinkButton,
             isSpeedIndicatorSignal
                 ? "Ks 2 with white marker light at the top left and top speed indicator"
                 : "Ks 1 flashing - Proceed with speed pre-indicator");
         ToolTipService.SetToolTip(
-            AspectKennlichtButton,
+            control.AspectKennlichtButton,
             isSpeedIndicatorSignal
                 ? "Only white marker light at the top left"
                 : "Marker light - Signal disabled for operations");
         ToolTipService.SetToolTip(
-            AspectDunkelButton,
+            control.AspectDunkelButton,
             isSpeedIndicatorSignal
                 ? "Green flashing with white marker light at the top left and top/bottom speed indicators"
                 : "Dark mode - Signal inactive");
         ToolTipService.SetToolTip(
-            AspectRa12Button,
+            control.AspectRa12Button,
             isSpeedIndicatorSignal
                 ? "Hp0 with white marker light at the bottom for shunting movements"
                 : "Sh 1/Ra 12 - Shunting allowed");
         ToolTipService.SetToolTip(
-            AspectZs1Button,
+            control.AspectZs1Button,
             isSpeedIndicatorSignal
                 ? "Ks 1 with top speed indicator"
                 : "Zs 1 - Substitute signal (white flashing)");
         ToolTipService.SetToolTip(
-            AspectZs7Button,
+            control.AspectZs7Button,
             "Zs 7 - Caution signal (3x yellow)");
     }
 
