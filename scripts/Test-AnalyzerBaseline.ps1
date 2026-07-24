@@ -1,5 +1,5 @@
 param(
-    [string] $SarifRoot = ".",
+    [string] $SarifRoot = "artifacts/analyzers/Release/net10.0",
 
     [string] $BaselinePath = "quality/analyzer-baseline.json",
 
@@ -91,9 +91,6 @@ function Test-IsGeneratedPath([string] $Path) {
 function Get-SarifFiles([string] $ResolvedSarifRoot) {
     $sarifFiles = @(
         Get-ChildItem -LiteralPath $ResolvedSarifRoot -Recurse -Filter "*.sarif" -File |
-            Where-Object {
-                $_.FullName -match "[/\\]obj[/\\]analyzers[/\\]"
-            } |
             Sort-Object FullName
     )
 
@@ -176,9 +173,6 @@ function ConvertTo-SarifDiagnostic(
         targetFramework = $TargetFramework
         ruleId = [string] $Result.ruleId
         path = $path
-        message = Normalize-Message `
-            -Message ([string] $messageProperty.Value) `
-            -RepositoryRoot $RepositoryRoot
     }
 }
 
@@ -210,10 +204,10 @@ function Get-SarifDiagnostics(
 
 function ConvertTo-BaselineEntries([object[]] $Diagnostics) {
     $groups = $Diagnostics |
-        Group-Object project, targetFramework, ruleId, path, message |
+        Group-Object project, targetFramework, ruleId, path |
         Sort-Object {
             $first = $_.Group[0]
-            "$($first.project)|$($first.targetFramework)|$($first.ruleId)|$($first.path)|$($first.message)"
+            "$($first.project)|$($first.targetFramework)|$($first.ruleId)|$($first.path)"
         }
 
     return @(
@@ -224,7 +218,6 @@ function ConvertTo-BaselineEntries([object[]] $Diagnostics) {
                 targetFramework = $first.targetFramework
                 ruleId = $first.ruleId
                 path = $first.path
-                message = $first.message
                 count = $group.Count
             }
         }
@@ -232,7 +225,7 @@ function ConvertTo-BaselineEntries([object[]] $Diagnostics) {
 }
 
 function Get-EntryKey([object] $Entry) {
-    return "$($Entry.project)|$($Entry.targetFramework)|$($Entry.ruleId)|$($Entry.path)|$($Entry.message)"
+    return "$($Entry.project)|$($Entry.targetFramework)|$($Entry.ruleId)|$($Entry.path)"
 }
 
 function ConvertTo-EntryCountMap([object[]] $Entries) {
@@ -277,7 +270,7 @@ function Write-Baseline(
     }
 
     $document = [ordered]@{
-        schemaVersion = 1
+        schemaVersion = 2
         diagnostics = $Entries
     }
     $json = $document | ConvertTo-Json -Depth 8
@@ -295,7 +288,7 @@ function Compare-Baseline(
     }
 
     $baseline = Get-Content -Raw -LiteralPath $ResolvedBaselinePath | ConvertFrom-Json
-    if ([int] $baseline.schemaVersion -ne 1) {
+    if ([int] $baseline.schemaVersion -ne 2) {
         throw "Unsupported analyzer baseline schema version '$($baseline.schemaVersion)'."
     }
 

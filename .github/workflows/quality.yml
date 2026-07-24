@@ -35,6 +35,25 @@ jobs:
         shell: pwsh
         run: dotnet restore Test/Test.csproj -p:IncludeMobaSmartTests=false
 
+      - name: Build cross-platform analyzer graph
+        shell: pwsh
+        run: |
+          if (Test-Path -LiteralPath artifacts/analyzers) {
+            Remove-Item -LiteralPath artifacts/analyzers -Recurse -Force
+          }
+          dotnet build Test/Test.csproj `
+            --configuration Release `
+            --framework net10.0 `
+            --no-restore `
+            -m:1 `
+            -t:Rebuild `
+            -p:IncludeMobaSmartTests=false `
+            -p:MobaAnalyzerGate=true `
+            -p:UseSharedCompilation=false
+          ./scripts/Test-AnalyzerBaseline.ps1 `
+            -SarifRoot artifacts/analyzers/Release/net10.0 `
+            -BaselinePath quality/analyzer-baseline.json
+
       - name: Build desktop test graph
         shell: pwsh
         run: >-
@@ -45,6 +64,15 @@ jobs:
           -p:IncludeMobaSmartTests=false
           -p:DebugType=portable
           -p:DebugSymbols=true
+          -p:MobaAnalyzerGate=true
+          -p:UseSharedCompilation=false
+
+      - name: Enforce Windows analyzer baseline
+        shell: pwsh
+        run: >-
+          ./scripts/Test-AnalyzerBaseline.ps1
+          -SarifRoot artifacts/analyzers/Release/net10.0-windows10.0.22621.0
+          -BaselinePath quality/analyzer-baseline.windows.json
 
       - name: Audit resolved NuGet dependency graph
         shell: pwsh
@@ -127,6 +155,7 @@ jobs:
             artifacts/TestResults/**/*.trx
             artifacts/coverage.cobertura.xml
             artifacts/nuget-vulnerabilities.json
+            artifacts/analyzers/**/*.sarif
           if-no-files-found: warn
           retention-days: 90
 
@@ -159,10 +188,13 @@ jobs:
 
       - name: Restore Android dependency graph
         shell: pwsh
-        run: >-
-          dotnet restore MOBAsmart/MOBAsmart.csproj
-          --property:Configuration=Release
-          --force-evaluate
+        run: |
+          if (Test-Path -LiteralPath artifacts/analyzers) {
+            Remove-Item -LiteralPath artifacts/analyzers -Recurse -Force
+          }
+          dotnet restore MOBAsmart/MOBAsmart.csproj `
+            --property:Configuration=Release `
+            --force-evaluate
 
       - name: Verify Android build properties
         shell: pwsh
@@ -193,6 +225,15 @@ jobs:
           --configuration Release
           --no-restore
           -m:1
+          -p:MobaAnalyzerGate=true
+          -p:UseSharedCompilation=false
+
+      - name: Enforce Android analyzer baseline
+        shell: pwsh
+        run: >-
+          ./scripts/Test-AnalyzerBaseline.ps1
+          -SarifRoot artifacts/analyzers/Release
+          -BaselinePath quality/analyzer-baseline.android.json
 
       - name: Validate Android Release AAB
         shell: pwsh

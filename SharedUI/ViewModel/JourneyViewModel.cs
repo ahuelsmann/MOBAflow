@@ -308,8 +308,10 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     }
 
     [RelayCommand]
-    private void DeleteStation(StationViewModel stationVm)
+    private void DeleteStation(StationViewModel? stationVm)
     {
+        if (stationVm is null) return;
+
         // Find and remove Station by Id
         var station = _journey.Stations.FirstOrDefault(s => s.Id == stationVm.Model.Id);
         if (station != null)
@@ -435,8 +437,10 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     /// </summary>
     /// <param name="station">The station to move up</param>
     [RelayCommand]
-    private void MoveStationUp(StationViewModel station)
+    private void MoveStationUp(StationViewModel? station)
     {
+        if (station is null) return;
+
         var currentIndex = Stations.IndexOf(station);
         if (currentIndex > 0)
         {
@@ -453,8 +457,10 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     /// </summary>
     /// <param name="station">The station to move down</param>
     [RelayCommand]
-    private void MoveStationDown(StationViewModel station)
+    private void MoveStationDown(StationViewModel? station)
     {
+        if (station is null) return;
+
         var currentIndex = Stations.IndexOf(station);
         if (currentIndex < Stations.Count - 1)
         {

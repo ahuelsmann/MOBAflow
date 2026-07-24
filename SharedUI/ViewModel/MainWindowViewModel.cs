@@ -575,9 +575,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
     }
 
     [RelayCommand(CanExecute = nameof(CanAddStationFromCity))]
-    private void AddStationFromCity(City city)
+    private void AddStationFromCity(City? city)
     {
-        if (SelectedJourney == null) return;
+        if (SelectedJourney == null || city == null) return;
 
         // Get City's first station (Hauptbahnhof) - only the NAME
         var cityStation = city.Stations.FirstOrDefault();
