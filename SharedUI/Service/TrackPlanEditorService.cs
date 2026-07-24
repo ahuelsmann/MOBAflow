@@ -330,9 +330,9 @@ public sealed class TrackPlanEditorService : IDisposable
             IncrementPortUsage(portUsage, (connection.TargetSegment, connection.TargetPort));
         }
 
-        foreach (var usage in portUsage.Where(entry => entry.Value > 1))
+        foreach (var usage in portUsage.Where(entry => entry.Value > 1).Select(entry => entry.Key))
         {
-            messages.Add($"Port {usage.Key.PortName} of segment {usage.Key.SegmentId} is used multiple times.");
+            messages.Add($"Port {usage.PortName} of segment {usage.SegmentId} is used multiple times.");
         }
 
         var analysis = TrackPlanValidationHelper.Analyze(_plan.Segments, _plan.Connections);
