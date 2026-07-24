@@ -198,6 +198,19 @@ internal sealed class TrackPlanEditorServiceTests
         });
     }
 
+    [Test]
+    public void MarkClean_Should_NotClearNewerMutation()
+    {
+        var (service, plan) = CreateService();
+        plan.AddSegment(new PlacedSegment(new G231(), 0, 0, 0));
+        var saveVersion = service.ChangeVersion;
+        plan.AddSegment(new PlacedSegment(new G231(), 500, 0, 0));
+
+        service.MarkClean(saveVersion);
+
+        Assert.That(service.IsDirty, Is.True);
+    }
+
     private static (TrackPlanEditorService Service, EditableTrackPlan Plan) CreateService()
     {
         var plan = new EditableTrackPlan();

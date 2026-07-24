@@ -47,10 +47,12 @@
             OverflowButtonVisibility="Auto">
             <AppBarButton
                 x:Name="UndoButton"
+                Command="{x:Bind ViewModel.UndoCommand}"
                 Icon="Undo"
                 Label="Undo" />
             <AppBarButton
                 x:Name="RedoButton"
+                Command="{x:Bind ViewModel.RedoCommand}"
                 Icon="Redo"
                 Label="Redo" />
             <AppBarElementContainer VerticalAlignment="Center">
@@ -83,6 +85,7 @@
             </AppBarElementContainer>
             <AppBarButton
                 x:Name="ValidateButton"
+                Command="{x:Bind ViewModel.ValidateCommand}"
                 Icon="Accept"
                 Label="Validate" />
             <AppBarButton
@@ -103,11 +106,13 @@
                 Label="Snap" />
             <AppBarButton
                 x:Name="DisconnectButton"
+                Command="{x:Bind ViewModel.DisconnectSelectedTrackCommand}"
                 Icon="Remove"
                 Label="Disconnect"
                 ToolTipService.ToolTip="Disconnect selected track connections (R)" />
             <AppBarButton
                 x:Name="DeleteButton"
+                Command="{x:Bind ViewModel.DeleteSelectedTrackCommand}"
                 Icon="Delete"
                 Label="Delete"
                 ToolTipService.ToolTip="Delete selected track (Del)" />
@@ -133,12 +138,18 @@
                     <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE8D2;" />
                 </AppBarToggleButton.Icon>
             </AppBarToggleButton>
-            <AppBarButton x:Name="RotateLeftButton" Label="Rotate ←">
+            <AppBarButton
+                x:Name="RotateLeftButton"
+                Command="{x:Bind ViewModel.RotateSelectedTrackLeftCommand}"
+                Label="Rotate ←">
                 <AppBarButton.Icon>
                     <SymbolIcon Symbol="Back" />
                 </AppBarButton.Icon>
             </AppBarButton>
-            <AppBarButton x:Name="RotateRightButton" Label="Rotate →">
+            <AppBarButton
+                x:Name="RotateRightButton"
+                Command="{x:Bind ViewModel.RotateSelectedTrackRightCommand}"
+                Label="Rotate →">
                 <AppBarButton.Icon>
                     <SymbolIcon Symbol="Forward" />
                 </AppBarButton.Icon>
@@ -278,7 +289,7 @@
                                 <TextBlock
                                     x:Name="SelectionInfoText"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Text="No selection"
+                                    Text="{x:Bind ViewModel.SelectionSummary, Mode=OneWay}"
                                     TextWrapping="Wrap" />
                             </StackPanel>
                             <!--  Selected Track Properties (InPort etc.)  -->
@@ -552,7 +563,7 @@
                     x:Name="StatusText"
                     Grid.Column="0"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Text="" />
+                    Text="{x:Bind ViewModel.StatusText, Mode=OneWay}" />
                 <TextBlock
                     x:Name="CoordinatesText"
                     Grid.Column="1"

@@ -57,6 +57,8 @@ public sealed class TrackPlanEditorService : IDisposable
 
     public bool IsDirty { get; private set; }
 
+    public long ChangeVersion { get; private set; }
+
     public bool CanUndo => _undoRedoService.CanUndo;
 
     public bool CanRedo => _undoRedoService.CanRedo;
@@ -284,6 +286,7 @@ public sealed class TrackPlanEditorService : IDisposable
                 _undoRedoService.Clear();
             }
 
+            ChangeVersion++;
             IsDirty = !markClean;
         }
         finally
@@ -352,9 +355,11 @@ public sealed class TrackPlanEditorService : IDisposable
         return new TrackPlanEditorValidationResult(messages);
     }
 
-    public void MarkClean()
+    public void MarkClean() => MarkClean(ChangeVersion);
+
+    public void MarkClean(long expectedVersion)
     {
-        if (!IsDirty)
+        if (!IsDirty || expectedVersion != ChangeVersion)
         {
             return;
         }
@@ -394,6 +399,7 @@ public sealed class TrackPlanEditorService : IDisposable
         _ = e;
         if (!_isApplyingDocument)
         {
+            ChangeVersion++;
             IsDirty = true;
         }
 

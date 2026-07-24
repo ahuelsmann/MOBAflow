@@ -466,4 +466,62 @@ internal sealed class TrackLayoutArchitectureTests
             Is.EqualTo(typeof(LayoutService).Assembly));
     }
 
+    [Test]
+    public void TrackPlanPage_CodeBehind_RemainsAPlatformAdapter()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var codeBehind = string.Join(
+            Environment.NewLine,
+            File.ReadAllText(Path.Combine(repositoryRoot, "MOBAflow", "View", "TrackPlanPage.xaml.cs")),
+            File.ReadAllText(Path.Combine(repositoryRoot, "MOBAflow", "View", "TrackPlanPage.EditorFeatures.cs")));
+        string[] forbiddenPatterns =
+        [
+            "_plan.AddSegment(",
+            "_plan.RemoveSegment(",
+            "_plan.UpdateSegmentPosition(",
+            "_plan.UpdateSegmentInPort(",
+            "_plan.DisconnectSegmentFromGroup(",
+            "_plan.AddConnection(",
+            "_plan.RemoveConnection(",
+            "_plan.MoveGroup(",
+            "_plan.LoadFromPlacements(",
+            "_plan.HealImplicitConnections(",
+            "_interactionService",
+            "_undoRedoService",
+            "_selectedSegmentId",
+            "new ContentDialog",
+            "CollectValidationMessages",
+            "UndoButton.Click",
+            "RedoButton.Click",
+            "ValidateButton.Click",
+            "DisconnectButton.Click",
+            "DeleteButton.Click",
+            "RotateLeftButton.Click",
+            "RotateRightButton.Click"
+        ];
+
+        Assert.Multiple(() =>
+        {
+            foreach (var forbiddenPattern in forbiddenPatterns)
+            {
+                Assert.That(
+                    codeBehind,
+                    Does.Not.Contain(forbiddenPattern),
+                    $"TrackPlanPage code-behind must not own editor behavior matching '{forbiddenPattern}'.");
+            }
+        });
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        var directory = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
+        while (directory != null && !File.Exists(Path.Combine(directory.FullName, "Moba.slnx")))
+        {
+            directory = directory.Parent;
+        }
+
+        return directory?.FullName
+            ?? throw new DirectoryNotFoundException("Could not locate the MOBAflow repository root.");
+    }
+
 }

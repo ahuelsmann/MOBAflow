@@ -129,6 +129,12 @@ public sealed partial class TrackPlanViewModel : ObservableObject, IViewModelWra
         StatusText = $"Rotation set to {SelectedTrack?.RotationDegrees:F0}°.";
     }
 
+    [RelayCommand(CanExecute = nameof(CanRotateSelectedTrack))]
+    private void RotateSelectedTrackLeft() => RotateSelectedTrack(-15);
+
+    [RelayCommand(CanExecute = nameof(CanRotateSelectedTrack))]
+    private void RotateSelectedTrackRight() => RotateSelectedTrack(15);
+
     [RelayCommand]
     public void AssignSelectedTrackFeedback(int? inPort)
     {
@@ -304,6 +310,8 @@ public sealed partial class TrackPlanViewModel : ObservableObject, IViewModelWra
         DeleteSelectedTrackCommand.NotifyCanExecuteChanged();
         DisconnectSelectedTrackCommand.NotifyCanExecuteChanged();
         RotateSelectedTrackCommand.NotifyCanExecuteChanged();
+        RotateSelectedTrackLeftCommand.NotifyCanExecuteChanged();
+        RotateSelectedTrackRightCommand.NotifyCanExecuteChanged();
         UndoCommand.NotifyCanExecuteChanged();
         RedoCommand.NotifyCanExecuteChanged();
         ValidateCommand.NotifyCanExecuteChanged();
