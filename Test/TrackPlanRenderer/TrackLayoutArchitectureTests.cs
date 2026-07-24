@@ -99,10 +99,15 @@ internal sealed class TrackLayoutArchitectureTests
         var segment = new PlacedSegment(new G231(), 0, 0, 0);
         plan.AddSegment(segment);
         var settingsService = new Mock<ISettingsService>();
+        var editorService = new TrackPlanEditorService(
+            plan,
+            new TrackPlanInteractionService(plan),
+            new SelectionService(),
+            new UndoRedoService<TrackPlanEditorDocument>());
         var viewModel = new TrackPlanViewModel(
             new TrackPlan(),
-            plan,
-            new SelectionService(),
+            editorService,
+            Mock.Of<IDialogService>(),
             new AppSettings(),
             settingsService.Object,
             Mock.Of<ILogger<TrackPlanViewModel>>());
