@@ -344,10 +344,6 @@ sealed partial class SignalBoxPage
         {
             _propertiesViewModel.SelectedElement = _planViewModel.SelectedElement;
             InterlockingViewModel.SelectSignalBoxRepresentation(_planViewModel.SelectedElement?.Id);
-            if (_planViewModel.SelectedElement is SbSignal signal)
-            {
-                _planViewModel.RefreshElementVisual(signal);
-            }
         }
     }
 

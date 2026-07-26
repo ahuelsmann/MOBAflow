@@ -217,7 +217,7 @@ internal sealed class RollingStockMaintenanceViewModelTests
     }
 
     [Test]
-    public void UsageCheckpoint_DoesNotReenterFleetCollection_WhenRuntimeSnapshotIsOlder()
+    public void UsageCheckpoint_PreservesSelectedVehicle_WhenVisibleFleetIsUnchanged()
     {
         var firstLocomotive = new Locomotive { Name = "First locomotive" };
         var secondLocomotive = new Locomotive { Name = "Second locomotive" };
@@ -237,19 +237,18 @@ internal sealed class RollingStockMaintenanceViewModelTests
             project.Locomotives[0]);
         viewModel.Activate();
 
-        var selectionChangedDuringCollectionNotification = false;
+        var selectionClearedDuringCollectionNotification = false;
         viewModel.VisibleLocomotives.CollectionChanged += (_, _) =>
         {
-            if (selectionChangedDuringCollectionNotification)
+            if (selectionClearedDuringCollectionNotification)
                 return;
 
-            selectionChangedDuringCollectionNotification = true;
+            selectionClearedDuringCollectionNotification = true;
             viewModel.SetContext(
                 project,
                 TrainVehicleKind.Locomotive,
-                project.Locomotives[1]);
+                null);
         };
-        viewModel.VisibleLocomotives.CollectionChanged += (_, _) => { };
 
         Assert.DoesNotThrow(() => eventBus.Publish(new VehicleUsageCheckpointCommittedEvent(
             project.Model.Id,
@@ -257,8 +256,8 @@ internal sealed class RollingStockMaintenanceViewModelTests
             checkpointUsage)));
         Assert.Multiple(() =>
         {
-            Assert.That(selectionChangedDuringCollectionNotification, Is.True);
-            Assert.That(viewModel.VehicleName, Is.EqualTo("Second locomotive"));
+            Assert.That(selectionClearedDuringCollectionNotification, Is.False);
+            Assert.That(viewModel.VehicleName, Is.EqualTo("First locomotive"));
             Assert.That(viewModel.OperatingTimeText, Is.EqualTo("2 h 00 min"));
         });
     }

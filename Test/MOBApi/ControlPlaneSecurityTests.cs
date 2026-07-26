@@ -8,6 +8,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Moba.MOBApi.Security;
+using System.Net;
+using System.Net.Security;
+using System.Net.Sockets;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Moba.Test.MOBApi;
 
@@ -210,6 +215,48 @@ internal sealed class ControlPlaneSecurityTests
     }
 
     [Test]
+    public async Task ServerIdentity_Should_SupportTlsServerAuthentication()
+    {
+        using var context = SecurityTestContext.Create();
+        var identity = await context.GetRequiredService<IServerIdentityProvider>().GetAsync();
+        var expectedCertificateHash = identity.Certificate.GetCertHash(HashAlgorithmName.SHA256);
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+
+        try
+        {
+            var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+            var serverTask = AuthenticateServerAsync(listener, identity.Certificate, cancellation.Token);
+            using var client = new TcpClient();
+            await client.ConnectAsync(IPAddress.Loopback, port, cancellation.Token);
+            await using var clientTls = new SslStream(
+                client.GetStream(),
+                leaveInnerStreamOpen: false,
+                (_, certificate, _, _) =>
+                    certificate is not null &&
+                    CryptographicOperations.FixedTimeEquals(
+                        certificate.GetCertHash(HashAlgorithmName.SHA256),
+                        expectedCertificateHash));
+
+            await clientTls.AuthenticateAsClientAsync(
+                new SslClientAuthenticationOptions { TargetHost = "localhost" },
+                cancellation.Token);
+            var serverAuthenticated = await serverTask;
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(clientTls.IsAuthenticated, Is.True);
+                Assert.That(serverAuthenticated, Is.True);
+            });
+        }
+        finally
+        {
+            listener.Stop();
+        }
+    }
+
+    [Test]
     public async Task AddControlPlaneSecurity_Should_RegisterNamedCapabilityPolicies()
     {
         using var context = SecurityTestContext.Create();
@@ -261,6 +308,20 @@ internal sealed class ControlPlaneSecurityTests
             Assert.That(control.Succeeded, Is.True);
             Assert.That(security.Succeeded, Is.False);
         });
+    }
+
+    private static async Task<bool> AuthenticateServerAsync(
+        TcpListener listener,
+        X509Certificate2 certificate,
+        CancellationToken cancellationToken)
+    {
+        using var server = await listener.AcceptTcpClientAsync(cancellationToken);
+        await using var serverTls = new SslStream(server.GetStream(), leaveInnerStreamOpen: false);
+        await serverTls.AuthenticateAsServerAsync(
+            certificate,
+            clientCertificateRequired: false,
+            checkCertificateRevocation: false);
+        return serverTls.IsAuthenticated;
     }
 
     private static async Task<AuthenticateResult> AuthenticateQueryTokenAsync(

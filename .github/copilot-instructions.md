@@ -47,6 +47,7 @@ MainWindowViewModel.OnFeedbackReceived() → IsConnected = true (UI thread safe)
 17. **Standalone Markdown plans belong in `plans/`** — Keep project, quality, refactoring, and roadmap planning files out of `docs/`. Delete completed plans; Git history and closed GitHub work items retain the record. `docs/` contains current reference and user documentation. Spec Kit artifacts such as `specs/*/plan.md` remain in their feature directory. GitHub issues, milestones, and Kanban remain authoritative for active work and progress.
 18. **SonarQube before PR review** — Attempt local Sonar analysis against the actual PR base, then create every PR as a draft. Do not mark it ready for review until the remote SonarCloud check is green and the PR has zero `OPEN`/`CONFIRMED` Sonar issues. Do not lower quality gates, suppress valid findings, or exclude changed files to make the analysis pass. See `.github/instructions/sonarqube-pre-pr.instructions.md`.
 19. **Balanced secrets scanning** — Run `sonar analyze secrets` before reading files likely to contain credentials, tokens, private keys, certificates, connection strings, or deployment secrets. Ordinary source, tests, Markdown, schemas, and checked-in templates do not require an individual pre-read scan unless context suggests secret material. Run a secrets scan over all changed files before every commit and PR. If the scanner is unavailable, do not read sensitive files; ordinary development may continue and the limitation must be recorded before publication.
+20. **Never launch MOBAflow without explicit user approval** — Building, restoring, and testing are allowed, but every command or tool action that starts the MOBAflow WinUI application requires the user's explicit prior approval. This includes `dotnet run`, `dotnet watch run`, `winapp` launch commands, starting the executable, debugger launches, and UI automation that launches the application. Do not infer launch approval from a request to build, test, diagnose, or prepare UI automation.
 
 ---
 
@@ -190,7 +191,7 @@ services.AddTransient<View.JourneyPage>();
 dotnet build MOBApi/MOBApi.csproj
 dotnet test Test/Test.csproj
 dotnet build MOBAflow/MOBAflow.csproj --no-restore --no-dependencies  # Windows/WinUI compile check
-dotnet run --project MOBAflow    # Windows app
+dotnet run --project MOBAflow    # Windows app; requires explicit prior user approval
 dotnet run --project MOBApi      # REST API (Port 5001)
 ```
 

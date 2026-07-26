@@ -43,6 +43,12 @@
    - Require a green SonarCloud check and zero `OPEN`/`CONFIRMED` PR issues before review
    - See: `.github/instructions/sonarqube-pre-pr.instructions.md`
 
+6. **MOBAflow Launch Requires Explicit Approval**
+   - Building, restoring, and testing are allowed without launch approval
+   - Never start the MOBAflow WinUI application unless the user has explicitly approved the launch beforehand
+   - This applies to `dotnet run`, `dotnet watch run`, `winapp` launch commands, executable or debugger launches, and UI automation that launches the application
+   - Do not infer launch approval from a request to build, test, diagnose, or prepare UI automation
+
 ---
 
 ## 📚 Reference All Instruction Files
@@ -135,7 +141,7 @@ dotnet restore MOBAflow/MOBAflow.csproj
 dotnet build MOBAflow/MOBAflow.csproj -c FastDebug --no-restore \
   /p:BuildMOBApiDependency=false /p:CopyMOBApiToOutput=false
 
-# Run the WinUI app while editing
+# Run the WinUI app while editing (requires explicit prior user approval)
 dotnet watch run --project MOBAflow/MOBAflow.csproj -c FastDebug
 
 # Fast MOBAsmart Android build

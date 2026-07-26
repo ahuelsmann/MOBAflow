@@ -642,8 +642,12 @@ public sealed partial class RollingStockMaintenanceViewModel : ObservableObject
 
     private static void ReplaceItems<T>(ObservableCollection<T> target, IEnumerable<T> source)
     {
+        var items = source.ToArray();
+        if (target.SequenceEqual(items))
+            return;
+
         target.Clear();
-        foreach (var item in source)
+        foreach (var item in items)
             target.Add(item);
     }
 

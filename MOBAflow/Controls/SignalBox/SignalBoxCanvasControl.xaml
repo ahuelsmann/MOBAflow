@@ -179,7 +179,10 @@
         VerticalScrollBarVisibility="Auto"
         ZoomMode="Enabled">
 
-        <Grid Width="1920" Height="1080">
+        <Grid
+            x:Name="CanvasHost"
+            Width="1920"
+            Height="1080">
             <Canvas
                 Width="1920"
                 Height="1080"
@@ -193,10 +196,7 @@
                             AllowDrop="True"
                             Background="Transparent"
                             DragOver="OnCanvasDragOver"
-                            Drop="OnCanvasDrop"
-                            PointerMoved="OnCanvasPointerMoved"
-                            PointerPressed="OnCanvasPointerPressed"
-                            PointerReleased="OnCanvasPointerReleased" />
+                            Drop="OnCanvasDrop" />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
             </ItemsControl>

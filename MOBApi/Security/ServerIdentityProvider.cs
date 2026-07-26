@@ -102,10 +102,11 @@ internal sealed class ServerIdentityProvider : IServerIdentityProvider, IDisposa
 
     private static ServerIdentity FromPkcs12(byte[] pkcs12, string instanceId)
     {
+        // Windows Schannel requires a key-backed certificate for server TLS authentication.
         var certificate = X509CertificateLoader.LoadPkcs12(
             pkcs12,
             null,
-            X509KeyStorageFlags.Exportable | X509KeyStorageFlags.EphemeralKeySet);
+            X509KeyStorageFlags.UserKeySet);
         using var publicKey = certificate.GetECDsaPublicKey() ??
                               throw new InvalidDataException("Server identity does not contain an ECDSA public key.");
         var fingerprint = Convert.ToHexString(SHA256.HashData(publicKey.ExportSubjectPublicKeyInfo()));
