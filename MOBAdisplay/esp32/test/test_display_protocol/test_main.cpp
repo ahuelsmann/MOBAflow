@@ -44,10 +44,10 @@ struct RecordingTftDriver
         swapBytes = value;
     }
 
-    void pushImage(int32_t, int32_t, uint16_t, uint16_t, uint16_t* pixels) noexcept
+    void pushImage(int32_t, int32_t, uint16_t, uint16_t, const uint16_t* pixels) noexcept
     {
         swapBytesDuringPush = swapBytes;
-        const uint8_t* bytes = reinterpret_cast<const uint8_t*>(pixels);
+        const auto* bytes = reinterpret_cast<const uint8_t*>(pixels);
         std::copy(bytes, bytes + pushedBytes.size(), pushedBytes.begin());
     }
 };

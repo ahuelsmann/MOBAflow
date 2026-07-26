@@ -44,7 +44,7 @@ std::vector<uint8_t> MakeVersionedEnvelope(size_t totalLength)
     packet[3] = 0x41;
     packet[8] = 0;
     packet[9] = 32;
-    const uint16_t payloadLength = static_cast<uint16_t>(totalLength - 32);
+    const auto payloadLength = static_cast<uint16_t>(totalLength - 32);
     packet[10] = static_cast<uint8_t>(payloadLength >> 8U);
     packet[11] = static_cast<uint8_t>(payloadLength);
     return packet;
