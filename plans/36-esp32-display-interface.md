@@ -2,6 +2,9 @@
 
 ## Document status
 
+**GitHub Issue**: #36
+**Spec Kit**: Required
+
 - Status: In progress
 - Primary work item: [GitHub issue #36 - Define a common ESP32 SPI display firmware interface](https://github.com/ahuelsmann/MOBAflow/issues/36)
 - Recommended priority: P1
