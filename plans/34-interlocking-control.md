@@ -2,6 +2,9 @@
 
 ## Document status
 
+**GitHub Issue**: #34
+**Spec Kit**: Required
+
 - Status: In progress
 - Primary issue: [#34 - Add turnout, route, block, and interlocking control to SignalBoxPage and TrackPlanPage](https://github.com/ahuelsmann/MOBAflow/issues/34)
 - Status source: GitHub Issue #34
@@ -22,6 +25,9 @@ GitHub owns scope, status, and acceptance criteria. This plan owns technical seq
 - Integration checkpoint on 2026-07-20: restored the missing `Project.Interlocking` persistence boundary, removed duplicate persisted signal-box route/runtime state, and reconnected schema, sample data, validation, diagnostics, dependency injection, and canonical address allocation. The complete `net10.0` and Windows test targets pass.
 - Slice 5 validation on 2026-07-21: `net10.0` passed 1,099 tests with 4 expected skips; the Windows target passed all 1,149 tests; the MOBAflow FastDebug build completed with 0 warnings and 0 errors; deterministic per-file Sonar secret scans passed for every Slice 5 file read or changed.
 - Slice 6/7 gate check on 2026-07-21: GitHub Issue #47 still lists only RF-01 through RF-05 child work and states that later RF packages receive individual issues only when their dependency gates are satisfied. No RF-13 or RF-14 child is listed yet, so TrackPlanPage and SignalBoxPage integration must not start from Issue #34 at this checkpoint.
+- Slice 6/7 gate check on 2026-07-24: RF-06/#90, RF-13/#91, and RF-14/#92 are closed after PRs #94, #95, and #98 merged. TrackPlanPage and SignalBoxPage integration may now proceed from the current `main` baseline.
+- Slices 6 and 7 implemented on 2026-07-24 from baseline `22397b87`: page-scoped control ViewModels project one shared interlocking runtime into independent TrackPlanPage and SignalBoxPage selections; representation bindings resolve to shared operational identities; direct turnout commands use the semantic coordinator; route preview, set, cancel, release, and reconciliation share the same revisioned state; the TrackPlan route editor captures entry, ordered path, exit, turnout, block, and protected-signal requirements and validates before persistence; textual lock, reservation, lifecycle, and fault descriptions provide non-color-only state.
+- Slice 6/7 validation on 2026-07-24: all 30 focused interlocking coordinator/runtime/ViewModel tests and the complete `net10.0` suite (1,468 passed, 4 expected skips) pass; the MOBAflow FastDebug build completes with 0 warnings and 0 errors; every changed file passes the deterministic Sonar secret scan. The Windows test target exceeded the five-minute local runner limit without producing a result, so hardware/UI acceptance and the remote SonarCloud gate remain open before Issue #34 can close.
 
 ## Outcome
 

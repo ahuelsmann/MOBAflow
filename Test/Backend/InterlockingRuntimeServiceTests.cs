@@ -108,6 +108,57 @@ internal sealed class InterlockingRuntimeServiceTests
     }
 
     [Test]
+    public async Task SetTurnoutAsync_SynchronizedRuntime_DispatchesSemanticCommand()
+    {
+        var fixture = CreateFixture();
+        await fixture.Runtime.ActivateAsync(fixture.Definition).ConfigureAwait(false);
+        fixture.EventBus.Publish(new FeedbackStateChangedEvent(10, true, Guid.NewGuid()));
+        fixture.EventBus.Publish(new TurnoutInfoChangedEvent(500, true, Guid.NewGuid()));
+        await WaitForSynchronizationAsync(fixture.Runtime).ConfigureAwait(false);
+
+        var result = await fixture.Runtime.SetTurnoutAsync(
+            fixture.TurnoutId,
+            TurnoutPosition.Straight,
+            Guid.NewGuid()).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.Status, Is.EqualTo(RouteCoordinatorStatus.Pending));
+            Assert.That(result.State.Turnouts[fixture.TurnoutId].Lifecycle, Is.EqualTo(TurnoutLifecycle.Pending));
+            fixture.Z21.Verify(z21 => z21.SetTurnoutAsync(
+                100,
+                0,
+                true,
+                false,
+                It.IsAny<CancellationToken>()), Times.Once);
+        }
+    }
+
+    [Test]
+    public async Task SetTurnoutAsync_UnsynchronizedRuntime_RejectsWithoutHardwareEffect()
+    {
+        var fixture = CreateFixture();
+        await fixture.Runtime.ActivateAsync(fixture.Definition).ConfigureAwait(false);
+
+        var result = await fixture.Runtime.SetTurnoutAsync(
+            fixture.TurnoutId,
+            TurnoutPosition.Straight,
+            Guid.NewGuid()).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.Status, Is.EqualTo(RouteCoordinatorStatus.Rejected));
+            Assert.That(result.Code, Is.EqualTo("interlocking.unsynchronized"));
+            fixture.Z21.Verify(z21 => z21.SetTurnoutAsync(
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<bool>(),
+                It.IsAny<bool>(),
+                It.IsAny<CancellationToken>()), Times.Never);
+        }
+    }
+
+    [Test]
     public async Task DuplicateObservation_Should_NotAdvanceRevisionTwice()
     {
         var fixture = CreateFixture();

@@ -22,11 +22,14 @@ internal class NullIoServiceTests
     [Test]
     public async Task NewSolutionAsync_ReturnsNotSupported()
     {
-        var result = await _service.NewSolutionAsync(hasUnsavedChanges: false);
+        var result = await _service.NewSolutionAsync(hasUnsavedChanges: false).ConfigureAwait(false);
 
-        Assert.That(result.success, Is.False);
-        Assert.That(result.userCancelled, Is.False);
-        Assert.That(result.error, Does.Contain("not supported"));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.success, Is.False);
+            Assert.That(result.userCancelled, Is.False);
+            Assert.That(result.error, Does.Contain("not supported"));
+        }
     }
 
     [Test]
@@ -55,6 +58,16 @@ internal class NullIoServiceTests
         var solution = new Solution();
 
         var result = await _service.SaveAsync(solution, "/some/path.json");
+
+        Assert.That(result.success, Is.False);
+        Assert.That(result.path, Is.Null);
+        Assert.That(result.error, Does.Contain("not supported"));
+    }
+
+    [Test]
+    public async Task SaveAsAsync_ReturnsNotSupported()
+    {
+        var result = await _service.SaveAsAsync(new Solution());
 
         Assert.That(result.success, Is.False);
         Assert.That(result.path, Is.Null);

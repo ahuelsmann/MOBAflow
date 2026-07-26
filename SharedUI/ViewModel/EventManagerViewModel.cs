@@ -80,7 +80,12 @@ public sealed partial class EventManagerViewModel : ObservableObject
     partial void OnStationSearchTextChanged(string value) { _ = value; OnPropertyChanged(nameof(Stations)); }
 
     [RelayCommand]
-    public void AddElement(EventElementDescriptor descriptor) => InsertElement(descriptor, SelectedStep == null ? Steps.Count : Steps.IndexOf(SelectedStep) + 1);
+    public void AddElement(EventElementDescriptor? descriptor)
+    {
+        if (descriptor is null) return;
+
+        InsertElement(descriptor, SelectedStep == null ? Steps.Count : Steps.IndexOf(SelectedStep) + 1);
+    }
 
     public void InsertElement(EventElementDescriptor descriptor, int index)
     {

@@ -9,6 +9,7 @@ using Moba.Backend.Interface;
 using Moba.Backend.Model;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
+using Moba.Common.Events;
 using Moba.Domain;
 using Moba.Domain.Enum;
 
@@ -17,6 +18,30 @@ using Moq;
 [TestFixture]
 internal sealed class MobaRuntimeServiceVehicleUsageTests
 {
+    [Test]
+    public async Task ActivateProjectAsync_DoesNotPublishCommittedCheckpointForInitialRuntimeState()
+    {
+        var z21Mock = CreateZ21Mock();
+        var eventBus = new Mock<IEventBus>();
+        using var runtime = CreateRuntime(
+            z21Mock.Object,
+            new ManualTimeProvider(),
+            new MemoryCheckpointStore(),
+            eventBus.Object);
+
+        await runtime.ActivateProjectAsync(new Project()).ConfigureAwait(false);
+
+        eventBus.Verify(
+            candidate => candidate.Publish(It.IsAny<VehicleUsageCheckpointCommittedEvent>()),
+            Times.Never);
+
+        await runtime.CheckpointUsageAsync().ConfigureAwait(false);
+
+        eventBus.Verify(
+            candidate => candidate.Publish(It.IsAny<VehicleUsageCheckpointCommittedEvent>()),
+            Times.Once);
+    }
+
     [Test]
     public async Task AuthoritativeZ21State_ProjectsStableVehicleUsageAndStopsOnConnectionLoss()
     {
@@ -82,7 +107,8 @@ internal sealed class MobaRuntimeServiceVehicleUsageTests
     private static MobaRuntimeService CreateRuntime(
         IZ21 z21,
         TimeProvider timeProvider,
-        IVehicleUsageCheckpointStore checkpointStore)
+        IVehicleUsageCheckpointStore checkpointStore,
+        IEventBus? eventBus = null)
     {
         var workflowServiceMock = new Mock<IWorkflowService>();
         var loggerMock = new Mock<ILogger<MobaRuntimeService>>();
@@ -92,6 +118,7 @@ internal sealed class MobaRuntimeServiceVehicleUsageTests
             new ActionExecutionContextFactory(new ActionExecutionContext { Z21 = z21 }),
             new AppSettings { Z21 = new Z21Settings { CurrentIpAddress = string.Empty } },
             loggerMock.Object,
+            eventBus: eventBus,
             vehicleUsageCheckpointStore: checkpointStore,
             timeProvider: timeProvider);
     }

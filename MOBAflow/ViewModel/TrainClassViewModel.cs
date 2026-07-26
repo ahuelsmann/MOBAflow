@@ -120,7 +120,7 @@ internal sealed partial class TrainClassViewModel : ObservableObject
     /// </summary>
     /// <param name="series">LocomotiveSeries to select</param>
     [RelayCommand]
-    public async Task SelectClassAsync(LocomotiveSeries series)
+    public async Task SelectClassAsync(LocomotiveSeries? series)
     {
         ArgumentNullException.ThrowIfNull(series);
 

@@ -324,35 +324,29 @@ public sealed partial class MainWindow
         RootGrid.RequestedTheme = isDarkMode ? ElementTheme.Dark : ElementTheme.Light;
     }
 
-    internal async Task PrepareForShutdownAsync()
+    internal async Task<bool> PrepareForShutdownAsync()
     {
         if (_isClosing)
         {
-            return;
+            return true;
+        }
+
+        try
+        {
+            if (!await ViewModel.PrepareForShutdownAsync())
+            {
+                return false;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "ViewModel shutdown workflow failed");
         }
 
         _isClosing = true;
         UnsubscribeWindowEvents();
 
         _restApiStatusService.Stop();
-
-        try
-        {
-            await ViewModel.SaveSolutionInternalAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Solution auto-save during shutdown failed");
-        }
-
-        try
-        {
-            await ViewModel.PrepareForShutdownAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "ViewModel shutdown workflow failed");
-        }
 
         try
         {
@@ -387,6 +381,7 @@ public sealed partial class MainWindow
         }
 
         DetachWindowBindings();
+        return true;
     }
 
     private void UnsubscribeWindowEvents()

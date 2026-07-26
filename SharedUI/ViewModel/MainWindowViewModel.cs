@@ -190,6 +190,12 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
     [ObservableProperty]
     private string? _currentSolutionPath;
 
+    /// <summary>
+    /// Indicates whether the in-memory solution contains changes that have not been persisted.
+    /// </summary>
+    [ObservableProperty]
+    public partial bool HasUnsavedChanges { get; set; }
+
     [ObservableProperty]
     private bool _isDarkMode = true;  // Dark theme is default for WinUI
 
@@ -480,20 +486,42 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
     /// <summary>
     /// Stops runtime-driven UI updates and disconnects from the Z21 before the host window completes shutdown.
     /// </summary>
-    public async Task PrepareForShutdownAsync()
+    public async Task<bool> PrepareForShutdownAsync()
     {
         if (_isShuttingDown)
         {
-            return;
+            return true;
         }
 
-        await _mobaRuntime.CheckpointUsageAsync().ConfigureAwait(false);
-        SynchronizeVehicleUsageFromRuntime();
-        await SaveSolutionInternalAsync().ConfigureAwait(false);
+        BeginSuppressSolutionAutoSave();
+        try
+        {
+            await _mobaRuntime.CheckpointUsageAsync().ConfigureAwait(false);
+            if (SynchronizeVehicleUsageFromRuntime())
+            {
+                MarkSolutionDirty();
+            }
+        }
+        finally
+        {
+            EndSuppressSolutionAutoSave();
+        }
+
+        if (HasUnsavedChanges)
+        {
+            var saved = await SaveSolutionCoreAsync(
+                    CurrentSolutionPath,
+                    allowPathSelection: string.IsNullOrWhiteSpace(CurrentSolutionPath))
+                .ConfigureAwait(false);
+            if (!saved)
+            {
+                return false;
+            }
+        }
 
         if (!TryBeginShutdown())
         {
-            return;
+            return true;
         }
 
         using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(ShutdownDisconnectTimeoutSeconds));
@@ -516,6 +544,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         }
 
         await DrainAndDisposeSolutionSaveSemaphoreAsync().ConfigureAwait(false);
+        return true;
     }
 
     private bool TryBeginShutdown()
@@ -575,9 +604,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
     }
 
     [RelayCommand(CanExecute = nameof(CanAddStationFromCity))]
-    private void AddStationFromCity(City city)
+    private void AddStationFromCity(City? city)
     {
-        if (SelectedJourney == null) return;
+        if (SelectedJourney == null || city == null) return;
 
         // Get City's first station (Hauptbahnhof) - only the NAME
         var cityStation = city.Stations.FirstOrDefault();

@@ -2,7 +2,7 @@
 
 ## Document status
 
-- Status: Slices 1 through 4a merged; Slice 4b MOBAsmart security foundation ready for draft review
+- Status: Slices 1 through 4b merged; Slice 4c explicit MOBAsmart pairing UI ready for draft review
 - Primary issue: https://github.com/ahuelsmann/MOBAflow/issues/50
 - Parent programme: https://github.com/ahuelsmann/MOBAflow/issues/47
 - Security design record: [MOBApi Security Design](../docs/MOBAPI-SECURITY-DESIGN.md)
@@ -12,7 +12,7 @@
 
 This is the single implementation plan for RF-03. It sequences the work required to authenticate, authorize, validate, rate-limit, queue, and observe MOBApi control-plane traffic without combining the change into one broad server/client delivery.
 
-Slice 1 delivered the security design record without runtime changes. Slice 2 delivered the additive authentication and credential foundation. Slice 3 migrated only the trusted MOBAflow host paths. Slice 4a added authenticated LAN discovery metadata, and Slice 4b now establishes the pinning and protected mobile credential foundation without yet enforcing authenticated reads.
+Slice 1 delivered the security design record without runtime changes. Slice 2 delivered the additive authentication and credential foundation. Slice 3 migrated only the trusted MOBAflow host paths. Slice 4a added authenticated LAN discovery metadata, Slice 4b established the pinning and protected mobile credential foundation, and Slice 4c now exposes the explicit fingerprint-verification and approval flow without yet enforcing authenticated reads.
 
 ## Scope boundaries
 
@@ -214,6 +214,36 @@ Validation evidence:
 - local agentic Sonar analysis against `github/main` was attempted but not authorized to export the
   private changed-file contents; the draft PR remains gated on a green remote SonarCloud check and
   zero open or confirmed PR findings.
+
+#### Slice 4c: Explicit MOBAsmart pairing and approval UI
+
+This independently reviewable UI slice adds a dedicated MOBAsmart Pairing tab backed by a
+platform-neutral `RemotePairingViewModel`. Discovery exposes the candidate HTTPS endpoint, persistent
+server instance, and formatted SHA-256 public-key fingerprint. The user must explicitly confirm that
+the fingerprint matches MOBAflow before the 43-character pairing secret can be submitted.
+
+The client requests either remote-control or read-only capability, clears the submitted secret from
+the bound UI state, displays the server-generated confirmation code, and polls the protected claim
+endpoint until MOBAflow approves, rejects, or the bounded wait expires. Successful pairing exposes
+only the granted role; access and refresh tokens never enter the ViewModel or XAML. The same surface
+can remove the locally protected credential to recover to an unpaired state.
+
+Authenticated REST and SignalR reads, compatibility telemetry, and anonymous-read enforcement remain
+following Slice 4 deliveries. Existing runtime communication is deliberately unchanged.
+
+Validation evidence:
+
+- six focused ViewModel tests cover explicit fingerprint confirmation, pending-to-approved polling,
+  remote-control and read-only roles, rejected claims, protected credential restoration, local
+  credential removal, and diagnostic redaction;
+- the full test suite passes for both targets with 2,907 tests passed and four expected skips;
+- the MOBAsmart FastDebug Android compile passes with zero errors without starting the app; the 45
+  existing XAML compiled-binding warnings remain unchanged and no warning points to the pairing UI;
+- scoped `dotnet format --verify-no-changes`, `git diff --check`, and changed-file secret scanning
+  pass;
+- local Sonar agentic analysis was attempted against the actual branch but the approval boundary
+  rejected private changed-file export; the draft PR therefore remains gated on a green remote
+  SonarCloud check and zero open or confirmed PR findings.
 
 ### Slice 5: Unified control admission
 

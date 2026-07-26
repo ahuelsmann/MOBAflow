@@ -144,6 +144,7 @@ public static class MobaMauiServiceCollectionExtensions
             sp.GetRequiredService<IMobileRuntimeCoordinator>(),
             sp.GetRequiredService<IProjectContext>(),
             sp.GetRequiredService<IBackgroundService>()));
+        services.AddSingleton<RemotePairingViewModel>();
         services.AddSingleton(new TrainControlViewModelOptions
         {
             HybridRuntimeSnapshots = true,
@@ -181,6 +182,7 @@ public static class MobaMauiServiceCollectionExtensions
         services.AddTransient<SignalBoxPage>();
         services.AddTransient<EnginePage>();
         services.AddTransient<ControlPage>();
+        services.AddTransient<PairingPage>();
 
         return services;
     }

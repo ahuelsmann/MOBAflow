@@ -144,14 +144,21 @@ public sealed partial class JourneyFeedbackStepViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void AssignWorkflow(WorkflowViewModel workflow) => WorkflowId = workflow.Model.Id;
+    private void AssignWorkflow(WorkflowViewModel? workflow)
+    {
+        if (workflow is null) return;
+
+        WorkflowId = workflow.Model.Id;
+    }
 
     [RelayCommand]
     private void RemoveWorkflow() => WorkflowId = null;
 
     [RelayCommand]
-    private void AssignStation(StationAssignmentOption option)
+    private void AssignStation(StationAssignmentOption? option)
     {
+        if (option is null) return;
+
         _beforeChange?.Invoke();
         Model.StopTransition.Mode = option.Mode;
         Model.StopTransition.StationId = option.Station?.Id;

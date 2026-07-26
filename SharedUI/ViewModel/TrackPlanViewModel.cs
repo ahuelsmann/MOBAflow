@@ -10,9 +10,10 @@ using Interface;
 
 using Microsoft.Extensions.Logging;
 
+using Service;
+
 using TrackPlan.Renderer;
 using TrackLibrary.PikoA;
-using Backend.Service.TrackPlan;
 
 /// <summary>
 /// ViewModel wrapper for <see cref="TrackPlan"/> used by the track plan editor UI.
@@ -22,9 +23,9 @@ public sealed partial class TrackPlanViewModel : ObservableObject, IViewModelWra
     private readonly TrackPlan _model;
     private readonly AppSettings _settings;
     private readonly ISettingsService _settingsService;
+    private readonly IDialogService _dialogService;
     private readonly ILogger<TrackPlanViewModel> _logger;
-    private readonly EditableTrackPlan _editablePlan;
-    private readonly SelectionService _selectionService;
+    private readonly TrackPlanEditorService _editorService;
     private bool _isToolboxExpanded;
     private bool _isPropertiesExpanded;
 
@@ -37,27 +38,27 @@ public sealed partial class TrackPlanViewModel : ObservableObject, IViewModelWra
     /// <param name="logger">Logger for persistence failures.</param>
     public TrackPlanViewModel(
         TrackPlan model,
-        EditableTrackPlan editablePlan,
-        SelectionService selectionService,
+        TrackPlanEditorService editorService,
+        IDialogService dialogService,
         AppSettings settings,
         ISettingsService settingsService,
         ILogger<TrackPlanViewModel> logger)
     {
         ArgumentNullException.ThrowIfNull(model);
-        ArgumentNullException.ThrowIfNull(editablePlan);
-        ArgumentNullException.ThrowIfNull(selectionService);
+        ArgumentNullException.ThrowIfNull(editorService);
+        ArgumentNullException.ThrowIfNull(dialogService);
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(settingsService);
         ArgumentNullException.ThrowIfNull(logger);
         _model = model;
-        _editablePlan = editablePlan;
-        _selectionService = selectionService;
+        _editorService = editorService;
+        _dialogService = dialogService;
         _settings = settings;
         _settingsService = settingsService;
         _logger = logger;
         _isToolboxExpanded = _settings.Layout.TrackPlanPage.IsToolboxExpanded;
         _isPropertiesExpanded = _settings.Layout.TrackPlanPage.IsPropertiesExpanded;
-        _selectionService.SelectionChanged += OnSelectionChanged;
+        _editorService.StateChanged += OnEditorStateChanged;
     }
 
     /// <summary>
@@ -66,73 +67,84 @@ public sealed partial class TrackPlanViewModel : ObservableObject, IViewModelWra
     public TrackPlan Model => _model;
 
     /// <summary>Selected track identity, independent of a concrete UI control.</summary>
-    public Guid? SelectedTrackId => _selectionService.SelectedTrackId;
+    public Guid? SelectedTrackId => _editorService.SelectedTrackId;
 
-    public bool CanDeleteSelectedTrack => SelectedTrackId.HasValue;
+    public PlacedSegment? SelectedTrack => _editorService.SelectedTrack;
 
-    public bool CanDisconnectSelectedTrack => SelectedTrackId.HasValue
-        && _editablePlan.Connections.Any(connection =>
-            connection.SourceSegment == SelectedTrackId.Value || connection.TargetSegment == SelectedTrackId.Value);
+    public bool HasSelectedTrack => SelectedTrack != null;
 
-    public bool CanRotateSelectedTrack => SelectedTrackId.HasValue
-        && _editablePlan.Segments.Any(segment => segment.Segment.No == SelectedTrackId.Value)
-        && !CanDisconnectSelectedTrack;
+    public bool HasTracks => _editorService.Segments.Count > 0;
+
+    public bool CanDeleteSelectedTrack => _editorService.CanDeleteSelectedTrack;
+
+    public bool CanDisconnectSelectedTrack => _editorService.CanDisconnectSelectedTrack;
+
+    public bool CanRotateSelectedTrack => _editorService.CanRotateSelectedTrack;
+
+    public bool CanUndo => _editorService.CanUndo;
+
+    public bool CanRedo => _editorService.CanRedo;
+
+    public bool IsDirty => _editorService.IsDirty;
+
+    public string SelectionSummary => CreateSelectionSummary();
 
     public IReadOnlySet<(double X, double Y)> SnapPreviewPorts { get; private set; } = new HashSet<(double X, double Y)>();
 
-    /// <summary>Raised immediately before a command mutates the editor document.</summary>
-    public event EventHandler? EditorMutationStarting;
+    public IReadOnlyList<string> ValidationMessages { get; private set; } = [];
+
+    [ObservableProperty]
+    public partial string StatusText { get; set; } = "Ready.";
 
     [RelayCommand]
-    public void SelectTrack(Guid? trackId) => _selectionService.Select(trackId);
+    public void SelectTrack(Guid? trackId) => _editorService.Select(trackId);
 
     [RelayCommand(CanExecute = nameof(CanDeleteSelectedTrack))]
     public void DeleteSelectedTrack()
     {
-        if (SelectedTrackId is not Guid trackId)
+        if (!CanDeleteSelectedTrack)
             return;
 
-        BeginMutation();
-        _editablePlan.RemoveSegment(trackId);
-        _selectionService.Select(null);
+        _editorService.DeleteSelectedTrack();
+        StatusText = "Track deleted.";
     }
 
     [RelayCommand(CanExecute = nameof(CanDisconnectSelectedTrack))]
     public void DisconnectSelectedTrack()
     {
-        if (SelectedTrackId is not Guid trackId)
+        if (!CanDisconnectSelectedTrack)
             return;
 
-        BeginMutation();
-        _editablePlan.DisconnectSegmentFromGroup(trackId);
+        _editorService.DisconnectSelectedTrack();
+        StatusText = "Track disconnected.";
     }
 
     [RelayCommand(CanExecute = nameof(CanRotateSelectedTrack))]
     public void RotateSelectedTrack(double deltaDegrees)
     {
-        if (SelectedTrackId is not Guid trackId)
+        if (!CanRotateSelectedTrack)
             return;
 
-        var placed = _editablePlan.Segments.FirstOrDefault(segment => segment.Segment.No == trackId);
-        if (placed == null || !CanRotateSelectedTrack)
-            return;
-
-        BeginMutation();
-        _editablePlan.UpdateSegmentPosition(trackId, placed.X, placed.Y, NormalizeAngle(placed.RotationDegrees + deltaDegrees));
+        _editorService.RotateSelectedTrack(deltaDegrees);
+        StatusText = $"Rotation set to {SelectedTrack?.RotationDegrees:F0}°.";
     }
+
+    [RelayCommand(CanExecute = nameof(CanRotateSelectedTrack))]
+    private void RotateSelectedTrackLeft() => RotateSelectedTrack(-15);
+
+    [RelayCommand(CanExecute = nameof(CanRotateSelectedTrack))]
+    private void RotateSelectedTrackRight() => RotateSelectedTrack(15);
 
     [RelayCommand]
     public void AssignSelectedTrackFeedback(int? inPort)
     {
-        if (SelectedTrackId is not Guid trackId)
+        if (SelectedTrack == null || SelectedTrack.InPort == inPort)
             return;
 
-        var placed = _editablePlan.Segments.FirstOrDefault(segment => segment.Segment.No == trackId);
-        if (placed == null || placed.InPort == inPort)
-            return;
-
-        BeginMutation();
-        _editablePlan.UpdateSegmentInPort(trackId, inPort);
+        _editorService.AssignSelectedTrackFeedback(inPort);
+        StatusText = inPort.HasValue
+            ? $"Feedback address set to {inPort.Value}."
+            : "Feedback address cleared.";
     }
 
     /// <summary>Updates the renderer-neutral connector preview projected by the interaction layer.</summary>
@@ -141,6 +153,96 @@ public sealed partial class TrackPlanViewModel : ObservableObject, IViewModelWra
         ArgumentNullException.ThrowIfNull(ports);
         SnapPreviewPorts = ports;
         OnPropertyChanged(nameof(SnapPreviewPorts));
+    }
+
+    /// <summary>Selects the nearest track and returns the drag state for the WinUI pointer adapter.</summary>
+    public TrackPlanInteractionService.DragSelection? SelectForDrag(double worldX, double worldY)
+    {
+        return _editorService.SelectForDrag(worldX, worldY);
+    }
+
+    public TrackPlanSnapHelper.SnapResult? FindBestSnap(
+        PlacedSegment movingSegment,
+        Guid? excludeSegmentId = null,
+        IReadOnlySet<Guid>? movingGroup = null)
+    {
+        return _editorService.FindBestSnap(movingSegment, excludeSegmentId, movingGroup);
+    }
+
+    public TrackPlanInteractionService.SnapPreview GetSnapPreview(
+        PlacedSegment movingSegment,
+        IReadOnlySet<Guid>? movingGroup = null,
+        double thresholdMm = 25)
+    {
+        return _editorService.GetSnapPreview(movingSegment, movingGroup, thresholdMm);
+    }
+
+    public void BeginGesture() => _editorService.BeginGesture();
+
+    public void MoveGroup(IReadOnlySet<Guid> movingGroup, double deltaX, double deltaY)
+    {
+        _editorService.MoveGroup(movingGroup, deltaX, deltaY);
+    }
+
+    public void CompleteMove(Guid movedSegmentId, IReadOnlySet<Guid> movingGroup, bool snapEnabled)
+    {
+        _editorService.CompleteMove(movedSegmentId, movingGroup, snapEnabled);
+    }
+
+    public void CompleteGesture() => _editorService.CompleteGesture();
+
+    public void PlaceSegment(PlacedSegment placed, bool snapEnabled)
+    {
+        _editorService.PlaceSegment(placed, snapEnabled);
+        StatusText = "Track placed.";
+    }
+
+    public void SetSelectedTrackRotation(double rotationDegrees)
+    {
+        _editorService.SetSelectedTrackRotation(rotationDegrees);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanUndo))]
+    public void Undo()
+    {
+        if (!_editorService.Undo())
+            return;
+
+        StatusText = "Undo executed.";
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRedo))]
+    public void Redo()
+    {
+        if (!_editorService.Redo())
+            return;
+
+        StatusText = "Redo executed.";
+    }
+
+    [RelayCommand(CanExecute = nameof(HasTracks))]
+    public async Task ValidateAsync()
+    {
+        var result = _editorService.Validate();
+        ValidationMessages = result.Messages;
+        OnPropertyChanged(nameof(ValidationMessages));
+
+        var title = result.IsValid ? "Track Plan Valid" : "Validation Completed";
+        var message = result.IsValid
+            ? "No issues found."
+            : string.Join(
+                Environment.NewLine,
+                result.Messages.Select((validationMessage, index) => $"{index + 1}. {validationMessage}"));
+        await _dialogService.ShowConfirmationAsync(
+            title,
+            message,
+            "OK",
+            "Cancel",
+            isCancelDefault: false).ConfigureAwait(true);
+
+        StatusText = result.IsValid
+            ? "Validation successful."
+            : $"Validation completed: {result.Messages.Count} hint(s).";
     }
 
     public bool IsToolboxExpanded
@@ -184,10 +286,10 @@ public sealed partial class TrackPlanViewModel : ObservableObject, IViewModelWra
             TaskScheduler.Default);
     }
 
-    private void BeginMutation() => EditorMutationStarting?.Invoke(this, EventArgs.Empty);
-
-    private void OnSelectionChanged(object? sender, EventArgs e)
+    private void OnEditorStateChanged(object? sender, EventArgs e)
     {
+        _ = sender;
+        _ = e;
         RefreshEditorState();
     }
 
@@ -195,20 +297,42 @@ public sealed partial class TrackPlanViewModel : ObservableObject, IViewModelWra
     public void RefreshEditorState()
     {
         OnPropertyChanged(nameof(SelectedTrackId));
+        OnPropertyChanged(nameof(SelectedTrack));
+        OnPropertyChanged(nameof(HasSelectedTrack));
+        OnPropertyChanged(nameof(HasTracks));
         OnPropertyChanged(nameof(CanDeleteSelectedTrack));
         OnPropertyChanged(nameof(CanDisconnectSelectedTrack));
         OnPropertyChanged(nameof(CanRotateSelectedTrack));
+        OnPropertyChanged(nameof(CanUndo));
+        OnPropertyChanged(nameof(CanRedo));
+        OnPropertyChanged(nameof(IsDirty));
+        OnPropertyChanged(nameof(SelectionSummary));
         DeleteSelectedTrackCommand.NotifyCanExecuteChanged();
         DisconnectSelectedTrackCommand.NotifyCanExecuteChanged();
         RotateSelectedTrackCommand.NotifyCanExecuteChanged();
+        RotateSelectedTrackLeftCommand.NotifyCanExecuteChanged();
+        RotateSelectedTrackRightCommand.NotifyCanExecuteChanged();
+        UndoCommand.NotifyCanExecuteChanged();
+        RedoCommand.NotifyCanExecuteChanged();
+        ValidateCommand.NotifyCanExecuteChanged();
     }
 
-    private static double NormalizeAngle(double degrees)
+    private string CreateSelectionSummary()
     {
-        while (degrees >= 360)
-            degrees -= 360;
-        while (degrees < 0)
-            degrees += 360;
-        return degrees;
+        var selected = SelectedTrack;
+        if (selected == null)
+        {
+            return "No selection";
+        }
+
+        var entry = PikoACatalog.All.FirstOrDefault(candidate => candidate.SegmentType == selected.Segment.GetType());
+        var code = entry?.Code ?? selected.Segment.GetType().Name;
+        var displayName = entry?.DisplayName ?? code;
+        var connectionCount = _editorService.Connections.Count(connection =>
+            connection.SourceSegment == selected.Segment.No || connection.TargetSegment == selected.Segment.No);
+        return $"{code}{Environment.NewLine}{displayName}{Environment.NewLine}{Environment.NewLine}"
+            + $"Position: X={selected.X:F0} mm, Y={selected.Y:F0} mm{Environment.NewLine}"
+            + $"Rotation: {selected.RotationDegrees:F0}°{Environment.NewLine}"
+            + $"Connections: {connectionCount}";
     }
 }

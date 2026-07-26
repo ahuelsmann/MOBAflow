@@ -12,8 +12,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 
-using Service;
-
 using SharedUI.Interface;
 using SharedUI.ViewModel;
 
@@ -24,42 +22,56 @@ using System.Linq;
 
 sealed partial class SignalBoxPage
 {
+    private static readonly Action<ILogger, Exception?> LogPropertyPersistenceFailure =
+        LoggerMessage.Define(
+            LogLevel.Warning,
+            new EventId(1, nameof(LogPropertyPersistenceFailure)),
+            "Persist signal-box property change failed");
+
+    private static readonly Action<ILogger, Exception?> LogSignalAspectFailure =
+        LoggerMessage.Define(
+            LogLevel.Warning,
+            new EventId(2, nameof(LogSignalAspectFailure)),
+            "Set signal aspect failed");
+
     private readonly AppSettings _settings;
     private readonly ISettingsService? _settingsService;
     private readonly ILogger<SignalBoxPage>? _logger;
+    private readonly SignalBoxPropertiesViewModel _propertiesViewModel;
 
     private double _toolboxExpandedWidth = 240;
     private double _canvasExpandedStarValue = 3;
     private double _propertiesExpandedStarValue = 1;
 
     public MainWindowViewModel ViewModel { get; }
+    public InterlockingControlViewModel InterlockingViewModel { get; }
 
     private SignalBoxPlanViewModel? _planViewModel;
 
     public SignalBoxPage(
         MainWindowViewModel viewModel,
-        ViessmannSignalService viessmannSignalService,
+        InterlockingControlViewModel interlockingViewModel,
+        SignalBoxPropertiesViewModel propertiesViewModel,
         AppSettings settings,
         ISettingsService? settingsService = null,
         ILogger<SignalBoxPage>? logger = null,
-        ILogger<SignalBoxPropertiesControl>? signalBoxPropertiesLogger = null,
         ILogger<SignalBoxCanvasControl>? signalBoxCanvasLogger = null)
     {
         ArgumentNullException.ThrowIfNull(viewModel);
-        ArgumentNullException.ThrowIfNull(viessmannSignalService);
+        ArgumentNullException.ThrowIfNull(interlockingViewModel);
+        ArgumentNullException.ThrowIfNull(propertiesViewModel);
 
         ViewModel = viewModel;
+        InterlockingViewModel = interlockingViewModel;
+        _propertiesViewModel = propertiesViewModel;
         _settings = settings;
         _settingsService = settingsService;
         _logger = logger;
 
         InitializeComponent();
 
-        PropertiesControl.AttachRuntimeServices(viessmannSignalService, signalBoxPropertiesLogger);
+        PropertiesControl.EditorViewModel = _propertiesViewModel;
         CanvasControl.AttachLogger(signalBoxCanvasLogger);
-
-        ViewModel.SolutionLoaded += OnSolutionLoaded;
-        ViewModel.SignalBoxRuntimeStateChanged += OnSignalBoxRuntimeStateChanged;
 
         Loaded += OnPageLoaded;
         Unloaded += OnPageUnloaded;
@@ -145,8 +157,17 @@ sealed partial class SignalBoxPage
 
     private void OnPageLoaded(object sender, RoutedEventArgs e)
     {
+        InterlockingViewModel.StartObserving();
         ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+        ViewModel.SolutionLoaded -= OnSolutionLoaded;
+        ViewModel.SolutionLoaded += OnSolutionLoaded;
+        ViewModel.SignalBoxRuntimeStateChanged -= OnSignalBoxRuntimeStateChanged;
+        ViewModel.SignalBoxRuntimeStateChanged += OnSignalBoxRuntimeStateChanged;
+        _propertiesViewModel.ElementChanged -= OnPropertyEditorElementChanged;
+        _propertiesViewModel.ElementChanged += OnPropertyEditorElementChanged;
+        _propertiesViewModel.DeletionRequested -= OnPropertyEditorDeletionRequested;
+        _propertiesViewModel.DeletionRequested += OnPropertyEditorDeletionRequested;
         RestoreLayout();
         LoadFromModel();
     }
@@ -159,6 +180,9 @@ sealed partial class SignalBoxPage
         HandlePageUnloadedAsync().Observe(ex => _logger?.LogWarning(ex, "Persist layout on unload failed"));
         ViewModel.SolutionLoaded -= OnSolutionLoaded;
         ViewModel.SignalBoxRuntimeStateChanged -= OnSignalBoxRuntimeStateChanged;
+        _propertiesViewModel.ElementChanged -= OnPropertyEditorElementChanged;
+        _propertiesViewModel.DeletionRequested -= OnPropertyEditorDeletionRequested;
+        InterlockingViewModel.StopObserving();
         DetachPlanViewModel();
     }
 
@@ -285,8 +309,7 @@ sealed partial class SignalBoxPage
 
         if (PropertiesControl != null)
         {
-            PropertiesControl.PlanViewModel = _planViewModel;
-            PropertiesControl.SelectedElement = _planViewModel.SelectedElement;
+            _propertiesViewModel.SelectedElement = _planViewModel.SelectedElement;
         }
 
         UpdateElementCount();
@@ -317,9 +340,10 @@ sealed partial class SignalBoxPage
             return;
         }
 
-        if (PropertiesControl != null && _planViewModel != null)
+        if (_planViewModel != null)
         {
-            PropertiesControl.SelectedElement = _planViewModel.SelectedElement;
+            _propertiesViewModel.SelectedElement = _planViewModel.SelectedElement;
+            InterlockingViewModel.SelectSignalBoxRepresentation(_planViewModel.SelectedElement?.Id);
             if (_planViewModel.SelectedElement is SbSignal signal)
             {
                 _planViewModel.RefreshElementVisual(signal);
@@ -336,6 +360,7 @@ sealed partial class SignalBoxPage
 
         _planViewModel.PropertyChanged -= OnPlanViewModelPropertyChanged;
         _planViewModel.Elements.CollectionChanged -= OnElementsCollectionChanged;
+        _propertiesViewModel.SelectedElement = null;
     }
 
     private void OnDeleteButtonClick(object sender, RoutedEventArgs e)
@@ -367,13 +392,49 @@ sealed partial class SignalBoxPage
         return true;
     }
 
-    private void OnPropertyControlVisualRefresh(object sender, SbElement element)
+    private void OnPropertyEditorElementChanged(
+        object? sender,
+        SignalBoxPropertyChangeEventArgs args)
     {
-        _planViewModel?.RefreshElementVisual(element);
+        _ = sender;
+
+        if (args.RequiresVisualRefresh)
+        {
+            _planViewModel?.RefreshElementVisual(args.Element);
+        }
+
+        if (args.RequiresPersistence)
+        {
+            ViewModel.SaveSolutionInternalAsync().Observe(LogPropertyPersistenceException);
+        }
+
+        if (args.RequiresSignalCommand && args.Element is SbSignal signal)
+        {
+            ViewModel.SetSignalAspectAsync(signal).Observe(LogSignalAspectException);
+        }
     }
 
-    private void OnPropertyControlElementDeletion(object sender, SbElement element)
+    private void LogPropertyPersistenceException(Exception exception)
     {
-        _planViewModel?.RemoveElement(element);
+        if (_logger is not null)
+        {
+            LogPropertyPersistenceFailure(_logger, exception);
+        }
+    }
+
+    private void LogSignalAspectException(Exception exception)
+    {
+        if (_logger is not null)
+        {
+            LogSignalAspectFailure(_logger, exception);
+        }
+    }
+
+    private void OnPropertyEditorDeletionRequested(
+        object? sender,
+        SignalBoxElementEventArgs args)
+    {
+        _ = sender;
+        _planViewModel?.RemoveElement(args.Element);
     }
 }

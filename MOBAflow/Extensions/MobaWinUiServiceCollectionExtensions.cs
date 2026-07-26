@@ -9,6 +9,7 @@ using Backend.Service.TrackPlan;
 using Backend.Service.Validation;
 using Common.Configuration;
 using Common.Events;
+using Common.Multiplex;
 using Common.Navigation;
 using Display.Rendering;
 using Display.Runtime;
@@ -174,8 +175,10 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<MasterDataStore>(),
             sp.GetRequiredService<ILogger<LocomotiveService>>()));
 
-        services.AddSingleton(sp =>
+        services.AddSingleton<IMultiplexerProvider, DefaultMultiplexerProvider>();
+        services.AddSingleton<ISignalArticleCatalog>(sp =>
             new ViessmannSignalService(sp.GetRequiredService<MasterDataStore>()));
+        services.AddTransient<SignalBoxPropertiesViewModel>();
 
         services.AddSingleton<ISettingsService>(sp => new SettingsService(
             sp.GetRequiredService<AppSettings>(),
@@ -217,13 +220,14 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton<GraphService>();
         services.AddSingleton<SelectionService>();
         services.AddSingleton<UndoRedoService<TrackPlanEditorDocument>>();
+        services.AddSingleton<TrackPlanEditorService>();
         services.AddSingleton<TrackPlanSolutionBinder>();
         services.AddSingleton<TrackPlanFeedbackHighlighter>();
 
         services.AddSingleton(sp => new TrackPlanViewModel(
             sp.GetRequiredService<TrackPlan>(),
-            sp.GetRequiredService<EditableTrackPlan>(),
-            sp.GetRequiredService<SelectionService>(),
+            sp.GetRequiredService<TrackPlanEditorService>(),
+            sp.GetRequiredService<IDialogService>(),
             sp.GetRequiredService<AppSettings>(),
             sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<ILogger<TrackPlanViewModel>>()));
@@ -271,6 +275,8 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton<IJourneySelectionContext>(sp => sp.GetRequiredService<MainWindowViewModel>());
         services.AddSingleton<IProjectContext>(sp => sp.GetRequiredService<MainWindowViewModel>());
         services.AddSingleton<IRecordingContextProvider, WinUiRecordingContextProvider>();
+        services.AddTransient<InterlockingControlViewModel>();
+        services.AddTransient<TrackPlanPageViewModels>();
         services.AddSingleton<JourneyMapViewModel>();
         services.AddSingleton<MonitorPageViewModel>();
         services.AddSingleton<RecorderPageViewModel>();

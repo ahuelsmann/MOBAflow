@@ -46,6 +46,7 @@ MainWindowViewModel.OnFeedbackReceived() → IsConnected = true (UI thread safe)
 16. **English UI language** — All user-visible text in UI apps (MOBAflow WinUI, MOBAsmart MAUI) must be English: labels, buttons, status messages, tooltips, empty states, defaults, and shipped master data (`data.json`, `solution.json`). No German (or other non-English) UI strings in XAML, ViewModels, or domain defaults. TTS/announcement language remains user-configurable in settings and is independent of UI language.
 17. **Standalone Markdown plans belong in `plans/`** — Keep project, quality, refactoring, and roadmap planning files out of `docs/`. Delete completed plans; Git history and closed GitHub work items retain the record. `docs/` contains current reference and user documentation. Spec Kit artifacts such as `specs/*/plan.md` remain in their feature directory. GitHub issues, milestones, and Kanban remain authoritative for active work and progress.
 18. **SonarQube before PR review** — Attempt local Sonar analysis against the actual PR base, then create every PR as a draft. Do not mark it ready for review until the remote SonarCloud check is green and the PR has zero `OPEN`/`CONFIRMED` Sonar issues. Do not lower quality gates, suppress valid findings, or exclude changed files to make the analysis pass. See `.github/instructions/sonarqube-pre-pr.instructions.md`.
+19. **Balanced secrets scanning** — Run `sonar analyze secrets` before reading files likely to contain credentials, tokens, private keys, certificates, connection strings, or deployment secrets. Ordinary source, tests, Markdown, schemas, and checked-in templates do not require an individual pre-read scan unless context suggests secret material. Run a secrets scan over all changed files before every commit and PR. If the scanner is unavailable, do not read sensitive files; ordinary development may continue and the limitation must be recorded before publication.
 
 ---
 
@@ -80,6 +81,7 @@ MainWindowViewModel.OnFeedbackReceived() → IsConnected = true (UI thread safe)
 - `run_tests()` for relevant projects
 - `.editorconfig` compliance
 - Attempt local SonarQube analysis against the actual base branch
+- Run a secrets scan over all changed files
 - Create the PR as a draft, then verify the remote SonarCloud result and PR issue count before review
 
 ### 6. DOCUMENTATION
@@ -252,6 +254,7 @@ dotnet run --project MOBApi      # REST API (Port 5001)
 - [ ] **Tests for new/changed behavior** — Unit or integration tests added; `dotnet test` passes
 - [ ] **User-visible UI strings are English** (MOBAflow, MOBAsmart, SharedUI ViewModels bound to UI)
 - [ ] Local Sonar analysis completed, or its documented capability limitation was recorded on the draft PR
+- [ ] Changed files passed `sonar analyze secrets`
 - [ ] PR was created as a draft and stayed draft until SonarCloud was green with zero `OPEN`/`CONFIRMED` issues
 - [ ] Build: `dotnet build`
 - [ ] README updated (if user-facing)

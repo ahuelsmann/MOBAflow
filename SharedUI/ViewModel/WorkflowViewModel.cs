@@ -344,8 +344,10 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
     }
 
     [RelayCommand]
-    private void DeleteAction(object actionVm)
+    private void DeleteAction(object? actionVm)
     {
+        if (actionVm is null) return;
+
         if (_actionViewModelFactory.TryGetAction(actionVm, out var actionModel))
         {
             // Unsubscribe from PropertyChanged events before removing

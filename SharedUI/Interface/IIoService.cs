@@ -49,19 +49,30 @@ public interface ISolutionIoService
     Task<(Solution? solution, string? path, string? error)> LoadFromPathAsync(string filePath);
 
     /// <summary>
-    /// Saves the solution to a JSON file. Shows file picker if currentPath is null.
+    /// Saves the solution to an existing JSON file without showing a file picker.
     /// Uses atomic write (temp file + rename) to prevent data corruption.
     /// </summary>
     /// <param name="solution">Solution object to serialize and save.</param>
-    /// <param name="currentPath">Existing file path for overwrite, or null to show file picker.</param>
+    /// <param name="currentPath">Existing file path for overwrite.</param>
+    /// <returns>
+    /// Tuple containing:
+    /// - success: True if save completed successfully.
+    /// - path: Full path where file was saved, or null if failed.
+    /// - error: Error message if save failed, null otherwise.
+    /// </returns>
+    Task<(bool success, string? path, string? error)> SaveAsync(Solution solution, string currentPath);
+
+    /// <summary>
+    /// Shows a file picker and saves the solution to the selected JSON file.
+    /// </summary>
+    /// <param name="solution">Solution object to serialize and save.</param>
     /// <returns>
     /// Tuple containing:
     /// - success: True if save completed successfully.
     /// - path: Full path where file was saved, or null if cancelled/failed.
     /// - error: Error message if save failed, null otherwise.
     /// </returns>
-    Task<(bool success, string? path, string? error)> SaveAsync(Solution solution, string? currentPath);
-
+    Task<(bool success, string? path, string? error)> SaveAsAsync(Solution solution);
 }
 
 public interface IFilePickerService

@@ -2,11 +2,10 @@
 
 namespace Moba.Backend.Service.Interlocking;
 
+using Domain;
 using System.Collections.Frozen;
 using System.Security.Cryptography;
 using System.Text;
-
-using Domain;
 
 public enum SignalEffectStatus
 {
@@ -39,6 +38,13 @@ public enum RouteCoordinatorStatus
 }
 
 public sealed record RouteCoordinatorResult(
+    RouteCoordinatorStatus Status,
+    string Code,
+    string Message,
+    Guid CorrelationId,
+    InterlockingRuntimeState State);
+
+public sealed record TurnoutCoordinatorResult(
     RouteCoordinatorStatus Status,
     string Code,
     string Message,
@@ -164,6 +170,74 @@ public sealed class InterlockingRouteCoordinator : IAsyncDisposable
         }
     }
 
+    public async Task<TurnoutCoordinatorResult> SetTurnoutAsync(
+        Guid turnoutId,
+        TurnoutPosition position,
+        Guid correlationId,
+        CancellationToken cancellationToken = default)
+    {
+        if (correlationId == Guid.Empty)
+            return TurnoutResult(RouteCoordinatorStatus.Rejected, "input.correlation.empty", "Every interlocking coordinator operation requires a non-empty correlation ID.", correlationId);
+        if (IsShutdown)
+            return TurnoutResult(RouteCoordinatorStatus.Rejected, "interlocking.shutdown", "The interlocking coordinator is shutting down.", correlationId);
+
+        using var operationCancellation = CancellationTokenSource.CreateLinkedTokenSource(
+            cancellationToken,
+            _shutdownCancellation.Token);
+        cancellationToken = operationCancellation.Token;
+
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (!Snapshot.Turnouts.TryGetValue(turnoutId, out var turnout))
+                return TurnoutResult(RouteCoordinatorStatus.Rejected, "turnout.missing", "The requested turnout does not exist.", correlationId);
+            if (turnout.LockOwnerRouteId != null)
+                return TurnoutResult(RouteCoordinatorStatus.Rejected, "turnout.locked", "The turnout is locked by an active route.", correlationId);
+            if (turnout.Lifecycle is TurnoutLifecycle.Requested or TurnoutLifecycle.Pending)
+                return TurnoutResult(RouteCoordinatorStatus.Rejected, "turnout.command.busy", "The turnout already has a command awaiting completion or confirmation.", correlationId);
+
+            var requested = InterlockingSafetyEngine.ProjectTurnoutCommand(
+                Snapshot,
+                turnoutId,
+                TurnoutLifecycle.Requested,
+                position,
+                StepCorrelation(correlationId, "standalone-requested"),
+                Snapshot.Revision);
+            ApplyDecision(requested, correlationId);
+            if (!requested.IsAccepted)
+                return TurnoutResult(RouteCoordinatorStatus.Rejected, requested.Code, requested.Message, correlationId);
+
+            var transition = await _turnoutRuntime.RequestAsync(
+                turnoutId,
+                position,
+                StepCorrelation(correlationId, "standalone-effect"),
+                cancellationToken).ConfigureAwait(false);
+            var projected = InterlockingSafetyEngine.ProjectTurnoutCommand(
+                Snapshot,
+                turnoutId,
+                transition.State.Lifecycle,
+                transition.State.RequestedPosition,
+                StepCorrelation(correlationId, "standalone-result"),
+                Snapshot.Revision);
+            ApplyDecision(projected, correlationId);
+
+            var status = transition.Status == TurnoutRuntimeTransitionStatus.Rejected
+                ? RouteCoordinatorStatus.Rejected
+                : transition.State.Lifecycle switch
+                {
+                    TurnoutLifecycle.Pending => RouteCoordinatorStatus.Pending,
+                    TurnoutLifecycle.Failed => RouteCoordinatorStatus.Failed,
+                    TurnoutLifecycle.Unknown => RouteCoordinatorStatus.Rejected,
+                    _ => RouteCoordinatorStatus.Accepted
+                };
+            return TurnoutResult(status, transition.Code, transition.Message, correlationId);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
     public async Task<RouteCoordinatorResult> SetRouteAsync(
         Guid routeId,
         Guid correlationId,
@@ -208,11 +282,30 @@ public sealed class InterlockingRouteCoordinator : IAsyncDisposable
 
             foreach (var requirement in route.TurnoutRequirements)
             {
+                var requested = InterlockingSafetyEngine.ProjectTurnoutCommand(
+                    Snapshot,
+                    requirement.TurnoutId,
+                    TurnoutLifecycle.Requested,
+                    requirement.Position,
+                    StepCorrelation(correlationId, $"turnout-requested:{requirement.TurnoutId:N}"),
+                    Snapshot.Revision);
+                ApplyDecision(requested, correlationId);
+                if (!requested.IsAccepted)
+                    return FromDecision(requested, correlationId);
+
                 var transition = await _turnoutRuntime.RequestAsync(
                     requirement.TurnoutId,
                     requirement.Position,
                     StepCorrelation(correlationId, $"turnout:{requirement.TurnoutId:N}"),
                     cancellationToken).ConfigureAwait(false);
+                var projected = InterlockingSafetyEngine.ProjectTurnoutCommand(
+                    Snapshot,
+                    requirement.TurnoutId,
+                    transition.State.Lifecycle,
+                    transition.State.RequestedPosition,
+                    StepCorrelation(correlationId, $"turnout-result:{requirement.TurnoutId:N}"),
+                    Snapshot.Revision);
+                ApplyDecision(projected, correlationId);
                 if (transition.State.Lifecycle == TurnoutLifecycle.Pending)
                     continue;
 
@@ -917,6 +1010,17 @@ public sealed class InterlockingRouteCoordinator : IAsyncDisposable
             result.CorrelationId,
             result.State);
 
+        return result;
+    }
+
+    private TurnoutCoordinatorResult TurnoutResult(
+        RouteCoordinatorStatus status,
+        string code,
+        string message,
+        Guid correlationId)
+    {
+        var result = new TurnoutCoordinatorResult(status, code, message, correlationId, Snapshot);
+        PublishLifecycleEvent(status, code, message, correlationId, result.State);
         return result;
     }
 

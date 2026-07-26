@@ -4,6 +4,7 @@ namespace Moba.WinUI.Service;
 
 using Common.Extension;
 using Domain;
+using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 using System.ComponentModel;
 using TrackLibrary.PikoA;
@@ -22,12 +23,17 @@ using TrackLibrary.PikoA;
 public sealed class TrackPlanSolutionBinder
 {
     private readonly EditableTrackPlan _plan;
+    private readonly TrackPlanEditorService _editorService;
     private readonly MainWindowViewModel _mainViewModel;
     private bool _suppressPlanChanged;
 
-    public TrackPlanSolutionBinder(EditableTrackPlan plan, MainWindowViewModel mainViewModel)
+    public TrackPlanSolutionBinder(
+        EditableTrackPlan plan,
+        TrackPlanEditorService editorService,
+        MainWindowViewModel mainViewModel)
     {
         _plan = plan ?? throw new ArgumentNullException(nameof(plan));
+        _editorService = editorService ?? throw new ArgumentNullException(nameof(editorService));
         _mainViewModel = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
     }
 
@@ -58,7 +64,8 @@ public sealed class TrackPlanSolutionBinder
         // Trigger the existing solution auto-save pipeline so additions/removals persist
         // before shutdown (EditableTrackPlan is not a ViewModel, so it does not feed
         // the PropertyChanged-based auto-save hook in MainWindowViewModel.SolutionAutoSave).
-        _mainViewModel.SaveSolutionInternalAsync()
+        var changeVersion = _editorService.ChangeVersion;
+        SaveAndMarkCleanAsync(changeVersion)
             .Observe(_ => { /* logging handled inside SaveSolutionInternalAsync */ });
     }
 
@@ -80,6 +87,12 @@ public sealed class TrackPlanSolutionBinder
         project.TrackPlan = TrackPlanEditorDocument
             .FromEditableTrackPlan(_plan)
             .ToDomainDocument();
+    }
+
+    private async Task SaveAndMarkCleanAsync(long changeVersion)
+    {
+        await _mainViewModel.SaveSolutionInternalAsync().ConfigureAwait(true);
+        _editorService.MarkClean(changeVersion);
     }
 
     private void OnSolutionLoaded(object? sender, EventArgs e)
@@ -124,6 +137,7 @@ public sealed class TrackPlanSolutionBinder
         finally
         {
             _suppressPlanChanged = false;
+            _editorService.MarkClean();
         }
     }
 }

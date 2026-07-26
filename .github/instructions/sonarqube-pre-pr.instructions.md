@@ -10,23 +10,35 @@ the remote SonarCloud analysis before review. Every PR starts as a draft. This p
 quality debt from being introduced while keeping historical `main` findings in their
 dedicated RF work packages.
 
+## Balanced secrets scan
+
+Scan a file before reading it when its name, location, or context indicates that it may
+contain credentials, tokens, private keys, certificates, connection strings, or deployment
+secrets. Ordinary source files, tests, Markdown documentation, schemas, and templates do
+not require an individual pre-read scan unless such an indication exists.
+
+Before every commit or pull request, run `sonar analyze secrets <path>` for each changed
+file. A positive finding is a hard stop: do not read, commit, or publish the file; rotate
+the exposed credential at its source of truth and remove it from the repository.
+
 ## Before creating the draft pull request
 
-1. Verify that the Sonar CLI is authenticated:
+1. Confirm that every changed file passed the deterministic secrets scan.
+2. Verify that the Sonar CLI is authenticated:
 
    ```powershell
    sonar auth status
    ```
 
-2. Fetch and identify the actual PR base. Do not assume the remote is named `origin`.
-3. Run local analysis for the complete branch change set:
+3. Fetch and identify the actual PR base. Do not assume the remote is named `origin`.
+4. Run local analysis for the complete branch change set:
 
    ```powershell
    sonar analyze --base <remote>/main --force --format json -p ahuelsmann_MOBAflow2
    ```
 
-4. If analysis succeeds, resolve every new actionable finding and repeat it until clean.
-5. If the organization does not support local agentic analysis, record the exact capability
+5. If analysis succeeds, resolve every new actionable finding and repeat it until clean.
+6. If the organization does not support local agentic analysis, record the exact capability
    error in the PR `Validation` section. This limitation permits only a draft PR so the
    remote SonarCloud analysis can run.
 

@@ -16,13 +16,14 @@
    - Key files: `Backend/Z21.cs`, `SharedUI/Service/UiThreadEventBusDecorator.cs`, `SharedUI/ViewModel/MainWindowViewModel.cs`
    - See: `.github/copilot-instructions.md` § EventBus Threading Boundary
 
-2. **Absolute Rules (18 rules)**
+2. **Absolute Rules (19 rules)**
    - No `.Result` / `.Wait()` → Always use `await`
    - No hardcoded colors → `ThemeResource` only
    - No `InvokeOnUi` in EventBus handlers → Decorator already marshals
    - Backend/Common platform-independent → Zero WinUI/MAUI references
    - Standalone Markdown plans → `plans/`, not `docs/`
    - Delete completed plans; use Git history and closed GitHub work items as the record
+   - Scan secret-bearing files before reading; scan every changed file before commit and PR
    - See: `.github/copilot-instructions.md` § Absolute Rules
 
 3. **English UI Language**
@@ -398,15 +399,35 @@ internal sealed class WorkflowServiceTests
 **Up-to-date diagrams and DI examples:** See `docs/ARCHITECTURE.md` and `README.md` (runtime boundary)
 
 <!-- sonar:begin:codex-secrets-on-read -->
-# SonarQube secrets scanning for files protocol
+# Balanced SonarQube secrets scanning protocol
 
-Before reading any file in this workspace, scan it for secrets with the deterministic scanner:
+This repository-specific policy replaces any broader instruction that requires a
+Sonar secrets scan before reading every file.
+
+Before reading a file that is likely to contain credentials, tokens, private
+keys, certificates, connection strings, or deployment secrets, scan it with:
 
 ```bash
-sonar analyze secrets <path/to/file>
+sonar analyze secrets <path/to-sensitive-file>
 ```
 
-If the command reports that the file contains a secret, **do not read the file**. Instead:
+Sensitive files include `.env*`, secret or credential stores, private-key and
+certificate files, publish profiles, user-secrets exports, deployment
+configuration, CI/CD variable files, and configuration files that may contain
+connection strings or tokens. Also scan any file explicitly identified as
+sensitive by the user or repository instructions.
+
+Ordinary source code, tests, Markdown documentation, schemas, and checked-in
+templates may be read without an individual pre-read scan unless their path,
+name, or surrounding context suggests secret material.
+
+Before every commit and pull request, run a repository-wide secrets scan over
+the changed files. SonarCloud remains a mandatory remote PR gate. If the local
+scanner is unavailable, ordinary development may continue, but sensitive files
+must not be read and the local-scan limitation must be recorded before
+publication.
+
+If a scan reports a secret, **do not read the file**. Instead:
 
 1. Inform the user that the file appears to contain a secret or credential and that reading it would expose the value in chat history, logs, and any downstream telemetry.
 2. Advise them to rotate the leaked credential at its source of truth and remove it from the file.

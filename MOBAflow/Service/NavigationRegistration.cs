@@ -10,11 +10,14 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 using SharedUI.Interface;
+using SharedUI.Service;
 using SharedUI.ViewModel;
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
+using TrackLibrary.PikoA;
 
 using View;
 
@@ -81,7 +84,14 @@ internal static class NavigationRegistration
         services.AddSingleton<TrainsPage>();
         pages.Add(new PageMetadata("trains", "Trains", "\uE7C0", typeof(TrainsPage), NavigationCategory.Solution, 28, "IsTrainsPageAvailable", "TrainsPageLabel", null, false));
 
-        services.AddSingleton<TrackPlanPage>();
+        services.AddSingleton(serviceProvider => new TrackPlanPage(
+            serviceProvider.GetRequiredService<TrackPlanPageViewModels>(),
+            serviceProvider.GetRequiredService<MainWindowViewModel>(),
+            serviceProvider.GetRequiredService<EditableTrackPlan>(),
+            serviceProvider.GetRequiredService<TrackPlanFeedbackHighlighter>(),
+            serviceProvider.GetRequiredService<AppSettings>(),
+            serviceProvider.GetService<ISettingsService>(),
+            serviceProvider.GetService<ILogger<TrackPlanPage>>()));
         pages.Add(new PageMetadata("trackplaneditor", "Track Plan", "\uE7F9", typeof(TrackPlanPage), NavigationCategory.TrackManagement, 10, "IsTrackPlanEditorPageAvailable", "TrackPlanEditorPageLabel", null, false));
 
         services.AddSingleton<TrainControlPage>();
@@ -197,11 +207,11 @@ internal static class NavigationRegistration
         // SignalBoxPage: requires custom runtime services
         services.AddSingleton(sp => new SignalBoxPage(
             sp.GetRequiredService<MainWindowViewModel>(),
-            sp.GetRequiredService<ViessmannSignalService>(),
+            sp.GetRequiredService<InterlockingControlViewModel>(),
+            sp.GetRequiredService<SignalBoxPropertiesViewModel>(),
             sp.GetRequiredService<AppSettings>(),
             sp.GetService<ISettingsService>(),
             sp.GetService<ILogger<SignalBoxPage>>(),
-            sp.GetService<ILogger<SignalBoxPropertiesControl>>(),
             sp.GetService<ILogger<SignalBoxCanvasControl>>()));
         pages.Add(new PageMetadata(
             Tag: "signalbox",
