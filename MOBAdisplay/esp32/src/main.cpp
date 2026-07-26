@@ -16,13 +16,17 @@
 #include <esp_log.h>
 #include <inttypes.h>
 #include <UdpPacketParser.h>
+#include <DisplayProtocolDispatcher.h>
+#include <FrameAssembler.h>
 #include <ProvisioningState.h>
 #include <Security2Transport.h>
+#include <TftEsPiDisplayBackend.h>
 
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <array>
+#include <new>
 #include <string>
 
 #ifndef APP_VERSION
@@ -43,6 +47,10 @@ static constexpr char kWifiPrefsOwnerPublicKey[] = "owner_pk";
 constexpr int kTftWidth = 240;
 constexpr int kTftHeight = 280;
 constexpr int kUdpPort = 4210;
+constexpr uint16_t kMaximumDatagramLength = MobaDisplay::Protocol::kDefaultMaximumDatagramLength;
+constexpr uint16_t kMaximumRegionPayloadLength =
+    kMaximumDatagramLength - MobaDisplay::Protocol::kHeaderLength - 16U;
+constexpr uint32_t kFrameInactivityTimeoutMs = 1000;
 
 constexpr uint16_t kLineBytes = static_cast<uint16_t>(kTftWidth * 2);
 constexpr uint16_t kIndexedLineBytes = static_cast<uint16_t>(kLineBytes + 2);
@@ -53,15 +61,25 @@ static_assert(kIndexedLineBytes == MobaDisplay::Udp::kIndexedLineBytes, "Indexed
 static_assert(kTftHeight == MobaDisplay::Udp::kDisplayHeight, "Display height must match the UDP parser.");
 
 TFT_eSPI tft;
+MobaDisplay::Esp32::TftEsPiDisplayBackend displayBackend(
+    tft,
+    kTftWidth,
+    kTftHeight,
+    kMaximumRegionPayloadLength);
 WiFiUDP udp;
 Preferences preferences;
 
 uint16_t* gFb = nullptr;
 uint8_t pktBuf[MobaDisplay::Udp::kMaxPacketBytes];
+uint8_t responseBuf[MobaDisplay::Udp::kMaxPacketBytes];
+uint8_t* gFrameTracking = nullptr;
+MobaDisplay::Core::FrameAssembler* gFrameAssembler = nullptr;
+MobaDisplay::Protocol::DisplayProtocolDispatcher* gProtocolDispatcher = nullptr;
+char gDeviceIdentity[24] = {};
 
-volatile uint16_t linesReceivedCurrentFrame = 0;
-volatile uint32_t framesOk = 0;
-volatile uint32_t framesIncomplete = 0;
+uint16_t linesReceivedCurrentFrame = 0;
+uint32_t framesOk = 0;
+uint32_t framesIncomplete = 0;
 uint8_t gRowReceived[kTftHeight] = {0};
 
 bool gUdpReady = false;
@@ -116,6 +134,7 @@ void drawBootScreen(const char* line1, const char* line2, const char* line3);
 void drawListeningScreen(const char* modeLine, const char* ssidLine, const char* ipLine, uint16_t udpPort);
 
 bool allocateFramebuffer();
+bool initializeDisplayProtocol();
 inline void unpackLineBigEndianRgb565IntoRow(const uint8_t* packet480, uint16_t* rowOut240);
 
 bool loadSavedWifiCredentials(String* ssidOut, String* passwordOut);
@@ -142,8 +161,55 @@ bool allocateFramebuffer()
     if (!heapPtr)
         return false;
 
+    const size_t trackingByteCount =
+        MobaDisplay::Core::FrameAssembler::TrackingByteCount(kTftWidth, kTftHeight);
+    void* trackingPtr = heap_caps_calloc(1, trackingByteCount, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+    if (!trackingPtr)
+    {
+        heap_caps_free(heapPtr);
+        return false;
+    }
+
     gFb = static_cast<uint16_t*>(heapPtr);
+    gFrameTracking = static_cast<uint8_t*>(trackingPtr);
+    gFrameAssembler = new (std::nothrow) MobaDisplay::Core::FrameAssembler(
+        displayBackend,
+        reinterpret_cast<uint8_t*>(gFb),
+        kFrameBytes,
+        gFrameTracking,
+        trackingByteCount,
+        kFrameInactivityTimeoutMs);
+    if (!gFrameAssembler)
+    {
+        heap_caps_free(gFrameTracking);
+        heap_caps_free(gFb);
+        gFrameTracking = nullptr;
+        gFb = nullptr;
+        return false;
+    }
+
     return true;
+}
+
+bool initializeDisplayProtocol()
+{
+    if (!gFrameAssembler)
+        return false;
+
+    const auto chipSuffix = static_cast<uint32_t>(ESP.getEfuseMac() & 0xFFFFFFu);
+    snprintf(gDeviceIdentity, sizeof(gDeviceIdentity), "esp32s3-%06" PRIX32, chipSuffix);
+    uint32_t sessionId = esp_random();
+    if (sessionId == 0)
+        sessionId = 1;
+
+    gProtocolDispatcher = new (std::nothrow) MobaDisplay::Protocol::DisplayProtocolDispatcher(
+        *gFrameAssembler,
+        displayBackend,
+        sessionId,
+        kMaximumDatagramLength,
+        gDeviceIdentity,
+        APP_VERSION);
+    return gProtocolDispatcher != nullptr;
 }
 
 inline void unpackLineBigEndianRgb565IntoRow(const uint8_t* packet480, uint16_t* rowOut240)
@@ -470,9 +536,11 @@ void setup()
     Serial.println();
     Serial.println(F("--- MOBAdisplay ESP32-S3 ---"));
 
-    tft.init();
-    tft.setRotation(0);
-    tft.setSwapBytes(true);
+    if (displayBackend.Initialize().code != MobaDisplay::Core::ResultCode::Ok)
+    {
+        ESP.restart();
+        return;
+    }
     splashStatic();
     pinMode(MobaDisplay::Board::kBootButtonPin,
         MobaDisplay::Board::kBootButtonActiveLow ? INPUT_PULLUP : INPUT_PULLDOWN);
@@ -485,6 +553,13 @@ void setup()
     if (!allocateFramebuffer())
     {
         drawBootScreen("Out of RAM", "Framebuffer", "");
+        ESP.restart();
+        return;
+    }
+
+    if (!initializeDisplayProtocol())
+    {
+        drawBootScreen("Out of RAM", "Display protocol", "");
         ESP.restart();
         return;
     }
@@ -514,7 +589,15 @@ void presentCapturedFrameIfAny()
     if (linesReceivedCurrentFrame == 0 || !gFb)
         return;
 
-    tft.pushImage(0, 0, kTftWidth, kTftHeight, gFb);
+    const MobaDisplay::Core::DisplayResult presentResult = displayBackend.Present(
+        reinterpret_cast<const uint8_t*>(gFb),
+        kFrameBytes,
+        MobaDisplay::Core::Rotation::Degrees0);
+    if (presentResult.code != MobaDisplay::Core::ResultCode::Ok)
+    {
+        ++framesIncomplete;
+        return;
+    }
     if (linesReceivedCurrentFrame == kTftHeight)
     {
         ++framesOk;
@@ -607,6 +690,35 @@ void processUdpPacket()
         pktBuf,
         static_cast<size_t>(rd),
         static_cast<size_t>(pktSize));
+    if (packet.kind == MobaDisplay::Udp::PacketKind::Versioned)
+    {
+        resetCapture();
+        if (!gProtocolDispatcher)
+            return;
+
+        const MobaDisplay::Protocol::DispatchResult dispatchResult =
+            gProtocolDispatcher->Dispatch(
+                packet.payload,
+                packet.payloadLength,
+                millis(),
+                {
+                    millis() / 1000U,
+                    static_cast<uint32_t>(ESP.getFreeHeap())},
+                responseBuf,
+                sizeof(responseBuf));
+        if (!dispatchResult.hasResponse)
+            return;
+
+        if (udp.beginPacket(udp.remoteIP(), udp.remotePort()) != 1)
+            return;
+        udp.write(responseBuf, dispatchResult.responseLength);
+        udp.endPacket();
+        return;
+    }
+
+    if (gProtocolDispatcher && gProtocolDispatcher->IsNegotiated())
+        return;
+
     handleUdpPacket(packet);
 }
 
@@ -620,6 +732,11 @@ void loop()
     {
         closeProvisioningWindow(runtime.state.HasActiveCredentials());
     }
+
+    if (gProtocolDispatcher)
+        gProtocolDispatcher->Tick(millis());
+    else if (gFrameAssembler)
+        gFrameAssembler->Tick(millis());
 
     if (!gUdpReady)
     {

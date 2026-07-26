@@ -2336,13 +2336,6 @@
       "project": "MOBAdisplay",
       "targetFramework": "net10.0",
       "ruleId": "IDE0290",
-      "path": "MOBAdisplay/Protocol/DisplayIdentifierSequence.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAdisplay",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0290",
       "path": "MOBAdisplay/Protocol/DisplayProtocolPacket.cs",
       "count": 1
     },
@@ -6046,6 +6039,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/SharedUI/SignalBoxPropertiesViewModelTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/SharedUI/SignalBoxRuntimeSyncTests.cs",
       "count": 1
     },
@@ -6166,13 +6166,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/TrackPlanRenderer/RendererTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "Test/SharedUI/SignalBoxPropertiesViewModelTests.cs",
       "count": 1
     },
     {
@@ -8778,13 +8771,6 @@
       "ruleId": "NUnit2056",
       "path": "Test/Integration/WorkflowExecutionEndToEndTests.cs",
       "count": 5
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/MOBAdisplay/DisplayIdentifierSequenceTests.cs",
-      "count": 2
     },
     {
       "project": "Test",

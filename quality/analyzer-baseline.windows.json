@@ -3750,6 +3750,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/SharedUI/SignalBoxPropertiesViewModelTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/SharedUI/SignalBoxRuntimeSyncTests.cs",
       "count": 1
     },
@@ -3870,13 +3877,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/TrackPlanRenderer/RendererTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1812",
-      "path": "Test/SharedUI/SignalBoxPropertiesViewModelTests.cs",
       "count": 1
     },
     {
@@ -6734,13 +6734,6 @@
       "ruleId": "NUnit2056",
       "path": "Test/Integration/WorkflowExecutionEndToEndTests.cs",
       "count": 5
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/MOBAdisplay/DisplayIdentifierSequenceTests.cs",
-      "count": 2
     },
     {
       "project": "Test",

@@ -18,11 +18,11 @@ internal sealed class DisplayIdentifierSequenceTests
         var second = sequence.Next();
 
         // Assert
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(first, Is.EqualTo(42));
             Assert.That(second, Is.EqualTo(43));
-        });
+        }
     }
 
     [Test]
@@ -51,10 +51,35 @@ internal sealed class DisplayIdentifierSequenceTests
         var identifiers = await Task.WhenAll(callers);
 
         // Assert
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(identifiers, Has.None.EqualTo(0));
             Assert.That(identifiers.Distinct().Count(), Is.EqualTo(identifiers.Length));
-        });
+        }
+    }
+
+    [Test]
+    public void Next_Should_UseOneProcessWideStream_For_DefaultSequences()
+    {
+        // Arrange
+        var firstSequence = new DisplayIdentifierSequence();
+        var secondSequence = new DisplayIdentifierSequence();
+
+        // Act
+        var identifiers = new[]
+        {
+            firstSequence.Next(),
+            firstSequence.Next(),
+            secondSequence.Next(),
+            firstSequence.Next(),
+            secondSequence.Next(),
+        };
+
+        // Assert
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(identifiers, Has.None.Zero);
+            Assert.That(identifiers.Distinct().Count(), Is.EqualTo(identifiers.Length));
+        }
     }
 }

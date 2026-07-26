@@ -145,7 +145,7 @@ internal sealed class FakeDisplayEndpointTests
     {
         // Arrange
         var endpoint = new FakeDisplayEndpoint();
-        using (var firstClient = new DisplayProtocolClient(endpoint, new DisplayIdentifierSequence()))
+        using (var firstClient = new DisplayProtocolClient(endpoint, new DisplayIdentifierSequence(0)))
         {
             await firstClient.SendRequestAsync(
                 new HealthRequestPayload(),
@@ -153,7 +153,8 @@ internal sealed class FakeDisplayEndpointTests
                 options: SingleAttempt);
         }
 
-        using var secondClient = new DisplayProtocolClient(endpoint, new DisplayIdentifierSequence());
+        using var secondClient =
+            new DisplayProtocolClient(endpoint, new DisplayIdentifierSequence(0));
 
         // Act
         var outcome = await secondClient.SendRequestAsync(
