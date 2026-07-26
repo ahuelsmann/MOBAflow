@@ -203,6 +203,12 @@ public sealed partial class RollingStockMaintenanceViewModel : ObservableObject
         object? selectedVehicle,
         string? searchText = null)
     {
+        var normalizedSearchText = searchText?.Trim() ?? string.Empty;
+        var fleetContextChanged =
+            !ReferenceEquals(_project, project)
+            || _vehicleKind != vehicleKind
+            || !string.Equals(_searchText, normalizedSearchText, StringComparison.Ordinal);
+
         _project = project;
         _vehicleKind = vehicleKind;
         _selectedVehicle = selectedVehicle switch
@@ -212,9 +218,11 @@ public sealed partial class RollingStockMaintenanceViewModel : ObservableObject
             Locomotive or Wagon => selectedVehicle,
             _ => null
         };
-        _searchText = searchText?.Trim() ?? string.Empty;
-        _runtimeUsage = _runtime.Current.VehicleUsage;
-        Refresh();
+        _searchText = normalizedSearchText;
+
+        if (fleetContextChanged)
+            RefreshFleet();
+        RefreshSelectedVehicle();
     }
 
     partial void OnSelectedFilterChanged(MaintenanceFleetFilterOption value)

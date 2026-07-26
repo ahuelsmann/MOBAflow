@@ -70,7 +70,6 @@ The following table is regenerated from the centrally managed versions in [`Dire
 | Package or family | Version(s) | Used in | Purpose |
 | --- | --- | --- | --- |
 | `CommunityToolkit.WinUI.Controls.ColorPicker`, `CommunityToolkit.WinUI.Controls.Sizers` | `8.2.251219` | `MOBAflow` | WinUI color picker and grid splitters. |
-| `CommunityToolkit.WinUI.UI.Controls.Markdown` | `7.1.2` | `MOBAflow` | Markdown rendering on the Info page. Stays on 7.x because Markdown has not been migrated to the unified `CommunityToolkit.WinUI.Controls.*` 8.x line. |
 | `CommunityToolkit.Mvvm` | `8.4.2` | `SharedUI` | MVVM primitives such as observable properties and relay commands. |
 | `CommunityToolkit.Maui` | `14.2.0` | `MOBAsmart` | MAUI helpers, converters, and behaviors. |
 | `Microsoft.WindowsAppSDK`, `Microsoft.Graphics.Win2D`, `Microsoft.Xaml.Behaviors.WinUI.Managed` | `2.2.0`, `1.4.0`, `3.0.1` | `MOBAflow` | Windows desktop shell, GPU-accelerated 2D rendering, and XAML behaviors. |

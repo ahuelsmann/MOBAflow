@@ -174,6 +174,96 @@ internal sealed class RollingStockMaintenanceViewModelTests
     }
 
     [Test]
+    public void SetContext_DoesNotReenterFleetCollection_WhenSelectionChangesDuringRefresh()
+    {
+        var firstLocomotive = new Locomotive { Name = "First locomotive" };
+        var secondLocomotive = new Locomotive { Name = "Second locomotive" };
+        var viewModel = CreateViewModel();
+        var project = new ProjectViewModel(new Project
+        {
+            Locomotives = [firstLocomotive, secondLocomotive]
+        });
+        viewModel.SetContext(
+            project,
+            TrainVehicleKind.Locomotive,
+            project.Locomotives[0]);
+
+        var selectionChangedDuringCollectionNotification = false;
+        viewModel.VisibleLocomotives.CollectionChanged += (_, _) =>
+        {
+            if (selectionChangedDuringCollectionNotification)
+                return;
+
+            selectionChangedDuringCollectionNotification = true;
+            viewModel.SetContext(
+                project,
+                TrainVehicleKind.Locomotive,
+                project.Locomotives[1],
+                "no match");
+        };
+        viewModel.VisibleLocomotives.CollectionChanged += (_, _) => { };
+
+        Assert.DoesNotThrow(() => viewModel.SetContext(
+            project,
+            TrainVehicleKind.Locomotive,
+            project.Locomotives[0],
+            "no match"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(selectionChangedDuringCollectionNotification, Is.True);
+            Assert.That(viewModel.VisibleLocomotives, Is.Empty);
+            Assert.That(viewModel.VehicleName, Is.EqualTo("Second locomotive"));
+        });
+    }
+
+    [Test]
+    public void UsageCheckpoint_DoesNotReenterFleetCollection_WhenRuntimeSnapshotIsOlder()
+    {
+        var firstLocomotive = new Locomotive { Name = "First locomotive" };
+        var secondLocomotive = new Locomotive { Name = "Second locomotive" };
+        var staleUsage = Usage(firstLocomotive.Id, secondLocomotive.Id, 60);
+        var checkpointUsage = Usage(firstLocomotive.Id, secondLocomotive.Id, 7200);
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var viewModel = CreateViewModel(
+            new MobaRuntimeSnapshot { VehicleUsage = staleUsage },
+            eventBus);
+        var project = new ProjectViewModel(new Project
+        {
+            Locomotives = [firstLocomotive, secondLocomotive]
+        });
+        viewModel.SetContext(
+            project,
+            TrainVehicleKind.Locomotive,
+            project.Locomotives[0]);
+        viewModel.Activate();
+
+        var selectionChangedDuringCollectionNotification = false;
+        viewModel.VisibleLocomotives.CollectionChanged += (_, _) =>
+        {
+            if (selectionChangedDuringCollectionNotification)
+                return;
+
+            selectionChangedDuringCollectionNotification = true;
+            viewModel.SetContext(
+                project,
+                TrainVehicleKind.Locomotive,
+                project.Locomotives[1]);
+        };
+        viewModel.VisibleLocomotives.CollectionChanged += (_, _) => { };
+
+        Assert.DoesNotThrow(() => eventBus.Publish(new VehicleUsageCheckpointCommittedEvent(
+            project.Model.Id,
+            Now,
+            checkpointUsage)));
+        Assert.Multiple(() =>
+        {
+            Assert.That(selectionChangedDuringCollectionNotification, Is.True);
+            Assert.That(viewModel.VehicleName, Is.EqualTo("Second locomotive"));
+            Assert.That(viewModel.OperatingTimeText, Is.EqualTo("2 h 00 min"));
+        });
+    }
+
+    [Test]
     public void RuntimeSnapshotSubscription_RefreshesWhileActiveAndStopsAfterDeactivation()
     {
         var locomotive = new Locomotive();
@@ -263,6 +353,28 @@ internal sealed class RollingStockMaintenanceViewModelTests
                     TrackedCompletedTrips = completedTrips,
                     IsOperating = isOperating
                 }
+            }
+        };
+
+    private static IReadOnlyDictionary<Guid, VehicleUsageRuntimeSnapshot> Usage(
+        Guid firstVehicleId,
+        Guid secondVehicleId,
+        long operatingSeconds)
+        => new Dictionary<Guid, VehicleUsageRuntimeSnapshot>
+        {
+            [firstVehicleId] = new()
+            {
+                VehicleId = firstVehicleId,
+                VehicleKind = TrainVehicleKind.Locomotive,
+                TrackedOperatingSeconds = operatingSeconds,
+                TrackedCompletedTrips = 0
+            },
+            [secondVehicleId] = new()
+            {
+                VehicleId = secondVehicleId,
+                VehicleKind = TrainVehicleKind.Locomotive,
+                TrackedOperatingSeconds = operatingSeconds,
+                TrackedCompletedTrips = 0
             }
         };
 

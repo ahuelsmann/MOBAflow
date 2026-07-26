@@ -47,7 +47,6 @@
         <PackageReference Include="Serilog.Enrichers.Environment" />
         <PackageReference Include="Serilog.Enrichers.Process" />
         <PackageReference Include="Serilog.Enrichers.Thread" />
-        <PackageReference Include="CommunityToolkit.WinUI.UI.Controls.Markdown" />
         <PackageReference Include="SkiaSharp" />
         <PackageReference Include="ZXing.Net" />
     </ItemGroup>
@@ -73,7 +72,6 @@
     </ItemGroup>
     <!-- Data Files -->
     <ItemGroup>
-        <Content Include="..\README.md" Link="README.md" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="solution.json" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="photos\**\*" CopyToOutputDirectory="PreserveNewest" />
