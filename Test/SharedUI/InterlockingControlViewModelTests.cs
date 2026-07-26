@@ -17,7 +17,7 @@ using System.Diagnostics.CodeAnalysis;
 
 [TestFixture]
 [SuppressMessage("Naming", "CA1707:Identifiers should not contain underscores", Justification = "Test names use the repository's Method_State_Result convention.")]
-internal static class InterlockingControlViewModelTests
+internal static partial class InterlockingControlViewModelTests
 {
     [Test]
     public static void RuntimeSnapshotChanged_TwoPageViewModels_ProjectSameRevisionAndTurnoutState()
@@ -311,7 +311,7 @@ internal static class InterlockingControlViewModelTests
                 NullLogger<InterlockingControlViewModel>.Instance);
     }
 
-    private sealed class TestProjectContext(Project project, Func<Task>? save = null) : IProjectContext
+    private sealed partial class TestProjectContext(Project project, Func<Task>? save = null) : IProjectContext
     {
         private ProjectViewModel? _selectedProject = new(project);
         private JourneyViewModel? _selectedJourney;

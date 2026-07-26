@@ -78,7 +78,7 @@ public sealed partial class TrackPlanPage
     private double _toolboxExpandedWidth = 180;
     private double _propertiesExpandedWidth = 240;
 
-    public TrackPlanPage(
+    internal TrackPlanPage(
         TrackPlanPageViewModels viewModels,
         MainWindowViewModel mainViewModel,
         EditableTrackPlan plan,
@@ -1723,6 +1723,6 @@ public sealed partial class TrackPlanPage
 /// <summary>
 /// Cohesive ViewModel dependencies used by the physical plan page.
 /// </summary>
-public sealed record TrackPlanPageViewModels(
+internal sealed record TrackPlanPageViewModels(
     TrackPlanViewModel TrackPlan,
     InterlockingControlViewModel Interlocking);
