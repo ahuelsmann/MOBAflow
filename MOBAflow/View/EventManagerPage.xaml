@@ -146,7 +146,11 @@
                         <AppBarButton Icon="Stop" Label="Add termination" Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.AddStepCommand}" CommandParameter="{x:Bind steps:WorkflowStepKind.Terminate}" />
                         <AppBarSeparator />
                         <AppBarButton Icon="Up" Label="Move step up" Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.MoveStepUpCommand}" CommandParameter="{x:Bind ViewModel.WorkflowLibrary.SelectedStep}" />
-                        <AppBarButton Icon="Down" Label="Move step down" Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.MoveStepDownCommand}" CommandParameter="{x:Bind ViewModel.WorkflowLibrary.SelectedStep}" />
+                        <AppBarButton Label="Move step down" Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.MoveStepDownCommand}" CommandParameter="{x:Bind ViewModel.WorkflowLibrary.SelectedStep}">
+                            <AppBarButton.Icon>
+                                <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE74B;" />
+                            </AppBarButton.Icon>
+                        </AppBarButton>
                     </CommandBar>
                     <ListView
                         Grid.Row="3"

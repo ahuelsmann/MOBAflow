@@ -116,11 +116,6 @@
           ],
           "isPushing": false,
           "photoPath": "photos/locomotives/bb15c10a-5b78-451f-8f2f-2d4e3efa74af.jpg",
-          "usage": {
-            "trackedOperatingSeconds": 14400,
-            "trackedCompletedTrips": 8,
-            "corrections": []
-          },
           "maintenance": {
             "entries": [],
             "plans": [
@@ -132,6 +127,11 @@
                 "intervalCompletedTrips": 20
               }
             ]
+          },
+          "usage": {
+            "trackedOperatingSeconds": 14400,
+            "trackedCompletedTrips": 8,
+            "corrections": []
           }
         },
         {
@@ -379,41 +379,45 @@
           "steps": [
             {
               "kind": "action",
-              "id": "11111111-1111-1111-1111-000000003201",
-              "name": "Aspect Red",
-              "nextStepId": "11111111-1111-1111-1111-000000003202",
               "action": {
                 "id": "7c46176e-2dd4-44cb-9c9e-ce1e2e6ac09d",
                 "name": "Aspect Red",
+                "number": 0,
                 "type": 5,
+                "delayAfterMs": 0,
                 "selectSignalAspect": {
                   "baseAddress": 201,
                   "signalAspect": "Ra12",
                   "multiplexerArticleNumber": "5229",
                   "signalArticleNumber": "4046"
                 }
-              }
+              },
+              "id": "11111111-1111-1111-1111-000000003201",
+              "name": "Aspect Red",
+              "nextStepId": "11111111-1111-1111-1111-000000003202"
             },
             {
               "kind": "action",
-              "id": "11111111-1111-1111-1111-000000003202",
-              "name": "Arrival Announcement",
-              "nextStepId": "11111111-1111-1111-1111-000000003203",
               "action": {
                 "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
                 "name": "Arrival Announcement",
+                "number": 0,
                 "type": 0,
+                "delayAfterMs": 0,
                 "announcement": {
                   "message": "We are now arriving at {StationName}. Exit: {StationIsExitOnLeft}.",
                   "rate": -1
                 }
-              }
+              },
+              "id": "11111111-1111-1111-1111-000000003202",
+              "name": "Arrival Announcement",
+              "nextStepId": "11111111-1111-1111-1111-000000003203"
             },
             {
               "kind": "terminate",
+              "result": 0,
               "id": "11111111-1111-1111-1111-000000003203",
-              "name": "Completed",
-              "result": 0
+              "name": "Completed"
             }
           ],
           "defaultErrorPolicy": {
@@ -428,40 +432,44 @@
           "steps": [
             {
               "kind": "action",
-              "id": "22222222-2222-2222-2222-000000003201",
-              "name": "Aspect Yellow",
-              "nextStepId": "22222222-2222-2222-2222-000000003202",
               "action": {
                 "id": "68762cfe-28ac-4814-9686-1fd7009e445b",
                 "name": "Aspect Yellow",
+                "number": 0,
                 "type": 5,
+                "delayAfterMs": 0,
                 "selectSignalAspect": {
                   "baseAddress": 201,
                   "signalAspect": "Ks1Blink",
                   "multiplexerArticleNumber": "5229",
                   "signalArticleNumber": "4046"
                 }
-              }
+              },
+              "id": "22222222-2222-2222-2222-000000003201",
+              "name": "Aspect Yellow",
+              "nextStepId": "22222222-2222-2222-2222-000000003202"
             },
             {
               "kind": "action",
-              "id": "22222222-2222-2222-2222-000000003202",
-              "name": "Next Stop Announcement",
-              "nextStepId": "22222222-2222-2222-2222-000000003203",
               "action": {
                 "id": "c60f8ab8-15ad-4f7d-a68c-0bfa95fa6afe",
                 "name": "Next Stop Announcement",
+                "number": 0,
                 "type": 0,
+                "delayAfterMs": 0,
                 "announcement": {
                   "message": "Next stop: {StationName}. Exit: {StationIsExitOnLeft}."
                 }
-              }
+              },
+              "id": "22222222-2222-2222-2222-000000003202",
+              "name": "Next Stop Announcement",
+              "nextStepId": "22222222-2222-2222-2222-000000003203"
             },
             {
               "kind": "terminate",
+              "result": 0,
               "id": "22222222-2222-2222-2222-000000003203",
-              "name": "Completed",
-              "result": 0
+              "name": "Completed"
             }
           ],
           "defaultErrorPolicy": {
@@ -799,116 +807,11 @@
           "connections": []
         }
       ],
-      "locomotiveWhistleRules": [],
-      "signalBoxPlan": {
-        "id": "f1d3dd73-dcd5-4faa-b180-e687659598ea",
-        "name": "Signal box",
-        "grid": {
-          "width": 20,
-          "height": 12,
-          "cellSize": 60
-        },
-        "elements": [
-          {
-            "$type": "TrackCurve",
-            "id": "f364d7d8-8fc3-4217-a84f-31e9805a88b2",
-            "x": 2,
-            "y": 3,
-            "rotation": 270,
-            "name": ""
-          },
-          {
-            "$type": "TrackStraight",
-            "id": "f52c9e75-8a52-4c3c-9bd4-f88cb8fb8903",
-            "x": 3,
-            "y": 3,
-            "rotation": 0,
-            "name": ""
-          },
-          {
-            "$type": "TrackStraight",
-            "id": "3bcaa969-8d75-447c-9bf8-a5540d274de4",
-            "x": 4,
-            "y": 3,
-            "rotation": 0,
-            "name": ""
-          },
-          {
-            "$type": "TrackCurve",
-            "id": "d2d86731-9122-4c16-8e08-00fdef17989c",
-            "x": 5,
-            "y": 3,
-            "rotation": 0,
-            "name": ""
-          },
-          {
-            "$type": "Detector",
-            "feedbackAddress": 1,
-            "id": "89a8b660-1623-4edb-99b5-c0cf01afba72",
-            "x": 2,
-            "y": 4,
-            "rotation": 90,
-            "name": ""
-          },
-          {
-            "$type": "TrackStraight",
-            "id": "339647eb-4cc2-41d6-8517-e540f6c16e5c",
-            "x": 5,
-            "y": 4,
-            "rotation": 90,
-            "name": ""
-          },
-          {
-            "$type": "TrackCurve",
-            "id": "ad566a5c-60be-429a-bff4-720c93c9854a",
-            "x": 5,
-            "y": 5,
-            "rotation": 90,
-            "name": ""
-          },
-          {
-            "$type": "TrackStraight",
-            "id": "ae0dd7a5-5505-4051-8a81-35fc7409984a",
-            "x": 4,
-            "y": 5,
-            "rotation": 0,
-            "name": ""
-          },
-          {
-            "$type": "TrackStraight",
-            "id": "b9edfafb-611b-4e20-a98a-7c1ce739c00e",
-            "x": 3,
-            "y": 5,
-            "rotation": 0,
-            "name": ""
-          },
-          {
-            "$type": "TrackCurve",
-            "id": "ac4d1724-c7cd-4740-91d0-85bc9c14992c",
-            "x": 2,
-            "y": 5,
-            "rotation": 180,
-            "name": ""
-          },
-          {
-            "$type": "Signal",
-            "signalSystem": "Ks",
-            "topSpeedIndicator": "8",
-            "bottomSpeedIndicator": "6",
-            "isMultiplexed": true,
-            "multiplexerArticleNumber": "5229",
-            "mainSignalArticleNumber": "4046",
-            "distantSignalArticleNumber": "4040",
-            "baseAddress": 201,
-            "id": "3d6c0ace-dde2-4329-95d5-8e474b65828f",
-            "x": 6,
-            "y": 4,
-            "rotation": 0,
-            "name": "G2HBFA1"
-          }
-        ],
-        "connections": []
+      "timetableServices": [],
+      "timetablePolicy": {
+        "minimumTurnaround": "00:05:00"
       },
+      "locomotiveWhistleRules": [],
       "interlocking": {
         "turnouts": [
           {
@@ -1060,6 +963,115 @@
             "signalBoxElementIds": []
           }
         ]
+      },
+      "signalBoxPlan": {
+        "id": "f1d3dd73-dcd5-4faa-b180-e687659598ea",
+        "name": "Signal box",
+        "grid": {
+          "width": 20,
+          "height": 12,
+          "cellSize": 60
+        },
+        "elements": [
+          {
+            "$type": "TrackCurve",
+            "id": "f364d7d8-8fc3-4217-a84f-31e9805a88b2",
+            "x": 2,
+            "y": 3,
+            "rotation": 270,
+            "name": ""
+          },
+          {
+            "$type": "TrackStraight",
+            "id": "f52c9e75-8a52-4c3c-9bd4-f88cb8fb8903",
+            "x": 3,
+            "y": 3,
+            "rotation": 0,
+            "name": ""
+          },
+          {
+            "$type": "TrackStraight",
+            "id": "3bcaa969-8d75-447c-9bf8-a5540d274de4",
+            "x": 4,
+            "y": 3,
+            "rotation": 0,
+            "name": ""
+          },
+          {
+            "$type": "TrackCurve",
+            "id": "d2d86731-9122-4c16-8e08-00fdef17989c",
+            "x": 5,
+            "y": 3,
+            "rotation": 0,
+            "name": ""
+          },
+          {
+            "$type": "Detector",
+            "feedbackAddress": 1,
+            "id": "89a8b660-1623-4edb-99b5-c0cf01afba72",
+            "x": 2,
+            "y": 4,
+            "rotation": 90,
+            "name": ""
+          },
+          {
+            "$type": "TrackStraight",
+            "id": "339647eb-4cc2-41d6-8517-e540f6c16e5c",
+            "x": 5,
+            "y": 4,
+            "rotation": 90,
+            "name": ""
+          },
+          {
+            "$type": "TrackCurve",
+            "id": "ad566a5c-60be-429a-bff4-720c93c9854a",
+            "x": 5,
+            "y": 5,
+            "rotation": 90,
+            "name": ""
+          },
+          {
+            "$type": "TrackStraight",
+            "id": "ae0dd7a5-5505-4051-8a81-35fc7409984a",
+            "x": 4,
+            "y": 5,
+            "rotation": 0,
+            "name": ""
+          },
+          {
+            "$type": "TrackStraight",
+            "id": "b9edfafb-611b-4e20-a98a-7c1ce739c00e",
+            "x": 3,
+            "y": 5,
+            "rotation": 0,
+            "name": ""
+          },
+          {
+            "$type": "TrackCurve",
+            "id": "ac4d1724-c7cd-4740-91d0-85bc9c14992c",
+            "x": 2,
+            "y": 5,
+            "rotation": 180,
+            "name": ""
+          },
+          {
+            "$type": "Signal",
+            "signalSystem": "Ks",
+            "topSpeedIndicator": "8",
+            "bottomSpeedIndicator": "6",
+            "isMultiplexed": true,
+            "multiplexerArticleNumber": "5229",
+            "mainSignalArticleNumber": "4046",
+            "distantSignalArticleNumber": "4040",
+            "baseAddress": 201,
+            "id": "3d6c0ace-dde2-4329-95d5-8e474b65828f",
+            "x": 6,
+            "y": 4,
+            "rotation": 0,
+            "name": "G2HBFA1"
+          }
+        ],
+        "connections": []
       },
       "trackPlan": {
         "version": 1,

@@ -143,9 +143,12 @@
                             CommandParameter="{x:Bind ViewModel.WorkflowLibrary.SelectedStep}" />
                         <AppBarButton
                             Label="Move down"
-                            Icon="Down"
                             Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.MoveStepDownCommand}"
-                            CommandParameter="{x:Bind ViewModel.WorkflowLibrary.SelectedStep}" />
+                            CommandParameter="{x:Bind ViewModel.WorkflowLibrary.SelectedStep}">
+                            <AppBarButton.Icon>
+                                <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE74B;" />
+                            </AppBarButton.Icon>
+                        </AppBarButton>
                         <AppBarButton
                             Label="Delete step"
                             Icon="Delete"
