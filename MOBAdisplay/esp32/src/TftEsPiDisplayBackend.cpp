@@ -1,4 +1,5 @@
 #include "TftEsPiDisplayBackend.h"
+#include "Rgb565BigEndianPresenter.h"
 
 namespace MobaDisplay
 {
@@ -58,12 +59,11 @@ Core::DisplayResult TftEsPiDisplayBackend::Present(
         return Core::MakeResult(Core::ResultCode::HardwareFailure);
     }
 
-    _display.pushImage(
-        0,
-        0,
+    PushRgb565BigEndian(
+        _display,
         _capabilities.width,
         _capabilities.height,
-        reinterpret_cast<const uint16_t*>(frameBytes));
+        frameBytes);
     return Core::MakeResult(Core::ResultCode::Ok, Core::ResultFlagPresented);
 }
 

@@ -8,16 +8,17 @@ using System.Security.Cryptography;
 /// </summary>
 public sealed class DisplayIdentifierSequence
 {
-    private static int _defaultSeed = RandomNumberGenerator.GetInt32(1, int.MaxValue);
+    private static long _processValue = RandomNumberGenerator.GetInt32(1, int.MaxValue);
     private readonly object _syncRoot = new();
+    private readonly bool _usesProcessSequence;
     private uint _lastValue;
 
     /// <summary>
-    /// Initializes a sequence in a process-unique randomized identifier range.
+    /// Initializes a sequence backed by the process-wide randomized identifier stream.
     /// </summary>
     public DisplayIdentifierSequence()
-        : this(unchecked((uint)Interlocked.Increment(ref _defaultSeed)))
     {
+        _usesProcessSequence = true;
     }
 
     /// <summary>
@@ -34,6 +35,18 @@ public sealed class DisplayIdentifierSequence
     /// </summary>
     public uint Next()
     {
+        if (_usesProcessSequence)
+        {
+            uint processValue;
+            do
+            {
+                processValue = unchecked((uint)Interlocked.Increment(ref _processValue));
+            }
+            while (processValue == 0);
+
+            return processValue;
+        }
+
         lock (_syncRoot)
         {
             _lastValue = unchecked(_lastValue + 1);

@@ -17,6 +17,7 @@ constexpr size_t kFrameStartLength = sizeof(kFrameStart) - 1;
 constexpr size_t kFrameDoneLength = sizeof(kFrameDone) - 1;
 constexpr size_t kHostVersionPrefixLength = sizeof(kHostVersionPrefix) - 1;
 constexpr size_t kVersionedMagicLength = sizeof(kVersionedMagic);
+constexpr size_t kVersionedHeaderLength = 32;
 
 PacketView MakePacket(PacketKind kind) noexcept
 {
@@ -36,6 +37,26 @@ bool StartsWith(const uint8_t* buffer, size_t length, const char* expected, size
 bool IsStrictPrefix(const uint8_t* buffer, size_t length, const char* expected, size_t expectedLength) noexcept
 {
     return length > 0 && length < expectedLength && std::memcmp(buffer, expected, length) == 0;
+}
+
+uint16_t ReadUInt16(const uint8_t* bytes) noexcept
+{
+    return static_cast<uint16_t>(
+        (static_cast<uint16_t>(bytes[0]) << 8U) | bytes[1]);
+}
+
+bool LooksLikeVersionedEnvelope(const uint8_t* buffer, size_t datagramLength) noexcept
+{
+    if (datagramLength < kVersionedHeaderLength
+        || std::memcmp(buffer, kVersionedMagic, kVersionedMagicLength) != 0)
+    {
+        return false;
+    }
+
+    const uint16_t headerLength = ReadUInt16(buffer + 8);
+    const uint16_t payloadLength = ReadUInt16(buffer + 10);
+    return headerLength == kVersionedHeaderLength
+        && datagramLength == static_cast<size_t>(headerLength) + payloadLength;
 }
 
 bool IsPrintableAscii(const uint8_t* buffer, size_t length) noexcept
@@ -68,14 +89,15 @@ PacketView ClassifyPacket(const uint8_t* buffer, size_t copiedLength, size_t dat
     if (copiedLength > datagramLength)
         return MakePacket(PacketKind::Malformed);
 
-    if (datagramLength >= kVersionedMagicLength
-        && std::memcmp(buffer, kVersionedMagic, kVersionedMagicLength) == 0)
+    if (LooksLikeVersionedEnvelope(buffer, datagramLength))
     {
         return {PacketKind::Versioned, buffer, datagramLength, 0};
     }
 
-    if (datagramLength < kVersionedMagicLength
-        && std::memcmp(buffer, kVersionedMagic, datagramLength) == 0)
+    const size_t versionedPrefixLength =
+        datagramLength < kVersionedMagicLength ? datagramLength : kVersionedMagicLength;
+    if (datagramLength < kVersionedHeaderLength
+        && std::memcmp(buffer, kVersionedMagic, versionedPrefixLength) == 0)
     {
         return MakePacket(PacketKind::Truncated);
     }

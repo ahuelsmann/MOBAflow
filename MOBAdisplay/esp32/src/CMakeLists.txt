@@ -24,3 +24,8 @@ idf_component_register(
         nvs_flash
         protocomm
 )
+
+set_source_files_properties(
+    "${CMAKE_CURRENT_LIST_DIR}/../lib/TFT_eSPI/TFT_eSPI.cpp"
+    PROPERTIES COMPILE_OPTIONS "-Wno-error=misleading-indentation"
+)

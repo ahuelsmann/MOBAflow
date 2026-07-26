@@ -1,5 +1,6 @@
 #include <DisplayProtocolDispatcher.h>
 #include <RecordingDisplayBackend.h>
+#include <Rgb565BigEndianPresenter.h>
 #include <unity.h>
 
 #include <algorithm>
@@ -27,6 +28,30 @@ void tearDown()
 
 namespace
 {
+struct RecordingTftDriver
+{
+    bool swapBytes = true;
+    bool swapBytesDuringPush = true;
+    std::array<uint8_t, 4> pushedBytes{};
+
+    bool getSwapBytes() const noexcept
+    {
+        return swapBytes;
+    }
+
+    void setSwapBytes(bool value) noexcept
+    {
+        swapBytes = value;
+    }
+
+    void pushImage(int32_t, int32_t, uint16_t, uint16_t, uint16_t* pixels) noexcept
+    {
+        swapBytesDuringPush = swapBytes;
+        const uint8_t* bytes = reinterpret_cast<const uint8_t*>(pixels);
+        std::copy(bytes, bytes + pushedBytes.size(), pushedBytes.begin());
+    }
+};
+
 constexpr uint16_t kWidth = 4;
 constexpr uint16_t kHeight = 2;
 constexpr uint32_t kSessionId = 0x10203040U;
@@ -512,6 +537,147 @@ void TestRegionAcknowledgementCanBeOmittedOnlyAfterSuccess()
         fixture.response[MobaDisplay::Protocol::kHeaderLength]);
 }
 
+void TestIncompleteCompletionRetryReevaluatesAfterMissingRegionArrives()
+{
+    Fixture fixture;
+    fixture.Dispatch(
+        MakePacket(MessageType::BeginFrame, 70, 400, kSessionId, MakeBeginPayload()),
+        1);
+    fixture.Dispatch(
+        MakePacket(
+            MessageType::FrameRegion,
+            71,
+            400,
+            kSessionId,
+            MakeRegionPayload(0),
+            kAcknowledgementRequired,
+            0,
+            2),
+        2);
+
+    DispatchResult result = fixture.Dispatch(
+        MakePacket(MessageType::CompleteFrame, 72, 400, kSessionId, MakeCompletePayload()),
+        3);
+    AssertResponse(MessageType::Result, 72, 400, kSessionId, result, fixture.response);
+    TEST_ASSERT_EQUAL_UINT8(
+        static_cast<uint8_t>(MobaDisplay::Core::ResultCode::Incomplete),
+        fixture.response[MobaDisplay::Protocol::kHeaderLength]);
+
+    fixture.Dispatch(
+        MakePacket(
+            MessageType::FrameRegion,
+            73,
+            400,
+            kSessionId,
+            MakeRegionPayload(1),
+            static_cast<uint8_t>(
+                kAcknowledgementRequired | MobaDisplay::Protocol::FlagFinalPacket),
+            1,
+            2),
+        4);
+    result = fixture.Dispatch(
+        MakePacket(
+            MessageType::CompleteFrame,
+            72,
+            400,
+            kSessionId,
+            MakeCompletePayload(),
+            static_cast<uint8_t>(
+                kAcknowledgementRequired | MobaDisplay::Protocol::FlagRetry)),
+        5);
+
+    AssertResponse(MessageType::Result, 72, 400, kSessionId, result, fixture.response);
+    TEST_ASSERT_EQUAL_UINT8(
+        static_cast<uint8_t>(MobaDisplay::Core::ResultCode::Ok),
+        fixture.response[MobaDisplay::Protocol::kHeaderLength]);
+    TEST_ASSERT_BITS_HIGH(
+        MobaDisplay::Core::ResultFlagPresented,
+        fixture.response[MobaDisplay::Protocol::kHeaderLength + 1]);
+    TEST_ASSERT_EQUAL_size_t(1, fixture.backend.PresentCallCount());
+}
+
+void TestBusyBeginRetryReevaluatesAfterActiveFrameIsAborted()
+{
+    Fixture fixture;
+    fixture.Dispatch(
+        MakePacket(MessageType::BeginFrame, 80, 500, kSessionId, MakeBeginPayload()),
+        1);
+
+    DispatchResult result = fixture.Dispatch(
+        MakePacket(MessageType::BeginFrame, 81, 501, kSessionId, MakeBeginPayload()),
+        2);
+    AssertResponse(MessageType::Result, 81, 501, kSessionId, result, fixture.response);
+    TEST_ASSERT_EQUAL_UINT8(
+        static_cast<uint8_t>(MobaDisplay::Core::ResultCode::Busy),
+        fixture.response[MobaDisplay::Protocol::kHeaderLength]);
+
+    fixture.Dispatch(
+        MakePacket(MessageType::AbortFrame, 82, 500, kSessionId, {0, 0, 0, 0}),
+        3);
+    result = fixture.Dispatch(
+        MakePacket(
+            MessageType::BeginFrame,
+            81,
+            501,
+            kSessionId,
+            MakeBeginPayload(),
+            static_cast<uint8_t>(
+                kAcknowledgementRequired | MobaDisplay::Protocol::FlagRetry)),
+        4);
+
+    AssertResponse(MessageType::Result, 81, 501, kSessionId, result, fixture.response);
+    TEST_ASSERT_EQUAL_UINT8(
+        static_cast<uint8_t>(MobaDisplay::Core::ResultCode::Ok),
+        fixture.response[MobaDisplay::Protocol::kHeaderLength]);
+    TEST_ASSERT_EQUAL_UINT32(501, fixture.assembler.ActiveFrameId());
+}
+
+void TestEvictedRequestIdCannotExecuteAgain()
+{
+    Fixture fixture;
+    fixture.Dispatch(
+        MakePacket(MessageType::HelloRequest, 1, 0, 0, MakeHelloPayload()));
+    fixture.Dispatch(
+        MakePacket(MessageType::Clear, 2, 0, kSessionId, {0x12, 0x34}));
+    TEST_ASSERT_EQUAL_size_t(1, fixture.backend.ClearCallCount());
+
+    for (uint32_t requestId = 3; requestId <= 18; ++requestId)
+    {
+        fixture.Dispatch(
+            MakePacket(MessageType::HealthRequest, requestId, 0, kSessionId, {}));
+    }
+
+    const DispatchResult result = fixture.Dispatch(
+        MakePacket(
+            MessageType::Clear,
+            2,
+            0,
+            kSessionId,
+            {0x12, 0x34},
+            static_cast<uint8_t>(
+                kAcknowledgementRequired | MobaDisplay::Protocol::FlagRetry)));
+    AssertResponse(MessageType::Result, 2, 0, kSessionId, result, fixture.response);
+    TEST_ASSERT_EQUAL_UINT8(
+        static_cast<uint8_t>(MobaDisplay::Core::ResultCode::Invalid),
+        fixture.response[MobaDisplay::Protocol::kHeaderLength]);
+    TEST_ASSERT_EQUAL_size_t(1, fixture.backend.ClearCallCount());
+}
+
+void TestOutOfOrderRequestWithinReplayWindowRemainsValid()
+{
+    Fixture fixture;
+    fixture.Dispatch(
+        MakePacket(MessageType::Clear, 105, 0, kSessionId, {0x12, 0x34}));
+    const DispatchResult result = fixture.Dispatch(
+        MakePacket(MessageType::Clear, 104, 0, kSessionId, {0x56, 0x78}));
+
+    AssertResponse(MessageType::Result, 104, 0, kSessionId, result, fixture.response);
+    TEST_ASSERT_EQUAL_UINT8(
+        static_cast<uint8_t>(MobaDisplay::Core::ResultCode::Ok),
+        fixture.response[MobaDisplay::Protocol::kHeaderLength]);
+    TEST_ASSERT_EQUAL_size_t(2, fixture.backend.ClearCallCount());
+}
+
 void TestHealthAndRebootExposeOnlySafeSessionState()
 {
     Fixture fixture;
@@ -565,6 +731,18 @@ void TestHealthAndRebootExposeOnlySafeSessionState()
         fixture.response[MobaDisplay::Protocol::kHeaderLength]);
     TEST_ASSERT_EQUAL_UINT32(newSessionId, fixture.dispatcher.SessionId());
 }
+
+void TestTftPresenterPushesNetworkOrderBytesWithoutSwappingAgain()
+{
+    RecordingTftDriver display;
+    alignas(uint16_t) const std::array<uint8_t, 4> frame = {0xF8, 0x00, 0x07, 0xE0};
+
+    MobaDisplay::Esp32::PushRgb565BigEndian(display, 2, 1, frame.data());
+
+    TEST_ASSERT_FALSE(display.swapBytesDuringPush);
+    TEST_ASSERT_TRUE(display.swapBytes);
+    TEST_ASSERT_EQUAL_UINT8_ARRAY(frame.data(), display.pushedBytes.data(), frame.size());
+}
 }
 
 int main(int, char**)
@@ -579,6 +757,11 @@ int main(int, char**)
     RUN_TEST(TestOptionalCommandsReflectBackendCapabilities);
     RUN_TEST(TestMalformedPacketsAreDroppedAndUnsupportedVersionIsStructured);
     RUN_TEST(TestRegionAcknowledgementCanBeOmittedOnlyAfterSuccess);
+    RUN_TEST(TestIncompleteCompletionRetryReevaluatesAfterMissingRegionArrives);
+    RUN_TEST(TestBusyBeginRetryReevaluatesAfterActiveFrameIsAborted);
+    RUN_TEST(TestEvictedRequestIdCannotExecuteAgain);
+    RUN_TEST(TestOutOfOrderRequestWithinReplayWindowRemainsValid);
     RUN_TEST(TestHealthAndRebootExposeOnlySafeSessionState);
+    RUN_TEST(TestTftPresenterPushesNetworkOrderBytesWithoutSwappingAgain);
     return UNITY_END();
 }

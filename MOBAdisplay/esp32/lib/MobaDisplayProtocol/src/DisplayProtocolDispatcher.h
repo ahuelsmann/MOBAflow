@@ -179,6 +179,8 @@ private:
     bool _isNegotiated = false;
     RequestFingerprint _requestHistory[kRequestHistoryLength]{};
     size_t _nextRequestHistoryIndex = 0;
+    uint32_t _latestRequestId = 0;
+    bool _hasLatestRequestId = false;
 };
 }
 }

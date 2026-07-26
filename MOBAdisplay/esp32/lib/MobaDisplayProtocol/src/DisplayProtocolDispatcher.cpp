@@ -106,6 +106,12 @@ bool IsCommandMessage(MessageType messageType) noexcept
         || messageType == MessageType::RenderTestPattern;
 }
 
+bool IsNewerRequestId(uint32_t candidate, uint32_t reference) noexcept
+{
+    const uint32_t distance = candidate - reference;
+    return distance != 0 && distance < 0x80000000U;
+}
+
 bool IsVersionSupported(
     uint8_t minimumMajor,
     uint8_t minimumMinor,
@@ -339,6 +345,16 @@ DisplayProtocolDispatcher::InspectRequestFingerprint(
         return RequestFingerprintState::New;
     }
 
+    if (_hasLatestRequestId && !IsNewerRequestId(header.requestId, _latestRequestId))
+    {
+        const uint32_t age = _latestRequestId - header.requestId;
+        if (age >= kRequestHistoryLength && age < 0x80000000U)
+        {
+            *fingerprint = nullptr;
+            return RequestFingerprintState::Conflict;
+        }
+    }
+
     RequestFingerprint& newFingerprint = _requestHistory[_nextRequestHistoryIndex];
     newFingerprint = {
         header.requestId,
@@ -354,6 +370,11 @@ DisplayProtocolDispatcher::InspectRequestFingerprint(
         true};
     *fingerprint = &newFingerprint;
     _nextRequestHistoryIndex = (_nextRequestHistoryIndex + 1U) % kRequestHistoryLength;
+    if (!_hasLatestRequestId || IsNewerRequestId(header.requestId, _latestRequestId))
+    {
+        _latestRequestId = header.requestId;
+        _hasLatestRequestId = true;
+    }
     return RequestFingerprintState::New;
 }
 
@@ -361,6 +382,8 @@ void DisplayProtocolDispatcher::ResetRequestHistory() noexcept
 {
     std::memset(_requestHistory, 0, sizeof(_requestHistory));
     _nextRequestHistoryIndex = 0;
+    _latestRequestId = 0;
+    _hasLatestRequestId = false;
 }
 
 DispatchResult DisplayProtocolDispatcher::HandleHello(
@@ -441,6 +464,9 @@ DispatchResult DisplayProtocolDispatcher::HandleHello(
         _frameAssembler.AbortFrame(_frameAssembler.ActiveFrameId());
     ResetRequestHistory();
     InspectRequestFingerprint(header, &fingerprint, true);
+    // The handshake opens a new request epoch; the first negotiated request sets its replay boundary.
+    _latestRequestId = 0;
+    _hasLatestRequestId = false;
 
     _isNegotiated = true;
     return response;
@@ -624,9 +650,15 @@ Core::DisplayResult DisplayProtocolDispatcher::ResolveTrackedResult(
         return result;
     }
 
-    fingerprint.cachedResult = currentResult;
-    fingerprint.hasCachedResult = true;
     _lastOperationResult = currentResult;
+    const bool transientResult = currentResult.code == Core::ResultCode::Busy
+        || currentResult.code == Core::ResultCode::Incomplete
+        || (currentResult.flags & Core::ResultFlagRetryable) != 0;
+    if (!transientResult)
+    {
+        fingerprint.cachedResult = currentResult;
+        fingerprint.hasCachedResult = true;
+    }
     return currentResult;
 }
 

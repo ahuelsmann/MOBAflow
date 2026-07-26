@@ -59,22 +59,27 @@ internal sealed class DisplayIdentifierSequenceTests
     }
 
     [Test]
-    public void Next_Should_UseDistinctRanges_For_DefaultSequences()
+    public void Next_Should_UseOneProcessWideStream_For_DefaultSequences()
     {
         // Arrange
         var firstSequence = new DisplayIdentifierSequence();
         var secondSequence = new DisplayIdentifierSequence();
 
         // Act
-        var first = firstSequence.Next();
-        var second = secondSequence.Next();
+        var identifiers = new[]
+        {
+            firstSequence.Next(),
+            firstSequence.Next(),
+            secondSequence.Next(),
+            firstSequence.Next(),
+            secondSequence.Next(),
+        };
 
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(first, Is.Not.Zero);
-            Assert.That(second, Is.Not.Zero);
-            Assert.That(second, Is.Not.EqualTo(first));
+            Assert.That(identifiers, Has.None.Zero);
+            Assert.That(identifiers.Distinct().Count(), Is.EqualTo(identifiers.Length));
         });
     }
 }

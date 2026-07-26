@@ -12,6 +12,45 @@
 
 ## Implementation progress
 
+Status on 2026-07-25:
+
+- The actionable review findings for draft PR #89 are fixed locally in the
+  isolated `codex/89-review-fixes` worktree. Default request IDs now use one
+  process-wide randomized sequence, while explicitly seeded test sequences
+  remain deterministic.
+- The TFT_eSPI adapter presents network-order RGB565 bytes without a second
+  byte swap and restores the driver's previous swap setting. Native tests cover
+  the byte sequence and driver-state restoration.
+- Retryable, busy, and incomplete results are no longer cached as terminal
+  responses. The dispatcher rejects request IDs that fall outside its bounded
+  replay window while retaining valid out-of-order requests inside that window.
+  A fresh Hello starts a new request epoch.
+- The UDP classifier treats a `MOBA` prefix as versioned only when the complete
+  fixed envelope and declared payload length are valid. A 480-byte legacy line
+  that happens to start with those bytes remains on the explicit legacy path.
+- A checked-in `sdkconfig.defaults` now supplies the 1 kHz FreeRTOS tick,
+  8 MiB flash selection, and Arduino component autostart. PlatformIO explicitly
+  embeds the public ESP Insights and RainMaker CA files required by the managed
+  components, and only the vendored TFT_eSPI translation unit downgrades its
+  GCC 14 misleading-indentation diagnostics from errors to warnings.
+- The authoritative ESP32-S3 release build completes and creates the firmware
+  image. The complete native PlatformIO matrix passes all 46 tests: 14
+  display-core cases, 15 dispatcher/adapter cases, 8 provisioning regressions,
+  and 9 parser cases.
+- The complete .NET matrix passes 1,422 net10.0 tests with four existing skips
+  and 1,475 Windows tests without failures or skips. `MOBAdisplay` builds with
+  zero warnings and errors, `git diff --check` passes, and scoped formatting
+  verification passes for both changed C# files. Project-wide formatting still
+  reports pre-existing repository findings and generated managed-component
+  source outside this PR scope.
+- Publication is blocked at the local deterministic secrets gate: the Sonar CLI
+  is not available and the configured Sonar MCP cannot start while the Docker
+  daemon is stopped. No commit or push may occur until all changed files pass
+  that scan.
+- Current-hardware negotiation, conformance-pattern, loss, reconnect, and reboot
+  smoke tests remain pending. WP4 and PR #89 therefore stay in draft even after
+  the automated remediation is published.
+
 Status on 2026-07-23:
 
 - WP3 and PR #82 are merged. RF-01 and RF-02 are closed, so the versioned
