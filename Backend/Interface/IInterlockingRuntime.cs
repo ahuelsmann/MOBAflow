@@ -19,6 +19,12 @@ public interface IInterlockingRuntime : IAsyncDisposable
 
     Task SynchronizeAsync(CancellationToken cancellationToken = default);
 
+    Task<TurnoutCoordinatorResult> SetTurnoutAsync(
+        Guid turnoutId,
+        TurnoutPosition position,
+        Guid correlationId,
+        CancellationToken cancellationToken = default);
+
     Task<RouteCoordinatorResult> PreviewRouteAsync(Guid routeId, Guid correlationId, CancellationToken cancellationToken = default);
 
     Task<RouteCoordinatorResult> SelectRouteAsync(Guid routeId, Guid correlationId, CancellationToken cancellationToken = default);

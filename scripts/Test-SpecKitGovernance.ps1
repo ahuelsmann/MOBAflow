@@ -209,7 +209,6 @@ function Get-FeatureArtifactErrors(
                 -Text $text `
                 -RelativePath $RelativePath `
                 -Errors $errors
-            }
             if ($text -notmatch "(?m)^## Governance and Traceability") {
                 $errors.Add("$RelativePath is missing the Governance and Traceability section.")
             }

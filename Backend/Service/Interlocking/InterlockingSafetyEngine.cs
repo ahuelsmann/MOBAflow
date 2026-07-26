@@ -125,6 +125,41 @@ public sealed class InterlockingSafetyEngine
         return Accept(state, new RuntimeStateChanges(Turnouts: turnouts, Signals: signals, Routes: routes), correlationId, "turnout.observed", "Turnout observation accepted.", [turnoutId]);
     }
 
+    public static InterlockingDecision ProjectTurnoutCommand(
+        InterlockingRuntimeState state,
+        Guid turnoutId,
+        TurnoutLifecycle lifecycle,
+        TurnoutPosition? requestedPosition,
+        Guid correlationId,
+        long expectedRevision)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+
+        if (TryRejectInput(state, correlationId, expectedRevision) is { } rejected)
+            return rejected;
+        if (!state.Turnouts.TryGetValue(turnoutId, out var turnout))
+            return Reject(state, "turnout.missing", "The commanded turnout does not exist.", [turnoutId]);
+        if (lifecycle is TurnoutLifecycle.Confirmed)
+            return Reject(state, "turnout.command.lifecycle.invalid", "A command transition cannot confirm a turnout without feedback.", [turnoutId]);
+        if (lifecycle is (TurnoutLifecycle.Requested or TurnoutLifecycle.Pending) && requestedPosition == null)
+            return Reject(state, "turnout.command.position.missing", "A requested or pending turnout command requires a semantic position.", [turnoutId]);
+
+        var turnouts = state.Turnouts.ToDictionary();
+        turnouts[turnoutId] = turnout with
+        {
+            Lifecycle = lifecycle,
+            RequestedPosition = lifecycle == TurnoutLifecycle.Unknown ? null : requestedPosition,
+            ConfirmedPosition = null
+        };
+        return Accept(
+            state,
+            new RuntimeStateChanges(Turnouts: turnouts),
+            correlationId,
+            "turnout.command.projected",
+            "Turnout command state projected.",
+            [turnoutId]);
+    }
+
     public InterlockingDecision ReserveRoute(
         InterlockingRuntimeState state,
         Guid routeId,

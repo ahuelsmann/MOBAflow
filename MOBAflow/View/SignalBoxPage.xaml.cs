@@ -44,11 +44,13 @@ sealed partial class SignalBoxPage
     private double _propertiesExpandedStarValue = 1;
 
     public MainWindowViewModel ViewModel { get; }
+    public InterlockingControlViewModel InterlockingViewModel { get; }
 
     private SignalBoxPlanViewModel? _planViewModel;
 
     public SignalBoxPage(
         MainWindowViewModel viewModel,
+        InterlockingControlViewModel interlockingViewModel,
         SignalBoxPropertiesViewModel propertiesViewModel,
         AppSettings settings,
         ISettingsService? settingsService = null,
@@ -56,9 +58,11 @@ sealed partial class SignalBoxPage
         ILogger<SignalBoxCanvasControl>? signalBoxCanvasLogger = null)
     {
         ArgumentNullException.ThrowIfNull(viewModel);
+        ArgumentNullException.ThrowIfNull(interlockingViewModel);
         ArgumentNullException.ThrowIfNull(propertiesViewModel);
 
         ViewModel = viewModel;
+        InterlockingViewModel = interlockingViewModel;
         _propertiesViewModel = propertiesViewModel;
         _settings = settings;
         _settingsService = settingsService;
@@ -153,6 +157,7 @@ sealed partial class SignalBoxPage
 
     private void OnPageLoaded(object sender, RoutedEventArgs e)
     {
+        InterlockingViewModel.StartObserving();
         ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
         ViewModel.SolutionLoaded -= OnSolutionLoaded;
@@ -177,6 +182,7 @@ sealed partial class SignalBoxPage
         ViewModel.SignalBoxRuntimeStateChanged -= OnSignalBoxRuntimeStateChanged;
         _propertiesViewModel.ElementChanged -= OnPropertyEditorElementChanged;
         _propertiesViewModel.DeletionRequested -= OnPropertyEditorDeletionRequested;
+        InterlockingViewModel.StopObserving();
         DetachPlanViewModel();
     }
 
@@ -337,6 +343,7 @@ sealed partial class SignalBoxPage
         if (_planViewModel != null)
         {
             _propertiesViewModel.SelectedElement = _planViewModel.SelectedElement;
+            InterlockingViewModel.SelectSignalBoxRepresentation(_planViewModel.SelectedElement?.Id);
             if (_planViewModel.SelectedElement is SbSignal signal)
             {
                 _planViewModel.RefreshElementVisual(signal);

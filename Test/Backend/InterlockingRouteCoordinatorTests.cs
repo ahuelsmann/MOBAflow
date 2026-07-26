@@ -8,6 +8,52 @@ using global::Moba.Domain;
 internal sealed class InterlockingRouteCoordinatorTests
 {
     [Test]
+    public async Task SetTurnoutAsync_UnlockedTurnout_DispatchesSemanticCommandAndProjectsPendingState()
+    {
+        var fixture = CreateFixture();
+
+        var result = await fixture.Coordinator.SetTurnoutAsync(
+            fixture.TurnoutId,
+            TurnoutPosition.Straight,
+            Guid.NewGuid()).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.Status, Is.EqualTo(RouteCoordinatorStatus.Pending));
+            Assert.That(result.Code, Is.EqualTo("turnout.command.pending"));
+            Assert.That(result.State.Turnouts[fixture.TurnoutId].Lifecycle, Is.EqualTo(TurnoutLifecycle.Pending));
+            Assert.That(result.State.Turnouts[fixture.TurnoutId].RequestedPosition, Is.EqualTo(TurnoutPosition.Straight));
+            Assert.That(fixture.TurnoutGateway.Commands, Has.Count.EqualTo(1));
+        }
+    }
+
+    [Test]
+    public async Task SetTurnoutAsync_RouteLockedTurnout_RejectsWithoutDispatchingCommand()
+    {
+        var fixture = CreateFixture();
+        await fixture.Coordinator.ObserveBlockAsync(
+            fixture.BlockId,
+            BlockOccupancy.Free,
+            Guid.NewGuid()).ConfigureAwait(false);
+        await fixture.Coordinator.SelectRouteAsync(
+            fixture.RouteId,
+            Guid.NewGuid()).ConfigureAwait(false);
+
+        var result = await fixture.Coordinator.SetTurnoutAsync(
+            fixture.TurnoutId,
+            TurnoutPosition.Straight,
+            Guid.NewGuid()).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.Status, Is.EqualTo(RouteCoordinatorStatus.Rejected));
+            Assert.That(result.Code, Is.EqualTo("turnout.locked"));
+            Assert.That(result.State.Turnouts[fixture.TurnoutId].LockOwnerRouteId, Is.EqualTo(fixture.RouteId));
+            Assert.That(fixture.TurnoutGateway.Commands, Is.Empty);
+        }
+    }
+
+    [Test]
     public async Task SetRouteAsync_ConfirmedTurnout_EstablishesRouteAndClearsConfiguredSignal()
     {
         var fixture = CreateFixture();

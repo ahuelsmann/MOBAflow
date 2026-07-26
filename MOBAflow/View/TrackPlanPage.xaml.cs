@@ -2,13 +2,9 @@
 
 namespace Moba.WinUI.View;
 
-using TrackPlan.Renderer;
-
 using Common.Configuration;
 using Common.Extension;
-
 using Converter;
-
 using Microsoft.Extensions.Logging;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Geometry;
@@ -24,13 +20,11 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
-
 using SharedUI.Interface;
 using SharedUI.Service;
 using SharedUI.ViewModel;
-
 using TrackLibrary.PikoA;
-
+using TrackPlan.Renderer;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.System;
@@ -56,6 +50,7 @@ public sealed partial class TrackPlanPage
     private readonly ISettingsService? _settingsService;
 
     public TrackPlanViewModel ViewModel { get; }
+    public InterlockingControlViewModel InterlockingViewModel { get; }
     public MainWindowViewModel MainViewModel { get; }
     private readonly EditableTrackPlan _plan;
     private readonly TrackPlanFeedbackHighlighter _feedbackHighlighter;
@@ -83,8 +78,8 @@ public sealed partial class TrackPlanPage
     private double _toolboxExpandedWidth = 180;
     private double _propertiesExpandedWidth = 240;
 
-    public TrackPlanPage(
-        TrackPlanViewModel viewModel,
+    internal TrackPlanPage(
+        TrackPlanPageViewModels viewModels,
         MainWindowViewModel mainViewModel,
         EditableTrackPlan plan,
         TrackPlanFeedbackHighlighter feedbackHighlighter,
@@ -92,7 +87,9 @@ public sealed partial class TrackPlanPage
         ISettingsService? settingsService = null,
         ILogger<TrackPlanPage>? logger = null)
     {
-        ViewModel = viewModel;
+        ArgumentNullException.ThrowIfNull(viewModels);
+        ViewModel = viewModels.TrackPlan;
+        InterlockingViewModel = viewModels.Interlocking;
         MainViewModel = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
         _plan = plan ?? throw new ArgumentNullException(nameof(plan));
         _feedbackHighlighter = feedbackHighlighter ?? throw new ArgumentNullException(nameof(feedbackHighlighter));
@@ -113,40 +110,48 @@ public sealed partial class TrackPlanPage
 
     private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(ViewModel.SelectedTrackId))
+        {
+            InterlockingViewModel.SelectTrackRepresentation(ViewModel.SelectedTrackId);
+            return;
+        }
+
         if (e.PropertyName == nameof(ViewModel.IsToolboxExpanded))
         {
-            if (!ViewModel.IsToolboxExpanded)
-            {
-                if (ColToolbox.Width.IsAbsolute)
-                {
-                    _toolboxExpandedWidth = ColToolbox.Width.Value;
-                }
-                ColToolbox.Width = GridLength.Auto;
-            }
-            else
-            {
-                ColToolbox.Width = new GridLength(_toolboxExpandedWidth);
-            }
+            UpdateToolboxColumn();
         }
         else if (e.PropertyName == nameof(ViewModel.IsPropertiesExpanded))
         {
-            if (!ViewModel.IsPropertiesExpanded)
-            {
-                if (ColProperties.ActualWidth > 0)
-                {
-                    _propertiesExpandedWidth = ColProperties.ActualWidth;
-                }
-                else if (ColProperties.Width.IsAbsolute)
-                {
-                    _propertiesExpandedWidth = ColProperties.Width.Value;
-                }
-                ColProperties.Width = GridLength.Auto;
-            }
-            else
-            {
-                ColProperties.Width = new GridLength(_propertiesExpandedWidth);
-            }
+            UpdatePropertiesColumn();
         }
+    }
+
+    private void UpdateToolboxColumn()
+    {
+        if (ViewModel.IsToolboxExpanded)
+        {
+            ColToolbox.Width = new GridLength(_toolboxExpandedWidth);
+            return;
+        }
+
+        if (ColToolbox.Width.IsAbsolute)
+            _toolboxExpandedWidth = ColToolbox.Width.Value;
+        ColToolbox.Width = GridLength.Auto;
+    }
+
+    private void UpdatePropertiesColumn()
+    {
+        if (ViewModel.IsPropertiesExpanded)
+        {
+            ColProperties.Width = new GridLength(_propertiesExpandedWidth);
+            return;
+        }
+
+        if (ColProperties.ActualWidth > 0)
+            _propertiesExpandedWidth = ColProperties.ActualWidth;
+        else if (ColProperties.Width.IsAbsolute)
+            _propertiesExpandedWidth = ColProperties.Width.Value;
+        ColProperties.Width = GridLength.Auto;
     }
 
     /// <summary>
@@ -159,6 +164,9 @@ public sealed partial class TrackPlanPage
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+        ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+        InterlockingViewModel.StartObserving();
         SegmentPlanPathBuilder.ScaleMmToPx = ScaleMmToPx;
         PopulateToolbox();
         SetupCanvas();
@@ -191,6 +199,7 @@ public sealed partial class TrackPlanPage
         _plan.PlanChanged -= OnPlanChanged;
         KeyDown -= Page_KeyDown;
         _feedbackHighlighter.HighlightsChanged -= OnFeedbackHighlightsChanged;
+        InterlockingViewModel.StopObserving();
     }
 
     private async Task HandlePageUnloadedAsync()
@@ -1710,3 +1719,10 @@ public sealed partial class TrackPlanPage
         ZoomLevelText.Text = $"{ZoomSlider.Value * 100:F0}%";
     }
 }
+
+/// <summary>
+/// Cohesive ViewModel dependencies used by the physical plan page.
+/// </summary>
+internal sealed record TrackPlanPageViewModels(
+    TrackPlanViewModel TrackPlan,
+    InterlockingControlViewModel Interlocking);
