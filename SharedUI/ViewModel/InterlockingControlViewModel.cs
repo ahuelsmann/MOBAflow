@@ -23,6 +23,18 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
     private const string UnknownStateText = "Unknown";
     private const string NoRuntimeStateText = "No runtime state";
 
+    private static readonly Action<ILogger, Guid, Exception?> LogRoutePersistenceFailure =
+        LoggerMessage.Define<Guid>(
+            LogLevel.Error,
+            new EventId(1, nameof(LogRoutePersistenceFailure)),
+            "Persist interlocking route {RouteId} failed");
+
+    private static readonly Action<ILogger, Guid, Exception?> LogRouteActivationFailure =
+        LoggerMessage.Define<Guid>(
+            LogLevel.Error,
+            new EventId(2, nameof(LogRouteActivationFailure)),
+            "Activate persisted interlocking route {RouteId} failed");
+
     private readonly IInterlockingRuntime _runtime;
     private readonly IEventBus _eventBus;
     private readonly IProjectContext _projectContext;
@@ -75,65 +87,52 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
     public IReadOnlyList<string> ValidationMessages { get; private set; } = [];
 
     [ObservableProperty]
-    private InterlockingItemViewState? _selectedTurnout;
+    [NotifyPropertyChangedFor(nameof(CanOperateTurnout))]
+    public partial InterlockingItemViewState? SelectedTurnout { get; set; }
 
     [ObservableProperty]
-    private InterlockingItemViewState? _selectedRoute;
+    [NotifyPropertyChangedFor(nameof(CanOperateRoute))]
+    [NotifyPropertyChangedFor(nameof(HasSelectedRoute))]
+    public partial InterlockingItemViewState? SelectedRoute { get; set; }
 
     [ObservableProperty]
-    private InterlockingItemViewState? _selectedBlock;
+    public partial InterlockingItemViewState? SelectedBlock { get; set; }
 
     [ObservableProperty]
-    private InterlockingItemViewState? _selectedSignal;
+    public partial InterlockingItemViewState? SelectedSignal { get; set; }
 
     [ObservableProperty]
-    private OperationalElementOption? _selectedOperationalElement;
+    public partial OperationalElementOption? SelectedOperationalElement { get; set; }
 
     [ObservableProperty]
-    private bool _isSynchronized;
-
-    private bool _canOperateTurnout;
-
-    private bool _canOperateRoute;
-
-    private bool _hasSelectedRoute;
+    [NotifyPropertyChangedFor(nameof(CanOperateTurnout))]
+    [NotifyPropertyChangedFor(nameof(CanOperateRoute))]
+    public partial bool IsSynchronized { get; set; }
 
     [ObservableProperty]
-    private long _revision;
+    public partial long Revision { get; set; }
 
     private string _statusText = "Interlocking is not synchronized.";
 
     private string _statusCode = "interlocking.unsynchronized";
 
     [ObservableProperty]
-    private string _draftName = string.Empty;
+    public partial string DraftName { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private TurnoutPosition _draftTurnoutPosition = TurnoutPosition.Straight;
+    public partial TurnoutPosition DraftTurnoutPosition { get; set; } = TurnoutPosition.Straight;
 
     [ObservableProperty]
-    private SignalAspect _draftSignalAspect = SignalAspect.Ks1;
+    public partial SignalAspect DraftSignalAspect { get; set; } = SignalAspect.Ks1;
 
     [ObservableProperty]
-    private string _draftSummary = "No route draft.";
+    public partial string DraftSummary { get; set; } = "No route draft.";
 
-    public bool CanOperateTurnout
-    {
-        get => _canOperateTurnout;
-        private set => SetProperty(ref _canOperateTurnout, value);
-    }
+    public bool CanOperateTurnout => IsSynchronized && SelectedTurnout != null && !SelectedTurnout.IsLocked;
 
-    public bool CanOperateRoute
-    {
-        get => _canOperateRoute;
-        private set => SetProperty(ref _canOperateRoute, value);
-    }
+    public bool CanOperateRoute => IsSynchronized && SelectedRoute != null;
 
-    public bool HasSelectedRoute
-    {
-        get => _hasSelectedRoute;
-        private set => SetProperty(ref _hasSelectedRoute, value);
-    }
+    public bool HasSelectedRoute => SelectedRoute != null;
 
     public string StatusText
     {
@@ -373,14 +372,41 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
         project.Interlocking.Routes.Add(route);
         try
         {
-            await _runtime.ActivateAsync(project.Interlocking).ConfigureAwait(true);
             await _projectContext.SaveSolutionInternalAsync().ConfigureAwait(true);
         }
-        catch (Exception ex)
+        catch (IOException ex)
         {
-            project.Interlocking.Routes.Remove(route);
-            _logger.LogError(ex, "Save interlocking route {RouteId} failed", route.Id);
-            SetStatus("route.draft.save-failed", "The route could not be saved.");
+            HandleRoutePersistenceFailure(project, route, ex);
+            return;
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            HandleRoutePersistenceFailure(project, route, ex);
+            return;
+        }
+        catch (InvalidOperationException ex)
+        {
+            HandleRoutePersistenceFailure(project, route, ex);
+            return;
+        }
+        catch (NotSupportedException ex)
+        {
+            HandleRoutePersistenceFailure(project, route, ex);
+            return;
+        }
+
+        try
+        {
+            await _runtime.ActivateAsync(project.Interlocking).ConfigureAwait(true);
+        }
+        catch (ObjectDisposedException ex)
+        {
+            HandleRouteActivationFailure(route, ex);
+            return;
+        }
+        catch (InvalidOperationException ex)
+        {
+            HandleRouteActivationFailure(route, ex);
             return;
         }
 
@@ -397,29 +423,23 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
 
     private Project? CurrentProject => _projectContext.SelectedProject?.Model;
 
-    partial void OnSelectedTurnoutChanged(InterlockingItemViewState? value)
+    private void HandleRoutePersistenceFailure(Project project, RouteDefinition route, Exception exception)
     {
-        _ = value;
-        UpdateCommandAvailability();
+        project.Interlocking.Routes.Remove(route);
+        LogRoutePersistenceFailure(_logger, route.Id, exception);
+        SetStatus("route.draft.save-failed", "The route could not be saved.");
     }
 
-    partial void OnSelectedRouteChanged(InterlockingItemViewState? value)
+    private void HandleRouteActivationFailure(RouteDefinition route, Exception exception)
     {
-        _ = value;
-        UpdateCommandAvailability();
-    }
-
-    partial void OnIsSynchronizedChanged(bool value)
-    {
-        _ = value;
-        UpdateCommandAvailability();
-    }
-
-    private void UpdateCommandAvailability()
-    {
-        CanOperateTurnout = IsSynchronized && SelectedTurnout != null && !SelectedTurnout.IsLocked;
-        CanOperateRoute = IsSynchronized && SelectedRoute != null;
-        HasSelectedRoute = SelectedRoute != null;
+        LogRouteActivationFailure(_logger, route.Id, exception);
+        RefreshDefinitions();
+        SelectedRoute = Routes.FirstOrDefault(item => item.Id == route.Id);
+        SetStatus(
+            "route.draft.activation-failed",
+            $"Route '{route.Name}' was saved, but the live interlocking could not be reloaded.");
+        _draftRouteId = Guid.Empty;
+        UpdateDraftSummary();
     }
 
     private async Task SetTurnoutAsync(TurnoutPosition position)

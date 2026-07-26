@@ -15,16 +15,16 @@ internal sealed class InterlockingRouteCoordinatorTests
         var result = await fixture.Coordinator.SetTurnoutAsync(
             fixture.TurnoutId,
             TurnoutPosition.Straight,
-            Guid.NewGuid());
+            Guid.NewGuid()).ConfigureAwait(false);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(result.Status, Is.EqualTo(RouteCoordinatorStatus.Pending));
             Assert.That(result.Code, Is.EqualTo("turnout.command.pending"));
             Assert.That(result.State.Turnouts[fixture.TurnoutId].Lifecycle, Is.EqualTo(TurnoutLifecycle.Pending));
             Assert.That(result.State.Turnouts[fixture.TurnoutId].RequestedPosition, Is.EqualTo(TurnoutPosition.Straight));
             Assert.That(fixture.TurnoutGateway.Commands, Has.Count.EqualTo(1));
-        });
+        }
     }
 
     [Test]
@@ -34,21 +34,23 @@ internal sealed class InterlockingRouteCoordinatorTests
         await fixture.Coordinator.ObserveBlockAsync(
             fixture.BlockId,
             BlockOccupancy.Free,
-            Guid.NewGuid());
-        await fixture.Coordinator.SelectRouteAsync(fixture.RouteId, Guid.NewGuid());
+            Guid.NewGuid()).ConfigureAwait(false);
+        await fixture.Coordinator.SelectRouteAsync(
+            fixture.RouteId,
+            Guid.NewGuid()).ConfigureAwait(false);
 
         var result = await fixture.Coordinator.SetTurnoutAsync(
             fixture.TurnoutId,
             TurnoutPosition.Straight,
-            Guid.NewGuid());
+            Guid.NewGuid()).ConfigureAwait(false);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(result.Status, Is.EqualTo(RouteCoordinatorStatus.Rejected));
             Assert.That(result.Code, Is.EqualTo("turnout.locked"));
             Assert.That(result.State.Turnouts[fixture.TurnoutId].LockOwnerRouteId, Is.EqualTo(fixture.RouteId));
             Assert.That(fixture.TurnoutGateway.Commands, Is.Empty);
-        });
+        }
     }
 
     [Test]

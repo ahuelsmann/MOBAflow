@@ -125,7 +125,7 @@ public sealed class InterlockingSafetyEngine
         return Accept(state, new RuntimeStateChanges(Turnouts: turnouts, Signals: signals, Routes: routes), correlationId, "turnout.observed", "Turnout observation accepted.", [turnoutId]);
     }
 
-    public InterlockingDecision ProjectTurnoutCommand(
+    public static InterlockingDecision ProjectTurnoutCommand(
         InterlockingRuntimeState state,
         Guid turnoutId,
         TurnoutLifecycle lifecycle,
@@ -133,6 +133,8 @@ public sealed class InterlockingSafetyEngine
         Guid correlationId,
         long expectedRevision)
     {
+        ArgumentNullException.ThrowIfNull(state);
+
         if (TryRejectInput(state, correlationId, expectedRevision) is { } rejected)
             return rejected;
         if (!state.Turnouts.TryGetValue(turnoutId, out var turnout))

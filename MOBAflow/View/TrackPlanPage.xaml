@@ -214,6 +214,10 @@
                         Content="Preview"
                         IsEnabled="{x:Bind InterlockingViewModel.CanOperateRoute, Mode=OneWay}" />
                     <Button
+                        Command="{x:Bind InterlockingViewModel.SelectRouteCommand}"
+                        Content="Select"
+                        IsEnabled="{x:Bind InterlockingViewModel.CanOperateRoute, Mode=OneWay}" />
+                    <Button
                         Command="{x:Bind InterlockingViewModel.SetRouteCommand}"
                         Content="Set"
                         IsEnabled="{x:Bind InterlockingViewModel.CanOperateRoute, Mode=OneWay}" />

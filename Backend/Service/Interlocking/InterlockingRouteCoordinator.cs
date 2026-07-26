@@ -196,7 +196,7 @@ public sealed class InterlockingRouteCoordinator : IAsyncDisposable
             if (turnout.Lifecycle is TurnoutLifecycle.Requested or TurnoutLifecycle.Pending)
                 return TurnoutResult(RouteCoordinatorStatus.Rejected, "turnout.command.busy", "The turnout already has a command awaiting completion or confirmation.", correlationId);
 
-            var requested = _engine.ProjectTurnoutCommand(
+            var requested = InterlockingSafetyEngine.ProjectTurnoutCommand(
                 Snapshot,
                 turnoutId,
                 TurnoutLifecycle.Requested,
@@ -212,7 +212,7 @@ public sealed class InterlockingRouteCoordinator : IAsyncDisposable
                 position,
                 StepCorrelation(correlationId, "standalone-effect"),
                 cancellationToken).ConfigureAwait(false);
-            var projected = _engine.ProjectTurnoutCommand(
+            var projected = InterlockingSafetyEngine.ProjectTurnoutCommand(
                 Snapshot,
                 turnoutId,
                 transition.State.Lifecycle,
@@ -282,7 +282,7 @@ public sealed class InterlockingRouteCoordinator : IAsyncDisposable
 
             foreach (var requirement in route.TurnoutRequirements)
             {
-                var requested = _engine.ProjectTurnoutCommand(
+                var requested = InterlockingSafetyEngine.ProjectTurnoutCommand(
                     Snapshot,
                     requirement.TurnoutId,
                     TurnoutLifecycle.Requested,
@@ -298,7 +298,7 @@ public sealed class InterlockingRouteCoordinator : IAsyncDisposable
                     requirement.Position,
                     StepCorrelation(correlationId, $"turnout:{requirement.TurnoutId:N}"),
                     cancellationToken).ConfigureAwait(false);
-                var projected = _engine.ProjectTurnoutCommand(
+                var projected = InterlockingSafetyEngine.ProjectTurnoutCommand(
                     Snapshot,
                     requirement.TurnoutId,
                     transition.State.Lifecycle,

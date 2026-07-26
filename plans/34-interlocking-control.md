@@ -2,6 +2,9 @@
 
 ## Document status
 
+**GitHub Issue**: #34
+**Spec Kit**: Required
+
 - Status: In progress
 - Primary issue: [#34 - Add turnout, route, block, and interlocking control to SignalBoxPage and TrackPlanPage](https://github.com/ahuelsmann/MOBAflow/issues/34)
 - Status source: GitHub Issue #34
