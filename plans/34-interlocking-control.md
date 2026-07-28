@@ -28,7 +28,7 @@ GitHub owns scope, status, and acceptance criteria. This plan owns technical seq
 - Slice 6/7 gate check on 2026-07-24: RF-06/#90, RF-13/#91, and RF-14/#92 are closed after PRs #94, #95, and #98 merged. TrackPlanPage and SignalBoxPage integration may now proceed from the current `main` baseline.
 - Slices 6 and 7 implemented on 2026-07-24 from baseline `22397b87`: page-scoped control ViewModels project one shared interlocking runtime into independent TrackPlanPage and SignalBoxPage selections; representation bindings resolve to shared operational identities; direct turnout commands use the semantic coordinator; route preview, set, cancel, release, and reconciliation share the same revisioned state; the TrackPlan route editor captures entry, ordered path, exit, turnout, block, and protected-signal requirements and validates before persistence; textual lock, reservation, lifecycle, and fault descriptions provide non-color-only state.
 - Slice 6/7 validation on 2026-07-24: all 30 focused interlocking coordinator/runtime/ViewModel tests and the complete `net10.0` suite (1,468 passed, 4 expected skips) pass; the MOBAflow FastDebug build completes with 0 warnings and 0 errors; every changed file passes the deterministic Sonar secret scan. The Windows test target exceeded the five-minute local runner limit without producing a result, so hardware/UI acceptance and the remote SonarCloud gate remain open before Issue #34 can close.
-- UX remediation planned on 2026-07-26 against merged baseline `2ee7611f`: the always-visible, horizontally scrolling interlocking row is not accepted as the final operator experience. The shared runtime and fail-safe commands remain valid, but their presentation must move into a contextual operations surface before UI acceptance.
+- UX remediation planned on 2026-07-26 against merged baseline `2ee7611f`: the always-visible, horizontally scrolling interlocking row is not accepted as the final operator experience. The shared runtime and fail-safe commands remain valid, but their presentation must move into a contextual selected-object surface before UI acceptance.
 
 ## UX remediation plan
 
@@ -48,44 +48,54 @@ This implementation proves that both pages can consume the shared runtime, but i
 - The TrackPlan route editor is hidden in a flyout launched from the same dense row, although route authoring is a separate configuration task.
 - Keyboard focus order and screen-reader announcements must traverse unrelated controls and may announce revision churn instead of meaningful state changes.
 
+## Clarifications
+
+### Session 2026-07-28
+
+- Q: What is the primary role of TrackPlanPage and SignalBoxPage? -> A: Both pages support editing and live operation as equal first-class workflows.
+- Q: Which interaction model should make editing and live operation equally available? -> A: Use one Selected Object Workbench without a global Edit/Operate mode.
+- Q: How should the Workbench protect against accidental live commands? -> A: Routine semantic commands execute from explicit named buttons without confirmation; exceptional recovery actions require confirmation.
+
 ### UX outcome
 
-Remove the permanent interlocking row from both pages. Provide one reusable contextual **Operations** surface that preserves the shared `InterlockingControlViewModel` and the fail-safe command boundary while making the canvas the primary workspace.
+Remove the permanent interlocking row from both pages. Replace the separate Properties and Operations surfaces with one reusable **Selected Object Workbench** that preserves the shared `InterlockingControlViewModel`, the fail-safe command boundary, and the canvas as the shared primary workspace.
 
-The operator experience has three levels:
+The Workbench shows safety state, relevant live actions, definition editing, details, and diagnostics for the same selected object. Editing and live operation remain equal first-class workflows without a global Edit/Operate mode or page navigation.
 
-1. **Global availability**: one `Operations` command in the page `CommandBar` with an icon and concise text state such as `Synchronized`, `Offline`, `Unknown`, or `Fault`.
-2. **Contextual operation**: an Operations view in the existing right-side context column shows only controls relevant to the selected turnout, block, signal, or route.
-3. **Diagnostics and configuration**: detailed state, correlation/revision data, and route authoring are available through explicitly expanded sections or a separate editor view, not in the primary command surface.
+The experience has three levels:
 
-Opening or closing the Operations surface must never start, cancel, release, or otherwise mutate runtime state.
+1. **Global availability**: one `Context` command in the page `CommandBar` opens or focuses the Workbench and includes a concise state such as `Synchronized`, `Offline`, `Unknown`, or `Fault`.
+2. **Selected object**: the Workbench presents clearly separated Safety, Live action, and Definition sections for the current turnout, block, signal, route, or representation.
+3. **Progressive detail**: additional properties, validation, correlation/revision data, and diagnostics remain available through explicitly expanded sections.
+
+Opening, closing, pinning, resizing, or changing selection in the Workbench must never start, cancel, release, apply a draft, or otherwise mutate runtime or persisted definition state.
 
 ### Information architecture
 
 #### Command bar
 
-- Add a single `Operations` `AppBarButton` to TrackPlanPage and SignalBoxPage.
-- Use the button to open the right-side context column on its Operations view.
+- Add a single `Context` `AppBarButton` to TrackPlanPage and SignalBoxPage.
+- Use the button to open or focus the Selected Object Workbench.
 - Show a non-color-only availability indicator through icon plus text or accessible description.
-- Keep edit commands such as delete, rotate, new, and open separate from operational railway commands.
+- Keep page-global commands such as new and open in the CommandBar; selected-object definition and live commands belong in their explicitly labelled Workbench sections.
 - Do not show the raw runtime revision in the command bar.
-- TrackPlanPage exposes `Edit routes` as a separate configuration command; SignalBoxPage does not expose route authoring.
+- Do not add a global Edit/Operate toggle.
 
-#### Shared right-side context column
+#### Selected Object Workbench
 
-Evolve the existing collapsible Properties column into a context column with `Properties` and `Operations` views rather than adding a fourth permanent pane.
+Evolve the existing collapsible Properties column into one Selected Object Workbench rather than adding tabs, page modes, or a fourth permanent pane.
 
 - The column stays collapsible and resizable.
-- `Properties` remains the default view.
-- Selecting a canvas representation updates Operations context but does not unexpectedly steal focus or switch the visible view.
-- Invoking `Operations` explicitly opens the column and selects Operations.
-- An explicitly pinned Operations view may be persisted; the redesign must not infer a pinned/open state from the removed toolbar.
+- Safety, Live action, and Definition are peer sections for the same selected object.
+- Selecting a canvas representation updates the Workbench context but does not unexpectedly steal focus.
+- Invoking `Context` explicitly opens or focuses the Workbench.
+- An explicitly pinned Workbench may be persisted; the redesign must not infer a pinned/open state from the removed toolbar.
 - On compact windows, the same content opens as an overlay pane so the canvas retains a useful minimum width.
 - The page must not introduce horizontal scrolling for commands at any supported width or display scale.
 
-#### Operations content
+#### Workbench content
 
-The reusable operations content is provisionally named `InterlockingOperationsPane`. It is a WinUI input adapter only: it binds to commands and presentation state owned by `InterlockingControlViewModel` and contains no operational behavior in code-behind.
+The reusable content is provisionally named `SelectedObjectWorkbench`. It is a WinUI input adapter only: it binds to commands and presentation state owned by page and interlocking ViewModels and contains no definition or operational behavior in code-behind.
 
 The content is vertically scrollable and grouped as follows:
 
@@ -94,30 +104,37 @@ The content is vertically scrollable and grouped as follows:
    - Wrapped, non-ellipsized fault or rejection explanation.
    - `InfoBar`-style emphasis for warning, error, reconciliation-required, or offline states.
    - Runtime revision and correlation details only in an expandable Diagnostics section.
-2. **Current context**
+2. **Current object**
    - Entity type, name, and binding source.
    - Full textual state, including occupancy, lock owner, reservation, lifecycle, confirmation, and fault details as applicable.
    - A searchable fallback selector when no canvas representation is selected or when the operator intentionally changes context.
-3. **Relevant actions**
+3. **Live action**
    - Turnout context shows only supported positions.
    - Block and signal contexts are read-only unless an already-authorized semantic command exists.
    - Route context shows one emphasized next valid lifecycle action and only the currently relevant secondary or recovery actions.
    - Disabled actions include a visible or accessible reason; unsupported actions are omitted.
-4. **Diagnostics**
+   - Routine semantic commands execute only from an explicit, clearly named button and do not add a confirmation step.
+   - Exceptional recovery actions require a confirmation that states the affected object, retained or released safety state, and expected consequence.
+   - Selection, focus, opening, closing, and keyboard navigation never execute the primary action implicitly.
+4. **Definition**
+   - Selected-object properties, representation binding, and validation are edited as an explicit draft.
+   - Draft state, `Apply changes`, and `Discard changes` are visually and semantically separate from Live action.
+   - Applying a definition draft never selects, previews, reserves, sets, cancels, releases, or reconciles a runtime entity.
+5. **Details and diagnostics**
    - Revision, correlation, timestamps, and detailed structured state.
    - Collapsed by default and excluded from routine screen-reader live announcements.
 
-Safety-critical state must never rely on color alone and must not be truncated without another immediately available full-text representation.
+Safety-critical state must never rely on color alone and must not be truncated without another immediately available full-text representation. Live actions and definition actions require distinct headings, button hierarchy, focus groups, and accessible descriptions.
 
 #### Route authoring
 
-Route authoring remains available only on TrackPlanPage but moves out of the operations surface:
+Route authoring appears as a task-focused Definition section in the same Workbench:
 
-- Open a dedicated route editor view in the context column or a task-focused dialog.
 - Preserve entry, ordered path, exit, turnout, block, protected-signal, validation, and save capabilities.
-- Present the draft as grouped form sections with a persistent validation summary and explicit `Validate`, `Save route`, and `Discard` actions.
+- Present the draft as grouped form sections with a persistent validation summary and explicit `Validate`, `Apply changes`, and `Discard changes` actions.
+- A short-lived, field-specific `Pick from canvas` interaction may collect route elements without introducing a global page mode.
 - Warn before discarding a dirty draft.
-- Keep route editing separate from live route selection and operation.
+- Keep the Definition and Live action sections visibly separate even though both refer to the same route.
 - A saved route is not automatically selected, reserved, or set.
 
 ### Page-specific behavior
@@ -125,15 +142,15 @@ Route authoring remains available only on TrackPlanPage but moves out of the ope
 #### TrackPlanPage
 
 - Selecting a bound track representation continues to call `SelectTrackRepresentation`.
-- The Operations view resolves that representation to its operational turnout, block, signal, or route context.
+- The Workbench resolves that representation to its operational turnout, block, signal, or route context while retaining track geometry and binding properties.
 - If a selected track has no operational binding, show `No operational binding` and keep live commands unavailable.
-- Properties remains focused on geometry and configuration; Operations remains focused on live state and semantic commands.
-- Route editing uses the existing TrackPlan operational-element selection and draft commands without placing editor fields in the command bar.
+- Workbench section boundaries keep geometry and configuration distinct from live state and semantic commands.
+- Route editing uses the existing TrackPlan operational-element selection and draft commands without placing editor fields in the command bar or a transient toolbar.
 
 #### SignalBoxPage
 
 - Selecting a bound signal-box element continues to call `SelectSignalBoxRepresentation`.
-- The Operations view follows the selected element and shows the shared runtime state also visible on TrackPlanPage.
+- The Workbench follows the selected element and combines its definition with the shared runtime state also visible on TrackPlanPage.
 - Selection changes update context without rebuilding the selected visual during the pointer event.
 - Unbound elements show a clear read-only explanation instead of retaining stale commands from the prior selection.
 
@@ -144,6 +161,7 @@ Keep the runtime, coordinator, domain safety engine, and EventBus threading boun
 - `SelectedOperationalContext` or equivalent discriminated presentation state for turnout, block, signal, route, or none.
 - Concise `AvailabilityText` and accessible availability description for the command bar.
 - Full, wrapped context state separate from the existing concise status message.
+- Explicit selected-object draft state that remains separate from immutable runtime snapshots.
 - `PrimaryRouteActionLabel`, availability, command, and disabled reason derived from the route lifecycle.
 - Visibility and disabled-reason properties for secondary route recovery actions.
 - Supported turnout-position actions derived from the definition instead of always showing all three buttons.
@@ -153,11 +171,11 @@ Do not duplicate interlocking decisions in the ViewModel. Command availability r
 
 ### Responsive and accessibility contract
 
-- Wide layout: context column is inline with the canvas and respects the existing user-resizable width.
-- Compact layout: context content uses an overlay pane with a practical maximum width and an explicit close action.
+- Wide layout: the Workbench is inline with the canvas and respects the existing user-resizable width.
+- Compact layout: the Workbench uses an overlay pane with a practical maximum width and an explicit close action.
 - Very narrow layout: controls stack vertically; no command group depends on horizontal scrolling.
 - Validate at 100%, 150%, and 200% Windows display scaling and at representative effective widths around 800, 1024, 1200, and 1440 device-independent pixels.
-- Preserve a logical focus sequence: Operations command, safety status, current context, primary action, secondary actions, diagnostics.
+- Preserve a logical focus sequence: Context command, safety status, current object, live action, definition, details, diagnostics.
 - Provide `AutomationProperties.Name`, help text, and keyboard access for every command.
 - Announce meaningful accepted, rejected, failed, and reconciled transitions politely; do not announce raw revision increments.
 - Validate Light, Dark, High Contrast, disabled, hover, focus, selected, warning, and fault states with `ThemeResource` values only.
@@ -168,7 +186,9 @@ Do not duplicate interlocking decisions in the ViewModel. Command availability r
 - **Move all controls into a command-bar overflow menu**: rejected because complex safety state and lifecycle explanations do not fit transient menus and would be difficult to scan and access.
 - **Add a second permanent right-side pane beside Properties**: rejected because it would reduce canvas width and compete with the existing toolbox and properties layout.
 - **Use only direct manipulation on canvas**: rejected because keyboard users, unbound definitions, route recovery, and detailed fail-safe explanations still need an explicit operational surface.
-- **Use the existing context column with separate Properties and Operations views**: selected because it preserves canvas priority, reuses the established collapsible layout, supports contextual selection, and remains usable as an overlay on compact windows.
+- **Use an explicit global Edit/Operate mode**: rejected because both workflows must remain simultaneously available for the selected object and mode switching would add friction.
+- **Use an anchored Canvas Lens card**: rejected because overlay collision, spatial keyboard navigation, and global recovery access add complexity.
+- **Use one Selected Object Workbench**: selected because one deep surface can keep Safety, Live action, and Definition simultaneously available while hiding runtime, draft, responsive, and accessibility complexity behind a small contextual interface.
 
 ### Expected implementation areas
 
@@ -176,9 +196,10 @@ Do not duplicate interlocking decisions in the ViewModel. Command availability r
 - `MOBAflow/View/SignalBoxPage.xaml`
 - `MOBAflow/View/TrackPlanPage.xaml.cs`
 - `MOBAflow/View/SignalBoxPage.xaml.cs`
-- new shared WinUI input adapters under `MOBAflow/Controls/Interlocking/`
+- a shared Selected Object Workbench input adapter under `MOBAflow/Controls/`
 - `SharedUI/ViewModel/InterlockingControlViewModel.cs`
-- page layout settings only if explicit Operations pinning is approved for persistence
+- page and definition ViewModels required to expose explicit selected-object draft state
+- page layout settings only if explicit Workbench pinning is approved for persistence
 - `Test/SharedUI/InterlockingControlViewModelTests.cs`
 - focused WinUI structure/selection tests under `Test/WinUI/`
 
@@ -201,6 +222,7 @@ Exit criteria:
 
 - Add the operational-context and next-valid-action presentation properties.
 - Separate concise availability, full state explanation, disabled reasons, and diagnostics.
+- Distinguish routine semantic actions from confirmation-required recovery actions without duplicating coordinator safety decisions.
 - Add unit tests for none, unbound, synchronized, locked, offline, failed, and reconciliation-required contexts.
 
 Exit criteria:
@@ -208,22 +230,24 @@ Exit criteria:
 - The ViewModel can drive the target UI without operational decisions in XAML or code-behind.
 - Every unavailable action has a deterministic reason.
 
-#### UX Slice C: Shared Operations surface
+#### UX Slice C: Selected Object Workbench
 
-- Build the reusable vertically grouped operations input adapter.
-- Implement contextual turnout, block, signal, and route templates.
+- Build the reusable vertically grouped Workbench input adapter.
+- Implement contextual turnout, block, signal, route, and unbound templates.
+- Separate Safety, Live action, and Definition with distinct focus groups and accessible descriptions.
 - Add the diagnostics expander and accessible live-region boundaries.
-- Extract route authoring into a dedicated TrackPlan editor surface.
+- Integrate route authoring as an explicit Definition draft without coupling it to live route commands.
 
 Exit criteria:
 
 - The control has no command behavior beyond forwarding input to ViewModel commands.
+- Definition draft actions cannot invoke runtime commands, and live actions cannot mutate definition drafts.
 - Full safety state remains readable without horizontal scrolling or ellipsis.
 
 #### UX Slice D: Page integration and responsive behavior
 
 - Remove the full-width interlocking Borders and horizontal ScrollViewers from both pages.
-- Add the Operations command and integrate the shared surface into the context column.
+- Add the Context command and replace the existing Properties surface with the shared Workbench.
 - Preserve TrackPlan and SignalBox selection synchronization and layout persistence semantics.
 - Add wide, compact, and overlay visual states.
 
@@ -251,19 +275,23 @@ Exit criteria:
 ### UX acceptance criteria
 
 1. Neither page shows an always-visible interlocking row after navigation.
-2. The canvas loses no vertical space to interlocking controls while Operations is closed.
-3. All existing turnout and route capabilities remain reachable from the Operations surface.
+2. The canvas loses no vertical space to interlocking controls while the Workbench is closed.
+3. All existing definition, turnout, and route capabilities remain reachable from the Selected Object Workbench.
 4. Selecting a bound canvas element updates the operational context on the same page.
 5. An unbound or stale selection cannot leave an actionable command for the previous entity.
 6. The next valid route action is visually primary; recovery actions appear only when relevant.
 7. Offline, unknown, locked, rejected, failed, and reconciliation-required states include full text and do not rely on color.
 8. Runtime revisions are available in Diagnostics but absent from the primary toolbar.
-9. No horizontal scrollbar is required for the Operations surface at supported widths or display scaling.
-10. Route authoring is visually and behaviorally separate from live route operation.
-11. Opening, closing, resizing, or switching the context column cannot mutate interlocking runtime state.
+9. No horizontal scrollbar is required for the Workbench at supported widths or display scaling.
+10. Route authoring and live route operation remain visibly and behaviorally separate sections of the same selected-route context.
+11. Opening, closing, pinning, resizing, or changing selection in the Workbench cannot mutate runtime or definition state.
 12. TrackPlanPage and SignalBoxPage continue to project the same runtime revision and entity state when observing the same shared runtime snapshot.
 13. Light, Dark, and High Contrast visuals, keyboard focus, and screen-reader announcements meet the project accessibility contract.
 14. MOBAflow is not launched for manual validation without explicit prior user approval.
+15. Applying or discarding a definition draft cannot invoke preview, set, cancel, release, reconcile, turnout, or signal commands.
+16. Executing a live command cannot mark, apply, or discard a definition draft.
+17. Routine semantic commands require one explicit activation and no confirmation dialog; selection or focus cannot activate them.
+18. Every exceptional recovery action presents a consequence-specific confirmation before invoking its existing semantic command.
 
 ## Outcome
 
