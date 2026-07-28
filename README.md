@@ -30,6 +30,15 @@ MOBAflow turns feedback from a Roco Z21 layout into useful actions: advance a
 journey, run a workflow, play an announcement or update a signal. Project data
 and layout communication stay on the local network.
 
+## Current Progress
+
+MOBAflow is currently moving toward its first stable release. The ongoing work
+completes and stabilizes all features that are currently available so they can
+ship as one coherent, reliable version. Follow the
+[roadmap](plans/ROADMAP.md), [public Kanban](https://github.com/users/ahuelsmann/projects/1)
+and [GitHub issues](https://github.com/ahuelsmann/MOBAflow/issues) for the live
+delivery status.
+
 ## The apps
 
 ### MOBAflow Desktop
@@ -152,9 +161,11 @@ MOBAflow can send commands to real model railroad hardware. Read the
 [hardware and liability notes](docs/HARDWARE-DISCLAIMER.md) before operating a
 layout.
 
-MOBAflow, MOBAsmart and MOBApi are intended for a trusted private LAN. MOBApi
-does not currently provide API-key authentication and must not be exposed to the
-public internet.
+MOBAflow, MOBAsmart and MOBApi are intended for a trusted private LAN and must
+not be exposed to the public internet. MOBApi's authenticated control-plane
+rollout includes protected desktop-host communication and an explicit,
+certificate-pinned MOBAsmart pairing flow; enforcement across all remote reads
+and commands is still being completed.
 
 MOBAflow is an independent open-source project. Product names and trademarks
 belong to their respective owners; see the

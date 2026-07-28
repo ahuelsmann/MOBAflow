@@ -2,7 +2,7 @@
 
 ## Document status
 
-- Status: Slices 1 through 4b merged; Slice 4c explicit MOBAsmart pairing UI ready for draft review
+- Status: Slices 1 through 4c merged; authenticated reads and unified control admission remain open
 - Primary issue: https://github.com/ahuelsmann/MOBAflow/issues/50
 - Parent programme: https://github.com/ahuelsmann/MOBAflow/issues/47
 - Security design record: [MOBApi Security Design](../docs/MOBAPI-SECURITY-DESIGN.md)
@@ -12,7 +12,7 @@
 
 This is the single implementation plan for RF-03. It sequences the work required to authenticate, authorize, validate, rate-limit, queue, and observe MOBApi control-plane traffic without combining the change into one broad server/client delivery.
 
-Slice 1 delivered the security design record without runtime changes. Slice 2 delivered the additive authentication and credential foundation. Slice 3 migrated only the trusted MOBAflow host paths. Slice 4a added authenticated LAN discovery metadata, Slice 4b established the pinning and protected mobile credential foundation, and Slice 4c now exposes the explicit fingerprint-verification and approval flow without yet enforcing authenticated reads.
+Slice 1 delivered the security design record without runtime changes. Slice 2 delivered the additive authentication and credential foundation. Slice 3 migrated only the trusted MOBAflow host paths. Slice 4a added authenticated LAN discovery metadata, Slice 4b established the pinning and protected mobile credential foundation, and Slice 4c exposes the explicit fingerprint-verification and approval flow without yet enforcing authenticated reads.
 
 ## Scope boundaries
 

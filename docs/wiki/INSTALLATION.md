@@ -61,7 +61,9 @@ run it separately:
 dotnet run --project MOBApi/MOBApi.csproj
 ```
 
-The default local endpoint is `http://0.0.0.0:5001`.
+The compatibility endpoint listens on `http://0.0.0.0:5001`. MOBApi also
+advertises its certificate-pinned HTTPS endpoint through LAN discovery for the
+protected host and MOBAsmart pairing flows.
 
 ## First desktop start
 
@@ -84,7 +86,11 @@ API.
 3. Wait for the Z21 status to become ON.
 4. Enable the **MOBAflow** switch to discover MOBApi and synchronize the current
    solution.
-5. Grant camera permission only if you want to upload photos.
+5. Open **Pairing**, compare the displayed certificate fingerprint with the
+   MOBAflow host, and submit the one-time pairing secret if protected remote
+   access is required. Pairing is explicit and does not yet replace every
+   compatibility read path.
+6. Grant camera permission only if you want to upload photos.
 
 See the [MOBAsmart guide](MOBASMART-USER-GUIDE.md) for the connection model and
 tab behavior.

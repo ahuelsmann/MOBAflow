@@ -13,7 +13,7 @@ requests remain the work items; the Kanban adds shared fields and useful views.
 | Priority       | P0, P1, P2, P3                                                                           |
 | Area           | MOBAflow, MOBAsmart, MOBApi, MOBAdisplay, Track plan, Z21, Documentation, Infrastructure |
 | Type           | Feature, Bug, Refactoring, Documentation, Security, Release                              |
-| Target release | 0.2.0, Future                                                                            |
+| Target release | First stable release, Future                                                            |
 
 ## Views
 
