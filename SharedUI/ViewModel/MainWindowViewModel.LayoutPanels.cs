@@ -2,6 +2,8 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Common.Configuration;
+using CommunityToolkit.Mvvm.Input;
+
 public partial class MainWindowViewModel
 {
     private bool _isJourneyListExpanded = true;
@@ -290,6 +292,9 @@ public partial class MainWindowViewModel
                 PersistLayoutState(layout => layout.SignalBoxPage.IsPropertiesExpanded = value);
         }
     }
+
+    [RelayCommand]
+    private void OpenSignalBoxWorkbench() => IsSignalBoxPropertiesExpanded = true;
 
     private void InitializeLayoutPanelStates()
     {

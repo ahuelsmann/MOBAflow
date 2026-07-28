@@ -37,7 +37,6 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
@@ -99,6 +98,14 @@
                 Icon="Zoom"
                 Label="100%"
                 ToolTipService.ToolTip="Reset zoom to 100% (Ctrl+1)" />
+            <AppBarButton
+                x:Name="ContextButton"
+                AutomationProperties.HelpText="{x:Bind InterlockingViewModel.AvailabilityDescription, Mode=OneWay}"
+                Click="OnContextButtonClick"
+                Command="{x:Bind ViewModel.OpenWorkbenchCommand}"
+                Icon="ContactInfo"
+                Label="Context"
+                ToolTipService.ToolTip="{x:Bind InterlockingViewModel.AvailabilityDescription, Mode=OneWay}" />
             <AppBarSeparator />
             <AppBarToggleButton
                 x:Name="SnapToggle"
@@ -156,181 +163,30 @@
                 </AppBarButton.Icon>
             </AppBarButton>
         </CommandBar>
-        <Border
-            Grid.Row="1"
-            Padding="12,8"
-            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-            BorderThickness="0,0,0,1">
-            <ScrollViewer HorizontalScrollBarVisibility="Auto" HorizontalScrollMode="Enabled">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <TextBlock
-                        VerticalAlignment="Center"
-                        AutomationProperties.LiveSetting="Polite"
-                        Text="{x:Bind InterlockingViewModel.StatusText, Mode=OneWay}" />
-                    <TextBlock
-                        VerticalAlignment="Center"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="{x:Bind InterlockingViewModel.Revision, Mode=OneWay}" />
-                    <ComboBox
-                        Width="160"
-                        AutomationProperties.Name="Operational turnout"
-                        DisplayMemberPath="Name"
-                        ItemsSource="{x:Bind InterlockingViewModel.Turnouts}"
-                        PlaceholderText="Select turnout"
-                        SelectedItem="{x:Bind InterlockingViewModel.SelectedTurnout, Mode=TwoWay}" />
-                    <Button
-                        AutomationProperties.Name="Set turnout straight"
-                        Command="{x:Bind InterlockingViewModel.SetTurnoutStraightCommand}"
-                        Content="Straight"
-                        IsEnabled="{x:Bind InterlockingViewModel.CanOperateTurnout, Mode=OneWay}" />
-                    <Button
-                        AutomationProperties.Name="Set turnout diverging left"
-                        Command="{x:Bind InterlockingViewModel.SetTurnoutDivergingLeftCommand}"
-                        Content="Left"
-                        IsEnabled="{x:Bind InterlockingViewModel.CanOperateTurnout, Mode=OneWay}" />
-                    <Button
-                        AutomationProperties.Name="Set turnout diverging right"
-                        Command="{x:Bind InterlockingViewModel.SetTurnoutDivergingRightCommand}"
-                        Content="Right"
-                        IsEnabled="{x:Bind InterlockingViewModel.CanOperateTurnout, Mode=OneWay}" />
-                    <TextBlock
-                        MaxWidth="240"
-                        VerticalAlignment="Center"
-                        AutomationProperties.LiveSetting="Polite"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="{x:Bind InterlockingViewModel.SelectedTurnout.AccessibleState, Mode=OneWay}"
-                        TextTrimming="CharacterEllipsis"
-                        ToolTipService.ToolTip="{x:Bind InterlockingViewModel.SelectedTurnout.AccessibleState, Mode=OneWay}" />
-                    <ComboBox
-                        Width="160"
-                        AutomationProperties.Name="Interlocking route"
-                        DisplayMemberPath="Name"
-                        ItemsSource="{x:Bind InterlockingViewModel.Routes}"
-                        PlaceholderText="Select route"
-                        SelectedItem="{x:Bind InterlockingViewModel.SelectedRoute, Mode=TwoWay}" />
-                    <Button
-                        Command="{x:Bind InterlockingViewModel.PreviewRouteCommand}"
-                        Content="Preview"
-                        IsEnabled="{x:Bind InterlockingViewModel.CanOperateRoute, Mode=OneWay}" />
-                    <Button
-                        Command="{x:Bind InterlockingViewModel.SelectRouteCommand}"
-                        Content="Select"
-                        IsEnabled="{x:Bind InterlockingViewModel.CanOperateRoute, Mode=OneWay}" />
-                    <Button
-                        Command="{x:Bind InterlockingViewModel.SetRouteCommand}"
-                        Content="Set"
-                        IsEnabled="{x:Bind InterlockingViewModel.CanOperateRoute, Mode=OneWay}" />
-                    <Button
-                        Command="{x:Bind InterlockingViewModel.CancelRouteCommand}"
-                        Content="Cancel"
-                        IsEnabled="{x:Bind InterlockingViewModel.HasSelectedRoute, Mode=OneWay}" />
-                    <Button
-                        Command="{x:Bind InterlockingViewModel.ReleaseRouteCommand}"
-                        Content="Release"
-                        IsEnabled="{x:Bind InterlockingViewModel.HasSelectedRoute, Mode=OneWay}" />
-                    <Button
-                        Command="{x:Bind InterlockingViewModel.ReconcileRouteCommand}"
-                        Content="Reconcile"
-                        IsEnabled="{x:Bind InterlockingViewModel.HasSelectedRoute, Mode=OneWay}" />
-                    <TextBlock
-                        MaxWidth="240"
-                        VerticalAlignment="Center"
-                        AutomationProperties.LiveSetting="Polite"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="{x:Bind InterlockingViewModel.SelectedRoute.AccessibleState, Mode=OneWay}"
-                        TextTrimming="CharacterEllipsis"
-                        ToolTipService.ToolTip="{x:Bind InterlockingViewModel.SelectedRoute.AccessibleState, Mode=OneWay}" />
-                    <Button Content="Route editor">
-                        <Button.Flyout>
-                            <Flyout>
-                                <ScrollViewer MaxHeight="640">
-                                    <StackPanel Width="420" Spacing="10">
-                                        <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Route editor" />
-                                        <TextBlock
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            Text="{x:Bind InterlockingViewModel.DraftSummary, Mode=OneWay}"
-                                            TextWrapping="WrapWholeWords" />
-                                        <Button
-                                            Command="{x:Bind InterlockingViewModel.BeginRouteDraftCommand}"
-                                            Content="Start new route" />
-                                        <TextBox
-                                            AutomationProperties.Name="Route name"
-                                            Header="Name"
-                                            Text="{x:Bind InterlockingViewModel.DraftName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                        <ComboBox
-                                            AutomationProperties.Name="Operational route element"
-                                            DisplayMemberPath="DisplayName"
-                                            Header="Operational element"
-                                            ItemsSource="{x:Bind InterlockingViewModel.OperationalElements}"
-                                            SelectedItem="{x:Bind InterlockingViewModel.SelectedOperationalElement, Mode=TwoWay}" />
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <Button Command="{x:Bind InterlockingViewModel.SetDraftEntryCommand}" Content="Set entry" />
-                                            <Button Command="{x:Bind InterlockingViewModel.AppendDraftPathCommand}" Content="Append path" />
-                                            <Button Command="{x:Bind InterlockingViewModel.SetDraftExitCommand}" Content="Set exit" />
-                                        </StackPanel>
-                                        <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Turnout requirement" />
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <ComboBox
-                                                Width="180"
-                                                DisplayMemberPath="Name"
-                                                ItemsSource="{x:Bind InterlockingViewModel.Turnouts}"
-                                                PlaceholderText="Select turnout"
-                                                SelectedItem="{x:Bind InterlockingViewModel.SelectedTurnout, Mode=TwoWay}" />
-                                            <ComboBox
-                                                Width="150"
-                                                ItemsSource="{x:Bind InterlockingViewModel.TurnoutPositions}"
-                                                SelectedItem="{x:Bind InterlockingViewModel.DraftTurnoutPosition, Mode=TwoWay}" />
-                                            <Button Command="{x:Bind InterlockingViewModel.AddDraftTurnoutRequirementCommand}" Content="Add" />
-                                        </StackPanel>
-                                        <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Protected block" />
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <ComboBox
-                                                Width="250"
-                                                DisplayMemberPath="Name"
-                                                ItemsSource="{x:Bind InterlockingViewModel.Blocks}"
-                                                PlaceholderText="Select block"
-                                                SelectedItem="{x:Bind InterlockingViewModel.SelectedBlock, Mode=TwoWay}" />
-                                            <Button Command="{x:Bind InterlockingViewModel.AddDraftBlockCommand}" Content="Add" />
-                                        </StackPanel>
-                                        <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Protected signal" />
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <ComboBox
-                                                Width="150"
-                                                DisplayMemberPath="Name"
-                                                ItemsSource="{x:Bind InterlockingViewModel.Signals}"
-                                                PlaceholderText="Select signal"
-                                                SelectedItem="{x:Bind InterlockingViewModel.SelectedSignal, Mode=TwoWay}" />
-                                            <ComboBox
-                                                Width="130"
-                                                ItemsSource="{x:Bind InterlockingViewModel.SignalAspects}"
-                                                SelectedItem="{x:Bind InterlockingViewModel.DraftSignalAspect, Mode=TwoWay}" />
-                                            <Button Command="{x:Bind InterlockingViewModel.AddDraftSignalRequirementCommand}" Content="Add" />
-                                        </StackPanel>
-                                        <ItemsControl ItemsSource="{x:Bind InterlockingViewModel.ValidationMessages, Mode=OneWay}">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <TextBlock
-                                                        Foreground="{ThemeResource SystemFillColorCriticalBrush}"
-                                                        Text="{Binding}"
-                                                        TextWrapping="WrapWholeWords" />
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <Button Command="{x:Bind InterlockingViewModel.ValidateRouteDraftCommand}" Content="Validate" />
-                                            <Button Command="{x:Bind InterlockingViewModel.SaveRouteDraftCommand}" Content="Save route" />
-                                        </StackPanel>
-                                    </StackPanel>
-                                </ScrollViewer>
-                            </Flyout>
-                        </Button.Flyout>
-                    </Button>
-                </StackPanel>
-            </ScrollViewer>
-        </Border>
         <!--  Main Content Grid  -->
-        <Grid x:Name="MainGrid" Grid.Row="2">
+        <Grid x:Name="MainGrid" Grid.Row="1">
+            <VisualStateManager.VisualStateGroups>
+                <VisualStateGroup x:Name="WorkbenchLayoutStates">
+                    <VisualState x:Name="WideWorkbenchState">
+                        <VisualState.StateTriggers>
+                            <AdaptiveTrigger MinWindowWidth="1024" />
+                        </VisualState.StateTriggers>
+                    </VisualState>
+                    <VisualState x:Name="CompactWorkbenchState">
+                        <VisualState.StateTriggers>
+                            <AdaptiveTrigger MinWindowWidth="0" />
+                        </VisualState.StateTriggers>
+                        <VisualState.Setters>
+                            <Setter Target="ColProperties.Width" Value="0" />
+                            <Setter Target="RightWorkbenchSplitter.Visibility" Value="Collapsed" />
+                            <Setter Target="WorkbenchHost.(Grid.Column)" Value="2" />
+                            <Setter Target="WorkbenchHost.HorizontalAlignment" Value="Right" />
+                            <Setter Target="WorkbenchHost.Width" Value="360" />
+                            <Setter Target="WorkbenchHost.(Panel.ZIndex)" Value="10" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateManager.VisualStateGroups>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition
                     x:Name="ColToolbox"
@@ -442,21 +298,33 @@
             </Border>
 
             <controls1:GridSplitter
+                x:Name="RightWorkbenchSplitter"
                 Grid.Column="3"
                 Width="4"
                 HorizontalAlignment="Left"
                 ResizeBehavior="PreviousAndNext" />
 
-            <!--  Right Panel: Properties  -->
+            <!--  Right Panel: Selected Object Workbench  -->
             <controls:CollapsibleColumnProperties
+                x:Name="WorkbenchHost"
                 Grid.Column="4"
                 Margin="0"
+                MaxWidth="420"
                 Glyph="&#xE946;"
-                Header="Properties"
+                Header="Context"
                 IsExpanded="{x:Bind ViewModel.IsPropertiesExpanded, Mode=TwoWay}">
                 <controls:CollapsibleColumnProperties.PanelContent>
-                    <ScrollViewer Padding="16">
-                        <StackPanel Spacing="16">
+                    <controls:SelectedObjectWorkbench
+                        x:Name="SelectedObjectWorkbench"
+                        ShowRouteAuthoring="True"
+                        ViewModel="{x:Bind InterlockingViewModel}">
+                        <controls:SelectedObjectWorkbench.DefinitionContent>
+                            <StackPanel Padding="0,8,0,0" Spacing="16">
+                                <TextBlock
+                                    AutomationProperties.LiveSetting="Polite"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="{x:Bind MainViewModel.SolutionSaveStatusText, Mode=OneWay}"
+                                    TextWrapping="WrapWholeWords" />
                             <!--  Selection Info  -->
                             <StackPanel Spacing="8">
                                 <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Selection" />
@@ -716,14 +584,15 @@
                                     </StackPanel>
                                 </StackPanel>
                             </StackPanel>
-                        </StackPanel>
-                    </ScrollViewer>
+                            </StackPanel>
+                        </controls:SelectedObjectWorkbench.DefinitionContent>
+                    </controls:SelectedObjectWorkbench>
                 </controls:CollapsibleColumnProperties.PanelContent>
             </controls:CollapsibleColumnProperties>
         </Grid>
         <!--  Status Bar  -->
         <Border
-            Grid.Row="3"
+            Grid.Row="2"
             Padding="16,8"
             Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"

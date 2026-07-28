@@ -55,6 +55,8 @@ This implementation proves that both pages can consume the shared runtime, but i
 - Q: What is the primary role of TrackPlanPage and SignalBoxPage? -> A: Both pages support editing and live operation as equal first-class workflows.
 - Q: Which interaction model should make editing and live operation equally available? -> A: Use one Selected Object Workbench without a global Edit/Operate mode.
 - Q: How should the Workbench protect against accidental live commands? -> A: Routine semantic commands execute from explicit named buttons without confirmation; exceptional recovery actions require confirmation.
+- Q: What happens to definition changes when selection moves to another object? -> A: Definition changes save automatically without an Apply/Discard/Stay selection-change prompt.
+- Q: When should an accepted definition field change be written to the solution file? -> A: Every valid ViewModel field change immediately requests a file save, without debounce.
 
 ### UX outcome
 
@@ -68,7 +70,7 @@ The experience has three levels:
 2. **Selected object**: the Workbench presents clearly separated Safety, Live action, and Definition sections for the current turnout, block, signal, route, or representation.
 3. **Progressive detail**: additional properties, validation, correlation/revision data, and diagnostics remain available through explicitly expanded sections.
 
-Opening, closing, pinning, resizing, or changing selection in the Workbench must never start, cancel, release, apply a draft, or otherwise mutate runtime or persisted definition state.
+Opening, closing, pinning, resizing, or changing selection in the Workbench must never start, cancel, release, or otherwise mutate runtime state. Selection itself does not save; only an actual definition edit may enter the validation-gated autosave path.
 
 ### Information architecture
 
@@ -116,26 +118,45 @@ The content is vertically scrollable and grouped as follows:
    - Routine semantic commands execute only from an explicit, clearly named button and do not add a confirmation step.
    - Exceptional recovery actions require a confirmation that states the affected object, retained or released safety state, and expected consequence.
    - Selection, focus, opening, closing, and keyboard navigation never execute the primary action implicitly.
+   - Recovery classification is derived from the command and current route lifecycle:
+     - `Reconcile` always requires confirmation because a successful reconciliation may release retained locks and reservations after failed, timed-out, or late feedback.
+     - `Cancel` before hardware dispatch is routine and requires no confirmation.
+     - `Cancel` during `Setting` or another pending hardware-confirmation state requires confirmation because the route enters `Failed`, protected signals remain at stop, and uncertain resources remain locked for reconciliation.
+     - `Release` after the configured route-clear conditions are verified is the routine lifecycle completion and requires no confirmation. If those conditions are not satisfied, Release remains unavailable rather than becoming a forced release.
+     - `Safe Stop` requires no confirmation because it immediately requests the safer signal state and retains conservative locks. It is not currently exposed by `InterlockingControlViewModel`.
+     - Future forced release, lock reset, or occupancy-override commands remain out of scope; if introduced through a separately approved change, they require consequence-specific confirmation.
 4. **Definition**
-   - Selected-object properties, representation binding, and validation are edited as an explicit draft.
-   - Draft state, `Apply changes`, and `Discard changes` are visually and semantically separate from Live action.
-   - Applying a definition draft never selects, previews, reserves, sets, cancels, releases, or reconciles a runtime entity.
+   - Selected-object properties, representation binding, and validation use a validation-gated autosave workflow.
+   - The Workbench shows `Saving`, `Saved`, `Not saved`, and validation-error state without requiring `Apply changes`, `Discard changes`, or a selection-change prompt.
+   - Invalid or incomplete input cannot replace the last valid authoritative definition.
+   - Definition autosave never selects, previews, reserves, sets, cancels, releases, or reconciles a runtime entity.
 5. **Details and diagnostics**
    - Revision, correlation, timestamps, and detailed structured state.
    - Collapsed by default and excluded from routine screen-reader live announcements.
 
 Safety-critical state must never rely on color alone and must not be truncated without another immediately available full-text representation. Live actions and definition actions require distinct headings, button hierarchy, focus groups, and accessible descriptions.
 
+#### Definition autosave contract
+
+- Every valid definition value accepted by the ViewModel immediately updates the authoritative in-memory definition and requests persistence; there is no debounce timer.
+- Validation runs before replacing the last valid definition. An invalid or incomplete value remains visible as `Not saved` and does not enter the authoritative model.
+- Autosave reuses the non-interactive `SaveSolutionInternalAsync` boundary.
+- When `CurrentSolutionPath` is known, autosave silently overwrites that file through `SaveAsync`; it never calls `SaveAsAsync`.
+- When `CurrentSolutionPath` is unknown, the in-memory definition remains changed, `HasUnsavedChanges` stays true, and the Workbench shows `Not saved - choose Save As`; autosave never opens a picker.
+- Save requests are serialized in edit order so an older asynchronous write cannot overwrite a newer accepted value.
+- `Saving` remains visible while any requested write is pending. `Saved` appears only after the latest accepted value has been persisted successfully.
+- A write failure keeps `HasUnsavedChanges` true, exposes a non-modal actionable error, and does not roll back runtime state or invoke any live command.
+- Canvas selection changes neither flush nor create an additional save request; they only display the save state already produced by actual edits.
+
 #### Route authoring
 
 Route authoring appears as a task-focused Definition section in the same Workbench:
 
 - Preserve entry, ordered path, exit, turnout, block, protected-signal, validation, and save capabilities.
-- Present the draft as grouped form sections with a persistent validation summary and explicit `Validate`, `Apply changes`, and `Discard changes` actions.
+- Present the draft as grouped form sections with a persistent validation and autosave summary.
 - A short-lived, field-specific `Pick from canvas` interaction may collect route elements without introducing a global page mode.
-- Warn before discarding a dirty draft.
 - Keep the Definition and Live action sections visibly separate even though both refer to the same route.
-- A saved route is not automatically selected, reserved, or set.
+- An autosaved route definition is not automatically selected, reserved, or set.
 
 ### Page-specific behavior
 
@@ -161,9 +182,9 @@ Keep the runtime, coordinator, domain safety engine, and EventBus threading boun
 - `SelectedOperationalContext` or equivalent discriminated presentation state for turnout, block, signal, route, or none.
 - Concise `AvailabilityText` and accessible availability description for the command bar.
 - Full, wrapped context state separate from the existing concise status message.
-- Explicit selected-object draft state that remains separate from immutable runtime snapshots.
+- Explicit selected-object edit, validation, and autosave state that remains separate from immutable runtime snapshots.
 - `PrimaryRouteActionLabel`, availability, command, and disabled reason derived from the route lifecycle.
-- Visibility and disabled-reason properties for secondary route recovery actions.
+- Visibility, disabled reason, `RequiresConfirmation`, and consequence-specific confirmation text for secondary route recovery actions.
 - Supported turnout-position actions derived from the definition instead of always showing all three buttons.
 - Diagnostics presentation state that does not trigger primary live-region announcements on every revision.
 
@@ -198,9 +219,11 @@ Do not duplicate interlocking decisions in the ViewModel. Command availability r
 - `MOBAflow/View/SignalBoxPage.xaml.cs`
 - a shared Selected Object Workbench input adapter under `MOBAflow/Controls/`
 - `SharedUI/ViewModel/InterlockingControlViewModel.cs`
-- page and definition ViewModels required to expose explicit selected-object draft state
+- page and definition ViewModels required to expose selected-object validation and autosave state
+- `SharedUI/ViewModel/MainWindowViewModel.cs` non-interactive `SaveSolutionInternalAsync` integration
 - page layout settings only if explicit Workbench pinning is approved for persistence
 - `Test/SharedUI/InterlockingControlViewModelTests.cs`
+- `Test/SharedUI/MainWindowViewModelStartupAutoSaveTests.cs`
 - focused WinUI structure/selection tests under `Test/WinUI/`
 
 No Domain, Backend, coordinator, Z21, persistence-schema, or hardware-effect changes are expected. Any required change in those areas is a scope expansion and must be justified before implementation.
@@ -223,6 +246,9 @@ Exit criteria:
 - Add the operational-context and next-valid-action presentation properties.
 - Separate concise availability, full state explanation, disabled reasons, and diagnostics.
 - Distinguish routine semantic actions from confirmation-required recovery actions without duplicating coordinator safety decisions.
+- Test lifecycle-aware recovery classification: Reconcile always confirms; Cancel confirms only after hardware dispatch begins; normal Release and Safe Stop do not confirm.
+- Project every valid definition property change immediately to the existing non-interactive autosave boundary.
+- Serialize rapid save requests and expose deterministic `Saving`, `Saved`, `Not saved`, and validation-error states.
 - Add unit tests for none, unbound, synchronized, locked, offline, failed, and reconciliation-required contexts.
 
 Exit criteria:
@@ -236,12 +262,12 @@ Exit criteria:
 - Implement contextual turnout, block, signal, route, and unbound templates.
 - Separate Safety, Live action, and Definition with distinct focus groups and accessible descriptions.
 - Add the diagnostics expander and accessible live-region boundaries.
-- Integrate route authoring as an explicit Definition draft without coupling it to live route commands.
+- Integrate route authoring as a validation-gated autosave workflow without coupling it to live route commands.
 
 Exit criteria:
 
 - The control has no command behavior beyond forwarding input to ViewModel commands.
-- Definition draft actions cannot invoke runtime commands, and live actions cannot mutate definition drafts.
+- Definition autosave cannot invoke runtime commands, and live actions cannot mutate pending definition edits.
 - Full safety state remains readable without horizontal scrolling or ellipsis.
 
 #### UX Slice D: Page integration and responsive behavior
@@ -284,14 +310,21 @@ Exit criteria:
 8. Runtime revisions are available in Diagnostics but absent from the primary toolbar.
 9. No horizontal scrollbar is required for the Workbench at supported widths or display scaling.
 10. Route authoring and live route operation remain visibly and behaviorally separate sections of the same selected-route context.
-11. Opening, closing, pinning, resizing, or changing selection in the Workbench cannot mutate runtime or definition state.
+11. Opening, closing, pinning, resizing, or changing selection in the Workbench cannot mutate runtime state; selection without an edit cannot invoke autosave.
 12. TrackPlanPage and SignalBoxPage continue to project the same runtime revision and entity state when observing the same shared runtime snapshot.
 13. Light, Dark, and High Contrast visuals, keyboard focus, and screen-reader announcements meet the project accessibility contract.
 14. MOBAflow is not launched for manual validation without explicit prior user approval.
-15. Applying or discarding a definition draft cannot invoke preview, set, cancel, release, reconcile, turnout, or signal commands.
-16. Executing a live command cannot mark, apply, or discard a definition draft.
+15. Definition autosave cannot invoke preview, set, cancel, release, reconcile, turnout, or signal commands.
+16. Executing a live command cannot start, complete, or clear a pending definition autosave.
 17. Routine semantic commands require one explicit activation and no confirmation dialog; selection or focus cannot activate them.
-18. Every exceptional recovery action presents a consequence-specific confirmation before invoking its existing semantic command.
+18. Reconcile always presents a consequence-specific confirmation before invoking its existing semantic command.
+19. A valid definition edit saves automatically without blocking canvas selection; invalid or incomplete input leaves the last valid authoritative definition unchanged and shows `Not saved`.
+20. Every valid ViewModel field change requests persistence without debounce; save requests complete in edit order and the final file contains the newest accepted value.
+21. Autosave calls `SaveAsync` only when `CurrentSolutionPath` is known and never calls `SaveAsAsync`.
+22. Without a known path or after a write failure, `HasUnsavedChanges` remains true and the Workbench reports `Not saved` without opening a picker.
+23. Cancel requires confirmation only while route setting or hardware confirmation is pending; the message states that the route becomes failed and uncertain resources remain locked.
+24. Normal full-route Release requires no confirmation and is unavailable until the coordinator verifies its route-clear conditions.
+25. Safe Stop requires no confirmation and cannot release retained locks.
 
 ## Outcome
 
@@ -756,6 +789,12 @@ Mitigation: RF-04 gate, serialized coordinator, revisions, correlation IDs, and 
 Risk: route editing adds more domain behavior to large pages and controls.
 
 Mitigation: RF-13/RF-14 gates, command-oriented ViewModels, renderer-neutral presentation state, and architecture tests.
+
+### Immediate autosave write pressure
+
+Risk: text editing can produce many valid property changes and therefore many file writes; overlapping writes could persist an older snapshot after a newer one or make save status misleading.
+
+Mitigation: validate before mutation, enqueue every accepted change on one ordered non-interactive save boundary, keep `Saving` visible until the newest requested write succeeds, retain `HasUnsavedChanges` on failure or missing path, and test rapid edits with delayed and failing `IIoService` implementations.
 
 ### Scope expansion into automation or dispatch
 

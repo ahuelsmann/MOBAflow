@@ -39,6 +39,7 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
     private readonly IEventBus _eventBus;
     private readonly IProjectContext _projectContext;
     private readonly IInterlockingDefinitionValidator _validator;
+    private readonly IDialogService _dialogService;
     private readonly ILogger<InterlockingControlViewModel> _logger;
     private readonly List<RouteTurnoutRequirement> _draftTurnouts = [];
     private readonly List<Guid> _draftBlocks = [];
@@ -53,18 +54,21 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
         IEventBus eventBus,
         IProjectContext projectContext,
         IInterlockingDefinitionValidator validator,
+        IDialogService dialogService,
         ILogger<InterlockingControlViewModel> logger)
     {
         ArgumentNullException.ThrowIfNull(runtime);
         ArgumentNullException.ThrowIfNull(eventBus);
         ArgumentNullException.ThrowIfNull(projectContext);
         ArgumentNullException.ThrowIfNull(validator);
+        ArgumentNullException.ThrowIfNull(dialogService);
         ArgumentNullException.ThrowIfNull(logger);
 
         _runtime = runtime;
         _eventBus = eventBus;
         _projectContext = projectContext;
         _validator = validator;
+        _dialogService = dialogService;
         _logger = logger;
         RefreshDefinitions();
         ApplySnapshot(_runtime.Current, _runtime.IsSynchronized, "interlocking.current");
@@ -137,13 +141,21 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
     public string StatusText
     {
         get => _statusText;
-        private set => SetProperty(ref _statusText, value);
+        private set
+        {
+            if (SetProperty(ref _statusText, value))
+                OnPropertyChanged(nameof(AvailabilityDescription));
+        }
     }
 
     public string StatusCode
     {
         get => _statusCode;
-        private set => SetProperty(ref _statusCode, value);
+        private set
+        {
+            if (SetProperty(ref _statusCode, value))
+                OnPropertyChanged(nameof(DiagnosticsText));
+        }
     }
 
     /// <summary>
@@ -215,28 +227,81 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
     [RelayCommand]
     private Task SetRouteAsync() => ExecuteRouteAsync(_runtime.SetRouteAsync);
 
-    [RelayCommand]
-    private Task CancelRouteAsync() => ExecuteRouteAsync(_runtime.CancelRouteAsync);
+    [RelayCommand(CanExecute = nameof(CanCancelSelectedRoute))]
+    private async Task CancelRouteAsync()
+    {
+        if (SelectedRoute == null)
+        {
+            SetStatus("route.selection.missing", "Select a route first.");
+            return;
+        }
 
-    [RelayCommand]
+        if (SelectedRouteLifecycle == RouteLifecycle.Setting)
+        {
+            var confirmed = await _dialogService.ShowConfirmationAsync(
+                "Cancel route setting?",
+                $"Cancel setting '{SelectedRoute.Name}'? The route becomes failed, protected signals remain at stop, "
+                + "and uncertain resources remain locked until reconciliation.",
+                "Cancel setting",
+                "Keep setting").ConfigureAwait(true);
+            if (!confirmed)
+                return;
+        }
+
+        await ExecuteRouteAsync(_runtime.CancelRouteAsync).ConfigureAwait(true);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanReleaseSelectedRoute))]
     private Task ReleaseRouteAsync() => ExecuteRouteAsync(_runtime.ReleaseRouteAsync);
 
-    [RelayCommand]
-    private Task ReconcileRouteAsync() => ExecuteRouteAsync(_runtime.ReconcileRouteAsync);
+    [RelayCommand(CanExecute = nameof(CanSafeStopSelectedRoute))]
+    private Task SafeStopRouteAsync() => ExecuteRouteAsync(_runtime.SafeStopRouteAsync);
+
+    [RelayCommand(CanExecute = nameof(CanReconcileSelectedRoute))]
+    private async Task ReconcileRouteAsync()
+    {
+        if (SelectedRoute == null)
+        {
+            SetStatus("route.selection.missing", "Select a route first.");
+            return;
+        }
+
+        var confirmed = await _dialogService.ShowConfirmationAsync(
+            "Reconcile route?",
+            $"Reconcile '{SelectedRoute.Name}'? Successful reconciliation may release retained locks and "
+            + "reservations after failed, timed-out, or late hardware feedback.",
+            "Reconcile",
+            "Keep locked").ConfigureAwait(true);
+        if (!confirmed)
+            return;
+
+        await ExecuteRouteAsync(_runtime.ReconcileRouteAsync).ConfigureAwait(true);
+    }
+
+    private bool CanCancelSelectedRoute() => IsCancelRouteVisible;
+
+    private bool CanReleaseSelectedRoute() => CanReleaseRoute;
+
+    private bool CanSafeStopSelectedRoute() => IsSafeStopRouteVisible;
+
+    private bool CanReconcileSelectedRoute() => IsReconcileRouteVisible;
 
     [RelayCommand]
     private void BeginRouteDraft()
     {
         _draftRouteId = Guid.NewGuid();
-        DraftName = "New route";
+        DraftEntryId = Guid.Empty;
+        DraftExitId = Guid.Empty;
         _draftPath.Clear();
         _draftTurnouts.Clear();
         _draftBlocks.Clear();
         _draftSignals.Clear();
         ValidationMessages = [];
         OnPropertyChanged(nameof(ValidationMessages));
+        DraftName = "New route";
         UpdateDraftSummary();
         SetStatus("route.draft.started", "Route draft started.");
+        ValidateAndRequestDefinitionSave();
     }
 
     [RelayCommand]
@@ -251,6 +316,7 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
 
         DraftEntryId = SelectedOperationalElement.Id;
         UpdateDraftSummary();
+        ValidateAndRequestDefinitionSave();
     }
 
     [RelayCommand]
@@ -265,6 +331,7 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
 
         _draftPath.Add(SelectedOperationalElement.Id);
         UpdateDraftSummary();
+        ValidateAndRequestDefinitionSave();
     }
 
     [RelayCommand]
@@ -279,6 +346,7 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
 
         DraftExitId = SelectedOperationalElement.Id;
         UpdateDraftSummary();
+        ValidateAndRequestDefinitionSave();
     }
 
     [RelayCommand]
@@ -298,6 +366,7 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
             Position = DraftTurnoutPosition
         });
         UpdateDraftSummary();
+        ValidateAndRequestDefinitionSave();
     }
 
     [RelayCommand]
@@ -313,6 +382,7 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
         if (!_draftBlocks.Contains(SelectedBlock.Id))
             _draftBlocks.Add(SelectedBlock.Id);
         UpdateDraftSummary();
+        ValidateAndRequestDefinitionSave();
     }
 
     [RelayCommand]
@@ -332,6 +402,7 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
             ProceedAspect = DraftSignalAspect
         });
         UpdateDraftSummary();
+        ValidateAndRequestDefinitionSave();
     }
 
     [RelayCommand]
@@ -350,97 +421,11 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
             report.IsValid ? "Route draft is valid." : $"Route draft has {report.Findings.Count} finding(s).");
     }
 
-    [RelayCommand]
-    private async Task SaveRouteDraftAsync()
-    {
-        var project = CurrentProject;
-        var report = ValidateDraft();
-        if (project == null || report == null)
-            return;
-
-        ValidationMessages = report.Findings
-            .Select(finding => $"{finding.Code}: {finding.Message}")
-            .ToArray();
-        OnPropertyChanged(nameof(ValidationMessages));
-        if (!report.IsValid)
-        {
-            SetStatus("route.draft.invalid", "Resolve route validation findings before saving.");
-            return;
-        }
-
-        var route = CreateDraftRoute();
-        project.Interlocking.Routes.Add(route);
-        try
-        {
-            await _projectContext.SaveSolutionInternalAsync().ConfigureAwait(true);
-        }
-        catch (IOException ex)
-        {
-            HandleRoutePersistenceFailure(project, route, ex);
-            return;
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            HandleRoutePersistenceFailure(project, route, ex);
-            return;
-        }
-        catch (InvalidOperationException ex)
-        {
-            HandleRoutePersistenceFailure(project, route, ex);
-            return;
-        }
-        catch (NotSupportedException ex)
-        {
-            HandleRoutePersistenceFailure(project, route, ex);
-            return;
-        }
-
-        try
-        {
-            await _runtime.ActivateAsync(project.Interlocking).ConfigureAwait(true);
-        }
-        catch (ObjectDisposedException ex)
-        {
-            HandleRouteActivationFailure(route, ex);
-            return;
-        }
-        catch (InvalidOperationException ex)
-        {
-            HandleRouteActivationFailure(route, ex);
-            return;
-        }
-
-        RefreshDefinitions();
-        SelectedRoute = Routes.FirstOrDefault(item => item.Id == route.Id);
-        SetStatus("route.draft.saved", $"Route '{route.Name}' saved.");
-        _draftRouteId = Guid.Empty;
-        UpdateDraftSummary();
-    }
-
     private Guid DraftEntryId { get; set; }
 
     private Guid DraftExitId { get; set; }
 
     private Project? CurrentProject => _projectContext.SelectedProject?.Model;
-
-    private void HandleRoutePersistenceFailure(Project project, RouteDefinition route, Exception exception)
-    {
-        project.Interlocking.Routes.Remove(route);
-        LogRoutePersistenceFailure(_logger, route.Id, exception);
-        SetStatus("route.draft.save-failed", "The route could not be saved.");
-    }
-
-    private void HandleRouteActivationFailure(RouteDefinition route, Exception exception)
-    {
-        LogRouteActivationFailure(_logger, route.Id, exception);
-        RefreshDefinitions();
-        SelectedRoute = Routes.FirstOrDefault(item => item.Id == route.Id);
-        SetStatus(
-            "route.draft.activation-failed",
-            $"Route '{route.Name}' was saved, but the live interlocking could not be reloaded.");
-        _draftRouteId = Guid.Empty;
-        UpdateDraftSummary();
-    }
 
     private async Task SetTurnoutAsync(TurnoutPosition position)
     {
@@ -505,12 +490,15 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
             OperationalElements.Add(new OperationalElementOption(signal.Id, signal.Name, "Signal"));
         foreach (var block in definition.Blocks)
             OperationalElements.Add(new OperationalElementOption(block.Id, block.Name, "Block"));
+        foreach (var route in definition.Routes)
+            OperationalElements.Add(new OperationalElementOption(route.Id, route.Name, "Route"));
 
         ApplySnapshot(_runtime.Current, _runtime.IsSynchronized, StatusCode);
     }
 
     private void ApplySnapshot(InterlockingRuntimeState state, bool isSynchronized, string code)
     {
+        UpdateProjectedState(state);
         var definition = CurrentProject?.Interlocking;
         var selectedTurnoutId = SelectedTurnout?.Id;
         var selectedBlockId = SelectedBlock?.Id;
@@ -539,6 +527,7 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
         StatusCode = code;
         if (code is "interlocking.current" or "interlocking.project.changed")
             StatusText = isSynchronized ? "Interlocking synchronized." : "Interlocking is not synchronized.";
+        UpdateSelectedContextAfterSnapshot();
     }
 
     private void ApplyResult(string code, string message, InterlockingRuntimeState state)
@@ -551,6 +540,10 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
         Guid? representationId,
         Func<OperationalBinding, IReadOnlyList<Guid>> selector)
     {
+        ClearOperationalSelection(
+            representationId.HasValue
+                ? SelectedOperationalContext.Unbound
+                : SelectedOperationalContext.None);
         if (!representationId.HasValue)
             return;
 
@@ -573,11 +566,7 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
 
     private void SelectOperationalId(Guid operationalId)
     {
-        SelectedTurnout = Turnouts.FirstOrDefault(item => item.Id == operationalId);
-        SelectedBlock = Blocks.FirstOrDefault(item => item.Id == operationalId);
-        SelectedSignal = Signals.FirstOrDefault(item => item.Id == operationalId);
-        SelectedRoute = Routes.FirstOrDefault(item => item.Id == operationalId);
-        SelectedOperationalElement = OperationalElements.FirstOrDefault(item => item.Id == operationalId);
+        ProjectOperationalSelection(operationalId);
     }
 
     private InterlockingItemViewState? FindState(Guid operationalId) =>
@@ -593,17 +582,8 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
         }
 
         EnsureDraft();
-        var existingRoutes = project.Interlocking.Routes;
         var route = CreateDraftRoute();
-        existingRoutes.Add(route);
-        try
-        {
-            return _validator.Validate(project);
-        }
-        finally
-        {
-            existingRoutes.Remove(route);
-        }
+        return ValidateRouteCandidate(project, route);
     }
 
     private RouteDefinition CreateDraftRoute() =>

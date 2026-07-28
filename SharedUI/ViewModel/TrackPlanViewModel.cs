@@ -99,6 +99,9 @@ public sealed partial class TrackPlanViewModel : ObservableObject, IViewModelWra
     [RelayCommand]
     public void SelectTrack(Guid? trackId) => _editorService.Select(trackId);
 
+    [RelayCommand]
+    private void OpenWorkbench() => IsPropertiesExpanded = true;
+
     [RelayCommand(CanExecute = nameof(CanDeleteSelectedTrack))]
     public void DeleteSelectedTrack()
     {

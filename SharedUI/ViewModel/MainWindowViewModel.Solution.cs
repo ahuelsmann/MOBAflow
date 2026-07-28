@@ -66,21 +66,49 @@ public partial class MainWindowViewModel
     public async Task SaveSolutionInternalAsync()
     {
         MarkSolutionDirty();
+        var requestVersion = BeginSolutionAutoSaveRequest();
 
         // Skip if IoService not available (WebApp/MAUI)
         if (_ioService is NullIoService)
+        {
+            SetSolutionSaveStatus(SolutionSaveState.NotSaved, "Not saved");
             return;
+        }
 
         var currentPath = CurrentSolutionPath;
         if (_isShuttingDown || string.IsNullOrWhiteSpace(currentPath))
         {
+            SetSolutionSaveStatus(
+                SolutionSaveState.NotSaved,
+                string.IsNullOrWhiteSpace(currentPath)
+                    ? "Not saved - choose Save As"
+                    : "Not saved - application is shutting down");
             return;
         }
 
-        await SaveSolutionCoreAsync(currentPath, allowPathSelection: false).ConfigureAwait(false);
+        try
+        {
+            await SaveSolutionCoreAsync(
+                currentPath,
+                allowPathSelection: false,
+                requestVersion).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
+                                   or InvalidOperationException or NotSupportedException)
+        {
+            if (IsLatestSolutionAutoSaveRequest(requestVersion))
+            {
+                SetSolutionSaveStatus(SolutionSaveState.NotSaved, $"Not saved - {ex.Message}");
+            }
+
+            throw;
+        }
     }
 
-    private async Task<bool> SaveSolutionCoreAsync(string? currentPath, bool allowPathSelection)
+    private async Task<bool> SaveSolutionCoreAsync(
+        string? currentPath,
+        bool allowPathSelection,
+        long? autoSaveRequestVersion = null)
     {
         if (_ioService is NullIoService || _isShuttingDown)
         {
@@ -111,11 +139,17 @@ public partial class MainWindowViewModel
                 : await _ioService.SaveAsync(Solution, currentPath).ConfigureAwait(false);
             if (success && path != null)
             {
+                var isLatestAutoSave = !autoSaveRequestVersion.HasValue ||
+                    IsLatestSolutionAutoSaveRequest(autoSaveRequestVersion.Value);
                 // Marshal to UI thread to update observable properties bound to UI
                 _uiDispatcher.InvokeOnUi(() =>
                 {
                     CurrentSolutionPath = path;
-                    HasUnsavedChanges = false;
+                    HasUnsavedChanges = !isLatestAutoSave;
+                    SolutionSaveState = isLatestAutoSave
+                        ? SolutionSaveState.Saved
+                        : SolutionSaveState.Saving;
+                    SolutionSaveStatusText = isLatestAutoSave ? "Saved" : "Saving";
                 });
                 return true;
             }
@@ -178,6 +212,7 @@ public partial class MainWindowViewModel
 
             CurrentSolutionPath = null;
             MarkSolutionDirty();
+            SetSolutionSaveStatus(SolutionSaveState.NotSaved, "Not saved - choose Save As");
 
             // ✅ Clear all selections to reset property panels across all pages
             ClearAllSelections();
@@ -263,6 +298,8 @@ public partial class MainWindowViewModel
 
             CurrentSolutionPath = path;
             HasUnsavedChanges = false;
+            SolutionSaveState = SolutionSaveState.Saved;
+            SolutionSaveStatusText = "Saved";
             HasSolution = Solution.Projects.Count > 0;
 
             if (Solution.Projects.Count > 0)
