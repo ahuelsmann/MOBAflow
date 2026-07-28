@@ -52,6 +52,13 @@ acceptance evidence live only in GitHub issue #47 and its child issues.
 - compatibility, migration, telemetry, and package-specific rollback;
 - exact validation commands, expected results, and acceptance evidence.
 
+Until a package has a linked child issue and plan, the provisional technical
+anchors in this umbrella plan remain authoritative. Creating that child must
+reconcile and transfer the anchors, then replace the package's provisional
+section here with the child-plan link in the same planning change. This keeps
+one current owner for the detail without requiring reconstruction from Git
+history.
+
 ### Explicitly out of scope
 
 - Product behavior owned by feature issues #30 through #36.
@@ -106,6 +113,172 @@ dependencies.
 The phrase "until child creation" is traceability, not workflow status. Issue #47
 remains authoritative for whether a child package is proposed, active, blocked,
 or complete.
+
+## Provisional technical anchors for packages without child plans
+
+These anchors preserve stable technical sequence and acceptance intent; they do
+not authorize implementation. The execution-model gates still apply. A future
+child issue may refine an anchor when it records the decision and rationale,
+updates issue #47, and remains inside the package and feature-scope boundaries.
+
+### RF-07: Complete the CI platform matrix
+
+Sequence:
+
+1. inventory every supported deliverable and document its clean local command;
+2. make cross-platform .NET, Windows/WinUI, Android/MAUI Release, and ESP32
+   PlatformIO builds repeatable;
+3. add resolved transitive dependency auditing and the applicable test and
+   coverage gates;
+4. add mutation and formatting lanes only after RF-09 and RF-10 establish their
+   baselines.
+
+Acceptance anchor: every supported deliverable is reproduced from a clean
+checkout with the documented local command and an equivalent mandatory CI lane;
+required artifacts and tests are retained as workflow evidence.
+
+### RF-08: Compile MAUI XAML bindings
+
+Sequence:
+
+1. inventory project-owned binding-context boundaries and current warnings;
+2. add correct `x:DataType` declarations and enable source-binding compilation
+   incrementally;
+3. fix resulting binding errors instead of suppressing `XC0025` globally;
+4. promote the clean project-owned warning baseline into CI.
+
+Acceptance anchor: Android Release has no `XC0025` warnings in project-owned
+XAML; locomotive selection, signal aspects, function toggles, and control-page
+state retain regression coverage; measured startup and interaction performance
+does not regress.
+
+### RF-09: Coverage and mutation ratchets
+
+Sequence:
+
+1. protect Z21 ordering and overload behavior;
+2. protect MOBApi authentication, authorization, validation, and throttling;
+3. establish the Backend and API mutation lanes;
+4. extend measured lanes to Common and SharedUI;
+5. extend further only where the tooling is technically suitable.
+
+Acceptance anchor: existing coverage thresholds do not decrease without an
+approved rationale; security and concurrency paths include negative and
+failure-path assertions; every activated mutation lane records a baseline and
+adopts a non-decreasing ratchet.
+
+### RF-10: Formatting baseline and gate
+
+Sequence:
+
+1. wait for the RF-06 analyzer baseline to stabilize;
+2. define generated, vendored, and firmware-library exclusions;
+3. normalize formatting, line endings, and final newlines in a dedicated
+   mechanical change;
+4. add `dotnet format --verify-no-changes` to mandatory CI.
+
+Acceptance anchor: the baseline change contains no functional or architecture
+work, `.editorconfig` and documented commands agree, and the mandatory
+formatting gate rejects subsequent drift.
+
+### RF-11: Decompose `TrainControlViewModel`
+
+After characterization tests, extract in this order:
+
+1. locomotive selection and fleet projection;
+2. speed conversion, ramping, and command debounce;
+3. function state and appearance;
+4. brake and door state machines;
+5. journey and station projection;
+6. telemetry aggregation and peaks;
+7. host-specific settings persistence.
+
+Acceptance anchor: `TrainControlViewModel` coordinates focused,
+platform-neutral collaborators; state transitions are independently testable
+with controlled time and cancellation; WinUI and MAUI differences remain
+explicit; each superseded path is removed after equivalence is proven.
+
+### RF-12: Decompose `MauiViewModel`
+
+After characterization tests, separate:
+
+1. discovery and endpoint selection;
+2. SignalR session and reconnect lifecycle;
+3. remote snapshot projection;
+4. solution synchronization;
+5. photo capture and upload orchestration;
+6. application and network lifecycle handling.
+
+Acceptance anchor: the root mobile ViewModel is a composition boundary rather
+than the owner of networking, storage, runtime projection, and UI state
+transitions; reconnect, cancellation, failure, and lifecycle behavior is
+independently tested; superseded paths are removed.
+
+### RF-15: Remove or harden latent legacy services
+
+Sequence:
+
+1. reconcile current references and issue #36 ownership before changing display
+   sender code; consume its cutover rather than repeating feature-owned work;
+2. remove an unreferenced synchronous sender only after all required behavior
+   uses `IFrameSender.SendFrameAsync`;
+3. remove an unused photo-storage abstraction or route every remaining path
+   through `PhotoPathHelper` with canonical-root containment;
+4. add traversal cases for parent segments, rooted paths, alternate separators,
+   and encoded edge cases before retaining any path abstraction;
+5. remove duplicate utilities only after reference and behavior checks.
+
+Acceptance anchor: no required caller depends on the removed synchronous path;
+remaining path operations cannot escape their configured root; relevant
+behavior and failure tests pass; no product behavior from issue #36 is absorbed.
+
+### RF-16: Accessibility and themes
+
+Sequence:
+
+1. inventory critical workflows plus icon-only and custom-drawn controls;
+2. add accessible names, help text, roles, patterns, and automation peers where
+   native semantics are insufficient;
+3. complete keyboard operation, focus order, visible focus, Narrator, and text
+   scaling behavior;
+4. replace general-purpose literal colors with theme resources while retaining
+   fixed railway signal colors only where semantically required;
+5. run Accessibility Insights and Light, Dark, and High Contrast acceptance.
+
+Acceptance anchor: the critical workflow inventory has retained evidence for
+keyboard, Narrator, text scaling, focus, contrast, and all required themes, with
+no unresolved critical accessibility failure.
+
+### RF-17: Repository instruction cleanup
+
+Sequence:
+
+1. inventory repository guidance against actual project, build, test, and CI
+   behavior;
+2. replace stale framework, synchronous-wait, and workflow guidance with the
+   enforced NUnit, async, and GitHub Actions model;
+3. add an executable consistency check where deterministic enforcement is
+   practical and assign review ownership for the remainder.
+
+Acceptance anchor: contributor and agent instructions agree with executable
+commands and mandatory CI; contradictory guidance is removed; the consistency
+check or explicit review owner detects future drift.
+
+### RF-18: Performance and operational verification
+
+Sequence:
+
+1. benchmark EventBus throughput and runtime-snapshot serialization;
+2. load-test SignalR behavior and its admission and rate limits;
+3. measure MAUI startup and binding costs;
+4. run firmware endurance scenarios with packet loss and Wi-Fi reconnection;
+5. verify structured telemetry for dropped events, authentication failures,
+   queue overload, recovery, and failed shutdown.
+
+Acceptance anchor: each critical scenario records its environment, baseline,
+limit, agreed regression threshold, and normal and failure results; required
+hardware evidence covers recovery and endurance; the work consumes RF-03,
+RF-04, and RF-07 guarantees without reopening their implementation scope.
 
 ## Dependency graph
 
