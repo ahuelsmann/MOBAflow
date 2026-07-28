@@ -2,8 +2,8 @@
 
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -12,7 +12,6 @@ using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 
 namespace Moba.Test.MOBApi;
 
@@ -218,19 +217,20 @@ internal sealed class ControlPlaneSecurityTests
     public async Task ServerIdentity_Should_SupportTlsServerAuthentication()
     {
         using var context = SecurityTestContext.Create();
-        var identity = await context.GetRequiredService<IServerIdentityProvider>().GetAsync();
+        var identity = await context.GetRequiredService<IServerIdentityProvider>().GetAsync().ConfigureAwait(false);
         var expectedCertificateHash = identity.Certificate.GetCertHash(HashAlgorithmName.SHA256);
         using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-        var listener = new TcpListener(IPAddress.Loopback, 0);
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
 
         try
         {
             var port = ((IPEndPoint)listener.LocalEndpoint).Port;
-            var serverTask = AuthenticateServerAsync(listener, identity.Certificate, cancellation.Token);
+            var acceptTask = listener.AcceptTcpClientAsync(cancellation.Token);
             using var client = new TcpClient();
-            await client.ConnectAsync(IPAddress.Loopback, port, cancellation.Token);
-            await using var clientTls = new SslStream(
+            await client.ConnectAsync(IPAddress.Loopback, port, cancellation.Token).ConfigureAwait(false);
+            using var server = await acceptTask.ConfigureAwait(false);
+            using var clientTls = new SslStream(
                 client.GetStream(),
                 leaveInnerStreamOpen: false,
                 (_, certificate, _, _) =>
@@ -238,17 +238,22 @@ internal sealed class ControlPlaneSecurityTests
                     CryptographicOperations.FixedTimeEquals(
                         certificate.GetCertHash(HashAlgorithmName.SHA256),
                         expectedCertificateHash));
+            using var serverTls = new SslStream(server.GetStream(), leaveInnerStreamOpen: false);
 
-            await clientTls.AuthenticateAsClientAsync(
+            var serverAuthenticationTask = serverTls.AuthenticateAsServerAsync(
+                identity.Certificate,
+                clientCertificateRequired: false,
+                checkCertificateRevocation: false);
+            var clientAuthenticationTask = clientTls.AuthenticateAsClientAsync(
                 new SslClientAuthenticationOptions { TargetHost = "localhost" },
                 cancellation.Token);
-            var serverAuthenticated = await serverTask;
+            await Task.WhenAll(serverAuthenticationTask, clientAuthenticationTask).ConfigureAwait(false);
 
-            Assert.Multiple(() =>
+            using (Assert.EnterMultipleScope())
             {
                 Assert.That(clientTls.IsAuthenticated, Is.True);
-                Assert.That(serverAuthenticated, Is.True);
-            });
+                Assert.That(serverTls.IsAuthenticated, Is.True);
+            }
         }
         finally
         {
@@ -308,20 +313,6 @@ internal sealed class ControlPlaneSecurityTests
             Assert.That(control.Succeeded, Is.True);
             Assert.That(security.Succeeded, Is.False);
         });
-    }
-
-    private static async Task<bool> AuthenticateServerAsync(
-        TcpListener listener,
-        X509Certificate2 certificate,
-        CancellationToken cancellationToken)
-    {
-        using var server = await listener.AcceptTcpClientAsync(cancellationToken);
-        await using var serverTls = new SslStream(server.GetStream(), leaveInnerStreamOpen: false);
-        await serverTls.AuthenticateAsServerAsync(
-            certificate,
-            clientCertificateRequired: false,
-            checkCertificateRevocation: false);
-        return serverTls.IsAuthenticated;
     }
 
     private static async Task<AuthenticateResult> AuthenticateQueryTokenAsync(

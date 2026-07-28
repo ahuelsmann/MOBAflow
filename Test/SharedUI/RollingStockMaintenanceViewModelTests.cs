@@ -208,12 +208,12 @@ internal sealed class RollingStockMaintenanceViewModelTests
             TrainVehicleKind.Locomotive,
             project.Locomotives[0],
             "no match"));
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(selectionChangedDuringCollectionNotification, Is.True);
             Assert.That(viewModel.VisibleLocomotives, Is.Empty);
             Assert.That(viewModel.VehicleName, Is.EqualTo("Second locomotive"));
-        });
+        }
     }
 
     [Test]
@@ -254,12 +254,12 @@ internal sealed class RollingStockMaintenanceViewModelTests
             project.Model.Id,
             Now,
             checkpointUsage)));
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(selectionClearedDuringCollectionNotification, Is.False);
             Assert.That(viewModel.VehicleName, Is.EqualTo("First locomotive"));
             Assert.That(viewModel.OperatingTimeText, Is.EqualTo("2 h 00 min"));
-        });
+        }
     }
 
     [Test]
@@ -355,11 +355,11 @@ internal sealed class RollingStockMaintenanceViewModelTests
             }
         };
 
-    private static IReadOnlyDictionary<Guid, VehicleUsageRuntimeSnapshot> Usage(
+    private static Dictionary<Guid, VehicleUsageRuntimeSnapshot> Usage(
         Guid firstVehicleId,
         Guid secondVehicleId,
         long operatingSeconds)
-        => new Dictionary<Guid, VehicleUsageRuntimeSnapshot>
+        => new()
         {
             [firstVehicleId] = new()
             {
