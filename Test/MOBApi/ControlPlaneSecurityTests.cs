@@ -12,6 +12,7 @@ using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Moba.Test.MOBApi;
 
@@ -241,9 +242,13 @@ internal sealed class ControlPlaneSecurityTests
             using var serverTls = new SslStream(server.GetStream(), leaveInnerStreamOpen: false);
 
             var serverAuthenticationTask = serverTls.AuthenticateAsServerAsync(
-                identity.Certificate,
-                clientCertificateRequired: false,
-                checkCertificateRevocation: false);
+                new SslServerAuthenticationOptions
+                {
+                    ServerCertificate = identity.Certificate,
+                    ClientCertificateRequired = false,
+                    CertificateRevocationCheckMode = X509RevocationMode.NoCheck
+                },
+                cancellation.Token);
             var clientAuthenticationTask = clientTls.AuthenticateAsClientAsync(
                 new SslClientAuthenticationOptions { TargetHost = "localhost" },
                 cancellation.Token);
