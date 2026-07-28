@@ -268,7 +268,11 @@ MOBApi maps controllers plus two SignalR hubs.
 
 The default HTTP port is `5001`. `UdpDiscoveryService` runs in standalone MOBApi
 unless `MOBAFLOW_DISCOVERY_IN_WINUI` indicates that the WinUI host owns
-discovery.
+discovery. Version 2 discovery also advertises the persistent server identity,
+LAN HTTPS endpoint and SHA-256 public-key fingerprint. The desktop host uses a
+protected bootstrap channel, and MOBAsmart provides explicit fingerprint
+verification and pairing. Authenticated remote reads and unified command
+admission remain incomplete, so the compatibility HTTP path still exists.
 
 MOBAflow starts MOBApi from an isolated copy of its build output so updates and
 cleanup do not race the running process.

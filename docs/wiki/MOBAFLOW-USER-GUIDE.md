@@ -165,8 +165,10 @@ MOBAsmart then discovers the endpoint on the LAN.
 
 The bridge supports solution synchronization, runtime state, remote commands,
 journey progress, feedback sequences, client registration and rolling-stock
-photos. It is designed for a trusted private LAN and must not be exposed to the
-public internet.
+photos. Protected desktop-host communication and certificate-pinned MOBAsmart
+pairing are available while authenticated remote-read and command enforcement
+is still being completed. The bridge is designed for a trusted private LAN and
+must not be exposed to the public internet.
 
 ## Useful Track Plan keys
 
