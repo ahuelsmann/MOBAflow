@@ -18,21 +18,17 @@ internal sealed class SignalBoxPageSelectionTests
             "SignalBoxCanvasControl.xaml.cs"));
 
         // Act
-        var normalizedCode = codeBehind.ReplaceLineEndings("\n");
+        var compactCode = string.Concat(codeBehind.Where(character => !char.IsWhiteSpace(character)));
 
         // Assert
         using (Assert.EnterMultipleScope())
         {
             Assert.That(
-                normalizedCode,
+                compactCode,
                 Does.Contain(
-                    """
-                    CanvasHost.AddHandler(
-                                UIElement.PointerPressedEvent,
-                                new PointerEventHandler(OnCanvasPointerPressed),
-                                true);
-                    """));
-            Assert.That(normalizedCode, Does.Not.Contain("if (e.Handled) return;"));
+                    "CanvasHost.AddHandler(UIElement.PointerPressedEvent,"
+                    + "newPointerEventHandler(OnCanvasPointerPressed),true);"));
+            Assert.That(compactCode, Does.Not.Contain("if(e.Handled)return;"));
         }
     }
 
