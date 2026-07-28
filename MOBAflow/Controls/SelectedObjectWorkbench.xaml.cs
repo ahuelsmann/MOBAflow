@@ -55,5 +55,6 @@ public sealed partial class SelectedObjectWorkbench : UserControl
     /// <summary>
     /// Moves keyboard focus into the workbench after an explicit Context invocation.
     /// </summary>
-    public bool FocusWorkbench() => WorkbenchScrollViewer.Focus(FocusState.Programmatic);
+    public bool FocusWorkbench() =>
+        this.WorkbenchScrollViewer.Focus(FocusState.Programmatic);
 }

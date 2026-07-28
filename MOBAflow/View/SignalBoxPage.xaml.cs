@@ -370,7 +370,7 @@ sealed partial class SignalBoxPage
     {
         _ = sender;
         _ = e;
-        DispatcherQueue.TryEnqueue(() => SelectedObjectWorkbench.FocusWorkbench());
+        this.DispatcherQueue.TryEnqueue(() => this.SelectedObjectWorkbench.FocusWorkbench());
     }
 
     private void OnDeleteAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)

@@ -130,7 +130,7 @@ public sealed partial class TrackPlanPage
     {
         _ = sender;
         _ = e;
-        DispatcherQueue.TryEnqueue(() => SelectedObjectWorkbench.FocusWorkbench());
+        this.DispatcherQueue.TryEnqueue(() => this.SelectedObjectWorkbench.FocusWorkbench());
     }
 
     private void UpdateToolboxColumn()

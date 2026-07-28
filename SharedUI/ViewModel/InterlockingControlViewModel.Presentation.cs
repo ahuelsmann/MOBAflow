@@ -63,11 +63,12 @@ public sealed partial class InterlockingControlViewModel
 
     public bool HasOperationalSelection => SelectedObject != null;
 
-    public string AvailabilityText => !IsSynchronized
-        ? "Offline"
-        : SelectedObject?.IsFaulted == true
-            ? "Fault"
-            : "Synchronized";
+    public string AvailabilityText => (IsSynchronized, SelectedObject?.IsFaulted) switch
+    {
+        (false, _) => "Offline",
+        (_, true) => "Fault",
+        _ => "Synchronized"
+    };
 
     public string AvailabilityDescription =>
         $"{AvailabilityText}. {StatusText}";
@@ -161,11 +162,13 @@ public sealed partial class InterlockingControlViewModel
     public bool IsPrimaryRouteActionAvailable =>
         IsSynchronized && PrimaryRouteActionCommand != null;
 
-    public string PrimaryRouteActionDisabledReason => IsPrimaryRouteActionAvailable
-        ? string.Empty
-        : !IsSynchronized
-            ? "Live actions are unavailable while the interlocking is offline."
-            : "No lifecycle action is available for the selected route.";
+    public string PrimaryRouteActionDisabledReason =>
+        (IsPrimaryRouteActionAvailable, IsSynchronized) switch
+        {
+            (true, _) => string.Empty,
+            (_, false) => "Live actions are unavailable while the interlocking is offline.",
+            _ => "No lifecycle action is available for the selected route."
+        };
 
     partial void OnSelectedTurnoutChanged(InterlockingItemViewState? value) =>
         ProjectDirectSelection(value, SelectedOperationalContext.Turnout);
@@ -216,15 +219,7 @@ public sealed partial class InterlockingControlViewModel
             SelectedSignal = Signals.FirstOrDefault(item => item.Id == operationalId);
             SelectedRoute = Routes.FirstOrDefault(item => item.Id == operationalId);
             SelectedOperationalElement = OperationalElements.FirstOrDefault(item => item.Id == operationalId);
-            SelectedContext = SelectedTurnout != null
-                ? SelectedOperationalContext.Turnout
-                : SelectedBlock != null
-                    ? SelectedOperationalContext.Block
-                    : SelectedSignal != null
-                        ? SelectedOperationalContext.Signal
-                        : SelectedRoute != null
-                            ? SelectedOperationalContext.Route
-                            : SelectedOperationalContext.Unbound;
+            SelectedContext = ResolveSelectedContext();
         }
         finally
         {
@@ -232,6 +227,22 @@ public sealed partial class InterlockingControlViewModel
         }
 
         NotifyPresentationChanged();
+    }
+
+    private SelectedOperationalContext ResolveSelectedContext()
+    {
+        if (SelectedTurnout != null)
+            return SelectedOperationalContext.Turnout;
+
+        if (SelectedBlock != null)
+            return SelectedOperationalContext.Block;
+
+        if (SelectedSignal != null)
+            return SelectedOperationalContext.Signal;
+
+        return SelectedRoute != null
+            ? SelectedOperationalContext.Route
+            : SelectedOperationalContext.Unbound;
     }
 
     private void ClearOperationalSelection(SelectedOperationalContext context)

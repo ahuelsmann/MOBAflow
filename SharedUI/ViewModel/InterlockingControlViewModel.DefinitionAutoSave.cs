@@ -19,7 +19,7 @@ public enum DefinitionSaveState
 
 public sealed partial class InterlockingControlViewModel
 {
-    private readonly object _definitionSaveSync = new();
+    private readonly Lock _definitionSaveSync = new();
     private Task _definitionSaveTail = Task.CompletedTask;
     private long _definitionSaveRequestedVersion;
 
@@ -78,7 +78,7 @@ public sealed partial class InterlockingControlViewModel
     {
         var routes = project.Interlocking.Routes;
         var existingIndex = routes.FindIndex(candidate => candidate.Id == route.Id);
-        RouteDefinition? existing = null;
+        var existing = route;
         if (existingIndex >= 0)
         {
             existing = routes[existingIndex];
@@ -96,7 +96,7 @@ public sealed partial class InterlockingControlViewModel
         finally
         {
             if (existingIndex >= 0)
-                routes[existingIndex] = existing!;
+                routes[existingIndex] = existing;
             else
                 routes.Remove(route);
         }
