@@ -16,7 +16,7 @@
    - Key files: `Backend/Z21.cs`, `SharedUI/Service/UiThreadEventBusDecorator.cs`, `SharedUI/ViewModel/MainWindowViewModel.cs`
    - See: `.github/copilot-instructions.md` § EventBus Threading Boundary
 
-2. **Absolute Rules (19 rules)**
+2. **Absolute Rules (21 rules)**
    - No `.Result` / `.Wait()` → Always use `await`
    - No hardcoded colors → `ThemeResource` only
    - No `InvokeOnUi` in EventBus handlers → Decorator already marshals
@@ -24,6 +24,7 @@
    - Standalone Markdown plans → `plans/`, not `docs/`
    - Delete completed plans; use Git history and closed GitHub work items as the record
    - Scan secret-bearing files before reading; scan every changed file before commit and PR
+   - Write explanations and answers for junior developers using clear language, necessary context, brief explanations of unfamiliar terms, and explicit next steps
    - See: `.github/copilot-instructions.md` § Absolute Rules
 
 3. **English UI Language**
@@ -48,6 +49,11 @@
    - Never start the MOBAflow WinUI application unless the user has explicitly approved the launch beforehand
    - This applies to `dotnet run`, `dotnet watch run`, `winapp` launch commands, executable or debugger launches, and UI automation that launches the application
    - Do not infer launch approval from a request to build, test, diagnose, or prepare UI automation
+
+7. **Junior-Developer-Oriented Communication**
+   - Formulate explanations and answers as if they are addressed to a junior developer
+   - Use clear, plain language and include the context needed to understand the reasoning
+   - Briefly explain unfamiliar terms and make next steps explicit without being patronizing
 
 ---
 
