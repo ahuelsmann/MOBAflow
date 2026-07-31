@@ -68,8 +68,15 @@ public static class MobaMauiServiceCollectionExtensions
         services.AddSingleton<IAuthenticatedRestDiscoveryService>(sp => sp.GetRequiredService<RestApiDiscoveryService>());
         services.AddSingleton<ISecureStorage>(_ => SecureStorage.Default);
         services.AddSingleton<IRemoteControlCredentialStore, MauiRemoteControlCredentialStore>();
-        services.AddSingleton<IRemoteControlTransport, PinnedRemoteControlTransport>();
+        services.AddSingleton<PinnedRemoteControlTransport>();
+        services.AddSingleton<IRemoteControlTransport>(sp =>
+            sp.GetRequiredService<PinnedRemoteControlTransport>());
+        services.AddSingleton<IRemoteControlHttpClientFactory>(sp =>
+            sp.GetRequiredService<PinnedRemoteControlTransport>());
         services.AddSingleton<RemoteControlSessionService>();
+        services.AddSingleton<RemoteControlAuthenticatedHttpClient>();
+        services.AddSingleton<IRemoteControlAuthenticatedHttpClient>(sp =>
+            sp.GetRequiredService<RemoteControlAuthenticatedHttpClient>());
         services.AddSingleton<IPhotoUploadService, PhotoUploadService>();
         services.AddSingleton<IPhotoCaptureService, PhotoCaptureService>();
         services.AddSingleton<IPhotoUriResolver, MauiPhotoUriResolver>();
@@ -110,7 +117,8 @@ public static class MobaMauiServiceCollectionExtensions
             sp.GetRequiredService<IHttpClientFactory>().CreateClient(MobiHttpClientNames.Platform),
             sp.GetRequiredService<IMobileRuntimeCoordinator>(),
             sp.GetRequiredService<IUiDispatcher>(),
-            sp.GetRequiredService<IMobileSolutionStore>()));
+            sp.GetRequiredService<IMobileSolutionStore>(),
+            sp.GetRequiredService<IRemoteControlAuthenticatedHttpClient>()));
         services.AddSingleton<ISolutionRemoteLoader>(sp => sp.GetRequiredService<SolutionRemoteLoader>());
 
         return services;

@@ -29,6 +29,7 @@ public class RuntimeCommandsController : ControllerBase
     }
 
     [HttpPost("signal-aspect")]
+    [Authorize(Policy = ControlPlaneCapabilities.RuntimeControl)]
     public IActionResult EnqueueSignalAspect([FromBody] SetSignalAspectRequest? request)
     {
         if (request == null || request.SignalId == Guid.Empty)
@@ -47,6 +48,7 @@ public class RuntimeCommandsController : ControllerBase
     }
 
     [HttpPost("locomotive/drive")]
+    [Authorize(Policy = ControlPlaneCapabilities.RuntimeControl)]
     public IActionResult EnqueueLocomotiveDrive([FromBody] SetLocomotiveDriveRequest? request)
     {
         if (request == null || request.Address <= 0)
@@ -66,6 +68,7 @@ public class RuntimeCommandsController : ControllerBase
     }
 
     [HttpPost("locomotive/function")]
+    [Authorize(Policy = ControlPlaneCapabilities.RuntimeControl)]
     public IActionResult EnqueueLocomotiveFunction([FromBody] SetLocomotiveFunctionRequest? request)
     {
         if (request == null || request.Address <= 0)

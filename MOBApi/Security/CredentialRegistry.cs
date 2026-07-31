@@ -29,6 +29,7 @@ internal sealed class CredentialRegistry : ICredentialRegistry
 {
     private const string RegistryPurpose = "MOBApi.ControlPlane.CredentialRegistry.v1";
     private readonly SemaphoreSlim _gate = new(1, 1);
+    private readonly IControlPlaneConnectionRevoker _connectionRevoker;
     private readonly ProtectedDocumentStore<CredentialRegistryDocument> _store;
     private readonly ControlPlaneSecurityOptions _options;
     private readonly TimeProvider _timeProvider;
@@ -36,10 +37,12 @@ internal sealed class CredentialRegistry : ICredentialRegistry
     public CredentialRegistry(
         IDataProtectionProvider dataProtectionProvider,
         IOptions<ControlPlaneSecurityOptions> options,
-        TimeProvider timeProvider)
+        TimeProvider timeProvider,
+        IControlPlaneConnectionRevoker connectionRevoker)
     {
         _options = options.Value;
         _timeProvider = timeProvider;
+        _connectionRevoker = connectionRevoker;
         var path = Path.Combine(_options.ResolveStorageDirectory(), "credentials.dat");
         _store = new ProtectedDocumentStore<CredentialRegistryDocument>(dataProtectionProvider, RegistryPurpose, path);
     }
@@ -135,7 +138,7 @@ internal sealed class CredentialRegistry : ICredentialRegistry
         if (string.IsNullOrWhiteSpace(reason) || reason.Length > 256)
             return false;
 
-        return await MutateAsync(credentialId, record =>
+        var revoked = await MutateAsync(credentialId, record =>
         {
             if (record.RevokedAt is not null)
                 return false;
@@ -144,6 +147,9 @@ internal sealed class CredentialRegistry : ICredentialRegistry
             record.RevocationReason = reason.Trim();
             return true;
         }, cancellationToken).ConfigureAwait(false);
+        if (revoked)
+            _connectionRevoker.Revoke(credentialId);
+        return revoked;
     }
 
     public async Task<bool> ChangeRoleAsync(
@@ -154,7 +160,7 @@ internal sealed class CredentialRegistry : ICredentialRegistry
         if (role == ControlPlaneRole.Host)
             return false;
 
-        return await MutateAsync(credentialId, record =>
+        var changed = await MutateAsync(credentialId, record =>
         {
             if (record.RevokedAt is not null || record.Role == role)
                 return false;
@@ -163,6 +169,9 @@ internal sealed class CredentialRegistry : ICredentialRegistry
             record.CapabilityVersion++;
             return true;
         }, cancellationToken).ConfigureAwait(false);
+        if (changed)
+            _connectionRevoker.Revoke(credentialId);
+        return changed;
     }
 
     private async Task<bool> MutateAsync(
@@ -234,6 +243,7 @@ internal sealed class CredentialRegistry : ICredentialRegistry
         record.RevokedAt = now;
         record.RevocationReason = "refresh_replay";
         await _store.SaveAsync(document, cancellationToken).ConfigureAwait(false);
+        _connectionRevoker.Revoke(record.CredentialId);
         return new RefreshRotationResult(RefreshRotationStatus.ReplayDetected);
     }
 

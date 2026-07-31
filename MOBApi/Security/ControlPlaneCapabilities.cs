@@ -16,6 +16,7 @@ public static class ControlPlaneCapabilities
     public const string SecurityManage = "security.manage";
 
     public const string ClaimType = "mobaflow:capability";
+    public const string AccessTokenExpiresAtClaimType = "mobaflow:access_token_expires_at";
 
     public static IReadOnlySet<string> ForRole(ControlPlaneRole role) => role switch
     {

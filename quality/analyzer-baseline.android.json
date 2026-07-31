@@ -1537,13 +1537,6 @@
     {
       "project": "Common",
       "targetFramework": "net10.0",
-      "ruleId": "CA1055",
-      "path": "Common/Path/RemotePhotoUriBuilder.cs",
-      "count": 1
-    },
-    {
-      "project": "Common",
-      "targetFramework": "net10.0",
       "ruleId": "CA1062",
       "path": "Common/Discovery/DiscoveryResponseParser.cs",
       "count": 2
@@ -2272,13 +2265,6 @@
     {
       "project": "MOBAsmart",
       "targetFramework": "net10.0-android",
-      "ruleId": "CA1055",
-      "path": "MOBAsmart/Service/MauiPhotoUriResolver.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
       "ruleId": "CA1062",
       "path": "MOBAsmart/Converters/FunctionBacklightColorConverter.cs",
       "count": 1
@@ -2288,7 +2274,7 @@
       "targetFramework": "net10.0-android",
       "ruleId": "CA1062",
       "path": "MOBAsmart/Service/PinnedRemoteControlTransport.cs",
-      "count": 2
+      "count": 3
     },
     {
       "project": "MOBAsmart",
@@ -2533,7 +2519,7 @@
       "targetFramework": "net10.0-android",
       "ruleId": "CA2007",
       "path": "MOBAsmart/Service/PhotoUploadService.cs",
-      "count": 5
+      "count": 4
     },
     {
       "project": "MOBAsmart",
@@ -2573,22 +2559,8 @@
     {
       "project": "MOBAsmart",
       "targetFramework": "net10.0-android",
-      "ruleId": "CA2213",
-      "path": "MOBAsmart/Service/RuntimeHubRemoteClient.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
       "ruleId": "CA2234",
       "path": "MOBAsmart/Service/PhotoUploadService.cs",
-      "count": 2
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
-      "ruleId": "CA2234",
-      "path": "MOBAsmart/Service/RestApiClientRegistrationService.cs",
       "count": 1
     },
     {
@@ -2596,20 +2568,6 @@
       "targetFramework": "net10.0-android",
       "ruleId": "CA2234",
       "path": "MOBAsmart/Service/RestApiDiscoveryService.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
-      "ruleId": "CA2234",
-      "path": "MOBAsmart/Service/RuntimeHubRemoteClient.cs",
-      "count": 2
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
-      "ruleId": "CA2234",
-      "path": "MOBAsmart/Service/RuntimeSettingsClient.cs",
       "count": 1
     },
     {
@@ -2650,13 +2608,6 @@
     {
       "project": "MOBAsmart",
       "targetFramework": "net10.0-android",
-      "ruleId": "IDE0053",
-      "path": "MOBAsmart/Service/RuntimeHubRemoteClient.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
       "ruleId": "IDE0057",
       "path": "MOBAsmart/Service/PhotoUploadService.cs",
       "count": 1
@@ -2686,6 +2637,13 @@
       "project": "MOBAsmart",
       "targetFramework": "net10.0-android",
       "ruleId": "IDE0290",
+      "path": "MOBAsmart/Service/MauiPhotoUriResolver.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "IDE0290",
       "path": "MOBAsmart/Service/MauiRemoteControlCredentialStore.cs",
       "count": 1
     },
@@ -2694,6 +2652,20 @@
       "targetFramework": "net10.0-android",
       "ruleId": "IDE0290",
       "path": "MOBAsmart/Service/MobiStartupService.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "IDE0290",
+      "path": "MOBAsmart/Service/RestApiClientRegistrationService.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "IDE0290",
+      "path": "MOBAsmart/Service/RuntimeSettingsClient.cs",
       "count": 1
     },
     {
@@ -2974,13 +2946,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1034",
       "path": "SharedUI/Helper/Z21DccCommandDecoder.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1055",
-      "path": "SharedUI/Interface/IPhotoUriResolver.cs",
       "count": 1
     },
     {

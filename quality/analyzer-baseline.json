@@ -1537,13 +1537,6 @@
     {
       "project": "Common",
       "targetFramework": "net10.0",
-      "ruleId": "CA1055",
-      "path": "Common/Path/RemotePhotoUriBuilder.cs",
-      "count": 1
-    },
-    {
-      "project": "Common",
-      "targetFramework": "net10.0",
       "ruleId": "CA1062",
       "path": "Common/Discovery/DiscoveryResponseParser.cs",
       "count": 2
@@ -2637,6 +2630,20 @@
       "project": "MOBApi",
       "targetFramework": "net10.0",
       "ruleId": "CA1515",
+      "path": "MOBApi/Security/ControlPlaneConnectionRevoker.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBApi",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1515",
+      "path": "MOBApi/Security/ControlPlaneHubConnectionRegistration.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBApi",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1515",
       "path": "MOBApi/Security/ControlPlaneSecurityOptions.cs",
       "count": 1
     },
@@ -2784,6 +2791,13 @@
       "project": "MOBApi",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "MOBApi/Security/CompatibilityReadAuthorizationHandler.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBApi",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "MOBApi/Security/ControlPlaneAccessTokenService.cs",
       "count": 1
     },
@@ -2792,6 +2806,20 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "MOBApi/Security/ControlPlaneAuthenticationHandler.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBApi",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "MOBApi/Security/ControlPlaneConnectionRevoker.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBApi",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "MOBApi/Security/ControlPlaneHubConnectionRegistration.cs",
       "count": 1
     },
     {
@@ -2867,6 +2895,13 @@
     {
       "project": "MOBApi",
       "targetFramework": "net10.0",
+      "ruleId": "CA2000",
+      "path": "MOBApi/Security/ControlPlaneConnectionRevoker.cs",
+      "count": 2
+    },
+    {
+      "project": "MOBApi",
+      "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "MOBApi/Controllers/PhotosController.cs",
       "count": 3
@@ -2881,9 +2916,30 @@
     {
       "project": "MOBApi",
       "targetFramework": "net10.0",
+      "ruleId": "CA2025",
+      "path": "MOBApi/Security/ControlPlaneConnectionRevoker.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBApi",
+      "targetFramework": "net10.0",
       "ruleId": "CA3003",
       "path": "MOBApi/Controllers/PhotosController.cs",
       "count": 3
+    },
+    {
+      "project": "MOBApi",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0060",
+      "path": "MOBApi/Controllers/ClientsController.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBApi",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0060",
+      "path": "MOBApi/Hubs/RuntimeHub.cs",
+      "count": 1
     },
     {
       "project": "MOBApi",
@@ -2959,6 +3015,13 @@
       "project": "MOBApi",
       "targetFramework": "net10.0",
       "ruleId": "IDE0290",
+      "path": "MOBApi/Security/CompatibilityReadAuthorizationHandler.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBApi",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
       "path": "MOBApi/Security/ControlPlaneAccessTokenService.cs",
       "count": 1
     },
@@ -2967,6 +3030,13 @@
       "targetFramework": "net10.0",
       "ruleId": "IDE0290",
       "path": "MOBApi/Security/ControlPlaneAuthenticationHandler.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBApi",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "MOBApi/Security/ControlPlaneConnectionRevoker.cs",
       "count": 1
     },
     {
@@ -3268,13 +3338,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1034",
       "path": "SharedUI/Helper/Z21DccCommandDecoder.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1055",
-      "path": "SharedUI/Interface/IPhotoUriResolver.cs",
       "count": 1
     },
     {
@@ -5738,6 +5801,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/Integration/AuthenticatedControlPlaneProcessTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/Integration/RuntimeHubLiveE2ETests.cs",
       "count": 1
     },
@@ -6851,6 +6921,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1861",
+      "path": "Test/MOBApi/ControlPlaneSecurityTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1861",
       "path": "Test/SharedUI/JourneyMapViewModelTests.cs",
       "count": 1
     },
@@ -6894,7 +6971,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1869",
       "path": "Test/MOBApi/StatusControllerTests.cs",
-      "count": 1
+      "count": 2
     },
     {
       "project": "Test",
@@ -6935,6 +7012,20 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA2000",
+      "path": "Test/Common/RemoteControlClientSecurityTests.cs",
+      "count": 3
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2000",
+      "path": "Test/Integration/AuthenticatedControlPlaneProcessTests.cs",
+      "count": 5
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2000",
       "path": "Test/SharedUI/MauiViewModelControlTabTests.cs",
       "count": 26
     },
@@ -6957,7 +7048,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2000",
       "path": "Test/SharedUI/SolutionRemoteLoaderTests.cs",
-      "count": 27
+      "count": 30
     },
     {
       "project": "Test",
@@ -7209,7 +7300,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "Test/Common/RemoteControlClientSecurityTests.cs",
-      "count": 9
+      "count": 23
     },
     {
       "project": "Test",
@@ -7224,6 +7315,13 @@
       "ruleId": "CA2007",
       "path": "Test/Domain/WorkflowSchemaCutoverTests.cs",
       "count": 2
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2007",
+      "path": "Test/Integration/AuthenticatedControlPlaneProcessTests.cs",
+      "count": 45
     },
     {
       "project": "Test",
@@ -7272,7 +7370,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "Test/MOBApi/ControlPlaneSecurityTests.cs",
-      "count": 43
+      "count": 62
     },
     {
       "project": "Test",
@@ -7384,7 +7482,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "Test/SharedUI/SolutionRemoteLoaderTests.cs",
-      "count": 13
+      "count": 14
     },
     {
       "project": "Test",
@@ -7447,6 +7545,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "Test/Unit/SystemSpeechEngineTest.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2234",
+      "path": "Test/Integration/AuthenticatedControlPlaneProcessTests.cs",
       "count": 1
     },
     {
@@ -7915,13 +8020,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2045",
-      "path": "Test/Common/RemotePhotoUriBuilderTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2045",
       "path": "Test/Common/RestApiDiscoveryCandidateBuilderTests.cs",
       "count": 1
     },
@@ -7980,6 +8078,13 @@
       "ruleId": "NUnit2045",
       "path": "Test/Domain/WorkflowTests.cs",
       "count": 5
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "NUnit2045",
+      "path": "Test/Integration/AuthenticatedControlPlaneProcessTests.cs",
+      "count": 1
     },
     {
       "project": "Test",
@@ -8637,7 +8742,7 @@
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
       "path": "Test/Common/RemoteControlClientSecurityTests.cs",
-      "count": 9
+      "count": 14
     },
     {
       "project": "Test",
@@ -8812,7 +8917,7 @@
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
       "path": "Test/MOBApi/ControlPlaneSecurityTests.cs",
-      "count": 8
+      "count": 11
     },
     {
       "project": "Test",
@@ -8840,7 +8945,7 @@
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
       "path": "Test/MOBApi/StatusControllerTests.cs",
-      "count": 2
+      "count": 3
     },
     {
       "project": "Test",
