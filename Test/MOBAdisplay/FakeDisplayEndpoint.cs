@@ -15,14 +15,24 @@ internal sealed class FakeDisplayEndpoint : IDisplayDatagramTransport
     private readonly Dictionary<uint, ResultPayload> _completedFrames = new();
     private readonly List<byte[]> _heldResponses = [];
     private readonly TimeProvider _timeProvider;
+    private readonly ushort _width;
+    private readonly ushort _height;
+    private readonly ushort _maximumRegionPayloadLength;
     private ActiveFrame? _activeFrame;
     private uint _sessionId = 0x0A0B0C0D;
     private uint _acceptedFrameCount;
     private uint _rejectedFrameCount;
 
-    public FakeDisplayEndpoint(TimeProvider? timeProvider = null)
+    public FakeDisplayEndpoint(
+        TimeProvider? timeProvider = null,
+        ushort width = 4,
+        ushort height = 3,
+        ushort maximumRegionPayloadLength = 512)
     {
         _timeProvider = timeProvider ?? TimeProvider.System;
+        _width = width;
+        _height = height;
+        _maximumRegionPayloadLength = maximumRegionPayloadLength;
     }
 
     public event EventHandler<DisplayDatagramReceivedEventArgs>? DatagramReceived;
@@ -287,10 +297,10 @@ internal sealed class FakeDisplayEndpoint : IDisplayDatagramTransport
 
         var capabilities = new CapabilitiesResponsePayload(
             DisplayProtocol.CurrentVersion,
-            4,
-            3,
+            _width,
+            _height,
             DisplayProtocol.DEFAULT_MAX_DATAGRAM_LENGTH,
-            512,
+            _maximumRegionPayloadLength,
             DisplayPixelFormatFlags.Rgb565BigEndian,
             DisplayRotationFlags.Degrees0,
             DisplayOptionalCommandFlags.Clear

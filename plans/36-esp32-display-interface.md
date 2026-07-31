@@ -10,12 +10,70 @@
 - Recommended priority: P1
 - Required label: `plan-required`
 - Plan ownership: one-to-one with issue #36
-- Implementation baseline: `codex/issue-36-wp4-firmware-dispatcher` from current `main` commit `6820ba3c` (including merged WP3) in `C:\Repo\ahuelsmann\MOBAflow-issue-36`
+- Implementation baseline: `github/main` at `7f4edea0`, including merged PR #89; WP4.1 is implemented from that baseline
 - Lifecycle: delete this plan after issue #36 is complete; the closed issue, pull requests, and Git history remain the permanent record
 
 ## Implementation progress
 
-Status on 2026-07-25:
+Status on 2026-07-31:
+
+- WP4.1 is implemented locally on `codex/issue-36-wp4-1` from `github/main`
+  `7f4edea0`. No commit, push, pull request, GitHub write, or MOBAflow launch
+  has been performed.
+- The host production sender now negotiates v1.0 capabilities and transfers
+  frames atomically through `BeginFrame`, bounded `FrameRegion` packets, and
+  `CompleteFrame`. Cancellation preserves `OperationCanceledException`, makes
+  a best-effort `AbortFrame` attempt after an uncertain begin, and the UDP
+  receive loop survives transient socket failures.
+- Firmware replay protection now tracks exact observed request fingerprints:
+  16 active cached results plus 64 evicted tombstones. Unseen out-of-order and
+  wrapped request IDs remain valid; a reboot clears both histories. The host
+  line sender, firmware line parser, and legacy framebuffer presentation path
+  are removed, leaving one production v1.0 path.
+- The complete native PlatformIO matrix passes 45 tests: 14 display-core,
+  18 dispatcher/adapter, 8 provisioning, and 5 length-safe parser cases. The
+  ESP32-S3 release build creates `firmware.bin`; RAM usage is 43,960 of 327,680
+  bytes (13.4 percent), while flash usage is 1,047,289 of 1,048,576 bytes
+  (99.9 percent), leaving only 1,287 bytes and therefore a release risk.
+- The complete .NET matrices pass 1,487 net10.0 tests with four existing skips
+  (1,491 total) and all 1,541 Windows tests. `MOBAdisplay`, the Windows test
+  graph, and the MOBAflow FastDebug graph build with zero warnings and errors.
+  Scoped formatting, `git diff --check`, the analyzer baseline, and Spec Kit
+  pull-request governance pass.
+- All 25 existing changed or new files pass the deterministic Sonar secrets
+  scan with no findings. After explicit source-upload authorization, local
+  analysis ran against `github/main` with project `ahuelsmann_MOBAflow2`, but
+  Vortex failed for all 25 files with `Vortex agentic analysis is not available
+  for this organization (403 Forbidden)`. This organization capability cannot
+  be repaired in WP4.1 and permits only a future draft PR; the remote
+  SonarCloud pull-request gate remains pending.
+- Current ESP32-S3/ST7789 hardware negotiation, conformance-pattern, packet
+  loss, reconnect, and reboot acceptance remain mandatory before issue closure
+  but are not WP4.1 merge gates. WP5 through WP7, permanent CI coverage, final
+  documentation, and plan deletion remain open.
+
+Historical status on 2026-07-28:
+
+- PR #89 is merged. Its ESP32-S3 release build, 46 native firmware tests,
+  complete .NET test matrices, changed-file secrets scan, and SonarCloud gate
+  passed at publication time.
+- Two later review findings against the merged implementation remain
+  actionable: the firmware must not reject an unseen request ID solely from its
+  numeric distance to the latest ID, and the legacy native-word RGB565 path is
+  incompatible with the v1.0 big-endian presenter.
+- WP4.1 is the next blocking slice before WP5. It corrects request replay
+  handling and removes the host and firmware legacy transports rather than
+  preserving a temporary dual-protocol window.
+- WP4.1 may merge after the complete automated repository gates pass. Current
+  ESP32-S3/ST7789 hardware validation remains mandatory before issue #36 can
+  close, but it is not a WP4.1 merge gate.
+- WP5 uses one explicitly configured endpoint from user/environment settings.
+  Capabilities are negotiated live and are not persisted as authoritative
+  project state.
+- WP5 through WP7, permanent CI coverage, hardware acceptance, final
+  documentation, and plan deletion remain open.
+
+Historical status on 2026-07-25:
 
 - The actionable review findings for draft PR #89 are fixed locally in the
   isolated `codex/89-review-fixes` worktree. Default request IDs now use one
@@ -54,7 +112,7 @@ Status on 2026-07-25:
   smoke tests remain pending. WP4 and PR #89 therefore stay in draft even after
   the automated remediation is published.
 
-Status on 2026-07-23:
+Historical status on 2026-07-23:
 
 - WP3 and PR #82 are merged. RF-01 and RF-02 are closed, so the versioned
   firmware-dispatcher entrance gates are satisfied.
@@ -112,7 +170,7 @@ Status on 2026-07-23:
   draft pull request until the ESP32-S3 build baseline and hardware evidence are
   resolved.
 
-Status on 2026-07-22:
+Historical status on 2026-07-22:
 
 - RF-02's protected-provisioning boundary and UDP-loop cleanup are merged in
   commits `442d2c` and `677ba975`. WP3 therefore started from current `main`
@@ -141,7 +199,8 @@ Status on 2026-07-22:
 - `MOBAdisplay` builds with zero warnings and errors. The complete .NET test
   matrix passes 1,408 net10.0 tests with four existing skips and 1,461 Windows
   tests without failures or skips.
-- The v2 UDP dispatcher and TFT_eSPI reference adapter remain WP4 work; the
+- The versioned v1.0 UDP dispatcher and TFT_eSPI reference adapter remain WP4
+  work; the
   legacy `main.cpp` frame path is intentionally unchanged in this slice.
 - The ESP32-S3 build is blocked before compiling WP3 code because current
   `main` references an absent `MOBAdisplay/esp32/sdkconfig.defaults`. This
@@ -156,7 +215,7 @@ Status on 2026-07-22:
   C++11 compatibility rationale. PR #82 reports zero open or confirmed Sonar
   findings, and all required GitHub checks are green.
 
-Prior status on 2026-07-21:
+Historical status on 2026-07-21:
 
 - WP0 local readiness is complete: the assigned branch and worktree were
   synchronized non-destructively with current `main`; the single protocol-doc
@@ -219,9 +278,11 @@ When this plan is complete:
 - host and firmware conformance tests cover normal operation, invalid input, cancellation, timeout, packet anomalies, unsupported features, and reboot behavior;
 - the legacy synchronous chunk sender is removed after the new contract is proven.
 
-## Current verified foundation
+## Original verified foundation
 
-The GitHub baseline establishes the following starting point:
+The following list records the original starting point. The dated implementation
+progress above and merged pull requests supersede it where behavior has already
+changed:
 
 - `MOBAdisplay/Transport/IFrameSender.cs` exposes only `SendFrameAsync` for a complete RGB565 frame.
 - `MOBAdisplay/Transport/UdpLineFrameSender.cs` sends `HOST_VER`, `FRAME_START`, indexed rows, and `FRAME_DONE` over UDP.
@@ -234,7 +295,9 @@ The GitHub baseline establishes the following starting point:
 - `Common/Configuration/DisplaySettings` stores only one ESP32 IP address.
 - `SharedUI/ViewModel/DisplayViewModel.cs` and the DisplayPage currently model fixed display choices and resolutions but not endpoint health, capabilities, protocol state, or test-pattern execution.
 - Existing display tests cover rendering and scheduler behavior, not protocol negotiation, UDP responses, frame assembly, or firmware conformance.
-- `MOBAdisplay/esp32/platformio.ini` defines the current ESP32-S3 target, but the repository does not yet document the exact agent-safe PlatformIO validation command.
+- `MOBAdisplay/esp32/platformio.ini` defines the current ESP32-S3 target. The
+  authoritative PlatformIO build and native-test commands are now documented in
+  `MOBAdisplay/docs/protocol.md` and repeated in the validation section below.
 
 The first implementation turn must revalidate these statements against the local worktree after every affected local file passes the required secret scan.
 
@@ -277,7 +340,7 @@ The first implementation turn must revalidate these statements against the local
 
 | Dependency | Type | Required handling |
 | --- | --- | --- |
-| RF-01: Length-safe ESP32 UDP parser | Hard | Must be merged before issue #36 changes packet parsing or builds the v2 firmware dispatcher on that parser boundary. Issue #36 must not duplicate RF-01. |
+| RF-01: Length-safe ESP32 UDP parser | Hard | Must be merged before issue #36 changes packet parsing or builds the versioned v1.0 firmware dispatcher on that parser boundary. Issue #36 must not duplicate RF-01. |
 | RF-02: Protected ESP32 provisioning | Strong sequencing | Protocol specification and host work may proceed, but the large `main.cpp` extraction should start only after RF-02 stabilizes the provisioning boundary. |
 | RF-06: Effective Release analyzer gate | Indirect | Do not block contract design; ensure new .NET code is clean under the active analyzer baseline. |
 | RF-07: Complete CI platform matrix | Coordination | Align host tests, firmware parser tests, and PlatformIO build commands so RF-07 can make them mandatory without inventing a second test lane. |
@@ -291,7 +354,9 @@ The first implementation turn must revalidate these statements against the local
 - Host contract models and fake endpoint: after the decision gates below are approved; they may proceed while unrelated P0 packages continue.
 - Firmware protocol integration: after RF-01.
 - Firmware decomposition and TFT_eSPI reference adapter: after RF-02.
-- Final cutover and legacy removal: after host conformance, firmware conformance, and current-hardware smoke tests pass.
+- Corrective cutover and legacy removal: WP4.1, after host and firmware
+  conformance tests pass and before WP5. Hardware evidence remains a final
+  issue-closure gate rather than a WP4.1 merge gate.
 
 For a single sequential delivery lane, begin implementation at the start of the P1 phase after RF-01 through RF-05. For parallel delivery, begin the host-only slices after RF-01 while unrelated P0 packages continue.
 
@@ -308,8 +373,8 @@ The following decisions must be approved in issue #36 or its linked pull request
 | D5 | Idempotency | Unique request and frame IDs; duplicate begin/data/end commands are recognized and do not present twice | Duplicate-packet conformance tests |
 | D6 | Presentation rule | Only a fully validated frame/region transaction may update the visible display; incomplete buffers are discarded on timeout, replacement, cancellation, or reboot | Firmware tests prove no partial `present` call |
 | D7 | Capability freshness | Query on connection and after reboot/version change; persisted capabilities are diagnostic cache only until reconfirmed | Stale-capability and reboot tests |
-| D8 | Configuration ownership | Keep network endpoint in environment/user settings; keep logical device assignment in project data only if multiple project-bound displays are explicitly required | Persistence decision recorded with schema impact |
-| D9 | Legacy cutover | Temporary, explicit v1 validation window only; no silent fallback after v2 is selected; delete the synchronous chunk sender before issue closure | Cutover checklist and reference-hardware evidence |
+| D8 | Configuration ownership | Approved 2026-07-28: keep one endpoint in user/environment settings; negotiate capabilities live; do not add project-bound display assignment or authoritative persisted capabilities in issue #36 | Configuration-default and restart tests prove no project schema migration and no live use of stale capabilities |
+| D9 | Legacy cutover | Approved 2026-07-28: remove host and firmware legacy transports in WP4.1 before WP5; do not retain a dual-protocol release path | Repository-wide reference checks and automated v1.0 regression gates before merge; current-hardware evidence before issue closure |
 | D10 | Second adapter | Prefer a deterministic in-memory/host-native adapter plus a distinct capability profile; use a second hardware driver only if it is available for repeatable CI | Adapter builds and passes the same contract suite |
 
 ### Protocol invariants
@@ -323,6 +388,8 @@ Regardless of the final encoding decision, the protocol must preserve these inva
 - a new frame cannot silently merge with a previous or pre-reboot frame;
 - repeated rows or regions do not inflate completion counts;
 - out-of-order data is either supported deterministically or rejected with a structured result;
+- an unseen request ID is never rejected solely from its numeric distance to a
+  previously observed ID;
 - incomplete data never reaches the visible display;
 - optional operations report `unsupported` rather than appearing to succeed;
 - `busy`, `invalid`, `unsupported`, `timeout`, and `hardware failure` are distinguishable;
@@ -396,7 +463,8 @@ These are planning targets, not authorization to create guessed APIs. Reconfirm 
 
 ### Existing file expected to be removed
 
-- `MOBAdisplay/FrameSender.cs`, only after the v2 reference path is proven and repository-wide reference checks show no remaining consumers
+- `MOBAdisplay/FrameSender.cs`, in WP4.1 after repository-wide reference checks
+  show that the versioned v1.0 path owns every remaining consumer
 
 ### Candidate new areas
 
@@ -415,8 +483,10 @@ Do not create a second README in a subdirectory. Update the existing root/refere
 
 Tasks:
 
-1. Restore the required local secret-scanning capability without initiating an interactive login from this task.
-2. Scan every local file before reading it.
+1. Confirm local secret-scanning capability without initiating an interactive
+   login from this task.
+2. Scan files likely to contain secrets before reading them, and scan every
+   changed file before commit or pull-request publication.
 3. Compare the local worktree with the GitHub baseline used by this plan.
 4. Confirm RF-01 and RF-02 ownership and merge status; do not implement their scope in issue #36.
 5. Search all local references to `IFrameSender`, `UdpLineFrameSender`, `FrameSender`, `FrameLoopOptions`, `DISPLAY_META`, and the ESP32 frame constants.
@@ -514,34 +584,78 @@ Exit criteria:
 - frame replacement and reboot behavior are deterministic;
 - PlatformIO builds without new warnings.
 
-### WP4: TFT_eSPI reference adapter and v2 transport integration
+### WP4: TFT_eSPI reference adapter and v1.0 transport integration
 
 Tasks:
 
 1. Implement the current ESP32-S3/ST7789 behavior through the portable adapter.
 2. Report actual compiled/runtime capabilities rather than accepting host assumptions.
-3. Add the v2 UDP dispatcher and structured responses.
+3. Add the versioned v1.0 UDP dispatcher and structured responses.
 4. Add the host device client and capability-aware frame transport.
 5. Split rendered rows into bounded regions according to the negotiated payload limit.
 6. Reject incompatible dimensions, pixel formats, rotations, and optional commands before frame transmission.
 7. Preserve `CancellationToken` propagation through all host operations.
 8. Update the scheduler adapter to surface negotiated and transfer failures without stopping local preview.
-9. Keep any temporary v1 validation path explicit, isolated, and scheduled for deletion in WP6.
-10. Perform current-hardware smoke tests for negotiation, standard test pattern, repeated frames, loss, reconnect, and reboot.
+9. Keep the legacy v0 path explicit and isolated until the corrective WP4.1
+   cutover.
+10. Record the automated build, test, secrets, and Sonar evidence for the
+    delivered transport slice.
 
 Exit criteria:
 
-- the current display receives and atomically presents the standard pattern;
-- host and device report matching protocol/firmware/capability diagnostics;
+- the v1.0 dispatcher and reference adapter compile and pass their native
+  contract and conformance suites;
+- host and device diagnostic payloads agree in automated conformance tests;
 - an incompatible fake profile is rejected before data transmission;
 - timeout and retry do not duplicate presentation;
-- the reference firmware remains usable after reboot and reconnect.
+- the ESP32-S3 release firmware image builds without new warnings.
+
+### WP4.1: Protocol correctness and legacy cutover
+
+This corrective slice blocks WP5. It remains narrowly scoped to the two
+post-merge review findings, regression coverage, and removal of superseded
+display transports.
+
+Tasks:
+
+1. Replace numeric-age replay rejection with session-scoped handling based on
+   actually observed request fingerprints.
+2. Add firmware tests for valid unseen out-of-order request IDs separated by
+   more than the retained history length, delayed duplicates, conflicting
+   retries, wraparound, fresh Hello epochs, and reboot.
+3. Remove the firmware legacy v0 classifier/capture/presentation path and any
+   temporary fallback after a v1.0 negotiation.
+4. Remove `MOBAdisplay/FrameSender.cs`, migrate or remove every remaining
+   consumer, and remove misleading options such as `SendDisplayMetadata`.
+5. Keep the v1.0 RGB565 golden-color presenter test and add an integration-level
+   conformance assertion that the standard pattern reaches the display adapter
+   in network byte order.
+6. Normalize plan, protocol, diagnostics, and code terminology to legacy v0 and
+   versioned protocol v1.0.
+7. Run repository-wide reference checks, native firmware tests, the ESP32-S3
+   release build, relevant .NET tests, the complete test matrix, formatting,
+   changed-file secrets scanning, local Sonar against the actual base, and the
+   remote SonarCloud PR gate.
+
+Exit criteria:
+
+- valid unseen out-of-order requests are not rejected by numeric age;
+- delayed duplicate operations remain at-most-once within the documented
+  session/retry contract;
+- one production protocol path remains and every legacy display transport,
+  parser branch, sender, and misleading metadata option is absent;
+- the v1.0 standard-pattern bytes remain correct through the adapter boundary;
+- all automated quality gates pass with zero unresolved `OPEN` or `CONFIRMED`
+  Sonar findings and no unresolved actionable review findings;
+- the pull request may merge without current-hardware evidence; hardware
+  acceptance remains mandatory in WP7 before issue closure.
 
 ### WP5: MOBAflow configuration, diagnostics, and test-pattern UX
 
 Tasks:
 
-1. Extend display configuration according to D8 without storing credentials.
+1. Store one explicit endpoint in user/environment settings without storing
+   credentials or adding project-bound display assignments.
 2. Model endpoint validation, connection state, negotiation state, capability freshness, health, and last result in platform-neutral/ViewModel code.
 3. Replace fixed-resolution assumptions with negotiated read-only device information where a configured device is selected.
 4. Allow a test pattern only after endpoint validation and successful capability negotiation.
@@ -549,7 +663,9 @@ Tasks:
 6. Add English status, empty, invalid, busy, offline, unsupported, and stale-capability messages.
 7. Keep commands in the ViewModel; code-behind remains an input adapter only.
 8. Use `ThemeResource` values and validate Light, Dark, High Contrast, keyboard, focus, and screen-reader behavior.
-9. Persist only the approved endpoint/selection fields and a clearly stale diagnostic capability cache if D8 permits it.
+9. Persist only the endpoint fields. Treat capabilities as live negotiated
+   state; any diagnostic cache must be visibly stale and must never authorize a
+   send.
 10. Add ViewModel and configuration-default regression tests.
 
 Exit criteria:
@@ -560,24 +676,22 @@ Exit criteria:
 - UI behavior is testable without an ESP32;
 - user-visible strings are English and theme/accessibility checks pass.
 
-### WP6: Cutover, legacy removal, and operational hardening
+### WP6: CI and operational hardening
 
 Tasks:
 
-1. Run repository-wide reference checks for the synchronous `FrameSender` and undocumented legacy packet paths.
-2. Remove `MOBAdisplay/FrameSender.cs` after all consumers use the validated async path.
-3. Remove firmware support for undocumented unindexed legacy rows after the agreed validation window.
-4. Remove unused flags such as `SendDisplayMetadata` or implement their approved replacement; do not leave misleading options.
-5. Remove temporary v1 fallback branches rather than retaining a permanent dual protocol.
-6. Verify that RF-15 tracking recognizes the completed display cleanup and does not repeat it.
-7. Add permanent CI hooks for host conformance, firmware parser tests, and PlatformIO build in coordination with RF-07.
-8. Review logging and diagnostics for credentials, SSIDs, tokens, packet payload leakage, and excessive frame-level noise.
+1. Confirm that WP4.1 left no synchronous sender, undocumented packet path,
+   fallback branch, or misleading metadata option.
+2. Verify that RF-15 tracking recognizes the completed display cleanup and does
+   not repeat it.
+3. Add permanent CI hooks for host conformance, firmware parser tests, and
+   PlatformIO build in coordination with RF-07.
+4. Review logging and diagnostics for credentials, SSIDs, tokens, packet
+   payload leakage, and excessive frame-level noise.
 
 Exit criteria:
 
-- one supported production transport path remains;
-- no synchronous sleep/send path remains;
-- no undocumented legacy packet format remains enabled;
+- WP4.1 legacy-removal invariants remain enforced by repository checks;
 - CI reproduces all software validation from a clean checkout;
 - diagnostics are useful without exposing secrets.
 
@@ -591,8 +705,18 @@ Tasks:
 4. Document hardware-specific configuration only in the existing appropriate hardware notes.
 5. Record the final protocol and firmware versions used for acceptance.
 6. Link every pull request to issue #36 and list RF packages only as secondary dependencies.
-7. Close issue #36 only after automated and maintainer-led hardware evidence satisfies every acceptance criterion.
-8. Delete this completed plan in the final cleanup pull request.
+7. Run current-hardware negotiation, standard-pattern, optional-command,
+   packet-anomaly, incomplete-transfer, reconnect, reboot, and sustained-refresh
+   acceptance on the ESP32-S3/ST7789 reference device.
+8. Record the tested commit and firmware-image hash, board/display identity,
+   protocol and firmware versions, exact commands, results, and safe diagnostic
+   evidence in issue #36.
+9. Before the hardware run, approve the sustained-refresh duration and allowed
+   dropped/rejected-frame thresholds. These values are an open acceptance
+   detail but do not block WP4.1 or WP5.
+10. Close issue #36 only after automated and maintainer-led hardware evidence
+    satisfies every acceptance criterion.
+11. Delete this completed plan in the final cleanup pull request.
 
 ## Test strategy
 
@@ -661,20 +785,20 @@ Use the repository-authoritative commands after the local baseline is scanned an
 dotnet build MOBAdisplay/MOBAdisplay.csproj
 dotnet test Test/Test.csproj
 dotnet build MOBAflow/MOBAflow.csproj -c FastDebug --no-restore /p:BuildMOBApiDependency=false /p:CopyMOBApiToOutput=false
+python -m platformio test -d MOBAdisplay/esp32 -e native
+python -m platformio run -d MOBAdisplay/esp32 -e esp32s3
 ```
-
-Do not guess the PlatformIO command. WP0 must establish and document the exact repository-supported command before firmware validation is automated.
 
 ## Acceptance traceability
 
 | Issue #36 acceptance criterion | Owning work packages | Required evidence |
 | --- | --- | --- |
 | Two different ESP32 display projects implement the same interface without shared board configuration | WP3, WP4 | Two adapter builds and shared contract tests with distinct capability profiles |
-| MOBAflow receives capabilities and sends only compatible content | WP1, WP2, WP4, WP5 | Negotiation, compatibility rejection, and ViewModel tests |
-| Configured device displays the standard test pattern | WP1, WP4, WP5 | Golden pattern vector plus current-hardware evidence |
-| Invalid or incomplete frames are rejected without corrupted partial display | WP2, WP3, WP4 | Fake endpoint, firmware assembler, packet anomaly, and hardware interruption tests |
-| Protocol and firmware versions are visible in diagnostics | WP1, WP4, WP5 | Diagnostic projection and UI/manual evidence |
-| Current MOBAdisplay firmware remains functional through the reference adapter | WP3, WP4 | PlatformIO build and ST7789 smoke test |
+| MOBAflow receives capabilities and sends only compatible content | WP1, WP2, WP4, WP4.1, WP5 | Negotiation, compatibility rejection, replay regression, and ViewModel tests |
+| Configured device displays the standard test pattern | WP1, WP4, WP4.1, WP5, WP7 | Golden pattern vector, adapter byte-order assertion, and current-hardware evidence |
+| Invalid or incomplete frames are rejected without corrupted partial display | WP2, WP3, WP4, WP4.1, WP7 | Fake endpoint, firmware assembler, replay/anomaly tests, and hardware interruption evidence |
+| Protocol and firmware versions are visible in diagnostics | WP1, WP4, WP5, WP7 | Diagnostic projection and UI/hardware evidence |
+| Current MOBAdisplay firmware remains functional through the reference adapter | WP3, WP4, WP4.1, WP7 | PlatformIO build and ST7789 smoke test |
 | Automated tests cover negotiation, validation, assembly, optional commands, timeouts, anomalies, and unsupported hardware features | WP2 through WP6 | Green host and firmware conformance suites in CI |
 
 ## Risk register
@@ -688,7 +812,8 @@ Do not guess the PlatformIO command. WP0 must establish and document the exact r
 | Large displays exceed internal RAM/PSRAM assumptions | Medium | High | Report memory/region capabilities; do not require every adapter to hold a full framebuffer |
 | Documentation and implementation drift again | Medium | Medium | Golden vectors, conformance tests, and protocol-doc review in the same PR |
 | Capability cache is mistaken for live device state | Medium | Medium | Mark cached values stale and require negotiation before sending |
-| Permanent v1/v2 compatibility code increases complexity | Medium | Medium | Time-box explicit validation path and delete it in WP6 |
+| Permanent legacy v0/v1.0 compatibility code increases complexity | Current | High | Remove the legacy path in WP4.1 and enforce repository-wide absence checks |
+| WP4.1 reaches `main` before current-hardware acceptance | Medium | High | Keep WP4.1 isolated and reversible, require complete automated gates, and retain hardware acceptance as a hard issue-closure gate |
 | Hardware is unavailable in CI | High | Medium | Host-native firmware harness and fake adapter as mandatory gates; maintainer hardware sign-off remains separate |
 | UI starts owning transport behavior | Medium | Medium | Capability-aware service/client boundary; ViewModel commands; thin code-behind |
 | Diagnostics expose Wi-Fi credentials or payload data | Low | High | Structured allow-listed diagnostics and explicit secret review |
@@ -707,12 +832,18 @@ Keep every pull request independently buildable, reviewable, and reversible. Eve
    - deterministic assembler, portable interface, fake/alternate adapter, firmware tests;
    - only after RF-01 and RF-02 gates.
 4. `feat(display): add capability-aware ESP32 transport`
-   - v2 device client, TFT_eSPI reference adapter, region transfer, structured responses.
-5. `feat(display): add configured-device diagnostics and test pattern`
+   - v1.0 device client, TFT_eSPI reference adapter, region transfer, structured responses.
+5. `fix(display): correct replay handling and remove legacy transport`
+   - reject only observed conflicting/replayed requests, remove host and firmware
+     legacy paths, retain v1.0 golden-byte coverage;
+   - automated quality gates are required before merge; hardware remains a
+     final issue gate.
+6. `feat(display): add configured-device diagnostics and test pattern`
    - settings, ViewModel, DisplayPage, diagnostics, accessibility, tests.
-6. `refactor(display): remove legacy frame transport`
-   - delete synchronous sender, legacy packet handling, misleading options, and temporary fallback.
-7. `docs(display): finalize ESP32 display operation and validation`
+7. `ci(display): enforce display conformance gates`
+   - permanent host, native firmware, and ESP32-S3 validation lanes plus
+     diagnostic hardening.
+8. `docs(display): finalize ESP32 display operation and validation`
    - final docs, CI references, hardware evidence, plan deletion.
 
 Split a pull request further if it mixes protocol behavior, mechanical movement, UI changes, or hardware-only changes. Do not combine repository-wide formatting with any issue #36 pull request.

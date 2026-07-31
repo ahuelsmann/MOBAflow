@@ -217,27 +217,32 @@ Vendor-specific geometry must not be added to the neutral renderer.
 
 ## Display pipeline
 
-The display library can render labels and clocks into RGB565 frames and send
-them through `UdpLineFrameSender`.
+The display library renders labels and clocks into RGB565 frames. The registered
+`UdpDisplayFrameSender` opens a `DisplayProtocolFrameSession`, negotiates device
+capabilities and sends each frame as one atomic version-1 transaction.
 
 ```text
 Display configuration
   -> SkiaFrameRenderer / ClockRenderer
-  -> RGB565 frame
-  -> UDP line packets
+  -> RGB565 big-endian frame
+  -> Hello / BeginFrame / FrameRegion(s) / CompleteFrame
+  -> versioned UDP datagrams
   -> ESP32-S3 target
 ```
 
-The line protocol sends `HOST_VER`, `DISPLAY_META`, `FRAME_START`, one packet per
-row and `FRAME_DONE`; see `MOBAdisplay/docs/protocol.md`. MOBAflow registers the
-sender and scheduler, but the current Display page is a model/resolution
-selector and no production destination-display workflow service is wired into
-the default action handler.
+The session validates dimensions, pixel format, rotation and atomic-frame
+capabilities before sending frame data. Regions respect the negotiated payload
+limit and carry packet ordering metadata; completion is accepted only after the
+firmware has assembled and CRC-validated the full frame. See
+`MOBAdisplay/docs/protocol.md`. MOBAflow registers the sender and scheduler, but
+the current Display page is a model/resolution selector and no production
+destination-display workflow service is wired into the default action handler.
 
 `MOBAdisplay/esp32/src/main.cpp` implements the current 240x280 receiver: Wi-Fi
-setup/status endpoints, row assembly, RGB565 framebuffer allocation and TFT
-presentation. `MOBAdisplay/MobaDisplay/MobaDisplay.ino` is an older standalone
-color-test sketch and does not implement networking.
+setup/status endpoints, a length-safe version-1 parser, bounded replay
+protection, `FrameAssembler` staging and atomic TFT presentation.
+`MOBAdisplay/MobaDisplay/MobaDisplay.ino` is an older standalone color-test
+sketch and does not implement networking.
 
 ## MOBApi endpoints
 

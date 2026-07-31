@@ -1,7 +1,7 @@
 /**
  * MOBAdisplay firmware for ESP32-S3 + ST7789 (240x280, RGB565 over SPI).
  *
- * Receives full frames via UDP line protocol matching UdpLineFrameSender (MOBAflow).
+ * Receives validated protocol v1.0 frame transactions over UDP.
  * Serial is diagnostics only; Wi-Fi credentials are provisioned and stored in NVS.
  */
 
@@ -52,13 +52,8 @@ constexpr uint16_t kMaximumRegionPayloadLength =
     kMaximumDatagramLength - MobaDisplay::Protocol::kHeaderLength - 16U;
 constexpr uint32_t kFrameInactivityTimeoutMs = 1000;
 
-constexpr uint16_t kLineBytes = static_cast<uint16_t>(kTftWidth * 2);
-constexpr uint16_t kIndexedLineBytes = static_cast<uint16_t>(kLineBytes + 2);
 constexpr uint32_t kFramePixels = static_cast<uint32_t>(kTftWidth * kTftHeight);
 constexpr size_t kFrameBytes = static_cast<size_t>(kFramePixels * sizeof(uint16_t));
-static_assert(kLineBytes == MobaDisplay::Udp::kLegacyLineBytes, "Legacy row size must match the UDP parser.");
-static_assert(kIndexedLineBytes == MobaDisplay::Udp::kIndexedLineBytes, "Indexed row size must match the UDP parser.");
-static_assert(kTftHeight == MobaDisplay::Udp::kDisplayHeight, "Display height must match the UDP parser.");
 
 TFT_eSPI tft;
 MobaDisplay::Esp32::TftEsPiDisplayBackend displayBackend(
@@ -77,15 +72,9 @@ MobaDisplay::Core::FrameAssembler* gFrameAssembler = nullptr;
 MobaDisplay::Protocol::DisplayProtocolDispatcher* gProtocolDispatcher = nullptr;
 char gDeviceIdentity[24] = {};
 
-uint16_t linesReceivedCurrentFrame = 0;
-uint32_t framesOk = 0;
-uint32_t framesIncomplete = 0;
-uint8_t gRowReceived[kTftHeight] = {0};
-
 bool gUdpReady = false;
 String gConnectedSsid;
 int gLastWifiStatus = WL_IDLE_STATUS;
-String gHostProjectVersion = "n/a";
 struct ProvisioningRuntime
 {
     MobaDisplay::Provisioning::StateMachine state;
@@ -135,7 +124,6 @@ void drawListeningScreen(const char* modeLine, const char* ssidLine, const char*
 
 bool allocateFramebuffer();
 bool initializeDisplayProtocol();
-inline void unpackLineBigEndianRgb565IntoRow(const uint8_t* packet480, uint16_t* rowOut240);
 
 bool loadSavedWifiCredentials(String* ssidOut, String* passwordOut);
 void saveWifiCredentials(const String& ssid, const String& password);
@@ -150,7 +138,6 @@ esp_err_t handleProvisioningRequest(uint32_t sessionId, const uint8_t* input, ss
     uint8_t** output, ssize_t* outputLength, void* privateData);
 bool createSetupPassphrase(String* passphraseOut);
 const char* wifiStatusToText(int status);
-void handleUdpPacket(const MobaDisplay::Udp::PacketView& packet);
 void processUdpPacket();
 
 bool allocateFramebuffer()
@@ -212,16 +199,6 @@ bool initializeDisplayProtocol()
     return gProtocolDispatcher != nullptr;
 }
 
-inline void unpackLineBigEndianRgb565IntoRow(const uint8_t* packet480, uint16_t* rowOut240)
-{
-    for (int x = 0; x < kTftWidth; ++x)
-    {
-        uint16_t p = static_cast<uint16_t>(packet480[2 * x]) << 8;
-        p |= packet480[2 * x + 1];
-        rowOut240[x] = p;
-    }
-}
-
 void splashStatic()
 {
     tft.fillScreen(0x18E7);
@@ -230,8 +207,7 @@ void splashStatic()
     tft.setTextColor(TFT_WHITE, 0x18E7);
     String fwLine = String("FW: ") + APP_VERSION;
     tft.drawCentreString(fwLine.c_str(), tft.width() / 2, 68, 2);
-    String hostLine = String("Host: ") + gHostProjectVersion;
-    tft.drawCentreString(hostLine.c_str(), tft.width() / 2, 90, 2);
+    tft.drawCentreString("Protocol: v1.0", tft.width() / 2, 90, 2);
 }
 
 void drawBootScreen(const char* line1, const char* line2, const char* line3)
@@ -578,100 +554,6 @@ void setup()
     Serial.printf("UDP frame port: %u\r\n", static_cast<unsigned>(kUdpPort));
 }
 
-void resetCapture()
-{
-    linesReceivedCurrentFrame = 0;
-    memset(gRowReceived, 0, sizeof(gRowReceived));
-}
-
-void presentCapturedFrameIfAny()
-{
-    if (linesReceivedCurrentFrame == 0 || !gFb)
-        return;
-
-    const MobaDisplay::Core::DisplayResult presentResult = displayBackend.Present(
-        reinterpret_cast<const uint8_t*>(gFb),
-        kFrameBytes,
-        MobaDisplay::Core::Rotation::Degrees0);
-    if (presentResult.code != MobaDisplay::Core::ResultCode::Ok)
-    {
-        ++framesIncomplete;
-        return;
-    }
-    if (linesReceivedCurrentFrame == kTftHeight)
-    {
-        ++framesOk;
-        if ((framesOk & 0x01FFU) == 0U)
-            Serial.printf("Frames OK: %" PRIu32 "\r\n", framesOk);
-    }
-    else
-    {
-        ++framesIncomplete;
-    }
-}
-
-void handleUdpPacket(const MobaDisplay::Udp::PacketView& packet)
-{
-    if (packet.kind == MobaDisplay::Udp::PacketKind::FrameStart)
-    {
-        resetCapture();
-        return;
-    }
-
-    if (packet.kind == MobaDisplay::Udp::PacketKind::HostVersion)
-    {
-        const size_t displayedLength = packet.payloadLength > MobaDisplay::Udp::kDisplayedHostVersionBytes
-            ? MobaDisplay::Udp::kDisplayedHostVersionBytes
-            : packet.payloadLength;
-        char displayedVersion[MobaDisplay::Udp::kDisplayedHostVersionBytes + 1];
-        memcpy(displayedVersion, packet.payload, displayedLength);
-        displayedVersion[displayedLength] = '\0';
-        gHostProjectVersion = String(displayedVersion);
-        return;
-    }
-
-    if (packet.kind == MobaDisplay::Udp::PacketKind::FrameDone)
-    {
-        presentCapturedFrameIfAny();
-        resetCapture();
-        return;
-    }
-
-    if (packet.kind == MobaDisplay::Udp::PacketKind::LegacyLine)
-    {
-        if (linesReceivedCurrentFrame < kTftHeight && gFb)
-        {
-            uint16_t* row = gFb + (static_cast<uint32_t>(linesReceivedCurrentFrame) * kTftWidth);
-            unpackLineBigEndianRgb565IntoRow(pktBuf, row);
-            ++linesReceivedCurrentFrame;
-        }
-        return;
-    }
-
-    if (packet.kind != MobaDisplay::Udp::PacketKind::IndexedLine || !gFb)
-        return;
-
-    const uint16_t rowIndex = packet.rowIndex;
-    if (rowIndex == 0 && linesReceivedCurrentFrame > 0)
-    {
-        presentCapturedFrameIfAny();
-        resetCapture();
-    }
-
-    uint16_t* row = gFb + (static_cast<uint32_t>(rowIndex) * kTftWidth);
-    unpackLineBigEndianRgb565IntoRow(packet.payload, row);
-    if (gRowReceived[rowIndex] == 0)
-    {
-        gRowReceived[rowIndex] = 1;
-        ++linesReceivedCurrentFrame;
-        if (linesReceivedCurrentFrame == kTftHeight)
-        {
-            presentCapturedFrameIfAny();
-            resetCapture();
-        }
-    }
-}
-
 void processUdpPacket()
 {
     const int pktSize = udp.parsePacket();
@@ -690,36 +572,26 @@ void processUdpPacket()
         pktBuf,
         static_cast<size_t>(rd),
         static_cast<size_t>(pktSize));
-    if (packet.kind == MobaDisplay::Udp::PacketKind::Versioned)
-    {
-        resetCapture();
-        if (!gProtocolDispatcher)
-            return;
-
-        const MobaDisplay::Protocol::DispatchResult dispatchResult =
-            gProtocolDispatcher->Dispatch(
-                packet.payload,
-                packet.payloadLength,
-                millis(),
-                {
-                    millis() / 1000U,
-                    static_cast<uint32_t>(ESP.getFreeHeap())},
-                responseBuf,
-                sizeof(responseBuf));
-        if (!dispatchResult.hasResponse)
-            return;
-
-        if (udp.beginPacket(udp.remoteIP(), udp.remotePort()) != 1)
-            return;
-        udp.write(responseBuf, dispatchResult.responseLength);
-        udp.endPacket();
-        return;
-    }
-
-    if (gProtocolDispatcher && gProtocolDispatcher->IsNegotiated())
+    if (packet.kind != MobaDisplay::Udp::PacketKind::Versioned || !gProtocolDispatcher)
         return;
 
-    handleUdpPacket(packet);
+    const MobaDisplay::Protocol::DispatchResult dispatchResult =
+        gProtocolDispatcher->Dispatch(
+            packet.payload,
+            packet.payloadLength,
+            millis(),
+            {
+                millis() / 1000U,
+                static_cast<uint32_t>(ESP.getFreeHeap())},
+            responseBuf,
+            sizeof(responseBuf));
+    if (!dispatchResult.hasResponse)
+        return;
+
+    if (udp.beginPacket(udp.remoteIP(), udp.remotePort()) != 1)
+        return;
+    udp.write(responseBuf, dispatchResult.responseLength);
+    udp.endPacket();
 }
 
 void loop()

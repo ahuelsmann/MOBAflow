@@ -205,7 +205,7 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton<HealthCheckService>();
 
         services.AddSingleton<IFrameRenderer, SkiaFrameRenderer>();
-        services.AddSingletonWithInterface<UdpLineFrameSender, IFrameSender>();
+        services.AddSingletonWithInterface<UdpDisplayFrameSender, IFrameSender>();
         services.AddTransient<FrameLoopScheduler>();
 
         services.AddSingleton<TrackPlan>();

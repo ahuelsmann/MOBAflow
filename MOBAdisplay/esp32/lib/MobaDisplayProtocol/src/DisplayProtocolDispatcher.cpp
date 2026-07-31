@@ -106,12 +106,6 @@ bool IsCommandMessage(MessageType messageType) noexcept
         || messageType == MessageType::RenderTestPattern;
 }
 
-bool IsNewerRequestId(uint32_t candidate, uint32_t reference) noexcept
-{
-    const uint32_t distance = candidate - reference;
-    return distance != 0 && distance < 0x80000000U;
-}
-
 bool IsVersionSupported(
     uint8_t minimumMajor,
     uint8_t minimumMinor,
@@ -339,23 +333,29 @@ DisplayProtocolDispatcher::InspectRequestFingerprint(
             : RequestFingerprintState::Conflict;
     }
 
-    if (!recordWhenNew)
+    for (const RequestFingerprint& previous : _evictedRequestHistory)
     {
-        *fingerprint = nullptr;
-        return RequestFingerprintState::New;
-    }
-
-    if (_hasLatestRequestId && !IsNewerRequestId(header.requestId, _latestRequestId))
-    {
-        const uint32_t age = _latestRequestId - header.requestId;
-        if (age >= kRequestHistoryLength && age < 0x80000000U)
+        if (previous.occupied && previous.requestId == header.requestId)
         {
             *fingerprint = nullptr;
             return RequestFingerprintState::Conflict;
         }
     }
 
+    if (!recordWhenNew)
+    {
+        *fingerprint = nullptr;
+        return RequestFingerprintState::New;
+    }
+
     RequestFingerprint& newFingerprint = _requestHistory[_nextRequestHistoryIndex];
+    if (newFingerprint.occupied)
+    {
+        _evictedRequestHistory[_nextEvictedRequestHistoryIndex] = newFingerprint;
+        _nextEvictedRequestHistoryIndex =
+            (_nextEvictedRequestHistoryIndex + 1U) % kEvictedRequestHistoryLength;
+    }
+
     newFingerprint = {
         header.requestId,
         header.frameId,
@@ -370,20 +370,15 @@ DisplayProtocolDispatcher::InspectRequestFingerprint(
         true};
     *fingerprint = &newFingerprint;
     _nextRequestHistoryIndex = (_nextRequestHistoryIndex + 1U) % kRequestHistoryLength;
-    if (!_hasLatestRequestId || IsNewerRequestId(header.requestId, _latestRequestId))
-    {
-        _latestRequestId = header.requestId;
-        _hasLatestRequestId = true;
-    }
     return RequestFingerprintState::New;
 }
 
 void DisplayProtocolDispatcher::ResetRequestHistory() noexcept
 {
     std::memset(_requestHistory, 0, sizeof(_requestHistory));
+    std::memset(_evictedRequestHistory, 0, sizeof(_evictedRequestHistory));
     _nextRequestHistoryIndex = 0;
-    _latestRequestId = 0;
-    _hasLatestRequestId = false;
+    _nextEvictedRequestHistoryIndex = 0;
 }
 
 DispatchResult DisplayProtocolDispatcher::HandleHello(
@@ -464,9 +459,6 @@ DispatchResult DisplayProtocolDispatcher::HandleHello(
         _frameAssembler.AbortFrame(_frameAssembler.ActiveFrameId());
     ResetRequestHistory();
     InspectRequestFingerprint(header, &fingerprint, true);
-    // The handshake opens a new request epoch; the first negotiated request sets its replay boundary.
-    _latestRequestId = 0;
-    _hasLatestRequestId = false;
 
     _isNegotiated = true;
     return response;

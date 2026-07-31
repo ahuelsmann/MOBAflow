@@ -114,6 +114,7 @@ private:
     };
 
     static constexpr size_t kRequestHistoryLength = 16;
+    static constexpr size_t kEvictedRequestHistoryLength = 64;
 
     bool TryDecodePacket(
         const uint8_t* datagram,
@@ -178,9 +179,9 @@ private:
     Core::DisplayResult _lastOperationResult = Core::MakeResult(Core::ResultCode::Ok);
     bool _isNegotiated = false;
     RequestFingerprint _requestHistory[kRequestHistoryLength]{};
+    RequestFingerprint _evictedRequestHistory[kEvictedRequestHistoryLength]{};
     size_t _nextRequestHistoryIndex = 0;
-    uint32_t _latestRequestId = 0;
-    bool _hasLatestRequestId = false;
+    size_t _nextEvictedRequestHistoryIndex = 0;
 };
 }
 }

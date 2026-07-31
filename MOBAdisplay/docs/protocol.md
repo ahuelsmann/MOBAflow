@@ -11,38 +11,23 @@ The protocol is independent of the display controller, graphics library, board
 pins, DMA configuration, Wi-Fi provisioning, and credential storage. Those
 details remain owned by each firmware project.
 
-The current line-oriented `HOST_VER`, `FRAME_START`, indexed-row, and
-`FRAME_DONE` transport is legacy protocol v0. The old documentation stated that
-the host sent `DISPLAY_META`, but `UdpLineFrameSender` does not send that
-datagram. Implementations MUST NOT infer v1 capabilities from that obsolete
-description. There is no silent fallback from a negotiated v1 session to v0.
+The production host and firmware accept only protocol v1.0. The former
+line-oriented `HOST_VER`, `FRAME_START`, indexed-row, and `FRAME_DONE`
+transport is legacy protocol v0 and has been removed. There is no automatic or
+configured fallback to v0.
 
-Firmware integration of this specification remains gated by RF-01 (length-safe
-UDP parsing) and RF-02 (stable provisioning boundary). The host envelope and
-golden vectors can be implemented and tested independently of those gates.
+## Firmware parser boundary
 
-## Legacy v0 parser behavior
+The firmware classifies each UDP datagram using both the original datagram
+length and the number of bytes copied into its fixed 1232-byte receive buffer.
+It does not assume that UDP payloads are null-terminated. A complete envelope
+with `MOBA` magic and matching declared length is routed to the v1.0
+dispatcher. A matching prefix that is too short is classified as truncated,
+and a full prefix with inconsistent envelope lengths is malformed. Oversized
+or incompletely copied datagrams are rejected before dispatch.
 
-The current firmware classifies each legacy datagram using both the original
-datagram length and the number of bytes copied into its fixed 768-byte receive
-buffer. It does not assume that UDP payloads are null-terminated.
-
-| Datagram | Result |
-| --- | --- |
-| Empty | Ignored as empty |
-| Supported control-prefix fragment | Ignored as truncated |
-| Larger than 768 bytes or not copied completely | Drained and ignored |
-| `HOST_VER:` without a value or with non-printable bytes | Ignored as malformed |
-| Unknown length or content, including obsolete `DISPLAY_META` | Ignored as unknown |
-| Exact `FRAME_START` / `FRAME_DONE` | Capture reset / frame completion |
-| Exact 480-byte legacy row | Accepted in receive order |
-| Exact 482-byte indexed row with index 0 through 279 | Accepted at its row index |
-| Indexed row outside 0 through 279 | Ignored as malformed |
-
-Valid `HOST_VER:` payloads are parsed with an explicit payload length. The
-displayed value remains limited to 28 characters for compatibility, and the
-portable parser performs no allocation. This RF-01 behavior does not implement
-the v1 envelope or capability protocol.
+Legacy v0 control and row datagrams are unknown input. They are neither
+presented nor interpreted as versioned traffic.
 
 The boundary and deterministic fuzz suite run on the host, while the production
 integration is compiled for ESP32-S3:
@@ -372,6 +357,16 @@ additional standardized detail exists.
 - A retry uses the same request ID, frame ID, message type, and payload plus the
   `Retry` flag. The receiver returns the cached result for a duplicate completed
   operation. It does not execute it again.
+- Request-ID ordering has no protocol meaning. An unseen identifier is not
+  rejected because it is numerically lower than, or distant from, another
+  identifier.
+- The reference firmware retains complete fingerprints and terminal results for
+  the 16 most recent requests plus exact tombstones for 64 evicted request IDs.
+  An exact retry still in the result cache receives the cached result. Any
+  request ID still present in the tombstone set is rejected without execution.
+  This provides bounded at-most-once handling for the 80 most recently observed
+  requests in the current session. A fresh successful hello or reboot starts a
+  new request epoch and clears this history.
 - The host uses bounded timeouts and a bounded retry count. Cancellation stops
   waiting and further retries, then sends a best-effort `AbortFrame` when a
   transaction was started.

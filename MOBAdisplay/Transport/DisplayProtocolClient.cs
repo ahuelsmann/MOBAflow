@@ -46,12 +46,14 @@ public sealed class DisplayProtocolClient : IDisposable
     /// <param name="sessionId">Negotiated session identifier, or zero for hello.</param>
     /// <param name="frameId">Frame identifier for frame-scoped messages, otherwise zero.</param>
     /// <param name="options">Bounded wait and retry policy.</param>
+    /// <param name="packetSequence">Optional logical packet position for a multi-region frame.</param>
     /// <param name="cancellationToken">Stops sending, waiting, and further retries.</param>
     public async Task<DisplayRequestOutcome> SendRequestAsync(
         IDisplayProtocolPayload request,
         uint sessionId = 0,
         uint frameId = 0,
         DisplayRequestOptions? options = null,
+        DisplayPacketSequence? packetSequence = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -92,7 +94,8 @@ public sealed class DisplayProtocolClient : IDisposable
                     requestId,
                     frameId,
                     sessionId,
-                    attempt > 1);
+                    attempt > 1,
+                    packetSequence);
                 await _transport.SendAsync(datagram, cancellationToken).ConfigureAwait(false);
                 var resolution = await pending.Completion.Task
                     .WaitAsync(requestOptions.ResponseTimeout, _timeProvider, cancellationToken)
@@ -180,12 +183,19 @@ public sealed class DisplayProtocolClient : IDisposable
         uint requestId,
         uint frameId,
         uint sessionId,
-        bool isRetry)
+        bool isRetry,
+        DisplayPacketSequence? packetSequence)
     {
         var flags = DisplayProtocolFlags.AcknowledgementRequired;
         if (isRetry)
         {
             flags |= DisplayProtocolFlags.Retry;
+        }
+
+        var sequence = packetSequence ?? new DisplayPacketSequence(0, 1, false);
+        if (sequence.IsFinalPacket)
+        {
+            flags |= DisplayProtocolFlags.FinalPacket;
         }
 
         var header = new DisplayPacketHeader(
@@ -194,7 +204,9 @@ public sealed class DisplayProtocolClient : IDisposable
             flags,
             requestId,
             frameId,
-            sessionId);
+            sessionId,
+            sequence.PacketIndex,
+            sequence.PacketCount);
         return DisplayPacketCodec.Encode(new DisplayProtocolPacket(header, payload));
     }
 

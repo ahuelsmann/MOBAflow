@@ -667,11 +667,47 @@ void TestOutOfOrderRequestWithinReplayWindowRemainsValid()
 {
     Fixture fixture;
     fixture.Dispatch(
+        MakePacket(MessageType::HelloRequest, 1, 0, 0, MakeHelloPayload()));
+    fixture.Dispatch(
         MakePacket(MessageType::Clear, 105, 0, kSessionId, {0x12, 0x34}));
     const DispatchResult result = fixture.Dispatch(
         MakePacket(MessageType::Clear, 104, 0, kSessionId, {0x56, 0x78}));
 
     AssertResponse(MessageType::Result, 104, 0, kSessionId, result, fixture.response);
+    TEST_ASSERT_EQUAL_UINT8(
+        static_cast<uint8_t>(MobaDisplay::Core::ResultCode::Ok),
+        fixture.response[MobaDisplay::Protocol::kHeaderLength]);
+    TEST_ASSERT_EQUAL_size_t(2, fixture.backend.ClearCallCount());
+}
+
+void TestUnseenOutOfOrderRequestOutsideHistoryRemainsValid()
+{
+    Fixture fixture;
+    fixture.Dispatch(
+        MakePacket(MessageType::HelloRequest, 1, 0, 0, MakeHelloPayload()));
+    fixture.Dispatch(
+        MakePacket(MessageType::Clear, 105, 0, kSessionId, {0x12, 0x34}));
+    const DispatchResult result = fixture.Dispatch(
+        MakePacket(MessageType::Clear, 80, 0, kSessionId, {0x56, 0x78}));
+
+    AssertResponse(MessageType::Result, 80, 0, kSessionId, result, fixture.response);
+    TEST_ASSERT_EQUAL_UINT8(
+        static_cast<uint8_t>(MobaDisplay::Core::ResultCode::Ok),
+        fixture.response[MobaDisplay::Protocol::kHeaderLength]);
+    TEST_ASSERT_EQUAL_size_t(2, fixture.backend.ClearCallCount());
+}
+
+void TestRequestIdsRemainValidAcrossWraparound()
+{
+    Fixture fixture;
+    fixture.Dispatch(
+        MakePacket(MessageType::HelloRequest, 100, 0, 0, MakeHelloPayload()));
+    fixture.Dispatch(
+        MakePacket(MessageType::Clear, UINT32_MAX, 0, kSessionId, {0x12, 0x34}));
+    const DispatchResult result = fixture.Dispatch(
+        MakePacket(MessageType::Clear, 1, 0, kSessionId, {0x56, 0x78}));
+
+    AssertResponse(MessageType::Result, 1, 0, kSessionId, result, fixture.response);
     TEST_ASSERT_EQUAL_UINT8(
         static_cast<uint8_t>(MobaDisplay::Core::ResultCode::Ok),
         fixture.response[MobaDisplay::Protocol::kHeaderLength]);
@@ -732,6 +768,41 @@ void TestHealthAndRebootExposeOnlySafeSessionState()
     TEST_ASSERT_EQUAL_UINT32(newSessionId, fixture.dispatcher.SessionId());
 }
 
+void TestRebootClearsActiveAndEvictedRequestHistory()
+{
+    Fixture fixture;
+    fixture.Dispatch(
+        MakePacket(MessageType::HelloRequest, 1, 0, 0, MakeHelloPayload()));
+    fixture.Dispatch(
+        MakePacket(MessageType::Clear, 2, 0, kSessionId, {0x12, 0x34}));
+    for (uint32_t requestId = 3; requestId <= 18; ++requestId)
+    {
+        fixture.Dispatch(
+            MakePacket(MessageType::HealthRequest, requestId, 0, kSessionId, {}));
+    }
+    TEST_ASSERT_EQUAL_size_t(1, fixture.backend.ClearCallCount());
+
+    constexpr uint32_t newSessionId = 0x55667788U;
+    fixture.dispatcher.ResetForReboot(newSessionId);
+    DispatchResult result = fixture.Dispatch(
+        MakePacket(MessageType::HelloRequest, 1, 0, 0, MakeHelloPayload()));
+    AssertResponse(
+        MessageType::CapabilitiesResponse,
+        1,
+        0,
+        0,
+        result,
+        fixture.response);
+    result = fixture.Dispatch(
+        MakePacket(MessageType::Clear, 2, 0, newSessionId, {0x56, 0x78}));
+
+    AssertResponse(MessageType::Result, 2, 0, newSessionId, result, fixture.response);
+    TEST_ASSERT_EQUAL_UINT8(
+        static_cast<uint8_t>(MobaDisplay::Core::ResultCode::Ok),
+        fixture.response[MobaDisplay::Protocol::kHeaderLength]);
+    TEST_ASSERT_EQUAL_size_t(2, fixture.backend.ClearCallCount());
+}
+
 void TestTftPresenterPushesNetworkOrderBytesWithoutSwappingAgain()
 {
     RecordingTftDriver display;
@@ -761,7 +832,10 @@ int main(int, char**)
     RUN_TEST(TestBusyBeginRetryReevaluatesAfterActiveFrameIsAborted);
     RUN_TEST(TestEvictedRequestIdCannotExecuteAgain);
     RUN_TEST(TestOutOfOrderRequestWithinReplayWindowRemainsValid);
+    RUN_TEST(TestUnseenOutOfOrderRequestOutsideHistoryRemainsValid);
+    RUN_TEST(TestRequestIdsRemainValidAcrossWraparound);
     RUN_TEST(TestHealthAndRebootExposeOnlySafeSessionState);
+    RUN_TEST(TestRebootClearsActiveAndEvictedRequestHistory);
     RUN_TEST(TestTftPresenterPushesNetworkOrderBytesWithoutSwappingAgain);
     return UNITY_END();
 }
