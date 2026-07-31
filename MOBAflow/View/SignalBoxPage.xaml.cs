@@ -366,13 +366,6 @@ sealed partial class SignalBoxPage
         DeleteSelectedElement();
     }
 
-    private void OnContextButtonClick(object sender, RoutedEventArgs e)
-    {
-        _ = sender;
-        _ = e;
-        this.DispatcherQueue.TryEnqueue(() => this.SelectedObjectWorkbench.FocusWorkbench());
-    }
-
     private void OnDeleteAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
     {
         _ = sender;

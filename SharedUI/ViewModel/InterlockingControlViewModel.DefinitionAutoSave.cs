@@ -5,6 +5,7 @@ namespace Moba.SharedUI.ViewModel;
 using Backend.Service.Validation;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Domain;
+using Interface;
 
 /// <summary>
 /// Validation and persistence state for the selected object's definition.
@@ -71,7 +72,7 @@ public sealed partial class InterlockingControlViewModel
 
         ReplaceAuthoritativeRoute(project, route);
         RefreshDefinitions();
-        QueueDefinitionSave(project, route);
+        QueueDefinitionSave(route);
     }
 
     private InterlockingValidationReport ValidateRouteCandidate(Project project, RouteDefinition route)
@@ -112,7 +113,7 @@ public sealed partial class InterlockingControlViewModel
             routes.Add(route);
     }
 
-    private void QueueDefinitionSave(Project project, RouteDefinition route)
+    private void QueueDefinitionSave(RouteDefinition route)
     {
         var version = Interlocked.Increment(ref _definitionSaveRequestedVersion);
         DefinitionSaveState = DefinitionSaveState.Saving;
@@ -121,7 +122,6 @@ public sealed partial class InterlockingControlViewModel
         {
             _definitionSaveTail = PersistDefinitionAfterAsync(
                 _definitionSaveTail,
-                project,
                 route,
                 version);
         }
@@ -129,57 +129,65 @@ public sealed partial class InterlockingControlViewModel
 
     private async Task PersistDefinitionAfterAsync(
         Task previousSave,
-        Project project,
         RouteDefinition route,
         long version)
     {
-        await previousSave.ConfigureAwait(true);
+        await previousSave.ConfigureAwait(false);
+        SolutionSaveResult saveResult;
         try
         {
-            await _projectContext.SaveSolutionInternalAsync().ConfigureAwait(true);
+            saveResult = await _projectContext.SaveSolutionWithStatusAsync().ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
                                    or InvalidOperationException or NotSupportedException)
         {
             LogRoutePersistenceFailure(_logger, route.Id, ex);
-            if (IsLatestDefinitionSave(version))
-            {
-                DefinitionSaveState = DefinitionSaveState.NotSaved;
-                DefinitionSaveStatusText = $"Not saved - {ex.Message}";
-            }
-            return;
-        }
-
-        try
-        {
-            await _runtime.ActivateAsync(project.Interlocking).ConfigureAwait(true);
-        }
-        catch (Exception ex) when (ex is ObjectDisposedException or InvalidOperationException)
-        {
-            LogRouteActivationFailure(_logger, route.Id, ex);
-            if (IsLatestDefinitionSave(version))
-            {
-                DefinitionSaveState = DefinitionSaveState.NotSaved;
-                DefinitionSaveStatusText = "Not saved - live interlocking reload failed";
-            }
+            await UpdateLatestDefinitionSaveStateAsync(
+                version,
+                DefinitionSaveState.NotSaved,
+                $"Not saved - {ex.Message}").ConfigureAwait(false);
             return;
         }
 
         if (!IsLatestDefinitionSave(version))
             return;
 
-        if (_projectContext is MainWindowViewModel mainWindow &&
-            mainWindow.SolutionSaveState != SolutionSaveState.Saved)
+        if (saveResult.State != SolutionSaveState.Saved)
         {
-            DefinitionSaveState = DefinitionSaveState.NotSaved;
-            DefinitionSaveStatusText = mainWindow.SolutionSaveStatusText;
+            await UpdateLatestDefinitionSaveStateAsync(
+                version,
+                DefinitionSaveState.NotSaved,
+                saveResult.StatusText).ConfigureAwait(false);
             return;
         }
 
-        DefinitionSaveState = DefinitionSaveState.Saved;
-        DefinitionSaveStatusText = "Saved";
-        SetStatus("route.draft.saved", $"Route definition '{route.Name}' saved.");
+        await _uiDispatcher.InvokeOnUiAsync(() =>
+        {
+            if (IsLatestDefinitionSave(version))
+            {
+                DefinitionSaveState = DefinitionSaveState.Saved;
+                DefinitionSaveStatusText = "Saved";
+                SetStatus("route.draft.saved", $"Route definition '{route.Name}' saved.");
+            }
+
+            return Task.CompletedTask;
+        }).ConfigureAwait(false);
     }
+
+    private Task UpdateLatestDefinitionSaveStateAsync(
+        long version,
+        DefinitionSaveState state,
+        string statusText) =>
+        _uiDispatcher.InvokeOnUiAsync(() =>
+        {
+            if (IsLatestDefinitionSave(version))
+            {
+                DefinitionSaveState = state;
+                DefinitionSaveStatusText = statusText;
+            }
+
+            return Task.CompletedTask;
+        });
 
     private bool IsLatestDefinitionSave(long version) =>
         version == Volatile.Read(ref _definitionSaveRequestedVersion);

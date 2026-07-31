@@ -368,6 +368,10 @@ public sealed class WorkflowLibraryViewModelTests
 
         public SolutionViewModel? SolutionViewModel => null;
 
+        public SolutionSaveState SolutionSaveState => SolutionSaveState.Saved;
+
+        public string SolutionSaveStatusText => "Saved";
+
         public int SaveCount { get; private set; }
 
         public TaskCompletionSource Saved { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);

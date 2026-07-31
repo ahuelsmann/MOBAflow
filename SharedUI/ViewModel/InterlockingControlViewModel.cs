@@ -29,17 +29,12 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
             new EventId(1, nameof(LogRoutePersistenceFailure)),
             "Persist interlocking route {RouteId} failed");
 
-    private static readonly Action<ILogger, Guid, Exception?> LogRouteActivationFailure =
-        LoggerMessage.Define<Guid>(
-            LogLevel.Error,
-            new EventId(2, nameof(LogRouteActivationFailure)),
-            "Activate persisted interlocking route {RouteId} failed");
-
     private readonly IInterlockingRuntime _runtime;
     private readonly IEventBus _eventBus;
     private readonly IProjectContext _projectContext;
     private readonly IInterlockingDefinitionValidator _validator;
     private readonly IDialogService _dialogService;
+    private readonly IUiDispatcher _uiDispatcher;
     private readonly ILogger<InterlockingControlViewModel> _logger;
     private readonly List<RouteTurnoutRequirement> _draftTurnouts = [];
     private readonly List<Guid> _draftBlocks = [];
@@ -55,6 +50,7 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
         IProjectContext projectContext,
         IInterlockingDefinitionValidator validator,
         IDialogService dialogService,
+        IUiDispatcher uiDispatcher,
         ILogger<InterlockingControlViewModel> logger)
     {
         ArgumentNullException.ThrowIfNull(runtime);
@@ -62,6 +58,7 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(projectContext);
         ArgumentNullException.ThrowIfNull(validator);
         ArgumentNullException.ThrowIfNull(dialogService);
+        ArgumentNullException.ThrowIfNull(uiDispatcher);
         ArgumentNullException.ThrowIfNull(logger);
 
         _runtime = runtime;
@@ -69,6 +66,7 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
         _projectContext = projectContext;
         _validator = validator;
         _dialogService = dialogService;
+        _uiDispatcher = uiDispatcher;
         _logger = logger;
         RefreshDefinitions();
         ApplySnapshot(_runtime.Current, _runtime.IsSynchronized, "interlocking.current");
@@ -107,6 +105,18 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
 
     [ObservableProperty]
     public partial OperationalElementOption? SelectedOperationalElement { get; set; }
+
+    [ObservableProperty]
+    public partial OperationalElementOption? SelectedDraftOperationalElement { get; set; }
+
+    [ObservableProperty]
+    public partial InterlockingItemViewState? SelectedDraftTurnout { get; set; }
+
+    [ObservableProperty]
+    public partial InterlockingItemViewState? SelectedDraftBlock { get; set; }
+
+    [ObservableProperty]
+    public partial InterlockingItemViewState? SelectedDraftSignal { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanOperateTurnout))]
@@ -238,17 +248,18 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
 
         if (SelectedRouteLifecycle == RouteLifecycle.Setting)
         {
+            var selectedRouteName = SelectedRoute.Name;
             var confirmed = await _dialogService.ShowConfirmationAsync(
                 "Cancel route setting?",
-                $"Cancel setting '{SelectedRoute.Name}'? The route becomes failed, protected signals remain at stop, "
+                $"Cancel setting '{selectedRouteName}'? The route becomes failed, protected signals remain at stop, "
                 + "and uncertain resources remain locked until reconciliation.",
                 "Cancel setting",
-                "Keep setting").ConfigureAwait(true);
+                "Keep setting").ConfigureAwait(false);
             if (!confirmed)
                 return;
         }
 
-        await ExecuteRouteAsync(_runtime.CancelRouteAsync).ConfigureAwait(true);
+        await ExecuteRouteAsync(_runtime.CancelRouteAsync).ConfigureAwait(false);
     }
 
     [RelayCommand(CanExecute = nameof(CanReleaseSelectedRoute))]
@@ -266,16 +277,17 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
             return;
         }
 
+        var selectedRouteName = SelectedRoute.Name;
         var confirmed = await _dialogService.ShowConfirmationAsync(
             "Reconcile route?",
-            $"Reconcile '{SelectedRoute.Name}'? Successful reconciliation may release retained locks and "
+            $"Reconcile '{selectedRouteName}'? Successful reconciliation may release retained locks and "
             + "reservations after failed, timed-out, or late hardware feedback.",
             "Reconcile",
-            "Keep locked").ConfigureAwait(true);
+            "Keep locked").ConfigureAwait(false);
         if (!confirmed)
             return;
 
-        await ExecuteRouteAsync(_runtime.ReconcileRouteAsync).ConfigureAwait(true);
+        await ExecuteRouteAsync(_runtime.ReconcileRouteAsync).ConfigureAwait(false);
     }
 
     private bool CanCancelSelectedRoute() => IsCancelRouteVisible;
@@ -308,13 +320,13 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
     private void SetDraftEntry()
     {
         EnsureDraft();
-        if (SelectedOperationalElement == null)
+        if (SelectedDraftOperationalElement == null)
         {
             SetStatus("route.draft.selection.missing", "Select an operational element first.");
             return;
         }
 
-        DraftEntryId = SelectedOperationalElement.Id;
+        DraftEntryId = SelectedDraftOperationalElement.Id;
         UpdateDraftSummary();
         ValidateAndRequestDefinitionSave();
     }
@@ -323,13 +335,13 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
     private void AppendDraftPath()
     {
         EnsureDraft();
-        if (SelectedOperationalElement == null)
+        if (SelectedDraftOperationalElement == null)
         {
             SetStatus("route.draft.selection.missing", "Select an operational element first.");
             return;
         }
 
-        _draftPath.Add(SelectedOperationalElement.Id);
+        _draftPath.Add(SelectedDraftOperationalElement.Id);
         UpdateDraftSummary();
         ValidateAndRequestDefinitionSave();
     }
@@ -338,13 +350,13 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
     private void SetDraftExit()
     {
         EnsureDraft();
-        if (SelectedOperationalElement == null)
+        if (SelectedDraftOperationalElement == null)
         {
             SetStatus("route.draft.selection.missing", "Select an operational element first.");
             return;
         }
 
-        DraftExitId = SelectedOperationalElement.Id;
+        DraftExitId = SelectedDraftOperationalElement.Id;
         UpdateDraftSummary();
         ValidateAndRequestDefinitionSave();
     }
@@ -353,16 +365,16 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
     private void AddDraftTurnoutRequirement()
     {
         EnsureDraft();
-        if (SelectedTurnout == null)
+        if (SelectedDraftTurnout == null)
         {
             SetStatus("route.draft.turnout.missing", "Select a turnout first.");
             return;
         }
 
-        _draftTurnouts.RemoveAll(item => item.TurnoutId == SelectedTurnout.Id);
+        _draftTurnouts.RemoveAll(item => item.TurnoutId == SelectedDraftTurnout.Id);
         _draftTurnouts.Add(new RouteTurnoutRequirement
         {
-            TurnoutId = SelectedTurnout.Id,
+            TurnoutId = SelectedDraftTurnout.Id,
             Position = DraftTurnoutPosition
         });
         UpdateDraftSummary();
@@ -373,14 +385,14 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
     private void AddDraftBlock()
     {
         EnsureDraft();
-        if (SelectedBlock == null)
+        if (SelectedDraftBlock == null)
         {
             SetStatus("route.draft.block.missing", "Select a protected block first.");
             return;
         }
 
-        if (!_draftBlocks.Contains(SelectedBlock.Id))
-            _draftBlocks.Add(SelectedBlock.Id);
+        if (!_draftBlocks.Contains(SelectedDraftBlock.Id))
+            _draftBlocks.Add(SelectedDraftBlock.Id);
         UpdateDraftSummary();
         ValidateAndRequestDefinitionSave();
     }
@@ -389,16 +401,16 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
     private void AddDraftSignalRequirement()
     {
         EnsureDraft();
-        if (SelectedSignal == null)
+        if (SelectedDraftSignal == null)
         {
             SetStatus("route.draft.signal.missing", "Select a protected signal first.");
             return;
         }
 
-        _draftSignals.RemoveAll(item => item.SignalId == SelectedSignal.Id);
+        _draftSignals.RemoveAll(item => item.SignalId == SelectedDraftSignal.Id);
         _draftSignals.Add(new RouteSignalRequirement
         {
-            SignalId = SelectedSignal.Id,
+            SignalId = SelectedDraftSignal.Id,
             ProceedAspect = DraftSignalAspect
         });
         UpdateDraftSummary();
@@ -435,11 +447,14 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
             return;
         }
 
+        var selectedTurnoutId = SelectedTurnout.Id;
+        var correlationId = Guid.NewGuid();
         var result = await _runtime.SetTurnoutAsync(
-            SelectedTurnout.Id,
+            selectedTurnoutId,
             position,
-            Guid.NewGuid()).ConfigureAwait(true);
-        ApplyResult(result.Code, result.Message, result.State);
+            correlationId).ConfigureAwait(false);
+        await ApplyResultOnUiAsync(result.Code, result.Message, result.State, result.CorrelationId)
+            .ConfigureAwait(false);
     }
 
     private async Task ExecuteRouteAsync(
@@ -451,15 +466,22 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
             return;
         }
 
+        var selectedRouteId = SelectedRoute.Id;
+        var correlationId = Guid.NewGuid();
         var result = await operation(
-            SelectedRoute.Id,
-            Guid.NewGuid(),
-            CancellationToken.None).ConfigureAwait(true);
-        ApplyResult(result.Code, result.Message, result.State);
+            selectedRouteId,
+            correlationId,
+            CancellationToken.None).ConfigureAwait(false);
+        await ApplyResultOnUiAsync(result.Code, result.Message, result.State, result.CorrelationId)
+            .ConfigureAwait(false);
     }
 
-    private void OnRuntimeSnapshotChanged(InterlockingRuntimeSnapshotChangedEvent @event) =>
+    private void OnRuntimeSnapshotChanged(InterlockingRuntimeSnapshotChangedEvent @event)
+    {
+        _lastCorrelationId = @event.CorrelationId;
+        _lastRuntimeUpdateUtc = @event.CreatedUtc;
         ApplySnapshot(@event.Snapshot, @event.IsSynchronized, @event.Code);
+    }
 
     private void OnProjectContextPropertyChanged(object? sender, PropertyChangedEventArgs args)
     {
@@ -474,6 +496,7 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
     private void RefreshDefinitions()
     {
         var definition = CurrentProject?.Interlocking;
+        var selectedDraftOperationalId = SelectedDraftOperationalElement?.Id;
         OperationalElements.Clear();
         if (definition == null)
         {
@@ -493,6 +516,9 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
         foreach (var route in definition.Routes)
             OperationalElements.Add(new OperationalElementOption(route.Id, route.Name, "Route"));
 
+        SelectedDraftOperationalElement = OperationalElements.FirstOrDefault(
+            item => item.Id == selectedDraftOperationalId);
+
         ApplySnapshot(_runtime.Current, _runtime.IsSynchronized, StatusCode);
     }
 
@@ -504,6 +530,9 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
         var selectedBlockId = SelectedBlock?.Id;
         var selectedSignalId = SelectedSignal?.Id;
         var selectedRouteId = SelectedRoute?.Id;
+        var selectedDraftTurnoutId = SelectedDraftTurnout?.Id;
+        var selectedDraftBlockId = SelectedDraftBlock?.Id;
+        var selectedDraftSignalId = SelectedDraftSignal?.Id;
 
         Replace(
             Turnouts,
@@ -522,6 +551,9 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
         SelectedBlock = Blocks.FirstOrDefault(item => item.Id == selectedBlockId);
         SelectedSignal = Signals.FirstOrDefault(item => item.Id == selectedSignalId);
         SelectedRoute = Routes.FirstOrDefault(item => item.Id == selectedRouteId);
+        SelectedDraftTurnout = Turnouts.FirstOrDefault(item => item.Id == selectedDraftTurnoutId);
+        SelectedDraftBlock = Blocks.FirstOrDefault(item => item.Id == selectedDraftBlockId);
+        SelectedDraftSignal = Signals.FirstOrDefault(item => item.Id == selectedDraftSignalId);
         Revision = state.Revision;
         IsSynchronized = isSynchronized;
         StatusCode = code;
@@ -530,11 +562,19 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
         UpdateSelectedContextAfterSnapshot();
     }
 
-    private void ApplyResult(string code, string message, InterlockingRuntimeState state)
-    {
-        ApplySnapshot(state, _runtime.IsSynchronized, code);
-        StatusText = message;
-    }
+    private Task ApplyResultOnUiAsync(
+        string code,
+        string message,
+        InterlockingRuntimeState state,
+        Guid correlationId) =>
+        _uiDispatcher.InvokeOnUiAsync(() =>
+        {
+            _lastCorrelationId = correlationId;
+            _lastRuntimeUpdateUtc = DateTime.UtcNow;
+            ApplySnapshot(state, _runtime.IsSynchronized, code);
+            StatusText = message;
+            return Task.CompletedTask;
+        });
 
     private void SelectRepresentation(
         Guid? representationId,

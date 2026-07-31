@@ -101,8 +101,8 @@
             <AppBarButton
                 x:Name="ContextButton"
                 AutomationProperties.HelpText="{x:Bind InterlockingViewModel.AvailabilityDescription, Mode=OneWay}"
-                Click="OnContextButtonClick"
                 Command="{x:Bind ViewModel.OpenWorkbenchCommand}"
+                controls:FocusTargetBehavior.Target="{x:Bind SelectedObjectWorkbench, Mode=OneTime}"
                 Icon="ContactInfo"
                 Label="Context"
                 ToolTipService.ToolTip="{x:Bind InterlockingViewModel.AvailabilityDescription, Mode=OneWay}" />
@@ -181,7 +181,6 @@
                             <Setter Target="RightWorkbenchSplitter.Visibility" Value="Collapsed" />
                             <Setter Target="WorkbenchHost.(Grid.Column)" Value="2" />
                             <Setter Target="WorkbenchHost.HorizontalAlignment" Value="Right" />
-                            <Setter Target="WorkbenchHost.Width" Value="360" />
                             <Setter Target="WorkbenchHost.(Panel.ZIndex)" Value="10" />
                         </VisualState.Setters>
                     </VisualState>

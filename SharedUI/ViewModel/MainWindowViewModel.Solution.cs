@@ -5,6 +5,8 @@ using CommunityToolkit.Mvvm.Input;
 
 using Domain;
 
+using Interface;
+
 using Service;
 
 /// <summary>
@@ -103,6 +105,14 @@ public partial class MainWindowViewModel
 
             throw;
         }
+    }
+
+    /// <inheritdoc />
+    public async Task<SolutionSaveResult> SaveSolutionWithStatusAsync()
+    {
+        await SaveSolutionInternalAsync().ConfigureAwait(false);
+        return await _uiDispatcher.InvokeOnUiAsync(() => Task.FromResult(
+            new SolutionSaveResult(SolutionSaveState, SolutionSaveStatusText))).ConfigureAwait(false);
     }
 
     private async Task<bool> SaveSolutionCoreAsync(

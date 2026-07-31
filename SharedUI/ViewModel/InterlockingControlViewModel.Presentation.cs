@@ -24,6 +24,8 @@ public sealed partial class InterlockingControlViewModel
 {
     private bool _isProjectingSelection;
     private InterlockingRuntimeState _projectedState = InterlockingRuntimeState.Empty;
+    private Guid? _lastCorrelationId;
+    private DateTime? _lastRuntimeUpdateUtc;
 
     [ObservableProperty]
     public partial SelectedOperationalContext SelectedContext { get; private set; }
@@ -81,7 +83,12 @@ public sealed partial class InterlockingControlViewModel
     };
 
     public string DiagnosticsText =>
-        $"Revision {Revision}; status code {StatusCode}; context {SelectedContext}.";
+        $"Revision {Revision}; status code {StatusCode}; synchronized {IsSynchronized}; "
+        + $"correlation {_lastCorrelationId?.ToString("D") ?? "not available"}; "
+        + $"updated {_lastRuntimeUpdateUtc?.ToString("O") ?? "not available"}; "
+        + $"context {SelectedContext}; state {SelectedObjectKind} {SelectedObjectTitle}: "
+        + $"{SelectedObjectState}. {SelectedObjectDetail}; "
+        + $"processed correlations {_projectedState.ProcessedCorrelationIds.Count}.";
 
     public bool IsTurnoutContext => SelectedContext == SelectedOperationalContext.Turnout;
 
@@ -98,6 +105,15 @@ public sealed partial class InterlockingControlViewModel
     public bool IsDivergingLeftActionVisible => SupportsTurnoutPosition(TurnoutPosition.DivergingLeft);
 
     public bool IsDivergingRightActionVisible => SupportsTurnoutPosition(TurnoutPosition.DivergingRight);
+
+    public bool HasLiveActionControls =>
+        IsRouteContext ||
+        IsStraightActionVisible ||
+        IsDivergingLeftActionVisible ||
+        IsDivergingRightActionVisible;
+
+    public bool ShowNoAuthorizedLiveActionMessage =>
+        HasOperationalSelection && !HasLiveActionControls;
 
     public RouteLifecycle? SelectedRouteLifecycle =>
         SelectedRoute != null &&
@@ -137,26 +153,21 @@ public sealed partial class InterlockingControlViewModel
         ? string.Empty
         : "Release is available only when every protected block is explicitly free.";
 
-    public string PrimaryRouteActionLabel => SelectedRouteLifecycle switch
-    {
-        RouteLifecycle.Available => "Select route",
-        RouteLifecycle.Selected => "Set route",
-        RouteLifecycle.Setting => "Cancel setting",
-        RouteLifecycle.Established or RouteLifecycle.Occupied when CanReleaseRoute => "Release route",
-        RouteLifecycle.Established or RouteLifecycle.Occupied or RouteLifecycle.Releasing => "Safe stop",
-        RouteLifecycle.Failed or RouteLifecycle.Conflicting => "Reconcile route",
-        _ => "No route action"
-    };
+    public string PrimaryRouteActionLabel => PrimaryRouteAction.Label;
 
-    public IAsyncRelayCommand? PrimaryRouteActionCommand => SelectedRouteLifecycle switch
+    public IAsyncRelayCommand? PrimaryRouteActionCommand => PrimaryRouteAction.Command;
+
+    private RouteActionPresentation PrimaryRouteAction => SelectedRouteLifecycle switch
     {
-        RouteLifecycle.Available => SelectRouteCommand,
-        RouteLifecycle.Selected => SetRouteCommand,
-        RouteLifecycle.Setting => CancelRouteCommand,
-        RouteLifecycle.Established or RouteLifecycle.Occupied when CanReleaseRoute => ReleaseRouteCommand,
-        RouteLifecycle.Established or RouteLifecycle.Occupied or RouteLifecycle.Releasing => SafeStopRouteCommand,
-        RouteLifecycle.Failed or RouteLifecycle.Conflicting => ReconcileRouteCommand,
-        _ => null
+        RouteLifecycle.Available => new("Select route", SelectRouteCommand),
+        RouteLifecycle.Selected => new("Set route", SetRouteCommand),
+        RouteLifecycle.Setting => new("Cancel setting", CancelRouteCommand),
+        RouteLifecycle.Established or RouteLifecycle.Occupied when CanReleaseRoute =>
+            new("Release route", ReleaseRouteCommand),
+        RouteLifecycle.Established or RouteLifecycle.Occupied or RouteLifecycle.Releasing =>
+            new("Safe stop", SafeStopRouteCommand),
+        RouteLifecycle.Failed or RouteLifecycle.Conflicting => new("Reconcile route", ReconcileRouteCommand),
+        _ => new("No route action", null)
     };
 
     public bool IsPrimaryRouteActionAvailable =>
@@ -319,6 +330,8 @@ public sealed partial class InterlockingControlViewModel
         OnPropertyChanged(nameof(IsStraightActionVisible));
         OnPropertyChanged(nameof(IsDivergingLeftActionVisible));
         OnPropertyChanged(nameof(IsDivergingRightActionVisible));
+        OnPropertyChanged(nameof(HasLiveActionControls));
+        OnPropertyChanged(nameof(ShowNoAuthorizedLiveActionMessage));
         OnPropertyChanged(nameof(SelectedRouteLifecycle));
         OnPropertyChanged(nameof(IsPreviewRouteVisible));
         OnPropertyChanged(nameof(IsCancelRouteVisible));
@@ -338,4 +351,6 @@ public sealed partial class InterlockingControlViewModel
         SafeStopRouteCommand.NotifyCanExecuteChanged();
         ReconcileRouteCommand.NotifyCanExecuteChanged();
     }
+
+    private readonly record struct RouteActionPresentation(string Label, IAsyncRelayCommand? Command);
 }

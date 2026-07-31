@@ -118,7 +118,7 @@
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Text="No authorized live action is available for this object."
                     TextWrapping="WrapWholeWords"
-                    Visibility="{x:Bind ViewModel.HasOperationalSelection, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}" />
+                    Visibility="{x:Bind ViewModel.ShowNoAuthorizedLiveActionMessage, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
             </StackPanel>
 
             <StackPanel Spacing="8">
@@ -155,37 +155,47 @@
                         DisplayMemberPath="DisplayName"
                         Header="Operational element"
                         ItemsSource="{x:Bind ViewModel.OperationalElements}"
-                        SelectedItem="{x:Bind ViewModel.SelectedOperationalElement, Mode=TwoWay}" />
+                        SelectedItem="{x:Bind ViewModel.SelectedDraftOperationalElement, Mode=TwoWay}" />
                     <Button Command="{x:Bind ViewModel.SetDraftEntryCommand}" Content="Use as entry" />
                     <Button Command="{x:Bind ViewModel.AppendDraftPathCommand}" Content="Append to path" />
                     <Button Command="{x:Bind ViewModel.SetDraftExitCommand}" Content="Use as exit" />
 
                     <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Turnout requirement" />
                     <ComboBox
+                        AutomationProperties.Name="Turnout"
                         DisplayMemberPath="Name"
+                        Header="Turnout"
                         ItemsSource="{x:Bind ViewModel.Turnouts}"
                         PlaceholderText="Select turnout"
-                        SelectedItem="{x:Bind ViewModel.SelectedTurnout, Mode=TwoWay}" />
+                        SelectedItem="{x:Bind ViewModel.SelectedDraftTurnout, Mode=TwoWay}" />
                     <ComboBox
+                        AutomationProperties.Name="Turnout position"
+                        Header="Position"
                         ItemsSource="{x:Bind ViewModel.TurnoutPositions}"
                         SelectedItem="{x:Bind ViewModel.DraftTurnoutPosition, Mode=TwoWay}" />
                     <Button Command="{x:Bind ViewModel.AddDraftTurnoutRequirementCommand}" Content="Add turnout requirement" />
 
                     <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Protected block" />
                     <ComboBox
+                        AutomationProperties.Name="Protected block"
                         DisplayMemberPath="Name"
+                        Header="Block"
                         ItemsSource="{x:Bind ViewModel.Blocks}"
                         PlaceholderText="Select block"
-                        SelectedItem="{x:Bind ViewModel.SelectedBlock, Mode=TwoWay}" />
+                        SelectedItem="{x:Bind ViewModel.SelectedDraftBlock, Mode=TwoWay}" />
                     <Button Command="{x:Bind ViewModel.AddDraftBlockCommand}" Content="Add protected block" />
 
                     <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Protected signal" />
                     <ComboBox
+                        AutomationProperties.Name="Protected signal"
                         DisplayMemberPath="Name"
+                        Header="Signal"
                         ItemsSource="{x:Bind ViewModel.Signals}"
                         PlaceholderText="Select signal"
-                        SelectedItem="{x:Bind ViewModel.SelectedSignal, Mode=TwoWay}" />
+                        SelectedItem="{x:Bind ViewModel.SelectedDraftSignal, Mode=TwoWay}" />
                     <ComboBox
+                        AutomationProperties.Name="Proceed aspect"
+                        Header="Proceed aspect"
                         ItemsSource="{x:Bind ViewModel.SignalAspects}"
                         SelectedItem="{x:Bind ViewModel.DraftSignalAspect, Mode=TwoWay}" />
                     <Button Command="{x:Bind ViewModel.AddDraftSignalRequirementCommand}" Content="Add protected signal" />

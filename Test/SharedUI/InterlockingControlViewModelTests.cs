@@ -495,9 +495,9 @@ internal static partial class InterlockingControlViewModelTests
         var originalRouteCount = fixture.Project.Interlocking.Routes.Count;
         viewModel.BeginRouteDraftCommand.Execute(null);
         viewModel.DraftName = "East arrival";
-        viewModel.SelectedOperationalElement = viewModel.OperationalElements.Single(item => item.Kind == "Signal");
+        viewModel.SelectedDraftOperationalElement = viewModel.OperationalElements.Single(item => item.Kind == "Signal");
         viewModel.SetDraftEntryCommand.Execute(null);
-        viewModel.SelectedOperationalElement = viewModel.OperationalElements.Single(item => item.Kind == "Block");
+        viewModel.SelectedDraftOperationalElement = viewModel.OperationalElements.Single(item => item.Kind == "Block");
         viewModel.SetDraftExitCommand.Execute(null);
 
         // Act
@@ -512,6 +512,149 @@ internal static partial class InterlockingControlViewModelTests
             fixture.Runtime.Verify(runtime => runtime.ActivateAsync(
                 It.IsAny<InterlockingDefinition>(),
                 It.IsAny<CancellationToken>()), Times.Never);
+        }
+    }
+
+    [Test]
+    public static async Task ValidRouteDefinitionChange_SuccessfulSave_DoesNotReloadLiveRuntime()
+    {
+        // Arrange
+        var fixture = CreateFixture();
+        var saveCount = 0;
+        var projectContext = new TestProjectContext(
+            fixture.Project,
+            () =>
+            {
+                saveCount++;
+                return Task.CompletedTask;
+            });
+        var validator = new Mock<IInterlockingDefinitionValidator>();
+        validator
+            .Setup(candidate => candidate.Validate(fixture.Project))
+            .Returns(new InterlockingValidationReport([]));
+        var viewModel = fixture.CreateViewModel(projectContext, validator.Object);
+
+        // Act
+        viewModel.BeginRouteDraftCommand.Execute(null);
+        await viewModel.WhenDefinitionSaveIdleAsync().ConfigureAwait(false);
+
+        // Assert
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(saveCount, Is.GreaterThan(0));
+            Assert.That(viewModel.DefinitionSaveState, Is.EqualTo(DefinitionSaveState.Saved));
+            fixture.Runtime.Verify(runtime => runtime.ActivateAsync(
+                It.IsAny<InterlockingDefinition>(),
+                It.IsAny<CancellationToken>()), Times.Never);
+        }
+    }
+
+    [Test]
+    public static async Task ValidRouteDefinitionChange_MissingPersistencePath_RemainsNotSavedWithoutRuntimeCommand()
+    {
+        // Arrange
+        var fixture = CreateFixture();
+        var projectContext = new TestProjectContext(
+            fixture.Project,
+            saveState: SolutionSaveState.NotSaved,
+            saveStatusText: "Not saved - choose Save As");
+        var validator = new Mock<IInterlockingDefinitionValidator>();
+        validator
+            .Setup(candidate => candidate.Validate(fixture.Project))
+            .Returns(new InterlockingValidationReport([]));
+        var viewModel = fixture.CreateViewModel(projectContext, validator.Object);
+
+        // Act
+        viewModel.BeginRouteDraftCommand.Execute(null);
+        await viewModel.WhenDefinitionSaveIdleAsync().ConfigureAwait(false);
+
+        // Assert
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.DefinitionSaveState, Is.EqualTo(DefinitionSaveState.NotSaved));
+            Assert.That(viewModel.DefinitionSaveStatusText, Is.EqualTo("Not saved - choose Save As"));
+            fixture.Runtime.Verify(runtime => runtime.ActivateAsync(
+                It.IsAny<InterlockingDefinition>(),
+                It.IsAny<CancellationToken>()), Times.Never);
+        }
+    }
+
+    [Test]
+    public static async Task RouteAuthoringSelection_DoesNotChangeSelectedWorkbenchContext()
+    {
+        // Arrange
+        var fixture = CreateFixture();
+        var viewModel = fixture.CreateViewModel();
+        viewModel.StartObserving();
+        viewModel.SelectedRoute = viewModel.Routes.Single();
+        var selectedRoute = viewModel.SelectedRoute;
+
+        // Act
+        viewModel.SelectedDraftOperationalElement = viewModel.OperationalElements.Single(item => item.Kind == "Signal");
+        viewModel.SetDraftEntryCommand.Execute(null);
+        await viewModel.WhenDefinitionSaveIdleAsync().ConfigureAwait(false);
+
+        // Assert
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.SelectedContext, Is.EqualTo(SelectedOperationalContext.Route));
+            Assert.That(viewModel.SelectedRoute, Is.SameAs(selectedRoute));
+            fixture.Runtime.Verify(runtime => runtime.ActivateAsync(
+                It.IsAny<InterlockingDefinition>(),
+                It.IsAny<CancellationToken>()), Times.Never);
+        }
+    }
+
+    [TestCase(SelectedOperationalContext.Block)]
+    [TestCase(SelectedOperationalContext.Signal)]
+    public static void ReadOnlyOperationalContext_ShowsNoAuthorizedLiveAction(
+        SelectedOperationalContext context)
+    {
+        // Arrange
+        var fixture = CreateFixture();
+        var viewModel = fixture.CreateViewModel();
+
+        // Act
+        if (context == SelectedOperationalContext.Block)
+            viewModel.SelectedBlock = viewModel.Blocks.Single();
+        else
+            viewModel.SelectedSignal = viewModel.Signals.Single();
+
+        // Assert
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.HasOperationalSelection, Is.True);
+            Assert.That(viewModel.HasLiveActionControls, Is.False);
+            Assert.That(viewModel.ShowNoAuthorizedLiveActionMessage, Is.True);
+        }
+    }
+
+    [Test]
+    public static void RuntimeSnapshot_DiagnosticsIncludeCorrelationTimestampAndStructuredState()
+    {
+        // Arrange
+        var fixture = CreateFixture();
+        var viewModel = fixture.CreateViewModel();
+        viewModel.StartObserving();
+        viewModel.SelectedRoute = viewModel.Routes.Single();
+        var correlationId = Guid.NewGuid();
+        var runtimeEvent = new InterlockingRuntimeSnapshotChangedEvent(
+            fixture.InitialState,
+            true,
+            correlationId,
+            "route.preview.available");
+
+        // Act
+        fixture.EventBus.Publish(runtimeEvent);
+
+        // Assert
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.DiagnosticsText, Does.Contain(correlationId.ToString("D")));
+            Assert.That(viewModel.DiagnosticsText, Does.Contain(runtimeEvent.CreatedUtc.ToString("O")));
+            Assert.That(viewModel.DiagnosticsText, Does.Contain("Route West arrival"));
+            Assert.That(viewModel.DiagnosticsText, Does.Contain("Available"));
+            Assert.That(viewModel.DiagnosticsText, Does.Contain("synchronized True"));
         }
     }
 
@@ -720,10 +863,15 @@ internal static partial class InterlockingControlViewModelTests
                 projectContext ?? new TestProjectContext(Project),
                 validator ?? new InterlockingDefinitionValidator(),
                 dialogService ?? new Mock<IDialogService>().Object,
+                ImmediateUiDispatcher.Instance,
                 NullLogger<InterlockingControlViewModel>.Instance);
     }
 
-    private sealed partial class TestProjectContext(Project project, Func<Task>? save = null) : IProjectContext
+    private sealed partial class TestProjectContext(
+        Project project,
+        Func<Task>? save = null,
+        SolutionSaveState saveState = SolutionSaveState.Saved,
+        string saveStatusText = "Saved") : IProjectContext
     {
         private ProjectViewModel? _selectedProject = new(project);
         private JourneyViewModel? _selectedJourney;
@@ -758,6 +906,31 @@ internal static partial class InterlockingControlViewModelTests
 
         public SolutionViewModel? SolutionViewModel => null;
 
+        public SolutionSaveState SolutionSaveState => saveState;
+
+        public string SolutionSaveStatusText => saveStatusText;
+
         public Task SaveSolutionInternalAsync() => save?.Invoke() ?? Task.CompletedTask;
+    }
+
+    private sealed class ImmediateUiDispatcher : IUiDispatcher
+    {
+        public static ImmediateUiDispatcher Instance { get; } = new();
+
+        public void InvokeOnUi(Action action) => action();
+
+        public Task InvokeOnUiAsync(Func<Task> asyncAction) => asyncAction();
+
+        public Task<T> InvokeOnUiAsync<T>(Func<Task<T>> asyncFunc) => asyncFunc();
+
+        public void InvokeOnUiHighPriority(Action action) => action();
+
+        public void InvokeOnUiLowPriority(Action action) => action();
+
+        public Task InvokeOnUiAsync(Func<Task> asyncAction, UiPriority priority)
+        {
+            _ = priority;
+            return asyncAction();
+        }
     }
 }

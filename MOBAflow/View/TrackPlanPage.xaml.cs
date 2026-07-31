@@ -126,13 +126,6 @@ public sealed partial class TrackPlanPage
         }
     }
 
-    private void OnContextButtonClick(object sender, RoutedEventArgs e)
-    {
-        _ = sender;
-        _ = e;
-        this.DispatcherQueue.TryEnqueue(() => this.SelectedObjectWorkbench.FocusWorkbench());
-    }
-
     private void UpdateToolboxColumn()
     {
         if (ViewModel.IsToolboxExpanded)

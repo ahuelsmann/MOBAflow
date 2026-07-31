@@ -79,6 +79,8 @@ internal sealed class SignalBoxPageSelectionTests
             Assert.That(compactPage, Does.Contain("Label=\"Context\""));
             Assert.That(compactPage, Does.Contain("<controls:SelectedObjectWorkbench"));
             Assert.That(compactPage, Does.Contain("Context=\"{x:BindInterlockingViewModel}\""));
+            Assert.That(compactPage, Does.Contain("controls:FocusTargetBehavior.Target=\"{x:BindSelectedObjectWorkbench,Mode=OneTime}\""));
+            Assert.That(compactPage, Does.Not.Contain("Click=\"OnContextButtonClick\""));
             Assert.That(compactPage, Does.Not.Contain("HorizontalScrollMode=\"Enabled\"><StackPanelOrientation=\"Horizontal\""));
             Assert.That(compactPage, Does.Not.Contain("InterlockingViewModel.Revision"));
         }
@@ -108,6 +110,13 @@ internal sealed class SignalBoxPageSelectionTests
             Assert.That(compactWorkbench, Does.Contain("IsExpanded=\"False\""));
             Assert.That(compactWorkbench, Does.Contain("AutomationProperties.LiveSetting=\"Polite\""));
             Assert.That(compactWorkbench, Does.Contain("HorizontalScrollMode=\"Disabled\""));
+            Assert.That(compactWorkbench, Does.Contain("SelectedItem=\"{x:BindViewModel.SelectedDraftOperationalElement,Mode=TwoWay}\""));
+            Assert.That(compactWorkbench, Does.Contain("SelectedItem=\"{x:BindViewModel.SelectedDraftTurnout,Mode=TwoWay}\""));
+            Assert.That(compactWorkbench, Does.Contain("SelectedItem=\"{x:BindViewModel.SelectedDraftBlock,Mode=TwoWay}\""));
+            Assert.That(compactWorkbench, Does.Contain("SelectedItem=\"{x:BindViewModel.SelectedDraftSignal,Mode=TwoWay}\""));
+            Assert.That(compactWorkbench, Does.Contain("AutomationProperties.Name=\"Turnoutposition\""));
+            Assert.That(compactWorkbench, Does.Contain("AutomationProperties.Name=\"Proceedaspect\""));
+            Assert.That(compactWorkbench, Does.Contain("ViewModel.ShowNoAuthorizedLiveActionMessage"));
             Assert.That(compactWorkbench, Does.Not.Contain("TextTrimming=\"CharacterEllipsis\""));
         }
     }
@@ -129,6 +138,8 @@ internal sealed class SignalBoxPageSelectionTests
             Assert.That(page, Does.Contain("AdaptiveTrigger MinWindowWidth=\"1024\""));
             Assert.That(page, Does.Contain("CompactWorkbenchState"));
             Assert.That(page, Does.Contain("Panel.ZIndex"));
+            Assert.That(page, Does.Contain("MaxWidth=\"420\""));
+            Assert.That(page, Does.Not.Contain("Target=\"WorkbenchHost.Width\""));
         }
     }
 
