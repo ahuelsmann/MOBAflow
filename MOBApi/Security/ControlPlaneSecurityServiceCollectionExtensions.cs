@@ -24,6 +24,7 @@ public static class ControlPlaneSecurityServiceCollectionExtensions
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton(hostBootstrapMaterial ?? HostBootstrapMaterial.Unavailable);
         services.AddSingleton<IControlPlaneConnectionRevoker, ControlPlaneConnectionRevoker>();
+        services.AddSingleton<IControlPlaneHubConnectionRegistry, ControlPlaneHubConnectionRegistry>();
         services.AddSingleton<IHostCredentialService, HostCredentialService>();
         services.AddSingleton<ICredentialRegistry, CredentialRegistry>();
         services.AddSingleton<IControlPlaneAccessTokenService, ControlPlaneAccessTokenService>();

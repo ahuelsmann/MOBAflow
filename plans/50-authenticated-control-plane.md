@@ -312,18 +312,20 @@ Implementation checkpoint (2026-07-31; local Slice 4d pre-publication gates comp
 - the client recovery test proves that a missing secure-storage credential cannot restore or
   refresh a session and that an explicit replacement pairing stores a new credential;
 - the 20-test focused client/process gate set passes; the complete `net10.0` target passes with
-  1,523 tests and four expected skips, and the Windows target passes with 1,576 tests; MOBApi Release and MOBAsmart
+  1,520 tests and four expected skips, and the Windows target passes with 1,573 tests; MOBApi Release and MOBAsmart
   FastDebug Android builds pass with zero errors, with the 45 existing XAML binding warnings
   unchanged;
-- scoped format checks, `git diff --check`, Spec Kit governance, and the 37-file Sonar secrets scan
+- scoped format checks, `git diff --check`, Spec Kit governance, and the 38-file Sonar secrets scan
   pass; the worktree is fast-forwarded to `github/main` at `f9c141a1`;
 - the authenticated local Sonar branch analysis was attempted against `github/main` and reported
   zero secret or code findings, but its Vortex analysis failed for all 38 files because that feature
   is unavailable to the SonarCloud organization (`403 Forbidden`); this is recorded as unavailable,
   not green, and the remote SonarCloud check remains mandatory;
-- the remaining Slice 4d publication gates are explicit commit and draft-PR publication followed by
-  green remote checks with zero open or confirmed Sonar findings. Optional real-device and hardware
-  evidence remains non-blocking under the issue-wide acceptance rule.
+- draft PR #110 was published; its first remote Sonar analysis reported five open findings, including
+  one insecure legacy HTTP URL builder, and each finding was corrected locally without suppression;
+- the remaining Slice 4d publication gate is the updated remote analysis with green required checks
+  and zero open or confirmed Sonar findings. Optional real-device and hardware evidence remains
+  non-blocking under the issue-wide acceptance rule.
 
 #### Slice 4e: Compatibility telemetry and anonymous-read enforcement
 

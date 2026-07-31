@@ -98,11 +98,13 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
             _hubConnection = null;
         }
 
+        var httpsPort = connection.Endpoint.HttpsPort
+            ?? throw new InvalidOperationException("The authenticated MOBApi endpoint requires an HTTPS port.");
         var hubUrl = new Uri(
             new UriBuilder(
                 Uri.UriSchemeHttps,
                 connection.Endpoint.IpAddress,
-                connection.Endpoint.HttpsPort!.Value).Uri,
+                httpsPort).Uri,
             "runtime-hub");
         _logger?.LogInformation("Connecting to RuntimeHub remote: {HubUrl}", hubUrl);
 

@@ -20,35 +20,32 @@ public sealed class RuntimeHub : Hub
     private readonly IRuntimeSnapshotCache _snapshotCache;
     private readonly ISolutionCache _solutionCache;
     private readonly IRuntimeHostRegistry _hostRegistry;
-    private readonly IRuntimeRemoteRegistry _remoteRegistry;
     private readonly IRuntimeBroadcastMetrics _broadcastMetrics;
     private readonly IRuntimeCommandQueue _commandQueue;
-    private readonly IControlPlaneConnectionRevoker _connectionRevoker;
+    private readonly IControlPlaneHubConnectionRegistry _connectionRegistry;
     private readonly IHostCredentialService? _hostCredentialService;
 
     public RuntimeHub(
         IRuntimeSnapshotCache snapshotCache,
         ISolutionCache solutionCache,
         IRuntimeHostRegistry hostRegistry,
-        IRuntimeRemoteRegistry remoteRegistry,
         IRuntimeBroadcastMetrics broadcastMetrics,
         IRuntimeCommandQueue commandQueue,
-        IControlPlaneConnectionRevoker connectionRevoker,
+        IControlPlaneHubConnectionRegistry connectionRegistry,
         IHostCredentialService? hostCredentialService = null)
     {
         _snapshotCache = snapshotCache;
         _solutionCache = solutionCache;
         _hostRegistry = hostRegistry;
-        _remoteRegistry = remoteRegistry;
         _broadcastMetrics = broadcastMetrics;
         _commandQueue = commandQueue;
-        _connectionRevoker = connectionRevoker;
+        _connectionRegistry = connectionRegistry;
         _hostCredentialService = hostCredentialService;
     }
 
     public override Task OnConnectedAsync()
     {
-        ControlPlaneHubConnectionRegistration.Register(Context, _connectionRevoker);
+        _connectionRegistry.RegisterAuthenticated(Context);
         return base.OnConnectedAsync();
     }
 
@@ -60,9 +57,9 @@ public sealed class RuntimeHub : Hub
             throw new HubException("Only localhost connections may register as runtime host.");
         }
 
-        _hostRegistry.SetHost(Context.ConnectionId!);
+        _hostRegistry.SetHost(Context.ConnectionId);
         _hostCredentialService?.ConfirmHostConnection();
-        await Groups.AddToGroupAsync(Context.ConnectionId!, "runtime-host").ConfigureAwait(false);
+        await Groups.AddToGroupAsync(Context.ConnectionId, "runtime-host").ConfigureAwait(false);
         await BroadcastSessionStateAsync().ConfigureAwait(false);
     }
 
@@ -75,8 +72,8 @@ public sealed class RuntimeHub : Hub
             throw new HubException("An authenticated credential identity is required.");
         }
 
-        await Groups.AddToGroupAsync(Context.ConnectionId!, "runtime-remote").ConfigureAwait(false);
-        _remoteRegistry.Register(Context.ConnectionId!, credentialId);
+        await Groups.AddToGroupAsync(Context.ConnectionId, "runtime-remote").ConfigureAwait(false);
+        _connectionRegistry.RegisterRemote(Context, credentialId);
 
         if (_snapshotCache.TryGet(out var entry))
         {
@@ -170,15 +167,14 @@ public sealed class RuntimeHub : Hub
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        if (_hostRegistry.IsHost(Context.ConnectionId!))
+        if (_hostRegistry.IsHost(Context.ConnectionId))
         {
-            _hostRegistry.ClearHost(Context.ConnectionId!);
+            _hostRegistry.ClearHost(Context.ConnectionId);
             _hostCredentialService?.BeginDisconnectGrace();
             await BroadcastSessionStateAsync().ConfigureAwait(false);
         }
 
-        _remoteRegistry.Unregister(Context.ConnectionId!);
-        _connectionRevoker.Unregister(Context.ConnectionId!);
+        _connectionRegistry.Unregister(Context);
 
         await base.OnDisconnectedAsync(exception).ConfigureAwait(false);
     }

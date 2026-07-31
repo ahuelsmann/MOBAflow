@@ -10,17 +10,17 @@ using Moba.MOBApi.Security;
 /// WinUI PhotoHubClient subscribes to "PhotoUploaded" (photoPath, uploadedAt) to assign the photo to the selected item.
 /// </summary>
 [Authorize(Policy = ControlPlaneCapabilities.Read)]
-public sealed class PhotoHub(IControlPlaneConnectionRevoker connectionRevoker) : Hub
+public sealed class PhotoHub(IControlPlaneHubConnectionRegistry connectionRegistry) : Hub
 {
     public override Task OnConnectedAsync()
     {
-        ControlPlaneHubConnectionRegistration.Register(Context, connectionRevoker);
+        connectionRegistry.RegisterAuthenticated(Context);
         return base.OnConnectedAsync();
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        connectionRevoker.Unregister(Context.ConnectionId);
+        connectionRegistry.Unregister(Context);
         await base.OnDisconnectedAsync(exception).ConfigureAwait(false);
     }
 }
