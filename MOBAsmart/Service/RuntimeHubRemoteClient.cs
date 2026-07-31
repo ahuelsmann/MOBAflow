@@ -4,6 +4,7 @@ namespace Moba.MAUI.Service;
 
 using Common.Configuration;
 using Common.Runtime;
+using Common.Security;
 
 using Domain;
 
@@ -20,9 +21,11 @@ using System.Text.Json;
 /// </summary>
 public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
 {
-    private readonly HttpClient _httpClient;
+    private readonly IRemoteControlAuthenticatedHttpClient _authenticatedHttpClient;
+    private readonly IRemoteControlHttpClientFactory _authenticatedHttpClientFactory;
     private readonly AppSettings _appSettings;
     private readonly ILogger<RuntimeHubRemoteClient>? _logger;
+    private readonly RemoteControlSessionService _sessionService;
     private HubConnection? _hubConnection;
     private bool _hasActiveHost;
     private string _serverIp = string.Empty;
@@ -30,14 +33,20 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
     private string _clientId = string.Empty;
 
     public RuntimeHubRemoteClient(
-        IHttpClientFactory httpClientFactory,
         AppSettings appSettings,
+        RemoteControlSessionService sessionService,
+        IRemoteControlAuthenticatedHttpClient authenticatedHttpClient,
+        IRemoteControlHttpClientFactory authenticatedHttpClientFactory,
         ILogger<RuntimeHubRemoteClient>? logger = null)
     {
-        ArgumentNullException.ThrowIfNull(httpClientFactory);
         ArgumentNullException.ThrowIfNull(appSettings);
-        _httpClient = httpClientFactory.CreateClient(MobiHttpClientNames.Platform);
+        ArgumentNullException.ThrowIfNull(sessionService);
+        ArgumentNullException.ThrowIfNull(authenticatedHttpClient);
+        ArgumentNullException.ThrowIfNull(authenticatedHttpClientFactory);
         _appSettings = appSettings;
+        _sessionService = sessionService;
+        _authenticatedHttpClient = authenticatedHttpClient;
+        _authenticatedHttpClientFactory = authenticatedHttpClientFactory;
         _logger = logger;
     }
 
@@ -58,9 +67,12 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
         CancellationToken cancellationToken = default,
         bool forceReconnect = false)
     {
-        _serverIp = serverIp;
-        _serverPort = serverPort;
         _clientId = clientId;
+
+        var connection = await _sessionService
+            .GetConnectionSessionAsync(TimeSpan.FromSeconds(30), cancellationToken)
+            .ConfigureAwait(false)
+            ?? throw new RemoteCredentialRejectedException();
 
         if (!forceReconnect
             && _hubConnection != null
@@ -86,13 +98,25 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
             _hubConnection = null;
         }
 
-        var hubUrl = $"http://{serverIp}:{serverPort}/runtime-hub";
+        var hubUrl = new Uri(
+            new UriBuilder(
+                Uri.UriSchemeHttps,
+                connection.Endpoint.IpAddress,
+                connection.Endpoint.HttpsPort!.Value).Uri,
+            "runtime-hub");
         _logger?.LogInformation("Connecting to RuntimeHub remote: {HubUrl}", hubUrl);
 
         _hubConnection = new HubConnectionBuilder()
             .WithUrl(hubUrl, options =>
             {
-                options.HttpMessageHandlerFactory = _ => MobiLanHttpClientFactory.CreateLanSignalRHandler();
+                options.AccessTokenProvider = GetAccessTokenAsync;
+                options.HttpMessageHandlerFactory = _ =>
+                    _authenticatedHttpClientFactory.CreateHandler(connection.Endpoint);
+                options.WebSocketConfiguration = webSocketOptions =>
+                {
+                    webSocketOptions.RemoteCertificateValidationCallback = (_, certificate, _, _) =>
+                        _authenticatedHttpClientFactory.ValidateServerCertificate(connection.Endpoint, certificate);
+                };
             })
             .WithAutomaticReconnect(
             [
@@ -110,6 +134,8 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
         _hubConnection.Closed += OnClosedAsync;
 
         await _hubConnection.StartAsync(cancellationToken).ConfigureAwait(false);
+        _serverIp = serverIp;
+        _serverPort = serverPort;
         await RegisterRemoteAsync(cancellationToken).ConfigureAwait(false);
         await TryFetchInitialSnapshotAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -152,7 +178,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
         }
 
         await PostRestFallbackAsync(
-            BuildCommandsUrl("signal-aspect"),
+            "signal-aspect",
             new { signalId, aspect },
             cancellationToken).ConfigureAwait(false);
     }
@@ -175,7 +201,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
         }
 
         await PostRestFallbackAsync(
-            BuildCommandsUrl("locomotive/drive"),
+            "locomotive/drive",
             new { address, speed, forward },
             cancellationToken).ConfigureAwait(false);
     }
@@ -198,7 +224,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
         }
 
         await PostRestFallbackAsync(
-            BuildCommandsUrl("locomotive/function"),
+            "locomotive/function",
             new { address, functionIndex, isOn },
             cancellationToken).ConfigureAwait(false);
     }
@@ -215,16 +241,13 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
         GC.SuppressFinalize(this);
     }
 
-    private string BuildCommandsUrl(string relativePath)
-    {
-        return $"http://{_serverIp}:{_serverPort}/api/runtime/commands/{relativePath}";
-    }
-
-    private async Task PostRestFallbackAsync(string url, object body, CancellationToken cancellationToken)
+    private async Task PostRestFallbackAsync(string relativePath, object body, CancellationToken cancellationToken)
     {
         var json = JsonSerializer.Serialize(body);
         using var content = new StringContent(json, Encoding.UTF8, "application/json");
-        using var response = await _httpClient.PostAsync(url, content, cancellationToken).ConfigureAwait(false);
+        using var response = await _authenticatedHttpClient
+            .PostAsync($"api/runtime/commands/{relativePath}", content, cancellationToken)
+            .ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
     }
 
@@ -313,8 +336,9 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
 
         try
         {
-            var url = $"http://{_serverIp}:{_serverPort}/api/runtime/snapshot";
-            using var response = await _httpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
+            using var response = await _authenticatedHttpClient
+                .GetAsync("api/runtime/snapshot", cancellationToken)
+                .ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
                 return;
@@ -336,5 +360,14 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
         {
             _logger?.LogDebug(ex, "Runtime REST snapshot fetch failed");
         }
+    }
+
+    private async Task<string?> GetAccessTokenAsync()
+    {
+        var connection = await _sessionService
+            .GetConnectionSessionAsync(TimeSpan.FromSeconds(30))
+            .ConfigureAwait(false)
+            ?? throw new RemoteCredentialRejectedException();
+        return connection.AccessSession.AccessToken;
     }
 }

@@ -30,6 +30,7 @@ public class RuntimeSettingsController : ControllerBase
     /// Returns the Z21 endpoint configured in MOBAflow when available.
     /// </summary>
     [HttpGet]
+    [Authorize(Policy = ControlPlaneCapabilities.Read)]
     public IActionResult GetRuntimeSettings()
     {
         if (!_runtimeSettingsCache.TryGetZ21Endpoint(out var ipAddress, out var port))

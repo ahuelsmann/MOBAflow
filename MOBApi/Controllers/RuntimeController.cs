@@ -28,6 +28,7 @@ public class RuntimeController : ControllerBase
     }
 
     [HttpGet("meta")]
+    [Authorize(Policy = ControlPlaneCapabilities.Read)]
     public IActionResult GetMeta()
     {
         if (!_snapshotCache.TryGet(out var entry))
@@ -43,6 +44,7 @@ public class RuntimeController : ControllerBase
     }
 
     [HttpGet("snapshot")]
+    [Authorize(Policy = ControlPlaneCapabilities.Read)]
     public IActionResult GetSnapshot()
     {
         if (!_snapshotCache.TryGet(out var entry))

@@ -16,6 +16,22 @@ public static class RemotePhotoUriBuilder
             return null;
         }
 
+        var relativeApiPath = BuildRelativeApiPath(relativePhotoPath);
+        return relativeApiPath is null
+            ? null
+            : $"http://{serverIp.Trim()}:{serverPort}/{relativeApiPath}";
+    }
+
+    /// <summary>
+    /// Returns the relative MOBApi photo path without embedding a server address or credential.
+    /// </summary>
+    public static string? BuildRelativeApiPath(string? relativePhotoPath)
+    {
+        if (string.IsNullOrWhiteSpace(relativePhotoPath))
+        {
+            return null;
+        }
+
         var pathWithoutQuery = StripQuery(relativePhotoPath);
         var normalized = PhotoPathHelper.NormalizeStoredRelativePath(pathWithoutQuery);
         if (string.IsNullOrWhiteSpace(normalized))
@@ -23,7 +39,7 @@ public static class RemotePhotoUriBuilder
             return null;
         }
 
-        var uri = $"http://{serverIp.Trim()}:{serverPort}/api/photos/file?path={Uri.EscapeDataString(normalized)}";
+        var uri = $"api/photos/file?path={Uri.EscapeDataString(normalized)}";
         var version = PhotoPathHelper.TryExtractVersionQuery(relativePhotoPath);
         if (!string.IsNullOrWhiteSpace(version))
         {

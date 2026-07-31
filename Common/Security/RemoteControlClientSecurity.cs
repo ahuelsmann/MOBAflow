@@ -2,6 +2,8 @@
 
 using Moba.Common.Discovery;
 using System.Net;
+using System.Net.Http.Headers;
+using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
 
 namespace Moba.Common.Security;
@@ -57,6 +59,17 @@ public sealed record RemoteControlAccessSession(
 {
     public override string ToString() =>
         $"RemoteControlAccessSession {{ AccessToken = [REDACTED], ExpiresAt = {ExpiresAt:O}, Role = {Role}, CapabilityVersion = {CapabilityVersion} }}";
+}
+
+/// <summary>
+/// Binds an in-memory access session to the authenticated, fingerprint-pinned server endpoint.
+/// </summary>
+public sealed record RemoteControlConnectionSession(
+    MobApiDiscoveryEndpoint Endpoint,
+    RemoteControlAccessSession AccessSession)
+{
+    public override string ToString() =>
+        $"RemoteControlConnectionSession {{ Endpoint = {Endpoint}, AccessSession = {AccessSession} }}";
 }
 
 public sealed record RemoteControlTokenResponse(
@@ -140,6 +153,144 @@ public interface IRemoteControlTransport
 }
 
 /// <summary>
+/// Creates an HTTPS client whose server certificate is pinned to the supplied discovery endpoint.
+/// </summary>
+public interface IRemoteControlHttpClientFactory
+{
+    /// <summary>
+    /// Creates an HTTPS client pinned to <paramref name="endpoint"/>.
+    /// </summary>
+    HttpClient CreateClient(MobApiDiscoveryEndpoint endpoint);
+
+    /// <summary>
+    /// Creates an HTTP handler pinned to <paramref name="endpoint"/>.
+    /// </summary>
+    HttpMessageHandler CreateHandler(MobApiDiscoveryEndpoint endpoint);
+
+    /// <summary>
+    /// Validates a server certificate against the fingerprint pinned to <paramref name="endpoint"/>.
+    /// </summary>
+    bool ValidateServerCertificate(MobApiDiscoveryEndpoint endpoint, X509Certificate? certificate);
+}
+
+/// <summary>
+/// Sends authenticated requests through the current endpoint-bound remote-control session.
+/// </summary>
+public interface IRemoteControlAuthenticatedHttpClient
+{
+    /// <summary>
+    /// Sends an authenticated GET request to a path on the pinned MOBApi endpoint.
+    /// </summary>
+    Task<HttpResponseMessage> GetAsync(
+        string relativePath,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Sends an authenticated POST request to a path on the pinned MOBApi endpoint.
+    /// </summary>
+    Task<HttpResponseMessage> PostAsync(
+        string relativePath,
+        HttpContent content,
+        CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// Sends authenticated requests without exposing bearer credentials to UI consumers.
+/// </summary>
+public sealed class RemoteControlAuthenticatedHttpClient : IRemoteControlAuthenticatedHttpClient
+{
+    private static readonly TimeSpan MinimumSessionLifetime = TimeSpan.FromSeconds(30);
+    private readonly IRemoteControlHttpClientFactory _httpClientFactory;
+    private readonly RemoteControlSessionService _sessionService;
+
+    public RemoteControlAuthenticatedHttpClient(
+        RemoteControlSessionService sessionService,
+        IRemoteControlHttpClientFactory httpClientFactory)
+    {
+        _sessionService = sessionService ?? throw new ArgumentNullException(nameof(sessionService));
+        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+    }
+
+    public async Task<HttpResponseMessage> GetAsync(
+        string relativePath,
+        CancellationToken cancellationToken = default) =>
+        await SendAsync(HttpMethod.Get, relativePath, null, cancellationToken).ConfigureAwait(false);
+
+    public async Task<HttpResponseMessage> PostAsync(
+        string relativePath,
+        HttpContent content,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+        return await SendAsync(HttpMethod.Post, relativePath, content, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<HttpResponseMessage> SendAsync(
+        HttpMethod method,
+        string relativePath,
+        HttpContent? content,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(relativePath) ||
+            !Uri.TryCreate(relativePath, UriKind.Relative, out var requestUri))
+        {
+            throw new ArgumentException("An authenticated MOBApi path must be relative.", nameof(relativePath));
+        }
+
+        var connection = await _sessionService
+            .GetConnectionSessionAsync(MinimumSessionLifetime, cancellationToken)
+            .ConfigureAwait(false)
+            ?? throw new RemoteCredentialRejectedException();
+
+        using var client = _httpClientFactory.CreateClient(connection.Endpoint);
+        if (client.BaseAddress?.Scheme != Uri.UriSchemeHttps)
+            throw new InvalidOperationException("Authenticated MOBApi requests require HTTPS.");
+
+        var resolvedRequestUri = new Uri(client.BaseAddress, requestUri);
+        if (!string.Equals(
+                resolvedRequestUri.GetLeftPart(UriPartial.Authority),
+                client.BaseAddress.GetLeftPart(UriPartial.Authority),
+                StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException(
+                "An authenticated MOBApi path must remain on the pinned server endpoint.",
+                nameof(relativePath));
+        }
+
+        using var request = new HttpRequestMessage(method, resolvedRequestUri)
+        {
+            Content = content
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            connection.AccessSession.AccessToken);
+        using var response = await client.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        return await BufferResponseAsync(response, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task<HttpResponseMessage> BufferResponseAsync(
+        HttpResponseMessage response,
+        CancellationToken cancellationToken)
+    {
+        var buffered = new HttpResponseMessage(response.StatusCode)
+        {
+            ReasonPhrase = response.ReasonPhrase,
+            Version = response.Version
+        };
+
+        foreach (var header in response.Headers)
+            buffered.Headers.TryAddWithoutValidation(header.Key, header.Value);
+
+        var content = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+        buffered.Content = new ByteArrayContent(content);
+        foreach (var header in response.Content.Headers)
+            buffered.Content.Headers.TryAddWithoutValidation(header.Key, header.Value);
+
+        return buffered;
+    }
+}
+
+/// <summary>
 /// Signals that MOBApi rejected or revoked the stored refresh credential.
 /// </summary>
 public sealed class RemoteCredentialRejectedException : Exception
@@ -169,6 +320,8 @@ public sealed class RemoteControlSessionService
     }
 
     public RemoteControlAccessSession? CurrentAccessSession { get; private set; }
+
+    public RemoteControlConnectionSession? CurrentConnectionSession { get; private set; }
 
     public async Task<RemotePairingAttempt> BeginPairingAsync(
         MobApiDiscoveryEndpoint endpoint,
@@ -248,12 +401,33 @@ public sealed class RemoteControlSessionService
             cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task<RemoteControlConnectionSession?> GetConnectionSessionAsync(
+        TimeSpan minimumRemainingLifetime,
+        CancellationToken cancellationToken = default)
+    {
+        if (minimumRemainingLifetime < TimeSpan.Zero)
+            throw new ArgumentOutOfRangeException(nameof(minimumRemainingLifetime));
+
+        return await RunLockedAsync(async () =>
+        {
+            if (CurrentConnectionSession is not null &&
+                CurrentConnectionSession.AccessSession.ExpiresAt - DateTimeOffset.UtcNow > minimumRemainingLifetime)
+            {
+                return CurrentConnectionSession;
+            }
+
+            var refreshed = await RefreshStoredCredentialAsync(cancellationToken).ConfigureAwait(false);
+            return refreshed is null ? null : CurrentConnectionSession;
+        }, cancellationToken).ConfigureAwait(false);
+    }
+
     public async Task ClearAsync(CancellationToken cancellationToken = default)
     {
         await RunLockedAsync(async () =>
         {
             await _credentialStore.ClearAsync(cancellationToken).ConfigureAwait(false);
             CurrentAccessSession = null;
+            CurrentConnectionSession = null;
             return true;
         }, cancellationToken).ConfigureAwait(false);
     }
@@ -264,6 +438,7 @@ public sealed class RemoteControlSessionService
         if (credential is null)
         {
             CurrentAccessSession = null;
+            CurrentConnectionSession = null;
             return null;
         }
 
@@ -275,6 +450,7 @@ public sealed class RemoteControlSessionService
         {
             await _credentialStore.ClearAsync(cancellationToken).ConfigureAwait(false);
             CurrentAccessSession = null;
+            CurrentConnectionSession = null;
             return null;
         }
     }
@@ -338,6 +514,7 @@ public sealed class RemoteControlSessionService
             response.AccessTokenExpiresAt,
             response.Role,
             response.CapabilityVersion);
+        CurrentConnectionSession = new RemoteControlConnectionSession(endpoint, CurrentAccessSession);
         return CurrentAccessSession;
     }
 

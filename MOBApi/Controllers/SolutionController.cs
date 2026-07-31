@@ -42,6 +42,7 @@ public class SolutionController : ControllerBase
     /// Returns metadata for polling without transferring the full solution JSON.
     /// </summary>
     [HttpGet("meta")]
+    [Authorize(Policy = ControlPlaneCapabilities.Read)]
     public IActionResult GetMeta()
     {
         if (!_solutionCache.TryGet(out var entry))
@@ -56,6 +57,7 @@ public class SolutionController : ControllerBase
     /// Returns the cached solution JSON for MOBAsmart.
     /// </summary>
     [HttpGet]
+    [Authorize(Policy = ControlPlaneCapabilities.Read)]
     public IActionResult GetSolution()
     {
         if (!_solutionCache.TryGet(out var entry))

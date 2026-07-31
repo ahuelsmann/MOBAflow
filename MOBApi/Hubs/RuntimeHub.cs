@@ -23,6 +23,7 @@ public sealed class RuntimeHub : Hub
     private readonly IRuntimeRemoteRegistry _remoteRegistry;
     private readonly IRuntimeBroadcastMetrics _broadcastMetrics;
     private readonly IRuntimeCommandQueue _commandQueue;
+    private readonly IControlPlaneConnectionRevoker _connectionRevoker;
     private readonly IHostCredentialService? _hostCredentialService;
 
     public RuntimeHub(
@@ -32,6 +33,7 @@ public sealed class RuntimeHub : Hub
         IRuntimeRemoteRegistry remoteRegistry,
         IRuntimeBroadcastMetrics broadcastMetrics,
         IRuntimeCommandQueue commandQueue,
+        IControlPlaneConnectionRevoker connectionRevoker,
         IHostCredentialService? hostCredentialService = null)
     {
         _snapshotCache = snapshotCache;
@@ -40,7 +42,14 @@ public sealed class RuntimeHub : Hub
         _remoteRegistry = remoteRegistry;
         _broadcastMetrics = broadcastMetrics;
         _commandQueue = commandQueue;
+        _connectionRevoker = connectionRevoker;
         _hostCredentialService = hostCredentialService;
+    }
+
+    public override Task OnConnectedAsync()
+    {
+        ControlPlaneHubConnectionRegistration.Register(Context, _connectionRevoker);
+        return base.OnConnectedAsync();
     }
 
     [Authorize(Policy = ControlPlaneCapabilities.HostConsume)]
@@ -57,15 +66,17 @@ public sealed class RuntimeHub : Hub
         await BroadcastSessionStateAsync().ConfigureAwait(false);
     }
 
+    [Authorize(Policy = ControlPlaneCapabilities.ClientPresence)]
     public async Task RegisterRemote(string clientId)
     {
-        if (string.IsNullOrWhiteSpace(clientId))
+        var credentialId = Context.UserIdentifier;
+        if (string.IsNullOrWhiteSpace(credentialId))
         {
-            throw new HubException("ClientId is required.");
+            throw new HubException("An authenticated credential identity is required.");
         }
 
         await Groups.AddToGroupAsync(Context.ConnectionId!, "runtime-remote").ConfigureAwait(false);
-        _remoteRegistry.Register(Context.ConnectionId!, clientId);
+        _remoteRegistry.Register(Context.ConnectionId!, credentialId);
 
         if (_snapshotCache.TryGet(out var entry))
         {
@@ -97,6 +108,7 @@ public sealed class RuntimeHub : Hub
         _broadcastMetrics.RecordSnapshotBroadcast(System.Text.Encoding.UTF8.GetByteCount(broadcastJson));
     }
 
+    [Authorize(Policy = ControlPlaneCapabilities.RuntimeControl)]
     public async Task SetSignalAspect(string signalId, string aspect)
     {
         if (!Guid.TryParse(signalId, out _))
@@ -122,6 +134,7 @@ public sealed class RuntimeHub : Hub
         });
     }
 
+    [Authorize(Policy = ControlPlaneCapabilities.RuntimeControl)]
     public async Task SetLocomotiveDrive(int address, int speed, bool forward)
     {
         if (await TryForwardSetLocomotiveDriveAsync(address, speed, forward).ConfigureAwait(false))
@@ -138,6 +151,7 @@ public sealed class RuntimeHub : Hub
         });
     }
 
+    [Authorize(Policy = ControlPlaneCapabilities.RuntimeControl)]
     public async Task SetLocomotiveFunction(int address, int functionIndex, bool isOn)
     {
         if (await TryForwardSetLocomotiveFunctionAsync(address, functionIndex, isOn).ConfigureAwait(false))
@@ -164,6 +178,7 @@ public sealed class RuntimeHub : Hub
         }
 
         _remoteRegistry.Unregister(Context.ConnectionId!);
+        _connectionRevoker.Unregister(Context.ConnectionId!);
 
         await base.OnDisconnectedAsync(exception).ConfigureAwait(false);
     }

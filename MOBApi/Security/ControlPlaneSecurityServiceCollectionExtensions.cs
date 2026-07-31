@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 
 namespace Moba.MOBApi.Security;
@@ -22,11 +23,13 @@ public static class ControlPlaneSecurityServiceCollectionExtensions
         services.AddDataProtection().SetApplicationName("MOBApi.ControlPlane");
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton(hostBootstrapMaterial ?? HostBootstrapMaterial.Unavailable);
+        services.AddSingleton<IControlPlaneConnectionRevoker, ControlPlaneConnectionRevoker>();
         services.AddSingleton<IHostCredentialService, HostCredentialService>();
         services.AddSingleton<ICredentialRegistry, CredentialRegistry>();
         services.AddSingleton<IControlPlaneAccessTokenService, ControlPlaneAccessTokenService>();
         services.AddSingleton<IServerIdentityProvider, ServerIdentityProvider>();
         services.AddSingleton<IPairingService, PairingService>();
+        services.AddSingleton<IAuthorizationHandler, LiveCapabilityAuthorizationHandler>();
 
         services.AddAuthentication(ControlPlaneAuthenticationDefaults.Scheme)
             .AddScheme<AuthenticationSchemeOptions, ControlPlaneAuthenticationHandler>(
@@ -35,7 +38,14 @@ public static class ControlPlaneSecurityServiceCollectionExtensions
         services.AddAuthorization(options =>
         {
             foreach (var capability in ControlPlaneCapabilities.All)
-                options.AddPolicy(capability, policy => policy.RequireClaim(ControlPlaneCapabilities.ClaimType, capability));
+            {
+                options.AddPolicy(capability, policy =>
+                {
+                    policy.AddRequirements(new LiveCapabilityRequirement(
+                        capability,
+                        AllowAnonymousCompatibility: capability == ControlPlaneCapabilities.Read));
+                });
+            }
         });
         return services;
     }

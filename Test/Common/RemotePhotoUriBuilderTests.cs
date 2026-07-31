@@ -29,6 +29,14 @@ internal sealed class RemotePhotoUriBuilderTests
     }
 
     [Test]
+    public void BuildRelativeApiPath_ReturnsEncodedPathWithoutServerAddress()
+    {
+        var path = RemotePhotoUriBuilder.BuildRelativeApiPath("photos/latest/abc.jpg?v=2");
+
+        Assert.That(path, Is.EqualTo("api/photos/file?path=photos%2Flatest%2Fabc.jpg&v=2"));
+    }
+
+    [Test]
     public void BuildHttpUri_ReturnsNull_WhenServerMissing()
     {
         Assert.That(RemotePhotoUriBuilder.BuildHttpUri(null, 5001, "photos/a.jpg"), Is.Null);
