@@ -4597,6 +4597,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1861",
+      "path": "Test/MOBApi/ControlPlaneSecurityTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1861",
       "path": "Test/SharedUI/JourneyMapViewModelTests.cs",
       "count": 1
     },
@@ -4640,7 +4647,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1869",
       "path": "Test/MOBApi/StatusControllerTests.cs",
-      "count": 1
+      "count": 2
     },
     {
       "project": "Test",
@@ -4676,6 +4683,13 @@
       "ruleId": "CA2000",
       "path": "Test/Backend/Z21WrapperTests.cs",
       "count": 9
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA2000",
+      "path": "Test/Common/RemoteControlClientSecurityTests.cs",
+      "count": 3
     },
     {
       "project": "Test",
@@ -4724,7 +4738,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2000",
       "path": "Test/SharedUI/SolutionRemoteLoaderTests.cs",
-      "count": 27
+      "count": 30
     },
     {
       "project": "Test",
@@ -4976,7 +4990,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2007",
       "path": "Test/Common/RemoteControlClientSecurityTests.cs",
-      "count": 9
+      "count": 23
     },
     {
       "project": "Test",
@@ -5067,7 +5081,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2007",
       "path": "Test/MOBApi/ControlPlaneSecurityTests.cs",
-      "count": 43
+      "count": 62
     },
     {
       "project": "Test",
@@ -5179,7 +5193,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2007",
       "path": "Test/SharedUI/SolutionRemoteLoaderTests.cs",
-      "count": 13
+      "count": 14
     },
     {
       "project": "Test",
@@ -5269,6 +5283,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CsWinRT1028",
+      "path": "Test/Common/RemoteControlClientSecurityTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CsWinRT1028",
       "path": "Test/MOBAdisplay/ManualTimeProvider.cs",
       "count": 1
     },
@@ -5312,7 +5333,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CsWinRT1028",
       "path": "Test/SharedUI/SolutionRemoteLoaderTests.cs",
-      "count": 1
+      "count": 2
     },
     {
       "project": "Test",
@@ -5355,6 +5376,13 @@
       "ruleId": "CsWinRT1030",
       "path": "Test/Common/RecordingArtifactTests.cs",
       "count": 2
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CsWinRT1030",
+      "path": "Test/Common/RemoteControlClientSecurityTests.cs",
+      "count": 1
     },
     {
       "project": "Test",
@@ -5859,13 +5887,6 @@
       "ruleId": "NUnit2045",
       "path": "Test/Common/PhotoPathHelperTests.cs",
       "count": 4
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2045",
-      "path": "Test/Common/RemotePhotoUriBuilderTests.cs",
-      "count": 1
     },
     {
       "project": "Test",
@@ -6600,7 +6621,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2056",
       "path": "Test/Common/RemoteControlClientSecurityTests.cs",
-      "count": 9
+      "count": 14
     },
     {
       "project": "Test",
@@ -6803,7 +6824,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2056",
       "path": "Test/MOBApi/ControlPlaneSecurityTests.cs",
-      "count": 8
+      "count": 11
     },
     {
       "project": "Test",
@@ -6831,7 +6852,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2056",
       "path": "Test/MOBApi/StatusControllerTests.cs",
-      "count": 2
+      "count": 3
     },
     {
       "project": "Test",
