@@ -31,6 +31,49 @@ public partial class MainWindowViewModel
     /// </summary>
     private int _solutionSaveSemaphoreDrainStarted;
 
+    private long _solutionSaveRequestedVersion;
+
+    private SolutionSaveState _solutionSaveState = SolutionSaveState.NotSaved;
+
+    private string _solutionSaveStatusText = "Not saved";
+
+    /// <summary>
+    /// Gets the current non-interactive solution persistence state.
+    /// </summary>
+    public SolutionSaveState SolutionSaveState
+    {
+        get => _solutionSaveState;
+        private set => SetProperty(ref _solutionSaveState, value);
+    }
+
+    /// <summary>
+    /// Gets an actionable, non-modal description of the current persistence state.
+    /// </summary>
+    public string SolutionSaveStatusText
+    {
+        get => _solutionSaveStatusText;
+        private set => SetProperty(ref _solutionSaveStatusText, value);
+    }
+
+    private long BeginSolutionAutoSaveRequest()
+    {
+        var version = Interlocked.Increment(ref _solutionSaveRequestedVersion);
+        SetSolutionSaveStatus(SolutionSaveState.Saving, "Saving");
+        return version;
+    }
+
+    private bool IsLatestSolutionAutoSaveRequest(long version) =>
+        version == Volatile.Read(ref _solutionSaveRequestedVersion);
+
+    private void SetSolutionSaveStatus(SolutionSaveState state, string text)
+    {
+        _uiDispatcher.InvokeOnUi(() =>
+        {
+            SolutionSaveState = state;
+            SolutionSaveStatusText = text;
+        });
+    }
+
     /// <summary>
     /// Called when SelectedJourney changes. Subscribes to PropertyChanged for auto-save.
     /// </summary>

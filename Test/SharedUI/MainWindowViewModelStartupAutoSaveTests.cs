@@ -59,13 +59,116 @@ internal partial class MainWindowViewModelShutdownTests
 
         await viewModel.SaveSolutionInternalAsync().ConfigureAwait(false);
 
-        Assert.That(viewModel.HasUnsavedChanges, Is.True);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.HasUnsavedChanges, Is.True);
+            Assert.That(viewModel.SolutionSaveState, Is.EqualTo(SolutionSaveState.NotSaved));
+            Assert.That(viewModel.SolutionSaveStatusText, Is.EqualTo("Not saved - choose Save As"));
+        }
         ioService.Verify(
             candidate => candidate.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()),
             Times.Never);
         ioService.Verify(
             candidate => candidate.SaveAsAsync(It.IsAny<Solution>()),
             Times.Never);
+    }
+
+    [Test]
+    public async Task SaveSolutionInternalAsync_RapidRequests_AreSerializedAndLatestCompletionOwnsStatus()
+    {
+        // Arrange
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var runtime = CreateRuntimeMock();
+        var ioService = new Mock<IIoService>();
+        var firstSaveStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseFirstSave = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var secondSaveStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseSecondSave = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var saveCall = 0;
+        var concurrentSaves = 0;
+        var maximumConcurrentSaves = 0;
+        ioService
+            .Setup(candidate => candidate.SaveAsync(It.IsAny<Solution>(), "existing.json"))
+            .Returns(async () =>
+            {
+                var currentConcurrent = Interlocked.Increment(ref concurrentSaves);
+                maximumConcurrentSaves = Math.Max(maximumConcurrentSaves, currentConcurrent);
+                try
+                {
+                    saveCall++;
+                    if (saveCall == 1)
+                    {
+                        firstSaveStarted.SetResult();
+                        await releaseFirstSave.Task.ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        secondSaveStarted.SetResult();
+                        await releaseSecondSave.Task.ConfigureAwait(false);
+                    }
+
+                    return (true, "existing.json", (string?)null);
+                }
+                finally
+                {
+                    Interlocked.Decrement(ref concurrentSaves);
+                }
+            });
+        var viewModel = CreateViewModel(runtime.Object, eventBus, ioService.Object);
+        viewModel.CurrentSolutionPath = "existing.json";
+
+        // Act
+        var firstSave = viewModel.SaveSolutionInternalAsync();
+        await firstSaveStarted.Task.ConfigureAwait(false);
+        var secondSave = viewModel.SaveSolutionInternalAsync();
+
+        // Assert
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.SolutionSaveState, Is.EqualTo(SolutionSaveState.Saving));
+            Assert.That(viewModel.HasUnsavedChanges, Is.True);
+        }
+
+        releaseFirstSave.SetResult();
+        await secondSaveStarted.Task.ConfigureAwait(false);
+        Assert.That(viewModel.HasUnsavedChanges, Is.True);
+        releaseSecondSave.SetResult();
+        await Task.WhenAll(firstSave, secondSave).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(maximumConcurrentSaves, Is.EqualTo(1));
+            Assert.That(viewModel.SolutionSaveState, Is.EqualTo(SolutionSaveState.Saved));
+            Assert.That(viewModel.SolutionSaveStatusText, Is.EqualTo("Saved"));
+            Assert.That(viewModel.HasUnsavedChanges, Is.False);
+        }
+    }
+
+    [Test]
+    public void SaveSolutionInternalAsync_WriteFailure_RetainsDirtyStateAndReportsNotSaved()
+    {
+        // Arrange
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var runtime = CreateRuntimeMock();
+        var ioService = new Mock<IIoService>();
+        ioService
+            .Setup(candidate => candidate.SaveAsync(It.IsAny<Solution>(), "existing.json"))
+            .ReturnsAsync((false, (string?)null, "disk full"));
+        var viewModel = CreateViewModel(runtime.Object, eventBus, ioService.Object);
+        viewModel.CurrentSolutionPath = "existing.json";
+
+        // Act
+        var exception = Assert.ThrowsAsync<InvalidOperationException>(
+            () => viewModel.SaveSolutionInternalAsync());
+
+        // Assert
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(exception!.Message, Does.Contain("disk full"));
+            Assert.That(viewModel.HasUnsavedChanges, Is.True);
+            Assert.That(viewModel.SolutionSaveState, Is.EqualTo(SolutionSaveState.NotSaved));
+            Assert.That(viewModel.SolutionSaveStatusText, Does.Contain("Not saved"));
+        }
     }
 
     [Test]

@@ -1,0 +1,236 @@
+<UserControl
+    x:Class="Moba.WinUI.Controls.SelectedObjectWorkbench"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer
+        x:Name="WorkbenchScrollViewer"
+        AutomationProperties.Name="Selected object workbench"
+        HorizontalScrollBarVisibility="Disabled"
+        HorizontalScrollMode="Disabled"
+        IsTabStop="True"
+        VerticalScrollBarVisibility="Auto"
+        VerticalScrollMode="Auto">
+        <StackPanel Padding="16" Spacing="20">
+            <StackPanel Spacing="8">
+                <TextBlock
+                    Style="{StaticResource SubtitleTextBlockStyle}"
+                    Text="Safety" />
+                <InfoBar
+                    AutomationProperties.LiveSetting="Polite"
+                    IsClosable="False"
+                    IsOpen="True"
+                    Message="{x:Bind ViewModel.StatusText, Mode=OneWay}"
+                    Severity="{x:Bind ViewModel.SafetySeverity, Mode=OneWay, Converter={StaticResource StringToInfoBarSeverityConverter}}"
+                    Title="{x:Bind ViewModel.AvailabilityText, Mode=OneWay}" />
+            </StackPanel>
+
+            <StackPanel Spacing="8">
+                <TextBlock
+                    Style="{StaticResource SubtitleTextBlockStyle}"
+                    Text="Current object" />
+                <TextBlock
+                    Style="{StaticResource BodyStrongTextBlockStyle}"
+                    Text="{x:Bind ViewModel.SelectedObjectTitle, Mode=OneWay}"
+                    TextWrapping="Wrap" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="{x:Bind ViewModel.SelectedObjectKind, Mode=OneWay}"
+                    TextWrapping="Wrap" />
+                <TextBlock
+                    AutomationProperties.LiveSetting="Polite"
+                    Text="{x:Bind ViewModel.SelectedObjectState, Mode=OneWay}"
+                    TextWrapping="Wrap" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="{x:Bind ViewModel.SelectedObjectDetail, Mode=OneWay}"
+                    TextWrapping="WrapWholeWords" />
+                <ComboBox
+                    AutomationProperties.HelpText="Choose an operational object without issuing a live command."
+                    AutomationProperties.Name="Operational object"
+                    DisplayMemberPath="DisplayName"
+                    Header="Choose context"
+                    ItemsSource="{x:Bind ViewModel.OperationalElements, Mode=OneWay}"
+                    PlaceholderText="Select an object"
+                    SelectedItem="{x:Bind ViewModel.SelectedOperationalElement, Mode=TwoWay}" />
+            </StackPanel>
+
+            <StackPanel Spacing="8">
+                <TextBlock
+                    Style="{StaticResource SubtitleTextBlockStyle}"
+                    Text="Live action" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="{x:Bind ViewModel.PrimaryRouteActionDisabledReason, Mode=OneWay}"
+                    TextWrapping="WrapWholeWords"
+                    Visibility="{x:Bind ViewModel.IsRouteContext, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                <StackPanel
+                    Spacing="8"
+                    Visibility="{x:Bind ViewModel.IsTurnoutContext, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Button
+                        AutomationProperties.HelpText="Requests the configured semantic straight position."
+                        AutomationProperties.Name="Set turnout straight"
+                        Command="{x:Bind ViewModel.SetTurnoutStraightCommand}"
+                        Content="Set straight"
+                        IsEnabled="{x:Bind ViewModel.CanOperateTurnout, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.IsStraightActionVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    <Button
+                        AutomationProperties.HelpText="Requests the configured semantic diverging-left position."
+                        AutomationProperties.Name="Set turnout diverging left"
+                        Command="{x:Bind ViewModel.SetTurnoutDivergingLeftCommand}"
+                        Content="Set diverging left"
+                        IsEnabled="{x:Bind ViewModel.CanOperateTurnout, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.IsDivergingLeftActionVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    <Button
+                        AutomationProperties.HelpText="Requests the configured semantic diverging-right position."
+                        AutomationProperties.Name="Set turnout diverging right"
+                        Command="{x:Bind ViewModel.SetTurnoutDivergingRightCommand}"
+                        Content="Set diverging right"
+                        IsEnabled="{x:Bind ViewModel.CanOperateTurnout, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.IsDivergingRightActionVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                </StackPanel>
+
+                <StackPanel
+                    Spacing="8"
+                    Visibility="{x:Bind ViewModel.IsRouteContext, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Button
+                        AutomationProperties.HelpText="{x:Bind ViewModel.PrimaryRouteActionDisabledReason, Mode=OneWay}"
+                        AutomationProperties.Name="{x:Bind ViewModel.PrimaryRouteActionLabel, Mode=OneWay}"
+                        Command="{x:Bind ViewModel.PrimaryRouteActionCommand, Mode=OneWay}"
+                        Content="{x:Bind ViewModel.PrimaryRouteActionLabel, Mode=OneWay}"
+                        IsEnabled="{x:Bind ViewModel.IsPrimaryRouteActionAvailable, Mode=OneWay}"
+                        Style="{StaticResource AccentButtonStyle}" />
+                    <Button
+                        AutomationProperties.HelpText="{x:Bind ViewModel.RoutineCancelRouteDisabledReason, Mode=OneWay}"
+                        AutomationProperties.Name="Cancel selected route"
+                        Command="{x:Bind ViewModel.CancelRouteCommand}"
+                        Content="Cancel route"
+                        IsEnabled="{x:Bind ViewModel.IsRoutineCancelRouteAvailable, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.IsRoutineCancelRouteVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    <Button
+                        AutomationProperties.HelpText="Checks route availability without reserving or setting it."
+                        AutomationProperties.Name="Preview route"
+                        Command="{x:Bind ViewModel.PreviewRouteCommand}"
+                        Content="Preview route"
+                        IsEnabled="{x:Bind ViewModel.CanOperateRoute, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.IsPreviewRouteVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{x:Bind ViewModel.ReleaseRouteDisabledReason, Mode=OneWay}"
+                        TextWrapping="WrapWholeWords"
+                        Visibility="{x:Bind ViewModel.IsReleaseRouteVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                </StackPanel>
+
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="No authorized live action is available for this object."
+                    TextWrapping="WrapWholeWords"
+                    Visibility="{x:Bind ViewModel.ShowNoAuthorizedLiveActionMessage, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+            </StackPanel>
+
+            <StackPanel Spacing="8">
+                <TextBlock
+                    Style="{StaticResource SubtitleTextBlockStyle}"
+                    Text="Definition" />
+                <ContentPresenter Content="{x:Bind DefinitionContent, Mode=OneWay}" />
+
+                <StackPanel
+                    Spacing="10"
+                    Visibility="{x:Bind ShowRouteAuthoring, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <TextBlock
+                        Style="{StaticResource BodyStrongTextBlockStyle}"
+                        Text="Route authoring" />
+                    <TextBlock
+                        AutomationProperties.LiveSetting="Polite"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{x:Bind ViewModel.DefinitionSaveStatusText, Mode=OneWay}"
+                        TextWrapping="WrapWholeWords" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{x:Bind ViewModel.DraftSummary, Mode=OneWay}"
+                        TextWrapping="WrapWholeWords" />
+                    <Button
+                        AutomationProperties.Name="Start new route definition"
+                        Command="{x:Bind ViewModel.BeginRouteDraftCommand}"
+                        Content="Start new route" />
+                    <TextBox
+                        AutomationProperties.Name="Route name"
+                        Header="Name"
+                        Text="{x:Bind ViewModel.DraftName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <ComboBox
+                        AutomationProperties.Name="Operational route element"
+                        DisplayMemberPath="DisplayName"
+                        Header="Operational element"
+                        ItemsSource="{x:Bind ViewModel.OperationalElements}"
+                        SelectedItem="{x:Bind ViewModel.SelectedDraftOperationalElement, Mode=TwoWay}" />
+                    <Button Command="{x:Bind ViewModel.SetDraftEntryCommand}" Content="Use as entry" />
+                    <Button Command="{x:Bind ViewModel.AppendDraftPathCommand}" Content="Append to path" />
+                    <Button Command="{x:Bind ViewModel.SetDraftExitCommand}" Content="Use as exit" />
+
+                    <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Turnout requirement" />
+                    <ComboBox
+                        AutomationProperties.Name="Turnout"
+                        DisplayMemberPath="Name"
+                        Header="Turnout"
+                        ItemsSource="{x:Bind ViewModel.Turnouts}"
+                        PlaceholderText="Select turnout"
+                        SelectedItem="{x:Bind ViewModel.SelectedDraftTurnout, Mode=TwoWay}" />
+                    <ComboBox
+                        AutomationProperties.Name="Turnout position"
+                        Header="Position"
+                        ItemsSource="{x:Bind ViewModel.TurnoutPositions}"
+                        SelectedItem="{x:Bind ViewModel.DraftTurnoutPosition, Mode=TwoWay}" />
+                    <Button Command="{x:Bind ViewModel.AddDraftTurnoutRequirementCommand}" Content="Add turnout requirement" />
+
+                    <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Protected block" />
+                    <ComboBox
+                        AutomationProperties.Name="Protected block"
+                        DisplayMemberPath="Name"
+                        Header="Block"
+                        ItemsSource="{x:Bind ViewModel.Blocks}"
+                        PlaceholderText="Select block"
+                        SelectedItem="{x:Bind ViewModel.SelectedDraftBlock, Mode=TwoWay}" />
+                    <Button Command="{x:Bind ViewModel.AddDraftBlockCommand}" Content="Add protected block" />
+
+                    <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Protected signal" />
+                    <ComboBox
+                        AutomationProperties.Name="Protected signal"
+                        DisplayMemberPath="Name"
+                        Header="Signal"
+                        ItemsSource="{x:Bind ViewModel.Signals}"
+                        PlaceholderText="Select signal"
+                        SelectedItem="{x:Bind ViewModel.SelectedDraftSignal, Mode=TwoWay}" />
+                    <ComboBox
+                        AutomationProperties.Name="Proceed aspect"
+                        Header="Proceed aspect"
+                        ItemsSource="{x:Bind ViewModel.SignalAspects}"
+                        SelectedItem="{x:Bind ViewModel.DraftSignalAspect, Mode=TwoWay}" />
+                    <Button Command="{x:Bind ViewModel.AddDraftSignalRequirementCommand}" Content="Add protected signal" />
+
+                    <ItemsControl ItemsSource="{x:Bind ViewModel.ValidationMessages, Mode=OneWay}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock
+                                    Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                    Text="{Binding}"
+                                    TextWrapping="WrapWholeWords" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </StackPanel>
+
+            <Expander Header="Details" IsExpanded="False">
+                <TextBlock
+                    Text="{x:Bind ViewModel.SelectedObjectDetail, Mode=OneWay}"
+                    TextWrapping="WrapWholeWords" />
+            </Expander>
+            <Expander Header="Diagnostics" IsExpanded="False">
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="{x:Bind ViewModel.DiagnosticsText, Mode=OneWay}"
+                    TextWrapping="WrapWholeWords" />
+            </Expander>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
