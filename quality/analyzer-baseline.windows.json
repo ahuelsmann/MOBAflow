@@ -3456,6 +3456,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/MOBAdisplay/DisplayProtocolFrameSessionTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/MOBAdisplay/DisplayProtocolVersionTests.cs",
       "count": 1
     },
@@ -3485,6 +3492,13 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/MOBAdisplay/SkiaFrameRendererTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
+      "path": "Test/MOBAdisplay/UdpDisplayDatagramTransportTests.cs",
       "count": 1
     },
     {
@@ -5355,6 +5369,13 @@
       "ruleId": "CsWinRT1030",
       "path": "Test/Common/RecordingArtifactTests.cs",
       "count": 2
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CsWinRT1030",
+      "path": "Test/MOBAdisplay/UdpDisplayDatagramTransportTests.cs",
+      "count": 1
     },
     {
       "project": "Test",
