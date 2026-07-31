@@ -51,6 +51,7 @@ public:
     DisplayResult CompleteFrame(uint32_t frameId, uint32_t frameCrc32, uint32_t nowMilliseconds) noexcept;
     DisplayResult AbortFrame(uint32_t frameId) noexcept;
     DisplayResult Tick(uint32_t nowMilliseconds) noexcept;
+    void ResetFrameEpoch() noexcept;
     void ResetForReboot() noexcept;
 
     bool HasActiveFrame() const noexcept;

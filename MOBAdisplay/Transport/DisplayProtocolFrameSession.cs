@@ -9,6 +9,8 @@ using Moba.Display.Protocol;
 public sealed class DisplayProtocolFrameSession
 {
     private const int MaximumIncompleteRepairs = 3;
+    private static readonly DisplayRequestOptions FrameRequestOptions =
+        new(3, TimeSpan.FromMilliseconds(250), TimeSpan.FromMilliseconds(250));
     private readonly DisplayProtocolClient _client;
     private readonly DisplayIdentifierSequence _frameIds;
     private CapabilitiesResponsePayload? _capabilities;
@@ -233,7 +235,7 @@ public sealed class DisplayProtocolFrameSession
             request,
             sessionId,
             frameId,
-            DisplayRequestOptions.Default,
+            FrameRequestOptions,
             packetSequence,
             cancellationToken).ConfigureAwait(false);
         if (!outcome.IsSuccessful || outcome.Response is not ResultPayload result)

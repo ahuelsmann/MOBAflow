@@ -186,6 +186,57 @@ internal sealed class DisplayProtocolFrameSessionTests
     }
 
     [Test]
+    public async Task SendFrameAsync_Should_RetryBeginBeforeFirmwareStagingTimeout_When_ResponseIsLost()
+    {
+        // Arrange
+        var timeProvider = new ManualTimeProvider();
+        var endpoint = new FakeDisplayEndpoint(timeProvider);
+        endpoint.DropNextResponse(DisplayMessageType.BeginFrame);
+        using var client = new DisplayProtocolClient(endpoint, timeProvider: timeProvider);
+        var session = new DisplayProtocolFrameSession(client);
+        var frame = DisplayConformancePattern.CreateRgb565(4, 3);
+        using var cancellation = new CancellationTokenSource();
+        var sendTask = session.SendFrameAsync(frame, 4, 3, cancellation.Token);
+
+        try
+        {
+            await WaitUntilAsync(
+                () => endpoint.ReceivedPackets.Count(
+                    packet => packet.Header.MessageType == DisplayMessageType.BeginFrame) == 1)
+                .ConfigureAwait(false);
+            await WaitForTimerAsync(timeProvider).ConfigureAwait(false);
+
+            // Act
+            timeProvider.Advance(TimeSpan.FromMilliseconds(250));
+            await WaitUntilAsync(
+                () => endpoint.ReceivedPackets.Count(
+                    packet => packet.Header.MessageType == DisplayMessageType.BeginFrame) == 2)
+                .ConfigureAwait(false);
+            await sendTask.ConfigureAwait(false);
+
+            // Assert
+            var beginPackets = endpoint.ReceivedPackets
+                .Where(packet => packet.Header.MessageType == DisplayMessageType.BeginFrame)
+                .ToArray();
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(beginPackets, Has.Length.EqualTo(2));
+                Assert.That(
+                    beginPackets.Select(packet => packet.Header.RequestId).Distinct(),
+                    Has.Exactly(1).Items);
+                Assert.That(
+                    beginPackets[1].Header.Flags.HasFlag(DisplayProtocolFlags.Retry),
+                    Is.True);
+                Assert.That(endpoint.PresentationCount, Is.EqualTo(1));
+            }
+        }
+        finally
+        {
+            await cancellation.CancelAsync().ConfigureAwait(false);
+        }
+    }
+
+    [Test]
     public async Task SendFrameAsync_Should_RejectIncompatibleDimensionsBeforeFrameData()
     {
         // Arrange
@@ -321,6 +372,16 @@ internal sealed class DisplayProtocolFrameSessionTests
         {
             await Task.Delay(TimeSpan.FromMilliseconds(10), timeout.Token).ConfigureAwait(false);
         }
+    }
+
+    private static async Task WaitForTimerAsync(ManualTimeProvider timeProvider)
+    {
+        for (var attempt = 0; attempt < 100 && timeProvider.ScheduledTimerCount == 0; attempt++)
+        {
+            await Task.Yield();
+        }
+
+        Assert.That(timeProvider.ScheduledTimerCount, Is.GreaterThan(0));
     }
 
     private static async Task<TException> CaptureExceptionAsync<TException>(Func<Task> action)

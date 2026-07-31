@@ -366,8 +366,11 @@ additional standardized detail exists.
   request ID still present in the tombstone set is rejected without execution.
   This provides bounded at-most-once handling for the 80 most recently observed
   requests in the current session. A fresh successful hello or reboot starts a
-  new request epoch and clears this history.
-- The host uses bounded timeouts and a bounded retry count. Cancellation stops
+  new request and frame epoch, clears this history, discards active staging,
+  and allows the reconnecting host to restart its frame-ID sequence.
+- The host uses bounded timeouts and a bounded retry count. The response wait
+  for acknowledged frame operations MUST remain safely below the device's
+  staging inactivity timeout. Cancellation stops
   waiting and further retries, then sends a best-effort `AbortFrame` when a
   transaction was started.
 - A device maintains one active staging transaction per display unless its
@@ -378,8 +381,8 @@ additional standardized detail exists.
   discards the staging bytes and records `Timeout`; it never presents them.
 - Incomplete, invalid, conflicting, timed-out, aborted, pre-reboot, or
   wrong-session data never changes the visible display.
-- A frame ID is presented at most once within one session. Duplicate completion
-  returns the prior result with the `Duplicate` flag.
+- A frame ID is presented at most once within one negotiated frame epoch.
+  Duplicate completion returns the prior result with the `Duplicate` flag.
 - When `Incomplete` identifies one contiguous missing range, the result includes
   its offset and length. The host MAY resend intersecting regions and retry
   completion. Multiple gaps may require a new complete frame transaction in

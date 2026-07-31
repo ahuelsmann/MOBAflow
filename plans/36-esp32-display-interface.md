@@ -37,19 +37,26 @@ Status on 2026-07-31:
   request-ID reuse as `Conflict`. Direct sender lifecycle tests and an
   end-to-end native conformance-pattern presenter test cover the remaining
   review gaps.
-- The complete native PlatformIO matrix passes 46 tests: 14 display-core,
-  19 dispatcher/adapter, 8 provisioning, and 5 length-safe parser cases. The
+- The follow-up GitHub review found two reconnect/retry races. A fresh
+  successful `Hello` now resets the firmware frame-ID epoch, so a restarted
+  host may begin with a lower randomized frame ID without rebooting the ESP32.
+  Acknowledged frame operations now retry after 250 milliseconds, safely below
+  the firmware's one-second staging timeout. Regression tests first failed on
+  both old behaviors and now pass for a lower post-reconnect frame ID and a
+  dropped `BeginFrame` response.
+- The complete native PlatformIO matrix passes 47 tests: 14 display-core,
+  20 dispatcher/adapter, 8 provisioning, and 5 length-safe parser cases. The
   ESP32-S3 release build creates `firmware.bin`; RAM usage is 43,960 of 327,680
   bytes (13.4 percent), while the post-Sonar-remediation flash usage is
-  1,047,345 of 1,048,576 bytes (99.9 percent), leaving only 1,231 bytes and
+  1,047,357 of 1,048,576 bytes (99.9 percent), leaving only 1,219 bytes and
   therefore a release risk.
-- The complete .NET matrices pass 1,501 net10.0 tests with four existing skips
-  (1,505 total) and all 1,555 Windows tests. `MOBAdisplay`, the Windows test
+- The complete .NET matrices pass 1,502 net10.0 tests with four existing skips
+  (1,506 total) and all 1,556 Windows tests. `MOBAdisplay`, the Windows test
   graph, and the MOBAflow FastDebug graph build with zero warnings and errors.
   `git diff --check` passes. The cross-platform analyzer baseline matches 4,051
   diagnostics in 1,343 groups, and the Windows baseline matches 2,801
   diagnostics in 1,025 groups without adding suppressions or baseline entries.
-- All 26 existing changed or new files pass the deterministic Sonar secrets
+- All 28 existing changed or new files pass the deterministic Sonar secrets
   scan with no findings. After explicit source-upload authorization, local
   analysis ran against current `github/main` with project
   `ahuelsmann_MOBAflow2`, but Vortex failed for all enumerated files with

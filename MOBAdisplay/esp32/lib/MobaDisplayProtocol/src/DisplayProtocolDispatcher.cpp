@@ -458,8 +458,7 @@ DispatchResult DisplayProtocolDispatcher::HandleHello(
         return response;
     }
 
-    if (_frameAssembler.HasActiveFrame())
-        _frameAssembler.AbortFrame(_frameAssembler.ActiveFrameId());
+    _frameAssembler.ResetFrameEpoch();
     ResetRequestHistory();
     InspectRequestFingerprint(header, &fingerprint, true);
 

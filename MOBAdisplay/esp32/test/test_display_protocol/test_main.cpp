@@ -523,6 +523,81 @@ void TestDuplicatedHelloPreservesTheCurrentRequestHistory()
     TEST_ASSERT_EQUAL_size_t(0, fixture.backend.ClearCallCount());
 }
 
+void TestFreshHelloAllowsLowerFrameIdAfterHostRestart()
+{
+    constexpr uint32_t previousFrameId = 0x70000000U;
+    constexpr uint32_t restartedHostFrameId = 1U;
+    Fixture fixture;
+    DispatchResult result = fixture.Dispatch(
+        MakePacket(MessageType::HelloRequest, 1, 0, 0, MakeHelloPayload()));
+    AssertResponse(MessageType::CapabilitiesResponse, 1, 0, 0, result, fixture.response);
+
+    result = fixture.Dispatch(
+        MakePacket(MessageType::BeginFrame, 10, previousFrameId, kSessionId, MakeBeginPayload()),
+        1);
+    AssertResponse(MessageType::Result, 10, previousFrameId, kSessionId, result, fixture.response);
+    result = fixture.Dispatch(
+        MakePacket(
+            MessageType::FrameRegion,
+            11,
+            previousFrameId,
+            kSessionId,
+            MakeRegionPayload(0),
+            kAcknowledgementRequired,
+            0,
+            2),
+        2);
+    AssertResponse(MessageType::Result, 11, previousFrameId, kSessionId, result, fixture.response);
+    result = fixture.Dispatch(
+        MakePacket(
+            MessageType::FrameRegion,
+            12,
+            previousFrameId,
+            kSessionId,
+            MakeRegionPayload(1),
+            static_cast<uint8_t>(
+                kAcknowledgementRequired | MobaDisplay::Protocol::FlagFinalPacket),
+            1,
+            2),
+        3);
+    AssertResponse(MessageType::Result, 12, previousFrameId, kSessionId, result, fixture.response);
+    result = fixture.Dispatch(
+        MakePacket(
+            MessageType::CompleteFrame,
+            13,
+            previousFrameId,
+            kSessionId,
+            MakeCompletePayload()),
+        4);
+    AssertResponse(MessageType::Result, 13, previousFrameId, kSessionId, result, fixture.response);
+    TEST_ASSERT_EQUAL_UINT32(previousFrameId, fixture.assembler.LastCompletedFrameId());
+
+    result = fixture.Dispatch(
+        MakePacket(MessageType::HelloRequest, 100, 0, 0, MakeHelloPayload()),
+        5);
+    AssertResponse(MessageType::CapabilitiesResponse, 100, 0, 0, result, fixture.response);
+    result = fixture.Dispatch(
+        MakePacket(
+            MessageType::BeginFrame,
+            101,
+            restartedHostFrameId,
+            kSessionId,
+            MakeBeginPayload()),
+        6);
+    AssertResponse(
+        MessageType::Result,
+        101,
+        restartedHostFrameId,
+        kSessionId,
+        result,
+        fixture.response);
+
+    TEST_ASSERT_EQUAL_UINT8(
+        static_cast<uint8_t>(MobaDisplay::Core::ResultCode::Ok),
+        fixture.response[MobaDisplay::Protocol::kHeaderLength]);
+    TEST_ASSERT_EQUAL_UINT32(restartedHostFrameId, fixture.assembler.ActiveFrameId());
+}
+
 void TestOptionalCommandsReflectBackendCapabilities()
 {
     Fixture fixture;
@@ -984,6 +1059,7 @@ int main(int, char**)
     RUN_TEST(TestIdenticalCommandRetryReturnsCachedResultWithoutExecutingAgain);
     RUN_TEST(TestFreshHelloStartsNewRequestEpochAndRestoresDeviceDatagramLimit);
     RUN_TEST(TestDuplicatedHelloPreservesTheCurrentRequestHistory);
+    RUN_TEST(TestFreshHelloAllowsLowerFrameIdAfterHostRestart);
     RUN_TEST(TestOptionalCommandsReflectBackendCapabilities);
     RUN_TEST(TestMalformedPacketsAreDroppedAndUnsupportedVersionIsStructured);
     RUN_TEST(TestRegionAcknowledgementCanBeOmittedOnlyAfterSuccess);
