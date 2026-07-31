@@ -321,8 +321,8 @@ Implementation checkpoint (2026-07-31; local Slice 4d pre-publication gates comp
   zero secret or code findings, but its Vortex analysis failed for all 38 files because that feature
   is unavailable to the SonarCloud organization (`403 Forbidden`); this is recorded as unavailable,
   not green, and the remote SonarCloud check remains mandatory;
-- draft PR #110 was published; its first remote Sonar analysis reported five open findings, including
-  one insecure legacy HTTP URL builder, and each finding was corrected locally without suppression;
+- draft PR #110 was published; its first two remote Sonar analyses reported six open findings in total,
+  including one insecure legacy HTTP URL builder, and each finding was corrected locally without suppression;
 - the remaining Slice 4d publication gate is the updated remote analysis with green required checks
   and zero open or confirmed Sonar findings. Optional real-device and hardware evidence remains
   non-blocking under the issue-wide acceptance rule.

@@ -17,6 +17,7 @@ using System.Net;
 /// </summary>
 public sealed class RuntimeHub : Hub
 {
+    private const string RuntimeRemoteGroup = "runtime-remote";
     private readonly IRuntimeSnapshotCache _snapshotCache;
     private readonly ISolutionCache _solutionCache;
     private readonly IRuntimeHostRegistry _hostRegistry;
@@ -72,7 +73,7 @@ public sealed class RuntimeHub : Hub
             throw new HubException("An authenticated credential identity is required.");
         }
 
-        await Groups.AddToGroupAsync(Context.ConnectionId, "runtime-remote").ConfigureAwait(false);
+        await Groups.AddToGroupAsync(Context.ConnectionId, RuntimeRemoteGroup).ConfigureAwait(false);
         _connectionRegistry.RegisterRemote(Context, credentialId);
 
         if (_snapshotCache.TryGet(out var entry))
@@ -100,8 +101,8 @@ public sealed class RuntimeHub : Hub
 
         _snapshotCache.Set(snapshotJson, snapshot.IsConnected);
         var broadcastJson = _snapshotCache.TryGet(out var cachedEntry) ? cachedEntry.Json : snapshotJson;
-        await Clients.Group("runtime-remote").SendAsync(RuntimeHubMethods.SnapshotUpdated, broadcastJson).ConfigureAwait(false);
-        await Clients.Group("runtime-remote").SendAsync(RuntimeHubMethods.SessionStateChanged, BuildSessionOperational(snapshot.IsConnected)).ConfigureAwait(false);
+        await Clients.Group(RuntimeRemoteGroup).SendAsync(RuntimeHubMethods.SnapshotUpdated, broadcastJson).ConfigureAwait(false);
+        await Clients.Group(RuntimeRemoteGroup).SendAsync(RuntimeHubMethods.SessionStateChanged, BuildSessionOperational(snapshot.IsConnected)).ConfigureAwait(false);
         _broadcastMetrics.RecordSnapshotBroadcast(System.Text.Encoding.UTF8.GetByteCount(broadcastJson));
     }
 
@@ -238,7 +239,7 @@ public sealed class RuntimeHub : Hub
 
     private async Task BroadcastSessionStateAsync()
     {
-        await Clients.Group("runtime-remote")
+        await Clients.Group(RuntimeRemoteGroup)
             .SendAsync(RuntimeHubMethods.SessionStateChanged, BuildSessionOperational())
             .ConfigureAwait(false);
     }
