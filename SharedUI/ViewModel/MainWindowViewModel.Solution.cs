@@ -5,6 +5,8 @@ using CommunityToolkit.Mvvm.Input;
 
 using Domain;
 
+using Interface;
+
 using Service;
 
 /// <summary>
@@ -66,80 +68,147 @@ public partial class MainWindowViewModel
     public async Task SaveSolutionInternalAsync()
     {
         MarkSolutionDirty();
+        var requestVersion = BeginSolutionAutoSaveRequest();
 
         // Skip if IoService not available (WebApp/MAUI)
         if (_ioService is NullIoService)
+        {
+            SetSolutionSaveStatus(SolutionSaveState.NotSaved, "Not saved");
             return;
+        }
 
         var currentPath = CurrentSolutionPath;
         if (_isShuttingDown || string.IsNullOrWhiteSpace(currentPath))
         {
+            SetSolutionSaveStatus(
+                SolutionSaveState.NotSaved,
+                string.IsNullOrWhiteSpace(currentPath)
+                    ? "Not saved - choose Save As"
+                    : "Not saved - application is shutting down");
             return;
         }
 
-        await SaveSolutionCoreAsync(currentPath, allowPathSelection: false).ConfigureAwait(false);
-    }
-
-    private async Task<bool> SaveSolutionCoreAsync(string? currentPath, bool allowPathSelection)
-    {
-        if (_ioService is NullIoService || _isShuttingDown)
-        {
-            return false;
-        }
-
-        var lockTaken = false;
         try
         {
-            try
+            await SaveSolutionCoreAsync(
+                currentPath,
+                allowPathSelection: false,
+                requestVersion).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
+                                   or InvalidOperationException or NotSupportedException)
+        {
+            if (IsLatestSolutionAutoSaveRequest(requestVersion))
             {
-                await _solutionSaveSemaphore.WaitAsync().ConfigureAwait(false);
-            }
-            catch (ObjectDisposedException)
-            {
-                return false;
+                SetSolutionSaveStatus(SolutionSaveState.NotSaved, $"Not saved - {ex.Message}");
             }
 
-            lockTaken = true;
+            throw;
+        }
+    }
 
+    /// <inheritdoc />
+    public async Task<SolutionSaveResult> SaveSolutionWithStatusAsync()
+    {
+        await SaveSolutionInternalAsync().ConfigureAwait(false);
+        return await _uiDispatcher.InvokeOnUiAsync(() => Task.FromResult(
+            new SolutionSaveResult(SolutionSaveState, SolutionSaveStatusText))).ConfigureAwait(false);
+    }
+
+    private async Task<bool> SaveSolutionCoreAsync(
+        string? currentPath,
+        bool allowPathSelection,
+        long? autoSaveRequestVersion = null)
+    {
+        if (_ioService is NullIoService || _isShuttingDown)
+            return false;
+
+        if (!await TryEnterSolutionSaveAsync().ConfigureAwait(false))
+            return false;
+
+        try
+        {
             // Notify subscribers to sync their data before saving
             SolutionSaving?.Invoke(this, EventArgs.Empty);
 
-            var (success, path, error) = string.IsNullOrWhiteSpace(currentPath)
-                ? allowPathSelection
-                    ? await _ioService.SaveAsAsync(Solution).ConfigureAwait(false)
-                    : (false, null, null)
-                : await _ioService.SaveAsync(Solution, currentPath).ConfigureAwait(false);
-            if (success && path != null)
-            {
-                // Marshal to UI thread to update observable properties bound to UI
-                _uiDispatcher.InvokeOnUi(() =>
-                {
-                    CurrentSolutionPath = path;
-                    HasUnsavedChanges = false;
-                });
-                return true;
-            }
-
-            if (!string.IsNullOrEmpty(error))
-            {
-                throw new InvalidOperationException($"Failed to save solution: {error}");
-            }
-
-            return false;
+            var result = await SaveSolutionAtPathAsync(
+                currentPath,
+                allowPathSelection).ConfigureAwait(false);
+            return CompleteSolutionSave(result, autoSaveRequestVersion);
         }
         finally
         {
-            if (lockTaken)
-            {
-                try
-                {
-                    _solutionSaveSemaphore.Release();
-                }
-                catch (ObjectDisposedException)
-                {
-                    // Semaphore was disposed during shutdown while this save was finishing.
-                }
-            }
+            ReleaseSolutionSaveSemaphore();
+        }
+    }
+
+    private async Task<bool> TryEnterSolutionSaveAsync()
+    {
+        try
+        {
+            await _solutionSaveSemaphore.WaitAsync().ConfigureAwait(false);
+            return true;
+        }
+        catch (ObjectDisposedException)
+        {
+            return false;
+        }
+    }
+
+    private async Task<(bool success, string? path, string? error)> SaveSolutionAtPathAsync(
+        string? currentPath,
+        bool allowPathSelection)
+    {
+        if (!string.IsNullOrWhiteSpace(currentPath))
+            return await _ioService.SaveAsync(Solution, currentPath).ConfigureAwait(false);
+
+        if (allowPathSelection)
+            return await _ioService.SaveAsAsync(Solution).ConfigureAwait(false);
+
+        return (false, null, null);
+    }
+
+    private bool CompleteSolutionSave(
+        (bool success, string? path, string? error) result,
+        long? autoSaveRequestVersion)
+    {
+        if (result.success && result.path != null)
+        {
+            ApplySuccessfulSolutionSave(result.path, autoSaveRequestVersion);
+            return true;
+        }
+
+        if (!string.IsNullOrEmpty(result.error))
+            throw new InvalidOperationException($"Failed to save solution: {result.error}");
+
+        return false;
+    }
+
+    private void ApplySuccessfulSolutionSave(string path, long? autoSaveRequestVersion)
+    {
+        var isLatestAutoSave = !autoSaveRequestVersion.HasValue ||
+            IsLatestSolutionAutoSaveRequest(autoSaveRequestVersion.Value);
+        // Marshal to UI thread to update observable properties bound to UI
+        _uiDispatcher.InvokeOnUi(() =>
+        {
+            CurrentSolutionPath = path;
+            HasUnsavedChanges = !isLatestAutoSave;
+            SolutionSaveState = isLatestAutoSave
+                ? SolutionSaveState.Saved
+                : SolutionSaveState.Saving;
+            SolutionSaveStatusText = isLatestAutoSave ? "Saved" : "Saving";
+        });
+    }
+
+    private void ReleaseSolutionSaveSemaphore()
+    {
+        try
+        {
+            _solutionSaveSemaphore.Release();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Semaphore was disposed during shutdown while this save was finishing.
         }
     }
 
@@ -178,6 +247,7 @@ public partial class MainWindowViewModel
 
             CurrentSolutionPath = null;
             MarkSolutionDirty();
+            SetSolutionSaveStatus(SolutionSaveState.NotSaved, "Not saved - choose Save As");
 
             // ✅ Clear all selections to reset property panels across all pages
             ClearAllSelections();
@@ -263,6 +333,8 @@ public partial class MainWindowViewModel
 
             CurrentSolutionPath = path;
             HasUnsavedChanges = false;
+            SolutionSaveState = SolutionSaveState.Saved;
+            SolutionSaveStatusText = "Saved";
             HasSolution = Solution.Projects.Count > 0;
 
             if (Solution.Projects.Count > 0)
