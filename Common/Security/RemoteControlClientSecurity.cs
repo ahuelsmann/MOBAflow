@@ -3,8 +3,8 @@
 using Moba.Common.Discovery;
 using System.Net;
 using System.Net.Http.Headers;
-using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Moba.Common.Security;
 
@@ -197,19 +197,15 @@ public interface IRemoteControlAuthenticatedHttpClient
 /// <summary>
 /// Sends authenticated requests without exposing bearer credentials to UI consumers.
 /// </summary>
-public sealed class RemoteControlAuthenticatedHttpClient : IRemoteControlAuthenticatedHttpClient
+public sealed class RemoteControlAuthenticatedHttpClient(
+    RemoteControlSessionService sessionService,
+    IRemoteControlHttpClientFactory httpClientFactory) : IRemoteControlAuthenticatedHttpClient
 {
     private static readonly TimeSpan MinimumSessionLifetime = TimeSpan.FromSeconds(30);
-    private readonly IRemoteControlHttpClientFactory _httpClientFactory;
-    private readonly RemoteControlSessionService _sessionService;
-
-    public RemoteControlAuthenticatedHttpClient(
-        RemoteControlSessionService sessionService,
-        IRemoteControlHttpClientFactory httpClientFactory)
-    {
-        _sessionService = sessionService ?? throw new ArgumentNullException(nameof(sessionService));
-        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
-    }
+    private readonly IRemoteControlHttpClientFactory _httpClientFactory =
+        httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+    private readonly RemoteControlSessionService _sessionService =
+        sessionService ?? throw new ArgumentNullException(nameof(sessionService));
 
     public async Task<HttpResponseMessage> GetAsync(
         string relativePath,
@@ -405,8 +401,7 @@ public sealed class RemoteControlSessionService
         TimeSpan minimumRemainingLifetime,
         CancellationToken cancellationToken = default)
     {
-        if (minimumRemainingLifetime < TimeSpan.Zero)
-            throw new ArgumentOutOfRangeException(nameof(minimumRemainingLifetime));
+        ArgumentOutOfRangeException.ThrowIfLessThan(minimumRemainingLifetime, TimeSpan.Zero);
 
         return await RunLockedAsync(async () =>
         {
