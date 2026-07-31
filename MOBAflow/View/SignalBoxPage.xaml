@@ -134,7 +134,7 @@
                 <controls:CollapsibleColumnProperties.PanelContent>
                     <controls:SelectedObjectWorkbench
                         x:Name="SelectedObjectWorkbench"
-                        ViewModel="{x:Bind InterlockingViewModel}">
+                        Context="{x:Bind InterlockingViewModel}">
                         <controls:SelectedObjectWorkbench.DefinitionContent>
                             <StackPanel Padding="0,8,0,0" Spacing="8">
                                 <TextBlock

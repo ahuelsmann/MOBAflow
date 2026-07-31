@@ -78,6 +78,7 @@ internal sealed class SignalBoxPageSelectionTests
         {
             Assert.That(compactPage, Does.Contain("Label=\"Context\""));
             Assert.That(compactPage, Does.Contain("<controls:SelectedObjectWorkbench"));
+            Assert.That(compactPage, Does.Contain("Context=\"{x:BindInterlockingViewModel}\""));
             Assert.That(compactPage, Does.Not.Contain("HorizontalScrollMode=\"Enabled\"><StackPanelOrientation=\"Horizontal\""));
             Assert.That(compactPage, Does.Not.Contain("InterlockingViewModel.Revision"));
         }

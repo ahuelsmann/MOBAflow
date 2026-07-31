@@ -9,13 +9,13 @@ using Moba.SharedUI.ViewModel;
 /// <summary>
 /// Reusable WinUI input adapter for selected-object presentation and commands.
 /// </summary>
-public sealed partial class SelectedObjectWorkbench : UserControl
+internal sealed partial class SelectedObjectWorkbench : UserControl
 {
-    public static readonly DependencyProperty ViewModelProperty = DependencyProperty.Register(
-        nameof(ViewModel),
-        typeof(InterlockingControlViewModel),
+    public static readonly DependencyProperty ContextProperty = DependencyProperty.Register(
+        nameof(Context),
+        typeof(object),
         typeof(SelectedObjectWorkbench),
-        new PropertyMetadata(null));
+        new PropertyMetadata(null, OnContextChanged));
 
     public static readonly DependencyProperty DefinitionContentProperty = DependencyProperty.Register(
         nameof(DefinitionContent),
@@ -34,11 +34,13 @@ public sealed partial class SelectedObjectWorkbench : UserControl
         InitializeComponent();
     }
 
-    public InterlockingControlViewModel ViewModel
+    public object? Context
     {
-        get => (InterlockingControlViewModel)GetValue(ViewModelProperty);
-        set => SetValue(ViewModelProperty, value);
+        get => GetValue(ContextProperty);
+        set => SetValue(ContextProperty, value);
     }
+
+    internal InterlockingControlViewModel? ViewModel => Context as InterlockingControlViewModel;
 
     public UIElement? DefinitionContent
     {
@@ -57,4 +59,12 @@ public sealed partial class SelectedObjectWorkbench : UserControl
     /// </summary>
     public bool FocusWorkbench() =>
         this.WorkbenchScrollViewer.Focus(FocusState.Programmatic);
+
+    private static void OnContextChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args)
+    {
+        if (sender is SelectedObjectWorkbench workbench)
+        {
+            workbench.Bindings.Update();
+        }
+    }
 }

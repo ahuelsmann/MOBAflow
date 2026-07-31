@@ -316,8 +316,8 @@
                 <controls:CollapsibleColumnProperties.PanelContent>
                     <controls:SelectedObjectWorkbench
                         x:Name="SelectedObjectWorkbench"
-                        ShowRouteAuthoring="True"
-                        ViewModel="{x:Bind InterlockingViewModel}">
+                        Context="{x:Bind InterlockingViewModel}"
+                        ShowRouteAuthoring="True">
                         <controls:SelectedObjectWorkbench.DefinitionContent>
                             <StackPanel Padding="0,8,0,0" Spacing="16">
                                 <TextBlock
