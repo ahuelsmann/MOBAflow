@@ -51,11 +51,8 @@ public sealed class DisplayProtocolFrameSession
 
         var frameId = _frameIds.Next();
         var frameCrc32 = DisplayPacketCodec.ComputeCrc32(rgb565Frame.Span);
-        var frameMayHaveStarted = false;
-        var frameCompleted = false;
         try
         {
-            frameMayHaveStarted = true;
             await SendRequiredResultAsync(
                 new BeginFramePayload(
                     width,
@@ -84,15 +81,10 @@ public sealed class DisplayProtocolFrameSession
             {
                 throw new InvalidOperationException("The display accepted the frame without confirming presentation.");
             }
-
-            frameCompleted = true;
         }
         catch
         {
-            if (frameMayHaveStarted && !frameCompleted)
-            {
-                await TryAbortFrameAsync(capabilities.SessionId, frameId).ConfigureAwait(false);
-            }
+            await TryAbortFrameAsync(capabilities.SessionId, frameId).ConfigureAwait(false);
 
             throw;
         }

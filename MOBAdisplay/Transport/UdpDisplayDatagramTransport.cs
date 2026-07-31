@@ -11,7 +11,6 @@ public sealed class UdpDisplayDatagramTransport : IDisplayDatagramTransport, IDi
 {
     private readonly UdpClient _client;
     private readonly CancellationTokenSource _receiveCancellation = new();
-    private readonly Task _receiveTask;
     private bool _disposed;
 
     /// <summary>
@@ -27,7 +26,7 @@ public sealed class UdpDisplayDatagramTransport : IDisplayDatagramTransport, IDi
 
         _client = new UdpClient(address.AddressFamily);
         _client.Connect(new IPEndPoint(address, port));
-        _receiveTask = RunReceiveLoopAsync(
+        _ = RunReceiveLoopAsync(
             ReceiveDatagramAsync,
             RaiseDatagramReceived,
             _receiveCancellation.Token);

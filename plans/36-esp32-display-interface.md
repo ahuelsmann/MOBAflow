@@ -17,9 +17,9 @@
 
 Status on 2026-07-31:
 
-- WP4.1 is implemented locally on `codex/issue-36-wp4-1` from `github/main`
-  `7f4edea0`. No commit, push, pull request, GitHub write, or MOBAflow launch
-  has been performed.
+- WP4.1 is published from `codex/issue-36-wp4-1` in draft PR #109 against
+  `github/main` `7f4edea0`; the initial implementation commit is `3bfcf1af`.
+  MOBAflow has not been launched.
 - The host production sender now negotiates v1.0 capabilities and transfers
   frames atomically through `BeginFrame`, bounded `FrameRegion` packets, and
   `CompleteFrame`. Cancellation preserves `OperationCanceledException`, makes
@@ -33,8 +33,9 @@ Status on 2026-07-31:
 - The complete native PlatformIO matrix passes 45 tests: 14 display-core,
   18 dispatcher/adapter, 8 provisioning, and 5 length-safe parser cases. The
   ESP32-S3 release build creates `firmware.bin`; RAM usage is 43,960 of 327,680
-  bytes (13.4 percent), while flash usage is 1,047,289 of 1,048,576 bytes
-  (99.9 percent), leaving only 1,287 bytes and therefore a release risk.
+  bytes (13.4 percent), while the post-Sonar-remediation flash usage is
+  1,047,337 of 1,048,576 bytes (99.9 percent), leaving only 1,239 bytes and
+  therefore a release risk.
 - The complete .NET matrices pass 1,487 net10.0 tests with four existing skips
   (1,491 total) and all 1,541 Windows tests. `MOBAdisplay`, the Windows test
   graph, and the MOBAflow FastDebug graph build with zero warnings and errors.
@@ -45,8 +46,10 @@ Status on 2026-07-31:
   analysis ran against `github/main` with project `ahuelsmann_MOBAflow2`, but
   Vortex failed for all 25 files with `Vortex agentic analysis is not available
   for this organization (403 Forbidden)`. This organization capability cannot
-  be repaired in WP4.1 and permits only a future draft PR; the remote
-  SonarCloud pull-request gate remains pending.
+  be repaired in WP4.1. Draft PR #109 supplied the required remote analysis;
+  its first detailed query found five `OPEN` findings. The branch contains
+  minimal fixes without suppressions, and zero `OPEN`/`CONFIRMED` issues must
+  be reconfirmed after the follow-up push before review readiness.
 - Current ESP32-S3/ST7789 hardware negotiation, conformance-pattern, packet
   loss, reconnect, and reboot acceptance remain mandatory before issue closure
   but are not WP4.1 merge gates. WP5 through WP7, permanent CI coverage, final

@@ -3,6 +3,7 @@
 #include "DisplayBackend.h"
 #include "FrameAssembler.h"
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 
@@ -178,8 +179,8 @@ private:
     const char* _firmwareVersion;
     Core::DisplayResult _lastOperationResult = Core::MakeResult(Core::ResultCode::Ok);
     bool _isNegotiated = false;
-    RequestFingerprint _requestHistory[kRequestHistoryLength]{};
-    RequestFingerprint _evictedRequestHistory[kEvictedRequestHistoryLength]{};
+    std::array<RequestFingerprint, kRequestHistoryLength> _requestHistory{};
+    std::array<RequestFingerprint, kEvictedRequestHistoryLength> _evictedRequestHistory{};
     size_t _nextRequestHistoryIndex = 0;
     size_t _nextEvictedRequestHistoryIndex = 0;
 };

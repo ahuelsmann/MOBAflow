@@ -375,8 +375,8 @@ DisplayProtocolDispatcher::InspectRequestFingerprint(
 
 void DisplayProtocolDispatcher::ResetRequestHistory() noexcept
 {
-    std::memset(_requestHistory, 0, sizeof(_requestHistory));
-    std::memset(_evictedRequestHistory, 0, sizeof(_evictedRequestHistory));
+    _requestHistory.fill(RequestFingerprint{});
+    _evictedRequestHistory.fill(RequestFingerprint{});
     _nextRequestHistoryIndex = 0;
     _nextEvictedRequestHistoryIndex = 0;
 }

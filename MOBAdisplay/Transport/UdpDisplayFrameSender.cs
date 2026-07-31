@@ -41,7 +41,9 @@ public sealed class UdpDisplayFrameSender : IFrameSender, IDisposable
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             EnsureSession(address, options.Port);
-            await _session!.SendFrameAsync(
+            var session = _session
+                ?? throw new InvalidOperationException("Display protocol session initialization failed.");
+            await session.SendFrameAsync(
                 rgb565Frame,
                 (ushort)options.Width,
                 (ushort)options.Height,
