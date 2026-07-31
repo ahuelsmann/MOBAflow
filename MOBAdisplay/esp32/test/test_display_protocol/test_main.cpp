@@ -66,6 +66,8 @@ constexpr uint16_t kHeight = 2;
 constexpr uint32_t kSessionId = 0x10203040U;
 constexpr uint8_t kAcknowledgementRequired =
     MobaDisplay::Protocol::FlagAcknowledgementRequired;
+constexpr uint8_t kAcknowledgedFinalPacketFlags =
+    kAcknowledgementRequired + MobaDisplay::Protocol::FlagFinalPacket;
 constexpr std::array<uint8_t, 16> kFrameBytes = {{
     0xF8, 0x00, 0x07, 0xE0, 0x00, 0x1F, 0xFF, 0xFF,
     0x00, 0x00, 0xFF, 0xFF, 0xF8, 0x00, 0x07, 0xE0}};
@@ -102,7 +104,7 @@ public:
         }
 
         MobaDisplay::Esp32::PushRgb565BigEndian(
-            display,
+            _display,
             kConformanceWidth,
             kConformanceHeight,
             frameBytes);
@@ -111,9 +113,13 @@ public:
             MobaDisplay::Core::ResultFlagPresented);
     }
 
-    RecordingTftDriver display;
+    const RecordingTftDriver& Driver() const noexcept
+    {
+        return _display;
+    }
 
 private:
+    RecordingTftDriver _display;
     MobaDisplay::Core::DisplayCapabilities _capabilities = {
         kConformanceWidth,
         kConformanceHeight,
@@ -154,6 +160,11 @@ void WriteUInt32(uint8_t* bytes, uint32_t value)
     bytes[1] = static_cast<uint8_t>(value >> 16U);
     bytes[2] = static_cast<uint8_t>(value >> 8U);
     bytes[3] = static_cast<uint8_t>(value);
+}
+
+void AssertResultCode(MobaDisplay::Core::ResultCode expected, uint8_t actual)
+{
+    TEST_ASSERT_TRUE(expected == static_cast<MobaDisplay::Core::ResultCode>(actual));
 }
 
 std::vector<uint8_t> MakePacket(
@@ -437,8 +448,8 @@ void TestWrongSessionAndChangedRequestIdReuseFailClosed()
             static_cast<uint8_t>(
                 kAcknowledgementRequired | MobaDisplay::Protocol::FlagRetry)));
     AssertResponse(MessageType::Result, 21, 0, kSessionId, result, fixture.response);
-    TEST_ASSERT_EQUAL_UINT8(
-        static_cast<uint8_t>(MobaDisplay::Core::ResultCode::Conflict),
+    AssertResultCode(
+        MobaDisplay::Core::ResultCode::Conflict,
         fixture.response[MobaDisplay::Protocol::kHeaderLength]);
     TEST_ASSERT_EQUAL_size_t(1, fixture.backend.ClearCallCount());
 }
@@ -517,8 +528,8 @@ void TestDuplicatedHelloPreservesTheCurrentRequestHistory()
     result = fixture.Dispatch(
         MakePacket(MessageType::Clear, 2, 0, kSessionId, {0x12, 0x34}));
     AssertResponse(MessageType::Result, 2, 0, kSessionId, result, fixture.response);
-    TEST_ASSERT_EQUAL_UINT8(
-        static_cast<uint8_t>(MobaDisplay::Core::ResultCode::Conflict),
+    AssertResultCode(
+        MobaDisplay::Core::ResultCode::Conflict,
         fixture.response[MobaDisplay::Protocol::kHeaderLength]);
     TEST_ASSERT_EQUAL_size_t(0, fixture.backend.ClearCallCount());
 }
@@ -799,8 +810,8 @@ void TestEvictedRequestIdCannotExecuteAgain()
             static_cast<uint8_t>(
                 kAcknowledgementRequired | MobaDisplay::Protocol::FlagRetry)));
     AssertResponse(MessageType::Result, 2, 0, kSessionId, result, fixture.response);
-    TEST_ASSERT_EQUAL_UINT8(
-        static_cast<uint8_t>(MobaDisplay::Core::ResultCode::Conflict),
+    AssertResultCode(
+        MobaDisplay::Core::ResultCode::Conflict,
         fixture.response[MobaDisplay::Protocol::kHeaderLength]);
     TEST_ASSERT_EQUAL_size_t(1, fixture.backend.ClearCallCount());
 }
@@ -1012,15 +1023,14 @@ void TestConformancePatternReachesPresenterInNetworkByteOrder()
     WriteUInt16(regionPayload.data() + 4, kConformanceWidth);
     WriteUInt16(regionPayload.data() + 6, kConformanceHeight);
     WriteUInt32(regionPayload.data() + 12, kConformanceFrame.size());
-    std::copy(kConformanceFrame.begin(), kConformanceFrame.end(), regionPayload.begin() + 16);
+    std::copy_n(kConformanceFrame.begin(), kConformanceFrame.size(), regionPayload.begin() + 16);
     result = dispatch(MakePacket(
         MessageType::FrameRegion,
         92,
         900,
         kSessionId,
         regionPayload,
-        static_cast<uint8_t>(
-            kAcknowledgementRequired | MobaDisplay::Protocol::FlagFinalPacket)));
+        kAcknowledgedFinalPacketFlags));
     AssertResponse(MessageType::Result, 92, 900, kSessionId, result, response);
 
     std::vector<uint8_t> completePayload(4, 0);
@@ -1038,14 +1048,15 @@ void TestConformancePatternReachesPresenterInNetworkByteOrder()
     TEST_ASSERT_BITS_HIGH(
         MobaDisplay::Core::ResultFlagPresented,
         response[MobaDisplay::Protocol::kHeaderLength + 1]);
-    TEST_ASSERT_FALSE(backend.display.swapBytesDuringPush);
-    TEST_ASSERT_TRUE(backend.display.swapBytes);
-    TEST_ASSERT_EQUAL_UINT16(kConformanceWidth, backend.display.pushedWidth);
-    TEST_ASSERT_EQUAL_UINT16(kConformanceHeight, backend.display.pushedHeight);
-    TEST_ASSERT_EQUAL_size_t(kConformanceFrame.size(), backend.display.pushedBytes.size());
+    const RecordingTftDriver& display = backend.Driver();
+    TEST_ASSERT_FALSE(display.swapBytesDuringPush);
+    TEST_ASSERT_TRUE(display.swapBytes);
+    TEST_ASSERT_EQUAL_UINT16(kConformanceWidth, display.pushedWidth);
+    TEST_ASSERT_EQUAL_UINT16(kConformanceHeight, display.pushedHeight);
+    TEST_ASSERT_EQUAL_size_t(kConformanceFrame.size(), display.pushedBytes.size());
     TEST_ASSERT_EQUAL_UINT8_ARRAY(
         kConformanceFrame.data(),
-        backend.display.pushedBytes.data(),
+        display.pushedBytes.data(),
         kConformanceFrame.size());
 }
 }

@@ -11,6 +11,8 @@ using System.Net.Sockets;
 /// </summary>
 public sealed class DisplayProtocolClient : IDisposable
 {
+    private const string CancelledDiagnostic = "The display request was cancelled.";
+    private const string DisposedDiagnostic = "The display protocol client is disposed.";
     private readonly IDisplayDatagramTransport _transport;
     private readonly DisplayIdentifierSequence _requestIds;
     private readonly TimeProvider _timeProvider;
@@ -66,19 +68,19 @@ public sealed class DisplayProtocolClient : IDisposable
 
         if (_disposed)
         {
-            return Failure(requestId, 0, DisplayRequestFailure.ClientDisposed, "The display protocol client is disposed.");
+            return Failure(requestId, 0, DisplayRequestFailure.ClientDisposed, DisposedDiagnostic);
         }
 
         for (var attempt = 1; attempt <= requestOptions.MaximumAttempts; attempt++)
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return Failure(requestId, attempt - 1, DisplayRequestFailure.Cancelled, "The display request was cancelled.");
+                return Failure(requestId, attempt - 1, DisplayRequestFailure.Cancelled, CancelledDiagnostic);
             }
 
             if (_disposed)
             {
-                return Failure(requestId, attempt - 1, DisplayRequestFailure.ClientDisposed, "The display protocol client is disposed.");
+                return Failure(requestId, attempt - 1, DisplayRequestFailure.ClientDisposed, DisposedDiagnostic);
             }
 
             var pending = new PendingResponse(expectedResponse, frameId, sessionId);
@@ -95,8 +97,10 @@ public sealed class DisplayProtocolClient : IDisposable
                     requestId,
                     frameId,
                     sessionId,
-                    attempt > 1,
-                    packetSequence);
+                    packetSequence,
+                    attempt > 1
+                        ? DisplayProtocolFlags.AcknowledgementRequired | DisplayProtocolFlags.Retry
+                        : DisplayProtocolFlags.AcknowledgementRequired);
                 await _transport.SendAsync(datagram, cancellationToken).ConfigureAwait(false);
                 var resolution = await pending.Completion.Task
                     .WaitAsync(requestOptions.ResponseTimeout, _timeProvider, cancellationToken)
@@ -135,7 +139,7 @@ public sealed class DisplayProtocolClient : IDisposable
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                return Failure(requestId, attempt, DisplayRequestFailure.Cancelled, "The display request was cancelled.");
+                return Failure(requestId, attempt, DisplayRequestFailure.Cancelled, CancelledDiagnostic);
             }
             catch (Exception ex)
             {
@@ -178,12 +182,12 @@ public sealed class DisplayProtocolClient : IDisposable
         var requestId = _requestIds.Next();
         if (cancellationToken.IsCancellationRequested)
         {
-            return Failure(requestId, 0, DisplayRequestFailure.Cancelled, "The display request was cancelled.");
+            return Failure(requestId, 0, DisplayRequestFailure.Cancelled, CancelledDiagnostic);
         }
 
         if (_disposed)
         {
-            return Failure(requestId, 0, DisplayRequestFailure.ClientDisposed, "The display protocol client is disposed.");
+            return Failure(requestId, 0, DisplayRequestFailure.ClientDisposed, DisposedDiagnostic);
         }
 
         var datagram = CreateDatagram(
@@ -192,9 +196,8 @@ public sealed class DisplayProtocolClient : IDisposable
             requestId,
             frameId,
             sessionId,
-            isRetry: false,
             packetSequence: packetSequence,
-            acknowledgementRequired: false);
+            flags: DisplayProtocolFlags.None);
         try
         {
             await _transport.SendAsync(datagram, cancellationToken).ConfigureAwait(false);
@@ -202,7 +205,7 @@ public sealed class DisplayProtocolClient : IDisposable
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            return Failure(requestId, 1, DisplayRequestFailure.Cancelled, "The display request was cancelled.");
+            return Failure(requestId, 1, DisplayRequestFailure.Cancelled, CancelledDiagnostic);
         }
         catch (SocketException ex)
         {
@@ -237,7 +240,7 @@ public sealed class DisplayProtocolClient : IDisposable
         foreach (var pending in _pendingResponses.Values)
         {
             pending.Completion.TrySetResult(
-                PendingResolution.Failed(DisplayRequestFailure.ClientDisposed, "The display protocol client is disposed."));
+                PendingResolution.Failed(DisplayRequestFailure.ClientDisposed, DisposedDiagnostic));
         }
 
         _pendingResponses.Clear();
@@ -249,18 +252,9 @@ public sealed class DisplayProtocolClient : IDisposable
         uint requestId,
         uint frameId,
         uint sessionId,
-        bool isRetry,
         DisplayPacketSequence? packetSequence,
-        bool acknowledgementRequired = true)
+        DisplayProtocolFlags flags)
     {
-        var flags = acknowledgementRequired
-            ? DisplayProtocolFlags.AcknowledgementRequired
-            : DisplayProtocolFlags.None;
-        if (isRetry)
-        {
-            flags |= DisplayProtocolFlags.Retry;
-        }
-
         var sequence = packetSequence ?? new DisplayPacketSequence(0, 1, false);
         if (sequence.IsFinalPacket)
         {

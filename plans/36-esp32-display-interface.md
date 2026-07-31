@@ -62,10 +62,13 @@ Status on 2026-07-31:
   `ahuelsmann_MOBAflow2`, but Vortex failed for all enumerated files with
   `Vortex agentic analysis is not available
   for this organization (403 Forbidden)`. This organization capability cannot
-  be repaired in WP4.1. PR #109 supplied the required remote analysis before
-  this review; its previous detailed query reported zero `OPEN`/`CONFIRMED`
-  issues. The remote quality gate and issue count must be reconfirmed after the
-  review-fix push.
+  be repaired in WP4.1. A direct PR query after the review-fix push exposed nine
+  `OPEN` Sonar issues despite a green quality gate. All nine are addressed in
+  code without acceptance, suppression, or baseline changes: duplicated host
+  diagnostics use constants, the datagram helper has seven parameters, and the
+  native conformance test uses encapsulated state and C++11-compatible clear
+  comparisons/copying/flag values. The remote quality gate and zero
+  `OPEN`/`CONFIRMED` issue count must be reconfirmed after the Sonar-fix push.
 - Current ESP32-S3/ST7789 hardware negotiation, conformance-pattern, packet
   loss, reconnect, and reboot acceptance remain mandatory before issue closure
   but are not WP4.1 merge gates. WP5 through WP7, permanent CI coverage, final
