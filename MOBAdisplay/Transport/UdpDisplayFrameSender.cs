@@ -5,17 +5,38 @@ using Moba.Display.Runtime;
 
 using System.Net;
 
+internal interface IDisplayFrameSessionConnection : IDisposable
+{
+    Task SendFrameAsync(
+        ReadOnlyMemory<byte> rgb565Frame,
+        ushort width,
+        ushort height,
+        CancellationToken cancellationToken);
+}
+
 /// <summary>
 /// Sends frames through the single production protocol v1.0 UDP path.
 /// </summary>
 public sealed class UdpDisplayFrameSender : IFrameSender, IDisposable
 {
+    private readonly Func<IPEndPoint, IDisplayFrameSessionConnection> _connectionFactory;
     private readonly SemaphoreSlim _sendGate = new(1, 1);
-    private UdpDisplayDatagramTransport? _transport;
-    private DisplayProtocolClient? _client;
-    private DisplayProtocolFrameSession? _session;
-    private string? _endpointKey;
+    private IDisplayFrameSessionConnection? _connection;
+    private IPEndPoint? _endpoint;
     private bool _disposed;
+
+    /// <summary>Initializes the production UDP display sender.</summary>
+    public UdpDisplayFrameSender()
+        : this(CreateConnection)
+    {
+    }
+
+    internal UdpDisplayFrameSender(
+        Func<IPEndPoint, IDisplayFrameSessionConnection> connectionFactory)
+    {
+        ArgumentNullException.ThrowIfNull(connectionFactory);
+        _connectionFactory = connectionFactory;
+    }
 
     /// <inheritdoc />
     public async Task SendFrameAsync(
@@ -41,9 +62,9 @@ public sealed class UdpDisplayFrameSender : IFrameSender, IDisposable
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             EnsureSession(address, options.Port);
-            var session = _session
+            var connection = _connection
                 ?? throw new InvalidOperationException("Display protocol session initialization failed.");
-            await session.SendFrameAsync(
+            await connection.SendFrameAsync(
                 rgb565Frame,
                 (ushort)options.Width,
                 (ushort)options.Height,
@@ -71,28 +92,53 @@ public sealed class UdpDisplayFrameSender : IFrameSender, IDisposable
 
     private void EnsureSession(IPAddress address, int port)
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(port, IPEndPoint.MinPort);
+        ArgumentOutOfRangeException.ThrowIfLessThan(port, 1);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(port, IPEndPoint.MaxPort);
-        var endpointKey = $"{address}:{port}";
-        if (string.Equals(_endpointKey, endpointKey, StringComparison.Ordinal))
+        var endpoint = new IPEndPoint(address, port);
+        if (Equals(_endpoint, endpoint))
         {
             return;
         }
 
         DisposeSession();
-        _transport = new UdpDisplayDatagramTransport(address, port);
-        _client = new DisplayProtocolClient(_transport);
-        _session = new DisplayProtocolFrameSession(_client);
-        _endpointKey = endpointKey;
+        _connection = _connectionFactory(endpoint);
+        _endpoint = endpoint;
     }
 
     private void DisposeSession()
     {
-        _client?.Dispose();
-        _transport?.Dispose();
-        _session = null;
-        _client = null;
-        _transport = null;
-        _endpointKey = null;
+        _connection?.Dispose();
+        _connection = null;
+        _endpoint = null;
+    }
+
+    private static IDisplayFrameSessionConnection CreateConnection(IPEndPoint endpoint) =>
+        new UdpDisplayFrameSessionConnection(endpoint);
+
+    private sealed class UdpDisplayFrameSessionConnection : IDisplayFrameSessionConnection
+    {
+        private readonly UdpDisplayDatagramTransport _transport;
+        private readonly DisplayProtocolClient _client;
+        private readonly DisplayProtocolFrameSession _session;
+
+        public UdpDisplayFrameSessionConnection(IPEndPoint endpoint)
+        {
+            _transport = new UdpDisplayDatagramTransport(endpoint.Address, endpoint.Port);
+            _client = new DisplayProtocolClient(_transport);
+            _session = new DisplayProtocolFrameSession(_client);
+        }
+
+        public Task SendFrameAsync(
+            ReadOnlyMemory<byte> rgb565Frame,
+            ushort width,
+            ushort height,
+            CancellationToken cancellationToken) =>
+            _session.SendFrameAsync(rgb565Frame, width, height, cancellationToken);
+
+        public void Dispose()
+        {
+            _client.Dispose();
+            _transport.Dispose();
+        }
     }
 }

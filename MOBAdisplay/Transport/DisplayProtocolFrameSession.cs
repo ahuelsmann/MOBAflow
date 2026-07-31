@@ -8,6 +8,7 @@ using Moba.Display.Protocol;
 /// </summary>
 public sealed class DisplayProtocolFrameSession
 {
+    private const int MaximumIncompleteRepairs = 3;
     private readonly DisplayProtocolClient _client;
     private readonly DisplayIdentifierSequence _frameIds;
     private CapabilitiesResponsePayload? _capabilities;
@@ -48,6 +49,7 @@ public sealed class DisplayProtocolFrameSession
 
         var capabilities = await EnsureNegotiatedAsync(cancellationToken).ConfigureAwait(false);
         ValidateCapabilities(capabilities, width, height);
+        var regions = CreateRegions(width, height, capabilities.MaximumRegionPayloadLength);
 
         var frameId = _frameIds.Next();
         var frameCrc32 = DisplayPacketCodec.ComputeCrc32(rgb565Frame.Span);
@@ -66,16 +68,18 @@ public sealed class DisplayProtocolFrameSession
                 cancellationToken).ConfigureAwait(false);
             await SendRegionsAsync(
                 rgb565Frame,
-                width,
-                height,
-                capabilities,
+                regions,
+                regions.Length,
+                capabilities.SessionId,
                 frameId,
                 cancellationToken).ConfigureAwait(false);
 
-            var completion = await SendRequiredResultAsync(
-                new CompleteFramePayload(frameCrc32),
+            var completion = await CompleteFrameAsync(
+                rgb565Frame,
+                regions,
                 capabilities.SessionId,
                 frameId,
+                frameCrc32,
                 cancellationToken).ConfigureAwait(false);
             if (!completion.Flags.HasFlag(DisplayResultFlags.Presented))
             {
@@ -117,51 +121,108 @@ public sealed class DisplayProtocolFrameSession
 
     private async Task SendRegionsAsync(
         ReadOnlyMemory<byte> rgb565Frame,
-        ushort width,
-        ushort height,
-        CapabilitiesResponsePayload capabilities,
+        FrameRegionDescriptor[] regions,
+        int totalRegionCount,
+        uint sessionId,
         uint frameId,
         CancellationToken cancellationToken)
     {
-        var bytesPerRow = checked(width * 2);
-        var rowsPerRegion = capabilities.MaximumRegionPayloadLength / bytesPerRow;
-        if (rowsPerRegion == 0)
+        foreach (var region in regions)
         {
-            throw new InvalidOperationException("The negotiated region limit cannot carry one display row.");
-        }
-
-        var regionCount = checked((height + rowsPerRegion - 1) / rowsPerRegion);
-        if (regionCount > ushort.MaxValue)
-        {
-            throw new InvalidOperationException("The frame requires too many protocol regions.");
-        }
-
-        for (var regionIndex = 0; regionIndex < regionCount; regionIndex++)
-        {
-            var y = regionIndex * rowsPerRegion;
-            var regionHeight = Math.Min(rowsPerRegion, height - y);
-            var byteOffset = checked(y * bytesPerRow);
-            var byteCount = checked(regionHeight * bytesPerRow);
-            var isFinal = regionIndex == regionCount - 1;
-            await SendRequiredResultAsync(
+            var outcome = await _client.SendUnacknowledgedAsync(
                 new FrameRegionPayload(
-                    0,
-                    (ushort)y,
-                    width,
-                    (ushort)regionHeight,
-                    (uint)byteOffset,
-                    rgb565Frame.Slice(byteOffset, byteCount)),
-                capabilities.SessionId,
+                    region.X,
+                    region.Y,
+                    region.Width,
+                    region.Height,
+                    (uint)region.ByteOffset,
+                    rgb565Frame.Slice(region.ByteOffset, region.ByteCount)),
+                sessionId,
                 frameId,
-                cancellationToken,
                 new DisplayPacketSequence(
-                    (ushort)regionIndex,
-                    (ushort)regionCount,
-                    isFinal)).ConfigureAwait(false);
+                    region.PacketIndex,
+                    checked((ushort)totalRegionCount),
+                    region.PacketIndex == totalRegionCount - 1),
+                cancellationToken).ConfigureAwait(false);
+            if (!outcome.IsSuccessful)
+            {
+                ThrowIfCancelled(outcome, cancellationToken);
+                throw CreateRequestException(DisplayMessageType.FrameRegion.ToString(), outcome);
+            }
         }
     }
 
+    private async Task<ResultPayload> CompleteFrameAsync(
+        ReadOnlyMemory<byte> rgb565Frame,
+        FrameRegionDescriptor[] regions,
+        uint sessionId,
+        uint frameId,
+        uint frameCrc32,
+        CancellationToken cancellationToken)
+    {
+        for (var repairAttempt = 0; repairAttempt <= MaximumIncompleteRepairs; repairAttempt++)
+        {
+            var result = await SendResultAsync(
+                new CompleteFramePayload(frameCrc32),
+                sessionId,
+                frameId,
+                cancellationToken).ConfigureAwait(false);
+            if (result.ResultCode == DisplayResultCode.Ok)
+            {
+                return result;
+            }
+
+            if (result.ResultCode != DisplayResultCode.Incomplete
+                || repairAttempt == MaximumIncompleteRepairs)
+            {
+                throw CreateResultException(DisplayMessageType.CompleteFrame, result.ResultCode);
+            }
+
+            var missingStart = result.FirstMissingByteOffset;
+            var missingEnd = (ulong)missingStart + result.MissingByteCount;
+            var missingRegions = regions
+                .Where(region => (ulong)region.ByteOffset < missingEnd
+                    && (ulong)region.ByteOffset + (uint)region.ByteCount > missingStart)
+                .ToArray();
+            if (missingRegions.Length == 0)
+            {
+                throw new InvalidOperationException("The display reported a missing range outside the frame regions.");
+            }
+
+            await SendRegionsAsync(
+                rgb565Frame,
+                missingRegions,
+                regions.Length,
+                sessionId,
+                frameId,
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        throw new InvalidOperationException("The display frame repair policy was exhausted.");
+    }
+
     private async Task<ResultPayload> SendRequiredResultAsync(
+        BeginFramePayload request,
+        uint sessionId,
+        uint frameId,
+        CancellationToken cancellationToken,
+        DisplayPacketSequence? packetSequence = null)
+    {
+        var result = await SendResultAsync(
+            request,
+            sessionId,
+            frameId,
+            cancellationToken,
+            packetSequence).ConfigureAwait(false);
+        if (result.ResultCode != DisplayResultCode.Ok)
+        {
+            throw CreateResultException(request.MessageType, result.ResultCode);
+        }
+
+        return result;
+    }
+
+    private async Task<ResultPayload> SendResultAsync(
         IDisplayProtocolPayload request,
         uint sessionId,
         uint frameId,
@@ -181,15 +242,9 @@ public sealed class DisplayProtocolFrameSession
             throw CreateRequestException(request.MessageType.ToString(), outcome);
         }
 
-        if (result.ResultCode != DisplayResultCode.Ok)
+        if (result.ResultCode == DisplayResultCode.WrongSession)
         {
-            if (result.ResultCode == DisplayResultCode.WrongSession)
-            {
-                _capabilities = null;
-            }
-
-            throw new InvalidOperationException(
-                $"Display request {request.MessageType} failed with {result.ResultCode}.");
+            _capabilities = null;
         }
 
         return result;
@@ -199,12 +254,73 @@ public sealed class DisplayProtocolFrameSession
     {
         using var timeout = new CancellationTokenSource(TimeSpan.FromMilliseconds(250));
         var options = new DisplayRequestOptions(1, TimeSpan.FromMilliseconds(200), TimeSpan.Zero);
-        await _client.SendRequestAsync(
+        var outcome = await _client.SendRequestAsync(
             new AbortFramePayload(DisplayAbortReason.HostCancellation),
             sessionId,
             frameId,
             options,
             cancellationToken: timeout.Token).ConfigureAwait(false);
+        if (outcome.Response is ResultPayload { ResultCode: DisplayResultCode.WrongSession })
+        {
+            _capabilities = null;
+        }
+    }
+
+    private static FrameRegionDescriptor[] CreateRegions(
+        ushort width,
+        ushort height,
+        ushort maximumRegionPayloadLength)
+    {
+        var maximumPixelsPerRegion = maximumRegionPayloadLength / 2;
+        if (maximumPixelsPerRegion == 0)
+        {
+            throw new InvalidOperationException("The negotiated region limit cannot carry one RGB565 pixel.");
+        }
+
+        var regions = new List<FrameRegionDescriptor>();
+        if (maximumPixelsPerRegion >= width)
+        {
+            var rowsPerRegion = maximumPixelsPerRegion / width;
+            for (var y = 0; y < height; y += rowsPerRegion)
+            {
+                var regionHeight = Math.Min(rowsPerRegion, height - y);
+                var byteOffset = checked(y * width * 2);
+                regions.Add(new FrameRegionDescriptor(
+                    0,
+                    (ushort)y,
+                    width,
+                    (ushort)regionHeight,
+                    byteOffset,
+                    checked(regionHeight * width * 2)));
+            }
+        }
+        else
+        {
+            for (var y = 0; y < height; y++)
+            {
+                for (var x = 0; x < width; x += maximumPixelsPerRegion)
+                {
+                    var regionWidth = Math.Min(maximumPixelsPerRegion, width - x);
+                    var byteOffset = checked((y * width + x) * 2);
+                    regions.Add(new FrameRegionDescriptor(
+                        (ushort)x,
+                        (ushort)y,
+                        (ushort)regionWidth,
+                        1,
+                        byteOffset,
+                        checked(regionWidth * 2)));
+                }
+            }
+        }
+
+        if (regions.Count > ushort.MaxValue)
+        {
+            throw new InvalidOperationException("The frame requires too many protocol regions.");
+        }
+
+        return regions
+            .Select((region, index) => region with { PacketIndex = (ushort)index })
+            .ToArray();
     }
 
     private static void ValidateCapabilities(
@@ -234,6 +350,11 @@ public sealed class DisplayProtocolFrameSession
             $"{operation} failed with {outcome.Failure}: "
             + (outcome.Diagnostic ?? "No compatible response was received."));
 
+    private static InvalidOperationException CreateResultException(
+        DisplayMessageType messageType,
+        DisplayResultCode resultCode) =>
+        new($"Display request {messageType} failed with {resultCode}.");
+
     private static void ThrowIfCancelled(
         DisplayRequestOutcome outcome,
         CancellationToken cancellationToken)
@@ -244,5 +365,16 @@ public sealed class DisplayProtocolFrameSession
                 "The display frame transfer was cancelled.",
                 cancellationToken);
         }
+    }
+
+    private readonly record struct FrameRegionDescriptor(
+        ushort X,
+        ushort Y,
+        ushort Width,
+        ushort Height,
+        int ByteOffset,
+        int ByteCount)
+    {
+        public ushort PacketIndex { get; init; }
     }
 }

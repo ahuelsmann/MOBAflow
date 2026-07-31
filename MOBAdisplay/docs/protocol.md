@@ -106,7 +106,7 @@ authentication mechanism.
 | 4-7 | Reserved | MUST be zero in v1.0 |
 
 The `Retry` flag does not permit different payload bytes under the same request
-ID. A receiver MUST return `Invalid` when a reused request ID changes the
+ID. A receiver MUST return `Conflict` when a reused request ID changes the
 operation or payload.
 
 ## Message catalog

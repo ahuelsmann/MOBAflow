@@ -66,8 +66,123 @@ internal sealed class DisplayProtocolFrameSessionTests
             Assert.That(
                 regions.Select(packet => packet.Header.Flags.HasFlag(DisplayProtocolFlags.FinalPacket)),
                 Is.EqualTo(ExpectedFinalPacketFlags));
+            Assert.That(
+                regions.Select(packet => packet.Header.Flags.HasFlag(DisplayProtocolFlags.AcknowledgementRequired)),
+                Is.All.False);
             Assert.That(endpoint.PresentedFrame.ToArray(), Is.EqualTo(frame));
         }
+    }
+
+    [TestCase((ushort)172, (ushort)256)]
+    [TestCase((ushort)240, (ushort)480)]
+    [TestCase((ushort)800, (ushort)1184)]
+    public async Task SendFrameAsync_Should_SplitRowsWithinNegotiatedLimit(
+        ushort width,
+        ushort maximumRegionPayloadLength)
+    {
+        // Arrange
+        const ushort height = 2;
+        var endpoint = new FakeDisplayEndpoint(
+            width: width,
+            height: height,
+            maximumRegionPayloadLength: maximumRegionPayloadLength);
+        using var client = new DisplayProtocolClient(endpoint);
+        var session = new DisplayProtocolFrameSession(client);
+        var frame = DisplayConformancePattern.CreateRgb565(width, height);
+
+        // Act
+        await session.SendFrameAsync(frame, width, height).ConfigureAwait(false);
+
+        // Assert
+        var regionPackets = endpoint.ReceivedPackets
+            .Where(packet => packet.Header.MessageType == DisplayMessageType.FrameRegion)
+            .ToArray();
+        var regions = regionPackets.Select(DecodeRegion).ToArray();
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(regions, Is.Not.Empty);
+            Assert.That(
+                regions.Select(region => region.PixelBytes.Length),
+                Is.All.LessThanOrEqualTo(maximumRegionPayloadLength));
+            Assert.That(
+                regions.Any(region => region.X > 0),
+                Is.EqualTo(width * 2 > maximumRegionPayloadLength));
+            Assert.That(
+                regionPackets.Select(packet => packet.Header.PacketIndex),
+                Is.EqualTo(Enumerable.Range(0, regionPackets.Length).Select(index => (ushort)index)));
+            Assert.That(
+                regionPackets.Select(packet => packet.Header.PacketCount),
+                Is.All.EqualTo((ushort)regionPackets.Length));
+            Assert.That(endpoint.PresentedFrame.ToArray(), Is.EqualTo(frame));
+        }
+    }
+
+    [Test]
+    public async Task SendFrameAsync_Should_RepairMissingRegionsBeforePresentation()
+    {
+        // Arrange
+        var endpoint = new FakeDisplayEndpoint(maximumRegionPayloadLength: 8);
+        endpoint.DropFrameRegion(0);
+        endpoint.DropFrameRegion(2);
+        using var client = new DisplayProtocolClient(endpoint);
+        var session = new DisplayProtocolFrameSession(client);
+        var frame = DisplayConformancePattern.CreateRgb565(4, 3);
+
+        // Act
+        await session.SendFrameAsync(frame, 4, 3).ConfigureAwait(false);
+
+        // Assert
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(endpoint.PresentationCount, Is.EqualTo(1));
+            Assert.That(endpoint.PresentedFrame.ToArray(), Is.EqualTo(frame));
+            Assert.That(
+                endpoint.ReceivedPackets.Count(
+                    packet => packet.Header.MessageType == DisplayMessageType.CompleteFrame),
+                Is.EqualTo(3));
+        }
+    }
+
+    [Test]
+    public async Task SendFrameAsync_Should_AbortWithoutPresentation_When_RegionRemainsMissing()
+    {
+        // Arrange
+        var endpoint = new FakeDisplayEndpoint(maximumRegionPayloadLength: 8);
+        endpoint.DropFrameRegion(1, int.MaxValue);
+        using var client = new DisplayProtocolClient(endpoint);
+        var session = new DisplayProtocolFrameSession(client);
+        var frame = DisplayConformancePattern.CreateRgb565(4, 3);
+
+        // Act
+        var exception = await CaptureExceptionAsync<InvalidOperationException>(
+            () => session.SendFrameAsync(frame, 4, 3)).ConfigureAwait(false);
+
+        // Assert
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(exception, Is.Not.Null);
+            Assert.That(endpoint.PresentationCount, Is.Zero);
+            Assert.That(
+                endpoint.ReceivedPackets.Last().Header.MessageType,
+                Is.EqualTo(DisplayMessageType.AbortFrame));
+        }
+    }
+
+    [Test]
+    public async Task SendFrameAsync_Should_PresentOnce_When_CompletionResponseIsLost()
+    {
+        // Arrange
+        var endpoint = new FakeDisplayEndpoint();
+        endpoint.DropNextResponse(DisplayMessageType.CompleteFrame);
+        using var client = new DisplayProtocolClient(endpoint);
+        var session = new DisplayProtocolFrameSession(client);
+        var frame = DisplayConformancePattern.CreateRgb565(4, 3);
+
+        // Act
+        await session.SendFrameAsync(frame, 4, 3).ConfigureAwait(false);
+
+        // Assert
+        Assert.That(endpoint.PresentationCount, Is.EqualTo(1));
     }
 
     [Test]
@@ -151,6 +266,52 @@ internal sealed class DisplayProtocolFrameSessionTests
                 endpoint.ReceivedPackets.Last().Header.MessageType,
                 Is.EqualTo(DisplayMessageType.AbortFrame));
         }
+    }
+
+    [Test]
+    public async Task SendFrameAsync_Should_RenegotiateAfterAbortReportsWrongSession()
+    {
+        // Arrange
+        var endpoint = new FakeDisplayEndpoint();
+        using var client = new DisplayProtocolClient(endpoint);
+        var session = new DisplayProtocolFrameSession(client);
+        var frame = DisplayConformancePattern.CreateRgb565(4, 3);
+        await session.SendFrameAsync(frame, 4, 3).ConfigureAwait(false);
+        endpoint.HoldNextResponse();
+        using var cancellation = new CancellationTokenSource();
+        var expectedPacketCount = endpoint.ReceivedPacketCount + 1;
+        var interruptedSend = session.SendFrameAsync(frame, 4, 3, cancellation.Token);
+        await WaitUntilAsync(
+            () => endpoint.ReceivedPacketCount >= expectedPacketCount).ConfigureAwait(false);
+        endpoint.Reboot();
+        await cancellation.CancelAsync().ConfigureAwait(false);
+        _ = await CaptureExceptionAsync<OperationCanceledException>(
+            () => interruptedSend).ConfigureAwait(false);
+
+        // Act
+        await session.SendFrameAsync(frame, 4, 3).ConfigureAwait(false);
+
+        // Assert
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(endpoint.PresentationCount, Is.EqualTo(2));
+            Assert.That(
+                endpoint.ReceivedPackets.Count(
+                    packet => packet.Header.MessageType == DisplayMessageType.HelloRequest),
+                Is.EqualTo(2));
+        }
+    }
+
+    private static FrameRegionPayload DecodeRegion(DisplayProtocolPacket packet)
+    {
+        var decoded = DisplayPayloadCodec.TryDecode(
+            DisplayMessageType.FrameRegion,
+            packet.Payload.Span,
+            out var payload,
+            out var error);
+        Assert.That(decoded, Is.True, $"Region payload decode failed with {error}.");
+        return payload as FrameRegionPayload
+            ?? throw new AssertionException("Decoded payload is not a frame region.");
     }
 
     private static async Task WaitUntilAsync(Func<bool> condition)

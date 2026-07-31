@@ -4,6 +4,7 @@ namespace Moba.Display.Transport;
 using Moba.Display.Protocol;
 
 using System.Collections.Concurrent;
+using System.Net.Sockets;
 
 /// <summary>
 /// Sends versioned display requests and correlates validated responses across bounded retries.
@@ -157,6 +158,71 @@ public sealed class DisplayProtocolClient : IDisposable
     }
 
     /// <summary>
+    /// Sends one datagram without requesting or waiting for a positive acknowledgement.
+    /// </summary>
+    /// <param name="request">Typed request payload.</param>
+    /// <param name="sessionId">Negotiated session identifier.</param>
+    /// <param name="frameId">Frame identifier for the region.</param>
+    /// <param name="packetSequence">Logical packet position within the frame.</param>
+    /// <param name="cancellationToken">Stops the send operation.</param>
+    public async Task<DisplayRequestOutcome> SendUnacknowledgedAsync(
+        FrameRegionPayload request,
+        uint sessionId,
+        uint frameId,
+        DisplayPacketSequence packetSequence,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ValidateRequestEnvelope(request.MessageType, sessionId, frameId);
+
+        var requestId = _requestIds.Next();
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return Failure(requestId, 0, DisplayRequestFailure.Cancelled, "The display request was cancelled.");
+        }
+
+        if (_disposed)
+        {
+            return Failure(requestId, 0, DisplayRequestFailure.ClientDisposed, "The display protocol client is disposed.");
+        }
+
+        var datagram = CreateDatagram(
+            request.MessageType,
+            DisplayPayloadCodec.Encode(request),
+            requestId,
+            frameId,
+            sessionId,
+            isRetry: false,
+            packetSequence: packetSequence,
+            acknowledgementRequired: false);
+        try
+        {
+            await _transport.SendAsync(datagram, cancellationToken).ConfigureAwait(false);
+            return new DisplayRequestOutcome(requestId, 1, null, DisplayRequestFailure.None, null);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return Failure(requestId, 1, DisplayRequestFailure.Cancelled, "The display request was cancelled.");
+        }
+        catch (SocketException ex)
+        {
+            return TransportFailure(requestId, ex);
+        }
+        catch (IOException ex)
+        {
+            return TransportFailure(requestId, ex);
+        }
+        catch (ObjectDisposedException ex)
+        {
+            return TransportFailure(requestId, ex);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return TransportFailure(requestId, ex);
+        }
+    }
+
+    /// <summary>
     /// Stops response correlation and completes active requests as disposed.
     /// </summary>
     public void Dispose()
@@ -184,9 +250,12 @@ public sealed class DisplayProtocolClient : IDisposable
         uint frameId,
         uint sessionId,
         bool isRetry,
-        DisplayPacketSequence? packetSequence)
+        DisplayPacketSequence? packetSequence,
+        bool acknowledgementRequired = true)
     {
-        var flags = DisplayProtocolFlags.AcknowledgementRequired;
+        var flags = acknowledgementRequired
+            ? DisplayProtocolFlags.AcknowledgementRequired
+            : DisplayProtocolFlags.None;
         if (isRetry)
         {
             flags |= DisplayProtocolFlags.Retry;
@@ -381,6 +450,13 @@ public sealed class DisplayProtocolClient : IDisposable
         DisplayRequestFailure failure,
         string? diagnostic) =>
         new(requestId, attemptCount, null, failure, diagnostic);
+
+    private static DisplayRequestOutcome TransportFailure(uint requestId, Exception exception) =>
+        Failure(
+            requestId,
+            1,
+            DisplayRequestFailure.TransportFailure,
+            $"Datagram transport failed with {exception.GetType().Name}: {exception.Message}");
 
     private sealed record PendingResponse(
         DisplayMessageType ExpectedMessageType,

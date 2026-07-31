@@ -17,9 +17,9 @@
 
 Status on 2026-07-31:
 
-- WP4.1 is published from `codex/issue-36-wp4-1` in draft PR #109 against
-  `github/main` `7f4edea0`; the initial implementation commit is `3bfcf1af`.
-  MOBAflow has not been launched.
+- WP4.1 is published from `codex/issue-36-wp4-1` in ready-for-review PR #109.
+  Its implementation baseline remains `github/main` `7f4edea0`; the current
+  PR base head is `f9c141a1`. MOBAflow has not been launched.
 - The host production sender now negotiates v1.0 capabilities and transfers
   frames atomically through `BeginFrame`, bounded `FrameRegion` packets, and
   `CompleteFrame`. Cancellation preserves `OperationCanceledException`, makes
@@ -30,26 +30,35 @@ Status on 2026-07-31:
   wrapped request IDs remain valid; a reboot clears both histories. The host
   line sender, firmware line parser, and legacy framebuffer presentation path
   are removed, leaving one production v1.0 path.
-- The complete native PlatformIO matrix passes 45 tests: 14 display-core,
-  18 dispatcher/adapter, 8 provisioning, and 5 length-safe parser cases. The
+- The post-review implementation sends regions without per-packet positive
+  acknowledgement, repairs reported gaps through bounded `CompleteFrame`
+  retries, splits wide rows for 172-, 240-, and 800-pixel displays, invalidates
+  stale negotiated capabilities after `WrongSession`, and reports conflicting
+  request-ID reuse as `Conflict`. Direct sender lifecycle tests and an
+  end-to-end native conformance-pattern presenter test cover the remaining
+  review gaps.
+- The complete native PlatformIO matrix passes 46 tests: 14 display-core,
+  19 dispatcher/adapter, 8 provisioning, and 5 length-safe parser cases. The
   ESP32-S3 release build creates `firmware.bin`; RAM usage is 43,960 of 327,680
   bytes (13.4 percent), while the post-Sonar-remediation flash usage is
-  1,047,337 of 1,048,576 bytes (99.9 percent), leaving only 1,239 bytes and
+  1,047,345 of 1,048,576 bytes (99.9 percent), leaving only 1,231 bytes and
   therefore a release risk.
-- The complete .NET matrices pass 1,487 net10.0 tests with four existing skips
-  (1,491 total) and all 1,541 Windows tests. `MOBAdisplay`, the Windows test
+- The complete .NET matrices pass 1,501 net10.0 tests with four existing skips
+  (1,505 total) and all 1,555 Windows tests. `MOBAdisplay`, the Windows test
   graph, and the MOBAflow FastDebug graph build with zero warnings and errors.
-  Scoped formatting, `git diff --check`, the analyzer baseline, and Spec Kit
-  pull-request governance pass.
-- All 25 existing changed or new files pass the deterministic Sonar secrets
+  `git diff --check` passes. The cross-platform analyzer baseline matches 4,051
+  diagnostics in 1,343 groups, and the Windows baseline matches 2,801
+  diagnostics in 1,025 groups without adding suppressions or baseline entries.
+- All 26 existing changed or new files pass the deterministic Sonar secrets
   scan with no findings. After explicit source-upload authorization, local
-  analysis ran against `github/main` with project `ahuelsmann_MOBAflow2`, but
-  Vortex failed for all 25 files with `Vortex agentic analysis is not available
+  analysis ran against current `github/main` with project
+  `ahuelsmann_MOBAflow2`, but Vortex failed for all enumerated files with
+  `Vortex agentic analysis is not available
   for this organization (403 Forbidden)`. This organization capability cannot
-  be repaired in WP4.1. Draft PR #109 supplied the required remote analysis;
-  its first detailed query found five `OPEN` findings. The branch contains
-  minimal fixes without suppressions, and zero `OPEN`/`CONFIRMED` issues must
-  be reconfirmed after the follow-up push before review readiness.
+  be repaired in WP4.1. PR #109 supplied the required remote analysis before
+  this review; its previous detailed query reported zero `OPEN`/`CONFIRMED`
+  issues. The remote quality gate and issue count must be reconfirmed after the
+  review-fix push.
 - Current ESP32-S3/ST7789 hardware negotiation, conformance-pattern, packet
   loss, reconnect, and reboot acceptance remain mandatory before issue closure
   but are not WP4.1 merge gates. WP5 through WP7, permanent CI coverage, final

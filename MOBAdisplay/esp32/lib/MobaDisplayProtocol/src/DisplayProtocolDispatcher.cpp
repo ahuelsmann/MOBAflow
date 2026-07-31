@@ -434,7 +434,10 @@ DispatchResult DisplayProtocolDispatcher::HandleHello(
     {
         return WriteResultResponse(
             header,
-            Core::MakeResult(Core::ResultCode::Invalid),
+            Core::MakeResult(
+                fingerprintState == RequestFingerprintState::Conflict
+                    ? Core::ResultCode::Conflict
+                    : Core::ResultCode::Invalid),
             responseBuffer,
             responseBufferLength);
     }
@@ -488,7 +491,7 @@ DispatchResult DisplayProtocolDispatcher::HandleNegotiatedRequest(
     {
         return WriteResultResponse(
             header,
-            Core::MakeResult(Core::ResultCode::Invalid),
+            Core::MakeResult(Core::ResultCode::Conflict),
             responseBuffer,
             responseBufferLength);
     }
