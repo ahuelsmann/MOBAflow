@@ -101,6 +101,13 @@
                         IsEnabled="{x:Bind ViewModel.IsPrimaryRouteActionAvailable, Mode=OneWay}"
                         Style="{StaticResource AccentButtonStyle}" />
                     <Button
+                        AutomationProperties.HelpText="{x:Bind ViewModel.RoutineCancelRouteDisabledReason, Mode=OneWay}"
+                        AutomationProperties.Name="Cancel selected route"
+                        Command="{x:Bind ViewModel.CancelRouteCommand}"
+                        Content="Cancel route"
+                        IsEnabled="{x:Bind ViewModel.IsRoutineCancelRouteAvailable, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.IsRoutineCancelRouteVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    <Button
                         AutomationProperties.HelpText="Checks route availability without reserving or setting it."
                         AutomationProperties.Name="Preview route"
                         Command="{x:Bind ViewModel.PreviewRouteCommand}"

@@ -117,6 +117,7 @@ internal sealed class SignalBoxPageSelectionTests
             Assert.That(compactWorkbench, Does.Contain("AutomationProperties.Name=\"Turnoutposition\""));
             Assert.That(compactWorkbench, Does.Contain("AutomationProperties.Name=\"Proceedaspect\""));
             Assert.That(compactWorkbench, Does.Contain("ViewModel.ShowNoAuthorizedLiveActionMessage"));
+            Assert.That(compactWorkbench, Does.Contain("ViewModel.IsRoutineCancelRouteVisible"));
             Assert.That(compactWorkbench, Does.Not.Contain("TextTrimming=\"CharacterEllipsis\""));
         }
     }
@@ -132,14 +133,17 @@ internal sealed class SignalBoxPageSelectionTests
             "View",
             pageName));
 
+        // Act
+        var compactPage = string.Concat(page.Where(character => !char.IsWhiteSpace(character)));
+
         // Assert
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(page, Does.Contain("AdaptiveTrigger MinWindowWidth=\"1024\""));
-            Assert.That(page, Does.Contain("CompactWorkbenchState"));
-            Assert.That(page, Does.Contain("Panel.ZIndex"));
-            Assert.That(page, Does.Contain("MaxWidth=\"420\""));
-            Assert.That(page, Does.Not.Contain("Target=\"WorkbenchHost.Width\""));
+            Assert.That(compactPage, Does.Contain("AdaptiveTriggerMinWindowWidth=\"1024\""));
+            Assert.That(compactPage, Does.Contain("CompactWorkbenchState"));
+            Assert.That(compactPage, Does.Contain("Panel.ZIndex"));
+            Assert.That(compactPage, Does.Contain("MaxWidth=\"420\""));
+            Assert.That(compactPage, Does.Not.Contain("Target=\"WorkbenchHost.Width\""));
         }
     }
 

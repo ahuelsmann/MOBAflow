@@ -39,18 +39,25 @@ internal static class FocusTargetBehavior
             button.Click += OnButtonClick;
     }
 
-    private static void OnButtonClick(object sender, RoutedEventArgs args)
+    private static async void OnButtonClick(object sender, RoutedEventArgs args)
     {
         _ = args;
         if (sender is not ButtonBase button || GetTarget(button) is not Control target)
             return;
 
-        target.DispatcherQueue.TryEnqueue(() =>
-        {
-            if (target is SelectedObjectWorkbench workbench)
-                workbench.FocusWorkbench();
-            else
-                target.Focus(FocusState.Programmatic);
-        });
+        // Let the bound command open the compact overlay before moving keyboard focus into it.
+        await Task.Yield();
+        if (!ReferenceEquals(GetTarget(button), target) || target.XamlRoot == null)
+            return;
+
+        FocusTarget(target);
+    }
+
+    private static void FocusTarget(Control target)
+    {
+        if (target is SelectedObjectWorkbench workbench)
+            workbench.FocusWorkbench();
+        else
+            target.Focus(FocusState.Programmatic);
     }
 }

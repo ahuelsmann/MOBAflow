@@ -62,6 +62,7 @@ public sealed partial class InterlockingControlViewModel
         OnPropertyChanged(nameof(ValidationMessages));
         if (!report.IsValid)
         {
+            Interlocked.Increment(ref _definitionSaveRequestedVersion);
             DefinitionSaveState = DefinitionSaveState.ValidationError;
             DefinitionSaveStatusText = "Not saved - resolve validation errors";
             SetStatus(

@@ -300,6 +300,50 @@ internal static partial class InterlockingControlViewModelTests
     }
 
     [Test]
+    public static async Task CancelRouteCommand_SelectionChangesDuringConfirmation_SendsNoRuntimeCommand()
+    {
+        // Arrange
+        var fixture = CreateFixture();
+        var secondRoute = AddSecondRoute(fixture);
+        var settingState = CreateRouteState(
+            fixture,
+            RouteLifecycle.Setting,
+            BlockOccupancy.Free);
+        fixture.Runtime.SetupGet(runtime => runtime.Current).Returns(settingState);
+        fixture.Runtime
+            .Setup(runtime => runtime.CancelRouteAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<Guid>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RouteCoordinatorResult(
+                RouteCoordinatorStatus.Accepted,
+                "route.cancelled",
+                "Route cancelled.",
+                Guid.NewGuid(),
+                settingState));
+        var confirmation = CreateBlockingConfirmation();
+        var uiDispatcher = new CountingUiDispatcher();
+        var viewModel = fixture.CreateViewModel(
+            dialogService: confirmation.Dialog.Object,
+            uiDispatcher: uiDispatcher);
+        viewModel.SelectedRoute = viewModel.Routes.Single(route => route.Id == fixture.Route.Id);
+
+        // Act
+        var cancelTask = viewModel.CancelRouteCommand.ExecuteAsync(null);
+        await confirmation.Shown.Task.ConfigureAwait(false);
+        viewModel.SelectedRoute = viewModel.Routes.Single(route => route.Id == secondRoute.Id);
+        confirmation.Release.SetResult();
+        await cancelTask.ConfigureAwait(false);
+
+        // Assert
+        fixture.Runtime.Verify(runtime => runtime.CancelRouteAsync(
+            It.IsAny<Guid>(),
+            It.IsAny<Guid>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+        Assert.That(uiDispatcher.AsyncInvocationCount, Is.EqualTo(1));
+    }
+
+    [Test]
     public static async Task CancelRouteCommand_SelectedRoute_DoesNotRequestConfirmation()
     {
         // Arrange
@@ -348,6 +392,38 @@ internal static partial class InterlockingControlViewModelTests
     }
 
     [Test]
+    public static void SelectedRoute_PresentsSetAsPrimaryAndRoutineCancelAsSecondary()
+    {
+        // Arrange
+        var fixture = CreateFixture();
+        var free = fixture.Engine.ObserveBlock(
+            fixture.InitialState,
+            fixture.Project.Interlocking.Blocks.Single().Id,
+            BlockOccupancy.Free,
+            Guid.NewGuid(),
+            fixture.InitialState.Revision);
+        var selected = fixture.Engine.ReserveRoute(
+            free.State,
+            fixture.Route.Id,
+            Guid.NewGuid(),
+            free.State.Revision);
+        fixture.Runtime.SetupGet(runtime => runtime.Current).Returns(selected.State);
+        var viewModel = fixture.CreateViewModel();
+
+        // Act
+        viewModel.SelectedRoute = viewModel.Routes.Single();
+
+        // Assert
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.PrimaryRouteActionLabel, Is.EqualTo("Set route"));
+            Assert.That(viewModel.IsRoutineCancelRouteVisible, Is.True);
+            Assert.That(viewModel.IsRoutineCancelRouteAvailable, Is.True);
+            Assert.That(viewModel.CancelRouteRequiresConfirmation, Is.False);
+        }
+    }
+
+    [Test]
     public static async Task ReconcileRouteCommand_AlwaysConfirmsBeforeRuntimeCommand()
     {
         // Arrange
@@ -384,6 +460,51 @@ internal static partial class InterlockingControlViewModelTests
             It.IsAny<Guid>(),
             It.IsAny<Guid>(),
             It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public static async Task ReconcileRouteCommand_SelectionChangesDuringConfirmation_SendsNoRuntimeCommand()
+    {
+        // Arrange
+        var fixture = CreateFixture();
+        var secondRoute = AddSecondRoute(fixture);
+        var failedState = CreateRouteState(
+            fixture,
+            RouteLifecycle.Failed,
+            BlockOccupancy.Unknown,
+            "route.feedback.timeout");
+        fixture.Runtime.SetupGet(runtime => runtime.Current).Returns(failedState);
+        fixture.Runtime
+            .Setup(runtime => runtime.ReconcileRouteAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<Guid>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RouteCoordinatorResult(
+                RouteCoordinatorStatus.Accepted,
+                "route.reconciled",
+                "Route reconciled.",
+                Guid.NewGuid(),
+                failedState));
+        var confirmation = CreateBlockingConfirmation();
+        var uiDispatcher = new CountingUiDispatcher();
+        var viewModel = fixture.CreateViewModel(
+            dialogService: confirmation.Dialog.Object,
+            uiDispatcher: uiDispatcher);
+        viewModel.SelectedRoute = viewModel.Routes.Single(route => route.Id == fixture.Route.Id);
+
+        // Act
+        var reconcileTask = viewModel.ReconcileRouteCommand.ExecuteAsync(null);
+        await confirmation.Shown.Task.ConfigureAwait(false);
+        viewModel.SelectedRoute = viewModel.Routes.Single(route => route.Id == secondRoute.Id);
+        confirmation.Release.SetResult();
+        await reconcileTask.ConfigureAwait(false);
+
+        // Assert
+        fixture.Runtime.Verify(runtime => runtime.ReconcileRouteAsync(
+            It.IsAny<Guid>(),
+            It.IsAny<Guid>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+        Assert.That(uiDispatcher.AsyncInvocationCount, Is.EqualTo(1));
     }
 
     [Test]
@@ -714,6 +835,56 @@ internal static partial class InterlockingControlViewModelTests
     }
 
     [Test]
+    public static async Task InvalidRouteFieldChange_DuringPendingSave_RemainsValidationErrorAfterSaveCompletes()
+    {
+        // Arrange
+        var fixture = CreateFixture();
+        var saveStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseSave = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var projectContext = new TestProjectContext(
+            fixture.Project,
+            async () =>
+            {
+                saveStarted.TrySetResult();
+                await releaseSave.Task.ConfigureAwait(false);
+            });
+        var validator = new Mock<IInterlockingDefinitionValidator>();
+        validator
+            .Setup(candidate => candidate.Validate(fixture.Project))
+            .Returns(() =>
+            {
+                var draft = fixture.Project.Interlocking.Routes
+                    .FirstOrDefault(route => route.Id != fixture.Route.Id);
+                return string.IsNullOrWhiteSpace(draft?.Name)
+                    ? new InterlockingValidationReport(
+                    [
+                        new InterlockingValidationFinding(
+                            "route.name.missing",
+                            InterlockingValidationSeverity.Error,
+                            draft?.Id ?? Guid.Empty,
+                            [],
+                            "Every route requires a name.")
+                    ])
+                    : new InterlockingValidationReport([]);
+            });
+        var viewModel = fixture.CreateViewModel(projectContext, validator.Object);
+        viewModel.BeginRouteDraftCommand.Execute(null);
+        await saveStarted.Task.ConfigureAwait(false);
+
+        // Act
+        viewModel.DraftName = string.Empty;
+        releaseSave.SetResult();
+        await viewModel.WhenDefinitionSaveIdleAsync().ConfigureAwait(false);
+
+        // Assert
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.DefinitionSaveState, Is.EqualTo(DefinitionSaveState.ValidationError));
+            Assert.That(viewModel.DefinitionSaveStatusText, Does.StartWith("Not saved"));
+        }
+    }
+
+    [Test]
     public static async Task LiveRouteCommand_DoesNotStartDefinitionAutosave()
     {
         // Arrange
@@ -745,6 +916,39 @@ internal static partial class InterlockingControlViewModelTests
 
         // Assert
         Assert.That(saveCount, Is.Zero);
+    }
+
+    private static RouteDefinition AddSecondRoute(Fixture fixture)
+    {
+        var route = new RouteDefinition
+        {
+            Name = "East arrival",
+            EntryElementId = fixture.Route.EntryElementId,
+            ExitElementId = fixture.Route.ExitElementId
+        };
+        fixture.Project.Interlocking.Routes.Add(route);
+        return route;
+    }
+
+    private static BlockingConfirmation CreateBlockingConfirmation()
+    {
+        var shown = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var dialog = new Mock<IDialogService>();
+        dialog
+            .Setup(candidate => candidate.ShowConfirmationAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<bool>()))
+            .Returns(async () =>
+            {
+                shown.TrySetResult();
+                await release.Task.ConfigureAwait(false);
+                return true;
+            });
+        return new BlockingConfirmation(dialog, shown, release);
     }
 
     private static Fixture CreateFixture()
@@ -856,16 +1060,22 @@ internal static partial class InterlockingControlViewModelTests
         public InterlockingControlViewModel CreateViewModel(
             IProjectContext? projectContext = null,
             IInterlockingDefinitionValidator? validator = null,
-            IDialogService? dialogService = null) =>
+            IDialogService? dialogService = null,
+            IUiDispatcher? uiDispatcher = null) =>
             new(
                 Runtime.Object,
                 EventBus,
                 projectContext ?? new TestProjectContext(Project),
                 validator ?? new InterlockingDefinitionValidator(),
                 dialogService ?? new Mock<IDialogService>().Object,
-                ImmediateUiDispatcher.Instance,
+                uiDispatcher ?? ImmediateUiDispatcher.Instance,
                 NullLogger<InterlockingControlViewModel>.Instance);
     }
+
+    private sealed record BlockingConfirmation(
+        Mock<IDialogService> Dialog,
+        TaskCompletionSource Shown,
+        TaskCompletionSource Release);
 
     private sealed partial class TestProjectContext(
         Project project,
@@ -930,6 +1140,36 @@ internal static partial class InterlockingControlViewModelTests
         public Task InvokeOnUiAsync(Func<Task> asyncAction, UiPriority priority)
         {
             _ = priority;
+            return asyncAction();
+        }
+    }
+
+    private sealed class CountingUiDispatcher : IUiDispatcher
+    {
+        public int AsyncInvocationCount { get; private set; }
+
+        public void InvokeOnUi(Action action) => action();
+
+        public Task InvokeOnUiAsync(Func<Task> asyncAction)
+        {
+            AsyncInvocationCount++;
+            return asyncAction();
+        }
+
+        public Task<T> InvokeOnUiAsync<T>(Func<Task<T>> asyncFunc)
+        {
+            AsyncInvocationCount++;
+            return asyncFunc();
+        }
+
+        public void InvokeOnUiHighPriority(Action action) => action();
+
+        public void InvokeOnUiLowPriority(Action action) => action();
+
+        public Task InvokeOnUiAsync(Func<Task> asyncAction, UiPriority priority)
+        {
+            _ = priority;
+            AsyncInvocationCount++;
             return asyncAction();
         }
     }

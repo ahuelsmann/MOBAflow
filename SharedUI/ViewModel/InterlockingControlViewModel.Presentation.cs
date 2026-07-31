@@ -129,6 +129,16 @@ public sealed partial class InterlockingControlViewModel
     public bool CancelRouteRequiresConfirmation =>
         SelectedRouteLifecycle == RouteLifecycle.Setting;
 
+    public bool IsRoutineCancelRouteVisible =>
+        SelectedRouteLifecycle == RouteLifecycle.Selected;
+
+    public bool IsRoutineCancelRouteAvailable =>
+        IsSynchronized && IsRoutineCancelRouteVisible;
+
+    public string RoutineCancelRouteDisabledReason => IsRoutineCancelRouteAvailable
+        ? "Cancels the selected route before hardware dispatch."
+        : "Cancel is unavailable while the interlocking is offline.";
+
     public bool IsReconcileRouteVisible =>
         SelectedRouteLifecycle is RouteLifecycle.Failed or RouteLifecycle.Conflicting;
 
@@ -336,6 +346,9 @@ public sealed partial class InterlockingControlViewModel
         OnPropertyChanged(nameof(IsPreviewRouteVisible));
         OnPropertyChanged(nameof(IsCancelRouteVisible));
         OnPropertyChanged(nameof(CancelRouteRequiresConfirmation));
+        OnPropertyChanged(nameof(IsRoutineCancelRouteVisible));
+        OnPropertyChanged(nameof(IsRoutineCancelRouteAvailable));
+        OnPropertyChanged(nameof(RoutineCancelRouteDisabledReason));
         OnPropertyChanged(nameof(IsReconcileRouteVisible));
         OnPropertyChanged(nameof(ReconcileRouteRequiresConfirmation));
         OnPropertyChanged(nameof(IsSafeStopRouteVisible));

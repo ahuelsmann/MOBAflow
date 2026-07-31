@@ -240,18 +240,19 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanCancelSelectedRoute))]
     private async Task CancelRouteAsync()
     {
-        if (SelectedRoute == null)
+        var selectedRoute = SelectedRoute;
+        if (selectedRoute == null)
         {
             SetStatus("route.selection.missing", "Select a route first.");
             return;
         }
 
-        if (SelectedRouteLifecycle == RouteLifecycle.Setting)
+        var selectedRouteLifecycle = SelectedRouteLifecycle;
+        if (selectedRouteLifecycle == RouteLifecycle.Setting)
         {
-            var selectedRouteName = SelectedRoute.Name;
             var confirmed = await _dialogService.ShowConfirmationAsync(
                 "Cancel route setting?",
-                $"Cancel setting '{selectedRouteName}'? The route becomes failed, protected signals remain at stop, "
+                $"Cancel setting '{selectedRoute.Name}'? The route becomes failed, protected signals remain at stop, "
                 + "and uncertain resources remain locked until reconciliation.",
                 "Cancel setting",
                 "Keep setting").ConfigureAwait(false);
@@ -259,7 +260,13 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
                 return;
         }
 
-        await ExecuteRouteAsync(_runtime.CancelRouteAsync).ConfigureAwait(false);
+        if (!await ValidateConfirmedRouteContextAsync(
+                selectedRoute.Id,
+                selectedRouteLifecycle,
+                "cancel").ConfigureAwait(false))
+            return;
+
+        await ExecuteRouteAsync(_runtime.CancelRouteAsync, selectedRoute.Id).ConfigureAwait(false);
     }
 
     [RelayCommand(CanExecute = nameof(CanReleaseSelectedRoute))]
@@ -271,26 +278,33 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanReconcileSelectedRoute))]
     private async Task ReconcileRouteAsync()
     {
-        if (SelectedRoute == null)
+        var selectedRoute = SelectedRoute;
+        if (selectedRoute == null)
         {
             SetStatus("route.selection.missing", "Select a route first.");
             return;
         }
 
-        var selectedRouteName = SelectedRoute.Name;
+        var selectedRouteLifecycle = SelectedRouteLifecycle;
         var confirmed = await _dialogService.ShowConfirmationAsync(
             "Reconcile route?",
-            $"Reconcile '{selectedRouteName}'? Successful reconciliation may release retained locks and "
+            $"Reconcile '{selectedRoute.Name}'? Successful reconciliation may release retained locks and "
             + "reservations after failed, timed-out, or late hardware feedback.",
             "Reconcile",
             "Keep locked").ConfigureAwait(false);
         if (!confirmed)
             return;
 
-        await ExecuteRouteAsync(_runtime.ReconcileRouteAsync).ConfigureAwait(false);
+        if (!await ValidateConfirmedRouteContextAsync(
+                selectedRoute.Id,
+                selectedRouteLifecycle,
+                "reconcile").ConfigureAwait(false))
+            return;
+
+        await ExecuteRouteAsync(_runtime.ReconcileRouteAsync, selectedRoute.Id).ConfigureAwait(false);
     }
 
-    private bool CanCancelSelectedRoute() => IsCancelRouteVisible;
+    private bool CanCancelSelectedRoute() => IsSynchronized && IsCancelRouteVisible;
 
     private bool CanReleaseSelectedRoute() => CanReleaseRoute;
 
@@ -466,7 +480,13 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
             return;
         }
 
-        var selectedRouteId = SelectedRoute.Id;
+        await ExecuteRouteAsync(operation, SelectedRoute.Id).ConfigureAwait(false);
+    }
+
+    private async Task ExecuteRouteAsync(
+        Func<Guid, Guid, CancellationToken, Task<RouteCoordinatorResult>> operation,
+        Guid selectedRouteId)
+    {
         var correlationId = Guid.NewGuid();
         var result = await operation(
             selectedRouteId,
@@ -475,6 +495,24 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
         await ApplyResultOnUiAsync(result.Code, result.Message, result.State, result.CorrelationId)
             .ConfigureAwait(false);
     }
+
+    private Task<bool> ValidateConfirmedRouteContextAsync(
+        Guid selectedRouteId,
+        RouteLifecycle? selectedRouteLifecycle,
+        string actionName) =>
+        _uiDispatcher.InvokeOnUiAsync(() =>
+        {
+            var isCurrent = SelectedRoute?.Id == selectedRouteId &&
+                SelectedRouteLifecycle == selectedRouteLifecycle;
+            if (!isCurrent)
+            {
+                SetStatus(
+                    "route.selection.changed",
+                    $"Route context changed; no {actionName} command was sent.");
+            }
+
+            return Task.FromResult(isCurrent);
+        });
 
     private void OnRuntimeSnapshotChanged(InterlockingRuntimeSnapshotChangedEvent @event)
     {
