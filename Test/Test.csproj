@@ -37,6 +37,8 @@
     <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.22621.0'">
         <!-- The live fixture owns a singleton host slot in MOBApi and must run only once per test invocation. -->
         <Compile Remove="Integration\RuntimeHubLiveE2ETests.cs" />
+        <!-- The process fixture is transport-neutral and runs once in the cross-platform test target. -->
+        <Compile Remove="Integration\AuthenticatedControlPlaneProcessTests.cs" />
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\Domain\Domain.csproj" />

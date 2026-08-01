@@ -144,6 +144,9 @@ internal sealed class ControlPlaneAccessTokenService : IControlPlaneAccessTokenS
             new(ClaimTypes.Name, payload.DisplayName),
             new(ClaimTypes.Role, payload.Role.ToString()),
             new("mobaflow:capability_version", payload.CapabilityVersion.ToString(System.Globalization.CultureInfo.InvariantCulture)),
+            new(
+                ControlPlaneCapabilities.AccessTokenExpiresAtClaimType,
+                payload.ExpiresAt.ToUnixTimeSeconds().ToString(System.Globalization.CultureInfo.InvariantCulture)),
             new("jti", payload.TokenId)
         };
         claims.AddRange(payload.Capabilities.Select(capability => new Claim(ControlPlaneCapabilities.ClaimType, capability)));

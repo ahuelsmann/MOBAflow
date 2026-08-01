@@ -2,12 +2,14 @@
 namespace Moba.SharedUI.Interface;
 
 /// <summary>
-/// Resolves relative photo paths to URIs that can be loaded by the UI (e.g. MOBApi file endpoint on MAUI).
+/// Opens relative photo paths for UI image loading without exposing transport credentials.
 /// </summary>
 public interface IPhotoUriResolver
 {
     /// <summary>
-    /// Returns a loadable URI for the relative photo path, or <c>null</c> when unavailable.
+    /// Opens the relative photo path, or returns <c>null</c> when unavailable.
     /// </summary>
-    string? TryResolveRemoteUri(string? relativePhotoPath);
+    Task<Stream?> OpenReadAsync(
+        string? relativePhotoPath,
+        CancellationToken cancellationToken = default);
 }

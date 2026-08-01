@@ -2,11 +2,14 @@
 
 namespace Moba.Test.MOBApi;
 
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Moba.Common.Runtime;
 using Moba.Domain;
 using Moba.MOBApi.Controllers;
 using Moba.MOBApi.Service;
+using System.Security.Claims;
 using System.Text.Json;
 
 [TestFixture]
@@ -84,6 +87,13 @@ internal sealed class StatusControllerTests
             broadcastMetrics,
             snapshotCache,
             solutionCache);
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(new ClaimsIdentity([], "test"))
+            }
+        };
 
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?> { ["Kestrel:Endpoints:Http:Url"] = "http://127.0.0.1:5001" })
@@ -115,6 +125,48 @@ internal sealed class StatusControllerTests
             Assert.That(snapshotCacheJson.GetProperty("locomotiveFleetCount").GetInt32(), Is.EqualTo(1));
             Assert.That(solutionJson.GetProperty("available").GetBoolean(), Is.True);
             Assert.That(solutionJson.GetProperty("activeProjectName").GetString(), Is.EqualTo("myMOBA"));
+        });
+    }
+
+    [Test]
+    public void GetStatus_ReturnsOnlyMinimalHealth_WhenCallerIsAnonymous()
+    {
+        var controller = new StatusController(
+            new ClientRegistry(),
+            new RuntimeHostRegistry(),
+            new RuntimeRemoteRegistry(),
+            new RuntimeBroadcastMetrics(),
+            new RuntimeSnapshotCache(),
+            new SolutionCache())
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            }
+        };
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Kestrel:Endpoints:Http:Url"] = "http://127.0.0.1:5001"
+            })
+            .Build();
+
+        var result = controller.GetStatus(configuration) as OkObjectResult;
+
+        Assert.That(result, Is.Not.Null);
+        var json = JsonSerializer.Serialize(result!.Value, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        });
+        using var document = JsonDocument.Parse(json);
+        var root = document.RootElement;
+        Assert.Multiple(() =>
+        {
+            Assert.That(root.GetProperty("status").GetString(), Is.EqualTo("running"));
+            Assert.That(root.GetProperty("port").GetInt32(), Is.EqualTo(5001));
+            Assert.That(root.TryGetProperty("connectedClients", out _), Is.False);
+            Assert.That(root.TryGetProperty("runtime", out _), Is.False);
+            Assert.That(root.TryGetProperty("solution", out _), Is.False);
         });
     }
 }

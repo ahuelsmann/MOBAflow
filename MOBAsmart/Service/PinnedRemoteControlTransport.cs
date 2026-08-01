@@ -4,6 +4,7 @@ namespace Moba.MAUI.Service;
 
 using System.Net;
 using System.Net.Http.Json;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 
 using Moba.Common.Discovery;
@@ -16,7 +17,7 @@ using Xamarin.Android.Net;
 /// <summary>
 /// Calls pairing and token refresh over fingerprint-pinned HTTPS.
 /// </summary>
-public sealed class PinnedRemoteControlTransport : IRemoteControlTransport
+public sealed class PinnedRemoteControlTransport : IRemoteControlTransport, IRemoteControlHttpClientFactory
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -108,7 +109,7 @@ public sealed class PinnedRemoteControlTransport : IRemoteControlTransport
             ?? throw new InvalidDataException("MOBApi returned an empty token response.");
     }
 
-    private static HttpClient CreateClient(MobApiDiscoveryEndpoint endpoint)
+    public HttpClient CreateClient(MobApiDiscoveryEndpoint endpoint)
     {
         if (endpoint.HttpsPort is not (> 0 and < 65536) ||
             string.IsNullOrWhiteSpace(endpoint.ServerPublicKeyFingerprint))
@@ -116,14 +117,26 @@ public sealed class PinnedRemoteControlTransport : IRemoteControlTransport
             throw new ArgumentException("An HTTPS port and certificate fingerprint are required.", nameof(endpoint));
         }
 
-        return new HttpClient(CreatePinnedHandler(endpoint.ServerPublicKeyFingerprint), disposeHandler: true)
+        return new HttpClient(CreateHandler(endpoint), disposeHandler: true)
         {
             BaseAddress = new UriBuilder(Uri.UriSchemeHttps, endpoint.IpAddress, endpoint.HttpsPort.Value).Uri,
             Timeout = TimeSpan.FromSeconds(10)
         };
     }
 
-    private static HttpMessageHandler CreatePinnedHandler(string fingerprint)
+    public HttpMessageHandler CreateHandler(MobApiDiscoveryEndpoint endpoint)
+    {
+        ValidateEndpoint(endpoint);
+        return CreatePinnedHandler(endpoint);
+    }
+
+    public bool ValidateServerCertificate(MobApiDiscoveryEndpoint endpoint, X509Certificate? certificate)
+    {
+        ValidateEndpoint(endpoint);
+        return ServerCertificatePinning.Matches(certificate, endpoint.ServerPublicKeyFingerprint);
+    }
+
+    private HttpMessageHandler CreatePinnedHandler(MobApiDiscoveryEndpoint endpoint)
     {
 #if ANDROID
         return new AndroidMessageHandler
@@ -131,7 +144,7 @@ public sealed class PinnedRemoteControlTransport : IRemoteControlTransport
             AllowAutoRedirect = false,
             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
             ServerCertificateCustomValidationCallback = (_, certificate, _, _) =>
-                ServerCertificatePinning.Matches(certificate, fingerprint),
+                ValidateServerCertificate(endpoint, certificate),
             UseProxy = false
         };
 #else
@@ -142,10 +155,19 @@ public sealed class PinnedRemoteControlTransport : IRemoteControlTransport
             SslOptions = new SslClientAuthenticationOptions
             {
                 RemoteCertificateValidationCallback = (_, certificate, _, _) =>
-                    ServerCertificatePinning.Matches(certificate, fingerprint)
+                    ValidateServerCertificate(endpoint, certificate)
             }
         };
 #endif
+    }
+
+    private static void ValidateEndpoint(MobApiDiscoveryEndpoint endpoint)
+    {
+        if (endpoint.HttpsPort is not (> 0 and < 65536) ||
+            string.IsNullOrWhiteSpace(endpoint.ServerPublicKeyFingerprint))
+        {
+            throw new ArgumentException("An HTTPS port and certificate fingerprint are required.", nameof(endpoint));
+        }
     }
 
     private sealed record PairingSubmissionRequest(

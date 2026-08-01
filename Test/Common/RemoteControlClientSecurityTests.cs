@@ -2,8 +2,10 @@
 
 using Moba.Common.Discovery;
 using Moba.Common.Security;
+using System.Net;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 
 namespace Moba.Test.Common;
 
@@ -133,6 +135,132 @@ internal sealed class RemoteControlClientSecurityTests
     }
 
     [Test]
+    public async Task GetConnectionSessionAsync_Should_ReturnPinnedEndpointWithoutRefreshingValidSession()
+    {
+        var transport = new FakeTransport
+        {
+            ClaimResult = new RemotePairingClaimResult(
+                RemotePairingClaimStatus.Succeeded,
+                CreateTokenResponse("access-token", "refresh-token"))
+        };
+        var service = new RemoteControlSessionService(new FakeCredentialStore(), transport);
+        await service.ClaimAsync(CreateAttempt());
+
+        var connection = await service.GetConnectionSessionAsync(TimeSpan.FromSeconds(30));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(connection, Is.Not.Null);
+            Assert.That(connection!.Endpoint, Is.EqualTo(CreateEndpoint()));
+            Assert.That(connection.AccessSession.AccessToken, Is.EqualTo("access-token"));
+            Assert.That(transport.RefreshCount, Is.Zero);
+        });
+    }
+
+    [Test]
+    public async Task GetConnectionSessionAsync_Should_RotateSessionBeforeExpiry()
+    {
+        var transport = new FakeTransport
+        {
+            ClaimResult = new RemotePairingClaimResult(
+                RemotePairingClaimStatus.Succeeded,
+                CreateTokenResponse(
+                    "expiring-access",
+                    "first-refresh",
+                    DateTimeOffset.UtcNow.AddSeconds(10))),
+            RefreshResult = CreateTokenResponse("refreshed-access", "rotated-refresh")
+        };
+        var service = new RemoteControlSessionService(new FakeCredentialStore(), transport);
+        await service.ClaimAsync(CreateAttempt());
+
+        var connection = await service.GetConnectionSessionAsync(TimeSpan.FromSeconds(30));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(connection?.AccessSession.AccessToken, Is.EqualTo("refreshed-access"));
+            Assert.That(transport.RefreshCount, Is.EqualTo(1));
+        });
+    }
+
+    [Test]
+    public async Task AuthenticatedHttpClient_Should_SendBearerTokenToPinnedHttpsEndpoint()
+    {
+        var transport = new FakeTransport
+        {
+            ClaimResult = new RemotePairingClaimResult(
+                RemotePairingClaimStatus.Succeeded,
+                CreateTokenResponse("access-token", "refresh-token"))
+        };
+        var sessionService = new RemoteControlSessionService(new FakeCredentialStore(), transport);
+        await sessionService.ClaimAsync(CreateAttempt());
+        var handler = new RecordingHttpMessageHandler();
+        var factory = new FakeRemoteControlHttpClientFactory(handler);
+        var client = new RemoteControlAuthenticatedHttpClient(sessionService, factory);
+
+        using var response = await client.GetAsync("api/runtime-settings");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(response.RequestMessage, Is.Null);
+            Assert.That(factory.LastEndpoint, Is.EqualTo(CreateEndpoint()));
+            Assert.That(handler.LastRequestUri, Is.EqualTo(new Uri("https://192.0.2.1:5443/api/runtime-settings")));
+            Assert.That(handler.LastAuthorizationScheme, Is.EqualTo("Bearer"));
+            Assert.That(handler.LastAuthorizationParameter, Is.EqualTo("access-token"));
+        });
+    }
+
+    [Test]
+    public async Task AuthenticatedHttpClient_Should_RejectCrossAuthorityPathBeforeSendingCredential()
+    {
+        var transport = new FakeTransport
+        {
+            ClaimResult = new RemotePairingClaimResult(
+                RemotePairingClaimStatus.Succeeded,
+                CreateTokenResponse("access-token", "refresh-token"))
+        };
+        var sessionService = new RemoteControlSessionService(new FakeCredentialStore(), transport);
+        await sessionService.ClaimAsync(CreateAttempt());
+        var handler = new RecordingHttpMessageHandler();
+        var client = new RemoteControlAuthenticatedHttpClient(
+            sessionService,
+            new FakeRemoteControlHttpClientFactory(handler));
+
+        Assert.That(
+            async () => await client.GetAsync("//attacker.example/api/runtime-settings"),
+            Throws.TypeOf<ArgumentException>());
+        Assert.That(handler.LastAuthorizationParameter, Is.Null);
+    }
+
+    [Test]
+    public async Task AuthenticatedHttpClient_Should_PostContentWithBearerToken()
+    {
+        var transport = new FakeTransport
+        {
+            ClaimResult = new RemotePairingClaimResult(
+                RemotePairingClaimStatus.Succeeded,
+                CreateTokenResponse("access-token", "refresh-token"))
+        };
+        var sessionService = new RemoteControlSessionService(new FakeCredentialStore(), transport);
+        await sessionService.ClaimAsync(CreateAttempt());
+        var handler = new RecordingHttpMessageHandler();
+        var client = new RemoteControlAuthenticatedHttpClient(
+            sessionService,
+            new FakeRemoteControlHttpClientFactory(handler));
+        using var content = new StringContent("{\"value\":1}", Encoding.UTF8, "application/json");
+
+        using var response = await client.PostAsync("api/runtime/commands/test", content);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(handler.LastMethod, Is.EqualTo(HttpMethod.Post));
+            Assert.That(handler.LastContent, Is.EqualTo("{\"value\":1}"));
+            Assert.That(handler.LastAuthorizationParameter, Is.EqualTo("access-token"));
+        });
+    }
+
+    [Test]
     public async Task RefreshAsync_Should_KeepCurrentSessionWhenRotatedCredentialCannotBePersisted()
     {
         var store = new FakeCredentialStore();
@@ -187,6 +315,36 @@ internal sealed class RemoteControlClientSecurityTests
             Assert.That(session, Is.Null);
             Assert.That(store.Saved, Is.Null);
             Assert.That(store.ClearCount, Is.EqualTo(1));
+        });
+    }
+
+    [Test]
+    public async Task RestoreAsync_Should_RequireNewPairingAndRecover_WhenSecureStorageWasLost()
+    {
+        var store = new FakeCredentialStore();
+        var transport = new FakeTransport
+        {
+            ClaimResult = new RemotePairingClaimResult(
+                RemotePairingClaimStatus.Succeeded,
+                CreateTokenResponse("replacement-access", "replacement-refresh"))
+        };
+        var service = new RemoteControlSessionService(store, transport);
+
+        var restored = await service.RestoreAsync();
+        var pairing = await service.BeginPairingAsync(
+            CreateEndpoint(),
+            new string('P', 43),
+            "MOBAsmart replacement pairing",
+            RemoteControlRole.ReadOnly);
+        var replacement = await service.ClaimAsync(pairing);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(restored, Is.Null);
+            Assert.That(transport.RefreshCount, Is.Zero);
+            Assert.That(replacement?.AccessToken, Is.EqualTo("replacement-access"));
+            Assert.That(store.Saved?.RefreshToken, Is.EqualTo("replacement-refresh"));
+            Assert.That(service.CurrentConnectionSession, Is.Not.Null);
         });
     }
 
@@ -253,10 +411,13 @@ internal sealed class RemoteControlClientSecurityTests
         RemoteControlRole.ReadOnly,
         1);
 
-    private static RemoteControlTokenResponse CreateTokenResponse(string accessToken, string refreshToken) => new(
+    private static RemoteControlTokenResponse CreateTokenResponse(
+        string accessToken,
+        string refreshToken,
+        DateTimeOffset? expiresAt = null) => new(
         "credential-1",
         accessToken,
-        DateTimeOffset.UtcNow.AddMinutes(5),
+        expiresAt ?? DateTimeOffset.UtcNow.AddMinutes(5),
         refreshToken,
         RemoteControlRole.ReadOnly,
         1);
@@ -305,6 +466,8 @@ internal sealed class RemoteControlClientSecurityTests
 
         public bool RejectRefresh { get; set; }
 
+        public int RefreshCount { get; private set; }
+
         public List<string> SubmittedNonces { get; } = [];
 
         public string? LastDisplayName { get; private set; }
@@ -331,9 +494,69 @@ internal sealed class RemoteControlClientSecurityTests
 
         public Task<RemoteControlTokenResponse> RefreshAsync(
             RemoteControlCredential credential,
-            CancellationToken cancellationToken = default) =>
-            RejectRefresh
+            CancellationToken cancellationToken = default)
+        {
+            RefreshCount++;
+            return RejectRefresh
                 ? Task.FromException<RemoteControlTokenResponse>(new RemoteCredentialRejectedException())
                 : Task.FromResult(RefreshResult);
+        }
+    }
+
+    private sealed class FakeRemoteControlHttpClientFactory(RecordingHttpMessageHandler handler)
+        : IRemoteControlHttpClientFactory
+    {
+        public MobApiDiscoveryEndpoint? LastEndpoint { get; private set; }
+
+        public HttpClient CreateClient(MobApiDiscoveryEndpoint endpoint)
+        {
+            LastEndpoint = endpoint;
+            return new HttpClient(handler, disposeHandler: false)
+            {
+                BaseAddress = new UriBuilder(Uri.UriSchemeHttps, endpoint.IpAddress, endpoint.HttpsPort!.Value).Uri
+            };
+        }
+
+        public HttpMessageHandler CreateHandler(MobApiDiscoveryEndpoint endpoint)
+        {
+            LastEndpoint = endpoint;
+            return handler;
+        }
+
+        public bool ValidateServerCertificate(MobApiDiscoveryEndpoint endpoint, X509Certificate? certificate)
+        {
+            LastEndpoint = endpoint;
+            return certificate is not null;
+        }
+    }
+
+    private sealed class RecordingHttpMessageHandler : HttpMessageHandler
+    {
+        public string? LastContent { get; private set; }
+
+        public HttpMethod? LastMethod { get; private set; }
+
+        public string? LastAuthorizationParameter { get; private set; }
+
+        public string? LastAuthorizationScheme { get; private set; }
+
+        public Uri? LastRequestUri { get; private set; }
+
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            LastMethod = request.Method;
+            LastRequestUri = request.RequestUri;
+            LastAuthorizationScheme = request.Headers.Authorization?.Scheme;
+            LastAuthorizationParameter = request.Headers.Authorization?.Parameter;
+            LastContent = request.Content is null
+                ? null
+                : await request.Content.ReadAsStringAsync(cancellationToken);
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("{}")
+            };
+        }
     }
 }

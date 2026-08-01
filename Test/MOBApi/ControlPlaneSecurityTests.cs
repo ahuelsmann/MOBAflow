@@ -7,12 +7,17 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Moba.MOBApi.Controllers;
+using Moba.MOBApi.Hubs;
+using Moba.MOBApi.Models;
 using Moba.MOBApi.Security;
+using Moba.MOBApi.Service;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Claims;
 
 namespace Moba.Test.MOBApi;
 
@@ -132,6 +137,28 @@ internal sealed class ControlPlaneSecurityTests
         var principal = await tokenService.ValidateAsync(token!.Token);
 
         Assert.That(principal, Is.Null);
+    }
+
+    [Test]
+    public async Task ValidateAsync_Should_ExposeCredentialAndExpiryForConnectionRevocation()
+    {
+        using var context = SecurityTestContext.Create();
+        var registry = context.GetRequiredService<ICredentialRegistry>();
+        var tokenService = context.GetRequiredService<IControlPlaneAccessTokenService>();
+        var issued = await registry.CreateAsync("Observer", ControlPlaneRole.ReadOnly);
+        var token = await tokenService.IssueAsync(issued.Credential.CredentialId);
+
+        var principal = await tokenService.ValidateAsync(token!.Token);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(
+                principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+                Is.EqualTo(issued.Credential.CredentialId));
+            Assert.That(
+                principal?.FindFirst(ControlPlaneCapabilities.AccessTokenExpiresAtClaimType)?.Value,
+                Is.EqualTo(token.ExpiresAt.ToUnixTimeSeconds().ToString(System.Globalization.CultureInfo.InvariantCulture)));
+        });
     }
 
     [Test]
@@ -318,6 +345,238 @@ internal sealed class ControlPlaneSecurityTests
             Assert.That(control.Succeeded, Is.True);
             Assert.That(security.Succeeded, Is.False);
         });
+    }
+
+    [Test]
+    public async Task ReadPolicy_Should_AllowAnonymousCompatibility_WhenNoCredentialIsPresented()
+    {
+        using var context = SecurityTestContext.Create();
+        var authorization = context.GetRequiredService<IAuthorizationService>();
+        var httpContext = new DefaultHttpContext();
+
+        var result = await authorization.AuthorizeAsync(
+            new ClaimsPrincipal(new ClaimsIdentity()),
+            httpContext,
+            ControlPlaneCapabilities.Read);
+
+        Assert.That(result.Succeeded, Is.True);
+    }
+
+    [Test]
+    public async Task ReadPolicy_Should_RejectStalePrincipal_WhenPresentedCredentialWasRevoked()
+    {
+        using var context = SecurityTestContext.Create();
+        var registry = context.GetRequiredService<ICredentialRegistry>();
+        var tokenService = context.GetRequiredService<IControlPlaneAccessTokenService>();
+        var authorization = context.GetRequiredService<IAuthorizationService>();
+        var issued = await registry.CreateAsync("Observer", ControlPlaneRole.ReadOnly);
+        var token = await tokenService.IssueAsync(issued.Credential.CredentialId);
+        var stalePrincipal = await tokenService.ValidateAsync(token!.Token);
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Headers.Authorization = $"Bearer {token.Token}";
+        await registry.RevokeAsync(issued.Credential.CredentialId, "operator_revoked");
+
+        var result = await authorization.AuthorizeAsync(
+            stalePrincipal!,
+            httpContext,
+            ControlPlaneCapabilities.Read);
+
+        Assert.That(result.Succeeded, Is.False);
+    }
+
+    [Test]
+    public async Task ReadPolicy_Should_RejectMalformedPresentedCredential()
+    {
+        using var context = SecurityTestContext.Create();
+        var authorization = context.GetRequiredService<IAuthorizationService>();
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Headers.Authorization = "Bearer";
+
+        var result = await authorization.AuthorizeAsync(
+            new ClaimsPrincipal(new ClaimsIdentity()),
+            httpContext,
+            ControlPlaneCapabilities.Read);
+
+        Assert.That(result.Succeeded, Is.False);
+    }
+
+    [Test]
+    public async Task RuntimeControlPolicy_Should_RejectStalePrincipalAfterDowngrade()
+    {
+        using var context = SecurityTestContext.Create();
+        var registry = context.GetRequiredService<ICredentialRegistry>();
+        var tokenService = context.GetRequiredService<IControlPlaneAccessTokenService>();
+        var authorization = context.GetRequiredService<IAuthorizationService>();
+        var issued = await registry.CreateAsync("Remote cab", ControlPlaneRole.RemoteControl);
+        var token = await tokenService.IssueAsync(issued.Credential.CredentialId);
+        var stalePrincipal = await tokenService.ValidateAsync(token!.Token);
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Headers.Authorization = $"Bearer {token.Token}";
+        await registry.ChangeRoleAsync(issued.Credential.CredentialId, ControlPlaneRole.ReadOnly);
+
+        var result = await authorization.AuthorizeAsync(
+            stalePrincipal!,
+            httpContext,
+            ControlPlaneCapabilities.RuntimeControl);
+
+        Assert.That(result.Succeeded, Is.False);
+    }
+
+    [Test]
+    public async Task ChangeRoleAsync_Should_AbortActiveCredentialConnections()
+    {
+        using var context = SecurityTestContext.Create();
+        var registry = context.GetRequiredService<ICredentialRegistry>();
+        var revoker = context.GetRequiredService<IControlPlaneConnectionRevoker>();
+        var issued = await registry.CreateAsync("Remote cab", ControlPlaneRole.RemoteControl);
+        var aborted = false;
+        revoker.Register(
+            "connection-1",
+            issued.Credential.CredentialId,
+            context.TimeProvider.GetUtcNow().AddMinutes(5),
+            () => aborted = true);
+
+        var changed = await registry.ChangeRoleAsync(
+            issued.Credential.CredentialId,
+            ControlPlaneRole.ReadOnly);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(changed, Is.True);
+            Assert.That(aborted, Is.True);
+        });
+    }
+
+    [Test]
+    public async Task RevokeAsync_Should_AbortActiveCredentialConnections()
+    {
+        using var context = SecurityTestContext.Create();
+        var registry = context.GetRequiredService<ICredentialRegistry>();
+        var revoker = context.GetRequiredService<IControlPlaneConnectionRevoker>();
+        var issued = await registry.CreateAsync("Remote cab", ControlPlaneRole.RemoteControl);
+        var aborted = false;
+        revoker.Register(
+            "connection-1",
+            issued.Credential.CredentialId,
+            context.TimeProvider.GetUtcNow().AddMinutes(5),
+            () => aborted = true);
+
+        var revoked = await registry.RevokeAsync(issued.Credential.CredentialId, "operator_revoked");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(revoked, Is.True);
+            Assert.That(aborted, Is.True);
+        });
+    }
+
+    [Test]
+    public void Register_Should_AbortConnection_WhenAccessTokenIsAlreadyExpired()
+    {
+        using var context = SecurityTestContext.Create();
+        var revoker = context.GetRequiredService<IControlPlaneConnectionRevoker>();
+        var aborted = false;
+
+        revoker.Register(
+            "connection-1",
+            "credential-1",
+            context.TimeProvider.GetUtcNow().AddSeconds(-1),
+            () => aborted = true);
+
+        Assert.That(aborted, Is.True);
+    }
+
+    [TestCase(typeof(FeedbackSequencesController), nameof(FeedbackSequencesController.Get))]
+    [TestCase(typeof(JourneyProgressController), nameof(JourneyProgressController.Get))]
+    [TestCase(typeof(PhotosController), nameof(PhotosController.GetFile))]
+    [TestCase(typeof(RuntimeController), nameof(RuntimeController.GetMeta))]
+    [TestCase(typeof(RuntimeController), nameof(RuntimeController.GetSnapshot))]
+    [TestCase(typeof(RuntimeSettingsController), nameof(RuntimeSettingsController.GetRuntimeSettings))]
+    [TestCase(typeof(SolutionController), nameof(SolutionController.GetMeta))]
+    [TestCase(typeof(SolutionController), nameof(SolutionController.GetSolution))]
+    [TestCase(typeof(StatusController), nameof(StatusController.GetStatus))]
+    public void ReadOperation_Should_UseSharedReadPolicy(Type declaringType, string methodName)
+    {
+        var method = declaringType.GetMethod(methodName)
+            ?? throw new InvalidOperationException($"Missing read operation {declaringType.Name}.{methodName}.");
+        var attribute = method.GetCustomAttributes(typeof(AuthorizeAttribute), inherit: true)
+            .Cast<AuthorizeAttribute>()
+            .SingleOrDefault(candidate => candidate.Policy == ControlPlaneCapabilities.Read);
+
+        Assert.That(attribute, Is.Not.Null);
+    }
+
+    [TestCase(typeof(ClientsController), nameof(ClientsController.Register), ControlPlaneCapabilities.ClientPresence)]
+    [TestCase(typeof(ClientsController), nameof(ClientsController.Unregister), ControlPlaneCapabilities.ClientPresence)]
+    [TestCase(typeof(PhotosController), nameof(PhotosController.Upload), ControlPlaneCapabilities.PhotoWrite)]
+    [TestCase(typeof(FeedbackSequencesController), nameof(FeedbackSequencesController.Put), ControlPlaneCapabilities.HostPublish)]
+    [TestCase(typeof(JourneyProgressController), nameof(JourneyProgressController.Reset), ControlPlaneCapabilities.RuntimeControl)]
+    [TestCase(typeof(RuntimeCommandsController), nameof(RuntimeCommandsController.EnqueueSignalAspect), ControlPlaneCapabilities.RuntimeControl)]
+    [TestCase(typeof(RuntimeCommandsController), nameof(RuntimeCommandsController.EnqueueLocomotiveDrive), ControlPlaneCapabilities.RuntimeControl)]
+    [TestCase(typeof(RuntimeCommandsController), nameof(RuntimeCommandsController.EnqueueLocomotiveFunction), ControlPlaneCapabilities.RuntimeControl)]
+    [TestCase(typeof(RuntimeHub), nameof(RuntimeHub.RegisterRemote), ControlPlaneCapabilities.ClientPresence)]
+    [TestCase(typeof(RuntimeHub), nameof(RuntimeHub.SetSignalAspect), ControlPlaneCapabilities.RuntimeControl)]
+    [TestCase(typeof(RuntimeHub), nameof(RuntimeHub.SetLocomotiveDrive), ControlPlaneCapabilities.RuntimeControl)]
+    [TestCase(typeof(RuntimeHub), nameof(RuntimeHub.SetLocomotiveFunction), ControlPlaneCapabilities.RuntimeControl)]
+    public void RestrictedOperation_Should_UseDesignedCapability(
+        Type declaringType,
+        string methodName,
+        string capability)
+    {
+        var method = declaringType.GetMethod(methodName)
+            ?? throw new InvalidOperationException($"Missing restricted operation {declaringType.Name}.{methodName}.");
+        var attribute = method.GetCustomAttributes(typeof(AuthorizeAttribute), inherit: true)
+            .Cast<AuthorizeAttribute>()
+            .SingleOrDefault(candidate => candidate.Policy == capability);
+
+        Assert.That(attribute, Is.Not.Null);
+    }
+
+    [Test]
+    public void PhotoHub_Should_UseSharedReadPolicy()
+    {
+        var attribute = typeof(PhotoHub)
+            .GetCustomAttributes(typeof(AuthorizeAttribute), inherit: true)
+            .Cast<AuthorizeAttribute>()
+            .SingleOrDefault(candidate => candidate.Policy == ControlPlaneCapabilities.Read);
+
+        Assert.That(attribute, Is.Not.Null);
+    }
+
+    [Test]
+    public void ClientsController_Should_RegisterAuthenticatedCredentialIdentity()
+    {
+        var registry = new ClientRegistry();
+        var controller = CreateClientsController(registry, "credential-1");
+
+        controller.Register(new RegisterClientRequest("caller-selected-id", "Remote cab"));
+
+        Assert.That(registry.GetAll().Single().ClientId, Is.EqualTo("credential-1"));
+    }
+
+    [Test]
+    public void ClientsController_Should_UnregisterOnlyAuthenticatedCredentialIdentity()
+    {
+        var registry = new ClientRegistry();
+        registry.Add(new ConnectedClientInfo { ClientId = "credential-1" });
+        registry.Add(new ConnectedClientInfo { ClientId = "credential-2" });
+        var controller = CreateClientsController(registry, "credential-1");
+
+        controller.Unregister(new UnregisterClientRequest("credential-2"));
+
+        Assert.That(registry.GetAll().Select(client => client.ClientId), Is.EqualTo(new[] { "credential-2" }));
+    }
+
+    private static ClientsController CreateClientsController(ClientRegistry registry, string credentialId)
+    {
+        var controller = new ClientsController(registry);
+        controller.ControllerContext.HttpContext = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity(
+                [new Claim(ClaimTypes.NameIdentifier, credentialId)],
+                ControlPlaneAuthenticationDefaults.Scheme))
+        };
+        return controller;
     }
 
     private static async Task<AuthenticateResult> AuthenticateQueryTokenAsync(

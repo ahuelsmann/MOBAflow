@@ -2,7 +2,9 @@
 namespace Moba.MOBApi.Controllers;
 
 using Domain;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Moba.MOBApi.Security;
 using Moba.MOBApi.Service;
 using System.Net;
 using System.Security.Cryptography;
@@ -14,6 +16,7 @@ using System.Text.Json;
 public sealed class FeedbackSequencesController(ISolutionCache solutionCache) : ControllerBase
 {
     [HttpGet]
+    [Authorize(Policy = ControlPlaneCapabilities.Read)]
     public IActionResult Get(Guid projectId, Guid journeyId)
     {
         if (!TryLoad(out var solution, out _, out var error)) return error!;
@@ -24,6 +27,7 @@ public sealed class FeedbackSequencesController(ISolutionCache solutionCache) : 
     }
 
     [HttpPut]
+    [Authorize(Policy = ControlPlaneCapabilities.HostPublish)]
     public IActionResult Put(Guid projectId, Guid journeyId, [FromBody] List<JourneyFeedbackStep>? steps)
     {
         if (!IsLocalhostRequest()) return Forbid();
