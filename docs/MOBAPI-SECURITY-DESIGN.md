@@ -459,8 +459,18 @@ This document and its issue plan are delivered. Runtime behavior is unchanged.
 
 - All runtime commands, photo writes, host operations, and security administration require credentials with no compatibility bypass.
 - Anonymous control returns `401`; a read-only principal attempting control returns `403`.
-- Anonymous reads may remain temporarily available behind an owner-visible `LegacyAnonymousReads` switch for one compatibility release. The switch is off for new installations, cannot expose client lists or security state, emits a warning and metric, and has an explicit removal version.
-- Pairing readiness is visible before anonymous reads are disabled for upgraded installations.
+- Anonymous reads remain available during the measured compatibility window, but expose no client,
+  version, server-identity, runtime, hardware, or security details through the public health surface.
+- MOBAsmart sends the non-secret `X-MOBAflow-Client-Release` header on authenticated REST and
+  SignalR traffic. Enforcement requires matching traffic from the selected stable release on both
+  transports, fourteen consecutive defect-free days, no open critical authentication, refresh,
+  reconnect, or read-parity defect, and a concrete readiness-evidence comment in issue #50.
+- Fixing a critical defect restarts the full observation window. Elapsed time without matching
+  authenticated traffic can never complete the gate.
+- After enforcement, legacy REST and SignalR entry points return the same machine-readable
+  `client_upgrade_required` reason instead of silently restoring anonymous access.
+- Pairing readiness and the migration gate are visible before anonymous reads are disabled for
+  upgraded installations.
 
 ### Phase 5: Remove legacy access
 
@@ -476,7 +486,10 @@ The design supports functional rollback without reintroducing anonymous hardware
 
 - This design-only slice can be reverted with no runtime effect.
 - Authentication components remain additive until host and remote parity tests pass.
-- During the compatibility window, rollback may re-enable `LegacyAnonymousReads` only. The switch has no effect on command, host, photo-write, or security endpoints.
+- After enforcement, a local administrator may activate anonymous read-only rollback for at most
+  seven days. The protected expiry survives restart, expires automatically, emits an immediate audit
+  warning, a startup warning while active, and an operational gauge. It has no effect on command,
+  host, photo-write, pairing-administration, credential-administration, or security endpoints.
 - If authentication, TLS identity, revocation checks, or command admission is unhealthy, MOBApi disables remote control and reports degraded minimal health. MOBAflow continues local Z21 operation.
 - Rolling back a client does not delete server revocation state or the no-downgrade marker. A legacy client that cannot authenticate must remain disconnected.
 - Rolling back across a credential-registry schema requires a tested read-compatible migration or an explicit security reset; it never treats unreadable state as an empty allow-all store.

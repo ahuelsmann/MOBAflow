@@ -112,6 +112,8 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
             .WithUrl(hubUrl, options =>
             {
                 options.AccessTokenProvider = GetAccessTokenAsync;
+                options.Headers[PinnedRemoteControlTransport.ClientReleaseHeaderName] =
+                    PinnedRemoteControlTransport.ClientRelease;
                 options.HttpMessageHandlerFactory = _ =>
                     _authenticatedHttpClientFactory.CreateHandler(connection.Endpoint);
                 options.WebSocketConfiguration = webSocketOptions =>

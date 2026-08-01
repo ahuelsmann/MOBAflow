@@ -357,6 +357,33 @@ Validation:
 - rollback and downgrade evidence identifies every persisted or migrated value and proves the
   expected fail-closed behavior.
 
+Implementation checkpoint (2026-08-01):
+
+- Slice 4e code records bounded, process-local pseudonymous outcome counters and low-cardinality
+  metrics. Metric labels contain only transport and outcome; client pseudonyms are limited to 64
+  current-process buckets plus one overflow bucket and are never persisted.
+- `read-migration.dat` is a data-protected document under the existing control-plane security
+  storage directory. It persists only the stable client release, observation start, one REST and
+  one SignalR traffic marker, open critical-defect codes, the issue-comment evidence reference,
+  enforcement time, rollback expiry, and the last fixed-defect audit fields. Normal reads use a
+  cached decision and do not write the file; only the first matching REST and SignalR observations
+  advance persisted readiness evidence.
+- MOBAsmart sends `X-MOBAflow-Client-Release` on authenticated REST and SignalR traffic. Readiness
+  advances only when that value exactly matches the manually selected stable release and both
+  transports have been observed. Open critical defects block enforcement and cannot be cleared by
+  starting a new window; fixing one restarts the full fourteen-day window.
+- The rollback is read-only, manually activated, persisted, capped at seven days, and restored on
+  restart. Activation emits an audit warning immediately; startup emits another warning while the
+  rollback is active; the gauge returns to zero automatically at expiry.
+- A missing, unreadable, or cryptographically invalid migration document fails closed in the new
+  server because authorization cannot establish a compatibility decision. The document is retained
+  across source rollback. Binary downgrade to a pre-Slice-4e MOBApi is prohibited after enforcement:
+  that older binary does not understand the document and would restore its historical anonymous-read
+  behavior. Reverting source alone is therefore not an approved rollback procedure.
+- This checkpoint does not satisfy the operational gate. Issue #50 currently has no Slice 4e
+  fourteen-day evidence comment, no stable-release observation window has been completed, and
+  authenticated-only reads must remain disabled until those external gates are recorded.
+
 ### Slice 5: Unified control admission
 
 Planned boundary:

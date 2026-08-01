@@ -163,7 +163,7 @@ internal sealed class StatusControllerTests
         Assert.Multiple(() =>
         {
             Assert.That(root.GetProperty("status").GetString(), Is.EqualTo("running"));
-            Assert.That(root.GetProperty("port").GetInt32(), Is.EqualTo(5001));
+            Assert.That(root.TryGetProperty("port", out _), Is.False);
             Assert.That(root.TryGetProperty("connectedClients", out _), Is.False);
             Assert.That(root.TryGetProperty("runtime", out _), Is.False);
             Assert.That(root.TryGetProperty("solution", out _), Is.False);

@@ -348,6 +348,9 @@ internal sealed class AuthenticatedControlPlaneProcessTests
             HttpContent? content = null)
         {
             var request = new HttpRequestMessage(method, path) { Content = content };
+            request.Headers.TryAddWithoutValidation(
+                CompatibilityReadHeaders.ClientRelease,
+                "MOBAsmart 1.0.0");
             if (!string.IsNullOrWhiteSpace(accessToken))
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             return request;
@@ -433,6 +436,7 @@ internal sealed class AuthenticatedControlPlaneProcessTests
                 .WithUrl(hubUrl, options =>
                 {
                     options.AccessTokenProvider = () => Task.FromResult<string?>(accessToken);
+                    options.Headers[CompatibilityReadHeaders.ClientRelease] = "MOBAsmart 1.0.0";
                     options.Transports = HttpTransportType.LongPolling;
                     options.HttpMessageHandlerFactory = _ => MobaApiProcess.CreatePinnedHandler(fingerprint);
                 })

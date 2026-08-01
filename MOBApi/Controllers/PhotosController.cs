@@ -29,7 +29,7 @@ public class PhotosController : ControllerBase
     [HttpGet("health")]
     public IActionResult Health()
     {
-        return Ok(new { service = "MOBAflow MOBAapi", status = "healthy", version = "1.0.0" });
+        return Ok(new { service = "MOBAflow MOBApi", status = "healthy" });
     }
 
     /// <summary>

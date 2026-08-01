@@ -1,12 +1,31 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 using Microsoft.AspNetCore.Mvc;
 using Moba.MOBApi.Controllers;
+using System.Text.Json;
 
 namespace Moba.Test.MOBApi;
 
 [TestFixture]
 internal sealed class PhotosControllerTests
 {
+    [Test]
+    public void Health_ReturnsOnlyStaticReachabilityMetadata()
+    {
+        var result = new PhotosController().Health() as OkObjectResult;
+
+        Assert.That(result, Is.Not.Null);
+        using var document = JsonDocument.Parse(JsonSerializer.Serialize(result!.Value));
+        var root = document.RootElement;
+        Assert.Multiple(() =>
+        {
+            Assert.That(root.GetProperty("status").GetString(), Is.EqualTo("healthy"));
+            Assert.That(root.TryGetProperty("service", out _), Is.True);
+            Assert.That(root.TryGetProperty("version", out _), Is.False);
+            Assert.That(root.TryGetProperty("instanceId", out _), Is.False);
+            Assert.That(root.TryGetProperty("port", out _), Is.False);
+        });
+    }
+
     [Test]
     public void GetFile_ReturnsBadRequest_WhenPathMissing()
     {
