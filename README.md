@@ -93,9 +93,10 @@ MOBApi can run by itself or be started automatically by MOBAflow.
 
 ### Remote displays
 
-`MOBAdisplay` provides RGB565 renderers and UDP frame transport, and the current
-PlatformIO firmware receives the line protocol, stores Wi-Fi credentials locally
-and displays completed frames. This is still an integration foundation: the
+`MOBAdisplay` provides RGB565 renderers and a versioned UDP frame transport. The
+PlatformIO firmware negotiates protocol v1.0 capabilities, validates complete
+frame transactions, stores Wi-Fi credentials locally, and presents only
+completed frames. This is still an integration foundation: the
 desktop Display page currently identifies supported models, while the destination
 display workflow action is skipped unless a display service is wired in. The
 older standalone Arduino sketch remains a hardware color-test only.

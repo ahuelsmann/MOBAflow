@@ -139,9 +139,10 @@ polarity are available for supported signal configurations.
 project. **Display Configurations** currently presents the supported Waveshare
 display models and their resolutions; it is not yet a full device/layout editor.
 
-The `MOBAdisplay` library can render RGB565 data and send it over UDP. The
-PlatformIO firmware under `MOBAdisplay/esp32/` receives the line protocol,
-provisions Wi-Fi credentials through its local setup API and presents complete
+The `MOBAdisplay` library can render RGB565 data and send validated protocol
+v1.0 frame transactions over UDP. The PlatformIO firmware under
+`MOBAdisplay/esp32/` negotiates device capabilities, provisions Wi-Fi
+credentials through its protected setup boundary, and presents only complete
 frames. End-to-end destination-display workflows remain preview-stage because
 the registered workflow handler currently skips output when no display service
 is configured. The older `MobaDisplay.ino` sketch is only a hardware color test.

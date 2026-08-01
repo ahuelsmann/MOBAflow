@@ -3,6 +3,7 @@
 #include "DisplayBackend.h"
 #include "FrameAssembler.h"
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 
@@ -114,6 +115,7 @@ private:
     };
 
     static constexpr size_t kRequestHistoryLength = 16;
+    static constexpr size_t kEvictedRequestHistoryLength = 64;
 
     bool TryDecodePacket(
         const uint8_t* datagram,
@@ -177,10 +179,10 @@ private:
     const char* _firmwareVersion;
     Core::DisplayResult _lastOperationResult = Core::MakeResult(Core::ResultCode::Ok);
     bool _isNegotiated = false;
-    RequestFingerprint _requestHistory[kRequestHistoryLength]{};
+    std::array<RequestFingerprint, kRequestHistoryLength> _requestHistory{};
+    std::array<RequestFingerprint, kEvictedRequestHistoryLength> _evictedRequestHistory{};
     size_t _nextRequestHistoryIndex = 0;
-    uint32_t _latestRequestId = 0;
-    bool _hasLatestRequestId = false;
+    size_t _nextEvictedRequestHistoryIndex = 0;
 };
 }
 }

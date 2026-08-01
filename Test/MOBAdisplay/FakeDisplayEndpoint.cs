@@ -13,16 +13,28 @@ internal sealed class FakeDisplayEndpoint : IDisplayDatagramTransport
     private readonly Dictionary<uint, RequestFingerprint> _requestFingerprints = new();
     private readonly Dictionary<uint, CachedResponse> _responses = new();
     private readonly Dictionary<uint, ResultPayload> _completedFrames = new();
+    private readonly Dictionary<ushort, int> _frameRegionDrops = [];
+    private readonly Dictionary<DisplayMessageType, int> _responseDrops = [];
     private readonly List<byte[]> _heldResponses = [];
     private readonly TimeProvider _timeProvider;
+    private readonly ushort _width;
+    private readonly ushort _height;
+    private readonly ushort _maximumRegionPayloadLength;
     private ActiveFrame? _activeFrame;
     private uint _sessionId = 0x0A0B0C0D;
     private uint _acceptedFrameCount;
     private uint _rejectedFrameCount;
 
-    public FakeDisplayEndpoint(TimeProvider? timeProvider = null)
+    public FakeDisplayEndpoint(
+        TimeProvider? timeProvider = null,
+        ushort width = 4,
+        ushort height = 3,
+        ushort maximumRegionPayloadLength = 512)
     {
         _timeProvider = timeProvider ?? TimeProvider.System;
+        _width = width;
+        _height = height;
+        _maximumRegionPayloadLength = maximumRegionPayloadLength;
     }
 
     public event EventHandler<DisplayDatagramReceivedEventArgs>? DatagramReceived;
@@ -56,6 +68,24 @@ internal sealed class FakeDisplayEndpoint : IDisplayDatagramTransport
     }
 
     public void DropNextResponse() => Enqueue(new FakeDisplayBehavior(DropResponse: true));
+
+    public void DropNextResponse(DisplayMessageType messageType)
+    {
+        lock (_syncRoot)
+        {
+            _responseDrops.TryGetValue(messageType, out var count);
+            _responseDrops[messageType] = count + 1;
+        }
+    }
+
+    public void DropFrameRegion(ushort packetIndex, int count = 1)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(count, 1);
+        lock (_syncRoot)
+        {
+            _frameRegionDrops[packetIndex] = count;
+        }
+    }
 
     public void DuplicateNextResponse() => Enqueue(new FakeDisplayBehavior(DeliveryCount: 2));
 
@@ -133,9 +163,15 @@ internal sealed class FakeDisplayEndpoint : IDisplayDatagramTransport
 
         FakeDisplayBehavior behavior;
         DisplayProtocolPacket response;
+        bool dropTargetedResponse;
         lock (_syncRoot)
         {
             ReceivedPackets.Add(request);
+            if (ShouldDropFrameRegion(request))
+            {
+                return ValueTask.CompletedTask;
+            }
+
             behavior = _behaviors.Count == 0 ? new FakeDisplayBehavior() : _behaviors.Dequeue();
             if (behavior.TransportFailure)
             {
@@ -145,9 +181,12 @@ internal sealed class FakeDisplayEndpoint : IDisplayDatagramTransport
             response = behavior.ForcedResult is { } forcedResult
                 ? CreateResponse(request, forcedResult)
                 : ProcessIdempotently(request, requestPayload);
+            dropTargetedResponse = ConsumeTargetedResponseDrop(request.Header.MessageType);
         }
 
-        if (behavior.DropResponse)
+        if (behavior.DropResponse
+            || dropTargetedResponse
+            || IsSuccessfulUnacknowledgedRegion(request, response))
         {
             return ValueTask.CompletedTask;
         }
@@ -287,10 +326,10 @@ internal sealed class FakeDisplayEndpoint : IDisplayDatagramTransport
 
         var capabilities = new CapabilitiesResponsePayload(
             DisplayProtocol.CurrentVersion,
-            4,
-            3,
+            _width,
+            _height,
             DisplayProtocol.DEFAULT_MAX_DATAGRAM_LENGTH,
-            512,
+            _maximumRegionPayloadLength,
             DisplayPixelFormatFlags.Rgb565BigEndian,
             DisplayRotationFlags.Degrees0,
             DisplayOptionalCommandFlags.Clear
@@ -542,6 +581,64 @@ internal sealed class FakeDisplayEndpoint : IDisplayDatagramTransport
         {
             _behaviors.Enqueue(behavior);
         }
+    }
+
+    private bool ShouldDropFrameRegion(DisplayProtocolPacket request)
+    {
+        if (request.Header.MessageType != DisplayMessageType.FrameRegion
+            || !_frameRegionDrops.TryGetValue(request.Header.PacketIndex, out var remaining))
+        {
+            return false;
+        }
+
+        if (remaining == 1)
+        {
+            _frameRegionDrops.Remove(request.Header.PacketIndex);
+        }
+        else if (remaining != int.MaxValue)
+        {
+            _frameRegionDrops[request.Header.PacketIndex] = remaining - 1;
+        }
+
+        return true;
+    }
+
+    private bool ConsumeTargetedResponseDrop(DisplayMessageType messageType)
+    {
+        if (!_responseDrops.TryGetValue(messageType, out var remaining))
+        {
+            return false;
+        }
+
+        if (remaining == 1)
+        {
+            _responseDrops.Remove(messageType);
+        }
+        else
+        {
+            _responseDrops[messageType] = remaining - 1;
+        }
+
+        return true;
+    }
+
+    private static bool IsSuccessfulUnacknowledgedRegion(
+        DisplayProtocolPacket request,
+        DisplayProtocolPacket response)
+    {
+        if (request.Header.MessageType != DisplayMessageType.FrameRegion
+            || request.Header.Flags.HasFlag(DisplayProtocolFlags.AcknowledgementRequired)
+            || !DisplayPayloadCodec.TryDecode(
+                response.Header.MessageType,
+                response.Payload.Span,
+                out var payload,
+                out _)
+            || payload is not ResultPayload result)
+        {
+            return false;
+        }
+
+        return result.ResultCode == DisplayResultCode.Ok;
     }
 
     private static uint NextNonZero(uint value)

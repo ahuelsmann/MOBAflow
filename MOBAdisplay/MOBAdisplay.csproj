@@ -15,6 +15,9 @@
         <ProjectReference Include="..\Domain\Domain.csproj" />
     </ItemGroup>
     <ItemGroup>
+        <Compile Remove="esp32\**\*.cs" />
+    </ItemGroup>
+    <ItemGroup>
         <None Update="test.png">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>

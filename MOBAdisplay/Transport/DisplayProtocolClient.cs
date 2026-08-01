@@ -4,12 +4,15 @@ namespace Moba.Display.Transport;
 using Moba.Display.Protocol;
 
 using System.Collections.Concurrent;
+using System.Net.Sockets;
 
 /// <summary>
 /// Sends versioned display requests and correlates validated responses across bounded retries.
 /// </summary>
 public sealed class DisplayProtocolClient : IDisposable
 {
+    private const string CancelledDiagnostic = "The display request was cancelled.";
+    private const string DisposedDiagnostic = "The display protocol client is disposed.";
     private readonly IDisplayDatagramTransport _transport;
     private readonly DisplayIdentifierSequence _requestIds;
     private readonly TimeProvider _timeProvider;
@@ -46,12 +49,14 @@ public sealed class DisplayProtocolClient : IDisposable
     /// <param name="sessionId">Negotiated session identifier, or zero for hello.</param>
     /// <param name="frameId">Frame identifier for frame-scoped messages, otherwise zero.</param>
     /// <param name="options">Bounded wait and retry policy.</param>
+    /// <param name="packetSequence">Optional logical packet position for a multi-region frame.</param>
     /// <param name="cancellationToken">Stops sending, waiting, and further retries.</param>
     public async Task<DisplayRequestOutcome> SendRequestAsync(
         IDisplayProtocolPayload request,
         uint sessionId = 0,
         uint frameId = 0,
         DisplayRequestOptions? options = null,
+        DisplayPacketSequence? packetSequence = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -63,19 +68,19 @@ public sealed class DisplayProtocolClient : IDisposable
 
         if (_disposed)
         {
-            return Failure(requestId, 0, DisplayRequestFailure.ClientDisposed, "The display protocol client is disposed.");
+            return Failure(requestId, 0, DisplayRequestFailure.ClientDisposed, DisposedDiagnostic);
         }
 
         for (var attempt = 1; attempt <= requestOptions.MaximumAttempts; attempt++)
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return Failure(requestId, attempt - 1, DisplayRequestFailure.Cancelled, "The display request was cancelled.");
+                return Failure(requestId, attempt - 1, DisplayRequestFailure.Cancelled, CancelledDiagnostic);
             }
 
             if (_disposed)
             {
-                return Failure(requestId, attempt - 1, DisplayRequestFailure.ClientDisposed, "The display protocol client is disposed.");
+                return Failure(requestId, attempt - 1, DisplayRequestFailure.ClientDisposed, DisposedDiagnostic);
             }
 
             var pending = new PendingResponse(expectedResponse, frameId, sessionId);
@@ -92,7 +97,10 @@ public sealed class DisplayProtocolClient : IDisposable
                     requestId,
                     frameId,
                     sessionId,
-                    attempt > 1);
+                    packetSequence,
+                    attempt > 1
+                        ? DisplayProtocolFlags.AcknowledgementRequired | DisplayProtocolFlags.Retry
+                        : DisplayProtocolFlags.AcknowledgementRequired);
                 await _transport.SendAsync(datagram, cancellationToken).ConfigureAwait(false);
                 var resolution = await pending.Completion.Task
                     .WaitAsync(requestOptions.ResponseTimeout, _timeProvider, cancellationToken)
@@ -131,7 +139,7 @@ public sealed class DisplayProtocolClient : IDisposable
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                return Failure(requestId, attempt, DisplayRequestFailure.Cancelled, "The display request was cancelled.");
+                return Failure(requestId, attempt, DisplayRequestFailure.Cancelled, CancelledDiagnostic);
             }
             catch (Exception ex)
             {
@@ -154,6 +162,70 @@ public sealed class DisplayProtocolClient : IDisposable
     }
 
     /// <summary>
+    /// Sends one datagram without requesting or waiting for a positive acknowledgement.
+    /// </summary>
+    /// <param name="request">Typed request payload.</param>
+    /// <param name="sessionId">Negotiated session identifier.</param>
+    /// <param name="frameId">Frame identifier for the region.</param>
+    /// <param name="packetSequence">Logical packet position within the frame.</param>
+    /// <param name="cancellationToken">Stops the send operation.</param>
+    public async Task<DisplayRequestOutcome> SendUnacknowledgedAsync(
+        FrameRegionPayload request,
+        uint sessionId,
+        uint frameId,
+        DisplayPacketSequence packetSequence,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ValidateRequestEnvelope(request.MessageType, sessionId, frameId);
+
+        var requestId = _requestIds.Next();
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return Failure(requestId, 0, DisplayRequestFailure.Cancelled, CancelledDiagnostic);
+        }
+
+        if (_disposed)
+        {
+            return Failure(requestId, 0, DisplayRequestFailure.ClientDisposed, DisposedDiagnostic);
+        }
+
+        var datagram = CreateDatagram(
+            request.MessageType,
+            DisplayPayloadCodec.Encode(request),
+            requestId,
+            frameId,
+            sessionId,
+            packetSequence: packetSequence,
+            flags: DisplayProtocolFlags.None);
+        try
+        {
+            await _transport.SendAsync(datagram, cancellationToken).ConfigureAwait(false);
+            return new DisplayRequestOutcome(requestId, 1, null, DisplayRequestFailure.None, null);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return Failure(requestId, 1, DisplayRequestFailure.Cancelled, CancelledDiagnostic);
+        }
+        catch (SocketException ex)
+        {
+            return TransportFailure(requestId, ex);
+        }
+        catch (IOException ex)
+        {
+            return TransportFailure(requestId, ex);
+        }
+        catch (ObjectDisposedException ex)
+        {
+            return TransportFailure(requestId, ex);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return TransportFailure(requestId, ex);
+        }
+    }
+
+    /// <summary>
     /// Stops response correlation and completes active requests as disposed.
     /// </summary>
     public void Dispose()
@@ -168,7 +240,7 @@ public sealed class DisplayProtocolClient : IDisposable
         foreach (var pending in _pendingResponses.Values)
         {
             pending.Completion.TrySetResult(
-                PendingResolution.Failed(DisplayRequestFailure.ClientDisposed, "The display protocol client is disposed."));
+                PendingResolution.Failed(DisplayRequestFailure.ClientDisposed, DisposedDiagnostic));
         }
 
         _pendingResponses.Clear();
@@ -180,12 +252,13 @@ public sealed class DisplayProtocolClient : IDisposable
         uint requestId,
         uint frameId,
         uint sessionId,
-        bool isRetry)
+        DisplayPacketSequence? packetSequence,
+        DisplayProtocolFlags flags)
     {
-        var flags = DisplayProtocolFlags.AcknowledgementRequired;
-        if (isRetry)
+        var sequence = packetSequence ?? new DisplayPacketSequence(0, 1, false);
+        if (sequence.IsFinalPacket)
         {
-            flags |= DisplayProtocolFlags.Retry;
+            flags |= DisplayProtocolFlags.FinalPacket;
         }
 
         var header = new DisplayPacketHeader(
@@ -194,7 +267,9 @@ public sealed class DisplayProtocolClient : IDisposable
             flags,
             requestId,
             frameId,
-            sessionId);
+            sessionId,
+            sequence.PacketIndex,
+            sequence.PacketCount);
         return DisplayPacketCodec.Encode(new DisplayProtocolPacket(header, payload));
     }
 
@@ -369,6 +444,13 @@ public sealed class DisplayProtocolClient : IDisposable
         DisplayRequestFailure failure,
         string? diagnostic) =>
         new(requestId, attemptCount, null, failure, diagnostic);
+
+    private static DisplayRequestOutcome TransportFailure(uint requestId, Exception exception) =>
+        Failure(
+            requestId,
+            1,
+            DisplayRequestFailure.TransportFailure,
+            $"Datagram transport failed with {exception.GetType().Name}: {exception.Message}");
 
     private sealed record PendingResponse(
         DisplayMessageType ExpectedMessageType,

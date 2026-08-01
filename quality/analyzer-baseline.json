@@ -2209,13 +2209,6 @@
     {
       "project": "MOBAdisplay",
       "targetFramework": "net10.0",
-      "ruleId": "CA1062",
-      "path": "MOBAdisplay/Transport/UdpLineFrameSender.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAdisplay",
-      "targetFramework": "net10.0",
       "ruleId": "CA1305",
       "path": "MOBAdisplay/Rendering/SkiaFrameRenderer.cs",
       "count": 1
@@ -5857,6 +5850,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/MOBAdisplay/DisplayProtocolFrameSessionTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/MOBAdisplay/DisplayProtocolVersionTests.cs",
       "count": 1
     },
@@ -5886,6 +5886,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/MOBAdisplay/SkiaFrameRendererTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/MOBAdisplay/UdpDisplayDatagramTransportTests.cs",
       "count": 1
     },
     {

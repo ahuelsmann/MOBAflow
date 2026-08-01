@@ -292,7 +292,7 @@ DisplayResult FrameAssembler::Tick(uint32_t nowMilliseconds) noexcept
     return ExpireIfNeeded(nowMilliseconds) ? _lastResult : MakeResult(ResultCode::Ok);
 }
 
-void FrameAssembler::ResetForReboot() noexcept
+void FrameAssembler::ResetFrameEpoch() noexcept
 {
     DiscardActiveFrame();
     _lastCompletedFrameId = 0;
@@ -300,6 +300,11 @@ void FrameAssembler::ResetForReboot() noexcept
     _lastCompletedMetadata = {};
     _hasCompletedFrame = false;
     _lastResult = MakeResult(ResultCode::Ok);
+}
+
+void FrameAssembler::ResetForReboot() noexcept
+{
+    ResetFrameEpoch();
 }
 
 bool FrameAssembler::HasActiveFrame() const noexcept

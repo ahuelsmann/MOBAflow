@@ -57,6 +57,44 @@ public sealed record DisplayRequestOptions
 }
 
 /// <summary>
+/// Identifies one datagram within a logical packet sequence.
+/// </summary>
+public readonly record struct DisplayPacketSequence
+{
+    /// <summary>
+    /// Initializes a validated packet sequence position.
+    /// </summary>
+    /// <param name="packetIndex">Zero-based packet position.</param>
+    /// <param name="packetCount">Total number of packets in the logical sequence.</param>
+    /// <param name="isFinalPacket">Whether this is the last packet in the sequence.</param>
+    public DisplayPacketSequence(ushort packetIndex, ushort packetCount, bool isFinalPacket)
+    {
+        if (packetCount == 0 || packetIndex >= packetCount)
+        {
+            throw new ArgumentOutOfRangeException(nameof(packetCount));
+        }
+
+        if (isFinalPacket && packetIndex != packetCount - 1)
+        {
+            throw new ArgumentException("Only the last packet may carry the final-packet flag.", nameof(isFinalPacket));
+        }
+
+        PacketIndex = packetIndex;
+        PacketCount = packetCount;
+        IsFinalPacket = isFinalPacket;
+    }
+
+    /// <summary>Gets the zero-based packet position.</summary>
+    public ushort PacketIndex { get; }
+
+    /// <summary>Gets the total number of packets in the logical sequence.</summary>
+    public ushort PacketCount { get; }
+
+    /// <summary>Gets whether this is the last packet in the logical sequence.</summary>
+    public bool IsFinalPacket { get; }
+}
+
+/// <summary>
 /// Identifies a host-side failure before a valid device response was obtained.
 /// </summary>
 public enum DisplayRequestFailure
