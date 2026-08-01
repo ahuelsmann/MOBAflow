@@ -111,14 +111,26 @@ public sealed class ControlPlaneSecurityController : ControllerBase
 {
     private readonly ICredentialRegistry _credentialRegistry;
     private readonly IPairingService _pairingService;
+    private readonly ICompatibilityReadTelemetry _compatibilityReadTelemetry;
+    private readonly ICompatibilityReadiness _compatibilityReadiness;
 
     public ControlPlaneSecurityController(
         ICredentialRegistry credentialRegistry,
-        IPairingService pairingService)
+        IPairingService pairingService,
+        ICompatibilityReadTelemetry compatibilityReadTelemetry,
+        ICompatibilityReadiness compatibilityReadiness)
     {
         _credentialRegistry = credentialRegistry;
         _pairingService = pairingService;
+        _compatibilityReadTelemetry = compatibilityReadTelemetry;
+        _compatibilityReadiness = compatibilityReadiness;
     }
+
+    [HttpGet("compatibility")]
+    public ActionResult<CompatibilityStatusResponse> GetCompatibilityStatus() =>
+        Ok(new CompatibilityStatusResponse(
+            _compatibilityReadTelemetry.GetSnapshot(),
+            _compatibilityReadiness.GetSnapshot()));
 
     [HttpPost("pairing/open")]
     public async Task<ActionResult<PairingWindowResult>> OpenPairing(
@@ -191,6 +203,10 @@ public sealed record OpenPairingRequest(ControlPlaneRole AllowedRole);
 public sealed record RevokeCredentialRequest(string Reason);
 
 public sealed record ChangeCredentialRoleRequest(ControlPlaneRole Role);
+
+public sealed record CompatibilityStatusResponse(
+    CompatibilityReadTelemetrySnapshot Telemetry,
+    CompatibilityReadinessSnapshot Readiness);
 
 public sealed record TokenResponse(
     string CredentialId,

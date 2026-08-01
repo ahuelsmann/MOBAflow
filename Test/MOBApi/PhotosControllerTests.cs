@@ -1,12 +1,28 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 using Microsoft.AspNetCore.Mvc;
 using Moba.MOBApi.Controllers;
+using System.Text.Json;
 
 namespace Moba.Test.MOBApi;
 
 [TestFixture]
 internal sealed class PhotosControllerTests
 {
+    [Test]
+    public void Health_ExposesOnlyMinimalReachability()
+    {
+        var controller = new PhotosController();
+
+        var result = (OkObjectResult)controller.Health();
+        var body = JsonSerializer.SerializeToElement(result.Value);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(body.EnumerateObject().Count(), Is.EqualTo(1));
+            Assert.That(body.GetProperty("status").GetString(), Is.EqualTo("healthy"));
+        });
+    }
+
     [Test]
     public void GetFile_ReturnsBadRequest_WhenPathMissing()
     {

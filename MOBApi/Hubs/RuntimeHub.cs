@@ -15,6 +15,7 @@ using System.Net;
 /// <summary>
 /// SignalR hub for MOBAflow runtime snapshots and remote control commands.
 /// </summary>
+[Authorize(Policy = ControlPlaneCapabilities.Read)]
 public sealed class RuntimeHub : Hub
 {
     private const string RuntimeRemoteGroup = "runtime-remote";

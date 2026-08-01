@@ -459,8 +459,32 @@ This document and its issue plan are delivered. Runtime behavior is unchanged.
 
 - All runtime commands, photo writes, host operations, and security administration require credentials with no compatibility bypass.
 - Anonymous control returns `401`; a read-only principal attempting control returns `403`.
-- Anonymous reads may remain temporarily available behind an owner-visible `LegacyAnonymousReads` switch for one compatibility release. The switch is off for new installations, cannot expose client lists or security state, emits a warning and metric, and has an explicit removal version.
+- Anonymous reads may remain temporarily available behind the owner-visible
+  `LegacyAnonymousReadsEnabled` switch for the measured compatibility release. The switch cannot
+  expose client lists or security state and has an explicit removal gate.
 - Pairing readiness is visible before anonymous reads are disabled for upgraded installations.
+
+The Slice 4e observation release implements this migration with the following controls:
+
+- `ControlPlaneSecurity:LegacyAnonymousReadsEnabled` remains `true` only while the required
+  fourteen-day observation is incomplete. It is not a permanent rollback setting.
+- `ControlPlaneSecurity:AnonymousReadRollbackUntilUtc` can restore anonymous reads only when the
+  legacy window is disabled. Startup validation rejects an expiry more than seven days in the
+  future, and authorization stops the rollback at the configured UTC timestamp without a restart.
+- `ControlPlaneSecurity:StableAuthenticatedClientReleaseUtc`,
+  `LastCriticalDefectResolvedUtc`, and `HasOpenCriticalMigrationDefect` provide local readiness
+  inputs. A critical fix restarts the fourteen-day window. Elapsed time without authenticated-read
+  traffic never reports ready, and issue #50 remains the authoritative human-reviewed evidence.
+- The host-only `GET /api/control-plane/security/compatibility` endpoint exposes aggregate read
+  counts, rollback activity, and readiness. It requires HTTPS and `security.manage`; it contains no
+  credential, token, request payload, runtime snapshot, or hardware state.
+- When rollback is active at startup, MOBApi writes warning/audit event
+  `AnonymousReadRollbackActivated` and marks the aggregate rollback metric active. The metric turns
+  inactive automatically at expiry.
+- Once anonymous reads are disabled, legacy REST and SignalR negotiation receive HTTP `426` with
+  machine-readable code `upgrade_required`. A presented invalid credential remains `401` and never
+  falls through to compatibility access.
+- The anonymous health response contains only `{ "status": "healthy" }`.
 
 ### Phase 5: Remove legacy access
 
@@ -476,7 +500,9 @@ The design supports functional rollback without reintroducing anonymous hardware
 
 - This design-only slice can be reverted with no runtime effect.
 - Authentication components remain additive until host and remote parity tests pass.
-- During the compatibility window, rollback may re-enable `LegacyAnonymousReads` only. The switch has no effect on command, host, photo-write, or security endpoints.
+- After the compatibility window, rollback may set `AnonymousReadRollbackUntilUtc` only while
+  `LegacyAnonymousReadsEnabled` is false. The expiry is limited to seven days and has no effect on
+  command, host, photo-write, pairing-administration, or security-administration endpoints.
 - If authentication, TLS identity, revocation checks, or command admission is unhealthy, MOBApi disables remote control and reports degraded minimal health. MOBAflow continues local Z21 operation.
 - Rolling back a client does not delete server revocation state or the no-downgrade marker. A legacy client that cannot authenticate must remain disconnected.
 - Rolling back across a credential-registry schema requires a tested read-compatible migration or an explicit security reset; it never treats unreadable state as an empty allow-all store.
