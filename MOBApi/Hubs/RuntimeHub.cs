@@ -15,6 +15,7 @@ using System.Net;
 /// <summary>
 /// SignalR hub for MOBAflow runtime snapshots and remote control commands.
 /// </summary>
+[Authorize(Policy = ControlPlaneCapabilities.Read)]
 public sealed class RuntimeHub : Hub
 {
     private const string RuntimeRemoteGroup = "runtime-remote";
@@ -64,17 +65,17 @@ public sealed class RuntimeHub : Hub
         await BroadcastSessionStateAsync().ConfigureAwait(false);
     }
 
-    [Authorize(Policy = ControlPlaneCapabilities.ClientPresence)]
     public async Task RegisterRemote(string clientId)
     {
         var credentialId = Context.UserIdentifier;
-        if (string.IsNullOrWhiteSpace(credentialId))
+        var presenceId = string.IsNullOrWhiteSpace(credentialId) ? clientId?.Trim() : credentialId;
+        if (string.IsNullOrWhiteSpace(presenceId))
         {
-            throw new HubException("An authenticated credential identity is required.");
+            throw new HubException("ClientId is required for a compatibility read connection.");
         }
 
         await Groups.AddToGroupAsync(Context.ConnectionId, RuntimeRemoteGroup).ConfigureAwait(false);
-        _connectionRegistry.RegisterRemote(Context, credentialId);
+        _connectionRegistry.RegisterRemote(Context, presenceId);
 
         if (_snapshotCache.TryGet(out var entry))
         {

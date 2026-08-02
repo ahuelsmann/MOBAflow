@@ -45,17 +45,15 @@ public class StatusController : ControllerBase
     [Authorize(Policy = ControlPlaneCapabilities.Read)]
     public IActionResult GetStatus([FromServices] IConfiguration configuration)
     {
-        var port = GetPortFromConfig(configuration);
-
         if (HttpContext.User.Identity?.IsAuthenticated != true)
         {
             return Ok(new
             {
-                status = "running",
-                port
+                status = "running"
             });
         }
 
+        var port = GetPortFromConfig(configuration);
         _clientRegistry.PruneExpired(ClientExpiryMinutes);
 
         return Ok(new

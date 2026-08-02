@@ -19,6 +19,9 @@ using Xamarin.Android.Net;
 /// </summary>
 public sealed class PinnedRemoteControlTransport : IRemoteControlTransport, IRemoteControlHttpClientFactory
 {
+    internal const string ClientReleaseHeaderName = "X-MOBAflow-Client-Release";
+    internal static string ClientRelease { get; } =
+        $"MOBAsmart {typeof(PinnedRemoteControlTransport).Assembly.GetName().Version?.ToString(3) ?? "unknown"}";
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     public async Task<RemotePairingSubmissionResult> SubmitPairingAsync(
@@ -117,11 +120,13 @@ public sealed class PinnedRemoteControlTransport : IRemoteControlTransport, IRem
             throw new ArgumentException("An HTTPS port and certificate fingerprint are required.", nameof(endpoint));
         }
 
-        return new HttpClient(CreateHandler(endpoint), disposeHandler: true)
+        var client = new HttpClient(CreateHandler(endpoint), disposeHandler: true)
         {
             BaseAddress = new UriBuilder(Uri.UriSchemeHttps, endpoint.IpAddress, endpoint.HttpsPort.Value).Uri,
             Timeout = TimeSpan.FromSeconds(10)
         };
+        client.DefaultRequestHeaders.TryAddWithoutValidation(ClientReleaseHeaderName, ClientRelease);
+        return client;
     }
 
     public HttpMessageHandler CreateHandler(MobApiDiscoveryEndpoint endpoint)

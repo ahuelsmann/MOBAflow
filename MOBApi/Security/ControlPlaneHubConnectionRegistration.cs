@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-using System.Globalization;
-using System.Security.Claims;
 using Microsoft.AspNetCore.SignalR;
 using Moba.MOBApi.Service;
+using System.Globalization;
+using System.Security.Claims;
 
 namespace Moba.MOBApi.Security;
 
@@ -18,7 +18,7 @@ public interface IControlPlaneHubConnectionRegistry
     void RegisterAuthenticated(HubCallerContext context);
 
     /// <summary>
-    /// Records an authenticated runtime-remote presence.
+    /// Records a runtime-remote presence. During the migration window, this may be a legacy anonymous client.
     /// </summary>
     void RegisterRemote(HubCallerContext context, string credentialId);
 
