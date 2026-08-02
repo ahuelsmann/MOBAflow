@@ -28,6 +28,13 @@ public interface IControlPlaneHubConnectionRegistry
     void Unregister(HubCallerContext context);
 }
 
+/// <summary>
+/// Groups the two security services used together by <see cref="Hubs.RuntimeHub"/>.
+/// </summary>
+public sealed record RuntimeHubSecurityServices(
+    IControlPlaneHubConnectionRegistry ConnectionRegistry,
+    ICompatibilityReadMigration ReadMigration);
+
 internal sealed class ControlPlaneHubConnectionRegistry(
     IRuntimeRemoteRegistry remoteRegistry,
     IControlPlaneConnectionRevoker connectionRevoker,

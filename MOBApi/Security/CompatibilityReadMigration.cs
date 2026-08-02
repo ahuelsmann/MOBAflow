@@ -635,7 +635,11 @@ internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration, 
         {
             _rollbackTimer?.Dispose();
             _rollbackTimer = _timeProvider.CreateTimer(
-                static state => ((CompatibilityReadMigration)state!).OnRollbackExpired(),
+                static state =>
+                {
+                    ArgumentNullException.ThrowIfNull(state);
+                    ((CompatibilityReadMigration)state).OnRollbackExpired();
+                },
                 this,
                 rollbackExpiresAt.Value - now,
                 Timeout.InfiniteTimeSpan);

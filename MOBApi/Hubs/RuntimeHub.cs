@@ -34,17 +34,17 @@ public sealed class RuntimeHub : Hub
         IRuntimeHostRegistry hostRegistry,
         IRuntimeBroadcastMetrics broadcastMetrics,
         IRuntimeCommandQueue commandQueue,
-        IControlPlaneHubConnectionRegistry connectionRegistry,
-        ICompatibilityReadMigration readMigration,
+        RuntimeHubSecurityServices securityServices,
         IHostCredentialService? hostCredentialService = null)
     {
+        ArgumentNullException.ThrowIfNull(securityServices);
         _snapshotCache = snapshotCache;
         _solutionCache = solutionCache;
         _hostRegistry = hostRegistry;
         _broadcastMetrics = broadcastMetrics;
         _commandQueue = commandQueue;
-        _connectionRegistry = connectionRegistry;
-        _readMigration = readMigration;
+        _connectionRegistry = securityServices.ConnectionRegistry;
+        _readMigration = securityServices.ReadMigration;
         _hostCredentialService = hostCredentialService;
     }
 

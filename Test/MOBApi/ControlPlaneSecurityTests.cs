@@ -1136,8 +1136,9 @@ internal sealed partial class ControlPlaneSecurityTests
             new Mock<IRuntimeHostRegistry>().Object,
             new Mock<IRuntimeBroadcastMetrics>().Object,
             new Mock<IRuntimeCommandQueue>().Object,
-            new Mock<IControlPlaneHubConnectionRegistry>().Object,
-            migration)
+            new RuntimeHubSecurityServices(
+                new Mock<IControlPlaneHubConnectionRegistry>().Object,
+                migration))
         {
             Context = callerContext.Object,
             Clients = clients.Object,
