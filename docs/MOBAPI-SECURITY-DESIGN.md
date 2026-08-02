@@ -476,6 +476,9 @@ This document and its issue plan are delivered. Runtime behavior is unchanged.
   `client_upgrade_required` reason instead of silently restoring anonymous access.
 - Pairing readiness and the migration gate are visible before anonymous reads are disabled for
   upgraded installations.
+- The host-only `GET /api/control-plane/security/compatibility` endpoint combines bounded,
+  process-local outcome counters with the persisted migration status. It is an operator view over
+  the same protected gate and cannot enable or roll back anonymous access by itself.
 
 ### Phase 5: Remove legacy access
 

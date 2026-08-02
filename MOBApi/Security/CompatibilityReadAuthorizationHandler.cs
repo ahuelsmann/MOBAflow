@@ -110,7 +110,7 @@ internal sealed class LiveCapabilityAuthorizationHandler
             : null;
     }
 
-    private static bool HasPresentedCredential(HttpContext context)
+    internal static bool HasPresentedCredential(HttpContext context)
     {
         if (!string.IsNullOrWhiteSpace(context.Request.Headers[HeaderNames.Authorization].ToString()))
             return true;

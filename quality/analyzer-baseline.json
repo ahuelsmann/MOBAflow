@@ -2797,104 +2797,6 @@
     {
       "project": "MOBApi",
       "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "MOBApi/Security/CompatibilityReadAuthorizationHandler.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBApi",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "MOBApi/Security/CompatibilityReadAuthorizationResultHandler.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBApi",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "MOBApi/Security/CompatibilityReadMigration.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBApi",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "MOBApi/Security/CompatibilityReadStartupReporter.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBApi",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "MOBApi/Security/ControlPlaneAccessTokenService.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBApi",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "MOBApi/Security/ControlPlaneAuthenticationHandler.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBApi",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "MOBApi/Security/ControlPlaneConnectionRevoker.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBApi",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "MOBApi/Security/ControlPlaneHubConnectionRegistration.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBApi",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "MOBApi/Security/CredentialRegistry.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBApi",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "MOBApi/Security/GitHubIssueEvidenceVerifier.cs",
-      "count": 2
-    },
-    {
-      "project": "MOBApi",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "MOBApi/Security/HostCredentialService.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBApi",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "MOBApi/Security/PairingService.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBApi",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "MOBApi/Security/ServerIdentityProvider.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBApi",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "MOBApi/Service/UdpDiscoveryService.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBApi",
-      "targetFramework": "net10.0",
       "ruleId": "CA1819",
       "path": "MOBApi/Security/HostCredentialService.cs",
       "count": 1
@@ -2912,13 +2814,6 @@
       "ruleId": "CA1848",
       "path": "MOBApi/Service/UdpDiscoveryService.cs",
       "count": 3
-    },
-    {
-      "project": "MOBApi",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1852",
-      "path": "MOBApi/Service/UdpDiscoveryService.cs",
-      "count": 1
     },
     {
       "project": "MOBApi",
@@ -8995,13 +8890,6 @@
       "ruleId": "NUnit2056",
       "path": "Test/MOBApi/HostCredentialServiceTests.cs",
       "count": 4
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/MOBApi/PhotosControllerTests.cs",
-      "count": 1
     },
     {
       "project": "Test",

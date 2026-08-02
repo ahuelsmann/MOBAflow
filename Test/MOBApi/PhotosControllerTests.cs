@@ -9,21 +9,18 @@ namespace Moba.Test.MOBApi;
 internal sealed class PhotosControllerTests
 {
     [Test]
-    public void Health_ReturnsOnlyStaticReachabilityMetadata()
+    public void Health_ExposesOnlyMinimalReachability()
     {
-        var result = new PhotosController().Health() as OkObjectResult;
+        var controller = new PhotosController();
 
-        Assert.That(result, Is.Not.Null);
-        using var document = JsonDocument.Parse(JsonSerializer.Serialize(result!.Value));
-        var root = document.RootElement;
-        Assert.Multiple(() =>
+        var result = (OkObjectResult)controller.Health();
+        var body = JsonSerializer.SerializeToElement(result.Value);
+
+        using (Assert.EnterMultipleScope())
         {
-            Assert.That(root.GetProperty("status").GetString(), Is.EqualTo("healthy"));
-            Assert.That(root.TryGetProperty("service", out _), Is.True);
-            Assert.That(root.TryGetProperty("version", out _), Is.False);
-            Assert.That(root.TryGetProperty("instanceId", out _), Is.False);
-            Assert.That(root.TryGetProperty("port", out _), Is.False);
-        });
+            Assert.That(body.EnumerateObject().Count(), Is.EqualTo(1));
+            Assert.That(body.GetProperty("status").GetString(), Is.EqualTo("healthy"));
+        }
     }
 
     [Test]

@@ -14,12 +14,69 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Channels;
 
 [TestFixture]
 [NonParallelizable]
 internal sealed class AuthenticatedControlPlaneProcessTests
 {
+    [Test]
+    [CancelAfter(120_000)]
+    public async Task CompatibilityStatus_Should_BeHostOnlyAndExposeBoundedEvidence()
+    {
+        var storageDirectory = Path.Combine(
+            Path.GetTempPath(),
+            "MOBAflow",
+            "authenticated-control-plane-tests",
+            Guid.NewGuid().ToString("N"));
+        var httpPort = GetAvailablePort();
+        var httpsPort = GetAvailablePort();
+        while (httpsPort == httpPort)
+            httpsPort = GetAvailablePort();
+
+        Directory.CreateDirectory(storageDirectory);
+        try
+        {
+            var server = await MobaApiProcess
+                .StartAsync(storageDirectory, httpPort, httpsPort)
+                .ConfigureAwait(false);
+            await using (server.ConfigureAwait(false))
+            {
+                using var compatibilityRead = await server
+                    .SendAnonymousAsync(HttpMethod.Get, "api/runtime/snapshot")
+                    .ConfigureAwait(false);
+                using var anonymousStatus = await server
+                    .SendAnonymousAsync(HttpMethod.Get, "api/control-plane/security/compatibility")
+                    .ConfigureAwait(false);
+                using var hostStatus = await server
+                    .SendHostAsync(HttpMethod.Get, "api/control-plane/security/compatibility")
+                    .ConfigureAwait(false);
+                var responseBody = await hostStatus.Content.ReadAsStringAsync().ConfigureAwait(false);
+                using var body = JsonDocument.Parse(responseBody);
+
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(compatibilityRead.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+                    Assert.That(anonymousStatus.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+                    Assert.That(hostStatus.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+                    Assert.That(responseBody, Does.Not.Contain("token").IgnoreCase);
+                    Assert.That(responseBody, Does.Not.Contain("snapshot").IgnoreCase);
+                    Assert.That(responseBody, Does.Not.Contain("hardware").IgnoreCase);
+                    Assert.That(
+                        body.RootElement.GetProperty("telemetry").GetProperty("outcomes").GetArrayLength(),
+                        Is.GreaterThanOrEqualTo(1));
+                    Assert.That(body.RootElement.TryGetProperty("readiness", out _), Is.True);
+                }
+            }
+        }
+        finally
+        {
+            if (Directory.Exists(storageDirectory))
+                Directory.Delete(storageDirectory, recursive: true);
+        }
+    }
+
     [Test]
     [CancelAfter(120_000)]
     public async Task AuthenticatedReads_ShouldRemainEquivalent_AfterReconnectAndServerRestart()
@@ -264,6 +321,18 @@ internal sealed class AuthenticatedControlPlaneProcessTests
             return await response.Content.ReadAsStringAsync();
         }
 
+        public async Task<HttpResponseMessage> SendAnonymousAsync(HttpMethod method, string path)
+        {
+            using var request = CreateRequest(method, path, accessToken: null);
+            return await _client.SendAsync(request).ConfigureAwait(false);
+        }
+
+        public async Task<HttpResponseMessage> SendHostAsync(HttpMethod method, string path)
+        {
+            using var request = CreateRequest(method, path, HostToken.AccessToken);
+            return await _client.SendAsync(request).ConfigureAwait(false);
+        }
+
         public Task<SignalRReconnectProbe> CreateSignalRReconnectProbeAsync(string accessToken)
         {
             return SignalRReconnectProbe.StartAsync(
@@ -308,7 +377,7 @@ internal sealed class AuthenticatedControlPlaneProcessTests
 
                 try
                 {
-                    using var response = await client.GetAsync("api/status", cancellationToken);
+                    using var response = await client.GetAsync("api/photos/health", cancellationToken);
                     if (response.IsSuccessStatusCode)
                         return;
                 }

@@ -125,6 +125,14 @@ public sealed class ControlPlaneSecurityController : ControllerBase
         _readMigration = readMigration;
     }
 
+    [HttpGet("compatibility")]
+    [ProducesResponseType(typeof(CompatibilityStatusResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetCompatibilityStatus(
+        CancellationToken cancellationToken) =>
+        Ok(new CompatibilityStatusResponse(
+            await _readMigration.GetTelemetryAsync(cancellationToken).ConfigureAwait(false),
+            await _readMigration.GetStatusAsync(cancellationToken).ConfigureAwait(false)));
+
     [HttpPost("pairing/open")]
     public async Task<ActionResult<PairingWindowResult>> OpenPairing(
         OpenPairingRequest request,
