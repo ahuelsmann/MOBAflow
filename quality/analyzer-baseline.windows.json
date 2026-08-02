@@ -3547,6 +3547,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/MOBApi/ControlPlaneSecurityTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/MOBApi/HostCredentialServiceTests.cs",
       "count": 1
     },
@@ -4730,6 +4737,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2000",
+      "path": "Test/MOBApi/ControlPlaneSecurityTests.cs",
+      "count": 8
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA2000",
       "path": "Test/SharedUI/MauiViewModelControlTabTests.cs",
       "count": 26
     },
@@ -5095,7 +5109,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2007",
       "path": "Test/MOBApi/ControlPlaneSecurityTests.cs",
-      "count": 62
+      "count": 192
     },
     {
       "project": "Test",
@@ -5326,7 +5340,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CsWinRT1028",
       "path": "Test/MOBApi/ControlPlaneSecurityTests.cs",
-      "count": 1
+      "count": 3
     },
     {
       "project": "Test",
@@ -5992,6 +6006,13 @@
       "ruleId": "NUnit2045",
       "path": "Test/MOBAflow/WinUiShutdownCoordinatorTests.cs",
       "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "NUnit2045",
+      "path": "Test/MOBApi/ControlPlaneSecurityTests.cs",
+      "count": 5
     },
     {
       "project": "Test",
@@ -6845,7 +6866,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2056",
       "path": "Test/MOBApi/ControlPlaneSecurityTests.cs",
-      "count": 11
+      "count": 25
     },
     {
       "project": "Test",
@@ -6853,6 +6874,13 @@
       "ruleId": "NUnit2056",
       "path": "Test/MOBApi/HostCredentialServiceTests.cs",
       "count": 4
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "NUnit2056",
+      "path": "Test/MOBApi/PhotosControllerTests.cs",
+      "count": 1
     },
     {
       "project": "Test",

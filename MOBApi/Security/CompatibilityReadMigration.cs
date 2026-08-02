@@ -29,6 +29,16 @@ public enum CompatibilityReadTransport
     SignalR
 }
 
+internal static class CompatibilityReadTransportNames
+{
+    internal static string GetProtocolName(CompatibilityReadTransport transport) => transport switch
+    {
+        CompatibilityReadTransport.Rest => "rest",
+        CompatibilityReadTransport.SignalR => "signalr",
+        _ => throw new ArgumentOutOfRangeException(nameof(transport))
+    };
+}
+
 /// <summary>
 /// Defines the non-secret protocol header used to bind readiness evidence to a stable client release.
 /// </summary>
@@ -136,12 +146,19 @@ public interface ICompatibilityReadMigration
     Task<CompatibilityReadMigrationStatus> GetStatusAsync(CancellationToken cancellationToken = default);
 }
 
-internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration
+internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration, IDisposable
 {
     private const string StorePurpose = "MOBApi.ControlPlane.CompatibilityReadMigration.v1";
     private const string EnforcementMarkerPurpose = "MOBApi.ControlPlane.CompatibilityReadMigration.EnforcementMarker.v1";
     private const int MaximumPseudonymousClients = 64;
-    private static readonly EventId RollbackActivatedEvent = new(5002, "CompatibilityReadRollbackActivated");
+    private static readonly Action<ILogger, Exception?> LogEvidencePersistenceFailure = LoggerMessage.Define(
+        LogLevel.Warning,
+        new EventId(5003, "CompatibilityReadEvidencePersistenceFailed"),
+        "Authenticated read evidence could not be persisted. The read remains authorized, but the migration gate was not advanced.");
+    private static readonly Action<ILogger, TimeSpan, DateTimeOffset?, Exception?> LogRollbackActivated = LoggerMessage.Define<TimeSpan, DateTimeOffset?>(
+        LogLevel.Warning,
+        new EventId(5002, "CompatibilityReadRollbackActivated"),
+        "The anonymous read-only rollback was activated for {RollbackDuration} and expires at {RollbackExpiresAt}. Anonymous control and administration remain disabled.");
     private static readonly TimeSpan RequiredObservationWindow = TimeSpan.FromDays(14);
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly List<CompatibilityReadOutcomeCounter> _outcomeCounts = [];
@@ -319,10 +336,7 @@ internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration
             }
             catch (Exception exception) when (exception is not OperationCanceledException)
             {
-                _logger.LogWarning(
-                    new EventId(5003, "CompatibilityReadEvidencePersistenceFailed"),
-                    exception,
-                    "Authenticated read evidence could not be persisted. The read remains authorized, but the migration gate was not advanced.");
+                LogEvidencePersistenceFailure(_logger, exception);
             }
         }
         finally
@@ -475,11 +489,7 @@ internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration
             updated.RollbackExpiresAt = _timeProvider.GetUtcNow().Add(duration);
             await SaveDocumentAsync(updated, cancellationToken).ConfigureAwait(false);
             _metrics.SetRollbackExpiry(updated.RollbackExpiresAt);
-            _logger.LogWarning(
-                RollbackActivatedEvent,
-                "The anonymous read-only rollback was activated for {RollbackDuration} and expires at {RollbackExpiresAt}. Anonymous control and administration remain disabled.",
-                duration,
-                updated.RollbackExpiresAt);
+            LogRollbackActivated(_logger, duration, updated.RollbackExpiresAt, null);
             return true;
         }
         finally
@@ -726,6 +736,12 @@ internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration
     private sealed class CompatibilityReadEnforcementMarker
     {
         public DateTimeOffset? AuthenticatedReadsEnforcedAt { get; set; }
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        _gate.Dispose();
     }
 
     private sealed record EvidenceValidationSnapshot(

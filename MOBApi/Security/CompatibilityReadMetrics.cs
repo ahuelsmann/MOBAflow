@@ -40,7 +40,7 @@ public sealed class CompatibilityReadMetrics : IDisposable
     {
         _readOutcomes.Add(
             1,
-            new KeyValuePair<string, object?>("transport", transport.ToString().ToLowerInvariant()),
+            new KeyValuePair<string, object?>("transport", CompatibilityReadTransportNames.GetProtocolName(transport)),
             new KeyValuePair<string, object?>("outcome", outcome.ToString()));
     }
 

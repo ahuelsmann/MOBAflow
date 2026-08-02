@@ -7,7 +7,10 @@ namespace Moba.MOBApi.Security;
 /// </summary>
 internal sealed class CompatibilityReadStartupReporter : IHostedService
 {
-    private static readonly EventId RollbackActiveEvent = new(5001, "CompatibilityReadRollbackActive");
+    private static readonly Action<ILogger, DateTimeOffset?, Exception?> LogRollbackActive = LoggerMessage.Define<DateTimeOffset?>(
+        LogLevel.Warning,
+        new EventId(5001, "CompatibilityReadRollbackActive"),
+        "The anonymous read-only rollback is active until {RollbackExpiresAt}. Anonymous control and administration remain disabled.");
     private readonly ILogger<CompatibilityReadStartupReporter> _logger;
     private readonly CompatibilityReadMetrics _metrics;
     private readonly ICompatibilityReadMigration _migration;
@@ -32,10 +35,7 @@ internal sealed class CompatibilityReadStartupReporter : IHostedService
         if (status.RollbackExpiresAt <= _timeProvider.GetUtcNow())
             return;
 
-        _logger.LogWarning(
-            RollbackActiveEvent,
-            "The anonymous read-only rollback is active until {RollbackExpiresAt}. Anonymous control and administration remain disabled.",
-            status.RollbackExpiresAt);
+        LogRollbackActive(_logger, status.RollbackExpiresAt, null);
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

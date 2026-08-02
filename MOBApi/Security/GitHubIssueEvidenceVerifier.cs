@@ -33,7 +33,7 @@ internal sealed class GitHubIssueEvidenceVerifier(IHttpClientFactory httpClientF
         var commentId = evidenceUri.Fragment["#issuecomment-".Length..];
         using var response = await httpClientFactory
             .CreateClient(HttpClientName)
-            .GetAsync($"repos/ahuelsmann/MOBAflow/issues/comments/{commentId}", cancellationToken)
+            .GetAsync(new Uri($"repos/ahuelsmann/MOBAflow/issues/comments/{commentId}", UriKind.Relative), cancellationToken)
             .ConfigureAwait(false);
         if (response.StatusCode == HttpStatusCode.NotFound)
             throw new InvalidOperationException("The referenced issue #50 evidence comment does not exist.");

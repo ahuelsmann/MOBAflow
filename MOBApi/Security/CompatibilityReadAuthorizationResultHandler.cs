@@ -31,7 +31,7 @@ internal sealed class CompatibilityReadAuthorizationResultHandler : IAuthorizati
                     title = "Client upgrade required",
                     status = StatusCodes.Status401Unauthorized,
                     code = "client_upgrade_required",
-                    transport = upgradeRequired.Transport.ToString().ToLowerInvariant()
+                    transport = CompatibilityReadTransportNames.GetProtocolName(upgradeRequired.Transport)
                 },
                 options: null,
                 contentType: "application/problem+json",
