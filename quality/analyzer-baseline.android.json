@@ -2137,6 +2137,223 @@
       "count": 1
     },
     {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1001",
+      "path": "MOBAdisplay/Rendering/ClockRenderer.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1001",
+      "path": "MOBAdisplay/Rendering/GridRenderer.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1008",
+      "path": "MOBAdisplay/Protocol/DisplayProtocol.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1008",
+      "path": "MOBAdisplay/Protocol/DisplayProtocolPayloads.cs",
+      "count": 2
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1014",
+      "path": "<no-location>",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1028",
+      "path": "MOBAdisplay/Protocol/DisplayProtocol.cs",
+      "count": 2
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1028",
+      "path": "MOBAdisplay/Protocol/DisplayProtocolPayloads.cs",
+      "count": 12
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "MOBAdisplay/Runtime/FrameLoopScheduler.cs",
+      "count": 2
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "MOBAdisplay/Transport/DisplayProtocolClient.cs",
+      "count": 2
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1036",
+      "path": "MOBAdisplay/Protocol/DisplayProtocolVersion.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1305",
+      "path": "MOBAdisplay/Rendering/SkiaFrameRenderer.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1416",
+      "path": "MOBAdisplay/BitmapToRgb565.cs",
+      "count": 3
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1700",
+      "path": "MOBAdisplay/Protocol/DisplayProtocolPayloads.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1707",
+      "path": "MOBAdisplay/Protocol/DisplayProtocol.cs",
+      "count": 7
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1711",
+      "path": "MOBAdisplay/Protocol/DisplayProtocol.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1711",
+      "path": "MOBAdisplay/Protocol/DisplayProtocolPayloads.cs",
+      "count": 5
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1814",
+      "path": "MOBAdisplay/Rendering/GridRenderer.cs",
+      "count": 3
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1814",
+      "path": "MOBAdisplay/Rendering/SkiaFrameRenderer.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1822",
+      "path": "MOBAdisplay/Rendering/ClockRenderer.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1822",
+      "path": "MOBAdisplay/Rendering/GridRenderer.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1849",
+      "path": "MOBAdisplay/Runtime/FrameLoopScheduler.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2208",
+      "path": "MOBAdisplay/Protocol/DisplayPayloadCodec.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2263",
+      "path": "MOBAdisplay/Protocol/DisplayPacketCodec.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2263",
+      "path": "MOBAdisplay/Protocol/DisplayPayloadCodec.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0060",
+      "path": "MOBAdisplay/Protocol/DisplayPayloadCodec.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "MOBAdisplay/Protocol/DisplayProtocolPacket.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "MOBAdisplay/Protocol/DisplayProtocolPayloads.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "MOBAdisplay/Runtime/FrameReadyEventArgs.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "MOBAdisplay/Runtime/FrameTransmissionCompletedEventArgs.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "MOBAdisplay/Transport/DisplayDatagramTransport.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0330",
+      "path": "MOBAdisplay/Protocol/DisplayIdentifierSequence.cs",
+      "count": 1
+    },
+    {
       "project": "MOBAsmart",
       "targetFramework": "net10.0-android",
       "ruleId": "CA1001",
@@ -3897,13 +4114,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0290",
-      "path": "SharedUI/ViewModel/DisplayViewModel.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0290",
       "path": "SharedUI/ViewModel/FunctionButtonViewModel.cs",
       "count": 1
     },
@@ -3989,13 +4199,6 @@
       "targetFramework": "net10.0",
       "ruleId": "IDE2002",
       "path": "SharedUI/ViewModel/SignalBoxPlanViewModel.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/DisplayViewModel.cs",
       "count": 1
     },
     {
