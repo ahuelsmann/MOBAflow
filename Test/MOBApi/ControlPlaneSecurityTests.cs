@@ -780,6 +780,39 @@ internal sealed partial class ControlPlaneSecurityTests
     }
 
     [Test]
+    public async Task ReadMigration_Should_PreserveRollback_WhenConcurrentEnforcementFinishesLater()
+    {
+        var verifier = new ConcurrentEnforcementEvidenceVerifier();
+        using var context = SecurityTestContext.Create(evidenceVerifier: verifier);
+        var migration = context.GetRequiredService<ICompatibilityReadMigration>();
+        await MakeReadMigrationReadyAsync(context, migration).ConfigureAwait(false);
+
+        var firstEnforcement = migration.EnableAuthenticatedReadsAsync();
+        await verifier.FirstEnforcementStarted.Task.WaitAsync(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        var secondEnforcement = migration.EnableAuthenticatedReadsAsync();
+        await verifier.SecondEnforcementStarted.Task.WaitAsync(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+
+        verifier.ReleaseFirstEnforcement.SetResult();
+        var firstResult = await firstEnforcement.ConfigureAwait(false);
+        var activationResult = await migration
+            .ActivateAnonymousReadRollbackAsync(TimeSpan.FromHours(24))
+            .ConfigureAwait(false);
+        var rollbackExpiresAt = (await migration.GetStatusAsync().ConfigureAwait(false)).RollbackExpiresAt;
+
+        verifier.ReleaseSecondEnforcement.SetResult();
+        var secondResult = await secondEnforcement.ConfigureAwait(false);
+        var finalStatus = await migration.GetStatusAsync().ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(firstResult, Is.True);
+            Assert.That(activationResult, Is.True);
+            Assert.That(secondResult, Is.False);
+            Assert.That(finalStatus.RollbackExpiresAt, Is.EqualTo(rollbackExpiresAt));
+        }
+    }
+
+    [Test]
     public async Task ReadMigration_Should_RevokeCompatibilityConnections_WhenEnforcedAndRollbackExpires()
     {
         var revoker = new CapturingCompatibilityReadConnectionRevoker();
@@ -829,9 +862,67 @@ internal sealed partial class ControlPlaneSecurityTests
         var registry = new ControlPlaneHubConnectionRegistry(
             new Mock<IRuntimeRemoteRegistry>().Object,
             new Mock<IControlPlaneConnectionRevoker>().Object,
-            compatibilityRevoker);
+            compatibilityRevoker,
+            new Mock<ICompatibilityReadMigration>().Object);
         registry.RegisterRemote(callerContext.Object, "legacy-client", isAnonymousCompatibility: true);
 
+        compatibilityRevoker.RevokeAll();
+
+        callerContext.Verify(candidate => candidate.Abort(), Times.Once);
+    }
+
+    [Test]
+    public async Task PhotoHub_Should_TrackAnonymousConnectionForCompatibilityRevocation()
+    {
+        var compatibilityRevoker = new CompatibilityReadConnectionRevoker();
+        var callerContext = new Mock<HubCallerContext>();
+        callerContext.SetupGet(candidate => candidate.ConnectionId).Returns("photo-connection-1");
+        callerContext.SetupGet(candidate => candidate.User).Returns(new ClaimsPrincipal(new ClaimsIdentity()));
+        var migration = new Mock<ICompatibilityReadMigration>();
+        migration.Setup(candidate => candidate.EvaluateAnonymousReadAsync(
+                CompatibilityReadTransport.SignalR,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CompatibilityReadDecision.AllowedCompatibility);
+        var registry = new ControlPlaneHubConnectionRegistry(
+            new Mock<IRuntimeRemoteRegistry>().Object,
+            new Mock<IControlPlaneConnectionRevoker>().Object,
+            compatibilityRevoker,
+            migration.Object);
+        using var hub = new PhotoHub(registry)
+        {
+            Context = callerContext.Object
+        };
+
+        await hub.OnConnectedAsync().ConfigureAwait(false);
+        compatibilityRevoker.RevokeAll();
+
+        callerContext.Verify(candidate => candidate.Abort(), Times.Once);
+    }
+
+    [Test]
+    public async Task PhotoHub_Should_AbortAnonymousConnection_WhenRevalidationFails()
+    {
+        var compatibilityRevoker = new CompatibilityReadConnectionRevoker();
+        var callerContext = new Mock<HubCallerContext>();
+        callerContext.SetupGet(candidate => candidate.ConnectionId).Returns("photo-connection-1");
+        callerContext.SetupGet(candidate => candidate.User).Returns(new ClaimsPrincipal(new ClaimsIdentity()));
+        callerContext.SetupGet(candidate => candidate.ConnectionAborted).Returns(CancellationToken.None);
+        var migration = new Mock<ICompatibilityReadMigration>();
+        migration.Setup(candidate => candidate.EvaluateAnonymousReadAsync(
+                CompatibilityReadTransport.SignalR,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CompatibilityReadDecision.UpgradeRequired);
+        var registry = new ControlPlaneHubConnectionRegistry(
+            new Mock<IRuntimeRemoteRegistry>().Object,
+            new Mock<IControlPlaneConnectionRevoker>().Object,
+            compatibilityRevoker,
+            migration.Object);
+        using var hub = new PhotoHub(registry)
+        {
+            Context = callerContext.Object
+        };
+
+        await hub.OnConnectedAsync().ConfigureAwait(false);
         compatibilityRevoker.RevokeAll();
 
         callerContext.Verify(candidate => candidate.Abort(), Times.Once);
@@ -857,6 +948,46 @@ internal sealed partial class ControlPlaneSecurityTests
                 await restarted.GetRequiredService<ICompatibilityReadMigration>()
                     .EvaluateAnonymousReadAsync(CompatibilityReadTransport.Rest),
                 Is.EqualTo(CompatibilityReadDecision.UpgradeRequired));
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+                Directory.Delete(root, true);
+        }
+    }
+
+    [Test]
+    public async Task ReadMigration_Should_NotRestoreConsumedRollback_WhenMigrationDocumentIsLost()
+    {
+        var root = SecurityTestContext.CreateTemporaryRoot();
+        try
+        {
+            bool enforcementEnabled;
+            bool rollbackActivated;
+            using (var first = SecurityTestContext.Create(root))
+            {
+                var migration = first.GetRequiredService<ICompatibilityReadMigration>();
+                await MakeReadMigrationReadyAsync(first, migration).ConfigureAwait(false);
+                enforcementEnabled = await migration.EnableAuthenticatedReadsAsync().ConfigureAwait(false);
+                rollbackActivated = await migration
+                    .ActivateAnonymousReadRollbackAsync(TimeSpan.FromHours(24))
+                    .ConfigureAwait(false);
+            }
+
+            File.Delete(Path.Combine(root, "store", "read-migration.dat"));
+            using var restarted = SecurityTestContext.Create(root);
+            var restartedMigration = restarted.GetRequiredService<ICompatibilityReadMigration>();
+
+            var restoredRollback = await restartedMigration
+                .ActivateAnonymousReadRollbackAsync(TimeSpan.FromHours(24))
+                .ConfigureAwait(false);
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(enforcementEnabled, Is.True);
+                Assert.That(rollbackActivated, Is.True);
+                Assert.That(restoredRollback, Is.False);
+            }
         }
         finally
         {
@@ -939,6 +1070,28 @@ internal sealed partial class ControlPlaneSecurityTests
         Assert.That(
             await migration.EvaluateAnonymousReadAsync(CompatibilityReadTransport.Rest),
             Is.EqualTo(CompatibilityReadDecision.UpgradeRequired));
+    }
+
+    [Test]
+    public async Task ReadMigration_Should_RevokeConnections_WhenDetailedEnforcementPersistenceFails()
+    {
+        var revoker = new CapturingCompatibilityReadConnectionRevoker();
+        using var context = SecurityTestContext.Create(connectionRevoker: revoker);
+        var migration = context.GetRequiredService<ICompatibilityReadMigration>();
+        await MakeReadMigrationReadyAsync(context, migration).ConfigureAwait(false);
+        var migrationPath = Path.Combine(context.Root, "store", "read-migration.dat");
+        File.Delete(migrationPath);
+        Directory.CreateDirectory(migrationPath);
+
+        var persistenceFailure = Assert.CatchAsync(() => migration.EnableAuthenticatedReadsAsync());
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(
+                persistenceFailure,
+                Is.InstanceOf<IOException>().Or.InstanceOf<UnauthorizedAccessException>());
+            Assert.That(revoker.RevocationCount, Is.EqualTo(1));
+        }
     }
 
     [Test]
@@ -1130,15 +1283,18 @@ internal sealed partial class ControlPlaneSecurityTests
                 It.IsAny<string>(),
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+        var connectionRegistry = new ControlPlaneHubConnectionRegistry(
+            new Mock<IRuntimeRemoteRegistry>().Object,
+            new Mock<IControlPlaneConnectionRevoker>().Object,
+            new CompatibilityReadConnectionRevoker(),
+            migration);
         using var hub = new RuntimeHub(
             new Mock<IRuntimeSnapshotCache>().Object,
             new Mock<ISolutionCache>().Object,
             new Mock<IRuntimeHostRegistry>().Object,
             new Mock<IRuntimeBroadcastMetrics>().Object,
             new Mock<IRuntimeCommandQueue>().Object,
-            new RuntimeHubSecurityServices(
-                new Mock<IControlPlaneHubConnectionRegistry>().Object,
-                migration))
+            connectionRegistry)
         {
             Context = callerContext.Object,
             Clients = clients.Object,
@@ -1154,6 +1310,46 @@ internal sealed partial class ControlPlaneSecurityTests
 
             var telemetry = await migration.GetTelemetryAsync().ConfigureAwait(false);
             Assert.That(telemetry.Outcomes.Sum(outcome => outcome.Count), Is.EqualTo(expectedOutcomeCount));
+        }
+    }
+
+    [Test]
+    public async Task RuntimeHub_Should_NotJoinRemoteGroup_WhenAnonymousRevalidationFails()
+    {
+        using var context = SecurityTestContext.Create();
+        var migration = context.GetRequiredService<ICompatibilityReadMigration>();
+        await MakeReadMigrationReadyAsync(context, migration).ConfigureAwait(false);
+        Assert.That(await migration.EnableAuthenticatedReadsAsync().ConfigureAwait(false), Is.True);
+        var callerContext = new Mock<HubCallerContext>();
+        callerContext.SetupGet(candidate => candidate.ConnectionId).Returns("anonymous-connection-1");
+        callerContext.SetupGet(candidate => candidate.ConnectionAborted).Returns(CancellationToken.None);
+        var connectionRegistry = new Mock<IControlPlaneHubConnectionRegistry>();
+        connectionRegistry.Setup(registry => registry.EvaluateAnonymousReadAsync(
+                CompatibilityReadTransport.SignalR,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CompatibilityReadDecision.UpgradeRequired);
+        var groups = new Mock<IGroupManager>();
+        using var hub = new RuntimeHub(
+            new Mock<IRuntimeSnapshotCache>().Object,
+            new Mock<ISolutionCache>().Object,
+            new Mock<IRuntimeHostRegistry>().Object,
+            new Mock<IRuntimeBroadcastMetrics>().Object,
+            new Mock<IRuntimeCommandQueue>().Object,
+            connectionRegistry.Object)
+        {
+            Context = callerContext.Object,
+            Groups = groups.Object
+        };
+
+        Assert.ThrowsAsync<HubException>(() => hub.RegisterRemote("legacy-client"));
+
+        using (Assert.EnterMultipleScope())
+        {
+            groups.Verify(manager => manager.AddToGroupAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()), Times.Never);
+            connectionRegistry.Verify(registry => registry.Unregister(callerContext.Object), Times.Once);
         }
     }
 
@@ -1802,6 +1998,39 @@ internal sealed partial class ControlPlaneSecurityTests
         {
             Started.TrySetResult();
             await Release.Task.WaitAsync(cancellationToken);
+        }
+    }
+
+    private sealed class ConcurrentEnforcementEvidenceVerifier : ICompatibilityReadEvidenceVerifier
+    {
+        private int _verificationCount;
+
+        public TaskCompletionSource FirstEnforcementStarted { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public TaskCompletionSource SecondEnforcementStarted { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public TaskCompletionSource ReleaseFirstEnforcement { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public TaskCompletionSource ReleaseSecondEnforcement { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public async Task VerifyAsync(
+            Uri evidenceUri,
+            string stableClientRelease,
+            DateTimeOffset observationCompletedAt,
+            CancellationToken cancellationToken)
+        {
+            var call = Interlocked.Increment(ref _verificationCount);
+            if (call == 1)
+                return;
+
+            var started = call == 2 ? FirstEnforcementStarted : SecondEnforcementStarted;
+            var release = call == 2 ? ReleaseFirstEnforcement : ReleaseSecondEnforcement;
+            started.TrySetResult();
+            await release.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 

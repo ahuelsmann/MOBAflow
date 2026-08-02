@@ -25,7 +25,6 @@ public sealed class RuntimeHub : Hub
     private readonly IRuntimeBroadcastMetrics _broadcastMetrics;
     private readonly IRuntimeCommandQueue _commandQueue;
     private readonly IControlPlaneHubConnectionRegistry _connectionRegistry;
-    private readonly ICompatibilityReadMigration _readMigration;
     private readonly IHostCredentialService? _hostCredentialService;
 
     public RuntimeHub(
@@ -34,23 +33,21 @@ public sealed class RuntimeHub : Hub
         IRuntimeHostRegistry hostRegistry,
         IRuntimeBroadcastMetrics broadcastMetrics,
         IRuntimeCommandQueue commandQueue,
-        RuntimeHubSecurityServices securityServices,
+        IControlPlaneHubConnectionRegistry connectionRegistry,
         IHostCredentialService? hostCredentialService = null)
     {
-        ArgumentNullException.ThrowIfNull(securityServices);
         _snapshotCache = snapshotCache;
         _solutionCache = solutionCache;
         _hostRegistry = hostRegistry;
         _broadcastMetrics = broadcastMetrics;
         _commandQueue = commandQueue;
-        _connectionRegistry = securityServices.ConnectionRegistry;
-        _readMigration = securityServices.ReadMigration;
+        _connectionRegistry = connectionRegistry;
         _hostCredentialService = hostCredentialService;
     }
 
     public override Task OnConnectedAsync()
     {
-        _connectionRegistry.RegisterAuthenticated(Context);
+        _connectionRegistry.RegisterReadConnection(Context);
         return base.OnConnectedAsync();
     }
 
@@ -78,11 +75,10 @@ public sealed class RuntimeHub : Hub
             throw new HubException("ClientId is required for a compatibility read connection.");
         }
 
-        await Groups.AddToGroupAsync(Context.ConnectionId, RuntimeRemoteGroup).ConfigureAwait(false);
         _connectionRegistry.RegisterRemote(Context, presenceId, isAnonymousCompatibility);
 
         if (isAnonymousCompatibility &&
-            await _readMigration.EvaluateAnonymousReadAsync(
+            await _connectionRegistry.EvaluateAnonymousReadAsync(
                     CompatibilityReadTransport.SignalR,
                     Context.ConnectionAborted)
                 .ConfigureAwait(false) == CompatibilityReadDecision.UpgradeRequired)
@@ -90,6 +86,8 @@ public sealed class RuntimeHub : Hub
             _connectionRegistry.Unregister(Context);
             throw new HubException("A current authenticated client is required for read access.");
         }
+
+        await Groups.AddToGroupAsync(Context.ConnectionId, RuntimeRemoteGroup).ConfigureAwait(false);
 
         if (_snapshotCache.TryGet(out var entry))
         {
@@ -107,7 +105,7 @@ public sealed class RuntimeHub : Hub
 
         if (!string.IsNullOrWhiteSpace(credentialId))
         {
-            await _readMigration.RecordAuthenticatedReadAsync(
+            await _connectionRegistry.RecordAuthenticatedReadAsync(
                     credentialId,
                     CompatibilityReadTransport.SignalR,
                     Context.GetHttpContext()?.Request.Headers[CompatibilityReadHeaders.ClientRelease].FirstOrDefault(),

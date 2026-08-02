@@ -26,7 +26,6 @@ public static class ControlPlaneSecurityServiceCollectionExtensions
         services.AddSingleton<IControlPlaneConnectionRevoker, ControlPlaneConnectionRevoker>();
         services.AddSingleton<ICompatibilityReadConnectionRevoker, CompatibilityReadConnectionRevoker>();
         services.AddSingleton<IControlPlaneHubConnectionRegistry, ControlPlaneHubConnectionRegistry>();
-        services.AddSingleton<RuntimeHubSecurityServices>();
         services.AddHttpClient(GitHubIssueEvidenceVerifier.HttpClientName, client =>
         {
             client.BaseAddress = new Uri("https://api.github.com/");
