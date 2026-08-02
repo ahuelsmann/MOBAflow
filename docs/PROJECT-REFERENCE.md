@@ -220,6 +220,8 @@ Vendor-specific geometry must not be added to the neutral renderer.
 The display library renders labels and clocks into RGB565 frames. The registered
 `UdpDisplayFrameSender` opens a `DisplayProtocolFrameSession`, negotiates device
 capabilities and sends each frame as one atomic version-1 transaction.
+`UdpDisplayDeviceClient` owns the interactive diagnostic session used by the
+desktop Display page.
 
 ```text
 Display configuration
@@ -234,9 +236,12 @@ The session validates dimensions, pixel format, rotation and atomic-frame
 capabilities before sending frame data. Regions respect the negotiated payload
 limit and carry packet ordering metadata; completion is accepted only after the
 firmware has assembled and CRC-validated the full frame. See
-`MOBAdisplay/docs/protocol.md`. MOBAflow registers the sender and scheduler, but
-the current Display page is a model/resolution selector and no production
-destination-display workflow service is wired into the default action handler.
+`MOBAdisplay/docs/protocol.md`. MOBAflow stores one explicit IP address and UDP
+port in user settings. The Display page validates that endpoint, negotiates live
+capabilities, reports health, and gates test and optional commands against the
+current session. It does not persist capabilities, identities, session IDs, or
+credentials. No production destination-display workflow service is wired into
+the default action handler yet.
 
 `MOBAdisplay/esp32/src/main.cpp` implements the current 240x280 receiver: Wi-Fi
 setup/status endpoints, a length-safe version-1 parser, bounded replay

@@ -15,6 +15,57 @@
 
 ## Implementation progress
 
+Status on 2026-08-02:
+
+- PR #109 is merged in `github/main` at `0975315715f2f107b0c68e058dfdc9d4fdb1a685`.
+  WP5 through the software and documentation portions of WP7 are implemented
+  on `codex/issue-36-wp5` from that baseline. MOBAflow has not been launched.
+- WP5 now persists only one configured ESP32 IP address and UDP port. The
+  display client negotiates a live session, projects protocol, firmware,
+  identity, capability, health, and last-result diagnostics, and invalidates
+  capabilities after endpoint changes, failed renegotiation, timeout,
+  transport failure, disposal, or `WrongSession`. Standard and optional
+  commands remain fail-closed until the live capabilities authorize them.
+- The Display page uses English, capability-driven WinUI controls and
+  `ThemeResource` styling. Fixed Waveshare model selectors and their obsolete
+  configuration controls are removed. ViewModel and endpoint/client tests
+  cover unconfigured, invalid, offline, unsupported, stale, reboot, and
+  successful operation paths without an ESP32.
+- WP6 adds a permanent `display-protocol` GitHub Actions job for the legacy
+  cutover invariant, .NET conformance tests, native PlatformIO tests, the
+  ESP32-S3 build, firmware SHA-256 recording, and firmware artifact upload.
+  `scripts/Test-DisplayProtocolCutover.ps1` passes locally and prevents the
+  removed legacy sender, parser, metadata, and synchronous frame paths from
+  returning.
+- The final full .NET runs pass 1,591 net10.0 tests with four existing skips
+  (1,595 total) and all 1,644 Windows tests. The focused WP5 suite passes all
+  53 tests. The MOBAflow FastDebug build passes with zero warnings and errors.
+  The complete native matrix passes all 47 tests, and the ESP32-S3 release
+  build succeeds.
+- The cross-platform analyzer baseline matches 4,156 diagnostics in 1,354
+  groups, and the Windows baseline matches 2,848 diagnostics in 1,025 groups.
+  The reviewed baseline refresh removes resolved warnings and records only two
+  new `CA1812` false positives where NUnit constructs internal test fixtures by
+  reflection; no source suppression was added.
+- All 30 changed or new existing files pass the deterministic Sonar secrets
+  scan. A direct server-side agentic upload to SonarQube Cloud was requested
+  after general Sonar authorization but was blocked by the execution security
+  reviewer because the external destination and complete source payload were
+  not separately authorized. It was not bypassed. The draft PR's established
+  SonarCloud gate and zero `OPEN`/`CONFIRMED` issue requirement remain
+  mandatory publication evidence.
+- WP7 protocol, architecture, reference, user, and hardware-acceptance notes
+  are updated. The current firmware image SHA-256 is
+  `98BC90D9541FE60F6C0AF84742C06A180951F45A528E7AB855F34934AE703245`.
+  Flash remains at 1,047,357 of 1,048,576 bytes (99.9 percent), leaving only
+  1,219 bytes; this is a critical release and hardware-validation risk.
+- Final issue closure is still blocked by manual Light, Dark, High Contrast,
+  keyboard, focus, and screen-reader checks; approved sustained-refresh
+  duration and dropped/rejected-frame thresholds; and current
+  ESP32-S3/ST7789 negotiation, standard-pattern, optional-command,
+  packet-anomaly, interruption, reconnect, reboot, and sustained-refresh
+  acceptance. The plan remains authoritative until those gates pass.
+
 Status on 2026-07-31:
 
 - WP4.1 is published from `codex/issue-36-wp4-1` in ready-for-review PR #109.

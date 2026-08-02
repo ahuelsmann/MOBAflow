@@ -25,15 +25,8 @@ public sealed record DisplayRequestOptions
         TimeSpan maximumRetryDelay)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(maximumAttempts, 1);
-        if (responseTimeout <= TimeSpan.Zero)
-        {
-            throw new ArgumentOutOfRangeException(nameof(responseTimeout));
-        }
-
-        if (maximumRetryDelay < TimeSpan.Zero)
-        {
-            throw new ArgumentOutOfRangeException(nameof(maximumRetryDelay));
-        }
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(responseTimeout, TimeSpan.Zero);
+        ArgumentOutOfRangeException.ThrowIfLessThan(maximumRetryDelay, TimeSpan.Zero);
 
         MaximumAttempts = maximumAttempts;
         ResponseTimeout = responseTimeout;
@@ -134,6 +127,47 @@ public sealed record DisplayRequestOutcome(
 }
 
 /// <summary>
+/// Preserves a structured device or host failure across the frame-session boundary.
+/// </summary>
+/// <param name="message">Safe failure explanation.</param>
+/// <param name="requestFailure">Host request failure.</param>
+/// <param name="resultCode">Structured device result, if available.</param>
+/// <param name="innerException">Underlying exception, if available.</param>
+public sealed class DisplayProtocolOperationException(
+    string message,
+    DisplayRequestFailure requestFailure,
+    DisplayResultCode? resultCode = null,
+    Exception? innerException = null) : InvalidOperationException(message, innerException)
+{
+    /// <summary>Initializes an empty protocol operation exception.</summary>
+    public DisplayProtocolOperationException()
+        : this("A display protocol operation failed.", DisplayRequestFailure.None, null, null)
+    {
+    }
+
+    /// <summary>Initializes a protocol operation exception with a safe message.</summary>
+    /// <param name="message">Safe failure explanation.</param>
+    public DisplayProtocolOperationException(string message)
+        : this(message, DisplayRequestFailure.None, null, null)
+    {
+    }
+
+    /// <summary>Initializes a protocol operation exception with an inner exception.</summary>
+    /// <param name="message">Safe failure explanation.</param>
+    /// <param name="innerException">Underlying exception.</param>
+    public DisplayProtocolOperationException(string message, Exception innerException)
+        : this(message, DisplayRequestFailure.None, null, innerException)
+    {
+    }
+
+    /// <summary>Gets the host-side request failure.</summary>
+    public DisplayRequestFailure RequestFailure { get; } = requestFailure;
+
+    /// <summary>Gets the structured device result, when one was returned.</summary>
+    public DisplayResultCode? ResultCode { get; } = resultCode;
+}
+
+/// <summary>
 /// Identifies an unexpected response observed at the transport boundary.
 /// </summary>
 public enum DisplayTransportAnomaly
@@ -151,36 +185,26 @@ public enum DisplayTransportAnomaly
 /// <summary>
 /// Reports safe correlation diagnostics without exposing datagram payloads.
 /// </summary>
-public sealed class DisplayTransportAnomalyEventArgs : EventArgs
+/// <param name="anomaly">Observed anomaly.</param>
+/// <param name="requestId">Related request identifier, or zero when unavailable.</param>
+/// <param name="diagnostic">Safe diagnostic text.</param>
+public sealed class DisplayTransportAnomalyEventArgs(
+    DisplayTransportAnomaly anomaly,
+    uint requestId,
+    string diagnostic) : EventArgs
 {
-    /// <summary>
-    /// Initializes safe correlation diagnostics.
-    /// </summary>
-    /// <param name="anomaly">Observed anomaly.</param>
-    /// <param name="requestId">Related request identifier, or zero when unavailable.</param>
-    /// <param name="diagnostic">Safe diagnostic text.</param>
-    public DisplayTransportAnomalyEventArgs(
-        DisplayTransportAnomaly anomaly,
-        uint requestId,
-        string diagnostic)
-    {
-        Anomaly = anomaly;
-        RequestId = requestId;
-        Diagnostic = diagnostic;
-    }
-
     /// <summary>
     /// Gets the observed anomaly.
     /// </summary>
-    public DisplayTransportAnomaly Anomaly { get; }
+    public DisplayTransportAnomaly Anomaly { get; } = anomaly;
 
     /// <summary>
     /// Gets the related request identifier, or zero when unavailable.
     /// </summary>
-    public uint RequestId { get; }
+    public uint RequestId { get; } = requestId;
 
     /// <summary>
     /// Gets safe diagnostic text.
     /// </summary>
-    public string Diagnostic { get; }
+    public string Diagnostic { get; } = diagnostic;
 }

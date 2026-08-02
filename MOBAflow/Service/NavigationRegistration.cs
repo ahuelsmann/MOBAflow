@@ -139,7 +139,7 @@ internal static class NavigationRegistration
         services.AddSingleton<DisplayPage>();
         pages.Add(new PageMetadata(
             Tag: "display",
-            Title: "Display Configurations",
+            Title: "ESP32 Display",
             Icon: "\uE7F4",
             PageType: typeof(DisplayPage),
             Category: NavigationCategory.TrackManagement,

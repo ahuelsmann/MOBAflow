@@ -537,27 +537,6 @@
       "project": "MOBAflow",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1515",
-      "path": "MOBAflow/Controls/Display/WaveshareLcd147InchConfigurationView.xaml.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1515",
-      "path": "MOBAflow/Controls/Display/WaveshareLcd169InchConfigurationView.xaml.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1515",
-      "path": "MOBAflow/Controls/Display/WaveshareLcdTouch700InchConfigurationView.xaml.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1515",
       "path": "MOBAflow/Controls/FunctionToggleControl.xaml.cs",
       "count": 1
     },
@@ -2609,13 +2588,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1707",
-      "path": "Test/SharedUI/DisplayViewModelTests.cs",
-      "count": 3
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1707",
       "path": "Test/SharedUI/WorkflowLibraryViewModelTests.cs",
       "count": 11
     },
@@ -3428,6 +3400,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/MOBAdisplay/DisplayEndpointTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/MOBAdisplay/DisplayIdentifierSequenceTests.cs",
       "count": 1
     },
@@ -3499,6 +3478,13 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/MOBAdisplay/UdpDisplayDatagramTransportTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
+      "path": "Test/MOBAdisplay/UdpDisplayDeviceClientTests.cs",
       "count": 1
     },
     {
@@ -6012,13 +5998,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2045",
       "path": "Test/MOBApi/SolutionControllerTests.cs",
-      "count": 2
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2045",
-      "path": "Test/SharedUI/DisplayViewModelTests.cs",
       "count": 2
     },
     {

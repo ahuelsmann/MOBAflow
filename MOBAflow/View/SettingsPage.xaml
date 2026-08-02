@@ -123,6 +123,59 @@
                     </StackPanel>
                 </Expander>
 
+                <!--  ESP32 Display Section  -->
+                <Expander
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch"
+                    Header="ESP32 Display"
+                    IsExpanded="False">
+                    <Expander.HeaderTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <FontIcon FontSize="20" Glyph="&#xE7F4;" />
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    Style="{StaticResource SubtitleTextBlockStyle}"
+                                    Text="{Binding}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </Expander.HeaderTemplate>
+
+                    <StackPanel Padding="56,16,0,16" Spacing="16">
+                        <InfoBar
+                            IsClosable="False"
+                            IsOpen="True"
+                            Message="Configure one explicit display endpoint. MOBAflow negotiates capabilities live and never stores them as device authorization."
+                            Severity="Informational" />
+
+                        <TextBox
+                            MinWidth="320"
+                            HorizontalAlignment="Left"
+                            AutomationProperties.HelpText="IPv4 or IPv6 address of the configured ESP32 display"
+                            Header="Display IP Address"
+                            PlaceholderText="192.168.0.82"
+                            Text="{x:Bind ViewModel.DisplayIpAddress, Mode=TwoWay, UpdateSourceTrigger=LostFocus}">
+                            <TextBox.Description>
+                                <TextBlock Text="Leave empty until a display is configured. Credentials are not stored here." TextWrapping="Wrap" />
+                            </TextBox.Description>
+                        </TextBox>
+
+                        <NumberBox
+                            Width="240"
+                            HorizontalAlignment="Left"
+                            AutomationProperties.HelpText="UDP port used by display protocol version 1"
+                            Header="Display UDP Port"
+                            Maximum="65535"
+                            Minimum="1"
+                            SpinButtonPlacementMode="Inline"
+                            Value="{x:Bind ViewModel.DisplayPort, Mode=TwoWay}">
+                            <NumberBox.Description>
+                                <TextBlock Text="Protocol v1.0 uses port 4210 by default." TextWrapping="Wrap" />
+                            </NumberBox.Description>
+                        </NumberBox>
+                    </StackPanel>
+                </Expander>
+
                 <!--  Speech Synthesis Section  -->
                 <Expander
                     HorizontalAlignment="Stretch"

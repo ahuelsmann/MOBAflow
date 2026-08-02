@@ -118,6 +118,7 @@ internal class SettingsService : ISettingsService
         _settings.Layout.TrackPlanPage = source.Layout.TrackPlanPage;
         _settings.Layout.MonitorPage = source.Layout.MonitorPage;
         _settings.Display.Esp32IpAddress = source.Display.Esp32IpAddress;
+        _settings.Display.Port = source.Display.Port;
         _settings.FeatureToggles = source.FeatureToggles;
     }
 

@@ -37,9 +37,15 @@ public class RestApiSettings
 public class DisplaySettings
 {
     /// <summary>
-    /// Last used ESP32 target IP for display UDP transport.
+    /// Explicit ESP32 target IP for display UDP transport.
+    /// Empty until the user configures a device; do not ship a guessed default.
     /// </summary>
-    public string Esp32IpAddress { get; set; } = "192.168.0.82";
+    public string Esp32IpAddress { get; set; } = string.Empty;
+
+    /// <summary>
+    /// UDP destination port defined by display protocol v1.0.
+    /// </summary>
+    public int Port { get; set; } = 4210;
 }
 
 /// <summary>

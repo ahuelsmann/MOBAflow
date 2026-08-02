@@ -96,10 +96,13 @@ MOBApi can run by itself or be started automatically by MOBAflow.
 `MOBAdisplay` provides RGB565 renderers and a versioned UDP frame transport. The
 PlatformIO firmware negotiates protocol v1.0 capabilities, validates complete
 frame transactions, stores Wi-Fi credentials locally, and presents only
-completed frames. This is still an integration foundation: the
-desktop Display page currently identifies supported models, while the destination
-display workflow action is skipped unless a display service is wired in. The
-older standalone Arduino sketch remains a hardware color-test only.
+completed frames. In MOBAflow, configure one ESP32 IP address and UDP port under
+**Settings > ESP32 Display**. The **ESP32 Display** page then negotiates live
+capabilities, shows protocol and health diagnostics, and enables only commands
+advertised by that device. Negotiated capabilities and session IDs are never
+saved. The destination-display workflow action is still skipped unless a
+display service is wired in. The older standalone Arduino sketch remains a
+hardware color-test only.
 
 ## Features
 
