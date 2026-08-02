@@ -333,16 +333,11 @@ public sealed class DisplayProtocolFrameSession
         ushort width,
         ushort height)
     {
-        var requiredFrameCapabilities =
-            DisplayFrameCapabilityFlags.FullFrameStaging
-            | DisplayFrameCapabilityFlags.RegionTransfer
-            | DisplayFrameCapabilityFlags.AtomicPresentation;
+        var incompatibility = DisplayStandardPatternRequirements.EvaluateFrameTransfer(capabilities);
         if (capabilities.SelectedVersion != DisplayProtocol.CurrentVersion
             || capabilities.Width != width
             || capabilities.Height != height
-            || !capabilities.PixelFormats.HasFlag(DisplayPixelFormatFlags.Rgb565BigEndian)
-            || !capabilities.Rotations.HasFlag(DisplayRotationFlags.Degrees0)
-            || (capabilities.FrameCapabilities & requiredFrameCapabilities) != requiredFrameCapabilities)
+            || incompatibility != DisplayStandardPatternIncompatibility.None)
         {
             throw new InvalidOperationException("The negotiated display capabilities do not support this frame.");
         }

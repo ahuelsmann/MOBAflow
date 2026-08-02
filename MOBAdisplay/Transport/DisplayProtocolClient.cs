@@ -83,7 +83,11 @@ public sealed class DisplayProtocolClient : IDisposable
                 return Failure(requestId, attempt - 1, DisplayRequestFailure.ClientDisposed, DisposedDiagnostic);
             }
 
-            var pending = new PendingResponse(expectedResponse, frameId, sessionId);
+            var pending = new PendingResponse(
+                DisplayProtocol.CurrentVersion,
+                expectedResponse,
+                frameId,
+                sessionId);
             if (!_pendingResponses.TryAdd(requestId, pending))
             {
                 return Failure(requestId, attempt - 1, DisplayRequestFailure.TransportFailure, "The request identifier is already active.");
@@ -335,6 +339,17 @@ public sealed class DisplayProtocolClient : IDisposable
             return;
         }
 
+        if (packet.Header.Version != pending.ExpectedVersion)
+        {
+            CompleteFailure(
+                pending,
+                DisplayTransportAnomaly.InvalidDatagram,
+                requestId,
+                DisplayRequestFailure.InvalidDatagram,
+                $"The response protocol version {packet.Header.Version} does not match request version {pending.ExpectedVersion}.");
+            return;
+        }
+
         if (!packet.Header.Flags.HasFlag(DisplayProtocolFlags.Response))
         {
             CompleteFailure(
@@ -453,6 +468,7 @@ public sealed class DisplayProtocolClient : IDisposable
             $"Datagram transport failed with {exception.GetType().Name}: {exception.Message}");
 
     private sealed record PendingResponse(
+        DisplayProtocolVersion ExpectedVersion,
         DisplayMessageType ExpectedMessageType,
         uint FrameId,
         uint SessionId)

@@ -41,14 +41,28 @@ public sealed class UdpDisplayDeviceClient : IDisplayDeviceClient
             DisposeConnection();
             _transport = _transportFactory(endpoint);
             _protocolClient = new DisplayProtocolClient(_transport);
+            var minimumVersion = DisplayProtocol.CurrentVersion;
+            var maximumVersion = DisplayProtocol.CurrentVersion;
             var outcome = await _protocolClient.SendRequestAsync(
                 new HelloRequestPayload(
-                    DisplayProtocol.CurrentVersion,
-                    DisplayProtocol.CurrentVersion,
+                    minimumVersion,
+                    maximumVersion,
                     DisplayProtocol.DEFAULT_MAX_DATAGRAM_LENGTH),
                 cancellationToken: cancellationToken).ConfigureAwait(false);
             if (outcome.IsSuccessful && outcome.Response is CapabilitiesResponsePayload capabilities)
             {
+                var validationFailure = ValidateNegotiatedCapabilities(
+                    capabilities,
+                    minimumVersion,
+                    maximumVersion);
+                if (validationFailure is not null)
+                {
+                    DisposeConnection();
+                    return DisplayDeviceNegotiationResult.Failed(
+                        DisplayRequestFailure.InvalidPayload,
+                        validationFailure);
+                }
+
                 _capabilities = capabilities;
                 _frameSession = new DisplayProtocolFrameSession(_protocolClient, negotiatedCapabilities: capabilities);
                 return DisplayDeviceNegotiationResult.Succeeded(capabilities);
@@ -131,6 +145,14 @@ public sealed class UdpDisplayDeviceClient : IDisplayDeviceClient
             if (_frameSession is null || _capabilities is null)
             {
                 return NotConnected();
+            }
+
+            var incompatibility =
+                DisplayStandardPatternRequirements.EvaluateStandardPattern(_capabilities);
+            if (incompatibility != DisplayStandardPatternIncompatibility.None)
+            {
+                return DisplayDeviceOperationResult.Unsupported(
+                    GetStandardPatternIncompatibilityDiagnostic(incompatibility));
             }
 
             var frame = DisplayConformancePattern.CreateRgb565(
@@ -280,6 +302,35 @@ public sealed class UdpDisplayDeviceClient : IDisplayDeviceClient
 
         _transport = null;
     }
+
+    private static string? ValidateNegotiatedCapabilities(
+        CapabilitiesResponsePayload capabilities,
+        DisplayProtocolVersion minimumVersion,
+        DisplayProtocolVersion maximumVersion)
+    {
+        if (capabilities.SelectedVersion.CompareTo(minimumVersion) < 0
+            || capabilities.SelectedVersion.CompareTo(maximumVersion) > 0)
+        {
+            return $"The selected protocol version {capabilities.SelectedVersion} is outside "
+                + $"the offered range {minimumVersion} through {maximumVersion}.";
+        }
+
+        var frameByteCount = (long)capabilities.Width * capabilities.Height * 2;
+        if (frameByteCount == 0)
+        {
+            return "The negotiated frame dimensions must produce at least one RGB565 pixel.";
+        }
+
+        return null;
+    }
+
+    private static string GetStandardPatternIncompatibilityDiagnostic(
+        DisplayStandardPatternIncompatibility incompatibility) => incompatibility switch
+        {
+            DisplayStandardPatternIncompatibility.FrameExceedsHostSafetyLimit =>
+                $"The standard pattern exceeds the {DisplayStandardPatternRequirements.MaximumHostFrameByteCount}-byte host safety limit.",
+            _ => $"The negotiated capabilities do not support the standard pattern: {incompatibility}."
+        };
 
     private static DisplayDeviceOperationResult NotConnected() =>
         DisplayDeviceOperationResult.Failed(

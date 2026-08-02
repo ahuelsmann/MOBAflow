@@ -12,7 +12,7 @@ internal sealed class DisplayEndpointTests
     [TestCase("not-an-ip", DisplayEndpointValidationError.InvalidAddress)]
     [TestCase("0.0.0.0", DisplayEndpointValidationError.UnspecifiedAddress)]
     [TestCase("::", DisplayEndpointValidationError.UnspecifiedAddress)]
-    public void TryCreateRejectsUnavailableAddress(
+    public void TryCreate_Should_RejectAddress_WhenUnavailable(
         string? address,
         DisplayEndpointValidationError expectedError)
     {
@@ -28,7 +28,7 @@ internal sealed class DisplayEndpointTests
 
     [TestCase(0)]
     [TestCase(65536)]
-    public void TryCreateRejectsPortOutsideUdpRange(int port)
+    public void TryCreate_Should_RejectPort_WhenOutsideUdpRange(int port)
     {
         var success = DisplayEndpoint.TryCreate("192.168.0.82", port, out var endpoint, out var error);
 
@@ -42,7 +42,9 @@ internal sealed class DisplayEndpointTests
 
     [TestCase("192.168.0.82", "192.168.0.82:4210")]
     [TestCase("::1", "[::1]:4210")]
-    public void TryCreateReturnsNormalizedEndpoint(string address, string expectedText)
+    public void TryCreate_Should_ReturnNormalizedEndpoint_WhenAddressIsValid(
+        string address,
+        string expectedText)
     {
         var success = DisplayEndpoint.TryCreate(address, 4210, out var endpoint, out var error);
 

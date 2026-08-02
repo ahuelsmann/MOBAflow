@@ -47,21 +47,21 @@ internal class AppSettingsDefaultsTests
     }
 
     [Test]
-    public void DisplaySettingsDefaultsAddressToEmptyWhenUnconfigured()
+    public void DisplaySettings_Should_DefaultAddressToEmpty_WhenUnconfigured()
     {
         var display = new DisplaySettings();
         Assert.That(display.Esp32IpAddress, Is.EqualTo(string.Empty));
     }
 
     [Test]
-    public void DisplaySettingsDefaultsPortToProtocolPortWhenConstructed()
+    public void DisplaySettings_Should_DefaultPortToProtocolPort_WhenConstructed()
     {
         var display = new DisplaySettings();
         Assert.That(display.Port, Is.EqualTo(4210));
     }
 
     [Test]
-    public void AppSettingsRoundTripsOnlyEndpointStateWhenSerialized()
+    public void AppSettings_Should_RoundTripOnlyEndpointState_WhenSerialized()
     {
         var settings = new AppSettings
         {

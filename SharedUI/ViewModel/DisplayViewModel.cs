@@ -7,29 +7,46 @@ using Moba.Common.Configuration;
 using Moba.Display.Protocol;
 using Moba.Display.Transport;
 
+/// <summary>Identifies the current connection state for the configured display endpoint.</summary>
 public enum DisplayConnectionState
 {
+    /// <summary>No display endpoint is configured.</summary>
     NotConfigured,
+    /// <summary>The configured display endpoint is invalid.</summary>
     InvalidConfiguration,
+    /// <summary>A valid endpoint is configured but not connected.</summary>
     Disconnected,
+    /// <summary>The client is connecting and negotiating capabilities.</summary>
     Connecting,
+    /// <summary>The configured endpoint has a live negotiated session.</summary>
     Connected,
+    /// <summary>The configured endpoint could not be reached or negotiated.</summary>
     Offline
 }
 
+/// <summary>Identifies the lifecycle state of display capability negotiation.</summary>
 public enum DisplayNegotiationState
 {
+    /// <summary>No negotiation has started for the configured endpoint.</summary>
     NotStarted,
+    /// <summary>A negotiation request is currently active.</summary>
     Negotiating,
+    /// <summary>The current endpoint negotiated compatible live capabilities.</summary>
     Succeeded,
+    /// <summary>The latest negotiation attempt failed.</summary>
     Failed,
+    /// <summary>Previously negotiated capabilities no longer authorize commands.</summary>
     Stale
 }
 
+/// <summary>Identifies whether displayed capabilities can authorize device commands.</summary>
 public enum DisplayCapabilityFreshness
 {
+    /// <summary>No capabilities have been negotiated.</summary>
     Unavailable,
+    /// <summary>Capabilities belong to the current live endpoint session.</summary>
     Live,
+    /// <summary>Capabilities are diagnostic history only and require renegotiation.</summary>
     Stale
 }
 
@@ -39,16 +56,15 @@ public enum DisplayCapabilityFreshness
 public sealed partial class DisplayViewModel : ObservableObject
 {
     private const string NotNegotiatedText = "Not negotiated";
-    private const DisplayFrameCapabilityFlags RequiredFrameCapabilities =
-        DisplayFrameCapabilityFlags.FullFrameStaging
-        | DisplayFrameCapabilityFlags.RegionTransfer
-        | DisplayFrameCapabilityFlags.AtomicPresentation;
     private readonly AppSettings _settings;
     private readonly IDisplayDeviceClient _deviceClient;
     private DisplayEndpoint? _configuredEndpoint;
     private DisplayEndpoint? _connectedEndpoint;
     private CapabilitiesResponsePayload? _capabilities;
 
+    /// <summary>Initializes display diagnostics and commands for the persisted endpoint settings.</summary>
+    /// <param name="settings">Application settings containing the explicit display endpoint.</param>
+    /// <param name="deviceClient">Capability-aware display transport client.</param>
     public DisplayViewModel(AppSettings settings, IDisplayDeviceClient deviceClient)
     {
         ArgumentNullException.ThrowIfNull(settings);
@@ -58,53 +74,69 @@ public sealed partial class DisplayViewModel : ObservableObject
         SynchronizeConfiguration();
     }
 
+    /// <summary>Gets whether the persisted endpoint is valid for connection attempts.</summary>
     [ObservableProperty]
     public partial bool IsEndpointValid { get; private set; }
 
+    /// <summary>Gets whether a display command is currently running.</summary>
     [ObservableProperty]
     public partial bool IsBusy { get; private set; }
 
+    /// <summary>Gets the normalized configured endpoint or an unconfigured marker.</summary>
     [ObservableProperty]
     public partial string ConfiguredEndpointText { get; private set; } = "Not configured";
 
+    /// <summary>Gets actionable validation guidance for the configured endpoint.</summary>
     [ObservableProperty]
     public partial string EndpointStatusText { get; private set; } = "Configure a display IP address in Settings.";
 
+    /// <summary>Gets the current endpoint connection state.</summary>
     [ObservableProperty]
     public partial DisplayConnectionState ConnectionState { get; private set; } = DisplayConnectionState.NotConfigured;
 
+    /// <summary>Gets the current capability-negotiation state.</summary>
     [ObservableProperty]
     public partial DisplayNegotiationState NegotiationState { get; private set; } = DisplayNegotiationState.NotStarted;
 
+    /// <summary>Gets whether projected capabilities are unavailable, live, or stale.</summary>
     [ObservableProperty]
     public partial DisplayCapabilityFreshness CapabilityFreshness { get; private set; } = DisplayCapabilityFreshness.Unavailable;
 
+    /// <summary>Gets the latest safe device-health summary.</summary>
     [ObservableProperty]
     public partial string HealthText { get; private set; } = "Not queried";
 
+    /// <summary>Gets the safe result text for the latest connection or device operation.</summary>
     [ObservableProperty]
     public partial string LastResultText { get; private set; } = "No display operation has run.";
 
+    /// <summary>Gets or sets the requested brightness percentage from zero through 100.</summary>
     [ObservableProperty]
     public partial double BrightnessPercentage { get; set; } = 100;
 
+    /// <summary>Gets whether a new connection attempt is currently allowed.</summary>
     public bool CanConnect => IsEndpointValid && !IsBusy;
 
+    /// <summary>Gets whether health can be queried through a live negotiated session.</summary>
     public bool CanRefreshHealth => HasLiveCapabilities && !IsBusy;
 
+    /// <summary>Gets whether the host-rendered standard pattern can be sent safely.</summary>
     public bool CanSendStandardTestPattern =>
         HasLiveCapabilities && IsStandardPatternCompatible && !IsBusy;
 
+    /// <summary>Gets whether the live device advertises its optional built-in pattern.</summary>
     public bool CanRenderBuiltInTestPattern =>
         HasLiveCapabilities
         && _capabilities?.OptionalCommands.HasFlag(DisplayOptionalCommandFlags.RenderTestPattern) == true
         && !IsBusy;
 
+    /// <summary>Gets whether the live device advertises brightness control.</summary>
     public bool CanSetBrightness =>
         HasLiveCapabilities
         && _capabilities?.OptionalCommands.HasFlag(DisplayOptionalCommandFlags.SetBrightness) == true
         && !IsBusy;
 
+    /// <summary>Gets whether capabilities belong to the currently configured live endpoint.</summary>
     public bool HasLiveCapabilities =>
         ConnectionState == DisplayConnectionState.Connected
         && NegotiationState == DisplayNegotiationState.Succeeded
@@ -112,6 +144,7 @@ public sealed partial class DisplayViewModel : ObservableObject
         && _capabilities is not null
         && Equals(_configuredEndpoint, _connectedEndpoint);
 
+    /// <summary>Gets the user-facing connection-state label.</summary>
     public string ConnectionStatusText => ConnectionState switch
     {
         DisplayConnectionState.NotConfigured => "Not configured",
@@ -122,6 +155,7 @@ public sealed partial class DisplayViewModel : ObservableObject
         _ => "Offline"
     };
 
+    /// <summary>Gets the user-facing negotiation-state label.</summary>
     public string NegotiationStatusText => NegotiationState switch
     {
         DisplayNegotiationState.NotStarted => "Not started",
@@ -131,6 +165,7 @@ public sealed partial class DisplayViewModel : ObservableObject
         _ => "Negotiation failed"
     };
 
+    /// <summary>Gets the user-facing capability-freshness explanation.</summary>
     public string CapabilityStatusText => CapabilityFreshness switch
     {
         DisplayCapabilityFreshness.Live => "Capabilities are live for the configured endpoint.",
@@ -138,43 +173,58 @@ public sealed partial class DisplayViewModel : ObservableObject
         _ => "Capabilities have not been negotiated."
     };
 
+    /// <summary>Gets the negotiated native display dimensions.</summary>
     public string ResolutionText => _capabilities is null
         ? NotNegotiatedText
         : $"{_capabilities.Width} x {_capabilities.Height}";
 
+    /// <summary>Gets the negotiated protocol version.</summary>
     public string ProtocolVersionText => _capabilities?.SelectedVersion.ToString() ?? NotNegotiatedText;
 
+    /// <summary>Gets the negotiated firmware version text.</summary>
     public string FirmwareVersionText => _capabilities?.FirmwareVersion ?? NotNegotiatedText;
 
+    /// <summary>Gets the negotiated device identity.</summary>
     public string DeviceIdentityText => _capabilities?.DeviceIdentity ?? NotNegotiatedText;
 
+    /// <summary>Gets the negotiated display-adapter identity.</summary>
     public string AdapterIdentityText => _capabilities?.AdapterIdentity ?? NotNegotiatedText;
 
+    /// <summary>Gets the negotiated pixel-format flags.</summary>
     public string PixelFormatsText => _capabilities?.PixelFormats.ToString() ?? NotNegotiatedText;
 
+    /// <summary>Gets the negotiated rotation flags.</summary>
     public string RotationsText => _capabilities?.Rotations.ToString() ?? NotNegotiatedText;
 
+    /// <summary>Gets the negotiated maximum region payload length.</summary>
     public string RegionLimitText => _capabilities is null
         ? NotNegotiatedText
         : $"{_capabilities.MaximumRegionPayloadLength} bytes";
 
-    public string StandardPatternAvailabilityText => _capabilities switch
+    /// <summary>Gets why the standard host pattern is available or blocked.</summary>
+    public string StandardPatternAvailabilityText
     {
-        null => "Negotiate capabilities before sending the standard host pattern.",
-        { PixelFormats: var formats }
-            when !formats.HasFlag(DisplayPixelFormatFlags.Rgb565BigEndian) =>
-            "The device does not support the RGB565 big-endian format required by the standard pattern.",
-        { Rotations: var rotations }
-            when !rotations.HasFlag(DisplayRotationFlags.Degrees0) =>
-            "The device does not support the zero-degree rotation required by the standard pattern.",
-        { FrameCapabilities: var frameCapabilities }
-            when (frameCapabilities & RequiredFrameCapabilities) != RequiredFrameCapabilities =>
-            "The device does not support the complete atomic frame transfer required by the standard pattern.",
-        _ when !HasLiveCapabilities =>
-            "Reconnect and negotiate live capabilities before sending the standard pattern.",
-        _ => "The standard host-rendered pattern is supported by the live device session."
-    };
+        get
+        {
+            if (_capabilities is null)
+            {
+                return "Negotiate capabilities before sending the standard host pattern.";
+            }
 
+            var incompatibility =
+                DisplayStandardPatternRequirements.EvaluateStandardPattern(_capabilities);
+            if (incompatibility != DisplayStandardPatternIncompatibility.None)
+            {
+                return GetStandardPatternIncompatibilityText(incompatibility);
+            }
+
+            return HasLiveCapabilities
+                ? "The standard host-rendered pattern is supported by the live device session."
+                : "Reconnect and negotiate live capabilities before sending the standard pattern.";
+        }
+    }
+
+    /// <summary>Gets why the optional device-rendered pattern is available or blocked.</summary>
     public string BuiltInPatternAvailabilityText => _capabilities switch
     {
         null => "Negotiate capabilities to check built-in pattern support.",
@@ -184,6 +234,7 @@ public sealed partial class DisplayViewModel : ObservableObject
         _ => "The device does not support a built-in test pattern. Use the standard host pattern instead."
     };
 
+    /// <summary>Gets why brightness control is available or blocked.</summary>
     public string BrightnessAvailabilityText => _capabilities switch
     {
         null => "Negotiate capabilities to check brightness support.",
@@ -283,7 +334,7 @@ public sealed partial class DisplayViewModel : ObservableObject
             var result = await _deviceClient.ConnectAsync(
                 endpoint,
                 cancellationToken).ConfigureAwait(true);
-            await ProjectNegotiationResultAsync(result, cancellationToken).ConfigureAwait(true);
+            await ProjectNegotiationResultAsync(result, endpoint, cancellationToken).ConfigureAwait(true);
         }
         finally
         {
@@ -294,15 +345,25 @@ public sealed partial class DisplayViewModel : ObservableObject
 
     private async Task ProjectNegotiationResultAsync(
         DisplayDeviceNegotiationResult result,
+        DisplayEndpoint attemptedEndpoint,
         CancellationToken cancellationToken)
     {
+        if (!Equals(attemptedEndpoint, _configuredEndpoint))
+        {
+            DiscardSupersededNegotiation();
+            return;
+        }
+
         if (!result.IsSuccessful || result.Capabilities is null)
         {
             ProjectNegotiationFailure(result);
             return;
         }
 
-        await ProjectNegotiationSuccessAsync(result.Capabilities, cancellationToken).ConfigureAwait(true);
+        await ProjectNegotiationSuccessAsync(
+            result.Capabilities,
+            attemptedEndpoint,
+            cancellationToken).ConfigureAwait(true);
     }
 
     private void BeginNegotiation()
@@ -331,24 +392,43 @@ public sealed partial class DisplayViewModel : ObservableObject
 
     private async Task ProjectNegotiationSuccessAsync(
         CapabilitiesResponsePayload capabilities,
+        DisplayEndpoint connectedEndpoint,
         CancellationToken cancellationToken)
     {
         _capabilities = capabilities;
-        _connectedEndpoint = _configuredEndpoint;
+        _connectedEndpoint = connectedEndpoint;
         ConnectionState = DisplayConnectionState.Connected;
         NegotiationState = DisplayNegotiationState.Succeeded;
         CapabilityFreshness = DisplayCapabilityFreshness.Live;
         LastResultText = "Display capabilities negotiated successfully.";
-        await RefreshHealthCoreAsync(cancellationToken).ConfigureAwait(true);
+        await RefreshHealthCoreAsync(connectedEndpoint, cancellationToken).ConfigureAwait(true);
+    }
+
+    private void DiscardSupersededNegotiation()
+    {
+        _deviceClient.Disconnect();
+        _connectedEndpoint = null;
+        if (_capabilities is null)
+        {
+            NegotiationState = DisplayNegotiationState.NotStarted;
+            CapabilityFreshness = DisplayCapabilityFreshness.Unavailable;
+        }
+        else
+        {
+            MarkCapabilitiesStale();
+        }
+
+        LastResultText = "The configured display endpoint changed during negotiation. Reconnect to the current endpoint.";
     }
 
     [RelayCommand(CanExecute = nameof(CanRefreshHealth))]
     private async Task RefreshHealthAsync(CancellationToken cancellationToken)
     {
+        var operationEndpoint = _connectedEndpoint;
         SetBusy(true);
         try
         {
-            await RefreshHealthCoreAsync(cancellationToken).ConfigureAwait(true);
+            await RefreshHealthCoreAsync(operationEndpoint, cancellationToken).ConfigureAwait(true);
         }
         finally
         {
@@ -382,9 +462,16 @@ public sealed partial class DisplayViewModel : ObservableObject
             $"Brightness set to {percentage} percent.").ConfigureAwait(true);
     }
 
-    private async Task RefreshHealthCoreAsync(CancellationToken cancellationToken)
+    private async Task RefreshHealthCoreAsync(
+        DisplayEndpoint? operationEndpoint,
+        CancellationToken cancellationToken)
     {
         var result = await _deviceClient.QueryHealthAsync(cancellationToken).ConfigureAwait(true);
+        if (!IsOperationEndpointCurrent(operationEndpoint))
+        {
+            return;
+        }
+
         if (result.IsSuccessful && result.Health is { } health)
         {
             HealthText = $"{health.HealthState}; {health.AcceptedFrameCount} accepted, {health.RejectedFrameCount} rejected";
@@ -402,10 +489,16 @@ public sealed partial class DisplayViewModel : ObservableObject
         Func<Task<DisplayDeviceOperationResult>> operation,
         string successMessage)
     {
+        var operationEndpoint = _connectedEndpoint;
         SetBusy(true);
         try
         {
             var result = await operation().ConfigureAwait(true);
+            if (!IsOperationEndpointCurrent(operationEndpoint))
+            {
+                return;
+            }
+
             LastResultText = result.IsSuccessful
                 ? successMessage
                 : FormatFailure("Display operation", result.RequestFailure, result.ResultCode, result.Diagnostic);
@@ -476,15 +569,28 @@ public sealed partial class DisplayViewModel : ObservableObject
     }
 
     private bool IsStandardPatternCompatible =>
-        _capabilities is
+        _capabilities is not null
+        && DisplayStandardPatternRequirements.EvaluateStandardPattern(_capabilities)
+            == DisplayStandardPatternIncompatibility.None;
+
+    private static string GetStandardPatternIncompatibilityText(
+        DisplayStandardPatternIncompatibility incompatibility) => incompatibility switch
         {
-            PixelFormats: var formats,
-            Rotations: var rotations,
-            FrameCapabilities: var frameCapabilities
-        }
-        && formats.HasFlag(DisplayPixelFormatFlags.Rgb565BigEndian)
-        && rotations.HasFlag(DisplayRotationFlags.Degrees0)
-        && (frameCapabilities & RequiredFrameCapabilities) == RequiredFrameCapabilities;
+            DisplayStandardPatternIncompatibility.MissingRgb565BigEndian =>
+                "The device does not support the RGB565 big-endian format required by the standard pattern.",
+            DisplayStandardPatternIncompatibility.MissingZeroDegreeRotation =>
+                "The device does not support the zero-degree rotation required by the standard pattern.",
+            DisplayStandardPatternIncompatibility.MissingAtomicFrameTransfer =>
+                "The device does not support the complete atomic frame transfer required by the standard pattern.",
+            DisplayStandardPatternIncompatibility.FrameExceedsHostSafetyLimit =>
+                $"The native frame exceeds the {DisplayStandardPatternRequirements.MaximumHostFrameByteCount}-byte host safety limit for the standard pattern.",
+            _ => "The standard host-rendered pattern is compatible."
+        };
+
+    private bool IsOperationEndpointCurrent(DisplayEndpoint? operationEndpoint) =>
+        operationEndpoint is not null
+        && Equals(operationEndpoint, _connectedEndpoint)
+        && Equals(operationEndpoint, _configuredEndpoint);
 
     private static bool ShouldInvalidateCapabilities(
         DisplayRequestFailure requestFailure,

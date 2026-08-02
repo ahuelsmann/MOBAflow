@@ -4961,6 +4961,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1707",
+      "path": "Test/SharedUI/DisplayViewModelTests.cs",
+      "count": 14
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1707",
       "path": "Test/SharedUI/WorkflowLibraryViewModelTests.cs",
       "count": 11
     },
@@ -5830,6 +5837,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/MOBAdisplay/DisplayProtocolVersionTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/MOBAdisplay/DisplayStandardPatternRequirementsTests.cs",
       "count": 1
     },
     {

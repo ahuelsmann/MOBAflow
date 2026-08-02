@@ -10,7 +10,7 @@ using System.Net;
 internal sealed class UdpDisplayDeviceClientTests
 {
     [Test]
-    public async Task ConnectedClientQueriesHealthAndPresentsStandardPattern()
+    public async Task ConnectAsync_Should_EnableHealthAndStandardPattern_WhenNegotiationSucceeds()
     {
         var endpointTransport = new FakeDisplayEndpoint(width: 5, height: 4);
         using var client = new UdpDisplayDeviceClient(_ => endpointTransport);
@@ -36,7 +36,7 @@ internal sealed class UdpDisplayDeviceClientTests
     }
 
     [Test]
-    public async Task RebootInvalidatesSessionAndBlocksFurtherCommands()
+    public async Task QueryHealthAsync_Should_InvalidateSession_WhenDeviceReboots()
     {
         var endpointTransport = new FakeDisplayEndpoint();
         using var client = new UdpDisplayDeviceClient(_ => endpointTransport);
@@ -56,7 +56,7 @@ internal sealed class UdpDisplayDeviceClientTests
     }
 
     [Test]
-    public async Task RebootDuringFrameSendReturnsWrongSessionAndDropsCapabilities()
+    public async Task SendStandardTestPatternAsync_Should_DropCapabilities_WhenDeviceReboots()
     {
         var endpointTransport = new FakeDisplayEndpoint();
         using var client = new UdpDisplayDeviceClient(_ => endpointTransport);
@@ -76,7 +76,7 @@ internal sealed class UdpDisplayDeviceClientTests
     }
 
     [Test]
-    public async Task OptionalCommandsUseNegotiatedSession()
+    public async Task SetBrightnessAsync_Should_UseNegotiatedSession_WhenCapabilityIsAdvertised()
     {
         var endpointTransport = new FakeDisplayEndpoint();
         using var client = new UdpDisplayDeviceClient(_ => endpointTransport);
@@ -95,6 +95,67 @@ internal sealed class UdpDisplayDeviceClientTests
             Assert.That(
                 endpointTransport.ReceivedPackets.Select(packet => packet.Header.MessageType),
                 Does.Contain(DisplayMessageType.SetBrightness));
+        }
+    }
+
+    [Test]
+    public async Task ConnectAsync_Should_RejectCapabilities_WhenVersionIsOutsideOfferedRange()
+    {
+        var endpointTransport = new FakeDisplayEndpoint(
+            selectedVersion: new DisplayProtocolVersion(1, 1));
+        using var client = new UdpDisplayDeviceClient(_ => endpointTransport);
+
+        var negotiation = await client.ConnectAsync(
+            new DisplayEndpoint(IPAddress.Loopback, 4210)).ConfigureAwait(false);
+        var health = await client.QueryHealthAsync().ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(negotiation.IsSuccessful, Is.False);
+            Assert.That(negotiation.RequestFailure, Is.EqualTo(DisplayRequestFailure.InvalidPayload));
+            Assert.That(negotiation.Diagnostic, Does.Contain("selected protocol version"));
+            Assert.That(health.IsSuccessful, Is.False);
+        }
+    }
+
+    [Test]
+    public async Task ConnectAsync_Should_RejectResponse_WhenEnvelopeVersionDoesNotMatchRequest()
+    {
+        var endpointTransport = new FakeDisplayEndpoint();
+        endpointTransport.UseProtocolVersionForNextResponse(new DisplayProtocolVersion(9, 0));
+        using var client = new UdpDisplayDeviceClient(_ => endpointTransport);
+
+        var negotiation = await client.ConnectAsync(
+            new DisplayEndpoint(IPAddress.Loopback, 4210)).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(negotiation.IsSuccessful, Is.False);
+            Assert.That(negotiation.RequestFailure, Is.EqualTo(DisplayRequestFailure.InvalidDatagram));
+            Assert.That(negotiation.Diagnostic, Does.Contain("response protocol version"));
+        }
+    }
+
+    [Test]
+    public async Task SendStandardTestPatternAsync_Should_BlockPattern_WhenFrameExceedsSafetyLimit()
+    {
+        var endpointTransport = new FakeDisplayEndpoint(
+            width: ushort.MaxValue,
+            height: ushort.MaxValue);
+        using var client = new UdpDisplayDeviceClient(_ => endpointTransport);
+
+        var negotiation = await client.ConnectAsync(
+            new DisplayEndpoint(IPAddress.Loopback, 4210)).ConfigureAwait(false);
+        var health = await client.QueryHealthAsync().ConfigureAwait(false);
+        var pattern = await client.SendStandardTestPatternAsync().ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(negotiation.IsSuccessful, Is.True);
+            Assert.That(health.IsSuccessful, Is.True);
+            Assert.That(pattern.IsSuccessful, Is.False);
+            Assert.That(pattern.Diagnostic, Does.Contain("host safety limit"));
+            Assert.That(endpointTransport.PresentationCount, Is.Zero);
         }
     }
 }

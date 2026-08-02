@@ -11,7 +11,7 @@ using Moba.SharedUI.ViewModel;
 public sealed partial class DisplayViewModelTests
 {
     [Test]
-    public void ConstructorWithoutEndpointBlocksNetworkCommands()
+    public void Constructor_Should_BlockNetworkCommands_WhenEndpointIsMissing()
     {
         using var client = new FakeDisplayDeviceClient();
         var viewModel = new DisplayViewModel(new AppSettings(), client);
@@ -29,7 +29,7 @@ public sealed partial class DisplayViewModelTests
     }
 
     [Test]
-    public void ConstructorWithValidEndpointAllowsNegotiationOnly()
+    public void Constructor_Should_AllowOnlyNegotiation_WhenEndpointIsValid()
     {
         var settings = CreateConfiguredSettings();
         using var client = new FakeDisplayDeviceClient();
@@ -46,7 +46,7 @@ public sealed partial class DisplayViewModelTests
     }
 
     [Test]
-    public async Task ConnectCommandAfterSuccessfulNegotiationProjectsLiveDiagnostics()
+    public async Task ConnectCommand_Should_ProjectLiveDiagnostics_WhenNegotiationSucceeds()
     {
         using var client = new FakeDisplayDeviceClient
         {
@@ -73,7 +73,7 @@ public sealed partial class DisplayViewModelTests
     }
 
     [Test]
-    public async Task SynchronizeConfigurationAfterEndpointChangeMarksCapabilitiesStaleAndBlocksSend()
+    public async Task SynchronizeConfiguration_Should_MarkCapabilitiesStale_WhenEndpointChanges()
     {
         var settings = CreateConfiguredSettings();
         using var client = new FakeDisplayDeviceClient
@@ -98,7 +98,7 @@ public sealed partial class DisplayViewModelTests
     }
 
     [Test]
-    public async Task NewViewModelWithPersistedEndpointDoesNotTreatPreviousCapabilitiesAsLive()
+    public async Task Constructor_Should_NotRestoreLiveCapabilities_WhenOnlyEndpointWasPersisted()
     {
         var settings = CreateConfiguredSettings();
         using var firstClient = new FakeDisplayDeviceClient
@@ -122,7 +122,7 @@ public sealed partial class DisplayViewModelTests
     }
 
     [Test]
-    public async Task ConnectCommandWhenOptionalCommandsAreMissingExplainsDisabledControls()
+    public async Task ConnectCommand_Should_ExplainDisabledControls_WhenOptionalCommandsAreMissing()
     {
         using var client = new FakeDisplayDeviceClient
         {
@@ -162,7 +162,7 @@ public sealed partial class DisplayViewModelTests
         DisplayRotationFlags.Degrees0,
         DisplayFrameCapabilityFlags.FullFrameStaging,
         "atomic frame")]
-    public async Task ConnectCommandBlocksStandardPatternWhenFrameCapabilitiesAreIncompatible(
+    public async Task ConnectCommand_Should_BlockStandardPattern_WhenFrameCapabilitiesAreIncompatible(
         DisplayPixelFormatFlags pixelFormats,
         DisplayRotationFlags rotations,
         DisplayFrameCapabilityFlags frameCapabilities,
@@ -189,7 +189,7 @@ public sealed partial class DisplayViewModelTests
     }
 
     [Test]
-    public async Task SendStandardTestPatternCommandWithLiveCapabilitiesReportsSuccess()
+    public async Task SendStandardTestPatternCommand_Should_ReportSuccess_WhenCapabilitiesAreLive()
     {
         using var client = new FakeDisplayDeviceClient
         {
@@ -210,7 +210,7 @@ public sealed partial class DisplayViewModelTests
     }
 
     [Test]
-    public async Task ConnectCommandWhenNegotiationTimesOutStaysFailClosed()
+    public async Task ConnectCommand_Should_RemainFailClosed_WhenNegotiationTimesOut()
     {
         using var client = new FakeDisplayDeviceClient
         {
@@ -233,7 +233,7 @@ public sealed partial class DisplayViewModelTests
     }
 
     [Test]
-    public async Task ConnectCommandMarksPreviousCapabilitiesStaleWhenRenegotiationFails()
+    public async Task ConnectCommand_Should_MarkPriorCapabilitiesStale_WhenRenegotiationFails()
     {
         using var client = new FakeDisplayDeviceClient
         {
@@ -259,7 +259,7 @@ public sealed partial class DisplayViewModelTests
     }
 
     [Test]
-    public async Task SendStandardTestPatternCommandWhenSessionIsStaleBlocksFurtherSends()
+    public async Task SendStandardTestPatternCommand_Should_BlockFurtherSends_WhenSessionBecomesStale()
     {
         using var client = new FakeDisplayDeviceClient
         {
@@ -281,6 +281,95 @@ public sealed partial class DisplayViewModelTests
             Assert.That(viewModel.NegotiationState, Is.EqualTo(DisplayNegotiationState.Stale));
             Assert.That(viewModel.CanSendStandardTestPattern, Is.False);
             Assert.That(viewModel.LastResultText, Does.Contain("Reconnect"));
+        }
+    }
+
+    [Test]
+    public async Task ConnectCommand_Should_DiscardSuccess_WhenEndpointChangesInFlight()
+    {
+        var settings = CreateConfiguredSettings();
+        var pendingNegotiation = new TaskCompletionSource<DisplayDeviceNegotiationResult>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        using var client = new FakeDisplayDeviceClient
+        {
+            ConnectHandler = (_, _) => pendingNegotiation.Task,
+            HealthResult = DisplayDeviceHealthResult.Succeeded(CreateHealth())
+        };
+        var viewModel = new DisplayViewModel(settings, client);
+
+        var connectTask = viewModel.ConnectCommand.ExecuteAsync(null);
+        settings.Display.Esp32IpAddress = "192.168.0.83";
+        viewModel.SynchronizeConfiguration();
+        pendingNegotiation.SetResult(DisplayDeviceNegotiationResult.Succeeded(CreateCapabilities()));
+        await connectTask.ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(client.LastConnectEndpoint?.ToString(), Is.EqualTo("192.168.0.82:4210"));
+            Assert.That(viewModel.ConfiguredEndpointText, Is.EqualTo("192.168.0.83:4210"));
+            Assert.That(viewModel.ConnectionState, Is.EqualTo(DisplayConnectionState.Disconnected));
+            Assert.That(viewModel.CapabilityFreshness, Is.EqualTo(DisplayCapabilityFreshness.Unavailable));
+            Assert.That(viewModel.HasLiveCapabilities, Is.False);
+            Assert.That(client.DisconnectCount, Is.EqualTo(1));
+            Assert.That(client.HealthQueryCount, Is.Zero);
+        }
+    }
+
+    [Test]
+    public async Task RefreshHealthCommand_Should_DiscardResult_WhenEndpointChangesInFlight()
+    {
+        var settings = CreateConfiguredSettings();
+        using var client = new FakeDisplayDeviceClient
+        {
+            NegotiationResult = DisplayDeviceNegotiationResult.Succeeded(CreateCapabilities()),
+            HealthResult = DisplayDeviceHealthResult.Succeeded(CreateHealth())
+        };
+        var viewModel = new DisplayViewModel(settings, client);
+        await viewModel.ConnectCommand.ExecuteAsync(null).ConfigureAwait(false);
+        var pendingHealth = new TaskCompletionSource<DisplayDeviceHealthResult>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        client.HealthHandler = _ => pendingHealth.Task;
+
+        var healthTask = viewModel.RefreshHealthCommand.ExecuteAsync(null);
+        settings.Display.Esp32IpAddress = "192.168.0.83";
+        viewModel.SynchronizeConfiguration();
+        pendingHealth.SetResult(DisplayDeviceHealthResult.Succeeded(CreateHealth()));
+        await healthTask.ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.CapabilityFreshness, Is.EqualTo(DisplayCapabilityFreshness.Stale));
+            Assert.That(viewModel.HasLiveCapabilities, Is.False);
+            Assert.That(viewModel.HealthText, Does.Contain("Stale"));
+        }
+    }
+
+    [Test]
+    public async Task SendStandardTestPatternCommand_Should_DiscardResult_WhenEndpointChangesInFlight()
+    {
+        var settings = CreateConfiguredSettings();
+        using var client = new FakeDisplayDeviceClient
+        {
+            NegotiationResult = DisplayDeviceNegotiationResult.Succeeded(CreateCapabilities()),
+            HealthResult = DisplayDeviceHealthResult.Succeeded(CreateHealth())
+        };
+        var viewModel = new DisplayViewModel(settings, client);
+        await viewModel.ConnectCommand.ExecuteAsync(null).ConfigureAwait(false);
+        var pendingOperation = new TaskCompletionSource<DisplayDeviceOperationResult>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        client.OperationHandler = _ => pendingOperation.Task;
+
+        var operationTask = viewModel.SendStandardTestPatternCommand.ExecuteAsync(null);
+        settings.Display.Esp32IpAddress = "192.168.0.83";
+        viewModel.SynchronizeConfiguration();
+        pendingOperation.SetResult(DisplayDeviceOperationResult.Succeeded());
+        await operationTask.ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.CapabilityFreshness, Is.EqualTo(DisplayCapabilityFreshness.Stale));
+            Assert.That(viewModel.HasLiveCapabilities, Is.False);
+            Assert.That(viewModel.LastResultText, Is.Not.EqualTo("Standard test pattern presented successfully."));
         }
     }
 
@@ -326,6 +415,13 @@ public sealed partial class DisplayViewModelTests
 
     private sealed partial class FakeDisplayDeviceClient : IDisplayDeviceClient
     {
+        public Func<DisplayEndpoint, CancellationToken, Task<DisplayDeviceNegotiationResult>>?
+            ConnectHandler { get; set; }
+
+        public Func<CancellationToken, Task<DisplayDeviceHealthResult>>? HealthHandler { get; set; }
+
+        public Func<CancellationToken, Task<DisplayDeviceOperationResult>>? OperationHandler { get; set; }
+
         public DisplayDeviceNegotiationResult NegotiationResult { get; set; } =
             DisplayDeviceNegotiationResult.Failed(DisplayRequestFailure.TimedOut, "No response.");
 
@@ -339,20 +435,31 @@ public sealed partial class DisplayViewModelTests
 
         public int StandardPatternSendCount { get; private set; }
 
+        public int HealthQueryCount { get; private set; }
+
+        public DisplayEndpoint? LastConnectEndpoint { get; private set; }
+
         public Task<DisplayDeviceNegotiationResult> ConnectAsync(
             DisplayEndpoint endpoint,
-            CancellationToken cancellationToken = default) =>
-            Task.FromResult(NegotiationResult);
+            CancellationToken cancellationToken = default)
+        {
+            LastConnectEndpoint = endpoint;
+            return ConnectHandler?.Invoke(endpoint, cancellationToken)
+                ?? Task.FromResult(NegotiationResult);
+        }
 
         public Task<DisplayDeviceHealthResult> QueryHealthAsync(
-            CancellationToken cancellationToken = default) =>
-            Task.FromResult(HealthResult);
+            CancellationToken cancellationToken = default)
+        {
+            HealthQueryCount++;
+            return HealthHandler?.Invoke(cancellationToken) ?? Task.FromResult(HealthResult);
+        }
 
         public Task<DisplayDeviceOperationResult> SendStandardTestPatternAsync(
             CancellationToken cancellationToken = default)
         {
             StandardPatternSendCount++;
-            return Task.FromResult(OperationResult);
+            return OperationHandler?.Invoke(cancellationToken) ?? Task.FromResult(OperationResult);
         }
 
         public Task<DisplayDeviceOperationResult> RenderBuiltInTestPatternAsync(
