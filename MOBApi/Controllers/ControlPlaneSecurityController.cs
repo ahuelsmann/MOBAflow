@@ -305,8 +305,19 @@ public sealed class ControlPlaneSecurityController : ControllerBase
     [HttpPost("read-migration/enforce")]
     public async Task<IActionResult> EnableAuthenticatedReads(CancellationToken cancellationToken)
     {
-        if (await _readMigration.EnableAuthenticatedReadsAsync(cancellationToken).ConfigureAwait(false))
-            return NoContent();
+        try
+        {
+            if (await _readMigration.EnableAuthenticatedReadsAsync(cancellationToken).ConfigureAwait(false))
+                return NoContent();
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Conflict(new ProblemDetails
+            {
+                Title = "Authenticated-read evidence could not be revalidated.",
+                Detail = exception.Message
+            });
+        }
 
         var status = await _readMigration.GetStatusAsync(cancellationToken).ConfigureAwait(false);
         return Conflict(new ProblemDetails

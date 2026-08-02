@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Net.Http.Headers;
 using System.Net.Http.Headers;
-using System.Security.Claims;
 
 namespace Moba.MOBApi.Security;
 
@@ -68,23 +67,7 @@ internal sealed class LiveCapabilityAuthorizationHandler
             .ValidateAsync(token, httpContext.RequestAborted)
             .ConfigureAwait(false);
         if (currentPrincipal?.HasClaim(ControlPlaneCapabilities.ClaimType, requirement.Capability) == true)
-        {
             context.Succeed(requirement);
-            if (string.Equals(requirement.Capability, ControlPlaneCapabilities.Read, StringComparison.Ordinal))
-            {
-                var credentialId = currentPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (!string.IsNullOrWhiteSpace(credentialId))
-                {
-                    await _readMigration
-                        .RecordAuthenticatedReadAsync(
-                            credentialId,
-                            ResolveTransport(httpContext),
-                            httpContext.Request.Headers[CompatibilityReadHeaders.ClientRelease].FirstOrDefault(),
-                            httpContext.RequestAborted)
-                        .ConfigureAwait(false);
-                }
-            }
-        }
     }
 
     private static HttpContext? ResolveHttpContext(object? resource) => resource switch

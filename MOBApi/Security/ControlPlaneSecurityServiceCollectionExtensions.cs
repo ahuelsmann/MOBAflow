@@ -24,6 +24,7 @@ public static class ControlPlaneSecurityServiceCollectionExtensions
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton(hostBootstrapMaterial ?? HostBootstrapMaterial.Unavailable);
         services.AddSingleton<IControlPlaneConnectionRevoker, ControlPlaneConnectionRevoker>();
+        services.AddSingleton<ICompatibilityReadConnectionRevoker, CompatibilityReadConnectionRevoker>();
         services.AddSingleton<IControlPlaneHubConnectionRegistry, ControlPlaneHubConnectionRegistry>();
         services.AddHttpClient(GitHubIssueEvidenceVerifier.HttpClientName, client =>
         {

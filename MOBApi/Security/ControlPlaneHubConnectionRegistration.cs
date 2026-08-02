@@ -20,7 +20,7 @@ public interface IControlPlaneHubConnectionRegistry
     /// <summary>
     /// Records a runtime-remote presence. During the migration window, this may be a legacy anonymous client.
     /// </summary>
-    void RegisterRemote(HubCallerContext context, string credentialId);
+    void RegisterRemote(HubCallerContext context, string credentialId, bool isAnonymousCompatibility);
 
     /// <summary>
     /// Removes all security and runtime-presence state for a disconnected hub.
@@ -30,7 +30,8 @@ public interface IControlPlaneHubConnectionRegistry
 
 internal sealed class ControlPlaneHubConnectionRegistry(
     IRuntimeRemoteRegistry remoteRegistry,
-    IControlPlaneConnectionRevoker connectionRevoker) : IControlPlaneHubConnectionRegistry
+    IControlPlaneConnectionRevoker connectionRevoker,
+    ICompatibilityReadConnectionRevoker compatibilityReadConnectionRevoker) : IControlPlaneHubConnectionRegistry
 {
     public void RegisterAuthenticated(HubCallerContext context)
     {
@@ -51,12 +52,17 @@ internal sealed class ControlPlaneHubConnectionRegistry(
             context.Abort);
     }
 
-    public void RegisterRemote(HubCallerContext context, string credentialId) =>
+    public void RegisterRemote(HubCallerContext context, string credentialId, bool isAnonymousCompatibility)
+    {
         remoteRegistry.Register(context.ConnectionId, credentialId);
+        if (isAnonymousCompatibility)
+            compatibilityReadConnectionRevoker.Register(context.ConnectionId, context.Abort);
+    }
 
     public void Unregister(HubCallerContext context)
     {
         remoteRegistry.Unregister(context.ConnectionId);
         connectionRevoker.Unregister(context.ConnectionId);
+        compatibilityReadConnectionRevoker.Unregister(context.ConnectionId);
     }
 }

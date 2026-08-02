@@ -166,21 +166,26 @@ internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration, 
     private readonly ILogger<CompatibilityReadMigration> _logger;
     private readonly CompatibilityReadMetrics _metrics;
     private readonly ICompatibilityReadEvidenceVerifier _evidenceVerifier;
+    private readonly ICompatibilityReadConnectionRevoker _connectionRevoker;
     private readonly ProtectedDocumentStore<CompatibilityReadEnforcementMarker> _enforcementMarkerStore;
     private readonly ProtectedDocumentStore<CompatibilityReadMigrationDocument> _store;
     private readonly TimeProvider _timeProvider;
+    private readonly Lock _rollbackTimerLock = new();
     private CompatibilityReadMigrationDocument? _cachedDocument;
+    private ITimer? _rollbackTimer;
 
     public CompatibilityReadMigration(
         IDataProtectionProvider dataProtectionProvider,
         IOptions<ControlPlaneSecurityOptions> options,
         TimeProvider timeProvider,
         ICompatibilityReadEvidenceVerifier evidenceVerifier,
+        ICompatibilityReadConnectionRevoker connectionRevoker,
         CompatibilityReadMetrics metrics,
         ILogger<CompatibilityReadMigration> logger)
     {
         _timeProvider = timeProvider;
         _evidenceVerifier = evidenceVerifier;
+        _connectionRevoker = connectionRevoker;
         _metrics = metrics;
         _logger = logger;
         var path = Path.Combine(options.Value.ResolveStorageDirectory(), "read-migration.dat");
@@ -412,6 +417,8 @@ internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration, 
         try
         {
             var current = await LoadDocumentAsync(cancellationToken).ConfigureAwait(false);
+            if (current.AuthenticatedReadsEnforcedAt is not null)
+                return false;
             if (GetBlockingReason(current) != CompatibilityReadBlockingReason.None)
                 return false;
 
@@ -463,6 +470,7 @@ internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration, 
                 throw;
             }
             _metrics.SetRollbackExpiry(null);
+            ApplyConnectionPolicy(updated);
             return true;
         }
         finally
@@ -482,13 +490,14 @@ internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration, 
         try
         {
             var current = await LoadDocumentAsync(cancellationToken).ConfigureAwait(false);
-            if (current.AuthenticatedReadsEnforcedAt is null)
+            if (current.AuthenticatedReadsEnforcedAt is null || current.RollbackExpiresAt is not null)
                 return false;
 
             var updated = CopyDocument(current);
             updated.RollbackExpiresAt = _timeProvider.GetUtcNow().Add(duration);
             await SaveDocumentAsync(updated, cancellationToken).ConfigureAwait(false);
             _metrics.SetRollbackExpiry(updated.RollbackExpiresAt);
+            ApplyConnectionPolicy(updated);
             LogRollbackActivated(_logger, duration, updated.RollbackExpiresAt, null);
             return true;
         }
@@ -506,6 +515,7 @@ internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration, 
         try
         {
             var document = await LoadDocumentAsync(cancellationToken).ConfigureAwait(false);
+            ApplyConnectionPolicy(document);
             _metrics.SetRollbackExpiry(document.RollbackExpiresAt);
             var decision = document.AuthenticatedReadsEnforcedAt is null
                 ? CompatibilityReadDecision.AllowedCompatibility
@@ -557,6 +567,7 @@ internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration, 
         try
         {
             var document = await LoadDocumentAsync(cancellationToken).ConfigureAwait(false);
+            ApplyConnectionPolicy(document);
             var blockingReason = GetBlockingReason(document);
             return new CompatibilityReadMigrationStatus(
                 blockingReason == CompatibilityReadBlockingReason.None,
@@ -604,6 +615,52 @@ internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration, 
     {
         await _store.SaveAsync(document, cancellationToken).ConfigureAwait(false);
         _cachedDocument = document;
+    }
+
+    private void ApplyConnectionPolicy(CompatibilityReadMigrationDocument document)
+    {
+        if (document.AuthenticatedReadsEnforcedAt is null)
+            return;
+
+        var rollbackExpiresAt = document.RollbackExpiresAt;
+        var now = _timeProvider.GetUtcNow();
+        if (rollbackExpiresAt is null || rollbackExpiresAt <= now)
+        {
+            CancelRollbackTimer();
+            _connectionRevoker.RevokeAll();
+            return;
+        }
+
+        lock (_rollbackTimerLock)
+        {
+            _rollbackTimer?.Dispose();
+            _rollbackTimer = _timeProvider.CreateTimer(
+                static state => ((CompatibilityReadMigration)state!).OnRollbackExpired(),
+                this,
+                rollbackExpiresAt.Value - now,
+                Timeout.InfiniteTimeSpan);
+        }
+    }
+
+    private void OnRollbackExpired()
+    {
+        lock (_rollbackTimerLock)
+        {
+            _rollbackTimer?.Dispose();
+            _rollbackTimer = null;
+        }
+
+        _metrics.SetRollbackExpiry(null);
+        _connectionRevoker.RevokeAll();
+    }
+
+    private void CancelRollbackTimer()
+    {
+        lock (_rollbackTimerLock)
+        {
+            _rollbackTimer?.Dispose();
+            _rollbackTimer = null;
+        }
     }
 
     private static CompatibilityReadMigrationDocument CopyDocument(CompatibilityReadMigrationDocument source) => new()
@@ -741,6 +798,7 @@ internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration, 
     /// <inheritdoc />
     public void Dispose()
     {
+        CancelRollbackTimer();
         _gate.Dispose();
     }
 

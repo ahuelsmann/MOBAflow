@@ -57,6 +57,9 @@
         <TrimmerRootDescriptor Include="Linker.xml" />
     </ItemGroup>
     <ItemGroup>
+        <AssemblyMetadata Include="MOBAsmart.ApplicationDisplayVersion" Value="$(ApplicationDisplayVersion)" />
+    </ItemGroup>
+    <ItemGroup>
         <!-- App Icon - PNG-basiert für bessere Android-Kompatibilität -->
         <MauiImage Include="Resources\AppIcon\modern_train_backup.png" Color="#512BD4" />
         <!-- Splash image as MauiImage for use in custom SplashPage -->

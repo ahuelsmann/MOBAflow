@@ -25,6 +25,7 @@ public sealed class RuntimeHub : Hub
     private readonly IRuntimeBroadcastMetrics _broadcastMetrics;
     private readonly IRuntimeCommandQueue _commandQueue;
     private readonly IControlPlaneHubConnectionRegistry _connectionRegistry;
+    private readonly ICompatibilityReadMigration _readMigration;
     private readonly IHostCredentialService? _hostCredentialService;
 
     public RuntimeHub(
@@ -34,6 +35,7 @@ public sealed class RuntimeHub : Hub
         IRuntimeBroadcastMetrics broadcastMetrics,
         IRuntimeCommandQueue commandQueue,
         IControlPlaneHubConnectionRegistry connectionRegistry,
+        ICompatibilityReadMigration readMigration,
         IHostCredentialService? hostCredentialService = null)
     {
         _snapshotCache = snapshotCache;
@@ -42,6 +44,7 @@ public sealed class RuntimeHub : Hub
         _broadcastMetrics = broadcastMetrics;
         _commandQueue = commandQueue;
         _connectionRegistry = connectionRegistry;
+        _readMigration = readMigration;
         _hostCredentialService = hostCredentialService;
     }
 
@@ -68,6 +71,7 @@ public sealed class RuntimeHub : Hub
     public async Task RegisterRemote(string clientId)
     {
         var credentialId = Context.UserIdentifier;
+        var isAnonymousCompatibility = string.IsNullOrWhiteSpace(credentialId);
         var presenceId = string.IsNullOrWhiteSpace(credentialId) ? clientId?.Trim() : credentialId;
         if (string.IsNullOrWhiteSpace(presenceId))
         {
@@ -75,7 +79,17 @@ public sealed class RuntimeHub : Hub
         }
 
         await Groups.AddToGroupAsync(Context.ConnectionId, RuntimeRemoteGroup).ConfigureAwait(false);
-        _connectionRegistry.RegisterRemote(Context, presenceId);
+        _connectionRegistry.RegisterRemote(Context, presenceId, isAnonymousCompatibility);
+
+        if (isAnonymousCompatibility &&
+            await _readMigration.EvaluateAnonymousReadAsync(
+                    CompatibilityReadTransport.SignalR,
+                    Context.ConnectionAborted)
+                .ConfigureAwait(false) == CompatibilityReadDecision.UpgradeRequired)
+        {
+            _connectionRegistry.Unregister(Context);
+            throw new HubException("A current authenticated client is required for read access.");
+        }
 
         if (_snapshotCache.TryGet(out var entry))
         {
@@ -90,6 +104,16 @@ public sealed class RuntimeHub : Hub
         }
 
         await Clients.Caller.SendAsync(RuntimeHubMethods.SessionStateChanged, BuildSessionOperational()).ConfigureAwait(false);
+
+        if (!string.IsNullOrWhiteSpace(credentialId))
+        {
+            await _readMigration.RecordAuthenticatedReadAsync(
+                    credentialId,
+                    CompatibilityReadTransport.SignalR,
+                    Context.GetHttpContext()?.Request.Headers[CompatibilityReadHeaders.ClientRelease].FirstOrDefault(),
+                    CancellationToken.None)
+                .ConfigureAwait(false);
+        }
     }
 
     [Authorize(Policy = ControlPlaneCapabilities.HostPublish)]
