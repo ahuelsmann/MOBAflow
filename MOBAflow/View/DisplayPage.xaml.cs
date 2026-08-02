@@ -1,14 +1,11 @@
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
-
 namespace Moba.WinUI.View;
 
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Moba.SharedUI.ViewModel;
-using System;
 
 /// <summary>
-/// An empty page that can be used on its own or navigated to within a Frame.
+/// Displays live diagnostics and capability-gated commands for one configured ESP32 display.
 /// </summary>
 public sealed partial class DisplayPage : Page
 {
@@ -20,15 +17,10 @@ public sealed partial class DisplayPage : Page
         InitializeComponent();
     }
 
-    private void OnDisplaySelectionChanged(object sender, SelectorBarSelectionChangedEventArgs args)
+    private void Page_Loaded(object sender, RoutedEventArgs e)
     {
-        if (sender is not SelectorBar selectorBar ||
-            selectorBar.SelectedItem?.Tag is not string tag ||
-            !Enum.TryParse<DisplayConfigurationKind>(tag, out var kind))
-        {
-            return;
-        }
-
-        ViewModel.SelectConfiguration(kind);
+        _ = sender;
+        _ = e;
+        ViewModel.SynchronizeConfiguration();
     }
 }

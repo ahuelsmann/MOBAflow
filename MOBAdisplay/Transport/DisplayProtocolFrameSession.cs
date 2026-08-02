@@ -20,13 +20,16 @@ public sealed class DisplayProtocolFrameSession
     /// </summary>
     /// <param name="client">Protocol client connected to one display endpoint.</param>
     /// <param name="frameIds">Frame identifier sequence, or a process-wide sequence when omitted.</param>
+    /// <param name="negotiatedCapabilities">Capabilities already negotiated on the same client session.</param>
     public DisplayProtocolFrameSession(
         DisplayProtocolClient client,
-        DisplayIdentifierSequence? frameIds = null)
+        DisplayIdentifierSequence? frameIds = null,
+        CapabilitiesResponsePayload? negotiatedCapabilities = null)
     {
         ArgumentNullException.ThrowIfNull(client);
         _client = client;
         _frameIds = frameIds ?? new DisplayIdentifierSequence();
+        _capabilities = negotiatedCapabilities;
     }
 
     /// <summary>
@@ -330,32 +333,31 @@ public sealed class DisplayProtocolFrameSession
         ushort width,
         ushort height)
     {
-        var requiredFrameCapabilities =
-            DisplayFrameCapabilityFlags.FullFrameStaging
-            | DisplayFrameCapabilityFlags.RegionTransfer
-            | DisplayFrameCapabilityFlags.AtomicPresentation;
+        var incompatibility = DisplayStandardPatternRequirements.EvaluateFrameTransfer(capabilities);
         if (capabilities.SelectedVersion != DisplayProtocol.CurrentVersion
             || capabilities.Width != width
             || capabilities.Height != height
-            || !capabilities.PixelFormats.HasFlag(DisplayPixelFormatFlags.Rgb565BigEndian)
-            || !capabilities.Rotations.HasFlag(DisplayRotationFlags.Degrees0)
-            || (capabilities.FrameCapabilities & requiredFrameCapabilities) != requiredFrameCapabilities)
+            || incompatibility != DisplayStandardPatternIncompatibility.None)
         {
             throw new InvalidOperationException("The negotiated display capabilities do not support this frame.");
         }
     }
 
-    private static InvalidOperationException CreateRequestException(
+    private static DisplayProtocolOperationException CreateRequestException(
         string operation,
         DisplayRequestOutcome outcome) =>
         new(
             $"{operation} failed with {outcome.Failure}: "
-            + (outcome.Diagnostic ?? "No compatible response was received."));
+            + (outcome.Diagnostic ?? "No compatible response was received."),
+            outcome.Failure);
 
-    private static InvalidOperationException CreateResultException(
+    private static DisplayProtocolOperationException CreateResultException(
         DisplayMessageType messageType,
         DisplayResultCode resultCode) =>
-        new($"Display request {messageType} failed with {resultCode}.");
+        new(
+            $"Display request {messageType} failed with {resultCode}.",
+            DisplayRequestFailure.None,
+            resultCode);
 
     private static void ThrowIfCancelled(
         DisplayRequestOutcome outcome,

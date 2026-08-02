@@ -15,6 +15,7 @@
     <ItemGroup>
         <ProjectReference Include="..\Backend\Backend.csproj" />
         <ProjectReference Include="..\Common\Common.csproj" />
+        <ProjectReference Include="..\MOBAdisplay\MOBAdisplay.csproj" />
         <ProjectReference Include="..\TrackPlan.Renderer\TrackPlan.Renderer.csproj" />
         <ProjectReference Include="..\TrackLibrary.PikoA\TrackLibrary.PikoA.csproj" />
     </ItemGroup>

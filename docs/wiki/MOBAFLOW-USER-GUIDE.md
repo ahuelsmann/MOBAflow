@@ -133,11 +133,22 @@ The Signal Box editor manages signals, switches and routes. Signal aspects can
 be operated against a connected Z21. Viessmann multiplex mappings and per-output
 polarity are available for supported signal configurations.
 
-### Matrix Images and Display Configurations
+### Matrix Images and ESP32 Display
 
 **Matrix Images** provides a 5x5 color editor whose images are stored in the
-project. **Display Configurations** currently presents the supported Waveshare
-display models and their resolutions; it is not yet a full device/layout editor.
+project. To test one network display, enter its IP address and UDP port under
+**Settings > ESP32 Display**, then open **ESP32 Display** and select **Connect and
+negotiate**. The page reads the resolution, protocol version, firmware identity,
+adapter identity, supported formats and rotations, and current health directly
+from the device.
+
+The standard test pattern stays disabled until the endpoint is valid and the
+current connection has negotiated live capabilities. Brightness and the
+device-rendered pattern are enabled only when the device advertises those
+commands. After an endpoint change, application restart, device reboot, or stale
+session response, reconnect before sending another command. MOBAflow saves only
+the configured IP address and port; it does not save Wi-Fi credentials,
+capabilities, or session IDs.
 
 The `MOBAdisplay` library can render RGB565 data and send validated protocol
 v1.0 frame transactions over UDP. The PlatformIO firmware under

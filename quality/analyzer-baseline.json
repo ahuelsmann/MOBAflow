@@ -2223,13 +2223,6 @@
     {
       "project": "MOBAdisplay",
       "targetFramework": "net10.0",
-      "ruleId": "CA1512",
-      "path": "MOBAdisplay/Transport/DisplayRequestModels.cs",
-      "count": 2
-    },
-    {
-      "project": "MOBAdisplay",
-      "targetFramework": "net10.0",
       "ruleId": "CA1700",
       "path": "MOBAdisplay/Protocol/DisplayProtocolPayloads.cs",
       "count": 1
@@ -2351,13 +2344,6 @@
       "targetFramework": "net10.0",
       "ruleId": "IDE0290",
       "path": "MOBAdisplay/Transport/DisplayDatagramTransport.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAdisplay",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0290",
-      "path": "MOBAdisplay/Transport/DisplayRequestModels.cs",
       "count": 1
     },
     {
@@ -4219,13 +4205,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0290",
-      "path": "SharedUI/ViewModel/DisplayViewModel.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0290",
       "path": "SharedUI/ViewModel/FunctionButtonViewModel.cs",
       "count": 1
     },
@@ -4311,13 +4290,6 @@
       "targetFramework": "net10.0",
       "ruleId": "IDE2002",
       "path": "SharedUI/ViewModel/SignalBoxPlanViewModel.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/DisplayViewModel.cs",
       "count": 1
     },
     {
@@ -4927,7 +4899,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1707",
       "path": "Test/SharedUI/DisplayViewModelTests.cs",
-      "count": 3
+      "count": 14
     },
     {
       "project": "Test",
@@ -5759,6 +5731,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/MOBAdisplay/DisplayEndpointTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/MOBAdisplay/DisplayIdentifierSequenceTests.cs",
       "count": 1
     },
@@ -5801,6 +5780,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/MOBAdisplay/DisplayStandardPatternRequirementsTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/MOBAdisplay/FakeDisplayEndpointTests.cs",
       "count": 1
     },
@@ -5830,6 +5816,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/MOBAdisplay/UdpDisplayDatagramTransportTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/MOBAdisplay/UdpDisplayDeviceClientTests.cs",
       "count": 1
     },
     {
@@ -8091,13 +8084,6 @@
       "targetFramework": "net10.0",
       "ruleId": "NUnit2045",
       "path": "Test/MOBApi/SolutionControllerTests.cs",
-      "count": 2
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2045",
-      "path": "Test/SharedUI/DisplayViewModelTests.cs",
       "count": 2
     },
     {

@@ -20,6 +20,7 @@ internal sealed class FakeDisplayEndpoint : IDisplayDatagramTransport
     private readonly ushort _width;
     private readonly ushort _height;
     private readonly ushort _maximumRegionPayloadLength;
+    private readonly DisplayProtocolVersion _selectedVersion;
     private ActiveFrame? _activeFrame;
     private uint _sessionId = 0x0A0B0C0D;
     private uint _acceptedFrameCount;
@@ -29,12 +30,14 @@ internal sealed class FakeDisplayEndpoint : IDisplayDatagramTransport
         TimeProvider? timeProvider = null,
         ushort width = 4,
         ushort height = 3,
-        ushort maximumRegionPayloadLength = 512)
+        ushort maximumRegionPayloadLength = 512,
+        DisplayProtocolVersion? selectedVersion = null)
     {
         _timeProvider = timeProvider ?? TimeProvider.System;
         _width = width;
         _height = height;
         _maximumRegionPayloadLength = maximumRegionPayloadLength;
+        _selectedVersion = selectedVersion ?? DisplayProtocol.CurrentVersion;
     }
 
     public event EventHandler<DisplayDatagramReceivedEventArgs>? DatagramReceived;
@@ -100,6 +103,9 @@ internal sealed class FakeDisplayEndpoint : IDisplayDatagramTransport
     public void OmitResponseFlagForNextResponse() => Enqueue(new FakeDisplayBehavior(MissingResponseFlag: true));
 
     public void UseUnexpectedMessageTypeForNextResponse() => Enqueue(new FakeDisplayBehavior(UnexpectedMessageType: true));
+
+    public void UseProtocolVersionForNextResponse(DisplayProtocolVersion version) =>
+        Enqueue(new FakeDisplayBehavior(ResponseVersion: version));
 
     public void InvalidateNextResponsePayload() => Enqueue(new FakeDisplayBehavior(InvalidPayload: true));
 
@@ -325,7 +331,7 @@ internal sealed class FakeDisplayEndpoint : IDisplayDatagramTransport
         }
 
         var capabilities = new CapabilitiesResponsePayload(
-            DisplayProtocol.CurrentVersion,
+            _selectedVersion,
             _width,
             _height,
             DisplayProtocol.DEFAULT_MAX_DATAGRAM_LENGTH,
@@ -537,7 +543,8 @@ internal sealed class FakeDisplayEndpoint : IDisplayDatagramTransport
         if (behavior.WrongFrameId
             || behavior.WrongSessionId
             || behavior.MissingResponseFlag
-            || behavior.UnexpectedMessageType)
+            || behavior.UnexpectedMessageType
+            || behavior.ResponseVersion is not null)
         {
             response = new DisplayProtocolPacket(
                 response.Header with
@@ -549,7 +556,8 @@ internal sealed class FakeDisplayEndpoint : IDisplayDatagramTransport
                         : response.Header.Flags,
                     MessageType = behavior.UnexpectedMessageType
                         ? GetDifferentMessageType(response.Header.MessageType)
-                        : response.Header.MessageType
+                        : response.Header.MessageType,
+                    Version = behavior.ResponseVersion ?? response.Header.Version
                 },
                 behavior.InvalidPayload ? ReadOnlyMemory<byte>.Empty : response.Payload);
         }
@@ -762,5 +770,6 @@ internal sealed class FakeDisplayEndpoint : IDisplayDatagramTransport
         bool InvalidPayload = false,
         bool TransportFailure = false,
         TimeSpan Delay = default,
+        DisplayProtocolVersion? ResponseVersion = null,
         ResultPayload? ForcedResult = null);
 }

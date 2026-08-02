@@ -159,6 +159,76 @@ jobs:
           if-no-files-found: warn
           retention-days: 90
 
+  display-protocol:
+    name: Display protocol host, parser, and firmware
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      - name: Restore display host test graph
+        shell: pwsh
+        run: >-
+          dotnet restore Test/Test.csproj
+          -p:TargetFramework=net10.0
+          -p:IncludeMobaSmartTests=false
+
+      - name: Verify display protocol cutover invariants
+        shell: pwsh
+        run: ./scripts/Test-DisplayProtocolCutover.ps1
+
+      # Skia rendering stays in the Windows desktop lane because this Linux lane owns protocol and transport only.
+      - name: Run display host conformance tests
+        shell: pwsh
+        run: |
+          $filter = @(
+            'FullyQualifiedName~Moba.Test.MOBAdisplay'
+            'FullyQualifiedName!~ClockRendererTests'
+            'FullyQualifiedName!~FrameLoopSchedulerTests'
+            'FullyQualifiedName!~Rgb565ConverterTests'
+            'FullyQualifiedName!~SkiaFrameRendererTests'
+          ) -join '&'
+          dotnet test Test/Test.csproj `
+            --configuration Release `
+            --framework net10.0 `
+            --no-restore `
+            -p:IncludeMobaSmartTests=false `
+            --filter $filter
+
+      - name: Install pinned PlatformIO
+        shell: bash
+        run: python3 -m pip install --user platformio==6.1.19
+
+      - name: Run native firmware parser and protocol tests
+        shell: bash
+        run: python3 -m platformio test -d MOBAdisplay/esp32 -e native
+
+      - name: Build ESP32-S3 firmware
+        shell: bash
+        run: python3 -m platformio run -d MOBAdisplay/esp32 -e esp32s3
+
+      - name: Record firmware SHA-256
+        shell: bash
+        run: >-
+          sha256sum MOBAdisplay/esp32/.pio/build/esp32s3/firmware.bin
+          | tee MOBAdisplay/esp32/.pio/build/esp32s3/firmware.bin.sha256
+
+      - name: Archive ESP32-S3 firmware
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: MOBAdisplay-esp32s3-${{ github.run_number }}
+          path: |
+            MOBAdisplay/esp32/.pio/build/esp32s3/firmware.bin
+            MOBAdisplay/esp32/.pio/build/esp32s3/firmware.bin.sha256
+          if-no-files-found: error
+          retention-days: 30
+
   android-release:
     name: Android Release AAB
     runs-on: windows-latest

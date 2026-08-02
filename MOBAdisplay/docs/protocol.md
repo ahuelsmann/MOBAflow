@@ -16,6 +16,25 @@ line-oriented `HOST_VER`, `FRAME_START`, indexed-row, and `FRAME_DONE`
 transport is legacy protocol v0 and has been removed. There is no automatic or
 configured fallback to v0.
 
+## Host configuration and live diagnostics
+
+MOBAflow persists one explicit display IP address and UDP port in user or
+environment settings. It does not persist Wi-Fi credentials, device identities,
+negotiated capabilities, or session IDs. The desktop host validates the endpoint
+before opening UDP transport and sends no frame or optional command until a
+`HelloRequest` has produced a valid, live `CapabilitiesResponse`.
+
+The Display page projects the current connection, negotiation, capability
+freshness, device and adapter identities, protocol and firmware versions,
+resolution, supported formats and rotations, region limit, health, and last
+operation result. A changed endpoint, application restart, device reboot, or
+`WrongSession` response makes prior capabilities stale. Stale capabilities are
+diagnostic information only and never authorize another send.
+
+The standard host-rendered pattern uses the negotiated native dimensions and
+RGB565 big-endian format. Brightness and the device-rendered pattern remain
+disabled unless their optional-command bits are present.
+
 ## Firmware parser boundary
 
 The firmware classifies each UDP datagram using both the original datagram
@@ -36,6 +55,11 @@ integration is compiled for ESP32-S3:
 python -m platformio test -d MOBAdisplay/esp32 -e native
 python -m platformio run -d MOBAdisplay/esp32 -e esp32s3
 ```
+
+The `display-protocol` job in `.github/workflows/quality.yml` permanently runs
+the .NET host conformance suite, all native parser/protocol tests, and the
+ESP32-S3 build from a clean checkout. It archives `firmware.bin` for traceable
+hardware acceptance.
 
 ## Transport limits
 

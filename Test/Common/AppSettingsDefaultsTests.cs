@@ -2,11 +2,13 @@
 namespace Moba.Test.Common;
 
 using Moba.Common.Configuration;
+using System.Text.Json;
 
 /// <summary>
 /// Tests for default configuration values so config refactors don't break apps silently.
 /// </summary>
 [TestFixture]
+[Category("Unit")]
 internal class AppSettingsDefaultsTests
 {
     [Test]
@@ -42,6 +44,46 @@ internal class AppSettingsDefaultsTests
     {
         var rest = new RestApiSettings();
         Assert.That(rest.IsConnectionEnabled, Is.False);
+    }
+
+    [Test]
+    public void DisplaySettings_Should_DefaultAddressToEmpty_WhenUnconfigured()
+    {
+        var display = new DisplaySettings();
+        Assert.That(display.Esp32IpAddress, Is.EqualTo(string.Empty));
+    }
+
+    [Test]
+    public void DisplaySettings_Should_DefaultPortToProtocolPort_WhenConstructed()
+    {
+        var display = new DisplaySettings();
+        Assert.That(display.Port, Is.EqualTo(4210));
+    }
+
+    [Test]
+    public void AppSettings_Should_RoundTripOnlyEndpointState_WhenSerialized()
+    {
+        var settings = new AppSettings
+        {
+            Display = new DisplaySettings
+            {
+                Esp32IpAddress = "192.0.2.36",
+                Port = 4211
+            }
+        };
+
+        var json = JsonSerializer.Serialize(settings);
+        var restored = JsonSerializer.Deserialize<AppSettings>(json);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(restored, Is.Not.Null);
+            Assert.That(restored!.Display.Esp32IpAddress, Is.EqualTo("192.0.2.36"));
+            Assert.That(restored.Display.Port, Is.EqualTo(4211));
+            Assert.That(typeof(DisplaySettings).GetProperties(),
+                Has.Exactly(2).Items,
+                "Display settings must not persist negotiated capabilities or session state.");
+        }
     }
 
     [Test]
