@@ -465,6 +465,11 @@ This document and its issue plan are delivered. Runtime behavior is unchanged.
   SignalR traffic. Enforcement requires matching traffic from the selected stable release on both
   transports, fourteen consecutive defect-free days, no open critical authentication, refresh,
   reconnect, or read-parity defect, and a concrete readiness-evidence comment in issue #50.
+- MOBApi resolves that comment through the public GitHub API both when evidence is recorded and
+  immediately before enforcement. The comment must have been created after the fourteen-day window
+  completed and contain these exact lines: `Slice 4e readiness evidence`,
+  `Stable client release: <selected release>`, and `Observation result: passed`. A missing, deleted,
+  stale, malformed, or temporarily unverifiable comment blocks enforcement.
 - Fixing a critical defect restarts the full observation window. Elapsed time without matching
   authenticated traffic can never complete the gate.
 - After enforcement, legacy REST and SignalR entry points return the same machine-readable
@@ -490,6 +495,10 @@ The design supports functional rollback without reintroducing anonymous hardware
   seven days. The protected expiry survives restart, expires automatically, emits an immediate audit
   warning, a startup warning while active, and an operational gauge. It has no effect on command,
   host, photo-write, pairing-administration, credential-administration, or security endpoints.
+- Enforcement also writes the independent protected `read-migration-enforced.dat` marker. If the
+  detailed `read-migration.dat` document is later lost, restart still denies anonymous reads. If the
+  detailed document or marker is unreadable, authorization fails closed. Losing the entire security
+  directory is an explicit security reset, not an approved rollback procedure.
 - If authentication, TLS identity, revocation checks, or command admission is unhealthy, MOBApi disables remote control and reports degraded minimal health. MOBAflow continues local Z21 operation.
 - Rolling back a client does not delete server revocation state or the no-downgrade marker. A legacy client that cannot authenticate must remain disconnected.
 - Rolling back across a credential-registry schema requires a tested read-compatible migration or an explicit security reset; it never treats unreadable state as an empty allow-all store.

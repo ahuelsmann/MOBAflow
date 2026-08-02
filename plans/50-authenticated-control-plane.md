@@ -368,16 +368,24 @@ Implementation checkpoint (2026-08-01):
   enforcement time, rollback expiry, and the last fixed-defect audit fields. Normal reads use a
   cached decision and do not write the file; only the first matching REST and SignalR observations
   advance persisted readiness evidence.
+- Enforcement additionally persists the protected `read-migration-enforced.dat` marker. The marker
+  is written before the detailed document changes, so a failed or later missing detailed document
+  cannot reopen anonymous reads. State mutations are saved on a copy and replace the in-memory cache
+  only after persistence succeeds.
 - MOBAsmart sends `X-MOBAflow-Client-Release` on authenticated REST and SignalR traffic. Readiness
   advances only when that value exactly matches the manually selected stable release and both
   transports have been observed. Open critical defects block enforcement and cannot be cleared by
   starting a new window; fixing one restarts the full fourteen-day window.
+- Evidence recording and enforcement both resolve the concrete issue #50 comment through GitHub.
+  The comment must be created after the full observation window and contain the Slice 4e evidence
+  marker, the exact selected stable release, and `Observation result: passed`; unavailable, missing,
+  stale, or malformed evidence blocks the transition.
 - The rollback is read-only, manually activated, persisted, capped at seven days, and restored on
   restart. Activation emits an audit warning immediately; startup emits another warning while the
   rollback is active; the gauge returns to zero automatically at expiry.
-- A missing, unreadable, or cryptographically invalid migration document fails closed in the new
-  server because authorization cannot establish a compatibility decision. The document is retained
-  across source rollback. Binary downgrade to a pre-Slice-4e MOBApi is prohibited after enforcement:
+- A missing detailed migration document after enforcement fails closed through the independent
+  protected enforcement marker. An unreadable or cryptographically invalid document or marker also
+  fails closed. Both files are retained across source rollback. Binary downgrade to a pre-Slice-4e MOBApi is prohibited after enforcement:
   that older binary does not understand the document and would restore its historical anonymous-read
   behavior. Reverting source alone is therefore not an approved rollback procedure.
 - This checkpoint does not satisfy the operational gate. Issue #50 currently has no Slice 4e

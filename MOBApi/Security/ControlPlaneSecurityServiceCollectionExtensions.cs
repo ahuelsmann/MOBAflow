@@ -25,6 +25,14 @@ public static class ControlPlaneSecurityServiceCollectionExtensions
         services.AddSingleton(hostBootstrapMaterial ?? HostBootstrapMaterial.Unavailable);
         services.AddSingleton<IControlPlaneConnectionRevoker, ControlPlaneConnectionRevoker>();
         services.AddSingleton<IControlPlaneHubConnectionRegistry, ControlPlaneHubConnectionRegistry>();
+        services.AddHttpClient(GitHubIssueEvidenceVerifier.HttpClientName, client =>
+        {
+            client.BaseAddress = new Uri("https://api.github.com/");
+            client.Timeout = TimeSpan.FromSeconds(10);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("MOBAflow-MOBApi/1.0");
+            client.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");
+        });
+        services.AddSingleton<ICompatibilityReadEvidenceVerifier, GitHubIssueEvidenceVerifier>();
         services.AddSingleton<CompatibilityReadMetrics>();
         services.AddSingleton<ICompatibilityReadMigration, CompatibilityReadMigration>();
         services.AddHostedService<CompatibilityReadStartupReporter>();

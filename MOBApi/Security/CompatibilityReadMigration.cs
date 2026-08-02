@@ -139,6 +139,7 @@ public interface ICompatibilityReadMigration
 internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration
 {
     private const string StorePurpose = "MOBApi.ControlPlane.CompatibilityReadMigration.v1";
+    private const string EnforcementMarkerPurpose = "MOBApi.ControlPlane.CompatibilityReadMigration.EnforcementMarker.v1";
     private const int MaximumPseudonymousClients = 64;
     private static readonly EventId RollbackActivatedEvent = new(5002, "CompatibilityReadRollbackActivated");
     private static readonly TimeSpan RequiredObservationWindow = TimeSpan.FromDays(14);
@@ -147,6 +148,8 @@ internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration
     private readonly byte[] _pseudonymKey = RandomNumberGenerator.GetBytes(32);
     private readonly ILogger<CompatibilityReadMigration> _logger;
     private readonly CompatibilityReadMetrics _metrics;
+    private readonly ICompatibilityReadEvidenceVerifier _evidenceVerifier;
+    private readonly ProtectedDocumentStore<CompatibilityReadEnforcementMarker> _enforcementMarkerStore;
     private readonly ProtectedDocumentStore<CompatibilityReadMigrationDocument> _store;
     private readonly TimeProvider _timeProvider;
     private CompatibilityReadMigrationDocument? _cachedDocument;
@@ -155,10 +158,12 @@ internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration
         IDataProtectionProvider dataProtectionProvider,
         IOptions<ControlPlaneSecurityOptions> options,
         TimeProvider timeProvider,
+        ICompatibilityReadEvidenceVerifier evidenceVerifier,
         CompatibilityReadMetrics metrics,
         ILogger<CompatibilityReadMigration> logger)
     {
         _timeProvider = timeProvider;
+        _evidenceVerifier = evidenceVerifier;
         _metrics = metrics;
         _logger = logger;
         var path = Path.Combine(options.Value.ResolveStorageDirectory(), "read-migration.dat");
@@ -166,6 +171,10 @@ internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration
             dataProtectionProvider,
             StorePurpose,
             path);
+        _enforcementMarkerStore = new ProtectedDocumentStore<CompatibilityReadEnforcementMarker>(
+            dataProtectionProvider,
+            EnforcementMarkerPurpose,
+            Path.Combine(options.Value.ResolveStorageDirectory(), "read-migration-enforced.dat"));
     }
 
     public async Task BeginReadinessWindowAsync(
@@ -179,15 +188,16 @@ internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            var document = await LoadDocumentAsync(cancellationToken).ConfigureAwait(false);
-            EnsureWindowMutable(document);
-            document.StableClientRelease = stableClientRelease.Trim();
-            document.ObservationStartedAt = _timeProvider.GetUtcNow();
-            document.AuthenticatedReadCount = 0;
-            document.HasAuthenticatedRestRead = false;
-            document.HasAuthenticatedSignalRRead = false;
-            document.EvidenceReference = null;
-            await _store.SaveAsync(document, cancellationToken).ConfigureAwait(false);
+            var current = await LoadDocumentAsync(cancellationToken).ConfigureAwait(false);
+            EnsureWindowMutable(current);
+            var updated = CopyDocument(current);
+            updated.StableClientRelease = stableClientRelease.Trim();
+            updated.ObservationStartedAt = _timeProvider.GetUtcNow();
+            updated.AuthenticatedReadCount = 0;
+            updated.HasAuthenticatedRestRead = false;
+            updated.HasAuthenticatedSignalRRead = false;
+            updated.EvidenceReference = null;
+            await SaveDocumentAsync(updated, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -220,13 +230,50 @@ internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration
                 nameof(evidenceReference));
         }
 
+        EvidenceValidationSnapshot snapshot;
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            var document = await LoadDocumentAsync(cancellationToken).ConfigureAwait(false);
-            EnsureWindowMutable(document);
-            document.EvidenceReference = evidenceReference.Trim();
-            await _store.SaveAsync(document, cancellationToken).ConfigureAwait(false);
+            var current = await LoadDocumentAsync(cancellationToken).ConfigureAwait(false);
+            EnsureWindowMutable(current);
+            var blockingReason = GetBlockingReason(current);
+            if (blockingReason is not CompatibilityReadBlockingReason.EvidenceNotRecorded)
+            {
+                throw new InvalidOperationException(
+                    $"Readiness evidence can be recorded only after the observation gate passes. Current blocker: {blockingReason}.");
+            }
+
+            snapshot = new EvidenceValidationSnapshot(
+                current.StableClientRelease!,
+                current.ObservationStartedAt!.Value,
+                evidenceReference.Trim());
+        }
+        finally
+        {
+            _gate.Release();
+        }
+
+        await _evidenceVerifier.VerifyAsync(
+                evidenceUri,
+                snapshot.StableClientRelease,
+                snapshot.ObservationStartedAt.Add(RequiredObservationWindow),
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var current = await LoadDocumentAsync(cancellationToken).ConfigureAwait(false);
+            if (!MatchesSnapshot(current, snapshot, expectEvidence: false) ||
+                GetBlockingReason(current) is not CompatibilityReadBlockingReason.EvidenceNotRecorded)
+            {
+                throw new InvalidOperationException(
+                    "The readiness state changed while issue evidence was being verified. Verify the current state and try again.");
+            }
+
+            var updated = CopyDocument(current);
+            updated.EvidenceReference = snapshot.EvidenceReference;
+            await SaveDocumentAsync(updated, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -260,22 +307,18 @@ internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration
             if (alreadyObserved)
                 return;
 
+            var updated = CopyDocument(document);
             if (transport == CompatibilityReadTransport.Rest)
-                document.HasAuthenticatedRestRead = true;
+                updated.HasAuthenticatedRestRead = true;
             else
-                document.HasAuthenticatedSignalRRead = true;
-            document.AuthenticatedReadCount++;
+                updated.HasAuthenticatedSignalRRead = true;
+            updated.AuthenticatedReadCount++;
             try
             {
-                await _store.SaveAsync(document, cancellationToken).ConfigureAwait(false);
+                await SaveDocumentAsync(updated, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception exception) when (exception is not OperationCanceledException)
             {
-                if (transport == CompatibilityReadTransport.Rest)
-                    document.HasAuthenticatedRestRead = false;
-                else
-                    document.HasAuthenticatedSignalRRead = false;
-                document.AuthenticatedReadCount--;
                 _logger.LogWarning(
                     new EventId(5003, "CompatibilityReadEvidencePersistenceFailed"),
                     exception,
@@ -296,16 +339,17 @@ internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            var document = await LoadDocumentAsync(cancellationToken).ConfigureAwait(false);
-            EnsureWindowMutable(document);
-            if (document.ObservationStartedAt is null)
+            var current = await LoadDocumentAsync(cancellationToken).ConfigureAwait(false);
+            EnsureWindowMutable(current);
+            if (current.ObservationStartedAt is null)
                 throw new InvalidOperationException("Start the readiness window before recording a critical defect.");
 
             var normalizedCode = defectCode.Trim();
-            if (!document.OpenCriticalDefectCodes.Contains(normalizedCode, StringComparer.Ordinal))
-                document.OpenCriticalDefectCodes.Add(normalizedCode);
-            document.EvidenceReference = null;
-            await _store.SaveAsync(document, cancellationToken).ConfigureAwait(false);
+            var updated = CopyDocument(current);
+            if (!updated.OpenCriticalDefectCodes.Contains(normalizedCode, StringComparer.Ordinal))
+                updated.OpenCriticalDefectCodes.Add(normalizedCode);
+            updated.EvidenceReference = null;
+            await SaveDocumentAsync(updated, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -322,23 +366,24 @@ internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            var document = await LoadDocumentAsync(cancellationToken).ConfigureAwait(false);
-            EnsureWindowMutable(document);
-            if (document.ObservationStartedAt is null)
+            var current = await LoadDocumentAsync(cancellationToken).ConfigureAwait(false);
+            EnsureWindowMutable(current);
+            if (current.ObservationStartedAt is null)
                 throw new InvalidOperationException("Start the readiness window before fixing a critical defect.");
 
             var normalizedCode = defectCode.Trim();
-            if (!document.OpenCriticalDefectCodes.Remove(normalizedCode))
+            var updated = CopyDocument(current);
+            if (!updated.OpenCriticalDefectCodes.Remove(normalizedCode))
                 throw new InvalidOperationException("The critical defect is not currently open.");
 
-            document.ObservationStartedAt = _timeProvider.GetUtcNow();
-            document.AuthenticatedReadCount = 0;
-            document.HasAuthenticatedRestRead = false;
-            document.HasAuthenticatedSignalRRead = false;
-            document.EvidenceReference = null;
-            document.LastCriticalDefectCode = normalizedCode;
-            document.LastCriticalDefectFixedAt = document.ObservationStartedAt;
-            await _store.SaveAsync(document, cancellationToken).ConfigureAwait(false);
+            updated.ObservationStartedAt = _timeProvider.GetUtcNow();
+            updated.AuthenticatedReadCount = 0;
+            updated.HasAuthenticatedRestRead = false;
+            updated.HasAuthenticatedSignalRRead = false;
+            updated.EvidenceReference = null;
+            updated.LastCriticalDefectCode = normalizedCode;
+            updated.LastCriticalDefectFixedAt = updated.ObservationStartedAt;
+            await SaveDocumentAsync(updated, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -348,16 +393,61 @@ internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration
 
     public async Task<bool> EnableAuthenticatedReadsAsync(CancellationToken cancellationToken = default)
     {
+        EvidenceValidationSnapshot snapshot;
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            var document = await LoadDocumentAsync(cancellationToken).ConfigureAwait(false);
-            if (GetBlockingReason(document) != CompatibilityReadBlockingReason.None)
+            var current = await LoadDocumentAsync(cancellationToken).ConfigureAwait(false);
+            if (GetBlockingReason(current) != CompatibilityReadBlockingReason.None)
                 return false;
 
-            document.AuthenticatedReadsEnforcedAt ??= _timeProvider.GetUtcNow();
-            document.RollbackExpiresAt = null;
-            await _store.SaveAsync(document, cancellationToken).ConfigureAwait(false);
+            snapshot = new EvidenceValidationSnapshot(
+                current.StableClientRelease!,
+                current.ObservationStartedAt!.Value,
+                current.EvidenceReference!);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+
+        await _evidenceVerifier.VerifyAsync(
+                new Uri(snapshot.EvidenceReference, UriKind.Absolute),
+                snapshot.StableClientRelease,
+                snapshot.ObservationStartedAt.Add(RequiredObservationWindow),
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var current = await LoadDocumentAsync(cancellationToken).ConfigureAwait(false);
+            if (!MatchesSnapshot(current, snapshot, expectEvidence: true) ||
+                GetBlockingReason(current) is not CompatibilityReadBlockingReason.None)
+            {
+                throw new InvalidOperationException(
+                    "The readiness state changed while issue evidence was being verified. Verify the current state and try again.");
+            }
+
+            var enforcedAt = current.AuthenticatedReadsEnforcedAt ?? _timeProvider.GetUtcNow();
+            await _enforcementMarkerStore.SaveAsync(
+                new CompatibilityReadEnforcementMarker { AuthenticatedReadsEnforcedAt = enforcedAt },
+                cancellationToken).ConfigureAwait(false);
+            var updated = CopyDocument(current);
+            updated.AuthenticatedReadsEnforcedAt = enforcedAt;
+            updated.RollbackExpiresAt = null;
+            try
+            {
+                await SaveDocumentAsync(updated, cancellationToken).ConfigureAwait(false);
+            }
+            catch
+            {
+                _cachedDocument = new CompatibilityReadMigrationDocument
+                {
+                    AuthenticatedReadsEnforcedAt = enforcedAt
+                };
+                throw;
+            }
             _metrics.SetRollbackExpiry(null);
             return true;
         }
@@ -377,18 +467,19 @@ internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            var document = await LoadDocumentAsync(cancellationToken).ConfigureAwait(false);
-            if (document.AuthenticatedReadsEnforcedAt is null)
+            var current = await LoadDocumentAsync(cancellationToken).ConfigureAwait(false);
+            if (current.AuthenticatedReadsEnforcedAt is null)
                 return false;
 
-            document.RollbackExpiresAt = _timeProvider.GetUtcNow().Add(duration);
-            await _store.SaveAsync(document, cancellationToken).ConfigureAwait(false);
-            _metrics.SetRollbackExpiry(document.RollbackExpiresAt);
+            var updated = CopyDocument(current);
+            updated.RollbackExpiresAt = _timeProvider.GetUtcNow().Add(duration);
+            await SaveDocumentAsync(updated, cancellationToken).ConfigureAwait(false);
+            _metrics.SetRollbackExpiry(updated.RollbackExpiresAt);
             _logger.LogWarning(
                 RollbackActivatedEvent,
                 "The anonymous read-only rollback was activated for {RollbackDuration} and expires at {RollbackExpiresAt}. Anonymous control and administration remain disabled.",
                 duration,
-                document.RollbackExpiresAt);
+                updated.RollbackExpiresAt);
             return true;
         }
         finally
@@ -477,9 +568,59 @@ internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration
     private async Task<CompatibilityReadMigrationDocument> LoadDocumentAsync(
         CancellationToken cancellationToken)
     {
-        _cachedDocument ??= await _store.LoadAsync(cancellationToken).ConfigureAwait(false);
+        if (_cachedDocument is not null)
+            return _cachedDocument;
+
+        CompatibilityReadEnforcementMarker? marker = null;
+        if (_enforcementMarkerStore.Exists)
+            marker = await _enforcementMarkerStore.LoadAsync(cancellationToken).ConfigureAwait(false);
+
+        var document = await _store.LoadAsync(cancellationToken).ConfigureAwait(false);
+        if (marker?.AuthenticatedReadsEnforcedAt is not null &&
+            (document.AuthenticatedReadsEnforcedAt is null ||
+             document.AuthenticatedReadsEnforcedAt < marker.AuthenticatedReadsEnforcedAt))
+        {
+            document.AuthenticatedReadsEnforcedAt = marker.AuthenticatedReadsEnforcedAt;
+            document.RollbackExpiresAt = null;
+        }
+
+        _cachedDocument = document;
         return _cachedDocument;
     }
+
+    private async Task SaveDocumentAsync(
+        CompatibilityReadMigrationDocument document,
+        CancellationToken cancellationToken)
+    {
+        await _store.SaveAsync(document, cancellationToken).ConfigureAwait(false);
+        _cachedDocument = document;
+    }
+
+    private static CompatibilityReadMigrationDocument CopyDocument(CompatibilityReadMigrationDocument source) => new()
+    {
+        StableClientRelease = source.StableClientRelease,
+        ObservationStartedAt = source.ObservationStartedAt,
+        AuthenticatedReadCount = source.AuthenticatedReadCount,
+        EvidenceReference = source.EvidenceReference,
+        LastCriticalDefectCode = source.LastCriticalDefectCode,
+        LastCriticalDefectFixedAt = source.LastCriticalDefectFixedAt,
+        AuthenticatedReadsEnforcedAt = source.AuthenticatedReadsEnforcedAt,
+        RollbackExpiresAt = source.RollbackExpiresAt,
+        HasAuthenticatedRestRead = source.HasAuthenticatedRestRead,
+        HasAuthenticatedSignalRRead = source.HasAuthenticatedSignalRRead,
+        OpenCriticalDefectCodes = [.. source.OpenCriticalDefectCodes]
+    };
+
+    private static bool MatchesSnapshot(
+        CompatibilityReadMigrationDocument document,
+        EvidenceValidationSnapshot snapshot,
+        bool expectEvidence) =>
+        string.Equals(document.StableClientRelease, snapshot.StableClientRelease, StringComparison.Ordinal) &&
+        document.ObservationStartedAt == snapshot.ObservationStartedAt &&
+        (!expectEvidence || string.Equals(
+            document.EvidenceReference,
+            snapshot.EvidenceReference,
+            StringComparison.Ordinal));
 
     private static void EnsureWindowMutable(CompatibilityReadMigrationDocument document)
     {
@@ -581,6 +722,16 @@ internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration
 
         public List<string> OpenCriticalDefectCodes { get; set; } = [];
     }
+
+    private sealed class CompatibilityReadEnforcementMarker
+    {
+        public DateTimeOffset? AuthenticatedReadsEnforcedAt { get; set; }
+    }
+
+    private sealed record EvidenceValidationSnapshot(
+        string StableClientRelease,
+        DateTimeOffset ObservationStartedAt,
+        string EvidenceReference);
 
     private sealed class CompatibilityReadOutcomeCounter
     {

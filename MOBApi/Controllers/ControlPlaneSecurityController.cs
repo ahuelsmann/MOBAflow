@@ -184,6 +184,7 @@ public sealed class ControlPlaneSecurityController : ControllerBase
             ? NoContent()
             : NotFound();
 
+    /// <summary>Starts the fourteen-day readiness window for a stable client release.</summary>
     [HttpPost("read-migration/window")]
     public async Task<IActionResult> BeginReadinessWindow(
         BeginReadinessWindowRequest request,
@@ -204,16 +205,19 @@ public sealed class ControlPlaneSecurityController : ControllerBase
         }
     }
 
+    /// <summary>Returns the current authenticated-read migration gate status.</summary>
     [HttpGet("read-migration")]
     public async Task<ActionResult<CompatibilityReadMigrationStatus>> GetReadMigrationStatus(
         CancellationToken cancellationToken) =>
         await _readMigration.GetStatusAsync(cancellationToken).ConfigureAwait(false);
 
+    /// <summary>Returns bounded, process-local compatibility-read telemetry.</summary>
     [HttpGet("read-migration/telemetry")]
     public async Task<ActionResult<CompatibilityReadTelemetry>> GetReadMigrationTelemetry(
         CancellationToken cancellationToken) =>
         await _readMigration.GetTelemetryAsync(cancellationToken).ConfigureAwait(false);
 
+    /// <summary>Records a critical defect fix and restarts the full readiness window.</summary>
     [HttpPost("read-migration/critical-defect-fixed")]
     public async Task<IActionResult> RecordCriticalDefectFixed(
         RecordCriticalDefectFixedRequest request,
@@ -234,6 +238,7 @@ public sealed class ControlPlaneSecurityController : ControllerBase
         }
     }
 
+    /// <summary>Records a critical defect that blocks authenticated-read enforcement.</summary>
     [HttpPost("read-migration/critical-defect")]
     public async Task<IActionResult> RecordCriticalDefect(
         RecordCriticalDefectRequest request,
@@ -254,6 +259,7 @@ public sealed class ControlPlaneSecurityController : ControllerBase
         }
     }
 
+    /// <summary>Verifies and records the exact issue #50 readiness evidence comment.</summary>
     [HttpPost("read-migration/evidence")]
     public async Task<IActionResult> RecordReadinessEvidence(
         RecordReadinessEvidenceRequest request,
@@ -274,6 +280,7 @@ public sealed class ControlPlaneSecurityController : ControllerBase
         }
     }
 
+    /// <summary>Enables authenticated-only reads after every readiness gate passes.</summary>
     [HttpPost("read-migration/enforce")]
     public async Task<IActionResult> EnableAuthenticatedReads(CancellationToken cancellationToken)
     {
@@ -288,6 +295,7 @@ public sealed class ControlPlaneSecurityController : ControllerBase
         });
     }
 
+    /// <summary>Activates the persisted anonymous read-only rollback for at most seven days.</summary>
     [HttpPost("read-migration/rollback")]
     public async Task<IActionResult> ActivateAnonymousReadRollback(
         ActivateAnonymousReadRollbackRequest request,

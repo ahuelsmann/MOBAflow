@@ -24,6 +24,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.Json;
 
 namespace Moba.Test.MOBApi;
 
@@ -375,7 +376,6 @@ internal sealed class ControlPlaneSecurityTests
         var migration = context.GetRequiredService<ICompatibilityReadMigration>();
         await migration.BeginReadinessWindowAsync("MOBAsmart 1.0.0");
         context.TimeProvider.Advance(TimeSpan.FromDays(14));
-        await migration.RecordIssueEvidenceAsync("https://github.com/ahuelsmann/MOBAflow/issues/50#issuecomment-1234567890");
 
         var status = await migration.GetStatusAsync();
 
@@ -429,7 +429,6 @@ internal sealed class ControlPlaneSecurityTests
         await migration.RecordAuthenticatedReadAsync("credential-1", CompatibilityReadTransport.Rest, "MOBAsmart 0.9.0");
         await migration.RecordAuthenticatedReadAsync("credential-1", CompatibilityReadTransport.SignalR, "MOBAsmart 0.9.0");
         context.TimeProvider.Advance(TimeSpan.FromDays(14));
-        await migration.RecordIssueEvidenceAsync("https://github.com/ahuelsmann/MOBAflow/issues/50#issuecomment-1234567890");
 
         Assert.That((await migration.GetStatusAsync()).BlockingReason,
             Is.EqualTo(CompatibilityReadBlockingReason.NoAuthenticatedTraffic));
@@ -438,7 +437,107 @@ internal sealed class ControlPlaneSecurityTests
         Assert.That((await migration.GetStatusAsync()).IsReadyForEnforcement, Is.False);
 
         await migration.RecordAuthenticatedReadAsync("credential-1", CompatibilityReadTransport.SignalR, "MOBAsmart 1.0.0");
+        await migration.RecordIssueEvidenceAsync("https://github.com/ahuelsmann/MOBAflow/issues/50#issuecomment-1234567890");
         Assert.That((await migration.GetStatusAsync()).IsReadyForEnforcement, Is.True);
+    }
+
+    [Test]
+    public async Task ReadMigration_Should_RejectEvidenceThatVerifierCannotResolve()
+    {
+        using var context = SecurityTestContext.Create();
+        var migration = context.GetRequiredService<ICompatibilityReadMigration>();
+        await migration.BeginReadinessWindowAsync("MOBAsmart 1.0.0");
+        await migration.RecordAuthenticatedReadAsync("credential-1", CompatibilityReadTransport.Rest, "MOBAsmart 1.0.0");
+        await migration.RecordAuthenticatedReadAsync("credential-1", CompatibilityReadTransport.SignalR, "MOBAsmart 1.0.0");
+        context.TimeProvider.Advance(TimeSpan.FromDays(14));
+
+        Assert.ThrowsAsync<InvalidOperationException>(() => migration.RecordIssueEvidenceAsync(
+            "https://github.com/ahuelsmann/MOBAflow/issues/50#issuecomment-9999999999"));
+        Assert.That((await migration.GetStatusAsync()).EvidenceRecorded, Is.False);
+    }
+
+    [Test]
+    public void GitHubEvidenceVerifier_Should_RejectMissingComment()
+    {
+        using var services = CreateEvidenceVerifierServices(new HttpResponseMessage(HttpStatusCode.NotFound));
+        var verifier = services.GetRequiredService<ICompatibilityReadEvidenceVerifier>();
+
+        Assert.ThrowsAsync<InvalidOperationException>(() => verifier.VerifyAsync(
+            new Uri("https://github.com/ahuelsmann/MOBAflow/issues/50#issuecomment-1234567890"),
+            "MOBAsmart 1.0.0",
+            new DateTimeOffset(2026, 8, 3, 12, 0, 0, TimeSpan.Zero),
+            CancellationToken.None));
+    }
+
+    [Test]
+    public async Task GitHubEvidenceVerifier_Should_AcceptCurrentPostWindowEvidence()
+    {
+        const string body = """
+                            {
+                              "html_url": "https://github.com/ahuelsmann/MOBAflow/issues/50#issuecomment-1234567890",
+                              "issue_url": "https://api.github.com/repos/ahuelsmann/MOBAflow/issues/50",
+                              "created_at": "2026-08-03T12:01:00Z",
+                              "body": "Slice 4e readiness evidence\nStable client release: MOBAsmart 1.0.0\nObservation result: passed"
+                            }
+                            """;
+        using var services = CreateEvidenceVerifierServices(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(body, Encoding.UTF8, "application/json")
+        });
+
+        await services.GetRequiredService<ICompatibilityReadEvidenceVerifier>().VerifyAsync(
+            new Uri("https://github.com/ahuelsmann/MOBAflow/issues/50#issuecomment-1234567890"),
+            "MOBAsmart 1.0.0",
+            new DateTimeOffset(2026, 8, 3, 12, 0, 0, TimeSpan.Zero),
+            CancellationToken.None);
+    }
+
+    [Test]
+    public void GitHubEvidenceVerifier_Should_RejectCommentCreatedBeforeWindowCompleted()
+    {
+        const string body = """
+                            {
+                              "html_url": "https://github.com/ahuelsmann/MOBAflow/issues/50#issuecomment-1234567890",
+                              "issue_url": "https://api.github.com/repos/ahuelsmann/MOBAflow/issues/50",
+                              "created_at": "2026-08-03T11:59:59Z",
+                              "body": "Slice 4e readiness evidence\nStable client release: MOBAsmart 1.0.0\nObservation result: passed"
+                            }
+                            """;
+        using var services = CreateEvidenceVerifierServices(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(body, Encoding.UTF8, "application/json")
+        });
+
+        Assert.ThrowsAsync<InvalidOperationException>(() =>
+            services.GetRequiredService<ICompatibilityReadEvidenceVerifier>().VerifyAsync(
+                new Uri("https://github.com/ahuelsmann/MOBAflow/issues/50#issuecomment-1234567890"),
+                "MOBAsmart 1.0.0",
+                new DateTimeOffset(2026, 8, 3, 12, 0, 0, TimeSpan.Zero),
+                CancellationToken.None));
+    }
+
+    [Test]
+    public void GitHubEvidenceVerifier_Should_RejectReleasePrefixInsteadOfExactLine()
+    {
+        const string body = """
+                            {
+                              "html_url": "https://github.com/ahuelsmann/MOBAflow/issues/50#issuecomment-1234567890",
+                              "issue_url": "https://api.github.com/repos/ahuelsmann/MOBAflow/issues/50",
+                              "created_at": "2026-08-03T12:01:00Z",
+                              "body": "Slice 4e readiness evidence\nStable client release: MOBAsmart 1.0.0-rc\nObservation result: passed"
+                            }
+                            """;
+        using var services = CreateEvidenceVerifierServices(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(body, Encoding.UTF8, "application/json")
+        });
+
+        Assert.ThrowsAsync<InvalidOperationException>(() =>
+            services.GetRequiredService<ICompatibilityReadEvidenceVerifier>().VerifyAsync(
+                new Uri("https://github.com/ahuelsmann/MOBAflow/issues/50#issuecomment-1234567890"),
+                "MOBAsmart 1.0.0",
+                new DateTimeOffset(2026, 8, 3, 12, 0, 0, TimeSpan.Zero),
+                CancellationToken.None));
     }
 
     [Test]
@@ -646,6 +745,110 @@ internal sealed class ControlPlaneSecurityTests
             if (Directory.Exists(root))
                 Directory.Delete(root, true);
         }
+    }
+
+    [Test]
+    public async Task ReadMigration_Should_FailClosed_WhenMigrationDocumentIsLostAfterEnforcement()
+    {
+        var root = SecurityTestContext.CreateTemporaryRoot();
+        try
+        {
+            using (var first = SecurityTestContext.Create(root))
+            {
+                var migration = first.GetRequiredService<ICompatibilityReadMigration>();
+                await MakeReadMigrationReadyAsync(first, migration);
+                Assert.That(await migration.EnableAuthenticatedReadsAsync(), Is.True);
+            }
+
+            File.Delete(Path.Combine(root, "store", "read-migration.dat"));
+            using var restarted = SecurityTestContext.Create(root);
+
+            Assert.That(
+                await restarted.GetRequiredService<ICompatibilityReadMigration>()
+                    .EvaluateAnonymousReadAsync(CompatibilityReadTransport.Rest),
+                Is.EqualTo(CompatibilityReadDecision.UpgradeRequired));
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+                Directory.Delete(root, true);
+        }
+    }
+
+    [Test]
+    public async Task ReadMigration_Should_LetEnforcementMarkerOverrideExistingCompatibilityDocument()
+    {
+        var root = SecurityTestContext.CreateTemporaryRoot();
+        try
+        {
+            using (var first = SecurityTestContext.Create(root))
+            {
+                await first.GetRequiredService<ICompatibilityReadMigration>()
+                    .BeginReadinessWindowAsync("MOBAsmart 1.0.0");
+                var clearMarker = JsonSerializer.SerializeToUtf8Bytes(new
+                {
+                    AuthenticatedReadsEnforcedAt = first.TimeProvider.GetUtcNow()
+                });
+                var protectedMarker = first.GetRequiredService<IDataProtectionProvider>()
+                    .CreateProtector("MOBApi.ControlPlane.CompatibilityReadMigration.EnforcementMarker.v1")
+                    .Protect(clearMarker);
+                await File.WriteAllBytesAsync(
+                    Path.Combine(root, "store", "read-migration-enforced.dat"),
+                    protectedMarker);
+            }
+
+            using var restarted = SecurityTestContext.Create(root);
+            Assert.That(
+                await restarted.GetRequiredService<ICompatibilityReadMigration>()
+                    .EvaluateAnonymousReadAsync(CompatibilityReadTransport.Rest),
+                Is.EqualTo(CompatibilityReadDecision.UpgradeRequired));
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+                Directory.Delete(root, true);
+        }
+    }
+
+    [Test]
+    public async Task ReadMigration_Should_NotBlockReads_WhileGitHubEvidenceIsVerified()
+    {
+        var blockingVerifier = new BlockingCompatibilityReadEvidenceVerifier();
+        using var context = SecurityTestContext.Create(evidenceVerifier: blockingVerifier);
+        var migration = context.GetRequiredService<ICompatibilityReadMigration>();
+        await migration.BeginReadinessWindowAsync("MOBAsmart 1.0.0");
+        await migration.RecordAuthenticatedReadAsync("credential-1", CompatibilityReadTransport.Rest, "MOBAsmart 1.0.0");
+        await migration.RecordAuthenticatedReadAsync("credential-1", CompatibilityReadTransport.SignalR, "MOBAsmart 1.0.0");
+        context.TimeProvider.Advance(TimeSpan.FromDays(14));
+
+        var evidenceTask = migration.RecordIssueEvidenceAsync(
+            "https://github.com/ahuelsmann/MOBAflow/issues/50#issuecomment-1234567890");
+        await blockingVerifier.Started.Task.WaitAsync(TimeSpan.FromSeconds(1));
+        var decision = await migration.EvaluateAnonymousReadAsync(CompatibilityReadTransport.Rest)
+            .WaitAsync(TimeSpan.FromSeconds(1));
+        blockingVerifier.Release.SetResult();
+        await evidenceTask;
+
+        Assert.That(decision, Is.EqualTo(CompatibilityReadDecision.AllowedCompatibility));
+    }
+
+    [Test]
+    public async Task ReadMigration_Should_NotActivateCachedRollback_WhenPersistenceFails()
+    {
+        using var context = SecurityTestContext.Create();
+        var migration = context.GetRequiredService<ICompatibilityReadMigration>();
+        await MakeReadMigrationReadyAsync(context, migration);
+        Assert.That(await migration.EnableAuthenticatedReadsAsync(), Is.True);
+        var migrationPath = Path.Combine(context.Root, "store", "read-migration.dat");
+        File.Delete(migrationPath);
+        Directory.CreateDirectory(migrationPath);
+
+        var persistenceFailure = Assert.CatchAsync(() =>
+            migration.ActivateAnonymousReadRollbackAsync(TimeSpan.FromHours(24)));
+        Assert.That(persistenceFailure, Is.InstanceOf<IOException>().Or.InstanceOf<UnauthorizedAccessException>());
+        Assert.That(
+            await migration.EvaluateAnonymousReadAsync(CompatibilityReadTransport.Rest),
+            Is.EqualTo(CompatibilityReadDecision.UpgradeRequired));
     }
 
     [Test]
@@ -1136,6 +1339,28 @@ internal sealed class ControlPlaneSecurityTests
         return controller;
     }
 
+    private static ServiceProvider CreateEvidenceVerifierServices(HttpResponseMessage response)
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddControlPlaneSecurity(new ConfigurationBuilder().Build());
+        services.RemoveAll<IHttpClientFactory>();
+        services.AddSingleton<IHttpClientFactory>(new StubHttpClientFactory(response));
+        return services.BuildServiceProvider(validateScopes: true);
+    }
+
+    private static async Task MakeReadMigrationReadyAsync(
+        SecurityTestContext context,
+        ICompatibilityReadMigration migration)
+    {
+        await migration.BeginReadinessWindowAsync("MOBAsmart 1.0.0");
+        await migration.RecordAuthenticatedReadAsync("credential-1", CompatibilityReadTransport.Rest, "MOBAsmart 1.0.0");
+        await migration.RecordAuthenticatedReadAsync("credential-1", CompatibilityReadTransport.SignalR, "MOBAsmart 1.0.0");
+        context.TimeProvider.Advance(TimeSpan.FromDays(14));
+        await migration.RecordIssueEvidenceAsync(
+            "https://github.com/ahuelsmann/MOBAflow/issues/50#issuecomment-1234567890");
+    }
+
     private static async Task<AuthenticateResult> AuthenticateQueryTokenAsync(
         IServiceProvider services,
         string path,
@@ -1172,7 +1397,8 @@ internal sealed class ControlPlaneSecurityTests
             bool ownsRoot,
             TimeSpan accessTokenLifetime,
             int pairingMaximumFailedAttempts,
-            ILoggerProvider? loggerProvider)
+            ILoggerProvider? loggerProvider,
+            ICompatibilityReadEvidenceVerifier? evidenceVerifier)
         {
             Root = root;
             _ownsRoot = ownsRoot;
@@ -1182,7 +1408,8 @@ internal sealed class ControlPlaneSecurityTests
                 accessTokenLifetime,
                 pairingMaximumFailedAttempts,
                 TimeProvider,
-                loggerProvider);
+                loggerProvider,
+                evidenceVerifier);
         }
 
         public string Root { get; }
@@ -1195,7 +1422,8 @@ internal sealed class ControlPlaneSecurityTests
             string? root = null,
             TimeSpan? accessTokenLifetime = null,
             int pairingMaximumFailedAttempts = 5,
-            ILoggerProvider? loggerProvider = null)
+            ILoggerProvider? loggerProvider = null,
+            ICompatibilityReadEvidenceVerifier? evidenceVerifier = null)
         {
             var ownsRoot = root is null;
             return new SecurityTestContext(
@@ -1203,7 +1431,8 @@ internal sealed class ControlPlaneSecurityTests
                 ownsRoot,
                 accessTokenLifetime ?? TimeSpan.FromMinutes(5),
                 pairingMaximumFailedAttempts,
-                loggerProvider);
+                loggerProvider,
+                evidenceVerifier);
         }
 
         public static string CreateTemporaryRoot() =>
@@ -1223,7 +1452,8 @@ internal sealed class ControlPlaneSecurityTests
             TimeSpan accessTokenLifetime,
             int pairingMaximumFailedAttempts,
             TimeProvider timeProvider,
-            ILoggerProvider? loggerProvider)
+            ILoggerProvider? loggerProvider,
+            ICompatibilityReadEvidenceVerifier? evidenceVerifier)
         {
             Directory.CreateDirectory(root);
             var settings = new Dictionary<string, string?>
@@ -1240,11 +1470,65 @@ internal sealed class ControlPlaneSecurityTests
                     builder.AddProvider(loggerProvider);
             });
             services.AddControlPlaneSecurity(configuration);
+            services.RemoveAll<ICompatibilityReadEvidenceVerifier>();
+            if (evidenceVerifier is null)
+                services.AddSingleton<ICompatibilityReadEvidenceVerifier, TestCompatibilityReadEvidenceVerifier>();
+            else
+                services.AddSingleton(evidenceVerifier);
             services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(root, "keys")));
             services.RemoveAll<TimeProvider>();
             services.AddSingleton(timeProvider);
             return services.BuildServiceProvider(validateScopes: true);
         }
+    }
+
+    private sealed class TestCompatibilityReadEvidenceVerifier : ICompatibilityReadEvidenceVerifier
+    {
+        public Task VerifyAsync(
+            Uri evidenceUri,
+            string stableClientRelease,
+            DateTimeOffset observationCompletedAt,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (evidenceUri.Fragment != "#issuecomment-1234567890")
+                throw new InvalidOperationException("The test evidence comment does not exist.");
+            if (string.IsNullOrWhiteSpace(stableClientRelease) || observationCompletedAt == default)
+                throw new InvalidOperationException("The test evidence context is incomplete.");
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class BlockingCompatibilityReadEvidenceVerifier : ICompatibilityReadEvidenceVerifier
+    {
+        public TaskCompletionSource Started { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public TaskCompletionSource Release { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public async Task VerifyAsync(
+            Uri evidenceUri,
+            string stableClientRelease,
+            DateTimeOffset observationCompletedAt,
+            CancellationToken cancellationToken)
+        {
+            Started.TrySetResult();
+            await Release.Task.WaitAsync(cancellationToken);
+        }
+    }
+
+    private sealed class StubHttpClientFactory(HttpResponseMessage response) : IHttpClientFactory
+    {
+        public HttpClient CreateClient(string name) => new(new StubHttpMessageHandler(response))
+        {
+            BaseAddress = new Uri("https://api.github.com/")
+        };
+    }
+
+    private sealed class StubHttpMessageHandler(HttpResponseMessage response) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken) => Task.FromResult(response);
     }
 
     private sealed record CapturedLog(LogLevel Level, EventId EventId, string Message);
