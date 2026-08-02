@@ -183,15 +183,23 @@ jobs:
         shell: pwsh
         run: ./scripts/Test-DisplayProtocolCutover.ps1
 
+      # Skia rendering stays in the Windows desktop lane because this Linux lane owns protocol and transport only.
       - name: Run display host conformance tests
         shell: pwsh
-        run: >-
-          dotnet test Test/Test.csproj
-          --configuration Release
-          --framework net10.0
-          --no-restore
-          -p:IncludeMobaSmartTests=false
-          --filter FullyQualifiedName~Moba.Test.MOBAdisplay
+        run: |
+          $filter = @(
+            'FullyQualifiedName~Moba.Test.MOBAdisplay'
+            'FullyQualifiedName!~ClockRendererTests'
+            'FullyQualifiedName!~FrameLoopSchedulerTests'
+            'FullyQualifiedName!~Rgb565ConverterTests'
+            'FullyQualifiedName!~SkiaFrameRendererTests'
+          ) -join '&'
+          dotnet test Test/Test.csproj `
+            --configuration Release `
+            --framework net10.0 `
+            --no-restore `
+            -p:IncludeMobaSmartTests=false `
+            --filter $filter
 
       - name: Install pinned PlatformIO
         shell: bash
