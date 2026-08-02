@@ -10,8 +10,12 @@ internal sealed class AnonymousReadRollbackStartupReporter(
     ICompatibilityReadTelemetryRecorder telemetry,
     ILogger<AnonymousReadRollbackStartupReporter> logger) : IHostedService
 {
-    private static readonly EventId RollbackActivatedEvent =
-        new(5001, "AnonymousReadRollbackActivated");
+    private static readonly Action<ILogger, DateTimeOffset, Exception?> LogRollbackActivated =
+        LoggerMessage.Define<DateTimeOffset>(
+            LogLevel.Warning,
+            new EventId(5001, "AnonymousReadRollbackActivated"),
+            "Security audit: anonymous read-only rollback is active until {RollbackUntilUtc}. " +
+            "Control, host publication, pairing administration, and credential administration remain protected.");
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
@@ -19,11 +23,7 @@ internal sealed class AnonymousReadRollbackStartupReporter(
         if (!options.Value.LegacyAnonymousReadsEnabled && rollbackUntilUtc > timeProvider.GetUtcNow())
         {
             telemetry.RecordAnonymousRollbackActivated(rollbackUntilUtc.Value);
-            logger.LogWarning(
-                RollbackActivatedEvent,
-                "Security audit: anonymous read-only rollback is active until {RollbackUntilUtc}. " +
-                "Control, host publication, pairing administration, and credential administration remain protected.",
-                rollbackUntilUtc.Value);
+            LogRollbackActivated(logger, rollbackUntilUtc.Value, null);
         }
 
         return Task.CompletedTask;

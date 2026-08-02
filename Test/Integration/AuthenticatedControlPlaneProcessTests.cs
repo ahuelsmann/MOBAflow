@@ -38,18 +38,22 @@ internal sealed class AuthenticatedControlPlaneProcessTests
         Directory.CreateDirectory(storageDirectory);
         try
         {
-            await using var server = await MobaApiProcess.StartAsync(
+            var server = await MobaApiProcess.StartAsync(
                 storageDirectory,
                 httpPort,
                 httpsPort,
-                legacyAnonymousReadsEnabled: false);
+                legacyAnonymousReadsEnabled: false).ConfigureAwait(false);
+            await using (server.ConfigureAwait(false))
+            {
+                using var response = await server
+                    .SendAnonymousAsync(HttpMethod.Get, "api/runtime/snapshot")
+                    .ConfigureAwait(false);
+                var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-            using var response = await server.SendAnonymousAsync(HttpMethod.Get, "api/runtime/snapshot");
-            var responseBody = await response.Content.ReadAsStringAsync();
-
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.UpgradeRequired));
-            using var body = JsonDocument.Parse(responseBody);
-            Assert.That(body.RootElement.GetProperty("code").GetString(), Is.EqualTo("upgrade_required"));
+                Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.UpgradeRequired));
+                using var body = JsonDocument.Parse(responseBody);
+                Assert.That(body.RootElement.GetProperty("code").GetString(), Is.EqualTo("upgrade_required"));
+            }
         }
         finally
         {
@@ -75,18 +79,21 @@ internal sealed class AuthenticatedControlPlaneProcessTests
         Directory.CreateDirectory(storageDirectory);
         try
         {
-            await using var server = await MobaApiProcess.StartAsync(
+            var server = await MobaApiProcess.StartAsync(
                 storageDirectory,
                 httpPort,
                 httpsPort,
-                legacyAnonymousReadsEnabled: false);
+                legacyAnonymousReadsEnabled: false).ConfigureAwait(false);
+            await using (server.ConfigureAwait(false))
+            {
+                using var response = await server.SendWithAccessTokenAsync(
+                        HttpMethod.Get,
+                        "api/runtime/snapshot",
+                        "invalid-access-token")
+                    .ConfigureAwait(false);
 
-            using var response = await server.SendWithAccessTokenAsync(
-                HttpMethod.Get,
-                "api/runtime/snapshot",
-                "invalid-access-token");
-
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+                Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+            }
         }
         finally
         {
@@ -112,20 +119,23 @@ internal sealed class AuthenticatedControlPlaneProcessTests
         Directory.CreateDirectory(storageDirectory);
         try
         {
-            await using var server = await MobaApiProcess.StartAsync(
+            var server = await MobaApiProcess.StartAsync(
                 storageDirectory,
                 httpPort,
                 httpsPort,
-                legacyAnonymousReadsEnabled: false);
+                legacyAnonymousReadsEnabled: false).ConfigureAwait(false);
+            await using (server.ConfigureAwait(false))
+            {
+                using var response = await server.SendAnonymousAsync(
+                        HttpMethod.Post,
+                        "runtime-hub/negotiate?negotiateVersion=1")
+                    .ConfigureAwait(false);
+                var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-            using var response = await server.SendAnonymousAsync(
-                HttpMethod.Post,
-                "runtime-hub/negotiate?negotiateVersion=1");
-            var responseBody = await response.Content.ReadAsStringAsync();
-
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.UpgradeRequired));
-            using var body = JsonDocument.Parse(responseBody);
-            Assert.That(body.RootElement.GetProperty("code").GetString(), Is.EqualTo("upgrade_required"));
+                Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.UpgradeRequired));
+                using var body = JsonDocument.Parse(responseBody);
+                Assert.That(body.RootElement.GetProperty("code").GetString(), Is.EqualTo("upgrade_required"));
+            }
         }
         finally
         {
@@ -151,29 +161,38 @@ internal sealed class AuthenticatedControlPlaneProcessTests
         Directory.CreateDirectory(storageDirectory);
         try
         {
-            await using var server = await MobaApiProcess.StartAsync(storageDirectory, httpPort, httpsPort);
-            using var compatibilityRead = await server.SendAnonymousAsync(HttpMethod.Get, "api/runtime/snapshot");
-            using var anonymousStatus = await server.SendAnonymousAsync(
-                HttpMethod.Get,
-                "api/control-plane/security/compatibility");
-            using var hostStatus = await server.SendHostAsync(
-                HttpMethod.Get,
-                "api/control-plane/security/compatibility");
-            var responseBody = await hostStatus.Content.ReadAsStringAsync();
-
-            Assert.Multiple(() =>
+            var server = await MobaApiProcess
+                .StartAsync(storageDirectory, httpPort, httpsPort)
+                .ConfigureAwait(false);
+            await using (server.ConfigureAwait(false))
             {
-                Assert.That(anonymousStatus.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
-                Assert.That(hostStatus.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-                Assert.That(responseBody, Does.Not.Contain("token").IgnoreCase);
-                Assert.That(responseBody, Does.Not.Contain("snapshot").IgnoreCase);
-                Assert.That(responseBody, Does.Not.Contain("hardware").IgnoreCase);
-            });
-            using var body = JsonDocument.Parse(responseBody);
-            Assert.That(
-                body.RootElement.GetProperty("telemetry").GetProperty("anonymousReadCount").GetInt64(),
-                Is.GreaterThanOrEqualTo(1));
-            Assert.That(body.RootElement.TryGetProperty("readiness", out _), Is.True);
+                using var compatibilityRead = await server
+                    .SendAnonymousAsync(HttpMethod.Get, "api/runtime/snapshot")
+                    .ConfigureAwait(false);
+                using var anonymousStatus = await server.SendAnonymousAsync(
+                        HttpMethod.Get,
+                        "api/control-plane/security/compatibility")
+                    .ConfigureAwait(false);
+                using var hostStatus = await server.SendHostAsync(
+                        HttpMethod.Get,
+                        "api/control-plane/security/compatibility")
+                    .ConfigureAwait(false);
+                var responseBody = await hostStatus.Content.ReadAsStringAsync().ConfigureAwait(false);
+                using var body = JsonDocument.Parse(responseBody);
+
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(anonymousStatus.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+                    Assert.That(hostStatus.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+                    Assert.That(responseBody, Does.Not.Contain("token").IgnoreCase);
+                    Assert.That(responseBody, Does.Not.Contain("snapshot").IgnoreCase);
+                    Assert.That(responseBody, Does.Not.Contain("hardware").IgnoreCase);
+                    Assert.That(
+                        body.RootElement.GetProperty("telemetry").GetProperty("anonymousReadCount").GetInt64(),
+                        Is.GreaterThanOrEqualTo(1));
+                    Assert.That(body.RootElement.TryGetProperty("readiness", out _), Is.True);
+                }
+            }
         }
         finally
         {
@@ -437,22 +456,25 @@ internal sealed class AuthenticatedControlPlaneProcessTests
                 PublicKeyFingerprint);
         }
 
-        public Task<HttpResponseMessage> SendAnonymousAsync(HttpMethod method, string path)
+        public async Task<HttpResponseMessage> SendAnonymousAsync(HttpMethod method, string path)
         {
-            return _client.SendAsync(CreateRequest(method, path, accessToken: null));
+            using var request = CreateRequest(method, path, accessToken: null);
+            return await _client.SendAsync(request).ConfigureAwait(false);
         }
 
-        public Task<HttpResponseMessage> SendHostAsync(HttpMethod method, string path)
+        public async Task<HttpResponseMessage> SendHostAsync(HttpMethod method, string path)
         {
-            return _client.SendAsync(CreateRequest(method, path, HostToken.AccessToken));
+            using var request = CreateRequest(method, path, HostToken.AccessToken);
+            return await _client.SendAsync(request).ConfigureAwait(false);
         }
 
-        public Task<HttpResponseMessage> SendWithAccessTokenAsync(
+        public async Task<HttpResponseMessage> SendWithAccessTokenAsync(
             HttpMethod method,
             string path,
             string accessToken)
         {
-            return _client.SendAsync(CreateRequest(method, path, accessToken));
+            using var request = CreateRequest(method, path, accessToken);
+            return await _client.SendAsync(request).ConfigureAwait(false);
         }
 
         public async ValueTask DisposeAsync()

@@ -3,11 +3,24 @@
 namespace Moba.MOBApi.Security;
 
 using Microsoft.Extensions.Options;
+using System.Diagnostics.CodeAnalysis;
+
+/// <summary>
+/// Exposes aggregate compatibility and readiness evidence to the host-only controller.
+/// </summary>
+[UnconditionalSuppressMessage(
+    "Maintainability",
+    "CA1515:Consider making public types internal",
+    Justification = "ASP.NET Core controller activation requires this constructor-injected contract to be public.")]
+public interface ICompatibilityStatusProvider
+{
+    object GetStatus();
+}
 
 /// <summary>
 /// Exposes the evidence-based state of the anonymous-read migration window.
 /// </summary>
-public interface ICompatibilityReadiness
+internal interface ICompatibilityReadiness
 {
     CompatibilityReadinessSnapshot GetSnapshot();
 }
@@ -15,7 +28,7 @@ public interface ICompatibilityReadiness
 /// <summary>
 /// Describes why the anonymous-read migration is or is not ready for manual enforcement.
 /// </summary>
-public enum CompatibilityReadinessState
+internal enum CompatibilityReadinessState
 {
     StableClientReleaseMissing,
     AuthenticatedTrafficAbsent,
@@ -27,11 +40,24 @@ public enum CompatibilityReadinessState
 /// <summary>
 /// Represents aggregate readiness evidence without retaining credentials or request data.
 /// </summary>
-public sealed record CompatibilityReadinessSnapshot(
+internal sealed record CompatibilityReadinessSnapshot(
     CompatibilityReadinessState State,
     DateTimeOffset? ObservationStartedUtc,
     DateTimeOffset? EligibleAfterUtc,
     bool IsReady);
+
+internal sealed record CompatibilityStatusResponse(
+    CompatibilityReadTelemetrySnapshot Telemetry,
+    CompatibilityReadinessSnapshot Readiness);
+
+internal sealed class CompatibilityStatusProvider(
+    ICompatibilityReadTelemetry telemetry,
+    ICompatibilityReadiness readiness) : ICompatibilityStatusProvider
+{
+    public object GetStatus() => new CompatibilityStatusResponse(
+        telemetry.GetSnapshot(),
+        readiness.GetSnapshot());
+}
 
 internal sealed class CompatibilityReadiness(
     ICompatibilityReadTelemetry telemetry,

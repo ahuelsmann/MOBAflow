@@ -25,7 +25,7 @@ using System.Security.Claims;
 namespace Moba.Test.MOBApi;
 
 [TestFixture]
-internal sealed class ControlPlaneSecurityTests
+internal sealed partial class ControlPlaneSecurityTests
 {
     [Test]
     public void ForRole_Should_ApplyLeastPrivilegeCapabilityTemplates()
@@ -374,15 +374,16 @@ internal sealed class ControlPlaneSecurityTests
         var httpContext = new DefaultHttpContext();
 
         var result = await authorization.AuthorizeAsync(
-            new ClaimsPrincipal(new ClaimsIdentity()),
-            httpContext,
-            ControlPlaneCapabilities.Read);
+                new ClaimsPrincipal(new ClaimsIdentity()),
+                httpContext,
+                ControlPlaneCapabilities.Read)
+            .ConfigureAwait(false);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(result.Succeeded, Is.True);
             Assert.That(telemetry.GetSnapshot().AnonymousReadCount, Is.EqualTo(1));
-        });
+        }
     }
 
     [Test]
@@ -393,22 +394,23 @@ internal sealed class ControlPlaneSecurityTests
         var tokenService = context.GetRequiredService<IControlPlaneAccessTokenService>();
         var authorization = context.GetRequiredService<IAuthorizationService>();
         var telemetry = context.GetRequiredService<ICompatibilityReadTelemetry>();
-        var issued = await registry.CreateAsync("Observer", ControlPlaneRole.ReadOnly);
-        var token = await tokenService.IssueAsync(issued.Credential.CredentialId);
-        var principal = await tokenService.ValidateAsync(token!.Token);
+        var issued = await registry.CreateAsync("Observer", ControlPlaneRole.ReadOnly).ConfigureAwait(false);
+        var token = await tokenService.IssueAsync(issued.Credential.CredentialId).ConfigureAwait(false);
+        var principal = await tokenService.ValidateAsync(token!.Token).ConfigureAwait(false);
         var httpContext = new DefaultHttpContext();
         httpContext.Request.Headers.Authorization = $"Bearer {token.Token}";
 
         var result = await authorization.AuthorizeAsync(
-            principal!,
-            httpContext,
-            ControlPlaneCapabilities.Read);
+                principal!,
+                httpContext,
+                ControlPlaneCapabilities.Read)
+            .ConfigureAwait(false);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(result.Succeeded, Is.True);
             Assert.That(telemetry.GetSnapshot().AuthenticatedReadCount, Is.EqualTo(1));
-        });
+        }
     }
 
     [Test]
@@ -419,9 +421,10 @@ internal sealed class ControlPlaneSecurityTests
         var httpContext = new DefaultHttpContext();
 
         var result = await authorization.AuthorizeAsync(
-            new ClaimsPrincipal(new ClaimsIdentity()),
-            httpContext,
-            ControlPlaneCapabilities.Read);
+                new ClaimsPrincipal(new ClaimsIdentity()),
+                httpContext,
+                ControlPlaneCapabilities.Read)
+            .ConfigureAwait(false);
 
         Assert.That(result.Succeeded, Is.False);
     }
@@ -436,20 +439,22 @@ internal sealed class ControlPlaneSecurityTests
         var authorization = context.GetRequiredService<IAuthorizationService>();
 
         var beforeExpiry = await authorization.AuthorizeAsync(
-            new ClaimsPrincipal(new ClaimsIdentity()),
-            new DefaultHttpContext(),
-            ControlPlaneCapabilities.Read);
+                new ClaimsPrincipal(new ClaimsIdentity()),
+                new DefaultHttpContext(),
+                ControlPlaneCapabilities.Read)
+            .ConfigureAwait(false);
         context.TimeProvider.Advance(TimeSpan.FromHours(1));
         var atExpiry = await authorization.AuthorizeAsync(
-            new ClaimsPrincipal(new ClaimsIdentity()),
-            new DefaultHttpContext(),
-            ControlPlaneCapabilities.Read);
+                new ClaimsPrincipal(new ClaimsIdentity()),
+                new DefaultHttpContext(),
+                ControlPlaneCapabilities.Read)
+            .ConfigureAwait(false);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(beforeExpiry.Succeeded, Is.True);
             Assert.That(atExpiry.Succeeded, Is.False);
-        });
+        }
     }
 
     [Test]
@@ -472,14 +477,14 @@ internal sealed class ControlPlaneSecurityTests
             legacyAnonymousReadsEnabled: false,
             anonymousReadRollbackUntilUtc: rollbackUntil);
         foreach (var hostedService in context.GetRequiredService<IEnumerable<IHostedService>>())
-            await hostedService.StartAsync(CancellationToken.None);
+            await hostedService.StartAsync(CancellationToken.None).ConfigureAwait(false);
 
         var telemetry = context.GetRequiredService<ICompatibilityReadTelemetry>().GetSnapshot();
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(telemetry.AnonymousRollbackActive, Is.True);
             Assert.That(telemetry.AnonymousRollbackActivationCount, Is.EqualTo(1));
-        });
+        }
         Assert.That(
             context.LoggerProvider.Entries,
             Has.Some.Matches<LogEntry>(entry =>
@@ -501,11 +506,11 @@ internal sealed class ControlPlaneSecurityTests
 
         var snapshot = readiness.GetSnapshot();
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(snapshot.State, Is.EqualTo(CompatibilityReadinessState.AuthenticatedTrafficAbsent));
             Assert.That(snapshot.IsReady, Is.False);
-        });
+        }
     }
 
     [Test]
@@ -519,22 +524,24 @@ internal sealed class ControlPlaneSecurityTests
         var registry = context.GetRequiredService<ICredentialRegistry>();
         var tokenService = context.GetRequiredService<IControlPlaneAccessTokenService>();
         var authorization = context.GetRequiredService<IAuthorizationService>();
-        var issued = await registry.CreateAsync("Observer", ControlPlaneRole.ReadOnly);
-        var token = await tokenService.IssueAsync(issued.Credential.CredentialId);
-        var principal = await tokenService.ValidateAsync(token!.Token);
+        var issued = await registry.CreateAsync("Observer", ControlPlaneRole.ReadOnly).ConfigureAwait(false);
+        var token = await tokenService.IssueAsync(issued.Credential.CredentialId).ConfigureAwait(false);
+        var principal = await tokenService.ValidateAsync(token!.Token).ConfigureAwait(false);
         var httpContext = new DefaultHttpContext();
         httpContext.Request.Headers.Authorization = $"Bearer {token.Token}";
-        await authorization.AuthorizeAsync(principal!, httpContext, ControlPlaneCapabilities.Read);
+        await authorization
+            .AuthorizeAsync(principal!, httpContext, ControlPlaneCapabilities.Read)
+            .ConfigureAwait(false);
 
         var snapshot = context.GetRequiredService<ICompatibilityReadiness>().GetSnapshot();
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(snapshot.State, Is.EqualTo(CompatibilityReadinessState.Observing));
             Assert.That(snapshot.ObservationStartedUtc, Is.EqualTo(criticalDefectResolvedUtc));
             Assert.That(snapshot.EligibleAfterUtc, Is.EqualTo(criticalDefectResolvedUtc.AddDays(14)));
             Assert.That(snapshot.IsReady, Is.False);
-        });
+        }
     }
 
     [Test]
@@ -547,20 +554,22 @@ internal sealed class ControlPlaneSecurityTests
         var registry = context.GetRequiredService<ICredentialRegistry>();
         var tokenService = context.GetRequiredService<IControlPlaneAccessTokenService>();
         var authorization = context.GetRequiredService<IAuthorizationService>();
-        var issued = await registry.CreateAsync("Observer", ControlPlaneRole.ReadOnly);
-        var token = await tokenService.IssueAsync(issued.Credential.CredentialId);
-        var principal = await tokenService.ValidateAsync(token!.Token);
+        var issued = await registry.CreateAsync("Observer", ControlPlaneRole.ReadOnly).ConfigureAwait(false);
+        var token = await tokenService.IssueAsync(issued.Credential.CredentialId).ConfigureAwait(false);
+        var principal = await tokenService.ValidateAsync(token!.Token).ConfigureAwait(false);
         var httpContext = new DefaultHttpContext();
         httpContext.Request.Headers.Authorization = $"Bearer {token.Token}";
-        await authorization.AuthorizeAsync(principal!, httpContext, ControlPlaneCapabilities.Read);
+        await authorization
+            .AuthorizeAsync(principal!, httpContext, ControlPlaneCapabilities.Read)
+            .ConfigureAwait(false);
 
         var snapshot = context.GetRequiredService<ICompatibilityReadiness>().GetSnapshot();
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(snapshot.State, Is.EqualTo(CompatibilityReadinessState.CriticalDefectOpen));
             Assert.That(snapshot.IsReady, Is.False);
-        });
+        }
     }
 
     [Test]
@@ -918,9 +927,9 @@ internal sealed class ControlPlaneSecurityTests
         }
     }
 
-    public sealed record LogEntry(LogLevel Level, EventId EventId, string Message);
+    private sealed record LogEntry(LogLevel Level, EventId EventId, string Message);
 
-    public sealed class RecordingLoggerProvider : ILoggerProvider
+    private sealed partial class RecordingLoggerProvider : ILoggerProvider
     {
         private readonly List<LogEntry> _entries = [];
 

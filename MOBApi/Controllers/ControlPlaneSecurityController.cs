@@ -111,26 +111,22 @@ public sealed class ControlPlaneSecurityController : ControllerBase
 {
     private readonly ICredentialRegistry _credentialRegistry;
     private readonly IPairingService _pairingService;
-    private readonly ICompatibilityReadTelemetry _compatibilityReadTelemetry;
-    private readonly ICompatibilityReadiness _compatibilityReadiness;
+    private readonly ICompatibilityStatusProvider _compatibilityStatusProvider;
 
     public ControlPlaneSecurityController(
         ICredentialRegistry credentialRegistry,
         IPairingService pairingService,
-        ICompatibilityReadTelemetry compatibilityReadTelemetry,
-        ICompatibilityReadiness compatibilityReadiness)
+        ICompatibilityStatusProvider compatibilityStatusProvider)
     {
         _credentialRegistry = credentialRegistry;
         _pairingService = pairingService;
-        _compatibilityReadTelemetry = compatibilityReadTelemetry;
-        _compatibilityReadiness = compatibilityReadiness;
+        _compatibilityStatusProvider = compatibilityStatusProvider;
     }
 
     [HttpGet("compatibility")]
-    public ActionResult<CompatibilityStatusResponse> GetCompatibilityStatus() =>
-        Ok(new CompatibilityStatusResponse(
-            _compatibilityReadTelemetry.GetSnapshot(),
-            _compatibilityReadiness.GetSnapshot()));
+    [ProducesResponseType(typeof(CompatibilityStatusResponse), StatusCodes.Status200OK)]
+    public IActionResult GetCompatibilityStatus() =>
+        Ok(_compatibilityStatusProvider.GetStatus());
 
     [HttpPost("pairing/open")]
     public async Task<ActionResult<PairingWindowResult>> OpenPairing(
@@ -203,10 +199,6 @@ public sealed record OpenPairingRequest(ControlPlaneRole AllowedRole);
 public sealed record RevokeCredentialRequest(string Reason);
 
 public sealed record ChangeCredentialRoleRequest(ControlPlaneRole Role);
-
-public sealed record CompatibilityStatusResponse(
-    CompatibilityReadTelemetrySnapshot Telemetry,
-    CompatibilityReadinessSnapshot Readiness);
 
 public sealed record TokenResponse(
     string CredentialId,

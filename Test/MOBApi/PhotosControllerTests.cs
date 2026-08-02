@@ -16,11 +16,11 @@ internal sealed class PhotosControllerTests
         var result = (OkObjectResult)controller.Health();
         var body = JsonSerializer.SerializeToElement(result.Value);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(body.EnumerateObject().Count(), Is.EqualTo(1));
             Assert.That(body.GetProperty("status").GetString(), Is.EqualTo("healthy"));
-        });
+        }
     }
 
     [Test]

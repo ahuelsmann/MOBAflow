@@ -5,7 +5,7 @@ namespace Moba.MOBApi.Security;
 /// <summary>
 /// Exposes aggregate compatibility-read outcomes without retaining request payloads or credentials.
 /// </summary>
-public interface ICompatibilityReadTelemetry
+internal interface ICompatibilityReadTelemetry
 {
     CompatibilityReadTelemetrySnapshot GetSnapshot();
 }
@@ -13,7 +13,7 @@ public interface ICompatibilityReadTelemetry
 /// <summary>
 /// Represents aggregate compatibility-read outcomes for operational readiness checks.
 /// </summary>
-public sealed record CompatibilityReadTelemetrySnapshot(
+internal sealed record CompatibilityReadTelemetrySnapshot(
     long AnonymousReadCount,
     long AuthenticatedReadCount,
     bool AnonymousRollbackActive,
