@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moba.MOBApi.Controllers;
 using Moba.MOBApi.Hubs;
 using Moba.MOBApi.Models;
@@ -22,7 +25,7 @@ using System.Security.Claims;
 namespace Moba.Test.MOBApi;
 
 [TestFixture]
-internal sealed class ControlPlaneSecurityTests
+internal sealed partial class ControlPlaneSecurityTests
 {
     [Test]
     public void ForRole_Should_ApplyLeastPrivilegeCapabilityTemplates()
@@ -363,6 +366,213 @@ internal sealed class ControlPlaneSecurityTests
     }
 
     [Test]
+    public async Task ReadPolicy_Should_RecordAnonymousCompatibilityOutcome_WhenNoCredentialIsPresented()
+    {
+        using var context = SecurityTestContext.Create();
+        var authorization = context.GetRequiredService<IAuthorizationService>();
+        var telemetry = context.GetRequiredService<ICompatibilityReadTelemetry>();
+        var httpContext = new DefaultHttpContext();
+
+        var result = await authorization.AuthorizeAsync(
+                new ClaimsPrincipal(new ClaimsIdentity()),
+                httpContext,
+                ControlPlaneCapabilities.Read)
+            .ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.Succeeded, Is.True);
+            Assert.That(telemetry.GetSnapshot().AnonymousReadCount, Is.EqualTo(1));
+        }
+    }
+
+    [Test]
+    public async Task ReadPolicy_Should_RecordAuthenticatedOutcome_WhenCredentialIsValid()
+    {
+        using var context = SecurityTestContext.Create();
+        var registry = context.GetRequiredService<ICredentialRegistry>();
+        var tokenService = context.GetRequiredService<IControlPlaneAccessTokenService>();
+        var authorization = context.GetRequiredService<IAuthorizationService>();
+        var telemetry = context.GetRequiredService<ICompatibilityReadTelemetry>();
+        var issued = await registry.CreateAsync("Observer", ControlPlaneRole.ReadOnly).ConfigureAwait(false);
+        var token = await tokenService.IssueAsync(issued.Credential.CredentialId).ConfigureAwait(false);
+        var principal = await tokenService.ValidateAsync(token!.Token).ConfigureAwait(false);
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Headers.Authorization = $"Bearer {token.Token}";
+
+        var result = await authorization.AuthorizeAsync(
+                principal!,
+                httpContext,
+                ControlPlaneCapabilities.Read)
+            .ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.Succeeded, Is.True);
+            Assert.That(telemetry.GetSnapshot().AuthenticatedReadCount, Is.EqualTo(1));
+        }
+    }
+
+    [Test]
+    public async Task ReadPolicy_Should_RejectAnonymousRead_WhenCompatibilityIsDisabled()
+    {
+        using var context = SecurityTestContext.Create(legacyAnonymousReadsEnabled: false);
+        var authorization = context.GetRequiredService<IAuthorizationService>();
+        var httpContext = new DefaultHttpContext();
+
+        var result = await authorization.AuthorizeAsync(
+                new ClaimsPrincipal(new ClaimsIdentity()),
+                httpContext,
+                ControlPlaneCapabilities.Read)
+            .ConfigureAwait(false);
+
+        Assert.That(result.Succeeded, Is.False);
+    }
+
+    [Test]
+    public async Task ReadPolicy_Should_StopAnonymousRollback_WhenExpiryIsReached()
+    {
+        var rollbackUntil = new DateTimeOffset(2026, 7, 20, 13, 0, 0, TimeSpan.Zero);
+        using var context = SecurityTestContext.Create(
+            legacyAnonymousReadsEnabled: false,
+            anonymousReadRollbackUntilUtc: rollbackUntil);
+        var authorization = context.GetRequiredService<IAuthorizationService>();
+
+        var beforeExpiry = await authorization.AuthorizeAsync(
+                new ClaimsPrincipal(new ClaimsIdentity()),
+                new DefaultHttpContext(),
+                ControlPlaneCapabilities.Read)
+            .ConfigureAwait(false);
+        context.TimeProvider.Advance(TimeSpan.FromHours(1));
+        var atExpiry = await authorization.AuthorizeAsync(
+                new ClaimsPrincipal(new ClaimsIdentity()),
+                new DefaultHttpContext(),
+                ControlPlaneCapabilities.Read)
+            .ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(beforeExpiry.Succeeded, Is.True);
+            Assert.That(atExpiry.Succeeded, Is.False);
+        }
+    }
+
+    [Test]
+    public void ControlPlaneSecurityOptions_Should_RejectAnonymousRollbackBeyondSevenDays()
+    {
+        var rollbackUntil = new DateTimeOffset(2026, 7, 27, 12, 0, 1, TimeSpan.Zero);
+        using var context = SecurityTestContext.Create(
+            legacyAnonymousReadsEnabled: false,
+            anonymousReadRollbackUntilUtc: rollbackUntil);
+
+        Assert.Throws<OptionsValidationException>(() =>
+            _ = context.GetRequiredService<IOptions<ControlPlaneSecurityOptions>>().Value);
+    }
+
+    [Test]
+    public async Task AnonymousReadRollbackStartup_Should_EmitWarningAuditEventAndMetric_WhenActive()
+    {
+        var rollbackUntil = new DateTimeOffset(2026, 7, 21, 12, 0, 0, TimeSpan.Zero);
+        using var context = SecurityTestContext.Create(
+            legacyAnonymousReadsEnabled: false,
+            anonymousReadRollbackUntilUtc: rollbackUntil);
+        foreach (var hostedService in context.GetRequiredService<IEnumerable<IHostedService>>())
+            await hostedService.StartAsync(CancellationToken.None).ConfigureAwait(false);
+
+        var telemetry = context.GetRequiredService<ICompatibilityReadTelemetry>().GetSnapshot();
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(telemetry.AnonymousRollbackActive, Is.True);
+            Assert.That(telemetry.AnonymousRollbackActivationCount, Is.EqualTo(1));
+        }
+        Assert.That(
+            context.LoggerProvider.Entries,
+            Has.Some.Matches<LogEntry>(entry =>
+                entry.Level == LogLevel.Warning &&
+                entry.EventId.Name == "AnonymousReadRollbackActivated"));
+
+        context.TimeProvider.Advance(TimeSpan.FromDays(1));
+        Assert.That(
+            context.GetRequiredService<ICompatibilityReadTelemetry>().GetSnapshot().AnonymousRollbackActive,
+            Is.False);
+    }
+
+    [Test]
+    public void CompatibilityReadiness_Should_NotCompleteFromElapsedTimeAlone_WhenAuthenticatedTrafficIsAbsent()
+    {
+        var stableReleaseUtc = new DateTimeOffset(2026, 7, 5, 12, 0, 0, TimeSpan.Zero);
+        using var context = SecurityTestContext.Create(stableAuthenticatedClientReleaseUtc: stableReleaseUtc);
+        var readiness = context.GetRequiredService<ICompatibilityReadiness>();
+
+        var snapshot = readiness.GetSnapshot();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(snapshot.State, Is.EqualTo(CompatibilityReadinessState.AuthenticatedTrafficAbsent));
+            Assert.That(snapshot.IsReady, Is.False);
+        }
+    }
+
+    [Test]
+    public async Task CompatibilityReadiness_Should_RestartObservationAfterCriticalDefectFix()
+    {
+        var stableReleaseUtc = new DateTimeOffset(2026, 7, 5, 12, 0, 0, TimeSpan.Zero);
+        var criticalDefectResolvedUtc = new DateTimeOffset(2026, 7, 19, 12, 0, 0, TimeSpan.Zero);
+        using var context = SecurityTestContext.Create(
+            stableAuthenticatedClientReleaseUtc: stableReleaseUtc,
+            lastCriticalDefectResolvedUtc: criticalDefectResolvedUtc);
+        var registry = context.GetRequiredService<ICredentialRegistry>();
+        var tokenService = context.GetRequiredService<IControlPlaneAccessTokenService>();
+        var authorization = context.GetRequiredService<IAuthorizationService>();
+        var issued = await registry.CreateAsync("Observer", ControlPlaneRole.ReadOnly).ConfigureAwait(false);
+        var token = await tokenService.IssueAsync(issued.Credential.CredentialId).ConfigureAwait(false);
+        var principal = await tokenService.ValidateAsync(token!.Token).ConfigureAwait(false);
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Headers.Authorization = $"Bearer {token.Token}";
+        await authorization
+            .AuthorizeAsync(principal!, httpContext, ControlPlaneCapabilities.Read)
+            .ConfigureAwait(false);
+
+        var snapshot = context.GetRequiredService<ICompatibilityReadiness>().GetSnapshot();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(snapshot.State, Is.EqualTo(CompatibilityReadinessState.Observing));
+            Assert.That(snapshot.ObservationStartedUtc, Is.EqualTo(criticalDefectResolvedUtc));
+            Assert.That(snapshot.EligibleAfterUtc, Is.EqualTo(criticalDefectResolvedUtc.AddDays(14)));
+            Assert.That(snapshot.IsReady, Is.False);
+        }
+    }
+
+    [Test]
+    public async Task CompatibilityReadiness_Should_BlockWhileCriticalDefectIsOpen()
+    {
+        var stableReleaseUtc = new DateTimeOffset(2026, 7, 5, 12, 0, 0, TimeSpan.Zero);
+        using var context = SecurityTestContext.Create(
+            stableAuthenticatedClientReleaseUtc: stableReleaseUtc,
+            hasOpenCriticalMigrationDefect: true);
+        var registry = context.GetRequiredService<ICredentialRegistry>();
+        var tokenService = context.GetRequiredService<IControlPlaneAccessTokenService>();
+        var authorization = context.GetRequiredService<IAuthorizationService>();
+        var issued = await registry.CreateAsync("Observer", ControlPlaneRole.ReadOnly).ConfigureAwait(false);
+        var token = await tokenService.IssueAsync(issued.Credential.CredentialId).ConfigureAwait(false);
+        var principal = await tokenService.ValidateAsync(token!.Token).ConfigureAwait(false);
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Headers.Authorization = $"Bearer {token.Token}";
+        await authorization
+            .AuthorizeAsync(principal!, httpContext, ControlPlaneCapabilities.Read)
+            .ConfigureAwait(false);
+
+        var snapshot = context.GetRequiredService<ICompatibilityReadiness>().GetSnapshot();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(snapshot.State, Is.EqualTo(CompatibilityReadinessState.CriticalDefectOpen));
+            Assert.That(snapshot.IsReady, Is.False);
+        }
+    }
+
+    [Test]
     public async Task ReadPolicy_Should_RejectStalePrincipal_WhenPresentedCredentialWasRevoked()
     {
         using var context = SecurityTestContext.Create();
@@ -532,10 +742,11 @@ internal sealed class ControlPlaneSecurityTests
         Assert.That(attribute, Is.Not.Null);
     }
 
-    [Test]
-    public void PhotoHub_Should_UseSharedReadPolicy()
+    [TestCase(typeof(PhotoHub))]
+    [TestCase(typeof(RuntimeHub))]
+    public void ReadHub_Should_UseSharedReadPolicy(Type hubType)
     {
-        var attribute = typeof(PhotoHub)
+        var attribute = hubType
             .GetCustomAttributes(typeof(AuthorizeAttribute), inherit: true)
             .Cast<AuthorizeAttribute>()
             .SingleOrDefault(candidate => candidate.Policy == ControlPlaneCapabilities.Read);
@@ -610,31 +821,63 @@ internal sealed class ControlPlaneSecurityTests
         private readonly bool _ownsRoot;
         private readonly ServiceProvider _serviceProvider;
 
-        private SecurityTestContext(string root, bool ownsRoot, TimeSpan accessTokenLifetime, int pairingMaximumFailedAttempts)
+        private SecurityTestContext(
+            string root,
+            bool ownsRoot,
+            TimeSpan accessTokenLifetime,
+            int pairingMaximumFailedAttempts,
+            bool legacyAnonymousReadsEnabled,
+            DateTimeOffset? anonymousReadRollbackUntilUtc,
+            DateTimeOffset? stableAuthenticatedClientReleaseUtc,
+            DateTimeOffset? lastCriticalDefectResolvedUtc,
+            bool hasOpenCriticalMigrationDefect)
         {
             Root = root;
             _ownsRoot = ownsRoot;
             TimeProvider = new AdjustableTimeProvider(new DateTimeOffset(2026, 7, 20, 12, 0, 0, TimeSpan.Zero));
-            _serviceProvider = CreateServiceProvider(root, accessTokenLifetime, pairingMaximumFailedAttempts, TimeProvider);
+            LoggerProvider = new RecordingLoggerProvider();
+            _serviceProvider = CreateServiceProvider(
+                root,
+                accessTokenLifetime,
+                pairingMaximumFailedAttempts,
+                legacyAnonymousReadsEnabled,
+                anonymousReadRollbackUntilUtc,
+                stableAuthenticatedClientReleaseUtc,
+                lastCriticalDefectResolvedUtc,
+                hasOpenCriticalMigrationDefect,
+                TimeProvider,
+                LoggerProvider);
         }
 
         public string Root { get; }
 
         public AdjustableTimeProvider TimeProvider { get; }
 
+        public RecordingLoggerProvider LoggerProvider { get; }
+
         public IServiceProvider Services => _serviceProvider;
 
         public static SecurityTestContext Create(
             string? root = null,
             TimeSpan? accessTokenLifetime = null,
-            int pairingMaximumFailedAttempts = 5)
+            int pairingMaximumFailedAttempts = 5,
+            bool legacyAnonymousReadsEnabled = true,
+            DateTimeOffset? anonymousReadRollbackUntilUtc = null,
+            DateTimeOffset? stableAuthenticatedClientReleaseUtc = null,
+            DateTimeOffset? lastCriticalDefectResolvedUtc = null,
+            bool hasOpenCriticalMigrationDefect = false)
         {
             var ownsRoot = root is null;
             return new SecurityTestContext(
                 root ?? CreateTemporaryRoot(),
                 ownsRoot,
                 accessTokenLifetime ?? TimeSpan.FromMinutes(5),
-                pairingMaximumFailedAttempts);
+                pairingMaximumFailedAttempts,
+                legacyAnonymousReadsEnabled,
+                anonymousReadRollbackUntilUtc,
+                stableAuthenticatedClientReleaseUtc,
+                lastCriticalDefectResolvedUtc,
+                hasOpenCriticalMigrationDefect);
         }
 
         public static string CreateTemporaryRoot() =>
@@ -653,23 +896,74 @@ internal sealed class ControlPlaneSecurityTests
             string root,
             TimeSpan accessTokenLifetime,
             int pairingMaximumFailedAttempts,
-            TimeProvider timeProvider)
+            bool legacyAnonymousReadsEnabled,
+            DateTimeOffset? anonymousReadRollbackUntilUtc,
+            DateTimeOffset? stableAuthenticatedClientReleaseUtc,
+            DateTimeOffset? lastCriticalDefectResolvedUtc,
+            bool hasOpenCriticalMigrationDefect,
+            TimeProvider timeProvider,
+            RecordingLoggerProvider loggerProvider)
         {
             Directory.CreateDirectory(root);
             var settings = new Dictionary<string, string?>
             {
                 [$"{ControlPlaneSecurityOptions.SectionName}:StorageDirectory"] = Path.Combine(root, "store"),
                 [$"{ControlPlaneSecurityOptions.SectionName}:AccessTokenLifetime"] = accessTokenLifetime.ToString("c"),
-                [$"{ControlPlaneSecurityOptions.SectionName}:PairingMaximumFailedAttempts"] = pairingMaximumFailedAttempts.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                [$"{ControlPlaneSecurityOptions.SectionName}:PairingMaximumFailedAttempts"] = pairingMaximumFailedAttempts.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                [$"{ControlPlaneSecurityOptions.SectionName}:LegacyAnonymousReadsEnabled"] = legacyAnonymousReadsEnabled.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                [$"{ControlPlaneSecurityOptions.SectionName}:AnonymousReadRollbackUntilUtc"] = anonymousReadRollbackUntilUtc?.ToString("O"),
+                [$"{ControlPlaneSecurityOptions.SectionName}:StableAuthenticatedClientReleaseUtc"] = stableAuthenticatedClientReleaseUtc?.ToString("O"),
+                [$"{ControlPlaneSecurityOptions.SectionName}:LastCriticalDefectResolvedUtc"] = lastCriticalDefectResolvedUtc?.ToString("O"),
+                [$"{ControlPlaneSecurityOptions.SectionName}:HasOpenCriticalMigrationDefect"] = hasOpenCriticalMigrationDefect.ToString(System.Globalization.CultureInfo.InvariantCulture)
             };
             var configuration = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
             var services = new ServiceCollection();
-            services.AddLogging();
+            services.AddLogging(builder => builder.AddProvider(loggerProvider));
             services.AddControlPlaneSecurity(configuration);
             services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(root, "keys")));
             services.RemoveAll<TimeProvider>();
             services.AddSingleton(timeProvider);
             return services.BuildServiceProvider(validateScopes: true);
+        }
+    }
+
+    private sealed record LogEntry(LogLevel Level, EventId EventId, string Message);
+
+    private sealed partial class RecordingLoggerProvider : ILoggerProvider
+    {
+        private readonly List<LogEntry> _entries = [];
+
+        public IReadOnlyList<LogEntry> Entries
+        {
+            get
+            {
+                lock (_entries)
+                    return _entries.ToArray();
+            }
+        }
+
+        public ILogger CreateLogger(string categoryName) => new RecordingLogger(_entries);
+
+        public void Dispose()
+        {
+        }
+
+        private sealed class RecordingLogger(List<LogEntry> entries) : ILogger
+        {
+            public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+            public bool IsEnabled(LogLevel logLevel) => true;
+
+            public void Log<TState>(
+                LogLevel logLevel,
+                EventId eventId,
+                TState state,
+                Exception? exception,
+                Func<TState, Exception?, string> formatter)
+            {
+                lock (entries)
+                    entries.Add(new LogEntry(logLevel, eventId, formatter(state, exception)));
+            }
         }
     }
 

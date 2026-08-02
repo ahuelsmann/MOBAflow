@@ -4,6 +4,7 @@ using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 
 namespace Moba.MOBApi.Security;
@@ -19,10 +20,20 @@ internal sealed class LiveCapabilityAuthorizationHandler
     : AuthorizationHandler<LiveCapabilityRequirement>
 {
     private readonly IControlPlaneAccessTokenService _accessTokenService;
+    private readonly ICompatibilityReadTelemetryRecorder _compatibilityReadTelemetry;
+    private readonly ControlPlaneSecurityOptions _options;
+    private readonly TimeProvider _timeProvider;
 
-    public LiveCapabilityAuthorizationHandler(IControlPlaneAccessTokenService accessTokenService)
+    public LiveCapabilityAuthorizationHandler(
+        IControlPlaneAccessTokenService accessTokenService,
+        ICompatibilityReadTelemetryRecorder compatibilityReadTelemetry,
+        IOptions<ControlPlaneSecurityOptions> options,
+        TimeProvider timeProvider)
     {
         _accessTokenService = accessTokenService;
+        _compatibilityReadTelemetry = compatibilityReadTelemetry;
+        _options = options.Value;
+        _timeProvider = timeProvider;
     }
 
     protected override async Task HandleRequirementAsync(
@@ -41,8 +52,13 @@ internal sealed class LiveCapabilityAuthorizationHandler
         var token = GetBearerToken(httpContext);
         if (token is null)
         {
-            if (requirement.AllowAnonymousCompatibility && !credentialPresented)
+            if (requirement.AllowAnonymousCompatibility &&
+                IsAnonymousReadAllowed() &&
+                !credentialPresented)
+            {
+                _compatibilityReadTelemetry.RecordAnonymousRead();
                 context.Succeed(requirement);
+            }
             return;
         }
 
@@ -50,8 +66,16 @@ internal sealed class LiveCapabilityAuthorizationHandler
             .ValidateAsync(token, httpContext.RequestAborted)
             .ConfigureAwait(false);
         if (currentPrincipal?.HasClaim(ControlPlaneCapabilities.ClaimType, requirement.Capability) == true)
+        {
+            if (requirement.Capability == ControlPlaneCapabilities.Read)
+                _compatibilityReadTelemetry.RecordAuthenticatedRead();
             context.Succeed(requirement);
+        }
     }
+
+    private bool IsAnonymousReadAllowed() =>
+        _options.LegacyAnonymousReadsEnabled ||
+        _options.AnonymousReadRollbackUntilUtc > _timeProvider.GetUtcNow();
 
     private static HttpContext? ResolveHttpContext(object? resource) => resource switch
     {
@@ -76,7 +100,7 @@ internal sealed class LiveCapabilityAuthorizationHandler
             : null;
     }
 
-    private static bool HasPresentedCredential(HttpContext context)
+    internal static bool HasPresentedCredential(HttpContext context)
     {
         if (!string.IsNullOrWhiteSpace(context.Request.Headers[HeaderNames.Authorization].ToString()))
             return true;

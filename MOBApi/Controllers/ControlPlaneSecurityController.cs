@@ -111,14 +111,22 @@ public sealed class ControlPlaneSecurityController : ControllerBase
 {
     private readonly ICredentialRegistry _credentialRegistry;
     private readonly IPairingService _pairingService;
+    private readonly ICompatibilityStatusProvider _compatibilityStatusProvider;
 
     public ControlPlaneSecurityController(
         ICredentialRegistry credentialRegistry,
-        IPairingService pairingService)
+        IPairingService pairingService,
+        ICompatibilityStatusProvider compatibilityStatusProvider)
     {
         _credentialRegistry = credentialRegistry;
         _pairingService = pairingService;
+        _compatibilityStatusProvider = compatibilityStatusProvider;
     }
+
+    [HttpGet("compatibility")]
+    [ProducesResponseType(typeof(CompatibilityStatusResponse), StatusCodes.Status200OK)]
+    public IActionResult GetCompatibilityStatus() =>
+        Ok(_compatibilityStatusProvider.GetStatus());
 
     [HttpPost("pairing/open")]
     public async Task<ActionResult<PairingWindowResult>> OpenPairing(
