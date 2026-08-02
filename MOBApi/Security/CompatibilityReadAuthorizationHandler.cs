@@ -1,11 +1,11 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
+using System.Net.Http.Headers;
+using System.Security.Claims;
 
 namespace Moba.MOBApi.Security;
 
@@ -20,20 +20,14 @@ internal sealed class LiveCapabilityAuthorizationHandler
     : AuthorizationHandler<LiveCapabilityRequirement>
 {
     private readonly IControlPlaneAccessTokenService _accessTokenService;
-    private readonly ICompatibilityReadTelemetryRecorder _compatibilityReadTelemetry;
-    private readonly ControlPlaneSecurityOptions _options;
-    private readonly TimeProvider _timeProvider;
+    private readonly ICompatibilityReadMigration _readMigration;
 
     public LiveCapabilityAuthorizationHandler(
         IControlPlaneAccessTokenService accessTokenService,
-        ICompatibilityReadTelemetryRecorder compatibilityReadTelemetry,
-        IOptions<ControlPlaneSecurityOptions> options,
-        TimeProvider timeProvider)
+        ICompatibilityReadMigration readMigration)
     {
         _accessTokenService = accessTokenService;
-        _compatibilityReadTelemetry = compatibilityReadTelemetry;
-        _options = options.Value;
-        _timeProvider = timeProvider;
+        _readMigration = readMigration;
     }
 
     protected override async Task HandleRequirementAsync(
@@ -52,12 +46,20 @@ internal sealed class LiveCapabilityAuthorizationHandler
         var token = GetBearerToken(httpContext);
         if (token is null)
         {
-            if (requirement.AllowAnonymousCompatibility &&
-                IsAnonymousReadAllowed() &&
-                !credentialPresented)
+            if (requirement.AllowAnonymousCompatibility && !credentialPresented)
             {
-                _compatibilityReadTelemetry.RecordAnonymousRead();
-                context.Succeed(requirement);
+                var decision = await _readMigration
+                    .EvaluateAnonymousReadAsync(ResolveTransport(httpContext), httpContext.RequestAborted)
+                    .ConfigureAwait(false);
+                if (decision != CompatibilityReadDecision.UpgradeRequired)
+                {
+                    context.Succeed(requirement);
+                }
+                else
+                {
+                    httpContext.Items[CompatibilityReadUpgradeRequired.ItemKey] =
+                        new CompatibilityReadUpgradeRequired(ResolveTransport(httpContext));
+                }
             }
             return;
         }
@@ -67,15 +69,23 @@ internal sealed class LiveCapabilityAuthorizationHandler
             .ConfigureAwait(false);
         if (currentPrincipal?.HasClaim(ControlPlaneCapabilities.ClaimType, requirement.Capability) == true)
         {
-            if (requirement.Capability == ControlPlaneCapabilities.Read)
-                _compatibilityReadTelemetry.RecordAuthenticatedRead();
             context.Succeed(requirement);
+            if (string.Equals(requirement.Capability, ControlPlaneCapabilities.Read, StringComparison.Ordinal))
+            {
+                var credentialId = currentPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrWhiteSpace(credentialId))
+                {
+                    await _readMigration
+                        .RecordAuthenticatedReadAsync(
+                            credentialId,
+                            ResolveTransport(httpContext),
+                            httpContext.Request.Headers[CompatibilityReadHeaders.ClientRelease].FirstOrDefault(),
+                            httpContext.RequestAborted)
+                        .ConfigureAwait(false);
+                }
+            }
         }
     }
-
-    private bool IsAnonymousReadAllowed() =>
-        _options.LegacyAnonymousReadsEnabled ||
-        _options.AnonymousReadRollbackUntilUtc > _timeProvider.GetUtcNow();
 
     private static HttpContext? ResolveHttpContext(object? resource) => resource switch
     {
@@ -109,4 +119,15 @@ internal sealed class LiveCapabilityAuthorizationHandler
                 context.Request.Path.StartsWithSegments("/photos-hub", StringComparison.Ordinal)) &&
                context.Request.Query.ContainsKey("access_token");
     }
+
+    private static CompatibilityReadTransport ResolveTransport(HttpContext context) =>
+        context.Request.Path.StartsWithSegments("/runtime-hub", StringComparison.Ordinal) ||
+        context.Request.Path.StartsWithSegments("/photos-hub", StringComparison.Ordinal)
+            ? CompatibilityReadTransport.SignalR
+            : CompatibilityReadTransport.Rest;
+}
+
+internal sealed record CompatibilityReadUpgradeRequired(CompatibilityReadTransport Transport)
+{
+    public const string ItemKey = "MOBApi.CompatibilityReadUpgradeRequired";
 }

@@ -23,130 +23,7 @@ internal sealed class AuthenticatedControlPlaneProcessTests
 {
     [Test]
     [CancelAfter(120_000)]
-    public async Task AnonymousRead_ShouldReturnUpgradeRequired_WhenCompatibilityIsDisabled()
-    {
-        var storageDirectory = Path.Combine(
-            Path.GetTempPath(),
-            "MOBAflow",
-            "authenticated-control-plane-tests",
-            Guid.NewGuid().ToString("N"));
-        var httpPort = GetAvailablePort();
-        var httpsPort = GetAvailablePort();
-        while (httpsPort == httpPort)
-            httpsPort = GetAvailablePort();
-
-        Directory.CreateDirectory(storageDirectory);
-        try
-        {
-            var server = await MobaApiProcess.StartAsync(
-                storageDirectory,
-                httpPort,
-                httpsPort,
-                legacyAnonymousReadsEnabled: false).ConfigureAwait(false);
-            await using (server.ConfigureAwait(false))
-            {
-                using var response = await server
-                    .SendAnonymousAsync(HttpMethod.Get, "api/runtime/snapshot")
-                    .ConfigureAwait(false);
-                var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-                Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.UpgradeRequired));
-                using var body = JsonDocument.Parse(responseBody);
-                Assert.That(body.RootElement.GetProperty("code").GetString(), Is.EqualTo("upgrade_required"));
-            }
-        }
-        finally
-        {
-            if (Directory.Exists(storageDirectory))
-                Directory.Delete(storageDirectory, recursive: true);
-        }
-    }
-
-    [Test]
-    [CancelAfter(120_000)]
-    public async Task InvalidCredential_ShouldRemainUnauthorized_WhenCompatibilityIsDisabled()
-    {
-        var storageDirectory = Path.Combine(
-            Path.GetTempPath(),
-            "MOBAflow",
-            "authenticated-control-plane-tests",
-            Guid.NewGuid().ToString("N"));
-        var httpPort = GetAvailablePort();
-        var httpsPort = GetAvailablePort();
-        while (httpsPort == httpPort)
-            httpsPort = GetAvailablePort();
-
-        Directory.CreateDirectory(storageDirectory);
-        try
-        {
-            var server = await MobaApiProcess.StartAsync(
-                storageDirectory,
-                httpPort,
-                httpsPort,
-                legacyAnonymousReadsEnabled: false).ConfigureAwait(false);
-            await using (server.ConfigureAwait(false))
-            {
-                using var response = await server.SendWithAccessTokenAsync(
-                        HttpMethod.Get,
-                        "api/runtime/snapshot",
-                        "invalid-access-token")
-                    .ConfigureAwait(false);
-
-                Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
-            }
-        }
-        finally
-        {
-            if (Directory.Exists(storageDirectory))
-                Directory.Delete(storageDirectory, recursive: true);
-        }
-    }
-
-    [Test]
-    [CancelAfter(120_000)]
-    public async Task AnonymousRuntimeHub_ShouldReturnSameUpgradeRequiredReason_WhenCompatibilityIsDisabled()
-    {
-        var storageDirectory = Path.Combine(
-            Path.GetTempPath(),
-            "MOBAflow",
-            "authenticated-control-plane-tests",
-            Guid.NewGuid().ToString("N"));
-        var httpPort = GetAvailablePort();
-        var httpsPort = GetAvailablePort();
-        while (httpsPort == httpPort)
-            httpsPort = GetAvailablePort();
-
-        Directory.CreateDirectory(storageDirectory);
-        try
-        {
-            var server = await MobaApiProcess.StartAsync(
-                storageDirectory,
-                httpPort,
-                httpsPort,
-                legacyAnonymousReadsEnabled: false).ConfigureAwait(false);
-            await using (server.ConfigureAwait(false))
-            {
-                using var response = await server.SendAnonymousAsync(
-                        HttpMethod.Post,
-                        "runtime-hub/negotiate?negotiateVersion=1")
-                    .ConfigureAwait(false);
-                var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-                Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.UpgradeRequired));
-                using var body = JsonDocument.Parse(responseBody);
-                Assert.That(body.RootElement.GetProperty("code").GetString(), Is.EqualTo("upgrade_required"));
-            }
-        }
-        finally
-        {
-            if (Directory.Exists(storageDirectory))
-                Directory.Delete(storageDirectory, recursive: true);
-        }
-    }
-
-    [Test]
-    [CancelAfter(120_000)]
-    public async Task CompatibilityStatus_Should_BeHostOnlyAndExposeAggregateEvidence()
+    public async Task CompatibilityStatus_Should_BeHostOnlyAndExposeBoundedEvidence()
     {
         var storageDirectory = Path.Combine(
             Path.GetTempPath(),
@@ -169,26 +46,25 @@ internal sealed class AuthenticatedControlPlaneProcessTests
                 using var compatibilityRead = await server
                     .SendAnonymousAsync(HttpMethod.Get, "api/runtime/snapshot")
                     .ConfigureAwait(false);
-                using var anonymousStatus = await server.SendAnonymousAsync(
-                        HttpMethod.Get,
-                        "api/control-plane/security/compatibility")
+                using var anonymousStatus = await server
+                    .SendAnonymousAsync(HttpMethod.Get, "api/control-plane/security/compatibility")
                     .ConfigureAwait(false);
-                using var hostStatus = await server.SendHostAsync(
-                        HttpMethod.Get,
-                        "api/control-plane/security/compatibility")
+                using var hostStatus = await server
+                    .SendHostAsync(HttpMethod.Get, "api/control-plane/security/compatibility")
                     .ConfigureAwait(false);
                 var responseBody = await hostStatus.Content.ReadAsStringAsync().ConfigureAwait(false);
                 using var body = JsonDocument.Parse(responseBody);
 
                 using (Assert.EnterMultipleScope())
                 {
+                    Assert.That(compatibilityRead.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
                     Assert.That(anonymousStatus.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
                     Assert.That(hostStatus.StatusCode, Is.EqualTo(HttpStatusCode.OK));
                     Assert.That(responseBody, Does.Not.Contain("token").IgnoreCase);
                     Assert.That(responseBody, Does.Not.Contain("snapshot").IgnoreCase);
                     Assert.That(responseBody, Does.Not.Contain("hardware").IgnoreCase);
                     Assert.That(
-                        body.RootElement.GetProperty("telemetry").GetProperty("anonymousReadCount").GetInt64(),
+                        body.RootElement.GetProperty("telemetry").GetProperty("outcomes").GetArrayLength(),
                         Is.GreaterThanOrEqualTo(1));
                     Assert.That(body.RootElement.TryGetProperty("readiness", out _), Is.True);
                 }
@@ -305,8 +181,7 @@ internal sealed class AuthenticatedControlPlaneProcessTests
         public static async Task<MobaApiProcess> StartAsync(
             string storageDirectory,
             int httpPort,
-            int httpsPort,
-            bool legacyAnonymousReadsEnabled = true)
+            int httpsPort)
         {
             var repositoryRoot = FindRepositoryRoot();
             var configuration = new DirectoryInfo(AppContext.BaseDirectory).Parent?.Name
@@ -339,8 +214,6 @@ internal sealed class AuthenticatedControlPlaneProcessTests
             startInfo.Environment["MOBAFLOW_HTTPS_PORT"] = httpsPort.ToString(
                 System.Globalization.CultureInfo.InvariantCulture);
             startInfo.Environment["ControlPlaneSecurity__StorageDirectory"] = storageDirectory;
-            startInfo.Environment["ControlPlaneSecurity__LegacyAnonymousReadsEnabled"] =
-                legacyAnonymousReadsEnabled.ToString(System.Globalization.CultureInfo.InvariantCulture);
             bootstrapChannel.Configure(startInfo);
 
             var process = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
@@ -448,14 +321,6 @@ internal sealed class AuthenticatedControlPlaneProcessTests
             return await response.Content.ReadAsStringAsync();
         }
 
-        public Task<SignalRReconnectProbe> CreateSignalRReconnectProbeAsync(string accessToken)
-        {
-            return SignalRReconnectProbe.StartAsync(
-                new Uri(_client.BaseAddress!, "runtime-hub"),
-                accessToken,
-                PublicKeyFingerprint);
-        }
-
         public async Task<HttpResponseMessage> SendAnonymousAsync(HttpMethod method, string path)
         {
             using var request = CreateRequest(method, path, accessToken: null);
@@ -468,13 +333,12 @@ internal sealed class AuthenticatedControlPlaneProcessTests
             return await _client.SendAsync(request).ConfigureAwait(false);
         }
 
-        public async Task<HttpResponseMessage> SendWithAccessTokenAsync(
-            HttpMethod method,
-            string path,
-            string accessToken)
+        public Task<SignalRReconnectProbe> CreateSignalRReconnectProbeAsync(string accessToken)
         {
-            using var request = CreateRequest(method, path, accessToken);
-            return await _client.SendAsync(request).ConfigureAwait(false);
+            return SignalRReconnectProbe.StartAsync(
+                new Uri(_client.BaseAddress!, "runtime-hub"),
+                accessToken,
+                PublicKeyFingerprint);
         }
 
         public async ValueTask DisposeAsync()
@@ -553,6 +417,9 @@ internal sealed class AuthenticatedControlPlaneProcessTests
             HttpContent? content = null)
         {
             var request = new HttpRequestMessage(method, path) { Content = content };
+            request.Headers.TryAddWithoutValidation(
+                CompatibilityReadHeaders.ClientRelease,
+                "MOBAsmart 1.0.0");
             if (!string.IsNullOrWhiteSpace(accessToken))
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             return request;
@@ -638,6 +505,7 @@ internal sealed class AuthenticatedControlPlaneProcessTests
                 .WithUrl(hubUrl, options =>
                 {
                     options.AccessTokenProvider = () => Task.FromResult<string?>(accessToken);
+                    options.Headers[CompatibilityReadHeaders.ClientRelease] = "MOBAsmart 1.0.0";
                     options.Transports = HttpTransportType.LongPolling;
                     options.HttpMessageHandlerFactory = _ => MobaApiProcess.CreatePinnedHandler(fingerprint);
                 })

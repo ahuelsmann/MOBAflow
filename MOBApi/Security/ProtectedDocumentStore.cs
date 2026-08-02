@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-using System.Text.Json;
 using Microsoft.AspNetCore.DataProtection;
+using System.Text.Json;
 
 namespace Moba.MOBApi.Security;
 
@@ -15,6 +15,8 @@ internal sealed class ProtectedDocumentStore<TDocument> where TDocument : class,
         _protector = provider.CreateProtector(purpose);
         _path = path;
     }
+
+    public bool Exists => File.Exists(_path);
 
     public async Task<TDocument> LoadAsync(CancellationToken cancellationToken)
     {

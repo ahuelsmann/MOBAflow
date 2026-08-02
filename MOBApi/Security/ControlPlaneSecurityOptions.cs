@@ -29,16 +29,6 @@ public sealed class ControlPlaneSecurityOptions
 
     public TimeSpan HostDisconnectGrace { get; set; } = TimeSpan.FromSeconds(30);
 
-    public bool LegacyAnonymousReadsEnabled { get; set; } = true;
-
-    public DateTimeOffset? AnonymousReadRollbackUntilUtc { get; set; }
-
-    public DateTimeOffset? StableAuthenticatedClientReleaseUtc { get; set; }
-
-    public DateTimeOffset? LastCriticalDefectResolvedUtc { get; set; }
-
-    public bool HasOpenCriticalMigrationDefect { get; set; }
-
     internal string ResolveStorageDirectory()
     {
         if (!string.IsNullOrWhiteSpace(StorageDirectory))

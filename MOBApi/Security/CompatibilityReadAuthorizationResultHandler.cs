@@ -1,36 +1,43 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.MOBApi.Security;
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Policy;
 
+namespace Moba.MOBApi.Security;
+
+/// <summary>
+/// Returns one transport-neutral upgrade reason when anonymous compatibility reads are disabled.
+/// </summary>
 internal sealed class CompatibilityReadAuthorizationResultHandler : IAuthorizationMiddlewareResultHandler
 {
     private readonly AuthorizationMiddlewareResultHandler _fallback = new();
 
-    public async Task HandleAsync(
+    public Task HandleAsync(
         RequestDelegate next,
         HttpContext context,
         AuthorizationPolicy policy,
         PolicyAuthorizationResult authorizeResult)
     {
         if (!authorizeResult.Succeeded &&
-            !LiveCapabilityAuthorizationHandler.HasPresentedCredential(context) &&
-            policy.Requirements.OfType<LiveCapabilityRequirement>().Any(
-                requirement => requirement.AllowAnonymousCompatibility))
+            context.Items.TryGetValue(CompatibilityReadUpgradeRequired.ItemKey, out var value) &&
+            value is CompatibilityReadUpgradeRequired upgradeRequired)
         {
-            context.Response.StatusCode = StatusCodes.Status426UpgradeRequired;
-            await context.Response.WriteAsJsonAsync(
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            context.Response.Headers.WWWAuthenticate = "Bearer";
+            return context.Response.WriteAsJsonAsync(
                 new
                 {
-                    code = "upgrade_required",
-                    message = "Pair this client with MOBAflow and retry the request with a valid credential."
+                    type = "https://mobaflow.app/problems/client-upgrade-required",
+                    title = "Client upgrade required",
+                    status = StatusCodes.Status401Unauthorized,
+                    code = "client_upgrade_required",
+                    transport = CompatibilityReadTransportNames.GetProtocolName(upgradeRequired.Transport)
                 },
-                context.RequestAborted).ConfigureAwait(false);
-            return;
+                options: null,
+                contentType: "application/problem+json",
+                cancellationToken: context.RequestAborted);
         }
 
-        await _fallback.HandleAsync(next, context, policy, authorizeResult).ConfigureAwait(false);
+        return _fallback.HandleAsync(next, context, policy, authorizeResult);
     }
 }
