@@ -38,6 +38,7 @@ public enum DisplayCapabilityFreshness
 /// </summary>
 public sealed partial class DisplayViewModel : ObservableObject
 {
+    private const string NotNegotiatedText = "Not negotiated";
     private const DisplayFrameCapabilityFlags RequiredFrameCapabilities =
         DisplayFrameCapabilityFlags.FullFrameStaging
         | DisplayFrameCapabilityFlags.RegionTransfer
@@ -96,12 +97,12 @@ public sealed partial class DisplayViewModel : ObservableObject
 
     public bool CanRenderBuiltInTestPattern =>
         HasLiveCapabilities
-        && _capabilities!.OptionalCommands.HasFlag(DisplayOptionalCommandFlags.RenderTestPattern)
+        && _capabilities?.OptionalCommands.HasFlag(DisplayOptionalCommandFlags.RenderTestPattern) == true
         && !IsBusy;
 
     public bool CanSetBrightness =>
         HasLiveCapabilities
-        && _capabilities!.OptionalCommands.HasFlag(DisplayOptionalCommandFlags.SetBrightness)
+        && _capabilities?.OptionalCommands.HasFlag(DisplayOptionalCommandFlags.SetBrightness) == true
         && !IsBusy;
 
     public bool HasLiveCapabilities =>
@@ -138,23 +139,23 @@ public sealed partial class DisplayViewModel : ObservableObject
     };
 
     public string ResolutionText => _capabilities is null
-        ? "Not negotiated"
+        ? NotNegotiatedText
         : $"{_capabilities.Width} x {_capabilities.Height}";
 
-    public string ProtocolVersionText => _capabilities?.SelectedVersion.ToString() ?? "Not negotiated";
+    public string ProtocolVersionText => _capabilities?.SelectedVersion.ToString() ?? NotNegotiatedText;
 
-    public string FirmwareVersionText => _capabilities?.FirmwareVersion ?? "Not negotiated";
+    public string FirmwareVersionText => _capabilities?.FirmwareVersion ?? NotNegotiatedText;
 
-    public string DeviceIdentityText => _capabilities?.DeviceIdentity ?? "Not negotiated";
+    public string DeviceIdentityText => _capabilities?.DeviceIdentity ?? NotNegotiatedText;
 
-    public string AdapterIdentityText => _capabilities?.AdapterIdentity ?? "Not negotiated";
+    public string AdapterIdentityText => _capabilities?.AdapterIdentity ?? NotNegotiatedText;
 
-    public string PixelFormatsText => _capabilities?.PixelFormats.ToString() ?? "Not negotiated";
+    public string PixelFormatsText => _capabilities?.PixelFormats.ToString() ?? NotNegotiatedText;
 
-    public string RotationsText => _capabilities?.Rotations.ToString() ?? "Not negotiated";
+    public string RotationsText => _capabilities?.Rotations.ToString() ?? NotNegotiatedText;
 
     public string RegionLimitText => _capabilities is null
-        ? "Not negotiated"
+        ? NotNegotiatedText
         : $"{_capabilities.MaximumRegionPayloadLength} bytes";
 
     public string StandardPatternAvailabilityText => _capabilities switch
@@ -174,17 +175,23 @@ public sealed partial class DisplayViewModel : ObservableObject
         _ => "The standard host-rendered pattern is supported by the live device session."
     };
 
-    public string BuiltInPatternAvailabilityText => _capabilities is null
-        ? "Negotiate capabilities to check built-in pattern support."
-        : _capabilities.OptionalCommands.HasFlag(DisplayOptionalCommandFlags.RenderTestPattern)
-            ? "The device supports its built-in conformance pattern."
-            : "The device does not support a built-in test pattern. Use the standard host pattern instead.";
+    public string BuiltInPatternAvailabilityText => _capabilities switch
+    {
+        null => "Negotiate capabilities to check built-in pattern support.",
+        { OptionalCommands: var commands }
+            when commands.HasFlag(DisplayOptionalCommandFlags.RenderTestPattern) =>
+            "The device supports its built-in conformance pattern.",
+        _ => "The device does not support a built-in test pattern. Use the standard host pattern instead."
+    };
 
-    public string BrightnessAvailabilityText => _capabilities is null
-        ? "Negotiate capabilities to check brightness support."
-        : _capabilities.OptionalCommands.HasFlag(DisplayOptionalCommandFlags.SetBrightness)
-            ? "The device supports brightness control."
-            : "The device does not support brightness control.";
+    public string BrightnessAvailabilityText => _capabilities switch
+    {
+        null => "Negotiate capabilities to check brightness support.",
+        { OptionalCommands: var commands }
+            when commands.HasFlag(DisplayOptionalCommandFlags.SetBrightness) =>
+            "The device supports brightness control.",
+        _ => "The device does not support brightness control."
+    };
 
     /// <summary>
     /// Re-reads endpoint settings and invalidates live capabilities when the endpoint changed.
@@ -433,7 +440,11 @@ public sealed partial class DisplayViewModel : ObservableObject
     {
         RaiseCapabilityProperties();
         RaiseDiagnosticProperties();
-        NotifyCommandsCanExecuteChanged();
+        ConnectCommand.NotifyCanExecuteChanged();
+        RefreshHealthCommand.NotifyCanExecuteChanged();
+        SendStandardTestPatternCommand.NotifyCanExecuteChanged();
+        RenderBuiltInTestPatternCommand.NotifyCanExecuteChanged();
+        ApplyBrightnessCommand.NotifyCanExecuteChanged();
     }
 
     private void RaiseCapabilityProperties()
@@ -462,15 +473,6 @@ public sealed partial class DisplayViewModel : ObservableObject
         OnPropertyChanged(nameof(StandardPatternAvailabilityText));
         OnPropertyChanged(nameof(BuiltInPatternAvailabilityText));
         OnPropertyChanged(nameof(BrightnessAvailabilityText));
-    }
-
-    private void NotifyCommandsCanExecuteChanged()
-    {
-        ConnectCommand.NotifyCanExecuteChanged();
-        RefreshHealthCommand.NotifyCanExecuteChanged();
-        SendStandardTestPatternCommand.NotifyCanExecuteChanged();
-        RenderBuiltInTestPatternCommand.NotifyCanExecuteChanged();
-        ApplyBrightnessCommand.NotifyCanExecuteChanged();
     }
 
     private bool IsStandardPatternCompatible =>
