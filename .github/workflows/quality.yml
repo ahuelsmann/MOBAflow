@@ -174,7 +174,10 @@ jobs:
 
       - name: Restore display host test graph
         shell: pwsh
-        run: dotnet restore Test/Test.csproj -p:IncludeMobaSmartTests=false
+        run: >-
+          dotnet restore Test/Test.csproj
+          -p:TargetFramework=net10.0
+          -p:IncludeMobaSmartTests=false
 
       - name: Verify display protocol cutover invariants
         shell: pwsh
