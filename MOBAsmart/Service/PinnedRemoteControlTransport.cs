@@ -4,6 +4,7 @@ namespace Moba.MAUI.Service;
 
 using System.Net;
 using System.Net.Http.Json;
+using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 
@@ -21,8 +22,17 @@ public sealed class PinnedRemoteControlTransport : IRemoteControlTransport, IRem
 {
     internal const string ClientReleaseHeaderName = "X-MOBAflow-Client-Release";
     internal static string ClientRelease { get; } =
-        $"MOBAsmart {typeof(PinnedRemoteControlTransport).Assembly.GetName().Version?.ToString(3) ?? "unknown"}";
+        $"MOBAsmart {ResolveApplicationDisplayVersion()}";
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
+    private static string ResolveApplicationDisplayVersion() =>
+        typeof(PinnedRemoteControlTransport).Assembly
+            .GetCustomAttributes<AssemblyMetadataAttribute>()
+            .FirstOrDefault(attribute => string.Equals(
+                attribute.Key,
+                "MOBAsmart.ApplicationDisplayVersion",
+                StringComparison.Ordinal))?
+            .Value ?? "unknown";
 
     public async Task<RemotePairingSubmissionResult> SubmitPairingAsync(
         MobApiDiscoveryEndpoint endpoint,

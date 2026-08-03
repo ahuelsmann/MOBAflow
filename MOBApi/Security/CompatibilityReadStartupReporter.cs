@@ -2,6 +2,9 @@
 
 namespace Moba.MOBApi.Security;
 
+using System.Security.Cryptography;
+using System.Text.Json;
+
 /// <summary>
 /// Restores migration metrics and emits an auditable warning when read-only rollback is active.
 /// </summary>
@@ -11,13 +14,17 @@ internal sealed class CompatibilityReadStartupReporter : IHostedService
         LogLevel.Warning,
         new EventId(5001, "CompatibilityReadRollbackActive"),
         "The anonymous read-only rollback is active until {RollbackExpiresAt}. Anonymous control and administration remain disabled.");
+    private static readonly Action<ILogger, Exception?> LogStateUnavailable = LoggerMessage.Define(
+        LogLevel.Error,
+        new EventId(5004, "CompatibilityReadStateUnavailable"),
+        "The protected compatibility-read state is unavailable. The service remains online in fail-closed mode; anonymous reads stay disabled.");
     private readonly ILogger<CompatibilityReadStartupReporter> _logger;
     private readonly CompatibilityReadMetrics _metrics;
-    private readonly ICompatibilityReadMigration _migration;
+    private readonly ICompatibilityReadMigrationRecovery _migration;
     private readonly TimeProvider _timeProvider;
 
     public CompatibilityReadStartupReporter(
-        ICompatibilityReadMigration migration,
+        ICompatibilityReadMigrationRecovery migration,
         CompatibilityReadMetrics metrics,
         TimeProvider timeProvider,
         ILogger<CompatibilityReadStartupReporter> logger)
@@ -30,7 +37,19 @@ internal sealed class CompatibilityReadStartupReporter : IHostedService
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        var status = await _migration.GetStatusAsync(cancellationToken).ConfigureAwait(false);
+        CompatibilityReadMigrationStatus status;
+        try
+        {
+            status = await _migration.GetStatusAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (
+            exception is CryptographicException or JsonException or InvalidDataException or IOException or UnauthorizedAccessException)
+        {
+            await _migration.EnterFailClosedModeAsync(cancellationToken).ConfigureAwait(false);
+            LogStateUnavailable(_logger, exception);
+            return;
+        }
+
         _metrics.SetRollbackExpiry(status.RollbackExpiresAt);
         if (status.RollbackExpiresAt <= _timeProvider.GetUtcNow())
             return;
