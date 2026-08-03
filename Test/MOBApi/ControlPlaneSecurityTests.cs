@@ -1552,6 +1552,42 @@ internal sealed partial class ControlPlaneSecurityTests
     }
 
     [Test]
+    public async Task ReadMigrationStartupReporter_Should_KeepHostAlive_WhenProtectedStateIsEmpty()
+    {
+        var root = SecurityTestContext.CreateTemporaryRoot();
+        try
+        {
+            using (var first = SecurityTestContext.Create(root))
+            {
+                await first.GetRequiredService<ICompatibilityReadMigration>()
+                    .BeginReadinessWindowAsync("MOBAsmart 1.0.0")
+                    .ConfigureAwait(false);
+                var protectedEmptyDocument = first.GetRequiredService<IDataProtectionProvider>()
+                    .CreateProtector("MOBApi.ControlPlane.CompatibilityReadMigration.v1")
+                    .Protect(Encoding.UTF8.GetBytes("null"));
+                await File.WriteAllBytesAsync(
+                    Path.Combine(root, "store", "read-migration.dat"),
+                    protectedEmptyDocument).ConfigureAwait(false);
+            }
+
+            using var restarted = SecurityTestContext.Create(root);
+            foreach (var hostedService in restarted.Services.GetServices<IHostedService>())
+                await hostedService.StartAsync(CancellationToken.None).ConfigureAwait(false);
+
+            Assert.That(
+                await restarted.GetRequiredService<ICompatibilityReadMigration>()
+                    .EvaluateAnonymousReadAsync(CompatibilityReadTransport.Rest)
+                    .ConfigureAwait(false),
+                Is.EqualTo(CompatibilityReadDecision.UpgradeRequired));
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+                Directory.Delete(root, true);
+        }
+    }
+
+    [Test]
     public async Task ControlPlaneSecurityController_Should_RejectPrematureReadEnforcement()
     {
         using var context = SecurityTestContext.Create();

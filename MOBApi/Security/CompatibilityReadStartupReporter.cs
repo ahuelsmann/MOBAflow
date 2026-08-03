@@ -43,7 +43,7 @@ internal sealed class CompatibilityReadStartupReporter : IHostedService
             status = await _migration.GetStatusAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (Exception exception) when (
-            exception is CryptographicException or JsonException or IOException or UnauthorizedAccessException)
+            exception is CryptographicException or JsonException or InvalidDataException or IOException or UnauthorizedAccessException)
         {
             await _migration.EnterFailClosedModeAsync(cancellationToken).ConfigureAwait(false);
             LogStateUnavailable(_logger, exception);
