@@ -774,7 +774,7 @@ internal sealed partial class ControlPlaneSecurityTests
             var finalStatus = await migration.GetStatusAsync().ConfigureAwait(false);
 
             Assert.That(secondActivation, Is.False);
-            Assert.That(secondEnforcement, Is.False);
+            Assert.That(secondEnforcement, Is.True);
             Assert.That(finalStatus.RollbackExpiresAt, Is.EqualTo(originalExpiry));
         }
     }
@@ -807,7 +807,7 @@ internal sealed partial class ControlPlaneSecurityTests
         {
             Assert.That(firstResult, Is.True);
             Assert.That(activationResult, Is.True);
-            Assert.That(secondResult, Is.False);
+            Assert.That(secondResult, Is.True);
             Assert.That(finalStatus.RollbackExpiresAt, Is.EqualTo(rollbackExpiresAt));
         }
     }
@@ -1602,6 +1602,27 @@ internal sealed partial class ControlPlaneSecurityTests
         var result = await controller.EnableAuthenticatedReads(CancellationToken.None);
 
         Assert.That(result, Is.InstanceOf<ConflictObjectResult>());
+    }
+
+    [Test]
+    public async Task ControlPlaneSecurityController_Should_TreatRepeatedReadEnforcementAsSuccess()
+    {
+        using var context = SecurityTestContext.Create();
+        var migration = context.GetRequiredService<ICompatibilityReadMigration>();
+        await MakeReadMigrationReadyAsync(context, migration).ConfigureAwait(false);
+        var controller = new ControlPlaneSecurityController(
+            context.GetRequiredService<ICredentialRegistry>(),
+            context.GetRequiredService<IPairingService>(),
+            migration);
+
+        var firstResult = await controller.EnableAuthenticatedReads(CancellationToken.None).ConfigureAwait(false);
+        var repeatedResult = await controller.EnableAuthenticatedReads(CancellationToken.None).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(firstResult, Is.InstanceOf<NoContentResult>());
+            Assert.That(repeatedResult, Is.InstanceOf<NoContentResult>());
+        }
     }
 
     [Test]

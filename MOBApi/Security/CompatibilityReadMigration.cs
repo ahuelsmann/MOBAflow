@@ -424,7 +424,7 @@ internal sealed class CompatibilityReadMigration : ICompatibilityReadMigrationRe
         {
             var current = await LoadDocumentAsync(cancellationToken).ConfigureAwait(false);
             if (current.AuthenticatedReadsEnforcedAt is not null)
-                return false;
+                return true;
             if (GetBlockingReason(current) != CompatibilityReadBlockingReason.None)
                 return false;
 
@@ -450,7 +450,7 @@ internal sealed class CompatibilityReadMigration : ICompatibilityReadMigrationRe
         {
             var current = await LoadDocumentAsync(cancellationToken).ConfigureAwait(false);
             if (current.AuthenticatedReadsEnforcedAt is not null)
-                return false;
+                return true;
             if (!MatchesSnapshot(current, snapshot, expectEvidence: true) ||
                 GetBlockingReason(current) is not CompatibilityReadBlockingReason.None)
             {
