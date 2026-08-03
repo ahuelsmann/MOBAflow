@@ -35,7 +35,11 @@ public static class ControlPlaneSecurityServiceCollectionExtensions
         });
         services.AddSingleton<ICompatibilityReadEvidenceVerifier, GitHubIssueEvidenceVerifier>();
         services.AddSingleton<CompatibilityReadMetrics>();
-        services.AddSingleton<ICompatibilityReadMigration, CompatibilityReadMigration>();
+        services.AddSingleton<CompatibilityReadMigration>();
+        services.AddSingleton<ICompatibilityReadMigration>(static provider =>
+            provider.GetRequiredService<CompatibilityReadMigration>());
+        services.AddSingleton<ICompatibilityReadMigrationRecovery>(static provider =>
+            provider.GetRequiredService<CompatibilityReadMigration>());
         services.AddHostedService<CompatibilityReadStartupReporter>();
         services.AddSingleton<IHostCredentialService, HostCredentialService>();
         services.AddSingleton<ICredentialRegistry, CredentialRegistry>();

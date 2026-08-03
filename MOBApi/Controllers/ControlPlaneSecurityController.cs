@@ -342,14 +342,19 @@ public sealed class ControlPlaneSecurityController : ControllerBase
             });
         }
 
-        return await _readMigration
+        var activated = await _readMigration
             .ActivateAnonymousReadRollbackAsync(TimeSpan.FromHours(request.DurationHours), cancellationToken)
-            .ConfigureAwait(false)
-            ? NoContent()
-            : Conflict(new ProblemDetails
-            {
-                Title = "Anonymous read-only rollback requires authenticated-read enforcement."
-            });
+            .ConfigureAwait(false);
+        if (activated)
+            return NoContent();
+
+        var status = await _readMigration.GetStatusAsync(cancellationToken).ConfigureAwait(false);
+        return Conflict(new ProblemDetails
+        {
+            Title = status.RollbackConsumed
+                ? "Anonymous read-only rollback is already active or has already been consumed."
+                : "Anonymous read-only rollback requires authenticated-read enforcement."
+        });
     }
 }
 

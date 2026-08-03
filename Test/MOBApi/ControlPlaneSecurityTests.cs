@@ -929,6 +929,47 @@ internal sealed partial class ControlPlaneSecurityTests
     }
 
     [Test]
+    public async Task PhotoHub_Should_RecordAuthenticatedSignalRRead_AfterConnectionCompletes()
+    {
+        using var context = SecurityTestContext.Create();
+        var migration = context.GetRequiredService<ICompatibilityReadMigration>();
+        await migration.BeginReadinessWindowAsync("MOBAsmart 1.0.0").ConfigureAwait(false);
+        await migration.RecordAuthenticatedReadAsync(
+            "credential-1",
+            CompatibilityReadTransport.Rest,
+            "MOBAsmart 1.0.0").ConfigureAwait(false);
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Headers[CompatibilityReadHeaders.ClientRelease] = "MOBAsmart 1.0.0";
+        var httpContextFeature = new Mock<IHttpContextFeature>();
+        httpContextFeature.SetupGet(feature => feature.HttpContext).Returns(httpContext);
+        var features = new FeatureCollection();
+        features.Set(httpContextFeature.Object);
+        var callerContext = new Mock<HubCallerContext>();
+        callerContext.SetupGet(candidate => candidate.ConnectionId).Returns("photo-connection-1");
+        callerContext.SetupGet(candidate => candidate.UserIdentifier).Returns("credential-1");
+        callerContext.SetupGet(candidate => candidate.User).Returns(new ClaimsPrincipal(new ClaimsIdentity(
+            [new Claim(ClaimTypes.NameIdentifier, "credential-1")],
+            ControlPlaneAuthenticationDefaults.Scheme)));
+        callerContext.SetupGet(candidate => candidate.Features).Returns(features);
+        var registry = new ControlPlaneHubConnectionRegistry(
+            new Mock<IRuntimeRemoteRegistry>().Object,
+            new Mock<IControlPlaneConnectionRevoker>().Object,
+            new CompatibilityReadConnectionRevoker(),
+            migration);
+        using var hub = new PhotoHub(registry)
+        {
+            Context = callerContext.Object
+        };
+
+        await hub.OnConnectedAsync().ConfigureAwait(false);
+        context.TimeProvider.Advance(TimeSpan.FromDays(14));
+
+        Assert.That(
+            (await migration.GetStatusAsync().ConfigureAwait(false)).BlockingReason,
+            Is.EqualTo(CompatibilityReadBlockingReason.EvidenceNotRecorded));
+    }
+
+    [Test]
     public async Task ReadMigration_Should_FailClosed_WhenMigrationDocumentIsLostAfterEnforcement()
     {
         var root = SecurityTestContext.CreateTemporaryRoot();
@@ -1485,7 +1526,23 @@ internal sealed partial class ControlPlaneSecurityTests
             var warning = loggerProvider.Entries.Single(entry =>
                 entry.Level == LogLevel.Error &&
                 entry.EventId.Name == "CompatibilityReadStateUnavailable");
-            Assert.That(warning.Message, Does.Contain("fail-closed"));
+            var migration = restarted.GetRequiredService<ICompatibilityReadMigration>();
+            var anonymousDecision = await migration
+                .EvaluateAnonymousReadAsync(CompatibilityReadTransport.Rest)
+                .ConfigureAwait(false);
+            await migration.RecordAuthenticatedReadAsync(
+                "credential-1",
+                CompatibilityReadTransport.SignalR,
+                "MOBAsmart 1.0.0").ConfigureAwait(false);
+            var telemetry = await migration.GetTelemetryAsync().ConfigureAwait(false);
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(warning.Message, Does.Contain("fail-closed"));
+                Assert.That(anonymousDecision, Is.EqualTo(CompatibilityReadDecision.UpgradeRequired));
+                Assert.That(telemetry.Outcomes.Single(outcome =>
+                    outcome.Outcome == CompatibilityReadOutcome.AuthenticatedAllowed).Count, Is.EqualTo(1));
+            }
         }
         finally
         {
@@ -1576,6 +1633,37 @@ internal sealed partial class ControlPlaneSecurityTests
             Assert.That(rollback, Is.InstanceOf<NoContentResult>());
             Assert.That(status.Value?.RollbackExpiresAt, Is.EqualTo(context.TimeProvider.GetUtcNow().AddDays(7)));
         });
+    }
+
+    [Test]
+    public async Task ControlPlaneSecurityController_Should_ReportConsumedRollback()
+    {
+        using var context = SecurityTestContext.Create();
+        var migration = context.GetRequiredService<ICompatibilityReadMigration>();
+        await MakeReadMigrationReadyAsync(context, migration).ConfigureAwait(false);
+        var enforcementEnabled = await migration.EnableAuthenticatedReadsAsync().ConfigureAwait(false);
+        var rollbackActivated = await migration
+            .ActivateAnonymousReadRollbackAsync(TimeSpan.FromHours(24))
+            .ConfigureAwait(false);
+        context.TimeProvider.Advance(TimeSpan.FromHours(24));
+        var controller = new ControlPlaneSecurityController(
+            context.GetRequiredService<ICredentialRegistry>(),
+            context.GetRequiredService<IPairingService>(),
+            migration);
+
+        var result = await controller.ActivateAnonymousReadRollback(
+            new ActivateAnonymousReadRollbackRequest(24),
+            CancellationToken.None).ConfigureAwait(false);
+
+        var conflict = result as ConflictObjectResult;
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(enforcementEnabled, Is.True);
+            Assert.That(rollbackActivated, Is.True);
+            Assert.That(conflict, Is.Not.Null);
+            Assert.That(conflict?.Value, Is.InstanceOf<ProblemDetails>());
+            Assert.That(((ProblemDetails?)conflict?.Value)?.Title, Does.Contain("consumed"));
+        }
     }
 
     [Test]

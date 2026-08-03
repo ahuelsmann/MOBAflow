@@ -20,11 +20,11 @@ internal sealed class CompatibilityReadStartupReporter : IHostedService
         "The protected compatibility-read state is unavailable. The service remains online in fail-closed mode; anonymous reads stay disabled.");
     private readonly ILogger<CompatibilityReadStartupReporter> _logger;
     private readonly CompatibilityReadMetrics _metrics;
-    private readonly ICompatibilityReadMigration _migration;
+    private readonly ICompatibilityReadMigrationRecovery _migration;
     private readonly TimeProvider _timeProvider;
 
     public CompatibilityReadStartupReporter(
-        ICompatibilityReadMigration migration,
+        ICompatibilityReadMigrationRecovery migration,
         CompatibilityReadMetrics metrics,
         TimeProvider timeProvider,
         ILogger<CompatibilityReadStartupReporter> logger)
@@ -45,7 +45,7 @@ internal sealed class CompatibilityReadStartupReporter : IHostedService
         catch (Exception exception) when (
             exception is CryptographicException or JsonException or IOException or UnauthorizedAccessException)
         {
-            _metrics.SetRollbackExpiry(null);
+            await _migration.EnterFailClosedModeAsync(cancellationToken).ConfigureAwait(false);
             LogStateUnavailable(_logger, exception);
             return;
         }

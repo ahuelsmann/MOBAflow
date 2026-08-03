@@ -96,7 +96,8 @@ public sealed record CompatibilityReadMigrationStatus(
     int OpenCriticalDefectCount,
     bool EvidenceRecorded,
     DateTimeOffset? AuthenticatedReadsEnforcedAt,
-    DateTimeOffset? RollbackExpiresAt);
+    DateTimeOffset? RollbackExpiresAt,
+    bool RollbackConsumed);
 
 /// <summary>
 /// Coordinates the measured transition from anonymous compatibility reads to authenticated reads.
@@ -146,7 +147,12 @@ public interface ICompatibilityReadMigration
     Task<CompatibilityReadMigrationStatus> GetStatusAsync(CancellationToken cancellationToken = default);
 }
 
-internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration, IDisposable
+internal interface ICompatibilityReadMigrationRecovery : ICompatibilityReadMigration
+{
+    Task EnterFailClosedModeAsync(CancellationToken cancellationToken = default);
+}
+
+internal sealed class CompatibilityReadMigration : ICompatibilityReadMigrationRecovery, IDisposable
 {
     private const string StorePurpose = "MOBApi.ControlPlane.CompatibilityReadMigration.v1";
     private const string EnforcementMarkerPurpose = "MOBApi.ControlPlane.CompatibilityReadMigration.EnforcementMarker.v1";
@@ -588,6 +594,25 @@ internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration, 
         }
     }
 
+    public async Task EnterFailClosedModeAsync(CancellationToken cancellationToken = default)
+    {
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            _cachedDocument = new CompatibilityReadMigrationDocument
+            {
+                AuthenticatedReadsEnforcedAt = _timeProvider.GetUtcNow(),
+                RollbackConsumed = true
+            };
+            _metrics.SetRollbackExpiry(null);
+            ApplyConnectionPolicy(_cachedDocument);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
     public async Task<CompatibilityReadMigrationStatus> GetStatusAsync(
         CancellationToken cancellationToken = default)
     {
@@ -606,7 +631,8 @@ internal sealed class CompatibilityReadMigration : ICompatibilityReadMigration, 
                 document.OpenCriticalDefectCodes.Count,
                 !string.IsNullOrWhiteSpace(document.EvidenceReference),
                 document.AuthenticatedReadsEnforcedAt,
-                document.RollbackExpiresAt);
+                document.RollbackExpiresAt,
+                document.RollbackConsumed);
         }
         finally
         {
