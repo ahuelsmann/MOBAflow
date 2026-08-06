@@ -49,6 +49,7 @@ MainWindowViewModel.OnFeedbackReceived() → IsConnected = true (UI thread safe)
 19. **Balanced secrets scanning** — Run `sonar analyze secrets` before reading files likely to contain credentials, tokens, private keys, certificates, connection strings, or deployment secrets. Ordinary source, tests, Markdown, schemas, and checked-in templates do not require an individual pre-read scan unless context suggests secret material. Run a secrets scan over all changed files before every commit and PR. If the scanner is unavailable, do not read sensitive files; ordinary development may continue and the limitation must be recorded before publication.
 20. **Never launch MOBAflow without explicit user approval** — Building, restoring, and testing are allowed, but every command or tool action that starts the MOBAflow WinUI application requires the user's explicit prior approval. This includes `dotnet run`, `dotnet watch run`, `winapp` launch commands, starting the executable, debugger launches, and UI automation that launches the application. Do not infer launch approval from a request to build, test, diagnose, or prepare UI automation.
 21. **Write answers for junior developers** — Formulate explanations and answers as if they are addressed to a junior developer. Use clear, plain language, provide the context needed to understand the reasoning, briefly explain unfamiliar terms, and make next steps explicit without being patronizing.
+22. **Isolate independent write tasks with Git worktrees** — Before changing repository files or Git state, use one dedicated worktree and task branch for the primary issue or explicitly named task. Read-only analysis and GitHub-only metadata work are exempt. The shared checkout may create the dedicated worktree as the documented bootstrap exception, but it must not contain the task's file changes. See `.github/instructions/git-worktree-isolation.instructions.md`.
 
 ---
 
@@ -56,6 +57,7 @@ MainWindowViewModel.OnFeedbackReceived() → IsConnected = true (UI thread safe)
 
 ### 1. ANALYSE
 - Understand requirements
+- Verify the primary issue or task, dedicated worktree, branch, base, and unrelated changes before any repository mutation
 - Identify affected files
 - Find existing patterns
 - Identify existing tests
