@@ -107,7 +107,7 @@ dependencies.
 | RF-14 | [#92](https://github.com/ahuelsmann/MOBAflow/issues/92) | Signal-box property changes flow through commands and ViewModels rather than direct control mutation. |
 | RF-15 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Unused synchronous and unsafe path abstractions are removed or hardened. |
 | RF-16 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Critical workflows pass accessibility, keyboard, contrast, and theme acceptance. |
-| RF-17 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Repository guidance and executable engineering gates describe the same rules. |
+| RF-17 | [#116](https://github.com/ahuelsmann/MOBAflow/issues/116) | Repository guidance and executable engineering gates describe the same rules. |
 | RF-18 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Critical throughput, load, telemetry, recovery, and endurance behavior is measured. |
 
 The phrase "until child creation" is traceability, not workflow status. Issue #47

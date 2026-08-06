@@ -16,7 +16,7 @@
    - Key files: `Backend/Z21.cs`, `SharedUI/Service/UiThreadEventBusDecorator.cs`, `SharedUI/ViewModel/MainWindowViewModel.cs`
    - See: `.github/copilot-instructions.md` § EventBus Threading Boundary
 
-2. **Absolute Rules (21 rules)**
+2. **Absolute Rules (22 rules)**
    - No `.Result` / `.Wait()` → Always use `await`
    - No hardcoded colors → `ThemeResource` only
    - No `InvokeOnUi` in EventBus handlers → Decorator already marshals
@@ -24,6 +24,7 @@
    - Standalone Markdown plans → `plans/`, not `docs/`
    - Delete completed plans; use Git history and closed GitHub work items as the record
    - Scan secret-bearing files before reading; scan every changed file before commit and PR
+   - Use one dedicated Git worktree and task branch for every independent repository write task; see `.github/instructions/git-worktree-isolation.instructions.md`
    - Write explanations and answers for junior developers using clear language, necessary context, brief explanations of unfamiliar terms, and explicit next steps
    - See: `.github/copilot-instructions.md` § Absolute Rules
 
@@ -64,6 +65,7 @@ Located in `.github/instructions/`:
 | File | Purpose |
 | ---- | ------- |
 | `instructions-index.md` | Index of all instruction files in `.github/instructions/` |
+| `git-worktree-isolation.instructions.md` | Worktree isolation for independent repository write tasks |
 | `di-pattern-consistency.instructions.md` | DI registration, singletons, constructor injection |
 | `architecture.instructions.md` | Layer boundaries, data flow, threading model |
 | `backend.instructions.md` | Platform independence, Z21 protocol, action executors |
