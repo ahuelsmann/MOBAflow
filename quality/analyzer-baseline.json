@@ -3233,7 +3233,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
       "path": "SharedUI/ViewModel/RemotePairingViewModel.cs",
-      "count": 4
+      "count": 3
     },
     {
       "project": "SharedUI",
@@ -3932,13 +3932,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
-      "path": "SharedUI/ViewModel/RemotePairingViewModel.cs",
-      "count": 7
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2007",
       "path": "SharedUI/ViewModel/RollingStockMaintenanceViewModel.cs",
       "count": 3
     },
@@ -4459,13 +4452,6 @@
       "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/RecorderPageViewModel.cs",
       "count": 23
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "MVVMTK0042",
-      "path": "SharedUI/ViewModel/RemotePairingViewModel.cs",
-      "count": 17
     },
     {
       "project": "SharedUI",
@@ -7418,13 +7404,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
-      "path": "Test/SharedUI/RemotePairingViewModelTests.cs",
-      "count": 11
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2007",
       "path": "Test/SharedUI/RollingStockMaintenanceViewModelTests.cs",
       "count": 5
     },
@@ -8988,13 +8967,6 @@
       "ruleId": "NUnit2056",
       "path": "Test/SharedUI/RecordingRuntimeCommandGatewayTests.cs",
       "count": 4
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/SharedUI/RemotePairingViewModelTests.cs",
-      "count": 6
     },
     {
       "project": "Test",

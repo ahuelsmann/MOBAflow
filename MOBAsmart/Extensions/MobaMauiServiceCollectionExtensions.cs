@@ -151,9 +151,10 @@ public static class MobaMauiServiceCollectionExtensions
             sp.GetRequiredService<IRuntimeCommandGateway>(),
             sp.GetRequiredService<IMobileRuntimeCoordinator>(),
             sp.GetRequiredService<IProjectContext>(),
-            sp.GetRequiredService<IBackgroundService>()));
+            sp.GetRequiredService<IBackgroundService>(),
+            sp.GetRequiredService<RemoteControlSessionService>()));
         services.AddSingleton<RemotePairingViewModel>();
-        services.AddSingleton<IPairingCameraPermission, PairingCameraPermission>();
+        services.AddSingleton<IPairingCameraAccess, PairingCameraAccess>();
         services.AddSingleton(new TrainControlViewModelOptions
         {
             HybridRuntimeSnapshots = true,

@@ -2,13 +2,12 @@
 
 namespace Moba.Test.SharedUI;
 
+using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Common.Discovery;
 using Moba.Common.Events;
 using Moba.Common.Security;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
-
-using Microsoft.Extensions.Logging.Abstractions;
 
 [TestFixture]
 internal sealed class RemotePairingViewModelTests
@@ -16,17 +15,34 @@ internal sealed class RemotePairingViewModelTests
     [Test]
     public async Task OpenScannerAsync_Should_RequestCameraAndShowScanner()
     {
-        var permission = new FakeCameraPermission(true);
+        var permission = new FakeCameraAccess(true);
         var viewModel = CreateViewModel(permission: permission);
 
-        await viewModel.OpenScannerCommand.ExecuteAsync(null);
+        await viewModel.OpenScannerCommand.ExecuteAsync(null).ConfigureAwait(true);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(permission.RequestCount, Is.EqualTo(1));
             Assert.That(viewModel.State, Is.EqualTo(RemotePairingUiState.Scanning));
             Assert.That(viewModel.IsScannerVisible, Is.True);
-        });
+        }
+    }
+
+    [Test]
+    public async Task OpenScannerAsync_Should_KeepScannerHidden_WhenCameraAccessIsDenied()
+    {
+        var cameraAccess = new FakeCameraAccess(false);
+        var viewModel = CreateViewModel(permission: cameraAccess);
+
+        await viewModel.OpenScannerCommand.ExecuteAsync(null).ConfigureAwait(true);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(cameraAccess.RequestCount, Is.EqualTo(1));
+            Assert.That(viewModel.State, Is.EqualTo(RemotePairingUiState.Unpaired));
+            Assert.That(viewModel.IsScannerVisible, Is.False);
+            Assert.That(viewModel.StatusMessage, Does.Contain("Camera access"));
+        }
     }
 
     [Test]
@@ -35,14 +51,63 @@ internal sealed class RemotePairingViewModelTests
         var transport = new FakeTransport();
         var viewModel = CreateViewModel(transport: transport);
 
-        await viewModel.ScanQrCodeCommand.ExecuteAsync("not-a-mobaflow-code");
+        await viewModel
+            .ScanQrCodeCommand
+            .ExecuteAsync("not-a-mobaflow-code")
+            .ConfigureAwait(true);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(viewModel.State, Is.EqualTo(RemotePairingUiState.Error));
             Assert.That(viewModel.StatusMessage, Does.Contain("not a valid"));
             Assert.That(transport.SubmitCount, Is.Zero);
-        });
+        }
+    }
+
+    [Test]
+    public async Task ScanQrCodeAsync_Should_AcceptFreshCodeAfterExpiredCode_WhenUserRetries()
+    {
+        var transport = new FakeTransport();
+        transport.ClaimResults.Enqueue(new RemotePairingClaimResult(
+            RemotePairingClaimStatus.Succeeded,
+            CreateTokenResponse(RemoteControlRole.RemoteControl)));
+        var viewModel = CreateViewModel(transport: transport);
+
+        await viewModel
+            .ScanQrCodeCommand
+            .ExecuteAsync(CreateQrPayload(DateTimeOffset.UtcNow.AddMinutes(-1)))
+            .ConfigureAwait(true);
+        var expiredState = viewModel.State;
+        var expiredStatus = viewModel.StatusMessage;
+        await viewModel
+            .ScanQrCodeCommand
+            .ExecuteAsync(CreateQrPayload())
+            .ConfigureAwait(true);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(expiredState, Is.EqualTo(RemotePairingUiState.Error));
+            Assert.That(expiredStatus, Does.Contain("expired"));
+            Assert.That(transport.SubmitCount, Is.EqualTo(1));
+            Assert.That(viewModel.State, Is.EqualTo(RemotePairingUiState.Paired));
+        }
+    }
+
+    [Test]
+    public async Task ScanQrCodeAsync_Should_ShowRetryMessage_WhenPairingIsRejected()
+    {
+        var transport = new FakeTransport();
+        transport.ClaimResults.Enqueue(new RemotePairingClaimResult(RemotePairingClaimStatus.Rejected));
+        var viewModel = CreateViewModel(transport: transport);
+
+        await viewModel.ScanQrCodeCommand.ExecuteAsync(CreateQrPayload()).ConfigureAwait(true);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(transport.SubmitCount, Is.EqualTo(1));
+            Assert.That(viewModel.State, Is.EqualTo(RemotePairingUiState.Error));
+            Assert.That(viewModel.StatusMessage, Does.Contain("try again"));
+        }
     }
 
     [Test]
@@ -60,9 +125,9 @@ internal sealed class RemotePairingViewModelTests
         var viewModel = CreateViewModel(store, transport, eventBus: eventBus);
         var payload = CreateQrPayload();
 
-        await viewModel.ScanQrCodeCommand.ExecuteAsync(payload);
+        await viewModel.ScanQrCodeCommand.ExecuteAsync(payload).ConfigureAwait(true);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(transport.RequestedRole, Is.EqualTo(RemoteControlRole.RemoteControl));
             Assert.That(transport.SubmitCount, Is.EqualTo(1));
@@ -71,7 +136,7 @@ internal sealed class RemotePairingViewModelTests
             Assert.That(completed?.IpAddress, Is.EqualTo("192.168.0.27"));
             Assert.That(completed?.HttpPort, Is.EqualTo(5001));
             Assert.That(viewModel.StatusMessage, Does.Not.Contain(new string('B', 43)));
-        });
+        }
     }
 
     [Test]
@@ -87,14 +152,14 @@ internal sealed class RemotePairingViewModelTests
         };
         var viewModel = CreateViewModel(store, transport);
 
-        await viewModel.InitializeAsync();
+        await viewModel.InitializeAsync().ConfigureAwait(true);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(viewModel.State, Is.EqualTo(RemotePairingUiState.Paired));
             Assert.That(viewModel.StatusMessage, Does.Contain("Administrator"));
             Assert.That(store.ClearCount, Is.Zero);
-        });
+        }
     }
 
     [Test]
@@ -110,20 +175,20 @@ internal sealed class RemotePairingViewModelTests
         };
         var viewModel = CreateViewModel(store, transport);
 
-        await viewModel.InitializeAsync();
+        await viewModel.InitializeAsync().ConfigureAwait(true);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(viewModel.State, Is.EqualTo(RemotePairingUiState.Unpaired));
-            Assert.That(viewModel.StatusMessage, Does.Contain("no longer supported"));
+            Assert.That(viewModel.StatusMessage, Does.Contain("Not paired"));
             Assert.That(store.ClearCount, Is.EqualTo(1));
-        });
+        }
     }
 
     private static RemotePairingViewModel CreateViewModel(
         FakeCredentialStore? store = null,
         FakeTransport? transport = null,
-        FakeCameraPermission? permission = null,
+        FakeCameraAccess? permission = null,
         IEventBus? eventBus = null) =>
         new(
             new RemoteControlSessionService(store ?? new FakeCredentialStore(), transport ?? new FakeTransport()),
@@ -132,14 +197,15 @@ internal sealed class RemotePairingViewModelTests
             TimeProvider.System,
             new RemotePairingPollingOptions(TimeSpan.FromMilliseconds(1), TimeSpan.FromSeconds(1)));
 
-    private static string CreateQrPayload() => RemotePairingQrCode.Encode(new RemotePairingQrInvitation(
+    private static string CreateQrPayload(DateTimeOffset? expiresAt = null) =>
+        RemotePairingQrCode.Encode(new RemotePairingQrInvitation(
         "192.168.0.27",
         5001,
         5002,
         Guid.Parse("11111111-2222-3333-4444-555555555555").ToString("N"),
         new string('A', 64),
         new string('B', 43),
-        DateTimeOffset.UtcNow.AddMinutes(2)));
+        expiresAt ?? DateTimeOffset.UtcNow.AddMinutes(2)));
 
     private static RemoteControlCredential CreateCredential(RemoteControlRole role) => new(
         Guid.Parse("11111111-2222-3333-4444-555555555555").ToString("N"),
@@ -159,7 +225,7 @@ internal sealed class RemotePairingViewModelTests
         role,
         1);
 
-    private sealed class FakeCameraPermission(bool granted) : IPairingCameraPermission
+    private sealed class FakeCameraAccess(bool granted) : IPairingCameraAccess
     {
         public int RequestCount { get; private set; }
 

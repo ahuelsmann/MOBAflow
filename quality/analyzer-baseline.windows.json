@@ -4731,7 +4731,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2000",
       "path": "Test/MOBAflow/RestApiStatusServiceTests.cs",
-      "count": 7
+      "count": 5
     },
     {
       "project": "Test",
@@ -5087,13 +5087,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2007",
-      "path": "Test/MOBAflow/RestApiStatusServiceTests.cs",
-      "count": 8
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA2007",
       "path": "Test/MOBAflow/UiDispatcherTests.cs",
       "count": 1
     },
@@ -5201,13 +5194,6 @@
       "ruleId": "CA2007",
       "path": "Test/SharedUI/RecordingRuntimeCommandGatewayTests.cs",
       "count": 14
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA2007",
-      "path": "Test/SharedUI/RemotePairingViewModelTests.cs",
-      "count": 11
     },
     {
       "project": "Test",
@@ -5327,13 +5313,6 @@
       "ruleId": "CsWinRT1028",
       "path": "Test/MOBAflow/RestApiRuntimeHubServiceTests.cs",
       "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1028",
-      "path": "Test/MOBAflow/RestApiStatusServiceTests.cs",
-      "count": 2
     },
     {
       "project": "Test",
@@ -6979,13 +6958,6 @@
       "ruleId": "NUnit2056",
       "path": "Test/SharedUI/RecordingRuntimeCommandGatewayTests.cs",
       "count": 4
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/SharedUI/RemotePairingViewModelTests.cs",
-      "count": 6
     },
     {
       "project": "Test",

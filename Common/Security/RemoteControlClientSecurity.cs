@@ -390,6 +390,26 @@ public sealed class RemoteControlSessionService
             cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Removes a legacy read-only mobile credential without contacting MOBApi.
+    /// </summary>
+    /// <returns><see langword="true"/> when a legacy credential was removed.</returns>
+    public async Task<bool> ClearLegacyReadOnlyCredentialAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return await RunLockedAsync(async () =>
+        {
+            var credential = await _credentialStore.LoadAsync(cancellationToken).ConfigureAwait(false);
+            if (credential?.Role != RemoteControlRole.ReadOnly)
+            {
+                return false;
+            }
+
+            await ClearCredentialStateAsync(cancellationToken).ConfigureAwait(false);
+            return true;
+        }, cancellationToken).ConfigureAwait(false);
+    }
+
     public async Task<RemoteControlAccessSession?> RefreshAsync(CancellationToken cancellationToken = default)
     {
         return await RunLockedAsync(
@@ -437,6 +457,12 @@ public sealed class RemoteControlSessionService
             return null;
         }
 
+        if (credential.Role == RemoteControlRole.ReadOnly)
+        {
+            await ClearCredentialStateAsync(cancellationToken).ConfigureAwait(false);
+            return null;
+        }
+
         try
         {
             return await RefreshCoreAsync(credential, cancellationToken).ConfigureAwait(false);
@@ -448,6 +474,13 @@ public sealed class RemoteControlSessionService
             CurrentConnectionSession = null;
             return null;
         }
+    }
+
+    private async Task ClearCredentialStateAsync(CancellationToken cancellationToken)
+    {
+        await _credentialStore.ClearAsync(cancellationToken).ConfigureAwait(false);
+        CurrentAccessSession = null;
+        CurrentConnectionSession = null;
     }
 
     private async Task<RemoteControlAccessSession> RefreshCoreAsync(

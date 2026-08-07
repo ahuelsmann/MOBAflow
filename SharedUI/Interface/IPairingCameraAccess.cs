@@ -5,7 +5,7 @@ namespace Moba.SharedUI.Interface;
 /// <summary>
 /// Requests camera access before the MOBAsmart QR scanner becomes visible.
 /// </summary>
-public interface IPairingCameraPermission
+public interface IPairingCameraAccess
 {
     Task<bool> RequestAsync(CancellationToken cancellationToken = default);
 }

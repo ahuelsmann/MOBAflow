@@ -35,7 +35,7 @@ public sealed record RemotePairingPollingOptions(
 public sealed partial class RemotePairingViewModel : ObservableObject
 {
     private readonly IEventBus? _eventBus;
-    private readonly IPairingCameraPermission? _pairingCameraPermission;
+    private readonly IPairingCameraAccess? _pairingCameraAccess;
     private readonly RemotePairingPollingOptions _pollingOptions;
     private readonly RemoteControlSessionService _sessionService;
     private readonly TimeProvider _timeProvider;
@@ -43,38 +43,39 @@ public sealed partial class RemotePairingViewModel : ObservableObject
     private bool _isInitialized;
 
     [ObservableProperty]
-    private string confirmationCode = string.Empty;
+    public partial string ConfirmationCode { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private string displayName = "MOBAsmart";
+    public partial string DisplayName { get; set; } = "MOBAsmart";
 
     [ObservableProperty]
-    private bool isBusy;
+    public partial bool IsBusy { get; set; }
 
     [ObservableProperty]
-    private bool isPaired;
+    public partial bool IsPaired { get; set; }
 
     [ObservableProperty]
-    private bool isScannerVisible;
+    public partial bool IsScannerVisible { get; set; }
 
     [ObservableProperty]
-    private bool isWaitingForApproval;
+    public partial bool IsWaitingForApproval { get; set; }
 
     [ObservableProperty]
-    private RemotePairingUiState state = RemotePairingUiState.Unpaired;
+    public partial RemotePairingUiState State { get; set; } = RemotePairingUiState.Unpaired;
 
     [ObservableProperty]
-    private string statusMessage = "Not paired. Scan the QR code shown under MOBAflow Settings / REST API.";
+    public partial string StatusMessage { get; set; } =
+        "Not paired. Scan the QR code shown under MOBAflow Settings / REST API.";
 
     public RemotePairingViewModel(
         RemoteControlSessionService sessionService,
-        IPairingCameraPermission? pairingCameraPermission = null,
+        IPairingCameraAccess? pairingCameraAccess = null,
         IEventBus? eventBus = null,
         TimeProvider? timeProvider = null,
         RemotePairingPollingOptions? pollingOptions = null)
     {
         _sessionService = sessionService ?? throw new ArgumentNullException(nameof(sessionService));
-        _pairingCameraPermission = pairingCameraPermission;
+        _pairingCameraAccess = pairingCameraAccess;
         _eventBus = eventBus;
         _timeProvider = timeProvider ?? TimeProvider.System;
         _pollingOptions = pollingOptions ?? RemotePairingPollingOptions.Default;
@@ -101,7 +102,7 @@ public sealed partial class RemotePairingViewModel : ObservableObject
         var operation = BeginOperation(cancellationToken);
         try
         {
-            var session = await _sessionService.RestoreAsync(operation.Token);
+            var session = await _sessionService.RestoreAsync(operation.Token).ConfigureAwait(true);
             if (session is null)
             {
                 SetUnpaired("Not paired. Scan the QR code shown under MOBAflow Settings / REST API.");
@@ -110,7 +111,7 @@ public sealed partial class RemotePairingViewModel : ObservableObject
 
             if (session.Role != RemoteControlRole.RemoteControl)
             {
-                await _sessionService.ClearAsync(operation.Token);
+                await _sessionService.ClearAsync(operation.Token).ConfigureAwait(true);
                 SetUnpaired("The previous access level is no longer supported. Scan a new administrator QR code.");
                 return;
             }
@@ -137,8 +138,8 @@ public sealed partial class RemotePairingViewModel : ObservableObject
     [RelayCommand]
     private async Task OpenScannerAsync(CancellationToken cancellationToken)
     {
-        if (_pairingCameraPermission is not null &&
-            !await _pairingCameraPermission.RequestAsync(cancellationToken))
+        if (_pairingCameraAccess is not null &&
+            !await _pairingCameraAccess.RequestAsync(cancellationToken).ConfigureAwait(true))
         {
             StatusMessage = "Camera access is required to scan the MOBAflow pairing QR code.";
             return;
@@ -185,11 +186,11 @@ public sealed partial class RemotePairingViewModel : ObservableObject
                 invitation.PairingSecret,
                 DisplayName,
                 RemoteControlRole.RemoteControl,
-                operation.Token);
+                operation.Token).ConfigureAwait(true);
             ConfirmationCode = attempt.ConfirmationCode;
             State = RemotePairingUiState.WaitingForApproval;
             StatusMessage = "Confirm this code in MOBAflow. Waiting for approval...";
-            await WaitForApprovalAsync(attempt, operation.Token);
+            await WaitForApprovalAsync(attempt, operation.Token).ConfigureAwait(true);
         }
         catch (OperationCanceledException)
         {
@@ -219,7 +220,7 @@ public sealed partial class RemotePairingViewModel : ObservableObject
         var operation = BeginOperation(CancellationToken.None);
         try
         {
-            await _sessionService.ClearAsync(operation.Token);
+            await _sessionService.ClearAsync(operation.Token).ConfigureAwait(true);
             SetUnpaired("Protected credentials were removed from this device.");
         }
         catch (OperationCanceledException)
@@ -257,12 +258,14 @@ public sealed partial class RemotePairingViewModel : ObservableObject
         var deadline = _timeProvider.GetUtcNow() + _pollingOptions.ApprovalTimeout;
         while (_timeProvider.GetUtcNow() < deadline)
         {
-            var session = await _sessionService.ClaimAsync(attempt, cancellationToken);
+            var session = await _sessionService
+                .ClaimAsync(attempt, cancellationToken)
+                .ConfigureAwait(true);
             if (session is not null)
             {
                 if (session.Role != RemoteControlRole.RemoteControl)
                 {
-                    await _sessionService.ClearAsync(cancellationToken);
+                    await _sessionService.ClearAsync(cancellationToken).ConfigureAwait(true);
                     State = RemotePairingUiState.Error;
                     StatusMessage = "MOBAflow did not grant administrator access. Create a new QR code.";
                     return;
@@ -286,7 +289,7 @@ public sealed partial class RemotePairingViewModel : ObservableObject
             var delay = remaining < _pollingOptions.PollInterval
                 ? remaining
                 : _pollingOptions.PollInterval;
-            await Task.Delay(delay, _timeProvider, cancellationToken);
+            await Task.Delay(delay, _timeProvider, cancellationToken).ConfigureAwait(true);
         }
 
         State = RemotePairingUiState.Error;

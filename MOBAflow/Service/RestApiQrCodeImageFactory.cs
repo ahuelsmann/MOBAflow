@@ -13,7 +13,7 @@ using ZXing.QrCode;
 /// <summary>
 /// Renders a secret-bearing QR payload without writing it to disk.
 /// </summary>
-public interface IRestApiQrCodeImageFactory
+internal interface IRestApiQrCodeImageFactory
 {
     Task<ImageSource> CreateAsync(string payload, CancellationToken cancellationToken = default);
 }
@@ -21,7 +21,7 @@ public interface IRestApiQrCodeImageFactory
 /// <summary>
 /// Creates an in-memory QR image for the MOBAflow Settings page.
 /// </summary>
-public sealed class RestApiQrCodeImageFactory : IRestApiQrCodeImageFactory
+internal sealed class RestApiQrCodeImageFactory : IRestApiQrCodeImageFactory
 {
     private const int ImageSize = 320;
 

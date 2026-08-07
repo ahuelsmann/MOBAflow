@@ -8,6 +8,7 @@ using Common.Discovery;
 using Common.Events;
 using Common.Extension;
 using Common.Runtime;
+using Common.Security;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -44,6 +45,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     private readonly INetworkProfileChangeNotifier _networkProfileChangeNotifier;
     private readonly ILogger<MauiViewModel> _logger;
     private readonly IEventBus _eventBus;
+    private readonly RemoteControlSessionService? _remoteControlSessionService;
     private readonly List<Guid> _eventBusSubscriptions = [];
 
     private readonly object _networkChangeDebounceLock = new();
@@ -128,7 +130,8 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         IRuntimeCommandGateway? runtimeCommandGateway = null,
         IMobileRuntimeCoordinator? mobileRuntimeCoordinator = null,
         IProjectContext? projectContext = null,
-        IBackgroundService? backgroundService = null)
+        IBackgroundService? backgroundService = null,
+        RemoteControlSessionService? remoteControlSessionService = null)
     {
         ArgumentNullException.ThrowIfNull(mobaRuntime);
         ArgumentNullException.ThrowIfNull(uiDispatcher);
@@ -160,6 +163,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         _mobileRuntimeCoordinator = mobileRuntimeCoordinator;
         _backgroundService = backgroundService;
         _eventBus = eventBus;
+        _remoteControlSessionService = remoteControlSessionService;
         _projectContext = projectContext;
 
         _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
@@ -221,6 +225,13 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
 
     private async Task InitializeCoreAsync()
     {
+        if (_remoteControlSessionService is not null)
+        {
+            await _remoteControlSessionService
+                .ClearLegacyReadOnlyCredentialAsync(_applicationLifetimeCts.Token)
+                .ConfigureAwait(false);
+        }
+
         await _mobaRuntime.StartAsync(_applicationLifetimeCts.Token).ConfigureAwait(false);
 
         _networkProfileChangeNotifier.NetworkProfilePossiblyChanged += OnNetworkProfilePossiblyChanged;

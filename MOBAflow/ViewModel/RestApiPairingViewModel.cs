@@ -11,57 +11,54 @@ using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml.Media;
 
 using Service;
+using System.Text.Json;
 
 /// <summary>
 /// Owns the local administrator pairing workflow displayed under Settings / REST API.
 /// </summary>
-public sealed partial class RestApiPairingViewModel : ObservableObject, IDisposable
+internal sealed partial class RestApiPairingViewModel(
+    IRestApiPairingHost pairingHost,
+    IRestApiQrCodeImageFactory qrCodeImageFactory,
+    ILogger<RestApiPairingViewModel> logger,
+    TimeProvider? timeProvider = null) : ObservableObject, IDisposable
 {
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(1);
-    private readonly IRestApiPairingHost _pairingHost;
-    private readonly IRestApiQrCodeImageFactory _qrCodeImageFactory;
-    private readonly ILogger<RestApiPairingViewModel> _logger;
-    private readonly TimeProvider _timeProvider;
+    private readonly IRestApiPairingHost _pairingHost =
+        pairingHost ?? throw new ArgumentNullException(nameof(pairingHost));
+    private readonly IRestApiQrCodeImageFactory _qrCodeImageFactory =
+        qrCodeImageFactory ?? throw new ArgumentNullException(nameof(qrCodeImageFactory));
+    private readonly ILogger<RestApiPairingViewModel> _logger =
+        logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
     private CancellationTokenSource? _pollingCancellation;
     private DateTimeOffset _expiresAt;
     private string? _pendingRequestId;
     private bool _disposed;
 
     [ObservableProperty]
-    private string confirmationCode = string.Empty;
+    public partial string ConfirmationCode { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private string expirationText = string.Empty;
+    public partial string ExpirationText { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private bool isBusy;
+    public partial bool IsBusy { get; set; }
 
     [ObservableProperty]
-    private bool isInvitationVisible;
+    public partial bool IsInvitationVisible { get; set; }
 
     [ObservableProperty]
-    private bool isPendingRequestVisible;
+    public partial bool IsPendingRequestVisible { get; set; }
 
     [ObservableProperty]
-    private string pendingDeviceName = string.Empty;
+    public partial string PendingDeviceName { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private ImageSource? qrCodeImage;
+    public partial ImageSource? QrCodeImage { get; set; }
 
     [ObservableProperty]
-    private string statusMessage = "Start the REST API to create a MOBAsmart pairing QR code.";
-
-    public RestApiPairingViewModel(
-        IRestApiPairingHost pairingHost,
-        IRestApiQrCodeImageFactory qrCodeImageFactory,
-        ILogger<RestApiPairingViewModel> logger,
-        TimeProvider? timeProvider = null)
-    {
-        _pairingHost = pairingHost ?? throw new ArgumentNullException(nameof(pairingHost));
-        _qrCodeImageFactory = qrCodeImageFactory ?? throw new ArgumentNullException(nameof(qrCodeImageFactory));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _timeProvider = timeProvider ?? TimeProvider.System;
-    }
+    public partial string StatusMessage { get; set; } =
+        "Start the REST API to create a MOBAsmart pairing QR code.";
 
     [RelayCommand]
     private async Task OpenPairingAsync(CancellationToken cancellationToken)
@@ -87,9 +84,9 @@ public sealed partial class RestApiPairingViewModel : ObservableObject, IDisposa
         {
             StatusMessage = "Pairing was cancelled.";
         }
-        catch (Exception exception)
+        catch (Exception exception) when (IsExpectedPairingFailure(exception))
         {
-            _logger.LogWarning(exception, "Could not open the MOBAsmart pairing window");
+            LogOpenPairingFailed(_logger, exception);
             StatusMessage = "Pairing is unavailable. Start the REST API and try again.";
         }
         finally
@@ -117,7 +114,7 @@ public sealed partial class RestApiPairingViewModel : ObservableObject, IDisposa
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            _logger.LogWarning(exception, "Could not approve the MOBAsmart pairing request");
+            LogApprovePairingFailed(_logger, exception);
             StatusMessage = "The pairing request could not be approved. Try again.";
         }
         finally
@@ -145,7 +142,7 @@ public sealed partial class RestApiPairingViewModel : ObservableObject, IDisposa
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            _logger.LogWarning(exception, "Could not reject the MOBAsmart pairing request");
+            LogRejectPairingFailed(_logger, exception);
             StatusMessage = "The pairing request could not be rejected. Try again.";
         }
         finally
@@ -167,7 +164,7 @@ public sealed partial class RestApiPairingViewModel : ObservableObject, IDisposa
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            _logger.LogWarning(exception, "Could not cancel the MOBAsmart pairing window");
+            LogCancelPairingFailed(_logger, exception);
             StatusMessage = "The pairing window could not be cancelled. Try again.";
         }
         finally
@@ -191,7 +188,7 @@ public sealed partial class RestApiPairingViewModel : ObservableObject, IDisposa
     {
         _pollingCancellation = new CancellationTokenSource();
         PollPendingRequestsAsync(_pollingCancellation.Token).Observe(
-            exception => _logger.LogWarning(exception, "REST API pairing request polling failed."));
+            exception => LogPairingPollingFailed(_logger, exception));
     }
 
     private async Task PollPendingRequestsAsync(CancellationToken cancellationToken)
@@ -211,7 +208,7 @@ public sealed partial class RestApiPairingViewModel : ObservableObject, IDisposa
                 var requests = await _pairingHost
                     .GetPendingRequestsAsync(cancellationToken)
                     .ConfigureAwait(true);
-                var request = requests.FirstOrDefault();
+                var request = requests.Count > 0 ? requests[0] : null;
                 if (request is not null)
                 {
                     _pendingRequestId = request.RequestId;
@@ -228,9 +225,9 @@ public sealed partial class RestApiPairingViewModel : ObservableObject, IDisposa
         {
             // Expected when the owner approves, rejects, cancels, or replaces the pairing window.
         }
-        catch (Exception exception)
+        catch (Exception exception) when (IsExpectedPairingFailure(exception))
         {
-            _logger.LogWarning(exception, "Could not refresh pending MOBAsmart pairing requests");
+            LogRefreshPendingRequestsFailed(_logger, exception);
             StatusMessage = "Pending pairing requests could not be refreshed.";
         }
     }
@@ -259,4 +256,26 @@ public sealed partial class RestApiPairingViewModel : ObservableObject, IDisposa
         ConfirmationCode = string.Empty;
         _pendingRequestId = null;
     }
+
+    private static bool IsExpectedPairingFailure(Exception exception) =>
+        exception is HttpRequestException or InvalidOperationException or InvalidDataException or
+        IOException or JsonException or NotSupportedException or ArgumentException;
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Could not open the MOBAsmart pairing window")]
+    private static partial void LogOpenPairingFailed(ILogger logger, Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Could not approve the MOBAsmart pairing request")]
+    private static partial void LogApprovePairingFailed(ILogger logger, Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Could not reject the MOBAsmart pairing request")]
+    private static partial void LogRejectPairingFailed(ILogger logger, Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Could not cancel the MOBAsmart pairing window")]
+    private static partial void LogCancelPairingFailed(ILogger logger, Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "REST API pairing request polling failed")]
+    private static partial void LogPairingPollingFailed(ILogger logger, Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Could not refresh pending MOBAsmart pairing requests")]
+    private static partial void LogRefreshPendingRequestsFailed(ILogger logger, Exception exception);
 }

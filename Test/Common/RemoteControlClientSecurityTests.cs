@@ -12,6 +12,75 @@ namespace Moba.Test.Common;
 [TestFixture]
 internal sealed class RemoteControlClientSecurityTests
 {
+    private static readonly DateTimeOffset QrTestTime = new(2026, 8, 6, 14, 0, 0, TimeSpan.Zero);
+
+    [Test]
+    public void EncodeAndDecode_Should_RoundTripValidPrivateLanInvitation_WhenInvitationIsValid()
+    {
+        var invitation = CreateQrInvitation();
+
+        var encoded = RemotePairingQrCode.Encode(invitation);
+        var result = RemotePairingQrCode.Decode(encoded, new FixedTimeProvider(QrTestTime));
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Failure, Is.EqualTo(RemotePairingQrFailure.None));
+            Assert.That(result.Invitation, Is.EqualTo(invitation));
+        }
+    }
+
+    [Test]
+    public void Decode_Should_ReturnExpired_WhenInvitationLifetimeElapsed()
+    {
+        var encoded = RemotePairingQrCode.Encode(CreateQrInvitation() with { ExpiresAt = QrTestTime });
+
+        var result = RemotePairingQrCode.Decode(encoded, new FixedTimeProvider(QrTestTime));
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Failure, Is.EqualTo(RemotePairingQrFailure.Expired));
+            Assert.That(result.Invitation, Is.Null);
+        }
+    }
+
+    [TestCase(null)]
+    [TestCase("")]
+    [TestCase("https://192.168.0.27:5002")]
+    [TestCase("MOBAFLOW_PAIRING|1|not-base64")]
+    public void Decode_Should_ReturnInvalid_WhenPayloadIsMalformed(string? payload)
+    {
+        var result = RemotePairingQrCode.Decode(payload, new FixedTimeProvider(QrTestTime));
+
+        Assert.That(result.Failure, Is.EqualTo(RemotePairingQrFailure.Invalid));
+    }
+
+    [TestCase("8.8.8.8")]
+    [TestCase("127.0.0.1")]
+    [TestCase("2001:db8::1")]
+    public void Encode_Should_RejectNonPrivateEndpoint_WhenEndpointIsOutsidePrivateLan(string ipAddress)
+    {
+        var invitation = CreateQrInvitation() with { IpAddress = ipAddress };
+
+        Assert.That(() => RemotePairingQrCode.Encode(invitation), Throws.ArgumentException);
+    }
+
+    [Test]
+    public void ToString_Should_RedactFingerprintAndSecret_WhenFormattingDiagnostics()
+    {
+        var invitation = CreateQrInvitation();
+
+        var text = invitation.ToString();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(text, Does.Not.Contain(invitation.PairingSecret));
+            Assert.That(text, Does.Not.Contain(invitation.ServerPublicKeyFingerprint));
+            Assert.That(text, Does.Contain("[REDACTED]"));
+        }
+    }
+
     [Test]
     public void ServerCertificatePinning_Should_MatchSubjectPublicKeyInfoFingerprint()
     {
@@ -296,7 +365,29 @@ internal sealed class RemoteControlClientSecurityTests
             Assert.That(session, Is.Null);
             Assert.That(store.Saved, Is.Null);
             Assert.That(store.ClearCount, Is.EqualTo(1));
+            Assert.That(transport.RefreshCount, Is.EqualTo(1));
         });
+    }
+
+    [Test]
+    public async Task ClearLegacyReadOnlyCredentialAsync_Should_ClearWithoutRefresh_WhenReadOnlyCredentialStored()
+    {
+        var store = new FakeCredentialStore
+        {
+            Saved = CreateCredential("stored-refresh", RemoteControlRole.ReadOnly)
+        };
+        var transport = new FakeTransport();
+        var service = new RemoteControlSessionService(store, transport);
+
+        var cleared = await service.ClearLegacyReadOnlyCredentialAsync().ConfigureAwait(true);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(cleared, Is.True);
+            Assert.That(store.Saved, Is.Null);
+            Assert.That(store.ClearCount, Is.EqualTo(1));
+            Assert.That(transport.RefreshCount, Is.Zero);
+        }
     }
 
     [Test]
@@ -335,7 +426,7 @@ internal sealed class RemoteControlClientSecurityTests
             CreateEndpoint(),
             new string('P', 43),
             "MOBAsmart replacement pairing",
-            RemoteControlRole.ReadOnly);
+            RemoteControlRole.RemoteControl);
         var replacement = await service.ClaimAsync(pairing);
 
         Assert.Multiple(() =>
@@ -401,25 +492,37 @@ internal sealed class RemoteControlClientSecurityTests
         "claim-secret",
         "123456");
 
-    private static RemoteControlCredential CreateCredential(string refreshToken) => new(
+    private static RemotePairingQrInvitation CreateQrInvitation() => new(
+        "192.168.0.27",
+        5001,
+        5002,
+        Guid.Parse("11111111-2222-3333-4444-555555555555").ToString("N"),
+        new string('A', 64),
+        new string('B', 43),
+        QrTestTime.AddMinutes(2));
+
+    private static RemoteControlCredential CreateCredential(
+        string refreshToken,
+        RemoteControlRole role = RemoteControlRole.RemoteControl) => new(
         "11111111111111111111111111111111",
         "192.0.2.1",
         5443,
         new string('A', 64),
         "credential-1",
         refreshToken,
-        RemoteControlRole.ReadOnly,
+        role,
         1);
 
     private static RemoteControlTokenResponse CreateTokenResponse(
         string accessToken,
         string refreshToken,
-        DateTimeOffset? expiresAt = null) => new(
+        DateTimeOffset? expiresAt = null,
+        RemoteControlRole role = RemoteControlRole.RemoteControl) => new(
         "credential-1",
         accessToken,
         expiresAt ?? DateTimeOffset.UtcNow.AddMinutes(5),
         refreshToken,
-        RemoteControlRole.ReadOnly,
+        role,
         1);
 
     private sealed class FakeCredentialStore : IRemoteControlCredentialStore
@@ -451,6 +554,11 @@ internal sealed class RemoteControlClientSecurityTests
             ClearCount++;
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class FixedTimeProvider(DateTimeOffset now) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => now;
     }
 
     private sealed class FakeTransport : IRemoteControlTransport

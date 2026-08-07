@@ -12,7 +12,7 @@ using System.Text.Json;
 /// <summary>
 /// Sends authenticated host requests to MOBApi without exposing host credentials to callers.
 /// </summary>
-public interface IHostControlPlaneClient
+internal interface IHostControlPlaneClient
 {
     bool IsEnrolled { get; }
 
@@ -24,7 +24,7 @@ public interface IHostControlPlaneClient
 /// <summary>
 /// Supplies the authenticated LAN endpoint advertised by the running MOBApi instance.
 /// </summary>
-public interface IRestApiPairingEndpointProvider
+internal interface IRestApiPairingEndpointProvider
 {
     MobApiDiscoveryEndpoint? GetAuthenticatedPairingEndpoint();
 }
@@ -32,7 +32,7 @@ public interface IRestApiPairingEndpointProvider
 /// <summary>
 /// Describes a pending MOBAsmart administrator pairing request shown to the local owner.
 /// </summary>
-public sealed record RestApiPairingRequest(
+internal sealed record RestApiPairingRequest(
     string RequestId,
     string DisplayName,
     string ConfirmationCode,
@@ -41,7 +41,7 @@ public sealed record RestApiPairingRequest(
 /// <summary>
 /// Contains the QR invitation shown by MOBAflow. Its encoded payload contains a short-lived secret.
 /// </summary>
-public sealed record RestApiPairingInvitation(
+internal sealed record RestApiPairingInvitation(
     RemotePairingQrInvitation Invitation,
     string EncodedQrPayload)
 {
@@ -53,7 +53,7 @@ public sealed record RestApiPairingInvitation(
 /// <summary>
 /// Owns the complete local-host pairing interface used by the REST API settings view.
 /// </summary>
-public interface IRestApiPairingHost
+internal interface IRestApiPairingHost
 {
     bool IsAvailable { get; }
 
@@ -72,7 +72,7 @@ public interface IRestApiPairingHost
 /// <summary>
 /// Adapts MOBApi host-only pairing endpoints to the small interface used by the Settings page.
 /// </summary>
-public sealed class RestApiPairingHost(
+internal sealed class RestApiPairingHost(
     IHostControlPlaneClient hostClient,
     IRestApiPairingEndpointProvider endpointProvider) : IRestApiPairingHost
 {
