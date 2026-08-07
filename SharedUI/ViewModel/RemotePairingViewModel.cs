@@ -135,10 +135,10 @@ public sealed partial class RemotePairingViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task OpenScannerAsync()
+    private async Task OpenScannerAsync(CancellationToken cancellationToken)
     {
         if (_pairingCameraPermission is not null &&
-            !await _pairingCameraPermission.RequestAsync())
+            !await _pairingCameraPermission.RequestAsync(cancellationToken))
         {
             StatusMessage = "Camera access is required to scan the MOBAflow pairing QR code.";
             return;
@@ -167,7 +167,8 @@ public sealed partial class RemotePairingViewModel : ObservableObject
             return;
         }
 
-        var invitation = decoded.Invitation!;
+        var invitation = decoded.Invitation
+            ?? throw new InvalidOperationException("A successful QR decode must contain an invitation.");
         var endpoint = new MobApiDiscoveryEndpoint(
             invitation.IpAddress,
             invitation.HttpPort,
@@ -236,7 +237,8 @@ public sealed partial class RemotePairingViewModel : ObservableObject
         }
     }
 
-    private bool CanForget() => State == RemotePairingUiState.Paired && !IsBusy;
+    private bool CanForget() =>
+        this.State == RemotePairingUiState.Paired && !this.IsBusy;
 
     partial void OnStateChanged(RemotePairingUiState value)
     {
@@ -293,9 +295,9 @@ public sealed partial class RemotePairingViewModel : ObservableObject
 
     private void SetUnpaired(string message)
     {
-        ConfirmationCode = string.Empty;
-        State = RemotePairingUiState.Unpaired;
-        StatusMessage = message;
+        this.ConfirmationCode = string.Empty;
+        this.State = RemotePairingUiState.Unpaired;
+        this.StatusMessage = message;
     }
 
     private CancellationTokenSource BeginOperation(CancellationToken cancellationToken)

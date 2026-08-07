@@ -2,6 +2,8 @@
 
 namespace Moba.WinUI.ViewModel;
 
+using Moba.Common.Extension;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -21,7 +23,6 @@ public sealed partial class RestApiPairingViewModel : ObservableObject, IDisposa
     private readonly ILogger<RestApiPairingViewModel> _logger;
     private readonly TimeProvider _timeProvider;
     private CancellationTokenSource? _pollingCancellation;
-    private Task? _pollingTask;
     private DateTimeOffset _expiresAt;
     private string? _pendingRequestId;
     private bool _disposed;
@@ -189,7 +190,8 @@ public sealed partial class RestApiPairingViewModel : ObservableObject, IDisposa
     private void StartPolling()
     {
         _pollingCancellation = new CancellationTokenSource();
-        _pollingTask = PollPendingRequestsAsync(_pollingCancellation.Token);
+        PollPendingRequestsAsync(_pollingCancellation.Token).Observe(
+            exception => _logger.LogWarning(exception, "REST API pairing request polling failed."));
     }
 
     private async Task PollPendingRequestsAsync(CancellationToken cancellationToken)
@@ -245,7 +247,6 @@ public sealed partial class RestApiPairingViewModel : ObservableObject, IDisposa
         _pollingCancellation?.Cancel();
         _pollingCancellation?.Dispose();
         _pollingCancellation = null;
-        _pollingTask = null;
     }
 
     private void ResetVisibleInvitation()

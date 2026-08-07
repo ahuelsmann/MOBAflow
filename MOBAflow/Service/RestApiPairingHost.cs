@@ -91,6 +91,12 @@ public sealed class RestApiPairingHost(
     {
         var endpoint = _endpointProvider.GetAuthenticatedPairingEndpoint()
             ?? throw new InvalidOperationException("Start the REST API before creating a pairing QR code.");
+        if (endpoint.HttpsPort is not int httpsPort ||
+            string.IsNullOrWhiteSpace(endpoint.ServerInstanceId))
+        {
+            throw new InvalidOperationException("The authenticated REST API endpoint is incomplete.");
+        }
+
         if (!_hostClient.IsEnrolled)
         {
             throw new InvalidOperationException("MOBAflow is not authenticated with the running REST API.");
@@ -111,8 +117,8 @@ public sealed class RestApiPairingHost(
         var invitation = new RemotePairingQrInvitation(
             endpoint.IpAddress,
             endpoint.HttpPort,
-            endpoint.HttpsPort!.Value,
-            endpoint.ServerInstanceId!,
+            httpsPort,
+            endpoint.ServerInstanceId,
             result.ServerPublicKeyFingerprint,
             result.PairingSecret,
             result.ExpiresAt);
