@@ -20,6 +20,27 @@ using Moq;
 internal sealed class RestApiStatusServiceTests
 {
     [Test]
+    public async Task RefreshAsync_ShouldDisplayEffectivePort_WhenAnonymousStatusOmitsPort()
+    {
+        // Arrange
+        const string statusJson = """
+            {
+              "status": "running"
+            }
+            """;
+        await using var dependencies = CreateDependencies(new JsonHttpMessageHandler(statusJson));
+        RestApiStatusChangedEvent? publishedStatus = null;
+        dependencies.EventBus.Subscribe<RestApiStatusChangedEvent>(status => publishedStatus = status);
+
+        // Act
+        await dependencies.StatusService.RefreshAsync();
+
+        // Assert
+        Assert.That(publishedStatus, Is.Not.Null);
+        Assert.That(publishedStatus!.Status, Is.EqualTo("Running on port 5001"));
+    }
+
+    [Test]
     public async Task DisposeAsync_ShouldDisconnectClientsOnlyOnce_WithoutDisposingDependencies()
     {
         // Arrange
@@ -114,6 +135,7 @@ internal sealed class RestApiStatusServiceTests
             solutionSyncService,
             restApiProcessService,
             statusHttpClient,
+            eventBus,
             photoHubClient,
             runtimeHubHostClient);
     }
@@ -152,6 +174,19 @@ internal sealed class RestApiStatusServiceTests
         }
     }
 
+    private sealed class JsonHttpMessageHandler(string json) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+            {
+                Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
+            });
+        }
+    }
+
     private sealed class BlockingHttpMessageHandler : HttpMessageHandler
     {
         public TaskCompletionSource RequestStarted { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -172,6 +207,7 @@ internal sealed class RestApiStatusServiceTests
         RestApiSolutionSyncService SolutionSyncService,
         RestApiProcessService RestApiProcessService,
         HttpClient StatusHttpClient,
+        IEventBus EventBus,
         Mock<IPhotoHubClient> PhotoHubClient,
         Mock<IRuntimeHubHostClient> RuntimeHubHostClient) : IAsyncDisposable
     {

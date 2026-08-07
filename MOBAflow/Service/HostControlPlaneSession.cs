@@ -13,7 +13,7 @@ using System.Security.Cryptography.X509Certificates;
 /// <summary>
 /// Keeps the process-bound MOBApi host credential and pinned HTTPS client in memory.
 /// </summary>
-public sealed class HostControlPlaneSession : IDisposable
+public sealed class HostControlPlaneSession : IHostControlPlaneClient, IDisposable
 {
     private static readonly TimeSpan RefreshLeadTime = TimeSpan.FromSeconds(45);
     private readonly SemaphoreSlim _refreshGate = new(1, 1);

@@ -305,6 +305,12 @@ public class FeatureToggleSettings
     /// </summary>
     public string WorkflowsPageLabel { get; set; } = string.Empty;
 
+    /// <summary>Enable the stations master-data page.</summary>
+    public bool IsStationsPageAvailable { get; set; } = true;
+
+    /// <summary>Gets or sets an optional label suffix for the Stations page.</summary>
+    public string StationsPageLabel { get; set; } = string.Empty;
+
     // Track Management (Testing - ENABLED by default)
 
     /// <summary>
@@ -352,6 +358,12 @@ public class FeatureToggleSettings
     /// Gets or sets an optional label suffix for the Monitor page.
     /// </summary>
     public string MonitorPageLabel { get; set; } = "Preview";
+
+    /// <summary>Enable the runtime event recorder and replay page.</summary>
+    public bool IsRecorderPageAvailable { get; set; } = true;
+
+    /// <summary>Gets or sets an optional label suffix for the Recorder page.</summary>
+    public string RecorderPageLabel { get; set; } = string.Empty;
 
     public bool IsMatrixPageAvailable { get; set; } = true;
 

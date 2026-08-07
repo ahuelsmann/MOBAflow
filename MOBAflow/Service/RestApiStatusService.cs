@@ -189,9 +189,8 @@ public sealed class RestApiStatusService : IAsyncDisposable
                         ConnectedAt = c.ConnectedAt
                     })
                     .ToList() ?? [];
-                var statusText = data != null
-                    ? $"Running on port {data.Port}"
-                    : $"Running on port {port}";
+                var effectivePort = data is { Port: > 0 } ? data.Port : port;
+                var statusText = $"Running on port {effectivePort}";
 
                 // Publish event - UiThreadEventBusDecorator marshals to UI thread
                 _eventBus.Publish(new RestApiStatusChangedEvent(statusText, isReachable: true, clients));

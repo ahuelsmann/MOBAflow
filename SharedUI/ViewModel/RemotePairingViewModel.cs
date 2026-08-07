@@ -3,16 +3,18 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Common.Discovery;
+using Common.Events;
 using Common.Security;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
 using Interface;
 
 public enum RemotePairingUiState
 {
     Unpaired,
-    Discovering,
-    CandidateFound,
+    Scanning,
     WaitingForApproval,
     Paired,
     Error
@@ -28,16 +30,16 @@ public sealed record RemotePairingPollingOptions(
 }
 
 /// <summary>
-/// Owns the explicit MOBAsmart pairing flow without exposing credentials to the UI layer.
+/// Owns the QR-only MOBAsmart administrator pairing flow without exposing credentials to the UI.
 /// </summary>
 public sealed partial class RemotePairingViewModel : ObservableObject
 {
-    private readonly IAuthenticatedRestDiscoveryService _discoveryService;
+    private readonly IEventBus? _eventBus;
+    private readonly IPairingCameraPermission? _pairingCameraPermission;
     private readonly RemotePairingPollingOptions _pollingOptions;
     private readonly RemoteControlSessionService _sessionService;
     private readonly TimeProvider _timeProvider;
     private CancellationTokenSource? _operationCancellation;
-    private MobApiDiscoveryEndpoint? _selectedEndpoint;
     private bool _isInitialized;
 
     [ObservableProperty]
@@ -47,58 +49,33 @@ public sealed partial class RemotePairingViewModel : ObservableObject
     private string displayName = "MOBAsmart";
 
     [ObservableProperty]
-    private string fingerprint = string.Empty;
-
-    [ObservableProperty]
-    private bool hasDiscoveredServer;
-
-    [ObservableProperty]
     private bool isBusy;
-
-    [ObservableProperty]
-    private bool isFingerprintConfirmed;
 
     [ObservableProperty]
     private bool isPaired;
 
     [ObservableProperty]
-    private bool isReadOnlySelected;
-
-    [ObservableProperty]
-    private bool isRemoteControlSelected = true;
+    private bool isScannerVisible;
 
     [ObservableProperty]
     private bool isWaitingForApproval;
 
     [ObservableProperty]
-    private string pairingSecret = string.Empty;
-
-    [ObservableProperty]
-    private string pairedRole = string.Empty;
-
-    [ObservableProperty]
-    private string serverAddress = string.Empty;
-
-    [ObservableProperty]
-    private string serverInstanceId = string.Empty;
-
-    [ObservableProperty]
-    private bool showPairingForm;
-
-    [ObservableProperty]
     private RemotePairingUiState state = RemotePairingUiState.Unpaired;
 
     [ObservableProperty]
-    private string statusMessage = "Not paired. Discover MOBAflow to begin.";
+    private string statusMessage = "Not paired. Scan the QR code shown under MOBAflow Settings / REST API.";
 
     public RemotePairingViewModel(
-        IAuthenticatedRestDiscoveryService discoveryService,
         RemoteControlSessionService sessionService,
+        IPairingCameraPermission? pairingCameraPermission = null,
+        IEventBus? eventBus = null,
         TimeProvider? timeProvider = null,
         RemotePairingPollingOptions? pollingOptions = null)
     {
-        _discoveryService = discoveryService ?? throw new ArgumentNullException(nameof(discoveryService));
         _sessionService = sessionService ?? throw new ArgumentNullException(nameof(sessionService));
+        _pairingCameraPermission = pairingCameraPermission;
+        _eventBus = eventBus;
         _timeProvider = timeProvider ?? TimeProvider.System;
         _pollingOptions = pollingOptions ?? RemotePairingPollingOptions.Default;
 
@@ -127,17 +104,19 @@ public sealed partial class RemotePairingViewModel : ObservableObject
             var session = await _sessionService.RestoreAsync(operation.Token);
             if (session is null)
             {
-                State = RemotePairingUiState.Unpaired;
-                StatusMessage = "Not paired. Discover MOBAflow to begin.";
+                SetUnpaired("Not paired. Scan the QR code shown under MOBAflow Settings / REST API.");
                 return;
             }
 
-            PairedRole = session.Role == RemoteControlRole.ReadOnly
-                ? "Read only"
-                : "Remote control";
-            ConfirmationCode = string.Empty;
+            if (session.Role != RemoteControlRole.RemoteControl)
+            {
+                await _sessionService.ClearAsync(operation.Token);
+                SetUnpaired("The previous access level is no longer supported. Scan a new administrator QR code.");
+                return;
+            }
+
             State = RemotePairingUiState.Paired;
-            StatusMessage = "Protected credentials restored.";
+            StatusMessage = "Administrator credentials restored. Connecting to MOBAflow...";
         }
         catch (OperationCanceledException)
         {
@@ -155,42 +134,70 @@ public sealed partial class RemotePairingViewModel : ObservableObject
         }
     }
 
-    [RelayCommand(CanExecute = nameof(CanDiscover))]
-    private async Task DiscoverAsync()
+    [RelayCommand]
+    private async Task OpenScannerAsync()
     {
-        var operation = BeginOperation(CancellationToken.None);
-        State = RemotePairingUiState.Discovering;
-        StatusMessage = "Searching for an authenticated MOBAflow endpoint...";
-        ResetCandidate();
+        if (_pairingCameraPermission is not null &&
+            !await _pairingCameraPermission.RequestAsync())
+        {
+            StatusMessage = "Camera access is required to scan the MOBAflow pairing QR code.";
+            return;
+        }
 
+        State = RemotePairingUiState.Scanning;
+        StatusMessage = "Point the camera at the QR code shown by MOBAflow.";
+    }
+
+    [RelayCommand]
+    private async Task ScanQrCodeAsync(string? payload)
+    {
+        if (IsBusy || string.IsNullOrWhiteSpace(payload))
+        {
+            return;
+        }
+
+        IsScannerVisible = false;
+        var decoded = RemotePairingQrCode.Decode(payload, _timeProvider);
+        if (!decoded.IsSuccess)
+        {
+            State = RemotePairingUiState.Error;
+            StatusMessage = decoded.Failure == RemotePairingQrFailure.Expired
+                ? "This pairing QR code expired. Create a new code in MOBAflow."
+                : "This is not a valid MOBAflow pairing QR code.";
+            return;
+        }
+
+        var invitation = decoded.Invitation!;
+        var endpoint = new MobApiDiscoveryEndpoint(
+            invitation.IpAddress,
+            invitation.HttpPort,
+            invitation.HttpsPort,
+            invitation.ServerInstanceId,
+            invitation.ServerPublicKeyFingerprint,
+            DiscoveryResponseParser.CurrentProtocolVersion);
+        var operation = BeginOperation(CancellationToken.None);
+        ConfirmationCode = string.Empty;
         try
         {
-            var endpoint = await _discoveryService.DiscoverAuthenticatedServerAsync(operation.Token);
-            if (endpoint is null)
-            {
-                State = RemotePairingUiState.Error;
-                StatusMessage = "No authenticated MOBAflow endpoint was found.";
-                return;
-            }
-
-            _selectedEndpoint = endpoint;
-            ServerAddress = $"{endpoint.IpAddress}:{endpoint.HttpsPort}";
-            ServerInstanceId = endpoint.ServerInstanceId ?? string.Empty;
-            Fingerprint = FormatFingerprint(endpoint.ServerPublicKeyFingerprint);
-            HasDiscoveredServer = true;
-            IsFingerprintConfirmed = false;
-            State = RemotePairingUiState.CandidateFound;
-            StatusMessage = "Compare this fingerprint with the value shown by MOBAflow.";
+            var attempt = await _sessionService.BeginPairingAsync(
+                endpoint,
+                invitation.PairingSecret,
+                DisplayName,
+                RemoteControlRole.RemoteControl,
+                operation.Token);
+            ConfirmationCode = attempt.ConfirmationCode;
+            State = RemotePairingUiState.WaitingForApproval;
+            StatusMessage = "Confirm this code in MOBAflow. Waiting for approval...";
+            await WaitForApprovalAsync(attempt, operation.Token);
         }
         catch (OperationCanceledException)
         {
-            State = RemotePairingUiState.Unpaired;
-            StatusMessage = "Discovery cancelled.";
+            SetUnpaired("Pairing was cancelled.");
         }
         catch (Exception)
         {
             State = RemotePairingUiState.Error;
-            StatusMessage = "Authenticated discovery failed. Check the network and try again.";
+            StatusMessage = "Pairing failed. Create a new QR code in MOBAflow and try again.";
         }
         finally
         {
@@ -198,61 +205,11 @@ public sealed partial class RemotePairingViewModel : ObservableObject
         }
     }
 
-    [RelayCommand(CanExecute = nameof(CanStartPairing))]
-    private async Task StartPairingAsync()
+    [RelayCommand]
+    private void Cancel()
     {
-        if (_selectedEndpoint is null)
-        {
-            return;
-        }
-
-        var operation = BeginOperation(CancellationToken.None);
-        var secret = PairingSecret.Trim();
-        PairingSecret = string.Empty;
-        ConfirmationCode = string.Empty;
-
-        try
-        {
-            var role = IsReadOnlySelected
-                ? RemoteControlRole.ReadOnly
-                : RemoteControlRole.RemoteControl;
-            var attempt = await _sessionService.BeginPairingAsync(
-                _selectedEndpoint,
-                secret,
-                DisplayName,
-                role,
-                operation.Token);
-
-            ConfirmationCode = attempt.ConfirmationCode;
-            State = RemotePairingUiState.WaitingForApproval;
-            StatusMessage = "Confirm this code in MOBAflow. Waiting for approval...";
-
-            await WaitForApprovalAsync(attempt, operation.Token);
-        }
-        catch (OperationCanceledException)
-        {
-            State = RemotePairingUiState.CandidateFound;
-            StatusMessage = "Pairing cancelled. The discovered server remains selected.";
-        }
-        catch (ArgumentException)
-        {
-            State = RemotePairingUiState.CandidateFound;
-            StatusMessage = "Enter a valid 43-character pairing secret and display name.";
-        }
-        catch (InvalidOperationException)
-        {
-            State = RemotePairingUiState.Error;
-            StatusMessage = "Pairing was rejected or is no longer valid. Start a new request.";
-        }
-        catch (Exception)
-        {
-            State = RemotePairingUiState.Error;
-            StatusMessage = "Pairing failed. Check the network and try again.";
-        }
-        finally
-        {
-            CompleteOperation(operation);
-        }
+        _operationCancellation?.Cancel();
+        SetUnpaired("Pairing was cancelled.");
     }
 
     [RelayCommand(CanExecute = nameof(CanForget))]
@@ -262,12 +219,7 @@ public sealed partial class RemotePairingViewModel : ObservableObject
         try
         {
             await _sessionService.ClearAsync(operation.Token);
-            PairedRole = string.Empty;
-            ConfirmationCode = string.Empty;
-            State = HasDiscoveredServer
-                ? RemotePairingUiState.CandidateFound
-                : RemotePairingUiState.Unpaired;
-            StatusMessage = "Protected credentials were removed from this device.";
+            SetUnpaired("Protected credentials were removed from this device.");
         }
         catch (OperationCanceledException)
         {
@@ -284,78 +236,17 @@ public sealed partial class RemotePairingViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
-    private void Cancel()
-    {
-        _operationCancellation?.Cancel();
-    }
-
-    private bool CanDiscover() => _operationCancellation is null && !IsPaired;
-
-    private bool CanStartPairing() =>
-        !IsBusy &&
-        _selectedEndpoint is not null &&
-        IsFingerprintConfirmed &&
-        PairingSecret.Trim().Length == 43 &&
-        !string.IsNullOrWhiteSpace(DisplayName) &&
-        DisplayName.Trim().Length <= 100 &&
-        (IsRemoteControlSelected || IsReadOnlySelected);
-
-    private bool CanForget() => _operationCancellation is null && IsPaired;
-
-    partial void OnDisplayNameChanged(string value) => StartPairingCommand.NotifyCanExecuteChanged();
-
-    partial void OnHasDiscoveredServerChanged(bool value) =>
-        ShowPairingForm = value && State != RemotePairingUiState.Paired;
-
-    partial void OnIsBusyChanged(bool value)
-    {
-        DiscoverCommand.NotifyCanExecuteChanged();
-        StartPairingCommand.NotifyCanExecuteChanged();
-        ForgetCommand.NotifyCanExecuteChanged();
-    }
-
-    partial void OnIsFingerprintConfirmedChanged(bool value) => StartPairingCommand.NotifyCanExecuteChanged();
-
-    partial void OnIsReadOnlySelectedChanged(bool value)
-    {
-        if (value)
-        {
-            IsRemoteControlSelected = false;
-        }
-        else if (!IsRemoteControlSelected)
-        {
-            IsRemoteControlSelected = true;
-        }
-
-        StartPairingCommand.NotifyCanExecuteChanged();
-    }
-
-    partial void OnIsRemoteControlSelectedChanged(bool value)
-    {
-        if (value)
-        {
-            IsReadOnlySelected = false;
-        }
-        else if (!IsReadOnlySelected)
-        {
-            IsReadOnlySelected = true;
-        }
-
-        StartPairingCommand.NotifyCanExecuteChanged();
-    }
-
-    partial void OnPairingSecretChanged(string value) => StartPairingCommand.NotifyCanExecuteChanged();
+    private bool CanForget() => State == RemotePairingUiState.Paired && !IsBusy;
 
     partial void OnStateChanged(RemotePairingUiState value)
     {
         IsPaired = value == RemotePairingUiState.Paired;
+        IsScannerVisible = value == RemotePairingUiState.Scanning;
         IsWaitingForApproval = value == RemotePairingUiState.WaitingForApproval;
-        ShowPairingForm = HasDiscoveredServer && !IsPaired;
-        DiscoverCommand.NotifyCanExecuteChanged();
-        StartPairingCommand.NotifyCanExecuteChanged();
         ForgetCommand.NotifyCanExecuteChanged();
     }
+
+    partial void OnIsBusyChanged(bool value) => ForgetCommand.NotifyCanExecuteChanged();
 
     private async Task WaitForApprovalAsync(
         RemotePairingAttempt attempt,
@@ -367,12 +258,20 @@ public sealed partial class RemotePairingViewModel : ObservableObject
             var session = await _sessionService.ClaimAsync(attempt, cancellationToken);
             if (session is not null)
             {
-                PairedRole = session.Role == RemoteControlRole.ReadOnly
-                    ? "Read only"
-                    : "Remote control";
+                if (session.Role != RemoteControlRole.RemoteControl)
+                {
+                    await _sessionService.ClearAsync(cancellationToken);
+                    State = RemotePairingUiState.Error;
+                    StatusMessage = "MOBAflow did not grant administrator access. Create a new QR code.";
+                    return;
+                }
+
                 ConfirmationCode = string.Empty;
                 State = RemotePairingUiState.Paired;
-                StatusMessage = "Pairing approved. This device is ready.";
+                StatusMessage = "Pairing approved. Connecting to MOBAflow...";
+                _eventBus?.Publish(new RemotePairingCompletedEvent(
+                    attempt.Endpoint.IpAddress,
+                    attempt.Endpoint.HttpPort));
                 return;
             }
 
@@ -389,12 +288,20 @@ public sealed partial class RemotePairingViewModel : ObservableObject
         }
 
         State = RemotePairingUiState.Error;
-        StatusMessage = "Pairing approval timed out. Start a new pairing request.";
+        StatusMessage = "Pairing approval timed out. Create a new QR code in MOBAflow.";
+    }
+
+    private void SetUnpaired(string message)
+    {
+        ConfirmationCode = string.Empty;
+        State = RemotePairingUiState.Unpaired;
+        StatusMessage = message;
     }
 
     private CancellationTokenSource BeginOperation(CancellationToken cancellationToken)
     {
         _operationCancellation?.Cancel();
+        _operationCancellation?.Dispose();
         _operationCancellation = cancellationToken.CanBeCanceled
             ? CancellationTokenSource.CreateLinkedTokenSource(cancellationToken)
             : new CancellationTokenSource();
@@ -411,32 +318,7 @@ public sealed partial class RemotePairingViewModel : ObservableObject
         }
 
         _operationCancellation = null;
-        operation.Dispose();
         IsBusy = false;
-    }
-
-    private void ResetCandidate()
-    {
-        _selectedEndpoint = null;
-        HasDiscoveredServer = false;
-        ServerAddress = string.Empty;
-        ServerInstanceId = string.Empty;
-        Fingerprint = string.Empty;
-        IsFingerprintConfirmed = false;
-        ConfirmationCode = string.Empty;
-    }
-
-    private static string FormatFingerprint(string? fingerprint)
-    {
-        if (string.IsNullOrWhiteSpace(fingerprint))
-        {
-            return string.Empty;
-        }
-
-        var normalized = fingerprint.ToUpperInvariant();
-        return string.Join(
-            ':',
-            Enumerable.Range(0, normalized.Length / 2)
-                .Select(index => normalized.Substring(index * 2, 2)));
+        operation.Dispose();
     }
 }

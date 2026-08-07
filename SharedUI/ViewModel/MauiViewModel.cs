@@ -166,6 +166,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         _eventBusSubscriptions.Add(_eventBus.Subscribe<FeedbackReceivedEvent>(OnFeedbackReceived));
         _eventBusSubscriptions.Add(_eventBus.Subscribe<SolutionSyncedEvent>(OnSolutionSyncedForSignalBox));
         _eventBusSubscriptions.Add(_eventBus.Subscribe<SolutionSyncedEvent>(OnSolutionSyncedForControlTab));
+        _eventBusSubscriptions.Add(_eventBus.Subscribe<RemotePairingCompletedEvent>(OnRemotePairingCompleted));
 
         WireProjectContextForControlTab();
 
@@ -175,6 +176,25 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             _runtimeHubRemoteClient.SessionStateChanged += OnRuntimeHubSessionStateChangedAsync;
             _runtimeHubRemoteClient.SolutionUpdated += OnRuntimeHubSolutionUpdatedAsync;
         }
+    }
+
+    private void OnRemotePairingCompleted(RemotePairingCompletedEvent pairing)
+    {
+        RunInBackground(
+            ApplyRemotePairingEndpointAsync(pairing),
+            "Connect MOBAflow after QR pairing");
+    }
+
+    private async Task ApplyRemotePairingEndpointAsync(RemotePairingCompletedEvent pairing)
+    {
+        await ApplyDiscoveredRestEndpointAsync(pairing.IpAddress, pairing.HttpPort).ConfigureAwait(true);
+        if (!IsMobaflowConnectionEnabled)
+        {
+            IsMobaflowConnectionEnabled = true;
+            return;
+        }
+
+        await ConnectToStoredEndpointAsync(_applicationLifetimeCts.Token).ConfigureAwait(true);
     }
 
     /// <summary>

@@ -82,6 +82,7 @@
         <PackageReference Include="CommunityToolkit.Maui" />
         <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
         <PackageReference Include="Microsoft.Extensions.Http" />
+        <PackageReference Include="ZXing.Net.Maui.Controls" />
         <!-- .NET 10 Android AOT loads this dependency from System.Private.Windows.Core in the existing sound graph. -->
         <PackageReference Include="System.Formats.Nrbf" />
         <!-- AndroidX Startup (required for initialization providers) -->
