@@ -5,7 +5,7 @@
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/50
 **Spec Kit**: Not applicable - RF-03 began before Spec Kit adoption and remains governed by this existing issue-specific sliced implementation plan.
 
-- Status: Slices 1 through 4c merged; Slices 4d, 4e, 5, and 6 planned
+- Status: Slices 1 through 4e merged; corrective Slice 4f active; Slices 5 and 6 planned
 - Parent programme: https://github.com/ahuelsmann/MOBAflow/issues/47
 - Security design record: [MOBApi Security Design](../docs/MOBAPI-SECURITY-DESIGN.md)
 - Status and acceptance criteria source: GitHub issue #50
@@ -391,6 +391,49 @@ Implementation checkpoint (2026-08-01):
 - This checkpoint does not satisfy the operational gate. Issue #50 currently has no Slice 4e
   fourteen-day evidence comment, no stable-release observation window has been completed, and
   authenticated-only reads must remain disabled until those external gates are recorded.
+
+#### Slice 4f: QR-first MOBAsmart administrator pairing
+
+User decision (2026-08-06):
+
+- expose one user-facing MOBAsmart access level named `Administrator`; retain the internal `Host`
+  principal exclusively for MOBAflow-to-MOBApi process ownership and never issue it to a phone;
+- place QR creation, expiry, the pending-device confirmation code, and approve/reject actions inside
+  the existing MOBAflow **Settings / REST API** section;
+- replace MOBAsmart endpoint discovery, fingerprint comparison, role selection, and manual
+  43-character secret entry with one **Scan MOBAflow QR code** action;
+- keep local owner approval after scanning and connect RuntimeHub plus solution/runtime synchronization
+  immediately after the protected administrator credential is stored;
+- clear legacy read-only mobile credentials and require one replacement administrator pairing.
+
+Security and implementation boundary:
+
+- the QR payload is versioned and contains only the private-LAN HTTP/HTTPS endpoint, server instance
+  ID, pinned SHA-256 public-key fingerprint, single-use pairing secret, and expiry;
+- the payload and pairing secret remain memory-only, are redacted from diagnostic strings, and are
+  never written to settings, files, URLs, telemetry, or logs;
+- MOBAflow opens the existing two-minute MOBApi window with the internal remote-control capability
+  template, which is presented to users only as `Administrator`; it does not grant `host.publish`,
+  `host.consume`, or `security.manage` to MOBAsmart;
+- the QR decoder accepts only private IPv4 endpoints and validates all ports, identity fields,
+  fingerprint, secret length, and expiry before any network request;
+- the existing confirmation-code comparison and explicit local approve/reject decision remain
+  mandatory.
+
+Validation:
+
+- QR encoding/decoding, expiry, malformed input, public-address rejection, and diagnostic redaction;
+- the host adapter always opens the fixed administrator template, rejects a fingerprint mismatch,
+  and uses only authenticated host decision routes;
+- the mobile ViewModel never submits an invalid QR payload, always requests administrator access,
+  rejects a legacy read-only credential, persists the protected credential, and publishes exactly
+  one immediate reconnect request;
+- MOBAflow and MOBAsmart builds pass, followed by a real-device scan proving that SignalBox and
+  Engines populate without restarting either app;
+- manual Android acceptance on 2026-08-07 confirmed successful QR pairing and immediate SignalBox
+  and Engines population in MOBAsmart; the MOBAflow Settings / REST API presentation was also
+  visually accepted;
+- Light and Dark theme, camera denial, QR expiry, rejection, and retry receive manual UI checks.
 
 ### Slice 5: Unified control admission
 

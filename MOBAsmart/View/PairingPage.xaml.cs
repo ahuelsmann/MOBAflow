@@ -4,6 +4,7 @@ namespace Moba.MAUI.View;
 
 using Common.Extension;
 using SharedUI.ViewModel;
+using ZXing.Net.Maui;
 
 public partial class PairingPage
 {
@@ -21,5 +22,23 @@ public partial class PairingPage
     {
         _initializationTask ??= _viewModel.InitializeAsync();
         _initializationTask.Observe();
+    }
+
+    private void PairingQrScanner_BarcodesDetected(object sender, BarcodeDetectionEventArgs e)
+    {
+        _ = sender;
+        var payload = e.Results.FirstOrDefault()?.Value;
+        if (string.IsNullOrWhiteSpace(payload))
+        {
+            return;
+        }
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            if (_viewModel.ScanQrCodeCommand.CanExecute(payload))
+            {
+                _viewModel.ScanQrCodeCommand.Execute(payload);
+            }
+        });
     }
 }

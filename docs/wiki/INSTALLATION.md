@@ -86,11 +86,13 @@ API.
 3. Wait for the Z21 status to become ON.
 4. Enable the **MOBAflow** switch to discover MOBApi and synchronize the current
    solution.
-5. Open **Pairing**, compare the displayed certificate fingerprint with the
-   MOBAflow host, and submit the one-time pairing secret if protected remote
-   access is required. Pairing is explicit and does not yet replace every
-   compatibility read path.
-6. Grant camera permission only if you want to upload photos.
+5. In MOBAflow, open **Settings / REST API** and select **Create pairing QR
+   code**. In MOBAsmart, open **Pairing**, select **Scan MOBAflow QR code**, and
+   scan the displayed code.
+6. Confirm that the same six-digit code is shown on both devices, then select
+   **Approve administrator** in MOBAflow. MOBAsmart connects and synchronizes
+   automatically.
+7. The same camera permission is also used when taking photos for upload.
 
 See the [MOBAsmart guide](MOBASMART-USER-GUIDE.md) for the connection model and
 tab behavior.

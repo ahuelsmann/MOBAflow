@@ -76,7 +76,7 @@ internal static class NavigationRegistration
         pages.Add(new PageMetadata("workflows", "Workflows", "\uE945", typeof(WorkflowsPage), NavigationCategory.Solution, 20, "IsWorkflowsPageAvailable", "WorkflowsPageLabel", null, false));
 
         services.AddSingleton<StationsPage>();
-        pages.Add(new PageMetadata("stations", "Stations", "\uEC06", typeof(StationsPage), NavigationCategory.Solution, 21, null, null, null, false));
+        pages.Add(new PageMetadata("stations", "Stations", "\uEC06", typeof(StationsPage), NavigationCategory.Solution, 21, "IsStationsPageAvailable", "StationsPageLabel", null, false));
 
         services.AddSingleton<GoodsWagonPage>();
         pages.Add(new PageMetadata("goodswagons", "Goods Wagons", "\uE7C0", typeof(GoodsWagonPage), NavigationCategory.Solution, 27, "IsGoodsWagonsPageAvailable", "GoodsWagonsPageLabel", null, false));
@@ -114,8 +114,8 @@ internal static class NavigationRegistration
             PageType: typeof(RecorderPage),
             Category: NavigationCategory.Monitoring,
             Order: 20,
-            FeatureToggleKey: null,
-            BadgeLabelKey: null,
+            FeatureToggleKey: "IsRecorderPageAvailable",
+            BadgeLabelKey: "RecorderPageLabel",
             PathIconData: null,
             IsBold: false));
 

@@ -15,7 +15,7 @@ using System.Diagnostics;
 /// Starts the standalone MOBApi project process when "Auto-start REST API" is enabled.
 /// WinUI then uses the MOBApi process for status, clients, and MAUI discovery.
 /// </summary>
-public sealed class RestApiProcessService : IDisposable
+public sealed class RestApiProcessService : IRestApiPairingEndpointProvider, IDisposable
 {
     private const string SolutionFileName = "Moba.slnx";
     private const string RuntimeDirectoryName = "MOBApi";
@@ -34,6 +34,7 @@ public sealed class RestApiProcessService : IDisposable
     private Process? _process;
     private MobaApiRuntimeDeployment? _runtimeDeployment;
     private UdpDiscoveryResponder? _udpResponder;
+    private AuthenticatedEndpointMetadata? _authenticatedEndpoint;
     private bool _disposed;
     private readonly SemaphoreSlim _startLock = new(1, 1);
 
@@ -55,6 +56,23 @@ public sealed class RestApiProcessService : IDisposable
     /// True when the MOBApi process has been started and not yet stopped.
     /// </summary>
     public bool IsRunning => _process != null && !_process.HasExited;
+
+    /// <summary>
+    /// Returns the private LAN endpoint and pinned identity used for QR pairing, when available.
+    /// </summary>
+    public MobApiDiscoveryEndpoint? GetAuthenticatedPairingEndpoint()
+    {
+        var endpoint = _authenticatedEndpoint;
+        return endpoint is null
+            ? null
+            : new MobApiDiscoveryEndpoint(
+                MobApiDiscoveryAddressResolver.GetLocalIpAddress(),
+                endpoint.HttpPort,
+                endpoint.HttpsPort,
+                endpoint.ServerInstanceId,
+                endpoint.ServerPublicKeyFingerprint,
+                DiscoveryResponseParser.CurrentProtocolVersion);
+    }
 
     /// <summary>
     /// Starts the MOBApi project process when "Auto-start REST API" is enabled.
@@ -226,6 +244,7 @@ public sealed class RestApiProcessService : IDisposable
     {
         try
         {
+            _authenticatedEndpoint = null;
             _udpResponder?.Stop();
             _udpResponder?.Dispose();
             _udpResponder = new UdpDiscoveryResponder(_discoveryLogger, port);
@@ -254,9 +273,15 @@ public sealed class RestApiProcessService : IDisposable
                 serverInstanceId,
                 serverPublicKeyFingerprint);
             _udpResponder.Start();
+            _authenticatedEndpoint = new AuthenticatedEndpointMetadata(
+                httpPort,
+                httpsPort,
+                serverInstanceId,
+                serverPublicKeyFingerprint);
         }
         catch (Exception ex)
         {
+            _authenticatedEndpoint = null;
             _logger.LogWarning(ex, "Failed to start authenticated UDP discovery responder");
         }
     }
@@ -291,6 +316,7 @@ public sealed class RestApiProcessService : IDisposable
             _udpResponder?.Stop();
             _udpResponder?.Dispose();
             _udpResponder = null;
+            _authenticatedEndpoint = null;
         }
         catch (Exception ex)
         {
@@ -359,6 +385,12 @@ public sealed class RestApiProcessService : IDisposable
         }
         return null;
     }
+
+    private sealed record AuthenticatedEndpointMetadata(
+        int HttpPort,
+        int HttpsPort,
+        string ServerInstanceId,
+        string ServerPublicKeyFingerprint);
 
     /// <summary>
     /// Resolves path to MOBApi.dll or MOBApi.csproj and working directory.
