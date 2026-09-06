@@ -15,6 +15,8 @@ public class PhotoHubClient : IPhotoHubClient
 {
     private HubConnection? _hubConnection;
     private readonly ILogger<PhotoHubClient>? _logger;
+    private readonly Lock _connectionLock = new();
+    private Task _connectTask = Task.CompletedTask;
 
     // Events for real-time photo updates
     public event Func<string, DateTime, Task>? PhotoUploaded; // photoPath, uploadedAt
@@ -30,10 +32,29 @@ public class PhotoHubClient : IPhotoHubClient
     /// <summary>
     /// Connect to the SignalR PhotoHub.
     /// </summary>
-    public async Task ConnectAsync(string serverIp, int serverPort)
+    public Task ConnectAsync(string serverIp, int serverPort)
+    {
+        lock (_connectionLock)
+        {
+            if (!_connectTask.IsCompleted) return _connectTask;
+            _connectTask = ConnectCoreAsync(serverIp, serverPort);
+            return _connectTask;
+        }
+    }
+
+    private async Task ConnectCoreAsync(string serverIp, int serverPort)
     {
         try
         {
+            // SignalR owns retries until they finish; polling must not create a second connection.
+            if (_hubConnection is { State: not HubConnectionState.Disconnected }) return;
+
+            if (_hubConnection is not null)
+            {
+                await _hubConnection.DisposeAsync().ConfigureAwait(false);
+                _hubConnection = null;
+            }
+
             var hubUrl = $"http://{serverIp}:{serverPort}/photos-hub";
             _logger?.LogInformation("🔗 Connecting to PhotoHub: {HubUrl}", hubUrl);
 
