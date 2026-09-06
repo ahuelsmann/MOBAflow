@@ -2,7 +2,7 @@
 
 MOBAflow uses [GitHub Spec Kit](https://github.com/github/spec-kit) for
 specification-driven feature development. The repository is initialized with
-Spec Kit 0.13.0, the Codex skills integration, and PowerShell workflow scripts.
+Spec Kit 1.0.4, the Codex skills integration, and PowerShell workflow scripts.
 
 ## Install the CLI
 
@@ -10,7 +10,7 @@ Install `uv`, then install the repository's pinned Spec Kit version:
 
 ```powershell
 winget install --id astral-sh.uv -e
-uv tool install specify-cli --from "git+https://github.com/github/spec-kit.git@v0.13.0"
+uv tool install specify-cli --from "git+https://github.com/github/spec-kit.git@v1.0.4"
 specify version
 ```
 
@@ -113,3 +113,28 @@ specify integration status
 
 Review generated changes before committing. Do not overwrite the project
 constitution or template overrides during an upgrade.
+
+### Version 1.0.4 migration notes
+
+The CLI installation and the checked-in Codex integration are updated separately.
+On Windows, run the `uv tool install` command above directly if `specify self
+upgrade` cannot replace its own running Python installation.
+
+Managed skills, scripts, and core templates use LF line endings through
+`.gitattributes`. This keeps their manifest checksums stable in Windows worktrees
+and avoids reporting line-ending conversions as local customizations.
+
+The constitution command now updates the constitution and its impact report only;
+it no longer automatically propagates policy edits into templates. MOBAflow's
+custom templates remain in `.specify/templates/overrides/`. Review them explicitly
+when changing project policy and run the governance checks below. The plan and
+analysis commands read the current constitution when they run.
+
+```powershell
+./scripts/Test-SpecKitGovernance.Tests.ps1
+./scripts/Test-InstructionConsistency.ps1
+```
+
+No extensions are installed in the current repository. If extensions are added,
+review their updates separately with `specify extension update` after upgrading
+the integration.
