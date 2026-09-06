@@ -15,7 +15,7 @@ public class PhotoHubClient : IPhotoHubClient
 {
     private HubConnection? _hubConnection;
     private readonly ILogger<PhotoHubClient>? _logger;
-    private readonly object _connectionLock = new();
+    private readonly Lock _connectionLock = new();
     private Task _connectTask = Task.CompletedTask;
 
     // Events for real-time photo updates

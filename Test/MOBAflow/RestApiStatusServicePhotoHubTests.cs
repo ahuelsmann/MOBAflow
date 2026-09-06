@@ -25,10 +25,12 @@ internal sealed partial class RestApiStatusServiceTests
         builder.WebHost.ConfigureKestrel(options => options.Listen(IPAddress.Loopback, 0));
         builder.Services.AddSignalR();
         builder.Services.AddSingleton(state);
-        await using var server = builder.Build();
+        builder.Services.AddTransient(_ => new PhotoTestHub(state));
+        var server = builder.Build();
+        await using var serverLifetime = server.ConfigureAwait(false);
         server.Use(async (context, next) =>
         {
-            if (state.IsUnavailable && context.Request.Path.StartsWithSegments("/photos-hub"))
+            if (state.IsUnavailable && context.Request.Path.StartsWithSegments("/photos-hub", StringComparison.OrdinalIgnoreCase))
             {
                 context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
                 context.Response.OnCompleted(() =>
@@ -46,9 +48,11 @@ internal sealed partial class RestApiStatusServiceTests
         await server.StartAsync().ConfigureAwait(false);
 
         var port = new Uri(server.Urls.Single()).Port;
-        await using var photoClient = new PhotoHubClient(NullLogger<PhotoHubClient>.Instance);
-        using var httpHandler = new HttpClientHandler { UseProxy = false };
-        await using var dependencies = CreateDependencies(httpHandler, photoClient, port);
+        var photoClient = new PhotoHubClient(NullLogger<PhotoHubClient>.Instance);
+        await using var photoClientLifetime = photoClient.ConfigureAwait(false);
+        using var httpHandler = new PhotoTestHttpHandler { UseProxy = false };
+        var dependencies = CreateDependencies(httpHandler, photoClient, port);
+        await using var dependenciesLifetime = dependencies.ConfigureAwait(false);
         var initialPhoto = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
         var recoveredPhoto = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
         dependencies.EventBus.Subscribe<PhotoAssignedEvent>(photo =>
@@ -86,7 +90,9 @@ internal sealed partial class RestApiStatusServiceTests
             Is.EqualTo("photos/recovered.jpg"));
     }
 
-    public sealed class PhotoTestState
+    private sealed partial class PhotoTestHttpHandler : HttpClientHandler;
+
+    private sealed class PhotoTestState
     {
         private readonly ConcurrentDictionary<string, Action> _connections = new();
         private int _unavailable;
@@ -118,7 +124,7 @@ internal sealed partial class RestApiStatusServiceTests
         }
     }
 
-    public sealed class PhotoTestHub(PhotoTestState state) : Hub
+    private sealed partial class PhotoTestHub(PhotoTestState state) : Hub
     {
         public override async Task OnConnectedAsync()
         {
