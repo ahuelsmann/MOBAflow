@@ -7,6 +7,12 @@
 *.sln text eol=crlf
 *.sh text eol=lf
 
+# Spec Kit manifests hash file bytes; keep managed assets stable across platforms.
+.agents/skills/speckit-*/SKILL.md text eol=lf
+.specify/.gitignore text eol=lf
+.specify/scripts/** text eol=lf
+.specify/templates/*.md text eol=lf
+
 # Binary files - never perform line ending conversion or text diffs.
 *.png binary
 *.jpg binary
