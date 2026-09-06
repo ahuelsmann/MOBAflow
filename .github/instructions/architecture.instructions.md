@@ -1,157 +1,59 @@
 ---
-description: 'MOBAflow architecture - layers, projects, key interfaces'
+description: 'Runtime ownership, threading boundaries and source locations.'
 applyTo: '**/*.cs'
 ---
 
-# MOBAflow Architecture
+# MOBAflow architecture
 
-> Full docs: [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md)
+Layer constraints and the project map are in [AGENTS.md](../../AGENTS.md).
+Use [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md) for broader context and verify details in these entry points.
 
-## Layer Overview
+## Runtime and events
 
-Presentation (MOBAflow/MOBAsmart/MOBApi) → SharedUI (ViewModels) → Domain/Backend/TrackPlan → External (Z21 UDP)
+- [IMobaRuntime](../../Backend/Interface/IMobaRuntime.cs) combines connection, locomotive, signal/journey and
+  snapshot roles. Its snapshot property is `Current` via `IRuntimeSnapshotProvider`.
+- [MobaRuntimeService](../../Backend/Service/MobaRuntimeService.cs) owns the active project execution context.
+  Its partials separate `RuntimeApi`, `Z21Handlers` and `AutoConnect`.
+  [MobaRuntimeSnapshotBuilder](../../Backend/Service/MobaRuntimeSnapshotBuilder.cs) and
+  [MobaRuntimeStatusFormatter](../../Backend/Service/MobaRuntimeStatusFormatter.cs) hold extracted helpers.
+- Treat [MobaRuntimeSnapshot](../../Common/Runtime/MobaRuntimeSnapshot.cs) as read-only query state; route mutations
+  through runtime commands. Keep editable project models separate from active runtime execution state.
+- Shared ViewModels depend on this runtime boundary. Preserve
+  [IRuntimeCommandGateway](../../SharedUI/Interface/IRuntimeCommandGateway.cs) where commands can target local or
+  remote runtimes, and [MobileRuntimeCoordinator](../../SharedUI/Service/MobileRuntimeCoordinator.cs) routing.
+- Z21 raw callbacks reach the runtime in the background; UI EventBus subscriptions go through
+  [UiThreadEventBusDecorator](../../SharedUI/Service/UiThreadEventBusDecorator.cs).
+  Its `Publish` queues through `InvokeOnUiLowPriority`; subscribers need no second dispatch.
+  This guarantee does not cover arbitrary .NET events or a bare EventBus in backend tests.
 
-## Projects
+## DI and lifecycle
 
-| Project | Layer | Purpose |
-|---------|-------|---------|
-| `Domain/` | Domain | POCOs: Solution, Journey, Workflow, Train |
-| `Backend/` | Service | Z21, WorkflowService, ActionExecutor |
-| `SharedUI/` | Presentation | Base ViewModels |
-| `MOBAflow/` | Platform | Windows Desktop |
-| `MOBAsmart/` | Platform | Android Mobile |
-| `MOBApi/` | Platform | REST API host |
-| `TrackPlan*/` | Domain | Track models, geometry, editor |
+- [Backend registrations](../../Backend/Extensions/MobaBackendServiceCollectionExtensions.cs):
+  `AddMobaBackendServices` owns shared services, including `IZ21`, `IMobaRuntime`, workflow handlers and `MasterDataStore`.
+- [WinUI registrations](../../MOBAflow/Extensions/MobaWinUiServiceCollectionExtensions.cs) and
+  [MAUI registrations](../../MOBAsmart/Extensions/MobaMauiServiceCollectionExtensions.cs) compose platform services,
+  dispatchers, ViewModels and pages. Extend these rather than duplicating registrations in startup files.
+- [EventBus registration](../../SharedUI/Extensions/EventBusUiExtensions.cs) registers the inner bus and decorated
+  `IEventBus`; provide the UI dispatcher first. Do not replace the decorated registration with a bare bus later.
+- Preserve singleton shared state and transient page lifetimes. Unsubscribe transient views from singleton events
+  on unload and resubscribe on load. Preserve disposal of owned subscriptions, timers and cancellation sources.
 
-## Key Interfaces
+## Data and workflows
 
-- `IZ21`: ConnectAsync, SetLocomotiveSpeedAsync, FeedbackReceived event
-- `IActionExecutor`: ExecuteActionAsync(WorkflowAction, ExecutionContext)
-- `ISpeakerEngine`: SpeakAsync, StopAsync
-- `IIoService`: LoadAsync, SaveAsync
+- [MasterDataStore](../../Backend/Data/MasterDataStore.cs) owns shipped `data.json` master data.
+- [WorkflowService](../../Backend/Service/WorkflowService.cs) executes through `IActionExecutor` and handlers in
+  `Backend/Manager/`. `ExecuteAsync` accepts `Workflow`, `ActionExecutionContext` and `WorkflowExecutionOptions`;
+  preserve sequential/parallel semantics and `StopOnFirstActionFailure` behavior.
+- Keep configuration in `Common/Configuration/`. Reuse `Common/Path/PhotoPathHelper.cs` for photo paths and
+  `Common/Discovery/DiscoveryResponseParser.cs` for `MOBAFLOW_REST_API|ip|port` discovery messages.
+- Platform-neutral UI state can live in `Common`, such as `Common/Display/LedMatrix5x5State.cs`;
+  adapt its ARGB values to brushes in the platform layer.
 
-## Data Flow
+## Regression starting points
 
-Z21 UDP → IZ21.FeedbackReceived → MainWindowViewModel → Journey.HandleFeedback → WorkflowService → UI Update
+- Paths/discovery/defaults: `Test/Common/PhotoPathHelperTests.cs`, `DiscoveryResponseParserTests.cs`, `AppSettingsDefaultsTests.cs`.
+- Runtime isolation/safety: `Test/Backend/MobaRuntimeServiceProjectIsolationTests.cs`, `MobaRuntimeServiceTrackPowerTests.cs`.
+- Workflows/DI: `Test/Backend/WorkflowServiceTests.cs`, `MobaBackendServiceCollectionExtensionsTests.cs`.
+- Remote routing/projection: `Test/SharedUI/MobileRuntimeCoordinatorTests.cs`, `RuntimeSnapshotProjectorTests.cs`.
 
-## Conventions
-
-- Async suffix on all async methods
-- Constructor injection (no service locator)
-- `[ObservableProperty]`, `[RelayCommand]` attributes
-- `ArgumentNullException.ThrowIfNull()` for null checks
-- `.ConfigureAwait(false)` in library code
-
-## Configuration & Paths
-
-| Artifact | Location | Format |
-|----------|----------|--------|
-| Solution | User-selected | `.mobaflow` (JSON) |
-| Settings | `MOBAflow/appsettings.json` | JSON |
-| Logs | `bin/Debug/logs/mobaflow-*.log` | Rolling text |
-| Plugins | `MOBAflow/bin/Debug/Plugins/` | DLL |
-| Track Libraries | `TrackLibrary.*/` projects | Compiled |
-
----
-
-## Dependency Injection
-
-All services registered in `MOBAflow/App.xaml.cs` / `MOBAsmart/MauiProgram.cs`:
-
-```csharp
-// Core services
-services.AddSingleton<IZ21, Z21>();
-services.AddSingleton<ISettingsService, SettingsService>();
-services.AddSingleton<IWorkflowService, WorkflowService>();
-services.AddSingleton<IAnnouncementService, AnnouncementService>();
-
-// Speech engines (factory pattern)
-services.AddSingleton<ISpeakerEngine>(sp => 
-    SpeakerEngineFactory.Create(settings.Speech));
-
-// ViewModels
-services.AddSingleton<MainWindowViewModel>();
-services.AddTransient<JourneyViewModel>();
-services.AddTransient<WorkflowViewModel>();
-
-// Pages
-services.AddTransient<OverviewPage>();
-services.AddTransient<JourneysPage>();
-// ... etc.
-```
-
----
-
-## Cross-Platform Strategy
-
-| Feature | MOBAflow | MOBAsmart | MOBApi |
-| -------- | -------- | ---------- | ------ |
-| UI Framework | WinUI 3 XAML | .NET MAUI XAML | ASP.NET Core |
-| Navigation / Surface | NavigationView | Shell | Controllers + SignalR Hub |
-| File I/O | FileSavePicker | FilePicker | Server-side |
-| Speech | Windows SAPI | Android TTS | Not applicable |
-| Z21 Integration | Full UDP | Full UDP | API/status surface |
-
----
-
-## EventBus Pattern (UI-Thread Marshalling)
-
-**Preferred pattern for backend → UI communication.** The `UiThreadEventBusDecorator` ensures all event handlers run on the UI thread automatically.
-
-```csharp
-// Backend service publishes events
-public class RestApiStatusService
-{
-    private readonly IEventBus _eventBus;
-    
-    public async Task RefreshAsync()
-    {
-        // ... check API status ...
-        _eventBus.Publish(new RestApiStatusChangedEvent(status, isReachable, clients));
-    }
-}
-
-// ViewModel subscribes (no dispatcher calls needed!)
-public partial class MainWindowViewModel
-{
-    public MainWindowViewModel(IEventBus eventBus, ...)
-    {
-        eventBus.Subscribe<RestApiStatusChangedEvent>(OnRestApiStatusChanged);
-    }
-    
-    private void OnRestApiStatusChanged(RestApiStatusChangedEvent e)
-    {
-        // Already on UI thread (decorator marshals automatically)
-        RestApiStatusText = e.Status;
-        RestApiIsReachable = e.IsReachable;
-    }
-}
-```
-
-### Registration (WinUI)
-
-```csharp
-// App.xaml.cs
-services.AddSingleton<IEventBus, EventBus>();
-services.AddEventBusWithUiDispatch(); // Wraps with UiThreadEventBusDecorator
-```
-
-### InvokeOnUi Status
-
-| Approach | Status | When to Use |
-|----------|--------|-------------|
-| `EventBus` + `UiThreadEventBusDecorator` | ✅ **Preferred** | All backend → UI updates |
-| `IUiDispatcher.InvokeOnUi()` | ⚠️ **Legacy** | Direct UI interaction only (e.g., WinUI-specific code) |
-| Manual `DispatcherQueue` | ❌ **Avoid** | Never - use decorator pattern |
-
----
-
-## Key Conventions
-
-1. **Async Suffix**: All async methods end with `Async`
-2. **Cancellation**: Pass `CancellationToken` through async chains
-3. **Logging**: Use structured logging with `{Property}` placeholders
-4. **Null Checks**: Use `ArgumentNullException.ThrowIfNull()`
-5. **MVVM**: Use `[ObservableProperty]` and `[RelayCommand]` attributes
-6. **DI**: Constructor injection, no service locator pattern
-7. **ConfigureAwait**: Use `.ConfigureAwait(false)` in library code
+Select the tests that cover the changed contract; this list is not a requirement to run all fixtures for every edit.

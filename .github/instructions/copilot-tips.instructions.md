@@ -1,5 +1,8 @@
 # Copilot Tips & Tricks für MOBAflow
 
+> Historical prompt examples, not active agent requirements. Use [AGENTS.md](../../AGENTS.md) for workflow and validation.
+> Tool names, blanket checklists and API examples below may be outdated; verify against current code before reuse.
+
 > Best Practices und Patterns für effektive Nutzung von GitHub Copilot & Copilot Chat in VS
 
 ## 🎯 Effektive Prompts für MOBAflow

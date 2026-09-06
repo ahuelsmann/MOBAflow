@@ -1,5 +1,8 @@
 # Weitere Qualitäts-Verbesserungen für MOBAflow
 
+> Historical proposals, not an active backlog or instructions to install tools/change dependencies.
+> Consult the requested Azure DevOps work item and current CI files for actual scope and implemented checks.
+
 > Zukünftige Sessions für erweiterte Code Quality & Developer Experience
 
 ## 🎯 Session 35+: Empfohlene Erweiterungen

@@ -15,6 +15,10 @@ applyTo: 'MOBAflow/**/*.xaml,MOBAflow/**/*.cs'
 
 ## UI Thread Dispatching
 
+EventBus handlers using `AddEventBusWithUiDispatch()` already run on the UI thread; do not dispatch them again.
+The following applies only to platform callbacks outside that decorated bus that actually run in the background.
+Use the existing dispatcher adapter when available; keep direct `DispatcherQueue` access in platform code.
+
 ```csharp
 // Background thread -> UI update
 _dispatcher.TryEnqueue(() => OnPropertyChanged(e.PropertyName));
@@ -127,7 +131,7 @@ var file = await picker.PickSingleFileAsync();
 ## Windows App SDK tooling
 
 - Use `winapp` on Windows when a task needs packaged WinUI execution, packaging/signing, or UI automation.
-- `winapp --version` is known to be available on the Windows development machine and returned `0.3.1`.
+- Check `winapp --version` when needed; availability and version depend on the current machine.
 - Prefer project-scoped commands such as `MOBAflow/MOBAflow.csproj`; avoid repository-wide `.csproj` discovery.
 - Treat Microsoft `win-dev-skills` as optional guidance for WinUI 3 workflows, Fluent Design, accessibility, `x:Bind`, packaging, and UI automation. MOBAflow rules remain authoritative.
 
@@ -155,7 +159,7 @@ partial void OnSelectedProjectChanged(ProjectViewModel? value)
 
 - UserControls for property panels → Use DataTemplates in EntityTemplates.xaml
 - Hardcoded colors → Use ThemeResource
-- Direct UI updates from background → Use DispatcherQueue
+- Background callbacks outside the decorated EventBus → Use the existing platform dispatcher adapter
 - FileOpenPicker without InitializeWithWindow → Will fail
 - **Grid:** ColumnDefinition **Width="Auto"** mit langem oder breitem
   Inhalt → Spalte explodiert; **Width="*"** ohne MinWidth → Spalte kann

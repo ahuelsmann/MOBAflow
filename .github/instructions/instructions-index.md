@@ -1,54 +1,35 @@
 ---
-description: 'Central index of active instruction documents in .github/instructions/.'
+description: 'Task-scoped navigation for MOBAflow agent instructions.'
 applyTo: '**'
 ---
 
-# Instruction Files Index
+# Instruction index
 
-**Primary rules:** [`.github/copilot-instructions.md`](../copilot-instructions.md) (always loaded).
+[AGENTS.md](../../AGENTS.md) owns the shared workflow, architecture constraints and validation policy.
+Read only the entries needed for the task. Copilot may load matching `applyTo` files; other agents should open
+relevant files explicitly. Examples illustrate patterns; current source code defines the actual APIs.
 
-**Open work:** Azure DevOps project MOBAflow (authoritative).
+| Task | Guidance |
+| --- | --- |
+| Runtime, layers, data flow | [Architecture](architecture.instructions.md) |
+| Backend behavior and I/O | [Backend](backend.instructions.md) |
+| Z21 parsing, connection, commands | [Z21](z21-backend.instructions.md) |
+| DI registrations and page lifetime | [DI](di-pattern-consistency.instructions.md) |
+| Observable state and commands | [MVVM](mvvm-best-practices.instructions.md), [auto-save](auto-save-pattern.instructions.md) |
+| WinUI views and styling | [WinUI](winui.instructions.md), [Fluent](fluent-design.instructions.md) |
+| XAML inclusion/compiler failures | [Page registration](xaml-page-registration.instructions.md) |
+| Android UI and resources | [MAUI](maui.instructions.md) |
+| Tests and test doubles | [Testing](test.instructions.md) |
+| C# conventions | [Naming](naming-conventions.instructions.md), [comments](self-explanatory-code-commenting.instructions.md), [encoding](no-special-chars.instructions.md) |
+| Instruction maintenance | [Writing instructions](instructions.instructions.md) |
 
----
+## Further references
 
-## Active instruction files
-
-### Architecture and backend
-- [architecture.instructions.md](./architecture.instructions.md)
-- [backend.instructions.md](./backend.instructions.md)
-- [z21-backend.instructions.md](./z21-backend.instructions.md)
-- [di-pattern-consistency.instructions.md](./di-pattern-consistency.instructions.md)
-
-### MVVM and UI
-- UI language policy: see `copilot-instructions.md` Absolute Rule #16 and `winui.instructions.md` / `maui.instructions.md` § UI Language
-- [mvvm-best-practices.instructions.md](./mvvm-best-practices.instructions.md)
-- [winui.instructions.md](./winui.instructions.md)
-- [maui.instructions.md](./maui.instructions.md)
-- [fluent-design.instructions.md](./fluent-design.instructions.md)
-- [xaml-page-registration.instructions.md](./xaml-page-registration.instructions.md)
-- [auto-save-pattern.instructions.md](./auto-save-pattern.instructions.md)
-
-### Code quality
-- [test.instructions.md](./test.instructions.md)
-- [naming-conventions.instructions.md](./naming-conventions.instructions.md)
-- [self-explanatory-code-commenting.instructions.md](./self-explanatory-code-commenting.instructions.md)
-- [no-special-chars.instructions.md](./no-special-chars.instructions.md)
-
-### Tooling and workflow
-- [vs-setup.instructions.md](./vs-setup.instructions.md)
-- [copilot-tips.instructions.md](./copilot-tips.instructions.md)
-- [quick-reference.md](./quick-reference.md)
-- [future-enhancements.instructions.md](./future-enhancements.instructions.md)
-- [instructions.instructions.md](./instructions.instructions.md)
-
-### CI/CD
-- Azure DevOps pipelines: [`.azure-pipelines/`](../../.azure-pipelines/) (`quality.yml`, `release.yml`)
-
-### Deprecated summaries (use quick-reference.md instead)
-- [visual-summary.md](./visual-summary.md)
-- [summary-hooks-packages-sonarqube.md](./summary-hooks-packages-sonarqube.md)
-
-### Project documentation
-- [README.md](../../README.md)
-- [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md)
-- [docs/CLAUDE.md](../../docs/CLAUDE.md)
+- [Project overview](../../README.md), [architecture documentation](../../docs/ARCHITECTURE.md),
+  [project reference](../../docs/PROJECT-REFERENCE.md), [build performance](../../docs/BUILD-PERFORMANCE.md)
+- [Validation entry points](quick-reference.md), [GitHub CI](../workflows/quality.yml),
+  [Azure CI](../../.azure-pipelines/quality.yml)
+- [Visual Studio setup](vs-setup.instructions.md) is optional environment guidance.
+- `copilot-tips.instructions.md`, `future-enhancements.instructions.md`, `visual-summary.md` and
+  `summary-hooks-packages-sonarqube.md` are historical/reference material, not active task requirements or a backlog.
+  Open work is tracked in Azure DevOps project MOBAflow.

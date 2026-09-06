@@ -1,383 +1,152 @@
-# AGENTS.md
+# MOBAflow agent instructions
 
-**For AI coding agents working on MOBAflow** — event-driven model railroad automation on .NET 10.
+MOBAflow is event-driven model railroad automation on .NET 10. These instructions are tuned for GPT-6 Astra
+and apply to coding agents across Windows and Linux.
 
-> **Load `.github/copilot-instructions.md` FIRST** — it contains essential patterns, EventBus threading rules, absolute coding rules, and the 6-Step Workflow that all agents must follow.
->
-> This file focuses on **platform-specific setup, build procedures, and architecture notes for agents running on the Cursor Cloud Linux VM.**
+## Working agreement
 
----
+- Complete the requested work through implementation, relevant validation, and a concise handoff.
+  Make routine, reversible decisions from repository evidence without asking for confirmation.
+- Ask only when missing information materially affects correctness or scope and cannot be inferred, or an action
+  needs authorization that the user has not already given. Continue independent work while blocked.
+- Make the smallest cohesive change that solves the problem. Preserve unrelated user edits and existing contracts;
+  avoid incidental cleanup, speculative abstractions, dependency upgrades, and repository-wide formatting.
+- Inspect affected code, callers, and tests before editing. Plan briefly for multi-file or risky work; simple fixes
+  need no formal plan. Use tools available in the session; no particular planning or diagnostic tool is required.
+- Read only the applicable guidance linked in the [instruction index](.github/instructions/instructions-index.md).
+  This file owns the repository-wide workflow; specialized instructions add technical detail, not approval gates.
+  Explicit user instructions take precedence over repository and skill guidance, within system/tool permissions.
+  Resolve stale examples against current code and build configuration; report unresolved material conflicts.
+  If an instruction blocks progress, identify its exact file and rule rather than inferring an approval requirement.
+- Keep updates and the final response brief, in the user's language. State what changed, what was actually checked,
+  and any remaining limitation. English UI and commit-message rules do not constrain conversation language.
 
-## 🎯 Critical for All Agents (Read First!)
+## Repository map
 
-1. **EventBus Threading Boundary** (MOST CRITICAL)
-   - Z21 publishes on background thread → `UiThreadEventBusDecorator` marshals to UI thread
-   - ViewModels subscribe directly (no manual dispatcher calls)
-   - Key files: `Backend/Z21.cs`, `SharedUI/Service/UiThreadEventBusDecorator.cs`, `SharedUI/ViewModel/MainWindowViewModel.cs`
-   - See: `.github/copilot-instructions.md` § EventBus Threading Boundary
+Use [Moba.slnx](Moba.slnx) and the affected project files to identify the build graph.
+Do not assume every directory is an active project or discover projects inside `.nuget`, `bin`, or `obj`.
 
-2. **Absolute Rules (16 rules)**
-   - No `.Result` / `.Wait()` → Always use `await`
-   - No hardcoded colors → `ThemeResource` only
-   - No `InvokeOnUi` in EventBus handlers → Decorator already marshals
-   - Backend/Common platform-independent → Zero WinUI/MAUI references
-   - See: `.github/copilot-instructions.md` § Absolute Rules
+| Area | Responsibility |
+| --- | --- |
+| `Domain/` | Serializable models, enums, workflow payloads and domain rules |
+| `Common/` | Configuration, events, runtime snapshots, discovery, paths and platform-neutral state |
+| `Backend/` | Z21 transport/protocol, runtime, journey managers and workflow action handlers |
+| `SharedUI/` | Shared MVVM state, commands, runtime projection and UI service interfaces |
+| `MOBAflow/` | WinUI 3 desktop UI and Windows service implementations |
+| `MOBAsmart/` | Android MAUI UI, local/remote runtime coordination and mobile services |
+| `MOBApi/` | ASP.NET Core REST and SignalR host (default REST port 5001) |
+| `MOBAdisplay/` | Display rendering/transport; ESP32-S3 firmware in `esp32/` |
+| `Sound/`, `TrackLibrary.Base/`, `TrackLibrary.PikoA/`, `TrackPlan.Renderer/` | Audio, track catalogues and rendering |
+| `Test/` | NUnit tests, Moq, test doubles and fixtures; `Analysis/` has separate helper projects |
+| `docs/`, `scripts/`, `.vscode/tasks.json` | Architecture/user docs and development workflows |
+| `.github/workflows/`, `.azure-pipelines/` | Checked-in CI and release definitions |
 
-3. **English UI Language**
-   - All user-visible strings in MOBAflow and MOBAsmart must be **English**
-   - Applies to XAML, ViewModels (`SharedUI/`), domain defaults, and shipped master data
-   - TTS/announcement voice and language stay user-configurable in settings
-   - See: `.github/copilot-instructions.md` § Absolute Rules (#16)
+## Architecture constraints
 
-4. **6-Step Workflow**
-   - **1. ANALYSE** → **2. RESEARCH** → **3. PLAN** (use `plan()` tool) → **4. IMPLEMENT** → **5. VALIDATE** → **6. DOCUMENT**
-   - Tests for every new/changed feature (run `dotnet test` before commit)
-   - See: `.github/copilot-instructions.md` § 6-Step Workflow
+- Keep `Domain`, `Common`, `Backend`, and shared UI logic free of WinUI/MAUI types. Adapt OS-specific behavior in
+  platform services; use existing I/O interfaces and constructor injection. Follow existing service lifetimes.
+- Shared ViewModels use `IMobaRuntime` and, where present, `IRuntimeCommandGateway`. Preserve local/remote routing;
+  do not reintroduce `IMobaClient` as the shared runtime boundary or duplicate runtime ownership in a ViewModel.
+- Z21 publishes from background work. UI hosts register `AddEventBusWithUiDispatch()`, whose
+  `SharedUI/Service/UiThreadEventBusDecorator.cs` marshals publishing to the UI thread. EventBus handlers using
+  that decorated bus update UI state directly. Do not add dispatcher calls there. Raw Z21 callbacks, timers and
+  other callbacks outside that bus are separate threading boundaries; inspect their actual execution context.
+- Use asynchronous calls with `await`; do not block tasks with `.Result`, `.Wait()` or `GetAwaiter().GetResult()`.
+  Preserve cancellation and error handling. Do not apply `ConfigureAwait(false)` to UI continuations that need UI access.
+- Keep feature behavior in ViewModel commands/services. Code-behind may coordinate view lifecycle and visuals;
+  UserControls forward input through `ICommand`. Use the existing dialog/navigation interfaces.
+- Use CommunityToolkit observable properties and relay commands for new state/commands. Preserve model-wrapper
+  `SetProperty` and nested `PropertyChanged` propagation required by auto-save and computed properties.
+- Keep theme-dependent WinUI brushes in `ThemeResource`; use existing MAUI theme resources/bindings on Android.
+  Domain/display color values (for example ARGB LED pixels) are data, adapted to brushes at the UI boundary.
+- Keep user-visible UI text, domain defaults and shipped master/sample data in English. TTS/announcement content
+  and voice remain user-configurable. Do not translate user-authored content as part of unrelated edits.
+- Persist resizable star columns as `*ColumnStarValue`; use pixels only for intentionally fixed columns.
+  When changing XAML files, ensure active pages remain included in XAML compilation; do not hide compiler errors
+  by adding `<Page Remove="..."/>` for an active page.
+- Preserve config defaults, serialized compatibility and safe locomotive startup (speed zero, no restored movement).
+  Reuse `PhotoPathHelper`, `DiscoveryResponseParser`, and `MasterDataStore` instead of duplicating their logic.
 
----
+For runtime ownership, DI entry points and regression tests, see
+[architecture.instructions.md](.github/instructions/architecture.instructions.md).
 
-## 📚 Reference All Instruction Files
+## Build and validation
 
-Located in `.github/instructions/`:
+Read `global.json`, `Directory.Build.props`, `Directory.Packages.props` and the affected `.csproj` when build or
+package behavior matters. `global.json` is the SDK source of truth; do not assume an SDK installation path or
+installed workloads. NuGet versions are centrally managed. Follow `.editorconfig` and `.gitattributes`.
 
-| File | Purpose |
-| ---- | ------- |
-| `instructions-index.md` | Index of all instruction files in `.github/instructions/` |
-| `di-pattern-consistency.instructions.md` | DI registration, singletons, constructor injection |
-| `architecture.instructions.md` | Layer boundaries, data flow, threading model |
-| `backend.instructions.md` | Platform independence, Z21 protocol, action executors |
-| `mvvm-best-practices.instructions.md` | `[ObservableProperty]`, `[RelayCommand]`, observable state |
-| `test.instructions.md` | AAA (Arrange-Act-Assert), NUnit, Moq, FakeUdpClientWrapper |
-| `winui.instructions.md` | DispatcherQueue, DataTemplates, x:Bind |
-| `fluent-design.instructions.md` | `ThemeResource`, 8px grid, icons, visual hierarchy |
-| `xaml-page-registration.instructions.md` | XAML compiler, `<Page Remove>` issues |
-| `naming-conventions.instructions.md` | PascalCase, `_camelCase`, UPPER_SNAKE_CASE (Z21 constants) |
-| `self-explanatory-code-commenting.instructions.md` | Why, not What — document intent |
-| `no-special-chars.instructions.md` | ASCII-only identifiers |
-| `z21-backend.instructions.md` | Z21 UDP protocol, handler patterns |
-| `maui.instructions.md` | MAUI-specific patterns for MOBAsmart |
-| `vs-setup.instructions.md` | ReSharper extensions, project setup |
+Run commands from the repository root. Restore/build named projects, not every `.csproj` or the entire solution
+unless the task requires it and the environment supports its Windows and Android targets.
 
----
+### Choose checks by change
 
-### Optional Windows WinUI tooling
+| Change | Required evidence |
+| --- | --- |
+| Documentation/instructions only | Review diff, links, referenced paths/commands and instruction consistency; no .NET build/tests |
+| Behavior in shared logic | Add/update meaningful regression tests as needed, run affected tests and build affected consumers |
+| Refactor without behavior change | Existing relevant tests and compile checks; new tests only for an uncovered risk |
+| WinUI/MAUI UI | Compile the affected app; test changed shared behavior; inspect affected states in Light and Dark themes |
+| Runtime, EventBus, DI, persistence, protocol or build graph | Cover affected boundaries and broaden to the relevant full target suite/CI checks |
 
-- **`winapp` CLI** — Available on the Windows development machine (`winapp --version` showed 0.3.1).
-  - Use for Windows App SDK / WinUI app execution, packaging, and future UI automation checks.
-  - Prefer project-scoped commands; do not scan or build every `.csproj` under the workspace.
-- **Microsoft `win-dev-skills`** — Installed as an external Copilot/Claude plugin, not automatically loaded by all agents.
-  - Treat it as guidance for WinUI workflows: WinUI 3 lane, Fluent Design, `x:Bind`, accessibility, packaging, and UI automation.
-  - Do not let it override MOBAflow-specific rules in `.github/copilot-instructions.md`.
-- **Workspace hygiene** — Keep `.nuget`, `bin`, and `obj` excluded from IDE search/watch/project discovery where possible.
-  - The local `.nuget/packages` folder can contain package source projects that break central package management during C# language-server discovery.
+A filtered run must discover and execute the intended tests. Passing zero tests is not validation.
+Once checks pass, repeat or broaden them only for new edits, failures or unresolved risk. Do not add tests that
+merely duplicate implementation or assert documentation text. Do not weaken tests/analyzers to make a change pass.
 
----
+### Portable .NET work (Windows or Linux)
 
-## Cursor Cloud specific instructions
-
-### Platform scope
-
-This is a .NET 10 multi-platform solution. On the Linux Cloud VM **only cross-platform projects** can build and run:
-
-| Buildable on Linux | NOT buildable (platform-specific) |
-| ------------------ | -------------------------------- |
-| Domain, Common, Backend, Sound, SharedUI, TrackLibrary.Base, TrackLibrary.PikoA, TrackPlan.Renderer, MOBAdisplay, MOBApi, Test | MOBAflow (`net10.0-windows10.0.22621.0`), MOBAsmart (`net10.0-android`) |
-
-### Build & test commands
-
-Standard commands are documented in `README.md`, `docs/BUILD-PERFORMANCE.md`, and `docs/PROJECT-REFERENCE.md`. Key cross-platform commands:
-
-```bash
-# Restore & build individual projects (solution-level restore fails due to Windows/Android TFMs)
-dotnet restore <project>.csproj
-dotnet build <project>.csproj
-
-# Typical cross-platform host build
+```text
 dotnet build MOBApi/MOBApi.csproj
-dotnet run --project MOBApi/MOBApi.csproj   # REST API host (default port 5001)
-
-# Display library build (ESP32 firmware lives under MOBAdisplay/esp32)
 dotnet build MOBAdisplay/MOBAdisplay.csproj
-
-# Run tests
-dotnet test Test/Test.csproj
-
-# Collect coverage locally
-dotnet test Test/Test.csproj --settings Test/coverlet.runsettings \
-  --results-directory TestResults
-
-# Alternative coverage collection matching the Azure DevOps quality pipeline
-dotnet tool install --global dotnet-coverage
-dotnet-coverage collect \
-  -s Test/dotnet-coverage.runsettings \
-  -f cobertura \
-  -o TestResults/coverage.cobertura.xml \
-  "dotnet test Test/Test.csproj --logger trx --results-directory TestResults"
+dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0
 ```
 
-### Windows local build/deploy loops
+Select the affected build target; the two build commands are examples, not a mandatory pair.
+For focused tests, append `--filter "FullyQualifiedName~ActualFixtureName"` using a fixture found in the repo.
+`Test/Test.csproj` also targets Windows: `-p:TargetFrameworks=net10.0` limits its restore graph for portable runs.
+Android tests are excluded by default (`IncludeMobaSmartTests=false`). Windows SAPI/audio tests can be unavailable
+on Linux/headless machines; report exact failures or skips rather than assuming every failure is environmental.
 
-Use these only on Windows with the required WinUI/MAUI workloads installed:
+### Windows desktop
 
-```bash
-# Fast WinUI compile check for everyday UI iteration
+```text
 dotnet restore MOBAflow/MOBAflow.csproj
-dotnet build MOBAflow/MOBAflow.csproj -c FastDebug --no-restore \
-  /p:BuildMOBApiDependency=false /p:CopyMOBApiToOutput=false
+dotnet build MOBAflow/MOBAflow.csproj -c FastDebug --no-restore -p:BuildMOBApiDependency=false -p:CopyMOBApiToOutput=false
+dotnet test Test/Test.csproj -f net10.0-windows10.0.22621.0 -p:IncludeMobaSmartTests=false
+```
 
-# Run the WinUI app while editing
-dotnet watch run --project MOBAflow/MOBAflow.csproj -c FastDebug
+FastDebug is a compile check that skips API build/copy and some checks. For host integration, packaging or release
+changes, build with the normal dependencies and use the Release checks in
+[GitHub quality CI](.github/workflows/quality.yml) or [Azure quality CI](.azure-pipelines/quality.yml), as applicable.
+Run/watch the desktop app only when needed for the task. Check optional tooling such as `winapp` before relying on it.
 
-# Fast MOBAsmart Android build
-dotnet restore MOBAsmart/MOBAsmart.csproj -f net10.0-android
+### Android (with MAUI/Android workloads)
+
+```text
+dotnet restore MOBAsmart/MOBAsmart.csproj
 dotnet build MOBAsmart/MOBAsmart.csproj -f net10.0-android -c FastDebug --no-restore
-
-# Reliable Android device deploy when fast deploy is inconsistent
-dotnet build MOBAsmart/MOBAsmart.csproj -f net10.0-android -c FastDebug --no-restore \
-  /p:MobaReliableDeploy=true -t:Run
 ```
 
-- VS Code tasks mirror these workflows: `restore`, `build`, `build:full`, `publish`, `watch`, `restore:mobasmart`, `build:mobasmart`, and `build:mobasmart:reliable-deploy`.
-- For local build timing, capture a binary log with `dotnet build <project>.csproj -bl:build.binlog` and inspect it with MSBuild Structured Log Viewer.
-- TODO: Document the exact agent-safe PlatformIO command for `MOBAdisplay/esp32` firmware once it is established in repo docs.
+The app currently has one Android target. `dotnet restore -f` means force, not framework selection.
+For an authorized device deployment, add `-p:MobaReliableDeploy=true -t:Run` to the Android build if needed.
+ESP32 firmware has its own `MOBAdisplay/esp32/platformio.ini`; a .NET build does not validate firmware.
+Use fakes for automated railroad tests. Live track power, locomotive movement and firmware flashing require a
+hardware task that authorizes those actions; a code-validation request alone is not such authorization.
 
-### Known issues on Linux Cloud VM
+### Completion
 
-- **System.Speech tests**: `SystemSpeechEngineTest` covers Windows SAPI; on non-Windows/headless agents it may be ignored or fail with platform/audio-device limitations. This is expected.
-- **Solution-level restore**: `dotnet restore Moba.slnx` fails because the solution contains Windows and Android target frameworks. Restore individual `.csproj` files instead.
-- **MOBAflow desktop app**: `MOBAflow/MOBAflow.csproj` requires Windows/WinUI tooling and cannot be built on Linux.
-- **MOBAsmart**: `MOBAsmart/MOBAsmart.csproj` targets Android and requires MAUI/Android workloads that are not available on the Linux Cloud VM.
+Review the final diff for unintended edits and architecture regressions. Update existing documentation when the
+change affects its accuracy; keep durable project knowledge here and session progress in the conversation.
+Azure DevOps project MOBAflow tracks open work; consult/update a linked work item when the task calls for it,
+without making tracker access a prerequisite for independent local work.
+When committing is requested, use English Conventional Commits. Report the commands/checks run and their outcomes;
+identify unavailable platform/hardware checks and the smallest remaining check without claiming they passed.
 
-### .NET SDK
+## Guidance sources
 
-The project requires .NET 10 SDK (pinned in `global.json` to `10.0.300-preview` with `latestFeature` rollForward). Installed at `/usr/share/dotnet`.
+Reviewed against official OpenAI guidance on 2026-09-06. These are the basis for the workflow above, not required
+reading for each coding task:
 
----
-
-## 🔀 Key Patterns & Examples for Agents
-
-### MVVM ViewModel Pattern (CommunityToolkit)
-
-```csharp
-// ✅ CORRECT
-public sealed partial class TrainControlViewModel : ObservableObject
-{
-    private readonly IMobaRuntime _runtime;
-    private readonly IEventBus _eventBus;
-    private readonly ILogger<TrainControlViewModel> _logger;
-
-    [ObservableProperty]
-    private string statusText = "Ready";
-
-    [RelayCommand]
-    private async Task ExecuteWorkflow()
-    {
-        try
-        {
-            await _runtime.ExecuteWorkflow(workflowId);
-            StatusText = "Workflow completed";
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Workflow failed");
-            StatusText = "Error";
-        }
-    }
-
-    public TrainControlViewModel(IMobaRuntime runtime, IEventBus eventBus, ILogger<TrainControlViewModel> logger)
-    {
-        _runtime = runtime;
-        _eventBus = eventBus;
-        _logger = logger;
-        _eventBus.Subscribe<WorkflowCompletedEvent>(OnWorkflowCompleted);
-    }
-
-    private void OnWorkflowCompleted(WorkflowCompletedEvent e)
-    {
-        StatusText = $"Completed: {e.WorkflowId}";  // UI thread safe (decorator guaranteed)
-    }
-}
-```
-
-### UI Interaction Pattern (Commands, Not Code-Behind Logic)
-
-```csharp
-// ✅ CORRECT - UserControl forwards input to a ViewModel command
-public ICommand? CellTappedCommand { get; set; }
-
-private void OnCellTapped(object sender, TappedRoutedEventArgs e)
-{
-    if (sender is FrameworkElement element && int.TryParse(element.Tag?.ToString(), out var index))
-    {
-        CellTappedCommand?.Execute(index);
-    }
-}
-
-// ✅ CORRECT - ViewModel owns the behavior
-[RelayCommand]
-private void CellClicked(int cellIndex)
-{
-    MatrixViewModel.SetCellColor(cellIndex, SelectedColorBrush);
-}
-
-// ❌ WRONG - Page code-behind performs domain/UI behavior directly
-private void OnMatrixCellTapped(object? sender, CellTappedEventArgs e)
-{
-    ViewModel.MatrixViewModel.SetCellColor(e.CellIndex, ViewModel.SelectedColorBrush);
-}
-```
-
-### Platform-Neutral State Pattern
-
-- Keep WinUI/MAUI types out of `Common`, `Domain`, and `Backend`.
-- If UI state must be unit-tested, extract the behavior into a platform-neutral model in `Common`.
-- Example: store matrix colors as ARGB values in `Common.Display.LedMatrix5x5State`; adapt to `SolidColorBrush` only in the WinUI ViewModel.
-
-### Layout Persistence Pattern
-
-- Persist star-sized resizable columns as `*ColumnStarValue`.
-- Persist pixel widths only for intentionally fixed side columns/toolboxes.
-- Do not reintroduce mixed semantics such as saving a pixel width in `PropertiesColumnWidth` and restoring it as `GridUnitType.Star`.
-
-### EventBus Handler Pattern (No InvokeOnUi!)
-
-```csharp
-// ✅ CORRECT - Decorator already marshals to UI thread
-private void OnFeedbackReceived(FeedbackReceivedEvent e)
-{
-    // ... 
-    IsConnected = true;  // Safe: runs on UI thread
-}
-
-// ❌ WRONG - DO NOT do this
-private void OnFeedbackReceived(FeedbackReceivedEvent e)
-{
-    _dispatcher.InvokeOnUi(() => IsConnected = true);  // Redundant, breaks pattern
-}
-```
-
-### Backend Service (Platform-Independent)
-
-```csharp
-// ✅ CORRECT - Backend layer
-public class WorkflowService : IWorkflowService
-{
-    private readonly IEventBus _eventBus;
-    private readonly ILogger<WorkflowService> _logger;
-
-    public async Task ExecuteAsync(Workflow workflow, WorkflowExecutionOptions? options = null)
-    {
-        ArgumentNullException.ThrowIfNull(workflow);
-
-        _logger.LogInformation("Executing workflow {WorkflowId}", workflow.Id);
-
-        foreach (var action in workflow.Actions)
-        {
-            await action.ExecuteAsync();  // No `.Result` or `.Wait()`!
-
-            if (options?.StopOnFirstActionFailure ?? false)
-            {
-                _eventBus.Publish(new WorkflowStoppedEvent(workflow.Id));
-                break;
-            }
-        }
-    }
-}
-
-// ❌ WRONG - Sync blocking
-public void Execute(Workflow workflow)
-{
-    var task = ExecuteAsync(workflow);
-    task.Wait();  // WRONG! Use await instead
-}
-```
-
-### DI Registration (WinUI/MOBAsmart)
-
-```csharp
-// In WinUI/App.xaml.cs or MOBAsmart/MauiProgram.cs
-var services = new ServiceCollection();
-
-// Domain & Backend
-services.AddSingleton<IZ21, Z21>();
-services.AddSingleton<IMobaRuntime, MobaRuntimeService>();
-services.AddSingleton<IWorkflowService, WorkflowService>();
-
-// EventBus with UI thread decorator
-services.AddSingleton<IEventBus, EventBus>();
-services.AddEventBusWithUiDispatch();  // Wraps EventBus, ensures handlers run on UI thread
-
-// ViewModels
-services.AddSingleton<MainWindowViewModel>();
-services.AddTransient<TrainControlViewModel>();
-
-// Logging
-services.AddLogging(builder =>
-{
-    builder.AddSerilog(/* configure Serilog */);
-});
-```
-
-### Testing Pattern (NUnit + Moq)
-
-```csharp
-[TestFixture]
-internal sealed class WorkflowServiceTests
-{
-    [Test]
-    public async Task ExecuteAsync_Should_RunAllActions_When_OptionsNull()
-    {
-        // Arrange
-        var eventBusMock = new Mock<IEventBus>();
-        var loggerMock = new Mock<ILogger<WorkflowService>>();
-        var service = new WorkflowService(eventBusMock.Object, loggerMock.Object);
-
-        var workflow = new Workflow { Id = 1, Actions = new List<WorkflowAction> { /* ... */ } };
-
-        // Act
-        await service.ExecuteAsync(workflow, null);
-
-        // Assert
-        eventBusMock.Verify(e => e.Publish(It.IsAny<WorkflowCompletedEvent>()), Times.Once);
-    }
-}
-```
-
-### Architecture notes (for agents)
-
-**Runtime & ViewModels:**
-
-- Shared ViewModels depend on **`IMobaRuntime`** (`MobaRuntimeService`), not `IMobaClient`
-- `MobaRuntimeService` is a **sealed partial** type split across:
-  - `MobaRuntimeService.cs` (core, constructor, snapshot)
-  - `MobaRuntimeService.RuntimeApi.cs` (public IMobaRuntime API)
-  - `MobaRuntimeService.Z21Handlers.cs` (Z21 event callbacks, journey projection)
-  - `MobaRuntimeService.AutoConnect.cs` (auto-connect timer, endpoint resolution)
-  - `MobaRuntimeService.StatusFormatting.cs` (status text helpers, signal polarity)
-
-**Master Data & Configuration:**
-
-- Master JSON (`data.json`) → **`MasterDataStore`** in Backend DI (registered in `AddMobaBackendServices`)
-- Project/Solution state → **`IMobaRuntime.CurrentSnapshot`** (immutable at query time)
-- Config defaults → `Common.Configuration` (must not break existing defaults; see tests: `Test/Common/AppSettingsDefaultsTests.cs`)
-
-**Workflows & Actions:**
-
-- Workflow execution: **`IWorkflowService.ExecuteAsync`** with optional **`WorkflowExecutionOptions`**
-  - Example: `StopOnFirstActionFailure` for sequential runs
-- Action executors live in `Backend/Manager/` (pluggable, FakeUdpClientWrapper for testing)
-
-**DI Bindings (see `.github/instructions/di-pattern-consistency.instructions.md`):**
-
-- Registration pattern: `services.AddSingleton<IZ21, Z21>()`, `services.AddSingleton<IMobaRuntime, MobaRuntimeService>()`
-- WinUI App.xaml.cs (~line 215), MOBAsmart MauiProgram.cs (~line 98)
-- EventBus wrapping: `AddEventBusWithUiDispatch()` decorator ensures UI thread safety
-
-**Test Coverage (Regression Protection):**
-
-- **Path handling:** Use `Common.Path.PhotoPathHelper.ToFullPath(baseDir, relativePath)` → Tests: `Test/Common/PhotoPathHelperTests.cs`
-- **Discovery protocol:** Use `Common.Discovery.DiscoveryResponseParser.TryParse()` for "MOBAFLOW_REST_API|ip|port" → Tests: `Test/Common/DiscoveryResponseParserTests.cs`
-- **Config defaults:** Changing `Common.Configuration` must preserve defaults → Tests: `Test/Common/AppSettingsDefaultsTests.cs`
-- **New features:** Always add unit tests for shared logic (Domain, Backend, Common); platform UI (WinUI/MAUI) at least critical paths covered
-
-**Up-to-date diagrams and DI examples:** See `docs/ARCHITECTURE.md` and `README.md` (runtime boundary)
+- [GPT-6 Astra prompting guidance](https://developers.openai.com/api/docs/guides/latest-model)
+- [Codex best practices](https://learn.chatgpt.com/guides/best-practices)
+- [AGENTS.md discovery and scope](https://learn.chatgpt.com/docs/agent-configuration/agents-md)
