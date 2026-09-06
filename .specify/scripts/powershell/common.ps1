@@ -349,11 +349,9 @@ function Get-NormalizedPriority {
     return $(if ($parsedPriority -ge 1) { $parsedPriority } else { 10 })
 }
 
-function Get-SortedExtensionIds {
+function Get-ExtensionRegistry {
     param([Parameter(Mandatory=$true)][string]$ExtensionsDir)
 
-    $registeredNames = @()
-    $ranked = @()
     $registryFile = Join-Path $ExtensionsDir '.registry'
     # Detect any filesystem entry at the registry path without following symlinks.
     # Test-Path follows links and reports $false for a dangling symlink, so a
@@ -363,41 +361,44 @@ function Get-SortedExtensionIds {
     $registryEntry = Get-ChildItem -LiteralPath $ExtensionsDir -Force -ErrorAction SilentlyContinue |
         Where-Object { $_.Name -eq '.registry' } |
         Select-Object -First 1
-    if ($registryEntry) {
-        if (-not (Test-Path -LiteralPath $registryFile -PathType Leaf)) {
-            throw "Invalid extension registry ${registryFile}: not a regular file"
+    if (-not $registryEntry) { return [PSCustomObject]@{} }
+    if (-not (Test-Path -LiteralPath $registryFile -PathType Leaf)) {
+        throw "Invalid extension registry ${registryFile}: not a regular file"
+    }
+    try {
+        $data = [System.IO.File]::ReadAllText($registryFile, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
+    } catch {
+        throw "Invalid extension registry ${registryFile}: $($_.Exception.Message)"
+    }
+    if ($null -eq $data -or $data -isnot [PSCustomObject]) {
+        throw "Invalid extension registry ${registryFile}: root must be a mapping"
+    }
+    $extensionsProperty = $data.PSObject.Properties['extensions']
+    if (-not $extensionsProperty) { return [PSCustomObject]@{} }
+    if ($extensionsProperty.Value -isnot [PSCustomObject]) {
+        throw "Invalid extension registry ${registryFile}: 'extensions' must be a mapping"
+    }
+    return $extensionsProperty.Value
+}
+
+function Get-SortedExtensionIds {
+    param([Parameter(Mandatory=$true)][string]$ExtensionsDir)
+
+    $extensions = Get-ExtensionRegistry -ExtensionsDir $ExtensionsDir
+    $registeredNames = @($extensions.PSObject.Properties | ForEach-Object { $_.Name })
+    $ranked = @()
+    foreach ($entry in $extensions.PSObject.Properties) {
+        if ($entry.Name -cnotmatch '^[a-z0-9-]+$' -or $entry.Value -isnot [PSCustomObject]) {
+            continue
         }
-        try {
-            $data = [System.IO.File]::ReadAllText($registryFile, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
-        } catch {
-            throw "Invalid extension registry ${registryFile}: $($_.Exception.Message)"
+        $enabledProperty = $entry.Value.PSObject.Properties['enabled']
+        if ($enabledProperty -and -not [bool]$enabledProperty.Value) { continue }
+        $priority = 10
+        $priorityProperty = $entry.Value.PSObject.Properties['priority']
+        if ($priorityProperty) {
+            $priority = Get-NormalizedPriority -Value $priorityProperty.Value
         }
-        if ($null -eq $data -or $data -isnot [PSCustomObject]) {
-            throw "Invalid extension registry ${registryFile}: root must be a mapping"
-        }
-        $extensionsProperty = $data.PSObject.Properties['extensions']
-        if ($extensionsProperty) {
-            if ($extensionsProperty.Value -isnot [PSCustomObject]) {
-                throw "Invalid extension registry ${registryFile}: 'extensions' must be a mapping"
-            }
-            $extensions = $extensionsProperty.Value
-        } else {
-            $extensions = [PSCustomObject]@{}
-        }
-        $registeredNames = @($extensions.PSObject.Properties | ForEach-Object { $_.Name })
-        foreach ($entry in $extensions.PSObject.Properties) {
-            if ($entry.Name -cnotmatch '^[a-z0-9-]+$' -or $entry.Value -isnot [PSCustomObject]) {
-                continue
-            }
-            $enabledProperty = $entry.Value.PSObject.Properties['enabled']
-            if ($enabledProperty -and -not [bool]$enabledProperty.Value) { continue }
-            $priority = 10
-            $priorityProperty = $entry.Value.PSObject.Properties['priority']
-            if ($priorityProperty) {
-                $priority = Get-NormalizedPriority -Value $priorityProperty.Value
-            }
-            $ranked += [PSCustomObject]@{ Priority = $priority; Id = $entry.Name }
-        }
+        $ranked += [PSCustomObject]@{ Priority = $priority; Id = $entry.Name }
     }
 
     foreach ($directory in Get-ChildItem -Path $ExtensionsDir -Directory -ErrorAction SilentlyContinue) {

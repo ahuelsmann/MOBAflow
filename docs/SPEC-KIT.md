@@ -120,9 +120,14 @@ The CLI installation and the checked-in Codex integration are updated separately
 On Windows, run the `uv tool install` command above directly if `specify self
 upgrade` cannot replace its own running Python installation.
 
-Managed skills, scripts, and core templates use LF line endings through
+Managed skills, scripts, core templates, and `.specify/.gitignore` use LF line endings through
 `.gitattributes`. This keeps their manifest checksums stable in Windows worktrees
 and avoids reporting line-ending conversions as local customizations.
+
+MOBAflow maintains a local refactoring in `common.ps1` that separates extension
+registry validation from ordering to satisfy the Sonar complexity limit. Its
+installed-file checksum is recorded in `speckit.manifest.json`. Recheck this
+refactoring after an integration upgrade, which can replace managed scripts.
 
 The constitution command now updates the constitution and its impact report only;
 it no longer automatically propagates policy edits into templates. MOBAflow's
