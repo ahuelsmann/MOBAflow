@@ -198,7 +198,7 @@ public sealed class RestApiStatusService : IAsyncDisposable
 
                 SetPollInterval(PollIntervalWhenReachableMs);
 
-                if (!_photoHubConnected)
+                if (!_photoHubClient.IsConnected)
                 {
                     try
                     {

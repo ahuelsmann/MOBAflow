@@ -170,9 +170,13 @@ internal sealed partial class RestApiStatusServiceTests
         await dependencies.DisposeAsync().ConfigureAwait(true);
     }
 
-    private static TestDependencies CreateDependencies(HttpMessageHandler statusHandler)
+    private static TestDependencies CreateDependencies(
+        HttpMessageHandler statusHandler,
+        IPhotoHubClient? actualPhotoHubClient = null,
+        int port = 5001)
     {
         var appSettings = new AppSettings();
+        appSettings.RestApi.Port = port;
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var mobaRuntime = new Mock<IMobaRuntime>();
         mobaRuntime.SetupGet(runtime => runtime.Current).Returns(MobaRuntimeSnapshot.Empty);
@@ -212,7 +216,7 @@ internal sealed partial class RestApiStatusServiceTests
             statusHttpClient,
             appSettings,
             restApiProcessService,
-            photoHubClient.Object,
+            actualPhotoHubClient ?? photoHubClient.Object,
             runtimeHubService,
             solutionSyncService,
             runtimeHubHostClient.Object,
