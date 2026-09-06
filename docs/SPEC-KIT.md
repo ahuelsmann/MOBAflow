@@ -125,7 +125,8 @@ Managed skills, scripts, core templates, and `.specify/.gitignore` use LF line e
 and avoids reporting line-ending conversions as local customizations.
 
 MOBAflow maintains a local refactoring in `common.ps1` that separates extension
-registry validation from ordering to satisfy the Sonar complexity limit. Its
+registry validation from ordering and shares preset-registry resolution between
+the template resolvers to satisfy the Sonar complexity and duplication limits. Its
 installed-file checksum is recorded in `speckit.manifest.json`. Recheck this
 refactoring after an integration upgrade, which can replace managed scripts.
 

@@ -409,6 +409,51 @@ function Get-SortedExtensionIds {
     return $ranked | Sort-Object Priority, Id | ForEach-Object { $_.Id }
 }
 
+function Get-PresetRegistry {
+    param([Parameter(Mandatory=$true)][string]$PresetsDir)
+
+    $result = [PSCustomObject]@{ Parsed = $false; SortedIds = @() }
+    $registryFile = Join-Path $PresetsDir '.registry'
+    if (-not (Test-Path $registryFile)) { return $result }
+
+    try {
+        $registryData = [System.IO.File]::ReadAllText($registryFile, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
+        if ($null -eq $registryData -or $registryData -isnot [PSCustomObject]) {
+            throw 'Registry root must be an object'
+        }
+        $presetsProperty = $registryData.PSObject.Properties['presets']
+        if (-not $presetsProperty) {
+            $result.Parsed = $true
+            return $result
+        }
+        $presets = $presetsProperty.Value
+        if ($null -eq $presets -or $presets -isnot [PSCustomObject]) {
+            throw 'Registry presets must be an object'
+        }
+        $priorityFor = {
+            param($Entry)
+            $priorityProperty = $Entry.Value.PSObject.Properties['priority']
+            if ($priorityProperty) {
+                return Get-NormalizedPriority -Value $priorityProperty.Value
+            }
+            return 10
+        }
+        $result.SortedIds = @($presets.PSObject.Properties |
+            Where-Object { $_.Value -is [PSCustomObject] } |
+            Where-Object {
+                $enabled = $_.Value.PSObject.Properties['enabled']
+                -not $enabled -or [bool]$enabled.Value
+            } |
+            Where-Object { $_.Name -cmatch '^[a-z0-9-]+$' } |
+            Sort-Object @{ Expression = { & $priorityFor $_ } }, @{ Expression = { $_.Name } } |
+            ForEach-Object { $_.Name })
+        $result.Parsed = $true
+    } catch {
+        $result.Parsed = $false
+    }
+    return $result
+}
+
 # Resolve a template name to a file path using the priority stack:
 #   1. .specify/templates/overrides/
 #   2. .specify/presets/<preset-id>/templates/ (sorted by priority from .registry)
@@ -431,47 +476,9 @@ function Resolve-Template {
     # Priority 2: Installed presets (sorted by priority from .registry)
     $presetsDir = Join-Path $RepoRoot '.specify/presets'
     if (Test-Path $presetsDir) {
-        $registryFile = Join-Path $presetsDir '.registry'
-        $sortedPresets = @()
-        $registryParsed = $false
-        if (Test-Path $registryFile) {
-            try {
-                $registryData = [System.IO.File]::ReadAllText($registryFile, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
-                if ($null -eq $registryData -or $registryData -isnot [PSCustomObject]) {
-                    throw 'Registry root must be an object'
-                }
-                $presetsProperty = $registryData.PSObject.Properties['presets']
-                if ($presetsProperty) {
-                    $presets = $presetsProperty.Value
-                    if ($null -eq $presets -or $presets -isnot [PSCustomObject]) {
-                        throw 'Registry presets must be an object'
-                    }
-                    $presetEntries = @($presets.PSObject.Properties)
-                    $priorityFor = {
-                        param($Entry)
-                        if ($Entry.Value -is [PSCustomObject]) {
-                            $priorityProperty = $Entry.Value.PSObject.Properties['priority']
-                            if ($priorityProperty) {
-                                return Get-NormalizedPriority -Value $priorityProperty.Value
-                            }
-                        }
-                        return 10
-                    }
-                    $sortedPresets = $presetEntries |
-                        Where-Object { $_.Value -is [PSCustomObject] } |
-                        Where-Object {
-                            $enabled = $_.Value.PSObject.Properties['enabled']
-                            -not $enabled -or [bool]$enabled.Value
-                        } |
-                        Where-Object { $_.Name -cmatch '^[a-z0-9-]+$' } |
-                        Sort-Object @{ Expression = { & $priorityFor $_ } }, @{ Expression = { $_.Name } } |
-                        ForEach-Object { $_.Name }
-                }
-                $registryParsed = $true
-            } catch {
-                $registryParsed = $false
-            }
-        }
+        $registryState = Get-PresetRegistry -PresetsDir $presetsDir
+        $sortedPresets = $registryState.SortedIds
+        $registryParsed = $registryState.Parsed
 
         if ($registryParsed) {
             foreach ($presetId in $sortedPresets) {
@@ -543,47 +550,9 @@ function Resolve-TemplateContent {
     # Priority 2: Installed presets (sorted by priority from .registry)
     $presetsDir = Join-Path $RepoRoot '.specify/presets'
     if (Test-Path $presetsDir) {
-        $registryFile = Join-Path $presetsDir '.registry'
-        $sortedPresets = @()
-        $registryParsed = $false
-        if (Test-Path $registryFile) {
-            try {
-                $registryData = [System.IO.File]::ReadAllText($registryFile, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
-                if ($null -eq $registryData -or $registryData -isnot [PSCustomObject]) {
-                    throw 'Registry root must be an object'
-                }
-                $presetsProperty = $registryData.PSObject.Properties['presets']
-                if ($presetsProperty) {
-                    $presets = $presetsProperty.Value
-                    if ($null -eq $presets -or $presets -isnot [PSCustomObject]) {
-                        throw 'Registry presets must be an object'
-                    }
-                    $presetEntries = @($presets.PSObject.Properties)
-                    $priorityFor = {
-                        param($Entry)
-                        if ($Entry.Value -is [PSCustomObject]) {
-                            $priorityProperty = $Entry.Value.PSObject.Properties['priority']
-                            if ($priorityProperty) {
-                                return Get-NormalizedPriority -Value $priorityProperty.Value
-                            }
-                        }
-                        return 10
-                    }
-                    $sortedPresets = $presetEntries |
-                        Where-Object { $_.Value -is [PSCustomObject] } |
-                        Where-Object {
-                            $enabled = $_.Value.PSObject.Properties['enabled']
-                            -not $enabled -or [bool]$enabled.Value
-                        } |
-                        Where-Object { $_.Name -cmatch '^[a-z0-9-]+$' } |
-                        Sort-Object @{ Expression = { & $priorityFor $_ } }, @{ Expression = { $_.Name } } |
-                        ForEach-Object { $_.Name }
-                }
-                $registryParsed = $true
-            } catch {
-                $registryParsed = $false
-            }
-        }
+        $registryState = Get-PresetRegistry -PresetsDir $presetsDir
+        $sortedPresets = $registryState.SortedIds
+        $registryParsed = $registryState.Parsed
 
         if (-not $registryParsed) {
             $sortedPresets = Get-ChildItem -Path $presetsDir -Directory -ErrorAction SilentlyContinue |
