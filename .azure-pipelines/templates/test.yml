@@ -8,6 +8,10 @@ parameters:
   - name: configuration
     type: string
     default: 'Release'
+    values:
+      - 'Debug'
+      - 'FastDebug'
+      - 'Release'
   - name: testRunTitle
     type: string
     default: 'Unit Tests'

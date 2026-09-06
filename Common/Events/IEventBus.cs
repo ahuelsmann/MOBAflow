@@ -45,16 +45,28 @@ public interface IEventBus
 }
 
 /// <summary>
+/// Optional diagnostics exposed by event-bus implementations and decorators.
+/// </summary>
+public interface IEventBusDiagnostics
+{
+    /// <summary>
+    /// Gets the total number of subscriber invocations that failed.
+    /// </summary>
+    long HandlerFailureCount { get; }
+}
+
+/// <summary>
 /// Default implementation of IEventBus using dictionary-based subscriptions.
 /// Thread-safe for Publish and Subscribe operations.
 /// Uses WeakReferences to prevent memory leaks - dead ViewModel references are automatically cleaned.
 /// </summary>
-public sealed class EventBus : IEventBus
+public sealed class EventBus : IEventBus, IEventBusDiagnostics
 {
     // Tuple: (subscription ID, WeakReference to target object, handler delegate)
     private readonly Dictionary<Type, List<(Guid Id, WeakReference<object>? TargetRef, Delegate Handler)>> _subscriptions = [];
     private readonly object _lock = new();
     private readonly ILogger<EventBus> _logger;
+    private long _handlerFailureCount;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="EventBus"/> class.
@@ -65,6 +77,9 @@ public sealed class EventBus : IEventBus
         ArgumentNullException.ThrowIfNull(logger);
         _logger = logger;
     }
+
+    /// <inheritdoc />
+    public long HandlerFailureCount => Interlocked.Read(ref _handlerFailureCount);
 
     /// <inheritdoc />
     public void Publish<TEvent>(TEvent @event) where TEvent : class, IEvent
@@ -103,6 +118,7 @@ public sealed class EventBus : IEventBus
             catch (Exception ex)
             {
                 // Isolate failures so other handlers still run; surface severity for diagnostics.
+                Interlocked.Increment(ref _handlerFailureCount);
                 _logger.LogError(ex, "EventBus handler failed for {EventType}", eventType.Name);
                 if (Debugger.IsAttached)
                 {

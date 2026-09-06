@@ -1,0 +1,4828 @@
+{
+  "schemaVersion": 2,
+  "diagnostics": [
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1000",
+      "path": "Backend/Result.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1001",
+      "path": "Backend/Service/Interlocking/SemanticTurnoutRuntimeCoordinator.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "Backend/Data/MasterDataStore.cs",
+      "count": 5
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "Backend/Model/Z21Models.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "Backend/Protocol/Z21FeedbackParser.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1003",
+      "path": "Backend/Interface/IRecordingReplayService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1003",
+      "path": "Backend/Interface/IRecordingSessionService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1003",
+      "path": "Backend/Interface/IZ21.cs",
+      "count": 7
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1003",
+      "path": "Backend/Service/Z21Monitor.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1014",
+      "path": "<no-location>",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "Backend/Discovery/Z21DiscoveryService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "Backend/Network/UdpWrapper.cs",
+      "count": 3
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "Backend/Protocol/Z21MessageParser.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "Backend/Service/Interlocking/InterlockingRouteCoordinator.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "Backend/Service/Interlocking/InterlockingRuntimeService.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "Backend/Service/Interlocking/SemanticTurnoutCommandService.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "Backend/Service/Interlocking/Z21SignalEffectGateway.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "Backend/Service/LocomotiveWhistleAutomationService.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "Backend/Service/MobaRuntimeService.AutoConnect.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "Backend/Service/MobaRuntimeService.RuntimeApi.cs",
+      "count": 4
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "Backend/Service/Recording/RecordingEventBusDecorator.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "Backend/Service/Recording/RecordingReplayService.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "Backend/Service/Recording/RecordingSessionService.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "Backend/Service/VehicleUsageRuntimeTracker.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "Backend/Service/WorkflowExecutionCoordinator.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "Backend/Service/WorkflowService.Graph.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "Backend/Service/Z21EventPipeline.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "Backend/Z21.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "Backend/Z21.Keepalive.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "Backend/Z21.SystemStatePolling.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1032",
+      "path": "Backend/Network/UdpNotConnectedException.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1032",
+      "path": "Backend/Service/Recording/RecordingArtifactSerializer.Import.cs",
+      "count": 3
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1032",
+      "path": "Backend/Service/WorkflowService.Graph.cs",
+      "count": 6
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1034",
+      "path": "Backend/Protocol/Z21Protocol.cs",
+      "count": 10
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1034",
+      "path": "Backend/Service/WorkflowService.Graph.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Backend/Discovery/Z21DiscoveryService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Backend/FeedbackResult.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Backend/Manager/JourneyManager.cs",
+      "count": 3
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Backend/Manager/PlatformManager.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Backend/Network/UdpWrapper.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Backend/Protocol/Z21FeedbackParser.cs",
+      "count": 4
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Backend/Protocol/Z21MessageParser.cs",
+      "count": 12
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Backend/Result.cs",
+      "count": 3
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Backend/Service/AnnouncementService.cs",
+      "count": 4
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Backend/Service/Interlocking/InterlockingSafetyEngine.cs",
+      "count": 10
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Backend/Service/Interlocking/SemanticTurnoutCommandService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Backend/Service/Interlocking/Z21SignalEffectGateway.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Backend/Service/JourneyRuntimeStateStore.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Backend/Service/MobaRuntimeStatusFormatter.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Backend/Service/Recording/CoreRecordingEventMappers.cs",
+      "count": 3
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Backend/Service/TimetableRuntimeProjectionService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Backend/Service/WorkflowActionHandlers.cs",
+      "count": 12
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Backend/Service/Z21Monitor.cs",
+      "count": 3
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1063",
+      "path": "Backend/Manager/JourneyManager.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1063",
+      "path": "Backend/Network/UdpWrapper.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1063",
+      "path": "Backend/Z21.Commands.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1063",
+      "path": "Backend/Z21.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1064",
+      "path": "Backend/Service/Recording/RecordingArtifactSerializer.Import.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1068",
+      "path": "Backend/Network/IUdpClientWrapper.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1068",
+      "path": "Backend/Service/AnnouncementService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1305",
+      "path": "Backend/Model/Z21Models.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1305",
+      "path": "Backend/Service/AnnouncementService.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1305",
+      "path": "Backend/Service/MobaRuntimeService.Z21Handlers.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1305",
+      "path": "Backend/Service/ProjectValidator.cs",
+      "count": 3
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1305",
+      "path": "Backend/Z21.Drive.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1307",
+      "path": "Backend/Model/Z21Models.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1307",
+      "path": "Backend/Network/UdpWrapper.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1307",
+      "path": "Backend/Protocol/Z21Protocol.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1307",
+      "path": "Backend/Service/AnnouncementService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1308",
+      "path": "Backend/Service/Recording/RecordingArtifactSerializer.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1308",
+      "path": "Backend/Service/Recording/RecordingArtifactSerializer.Import.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1308",
+      "path": "Backend/Service/Recording/RecordingSessionService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1512",
+      "path": "Backend/Service/LocomotiveWhistleAutomationService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1512",
+      "path": "Backend/Service/Recording/RecordingSessionService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1512",
+      "path": "Backend/Service/TrackPlan/TrackPlanRailroadStateProjector.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1707",
+      "path": "Backend/Protocol/Z21Protocol.cs",
+      "count": 56
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1711",
+      "path": "Backend/Protocol/Z21Protocol.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1711",
+      "path": "Backend/SystemState.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1716",
+      "path": "Backend/Interface/IActionExecutor.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1716",
+      "path": "Backend/Interface/IRecordingSessionService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1716",
+      "path": "Backend/Interface/ITimetableServices.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1716",
+      "path": "Backend/Interface/IZ21.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1724",
+      "path": "Backend/Z21.Commands.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Backend/Data/MasterDataStore.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Backend/Service/Recording/CoreRecordingPayloadValidators.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1816",
+      "path": "Backend/Network/UdpWrapper.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1819",
+      "path": "Backend/FeedbackResult.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1819",
+      "path": "Backend/Model/Z21Models.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1819",
+      "path": "Backend/Network/UdpReceivedEventArgs.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1822",
+      "path": "Backend/Manager/JourneyManager.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1822",
+      "path": "Backend/Service/Recording/RecordingArtifactSerializer.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1822",
+      "path": "Backend/Service/TrackPlan/GraphService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1822",
+      "path": "Backend/Service/TrackPlan/LayoutService.cs",
+      "count": 5
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1826",
+      "path": "Backend/FeedbackResult.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1826",
+      "path": "Backend/Service/Interlocking/InterlockingRouteCoordinator.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Backend/Manager/JourneyManager.cs",
+      "count": 18
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Backend/Manager/PlatformManager.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Backend/Network/UdpWrapper.cs",
+      "count": 21
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Backend/Service/ActionExecutor.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Backend/Service/AnnouncementService.cs",
+      "count": 8
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Backend/Service/Interlocking/InterlockingRuntimeService.cs",
+      "count": 3
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Backend/Service/LocomotiveWhistleAutomationService.cs",
+      "count": 5
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Backend/Service/MobaRuntimeService.AutoConnect.cs",
+      "count": 5
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Backend/Service/MobaRuntimeService.RuntimeApi.cs",
+      "count": 9
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Backend/Service/ProjectValidator.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Backend/Service/Recording/RecordingEventBusDecorator.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Backend/Service/VehicleUsageRuntimeTracker.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Backend/Service/WorkflowActionHandlers.cs",
+      "count": 12
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Backend/Service/WorkflowService.Graph.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Backend/Service/Z21EventPipeline.cs",
+      "count": 3
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Backend/Service/Z21Monitor.cs",
+      "count": 3
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Backend/Z21.Commands.cs",
+      "count": 19
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Backend/Z21.cs",
+      "count": 4
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Backend/Z21.Diagnostics.cs",
+      "count": 3
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Backend/Z21.Drive.cs",
+      "count": 12
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Backend/Z21.Keepalive.cs",
+      "count": 14
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Backend/Z21.Receive.cs",
+      "count": 11
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Backend/Z21.SystemStatePolling.cs",
+      "count": 8
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1849",
+      "path": "Backend/Discovery/Z21DiscoveryService.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1849",
+      "path": "Backend/Service/LocomotiveWhistleAutomationService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1859",
+      "path": "Backend/Service/ActionExecutor.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1859",
+      "path": "Backend/Service/Interlocking/InterlockingConflictAnalyzer.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1859",
+      "path": "Backend/Service/Interlocking/InterlockingSafetyEngine.cs",
+      "count": 3
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1859",
+      "path": "Backend/Service/Interlocking/SemanticTurnoutCommandService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1859",
+      "path": "Backend/Service/Interlocking/Z21SignalEffectGateway.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1859",
+      "path": "Backend/Service/Recording/CoreRecordingPayloadValidators.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1859",
+      "path": "Backend/Service/Recording/RecordingArtifactSerializer.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1859",
+      "path": "Backend/Service/Recording/RecordingArtifactSerializer.Import.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1859",
+      "path": "Backend/Service/Recording/RecordingEventMapperRegistry.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1859",
+      "path": "Backend/Service/Validation/InterlockingDefinitionValidator.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1859",
+      "path": "Backend/Service/WorkflowConditionEvaluator.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1859",
+      "path": "Backend/Service/WorkflowService.Graph.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1859",
+      "path": "Backend/Service/WorkflowValidator.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1862",
+      "path": "Backend/Service/Recording/RecordingArtifactSerializer.Import.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "Backend/Manager/JourneyManager.cs",
+      "count": 6
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "Backend/Network/UdpWrapper.cs",
+      "count": 6
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "Backend/Service/ActionExecutor.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "Backend/Service/AnnouncementService.cs",
+      "count": 5
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "Backend/Service/MobaRuntimeService.AutoConnect.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "Backend/Service/MobaRuntimeService.RuntimeApi.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "Backend/Service/ProjectValidator.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "Backend/Service/WorkflowActionHandlers.cs",
+      "count": 6
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "Backend/Service/Z21Monitor.cs",
+      "count": 3
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "Backend/Z21.Commands.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "Backend/Z21.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "Backend/Z21.Diagnostics.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "Backend/Z21.Drive.cs",
+      "count": 9
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "Backend/Z21.Keepalive.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "Backend/Z21.Receive.cs",
+      "count": 8
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "Backend/Z21.SystemStatePolling.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2000",
+      "path": "Backend/Service/WorkflowExecutionCoordinator.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2007",
+      "path": "Backend/Service/Interlocking/InterlockingRuntimeService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2007",
+      "path": "Backend/Service/Recording/RecordingReplayService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2007",
+      "path": "Backend/Service/TimetableStateStore.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2007",
+      "path": "Backend/Service/TrainClassParser.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2213",
+      "path": "Backend/Service/Z21EventPipeline.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "Backend/Data/MasterDataStore.cs",
+      "count": 3
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "Backend/Model/Z21Models.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0005",
+      "path": "Backend/Service/MobaRuntimeService.AutoConnect.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0005",
+      "path": "Backend/Service/MobaRuntimeService.Z21Handlers.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0005",
+      "path": "Backend/Service/WorkflowValidator.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0007",
+      "path": "Backend/Data/MasterDataStore.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0007",
+      "path": "Backend/Discovery/Z21DiscoveryService.cs",
+      "count": 3
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0007",
+      "path": "Backend/Network/UdpWrapper.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0007",
+      "path": "Backend/Protocol/Z21Command.cs",
+      "count": 16
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0007",
+      "path": "Backend/Protocol/Z21FeedbackParser.cs",
+      "count": 7
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0007",
+      "path": "Backend/Protocol/Z21MessageParser.cs",
+      "count": 19
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0007",
+      "path": "Backend/Service/Z21Monitor.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0007",
+      "path": "Backend/Z21.Drive.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0028",
+      "path": "Backend/Service/TimetableEvaluationService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0061",
+      "path": "Backend/Service/LocomotivePassportHtmlRenderer.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "Backend/Network/UdpReceivedEventArgs.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "Backend/Service/Interlocking/InterlockingRouteCoordinator.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "Backend/Service/Interlocking/SemanticTurnoutCommandService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "Backend/Service/LocomotiveLibraryService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "Backend/Service/ProjectValidator.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "Backend/Service/Recording/CoreRecordingPayloadValidators.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "Backend/Service/Recording/IsolatedReplayRuntime.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "Backend/Service/Recording/RecordingEventBusDecorator.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "Backend/Service/Recording/RecordingReplayService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "Backend/Service/Recording/RecordingSessionService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "Backend/Service/TimetableRuntimeProjectionService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "Backend/Service/TimetableStateStore.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "Backend/Service/TimetableTimingService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "Backend/Service/TrackPlan/TrackPlanRailroadStateProjector.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "Backend/Service/VehicleMaintenanceService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "Backend/Service/WorkflowService.Graph.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "Backend/Service/WorkflowValidator.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "Backend/Service/Z21Monitor.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0330",
+      "path": "Backend/Service/Interlocking/InterlockingRouteCoordinator.cs",
+      "count": 3
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0330",
+      "path": "Backend/Service/Interlocking/InterlockingRuntimeService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0330",
+      "path": "Backend/Service/Interlocking/SemanticTurnoutCommandService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0330",
+      "path": "Backend/Service/Interlocking/SemanticTurnoutRuntimeCoordinator.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0330",
+      "path": "Backend/Service/JourneyRuntimeStateStore.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0330",
+      "path": "Backend/Service/LocomotiveWhistleAutomationService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0330",
+      "path": "Backend/Service/Recording/RecordingReplayService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0330",
+      "path": "Backend/Service/Recording/RecordingSessionService.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0330",
+      "path": "Backend/Service/TrackPlan/TrackPlanRailroadStateProjector.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0330",
+      "path": "Backend/Service/VehicleUsageCheckpointStore.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0330",
+      "path": "Backend/Service/VehicleUsageRuntimeTracker.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0330",
+      "path": "Backend/Service/WorkflowExecutionCoordinator.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0330",
+      "path": "Backend/Service/WorkflowTraceStore.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0330",
+      "path": "Backend/Service/Z21EventPipeline.cs",
+      "count": 1
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE2000",
+      "path": "Backend/Service/TimetableEvaluationService.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1001",
+      "path": "Common/Security/RemoteControlClientSecurity.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "Common/Configuration/AppSettings.Sections.cs",
+      "count": 2
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "Common/Discovery/LanIpv4AddressHelper.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "Common/Events/RestApiEvents.cs",
+      "count": 2
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1003",
+      "path": "Common/Serilog/InMemorySink.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1008",
+      "path": "Common/Configuration/TrainControlSettings.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1008",
+      "path": "Common/Security/RemoteControlClientSecurity.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1014",
+      "path": "<no-location>",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1024",
+      "path": "Common/Multiplex/MultiplexerHelper.cs",
+      "count": 2
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "Common/Discovery/LanIpv4AddressHelper.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "Common/Discovery/MobApiUdpDiscoveryResponder.cs",
+      "count": 2
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "Common/Events/IEventBus.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "Common/Multiplex/MultiplexerHelper.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1032",
+      "path": "Common/Security/RemoteControlClientSecurity.cs",
+      "count": 2
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1034",
+      "path": "Common/Display/FunctionBacklightColor.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Common/Discovery/DiscoveryResponseParser.cs",
+      "count": 2
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Common/Discovery/MobaApiPathResolver.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Common/Discovery/MobApiUdpDiscoveryResponder.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Common/Runtime/LocomotiveFleetSnapshotComparer.cs",
+      "count": 4
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Common/Runtime/SignalBoxSnapshotMerge.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Common/Serilog/InMemorySink.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Common/Serilog/InMemorySinkExtensions.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1305",
+      "path": "Common/Serilog/InMemorySink.cs",
+      "count": 2
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1307",
+      "path": "Common/Path/PhotoPathHelper.cs",
+      "count": 2
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1308",
+      "path": "Common/Path/PhotoPathHelper.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1711",
+      "path": "Common/Events/Z21Events.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1716",
+      "path": "Common/Events/IEventBus.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1805",
+      "path": "Common/Configuration/AppSettings.Sections.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Common/Events/IEventBus.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1859",
+      "path": "Common/Multiplex/MultiplexerHelper.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1865",
+      "path": "Common/Path/PhotoPathHelper.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "Common/Configuration/AppSettings.Sections.cs",
+      "count": 7
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "Common/Configuration/GridSplitterLayoutSettings.cs",
+      "count": 4
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "Common/Configuration/SettingsPageLayoutSettings.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0005",
+      "path": "Common/Configuration/AppSettings.Sections.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0007",
+      "path": "Common/Discovery/MobApiUdpDiscoveryResponder.cs",
+      "count": 4
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0028",
+      "path": "Common/Configuration/AppSettings.Sections.cs",
+      "count": 4
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0028",
+      "path": "Common/Configuration/GridSplitterLayoutSettings.cs",
+      "count": 4
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0028",
+      "path": "Common/Configuration/SettingsPageLayoutSettings.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0028",
+      "path": "Common/Multiplex/MultiplexerHelper.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0057",
+      "path": "Common/Path/PhotoPathHelper.cs",
+      "count": 4
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "Common/Recording/RecordingEntry.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "Common/Recording/RecordingFilter.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "Common/Recording/RecordingSession.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "Common/Security/RemoteControlClientSecurity.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0330",
+      "path": "Common/Events/IEventBus.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE2002",
+      "path": "Common/Validation/JsonValidationService.cs",
+      "count": 1
+    },
+    {
+      "project": "Common",
+      "targetFramework": "net10.0",
+      "ruleId": "SYSLIB1045",
+      "path": "Common/Speech/PiperPronunciationNormalizer.cs",
+      "count": 3
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "Domain/City.cs",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "Domain/Interlocking/InterlockingDefinition.cs",
+      "count": 19
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "Domain/Journey.cs",
+      "count": 2
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "Domain/JourneyFeedbackStep.cs",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "Domain/Locomotive.cs",
+      "count": 3
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "Domain/LocomotiveCategory.cs",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "Domain/LocomotiveLifecycle.cs",
+      "count": 2
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "Domain/MatrixImage.cs",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "Domain/Project.cs",
+      "count": 10
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "Domain/SignalBoxPlan.cs",
+      "count": 2
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "Domain/Solution.cs",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "Domain/Station.cs",
+      "count": 2
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "Domain/Timetable.cs",
+      "count": 2
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "Domain/TrackPlanDocument.cs",
+      "count": 2
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "Domain/Train.cs",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "Domain/VehicleMaintenance.cs",
+      "count": 2
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "Domain/VehicleUsage.cs",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "Domain/Workflow.cs",
+      "count": 2
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "Domain/WorkflowStep.cs",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1014",
+      "path": "<no-location>",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Domain/JsonOptions.cs",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Domain/WorkflowActionJsonConverter.cs",
+      "count": 2
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Domain/WorkflowActionParameterBinding.cs",
+      "count": 3
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1307",
+      "path": "Domain/TrainClassLibrary.cs",
+      "count": 4
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1512",
+      "path": "Domain/TrackLayout.cs",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1716",
+      "path": "Domain/Enum/ActionType.cs",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1724",
+      "path": "Domain/TrackLayout.cs",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1810",
+      "path": "Domain/JsonOptions.cs",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "Domain/City.cs",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "Domain/Interlocking/InterlockingDefinition.cs",
+      "count": 19
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "Domain/Journey.cs",
+      "count": 2
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "Domain/JourneyFeedbackStep.cs",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "Domain/Locomotive.cs",
+      "count": 3
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "Domain/LocomotiveCategory.cs",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "Domain/LocomotiveLifecycle.cs",
+      "count": 2
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "Domain/MatrixImage.cs",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "Domain/Project.cs",
+      "count": 10
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "Domain/SignalBoxPlan.cs",
+      "count": 2
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "Domain/Solution.cs",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "Domain/SpeakerEngineConfiguration.cs",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "Domain/Station.cs",
+      "count": 2
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "Domain/Timetable.cs",
+      "count": 2
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "Domain/TrackPlanDocument.cs",
+      "count": 2
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "Domain/Train.cs",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "Domain/VehicleMaintenance.cs",
+      "count": 2
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "Domain/VehicleUsage.cs",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "Domain/Workflow.cs",
+      "count": 2
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "Domain/WorkflowStep.cs",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0028",
+      "path": "Domain/Train.cs",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0028",
+      "path": "Domain/TrainClassLibrary.cs",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0330",
+      "path": "Domain/TrackLayout.cs",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE2002",
+      "path": "Domain/City.cs",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE2002",
+      "path": "Domain/Project.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1001",
+      "path": "MOBAdisplay/Rendering/ClockRenderer.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1001",
+      "path": "MOBAdisplay/Rendering/GridRenderer.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1008",
+      "path": "MOBAdisplay/Protocol/DisplayProtocol.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1008",
+      "path": "MOBAdisplay/Protocol/DisplayProtocolPayloads.cs",
+      "count": 2
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1014",
+      "path": "<no-location>",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1028",
+      "path": "MOBAdisplay/Protocol/DisplayProtocol.cs",
+      "count": 2
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1028",
+      "path": "MOBAdisplay/Protocol/DisplayProtocolPayloads.cs",
+      "count": 12
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "MOBAdisplay/Runtime/FrameLoopScheduler.cs",
+      "count": 2
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "MOBAdisplay/Transport/DisplayProtocolClient.cs",
+      "count": 2
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1036",
+      "path": "MOBAdisplay/Protocol/DisplayProtocolVersion.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1305",
+      "path": "MOBAdisplay/Rendering/SkiaFrameRenderer.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1416",
+      "path": "MOBAdisplay/BitmapToRgb565.cs",
+      "count": 3
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1700",
+      "path": "MOBAdisplay/Protocol/DisplayProtocolPayloads.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1707",
+      "path": "MOBAdisplay/Protocol/DisplayProtocol.cs",
+      "count": 7
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1711",
+      "path": "MOBAdisplay/Protocol/DisplayProtocol.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1711",
+      "path": "MOBAdisplay/Protocol/DisplayProtocolPayloads.cs",
+      "count": 5
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1814",
+      "path": "MOBAdisplay/Rendering/GridRenderer.cs",
+      "count": 3
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1814",
+      "path": "MOBAdisplay/Rendering/SkiaFrameRenderer.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1822",
+      "path": "MOBAdisplay/Rendering/ClockRenderer.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1822",
+      "path": "MOBAdisplay/Rendering/GridRenderer.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1849",
+      "path": "MOBAdisplay/Runtime/FrameLoopScheduler.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2208",
+      "path": "MOBAdisplay/Protocol/DisplayPayloadCodec.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2263",
+      "path": "MOBAdisplay/Protocol/DisplayPacketCodec.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2263",
+      "path": "MOBAdisplay/Protocol/DisplayPayloadCodec.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0060",
+      "path": "MOBAdisplay/Protocol/DisplayPayloadCodec.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "MOBAdisplay/Protocol/DisplayProtocolPacket.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "MOBAdisplay/Protocol/DisplayProtocolPayloads.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "MOBAdisplay/Runtime/FrameReadyEventArgs.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "MOBAdisplay/Runtime/FrameTransmissionCompletedEventArgs.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "MOBAdisplay/Transport/DisplayDatagramTransport.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAdisplay",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0330",
+      "path": "MOBAdisplay/Protocol/DisplayIdentifierSequence.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1001",
+      "path": "MOBAsmart/Controls/SpeedGaugeView.xaml.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1001",
+      "path": "MOBAsmart/MainPage.xaml.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1003",
+      "path": "MOBAsmart/Controls/AppBottomTabBar.xaml.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1014",
+      "path": "<no-location>",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1031",
+      "path": "MOBAsmart/App.xaml.cs",
+      "count": 2
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1031",
+      "path": "MOBAsmart/Controls/SignalAspectPicker.xaml.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1031",
+      "path": "MOBAsmart/MainPage.xaml.cs",
+      "count": 2
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1031",
+      "path": "MOBAsmart/Platforms/Android/MainActivity.cs",
+      "count": 2
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1031",
+      "path": "MOBAsmart/Service/LanIpv4AddressHelperAndroidBootstrap.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1031",
+      "path": "MOBAsmart/Service/MauiRemoteControlCredentialStore.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1031",
+      "path": "MOBAsmart/Service/MobiAndroidPermissions.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1031",
+      "path": "MOBAsmart/Service/PhotoUploadService.cs",
+      "count": 3
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1031",
+      "path": "MOBAsmart/Service/RestApiClientRegistrationService.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1031",
+      "path": "MOBAsmart/Service/RestApiDiscoveryService.cs",
+      "count": 9
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1031",
+      "path": "MOBAsmart/Service/RuntimeHubRemoteClient.cs",
+      "count": 7
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1031",
+      "path": "MOBAsmart/Service/RuntimeSettingsClient.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1031",
+      "path": "MOBAsmart/Service/SettingsService.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1031",
+      "path": "MOBAsmart/View/SplashPage.xaml.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1062",
+      "path": "MOBAsmart/Converters/FunctionBacklightColorConverter.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1062",
+      "path": "MOBAsmart/Service/PinnedRemoteControlTransport.cs",
+      "count": 3
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1062",
+      "path": "MOBAsmart/Service/UiDispatcher.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1305",
+      "path": "MOBAsmart/Controls/SpeedGaugeView.xaml.cs",
+      "count": 3
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1422",
+      "path": "MOBAsmart/Platforms/Android/Services/Z21BackgroundService.cs",
+      "count": 2
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1721",
+      "path": "MOBAsmart/Controls/SpeedGaugeView.xaml.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1724",
+      "path": "MOBAsmart/App.xaml.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1812",
+      "path": "MOBAsmart/Service/PinnedRemoteControlTransport.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1822",
+      "path": "MOBAsmart/Controls/KsSignalScreen.xaml.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1822",
+      "path": "MOBAsmart/Controls/SpeedGaugeView.xaml.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1822",
+      "path": "MOBAsmart/Service/PhotoUploadService.cs",
+      "count": 2
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1822",
+      "path": "MOBAsmart/Service/RestApiDiscoveryService.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1822",
+      "path": "MOBAsmart/Service/UiDispatcher.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1822",
+      "path": "MOBAsmart/View/ControlPage.xaml.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1822",
+      "path": "MOBAsmart/View/EnginePage.xaml.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1822",
+      "path": "MOBAsmart/View/SignalBoxPage.xaml.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1823",
+      "path": "MOBAsmart/Service/RestApiDiscoveryService.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1826",
+      "path": "MOBAsmart/Controls/AppBottomTabBar.xaml.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1826",
+      "path": "MOBAsmart/View/SplashPage.xaml.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1848",
+      "path": "MOBAsmart/Service/RuntimeHubRemoteClient.cs",
+      "count": 10
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1849",
+      "path": "MOBAsmart/Service/PhotoUploadService.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1859",
+      "path": "MOBAsmart/Service/PinnedRemoteControlTransport.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1859",
+      "path": "MOBAsmart/Service/RestApiDiscoveryService.cs",
+      "count": 2
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1865",
+      "path": "MOBAsmart/Service/PhotoUploadService.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1869",
+      "path": "MOBAsmart/Service/SettingsService.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA1873",
+      "path": "MOBAsmart/Service/RuntimeHubRemoteClient.cs",
+      "count": 2
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA2000",
+      "path": "MOBAsmart/Controls/SpeedGaugeView.xaml.cs",
+      "count": 3
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA2000",
+      "path": "MOBAsmart/Platforms/Android/Services/Z21BackgroundService.cs",
+      "count": 4
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA2000",
+      "path": "MOBAsmart/Service/BackgroundService.cs",
+      "count": 2
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA2000",
+      "path": "MOBAsmart/Service/MobiAndroidPermissions.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA2000",
+      "path": "MOBAsmart/Service/MobiLanHttpClientFactory.cs",
+      "count": 2
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA2000",
+      "path": "MOBAsmart/Service/PhotoUploadService.cs",
+      "count": 2
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA2000",
+      "path": "MOBAsmart/Service/PinnedRemoteControlTransport.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA2007",
+      "path": "MOBAsmart/App.xaml.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA2007",
+      "path": "MOBAsmart/MainPage.xaml.cs",
+      "count": 8
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA2007",
+      "path": "MOBAsmart/Service/PhotoCaptureService.cs",
+      "count": 7
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA2007",
+      "path": "MOBAsmart/Service/PhotoUploadService.cs",
+      "count": 4
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA2007",
+      "path": "MOBAsmart/Service/RuntimeSettingsClient.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA2007",
+      "path": "MOBAsmart/Service/UiDispatcher.cs",
+      "count": 4
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA2007",
+      "path": "MOBAsmart/View/SignalBoxPage.xaml.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA2007",
+      "path": "MOBAsmart/View/SplashPage.xaml.cs",
+      "count": 2
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA2008",
+      "path": "MOBAsmart/Service/MobiStartupService.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA2234",
+      "path": "MOBAsmart/Service/PhotoUploadService.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "CA2234",
+      "path": "MOBAsmart/Service/RestApiDiscoveryService.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "IDE0005",
+      "path": "MOBAsmart/MainPage.xaml.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "IDE0019",
+      "path": "MOBAsmart/Service/MobiAndroidPermissions.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "IDE0053",
+      "path": "MOBAsmart/App.xaml.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "IDE0053",
+      "path": "MOBAsmart/Extensions/MobiHttpClientServiceCollectionExtensions.cs",
+      "count": 3
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "IDE0053",
+      "path": "MOBAsmart/MainPage.xaml.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "IDE0057",
+      "path": "MOBAsmart/Service/PhotoUploadService.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "IDE0060",
+      "path": "MOBAsmart/Controls/SpeedGaugeView.xaml.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "IDE0060",
+      "path": "MOBAsmart/View/AppTabHostPage.xaml.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "IDE0290",
+      "path": "MOBAsmart/Platforms/Android/MainApplication.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "IDE0290",
+      "path": "MOBAsmart/Service/MauiPhotoUriResolver.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "IDE0290",
+      "path": "MOBAsmart/Service/MauiRemoteControlCredentialStore.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "IDE0290",
+      "path": "MOBAsmart/Service/MobiStartupService.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "IDE0290",
+      "path": "MOBAsmart/Service/RestApiClientRegistrationService.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "IDE0290",
+      "path": "MOBAsmart/Service/RuntimeSettingsClient.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "IDE0290",
+      "path": "MOBAsmart/Service/SettingsService.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "IDE0330",
+      "path": "MOBAsmart/Service/RemoteRuntimeBridge.cs",
+      "count": 1
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "IDE2002",
+      "path": "MOBAsmart/Controls/SpeedGaugeView.xaml.cs",
+      "count": 9
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "IDE2002",
+      "path": "MOBAsmart/MainPage.xaml.cs",
+      "count": 9
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "IDE2002",
+      "path": "MOBAsmart/Platforms/Android/MainActivity.cs",
+      "count": 2
+    },
+    {
+      "project": "MOBAsmart",
+      "targetFramework": "net10.0-android",
+      "ruleId": "IDE2002",
+      "path": "MOBAsmart/View/SplashPage.xaml.cs",
+      "count": 3
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1001",
+      "path": "SharedUI/Service/MobileSolutionStore.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1001",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Commands.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "SharedUI/Interface/ICityService.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "SharedUI/Interface/ILocomotiveService.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "SharedUI/ViewModel/CityViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "SharedUI/ViewModel/JourneyViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "SharedUI/ViewModel/LocomotiveCategoryViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Journey.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Train.cs",
+      "count": 4
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Workflow.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1003",
+      "path": "SharedUI/Interface/IPhotoHubClient.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1003",
+      "path": "SharedUI/Interface/IRuntimeHubRemoteClient.cs",
+      "count": 3
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1003",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1003",
+      "path": "SharedUI/ViewModel/MauiViewModel.SignalBox.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1014",
+      "path": "<no-location>",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1016",
+      "path": "<no-location>",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/Helper/Z21DccCommandDecoder.cs",
+      "count": 3
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/Service/PhotoStorageService.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/Service/TrackPlanFeedbackHighlighter.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/ViewModel/Action/CommandViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/ViewModel/LocomotiveManagementViewModel.cs",
+      "count": 3
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Settings.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Signals.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Wagons.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/ViewModel/MauiViewModel.BackgroundService.cs",
+      "count": 3
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/ViewModel/MauiViewModel.cs",
+      "count": 13
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/ViewModel/MauiViewModel.MobaflowConnection.cs",
+      "count": 8
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/ViewModel/MauiViewModel.TabUpdates.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/ViewModel/RecorderPageViewModel.cs",
+      "count": 4
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/ViewModel/RemotePairingViewModel.cs",
+      "count": 3
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/ViewModel/TimetablePageViewModel.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
+      "count": 10
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1034",
+      "path": "SharedUI/Helper/Z21DccCommandDecoder.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "SharedUI/Helper/EntityEditorHelper.cs",
+      "count": 6
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "SharedUI/Helper/Z21DccCommandDecoder.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "SharedUI/Service/OperatingStateEvaluator.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "SharedUI/Service/PhotoStorageService.cs",
+      "count": 4
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "SharedUI/Service/SignalBoxRuntimeSync.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "SharedUI/ViewModel/ColumnViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "SharedUI/ViewModel/EventManagerViewModel.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "SharedUI/ViewModel/FeatureToggleItemViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "SharedUI/ViewModel/JourneyViewModel.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "SharedUI/ViewModel/LayoutColumnWidthsViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.HealthStatus.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.SettingsPageLayout.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "SharedUI/ViewModel/MauiViewModel.ControlTab.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "SharedUI/ViewModel/MauiViewModel.SignalBox.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "SharedUI/ViewModel/MauiViewModel.TabUpdates.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "SharedUI/ViewModel/PageLayoutViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "SharedUI/ViewModel/SignalBoxPlanViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "SharedUI/ViewModel/TimetablePageViewModel.cs",
+      "count": 5
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "SharedUI/ViewModel/TrainViewModel.cs",
+      "count": 3
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "SharedUI/ViewModel/WorkflowSteps/WorkflowStepViewModels.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1068",
+      "path": "SharedUI/Interface/IRuntimeHubRemoteClient.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1305",
+      "path": "SharedUI/ViewModel/InPortStatistic.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1305",
+      "path": "SharedUI/ViewModel/JourneyMapViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1305",
+      "path": "SharedUI/ViewModel/MauiViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1305",
+      "path": "SharedUI/ViewModel/RecorderPageViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1305",
+      "path": "SharedUI/ViewModel/StationViewModel.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1305",
+      "path": "SharedUI/ViewModel/TimetablePageViewModel.cs",
+      "count": 5
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1305",
+      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
+      "count": 4
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1307",
+      "path": "SharedUI/Helper/Z21DccCommandDecoder.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1307",
+      "path": "SharedUI/Service/PhotoStorageService.cs",
+      "count": 4
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1307",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.HealthStatus.cs",
+      "count": 3
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1308",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.SettingsPageLayout.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1716",
+      "path": "SharedUI/Interface/IBackgroundService.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1819",
+      "path": "SharedUI/ViewModel/Action/CommandViewModel.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1819",
+      "path": "SharedUI/ViewModel/Action/SelectSignalAspectViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1822",
+      "path": "SharedUI/Extensions/UiDispatcherServiceCollectionExtensions.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1822",
+      "path": "SharedUI/ViewModel/Action/WorkflowActionViewModelFactory.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1822",
+      "path": "SharedUI/ViewModel/JourneyFeedbackStepViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1822",
+      "path": "SharedUI/ViewModel/JourneyViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1822",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Counter.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1822",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Journey.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1822",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Settings.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1822",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Solution.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1822",
+      "path": "SharedUI/ViewModel/MauiViewModel.Session.cs",
+      "count": 3
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1822",
+      "path": "SharedUI/ViewModel/MauiViewModel.SignalBox.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1822",
+      "path": "SharedUI/ViewModel/StationViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1822",
+      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
+      "count": 4
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1822",
+      "path": "SharedUI/ViewModel/WorkflowViewModel.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1823",
+      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/Service/MobileSolutionStore.cs",
+      "count": 10
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/Service/PhotoStorageService.cs",
+      "count": 5
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/Service/SolutionRemoteLoader.cs",
+      "count": 8
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/Service/TrackPlanFeedbackHighlighter.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/ViewModel/Action/CommandViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Counter.cs",
+      "count": 4
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
+      "count": 6
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.OperatingState.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.RestApiStatus.cs",
+      "count": 4
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Settings.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Signals.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.SolutionAutoSave.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Wagons.cs",
+      "count": 19
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Z21.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/ViewModel/MauiViewModel.BackgroundService.cs",
+      "count": 3
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/ViewModel/MauiViewModel.cs",
+      "count": 15
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/ViewModel/MauiViewModel.MobaflowConnection.cs",
+      "count": 10
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/ViewModel/MauiViewModel.TabUpdates.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/ViewModel/MonitorPageViewModel.cs",
+      "count": 4
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/ViewModel/RecorderPageViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/ViewModel/TimetablePageViewModel.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/ViewModel/TrackPlanViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
+      "count": 28
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "SharedUI/ViewModel/WorkflowLibraryViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1849",
+      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1859",
+      "path": "SharedUI/Extensions/UiDispatcherServiceCollectionExtensions.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1859",
+      "path": "SharedUI/ViewModel/MauiViewModel.ControlTab.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1859",
+      "path": "SharedUI/ViewModel/MauiViewModel.SignalBox.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1859",
+      "path": "SharedUI/ViewModel/WorkflowLibraryViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "SharedUI/Service/MobileSolutionStore.cs",
+      "count": 3
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "SharedUI/Service/PhotoStorageService.cs",
+      "count": 3
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "SharedUI/Service/SolutionRemoteLoader.cs",
+      "count": 4
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Counter.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.RestApiStatus.cs",
+      "count": 4
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Wagons.cs",
+      "count": 12
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "SharedUI/ViewModel/MauiViewModel.cs",
+      "count": 4
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "SharedUI/ViewModel/MauiViewModel.MobaflowConnection.cs",
+      "count": 3
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
+      "count": 10
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2007",
+      "path": "SharedUI/Service/PhotoStorageService.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2007",
+      "path": "SharedUI/Service/SolutionRemoteLoader.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2007",
+      "path": "SharedUI/ViewModel/Action/AudioViewModel.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2007",
+      "path": "SharedUI/ViewModel/LocomotiveManagementViewModel.cs",
+      "count": 11
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2007",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2007",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Solution.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2007",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Wagons.cs",
+      "count": 4
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2007",
+      "path": "SharedUI/ViewModel/MonitorPageViewModel.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2007",
+      "path": "SharedUI/ViewModel/RecorderPageViewModel.cs",
+      "count": 16
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2007",
+      "path": "SharedUI/ViewModel/RollingStockMaintenanceViewModel.cs",
+      "count": 3
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2007",
+      "path": "SharedUI/ViewModel/TimetablePageViewModel.cs",
+      "count": 32
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2007",
+      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
+      "count": 19
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2007",
+      "path": "SharedUI/ViewModel/WorkflowLibraryViewModel.cs",
+      "count": 7
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2213",
+      "path": "SharedUI/ViewModel/MauiViewModel.BackgroundService.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2213",
+      "path": "SharedUI/ViewModel/TimetablePageViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "SharedUI/ViewModel/SpeakerEngineConfigurationViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2234",
+      "path": "SharedUI/Service/SolutionRemoteLoader.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA5394",
+      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0005",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Workflow.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0005",
+      "path": "SharedUI/ViewModel/MauiViewModel.BackgroundService.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0005",
+      "path": "SharedUI/ViewModel/MauiViewModel.ControlTab.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0005",
+      "path": "SharedUI/ViewModel/MauiViewModel.MobaflowConnection.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0005",
+      "path": "SharedUI/ViewModel/MauiViewModel.Session.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0005",
+      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0005",
+      "path": "SharedUI/ViewModel/WorkflowSteps/WorkflowStepViewModels.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0007",
+      "path": "SharedUI/Helper/Z21DccCommandDecoder.cs",
+      "count": 8
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0007",
+      "path": "SharedUI/Service/TrackPlanFeedbackHighlighter.cs",
+      "count": 11
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0007",
+      "path": "SharedUI/ViewModel/Action/CommandViewModel.cs",
+      "count": 5
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0007",
+      "path": "SharedUI/ViewModel/JourneyViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0007",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Counter.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0007",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Z21.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0007",
+      "path": "SharedUI/ViewModel/MauiViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0007",
+      "path": "SharedUI/ViewModel/PageLayoutViewModel.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0007",
+      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
+      "count": 7
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0007",
+      "path": "SharedUI/ViewModel/WorkflowViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0019",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Workflow.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0028",
+      "path": "SharedUI/ViewModel/MauiViewModel.SignalBox.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0028",
+      "path": "SharedUI/ViewModel/MonitorPageViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0028",
+      "path": "SharedUI/ViewModel/PageLayoutViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0028",
+      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
+      "count": 5
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0053",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "SharedUI/Service/FeedbackCounterEngine.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "SharedUI/Service/LocalRuntimeCommandGateway.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "SharedUI/Service/RecordingRuntimeCommandGateway.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "SharedUI/Service/TrackPlanFeedbackHighlighter.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "SharedUI/Service/UiThreadEventBusDecorator.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "SharedUI/ViewModel/ColumnViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "SharedUI/ViewModel/FunctionButtonViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "SharedUI/ViewModel/JourneyFeedbackStepViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "SharedUI/ViewModel/LocomotiveManagementViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "SharedUI/ViewModel/PageLayoutViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "SharedUI/ViewModel/SbElementViewModel.cs",
+      "count": 5
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "SharedUI/ViewModel/TimetablePageViewModel.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "SharedUI/ViewModel/VehicleItemViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0330",
+      "path": "SharedUI/Service/TrackPlanFeedbackHighlighter.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0330",
+      "path": "SharedUI/ViewModel/MauiViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0330",
+      "path": "SharedUI/ViewModel/MonitorPageViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0360",
+      "path": "SharedUI/ViewModel/JourneyViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE2002",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.LayoutPanels.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE2002",
+      "path": "SharedUI/ViewModel/SignalBoxPlanViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/EventManagerViewModel.cs",
+      "count": 5
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/FeatureToggleItemViewModel.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/FunctionButtonViewModel.cs",
+      "count": 4
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/InPortStatistic.cs",
+      "count": 7
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/LocomotiveManagementViewModel.cs",
+      "count": 5
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/LocomotiveViewModel.cs",
+      "count": 6
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Counter.cs",
+      "count": 8
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
+      "count": 33
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Diagnostics.cs",
+      "count": 4
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.HealthStatus.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.OperatingState.cs",
+      "count": 12
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.RestApiStatus.cs",
+      "count": 4
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Stations.cs",
+      "count": 3
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.SyncDiagnostics.cs",
+      "count": 14
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Train.cs",
+      "count": 3
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Wagons.cs",
+      "count": 6
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Z21.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/MauiViewModel.cs",
+      "count": 19
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/MauiViewModel.MobaflowConnection.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/MauiViewModel.SignalBox.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/MonitorPageViewModel.cs",
+      "count": 3
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/PageColumnWidthsViewModel.cs",
+      "count": 20
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/ProjectViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/RecorderPageViewModel.cs",
+      "count": 23
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/RollingStockMaintenanceViewModel.cs",
+      "count": 23
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/SignalBoxPlanViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/SolutionViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/StationViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/TimetablePageViewModel.cs",
+      "count": 10
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
+      "count": 29
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/VehicleItemViewModel.cs",
+      "count": 3
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/WagonViewModel.cs",
+      "count": 5
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/WorkflowLibraryViewModel.cs",
+      "count": 6
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0056",
+      "path": "SharedUI/ViewModel/StationViewModel.cs",
+      "count": 1
+    },
+    {
+      "project": "Sound",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1014",
+      "path": "<no-location>",
+      "count": 1
+    },
+    {
+      "project": "Sound",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "Sound/PiperSpeechEngine.cs",
+      "count": 3
+    },
+    {
+      "project": "Sound",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "Sound/SpeechHealthCheck.cs",
+      "count": 2
+    },
+    {
+      "project": "Sound",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "Sound/SystemSpeechEngine.cs",
+      "count": 1
+    },
+    {
+      "project": "Sound",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "Sound/PiperSpeechEngine.cs",
+      "count": 1
+    },
+    {
+      "project": "Sound",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1304",
+      "path": "Sound/SystemSpeechEngine.cs",
+      "count": 2
+    },
+    {
+      "project": "Sound",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1416",
+      "path": "Sound/PiperSpeechEngine.cs",
+      "count": 3
+    },
+    {
+      "project": "Sound",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1416",
+      "path": "Sound/SpeakerEngineFactory.cs",
+      "count": 1
+    },
+    {
+      "project": "Sound",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Sound/SpeakerEngineFactory.cs",
+      "count": 1
+    },
+    {
+      "project": "Sound",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Sound/PiperSpeechEngine.cs",
+      "count": 6
+    },
+    {
+      "project": "Sound",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Sound/SoundManager.cs",
+      "count": 4
+    },
+    {
+      "project": "Sound",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Sound/SpeakerEngineFactory.cs",
+      "count": 3
+    },
+    {
+      "project": "Sound",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Sound/SpeechHealthCheck.cs",
+      "count": 7
+    },
+    {
+      "project": "Sound",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1848",
+      "path": "Sound/SystemSpeechEngine.cs",
+      "count": 9
+    },
+    {
+      "project": "Sound",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1859",
+      "path": "Sound/SpeakerEngineFactory.cs",
+      "count": 1
+    },
+    {
+      "project": "Sound",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "Sound/PiperSpeechEngine.cs",
+      "count": 4
+    },
+    {
+      "project": "Sound",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "Sound/SoundManager.cs",
+      "count": 3
+    },
+    {
+      "project": "Sound",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "Sound/SpeakerEngineFactory.cs",
+      "count": 3
+    },
+    {
+      "project": "Sound",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "Sound/SpeechHealthCheck.cs",
+      "count": 2
+    },
+    {
+      "project": "Sound",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1873",
+      "path": "Sound/SystemSpeechEngine.cs",
+      "count": 5
+    },
+    {
+      "project": "Sound",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0007",
+      "path": "Sound/SpeechHealthCheck.cs",
+      "count": 1
+    },
+    {
+      "project": "Sound",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "Sound/PiperSpeechEngine.cs",
+      "count": 1
+    },
+    {
+      "project": "Sound",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0290",
+      "path": "Sound/SystemSpeechEngine.cs",
+      "count": 1
+    },
+    {
+      "project": "TrackLibrary.Base",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1014",
+      "path": "<no-location>",
+      "count": 1
+    },
+    {
+      "project": "TrackLibrary.Base",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1040",
+      "path": "TrackLibrary.Base/TrackPathGeometry.cs",
+      "count": 1
+    },
+    {
+      "project": "TrackLibrary.Base",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1716",
+      "path": "TrackLibrary.Base/End.cs",
+      "count": 1
+    },
+    {
+      "project": "TrackLibrary.PikoA",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "TrackLibrary.PikoA/TrackPlan.cs",
+      "count": 2
+    },
+    {
+      "project": "TrackLibrary.PikoA",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
+      "path": "TrackLibrary.PikoA/TrackPlanEditorDocument.cs",
+      "count": 2
+    },
+    {
+      "project": "TrackLibrary.PikoA",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1003",
+      "path": "TrackLibrary.PikoA/EditableTrackPlan.cs",
+      "count": 1
+    },
+    {
+      "project": "TrackLibrary.PikoA",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1014",
+      "path": "<no-location>",
+      "count": 1
+    },
+    {
+      "project": "TrackLibrary.PikoA",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1034",
+      "path": "TrackLibrary.PikoA/EditableTrackPlan.cs",
+      "count": 1
+    },
+    {
+      "project": "TrackLibrary.PikoA",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1034",
+      "path": "TrackLibrary.PikoA/SegmentLocalPathBuilder.cs",
+      "count": 4
+    },
+    {
+      "project": "TrackLibrary.PikoA",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1034",
+      "path": "TrackLibrary.PikoA/SegmentPortGeometry.cs",
+      "count": 1
+    },
+    {
+      "project": "TrackLibrary.PikoA",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1034",
+      "path": "TrackLibrary.PikoA/TrackPlanInteractionService.cs",
+      "count": 2
+    },
+    {
+      "project": "TrackLibrary.PikoA",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1034",
+      "path": "TrackLibrary.PikoA/TrackPlanSnapHelper.cs",
+      "count": 1
+    },
+    {
+      "project": "TrackLibrary.PikoA",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1034",
+      "path": "TrackLibrary.PikoA/TrackPlanValidationHelper.cs",
+      "count": 4
+    },
+    {
+      "project": "TrackLibrary.PikoA",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "TrackLibrary.PikoA/EditableTrackPlan.cs",
+      "count": 4
+    },
+    {
+      "project": "TrackLibrary.PikoA",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "TrackLibrary.PikoA/Rendering/TrackPlanSvgRenderer.cs",
+      "count": 1
+    },
+    {
+      "project": "TrackLibrary.PikoA",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "TrackLibrary.PikoA/SegmentLocalPathBuilder.cs",
+      "count": 1
+    },
+    {
+      "project": "TrackLibrary.PikoA",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "TrackLibrary.PikoA/SegmentPortGeometry.cs",
+      "count": 4
+    },
+    {
+      "project": "TrackLibrary.PikoA",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "TrackLibrary.PikoA/TrackPlan.cs",
+      "count": 1
+    },
+    {
+      "project": "TrackLibrary.PikoA",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1305",
+      "path": "TrackLibrary.PikoA/Rendering/TrackPlanSvgRenderer.cs",
+      "count": 4
+    },
+    {
+      "project": "TrackLibrary.PikoA",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1822",
+      "path": "TrackLibrary.PikoA/Rendering/TrackPlanSvgRenderer.cs",
+      "count": 2
+    },
+    {
+      "project": "TrackLibrary.PikoA",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1859",
+      "path": "TrackLibrary.PikoA/TrackPlanValidationHelper.cs",
+      "count": 2
+    },
+    {
+      "project": "TrackLibrary.PikoA",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1860",
+      "path": "TrackLibrary.PikoA/Rendering/TrackPlanSvgRenderer.cs",
+      "count": 1
+    },
+    {
+      "project": "TrackLibrary.PikoA",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0007",
+      "path": "TrackLibrary.PikoA/Rendering/TrackPlanSvgRenderer.cs",
+      "count": 23
+    },
+    {
+      "project": "TrackLibrary.PikoA",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0007",
+      "path": "TrackLibrary.PikoA/TrackPlanValidationHelper.cs",
+      "count": 4
+    },
+    {
+      "project": "TrackLibrary.PikoA",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0028",
+      "path": "TrackLibrary.PikoA/TrackPlan.cs",
+      "count": 2
+    },
+    {
+      "project": "TrackPlan.Renderer",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1014",
+      "path": "<no-location>",
+      "count": 1
+    },
+    {
+      "project": "TrackPlan.Renderer",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1062",
+      "path": "TrackPlan.Renderer/PathToSvgConverter.cs",
+      "count": 2
+    },
+    {
+      "project": "TrackPlan.Renderer",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1305",
+      "path": "TrackPlan.Renderer/PathToSvgConverter.cs",
+      "count": 4
+    },
+    {
+      "project": "TrackPlan.Renderer",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1305",
+      "path": "TrackPlan.Renderer/PlacedTrackPlanSvgRenderer.cs",
+      "count": 10
+    },
+    {
+      "project": "TrackPlan.Renderer",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1724",
+      "path": "TrackPlan.Renderer/TrackPlan.cs",
+      "count": 1
+    },
+    {
+      "project": "TrackPlan.Renderer",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1822",
+      "path": "TrackPlan.Renderer/PlacedTrackPlanSvgRenderer.cs",
+      "count": 1
+    },
+    {
+      "project": "TrackPlan.Renderer",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1822",
+      "path": "TrackPlan.Renderer/SvgExporter.cs",
+      "count": 1
+    },
+    {
+      "project": "TrackPlan.Renderer",
+      "targetFramework": "net10.0",
+      "ruleId": "IDE0007",
+      "path": "TrackPlan.Renderer/PlacedTrackPlanSvgRenderer.cs",
+      "count": 4
+    }
+  ]
+}

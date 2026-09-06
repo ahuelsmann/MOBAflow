@@ -25,6 +25,7 @@ Use [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md) for broader context and v
   [UiThreadEventBusDecorator](../../SharedUI/Service/UiThreadEventBusDecorator.cs).
   Its `Publish` queues through `InvokeOnUiLowPriority`; subscribers need no second dispatch.
   This guarantee does not cover arbitrary .NET events or a bare EventBus in backend tests.
+  Preserve the bounded FIFO publication in [Z21EventPipeline](../../Backend/Service/Z21EventPipeline.cs).
 
 ## DI and lifecycle
 
@@ -41,9 +42,10 @@ Use [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md) for broader context and v
 ## Data and workflows
 
 - [MasterDataStore](../../Backend/Data/MasterDataStore.cs) owns shipped `data.json` master data.
-- [WorkflowService](../../Backend/Service/WorkflowService.cs) executes through `IActionExecutor` and handlers in
-  `Backend/Manager/`. `ExecuteAsync` accepts `Workflow`, `ActionExecutionContext` and `WorkflowExecutionOptions`;
-  preserve sequential/parallel semantics and `StopOnFirstActionFailure` behavior.
+- [WorkflowService](../../Backend/Service/WorkflowService.cs) provides Workflow 2.0 execution with validation,
+  effect planning, conditions and traces, using `IActionExecutor` and handlers in `Backend/Manager/`.
+  Inspect its request/result contracts and partials before changing execution. The legacy overload taking
+  `WorkflowExecutionOptions` is a compatibility adapter; do not assume old failure options still control execution.
 - Keep configuration in `Common/Configuration/`. Reuse `Common/Path/PhotoPathHelper.cs` for photo paths and
   `Common/Discovery/DiscoveryResponseParser.cs` for `MOBAFLOW_REST_API|ip|port` discovery messages.
 - Platform-neutral UI state can live in `Common`, such as `Common/Display/LedMatrix5x5State.cs`;

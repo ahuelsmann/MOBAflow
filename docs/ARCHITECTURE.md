@@ -10,41 +10,36 @@ configuration files, build/deploy commands, and documentation findings, see
 MOBAflow is built on **Clean Architecture** principles with a clear
 separation of concerns:
 
-```text
-┌──────────────────────────────────────────────┐
-│                   Presentation Layer         │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
-│  │MOBAflow  │  │MOBAsmart │  │  MOBApi  │    │
-│  │(Windows) │  │(Android) │  │  (REST)  │    │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘    │
-└─────────┼────────────┼────────────┼──────────┘
-          │            │            │ 
-          └────────────┼────────────┼
-                       │            │
-          ┌────────────┴────────────┴────────────┐
-          │        Presentation Layer            │
-          │     (SharedUI ViewModels)            │
-          │  MVVM, Commands, Observable Props    │
-          └────────────┬────────────┬────────────┘
-                       │            │
-┌──────────────────────┴────────────┴─────────────────────┐
-│              Domain & Business Logic Layer              │
-│  ┌────────────┐  ┌──────────────┐  ┌──────────────┐     │
-│  │  Domain    │  │   Backend    │  │  TrackPlan   │     │
-│  │ (Models)   │  │  (Services)  │  │  (Geometry)  │     │
-│  └────────────┘  └──────────────┘  └──────────────┘     │
-└──────────────────────┬──────────────────────────────────┘
-                       │
-            ┌──────────┴──────────┐
-            │                     │
-        ┌───────────┐        ┌────────────┐
-        │ External  │        │ Logging &  │
-        │ Services  │        │ Config     │
-        │ (Z21 UDP) │        │ (Serilog)  │
-        └───────────┘        └────────────┘
+```mermaid
+flowchart TD
+    WinUI["MOBAflow Desktop"] --> SharedUI
+    MAUI["MOBAsmart"] --> SharedUI
+    SharedUI --> Runtime["Backend / IMobaRuntime"]
+    Runtime --> Domain
+    Runtime --> Z21["Z21 UDP"]
+    WinUI <-->|"REST + SignalR"| API["MOBApi caches and bridge"]
+    MAUI <-->|"REST + SignalR"| API
+    MAUI -->|"direct UDP"| Z21
+    API --> Common
 ```
 
+MOBApi is deliberately a thin standalone host that references `Common`, not
+`SharedUI` or `Backend`. MOBAflow publishes the current solution and runtime
+snapshots to it and consumes remote commands from it.
+
 ## 🏗️ Architecture Layers
+
+### Track-plan dependency rule
+
+Track-plan code follows an explicit inward dependency direction:
+
+`TrackLibrary.Base contracts → TrackPlan.Renderer → platform adapters`
+
+`TrackLibrary.PikoA` implements catalogue-specific geometry and may depend on
+`TrackLibrary.Base`; the neutral renderer must never reference Piko A. Win2D
+conversion stays in the Windows host. Runtime projection of EventBus feedback,
+timers and railroad state belongs to `Backend/Service/TrackPlan`, not `SharedUI`.
+`Test/TrackPlanRenderer/TrackLayoutArchitectureTests.cs` protects these rules.
 
 ### 1. **Domain Layer** (`Domain/`)
 
@@ -58,12 +53,11 @@ separation of concerns:
 
 **Key Classes:**
 
-```csharp
-// Immutable domain models
-public record Solution(string Name, List<Project> Projects, ...);
-public record Journey(int Id, string Name, List<Station> Stations, ...);
-public record Workflow(int Id, string Name, List<WorkflowAction> Actions, ...);
-```
+The persisted domain uses mutable POCO classes such as `Solution`, `Project`,
+`Journey`, `Station`, `Workflow`, the typed `WorkflowStep` hierarchy, and
+`WorkflowAction`. A Workflow 2.0 graph stores a stable entry-step ID, explicit
+step-ID edges, and a deterministic editor/serialization order. Runtime snapshots
+are the immutable boundary exposed to UI consumers.
 
 **Characteristics:**
 
@@ -82,8 +76,11 @@ public record Workflow(int Id, string Name, List<WorkflowAction> Actions, ...);
 
 - IZ21 (Z21 Control Station Communication)
 - IMobaRuntime / MobaRuntimeService (authoritative runtime owner)
-- WorkflowService (Action Execution)
-- ActionExecutor (Action Implementation)
+- `WorkflowService` (validated graph execution and dry-run planning)
+- `WorkflowValidator`, `WorkflowConditionEvaluator`, and `WorkflowEffectPlanner`
+- `WorkflowExecutionCoordinator` (per-feedback-source FIFO execution)
+- `WorkflowTraceStore` (bounded in-memory lifecycle projection)
+- `ActionExecutor` and typed action handlers (live effects only)
 - `MasterDataStore` (shared cities/locomotives/multiplex master JSON, e.g. `data.json`)
 - `ActiveProjectContext` (runtime project activation inside `MobaRuntimeService`)
 - Runtime Snapshots (MobaRuntimeSnapshot, JourneyRuntimeSnapshot)
@@ -93,25 +90,31 @@ public record Workflow(int Id, string Name, List<WorkflowAction> Actions, ...);
 **Key Interfaces:**
 
 ```csharp
-public interface IZ21
+public interface IZ21 : IZ21Connection, ILocoControl, IAccessoryControl, IZ21Diagnostics
 {
-    Task ConnectAsync(string ipAddress);
-    Task SetTrackPowerAsync(bool on);
-    Task SetLocomotiveSpeedAsync(int address, int speed);
-    event EventHandler<FeedbackReceivedEventArgs> FeedbackReceived;
 }
 
 public interface IMobaRuntime
 {
     MobaRuntimeSnapshot Current { get; }
-    Task ActivateProjectAsync(Project editableProject);
-    Task ConnectAsync();
-    Task SetTrackPowerAsync(bool isOn);
+    Task ActivateProjectAsync(Project editableProject, CancellationToken cancellationToken = default);
+    Task ConnectAsync(CancellationToken cancellationToken = default);
+    Task SetTrackPowerAsync(bool isOn, CancellationToken cancellationToken = default);
 }
 
 public interface IActionExecutor
 {
-    Task ExecuteActionAsync(WorkflowAction action, ExecutionContext context);
+    Task ExecuteAsync(
+        WorkflowAction action,
+        ActionExecutionContext context,
+        CancellationToken cancellationToken = default);
+}
+
+public interface IWorkflowService
+{
+    Task<WorkflowExecutionResult> ExecuteAsync(
+        WorkflowExecutionRequest request,
+        CancellationToken cancellationToken = default);
 }
 ```
 
@@ -193,7 +196,7 @@ IZ21 / JourneyManager / WorkflowService
 - Publishes immutable runtime projections via `MobaRuntimeSnapshot`
   (system, journeys, locomotives) and raises `FeedbackReceived` for UI consumers
 - Implementation is split into partial files under `Backend/Service/`
-  (`RuntimeApi`, `Z21Handlers`, `AutoConnect`, `StatusFormatting`, core snapshot/ctor)
+  (`RuntimeApi`, `Z21Handlers`, `AutoConnect`, and the core snapshot/constructor file)
 
 **ViewModel wiring:**
 
@@ -212,6 +215,42 @@ IZ21 / JourneyManager / WorkflowService
 - Entity Ids are preserved by the round-trip, so snapshots and journey reset keep
   resolving against the Ids the editor exposes.
 - Covered by `Test/Backend/MobaRuntimeServiceProjectIsolationTests.cs`.
+
+### Workflow 2.0 execution boundary
+
+Workflow execution is a validation-gated, cancellable graph traversal:
+
+```text
+ordered Z21 feedback
+  -> JourneyManager captures immutable execution context and correlation
+  -> WorkflowExecutionCoordinator (FIFO per feedback source)
+  -> WorkflowValidator
+  -> WorkflowService
+       -> condition / delay / parallel / nested / terminate steps
+       -> WorkflowEffectPlanner (dry run) OR ActionExecutor (live)
+  -> correlated WorkflowLifecycleEvent records
+  -> WorkflowTraceStore -> WorkflowLibraryViewModel
+```
+
+- General graph cycles and nested-workflow recursion are rejected. Retries are
+  bounded to 10 additional attempts and nested execution to 16 levels.
+- Step error policy overrides the workflow default. The terminal behaviors are
+  `Stop`, `Continue`, and `FailureBranch`; retry is an optional bounded modifier.
+- Parallel branches launch in persisted order, join explicitly, and reduce
+  results deterministically. Validation rejects ambiguous exclusive writes to
+  the same described resource.
+- Dry-run traverses the same validated graph but calls `WorkflowEffectPlanner`
+  and never a live action handler. Delay steps do not wait in dry-run mode.
+- Cancellation propagates through graph traversal, delays, handlers, nested
+  workflows, queued feedback execution, reset, project replacement, disconnect,
+  and shutdown.
+- Lifecycle events carry source correlation, execution/parent IDs, workflow and
+  step IDs, monotonic sequence, mode, attempt, timestamp, elapsed time, and a
+  sanitized result/detail. The trace store retains at most 100 executions and
+  10,000 entries by default and is not persisted in `solution.json`.
+- `WorkflowLibraryViewModel` is the single workflow catalog/editor state shared
+  by EventManagerPage and WorkflowsPage. It reuses the authoritative wrappers in
+  `ProjectViewModel.Workflows`; page code-behind only adapts WinUI input.
 
 **Planned refactoring (`MainWindowViewModel` decomposition):**
 
@@ -348,9 +387,11 @@ User clicks Button (MOBAflow/MOBAsmart)
   ↓
 IMobaRuntime (e.g. ConnectAsync, SetTrackPowerAsync, SetLocomotiveDriveAsync)
   ↓
-IZ21 / JourneyManager / WorkflowService as appropriate
+IZ21 / JourneyManager / WorkflowExecutionCoordinator / WorkflowService as appropriate
   ↓
-ActionExecutor.ExecuteAsync() (workflow actions)
+WorkflowValidator (mandatory execution gate)
+  ↓
+WorkflowEffectPlanner (dry run) OR ActionExecutor.ExecuteAsync() (live actions)
   ├─ Set Track Power
   ├─ Control Locomotive
   ├─ Play Sound
@@ -381,6 +422,8 @@ services.AddSingleton<MasterDataStore>();    // Master data (data.json)
 services.AddSingleton<IZ21>(/* z21 impl */); // Backend Service
 services.AddSingleton<IMobaRuntime, MobaRuntimeService>();
 services.AddSingleton<IWorkflowService, WorkflowService>();
+services.AddSingleton<IWorkflowExecutionCoordinator, WorkflowExecutionCoordinator>();
+services.AddSingleton<IWorkflowTraceStore, WorkflowTraceStore>();
 
 // Presentation Layer
 services.AddSingleton<MainWindowViewModel>(); // Shared ViewModel
@@ -422,6 +465,17 @@ MainWindowViewModel(
   the others.
 - Failures are logged at **error** level; when a debugger is attached, an extra
   `Debug.WriteLine` aids local diagnosis (see `Common/Events/IEventBus.cs`).
+
+### Recorder isolation boundary
+
+- Live capture occurs in `RecordingEventBusDecorator` before UI dispatch and persists only explicitly mapped payloads.
+- Explicit WinUI, MOBAsmart, RuntimeHub, and REST-fallback commands pass through `IRuntimeCommandGateway`; `RecordingRuntimeCommandGateway` records sanitized correlated request/outcome entries around the concrete local or mobile gateway.
+- Command failures retain only the bounded outcome `failed` or `cancelled`; exception messages, stack traces, paths, endpoints, credentials, and raw payloads never cross the recording boundary.
+- Replay never publishes recorded events to the root EventBus and never calls `IMobaRuntime` or `IZ21`.
+- `RecordingReplayService` schedules journal entries against a freshly constructed, in-memory `IsolatedReplayRuntime`.
+- The isolated runtime factory does not receive the production service provider or any external-effect adapter.
+- A separate read-only safety gate blocks play, step, and seek while the production runtime reports an active Z21 connection and rechecks before each application.
+- Pause cancels the current scheduled wait; seek and reset rebuild isolated state from position zero without changing production state.
 
 ### Graceful Degradation
 
@@ -531,4 +585,4 @@ The architecture supports:
 
 ---
 
-**Last Updated:** May 2026
+**Last Updated:** July 2026

@@ -1,0 +1,81 @@
+{
+  "lanes": [
+    {
+      "name": "domain",
+      "status": "active",
+      "test-directories": ["Test/Domain"],
+      "test-files": [
+        "Test/Unit/DomainDefaultsTests.cs",
+        "Test/Unit/NewSolutionTests.cs",
+        "Test/Unit/SolutionInstanceTests.cs",
+        "Test/Unit/SolutionTest.cs"
+      ],
+      "production-projects": ["Domain/Domain.csproj"]
+    },
+    {
+      "name": "backend",
+      "status": "planned",
+      "test-directories": ["Test/Backend", "Test/Integration"],
+      "test-files": ["Test/Z21DccCommandDecoderTests.cs"],
+      "production-projects": ["Backend/Backend.csproj"]
+    },
+    {
+      "name": "common",
+      "status": "planned",
+      "test-directories": ["Test/Common"],
+      "production-projects": ["Common/Common.csproj"]
+    },
+    {
+      "name": "shared-ui",
+      "status": "planned",
+      "test-directories": ["Test/SharedUI"],
+      "production-projects": ["SharedUI/SharedUI.csproj"]
+    },
+    {
+      "name": "api",
+      "status": "planned",
+      "test-directories": ["Test/MOBApi"],
+      "production-projects": ["MOBApi/MOBApi.csproj"]
+    },
+    {
+      "name": "sound",
+      "status": "planned",
+      "test-directories": ["Test/Sound"],
+      "test-files": [
+        "Test/Unit/PiperSpeechEngineTest.cs",
+        "Test/Unit/SystemSpeechEngineTest.cs"
+      ],
+      "production-projects": ["Sound/Sound.csproj"]
+    },
+    {
+      "name": "display",
+      "status": "planned",
+      "test-directories": ["Test/MOBAdisplay"],
+      "production-projects": ["MOBAdisplay/MOBAdisplay.csproj"]
+    },
+    {
+      "name": "track-plan-renderer",
+      "status": "planned",
+      "test-directories": ["Test/TrackPlanRenderer"],
+      "production-projects": ["TrackPlan.Renderer/TrackPlan.Renderer.csproj"]
+    },
+    {
+      "name": "track-library-piko-a",
+      "status": "planned",
+      "test-directories": ["Test/TrackLibrary.PikoA"],
+      "production-projects": ["TrackLibrary.PikoA/TrackLibrary.PikoA.csproj"]
+    },
+    {
+      "name": "win-ui",
+      "status": "planned",
+      "test-directories": ["Test/MOBAflow", "Test/WinUI"],
+      "production-projects": ["MOBAflow/MOBAflow.csproj"]
+    },
+    {
+      "name": "maui",
+      "status": "planned",
+      "test-directories": ["Test/MOBAsmart"],
+      "production-projects": ["MOBAsmart/MOBAsmart.csproj"]
+    }
+  ]
+}

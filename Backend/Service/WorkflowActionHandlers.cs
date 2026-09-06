@@ -21,8 +21,12 @@ public sealed class CommandWorkflowActionHandler(ILogger<CommandWorkflowActionHa
 {
     public ActionType ActionType => ActionType.Command;
 
-    public async Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context)
+    public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context) =>
+        ExecuteAsync(action, context, CancellationToken.None);
+
+    public async Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         if (action.Command == null)
             throw new ArgumentException("Command action requires a command payload");
 
@@ -33,7 +37,7 @@ public sealed class CommandWorkflowActionHandler(ILogger<CommandWorkflowActionHa
         }
 
         logger?.LogDebug("Sending command bytes: {ByteCount}", bytes.Length);
-        await context.Z21.SendCommandAsync(bytes).ConfigureAwait(false);
+        await context.Z21.SendCommandAsync(bytes, cancellationToken).ConfigureAwait(false);
         logger?.LogDebug("Command sent: {ByteCount} bytes", bytes.Length);
     }
 }
@@ -49,8 +53,12 @@ public sealed class AudioWorkflowActionHandler(
 
     public ActionType ActionType => ActionType.Audio;
 
-    public async Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context)
+    public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context) =>
+        ExecuteAsync(action, context, CancellationToken.None);
+
+    public async Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         if (context.SoundPlayer == null)
             throw new ArgumentException("Audio action requires SoundPlayer");
 
@@ -67,7 +75,7 @@ public sealed class AudioWorkflowActionHandler(
             throw new FileNotFoundException(error, filePath);
         }
 
-        await context.SoundPlayer.PlayAsync(filePath).ConfigureAwait(false);
+        await context.SoundPlayer.PlayAsync(filePath, cancellationToken).ConfigureAwait(false);
         logger?.LogDebug("Audio played: {FilePath}", filePath);
     }
 }
@@ -81,8 +89,12 @@ public sealed class AnnouncementWorkflowActionHandler(
 {
     public ActionType ActionType => ActionType.Announcement;
 
-    public async Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context)
+    public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context) =>
+        ExecuteAsync(action, context, CancellationToken.None);
+
+    public async Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var templateText = action.Announcement?.Message ?? context.JourneyTemplateText;
         if (string.IsNullOrEmpty(templateText))
         {
@@ -113,7 +125,7 @@ public sealed class AnnouncementWorkflowActionHandler(
             templateText,
             context.CurrentStation,
             stationIndex,
-            CancellationToken.None,
+            cancellationToken,
             action.Name).ConfigureAwait(false);
 
         logger?.LogInformation("Announcement executed for action '{ActionName}': {AnnouncementText}", action.Name, announcementText);
@@ -128,8 +140,12 @@ public sealed class TrainDestinationDisplayWorkflowActionHandler(
 {
     public ActionType ActionType => ActionType.TrainDestinationDisplay;
 
-    public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context)
+    public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context) =>
+        ExecuteAsync(action, context, CancellationToken.None);
+
+    public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         logger?.LogWarning(
             "Train destination display action '{ActionName}' skipped: display service not configured",
             action.Name);
@@ -144,8 +160,12 @@ public sealed class SelectSignalAspectWorkflowActionHandler : IWorkflowActionHan
 {
     public ActionType ActionType => ActionType.SelectSignalAspect;
 
-    public async Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context)
+    public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context) =>
+        ExecuteAsync(action, context, CancellationToken.None);
+
+    public async Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var payload = action.SelectSignalAspect ?? throw new ArgumentException("Select signal aspect action requires a signal aspect payload");
 
         var command = MultiplexerCommandResolver.Resolve(
@@ -158,7 +178,8 @@ public sealed class SelectSignalAspectWorkflowActionHandler : IWorkflowActionHan
                 command.DccAddress,
                 command.Output,
                 command.Activate,
-                false)
+                false,
+                cancellationToken)
             .ConfigureAwait(false);
     }
 }
@@ -174,9 +195,13 @@ public sealed class ExecuteScriptWorkflowActionHandler(
 
     public ActionType ActionType => ActionType.ExecuteScript;
 
-    public async Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context)
+    public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context) =>
+        ExecuteAsync(action, context, CancellationToken.None);
+
+    public async Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context, CancellationToken cancellationToken)
     {
         _ = context;
+        cancellationToken.ThrowIfCancellationRequested();
 
         var payload = action.PowerShell ?? throw new ArgumentException("ExecuteScript action requires a PowerShell payload");
         if (string.IsNullOrWhiteSpace(payload.ScriptPath))
@@ -203,9 +228,12 @@ public sealed class ExecuteScriptWorkflowActionHandler(
         logger?.LogInformation("Executing PowerShell action '{ActionName}' with script {ScriptPath}", action.Name, payload.ScriptPath);
 
         process.Start();
-        var outputTask = process.StandardOutput.ReadToEndAsync();
-        var errorTask = process.StandardError.ReadToEndAsync();
-        await process.WaitForExitAsync().ConfigureAwait(false);
+        using var cancellationRegistration = cancellationToken.Register(
+            static state => TryTerminate((Process)state!),
+            process);
+        var outputTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
+        var errorTask = process.StandardError.ReadToEndAsync(cancellationToken);
+        await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
 
         var output = await outputTask.ConfigureAwait(false);
         var error = await errorTask.ConfigureAwait(false);
@@ -228,40 +256,45 @@ public sealed class ExecuteScriptWorkflowActionHandler(
     }
 
     private static string Quote(string value) => $"\"{value.Replace("\"", "\\\"", StringComparison.Ordinal)}\"";
+
+    private static void TryTerminate(Process process)
+    {
+        try
+        {
+            if (!process.HasExited)
+                process.Kill(entireProcessTree: true);
+        }
+        catch (InvalidOperationException)
+        {
+            // The process exited between the cancellation check and termination request.
+        }
+    }
 }
 
 /// <summary>Moves the active journey to the next or an explicitly configured stop.</summary>
-public sealed class ChangeJourneyStopWorkflowActionHandler : IWorkflowActionHandler
+public sealed class ChangeJourneyStopWorkflowActionHandler(IJourneyStopTransitionService? transitionService = null) : IWorkflowActionHandler
 {
+    private readonly IJourneyStopTransitionService _transitionService = transitionService ?? new JourneyStopTransitionService();
+
     public ActionType ActionType => ActionType.ChangeJourneyStop;
 
-    public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context)
+    public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context) =>
+        ExecuteAsync(action, context, CancellationToken.None);
+
+    public Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var payload = action.ChangeJourneyStop ?? throw new ArgumentException("Change journey stop action requires a payload");
         var journey = context.CurrentJourney ?? throw new InvalidOperationException("Change journey stop action requires a journey context");
         var state = context.CurrentJourneySessionState ?? throw new InvalidOperationException("Change journey stop action requires a journey state");
 
-        var targetIndex = payload.MoveToNextStop
-            ? journey.Stations.FindIndex(station => station.Id == state.CurrentStationId) + 1
-            : journey.Stations.FindIndex(station => station.Id == payload.TargetStationId);
-
-        if (targetIndex >= journey.Stations.Count && payload.MoveToNextStop)
+        var result = _transitionService.Apply(journey, state, new JourneyStopTransition
         {
-            state.IsJourneyCompletionRequested = true;
-            return Task.CompletedTask;
-        }
-
-        if (targetIndex < 0 || targetIndex >= journey.Stations.Count)
-        {
-            throw new InvalidOperationException("The configured target stop does not exist in the current journey");
-        }
-
-        var target = journey.Stations[targetIndex];
-        state.CurrentStationId = target.Id;
-        state.CurrentStationName = target.Name;
-        state.CurrentPos = targetIndex;
-        context.CurrentStation = target;
-        context.CurrentStationIndex = targetIndex + 1;
+            Mode = payload.MoveToNextStop ? JourneyStopTransitionMode.Next : JourneyStopTransitionMode.SpecificStation,
+            StationId = payload.TargetStationId
+        });
+        context.CurrentStation = result.CurrentStation;
+        context.CurrentStationIndex = result.CurrentStation == null ? null : journey.Stations.IndexOf(result.CurrentStation) + 1;
         return Task.CompletedTask;
     }
 }

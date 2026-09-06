@@ -1,0 +1,60 @@
+name: Release acceptance
+description: Track the evidence required before a MOBAflow release is published.
+title: "Release acceptance: "
+labels: ["release", "quality"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: SemVer tag being accepted.
+      placeholder: 0.2.0
+    validations:
+      required: true
+  - type: checkboxes
+    id: automated
+    attributes:
+      label: Automated evidence
+      options:
+        - label: Windows quality build and all required tests pass.
+          required: true
+        - label: Cobertura and transitive NuGet vulnerability reports are archived.
+          required: true
+        - label: Release Studio produced the ZIP, MOBApi bundle and SHA-256 checksum from a signed tag.
+          required: true
+  - type: checkboxes
+    id: manual
+    attributes:
+      label: Manual acceptance
+      options:
+        - label: A real older project opens, saves and reopens without data loss.
+          required: true
+        - label: The packaged application and bundled MOBApi start on a clean Windows machine.
+          required: true
+        - label: Local paths, addresses and development settings are absent from the archive.
+          required: true
+        - label: Changelog, release notes and known limitations match the artifact.
+          required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Link the workflow run, draft release and compatibility notes.
+    validations:
+      required: true
+  - type: dropdown
+    id: spec_kit
+    attributes:
+      label: Spec Kit workflow
+      description: Link release acceptance to the relevant specification workflow.
+      options:
+        - Existing Spec Kit feature
+        - Not applicable - release tracking only
+    validations:
+      required: true
+  - type: input
+    id: spec_kit_reference
+    attributes:
+      label: Spec Kit reference
+      description: For existing feature work, provide the specs/NNN-feature-name path or linked issue.
+      placeholder: "For example, specs/001-safe-routing or #123"

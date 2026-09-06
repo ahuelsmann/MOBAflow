@@ -14,15 +14,13 @@ using Moq;
 internal class JourneyMapViewModelTests
 {
     [Test]
-    public void RouteStations_ExcludesVirtualStations()
+    public void RouteStations_ReturnsJourneyStations()
     {
         var journey = new Journey
         {
             Stations =
             [
-                new Station { Name = "Event1", IsVirtual = true },
                 new Station { Name = "Bielefeld" },
-                new Station { Name = "Event2", IsVirtual = true },
                 new Station { Name = "Herford" }
             ]
         };
@@ -34,7 +32,7 @@ internal class JourneyMapViewModelTests
         var viewModel = new JourneyMapViewModel(mainViewModel);
 
         Assert.That(viewModel.RouteStations.Select(station => station.Name), Is.EqualTo(new[] { "Bielefeld", "Herford" }));
-        Assert.That(viewModel.ProgressText, Is.EqualTo("Station 0 of 2"));
+        Assert.That(viewModel.ProgressText, Is.EqualTo("Station 1 of 2"));
     }
 
     private static MainWindowViewModel CreateMainWindowViewModel()

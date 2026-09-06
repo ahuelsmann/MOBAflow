@@ -65,6 +65,10 @@ internal abstract class ViewModelTestBase
         IoServiceMock
             .Setup(s => s.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()))
             .ReturnsAsync((true, "test.json", null));
+
+        IoServiceMock
+            .Setup(s => s.SaveAsAsync(It.IsAny<Solution>()))
+            .ReturnsAsync((true, "test.json", null));
     }
 
     /// <summary>

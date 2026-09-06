@@ -32,7 +32,72 @@ internal sealed class DigitalAddressConflictDetectorTests
             Assert.That(conflict.Start, Is.EqualTo(7));
             Assert.That(conflict.End, Is.EqualTo(7));
             Assert.That(conflict.Owners.Select(owner => owner.Id), Is.EquivalentTo(project.Locomotives.Select(locomotive => locomotive.Id)));
+            Assert.That(conflict.Message, Does.Contain("traction group"));
         });
+    }
+
+    [Test]
+    public void Detect_AllowsWagonsToShareAFunctionDecoderAddress()
+    {
+        var project = new Project
+        {
+            PassengerWagons =
+            [
+                new PassengerWagon { Name = "Coach one", DigitalAddress = 24 },
+                new PassengerWagon { Name = "Coach two", DigitalAddress = 24 }
+            ],
+            GoodsWagons =
+            [
+                new GoodsWagon { Name = "Guard van", DigitalAddress = 24 }
+            ]
+        };
+
+        var report = _detector.Detect(project);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(report.Allocations, Is.Empty);
+            Assert.That(report.Findings, Is.Empty);
+            Assert.That(report.IsValid, Is.True);
+        });
+    }
+
+    [Test]
+    public void Detect_ReportsDuplicateLocomotivePrimaryAddressesInDoubleTraction()
+    {
+        var first = new Locomotive { Name = "Lead", DigitalAddress = 31 };
+        var second = new Locomotive { Name = "Helper", DigitalAddress = 31 };
+        var project = new Project
+        {
+            Locomotives = [first, second],
+            Trains =
+            [
+                new Train
+                {
+                    Name = "Double traction",
+                    IsDoubleTraction = true,
+                    Vehicles =
+                    [
+                        new Vehicle
+                        {
+                            VehicleId = first.Id,
+                            VehicleKind = global::Moba.Domain.Enum.TrainVehicleKind.Locomotive
+                        },
+                        new Vehicle
+                        {
+                            VehicleId = second.Id,
+                            VehicleKind = global::Moba.Domain.Enum.TrainVehicleKind.Locomotive
+                        }
+                    ]
+                }
+            ]
+        };
+
+        var report = _detector.Detect(project);
+
+        Assert.That(
+            report.Findings.Single(finding => finding.Kind == DigitalAddressFindingKind.Conflict).Domain,
+            Is.EqualTo(DigitalAddressDomain.Locomotive));
     }
 
     [Test]
@@ -41,12 +106,19 @@ internal sealed class DigitalAddressConflictDetectorTests
         var project = new Project
         {
             Locomotives = [new Locomotive { Name = "Loco", DigitalAddress = 12 }],
-            SignalBoxPlan = new SignalBoxPlan
+            Interlocking = new InterlockingDefinition
             {
-                Elements =
+                Turnouts =
                 [
-                    new SbSwitch { Name = "Switch", Address = 12 },
-                    new SbDetector { Name = "Detector", FeedbackAddress = 12 }
+                    new TurnoutDefinition { Name = "Switch", DecoderAddress = 12 }
+                ],
+                Blocks =
+                [
+                    new BlockDefinition
+                    {
+                        Name = "Block",
+                        FeedbackInputs = [new BlockFeedbackInput { InPort = 12 }]
+                    }
                 ]
             }
         };
@@ -65,16 +137,7 @@ internal sealed class DigitalAddressConflictDetectorTests
     {
         var project = new Project
         {
-            Locomotives = [new Locomotive { Name = "Unconfigured", DigitalAddress = null }],
-            SignalBoxPlan = new SignalBoxPlan
-            {
-                Elements =
-                [
-                    new SbSwitch { Name = "Switch", Address = 0 },
-                    new SbSignal { Name = "Signal", BaseAddress = 0 },
-                    new SbDetector { Name = "Detector", FeedbackAddress = 0 }
-                ]
-            }
+            Locomotives = [new Locomotive { Name = "Unconfigured", DigitalAddress = null }]
         };
 
         var report = _detector.Detect(project);
@@ -89,7 +152,7 @@ internal sealed class DigitalAddressConflictDetectorTests
     [Test]
     public void Detect_UsesEntireMultiplexerRange()
     {
-        var signal = new SbSignal
+        var signal = new SignalDefinition
         {
             Name = "N1",
             IsMultiplexed = true,
@@ -97,10 +160,10 @@ internal sealed class DigitalAddressConflictDetectorTests
             MainSignalArticleNumber = "4046",
             BaseAddress = 100
         };
-        var sbSwitch = new SbSwitch { Name = "W1", Address = 103 };
+        var turnout = new TurnoutDefinition { Name = "W1", DecoderAddress = 103 };
         var project = new Project
         {
-            SignalBoxPlan = new SignalBoxPlan { Elements = [signal, sbSwitch] }
+            Interlocking = new InterlockingDefinition { Signals = [signal], Turnouts = [turnout] }
         };
 
         var report = _detector.Detect(project);
@@ -121,9 +184,9 @@ internal sealed class DigitalAddressConflictDetectorTests
         var project = new Project
         {
             Locomotives = [new Locomotive { Name = "Too high", DigitalAddress = 10_000 }],
-            SignalBoxPlan = new SignalBoxPlan
+            Interlocking = new InterlockingDefinition
             {
-                Elements = [new SbSwitch { Name = "Too high", Address = 2045 }]
+                Turnouts = [new TurnoutDefinition { Name = "Too high", DecoderAddress = 2045 }]
             }
         };
 
@@ -137,7 +200,7 @@ internal sealed class DigitalAddressConflictDetectorTests
     [Test]
     public void Detect_ReportsUnknownMultiplexerWithoutGuessingItsRange()
     {
-        var signal = new SbSignal
+        var signal = new SignalDefinition
         {
             Name = "Unknown decoder",
             IsMultiplexed = true,
@@ -147,7 +210,7 @@ internal sealed class DigitalAddressConflictDetectorTests
         };
         var project = new Project
         {
-            SignalBoxPlan = new SignalBoxPlan { Elements = [signal] }
+            Interlocking = new InterlockingDefinition { Signals = [signal] }
         };
 
         var report = _detector.Detect(project);

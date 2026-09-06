@@ -3,6 +3,7 @@ namespace Moba.SharedUI.ViewModel;
 
 using Backend.Interface;
 using Backend.Service;
+using Backend.Service.Validation;
 
 using Common.Configuration;
 using Common.Events;
@@ -37,6 +38,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
     // Core Services (required)
     private readonly IIoService _ioService;
     private readonly IMobaRuntime _mobaRuntime;
+    private readonly IRuntimeCommandGateway _runtimeCommandGateway;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly IEventBus _eventBus;
     private readonly ILogger<MainWindowViewModel> _logger;
@@ -52,6 +54,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
     private readonly Func<string, Task>? _speechTestAction;
     private readonly IFeatureTogglePageProvider? _featureTogglePageProvider;
     private readonly IDialogService? _dialogService;
+    private readonly ILocomotiveWhistleAutomationService? _locomotiveWhistleAutomation;
 
     // Execution Context (contains all action execution dependencies)
     private readonly ActionExecutionContext _executionContext;
@@ -81,6 +84,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
     /// <param name="settingsService">Optional settings service used to persist changes.</param>
     /// <param name="announcementService">Optional announcement service for text-to-speech announcements.</param>
     /// <param name="featureTogglePageProvider">Optional provider for feature toggle page metadata.</param>
+    /// <param name="runtimeCommandGateway">Optional explicit command route used by UI control actions.</param>
     /// <param name="loggerFactory">Optional factory used to create loggers for nested view models (e.g. workflow command encoding).</param>
     /// <param name="dialogService">Optional dialog service for showing confirmation dialogs (WinUI only).</param>
     /// <param name="speechTestAction">Optional direct speech test action for the selected speaker engine.</param>
@@ -100,7 +104,12 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         IFeatureTogglePageProvider? featureTogglePageProvider = null,
         ILoggerFactory? loggerFactory = null,
         IDialogService? dialogService = null,
-        Func<string, Task>? speechTestAction = null)
+        Func<string, Task>? speechTestAction = null,
+        ILocomotiveWhistleAutomationService? locomotiveWhistleAutomation = null,
+        IProjectDiagnosticsService? projectDiagnosticsService = null,
+        IRuntimeCommandGateway? runtimeCommandGateway = null,
+        IWorkflowService? workflowService = null,
+        IWorkflowTraceStore? workflowTraceStore = null)
     {
         ArgumentNullException.ThrowIfNull(layoutColumnWidths);
         ArgumentNullException.ThrowIfNull(mobaRuntime);
@@ -113,6 +122,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
 
         _ioService = ioService ?? new NullIoService();  // Use null object pattern
         _mobaRuntime = mobaRuntime;
+        _runtimeCommandGateway = runtimeCommandGateway ?? new LocalRuntimeCommandGateway(mobaRuntime);
         _uiDispatcher = uiDispatcher;
         _eventBus = eventBus;
         _settings = settings;
@@ -127,8 +137,25 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         _executionContext = executionContext;
         _featureTogglePageProvider = featureTogglePageProvider;
         _dialogService = dialogService;
+        _locomotiveWhistleAutomation = locomotiveWhistleAutomation;
+        _projectDiagnosticsService = projectDiagnosticsService;
+
+        WorkflowLibrary = new WorkflowLibraryViewModel(
+            this,
+            dialogService,
+            new WorkflowValidator(),
+            loggerFactory?.CreateLogger<WorkflowLibraryViewModel>(),
+            new WorkflowLibraryRuntimeServices
+            {
+                WorkflowService = workflowService,
+                TraceStore = workflowTraceStore,
+                ExecutionContext = executionContext,
+                EventBus = eventBus
+            });
+        WorkflowLibrary.PropertyChanged += OnWorkflowLibraryPropertyChanged;
 
         _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
+        _eventBusSubscriptions.Add(_eventBus.Subscribe<VehicleUsageCheckpointCommittedEvent>(OnVehicleUsageCheckpointCommitted));
         ApplyRuntimeSnapshot(_mobaRuntime.Current);
 
         Solution = solution;
@@ -163,6 +190,12 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
     [ObservableProperty]
     private string? _currentSolutionPath;
 
+    /// <summary>
+    /// Indicates whether the in-memory solution contains changes that have not been persisted.
+    /// </summary>
+    [ObservableProperty]
+    public partial bool HasUnsavedChanges { get; set; }
+
     [ObservableProperty]
     private bool _isDarkMode = true;  // Dark theme is default for WinUI
 
@@ -171,6 +204,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
     /// (from loaded settings or from the resize behavior), the UI updates via binding.
     /// </summary>
     public LayoutColumnWidthsViewModel LayoutColumnWidths => _layoutColumnWidths;
+
+    /// <summary>Gets the singleton workflow catalog and editor state shared by workflow surfaces.</summary>
+    public WorkflowLibraryViewModel WorkflowLibrary { get; }
 
     /// <summary>
     /// Application settings model shared with the shell. Exposed for UI behaviors that walk the visual tree
@@ -293,7 +329,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         get
         {
             if (JourneysPageSelectedObject is JourneyViewModel) return "Journey Properties";
-            if (JourneysPageSelectedObject is StationViewModel station) return station.IsVirtual ? "Event Properties" : "Station Properties";
+            if (JourneysPageSelectedObject is StationViewModel) return "Station Properties";
             return "Properties";
         }
     }
@@ -450,11 +486,42 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
     /// <summary>
     /// Stops runtime-driven UI updates and disconnects from the Z21 before the host window completes shutdown.
     /// </summary>
-    public async Task PrepareForShutdownAsync()
+    public async Task<bool> PrepareForShutdownAsync()
     {
+        if (_isShuttingDown)
+        {
+            return true;
+        }
+
+        BeginSuppressSolutionAutoSave();
+        try
+        {
+            await _mobaRuntime.CheckpointUsageAsync().ConfigureAwait(false);
+            if (SynchronizeVehicleUsageFromRuntime())
+            {
+                MarkSolutionDirty();
+            }
+        }
+        finally
+        {
+            EndSuppressSolutionAutoSave();
+        }
+
+        if (HasUnsavedChanges)
+        {
+            var saved = await SaveSolutionCoreAsync(
+                    CurrentSolutionPath,
+                    allowPathSelection: string.IsNullOrWhiteSpace(CurrentSolutionPath))
+                .ConfigureAwait(false);
+            if (!saved)
+            {
+                return false;
+            }
+        }
+
         if (!TryBeginShutdown())
         {
-            return;
+            return true;
         }
 
         using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(ShutdownDisconnectTimeoutSeconds));
@@ -477,6 +544,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         }
 
         await DrainAndDisposeSolutionSaveSemaphoreAsync().ConfigureAwait(false);
+        return true;
     }
 
     private bool TryBeginShutdown()
@@ -487,6 +555,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         }
 
         _isShuttingDown = true;
+        WorkflowLibrary.PropertyChanged -= OnWorkflowLibraryPropertyChanged;
+        WorkflowLibrary.Dispose();
         foreach (var subscriptionId in _eventBusSubscriptions)
         {
             _eventBus.Unsubscribe(subscriptionId);
@@ -534,14 +604,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
     }
 
     [RelayCommand(CanExecute = nameof(CanAddStationFromCity))]
-    private void AddStationFromCity(City city)
+    private void AddStationFromCity(City? city)
     {
-        if (SelectedJourney == null) return;
-
-        if (city.IsVirtual)
-        {
-            return;
-        }
+        if (SelectedJourney == null || city == null) return;
 
         // Get City's first station (Hauptbahnhof) - only the NAME
         var cityStation = city.Stations.FirstOrDefault();
@@ -552,7 +617,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         {
             Name = cityStation.Name,
             IsExitOnLeft = false,
-            IsVirtual = false
         };
 
         // Add JourneyStation to Journey

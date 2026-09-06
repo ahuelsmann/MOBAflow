@@ -19,24 +19,50 @@ using SharedUI.Interface;
 public sealed class RuntimeHubHostClient : IRuntimeHubHostClient
 {
     private readonly IMobaRuntime _mobaRuntime;
+    private readonly IRuntimeCommandGateway _runtimeCommandGateway;
     private readonly ILogger<RuntimeHubHostClient>? _logger;
+    private readonly HostControlPlaneSession? _hostSession;
     private HubConnection? _hubConnection;
 
-    public RuntimeHubHostClient(IMobaRuntime mobaRuntime, ILogger<RuntimeHubHostClient>? logger = null)
+    public RuntimeHubHostClient(
+        IMobaRuntime mobaRuntime,
+        IRuntimeCommandGateway runtimeCommandGateway,
+        ILogger<RuntimeHubHostClient>? logger = null,
+        HostControlPlaneSession? hostSession = null)
     {
         _mobaRuntime = mobaRuntime;
+        _runtimeCommandGateway = runtimeCommandGateway;
         _logger = logger;
+        _hostSession = hostSession;
     }
 
     public bool IsConnected => _hubConnection?.State == HubConnectionState.Connected;
 
     public async Task ConnectAsync(string serverIp, int serverPort, CancellationToken cancellationToken = default)
     {
-        var hubUrl = $"http://{serverIp}:{serverPort}/runtime-hub";
+        _ = serverIp;
+        _ = serverPort;
+        if (_hostSession?.IsEnrolled != true)
+        {
+            _logger?.LogDebug("RuntimeHub host connection skipped because local host enrollment is unavailable");
+            return;
+        }
+
+        var hubUrl = new Uri(_hostSession.BaseUri, "runtime-hub");
         _logger?.LogInformation("Connecting to RuntimeHub: {HubUrl}", hubUrl);
 
         _hubConnection = new HubConnectionBuilder()
-            .WithUrl(hubUrl)
+            .WithUrl(hubUrl, options =>
+            {
+                options.AccessTokenProvider = async () =>
+                    await _hostSession.GetAccessTokenAsync(CancellationToken.None).ConfigureAwait(false);
+                options.HttpMessageHandlerFactory = _ => _hostSession.CreatePinnedHttpMessageHandler();
+                options.WebSocketConfiguration = socketOptions =>
+                {
+                    socketOptions.RemoteCertificateValidationCallback = (_, certificate, _, _) =>
+                        _hostSession.ValidateServerCertificate(certificate);
+                };
+            })
             .WithAutomaticReconnect(
             [
                 TimeSpan.Zero,
@@ -129,16 +155,16 @@ public sealed class RuntimeHubHostClient : IRuntimeHubHostClient
             return;
         }
 
-        await _mobaRuntime.SetSignalAspectAsync(id, parsedAspect).ConfigureAwait(false);
+        await _runtimeCommandGateway.SetSignalAspectAsync(id, parsedAspect).ConfigureAwait(false);
     }
 
     private async Task OnExecuteSetLocomotiveDriveAsync(int address, int speed, bool forward)
     {
-        await _mobaRuntime.SetLocomotiveDriveAsync(address, speed, forward).ConfigureAwait(false);
+        await _runtimeCommandGateway.SetLocomotiveDriveAsync(address, speed, forward).ConfigureAwait(false);
     }
 
     private async Task OnExecuteSetLocomotiveFunctionAsync(int address, int functionIndex, bool isOn)
     {
-        await _mobaRuntime.SetLocomotiveFunctionAsync(address, functionIndex, isOn).ConfigureAwait(false);
+        await _runtimeCommandGateway.SetLocomotiveFunctionAsync(address, functionIndex, isOn).ConfigureAwait(false);
     }
 }

@@ -70,22 +70,20 @@ The following table is regenerated from the centrally managed versions in [`Dire
 | Package or family | Version(s) | Used in | Purpose |
 | --- | --- | --- | --- |
 | `CommunityToolkit.WinUI.Controls.ColorPicker`, `CommunityToolkit.WinUI.Controls.Sizers` | `8.2.251219` | `MOBAflow` | WinUI color picker and grid splitters. |
-| `CommunityToolkit.WinUI.UI.Controls.Markdown` | `7.1.2` | `MOBAflow` | Markdown rendering on the Info page. Stays on 7.x because Markdown has not been migrated to the unified `CommunityToolkit.WinUI.Controls.*` 8.x line. |
 | `CommunityToolkit.Mvvm` | `8.4.2` | `SharedUI` | MVVM primitives such as observable properties and relay commands. |
-| `CommunityToolkit.Maui` | `14.2.0` | `MOBAsmart` | MAUI helpers, converters, and behaviors. |
-| `Microsoft.WindowsAppSDK`, `Microsoft.Graphics.Win2D`, `Microsoft.Xaml.Behaviors.WinUI.Managed` | `2.2.0`, `1.4.0`, `3.0.1` | `MOBAflow` | Windows desktop shell, GPU-accelerated 2D rendering, and XAML behaviors. |
+| `CommunityToolkit.Maui` | `15.0.0` | `MOBAsmart` | MAUI helpers, converters, and behaviors. |
+| `Microsoft.WindowsAppSDK`, `Microsoft.Graphics.Win2D`, `Microsoft.Xaml.Behaviors.WinUI.Managed` | `2.3.1`, `1.4.0`, `3.0.1` | `MOBAflow` | Windows desktop shell, GPU-accelerated 2D rendering, and XAML behaviors. |
 | `Microsoft.Azure.AppConfiguration.AspNetCore` | `8.5.0` | `MOBAflow` | Optional Azure App Configuration source (DEBUG / `AZURE_APPCONFIG_CONNECTION`). |
-| `Microsoft.AspNetCore.SignalR.Client` | `10.0.9` | `MOBAflow`, `MOBAsmart`, `Test` | SignalR client connectivity. |
-| `Microsoft.Extensions.*` | `10.0.9` | `Common`, `Backend`, `Sound`, `SharedUI`, `Test` | Logging, dependency injection, and options. |
-| `Microsoft.Maui.Controls` | `10.0.80` | `MOBAsmart` | Core .NET MAUI UI framework for the Android client. |
+| `Microsoft.AspNetCore.SignalR.Client` | `10.0.10` | `MOBAflow`, `MOBAsmart`, `Test` | SignalR client connectivity. |
+| `Microsoft.Extensions.*` | `10.0.10` | `Common`, `Backend`, `Sound`, `SharedUI`, `Test` | Logging, dependency injection, and options. |
+| `Microsoft.Maui.Controls` | `10.0.90` | `MOBAsmart` | Core .NET MAUI UI framework for the Android client. |
 | `Xamarin.AndroidX.Startup.StartupRuntime` | `1.2.0.8` | `MOBAsmart` | AndroidX startup integration for MAUI initialization providers. |
-| `ZXing.Net`, `ZXing.Net.Maui.Controls` | `0.16.11`, `0.10.1` | `MOBAflow`, `MOBAsmart` | QR pairing (WinUI) and barcode scanning (MAUI). |
-| `System.Speech`, `System.Windows.Extensions` | `10.0.9` | `Sound` | Windows text-to-speech and Windows-specific audio APIs. |
+| `ZXing.Net` | `0.16.11` | `MOBAflow` | Referenced by the WinUI host for planned barcode/QR features; no active app surface currently uses it. |
+| `System.Speech`, `System.Windows.Extensions` | `10.0.10` | `Sound` | Windows text-to-speech and Windows-specific audio APIs. |
 | `Serilog`, `Serilog.Extensions.Logging`, `Serilog.Sinks.Async`, `Serilog.Sinks.Debug`, `Serilog.Sinks.File`, `Serilog.Enrichers.*` | `4.4.0`, `10.0.0`, `2.1.0`, `3.0.0`, `7.0.0`, `3.0.1`–`4.0.0` | `Common`, `MOBAflow` | Structured logging, async/file/debug sinks, and log enrichment. |
-| `SkiaSharp`, `System.Drawing.Common` | `4.150.0`, `10.0.9` | `MOBAdisplay`, `MOBAflow` | Display frame rendering, QR encoding, and image conversion utilities. |
-| `coverlet.collector`, `Microsoft.NET.Test.Sdk`, `NUnit`, `NUnit.Analyzers`, `NUnit3TestAdapter`, `Moq` | `10.0.1`, `18.7.0`, `4.6.1`, `4.14.0`, `6.2.0`, `4.20.72` | `Test` | Test execution, coverage collection, analyzers, and mocking. |
+| `SkiaSharp`, `System.Drawing.Common` | `4.150.1`, `10.0.10` | `MOBAdisplay`, `MOBAflow` | Display frame rendering and image conversion utilities. |
+| `coverlet.collector`, `Microsoft.NET.Test.Sdk`, `NUnit`, `NUnit.Analyzers`, `NUnit3TestAdapter`, `Moq` | `10.0.1`, `18.8.1`, `4.6.1`, `4.14.0`, `6.2.0`, `4.20.72` | `Test` | Test execution, coverage collection, analyzers, and mocking. |
 | `MinVer` | `7.0.0` | Build-wide via `Directory.Build.props` | Semantic version generation from git tags during builds. |
-| `Microsoft.SourceLink.AzureRepos.Git` | `10.0.300` | Build-wide via `Directory.Build.targets` | Source link metadata for debugger source navigation. |
 
 ---
 
@@ -95,7 +93,7 @@ Native assets are tracked separately because their redistribution and platform b
 
 | Component | Version source | License | Distribution context |
 | --- | --- | --- | --- |
-| SkiaSharp native binaries | `SkiaSharp 4.150.0` in `Directory.Packages.props` | MIT | Native graphics binaries used by MOBAdisplay and image/QR rendering. |
+| SkiaSharp native binaries | `SkiaSharp 4.150.0` in `Directory.Packages.props` | MIT | Native graphics binaries used by MOBAdisplay frame and image rendering. |
 | Windows App SDK runtime | `Microsoft.WindowsAppSDK 2.2.0` in `Directory.Packages.props` | MIT | Windows desktop runtime and deployment components. |
 | Win2D native components | `Microsoft.Graphics.Win2D 1.4.0` in `Directory.Packages.props` | MIT | GPU-accelerated Windows 2D rendering. |
 | AndroidX Startup runtime | `Xamarin.AndroidX.Startup.StartupRuntime 1.2.0.8` in `Directory.Packages.props` | Apache-2.0 | Android initialization runtime distributed with MOBAsmart. |
@@ -144,6 +142,6 @@ We are grateful to the open-source maintainers and standards authors whose work 
 
 ---
 
-**Last Updated:** 2026-07-14
+**Last Updated:** 2026-07-19
 **Scope:** Current direct dependencies and external interoperability surface  
 **License:** MIT License (see [LICENSE](../LICENSE))

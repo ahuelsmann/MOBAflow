@@ -46,7 +46,6 @@ internal sealed partial class JourneysPage
     private double _journeysExpandedWidth = 250;
     private double _stationsExpandedWidth = 250;
     private double _cityLibExpandedWidth = 250;
-    private double _workflowLibExpandedWidth = 250;
 
     private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
@@ -93,21 +92,6 @@ internal sealed partial class JourneysPage
             else
             {
                 ColCityLib.Width = new GridLength(_cityLibExpandedWidth);
-            }
-        }
-        else if (e.PropertyName == nameof(ViewModel.IsWorkflowLibraryVisible))
-        {
-            if (!ViewModel.IsWorkflowLibraryVisible)
-            {
-                if (ColWorkflowLib.Width.IsAbsolute)
-                {
-                    _workflowLibExpandedWidth = ColWorkflowLib.Width.Value;
-                }
-                ColWorkflowLib.Width = GridLength.Auto;
-            }
-            else
-            {
-                ColWorkflowLib.Width = new GridLength(_workflowLibExpandedWidth);
             }
         }
     }
@@ -190,20 +174,6 @@ internal sealed partial class JourneysPage
             ColCityLib.Width = GridLength.Auto;
         }
 
-        if (layout.WorkflowLibraryColumnWidth > 0)
-        {
-            _workflowLibExpandedWidth = layout.WorkflowLibraryColumnWidth;
-        }
-
-        if (layout.IsWorkflowLibraryExpanded)
-        {
-            ColWorkflowLib.Width = new GridLength(_workflowLibExpandedWidth);
-        }
-        else
-        {
-            ColWorkflowLib.Width = GridLength.Auto;
-        }
-
         // Restore CollapsibleColumn states
         if (ViewModel.IsJourneyListExpanded != layout.IsJourneyListExpanded)
         {
@@ -216,10 +186,6 @@ internal sealed partial class JourneysPage
         if (ViewModel.IsCityLibraryVisible != layout.IsCityLibraryExpanded)
         {
             ViewModel.IsCityLibraryVisible = layout.IsCityLibraryExpanded;
-        }
-        if (ViewModel.IsWorkflowLibraryVisible != layout.IsWorkflowLibraryExpanded)
-        {
-            ViewModel.IsWorkflowLibraryVisible = layout.IsWorkflowLibraryExpanded;
         }
         if (ViewModel.IsJourneyPropertiesExpanded != layout.IsJourneyPropertiesExpanded)
         {
@@ -235,7 +201,6 @@ internal sealed partial class JourneysPage
         layout.IsJourneyListExpanded = ViewModel.IsJourneyListExpanded;
         layout.IsStationListExpanded = ViewModel.IsStationListExpanded;
         layout.IsCityLibraryExpanded = ViewModel.IsCityLibraryVisible;
-        layout.IsWorkflowLibraryExpanded = ViewModel.IsWorkflowLibraryVisible;
         layout.IsJourneyPropertiesExpanded = ViewModel.IsJourneyPropertiesExpanded;
 
         // Save Column Widths
@@ -265,14 +230,6 @@ internal sealed partial class JourneysPage
         {
             layout.CityLibraryColumnWidth = _cityLibExpandedWidth;
         }
-        if (ColWorkflowLib.Width.IsAbsolute)
-        {
-            layout.WorkflowLibraryColumnWidth = ColWorkflowLib.Width.Value;
-        }
-        else if (!ViewModel.IsWorkflowLibraryVisible)
-        {
-            layout.WorkflowLibraryColumnWidth = _workflowLibExpandedWidth;
-        }
     }
 
     #region Drag & Drop Event Handlers
@@ -286,24 +243,8 @@ internal sealed partial class JourneysPage
         }
     }
 
-    private void WorkflowListView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
-    {
-        if (e.Items.FirstOrDefault() is WorkflowViewModel workflow)
-        {
-            e.Data.Properties.Add("Workflow", workflow);
-            e.Data.RequestedOperation = DataPackageOperation.Link;
-            e.Data.SetText(workflow.Name);
-        }
-    }
-
     private void StationListView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
     {
-        if (!ViewModel.IsStationTimelineView)
-        {
-            e.Cancel = true;
-            return;
-        }
-
         if (e.Items.FirstOrDefault() is StationViewModel station)
         {
             e.Data.Properties.Add("Station", station);
@@ -319,14 +260,6 @@ internal sealed partial class JourneysPage
         // Windows App SDK 2.0 Drag/Drop Visual Enhancements
         if (e.DataView.Properties.ContainsKey("Station"))
         {
-            if (!ViewModel.IsStationTimelineView)
-            {
-                e.AcceptedOperation = DataPackageOperation.None;
-                e.DragUIOverride.Caption = "Switch to Advanced View to reorder";
-                e.DragUIOverride.IsCaptionVisible = true;
-                return;
-            }
-
             if (!string.IsNullOrWhiteSpace(ViewModel.SelectedJourney?.StationSearchText))
             {
                 e.AcceptedOperation = DataPackageOperation.None;
@@ -348,21 +281,13 @@ internal sealed partial class JourneysPage
             e.DragUIOverride.IsContentVisible = true;
             e.DragUIOverride.IsGlyphVisible = true;
         }
-        else if (e.DataView.Properties.ContainsKey("Workflow"))
-        {
-            e.DragUIOverride.Caption = "Assign workflow";
-            e.DragUIOverride.IsCaptionVisible = true;
-            e.DragUIOverride.IsContentVisible = true;
-            e.DragUIOverride.IsGlyphVisible = true;
-        }
     }
 
     private void StationListView_Drop(object sender, DragEventArgs e)
     {
         if (e.DataView.Properties.TryGetValue("Station", out object? stationObj) && stationObj is StationViewModel station)
         {
-            if (!ViewModel.IsStationTimelineView
-                || !string.IsNullOrWhiteSpace(ViewModel.SelectedJourney?.StationSearchText))
+            if (!string.IsNullOrWhiteSpace(ViewModel.SelectedJourney?.StationSearchText))
             {
                 return;
             }

@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
 
+using Common.Security;
+
 using SharedUI.Interface;
 
 using System.Text;
@@ -14,12 +16,12 @@ public sealed class RestApiClientRegistrationService : IRestApiClientRegistratio
     private const string ClientIdKey = "MOBAflow.RestApi.ClientId";
     private const string DeviceNameDefault = "MOBAsmart";
 
-    private readonly HttpClient _httpClient;
+    private readonly IRemoteControlAuthenticatedHttpClient _authenticatedHttpClient;
 
-    public RestApiClientRegistrationService(IHttpClientFactory httpClientFactory)
+    public RestApiClientRegistrationService(IRemoteControlAuthenticatedHttpClient authenticatedHttpClient)
     {
-        ArgumentNullException.ThrowIfNull(httpClientFactory);
-        _httpClient = httpClientFactory.CreateClient(MobiHttpClientNames.LanHealth);
+        _authenticatedHttpClient = authenticatedHttpClient
+            ?? throw new ArgumentNullException(nameof(authenticatedHttpClient));
         ClientId = GetOrCreateClientId();
     }
 
@@ -36,13 +38,14 @@ public sealed class RestApiClientRegistrationService : IRestApiClientRegistratio
             deviceName = DeviceNameDefault;
         }
 
-        var url = $"http://{serverIp}:{serverPort}/api/clients/register";
         var body = JsonSerializer.Serialize(new { clientId, deviceName });
         using var content = new StringContent(body, Encoding.UTF8, "application/json");
 
         try
         {
-            using var response = await _httpClient.PostAsync(url, content).ConfigureAwait(false);
+            using var response = await _authenticatedHttpClient
+                .PostAsync("api/clients/register", content)
+                .ConfigureAwait(false);
             return response.IsSuccessStatusCode;
         }
         catch (Exception)

@@ -12,7 +12,7 @@ public class Solution
     /// Current schema version for Solution JSON format.
     /// Increment this when breaking changes are made to the schema.
     /// </summary>
-    public const int CurrentSchemaVersion = 1;
+    public const int CurrentSchemaVersion = 4;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Solution"/> class with default name and empty project list.
@@ -71,6 +71,8 @@ public class Solution
 
         var json = await File.ReadAllTextAsync(filePath).ConfigureAwait(false);
         var loaded = JsonSerializer.Deserialize<Solution>(json, JsonOptions.Default) ?? throw new InvalidOperationException("Failed to deserialize solution file");
+        if (loaded.SchemaVersion != CurrentSchemaVersion)
+            throw new InvalidOperationException($"Solution schema {loaded.SchemaVersion} is incompatible with required schema {CurrentSchemaVersion}.");
         UpdateFrom(loaded);
     }
 }

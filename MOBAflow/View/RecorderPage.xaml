@@ -1,0 +1,388 @@
+<Page
+    x:Class="Moba.WinUI.View.RecorderPage"
+    x:Name="PageRoot"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converter="using:Moba.WinUI.Converter"
+    xmlns:recording="using:Moba.Common.Recording"
+    AutomationProperties.Name="Recorder"
+    DataContext="{x:Bind ViewModel}">
+
+    <Page.Resources>
+        <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+    </Page.Resources>
+
+    <Grid Padding="24" RowSpacing="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="240" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Spacing="4">
+                <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Recorder" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Capture ordered runtime activity, add context, and inspect portable recording artifacts."
+                    TextWrapping="Wrap" />
+            </StackPanel>
+
+            <StackPanel
+                Grid.Column="1"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center">
+                <TextBlock
+                    HorizontalAlignment="Right"
+                    Style="{StaticResource BodyStrongTextBlockStyle}"
+                    Text="{x:Bind ViewModel.StatusText, Mode=OneWay}" />
+                <TextBlock
+                    HorizontalAlignment="Right"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="{x:Bind ViewModel.EntryCountText, Mode=OneWay}" />
+            </StackPanel>
+        </Grid>
+
+        <InfoBar
+            Grid.Row="1"
+            IsClosable="False"
+            IsOpen="{x:Bind ViewModel.HasError, Mode=OneWay}"
+            Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
+            Severity="Error"
+            Title="Recorder operation failed" />
+
+        <Border
+            Grid.Row="2"
+            Padding="16"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="8">
+            <Grid ColumnSpacing="12" RowSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" MinWidth="220" />
+                    <ColumnDefinition Width="3*" MinWidth="280" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <TextBox
+                    Header="Session name"
+                    MaxLength="128"
+                    PlaceholderText="Recording"
+                    Text="{x:Bind ViewModel.SessionName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                <CommandBar
+                    Grid.Column="1"
+                    HorizontalAlignment="Right"
+                    DefaultLabelPosition="Right"
+                    OverflowButtonVisibility="Auto">
+                    <AppBarButton
+                        AutomationProperties.Name="Start recording"
+                        Command="{x:Bind ViewModel.StartCommand}"
+                        Icon="Play"
+                        Label="Start" />
+                    <AppBarButton
+                        AutomationProperties.Name="Pause recording"
+                        Command="{x:Bind ViewModel.PauseCommand}"
+                        Icon="Pause"
+                        Label="Pause" />
+                    <AppBarButton
+                        AutomationProperties.Name="Resume recording"
+                        Command="{x:Bind ViewModel.ResumeCommand}"
+                        Icon="Play"
+                        Label="Resume" />
+                    <AppBarButton
+                        AutomationProperties.Name="Stop recording"
+                        Command="{x:Bind ViewModel.StopCommand}"
+                        Icon="Stop"
+                        Label="Stop" />
+                    <AppBarSeparator />
+                    <AppBarButton
+                        AutomationProperties.Name="Import recording"
+                        Command="{x:Bind ViewModel.ImportCommand}"
+                        Icon="OpenFile"
+                        Label="Import" />
+                    <AppBarButton
+                        AutomationProperties.Name="Export recording"
+                        Command="{x:Bind ViewModel.ExportCommand}"
+                        Icon="Save"
+                        Label="Export" />
+                </CommandBar>
+
+                <Grid
+                    Grid.Row="1"
+                    Grid.ColumnSpan="2"
+                    ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock VerticalAlignment="Center" Text="Marker or note" />
+                    <Button
+                        Grid.Column="1"
+                        AutomationProperties.Name="Add timeline marker"
+                        Command="{x:Bind ViewModel.AddMarkerCommand}"
+                        Content="Add marker" />
+                    <Button
+                        Grid.Column="2"
+                        AutomationProperties.Name="Add operator note"
+                        Command="{x:Bind ViewModel.AddNoteCommand}"
+                        Content="Add note" />
+                </Grid>
+
+                <TextBox
+                    Grid.Row="2"
+                    Grid.ColumnSpan="2"
+                    MaxLength="2048"
+                    PlaceholderText="Describe the operational context"
+                    Text="{x:Bind ViewModel.AnnotationText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="3" ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*" MinWidth="420" />
+                <ColumnDefinition Width="2*" MinWidth="260" MaxWidth="440" />
+            </Grid.ColumnDefinitions>
+
+            <Border
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8">
+                <Grid Padding="16" RowSpacing="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Grid ColumnSpacing="8" RowSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" MinWidth="120" />
+                            <ColumnDefinition Width="*" MinWidth="120" />
+                            <ColumnDefinition Width="*" MinWidth="120" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBox
+                            Header="Category"
+                            PlaceholderText="All categories"
+                            Text="{x:Bind ViewModel.CategoryFilter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBox
+                            Grid.Column="1"
+                            Header="Source"
+                            PlaceholderText="All sources"
+                            Text="{x:Bind ViewModel.SourceFilter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBox
+                            Grid.Column="2"
+                            Header="Severity"
+                            PlaceholderText="All severities"
+                            Text="{x:Bind ViewModel.SeverityFilter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBox
+                            Grid.Row="1"
+                            Grid.ColumnSpan="2"
+                            Header="Search"
+                            PlaceholderText="Search timeline text"
+                            Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBox
+                            Grid.Row="1"
+                            Grid.Column="2"
+                            Header="Entity"
+                            PlaceholderText="Entity kind or ID"
+                            Text="{x:Bind ViewModel.EntityFilter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <Button
+                            Grid.Row="1"
+                            Grid.Column="3"
+                            VerticalAlignment="Bottom"
+                            AutomationProperties.Name="Clear timeline filters"
+                            Command="{x:Bind ViewModel.ClearFiltersCommand}"
+                            Content="Clear" />
+                    </Grid>
+
+                    <Grid Grid.Row="1">
+                        <ListView
+                            x:Name="TimelineList"
+                            AutomationProperties.Name="Recording timeline"
+                            HorizontalContentAlignment="Stretch"
+                            ItemsSource="{x:Bind ViewModel.TimelineEntries, Mode=OneWay}"
+                            SelectedItem="{x:Bind ViewModel.SelectedEntry, Mode=TwoWay}"
+                            SelectionMode="Single">
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                    <Setter Property="Padding" Value="0" />
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="recording:RecordingEntry">
+                                    <Grid Padding="12,8" ColumnSpacing="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="76" />
+                                            <ColumnDefinition Width="120" />
+                                            <ColumnDefinition Width="130" />
+                                            <ColumnDefinition Width="*" MinWidth="180" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock
+                                            FontFamily="Consolas"
+                                            Style="{StaticResource CaptionTextBlockStyle}"
+                                            Text="{x:Bind Sequence}" />
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            Style="{StaticResource CaptionTextBlockStyle}"
+                                            Text="{x:Bind Category}"
+                                            TextTrimming="CharacterEllipsis" />
+                                        <TextBlock
+                                            Grid.Column="2"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Style="{StaticResource CaptionTextBlockStyle}"
+                                            Text="{x:Bind TypeKey}"
+                                            TextTrimming="CharacterEllipsis" />
+                                        <TextBlock
+                                            Grid.Column="3"
+                                            Text="{x:Bind DisplayText}"
+                                            TextTrimming="CharacterEllipsis" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+
+                        <StackPanel
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="8"
+                            Visibility="{x:Bind ViewModel.HasEntries, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                FontSize="32"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Glyph="&#xE7C8;" />
+                            <TextBlock
+                                Style="{StaticResource SubtitleTextBlockStyle}"
+                                Text="No timeline entries" />
+                            <TextBlock
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="Start a session, import a recording, or adjust the active filters."
+                                TextAlignment="Center"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <StackPanel Grid.Column="1" Spacing="16">
+                <Border
+                    Padding="16"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                    <StackPanel Spacing="8">
+                        <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Selected entry" />
+                        <TextBlock
+                            Style="{StaticResource BodyStrongTextBlockStyle}"
+                            Text="{x:Bind ViewModel.SelectedEntry.DisplayText, Mode=OneWay}"
+                            TextWrapping="Wrap" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="{x:Bind ViewModel.SelectedEntry.Source, Mode=OneWay}"
+                            TextTrimming="CharacterEllipsis" />
+                        <TextBlock
+                            FontFamily="Consolas"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="{x:Bind ViewModel.SelectedEntry.TypeKey, Mode=OneWay}"
+                            TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </Border>
+
+                <Border
+                    Padding="16"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                    <StackPanel Spacing="8">
+                        <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Isolated replay" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="{x:Bind ViewModel.ReplayStatusText, Mode=OneWay}"
+                            TextWrapping="Wrap" />
+                        <ProgressBar
+                            AutomationProperties.Name="Isolated replay position"
+                            Maximum="{x:Bind ViewModel.ReplayMaximum, Mode=OneWay}"
+                            Value="{x:Bind ViewModel.ReplayPosition, Mode=OneWay}" />
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" MinWidth="100" />
+                                <ColumnDefinition Width="*" MinWidth="100" />
+                            </Grid.ColumnDefinitions>
+                            <ComboBox
+                                Header="Speed"
+                                ItemsSource="{x:Bind ViewModel.ReplaySpeeds}"
+                                SelectedItem="{x:Bind ViewModel.SelectedReplaySpeed, Mode=TwoWay}" />
+                            <NumberBox
+                                Grid.Column="1"
+                                Header="Seek position"
+                                Maximum="{x:Bind ViewModel.ReplayMaximum, Mode=OneWay}"
+                                Minimum="0"
+                                SmallChange="1"
+                                SpinButtonPlacementMode="Inline"
+                                Value="{x:Bind ViewModel.ReplaySeekPosition, Mode=TwoWay}" />
+                        </Grid>
+                        <CommandBar
+                            DefaultLabelPosition="Right"
+                            OverflowButtonVisibility="Auto">
+                            <AppBarButton
+                                AutomationProperties.Name="Play isolated replay"
+                                Command="{x:Bind ViewModel.PlayReplayCommand}"
+                                Icon="Play"
+                                Label="Play" />
+                            <AppBarButton
+                                AutomationProperties.Name="Pause isolated replay"
+                                Command="{x:Bind ViewModel.PauseReplayCommand}"
+                                Icon="Pause"
+                                Label="Pause" />
+                            <AppBarButton
+                                AutomationProperties.Name="Apply next replay entry"
+                                Command="{x:Bind ViewModel.StepReplayCommand}"
+                                Icon="Forward"
+                                Label="Step" />
+                            <AppBarButton
+                                AutomationProperties.Name="Seek isolated replay"
+                                Command="{x:Bind ViewModel.SeekReplayCommand}"
+                                Icon="Go"
+                                Label="Seek" />
+                            <AppBarButton
+                                AutomationProperties.Name="Cancel and reset isolated replay"
+                                Command="{x:Bind ViewModel.CancelReplayCommand}"
+                                Icon="Cancel"
+                                Label="Reset" />
+                        </CommandBar>
+                        <TextBlock
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="{x:Bind ViewModel.ReplayElapsedText, Mode=OneWay}" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="{x:Bind ViewModel.CurrentReplayEntry.DisplayText, Mode=OneWay}"
+                            TextTrimming="CharacterEllipsis"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Page>

@@ -14,12 +14,32 @@ and apply to coding agents across Windows and Linux.
 - Inspect affected code, callers, and tests before editing. Plan briefly for multi-file or risky work; simple fixes
   need no formal plan. Use tools available in the session; no particular planning or diagnostic tool is required.
 - Read only the applicable guidance linked in the [instruction index](.github/instructions/instructions-index.md).
-  This file owns the repository-wide workflow; specialized instructions add technical detail, not approval gates.
+  This file owns the repository-wide workflow; specialized instructions supply the linked project policies and technical detail.
   Explicit user instructions take precedence over repository and skill guidance, within system/tool permissions.
   Resolve stale examples against current code and build configuration; report unresolved material conflicts.
   If an instruction blocks progress, identify its exact file and rule rather than inferring an approval requirement.
 - Keep updates and the final response brief, in the user's language. State what changed, what was actually checked,
   and any remaining limitation. English UI and commit-message rules do not constrain conversation language.
+  Write answers for junior developers: explain unfamiliar terms briefly and make necessary next steps explicit.
+
+## Repository policies
+
+- GitHub is the only Git host. Inspect `git remote -v` and branch tracking before synchronizing; use the configured
+  GitHub remote rather than assuming `origin` or restoring an Azure remote.
+- Isolate independent write tasks with Git worktrees: use a dedicated task branch/worktree as specified in
+  [.github/instructions/git-worktree-isolation.instructions.md](.github/instructions/git-worktree-isolation.instructions.md).
+  A user-requested synchronization of the shared checkout can be prepared there and then fast-forwarded into that checkout.
+- Never launch MOBAflow without explicit user approval. Build, restore and test requests alone do not authorize
+  starting the WinUI executable, debugger, watch process or launch-based UI automation.
+- SonarQube before PR review: attempt local analysis against the actual base, create PRs as drafts, and require a
+  green SonarCloud check with zero OPEN/CONFIRMED PR issues before marking ready. Follow
+  [the Sonar policy](.github/instructions/sonarqube-pre-pr.instructions.md); preserve existing analyzer baseline gates.
+- Balanced secrets scanning: scan likely secret-bearing files before reading and changed files before commits/PRs.
+  If the scanner is unavailable, continue ordinary development, avoid sensitive files and record the limitation
+  before publication. If a scan finds a secret, stop handling that file and report it without exposing its value.
+- Standalone Markdown plans belong in `plans/`; remove completed plans, retaining Git history and closed GitHub issues.
+  Spec Kit artifacts remain under `specs/`. Use [Spec Kit governance](.github/instructions/spec-kit-governance.instructions.md)
+  for product behavior and cross-cutting features; this does not require a standalone plan for every small fix.
 
 ## Repository map
 
@@ -39,7 +59,7 @@ Do not assume every directory is an active project or discover projects inside `
 | `Sound/`, `TrackLibrary.Base/`, `TrackLibrary.PikoA/`, `TrackPlan.Renderer/` | Audio, track catalogues and rendering |
 | `Test/` | NUnit tests, Moq, test doubles and fixtures; `Analysis/` has separate helper projects |
 | `docs/`, `scripts/`, `.vscode/tasks.json` | Architecture/user docs and development workflows |
-| `.github/workflows/`, `.azure-pipelines/` | Checked-in CI and release definitions |
+| `.github/workflows/` | GitHub CI and release definitions; `.azure-pipelines/` contains retained legacy definitions |
 
 ## Architecture constraints
 
@@ -83,7 +103,7 @@ unless the task requires it and the environment supports its Windows and Android
 
 | Change | Required evidence |
 | --- | --- |
-| Documentation/instructions only | Review diff, links, referenced paths/commands and instruction consistency; no .NET build/tests |
+| Documentation/instructions only | Review diff, links and commands; run `scripts/Test-InstructionConsistency.ps1` for instruction edits; no .NET build/tests |
 | Behavior in shared logic | Add/update meaningful regression tests as needed, run affected tests and build affected consumers |
 | Refactor without behavior change | Existing relevant tests and compile checks; new tests only for an uncovered risk |
 | WinUI/MAUI UI | Compile the affected app; test changed shared behavior; inspect affected states in Light and Dark themes |
@@ -117,8 +137,8 @@ dotnet test Test/Test.csproj -f net10.0-windows10.0.22621.0 -p:IncludeMobaSmartT
 
 FastDebug is a compile check that skips API build/copy and some checks. For host integration, packaging or release
 changes, build with the normal dependencies and use the Release checks in
-[GitHub quality CI](.github/workflows/quality.yml) or [Azure quality CI](.azure-pipelines/quality.yml), as applicable.
-Run/watch the desktop app only when needed for the task. Check optional tooling such as `winapp` before relying on it.
+[GitHub quality CI](.github/workflows/quality.yml), including its analyzer baselines when applicable.
+Run/watch the desktop app only with explicit launch approval. Check optional tooling such as `winapp` before relying on it.
 
 ### Android (with MAUI/Android workloads)
 
@@ -126,6 +146,9 @@ Run/watch the desktop app only when needed for the task. Check optional tooling 
 dotnet restore MOBAsmart/MOBAsmart.csproj
 dotnet build MOBAsmart/MOBAsmart.csproj -f net10.0-android -c FastDebug --no-restore
 ```
+
+For Android Release/AAB changes, use the release workflow's workload/restore/publish steps and validate the bundle
+with `scripts/Test-AndroidAppBundle.ps1`. A FastDebug build does not validate a Release bundle.
 
 The app currently has one Android target. `dotnet restore -f` means force, not framework selection.
 For an authorized device deployment, add `-p:MobaReliableDeploy=true -t:Run` to the Android build if needed.
@@ -137,7 +160,7 @@ hardware task that authorizes those actions; a code-validation request alone is 
 
 Review the final diff for unintended edits and architecture regressions. Update existing documentation when the
 change affects its accuracy; keep durable project knowledge here and session progress in the conversation.
-Azure DevOps project MOBAflow tracks open work; consult/update a linked work item when the task calls for it,
+GitHub issues, milestones and Kanban track open work; consult/update a linked issue when the task calls for it,
 without making tracker access a prerequisite for independent local work.
 When committing is requested, use English Conventional Commits. Report the commands/checks run and their outcomes;
 identify unavailable platform/hardware checks and the smallest remaining check without claiming they passed.

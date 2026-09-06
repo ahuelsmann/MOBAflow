@@ -1,21 +1,22 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "MOBAflow Solution Schema (Complete)",
-  "description": "Complete JSON Schema for MOBAflow projects - ensures all Domain model types are represented",
+  "description": "Complete JSON Schema for MOBAflow projects, including the direct Workflow 2.0 graph format. Workflow 1.x action lists are not accepted.",
   "type": "object",
-  "required": ["name", "projects"],
+  "required": ["name", "projects", "schemaVersion"],
   "properties": {
     "name": {
       "type": "string",
       "minLength": 1,
       "maxLength": 256
     },
+    "schemaVersion": { "const": 4 },
     "projects": {
       "type": "array",
       "minItems": 1,
       "items": {
         "type": "object",
-        "required": ["name"],
+        "required": ["name", "interlocking"],
         "properties": {
           "name": { "type": "string", "minLength": 1 },
           
@@ -53,7 +54,9 @@
                 },
                 "colorPrimary": { "type": ["integer", "null"] },
                 "colorSecondary": { "type": ["integer", "null"] },
-                "isPushing": { "type": "boolean" }
+                "isPushing": { "type": "boolean" },
+                "usage": { "$ref": "#/definitions/vehicleUsage" },
+                "maintenance": { "$ref": "#/definitions/vehicleMaintenance" }
               }
             }
           },
@@ -66,7 +69,9 @@
               "required": ["id", "name"],
               "properties": {
                 "id": { "type": "string", "format": "uuid" },
-                "name": { "type": "string" }
+                "name": { "type": "string" },
+                "usage": { "$ref": "#/definitions/vehicleUsage" },
+                "maintenance": { "$ref": "#/definitions/vehicleMaintenance" }
               }
             }
           },
@@ -79,7 +84,9 @@
               "required": ["id", "name"],
               "properties": {
                 "id": { "type": "string", "format": "uuid" },
-                "name": { "type": "string" }
+                "name": { "type": "string" },
+                "usage": { "$ref": "#/definitions/vehicleUsage" },
+                "maintenance": { "$ref": "#/definitions/vehicleMaintenance" }
               }
             }
           },
@@ -114,20 +121,8 @@
           
           "workflows": {
             "type": "array",
-            "description": "Workflows (automation sequences)",
-            "items": {
-              "type": "object",
-              "required": ["id", "name"],
-              "properties": {
-                "id": { "type": "string", "format": "uuid" },
-                "name": { "type": "string" },
-                "description": { "type": ["string", "null"] },
-                "actions": {
-                  "type": "array",
-                  "items": { "type": "object" }
-                }
-              }
-            }
+            "description": "Reusable validated Workflow 2.0 graphs",
+            "items": { "$ref": "#/definitions/workflow" }
           },
 
           "stations": {
@@ -139,7 +134,6 @@
               "properties": {
                 "id": { "type": "string", "format": "uuid" },
                 "name": { "type": "string" },
-                "isVirtual": { "type": "boolean" },
                 "inPort": { "type": "integer", "minimum": 0 },
                 "numberOfLapsToStop": { "type": "integer", "minimum": 0 },
                 "workflowId": { "type": ["string", "null"], "format": "uuid" },
@@ -186,7 +180,6 @@
                     "required": ["name"],
                     "properties": {
                       "name": { "type": "string" },
-                      "isVirtual": { "type": "boolean" },
                       "number": { "type": "integer", "minimum": 0 },
                       "inPort": { "type": "integer", "minimum": 0 },
                       "platformId": { "type": ["string", "null"], "format": "uuid" },
@@ -202,13 +195,530 @@
               }
             }
           },
+
+          "timetablePolicy": {
+            "type": "object",
+            "description": "Project-wide timetable validation policy",
+            "properties": {
+              "minimumTurnaround": { "type": "string", "description": "Minimum train turnaround as a TimeSpan value" }
+            }
+          },
+
+          "timetableServices": {
+            "type": "array",
+            "description": "Dated timetable service instances",
+            "items": {
+              "type": "object",
+              "required": ["id", "serviceNumber", "journeyId", "serviceDate", "calls"],
+              "properties": {
+                "id": { "type": "string", "format": "uuid" },
+                "serviceNumber": { "type": "string", "minLength": 1 },
+                "name": { "type": "string" },
+                "journeyId": { "type": "string", "format": "uuid" },
+                "trainId": { "type": ["string", "null"], "format": "uuid" },
+                "serviceDate": { "type": "string", "format": "date" },
+                "calls": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["id", "journeyStopId", "stationId", "platformId", "scheduledArrival", "scheduledDeparture"],
+                    "properties": {
+                      "id": { "type": "string", "format": "uuid" },
+                      "journeyStopId": { "type": "string", "format": "uuid" },
+                      "stationId": { "type": "string", "format": "uuid" },
+                      "platformId": { "type": "string", "format": "uuid" },
+                      "scheduledArrival": { "type": "string", "format": "date-time" },
+                      "scheduledDeparture": { "type": "string", "format": "date-time" }
+                    }
+                  }
+                }
+              }
+            }
+          },
           
           "signalBoxPlan": {
             "type": ["object", "null"],
             "description": "Signal box plan (electronic signal box - MOBAesb)"
+          },
+
+          "interlocking": {
+            "$ref": "#/definitions/interlockingDefinition"
           }
         }
       }
+    }
+  },
+  "definitions": {
+    "workflow": {
+      "type": "object",
+      "description": "Validated Workflow 2.0 graph with stable step IDs, an explicit entry, deterministic list order, and optional default error policy.",
+      "additionalProperties": false,
+      "required": ["id", "name", "entryStepId", "steps"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": ["string", "null"] },
+        "entryStepId": { "type": "string", "format": "uuid" },
+        "steps": {
+          "type": "array",
+          "description": "Canonical editor and serialization order. Runtime traversal follows step-ID edges rather than array position.",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/workflowStep" }
+        },
+        "defaultErrorPolicy": { "$ref": "#/definitions/workflowErrorPolicy" }
+      }
+    },
+    "workflowStep": {
+      "description": "Typed Workflow 2.0 graph node. The kind discriminator selects exactly one node shape.",
+      "oneOf": [
+        { "$ref": "#/definitions/workflowActionStep" },
+        { "$ref": "#/definitions/workflowDelayStep" },
+        { "$ref": "#/definitions/workflowConditionStep" },
+        { "$ref": "#/definitions/workflowParallelStep" },
+        { "$ref": "#/definitions/workflowNestedStep" },
+        { "$ref": "#/definitions/workflowTerminateStep" }
+      ]
+    },
+    "workflowActionStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "name", "nextStepId", "action"],
+      "properties": {
+        "kind": { "const": "action" },
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "nextStepId": { "type": "string", "format": "uuid" },
+        "errorPolicy": { "$ref": "#/definitions/workflowErrorPolicy" },
+        "action": { "$ref": "#/definitions/workflowAction" }
+      }
+    },
+    "workflowDelayStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "name", "nextStepId", "delayMs"],
+      "properties": {
+        "kind": { "const": "delay" },
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "nextStepId": { "type": "string", "format": "uuid" },
+        "errorPolicy": { "$ref": "#/definitions/workflowErrorPolicy" },
+        "delayMs": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "workflowConditionStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "name", "condition", "trueStepId", "falseStepId"],
+      "properties": {
+        "kind": { "const": "condition" },
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "errorPolicy": { "$ref": "#/definitions/workflowErrorPolicy" },
+        "condition": { "$ref": "#/definitions/workflowCondition" },
+        "trueStepId": { "type": "string", "format": "uuid" },
+        "falseStepId": { "type": "string", "format": "uuid" }
+      }
+    },
+    "workflowParallelStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "name", "branches", "joinStepId"],
+      "properties": {
+        "kind": { "const": "parallel" },
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "errorPolicy": { "$ref": "#/definitions/workflowErrorPolicy" },
+        "branches": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "entryStepId"],
+            "properties": {
+              "name": { "type": "string" },
+              "entryStepId": { "type": "string", "format": "uuid" }
+            }
+          }
+        },
+        "joinStepId": { "type": "string", "format": "uuid" }
+      }
+    },
+    "workflowNestedStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "name", "nextStepId", "workflowId"],
+      "properties": {
+        "kind": { "const": "nestedWorkflow" },
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "nextStepId": { "type": "string", "format": "uuid" },
+        "errorPolicy": { "$ref": "#/definitions/workflowErrorPolicy" },
+        "workflowId": { "type": "string", "format": "uuid" }
+      }
+    },
+    "workflowTerminateStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "name", "result"],
+      "properties": {
+        "kind": { "const": "terminate" },
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "errorPolicy": { "$ref": "#/definitions/workflowErrorPolicy" },
+        "result": { "type": "integer", "minimum": 0, "maximum": 2 }
+      }
+    },
+    "workflowCondition": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "inPort"],
+          "properties": {
+            "kind": { "const": "feedbackSource" },
+            "inPort": { "type": "integer", "minimum": 1, "maximum": 512 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "journeyId"],
+          "properties": {
+            "kind": { "const": "currentJourney" },
+            "journeyId": { "type": "string", "format": "uuid" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "stationId"],
+          "properties": {
+            "kind": { "const": "currentStation" },
+            "stationId": { "type": "string", "format": "uuid" }
+          }
+        }
+      ]
+    },
+    "workflowErrorPolicy": {
+      "type": "object",
+      "description": "Failure behavior for a workflow or step. Step policies override the workflow default; retry is bounded to 10 additional attempts.",
+      "additionalProperties": false,
+      "required": ["behavior"],
+      "properties": {
+        "behavior": { "type": "integer", "minimum": 0, "maximum": 2 },
+        "failureStepId": { "type": ["string", "null"], "format": "uuid" },
+        "retry": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["additionalAttempts", "delayMs"],
+          "properties": {
+            "additionalAttempts": { "type": "integer", "minimum": 0, "maximum": 10 },
+            "delayMs": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "interlockingDefinition": {
+      "type": "object",
+      "required": ["turnouts", "signals", "blocks", "connections", "routes", "bindings"],
+      "properties": {
+        "turnouts": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/turnoutDefinition" }
+        },
+        "signals": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/interlockingSignalDefinition" }
+        },
+        "blocks": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/blockDefinition" }
+        },
+        "connections": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/operationalConnection" }
+        },
+        "routes": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/routeDefinition" }
+        },
+        "bindings": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/operationalBinding" }
+        }
+      }
+    },
+    "turnoutDefinition": {
+      "type": "object",
+      "required": ["id", "name", "decoderAddress", "kind", "commands", "confirmations"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string", "minLength": 1 },
+        "decoderAddress": { "type": "integer", "minimum": 1, "maximum": 2044 },
+        "kind": { "enum": ["TwoWay", "ThreeWay"] },
+        "commands": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["position", "commands"],
+            "properties": {
+              "position": { "$ref": "#/definitions/turnoutPosition" },
+              "commands": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["addressOffset", "output", "activate", "queue"],
+                  "properties": {
+                    "addressOffset": { "type": "integer", "minimum": 0 },
+                    "output": { "type": "integer", "minimum": 0, "maximum": 1 },
+                    "activate": { "type": "boolean" },
+                    "queue": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "confirmations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["position", "conditions"],
+            "properties": {
+              "position": { "$ref": "#/definitions/turnoutPosition" },
+              "conditions": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["functionAddress", "outputPosition"],
+                  "properties": {
+                    "functionAddress": { "type": "integer", "minimum": 1, "maximum": 2044 },
+                    "outputPosition": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "workflowAction": {
+      "type": "object",
+      "required": ["id", "name", "type"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "type": { "enum": [0, 1, 2, 3, 5, 6, 7] },
+        "command": { "type": "object" },
+        "audio": { "type": "object" },
+        "announcement": { "type": "object" },
+        "powerShell": { "type": "object" },
+        "selectSignalAspect": { "type": "object" },
+        "trainDestinationDisplay": { "type": "object" },
+        "changeJourneyStop": { "type": "object" }
+      }
+    },
+    "interlockingSignalDefinition": {
+      "type": "object",
+      "required": ["id", "name", "safeAspect", "signalSystem", "isMultiplexed", "baseAddress"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string", "minLength": 1 },
+        "safeAspect": { "$ref": "#/definitions/signalAspect" },
+        "signalSystem": { "enum": ["Ks", "Hv", "Hl", "Form", "Sv"] },
+        "isMultiplexed": { "type": "boolean" },
+        "multiplexerArticleNumber": { "type": ["string", "null"] },
+        "mainSignalArticleNumber": { "type": ["string", "null"] },
+        "distantSignalArticleNumber": { "type": ["string", "null"] },
+        "baseAddress": { "type": "integer", "minimum": 1, "maximum": 2044 }
+      }
+    },
+    "blockDefinition": {
+      "type": "object",
+      "required": ["id", "name", "direction", "boundaryElementIds", "feedbackInputs"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string", "minLength": 1 },
+        "direction": { "enum": ["Bidirectional", "Forward", "Reverse"] },
+        "boundaryElementIds": {
+          "type": "array",
+          "items": { "type": "string", "format": "uuid" }
+        },
+        "feedbackInputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["inPort", "role", "activeState"],
+            "properties": {
+              "inPort": { "type": "integer", "minimum": 1, "maximum": 512 },
+              "role": { "enum": ["Occupied", "Clear"] },
+              "activeState": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    },
+    "operationalConnection": {
+      "type": "object",
+      "required": ["fromOperationalId", "toOperationalId", "isBidirectional"],
+      "properties": {
+        "fromOperationalId": { "type": "string", "format": "uuid" },
+        "toOperationalId": { "type": "string", "format": "uuid" },
+        "isBidirectional": { "type": "boolean" }
+      }
+    },
+    "routeDefinition": {
+      "type": "object",
+      "required": ["id", "name", "entryElementId", "exitElementId", "pathElementIds", "turnoutRequirements", "protectedBlockIds", "signalRequirements", "conflictingRouteIds"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string", "minLength": 1 },
+        "entryElementId": { "type": "string", "format": "uuid" },
+        "exitElementId": { "type": "string", "format": "uuid" },
+        "pathElementIds": {
+          "type": "array",
+          "items": { "type": "string", "format": "uuid" }
+        },
+        "turnoutRequirements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["turnoutId", "position"],
+            "properties": {
+              "turnoutId": { "type": "string", "format": "uuid" },
+              "position": { "$ref": "#/definitions/turnoutPosition" }
+            }
+          }
+        },
+        "protectedBlockIds": {
+          "type": "array",
+          "items": { "type": "string", "format": "uuid" }
+        },
+        "signalRequirements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["signalId", "proceedAspect"],
+            "properties": {
+              "signalId": { "type": "string", "format": "uuid" },
+              "proceedAspect": { "$ref": "#/definitions/signalAspect" }
+            }
+          }
+        },
+        "conflictingRouteIds": {
+          "type": "array",
+          "items": { "type": "string", "format": "uuid" }
+        }
+      }
+    },
+    "operationalBinding": {
+      "type": "object",
+      "required": ["operationalId", "trackSegmentIds", "signalBoxElementIds"],
+      "properties": {
+        "operationalId": { "type": "string", "format": "uuid" },
+        "trackSegmentIds": {
+          "type": "array",
+          "items": { "type": "string", "format": "uuid" }
+        },
+        "signalBoxElementIds": {
+          "type": "array",
+          "items": { "type": "string", "format": "uuid" }
+        }
+      }
+    },
+    "signalAspect": {
+      "enum": ["Hp0", "Ks1", "Ks2", "Ks1Blink", "Kennlicht", "Dunkel", "Ra12", "Zs1", "Zs7"]
+    },
+    "turnoutPosition": {
+      "enum": ["Straight", "DivergingLeft", "DivergingRight"]
+    },
+    "vehicleUsage": {
+      "type": "object",
+      "required": ["trackedOperatingSeconds", "trackedCompletedTrips", "corrections"],
+      "properties": {
+        "trackedOperatingSeconds": { "type": "integer", "minimum": 0 },
+        "trackedCompletedTrips": { "type": "integer", "minimum": 0 },
+        "trackedDistanceKilometres": { "type": ["number", "null"], "minimum": 0 },
+        "corrections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "recordedAt", "operatingSecondsDelta", "completedTripsDelta", "reason"],
+            "properties": {
+              "id": { "type": "string", "format": "uuid" },
+              "recordedAt": { "type": "string", "format": "date-time" },
+              "operatingSecondsDelta": { "type": "integer" },
+              "completedTripsDelta": { "type": "integer" },
+              "distanceKilometresDelta": { "type": ["number", "null"] },
+              "reason": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    },
+    "vehicleMaintenance": {
+      "type": "object",
+      "required": ["entries", "plans"],
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/vehicleMaintenanceEntry" }
+        },
+        "plans": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/vehicleMaintenancePlan" }
+        }
+      }
+    },
+    "vehicleMaintenanceEntry": {
+      "type": "object",
+      "required": ["id", "performedAt", "category", "description"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "performedAt": { "type": "string", "format": "date-time" },
+        "category": { "$ref": "#/definitions/maintenanceCategory" },
+        "description": { "type": "string", "minLength": 1 },
+        "operatingSecondsAtService": { "type": ["integer", "null"], "minimum": 0 },
+        "completedTripsAtService": { "type": ["integer", "null"], "minimum": 0 },
+        "distanceKilometresAtService": { "type": ["number", "null"], "minimum": 0 },
+        "cost": {
+          "type": ["object", "null"],
+          "properties": {
+            "amount": { "type": "number" },
+            "currency": { "type": "string", "pattern": "^[A-Z]{3}$" }
+          }
+        },
+        "notes": { "type": ["string", "null"] }
+      }
+    },
+    "vehicleMaintenancePlan": {
+      "type": "object",
+      "required": ["id", "category", "name"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "category": { "$ref": "#/definitions/maintenanceCategory" },
+        "name": { "type": "string", "minLength": 1 },
+        "intervalDays": { "type": ["integer", "null"], "minimum": 1 },
+        "intervalOperatingSeconds": { "type": ["integer", "null"], "minimum": 1 },
+        "intervalCompletedTrips": { "type": ["integer", "null"], "minimum": 1 },
+        "intervalDistanceKilometres": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+        "lastCompletedAt": { "type": ["string", "null"], "format": "date-time" },
+        "operatingSecondsAtLastCompletion": { "type": ["integer", "null"], "minimum": 0 },
+        "completedTripsAtLastCompletion": { "type": ["integer", "null"], "minimum": 0 },
+        "distanceKilometresAtLastCompletion": { "type": ["number", "null"], "minimum": 0 }
+      },
+      "anyOf": [
+        { "required": ["intervalDays"] },
+        { "required": ["intervalOperatingSeconds"] },
+        { "required": ["intervalCompletedTrips"] },
+        { "required": ["intervalDistanceKilometres"] }
+      ]
+    },
+    "maintenanceCategory": {
+      "enum": ["Inspection", "Cleaning", "Lubrication", "Repair", "Decoder", "WheelService", "Other"]
     }
   }
 }

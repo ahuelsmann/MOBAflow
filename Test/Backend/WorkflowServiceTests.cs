@@ -2,181 +2,94 @@
 
 namespace Moba.Test.Backend;
 
-using Microsoft.Extensions.Logging.Abstractions;
-
 using Moba.Backend.Interface;
 using Moba.Backend.Service;
-using Moba.Common.Events;
 using Moba.Domain;
 using Moba.Domain.Enum;
 
-using Mocks;
-
 using Moq;
 
-/// <summary>
-/// Integration tests for WorkflowService with IActionExecutor.
-/// Tests end-to-end workflow execution.
-/// </summary>
+/// <summary>Compatibility-boundary tests for callers that supply a workflow and context directly.</summary>
 [TestFixture]
-internal class WorkflowServiceTests
+internal sealed class WorkflowServiceTests
 {
-    private WorkflowService _workflowService = null!;
-    private IActionExecutor _actionExecutor = null!;
-    private FakeUdpClientWrapper _fakeUdp = null!;
-    private Z21 _z21 = null!;
-    private IEventBus _eventBus = null!;
-    private ActionExecutionContext _context = null!;
-
-    [SetUp]
-    public void SetUp()
+    [Test]
+    public async Task ExecuteAsync_GraphWorkflow_UsesWorkflow2Executor()
     {
-        _fakeUdp = new FakeUdpClientWrapper();
-        _eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        _z21 = new Z21(_fakeUdp, _eventBus);
-        _actionExecutor = ActionExecutor.CreateWithDefaultHandlers();
-        _workflowService = new WorkflowService(_actionExecutor);
+        var executor = new Mock<IActionExecutor>();
+        executor
+            .Setup(value => value.ExecuteAsync(
+                It.IsAny<WorkflowAction>(),
+                It.IsAny<ActionExecutionContext>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        var service = new WorkflowService(executor.Object);
+        var workflow = CreateWorkflow();
+        var project = new Project { Workflows = [workflow] };
 
-        _context = new ActionExecutionContext
-        {
-            Z21 = _z21
-        };
-    }
+        await service.ExecuteAsync(
+            workflow,
+            new ActionExecutionContext { Z21 = Mock.Of<IZ21>(), CurrentProject = project });
 
-    [TearDown]
-    public void TearDown()
-    {
-        _z21.Dispose();
-        _fakeUdp.Dispose();
+        executor.Verify(value => value.ExecuteAsync(
+            It.IsAny<WorkflowAction>(),
+            It.IsAny<ActionExecutionContext>(),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
-    public Task ExecuteAsync_WithEmptyWorkflow_ShouldNotThrow()
+    public void ExecuteAsync_InvalidGraph_ThrowsWithoutCallingActionExecutor()
     {
-        // Arrange
-        var workflow = new Workflow
-        {
-            Id = Guid.NewGuid(),
-            Name = "Empty Workflow",
-            Actions = []
-        };
+        var executor = new Mock<IActionExecutor>(MockBehavior.Strict);
+        var service = new WorkflowService(executor.Object);
+        var workflow = new Workflow { EntryStepId = Guid.NewGuid(), Steps = [] };
+        var project = new Project { Workflows = [workflow] };
 
-        // Act & Assert
-        Assert.DoesNotThrowAsync(async () => await _workflowService.ExecuteAsync(workflow, _context));
-        return Task.CompletedTask;
+        Assert.ThrowsAsync<InvalidOperationException>(() => service.ExecuteAsync(
+            workflow,
+            new ActionExecutionContext { Z21 = Mock.Of<IZ21>(), CurrentProject = project }));
+        executor.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task ExecuteAsync_WithMultipleActions_ShouldExecuteAll()
+    public void ExecuteAsync_PreCancelledToken_ThrowsCancellationWithoutCallingActionExecutor()
     {
-        // Arrange
-        var workflow = new Workflow
+        var executor = new Mock<IActionExecutor>(MockBehavior.Strict);
+        var service = new WorkflowService(executor.Object);
+        var workflow = CreateWorkflow();
+        var project = new Project { Workflows = [workflow] };
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        Assert.CatchAsync<OperationCanceledException>(() => service.ExecuteAsync(
+            workflow,
+            new ActionExecutionContext { Z21 = Mock.Of<IZ21>(), CurrentProject = project },
+            default,
+            cancellation.Token));
+        executor.VerifyNoOtherCalls();
+    }
+
+    private static Workflow CreateWorkflow()
+    {
+        var actionId = Guid.NewGuid();
+        var terminalId = Guid.NewGuid();
+        return new Workflow
         {
-            Id = Guid.NewGuid(),
-            Name = "Multi-Action Workflow",
-            Actions =
+            EntryStepId = actionId,
+            Steps =
             [
-                new WorkflowAction
+                new WorkflowActionStep
                 {
-                    Id = Guid.NewGuid(),
-                    Number = 1,
-                    Name = "Command 1",
-                    Type = ActionType.Command,
-                    Command = new CommandActionPayload
+                    Id = actionId,
+                    NextStepId = terminalId,
+                    Action = new WorkflowAction
                     {
-                        BytesBase64 = Convert.ToBase64String(new byte[] { 0x01, 0x00, 0x00, 0x00 })
+                        Type = ActionType.Command,
+                        Command = new CommandActionPayload { BytesBase64 = "AQID" }
                     }
                 },
-                new WorkflowAction
-                {
-                    Id = Guid.NewGuid(),
-                    Number = 2,
-                    Name = "Command 2",
-                    Type = ActionType.Command,
-                    Command = new CommandActionPayload
-                    {
-                        BytesBase64 = Convert.ToBase64String(new byte[] { 0x02, 0x00, 0x00, 0x00 })
-                    }
-                }
+                new WorkflowTerminateStep { Id = terminalId }
             ]
         };
-
-        // Act
-        await _workflowService.ExecuteAsync(workflow, _context);
-
-        // Assert
-        Assert.That(_fakeUdp.SentPayloads, Has.Count.GreaterThanOrEqualTo(2),
-            "At least 2 command packets should have been sent");
-    }
-
-    [Test]
-    public void ExecuteAsync_WithNullWorkflow_ShouldThrow()
-    {
-        // Arrange
-        Workflow? workflow = null;
-
-        // Act & Assert
-        Assert.ThrowsAsync<ArgumentNullException>(async () =>
-        {
-#pragma warning disable CS8604 // Possible null reference argument
-            await _workflowService.ExecuteAsync(workflow, _context);
-#pragma warning restore CS8604
-        });
-    }
-
-    [Test]
-    public async Task ExecuteAsync_Sequential_StopOnFirstActionFailure_StopsAfterFirstException()
-    {
-        var executorMock = new Mock<IActionExecutor>();
-        executorMock
-            .Setup(e => e.ExecuteAsync(It.IsAny<WorkflowAction>(), It.IsAny<ActionExecutionContext>()))
-            .ThrowsAsync(new InvalidOperationException("first action failed"));
-
-        var service = new WorkflowService(executorMock.Object);
-        var workflow = new Workflow
-        {
-            Id = Guid.NewGuid(),
-            Name = "Two-step",
-            ExecutionMode = WorkflowExecutionMode.Sequential,
-            Actions =
-            [
-                new WorkflowAction { Id = Guid.NewGuid(), Number = 1, Name = "A", Type = ActionType.Command },
-                new WorkflowAction { Id = Guid.NewGuid(), Number = 2, Name = "B", Type = ActionType.Command }
-            ]
-        };
-
-        try
-        {
-            await service.ExecuteAsync(workflow, _context, new WorkflowExecutionOptions { StopOnFirstActionFailure = true });
-            Assert.Fail("Expected exception");
-        }
-        catch (InvalidOperationException ex)
-        {
-            Assert.That(ex.Message, Is.EqualTo("first action failed"));
-        }
-
-        executorMock.Verify(
-            e => e.ExecuteAsync(It.IsAny<WorkflowAction>(), It.IsAny<ActionExecutionContext>()),
-            Times.Once);
-    }
-
-    [Test]
-    public void ExecuteAsync_WithNullContext_ShouldThrow()
-    {
-        // Arrange
-        var workflow = new Workflow
-        {
-            Id = Guid.NewGuid(),
-            Name = "Test Workflow",
-            Actions = []
-        };
-
-        // Act & Assert
-        Assert.ThrowsAsync<ArgumentNullException>(async () =>
-        {
-#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type
-            await _workflowService.ExecuteAsync(workflow, null);
-#pragma warning restore CS8625
-        });
     }
 }

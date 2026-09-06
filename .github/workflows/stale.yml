@@ -1,0 +1,36 @@
+name: Stale work visibility
+
+on:
+    schedule:
+        - cron: "17 4 * * 1"
+    workflow_dispatch:
+
+permissions:
+    contents: read
+    issues: write
+    pull-requests: write
+
+jobs:
+    mark-stale:
+        name: Mark inactive work for review
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/stale@4391f3da665fdf50b6810c1a66712fb9ba21aa93 # v11.0.0
+              with:
+                  repo-token: ${{ secrets.GITHUB_TOKEN }}
+                  days-before-stale: 60
+                  days-before-close: -1
+                  stale-issue-label: stale
+                  stale-pr-label: stale
+                  exempt-issue-labels: blocked,security
+                  exempt-pr-labels: blocked,security
+                  stale-issue-message: >-
+                      This issue has had no activity for 60 days and is marked for review.
+                      It will not be closed automatically. Remove the stale label when the
+                      work is still current or update its scope and priority.
+                  stale-pr-message: >-
+                      This pull request has had no activity for 60 days and is marked for
+                      review. It will not be closed automatically. Remove the stale label
+                      after updating or revalidating it.
+                  close-issue-message: ""
+                  close-pr-message: ""

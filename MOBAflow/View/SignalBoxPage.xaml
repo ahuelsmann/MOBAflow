@@ -31,13 +31,42 @@
                 Icon="Delete"
                 Label="Delete"
                 ToolTipService.ToolTip="Delete selected element (Del)" />
+            <AppBarButton
+                x:Name="ContextButton"
+                AutomationProperties.HelpText="{x:Bind InterlockingViewModel.AvailabilityDescription, Mode=OneWay}"
+                Command="{x:Bind ViewModel.OpenSignalBoxWorkbenchCommand}"
+                controls:FocusTargetBehavior.Target="{x:Bind SelectedObjectWorkbench, Mode=OneTime}"
+                Icon="ContactInfo"
+                Label="Context"
+                ToolTipService.ToolTip="{x:Bind InterlockingViewModel.AvailabilityDescription, Mode=OneWay}" />
         </CommandBar>
-
         <!--  Main Content: Toolbox | Canvas | Properties  -->
         <Grid
+            x:Name="MainGrid"
             Grid.Row="1"
             Padding="0"
             ColumnSpacing="0">
+            <VisualStateManager.VisualStateGroups>
+                <VisualStateGroup x:Name="WorkbenchLayoutStates">
+                    <VisualState x:Name="WideWorkbenchState">
+                        <VisualState.StateTriggers>
+                            <AdaptiveTrigger MinWindowWidth="1024" />
+                        </VisualState.StateTriggers>
+                    </VisualState>
+                    <VisualState x:Name="CompactWorkbenchState">
+                        <VisualState.StateTriggers>
+                            <AdaptiveTrigger MinWindowWidth="0" />
+                        </VisualState.StateTriggers>
+                        <VisualState.Setters>
+                            <Setter Target="ColProperties.Width" Value="0" />
+                            <Setter Target="RightWorkbenchSplitter.Visibility" Value="Collapsed" />
+                            <Setter Target="WorkbenchHost.(Grid.Column)" Value="2" />
+                            <Setter Target="WorkbenchHost.HorizontalAlignment" Value="Right" />
+                            <Setter Target="WorkbenchHost.(Panel.ZIndex)" Value="10" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateManager.VisualStateGroups>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition
                     x:Name="ColToolbox"
@@ -86,24 +115,37 @@
             </Border>
 
             <controls1:GridSplitter
+                x:Name="RightWorkbenchSplitter"
                 Grid.Column="3"
                 Width="4"
                 HorizontalAlignment="Left"
                 ResizeBehavior="PreviousAndNext" />
 
-            <!--  RIGHT: Properties Panel  -->
+            <!--  RIGHT: Selected Object Workbench  -->
             <controls:CollapsibleColumnProperties
+                x:Name="WorkbenchHost"
                 Grid.Column="4"
                 Margin="0"
+                MaxWidth="420"
                 Glyph="&#xE946;"
-                Header="Properties"
+                Header="Context"
                 IsExpanded="{x:Bind ViewModel.IsSignalBoxPropertiesExpanded, Mode=TwoWay}">
                 <controls:CollapsibleColumnProperties.PanelContent>
-                    <signalbox:SignalBoxPropertiesControl
-                        x:Name="PropertiesControl"
-                        RequestElementDeletion="OnPropertyControlElementDeletion"
-                        RequestVisualRefresh="OnPropertyControlVisualRefresh"
-                        ViewModel="{x:Bind ViewModel, Mode=OneWay}" />
+                    <controls:SelectedObjectWorkbench
+                        x:Name="SelectedObjectWorkbench"
+                        Context="{x:Bind InterlockingViewModel}">
+                        <controls:SelectedObjectWorkbench.DefinitionContent>
+                            <StackPanel Padding="0,8,0,0" Spacing="8">
+                                <TextBlock
+                                    AutomationProperties.LiveSetting="Polite"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="{x:Bind ViewModel.SolutionSaveStatusText, Mode=OneWay}"
+                                    TextWrapping="WrapWholeWords" />
+                                <signalbox:SignalBoxPropertiesControl
+                                    x:Name="PropertiesControl" />
+                            </StackPanel>
+                        </controls:SelectedObjectWorkbench.DefinitionContent>
+                    </controls:SelectedObjectWorkbench>
                 </controls:CollapsibleColumnProperties.PanelContent>
             </controls:CollapsibleColumnProperties>
         </Grid>

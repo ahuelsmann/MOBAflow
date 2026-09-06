@@ -37,9 +37,15 @@ public class RestApiSettings
 public class DisplaySettings
 {
     /// <summary>
-    /// Last used ESP32 target IP for display UDP transport.
+    /// Explicit ESP32 target IP for display UDP transport.
+    /// Empty until the user configures a device; do not ship a guessed default.
     /// </summary>
-    public string Esp32IpAddress { get; set; } = "192.168.0.82";
+    public string Esp32IpAddress { get; set; } = string.Empty;
+
+    /// <summary>
+    /// UDP destination port defined by display protocol v1.0.
+    /// </summary>
+    public int Port { get; set; } = 4210;
 }
 
 /// <summary>
@@ -271,6 +277,24 @@ public class FeatureToggleSettings
     /// </summary>
     public string JourneysPageLabel { get; set; } = string.Empty;
 
+    /// <summary>Enable the timetable planning and operations page.</summary>
+    public bool IsTimetablePageAvailable { get; set; } = true;
+
+    /// <summary>Gets or sets an optional label suffix for the Timetable page.</summary>
+    public string TimetablePageLabel { get; set; } = "Preview";
+
+    /// <summary>Enable the feedback-sequence event manager page.</summary>
+    public bool IsEventManagerPageAvailable { get; set; } = true;
+
+    /// <summary>Gets or sets an optional label suffix for the Event Manager page.</summary>
+    public string EventManagerPageLabel { get; set; } = "Preview";
+
+    /// <summary>Enable feedback-sequence V2 runtime behavior.</summary>
+    public bool UseFeedbackSequenceV2Runtime { get; set; } = true;
+
+    /// <summary>Enable the visual timeline editor on the Event Manager page.</summary>
+    public bool IsEventManagerVisualEditorAvailable { get; set; } = true;
+
     /// <summary>
     /// Enable Workflows page (Automation workflows for actions).
     /// </summary>
@@ -280,6 +304,12 @@ public class FeatureToggleSettings
     /// Gets or sets an optional label suffix for the Workflows page.
     /// </summary>
     public string WorkflowsPageLabel { get; set; } = string.Empty;
+
+    /// <summary>Enable the stations master-data page.</summary>
+    public bool IsStationsPageAvailable { get; set; } = true;
+
+    /// <summary>Gets or sets an optional label suffix for the Stations page.</summary>
+    public string StationsPageLabel { get; set; } = string.Empty;
 
     // Track Management (Testing - ENABLED by default)
 
@@ -328,6 +358,12 @@ public class FeatureToggleSettings
     /// Gets or sets an optional label suffix for the Monitor page.
     /// </summary>
     public string MonitorPageLabel { get; set; } = "Preview";
+
+    /// <summary>Enable the runtime event recorder and replay page.</summary>
+    public bool IsRecorderPageAvailable { get; set; } = true;
+
+    /// <summary>Gets or sets an optional label suffix for the Recorder page.</summary>
+    public string RecorderPageLabel { get; set; } = string.Empty;
 
     public bool IsMatrixPageAvailable { get; set; } = true;
 
@@ -462,6 +498,8 @@ public class LayoutSettings
     /// </summary>
     public JourneysPageLayoutSettings JourneysPage { get; set; } = new();
 
+    public EventManagerPageLayoutSettings EventManagerPage { get; set; } = new();
+
     public GoodsWagonPageLayoutSettings GoodsWagonPage { get; set; } = new();
 
     public LocomotivesPageLayoutSettings LocomotivesPage { get; set; } = new();
@@ -485,6 +523,18 @@ public class LayoutSettings
     public MonitorPageLayoutSettings MonitorPage { get; set; } = new();
 
     public StationsPageLayoutSettings StationsPage { get; set; } = new();
+
+    public TimetablePageLayoutSettings TimetablePage { get; set; } = new();
+}
+
+/// <summary>Persists the relative widths of the Timetable page master-detail columns.</summary>
+public class TimetablePageLayoutSettings
+{
+    /// <summary>Gets or sets the services column star value.</summary>
+    public double ServicesColumnStarValue { get; set; } = 2;
+
+    /// <summary>Gets or sets the details column star value.</summary>
+    public double DetailsColumnStarValue { get; set; } = 3;
 }
 
 /// <summary>
@@ -616,19 +666,9 @@ public class JourneysPageLayoutSettings
     public bool IsStationListExpanded { get; set; } = true;
 
     /// <summary>
-    /// Default filter for the station list on JourneysPage.
-    /// </summary>
-    public StationListViewMode StationListViewMode { get; set; } = StationListViewMode.StopsOnly;
-
-    /// <summary>
     /// Is City Library panel expanded?
     /// </summary>
     public bool IsCityLibraryExpanded { get; set; } = true;
-
-    /// <summary>
-    /// Is Workflow Library panel expanded?
-    /// </summary>
-    public bool IsWorkflowLibraryExpanded { get; set; } = true;
 
     public bool IsJourneyPropertiesExpanded { get; set; } = true;
 
@@ -638,7 +678,16 @@ public class JourneysPageLayoutSettings
 
     public double CityLibraryColumnWidth { get; set; } = 250;
 
-    public double WorkflowLibraryColumnWidth { get; set; } = 250;
+}
+
+public class EventManagerPageLayoutSettings
+{
+    public bool IsToolboxExpanded { get; set; } = true;
+    public bool IsValuesExpanded { get; set; } = true;
+    public bool IsPropertiesExpanded { get; set; } = true;
+    public double ToolboxColumnWidth { get; set; } = 220;
+    public double ValuesColumnWidth { get; set; } = 260;
+    public double PropertiesColumnWidth { get; set; } = 300;
 }
 
 public class GoodsWagonPageLayoutSettings

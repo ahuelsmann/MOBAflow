@@ -33,8 +33,6 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     // Runtime State
     private readonly JourneySessionState _state;
     private ObservableCollection<StationViewModel>? _stations;
-    private ObservableCollection<JourneyFeedbackStepViewModel>? _feedbackSteps;
-    private StationListViewMode _stationListViewMode = StationListViewMode.StopsOnly;
     #endregion
 
     /// <summary>
@@ -56,7 +54,6 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
 
         // Initialize Stations collection
         RefreshStations();
-        RefreshFeedbackSteps();
     }
 
     /// <summary>
@@ -117,48 +114,15 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     } = string.Empty;
 
     /// <summary>
-    /// Gets or sets how stations are displayed in the Journeys page list.
-    /// </summary>
-    public StationListViewMode StationListViewMode
-    {
-        get => _stationListViewMode;
-        set
-        {
-            if (_stationListViewMode == value)
-            {
-                return;
-            }
-
-            _stationListViewMode = value;
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(IsTimelineView));
-            OnPropertyChanged(nameof(FilteredStations));
-            UpdateStationHighlights();
-        }
-    }
-
-    /// <summary>
-    /// Indicates whether the full journey timeline (including events) is shown.
-    /// </summary>
-    public bool IsTimelineView => StationListViewMode == StationListViewMode.FullTimeline;
-
-    /// <summary>
-    /// Gets the filtered stations based on search text and view mode.
+    /// Gets the stations matching the current search text.
     /// </summary>
     public List<StationViewModel> FilteredStations
     {
         get
         {
-            var stations = string.IsNullOrWhiteSpace(StationSearchText)
-                ? Stations
-                : Stations.Where(s => s.Name.Contains(StationSearchText, StringComparison.OrdinalIgnoreCase));
-
-            if (StationListViewMode == StationListViewMode.StopsOnly)
-            {
-                stations = stations.Where(s => s.IsRealStation);
-            }
-
-            return [.. stations];
+            return string.IsNullOrWhiteSpace(StationSearchText)
+                ? [.. Stations]
+                : [.. Stations.Where(s => s.Name.Contains(StationSearchText, StringComparison.OrdinalIgnoreCase))];
         }
     }
 
@@ -178,33 +142,6 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
         }
     }
 
-    /// <summary>Gets the ordered feedback sequence configured for this journey.</summary>
-    public ObservableCollection<JourneyFeedbackStepViewModel> FeedbackSteps
-    {
-        get
-        {
-            if (_feedbackSteps == null)
-            {
-                RefreshFeedbackSteps();
-            }
-            return _feedbackSteps!;
-        }
-    }
-
-    [RelayCommand]
-    private void AddFeedbackStep()
-    {
-        _journey.FeedbackSequence.Add(new JourneyFeedbackStep { InPort = 1 });
-        RefreshFeedbackSteps();
-    }
-
-    [RelayCommand]
-    private void DeleteFeedbackStep(JourneyFeedbackStepViewModel step)
-    {
-        _journey.FeedbackSequence.Remove(step.Model);
-        RefreshFeedbackSteps();
-    }
-
     /// <summary>
     /// Gets the possible values for <see cref="BehaviorOnLastStop"/> for ComboBox binding.
     /// </summary>
@@ -216,11 +153,11 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     /// </summary>
     public string CurrentStation => _state.CurrentStationName;
 
-    /// <summary>
-    /// Gets the current lap or repetition counter from the runtime session state.
-    /// Read-only from the ViewModel perspective – updated via runtime snapshots.
-    /// </summary>
-    public int CurrentCounter => _state.Counter;
+    /// <summary>Gets the progress within the currently expected feedback step.</summary>
+    public uint CurrentStepOccurrence => _state.CurrentStepOccurrence;
+
+    /// <summary>Gets the repeat count required by the currently expected feedback step.</summary>
+    public uint CurrentStepRepeatCount => _journey.FeedbackSequence.ElementAtOrDefault(_state.CurrentFeedbackIndex)?.RepeatCount ?? 1;
 
     /// <summary>
     /// Gets the current station index within the journey from the runtime session state.
@@ -240,11 +177,11 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     /// <param name="state">The updated session state from the runtime projection</param>
     public void UpdateFromSessionState(JourneySessionState state)
     {
-        _state.Counter = state.Counter;
         _state.CurrentPos = state.CurrentPos;
         _state.CurrentStationName = state.CurrentStationName;
         _state.CurrentStationId = state.CurrentStationId;
         _state.CurrentFeedbackIndex = state.CurrentFeedbackIndex;
+        _state.CurrentStepOccurrence = state.CurrentStepOccurrence;
         _state.LastFeedbackTime = state.LastFeedbackTime;
         _state.IsActive = state.IsActive;
 
@@ -252,7 +189,8 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
 
         // Notify UI about property changes
         OnPropertyChanged(nameof(CurrentStation));
-        OnPropertyChanged(nameof(CurrentCounter));
+        OnPropertyChanged(nameof(CurrentStepOccurrence));
+        OnPropertyChanged(nameof(CurrentStepRepeatCount));
         OnPropertyChanged(nameof(CurrentPos));
         OnPropertyChanged(nameof(CurrentFeedbackIndex));
         OnPropertyChanged(nameof(NextFeedbackInPort));
@@ -265,18 +203,19 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     {
         ArgumentNullException.ThrowIfNull(snapshot);
 
-        _state.Counter = snapshot.Counter;
         _state.CurrentPos = snapshot.CurrentPos;
         _state.CurrentStationName = snapshot.CurrentStationName;
         _state.CurrentStationId = snapshot.CurrentStationId;
         _state.CurrentFeedbackIndex = snapshot.CurrentFeedbackIndex;
+        _state.CurrentStepOccurrence = snapshot.CurrentStepOccurrence;
         _state.LastFeedbackTime = snapshot.LastFeedbackTime;
         _state.IsActive = snapshot.IsActive;
 
         UpdateStationHighlights(snapshot.CurrentPos);
 
         OnPropertyChanged(nameof(CurrentStation));
-        OnPropertyChanged(nameof(CurrentCounter));
+        OnPropertyChanged(nameof(CurrentStepOccurrence));
+        OnPropertyChanged(nameof(CurrentStepRepeatCount));
         OnPropertyChanged(nameof(CurrentPos));
         OnPropertyChanged(nameof(CurrentFeedbackIndex));
         OnPropertyChanged(nameof(NextFeedbackInPort));
@@ -295,7 +234,8 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
         }
 
         OnPropertyChanged(nameof(CurrentStation));
-        OnPropertyChanged(nameof(CurrentCounter));
+        OnPropertyChanged(nameof(CurrentStepOccurrence));
+        OnPropertyChanged(nameof(CurrentStepRepeatCount));
         OnPropertyChanged(nameof(CurrentPos));
         OnPropertyChanged(nameof(CurrentFeedbackIndex));
         OnPropertyChanged(nameof(NextFeedbackInPort));
@@ -368,8 +308,10 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     }
 
     [RelayCommand]
-    private void DeleteStation(StationViewModel stationVm)
+    private void DeleteStation(StationViewModel? stationVm)
     {
+        if (stationVm is null) return;
+
         // Find and remove Station by Id
         var station = _journey.Stations.FirstOrDefault(s => s.Id == stationVm.Model.Id);
         if (station != null)
@@ -418,49 +360,14 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
         OnPropertyChanged(nameof(FilteredStations));
     }
 
-    public void RefreshFeedbackSteps()
-    {
-        _feedbackSteps ??= [];
-        _feedbackSteps.Clear();
-        foreach (var step in _journey.FeedbackSequence)
-        {
-            _feedbackSteps.Add(new JourneyFeedbackStepViewModel(step, _project));
-        }
-
-        OnPropertyChanged(nameof(FeedbackSteps));
-        OnPropertyChanged(nameof(NextFeedbackInPort));
-    }
-
     private void UpdateStationHighlights() => UpdateStationHighlights(_state.CurrentPos);
 
     private void UpdateStationHighlights(int currentPos)
     {
         for (var i = 0; i < Stations.Count; i++)
         {
-            Stations[i].IsCurrentStation = StationListViewMode == StationListViewMode.FullTimeline
-                ? i == currentPos
-                : Stations[i].IsRealStation && IsApproachSegmentActive(i, currentPos);
+            Stations[i].IsCurrentStation = i == currentPos;
         }
-    }
-
-    private bool IsApproachSegmentActive(int realStationIndex, int currentPos)
-    {
-        if (realStationIndex < 0 || realStationIndex >= Stations.Count || !Stations[realStationIndex].IsRealStation)
-        {
-            return false;
-        }
-
-        var segmentStart = 0;
-        for (var j = realStationIndex - 1; j >= 0; j--)
-        {
-            if (Stations[j].IsRealStation)
-            {
-                segmentStart = j + 1;
-                break;
-            }
-        }
-
-        return currentPos >= segmentStart && currentPos <= realStationIndex;
     }
 
     /// <summary>
@@ -530,8 +437,10 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     /// </summary>
     /// <param name="station">The station to move up</param>
     [RelayCommand]
-    private void MoveStationUp(StationViewModel station)
+    private void MoveStationUp(StationViewModel? station)
     {
+        if (station is null) return;
+
         var currentIndex = Stations.IndexOf(station);
         if (currentIndex > 0)
         {
@@ -548,8 +457,10 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     /// </summary>
     /// <param name="station">The station to move down</param>
     [RelayCommand]
-    private void MoveStationDown(StationViewModel station)
+    private void MoveStationDown(StationViewModel? station)
     {
+        if (station is null) return;
+
         var currentIndex = Stations.IndexOf(station);
         if (currentIndex < Stations.Count - 1)
         {

@@ -3,14 +3,16 @@
 namespace Moba.Test.MOBAflow;
 
 using Moba.Backend.Interface;
-using Moba.Common.Configuration;
 using Moba.Common.Events;
+using Moba.Domain;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 using Moba.SharedUI.Interface;
+using Moba.SharedUI.Service;
+using Moba.SharedUI.ViewModel;
 using Moba.WinUI.Extensions;
 using Moba.WinUI.Service;
 
@@ -29,6 +31,13 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         {
             Assert.That(provider.GetRequiredService<IUiDispatcher>(), Is.Not.Null);
             Assert.That(provider.GetRequiredService<IEventBus>(), Is.Not.Null);
+            Assert.That(
+                provider.GetRequiredService<List<PageMetadata>>(),
+                Has.One.Matches<PageMetadata>(page =>
+                    page.Tag == "recorder"
+                    && page.Title == "Recorder"
+                    && page.Category == global::Moba.Common.Navigation.NavigationCategory.Monitoring
+                    && page.Order == 20));
         });
     }
 
@@ -36,8 +45,14 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
     public void AddMobaWinUiBackendServices_ResolvesIMobaRuntime()
     {
         var provider = CreateBackendServiceProvider();
+        var replayService = provider.GetRequiredService<IRecordingReplayService>();
 
-        Assert.That(provider.GetRequiredService<IMobaRuntime>(), Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(provider.GetRequiredService<IMobaRuntime>(), Is.Not.Null);
+            Assert.That(replayService, Is.Not.Null);
+            Assert.That(provider.GetRequiredService<IRecordingReplayStatusSource>(), Is.SameAs(replayService));
+        });
     }
 
     [Test]
@@ -50,7 +65,9 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
             var ioService = provider.GetRequiredService<IIoService>();
             Assert.That(ioService, Is.Not.Null);
             Assert.That(provider.GetRequiredService<ISolutionIoService>(), Is.SameAs(ioService));
-            Assert.That(provider.GetRequiredService<IRuntimeCommandGateway>(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<IRecordingFileService>(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<IRuntimeCommandGateway>(), Is.InstanceOf<RecordingRuntimeCommandGateway>());
+            Assert.That(provider.GetRequiredService<LocalRuntimeCommandGateway>(), Is.Not.Null);
         });
     }
 
@@ -60,6 +77,20 @@ internal sealed class MobaWinUiServiceCollectionExtensionsTests
         var provider = CreateValidatorServiceProvider();
 
         Assert.DoesNotThrow(() => WinUiDiContainerValidator.ValidateCoreServices(provider));
+        Assert.That(provider.GetRequiredService<RecorderPageViewModel>(), Is.Not.Null);
+    }
+
+    [Test]
+    public void AddMobaWinUiViewModelsAndWindow_WiresWorkflowDryRunServices()
+    {
+        var provider = CreateValidatorServiceProvider();
+        var viewModel = provider.GetRequiredService<MainWindowViewModel>();
+        viewModel.SelectedProject = new ProjectViewModel(new Project
+        {
+            Workflows = [new Workflow { Name = "Preview" }]
+        });
+
+        Assert.That(viewModel.WorkflowLibrary.CanDryRun, Is.True);
     }
 
     private static ServiceProvider CreatePlatformServiceProvider()

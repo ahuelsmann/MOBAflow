@@ -1,332 +1,153 @@
-# 🚀 Installation & Setup Guide
+# Installation and setup
 
-**Status:** ℹ️ Automated setup scripts are planned for future releases  
-**Last Updated:** February 2026
+MOBAflow is currently distributed as source code and version tags. The
+repository does not yet publish ready-to-install GitHub release packages.
 
----
+## Before you start
 
-## ⚠️ Current Status: Manual Installation Required
+- Read the [hardware and liability notes](../HARDWARE-DISCLAIMER.md).
+- Keep the Z21, PC and Android device on a trusted private LAN.
+- Do not forward MOBApi or Z21 ports to the public internet.
 
-```text
-❌ Windows Setup.exe (planned)
-❌ Automated PowerShell setup scripts (planned)
-❌ Docker containers (planned)
-✅ Manual dotnet build & run (current)
-```
+## Requirements
 
-**Currently you must compile MOBAflow manually from source code.**
+### MOBAflow Desktop
 
----
+- Windows 10/11 compatible with the Windows App SDK target used by the project.
+- The .NET SDK selected by [`global.json`](../../global.json).
+- Visual Studio with the workloads from [`.vsconfig`](../../.vsconfig), or an
+  equivalent command-line setup.
 
-## 📋 Prerequisites (Requirements)
+### MOBAsmart
 
-### Software Requirements
+- Android 8.0 / API 26 or newer.
+- The .NET MAUI Android workload to build the app.
+- A connected Android device or emulator for deployment.
 
-- **.NET SDK:** Minimum `10.0`, recommended `10.0+`
-- **Visual Studio:** Minimum `2022 v17.10`, recommended `2026`
-- **Windows:** Minimum `10 (1809+)`, recommended `11`
-- **Git:** Minimum `2.30+`, recommended `Latest`
+### Layout network
 
-### Hardware Requirements
+- Roco Z21 command station reachable from the operating device.
+- A LAN that permits device-to-device UDP and TCP traffic.
+- Feedback modules and other layout hardware as required by your setup.
 
-- **Roco Z21:** Digital Command Station (latest firmware)
-- **Network:** LAN/WLAN, Z21 in same subnet
-- **PC:** Windows 10/11, x64
-- **Storage:** Minimum 4GB RAM, 2GB free disk
+## Build from source
 
-### Network Setup
+Clone the repository and open [`Moba.slnx`](../../Moba.slnx) in Visual Studio.
+The solution contains the Windows app, Android app, local API, shared libraries
+and tests.
 
-```text
-🖥️ Windows PC                     📡 Z21 Digital Station
-   ↓                                  ↓
-   └─────── LAN/WLAN ─────────────────┘
-   
-   • Z21 IP: e.g. 192.168.1.100
-   • PC in same network
-   • UDP Port 21105 open (locally, not over Internet!)
-```
-
----
-
-## 🔧 Manual Installation from Source
-
-### Step 1: Install Prerequisites
-
-**Windows:**
+Equivalent command-line builds are:
 
 ```powershell
-# Download & install .NET 10 SDK
-winget install Microsoft.DotNet.SDK.10
-
-# Visual Studio 2026 (optional, but recommended)
-winget install Microsoft.VisualStudio.2026.Community
-```
-
-**macOS/Linux:**
-
-```bash
-# Install .NET SDK
-curl https://dot.net/v1/dotnet-install.sh | bash
-
-# Or via Homebrew (macOS)
-brew install dotnet
-```
-
-### Step 2: Clone Repository
-
-```bash
-# GitHub Public Repo (after migration)
 git clone https://github.com/ahuelsmann/MOBAflow.git
-
-# OR currently: Azure DevOps
-git clone https://dev.azure.com/ahuelsmann/MOBAflow/_git/MOBAflow
-
 cd MOBAflow
-```
 
-### Step 3: Restore Dependencies
-
-```bash
-# Restore the projects you actually want to build
 dotnet restore MOBAflow/MOBAflow.csproj
-dotnet restore MOBApi/MOBApi.csproj
-
-# Android app
-dotnet restore MOBAsmart/MOBAsmart.csproj
+dotnet build MOBAflow/MOBAflow.csproj
+dotnet run --project MOBAflow/MOBAflow.csproj
 ```
 
-### Step 4: Compile Project
-
-```bash
-# Windows desktop app
-dotnet build MOBAflow/MOBAflow.csproj -c Release
-
-# REST API
-dotnet build MOBApi/MOBApi.csproj -c Release
-
-# Android app
-dotnet build MOBAsmart/MOBAsmart.csproj -f net10.0-android -c Release
-```
-
-**Output:**
-
-```text
-Build succeeded with 0 errors
-...
-```
-
-### Step 5: Run Applications
-
-#### 🖥️ WinUI Desktop App (Windows)
-
-```bash
-dotnet run --project MOBAflow/MOBAflow.csproj --configuration Release
-```
-
-#### 🌐 MOBApi (REST API)
-
-```bash
-dotnet run --project MOBApi/MOBApi.csproj --configuration Release
-```
-
-#### 📱 MAUI Android (Android Phone/Emulator)
-
-```bash
-# Emulator must be running or Android device connected
-dotnet build MOBAsmart/MOBAsmart.csproj -f net10.0-android -c Release
-
-# Or direct run:
-dotnet run --project MOBAsmart/MOBAsmart.csproj -f net10.0-android
-```
-
----
-
-## 🔗 Establish Z21 Connection
-
-### 1. Prepare Z21
-
-```text
-1. Check Z21 power button → green LED should be on
-2. Find Z21 IP address:
-   - Roco Mobile App → Settings → check Z21 IP
-   - OR: Scan ARP table: arp -a | findstr "roco"
-   - OR: Open router admin panel and find Z21
-3. Note the IP, e.g. 192.168.1.100
-```
-
-### 2. Connect MOBAflow to Z21
-
-**In the application:**
-
-```text
-1. Start MOBAflow
-2. Open Overview Page
-3. "Z21 Connection" widget
-4. Enter IP address: 192.168.1.100
-5. Click "Connect" button
-6. Status should turn green ✅
-```
-
-**If connection fails:**
-
-```text
-❌ "Connection refused" 
-   → Z21 IP wrong or Z21 not in network
-
-❌ "Timeout"
-   → Z21 not reachable, check WLAN/LAN
-
-❌ "Connection OK, but no data"
-   → UDP port 21105 blocked (check firewall)
-```
-
-### 3. Windows Firewall Configuration
-
-If MOBAflow doesn't receive Z21 data:
-
-**Open Windows Defender Firewall:**
+For Android:
 
 ```powershell
-# PowerShell as Administrator:
-
-# Add inbound rule for MOBAflow
-New-NetFirewallRule `
-  -DisplayName "MOBAflow Z21 UDP" `
-  -Direction Inbound `
-  -Action Allow `
-  -Protocol UDP `
-  -LocalPort 21105
+dotnet restore MOBAsmart/MOBAsmart.csproj -f net10.0-android
+dotnet build MOBAsmart/MOBAsmart.csproj -f net10.0-android
 ```
 
----
+MOBApi normally builds with MOBAflow and can be started by the desktop app. To
+run it separately:
 
-## 🧪 Run Tests
-
-### Start Unit Tests
-
-```bash
-dotnet test Test/Test.csproj --configuration Release
+```powershell
+dotnet run --project MOBApi/MOBApi.csproj
 ```
 
-**Expected Output:**
+The compatibility endpoint listens on `http://0.0.0.0:5001`. MOBApi also
+advertises its certificate-pinned HTTPS endpoint through LAN discovery for the
+protected host and MOBAsmart pairing flows.
 
-```text
-Test Run Successful.
-Total tests: > 0
-Passed: most tests
-Failed: 0 on supported platforms
-```
+## First desktop start
 
-### Test Project
+1. Open **Settings** in MOBAflow.
+2. Confirm the Z21 IP address and UDP port (`21105` by default).
+3. Create a solution or open the included sample solution.
+4. Select a project and connect to the Z21.
+5. Verify feedback and telemetry in **Overview** or **Monitor** before operating
+   trains.
 
-```bash
+If MOBAsmart should synchronize with the desktop, keep the REST API auto-start
+setting enabled and confirm that the main-window status bar reports a healthy
+API.
+
+## First Android start
+
+1. Connect the phone to the same LAN as the Z21 and desktop PC.
+2. Grant notification permission when Android requests it; the foreground
+   service uses the notification while a session is active.
+3. Wait for the Z21 status to become ON.
+4. Enable the **MOBAflow** switch to discover MOBApi and synchronize the current
+   solution.
+5. In MOBAflow, open **Settings / REST API** and select **Create pairing QR
+   code**. In MOBAsmart, open **Pairing**, select **Scan MOBAflow QR code**, and
+   scan the displayed code.
+6. Confirm that the same six-digit code is shown on both devices, then select
+   **Approve administrator** in MOBAflow. MOBAsmart connects and synchronizes
+   automatically.
+7. The same camera permission is also used when taking photos for upload.
+
+See the [MOBAsmart guide](MOBASMART-USER-GUIDE.md) for the connection model and
+tab behavior.
+
+## Firewall and LAN notes
+
+Windows may prompt for firewall access when MOBAflow or MOBApi starts. Allow
+access only on private networks.
+
+If MOBAsmart cannot discover the PC, verify at minimum:
+
+- TCP `5001` for MOBApi;
+- UDP `21105` between the operating device and Z21; and
+- local multicast/broadcast traffic used by discovery.
+
+Guest Wi-Fi, client isolation, VPN routing and phone-to-PC firewall rules are
+common causes of discovery failures.
+
+## Validation
+
+Run the repository test project after source changes:
+
+```powershell
 dotnet test Test/Test.csproj
 ```
 
----
+Windows and Android projects require their platform workloads. Cross-platform
+libraries, MOBApi and most tests can be built separately when those workloads
+are unavailable.
 
-## 📦 Publishing (Self-Hosted)
+## Troubleshooting
 
-### Self-Host (Local/Private)
+### Build fails before compilation
 
-```bash
-# Create MOBAflow desktop build
-dotnet publish MOBAflow/MOBAflow.csproj -c Release -o ./publish/MOBAflow
+- Check `dotnet --info` against [`global.json`](../../global.json).
+- Install missing Visual Studio/.NET workloads from [`.vsconfig`](../../.vsconfig).
+- Restore the specific app project instead of scanning generated `bin`, `obj` or
+  repository-local package directories.
 
-# Create MOBApi release build
-dotnet publish MOBApi/MOBApi.csproj -c Release -o ./publish/MOBApi
+### Z21 cannot be reached
 
-# Files are now in ./publish/
-```
+- Verify the configured IP and that both devices share the same LAN.
+- Check the private-network firewall profile.
+- Confirm that another app has not left stale Z21 clients; restart the app and,
+  if necessary, the command station.
 
-### Docker Support (planned)
+### MOBApi cannot start
 
-```bash
-# Not available in v0.1.0 yet
-# Planned for v0.2.0
-```
+- Check whether another process already uses TCP port `5001`.
+- Inspect the MOBAflow REST API status and Monitor output.
+- Run MOBApi separately to see startup errors directly.
 
----
+## Related guides
 
-## 🛠️ Troubleshooting
-
-### Build Errors
-
-#### Error: "The specified framework version 10.0 was not found"
-
-```bash
-# Check .NET 10 SDK
-dotnet --list-sdks
-
-# If missing: Install .NET 10 SDK
-# https://dotnet.microsoft.com/download
-```
-
-#### Error: "NuGet restore failed"
-
-```bash
-# Clear NuGet cache & restore
-dotnet nuget locals all --clear
-dotnet restore <project>.csproj
-```
-
-#### Error: "WinUI not available on this OS"
-
-```text
-WinUI is Windows only!
-- For macOS: the WinUI desktop app is not available in this repo
-- For Linux: use MOBApi or the cross-platform library/test projects
-- For Android: use MOBAsmart
-```
-
-### Runtime Errors
-
-#### Error: "Z21 Connection failed"
-
-```text
-1. Check Z21 power
-2. Test network: ping <z21-ip>
-3. Check firewall rule (see above)
-4. Restart Z21 (Power OFF → ON)
-```
-
-#### Error: "Piper TTS not working"
-
-```text
-1. Check piper.exe path
-2. Check .onnx model path
-3. See: docs/wiki/PIPER-TTS-SETUP.md
-```
-
-### Performance Issues
-
-```bash
-# Use Release build (faster than Debug)
-dotnet run --project MOBAflow/MOBAflow.csproj -c Release
-
-# Use profiler
-# Visual Studio → Analyze → Performance Profiler
-```
-
----
-
-## 📞 Further Help
-
-- 📖 **Wiki:** [INDEX.md](INDEX.md)
-- 🐛 **Issues:** [GitHub Issues](https://github.com/ahuelsmann/MOBAflow/issues)
-- 💬 **Discussions:** [GitHub Discussions](https://github.com/ahuelsmann/MOBAflow/discussions)
-- ⚖️ **Liability:** [HARDWARE-DISCLAIMER.md](../HARDWARE-DISCLAIMER.md)
-
----
-
-## 🚀 Planned Features (Roadmap)
-
-- **0.2.0:** Automated Setup Scripts (PowerShell) — 🚧 Planned
-- **0.3.0:** Docker Container Support — 🚧 Planned
-- **0.4.0:** Windows Installer (.MSI) — 🚧 Planned
-- **1.0.0:** Commercial Plugin Support — 🚧 Planned
-
----
-
-> Note: This is a preview version (`0.1.0`). Installation and setup
-> will be automated in future versions.
+- [MOBAflow Desktop](MOBAFLOW-USER-GUIDE.md)
+- [MOBAsmart](MOBASMART-USER-GUIDE.md)
+- [Piper TTS](PIPER-TTS-SETUP.md)
+- [Build performance](../BUILD-PERFORMANCE.md)

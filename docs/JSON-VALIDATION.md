@@ -2,7 +2,7 @@
 
 **Scope:** Solution JSON file validation  
 **Status:** Production  
-**Last Updated:** 2026-05-02
+**Last Updated:** 2026-07-20
 
 ---
 
@@ -26,7 +26,7 @@ compatible solution files can be loaded. This prevents:
   logic
 - **`Domain/Solution.cs`:** Schema version (`SchemaVersion` property)
 - **`MOBAflow/Service/IoService.cs`:** Validation before deserialization in the WinUI host
-- **`Test/Common/JsonValidationTests.cs`:** 16+ unit tests
+- **`Test/Common/JsonValidationServiceTests.cs`:** unit tests
 
 ### Flow
 
@@ -59,19 +59,27 @@ User gets a clear error message
 
 ### Current
 
-**Constant:** `Solution.CurrentSchemaVersion = 1`
+**Constant:** `Solution.CurrentSchemaVersion = 4`
 
 ### JSON example
 
 ```json
 {
   "name": "My Model Railroad",
-  "schemaVersion": 1,
+  "schemaVersion": 4,
   "projects": [
     {
       "name": "Main Project",
       "workflows": [],
-      "trains": []
+      "trains": [],
+      "interlocking": {
+        "turnouts": [],
+        "signals": [],
+        "blocks": [],
+        "connections": [],
+        "routes": [],
+        "bindings": []
+      }
     }
   ]
 }
@@ -79,9 +87,8 @@ User gets a clear error message
 
 ### Version checks
 
-- **Missing `schemaVersion`:** Warning, but allowed (for legacy files)
+- **Missing `schemaVersion`:** Error, file will **not** be loaded
 - **Wrong version:** Error, file will **not** be loaded
-- **Future versions:** Auto-migration or upgrade hint (planned)
 
 ---
 
@@ -165,9 +172,9 @@ if (requiredSchemaVersion.HasValue)
 **Error examples:**
 
 ```text
-❌ Missing schema version. Expected version 1.
+❌ Missing required property: 'schemaVersion'.
 ❌ Schema version must be a number.
-❌ Incompatible schema version. Expected 1, found 999.
+❌ Incompatible schema version. Expected 4, found 999.
 ```
 
 ### 6. Project structure
@@ -286,9 +293,9 @@ if (!string.IsNullOrEmpty(error))
 
 ### Test file
 
-`Test/Common/JsonValidationTests.cs`
+`Test/Common/JsonValidationServiceTests.cs`
 
-### Test scenarios (16 tests)
+### Covered test scenarios
 
 - **`Validate_EmptyString_ShouldFail`:** Empty string
 - **`Validate_WhitespaceOnly_ShouldFail`:** Whitespace only
@@ -315,7 +322,7 @@ if (!string.IsNullOrEmpty(error))
 ### Running tests
 
 ```bash
-dotnet test --filter "FullyQualifiedName~JsonValidationTests"
+dotnet test Test/Test.csproj --filter "FullyQualifiedName~JsonValidationServiceTests"
 ```
 
 **Result:**
@@ -323,44 +330,6 @@ dotnet test --filter "FullyQualifiedName~JsonValidationTests"
 ```text
 Test summary: total: 16; failed: 0; succeeded: 16; skipped: 0
 ```
-
----
-
-## Migration (future)
-
-### When schema version 2 is introduced
-
-1. **Update `Solution.CurrentSchemaVersion`:**
-
-   ```csharp
-   public const int CurrentSchemaVersion = 2;
-   ```
-
-2. **Migration implementieren:**
-
-   ```csharp
-   public static Solution MigrateFromV1(Solution oldSolution)
-   {
-       // Add new fields, transform data
-       return newSolution;
-   }
-   ```
-
-3. **In `IoService`:**
-
-   ```csharp
-   if (solution.SchemaVersion == 1)
-   {
-       solution = Solution.MigrateFromV1(solution);
-   }
-   ```
-
-4. **Extend tests:**
-
-   ```csharp
-   [Test]
-   public void MigrateFromV1_ShouldConvertCorrectly() { ... }
-   ```
 
 ---
 
@@ -372,7 +341,6 @@ Test summary: total: 16; failed: 0; succeeded: 16; skipped: 0
 - Return clear error messages to the user
 - Validate **before** deserialization
 - Increment the version on breaking changes
-- Offer migration paths for legacy files
 
 ### ❌ DON'T
 
@@ -396,14 +364,14 @@ MOBAflow's JSON validation protects against:
 
 - ✅ Better error handling
 - ✅ Clear user-facing error messages
-- ✅ Future-proof migration support
+- ✅ Explicit current-schema enforcement
 - ✅ High test coverage for validation
 
 ---
 
-**Status:** Implemented & tested (16 unit tests)  
+**Status:** Implemented and covered by automated tests
 **Owner:** `Common/Validation/JsonValidationService.cs`  
-**Tests:** `Test/Common/JsonValidationTests.cs`
+**Tests:** `Test/Common/JsonValidationServiceTests.cs`
 
 ## Related current model notes
 
@@ -415,10 +383,12 @@ is not shown in the minimal examples above:
 - `Project.Trains` uses `Train.Vehicles` as the canonical, ordered, mixed
   consist model. Legacy split lists such as locomotive IDs and wagon IDs are
   not the canonical representation.
-- `Project.DisplayDevices` stores ESP32-S3 display targets, selected display
-  model, purpose, rotation, UDP endpoint, and free-positioned layout labels.
 - Workflow actions use typed payload objects such as `announcement`, `audio`,
-  `command`, and `trainDestinationDisplay`.
+  `command`, `executeScript`, `selectSignalAspect`, `changeJourneyStop`, and
+  `trainDestinationDisplay`.
+- `Project.TimetableServices` stores dated service definitions and references
+  existing journeys, trains, stations, platforms and journey stops. Mutable
+  operator decisions are persisted separately by the timetable state store.
 
 See [`PROJECT-REFERENCE.md`](PROJECT-REFERENCE.md) for the full current data
 model overview.

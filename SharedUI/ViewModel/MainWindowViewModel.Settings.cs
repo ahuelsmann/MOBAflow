@@ -107,6 +107,41 @@ public partial class MainWindowViewModel
     }
 
     /// <summary>
+    /// Gets or sets the explicitly configured ESP32 display address.
+    /// </summary>
+    public string DisplayIpAddress
+    {
+        get => _settings.Display.Esp32IpAddress;
+        set
+        {
+            var normalized = value?.Trim() ?? string.Empty;
+            if (_settings.Display.Esp32IpAddress != normalized)
+            {
+                _settings.Display.Esp32IpAddress = normalized;
+                OnPropertyChanged();
+                PersistSettings();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the UDP port for display protocol v1.0.
+    /// </summary>
+    public int DisplayPort
+    {
+        get => _settings.Display.Port;
+        set
+        {
+            if (_settings.Display.Port != value)
+            {
+                _settings.Display.Port = value;
+                OnPropertyChanged();
+                PersistSettings();
+            }
+        }
+    }
+
+    /// <summary>
     /// Gets or sets the retry interval in seconds for the automatic Z21 auto-connect logic.
     /// </summary>
     public double Z21AutoConnectRetryInterval
@@ -1067,6 +1102,8 @@ public partial class MainWindowViewModel
             // Notify all settings properties changed
             OnPropertyChanged(nameof(IpAddress));
             OnPropertyChanged(nameof(Port));
+            OnPropertyChanged(nameof(DisplayIpAddress));
+            OnPropertyChanged(nameof(DisplayPort));
             OnPropertyChanged(nameof(Z21AutoConnectRetryInterval));
             OnPropertyChanged(nameof(Z21SystemStatePollingInterval));
             OnPropertyChanged(nameof(PiperExecutablePath));

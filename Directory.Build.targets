@@ -1,9 +1,28 @@
 <Project>
-  <ItemGroup>
-    <!-- SourceLink für besseres Debugging -->
-    <PackageReference Include="Microsoft.SourceLink.AzureRepos.Git">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
+  <!-- Source Link support is provided by the .NET SDK and uses RepositoryUrl from Directory.Build.props. -->
+
+  <PropertyGroup Condition="'$(MobaAnalyzerGate)' == 'true' and '$(TargetFramework)' != ''">
+    <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <CodeAnalysisTreatWarningsAsErrors>false</CodeAnalysisTreatWarningsAsErrors>
+    <!-- Keep existing IDE diagnostics visible in SARIF; the exact baseline ratchet owns their enforcement. -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);CS0169;CS0618;IDE0005;IDE0007;IDE0019;IDE0028;IDE0053;IDE0057;IDE0060;IDE0061;IDE0062;IDE0290;IDE0330;IDE0360;IDE2000;IDE2002;MVVMTK0045</WarningsNotAsErrors>
+    <_MobaAnalyzerSarifRoot Condition="'$(MobaAnalyzerSarifRoot)' == ''">$(MSBuildThisFileDirectory)artifacts\analyzers</_MobaAnalyzerSarifRoot>
+    <_MobaAnalyzerSarifDirectory>$(_MobaAnalyzerSarifRoot)\$(Configuration)\$(TargetFramework)</_MobaAnalyzerSarifDirectory>
+    <_MobaAnalyzerSarifPath>$(_MobaAnalyzerSarifDirectory)\$(MSBuildProjectName).sarif</_MobaAnalyzerSarifPath>
+    <ErrorLog>$(_MobaAnalyzerSarifPath),version=2.1</ErrorLog>
+  </PropertyGroup>
+
+  <Target
+    Name="ValidateMobaAnalyzerGateConfiguration"
+    BeforeTargets="PrepareForBuild;CoreCompile"
+    Condition="'$(MobaAnalyzerGate)' == 'true' and '$(TargetFramework)' != ''">
+    <Error
+      Condition="'$(RunAnalyzersDuringBuild)' != 'true'"
+      Text="The MOBA analyzer gate requires RunAnalyzersDuringBuild=true." />
+    <MakeDir Directories="$(_MobaAnalyzerSarifDirectory)" />
+    <Message
+      Importance="High"
+      Text="MOBA analyzer gate: project=$(MSBuildProjectName), framework=$(TargetFramework), SARIF=$(ErrorLog)" />
+  </Target>
 </Project>

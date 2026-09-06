@@ -10,11 +10,14 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 using SharedUI.Interface;
+using SharedUI.Service;
 using SharedUI.ViewModel;
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
+using TrackLibrary.PikoA;
 
 using View;
 
@@ -73,7 +76,7 @@ internal static class NavigationRegistration
         pages.Add(new PageMetadata("workflows", "Workflows", "\uE945", typeof(WorkflowsPage), NavigationCategory.Solution, 20, "IsWorkflowsPageAvailable", "WorkflowsPageLabel", null, false));
 
         services.AddSingleton<StationsPage>();
-        pages.Add(new PageMetadata("stations", "Stations", "\uEC06", typeof(StationsPage), NavigationCategory.Solution, 21, null, null, null, false));
+        pages.Add(new PageMetadata("stations", "Stations", "\uEC06", typeof(StationsPage), NavigationCategory.Solution, 21, "IsStationsPageAvailable", "StationsPageLabel", null, false));
 
         services.AddSingleton<GoodsWagonPage>();
         pages.Add(new PageMetadata("goodswagons", "Goods Wagons", "\uE7C0", typeof(GoodsWagonPage), NavigationCategory.Solution, 27, "IsGoodsWagonsPageAvailable", "GoodsWagonsPageLabel", null, false));
@@ -81,7 +84,14 @@ internal static class NavigationRegistration
         services.AddSingleton<TrainsPage>();
         pages.Add(new PageMetadata("trains", "Trains", "\uE7C0", typeof(TrainsPage), NavigationCategory.Solution, 28, "IsTrainsPageAvailable", "TrainsPageLabel", null, false));
 
-        services.AddSingleton<TrackPlanPage>();
+        services.AddSingleton(serviceProvider => new TrackPlanPage(
+            serviceProvider.GetRequiredService<TrackPlanPageViewModels>(),
+            serviceProvider.GetRequiredService<MainWindowViewModel>(),
+            serviceProvider.GetRequiredService<EditableTrackPlan>(),
+            serviceProvider.GetRequiredService<TrackPlanFeedbackHighlighter>(),
+            serviceProvider.GetRequiredService<AppSettings>(),
+            serviceProvider.GetService<ISettingsService>(),
+            serviceProvider.GetService<ILogger<TrackPlanPage>>()));
         pages.Add(new PageMetadata("trackplaneditor", "Track Plan", "\uE7F9", typeof(TrackPlanPage), NavigationCategory.TrackManagement, 10, "IsTrackPlanEditorPageAvailable", "TrackPlanEditorPageLabel", null, false));
 
         services.AddSingleton<TrainControlPage>();
@@ -95,6 +105,19 @@ internal static class NavigationRegistration
 
         services.AddSingleton<MonitorPage>();
         pages.Add(new PageMetadata("monitor", "Monitor", "\uE7F4", typeof(MonitorPage), NavigationCategory.Monitoring, 10, "IsMonitorPageAvailable", "MonitorPageLabel", null, false));
+
+        services.AddSingleton<RecorderPage>();
+        pages.Add(new PageMetadata(
+            Tag: "recorder",
+            Title: "Recorder",
+            Icon: "\uE7C8",
+            PageType: typeof(RecorderPage),
+            Category: NavigationCategory.Monitoring,
+            Order: 20,
+            FeatureToggleKey: "IsRecorderPageAvailable",
+            BadgeLabelKey: "RecorderPageLabel",
+            PathIconData: null,
+            IsBold: false));
 
         services.AddSingleton<MatrixPage>();
         services.AddSingleton(sp => new MatrixPageViewModel(
@@ -116,7 +139,7 @@ internal static class NavigationRegistration
         services.AddSingleton<DisplayPage>();
         pages.Add(new PageMetadata(
             Tag: "display",
-            Title: "Display Configurations",
+            Title: "ESP32 Display",
             Icon: "\uE7F4",
             PageType: typeof(DisplayPage),
             Category: NavigationCategory.TrackManagement,
@@ -144,14 +167,51 @@ internal static class NavigationRegistration
             PathIconData: null,
             IsBold: true));
 
+        services.AddSingleton<TimetablePageViewModel>();
+        // A transient page owns WinUI layout lifecycle while the singleton ViewModel preserves timetable state.
+        services.AddTransient(sp => new TimetablePage(
+            sp.GetRequiredService<TimetablePageViewModel>(),
+            sp.GetRequiredService<AppSettings>(),
+            sp.GetService<ISettingsService>(),
+            sp.GetService<ILogger<TimetablePage>>()));
+        pages.Add(new PageMetadata(
+            Tag: "timetable",
+            Title: "Timetable",
+            Icon: "\uE787",
+            PageType: typeof(TimetablePage),
+            Category: NavigationCategory.Journey,
+            Order: 12,
+            FeatureToggleKey: "IsTimetablePageAvailable",
+            BadgeLabelKey: "TimetablePageLabel",
+            PathIconData: null,
+            IsBold: false));
+
+        services.AddSingleton<EventManagerViewModel>();
+        services.AddSingleton(sp => new EventManagerPage(
+            sp.GetRequiredService<EventManagerViewModel>(),
+            sp.GetRequiredService<AppSettings>(),
+            sp.GetService<ISettingsService>(),
+            sp.GetService<ILogger<EventManagerPage>>()));
+        pages.Add(new PageMetadata(
+            Tag: "eventmanager",
+            Title: "Event Manager",
+            Icon: "\uE945",
+            PageType: typeof(EventManagerPage),
+            Category: NavigationCategory.Journey,
+            Order: 15,
+            FeatureToggleKey: "IsEventManagerPageAvailable",
+            BadgeLabelKey: "EventManagerPageLabel",
+            PathIconData: null,
+            IsBold: false));
+
         // SignalBoxPage: requires custom runtime services
         services.AddSingleton(sp => new SignalBoxPage(
             sp.GetRequiredService<MainWindowViewModel>(),
-            sp.GetRequiredService<ViessmannSignalService>(),
+            sp.GetRequiredService<InterlockingControlViewModel>(),
+            sp.GetRequiredService<SignalBoxPropertiesViewModel>(),
             sp.GetRequiredService<AppSettings>(),
             sp.GetService<ISettingsService>(),
             sp.GetService<ILogger<SignalBoxPage>>(),
-            sp.GetService<ILogger<SignalBoxPropertiesControl>>(),
             sp.GetService<ILogger<SignalBoxCanvasControl>>()));
         pages.Add(new PageMetadata(
             Tag: "signalbox",

@@ -1,20 +1,204 @@
 <Page
     x:Class="Moba.WinUI.View.InfoPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:markdown="using:CommunityToolkit.WinUI.UI.Controls">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Page.Resources>
+        <Style x:Key="InfoBodyTextStyle" BasedOn="{StaticResource BodyTextBlockStyle}" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style x:Key="InfoCardStyle" TargetType="Border">
+            <Setter Property="Padding" Value="16" />
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+    </Page.Resources>
 
     <Grid Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
-        <ScrollViewer Padding="24" VerticalScrollBarVisibility="Auto">
-            <StackPanel Spacing="16">
+        <ScrollViewer
+            Padding="24"
+            HorizontalScrollMode="Disabled"
+            HorizontalScrollBarVisibility="Disabled"
+            VerticalScrollBarVisibility="Auto">
+            <StackPanel
+                MaxWidth="960"
+                HorizontalAlignment="Left"
+                Spacing="24">
+                <StackPanel Spacing="8">
+                    <TextBlock
+                        Style="{StaticResource TitleTextBlockStyle}"
+                        Text="MOBAflow" />
+                    <TextBlock
+                        Style="{StaticResource SubtitleTextBlockStyle}"
+                        Text="Event-driven automation for model railroads"
+                        TextWrapping="Wrap" />
+                    <Border
+                        Padding="8,4"
+                        HorizontalAlignment="Left"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8">
+                        <TextBlock
+                            AutomationProperties.Name="Installed MOBAflow version"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="{x:Bind VersionText, Mode=OneTime}" />
+                    </Border>
+                </StackPanel>
+
+                <Border Style="{StaticResource InfoCardStyle}">
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            Style="{StaticResource SubtitleTextBlockStyle}"
+                            Text="What MOBAflow does" />
+                        <TextBlock
+                            Style="{StaticResource InfoBodyTextStyle}"
+                            Text="MOBAflow turns feedback from a Roco Z21 layout into useful actions. It controls trains, advances journeys, coordinates timetable operations, executes reusable workflows, plays local announcements and updates signals while project data and layout communication remain on the local network." />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource InfoCardStyle}">
+                    <StackPanel Spacing="12">
+                        <TextBlock
+                            Style="{StaticResource SubtitleTextBlockStyle}"
+                            Text="Applications" />
+
+                        <StackPanel Spacing="4">
+                            <TextBlock
+                                Style="{StaticResource BodyStrongTextBlockStyle}"
+                                Text="MOBAflow Desktop" />
+                            <TextBlock
+                                Style="{StaticResource InfoBodyTextStyle}"
+                                Text="The Windows control center creates, operates and monitors layouts. It includes train control, rolling-stock and maintenance records, journeys and timetables, workflows, track plans, signal-box and interlocking controls, monitoring, and the Recorder with isolated replay." />
+                        </StackPanel>
+
+                        <StackPanel Spacing="4">
+                            <TextBlock
+                                Style="{StaticResource BodyStrongTextBlockStyle}"
+                                Text="MOBAsmart" />
+                            <TextBlock
+                                Style="{StaticResource InfoBodyTextStyle}"
+                                Text="The Android companion provides lap counting, locomotive control, the synchronized signal box, fleet information and photo capture close to the layout. Explicit pairing and pinned server identity establish trust with MOBApi." />
+                        </StackPanel>
+
+                        <StackPanel Spacing="4">
+                            <TextBlock
+                                Style="{StaticResource BodyStrongTextBlockStyle}"
+                                Text="MOBApi" />
+                            <TextBlock
+                                Style="{StaticResource InfoBodyTextStyle}"
+                                Text="The local REST and SignalR bridge synchronizes solution and runtime state between MOBAflow, MOBAsmart and approved integrations. Its authenticated control-plane foundation protects sensitive host operations while compatibility migration continues." />
+                        </StackPanel>
+
+                        <StackPanel Spacing="4">
+                            <TextBlock
+                                Style="{StaticResource BodyStrongTextBlockStyle}"
+                                Text="MOBAdisplay" />
+                            <TextBlock
+                                Style="{StaticResource InfoBodyTextStyle}"
+                                Text="The display stack provides RGB565 rendering, a correlated UDP protocol and ESP32-S3 firmware with protected local provisioning. Remote-display integration remains under active development." />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource InfoCardStyle}">
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            Style="{StaticResource SubtitleTextBlockStyle}"
+                            Text="Key capabilities" />
+                        <TextBlock
+                            Style="{StaticResource InfoBodyTextStyle}"
+                            Text="&#x2022; Direct Z21 control, feedback events, track power and live telemetry" />
+                        <TextBlock
+                            Style="{StaticResource InfoBodyTextStyle}"
+                            Text="&#x2022; Locomotive functions F0-F31, fleet photos, maintenance history and decoder records" />
+                        <TextBlock
+                            Style="{StaticResource InfoBodyTextStyle}"
+                            Text="&#x2022; Journeys, feedback sequences, timetable decisions and visual workflow automation" />
+                        <TextBlock
+                            Style="{StaticResource InfoBodyTextStyle}"
+                            Text="&#x2022; Track-plan editing, topology validation, signal-box operation and fail-safe interlocking controls" />
+                        <TextBlock
+                            Style="{StaticResource InfoBodyTextStyle}"
+                            Text="&#x2022; Event recording with filtered export and structurally isolated replay" />
+                        <TextBlock
+                            Style="{StaticResource InfoBodyTextStyle}"
+                            Text="&#x2022; Offline Piper TTS, Windows Speech announcements and reusable audio actions" />
+                        <TextBlock
+                            Style="{StaticResource InfoBodyTextStyle}"
+                            Text="&#x2022; Mobile synchronization, authenticated pairing and preview-stage remote displays" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource InfoCardStyle}">
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            Style="{StaticResource SubtitleTextBlockStyle}"
+                            Text="Safety and network scope" />
+                        <TextBlock
+                            Style="{StaticResource InfoBodyTextStyle}"
+                            Text="MOBAflow can send commands to real model railroad hardware. Verify routes, signals and safe stopping behavior before operating a layout." />
+                        <TextBlock
+                            Style="{StaticResource InfoBodyTextStyle}"
+                            Text="MOBAflow, MOBAsmart, MOBApi and MOBAdisplay are intended for a trusted private LAN. Direct exposure of MOBApi or display endpoints to the public internet is unsupported." />
+                        <TextBlock
+                            Style="{StaticResource InfoBodyTextStyle}"
+                            Text="Preview features are available for testing and may still change. Hardware acceptance remains the responsibility of the layout operator." />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource InfoCardStyle}">
+                    <StackPanel Spacing="4">
+                        <TextBlock
+                            Margin="0,0,0,4"
+                            Style="{StaticResource SubtitleTextBlockStyle}"
+                            Text="Project resources" />
+                        <HyperlinkButton
+                            AutomationProperties.Name="Open the MOBAflow website"
+                            Content="Website"
+                            HorizontalAlignment="Left"
+                            NavigateUri="https://ahuelsmann.github.io/MOBAflow/" />
+                        <HyperlinkButton
+                            AutomationProperties.Name="Open the MOBAflow GitHub repository"
+                            Content="GitHub repository"
+                            HorizontalAlignment="Left"
+                            NavigateUri="https://github.com/ahuelsmann/MOBAflow" />
+                        <HyperlinkButton
+                            AutomationProperties.Name="Open the MOBAflow user documentation"
+                            Content="User documentation"
+                            HorizontalAlignment="Left"
+                            NavigateUri="https://github.com/ahuelsmann/MOBAflow/blob/main/docs/wiki/INDEX.md" />
+                        <HyperlinkButton
+                            AutomationProperties.Name="Open the MOBAflow roadmap"
+                            Content="Roadmap"
+                            HorizontalAlignment="Left"
+                            NavigateUri="https://github.com/ahuelsmann/MOBAflow/blob/main/plans/ROADMAP.md" />
+                        <HyperlinkButton
+                            AutomationProperties.Name="Open MOBAnews"
+                            Content="MOBAnews"
+                            HorizontalAlignment="Left"
+                            NavigateUri="https://mobaflow-fortschritt.ahuelsmann1177.chatgpt.site" />
+                        <HyperlinkButton
+                            AutomationProperties.Name="Open the hardware and liability notes"
+                            Content="Hardware and liability notes"
+                            HorizontalAlignment="Left"
+                            NavigateUri="https://github.com/ahuelsmann/MOBAflow/blob/main/docs/HARDWARE-DISCLAIMER.md" />
+                        <HyperlinkButton
+                            AutomationProperties.Name="Open the MIT license"
+                            Content="MIT License"
+                            HorizontalAlignment="Left"
+                            NavigateUri="https://github.com/ahuelsmann/MOBAflow/blob/main/LICENSE" />
+                    </StackPanel>
+                </Border>
+
                 <TextBlock
-                    FontSize="32"
-                    FontWeight="SemiBold"
-                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                    Text="MOBAflow" />
-                <markdown:MarkdownTextBlock
-                    x:Name="ReadmeMarkdownBlock"
-                    IsTextSelectionEnabled="True"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="MOBAflow is an independent open-source project. Product names and trademarks belong to their respective owners."
                     TextWrapping="Wrap" />
             </StackPanel>
         </ScrollViewer>

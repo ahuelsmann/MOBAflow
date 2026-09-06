@@ -2,8 +2,8 @@
 namespace Moba.Test.Domain;
 
 /// <summary>
-/// Tests for SignalBoxPlan aggregate invariants.
-/// Validates cell uniqueness, cascading deletes, and referential integrity.
+/// Tests for signal-box presentation aggregate invariants.
+/// Operational routes are covered by the shared interlocking definition tests.
 /// </summary>
 [TestFixture]
 internal class SignalBoxPlanTests
@@ -19,20 +19,15 @@ internal class SignalBoxPlanTests
     [Test]
     public void Constructor_InitializesDefaults()
     {
-        Assert.That(_plan.Id, Is.Not.EqualTo(Guid.Empty));
-        Assert.That(_plan.Name, Is.EqualTo("Signal box"));
-        Assert.That(_plan.Grid, Is.Not.Null);
-        Assert.That(_plan.Elements, Is.Not.Null);
-        Assert.That(_plan.Elements, Is.Empty);
-        Assert.That(_plan.Connections, Is.Not.Null);
-        Assert.That(_plan.Connections, Is.Empty);
-        Assert.That(_plan.Routes, Is.Not.Null);
-        Assert.That(_plan.Routes, Is.Empty);
+        Assert.Multiple(() =>
+        {
+            Assert.That(_plan.Id, Is.Not.EqualTo(Guid.Empty));
+            Assert.That(_plan.Name, Is.EqualTo("Signal box"));
+            Assert.That(_plan.Grid, Is.Not.Null);
+            Assert.That(_plan.Elements, Is.Empty);
+            Assert.That(_plan.Connections, Is.Empty);
+        });
     }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // AddElement - Cell Uniqueness
-    // ═══════════════════════════════════════════════════════════════════════
 
     [Test]
     public void AddElement_WhenCellIsFree_ThenElementIsAdded()
@@ -41,8 +36,7 @@ internal class SignalBoxPlanTests
 
         _plan.AddElement(track);
 
-        Assert.That(_plan.Elements, Has.Count.EqualTo(1));
-        Assert.That(_plan.Elements[0], Is.SameAs(track));
+        Assert.That(_plan.Elements.Single(), Is.SameAs(track));
     }
 
     [Test]
@@ -52,16 +46,13 @@ internal class SignalBoxPlanTests
 
         Assert.That(
             () => _plan.AddElement(new SbSwitch { X = 3, Y = 5 }),
-            Throws.TypeOf<InvalidOperationException>()
-                .With.Message.Contains("[3,5]"));
+            Throws.TypeOf<InvalidOperationException>().With.Message.Contains("[3,5]"));
     }
 
     [Test]
     public void AddElement_WhenNull_ThenThrowsArgumentNullException()
     {
-        Assert.That(
-            () => _plan.AddElement(null!),
-            Throws.TypeOf<ArgumentNullException>());
+        Assert.That(() => _plan.AddElement(null!), Throws.TypeOf<ArgumentNullException>());
     }
 
     [Test]
@@ -73,10 +64,6 @@ internal class SignalBoxPlanTests
         Assert.That(_plan.Elements, Has.Count.EqualTo(2));
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // RemoveElement - Cascading Deletes
-    // ═══════════════════════════════════════════════════════════════════════
-
     [Test]
     public void RemoveElement_WhenElementExists_ThenReturnsTrue()
     {
@@ -85,8 +72,11 @@ internal class SignalBoxPlanTests
 
         var result = _plan.RemoveElement(track.Id);
 
-        Assert.That(result, Is.True);
-        Assert.That(_plan.Elements, Is.Empty);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result, Is.True);
+            Assert.That(_plan.Elements, Is.Empty);
+        });
     }
 
     [Test]
@@ -103,53 +93,25 @@ internal class SignalBoxPlanTests
         var trackA = new SbTrackStraight { X = 0, Y = 0 };
         var trackB = new SbTrackStraight { X = 1, Y = 0 };
         var trackC = new SbTrackStraight { X = 2, Y = 0 };
-        _plan.AddElement(trackA);
-        _plan.AddElement(trackB);
-        _plan.AddElement(trackC);
-
+        _plan.Elements.AddRange([trackA, trackB, trackC]);
         _plan.AddConnection(new SignalBoxConnection { FromElementId = trackA.Id, ToElementId = trackB.Id });
         _plan.AddConnection(new SignalBoxConnection { FromElementId = trackB.Id, ToElementId = trackC.Id });
 
         _plan.RemoveElement(trackB.Id);
 
-        Assert.That(_plan.Connections, Is.Empty);
-        Assert.That(_plan.Elements, Has.Count.EqualTo(2));
-    }
-
-    [Test]
-    public void RemoveElement_WhenElementIsReferencedByRoute_ThenRouteIsCascadeDeleted()
-    {
-        var signalA = new SbSignal { X = 0, Y = 0 };
-        var signalB = new SbSignal { X = 5, Y = 0 };
-        var track = new SbTrackStraight { X = 2, Y = 0 };
-        _plan.AddElement(signalA);
-        _plan.AddElement(signalB);
-        _plan.AddElement(track);
-
-        _plan.AddRoute(new SignalBoxRoute
+        Assert.Multiple(() =>
         {
-            Name = "F1",
-            StartSignalId = signalA.Id,
-            EndSignalId = signalB.Id,
-            ElementIds = [track.Id]
+            Assert.That(_plan.Connections, Is.Empty);
+            Assert.That(_plan.Elements, Has.Count.EqualTo(2));
         });
-
-        _plan.RemoveElement(track.Id);
-
-        Assert.That(_plan.Routes, Is.Empty);
     }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // AddConnection - Referential Integrity
-    // ═══════════════════════════════════════════════════════════════════════
 
     [Test]
     public void AddConnection_WhenBothElementsExist_ThenConnectionIsAdded()
     {
         var trackA = new SbTrackStraight { X = 0, Y = 0 };
         var trackB = new SbTrackStraight { X = 1, Y = 0 };
-        _plan.AddElement(trackA);
-        _plan.AddElement(trackB);
+        _plan.Elements.AddRange([trackA, trackB]);
 
         _plan.AddConnection(new SignalBoxConnection
         {
@@ -174,8 +136,7 @@ internal class SignalBoxPlanTests
                 FromElementId = Guid.NewGuid(),
                 ToElementId = track.Id
             }),
-            Throws.TypeOf<InvalidOperationException>()
-                .With.Message.Contains("Source element"));
+            Throws.TypeOf<InvalidOperationException>().With.Message.Contains("Source element"));
     }
 
     [Test]
@@ -190,27 +151,30 @@ internal class SignalBoxPlanTests
                 FromElementId = track.Id,
                 ToElementId = Guid.NewGuid()
             }),
-            Throws.TypeOf<InvalidOperationException>()
-                .With.Message.Contains("Target element"));
+            Throws.TypeOf<InvalidOperationException>().With.Message.Contains("Target element"));
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // RemoveConnection
-    // ═══════════════════════════════════════════════════════════════════════
+    [Test]
+    public void AddConnection_WhenNull_ThenThrowsArgumentNullException()
+    {
+        Assert.That(() => _plan.AddConnection(null!), Throws.TypeOf<ArgumentNullException>());
+    }
 
     [Test]
     public void RemoveConnection_WhenConnectionExists_ThenReturnsTrue()
     {
         var trackA = new SbTrackStraight { X = 0, Y = 0 };
         var trackB = new SbTrackStraight { X = 1, Y = 0 };
-        _plan.AddElement(trackA);
-        _plan.AddElement(trackB);
+        _plan.Elements.AddRange([trackA, trackB]);
         _plan.AddConnection(new SignalBoxConnection { FromElementId = trackA.Id, ToElementId = trackB.Id });
 
         var result = _plan.RemoveConnection(trackA.Id, trackB.Id);
 
-        Assert.That(result, Is.True);
-        Assert.That(_plan.Connections, Is.Empty);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result, Is.True);
+            Assert.That(_plan.Connections, Is.Empty);
+        });
     }
 
     [Test]
@@ -221,138 +185,28 @@ internal class SignalBoxPlanTests
         Assert.That(result, Is.False);
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // AddRoute - Signal and Element Validation
-    // ═══════════════════════════════════════════════════════════════════════
-
     [Test]
-    public void AddRoute_WhenAllReferencesValid_ThenRouteIsAdded()
+    public void RemoveConnection_WhenConnectionsShareEndpoints_ThenRemovesOnlyExactPair()
     {
-        var signalA = new SbSignal { X = 0, Y = 0 };
-        var signalB = new SbSignal { X = 5, Y = 0 };
-        var sw = new SbSwitch { X = 2, Y = 0 };
-        _plan.AddElement(signalA);
-        _plan.AddElement(signalB);
-        _plan.AddElement(sw);
+        var sourceA = new SbTrackStraight();
+        var sourceB = new SbTrackStraight();
+        var targetA = new SbTrackStraight();
+        var targetB = new SbTrackStraight();
+        var sameSource = new SignalBoxConnection { FromElementId = sourceA.Id, ToElementId = targetB.Id };
+        var sameTarget = new SignalBoxConnection { FromElementId = sourceB.Id, ToElementId = targetA.Id };
+        var exact = new SignalBoxConnection { FromElementId = sourceA.Id, ToElementId = targetA.Id };
+        _plan.Connections.AddRange([sameSource, sameTarget, exact]);
 
-        _plan.AddRoute(new SignalBoxRoute
+        var removed = _plan.RemoveConnection(sourceA.Id, targetA.Id);
+
+        Assert.Multiple(() =>
         {
-            Name = "F1",
-            StartSignalId = signalA.Id,
-            EndSignalId = signalB.Id,
-            ElementIds = [sw.Id],
-            SwitchPositions = new Dictionary<Guid, SwitchPosition> { [sw.Id] = SwitchPosition.Straight }
+            Assert.That(removed, Is.True);
+            Assert.That(_plan.Connections, Does.Contain(sameSource));
+            Assert.That(_plan.Connections, Does.Contain(sameTarget));
+            Assert.That(_plan.Connections, Does.Not.Contain(exact));
         });
-
-        Assert.That(_plan.Routes, Has.Count.EqualTo(1));
     }
-
-    [Test]
-    public void AddRoute_WhenStartSignalMissing_ThenThrowsInvalidOperationException()
-    {
-        var signalB = new SbSignal { X = 5, Y = 0 };
-        _plan.AddElement(signalB);
-
-        Assert.That(
-            () => _plan.AddRoute(new SignalBoxRoute
-            {
-                StartSignalId = Guid.NewGuid(),
-                EndSignalId = signalB.Id
-            }),
-            Throws.TypeOf<InvalidOperationException>()
-                .With.Message.Contains("Start signal"));
-    }
-
-    [Test]
-    public void AddRoute_WhenStartIsNotSignal_ThenThrowsInvalidOperationException()
-    {
-        var track = new SbTrackStraight { X = 0, Y = 0 };
-        var signal = new SbSignal { X = 5, Y = 0 };
-        _plan.AddElement(track);
-        _plan.AddElement(signal);
-
-        Assert.That(
-            () => _plan.AddRoute(new SignalBoxRoute
-            {
-                StartSignalId = track.Id,
-                EndSignalId = signal.Id
-            }),
-            Throws.TypeOf<InvalidOperationException>()
-                .With.Message.Contains("Start signal"));
-    }
-
-    [Test]
-    public void AddRoute_WhenRouteReferencesNonExistentElement_ThenThrowsInvalidOperationException()
-    {
-        var signalA = new SbSignal { X = 0, Y = 0 };
-        var signalB = new SbSignal { X = 5, Y = 0 };
-        _plan.AddElement(signalA);
-        _plan.AddElement(signalB);
-
-        Assert.That(
-            () => _plan.AddRoute(new SignalBoxRoute
-            {
-                StartSignalId = signalA.Id,
-                EndSignalId = signalB.Id,
-                ElementIds = [Guid.NewGuid()]
-            }),
-            Throws.TypeOf<InvalidOperationException>()
-                .With.Message.Contains("non-existent elements"));
-    }
-
-    [Test]
-    public void AddRoute_WhenSwitchPositionReferencesNonSwitch_ThenThrowsInvalidOperationException()
-    {
-        var signalA = new SbSignal { X = 0, Y = 0 };
-        var signalB = new SbSignal { X = 5, Y = 0 };
-        var track = new SbTrackStraight { X = 2, Y = 0 };
-        _plan.AddElement(signalA);
-        _plan.AddElement(signalB);
-        _plan.AddElement(track);
-
-        Assert.That(
-            () => _plan.AddRoute(new SignalBoxRoute
-            {
-                StartSignalId = signalA.Id,
-                EndSignalId = signalB.Id,
-                SwitchPositions = new Dictionary<Guid, SwitchPosition> { [track.Id] = SwitchPosition.Straight }
-            }),
-            Throws.TypeOf<InvalidOperationException>()
-                .With.Message.Contains("non-switch elements"));
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // RemoveRoute
-    // ═══════════════════════════════════════════════════════════════════════
-
-    [Test]
-    public void RemoveRoute_WhenRouteExists_ThenReturnsTrue()
-    {
-        var signalA = new SbSignal { X = 0, Y = 0 };
-        var signalB = new SbSignal { X = 5, Y = 0 };
-        _plan.AddElement(signalA);
-        _plan.AddElement(signalB);
-
-        var route = new SignalBoxRoute { StartSignalId = signalA.Id, EndSignalId = signalB.Id };
-        _plan.AddRoute(route);
-
-        var result = _plan.RemoveRoute(route.Id);
-
-        Assert.That(result, Is.True);
-        Assert.That(_plan.Routes, Is.Empty);
-    }
-
-    [Test]
-    public void RemoveRoute_WhenRouteDoesNotExist_ThenReturnsFalse()
-    {
-        var result = _plan.RemoveRoute(Guid.NewGuid());
-
-        Assert.That(result, Is.False);
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // FindElement
-    // ═══════════════════════════════════════════════════════════════════════
 
     [Test]
     public void FindElement_WhenElementExists_ThenReturnsElement()
@@ -373,24 +227,91 @@ internal class SignalBoxPlanTests
         Assert.That(found, Is.Null);
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // Clear
-    // ═══════════════════════════════════════════════════════════════════════
-
     [Test]
     public void Clear_WhenPlanHasData_ThenAllCollectionsAreEmpty()
     {
-        var signalA = new SbSignal { X = 0, Y = 0 };
-        var signalB = new SbSignal { X = 5, Y = 0 };
-        _plan.AddElement(signalA);
-        _plan.AddElement(signalB);
-        _plan.AddConnection(new SignalBoxConnection { FromElementId = signalA.Id, ToElementId = signalB.Id });
-        _plan.AddRoute(new SignalBoxRoute { StartSignalId = signalA.Id, EndSignalId = signalB.Id });
+        var trackA = new SbTrackStraight { X = 0, Y = 0 };
+        var trackB = new SbTrackStraight { X = 1, Y = 0 };
+        _plan.Elements.AddRange([trackA, trackB]);
+        _plan.AddConnection(new SignalBoxConnection { FromElementId = trackA.Id, ToElementId = trackB.Id });
 
         _plan.Clear();
 
-        Assert.That(_plan.Elements, Is.Empty);
-        Assert.That(_plan.Connections, Is.Empty);
-        Assert.That(_plan.Routes, Is.Empty);
+        Assert.Multiple(() =>
+        {
+            Assert.That(_plan.Elements, Is.Empty);
+            Assert.That(_plan.Connections, Is.Empty);
+        });
+    }
+
+    [Test]
+    public void SignalBoxTypes_InitializeBehavioralDefaults()
+    {
+        var element = new SbTrackStraight();
+        var signal = new SbSignal();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(element.Name, Is.EqualTo(string.Empty));
+            Assert.That(signal.IsMultiplexed, Is.False);
+            Assert.That(signal.SignalAspect, Is.EqualTo(SignalAspect.Hp0));
+        });
+    }
+
+    [Test]
+    public void GridConfig_WhenValuesArePositive_PreservesValues()
+    {
+        var grid = new GridConfig(1, 2, 3);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(grid.Width, Is.EqualTo(1));
+            Assert.That(grid.Height, Is.EqualTo(2));
+            Assert.That(grid.CellSize, Is.EqualTo(3));
+        });
+    }
+
+    [TestCase(0, 1, 1, "Width")]
+    [TestCase(-1, 1, 1, "Width")]
+    [TestCase(1, 0, 1, "Height")]
+    [TestCase(1, -1, 1, "Height")]
+    [TestCase(1, 1, 0, "CellSize")]
+    [TestCase(1, 1, -1, "CellSize")]
+    public void GridConfig_WhenValueIsNotPositive_ThrowsForParameter(
+        int width,
+        int height,
+        int cellSize,
+        string expectedParameter)
+    {
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            _ = new GridConfig(width, height, cellSize));
+
+        Assert.That(exception!.ParamName, Is.EqualTo(expectedParameter));
+    }
+
+    [TestCase(0, 0)]
+    [TestCase(1, 2)]
+    public void GridPosition_WhenCoordinatesAreNonNegative_PreservesValues(int x, int y)
+    {
+        var position = new GridPosition(x, y);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(position.X, Is.EqualTo(x));
+            Assert.That(position.Y, Is.EqualTo(y));
+        });
+    }
+
+    [TestCase(-1, 0, "X")]
+    [TestCase(0, -1, "Y")]
+    public void GridPosition_WhenCoordinateIsNegative_ThrowsForParameter(
+        int x,
+        int y,
+        string expectedParameter)
+    {
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            _ = new GridPosition(x, y));
+
+        Assert.That(exception!.ParamName, Is.EqualTo(expectedParameter));
     }
 }

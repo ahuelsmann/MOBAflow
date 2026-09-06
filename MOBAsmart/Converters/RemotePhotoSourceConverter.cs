@@ -27,20 +27,14 @@ public sealed class RemotePhotoSourceConverter : IValueConverter
             return null;
         }
 
-        var uri = _photoUriResolver.TryResolveRemoteUri(path);
-        if (string.IsNullOrWhiteSpace(uri))
+        return ImageCache.GetOrAdd(path, relativePath => new StreamImageSource
         {
-            return null;
-        }
-
-        try
-        {
-            return ImageCache.GetOrAdd(path, _ => ImageSource.FromUri(new Uri(uri, UriKind.Absolute)));
-        }
-        catch (UriFormatException)
-        {
-            return null;
-        }
+            Stream = async cancellationToken =>
+                await _photoUriResolver
+                    .OpenReadAsync(relativePath, cancellationToken)
+                    .ConfigureAwait(false)
+                ?? Stream.Null
+        });
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

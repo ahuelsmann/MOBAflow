@@ -64,6 +64,31 @@ internal sealed class FrameLoopSchedulerTests
         Assert.That(transmitted, Is.GreaterThanOrEqualTo(3));
     }
 
+    [Test]
+    public async Task StopAsync_AllowsSchedulerToRestart()
+    {
+        var renderer = new FakeFrameRenderer();
+        var sender = new FakeFrameSender();
+        var scheduler = new FrameLoopScheduler(renderer, sender);
+        var options = new FrameLoopOptions
+        {
+            IpAddress = "127.0.0.1",
+            Port = 4210,
+            RefreshHz = 50
+        };
+
+        await scheduler.StartAsync(options);
+        await Task.Delay(100);
+        await scheduler.StopAsync();
+        var firstRunRenderCount = renderer.RenderCount;
+
+        await scheduler.StartAsync(options);
+        await Task.Delay(100);
+        await scheduler.StopAsync();
+
+        Assert.That(renderer.RenderCount, Is.GreaterThan(firstRunRenderCount));
+    }
+
     private sealed class FakeFrameRenderer : IFrameRenderer
     {
         public int RenderCount { get; private set; }

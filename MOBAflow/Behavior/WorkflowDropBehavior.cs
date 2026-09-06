@@ -57,21 +57,14 @@ public sealed class WorkflowDropBehavior : Behavior<UIElement>
 
     private void OnDragOver(object sender, DragEventArgs e)
     {
-        // Accept only Workflow drops
-        if (e.DataView.Properties.ContainsKey("Workflow"))
-        {
-            e.AcceptedOperation = DataPackageOperation.Link;
+        if (!e.DataView.Properties.ContainsKey("Workflow")) return;
 
-            // Windows App SDK 2.0 Drag/Drop Visual Enhancements
-            e.DragUIOverride.Caption = "Assign Workflow";
-            e.DragUIOverride.IsCaptionVisible = true;
-            e.DragUIOverride.IsContentVisible = true;
-            e.DragUIOverride.IsGlyphVisible = true;
-        }
-        else
-        {
-            e.AcceptedOperation = DataPackageOperation.None;
-        }
+        e.AcceptedOperation = DataPackageOperation.Link;
+        e.DragUIOverride.Caption = "Assign Workflow";
+        e.DragUIOverride.IsCaptionVisible = true;
+        e.DragUIOverride.IsContentVisible = true;
+        e.DragUIOverride.IsGlyphVisible = true;
+        e.Handled = true;
     }
 
     private void OnDrop(object sender, DragEventArgs e)
@@ -80,6 +73,7 @@ public sealed class WorkflowDropBehavior : Behavior<UIElement>
             workflowObj is WorkflowViewModel workflow)
         {
             Command?.Execute(workflow);
+            e.Handled = true;
         }
     }
 }

@@ -163,9 +163,7 @@ public sealed partial class ProjectViewModel : ObservableObject, IViewModelWrapp
         foreach (var station in Model.Stations)
             Stations.Add(new StationViewModel(station, Model));
 
-        Workflows.Clear();
-        foreach (var w in Model.Workflows)
-            Workflows.Add(new WorkflowViewModel(w, ioService: _ioService, soundPlayer: _soundPlayer, loggerFactory: _loggerFactory));
+        RefreshWorkflows();
 
         Trains.Clear();
         foreach (var train in Model.Trains)
@@ -193,4 +191,62 @@ public sealed partial class ProjectViewModel : ObservableObject, IViewModelWrapp
 
         NotifyStatisticsChanged();
     }
+
+    /// <summary>Adds a workflow model and its authoritative wrapper to this project.</summary>
+    public WorkflowViewModel AddWorkflow(Workflow workflow)
+    {
+        ArgumentNullException.ThrowIfNull(workflow);
+        Model.Workflows.Add(workflow);
+        var viewModel = CreateWorkflowViewModel(workflow);
+        Workflows.Add(viewModel);
+        return viewModel;
+    }
+
+    /// <summary>Removes a workflow model and its authoritative wrapper from this project.</summary>
+    public bool RemoveWorkflow(WorkflowViewModel workflow)
+    {
+        ArgumentNullException.ThrowIfNull(workflow);
+        var modelRemoved = Model.Workflows.Remove(workflow.Model);
+        var viewModelRemoved = Workflows.Remove(workflow);
+        return modelRemoved && viewModelRemoved;
+    }
+
+    private void RefreshWorkflows()
+    {
+        var existing = Workflows.ToList();
+        var ordered = new List<WorkflowViewModel>(Model.Workflows.Count);
+        foreach (var workflow in Model.Workflows)
+        {
+            var viewModel = existing.FirstOrDefault(candidate => ReferenceEquals(candidate.Model, workflow));
+            ordered.Add(viewModel != null
+                ? viewModel
+                : CreateWorkflowViewModel(workflow));
+        }
+
+        for (var index = 0; index < ordered.Count; index++)
+        {
+            if (index < Workflows.Count && ReferenceEquals(Workflows[index], ordered[index]))
+            {
+                continue;
+            }
+
+            var existingIndex = Workflows.IndexOf(ordered[index]);
+            if (existingIndex >= 0)
+            {
+                Workflows.Move(existingIndex, index);
+            }
+            else
+            {
+                Workflows.Insert(index, ordered[index]);
+            }
+        }
+
+        while (Workflows.Count > ordered.Count)
+        {
+            Workflows.RemoveAt(Workflows.Count - 1);
+        }
+    }
+
+    private WorkflowViewModel CreateWorkflowViewModel(Workflow workflow) =>
+        new(workflow, ioService: _ioService, soundPlayer: _soundPlayer, loggerFactory: _loggerFactory);
 }

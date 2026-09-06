@@ -22,7 +22,7 @@ public sealed class MobileSolutionStore : IMobileSolutionStore
 
 {
 
-    private const int SolutionSchemaVersion = 1;
+    private const int SolutionSchemaVersion = Solution.CurrentSchemaVersion;
 
     private static readonly JsonSerializerOptions SignalBoxJsonOptions = new()
 

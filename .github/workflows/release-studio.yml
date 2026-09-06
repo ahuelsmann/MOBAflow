@@ -32,7 +32,7 @@ jobs:
 
     steps:
       - name: Check out trusted release validator
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 1
           ref: ${{ github.event.repository.default_branch }}
@@ -45,7 +45,7 @@ jobs:
         run: Copy-Item trusted-workflow/scripts/Validate-ReleaseTag.ps1 "$env:RUNNER_TEMP/Validate-ReleaseTag.ps1"
 
       - name: Check out the requested tag
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           ref: refs/tags/${{ inputs.tag }}
@@ -62,14 +62,14 @@ jobs:
           -Token $env:GH_TOKEN
 
       - name: Install .NET SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           global-json-file: global.json
 
       - name: Restore release projects
         shell: pwsh
         run: |
-          dotnet restore MOBAflow/MOBAflow.csproj
+          dotnet restore MOBAflow/MOBAflow.csproj --runtime win-x64
           dotnet restore Test/Test.csproj
 
       - name: Build MOBAflow
@@ -120,6 +120,12 @@ jobs:
           $settings.Application.PhotoStoragePath = ''
           $settings | ConvertTo-Json -Depth 20 | Set-Content $settingsPath -Encoding utf8NoBOM
 
+      - name: Validate published release content
+        shell: pwsh
+        run: >-
+          ./scripts/Test-ReleasePackage.ps1
+          -PublishDirectory artifacts/MOBAflow-win-x64
+
       - name: Package artifacts and checksums
         shell: pwsh
         env:
@@ -130,15 +136,27 @@ jobs:
           Compress-Archive -Path artifacts/MOBAflow-win-x64/* -DestinationPath $archive -CompressionLevel Optimal
           $hash = (Get-FileHash -Path $archive -Algorithm SHA256).Hash.ToLowerInvariant()
           "$hash  $(Split-Path -Leaf $archive)" | Set-Content artifacts/SHA256SUMS.txt -Encoding utf8NoBOM
+          Copy-Item CHANGELOG.md artifacts/RELEASE-NOTES.md
+
+      - name: Validate archive and checksum
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: >-
+          ./scripts/Test-ReleasePackage.ps1
+          -PublishDirectory artifacts/MOBAflow-win-x64
+          -Archive "artifacts/MOBAflow-$env:RELEASE_TAG-win-x64.zip"
+          -ChecksumFile artifacts/SHA256SUMS.txt
 
       - name: Upload workflow artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: MOBAflow-${{ inputs.tag }}-release-candidate
           path: |
             artifacts/MOBAflow-${{ inputs.tag }}-win-x64.zip
             artifacts/SHA256SUMS.txt
             artifacts/TestResults/**/*.trx
+            artifacts/RELEASE-NOTES.md
           if-no-files-found: error
           retention-days: 30
 
@@ -164,13 +182,15 @@ jobs:
 
             gh release upload $tag @assets --clobber --repo '${{ github.repository }}'
             if ($LASTEXITCODE -ne 0) { throw "Could not update draft release assets." }
+            gh release edit $tag --notes-file artifacts/RELEASE-NOTES.md --repo '${{ github.repository }}'
+            if ($LASTEXITCODE -ne 0) { throw "Could not update draft release notes." }
           }
           else {
             $arguments = @(
               'release', 'create', $tag,
               '--draft',
               '--verify-tag',
-              '--generate-notes',
+              '--notes-file', 'artifacts/RELEASE-NOTES.md',
               '--title', "MOBAflow $tag",
               '--repo', '${{ github.repository }}'
             )

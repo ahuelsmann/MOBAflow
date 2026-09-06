@@ -1,8 +1,8 @@
 # Z21 Broadcast vs. MOBAflow Sync
 
 This document records the architecture decision for synchronizing MOBAsmart and MOBAflow.
-It complements [ARCHITECTURE.md](ARCHITECTURE.md) and the Z21 LAN specification
-([z21-lan-protokoll.pdf](z21-lan-protokoll.pdf), v1.13).
+It complements [ARCHITECTURE.md](ARCHITECTURE.md) and version 1.13 of the Z21
+LAN specification. The specification is not redistributed in this repository.
 
 ## Summary
 

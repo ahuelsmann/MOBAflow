@@ -32,7 +32,8 @@ internal sealed class RuntimeSnapshotRemoteFilterTests
                 [journeyId] = new JourneyRuntimeSnapshot
                 {
                     JourneyId = journeyId,
-                    Counter = 2,
+                    CurrentStepOccurrence = 2,
+                    CurrentStepRepeatCount = 10,
                     IsActive = true
                 }
             },
@@ -106,6 +107,6 @@ internal sealed class RuntimeSnapshotRemoteFilterTests
             RuntimeJsonSerializer.Serialize(RuntimeSnapshotRemoteFilter.ForMobasmartBroadcast(full)));
 
         Assert.That(slimBytes, Is.LessThan(fullBytes));
-        TestContext.WriteLine($"Full snapshot: {fullBytes} bytes, slim: {slimBytes} bytes");
+        TestContext.Out.WriteLine($"Full snapshot: {fullBytes} bytes, slim: {slimBytes} bytes");
     }
 }

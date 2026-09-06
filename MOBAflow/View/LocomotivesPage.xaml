@@ -55,6 +55,7 @@
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
@@ -65,10 +66,18 @@
                         QueryIcon="Find"
                         Text="{x:Bind ViewModel.LocomotiveSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-                    <ListView
+                    <ComboBox
                         Grid.Row="1"
+                        Margin="0,0,0,8"
+                        AutomationProperties.Name="Maintenance status filter"
+                        DisplayMemberPath="Label"
+                        ItemsSource="{x:Bind Maintenance.FilterOptions, Mode=OneWay}"
+                        SelectedItem="{x:Bind Maintenance.SelectedFilter, Mode=TwoWay}" />
+
+                    <ListView
+                        Grid.Row="2"
                         IsItemClickEnabled="True"
-                        ItemsSource="{x:Bind ViewModel.SelectedProject.Locomotives, Mode=OneWay}"
+                        ItemsSource="{x:Bind Maintenance.VisibleLocomotives, Mode=OneWay}"
                         SelectedItem="{x:Bind ViewModel.SelectedLocomotive, Mode=TwoWay}"
                         SelectionMode="Single">
                         <ListView.ContextFlyout>
@@ -129,12 +138,67 @@
             Header="Properties"
             IsExpanded="{x:Bind ViewModel.IsLocomotivesPropertiesExpanded, Mode=TwoWay}">
             <controls:CollapsibleColumnProperties.PanelContent>
-                <ContentControl
-                    HorizontalContentAlignment="Stretch"
-                    VerticalContentAlignment="Stretch"
-                    Content="{x:Bind ViewModel.SelectedLocomotive, Mode=OneWay}"
-                    ContentTemplateSelector="{StaticResource EntityTemplateSelector}"
-                    Visibility="{x:Bind ViewModel.SelectedLocomotive, Mode=OneWay, Converter={StaticResource NullableConverter}}" />
+                <ScrollViewer>
+                    <StackPanel Spacing="12">
+                        <ContentControl
+                            HorizontalContentAlignment="Stretch"
+                            Content="{x:Bind ViewModel.SelectedLocomotive, Mode=OneWay}"
+                            ContentTemplateSelector="{StaticResource EntityTemplateSelector}"
+                            Visibility="{x:Bind ViewModel.SelectedLocomotive, Mode=OneWay, Converter={StaticResource NullableConverter}}" />
+                        <controls:RollingStockMaintenancePanel ViewModel="{x:Bind Maintenance, Mode=OneWay}" />
+                        <Expander Header="Decoder CV backups">
+                            <StackPanel Spacing="8">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Button Command="{x:Bind Management.ImportCvSnapshotCommand}" Content="Import backup" />
+                                    <Button Command="{x:Bind Management.ExportLatestCvSnapshotCommand}" Content="Export latest" />
+                                </StackPanel>
+                                <ItemsControl ItemsSource="{x:Bind Management.DecoderSnapshots, Mode=OneWay}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="8,4">
+                                            <TextBlock Text="{Binding Name}" />
+                                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{Binding CapturedAt}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Expander>
+                        <Expander Header="Feedback whistle automation">
+                            <StackPanel Spacing="8">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Button Command="{x:Bind Management.AddWhistleRuleCommand}" Content="Add rule" />
+                                    <Button Command="{x:Bind Management.DeleteSelectedWhistleRuleCommand}" Content="Delete selected" />
+                                </StackPanel>
+                                <ListView
+                                    ItemsSource="{x:Bind Management.WhistleRules, Mode=OneWay}"
+                                    SelectedItem="{x:Bind Management.SelectedWhistleRule, Mode=TwoWay}">
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Padding="8" Spacing="6">
+                                                <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <NumberBox Header="Feedback input" Minimum="1" Value="{Binding InPort, Mode=TwoWay}" />
+                                                    <NumberBox Header="Function F0–F31" Maximum="31" Minimum="0" Value="{Binding FunctionIndex, Mode=TwoWay}" />
+                                                </StackPanel>
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <NumberBox Header="Delay (ms)" Minimum="0" Value="{Binding DelayMilliseconds, Mode=TwoWay}" />
+                                                    <NumberBox Header="Active (ms)" Minimum="1" Value="{Binding ActiveDurationMilliseconds, Mode=TwoWay}" />
+                                                </StackPanel>
+                                                <ToggleSwitch Header="Enabled" IsOn="{Binding Enabled, Mode=TwoWay}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
+                            </StackPanel>
+                        </Expander>
+                        <Button
+                            HorizontalAlignment="Left"
+                            Command="{x:Bind Management.ExportPassportCommand}"
+                            Content="Export printable locomotive passport" />
+                        <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind Management.OperationStatus, Mode=OneWay}" />
+                    </StackPanel>
+                </ScrollViewer>
             </controls:CollapsibleColumnProperties.PanelContent>
         </controls:CollapsibleColumnProperties>
     </Grid>

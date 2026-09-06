@@ -2,6 +2,7 @@
   "name": "Example Solution",
   "projects": [
     {
+      "id": "ff8c1442-da0b-4b81-9c99-ef7b6fd73a58",
       "name": "myMOBA",
       "locomotives": [
         {
@@ -114,7 +115,24 @@
             ""
           ],
           "isPushing": false,
-          "photoPath": "photos/locomotives/bb15c10a-5b78-451f-8f2f-2d4e3efa74af.jpg"
+          "photoPath": "photos/locomotives/bb15c10a-5b78-451f-8f2f-2d4e3efa74af.jpg",
+          "maintenance": {
+            "entries": [],
+            "plans": [
+              {
+                "id": "0b2eea9f-7398-4e67-ac78-833118fc3001",
+                "category": "Lubrication",
+                "name": "Lubrication",
+                "intervalOperatingSeconds": 36000,
+                "intervalCompletedTrips": 20
+              }
+            ]
+          },
+          "usage": {
+            "trackedOperatingSeconds": 14400,
+            "trackedCompletedTrips": 8,
+            "corrections": []
+          }
         },
         {
           "id": "f8a91b2c-3d4e-5f60-a211-279170442317",
@@ -212,7 +230,23 @@
             "railroadCompany": "DB Regio",
             "description": "First class passenger coach"
           },
-          "photoPath": "photos/latest/242e53cced544362951dbc39e4fea39e.jpg"
+          "photoPath": "photos/latest/242e53cced544362951dbc39e4fea39e.jpg",
+          "usage": {
+            "trackedOperatingSeconds": 10800,
+            "trackedCompletedTrips": 6,
+            "corrections": []
+          },
+          "maintenance": {
+            "entries": [],
+            "plans": [
+              {
+                "id": "0b2eea9f-7398-4e67-ac78-833118fc3002",
+                "category": "Cleaning",
+                "name": "Wheel cleaning",
+                "intervalCompletedTrips": 15
+              }
+            ]
+          }
         }
       ],
       "goodsWagons": [
@@ -231,7 +265,23 @@
             "railroadCompany": "DB Cargo",
             "description": "Container flat wagon"
           },
-          "photoPath": "photos/latest/82680c4a10b14db9bef80ea45e297662.jpg"
+          "photoPath": "photos/latest/82680c4a10b14db9bef80ea45e297662.jpg",
+          "usage": {
+            "trackedOperatingSeconds": 7200,
+            "trackedCompletedTrips": 4,
+            "corrections": []
+          },
+          "maintenance": {
+            "entries": [],
+            "plans": [
+              {
+                "id": "0b2eea9f-7398-4e67-ac78-833118fc3003",
+                "category": "Other",
+                "name": "Coupler inspection",
+                "intervalCompletedTrips": 12
+              }
+            ]
+          }
         }
       ],
       "trains": [
@@ -325,71 +375,106 @@
           "id": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
           "name": "Arrival Main Station",
           "description": "Plays announcement on station arrival",
-          "actions": [
+          "entryStepId": "11111111-1111-1111-1111-000000003201",
+          "steps": [
             {
-              "id": "7c46176e-2dd4-44cb-9c9e-ce1e2e6ac09d",
+              "kind": "action",
+              "action": {
+                "id": "7c46176e-2dd4-44cb-9c9e-ce1e2e6ac09d",
+                "name": "Aspect Red",
+                "number": 0,
+                "type": 5,
+                "delayAfterMs": 0,
+                "selectSignalAspect": {
+                  "baseAddress": 201,
+                  "signalAspect": "Ra12",
+                  "multiplexerArticleNumber": "5229",
+                  "signalArticleNumber": "4046"
+                }
+              },
+              "id": "11111111-1111-1111-1111-000000003201",
               "name": "Aspect Red",
-              "number": 1,
-              "type": 5,
-              "delayAfterMs": 0,
-              "selectSignalAspect": {
-                "baseAddress": 201,
-                "signalAspect": "Ra12",
-                "multiplexerArticleNumber": "5229",
-                "signalArticleNumber": "4046"
-              }
+              "nextStepId": "11111111-1111-1111-1111-000000003202"
             },
             {
-              "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+              "kind": "action",
+              "action": {
+                "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+                "name": "Arrival Announcement",
+                "number": 0,
+                "type": 0,
+                "delayAfterMs": 0,
+                "announcement": {
+                  "message": "We are now arriving at {StationName}. Exit: {StationIsExitOnLeft}.",
+                  "rate": -1
+                }
+              },
+              "id": "11111111-1111-1111-1111-000000003202",
               "name": "Arrival Announcement",
-              "number": 2,
-              "type": 0,
-              "delayAfterMs": 0,
-              "announcement": {
-                "message": "Wir erreichen jetzt {StationName}. Ausstieg: {StationIsExitOnLeft}.",
-                "rate": -1
-              }
+              "nextStepId": "11111111-1111-1111-1111-000000003203"
+            },
+            {
+              "kind": "terminate",
+              "result": 0,
+              "id": "11111111-1111-1111-1111-000000003203",
+              "name": "Completed"
             }
           ],
-          "executionMode": 0,
-          "inPort": 0,
-          "isUsingTimerToIgnoreFeedbacks": false,
-          "intervalForTimerToIgnoreFeedbacks": 0
+          "defaultErrorPolicy": {
+            "behavior": 0
+          }
         },
         {
           "id": "b0830625-1939-403a-8878-05a8d8546323",
           "name": "Next Stop Announcement",
           "description": "Next Stop Announcement",
-          "actions": [
+          "entryStepId": "22222222-2222-2222-2222-000000003201",
+          "steps": [
             {
-              "id": "68762cfe-28ac-4814-9686-1fd7009e445b",
+              "kind": "action",
+              "action": {
+                "id": "68762cfe-28ac-4814-9686-1fd7009e445b",
+                "name": "Aspect Yellow",
+                "number": 0,
+                "type": 5,
+                "delayAfterMs": 0,
+                "selectSignalAspect": {
+                  "baseAddress": 201,
+                  "signalAspect": "Ks1Blink",
+                  "multiplexerArticleNumber": "5229",
+                  "signalArticleNumber": "4046"
+                }
+              },
+              "id": "22222222-2222-2222-2222-000000003201",
               "name": "Aspect Yellow",
-              "number": 1,
-              "type": 5,
-              "delayAfterMs": 0,
-              "selectSignalAspect": {
-                "baseAddress": 201,
-                "signalAspect": "Ks1Blink",
-                "multiplexerArticleNumber": "5229",
-                "signalArticleNumber": "4046"
-              }
+              "nextStepId": "22222222-2222-2222-2222-000000003202"
             },
             {
-              "id": "c60f8ab8-15ad-4f7d-a68c-0bfa95fa6afe",
+              "kind": "action",
+              "action": {
+                "id": "c60f8ab8-15ad-4f7d-a68c-0bfa95fa6afe",
+                "name": "Next Stop Announcement",
+                "number": 0,
+                "type": 0,
+                "delayAfterMs": 0,
+                "announcement": {
+                  "message": "Next stop: {StationName}. Exit: {StationIsExitOnLeft}."
+                }
+              },
+              "id": "22222222-2222-2222-2222-000000003202",
               "name": "Next Stop Announcement",
-              "number": 2,
-              "type": 0,
-              "delayAfterMs": 0,
-              "announcement": {
-                "message": "N\u00E4chster Halt: {StationName}. Ausstieg: {StationIsExitOnLeft}.",
-                "voiceName": "de-DE-KatjaNeural"
-              }
+              "nextStepId": "22222222-2222-2222-2222-000000003203"
+            },
+            {
+              "kind": "terminate",
+              "result": 0,
+              "id": "22222222-2222-2222-2222-000000003203",
+              "name": "Completed"
             }
           ],
-          "executionMode": 0,
-          "inPort": 0,
-          "isUsingTimerToIgnoreFeedbacks": false,
-          "intervalForTimerToIgnoreFeedbacks": 0
+          "defaultErrorPolicy": {
+            "behavior": 0
+          }
         }
       ],
       "journeys": [
@@ -400,19 +485,8 @@
           "text": "N\u00E4chster Halt: {StationName}. Ausstieg: {StationIsExitOnLeft}.",
           "stations": [
             {
-              "id": "0284b108-361f-4357-ae1e-7fb8c52aa33e",
-              "name": "Event1",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "d1e2f3a4-b5c6-7890-1234-567890abcdef",
               "name": "Bielefeld Central Station",
-              "isVirtual": false,
               "isExitOnLeft": true,
               "platforms": [],
               "platformNumber": 0,
@@ -422,19 +496,8 @@
               "connections": []
             },
             {
-              "id": "751ad5f3-ee7a-4694-875f-76f7d8461f77",
-              "name": "Event2",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "d2e3f4a5-b6c7-8901-2345-678901bcdef0",
               "name": "Herford",
-              "isVirtual": false,
               "isExitOnLeft": false,
               "platforms": [],
               "platformNumber": 0,
@@ -444,19 +507,8 @@
               "connections": []
             },
             {
-              "id": "4eab1740-8f91-4840-9c9b-e2ebd3cdce0e",
-              "name": "Event3",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "d3e4f5a6-b7c8-9012-3456-789012cdef01",
               "name": "Minden (Westf)",
-              "isVirtual": false,
               "isExitOnLeft": true,
               "platforms": [],
               "platformNumber": 0,
@@ -466,7 +518,30 @@
               "connections": []
             }
           ],
-          "feedbackSequence": [],
+          "feedbackSequence": [
+            {
+              "id": "01c6cdc6-5d82-4b15-ad61-3d1cb5864148",
+              "inPort": 1,
+              "repeatCount": 1,
+              "delayMs": 0,
+              "enabled": true,
+              "stopTransition": {
+                "mode": 0
+              },
+              "conditions": []
+            },
+            {
+              "id": "d17a434a-534a-4605-9c39-f86300ca7199",
+              "inPort": 1,
+              "repeatCount": 10,
+              "delayMs": 0,
+              "enabled": true,
+              "stopTransition": {
+                "mode": 0
+              },
+              "conditions": []
+            }
+          ],
           "behaviorOnLastStop": 0,
           "firstPos": 0
         },
@@ -477,19 +552,8 @@
           "text": "N\u00E4chster Halt: {StationName}. Ausstieg: {StationIsExitOnLeft}.",
           "stations": [
             {
-              "id": "e1200001-1200-4000-8000-000000000001",
-              "name": "Event1",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "e1200002-1200-4000-8000-000000000002",
               "name": "Flensburg",
-              "isVirtual": false,
               "isExitOnLeft": true,
               "platforms": [],
               "platformNumber": 0,
@@ -499,19 +563,8 @@
               "connections": []
             },
             {
-              "id": "e1200003-1200-4000-8000-000000000003",
-              "name": "Event2",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "e1200004-1200-4000-8000-000000000004",
               "name": "Hamburg Central Station",
-              "isVirtual": false,
               "isExitOnLeft": false,
               "platforms": [],
               "platformNumber": 0,
@@ -521,19 +574,8 @@
               "connections": []
             },
             {
-              "id": "e1200005-1200-4000-8000-000000000005",
-              "name": "Event3",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "e1200006-1200-4000-8000-000000000006",
               "name": "Hannover Central Station",
-              "isVirtual": false,
               "isExitOnLeft": true,
               "platforms": [],
               "platformNumber": 0,
@@ -543,19 +585,8 @@
               "connections": []
             },
             {
-              "id": "e1200007-1200-4000-8000-000000000007",
-              "name": "Event4",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "d1e2f3a4-b5c6-7890-1234-567890abcdef",
               "name": "Bielefeld Central Station",
-              "isVirtual": false,
               "isExitOnLeft": true,
               "platforms": [],
               "platformNumber": 0,
@@ -565,19 +596,8 @@
               "connections": []
             },
             {
-              "id": "e1200009-1200-4000-8000-000000000009",
-              "name": "Event5",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "e1200010-1200-4000-8000-000000000010",
               "name": "G\u00F6ttingen",
-              "isVirtual": false,
               "isExitOnLeft": false,
               "platforms": [],
               "platformNumber": 0,
@@ -587,19 +607,8 @@
               "connections": []
             },
             {
-              "id": "e1200011-1200-4000-8000-000000000011",
-              "name": "Event6",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "e1200012-1200-4000-8000-000000000012",
               "name": "Kassel Central Station",
-              "isVirtual": false,
               "isExitOnLeft": true,
               "platforms": [],
               "platformNumber": 0,
@@ -609,19 +618,8 @@
               "connections": []
             },
             {
-              "id": "e1200013-1200-4000-8000-000000000013",
-              "name": "Event7",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "e1200014-1200-4000-8000-000000000014",
               "name": "Fulda",
-              "isVirtual": false,
               "isExitOnLeft": true,
               "platforms": [],
               "platformNumber": 0,
@@ -642,19 +640,8 @@
           "text": "N\u00E4chster Halt: {StationName}. Ausstieg: {StationIsExitOnLeft}.",
           "stations": [
             {
-              "id": "e1400001-1400-4000-8000-000000000001",
-              "name": "Event1",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "e1400002-1400-4000-8000-000000000002",
               "name": "Norddeich Mole",
-              "isVirtual": false,
               "isExitOnLeft": true,
               "platforms": [],
               "platformNumber": 0,
@@ -664,19 +651,8 @@
               "connections": []
             },
             {
-              "id": "e1400003-1400-4000-8000-000000000003",
-              "name": "Event2",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "e1400004-1400-4000-8000-000000000004",
               "name": "Emden",
-              "isVirtual": false,
               "isExitOnLeft": false,
               "platforms": [],
               "platformNumber": 0,
@@ -686,19 +662,8 @@
               "connections": []
             },
             {
-              "id": "e1400005-1400-4000-8000-000000000005",
-              "name": "Event3",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "e1400006-1400-4000-8000-000000000006",
               "name": "Oldenburg (Oldb) Central Station",
-              "isVirtual": false,
               "isExitOnLeft": true,
               "platforms": [],
               "platformNumber": 0,
@@ -708,19 +673,8 @@
               "connections": []
             },
             {
-              "id": "e1400007-1400-4000-8000-000000000007",
-              "name": "Event4",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "e1400008-1400-4000-8000-000000000008",
               "name": "Bremen Central Station",
-              "isVirtual": false,
               "isExitOnLeft": false,
               "platforms": [],
               "platformNumber": 0,
@@ -730,19 +684,8 @@
               "connections": []
             },
             {
-              "id": "e1400009-1400-4000-8000-000000000009",
-              "name": "Event5",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "e1400010-1400-4000-8000-000000000010",
               "name": "Hannover Central Station",
-              "isVirtual": false,
               "isExitOnLeft": true,
               "platforms": [],
               "platformNumber": 0,
@@ -752,19 +695,8 @@
               "connections": []
             },
             {
-              "id": "e1400011-1400-4000-8000-000000000011",
-              "name": "Event6",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "d1e2f3a4-b5c6-7890-1234-567890abcdef",
               "name": "Bielefeld Central Station",
-              "isVirtual": false,
               "isExitOnLeft": true,
               "platforms": [],
               "platformNumber": 0,
@@ -774,19 +706,8 @@
               "connections": []
             },
             {
-              "id": "e1400013-1400-4000-8000-000000000013",
-              "name": "Event7",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "d3e4f5a6-b7c8-9012-3456-789012cdef01",
               "name": "Minden (Westf)",
-              "isVirtual": false,
               "isExitOnLeft": true,
               "platforms": [],
               "platformNumber": 0,
@@ -796,19 +717,8 @@
               "connections": []
             },
             {
-              "id": "e1400015-1400-4000-8000-000000000015",
-              "name": "Event8",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "e1400016-1400-4000-8000-000000000016",
               "name": "Stendal",
-              "isVirtual": false,
               "isExitOnLeft": false,
               "platforms": [],
               "platformNumber": 0,
@@ -818,19 +728,8 @@
               "connections": []
             },
             {
-              "id": "e1400017-1400-4000-8000-000000000017",
-              "name": "Event9",
-              "isVirtual": true,
-              "isExitOnLeft": false,
-              "platforms": [],
-              "platformNumber": 0,
-              "platformTag": "",
-              "connections": []
-            },
-            {
               "id": "e1400018-1400-4000-8000-000000000018",
               "name": "Berlin Central Station",
-              "isVirtual": false,
               "isExitOnLeft": true,
               "platforms": [],
               "platformNumber": 0,
@@ -840,7 +739,19 @@
               "connections": []
             }
           ],
-          "feedbackSequence": [],
+          "feedbackSequence": [
+            {
+              "id": "d3cea651-a285-478f-886f-a93d30d5a56d",
+              "inPort": 1,
+              "repeatCount": 1,
+              "delayMs": 0,
+              "enabled": true,
+              "stopTransition": {
+                "mode": 0
+              },
+              "conditions": []
+            }
+          ],
           "behaviorOnLastStop": 0,
           "firstPos": 0
         }
@@ -849,7 +760,6 @@
         {
           "id": "d1e2f3a4-b5c6-7890-1234-567890abcdef",
           "name": "Bielefeld Central Station",
-          "isVirtual": false,
           "isExitOnLeft": false,
           "platforms": [
             {
@@ -867,7 +777,6 @@
         {
           "id": "d2e3f4a5-b6c7-8901-2345-678901bcdef0",
           "name": "Herford",
-          "isVirtual": false,
           "isExitOnLeft": false,
           "platforms": [
             {
@@ -884,7 +793,6 @@
         {
           "id": "d3e4f5a6-b7c8-9012-3456-789012cdef01",
           "name": "Minden (Westf)",
-          "isVirtual": false,
           "isExitOnLeft": false,
           "platforms": [
             {
@@ -899,6 +807,163 @@
           "connections": []
         }
       ],
+      "timetableServices": [],
+      "timetablePolicy": {
+        "minimumTurnaround": "00:05:00"
+      },
+      "locomotiveWhistleRules": [],
+      "interlocking": {
+        "turnouts": [
+          {
+            "id": "11111111-1111-4111-8111-111111111101",
+            "name": "W1",
+            "decoderAddress": 100,
+            "kind": "TwoWay",
+            "commands": [
+              {
+                "position": "Straight",
+                "commands": [
+                  {
+                    "addressOffset": 0,
+                    "output": 0,
+                    "activate": true,
+                    "queue": false
+                  }
+                ]
+              },
+              {
+                "position": "DivergingLeft",
+                "commands": [
+                  {
+                    "addressOffset": 0,
+                    "output": 1,
+                    "activate": true,
+                    "queue": false
+                  }
+                ]
+              }
+            ],
+            "confirmations": [
+              {
+                "position": "Straight",
+                "conditions": [
+                  {
+                    "functionAddress": 100,
+                    "outputPosition": false
+                  }
+                ]
+              },
+              {
+                "position": "DivergingLeft",
+                "conditions": [
+                  {
+                    "functionAddress": 100,
+                    "outputPosition": true
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "signals": [
+          {
+            "id": "11111111-1111-4111-8111-111111111102",
+            "name": "G2HBFA1",
+            "safeAspect": "Hp0",
+            "signalSystem": "Ks",
+            "isMultiplexed": true,
+            "multiplexerArticleNumber": "5229",
+            "mainSignalArticleNumber": "4046",
+            "distantSignalArticleNumber": "4040",
+            "baseAddress": 201
+          }
+        ],
+        "blocks": [
+          {
+            "id": "11111111-1111-4111-8111-111111111103",
+            "name": "Main line block",
+            "direction": "Bidirectional",
+            "boundaryElementIds": [
+              "11111111-1111-4111-8111-111111111101",
+              "11111111-1111-4111-8111-111111111102"
+            ],
+            "feedbackInputs": [
+              {
+                "inPort": 1,
+                "role": "Occupied",
+                "activeState": true
+              },
+              {
+                "inPort": 1,
+                "role": "Clear",
+                "activeState": false
+              }
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "fromOperationalId": "11111111-1111-4111-8111-111111111102",
+            "toOperationalId": "11111111-1111-4111-8111-111111111101",
+            "isBidirectional": true
+          },
+          {
+            "fromOperationalId": "11111111-1111-4111-8111-111111111101",
+            "toOperationalId": "11111111-1111-4111-8111-111111111103",
+            "isBidirectional": true
+          }
+        ],
+        "routes": [
+          {
+            "id": "11111111-1111-4111-8111-111111111104",
+            "name": "G2HBFA1 to main line",
+            "entryElementId": "11111111-1111-4111-8111-111111111102",
+            "exitElementId": "11111111-1111-4111-8111-111111111103",
+            "pathElementIds": [
+              "11111111-1111-4111-8111-111111111101"
+            ],
+            "turnoutRequirements": [
+              {
+                "turnoutId": "11111111-1111-4111-8111-111111111101",
+                "position": "Straight"
+              }
+            ],
+            "protectedBlockIds": [
+              "11111111-1111-4111-8111-111111111103"
+            ],
+            "signalRequirements": [
+              {
+                "signalId": "11111111-1111-4111-8111-111111111102",
+                "proceedAspect": "Ks1"
+              }
+            ],
+            "conflictingRouteIds": []
+          }
+        ],
+        "bindings": [
+          {
+            "operationalId": "11111111-1111-4111-8111-111111111101",
+            "trackSegmentIds": [
+              "d0f74455-6b51-4c54-9af0-b710b6224e1e"
+            ],
+            "signalBoxElementIds": []
+          },
+          {
+            "operationalId": "11111111-1111-4111-8111-111111111102",
+            "trackSegmentIds": [],
+            "signalBoxElementIds": [
+              "3d6c0ace-dde2-4329-95d5-8e474b65828f"
+            ]
+          },
+          {
+            "operationalId": "11111111-1111-4111-8111-111111111103",
+            "trackSegmentIds": [
+              "3924429b-bb7c-483d-a8b2-e165db764044"
+            ],
+            "signalBoxElementIds": []
+          }
+        ]
+      },
       "signalBoxPlan": {
         "id": "f1d3dd73-dcd5-4faa-b180-e687659598ea",
         "name": "Signal box",
@@ -914,8 +979,7 @@
             "x": 2,
             "y": 3,
             "rotation": 270,
-            "name": "",
-            "state": "Free"
+            "name": ""
           },
           {
             "$type": "TrackStraight",
@@ -923,8 +987,7 @@
             "x": 3,
             "y": 3,
             "rotation": 0,
-            "name": "",
-            "state": "Free"
+            "name": ""
           },
           {
             "$type": "TrackStraight",
@@ -932,8 +995,7 @@
             "x": 4,
             "y": 3,
             "rotation": 0,
-            "name": "",
-            "state": "Free"
+            "name": ""
           },
           {
             "$type": "TrackCurve",
@@ -941,8 +1003,7 @@
             "x": 5,
             "y": 3,
             "rotation": 0,
-            "name": "",
-            "state": "Free"
+            "name": ""
           },
           {
             "$type": "Detector",
@@ -951,8 +1012,7 @@
             "x": 2,
             "y": 4,
             "rotation": 90,
-            "name": "",
-            "state": "Free"
+            "name": ""
           },
           {
             "$type": "TrackStraight",
@@ -960,8 +1020,7 @@
             "x": 5,
             "y": 4,
             "rotation": 90,
-            "name": "",
-            "state": "Free"
+            "name": ""
           },
           {
             "$type": "TrackCurve",
@@ -969,8 +1028,7 @@
             "x": 5,
             "y": 5,
             "rotation": 90,
-            "name": "",
-            "state": "Free"
+            "name": ""
           },
           {
             "$type": "TrackStraight",
@@ -978,8 +1036,7 @@
             "x": 4,
             "y": 5,
             "rotation": 0,
-            "name": "",
-            "state": "Free"
+            "name": ""
           },
           {
             "$type": "TrackStraight",
@@ -987,8 +1044,7 @@
             "x": 3,
             "y": 5,
             "rotation": 0,
-            "name": "",
-            "state": "Free"
+            "name": ""
           },
           {
             "$type": "TrackCurve",
@@ -996,13 +1052,11 @@
             "x": 2,
             "y": 5,
             "rotation": 180,
-            "name": "",
-            "state": "Free"
+            "name": ""
           },
           {
             "$type": "Signal",
             "signalSystem": "Ks",
-            "signalAspect": "Hp0",
             "topSpeedIndicator": "8",
             "bottomSpeedIndicator": "6",
             "isMultiplexed": true,
@@ -1010,17 +1064,14 @@
             "mainSignalArticleNumber": "4046",
             "distantSignalArticleNumber": "4040",
             "baseAddress": 201,
-            "extendedAccessoryValue": 1,
             "id": "3d6c0ace-dde2-4329-95d5-8e474b65828f",
             "x": 6,
             "y": 4,
             "rotation": 0,
-            "name": "G2HBFA1",
-            "state": "Free"
+            "name": "G2HBFA1"
           }
         ],
-        "connections": [],
-        "routes": []
+        "connections": []
       },
       "trackPlan": {
         "version": 1,
@@ -2199,5 +2250,5 @@
       }
     }
   ],
-  "schemaVersion": 1
+  "schemaVersion": 4
 }

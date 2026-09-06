@@ -30,6 +30,8 @@ public sealed record RuntimeCommandEnvelope
     public int? FunctionIndex { get; init; }
 
     public bool? FunctionIsOn { get; init; }
+
+    public Guid? JourneyId { get; init; }
 }
 
 /// <summary>
@@ -39,5 +41,6 @@ public enum RuntimeCommandType
 {
     SetSignalAspect,
     SetLocomotiveDrive,
-    SetLocomotiveFunction
+    SetLocomotiveFunction,
+    ResetJourney
 }

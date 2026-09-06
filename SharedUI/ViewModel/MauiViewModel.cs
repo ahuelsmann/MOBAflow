@@ -8,6 +8,7 @@ using Common.Discovery;
 using Common.Events;
 using Common.Extension;
 using Common.Runtime;
+using Common.Security;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -44,6 +45,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     private readonly INetworkProfileChangeNotifier _networkProfileChangeNotifier;
     private readonly ILogger<MauiViewModel> _logger;
     private readonly IEventBus _eventBus;
+    private readonly RemoteControlSessionService? _remoteControlSessionService;
     private readonly List<Guid> _eventBusSubscriptions = [];
 
     private readonly object _networkChangeDebounceLock = new();
@@ -128,7 +130,8 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         IRuntimeCommandGateway? runtimeCommandGateway = null,
         IMobileRuntimeCoordinator? mobileRuntimeCoordinator = null,
         IProjectContext? projectContext = null,
-        IBackgroundService? backgroundService = null)
+        IBackgroundService? backgroundService = null,
+        RemoteControlSessionService? remoteControlSessionService = null)
     {
         ArgumentNullException.ThrowIfNull(mobaRuntime);
         ArgumentNullException.ThrowIfNull(uiDispatcher);
@@ -160,12 +163,14 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         _mobileRuntimeCoordinator = mobileRuntimeCoordinator;
         _backgroundService = backgroundService;
         _eventBus = eventBus;
+        _remoteControlSessionService = remoteControlSessionService;
         _projectContext = projectContext;
 
         _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
         _eventBusSubscriptions.Add(_eventBus.Subscribe<FeedbackReceivedEvent>(OnFeedbackReceived));
         _eventBusSubscriptions.Add(_eventBus.Subscribe<SolutionSyncedEvent>(OnSolutionSyncedForSignalBox));
         _eventBusSubscriptions.Add(_eventBus.Subscribe<SolutionSyncedEvent>(OnSolutionSyncedForControlTab));
+        _eventBusSubscriptions.Add(_eventBus.Subscribe<RemotePairingCompletedEvent>(OnRemotePairingCompleted));
 
         WireProjectContextForControlTab();
 
@@ -175,6 +180,25 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             _runtimeHubRemoteClient.SessionStateChanged += OnRuntimeHubSessionStateChangedAsync;
             _runtimeHubRemoteClient.SolutionUpdated += OnRuntimeHubSolutionUpdatedAsync;
         }
+    }
+
+    private void OnRemotePairingCompleted(RemotePairingCompletedEvent pairing)
+    {
+        RunInBackground(
+            ApplyRemotePairingEndpointAsync(pairing),
+            "Connect MOBAflow after QR pairing");
+    }
+
+    private async Task ApplyRemotePairingEndpointAsync(RemotePairingCompletedEvent pairing)
+    {
+        await ApplyDiscoveredRestEndpointAsync(pairing.IpAddress, pairing.HttpPort).ConfigureAwait(true);
+        if (!IsMobaflowConnectionEnabled)
+        {
+            IsMobaflowConnectionEnabled = true;
+            return;
+        }
+
+        await ConnectToStoredEndpointAsync(_applicationLifetimeCts.Token).ConfigureAwait(true);
     }
 
     /// <summary>
@@ -201,6 +225,13 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
 
     private async Task InitializeCoreAsync()
     {
+        if (_remoteControlSessionService is not null)
+        {
+            await _remoteControlSessionService
+                .ClearLegacyReadOnlyCredentialAsync(_applicationLifetimeCts.Token)
+                .ConfigureAwait(false);
+        }
+
         await _mobaRuntime.StartAsync(_applicationLifetimeCts.Token).ConfigureAwait(false);
 
         _networkProfileChangeNotifier.NetworkProfilePossiblyChanged += OnNetworkProfilePossiblyChanged;
@@ -1102,7 +1133,14 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             _hideZ21TelemetryUntilTrackPowerOff = false;
         }
 
-        await _mobaRuntime.SetTrackPowerAsync(turnOn).ConfigureAwait(false);
+        if (_runtimeCommandGateway is not null)
+        {
+            await _runtimeCommandGateway.SetTrackPowerAsync(turnOn).ConfigureAwait(false);
+        }
+        else
+        {
+            await _mobaRuntime.SetTrackPowerAsync(turnOn).ConfigureAwait(false);
+        }
     }
 
     private void ClearZ21TelemetryValues()
@@ -1135,8 +1173,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     // O(1) lookup for high-frequency feedback updates.
     private Dictionary<int, InPortStatistic> _statisticsByInPort = [];
 
-    // Last feedback time tracking for timer filter
-    private readonly Dictionary<int, DateTime> _lastFeedbackTime = [];
+    private readonly FeedbackCounterEngine _feedbackCounterEngine = new();
 
     partial void OnCountOfFeedbackPointsChanged(int value)
     {
@@ -1203,7 +1240,6 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             _statisticsByInPort = updatedByInPort;
         });
 
-        _lastFeedbackTime.Clear();
     }
 
     [RelayCommand]
@@ -1471,31 +1507,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     {
         if (_statisticsByInPort.TryGetValue(inPort, out var stat))
         {
-            // Timer filter: Prevent duplicate counts from long trains
-            if (UseTimerFilter)
-            {
-                if (_lastFeedbackTime.TryGetValue(inPort, out DateTime lastTime))
-                {
-                    var elapsed = (DateTime.Now - lastTime).TotalSeconds;
-                    if (elapsed < TimerIntervalSeconds)
-                    {
-                        // Skip: Too soon after last feedback (same train still passing)
-                        return;
-                    }
-                }
-                _lastFeedbackTime[inPort] = DateTime.Now;
-            }
-
-            // Calculate lap time (time between two consecutive feedbacks)
-            DateTime now = DateTime.Now;
-            if (stat.LastFeedbackTime.HasValue)
-            {
-                stat.LastLapTime = now - stat.LastFeedbackTime.Value;
-            }
-
-            // Update count and timestamp
-            stat.Count++;
-            stat.LastFeedbackTime = now;
+            _feedbackCounterEngine.ApplyFeedback(stat, UseTimerFilter, TimerIntervalSeconds);
         }
     }
 

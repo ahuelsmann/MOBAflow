@@ -277,7 +277,7 @@ public static class Z21Command
         byte cmdByte = (byte)(commandValue & 0xFF);
 
         // Calculate XOR checksum
-        byte xor = (byte)(Z21Protocol.XHeader.X_SET_EXT_ACCESSORY ^ adrMsb ^ adrLsb ^ cmdByte ^ 0x00);
+        byte xor = (byte)(Z21Protocol.XHeader.X_SET_EXT_ACCESSORY ^ adrMsb ^ adrLsb ^ cmdByte);
 
         return
         [

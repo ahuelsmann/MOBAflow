@@ -5,6 +5,7 @@ using Moba.Domain;
 using Moba.Domain.Enum;
 using Moba.SharedUI.ViewModel;
 using Moba.SharedUI.ViewModel.Action;
+using Moba.SharedUI.ViewModel.WorkflowSteps;
 
 /// <summary>
 /// Tests for WorkflowViewModel - ViewModel wrapper for Workflow domain model.
@@ -172,5 +173,162 @@ internal class WorkflowViewModelTests
         _viewModel.Name = "New Name";
 
         Assert.That(propertyChangedRaised, Is.True);
+    }
+
+    [Test]
+    public void ChildActionPropertyChanged_UpdatesModelAndRaisesActionsChanged()
+    {
+        // Arrange
+        var action = new WorkflowAction
+        {
+            Name = "Original action",
+            Number = 1,
+            Type = ActionType.Command,
+            Command = new CommandActionPayload()
+        };
+        var workflow = new Workflow { Actions = [action] };
+        var viewModel = new WorkflowViewModel(workflow);
+        var actionsChanged = 0;
+        viewModel.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(WorkflowViewModel.Actions))
+                actionsChanged++;
+        };
+        var actionViewModel = (WorkflowActionViewModel)viewModel.Actions.Single();
+
+        // Act
+        actionViewModel.Name = "Updated action";
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(action.Name, Is.EqualTo("Updated action"));
+            Assert.That(actionsChanged, Is.EqualTo(1));
+        });
+    }
+
+    [Test]
+    public void ProjectViewModel_WorkflowsExposeStableWrappersForProjectModels()
+    {
+        // Arrange
+        var workflow = new Workflow { Name = "Shared workflow" };
+        var project = new Project { Workflows = [workflow] };
+
+        // Act
+        var projectViewModel = new ProjectViewModel(project);
+        var firstAccess = projectViewModel.Workflows.Single();
+        var secondAccess = projectViewModel.Workflows.Single();
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(firstAccess, Is.SameAs(secondAccess));
+            Assert.That(firstAccess.Model, Is.SameAs(workflow));
+        });
+    }
+
+    [Test]
+    public void Constructor_CreatesTypedStepWrappersInPersistedOrder()
+    {
+        var delay = new WorkflowDelayStep { Name = "Wait", DelayMs = 250 };
+        var terminate = new WorkflowTerminateStep { Name = "Done" };
+        var workflow = new Workflow { EntryStepId = delay.Id, Steps = [delay, terminate] };
+
+        var viewModel = new WorkflowViewModel(workflow);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel.Steps, Has.Count.EqualTo(2));
+            Assert.That(viewModel.Steps[0], Is.TypeOf<WorkflowDelayStepViewModel>());
+            Assert.That(viewModel.Steps[1], Is.TypeOf<WorkflowTerminateStepViewModel>());
+            Assert.That(viewModel.Steps.Select(step => step.Model), Is.EqualTo(workflow.Steps));
+        });
+    }
+
+    [Test]
+    public void NestedStepPropertyChanged_PropagatesAsStepsChange()
+    {
+        var delay = new WorkflowDelayStep { DelayMs = 250 };
+        var viewModel = new WorkflowViewModel(new Workflow { EntryStepId = delay.Id, Steps = [delay] });
+        var changes = 0;
+        viewModel.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(WorkflowViewModel.Steps)) changes++;
+        };
+
+        ((WorkflowDelayStepViewModel)viewModel.Steps.Single()).DelayMs = 500;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(delay.DelayMs, Is.EqualTo(500));
+            Assert.That(changes, Is.EqualTo(1));
+        });
+    }
+
+    [Test]
+    public void AddStepCommand_AppendsTypedNodeAndConnectsLinearTail()
+    {
+        var first = new WorkflowDelayStep { Name = "First" };
+        var workflow = new Workflow { EntryStepId = first.Id, Steps = [first] };
+        var viewModel = new WorkflowViewModel(workflow);
+
+        viewModel.AddStepCommand.Execute(WorkflowStepKind.Terminate);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(workflow.Steps, Has.Count.EqualTo(2));
+            Assert.That(workflow.Steps![1], Is.TypeOf<WorkflowTerminateStep>());
+            Assert.That(first.NextStepId, Is.EqualTo(workflow.Steps[1].Id));
+            Assert.That(viewModel.Steps[1].Model, Is.SameAs(workflow.Steps[1]));
+        });
+    }
+
+    [Test]
+    public void MoveStep_PreservesExactModelAndWrapperOrder()
+    {
+        var first = new WorkflowDelayStep { Name = "First" };
+        var second = new WorkflowDelayStep { Name = "Second" };
+        var third = new WorkflowTerminateStep { Name = "Third" };
+        var workflow = new Workflow { EntryStepId = first.Id, Steps = [first, second, third] };
+        var viewModel = new WorkflowViewModel(workflow);
+
+        viewModel.MoveStep(viewModel.Steps[2], 0);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(workflow.Steps, Is.EqualTo(new WorkflowStep[] { third, first, second }));
+            Assert.That(viewModel.Steps.Select(step => step.Model), Is.EqualTo(workflow.Steps));
+        });
+    }
+
+    [Test]
+    public void MoveStepCommands_ReorderPersistedGraphWithinBounds()
+    {
+        var first = new WorkflowDelayStep { Name = "First" };
+        var second = new WorkflowDelayStep { Name = "Second" };
+        var third = new WorkflowTerminateStep { Name = "Third" };
+        var workflow = new Workflow { EntryStepId = first.Id, Steps = [first, second, third] };
+        var viewModel = new WorkflowViewModel(workflow);
+
+        viewModel.MoveStepUpCommand.Execute(viewModel.Steps[1]);
+        viewModel.MoveStepDownCommand.Execute(viewModel.Steps[1]);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(workflow.Steps, Is.EqualTo(new WorkflowStep[] { second, third, first }));
+            Assert.That(viewModel.Steps.Select(step => step.Model), Is.EqualTo(workflow.Steps));
+        });
+    }
+
+    [Test]
+    public void ProjectViewModel_RefreshPreservesAuthoritativeWorkflowWrapper()
+    {
+        var workflow = new Workflow { Name = "Shared workflow" };
+        var projectViewModel = new ProjectViewModel(new Project { Workflows = [workflow] });
+        var original = projectViewModel.Workflows.Single();
+
+        projectViewModel.Refresh();
+
+        Assert.That(projectViewModel.Workflows.Single(), Is.SameAs(original));
     }
 }

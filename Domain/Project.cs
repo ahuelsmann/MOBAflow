@@ -12,6 +12,7 @@ public class Project
     /// </summary>
     public Project()
     {
+        Id = Guid.NewGuid();
         Locomotives = [];
         PassengerWagons = [];
         GoodsWagons = [];
@@ -20,7 +21,13 @@ public class Project
         Workflows = [];
         Journeys = [];
         Stations = [];
+        TimetableServices = [];
+        LocomotiveWhistleRules = [];
+        Interlocking = new InterlockingDefinition();
     }
+
+    /// <summary>Gets or sets the stable project identifier.</summary>
+    public Guid Id { get; set; }
 
     /// <summary>
     /// Gets or sets the project name.
@@ -68,7 +75,28 @@ public class Project
     public List<Station> Stations { get; set; }
 
     /// <summary>
-    /// Signal box plan - Topological representation with signals, switches, and routes.
+    /// Gets or sets the dated timetable service definitions for this project.
+    /// </summary>
+    public List<TimetableService> TimetableServices { get; set; }
+
+    /// <summary>
+    /// Gets or sets project-wide timetable validation policy.
+    /// </summary>
+    public TimetablePolicy TimetablePolicy { get; set; } = new();
+
+    /// <summary>
+    /// Optional feedback-triggered locomotive function rules.
+    /// Empty by default so projects created before the feature remain compatible.
+    /// </summary>
+    public List<LocomotiveWhistleRule> LocomotiveWhistleRules { get; set; }
+
+    /// <summary>
+    /// Gets or sets the shared operational definitions for turnout, block, route, and signal control.
+    /// </summary>
+    public InterlockingDefinition Interlocking { get; set; }
+
+    /// <summary>
+    /// Signal-box presentation containing symbols and their visual topology.
     /// </summary>
     public SignalBoxPlan? SignalBoxPlan { get; set; }
 
@@ -76,4 +104,5 @@ public class Project
     /// Physical track plan for this project (Piko A-Gleis segments + port connections).
     /// </summary>
     public TrackPlanDocument? TrackPlan { get; set; }
+
 }

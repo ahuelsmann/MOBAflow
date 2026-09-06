@@ -2,13 +2,12 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Common.Configuration;
-using Domain.Enum;
+using CommunityToolkit.Mvvm.Input;
 
 public partial class MainWindowViewModel
 {
     private bool _isJourneyListExpanded = true;
     private bool _isStationListExpanded = true;
-    private StationListViewMode _stationListViewMode = StationListViewMode.StopsOnly;
     private bool _isJourneyPropertiesExpanded = true;
     private bool _isLocomotivesListExpanded = true;
     private bool _isLocomotivesPropertiesExpanded = true;
@@ -101,32 +100,6 @@ public partial class MainWindowViewModel
             if (SetProperty(ref _isStationListExpanded, value))
                 PersistLayoutState(layout => layout.JourneysPage.IsStationListExpanded = value);
         }
-    }
-
-    /// <summary>
-    /// Controls whether the Journeys page station list shows only stops or the full timeline.
-    /// </summary>
-    public StationListViewMode StationListViewMode
-    {
-        get => _stationListViewMode;
-        set
-        {
-            if (SetProperty(ref _stationListViewMode, value))
-            {
-                SyncStationListViewMode();
-                OnPropertyChanged(nameof(IsStationTimelineView));
-                PersistLayoutState(layout => layout.JourneysPage.StationListViewMode = value);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Two-way binding helper for the station list view toggle.
-    /// </summary>
-    public bool IsStationTimelineView
-    {
-        get => StationListViewMode == StationListViewMode.FullTimeline;
-        set => StationListViewMode = value ? StationListViewMode.FullTimeline : StationListViewMode.StopsOnly;
     }
 
     public bool IsJourneyPropertiesExpanded
@@ -320,13 +293,15 @@ public partial class MainWindowViewModel
         }
     }
 
+    [RelayCommand]
+    private void OpenSignalBoxWorkbench() => IsSignalBoxPropertiesExpanded = true;
+
     private void InitializeLayoutPanelStates()
     {
         _isJourneyListExpanded = _settings.Layout.JourneysPage.IsJourneyListExpanded;
         _isStationListExpanded = _settings.Layout.JourneysPage.IsStationListExpanded;
-        _stationListViewMode = _settings.Layout.JourneysPage.StationListViewMode;
         _isCityLibraryVisible = _settings.Layout.JourneysPage.IsCityLibraryExpanded;
-        _isWorkflowLibraryVisible = _settings.Layout.JourneysPage.IsWorkflowLibraryExpanded;
+        _isWorkflowLibraryVisible = _settings.Layout.StationsPage.IsWorkflowLibraryExpanded;
         _isJourneyPropertiesExpanded = _settings.Layout.JourneysPage.IsJourneyPropertiesExpanded;
         _isLocomotivesListExpanded = _settings.Layout.LocomotivesPage.IsListExpanded;
         _isLocomotivesPropertiesExpanded = _settings.Layout.LocomotivesPage.IsPropertiesExpanded;
@@ -351,7 +326,6 @@ public partial class MainWindowViewModel
         _isStationsPropertiesExpanded = _settings.Layout.StationsPage.IsPropertiesExpanded;
         _isMonitorTrafficExpanded = _settings.Layout.MonitorPage.IsTrafficExpanded;
         _isMonitorActivityLogExpanded = _settings.Layout.MonitorPage.IsActivityLogExpanded;
-        SyncStationListViewMode();
     }
 
     private void PersistLayoutState(Action<LayoutSettings> apply)
@@ -360,17 +334,4 @@ public partial class MainWindowViewModel
         PersistSettingsSafely();
     }
 
-    private void SyncStationListViewMode()
-    {
-        if (SelectedProject == null)
-        {
-            SelectedJourney?.StationListViewMode = StationListViewMode;
-            return;
-        }
-
-        foreach (var journey in SelectedProject.Journeys)
-        {
-            journey.StationListViewMode = StationListViewMode;
-        }
-    }
 }

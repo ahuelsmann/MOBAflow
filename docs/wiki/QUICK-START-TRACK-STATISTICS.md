@@ -1,159 +1,54 @@
-# Quick Start: Track Statistics Setup
+# Track statistics quick start
 
-> **For Open Source Users** - Getting started with MOBAflow Track
-> Statistics without creating a full Solution file.
+Track statistics count Z21 feedback events per input and calculate lap timing and
+progress. They can run without a loaded solution.
 
-## 📋 Overview
+## Configure the counter
 
-MOBAflow's **Track Statistics** feature tracks lap counts and timing
-for each feedback point (InPort) on your model railway layout. You can
-use it **without loading a Solution file** by simply configuring the
-number of feedback points you have.
+In MOBAflow Desktop, open **Overview** and use **Counter Settings**. In
+MOBAsmart, use **Lap Counter Setup** on the Counter tab.
 
----
+Set:
 
-## 🚀 Quick Setup (3 Steps)
+- the number of feedback points to display;
+- the target lap count;
+- whether duplicate-event timer filtering is enabled; and
+- the filter interval.
 
-### **Step 1: Configure Number of Feedback Points**
+Changes are persisted automatically; there is no separate Save button.
 
-Edit the `appsettings.json` file in MOBAflow, or use the settings UI of your app:
+## Input mapping
 
-#### **MOBAflow (Desktop)**
+The counter uses a direct mapping:
 
-File: `MOBAflow/appsettings.json`
+| Z21 input | Counter row |
+| --- | --- |
+| InPort 1 | Feedback Point 1 |
+| InPort 2 | Feedback Point 2 |
+| InPort 3 | Feedback Point 3 |
 
-```json
-"Counter": {
-  "CountOfFeedbackPoints": 3,  // Change this to match your layout
-  "TargetLapCount": 10,
-  "UseTimerFilter": true,
-  "TimerIntervalSeconds": 10.0
-}
-```
+Increase the configured feedback-point count if a higher input should appear in
+the statistics. InPort `0` is treated as disabled/not assigned.
 
-#### **MOBAsmart (Mobile)**
+## Operate
 
-These values are stored in the app settings/preferences. Use the
-settings UI instead of editing a repo file.
+1. Connect the app directly to the Z21.
+2. Confirm the Z21 status is online.
+3. Trigger a feedback sensor.
+4. Verify that its row updates count, progress, last feedback and timing data.
 
-### **Step 2: Understand InPort Mapping**
+The timer filter suppresses repeated events from the same input inside the
+configured interval. This is useful for long trains or noisy contacts, but an
+interval that is too long can also hide legitimate laps.
 
-MOBAflow uses a simple 1:1 mapping:
+## Relationship to journeys
 
-- **InPort 1** → Feedback Point 1 → `Feedback Point 1`
-- **InPort 2** → Feedback Point 2 → `Feedback Point 2`
-- **InPort 3** → Feedback Point 3 → `Feedback Point 3`
-- **InPort 0** → Special case → Disabled / Not in use
+Standalone statistics do not require a solution. Journeys use their own ordered
+`FeedbackSequence`, edited in the desktop Event Manager; they no longer depend
+on one global `Journey.InPort` value.
 
-**Example:** If you have 3 feedback points on your layout → Set
-`CountOfFeedbackPoints = 3`
+## Related documentation
 
-### **Step 3: Connect to Z21 & Start Monitoring**
-
-1. Start MOBAflow
-2. Connect to your Z21 digital command station
-3. Navigate to **Overview** page
-4. **Track Statistics** section will show:
-   - Feedback Point 1 (InPort 1)
-   - Feedback Point 2 (InPort 2)
-   - Feedback Point 3 (InPort 3)
-
-**Done!** 🎉
-
----
-
-## 🎛️ Change Settings via UI (MOBAflow Desktop)
-
-Instead of editing JSON files, you can use the **Settings Page**:
-
-1. Open **Settings** from navigation menu
-2. Expand **"Track Statistics"** section
-3. Change **"Number of Feedback Points"** using the NumberBox
-4. Click **Save** (automatic via app settings)
-5. **Restart** MOBAflow to apply changes
-
----
-
-## 📊 What Happens When Train Passes Feedback Point?
-
-When a train triggers a feedback sensor:
-
-```text
-Train passes InPort 2
-     ↓
-Z21 sends feedback event
-     ↓
-MOBAflow updates "Feedback Point 2":
-  • Counter: 0/10 → 1/10
-  • Last Lap Time: 00:02:15 (time since last pass)
-  • Last Seen: 14:32:45
-```
-
-**UI updates automatically** on all platforms! ✨
-
----
-
-## 🔧 Advanced Configuration
-
-### **Timer Filter (Prevent Double Counts)**
-
-Long trains (e.g., 16-axle freighters) may trigger the sensor multiple
-times. Use the **Timer Filter** to ignore duplicate counts:
-
-```json
-"UseTimerFilter": true,
-"TimerIntervalSeconds": 10.0  // Ignore counts within 10 seconds
-```
-
-### **Target Lap Count**
-
-Set the target number of laps for all tracks:
-
-```json
-"TargetLapCount": 10  // Progress bar shows X/10 laps
-```
-
----
-
-## ❓ FAQ
-
-### **Q: I have 0 feedback points configured. Will it crash?**
-
-**A:** No! MOBAflow will simply show:
-*"CountOfFeedbackPoints is 0 - no track statistics initialized."*
-
-### **Q: Can I use InPort 4 if `CountOfFeedbackPoints = 3`?**
-
-**A:** Yes! You can configure Journeys/Workflows with InPort 4, but
-Track Statistics won't show it (unless you increase the setting to 4).
-
-### **Q: What does InPort=0 mean in a Journey?**
-
-**A:** **Disabled** - This Journey won't trigger automatically via
-feedback. You can still trigger it manually via commands.
-
-### **Q: Do I need a Solution file?**
-
-**A:** **No!** Track Statistics work standalone with just the
-`CountOfFeedbackPoints` setting. Solution files are optional (they add
-named feedback points and advanced features like Journeys/Workflows).
-
----
-
-## 🎯 Next Steps
-
-Once you're comfortable with Track Statistics, explore:
-
-1. **Journeys** - Automate station announcements based on feedback points
-2. **Workflows** - Execute custom actions (speed changes, announcements, etc.)
-3. **Track Plan Editor** - Visual layout designer with feedback point assignment
-
-**Happy Railroading!** 🚂
-
----
-
-## 📖 Related Documentation
-
-- [Architecture Overview](../ARCHITECTURE.md)
-- [Solution File Format & Validation](../JSON-VALIDATION.md)
-- [Z21 Connection Guide](../../README.md)
+- [MOBAflow Desktop guide](MOBAFLOW-USER-GUIDE.md)
+- [MOBAsmart guide](MOBASMART-USER-GUIDE.md)
+- [JSON validation](../JSON-VALIDATION.md)

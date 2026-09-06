@@ -35,11 +35,11 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
     private readonly MainWindowViewModel _mainWindowViewModel;
 
-    private readonly HttpClient _httpClient;
-
     private readonly IEventBus _eventBus;
 
     private readonly ILogger<RestApiSolutionSyncService> _logger;
+
+    private readonly HostControlPlaneSession? _hostSession;
 
     private readonly object _debounceLock = new();
 
@@ -82,23 +82,21 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         AppSettings appSettings,
 
-        IHttpClientFactory httpClientFactory,
-
         MainWindowViewModel mainWindowViewModel,
 
         RestApiProcessService restApiProcessService,
 
         IEventBus eventBus,
 
-        ILogger<RestApiSolutionSyncService> logger)
+        ILogger<RestApiSolutionSyncService> logger,
+
+        HostControlPlaneSession? hostSession = null)
 
     {
 
         ArgumentNullException.ThrowIfNull(solution);
 
         ArgumentNullException.ThrowIfNull(appSettings);
-
-        ArgumentNullException.ThrowIfNull(httpClientFactory);
 
         ArgumentNullException.ThrowIfNull(mainWindowViewModel);
 
@@ -114,11 +112,11 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         _mainWindowViewModel = mainWindowViewModel;
 
-        _httpClient = httpClientFactory.CreateClient(nameof(RestApiSolutionSyncService));
-
         _eventBus = eventBus;
 
         _logger = logger;
+
+        _hostSession = hostSession;
 
         mainWindowViewModel.SolutionLoaded += OnSolutionChanged;
 
@@ -274,6 +272,12 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         var port = _appSettings.RestApi.Port > 0 ? _appSettings.RestApi.Port : 5001;
 
+        if (_hostSession?.IsEnrolled != true)
+        {
+            RecordSolutionPush(false);
+            return;
+        }
+
         if (_solution.SchemaVersion != Solution.CurrentSchemaVersion)
         {
             _solution.SchemaVersion = Solution.CurrentSchemaVersion;
@@ -283,7 +287,7 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         using var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        using var request = new HttpRequestMessage(HttpMethod.Put, $"http://127.0.0.1:{port}/api/solution")
+        using var request = new HttpRequestMessage(HttpMethod.Put, "api/solution")
 
         {
 
@@ -305,7 +309,7 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         {
 
-            var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            using var response = await _hostSession.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
             if (response.IsSuccessStatusCode)
 
@@ -377,6 +381,11 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
     {
 
+        if (_hostSession?.IsEnrolled != true)
+        {
+            return;
+        }
+
         var z21Ip = _appSettings.Z21.CurrentIpAddress?.Trim();
 
         if (string.IsNullOrEmpty(z21Ip))
@@ -413,7 +422,7 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         using var content = new StringContent(body, Encoding.UTF8, "application/json");
 
-        using var request = new HttpRequestMessage(HttpMethod.Put, $"http://127.0.0.1:{port}/api/runtime-settings")
+        using var request = new HttpRequestMessage(HttpMethod.Put, "api/runtime-settings")
 
         {
 
@@ -425,7 +434,7 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         {
 
-            var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            using var response = await _hostSession.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
             if (response.IsSuccessStatusCode)
 
@@ -505,4 +514,3 @@ public sealed class RestApiSolutionSyncService : IDisposable
         }
     }
 }
-

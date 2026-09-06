@@ -8,6 +8,7 @@ using Moba.Common.Configuration;
 using Moba.Common.Discovery;
 using Moba.Common.Events;
 using Moba.Common.Runtime;
+using Moba.Common.Security;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
 
@@ -108,6 +109,46 @@ internal sealed class MauiViewModelInitializationTests
     }
 
     [Test]
+    public async Task InitializeAsync_Should_ClearLegacyReadOnlyCredentialBeforeRuntimeStarts()
+    {
+        var dependencies = CreateDependencies();
+        var credentialStore = new Mock<IRemoteControlCredentialStore>();
+        credentialStore
+            .Setup(store => store.LoadAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RemoteControlCredential(
+                Guid.Parse("11111111-2222-3333-4444-555555555555").ToString("N"),
+                "192.168.0.27",
+                5002,
+                new string('A', 64),
+                "credential-1",
+                "legacy-refresh-token",
+                RemoteControlRole.ReadOnly,
+                1));
+        credentialStore
+            .Setup(store => store.ClearAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        var transport = new Mock<IRemoteControlTransport>();
+        var sessionService = new RemoteControlSessionService(credentialStore.Object, transport.Object);
+        var viewModel = CreateViewModel(
+            dependencies,
+            remoteControlSessionService: sessionService);
+
+        await viewModel.InitializeAsync().ConfigureAwait(true);
+
+        credentialStore.Verify(
+            store => store.ClearAsync(It.IsAny<CancellationToken>()),
+            Times.Once);
+        transport.Verify(
+            service => service.RefreshAsync(
+                It.IsAny<RemoteControlCredential>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+        dependencies.MobaRuntimeMock.Verify(
+            runtime => runtime.StartAsync(It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Test]
     public void NotifyApplicationStopping_UnsubscribesFromEventBusSnapshots()
     {
         var dependencies = CreateDependencies();
@@ -127,7 +168,10 @@ internal sealed class MauiViewModelInitializationTests
         dependencies.NetworkNotifierMock.Verify(notifier => notifier.StopListening(), Times.Once);
     }
 
-    private MauiViewModel CreateViewModel(TestDependencies dependencies, IEventBus? eventBus = null)
+    private MauiViewModel CreateViewModel(
+        TestDependencies dependencies,
+        IEventBus? eventBus = null,
+        RemoteControlSessionService? remoteControlSessionService = null)
     {
         var viewModel = new MauiViewModel(
             dependencies.MobaRuntimeMock.Object,
@@ -141,7 +185,8 @@ internal sealed class MauiViewModelInitializationTests
             dependencies.NetworkNotifierMock.Object,
             NullLogger<MauiViewModel>.Instance,
             eventBus ?? new EventBus(NullLogger<EventBus>.Instance),
-            dependencies.RestApiClientRegistrationMock.Object);
+            dependencies.RestApiClientRegistrationMock.Object,
+            remoteControlSessionService: remoteControlSessionService);
 
         _createdViewModels.Add(viewModel);
         return viewModel;

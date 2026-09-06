@@ -21,4 +21,12 @@ public interface IWorkflowActionHandler
     /// Executes the supplied action with the current workflow context.
     /// </summary>
     Task ExecuteAsync(WorkflowAction action, ActionExecutionContext context);
+
+    /// <summary>
+    /// Executes the supplied action and propagates cancellation to the concrete effect boundary.
+    /// </summary>
+    Task ExecuteAsync(
+        WorkflowAction action,
+        ActionExecutionContext context,
+        CancellationToken cancellationToken);
 }

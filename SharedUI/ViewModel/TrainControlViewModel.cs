@@ -506,24 +506,18 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     [NotifyPropertyChangedFor(nameof(PreviousStationTrack))]
     [NotifyPropertyChangedFor(nameof(PreviousStationHasValue))]
     [NotifyPropertyChangedFor(nameof(PreviousStationIsExitOnLeft))]
-    [NotifyPropertyChangedFor(nameof(PreviousStationIsEvent))]
-    [NotifyPropertyChangedFor(nameof(PreviousStationShowsExitDirection))]
     [NotifyPropertyChangedFor(nameof(CurrentStationName))]
     [NotifyPropertyChangedFor(nameof(CurrentStationArrival))]
     [NotifyPropertyChangedFor(nameof(CurrentStationDeparture))]
     [NotifyPropertyChangedFor(nameof(CurrentStationTrack))]
     [NotifyPropertyChangedFor(nameof(CurrentStationHasValue))]
     [NotifyPropertyChangedFor(nameof(CurrentStationIsExitOnLeft))]
-    [NotifyPropertyChangedFor(nameof(CurrentStationIsEvent))]
-    [NotifyPropertyChangedFor(nameof(CurrentStationShowsExitDirection))]
     [NotifyPropertyChangedFor(nameof(NextStationName))]
     [NotifyPropertyChangedFor(nameof(NextStationArrival))]
     [NotifyPropertyChangedFor(nameof(NextStationDeparture))]
     [NotifyPropertyChangedFor(nameof(NextStationTrack))]
     [NotifyPropertyChangedFor(nameof(NextStationHasValue))]
     [NotifyPropertyChangedFor(nameof(NextStationIsExitOnLeft))]
-    [NotifyPropertyChangedFor(nameof(NextStationIsEvent))]
-    [NotifyPropertyChangedFor(nameof(NextStationShowsExitDirection))]
     private Journey? _currentJourney;
 
     /// <summary>
@@ -536,24 +530,18 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     [NotifyPropertyChangedFor(nameof(PreviousStationTrack))]
     [NotifyPropertyChangedFor(nameof(PreviousStationHasValue))]
     [NotifyPropertyChangedFor(nameof(PreviousStationIsExitOnLeft))]
-    [NotifyPropertyChangedFor(nameof(PreviousStationIsEvent))]
-    [NotifyPropertyChangedFor(nameof(PreviousStationShowsExitDirection))]
     [NotifyPropertyChangedFor(nameof(CurrentStationName))]
     [NotifyPropertyChangedFor(nameof(CurrentStationArrival))]
     [NotifyPropertyChangedFor(nameof(CurrentStationDeparture))]
     [NotifyPropertyChangedFor(nameof(CurrentStationTrack))]
     [NotifyPropertyChangedFor(nameof(CurrentStationHasValue))]
     [NotifyPropertyChangedFor(nameof(CurrentStationIsExitOnLeft))]
-    [NotifyPropertyChangedFor(nameof(CurrentStationIsEvent))]
-    [NotifyPropertyChangedFor(nameof(CurrentStationShowsExitDirection))]
     [NotifyPropertyChangedFor(nameof(NextStationName))]
     [NotifyPropertyChangedFor(nameof(NextStationArrival))]
     [NotifyPropertyChangedFor(nameof(NextStationDeparture))]
     [NotifyPropertyChangedFor(nameof(NextStationTrack))]
     [NotifyPropertyChangedFor(nameof(NextStationHasValue))]
     [NotifyPropertyChangedFor(nameof(NextStationIsExitOnLeft))]
-    [NotifyPropertyChangedFor(nameof(NextStationIsEvent))]
-    [NotifyPropertyChangedFor(nameof(NextStationShowsExitDirection))]
     private int _currentStationIndex;
 
     // === Computed Properties for TimetableStopsControl ===
@@ -590,10 +578,6 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// </summary>
     public bool PreviousStationIsExitOnLeft => GetPreviousStation()?.IsExitOnLeft ?? false;
 
-    public bool PreviousStationIsEvent => GetPreviousStation()?.IsVirtual ?? false;
-
-    public bool PreviousStationShowsExitDirection => GetPreviousStation() is { IsVirtual: false };
-
     /// <summary>
     /// Provides TimetableStopsControl with the current station name, using a placeholder when none.
     /// </summary>
@@ -624,10 +608,6 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// </summary>
     public bool CurrentStationIsExitOnLeft => GetCurrentStation()?.IsExitOnLeft ?? false;
 
-    public bool CurrentStationIsEvent => GetCurrentStation()?.IsVirtual ?? false;
-
-    public bool CurrentStationShowsExitDirection => GetCurrentStation() is { IsVirtual: false };
-
     /// <summary>
     /// Provides TimetableStopsControl with the next station name, using a placeholder when none.
     /// </summary>
@@ -657,10 +637,6 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// Used by TimetableStopsControl to choose the next station exit direction icon.
     /// </summary>
     public bool NextStationIsExitOnLeft => GetNextStation()?.IsExitOnLeft ?? false;
-
-    public bool NextStationIsEvent => GetNextStation()?.IsVirtual ?? false;
-
-    public bool NextStationShowsExitDirection => GetNextStation() is { IsVirtual: false };
 
     private Station? GetPreviousStation()
     {
@@ -704,7 +680,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
     private string ResolveArrivalText(Station? station)
     {
-        if (station == null || station.IsVirtual)
+        if (station == null)
         {
             return StationPlaceholder;
         }
@@ -714,7 +690,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
     private string ResolveDepartureText(Station? station)
     {
-        if (station == null || station.IsVirtual)
+        if (station == null)
         {
             return StationPlaceholder;
         }
@@ -727,11 +703,6 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         if (station == null)
         {
             return StationPlaceholder;
-        }
-
-        if (station.IsVirtual)
-        {
-            return "Event";
         }
 
         return ResolvePlatformText(station);

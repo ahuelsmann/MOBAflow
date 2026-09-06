@@ -9,6 +9,7 @@ using Microsoft.UI.Xaml.Controls;
 using Moba.SharedUI.ViewModel;
 
 using SharedUI.ViewModel.Action;
+using SharedUI.ViewModel.WorkflowSteps;
 
 /// <summary>
 /// Selects the appropriate DataTemplate based on the type of entity.
@@ -93,6 +94,18 @@ public partial class EntityTemplateSelector : DataTemplateSelector
 
     public DataTemplate? ChangeJourneyStopActionTemplate { get; set; }
 
+    public DataTemplate? WorkflowActionStepTemplate { get; set; }
+
+    public DataTemplate? WorkflowDelayStepTemplate { get; set; }
+
+    public DataTemplate? WorkflowConditionStepTemplate { get; set; }
+
+    public DataTemplate? WorkflowParallelStepTemplate { get; set; }
+
+    public DataTemplate? WorkflowNestedStepTemplate { get; set; }
+
+    public DataTemplate? WorkflowTerminateStepTemplate { get; set; }
+
     /// <summary>
     /// Fallback DataTemplate for unknown types
     /// </summary>
@@ -111,6 +124,12 @@ public partial class EntityTemplateSelector : DataTemplateSelector
             PassengerWagonViewModel => WagonTemplate,
             GoodsWagonViewModel => WagonTemplate,
             ProjectViewModel => ProjectTemplate,
+            WorkflowActionStepViewModel => WorkflowActionStepTemplate,
+            WorkflowDelayStepViewModel => WorkflowDelayStepTemplate,
+            WorkflowConditionStepViewModel => WorkflowConditionStepTemplate,
+            WorkflowParallelStepViewModel => WorkflowParallelStepTemplate,
+            WorkflowNestedStepViewModel => WorkflowNestedStepTemplate,
+            WorkflowTerminateStepViewModel => WorkflowTerminateStepTemplate,
             AnnouncementViewModel => AnnouncementActionTemplate,
             AudioViewModel => AudioActionTemplate,
             CommandViewModel => CommandActionTemplate,

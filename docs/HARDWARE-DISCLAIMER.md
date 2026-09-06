@@ -74,7 +74,7 @@ The following points **MUST** be checked by the user before use:
 
 ```text
 [ ] Z21 hardware is functional and tested
-[ ] Z21 has current firmware (current version: X.X)
+[ ] Z21 firmware is current according to the hardware vendor
 [ ] Power supply is stable and tested
 [ ] Network connection is stable (ping to Z21 <10ms)
 [ ] Windows/Android device is connected to Z21 via LAN/WLAN
@@ -146,7 +146,7 @@ information on dependencies and third-party software.
 If you:
 
 - **Find bugs in MOBAflow** → Create GitHub Issue
-- **Discover security issues** → See [`SECURITY.md`](SECURITY.md)
+- **Discover security issues** → See [`SECURITY.md`](../SECURITY.md)
 - **Test Z21 compatibility** → Please test and report!
 - **Improve documentation** → Pull requests welcome!
 

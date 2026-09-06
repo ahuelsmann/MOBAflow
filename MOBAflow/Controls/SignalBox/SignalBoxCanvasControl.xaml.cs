@@ -63,6 +63,18 @@ public sealed partial class SignalBoxCanvasControl
     public SignalBoxCanvasControl()
     {
         InitializeComponent();
+        CanvasHost.AddHandler(
+            UIElement.PointerPressedEvent,
+            new PointerEventHandler(OnCanvasPointerPressed),
+            true);
+        CanvasHost.AddHandler(
+            UIElement.PointerMovedEvent,
+            new PointerEventHandler(OnCanvasPointerMoved),
+            true);
+        CanvasHost.AddHandler(
+            UIElement.PointerReleasedEvent,
+            new PointerEventHandler(OnCanvasPointerReleased),
+            true);
     }
 
     private static void OnPlanViewModelChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -191,8 +203,6 @@ public sealed partial class SignalBoxCanvasControl
 
     private void OnCanvasPointerPressed(object sender, PointerRoutedEventArgs e)
     {
-        if (e.Handled) return;
-
         if (sender is not UIElement canvas)
             return;
 

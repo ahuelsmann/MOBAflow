@@ -30,13 +30,6 @@ internal sealed class RuntimeHubLiveE2ETests
     {
         await EnsureMobApiReachableAsync();
 
-        var snapshotReceived = new TaskCompletionSource<MobaRuntimeSnapshot>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var driveReceived = new TaskCompletionSource<(int Address, int Speed, bool Forward)>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var sessionStateReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-
-        await using var hostHub = await ConnectHostHubAsync(driveReceived).ConfigureAwait(false);
-        await using var remoteHub = await ConnectRemoteHubAsync(snapshotReceived, sessionStateReceived).ConfigureAwait(false);
-
         var testSnapshot = new MobaRuntimeSnapshot
         {
             IsConnected = true,
@@ -52,6 +45,12 @@ internal sealed class RuntimeHubLiveE2ETests
                 }
             ]
         };
+        var snapshotReceived = new TaskCompletionSource<MobaRuntimeSnapshot>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var driveReceived = new TaskCompletionSource<(int Address, int Speed, bool Forward)>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var sessionStateReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        await using var hostHub = await ConnectHostHubAsync(driveReceived).ConfigureAwait(false);
+        await using var remoteHub = await ConnectRemoteHubAsync(snapshotReceived, sessionStateReceived, testSnapshot.StatusText).ConfigureAwait(false);
 
         await hostHub
             .InvokeAsync(RuntimeHubMethods.PushSnapshot, RuntimeJsonSerializer.Serialize(testSnapshot))
@@ -106,7 +105,7 @@ internal sealed class RuntimeHubLiveE2ETests
 
         var snapshotReceived = new TaskCompletionSource<MobaRuntimeSnapshot>(TaskCreationOptions.RunContinuationsAsynchronously);
         var sessionStateReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-        await using var remoteHub = await ConnectRemoteHubAsync(snapshotReceived, sessionStateReceived).ConfigureAwait(false);
+        await using var remoteHub = await ConnectRemoteHubAsync(snapshotReceived, sessionStateReceived, cachedSnapshot.StatusText).ConfigureAwait(false);
 
         var receivedSnapshot = await snapshotReceived.Task.WaitAsync(StepTimeout).ConfigureAwait(false);
         Assert.That(receivedSnapshot.StatusText, Is.EqualTo("Cached before remote connect"));
@@ -199,7 +198,8 @@ internal sealed class RuntimeHubLiveE2ETests
 
     private static async Task<HubConnection> ConnectRemoteHubAsync(
         TaskCompletionSource<MobaRuntimeSnapshot> snapshotReceived,
-        TaskCompletionSource<bool> sessionStateReceived)
+        TaskCompletionSource<bool> sessionStateReceived,
+        string expectedStatusText)
     {
         var hub = new HubConnectionBuilder()
             .WithUrl($"{BaseUrl}/runtime-hub")
@@ -208,7 +208,7 @@ internal sealed class RuntimeHubLiveE2ETests
         hub.On<string>(RuntimeHubMethods.SnapshotUpdated, json =>
         {
             var snapshot = RuntimeJsonSerializer.Deserialize(json);
-            if (snapshot != null)
+            if (snapshot?.StatusText == expectedStatusText)
             {
                 snapshotReceived.TrySetResult(snapshot);
             }
@@ -218,7 +218,11 @@ internal sealed class RuntimeHubLiveE2ETests
 
         hub.On<bool>(RuntimeHubMethods.SessionStateChanged, isOperational =>
         {
-            sessionStateReceived.TrySetResult(isOperational);
+            if (isOperational)
+            {
+                sessionStateReceived.TrySetResult(true);
+            }
+
             return Task.CompletedTask;
         });
 

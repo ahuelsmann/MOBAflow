@@ -29,8 +29,8 @@ variables:
 
   # SonarQube Cloud configuration (see SonarCloudPrepare inputs in Sonar docs)
   # sonarServiceConnection must match the service connection name in Project Settings > Service connections.
-  sonarOrganization: 'ahuelsmann'
-  sonarProjectKey: 'ahuelsmann_MOBAflow'
+  sonarOrganization: 'ahuelsmann-1'
+  sonarProjectKey: 'ahuelsmann_MOBAflow2'
   sonarProjectName: 'MOBAflow'
   sonarProjectVersion: '1.0'
   sonarServiceConnection: 'SonarQubeAnalyze'
@@ -77,7 +77,7 @@ stages:
               projectName: '$(sonarProjectName)'
               projectVersion: '$(sonarProjectVersion)'
               extraProperties: |
-                sonar.exclusions=**/obj/**
+                sonar.exclusions=**/obj/**,MOBAdisplay/esp32/lib/TFT_eSPI/**
 
           - task: DotNetCoreCLI@2
             displayName: 'Restore NuGet Packages (MOBAflow + Test)'

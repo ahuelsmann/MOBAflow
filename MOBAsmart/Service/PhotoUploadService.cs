@@ -2,6 +2,7 @@
 namespace Moba.MAUI.Service;
 
 using Common.Discovery;
+using Common.Security;
 
 using SharedUI.Interface;
 
@@ -18,13 +19,16 @@ public class PhotoUploadService : IPhotoUploadService
     /// LAN health checks bypass the platform <see cref="HttpClient"/> handler so Android does not route
     /// private IPs through a system proxy/VPN (avoids <c>SocksSocketImpl</c> / failed connects in logs).
     /// </summary>
-    private readonly HttpClient _httpClient;
+    private readonly IRemoteControlAuthenticatedHttpClient _authenticatedHttpClient;
     private readonly HttpClient _lanHealthHttpClient;
 
-    public PhotoUploadService(IHttpClientFactory httpClientFactory)
+    public PhotoUploadService(
+        IHttpClientFactory httpClientFactory,
+        IRemoteControlAuthenticatedHttpClient authenticatedHttpClient)
     {
         ArgumentNullException.ThrowIfNull(httpClientFactory);
-        _httpClient = httpClientFactory.CreateClient(MobiHttpClientNames.Platform);
+        _authenticatedHttpClient = authenticatedHttpClient
+            ?? throw new ArgumentNullException(nameof(authenticatedHttpClient));
         _lanHealthHttpClient = httpClientFactory.CreateClient(MobiHttpClientNames.LanHealth);
     }
 
@@ -60,8 +64,6 @@ public class PhotoUploadService : IPhotoUploadService
                 return (false, null, errorMsg);
             }
 
-            var url = $"http://{serverIp}:{serverPort}/api/photos/upload";
-
             using var form = new MultipartFormDataContent();
 
             // Add photo file
@@ -76,7 +78,9 @@ public class PhotoUploadService : IPhotoUploadService
             form.Add(new StringContent(category), "category");
             form.Add(new StringContent(entityId.ToString()), "entityId");
 
-            var response = await _httpClient.PostAsync(url, form);
+            using var response = await _authenticatedHttpClient
+                .PostAsync("api/photos/upload", form)
+                .ConfigureAwait(false);
 
             if (response.IsSuccessStatusCode)
             {

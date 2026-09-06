@@ -8,6 +8,7 @@
         <OutputType>WinExe</OutputType>
         <!-- 22621 erforderlich für Win2D (NETSDK1130 mit 17763) -->
         <TargetFramework>net10.0-windows10.0.22621.0</TargetFramework>
+        <Platform Condition="'$(Platform)' == '' or '$(Platform)' == 'AnyCPU'">x64</Platform>
         <RuntimeIdentifier>win-x64</RuntimeIdentifier>
         <UseWinUI>true</UseWinUI>
         <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
@@ -46,7 +47,6 @@
         <PackageReference Include="Serilog.Enrichers.Environment" />
         <PackageReference Include="Serilog.Enrichers.Process" />
         <PackageReference Include="Serilog.Enrichers.Thread" />
-        <PackageReference Include="CommunityToolkit.WinUI.UI.Controls.Markdown" />
         <PackageReference Include="SkiaSharp" />
         <PackageReference Include="ZXing.Net" />
     </ItemGroup>
@@ -72,7 +72,6 @@
     </ItemGroup>
     <!-- Data Files -->
     <ItemGroup>
-        <Content Include="..\README.md" Link="README.md" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="solution.json" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="photos\**\*" CopyToOutputDirectory="PreserveNewest" />

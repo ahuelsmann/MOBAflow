@@ -1,483 +1,241 @@
-# MOBAflow (WinUI) – User Guide
+# MOBAflow Desktop user guide
+
+MOBAflow Desktop is the Windows control center for a model railroad operated
+through a Roco Z21. It combines live control with the editable layout model used
+by MOBAsmart and MOBApi.
+
+> [!CAUTION]
+> MOBAflow sends commands to real hardware. Read the
+> [hardware and liability notes](../HARDWARE-DISCLAIMER.md) before operating a
+> layout.
+
+## First session
+
+1. Open **Settings** and verify the Z21 IP address and UDP port.
+2. Create a solution or open an existing `.json` solution file.
+3. Select the project you want to operate.
+4. Connect to the Z21 and verify the connection and track-power state in the
+   status bar.
+5. If you use MOBAsmart, keep **Auto-start REST API with MOBAflow** enabled or
+   start MOBApi separately.
 
-**Version:** 1.0  
-**Platform:** Windows 10/11 (Desktop)  
-**Status:** Production  
-**Last Updated:** 2025-12-29
+MOBAflow can automatically reopen the last solution. Settings and solution data
+are separate: app preferences live in the local settings file, while projects,
+rolling stock, journeys and plans are stored in the solution JSON.
+
+## Main areas
+
+### Overview and Monitor
+
+**Overview** shows the active operating state, including Z21 telemetry,
+track-power state, feedback counters, lap progress and connected clients.
 
----
+**Monitor** shows continuous traffic and activity. The expandable **Messages**
+area at the bottom of the main window contains structural project diagnostics,
+such as invalid references or conflicting data.
 
-## 📱 What is MOBAflow?
+### Rolling stock and trains
 
-**MOBAflow** is the Windows desktop application for advanced control
-and automation of your model railway layout. It connects directly via
-UDP to your **Roco Z21 digital command station** and provides features
-such as journey management, workflow automation, and a visual track
-plan editor.
+- **Locomotives:** maintain names, digital addresses, photos and function
+  assignments. The management area also supports maintenance plans, decoder/CV
+  snapshots and printable locomotive passports.
+- **Passenger Wagons** and **Goods Wagons:** maintain the wagon libraries.
+- **Trains:** compose ordered consists from locomotives and both wagon types.
+- **Train Control:** select a project locomotive, set direction and speed, use
+  presets, trigger emergency stop and switch functions F0-F31.
+
+MOBAflow reports digital-address conflicts in project diagnostics. Resolve them
+before operating the affected locomotives.
+
+### Stations, journeys and feedback sequences
+
+**Stations** are reusable project entities with platforms and optional city
+metadata. **Journeys** reference an ordered list of those stations.
+
+A journey advances through an explicit **feedback sequence**. Each step records
+the expected feedback input and can be associated with a station transition.
+This allows repeated inputs and route changes to be represented without relying
+on one global journey input.
+
+Use **Event Manager** to edit the ordered feedback steps visually. Journey
+progress is kept in runtime state and synchronized through MOBApi for connected
+mobile clients. **Journey Map** visualizes the active route and progress.
+
+At the last stop, a journey can stop, restart or continue with another journey,
+depending on its configured behavior.
+
+### Workflows
+
+Workflow 2.0 represents automation as a graph of typed steps:
+
+- **Action** performs one configured action and continues to its next step.
+- **Delay** waits for the configured milliseconds before continuing.
+- **Condition** selects a true or false target from feedback, journey, or station context.
+- **Parallel** runs named branches and waits at an explicit join step.
+- **Nested workflow** calls another workflow and then continues.
+- **Terminate** ends the run as succeeded, cancelled, or failed.
+
+Action steps currently support:
+
+- spoken announcement;
+- WAV audio playback;
+- raw Z21 command;
+- PowerShell script;
+- signal aspect selection;
+- train destination display refresh; and
+- active-journey stop transition.
+
+The matrix action type exists in the data model but does not currently have a
+runtime handler.
+
+Use **Workflows** for library-focused authoring. Create or duplicate a workflow,
+add and reorder steps, select a step, and edit its typed properties in the
+editor pane. Set every successor, branch, join, nested-workflow, and failure
+target to a valid step or workflow ID. The first step is the workflow entry by
+default. Deleting a referenced workflow is blocked until every Event Manager or
+nested-workflow reference is removed or reassigned.
+
+Use **Event Manager** when authoring in journey context. It exposes the same
+workflow collection and selection, so edits made on either page are immediately
+visible on the other. Select a journey feedback occurrence and choose **Assign
+selected workflow to feedback step** to link it.
+
+Choose **Validate** before operating a workflow. Validation reports structural,
+reference, payload, retry, recursion, and parallel-resource conflicts without
+running the graph. Choose **Dry run** to traverse a valid graph and list planned
+effects without waiting or contacting Z21, audio, speech, scripts, displays, or
+journey mutation handlers. **Recent trace** shows correlated lifecycle entries
+for the selected workflow; traces are memory-only and reset with the process.
+
+Execution stops safely when it is cancelled, the project changes, the runtime
+disconnects, or the application shuts down. A step-specific failure policy
+overrides the workflow default and can stop, continue, follow a failure branch,
+or retry a bounded number of times.
+
+### Track Plan
+
+The visual track-plan editor supports:
+
+- Piko A track pieces from the toolbox;
+- drag and drop, positioning and rotation;
+- snap-to-connect and explicit disconnect;
+- feedback-point assignment and topology validation;
+- Undo/Redo, zoom, fit-to-view and selection tools;
+- AnyRail XML import; and
+- SVG export.
+
+The currently shipped catalog is Piko A. Other track systems are not yet
+included.
 
----
+### Signal Box
+
+The Signal Box editor manages signals, switches and routes. Signal aspects can
+be operated against a connected Z21. Viessmann multiplex mappings and per-output
+polarity are available for supported signal configurations.
+
+### Matrix Images and ESP32 Display
 
-## 🚀 Getting Started
-
-### 1. System requirements
-
-- **Operating system:** Windows 10 (version 1809+) or Windows 11  
-- **Runtime:** .NET 10 Desktop Runtime  
-- **Hardware:**  
-  - Roco Z21 digital command station  
-  - Feedback modules (Roco 10808, 10787, etc.)  
-  - WLAN router (Z21 and PC in the same network)
-
-### 2. Installation
-
-1. **Read the installation guide:** Follow the step-by-step
-   instructions in [`INSTALLATION.md`](INSTALLATION.md).  
-2. **Build the project:** Build MOBAflow with .NET 10 as described
-   in the installation guide.  
-3. **Start the app:** Launch the desktop application as described
-   there (for example via `dotnet run --project
-   MOBAflow/MOBAflow.csproj`).
-
-### 3. First launch
-
-1. **Welcome screen:** Overview of the main features.  
-2. **Connect to Z21:** Enter the IP address and click
-   **Connect**.  
-3. **Create a solution:** Create a new solution or open an
-   existing one.
-
----
-
-## 🎯 Main Features
-
-### 📊 Overview page
-
-**The central control dashboard for your layout.**
-
-#### Features
-
-- **Z21 connection status:** Green = connected, Red = disconnected  
-- **Track power control:** Turn track power on/off  
-- **System stats:**  
-  - 🌡️ Z21 temperature  
-  - 🔌 Supply voltage  
-  - ⚡ VCC voltage  
-  - 🔋 Main current
-
-#### Lap counter
-
-- **Real-time monitoring** of all feedback points  
-- **Lap times** with basic statistics  
-- **Progress bars** per track  
-- **Export function** (CSV, JSON – where supported)
-
----
-
-### 🚂 Journeys
-
-**Define complex train runs with multiple stations.**
-
-#### What is a journey?
-
-A **journey** is a predefined route with multiple stations. At each
-station, actions can be executed automatically (announcements,
-commands, sounds).
-
-#### Creating a journey
-
-1. Open the **Journeys** page (left navigation).  
-2. Click **Add Journey**.  
-3. Configure the **properties**:  
-   - **Name:** e.g. `ICE Berlin → Munich`  
-   - **InPort:** Feedback point used to detect the train (e.g. InPort 5)  
-   - **Train:** Select your train from the list  
-
-4. **Add stations:**  
-   - Click **Add Station**.  
-   - **Name:** e.g. `Berlin Hbf`  
-   - **InPort:** Feedback point of the station (e.g. InPort 1)  
-   - **Workflow:** Action to execute on arrival (optional)  
-
-#### Example journey
-
-```text
-Journey: "ICE 1234 Hamburg → Frankfurt"
-├─ Station 1: "Hamburg Hbf" (InPort 1)
-│  └─ Workflow: Announcement "The train is departing"
-├─ Station 2: "Bremen Hbf" (InPort 3)
-│  └─ Workflow: Announcement "Next stop: Hanover"
-└─ Station 3: "Frankfurt Hbf" (InPort 5)
-   └─ Workflow: Announcement "Final destination reached"
-```
-
-#### Starting a journey
-
-1. Select the **journey** in the list.  
-2. Click **Start Journey**.  
-3. Run the train – on each feedback event the matching station is detected.  
-4. The **counter** increases to show how many times the journey has been completed.
-
----
-
-### ⚡ Workflows
-
-**Automate actions using event‑driven workflows.**
-
-#### What is a workflow?
-
-A **workflow** is a sequence of actions that is executed automatically
-when a trigger fires (for example a feedback event, a timer, or a
-button click).
-
-#### Creating a workflow
-
-1. Open the **Workflows** page.  
-2. Click **Add Workflow**.  
-3. Configure the **properties**:  
-   - **Name:** e.g. `Station announcement Berlin`  
-   - **InPort:** Trigger feedback point (e.g. InPort 1)  
-   - **Execution mode:** Sequential (one after another) or Parallel
-     (staggered/overlapping)  
-   - **Actions:** List of actions to execute  
-
-#### Execution modes
-
-- **Sequential:** Actions run one after another. `DelayAfterMs`
-  means a pause **after** the action finishes before the next one starts.
-- **Parallel:** Actions start with offsets (overlap in time).
-  `DelayAfterMs` means the start offset relative to the previous action.
-
-**Sequential example:**
-
-```text
-Action 1: Play "gong.wav" → waits until finished → 1000ms pause → Action 2 starts
-Action 2: Announcement → waits until finished → Action 3 starts
-```
-
-**Parallel example (staggered start):**
-
-```text
-t=0ms:    Action 1: Gong (DelayAfterMs=0)           → starts immediately
-t=500ms:  Action 2: Announcement (DelayAfterMs=500)
-           → starts after 500ms (gong still playing)
-t=2500ms: Action 3: Lights (DelayAfterMs=2000)      → starts 2s after previous action
-```
-
-#### Available action types
-
-- **Announcement:** Text-to-speech station announcement. Parameters:
-  text, voice, rate, volume
-- **Command:** Send Z21 command. Parameters: command bytes
-- **Audio:** Play a WAV file. Parameters: file path
-
-**All actions support:**
-
-- **`DelayAfterMs`:** Time delay whose meaning depends on the execution mode
-
-#### Example workflow (sequential)
-
-```yaml
-Workflow: "Bahnhofsansage Berlin Hbf"
-Trigger: InPort 1
-Execution Mode: Sequential
-
-Actions:
-1. Audio: `"gong.wav"` (DelayAfterMs: 1000)
-   → gong + 1s pause afterwards  
-2. Announcement: `"ICE 1234 is arriving"`
-   → first announcement  
-3. Announcement: `"Please stand back from the edge"`
-   → second announcement  
-```
-
-#### Example workflow (parallel)
-
-```yaml
-Workflow: "Bahnhof mit Effekten"
-Trigger: InPort 1
-Execution Mode: Parallel
-
-Actions:
-1. Audio: `"gong.wav"` (DelayAfterMs: 0)               → t=0ms: gong starts  
-2. Announcement: `"Train is arriving"` (DelayAfterMs: 500)
-   → t=500ms: announcement starts (gong still playing)  
-3. Command: lights on (DelayAfterMs: 2000)           → t=2500ms: lights switch  
-```
-
----
-
-### 🎨 Track plan editor
-
-**Visualise and edit your track plan.**
-
-#### Track-plan features
-
-- **AnyRail import:** Import track plans from AnyRail XML  
-- **Drag & drop:** Place track pieces on the canvas  
-- **Feedback points:** Assign InPorts to track segments  
-- **Zoom & pan:** Navigate using mouse/touchpad  
-
-#### AnyRail import
-
-1. Open **AnyRail** and create your layout.  
-2. **Export:** `File → Export → XML`.  
-3. In **MOBAflow:** open the track plan page and use **Import** to
-   select the XML file.  
-4. The track plan is converted automatically.
-
-#### Manual editing
-
-1. **Track library** (left): Available tracks (e.g. Piko A‑Gleis).  
-2. **Canvas** (center): Working area.  
-3. **Properties** (right): Properties of the selected track item.  
-
-**Placing tracks:**
-
-- Drag & drop from the library.  
-- Double‑click a track to rotate it.  
-- Right‑click to delete.
-
----
-
-### Display page
-
-**Design and test LED matrix output for remote display scenarios.**
-
-#### 5x5 matrix editor
-
-The Display page contains a color palette and a 5x5 LED matrix preview.
-
-- **Choose a color:** Use the color picker on the left.
-- **Paint a cell:** Left-click or tap a matrix cell.
-- **Clear a cell:** Right-click a matrix cell to switch it back to the off state.
-- **Off state:** Cleared cells use the default light-gray off color.
-
-#### Interaction model
-
-The page uses ViewModel commands for painting and clearing cells. This keeps the interaction consistent with the MOBAflow MVVM pattern and makes the matrix state testable outside the WinUI runtime.
-
----
-
-### Solution management
-
-**Organise your layout into projects and solutions.**
-
-#### What is a solution?
-
-A **solution** is a file (`.mobaflow.json`) that contains all your data:
-
-- Journeys  
-- Workflows  
-- Track plans  
-- Trains and locomotives  
-- Feedback points  
-
-#### Creating a new solution
-
-1. Go to **File → New Solution**.  
-2. **Name:** e.g. `My Layout 2025`.  
-3. **Location:** Choose a folder.  
-4. Click **Save**.  
-
-#### Opening an existing solution
-
-1. Go to **File → Open Solution**.  
-2. Select your `.mobaflow.json` file.  
-3. All data is loaded into the app.  
-
-#### Auto‑load on startup
-
-1. Go to **Settings → Auto-load last solution**.  
-2. Enable the option.  
-3. On the next start, the last solution will be loaded automatically.
-
----
-
-## 🎙️ Text‑to‑Speech (Piper TTS)
-
-**Offline announcements using local Piper TTS or Windows Speech.**
-
-### Setup
-
-1. **Piper:** Install [`OHF-Voice/piper1-gpl`](https://github.com/OHF-Voice/piper1-gpl) with `py -m pip install piper-tts`.  
-2. **Executable:** Use the generated `piper.exe`, for example `.venv\Scripts\piper.exe`.  
-3. **Voice model:** Download a compatible German `.onnx` model.  
-4. **Paths:** Keep `piper.exe`, the model and optional `.json` config file locally.  
-
-### Configure in MOBAflow
-
-1. Open **Settings → Speech**.  
-2. Select **Piper TTS**.  
-3. Set **Piper Executable** to `piper.exe`.  
-4. Set **Piper Model** to the `.onnx` voice model.  
-5. Optionally set **Piper Config** to the matching `.json` file.  
-
-### Test
-
-1. Go to **Workflows → Add Workflow → Add Announcement Action**.  
-2. Enter some test text, for example `"This is a test"`.  
-3. Click **Play** – the announcement should be spoken.  
-
-### Cost
-
-- Piper runs locally and has no API usage fees.  
-- Windows Speech (SAPI) is available as a local fallback.
-
----
-
-## 🔧 Settings page
-
-### General
-
-- **Auto-load last solution:** Load the last solution file on startup.
-  Default: ✅ Enabled
-- **Reset window layout on start:** Reset window size/position on
-  startup. Default: ❌ Disabled
-
-### Z21
-
-- **Current IP Address:** Z21 IP address. Default: `192.168.0.111`
-- **Default Port:** UDP port. Default: `21105`
-- **Auto-connect retry interval:** Reconnect interval (seconds).
-  Default: `10`
-- **System state polling interval:** Status polling interval
-  (seconds). Default: `5`
-
-### Speech
-
-- **Speech Engine:** Piper TTS or System Speech (Windows SAPI).
-- **Piper Executable:** Path to `piper.exe`. Default: (empty)
-- **Piper Model:** Path to the `.onnx` voice model. Default: (empty)
-- **Piper Config:** Optional path to the model `.json` file. Default: (empty)
-- **Rate:** Speaking rate (`-10` to `+10`). Default: `-1`
-- **Volume:** Volume (0–100). Default: `90`
-
-### Counter
-
-- **Count of Feedback Points:** Number of InPorts. Default: `0`
-- **Target Lap Count:** Target number of laps. Default: `10`
-- **Use Timer Filter:** Anti-double-count filter. Default: ✅ Enabled
-- **Timer Interval:** Filter interval (seconds). Default: `10.0`
-
----
-
-## 🛠️ Troubleshooting
-
-### Problem: Z21 does not connect
-
-#### Z21-connection solution
-
-1. **Check IP address:** Does it match your Z21 IP?  
-2. **Firewall:** Does Windows Firewall allow MOBAflow on UDP port `21105`?  
-3. **Network:** Are PC and Z21 in the same LAN/WLAN?  
-4. **Restart Z21:** Power cycle the Z21 and wait 10 seconds before
-   reconnecting.  
-
-### Problem: Piper TTS does not work
-
-#### Piper TTS solution
-
-1. **Executable path correct?** Verify that `piper.exe` exists.  
-2. **Model path correct?** Verify that the `.onnx` file exists.  
-3. **CLI starts?** Run `piper.exe --help` in a terminal.  
-4. **Audio device works?** Test System Speech (Windows SAPI) as a fallback.  
-
-### Problem: Journeys are not counted
-
-#### Journey-counting solution
-
-1. **InPort correct?** `Journey.InPort` must match the feedback point.  
-2. **Feedback received?** Check on the overview page (lap counter).  
-3. **Journey started?** Make sure you clicked **Start Journey**.  
-
-### Problem: Workflow is not executed
-
-#### Workflow-execution solution
-
-1. **InPort correct?** `Workflow.InPort` must be the trigger feedback point.  
-2. **Any actions defined?** At least one action is required.  
-3. **Error in action?** Check the log output (View → Logs).  
-
----
-
-## 💡 Tips & Tricks
-
-### 🚂 Best practice: journey structure
-
-**Good journey:**
-
-```text
-Journey: "ICE Hamburg → München"
-InPort: 10 (Lok-Decoder Feedback)
-Stations:
-  1. Hamburg (InPort 1)
-  2. Bremen (InPort 3)
-  3. Hannover (InPort 5)
-  4. Frankfurt (InPort 7)
-  5. München (InPort 9)
-```
-
-**Poor journey:**
-
-```text
-Journey: "Alle Züge"
-InPort: 0 (kein spezifischer Zug)
-Stations:
-  1. Irgendwo (InPort 1)
-```
-
-### ⚡ Performance optimisation
-
-**Problem:** The app becomes slow with many feedback events.
-
-#### Performance-optimisation solution
-
-1. **Increase polling interval:** Settings → Z21 → Polling interval: e.g. 10s.  
-2. **Reduce active workflows:** Disable unused workflows.  
-3. **Lower log level:** Settings → Logging → level `Warning`.  
-
-### 🎨 Track plan import
-
-**Tip:** AnyRail track plans are often more precise than drawing everything manually.
-
-**Typical workflow:**
-
-1. **AnyRail:** Design your exact layout with measurements.  
-2. **Export XML:** Export with full geometry information.  
-3. **MOBAflow import:** Import the XML and let MOBAflow convert it.  
-4. **Assign feedback points:** Link InPorts to track segments.  
-
----
-
-## 📋 Keyboard shortcuts
-
-- **Ctrl + N:** New solution
-- **Ctrl + O:** Open solution
-- **Ctrl + S:** Save solution
-- **Ctrl + Q:** Quit app
-- **F1:** Open help
-- **F5:** Refresh Z21 connection
-- **Ctrl + T:** Toggle track power
-
----
-
-## 📜 License & Credits
-
-**MOBAflow** is open source (MIT license).
-
-- **Author:** Andreas Huelsmann  
-- **Repository:** [Azure DevOps](https://dev.azure.com/ahuelsmann/MOBAflow)  
-- **App version:** 3.9 (December 2025)  
-
-**Third‑party components:**
-
-- Roco Z21 protocol  
-- Piper TTS and Windows Speech
-- AnyRail (import format)  
-- Microsoft WinUI 3 (UI framework)  
-
-See [`THIRD-PARTY-NOTICES.md`](../THIRD-PARTY-NOTICES.md) for full details.
-
----
-
-**Enjoy using MOBAflow!** 🚂✨
+**Matrix Images** provides a 5x5 color editor whose images are stored in the
+project. To test one network display, enter its IP address and UDP port under
+**Settings > ESP32 Display**, then open **ESP32 Display** and select **Connect and
+negotiate**. The page reads the resolution, protocol version, firmware identity,
+adapter identity, supported formats and rotations, and current health directly
+from the device.
+
+The standard test pattern stays disabled until the endpoint is valid and the
+current connection has negotiated live capabilities. Brightness and the
+device-rendered pattern are enabled only when the device advertises those
+commands. After an endpoint change, application restart, device reboot, or stale
+session response, reconnect before sending another command. MOBAflow saves only
+the configured IP address and port; it does not save Wi-Fi credentials,
+capabilities, or session IDs.
+
+The `MOBAdisplay` library can render RGB565 data and send validated protocol
+v1.0 frame transactions over UDP. The PlatformIO firmware under
+`MOBAdisplay/esp32/` negotiates device capabilities, provisions Wi-Fi
+credentials through its protected setup boundary, and presents only complete
+frames. End-to-end destination-display workflows remain preview-stage because
+the registered workflow handler currently skips output when no display service
+is configured. The older `MobaDisplay.ino` sketch is only a hardware color test.
+
+## Announcements
+
+MOBAflow supports two local speech engines:
+
+- **Piper TTS** with a local executable and ONNX voice model; and
+- **System Speech (Windows SAPI)** as a Windows fallback.
+
+Configure and test the selected engine in **Settings → Speech Synthesis**. See
+the [Piper setup guide](PIPER-TTS-SETUP.md) for installation details. Speech
+language and voice are independent from the English application UI.
+
+## MOBAsmart and MOBApi
+
+MOBApi is the local REST and SignalR bridge. MOBAflow can start its own isolated
+MOBApi process and publish the current solution, runtime settings and snapshots.
+MOBAsmart then discovers the endpoint on the LAN.
+
+The bridge supports solution synchronization, runtime state, remote commands,
+journey progress, feedback sequences, client registration and rolling-stock
+photos. Protected desktop-host communication and certificate-pinned MOBAsmart
+pairing are available while authenticated remote-read and command enforcement
+is still being completed. The bridge is designed for a trusted private LAN and
+must not be exposed to the public internet.
+
+## Useful Track Plan keys
+
+The Track Plan page supports the shortcuts implemented directly by that editor:
+
+| Key | Action |
+| --- | --- |
+| Delete or Backspace | Delete the selection |
+| Ctrl+Z / Ctrl+Y | Undo / Redo |
+| Ctrl++ / Ctrl+- | Zoom in / out |
+| Ctrl+0 | Fit the plan to the viewport |
+| Ctrl+1 | Reset zoom to 100% |
+| R | Disconnect the selected track connection |
+
+The Event Manager also supports Delete for the selected feedback step. Other
+global shortcuts are not currently defined.
+
+## Troubleshooting
+
+### Z21 does not connect
+
+- Confirm that the PC and Z21 are on the same private network.
+- Verify the configured IP address and UDP port, normally `21105`.
+- Allow MOBAflow through Windows Firewall.
+- Check **Monitor** and **Messages** before restarting hardware.
+
+### MOBAsmart cannot find MOBAflow
+
+- Verify that the REST API status in the desktop status bar is healthy.
+- Keep the phone and PC on the same LAN and avoid guest-network isolation.
+- Allow TCP port `5001` and the discovery traffic through the PC firewall.
+- Tap the MOBAflow status in MOBAsmart to retry discovery.
+
+### A journey does not advance
+
+- Confirm that the journey is active.
+- Compare incoming feedback in **Monitor** with the ordered sequence in
+  **Event Manager**.
+- Check project diagnostics for missing stations or invalid references.
+- Review timer filtering if legitimate events arrive very close together.
+
+### A workflow fails
+
+- Run **Validate** and resolve every reported step/reference issue first.
+- Use **Dry run** to confirm the selected branch and planned effects without
+  contacting external systems.
+- Confirm that payloads and referenced files exist and that required
+  station/journey/feedback context is available.
+- Review **Recent trace** for the failing workflow and step, then check
+  **Monitor** and **Messages** for the corresponding external-system error.
+
+## More documentation
+
+- [Installation](INSTALLATION.md)
+- [MOBAsmart guide](MOBASMART-USER-GUIDE.md)
+- [Viessmann signal mapping](VIESSMANN-SIGNAL-MAPPING.md)
+- [Project reference](../PROJECT-REFERENCE.md)
+- [Third-party notices](../THIRD-PARTY-NOTICES.md)

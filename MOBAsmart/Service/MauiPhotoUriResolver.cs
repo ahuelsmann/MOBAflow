@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
 
-using Common.Configuration;
 using Common.Path;
+using Common.Security;
 
 using SharedUI.Interface;
 
@@ -11,19 +11,36 @@ using SharedUI.Interface;
 /// </summary>
 public sealed class MauiPhotoUriResolver : IPhotoUriResolver
 {
-    private readonly AppSettings _settings;
+    private readonly IRemoteControlAuthenticatedHttpClient _authenticatedHttpClient;
 
-    public MauiPhotoUriResolver(AppSettings settings)
+    public MauiPhotoUriResolver(IRemoteControlAuthenticatedHttpClient authenticatedHttpClient)
     {
-        ArgumentNullException.ThrowIfNull(settings);
-        _settings = settings;
+        _authenticatedHttpClient = authenticatedHttpClient
+            ?? throw new ArgumentNullException(nameof(authenticatedHttpClient));
     }
 
     /// <inheritdoc />
-    public string? TryResolveRemoteUri(string? relativePhotoPath)
+    public async Task<Stream?> OpenReadAsync(
+        string? relativePhotoPath,
+        CancellationToken cancellationToken = default)
     {
-        var ip = _settings.RestApi.CurrentIpAddress?.Trim();
-        var port = _settings.RestApi.Port;
-        return RemotePhotoUriBuilder.BuildHttpUri(ip, port, relativePhotoPath);
+        var requestPath = RemotePhotoUriBuilder.BuildRelativeApiPath(relativePhotoPath);
+        if (requestPath is null)
+        {
+            return null;
+        }
+
+        using var response = await _authenticatedHttpClient
+            .GetAsync(requestPath, cancellationToken)
+            .ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        var content = await response.Content
+            .ReadAsByteArrayAsync(cancellationToken)
+            .ConfigureAwait(false);
+        return new MemoryStream(content, writable: false);
     }
 }

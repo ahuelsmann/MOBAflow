@@ -18,26 +18,13 @@ public partial class Z21
 {
     #region Message Receiving & Parsing
     /// <summary>
-    /// Publishes an event asynchronously without blocking the UDP receiver.
-    /// Events are queued to a background task so the UDP callback returns immediately.
+    /// Queues an event without blocking the UDP receiver.
     /// </summary>
     /// <typeparam name="TEvent">The event type</typeparam>
     /// <param name="event">The event instance to publish</param>
-    private void PublishEventAsync<TEvent>(TEvent @event) where TEvent : class, IEvent
+    private void QueueEvent<TEvent>(TEvent @event) where TEvent : class, IEvent
     {
-        // Fire-and-forget: publish on thread pool without awaiting
-        // This allows OnUdpReceived to return immediately
-        _ = Task.Run(() =>
-        {
-            try
-            {
-                _eventBus.Publish(@event);
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogWarning(ex, "Error publishing event {EventType}", typeof(TEvent).Name);
-            }
-        });
+        _eventPipeline.TryEnqueue(@event);
     }
 
     private void UpdateAndPublishVersionInfo(Action<Z21VersionInfo> updateAction)
@@ -45,7 +32,7 @@ public partial class Z21
         VersionInfo ??= new Z21VersionInfo();
         updateAction(VersionInfo);
         OnVersionInfoChanged?.Invoke(VersionInfo);
-        PublishEventAsync(new VersionInfoChangedEvent(
+        QueueEvent(new VersionInfoChangedEvent(
             VersionInfo.SerialNumber,
             (int)VersionInfo.HardwareTypeCode,
             (int)VersionInfo.FirmwareVersionCode));
@@ -80,7 +67,7 @@ public partial class Z21
                 SetConnectedIfNotAlready();
 
                 OnXBusStatusChanged?.Invoke(xStatus);
-                PublishEventAsync(new XBusStatusChangedEvent(
+                QueueEvent(new XBusStatusChangedEvent(
                     xStatus.EmergencyStop,
                     xStatus.TrackOff,
                     xStatus.ShortCircuit,
@@ -95,7 +82,7 @@ public partial class Z21
                 SetConnectedIfNotAlready();
 
                 OnLocoInfoChanged?.Invoke(locoInfo);
-                PublishEventAsync(new LocomotiveInfoChangedEvent(
+                QueueEvent(new LocomotiveInfoChangedEvent(
                     locoInfo.Address,
                     locoInfo.Speed,
                     locoInfo.IsForward,
@@ -138,6 +125,16 @@ public partial class Z21
                 });
             }
 
+            if (Z21MessageParser.TryParseTurnoutInfo(content, out var turnoutInfo) && turnoutInfo != null)
+            {
+                SetConnectedIfNotAlready();
+                QueueEvent(new TurnoutInfoChangedEvent(
+                    turnoutInfo.FunctionAddress,
+                    turnoutInfo.OutputPosition,
+                    Guid.NewGuid(),
+                    turnoutInfo.IsSwitched));
+            }
+
             return;
         }
 
@@ -164,7 +161,7 @@ public partial class Z21
                 _logger?.LogInformation("SystemState received: MainCurrent={MainCurrent}mA, Temp={Temp}C, Voltage={Voltage}mV",
                     mainCurrent, temperature, supplyVoltage);
                 OnSystemStateChanged?.Invoke(CurrentSystemState);
-                PublishEventAsync(new SystemStateChangedEvent(
+                QueueEvent(new SystemStateChangedEvent(
                     CurrentSystemState.MainCurrent,
                     CurrentSystemState.ProgCurrent,
                     CurrentSystemState.FilteredMainCurrent,
@@ -184,15 +181,35 @@ public partial class Z21
         // Parse RBusFeedback (0x80) - occupancy detection
         if (Z21MessageParser.IsRBusFeedback(content))
         {
-            // Parse feedback to get InPort
-            var feedback = new FeedbackResult(content);
+            var groupNumber = Z21FeedbackParser.GetGroupNumber(content);
+            var activeInPorts = Z21FeedbackParser.ExtractAllInPorts(content).ToHashSet();
+            _feedbackStatesByGroup.TryGetValue(groupNumber, out var previousState);
+            previousState ??= [];
 
-            // Invoke legacy Received event
-            Received?.Invoke(feedback);
+            var changedInPorts = activeInPorts
+                .Union(previousState)
+                .Where(inPort => activeInPorts.Contains(inPort) != previousState.Contains(inPort))
+                .Order();
+            foreach (var inPort in changedInPorts)
+            {
+                var isActive = activeInPorts.Contains(inPort);
+                var correlationId = Guid.NewGuid();
+                if (isActive)
+                {
+                    var feedback = new FeedbackResult(content, inPort);
+                    correlationId = feedback.CorrelationId;
+                    Received?.Invoke(feedback);
+                    QueueEvent(new FeedbackReceivedEvent(inPort, correlationId));
+                }
 
-            PublishEventAsync(new FeedbackReceivedEvent(feedback.InPort));
+                QueueEvent(new FeedbackStateChangedEvent(inPort, isActive, correlationId));
+                _logger?.LogDebug(
+                    "R-Bus Feedback changed: InPort={InPort}, IsActive={IsActive}",
+                    inPort,
+                    isActive);
+            }
 
-            _logger?.LogDebug("R-Bus Feedback: InPort={InPort}", feedback.InPort);
+            _feedbackStatesByGroup[groupNumber] = activeInPorts;
             return;
         }
 

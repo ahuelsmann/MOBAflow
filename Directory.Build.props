@@ -14,13 +14,19 @@
     <Copyright>Copyright © $([System.DateTime]::Now.Year) Andreas Huelsmann</Copyright>
     <!-- Repository Information -->
     <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://dev.azure.com/ahuelsmann/MOBAflow/_git/MOBAflow</RepositoryUrl>
+    <RepositoryUrl>https://github.com/ahuelsmann/MOBAflow</RepositoryUrl>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <WarningsAsErrors>$(WarningsAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsAsErrors>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <PlatformTarget Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">x64</PlatformTarget>
+    <_MobaTargetPlatformIdentifier>$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)'))</_MobaTargetPlatformIdentifier>
+    <PlatformTarget Condition="'$(_MobaTargetPlatformIdentifier)' == 'windows'">x64</PlatformTarget>
     <!-- Any CPU maps to mismatched bin/obj paths for WinUI + MOBAflow dependencies (WMC1006). -->
-    <Platform Condition="'$(OS)' == 'Windows_NT' and ('$(Platform)' == '' or '$(Platform)' == 'AnyCPU')">x64</Platform>
+    <Platform Condition="'$(_MobaTargetPlatformIdentifier)' == 'windows' and ('$(Platform)' == '' or '$(Platform)' == 'AnyCPU')">x64</Platform>
 
     <!-- Keep normal build loops fast; Release remains strict below. -->
     <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>

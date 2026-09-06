@@ -30,11 +30,13 @@ public sealed partial class MobaRuntimeService
             ? MobaRuntimeStatusFormatter.GetConnectedStatusText(_settings.Z21.CurrentIpAddress)
             : MobaRuntimeStatusFormatter.GetDisconnectedStatusText(_isManualDisconnectRequested);
 
+        UpdateVehicleUsageRuntimeState();
         PublishSnapshot();
     }
 
     private void OnZ21ConnectionLost()
     {
+        _activeProjectContext?.JourneyManager.CancelPendingWork();
         _isConnected = false;
         _isTrackPowerOn = false;
         _isEmergencyStopActive = false;
@@ -42,7 +44,8 @@ public sealed partial class MobaRuntimeService
         _isProgrammingModeActive = false;
         _statusText = "Connection lost - reconnect required";
         TriggerFailSafe("Unexpected loss of the Z21 connection.");
-        PublishSnapshot();
+        UpdateVehicleUsageRuntimeState();
+        CheckpointVehicleUsage(publishSnapshot: true);
     }
 
     private void OnZ21SystemStateChanged(SystemState systemState)
@@ -64,6 +67,7 @@ public sealed partial class MobaRuntimeService
         _vccVoltage = systemState.VccVoltage;
         _statusText = MobaRuntimeStatusFormatter.BuildSystemStateStatusText(systemState);
 
+        UpdateVehicleUsageRuntimeState();
         PublishSnapshot();
     }
 
@@ -73,6 +77,7 @@ public sealed partial class MobaRuntimeService
         _isEmergencyStopActive = xBusStatus.EmergencyStop;
         _isShortCircuitActive = xBusStatus.ShortCircuit;
         _isProgrammingModeActive = xBusStatus.Programming;
+        UpdateVehicleUsageRuntimeState();
         PublishSnapshot();
     }
 
@@ -89,6 +94,34 @@ public sealed partial class MobaRuntimeService
         _ = sender;
         _ = args;
         PublishSnapshot();
+    }
+
+    private void OnJourneyStationChanged(object? sender, Moba.Backend.Manager.StationChangedEventArgs args)
+    {
+        _ = sender;
+        PublishSnapshot();
+
+        if (_activeProjectContext is null || args.SessionState.LastFeedbackTime is not DateTime occurredAt)
+        {
+            return;
+        }
+
+        _eventBus?.Publish(new JourneyStationReachedEvent(
+            _activeProjectContext.ActiveProject.Id,
+            args.JourneyId,
+            args.SessionState.RunId,
+            args.Station.Id,
+            new DateTimeOffset(occurredAt)));
+    }
+
+    private void OnJourneyCompleted(object? sender, Moba.Backend.Manager.JourneyCompletedEventArgs args)
+    {
+        _ = sender;
+        if (_vehicleUsageTracker.RecordJourneyCompleted(args.JourneyRunId))
+        {
+            PublishSnapshot();
+            PublishVehicleUsageCheckpointCommitted();
+        }
     }
 
     private void OnZ21LocomotiveInfoChanged(LocoInfo locoInfo)
@@ -109,6 +142,8 @@ public sealed partial class MobaRuntimeService
                 : locoInfo.Functions
         };
 
+        SelectActiveTrainForLocomotive(locoInfo.Address, locoInfo.Speed);
+        UpdateVehicleUsageRuntimeState();
         PublishSnapshot();
     }
 
@@ -136,19 +171,6 @@ public sealed partial class MobaRuntimeService
         }
 
         return true;
-    }
-
-    private void OnZ21FeedbackReceived(FeedbackResult feedback)
-    {
-        _eventBus?.Publish(new FeedbackReceivedEvent(feedback.InPort));
-    }
-
-    private void OnActionExecutionError(object? sender, ActionExecutionErrorEventArgs e)
-    {
-        _ = sender;
-        _statusText = $"Action '{e.Action.Name}' failed: {e.ErrorMessage}";
-        PublishSnapshot();
-        _logger.LogError(e.Exception, "Action '{ActionName}' execution failed: {ErrorMessage}", e.Action.Name, e.ErrorMessage);
     }
 
     private void OnTrafficPacketLogged(object? sender, Z21TrafficPacket packet)

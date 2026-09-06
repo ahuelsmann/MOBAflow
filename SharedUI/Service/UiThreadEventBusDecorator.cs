@@ -6,11 +6,11 @@ using Common.Events;
 using Interface;
 
 /// <summary>
-/// Decorator for IEventBus: executes all handler calls on the UI thread.
+/// Decorator for IEventBus: queues all handler calls on the UI thread.
 /// ViewModels for EventBus subscriptions no longer need a dispatcher –
 /// the thread boundary is handled centrally here.
 /// </summary>
-public sealed class UiThreadEventBusDecorator : IEventBus
+public sealed class UiThreadEventBusDecorator : IEventBus, IEventBusDiagnostics
 {
     private readonly IEventBus _inner;
     private readonly IUiDispatcher _dispatcher;
@@ -27,6 +27,13 @@ public sealed class UiThreadEventBusDecorator : IEventBus
     }
 
     /// <inheritdoc />
+    public long HandlerFailureCount => (_inner as IEventBusDiagnostics)?.HandlerFailureCount ?? 0;
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// Publishing from the UI thread invokes handlers immediately. Publishing from another thread
+    /// queues handlers at low priority and returns, preserving UI responsiveness during event bursts.
+    /// </remarks>
     public void Publish<TEvent>(TEvent @event) where TEvent : class, IEvent
     {
         _dispatcher.InvokeOnUiLowPriority(() => _inner.Publish(@event));

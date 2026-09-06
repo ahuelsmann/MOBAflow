@@ -2,6 +2,8 @@
 
 namespace Moba.Backend.Manager;
 
+using Common.Events;
+
 using Domain;
 
 using Interface;
@@ -16,9 +18,13 @@ public interface IJourneyManager : IDisposable
 
     event EventHandler<JourneyFeedbackEventArgs>? FeedbackReceived;
 
+    event EventHandler<JourneyCompletedEventArgs>? JourneyCompleted;
+
     JourneySessionState? GetState(Guid journeyId);
 
     void Reset(Journey journey);
+
+    void CancelPendingWork();
 }
 
 public interface IPlatformManager : IDisposable
@@ -35,10 +41,26 @@ public interface IPlatformManager : IDisposable
 public sealed class JourneyManagerFactory(
     IZ21 z21,
     IWorkflowService workflowService,
-    ILogger<JourneyManager>? logger = null)
+    IJourneyStopTransitionService? stopTransitionService = null,
+    IJourneyRuntimeStateStore? runtimeStateStore = null,
+    ILogger<JourneyManager>? logger = null,
+    TimeProvider? timeProvider = null,
+    IEventBus? eventBus = null)
 {
     public IJourneyManager Create(Project project, ActionExecutionContext executionContext) =>
-        new JourneyManager(z21, project, workflowService, executionContext, logger);
+        new JourneyManager(
+            z21,
+            project,
+            workflowService,
+            executionContext,
+            logger,
+            new JourneyManagerDependencies
+            {
+                StopTransitionService = stopTransitionService,
+                RuntimeStateStore = runtimeStateStore,
+                TimeProvider = timeProvider,
+                EventBus = eventBus
+            });
 }
 
 public sealed class PlatformManagerFactory(

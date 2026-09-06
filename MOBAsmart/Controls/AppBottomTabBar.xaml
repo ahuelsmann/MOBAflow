@@ -21,7 +21,7 @@
             <Grid
                 x:Name="TabItemsGrid"
                 Grid.Row="1"
-                ColumnDefinitions="*,*,*,*"
+                ColumnDefinitions="*,*,*,*,*"
                 MinimumHeightRequest="48">
 
                 <Grid
@@ -110,6 +110,28 @@
                         InputTransparent="True"
                         Style="{DynamicResource FluentBottomTabBarLabel}"
                         Text="Control" />
+                </Grid>
+
+                <Grid
+                    x:Name="PairingTab"
+                    Grid.Column="4"
+                    RowDefinitions="Auto,*">
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnPairingTapped" />
+                    </Grid.GestureRecognizers>
+                    <BoxView
+                        x:Name="PairingIndicator"
+                        Grid.Row="0"
+                        HeightRequest="2"
+                        HorizontalOptions="Fill"
+                        IsVisible="False"
+                        Color="{DynamicResource TabBarSelectedForeground}" />
+                    <Label
+                        x:Name="PairingLabel"
+                        Grid.Row="1"
+                        InputTransparent="True"
+                        Style="{DynamicResource FluentBottomTabBarLabel}"
+                        Text="Pairing" />
                 </Grid>
             </Grid>
         </Grid>

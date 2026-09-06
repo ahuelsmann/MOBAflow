@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Common.Runtime;
+using Moba.Common.Security;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
@@ -21,7 +22,7 @@ internal sealed class SolutionRemoteLoaderTests
         """
         {
           "name": "Remote Solution",
-          "schemaVersion": 1,
+          "schemaVersion": 4,
           "projects": [
             {
               "name": "Other Project",
@@ -75,6 +76,37 @@ internal sealed class SolutionRemoteLoaderTests
         Assert.That(mobileContext.SelectedProject!.Name, Is.EqualTo("Other Project"));
         Assert.That(mobileContext.SelectedProject.Locomotives, Is.Empty);
         Assert.That(synced, Is.True);
+    }
+
+    [Test]
+    public async Task ForceSyncAsync_Should_UseAuthenticatedReadTransport_WhenAvailable()
+    {
+        var updatedAt = DateTimeOffset.UtcNow;
+        var authenticatedClient = new Mock<IRemoteControlAuthenticatedHttpClient>();
+        authenticatedClient
+            .Setup(client => client.GetAsync("api/solution/meta", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() => CreateJsonResponse(
+                $$"""{"updatedAt":"{{updatedAt:O}}","activeProjectName":"myMOBA","firstProjectName":"Other Project"}"""));
+        authenticatedClient
+            .Setup(client => client.GetAsync("api/solution", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() => CreateJsonResponse(ValidSolutionJson));
+        var loader = new SolutionRemoteLoader(
+            new Mock<IMobaRuntime>().Object,
+            new MobileSolutionContext(),
+            new EventBus(NullLogger<EventBus>.Instance),
+            NullLogger<SolutionRemoteLoader>.Instance,
+            new HttpClient(new FailingHttpMessageHandler()),
+            authenticatedHttpClient: authenticatedClient.Object);
+
+        await loader.ForceSyncAsync("192.168.0.10", 5001);
+
+        Assert.That(loader.LastSyncedAt, Is.EqualTo(updatedAt));
+        authenticatedClient.Verify(
+            client => client.GetAsync("api/solution/meta", It.IsAny<CancellationToken>()),
+            Times.Once);
+        authenticatedClient.Verify(
+            client => client.GetAsync("api/solution", It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Test]
@@ -303,12 +335,12 @@ internal sealed class SolutionRemoteLoaderTests
     }
 
     [Test]
-    public async Task SyncIfNeededAsync_AcceptsLegacySolutionJson_WithoutSchemaVersion()
+    public async Task SyncIfNeededAsync_RejectsSolutionJson_WithoutSchemaVersion()
     {
-        const string legacySolutionJson =
+        const string invalidSolutionJson =
             """
             {
-              "name": "Legacy Solution",
+              "name": "Invalid Solution",
               "projects": [
                 {
                   "name": "myMOBA",
@@ -328,7 +360,7 @@ internal sealed class SolutionRemoteLoaderTests
             """;
 
         var updatedAt = DateTimeOffset.UtcNow;
-        var handler = new FakeSolutionHttpHandler(updatedAt, legacySolutionJson, "C:/demo/solution.json", "myMOBA");
+        var handler = new FakeSolutionHttpHandler(updatedAt, invalidSolutionJson, "C:/demo/solution.json", "myMOBA");
         var httpClient = new HttpClient(handler);
         var mobileContext = new MobileSolutionContext();
         var loader = new SolutionRemoteLoader(
@@ -340,8 +372,7 @@ internal sealed class SolutionRemoteLoaderTests
 
         await loader.ForceSyncAsync("192.168.0.10", 5001);
 
-        Assert.That(mobileContext.SelectedProject?.Locomotives, Has.Count.EqualTo(1));
-        Assert.That(mobileContext.SelectedProject?.Locomotives[0].Name, Is.EqualTo("BR 110 Verkehrsrot"));
+        Assert.That(mobileContext.SelectedProject, Is.Null);
     }
 
     private sealed class FakeSolutionHttpHandler(
@@ -380,5 +411,18 @@ internal sealed class SolutionRemoteLoaderTests
 
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
         }
+    }
+
+    private static HttpResponseMessage CreateJsonResponse(string json) => new(HttpStatusCode.OK)
+    {
+        Content = new StringContent(json, Encoding.UTF8, "application/json")
+    };
+
+    private sealed class FailingHttpMessageHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken) =>
+            Task.FromException<HttpResponseMessage>(new InvalidOperationException("Legacy HTTP transport was used."));
     }
 }

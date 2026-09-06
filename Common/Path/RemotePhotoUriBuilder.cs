@@ -2,16 +2,16 @@
 namespace Moba.Common.Path;
 
 /// <summary>
-/// Builds HTTP URIs for photo files served by MOBApi from relative storage paths.
+/// Builds relative paths for photo files served by MOBApi.
 /// </summary>
 public static class RemotePhotoUriBuilder
 {
     /// <summary>
-    /// Returns an HTTP URI for the given relative photo path, or <c>null</c> when inputs are invalid.
+    /// Returns the relative MOBApi photo path without embedding a server address or credential.
     /// </summary>
-    public static string? BuildHttpUri(string? serverIp, int serverPort, string? relativePhotoPath)
+    public static string? BuildRelativeApiPath(string? relativePhotoPath)
     {
-        if (string.IsNullOrWhiteSpace(serverIp) || serverPort <= 0 || string.IsNullOrWhiteSpace(relativePhotoPath))
+        if (string.IsNullOrWhiteSpace(relativePhotoPath))
         {
             return null;
         }
@@ -23,7 +23,7 @@ public static class RemotePhotoUriBuilder
             return null;
         }
 
-        var uri = $"http://{serverIp.Trim()}:{serverPort}/api/photos/file?path={Uri.EscapeDataString(normalized)}";
+        var uri = $"api/photos/file?path={Uri.EscapeDataString(normalized)}";
         var version = PhotoPathHelper.TryExtractVersionQuery(relativePhotoPath);
         if (!string.IsNullOrWhiteSpace(version))
         {

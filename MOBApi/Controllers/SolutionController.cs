@@ -4,11 +4,15 @@ namespace Moba.MOBApi.Controllers;
 using Common.Runtime;
 
 using Common.Validation;
+using Domain;
 
 using Hubs;
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+
+using Moba.MOBApi.Security;
 
 using Service;
 
@@ -23,8 +27,7 @@ using System.Text.Json;
 [Route("api/[controller]")]
 public class SolutionController : ControllerBase
 {
-    /// <summary>Must match Domain.Solution.CurrentSchemaVersion (1).</summary>
-    private const int SolutionSchemaVersion = 1;
+    private const int SolutionSchemaVersion = Solution.CurrentSchemaVersion;
 
     private readonly ISolutionCache _solutionCache;
     private readonly IHubContext<RuntimeHub> _hubContext;
@@ -39,6 +42,7 @@ public class SolutionController : ControllerBase
     /// Returns metadata for polling without transferring the full solution JSON.
     /// </summary>
     [HttpGet("meta")]
+    [Authorize(Policy = ControlPlaneCapabilities.Read)]
     public IActionResult GetMeta()
     {
         if (!_solutionCache.TryGet(out var entry))
@@ -53,6 +57,7 @@ public class SolutionController : ControllerBase
     /// Returns the cached solution JSON for MOBAsmart.
     /// </summary>
     [HttpGet]
+    [Authorize(Policy = ControlPlaneCapabilities.Read)]
     public IActionResult GetSolution()
     {
         if (!_solutionCache.TryGet(out var entry))
@@ -67,6 +72,7 @@ public class SolutionController : ControllerBase
     /// Receives solution JSON from MOBAflow WinUI (localhost only).
     /// </summary>
     [HttpPut]
+    [Authorize(Policy = ControlPlaneCapabilities.HostPublish)]
     public async Task<IActionResult> PutSolution(CancellationToken cancellationToken)
     {
         if (!IsLocalhostRequest())

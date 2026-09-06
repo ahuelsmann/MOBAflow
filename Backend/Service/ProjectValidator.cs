@@ -3,6 +3,10 @@
 namespace Moba.Backend.Service;
 
 using Domain;
+using Domain.Enum;
+
+using Interface;
+using Validation;
 
 using Microsoft.Extensions.Logging;
 
@@ -28,15 +32,25 @@ public interface IProjectValidator
 public class ProjectValidator : IProjectValidator
 {
     private readonly ILogger<ProjectValidator> _logger;
+    private readonly IWorkflowValidator _workflowValidator;
+    private readonly IInterlockingDefinitionValidator _interlockingValidator;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ProjectValidator"/> class.
     /// </summary>
     /// <param name="logger">Logger used for diagnostic output during validation.</param>
-    public ProjectValidator(ILogger<ProjectValidator> logger)
+    /// <param name="interlockingValidator">Validator for the shared operational definition.</param>
+    /// <param name="workflowValidator">Optional Workflow 2.0 validator.</param>
+    public ProjectValidator(
+        ILogger<ProjectValidator> logger,
+        IInterlockingDefinitionValidator interlockingValidator,
+        IWorkflowValidator? workflowValidator = null)
     {
         ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(interlockingValidator);
         _logger = logger;
+        _workflowValidator = workflowValidator ?? new WorkflowValidator();
+        _interlockingValidator = interlockingValidator;
     }
 
     /// <summary>
@@ -73,7 +87,15 @@ public class ProjectValidator : IProjectValidator
     {
         var projectName = string.IsNullOrEmpty(project.Name) ? $"Project[{projectIndex}]" : project.Name;
 
-        // Check locomotives (required for any meaningful journey)
+        ValidateLocomotives(project, projectName, result);
+        ValidateJourneys(project, projectName, result);
+        AddOptionalInventorySummary(project, projectName, result);
+        ValidateWorkflows(project, projectName, result);
+        ValidateInterlocking(project, projectName, result);
+    }
+
+    private static void ValidateLocomotives(Project project, string projectName, ProjectValidationResult result)
+    {
         if (project.Locomotives.Count == 0)
         {
             result.AddWarning($"[{projectName}] No locomotives defined. Journey execution will fail.");
@@ -82,8 +104,77 @@ public class ProjectValidator : IProjectValidator
         {
             result.AddInfo($"[{projectName}] Locomotives: {project.Locomotives.Count} defined");
         }
+    }
 
-        // Check journeys (primary use case)
+    private static void AddOptionalInventorySummary(Project project, string projectName, ProjectValidationResult result)
+    {
+        if (project.Trains.Count > 0)
+        {
+            result.AddInfo($"[{projectName}] Trains: {project.Trains.Count} defined");
+        }
+
+        if (project.PassengerWagons.Count > 0)
+        {
+            result.AddInfo($"[{projectName}] Passenger Wagons: {project.PassengerWagons.Count} defined");
+        }
+
+        if (project.GoodsWagons.Count > 0)
+        {
+            result.AddInfo($"[{projectName}] Goods Wagons: {project.GoodsWagons.Count} defined");
+        }
+
+        if (project.SignalBoxPlan != null)
+        {
+            result.AddInfo($"[{projectName}] Signal Box Plan defined");
+        }
+    }
+
+    private void ValidateWorkflows(Project project, string projectName, ProjectValidationResult result)
+    {
+        if (project.Workflows.Count > 0)
+        {
+            result.AddInfo($"[{projectName}] Workflows: {project.Workflows.Count} defined");
+        }
+
+        foreach (var issue in _workflowValidator.Validate(project).Issues)
+        {
+            var step = issue.StepId.HasValue ? $"/Step {issue.StepId}" : string.Empty;
+            var message = $"[{projectName}/Workflow {issue.WorkflowId}{step}] {issue.Code}: {issue.Message} ({issue.FieldPath})";
+            if (issue.Severity == WorkflowValidationSeverity.Error)
+            {
+                result.AddError(message);
+            }
+            else
+            {
+                result.AddWarning(message);
+            }
+        }
+    }
+
+    private void ValidateInterlocking(Project project, string projectName, ProjectValidationResult result)
+    {
+        var interlockingReport = _interlockingValidator.Validate(project);
+        foreach (var finding in interlockingReport.Findings)
+        {
+            var message = $"[{projectName}/Interlocking/{finding.Code}] {finding.Message}";
+            if (finding.Severity == InterlockingValidationSeverity.Error)
+            {
+                result.AddError(message);
+            }
+            else
+            {
+                result.AddWarning(message);
+            }
+        }
+
+        if (interlockingReport.IsValid)
+        {
+            result.AddInfo($"[{projectName}] Interlocking definition valid");
+        }
+    }
+
+    private static void ValidateJourneys(Project project, string projectName, ProjectValidationResult result)
+    {
         if (project.Journeys.Count == 0)
         {
             result.AddWarning($"[{projectName}] No journeys defined. This project cannot execute any routes.");
@@ -102,36 +193,49 @@ public class ProjectValidator : IProjectValidator
             {
                 result.AddInfo($"[{projectName}] Stations: {totalStations} total across journeys");
             }
-        }
 
-        // Check trains (optional but recommended)
-        if (project.Trains.Count > 0)
-        {
-            result.AddInfo($"[{projectName}] Trains: {project.Trains.Count} defined");
+            foreach (var journey in project.Journeys)
+            {
+                ValidateFeedbackSequence(project, journey, projectName, result);
+            }
         }
+    }
 
-        // Check workflows (optional)
-        if (project.Workflows.Count > 0)
+    private static void ValidateFeedbackSequence(Project project, Journey journey, string projectName, ProjectValidationResult result)
+    {
+        for (var index = 0; index < journey.FeedbackSequence.Count; index++)
         {
-            result.AddInfo($"[{projectName}] Workflows: {project.Workflows.Count} defined");
-        }
+            var step = journey.FeedbackSequence[index];
+            var prefix = $"[{projectName}/{journey.Name}/FeedbackStep {index + 1}]";
+            if (step.InPort is < 1 or > 512)
+                result.AddError($"{prefix} InPort must be between 1 and 512.");
+            if (step.RepeatCount < 1)
+                result.AddError($"{prefix} RepeatCount must be at least 1.");
+            if (step.DelayMs < 0)
+                result.AddError($"{prefix} DelayMs cannot be negative.");
 
-        // Check passenger wagons (optional)
-        if (project.PassengerWagons.Count > 0)
-        {
-            result.AddInfo($"[{projectName}] Passenger Wagons: {project.PassengerWagons.Count} defined");
-        }
+            var workflow = step.WorkflowId.HasValue
+                ? project.Workflows.FirstOrDefault(candidate => candidate.Id == step.WorkflowId.Value)
+                : null;
+            if (step.WorkflowId.HasValue && workflow == null)
+                result.AddError($"{prefix} Assigned workflow does not exist.");
 
-        // Check goods wagons (optional)
-        if (project.GoodsWagons.Count > 0)
-        {
-            result.AddInfo($"[{projectName}] Goods Wagons: {project.GoodsWagons.Count} defined");
-        }
+            if (step.StopTransition.Mode == JourneyStopTransitionMode.SpecificStation
+                && (!step.StopTransition.StationId.HasValue
+                    || journey.Stations.All(station => station.Id != step.StopTransition.StationId.Value)))
+                result.AddError($"{prefix} Target stop does not exist in this journey.");
 
-        // Check signal box plan (optional)
-        if (project.SignalBoxPlan != null)
-        {
-            result.AddInfo($"[{projectName}] Signal Box Plan defined");
+            if (step.StopTransition.Mode != JourneyStopTransitionMode.None
+                && workflow?.Actions.Any(action => action.Type == ActionType.ChangeJourneyStop) == true)
+                result.AddError($"{prefix} Direct stop transition conflicts with a ChangeJourneyStop workflow action.");
+
+            foreach (var condition in step.Conditions)
+            {
+                if (condition.Type == JourneyFeedbackConditionType.CurrentStationIs
+                    && (!condition.StationId.HasValue
+                        || journey.Stations.All(station => station.Id != condition.StationId.Value)))
+                    result.AddError($"{prefix} Condition references a stop outside this journey.");
+            }
         }
     }
 }

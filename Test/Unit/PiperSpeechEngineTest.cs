@@ -81,6 +81,30 @@ internal class PiperSpeechEngineTest
     }
 
     [Test]
+    public async Task AnnouncementAsync_Should_PropagateCancellationToSynthesisAndPlayback()
+    {
+        var runner = new FakePiperProcessRunner();
+        var audioPlayer = new FakePiperAudioPlayer();
+        var engine = CreateEngine(
+            new SpeechOptions
+            {
+                PiperExecutablePath = CreateTempFile(),
+                PiperModelPath = CreateTempFile()
+            },
+            runner,
+            audioPlayer);
+        using var cancellation = new CancellationTokenSource();
+
+        await engine.AnnouncementAsync("Next stop Minden.", null, cancellation.Token);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(runner.LastCancellationToken, Is.EqualTo(cancellation.Token));
+            Assert.That(audioPlayer.LastCancellationToken, Is.EqualTo(cancellation.Token));
+        });
+    }
+
+    [Test]
     public async Task AnnouncementAsync_Should_NormalizeTextBeforePiper()
     {
         var executablePath = CreateTempFile();
@@ -251,8 +275,14 @@ internal class PiperSpeechEngineTest
     {
         public PiperSynthesisRequest? LastRequest { get; private set; }
 
-        public Task<PiperProcessResult> SynthesizeAsync(PiperSynthesisRequest request)
+        public CancellationToken LastCancellationToken { get; private set; }
+
+        public Task<PiperProcessResult> SynthesizeAsync(
+            PiperSynthesisRequest request,
+            CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+            LastCancellationToken = cancellationToken;
             LastRequest = request;
             WritePcmWave(request.OutputPath, [0, 1000, 0, 0]);
             return Task.FromResult(new PiperProcessResult(0, string.Empty, string.Empty));
@@ -292,8 +322,12 @@ internal class PiperSpeechEngineTest
     {
         public string PlayedPath { get; private set; } = string.Empty;
 
-        public Task PlayAsync(string wavPath)
+        public CancellationToken LastCancellationToken { get; private set; }
+
+        public Task PlayAsync(string wavPath, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+            LastCancellationToken = cancellationToken;
             PlayedPath = wavPath;
             return Task.CompletedTask;
         }
@@ -332,6 +366,15 @@ internal class PiperSpeechEngineTest
             _ = message;
             _ = voiceName;
             return Task.CompletedTask;
+        }
+
+        public Task AnnouncementAsync(
+            string message,
+            string? voiceName,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return AnnouncementAsync(message, voiceName);
         }
     }
 }

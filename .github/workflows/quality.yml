@@ -14,22 +14,57 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  instruction-consistency:
+    name: Repository instruction consistency
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Validate repository instructions
+        shell: pwsh
+        run: ./scripts/Test-InstructionConsistency.ps1
+
   desktop:
     name: Windows desktop build, tests, and coverage
     runs-on: windows-latest
     timeout-minutes: 60
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install .NET SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           global-json-file: global.json
+
+      - name: Validate mutation test lane registry
+        shell: pwsh
+        run: ./scripts/Test-MutationLaneCoverage.ps1
 
       - name: Restore desktop test graph
         shell: pwsh
         run: dotnet restore Test/Test.csproj -p:IncludeMobaSmartTests=false
+
+      - name: Build cross-platform analyzer graph
+        shell: pwsh
+        run: |
+          if (Test-Path -LiteralPath artifacts/analyzers) {
+            Remove-Item -LiteralPath artifacts/analyzers -Recurse -Force
+          }
+          dotnet build Test/Test.csproj `
+            --configuration Release `
+            --framework net10.0 `
+            --no-restore `
+            -m:1 `
+            -t:Rebuild `
+            -p:IncludeMobaSmartTests=false `
+            -p:MobaAnalyzerGate=true `
+            -p:UseSharedCompilation=false
+          ./scripts/Test-AnalyzerBaseline.ps1 `
+            -SarifRoot artifacts/analyzers/Release/net10.0 `
+            -BaselinePath quality/analyzer-baseline.json
 
       - name: Build desktop test graph
         shell: pwsh
@@ -41,6 +76,27 @@ jobs:
           -p:IncludeMobaSmartTests=false
           -p:DebugType=portable
           -p:DebugSymbols=true
+          -p:MobaAnalyzerGate=true
+          -p:UseSharedCompilation=false
+
+      - name: Enforce Windows analyzer baseline
+        shell: pwsh
+        run: >-
+          ./scripts/Test-AnalyzerBaseline.ps1
+          -SarifRoot artifacts/analyzers/Release/net10.0-windows10.0.22621.0
+          -BaselinePath quality/analyzer-baseline.windows.json
+
+      - name: Audit resolved NuGet dependency graph
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force artifacts | Out-Null
+          dotnet list Test/Test.csproj package `
+            --framework net10.0-windows10.0.22621.0 `
+            --include-transitive `
+            --vulnerable `
+            --format json `
+            --output-version 1 `
+            --no-restore | Set-Content artifacts/nuget-vulnerabilities.json -Encoding utf8NoBOM
 
       - name: Run desktop tests with Cobertura coverage
         shell: pwsh
@@ -75,6 +131,12 @@ jobs:
 
           exit $testExitCode
 
+      - name: Enforce coverage ratchet
+        shell: pwsh
+        run: >-
+          ./scripts/Test-CoverageThresholds.ps1
+          -CoveragePath artifacts/coverage.cobertura.xml
+
       - name: Add measured coverage to job summary
         if: always()
         shell: pwsh
@@ -98,11 +160,218 @@ jobs:
 
       - name: Archive test results and Cobertura report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: desktop-quality-${{ github.run_number }}
           path: |
             artifacts/TestResults/**/*.trx
             artifacts/coverage.cobertura.xml
+            artifacts/nuget-vulnerabilities.json
+            artifacts/analyzers/**/*.sarif
+          if-no-files-found: warn
+          retention-days: 90
+
+  display-protocol:
+    name: Display protocol host, parser, and firmware
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      - name: Restore display host test graph
+        shell: pwsh
+        run: >-
+          dotnet restore Test/Test.csproj
+          -p:TargetFramework=net10.0
+          -p:IncludeMobaSmartTests=false
+
+      - name: Verify display protocol cutover invariants
+        shell: pwsh
+        run: ./scripts/Test-DisplayProtocolCutover.ps1
+
+      # Skia rendering stays in the Windows desktop lane because this Linux lane owns protocol and transport only.
+      - name: Run display host conformance tests
+        shell: pwsh
+        run: |
+          $filter = @(
+            'FullyQualifiedName~Moba.Test.MOBAdisplay'
+            'FullyQualifiedName!~ClockRendererTests'
+            'FullyQualifiedName!~FrameLoopSchedulerTests'
+            'FullyQualifiedName!~Rgb565ConverterTests'
+            'FullyQualifiedName!~SkiaFrameRendererTests'
+          ) -join '&'
+          dotnet test Test/Test.csproj `
+            --configuration Release `
+            --framework net10.0 `
+            --no-restore `
+            -p:IncludeMobaSmartTests=false `
+            --filter $filter
+
+      - name: Install pinned PlatformIO
+        shell: bash
+        run: python3 -m pip install --user platformio==6.1.19
+
+      - name: Run native firmware parser and protocol tests
+        shell: bash
+        run: python3 -m platformio test -d MOBAdisplay/esp32 -e native
+
+      - name: Build ESP32-S3 firmware
+        shell: bash
+        run: python3 -m platformio run -d MOBAdisplay/esp32 -e esp32s3
+
+      - name: Record firmware SHA-256
+        shell: bash
+        run: >-
+          sha256sum MOBAdisplay/esp32/.pio/build/esp32s3/firmware.bin
+          | tee MOBAdisplay/esp32/.pio/build/esp32s3/firmware.bin.sha256
+
+      - name: Archive ESP32-S3 firmware
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: MOBAdisplay-esp32s3-${{ github.run_number }}
+          path: |
+            MOBAdisplay/esp32/.pio/build/esp32s3/firmware.bin
+            MOBAdisplay/esp32/.pio/build/esp32s3/firmware.bin.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+  android-release:
+    name: Android Release AAB
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .nuget/packages
+          key: >-
+            nuget-${{ runner.os }}-android-${{ hashFiles('global.json', 'NuGet.Config',
+            'Directory.Packages.props', 'Directory.Build.props', '**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-android-
+
+      - name: Restore MAUI Android workload
+        shell: pwsh
+        run: dotnet workload restore MOBAsmart/MOBAsmart.csproj --skip-manifest-update
+
+      - name: Restore Android dependency graph
+        shell: pwsh
+        run: |
+          if (Test-Path -LiteralPath artifacts/analyzers) {
+            Remove-Item -LiteralPath artifacts/analyzers -Recurse -Force
+          }
+          dotnet restore MOBAsmart/MOBAsmart.csproj `
+            --property:Configuration=Release `
+            --force-evaluate
+
+      - name: Verify Android build properties
+        shell: pwsh
+        run: |
+          $properties = dotnet msbuild MOBAsmart/MOBAsmart.csproj `
+            -nologo `
+            -p:Configuration=Release `
+            -getProperty:Platform,PlatformTarget,RuntimeIdentifiers,AndroidPackageFormats |
+            ConvertFrom-Json
+          if ($properties.Properties.Platform -ne 'AnyCPU') {
+            throw "Expected Platform=AnyCPU; found $($properties.Properties.Platform)."
+          }
+          if ($properties.Properties.PlatformTarget -ne 'AnyCPU') {
+            throw "Expected PlatformTarget=AnyCPU; found $($properties.Properties.PlatformTarget)."
+          }
+          if ($properties.Properties.RuntimeIdentifiers -ne 'android-arm64;android-x64') {
+            throw "Unexpected Android RuntimeIdentifiers: $($properties.Properties.RuntimeIdentifiers)"
+          }
+          if ($properties.Properties.AndroidPackageFormats -ne 'aab') {
+            throw "Expected AndroidPackageFormats=aab; found $($properties.Properties.AndroidPackageFormats)."
+          }
+
+      - name: Publish Android Release AAB
+        shell: pwsh
+        run: >-
+          dotnet publish MOBAsmart/MOBAsmart.csproj
+          --framework net10.0-android
+          --configuration Release
+          --no-restore
+          -m:1
+          -p:MobaAnalyzerGate=true
+          -p:UseSharedCompilation=false
+
+      - name: Enforce Android analyzer baseline
+        shell: pwsh
+        run: >-
+          ./scripts/Test-AnalyzerBaseline.ps1
+          -SarifRoot artifacts/analyzers/Release
+          -BaselinePath quality/analyzer-baseline.android.json
+
+      - name: Validate Android Release AAB
+        shell: pwsh
+        run: |
+          $bundleRoot = 'MOBAsmart/bin/Release/net10.0-android/publish'
+          $bundles = @(Get-ChildItem -LiteralPath $bundleRoot -Recurse -File -Filter *.aab)
+          if ($bundles.Count -eq 0) {
+            throw 'Android Release publish did not produce an AAB.'
+          }
+          $apks = @(Get-ChildItem -LiteralPath $bundleRoot -Recurse -File -Filter *.apk)
+          if ($apks.Count -ne 0) {
+            throw "Android Release publish produced unexpected APK files: $($apks.Name -join ', ')"
+          }
+          New-Item -ItemType Directory -Force artifacts/MOBAsmart-Release | Out-Null
+          foreach ($bundle in $bundles) {
+            ./scripts/Test-AndroidAppBundle.ps1 -BundlePath $bundle.FullName
+            Copy-Item -LiteralPath $bundle.FullName -Destination artifacts/MOBAsmart-Release
+          }
+
+      - name: Archive Android Release AAB
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: MOBAsmart-android-release-${{ github.run_number }}
+          path: artifacts/MOBAsmart-Release/*.aab
+          if-no-files-found: error
+          retention-days: 30
+
+  mutation-domain:
+    name: Domain mutation testing
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      - name: Restore local tools and Domain mutation test graph
+        shell: pwsh
+        run: |
+          dotnet tool restore
+          dotnet restore MutationTest/Domain.MutationTests.csproj
+
+      - name: Run Domain mutation tests
+        shell: pwsh
+        working-directory: MutationTest
+        run: dotnet stryker --skip-version-check
+
+      - name: Archive Domain mutation report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: domain-mutation-${{ github.run_number }}
+          path: MutationTest/StrykerOutput/**/reports/*
           if-no-files-found: warn
           retention-days: 90

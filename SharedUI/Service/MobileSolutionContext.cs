@@ -21,6 +21,12 @@ public sealed class MobileSolutionContext : ObservableObject, IProjectContext
     public SolutionViewModel? SolutionViewModel => _solutionViewModel;
 
     /// <inheritdoc />
+    public SolutionSaveState SolutionSaveState => SolutionSaveState.NotSaved;
+
+    /// <inheritdoc />
+    public string SolutionSaveStatusText => "Not saved";
+
+    /// <inheritdoc />
     public ProjectViewModel? SelectedProject
     {
         get => _selectedProject;

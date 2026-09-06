@@ -169,37 +169,44 @@ internal class IoService : IIoService
         }
     }
 
-    public async Task<(bool success, string? path, string? error)> SaveAsync(Solution solution, string? currentPath)
+    public Task<(bool success, string? path, string? error)> SaveAsync(Solution solution, string currentPath)
+    {
+        EnsureInitialized();
+        ArgumentException.ThrowIfNullOrWhiteSpace(currentPath);
+        return SaveToPathAsync(solution, currentPath);
+    }
+
+    public async Task<(bool success, string? path, string? error)> SaveAsAsync(Solution solution)
     {
         EnsureInitialized();
 
-        string? path = currentPath;
-        if (string.IsNullOrEmpty(path))
+        var picker = new FileSavePicker(_windowId.GetValueOrDefault())
         {
-            var picker = new FileSavePicker(_windowId.GetValueOrDefault())
-            {
-                SettingsIdentifier = "MobaSolutionSaver",
-                SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
-                SuggestedFileName = "solution",
-                DefaultFileExtension = ".json",
-                ShowOverwritePrompt = true,
-                Title = "Save MOBAflow Solution",
-                FileTypeChoices = { { "MOBAflow Solution (*.json)", new List<string> { ".json" } } }
-            };
+            SettingsIdentifier = "MobaSolutionSaver",
+            SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
+            SuggestedFileName = "solution",
+            DefaultFileExtension = ".json",
+            ShowOverwritePrompt = true,
+            Title = "Save MOBAflow Solution",
+            FileTypeChoices = { { "MOBAflow Solution (*.json)", new List<string> { ".json" } } }
+        };
 
-            var result = await picker.PickSaveFileAsync();
-            if (result == null) return (false, null, null);
-            path = result.Path;
-        }
+        var result = await picker.PickSaveFileAsync();
+        return result == null
+            ? (false, null, null)
+            : await SaveToPathAsync(solution, result.Path).ConfigureAwait(false);
+    }
 
+    private async Task<(bool success, string? path, string? error)> SaveToPathAsync(Solution solution, string path)
+    {
         try
         {
             var json = JsonSerializer.Serialize(solution, JsonOptions.Default);
 
             // ✅ Atomic write: Write to temp file first, then rename to avoid data corruption
-            var tempPath = path! + ".tmp";
+            var tempPath = path + ".tmp";
             await File.WriteAllTextAsync(tempPath, json);
-            File.Move(tempPath, path!, overwrite: true);
+            File.Move(tempPath, path, overwrite: true);
 
             // Save last solution path to settings
             _settingsService.LastSolutionPath = path;
@@ -281,6 +288,43 @@ internal class IoService : IIoService
         return result?.Path;
     }
 
+    /// <inheritdoc />
+    public async Task<string?> BrowseForRecordingFileAsync()
+    {
+        EnsureInitialized();
+
+        var picker = new FileOpenPicker(_windowId.GetValueOrDefault())
+        {
+            SettingsIdentifier = "MobaRecordingPicker",
+            SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
+            Title = "Open MOBAflow Recording",
+            FileTypeChoices = { { "MOBAflow Recording (*.mobarecording.json)", new List<string> { ".json" } } }
+        };
+
+        var result = await picker.PickSingleFileAsync();
+        return result?.Path;
+    }
+
+    /// <inheritdoc />
+    public async Task<string?> SaveRecordingFileAsync(string suggestedFileName)
+    {
+        EnsureInitialized();
+
+        var picker = new FileSavePicker(_windowId.GetValueOrDefault())
+        {
+            SettingsIdentifier = "MobaRecordingSaver",
+            SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
+            SuggestedFileName = $"{suggestedFileName}.mobarecording",
+            DefaultFileExtension = ".json",
+            ShowOverwritePrompt = true,
+            Title = "Save MOBAflow Recording",
+            FileTypeChoices = { { "MOBAflow Recording (*.mobarecording.json)", new List<string> { ".json" } } }
+        };
+
+        var result = await picker.PickSaveFileAsync();
+        return result?.Path;
+    }
+
     /// <summary>
     /// Opens a file save picker for saving a JSON file.
     /// </summary>
@@ -297,6 +341,25 @@ internal class IoService : IIoService
             ShowOverwritePrompt = true,
             Title = "Save JSON File",
             FileTypeChoices = { { "JSON Files (*.json)", new List<string> { ".json" } } }
+        };
+
+        var result = await picker.PickSaveFileAsync();
+        return result?.Path;
+    }
+
+    public async Task<string?> SaveHtmlFileAsync(string suggestedFileName)
+    {
+        EnsureInitialized();
+
+        var picker = new FileSavePicker(_windowId.GetValueOrDefault())
+        {
+            SettingsIdentifier = "MobaHtmlSaver",
+            SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
+            SuggestedFileName = suggestedFileName,
+            DefaultFileExtension = ".html",
+            ShowOverwritePrompt = true,
+            Title = "Save Locomotive Passport",
+            FileTypeChoices = { { "HTML Documents (*.html)", new List<string> { ".html" } } }
         };
 
         var result = await picker.PickSaveFileAsync();

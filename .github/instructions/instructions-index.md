@@ -22,14 +22,17 @@ relevant files explicitly. Examples illustrate patterns; current source code def
 | Tests and test doubles | [Testing](test.instructions.md) |
 | C# conventions | [Naming](naming-conventions.instructions.md), [comments](self-explanatory-code-commenting.instructions.md), [encoding](no-special-chars.instructions.md) |
 | Instruction maintenance | [Writing instructions](instructions.instructions.md) |
+| Independent repository write tasks | [Worktree isolation](git-worktree-isolation.instructions.md) |
+| Commits and pull requests | [Secrets and Sonar gates](sonarqube-pre-pr.instructions.md) |
+| Feature specifications and plans | [Spec Kit workflow](../../docs/SPEC-KIT.md), [governance](spec-kit-governance.instructions.md) |
 
 ## Further references
 
 - [Project overview](../../README.md), [architecture documentation](../../docs/ARCHITECTURE.md),
   [project reference](../../docs/PROJECT-REFERENCE.md), [build performance](../../docs/BUILD-PERFORMANCE.md)
-- [Validation entry points](quick-reference.md), [GitHub CI](../workflows/quality.yml),
-  [Azure CI](../../.azure-pipelines/quality.yml)
+- [Validation entry points](quick-reference.md), [GitHub CI](../workflows/quality.yml).
+  `.azure-pipelines/` contains retained legacy definitions, not a second Git remote or default workflow.
 - [Visual Studio setup](vs-setup.instructions.md) is optional environment guidance.
 - `copilot-tips.instructions.md`, `future-enhancements.instructions.md`, `visual-summary.md` and
   `summary-hooks-packages-sonarqube.md` are historical/reference material, not active task requirements or a backlog.
-  Open work is tracked in Azure DevOps project MOBAflow.
+  Open work is tracked in GitHub issues, milestones and Kanban.

@@ -28,9 +28,10 @@ public enum UiPriority
 public interface IUiDispatcher
 {
     /// <summary>
-    /// Executes the action on the UI thread. If the call is already on the UI thread,
-    /// runs synchronously; otherwise switches to the UI thread.
+    /// Executes the action immediately when called on the UI thread. Otherwise, queues the
+    /// action on the UI thread and returns without waiting for completion.
     /// </summary>
+    /// <remarks>Use <see cref="InvokeOnUiAsync(Func{Task})"/> when completion or exception propagation is required.</remarks>
     void InvokeOnUi(Action action);
 
     /// <summary>
@@ -44,13 +45,13 @@ public interface IUiDispatcher
     Task<T> InvokeOnUiAsync<T>(Func<Task<T>> asyncFunc);
 
     /// <summary>
-    /// Executes the action on the UI thread with high priority.
+    /// Executes or queues the action on the UI thread with high priority.
     /// Use for critical UI updates that should be processed immediately.
     /// </summary>
     void InvokeOnUiHighPriority(Action action);
 
     /// <summary>
-    /// Executes the action on the UI thread with low priority.
+    /// Executes or queues the action on the UI thread with low priority.
     /// Use for background UI updates that can be deferred.
     /// </summary>
     void InvokeOnUiLowPriority(Action action);

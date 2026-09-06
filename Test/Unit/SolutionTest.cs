@@ -88,4 +88,60 @@ internal class SolutionTest
         Assert.That(solution.Projects, Is.Not.Null);
         Assert.That(solution.Projects, Is.Empty);
     }
+
+    [Test]
+    public void JsonRoundtrip_PreservesTimetableDefinitionsInSchemaVersionFour()
+    {
+        var serviceId = Guid.NewGuid();
+        var solution = new Solution
+        {
+            Projects =
+            [
+                new Project
+                {
+                    Name = "Timetable project",
+                    TimetableServices =
+                    [
+                        new TimetableService
+                        {
+                            Id = serviceId,
+                            ServiceNumber = "RE 78",
+                            ServiceDate = new DateOnly(2026, 8, 1)
+                        }
+                    ]
+                }
+            ]
+        };
+
+        var json = System.Text.Json.JsonSerializer.Serialize(solution, JsonOptions.Default);
+        var roundtrip = System.Text.Json.JsonSerializer.Deserialize<Solution>(json, JsonOptions.Default);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(roundtrip, Is.Not.Null);
+            Assert.That(roundtrip!.SchemaVersion, Is.EqualTo(4));
+            Assert.That(roundtrip.Projects[0].TimetableServices.Single().Id, Is.EqualTo(serviceId));
+        });
+    }
+
+    [Test]
+    public void LoadAsync_WithOlderSchema_ThrowsInvalidOperationException()
+    {
+        var path = Path.Combine(TestContext.CurrentContext.WorkDirectory, $"solution-{Guid.NewGuid():N}.json");
+        File.WriteAllText(path, """{"name":"Test","projects":[],"schemaVersion":2}""");
+
+        try
+        {
+            var solution = new Solution();
+
+            var exception = Assert.ThrowsAsync<InvalidOperationException>(async () => await solution.LoadAsync(path));
+
+            Assert.That(exception!.Message, Does.Contain("incompatible"));
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
 }

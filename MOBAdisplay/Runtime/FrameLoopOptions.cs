@@ -14,6 +14,4 @@ public sealed class FrameLoopOptions
     public int Width { get; init; } = Rendering.FrameDimensions.Width;
 
     public int Height { get; init; } = Rendering.FrameDimensions.Height;
-
-    public bool SendDisplayMetadata { get; init; }
 }

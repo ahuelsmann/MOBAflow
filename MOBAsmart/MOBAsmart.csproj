@@ -43,20 +43,21 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
         <!-- RELEASE OPTIMIZATIONS -->
+        <RuntimeIdentifiers>android-arm64;android-x64</RuntimeIdentifiers>
         <AndroidLinkMode>SdkOnly</AndroidLinkMode>
         <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
         <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
-        <AndroidPackageFormat>aab</AndroidPackageFormat>
+        <AndroidPackageFormats>aab</AndroidPackageFormats>
         <AndroidCreateDebugSymbols>true</AndroidCreateDebugSymbols>
         <AndroidUseApkSigner>true</AndroidUseApkSigner>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <!-- Analyzers + TreatWarningsAsErrors break legacy MAUI code; Debug/FastDebug keep live analysis. -->
-        <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
-        <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
     </PropertyGroup>
     <!-- Include Linker descriptor -->
     <ItemGroup>
         <TrimmerRootDescriptor Include="Linker.xml" />
+    </ItemGroup>
+    <ItemGroup>
+        <AssemblyMetadata Include="MOBAsmart.ApplicationDisplayVersion" Value="$(ApplicationDisplayVersion)" />
     </ItemGroup>
     <ItemGroup>
         <!-- App Icon - PNG-basiert für bessere Android-Kompatibilität -->
@@ -81,6 +82,9 @@
         <PackageReference Include="CommunityToolkit.Maui" />
         <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
         <PackageReference Include="Microsoft.Extensions.Http" />
+        <PackageReference Include="ZXing.Net.Maui.Controls" />
+        <!-- .NET 10 Android AOT loads this dependency from System.Private.Windows.Core in the existing sound graph. -->
+        <PackageReference Include="System.Formats.Nrbf" />
         <!-- AndroidX Startup (required for initialization providers) -->
         <PackageReference Include="Xamarin.AndroidX.Startup.StartupRuntime" />
         <!-- Note: CommunityToolkit.Mvvm comes via SharedUI project reference -->

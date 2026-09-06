@@ -4,7 +4,6 @@ namespace Moba.WinUI.Service;
 
 using Backend.Interface;
 
-using Common.Configuration;
 using Common.Events;
 using Common.Runtime;
 
@@ -18,21 +17,21 @@ using System.Text.Json;
 /// <summary>
 /// Connects the MOBAflow runtime host to MOBApi RuntimeHub and pushes snapshot updates.
 /// </summary>
-public sealed class RestApiRuntimeHubService : IDisposable
+public sealed class RestApiRuntimeHubService : IAsyncDisposable
 {
     private const int PushDebounceMilliseconds = 75;
 
     private readonly IRuntimeHubHostClient _runtimeHubHostClient;
     private readonly IMobaRuntime _mobaRuntime;
     private readonly IEventBus _eventBus;
-    private readonly AppSettings _appSettings;
-    private readonly HttpClient _httpClient;
     private readonly ILogger<RestApiRuntimeHubService> _logger;
+    private readonly HostControlPlaneSession? _hostSession;
     private readonly object _debounceLock = new();
     private readonly Guid _subscriptionId;
     private CancellationTokenSource? _debounceCts;
+    private Task _debounceTask = Task.CompletedTask;
     private MobaRuntimeSnapshot? _pendingSnapshot;
-    private bool _disposed;
+    private int _disposeState;
     private readonly object _metricsLock = new();
     private DateTimeOffset? _lastHubPushAt;
     private bool _lastHubPushSucceeded;
@@ -87,16 +86,14 @@ public sealed class RestApiRuntimeHubService : IDisposable
         IRuntimeHubHostClient runtimeHubHostClient,
         IMobaRuntime mobaRuntime,
         IEventBus eventBus,
-        AppSettings appSettings,
-        IHttpClientFactory httpClientFactory,
-        ILogger<RestApiRuntimeHubService> logger)
+        ILogger<RestApiRuntimeHubService> logger,
+        HostControlPlaneSession? hostSession = null)
     {
         _runtimeHubHostClient = runtimeHubHostClient;
         _mobaRuntime = mobaRuntime;
         _eventBus = eventBus;
-        _appSettings = appSettings;
-        _httpClient = httpClientFactory.CreateClient(nameof(RestApiRuntimeHubService));
         _logger = logger;
+        _hostSession = hostSession;
         _subscriptionId = _eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged);
     }
 
@@ -115,23 +112,31 @@ public sealed class RestApiRuntimeHubService : IDisposable
         await _runtimeHubHostClient.DisconnectAsync().ConfigureAwait(false);
     }
 
-    public void Dispose()
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
     {
-        if (_disposed)
+        if (Interlocked.Exchange(ref _disposeState, 1) != 0)
         {
             return;
         }
 
-        _disposed = true;
         _eventBus.Unsubscribe(_subscriptionId);
+        CancellationTokenSource? debounceCts;
+        Task debounceTask;
         lock (_debounceLock)
         {
-            _debounceCts?.Cancel();
-            _debounceCts?.Dispose();
+            debounceCts = _debounceCts;
             _debounceCts = null;
+            debounceTask = _debounceTask;
+            _pendingSnapshot = null;
         }
 
-        DisconnectHostAsync().GetAwaiter().GetResult();
+        debounceCts?.Cancel();
+        debounceCts?.Dispose();
+
+        await debounceTask.ConfigureAwait(false);
+        await DisconnectHostAsync().ConfigureAwait(false);
+        GC.SuppressFinalize(this);
     }
 
     private void OnRuntimeSnapshotChanged(RuntimeSnapshotChangedEvent e)
@@ -141,7 +146,7 @@ public sealed class RestApiRuntimeHubService : IDisposable
 
     private void QueuePush(MobaRuntimeSnapshot snapshot)
     {
-        if (_disposed)
+        if (Volatile.Read(ref _disposeState) != 0)
         {
             return;
         }
@@ -149,14 +154,18 @@ public sealed class RestApiRuntimeHubService : IDisposable
         CancellationToken token;
         lock (_debounceLock)
         {
+            if (_disposeState != 0)
+            {
+                return;
+            }
+
             _pendingSnapshot = snapshot;
             _debounceCts?.Cancel();
             _debounceCts?.Dispose();
             _debounceCts = new CancellationTokenSource();
             token = _debounceCts.Token;
+            _debounceTask = PushDebouncedAsync(token);
         }
-
-        _ = PushDebouncedAsync(token);
     }
 
     private async Task PushDebouncedAsync(CancellationToken cancellationToken)
@@ -212,12 +221,13 @@ public sealed class RestApiRuntimeHubService : IDisposable
 
     private async Task<bool> PushSnapshotRestFallbackAsync(MobaRuntimeSnapshot snapshot, CancellationToken cancellationToken)
     {
-        var port = _appSettings.RestApi.Port > 0 ? _appSettings.RestApi.Port : 5001;
+        if (_hostSession?.IsEnrolled != true)
+            return false;
+
         var json = RuntimeJsonSerializer.Serialize(snapshot);
         using var content = new StringContent(json, Encoding.UTF8, "application/json");
-        using var response = await _httpClient
-            .PutAsync($"http://127.0.0.1:{port}/api/runtime/snapshot", content, cancellationToken)
-            .ConfigureAwait(false);
+        using var request = new HttpRequestMessage(HttpMethod.Put, "api/runtime/snapshot") { Content = content };
+        using var response = await _hostSession.SendAsync(request, cancellationToken).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
             _logger.LogDebug("Runtime REST snapshot push returned {StatusCode}", (int)response.StatusCode);

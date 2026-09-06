@@ -2,6 +2,7 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Action;
+using WorkflowSteps;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -31,6 +32,7 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
 
     // Services
     private readonly WorkflowActionViewModelFactory _actionViewModelFactory;
+    private readonly WorkflowStepViewModelFactory _stepViewModelFactory;
     #endregion
 
     /// <summary>
@@ -48,6 +50,7 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
             ioService ?? new NullIoService(),
             soundPlayer,
             loggerFactory?.CreateLogger<CommandViewModel>());
+        _stepViewModelFactory = new WorkflowStepViewModelFactory(_actionViewModelFactory);
 
         Actions = new ObservableCollection<object>(
             model.Actions
@@ -58,6 +61,14 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
         foreach (var actionVm in Actions.OfType<WorkflowActionViewModel>())
         {
             actionVm.PropertyChanged += OnActionPropertyChanged;
+        }
+
+        model.Steps ??= [];
+        Steps = new ObservableCollection<WorkflowStepViewModel>(
+            model.Steps.Select(_stepViewModelFactory.CreateViewModel));
+        foreach (var step in Steps)
+        {
+            step.PropertyChanged += OnStepPropertyChanged;
         }
     }
 
@@ -135,6 +146,180 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
     /// </summary>
     public ObservableCollection<object> Actions { get; }
 
+    /// <summary>Gets the authoritative ordered Workflow 2.0 graph-node wrappers.</summary>
+    public ObservableCollection<WorkflowStepViewModel> Steps { get; }
+
+    /// <summary>Gets workflow-level failure behaviors available to the editor.</summary>
+    public IEnumerable<WorkflowFailureBehavior> FailureBehaviors { get; } = Enum.GetValues<WorkflowFailureBehavior>();
+
+    /// <summary>Gets or sets the Workflow 2.0 entry node.</summary>
+    public Guid? EntryStepId
+    {
+        get => _model.EntryStepId;
+        set => SetProperty(_model.EntryStepId, value, _model, static (workflow, id) => workflow.EntryStepId = id);
+    }
+
+    /// <summary>Gets or sets the workflow-level failure behavior inherited by graph nodes.</summary>
+    public WorkflowFailureBehavior DefaultFailureBehavior
+    {
+        get => _model.DefaultErrorPolicy?.Behavior ?? WorkflowFailureBehavior.Stop;
+        set
+        {
+            _model.DefaultErrorPolicy ??= new WorkflowErrorPolicy();
+            SetProperty(
+                _model.DefaultErrorPolicy.Behavior,
+                value,
+                _model.DefaultErrorPolicy,
+                static (policy, behavior) => policy.Behavior = behavior);
+        }
+    }
+
+    /// <summary>Gets or sets the workflow-level failure-branch entry.</summary>
+    public Guid? DefaultFailureStepId
+    {
+        get => _model.DefaultErrorPolicy?.FailureStepId;
+        set
+        {
+            _model.DefaultErrorPolicy ??= new WorkflowErrorPolicy();
+            SetProperty(
+                _model.DefaultErrorPolicy.FailureStepId,
+                value,
+                _model.DefaultErrorPolicy,
+                static (policy, id) => policy.FailureStepId = id);
+        }
+    }
+
+    /// <summary>Gets or sets the workflow-level retry count after the initial attempt.</summary>
+    public int DefaultRetryAdditionalAttempts
+    {
+        get => _model.DefaultErrorPolicy?.Retry?.AdditionalAttempts ?? 0;
+        set
+        {
+            var retry = EnsureDefaultRetryPolicy();
+            SetProperty(
+                retry.AdditionalAttempts,
+                Math.Max(value, 0),
+                retry,
+                static (policy, attempts) => policy.AdditionalAttempts = attempts);
+        }
+    }
+
+    /// <summary>Gets or sets the workflow-level delay before each retry.</summary>
+    public int DefaultRetryDelayMs
+    {
+        get => _model.DefaultErrorPolicy?.Retry?.DelayMs ?? 0;
+        set
+        {
+            var retry = EnsureDefaultRetryPolicy();
+            SetProperty(
+                retry.DelayMs,
+                Math.Max(value, 0),
+                retry,
+                static (policy, delay) => policy.DelayMs = delay);
+        }
+    }
+
+    /// <summary>Adds a typed graph node after the current persisted tail.</summary>
+    [RelayCommand]
+    private void AddStep(WorkflowStepKind kind)
+    {
+        var step = _stepViewModelFactory.CreateDefaultStep(kind);
+        var steps = _model.Steps ??= [];
+        var previous = steps.LastOrDefault();
+        if (previous is WorkflowActionStep or WorkflowDelayStep or WorkflowNestedStep)
+        {
+            previous.NextStepId = step.Id;
+        }
+
+        steps.Add(step);
+        EntryStepId ??= step.Id;
+        var viewModel = _stepViewModelFactory.CreateViewModel(step);
+        viewModel.PropertyChanged += OnStepPropertyChanged;
+        Steps.Add(viewModel);
+        OnPropertyChanged(nameof(Steps));
+    }
+
+    /// <summary>Deletes a graph node and clears every internal edge that targeted it.</summary>
+    [RelayCommand]
+    private void DeleteStep(WorkflowStepViewModel? step)
+    {
+        if (step == null || !_model.Steps!.Remove(step.Model))
+        {
+            return;
+        }
+
+        step.PropertyChanged -= OnStepPropertyChanged;
+        Steps.Remove(step);
+        ClearStepReferences(step.Id);
+        if (EntryStepId == step.Id)
+        {
+            EntryStepId = _model.Steps.FirstOrDefault()?.Id;
+        }
+
+        OnPropertyChanged(nameof(Steps));
+    }
+
+    /// <summary>Moves a node in persisted editor order without changing its explicit graph edges.</summary>
+    public void MoveStep(WorkflowStepViewModel step, int targetIndex)
+    {
+        var sourceIndex = Steps.IndexOf(step);
+        if (sourceIndex < 0)
+        {
+            return;
+        }
+
+        targetIndex = Math.Clamp(targetIndex, 0, Steps.Count - 1);
+        if (sourceIndex == targetIndex)
+        {
+            return;
+        }
+
+        Steps.Move(sourceIndex, targetIndex);
+        var model = _model.Steps![sourceIndex];
+        _model.Steps.RemoveAt(sourceIndex);
+        _model.Steps.Insert(targetIndex, model);
+        OnPropertyChanged(nameof(Steps));
+    }
+
+    /// <summary>Moves a node one position toward the start of the persisted editor order.</summary>
+    [RelayCommand]
+    private void MoveStepUp(WorkflowStepViewModel? step)
+    {
+        if (step == null)
+        {
+            return;
+        }
+
+        var index = Steps.IndexOf(step);
+        if (index > 0)
+        {
+            MoveStep(step, index - 1);
+        }
+    }
+
+    /// <summary>Moves a node one position toward the end of the persisted editor order.</summary>
+    [RelayCommand]
+    private void MoveStepDown(WorkflowStepViewModel? step)
+    {
+        if (step == null)
+        {
+            return;
+        }
+
+        var index = Steps.IndexOf(step);
+        if (index >= 0 && index < Steps.Count - 1)
+        {
+            MoveStep(step, index + 1);
+        }
+    }
+
+    /// <summary>Synchronizes the persisted editor order after a view-level reorder operation.</summary>
+    public void UpdateStepOrder()
+    {
+        _model.Steps = Steps.Select(step => step.Model).ToList();
+        OnPropertyChanged(nameof(Steps));
+    }
+
     [RelayCommand]
     private void AddAction(ActionType actionType)
     {
@@ -159,8 +344,10 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
     }
 
     [RelayCommand]
-    private void DeleteAction(object actionVm)
+    private void DeleteAction(object? actionVm)
     {
+        if (actionVm is null) return;
+
         if (_actionViewModelFactory.TryGetAction(actionVm, out var actionModel))
         {
             // Unsubscribe from PropertyChanged events before removing
@@ -235,5 +422,67 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
             return;
 
         OnPropertyChanged(nameof(Actions));
+    }
+
+    private void OnStepPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        _ = sender;
+        _ = e;
+        OnPropertyChanged(nameof(Steps));
+    }
+
+    private void ClearStepReferences(Guid deletedStepId)
+    {
+        foreach (var graphStep in _model.Steps!)
+        {
+            ClearStepReference(graphStep, deletedStepId);
+        }
+
+        ClearFailureStepReference(_model.DefaultErrorPolicy, deletedStepId);
+    }
+
+    private static void ClearStepReference(WorkflowStep graphStep, Guid deletedStepId)
+    {
+        if (graphStep.NextStepId == deletedStepId)
+        {
+            graphStep.NextStepId = null;
+        }
+
+        ClearFailureStepReference(graphStep.ErrorPolicy, deletedStepId);
+        switch (graphStep)
+        {
+            case WorkflowConditionStep condition:
+                if (condition.TrueStepId == deletedStepId)
+                {
+                    condition.TrueStepId = Guid.Empty;
+                }
+                if (condition.FalseStepId == deletedStepId)
+                {
+                    condition.FalseStepId = Guid.Empty;
+                }
+                break;
+            case WorkflowParallelStep parallel:
+                parallel.Branches.RemoveAll(branch => branch.EntryStepId == deletedStepId);
+                if (parallel.JoinStepId == deletedStepId)
+                {
+                    parallel.JoinStepId = Guid.Empty;
+                }
+                break;
+        }
+    }
+
+    private static void ClearFailureStepReference(WorkflowErrorPolicy? policy, Guid deletedStepId)
+    {
+        if (policy?.FailureStepId == deletedStepId)
+        {
+            policy.FailureStepId = null;
+        }
+    }
+
+    private WorkflowRetryPolicy EnsureDefaultRetryPolicy()
+    {
+        _model.DefaultErrorPolicy ??= new WorkflowErrorPolicy();
+        _model.DefaultErrorPolicy.Retry ??= new WorkflowRetryPolicy();
+        return _model.DefaultErrorPolicy.Retry;
     }
 }

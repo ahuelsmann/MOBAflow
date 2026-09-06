@@ -105,7 +105,14 @@ public interface IZ21Diagnostics
 
     Z21VersionInfo? VersionInfo { get; }
 
+    /// <summary>
+    /// Gets current diagnostics for the ordered application-event pipeline.
+    /// </summary>
+    Z21EventPipelineSnapshot EventPipelineSnapshot { get; }
+
     Task SendCommandAsync(byte[] sendBytes);
+
+    Task SendCommandAsync(byte[] sendBytes, CancellationToken cancellationToken);
 
     Task GetRailComDataAsync(int address, CancellationToken cancellationToken = default);
 

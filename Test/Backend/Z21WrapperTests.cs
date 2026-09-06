@@ -71,6 +71,59 @@ internal class Z21WrapperTests
     }
 
     [Test]
+    public async Task Received_RaisesOnlyForRisingEdges_AndSupportsReactivation()
+    {
+        var fake = new FakeUdpClientWrapper();
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var z21 = new Z21(fake, eventBus);
+        var activations = new List<int>();
+        var publishedActivations = new List<int>();
+        var sourceCorrelations = new List<Guid>();
+        var publishedCorrelations = new List<Guid>();
+        z21.Received += feedback =>
+        {
+            activations.Add(feedback.InPort);
+            sourceCorrelations.Add(feedback.CorrelationId);
+        };
+        eventBus.Subscribe<FeedbackReceivedEvent>(@event =>
+        {
+            publishedActivations.Add(@event.InPort);
+            publishedCorrelations.Add(@event.CorrelationId);
+        });
+
+        fake.RaiseReceived(Z21Packets.RBusFeedbackInPort5);
+        fake.RaiseReceived(Z21Packets.RBusFeedbackInPort5);
+        var released = Z21Packets.RBusFeedbackInPort5.ToArray();
+        Array.Clear(released, 5, Math.Min(8, released.Length - 5));
+        fake.RaiseReceived(released);
+        fake.RaiseReceived(Z21Packets.RBusFeedbackInPort5);
+        await z21.DisposeAsync();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(activations, Is.EqualTo(new[] { 5, 5 }));
+            Assert.That(publishedActivations, Is.EqualTo(new[] { 5, 5 }));
+            Assert.That(sourceCorrelations, Is.EqualTo(publishedCorrelations));
+            Assert.That(sourceCorrelations, Has.All.Not.EqualTo(Guid.Empty));
+        });
+    }
+
+    [Test]
+    public void Received_RaisesEveryNewlyActiveInPort_InOnePacket()
+    {
+        var fake = new FakeUdpClientWrapper();
+        var z21 = new Z21(fake, new EventBus(NullLogger<EventBus>.Instance));
+        var activations = new List<int>();
+        z21.Received += feedback => activations.Add(feedback.InPort);
+        var packet = Z21Packets.RBusFeedbackInPort5.ToArray();
+        packet[5] = 0b0011_0000;
+
+        fake.RaiseReceived(packet);
+
+        Assert.That(activations, Is.EqualTo(new[] { 5, 6 }));
+    }
+
+    [Test]
     public void XBusStatusChanged_IsRaised_WhenStatusPacketArrives()
     {
         var signal = new ManualResetEventSlim(false);

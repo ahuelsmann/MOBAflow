@@ -54,19 +54,30 @@ public sealed class FrameLoopScheduler
 
     public async Task StopAsync()
     {
-        if (!IsRunning || _runCts is null || _runTask is null)
+        if (_runCts is null || _runTask is null)
         {
             return;
         }
 
-        _runCts.Cancel();
+        var runCts = _runCts;
+        var runTask = _runTask;
+        runCts.Cancel();
         try
         {
-            await _runTask.ConfigureAwait(false);
+            await runTask.ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
             // expected on shutdown
+        }
+        finally
+        {
+            runCts.Dispose();
+            if (ReferenceEquals(_runCts, runCts))
+            {
+                _runCts = null;
+                _runTask = null;
+            }
         }
     }
 

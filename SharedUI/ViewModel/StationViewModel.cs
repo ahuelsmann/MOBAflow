@@ -53,27 +53,6 @@ public sealed partial class StationViewModel : ObservableObject, IViewModelWrapp
         set => SetProperty(_station.Name, value, _station, (m, v) => m.Name = v);
     }
 
-    public bool IsVirtual
-    {
-        get => _station.IsVirtual;
-        set
-        {
-            if (SetProperty(_station.IsVirtual, value, _station, (m, v) => m.IsVirtual = v))
-            {
-                OnPropertyChanged(nameof(IsRealStation));
-                OnPropertyChanged(nameof(StationIconGlyph));
-                OnPropertyChanged(nameof(StationKindText));
-                OnPropertyChanged(nameof(StationForegroundResourceKey));
-            }
-        }
-    }
-
-    public bool IsRealStation => !IsVirtual;
-
-    public string StationIconGlyph => IsVirtual ? "\uE945" : "\uEC06";
-
-    public string StationKindText => IsVirtual ? "Event" : "Station";
-
     public string StationForegroundResourceKey => "TextFillColorPrimaryBrush";
 
     /// <summary>

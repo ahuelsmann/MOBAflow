@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentView
+    x:Class="Moba.MAUI.View.PairingPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:vm="clr-namespace:Moba.SharedUI.ViewModel;assembly=SharedUI"
+    xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.Maui.Controls"
+    x:DataType="vm:RemotePairingViewModel">
+
+    <ScrollView>
+        <VerticalStackLayout
+            Padding="0,12,0,24"
+            Spacing="8">
+            <Border Style="{DynamicResource MainSectionCard}">
+                <VerticalStackLayout Spacing="12">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <VerticalStackLayout Grid.Column="0" Spacing="4">
+                            <Label
+                                Style="{DynamicResource SectionTitleLabel}"
+                                Text="Connect to MOBAflow" />
+                            <Label
+                                FontSize="13"
+                                Text="Open Settings / REST API in MOBAflow and scan its pairing QR code."
+                                TextColor="{DynamicResource TextSecondary}" />
+                        </VerticalStackLayout>
+                        <ActivityIndicator
+                            Grid.Column="1"
+                            HeightRequest="32"
+                            IsRunning="{Binding IsBusy}"
+                            IsVisible="{Binding IsBusy}"
+                            VerticalOptions="Center"
+                            WidthRequest="32"
+                            Color="{DynamicResource RailwayPrimary}" />
+                    </Grid>
+
+                    <Label
+                        FontSize="14"
+                        SemanticProperties.Description="{Binding StatusMessage}"
+                        Text="{Binding StatusMessage}"
+                        TextColor="{DynamicResource TextPrimary}" />
+
+                    <Button
+                        Command="{Binding OpenScannerCommand}"
+                        IsVisible="{Binding IsPaired, Converter={toolkit:InvertedBoolConverter}}"
+                        SemanticProperties.Description="Scan the pairing QR code shown by MOBAflow"
+                        Style="{DynamicResource PrimaryButton}"
+                        Text="Scan MOBAflow QR code" />
+
+                    <Button
+                        Command="{Binding CancelCommand}"
+                        IsVisible="{Binding IsBusy}"
+                        SemanticProperties.Description="Cancel the current pairing operation"
+                        Style="{DynamicResource OutlinedButton}"
+                        Text="Cancel" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border
+                IsVisible="{Binding IsScannerVisible}"
+                Style="{DynamicResource MainSectionCard}">
+                <Grid HeightRequest="360">
+                    <zxing:CameraBarcodeReaderView
+                        x:Name="PairingQrScanner"
+                        BarcodesDetected="PairingQrScanner_BarcodesDetected"
+                        IsDetecting="{Binding IsScannerVisible}" />
+                    <Border
+                        Margin="32"
+                        Background="Transparent"
+                        InputTransparent="True"
+                        Stroke="{DynamicResource RailwayPrimary}"
+                        StrokeShape="RoundRectangle 12"
+                        StrokeThickness="3" />
+                </Grid>
+            </Border>
+
+            <Border
+                IsVisible="{Binding IsWaitingForApproval}"
+                Style="{DynamicResource MainSectionCard}">
+                <VerticalStackLayout Spacing="12">
+                    <Label
+                        Style="{DynamicResource SectionTitleLabel}"
+                        Text="Approve in MOBAflow" />
+                    <Label
+                        Text="Confirm that this code matches the request shown under Settings / REST API."
+                        TextColor="{DynamicResource TextSecondary}" />
+                    <Label
+                        FontAttributes="Bold"
+                        FontSize="32"
+                        HorizontalTextAlignment="Center"
+                        SemanticProperties.Description="{Binding ConfirmationCode, StringFormat='Confirmation code {0}'}"
+                        Text="{Binding ConfirmationCode}"
+                        TextColor="{DynamicResource RailwayPrimary}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border
+                IsVisible="{Binding IsPaired}"
+                Style="{DynamicResource MainSectionCard}">
+                <VerticalStackLayout Spacing="12">
+                    <Label
+                        Style="{DynamicResource SectionTitleLabel}"
+                        Text="Connected administrator" />
+                    <Label
+                        Text="This device can view and control the connected MOBAflow layout."
+                        TextColor="{DynamicResource TextSecondary}" />
+                    <Button
+                        Command="{Binding ForgetCommand}"
+                        SemanticProperties.Description="Remove protected MOBAsmart credentials from this device"
+                        Style="{DynamicResource DangerButton}"
+                        Text="Forget this device" />
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentView>

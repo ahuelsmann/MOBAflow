@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <include domain="file" path="." />
+    <!-- SecureStorage shared preferences are intentionally outside this file-only allowlist. -->
+    <exclude domain="sharedpref" path="com.mobaflow.mobasmart.microsoft.maui.essentials.preferences.xml" />
+</full-backup-content>

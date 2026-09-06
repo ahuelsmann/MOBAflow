@@ -13,7 +13,10 @@ internal static class MobaRuntimeSnapshotBuilder
 {
     public static MobaRuntimeSnapshot Create(
         MobaRuntimeTelemetryState telemetry,
-        ActiveProjectContext? activeProjectContext)
+        ActiveProjectContext? activeProjectContext,
+        Guid? activeTrainId,
+        IReadOnlyDictionary<Guid, VehicleUsageRuntimeSnapshot> vehicleUsage,
+        VehicleUsageRuntimeDiagnosticsSnapshot vehicleUsageDiagnostics)
     {
         var journeyStates = new Dictionary<Guid, JourneyRuntimeSnapshot>();
         var signalBoxElements = new List<SignalBoxElementRuntimeSnapshot>();
@@ -32,11 +35,14 @@ internal static class MobaRuntimeSnapshotBuilder
                 journeyStates[journey.Id] = new JourneyRuntimeSnapshot
                 {
                     JourneyId = journey.Id,
-                    Counter = state.Counter,
+                    JourneyRunId = state.RunId,
                     CurrentPos = state.CurrentPos,
                     CurrentStationName = state.CurrentStationName,
                     CurrentStationId = state.CurrentStationId,
                     CurrentFeedbackIndex = state.CurrentFeedbackIndex,
+                    CurrentStepOccurrence = state.CurrentStepOccurrence,
+                    CurrentStepRepeatCount = journey.FeedbackSequence.ElementAtOrDefault(state.CurrentFeedbackIndex)?.RepeatCount ?? 1,
+                    ExpectedInPort = journey.FeedbackSequence.ElementAtOrDefault(state.CurrentFeedbackIndex)?.InPort,
                     LastFeedbackTime = state.LastFeedbackTime,
                     IsActive = state.IsActive
                 };
@@ -120,6 +126,9 @@ internal static class MobaRuntimeSnapshotBuilder
             JourneyStates = journeyStates,
             LocomotiveStates = new Dictionary<int, LocomotiveRuntimeSnapshot>(telemetry.LocomotiveStates),
             LocomotiveFleet = locomotiveFleet,
+            VehicleUsage = vehicleUsage,
+            ActiveTrainId = activeTrainId,
+            VehicleUsageDiagnostics = vehicleUsageDiagnostics,
             SignalBoxElements = signalBoxElements,
             CreatedAt = DateTimeOffset.Now
         };

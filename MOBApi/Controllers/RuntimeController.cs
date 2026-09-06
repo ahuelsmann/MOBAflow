@@ -4,8 +4,10 @@ namespace Moba.MOBApi.Controllers;
 
 using Common.Runtime;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+using Moba.MOBApi.Security;
 using Moba.MOBApi.Service;
 
 using System.Net;
@@ -26,6 +28,7 @@ public class RuntimeController : ControllerBase
     }
 
     [HttpGet("meta")]
+    [Authorize(Policy = ControlPlaneCapabilities.Read)]
     public IActionResult GetMeta()
     {
         if (!_snapshotCache.TryGet(out var entry))
@@ -41,6 +44,7 @@ public class RuntimeController : ControllerBase
     }
 
     [HttpGet("snapshot")]
+    [Authorize(Policy = ControlPlaneCapabilities.Read)]
     public IActionResult GetSnapshot()
     {
         if (!_snapshotCache.TryGet(out var entry))
@@ -52,6 +56,7 @@ public class RuntimeController : ControllerBase
     }
 
     [HttpPut("snapshot")]
+    [Authorize(Policy = ControlPlaneCapabilities.HostPublish)]
     public IActionResult PutSnapshot([FromBody] JsonElement? body)
     {
         if (!IsLocalhostRequest())

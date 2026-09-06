@@ -33,12 +33,6 @@ Release-Validierung bleibt der normale Build maßgeblich. Details stehen in
 dotnet test Test/Test.csproj
 ```
 
-Der Großteil der Unit-Tests ist im zentralen Testprojekt gebündelt:
-
-```bash
-dotnet test Test/Test.csproj
-```
-
 ## 2. Projektübersicht & wichtige Doku
 
 - Architektur & Schichten: `docs/ARCHITECTURE.md`
@@ -50,7 +44,9 @@ dotnet test Test/Test.csproj
 Bitte lies mindestens `README.md` und `docs/ARCHITECTURE.md`, bevor du größere Änderungen machst.
 
 **Repository:** Code, Issues und Pull Requests auf [GitHub](https://github.com/ahuelsmann/MOBAflow).
-CI und Releases laufen über Azure DevOps (`.azure-pipelines/`).
+GitHub Actions enthält die öffentlichen Qualitäts- und Release-Workflows;
+die vorhandenen Azure-DevOps-Pipelines bleiben als zusätzlicher Build- und
+Release-Weg erhalten.
 
 ## 3. Wie du beitragen kannst
 
@@ -78,7 +74,6 @@ Die vollständigen Regeln stehen in:
 
 - `.github/copilot-instructions.md`
 - `.github/instructions/*.instructions.md`
-- `docs/CLAUDE.md`
 
 Kurz zusammengefasst:
 
@@ -107,6 +102,10 @@ Kurz zusammengefasst:
   - `README.md` und/oder passende Seite unter `docs/wiki/` aktualisieren
 - Technische Änderungen:
   - Gegebenenfalls `docs/ARCHITECTURE.md`, `docs/JSON-VALIDATION.md` usw. ergänzen
+- Eigenständige Projekt-, Qualitäts-, Refactoring- und Roadmap-Pläne:
+  - Als Markdown-Dateien unter `plans/` ablegen, nicht unter `docs/`
+  - Abgeschlossene Pläne löschen; Git-Historie und geschlossene GitHub-Vorgänge bewahren den Verlauf
+  - GitHub Issues, Milestones und Kanban bleiben für Status und Fortschritt maßgeblich
 - Drittanbieter / neue Pakete:
   - `docs/THIRD-PARTY-NOTICES.md` mit Lizenzinformationen nachziehen
 

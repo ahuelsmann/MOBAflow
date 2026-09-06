@@ -12,6 +12,9 @@ public sealed class JourneyRuntimeSnapshot
     /// </summary>
     public required Guid JourneyId { get; init; }
 
+    /// <summary>Gets the stable identity of the current journey execution.</summary>
+    public Guid JourneyRunId { get; init; }
+
     /// <summary>
     /// Gets the current station name.
     /// </summary>
@@ -23,10 +26,14 @@ public sealed class JourneyRuntimeSnapshot
     /// <summary>Gets the zero-based index of the next expected feedback sequence entry.</summary>
     public int CurrentFeedbackIndex { get; init; }
 
-    /// <summary>
-    /// Gets the current counter value.
-    /// </summary>
-    public int Counter { get; init; }
+    /// <summary>Gets the number of accepted activations for the current feedback step.</summary>
+    public uint CurrentStepOccurrence { get; init; }
+
+    /// <summary>Gets the repeat count required by the current feedback step.</summary>
+    public uint CurrentStepRepeatCount { get; init; } = 1;
+
+    /// <summary>Gets the InPort expected by the current feedback step.</summary>
+    public uint? ExpectedInPort { get; init; }
 
     /// <summary>
     /// Gets the current position index.

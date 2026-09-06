@@ -106,8 +106,9 @@ internal class SettingsService : ISettingsService
         _settings.Layout.ColumnWidths = new Dictionary<string, double>(source.Layout.ColumnWidths);
         _settings.Layout.JourneysPage.IsJourneyListExpanded = source.Layout.JourneysPage.IsJourneyListExpanded;
         _settings.Layout.JourneysPage.IsCityLibraryExpanded = source.Layout.JourneysPage.IsCityLibraryExpanded;
-        _settings.Layout.JourneysPage.IsWorkflowLibraryExpanded = source.Layout.JourneysPage.IsWorkflowLibraryExpanded;
         _settings.Layout.JourneysPage.IsJourneyPropertiesExpanded = source.Layout.JourneysPage.IsJourneyPropertiesExpanded;
+        _settings.Layout.StationsPage = source.Layout.StationsPage;
+        _settings.Layout.EventManagerPage = source.Layout.EventManagerPage;
         _settings.Layout.GoodsWagonPage = source.Layout.GoodsWagonPage;
         _settings.Layout.LocomotivesPage = source.Layout.LocomotivesPage;
         _settings.Layout.PassengerWagonPage = source.Layout.PassengerWagonPage;
@@ -117,6 +118,7 @@ internal class SettingsService : ISettingsService
         _settings.Layout.TrackPlanPage = source.Layout.TrackPlanPage;
         _settings.Layout.MonitorPage = source.Layout.MonitorPage;
         _settings.Display.Esp32IpAddress = source.Display.Esp32IpAddress;
+        _settings.Display.Port = source.Display.Port;
         _settings.FeatureToggles = source.FeatureToggles;
     }
 

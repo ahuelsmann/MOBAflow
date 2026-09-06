@@ -47,10 +47,12 @@
             OverflowButtonVisibility="Auto">
             <AppBarButton
                 x:Name="UndoButton"
+                Command="{x:Bind ViewModel.UndoCommand}"
                 Icon="Undo"
                 Label="Undo" />
             <AppBarButton
                 x:Name="RedoButton"
+                Command="{x:Bind ViewModel.RedoCommand}"
                 Icon="Redo"
                 Label="Redo" />
             <AppBarElementContainer VerticalAlignment="Center">
@@ -83,6 +85,7 @@
             </AppBarElementContainer>
             <AppBarButton
                 x:Name="ValidateButton"
+                Command="{x:Bind ViewModel.ValidateCommand}"
                 Icon="Accept"
                 Label="Validate" />
             <AppBarButton
@@ -95,6 +98,14 @@
                 Icon="Zoom"
                 Label="100%"
                 ToolTipService.ToolTip="Reset zoom to 100% (Ctrl+1)" />
+            <AppBarButton
+                x:Name="ContextButton"
+                AutomationProperties.HelpText="{x:Bind InterlockingViewModel.AvailabilityDescription, Mode=OneWay}"
+                Command="{x:Bind ViewModel.OpenWorkbenchCommand}"
+                controls:FocusTargetBehavior.Target="{x:Bind SelectedObjectWorkbench, Mode=OneTime}"
+                Icon="ContactInfo"
+                Label="Context"
+                ToolTipService.ToolTip="{x:Bind InterlockingViewModel.AvailabilityDescription, Mode=OneWay}" />
             <AppBarSeparator />
             <AppBarToggleButton
                 x:Name="SnapToggle"
@@ -103,11 +114,13 @@
                 Label="Snap" />
             <AppBarButton
                 x:Name="DisconnectButton"
+                Command="{x:Bind ViewModel.DisconnectSelectedTrackCommand}"
                 Icon="Remove"
                 Label="Disconnect"
                 ToolTipService.ToolTip="Disconnect selected track connections (R)" />
             <AppBarButton
                 x:Name="DeleteButton"
+                Command="{x:Bind ViewModel.DeleteSelectedTrackCommand}"
                 Icon="Delete"
                 Label="Delete"
                 ToolTipService.ToolTip="Delete selected track (Del)" />
@@ -133,12 +146,18 @@
                     <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE8D2;" />
                 </AppBarToggleButton.Icon>
             </AppBarToggleButton>
-            <AppBarButton x:Name="RotateLeftButton" Label="Rotate ←">
+            <AppBarButton
+                x:Name="RotateLeftButton"
+                Command="{x:Bind ViewModel.RotateSelectedTrackLeftCommand}"
+                Label="Rotate ←">
                 <AppBarButton.Icon>
                     <SymbolIcon Symbol="Back" />
                 </AppBarButton.Icon>
             </AppBarButton>
-            <AppBarButton x:Name="RotateRightButton" Label="Rotate →">
+            <AppBarButton
+                x:Name="RotateRightButton"
+                Command="{x:Bind ViewModel.RotateSelectedTrackRightCommand}"
+                Label="Rotate →">
                 <AppBarButton.Icon>
                     <SymbolIcon Symbol="Forward" />
                 </AppBarButton.Icon>
@@ -146,6 +165,27 @@
         </CommandBar>
         <!--  Main Content Grid  -->
         <Grid x:Name="MainGrid" Grid.Row="1">
+            <VisualStateManager.VisualStateGroups>
+                <VisualStateGroup x:Name="WorkbenchLayoutStates">
+                    <VisualState x:Name="WideWorkbenchState">
+                        <VisualState.StateTriggers>
+                            <AdaptiveTrigger MinWindowWidth="1024" />
+                        </VisualState.StateTriggers>
+                    </VisualState>
+                    <VisualState x:Name="CompactWorkbenchState">
+                        <VisualState.StateTriggers>
+                            <AdaptiveTrigger MinWindowWidth="0" />
+                        </VisualState.StateTriggers>
+                        <VisualState.Setters>
+                            <Setter Target="ColProperties.Width" Value="0" />
+                            <Setter Target="RightWorkbenchSplitter.Visibility" Value="Collapsed" />
+                            <Setter Target="WorkbenchHost.(Grid.Column)" Value="2" />
+                            <Setter Target="WorkbenchHost.HorizontalAlignment" Value="Right" />
+                            <Setter Target="WorkbenchHost.(Panel.ZIndex)" Value="10" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateManager.VisualStateGroups>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition
                     x:Name="ColToolbox"
@@ -257,28 +297,40 @@
             </Border>
 
             <controls1:GridSplitter
+                x:Name="RightWorkbenchSplitter"
                 Grid.Column="3"
                 Width="4"
                 HorizontalAlignment="Left"
                 ResizeBehavior="PreviousAndNext" />
 
-            <!--  Right Panel: Properties  -->
+            <!--  Right Panel: Selected Object Workbench  -->
             <controls:CollapsibleColumnProperties
+                x:Name="WorkbenchHost"
                 Grid.Column="4"
                 Margin="0"
+                MaxWidth="420"
                 Glyph="&#xE946;"
-                Header="Properties"
+                Header="Context"
                 IsExpanded="{x:Bind ViewModel.IsPropertiesExpanded, Mode=TwoWay}">
                 <controls:CollapsibleColumnProperties.PanelContent>
-                    <ScrollViewer Padding="16">
-                        <StackPanel Spacing="16">
+                    <controls:SelectedObjectWorkbench
+                        x:Name="SelectedObjectWorkbench"
+                        Context="{x:Bind InterlockingViewModel}"
+                        ShowRouteAuthoring="True">
+                        <controls:SelectedObjectWorkbench.DefinitionContent>
+                            <StackPanel Padding="0,8,0,0" Spacing="16">
+                                <TextBlock
+                                    AutomationProperties.LiveSetting="Polite"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="{x:Bind MainViewModel.SolutionSaveStatusText, Mode=OneWay}"
+                                    TextWrapping="WrapWholeWords" />
                             <!--  Selection Info  -->
                             <StackPanel Spacing="8">
                                 <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Selection" />
                                 <TextBlock
                                     x:Name="SelectionInfoText"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Text="No selection"
+                                    Text="{x:Bind ViewModel.SelectionSummary, Mode=OneWay}"
                                     TextWrapping="Wrap" />
                             </StackPanel>
                             <!--  Selected Track Properties (InPort etc.)  -->
@@ -531,8 +583,9 @@
                                     </StackPanel>
                                 </StackPanel>
                             </StackPanel>
-                        </StackPanel>
-                    </ScrollViewer>
+                            </StackPanel>
+                        </controls:SelectedObjectWorkbench.DefinitionContent>
+                    </controls:SelectedObjectWorkbench>
                 </controls:CollapsibleColumnProperties.PanelContent>
             </controls:CollapsibleColumnProperties>
         </Grid>
@@ -552,7 +605,7 @@
                     x:Name="StatusText"
                     Grid.Column="0"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Text="" />
+                    Text="{x:Bind ViewModel.StatusText, Mode=OneWay}" />
                 <TextBlock
                     x:Name="CoordinatesText"
                     Grid.Column="1"

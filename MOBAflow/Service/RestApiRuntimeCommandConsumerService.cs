@@ -4,36 +4,34 @@ namespace Moba.WinUI.Service;
 
 using Backend.Interface;
 
-using Common.Configuration;
 using Common.Runtime;
 
 using Domain;
 
 using Microsoft.Extensions.Logging;
 
+using SharedUI.Interface;
+
 /// <summary>
 /// Polls MOBApi for queued runtime commands when SignalR host forwarding is unavailable.
 /// </summary>
 public sealed class RestApiRuntimeCommandConsumerService : IDisposable
 {
-    private readonly IMobaRuntime _mobaRuntime;
-    private readonly AppSettings _appSettings;
-    private readonly HttpClient _httpClient;
+    private readonly IRuntimeCommandGateway _runtimeCommandGateway;
     private readonly ILogger<RestApiRuntimeCommandConsumerService> _logger;
+    private readonly HostControlPlaneSession? _hostSession;
     private readonly PeriodicTimer _timer;
     private readonly CancellationTokenSource _cts = new();
     private bool _disposed;
 
     public RestApiRuntimeCommandConsumerService(
-        IMobaRuntime mobaRuntime,
-        AppSettings appSettings,
-        IHttpClientFactory httpClientFactory,
-        ILogger<RestApiRuntimeCommandConsumerService> logger)
+        IRuntimeCommandGateway runtimeCommandGateway,
+        ILogger<RestApiRuntimeCommandConsumerService> logger,
+        HostControlPlaneSession? hostSession = null)
     {
-        _mobaRuntime = mobaRuntime;
-        _appSettings = appSettings;
-        _httpClient = httpClientFactory.CreateClient(nameof(RestApiRuntimeCommandConsumerService));
+        _runtimeCommandGateway = runtimeCommandGateway;
         _logger = logger;
+        _hostSession = hostSession;
         _timer = new PeriodicTimer(TimeSpan.FromMilliseconds(500));
         _ = ConsumeLoopAsync(_cts.Token);
     }
@@ -59,10 +57,11 @@ public sealed class RestApiRuntimeCommandConsumerService : IDisposable
 
     private async Task ProcessNextCommandAsync(CancellationToken cancellationToken)
     {
-        var port = _appSettings.RestApi.Port > 0 ? _appSettings.RestApi.Port : 5001;
-        using var response = await _httpClient
-            .GetAsync($"http://127.0.0.1:{port}/api/runtime/commands/pending", cancellationToken)
-            .ConfigureAwait(false);
+        if (_hostSession?.IsEnrolled != true)
+            return;
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, "api/runtime/commands/pending");
+        using var response = await _hostSession.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
         if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
         {
@@ -93,14 +92,14 @@ public sealed class RestApiRuntimeCommandConsumerService : IDisposable
         {
             case RuntimeCommandType.SetSignalAspect
                 when command.SignalId.HasValue && command.SignalAspect.HasValue:
-                await _mobaRuntime
+                await _runtimeCommandGateway
                     .SetSignalAspectAsync(command.SignalId.Value, command.SignalAspect.Value, cancellationToken)
                     .ConfigureAwait(false);
                 break;
 
             case RuntimeCommandType.SetLocomotiveDrive
                 when command.LocomotiveAddress.HasValue && command.Speed.HasValue && command.Forward.HasValue:
-                await _mobaRuntime
+                await _runtimeCommandGateway
                     .SetLocomotiveDriveAsync(
                         command.LocomotiveAddress.Value,
                         command.Speed.Value,
@@ -111,13 +110,17 @@ public sealed class RestApiRuntimeCommandConsumerService : IDisposable
 
             case RuntimeCommandType.SetLocomotiveFunction
                 when command.LocomotiveAddress.HasValue && command.FunctionIndex.HasValue && command.FunctionIsOn.HasValue:
-                await _mobaRuntime
+                await _runtimeCommandGateway
                     .SetLocomotiveFunctionAsync(
                         command.LocomotiveAddress.Value,
                         command.FunctionIndex.Value,
                         command.FunctionIsOn.Value,
                         cancellationToken)
                     .ConfigureAwait(false);
+                break;
+
+            case RuntimeCommandType.ResetJourney when command.JourneyId.HasValue:
+                await _runtimeCommandGateway.ResetJourneyAsync(command.JourneyId.Value, cancellationToken).ConfigureAwait(false);
                 break;
 
             default:

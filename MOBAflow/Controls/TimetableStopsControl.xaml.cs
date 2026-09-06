@@ -53,14 +53,6 @@ internal sealed partial class TimetableStopsControl
         DependencyProperty.Register("PreviousStationIsExitOnLeft", typeof(bool), typeof(TimetableStopsControl),
             new PropertyMetadata(false));
 
-    public static readonly DependencyProperty PreviousStationIsEventProperty =
-        DependencyProperty.Register("PreviousStationIsEvent", typeof(bool), typeof(TimetableStopsControl),
-            new PropertyMetadata(false));
-
-    public static readonly DependencyProperty PreviousStationShowsExitDirectionProperty =
-        DependencyProperty.Register("PreviousStationShowsExitDirection", typeof(bool), typeof(TimetableStopsControl),
-            new PropertyMetadata(false));
-
     /// <summary>
     /// Current station name.
     /// </summary>
@@ -103,14 +95,6 @@ internal sealed partial class TimetableStopsControl
         DependencyProperty.Register("CurrentStationIsExitOnLeft", typeof(bool), typeof(TimetableStopsControl),
             new PropertyMetadata(false));
 
-    public static readonly DependencyProperty CurrentStationIsEventProperty =
-        DependencyProperty.Register("CurrentStationIsEvent", typeof(bool), typeof(TimetableStopsControl),
-            new PropertyMetadata(false));
-
-    public static readonly DependencyProperty CurrentStationShowsExitDirectionProperty =
-        DependencyProperty.Register("CurrentStationShowsExitDirection", typeof(bool), typeof(TimetableStopsControl),
-            new PropertyMetadata(false));
-
     /// <summary>
     /// Next station name.
     /// </summary>
@@ -151,14 +135,6 @@ internal sealed partial class TimetableStopsControl
     /// </summary>
     public static readonly DependencyProperty NextStationIsExitOnLeftProperty =
         DependencyProperty.Register("NextStationIsExitOnLeft", typeof(bool), typeof(TimetableStopsControl),
-            new PropertyMetadata(false));
-
-    public static readonly DependencyProperty NextStationIsEventProperty =
-        DependencyProperty.Register("NextStationIsEvent", typeof(bool), typeof(TimetableStopsControl),
-            new PropertyMetadata(false));
-
-    public static readonly DependencyProperty NextStationShowsExitDirectionProperty =
-        DependencyProperty.Register("NextStationShowsExitDirection", typeof(bool), typeof(TimetableStopsControl),
             new PropertyMetadata(false));
 
     public TimetableStopsControl()
@@ -225,18 +201,6 @@ internal sealed partial class TimetableStopsControl
         set => SetValue(PreviousStationIsExitOnLeftProperty, value);
     }
 
-    public bool PreviousStationIsEvent
-    {
-        get => (bool)GetValue(PreviousStationIsEventProperty);
-        set => SetValue(PreviousStationIsEventProperty, value);
-    }
-
-    public bool PreviousStationShowsExitDirection
-    {
-        get => (bool)GetValue(PreviousStationShowsExitDirectionProperty);
-        set => SetValue(PreviousStationShowsExitDirectionProperty, value);
-    }
-
     // === Current Station Properties ===
 
     public string CurrentStationNameValue
@@ -273,18 +237,6 @@ internal sealed partial class TimetableStopsControl
     {
         get => (bool)GetValue(CurrentStationIsExitOnLeftProperty);
         set => SetValue(CurrentStationIsExitOnLeftProperty, value);
-    }
-
-    public bool CurrentStationIsEvent
-    {
-        get => (bool)GetValue(CurrentStationIsEventProperty);
-        set => SetValue(CurrentStationIsEventProperty, value);
-    }
-
-    public bool CurrentStationShowsExitDirection
-    {
-        get => (bool)GetValue(CurrentStationShowsExitDirectionProperty);
-        set => SetValue(CurrentStationShowsExitDirectionProperty, value);
     }
 
     // === Next Station Properties ===
@@ -325,15 +277,4 @@ internal sealed partial class TimetableStopsControl
         set => SetValue(NextStationIsExitOnLeftProperty, value);
     }
 
-    public bool NextStationIsEvent
-    {
-        get => (bool)GetValue(NextStationIsEventProperty);
-        set => SetValue(NextStationIsEventProperty, value);
-    }
-
-    public bool NextStationShowsExitDirection
-    {
-        get => (bool)GetValue(NextStationShowsExitDirectionProperty);
-        set => SetValue(NextStationShowsExitDirectionProperty, value);
-    }
 }

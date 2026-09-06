@@ -49,23 +49,43 @@ public interface ISolutionIoService
     Task<(Solution? solution, string? path, string? error)> LoadFromPathAsync(string filePath);
 
     /// <summary>
-    /// Saves the solution to a JSON file. Shows file picker if currentPath is null.
+    /// Saves the solution to an existing JSON file without showing a file picker.
     /// Uses atomic write (temp file + rename) to prevent data corruption.
     /// </summary>
     /// <param name="solution">Solution object to serialize and save.</param>
-    /// <param name="currentPath">Existing file path for overwrite, or null to show file picker.</param>
+    /// <param name="currentPath">Existing file path for overwrite.</param>
+    /// <returns>
+    /// Tuple containing:
+    /// - success: True if save completed successfully.
+    /// - path: Full path where file was saved, or null if failed.
+    /// - error: Error message if save failed, null otherwise.
+    /// </returns>
+    Task<(bool success, string? path, string? error)> SaveAsync(Solution solution, string currentPath);
+
+    /// <summary>
+    /// Shows a file picker and saves the solution to the selected JSON file.
+    /// </summary>
+    /// <param name="solution">Solution object to serialize and save.</param>
     /// <returns>
     /// Tuple containing:
     /// - success: True if save completed successfully.
     /// - path: Full path where file was saved, or null if cancelled/failed.
     /// - error: Error message if save failed, null otherwise.
     /// </returns>
-    Task<(bool success, string? path, string? error)> SaveAsync(Solution solution, string? currentPath);
-
+    Task<(bool success, string? path, string? error)> SaveAsAsync(Solution solution);
 }
 
 public interface IFilePickerService
 {
+    /// <summary>Opens a file picker for a MOBAflow recording artifact.</summary>
+    /// <returns>The selected recording path, or <see langword="null"/> when cancelled.</returns>
+    Task<string?> BrowseForRecordingFileAsync();
+
+    /// <summary>Opens a file save picker for a MOBAflow recording artifact.</summary>
+    /// <param name="suggestedFileName">Suggested base file name without the recording suffix.</param>
+    /// <returns>The selected recording path, or <see langword="null"/> when cancelled.</returns>
+    Task<string?> SaveRecordingFileAsync(string suggestedFileName);
+
     /// <summary>
     /// Opens a file picker to browse for a JSON file.
     /// </summary>
@@ -78,6 +98,9 @@ public interface IFilePickerService
     /// <param name="suggestedFileName">Suggested file name</param>
     /// <returns>The selected file path, or null if cancelled.</returns>
     Task<string?> SaveJsonFileAsync(string suggestedFileName);
+
+    /// <summary>Opens a file save picker for a printable HTML document.</summary>
+    Task<string?> SaveHtmlFileAsync(string suggestedFileName);
 
     /// <summary>
     /// Opens a file picker to browse for an XML file (e.g., AnyRail layout).

@@ -1,45 +1,19 @@
-# Auto detect text files and perform LF normalization
-* text=auto eol=crlf
+# Normalize text files in the repository and use native line endings on checkout.
+* text=auto
 
-# C# source files
-*.cs text eol=crlf
-*.csx text eol=crlf
-
-# Project files
-*.csproj text eol=crlf
+# Preserve line endings required by platform-specific files.
+*.bat text eol=crlf
+*.cmd text eol=crlf
 *.sln text eol=crlf
-*.props text eol=crlf
-*.targets text eol=crlf
+*.sh text eol=lf
 
-# XAML files
-*.xaml text eol=crlf
-
-# Web files
-*.html text eol=crlf
-*.css text eol=crlf
-*.js text eol=crlf
-*.ts text eol=crlf
-*.json text eol=crlf
-*.razor text eol=crlf
-
-# Config files
-*.xml text eol=crlf
-*.config text eol=crlf
-*.yml text eol=crlf
-*.yaml text eol=crlf
-.editorconfig text eol=crlf
-.gitattributes text eol=crlf
-.gitignore text eol=crlf
-
-# Documentation
-*.md text eol=crlf
-*.txt text eol=crlf
-
-# Binary files - no line ending normalization
+# Binary files - never perform line ending conversion or text diffs.
 *.png binary
 *.jpg binary
 *.jpeg binary
 *.gif binary
+*.bmp binary
+*.webp binary
 *.ico binary
 *.pdf binary
 *.dll binary
@@ -47,3 +21,16 @@
 *.pdb binary
 *.nupkg binary
 *.snupkg binary
+*.zip binary
+*.wav binary
+*.mp3 binary
+*.pptx binary
+*.dylib binary
+*.so binary
+*.a binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.appx binary
+*.msix binary
+*.msixbundle binary

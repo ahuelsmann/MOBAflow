@@ -3,8 +3,10 @@ namespace Moba.MOBApi.Controllers;
 
 using Common.Path;
 using Hubs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Moba.MOBApi.Security;
 
 /// <summary>
 /// REST API for photo health check and upload (MAUI compatibility).
@@ -27,13 +29,14 @@ public class PhotosController : ControllerBase
     [HttpGet("health")]
     public IActionResult Health()
     {
-        return Ok(new { service = "MOBAflow MOBAapi", status = "healthy", version = "1.0.0" });
+        return Ok(new { status = "healthy" });
     }
 
     /// <summary>
     /// Serves a photo file by relative storage path (e.g. photos/locomotives/{id}.jpg).
     /// </summary>
     [HttpGet("file")]
+    [Authorize(Policy = ControlPlaneCapabilities.Read)]
     public IActionResult GetFile([FromQuery] string path)
     {
         if (string.IsNullOrWhiteSpace(path))
@@ -72,6 +75,7 @@ public class PhotosController : ControllerBase
     /// Upload a photo (e.g. from MAUI). Saves to MOBAflow Photos folder under My Documents.
     /// </summary>
     [HttpPost("upload")]
+    [Authorize(Policy = ControlPlaneCapabilities.PhotoWrite)]
     [RequestSizeLimit(MaxFileSize)]
     public async Task<IActionResult> Upload(
         [FromForm] IFormFile? file,
@@ -110,7 +114,11 @@ public class PhotosController : ControllerBase
         {
             try
             {
-                await _hubContext.Clients.All.SendAsync("PhotoUploaded", relativePath, DateTime.UtcNow);
+                await _hubContext.Clients.All.SendAsync(
+                    "PhotoUploaded",
+                    relativePath,
+                    DateTime.UtcNow,
+                    cancellationToken);
             }
 
             catch
