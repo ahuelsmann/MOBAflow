@@ -81,6 +81,11 @@ try {
     $before = (Get-FileHash -LiteralPath (Join-Path $fixture 'bom.cs')).Hash
     $result = Check @('-Fix')
     Assert-True ($result.Code -eq 0 -and (Get-FileHash -LiteralPath (Join-Path $fixture 'bom.cs')).Hash -eq $before) 'Repeated fix was not idempotent.'
+    $checkerPath = (Join-Path $fixture 'scripts/Test-LineEndings.ps1').Replace("'", "''")
+    $quotedFixture = $fixture.Replace("'", "''")
+    $command = "`$global:LASTEXITCODE = 42; & '$checkerPath' -RepositoryRoot '$quotedFixture'; exit `$LASTEXITCODE"
+    $result = Invoke-Process 'pwsh' @('-NoProfile', '-Command', $command)
+    Assert-True ($result.Code -eq 0) 'Successful check retained a stale native exit code.'
     $result = Check @('-Path', 'missing.cs')
     Assert-True ($result.Code -ne 0) 'An unmatched explicit path passed.'
 

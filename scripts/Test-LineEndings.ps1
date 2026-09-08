@@ -90,3 +90,4 @@ if ($failures.Count -gt 0) {
     exit 1
 }
 Write-Host "Line endings passed: $checked text files checked; $fixed normalized."
+exit 0
