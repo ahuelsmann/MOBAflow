@@ -51,7 +51,7 @@ internal sealed class JourneyFeedbackStepViewModelTests
 
         viewModel.RepeatCount = 0;
 
-        Assert.That(step.RepeatCount, Is.EqualTo(1));
+        Assert.That(step.Index, Is.EqualTo(1));
         Assert.That(viewModel.IsRepeat, Is.False);
     }
 }

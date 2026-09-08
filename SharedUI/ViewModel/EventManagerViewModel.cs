@@ -91,7 +91,7 @@ public sealed partial class EventManagerViewModel : ObservableObject
     {
         if (SelectedJourney == null) return;
         CaptureUndo();
-        var step = new JourneyFeedbackStep { InPort = Math.Clamp(DefaultInPort, 1u, 512u), RepeatCount = descriptor.DefaultRepeatCount };
+        var step = new JourneyFeedbackStep { InPort = Math.Clamp(DefaultInPort, 1u, 512u), Index = descriptor.DefaultRepeatCount };
         index = Math.Clamp(index, 0, SelectedJourney.Model.FeedbackSequence.Count);
         SelectedJourney.Model.FeedbackSequence.Insert(index, step);
         Refresh(step.Id);

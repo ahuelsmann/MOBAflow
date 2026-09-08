@@ -67,7 +67,7 @@ public sealed class FeedbackSequencesController(ISolutionCache solutionCache) : 
         foreach (var step in steps)
         {
             if (step.InPort is < 1 or > 512) return "InPort must be between 1 and 512.";
-            if (step.RepeatCount < 1) return "RepeatCount must be at least 1.";
+            if (step.Index < 1) return "RepeatCount must be at least 1.";
             if (step.DelayMs < 0) return "DelayMs cannot be negative.";
             if (step.WorkflowId.HasValue && project.Workflows.All(workflow => workflow.Id != step.WorkflowId)) return "Workflow does not exist.";
             if (step.StopTransition.StationId.HasValue && journey.Stations.All(station => station.Id != step.StopTransition.StationId)) return "Target stop does not exist.";

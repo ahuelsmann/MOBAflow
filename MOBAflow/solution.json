@@ -531,9 +531,9 @@
               "conditions": []
             },
             {
-              "id": "d17a434a-534a-4605-9c39-f86300ca7199",
+              "id": "b247189b-98b4-4fdc-8036-135413d7cd69",
               "inPort": 1,
-              "repeatCount": 10,
+              "repeatCount": 1,
               "delayMs": 0,
               "enabled": true,
               "stopTransition": {

@@ -157,7 +157,7 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     public uint CurrentStepOccurrence => _state.CurrentStepOccurrence;
 
     /// <summary>Gets the repeat count required by the currently expected feedback step.</summary>
-    public uint CurrentStepRepeatCount => _journey.FeedbackSequence.ElementAtOrDefault(_state.CurrentFeedbackIndex)?.RepeatCount ?? 1;
+    public uint CurrentStepRepeatCount => _journey.FeedbackSequence.ElementAtOrDefault(_state.CurrentFeedbackIndex)?.Index ?? 1;
 
     /// <summary>
     /// Gets the current station index within the journey from the runtime session state.

@@ -13,7 +13,7 @@ public sealed class JourneyFeedbackStep
     public JourneyFeedbackStep()
     {
         Id = Guid.NewGuid();
-        RepeatCount = 1;
+        Index = 1;
         Enabled = true;
         StopTransition = new JourneyStopTransition();
         Conditions = [];
@@ -29,7 +29,7 @@ public sealed class JourneyFeedbackStep
     public Guid? WorkflowId { get; set; }
 
     /// <summary>Gets or sets how many matching feedback activations complete this step.</summary>
-    public uint RepeatCount { get; set; }
+    public uint Index { get; set; }
 
     /// <summary>Gets or sets the delay between completing this step and starting its workflow.</summary>
     public int DelayMs { get; set; }

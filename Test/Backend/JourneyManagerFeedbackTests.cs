@@ -193,7 +193,7 @@ public sealed class JourneyManagerFeedbackTests
         var workflowId = Guid.NewGuid();
         var journey = new Journey
         {
-            FeedbackSequence = [new JourneyFeedbackStep { InPort = 2, RepeatCount = 3, WorkflowId = workflowId }]
+            FeedbackSequence = [new JourneyFeedbackStep { InPort = 2, Index = 3, WorkflowId = workflowId }]
         };
         var project = new Project { Journeys = [journey], Workflows = [new Workflow { Id = workflowId }] };
         using var manager = new TestableJourneyManager(z21Mock.Object, project, workflowMock.Object);
@@ -486,7 +486,7 @@ public sealed class JourneyManagerFeedbackTests
         var step = new JourneyFeedbackStep
         {
             InPort = 5,
-            RepeatCount = 2,
+            Index = 2,
             StopTransition = new JourneyStopTransition
             {
                 Mode = Moba.Domain.Enum.JourneyStopTransitionMode.SpecificStation,

@@ -53,10 +53,10 @@ public sealed partial class JourneyFeedbackStepViewModel : ObservableObject
 
     public uint RepeatCount
     {
-        get => Model.RepeatCount;
+        get => Model.Index;
         set
         {
-            if (SetModelProperty(Model.RepeatCount, Math.Max(value, 1), (step, count) => step.RepeatCount = count))
+            if (SetModelProperty(Model.Index, Math.Max(value, 1), (step, count) => step.Index = count))
             {
                 OnPropertyChanged(nameof(IsRepeat));
                 OnPropertyChanged(nameof(AutomationName));

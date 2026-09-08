@@ -139,7 +139,7 @@ internal sealed class ProjectValidatorTests
     public void ValidateCompleteness_InvalidFeedbackStep_ProducesErrors()
     {
         var project = CreateMinimalValidProject();
-        project.Journeys[0].FeedbackSequence.Add(new JourneyFeedbackStep { InPort = 0, RepeatCount = 0, DelayMs = -1 });
+        project.Journeys[0].FeedbackSequence.Add(new JourneyFeedbackStep { InPort = 0, Index = 0, DelayMs = -1 });
         var solution = new Solution { Projects = [project] };
 
         var result = CreateValidator().ValidateCompleteness(solution);

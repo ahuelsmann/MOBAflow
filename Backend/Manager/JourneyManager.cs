@@ -236,7 +236,7 @@ public class JourneyManager : IJourneyManager
             SessionState = state
         });
 
-        if (state.CurrentStepOccurrence < Math.Max(feedbackStep.RepeatCount, 1u))
+        if (state.CurrentStepOccurrence < Math.Max(feedbackStep.Index, 1u))
         {
             queuedExecution = null;
             return false;
@@ -486,7 +486,7 @@ public class JourneyManager : IJourneyManager
             kind,
             state.CurrentFeedbackIndex,
             state.CurrentStepOccurrence,
-            feedbackStep is null ? 0u : Math.Max(feedbackStep.RepeatCount, 1u),
+            feedbackStep is null ? 0u : Math.Max(feedbackStep.Index, 1u),
             inPort,
             state.CurrentStationId,
             stationIndex >= 0 && stationIndex < journey.Stations.Count ? stationIndex : -1,

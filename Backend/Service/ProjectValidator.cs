@@ -209,7 +209,7 @@ public class ProjectValidator : IProjectValidator
             var prefix = $"[{projectName}/{journey.Name}/FeedbackStep {index + 1}]";
             if (step.InPort is < 1 or > 512)
                 result.AddError($"{prefix} InPort must be between 1 and 512.");
-            if (step.RepeatCount < 1)
+            if (step.Index < 1)
                 result.AddError($"{prefix} RepeatCount must be at least 1.");
             if (step.DelayMs < 0)
                 result.AddError($"{prefix} DelayMs cannot be negative.");
