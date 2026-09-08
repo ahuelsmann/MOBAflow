@@ -37,6 +37,10 @@ and apply to coding agents across Windows and Linux.
 - Balanced secrets scanning: scan likely secret-bearing files before reading and changed files before commits/PRs.
   If the scanner is unavailable, continue ordinary development, avoid sensitive files and record the limitation
   before publication. If a scan finds a secret, stop handling that file and report it without exposing its value.
+- After patches, generators or scripts change text files, run `scripts/Test-LineEndings.ps1 -Path <changed-paths>`.
+  Use `-Fix` to normalize those files according to `.gitattributes`, then check again. Preserve LF exceptions,
+  encoding and final-newline presence. Before committing, run `scripts/Test-LineEndings.ps1 -Staged`;
+  the installed pre-commit hook checks both staged files on disk and mixed line endings in the index.
 - Standalone Markdown plans belong in `plans/`; remove completed plans, retaining Git history and closed GitHub issues.
   Spec Kit artifacts remain under `specs/`. Use [Spec Kit governance](.github/instructions/spec-kit-governance.instructions.md)
   for product behavior and cross-cutting features; this does not require a standalone plan for every small fix.

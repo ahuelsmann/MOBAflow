@@ -27,6 +27,34 @@ Diese Variante ist für Edit/Build-Zyklen gedacht. Für vollständige App-Starts
 Release-Validierung bleibt der normale Build maßgeblich. Details stehen in
 `docs/BUILD-PERFORMANCE.md`.
 
+### Einheitliche Zeilenenden
+
+PowerShell 7 (`pwsh`) wird für die lokalen Prüfungen benötigt. Einmal pro Klon installieren:
+
+```powershell
+./scripts/Install-GitHooks.ps1
+```
+
+Der Hook prüft vor einem Commit die vorgemerkten Dateien auf der Festplatte und auf gemischte
+Zeilenenden im Git-Index. Er verändert und staged keine Dateien. Andere Hooks bleiben erhalten;
+bei einem bereits vorhandenen eigenen `pre-commit`-Hook bricht die Installation ab.
+Verknüpfte Worktrees teilen sich den installierten Hook. Ältere Branches ohne Prüfskript verwenden
+eine bei der Installation hinterlegte Kopie. Nach Änderungen am Hook die Installation erneut ausführen.
+
+Nach Änderungen durch Patches, Generatoren oder andere Werkzeuge:
+
+```powershell
+./scripts/Test-LineEndings.ps1 -Path Domain/Journey.cs -Fix
+./scripts/Test-LineEndings.ps1 -Path Domain/Journey.cs
+```
+
+Ohne `-Path` werden alle versionierten und nicht ignorierten neuen Dateien geprüft; `-Fix` normalisiert
+sie. CRLF ist der Standard. LF-Ausnahmen aus `.gitattributes` (Shell-Skripte, Git-Hooks und verwaltete
+Spec-Kit-Dateien) bleiben erhalten, ebenso Kodierung und das Vorhandensein eines letzten Zeilenumbruchs.
+Binärdateien werden übersprungen. Der Git-Index speichert normalisierte Textdateien weiterhin mit LF.
+CI ergänzt diese lokale Prüfung, kann aber Mischungen, die Git beim Staging bereits beseitigt hat,
+nicht mehr im ursprünglichen Arbeitsverzeichnis erkennen.
+
 ### Tests ausführen
 
 ```bash

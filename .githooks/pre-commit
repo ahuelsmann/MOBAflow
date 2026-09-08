@@ -1,0 +1,9 @@
+#!/bin/sh
+# MOBAflow managed line-ending hook
+root=$(git rev-parse --show-toplevel) || exit 1
+script="$root/scripts/Test-LineEndings.ps1"
+# Older linked worktrees can use the installed copy until their branch includes the script.
+if [ ! -f "$script" ]; then
+    script="$(dirname "$0")/mobaflow-line-endings.ps1"
+fi
+exec pwsh -NoLogo -NoProfile -File "$script" -RepositoryRoot "$root" -Staged
