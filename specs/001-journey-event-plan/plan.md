@@ -2,11 +2,11 @@
 
 **Branch**: `codex/journey-event-plan` | **Date**: 2026-09-10 | **Spec**: [spec.md](spec.md)
 
-**GitHub Issue**: Pending issue-specific publication authorization
+**GitHub Issue**: #124
 
 **Spec Kit**: Required
 
-**Status**: Implemented locally; portable tests and Windows compile passed; issue and remaining acceptance gates open
+**Status**: Implemented locally; issue linked and portable tests/Windows compile passed; manual acceptance and remote quality gate open
 
 ## Summary
 
@@ -45,10 +45,10 @@ Before-research and after-design checks describe intended design, not delivered 
 - [x] Specify additive compatibility and explicit adoption; reuse established services/serializers.
 - [x] Plan tests for every behavior, relevant `Test/Test.csproj` suites and consumer builds.
 - [x] Keep feature documents under `specs/`; follow supplied pre-read scans and changed-file scans.
-- [x] Keep the PR draft until remote checks pass; local Sonar must target the actual base after concrete transfer authorization.
-- [ ] Populate the authoritative GitHub issue after issue-specific publication authorization. Governance cannot pass until then.
+- [x] Attempt local Sonar against the actual base and document its capability limitation; keep the PR draft until remote quality checks pass.
+- [x] Reference authoritative GitHub issue #124 and pass issue/PR Spec Kit governance.
 
-Commit and draft PR creation are authorized. Automatic approval review requires separate issue-publication and concrete Sonar data-transfer authorization; both are pending. The source issue remains outstanding and local Sonar analysis has not executed.
+Authoritative [issue #124](https://github.com/ahuelsmann/MOBAflow/issues/124) is created and governance passes. Local Sonar ran against `github/main` but agentic analysis is unavailable for the organization (403 Forbidden); this is not a green analysis. The remote SonarCloud gate remains open for the draft PR.
 
 ## Project Structure
 
@@ -77,8 +77,8 @@ Commit and draft PR creation are authorized. Automatic approval review requires 
 - **Regression checks**: Legacy data/behavior, no persisted run state, runtime snapshots and local/remote command routing.
 - **Regression fixtures**: `Test/Backend/MobaRuntimeEventPlanTests.cs` covers deferred activation, stale-definition rejection and shared-counter ownership; `Test/SharedUI/JourneyCounterProjectionTests.cs` covers counter projection. `Test/Backend/JourneyEventPlanAcceptanceTests.cs` covers sparse 2/3/5 events and three parallel journeys.
 - **Static checks**: Changed-file secrets, line endings and Spec Kit governance. Instruction consistency only if instructions change.
-- **Sonar gates**: Attempt local analysis against actual base `698c4c8b`; verify the actual base again before later PR review. Draft PR requires green SonarCloud and zero OPEN/CONFIRMED issues before ready status.
-- **Issue traceability**: Authoritative issue publication is pending; do not substitute a fabricated issue or weaken the governance check.
+- **Sonar gates**: Local analysis was attempted against `github/main` at `698c4c8b5e35a4071e4acd81635e5a2dde3d3b41`; the organization lacks agentic analysis capability. Draft PR requires green SonarCloud and zero OPEN/CONFIRMED issues before ready status.
+- **Issue traceability**: Authoritative issue #124 is linked in the specification and plan; both issue and PR governance checks pass.
 
 ## Complexity Tracking
 

@@ -42,7 +42,7 @@ For an explicitly authorized focused acceptance run, use simulated feedback with
 
 ## Static and publication checks
 
-- Run Spec Kit governance against changed feature paths and the source issue body. Commit and draft PR creation are authorized; separate issue-publication authorization remains pending, so the source issue is still outstanding.
+- Authoritative [issue #124](https://github.com/ahuelsmann/MOBAflow/issues/124) is linked; the actual issue body and PR changes passed Spec Kit governance against `github/main`.
 - Run `scripts/Test-LineEndings.ps1 -Path <changed paths> -Fix`, then check again; use `-Staged` before a commit.
-- Scan changed files with `sonar analyze secrets`. Local Sonar against verified base `698c4c8b` or its successor has not executed; concrete analysis data-transfer authorization is pending.
+- Changed files passed deterministic secrets scanning. Local Sonar ran against `github/main` at `698c4c8b5e35a4071e4acd81635e5a2dde3d3b41`: zero secrets issues, 62 agentic failures because the organization lacks agentic analysis capability (403 Forbidden), exit 1. This is an attempted analysis, not a green result.
 - Any future PR stays draft until SonarCloud is green with zero OPEN/CONFIRMED issues. Manual/hardware checks remain open until actually performed.

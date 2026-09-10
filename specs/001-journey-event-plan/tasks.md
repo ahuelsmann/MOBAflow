@@ -8,7 +8,7 @@
 
 - [x] T001 Record approved requirements and compatibility in `specs/001-journey-event-plan/spec.md` and `plan.md` using repository templates.
 - [x] T002 Define runnable validation and manual acceptance in `specs/001-journey-event-plan/quickstart.md`.
-- [ ] T003 Publish the prepared authoritative issue after issue-specific authorization; replace pending metadata in `specs/001-journey-event-plan/spec.md` and `plan.md` and pass governance. Commit/PR authorization is already present but did not satisfy automatic approval review for issue creation.
+- [x] T003 Create authoritative issue #124, reference it in `specs/001-journey-event-plan/spec.md` and `plan.md`, and pass actual issue-body and PR governance validation.
 
 ## Phase 2: Foundational work
 
@@ -60,16 +60,16 @@
 - [x] T021 Compile affected consumers through the portable `Test/Test.csproj` build graph, including its `MOBApi/MOBApi.csproj` reference, and build `MOBAflow/MOBAflow.csproj`: Windows FastDebug passed with zero warnings/errors. No Android source files changed.
 - [x] T022 Verify serialization/runtime compatibility and final diff, then align feature documentation and public XML comments in affected source files.
 - [x] T023 Run changed-file secrets scanning and `scripts/Test-LineEndings.ps1`: 62 changed files passed secrets/line-ending checks; staged checks and `git diff --check` passed. Rerun staged checks after final metadata staging.
-- [ ] T024 Execute local Sonar against the verified base after concrete data-transfer authorization and record exact outcomes in `specs/001-journey-event-plan/analysis.md`; automatic approval review prevented execution, so no analysis result exists yet.
+- [x] T024 Attempt local Sonar against verified `github/main` and record outcomes in `specs/001-journey-event-plan/analysis.md`: zero secrets issues; 62 agentic failures reporting unavailable organization capability (403 Forbidden), exit 1. The attempt is complete, not a green quality result.
 - [ ] T025 Before any later ready-for-review state, verify draft PR/SonarCloud requirements documented in `specs/001-journey-event-plan/plan.md`.
 - [x] T026 Converge requirements, tasks, actual file paths and evidence in `specs/001-journey-event-plan/analysis.md`; retain unavailable checks as open.
 
 ## Dependencies and execution order
 
-T001-T002 precede design and code; T003 remains a separate publication gate. T004-T005 provide shared contracts. US1-US3 share the manager and must coordinate edits. US4 editor work can proceed against settled model/runtime contracts while backend work proceeds in other files. US5 tests may proceed independently after the additive model exists. Validation follows implementation, and manual/remote gates cannot be inferred from local compile success.
+T001-T002 precede design and code; T003 provides authoritative issue traceability. T004-T005 provide shared contracts. US1-US3 share the manager and must coordinate edits. US4 editor work can proceed against settled model/runtime contracts while backend work proceeds in other files. US5 tests may proceed independently after the additive model exists. Validation follows implementation, and manual/remote gates cannot be inferred from local compile success.
 
 Parallel examples: T014 editor tests alongside T007 backend matching; T018 serialization tests alongside T016 XAML. Confirm fixture/source filenames against the final implementation before marking tasks complete.
 
 ## Evidence
 
-2026-09-10: Twenty-two of 26 tasks are checked. Runtime baseline full suite: 1,710 passed, zero failed, four skipped, 1,714 total, 45 seconds; `Test/TestResults/event-plan-portable.trx`. Three skips require running MOBApi; one requires bundled photos. After UI refinement, 18 focused tests passed and the final Windows FastDebug build passed with zero warnings/errors in 1 minute 29 seconds. Secrets/line-ending checks across 62 files, staged checks and `git diff --check` passed. Additional Windows-specific runtime tests were not run. Positive user feedback on appearance does not close full manual acceptance. T003, T024 and T025 remain open for issue-specific authorization, concrete Sonar transfer authorization and remote PR gates respectively.
+2026-09-10: Twenty-four of 26 tasks are checked. Runtime baseline full suite: 1,710 passed, zero failed, four skipped, 1,714 total, 45 seconds; `Test/TestResults/event-plan-portable.trx`. Three skips require running MOBApi; one requires bundled photos. After UI refinement, 18 focused tests passed and the final Windows FastDebug build passed with zero warnings/errors in 1 minute 29 seconds. Secrets/line-ending checks across 62 files, staged checks and `git diff --check` passed. Additional Windows-specific runtime tests were not run. Issue #124 and issue/PR governance are complete. Local Sonar was attempted with zero secrets issues but 62 agentic capability failures (403 Forbidden), so no green analysis is claimed. T017 and T025 remain open for full manual acceptance and the remote Sonar/PR gate.

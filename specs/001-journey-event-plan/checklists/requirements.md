@@ -11,7 +11,7 @@
 - [x] Legacy per-step counting is distinguished from new start-relative thresholds.
 - [x] Drag and drop has concrete useful operations and keyboard alternatives.
 - [x] Requirements map to stories, design and validation tasks.
-- [ ] Authoritative source issue exists and metadata/governance passes.
+- [x] Authoritative source issue #124 exists and actual issue-body/PR metadata governance passes.
 - [x] Local domain/runtime/editor implementation and regression test code are present.
 - [x] Runtime baseline full suite, 18 focused tests after UI refinement and final Windows FastDebug compile passed; exact counts are recorded in the analysis.
 - [ ] Remaining platform/manual UI acceptance and publication gates have produced completion evidence.

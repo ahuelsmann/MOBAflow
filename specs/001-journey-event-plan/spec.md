@@ -2,11 +2,11 @@
 
 **Feature Directory**: `001-journey-event-plan`
 
-**Source Issue**: Pending issue-specific publication authorization
+**Source Issue**: #124
 
 **Created**: 2026-09-10
 
-**Status**: Implemented locally; portable tests and Windows compile passed; issue and remaining acceptance gates open
+**Status**: Implemented locally; issue linked and portable tests/Windows compile passed; manual acceptance and remote quality gate open
 
 **Spec Kit**: Required
 

@@ -8,10 +8,10 @@
 
 | ID | Severity | Location | Finding and action |
 | --- | --- | --- | --- |
-| G1 | Critical governance gate | `spec.md`, `plan.md` | Commit and draft PR creation are authorized; automatic approval review requires separate issue-publication authorization, which is pending. Keep the source issue outstanding until creation succeeds. |
+| Q1 | Open quality gate | `plan.md`, `tasks.md` | Local Sonar executed but agentic analysis returned 62 failures because the organization lacks that capability (403 Forbidden). This is not a green analysis; keep the PR draft until the remote SonarCloud gate passes. |
 | V1 | Open delivery gate | `tasks.md` | Platform UI acceptance and Sonar/publication outcomes remain open. Additional Windows-specific runtime tests were not run; portable/shared logic and WinUI compile evidence are separate. |
 
-No contradictory counting rules, implicit stop changes, train-identification requirements or silent legacy migration were found across the design artifacts. Independent authorized local work can proceed while the external traceability gate remains visible.
+No contradictory counting rules, implicit stop changes, train-identification requirements or silent legacy migration were found across the design artifacts. Authoritative issue #124 resolves source traceability; manual acceptance and remote quality gates remain open.
 
 ## Coverage
 
@@ -36,9 +36,9 @@ No contradictory counting rules, implicit stop changes, train-identification req
 - No `.specify/extensions.yml` exists; no extension hooks apply.
 - `check-prerequisites.ps1 -Json -RequireSpec -RequireTasks -IncludeTasks` passed using explicit `SPECIFY_FEATURE_DIRECTORY`.
 - `Test-LineEndings.ps1` normalized the feature artifacts and passed its subsequent check.
-- `Test-SpecKitGovernance.ps1 -Mode PullRequest -ChangedFiles ...` failed only the two absent authoritative issue references in spec/plan; this is an open gate.
-- Final portable/Windows compile evidence is recorded below; missing UI/theme, hardware, local Sonar and remote PR evidence is not inferred from it.
-- Prepared issue body passed `Test-SpecKitGovernance.ps1 -Mode Issue` locally; this does not create the issue or satisfy the spec/plan source-reference gate.
+- `Test-SpecKitGovernance.ps1 -Mode PullRequest -BaseRef github/main` passed with issue #124 referenced in the current specification and plan.
+- Portable/Windows compile and local Sonar attempt evidence is recorded below; missing UI/theme, hardware and remote PR evidence is not inferred from it.
+- The actual issue #124 body, read with `gh issue view 124 --repo ahuelsmann/MOBAflow --json title,body`, passed `Test-SpecKitGovernance.ps1 -Mode Issue`.
 - Feature artifacts and adapter source/tests passed deterministic secrets scanning. Adapter/source line endings and `git diff --check` passed; adapter fixtures are included in the final portable suite.
 
 ## Implementation convergence
@@ -60,4 +60,6 @@ The GotoJourney regression passed in the runtime baseline: targeting an already 
 
 Local static checks passed: secrets scans and line endings across 62 changed files, staged checks and `git diff --check`. The feature documents are normalized and scanned again after this metadata update; staged checks must be rerun after final staging.
 
-The user positively assessed the improved appearance; full Light/Dark and drag/keyboard acceptance remains open. Issue-specific publication authorization is pending. Local Sonar analysis has not executed because automatic approval review requires concrete data-transfer authorization, also pending. Source-reference governance and remote Sonar/PR gates remain open until their own evidence is obtained.
+The user positively assessed the improved appearance; full Light/Dark and drag/keyboard acceptance remains open. Authoritative [issue #124](https://github.com/ahuelsmann/MOBAflow/issues/124) exists and source-reference governance passes.
+
+Local Sonar ran with `sonar analyze --base github/main --force --format json -p ahuelsmann_MOBAflow2` against `698c4c8b5e35a4071e4acd81635e5a2dde3d3b41`, using the authenticated `sonarcloud.io` organization `ahuelsmann-1`. The command exited 1: deterministic secrets scanning reported zero issues, while all 62 agentic failures reported `Vortex agentic analysis is not available for this organization (403 Forbidden).` The attempt is complete; no successful agentic analysis or green quality gate is claimed. The PR remains draft until remote SonarCloud passes with zero OPEN/CONFIRMED issues.
