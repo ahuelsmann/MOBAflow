@@ -85,7 +85,10 @@
                     Text="{Binding Description, Mode=TwoWay}"
                     TextWrapping="Wrap" />
 
-                <StackPanel Spacing="8">
+                <TextBlock Text="Configure this journey's events in Event Manager."
+                           TextWrapping="Wrap"
+                           Visibility="{Binding HasEventPlan, Converter={StaticResource BoolToVisibilityConverter}}" />
+                <StackPanel Spacing="8" Visibility="{Binding UsesFeedbackSequence, Converter={StaticResource BoolToVisibilityConverter}}">
                     <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Feedback Sequence" />
                     <Button Command="{Binding AddFeedbackStepCommand}" Content="Add feedback step" />
                     <ListView x:Name="FeedbackStepList" ItemsSource="{Binding FeedbackSteps}">

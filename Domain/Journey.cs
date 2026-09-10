@@ -3,6 +3,8 @@ namespace Moba.Domain;
 
 using Enum;
 
+using System.Text.Json.Serialization;
+
 /// <summary>
 /// Journey - Pure Data Object (POCO).
 /// </summary>
@@ -51,6 +53,13 @@ public class Journey
     /// Each occurrence is intentionally explicit so a route may change to another track at any time.
     /// </summary>
     public List<JourneyFeedbackStep> FeedbackSequence { get; set; }
+
+    /// <summary>
+    /// Independent feedback events measured from an explicit journey start.
+    /// Null preserves the legacy feedback sequence and its per-step repeat counts.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public JourneyEventPlan? EventPlan { get; set; }
 
     /// <summary>
     /// Gets or sets the behavior when the last station of the journey is reached.

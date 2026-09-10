@@ -59,6 +59,12 @@ public interface ISignalTurnoutRuntime
 
     Task ResetJourneyAsync(Guid journeyId, CancellationToken cancellationToken = default);
 
+    Task StartJourneyAsync(Guid journeyId, CancellationToken cancellationToken = default);
+
+    Task StopJourneyAsync(Guid journeyId, CancellationToken cancellationToken = default);
+
+    Task ResetInPortCountersAsync(CancellationToken cancellationToken = default);
+
     Task SetSignalAspectAsync(SbSignal signal, CancellationToken cancellationToken = default);
 
     Task SetSignalAspectAsync(Guid signalId, SignalAspect signalAspect, CancellationToken cancellationToken = default);

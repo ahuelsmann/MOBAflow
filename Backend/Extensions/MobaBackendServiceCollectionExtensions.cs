@@ -38,6 +38,7 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton<IFileSystem>(SystemFileSystem.Instance);
         services.TryAddSingleton<IMultiplexerProvider, DefaultMultiplexerProvider>();
         services.TryAddSingleton(TimeProvider.System);
+        services.TryAddSingleton<InPortCounterService>();
         services.TryAddSingleton<IVehicleUsageService, VehicleUsageService>();
         services.TryAddSingleton<IVehicleMaintenanceService, VehicleMaintenanceService>();
         services.TryAddSingleton<IDecoderCvService, DecoderCvService>();
@@ -127,11 +128,13 @@ public static class MobaBackendServiceCollectionExtensions
                 sp.GetRequiredService<IJourneyRuntimeStateStore>(),
                 sp.GetService<ILogger<JourneyManager>>(),
                 timeProvider: sp.GetRequiredService<TimeProvider>(),
-                eventBus: sp.GetService<IEventBus>()),
+                eventBus: sp.GetService<IEventBus>(),
+                inPortCounterService: sp.GetRequiredService<InPortCounterService>()),
             z21Discovery: sp.GetRequiredService<IZ21DiscoveryService>(),
             vehicleUsageCheckpointStore: sp.GetRequiredService<IVehicleUsageCheckpointStore>(),
             timeProvider: sp.GetRequiredService<TimeProvider>(),
-            interlockingRuntime: sp.GetRequiredService<IInterlockingRuntime>()));
+            interlockingRuntime: sp.GetRequiredService<IInterlockingRuntime>(),
+            inPortCounterService: sp.GetRequiredService<InPortCounterService>()));
         services.TryAddSingleton<IRuntimeSnapshotProvider>(sp => sp.GetRequiredService<IMobaRuntime>());
         services.TryAddSingleton<IRecordingReplaySafetyGate, RecordingReplaySafetyGate>();
         services.TryAddSingleton<IRecordingReplayService, RecordingReplayService>();

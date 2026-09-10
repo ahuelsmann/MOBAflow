@@ -85,6 +85,9 @@ public partial class MainWindowViewModel
         }
 
         ResetJourneyCommand.NotifyCanExecuteChanged();
+        StartJourneyCommand.NotifyCanExecuteChanged();
+        StopJourneyCommand.NotifyCanExecuteChanged();
+        ResetJourneyCounterCommand.NotifyCanExecuteChanged();
     }
 
     /// <summary>
@@ -112,7 +115,9 @@ public partial class MainWindowViewModel
         // Ignore UI-only or runtime-backed properties that must not persist the whole solution.
         if (e.PropertyName is { } name &&
             (name is "IsSelected" or "IsExpanded" or "IsHighlighted" or "IsCurrentStation"
-             or "CurrentStation" or "CurrentStepOccurrence" or "CurrentPos"))
+             or "CurrentStation" or "CurrentStepOccurrence" or "CurrentPos" or "CurrentStepRepeatCount"
+             or "CurrentFeedbackIndex" or "NextFeedbackInPort" or "IsRunning" or "IsEventPlanRunning"
+             or "HasEventPlan" or "UsesFeedbackSequence"))
         {
             return;
         }

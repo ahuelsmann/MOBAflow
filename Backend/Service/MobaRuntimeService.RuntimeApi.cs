@@ -20,6 +20,30 @@ public sealed partial class MobaRuntimeService
     /// <inheritdoc />
     public async Task ActivateProjectAsync(Project editableProject, CancellationToken cancellationToken = default)
     {
+        await _journeyCommandLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            ArgumentNullException.ThrowIfNull(editableProject);
+            if (HasRunningEventPlans())
+            {
+                _pendingProject = CloneForRuntime(editableProject);
+                return;
+            }
+
+            _pendingProject = null;
+            await ActivateProjectCoreAsync(editableProject, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _journeyCommandLock.Release();
+        }
+    }
+
+    private bool HasRunningEventPlans() => _activeProjectContext?.ActiveProject.Journeys.Any(journey =>
+        journey.EventPlan != null && _activeProjectContext.JourneyManager.GetState(journey.Id)?.IsActive == true) == true;
+
+    private async Task ActivateProjectCoreAsync(Project editableProject, CancellationToken cancellationToken)
+    {
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentNullException.ThrowIfNull(editableProject);
 
@@ -30,7 +54,7 @@ public sealed partial class MobaRuntimeService
         // against the same Ids the editor exposes.
         CheckpointVehicleUsage(publishSnapshot: true);
         var activeProject = CloneForRuntime(editableProject);
-        var journeyManager = _journeyManagerFactory.Create(activeProject, _executionContextFactory.Create());
+        var journeyManager = _journeyManagerFactory.Create(activeProject, _executionContextFactory.Create(), _inPortCounters);
         journeyManager.StationChanged += OnJourneyStationChanged;
         journeyManager.FeedbackReceived += OnJourneyRuntimeChanged;
         journeyManager.JourneyCompleted += OnJourneyCompleted;
@@ -307,25 +331,84 @@ public sealed partial class MobaRuntimeService
     }
 
     /// <inheritdoc />
-    public Task ResetJourneyAsync(Guid journeyId, CancellationToken cancellationToken = default)
+    public async Task ResetJourneyAsync(Guid journeyId, CancellationToken cancellationToken = default)
     {
-        cancellationToken.ThrowIfCancellationRequested();
-
-        if (_activeProjectContext == null)
+        await _journeyCommandLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
         {
-            return Task.CompletedTask;
+            var journey = _activeProjectContext?.ActiveProject.Journeys.FirstOrDefault(j => j.Id == journeyId);
+            if (journey == null) return;
+            if (journey.EventPlan != null && _activeProjectContext!.JourneyManager.GetState(journey.Id)?.IsActive == true)
+                throw new InvalidOperationException("Stop the journey before resetting it.");
+            _activeProjectContext!.JourneyManager.Reset(journey);
+            _statusText = $"Journey '{journey.Name}' reset";
+            PublishSnapshot();
         }
-
-        var journey = _activeProjectContext.ActiveProject.Journeys.FirstOrDefault(j => j.Id == journeyId);
-        if (journey == null)
+        finally
         {
-            return Task.CompletedTask;
+            _journeyCommandLock.Release();
         }
+    }
 
-        _activeProjectContext.JourneyManager.Reset(journey);
-        _statusText = $"Journey '{journey.Name}' reset";
-        PublishSnapshot();
-        return Task.CompletedTask;
+    /// <inheritdoc />
+    public async Task StartJourneyAsync(Guid journeyId, CancellationToken cancellationToken = default)
+    {
+        await _journeyCommandLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await ApplyPendingProjectAsync(cancellationToken).ConfigureAwait(false);
+            var context = _activeProjectContext ?? throw new InvalidOperationException("Select a project first.");
+            var journey = context.ActiveProject.Journeys.FirstOrDefault(j => j.Id == journeyId)
+                ?? throw new InvalidOperationException("The journey is not in the active runtime project.");
+            if (_pendingProject != null && HasRunningEventPlans())
+            {
+                var pendingJourney = _pendingProject.Journeys.FirstOrDefault(j => j.Id == journeyId);
+                if (_pendingProject.Id != context.ActiveProject.Id
+                    || JsonSerializer.Serialize(pendingJourney, JsonOptions.Compact) != JsonSerializer.Serialize(journey, JsonOptions.Compact)
+                    || JsonSerializer.Serialize(_pendingProject.Workflows, JsonOptions.Compact) != JsonSerializer.Serialize(context.ActiveProject.Workflows, JsonOptions.Compact))
+                    throw new InvalidOperationException("Stop the running journeys before starting with changed journey or workflow definitions.");
+            }
+            await context.JourneyManager.StartJourneyAsync(journey, cancellationToken).ConfigureAwait(false);
+            PublishSnapshot();
+        }
+        finally { _journeyCommandLock.Release(); }
+    }
+
+    /// <inheritdoc />
+    public async Task StopJourneyAsync(Guid journeyId, CancellationToken cancellationToken = default)
+    {
+        await _journeyCommandLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var context = _activeProjectContext ?? throw new InvalidOperationException("Select a project first.");
+            var journey = context.ActiveProject.Journeys.FirstOrDefault(j => j.Id == journeyId)
+                ?? throw new InvalidOperationException("The journey is not in the active runtime project.");
+            await context.JourneyManager.StopJourneyAsync(journey, cancellationToken).ConfigureAwait(false);
+            // Apply editor changes on the next activation/start, keeping this stopped state visible.
+            PublishSnapshot();
+        }
+        finally { _journeyCommandLock.Release(); }
+    }
+
+    /// <inheritdoc />
+    public async Task ResetInPortCountersAsync(CancellationToken cancellationToken = default)
+    {
+        await _journeyCommandLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (!_inPortCounters.TryResetAll())
+                throw new InvalidOperationException("Stop all journeys before resetting the InPort counters.");
+            PublishSnapshot();
+        }
+        finally { _journeyCommandLock.Release(); }
+    }
+
+    private async Task ApplyPendingProjectAsync(CancellationToken cancellationToken)
+    {
+        if (_pendingProject == null || HasRunningEventPlans()) return;
+        var pendingProject = _pendingProject;
+        _pendingProject = null;
+        await ActivateProjectCoreAsync(pendingProject, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />

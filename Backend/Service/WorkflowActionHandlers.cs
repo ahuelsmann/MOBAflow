@@ -288,11 +288,14 @@ public sealed class ChangeJourneyStopWorkflowActionHandler(IJourneyStopTransitio
         var journey = context.CurrentJourney ?? throw new InvalidOperationException("Change journey stop action requires a journey context");
         var state = context.CurrentJourneySessionState ?? throw new InvalidOperationException("Change journey stop action requires a journey state");
 
-        var result = _transitionService.Apply(journey, state, new JourneyStopTransition
+        var transition = new JourneyStopTransition
         {
             Mode = payload.MoveToNextStop ? JourneyStopTransitionMode.Next : JourneyStopTransitionMode.SpecificStation,
             StationId = payload.TargetStationId
-        });
+        };
+        var result = context.ApplyJourneyStopTransition is not null
+            ? context.ApplyJourneyStopTransition(transition)
+            : _transitionService.Apply(journey, state, transition);
         context.CurrentStation = result.CurrentStation;
         context.CurrentStationIndex = result.CurrentStation == null ? null : journey.Stations.IndexOf(result.CurrentStation) + 1;
         return Task.CompletedTask;

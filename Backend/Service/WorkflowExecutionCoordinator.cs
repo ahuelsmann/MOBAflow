@@ -118,7 +118,10 @@ public sealed class WorkflowExecutionCoordinator : IWorkflowExecutionCoordinator
                 await Task.Delay(execution.Delay, _timeProvider, entry.Cancellation.Token).ConfigureAwait(false);
             }
 
-            return await _workflowService.ExecuteAsync(execution.Request, entry.Cancellation.Token).ConfigureAwait(false);
+            var request = execution.ContextFactory is null
+                ? execution.Request
+                : execution.Request with { Context = execution.ContextFactory() };
+            return await _workflowService.ExecuteAsync(request, entry.Cancellation.Token).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (entry.Cancellation.IsCancellationRequested)
         {

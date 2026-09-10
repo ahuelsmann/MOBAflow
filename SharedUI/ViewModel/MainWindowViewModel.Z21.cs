@@ -88,15 +88,14 @@ public partial class MainWindowViewModel
         await _runtimeCommandGateway.SimulateFeedbackAsync(inPort).ConfigureAwait(false);
     }
 
-    private bool CanResetJourney() => SelectedJourney != null;
+    private bool CanResetJourney() => SelectedJourney != null && !SelectedJourney.IsEventPlanRunning;
 
     [RelayCommand(CanExecute = nameof(CanResetJourney))]
     private async Task ResetJourney()
     {
         if (SelectedJourney == null) return;
 
-        SelectedJourney.ResetCommand.Execute(null);
-        await _runtimeCommandGateway.ResetJourneyAsync(SelectedJourney.Model.Id).ConfigureAwait(false);
+        await ResetJourneyCounter();
     }
 
     [RelayCommand(CanExecute = nameof(CanToggleTrackPower))]
@@ -145,6 +144,7 @@ public partial class MainWindowViewModel
         SuppressOperatingStateRecompute = true;
         try
         {
+            _latestRuntimeSnapshot = snapshot;
             var status = RuntimeSnapshotProjector.ProjectStatus(snapshot);
             IsConnected = status.IsConnected;
             IsTrackPowerOn = status.IsTrackPowerOn;
@@ -168,6 +168,8 @@ public partial class MainWindowViewModel
             IsOperatorAckRequired = status.IsOperatorAckRequired;
 
             ApplyJourneyRuntimeSnapshots(snapshot.JourneyStates);
+            ApplyInPortCounterSnapshot(snapshot);
+            OnPropertyChanged(nameof(IsAnyEventPlanRunning));
 
             if (SignalBoxRuntimeSync.ApplyToPlan(SelectedProject?.Model.SignalBoxPlan, snapshot.SignalBoxElements))
             {
@@ -208,6 +210,10 @@ public partial class MainWindowViewModel
         SetTrackPowerCommand.NotifyCanExecuteChanged();
         ResetJourneyCommand.NotifyCanExecuteChanged();
         ResetJourneyCounterCommand.NotifyCanExecuteChanged();
+        StartJourneyCommand.NotifyCanExecuteChanged();
+        StopJourneyCommand.NotifyCanExecuteChanged();
+        ResetCountersCommand.NotifyCanExecuteChanged();
+        DeleteJourneyCommand.NotifyCanExecuteChanged();
         AcknowledgeOperatingStateCommand.NotifyCanExecuteChanged();
     }
     #endregion

@@ -8,32 +8,37 @@ using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using SharedUI.Interface;
 using SharedUI.ViewModel;
-using Moba.WinUI.Controls;
 using Windows.ApplicationModel.DataTransfer;
-using Windows.Foundation;
 using Windows.System;
 using Windows.UI.Core;
 
 internal sealed partial class EventManagerPage
 {
+    private const string WorkflowFormat = "Workflow";
+    private const string EventFormat = "JourneyEvent";
     private readonly AppSettings _settings;
     private readonly ISettingsService? _settingsService;
     private readonly ILogger<EventManagerPage>? _logger;
-    private double _toolboxWidth;
-    private double _valuesWidth;
-    private double _propertiesWidth;
+    private bool _isLoaded;
+    private bool _isWide;
+    private Border? _rowDropIndicator;
+    private double _workflowLibraryStarValue = 1;
 
-    public EventManagerPage(EventManagerViewModel viewModel, AppSettings settings, ISettingsService? settingsService = null, ILogger<EventManagerPage>? logger = null)
+    public EventManagerPage(EventManagerViewModel viewModel, AppSettings settings,
+        ISettingsService? settingsService = null, ILogger<EventManagerPage>? logger = null)
     {
         ViewModel = viewModel;
         _settings = settings;
         _settingsService = settingsService;
         _logger = logger;
         InitializeComponent();
+        DataContext = viewModel;
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
+        SizeChanged += OnPageSizeChanged;
     }
 
     public EventManagerViewModel ViewModel { get; }
@@ -41,157 +46,211 @@ internal sealed partial class EventManagerPage
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         var layout = _settings.Layout.EventManagerPage;
-        _toolboxWidth = layout.ToolboxColumnWidth;
-        _valuesWidth = layout.ValuesColumnWidth;
-        _propertiesWidth = layout.PropertiesColumnWidth;
-        ToolboxPanel.IsExpanded = layout.IsToolboxExpanded;
-        ValuesPanel.IsExpanded = layout.IsValuesExpanded;
-        PropertiesPanel.IsExpanded = layout.IsPropertiesExpanded;
-        ApplyPanelWidths();
-        ToolboxPanel.RegisterPropertyChangedCallback(CollapsibleColumnBase.IsExpandedProperty, OnPanelExpansionChanged);
-        ValuesPanel.RegisterPropertyChangedCallback(CollapsibleColumnBase.IsExpandedProperty, OnPanelExpansionChanged);
-        PropertiesPanel.RegisterPropertyChangedCallback(CollapsibleColumnBase.IsExpandedProperty, OnPanelExpansionChanged);
+        EventPlanColumn.Width = new GridLength(ValidStarValue(layout.EventPlanColumnStarValue, 2), GridUnitType.Star);
+        _workflowLibraryStarValue = ValidStarValue(layout.WorkflowLibraryColumnStarValue, 1);
+        WorkflowLibraryToggle.IsChecked = layout.IsValuesExpanded;
+        _isLoaded = true;
+        ApplyResponsiveLayout();
     }
 
-    private void OnPanelExpansionChanged(DependencyObject sender, DependencyProperty property) => ApplyPanelWidths();
+    private static double ValidStarValue(double value, double fallback) => double.IsFinite(value) && value > 0 ? value : fallback;
 
-    private void ApplyPanelWidths()
+    private void WorkflowLibraryToggle_Changed(object sender, RoutedEventArgs e)
     {
-        ToolboxColumn.Width = ToolboxPanel.IsExpanded ? new GridLength(_toolboxWidth) : GridLength.Auto;
-        ValuesColumn.Width = ValuesPanel.IsExpanded ? new GridLength(_valuesWidth) : GridLength.Auto;
-        PropertiesColumn.Width = PropertiesPanel.IsExpanded ? new GridLength(_propertiesWidth) : GridLength.Auto;
+        if (!_isLoaded) return;
+        if (WorkflowLibraryColumn.Width.IsStar) _workflowLibraryStarValue = WorkflowLibraryColumn.Width.Value;
+        ApplyResponsiveLayout();
     }
 
-    private void OnUnloaded(object sender, RoutedEventArgs e) => SaveLayoutAsync().Observe(ex => _logger?.LogWarning(ex, "Persist Event Manager layout failed"));
+    private void OnPageSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (_isLoaded) ApplyResponsiveLayout();
+    }
+
+    private void ApplyResponsiveLayout()
+    {
+        var isWide = ActualWidth >= 900;
+        var showLibrary = WorkflowLibraryToggle.IsChecked == true;
+        if (_isWide && WorkflowLibraryColumn.Width.IsStar)
+            _workflowLibraryStarValue = WorkflowLibraryColumn.Width.Value;
+        _isWide = isWide;
+
+        var narrowHeader = ActualWidth < 720;
+        Grid.SetRow(JourneyCommands, narrowHeader ? 1 : 0);
+        Grid.SetColumn(JourneyCommands, narrowHeader ? 0 : 1);
+        Grid.SetColumnSpan(JourneyCommands, narrowHeader ? 2 : 1);
+        JourneyCommands.HorizontalAlignment = narrowHeader ? HorizontalAlignment.Left : HorizontalAlignment.Right;
+        JourneyCommands.Margin = narrowHeader ? new Thickness(0, 12, 0, 0) : new Thickness(0);
+
+        Grid.SetColumnSpan(PlanArea, isWide && showLibrary ? 1 : 3);
+        Grid.SetRow(WorkflowLibraryPanel, isWide ? 0 : 1);
+        Grid.SetColumn(WorkflowLibraryPanel, isWide ? 2 : 0);
+        Grid.SetColumnSpan(WorkflowLibraryPanel, isWide ? 1 : 3);
+        WorkflowLibraryPanel.Visibility = showLibrary ? Visibility.Visible : Visibility.Collapsed;
+        // Keep room for the plan in short windows; the compact library scrolls as a whole.
+        WorkflowLibraryPanel.MaxHeight = isWide ? double.PositiveInfinity : Math.Min(240, EditorColumns.ActualHeight * 0.45);
+        WorkflowLibraryScroller.VerticalScrollBarVisibility = isWide ? ScrollBarVisibility.Disabled : ScrollBarVisibility.Auto;
+        LibrarySplitter.Visibility = isWide && showLibrary ? Visibility.Visible : Visibility.Collapsed;
+        WorkflowLibraryColumn.MinWidth = isWide && showLibrary ? 240 : 0;
+        WorkflowLibraryColumn.Width = isWide && showLibrary
+            ? new GridLength(_workflowLibraryStarValue, GridUnitType.Star) : new GridLength(0);
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        _isLoaded = false;
+        ClearDropFeedback();
+        SaveLayoutAsync().Observe(ex => _logger?.LogWarning(ex, "Persist Event Manager layout failed"));
+    }
 
     private async Task SaveLayoutAsync()
     {
         var layout = _settings.Layout.EventManagerPage;
-        layout.IsToolboxExpanded = ToolboxPanel.IsExpanded;
-        layout.IsValuesExpanded = ValuesPanel.IsExpanded;
-        layout.IsPropertiesExpanded = PropertiesPanel.IsExpanded;
-        if (ToolboxColumn.Width.IsAbsolute) layout.ToolboxColumnWidth = ToolboxColumn.Width.Value;
-        if (ValuesColumn.Width.IsAbsolute) layout.ValuesColumnWidth = ValuesColumn.Width.Value;
-        if (PropertiesColumn.Width.IsAbsolute) layout.PropertiesColumnWidth = PropertiesColumn.Width.Value;
+        layout.IsValuesExpanded = WorkflowLibraryToggle.IsChecked == true;
+        if (EventPlanColumn.Width.IsStar) layout.EventPlanColumnStarValue = EventPlanColumn.Width.Value;
+        if (WorkflowLibraryColumn.Width.IsStar) _workflowLibraryStarValue = WorkflowLibraryColumn.Width.Value;
+        layout.WorkflowLibraryColumnStarValue = _workflowLibraryStarValue;
         if (_settingsService != null) await _settingsService.SaveSettingsAsync(_settings);
-    }
-
-    private void ToolboxList_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
-    {
-        if (e.Items.FirstOrDefault() is not EventElementDescriptor descriptor) return;
-        e.Data.Properties["EventElement"] = descriptor;
-        e.Data.RequestedOperation = DataPackageOperation.Copy;
-        e.Data.SetText(descriptor.Name);
-    }
-
-    private void ToolboxList_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
-    {
-        if (ToolboxList.SelectedItem is EventElementDescriptor descriptor) ViewModel.AddElementCommand.Execute(descriptor);
     }
 
     private void WorkflowValues_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
     {
-        if (e.Items.FirstOrDefault() is not WorkflowViewModel workflow) return;
-        e.Data.Properties["Workflow"] = workflow;
+        if (e.Items.FirstOrDefault() is not WorkflowViewModel workflow || !ViewModel.CanEdit)
+        {
+            e.Cancel = true;
+            return;
+        }
+        e.Data.Properties[WorkflowFormat] = workflow;
         e.Data.RequestedOperation = DataPackageOperation.Link;
         e.Data.SetText(workflow.Name);
     }
 
     private void WorkflowValues_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
     {
-        if (WorkflowValuesList.SelectedItem is WorkflowViewModel workflow && ViewModel.SelectedStep != null)
-            ViewModel.SelectedStep.AssignWorkflowCommand.Execute(workflow);
+        if (WorkflowValuesList.SelectedItem is WorkflowViewModel workflow)
+            ViewModel.SelectedEvent?.AssignWorkflowCommand.Execute(workflow);
     }
 
-    private void StationValues_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
+    private void EventHandle_DragStarting(UIElement sender, DragStartingEventArgs e)
     {
-        if (e.Items.FirstOrDefault() is not StationAssignmentOption option) return;
-        e.Data.Properties["StationAssignment"] = option;
-        e.Data.RequestedOperation = DataPackageOperation.Link;
-        e.Data.SetText(option.Name);
-    }
-
-    private void StationValues_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
-    {
-        if (StationValuesList.SelectedItem is StationAssignmentOption option && ViewModel.SelectedStep != null)
-            ViewModel.SelectedStep.AssignStationCommand.Execute(option);
-    }
-
-    private void StepCard_DragStarting(UIElement sender, DragStartingEventArgs e)
-    {
-        if ((sender as FrameworkElement)?.Tag is not JourneyFeedbackStepViewModel step) return;
-        e.Data.Properties["JourneyFeedbackStep"] = step;
-        e.Data.RequestedOperation = DataPackageOperation.Move;
-        e.Data.SetText($"InPort {step.InPort}");
-    }
-
-    private void StepCard_Tapped(object sender, TappedRoutedEventArgs e)
-    {
-        if ((sender as FrameworkElement)?.Tag is JourneyFeedbackStepViewModel step) ViewModel.SelectedStep = step;
-    }
-
-    private void Sequence_DragOver(object sender, DragEventArgs e)
-    {
-        if (e.DataView.Properties.ContainsKey("EventElement")) e.AcceptedOperation = DataPackageOperation.Copy;
-        else if (e.DataView.Properties.ContainsKey("JourneyFeedbackStep")) e.AcceptedOperation = DataPackageOperation.Move;
-        else e.AcceptedOperation = DataPackageOperation.None;
-    }
-
-    private void Sequence_Drop(object sender, DragEventArgs e)
-    {
-        var targetIndex = GetDropIndex(e.GetPosition(StepsRepeater));
-        if (e.DataView.Properties.TryGetValue("EventElement", out var descriptorValue) && descriptorValue is EventElementDescriptor descriptor)
-            ViewModel.InsertElement(descriptor, targetIndex);
-        else if (e.DataView.Properties.TryGetValue("JourneyFeedbackStep", out var stepValue) && stepValue is JourneyFeedbackStepViewModel step)
-            ViewModel.MoveStep(step, targetIndex);
-    }
-
-    private int GetDropIndex(Point position)
-    {
-        for (var index = 0; index < ViewModel.Steps.Count; index++)
+        if ((sender as FrameworkElement)?.Tag is not JourneyEventViewModel item || !ViewModel.CanEdit)
         {
-            var element = StepsRepeater.TryGetElement(index);
-            if (element == null) continue;
-            var origin = element.TransformToVisual(StepsRepeater).TransformPoint(new Point());
-            if (position.Y < origin.Y + element.ActualSize.Y / 2) return index;
+            e.Cancel = true;
+            return;
         }
-        return ViewModel.Steps.Count;
+        ViewModel.SelectedEvent = item;
+        e.Data.Properties[EventFormat] = item;
+        e.Data.RequestedOperation = DataPackageOperation.Move | DataPackageOperation.Copy;
+        e.Data.SetText(item.AutomationName);
     }
 
-    private void OnPageKeyDown(object sender, KeyRoutedEventArgs e)
+    private void EventRow_DragOver(object sender, DragEventArgs e)
     {
-        if (e.Key != VirtualKey.Delete || ViewModel.SelectedStep == null) return;
-        var controlDown = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control).HasFlag(CoreVirtualKeyStates.Down);
-        if (controlDown) ViewModel.SelectedStep.RemoveWorkflowCommand.Execute(null);
-        else ViewModel.DeleteStepCommand.Execute(ViewModel.SelectedStep);
+        ShowDropFeedback(e, true);
+        ClearDropFeedback();
+        if (e.AcceptedOperation != DataPackageOperation.None && sender is FrameworkElement row
+            && row.FindName("RowDropIndicator") is Border indicator)
+        {
+            _rowDropIndicator = indicator;
+            indicator.Opacity = 1;
+        }
+    }
+
+    private void Plan_DragOver(object sender, DragEventArgs e)
+    {
+        ShowDropFeedback(e, false);
+        ClearDropFeedback();
+        if (e.AcceptedOperation != DataPackageOperation.None) AddDropIndicator.Opacity = 1;
+    }
+
+    private void EventRow_DragLeave(object sender, DragEventArgs e)
+    {
+        e.Handled = true;
+        ClearDropFeedback();
+    }
+
+    private void Plan_DragLeave(object sender, DragEventArgs e) => ClearDropFeedback();
+
+    private void ClearDropFeedback()
+    {
+        if (_rowDropIndicator != null) _rowDropIndicator.Opacity = 0;
+        _rowDropIndicator = null;
+        AddDropIndicator.Opacity = 0;
+    }
+
+    private void ShowDropFeedback(DragEventArgs e, bool onRow)
+    {
+        e.Handled = true;
+        e.AcceptedOperation = DataPackageOperation.None;
+        e.DragUIOverride.IsCaptionVisible = false;
+        if (!ViewModel.CanEdit) return;
+        if (GetWorkflow(e) != null)
+        {
+            e.AcceptedOperation = DataPackageOperation.Link;
+            e.DragUIOverride.Caption = onRow ? "Assign workflow to event" : "Add event with this workflow";
+        }
+        else if (GetEvent(e) != null)
+        {
+            e.AcceptedOperation = IsControlDown() ? DataPackageOperation.Copy : DataPackageOperation.Move;
+            e.DragUIOverride.Caption = IsControlDown() ? "Copy event here" : "Move event here";
+        }
+        e.DragUIOverride.IsCaptionVisible = e.AcceptedOperation != DataPackageOperation.None;
+    }
+
+    private WorkflowViewModel? GetWorkflow(DragEventArgs e) =>
+        e.DataView.Properties.TryGetValue(WorkflowFormat, out var value)
+        && value is WorkflowViewModel workflow && ViewModel.IsAvailableWorkflow(workflow) ? workflow : null;
+
+    private JourneyEventViewModel? GetEvent(DragEventArgs e) =>
+        e.DataView.Properties.TryGetValue(EventFormat, out var value)
+        && value is JourneyEventViewModel item && ViewModel.ContainsEvent(item) ? item : null;
+
+    private void EventRow_Drop(object sender, DragEventArgs e)
+    {
+        ClearDropFeedback();
+        e.Handled = true;
+        if (!ViewModel.CanEdit || sender is not FrameworkElement row || row.Tag is not JourneyEventViewModel target) return;
+        if (GetWorkflow(e) is { } workflow)
+        {
+            ViewModel.SelectedEvent = target;
+            target.AssignWorkflowCommand.Execute(workflow);
+        }
+        else if (GetEvent(e) is { } item)
+        {
+            var index = ViewModel.Events.IndexOf(target);
+            if (e.GetPosition(row).Y >= row.ActualHeight / 2) index++;
+            ViewModel.MoveOrCopyEvent(item, index, IsControlDown());
+        }
+    }
+
+    private void Plan_Drop(object sender, DragEventArgs e)
+    {
+        ClearDropFeedback();
+        e.Handled = true;
+        if (!ViewModel.CanEdit) return;
+        if (GetWorkflow(e) is { } workflow) ViewModel.InsertEvent(workflow, ViewModel.Events.Count);
+        else if (GetEvent(e) is { } item) ViewModel.MoveOrCopyEvent(item, ViewModel.Events.Count, IsControlDown());
+    }
+
+    private static bool IsControlDown() => InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control)
+        .HasFlag(CoreVirtualKeyStates.Down);
+
+    private void EventList_KeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (IsEditingInput(e.OriginalSource as DependencyObject)) return;
+        var alt = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Menu).HasFlag(CoreVirtualKeyStates.Down);
+        if (alt && e.Key == VirtualKey.Up) ViewModel.MoveSelectedEventUpCommand.Execute(null);
+        else if (alt && e.Key == VirtualKey.Down) ViewModel.MoveSelectedEventDownCommand.Execute(null);
+        else if (IsControlDown() && e.Key == VirtualKey.D) ViewModel.DuplicateSelectedEventCommand.Execute(null);
+        else if (e.Key == VirtualKey.Delete) ViewModel.DeleteSelectedEventCommand.Execute(null);
+        else return;
         e.Handled = true;
     }
 
-    private void WorkflowSteps_KeyDown(object sender, KeyRoutedEventArgs e)
+    private static bool IsEditingInput(DependencyObject? source)
     {
-        var workflow = ViewModel.WorkflowLibrary.SelectedWorkflow;
-        var step = ViewModel.WorkflowLibrary.SelectedStep;
-        if (workflow == null || step == null)
-        {
-            return;
-        }
-
-        var altDown = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Menu)
-            .HasFlag(CoreVirtualKeyStates.Down);
-        if (altDown && e.Key == VirtualKey.Up)
-        {
-            workflow.MoveStepUpCommand.Execute(step);
-            e.Handled = true;
-        }
-        else if (altDown && e.Key == VirtualKey.Down)
-        {
-            workflow.MoveStepDownCommand.Execute(step);
-            e.Handled = true;
-        }
-        else if (e.Key == VirtualKey.Delete)
-        {
-            workflow.DeleteStepCommand.Execute(step);
-            e.Handled = true;
-        }
+        for (var current = source; current != null; current = VisualTreeHelper.GetParent(current))
+            if (current is TextBox or NumberBox or ComboBox) return true;
+        return false;
     }
 }
