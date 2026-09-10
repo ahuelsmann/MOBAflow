@@ -2,6 +2,8 @@
 
 namespace Moba.Backend.Interface;
 
+using Service;
+
 /// <summary>Describes one captured workflow execution waiting behind a source-ordering boundary.</summary>
 public sealed record QueuedWorkflowExecution
 {
@@ -16,6 +18,9 @@ public sealed record QueuedWorkflowExecution
 
     /// <summary>Gets the delay applied before the workflow starts.</summary>
     public TimeSpan Delay { get; init; }
+
+    /// <summary>Refreshes runtime context immediately before execution, after preceding source work completes.</summary>
+    public Func<ActionExecutionContext>? ContextFactory { get; init; }
 }
 
 /// <summary>Orders workflow executions per source without blocking unrelated sources.</summary>

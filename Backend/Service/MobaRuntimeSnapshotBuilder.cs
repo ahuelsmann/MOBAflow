@@ -16,7 +16,9 @@ internal static class MobaRuntimeSnapshotBuilder
         ActiveProjectContext? activeProjectContext,
         Guid? activeTrainId,
         IReadOnlyDictionary<Guid, VehicleUsageRuntimeSnapshot> vehicleUsage,
-        VehicleUsageRuntimeDiagnosticsSnapshot vehicleUsageDiagnostics)
+        VehicleUsageRuntimeDiagnosticsSnapshot vehicleUsageDiagnostics,
+        IReadOnlyList<InPortCounterSnapshot>? inPortCounters = null,
+        bool canResetInPortCounters = true)
     {
         var journeyStates = new Dictionary<Guid, JourneyRuntimeSnapshot>();
         var signalBoxElements = new List<SignalBoxElementRuntimeSnapshot>();
@@ -41,10 +43,12 @@ internal static class MobaRuntimeSnapshotBuilder
                     CurrentStationId = state.CurrentStationId,
                     CurrentFeedbackIndex = state.CurrentFeedbackIndex,
                     CurrentStepOccurrence = state.CurrentStepOccurrence,
-                    CurrentStepRepeatCount = journey.FeedbackSequence.ElementAtOrDefault(state.CurrentFeedbackIndex)?.Index ?? 1,
-                    ExpectedInPort = journey.FeedbackSequence.ElementAtOrDefault(state.CurrentFeedbackIndex)?.InPort,
+                    CurrentStepRepeatCount = journey.EventPlan == null ? journey.FeedbackSequence.ElementAtOrDefault(state.CurrentFeedbackIndex)?.Index ?? 1 : 1,
+                    ExpectedInPort = journey.EventPlan == null ? journey.FeedbackSequence.ElementAtOrDefault(state.CurrentFeedbackIndex)?.InPort : null,
                     LastFeedbackTime = state.LastFeedbackTime,
-                    IsActive = state.IsActive
+                    IsActive = state.IsActive,
+                    IsEventPlan = journey.EventPlan != null,
+                    StartCounterValues = new Dictionary<uint, ulong>(state.CurrentEventBases)
                 };
             }
 
@@ -124,6 +128,8 @@ internal static class MobaRuntimeSnapshotBuilder
             LastFailSafeAt = telemetry.LastFailSafeAt,
             IsOperatorAckRequired = telemetry.IsOperatorAckRequired,
             JourneyStates = journeyStates,
+            InPortCounters = inPortCounters ?? [],
+            CanResetInPortCounters = canResetInPortCounters,
             LocomotiveStates = new Dictionary<int, LocomotiveRuntimeSnapshot>(telemetry.LocomotiveStates),
             LocomotiveFleet = locomotiveFleet,
             VehicleUsage = vehicleUsage,

@@ -30,6 +30,10 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
     private readonly IInterlockingRuntime? _interlockingRuntime;
     private readonly TimeProvider _timeProvider;
     private readonly VehicleUsageRuntimeTracker _vehicleUsageTracker;
+    private readonly InPortCounterService _inPortCounters;
+    private readonly bool _ownsInPortCounters;
+    private Domain.Project? _pendingProject;
+    private readonly SemaphoreSlim _journeyCommandLock = new(1, 1);
 
     private ActiveProjectContext? _activeProjectContext;
     private Timer? _z21AutoConnectTimer;
@@ -78,7 +82,8 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         AppSettings settings,
         ILogger<MobaRuntimeService> logger,
         IEventBus? eventBus = null,
-        IInterlockingRuntime? interlockingRuntime = null)
+        IInterlockingRuntime? interlockingRuntime = null,
+        InPortCounterService? inPortCounterService = null)
         : this(
             z21,
             workflowService,
@@ -86,7 +91,8 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
             settings,
             logger,
             eventBus,
-            interlockingRuntime: interlockingRuntime)
+            interlockingRuntime: interlockingRuntime,
+            inPortCounterService: inPortCounterService)
     {
     }
 
@@ -101,7 +107,8 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         IZ21DiscoveryService? z21Discovery = null,
         IVehicleUsageCheckpointStore? vehicleUsageCheckpointStore = null,
         TimeProvider? timeProvider = null,
-        IInterlockingRuntime? interlockingRuntime = null)
+        IInterlockingRuntime? interlockingRuntime = null,
+        InPortCounterService? inPortCounterService = null)
     {
         ArgumentNullException.ThrowIfNull(z21);
         ArgumentNullException.ThrowIfNull(workflowService);
@@ -111,7 +118,10 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
 
         _z21 = z21;
         _executionContextFactory = executionContextFactory;
-        _journeyManagerFactory = journeyManagerFactory ?? new JourneyManagerFactory(z21, workflowService);
+        _inPortCounters = inPortCounterService ?? new InPortCounterService(z21, settings, timeProvider);
+        _ownsInPortCounters = inPortCounterService == null;
+        _journeyManagerFactory = journeyManagerFactory ?? new JourneyManagerFactory(
+            z21, workflowService, inPortCounterService: _inPortCounters);
         _settings = settings;
         _logger = logger;
         _eventBus = eventBus;
@@ -124,6 +134,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
             logger);
 
         _z21.OnConnectedChanged += OnZ21ConnectedChanged;
+        _inPortCounters.SnapshotChanged += OnJourneyRuntimeChanged;
         _z21.OnConnectionLost += OnZ21ConnectionLost;
         _z21.OnSystemStateChanged += OnZ21SystemStateChanged;
         _z21.OnXBusStatusChanged += OnZ21XBusStatusChanged;
@@ -180,6 +191,8 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         _vehicleUsageCheckpointTimer?.Dispose();
         _vehicleUsageTracker.Checkpoint();
         ReplaceActiveProjectContext(null);
+        _inPortCounters.SnapshotChanged -= OnJourneyRuntimeChanged;
+        if (_ownsInPortCounters) _inPortCounters.Dispose();
         _startLock.Dispose();
     }
 
@@ -241,7 +254,9 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
             _activeProjectContext,
             usage.ActiveTrainId,
             usage.Usage,
-            usage.Diagnostics);
+            usage.Diagnostics,
+            _inPortCounters.GetSnapshot(),
+            !_inPortCounters.HasActiveJourneys);
     }
 
     private void UpdateVehicleUsageRuntimeState()

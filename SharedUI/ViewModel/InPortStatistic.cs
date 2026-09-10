@@ -16,7 +16,7 @@ public partial class InPortStatistic : ObservableObject
     private string _name = string.Empty;
 
     [ObservableProperty]
-    private int _count;
+    private ulong _count;
 
     [ObservableProperty]
     private int _targetLapCount = 10;
@@ -67,7 +67,7 @@ public partial class InPortStatistic : ObservableObject
     /// </summary>
     public string BackgroundColorName => HasReceivedFirstLap ? "#66BB6A" : "#EF5350";
 
-    partial void OnCountChanged(int value)
+    partial void OnCountChanged(ulong value)
     {
         if (value > 0 && !HasReceivedFirstLap)
         {

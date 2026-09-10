@@ -7,6 +7,24 @@ using Moba.Domain.Enum;
 internal class JourneyTests
 {
     [Test]
+    public void EventPlanRoundTripPreservesSparseCountsAndLegacyRemainsUnconverted()
+    {
+        var legacy = System.Text.Json.JsonSerializer.Deserialize<Journey>("{\"FeedbackSequence\":[{\"InPort\":1,\"Index\":3}]}")!;
+        Assert.That(legacy.EventPlan, Is.Null);
+        Assert.That(legacy.FeedbackSequence.Single().Index, Is.EqualTo(3));
+        var workflowId = Guid.NewGuid();
+        var journey = new Journey { EventPlan = new JourneyEventPlan { Events =
+            [new JourneyEvent { InPort = 2, Count = ulong.MaxValue, WorkflowId = workflowId }] } };
+        var copy = System.Text.Json.JsonSerializer.Deserialize<Journey>(System.Text.Json.JsonSerializer.Serialize(journey))!;
+        Assert.Multiple(() =>
+        {
+            Assert.That(copy.EventPlan!.Events.Single().Count, Is.EqualTo(ulong.MaxValue));
+            Assert.That(copy.EventPlan.Events.Single().WorkflowId, Is.EqualTo(workflowId));
+            Assert.That(copy.EventPlan.Events.Single().Id, Is.EqualTo(journey.EventPlan.Events.Single().Id));
+        });
+    }
+
+    [Test]
     public void Constructor_InitializesDefaults()
     {
         var journey = new Journey();

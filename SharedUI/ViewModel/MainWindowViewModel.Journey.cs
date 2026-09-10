@@ -2,10 +2,12 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Interface;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Domain;
 using Domain.Enum;
 using Helper;
+using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// MainWindowViewModel - Journey and Station Management
@@ -13,6 +15,50 @@ using Helper;
 /// </summary>
 public partial class MainWindowViewModel
 {
+    [ObservableProperty]
+    private string _journeyCommandStatus = string.Empty;
+
+    public bool IsAnyEventPlanRunning => _latestRuntimeSnapshot.JourneyStates.Values.Any(state => state.IsEventPlan && state.IsActive);
+
+    [RelayCommand(CanExecute = nameof(CanStartJourney))]
+    private async Task StartJourney()
+    {
+        var journey = SelectedJourney;
+        if (journey == null || SelectedProject == null) return;
+        try
+        {
+            await _mobaRuntime.ActivateProjectAsync(SelectedProject.Model);
+            await _runtimeCommandGateway.StartJourneyAsync(journey.Id);
+            JourneyCommandStatus = $"Journey '{journey.Name}' started.";
+        }
+        catch (Exception ex)
+        {
+            JourneyCommandStatus = ex.Message;
+            _logger.LogWarning(ex, "Starting journey failed");
+        }
+    }
+
+    private bool CanStartJourney() => SelectedJourney != null && !SelectedJourney.IsRunning;
+
+    [RelayCommand(CanExecute = nameof(CanStopJourney))]
+    private async Task StopJourney()
+    {
+        var journey = SelectedJourney;
+        if (journey == null) return;
+        try
+        {
+            await _runtimeCommandGateway.StopJourneyAsync(journey.Id);
+            JourneyCommandStatus = $"Journey '{journey.Name}' stopped.";
+        }
+        catch (Exception ex)
+        {
+            JourneyCommandStatus = ex.Message;
+            _logger.LogWarning(ex, "Stopping journey failed");
+        }
+    }
+
+    private bool CanStopJourney() => SelectedJourney?.IsRunning == true;
+
     #region Journey Factory
     /// <summary>
     /// Creates a JourneyViewModel with SessionState.
@@ -103,7 +149,7 @@ public partial class MainWindowViewModel
         var journey = EntityEditorHelper.AddEntity(
             SelectedProject.Model.Journeys,
             SelectedProject.Journeys,
-            () => new Journey { Name = "New Journey", BehaviorOnLastStop = BehaviorOnLastStop.None },
+            () => new Journey { Name = "New Journey", BehaviorOnLastStop = BehaviorOnLastStop.None, EventPlan = new JourneyEventPlan() },
             model => CreateJourneyViewModel(model));
 
         SelectedJourney = journey;
@@ -126,7 +172,7 @@ public partial class MainWindowViewModel
         ObserveBackgroundTask(_mobaRuntime.ActivateProjectAsync(SelectedProject.Model), "Activate project runtime");
     }
 
-    private bool CanDeleteJourney() => SelectedJourney != null;
+    private bool CanDeleteJourney() => SelectedJourney != null && !IsAnyEventPlanRunning;
     #endregion
 
     #region Station CRUD Commands
@@ -168,11 +214,10 @@ public partial class MainWindowViewModel
     {
         if (SelectedJourney == null) return;
 
-        SelectedJourney.ResetCommand.Execute(null);
-        await _runtimeCommandGateway.ResetJourneyAsync(SelectedJourney.Model.Id).ConfigureAwait(false);
+        await _runtimeCommandGateway.ResetJourneyAsync(SelectedJourney.Model.Id);
     }
 
-    private bool CanResetJourneyCounter() => SelectedJourney != null;
+    private bool CanResetJourneyCounter() => SelectedJourney != null && !SelectedJourney.IsEventPlanRunning;
     #endregion
 
     #region Station Management (City Library)

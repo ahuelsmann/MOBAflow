@@ -49,4 +49,9 @@ public sealed class JourneyRuntimeSnapshot
     /// Gets a value indicating whether the journey is active.
     /// </summary>
     public bool IsActive { get; init; }
+
+    public bool IsEventPlan { get; init; }
+
+    /// <summary>Counter values captured when the current event-plan run started.</summary>
+    public IReadOnlyDictionary<uint, ulong> StartCounterValues { get; init; } = new Dictionary<uint, ulong>();
 }

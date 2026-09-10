@@ -9,6 +9,13 @@ namespace Moba.Backend.Service;
 /// </summary>
 public class JourneySessionState
 {
+    /// <summary>Global input counts captured atomically when this run started.</summary>
+    public IReadOnlyDictionary<uint, ulong> CurrentEventBases { get; internal set; }
+        = System.Collections.Frozen.FrozenDictionary<uint, ulong>.Empty;
+
+    /// <summary>Detached snapshot of event identifiers already triggered in this run.</summary>
+    public IReadOnlyList<Guid> CompletedEventIds { get; internal set; } = Array.Empty<Guid>();
+
     /// <summary>Stable identity for the current execution of this journey.</summary>
     public Guid RunId { get; set; } = Guid.NewGuid();
 
@@ -68,5 +75,7 @@ public class JourneySessionState
         LastFeedbackTime = null;
         IsActive = true;
         IsJourneyCompletionRequested = false;
+        CurrentEventBases = System.Collections.Frozen.FrozenDictionary<uint, ulong>.Empty;
+        CompletedEventIds = Array.Empty<Guid>();
     }
 }

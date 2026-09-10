@@ -631,6 +631,12 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
         var references = new List<WorkflowReference>();
         foreach (var journey in project.Journeys)
         {
+            foreach (var journeyEvent in journey.EventPlan?.Events ?? [])
+            {
+                if (journeyEvent.WorkflowId == workflowId)
+                    references.Add(new WorkflowReference("Journey", journey.Id, journey.Name,
+                        $"Event: InPort {journeyEvent.InPort}, count {journeyEvent.Count}"));
+            }
             for (var index = 0; index < journey.FeedbackSequence.Count; index++)
             {
                 if (journey.FeedbackSequence[index].WorkflowId == workflowId)

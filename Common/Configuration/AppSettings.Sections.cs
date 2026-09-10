@@ -682,6 +682,8 @@ public class JourneysPageLayoutSettings
 
 public class EventManagerPageLayoutSettings
 {
+    public double EventPlanColumnStarValue { get; set; } = 2;
+    public double WorkflowLibraryColumnStarValue { get; set; } = 1;
     public bool IsToolboxExpanded { get; set; } = true;
     public bool IsValuesExpanded { get; set; } = true;
     public bool IsPropertiesExpanded { get; set; } = true;
