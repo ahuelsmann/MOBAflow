@@ -116,13 +116,13 @@ public sealed class JourneyEventPlanTests
         };
         var handler = new ChangeJourneyStopWorkflowActionHandler();
         fixture.WorkflowService.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
-            .Returns(async (WorkflowExecutionRequest request, CancellationToken _) =>
+            .Returns(async (WorkflowExecutionRequest request, CancellationToken cancellationToken) =>
             {
                 fixture.Requests.Enqueue(request);
                 Assert.That(fixture.Manager.GetState(fixture.Journey.Id)!.CurrentStationId, Is.EqualTo(first.Id));
-                await handler.ExecuteAsync(action, request.Context);
-                await handler.ExecuteAsync(action, request.Context);
-                await handler.ExecuteAsync(action, request.Context);
+                await handler.ExecuteAsync(action, request.Context, cancellationToken);
+                await handler.ExecuteAsync(action, request.Context, cancellationToken);
+                await handler.ExecuteAsync(action, request.Context, cancellationToken);
                 return Success(request);
             });
         await fixture.Manager.StartJourneyAsync(fixture.Journey);
@@ -275,7 +275,7 @@ public sealed class JourneyEventPlanTests
         fixture.Journey.BehaviorOnLastStop = BehaviorOnLastStop.GotoJourney;
         fixture.Journey.NextJourneyId = targetJourney.Id;
         fixture.WorkflowService.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
-            .Returns(async (WorkflowExecutionRequest request, CancellationToken _) =>
+            .Returns(async (WorkflowExecutionRequest request, CancellationToken cancellationToken) =>
             {
                 fixture.Requests.Enqueue(request);
                 if (request.Context.CurrentJourney!.Id == fixture.Journey.Id)
@@ -284,7 +284,7 @@ public sealed class JourneyEventPlanTests
                     {
                         Type = ActionType.ChangeJourneyStop,
                         ChangeJourneyStop = new ChangeJourneyStopActionPayload { MoveToNextStop = true }
-                    }, request.Context);
+                    }, request.Context, cancellationToken);
                 }
                 return Success(request);
             });

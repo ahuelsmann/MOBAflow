@@ -313,7 +313,7 @@ public partial class JourneyManager
         }
     }
 
-    [LoggerMessage(EventId = 0, Level = LogLevel.Warning, Message = "Automatic start failed for journey {JourneyId}")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Automatic start failed for journey {JourneyId}")]
     private static partial void LogAutomaticStartFailed(ILogger logger, Exception exception, Guid journeyId);
 
     private Guid? CompleteEventPlanRun(EventPlanRun run)
