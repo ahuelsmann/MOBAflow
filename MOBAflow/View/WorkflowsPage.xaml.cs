@@ -11,7 +11,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 
 using Moba.SharedUI.ViewModel;
-using Moba.SharedUI.ViewModel.WorkflowSteps;
+using Moba.SharedUI.ViewModel.Action;
 
 using SharedUI.Interface;
 
@@ -247,30 +247,24 @@ internal sealed partial class WorkflowsPage
 
     private void ActionListView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
     {
-        if (e.Items.FirstOrDefault() is WorkflowStepViewModel step)
+        if (e.Items.FirstOrDefault() is WorkflowActionViewModel step)
         {
-            e.Data.Properties.Add("WorkflowStep", step);
+            e.Data.Properties.Add("WorkflowAction", step);
             e.Data.RequestedOperation = DataPackageOperation.Move;
         }
     }
 
-    private void ActionListView_Drop(object sender, DragEventArgs e)
-    {
-        // No longer needed - DragItemsCompleted handles drag & drop reordering
-        _ = e;
-    }
-
     private void ActionListView_DragItemsCompleted(object sender, DragItemsCompletedEventArgs e)
     {
-        if (ViewModel.SelectedWorkflow == null) return;
+        if (ViewModel.WorkflowLibrary.SelectedWorkflow == null) return;
 
-        ViewModel.SelectedWorkflow.UpdateStepOrder();
+        ViewModel.WorkflowLibrary.SelectedWorkflow.UpdateActionNumbers();
     }
 
     private void ActionListView_KeyDown(object sender, KeyRoutedEventArgs e)
     {
         var workflow = ViewModel.WorkflowLibrary.SelectedWorkflow;
-        var step = ViewModel.WorkflowLibrary.SelectedStep;
+        var step = ViewModel.WorkflowLibrary.SelectedAction;
         if (workflow == null || step == null)
         {
             return;
@@ -280,17 +274,17 @@ internal sealed partial class WorkflowsPage
             .HasFlag(CoreVirtualKeyStates.Down);
         if (altDown && e.Key == VirtualKey.Up)
         {
-            workflow.MoveStepUpCommand.Execute(step);
+            ViewModel.WorkflowLibrary.MoveSelectedActionUpCommand.Execute(null);
             e.Handled = true;
         }
         else if (altDown && e.Key == VirtualKey.Down)
         {
-            workflow.MoveStepDownCommand.Execute(step);
+            ViewModel.WorkflowLibrary.MoveSelectedActionDownCommand.Execute(null);
             e.Handled = true;
         }
-        else if (e.Key == VirtualKey.Delete && workflow.DeleteStepCommand.CanExecute(step))
+        else if (e.Key == VirtualKey.Delete && ViewModel.WorkflowLibrary.DeleteSelectedActionCommand.CanExecute(null))
         {
-            workflow.DeleteStepCommand.Execute(step);
+            ViewModel.WorkflowLibrary.DeleteSelectedActionCommand.Execute(null);
             e.Handled = true;
         }
     }

@@ -14,7 +14,7 @@ using Moq;
 internal sealed class WorkflowServiceTests
 {
     [Test]
-    public async Task ExecuteAsync_GraphWorkflow_UsesWorkflow2Executor()
+    public async Task ExecuteAsync_ActionList_UsesSequenceExecutor()
     {
         var executor = new Mock<IActionExecutor>();
         executor
@@ -38,11 +38,11 @@ internal sealed class WorkflowServiceTests
     }
 
     [Test]
-    public void ExecuteAsync_InvalidGraph_ThrowsWithoutCallingActionExecutor()
+    public void ExecuteAsync_EmptyList_ThrowsWithoutCallingActionExecutor()
     {
         var executor = new Mock<IActionExecutor>(MockBehavior.Strict);
         var service = new WorkflowService(executor.Object);
-        var workflow = new Workflow { EntryStepId = Guid.NewGuid(), Steps = [] };
+        var workflow = new Workflow();
         var project = new Project { Workflows = [workflow] };
 
         Assert.ThrowsAsync<InvalidOperationException>(() => service.ExecuteAsync(
@@ -69,27 +69,8 @@ internal sealed class WorkflowServiceTests
         executor.VerifyNoOtherCalls();
     }
 
-    private static Workflow CreateWorkflow()
+    private static Workflow CreateWorkflow() => new()
     {
-        var actionId = Guid.NewGuid();
-        var terminalId = Guid.NewGuid();
-        return new Workflow
-        {
-            EntryStepId = actionId,
-            Steps =
-            [
-                new WorkflowActionStep
-                {
-                    Id = actionId,
-                    NextStepId = terminalId,
-                    Action = new WorkflowAction
-                    {
-                        Type = ActionType.Command,
-                        Command = new CommandActionPayload { BytesBase64 = "AQID" }
-                    }
-                },
-                new WorkflowTerminateStep { Id = terminalId }
-            ]
-        };
-    }
+        Actions = [new WorkflowAction { Type = ActionType.Command, Command = new CommandActionPayload { BytesBase64 = "AQID" } }]
+    };
 }

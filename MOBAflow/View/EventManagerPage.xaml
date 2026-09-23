@@ -9,8 +9,7 @@
     xmlns:toolkit="using:CommunityToolkit.WinUI.Controls"
     xmlns:domain="using:Moba.Domain"
     xmlns:i="using:Microsoft.Xaml.Interactivity"
-    xmlns:viewmodel="using:Moba.SharedUI.ViewModel"
-    xmlns:steps="using:Moba.SharedUI.ViewModel.WorkflowSteps">
+    xmlns:viewmodel="using:Moba.SharedUI.ViewModel">
 
     <Page.Resources>
         <converter:BoolToPickerStateBrushConverter x:Key="RepeatBorderBrushConverter" Role="Border" />
@@ -115,7 +114,6 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
@@ -133,50 +131,15 @@
                         SelectionMode="Single">
                         <ListView.ItemTemplate><DataTemplate x:DataType="viewmodel:WorkflowViewModel"><TextBlock Padding="6" Text="{x:Bind Name}" /></DataTemplate></ListView.ItemTemplate>
                     </ListView>
-                    <CommandBar Grid.Row="2" DefaultLabelPosition="Collapsed" OverflowButtonVisibility="Auto">
-                        <AppBarButton Icon="Add" Label="Create workflow" Command="{x:Bind ViewModel.WorkflowLibrary.CreateWorkflowCommand}" />
-                        <AppBarButton Icon="Copy" Label="Duplicate workflow" Command="{x:Bind ViewModel.WorkflowLibrary.DuplicateSelectedWorkflowCommand}" />
-                        <AppBarButton Icon="Delete" Label="Delete workflow" Command="{x:Bind ViewModel.WorkflowLibrary.DeleteSelectedWorkflowCommand}" />
-                        <AppBarSeparator />
-                        <AppBarButton Icon="Play" Label="Add action" Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.AddStepCommand}" CommandParameter="{x:Bind steps:WorkflowStepKind.Action}" />
-                        <AppBarButton Icon="Clock" Label="Add delay" Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.AddStepCommand}" CommandParameter="{x:Bind steps:WorkflowStepKind.Delay}" />
-                        <AppBarButton Icon="Filter" Label="Add condition" Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.AddStepCommand}" CommandParameter="{x:Bind steps:WorkflowStepKind.Condition}" />
-                        <AppBarButton Icon="Switch" Label="Add parallel" Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.AddStepCommand}" CommandParameter="{x:Bind steps:WorkflowStepKind.Parallel}" />
-                        <AppBarButton Icon="OpenFile" Label="Add nested workflow" Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.AddStepCommand}" CommandParameter="{x:Bind steps:WorkflowStepKind.NestedWorkflow}" />
-                        <AppBarButton Icon="Stop" Label="Add termination" Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.AddStepCommand}" CommandParameter="{x:Bind steps:WorkflowStepKind.Terminate}" />
-                        <AppBarSeparator />
-                        <AppBarButton Icon="Up" Label="Move step up" Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.MoveStepUpCommand}" CommandParameter="{x:Bind ViewModel.WorkflowLibrary.SelectedStep}" />
-                        <AppBarButton Label="Move step down" Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.MoveStepDownCommand}" CommandParameter="{x:Bind ViewModel.WorkflowLibrary.SelectedStep}">
-                            <AppBarButton.Icon>
-                                <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE74B;" />
-                            </AppBarButton.Icon>
-                        </AppBarButton>
-                    </CommandBar>
-                    <ListView
-                        Grid.Row="3"
-                        AutomationProperties.Name="Contextual workflow steps"
-                        ItemsSource="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.Steps, Mode=OneWay}"
-                        KeyDown="WorkflowSteps_KeyDown"
-                        SelectedItem="{x:Bind ViewModel.WorkflowLibrary.SelectedStep, Mode=TwoWay}"
-                        SelectionMode="Single">
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="steps:WorkflowStepViewModel">
-                                <Grid Padding="6" ColumnSpacing="8">
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                    <TextBlock Text="{x:Bind Name}" TextTrimming="CharacterEllipsis" />
-                                    <TextBlock Grid.Column="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind Kind}" />
-                                </Grid>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
+                    <TextBlock Grid.Row="2" Text="Edit reusable actions on the Workflows page." TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                     <Button
-                        Grid.Row="4"
+                        Grid.Row="3"
                         HorizontalAlignment="Stretch"
                         Content="Assign selected workflow to feedback step"
                         Command="{x:Bind ViewModel.WorkflowLibrary.AssignSelectedWorkflowCommand}"
                         CommandParameter="{x:Bind ViewModel.SelectedStep}" />
-                    <AutoSuggestBox Grid.Row="5" PlaceholderText="Search stops..." Text="{x:Bind ViewModel.StationSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                    <ListView x:Name="StationValuesList" Grid.Row="6" CanDragItems="True" DragItemsStarting="StationValues_DragItemsStarting" DoubleTapped="StationValues_DoubleTapped" ItemsSource="{x:Bind ViewModel.Stations, Mode=OneWay}" SelectionMode="Single">
+                    <AutoSuggestBox Grid.Row="4" PlaceholderText="Search stops..." Text="{x:Bind ViewModel.StationSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <ListView x:Name="StationValuesList" Grid.Row="5" CanDragItems="True" DragItemsStarting="StationValues_DragItemsStarting" DoubleTapped="StationValues_DoubleTapped" ItemsSource="{x:Bind ViewModel.Stations, Mode=OneWay}" SelectionMode="Single">
                         <ListView.ItemTemplate><DataTemplate x:DataType="viewmodel:StationAssignmentOption"><TextBlock Padding="6" Text="{x:Bind Name}" /></DataTemplate></ListView.ItemTemplate>
                     </ListView>
                 </Grid>
@@ -200,53 +163,6 @@
                             <ComboBox Header="Only when current stop is" DisplayMemberPath="Name" ItemsSource="{Binding AvailableStations}" SelectedValue="{Binding ConditionStationId, Mode=TwoWay}" SelectedValuePath="Id" />
                             <ToggleSwitch Header="Enabled" IsOn="{Binding Enabled, Mode=TwoWay}" />
                         </StackPanel>
-                        <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Workflow editor" />
-                        <ContentControl
-                            HorizontalContentAlignment="Stretch"
-                            Content="{x:Bind ViewModel.WorkflowLibrary.SelectedEditorObject, Mode=OneWay}"
-                            ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
-                        <Grid ColumnSpacing="8">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                            <Button Content="Dry run" Style="{StaticResource AccentButtonStyle}" Command="{x:Bind ViewModel.WorkflowLibrary.DryRunSelectedWorkflowCommand}" />
-                            <Button Grid.Column="1" Content="Cancel" Command="{x:Bind ViewModel.WorkflowLibrary.CancelDryRunCommand}" />
-                            <Button Grid.Column="2" Content="Validate" Command="{x:Bind ViewModel.WorkflowLibrary.ValidateCommand}" />
-                        </Grid>
-                        <TextBlock AutomationProperties.LiveSetting="Polite" Text="{x:Bind ViewModel.WorkflowLibrary.LastDryRunStatus, Mode=OneWay}" />
-                        <ItemsControl ItemsSource="{x:Bind ViewModel.WorkflowLibrary.ValidationIssues, Mode=OneWay}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Button
-                                        HorizontalAlignment="Stretch"
-                                        HorizontalContentAlignment="Stretch"
-                                        AutomationProperties.Name="Open validation issue"
-                                        Command="{Binding DataContext.WorkflowLibrary.NavigateToValidationIssueCommand, ElementName=PageRoot}"
-                                        CommandParameter="{Binding}">
-                                        <StackPanel Margin="0,2">
-                                            <TextBlock FontWeight="SemiBold" Text="{Binding Code}" />
-                                            <TextBlock Text="{Binding FieldPath}" />
-                                            <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
-                                        </StackPanel>
-                                    </Button>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                        <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Planned effects" />
-                        <ItemsControl ItemsSource="{x:Bind ViewModel.WorkflowLibrary.PlannedEffects, Mode=OneWay}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate><TextBlock Margin="0,2" Text="{Binding Description}" TextWrapping="Wrap" /></DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                        <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Recent trace" />
-                        <ItemsControl ItemsSource="{x:Bind ViewModel.WorkflowLibrary.TraceEntries, Mode=OneWay}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Margin="0,2">
-                                        <TextBlock FontWeight="SemiBold" Text="{Binding Kind}" />
-                                        <TextBlock Text="{Binding Detail}" TextWrapping="Wrap" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
                     </StackPanel>
                 </ScrollViewer>
             </controls:CollapsibleColumnProperties.PanelContent>

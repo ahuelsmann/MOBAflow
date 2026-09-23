@@ -10,7 +10,7 @@ using System.Text.Json;
 internal sealed class WorkflowSchemaCutoverTests
 {
     [Test]
-    public async Task CurrentSolutionFixture_UsesValidWorkflowGraphsWithoutLegacyActionLists()
+    public async Task CurrentSolutionFixture_ContainsPersistedActionSequences()
     {
         // Arrange
         var path = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestFile", "solution.json");
@@ -23,13 +23,6 @@ internal sealed class WorkflowSchemaCutoverTests
         Assert.That(solution, Is.Not.Null);
         var workflows = solution!.Projects.SelectMany(project => project.Workflows).ToArray();
         Assert.That(workflows, Is.Not.Empty);
-        Assert.Multiple(() =>
-        {
-            Assert.That(workflows.All(workflow => workflow.EntryStepId.HasValue), Is.True);
-            Assert.That(workflows.All(workflow => workflow.Steps is { Count: > 0 }), Is.True);
-            Assert.That(workflows.All(workflow => workflow.Actions.Count == 0), Is.True);
-            Assert.That(workflows.SelectMany(workflow => workflow.Steps!).Any(step => step is WorkflowActionStep), Is.True);
-            Assert.That(workflows.SelectMany(workflow => workflow.Steps!).Any(step => step is WorkflowTerminateStep), Is.True);
-        });
+        Assert.That(workflows.All(workflow => workflow.Actions is { Count: > 0 }), Is.True);
     }
 }

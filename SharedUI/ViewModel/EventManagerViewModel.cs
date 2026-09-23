@@ -69,7 +69,7 @@ public sealed partial class EventManagerViewModel : ObservableObject
     partial void OnSelectedStepChanged(JourneyFeedbackStepViewModel? value)
     {
         _ = value;
-        WorkflowLibrary.SelectedStep = null;
+        WorkflowLibrary.SelectedAction = null;
     }
 
     partial void OnWorkflowSearchTextChanged(string value)

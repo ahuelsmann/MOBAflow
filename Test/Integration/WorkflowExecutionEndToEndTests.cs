@@ -66,7 +66,7 @@ internal sealed class WorkflowExecutionEndToEndTests
     [Test]
     public async Task EmptyWorkflow_IsRejectedBeforeExecution()
     {
-        var workflow = new Workflow { EntryStepId = Guid.NewGuid(), Steps = [] };
+        var workflow = new Workflow();
         var initialPayloadCount = _fakeUdp.SentPayloads.Count;
 
         var result = await ExecuteAsync(workflow);
@@ -81,22 +81,7 @@ internal sealed class WorkflowExecutionEndToEndTests
     [Test]
     public async Task UnsupportedAction_IsRejectedBeforeExecution()
     {
-        var actionId = Guid.NewGuid();
-        var terminalId = Guid.NewGuid();
-        var workflow = new Workflow
-        {
-            EntryStepId = actionId,
-            Steps =
-            [
-                new WorkflowActionStep
-                {
-                    Id = actionId,
-                    NextStepId = terminalId,
-                    Action = new WorkflowAction { Type = (ActionType)999 }
-                },
-                new WorkflowTerminateStep { Id = terminalId }
-            ]
-        };
+        var workflow = new Workflow { Actions = [new WorkflowAction { Type = (ActionType)999 }] };
 
         var result = await ExecuteAsync(workflow);
 
@@ -119,96 +104,32 @@ internal sealed class WorkflowExecutionEndToEndTests
     }
 
     [Test]
-    public async Task NestedWorkflow_WithRetry_PreservesCompleteFakeZ21CorrelationChain()
+    public async Task SequentialActions_PreserveFakeZ21CorrelationChain()
     {
-        // Arrange
-        var traceStore = new WorkflowTraceStore();
-        _workflowService = new WorkflowService(
-            ActionExecutor.CreateWithDefaultHandlers(),
-            new WorkflowServiceDependencies
-            {
-                Validator = new WorkflowValidator(),
-                EffectPlanner = new WorkflowEffectPlanner(),
-                ConditionEvaluator = new WorkflowConditionEvaluator(),
-                EventBus = new EventBus(NullLogger<EventBus>.Instance),
-                TraceStore = traceStore,
-                TimeProvider = TimeProvider.System
-            });
-        var child = CreateCommandWorkflow([new byte[] { 0x21, 0x81, 0x00, 0xA0 }]);
-        child.DefaultErrorPolicy = new WorkflowErrorPolicy
+        var trace = new WorkflowTraceStore();
+        _workflowService = new WorkflowService(ActionExecutor.CreateWithDefaultHandlers(), new WorkflowServiceDependencies
         {
-            Retry = new WorkflowRetryPolicy { AdditionalAttempts = 1 }
-        };
-        var nestedStepId = Guid.NewGuid();
-        var parentTerminalId = Guid.NewGuid();
-        var parent = new Workflow
-        {
-            EntryStepId = nestedStepId,
-            Steps =
-            [
-                new WorkflowNestedStep
-                {
-                    Id = nestedStepId,
-                    WorkflowId = child.Id,
-                    NextStepId = parentTerminalId
-                },
-                new WorkflowTerminateStep { Id = parentTerminalId }
-            ]
-        };
-        var project = new Project { Workflows = [parent, child] };
-        var sourceCorrelationId = Guid.NewGuid();
-        var childActionId = child.EntryStepId!.Value;
-        _fakeUdp.SendFailuresRemaining = 1;
-
-        // Act
+            Validator = new WorkflowValidator(), EffectPlanner = new WorkflowEffectPlanner(),
+            EventBus = new EventBus(NullLogger<EventBus>.Instance), TraceStore = trace, TimeProvider = TimeProvider.System
+        });
+        var workflow = CreateCommandWorkflow([new byte[] { 1 }, new byte[] { 2 }]);
+        var project = new Project { Workflows = [workflow] };
+        var sourceId = Guid.NewGuid();
         var result = await _workflowService.ExecuteAsync(new WorkflowExecutionRequest
         {
-            Project = project,
-            Workflow = parent,
-            Context = new ActionExecutionContext { Z21 = _z21, CurrentProject = project },
-            Mode = WorkflowRunMode.Live,
-            SourceCorrelationId = sourceCorrelationId
+            Project = project, Workflow = workflow,
+            Context = new ActionExecutionContext { Z21 = _z21, SourceEvent = new FeedbackReceivedEvent(5, sourceId) }
         });
-
-        // Assert
-        var entries = traceStore.GetEntries();
-        var childStarted = entries.Single(entry =>
-            entry.Kind == WorkflowLifecycleKind.WorkflowStarted && entry.WorkflowId == child.Id);
+        var entries = trace.GetEntries();
         Assert.Multiple(() =>
         {
             Assert.That(result.Status, Is.EqualTo(WorkflowExecutionStatus.Succeeded));
-            Assert.That(result.SourceCorrelationId, Is.EqualTo(sourceCorrelationId));
-            Assert.That(_fakeUdp.SendFailuresRemaining, Is.Zero);
+            Assert.That(result.SourceCorrelationId, Is.EqualTo(sourceId));
             Assert.That(_fakeUdp.SentPayloads, Is.Not.Empty);
-            Assert.That(entries, Is.All.Matches<WorkflowLifecycleEvent>(entry =>
-                entry.SourceCorrelationId == sourceCorrelationId));
-            Assert.That(entries.Select(entry => entry.Sequence),
-                Is.EqualTo(Enumerable.Range(1, entries.Count).Select(value => (long)value)));
-            Assert.That(childStarted.ParentExecutionId, Is.EqualTo(result.ExecutionId));
-            Assert.That(entries.Any(entry =>
-                entry.Kind == WorkflowLifecycleKind.NestedWorkflowEntered &&
-                entry.ExecutionId == result.ExecutionId &&
-                entry.WorkflowId == parent.Id &&
-                entry.StepId == nestedStepId), Is.True);
-            Assert.That(entries.Where(entry =>
-                    entry.Kind == WorkflowLifecycleKind.StepStarted &&
-                    entry.WorkflowId == child.Id &&
-                    entry.StepId == childActionId)
-                .Select(entry => entry.Attempt), Is.EqualTo(new[] { 1, 2 }));
-            Assert.That(entries.Any(entry =>
-                entry.Kind == WorkflowLifecycleKind.RetryScheduled &&
-                entry.WorkflowId == child.Id &&
-                entry.StepId == childActionId &&
-                entry.Attempt == 2), Is.True);
-            Assert.That(entries.Count(entry =>
-                entry.Kind == WorkflowLifecycleKind.WorkflowCompleted &&
-                (entry.WorkflowId == parent.Id || entry.WorkflowId == child.Id)), Is.EqualTo(2));
-            Assert.That(entries.Any(entry =>
-                entry.Kind == WorkflowLifecycleKind.NestedWorkflowExited &&
-                entry.ExecutionId == result.ExecutionId &&
-                entry.WorkflowId == parent.Id &&
-                entry.StepId == nestedStepId &&
-                entry.Result == nameof(WorkflowExecutionStatus.Succeeded)), Is.True);
+            Assert.That(entries, Is.All.Matches<WorkflowLifecycleEvent>(entry => entry.SourceCorrelationId == sourceId && entry.ExecutionId == result.ExecutionId));
+            Assert.That(entries.Select(entry => entry.Sequence), Is.EqualTo(Enumerable.Range(1, entries.Count).Select(value => (long)value)));
+            Assert.That(entries.Where(entry => entry.Kind == WorkflowLifecycleKind.StepStarted).Select(entry => entry.StepId), Is.EqualTo(workflow.Actions.Select(action => action.Id)));
+            Assert.That(entries.Count(entry => entry.Kind == WorkflowLifecycleKind.WorkflowCompleted), Is.EqualTo(1));
         });
     }
 
@@ -224,28 +145,12 @@ internal sealed class WorkflowExecutionEndToEndTests
         });
     }
 
-    private static Workflow CreateCommandWorkflow(IReadOnlyList<byte[]> commands)
+    private static Workflow CreateCommandWorkflow(IReadOnlyList<byte[]> commands) => new()
     {
-        var terminalId = Guid.NewGuid();
-        var actionIds = commands.Select(_ => Guid.NewGuid()).ToArray();
-        var steps = commands
-            .Select((bytes, index) => (WorkflowStep)new WorkflowActionStep
-            {
-                Id = actionIds[index],
-                NextStepId = index + 1 < actionIds.Length ? actionIds[index + 1] : terminalId,
-                Action = new WorkflowAction
-                {
-                    Name = $"Command {index + 1}",
-                    Type = ActionType.Command,
-                    Command = new CommandActionPayload { BytesBase64 = Convert.ToBase64String(bytes) }
-                }
-            })
-            .ToList();
-        steps.Add(new WorkflowTerminateStep { Id = terminalId });
-        return new Workflow
+        Actions = commands.Select((bytes, index) => new WorkflowAction
         {
-            EntryStepId = actionIds[0],
-            Steps = steps
-        };
-    }
+            Name = $"Command {index + 1}", Type = ActionType.Command,
+            Command = new CommandActionPayload { BytesBase64 = Convert.ToBase64String(bytes) }
+        }).ToList()
+    };
 }

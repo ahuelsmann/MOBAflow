@@ -404,7 +404,9 @@ public class JourneyManager : IJourneyManager
             CurrentStation = currentStation,
             JourneyTemplateText = journey.Text,
             CurrentStationIndex = stationIndex > 0 ? stationIndex : 1,
-            FeedbackInPort = feedbackStep.InPort
+            FeedbackInPort = feedbackStep.InPort,
+            SourceEvent = new FeedbackReceivedEvent(feedback.InPort, feedback.CorrelationId),
+            SourceEventDefinitionId = feedbackStep.Id
         });
 
         queuedExecution = _executionCoordinator.EnqueueAsync(new QueuedWorkflowExecution

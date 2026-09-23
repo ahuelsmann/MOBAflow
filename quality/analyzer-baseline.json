@@ -180,13 +180,6 @@
       "project": "Backend",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "Backend/Service/WorkflowService.Graph.cs",
-      "count": 2
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
       "path": "Backend/Service/Z21EventPipeline.cs",
       "count": 1
     },
@@ -228,23 +221,9 @@
     {
       "project": "Backend",
       "targetFramework": "net10.0",
-      "ruleId": "CA1032",
-      "path": "Backend/Service/WorkflowService.Graph.cs",
-      "count": 6
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
       "ruleId": "CA1034",
       "path": "Backend/Protocol/Z21Protocol.cs",
       "count": 10
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1034",
-      "path": "Backend/Service/WorkflowService.Graph.cs",
-      "count": 2
     },
     {
       "project": "Backend",
@@ -761,13 +740,6 @@
       "project": "Backend",
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
-      "path": "Backend/Service/WorkflowService.Graph.cs",
-      "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
       "path": "Backend/Service/Z21EventPipeline.cs",
       "count": 3
     },
@@ -909,27 +881,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1859",
       "path": "Backend/Service/Validation/InterlockingDefinitionValidator.cs",
-      "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1859",
-      "path": "Backend/Service/WorkflowConditionEvaluator.cs",
-      "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1859",
-      "path": "Backend/Service/WorkflowService.Graph.cs",
-      "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1859",
-      "path": "Backend/Service/WorkflowValidator.cs",
       "count": 1
     },
     {
@@ -1124,13 +1075,6 @@
     {
       "project": "Backend",
       "targetFramework": "net10.0",
-      "ruleId": "IDE0005",
-      "path": "Backend/Service/WorkflowValidator.cs",
-      "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
       "ruleId": "IDE0007",
       "path": "Backend/Data/MasterDataStore.cs",
       "count": 2
@@ -1301,20 +1245,6 @@
       "targetFramework": "net10.0",
       "ruleId": "IDE0290",
       "path": "Backend/Service/VehicleMaintenanceService.cs",
-      "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0290",
-      "path": "Backend/Service/WorkflowService.Graph.cs",
-      "count": 2
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0290",
-      "path": "Backend/Service/WorkflowValidator.cs",
       "count": 1
     },
     {
@@ -1889,13 +1819,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1002",
       "path": "Domain/Workflow.cs",
-      "count": 2
-    },
-    {
-      "project": "Domain",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1002",
-      "path": "Domain/WorkflowStep.cs",
       "count": 1
     },
     {
@@ -2092,13 +2015,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2227",
       "path": "Domain/Workflow.cs",
-      "count": 2
-    },
-    {
-      "project": "Domain",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2227",
-      "path": "Domain/WorkflowStep.cs",
       "count": 1
     },
     {
@@ -3392,13 +3308,6 @@
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
-      "ruleId": "CA1062",
-      "path": "SharedUI/ViewModel/WorkflowSteps/WorkflowStepViewModels.cs",
-      "count": 2
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
       "ruleId": "CA1068",
       "path": "SharedUI/Interface/IRuntimeHubRemoteClient.cs",
       "count": 1
@@ -3584,13 +3493,6 @@
       "ruleId": "CA1822",
       "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
       "count": 4
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1822",
-      "path": "SharedUI/ViewModel/WorkflowViewModel.cs",
-      "count": 2
     },
     {
       "project": "SharedUI",
@@ -4036,13 +3938,6 @@
     {
       "project": "SharedUI",
       "targetFramework": "net10.0",
-      "ruleId": "IDE0005",
-      "path": "SharedUI/ViewModel/WorkflowSteps/WorkflowStepViewModels.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
       "ruleId": "IDE0007",
       "path": "SharedUI/Helper/Z21DccCommandDecoder.cs",
       "count": 8
@@ -4102,13 +3997,6 @@
       "ruleId": "IDE0007",
       "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
       "count": 7
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0007",
-      "path": "SharedUI/ViewModel/WorkflowViewModel.cs",
-      "count": 1
     },
     {
       "project": "SharedUI",
@@ -4892,7 +4780,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1707",
       "path": "Test/SharedUI/WorkflowLibraryViewModelTests.cs",
-      "count": 11
+      "count": 10
     },
     {
       "project": "Test",
@@ -5199,14 +5087,14 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Backend/WorkflowGraphExecutionTests.cs",
+      "path": "Test/Backend/WorkflowSchemaCutoverValidationTests.cs",
       "count": 1
     },
     {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Backend/WorkflowSchemaCutoverValidationTests.cs",
+      "path": "Test/Backend/WorkflowSequenceExecutionTests.cs",
       "count": 1
     },
     {
@@ -5668,14 +5556,14 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Domain/WorkflowSchemaCutoverTests.cs",
+      "path": "Test/Domain/WorkflowActionSequenceSerializationTests.cs",
       "count": 1
     },
     {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Domain/WorkflowStepSerializationTests.cs",
+      "path": "Test/Domain/WorkflowSchemaCutoverTests.cs",
       "count": 1
     },
     {
@@ -6340,13 +6228,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1849",
-      "path": "Test/Backend/WorkflowGraphExecutionTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1849",
       "path": "Test/Backend/Z21UnitTests.cs",
       "count": 1
     },
@@ -6788,13 +6669,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1861",
-      "path": "Test/Backend/WorkflowGraphExecutionTests.cs",
-      "count": 2
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1861",
       "path": "Test/Backend/Z21EventPipelineTests.cs",
       "count": 1
     },
@@ -6844,13 +6718,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1861",
-      "path": "Test/Integration/WorkflowExecutionEndToEndTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1861",
       "path": "Test/MOBApi/ControlPlaneSecurityTests.cs",
       "count": 1
     },
@@ -6888,13 +6755,6 @@
       "ruleId": "CA1861",
       "path": "Test/SharedUI/TimetablePageViewModelTests.cs",
       "count": 5
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1861",
-      "path": "Test/SharedUI/WorkflowLibraryViewModelTests.cs",
-      "count": 1
     },
     {
       "project": "Test",
@@ -7175,13 +7035,6 @@
       "ruleId": "CA2007",
       "path": "Test/Backend/WorkflowExecutionCoordinatorTests.cs",
       "count": 5
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2007",
-      "path": "Test/Backend/WorkflowGraphExecutionTests.cs",
-      "count": 9
     },
     {
       "project": "Test",
@@ -7803,20 +7656,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2045",
-      "path": "Test/Backend/WorkflowGraphExecutionTests.cs",
-      "count": 2
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2045",
-      "path": "Test/Backend/WorkflowValidatorTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2045",
       "path": "Test/Backend/Z21BroadcastProtocolTests.cs",
       "count": 1
     },
@@ -8007,7 +7846,7 @@
       "targetFramework": "net10.0",
       "ruleId": "NUnit2045",
       "path": "Test/Domain/WorkflowTests.cs",
-      "count": 5
+      "count": 4
     },
     {
       "project": "Test",
@@ -8238,7 +8077,7 @@
       "targetFramework": "net10.0",
       "ruleId": "NUnit2045",
       "path": "Test/Unit/DomainDefaultsTests.cs",
-      "count": 17
+      "count": 16
     },
     {
       "project": "Test",
@@ -8531,13 +8370,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
-      "path": "Test/Backend/WorkflowGraphExecutionTests.cs",
-      "count": 6
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2056",
       "path": "Test/Backend/WorkflowTraceStoreTests.cs",
       "count": 1
     },
@@ -8804,27 +8636,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
-      "path": "Test/Domain/WorkflowSchemaCutoverTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/Domain/WorkflowStepSerializationTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/Domain/WorkflowTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2056",
       "path": "Test/Integration/WorkflowExecutionEndToEndTests.cs",
       "count": 5
     },
@@ -9014,15 +8825,8 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
-      "path": "Test/SharedUI/WorkflowLibraryViewModelTests.cs",
-      "count": 9
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2056",
       "path": "Test/SharedUI/WorkflowViewModelTests.cs",
-      "count": 7
+      "count": 2
     },
     {
       "project": "Test",
@@ -9133,13 +8937,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit4002",
-      "path": "Test/Domain/WorkflowTests.cs",
-      "count": 2
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit4002",
       "path": "Test/MOBAdisplay/Rgb565ConverterTests.cs",
       "count": 1
     },
@@ -9190,7 +8987,7 @@
       "targetFramework": "net10.0",
       "ruleId": "NUnit4002",
       "path": "Test/Unit/DomainDefaultsTests.cs",
-      "count": 3
+      "count": 1
     },
     {
       "project": "TrackLibrary.Base",

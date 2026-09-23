@@ -7,9 +7,8 @@ using System.Xml.Linq;
 [TestFixture]
 internal sealed class XamlIconMarkupTests
 {
-    [TestCase("EventManagerPage.xaml")]
     [TestCase("WorkflowsPage.xaml")]
-    public void MoveStepDownButton_ShouldUseExplicitFluentFontIcon(string pageFileName)
+    public void MoveActionDownButton_ShouldUseExplicitFluentFontIcon(string pageFileName)
     {
         // Arrange
         var repositoryRoot = FindRepositoryRoot();

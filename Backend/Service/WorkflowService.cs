@@ -10,17 +10,14 @@ using Interface;
 
 using Microsoft.Extensions.Logging;
 
-/// <summary>Groups the collaborators used by Workflow 2.0 graph execution.</summary>
+/// <summary>Groups the collaborators used by workflow sequence execution.</summary>
 public sealed class WorkflowServiceDependencies
 {
-    /// <summary>Gets the graph validator.</summary>
+    /// <summary>Gets the action-sequence validator.</summary>
     public required IWorkflowValidator Validator { get; init; }
 
     /// <summary>Gets the dry-run effect planner.</summary>
     public required IWorkflowEffectPlanner EffectPlanner { get; init; }
-
-    /// <summary>Gets the typed condition evaluator.</summary>
-    public required IWorkflowConditionEvaluator ConditionEvaluator { get; init; }
 
     /// <summary>Gets the optional lifecycle event bus.</summary>
     public IEventBus? EventBus { get; init; }
@@ -35,13 +32,12 @@ public sealed class WorkflowServiceDependencies
     public ILogger<WorkflowService>? Logger { get; init; }
 }
 
-/// <summary>Validates, executes, dry-runs, and traces Workflow 2.0 graphs.</summary>
+/// <summary>Validates, executes, dry-runs, and traces workflow sequences.</summary>
 public partial class WorkflowService : IWorkflowService
 {
     private readonly IActionExecutor _actionExecutor;
     private readonly IWorkflowValidator _workflowValidator;
     private readonly IWorkflowEffectPlanner _effectPlanner;
-    private readonly IWorkflowConditionEvaluator _conditionEvaluator;
     private readonly IEventBus? _eventBus;
     private readonly IWorkflowTraceStore _traceStore;
     private readonly TimeProvider _timeProvider;
@@ -75,13 +71,11 @@ public partial class WorkflowService : IWorkflowService
         ArgumentNullException.ThrowIfNull(dependencies);
         ArgumentNullException.ThrowIfNull(dependencies.Validator);
         ArgumentNullException.ThrowIfNull(dependencies.EffectPlanner);
-        ArgumentNullException.ThrowIfNull(dependencies.ConditionEvaluator);
         ArgumentNullException.ThrowIfNull(dependencies.TraceStore);
         ArgumentNullException.ThrowIfNull(dependencies.TimeProvider);
         _actionExecutor = actionExecutor;
         _workflowValidator = dependencies.Validator;
         _effectPlanner = dependencies.EffectPlanner;
-        _conditionEvaluator = dependencies.ConditionEvaluator;
         _eventBus = dependencies.EventBus;
         _traceStore = dependencies.TraceStore;
         _timeProvider = dependencies.TimeProvider;
@@ -94,7 +88,6 @@ public partial class WorkflowService : IWorkflowService
         {
             Validator = new WorkflowValidator(),
             EffectPlanner = new WorkflowEffectPlanner(),
-            ConditionEvaluator = new WorkflowConditionEvaluator(),
             TraceStore = new WorkflowTraceStore(),
             TimeProvider = timeProvider,
             Logger = logger

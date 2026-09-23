@@ -54,9 +54,9 @@ timers and railroad state belongs to `Backend/Service/TrackPlan`, not `SharedUI`
 **Key Classes:**
 
 The persisted domain uses mutable POCO classes such as `Solution`, `Project`,
-`Journey`, `Station`, `Workflow`, the typed `WorkflowStep` hierarchy, and
-`WorkflowAction`. A Workflow 2.0 graph stores a stable entry-step ID, explicit
-step-ID edges, and a deterministic editor/serialization order. Runtime snapshots
+`Journey`, `Station`, `Workflow`, and `WorkflowAction`. A workflow stores a
+reusable ordered list of typed actions. Events reference its stable ID and supply
+the context of each execution. Runtime snapshots
 are the immutable boundary exposed to UI consumers.
 
 **Characteristics:**
@@ -76,7 +76,7 @@ are the immutable boundary exposed to UI consumers.
 
 - IZ21 (Z21 Control Station Communication)
 - IMobaRuntime / MobaRuntimeService (authoritative runtime owner)
-- `WorkflowService` (validated graph execution and dry-run planning)
+- `WorkflowService` (validated ordered action execution and dry-run planning)
 - `WorkflowValidator`, `WorkflowConditionEvaluator`, and `WorkflowEffectPlanner`
 - `WorkflowExecutionCoordinator` (per-feedback-source FIFO execution)
 - `WorkflowTraceStore` (bounded in-memory lifecycle projection)
@@ -216,41 +216,51 @@ IZ21 / JourneyManager / WorkflowService
   resolving against the Ids the editor exposes.
 - Covered by `Test/Backend/MobaRuntimeServiceProjectIsolationTests.cs`.
 
-### Workflow 2.0 execution boundary
+### Workflow execution boundary
 
-Workflow execution is a validation-gated, cancellable graph traversal:
+A workflow is a reusable ordered list of actions. An event triggers it and supplies its execution context:
 
-```text
-ordered Z21 feedback
-  -> JourneyManager captures immutable execution context and correlation
-  -> WorkflowExecutionCoordinator (FIFO per feedback source)
-  -> WorkflowValidator
-  -> WorkflowService
-       -> condition / delay / parallel / nested / terminate steps
-       -> WorkflowEffectPlanner (dry run) OR ActionExecutor (live)
-  -> correlated WorkflowLifecycleEvent records
-  -> WorkflowTraceStore -> WorkflowLibraryViewModel
+```mermaid
+classDiagram
+    Project "1" --> "*" Workflow : library
+    Journey "1" --> "*" JourneyFeedbackStep : event assignments
+    JourneyFeedbackStep "*" --> "0..1" Workflow : WorkflowId
+    Workflow "1" *-- "*" WorkflowAction : ordered Actions
+    WorkflowAction --> ActionType
+    WorkflowAction --> ActionExecutionContext : uses during execution
+    ActionExecutionContext --> IEvent : SourceEvent
+    ActionExecutionContext --> Journey : CurrentJourney
+    ActionExecutionContext --> Station : CurrentStation
+    ActionExecutionContext --> Platform : CurrentPlatform
 ```
 
-- General graph cycles and nested-workflow recursion are rejected. Retries are
-  bounded to 10 additional attempts and nested execution to 16 levels.
-- Step error policy overrides the workflow default. The terminal behaviors are
-  `Stop`, `Continue`, and `FailureBranch`; retry is an optional bounded modifier.
-- Parallel branches launch in persisted order, join explicitly, and reduce
-  results deterministically. Validation rejects ambiguous exclusive writes to
-  the same described resource.
-- Dry-run traverses the same validated graph but calls `WorkflowEffectPlanner`
-  and never a live action handler. Delay steps do not wait in dry-run mode.
-- Cancellation propagates through graph traversal, delays, handlers, nested
-  workflows, queued feedback execution, reset, project replacement, disconnect,
-  and shutdown.
-- Lifecycle events carry source correlation, execution/parent IDs, workflow and
-  step IDs, monotonic sequence, mode, attempt, timestamp, elapsed time, and a
-  sanitized result/detail. The trace store retains at most 100 executions and
-  10,000 entries by default and is not persisted in `solution.json`.
-- `WorkflowLibraryViewModel` is the single workflow catalog/editor state shared
-  by EventManagerPage and WorkflowsPage. It reuses the authoritative wrappers in
-  `ProjectViewModel.Workflows`; page code-behind only adapts WinUI input.
+`Workflow`, `WorkflowAction`, `JourneyFeedbackStep`, `Journey`, `Station` and `Platform`
+are persisted Domain classes. `ActionExecutionContext` is an existing Backend runtime
+class; `IEvent` belongs to Common. Event assignments own the workflow reference;
+a workflow does not own its triggers and can be reused by multiple assignments.
+
+- JourneyManager captures event, correlation, journey and current stop information.
+  `WorkflowExecutionCoordinator` preserves FIFO execution per feedback source.
+- `WorkflowValidator` checks identifiers, a nonempty action list, typed payloads
+  and nonnegative delays. Invalid drafts elsewhere in the library do not block a valid run.
+- `WorkflowService` awaits each action in list order and its optional `DelayAfterMs`.
+  The first failure or cancellation stops the sequence. Number is a display ordinal.
+- Each invocation gets its own `ActionExecutionContext` container. Service dependencies
+  and the active journey session remain shared intentionally. A stop change updates
+  the invocation context so subsequent actions see the new stop.
+- `SourceEvent` accepts any `IEvent`; current Event Manager assignments are feedback
+  occurrences. This change does not introduce a catalogue or subscription UI for other events.
+- Dry run plans effects in the same order without calling live handlers or waiting.
+- Lifecycle/trace contracts remain compatible: `StepId` now identifies an action.
+  The trace store retains at most 100 executions and 10,000 entries by default.
+- WorkflowsPage edits the reusable action library; EventManagerPage assigns workflows.
+  Both share `WorkflowLibraryViewModel` and authoritative project wrappers.
+- Graph conditions, parallel/nested steps, retries and explicit termination are removed.
+  Earlier graph definitions retain metadata but load with no actions; validation prevents
+  execution until the operator recreates them. No automatic graph flattening is performed.
+
+See [issue #132](https://github.com/ahuelsmann/MOBAflow/issues/132) and the
+[specification](../specs/002-workflow-action-sequences/spec.md).
 
 **Planned refactoring (`MainWindowViewModel` decomposition):**
 

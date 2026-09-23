@@ -24,7 +24,8 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Text.Json;
 
-using WorkflowSteps;
+using Action;
+using Domain.Enum;
 
 /// <summary>Describes one project reference that prevents silent workflow deletion.</summary>
 public sealed record WorkflowReference(string OwnerType, Guid OwnerId, string OwnerName, string Location);
@@ -71,7 +72,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     private WorkflowViewModel? _selectedWorkflow;
 
     [ObservableProperty]
-    private WorkflowStepViewModel? _selectedStep;
+    private WorkflowActionViewModel? _selectedAction;
 
     [ObservableProperty]
     private string _lastDeletionBlockMessage = string.Empty;
@@ -132,8 +133,8 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     /// <summary>Gets whether a dry run is available in the current host.</summary>
     public bool CanDryRun => _workflowService != null && _executionContext != null && SelectedWorkflow != null;
 
-    /// <summary>Gets the node editor target, or the workflow when no node is selected.</summary>
-    public object? SelectedEditorObject => (object?)this.SelectedStep ?? this.SelectedWorkflow;
+    /// <summary>Gets the selected action editor, or general workflow settings.</summary>
+    public object? SelectedEditorObject => (object?)this.SelectedAction ?? this.SelectedWorkflow;
 
     partial void OnSearchTextChanged(string value)
     {
@@ -144,7 +145,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     partial void OnSelectedWorkflowChanged(WorkflowViewModel? oldValue, WorkflowViewModel? newValue)
     {
         _ = oldValue;
-        SelectedStep = newValue?.Steps.FirstOrDefault();
+        SelectedAction = newValue?.Actions.FirstOrDefault();
         Validate();
         RefreshTrace();
         OnPropertyChanged(nameof(CanDryRun));
@@ -154,10 +155,79 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
         DeleteSelectedWorkflowCommand.NotifyCanExecuteChanged();
         AssignSelectedWorkflowCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(SelectedEditorObject));
+        OnPropertyChanged(nameof(ActionListHint));
+        NotifyActionCommands();
     }
 
-    /// <summary>Creates a valid minimal workflow and selects its authoritative wrapper.</summary>
-    [RelayCommand]
+    /// <summary>Gets whether action editing has a selected workflow.</summary>
+    public bool HasWorkflowSelection => SelectedWorkflow != null;
+
+    /// <summary>Gets guidance for the current action-list state.</summary>
+    public string ActionListHint => _projectContext.SelectedProject == null
+        ? "Select a project to manage workflows."
+        : SelectedWorkflow == null ? "Create or select a workflow."
+        : SelectedWorkflow.Actions.Count == 0 ? "Add your first action. Earlier graph workflows must be recreated as action lists."
+        : "Actions run from top to bottom. Each action receives the triggering event and its related context.";
+
+    /// <summary>Shows general settings independently of action selection.</summary>
+    [RelayCommand(CanExecute = nameof(HasSelectedWorkflow))]
+    private void ShowWorkflowSettings() => SelectedAction = null;
+
+    /// <summary>Adds an action without losing its owning workflow during selection notifications.</summary>
+    [RelayCommand(CanExecute = nameof(HasSelectedWorkflow))]
+    private void AddAction(ActionType type)
+    {
+        var workflow = SelectedWorkflow;
+        if (workflow == null) return;
+        workflow.AddActionCommand.Execute(type);
+        if (ReferenceEquals(SelectedWorkflow, workflow))
+            SelectedAction = workflow.Actions.LastOrDefault();
+    }
+
+    [RelayCommand(CanExecute = nameof(HasSelectedAction))]
+    private void DeleteSelectedAction()
+    {
+        var workflow = SelectedWorkflow;
+        var action = SelectedAction;
+        if (workflow == null || action == null) return;
+        var index = workflow.Actions.IndexOf(action);
+        workflow.DeleteActionCommand.Execute(action);
+        if (ReferenceEquals(SelectedWorkflow, workflow))
+            SelectedAction = workflow.Actions.ElementAtOrDefault(Math.Min(index, workflow.Actions.Count - 1));
+    }
+
+    [RelayCommand(CanExecute = nameof(CanMoveActionUp))]
+    private void MoveSelectedActionUp() => MoveSelectedAction(-1);
+
+    [RelayCommand(CanExecute = nameof(CanMoveActionDown))]
+    private void MoveSelectedActionDown() => MoveSelectedAction(1);
+
+    private void MoveSelectedAction(int offset)
+    {
+        var workflow = SelectedWorkflow;
+        var action = SelectedAction;
+        if (workflow == null || action == null) return;
+        workflow.MoveAction(action, workflow.Actions.IndexOf(action) + offset);
+        if (ReferenceEquals(SelectedWorkflow, workflow)) SelectedAction = action;
+        NotifyActionCommands();
+    }
+
+    private bool HasSelectedAction() => SelectedAction != null && SelectedWorkflow?.Actions.Contains(SelectedAction) == true;
+    private bool CanMoveActionUp() => HasSelectedAction() && SelectedWorkflow!.Actions.IndexOf(SelectedAction!) > 0;
+    private bool CanMoveActionDown() => HasSelectedAction() && SelectedWorkflow!.Actions.IndexOf(SelectedAction!) < SelectedWorkflow.Actions.Count - 1;
+
+    private void NotifyActionCommands()
+    {
+        OnPropertyChanged(nameof(HasWorkflowSelection));
+        ShowWorkflowSettingsCommand.NotifyCanExecuteChanged();
+        AddActionCommand.NotifyCanExecuteChanged();
+        DeleteSelectedActionCommand.NotifyCanExecuteChanged();
+        MoveSelectedActionUpCommand.NotifyCanExecuteChanged();
+        MoveSelectedActionDownCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>Creates an empty workflow and selects its authoritative wrapper.</summary>
+    [RelayCommand(CanExecute = nameof(HasSelectedProject))]
     private async Task CreateWorkflowAsync()
     {
         var project = _projectContext.SelectedProject;
@@ -166,16 +236,9 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
             return;
         }
 
-        var terminate = new WorkflowTerminateStep
-        {
-            Name = "Complete workflow",
-            Result = WorkflowTerminationResult.Succeeded
-        };
         var workflow = new Workflow
         {
-            Name = CreateUniqueName(project, "New Workflow"),
-            EntryStepId = terminate.Id,
-            Steps = [terminate]
+            Name = CreateUniqueName(project, "New Workflow")
         };
         _suppressAutoSave = true;
         try
@@ -202,17 +265,17 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
         }
     }
 
-    /// <summary>Selects one typed node from the current graph.</summary>
+    /// <summary>Selects an action from the current workflow.</summary>
     [RelayCommand]
-    private void SelectStep(WorkflowStepViewModel? step)
+    private void SelectAction(WorkflowActionViewModel? action)
     {
-        if (step == null || (SelectedWorkflow != null && SelectedWorkflow.Steps.Contains(step)))
+        if (action == null || (SelectedWorkflow != null && SelectedWorkflow.Actions.Contains(action)))
         {
-            SelectedStep = step;
+            SelectedAction = action;
         }
     }
 
-    /// <summary>Duplicates the selected graph with new workflow, node, and action identifiers.</summary>
+    /// <summary>Duplicates the selected workflow with independent action payloads and new identifiers.</summary>
     [RelayCommand(CanExecute = nameof(HasSelectedWorkflow))]
     private async Task DuplicateSelectedWorkflowAsync()
     {
@@ -365,10 +428,12 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
         }
     }
 
-    partial void OnSelectedStepChanged(WorkflowStepViewModel? value)
+    partial void OnSelectedActionChanged(WorkflowActionViewModel? value)
     {
         _ = value;
         OnPropertyChanged(nameof(SelectedEditorObject));
+        OnPropertyChanged(nameof(ActionListHint));
+        NotifyActionCommands();
     }
 
     /// <summary>Cancels the active dry run.</summary>
@@ -418,7 +483,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
         }
     }
 
-    /// <summary>Selects the workflow and step identified by one validation issue.</summary>
+    /// <summary>Selects the workflow and action identified by one validation issue.</summary>
     [RelayCommand]
     private void NavigateToValidationIssue(WorkflowValidationIssue? issue)
     {
@@ -434,8 +499,8 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
         }
 
         SelectedWorkflow = workflow;
-        SelectedStep = issue.StepId.HasValue
-            ? workflow.Steps.FirstOrDefault(step => step.Id == issue.StepId.Value)
+        SelectedAction = issue.StepId.HasValue
+            ? workflow.Actions.FirstOrDefault(action => action.Id == issue.StepId.Value)
             : null;
     }
 
@@ -458,6 +523,8 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
         AttachProject(null);
         GC.SuppressFinalize(this);
     }
+
+    private bool HasSelectedProject() => _projectContext.SelectedProject != null;
 
     private bool HasSelectedWorkflow() => this.SelectedWorkflow != null;
 
@@ -539,10 +606,17 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
 
     private void OnWorkflowPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        _ = sender;
-        _ = e;
+        if (e.PropertyName == nameof(WorkflowViewModel.ActionSummary)) return;
         Validate();
-        OnPropertyChanged(nameof(FilteredWorkflows));
+        if (e.PropertyName == nameof(WorkflowViewModel.Name))
+            OnPropertyChanged(nameof(FilteredWorkflows));
+        if (ReferenceEquals(sender, SelectedWorkflow))
+        {
+            if (SelectedAction != null && !SelectedWorkflow!.Actions.Contains(SelectedAction))
+                SelectedAction = null;
+            OnPropertyChanged(nameof(ActionListHint));
+            NotifyActionCommands();
+        }
         if (!_suppressAutoSave)
         {
             SaveAsync().Observe(ex => _logger?.LogWarning(ex, "Workflow auto-save failed"));
@@ -559,6 +633,8 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
 
     private void NotifyCatalogChanged()
     {
+        OnPropertyChanged(nameof(ActionListHint));
+        CreateWorkflowCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(Workflows));
         OnPropertyChanged(nameof(FilteredWorkflows));
         Validate();
@@ -573,58 +649,12 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     {
         var json = JsonSerializer.Serialize(source, JsonOptions.Compact);
         var duplicate = JsonSerializer.Deserialize<Workflow>(json, JsonOptions.Compact)
-            ?? throw new InvalidOperationException("Workflow duplication could not deserialize the cloned graph.");
+            ?? throw new InvalidOperationException("Workflow duplication could not deserialize the cloned action list.");
         duplicate.Id = Guid.NewGuid();
-        duplicate.Steps ??= [];
-
-        var idMap = new Dictionary<Guid, Guid>();
-        var oldIds = duplicate.Steps.Select(step => step.Id).ToArray();
-        for (var index = 0; index < duplicate.Steps.Count; index++)
-        {
-            var newId = Guid.NewGuid();
-            idMap.TryAdd(oldIds[index], newId);
-            duplicate.Steps[index].Id = newId;
-            if (duplicate.Steps[index] is WorkflowActionStep { Action: { } action })
-            {
-                action.Id = Guid.NewGuid();
-            }
-        }
-
-        duplicate.EntryStepId = Remap(duplicate.EntryStepId, idMap);
-        RemapPolicy(duplicate.DefaultErrorPolicy, idMap);
-        foreach (var step in duplicate.Steps)
-        {
-            step.NextStepId = Remap(step.NextStepId, idMap);
-            RemapPolicy(step.ErrorPolicy, idMap);
-            switch (step)
-            {
-                case WorkflowConditionStep condition:
-                    condition.TrueStepId = Remap(condition.TrueStepId, idMap) ?? Guid.Empty;
-                    condition.FalseStepId = Remap(condition.FalseStepId, idMap) ?? Guid.Empty;
-                    break;
-                case WorkflowParallelStep parallel:
-                    parallel.JoinStepId = Remap(parallel.JoinStepId, idMap) ?? Guid.Empty;
-                    foreach (var branch in parallel.Branches)
-                    {
-                        branch.EntryStepId = Remap(branch.EntryStepId, idMap) ?? Guid.Empty;
-                    }
-                    break;
-            }
-        }
-
+        foreach (var action in duplicate.Actions)
+            action.Id = Guid.NewGuid();
         return duplicate;
     }
-
-    private static void RemapPolicy(WorkflowErrorPolicy? policy, IReadOnlyDictionary<Guid, Guid> idMap)
-    {
-        if (policy != null)
-        {
-            policy.FailureStepId = Remap(policy.FailureStepId, idMap);
-        }
-    }
-
-    private static Guid? Remap(Guid? id, IReadOnlyDictionary<Guid, Guid> idMap) =>
-        id.HasValue && idMap.TryGetValue(id.Value, out var mapped) ? mapped : id;
 
     private static IReadOnlyList<WorkflowReference> FindReferences(Project project, Guid workflowId)
     {
@@ -636,17 +666,6 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
                 if (journey.FeedbackSequence[index].WorkflowId == workflowId)
                 {
                     references.Add(new WorkflowReference("Journey", journey.Id, journey.Name, $"Feedback step {index + 1}"));
-                }
-            }
-        }
-
-        foreach (var workflow in project.Workflows)
-        {
-            foreach (var step in workflow.Steps?.OfType<WorkflowNestedStep>() ?? [])
-            {
-                if (step.WorkflowId == workflowId)
-                {
-                    references.Add(new WorkflowReference("Workflow", workflow.Id, workflow.Name, $"Nested step '{step.Name}'"));
                 }
             }
         }

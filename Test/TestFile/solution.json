@@ -16,59 +16,31 @@
           "id": "00000000-0000-0000-0000-000000000001",
           "name": "Platform Announcement",
           "description": "Announce train arrival at platform",
-          "entryStepId": "10000000-0000-0000-0000-000000000101",
-          "steps": [
+          "Actions": [
             {
-              "kind": "action",
-              "id": "10000000-0000-0000-0000-000000000101",
+              "id": "10000000-0000-0000-0000-000000000001",
               "name": "Announcement Action",
-              "nextStepId": "10000000-0000-0000-0000-000000000102",
-              "action": {
-                "id": "10000000-0000-0000-0000-000000000001",
-                "name": "Announcement Action",
-                "type": 0,
-                "announcement": {
-                  "message": "Train RE 78 is arriving at platform 3"
-                }
+              "type": 0,
+              "announcement": {
+                "message": "Train RE 78 is arriving at platform 3"
               }
-            },
-            {
-              "kind": "terminate",
-              "id": "10000000-0000-0000-0000-000000000102",
-              "name": "Completed",
-              "result": 0
             }
-          ],
-          "defaultErrorPolicy": { "behavior": 0 }
+          ]
         },
         {
           "id": "00000000-0000-0000-0000-000000000002",
           "name": "Departure",
           "description": "Handle train departure sequence",
-          "entryStepId": "20000000-0000-0000-0000-000000000101",
-          "steps": [
+          "Actions": [
             {
-              "kind": "action",
-              "id": "20000000-0000-0000-0000-000000000101",
+              "id": "20000000-0000-0000-0000-000000000001",
               "name": "Departure Command",
-              "nextStepId": "20000000-0000-0000-0000-000000000102",
-              "action": {
-                "id": "20000000-0000-0000-0000-000000000001",
-                "name": "Departure Command",
-                "type": 2,
-                "command": {
-                  "bytesBase64": "AQID"
-                }
+              "type": 2,
+              "command": {
+                "bytesBase64": "AQID"
               }
-            },
-            {
-              "kind": "terminate",
-              "id": "20000000-0000-0000-0000-000000000102",
-              "name": "Completed",
-              "result": 0
             }
-          ],
-          "defaultErrorPolicy": { "behavior": 0 }
+          ]
         }
       ],
       "Journeys": [
