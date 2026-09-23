@@ -5,6 +5,7 @@ using Common.Configuration;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
 using SharedUI.Interface;
 using SharedUI.ViewModel;
@@ -14,6 +15,7 @@ internal sealed partial class TimetablePage
     private readonly AppSettings _settings;
     private readonly ISettingsService? _settingsService;
     private readonly ILogger<TimetablePage>? _logger;
+    private bool _isCompactLayout;
 
     public TimetablePageViewModel ViewModel { get; }
 
@@ -30,15 +32,15 @@ internal sealed partial class TimetablePage
         InitializeComponent();
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
+        SizeChanged += OnSizeChanged;
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
         _ = sender;
         _ = e;
-        var layout = _settings.Layout.TimetablePage;
-        ServicesColumn.Width = new GridLength(Math.Max(0.1, layout.ServicesColumnStarValue), GridUnitType.Star);
-        DetailsColumn.Width = new GridLength(Math.Max(0.1, layout.DetailsColumnStarValue), GridUnitType.Star);
+        if (!_isCompactLayout) RestoreColumnWidths();
+        UpdateResponsiveLayout();
         try
         {
             await ViewModel.RefreshAsync();
@@ -49,19 +51,61 @@ internal sealed partial class TimetablePage
         }
     }
 
+    private void OnSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (IsLoaded) UpdateResponsiveLayout();
+    }
+
+    private void UpdateResponsiveLayout()
+    {
+        var compact = ActualWidth < 1000;
+        if (compact == _isCompactLayout) return;
+
+        if (compact) RememberColumnWidths();
+        _isCompactLayout = compact;
+        ServicesColumn.MinWidth = compact ? 0 : 280;
+        DetailsColumn.MinWidth = compact ? 0 : 360;
+        BoardGrid.ColumnSpacing = compact ? 0 : 12;
+        BoardGrid.RowSpacing = compact ? 16 : 0;
+        ServicesRow.Height = new GridLength(compact ? 2 : 1, GridUnitType.Star);
+        DetailsRow.Height = compact ? new GridLength(3, GridUnitType.Star) : new GridLength(0);
+        Grid.SetRow(DetailsPanel, compact ? 1 : 0);
+        Grid.SetColumn(DetailsPanel, compact ? 0 : 2);
+        BoardSplitter.Visibility = compact ? Visibility.Collapsed : Visibility.Visible;
+        if (compact)
+        {
+            ServicesColumn.Width = new GridLength(1, GridUnitType.Star);
+            DetailsColumn.Width = new GridLength(0);
+        }
+        else
+        {
+            RestoreColumnWidths();
+        }
+    }
+
+    private void RestoreColumnWidths()
+    {
+        var layout = _settings.Layout.TimetablePage;
+        ServicesColumn.Width = new GridLength(Math.Max(0.1, layout.ServicesColumnStarValue), GridUnitType.Star);
+        DetailsColumn.Width = new GridLength(Math.Max(0.1, layout.DetailsColumnStarValue), GridUnitType.Star);
+    }
+
+    private void RememberColumnWidths()
+    {
+        if (_isCompactLayout) return;
+        var total = ServicesColumn.ActualWidth + DetailsColumn.ActualWidth;
+        if (total <= 0) return;
+        _settings.Layout.TimetablePage.ServicesColumnStarValue = ServicesColumn.ActualWidth / total;
+        _settings.Layout.TimetablePage.DetailsColumnStarValue = DetailsColumn.ActualWidth / total;
+    }
+
     private async void OnUnloaded(object sender, RoutedEventArgs e)
     {
         _ = sender;
         _ = e;
         try
         {
-            var total = ServicesColumn.ActualWidth + DetailsColumn.ActualWidth;
-            if (total > 0)
-            {
-                _settings.Layout.TimetablePage.ServicesColumnStarValue = ServicesColumn.ActualWidth / total;
-                _settings.Layout.TimetablePage.DetailsColumnStarValue = DetailsColumn.ActualWidth / total;
-            }
-
+            RememberColumnWidths();
             if (_settingsService is not null) await _settingsService.SaveSettingsAsync(_settings);
         }
         catch (Exception ex)

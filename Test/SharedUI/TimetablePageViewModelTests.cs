@@ -150,6 +150,140 @@ internal sealed class TimetablePageViewModelTests
     }
 
     [Test]
+    public async Task EmptyTimetable_Should_TransitionThroughAddingAndDeletingFirstService()
+    {
+        var project = CreateProject();
+        project.TimetableServices.Clear();
+        using var context = CreateContext(project, new RecordingOperations());
+        await context.ViewModel.RefreshAsync();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(context.ViewModel.HasServices, Is.False);
+            Assert.That(context.ViewModel.HasNoMatchingServices, Is.False);
+            Assert.That(context.ViewModel.HasServiceSelection, Is.False);
+            Assert.That(context.ViewModel.SaveDefinitionCommand.CanExecute(null), Is.False);
+            Assert.That(context.ViewModel.AddServiceCommand.CanExecute(null), Is.True);
+        });
+
+        await context.ViewModel.AddServiceCommand.ExecuteAsync(null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(context.ViewModel.HasServices, Is.True);
+            Assert.That(context.ViewModel.HasServiceSelection, Is.True);
+            Assert.That(context.ViewModel.SaveDefinitionCommand.CanExecute(null), Is.True);
+        });
+
+        await context.ViewModel.DeleteSelectedServiceCommand.ExecuteAsync(null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(context.ViewModel.HasServices, Is.False);
+            Assert.That(context.ViewModel.HasServiceSelection, Is.False);
+            Assert.That(context.ViewModel.SaveDefinitionCommand.CanExecute(null), Is.False);
+        });
+    }
+
+    [Test]
+    public async Task FilteringOutSelection_Should_ClearDetailsAndDisableSelectionCommands()
+    {
+        using var context = CreateContext(CreateProject(), new RecordingOperations());
+        await context.ViewModel.RefreshAsync();
+        SelectFirstServiceAndCall(context.ViewModel);
+        var changedProperties = new List<string?>();
+        var saveCommandChanges = 0;
+        context.ViewModel.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
+        context.ViewModel.SaveDefinitionCommand.CanExecuteChanged += (_, _) => saveCommandChanges++;
+
+        context.ViewModel.FilterText = "No such service";
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(context.ViewModel.HasServices, Is.True);
+            Assert.That(context.ViewModel.HasNoMatchingServices, Is.True);
+            Assert.That(context.ViewModel.HasServiceSelection, Is.False);
+            Assert.That(context.ViewModel.HasCallSelection, Is.False);
+            Assert.That(context.ViewModel.Calls, Is.Empty);
+            Assert.That(context.ViewModel.SaveDefinitionCommand.CanExecute(null), Is.False);
+            Assert.That(context.ViewModel.RecordArrivalCommand.CanExecute(null), Is.False);
+            Assert.That(context.ViewModel.ServiceCountText, Is.EqualTo("0 of 1 services"));
+            Assert.That(changedProperties, Does.Contain(nameof(TimetablePageViewModel.HasNoMatchingServices)));
+            Assert.That(changedProperties, Does.Contain(nameof(TimetablePageViewModel.HasServiceSelection)));
+            Assert.That(changedProperties, Does.Contain(nameof(TimetablePageViewModel.HasCallSelection)));
+            Assert.That(saveCommandChanges, Is.GreaterThan(0));
+        });
+
+        context.ViewModel.ResetFiltersCommand.Execute(null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(context.ViewModel.Services, Has.Count.EqualTo(1));
+            Assert.That(context.ViewModel.HasNoMatchingServices, Is.False);
+            Assert.That(context.ViewModel.ServiceCountText, Is.EqualTo("1 service"));
+        });
+    }
+
+    [Test]
+    public async Task FilteringMatchingService_Should_PreserveServiceAndCallSelection()
+    {
+        using var context = CreateContext(CreateProject(), new RecordingOperations());
+        await context.ViewModel.RefreshAsync();
+        SelectFirstServiceAndCall(context.ViewModel);
+        var serviceId = context.ViewModel.SelectedService!.Id;
+        var callId = context.ViewModel.SelectedCall!.Id;
+
+        context.ViewModel.FilterText = "Express";
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(context.ViewModel.SelectedService!.Id, Is.EqualTo(serviceId));
+            Assert.That(context.ViewModel.SelectedCall!.Id, Is.EqualTo(callId));
+            Assert.That(context.ViewModel.SaveDefinitionCommand.CanExecute(null), Is.True);
+        });
+    }
+
+    [Test]
+    public async Task AddServiceWhileFiltered_Should_RevealAndSelectNewService()
+    {
+        using var context = CreateContext(CreateProject(), new RecordingOperations());
+        await context.ViewModel.RefreshAsync();
+        context.ViewModel.SelectedFocus = "Station";
+        context.ViewModel.FilterText = "No such station";
+
+        await context.ViewModel.AddServiceCommand.ExecuteAsync(null);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(context.ViewModel.Services, Has.Count.EqualTo(2));
+            Assert.That(context.ViewModel.HasNoMatchingServices, Is.False);
+            Assert.That(context.ViewModel.SelectedService!.ServiceNumber, Is.EqualTo("S002"));
+            Assert.That(context.ViewModel.SaveDefinitionCommand.CanExecute(null), Is.True);
+        });
+    }
+
+    [Test]
+    public async Task ClearingProject_Should_RemovePreviousBoardAndDisableAdding()
+    {
+        var project = CreateProject();
+        var issue = new TimetableIssue(TimetableIssueKind.PlatformConflict, project.TimetableServices[0].Id, null, "Overlap");
+        using var context = CreateContext(project, new RecordingOperations(), new TimetableEvaluationResult([issue]));
+        await context.ViewModel.RefreshAsync();
+        SelectFirstServiceAndCall(context.ViewModel);
+        Assert.That(context.ViewModel.HasIssues, Is.True);
+
+        context.MainWindow.SelectedProject = null;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(context.ViewModel.HasServices, Is.False);
+            Assert.That(context.ViewModel.HasNoMatchingServices, Is.False);
+            Assert.That(context.ViewModel.HasIssues, Is.False);
+            Assert.That(context.ViewModel.HasServiceSelection, Is.False);
+            Assert.That(context.ViewModel.HasCallSelection, Is.False);
+            Assert.That(context.ViewModel.AddServiceCommand.CanExecute(null), Is.False);
+            Assert.That(context.ViewModel.SaveDefinitionCommand.CanExecute(null), Is.False);
+        });
+    }
+
+    [Test]
     public async Task AddAndDeleteCommands_Should_UpdateDefinitionCollection()
     {
         // Arrange

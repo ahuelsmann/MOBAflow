@@ -70,6 +70,8 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
     public IReadOnlyList<string> FocusOptions { get; } = ["All", "Station", "Train", "Time window"];
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsTimeWindowFilter))]
+    [NotifyPropertyChangedFor(nameof(SearchPlaceholder))]
     private string _selectedFocus = "All";
 
     [ObservableProperty]
@@ -79,6 +81,8 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
     private double _timeWindowHours = 4;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasServiceSelection))]
+    [NotifyCanExecuteChangedFor(nameof(SaveDefinitionCommand))]
     [NotifyCanExecuteChangedFor(nameof(DeleteSelectedServiceCommand))]
     [NotifyCanExecuteChangedFor(nameof(HoldSelectedServiceCommand))]
     [NotifyCanExecuteChangedFor(nameof(ReleaseSelectedServiceCommand))]
@@ -91,6 +95,7 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
     private TimetableServiceRowViewModel? _selectedService;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasCallSelection))]
     [NotifyCanExecuteChangedFor(nameof(RecordArrivalCommand))]
     [NotifyCanExecuteChangedFor(nameof(RecordDepartureCommand))]
     [NotifyCanExecuteChangedFor(nameof(ShiftSelectedCallEarlierCommand))]
@@ -102,9 +107,41 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
     private string _validationSummary = "No timetable loaded";
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasStatusMessage))]
     private string _statusText = "Ready";
 
     public bool HasProject => _mainWindow.SelectedProject is not null;
+
+    public bool HasServices => _allRows.Count > 0;
+
+    public bool HasNoMatchingServices => HasServices && Services.Count == 0;
+
+    public bool HasServiceSelection => SelectedService is not null;
+
+    public bool HasCallSelection => SelectedCall is not null;
+
+    public bool HasIssues => Issues.Count > 0;
+
+    public bool HasStatusMessage => StatusText is not ("Ready" or "Timetable refreshed") && !string.IsNullOrWhiteSpace(StatusText);
+
+    public bool IsTimeWindowFilter => SelectedFocus == "Time window";
+
+    public string ServiceCountText => Services.Count == _allRows.Count
+        ? $"{Services.Count} {(Services.Count == 1 ? "service" : "services")}"
+        : $"{Services.Count} of {_allRows.Count} services";
+
+    public string EmptyStateTitle => HasProject ? "No services yet" : "Select a project";
+
+    public string EmptyStateDescription => HasProject
+        ? "Add your first service to plan station stops and manage arrivals and departures. A journey stop and a station platform are required."
+        : "Select a project in Solution to view and manage its timetable.";
+
+    public string SearchPlaceholder => SelectedFocus switch
+    {
+        "Station" => "Station name",
+        "Train" => "Train name",
+        _ => "Service number or name"
+    };
 
     /// <summary>Reloads definitions, operating state, live progress and conflict findings.</summary>
     [RelayCommand]
@@ -114,12 +151,13 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
         Services.Clear();
         Calls.Clear();
         Issues.Clear();
-        _allRows = [];
         SelectedService = null;
         SelectedCall = null;
 
         if (project is null)
         {
+            _allRows = [];
+            NotifyBoardStateChanged();
             ValidationSummary = "Select a project to view its timetable.";
             return;
         }
@@ -139,12 +177,13 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
             Issues.Add(new TimetableIssueRowViewModel(issue));
         }
         ValidationSummary = result.IsValid
-            ? $"{Services.Count} services; no conflicts"
+            ? $"{_allRows.Count} services; no conflicts"
             : $"{result.Issues.Count} validation issues or conflicts";
+        OnPropertyChanged(nameof(HasIssues));
         StatusText = "Timetable refreshed";
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(HasProject))]
     private async Task AddServiceAsync()
     {
         var project = CurrentProject;
@@ -179,6 +218,7 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
         };
         project.TimetableServices.Add(definition);
         await _mainWindow.SaveSolutionInternalAsync();
+        ResetFilters();
         await RefreshAsync();
         SelectedService = Services.FirstOrDefault(service => service.Id == definition.Id);
         StatusText = "Service added";
@@ -306,9 +346,10 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
         StatusText = "Platform reassigned";
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(HasSelectedService))]
     private async Task SaveDefinitionAsync()
     {
+        if (SelectedService is null) return;
         await _mainWindow.SaveSolutionInternalAsync();
         await RefreshAndReselectAsync(SelectedService?.Id, SelectedCall?.Id);
         StatusText = "Timetable definition saved";
@@ -390,6 +431,8 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
 
     private void ApplyFilter()
     {
+        var selectedServiceId = SelectedService?.Id;
+        var selectedCallId = SelectedCall?.Id;
         var project = CurrentProject;
         IEnumerable<TimetableServiceRowViewModel> filtered = _allRows;
         var text = FilterText.Trim();
@@ -425,6 +468,27 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
 
         Services.Clear();
         foreach (var row in filtered) Services.Add(row);
+        SelectedService = Services.FirstOrDefault(service => service.Id == selectedServiceId);
+        SelectedCall = Calls.FirstOrDefault(call => call.Id == selectedCallId);
+        NotifyBoardStateChanged();
+    }
+
+    [RelayCommand]
+    private void ResetFilters()
+    {
+        FilterText = string.Empty;
+        SelectedFocus = "All";
+        TimeWindowHours = 4;
+    }
+
+    private void NotifyBoardStateChanged()
+    {
+        OnPropertyChanged(nameof(HasServices));
+        OnPropertyChanged(nameof(HasNoMatchingServices));
+        OnPropertyChanged(nameof(ServiceCountText));
+        OnPropertyChanged(nameof(HasIssues));
+        OnPropertyChanged(nameof(EmptyStateTitle));
+        OnPropertyChanged(nameof(EmptyStateDescription));
     }
 
     private async Task RefreshAndReselectAsync(Guid? serviceId, Guid? callId = null)
@@ -475,6 +539,8 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
         _ = sender;
         if (e.PropertyName != nameof(MainWindowViewModel.SelectedProject)) return;
         OnPropertyChanged(nameof(HasProject));
+        AddServiceCommand.NotifyCanExecuteChanged();
+        StatusText = "Ready";
         try
         {
             await RefreshAsync();
