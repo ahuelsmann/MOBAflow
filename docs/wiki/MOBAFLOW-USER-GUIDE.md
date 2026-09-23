@@ -60,8 +60,9 @@ on one global journey input.
 Use **Event Manager** to edit a journey's event plan. Each event assigns a workflow
 to an InPort and a count since that journey started. Counts are independent for
 each InPort; list order does not define the trigger sequence. Existing feedback
-sequences remain stored until you explicitly choose **Create event plan**; their
-repeat counts are not converted. **Journey Map** visualizes the route and progress.
+sequences remain stored. **Create event plan** explicitly switches to an empty
+event plan without converting repeat counts or deleting the saved sequence.
+**Journey Map** visualizes the route and progress.
 
 At the last stop, a journey can stop, restart or continue with another journey,
 depending on its configured behavior.
