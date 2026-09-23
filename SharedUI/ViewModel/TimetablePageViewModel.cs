@@ -21,6 +21,8 @@ using Microsoft.Extensions.Logging;
 /// </summary>
 public sealed partial class TimetablePageViewModel : ObservableObject, IDisposable
 {
+    private const string TimeWindowFocus = "Time window";
+
     private readonly MainWindowViewModel _mainWindow;
     private readonly ITimetableEvaluationService _evaluation;
     private readonly ITimetableOperationsService _operations;
@@ -67,7 +69,7 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
 
     public ObservableCollection<TimetableIssueRowViewModel> Issues { get; } = [];
 
-    public IReadOnlyList<string> FocusOptions { get; } = ["All", "Station", "Train", "Time window"];
+    public IReadOnlyList<string> FocusOptions { get; } = ["All", "Station", "Train", TimeWindowFocus];
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsTimeWindowFilter))]
@@ -116,19 +118,25 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
 
     public bool HasNoMatchingServices => HasServices && Services.Count == 0;
 
-    public bool HasServiceSelection => SelectedService is not null;
+    public bool HasServiceSelection => this.SelectedService is not null;
 
-    public bool HasCallSelection => SelectedCall is not null;
+    public bool HasCallSelection => this.SelectedCall is not null;
 
     public bool HasIssues => Issues.Count > 0;
 
-    public bool HasStatusMessage => StatusText is not ("Ready" or "Timetable refreshed") && !string.IsNullOrWhiteSpace(StatusText);
+    public bool HasStatusMessage => this.StatusText is not ("Ready" or "Timetable refreshed") && !string.IsNullOrWhiteSpace(this.StatusText);
 
-    public bool IsTimeWindowFilter => SelectedFocus == "Time window";
+    public bool IsTimeWindowFilter => this.SelectedFocus == TimeWindowFocus;
 
-    public string ServiceCountText => Services.Count == _allRows.Count
-        ? $"{Services.Count} {(Services.Count == 1 ? "service" : "services")}"
-        : $"{Services.Count} of {_allRows.Count} services";
+    public string ServiceCountText
+    {
+        get
+        {
+            if (Services.Count != _allRows.Count) return $"{Services.Count} of {_allRows.Count} services";
+            var noun = Services.Count == 1 ? "service" : "services";
+            return $"{Services.Count} {noun}";
+        }
+    }
 
     public string EmptyStateTitle => HasProject ? "No services yet" : "Select a project";
 
@@ -136,7 +144,7 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
         ? "Add your first service to plan station stops and manage arrivals and departures. A journey stop and a station platform are required."
         : "Select a project in Solution to view and manage its timetable.";
 
-    public string SearchPlaceholder => SelectedFocus switch
+    public string SearchPlaceholder => this.SelectedFocus switch
     {
         "Station" => "Station name",
         "Train" => "Train name",
@@ -387,7 +395,7 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
     partial void OnTimeWindowHoursChanged(double value)
     {
         _ = value;
-        if (SelectedFocus == "Time window") ApplyFilter();
+        if (SelectedFocus == TimeWindowFocus) ApplyFilter();
     }
 
     /// <inheritdoc />
@@ -453,7 +461,7 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
                 .ToHashSet();
             filtered = filtered.Where(row => row.EffectiveTrainId is Guid trainId && trainIds.Contains(trainId));
         }
-        else if (SelectedFocus == "Time window")
+        else if (SelectedFocus == TimeWindowFocus)
         {
             var start = _timeProvider.GetLocalNow().AddHours(-1);
             var windowHours = double.IsFinite(TimeWindowHours) ? Math.Max(1, TimeWindowHours) : 1;
