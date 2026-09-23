@@ -74,6 +74,9 @@
                         <AppBarButton Label="Move down" Command="{x:Bind ViewModel.MoveSelectedEventDownCommand}">
                             <AppBarButton.Icon><FontIcon Glyph="&#xE74B;" /></AppBarButton.Icon>
                         </AppBarButton>
+                        <AppBarSeparator />
+                        <AppBarToggleButton Label="Values panel" IsChecked="{x:Bind ValuesPanel.IsExpanded, Mode=TwoWay}" />
+                        <AppBarToggleButton Label="Properties panel" IsChecked="{x:Bind PropertiesPanel.IsExpanded, Mode=TwoWay}" />
                     </CommandBar.SecondaryCommands>
                 </CommandBar>
                 <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
@@ -95,10 +98,11 @@
                                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" MinWidth="0" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                             <StackPanel Spacing="4">
                                                 <Grid ColumnSpacing="8">
-                                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                                    <TextBlock Text="{x:Bind InPortText, Mode=OneWay}" Style="{StaticResource BodyStrongTextBlockStyle}" TextTrimming="CharacterEllipsis" />
+                                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" MinWidth="0" /><ColumnDefinition Width="*" MinWidth="0" /></Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{x:Bind InPortText, Mode=OneWay}" Style="{StaticResource BodyStrongTextBlockStyle}"
+                                                               TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{x:Bind InPortText, Mode=OneWay}" />
                                                     <TextBlock Grid.Column="1" Text="{x:Bind CountLabel, Mode=OneWay}" Style="{StaticResource BodyStrongTextBlockStyle}"
-                                                               ToolTipService.ToolTip="Activation count for this InPort since journey start" />
+                                                               TextTrimming="CharacterEllipsis" TextAlignment="Right" ToolTipService.ToolTip="{x:Bind CountLabel, Mode=OneWay}" />
                                                 </Grid>
                                                 <Grid ColumnSpacing="8">
                                                     <Grid.ColumnDefinitions><ColumnDefinition Width="16" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>

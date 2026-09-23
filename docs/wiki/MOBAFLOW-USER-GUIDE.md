@@ -104,6 +104,8 @@ or delete events, and edit the selected event in **Properties**. **Values** cont
 the searchable workflow library: drop a workflow onto a row to assign it, or onto
 the free area to create an event. Double-clicking a workflow assigns it to the
 selected event as well. Drag an event to reorder it; hold **Ctrl** to copy it.
+Use **Values panel** and **Properties panel** in the event command bar's **More**
+menu to toggle either panel with the keyboard, including while a journey runs.
 
 Use **Start journey** and **Stop** for the selected journey. Event editing is locked
 while an event-plan journey is running, but rows remain selectable for inspection.
