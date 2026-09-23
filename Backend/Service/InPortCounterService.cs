@@ -25,9 +25,9 @@ public sealed class InPortCountedEventArgs(InPortCounterSnapshot snapshot, Guid 
 /// Owns application-lifetime input counts independently of projects, journeys, and UI pages.
 /// Only an explicit reset clears counts; registering a journey captures its bases atomically.
 /// </summary>
-public sealed class InPortCounterService : IDisposable
+public sealed partial class InPortCounterService : IDisposable
 {
-    private readonly object _sync = new();
+    private readonly Lock _sync = new();
     private readonly IZ21 _z21;
     private readonly AppSettings _settings;
     private readonly TimeProvider _timeProvider;
@@ -199,15 +199,15 @@ public sealed class InPortCounterService : IDisposable
                 }
             }
 
-            foreach (var subscriber in Counted?.GetInvocationList() ?? [])
+            foreach (var subscriber in Delegate.EnumerateInvocationList(Counted))
             {
                 try
                 {
-                    ((EventHandler<InPortCountedEventArgs>)subscriber)(this, next);
+                    subscriber(this, next);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "InPort counter subscriber failed for input {InPort}", next.Snapshot.InPort);
+                    LogCountedSubscriberFailed(_logger, ex, next.Snapshot.InPort);
                 }
             }
 
@@ -217,18 +217,24 @@ public sealed class InPortCounterService : IDisposable
 
     private void PublishSnapshotChanged()
     {
-        foreach (var subscriber in SnapshotChanged?.GetInvocationList() ?? [])
+        foreach (var subscriber in Delegate.EnumerateInvocationList(SnapshotChanged))
         {
             try
             {
-                ((EventHandler)subscriber)(this, EventArgs.Empty);
+                subscriber(this, EventArgs.Empty);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "InPort counter snapshot subscriber failed");
+                LogSnapshotSubscriberFailed(_logger, ex);
             }
         }
     }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "InPort counter subscriber failed for input {InPort}")]
+    private static partial void LogCountedSubscriberFailed(ILogger logger, Exception exception, uint inPort);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "InPort counter snapshot subscriber failed")]
+    private static partial void LogSnapshotSubscriberFailed(ILogger logger, Exception exception);
 
     /// <inheritdoc />
     public void Dispose()

@@ -97,8 +97,10 @@ Opening an old project must not reinterpret per-step repeat counts as new start-
 - Equal-condition rows each run once in stored order. Different conditions remain independent.
 - A dispatched event is not automatically retried after workflow failure. A new run creates a fresh dispatch scope.
 - Stopping prevents further dispatch; already executing work follows existing cancellation behavior.
+- A final stop action requests natural completion. Its running workflow finishes before the journey stops, restarts or starts its successor; queued events from the completed run are cancelled. An explicit operator stop still cancels immediately.
 - Reset and start must not interleave so as to invalidate a captured baseline.
 - Project selection and deferred editor updates do not replace an active event-plan execution. Starting changed definitions requires all active event-plan journeys to stop first.
+- Automatic successor starts use the same pending-definition checks as operator starts. If another journey prevents activating changed definitions, the successor stays inactive rather than using stale settings.
 
 ## Requirements
 

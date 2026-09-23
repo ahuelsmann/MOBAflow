@@ -121,7 +121,17 @@ public sealed class WorkflowExecutionCoordinator : IWorkflowExecutionCoordinator
             var request = execution.ContextFactory is null
                 ? execution.Request
                 : execution.Request with { Context = execution.ContextFactory() };
-            return await _workflowService.ExecuteAsync(request, entry.Cancellation.Token).ConfigureAwait(false);
+            try
+            {
+                return await _workflowService.ExecuteAsync(request, entry.Cancellation.Token).ConfigureAwait(false);
+            }
+            finally
+            {
+                if (execution.OnCompleted is not null)
+                {
+                    await execution.OnCompleted().ConfigureAwait(false);
+                }
+            }
         }
         catch (OperationCanceledException) when (entry.Cancellation.IsCancellationRequested)
         {

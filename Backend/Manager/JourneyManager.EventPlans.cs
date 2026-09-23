@@ -140,12 +140,16 @@ public partial class JourneyManager
     private void OnInPortCounted(object? sender, InPortCountedEventArgs args)
     {
         ProcessCountedFeedbackAsync(args).Observe(ex =>
-            _logger.LogWarning(ex, "Journey event processing failed for InPort {InPort}", args.Snapshot.InPort));
+            LogEventProcessingFailed(_logger, ex, args.Snapshot.InPort));
     }
+
+    [LoggerMessage(EventId = 0, Level = LogLevel.Warning, Message = "Journey event processing failed for InPort {InPort}")]
+    private static partial void LogEventProcessingFailed(ILogger logger, Exception exception, uint inPort);
 
     /// <summary>Evaluates each armed event against its own input's count since journey start.</summary>
     protected virtual async Task ProcessCountedFeedbackAsync(InPortCountedEventArgs args)
     {
+        ArgumentNullException.ThrowIfNull(args);
         var queuedExecutions = new List<Task<WorkflowExecutionResult>>();
         lock (_stateSync)
         {
@@ -156,39 +160,47 @@ public partial class JourneyManager
 
             foreach (var run in _eventPlanRuns.Values.ToArray())
             {
-                var baseCount = run.State.CurrentEventBases.GetValueOrDefault(args.Snapshot.InPort);
-                if (!run.State.IsActive || args.Snapshot.Count <= baseCount
-                    || _counterRuns.GetValueOrDefault(run.Journey.Id)?.Generation != args.Generation)
-                {
-                    continue;
-                }
-
-                var relativeCount = args.Snapshot.Count - baseCount;
-                foreach (var journeyEvent in run.Journey.EventPlan!.Events)
-                {
-                    if (!IsCurrentRun(run) || !journeyEvent.Enabled || journeyEvent.InPort != args.Snapshot.InPort
-                        || journeyEvent.Count != relativeCount || !run.CompletedEvents.Add(journeyEvent.Id))
-                    {
-                        continue;
-                    }
-
-                    run.State.LastFeedbackTime = args.Snapshot.LastFeedbackTime?.LocalDateTime;
-                    run.State.CompletedEventIds = Array.AsReadOnly(run.CompletedEvents.ToArray());
-                    PublishTransition(run.Journey, run.State, JourneyRuntimeTransitionKind.FeedbackAccepted,
-                        inPort: checked((int)journeyEvent.InPort));
-                    OnFeedbackReceived(new JourneyFeedbackEventArgs { JourneyId = run.Journey.Id, SessionState = run.State });
-
-                    if (IsCurrentRun(run) && journeyEvent.WorkflowId is Guid workflowId)
-                    {
-                        queuedExecutions.Add(QueueEventWorkflow(run, journeyEvent, workflowId, args.CorrelationId));
-                    }
-                }
+                QueueMatchingEventWorkflows(run, args, queuedExecutions);
             }
         }
 
         if (queuedExecutions.Count > 0)
         {
             await Task.WhenAll(queuedExecutions).ConfigureAwait(false);
+        }
+    }
+
+    private void QueueMatchingEventWorkflows(
+        EventPlanRun run,
+        InPortCountedEventArgs args,
+        List<Task<WorkflowExecutionResult>> queuedExecutions)
+    {
+        var baseCount = run.State.CurrentEventBases.GetValueOrDefault(args.Snapshot.InPort);
+        if (!run.State.IsActive || run.State.IsJourneyCompletionRequested || args.Snapshot.Count <= baseCount
+            || _counterRuns.GetValueOrDefault(run.Journey.Id)?.Generation != args.Generation)
+        {
+            return;
+        }
+
+        var relativeCount = args.Snapshot.Count - baseCount;
+        foreach (var journeyEvent in run.Journey.EventPlan!.Events)
+        {
+            if (!IsCurrentRun(run) || !journeyEvent.Enabled || journeyEvent.InPort != args.Snapshot.InPort
+                || journeyEvent.Count != relativeCount || !run.CompletedEvents.Add(journeyEvent.Id))
+            {
+                continue;
+            }
+
+            run.State.LastFeedbackTime = args.Snapshot.LastFeedbackTime?.LocalDateTime;
+            run.State.CompletedEventIds = Array.AsReadOnly(run.CompletedEvents.ToArray());
+            PublishTransition(run.Journey, run.State, JourneyRuntimeTransitionKind.FeedbackAccepted,
+                inPort: checked((int)journeyEvent.InPort));
+            OnFeedbackReceived(new JourneyFeedbackEventArgs { JourneyId = run.Journey.Id, SessionState = run.State });
+
+            if (IsCurrentRun(run) && journeyEvent.WorkflowId is Guid workflowId)
+            {
+                queuedExecutions.Add(QueueEventWorkflow(run, journeyEvent, workflowId, args.CorrelationId));
+            }
         }
     }
 
@@ -200,6 +212,7 @@ public partial class JourneyManager
             SourceKey = $"journey-event-plan:{run.State.RunId}",
             OwnerId = run.Journey.Id,
             ContextFactory = () => CreateEventWorkflowContext(run, journeyEvent.InPort),
+            OnCompleted = () => CompleteEventPlanRunAsync(run),
             Request = new WorkflowExecutionRequest
             {
                 Project = run.Project,
@@ -256,17 +269,54 @@ public partial class JourneyManager
                 });
             }
 
-            if (result.CompletionRequested)
-            {
-                CompleteEventPlanRun(run);
-            }
-
             _runtimeStateStore.Save(_project.Id, run.State);
             return result;
         }
     }
 
-    private void CompleteEventPlanRun(EventPlanRun run)
+    private async Task CompleteEventPlanRunAsync(EventPlanRun run)
+    {
+        Guid? nextJourneyId;
+        lock (_stateSync)
+        {
+            if (!IsCurrentRun(run) || !run.State.IsJourneyCompletionRequested)
+            {
+                return;
+            }
+
+            nextJourneyId = CompleteEventPlanRun(run);
+        }
+
+        if (nextJourneyId.HasValue)
+        {
+            await StartNextJourneyAsync(nextJourneyId.Value).ConfigureAwait(false);
+        }
+    }
+
+    private async Task StartNextJourneyAsync(Guid nextJourneyId)
+    {
+        if (_startJourneyAsync is not null)
+        {
+            // Legacy completion can call this while holding the manager lock.
+            // Enter the runtime command boundary only after releasing that lock.
+            await Task.Yield();
+            await _startJourneyAsync(nextJourneyId).ConfigureAwait(false);
+            return;
+        }
+
+        lock (_stateSync)
+        {
+            if (!_disposed)
+            {
+                TryActivateNextJourney(nextJourneyId);
+            }
+        }
+    }
+
+    [LoggerMessage(EventId = 0, Level = LogLevel.Warning, Message = "Automatic start failed for journey {JourneyId}")]
+    private static partial void LogAutomaticStartFailed(ILogger logger, Exception exception, Guid journeyId);
+
+    private Guid? CompleteEventPlanRun(EventPlanRun run)
     {
         PublishTransition(run.Journey, run.State, JourneyRuntimeTransitionKind.Completed);
         JourneyCompleted?.Invoke(this, new JourneyCompletedEventArgs
@@ -281,14 +331,13 @@ public partial class JourneyManager
             run.State.IsJourneyCompletionRequested = false;
             StartEventPlanRun(run.Project, run.Journey, initialPosition: 0);
             PublishTransition(run.Journey, _states[run.Journey.Id], JourneyRuntimeTransitionKind.Restarted);
-            return;
+            return null;
         }
 
         StopJourneyCore(run.Journey);
-        if (run.Journey.BehaviorOnLastStop == BehaviorOnLastStop.GotoJourney && run.Journey.NextJourneyId is Guid nextJourneyId)
-        {
-            TryActivateNextJourney(nextJourneyId);
-        }
+        return run.Journey.BehaviorOnLastStop == BehaviorOnLastStop.GotoJourney
+            ? run.Journey.NextJourneyId
+            : null;
     }
 
     private bool IsCurrentRun(EventPlanRun run) => !_disposed && run.State.IsActive

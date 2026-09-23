@@ -8,6 +8,7 @@ using System.Text.Json;
 internal static class CoreRecordingPayloadValidators
 {
     private const string OutcomeProperty = "outcome";
+    private const string JourneyIdProperty = "journeyId";
 
     public static IReadOnlyList<IRecordingPayloadValidator> Create() =>
     [
@@ -54,7 +55,7 @@ internal static class CoreRecordingPayloadValidators
         Schema(
             "journey.transition",
             ("projectId", IsGuid),
-            ("journeyId", IsGuid),
+            (JourneyIdProperty, IsGuid),
             ("journeyRunId", IsGuid),
             ("kind", IsJourneyTransitionKind),
             ("feedbackIndex", IsNonNegativeInt32),
@@ -79,9 +80,9 @@ internal static class CoreRecordingPayloadValidators
             ("result", IsNullableWorkflowResult)),
         Schema("command.track-power.request", ("isOn", IsBoolean)),
         Schema("command.simulate-feedback.request", ("inPort", IsPositiveInt32)),
-        Schema("command.journey-reset.request", ("journeyId", IsGuid)),
-        Schema("command.journey-start.request", ("journeyId", IsGuid)),
-        Schema("command.journey-stop.request", ("journeyId", IsGuid)),
+        Schema("command.journey-reset.request", (JourneyIdProperty, IsGuid)),
+        Schema("command.journey-start.request", (JourneyIdProperty, IsGuid)),
+        Schema("command.journey-stop.request", (JourneyIdProperty, IsGuid)),
         Schema("command.inport-counters-reset.request"),
         Schema("command.signal-aspect.request", ("signalId", IsGuid), ("aspect", IsBoundedString)),
         Schema(

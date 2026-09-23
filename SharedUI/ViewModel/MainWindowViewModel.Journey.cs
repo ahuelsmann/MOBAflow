@@ -27,18 +27,18 @@ public partial class MainWindowViewModel
         if (journey == null || SelectedProject == null) return;
         try
         {
-            await _mobaRuntime.ActivateProjectAsync(SelectedProject.Model);
-            await _runtimeCommandGateway.StartJourneyAsync(journey.Id);
+            await _mobaRuntime.ActivateProjectAsync(SelectedProject.Model).ConfigureAwait(true);
+            await _runtimeCommandGateway.StartJourneyAsync(journey.Id).ConfigureAwait(true);
             JourneyCommandStatus = $"Journey '{journey.Name}' started.";
         }
         catch (Exception ex)
         {
             JourneyCommandStatus = ex.Message;
-            _logger.LogWarning(ex, "Starting journey failed");
+            LogJourneyCommandFailure(_logger, ex, "Starting journey");
         }
     }
 
-    private bool CanStartJourney() => SelectedJourney != null && !SelectedJourney.IsRunning;
+    private bool CanStartJourney() => this.SelectedJourney is { IsRunning: false };
 
     [RelayCommand(CanExecute = nameof(CanStopJourney))]
     private async Task StopJourney()
@@ -47,17 +47,20 @@ public partial class MainWindowViewModel
         if (journey == null) return;
         try
         {
-            await _runtimeCommandGateway.StopJourneyAsync(journey.Id);
+            await _runtimeCommandGateway.StopJourneyAsync(journey.Id).ConfigureAwait(true);
             JourneyCommandStatus = $"Journey '{journey.Name}' stopped.";
         }
         catch (Exception ex)
         {
             JourneyCommandStatus = ex.Message;
-            _logger.LogWarning(ex, "Stopping journey failed");
+            LogJourneyCommandFailure(_logger, ex, "Stopping journey");
         }
     }
 
-    private bool CanStopJourney() => SelectedJourney?.IsRunning == true;
+    private bool CanStopJourney() => this.SelectedJourney is { IsRunning: true };
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "{Operation} failed")]
+    private static partial void LogJourneyCommandFailure(ILogger logger, Exception exception, string operation);
 
     #region Journey Factory
     /// <summary>
@@ -214,10 +217,10 @@ public partial class MainWindowViewModel
     {
         if (SelectedJourney == null) return;
 
-        await _runtimeCommandGateway.ResetJourneyAsync(SelectedJourney.Model.Id);
+        await _runtimeCommandGateway.ResetJourneyAsync(SelectedJourney.Model.Id).ConfigureAwait(true);
     }
 
-    private bool CanResetJourneyCounter() => SelectedJourney != null && !SelectedJourney.IsEventPlanRunning;
+    private bool CanResetJourneyCounter() => this.SelectedJourney is { IsEventPlanRunning: false };
     #endregion
 
     #region Station Management (City Library)

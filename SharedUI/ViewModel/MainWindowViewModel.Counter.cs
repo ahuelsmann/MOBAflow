@@ -219,13 +219,13 @@ public partial class MainWindowViewModel
     {
         try
         {
-            await _runtimeCommandGateway.ResetInPortCountersAsync();
+            await _runtimeCommandGateway.ResetInPortCountersAsync().ConfigureAwait(true);
             JourneyCommandStatus = "InPort counters reset.";
         }
         catch (Exception ex)
         {
             JourneyCommandStatus = ex.Message;
-            _logger.LogWarning(ex, "Resetting InPort counters failed");
+            LogJourneyCommandFailure(_logger, ex, "Resetting InPort counters");
         }
     }
 
@@ -242,7 +242,7 @@ public partial class MainWindowViewModel
     {
         foreach (var counter in snapshot.InPortCounters)
         {
-            var stat = Statistics.FirstOrDefault(s => s.InPort == counter.InPort);
+            var stat = this.Statistics.FirstOrDefault(s => s.InPort == counter.InPort);
             if (stat == null)
             {
                 stat = new InPortStatistic { InPort = checked((int)counter.InPort),

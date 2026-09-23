@@ -121,7 +121,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         _inPortCounters = inPortCounterService ?? new InPortCounterService(z21, settings, timeProvider);
         _ownsInPortCounters = inPortCounterService == null;
         _journeyManagerFactory = journeyManagerFactory ?? new JourneyManagerFactory(
-            z21, workflowService, inPortCounterService: _inPortCounters);
+            z21, workflowService, new JourneyManagerDependencies { InPortCounterService = _inPortCounters }, logger: null);
         _settings = settings;
         _logger = logger;
         _eventBus = eventBus;
@@ -193,6 +193,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         ReplaceActiveProjectContext(null);
         _inPortCounters.SnapshotChanged -= OnJourneyRuntimeChanged;
         if (_ownsInPortCounters) _inPortCounters.Dispose();
+        _journeyCommandLock.Dispose();
         _startLock.Dispose();
     }
 

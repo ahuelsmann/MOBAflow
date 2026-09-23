@@ -109,20 +109,25 @@ public sealed class JourneyEventPlanTests
         var completed = new List<Guid>();
         fixture.Manager.StationChanged += (_, args) => stations.Add(args.Station.Id);
         fixture.Manager.JourneyCompleted += (_, args) => completed.Add(args.JourneyRunId);
-        await fixture.Manager.StartJourneyAsync(fixture.Journey);
-        await fixture.RaiseAsync(1);
-        Assert.That(fixture.Manager.GetState(fixture.Journey.Id)!.CurrentStationId, Is.EqualTo(first.Id));
-
-        var request = fixture.Requests.Single();
         var action = new WorkflowAction
         {
             Type = ActionType.ChangeJourneyStop,
             ChangeJourneyStop = new ChangeJourneyStopActionPayload { MoveToNextStop = true }
         };
         var handler = new ChangeJourneyStopWorkflowActionHandler();
-        await handler.ExecuteAsync(action, request.Context);
-        await handler.ExecuteAsync(action, request.Context);
-        await handler.ExecuteAsync(action, request.Context);
+        fixture.WorkflowService.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
+            .Returns(async (WorkflowExecutionRequest request, CancellationToken _) =>
+            {
+                fixture.Requests.Enqueue(request);
+                Assert.That(fixture.Manager.GetState(fixture.Journey.Id)!.CurrentStationId, Is.EqualTo(first.Id));
+                await handler.ExecuteAsync(action, request.Context);
+                await handler.ExecuteAsync(action, request.Context);
+                await handler.ExecuteAsync(action, request.Context);
+                return Success(request);
+            });
+        await fixture.Manager.StartJourneyAsync(fixture.Journey);
+        await fixture.RaiseAsync(1);
+        var request = fixture.Requests.Single();
         Assert.Multiple(() =>
         {
             Assert.That(stations, Is.EqualTo(new[] { second.Id, third.Id }));
@@ -269,6 +274,20 @@ public sealed class JourneyEventPlanTests
         fixture.Journey.Stations = [new Station { Name = "Final stop" }];
         fixture.Journey.BehaviorOnLastStop = BehaviorOnLastStop.GotoJourney;
         fixture.Journey.NextJourneyId = targetJourney.Id;
+        fixture.WorkflowService.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
+            .Returns(async (WorkflowExecutionRequest request, CancellationToken _) =>
+            {
+                fixture.Requests.Enqueue(request);
+                if (request.Context.CurrentJourney!.Id == fixture.Journey.Id)
+                {
+                    await new ChangeJourneyStopWorkflowActionHandler().ExecuteAsync(new WorkflowAction
+                    {
+                        Type = ActionType.ChangeJourneyStop,
+                        ChangeJourneyStop = new ChangeJourneyStopActionPayload { MoveToNextStop = true }
+                    }, request.Context);
+                }
+                return Success(request);
+            });
 
         await fixture.RaiseAsync(1);
         await fixture.RaiseAsync(1);
@@ -279,12 +298,6 @@ public sealed class JourneyEventPlanTests
         var thirdRunId = fixture.Manager.GetState(thirdJourney.Id)!.RunId;
         await fixture.RaiseAsync(1);
         await fixture.RaiseAsync(2);
-
-        await new ChangeJourneyStopWorkflowActionHandler().ExecuteAsync(new WorkflowAction
-        {
-            Type = ActionType.ChangeJourneyStop,
-            ChangeJourneyStop = new ChangeJourneyStopActionPayload { MoveToNextStop = true }
-        }, fixture.Requests.Single().Context);
 
         var targetState = fixture.Manager.GetState(targetJourney.Id)!;
         Assert.Multiple(() =>

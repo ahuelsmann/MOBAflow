@@ -39,6 +39,9 @@ public sealed class JourneyManagerDependencies
 
     /// <summary>Gets the application-owned input counter service.</summary>
     public InPortCounterService? InPortCounterService { get; init; }
+
+    /// <summary>Gets the runtime start boundary used to validate automatic journey changes.</summary>
+    public Func<Guid, Task>? StartJourneyAsync { get; init; }
 }
 
 /// <summary>
@@ -48,10 +51,12 @@ public sealed class JourneyManagerDependencies
 /// </summary>
 public partial class JourneyManager : IJourneyManager
 {
-    private readonly object _stateSync = new();
+    private readonly Lock _stateSync = new();
     private readonly IZ21 _z21;
     private readonly ActionExecutionContextFactory _executionContextFactory;
     private readonly IWorkflowExecutionCoordinator _executionCoordinator;
+    private readonly bool _ownsExecutionCoordinator;
+    private readonly Func<Guid, Task>? _startJourneyAsync;
     private readonly Dictionary<Guid, JourneySessionState> _states = [];
     private readonly Project _project;
     private readonly ILogger<JourneyManager> _logger;
@@ -116,6 +121,8 @@ public partial class JourneyManager : IJourneyManager
         _stopTransitionService = dependencies.StopTransitionService ?? new JourneyStopTransitionService();
         _runtimeStateStore = dependencies.RuntimeStateStore ?? new NullJourneyRuntimeStateStore();
         _eventBus = dependencies.EventBus;
+        _startJourneyAsync = dependencies.StartJourneyAsync;
+        _ownsExecutionCoordinator = dependencies.ExecutionCoordinator is null;
         _ownsInPortCounterService = dependencies.InPortCounterService is null;
         _inPortCounterService = dependencies.InPortCounterService
             ?? new InPortCounterService(z21, new AppSettings { Counter = { UseTimerFilter = false } }, dependencies.TimeProvider);
@@ -431,6 +438,12 @@ public partial class JourneyManager : IJourneyManager
         _logger.LogInformation("Switching to journey: {Journey}", nextJourney.Name);
         if (nextJourney.EventPlan is not null)
         {
+            if (_startJourneyAsync is not null)
+            {
+                StartNextJourneyAsync(nextJourneyId).Observe(ex => LogAutomaticStartFailed(_logger, ex, nextJourneyId));
+                return;
+            }
+
             if (!nextState.IsActive)
             {
                 StartJourneyCore(nextJourney);
@@ -557,6 +570,19 @@ public partial class JourneyManager : IJourneyManager
 
     public void Dispose()
     {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>Releases the subscriptions and managed resources owned by this manager.</summary>
+    /// <param name="disposing">Whether managed resources should be released.</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposing)
+        {
+            return;
+        }
+
         lock (_stateSync)
         {
             if (_disposed)
@@ -567,7 +593,17 @@ public partial class JourneyManager : IJourneyManager
             _disposed = true;
             _inPortCounterService.Counted -= OnInPortCounted;
             _z21.Received -= OnZ21FeedbackReceived;
-            _executionCoordinator.Dispose();
+            if (_ownsExecutionCoordinator)
+            {
+                _executionCoordinator.Dispose();
+            }
+            else
+            {
+                foreach (var journeyId in _states.Keys)
+                {
+                    _executionCoordinator.CancelOwner(journeyId);
+                }
+            }
             foreach (var journeyId in _counterRuns.Keys.ToArray())
             {
                 ReleaseCounterRun(journeyId);
@@ -579,7 +615,5 @@ public partial class JourneyManager : IJourneyManager
                 _inPortCounterService.Dispose();
             }
         }
-
-        GC.SuppressFinalize(this);
     }
 }

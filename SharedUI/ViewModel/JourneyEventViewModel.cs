@@ -19,6 +19,11 @@ public sealed partial class JourneyEventViewModel : ObservableObject
     public JourneyEventViewModel(JourneyEvent model, Project project, Func<bool> canEdit,
         System.Action beforeChange, System.Action afterChange)
     {
+        ArgumentNullException.ThrowIfNull(model);
+        ArgumentNullException.ThrowIfNull(project);
+        ArgumentNullException.ThrowIfNull(canEdit);
+        ArgumentNullException.ThrowIfNull(beforeChange);
+        ArgumentNullException.ThrowIfNull(afterChange);
         Model = model;
         _project = project;
         _canEdit = canEdit;

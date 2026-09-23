@@ -45,25 +45,33 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
     public WorkflowLibraryViewModel WorkflowLibrary { get; }
     public ObservableCollection<JourneyEventViewModel> Events { get; } = [];
     public IEnumerable<JourneyViewModel> Journeys => _context.SelectedProject?.Journeys ?? [];
-    public bool HasEventPlan => SelectedJourney?.Model.EventPlan != null;
+    public bool HasEventPlan => this.SelectedJourney?.Model.EventPlan != null;
     public string EventCountLabel => Events.Count == 1 ? "1 event" : $"{Events.Count} events";
     public bool IsEmptyPlan => HasEventPlan && Events.Count == 0;
-    public bool HasPlanNotice => !HasEventPlan || SelectedJourney?.IsRunning == true || MainWindow?.IsAnyEventPlanRunning == true;
+    public bool HasPlanNotice => !HasEventPlan || SelectedJourney is { IsRunning: true } || MainWindow is { IsAnyEventPlanRunning: true };
     public bool HasCommandStatus => !string.IsNullOrWhiteSpace(MainWindow?.JourneyCommandStatus);
     public bool IsLegacyJourney => SelectedJourney != null && !HasEventPlan;
-    public bool CanEdit => HasEventPlan && SelectedJourney?.IsRunning == false && MainWindow?.IsAnyEventPlanRunning != true;
-    public bool CanCreateEventPlan => IsLegacyJourney && SelectedJourney?.IsRunning == false && MainWindow?.IsAnyEventPlanRunning != true;
+    public bool CanEdit => HasEventPlan && SelectedJourney is { IsRunning: false } && MainWindow is not { IsAnyEventPlanRunning: true };
+    public bool CanCreateEventPlan => IsLegacyJourney && SelectedJourney is { IsRunning: false } && MainWindow is not { IsAnyEventPlanRunning: true };
     public bool CanUndo => CanEdit && _undo.Count > 0;
     public bool CanRedo => CanEdit && _redo.Count > 0;
     public bool CanEditSelectedEvent => CanEdit && SelectedEvent != null;
-    public string LegacyStatus => IsLegacyJourney
-        ? $"This journey uses its saved feedback sequence ({SelectedJourney!.Model.FeedbackSequence.Count} steps). Create an event plan to configure counts since journey start."
+    public string LegacyStatus => this.SelectedJourney is { Model.EventPlan: null } journey
+        ? $"This journey uses its saved feedback sequence ({journey.Model.FeedbackSequence.Count} steps). Create an event plan to configure counts since journey start."
         : string.Empty;
-    public string PlanStatus => SelectedJourney == null ? "Select a journey to edit its event plan."
-        : SelectedJourney.IsRunning ? "Journey running. Stop the journey before editing its event plan."
-        : MainWindow?.IsAnyEventPlanRunning == true ? "Another journey is running. Stop it before editing event plans."
-        : HasEventPlan ? $"{Events.Count} events. Counts are measured separately for each InPort, since journey start."
-        : LegacyStatus;
+
+    public string PlanStatus
+    {
+        get
+        {
+            if (SelectedJourney == null) return "Select a journey to edit its event plan.";
+            if (SelectedJourney.IsRunning) return "Journey running. Stop the journey before editing its event plan.";
+            if (MainWindow is { IsAnyEventPlanRunning: true }) return "Another journey is running. Stop it before editing event plans.";
+            return HasEventPlan
+                ? $"{Events.Count} events. Counts are measured separately for each InPort, since journey start."
+                : LegacyStatus;
+        }
+    }
 
     partial void OnSelectedJourneyChanged(JourneyViewModel? oldValue, JourneyViewModel? newValue)
     {
@@ -92,7 +100,7 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
             var confirmed = await _dialogService.ShowConfirmationAsync(
                 "Create event plan",
                 "This journey will use the new event plan instead of its saved feedback sequence. The original sequence is kept, but its repeat counts are not converted. Create an empty event plan?",
-                "Create event plan", "Cancel");
+                "Create event plan", "Cancel").ConfigureAwait(true);
             if (!confirmed || SelectedJourney != journey || !CanCreateEventPlan) return;
         }
         journey.Model.EventPlan = new JourneyEventPlan();
@@ -105,7 +113,8 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
 
     public void InsertEvent(WorkflowViewModel? workflow, int index)
     {
-        if (!CanEdit || (workflow != null && !IsAvailableWorkflow(workflow))) return;
+        var plan = SelectedJourney?.Model.EventPlan;
+        if (!CanEdit || plan == null || (workflow != null && !IsAvailableWorkflow(workflow))) return;
         CaptureUndo();
         var inPort = Math.Clamp(DefaultInPort, 1u, 512u);
         var previousCount = Events.Where(item => item.InPort == inPort).Select(item => item.Count).DefaultIfEmpty(0UL).Max();
@@ -115,7 +124,6 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
             Count = previousCount == ulong.MaxValue ? previousCount : previousCount + 1,
             WorkflowId = workflow?.Model.Id
         };
-        var plan = SelectedJourney!.Model.EventPlan!;
         plan.Events.Insert(Math.Clamp(index, 0, plan.Events.Count), item);
         CompleteEdit(item.Id);
     }
@@ -134,9 +142,11 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
     [RelayCommand(CanExecute = nameof(CanEditSelectedEvent))]
     private void DeleteSelectedEvent()
     {
-        if (!CanEditSelectedEvent) return;
+        var plan = SelectedJourney?.Model.EventPlan;
+        var selectedEvent = SelectedEvent;
+        if (!CanEdit || plan == null || selectedEvent == null) return;
         CaptureUndo();
-        SelectedJourney!.Model.EventPlan!.Events.Remove(SelectedEvent!.Model);
+        plan.Events.Remove(selectedEvent.Model);
         CompleteEdit();
     }
 
@@ -152,13 +162,14 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
         if (SelectedEvent != null) MoveOrCopyEvent(SelectedEvent, Events.IndexOf(SelectedEvent) + 2, false);
     }
 
-    private bool CanMoveUp() => CanEditSelectedEvent && Events.IndexOf(SelectedEvent!) > 0;
-    private bool CanMoveDown() => CanEditSelectedEvent && Events.IndexOf(SelectedEvent!) < Events.Count - 1;
+    private bool CanMoveUp() => CanEdit && SelectedEvent is { } item && Events.IndexOf(item) > 0;
+    private bool CanMoveDown() => CanEdit && SelectedEvent is { } item && Events.IndexOf(item) < Events.Count - 1;
 
     public void MoveOrCopyEvent(JourneyEventViewModel item, int targetIndex, bool copy)
     {
-        if (!CanEdit || !ContainsEvent(item)) return;
-        var events = SelectedJourney!.Model.EventPlan!.Events;
+        var plan = SelectedJourney?.Model.EventPlan;
+        if (!CanEdit || plan == null || !ContainsEvent(item)) return;
+        var events = plan.Events;
         var sourceIndex = events.IndexOf(item.Model);
         targetIndex = Math.Clamp(targetIndex, 0, events.Count);
         if (!copy && (sourceIndex == targetIndex || sourceIndex + 1 == targetIndex)) return;
@@ -229,11 +240,14 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
         NotifyState();
     }
 
-    private string SerializePlan() => JsonSerializer.Serialize(SelectedJourney!.Model.EventPlan, JsonOptions.Compact);
+    private string SerializePlan() => JsonSerializer.Serialize(this.SelectedJourney?.Model.EventPlan, JsonOptions.Compact);
 
     private void RestorePlan(string json)
     {
-        SelectedJourney!.Model.EventPlan = JsonSerializer.Deserialize<JourneyEventPlan>(json, JsonOptions.Compact)!;
+        var journey = SelectedJourney;
+        if (journey == null) return;
+        journey.Model.EventPlan = JsonSerializer.Deserialize<JourneyEventPlan>(json, JsonOptions.Compact)
+            ?? throw new InvalidOperationException("The saved event plan could not be restored.");
         CompleteEdit();
     }
 

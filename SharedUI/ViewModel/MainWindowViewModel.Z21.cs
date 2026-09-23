@@ -95,7 +95,7 @@ public partial class MainWindowViewModel
     {
         if (SelectedJourney == null) return;
 
-        await ResetJourneyCounter();
+        await ResetJourneyCounter().ConfigureAwait(true);
     }
 
     [RelayCommand(CanExecute = nameof(CanToggleTrackPower))]

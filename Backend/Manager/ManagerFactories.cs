@@ -45,14 +45,31 @@ public interface IPlatformManager : IDisposable
 public sealed class JourneyManagerFactory(
     IZ21 z21,
     IWorkflowService workflowService,
-    IJourneyStopTransitionService? stopTransitionService = null,
-    IJourneyRuntimeStateStore? runtimeStateStore = null,
-    ILogger<JourneyManager>? logger = null,
-    TimeProvider? timeProvider = null,
-    IEventBus? eventBus = null,
-    InPortCounterService? inPortCounterService = null)
+    JourneyManagerDependencies dependencies,
+    ILogger<JourneyManager>? logger)
 {
-    public IJourneyManager Create(Project project, ActionExecutionContext executionContext, InPortCounterService? counters = null) =>
+    private readonly JourneyManagerDependencies _dependencies = dependencies ?? throw new ArgumentNullException(nameof(dependencies));
+
+    public JourneyManagerFactory(
+        IZ21 z21,
+        IWorkflowService workflowService,
+        IJourneyStopTransitionService? stopTransitionService = null,
+        IJourneyRuntimeStateStore? runtimeStateStore = null,
+        ILogger<JourneyManager>? logger = null,
+        TimeProvider? timeProvider = null,
+        IEventBus? eventBus = null)
+        : this(z21, workflowService, new JourneyManagerDependencies
+        {
+            StopTransitionService = stopTransitionService,
+            RuntimeStateStore = runtimeStateStore,
+            TimeProvider = timeProvider,
+            EventBus = eventBus
+        }, logger)
+    {
+    }
+
+    public IJourneyManager Create(Project project, ActionExecutionContext executionContext,
+        InPortCounterService? counters = null, Func<Guid, Task>? startJourneyAsync = null) =>
         new JourneyManager(
             z21,
             project,
@@ -61,11 +78,13 @@ public sealed class JourneyManagerFactory(
             logger,
             new JourneyManagerDependencies
             {
-                StopTransitionService = stopTransitionService,
-                RuntimeStateStore = runtimeStateStore,
-                TimeProvider = timeProvider,
-                EventBus = eventBus,
-                InPortCounterService = counters ?? inPortCounterService
+                StopTransitionService = _dependencies.StopTransitionService,
+                RuntimeStateStore = _dependencies.RuntimeStateStore,
+                TimeProvider = _dependencies.TimeProvider,
+                EventBus = _dependencies.EventBus,
+                ExecutionCoordinator = _dependencies.ExecutionCoordinator,
+                InPortCounterService = counters ?? _dependencies.InPortCounterService,
+                StartJourneyAsync = startJourneyAsync ?? _dependencies.StartJourneyAsync
             });
 }
 

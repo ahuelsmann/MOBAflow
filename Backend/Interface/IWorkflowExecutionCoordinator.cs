@@ -21,6 +21,9 @@ public sealed record QueuedWorkflowExecution
 
     /// <summary>Refreshes runtime context immediately before execution, after preceding source work completes.</summary>
     public Func<ActionExecutionContext>? ContextFactory { get; init; }
+
+    /// <summary>Runs after a started executor finishes, before the next source execution is released.</summary>
+    public Func<Task>? OnCompleted { get; init; }
 }
 
 /// <summary>Orders workflow executions per source without blocking unrelated sources.</summary>

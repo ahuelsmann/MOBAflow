@@ -20,38 +20,12 @@ internal static class MobaRuntimeSnapshotBuilder
         IReadOnlyList<InPortCounterSnapshot>? inPortCounters = null,
         bool canResetInPortCounters = true)
     {
-        var journeyStates = new Dictionary<Guid, JourneyRuntimeSnapshot>();
+        var journeyStates = CreateJourneySnapshots(activeProjectContext);
         var signalBoxElements = new List<SignalBoxElementRuntimeSnapshot>();
         var locomotiveFleet = new List<LocomotiveFleetSnapshot>();
 
         if (activeProjectContext != null)
         {
-            foreach (var journey in activeProjectContext.ActiveProject.Journeys)
-            {
-                var state = activeProjectContext.JourneyManager.GetState(journey.Id);
-                if (state == null)
-                {
-                    continue;
-                }
-
-                journeyStates[journey.Id] = new JourneyRuntimeSnapshot
-                {
-                    JourneyId = journey.Id,
-                    JourneyRunId = state.RunId,
-                    CurrentPos = state.CurrentPos,
-                    CurrentStationName = state.CurrentStationName,
-                    CurrentStationId = state.CurrentStationId,
-                    CurrentFeedbackIndex = state.CurrentFeedbackIndex,
-                    CurrentStepOccurrence = state.CurrentStepOccurrence,
-                    CurrentStepRepeatCount = journey.EventPlan == null ? journey.FeedbackSequence.ElementAtOrDefault(state.CurrentFeedbackIndex)?.Index ?? 1 : 1,
-                    ExpectedInPort = journey.EventPlan == null ? journey.FeedbackSequence.ElementAtOrDefault(state.CurrentFeedbackIndex)?.InPort : null,
-                    LastFeedbackTime = state.LastFeedbackTime,
-                    IsActive = state.IsActive,
-                    IsEventPlan = journey.EventPlan != null,
-                    StartCounterValues = new Dictionary<uint, ulong>(state.CurrentEventBases)
-                };
-            }
-
             foreach (var element in activeProjectContext.ActiveProject.SignalBoxPlan?.Elements ?? [])
             {
                 switch (element)
@@ -138,6 +112,46 @@ internal static class MobaRuntimeSnapshotBuilder
             SignalBoxElements = signalBoxElements,
             CreatedAt = DateTimeOffset.Now
         };
+    }
+
+    private static Dictionary<Guid, JourneyRuntimeSnapshot> CreateJourneySnapshots(ActiveProjectContext? activeProjectContext)
+    {
+        var snapshots = new Dictionary<Guid, JourneyRuntimeSnapshot>();
+        if (activeProjectContext == null)
+        {
+            return snapshots;
+        }
+
+        foreach (var journey in activeProjectContext.ActiveProject.Journeys)
+        {
+            var state = activeProjectContext.JourneyManager.GetState(journey.Id);
+            if (state == null)
+            {
+                continue;
+            }
+
+            var feedbackStep = journey.EventPlan == null
+                ? journey.FeedbackSequence.ElementAtOrDefault(state.CurrentFeedbackIndex)
+                : null;
+            snapshots[journey.Id] = new JourneyRuntimeSnapshot
+            {
+                JourneyId = journey.Id,
+                JourneyRunId = state.RunId,
+                CurrentPos = state.CurrentPos,
+                CurrentStationName = state.CurrentStationName,
+                CurrentStationId = state.CurrentStationId,
+                CurrentFeedbackIndex = state.CurrentFeedbackIndex,
+                CurrentStepOccurrence = state.CurrentStepOccurrence,
+                CurrentStepRepeatCount = feedbackStep?.Index ?? 1,
+                ExpectedInPort = feedbackStep?.InPort,
+                LastFeedbackTime = state.LastFeedbackTime,
+                IsActive = state.IsActive,
+                IsEventPlan = journey.EventPlan != null,
+                StartCounterValues = new Dictionary<uint, ulong>(state.CurrentEventBases)
+            };
+        }
+
+        return snapshots;
     }
 }
 

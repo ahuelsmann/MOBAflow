@@ -29,6 +29,7 @@ For an explicitly authorized focused acceptance run, use simulated feedback with
 7. Inspect empty, legacy, populated, invalid and running/read-only states in Light and Dark themes, including focus, disabled controls and drag affordances. Verify compact rows, aligned headers and a drop target immediately after the last event. Below 900 effective page pixels the library moves below the plan; below 720 the journey commands wrap below the selector. Include a short window, ensure both lists remain accessible, and verify restoring the window preserves the saved library width. Invalid count messages must appear only for invalid input.
 8. While A runs, start unchanged B/C and verify A's state is preserved. Edit an inactive journey or shared workflow and attempt to start it: verify a clear rejection rather than stale execution. Stop every event-plan run, then start with the updated definitions.
 9. Select different journeys/projects while a run is active; verify counters and the running journey stay intact. In the shared journey editor, event-plan journeys show the Event Manager guidance instead of legacy feedback controls.
+10. Put a stop-change action before another action in the final workflow. Natural completion must finish both actions before stopping/restarting; an explicit operator stop must still cancel immediately. A configured successor uses the same definition checks as a UI start.
 
 ## Recorded automated evidence
 
@@ -41,6 +42,11 @@ For an explicitly authorized focused acceptance run, use simulated feedback with
 - Final Windows FastDebug build after the visual refinement: **zero warnings, zero errors**, 1 minute 29 seconds. MOBAflow was not launched or restarted for this check; the running Debug instance was left untouched.
 
 ## Static and publication checks
+
+- Follow-up on 2026-09-23: the full portable suite passed **1,718 tests, zero failures, four skips (1,722 total)** in 51 seconds; `Test/TestResults/journey-completion-portable.trx`. Eight new regressions cover natural completion, explicit cancellation, queued events, successor definition checks and completion-callback ordering/failure. Existing stop-transition tests now execute actions inside the workflow boundary.
+- Windows FastDebug compilation after these corrections passed with **zero warnings and zero errors**, 1 minute 47 seconds. This was a compile-only check; MOBAflow was not launched.
+- Integration with issue #132 (ordered workflow actions) remains a separate step. Its executor must preserve the coordinator completion callback and copy `FeedbackInPort` and `ApplyJourneyStopTransition` into each execution context. No graph-editor changes from other branches are included here.
+- The last published PR #125 head still has failing Windows/Android analyzer-baseline checks and 36 OPEN/CONFIRMED SonarCloud findings. Local source corrections are not evidence that these remote gates have passed. Active analyzer baselines have not been changed.
 
 - Authoritative [issue #124](https://github.com/ahuelsmann/MOBAflow/issues/124) is linked; the actual issue body and PR changes passed Spec Kit governance against `github/main`.
 - Run `scripts/Test-LineEndings.ps1 -Path <changed paths> -Fix`, then check again; use `-Staged` before a commit.

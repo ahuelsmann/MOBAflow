@@ -124,12 +124,15 @@ public static class MobaBackendServiceCollectionExtensions
             journeyManagerFactory: new JourneyManagerFactory(
                 sp.GetRequiredService<IZ21>(),
                 sp.GetRequiredService<IWorkflowService>(),
-                sp.GetRequiredService<IJourneyStopTransitionService>(),
-                sp.GetRequiredService<IJourneyRuntimeStateStore>(),
-                sp.GetService<ILogger<JourneyManager>>(),
-                timeProvider: sp.GetRequiredService<TimeProvider>(),
-                eventBus: sp.GetService<IEventBus>(),
-                inPortCounterService: sp.GetRequiredService<InPortCounterService>()),
+                new JourneyManagerDependencies
+                {
+                    StopTransitionService = sp.GetRequiredService<IJourneyStopTransitionService>(),
+                    RuntimeStateStore = sp.GetRequiredService<IJourneyRuntimeStateStore>(),
+                    TimeProvider = sp.GetRequiredService<TimeProvider>(),
+                    EventBus = sp.GetService<IEventBus>(),
+                    InPortCounterService = sp.GetRequiredService<InPortCounterService>()
+                },
+                sp.GetService<ILogger<JourneyManager>>()),
             z21Discovery: sp.GetRequiredService<IZ21DiscoveryService>(),
             vehicleUsageCheckpointStore: sp.GetRequiredService<IVehicleUsageCheckpointStore>(),
             timeProvider: sp.GetRequiredService<TimeProvider>(),

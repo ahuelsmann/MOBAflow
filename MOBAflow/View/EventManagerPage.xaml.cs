@@ -70,19 +70,28 @@ internal sealed partial class EventManagerPage
     private void ApplyResponsiveLayout()
     {
         var isWide = ActualWidth >= 900;
-        var showLibrary = WorkflowLibraryToggle.IsChecked == true;
         if (_isWide && WorkflowLibraryColumn.Width.IsStar)
             _workflowLibraryStarValue = WorkflowLibraryColumn.Width.Value;
         _isWide = isWide;
 
+        ApplyJourneyHeaderLayout();
+        ApplyWorkflowLibraryLayout(isWide, WorkflowLibraryToggle.IsChecked.GetValueOrDefault());
+    }
+
+    private void ApplyJourneyHeaderLayout()
+    {
         var narrowHeader = ActualWidth < 720;
         Grid.SetRow(JourneyCommands, narrowHeader ? 1 : 0);
         Grid.SetColumn(JourneyCommands, narrowHeader ? 0 : 1);
         Grid.SetColumnSpan(JourneyCommands, narrowHeader ? 2 : 1);
         JourneyCommands.HorizontalAlignment = narrowHeader ? HorizontalAlignment.Left : HorizontalAlignment.Right;
         JourneyCommands.Margin = narrowHeader ? new Thickness(0, 12, 0, 0) : new Thickness(0);
+    }
 
-        Grid.SetColumnSpan(PlanArea, isWide && showLibrary ? 1 : 3);
+    private void ApplyWorkflowLibraryLayout(bool isWide, bool showLibrary)
+    {
+        var showSideLibrary = isWide && showLibrary;
+        Grid.SetColumnSpan(PlanArea, showSideLibrary ? 1 : 3);
         Grid.SetRow(WorkflowLibraryPanel, isWide ? 0 : 1);
         Grid.SetColumn(WorkflowLibraryPanel, isWide ? 2 : 0);
         Grid.SetColumnSpan(WorkflowLibraryPanel, isWide ? 1 : 3);
@@ -90,9 +99,9 @@ internal sealed partial class EventManagerPage
         // Keep room for the plan in short windows; the compact library scrolls as a whole.
         WorkflowLibraryPanel.MaxHeight = isWide ? double.PositiveInfinity : Math.Min(240, EditorColumns.ActualHeight * 0.45);
         WorkflowLibraryScroller.VerticalScrollBarVisibility = isWide ? ScrollBarVisibility.Disabled : ScrollBarVisibility.Auto;
-        LibrarySplitter.Visibility = isWide && showLibrary ? Visibility.Visible : Visibility.Collapsed;
-        WorkflowLibraryColumn.MinWidth = isWide && showLibrary ? 240 : 0;
-        WorkflowLibraryColumn.Width = isWide && showLibrary
+        LibrarySplitter.Visibility = showSideLibrary ? Visibility.Visible : Visibility.Collapsed;
+        WorkflowLibraryColumn.MinWidth = showSideLibrary ? 240 : 0;
+        WorkflowLibraryColumn.Width = showSideLibrary
             ? new GridLength(_workflowLibraryStarValue, GridUnitType.Star) : new GridLength(0);
     }
 
@@ -106,7 +115,7 @@ internal sealed partial class EventManagerPage
     private async Task SaveLayoutAsync()
     {
         var layout = _settings.Layout.EventManagerPage;
-        layout.IsValuesExpanded = WorkflowLibraryToggle.IsChecked == true;
+        layout.IsValuesExpanded = WorkflowLibraryToggle.IsChecked.GetValueOrDefault();
         if (EventPlanColumn.Width.IsStar) layout.EventPlanColumnStarValue = EventPlanColumn.Width.Value;
         if (WorkflowLibraryColumn.Width.IsStar) _workflowLibraryStarValue = WorkflowLibraryColumn.Width.Value;
         layout.WorkflowLibraryColumnStarValue = _workflowLibraryStarValue;

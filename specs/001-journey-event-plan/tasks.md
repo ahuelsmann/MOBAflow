@@ -64,6 +64,14 @@
 - [ ] T025 Before any later ready-for-review state, verify draft PR/SonarCloud requirements documented in `specs/001-journey-event-plan/plan.md`.
 - [x] T026 Converge requirements, tasks, actual file paths and evidence in `specs/001-journey-event-plan/analysis.md`; retain unavailable checks as open.
 
+## Review follow-up (2026-09-23)
+
+- [x] T027 Defer natural event-plan completion until the current workflow finishes; preserve explicit-stop cancellation and cancel queued work from the completed run.
+- [x] T028 Route automatic successor starts through runtime pending-definition validation; preserve externally owned execution coordinators when runtime project contexts are replaced.
+- [x] T029 Add eight regression cases and run the full portable suite: 1,718 passed, four skipped, zero failures (1,722 total).
+- [ ] T030 Verify Windows compilation and resolve analyzer baseline deltas without weakening the active gates.
+- [ ] T031 Publish corrected sources and require a fresh SonarCloud analysis with zero OPEN/CONFIRMED issues.
+
 ## Dependencies and execution order
 
 T001-T002 precede design and code; T003 provides authoritative issue traceability. T004-T005 provide shared contracts. US1-US3 share the manager and must coordinate edits. US4 editor work can proceed against settled model/runtime contracts while backend work proceeds in other files. US5 tests may proceed independently after the additive model exists. Validation follows implementation, and manual/remote gates cannot be inferred from local compile success.
