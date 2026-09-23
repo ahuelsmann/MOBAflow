@@ -57,9 +57,11 @@ the expected feedback input and can be associated with a station transition.
 This allows repeated inputs and route changes to be represented without relying
 on one global journey input.
 
-Use **Event Manager** to edit the ordered feedback steps visually. Journey
-progress is kept in runtime state and synchronized through MOBApi for connected
-mobile clients. **Journey Map** visualizes the active route and progress.
+Use **Event Manager** to edit a journey's event plan. Each event assigns a workflow
+to an InPort and a count since that journey started. Counts are independent for
+each InPort; list order does not define the trigger sequence. Existing feedback
+sequences remain stored until you explicitly choose **Create event plan**; their
+repeat counts are not converted. **Journey Map** visualizes the route and progress.
 
 At the last stop, a journey can stop, restart or continue with another journey,
 depending on its configured behavior.
@@ -95,10 +97,18 @@ target to a valid step or workflow ID. The first step is the workflow entry by
 default. Deleting a referenced workflow is blocked until every Event Manager or
 nested-workflow reference is removed or reassigned.
 
-Use **Event Manager** when authoring in journey context. It exposes the same
-workflow collection and selection, so edits made on either page are immediately
-visible on the other. Select a journey feedback occurrence and choose **Assign
-selected workflow to feedback step** to link it.
+Use **Event Manager** to assign existing workflows to journey events. Compact rows
+show the InPort, trigger count and workflow. Use **+** / **-** above the list to add
+or delete events, and edit the selected event in **Properties**. **Values** contains
+the searchable workflow library: drop a workflow onto a row to assign it, or onto
+the free area to create an event. Double-clicking a workflow assigns it to the
+selected event as well. Drag an event to reorder it; hold **Ctrl** to copy it.
+
+Use **Start journey** and **Stop** for the selected journey. Event editing is locked
+while an event-plan journey is running, but rows remain selectable for inspection.
+**Journey options** offers **Reset all InPort counters** only when the runtime allows
+it. Stop changes are workflow actions; an event does not advance a stop
+implicitly. Workflow authoring and diagnostics remain on the **Workflows** page.
 
 Choose **Validate** before operating a workflow. Validation reports structural,
 reference, payload, retry, recursion, and parallel-resource conflicts without
@@ -195,8 +205,10 @@ The Track Plan page supports the shortcuts implemented directly by that editor:
 | Ctrl+1 | Reset zoom to 100% |
 | R | Disconnect the selected track connection |
 
-The Event Manager also supports Delete for the selected feedback step. Other
-global shortcuts are not currently defined.
+With an Event Manager row focused, **Up/Down/Home/End** navigate, **Delete** removes
+the event, **Ctrl+Delete** removes its workflow, **Ctrl+D** duplicates it and
+**Alt+Up/Down** move it. These shortcuts do not delete events while a property input
+is focused. Other global shortcuts are not currently defined.
 
 ## Troubleshooting
 
@@ -217,8 +229,8 @@ global shortcuts are not currently defined.
 ### A journey does not advance
 
 - Confirm that the journey is active.
-- Compare incoming feedback in **Monitor** with the ordered sequence in
-  **Event Manager**.
+- Compare incoming feedback in **Monitor** with the InPort and count since journey
+  start configured in **Event Manager**.
 - Check project diagnostics for missing stations or invalid references.
 - Review timer filtering if legitimate events arrive very close together.
 

@@ -12,6 +12,116 @@ using System.Text.Json;
 [TestFixture]
 public sealed class EventManagerEventPlanTests
 {
+    [TestCase(false)]
+    [TestCase(true)]
+    public void SelectingRowIsViewStateOnlyEvenWhileRunning(bool running)
+    {
+        using var fixture = new EditorFixture(new Journey
+        {
+            EventPlan = new JourneyEventPlan { Events = [new(), new() { Count = 3 }] }
+        });
+        var first = fixture.Editor.Events[0];
+        var second = fixture.Editor.Events[1];
+        fixture.JourneyViewModel.UpdateFromSessionState(new JourneySessionState { JourneyId = fixture.Journey.Id, IsActive = running });
+
+        fixture.Editor.SelectedEvent = second;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(first.IsSelected, Is.False);
+            Assert.That(second.IsSelected, Is.True);
+            Assert.That(fixture.Editor.Events.Count(item => item.IsSelected), Is.EqualTo(1));
+            Assert.That(fixture.Editor.CanEditSelectedEvent, Is.EqualTo(!running));
+            Assert.That(fixture.ChangeNotifications, Is.Zero);
+            Assert.That(fixture.Editor.CanUndo, Is.False);
+        }
+    }
+
+    [Test]
+    public void RefreshAndUndoTransferSelectionToCurrentWrapper()
+    {
+        using var fixture = new EditorFixture(new Journey
+        {
+            EventPlan = new JourneyEventPlan { Events = [new() { Count = 2 }, new() { Count = 5 }] }
+        });
+        var original = fixture.Editor.Events[0];
+        fixture.Editor.MoveOrCopyEvent(original, 2, false);
+        var moved = fixture.Editor.SelectedEvent!;
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(original.IsSelected, Is.False);
+            Assert.That(moved.IsSelected, Is.True);
+            Assert.That(moved.Model.Id, Is.EqualTo(original.Model.Id));
+        }
+
+        fixture.Editor.UndoCommand.Execute(null);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(moved.IsSelected, Is.False);
+            Assert.That(fixture.Editor.SelectedEvent, Is.SameAs(fixture.Editor.Events[0]));
+            Assert.That(fixture.Editor.Events.Count(item => item.IsSelected), Is.EqualTo(1));
+            Assert.That(fixture.ChangeNotifications, Is.EqualTo(2));
+        }
+    }
+
+    [Test]
+    public void DeletingLastEventClearsSelectedWrapperAndProperties()
+    {
+        using var fixture = new EditorFixture(new Journey { EventPlan = new JourneyEventPlan { Events = [new()] } });
+        var selected = fixture.Editor.SelectedEvent!;
+
+        fixture.Editor.DeleteSelectedEventCommand.Execute(null);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(selected.IsSelected, Is.False);
+            Assert.That(fixture.Editor.SelectedEvent, Is.Null);
+            Assert.That(fixture.Editor.CanEditSelectedEvent, Is.False);
+        }
+        fixture.Editor.UndoCommand.Execute(null);
+        Assert.That(fixture.Editor.SelectedEvent!.IsSelected, Is.True);
+    }
+
+    [Test]
+    public void RunningJourneyBlocksAssignmentsMoveCopyAndHistoryWhileAllowingSelection()
+    {
+        var workflow = new Workflow { Name = "Arrival" };
+        using var fixture = new EditorFixture(new Journey
+        {
+            EventPlan = new JourneyEventPlan { Events = [new() { WorkflowId = workflow.Id }, new() { Count = 5 }] }
+        }, workflow);
+        fixture.Editor.AddEventCommand.Execute(null);
+        fixture.Editor.UndoCommand.Execute(null);
+        var first = fixture.Editor.Events[0];
+        var second = fixture.Editor.Events[1];
+        var snapshot = JsonSerializer.Serialize(fixture.Journey.EventPlan);
+        var changes = fixture.ChangeNotifications;
+        fixture.JourneyViewModel.UpdateFromSessionState(new JourneySessionState { JourneyId = fixture.Journey.Id, IsActive = true });
+
+        fixture.Editor.SelectedEvent = second;
+        second.AssignWorkflowCommand.Execute(fixture.Project.Workflows.Single());
+        first.RemoveWorkflowCommand.Execute(null);
+        second.CountText = "42";
+        second.WorkflowId = workflow.Id;
+        second.Enabled = false;
+        fixture.Editor.InsertEvent(fixture.Project.Workflows.Single(), 0);
+        fixture.Editor.MoveOrCopyEvent(second, 0, false);
+        fixture.Editor.MoveOrCopyEvent(second, 0, true);
+        fixture.Editor.UndoCommand.Execute(null);
+        fixture.Editor.RedoCommand.Execute(null);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(JsonSerializer.Serialize(fixture.Journey.EventPlan), Is.EqualTo(snapshot));
+            Assert.That(fixture.ChangeNotifications, Is.EqualTo(changes));
+            Assert.That(second.IsSelected, Is.True);
+            Assert.That(first.IsSelected, Is.False);
+            Assert.That(first.RemoveWorkflowCommand.CanExecute(null), Is.False);
+            Assert.That(second.AssignWorkflowCommand.CanExecute(null), Is.False);
+        }
+    }
+
     [Test]
     public void MoveEvent_PreservesSparseCountsAndStableIdentifiers()
     {

@@ -6,14 +6,16 @@ using Common.Extension;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
+using Controls;
 using SharedUI.Interface;
 using SharedUI.ViewModel;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 using Windows.UI.Core;
+using System.Windows.Input;
 
 internal sealed partial class EventManagerPage
 {
@@ -25,7 +27,11 @@ internal sealed partial class EventManagerPage
     private bool _isLoaded;
     private bool _isWide;
     private Border? _rowDropIndicator;
+    private double _eventPlanStarValue = 2;
     private double _workflowLibraryStarValue = 1;
+    private double _propertiesStarValue = 1.2;
+    private long _valuesExpansionToken;
+    private long _propertiesExpansionToken;
 
     public EventManagerPage(EventManagerViewModel viewModel, AppSettings settings,
         ISettingsService? settingsService = null, ILogger<EventManagerPage>? logger = null)
@@ -46,21 +52,21 @@ internal sealed partial class EventManagerPage
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         var layout = _settings.Layout.EventManagerPage;
-        EventPlanColumn.Width = new GridLength(ValidStarValue(layout.EventPlanColumnStarValue, 2), GridUnitType.Star);
+        _eventPlanStarValue = ValidStarValue(layout.EventPlanColumnStarValue, 2);
         _workflowLibraryStarValue = ValidStarValue(layout.WorkflowLibraryColumnStarValue, 1);
-        WorkflowLibraryToggle.IsChecked = layout.IsValuesExpanded;
+        _propertiesStarValue = ValidStarValue(layout.PropertiesColumnStarValue, 1.2);
+        ValuesPanel.IsExpanded = layout.IsValuesExpanded;
+        PropertiesPanel.IsExpanded = layout.IsPropertiesExpanded;
+        _valuesExpansionToken = ValuesPanel.RegisterPropertyChangedCallback(CollapsibleColumnBase.IsExpandedProperty, OnPanelExpansionChanged);
+        _propertiesExpansionToken = PropertiesPanel.RegisterPropertyChangedCallback(CollapsibleColumnBase.IsExpandedProperty, OnPanelExpansionChanged);
+        _isWide = false;
         _isLoaded = true;
         ApplyResponsiveLayout();
     }
 
     private static double ValidStarValue(double value, double fallback) => double.IsFinite(value) && value > 0 ? value : fallback;
 
-    private void WorkflowLibraryToggle_Changed(object sender, RoutedEventArgs e)
-    {
-        if (!_isLoaded) return;
-        if (WorkflowLibraryColumn.Width.IsStar) _workflowLibraryStarValue = WorkflowLibraryColumn.Width.Value;
-        ApplyResponsiveLayout();
-    }
+    private void OnPanelExpansionChanged(DependencyObject sender, DependencyProperty property) => ApplyResponsiveLayout();
 
     private void OnPageSizeChanged(object sender, SizeChangedEventArgs e)
     {
@@ -69,13 +75,10 @@ internal sealed partial class EventManagerPage
 
     private void ApplyResponsiveLayout()
     {
-        var isWide = ActualWidth >= 900;
-        if (_isWide && WorkflowLibraryColumn.Width.IsStar)
-            _workflowLibraryStarValue = WorkflowLibraryColumn.Width.Value;
-        _isWide = isWide;
-
+        CaptureColumnWidths();
+        _isWide = ActualWidth >= 900;
         ApplyJourneyHeaderLayout();
-        ApplyWorkflowLibraryLayout(isWide, WorkflowLibraryToggle.IsChecked.GetValueOrDefault());
+        ApplyEditorLayout();
     }
 
     private void ApplyJourneyHeaderLayout()
@@ -88,26 +91,40 @@ internal sealed partial class EventManagerPage
         JourneyCommands.Margin = narrowHeader ? new Thickness(0, 12, 0, 0) : new Thickness(0);
     }
 
-    private void ApplyWorkflowLibraryLayout(bool isWide, bool showLibrary)
+    private void CaptureColumnWidths()
     {
-        var showSideLibrary = isWide && showLibrary;
-        Grid.SetColumnSpan(PlanArea, showSideLibrary ? 1 : 3);
-        Grid.SetRow(WorkflowLibraryPanel, isWide ? 0 : 1);
-        Grid.SetColumn(WorkflowLibraryPanel, isWide ? 2 : 0);
-        Grid.SetColumnSpan(WorkflowLibraryPanel, isWide ? 1 : 3);
-        WorkflowLibraryPanel.Visibility = showLibrary ? Visibility.Visible : Visibility.Collapsed;
-        // Keep room for the plan in short windows; the compact library scrolls as a whole.
-        WorkflowLibraryPanel.MaxHeight = isWide ? double.PositiveInfinity : Math.Min(240, EditorColumns.ActualHeight * 0.45);
-        WorkflowLibraryScroller.VerticalScrollBarVisibility = isWide ? ScrollBarVisibility.Disabled : ScrollBarVisibility.Auto;
-        LibrarySplitter.Visibility = showSideLibrary ? Visibility.Visible : Visibility.Collapsed;
-        WorkflowLibraryColumn.MinWidth = showSideLibrary ? 240 : 0;
-        WorkflowLibraryColumn.Width = showSideLibrary
-            ? new GridLength(_workflowLibraryStarValue, GridUnitType.Star) : new GridLength(0);
+        if (!_isWide) return;
+        if (EventPlanColumn.Width.IsStar) _eventPlanStarValue = EventPlanColumn.Width.Value;
+        if (WorkflowLibraryColumn.Width.IsStar) _workflowLibraryStarValue = WorkflowLibraryColumn.Width.Value;
+        if (PropertiesColumn.Width.IsStar) _propertiesStarValue = PropertiesColumn.Width.Value;
+    }
+
+    private void ApplyEditorLayout()
+    {
+        Grid.SetColumnSpan(PlanArea, _isWide ? 1 : 5);
+        Grid.SetRow(ValuesPanel, _isWide ? 0 : 1);
+        Grid.SetColumn(ValuesPanel, _isWide ? 2 : 0);
+        Grid.SetColumnSpan(ValuesPanel, _isWide ? 1 : 3);
+        Grid.SetRow(PropertiesPanel, _isWide ? 0 : 1);
+        CompactPanelsRow.Height = _isWide ? new GridLength(0) : new GridLength(1, GridUnitType.Star);
+        EventPlanColumn.Width = new GridLength(_isWide ? _eventPlanStarValue : 1, GridUnitType.Star);
+        EventPlanColumn.MinWidth = _isWide ? 280 : 160;
+        WorkflowLibraryColumn.MinWidth = _isWide ? 32 : 0;
+        WorkflowLibraryColumn.Width = ValuesPanel.IsExpanded
+            ? new GridLength(_workflowLibraryStarValue, GridUnitType.Star) : GridLength.Auto;
+        if (!_isWide) WorkflowLibraryColumn.Width = new GridLength(0);
+        var propertiesWidth = _isWide ? _propertiesStarValue : 1;
+        PropertiesColumn.Width = PropertiesPanel.IsExpanded
+            ? new GridLength(propertiesWidth, GridUnitType.Star) : GridLength.Auto;
+        LibrarySplitter.Visibility = _isWide && ValuesPanel.IsExpanded ? Visibility.Visible : Visibility.Collapsed;
+        PropertiesSplitter.Visibility = _isWide && ValuesPanel.IsExpanded && PropertiesPanel.IsExpanded ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         _isLoaded = false;
+        ValuesPanel.UnregisterPropertyChangedCallback(CollapsibleColumnBase.IsExpandedProperty, _valuesExpansionToken);
+        PropertiesPanel.UnregisterPropertyChangedCallback(CollapsibleColumnBase.IsExpandedProperty, _propertiesExpansionToken);
         ClearDropFeedback();
         SaveLayoutAsync().Observe(ex => _logger?.LogWarning(ex, "Persist Event Manager layout failed"));
     }
@@ -115,10 +132,12 @@ internal sealed partial class EventManagerPage
     private async Task SaveLayoutAsync()
     {
         var layout = _settings.Layout.EventManagerPage;
-        layout.IsValuesExpanded = WorkflowLibraryToggle.IsChecked.GetValueOrDefault();
-        if (EventPlanColumn.Width.IsStar) layout.EventPlanColumnStarValue = EventPlanColumn.Width.Value;
-        if (WorkflowLibraryColumn.Width.IsStar) _workflowLibraryStarValue = WorkflowLibraryColumn.Width.Value;
+        CaptureColumnWidths();
+        layout.IsValuesExpanded = ValuesPanel.IsExpanded;
+        layout.IsPropertiesExpanded = PropertiesPanel.IsExpanded;
+        layout.EventPlanColumnStarValue = _eventPlanStarValue;
         layout.WorkflowLibraryColumnStarValue = _workflowLibraryStarValue;
+        layout.PropertiesColumnStarValue = _propertiesStarValue;
         if (_settingsService != null) await _settingsService.SaveSettingsAsync(_settings);
     }
 
@@ -244,22 +263,88 @@ internal sealed partial class EventManagerPage
     private static bool IsControlDown() => InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control)
         .HasFlag(CoreVirtualKeyStates.Down);
 
-    private void EventList_KeyDown(object sender, KeyRoutedEventArgs e)
+    private void EventRow_Tapped(object sender, TappedRoutedEventArgs e) => SelectEvent(sender);
+
+    private void EventRow_GotFocus(object sender, RoutedEventArgs e) => SelectEvent(sender);
+
+    private void EventRow_ContextRequested(UIElement sender, ContextRequestedEventArgs e) => SelectEvent(sender);
+
+    private void EventActions_Click(object sender, RoutedEventArgs e) => SelectEvent(sender);
+
+    private void SelectEvent(object sender)
     {
-        if (IsEditingInput(e.OriginalSource as DependencyObject)) return;
-        var alt = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Menu).HasFlag(CoreVirtualKeyStates.Down);
-        if (alt && e.Key == VirtualKey.Up) ViewModel.MoveSelectedEventUpCommand.Execute(null);
-        else if (alt && e.Key == VirtualKey.Down) ViewModel.MoveSelectedEventDownCommand.Execute(null);
-        else if (IsControlDown() && e.Key == VirtualKey.D) ViewModel.DuplicateSelectedEventCommand.Execute(null);
-        else if (e.Key == VirtualKey.Delete) ViewModel.DeleteSelectedEventCommand.Execute(null);
-        else return;
-        e.Handled = true;
+        if (sender is FrameworkElement { Tag: JourneyEventViewModel item } && ViewModel.ContainsEvent(item))
+            ViewModel.SelectedEvent = item;
     }
 
-    private static bool IsEditingInput(DependencyObject? source)
+    private void DeleteEvent_Click(object sender, RoutedEventArgs e)
     {
-        for (var current = source; current != null; current = VisualTreeHelper.GetParent(current))
-            if (current is TextBox or NumberBox or ComboBox) return true;
-        return false;
+        SelectEvent(sender);
+        ViewModel.DeleteSelectedEventCommand.Execute(null);
+    }
+
+    private void DuplicateEvent_Click(object sender, RoutedEventArgs e)
+    {
+        SelectEvent(sender);
+        ViewModel.DuplicateSelectedEventCommand.Execute(null);
+    }
+
+    private void EventsRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
+    {
+        AutomationProperties.SetPositionInSet(args.Element, args.Index + 1);
+        AutomationProperties.SetSizeOfSet(args.Element, ViewModel.Events.Count);
+    }
+
+    private void EventsRepeater_PreviewKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        // Row shortcuts must not consume input from property editors or action buttons.
+        if (FocusManager.GetFocusedElement(XamlRoot) is not ListViewItem { Tag: JourneyEventViewModel item }) return;
+        var index = ViewModel.Events.IndexOf(item);
+        if (index < 0) return;
+        ViewModel.SelectedEvent = item;
+        var alt = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Menu).HasFlag(CoreVirtualKeyStates.Down);
+        var command = GetRowCommand(e.Key, alt, IsControlDown(), item);
+        if (command != null)
+        {
+            if (command.CanExecute(null)) command.Execute(null);
+        }
+        else if (e.Key is not (VirtualKey.Enter or VirtualKey.Space) && !TryNavigate(e.Key, index)) return;
+        e.Handled = true;
+        FocusSelectedEvent();
+    }
+
+    private ICommand? GetRowCommand(VirtualKey key, bool alt, bool control, JourneyEventViewModel item) => (key, alt, control) switch
+    {
+        (VirtualKey.Up, true, _) => ViewModel.MoveSelectedEventUpCommand,
+        (VirtualKey.Down, true, _) => ViewModel.MoveSelectedEventDownCommand,
+        (VirtualKey.D, _, true) => ViewModel.DuplicateSelectedEventCommand,
+        (VirtualKey.Delete, _, true) => item.RemoveWorkflowCommand,
+        (VirtualKey.Delete, _, false) => ViewModel.DeleteSelectedEventCommand,
+        _ => null
+    };
+
+    private bool TryNavigate(VirtualKey key, int index)
+    {
+        var targetIndex = key switch
+        {
+            VirtualKey.Up => Math.Max(0, index - 1),
+            VirtualKey.Down => Math.Min(ViewModel.Events.Count - 1, index + 1),
+            VirtualKey.Home => 0,
+            VirtualKey.End => ViewModel.Events.Count - 1,
+            _ => -1
+        };
+        if (targetIndex < 0) return false;
+        ViewModel.SelectedEvent = ViewModel.Events[targetIndex];
+        return true;
+    }
+
+    private void FocusSelectedEvent()
+    {
+        var index = ViewModel.SelectedEvent == null ? -1 : ViewModel.Events.IndexOf(ViewModel.SelectedEvent);
+        if (index < 0) return;
+        var row = EventsRepeater.GetOrCreateElement(index);
+        EventsRepeater.UpdateLayout();
+        if (row is Control control) control.Focus(FocusState.Keyboard);
+        row.StartBringIntoView();
     }
 }

@@ -16,6 +16,9 @@ public sealed partial class JourneyEventViewModel : ObservableObject
     private readonly System.Action _afterChange;
     private string _countText;
 
+    [ObservableProperty]
+    public partial bool IsSelected { get; set; }
+
     public JourneyEventViewModel(JourneyEvent model, Project project, Func<bool> canEdit,
         System.Action beforeChange, System.Action afterChange)
     {
@@ -37,7 +40,11 @@ public sealed partial class JourneyEventViewModel : ObservableObject
     public uint InPort
     {
         get => Model.InPort;
-        set => SetModelProperty(Model.InPort, Math.Clamp(value, 1u, 512u), (item, port) => item.InPort = port);
+        set
+        {
+            if (SetModelProperty(Model.InPort, Math.Clamp(value, 1u, 512u), (item, port) => item.InPort = port))
+                OnPropertyChanged(nameof(InPortText));
+        }
     }
 
     public ulong Count
@@ -47,6 +54,7 @@ public sealed partial class JourneyEventViewModel : ObservableObject
         {
             if (!SetModelProperty(Model.Count, Math.Max(value, 1UL), (item, count) => item.Count = count)) return;
             _countText = Model.Count.ToString(CultureInfo.InvariantCulture);
+            OnPropertyChanged(nameof(CountLabel));
             OnPropertyChanged(nameof(CountText));
             OnPropertyChanged(nameof(CountValidationMessage));
             OnPropertyChanged(nameof(HasCountValidationError));
@@ -91,7 +99,9 @@ public sealed partial class JourneyEventViewModel : ObservableObject
     public string WorkflowName => WorkflowId.HasValue
         ? _project.Workflows.FirstOrDefault(workflow => workflow.Id == WorkflowId)?.Name ?? "Missing workflow"
         : "Choose a workflow";
-    public string AutomationName => $"InPort {InPort}, count {Count} since journey start, workflow {WorkflowName}";
+    public string InPortText => $"InPort {InPort}";
+    public string CountLabel => $"At count {Count.ToString(CultureInfo.InvariantCulture)}";
+    public string AutomationName => $"InPort {InPort}, count {Count} since journey start, workflow {WorkflowName}, {(Enabled ? "enabled" : "disabled")}";
 
     [RelayCommand(CanExecute = nameof(CanEdit))]
     private void AssignWorkflow(WorkflowViewModel? workflow)

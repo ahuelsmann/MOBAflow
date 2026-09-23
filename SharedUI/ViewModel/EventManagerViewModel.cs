@@ -83,9 +83,10 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
         Refresh();
     }
 
-    partial void OnSelectedEventChanged(JourneyEventViewModel? value)
+    partial void OnSelectedEventChanged(JourneyEventViewModel? oldValue, JourneyEventViewModel? newValue)
     {
-        _ = value;
+        if (oldValue != null) oldValue.IsSelected = false;
+        if (newValue != null) newValue.IsSelected = true;
         NotifyCommands();
     }
 
