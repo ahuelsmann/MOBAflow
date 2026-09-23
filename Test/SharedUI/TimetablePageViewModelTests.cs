@@ -283,6 +283,93 @@ internal sealed class TimetablePageViewModelTests
         }
     }
 
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task SwitchingProject_Should_NotRestorePreviousServicesWhileLoadingOrAfterFailure(bool failLoad)
+    {
+        var originalProject = CreateProject();
+        var nextProject = CreateProject();
+        var operations = new Mock<ITimetableOperationsService>();
+        operations.Setup(value => value.GetStatesAsync(originalProject.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<TimetableServiceState>());
+        var pendingLoad = new TaskCompletionSource<IReadOnlyList<TimetableServiceState>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        operations.Setup(value => value.GetStatesAsync(nextProject.Id, It.IsAny<CancellationToken>()))
+            .Returns(pendingLoad.Task);
+        using var context = CreateContext(originalProject, operations.Object);
+        await context.ViewModel.RefreshAsync().ConfigureAwait(false);
+        SelectFirstServiceAndCall(context.ViewModel);
+
+        try
+        {
+            context.MainWindow.SelectedProject = new ProjectViewModel(nextProject);
+            context.ViewModel.FilterText = "Express";
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(context.ViewModel.Services, Is.Empty);
+                Assert.That(context.ViewModel.HasServices, Is.False);
+                Assert.That(context.ViewModel.HasServiceSelection, Is.False);
+                Assert.That(context.ViewModel.Calls, Is.Empty);
+                Assert.That(context.ViewModel.SaveDefinitionCommand.CanExecute(null), Is.False);
+                Assert.That(context.ViewModel.HoldSelectedServiceCommand.CanExecute(null), Is.False);
+            }
+
+            var refresh = context.ViewModel.RefreshAsync();
+            if (failLoad)
+            {
+                pendingLoad.SetException(new IOException("State load failed"));
+                await Assert.ThatAsync(() => refresh.WaitAsync(TimeSpan.FromSeconds(5)), Throws.TypeOf<IOException>()).ConfigureAwait(false);
+            }
+            else
+            {
+                pendingLoad.SetResult([]);
+                await refresh.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            }
+
+            context.ViewModel.ResetFiltersCommand.Execute(null);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(context.ViewModel.Services.Any(service => service.Id == originalProject.TimetableServices[0].Id), Is.False);
+                Assert.That(context.ViewModel.Services.Select(service => service.Id),
+                    Is.EqualTo(failLoad ? [] : new[] { nextProject.TimetableServices[0].Id }));
+            }
+        }
+        finally
+        {
+            pendingLoad.TrySetResult([]);
+        }
+    }
+
+    [Test]
+    public async Task RefreshFromPreviousProject_Should_NotOverwriteCurrentProject()
+    {
+        var originalProject = CreateProject();
+        var nextProject = CreateProject();
+        var operations = new Mock<ITimetableOperationsService>();
+        operations.Setup(value => value.GetStatesAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<TimetableServiceState>());
+        using var context = CreateContext(originalProject, operations.Object);
+        await context.ViewModel.RefreshAsync().ConfigureAwait(false);
+        var pendingLoad = new TaskCompletionSource<IReadOnlyList<TimetableServiceState>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        operations.Setup(value => value.GetStatesAsync(originalProject.Id, It.IsAny<CancellationToken>()))
+            .Returns(pendingLoad.Task);
+
+        var previousRefresh = context.ViewModel.RefreshAsync();
+        context.MainWindow.SelectedProject = new ProjectViewModel(nextProject);
+        SelectFirstServiceAndCall(context.ViewModel);
+        var selectedService = context.ViewModel.SelectedService;
+        var selectedCall = context.ViewModel.SelectedCall;
+        pendingLoad.SetResult([]);
+        await previousRefresh.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(context.ViewModel.Services.Select(service => service.Id), Is.EqualTo(new[] { nextProject.TimetableServices[0].Id }));
+            Assert.That(context.ViewModel.SelectedService, Is.SameAs(selectedService));
+            Assert.That(context.ViewModel.SelectedCall, Is.SameAs(selectedCall));
+        }
+    }
+
     [Test]
     public async Task AddAndDeleteCommands_Should_UpdateDefinitionCollection()
     {
@@ -515,7 +602,7 @@ internal sealed class TimetablePageViewModelTests
 
     private static TimetableTestContext CreateContext(
         Project project,
-        RecordingOperations operations,
+        ITimetableOperationsService operations,
         TimetableEvaluationResult? evaluationResult = null,
         TimeSpan? delay = null,
         DateTimeOffset? now = null,

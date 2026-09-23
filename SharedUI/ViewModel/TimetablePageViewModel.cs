@@ -36,6 +36,8 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
     private readonly SemaphoreSlim _projectionGate = new(1, 1);
     private bool _disposed;
     private List<TimetableServiceRowViewModel> _allRows = [];
+    private Project? _boardProject;
+    private int _refreshVersion;
     private MobaRuntimeSnapshot _latestSnapshot = MobaRuntimeSnapshot.Empty;
 
     /// <summary>Initializes the timetable page state and runtime subscriptions.</summary>
@@ -155,6 +157,7 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
     [RelayCommand]
     public async Task RefreshAsync()
     {
+        var refreshVersion = ++_refreshVersion;
         var project = CurrentProject;
         Services.Clear();
         Calls.Clear();
@@ -162,15 +165,22 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
         SelectedService = null;
         SelectedCall = null;
 
-        if (project is null)
+        if (project is null || !ReferenceEquals(project, _boardProject))
         {
             _allRows = [];
+            _boardProject = project;
             NotifyBoardStateChanged();
+        }
+
+        if (project is null)
+        {
             ValidationSummary = "Select a project to view its timetable.";
             return;
         }
 
         var states = await _operations.GetStatesAsync(project.Id);
+        if (refreshVersion != _refreshVersion || !ReferenceEquals(project, CurrentProject)) return;
+
         var stateByService = states.ToDictionary(state => state.ServiceId);
         _allRows = project.TimetableServices
             .OrderBy(service => service.ServiceDate)
