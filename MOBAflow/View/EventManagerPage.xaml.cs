@@ -6,6 +6,7 @@ using Common.Extension;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using SharedUI.Interface;
@@ -21,7 +22,6 @@ internal sealed partial class EventManagerPage
     private readonly AppSettings _settings;
     private readonly ISettingsService? _settingsService;
     private readonly ILogger<EventManagerPage>? _logger;
-    private double _toolboxWidth;
     private double _valuesWidth;
     private double _propertiesWidth;
 
@@ -41,14 +41,11 @@ internal sealed partial class EventManagerPage
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         var layout = _settings.Layout.EventManagerPage;
-        _toolboxWidth = layout.ToolboxColumnWidth;
         _valuesWidth = layout.ValuesColumnWidth;
         _propertiesWidth = layout.PropertiesColumnWidth;
-        ToolboxPanel.IsExpanded = layout.IsToolboxExpanded;
         ValuesPanel.IsExpanded = layout.IsValuesExpanded;
         PropertiesPanel.IsExpanded = layout.IsPropertiesExpanded;
         ApplyPanelWidths();
-        ToolboxPanel.RegisterPropertyChangedCallback(CollapsibleColumnBase.IsExpandedProperty, OnPanelExpansionChanged);
         ValuesPanel.RegisterPropertyChangedCallback(CollapsibleColumnBase.IsExpandedProperty, OnPanelExpansionChanged);
         PropertiesPanel.RegisterPropertyChangedCallback(CollapsibleColumnBase.IsExpandedProperty, OnPanelExpansionChanged);
     }
@@ -57,7 +54,6 @@ internal sealed partial class EventManagerPage
 
     private void ApplyPanelWidths()
     {
-        ToolboxColumn.Width = ToolboxPanel.IsExpanded ? new GridLength(_toolboxWidth) : GridLength.Auto;
         ValuesColumn.Width = ValuesPanel.IsExpanded ? new GridLength(_valuesWidth) : GridLength.Auto;
         PropertiesColumn.Width = PropertiesPanel.IsExpanded ? new GridLength(_propertiesWidth) : GridLength.Auto;
     }
@@ -67,26 +63,11 @@ internal sealed partial class EventManagerPage
     private async Task SaveLayoutAsync()
     {
         var layout = _settings.Layout.EventManagerPage;
-        layout.IsToolboxExpanded = ToolboxPanel.IsExpanded;
         layout.IsValuesExpanded = ValuesPanel.IsExpanded;
         layout.IsPropertiesExpanded = PropertiesPanel.IsExpanded;
-        if (ToolboxColumn.Width.IsAbsolute) layout.ToolboxColumnWidth = ToolboxColumn.Width.Value;
         if (ValuesColumn.Width.IsAbsolute) layout.ValuesColumnWidth = ValuesColumn.Width.Value;
         if (PropertiesColumn.Width.IsAbsolute) layout.PropertiesColumnWidth = PropertiesColumn.Width.Value;
         if (_settingsService != null) await _settingsService.SaveSettingsAsync(_settings);
-    }
-
-    private void ToolboxList_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
-    {
-        if (e.Items.FirstOrDefault() is not EventElementDescriptor descriptor) return;
-        e.Data.Properties["EventElement"] = descriptor;
-        e.Data.RequestedOperation = DataPackageOperation.Copy;
-        e.Data.SetText(descriptor.Name);
-    }
-
-    private void ToolboxList_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
-    {
-        if (ToolboxList.SelectedItem is EventElementDescriptor descriptor) ViewModel.AddElementCommand.Execute(descriptor);
     }
 
     private void WorkflowValues_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
@@ -117,32 +98,50 @@ internal sealed partial class EventManagerPage
             ViewModel.SelectedStep.AssignStationCommand.Execute(option);
     }
 
-    private void StepCard_DragStarting(UIElement sender, DragStartingEventArgs e)
+    private void StepRow_DragStarting(UIElement sender, DragStartingEventArgs e)
     {
         if ((sender as FrameworkElement)?.Tag is not JourneyFeedbackStepViewModel step) return;
+        ViewModel.SelectedStep = step;
         e.Data.Properties["JourneyFeedbackStep"] = step;
         e.Data.RequestedOperation = DataPackageOperation.Move;
         e.Data.SetText($"InPort {step.InPort}");
     }
 
-    private void StepCard_Tapped(object sender, TappedRoutedEventArgs e)
+    private void StepRow_Tapped(object sender, TappedRoutedEventArgs e) => SelectStep(sender);
+
+    private void StepRow_GotFocus(object sender, RoutedEventArgs e) => SelectStep(sender);
+
+    private void StepRow_ContextRequested(UIElement sender, ContextRequestedEventArgs e) => SelectStep(sender);
+
+    private void StepActions_Click(object sender, RoutedEventArgs e) => SelectStep(sender);
+
+    private void SelectStep(object sender)
     {
         if ((sender as FrameworkElement)?.Tag is JourneyFeedbackStepViewModel step) ViewModel.SelectedStep = step;
     }
 
+    private void DeleteStep_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.Tag is JourneyFeedbackStepViewModel step)
+            ViewModel.DeleteStepCommand.Execute(step);
+    }
+
+    private void StepsRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
+    {
+        AutomationProperties.SetPositionInSet(args.Element, args.Index + 1);
+        AutomationProperties.SetSizeOfSet(args.Element, ViewModel.Steps.Count);
+    }
+
     private void Sequence_DragOver(object sender, DragEventArgs e)
     {
-        if (e.DataView.Properties.ContainsKey("EventElement")) e.AcceptedOperation = DataPackageOperation.Copy;
-        else if (e.DataView.Properties.ContainsKey("JourneyFeedbackStep")) e.AcceptedOperation = DataPackageOperation.Move;
+        if (e.DataView.Properties.ContainsKey("JourneyFeedbackStep")) e.AcceptedOperation = DataPackageOperation.Move;
         else e.AcceptedOperation = DataPackageOperation.None;
     }
 
     private void Sequence_Drop(object sender, DragEventArgs e)
     {
         var targetIndex = GetDropIndex(e.GetPosition(StepsRepeater));
-        if (e.DataView.Properties.TryGetValue("EventElement", out var descriptorValue) && descriptorValue is EventElementDescriptor descriptor)
-            ViewModel.InsertElement(descriptor, targetIndex);
-        else if (e.DataView.Properties.TryGetValue("JourneyFeedbackStep", out var stepValue) && stepValue is JourneyFeedbackStepViewModel step)
+        if (e.DataView.Properties.TryGetValue("JourneyFeedbackStep", out var stepValue) && stepValue is JourneyFeedbackStepViewModel step)
             ViewModel.MoveStep(step, targetIndex);
     }
 
@@ -158,40 +157,51 @@ internal sealed partial class EventManagerPage
         return ViewModel.Steps.Count;
     }
 
-    private void OnPageKeyDown(object sender, KeyRoutedEventArgs e)
+    private void StepsRepeater_PreviewKeyDown(object sender, KeyRoutedEventArgs e)
     {
-        if (e.Key != VirtualKey.Delete || ViewModel.SelectedStep == null) return;
-        var controlDown = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control).HasFlag(CoreVirtualKeyStates.Down);
-        if (controlDown) ViewModel.SelectedStep.RemoveWorkflowCommand.Execute(null);
-        else ViewModel.DeleteStepCommand.Execute(ViewModel.SelectedStep);
-        e.Handled = true;
-    }
+        // Only list rows own these shortcuts; editing a property must never delete an event.
+        if (FocusManager.GetFocusedElement(XamlRoot) is not ListViewItem { Tag: JourneyFeedbackStepViewModel step }) return;
+        var index = ViewModel.Steps.IndexOf(step);
+        if (index < 0) return;
 
-    private void WorkflowSteps_KeyDown(object sender, KeyRoutedEventArgs e)
-    {
-        var workflow = ViewModel.WorkflowLibrary.SelectedWorkflow;
-        var step = ViewModel.WorkflowLibrary.SelectedStep;
-        if (workflow == null || step == null)
+        var targetIndex = e.Key switch
         {
-            return;
+            VirtualKey.Up => Math.Max(0, index - 1),
+            VirtualKey.Down => Math.Min(ViewModel.Steps.Count - 1, index + 1),
+            VirtualKey.Home => 0,
+            VirtualKey.End => ViewModel.Steps.Count - 1,
+            _ => -1
+        };
+        if (targetIndex >= 0)
+        {
+            FocusStep(targetIndex);
         }
-
-        var altDown = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Menu)
-            .HasFlag(CoreVirtualKeyStates.Down);
-        if (altDown && e.Key == VirtualKey.Up)
+        else if (e.Key is VirtualKey.Enter or VirtualKey.Space)
         {
-            workflow.MoveStepUpCommand.Execute(step);
-            e.Handled = true;
-        }
-        else if (altDown && e.Key == VirtualKey.Down)
-        {
-            workflow.MoveStepDownCommand.Execute(step);
-            e.Handled = true;
+            ViewModel.SelectedStep = step;
         }
         else if (e.Key == VirtualKey.Delete)
         {
-            workflow.DeleteStepCommand.Execute(step);
-            e.Handled = true;
+            var controlDown = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control).HasFlag(CoreVirtualKeyStates.Down);
+            if (controlDown) step.RemoveWorkflowCommand.Execute(null);
+            else
+            {
+                ViewModel.DeleteStepCommand.Execute(step);
+                if (ViewModel.Steps.Count > 0) FocusStep(Math.Min(index, ViewModel.Steps.Count - 1));
+            }
         }
+        else return;
+
+        e.Handled = true;
     }
+
+    private void FocusStep(int index)
+    {
+        ViewModel.SelectedStep = ViewModel.Steps[index];
+        var row = StepsRepeater.GetOrCreateElement(index);
+        StepsRepeater.UpdateLayout();
+        if (row is Control control) control.Focus(FocusState.Keyboard);
+        row.StartBringIntoView();
+    }
+
 }

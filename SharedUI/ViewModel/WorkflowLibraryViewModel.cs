@@ -144,7 +144,8 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     partial void OnSelectedWorkflowChanged(WorkflowViewModel? oldValue, WorkflowViewModel? newValue)
     {
         _ = oldValue;
-        SelectedStep = newValue?.Steps.FirstOrDefault();
+        newValue?.ConfigureEditor(_projectContext.SelectedProject);
+        SelectedStep = newValue?.EntryStep ?? newValue?.Steps.FirstOrDefault();
         Validate();
         RefreshTrace();
         OnPropertyChanged(nameof(CanDryRun));
@@ -153,8 +154,28 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
         DuplicateSelectedWorkflowCommand.NotifyCanExecuteChanged();
         DeleteSelectedWorkflowCommand.NotifyCanExecuteChanged();
         AssignSelectedWorkflowCommand.NotifyCanExecuteChanged();
+        AddStepCommand.NotifyCanExecuteChanged();
+        EditWorkflowSettingsCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(SelectedEditorObject));
     }
+
+    /// <summary>Adds a step and opens its editor so its connections can be configured.</summary>
+    [RelayCommand(CanExecute = nameof(HasSelectedWorkflow))]
+    private void AddStep(WorkflowStepKind kind)
+    {
+        var workflow = SelectedWorkflow;
+        if (workflow == null) return;
+        workflow.AddStepCommand.Execute(kind);
+        // Change notifications can synchronously change the TwoWay-bound selection.
+        if (ReferenceEquals(SelectedWorkflow, workflow))
+        {
+            SelectedStep = workflow.Steps.LastOrDefault();
+        }
+    }
+
+    /// <summary>Opens workflow-level settings independently of step selection.</summary>
+    [RelayCommand(CanExecute = nameof(HasSelectedWorkflow))]
+    private void EditWorkflowSettings() => SelectedStep = null;
 
     /// <summary>Creates a valid minimal workflow and selects its authoritative wrapper.</summary>
     [RelayCommand]
@@ -492,6 +513,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     {
         if (workflow != null)
         {
+            workflow.ConfigureEditor(_subscribedProject);
             workflow.PropertyChanged -= OnWorkflowPropertyChanged;
             workflow.PropertyChanged += OnWorkflowPropertyChanged;
         }
@@ -500,6 +522,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     private void DetachWorkflow(WorkflowViewModel workflow)
     {
         workflow.PropertyChanged -= OnWorkflowPropertyChanged;
+        workflow.ConfigureEditor(null);
     }
 
     private void OnProjectContextPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -540,9 +563,17 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     private void OnWorkflowPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         _ = sender;
-        _ = e;
+        if (e.PropertyName is nameof(WorkflowViewModel.EntryStep) or nameof(WorkflowViewModel.DefaultFailureStep)) return;
+        foreach (var workflow in Workflows ?? []) workflow.RefreshStepPresentation();
+        if (SelectedStep != null && SelectedWorkflow?.Steps.Contains(SelectedStep) != true)
+        {
+            SelectedStep = SelectedWorkflow?.EntryStep;
+        }
         Validate();
-        OnPropertyChanged(nameof(FilteredWorkflows));
+        if (e.PropertyName == nameof(WorkflowViewModel.Name))
+        {
+            OnPropertyChanged(nameof(FilteredWorkflows));
+        }
         if (!_suppressAutoSave)
         {
             SaveAsync().Observe(ex => _logger?.LogWarning(ex, "Workflow auto-save failed"));
@@ -559,6 +590,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
 
     private void NotifyCatalogChanged()
     {
+        foreach (var workflow in Workflows ?? []) workflow.RefreshStepPresentation();
         OnPropertyChanged(nameof(Workflows));
         OnPropertyChanged(nameof(FilteredWorkflows));
         Validate();

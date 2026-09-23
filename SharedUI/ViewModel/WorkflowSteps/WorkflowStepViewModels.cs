@@ -49,7 +49,7 @@ public enum WorkflowConditionKind
 }
 
 /// <summary>Base wrapper for one Workflow 2.0 graph node.</summary>
-public abstract class WorkflowStepViewModel : ObservableObject
+public abstract partial class WorkflowStepViewModel : ObservableObject
 {
     /// <summary>Creates a graph-node wrapper.</summary>
     protected WorkflowStepViewModel(WorkflowStep model)
@@ -224,7 +224,7 @@ public sealed class WorkflowDelayStepViewModel(WorkflowDelayStep model) : Workfl
 }
 
 /// <summary>Wraps a typed condition and its two explicit successors.</summary>
-public sealed class WorkflowConditionStepViewModel(WorkflowConditionStep model) : WorkflowStepViewModel(model)
+public sealed partial class WorkflowConditionStepViewModel(WorkflowConditionStep model) : WorkflowStepViewModel(model)
 {
     /// <inheritdoc />
     public override WorkflowStepKind Kind => WorkflowStepKind.Condition;
@@ -315,7 +315,7 @@ public sealed class WorkflowConditionStepViewModel(WorkflowConditionStep model) 
 }
 
 /// <summary>Wraps one persisted parallel branch.</summary>
-public sealed class WorkflowParallelBranchViewModel : ObservableObject
+public sealed partial class WorkflowParallelBranchViewModel : ObservableObject
 {
     private readonly WorkflowParallelBranch _model;
 
@@ -432,7 +432,7 @@ public sealed partial class WorkflowParallelStepViewModel : WorkflowStepViewMode
 }
 
 /// <summary>Wraps a nested workflow invocation node.</summary>
-public sealed class WorkflowNestedStepViewModel(WorkflowNestedStep model) : WorkflowStepViewModel(model)
+public sealed partial class WorkflowNestedStepViewModel(WorkflowNestedStep model) : WorkflowStepViewModel(model)
 {
     /// <inheritdoc />
     public override WorkflowStepKind Kind => WorkflowStepKind.NestedWorkflow;

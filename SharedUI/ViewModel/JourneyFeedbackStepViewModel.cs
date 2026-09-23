@@ -15,6 +15,8 @@ public sealed partial class JourneyFeedbackStepViewModel : ObservableObject
     private bool _isCurrentRuntimeStep;
     private uint _runtimeOccurrence;
 
+    [ObservableProperty] private bool _isSelected;
+
     public JourneyFeedbackStepViewModel(JourneyFeedbackStep model, Project project, Journey? journey = null, System.Action? beforeChange = null)
     {
         Model = model;
@@ -47,6 +49,7 @@ public sealed partial class JourneyFeedbackStepViewModel : ObservableObject
             {
                 OnPropertyChanged(nameof(WorkflowName));
                 OnPropertyChanged(nameof(HasWorkflow));
+                OnPropertyChanged(nameof(AutomationName));
             }
         }
     }
@@ -59,6 +62,9 @@ public sealed partial class JourneyFeedbackStepViewModel : ObservableObject
             if (SetModelProperty(Model.Index, Math.Max(value, 1), (step, count) => step.Index = count))
             {
                 OnPropertyChanged(nameof(IsRepeat));
+                OnPropertyChanged(nameof(RepeatCountText));
+                OnPropertyChanged(nameof(RuntimeProgress));
+                OnPropertyChanged(nameof(CompactRuntimeProgress));
                 OnPropertyChanged(nameof(AutomationName));
             }
         }
@@ -73,7 +79,11 @@ public sealed partial class JourneyFeedbackStepViewModel : ObservableObject
     public bool Enabled
     {
         get => Model.Enabled;
-        set => SetModelProperty(Model.Enabled, value, (step, enabled) => step.Enabled = enabled);
+        set
+        {
+            if (SetModelProperty(Model.Enabled, value, (step, enabled) => step.Enabled = enabled))
+                OnPropertyChanged(nameof(AutomationName));
+        }
     }
 
     public JourneyStopTransitionMode StopMode
@@ -118,8 +128,10 @@ public sealed partial class JourneyFeedbackStepViewModel : ObservableObject
     public IEnumerable<Station> AvailableStations => _journey.Stations;
     public IEnumerable<JourneyStopTransitionMode> StopModes => Enum.GetValues<JourneyStopTransitionMode>();
     public bool IsRepeat => RepeatCount > 1;
+    public string RepeatCountText => $"{RepeatCount}x";
     public string InPortText => $"← InPort {InPort}";
     public bool HasWorkflow => WorkflowId.HasValue;
+    public bool HasStopTransition => StopMode != JourneyStopTransitionMode.None;
     public string WorkflowName => _project.Workflows.FirstOrDefault(workflow => workflow.Id == WorkflowId)?.Name ?? "No workflow";
     public string StopName => StopMode switch
     {
@@ -127,19 +139,21 @@ public sealed partial class JourneyFeedbackStepViewModel : ObservableObject
         JourneyStopTransitionMode.SpecificStation => _journey.Stations.FirstOrDefault(station => station.Id == TargetStationId)?.Name ?? "Missing stop",
         _ => "No stop change"
     };
-    public string AutomationName => $"Feedback step, InPort {InPort}, repeat {RepeatCount}, workflow {WorkflowName}, stop {StopName}";
+    public string AutomationName => $"Feedback step, InPort {InPort}, repeat {RepeatCount}, workflow {WorkflowName}, stop {StopName}, {(Enabled ? "enabled" : "disabled")}{(IsCurrentRuntimeStep ? $", {RuntimeProgress}" : string.Empty)}";
     public bool IsCurrentRuntimeStep
     {
         get => _isCurrentRuntimeStep;
         private set => SetProperty(ref _isCurrentRuntimeStep, value);
     }
     public string RuntimeProgress => IsCurrentRuntimeStep ? $"Current progress: {_runtimeOccurrence}/{RepeatCount}" : string.Empty;
+    public string CompactRuntimeProgress => IsCurrentRuntimeStep ? $"{_runtimeOccurrence}/{RepeatCount}" : string.Empty;
 
     public void UpdateRuntimeProgress(bool isCurrent, uint occurrence)
     {
         IsCurrentRuntimeStep = isCurrent;
         _runtimeOccurrence = occurrence;
         OnPropertyChanged(nameof(RuntimeProgress));
+        OnPropertyChanged(nameof(CompactRuntimeProgress));
         OnPropertyChanged(nameof(AutomationName));
     }
 
@@ -186,6 +200,7 @@ public sealed partial class JourneyFeedbackStepViewModel : ObservableObject
         OnPropertyChanged(nameof(StopMode));
         OnPropertyChanged(nameof(TargetStationId));
         OnPropertyChanged(nameof(StopName));
+        OnPropertyChanged(nameof(HasStopTransition));
         OnPropertyChanged(nameof(AutomationName));
     }
 }

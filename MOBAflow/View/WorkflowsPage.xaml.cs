@@ -5,19 +5,16 @@ using Common.Configuration;
 using Common.Extension;
 
 using Microsoft.Extensions.Logging;
-using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 
 using Moba.SharedUI.ViewModel;
-using Moba.SharedUI.ViewModel.WorkflowSteps;
 
 using SharedUI.Interface;
 
 using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
-using Windows.UI.Core;
 
 /// <summary>
 /// Workflows page displaying workflows and actions with properties panel.
@@ -245,28 +242,6 @@ internal sealed partial class WorkflowsPage
         }
     }
 
-    private void ActionListView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
-    {
-        if (e.Items.FirstOrDefault() is WorkflowStepViewModel step)
-        {
-            e.Data.Properties.Add("WorkflowStep", step);
-            e.Data.RequestedOperation = DataPackageOperation.Move;
-        }
-    }
-
-    private void ActionListView_Drop(object sender, DragEventArgs e)
-    {
-        // No longer needed - DragItemsCompleted handles drag & drop reordering
-        _ = e;
-    }
-
-    private void ActionListView_DragItemsCompleted(object sender, DragItemsCompletedEventArgs e)
-    {
-        if (ViewModel.SelectedWorkflow == null) return;
-
-        ViewModel.SelectedWorkflow.UpdateStepOrder();
-    }
-
     private void ActionListView_KeyDown(object sender, KeyRoutedEventArgs e)
     {
         var workflow = ViewModel.WorkflowLibrary.SelectedWorkflow;
@@ -276,19 +251,7 @@ internal sealed partial class WorkflowsPage
             return;
         }
 
-        var altDown = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Menu)
-            .HasFlag(CoreVirtualKeyStates.Down);
-        if (altDown && e.Key == VirtualKey.Up)
-        {
-            workflow.MoveStepUpCommand.Execute(step);
-            e.Handled = true;
-        }
-        else if (altDown && e.Key == VirtualKey.Down)
-        {
-            workflow.MoveStepDownCommand.Execute(step);
-            e.Handled = true;
-        }
-        else if (e.Key == VirtualKey.Delete && workflow.DeleteStepCommand.CanExecute(step))
+        if (e.Key == VirtualKey.Delete && workflow.DeleteStepCommand.CanExecute(step))
         {
             workflow.DeleteStepCommand.Execute(step);
             e.Handled = true;

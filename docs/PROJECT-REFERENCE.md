@@ -192,9 +192,11 @@ in-memory `WorkflowTraceStore` retains at most 100 executions and 10,000 entries
 by default. Trace persistence is deliberately outside `solution.json`.
 
 EventManagerPage and WorkflowsPage use the same `WorkflowLibraryViewModel` and
-the authoritative wrappers from `ProjectViewModel.Workflows`. Both surfaces
-therefore share selection, create/duplicate/delete, typed step editing,
-validation, dry-run, trace, autosave, and reference-safe assignment state.
+the authoritative wrappers from `ProjectViewModel.Workflows`, sharing workflow
+selection and autosave state. EventManagerPage provides compact feedback steps,
+event properties, and workflow or journey-stop assignment from Values.
+WorkflowsPage provides create/duplicate/delete, typed step editing, validation,
+dry-run, and trace controls.
 Deleting a workflow is blocked while any feedback or nested-workflow reference
 remains. The current JSON schema is the direct Workflow 2.0 shape; there is no
 Workflow 1.x compatibility executor or migration layer.

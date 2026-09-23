@@ -70,6 +70,7 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
         {
             step.PropertyChanged += OnStepPropertyChanged;
         }
+        RefreshStepPresentation();
     }
 
     /// <summary>
@@ -156,7 +157,14 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
     public Guid? EntryStepId
     {
         get => _model.EntryStepId;
-        set => SetProperty(_model.EntryStepId, value, _model, static (workflow, id) => workflow.EntryStepId = id);
+        set
+        {
+            if (SetProperty(_model.EntryStepId, value, _model, static (workflow, id) => workflow.EntryStepId = id))
+            {
+                RefreshStepPresentation();
+                OnPropertyChanged(nameof(EntryStep));
+            }
+        }
     }
 
     /// <summary>Gets or sets the workflow-level failure behavior inherited by graph nodes.</summary>
@@ -166,11 +174,14 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
         set
         {
             _model.DefaultErrorPolicy ??= new WorkflowErrorPolicy();
-            SetProperty(
+            if (SetProperty(
                 _model.DefaultErrorPolicy.Behavior,
                 value,
                 _model.DefaultErrorPolicy,
-                static (policy, behavior) => policy.Behavior = behavior);
+                static (policy, behavior) => policy.Behavior = behavior))
+            {
+                RefreshStepPresentation();
+            }
         }
     }
 
@@ -181,11 +192,15 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
         set
         {
             _model.DefaultErrorPolicy ??= new WorkflowErrorPolicy();
-            SetProperty(
+            if (SetProperty(
                 _model.DefaultErrorPolicy.FailureStepId,
                 value,
                 _model.DefaultErrorPolicy,
-                static (policy, id) => policy.FailureStepId = id);
+                static (policy, id) => policy.FailureStepId = id))
+            {
+                RefreshStepPresentation();
+                OnPropertyChanged(nameof(DefaultFailureStep));
+            }
         }
     }
 
@@ -236,6 +251,7 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
         var viewModel = _stepViewModelFactory.CreateViewModel(step);
         viewModel.PropertyChanged += OnStepPropertyChanged;
         Steps.Add(viewModel);
+        RefreshStepPresentation();
         OnPropertyChanged(nameof(Steps));
     }
 
@@ -256,6 +272,9 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
             EntryStepId = _model.Steps.FirstOrDefault()?.Id;
         }
 
+        RefreshStepPresentation();
+        OnPropertyChanged(nameof(EntryStep));
+        OnPropertyChanged(nameof(DefaultFailureStep));
         OnPropertyChanged(nameof(Steps));
     }
 
@@ -428,6 +447,8 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
     {
         _ = sender;
         _ = e;
+        if (_refreshingEditor) return;
+        RefreshStepPresentation();
         OnPropertyChanged(nameof(Steps));
     }
 

@@ -20,6 +20,166 @@ using System.Text.Json;
 [TestFixture]
 public sealed class WorkflowLibraryViewModelTests
 {
+    [TestCase(WorkflowStepKind.Action)]
+    [TestCase(WorkflowStepKind.Delay)]
+    [TestCase(WorkflowStepKind.Condition)]
+    [TestCase(WorkflowStepKind.Parallel)]
+    [TestCase(WorkflowStepKind.NestedWorkflow)]
+    [TestCase(WorkflowStepKind.Terminate)]
+    public void AddStep_PreservesSelectionWhenBoundCatalogRefreshWouldClearIt(WorkflowStepKind kind)
+    {
+        var end = new WorkflowTerminateStep { Name = "Done" };
+        var project = new ProjectViewModel(new Project
+        {
+            Workflows = [new Workflow { EntryStepId = end.Id, Steps = [end] }]
+        });
+        var context = new TestProjectContext(project);
+        using var library = new WorkflowLibraryViewModel(context);
+        var workflow = library.SelectedWorkflow!;
+        // Model a TwoWay ListView selection reset when its filtered ItemsSource is replaced.
+        library.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(WorkflowLibraryViewModel.FilteredWorkflows)) library.SelectedWorkflow = null;
+        };
+
+        Assert.DoesNotThrow(() => library.AddStepCommand.Execute(kind));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(library.SelectedWorkflow, Is.SameAs(workflow));
+            Assert.That(library.SelectedStep, Is.SameAs(workflow.Steps.Last()));
+            Assert.That(workflow.Steps, Has.Count.EqualTo(2));
+            Assert.That(workflow.Steps.Last().Kind, Is.EqualTo(kind));
+            Assert.That(context.SaveCount, Is.EqualTo(1));
+        });
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public void AddStep_DoesNotOverwriteSelectionChangedBySynchronousNotification(bool selectOtherWorkflow)
+    {
+        var end = new WorkflowTerminateStep { Name = "Done" };
+        var otherEnd = new WorkflowTerminateStep { Name = "Other end" };
+        var project = new ProjectViewModel(new Project
+        {
+            Workflows =
+            [
+                new Workflow { EntryStepId = end.Id, Steps = [end] },
+                new Workflow { EntryStepId = otherEnd.Id, Steps = [otherEnd] }
+            ]
+        });
+        using var library = new WorkflowLibraryViewModel(new TestProjectContext(project));
+        var workflow = library.SelectedWorkflow!;
+        var otherWorkflow = selectOtherWorkflow ? project.Workflows[1] : null;
+        workflow.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName != nameof(WorkflowViewModel.Steps)) return;
+            library.SelectedWorkflow = otherWorkflow;
+            library.SelectedStep = null;
+        };
+
+        Assert.DoesNotThrow(() => library.AddStepCommand.Execute(WorkflowStepKind.Delay));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(library.SelectedWorkflow, Is.SameAs(otherWorkflow));
+            Assert.That(library.SelectedStep, Is.Null);
+            Assert.That(workflow.Steps, Has.Count.EqualTo(2));
+            Assert.That(project.Workflows[1].Steps, Has.Count.EqualTo(1));
+        });
+    }
+
+    [Test]
+    public void NamedWorkflowSelection_UsesSharedWrappersAndRefreshesRenamedTarget()
+    {
+        var nested = new WorkflowNestedStep { Name = "Call" };
+        var caller = new Workflow { Name = "Caller", EntryStepId = nested.Id, Steps = [nested] };
+        var target = new Workflow { Name = "Arrival", Steps = [] };
+        var project = new ProjectViewModel(new Project { Workflows = [caller, target] });
+        var context = new TestProjectContext(project);
+        using var library = new WorkflowLibraryViewModel(context);
+        var editor = (WorkflowNestedStepViewModel)library.SelectedStep!;
+
+        editor.InvokedWorkflow = project.Workflows[1];
+        project.Workflows[1].Name = "Arrival announcement";
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(nested.WorkflowId, Is.EqualTo(target.Id));
+            Assert.That(editor.InvokedWorkflow, Is.SameAs(project.Workflows[1]));
+            Assert.That(editor.ConnectionsSummary, Does.Contain("Call: Arrival announcement"));
+            Assert.That(context.SaveCount, Is.EqualTo(2));
+        });
+    }
+
+    [Test]
+    public void RenameWorkflow_StillRefreshesSearchResults()
+    {
+        var project = new ProjectViewModel(new Project { Workflows = [new Workflow { Name = "Old name" }] });
+        using var library = new WorkflowLibraryViewModel(new TestProjectContext(project));
+        library.SearchText = "Arrival";
+        Assert.That(library.FilteredWorkflows, Is.Empty);
+        var refreshes = 0;
+        library.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(WorkflowLibraryViewModel.FilteredWorkflows)) refreshes++;
+        };
+
+        project.Workflows.Single().Name = "Arrival announcement";
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(library.FilteredWorkflows.Single(), Is.SameAs(project.Workflows.Single()));
+            Assert.That(refreshes, Is.EqualTo(1));
+        });
+    }
+
+    [Test]
+    public void NamedConditionContext_OffersJourneyAndStopChoicesForSelectedKind()
+    {
+        var station = new Station { Name = "Central" };
+        var journey = new Journey { Name = "Regional", Stations = [station] };
+        var condition = new WorkflowConditionStep { Condition = new CurrentJourneyWorkflowCondition() };
+        var workflow = new Workflow { EntryStepId = condition.Id, Steps = [condition] };
+        var project = new ProjectViewModel(new Project { Workflows = [workflow], Journeys = [journey] });
+        using var library = new WorkflowLibraryViewModel(new TestProjectContext(project));
+        var editor = (WorkflowConditionStepViewModel)library.SelectedStep!;
+
+        editor.ContextEntity = editor.ContextChoices.Single();
+        Assert.That(((CurrentJourneyWorkflowCondition)condition.Condition).JourneyId, Is.EqualTo(journey.Id));
+
+        editor.ConditionKind = WorkflowConditionKind.CurrentStation;
+        editor.ContextEntity = editor.ContextChoices.Single();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(editor.ContextEntity!.Name, Is.EqualTo("Central"));
+            Assert.That(((CurrentStationWorkflowCondition)condition.Condition).StationId, Is.EqualTo(station.Id));
+            Assert.That(editor.IsFeedbackCondition, Is.False);
+            Assert.That(editor.IsContextCondition, Is.True);
+        });
+    }
+
+    [Test]
+    public void AddStep_SelectsNewEditor_AndWorkflowSettingsDoNotSaveOrChangeConnections()
+    {
+        var end = new WorkflowTerminateStep { Name = "Done" };
+        var workflow = new Workflow { EntryStepId = end.Id, Steps = [end] };
+        var context = new TestProjectContext(new ProjectViewModel(new Project { Workflows = [workflow] }));
+        using var library = new WorkflowLibraryViewModel(context);
+
+        library.AddStepCommand.Execute(WorkflowStepKind.Delay);
+        Assert.That(library.SelectedStep, Is.SameAs(library.SelectedWorkflow!.Steps.Last()));
+        library.EditWorkflowSettingsCommand.Execute(null);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(library.SelectedEditorObject, Is.SameAs(library.SelectedWorkflow));
+            Assert.That(context.SaveCount, Is.EqualTo(1));
+            Assert.That(workflow.EntryStepId, Is.EqualTo(end.Id));
+        });
+    }
+
     [Test]
     public async Task CreateWorkflowCommand_AddsValidMinimalGraphThroughProjectWrapper()
     {

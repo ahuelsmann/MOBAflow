@@ -8,8 +8,6 @@ using Domain.Enum;
 using System.Collections.ObjectModel;
 using System.Text.Json;
 
-public sealed record EventElementDescriptor(string Id, string Name, string Description, uint DefaultRepeatCount);
-
 /// <summary>Edits the feedback sequence of the journey selected in the shared application context.</summary>
 public sealed partial class EventManagerViewModel : ObservableObject
 {
@@ -17,8 +15,14 @@ public sealed partial class EventManagerViewModel : ObservableObject
     private readonly Stack<string> _undo = [];
     private readonly Stack<string> _redo = [];
 
-    [ObservableProperty] private JourneyViewModel? _selectedJourney;
-    [ObservableProperty] private JourneyFeedbackStepViewModel? _selectedStep;
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(AddStepCommand))]
+    [NotifyCanExecuteChangedFor(nameof(DeleteStepCommand))]
+    private JourneyViewModel? _selectedJourney;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(DeleteStepCommand))]
+    private JourneyFeedbackStepViewModel? _selectedStep;
     [ObservableProperty] private uint _defaultInPort = 1;
     [ObservableProperty] private string _workflowSearchText = string.Empty;
     [ObservableProperty] private string _stationSearchText = string.Empty;
@@ -26,18 +30,12 @@ public sealed partial class EventManagerViewModel : ObservableObject
     public EventManagerViewModel(MainWindowViewModel main)
     {
         _main = main;
-        ToolboxElements =
-        [
-            new("single", "Single Feedback", "One matching feedback activation", 1),
-            new("repeat", "Repeat Feedback", "Wait for multiple matching activations", 10)
-        ];
         _main.PropertyChanged += OnMainPropertyChanged;
         SelectedJourney = _main.SelectedJourney;
         Refresh();
     }
 
     public ObservableCollection<JourneyFeedbackStepViewModel> Steps { get; } = [];
-    public IReadOnlyList<EventElementDescriptor> ToolboxElements { get; }
     public IEnumerable<JourneyViewModel> Journeys => _main.SelectedProject?.Journeys ?? [];
     public WorkflowLibraryViewModel WorkflowLibrary => _main.WorkflowLibrary;
     public IEnumerable<WorkflowViewModel> Workflows => WorkflowLibrary.FilteredWorkflows;
@@ -66,9 +64,10 @@ public sealed partial class EventManagerViewModel : ObservableObject
         OnPropertyChanged(nameof(Stations));
     }
 
-    partial void OnSelectedStepChanged(JourneyFeedbackStepViewModel? value)
+    partial void OnSelectedStepChanged(JourneyFeedbackStepViewModel? oldValue, JourneyFeedbackStepViewModel? newValue)
     {
-        _ = value;
+        if (oldValue != null) oldValue.IsSelected = false;
+        if (newValue != null) newValue.IsSelected = true;
         WorkflowLibrary.SelectedStep = null;
     }
 
@@ -79,28 +78,25 @@ public sealed partial class EventManagerViewModel : ObservableObject
     }
     partial void OnStationSearchTextChanged(string value) { _ = value; OnPropertyChanged(nameof(Stations)); }
 
-    [RelayCommand]
-    public void AddElement(EventElementDescriptor? descriptor)
-    {
-        if (descriptor is null) return;
-
-        InsertElement(descriptor, SelectedStep == null ? Steps.Count : Steps.IndexOf(SelectedStep) + 1);
-    }
-
-    public void InsertElement(EventElementDescriptor descriptor, int index)
+    [RelayCommand(CanExecute = nameof(CanAddStep))]
+    private void AddStep()
     {
         if (SelectedJourney == null) return;
         CaptureUndo();
-        var step = new JourneyFeedbackStep { InPort = Math.Clamp(DefaultInPort, 1u, 512u), Index = descriptor.DefaultRepeatCount };
-        index = Math.Clamp(index, 0, SelectedJourney.Model.FeedbackSequence.Count);
+        var step = new JourneyFeedbackStep { InPort = Math.Clamp(DefaultInPort, 1u, 512u), Index = 1 };
+        var index = SelectedStep == null ? Steps.Count : Steps.IndexOf(SelectedStep) + 1;
         SelectedJourney.Model.FeedbackSequence.Insert(index, step);
         Refresh(step.Id);
     }
 
-    [RelayCommand]
+    private bool CanAddStep() => SelectedJourney != null;
+
+    private bool CanDeleteStep(JourneyFeedbackStepViewModel? step) => SelectedJourney != null && step != null && Steps.Contains(step);
+
+    [RelayCommand(CanExecute = nameof(CanDeleteStep))]
     private void DeleteStep(JourneyFeedbackStepViewModel? step)
     {
-        if (SelectedJourney == null || step == null) return;
+        if (SelectedJourney == null || step == null || !Steps.Contains(step)) return;
         CaptureUndo();
         SelectedJourney.Model.FeedbackSequence.Remove(step.Model);
         Refresh();
@@ -120,7 +116,7 @@ public sealed partial class EventManagerViewModel : ObservableObject
         Refresh(step.Model.Id);
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanUndo))]
     private void Undo()
     {
         if (SelectedJourney == null || _undo.Count == 0) return;
@@ -128,7 +124,7 @@ public sealed partial class EventManagerViewModel : ObservableObject
         RestoreSequence(_undo.Pop());
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanRedo))]
     private void Redo()
     {
         if (SelectedJourney == null || _redo.Count == 0) return;

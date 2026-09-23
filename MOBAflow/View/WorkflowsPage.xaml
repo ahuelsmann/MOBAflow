@@ -77,7 +77,7 @@
                                     </Grid.ColumnDefinitions>
                                     <FontIcon Glyph="&#xEF90;" FontSize="16" />
                                     <StackPanel Grid.Column="1">
-                                        <TextBlock Text="{x:Bind Name}" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{x:Bind Name, Mode=OneWay}" TextTrimming="CharacterEllipsis" />
                                         <TextBlock
                                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                             Style="{ThemeResource CaptionTextBlockStyle}"
@@ -95,92 +95,97 @@
 
         <controls:CollapsibleColumnHelper
             Grid.Column="2"
-            Header="Workflow steps"
+            Header="Steps and connections"
             Glyph="&#xE945;"
             IsExpanded="{x:Bind ViewModel.IsWorkflowActionsExpanded, Mode=TwoWay}">
             <controls:CollapsibleColumnHelper.PanelContent>
                 <Grid RowSpacing="8">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <CommandBar DefaultLabelPosition="Right" OverflowButtonVisibility="Auto">
+                    <ComboBox Header="Start with" PlaceholderText="Select a starting step" HorizontalAlignment="Stretch"
+                              ItemsSource="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.Steps, Mode=OneWay}"
+                              DisplayMemberPath="SelectionLabel" SelectedItem="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.EntryStep, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="1" Text="Connections define the flow. Parallel branches run together."
+                               Style="{ThemeResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                    <CommandBar Grid.Row="2" DefaultLabelPosition="Collapsed" OverflowButtonVisibility="Auto">
                         <AppBarButton
                             Label="Action"
                             Icon="Play"
-                            Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.AddStepCommand}"
+                            ToolTipService.ToolTip="Add action"
+                            Command="{x:Bind ViewModel.WorkflowLibrary.AddStepCommand}"
                             CommandParameter="{x:Bind steps:WorkflowStepKind.Action}" />
                         <AppBarButton
                             Label="Delay"
                             Icon="Clock"
-                            Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.AddStepCommand}"
+                            ToolTipService.ToolTip="Add delay"
+                            Command="{x:Bind ViewModel.WorkflowLibrary.AddStepCommand}"
                             CommandParameter="{x:Bind steps:WorkflowStepKind.Delay}" />
                         <AppBarButton
                             Label="Condition"
                             Icon="Filter"
-                            Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.AddStepCommand}"
+                            ToolTipService.ToolTip="Add condition"
+                            Command="{x:Bind ViewModel.WorkflowLibrary.AddStepCommand}"
                             CommandParameter="{x:Bind steps:WorkflowStepKind.Condition}" />
                         <AppBarButton
                             Label="Parallel"
                             Icon="Switch"
-                            Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.AddStepCommand}"
+                            ToolTipService.ToolTip="Add parallel branches"
+                            Command="{x:Bind ViewModel.WorkflowLibrary.AddStepCommand}"
                             CommandParameter="{x:Bind steps:WorkflowStepKind.Parallel}" />
                         <AppBarButton
                             Label="Nested"
                             Icon="OpenFile"
-                            Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.AddStepCommand}"
+                            ToolTipService.ToolTip="Add nested workflow"
+                            Command="{x:Bind ViewModel.WorkflowLibrary.AddStepCommand}"
                             CommandParameter="{x:Bind steps:WorkflowStepKind.NestedWorkflow}" />
                         <AppBarButton
                             Label="Terminate"
                             Icon="Stop"
-                            Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.AddStepCommand}"
+                            ToolTipService.ToolTip="Add termination"
+                            Command="{x:Bind ViewModel.WorkflowLibrary.AddStepCommand}"
                             CommandParameter="{x:Bind steps:WorkflowStepKind.Terminate}" />
                         <AppBarSeparator />
                         <AppBarButton
-                            Label="Move up"
-                            Icon="Up"
-                            Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.MoveStepUpCommand}"
-                            CommandParameter="{x:Bind ViewModel.WorkflowLibrary.SelectedStep}" />
-                        <AppBarButton
-                            Label="Move down"
-                            Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.MoveStepDownCommand}"
-                            CommandParameter="{x:Bind ViewModel.WorkflowLibrary.SelectedStep}">
-                            <AppBarButton.Icon>
-                                <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE74B;" />
-                            </AppBarButton.Icon>
-                        </AppBarButton>
-                        <AppBarButton
                             Label="Delete step"
                             Icon="Delete"
-                            Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.DeleteStepCommand}"
-                            CommandParameter="{x:Bind ViewModel.WorkflowLibrary.SelectedStep}" />
+                            ToolTipService.ToolTip="Delete selected step"
+                            Command="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.DeleteStepCommand, Mode=OneWay}"
+                            CommandParameter="{x:Bind ViewModel.WorkflowLibrary.SelectedStep, Mode=OneWay}" />
                     </CommandBar>
                     <ListView
                         x:Name="ActionListView"
-                        Grid.Row="1"
-                        AutomationProperties.Name="Ordered workflow steps"
-                        CanDragItems="True"
-                        CanReorderItems="True"
-                        DragItemsCompleted="ActionListView_DragItemsCompleted"
-                        DragItemsStarting="ActionListView_DragItemsStarting"
+                        Grid.Row="3"
+                        AutomationProperties.Name="Workflow steps and their connections"
                         ItemsSource="{x:Bind ViewModel.WorkflowLibrary.SelectedWorkflow.Steps, Mode=OneWay}"
                         KeyDown="ActionListView_KeyDown"
                         SelectedItem="{x:Bind ViewModel.WorkflowLibrary.SelectedStep, Mode=TwoWay}"
                         SelectionMode="Single">
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Padding" Value="8,6" />
+                            </Style>
+                        </ListView.ItemContainerStyle>
                         <ListView.ItemTemplate>
                             <DataTemplate x:DataType="steps:WorkflowStepViewModel">
-                                <Grid Padding="8" ColumnSpacing="8">
+                                <Grid ColumnSpacing="8">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
                                     <FontIcon Glyph="&#xE945;" FontSize="16" />
                                     <StackPanel Grid.Column="1">
-                                        <TextBlock Text="{x:Bind Name}" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{x:Bind SelectionLabel, Mode=OneWay}" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{x:Bind SelectionLabel, Mode=OneWay}" />
                                         <TextBlock
                                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                             Style="{ThemeResource CaptionTextBlockStyle}"
-                                            Text="{x:Bind Kind}" />
+                                            Text="{x:Bind StepCaption, Mode=OneWay}" />
+                                        <TextBlock Margin="0,4,0,0" Text="{x:Bind ConnectionsSummary, Mode=OneWay}"
+                                                   Style="{ThemeResource CaptionTextBlockStyle}" TextWrapping="Wrap" />
                                     </StackPanel>
                                 </Grid>
                             </DataTemplate>
@@ -194,96 +199,110 @@
 
         <controls:CollapsibleColumnProperties
             Grid.Column="4"
-            Header="Editor and trace"
+            Header="Properties"
             Glyph="&#xE946;"
             IsExpanded="{x:Bind ViewModel.IsWorkflowPropertiesExpanded, Mode=TwoWay}">
             <controls:CollapsibleColumnProperties.PanelContent>
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled">
                     <StackPanel Padding="12" Spacing="16">
+                        <Button Content="Workflow settings" Command="{x:Bind ViewModel.WorkflowLibrary.EditWorkflowSettingsCommand}" />
                         <ContentControl
                             HorizontalContentAlignment="Stretch"
                             Content="{x:Bind ViewModel.WorkflowLibrary.SelectedEditorObject, Mode=OneWay}"
                             ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
 
-                        <Grid ColumnSpacing="8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <Button
-                                Content="Dry run"
-                                Style="{StaticResource AccentButtonStyle}"
-                                Command="{x:Bind ViewModel.WorkflowLibrary.DryRunSelectedWorkflowCommand}" />
-                            <Button
-                                Grid.Column="1"
-                                Content="Cancel"
-                                Command="{x:Bind ViewModel.WorkflowLibrary.CancelDryRunCommand}" />
-                            <Button
-                                Grid.Column="2"
-                                Content="Validate"
-                                Command="{x:Bind ViewModel.WorkflowLibrary.ValidateCommand}" />
-                        </Grid>
-                        <TextBlock
-                            AutomationProperties.LiveSetting="Polite"
-                            Text="{x:Bind ViewModel.WorkflowLibrary.LastDryRunStatus, Mode=OneWay}" />
-
-                        <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Validation" />
-                        <ListView
-                            MaxHeight="180"
-                            AutomationProperties.Name="Workflow validation issues"
-                            ItemsSource="{x:Bind ViewModel.WorkflowLibrary.ValidationIssues, Mode=OneWay}">
-                            <ListView.ItemTemplate>
-                                <DataTemplate>
+                        <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" IsExpanded="False">
+                            <Expander.Header>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Validation and diagnostics" />
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <TextBlock Text="{x:Bind ViewModel.WorkflowLibrary.ValidationIssues.Count, Mode=OneWay}" />
+                                        <TextBlock Text="issues" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Expander.Header>
+                            <StackPanel Spacing="12">
+                                <Grid ColumnSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
                                     <Button
-                                        HorizontalAlignment="Stretch"
-                                        HorizontalContentAlignment="Stretch"
-                                        AutomationProperties.Name="Open validation issue"
-                                        Command="{Binding DataContext.WorkflowLibrary.NavigateToValidationIssueCommand, ElementName=PageRoot}"
-                                        CommandParameter="{Binding}">
-                                        <StackPanel Padding="4">
-                                            <TextBlock FontWeight="SemiBold" Text="{Binding Code}" />
-                                            <TextBlock Text="{Binding FieldPath}" />
-                                            <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
-                                        </StackPanel>
-                                    </Button>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
+                                        Content="Dry run"
+                                        Style="{StaticResource AccentButtonStyle}"
+                                        Command="{x:Bind ViewModel.WorkflowLibrary.DryRunSelectedWorkflowCommand}" />
+                                    <Button
+                                        Grid.Column="1"
+                                        Content="Cancel"
+                                        Command="{x:Bind ViewModel.WorkflowLibrary.CancelDryRunCommand}" />
+                                    <Button
+                                        Grid.Column="2"
+                                        Content="Validate"
+                                        Command="{x:Bind ViewModel.WorkflowLibrary.ValidateCommand}" />
+                                </Grid>
+                                <TextBlock
+                                    AutomationProperties.LiveSetting="Polite"
+                                    Text="{x:Bind ViewModel.WorkflowLibrary.LastDryRunStatus, Mode=OneWay}" />
 
-                        <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Planned effects" />
-                        <ListView
-                            MaxHeight="160"
-                            AutomationProperties.Name="Dry run planned effects"
-                            ItemsSource="{x:Bind ViewModel.WorkflowLibrary.PlannedEffects, Mode=OneWay}">
-                            <ListView.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Padding="4" Text="{Binding Description}" TextWrapping="Wrap" />
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
+                                <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Validation" />
+                                <ListView
+                                    MaxHeight="180"
+                                    AutomationProperties.Name="Workflow validation issues"
+                                    ItemsSource="{x:Bind ViewModel.WorkflowLibrary.ValidationIssues, Mode=OneWay}">
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Stretch"
+                                                AutomationProperties.Name="Open validation issue"
+                                                Command="{Binding DataContext.WorkflowLibrary.NavigateToValidationIssueCommand, ElementName=PageRoot}"
+                                                CommandParameter="{Binding}">
+                                                <StackPanel Padding="4">
+                                                    <TextBlock FontWeight="SemiBold" Text="{Binding Code}" />
+                                                    <TextBlock Text="{Binding FieldPath}" />
+                                                    <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
+                                                </StackPanel>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
 
-                        <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Recent trace" />
-                        <ListView
-                            MaxHeight="280"
-                            AutomationProperties.Name="Workflow execution trace"
-                            ItemsSource="{x:Bind ViewModel.WorkflowLibrary.TraceEntries, Mode=OneWay}">
-                            <ListView.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid Padding="4" ColumnSpacing="8">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Text="{Binding Sequence}" />
-                                        <StackPanel Grid.Column="1">
-                                            <TextBlock FontWeight="SemiBold" Text="{Binding Kind}" />
-                                            <TextBlock Text="{Binding Detail}" TextWrapping="Wrap" />
-                                        </StackPanel>
-                                    </Grid>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
+                                <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Planned effects" />
+                                <ListView
+                                    MaxHeight="160"
+                                    AutomationProperties.Name="Dry run planned effects"
+                                    ItemsSource="{x:Bind ViewModel.WorkflowLibrary.PlannedEffects, Mode=OneWay}">
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Padding="4" Text="{Binding Description}" TextWrapping="Wrap" />
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
+
+                                <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Recent trace" />
+                                <ListView
+                                    MaxHeight="280"
+                                    AutomationProperties.Name="Workflow execution trace"
+                                    ItemsSource="{x:Bind ViewModel.WorkflowLibrary.TraceEntries, Mode=OneWay}">
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Padding="4" ColumnSpacing="8">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="{Binding Sequence}" />
+                                                <StackPanel Grid.Column="1">
+                                                    <TextBlock FontWeight="SemiBold" Text="{Binding Kind}" />
+                                                    <TextBlock Text="{Binding Detail}" TextWrapping="Wrap" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
+                            </StackPanel>
+                        </Expander>
                     </StackPanel>
                 </ScrollViewer>
             </controls:CollapsibleColumnProperties.PanelContent>

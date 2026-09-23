@@ -89,17 +89,28 @@ The matrix action type exists in the data model but does not currently have a
 runtime handler.
 
 Use **Workflows** for library-focused authoring. Create or duplicate a workflow,
-add and reorder steps, select a step, and edit its typed properties in the
-editor pane. Set every successor, branch, join, nested-workflow, and failure
-target to a valid step or workflow ID. The first step is the workflow entry by
-default. Deleting a referenced workflow is blocked until every Event Manager or
+add a step, and edit its properties on the right. Choose **Start with** to set
+the entry step. Select successor steps, condition targets, parallel branch
+entries and joins, and nested workflows by name. Conditions also offer named
+journey and stop choices. Equally named steps have a number to distinguish them.
+
+**Steps and connections** shows the start marker and each step's actual outgoing
+connections, including true/false paths and parallel branches. The list position
+does not define execution order; configure the connections to change the flow.
+New steps open in the editor so their connections can be completed. Use
+**Workflow settings** for the workflow name, description, and default error
+policy. Deleting a referenced workflow is blocked until every Event Manager or
 nested-workflow reference is removed or reassigned.
 
-Use **Event Manager** when authoring in journey context. It exposes the same
-workflow collection and selection, so edits made on either page are immediately
-visible on the other. Select a journey feedback occurrence and choose **Assign
-selected workflow to feedback step** to link it.
+Use **Event Manager** to configure when a journey triggers a workflow. Select a
+journey and use the **+** and **-** buttons above the event list to add or delete
+feedback steps. Drag a workflow or a journey stop from **Values** onto an event
+to assign it, and edit the selected event's settings in **Properties**. The
+workflow list uses the same library as **Workflows**; workflow editing,
+validation, dry runs, and traces are available on the **Workflows** page.
 
+Expand **Validation and diagnostics** on the Workflows page to access **Validate**,
+**Dry run**, and the trace. The issue count remains visible while collapsed.
 Choose **Validate** before operating a workflow. Validation reports structural,
 reference, payload, retry, recursion, and parallel-resource conflicts without
 running the graph. Choose **Dry run** to traverse a valid graph and list planned

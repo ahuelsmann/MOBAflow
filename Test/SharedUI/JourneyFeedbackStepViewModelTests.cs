@@ -54,4 +54,62 @@ internal sealed class JourneyFeedbackStepViewModelTests
         Assert.That(step.Index, Is.EqualTo(1));
         Assert.That(viewModel.IsRepeat, Is.False);
     }
+
+    [Test]
+    public void EditingRepeatCount_RefreshesVisibleRuntimeProgress()
+    {
+        var viewModel = new JourneyFeedbackStepViewModel(new JourneyFeedbackStep { Index = 10 }, new Project());
+        viewModel.UpdateRuntimeProgress(true, 3);
+        var notifications = new List<string?>();
+        viewModel.PropertyChanged += (_, args) => notifications.Add(args.PropertyName);
+
+        viewModel.RepeatCount = 12;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel.RepeatCountText, Is.EqualTo("12x"));
+            Assert.That(viewModel.CompactRuntimeProgress, Is.EqualTo("3/12"));
+            Assert.That(viewModel.RuntimeProgress, Is.EqualTo("Current progress: 3/12"));
+            Assert.That(notifications, Does.Contain(nameof(viewModel.RepeatCountText)));
+            Assert.That(notifications, Does.Contain(nameof(viewModel.CompactRuntimeProgress)));
+            Assert.That(notifications, Does.Contain(nameof(viewModel.RuntimeProgress)));
+        });
+    }
+
+    [Test]
+    public void RuntimeMovesToAnotherStep_ClearsProgressFromPreviousRow()
+    {
+        var viewModel = new JourneyFeedbackStepViewModel(new JourneyFeedbackStep { Index = 10 }, new Project());
+        viewModel.UpdateRuntimeProgress(true, 3);
+
+        viewModel.UpdateRuntimeProgress(false, 0);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel.CompactRuntimeProgress, Is.Empty);
+            Assert.That(viewModel.RuntimeProgress, Is.Empty);
+            Assert.That(viewModel.AutomationName, Does.Not.Contain("Current progress"));
+        });
+    }
+
+    [Test]
+    public void AssignmentAndEnabledChanges_RefreshAccessibleRowDescription()
+    {
+        var workflow = new Workflow { Name = "Arrival" };
+        var viewModel = new JourneyFeedbackStepViewModel(new JourneyFeedbackStep(), new Project { Workflows = [workflow] });
+        var accessibleNameChanges = 0;
+        viewModel.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(viewModel.AutomationName)) accessibleNameChanges++;
+        };
+
+        viewModel.WorkflowId = workflow.Id;
+        viewModel.Enabled = false;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel.AutomationName, Does.Contain("Arrival").And.Contain("disabled"));
+            Assert.That(accessibleNameChanges, Is.EqualTo(2));
+        });
+    }
 }
