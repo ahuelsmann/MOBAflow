@@ -80,7 +80,7 @@ internal sealed partial class EventManagerPage
 
     private void ApplyJourneyHeaderLayout()
     {
-        var narrowHeader = ActualWidth < 720;
+        var narrowHeader = this.ActualWidth < 720;
         Grid.SetRow(JourneyCommands, narrowHeader ? 1 : 0);
         Grid.SetColumn(JourneyCommands, narrowHeader ? 0 : 1);
         Grid.SetColumnSpan(JourneyCommands, narrowHeader ? 2 : 1);

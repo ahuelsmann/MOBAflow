@@ -55,7 +55,7 @@ public sealed partial class MobaRuntimeService
         CheckpointVehicleUsage(publishSnapshot: true);
         var activeProject = CloneForRuntime(editableProject);
         var journeyManager = _journeyManagerFactory.Create(activeProject, _executionContextFactory.Create(),
-            _inPortCounters, journeyId => StartJourneyAsync(journeyId));
+            _inPortCounters, journeyId => StartJourneyAsync(journeyId, CancellationToken.None));
         journeyManager.StationChanged += OnJourneyStationChanged;
         journeyManager.FeedbackReceived += OnJourneyRuntimeChanged;
         journeyManager.JourneyCompleted += OnJourneyCompleted;
