@@ -96,6 +96,13 @@
       "project": "Backend",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
+      "path": "Backend/Service/InPortCounterService.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
       "path": "Backend/Service/Interlocking/InterlockingRouteCoordinator.cs",
       "count": 2
     },
@@ -371,13 +378,6 @@
       "ruleId": "CA1062",
       "path": "Backend/Service/Z21Monitor.cs",
       "count": 3
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1063",
-      "path": "Backend/Manager/JourneyManager.cs",
-      "count": 2
     },
     {
       "project": "Backend",
@@ -671,7 +671,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "Backend/Manager/JourneyManager.cs",
-      "count": 18
+      "count": 16
     },
     {
       "project": "Backend",
@@ -1790,6 +1790,13 @@
       "project": "Domain",
       "targetFramework": "net10.0",
       "ruleId": "CA1002",
+      "path": "Domain/JourneyEventPlan.cs",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
       "path": "Domain/JourneyFeedbackStep.cs",
       "count": 1
     },
@@ -1981,6 +1988,13 @@
       "ruleId": "CA2227",
       "path": "Domain/Journey.cs",
       "count": 2
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "Domain/JourneyEventPlan.cs",
+      "count": 1
     },
     {
       "project": "Domain",
@@ -3078,7 +3092,21 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Counter.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
       "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Journey.cs",
       "count": 2
     },
     {
@@ -3442,13 +3470,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1822",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Counter.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1822",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Journey.cs",
       "count": 2
     },
@@ -3548,7 +3569,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Counter.cs",
-      "count": 4
+      "count": 1
     },
     {
       "project": "SharedUI",
@@ -3731,13 +3752,6 @@
       "ruleId": "CA1873",
       "path": "SharedUI/Service/SolutionRemoteLoader.cs",
       "count": 4
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Counter.cs",
-      "count": 2
     },
     {
       "project": "SharedUI",
@@ -4199,7 +4213,7 @@
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/EventManagerViewModel.cs",
-      "count": 5
+      "count": 3
     },
     {
       "project": "SharedUI",
@@ -4263,6 +4277,13 @@
       "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/MainWindowViewModel.HealthStatus.cs",
       "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Journey.cs",
+      "count": 1
     },
     {
       "project": "SharedUI",

@@ -69,8 +69,9 @@
 - [x] T027 Defer natural event-plan completion until the current workflow finishes; preserve explicit-stop cancellation and cancel queued work from the completed run.
 - [x] T028 Route automatic successor starts through runtime pending-definition validation; preserve externally owned execution coordinators when runtime project contexts are replaced.
 - [x] T029 Add eight regression cases and run the full portable suite: 1,718 passed, four skipped, zero failures (1,722 total).
-- [ ] T030 Verify Windows compilation and resolve analyzer baseline deltas without weakening the active gates.
-- [ ] T031 Publish corrected sources and require a fresh SonarCloud analysis with zero OPEN/CONFIRMED issues.
+- [x] T030 Verify Windows compilation and prepare exact analyzer inventories. The user explicitly approved accepting the reviewed additional findings; all three updated references match local Release reports. Confirm remote CI separately.
+- [x] T031 Publish corrected sources and require a fresh SonarCloud analysis with zero OPEN/CONFIRMED issues: verified for source commit `31e07a2b`.
+- [ ] T032 Confirm Windows/Android CI and SonarCloud again after publication of the approved baseline update.
 
 ## Dependencies and execution order
 

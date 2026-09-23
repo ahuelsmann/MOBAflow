@@ -96,6 +96,13 @@
       "project": "Backend",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
+      "path": "Backend/Service/InPortCounterService.cs",
+      "count": 2
+    },
+    {
+      "project": "Backend",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
       "path": "Backend/Service/Interlocking/InterlockingRouteCoordinator.cs",
       "count": 2
     },
@@ -371,13 +378,6 @@
       "ruleId": "CA1062",
       "path": "Backend/Service/Z21Monitor.cs",
       "count": 3
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1063",
-      "path": "Backend/Manager/JourneyManager.cs",
-      "count": 2
     },
     {
       "project": "Backend",
@@ -671,7 +671,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "Backend/Manager/JourneyManager.cs",
-      "count": 18
+      "count": 16
     },
     {
       "project": "Backend",
@@ -1790,6 +1790,13 @@
       "project": "Domain",
       "targetFramework": "net10.0",
       "ruleId": "CA1002",
+      "path": "Domain/JourneyEventPlan.cs",
+      "count": 1
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1002",
       "path": "Domain/JourneyFeedbackStep.cs",
       "count": 1
     },
@@ -1981,6 +1988,13 @@
       "ruleId": "CA2227",
       "path": "Domain/Journey.cs",
       "count": 2
+    },
+    {
+      "project": "Domain",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2227",
+      "path": "Domain/JourneyEventPlan.cs",
+      "count": 1
     },
     {
       "project": "Domain",
@@ -3169,7 +3183,21 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Counter.cs",
+      "count": 1
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
       "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
+      "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1031",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Journey.cs",
       "count": 2
     },
     {
@@ -3533,13 +3561,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1822",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Counter.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1822",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Journey.cs",
       "count": 2
     },
@@ -3639,7 +3660,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Counter.cs",
-      "count": 4
+      "count": 1
     },
     {
       "project": "SharedUI",
@@ -3822,13 +3843,6 @@
       "ruleId": "CA1873",
       "path": "SharedUI/Service/SolutionRemoteLoader.cs",
       "count": 4
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Counter.cs",
-      "count": 2
     },
     {
       "project": "SharedUI",
@@ -4290,7 +4304,7 @@
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/EventManagerViewModel.cs",
-      "count": 5
+      "count": 3
     },
     {
       "project": "SharedUI",
@@ -4354,6 +4368,13 @@
       "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/MainWindowViewModel.HealthStatus.cs",
       "count": 2
+    },
+    {
+      "project": "SharedUI",
+      "targetFramework": "net10.0",
+      "ruleId": "MVVMTK0042",
+      "path": "SharedUI/ViewModel/MainWindowViewModel.Journey.cs",
+      "count": 1
     },
     {
       "project": "SharedUI",
@@ -4807,6 +4828,27 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1515",
+      "path": "Test/Backend/InPortCounterServiceTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1515",
+      "path": "Test/Backend/JourneyEventPlanAcceptanceTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1515",
+      "path": "Test/Backend/JourneyEventPlanTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1515",
       "path": "Test/Backend/JourneyManagerFeedbackTests.cs",
       "count": 1
     },
@@ -4849,8 +4891,43 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1515",
+      "path": "Test/SharedUI/EventManagerEventPlanTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1515",
+      "path": "Test/SharedUI/JourneyCounterProjectionTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1515",
       "path": "Test/SharedUI/WorkflowLibraryViewModelTests.cs",
       "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1707",
+      "path": "Test/Backend/InPortCounterServiceTests.cs",
+      "count": 8
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1707",
+      "path": "Test/Backend/JourneyEventPlanAcceptanceTests.cs",
+      "count": 3
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1707",
+      "path": "Test/Backend/JourneyEventPlanTests.cs",
+      "count": 11
     },
     {
       "project": "Test",
@@ -4886,6 +4963,20 @@
       "ruleId": "CA1707",
       "path": "Test/SharedUI/DisplayViewModelTests.cs",
       "count": 14
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1707",
+      "path": "Test/SharedUI/EventManagerEventPlanTests.cs",
+      "count": 9
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1707",
+      "path": "Test/SharedUI/JourneyCounterProjectionTests.cs",
+      "count": 7
     },
     {
       "project": "Test",
@@ -4961,6 +5052,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/Backend/JourneyCompletionRegressionTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/Backend/LocomotiveLibraryServiceTests.cs",
       "count": 1
     },
@@ -4997,6 +5095,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/Backend/MobaBackendServiceCollectionExtensionsTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/Backend/MobaRuntimeEventPlanTests.cs",
       "count": 1
     },
     {
@@ -6739,6 +6844,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1861",
+      "path": "Test/Backend/InPortCounterServiceTests.cs",
+      "count": 2
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1861",
       "path": "Test/Backend/InterlockingDefinitionValidatorTests.cs",
       "count": 3
     },
@@ -6852,6 +6964,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1861",
       "path": "Test/MOBApi/ControlPlaneSecurityTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1861",
+      "path": "Test/SharedUI/JourneyCounterProjectionTests.cs",
       "count": 1
     },
     {
@@ -7033,6 +7152,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
+      "path": "Test/Backend/InPortCounterServiceTests.cs",
+      "count": 10
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2007",
       "path": "Test/Backend/InterlockingRouteCoordinatorTests.cs",
       "count": 53
     },
@@ -7042,6 +7168,20 @@
       "ruleId": "CA2007",
       "path": "Test/Backend/InterlockingRuntimeServiceTests.cs",
       "count": 20
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2007",
+      "path": "Test/Backend/JourneyEventPlanAcceptanceTests.cs",
+      "count": 22
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2007",
+      "path": "Test/Backend/JourneyEventPlanTests.cs",
+      "count": 57
     },
     {
       "project": "Test",
@@ -7070,6 +7210,13 @@
       "ruleId": "CA2007",
       "path": "Test/Backend/MasterDataStoreUpdateTests.cs",
       "count": 3
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2007",
+      "path": "Test/Backend/MobaRuntimeEventPlanTests.cs",
+      "count": 16
     },
     {
       "project": "Test",
@@ -7327,6 +7474,20 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
+      "path": "Test/SharedUI/EventManagerEventPlanTests.cs",
+      "count": 2
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2007",
+      "path": "Test/SharedUI/JourneyCounterProjectionTests.cs",
+      "count": 12
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA2007",
       "path": "Test/SharedUI/LocomotiveManagementViewModelTests.cs",
       "count": 10
     },
@@ -7363,7 +7524,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "Test/SharedUI/MobileRuntimeCoordinatorTests.cs",
-      "count": 4
+      "count": 13
     },
     {
       "project": "Test",
@@ -7398,7 +7559,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "Test/SharedUI/RecordingRuntimeCommandGatewayTests.cs",
-      "count": 14
+      "count": 17
     },
     {
       "project": "Test",
@@ -7753,6 +7914,27 @@
     {
       "project": "Test",
       "targetFramework": "net10.0",
+      "ruleId": "NUnit1028",
+      "path": "Test/Backend/InPortCounterServiceTests.cs",
+      "count": 2
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "NUnit2045",
+      "path": "Test/Backend/InPortCounterServiceTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "NUnit2045",
+      "path": "Test/Backend/JourneyEventPlanTests.cs",
+      "count": 4
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
       "ruleId": "NUnit2045",
       "path": "Test/Backend/JourneyManagerFeedbackTests.cs",
       "count": 4
@@ -7763,6 +7945,13 @@
       "ruleId": "NUnit2045",
       "path": "Test/Backend/MasterDataStoreTests.cs",
       "count": 4
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "NUnit2045",
+      "path": "Test/Backend/MobaRuntimeEventPlanTests.cs",
+      "count": 1
     },
     {
       "project": "Test",
@@ -7979,7 +8168,7 @@
       "targetFramework": "net10.0",
       "ruleId": "NUnit2045",
       "path": "Test/Domain/JourneyTests.cs",
-      "count": 4
+      "count": 5
     },
     {
       "project": "Test",
@@ -8064,6 +8253,13 @@
       "ruleId": "NUnit2045",
       "path": "Test/MOBApi/SolutionControllerTests.cs",
       "count": 2
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "NUnit2045",
+      "path": "Test/SharedUI/EventManagerEventPlanTests.cs",
+      "count": 4
     },
     {
       "project": "Test",
@@ -8328,6 +8524,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
+      "path": "Test/Backend/InPortCounterServiceTests.cs",
+      "count": 3
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "NUnit2056",
       "path": "Test/Backend/InterlockingDefinitionValidatorTests.cs",
       "count": 2
     },
@@ -8351,6 +8554,20 @@
       "ruleId": "NUnit2056",
       "path": "Test/Backend/InterlockingSafetyEngineTests.cs",
       "count": 13
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "NUnit2056",
+      "path": "Test/Backend/JourneyEventPlanAcceptanceTests.cs",
+      "count": 4
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "NUnit2056",
+      "path": "Test/Backend/JourneyEventPlanTests.cs",
+      "count": 6
     },
     {
       "project": "Test",
@@ -8386,6 +8603,13 @@
       "ruleId": "NUnit2056",
       "path": "Test/Backend/MobaBackendServiceCollectionExtensionsTests.cs",
       "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "NUnit2056",
+      "path": "Test/Backend/MobaRuntimeEventPlanTests.cs",
+      "count": 2
     },
     {
       "project": "Test",
@@ -8720,6 +8944,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
+      "path": "Test/Domain/JourneyTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "NUnit2056",
       "path": "Test/Domain/JsonOptionsTests.cs",
       "count": 3
     },
@@ -8881,8 +9112,22 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
+      "path": "Test/SharedUI/EventManagerEventPlanTests.cs",
+      "count": 7
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "NUnit2056",
       "path": "Test/SharedUI/FeedbackCounterEngineTests.cs",
       "count": 4
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "NUnit2056",
+      "path": "Test/SharedUI/JourneyCounterProjectionTests.cs",
+      "count": 8
     },
     {
       "project": "Test",
@@ -8938,7 +9183,7 @@
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
       "path": "Test/SharedUI/MobileRuntimeCoordinatorTests.cs",
-      "count": 1
+      "count": 3
     },
     {
       "project": "Test",
