@@ -15,3 +15,9 @@ Compared `128a2225...120946aa`, then reviewed the corrections. One actionable fi
 One initial finding: early turnout confirmations could be discarded while dispatch was pending. The runtime now preserves those observations until dispatch completes, without blocking occupancy/disconnect handling. The follow-up review found that observation replay must not replace a dispatch failure with success; the result now preserves the original failure/rejection. All three regression cases (success, disconnect, dispatch failure) pass in the Windows Release focused suite. The final independent follow-up found no further objections.
 
 Standards: one finding corrected, zero open. Specification: one initial and one follow-up finding corrected, zero open. Remaining platform, integration, CI and manual gates are tracked in `validation.md`.
+
+## SonarCloud follow-up
+
+PR #149 at `312fe50c` reported S3776, two S2583 findings and S8949 in `InterlockingRuntimeService`. The S2583 conditions were not constant at runtime: queued callbacks populated captured locals before the caller resumed. Queue operations now return typed results, retaining accepted-work completion and project identity guards. Dispatch start and completion are separate methods, reducing control-flow complexity without changing observation ordering or token lifetime. Disposal explicitly uses `CancellationToken.None` when waiting for a command that has already been cancelled, so resource cleanup cannot be skipped.
+
+Existing dispatch/confirmation/failure/disposal and activation-after-commit tests remain; an additional regression checks that pre-cancelled activation preserves the project and leaves the queue usable. No rule suppression or baseline expansion was introduced. GitHub SonarCloud must confirm the corrected commit; local code analysis is not used.

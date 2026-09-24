@@ -357,6 +357,27 @@ internal sealed class InterlockingRuntimeServiceTests
     }
 
     [Test]
+    public async Task CancelledActivation_PreservesProjectAndLeavesQueueUsable()
+    {
+        var fixture = CreateFixture();
+        var runtime = fixture.Runtime;
+        await using var runtimeLifetime = runtime.ConfigureAwait(false);
+        await runtime.ActivateAsync(fixture.Definition).ConfigureAwait(false);
+        var original = runtime.Current;
+        using var cancellation = new CancellationTokenSource();
+        await cancellation.CancelAsync().ConfigureAwait(false);
+
+        await Assert.ThatAsync(
+            () => runtime.ActivateAsync(new InterlockingDefinition(), cancellation.Token)
+                .WaitAsync(TimeSpan.FromSeconds(5)),
+            Throws.InstanceOf<OperationCanceledException>()).ConfigureAwait(false);
+
+        Assert.That(runtime.Current, Is.SameAs(original));
+        await runtime.ActivateAsync(new InterlockingDefinition()).WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        Assert.That(runtime.Current.Turnouts, Is.Empty);
+    }
+
+    [Test]
     public async Task CancellationAfterActivationCommit_StillCancelsPreviousProjectCommand()
     {
         var fixture = CreateFixture();

@@ -27,6 +27,6 @@
 ## Validation and convergence
 
 - [x] T011 Run focused/full `Test/Test.csproj` suites and host builds after coordination; record `specs/003-remove-reservations/validation.md`.
-- [ ] T012 Generate fresh complete Release SARIF and justify reductions in `quality/analyzer-baseline*.json`.
+- [x] T012 Generate fresh complete Release SARIF and justify reductions in `quality/analyzer-baseline*.json`.
 - [x] T013 Run `scripts/Test-LineEndings.ps1`, secrets, governance, residual-reference and diff checks; update this task list with results.
-- [ ] T014 Integrate main, commit/push and publish separate Draft PR; report CI/Sonar/manual gates without merging or cleanup.
+- [x] T014 Integrate main, commit/push and publish separate Draft PR; report CI/Sonar/manual gates without merging or cleanup. Published as [#149](https://github.com/ahuelsmann/MOBAflow/pull/149); remaining gates are explicit in `validation.md`.
