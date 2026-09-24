@@ -110,7 +110,7 @@ The Event Manager presents InPort, count and workflow in each row. Drag and drop
 
 ### Key Entities
 
-- **Journey**: Virtual stop sequence/current stop, active flag, event plan and last-stop behavior.
+- **Journey**: Virtual stop sequence/current stop, active flag and event plan.
 - **InPort session counters**: Shared real-activation totals since application start or the last reset.
 - **Event plan/event**: Presentation-ordered independent port/count-to-workflow mappings.
 - **Workflow**: Existing arbitrary action composition, optionally changing a stop.
