@@ -14,8 +14,8 @@ Run from this dedicated worktree. Coordinate substantial builds with the master 
 6. Publish a draft PR only after integrating main. Verify CI and current-commit SonarCloud with zero
    OPEN/CONFIRMED findings. Master coordinates the final merge after #146.
 
-Manual acceptance remains open. The user authorized an isolated synthetic-data inspection without
-layout connectivity; application launch awaits the centrally coordinated computer-use slot.
+The authorized isolated synthetic-data inspection was completed without layout connectivity.
+The following checklist defines the vehicle-page states; see the recorded scope and results below.
 Inspect `LocomotivesPage`,
 `PassengerWagonPage` and `GoodsWagonPage` in both Light and Dark themes:
 
@@ -29,7 +29,7 @@ Inspect `LocomotivesPage`,
 - On the locomotive page, inspect decoder CV import/export, feedback whistle rule editing and printable
   locomotive passport export. The passport contains no maintenance rows. Do not exercise live functions.
 
-No application launch or hardware action has been performed for this acceptance check.
+Only the isolated test copy was launched for this acceptance check. No hardware action was performed.
 
 ## Recorded results
 
@@ -45,6 +45,24 @@ The Windows analyzer comparison contains only expected maintenance-related decre
 or increased diagnostic groups. Android Release rebuild/publication passed; `scripts/Test-AndroidAppBundle.ps1`
 validated both published AAB files, including the required arm64-v8a and x86_64 libraries. Spec Kit
 governance, line endings and schema JSON checks passed. Final analyzer baselines,
-CI/Sonar and Light/Dark acceptance remain pending. The final baselines require complete fresh outputs
+CI/Sonar remain pending. The final baselines require complete fresh outputs
 after integrating the centrally coordinated main changes; the separate Android output folder alone
-does not contain SARIF for shared projects reused incrementally. No app launch or hardware action has occurred.
+does not contain SARIF for shared projects reused incrementally.
+
+Native UI acceptance on the code committed in `441cdb2170533a88bf7ff77a5f8e177dee61afd3` passed:
+
+- All three vehicle pages were inspected in Light/Dark with and without a selected vehicle. No maintenance
+  filters, panels or calendar remained, and no layout gap from their removal was observed.
+- Each vehicle kind was searched with surrounding spaces, renamed while still matching, and searched with
+  no results. Matching rename preserved selection and the editor; no-result search cleared them.
+- Adding and deleting a temporary vehicle under an active matching search worked on all three pages.
+- Switching to the second synthetic project refreshed all three lists without a previous selection.
+- Restarting the test copy restored all three edited names; the temporary deleted vehicles stayed absent.
+- Photo/master-data controls were present; the synthetic decoder CV backup and its import/export controls
+  were visible, as was the printable passport control. File-picker/import/export dialog flows and actual
+  photo assignment were not exercised in this UI pass; the retained automated regressions cover their logic.
+
+Isolation used a separate Release binary copy, own settings/photos/logs, two synthetic projects, six
+synthetic vehicles and inactive journeys. The invalid nonblank Z21 address prevented connection and discovery;
+REST auto-start, REST connection and health checks were disabled. No operator data or secrets were copied.
+The native Computer Use provider confirmed the test instance absent after shutdown; its slot was released.

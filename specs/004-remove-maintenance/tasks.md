@@ -31,7 +31,7 @@ project switches refresh lists; decoder backups and passports survive; no mainte
 
 - [x] T009 Update `README.md`, `CHANGELOG.md`, `MOBAflow/View/InfoPage.xaml`, `docs/PROJECT-REFERENCE.md`, `docs/wiki/MOBAFLOW-USER-GUIDE.md` and `specs/001-journey-event-plan/`.
 - [ ] T010 Run focused/full tests in `Test/Test.csproj`, affected host builds and static checks; record results in `specs/004-remove-maintenance/quickstart.md`.
-- [ ] T011 Verify Light/Dark vehicle pages using the manual checklist in `specs/004-remove-maintenance/quickstart.md` only after app-start authorization.
+- [x] T011 Verify the authorized isolated Light/Dark vehicle-page inspection and record its exact scope and remaining dialog-flow limitations in `specs/004-remove-maintenance/quickstart.md`.
 - [ ] T012 Scan changed files, integrate current main, review diff, create draft PR and verify current-commit CI/Sonar; record convergence in `specs/004-remove-maintenance/quickstart.md`. Final merge remains centrally coordinated after #146.
 
 ## Dependencies and Execution Order
