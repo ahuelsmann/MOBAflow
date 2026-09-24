@@ -30,7 +30,7 @@ public sealed class WorkflowActionJsonConverter : JsonConverter<WorkflowAction>
 
         var action = new WorkflowAction
         {
-            Id = ReadGuid(root, "id") ?? Guid.NewGuid(),
+            Id = ReadGuid(root, "id") ?? Guid.Empty,
             Name = ReadString(root, "name") ?? string.Empty,
             Number = ReadUInt32(root, "number"),
             Type = ReadActionType(root),
@@ -64,17 +64,6 @@ public sealed class WorkflowActionJsonConverter : JsonConverter<WorkflowAction>
 
     private static void WritePayloads(Utf8JsonWriter writer, WorkflowAction action)
     {
-        var declaredDescriptor = WorkflowActionPayloadDescriptors.Find(action.Type);
-        if (declaredDescriptor != null)
-        {
-            writer.WritePropertyName(declaredDescriptor.JsonPropertyName);
-            if (declaredDescriptor.HasPayload(action))
-                declaredDescriptor.Write(writer, action, NestedOptions);
-            else
-                declaredDescriptor.WriteDefault(writer, NestedOptions);
-            return;
-        }
-
         foreach (var descriptor in WorkflowActionPayloadDescriptors.All)
         {
             if (!descriptor.HasPayload(action))
@@ -121,7 +110,7 @@ public sealed class WorkflowActionJsonConverter : JsonConverter<WorkflowAction>
 
     private static uint ReadUInt32(JsonElement root, string name)
     {
-        if (!TryGetPropertyInsensitive(root, name, out var el))
+        if (!TryGetPropertyInsensitive(root, name, out var el) || el.ValueKind != JsonValueKind.Number)
             return 0;
         return el.TryGetUInt32(out var value) ? value : 0;
     }
@@ -136,7 +125,7 @@ public sealed class WorkflowActionJsonConverter : JsonConverter<WorkflowAction>
     private static ActionType ReadActionType(JsonElement root)
     {
         if (!TryGetPropertyInsensitive(root, "type", out var el))
-            return ActionType.Command;
+            return (ActionType)(-1);
 
         if (el.ValueKind == JsonValueKind.Number && el.TryGetInt32(out var n))
             return (ActionType)n;
@@ -148,6 +137,6 @@ public sealed class WorkflowActionJsonConverter : JsonConverter<WorkflowAction>
                 return parsed;
         }
 
-        return ActionType.Command;
+        return (ActionType)(-1);
     }
 }

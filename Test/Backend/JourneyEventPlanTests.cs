@@ -17,6 +17,51 @@ public sealed class JourneyEventPlanTests
     private static readonly string[] ExpectedTransitionOrder = ["transition:FeedbackAccepted:1", "callback"];
 
     [Test]
+    public async Task OrderedActionsPreserveEventContextAndPublishStopChangesThroughManager()
+    {
+        using var fixture = new EventPlanFixture();
+        var first = new Station { Name = "First" };
+        var next = new Station { Name = "Next" };
+        fixture.Journey.Stations = [first, next];
+        fixture.Workflow.Actions = [NextStopAction(), new WorkflowAction
+        {
+            Type = ActionType.Announcement, Announcement = new AnnouncementActionPayload()
+        }];
+        ActionExecutionContext? observed = null;
+        WorkflowExecutionRequest? invocation = null;
+        var executor = new Mock<IActionExecutor>();
+        executor.Setup(item => item.ExecuteAsync(It.IsAny<WorkflowAction>(), It.IsAny<ActionExecutionContext>(), It.IsAny<CancellationToken>()))
+            .Returns(async (WorkflowAction action, ActionExecutionContext context, CancellationToken token) =>
+            {
+                if (action.Type == ActionType.ChangeJourneyStop)
+                    await new ChangeJourneyStopWorkflowActionHandler().ExecuteAsync(action, context, token).ConfigureAwait(false);
+                else
+                    observed = context;
+            });
+        var service = new WorkflowService(executor.Object);
+        fixture.WorkflowService.Setup(item => item.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
+            .Returns(async (WorkflowExecutionRequest request, CancellationToken token) =>
+            {
+                invocation = request;
+                return await service.ExecuteAsync(request, token).ConfigureAwait(false);
+            });
+        var stopNotifications = 0;
+        fixture.Manager.StationChanged += (_, _) => stopNotifications++;
+
+        await fixture.RaiseAsync(1).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(observed?.CurrentStation?.Id, Is.EqualTo(next.Id));
+            Assert.That(observed?.SourceEventDefinitionId, Is.EqualTo(fixture.Journey.EventPlan.Events.Single().Id));
+            Assert.That((observed?.SourceEvent as FeedbackReceivedEvent)?.InPort, Is.EqualTo(1));
+            Assert.That((observed?.SourceEvent as FeedbackReceivedEvent)?.CorrelationId, Is.EqualTo(invocation?.SourceCorrelationId));
+            Assert.That(stopNotifications, Is.EqualTo(1));
+            Assert.That(fixture.Manager.GetState(fixture.Journey.Id)?.CurrentStationId, Is.EqualTo(next.Id));
+        }
+    }
+
+    [Test]
     public async Task InactiveJourneyIgnoresMatchingCounts()
     {
         using var fixture = new EventPlanFixture(isActive: false);
