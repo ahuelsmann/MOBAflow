@@ -332,6 +332,10 @@ internal sealed class TimetablePageViewModelTests
                 Assert.That(context.ViewModel.Services.Any(service => service.Id == originalProject.TimetableServices[0].Id), Is.False);
                 Assert.That(context.ViewModel.Services.Select(service => service.Id),
                     Is.EqualTo(failLoad ? [] : new[] { nextProject.TimetableServices[0].Id }));
+                Assert.That(context.ViewModel.HasStatusMessage, Is.EqualTo(failLoad));
+                Assert.That(context.ViewModel.StatusText, Is.EqualTo(failLoad
+                    ? "Unable to load the timetable. Select Refresh to try again."
+                    : "Timetable refreshed"));
             }
         }
         finally
@@ -394,11 +398,18 @@ internal sealed class TimetablePageViewModelTests
             Assert.That(context.ViewModel.Services, Has.Count.EqualTo(failLoad ? 0 : 1));
             Assert.That(context.ViewModel.HasIssues, Is.EqualTo(!failLoad));
             Assert.That(context.ViewModel.HoldSelectedServiceCommand.CanExecute(null), Is.False);
+            Assert.That(context.ViewModel.HasStatusMessage, Is.EqualTo(failLoad));
+            Assert.That(context.ViewModel.StatusText, Is.EqualTo(failLoad
+                ? "Unable to load the timetable. Select Refresh to try again."
+                : "Timetable refreshed"));
         }
     }
 
-    [Test]
-    public async Task RefreshFromPreviousProject_Should_NotOverwriteCurrentProject()
+    [TestCase(false, false)]
+    [TestCase(false, true)]
+    [TestCase(true, false)]
+    [TestCase(true, true)]
+    public async Task SupersededRefresh_Should_NotOverwriteCurrentBoard(bool switchProject, bool failLoad)
     {
         var originalProject = CreateProject();
         var nextProject = CreateProject();
@@ -412,18 +423,38 @@ internal sealed class TimetablePageViewModelTests
             .Returns(pendingLoad.Task);
 
         var previousRefresh = context.ViewModel.RefreshAsync();
-        context.MainWindow.SelectedProject = new ProjectViewModel(nextProject);
+        if (switchProject)
+        {
+            context.MainWindow.SelectedProject = new ProjectViewModel(nextProject);
+        }
+        else
+        {
+            operations.Setup(value => value.GetStatesAsync(originalProject.Id, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Array.Empty<TimetableServiceState>());
+            await context.ViewModel.RefreshAsync().ConfigureAwait(false);
+        }
         SelectFirstServiceAndCall(context.ViewModel);
         var selectedService = context.ViewModel.SelectedService;
         var selectedCall = context.ViewModel.SelectedCall;
-        pendingLoad.SetResult([]);
-        await previousRefresh.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        if (failLoad)
+        {
+            pendingLoad.SetException(new IOException("Superseded state load failed"));
+            await Assert.ThatAsync(() => previousRefresh.WaitAsync(TimeSpan.FromSeconds(5)), Throws.TypeOf<IOException>()).ConfigureAwait(false);
+        }
+        else
+        {
+            pendingLoad.SetResult([]);
+            await previousRefresh.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        }
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(context.ViewModel.Services.Select(service => service.Id), Is.EqualTo(new[] { nextProject.TimetableServices[0].Id }));
+            var expectedProject = switchProject ? nextProject : originalProject;
+            Assert.That(context.ViewModel.Services.Select(service => service.Id), Is.EqualTo(new[] { expectedProject.TimetableServices[0].Id }));
             Assert.That(context.ViewModel.SelectedService, Is.SameAs(selectedService));
             Assert.That(context.ViewModel.SelectedCall, Is.SameAs(selectedCall));
+            Assert.That(context.ViewModel.HasStatusMessage, Is.False);
+            Assert.That(context.ViewModel.StatusText, Is.EqualTo("Timetable refreshed"));
         }
     }
 

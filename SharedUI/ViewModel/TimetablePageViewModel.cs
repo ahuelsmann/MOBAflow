@@ -173,7 +173,16 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
             return;
         }
 
-        var states = await _operations.GetStatesAsync(project.Id);
+        IReadOnlyList<TimetableServiceState> states;
+        try
+        {
+            states = await _operations.GetStatesAsync(project.Id);
+        }
+        catch (Exception) when (refreshVersion == _refreshVersion && ReferenceEquals(project, CurrentProject))
+        {
+            StatusText = "Unable to load the timetable. Select Refresh to try again.";
+            throw;
+        }
         if (refreshVersion != _refreshVersion || !ReferenceEquals(project, CurrentProject)) return;
 
         var stateByService = states.ToDictionary(state => state.ServiceId);
