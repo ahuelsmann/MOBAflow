@@ -1,18 +1,19 @@
 <!--
 Sync Impact Report
-- Version change: 1.1.0 -> 2.0.0
+- Version change: 2.0.0 -> 3.0.0
 - Modified principles:
-  - IV. Specifications, Plans, and Issues Must Be Traceable: the compatibility and
-    migration requirement is replaced by removal of superseded models, because
-    MOBAflow has no released users yet.
+  - VI. Quality Gates Protect the Main Branch: Sonar code analysis runs only in
+    GitHub CI; the duplicate local analysis prerequisite is removed. Local secrets
+    scanning, builds, tests, and analyzer baseline checks remain required.
 - Templates updated:
-  - ✅ .specify/templates/overrides/spec-template.md
   - ✅ .specify/templates/overrides/plan-template.md
   - ✅ .specify/templates/overrides/tasks-template.md
 - Runtime guidance updated:
   - ✅ AGENTS.md
-- Migration note: specs/001-journey-event-plan was simplified accordingly in #125;
-  earlier artifacts there are marked as superseded.
+  - ✅ .github/instructions/sonarqube-pre-pr.instructions.md
+  - ✅ .github/PULL_REQUEST_TEMPLATE.md
+- Migration note: existing plans follow this CI-only Sonar policy; obsolete local
+  Sonar code-analysis tasks must not be executed. Historical validation records remain unchanged.
 - Follow-up TODOs: none
 -->
 # MOBAflow Constitution
@@ -78,9 +79,10 @@ Changed files likely to contain secrets MUST pass `sonar analyze secrets` before
 they are read, and all changed files MUST pass a secrets scan before commit and
 PR publication. Ordinary source, tests, Markdown, schemas, and checked-in
 templates do not require individual pre-read scans unless context indicates
-secret material. Every PR MUST be created as a draft. Local Sonar analysis MUST
-be attempted against the actual PR base, and the PR MUST remain a draft until
-the remote SonarCloud check is green with zero `OPEN` or `CONFIRMED` issues.
+secret material. Sonar code analysis MUST run only through GitHub CI; local
+Sonar/Vortex code analysis and analysis hooks MUST NOT be run or installed.
+Every PR MUST be created as a draft and remain a draft until the SonarCloud check
+for its current commit is green with zero `OPEN` or `CONFIRMED` issues.
 Valid findings MUST NOT be suppressed, excluded, or hidden by lowering a gate.
 
 ## Technical and Product Constraints
@@ -117,9 +119,9 @@ implement, validate, and document. Spec Kit maps to it as follows:
    approved task list when issue-level execution tracking is needed.
 8. Validation includes relevant targeted builds, `dotnet test Test/Test.csproj`,
    formatting/static checks, Light/Dark theme checks, changed-file secrets
-   scanning, and local Sonar analysis against the actual PR base.
+   scanning, and SonarCloud code analysis through GitHub CI only.
 9. Every PR is created as a draft and remains draft until SonarCloud is green
-   with zero `OPEN` or `CONFIRMED` issues.
+   for its current commit with zero `OPEN` or `CONFIRMED` issues.
 10. Documentation and changelog updates are included whenever behavior or the
     contributor workflow changes.
 
@@ -139,4 +141,4 @@ semantic versioning: MAJOR for incompatible governance changes, MINOR for new or
 materially expanded principles, and PATCH for clarifications. Every plan and
 review MUST verify compliance; unresolved violations block implementation.
 
-**Version**: 2.0.0 | **Ratified**: 2026-07-19 | **Last Amended**: 2026-09-24
+**Version**: 3.0.0 | **Ratified**: 2026-07-19 | **Last Amended**: 2026-09-24
