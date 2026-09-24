@@ -26,7 +26,7 @@
 
 ## Validation and convergence
 
-- [ ] T011 Run focused/full `Test/Test.csproj` suites and host builds after coordination; record `specs/003-remove-reservations/validation.md`.
+- [x] T011 Run focused/full `Test/Test.csproj` suites and host builds after coordination; record `specs/003-remove-reservations/validation.md`.
 - [ ] T012 Generate fresh complete Release SARIF and justify reductions in `quality/analyzer-baseline*.json`.
-- [ ] T013 Run `scripts/Test-LineEndings.ps1`, secrets, governance, residual-reference and diff checks; update this task list with results.
+- [x] T013 Run `scripts/Test-LineEndings.ps1`, secrets, governance, residual-reference and diff checks; update this task list with results.
 - [ ] T014 Integrate main, commit/push and publish separate Draft PR; report CI/Sonar/manual gates without merging or cleanup.
