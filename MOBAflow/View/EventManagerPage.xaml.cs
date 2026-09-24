@@ -51,7 +51,8 @@ internal sealed partial class EventManagerPage
 
     private void OnCountLostFocus(object sender, RoutedEventArgs e)
     {
-        if (sender is FrameworkElement { DataContext: JourneyEventViewModel row }) row.CommitCountCommand.Execute(null);
+        if (sender is FrameworkElement { DataContext: JourneyEventViewModel row } && ViewModel.ContainsEvent(row))
+            row.CommitCountCommand.Execute(null);
     }
 
     private void OnCountKeyDown(object sender, KeyRoutedEventArgs e)

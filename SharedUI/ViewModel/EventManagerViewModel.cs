@@ -74,8 +74,8 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
     partial void OnSelectedEventChanging(JourneyEventViewModel? oldValue, JourneyEventViewModel? newValue)
     {
         // Rebuilt/undone plans discard obsolete drafts; ordinary selection commits the existing row.
-        if (oldValue != null && Events.Contains(oldValue)
-            && SelectedJourney?.Model.EventPlan.Events.Contains(oldValue.Model) == true)
+        if (oldValue != null && Events.Contains(oldValue) && SelectedJourney is { } journey
+            && journey.Model.EventPlan.Events.Contains(oldValue.Model))
             oldValue.CommitCountCommand.Execute(null);
     }
 
@@ -262,7 +262,7 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
     {
         // Commit while the main window still observes the old journey for runtime updates and auto-save.
         if (e.PropertyName is nameof(IProjectContext.SelectedJourney) or nameof(IProjectContext.SelectedProject))
-            SelectedEvent?.CommitCountCommand.Execute(null);
+            this.SelectedEvent?.CommitCountCommand.Execute(null);
     }
 
     private void OnContextPropertyChanged(object? sender, PropertyChangedEventArgs e)
