@@ -449,7 +449,7 @@ internal sealed partial class HelpPage : INavigationParameterReceiver
 
             // Signal Box
             "Track Plan Editor" => """
-                Signal Box - Electronic Interlocking:
+                Signal Box - Direct Layout Operation:
 
                 The track plan editor allows:
                 - Graphical display of your layout
@@ -461,6 +461,9 @@ internal sealed partial class HelpPage : INavigationParameterReceiver
                 - Right-click for context menu
                 - Double-click to control
                 - Right mouse button to move plan
+
+                Block occupancy is an observation only. MOBAflow does not reserve routes,
+                lock turnouts or prevent collisions. The operator is responsible for safe operation.
                 """,
 
             "Signals" => """

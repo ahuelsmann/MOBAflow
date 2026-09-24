@@ -6,7 +6,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Backend.Events;
 using Moba.Backend.Interface;
 using Moba.Backend.Service.Interlocking;
-using Moba.Backend.Service.Validation;
 using Moba.Common.Events;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
@@ -29,26 +28,27 @@ internal static partial class InterlockingControlViewModelTests
         trackPage.StartObserving();
         signalBoxPage.StartObserving();
         var correlationId = Guid.NewGuid();
-        var projected = InterlockingSafetyEngine.ProjectTurnoutCommand(
-            fixture.InitialState,
-            fixture.Turnout.Id,
-            TurnoutLifecycle.Pending,
-            TurnoutPosition.DivergingLeft,
-            correlationId,
-            fixture.InitialState.Revision);
+        var projected = fixture.InitialState with
+        {
+            Revision = 1,
+            Turnouts = new Dictionary<Guid, TurnoutRuntimeState>
+            {
+                [fixture.Turnout.Id] = new(fixture.Turnout.Id, TurnoutLifecycle.Pending, TurnoutPosition.DivergingLeft, null)
+            }
+        };
 
         // Act
         fixture.EventBus.Publish(new InterlockingRuntimeSnapshotChangedEvent(
-            projected.State,
+            projected,
             true,
             correlationId,
-            projected.Code));
+            "turnout.command.pending"));
 
         // Assert
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(trackPage.Revision, Is.EqualTo(projected.State.Revision));
-            Assert.That(signalBoxPage.Revision, Is.EqualTo(projected.State.Revision));
+            Assert.That(trackPage.Revision, Is.EqualTo(projected.Revision));
+            Assert.That(signalBoxPage.Revision, Is.EqualTo(projected.Revision));
             Assert.That(trackPage.Turnouts.Single().State, Is.EqualTo("Pending"));
             Assert.That(signalBoxPage.Turnouts.Single().State, Is.EqualTo("Pending"));
             Assert.That(trackPage.Turnouts.Single().Detail, Does.Contain("DivergingLeft"));
@@ -94,9 +94,7 @@ internal static partial class InterlockingControlViewModelTests
         {
             Assert.That(viewModel.SelectedContext, Is.EqualTo(SelectedOperationalContext.Unbound));
             Assert.That(viewModel.SelectedTurnout, Is.Null);
-            Assert.That(viewModel.SelectedRoute, Is.Null);
             Assert.That(viewModel.CanOperateTurnout, Is.False);
-            Assert.That(viewModel.CanOperateRoute, Is.False);
             Assert.That(viewModel.SelectedObjectDetail, Is.EqualTo("No operational binding"));
         }
     }
@@ -130,12 +128,14 @@ internal static partial class InterlockingControlViewModelTests
     }
 
     [Test]
-    public static async Task SetTurnoutStraightCommand_SynchronizedUnlockedTurnout_UsesSemanticRuntimeBoundary()
+    public static async Task SetTurnoutStraightCommand_TurnoutWithoutCompleteObservations_UsesSemanticRuntimeBoundary()
     {
         // Arrange
         var fixture = CreateFixture();
+        fixture.Runtime.SetupGet(runtime => runtime.IsSynchronized).Returns(false);
         var viewModel = fixture.CreateViewModel();
         viewModel.SelectedTurnout = viewModel.Turnouts.Single();
+        Assert.That(viewModel.CanOperateTurnout, Is.True);
         fixture.Runtime
             .Setup(runtime => runtime.SetTurnoutAsync(
                 fixture.Turnout.Id,
@@ -143,7 +143,7 @@ internal static partial class InterlockingControlViewModelTests
                 It.IsAny<Guid>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new TurnoutCoordinatorResult(
-                RouteCoordinatorStatus.Pending,
+                TurnoutCoordinatorStatus.Pending,
                 "turnout.command.pending",
                 "Turnout command is awaiting confirmation.",
                 Guid.NewGuid(),
@@ -162,567 +162,6 @@ internal static partial class InterlockingControlViewModelTests
                 It.IsAny<CancellationToken>()), Times.Once);
             Assert.That(viewModel.StatusCode, Is.EqualTo("turnout.command.pending"));
             Assert.That(viewModel.StatusText, Is.EqualTo("Turnout command is awaiting confirmation."));
-        }
-    }
-
-    [Test]
-    public static void LockedTurnout_CannotOperateAndIncludesNonColorLockDescription()
-    {
-        // Arrange
-        var fixture = CreateFixture();
-        var observed = fixture.Engine.ObserveBlock(
-            fixture.InitialState,
-            fixture.Project.Interlocking.Blocks.Single().Id,
-            BlockOccupancy.Free,
-            Guid.NewGuid(),
-            fixture.InitialState.Revision);
-        var selected = fixture.Engine.ReserveRoute(
-            observed.State,
-            fixture.Route.Id,
-            Guid.NewGuid(),
-            observed.State.Revision);
-        var setting = fixture.Engine.BeginSetting(
-            selected.State,
-            fixture.Route.Id,
-            Guid.NewGuid(),
-            selected.State.Revision);
-        var viewModel = fixture.CreateViewModel();
-        viewModel.StartObserving();
-
-        // Act
-        fixture.EventBus.Publish(new InterlockingRuntimeSnapshotChangedEvent(
-            setting.State,
-            true,
-            Guid.NewGuid(),
-            setting.Code));
-        viewModel.SelectedTurnout = viewModel.Turnouts.Single();
-
-        // Assert
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(viewModel.CanOperateTurnout, Is.False);
-            Assert.That(viewModel.SelectedTurnout.IsLocked, Is.True);
-            Assert.That(viewModel.SelectedTurnout.AccessibleState, Does.Contain("route locked"));
-        }
-    }
-
-    [Test]
-    public static async Task SelectRouteCommand_SynchronizedRoute_UsesSharedRuntimeBoundary()
-    {
-        // Arrange
-        var fixture = CreateFixture();
-        var viewModel = fixture.CreateViewModel();
-        viewModel.SelectedRoute = viewModel.Routes.Single();
-        fixture.Runtime
-            .Setup(runtime => runtime.SelectRouteAsync(
-                fixture.Route.Id,
-                It.IsAny<Guid>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new RouteCoordinatorResult(
-                RouteCoordinatorStatus.Accepted,
-                "route.reserved",
-                "Route resources reserved atomically.",
-                Guid.NewGuid(),
-                fixture.InitialState));
-
-        // Act
-        await viewModel.SelectRouteCommand.ExecuteAsync(null).ConfigureAwait(false);
-
-        // Assert
-        fixture.Runtime.Verify(runtime => runtime.SelectRouteAsync(
-            fixture.Route.Id,
-            It.Is<Guid>(id => id != Guid.Empty),
-            It.IsAny<CancellationToken>()), Times.Once);
-        Assert.That(viewModel.StatusCode, Is.EqualTo("route.reserved"));
-    }
-
-    [Test]
-    public static async Task CancelRouteCommand_SettingRoute_ConfirmsConsequenceBeforeRuntimeCommand()
-    {
-        // Arrange
-        var fixture = CreateFixture();
-        var free = fixture.Engine.ObserveBlock(
-            fixture.InitialState,
-            fixture.Project.Interlocking.Blocks.Single().Id,
-            BlockOccupancy.Free,
-            Guid.NewGuid(),
-            fixture.InitialState.Revision);
-        var selected = fixture.Engine.ReserveRoute(
-            free.State,
-            fixture.Route.Id,
-            Guid.NewGuid(),
-            free.State.Revision);
-        var setting = fixture.Engine.BeginSetting(
-            selected.State,
-            fixture.Route.Id,
-            Guid.NewGuid(),
-            selected.State.Revision);
-        fixture.Runtime.SetupGet(runtime => runtime.Current).Returns(setting.State);
-        var dialog = new Mock<IDialogService>();
-        dialog
-            .Setup(candidate => candidate.ShowConfirmationAsync(
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<bool>()))
-            .ReturnsAsync(true);
-        fixture.Runtime
-            .Setup(runtime => runtime.CancelRouteAsync(
-                fixture.Route.Id,
-                It.IsAny<Guid>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new RouteCoordinatorResult(
-                RouteCoordinatorStatus.Accepted,
-                "route.cancel.reconciliation",
-                "Locks retained for reconciliation.",
-                Guid.NewGuid(),
-                setting.State));
-        var viewModel = fixture.CreateViewModel(dialogService: dialog.Object);
-        viewModel.SelectedRoute = viewModel.Routes.Single();
-
-        // Act
-        await viewModel.CancelRouteCommand.ExecuteAsync(null).ConfigureAwait(false);
-
-        // Assert
-        dialog.Verify(candidate => candidate.ShowConfirmationAsync(
-            "Cancel route setting?",
-            It.Is<string>(message =>
-                message.Contains(fixture.Route.Name, StringComparison.Ordinal) &&
-                message.Contains("remain locked", StringComparison.OrdinalIgnoreCase)),
-            "Cancel setting",
-            "Keep setting",
-            true), Times.Once);
-        fixture.Runtime.Verify(runtime => runtime.CancelRouteAsync(
-            fixture.Route.Id,
-            It.IsAny<Guid>(),
-            It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Test]
-    public static async Task CancelRouteCommand_SelectionChangesDuringConfirmation_SendsNoRuntimeCommand()
-    {
-        // Arrange
-        var fixture = CreateFixture();
-        var secondRoute = AddSecondRoute(fixture);
-        var settingState = CreateRouteState(
-            fixture,
-            RouteLifecycle.Setting,
-            BlockOccupancy.Free);
-        fixture.Runtime.SetupGet(runtime => runtime.Current).Returns(settingState);
-        fixture.Runtime
-            .Setup(runtime => runtime.CancelRouteAsync(
-                It.IsAny<Guid>(),
-                It.IsAny<Guid>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new RouteCoordinatorResult(
-                RouteCoordinatorStatus.Accepted,
-                "route.cancelled",
-                "Route cancelled.",
-                Guid.NewGuid(),
-                settingState));
-        var confirmation = CreateBlockingConfirmation();
-        var uiDispatcher = new CountingUiDispatcher();
-        var viewModel = fixture.CreateViewModel(
-            dialogService: confirmation.Dialog.Object,
-            uiDispatcher: uiDispatcher);
-        viewModel.SelectedRoute = viewModel.Routes.Single(route => route.Id == fixture.Route.Id);
-
-        // Act
-        var cancelTask = viewModel.CancelRouteCommand.ExecuteAsync(null);
-        await confirmation.Shown.Task.ConfigureAwait(false);
-        viewModel.SelectedRoute = viewModel.Routes.Single(route => route.Id == secondRoute.Id);
-        confirmation.Release.SetResult();
-        await cancelTask.ConfigureAwait(false);
-
-        // Assert
-        fixture.Runtime.Verify(runtime => runtime.CancelRouteAsync(
-            It.IsAny<Guid>(),
-            It.IsAny<Guid>(),
-            It.IsAny<CancellationToken>()), Times.Never);
-        Assert.That(uiDispatcher.AsyncInvocationCount, Is.EqualTo(1));
-    }
-
-    [Test]
-    public static async Task CancelRouteCommand_SelectedRoute_DoesNotRequestConfirmation()
-    {
-        // Arrange
-        var fixture = CreateFixture();
-        var free = fixture.Engine.ObserveBlock(
-            fixture.InitialState,
-            fixture.Project.Interlocking.Blocks.Single().Id,
-            BlockOccupancy.Free,
-            Guid.NewGuid(),
-            fixture.InitialState.Revision);
-        var selected = fixture.Engine.ReserveRoute(
-            free.State,
-            fixture.Route.Id,
-            Guid.NewGuid(),
-            free.State.Revision);
-        fixture.Runtime.SetupGet(runtime => runtime.Current).Returns(selected.State);
-        fixture.Runtime
-            .Setup(runtime => runtime.CancelRouteAsync(
-                fixture.Route.Id,
-                It.IsAny<Guid>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new RouteCoordinatorResult(
-                RouteCoordinatorStatus.Accepted,
-                "route.cancelled",
-                "Route cancelled before hardware dispatch.",
-                Guid.NewGuid(),
-                selected.State));
-        var dialog = new Mock<IDialogService>();
-        var viewModel = fixture.CreateViewModel(dialogService: dialog.Object);
-        viewModel.SelectedRoute = viewModel.Routes.Single();
-
-        // Act
-        await viewModel.CancelRouteCommand.ExecuteAsync(null).ConfigureAwait(false);
-
-        // Assert
-        dialog.Verify(candidate => candidate.ShowConfirmationAsync(
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<bool>()), Times.Never);
-        fixture.Runtime.Verify(runtime => runtime.CancelRouteAsync(
-            fixture.Route.Id,
-            It.IsAny<Guid>(),
-            It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Test]
-    public static void SelectedRoute_PresentsSetAsPrimaryAndRoutineCancelAsSecondary()
-    {
-        // Arrange
-        var fixture = CreateFixture();
-        var free = fixture.Engine.ObserveBlock(
-            fixture.InitialState,
-            fixture.Project.Interlocking.Blocks.Single().Id,
-            BlockOccupancy.Free,
-            Guid.NewGuid(),
-            fixture.InitialState.Revision);
-        var selected = fixture.Engine.ReserveRoute(
-            free.State,
-            fixture.Route.Id,
-            Guid.NewGuid(),
-            free.State.Revision);
-        fixture.Runtime.SetupGet(runtime => runtime.Current).Returns(selected.State);
-        var viewModel = fixture.CreateViewModel();
-
-        // Act
-        viewModel.SelectedRoute = viewModel.Routes.Single();
-
-        // Assert
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(viewModel.PrimaryRouteActionLabel, Is.EqualTo("Set route"));
-            Assert.That(viewModel.IsRoutineCancelRouteVisible, Is.True);
-            Assert.That(viewModel.IsRoutineCancelRouteAvailable, Is.True);
-            Assert.That(viewModel.CancelRouteRequiresConfirmation, Is.False);
-        }
-    }
-
-    [Test]
-    public static async Task ReconcileRouteCommand_AlwaysConfirmsBeforeRuntimeCommand()
-    {
-        // Arrange
-        var fixture = CreateFixture();
-        var failedState = CreateRouteState(
-            fixture,
-            RouteLifecycle.Failed,
-            BlockOccupancy.Unknown,
-            "route.feedback.timeout");
-        fixture.Runtime.SetupGet(runtime => runtime.Current).Returns(failedState);
-        var dialog = new Mock<IDialogService>();
-        dialog
-            .Setup(candidate => candidate.ShowConfirmationAsync(
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<bool>()))
-            .ReturnsAsync(false);
-        var viewModel = fixture.CreateViewModel(dialogService: dialog.Object);
-        viewModel.SelectedRoute = viewModel.Routes.Single();
-
-        // Act
-        await viewModel.ReconcileRouteCommand.ExecuteAsync(null).ConfigureAwait(false);
-
-        // Assert
-        dialog.Verify(candidate => candidate.ShowConfirmationAsync(
-            "Reconcile route?",
-            It.Is<string>(message => message.Contains("release retained locks", StringComparison.OrdinalIgnoreCase)),
-            "Reconcile",
-            "Keep locked",
-            true), Times.Once);
-        fixture.Runtime.Verify(runtime => runtime.ReconcileRouteAsync(
-            It.IsAny<Guid>(),
-            It.IsAny<Guid>(),
-            It.IsAny<CancellationToken>()), Times.Never);
-    }
-
-    [Test]
-    public static async Task ReconcileRouteCommand_SelectionChangesDuringConfirmation_SendsNoRuntimeCommand()
-    {
-        // Arrange
-        var fixture = CreateFixture();
-        var secondRoute = AddSecondRoute(fixture);
-        var failedState = CreateRouteState(
-            fixture,
-            RouteLifecycle.Failed,
-            BlockOccupancy.Unknown,
-            "route.feedback.timeout");
-        fixture.Runtime.SetupGet(runtime => runtime.Current).Returns(failedState);
-        fixture.Runtime
-            .Setup(runtime => runtime.ReconcileRouteAsync(
-                It.IsAny<Guid>(),
-                It.IsAny<Guid>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new RouteCoordinatorResult(
-                RouteCoordinatorStatus.Accepted,
-                "route.reconciled",
-                "Route reconciled.",
-                Guid.NewGuid(),
-                failedState));
-        var confirmation = CreateBlockingConfirmation();
-        var uiDispatcher = new CountingUiDispatcher();
-        var viewModel = fixture.CreateViewModel(
-            dialogService: confirmation.Dialog.Object,
-            uiDispatcher: uiDispatcher);
-        viewModel.SelectedRoute = viewModel.Routes.Single(route => route.Id == fixture.Route.Id);
-
-        // Act
-        var reconcileTask = viewModel.ReconcileRouteCommand.ExecuteAsync(null);
-        await confirmation.Shown.Task.ConfigureAwait(false);
-        viewModel.SelectedRoute = viewModel.Routes.Single(route => route.Id == secondRoute.Id);
-        confirmation.Release.SetResult();
-        await reconcileTask.ConfigureAwait(false);
-
-        // Assert
-        fixture.Runtime.Verify(runtime => runtime.ReconcileRouteAsync(
-            It.IsAny<Guid>(),
-            It.IsAny<Guid>(),
-            It.IsAny<CancellationToken>()), Times.Never);
-        Assert.That(uiDispatcher.AsyncInvocationCount, Is.EqualTo(1));
-    }
-
-    [Test]
-    public static async Task ReleaseRouteCommand_VerifiedClearRoute_DoesNotRequestConfirmation()
-    {
-        // Arrange
-        var fixture = CreateFixture();
-        var establishedState = CreateRouteState(
-            fixture,
-            RouteLifecycle.Established,
-            BlockOccupancy.Free);
-        fixture.Runtime.SetupGet(runtime => runtime.Current).Returns(establishedState);
-        fixture.Runtime
-            .Setup(runtime => runtime.ReleaseRouteAsync(
-                fixture.Route.Id,
-                It.IsAny<Guid>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new RouteCoordinatorResult(
-                RouteCoordinatorStatus.Accepted,
-                "route.available",
-                "Route resources released.",
-                Guid.NewGuid(),
-                establishedState));
-        var dialog = new Mock<IDialogService>();
-        var viewModel = fixture.CreateViewModel(dialogService: dialog.Object);
-        viewModel.SelectedRoute = viewModel.Routes.Single();
-
-        // Act
-        await viewModel.ReleaseRouteCommand.ExecuteAsync(null).ConfigureAwait(false);
-
-        // Assert
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(viewModel.CanReleaseRoute, Is.True);
-            Assert.That(viewModel.ReleaseRouteCommand.CanExecute(null), Is.True);
-        }
-        dialog.Verify(candidate => candidate.ShowConfirmationAsync(
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<bool>()), Times.Never);
-        fixture.Runtime.Verify(runtime => runtime.ReleaseRouteAsync(
-            fixture.Route.Id,
-            It.IsAny<Guid>(),
-            It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Test]
-    public static async Task SafeStopRouteCommand_UnsafeReleaseState_IsAvailableWithoutConfirmation()
-    {
-        // Arrange
-        var fixture = CreateFixture();
-        var occupiedState = CreateRouteState(
-            fixture,
-            RouteLifecycle.Occupied,
-            BlockOccupancy.Occupied);
-        fixture.Runtime.SetupGet(runtime => runtime.Current).Returns(occupiedState);
-        fixture.Runtime
-            .Setup(runtime => runtime.SafeStopRouteAsync(
-                fixture.Route.Id,
-                It.IsAny<Guid>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new RouteCoordinatorResult(
-                RouteCoordinatorStatus.Accepted,
-                "route.safe-stopped",
-                "Protected signals are safe and locks remain retained.",
-                Guid.NewGuid(),
-                occupiedState));
-        var dialog = new Mock<IDialogService>();
-        var viewModel = fixture.CreateViewModel(dialogService: dialog.Object);
-        viewModel.SelectedRoute = viewModel.Routes.Single();
-
-        // Act
-        await viewModel.SafeStopRouteCommand.ExecuteAsync(null).ConfigureAwait(false);
-
-        // Assert
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(viewModel.CanReleaseRoute, Is.False);
-            Assert.That(viewModel.ReleaseRouteCommand.CanExecute(null), Is.False);
-            Assert.That(viewModel.PrimaryRouteActionLabel, Is.EqualTo("Safe stop"));
-        }
-        dialog.Verify(candidate => candidate.ShowConfirmationAsync(
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<bool>()), Times.Never);
-        fixture.Runtime.Verify(runtime => runtime.SafeStopRouteAsync(
-            fixture.Route.Id,
-            It.IsAny<Guid>(),
-            It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Test]
-    public static async Task ValidRouteDefinitionChange_PersistenceFailure_RetainsAuthoritativeDefinitionAsNotSaved()
-    {
-        // Arrange
-        var fixture = CreateFixture();
-        var projectContext = new TestProjectContext(
-            fixture.Project,
-            () => Task.FromException(new IOException("Injected save failure.")));
-        var validator = new Mock<IInterlockingDefinitionValidator>();
-        validator
-            .Setup(candidate => candidate.Validate(fixture.Project))
-            .Returns(new InterlockingValidationReport([]));
-        var viewModel = fixture.CreateViewModel(projectContext, validator.Object);
-        var originalRouteCount = fixture.Project.Interlocking.Routes.Count;
-        viewModel.BeginRouteDraftCommand.Execute(null);
-        viewModel.DraftName = "East arrival";
-        viewModel.SelectedDraftOperationalElement = viewModel.OperationalElements.Single(item => item.Kind == "Signal");
-        viewModel.SetDraftEntryCommand.Execute(null);
-        viewModel.SelectedDraftOperationalElement = viewModel.OperationalElements.Single(item => item.Kind == "Block");
-        viewModel.SetDraftExitCommand.Execute(null);
-
-        // Act
-        await viewModel.WhenDefinitionSaveIdleAsync().ConfigureAwait(false);
-
-        // Assert
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(fixture.Project.Interlocking.Routes, Has.Count.EqualTo(originalRouteCount + 1));
-            Assert.That(viewModel.DefinitionSaveState, Is.EqualTo(DefinitionSaveState.NotSaved));
-            Assert.That(viewModel.DefinitionSaveStatusText, Does.Contain("Not saved"));
-            fixture.Runtime.Verify(runtime => runtime.ActivateAsync(
-                It.IsAny<InterlockingDefinition>(),
-                It.IsAny<CancellationToken>()), Times.Never);
-        }
-    }
-
-    [Test]
-    public static async Task ValidRouteDefinitionChange_SuccessfulSave_DoesNotReloadLiveRuntime()
-    {
-        // Arrange
-        var fixture = CreateFixture();
-        var saveCount = 0;
-        var projectContext = new TestProjectContext(
-            fixture.Project,
-            () =>
-            {
-                saveCount++;
-                return Task.CompletedTask;
-            });
-        var validator = new Mock<IInterlockingDefinitionValidator>();
-        validator
-            .Setup(candidate => candidate.Validate(fixture.Project))
-            .Returns(new InterlockingValidationReport([]));
-        var viewModel = fixture.CreateViewModel(projectContext, validator.Object);
-
-        // Act
-        viewModel.BeginRouteDraftCommand.Execute(null);
-        await viewModel.WhenDefinitionSaveIdleAsync().ConfigureAwait(false);
-
-        // Assert
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(saveCount, Is.GreaterThan(0));
-            Assert.That(viewModel.DefinitionSaveState, Is.EqualTo(DefinitionSaveState.Saved));
-            fixture.Runtime.Verify(runtime => runtime.ActivateAsync(
-                It.IsAny<InterlockingDefinition>(),
-                It.IsAny<CancellationToken>()), Times.Never);
-        }
-    }
-
-    [Test]
-    public static async Task ValidRouteDefinitionChange_MissingPersistencePath_RemainsNotSavedWithoutRuntimeCommand()
-    {
-        // Arrange
-        var fixture = CreateFixture();
-        var projectContext = new TestProjectContext(
-            fixture.Project,
-            saveState: SolutionSaveState.NotSaved,
-            saveStatusText: "Not saved - choose Save As");
-        var validator = new Mock<IInterlockingDefinitionValidator>();
-        validator
-            .Setup(candidate => candidate.Validate(fixture.Project))
-            .Returns(new InterlockingValidationReport([]));
-        var viewModel = fixture.CreateViewModel(projectContext, validator.Object);
-
-        // Act
-        viewModel.BeginRouteDraftCommand.Execute(null);
-        await viewModel.WhenDefinitionSaveIdleAsync().ConfigureAwait(false);
-
-        // Assert
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(viewModel.DefinitionSaveState, Is.EqualTo(DefinitionSaveState.NotSaved));
-            Assert.That(viewModel.DefinitionSaveStatusText, Is.EqualTo("Not saved - choose Save As"));
-            fixture.Runtime.Verify(runtime => runtime.ActivateAsync(
-                It.IsAny<InterlockingDefinition>(),
-                It.IsAny<CancellationToken>()), Times.Never);
-        }
-    }
-
-    [Test]
-    public static async Task RouteAuthoringSelection_DoesNotChangeSelectedWorkbenchContext()
-    {
-        // Arrange
-        var fixture = CreateFixture();
-        var viewModel = fixture.CreateViewModel();
-        viewModel.StartObserving();
-        viewModel.SelectedRoute = viewModel.Routes.Single();
-        var selectedRoute = viewModel.SelectedRoute;
-
-        // Act
-        viewModel.SelectedDraftOperationalElement = viewModel.OperationalElements.Single(item => item.Kind == "Signal");
-        viewModel.SetDraftEntryCommand.Execute(null);
-        await viewModel.WhenDefinitionSaveIdleAsync().ConfigureAwait(false);
-
-        // Assert
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(viewModel.SelectedContext, Is.EqualTo(SelectedOperationalContext.Route));
-            Assert.That(viewModel.SelectedRoute, Is.SameAs(selectedRoute));
-            fixture.Runtime.Verify(runtime => runtime.ActivateAsync(
-                It.IsAny<InterlockingDefinition>(),
-                It.IsAny<CancellationToken>()), Times.Never);
         }
     }
 
@@ -757,13 +196,13 @@ internal static partial class InterlockingControlViewModelTests
         var fixture = CreateFixture();
         var viewModel = fixture.CreateViewModel();
         viewModel.StartObserving();
-        viewModel.SelectedRoute = viewModel.Routes.Single();
+        viewModel.SelectedTurnout = viewModel.Turnouts.Single();
         var correlationId = Guid.NewGuid();
         var runtimeEvent = new InterlockingRuntimeSnapshotChangedEvent(
             fixture.InitialState,
             true,
             correlationId,
-            "route.preview.available");
+            "turnout.observed");
 
         // Act
         fixture.EventBus.Publish(runtimeEvent);
@@ -773,182 +212,30 @@ internal static partial class InterlockingControlViewModelTests
         {
             Assert.That(viewModel.DiagnosticsText, Does.Contain(correlationId.ToString("D")));
             Assert.That(viewModel.DiagnosticsText, Does.Contain(runtimeEvent.CreatedUtc.ToString("O")));
-            Assert.That(viewModel.DiagnosticsText, Does.Contain("Route West arrival"));
-            Assert.That(viewModel.DiagnosticsText, Does.Contain("Available"));
+            Assert.That(viewModel.DiagnosticsText, Does.Contain("Turnout West turnout"));
+            Assert.That(viewModel.DiagnosticsText, Does.Contain("Unknown"));
             Assert.That(viewModel.DiagnosticsText, Does.Contain("synchronized True"));
         }
     }
 
     [Test]
-    public static async Task InvalidRouteFieldChange_RetainsLastValidDefinitionWithoutAnotherSave()
+    public static void StopObserving_RemovesPageSubscriptionWithoutStoppingSharedRuntime()
     {
-        // Arrange
         var fixture = CreateFixture();
-        var saveCount = 0;
-        var projectContext = new TestProjectContext(
-            fixture.Project,
-            () =>
-            {
-                saveCount++;
-                return Task.CompletedTask;
-            });
-        var validator = new Mock<IInterlockingDefinitionValidator>();
-        validator
-            .Setup(candidate => candidate.Validate(fixture.Project))
-            .Returns(() =>
-            {
-                var draft = fixture.Project.Interlocking.Routes
-                    .FirstOrDefault(route => route.Id != fixture.Route.Id);
-                return string.IsNullOrWhiteSpace(draft?.Name)
-                    ? new InterlockingValidationReport(
-                    [
-                        new InterlockingValidationFinding(
-                            "route.name.missing",
-                            InterlockingValidationSeverity.Error,
-                            draft?.Id ?? Guid.Empty,
-                            [],
-                            "Every route requires a name.")
-                    ])
-                    : new InterlockingValidationReport([]);
-            });
-        var viewModel = fixture.CreateViewModel(projectContext, validator.Object);
-        viewModel.BeginRouteDraftCommand.Execute(null);
-        await viewModel.WhenDefinitionSaveIdleAsync().ConfigureAwait(false);
-        var acceptedRoute = fixture.Project.Interlocking.Routes
-            .Single(route => route.Id != fixture.Route.Id);
-        var savesAfterAcceptedDefinition = saveCount;
+        var firstPage = fixture.CreateViewModel();
+        var secondPage = fixture.CreateViewModel();
+        firstPage.StartObserving();
+        secondPage.StartObserving();
+        firstPage.StopObserving();
+        var updated = fixture.InitialState with { Revision = 3 };
 
-        // Act
-        viewModel.DraftName = string.Empty;
-        await viewModel.WhenDefinitionSaveIdleAsync().ConfigureAwait(false);
-        viewModel.SelectTrackRepresentation(fixture.TrackSegmentId);
+        fixture.EventBus.Publish(new InterlockingRuntimeSnapshotChangedEvent(
+            updated, false, Guid.NewGuid(), "block.observed"));
 
-        // Assert
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(acceptedRoute.Name, Is.EqualTo("New route"));
-            Assert.That(saveCount, Is.EqualTo(savesAfterAcceptedDefinition));
-            Assert.That(viewModel.DefinitionSaveState, Is.EqualTo(DefinitionSaveState.ValidationError));
-            Assert.That(viewModel.DefinitionSaveStatusText, Does.StartWith("Not saved"));
-            Assert.That(viewModel.SelectedRoute, Is.Null);
-        }
-    }
-
-    [Test]
-    public static async Task InvalidRouteFieldChange_DuringPendingSave_RemainsValidationErrorAfterSaveCompletes()
-    {
-        // Arrange
-        var fixture = CreateFixture();
-        var saveStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var releaseSave = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var projectContext = new TestProjectContext(
-            fixture.Project,
-            async () =>
-            {
-                saveStarted.TrySetResult();
-                await releaseSave.Task.ConfigureAwait(false);
-            });
-        var validator = new Mock<IInterlockingDefinitionValidator>();
-        validator
-            .Setup(candidate => candidate.Validate(fixture.Project))
-            .Returns(() =>
-            {
-                var draft = fixture.Project.Interlocking.Routes
-                    .FirstOrDefault(route => route.Id != fixture.Route.Id);
-                return string.IsNullOrWhiteSpace(draft?.Name)
-                    ? new InterlockingValidationReport(
-                    [
-                        new InterlockingValidationFinding(
-                            "route.name.missing",
-                            InterlockingValidationSeverity.Error,
-                            draft?.Id ?? Guid.Empty,
-                            [],
-                            "Every route requires a name.")
-                    ])
-                    : new InterlockingValidationReport([]);
-            });
-        var viewModel = fixture.CreateViewModel(projectContext, validator.Object);
-        viewModel.BeginRouteDraftCommand.Execute(null);
-        await saveStarted.Task.ConfigureAwait(false);
-
-        // Act
-        viewModel.DraftName = string.Empty;
-        releaseSave.SetResult();
-        await viewModel.WhenDefinitionSaveIdleAsync().ConfigureAwait(false);
-
-        // Assert
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(viewModel.DefinitionSaveState, Is.EqualTo(DefinitionSaveState.ValidationError));
-            Assert.That(viewModel.DefinitionSaveStatusText, Does.StartWith("Not saved"));
-        }
-    }
-
-    [Test]
-    public static async Task LiveRouteCommand_DoesNotStartDefinitionAutosave()
-    {
-        // Arrange
-        var fixture = CreateFixture();
-        var saveCount = 0;
-        var projectContext = new TestProjectContext(
-            fixture.Project,
-            () =>
-            {
-                saveCount++;
-                return Task.CompletedTask;
-            });
-        var viewModel = fixture.CreateViewModel(projectContext);
-        viewModel.SelectedRoute = viewModel.Routes.Single();
-        fixture.Runtime
-            .Setup(runtime => runtime.PreviewRouteAsync(
-                fixture.Route.Id,
-                It.IsAny<Guid>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new RouteCoordinatorResult(
-                RouteCoordinatorStatus.Accepted,
-                "route.preview.available",
-                "Route is available.",
-                Guid.NewGuid(),
-                fixture.InitialState));
-
-        // Act
-        await viewModel.PreviewRouteCommand.ExecuteAsync(null).ConfigureAwait(false);
-
-        // Assert
-        Assert.That(saveCount, Is.Zero);
-    }
-
-    private static RouteDefinition AddSecondRoute(Fixture fixture)
-    {
-        var route = new RouteDefinition
-        {
-            Name = "East arrival",
-            EntryElementId = fixture.Route.EntryElementId,
-            ExitElementId = fixture.Route.ExitElementId
-        };
-        fixture.Project.Interlocking.Routes.Add(route);
-        return route;
-    }
-
-    private static BlockingConfirmation CreateBlockingConfirmation()
-    {
-        var shown = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var dialog = new Mock<IDialogService>();
-        dialog
-            .Setup(candidate => candidate.ShowConfirmationAsync(
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<bool>()))
-            .Returns(async () =>
-            {
-                shown.TrySetResult();
-                await release.Task.ConfigureAwait(false);
-                return true;
-            });
-        return new BlockingConfirmation(dialog, shown, release);
+        using var assertions = Assert.EnterMultipleScope();
+        Assert.That(firstPage.Revision, Is.Zero);
+        Assert.That(secondPage.Revision, Is.EqualTo(3));
+        fixture.Runtime.Verify(runtime => runtime.DisposeAsync(), Times.Never);
     }
 
     private static Fixture CreateFixture()
@@ -967,21 +254,6 @@ internal static partial class InterlockingControlViewModelTests
             Name = "Entry signal",
             BaseAddress = 20
         };
-        var route = new RouteDefinition
-        {
-            Name = "West arrival",
-            EntryElementId = signal.Id,
-            ExitElementId = block.Id,
-            TurnoutRequirements =
-            [
-                new RouteTurnoutRequirement
-                {
-                    TurnoutId = turnout.Id,
-                    Position = TurnoutPosition.Straight
-                }
-            ],
-            ProtectedBlockIds = [block.Id]
-        };
         var trackSegmentId = Guid.NewGuid();
         var signalBoxElementId = Guid.NewGuid();
         var project = new Project
@@ -992,7 +264,6 @@ internal static partial class InterlockingControlViewModelTests
                 Turnouts = [turnout],
                 Blocks = [block],
                 Signals = [signal],
-                Routes = [route],
                 Bindings =
                 [
                     new OperationalBinding
@@ -1004,9 +275,16 @@ internal static partial class InterlockingControlViewModelTests
                 ]
             }
         };
-        var engine = new InterlockingSafetyEngine(project.Interlocking);
+        var initialState = new InterlockingRuntimeState
+        {
+            Revision = 0,
+            Turnouts = new Dictionary<Guid, TurnoutRuntimeState> { [turnout.Id] = new(turnout.Id, TurnoutLifecycle.Unknown, null, null) },
+            Blocks = new Dictionary<Guid, BlockRuntimeState> { [block.Id] = new(block.Id, BlockOccupancy.Unknown) },
+            Signals = new Dictionary<Guid, SignalRuntimeState> { [signal.Id] = new(signal.Id, null) },
+            ProcessedCorrelationIds = new HashSet<Guid>()
+        };
         var runtime = new Mock<IInterlockingRuntime>();
-        runtime.SetupGet(item => item.Current).Returns(engine.InitialState);
+        runtime.SetupGet(item => item.Current).Returns(initialState);
         runtime.SetupGet(item => item.IsSynchronized).Returns(true);
         runtime
             .Setup(item => item.ActivateAsync(
@@ -1015,67 +293,32 @@ internal static partial class InterlockingControlViewModelTests
             .Returns(Task.CompletedTask);
         return new Fixture(
             turnout,
-            route,
             trackSegmentId,
             signalBoxElementId,
             project,
-            engine,
+            initialState,
             runtime);
     }
 
-    private static InterlockingRuntimeState CreateRouteState(
-        Fixture fixture,
-        RouteLifecycle lifecycle,
-        BlockOccupancy occupancy,
-        string? failureCode = null) =>
-        new()
-        {
-            Revision = fixture.InitialState.Revision + 1,
-            Turnouts = fixture.InitialState.Turnouts,
-            Blocks = fixture.InitialState.Blocks.Values
-                .Select(block => block with { Occupancy = occupancy })
-                .ToDictionary(block => block.BlockId),
-            Signals = fixture.InitialState.Signals,
-            Routes = fixture.InitialState.Routes.Values.Select(route =>
-                route.RouteId == fixture.Route.Id
-                    ? route with { Lifecycle = lifecycle, FailureCode = failureCode }
-                    : route)
-                .ToDictionary(route => route.RouteId),
-            ProcessedCorrelationIds = fixture.InitialState.ProcessedCorrelationIds
-        };
-
     private sealed record Fixture(
         TurnoutDefinition Turnout,
-        RouteDefinition Route,
         Guid TrackSegmentId,
         Guid SignalBoxElementId,
         Project Project,
-        InterlockingSafetyEngine Engine,
+        InterlockingRuntimeState InitialState,
         Mock<IInterlockingRuntime> Runtime)
     {
-        public InterlockingRuntimeState InitialState => Engine.InitialState;
-
         public EventBus EventBus { get; } = new(NullLogger<EventBus>.Instance);
 
         public InterlockingControlViewModel CreateViewModel(
             IProjectContext? projectContext = null,
-            IInterlockingDefinitionValidator? validator = null,
-            IDialogService? dialogService = null,
             IUiDispatcher? uiDispatcher = null) =>
             new(
                 Runtime.Object,
                 EventBus,
                 projectContext ?? new TestProjectContext(Project),
-                validator ?? new InterlockingDefinitionValidator(),
-                dialogService ?? new Mock<IDialogService>().Object,
-                uiDispatcher ?? ImmediateUiDispatcher.Instance,
-                NullLogger<InterlockingControlViewModel>.Instance);
+                uiDispatcher ?? ImmediateUiDispatcher.Instance);
     }
-
-    private sealed record BlockingConfirmation(
-        Mock<IDialogService> Dialog,
-        TaskCompletionSource Shown,
-        TaskCompletionSource Release);
 
     private sealed partial class TestProjectContext(
         Project project,
@@ -1140,36 +383,6 @@ internal static partial class InterlockingControlViewModelTests
         public Task InvokeOnUiAsync(Func<Task> asyncAction, UiPriority priority)
         {
             _ = priority;
-            return asyncAction();
-        }
-    }
-
-    private sealed class CountingUiDispatcher : IUiDispatcher
-    {
-        public int AsyncInvocationCount { get; private set; }
-
-        public void InvokeOnUi(Action action) => action();
-
-        public Task InvokeOnUiAsync(Func<Task> asyncAction)
-        {
-            AsyncInvocationCount++;
-            return asyncAction();
-        }
-
-        public Task<T> InvokeOnUiAsync<T>(Func<Task<T>> asyncFunc)
-        {
-            AsyncInvocationCount++;
-            return asyncFunc();
-        }
-
-        public void InvokeOnUiHighPriority(Action action) => action();
-
-        public void InvokeOnUiLowPriority(Action action) => action();
-
-        public Task InvokeOnUiAsync(Func<Task> asyncAction, UiPriority priority)
-        {
-            _ = priority;
-            AsyncInvocationCount++;
             return asyncAction();
         }
     }

@@ -5,7 +5,6 @@ namespace Moba.Test.Backend;
 using global::Moba.Backend.Events;
 using global::Moba.Backend.Interface;
 using global::Moba.Backend.Service.Interlocking;
-using global::Moba.Common.Configuration;
 using global::Moba.Common.Events;
 using global::Moba.Domain;
 
@@ -38,25 +37,24 @@ internal sealed class InterlockingRuntimeServiceTests
     }
 
     [Test]
-    public async Task DisconnectDuringSetting_Should_FailRouteAndMakeInputsUnknown()
+    public async Task DisconnectDuringCommand_Should_MakeInputsUnknownWithoutAutomaticEffects()
     {
         var fixture = CreateFixture();
         await fixture.Runtime.ActivateAsync(fixture.Definition);
         fixture.EventBus.Publish(new FeedbackStateChangedEvent(10, true, Guid.NewGuid()));
         fixture.EventBus.Publish(new TurnoutInfoChangedEvent(500, true, Guid.NewGuid()));
         await WaitForSynchronizationAsync(fixture.Runtime);
-        await fixture.Runtime.SetRouteAsync(fixture.RouteId, Guid.NewGuid());
+        await fixture.Runtime.SetTurnoutAsync(fixture.TurnoutId, TurnoutPosition.Straight, Guid.NewGuid());
 
         fixture.EventBus.Publish(new Z21ConnectionLostEvent());
         var disconnected = await WaitForStateAsync(
             fixture.Runtime,
-            state => state.Routes[fixture.RouteId].Lifecycle == RouteLifecycle.Failed);
+            state => state.Turnouts[fixture.TurnoutId].Lifecycle == TurnoutLifecycle.Unknown);
 
         Assert.Multiple(() =>
         {
             Assert.That(disconnected.Turnouts[fixture.TurnoutId].Lifecycle, Is.EqualTo(TurnoutLifecycle.Unknown));
             Assert.That(disconnected.Blocks[fixture.BlockId].Occupancy, Is.EqualTo(BlockOccupancy.Unknown));
-            Assert.That(disconnected.Blocks[fixture.BlockId].ReservationOwnerRouteId, Is.EqualTo(fixture.RouteId));
             Assert.That(fixture.Runtime.IsSynchronized, Is.False);
         });
     }
@@ -123,7 +121,7 @@ internal sealed class InterlockingRuntimeServiceTests
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(result.Status, Is.EqualTo(RouteCoordinatorStatus.Pending));
+            Assert.That(result.Status, Is.EqualTo(TurnoutCoordinatorStatus.Pending));
             Assert.That(result.State.Turnouts[fixture.TurnoutId].Lifecycle, Is.EqualTo(TurnoutLifecycle.Pending));
             fixture.Z21.Verify(z21 => z21.SetTurnoutAsync(
                 100,
@@ -135,7 +133,7 @@ internal sealed class InterlockingRuntimeServiceTests
     }
 
     [Test]
-    public async Task SetTurnoutAsync_UnsynchronizedRuntime_RejectsWithoutHardwareEffect()
+    public async Task SetTurnoutAsync_UnknownBlock_DoesNotRequireCompleteSnapshot()
     {
         var fixture = CreateFixture();
         await fixture.Runtime.ActivateAsync(fixture.Definition).ConfigureAwait(false);
@@ -147,14 +145,14 @@ internal sealed class InterlockingRuntimeServiceTests
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(result.Status, Is.EqualTo(RouteCoordinatorStatus.Rejected));
-            Assert.That(result.Code, Is.EqualTo("interlocking.unsynchronized"));
+            Assert.That(result.Status, Is.EqualTo(TurnoutCoordinatorStatus.Pending));
+            Assert.That(result.State.Blocks[fixture.BlockId].Occupancy, Is.EqualTo(BlockOccupancy.Unknown));
             fixture.Z21.Verify(z21 => z21.SetTurnoutAsync(
                 It.IsAny<int>(),
                 It.IsAny<int>(),
                 It.IsAny<bool>(),
                 It.IsAny<bool>(),
-                It.IsAny<CancellationToken>()), Times.Never);
+                It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 
@@ -194,11 +192,251 @@ internal sealed class InterlockingRuntimeServiceTests
         });
     }
 
+    [Test]
+    public async Task OccupiedBlock_DoesNotPreventDirectTurnoutCommand()
+    {
+        var fixture = CreateFixture();
+        var runtime = fixture.Runtime;
+        await using var runtimeLifetime = runtime.ConfigureAwait(false);
+        await runtime.ActivateAsync(fixture.Definition).ConfigureAwait(false);
+        fixture.EventBus.Publish(new FeedbackStateChangedEvent(11, true, Guid.NewGuid()));
+        await runtime.WhenIdleAsync().ConfigureAwait(false);
+
+        var result = await runtime.SetTurnoutAsync(fixture.TurnoutId, TurnoutPosition.Straight, Guid.NewGuid()).ConfigureAwait(false);
+
+        using var assertions = Assert.EnterMultipleScope();
+        Assert.That(result.Status, Is.EqualTo(TurnoutCoordinatorStatus.Pending));
+        Assert.That(result.State.Blocks[fixture.BlockId].Occupancy, Is.EqualTo(BlockOccupancy.Occupied));
+    }
+
+    [Test]
+    public async Task DuplicateFeedback_DoesNotPolluteLaterOccupancyOrPreviousSnapshots()
+    {
+        var fixture = CreateFixture();
+        var runtime = fixture.Runtime;
+        await using var runtimeLifetime = runtime.ConfigureAwait(false);
+        var secondBlock = new BlockDefinition
+        {
+            FeedbackInputs = fixture.Definition.Blocks.Single().FeedbackInputs
+        };
+        fixture.Definition.Blocks.Add(secondBlock);
+        await runtime.ActivateAsync(fixture.Definition).ConfigureAwait(false);
+        var first = new FeedbackStateChangedEvent(10, true, Guid.NewGuid());
+        fixture.EventBus.Publish(first);
+        await runtime.WhenIdleAsync().ConfigureAwait(false);
+        var earlier = runtime.Current;
+        Assert.That(earlier.Blocks.Values.Select(block => block.Occupancy), Is.All.EqualTo(BlockOccupancy.Free));
+
+        fixture.EventBus.Publish(new FeedbackStateChangedEvent(10, false, Guid.NewGuid()));
+        fixture.EventBus.Publish(first);
+        fixture.EventBus.Publish(new FeedbackStateChangedEvent(11, true, Guid.NewGuid()));
+        await runtime.WhenIdleAsync().ConfigureAwait(false);
+
+        using var assertions = Assert.EnterMultipleScope();
+        Assert.That(runtime.Current.Blocks.Values.Select(block => block.Occupancy), Is.All.EqualTo(BlockOccupancy.Occupied));
+        Assert.That(earlier.Blocks.Values.Select(block => block.Occupancy), Is.All.EqualTo(BlockOccupancy.Free));
+    }
+
+    [Test]
+    public async Task PendingDispatch_DoesNotBlockOrderedObservations()
+    {
+        var fixture = CreateFixture();
+        var runtime = fixture.Runtime;
+        await using var runtimeLifetime = runtime.ConfigureAwait(false);
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        fixture.Z21.Setup(z21 => z21.SetTurnoutAsync(100, 0, true, false, It.IsAny<CancellationToken>()))
+            .Returns(async (int address, int output, bool activate, bool queue, CancellationToken token) =>
+            {
+                started.TrySetResult();
+                await release.Task.WaitAsync(token).ConfigureAwait(false);
+            });
+        var snapshots = new List<InterlockingRuntimeSnapshotChangedEvent>();
+        fixture.EventBus.Subscribe<InterlockingRuntimeSnapshotChangedEvent>(snapshots.Add);
+        await runtime.ActivateAsync(fixture.Definition).ConfigureAwait(false);
+
+        var command = runtime.SetTurnoutAsync(fixture.TurnoutId, TurnoutPosition.Straight, Guid.NewGuid());
+        await started.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await runtime.WhenIdleAsync().ConfigureAwait(false);
+        Assert.That(runtime.Current.Turnouts[fixture.TurnoutId].Lifecycle, Is.EqualTo(TurnoutLifecycle.Requested));
+        fixture.EventBus.Publish(new FeedbackStateChangedEvent(10, true, Guid.NewGuid()));
+        fixture.EventBus.Publish(new FeedbackStateChangedEvent(11, true, Guid.NewGuid()));
+        await runtime.WhenIdleAsync().ConfigureAwait(false);
+        release.TrySetResult();
+        var result = await command.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        using var assertions = Assert.EnterMultipleScope();
+        Assert.That(result.Status, Is.EqualTo(TurnoutCoordinatorStatus.Pending));
+        Assert.That(snapshots.Where(item => item.Code == "block.observed")
+            .Select(item => item.Snapshot.Blocks[fixture.BlockId].Occupancy),
+            Is.EqualTo(new[] { BlockOccupancy.Free, BlockOccupancy.Fault }));
+        Assert.That(snapshots.Select(item => item.Snapshot.Revision), Is.Ordered.Ascending);
+        Assert.That(snapshots.Select(item => item.Snapshot.Revision), Is.Unique);
+    }
+
+    [TestCase(false, false, TurnoutCoordinatorStatus.Accepted)]
+    [TestCase(true, false, TurnoutCoordinatorStatus.Rejected)]
+    [TestCase(false, true, TurnoutCoordinatorStatus.Failed)]
+    public async Task ConfirmationDuringDispatch_PreservesDispatchOutcome(
+        bool disconnect, bool failDispatch, TurnoutCoordinatorStatus expectedStatus)
+    {
+        var fixture = CreateFixture();
+        var runtime = fixture.Runtime;
+        await using var runtimeLifetime = runtime.ConfigureAwait(false);
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        fixture.Z21.Setup(z21 => z21.SetTurnoutAsync(100, 0, true, false, It.IsAny<CancellationToken>()))
+            .Returns(async (int address, int output, bool activate, bool queue, CancellationToken token) =>
+            {
+                started.TrySetResult();
+                await release.Task.WaitAsync(token).ConfigureAwait(false);
+                if (failDispatch)
+                    throw new InvalidOperationException("Synthetic dispatch failure.");
+            });
+        await runtime.ActivateAsync(fixture.Definition).ConfigureAwait(false);
+        var command = runtime.SetTurnoutAsync(fixture.TurnoutId, TurnoutPosition.Straight, Guid.NewGuid());
+        try
+        {
+            await started.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            fixture.EventBus.Publish(new TurnoutInfoChangedEvent(500, true, Guid.NewGuid()));
+            fixture.EventBus.Publish(new FeedbackStateChangedEvent(10, true, Guid.NewGuid()));
+            await runtime.WhenIdleAsync().WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            Assert.That(runtime.Current.Blocks[fixture.BlockId].Occupancy, Is.EqualTo(BlockOccupancy.Free));
+            if (disconnect)
+            {
+                fixture.EventBus.Publish(new Z21ConnectionLostEvent());
+                await runtime.WhenIdleAsync().WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            }
+        }
+        finally
+        {
+            release.TrySetResult();
+        }
+        var result = await command.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        using var assertions = Assert.EnterMultipleScope();
+        Assert.That(result.State.Turnouts[fixture.TurnoutId].Lifecycle,
+            Is.EqualTo(disconnect ? TurnoutLifecycle.Unknown : TurnoutLifecycle.Confirmed));
+        Assert.That(result.Status, Is.EqualTo(expectedStatus));
+    }
+
+    [Test]
+    public async Task ProjectActivation_DiscardsOldCommandCompletion()
+    {
+        var fixture = CreateFixture();
+        var runtime = fixture.Runtime;
+        await using var runtimeLifetime = runtime.ConfigureAwait(false);
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        fixture.Z21.Setup(z21 => z21.SetTurnoutAsync(100, 0, true, false, It.IsAny<CancellationToken>()))
+            .Returns(async () =>
+            {
+                started.TrySetResult();
+                await release.Task.ConfigureAwait(false);
+            });
+        await runtime.ActivateAsync(fixture.Definition).ConfigureAwait(false);
+        var command = runtime.SetTurnoutAsync(fixture.TurnoutId, TurnoutPosition.Straight, Guid.NewGuid());
+        InterlockingRuntimeState replacement;
+        try
+        {
+            await started.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            await runtime.WhenIdleAsync().WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            await runtime.ActivateAsync(new InterlockingDefinition()).WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            replacement = runtime.Current;
+        }
+        finally
+        {
+            release.TrySetResult();
+        }
+        var result = await command.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        using var assertions = Assert.EnterMultipleScope();
+        Assert.That(result.Code, Is.EqualTo("turnout.project.changed"));
+        Assert.That(runtime.Current, Is.SameAs(replacement));
+        Assert.That(runtime.Current.Turnouts, Is.Empty);
+    }
+
+    [Test]
+    public async Task CancelledActivation_PreservesProjectAndLeavesQueueUsable()
+    {
+        var fixture = CreateFixture();
+        var runtime = fixture.Runtime;
+        await using var runtimeLifetime = runtime.ConfigureAwait(false);
+        await runtime.ActivateAsync(fixture.Definition).ConfigureAwait(false);
+        var original = runtime.Current;
+        using var cancellation = new CancellationTokenSource();
+        await cancellation.CancelAsync().ConfigureAwait(false);
+
+        await Assert.ThatAsync(
+            () => runtime.ActivateAsync(new InterlockingDefinition(), cancellation.Token)
+                .WaitAsync(TimeSpan.FromSeconds(5)),
+            Throws.InstanceOf<OperationCanceledException>()).ConfigureAwait(false);
+
+        Assert.That(runtime.Current, Is.SameAs(original));
+        await runtime.ActivateAsync(new InterlockingDefinition()).WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        Assert.That(runtime.Current.Turnouts, Is.Empty);
+    }
+
+    [Test]
+    public async Task CancellationAfterActivationCommit_StillCancelsPreviousProjectCommand()
+    {
+        var fixture = CreateFixture();
+        var runtime = fixture.Runtime;
+        await using var runtimeLifetime = runtime.ConfigureAwait(false);
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        fixture.Z21.Setup(z21 => z21.SetTurnoutAsync(100, 0, true, false, It.IsAny<CancellationToken>()))
+            .Returns(async (int address, int output, bool activate, bool queue, CancellationToken token) =>
+            {
+                started.TrySetResult();
+                await Task.Delay(Timeout.InfiniteTimeSpan, token).ConfigureAwait(false);
+            });
+        await runtime.ActivateAsync(fixture.Definition).ConfigureAwait(false);
+        var command = runtime.SetTurnoutAsync(fixture.TurnoutId, TurnoutPosition.Straight, Guid.NewGuid());
+        await started.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await runtime.WhenIdleAsync().ConfigureAwait(false);
+        using var cancellation = new CancellationTokenSource();
+        fixture.EventBus.Subscribe<InterlockingRuntimeSnapshotChangedEvent>(snapshot =>
+        {
+            if (snapshot.Code == "interlocking.activated")
+                cancellation.Cancel();
+        });
+
+        await runtime.ActivateAsync(new InterlockingDefinition(), cancellation.Token).ConfigureAwait(false);
+        var result = await command.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        using var assertions = Assert.EnterMultipleScope();
+        Assert.That(cancellation.IsCancellationRequested, Is.True);
+        Assert.That(result.Code, Is.EqualTo("turnout.project.changed"));
+        Assert.That(runtime.Current.Turnouts, Is.Empty);
+    }
+
+    [Test]
+    public async Task DisposeDuringDispatch_CancelsBeforeWaitingAndUnsubscribes()
+    {
+        var fixture = CreateFixture();
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        fixture.Z21.Setup(z21 => z21.SetTurnoutAsync(100, 0, true, false, It.IsAny<CancellationToken>()))
+            .Returns(async (int address, int output, bool activate, bool queue, CancellationToken token) =>
+            {
+                started.TrySetResult();
+                await Task.Delay(Timeout.InfiniteTimeSpan, token).ConfigureAwait(false);
+            });
+        await fixture.Runtime.ActivateAsync(fixture.Definition).ConfigureAwait(false);
+        var command = fixture.Runtime.SetTurnoutAsync(fixture.TurnoutId, TurnoutPosition.Straight, Guid.NewGuid());
+        await started.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await fixture.Runtime.WhenIdleAsync().ConfigureAwait(false);
+
+        await fixture.Runtime.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        var result = await command.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        using var assertions = Assert.EnterMultipleScope();
+        Assert.That(result.Code, Is.EqualTo("turnout.shutdown"));
+        Assert.That(fixture.EventBus.GetSubscriberCount<FeedbackStateChangedEvent>(), Is.Zero);
+    }
     private static RuntimeFixture CreateFixture()
     {
         var turnoutId = Guid.Parse("10000000-0000-0000-0000-000000000001");
         var blockId = Guid.Parse("10000000-0000-0000-0000-000000000002");
-        var routeId = Guid.Parse("10000000-0000-0000-0000-000000000003");
         var definition = new InterlockingDefinition
         {
             Turnouts =
@@ -245,23 +483,6 @@ internal sealed class InterlockingRuntimeServiceTests
                         new BlockFeedbackInput { InPort = 11, Role = BlockFeedbackRole.Occupied }
                     ]
                 }
-            ],
-            Routes =
-            [
-                new RouteDefinition
-                {
-                    Id = routeId,
-                    Name = "R1",
-                    ProtectedBlockIds = [blockId],
-                    TurnoutRequirements =
-                    [
-                        new RouteTurnoutRequirement
-                        {
-                            TurnoutId = turnoutId,
-                            Position = TurnoutPosition.Straight
-                        }
-                    ]
-                }
             ]
         };
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
@@ -279,10 +500,9 @@ internal sealed class InterlockingRuntimeServiceTests
         var runtime = new InterlockingRuntimeService(
             z21.Object,
             eventBus,
-            new AppSettings(),
             TimeProvider.System,
             NullLogger<InterlockingRuntimeService>.Instance);
-        return new RuntimeFixture(runtime, eventBus, z21, definition, turnoutId, blockId, routeId);
+        return new RuntimeFixture(runtime, eventBus, z21, definition, turnoutId, blockId);
     }
 
     private static async Task WaitForSynchronizationAsync(IInterlockingRuntime runtime) =>
@@ -309,6 +529,5 @@ internal sealed class InterlockingRuntimeServiceTests
         Mock<IZ21> Z21,
         InterlockingDefinition Definition,
         Guid TurnoutId,
-        Guid BlockId,
-        Guid RouteId);
+        Guid BlockId);
 }

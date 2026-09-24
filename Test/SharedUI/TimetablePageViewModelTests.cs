@@ -150,6 +150,315 @@ internal sealed class TimetablePageViewModelTests
     }
 
     [Test]
+    public async Task EmptyTimetable_Should_TransitionThroughAddingAndDeletingFirstService()
+    {
+        var project = CreateProject();
+        project.TimetableServices.Clear();
+        using var context = CreateContext(project, new RecordingOperations());
+        await context.ViewModel.RefreshAsync().ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(context.ViewModel.HasServices, Is.False);
+            Assert.That(context.ViewModel.HasNoMatchingServices, Is.False);
+            Assert.That(context.ViewModel.HasServiceSelection, Is.False);
+            Assert.That(context.ViewModel.SaveDefinitionCommand.CanExecute(null), Is.False);
+            Assert.That(context.ViewModel.AddServiceCommand.CanExecute(null), Is.True);
+        }
+
+        await context.ViewModel.AddServiceCommand.ExecuteAsync(null).ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(context.ViewModel.HasServices, Is.True);
+            Assert.That(context.ViewModel.HasServiceSelection, Is.True);
+            Assert.That(context.ViewModel.SaveDefinitionCommand.CanExecute(null), Is.True);
+        }
+
+        await context.ViewModel.DeleteSelectedServiceCommand.ExecuteAsync(null).ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(context.ViewModel.HasServices, Is.False);
+            Assert.That(context.ViewModel.HasServiceSelection, Is.False);
+            Assert.That(context.ViewModel.SaveDefinitionCommand.CanExecute(null), Is.False);
+        }
+    }
+
+    [Test]
+    public async Task FilteringOutSelection_Should_ClearDetailsAndDisableSelectionCommands()
+    {
+        using var context = CreateContext(CreateProject(), new RecordingOperations());
+        await context.ViewModel.RefreshAsync().ConfigureAwait(false);
+        SelectFirstServiceAndCall(context.ViewModel);
+        var changedProperties = new List<string?>();
+        var saveCommandChanges = 0;
+        context.ViewModel.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
+        context.ViewModel.SaveDefinitionCommand.CanExecuteChanged += (_, _) => saveCommandChanges++;
+
+        context.ViewModel.FilterText = "No such service";
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(context.ViewModel.HasServices, Is.True);
+            Assert.That(context.ViewModel.HasNoMatchingServices, Is.True);
+            Assert.That(context.ViewModel.HasServiceSelection, Is.False);
+            Assert.That(context.ViewModel.HasCallSelection, Is.False);
+            Assert.That(context.ViewModel.Calls, Is.Empty);
+            Assert.That(context.ViewModel.SaveDefinitionCommand.CanExecute(null), Is.False);
+            Assert.That(context.ViewModel.RecordArrivalCommand.CanExecute(null), Is.False);
+            Assert.That(context.ViewModel.ServiceCountText, Is.EqualTo("0 of 1 services"));
+            Assert.That(changedProperties, Does.Contain(nameof(TimetablePageViewModel.HasNoMatchingServices)));
+            Assert.That(changedProperties, Does.Contain(nameof(TimetablePageViewModel.HasServiceSelection)));
+            Assert.That(changedProperties, Does.Contain(nameof(TimetablePageViewModel.HasCallSelection)));
+            Assert.That(saveCommandChanges, Is.GreaterThan(0));
+        }
+
+        context.ViewModel.ResetFiltersCommand.Execute(null);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(context.ViewModel.Services, Has.Count.EqualTo(1));
+            Assert.That(context.ViewModel.HasNoMatchingServices, Is.False);
+            Assert.That(context.ViewModel.ServiceCountText, Is.EqualTo("1 service"));
+        }
+    }
+
+    [Test]
+    public async Task FilteringMatchingService_Should_PreserveServiceAndCallSelection()
+    {
+        using var context = CreateContext(CreateProject(), new RecordingOperations());
+        await context.ViewModel.RefreshAsync().ConfigureAwait(false);
+        SelectFirstServiceAndCall(context.ViewModel);
+        var serviceId = context.ViewModel.SelectedService!.Id;
+        var callId = context.ViewModel.SelectedCall!.Id;
+
+        context.ViewModel.FilterText = "Express";
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(context.ViewModel.SelectedService!.Id, Is.EqualTo(serviceId));
+            Assert.That(context.ViewModel.SelectedCall!.Id, Is.EqualTo(callId));
+            Assert.That(context.ViewModel.SaveDefinitionCommand.CanExecute(null), Is.True);
+        }
+    }
+
+    [Test]
+    public async Task AddServiceWhileFiltered_Should_RevealAndSelectNewService()
+    {
+        using var context = CreateContext(CreateProject(), new RecordingOperations());
+        await context.ViewModel.RefreshAsync().ConfigureAwait(false);
+        context.ViewModel.SelectedFocus = "Station";
+        context.ViewModel.FilterText = "No such station";
+
+        await context.ViewModel.AddServiceCommand.ExecuteAsync(null).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(context.ViewModel.Services, Has.Count.EqualTo(2));
+            Assert.That(context.ViewModel.HasNoMatchingServices, Is.False);
+            Assert.That(context.ViewModel.SelectedService!.ServiceNumber, Is.EqualTo("S002"));
+            Assert.That(context.ViewModel.SaveDefinitionCommand.CanExecute(null), Is.True);
+        }
+    }
+
+    [Test]
+    public async Task ClearingProject_Should_RemovePreviousBoardAndDisableAdding()
+    {
+        var project = CreateProject();
+        var issue = new TimetableIssue(TimetableIssueKind.PlatformConflict, project.TimetableServices[0].Id, null, "Overlap");
+        using var context = CreateContext(project, new RecordingOperations(), new TimetableEvaluationResult([issue]));
+        await context.ViewModel.RefreshAsync().ConfigureAwait(false);
+        SelectFirstServiceAndCall(context.ViewModel);
+        Assert.That(context.ViewModel.HasIssues, Is.True);
+
+        context.MainWindow.SelectedProject = null;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(context.ViewModel.HasServices, Is.False);
+            Assert.That(context.ViewModel.HasNoMatchingServices, Is.False);
+            Assert.That(context.ViewModel.HasIssues, Is.False);
+            Assert.That(context.ViewModel.HasServiceSelection, Is.False);
+            Assert.That(context.ViewModel.HasCallSelection, Is.False);
+            Assert.That(context.ViewModel.AddServiceCommand.CanExecute(null), Is.False);
+            Assert.That(context.ViewModel.SaveDefinitionCommand.CanExecute(null), Is.False);
+        }
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task SwitchingProject_Should_NotRestorePreviousServicesWhileLoadingOrAfterFailure(bool failLoad)
+    {
+        var originalProject = CreateProject();
+        var nextProject = CreateProject();
+        var operations = new Mock<ITimetableOperationsService>();
+        operations.Setup(value => value.GetStatesAsync(originalProject.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<TimetableServiceState>());
+        var pendingLoad = new TaskCompletionSource<IReadOnlyList<TimetableServiceState>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        operations.Setup(value => value.GetStatesAsync(nextProject.Id, It.IsAny<CancellationToken>()))
+            .Returns(pendingLoad.Task);
+        using var context = CreateContext(originalProject, operations.Object);
+        await context.ViewModel.RefreshAsync().ConfigureAwait(false);
+        SelectFirstServiceAndCall(context.ViewModel);
+
+        try
+        {
+            context.MainWindow.SelectedProject = new ProjectViewModel(nextProject);
+            context.ViewModel.FilterText = "Express";
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(context.ViewModel.Services, Is.Empty);
+                Assert.That(context.ViewModel.HasServices, Is.False);
+                Assert.That(context.ViewModel.HasServiceSelection, Is.False);
+                Assert.That(context.ViewModel.Calls, Is.Empty);
+                Assert.That(context.ViewModel.SaveDefinitionCommand.CanExecute(null), Is.False);
+                Assert.That(context.ViewModel.HoldSelectedServiceCommand.CanExecute(null), Is.False);
+            }
+
+            var refresh = context.ViewModel.RefreshAsync();
+            if (failLoad)
+            {
+                pendingLoad.SetException(new IOException("State load failed"));
+                await Assert.ThatAsync(() => refresh.WaitAsync(TimeSpan.FromSeconds(5)), Throws.TypeOf<IOException>()).ConfigureAwait(false);
+            }
+            else
+            {
+                pendingLoad.SetResult([]);
+                await refresh.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            }
+
+            context.ViewModel.ResetFiltersCommand.Execute(null);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(context.ViewModel.Services.Any(service => service.Id == originalProject.TimetableServices[0].Id), Is.False);
+                Assert.That(context.ViewModel.Services.Select(service => service.Id),
+                    Is.EqualTo(failLoad ? [] : new[] { nextProject.TimetableServices[0].Id }));
+                Assert.That(context.ViewModel.HasStatusMessage, Is.EqualTo(failLoad));
+                Assert.That(context.ViewModel.StatusText, Is.EqualTo(failLoad
+                    ? "Unable to load the timetable. Select Refresh to try again."
+                    : "Timetable refreshed"));
+            }
+        }
+        finally
+        {
+            pendingLoad.TrySetResult([]);
+        }
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task RefreshSameProject_Should_ClearCachedServicesAndNotifyClearedIssues(bool failLoad)
+    {
+        var project = CreateProject();
+        var issue = new TimetableIssue(TimetableIssueKind.PlatformConflict, project.TimetableServices[0].Id, null, "Overlap");
+        var operations = new Mock<ITimetableOperationsService>();
+        operations.Setup(value => value.GetStatesAsync(project.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<TimetableServiceState>());
+        using var context = CreateContext(project, operations.Object, new TimetableEvaluationResult([issue]));
+        await context.ViewModel.RefreshAsync().ConfigureAwait(false);
+        SelectFirstServiceAndCall(context.ViewModel);
+        var clearedIssuesNotified = false;
+        context.ViewModel.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(TimetablePageViewModel.HasIssues) && !context.ViewModel.HasIssues)
+                clearedIssuesNotified = true;
+        };
+        var pendingLoad = new TaskCompletionSource<IReadOnlyList<TimetableServiceState>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        operations.Setup(value => value.GetStatesAsync(project.Id, It.IsAny<CancellationToken>()))
+            .Returns(pendingLoad.Task);
+
+        var refresh = context.ViewModel.RefreshAsync();
+        var notifiedBeforeFiltering = clearedIssuesNotified;
+        context.ViewModel.FilterText = "Express";
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(notifiedBeforeFiltering, Is.True);
+            Assert.That(context.ViewModel.Issues, Is.Empty);
+            Assert.That(context.ViewModel.HasIssues, Is.False);
+            Assert.That(context.ViewModel.Services, Is.Empty);
+            Assert.That(context.ViewModel.Calls, Is.Empty);
+            Assert.That(context.ViewModel.HasServices, Is.False);
+            Assert.That(context.ViewModel.SaveDefinitionCommand.CanExecute(null), Is.False);
+            Assert.That(context.ViewModel.HoldSelectedServiceCommand.CanExecute(null), Is.False);
+        }
+
+        if (failLoad)
+        {
+            pendingLoad.SetException(new IOException("State load failed"));
+            await Assert.ThatAsync(() => refresh.WaitAsync(TimeSpan.FromSeconds(5)), Throws.TypeOf<IOException>()).ConfigureAwait(false);
+        }
+        else
+        {
+            pendingLoad.SetResult([]);
+            await refresh.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        }
+
+        context.ViewModel.ResetFiltersCommand.Execute(null);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(context.ViewModel.Services, Has.Count.EqualTo(failLoad ? 0 : 1));
+            Assert.That(context.ViewModel.HasIssues, Is.EqualTo(!failLoad));
+            Assert.That(context.ViewModel.HoldSelectedServiceCommand.CanExecute(null), Is.False);
+            Assert.That(context.ViewModel.HasStatusMessage, Is.EqualTo(failLoad));
+            Assert.That(context.ViewModel.StatusText, Is.EqualTo(failLoad
+                ? "Unable to load the timetable. Select Refresh to try again."
+                : "Timetable refreshed"));
+        }
+    }
+
+    [TestCase(false, false)]
+    [TestCase(false, true)]
+    [TestCase(true, false)]
+    [TestCase(true, true)]
+    public async Task SupersededRefresh_Should_NotOverwriteCurrentBoard(bool switchProject, bool failLoad)
+    {
+        var originalProject = CreateProject();
+        var nextProject = CreateProject();
+        var operations = new Mock<ITimetableOperationsService>();
+        operations.Setup(value => value.GetStatesAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<TimetableServiceState>());
+        using var context = CreateContext(originalProject, operations.Object);
+        await context.ViewModel.RefreshAsync().ConfigureAwait(false);
+        var pendingLoad = new TaskCompletionSource<IReadOnlyList<TimetableServiceState>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        operations.Setup(value => value.GetStatesAsync(originalProject.Id, It.IsAny<CancellationToken>()))
+            .Returns(pendingLoad.Task);
+
+        var previousRefresh = context.ViewModel.RefreshAsync();
+        if (switchProject)
+        {
+            context.MainWindow.SelectedProject = new ProjectViewModel(nextProject);
+        }
+        else
+        {
+            operations.Setup(value => value.GetStatesAsync(originalProject.Id, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Array.Empty<TimetableServiceState>());
+            await context.ViewModel.RefreshAsync().ConfigureAwait(false);
+        }
+        SelectFirstServiceAndCall(context.ViewModel);
+        var selectedService = context.ViewModel.SelectedService;
+        var selectedCall = context.ViewModel.SelectedCall;
+        if (failLoad)
+        {
+            pendingLoad.SetException(new IOException("Superseded state load failed"));
+            await Assert.ThatAsync(() => previousRefresh.WaitAsync(TimeSpan.FromSeconds(5)), Throws.TypeOf<IOException>()).ConfigureAwait(false);
+        }
+        else
+        {
+            pendingLoad.SetResult([]);
+            await previousRefresh.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        }
+
+        using (Assert.EnterMultipleScope())
+        {
+            var expectedProject = switchProject ? nextProject : originalProject;
+            Assert.That(context.ViewModel.Services.Select(service => service.Id), Is.EqualTo(new[] { expectedProject.TimetableServices[0].Id }));
+            Assert.That(context.ViewModel.SelectedService, Is.SameAs(selectedService));
+            Assert.That(context.ViewModel.SelectedCall, Is.SameAs(selectedCall));
+            Assert.That(context.ViewModel.HasStatusMessage, Is.False);
+            Assert.That(context.ViewModel.StatusText, Is.EqualTo("Timetable refreshed"));
+        }
+    }
+
+    [Test]
     public async Task AddAndDeleteCommands_Should_UpdateDefinitionCollection()
     {
         // Arrange
@@ -380,7 +689,7 @@ internal sealed class TimetablePageViewModelTests
 
     private static TimetableTestContext CreateContext(
         Project project,
-        RecordingOperations operations,
+        ITimetableOperationsService operations,
         TimetableEvaluationResult? evaluationResult = null,
         TimeSpan? delay = null,
         DateTimeOffset? now = null,

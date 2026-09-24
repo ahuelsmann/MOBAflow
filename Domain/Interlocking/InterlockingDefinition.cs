@@ -4,8 +4,8 @@ namespace Moba.Domain;
 using System.Text.Json.Serialization;
 
 /// <summary>
-/// Persisted operational definitions shared by every interlocking presentation.
-/// Runtime occupancy, locks, confirmations, and route state are deliberately excluded.
+/// Persisted operational definitions shared by the track-plan and signal-box presentations.
+/// Runtime occupancy and turnout confirmations are deliberately excluded.
 /// </summary>
 public sealed class InterlockingDefinition
 {
@@ -16,8 +16,6 @@ public sealed class InterlockingDefinition
     public List<BlockDefinition> Blocks { get; set; } = [];
 
     public List<OperationalConnection> Connections { get; set; } = [];
-
-    public List<RouteDefinition> Routes { get; set; } = [];
 
     public List<OperationalBinding> Bindings { get; set; } = [];
 }
@@ -97,15 +95,13 @@ public sealed class TurnoutFeedbackCondition
 }
 
 /// <summary>
-/// Operational signal configuration used by protected route decisions.
+/// Operational signal configuration used by layout validation and representation bindings.
 /// </summary>
 public sealed class SignalDefinition
 {
     public Guid Id { get; set; } = Guid.NewGuid();
 
     public string Name { get; set; } = string.Empty;
-
-    public SignalAspect SafeAspect { get; set; } = SignalAspect.Hp0;
 
     public SignalSystemType SignalSystem { get; set; } = SignalSystemType.Ks;
 
@@ -146,50 +142,6 @@ public sealed class BlockFeedbackInput
     public BlockFeedbackRole Role { get; set; }
 
     public bool ActiveState { get; set; } = true;
-}
-
-/// <summary>
-/// Persisted route definition. All IDs refer to objects in the same interlocking definition.
-/// </summary>
-public sealed class RouteDefinition
-{
-    public Guid Id { get; set; } = Guid.NewGuid();
-
-    public string Name { get; set; } = string.Empty;
-
-    public Guid EntryElementId { get; set; }
-
-    public Guid ExitElementId { get; set; }
-
-    public List<Guid> PathElementIds { get; set; } = [];
-
-    public List<RouteTurnoutRequirement> TurnoutRequirements { get; set; } = [];
-
-    public List<Guid> ProtectedBlockIds { get; set; } = [];
-
-    public List<RouteSignalRequirement> SignalRequirements { get; set; } = [];
-
-    public List<Guid> ConflictingRouteIds { get; set; } = [];
-}
-
-/// <summary>
-/// Required semantic position for one turnout in a route.
-/// </summary>
-public sealed class RouteTurnoutRequirement
-{
-    public Guid TurnoutId { get; set; }
-
-    public TurnoutPosition Position { get; set; }
-}
-
-/// <summary>
-/// Configured proceed aspect for one signal protected by a route.
-/// </summary>
-public sealed class RouteSignalRequirement
-{
-    public Guid SignalId { get; set; }
-
-    public SignalAspect ProceedAspect { get; set; }
 }
 
 /// <summary>

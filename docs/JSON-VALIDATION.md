@@ -77,7 +77,6 @@ User gets a clear error message
         "signals": [],
         "blocks": [],
         "connections": [],
-        "routes": [],
         "bindings": []
       }
     }

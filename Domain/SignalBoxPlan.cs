@@ -208,7 +208,7 @@ public abstract record SbElement
     /// <summary>Display name (e.g., "W1" for Weiche 1, "N1" for Signal N1).</summary>
     public string Name { get; set; } = string.Empty;
 
-    /// <summary>Current state of the element (free, occupied, route set).</summary>
+    /// <summary>Current observed state of the element (free or occupied).</summary>
     [JsonIgnore]
     public SignalBoxElementState State { get; set; } = SignalBoxElementState.Free;
 }
@@ -435,15 +435,6 @@ public enum SignalBoxElementState
 
     /// <summary>Occupied section.</summary>
     Occupied,
-
-    /// <summary>Route set.</summary>
-    RouteSet,
-
-    /// <summary>Route clearing.</summary>
-    RouteClearing,
-
-    /// <summary>Blocked section.</summary>
-    Blocked,
 
     /// <summary>Fault condition.</summary>
     Fault
