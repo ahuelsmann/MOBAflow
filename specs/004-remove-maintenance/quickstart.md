@@ -66,3 +66,9 @@ Isolation used a separate Release binary copy, own settings/photos/logs, two syn
 synthetic vehicles and inactive journeys. The invalid nonblank Z21 address prevented connection and discovery;
 REST auto-start, REST connection and health checks were disabled. No operator data or secrets were copied.
 The native Computer Use provider confirmed the test instance absent after shutdown; its slot was released.
+
+After integrating main `29f56176aa699ffd14a2b96c9b98a54a5c342f90` (workflow action sequences), the portable
+Release test-project rebuild passed. All 56 focused vehicle, persistence, DI and workflow boundary tests
+passed with no failures or skips. The complete fresh portable SARIF comparison showed only expected
+maintenance-related decreases, with no new or increased groups. Final Windows/Android runs and baseline
+updates are deliberately deferred until the additional #146 integration, as centrally coordinated.

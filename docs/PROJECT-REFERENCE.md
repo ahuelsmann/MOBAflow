@@ -155,31 +155,26 @@ Z21 feedback
 
 ## Workflows
 
-Workflow 2.0 persists an ordered directed graph. `Workflow.EntryStepId` selects
-the first node, `Workflow.Steps` preserves editor and JSON order, and stable IDs
-form explicit edges. The supported node kinds are action, delay, typed
-condition, parallel branch/join, nested workflow, and explicit termination.
-General graph cycles are invalid; retry and nesting are separately bounded.
+A workflow stores an ordered `List<WorkflowAction>` and is reusable by multiple
+event assignments through its stable ID. List order determines execution order;
+`Number` is only the displayed ordinal. The workflow has no trigger or graph nodes.
 
-`WorkflowValidator` is the mandatory gate for both live and dry-run execution.
-It checks graph/reference integrity, reachability and termination, retry/depth
-limits, typed payloads, nested recursion, parallel ownership, and conflicting
-exclusive resource writes. A step error policy overrides the workflow default;
-`Stop`, `Continue`, and `FailureBranch` are the terminal behaviors, with an
-optional retry of at most 10 additional attempts.
+`WorkflowValidator` checks workflow/action IDs, nonempty lists, typed payloads and
+nonnegative `DelayAfterMs`. `WorkflowService` awaits each action and its delay,
+propagates cancellation and stops at the first failure. It validates the selected
+workflow independently of unrelated unfinished drafts.
 
-`WorkflowService` traverses valid graphs deterministically and propagates
-`CancellationToken` through delays, nested calls, and every action handler.
-Parallel branches launch in persisted order and join explicitly. Nested calls
-are limited to a depth of 16. `WorkflowExecutionCoordinator` preserves FIFO
-execution per feedback source outside JourneyManager's global feedback lock and
-cancels queued/running work on reset, project replacement, disconnect, loss, or
-shutdown.
+`ActionExecutionContext` already provides project, journey, active session, stop,
+platform and service dependencies. Its factory creates a separate context container
+per invocation, including the triggering `IEvent` and event-definition ID. Later
+actions see intentional stop updates in that invocation. The current Event Manager
+supports feedback assignments; accepting generic event data does not add new subscriptions.
+`WorkflowExecutionCoordinator` retains its FIFO and cancellation responsibilities.
 
 Dry-run uses `WorkflowEffectPlanner`; it never calls an
 `IWorkflowActionHandler`, waits for a delay, or performs network, hardware,
 audio, script, display, filesystem-script, or mutable journey effects. Live
-execution dispatches action nodes through `ActionExecutor` to typed handlers:
+execution dispatches actions through `ActionExecutor` to typed handlers:
 
 | Action type | Current runtime behavior |
 | --- | --- |
@@ -206,9 +201,14 @@ counters and supports workflow assignment and event move/copy with undo/redo.
 Events stay editable while a journey is active; each change is re-applied to the
 runtime. WorkflowsPage owns workflow authoring,
 validation, dry-run and trace; both pages share the library and autosave state.
-Deleting a workflow is blocked while any journey-event or nested-workflow reference
-remains. The current JSON schema is the direct Workflow 2.0 shape; there is no
-Workflow 1.x compatibility executor or migration layer.
+The workflow editor provides typed action settings, reordering, and duplication.
+Deleting a workflow is blocked while any journey event references it.
+
+The graph executor and graph authoring controls have been removed. Earlier graph
+metadata/IDs remain readable, but actions are empty and execution is rejected until
+the operator recreates the workflow. There is no automatic flattening or parallel
+legacy executor. The existing lifecycle field `StepId` now holds the action ID.
+See [issue #132](https://github.com/ahuelsmann/MOBAflow/issues/132).
 
 ## Track plan
 
