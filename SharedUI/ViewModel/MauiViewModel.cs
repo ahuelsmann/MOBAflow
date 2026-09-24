@@ -1246,9 +1246,9 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         try
         {
             if (_runtimeCommandGateway is not null)
-                await _runtimeCommandGateway.ResetInPortCountersAsync().ConfigureAwait(true);
+                await _runtimeCommandGateway.ResetInPortCountersAsync(CancellationToken.None).ConfigureAwait(true);
             else
-                await _mobaRuntime.ResetInPortCountersAsync().ConfigureAwait(true);
+                await _mobaRuntime.ResetInPortCountersAsync(CancellationToken.None).ConfigureAwait(true);
 
             _localCounters = _mobaRuntime.Current.InPortCounters;
             ApplyLocalCounters();
