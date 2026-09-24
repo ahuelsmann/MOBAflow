@@ -33,16 +33,16 @@ internal sealed class MobaRuntimeEventPlanTests
         var queuedProjects = new List<Guid>();
         var coordinator = new Mock<IWorkflowExecutionCoordinator>();
         coordinator.Setup(value => value.EnqueueAsync(It.IsAny<QueuedWorkflowExecution>(), It.IsAny<CancellationToken>()))
-            .Returns((QueuedWorkflowExecution execution, CancellationToken _) =>
+            .ReturnsAsync((QueuedWorkflowExecution execution, CancellationToken _) =>
             {
                 queuedProjects.Add(execution.Request.Project.Id);
-                return Task.FromResult(new WorkflowExecutionResult
+                return new WorkflowExecutionResult
                 {
                     ExecutionId = Guid.NewGuid(),
                     WorkflowId = workflow.Id,
                     SourceCorrelationId = execution.Request.SourceCorrelationId,
                     Status = WorkflowExecutionStatus.Succeeded
-                });
+                };
             });
         var dependencies = new JourneyManagerDependencies { InPortCounterService = counters, ExecutionCoordinator = coordinator.Object };
         using var oldManager = new JourneyManager(z21.Object, oldProject, Mock.Of<IWorkflowService>(), dependencies: dependencies);
