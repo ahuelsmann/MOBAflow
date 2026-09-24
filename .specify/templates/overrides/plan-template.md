@@ -32,7 +32,7 @@
 
 **Performance Goals**: [Feature-specific measurable goals or N/A with rationale]
 
-**Compatibility**: [Existing JSON, configuration defaults, APIs, Z21 protocol, persisted layouts]
+**Data and API Effects**: [Existing JSON, configuration defaults, APIs, Z21 protocol, persisted layouts; superseded items are removed, not migrated]
 
 **Scale/Scope**: [Concrete feature scope and important exclusions]
 
@@ -45,7 +45,7 @@
 - [ ] Async flows use `await` without sync-over-async.
 - [ ] UI behavior uses ViewModel commands; UI resources support Light and Dark themes.
 - [ ] All user-visible UI strings are English.
-- [ ] Compatibility and migration effects are explicit.
+- [ ] Data and API effects are explicit; superseded models are removed without legacy paths or migrations.
 - [ ] Automated tests cover every new or changed behavior.
 - [ ] Validation commands match the affected platforms and include `dotnet test Test/Test.csproj`.
 - [ ] The design reuses established services, helpers, DI patterns, and serializers.

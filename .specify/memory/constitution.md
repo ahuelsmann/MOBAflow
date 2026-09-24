@@ -1,24 +1,18 @@
 <!--
 Sync Impact Report
-- Version change: 1.0.0 -> 1.1.0
+- Version change: 1.1.0 -> 2.0.0
 - Modified principles:
-  - IV. Specifications Must Be Testable and Compatible ->
-    IV. Specifications, Plans, and Issues Must Be Traceable
-- Added principles:
-  - VI. Quality Gates Protect the Main Branch
-- Added governance:
-  - standalone plan location and lifecycle
-  - GitHub issue traceability
-  - balanced secrets scanning
-  - local Sonar and remote SonarCloud PR gates
+  - IV. Specifications, Plans, and Issues Must Be Traceable: the compatibility and
+    migration requirement is replaced by removal of superseded models, because
+    MOBAflow has no released users yet.
 - Templates updated:
   - ✅ .specify/templates/overrides/spec-template.md
   - ✅ .specify/templates/overrides/plan-template.md
   - ✅ .specify/templates/overrides/tasks-template.md
 - Runtime guidance updated:
   - ✅ AGENTS.md
-  - ✅ .github/copilot-instructions.md
-  - ✅ docs/SPEC-KIT.md
+- Migration note: specs/001-journey-event-plan was simplified accordingly in #125;
+  earlier artifacts there are marked as superseded.
 - Follow-up TODOs: none
 -->
 # MOBAflow Constitution
@@ -62,11 +56,12 @@ platforms. Every specification and implementation plan MUST reference its
 authoritative GitHub issue. Spec Kit feature artifacts remain together below
 `specs/NNN-feature-name/`; standalone project, quality, refactoring, and roadmap
 plans belong in `plans/`. Completed standalone plans MUST be deleted because Git
-history and closed GitHub issues retain the record. Plans MUST identify
-compatibility effects on existing JSON data, configuration defaults, public
-APIs, Z21 behavior, and persisted layouts. Breaking changes require an explicit
-migration path and justification. Existing defaults and serialized data MUST
-remain compatible unless the approved specification deliberately changes them.
+history and closed GitHub issues retain the record. Plans MUST state the effects
+on existing JSON data, configuration defaults, public APIs, Z21 behavior, and
+persisted layouts. MOBAflow has no released users yet: superseded models, fields,
+and endpoints MUST be removed in the same change rather than kept for
+compatibility, and no migration layer is added. Configuration defaults and safe
+locomotive startup remain protected.
 
 ### V. Prefer Simple, Traceable Changes
 
@@ -111,8 +106,8 @@ Valid findings MUST NOT be suppressed, excluded, or hidden by lowering a gate.
 Work follows the repository's six-step workflow: analyse, research, plan,
 implement, validate, and document. Spec Kit maps to it as follows:
 
-1. `$speckit-specify` records user value, scope, compatibility, and acceptance
-   criteria.
+1. `$speckit-specify` records user value, scope, data and API effects, and
+   acceptance criteria.
 2. `$speckit-clarify` resolves material ambiguity before technical design.
 3. `$speckit-plan` records architecture, platform scope, risks, and validation.
 4. `$speckit-tasks` creates traceable implementation and mandatory test tasks.
@@ -144,4 +139,4 @@ semantic versioning: MAJOR for incompatible governance changes, MINOR for new or
 materially expanded principles, and PATCH for clarifications. Every plan and
 review MUST verify compliance; unresolved violations block implementation.
 
-**Version**: 1.1.0 | **Ratified**: 2026-07-19 | **Last Amended**: 2026-07-24
+**Version**: 2.0.0 | **Ratified**: 2026-07-19 | **Last Amended**: 2026-09-24
