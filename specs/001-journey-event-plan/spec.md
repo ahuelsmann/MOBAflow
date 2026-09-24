@@ -87,7 +87,7 @@ The Event Manager presents InPort, count and workflow in each row. Drag and drop
 
 ### Functional Requirements
 
-- **FR-001**: Maintain one non-persisted application-session activation count per InPort, starting at zero.
+- **FR-001**: Maintain one non-persisted application-session activation count per InPort, starting at zero. Each app owns its own counts; MOBAflow and MOBAsmart do not synchronize counters, and mobile display/reset always use the local runtime.
 - **FR-002**: Reset all counts only by explicit user command; allowed at any time.
 - **FR-003**: Persist an active flag per journey. On every accepted activation, evaluate the events of all active journeys.
 - **FR-004**: Each enabled event maps a port, positive count and workflow and runs when that port's session count equals the event count.

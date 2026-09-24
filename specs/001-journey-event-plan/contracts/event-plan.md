@@ -1,8 +1,8 @@
 # Runtime and editor contract
 
-Use existing runtime and gateway boundaries, preserving local/remote routing. Remote views observe the owning host's counters rather than creating separate counters.
+Use existing runtime and gateway boundaries. Each application owns its InPort counters for its own lifetime; MOBAflow and MOBAsmart do not synchronize their counts.
 
-Mobile counter reset executes locally only when no remote session owns the view. An active remote session returns a clear unsupported-operation error directing the user to the MOBAflow host; it must never silently invoke the local runtime.
+Mobile counter display and reset always use the local runtime, including while a MOBAflow connection is active. A reset waits for the runtime command and projects the confirmed snapshot; failures retain the displayed counts and show an error.
 
 | Operation | Behavior |
 | --- | --- |

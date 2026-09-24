@@ -52,7 +52,7 @@ public sealed class MobileRuntimeCoordinator : IRuntimeCommandGateway, IMobileRu
     /// <inheritdoc />
     public Task ResetInPortCountersAsync(CancellationToken cancellationToken = default)
     {
-        EnsureLocalCounterControl(cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
         return _localGateway.ResetInPortCountersAsync(cancellationToken);
     }
 
@@ -114,13 +114,4 @@ public sealed class MobileRuntimeCoordinator : IRuntimeCommandGateway, IMobileRu
         CancellationToken cancellationToken = default) =>
         _localGateway.SendTurnoutCommandAsync(decoderAddress, output, activate, queue, cancellationToken);
 
-    private void EnsureLocalCounterControl(CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        if (_mobaflowSessionActive)
-        {
-            // A local fallback would mutate a different runtime than the one the user sees.
-            throw new NotSupportedException("InPort counters must be reset on the MOBAflow host.");
-        }
-    }
 }

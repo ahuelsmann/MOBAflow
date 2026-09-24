@@ -85,6 +85,18 @@ public sealed partial class InPortCounterService : IDisposable
         }
     }
 
+    /// <summary>Queues work for a current activation atomically with respect to counter resets.</summary>
+    internal void QueueIfCurrent(long generation, System.Action enqueue)
+    {
+        lock (_sync)
+        {
+            if (!_disposed && generation == _generation)
+            {
+                enqueue();
+            }
+        }
+    }
+
     /// <summary>Resets all counts and timer history.</summary>
     public void ResetAll()
     {

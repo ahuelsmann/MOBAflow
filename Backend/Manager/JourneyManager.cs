@@ -125,18 +125,18 @@ public partial class JourneyManager : IJourneyManager
         foreach (var journey in project.Journeys)
         {
             var checkpoint = _runtimeStateStore.Load(project.Id, journey.Id);
-            var position = checkpoint is not null && checkpoint.CurrentPos >= 0 && checkpoint.CurrentPos < journey.Stations.Count
-                ? checkpoint.CurrentPos
-                : (int)journey.FirstPos;
+            var checkpointPosition = journey.Stations.FindIndex(station => station.Id == checkpoint?.CurrentStationId);
+            var position = checkpointPosition >= 0 ? checkpointPosition : (int)journey.FirstPos;
             var station = journey.Stations.ElementAtOrDefault(position);
             _states[journey.Id] = new JourneySessionState
             {
                 JourneyId = journey.Id,
-                RunId = checkpoint is null || checkpoint.JourneyRunId == Guid.Empty ? Guid.NewGuid() : checkpoint.JourneyRunId,
+                RunId = checkpointPosition < 0 || checkpoint!.JourneyRunId == Guid.Empty ? Guid.NewGuid() : checkpoint.JourneyRunId,
                 CurrentPos = position,
                 CurrentStationId = station?.Id,
                 CurrentStationName = station?.Name ?? string.Empty,
-                IsActive = journey.IsActive
+                IsActive = journey.IsActive,
+                IsCompleted = checkpointPosition >= 0 && checkpoint!.IsCompleted
             };
         }
 
@@ -207,7 +207,7 @@ public partial class JourneyManager : IJourneyManager
             }
 
             var inPort = journeyEvent.InPort;
-            queuedExecutions.Add(_executionCoordinator.EnqueueAsync(new QueuedWorkflowExecution
+            _inPortCounterService.QueueIfCurrent(args.Generation, () => queuedExecutions.Add(_executionCoordinator.EnqueueAsync(new QueuedWorkflowExecution
             {
                 // Workflows of one journey share its stop state and run in order; other journeys stay independent.
                 SourceKey = $"journey:{journey.Id}",
@@ -222,7 +222,7 @@ public partial class JourneyManager : IJourneyManager
                     Mode = WorkflowRunMode.Live,
                     SourceCorrelationId = args.CorrelationId
                 }
-            }));
+            })));
         }
     }
 
@@ -279,6 +279,12 @@ public partial class JourneyManager : IJourneyManager
             }
 
             state.IsJourneyCompletionRequested = false;
+            if (state.IsCompleted)
+            {
+                return Task.CompletedTask;
+            }
+
+            state.IsCompleted = true;
             LogLastStationReached(_logger, journey.Name);
             PublishTransition(journey, state, JourneyRuntimeTransitionKind.Completed);
             JourneyCompleted?.Invoke(this, new JourneyCompletedEventArgs
@@ -291,6 +297,7 @@ public partial class JourneyManager : IJourneyManager
             {
                 var firstStation = journey.Stations.FirstOrDefault();
                 state.RunId = Guid.NewGuid();
+                state.IsCompleted = false;
                 state.CurrentPos = 0;
                 state.CurrentStationId = firstStation?.Id;
                 state.CurrentStationName = firstStation?.Name ?? string.Empty;
@@ -339,6 +346,7 @@ public partial class JourneyManager : IJourneyManager
             state.LastFeedbackTime = null;
             state.RunId = Guid.NewGuid();
             state.IsJourneyCompletionRequested = false;
+            state.IsCompleted = false;
             _runtimeStateStore.Reset(_project.Id, journey.Id);
             LogJourneyReset(_logger, journey.Name, state.CurrentPos);
             PublishTransition(journey, state, JourneyRuntimeTransitionKind.Reset);

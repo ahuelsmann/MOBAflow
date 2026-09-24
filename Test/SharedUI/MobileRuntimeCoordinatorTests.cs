@@ -29,17 +29,18 @@ internal sealed class MobileRuntimeCoordinatorTests
     }
 
     [Test]
-    public void CounterReset_RejectsRemoteSessionWithoutMutatingLocalRuntime()
+    public async Task CounterReset_UsesLocalRuntimeEvenWithRemoteSession()
     {
         var runtime = new Mock<IMobaRuntime>(MockBehavior.Strict);
+        runtime.Setup(value => value.ResetInPortCountersAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var remote = new Mock<IRuntimeHubRemoteClient>(MockBehavior.Strict);
         var coordinator = new MobileRuntimeCoordinator(runtime.Object, remote.Object);
         coordinator.SetMobaflowSessionActive(true);
         coordinator.SetLocalZ21Connected(true);
 
-        Assert.ThrowsAsync<NotSupportedException>(async () => await coordinator.ResetInPortCountersAsync());
+        await coordinator.ResetInPortCountersAsync();
 
-        runtime.VerifyNoOtherCalls();
+        runtime.Verify(value => value.ResetInPortCountersAsync(It.IsAny<CancellationToken>()), Times.Once);
         remote.VerifyNoOtherCalls();
     }
 

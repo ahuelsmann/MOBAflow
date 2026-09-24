@@ -60,6 +60,44 @@ public sealed class JourneyEventPlanTests
     }
 
     [Test]
+    public async Task ResetDuringFeedbackNotificationDoesNotQueueTheOldActivation()
+    {
+        using var fixture = new EventPlanFixture();
+        fixture.Manager.FeedbackReceived += (_, _) => fixture.Counters.ResetAll();
+
+        await fixture.RaiseAsync(1).ConfigureAwait(false);
+
+        Assert.That(fixture.Requests, Is.Empty);
+    }
+
+    [Test]
+    public async Task ResetOnAnotherThreadDuringFeedbackNotificationDoesNotQueueTheOldActivation()
+    {
+        using var fixture = new EventPlanFixture();
+        using var releaseNotification = new ManualResetEventSlim();
+        var notificationEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        fixture.Manager.FeedbackReceived += (_, _) =>
+        {
+            notificationEntered.TrySetResult();
+            if (!releaseNotification.Wait(TimeSpan.FromSeconds(5)))
+                throw new TimeoutException("Feedback notification was not released.");
+        };
+        var processing = Task.Run(() => fixture.RaiseAsync(1));
+        try
+        {
+            await notificationEntered.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            fixture.Counters.ResetAll();
+        }
+        finally
+        {
+            releaseNotification.Set();
+            await processing.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        }
+
+        Assert.That(fixture.Requests, Is.Empty);
+    }
+
+    [Test]
     public async Task EventsAreIndependentOfDisplayOrderAndOtherInPorts()
     {
         using var fixture = new EventPlanFixture();
@@ -250,6 +288,88 @@ public sealed class JourneyEventPlanTests
     }
 
     [Test]
+    public async Task ReorderedStopsRestoreTheSameStopIdentity()
+    {
+        using var fixture = new EventPlanFixture();
+        var second = new Station { Name = "B" };
+        fixture.Journey.Stations = [new Station { Name = "A" }, second];
+        var store = new InMemoryJourneyRuntimeStateStore();
+        using (var manager = fixture.CreateManager(store))
+        {
+            fixture.SetupNextStopActions(times: 1);
+            await fixture.RaiseAsync(1, manager).ConfigureAwait(false);
+        }
+        fixture.Journey.Stations.Reverse();
+
+        using var restored = fixture.CreateManager(store);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(restored.GetState(fixture.Journey.Id)!.CurrentStationId, Is.EqualTo(second.Id));
+            Assert.That(restored.GetState(fixture.Journey.Id)!.CurrentPos, Is.Zero);
+        }
+    }
+
+    [Test]
+    public async Task CompletionIsReportedOnceEvenAfterProjectReactivation()
+    {
+        using var fixture = new EventPlanFixture();
+        fixture.Journey.Stations = [new Station { Name = "Terminal" }];
+        fixture.Journey.BehaviorOnLastStop = BehaviorOnLastStop.None;
+        fixture.Journey.EventPlan.Events.Add(new JourneyEvent { InPort = 1, Count = 2, WorkflowId = fixture.Workflow.Id });
+        var store = new InMemoryJourneyRuntimeStateStore();
+        var completed = new List<Guid>();
+        fixture.SetupNextStopActions(times: 1);
+        using (var manager = fixture.CreateManager(store))
+        {
+            manager.JourneyCompleted += (_, args) => completed.Add(args.JourneyRunId);
+            await fixture.RaiseAsync(1, manager).ConfigureAwait(false);
+            await fixture.RaiseAsync(1, manager).ConfigureAwait(false);
+        }
+        fixture.Counters.ResetAll();
+        using var restored = fixture.CreateManager(store);
+        restored.JourneyCompleted += (_, args) => completed.Add(args.JourneyRunId);
+        await fixture.RaiseAsync(1, restored).ConfigureAwait(false);
+
+        Assert.That(completed, Has.Count.EqualTo(1));
+
+        restored.Reset(fixture.Journey);
+        await fixture.RaiseAsync(1, restored).ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(completed, Has.Count.EqualTo(2));
+            Assert.That(completed, Is.Unique);
+        }
+    }
+
+    [Test]
+    public async Task RemovedCheckpointedStopFallsBackToFirstPositionWithANewIdentity()
+    {
+        using var fixture = new EventPlanFixture();
+        fixture.Journey.Stations = [new Station { Name = "Old terminal" }];
+        fixture.Journey.BehaviorOnLastStop = BehaviorOnLastStop.None;
+        var store = new InMemoryJourneyRuntimeStateStore();
+        Guid oldRunId;
+        using (var manager = fixture.CreateManager(store))
+        {
+            fixture.SetupNextStopActions(times: 1);
+            await fixture.RaiseAsync(1, manager).ConfigureAwait(false);
+            oldRunId = manager.GetState(fixture.Journey.Id)!.RunId;
+        }
+        var replacement = new Station { Name = "New terminal" };
+        fixture.Journey.Stations = [replacement];
+        using var restored = fixture.CreateManager(store);
+        var state = restored.GetState(fixture.Journey.Id)!;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(state.CurrentStationId, Is.EqualTo(replacement.Id));
+            Assert.That(state.RunId, Is.Not.EqualTo(oldRunId));
+            Assert.That(state.IsCompleted, Is.False);
+        }
+    }
+
+    [Test]
     public async Task DisabledAndUnassignedEventsDoNotStartWorkflows()
     {
         using var fixture = new EventPlanFixture();
@@ -434,7 +554,7 @@ public sealed class JourneyEventPlanTests
         public JourneyRuntimeCheckpoint? Load(Guid projectId, Guid journeyId) => _checkpoints.GetValueOrDefault(journeyId);
 
         public void Save(Guid projectId, JourneySessionState state) =>
-            _checkpoints[state.JourneyId] = new JourneyRuntimeCheckpoint(state.CurrentPos, state.RunId);
+            _checkpoints[state.JourneyId] = new JourneyRuntimeCheckpoint(state.CurrentStationId, state.RunId, state.IsCompleted);
 
         public void Reset(Guid projectId, Guid journeyId) => _checkpoints.Remove(journeyId);
     }

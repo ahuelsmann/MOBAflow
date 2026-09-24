@@ -518,30 +518,25 @@
               "connections": []
             }
           ],
-          "feedbackSequence": [
-            {
-              "id": "01c6cdc6-5d82-4b15-ad61-3d1cb5864148",
-              "inPort": 1,
-              "repeatCount": 1,
-              "delayMs": 0,
-              "enabled": true,
-              "stopTransition": {
-                "mode": 0
+          "isActive": false,
+          "eventPlan": {
+            "events": [
+              {
+                "id": "01c6cdc6-5d82-4b15-ad61-3d1cb5864148",
+                "inPort": 1,
+                "count": 2,
+                "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+                "enabled": true
               },
-              "conditions": []
-            },
-            {
-              "id": "b247189b-98b4-4fdc-8036-135413d7cd69",
-              "inPort": 1,
-              "repeatCount": 1,
-              "delayMs": 0,
-              "enabled": true,
-              "stopTransition": {
-                "mode": 0
-              },
-              "conditions": []
-            }
-          ],
+              {
+                "id": "b247189b-98b4-4fdc-8036-135413d7cd69",
+                "inPort": 1,
+                "count": 3,
+                "workflowId": "b0830625-1939-403a-8878-05a8d8546323",
+                "enabled": true
+              }
+            ]
+          },
           "behaviorOnLastStop": 0,
           "firstPos": 0
         },
@@ -629,7 +624,8 @@
               "connections": []
             }
           ],
-          "feedbackSequence": [],
+          "isActive": false,
+          "eventPlan": { "events": [] },
           "behaviorOnLastStop": 0,
           "firstPos": 0
         },
@@ -739,19 +735,8 @@
               "connections": []
             }
           ],
-          "feedbackSequence": [
-            {
-              "id": "d3cea651-a285-478f-886f-a93d30d5a56d",
-              "inPort": 1,
-              "repeatCount": 1,
-              "delayMs": 0,
-              "enabled": true,
-              "stopTransition": {
-                "mode": 0
-              },
-              "conditions": []
-            }
-          ],
+          "isActive": false,
+          "eventPlan": { "events": [] },
           "behaviorOnLastStop": 0,
           "firstPos": 0
         }
