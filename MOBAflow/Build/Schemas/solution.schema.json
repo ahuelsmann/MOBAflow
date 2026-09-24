@@ -417,7 +417,7 @@
     },
     "interlockingDefinition": {
       "type": "object",
-      "required": ["turnouts", "signals", "blocks", "connections", "routes", "bindings"],
+      "required": ["turnouts", "signals", "blocks", "connections", "bindings"],
       "properties": {
         "turnouts": {
           "type": "array",
@@ -434,10 +434,6 @@
         "connections": {
           "type": "array",
           "items": { "$ref": "#/definitions/operationalConnection" }
-        },
-        "routes": {
-          "type": "array",
-          "items": { "$ref": "#/definitions/routeDefinition" }
         },
         "bindings": {
           "type": "array",
@@ -519,11 +515,10 @@
     },
     "interlockingSignalDefinition": {
       "type": "object",
-      "required": ["id", "name", "safeAspect", "signalSystem", "isMultiplexed", "baseAddress"],
+      "required": ["id", "name", "signalSystem", "isMultiplexed", "baseAddress"],
       "properties": {
         "id": { "type": "string", "format": "uuid" },
         "name": { "type": "string", "minLength": 1 },
-        "safeAspect": { "$ref": "#/definitions/signalAspect" },
         "signalSystem": { "enum": ["Ks", "Hv", "Hl", "Form", "Sv"] },
         "isMultiplexed": { "type": "boolean" },
         "multiplexerArticleNumber": { "type": ["string", "null"] },
@@ -566,50 +561,6 @@
         "isBidirectional": { "type": "boolean" }
       }
     },
-    "routeDefinition": {
-      "type": "object",
-      "required": ["id", "name", "entryElementId", "exitElementId", "pathElementIds", "turnoutRequirements", "protectedBlockIds", "signalRequirements", "conflictingRouteIds"],
-      "properties": {
-        "id": { "type": "string", "format": "uuid" },
-        "name": { "type": "string", "minLength": 1 },
-        "entryElementId": { "type": "string", "format": "uuid" },
-        "exitElementId": { "type": "string", "format": "uuid" },
-        "pathElementIds": {
-          "type": "array",
-          "items": { "type": "string", "format": "uuid" }
-        },
-        "turnoutRequirements": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": ["turnoutId", "position"],
-            "properties": {
-              "turnoutId": { "type": "string", "format": "uuid" },
-              "position": { "$ref": "#/definitions/turnoutPosition" }
-            }
-          }
-        },
-        "protectedBlockIds": {
-          "type": "array",
-          "items": { "type": "string", "format": "uuid" }
-        },
-        "signalRequirements": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": ["signalId", "proceedAspect"],
-            "properties": {
-              "signalId": { "type": "string", "format": "uuid" },
-              "proceedAspect": { "$ref": "#/definitions/signalAspect" }
-            }
-          }
-        },
-        "conflictingRouteIds": {
-          "type": "array",
-          "items": { "type": "string", "format": "uuid" }
-        }
-      }
-    },
     "operationalBinding": {
       "type": "object",
       "required": ["operationalId", "trackSegmentIds", "signalBoxElementIds"],
@@ -624,9 +575,6 @@
           "items": { "type": "string", "format": "uuid" }
         }
       }
-    },
-    "signalAspect": {
-      "enum": ["Hp0", "Ks1", "Ks2", "Ks1Blink", "Kennlicht", "Dunkel", "Ra12", "Zs1", "Zs7"]
     },
     "turnoutPosition": {
       "enum": ["Straight", "DivergingLeft", "DivergingRight"]

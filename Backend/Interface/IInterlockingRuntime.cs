@@ -7,7 +7,7 @@ using Domain;
 using Service.Interlocking;
 
 /// <summary>
-/// Narrow runtime boundary for immutable interlocking state and correlated route commands.
+/// Runtime boundary for immutable operational observations and direct turnout commands.
 /// </summary>
 public interface IInterlockingRuntime : IAsyncDisposable
 {
@@ -24,20 +24,6 @@ public interface IInterlockingRuntime : IAsyncDisposable
         TurnoutPosition position,
         Guid correlationId,
         CancellationToken cancellationToken = default);
-
-    Task<RouteCoordinatorResult> PreviewRouteAsync(Guid routeId, Guid correlationId, CancellationToken cancellationToken = default);
-
-    Task<RouteCoordinatorResult> SelectRouteAsync(Guid routeId, Guid correlationId, CancellationToken cancellationToken = default);
-
-    Task<RouteCoordinatorResult> SetRouteAsync(Guid routeId, Guid correlationId, CancellationToken cancellationToken = default);
-
-    Task<RouteCoordinatorResult> CancelRouteAsync(Guid routeId, Guid correlationId, CancellationToken cancellationToken = default);
-
-    Task<RouteCoordinatorResult> SafeStopRouteAsync(Guid routeId, Guid correlationId, CancellationToken cancellationToken = default);
-
-    Task<RouteCoordinatorResult> ReconcileRouteAsync(Guid routeId, Guid correlationId, CancellationToken cancellationToken = default);
-
-    Task<RouteCoordinatorResult> ReleaseRouteAsync(Guid routeId, Guid correlationId, CancellationToken cancellationToken = default);
 
     Task WhenIdleAsync(CancellationToken cancellationToken = default);
 }

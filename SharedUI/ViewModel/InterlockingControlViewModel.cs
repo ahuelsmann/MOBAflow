@@ -5,13 +5,11 @@ namespace Moba.SharedUI.ViewModel;
 using Backend.Events;
 using Backend.Interface;
 using Backend.Service.Interlocking;
-using Backend.Service.Validation;
 using Common.Events;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Domain;
 using Interface;
-using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 
@@ -23,51 +21,27 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
     private const string UnknownStateText = "Unknown";
     private const string NoRuntimeStateText = "No runtime state";
 
-    private static readonly Action<ILogger, Guid, Exception?> LogRoutePersistenceFailure =
-        LoggerMessage.Define<Guid>(
-            LogLevel.Error,
-            new EventId(1, nameof(LogRoutePersistenceFailure)),
-            "Persist interlocking route {RouteId} failed");
-
     private readonly IInterlockingRuntime _runtime;
     private readonly IEventBus _eventBus;
     private readonly IProjectContext _projectContext;
-    private readonly IInterlockingDefinitionValidator _validator;
-    private readonly IDialogService _dialogService;
     private readonly IUiDispatcher _uiDispatcher;
-    private readonly ILogger<InterlockingControlViewModel> _logger;
-    private readonly List<RouteTurnoutRequirement> _draftTurnouts = [];
-    private readonly List<Guid> _draftBlocks = [];
-    private readonly List<RouteSignalRequirement> _draftSignals = [];
-    private readonly List<Guid> _draftPath = [];
-
     private Guid? _runtimeSubscriptionId;
-    private Guid _draftRouteId;
 
     public InterlockingControlViewModel(
         IInterlockingRuntime runtime,
         IEventBus eventBus,
         IProjectContext projectContext,
-        IInterlockingDefinitionValidator validator,
-        IDialogService dialogService,
-        IUiDispatcher uiDispatcher,
-        ILogger<InterlockingControlViewModel> logger)
+        IUiDispatcher uiDispatcher)
     {
         ArgumentNullException.ThrowIfNull(runtime);
         ArgumentNullException.ThrowIfNull(eventBus);
         ArgumentNullException.ThrowIfNull(projectContext);
-        ArgumentNullException.ThrowIfNull(validator);
-        ArgumentNullException.ThrowIfNull(dialogService);
         ArgumentNullException.ThrowIfNull(uiDispatcher);
-        ArgumentNullException.ThrowIfNull(logger);
 
         _runtime = runtime;
         _eventBus = eventBus;
         _projectContext = projectContext;
-        _validator = validator;
-        _dialogService = dialogService;
         _uiDispatcher = uiDispatcher;
-        _logger = logger;
         RefreshDefinitions();
         ApplySnapshot(_runtime.Current, _runtime.IsSynchronized, "interlocking.current");
     }
@@ -78,24 +52,11 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
 
     public ObservableCollection<InterlockingItemViewState> Signals { get; } = [];
 
-    public ObservableCollection<InterlockingItemViewState> Routes { get; } = [];
-
     public ObservableCollection<OperationalElementOption> OperationalElements { get; } = [];
-
-    public IReadOnlyList<TurnoutPosition> TurnoutPositions { get; } = Enum.GetValues<TurnoutPosition>();
-
-    public IReadOnlyList<SignalAspect> SignalAspects { get; } = Enum.GetValues<SignalAspect>();
-
-    public IReadOnlyList<string> ValidationMessages { get; private set; } = [];
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanOperateTurnout))]
     public partial InterlockingItemViewState? SelectedTurnout { get; set; }
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CanOperateRoute))]
-    [NotifyPropertyChangedFor(nameof(HasSelectedRoute))]
-    public partial InterlockingItemViewState? SelectedRoute { get; set; }
 
     [ObservableProperty]
     public partial InterlockingItemViewState? SelectedBlock { get; set; }
@@ -107,46 +68,18 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
     public partial OperationalElementOption? SelectedOperationalElement { get; set; }
 
     [ObservableProperty]
-    public partial OperationalElementOption? SelectedDraftOperationalElement { get; set; }
-
-    [ObservableProperty]
-    public partial InterlockingItemViewState? SelectedDraftTurnout { get; set; }
-
-    [ObservableProperty]
-    public partial InterlockingItemViewState? SelectedDraftBlock { get; set; }
-
-    [ObservableProperty]
-    public partial InterlockingItemViewState? SelectedDraftSignal { get; set; }
-
-    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanOperateTurnout))]
-    [NotifyPropertyChangedFor(nameof(CanOperateRoute))]
     public partial bool IsSynchronized { get; set; }
 
     [ObservableProperty]
     public partial long Revision { get; set; }
 
-    private string _statusText = "Interlocking is not synchronized.";
+    private string _statusText = "Layout observations are incomplete.";
 
     private string _statusCode = "interlocking.unsynchronized";
 
-    [ObservableProperty]
-    public partial string DraftName { get; set; } = string.Empty;
-
-    [ObservableProperty]
-    public partial TurnoutPosition DraftTurnoutPosition { get; set; } = TurnoutPosition.Straight;
-
-    [ObservableProperty]
-    public partial SignalAspect DraftSignalAspect { get; set; } = SignalAspect.Ks1;
-
-    [ObservableProperty]
-    public partial string DraftSummary { get; set; } = "No route draft.";
-
-    public bool CanOperateTurnout => IsSynchronized && SelectedTurnout != null && !SelectedTurnout.IsLocked;
-
-    public bool CanOperateRoute => IsSynchronized && SelectedRoute != null;
-
-    public bool HasSelectedRoute => SelectedRoute != null;
+    public bool CanOperateTurnout => SelectedTurnout != null &&
+        SelectedTurnout.State is not "Requested" and not "Pending";
 
     public string StatusText
     {
@@ -228,229 +161,6 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
     [RelayCommand]
     private Task SetTurnoutDivergingRightAsync() => SetTurnoutAsync(TurnoutPosition.DivergingRight);
 
-    [RelayCommand]
-    private Task PreviewRouteAsync() => ExecuteRouteAsync(_runtime.PreviewRouteAsync);
-
-    [RelayCommand]
-    private Task SelectRouteAsync() => ExecuteRouteAsync(_runtime.SelectRouteAsync);
-
-    [RelayCommand]
-    private Task SetRouteAsync() => ExecuteRouteAsync(_runtime.SetRouteAsync);
-
-    [RelayCommand(CanExecute = nameof(CanCancelSelectedRoute))]
-    private async Task CancelRouteAsync()
-    {
-        var selectedRoute = SelectedRoute;
-        if (selectedRoute == null)
-        {
-            SetStatus("route.selection.missing", "Select a route first.");
-            return;
-        }
-
-        var selectedRouteLifecycle = SelectedRouteLifecycle;
-        if (selectedRouteLifecycle == RouteLifecycle.Setting)
-        {
-            var confirmed = await _dialogService.ShowConfirmationAsync(
-                "Cancel route setting?",
-                $"Cancel setting '{selectedRoute.Name}'? The route becomes failed, protected signals remain at stop, "
-                + "and uncertain resources remain locked until reconciliation.",
-                "Cancel setting",
-                "Keep setting").ConfigureAwait(false);
-            if (!confirmed)
-                return;
-        }
-
-        if (!await ValidateConfirmedRouteContextAsync(
-                selectedRoute.Id,
-                selectedRouteLifecycle,
-                "cancel").ConfigureAwait(false))
-            return;
-
-        await ExecuteRouteAsync(_runtime.CancelRouteAsync, selectedRoute.Id).ConfigureAwait(false);
-    }
-
-    [RelayCommand(CanExecute = nameof(CanReleaseSelectedRoute))]
-    private Task ReleaseRouteAsync() => ExecuteRouteAsync(_runtime.ReleaseRouteAsync);
-
-    [RelayCommand(CanExecute = nameof(CanSafeStopSelectedRoute))]
-    private Task SafeStopRouteAsync() => ExecuteRouteAsync(_runtime.SafeStopRouteAsync);
-
-    [RelayCommand(CanExecute = nameof(CanReconcileSelectedRoute))]
-    private async Task ReconcileRouteAsync()
-    {
-        var selectedRoute = SelectedRoute;
-        if (selectedRoute == null)
-        {
-            SetStatus("route.selection.missing", "Select a route first.");
-            return;
-        }
-
-        var selectedRouteLifecycle = SelectedRouteLifecycle;
-        var confirmed = await _dialogService.ShowConfirmationAsync(
-            "Reconcile route?",
-            $"Reconcile '{selectedRoute.Name}'? Successful reconciliation may release retained locks and "
-            + "reservations after failed, timed-out, or late hardware feedback.",
-            "Reconcile",
-            "Keep locked").ConfigureAwait(false);
-        if (!confirmed)
-            return;
-
-        if (!await ValidateConfirmedRouteContextAsync(
-                selectedRoute.Id,
-                selectedRouteLifecycle,
-                "reconcile").ConfigureAwait(false))
-            return;
-
-        await ExecuteRouteAsync(_runtime.ReconcileRouteAsync, selectedRoute.Id).ConfigureAwait(false);
-    }
-
-    private bool CanCancelSelectedRoute() => IsSynchronized && IsCancelRouteVisible;
-
-    private bool CanReleaseSelectedRoute() => CanReleaseRoute;
-
-    private bool CanSafeStopSelectedRoute() => IsSafeStopRouteVisible;
-
-    private bool CanReconcileSelectedRoute() => IsReconcileRouteVisible;
-
-    [RelayCommand]
-    private void BeginRouteDraft()
-    {
-        _draftRouteId = Guid.NewGuid();
-        DraftEntryId = Guid.Empty;
-        DraftExitId = Guid.Empty;
-        _draftPath.Clear();
-        _draftTurnouts.Clear();
-        _draftBlocks.Clear();
-        _draftSignals.Clear();
-        ValidationMessages = [];
-        OnPropertyChanged(nameof(ValidationMessages));
-        DraftName = "New route";
-        UpdateDraftSummary();
-        SetStatus("route.draft.started", "Route draft started.");
-        ValidateAndRequestDefinitionSave();
-    }
-
-    [RelayCommand]
-    private void SetDraftEntry()
-    {
-        EnsureDraft();
-        if (SelectedDraftOperationalElement == null)
-        {
-            SetStatus("route.draft.selection.missing", "Select an operational element first.");
-            return;
-        }
-
-        DraftEntryId = SelectedDraftOperationalElement.Id;
-        UpdateDraftSummary();
-        ValidateAndRequestDefinitionSave();
-    }
-
-    [RelayCommand]
-    private void AppendDraftPath()
-    {
-        EnsureDraft();
-        if (SelectedDraftOperationalElement == null)
-        {
-            SetStatus("route.draft.selection.missing", "Select an operational element first.");
-            return;
-        }
-
-        _draftPath.Add(SelectedDraftOperationalElement.Id);
-        UpdateDraftSummary();
-        ValidateAndRequestDefinitionSave();
-    }
-
-    [RelayCommand]
-    private void SetDraftExit()
-    {
-        EnsureDraft();
-        if (SelectedDraftOperationalElement == null)
-        {
-            SetStatus("route.draft.selection.missing", "Select an operational element first.");
-            return;
-        }
-
-        DraftExitId = SelectedDraftOperationalElement.Id;
-        UpdateDraftSummary();
-        ValidateAndRequestDefinitionSave();
-    }
-
-    [RelayCommand]
-    private void AddDraftTurnoutRequirement()
-    {
-        EnsureDraft();
-        if (SelectedDraftTurnout == null)
-        {
-            SetStatus("route.draft.turnout.missing", "Select a turnout first.");
-            return;
-        }
-
-        _draftTurnouts.RemoveAll(item => item.TurnoutId == SelectedDraftTurnout.Id);
-        _draftTurnouts.Add(new RouteTurnoutRequirement
-        {
-            TurnoutId = SelectedDraftTurnout.Id,
-            Position = DraftTurnoutPosition
-        });
-        UpdateDraftSummary();
-        ValidateAndRequestDefinitionSave();
-    }
-
-    [RelayCommand]
-    private void AddDraftBlock()
-    {
-        EnsureDraft();
-        if (SelectedDraftBlock == null)
-        {
-            SetStatus("route.draft.block.missing", "Select a protected block first.");
-            return;
-        }
-
-        if (!_draftBlocks.Contains(SelectedDraftBlock.Id))
-            _draftBlocks.Add(SelectedDraftBlock.Id);
-        UpdateDraftSummary();
-        ValidateAndRequestDefinitionSave();
-    }
-
-    [RelayCommand]
-    private void AddDraftSignalRequirement()
-    {
-        EnsureDraft();
-        if (SelectedDraftSignal == null)
-        {
-            SetStatus("route.draft.signal.missing", "Select a protected signal first.");
-            return;
-        }
-
-        _draftSignals.RemoveAll(item => item.SignalId == SelectedDraftSignal.Id);
-        _draftSignals.Add(new RouteSignalRequirement
-        {
-            SignalId = SelectedDraftSignal.Id,
-            ProceedAspect = DraftSignalAspect
-        });
-        UpdateDraftSummary();
-        ValidateAndRequestDefinitionSave();
-    }
-
-    [RelayCommand]
-    private void ValidateRouteDraft()
-    {
-        var report = ValidateDraft();
-        if (report == null)
-            return;
-
-        ValidationMessages = report.Findings
-            .Select(finding => $"{finding.Code}: {finding.Message}")
-            .ToArray();
-        OnPropertyChanged(nameof(ValidationMessages));
-        SetStatus(
-            report.IsValid ? "route.draft.valid" : "route.draft.invalid",
-            report.IsValid ? "Route draft is valid." : $"Route draft has {report.Findings.Count} finding(s).");
-    }
-
-    private Guid DraftEntryId { get; set; }
-
-    private Guid DraftExitId { get; set; }
-
     private Project? CurrentProject => _projectContext.SelectedProject?.Model;
 
     private async Task SetTurnoutAsync(TurnoutPosition position)
@@ -470,49 +180,6 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
         await ApplyResultOnUiAsync(result.Code, result.Message, result.State, result.CorrelationId)
             .ConfigureAwait(false);
     }
-
-    private async Task ExecuteRouteAsync(
-        Func<Guid, Guid, CancellationToken, Task<RouteCoordinatorResult>> operation)
-    {
-        if (SelectedRoute == null)
-        {
-            SetStatus("route.selection.missing", "Select a route first.");
-            return;
-        }
-
-        await ExecuteRouteAsync(operation, SelectedRoute.Id).ConfigureAwait(false);
-    }
-
-    private async Task ExecuteRouteAsync(
-        Func<Guid, Guid, CancellationToken, Task<RouteCoordinatorResult>> operation,
-        Guid selectedRouteId)
-    {
-        var correlationId = Guid.NewGuid();
-        var result = await operation(
-            selectedRouteId,
-            correlationId,
-            CancellationToken.None).ConfigureAwait(false);
-        await ApplyResultOnUiAsync(result.Code, result.Message, result.State, result.CorrelationId)
-            .ConfigureAwait(false);
-    }
-
-    private Task<bool> ValidateConfirmedRouteContextAsync(
-        Guid selectedRouteId,
-        RouteLifecycle? selectedRouteLifecycle,
-        string actionName) =>
-        _uiDispatcher.InvokeOnUiAsync(() =>
-        {
-            var isCurrent = SelectedRoute?.Id == selectedRouteId &&
-                SelectedRouteLifecycle == selectedRouteLifecycle;
-            if (!isCurrent)
-            {
-                SetStatus(
-                    "route.selection.changed",
-                    $"Route context changed; no {actionName} command was sent.");
-            }
-
-            return Task.FromResult(isCurrent);
-        });
 
     private void OnRuntimeSnapshotChanged(InterlockingRuntimeSnapshotChangedEvent @event)
     {
@@ -534,14 +201,12 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
     private void RefreshDefinitions()
     {
         var definition = CurrentProject?.Interlocking;
-        var selectedDraftOperationalId = SelectedDraftOperationalElement?.Id;
         OperationalElements.Clear();
         if (definition == null)
         {
             Turnouts.Clear();
             Blocks.Clear();
             Signals.Clear();
-            Routes.Clear();
             return;
         }
 
@@ -551,11 +216,6 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
             OperationalElements.Add(new OperationalElementOption(signal.Id, signal.Name, "Signal"));
         foreach (var block in definition.Blocks)
             OperationalElements.Add(new OperationalElementOption(block.Id, block.Name, "Block"));
-        foreach (var route in definition.Routes)
-            OperationalElements.Add(new OperationalElementOption(route.Id, route.Name, "Route"));
-
-        SelectedDraftOperationalElement = OperationalElements.FirstOrDefault(
-            item => item.Id == selectedDraftOperationalId);
 
         ApplySnapshot(_runtime.Current, _runtime.IsSynchronized, StatusCode);
     }
@@ -567,10 +227,6 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
         var selectedTurnoutId = SelectedTurnout?.Id;
         var selectedBlockId = SelectedBlock?.Id;
         var selectedSignalId = SelectedSignal?.Id;
-        var selectedRouteId = SelectedRoute?.Id;
-        var selectedDraftTurnoutId = SelectedDraftTurnout?.Id;
-        var selectedDraftBlockId = SelectedDraftBlock?.Id;
-        var selectedDraftSignalId = SelectedDraftSignal?.Id;
 
         Replace(
             Turnouts,
@@ -581,22 +237,15 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
         Replace(
             Signals,
             definition?.Signals.Select(item => CreateSignalState(item, state)) ?? []);
-        Replace(
-            Routes,
-            definition?.Routes.Select(item => CreateRouteState(item, state)) ?? []);
 
         SelectedTurnout = Turnouts.FirstOrDefault(item => item.Id == selectedTurnoutId);
         SelectedBlock = Blocks.FirstOrDefault(item => item.Id == selectedBlockId);
         SelectedSignal = Signals.FirstOrDefault(item => item.Id == selectedSignalId);
-        SelectedRoute = Routes.FirstOrDefault(item => item.Id == selectedRouteId);
-        SelectedDraftTurnout = Turnouts.FirstOrDefault(item => item.Id == selectedDraftTurnoutId);
-        SelectedDraftBlock = Blocks.FirstOrDefault(item => item.Id == selectedDraftBlockId);
-        SelectedDraftSignal = Signals.FirstOrDefault(item => item.Id == selectedDraftSignalId);
         Revision = state.Revision;
         IsSynchronized = isSynchronized;
         StatusCode = code;
         if (code is "interlocking.current" or "interlocking.project.changed")
-            StatusText = isSynchronized ? "Interlocking synchronized." : "Interlocking is not synchronized.";
+            StatusText = isSynchronized ? "Layout observations synchronized." : "Layout observations are incomplete.";
         UpdateSelectedContextAfterSnapshot();
     }
 
@@ -648,66 +297,7 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
     }
 
     private InterlockingItemViewState? FindState(Guid operationalId) =>
-        Turnouts.Concat(Blocks).Concat(Signals).Concat(Routes).FirstOrDefault(item => item.Id == operationalId);
-
-    private InterlockingValidationReport? ValidateDraft()
-    {
-        var project = CurrentProject;
-        if (project == null)
-        {
-            SetStatus("project.selection.missing", "Select a project first.");
-            return null;
-        }
-
-        EnsureDraft();
-        var route = CreateDraftRoute();
-        return ValidateRouteCandidate(project, route);
-    }
-
-    private RouteDefinition CreateDraftRoute() =>
-        new()
-        {
-            Id = _draftRouteId,
-            Name = DraftName.Trim(),
-            EntryElementId = DraftEntryId,
-            ExitElementId = DraftExitId,
-            PathElementIds = [.. _draftPath],
-            TurnoutRequirements = _draftTurnouts.Select(item => new RouteTurnoutRequirement
-            {
-                TurnoutId = item.TurnoutId,
-                Position = item.Position
-            }).ToList(),
-            ProtectedBlockIds = [.. _draftBlocks],
-            SignalRequirements = _draftSignals.Select(item => new RouteSignalRequirement
-            {
-                SignalId = item.SignalId,
-                ProceedAspect = item.ProceedAspect
-            }).ToList()
-        };
-
-    private void EnsureDraft()
-    {
-        if (_draftRouteId != Guid.Empty)
-            return;
-
-        BeginRouteDraft();
-    }
-
-    private void UpdateDraftSummary()
-    {
-        if (_draftRouteId == Guid.Empty)
-        {
-            DraftSummary = "No route draft.";
-            return;
-        }
-
-        DraftSummary =
-            $"Entry: {NameOf(DraftEntryId)} | Path: {_draftPath.Count} | Exit: {NameOf(DraftExitId)} | "
-            + $"Turnouts: {_draftTurnouts.Count} | Blocks: {_draftBlocks.Count} | Signals: {_draftSignals.Count}";
-    }
-
-    private string NameOf(Guid id) =>
-        OperationalElements.FirstOrDefault(item => item.Id == id)?.Name ?? "not set";
+        Turnouts.Concat(Blocks).Concat(Signals).FirstOrDefault(item => item.Id == operationalId);
 
     private void SetStatus(string code, string message)
     {
@@ -720,7 +310,7 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
         InterlockingRuntimeState state)
     {
         if (!state.Turnouts.TryGetValue(definition.Id, out var runtime))
-            return new(definition.Id, definition.Name, "Turnout", UnknownStateText, NoRuntimeStateText, true, false);
+            return new(definition.Id, definition.Name, "Turnout", UnknownStateText, NoRuntimeStateText, true);
 
         var position = runtime.ConfirmedPosition?.ToString()
             ?? runtime.RequestedPosition?.ToString()
@@ -730,9 +320,8 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
             definition.Name,
             "Turnout",
             runtime.Lifecycle.ToString(),
-            $"{position}; {(runtime.LockOwnerRouteId.HasValue ? "route locked" : "unlocked")}",
-            runtime.Lifecycle is TurnoutLifecycle.Failed or TurnoutLifecycle.Unknown,
-            runtime.LockOwnerRouteId.HasValue);
+            position,
+            runtime.Lifecycle is TurnoutLifecycle.Failed or TurnoutLifecycle.Unknown);
     }
 
     private static InterlockingItemViewState CreateBlockState(
@@ -740,16 +329,15 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
         InterlockingRuntimeState state)
     {
         if (!state.Blocks.TryGetValue(definition.Id, out var runtime))
-            return new(definition.Id, definition.Name, "Block", UnknownStateText, NoRuntimeStateText, true, false);
+            return new(definition.Id, definition.Name, "Block", UnknownStateText, NoRuntimeStateText, true);
 
         return new(
             definition.Id,
             definition.Name,
             "Block",
             runtime.Occupancy.ToString(),
-            runtime.ReservationOwnerRouteId.HasValue ? "Reserved by route" : "Not reserved",
-            runtime.Occupancy is BlockOccupancy.Fault or BlockOccupancy.Unknown,
-            runtime.ReservationOwnerRouteId.HasValue);
+            "Observed block occupancy",
+            runtime.Occupancy is BlockOccupancy.Fault or BlockOccupancy.Unknown);
     }
 
     private static InterlockingItemViewState CreateSignalState(
@@ -757,33 +345,15 @@ public sealed partial class InterlockingControlViewModel : ObservableObject
         InterlockingRuntimeState state)
     {
         if (!state.Signals.TryGetValue(definition.Id, out var runtime))
-            return new(definition.Id, definition.Name, "Signal", UnknownStateText, NoRuntimeStateText, true, false);
+            return new(definition.Id, definition.Name, "Signal", UnknownStateText, NoRuntimeStateText, true);
 
         return new(
             definition.Id,
             definition.Name,
             "Signal",
-            runtime.Aspect.ToString(),
-            runtime.LockOwnerRouteId.HasValue ? "Protected by route" : "Not route locked",
-            false,
-            runtime.LockOwnerRouteId.HasValue);
-    }
-
-    private static InterlockingItemViewState CreateRouteState(
-        RouteDefinition definition,
-        InterlockingRuntimeState state)
-    {
-        if (!state.Routes.TryGetValue(definition.Id, out var runtime))
-            return new(definition.Id, definition.Name, "Route", UnknownStateText, NoRuntimeStateText, true, false);
-
-        return new(
-            definition.Id,
-            definition.Name,
-            "Route",
-            runtime.Lifecycle.ToString(),
-            runtime.FailureCode ?? "No failure",
-            runtime.Lifecycle is RouteLifecycle.Failed or RouteLifecycle.Conflicting,
-            runtime.Lifecycle is RouteLifecycle.Setting or RouteLifecycle.Established or RouteLifecycle.Occupied);
+            runtime.Aspect?.ToString() ?? UnknownStateText,
+            "Use the existing signal controls to select an aspect.",
+            false);
     }
 
     private static void Replace(
@@ -805,14 +375,13 @@ public sealed record InterlockingItemViewState(
     string Kind,
     string State,
     string Detail,
-    bool IsFaulted,
-    bool IsLocked)
+    bool IsFaulted)
 {
     public string AccessibleState => $"{Kind} {Name}: {State}. {Detail}.";
 }
 
 /// <summary>
-/// Selectable operational identity used by route authoring.
+/// Selectable operational identity shared by the layout pages.
 /// </summary>
 public sealed record OperationalElementOption(Guid Id, string Name, string Kind)
 {

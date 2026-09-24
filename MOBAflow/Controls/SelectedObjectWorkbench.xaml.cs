@@ -23,12 +23,6 @@ internal sealed partial class SelectedObjectWorkbench : UserControl
         typeof(SelectedObjectWorkbench),
         new PropertyMetadata(null));
 
-    public static readonly DependencyProperty ShowRouteAuthoringProperty = DependencyProperty.Register(
-        nameof(ShowRouteAuthoring),
-        typeof(bool),
-        typeof(SelectedObjectWorkbench),
-        new PropertyMetadata(false));
-
     public SelectedObjectWorkbench()
     {
         InitializeComponent();
@@ -46,12 +40,6 @@ internal sealed partial class SelectedObjectWorkbench : UserControl
     {
         get => (UIElement?)GetValue(DefinitionContentProperty);
         set => SetValue(DefinitionContentProperty, value);
-    }
-
-    public bool ShowRouteAuthoring
-    {
-        get => (bool)GetValue(ShowRouteAuthoringProperty);
-        set => SetValue(ShowRouteAuthoringProperty, value);
     }
 
     /// <summary>

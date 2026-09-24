@@ -102,7 +102,7 @@ internal sealed class SignalBoxPageSelectionTests
         // Assert
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(compactWorkbench, Does.Contain("Text=\"Safety\""));
+            Assert.That(compactWorkbench, Does.Contain("Text=\"Status\""));
             Assert.That(compactWorkbench, Does.Contain("Text=\"Currentobject\""));
             Assert.That(compactWorkbench, Does.Contain("Text=\"Liveaction\""));
             Assert.That(compactWorkbench, Does.Contain("Text=\"Definition\""));
@@ -110,14 +110,10 @@ internal sealed class SignalBoxPageSelectionTests
             Assert.That(compactWorkbench, Does.Contain("IsExpanded=\"False\""));
             Assert.That(compactWorkbench, Does.Contain("AutomationProperties.LiveSetting=\"Polite\""));
             Assert.That(compactWorkbench, Does.Contain("HorizontalScrollMode=\"Disabled\""));
-            Assert.That(compactWorkbench, Does.Contain("SelectedItem=\"{x:BindViewModel.SelectedDraftOperationalElement,Mode=TwoWay}\""));
-            Assert.That(compactWorkbench, Does.Contain("SelectedItem=\"{x:BindViewModel.SelectedDraftTurnout,Mode=TwoWay}\""));
-            Assert.That(compactWorkbench, Does.Contain("SelectedItem=\"{x:BindViewModel.SelectedDraftBlock,Mode=TwoWay}\""));
-            Assert.That(compactWorkbench, Does.Contain("SelectedItem=\"{x:BindViewModel.SelectedDraftSignal,Mode=TwoWay}\""));
-            Assert.That(compactWorkbench, Does.Contain("AutomationProperties.Name=\"Turnoutposition\""));
-            Assert.That(compactWorkbench, Does.Contain("AutomationProperties.Name=\"Proceedaspect\""));
+            Assert.That(compactWorkbench, Does.Contain("SelectedItem=\"{x:BindViewModel.SelectedOperationalElement,Mode=TwoWay}\""));
+            Assert.That(compactWorkbench, Does.Contain("Command=\"{x:BindViewModel.SetTurnoutStraightCommand}\""));
+            Assert.That(compactWorkbench, Does.Contain("AutomationProperties.Name=\"Setturnoutstraight\""));
             Assert.That(compactWorkbench, Does.Contain("ViewModel.ShowNoAuthorizedLiveActionMessage"));
-            Assert.That(compactWorkbench, Does.Contain("ViewModel.IsRoutineCancelRouteVisible"));
             Assert.That(compactWorkbench, Does.Not.Contain("TextTrimming=\"CharacterEllipsis\""));
         }
     }
