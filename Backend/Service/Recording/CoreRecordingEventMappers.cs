@@ -207,7 +207,7 @@ public sealed class JourneyRecordingEventMapper : IRecordingEventMapper
             "journey",
             "journey-manager",
             "journey.transition",
-            transition.Kind == JourneyRuntimeTransitionKind.Stopped ? "warning" : "information",
+            "information",
             transition.JourneyRunId,
             references,
             JsonSerializer.SerializeToElement(new
@@ -216,9 +216,6 @@ public sealed class JourneyRecordingEventMapper : IRecordingEventMapper
                 journeyId = transition.JourneyId,
                 journeyRunId = transition.JourneyRunId,
                 kind = transition.Kind.ToString(),
-                feedbackIndex = transition.FeedbackIndex,
-                currentOccurrence = transition.CurrentOccurrence,
-                requiredOccurrences = transition.RequiredOccurrences,
                 inPort = transition.InPort,
                 stationId = transition.StationId,
                 stationIndex = transition.StationIndex,

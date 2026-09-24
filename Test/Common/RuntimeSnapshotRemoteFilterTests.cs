@@ -32,8 +32,6 @@ internal sealed class RuntimeSnapshotRemoteFilterTests
                 [journeyId] = new JourneyRuntimeSnapshot
                 {
                     JourneyId = journeyId,
-                    CurrentStepOccurrence = 2,
-                    CurrentStepRepeatCount = 10,
                     IsActive = true
                 }
             },

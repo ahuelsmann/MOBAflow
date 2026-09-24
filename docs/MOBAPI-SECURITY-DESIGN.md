@@ -224,8 +224,6 @@ The final policy applies to all routes even when a reverse proxy or loopback con
 | `PUT /api/runtime/snapshot` | `host.publish` | Loopback plus capability; size and schema validated |
 | `GET /api/runtime/journeys/{id}/feedback-progress` | `controlplane.read` | Journey ID must resolve in the active snapshot |
 | `POST .../feedback-progress/reset` | `runtime.control` | Uses the common command validator and admission service |
-| `GET .../feedback-sequence` | `controlplane.read` | Project and journey IDs must resolve |
-| `PUT .../feedback-sequence` | `host.publish` | Loopback plus capability; concurrency and collection bounds remain enforced |
 | `GET /api/solution/meta` | `controlplane.read` | Protected state |
 | `GET /api/solution` | `controlplane.read` | Protected state and response-size observability |
 | `PUT /api/solution` | `host.publish` | Loopback plus capability; schema and size validated |
@@ -296,7 +294,6 @@ Signal, journey, and project membership are checked against one immutable runtim
 | Pairing, token, presence, runtime-setting, and runtime-command request | 16 KiB; command bodies additionally target 4 KiB |
 | SignalR remote-control invocation | 16 KiB |
 | Runtime snapshot publication | 2 MiB |
-| Feedback sequence publication | 256 KiB and at most 512 steps |
 | Solution publication | 16 MiB |
 | Photo upload | Existing 10 MiB limit |
 | Device display name | 128 Unicode scalar values after normalization |

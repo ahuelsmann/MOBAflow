@@ -152,7 +152,6 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
         CancelDryRunCommand.NotifyCanExecuteChanged();
         DuplicateSelectedWorkflowCommand.NotifyCanExecuteChanged();
         DeleteSelectedWorkflowCommand.NotifyCanExecuteChanged();
-        AssignSelectedWorkflowCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(SelectedEditorObject));
     }
 
@@ -296,19 +295,6 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
             _suppressAutoSave = false;
         }
 
-        await SaveAsync();
-    }
-
-    /// <summary>Assigns the selected workflow to one journey feedback occurrence.</summary>
-    [RelayCommand(CanExecute = nameof(HasSelectedWorkflow))]
-    private async Task AssignSelectedWorkflowAsync(JourneyFeedbackStepViewModel? feedbackStep)
-    {
-        if (SelectedWorkflow == null || feedbackStep == null)
-        {
-            return;
-        }
-
-        feedbackStep.WorkflowId = SelectedWorkflow.Id;
         await SaveAsync();
     }
 
@@ -540,7 +526,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     private void OnWorkflowPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         _ = sender;
-        _ = e;
+        if (e.PropertyName == nameof(WorkflowViewModel.Name)) OnPropertyChanged(nameof(Workflows));
         Validate();
         OnPropertyChanged(nameof(FilteredWorkflows));
         if (!_suppressAutoSave)
@@ -564,7 +550,6 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
         Validate();
         DuplicateSelectedWorkflowCommand.NotifyCanExecuteChanged();
         DeleteSelectedWorkflowCommand.NotifyCanExecuteChanged();
-        AssignSelectedWorkflowCommand.NotifyCanExecuteChanged();
     }
 
     private Task SaveAsync() => _projectContext.SaveSolutionInternalAsync();
@@ -631,13 +616,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
         var references = new List<WorkflowReference>();
         foreach (var journey in project.Journeys)
         {
-            for (var index = 0; index < journey.FeedbackSequence.Count; index++)
-            {
-                if (journey.FeedbackSequence[index].WorkflowId == workflowId)
-                {
-                    references.Add(new WorkflowReference("Journey", journey.Id, journey.Name, $"Feedback step {index + 1}"));
-                }
-            }
+            AddJourneyReferences(journey, workflowId, references);
         }
 
         foreach (var workflow in project.Workflows)
@@ -652,6 +631,16 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
         }
 
         return references;
+    }
+
+    private static void AddJourneyReferences(Journey journey, Guid workflowId, List<WorkflowReference> references)
+    {
+        foreach (var journeyEvent in journey.EventPlan.Events)
+        {
+            if (journeyEvent.WorkflowId == workflowId)
+                references.Add(new WorkflowReference("Journey", journey.Id, journey.Name,
+                    $"Event: InPort {journeyEvent.InPort}, count {journeyEvent.Count}"));
+        }
     }
 
     private static string BuildReferenceMessage(string workflowName, IReadOnlyList<WorkflowReference> references)

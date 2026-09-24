@@ -6,7 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 
 using Microsoft.Extensions.Logging;
 
-using Service;
+using Common.Runtime;
 
 using System.Collections.ObjectModel;
 
@@ -70,7 +70,7 @@ public partial class MainWindowViewModel
     [ObservableProperty]
     private int _vccVoltage;
 
-    private readonly FeedbackCounterEngine _feedbackCounterEngine = new();
+    private MobaRuntimeSnapshot _latestRuntimeSnapshot = MobaRuntimeSnapshot.Empty;
 
     #endregion
 
@@ -105,6 +105,7 @@ public partial class MainWindowViewModel
         }
 
         Statistics = new ObservableCollection<InPortStatistic>(list);
+        ApplyInPortCounterSnapshot(_latestRuntimeSnapshot);
     }
 
     partial void OnGlobalTargetLapCountChanged(int value)
@@ -143,14 +144,6 @@ public partial class MainWindowViewModel
     /// Subscribes to PropertyChanged for auto-save (Project + all Workflows).
     /// Auto-selects first journey if available.
     /// </summary>
-    partial void OnSelectedProjectChanging(ProjectViewModel? value)
-    {
-        _ = value;
-        var checkpointTask = _mobaRuntime.CheckpointUsageAsync();
-        SynchronizeVehicleUsageFromRuntime();
-        ObserveBackgroundTask(checkpointTask, "Checkpoint project usage before selection change");
-    }
-
     partial void OnSelectedProjectChanged(ProjectViewModel? value)
     {
         _locomotiveWhistleAutomation?.Activate(value?.Model);
@@ -159,6 +152,7 @@ public partial class MainWindowViewModel
         // Statistics are replaced (new ObservableCollection), not mutated in place,
         // so no Enqueue needed – only one PropertyChanged, no CollectionChanged during binding.
         InitializeStatisticsFromFeedbackPoints();
+        ApplyJourneyRuntimeSnapshots(_latestRuntimeSnapshot.JourneyStates);
 
         // Subscribe to PropertyChanged for auto-save
         if (value != null)
@@ -212,47 +206,46 @@ public partial class MainWindowViewModel
 
     #region Counter Commands
 
-    [RelayCommand(CanExecute = nameof(CanResetCounters))]
-    private void ResetCounters()
+    [RelayCommand]
+    private async Task ResetCounters()
     {
-        foreach (var stat in Statistics)
+        try
         {
-            stat.Count = 0;
-            stat.LastLapTime = null;
-            stat.LastFeedbackTime = null;
-            stat.HasReceivedFirstLap = false;
+            await _runtimeCommandGateway.ResetInPortCountersAsync().ConfigureAwait(true);
+            JourneyCommandStatus = "InPort counters reset.";
         }
-        _logger.LogInformation("All counters reset");
+        catch (Exception ex)
+        {
+            JourneyCommandStatus = ex.Message;
+            LogJourneyCommandFailure(_logger, ex, "Resetting InPort counters");
+        }
     }
-
-    private bool CanResetCounters() => true; // Always enabled
 
     #endregion
 
     #region Counter Event Handlers (Feedback Processing)
 
     /// <summary>
-    /// Handles Z21 feedback events and updates track statistics.
-    /// Called from OnFeedbackReceived in MainWindowViewModel.cs.
+    /// Projects the authoritative session counters from the selected runtime.
     /// </summary>
-    private void UpdateTrackStatistics(uint inPort)
+    private void ApplyInPortCounterSnapshot(MobaRuntimeSnapshot snapshot)
     {
-        var stat = Statistics.FirstOrDefault(s => s.InPort == inPort);
-        if (stat == null) return;
-
-        var update = _feedbackCounterEngine.ApplyFeedback(stat, UseTimerFilter, TimerIntervalSeconds);
-        if (!update.IsAccepted)
+        foreach (var counter in snapshot.InPortCounters)
         {
-            _logger.LogDebug(
-                "InPort {InPort}: Ignored (timer filter: {Elapsed:F1}s < {Threshold}s)",
-                inPort,
-                update.ElapsedSincePrevious?.TotalSeconds,
-                TimerIntervalSeconds);
-            return;
+            var stat = this.Statistics.FirstOrDefault(s => s.InPort == counter.InPort);
+            if (stat == null) continue;
+            stat.Count = counter.Count;
+            stat.LastFeedbackTime = counter.LastFeedbackTime?.UtcDateTime;
+            stat.LastLapTime = counter.LastLapTime;
+            stat.HasReceivedFirstLap = counter.Count > 0;
         }
-
-        _logger.LogInformation("InPort {InPort}: Lap {Count}/{Target} | Lap time: {LapTime}",
-            inPort, stat.Count, stat.TargetLapCount, stat.LastLapTimeFormatted);
+        foreach (var stat in Statistics.Where(stat => !snapshot.InPortCounters.Any(c => c.InPort == stat.InPort)))
+        {
+            stat.Count = 0;
+            stat.LastFeedbackTime = null;
+            stat.LastLapTime = null;
+            stat.HasReceivedFirstLap = false;
+        }
     }
 
     #endregion
