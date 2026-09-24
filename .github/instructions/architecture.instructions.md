@@ -42,8 +42,8 @@ Use [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md) for broader context and v
 ## Data and workflows
 
 - [MasterDataStore](../../Backend/Data/MasterDataStore.cs) owns shipped `data.json` master data.
-- [WorkflowService](../../Backend/Service/WorkflowService.cs) provides Workflow 2.0 execution with validation,
-  effect planning, conditions and traces, using `IActionExecutor` and handlers in `Backend/Manager/`.
+- [WorkflowService](../../Backend/Service/WorkflowService.cs) executes ordered action lists with validation,
+  effect planning, per-invocation event context and traces, using `IActionExecutor` and handlers in `Backend/Manager/`.
   Inspect its request/result contracts and partials before changing execution. The legacy overload taking
   `WorkflowExecutionOptions` is a compatibility adapter; do not assume old failure options still control execution.
 - Keep configuration in `Common/Configuration/`. Reuse `Common/Path/PhotoPathHelper.cs` for photo paths and

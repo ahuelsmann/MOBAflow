@@ -11,7 +11,7 @@ using System.Text.Json;
 internal sealed class WorkflowSchemaCutoverValidationTests
 {
     [Test]
-    public async Task CurrentSolutionFixture_ContainsOnlyValidWorkflowGraphs()
+    public async Task CurrentSolutionFixture_ContainsOnlyValidActionSequences()
     {
         // Arrange
         var path = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestFile", "solution.json");

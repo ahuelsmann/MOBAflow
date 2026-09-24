@@ -5,7 +5,6 @@
     xmlns:controls="using:Moba.WinUI.Controls"
     xmlns:converter="using:Moba.WinUI.Converter"
     xmlns:i="using:Microsoft.Xaml.Interactivity"
-    xmlns:steps="using:Moba.SharedUI.ViewModel.WorkflowSteps"
     xmlns:selector="using:Moba.WinUI.Selector">
 
     <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
@@ -215,79 +214,7 @@
             <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Workflow properties" />
             <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
             <TextBox AcceptsReturn="True" Header="Description" Text="{Binding Description, Mode=TwoWay}" TextWrapping="Wrap" />
-            <TextBox Header="Entry step ID" Text="{Binding EntryStepId, Mode=TwoWay}" />
-            <ComboBox Header="Default failure behavior" ItemsSource="{Binding FailureBehaviors}" SelectedItem="{Binding DefaultFailureBehavior, Mode=TwoWay}" />
-            <TextBox Header="Default failure step ID" Text="{Binding DefaultFailureStepId, Mode=TwoWay}" />
-            <NumberBox Header="Default retry attempts" Minimum="0" Maximum="10" Value="{Binding DefaultRetryAdditionalAttempts, Mode=TwoWay}" />
-            <NumberBox Header="Default retry delay (ms)" Minimum="0" Value="{Binding DefaultRetryDelayMs, Mode=TwoWay}" />
-        </StackPanel>
-    </DataTemplate>
-
-    <DataTemplate x:Key="WorkflowActionStepTemplate">
-        <StackPanel Padding="0,0,16,16" Spacing="12">
-            <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Action step" />
-            <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
-            <TextBox Header="Next step ID" Text="{Binding NextStepId, Mode=TwoWay}" />
-            <ContentControl Content="{Binding Action}" ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
-        </StackPanel>
-    </DataTemplate>
-
-    <DataTemplate x:Key="WorkflowDelayStepTemplate">
-        <StackPanel Padding="0,0,16,16" Spacing="12">
-            <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Delay step" />
-            <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
-            <NumberBox Header="Delay (ms)" Minimum="0" Value="{Binding DelayMs, Mode=TwoWay}" />
-            <TextBox Header="Next step ID" Text="{Binding NextStepId, Mode=TwoWay}" />
-        </StackPanel>
-    </DataTemplate>
-
-    <DataTemplate x:Key="WorkflowConditionStepTemplate">
-        <StackPanel Padding="0,0,16,16" Spacing="12">
-            <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Condition step" />
-            <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
-            <ComboBox Header="Condition" ItemsSource="{Binding ConditionKinds}" SelectedItem="{Binding ConditionKind, Mode=TwoWay}" />
-            <NumberBox Header="Feedback InPort" Minimum="1" Maximum="512" Value="{Binding FeedbackInPort, Mode=TwoWay}" />
-            <TextBox Header="Journey or station ID" Text="{Binding ContextEntityId, Mode=TwoWay}" />
-            <TextBox Header="True step ID" Text="{Binding TrueStepId, Mode=TwoWay}" />
-            <TextBox Header="False step ID" Text="{Binding FalseStepId, Mode=TwoWay}" />
-        </StackPanel>
-    </DataTemplate>
-
-    <DataTemplate x:Key="WorkflowParallelStepTemplate">
-        <StackPanel Padding="0,0,16,16" Spacing="12">
-            <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Parallel step" />
-            <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
-            <TextBox Header="Join step ID" Text="{Binding JoinStepId, Mode=TwoWay}" />
-            <Button Content="Add branch" Command="{Binding AddBranchCommand}" />
-            <ItemsControl x:Name="ParallelBranches" ItemsSource="{Binding Branches}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Grid Padding="0,4" ColumnSpacing="8">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                            <TextBox Header="Branch name" Text="{Binding Name, Mode=TwoWay}" />
-                            <TextBox Grid.Column="1" Header="Entry step ID" Text="{Binding EntryStepId, Mode=TwoWay}" />
-                            <Button Grid.Column="2" VerticalAlignment="Bottom" Content="Delete" Command="{Binding DataContext.DeleteBranchCommand, ElementName=ParallelBranches}" CommandParameter="{Binding}" />
-                        </Grid>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </StackPanel>
-    </DataTemplate>
-
-    <DataTemplate x:Key="WorkflowNestedStepTemplate">
-        <StackPanel Padding="0,0,16,16" Spacing="12">
-            <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Nested workflow step" />
-            <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
-            <TextBox Header="Workflow ID" Text="{Binding WorkflowId, Mode=TwoWay}" />
-            <TextBox Header="Next step ID" Text="{Binding NextStepId, Mode=TwoWay}" />
-        </StackPanel>
-    </DataTemplate>
-
-    <DataTemplate x:Key="WorkflowTerminateStepTemplate">
-        <StackPanel Padding="0,0,16,16" Spacing="12">
-            <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Termination step" />
-            <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
-            <ComboBox Header="Result" ItemsSource="{Binding Results}" SelectedItem="{Binding Result, Mode=TwoWay}" />
+            <TextBlock Text="Actions run in list order. Events supply the execution context through their workflow assignment." TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
         </StackPanel>
     </DataTemplate>
 
@@ -480,13 +407,13 @@
                     Maximum="60000"
                     Minimum="0"
                     SpinButtonPlacementMode="Inline"
-                    ToolTipService.ToolTip="Wait time after this action completes (Sequential mode only)"
+                    ToolTipService.ToolTip="Wait time after this action completes"
                     Value="{Binding DelayAfterMs, Mode=TwoWay}" />
 
                 <TextBlock
                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                     Style="{ThemeResource CaptionTextBlockStyle}"
-                    Text="Volume is controlled via Windows system volume settings. Use Drag &amp; Drop in the Actions list to change execution order. DelayAfterMs applies only in Sequential mode."
+                    Text="Volume is controlled via Windows system volume settings. Use Drag &amp; Drop in the Actions list to change execution order. The configured delay is applied after this action completes."
                     TextWrapping="Wrap" />
             </StackPanel>
         </ScrollViewer>
@@ -536,13 +463,13 @@
                     Maximum="60000"
                     Minimum="0"
                     SpinButtonPlacementMode="Inline"
-                    ToolTipService.ToolTip="Wait time after this action completes (Sequential mode only)"
+                    ToolTipService.ToolTip="Wait time after this action completes"
                     Value="{Binding DelayAfterMs, Mode=TwoWay}" />
 
                 <TextBlock
                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                     Style="{ThemeResource CaptionTextBlockStyle}"
-                    Text="Volume is controlled via Windows system volume settings. The audio file will play once when this action is triggered. Use Drag &amp; Drop to change execution order. DelayAfterMs applies only in Sequential mode."
+                    Text="Volume is controlled via Windows system volume settings. The audio file will play once when this action is triggered. Use Drag &amp; Drop to change execution order. The configured delay is applied after this action completes."
                     TextWrapping="Wrap" />
             </StackPanel>
         </ScrollViewer>
@@ -586,7 +513,7 @@
                     Maximum="60000"
                     Minimum="0"
                     SpinButtonPlacementMode="Inline"
-                    ToolTipService.ToolTip="Wait time after this command executes (Sequential mode only)"
+                    ToolTipService.ToolTip="Wait time after this command executes"
                     Value="{Binding DelayAfterMs, Mode=TwoWay}" />
 
                 <!--  Raw Z21 Bytes (Advanced)  -->
@@ -601,7 +528,7 @@
                 <TextBlock
                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                     Style="{ThemeResource CaptionTextBlockStyle}"
-                    Text="Decoded from Z21 DCC command format. Edit the command in Z21 app or use raw bytes directly. Use Drag &amp; Drop to change execution order. DelayAfterMs applies only in Sequential mode."
+                    Text="Decoded from Z21 DCC command format. Edit the command in Z21 app or use raw bytes directly. Use Drag &amp; Drop to change execution order. The configured delay is applied after this action completes."
                     TextWrapping="Wrap" />
             </StackPanel>
         </ScrollViewer>
@@ -676,7 +603,7 @@
                 <TextBlock
                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                     Style="{ThemeResource CaptionTextBlockStyle}"
-                    Text="Executes the configured script when the workflow action runs. Use Drag &amp; Drop to change execution order. DelayAfterMs applies only in Sequential mode."
+                    Text="Executes the configured script when the workflow action runs. Use Drag &amp; Drop to change execution order. The configured delay is applied after this action completes."
                     TextWrapping="Wrap" />
             </StackPanel>
         </ScrollViewer>
@@ -717,13 +644,13 @@
                     Maximum="60000"
                     Minimum="0"
                     SpinButtonPlacementMode="Inline"
-                    ToolTipService.ToolTip="Wait time after this action completes (Sequential mode only)"
+                    ToolTipService.ToolTip="Wait time after this action completes"
                     Value="{Binding DelayAfterMs, Mode=TwoWay}" />
 
                 <TextBlock
                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                     Style="{ThemeResource CaptionTextBlockStyle}"
-                    Text="Shows journey information (train name, destination, departure time) on the selected ESP32-S3 display. Configure displays and layouts in Display Page. Use Drag &amp; Drop to change execution order. DelayAfterMs applies only in Sequential mode."
+                    Text="Shows journey information (train name, destination, departure time) on the selected ESP32-S3 display. Configure displays and layouts in Display Page. Use Drag &amp; Drop to change execution order. The configured delay is applied after this action completes."
                     TextWrapping="Wrap" />
             </StackPanel>
         </ScrollViewer>
@@ -743,6 +670,14 @@
     </DataTemplate>
 
     <!--  Generic Action Template (Fallback)  -->
+    <DataTemplate x:Key="InvalidActionTemplate">
+        <StackPanel Padding="0,0,16,16" Spacing="12">
+            <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Invalid action" />
+            <TextBlock Text="{Binding Name}" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding ValidationHint}" TextWrapping="Wrap" />
+        </StackPanel>
+    </DataTemplate>
+
     <DataTemplate x:Key="ActionTemplate">
         <ScrollViewer>
             <StackPanel Padding="0,0,16,16" Spacing="16">
@@ -1096,6 +1031,7 @@
     <selector:EntityTemplateSelector
         x:Key="EntityTemplateSelector"
         ActionTemplate="{StaticResource ActionTemplate}"
+        InvalidActionTemplate="{StaticResource InvalidActionTemplate}"
         AnnouncementActionTemplate="{StaticResource AnnouncementActionTemplate}"
         AudioActionTemplate="{StaticResource AudioActionTemplate}"
         CommandActionTemplate="{StaticResource CommandActionTemplate}"
@@ -1109,12 +1045,6 @@
         StationTemplate="{StaticResource StationTemplate}"
         TrainDestinationDisplayActionTemplate="{StaticResource TrainDestinationDisplayActionTemplate}"
         ChangeJourneyStopActionTemplate="{StaticResource ChangeJourneyStopActionTemplate}"
-        WorkflowActionStepTemplate="{StaticResource WorkflowActionStepTemplate}"
-        WorkflowDelayStepTemplate="{StaticResource WorkflowDelayStepTemplate}"
-        WorkflowConditionStepTemplate="{StaticResource WorkflowConditionStepTemplate}"
-        WorkflowParallelStepTemplate="{StaticResource WorkflowParallelStepTemplate}"
-        WorkflowNestedStepTemplate="{StaticResource WorkflowNestedStepTemplate}"
-        WorkflowTerminateStepTemplate="{StaticResource WorkflowTerminateStepTemplate}"
         TrainTemplate="{StaticResource TrainTemplate}"
         WagonTemplate="{StaticResource WagonTemplate}"
         WorkflowTemplate="{StaticResource WorkflowTemplate}" />
