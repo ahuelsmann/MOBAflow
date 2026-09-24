@@ -20,7 +20,7 @@
 
 **Sensitive Data**: [Credentials, private network data, personal data, or None]
 
-**Compatibility Surface**: [JSON, configuration defaults, APIs, Z21 protocol, persisted layouts, or None]
+**Data and API Effects**: [JSON, configuration defaults, APIs, Z21 protocol, persisted layouts, or None; superseded items are removed, not migrated]
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -78,7 +78,7 @@
 - **FR-001**: The system MUST [specific, testable capability].
 - **FR-002**: The system MUST [specific validation or failure behavior].
 - **FR-003**: Users MUST be able to [key interaction].
-- **FR-004**: The system MUST preserve [compatibility or state requirement].
+- **FR-004**: The system MUST preserve [state requirement, such as configuration defaults or safe startup].
 
 ### Key Entities *(include if feature involves data)*
 
@@ -91,7 +91,7 @@
 
 - **SC-001**: [Measurable, technology-agnostic user outcome]
 - **SC-002**: [Measurable reliability, performance, or completion outcome]
-- **SC-003**: [Measurable compatibility or recovery outcome]
+- **SC-003**: [Measurable state or recovery outcome]
 
 ## Assumptions
 

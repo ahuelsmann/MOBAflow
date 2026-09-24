@@ -105,6 +105,7 @@ public static class RuntimeSnapshotPreservation
             LastFailSafeAt = source.LastFailSafeAt,
             IsOperatorAckRequired = source.IsOperatorAckRequired,
             JourneyStates = source.JourneyStates,
+            InPortCounters = source.InPortCounters,
             LocomotiveStates = source.LocomotiveStates,
             LocomotiveFleet = locomotiveFleet,
             SignalBoxElements = signalBoxElements,

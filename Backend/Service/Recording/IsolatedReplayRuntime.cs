@@ -30,6 +30,7 @@ public sealed class IsolatedReplayRuntime : IIsolatedReplayRuntime
         "command.track-power.request",
         "command.simulate-feedback.request",
         "command.journey-reset.request",
+        "command.inport-counters-reset.request",
         "command.signal-aspect.request",
         "command.locomotive-drive.request",
         "command.locomotive-function.request",
