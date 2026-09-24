@@ -124,15 +124,15 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
             z21Mock.Object,
             interlockingRuntime: interlockingRuntime.Object);
         var project = new Project { Name = "Editor" };
-        project.Interlocking.Routes.Add(new RouteDefinition { Name = "R1" });
+        project.Interlocking.Turnouts.Add(new TurnoutDefinition { Name = "W1" });
 
         await runtime.ActivateProjectAsync(project);
 
         interlockingRuntime.Verify(item => item.ActivateAsync(
             It.Is<InterlockingDefinition>(definition =>
                 !ReferenceEquals(definition, project.Interlocking)
-                && definition.Routes.Count == 1
-                && definition.Routes[0].Name == "R1"),
+                && definition.Turnouts.Count == 1
+                && definition.Turnouts[0].Name == "W1"),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

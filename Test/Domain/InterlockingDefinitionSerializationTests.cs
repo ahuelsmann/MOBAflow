@@ -9,7 +9,6 @@ internal sealed class InterlockingDefinitionSerializationTests
     [Test]
     public void Project_RoundTripsSharedInterlockingDefinition()
     {
-        var routeId = Guid.Parse("00000000-0000-0000-0000-000000000004");
         var signalId = Guid.Parse("00000000-0000-0000-0000-000000000005");
         var project = new Project
         {
@@ -42,24 +41,7 @@ internal sealed class InterlockingDefinitionSerializationTests
                     {
                         Id = signalId,
                         Name = "N1",
-                        SafeAspect = SignalAspect.Hp0,
                         BaseAddress = 20
-                    }
-                ],
-                Routes =
-                [
-                    new RouteDefinition
-                    {
-                        Id = routeId,
-                        Name = "Route 1",
-                        SignalRequirements =
-                        [
-                            new RouteSignalRequirement
-                            {
-                                SignalId = signalId,
-                                ProceedAspect = SignalAspect.Ks1
-                            }
-                        ]
                     }
                 ]
             },
@@ -76,7 +58,7 @@ internal sealed class InterlockingDefinitionSerializationTests
                     new SbSignal
                     {
                         Name = "N1 presentation",
-                        State = SignalBoxElementState.RouteSet,
+                        State = SignalBoxElementState.Free,
                         SignalAspect = SignalAspect.Ks1,
                         ExtendedAccessoryValue = 1
                     }
@@ -99,16 +81,13 @@ internal sealed class InterlockingDefinitionSerializationTests
             Assert.That(presentationElements.All(element => !element.TryGetProperty("switchPosition", out _)), Is.True);
             Assert.That(presentationElements.All(element => !element.TryGetProperty("signalAspect", out _)), Is.True);
             Assert.That(presentationElements.All(element => !element.TryGetProperty("extendedAccessoryValue", out _)), Is.True);
-            Assert.That(root.GetProperty("interlocking").GetProperty("routes").GetArrayLength(), Is.EqualTo(1));
+            Assert.That(root.GetProperty("interlocking").TryGetProperty("routes", out _), Is.False);
             Assert.That(restored, Is.Not.Null);
             Assert.That(restored!.Interlocking.Turnouts.Single().Kind, Is.EqualTo(TurnoutKind.ThreeWay));
             Assert.That(
                 restored.Interlocking.Turnouts.Single().Commands.Single().Commands.Single().AddressOffset,
                 Is.EqualTo(1));
-            Assert.That(restored.Interlocking.Routes.Single().Id, Is.EqualTo(routeId));
-            Assert.That(
-                restored.Interlocking.Routes.Single().SignalRequirements.Single().ProceedAspect,
-                Is.EqualTo(SignalAspect.Ks1));
+            Assert.That(restored.Interlocking.Signals.Single().Id, Is.EqualTo(signalId));
             Assert.That(restored.SignalBoxPlan, Is.Not.Null);
             Assert.That(restored.SignalBoxPlan!.Elements.OfType<SbSwitch>().Single().SwitchPosition, Is.EqualTo(SwitchPosition.Straight));
             Assert.That(restored.SignalBoxPlan.Elements.OfType<SbSignal>().Single().SignalAspect, Is.EqualTo(SignalAspect.Hp0));

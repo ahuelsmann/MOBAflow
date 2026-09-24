@@ -63,7 +63,6 @@ public sealed class InterlockingDefinitionValidator : IInterlockingDefinitionVal
         ValidateSignals(definition.Signals, findings);
         ValidateBlocks(definition.Blocks, blockBoundaryIds, findings);
         ValidateConnections(definition.Connections, blockBoundaryIds.Concat(definition.Blocks.Select(block => block.Id)).ToHashSet(), findings);
-        ValidateRoutes(definition, findings);
         ValidateBindings(project, definition, operationalIds, findings);
         return CreateReport(findings);
     }
@@ -75,7 +74,6 @@ public sealed class InterlockingDefinitionValidator : IInterlockingDefinitionVal
         var entities = definition.Turnouts.Select(item => (item.Id, "turnout"))
             .Concat(definition.Signals.Select(item => (item.Id, "signal")))
             .Concat(definition.Blocks.Select(item => (item.Id, "block")))
-            .Concat(definition.Routes.Select(item => (item.Id, "route")))
             .ToArray();
 
         foreach (var entityType in entities.Where(entity => entity.Id == Guid.Empty).Select(entity => entity.Item2))
@@ -186,11 +184,11 @@ public sealed class InterlockingDefinitionValidator : IInterlockingDefinitionVal
             AddDuplicateIds(block.Id, block.BoundaryElementIds, "block.boundary.duplicate", findings);
             AddMissingReferences(block.Id, block.BoundaryElementIds, operationalIds, "block.boundary.missing", findings);
             if (block.FeedbackInputs.Count == 0)
-                Add(findings, "block.feedback.missing", block.Id, "A protected block requires explicit occupancy feedback inputs.");
+                Add(findings, "block.feedback.missing", block.Id, "A block requires explicit occupancy feedback inputs.");
             if (block.FeedbackInputs.All(input => input.Role != BlockFeedbackRole.Occupied))
-                Add(findings, "block.feedback.occupied.missing", block.Id, "A protected block requires an explicit occupied observation.");
+                Add(findings, "block.feedback.occupied.missing", block.Id, "A block requires an explicit occupied observation.");
             if (block.FeedbackInputs.All(input => input.Role != BlockFeedbackRole.Clear))
-                Add(findings, "block.feedback.clear.missing", block.Id, "A protected block requires an explicit clear observation.");
+                Add(findings, "block.feedback.clear.missing", block.Id, "A block requires an explicit clear observation.");
             foreach (var input in block.FeedbackInputs.Where(input => input.InPort is < 1 or > 512))
                 Add(findings, "block.feedback.range", block.Id, $"Feedback input {input.InPort} must be between 1 and 512.");
             foreach (var duplicate in block.FeedbackInputs
@@ -202,26 +200,6 @@ public sealed class InterlockingDefinitionValidator : IInterlockingDefinitionVal
                          .GroupBy(input => (input.InPort, input.ActiveState))
                          .Where(group => group.Select(input => input.Role).Distinct().Count() > 1))
                 Add(findings, "block.feedback.contradictory", block.Id, $"Feedback input {contradiction.Key.InPort} maps the same active state to occupied and clear.");
-        }
-    }
-
-    private static void ValidateRoutes(
-        InterlockingDefinition definition,
-        List<InterlockingValidationFinding> findings)
-    {
-        var routeIds = definition.Routes.Select(route => route.Id).ToHashSet();
-        var routeResourceIds = definition.Turnouts.Select(turnout => turnout.Id)
-            .Concat(definition.Signals.Select(signal => signal.Id))
-            .Concat(definition.Blocks.Select(block => block.Id))
-            .ToHashSet();
-        foreach (var route in definition.Routes)
-        {
-            RequireName(route.Id, route.Name, "route", findings);
-            if (route.EntryElementId == route.ExitElementId)
-                Add(findings, "route.endpoint.same", route.Id, "Route entry and exit must be different operational elements.");
-
-            ValidateRouteReferences(route, definition, routeResourceIds, routeIds, findings);
-            ValidateRouteConnectivity(route, definition.Connections, findings);
         }
     }
 
@@ -257,86 +235,12 @@ public sealed class InterlockingDefinitionValidator : IInterlockingDefinitionVal
         }
     }
 
-    private static void ValidateRouteConnectivity(
-        RouteDefinition route,
-        IReadOnlyList<OperationalConnection> connections,
-        List<InterlockingValidationFinding> findings)
-    {
-        var path = new[] { route.EntryElementId }
-            .Concat(route.PathElementIds)
-            .Append(route.ExitElementId)
-            .ToArray();
-
-        foreach (var duplicate in path.GroupBy(id => id).Where(group => group.Count() > 1))
-            Add(findings, "route.path.repeated", route.Id, "A route cannot traverse the same operational object more than once.", [duplicate.Key]);
-
-        for (var index = 0; index < path.Length - 1; index++)
-        {
-            var from = path[index];
-            var to = path[index + 1];
-            if (connections.Any(connection => Connects(connection, from, to)))
-                continue;
-
-            Add(findings, "route.path.disconnected", route.Id, "Adjacent route objects are not connected in the operational topology.", [from, to]);
-        }
-    }
-
     private static (Guid From, Guid To, bool Directed) ConnectionKey(OperationalConnection connection)
     {
         if (!connection.IsBidirectional || connection.FromOperationalId.CompareTo(connection.ToOperationalId) <= 0)
             return (connection.FromOperationalId, connection.ToOperationalId, !connection.IsBidirectional);
 
         return (connection.ToOperationalId, connection.FromOperationalId, false);
-    }
-
-    private static bool Connects(OperationalConnection connection, Guid from, Guid to) =>
-        (connection.FromOperationalId == from && connection.ToOperationalId == to)
-        || (connection.IsBidirectional && connection.FromOperationalId == to && connection.ToOperationalId == from);
-
-    private static void ValidateRouteReferences(
-        RouteDefinition route,
-        InterlockingDefinition definition,
-        IReadOnlySet<Guid> operationalIds,
-        IReadOnlySet<Guid> routeIds,
-        List<InterlockingValidationFinding> findings)
-    {
-        AddMissingReferences(route.Id, [route.EntryElementId, route.ExitElementId], operationalIds, "route.endpoint.missing", findings);
-        AddDuplicateIds(route.Id, route.PathElementIds, "route.path.duplicate", findings);
-        AddMissingReferences(route.Id, route.PathElementIds, operationalIds, "route.path.missing", findings);
-        AddDuplicateIds(route.Id, route.ProtectedBlockIds, "route.block.duplicate", findings);
-        AddMissingReferences(route.Id, route.ProtectedBlockIds, definition.Blocks.Select(block => block.Id).ToHashSet(), "route.block.missing", findings);
-        AddDuplicateIds(route.Id, route.SignalRequirements.Select(requirement => requirement.SignalId), "route.signal.duplicate", findings);
-        AddMissingReferences(
-            route.Id,
-            route.SignalRequirements.Select(requirement => requirement.SignalId),
-            definition.Signals.Select(signal => signal.Id).ToHashSet(),
-            "route.signal.missing",
-            findings);
-        var signals = definition.Signals.ToDictionary(signal => signal.Id);
-        foreach (var requirement in route.SignalRequirements)
-        {
-            if (!Enum.IsDefined(requirement.ProceedAspect))
-                Add(findings, "route.signal.aspect.invalid", route.Id, "A route signal requirement contains an unknown proceed aspect.", [requirement.SignalId]);
-            else if (signals.TryGetValue(requirement.SignalId, out var signal)
-                     && requirement.ProceedAspect == signal.SafeAspect)
-                Add(findings, "route.signal.proceed.safe", route.Id, "A route proceed aspect must differ from the signal's safe stop aspect.", [requirement.SignalId]);
-        }
-        AddDuplicateIds(route.Id, route.ConflictingRouteIds, "route.conflict.duplicate", findings);
-        AddMissingReferences(route.Id, route.ConflictingRouteIds, routeIds, "route.conflict.missing", findings);
-
-        if (route.ConflictingRouteIds.Contains(route.Id))
-            Add(findings, "route.conflict.self", route.Id, "A route cannot explicitly conflict with itself.");
-
-        foreach (var duplicate in route.TurnoutRequirements.GroupBy(requirement => requirement.TurnoutId).Where(group => group.Count() > 1))
-        {
-            var positions = duplicate.Select(requirement => requirement.Position).Distinct().ToArray();
-            var code = positions.Length > 1 ? "route.turnout.contradictory" : "route.turnout.duplicate";
-            var message = positions.Length > 1
-                ? "A route cannot require contradictory positions for the same turnout."
-                : "The same turnout requirement is listed more than once.";
-            Add(findings, code, route.Id, message, [duplicate.Key]);
-        }
-        AddMissingReferences(route.Id, route.TurnoutRequirements.Select(item => item.TurnoutId), definition.Turnouts.Select(turnout => turnout.Id).ToHashSet(), "route.turnout.missing", findings);
     }
 
     private static void ValidateBindings(

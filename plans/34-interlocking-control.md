@@ -1,15 +1,21 @@
-# Issue #34 Interlocking Control Implementation Plan
+# Issue #34 Interlocking Control Implementation Plan (Deferred)
+
+> Historical design, outside the 1.0 MVP. Issue #146 removes route definitions, reservations,
+> locking, release and automatic protective signal effects from the implemented product.
+> Direct turnout/signal commands and block occupancy observations remain available.
+> Future interlocking work is deferred under #144; the historical progress and design below
+> do not describe current product behavior or authorize implementation.
 
 ## Document status
 
 **GitHub Issue**: #34
 **Spec Kit**: Required
 
-- Status: In progress
+- Status: Deferred outside the 1.0 MVP
 - Primary issue: [#34 - Add turnout, route, block, and interlocking control to SignalBoxPage and TrackPlanPage](https://github.com/ahuelsmann/MOBAflow/issues/34)
 - Status source: GitHub Issue #34
 - Plan ownership: one plan for one issue
-- Priority recommendation: P1 (high), after the P0 safety foundations
+- Priority recommendation: Deferred; no active MVP delivery
 - Baseline reviewed: `985f29263f47fb34c767827655599fd5ae5d6e78`
 - Plan-required: yes
 

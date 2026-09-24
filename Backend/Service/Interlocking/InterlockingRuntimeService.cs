@@ -2,7 +2,6 @@
 
 namespace Moba.Backend.Service.Interlocking;
 
-using Common.Configuration;
 using Common.Events;
 using Domain;
 using Events;
@@ -11,17 +10,16 @@ using Microsoft.Extensions.Logging;
 using System.Threading.Channels;
 
 /// <summary>
-/// Projects ordered Z21 observations into the same safety engine used by route commands.
+/// Projects ordered observations and sends direct turnout commands without resource ownership.
 /// </summary>
-public sealed class InterlockingRuntimeService : IInterlockingRuntime, IInterlockingLifecycleEventSink
+public sealed class InterlockingRuntimeService : IInterlockingRuntime
 {
     private static readonly TimeSpan TurnoutConfirmationTimeout = TimeSpan.FromSeconds(5);
 
     private readonly object _stateSync = new();
-    private readonly SemaphoreSlim _activationGate = new(1, 1);
+    private readonly SemaphoreSlim _commandGate = new(1, 1);
     private readonly IZ21 _z21;
     private readonly IEventBus _eventBus;
-    private readonly AppSettings _appSettings;
     private readonly TimeProvider _timeProvider;
     private readonly ILogger<InterlockingRuntimeService> _logger;
     private readonly Channel<RuntimeWorkItem> _workItems;
@@ -29,9 +27,12 @@ public sealed class InterlockingRuntimeService : IInterlockingRuntime, IInterloc
     private readonly List<Guid> _subscriptionIds = [];
     private readonly Task _consumerTask;
     private readonly Dictionary<int, bool> _feedbackStates = [];
+    private readonly HashSet<Guid> _processedObservations = [];
 
     private InterlockingDefinition? _definition;
-    private InterlockingRouteCoordinator? _coordinator;
+    private SemanticTurnoutRuntimeCoordinator? _coordinator;
+    private List<TurnoutInfoChangedEvent>? _deferredTurnoutObservations;
+    private CancellationTokenSource _projectCancellation = new();
     private InterlockingRuntimeState _current = InterlockingRuntimeState.Empty;
     private bool _isSynchronized;
     private int _disposeStarted;
@@ -39,19 +40,15 @@ public sealed class InterlockingRuntimeService : IInterlockingRuntime, IInterloc
     public InterlockingRuntimeService(
         IZ21 z21,
         IEventBus eventBus,
-        AppSettings appSettings,
         TimeProvider timeProvider,
         ILogger<InterlockingRuntimeService> logger)
     {
         ArgumentNullException.ThrowIfNull(z21);
         ArgumentNullException.ThrowIfNull(eventBus);
-        ArgumentNullException.ThrowIfNull(appSettings);
         ArgumentNullException.ThrowIfNull(timeProvider);
         ArgumentNullException.ThrowIfNull(logger);
-
         _z21 = z21;
         _eventBus = eventBus;
-        _appSettings = appSettings;
         _timeProvider = timeProvider;
         _logger = logger;
         _workItems = Channel.CreateUnbounded<RuntimeWorkItem>(new UnboundedChannelOptions
@@ -61,7 +58,6 @@ public sealed class InterlockingRuntimeService : IInterlockingRuntime, IInterloc
             AllowSynchronousContinuations = false
         });
         _consumerTask = ConsumeAsync();
-
         _subscriptionIds.Add(_eventBus.Subscribe<FeedbackStateChangedEvent>(OnFeedbackStateChanged));
         _subscriptionIds.Add(_eventBus.Subscribe<TurnoutInfoChangedEvent>(OnTurnoutInfoChanged));
         _subscriptionIds.Add(_eventBus.Subscribe<Z21ConnectionEstablishedEvent>(_ => Enqueue(SynchronizeCoreAsync)));
@@ -70,66 +66,51 @@ public sealed class InterlockingRuntimeService : IInterlockingRuntime, IInterloc
 
     public InterlockingRuntimeState Current
     {
-        get
-        {
-            lock (_stateSync)
-                return _current;
-        }
+        get { lock (_stateSync) return _current; }
     }
 
     public bool IsSynchronized
     {
-        get
-        {
-            lock (_stateSync)
-                return _isSynchronized;
-        }
+        get { lock (_stateSync) return _isSynchronized; }
     }
 
-    public async Task ActivateAsync(
-        InterlockingDefinition definition,
-        CancellationToken cancellationToken = default)
+    public async Task ActivateAsync(InterlockingDefinition definition, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(definition);
-        await WhenIdleAsync(cancellationToken).ConfigureAwait(false);
-        await _activationGate.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
+        var coordinator = new SemanticTurnoutRuntimeCoordinator(
+            definition,
+            new SemanticTurnoutCommandService(definition, new Z21TurnoutEffectGateway(_z21)),
+            _timeProvider,
+            TurnoutConfirmationTimeout);
+        var previousCancellation = await QueueAndWaitAsync(_ =>
         {
-            if (_coordinator != null)
-                await _coordinator.DisposeAsync().ConfigureAwait(false);
-
-            var turnoutGateway = new Z21TurnoutEffectGateway(_z21);
-            var commandService = new SemanticTurnoutCommandService(definition, turnoutGateway);
-            var turnoutRuntime = new SemanticTurnoutRuntimeCoordinator(
-                definition,
-                commandService,
-                _timeProvider,
-                TurnoutConfirmationTimeout);
-            _definition = definition;
-            _feedbackStates.Clear();
-            _coordinator = new InterlockingRouteCoordinator(
-                definition,
-                turnoutRuntime,
-                new Z21SignalEffectGateway(definition, _z21, _appSettings),
-                this);
-            SetState(_coordinator.Snapshot, false);
+            CancellationTokenSource previous;
+            lock (_stateSync)
+            {
+                previous = _projectCancellation;
+                _projectCancellation = new CancellationTokenSource();
+                _definition = definition;
+                _coordinator = coordinator;
+                _deferredTurnoutObservations = null;
+                _feedbackStates.Clear();
+                _processedObservations.Clear();
+                _isSynchronized = false;
+                _current = InterlockingRuntimeState.Create(
+                    _current.Revision + 1,
+                    ProjectTurnouts(coordinator),
+                    definition.Blocks.Select(block => new BlockRuntimeState(block.Id, BlockOccupancy.Unknown)),
+                    definition.Signals.Select(signal => new SignalRuntimeState(signal.Id, null)),
+                    []);
+            }
             PublishSnapshot(Guid.NewGuid(), "interlocking.activated");
-        }
-        finally
-        {
-            _activationGate.Release();
-        }
+            return previous;
+        }, cancellationToken).ConfigureAwait(false);
+        await previousCancellation.CancelAsync().ConfigureAwait(false);
+        previousCancellation.Dispose();
     }
 
-    public async Task SynchronizeAsync(CancellationToken cancellationToken = default)
-    {
-        ThrowIfDisposed();
-        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        await _workItems.Writer.WriteAsync(
-            new RuntimeWorkItem(SynchronizeCoreAsync, completion),
-            cancellationToken).ConfigureAwait(false);
-        await completion.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
-    }
+    public Task SynchronizeAsync(CancellationToken cancellationToken = default) =>
+        QueueAndWaitAsync(SynchronizeCoreAsync, cancellationToken);
 
     public async Task<TurnoutCoordinatorResult> SetTurnoutAsync(
         Guid turnoutId,
@@ -137,127 +118,163 @@ public sealed class InterlockingRuntimeService : IInterlockingRuntime, IInterloc
         Guid correlationId,
         CancellationToken cancellationToken = default)
     {
+        ThrowIfDisposed();
         await WhenIdleAsync(cancellationToken).ConfigureAwait(false);
-        var coordinator = _coordinator;
-        if (coordinator == null)
-            return TurnoutRejected("interlocking.inactive", "No interlocking definition is active.", correlationId);
-        if (!IsSynchronized)
-            return TurnoutRejected("interlocking.unsynchronized", "Turnout commands require a complete live interlocking snapshot.", correlationId);
-        return await coordinator.SetTurnoutAsync(
-            turnoutId,
-            position,
-            correlationId,
-            cancellationToken).ConfigureAwait(false);
+        SemanticTurnoutRuntimeCoordinator? coordinator;
+        CancellationTokenSource operationCancellation;
+        lock (_stateSync)
+        {
+            ThrowIfDisposed();
+            coordinator = _coordinator;
+            operationCancellation = CancellationTokenSource.CreateLinkedTokenSource(
+                cancellationToken, _disposeCancellation.Token, _projectCancellation.Token);
+        }
+        using (operationCancellation)
+        {
+            await _commandGate.WaitAsync(operationCancellation.Token).ConfigureAwait(false);
+            try
+            {
+                if (coordinator == null)
+                    return Rejected("interlocking.inactive", "No operational definition is active.", correlationId);
+                var execution = await QueueAndWaitAsync<Task<TurnoutRuntimeTransition?>>(
+                    _ => BeginTurnoutDispatchAsync(coordinator, turnoutId, position, correlationId, operationCancellation.Token),
+                    operationCancellation.Token).ConfigureAwait(false);
+                var transition = await execution.ConfigureAwait(false);
+                if (transition == null)
+                    return ProjectChanged(correlationId);
+                if (Volatile.Read(ref _disposeStarted) != 0)
+                    return Rejected("turnout.shutdown", "The operational runtime is shutting down.", correlationId);
+                return await QueueAndWaitAsync(
+                    _ => CompleteTurnoutDispatch(coordinator, turnoutId, transition, correlationId),
+                    _disposeCancellation.Token).ConfigureAwait(false);
+            }
+            finally
+            {
+                _commandGate.Release();
+            }
+        }
     }
 
-    public Task<RouteCoordinatorResult> PreviewRouteAsync(
-        Guid routeId,
+    private async Task<TurnoutRuntimeTransition?> BeginTurnoutDispatchAsync(
+        SemanticTurnoutRuntimeCoordinator coordinator,
+        Guid turnoutId,
+        TurnoutPosition position,
         Guid correlationId,
-        CancellationToken cancellationToken = default) =>
-        ExecuteRouteCommandAsync(
-            (coordinator, token) => coordinator.PreviewRouteAsync(routeId, correlationId, token),
-            correlationId,
-            cancellationToken);
+        CancellationToken cancellationToken)
+    {
+        lock (_stateSync)
+        {
+            if (!ReferenceEquals(coordinator, _coordinator))
+                return null;
+            _deferredTurnoutObservations = [];
+        }
+        // Start dispatch in order, but let observations continue while hardware is awaited.
+        var execution = coordinator.RequestAsync(turnoutId, position, correlationId, cancellationToken);
+        if (coordinator.Snapshot.TryGetValue(turnoutId, out var state) &&
+            state.Lifecycle == TurnoutLifecycle.Requested)
+        {
+            bool stillRequested;
+            lock (_stateSync)
+            {
+                RefreshState();
+                stillRequested = _current.Turnouts[turnoutId].Lifecycle == TurnoutLifecycle.Requested;
+            }
+            if (stillRequested)
+                PublishSnapshot(correlationId, "turnout.command.requested");
+        }
+        return await execution.ConfigureAwait(false);
+    }
 
-    public Task<RouteCoordinatorResult> SelectRouteAsync(
-        Guid routeId,
-        Guid correlationId,
-        CancellationToken cancellationToken = default) =>
-        ExecuteRouteCommandAsync(
-            (coordinator, token) => coordinator.SelectRouteAsync(routeId, correlationId, token),
-            correlationId,
-            cancellationToken);
+    private TurnoutCoordinatorResult CompleteTurnoutDispatch(
+        SemanticTurnoutRuntimeCoordinator coordinator,
+        Guid turnoutId,
+        TurnoutRuntimeTransition transition,
+        Guid correlationId)
+    {
+        TurnoutCoordinatorResult result;
+        lock (_stateSync)
+        {
+            if (!ReferenceEquals(coordinator, _coordinator))
+                return ProjectChanged(correlationId);
+            // The semantic coordinator accepts confirmations only after dispatch.
+            // Preserve their order without holding up block or disconnect observations.
+            var awaitingConfirmation = transition.Status == TurnoutRuntimeTransitionStatus.Accepted &&
+                transition.State.Lifecycle == TurnoutLifecycle.Pending;
+            foreach (var observation in _deferredTurnoutObservations ?? [])
+            {
+                var observed = coordinator.ObserveFeedback(
+                        observation.FunctionAddress, observation.OutputPosition, observation.CorrelationId)
+                    .FirstOrDefault(item => item.State.TurnoutId == turnoutId);
+                if (awaitingConfirmation && observed != null)
+                    transition = observed;
+            }
+            _deferredTurnoutObservations = null;
+            RefreshState();
+            result = new TurnoutCoordinatorResult(
+                CommandStatus(transition), transition.Code, transition.Message, correlationId, _current);
+        }
+        PublishSnapshot(correlationId, transition.Code);
+        return result;
+    }
 
-    public Task<RouteCoordinatorResult> SetRouteAsync(
-        Guid routeId,
-        Guid correlationId,
-        CancellationToken cancellationToken = default) =>
-        ExecuteRouteCommandAsync(
-            (coordinator, token) => coordinator.SetRouteAsync(routeId, correlationId, token),
-            correlationId,
-            cancellationToken);
+    private static TurnoutCoordinatorStatus CommandStatus(TurnoutRuntimeTransition transition) =>
+        transition.Status switch
+        {
+            TurnoutRuntimeTransitionStatus.Rejected => TurnoutCoordinatorStatus.Rejected,
+            _ when transition.State.Lifecycle == TurnoutLifecycle.Pending => TurnoutCoordinatorStatus.Pending,
+            _ when transition.State.Lifecycle == TurnoutLifecycle.Failed => TurnoutCoordinatorStatus.Failed,
+            _ when transition.State.Lifecycle == TurnoutLifecycle.Unknown => TurnoutCoordinatorStatus.Rejected,
+            _ => TurnoutCoordinatorStatus.Accepted
+        };
 
-    public Task<RouteCoordinatorResult> CancelRouteAsync(
-        Guid routeId,
-        Guid correlationId,
-        CancellationToken cancellationToken = default) =>
-        ExecuteRouteCommandAsync(
-            (coordinator, token) => coordinator.CancelRouteAsync(routeId, correlationId, token),
-            correlationId,
-            cancellationToken,
-            requireSynchronization: false);
+    private TurnoutCoordinatorResult ProjectChanged(Guid correlationId) =>
+        Rejected("turnout.project.changed", "The active project changed during the command.", correlationId);
 
-    public Task<RouteCoordinatorResult> SafeStopRouteAsync(
-        Guid routeId,
-        Guid correlationId,
-        CancellationToken cancellationToken = default) =>
-        ExecuteRouteCommandAsync(
-            (coordinator, token) => coordinator.SafeStopRouteAsync(routeId, correlationId, token),
-            correlationId,
-            cancellationToken,
-            requireSynchronization: false);
+    public Task WhenIdleAsync(CancellationToken cancellationToken = default) =>
+        QueueAndWaitAsync(_ => Task.CompletedTask, cancellationToken);
 
-    public Task<RouteCoordinatorResult> ReconcileRouteAsync(
-        Guid routeId,
-        Guid correlationId,
-        CancellationToken cancellationToken = default) =>
-        ExecuteRouteCommandAsync(
-            (coordinator, token) => coordinator.ReconcileRouteAsync(routeId, correlationId, token),
-            correlationId,
-            cancellationToken);
+    private async Task<T> QueueAndWaitAsync<T>(Func<CancellationToken, T> callback, CancellationToken cancellationToken)
+    {
+        var result = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
+        await QueueAndWaitAsync(token =>
+        {
+            result.SetResult(callback(token));
+            return Task.CompletedTask;
+        }, cancellationToken).ConfigureAwait(false);
+        return await result.Task.ConfigureAwait(false);
+    }
 
-    public Task<RouteCoordinatorResult> ReleaseRouteAsync(
-        Guid routeId,
-        Guid correlationId,
-        CancellationToken cancellationToken = default) =>
-        ExecuteRouteCommandAsync(
-            (coordinator, token) => coordinator.ReleaseRouteAsync(routeId, correlationId, token),
-            correlationId,
-            cancellationToken);
-
-    public async Task WhenIdleAsync(CancellationToken cancellationToken = default)
+    private async Task QueueAndWaitAsync(Func<CancellationToken, Task> callback, CancellationToken cancellationToken)
     {
         ThrowIfDisposed();
+        using var workCancellation = CancellationTokenSource.CreateLinkedTokenSource(
+            cancellationToken, _disposeCancellation.Token);
         var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        await _workItems.Writer.WriteAsync(
-            new RuntimeWorkItem(_ => Task.CompletedTask, completion),
-            cancellationToken).ConfigureAwait(false);
-        await completion.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        await _workItems.Writer.WriteAsync(new RuntimeWorkItem(_ =>
+        {
+            workCancellation.Token.ThrowIfCancellationRequested();
+            return callback(workCancellation.Token);
+        }, completion), workCancellation.Token).ConfigureAwait(false);
+        // Once accepted, observe completion before disposing tokens or cleaning up replaced state.
+        await completion.Task.ConfigureAwait(false);
     }
 
     public async ValueTask DisposeAsync()
     {
         if (Interlocked.Exchange(ref _disposeStarted, 1) != 0)
             return;
-
         foreach (var subscriptionId in _subscriptionIds)
             _eventBus.Unsubscribe(subscriptionId);
         _subscriptionIds.Clear();
+        await _disposeCancellation.CancelAsync().ConfigureAwait(false);
         _workItems.Writer.TryComplete();
         await _consumerTask.ConfigureAwait(false);
-
-        if (_coordinator != null)
-            await _coordinator.DisposeAsync().ConfigureAwait(false);
-        await _disposeCancellation.CancelAsync().ConfigureAwait(false);
+        // Disposal must wait for the already-cancelled command to release its resources.
+        await _commandGate.WaitAsync(CancellationToken.None).ConfigureAwait(false);
+        _commandGate.Release();
+        _commandGate.Dispose();
+        _projectCancellation.Dispose();
         _disposeCancellation.Dispose();
-        _activationGate.Dispose();
-    }
-
-    void IInterlockingLifecycleEventSink.Publish(InterlockingLifecycleEvent lifecycleEvent)
-    {
-        ArgumentNullException.ThrowIfNull(lifecycleEvent);
-        lock (_stateSync)
-        {
-            if (_current.Revision == lifecycleEvent.State.Revision)
-                return;
-            _current = lifecycleEvent.State;
-        }
-
-        _eventBus.Publish(new InterlockingRuntimeSnapshotChangedEvent(
-            lifecycleEvent.State,
-            IsSynchronized,
-            lifecycleEvent.CorrelationId,
-            lifecycleEvent.Code));
     }
 
     private void OnFeedbackStateChanged(FeedbackStateChangedEvent observation) =>
@@ -268,10 +285,9 @@ public sealed class InterlockingRuntimeService : IInterlockingRuntime, IInterloc
 
     private void Enqueue(Func<CancellationToken, Task> callback)
     {
-        if (Volatile.Read(ref _disposeStarted) != 0)
-            return;
-        if (!_workItems.Writer.TryWrite(new RuntimeWorkItem(callback, null)))
-            _logger.LogWarning("Interlocking runtime rejected an observation because its queue is closed.");
+        if (Volatile.Read(ref _disposeStarted) == 0 &&
+            !_workItems.Writer.TryWrite(new RuntimeWorkItem(callback, null)))
+            _logger.LogWarning("Operational runtime rejected an observation because its queue is closed.");
     }
 
     private async Task ConsumeAsync()
@@ -283,76 +299,67 @@ public sealed class InterlockingRuntimeService : IInterlockingRuntime, IInterloc
                 await item.Callback(_disposeCancellation.Token).ConfigureAwait(false);
                 item.Completion?.TrySetResult();
             }
-            catch (OperationCanceledException) when (_disposeCancellation.IsCancellationRequested)
+            catch (OperationCanceledException ex)
             {
-                item.Completion?.TrySetCanceled(_disposeCancellation.Token);
+                item.Completion?.TrySetCanceled(ex.CancellationToken);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Interlocking runtime work item failed.");
+                _logger.LogError(ex, "Operational runtime work item failed.");
                 item.Completion?.TrySetException(ex);
             }
         }
     }
 
-    private async Task ObserveFeedbackAsync(
-        FeedbackStateChangedEvent observation,
-        CancellationToken cancellationToken)
+    private Task ObserveFeedbackAsync(FeedbackStateChangedEvent observation, CancellationToken cancellationToken)
     {
-        var definition = _definition;
-        var coordinator = _coordinator;
-        if (definition == null || coordinator == null || observation.CorrelationId == Guid.Empty)
-            return;
-
-        _feedbackStates[observation.InPort] = observation.IsActive;
-        foreach (var block in definition.Blocks.Where(block =>
-                     block.FeedbackInputs.Any(input => input.InPort == observation.InPort)))
+        cancellationToken.ThrowIfCancellationRequested();
+        lock (_stateSync)
         {
-            await coordinator.ObserveBlockAsync(
-                block.Id,
-                ProjectOccupancy(block),
-                observation.CorrelationId,
-                cancellationToken).ConfigureAwait(false);
+            if (_definition == null || observation.CorrelationId == Guid.Empty ||
+                !_processedObservations.Add(observation.CorrelationId))
+                return Task.CompletedTask;
+            _feedbackStates[observation.InPort] = observation.IsActive;
+            RefreshState();
         }
-
-        UpdateSynchronization(observation.CorrelationId);
+        PublishSnapshot(observation.CorrelationId, "block.observed");
+        return Task.CompletedTask;
     }
 
-    private async Task ObserveTurnoutAsync(
-        TurnoutInfoChangedEvent observation,
-        CancellationToken cancellationToken)
+    private Task ObserveTurnoutAsync(TurnoutInfoChangedEvent observation, CancellationToken cancellationToken)
     {
-        var coordinator = _coordinator;
-        if (coordinator == null || observation.CorrelationId == Guid.Empty)
-            return;
-
-        if (!observation.IsSwitched)
+        cancellationToken.ThrowIfCancellationRequested();
+        lock (_stateSync)
         {
-            SetSynchronization(false);
-            await coordinator.MarkDisconnectedAsync(
-                observation.CorrelationId,
-                cancellationToken).ConfigureAwait(false);
-            return;
+            if (_coordinator == null || observation.CorrelationId == Guid.Empty ||
+                !_processedObservations.Add(observation.CorrelationId))
+                return Task.CompletedTask;
+            if (observation.IsSwitched && _deferredTurnoutObservations != null)
+            {
+                _deferredTurnoutObservations.Add(observation);
+                return Task.CompletedTask;
+            }
+            if (observation.IsSwitched)
+                _coordinator.ObserveFeedback(observation.FunctionAddress, observation.OutputPosition, observation.CorrelationId);
+            else
+            {
+                _deferredTurnoutObservations?.Clear();
+                _coordinator.MarkDisconnected(observation.CorrelationId);
+            }
+            RefreshState();
         }
-
-        await coordinator.ObserveTurnoutFeedbackAsync(
-            observation.FunctionAddress,
-            observation.OutputPosition,
-            observation.CorrelationId,
-            cancellationToken).ConfigureAwait(false);
-        UpdateSynchronization(observation.CorrelationId);
+        PublishSnapshot(observation.CorrelationId, "turnout.observed");
+        return Task.CompletedTask;
     }
 
     private BlockOccupancy ProjectOccupancy(BlockDefinition block)
     {
         var occupied = block.FeedbackInputs.Any(input =>
-            input.Role == BlockFeedbackRole.Occupied
-            && _feedbackStates.TryGetValue(input.InPort, out var active)
-            && active == input.ActiveState);
+            input.Role == BlockFeedbackRole.Occupied &&
+            _feedbackStates.TryGetValue(input.InPort, out var active) && active == input.ActiveState);
         var clear = block.FeedbackInputs.Any(input =>
-            input.Role == BlockFeedbackRole.Clear
-            && _feedbackStates.TryGetValue(input.InPort, out var active)
-            && active == input.ActiveState);
+            input.Role == BlockFeedbackRole.Clear &&
+            _feedbackStates.TryGetValue(input.InPort, out var active) && active == input.ActiveState);
         return (occupied, clear) switch
         {
             (true, true) => BlockOccupancy.Fault,
@@ -364,24 +371,22 @@ public sealed class InterlockingRuntimeService : IInterlockingRuntime, IInterloc
 
     private async Task SynchronizeCoreAsync(CancellationToken cancellationToken)
     {
-        var definition = _definition;
+        InterlockingDefinition? definition;
+        lock (_stateSync)
+        {
+            definition = _definition;
+            _isSynchronized = false;
+        }
         if (definition == null)
             return;
-
-        SetSynchronization(false);
         try
         {
             await _z21.GetStatusAsync(cancellationToken).ConfigureAwait(false);
-            foreach (var decoderAddress in definition.Turnouts
-                         .SelectMany(turnout => turnout.Confirmations
-                             .SelectMany(mapping => mapping.Conditions)
-                             .Select(condition => condition.FunctionAddress)
-                             .Append(turnout.DecoderAddress))
-                         .Distinct()
-                         .Order())
-            {
-                await _z21.GetTurnoutInfoAsync(decoderAddress, cancellationToken).ConfigureAwait(false);
-            }
+            foreach (var address in definition.Turnouts.SelectMany(turnout =>
+                         turnout.Confirmations.SelectMany(mapping => mapping.Conditions)
+                             .Select(condition => condition.FunctionAddress).Append(turnout.DecoderAddress))
+                         .Distinct().Order())
+                await _z21.GetTurnoutInfoAsync(address, cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -389,100 +394,61 @@ public sealed class InterlockingRuntimeService : IInterlockingRuntime, IInterloc
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Interlocking synchronization query failed.");
+            _logger.LogWarning(ex, "Operational synchronization query failed.");
         }
     }
 
-    private async Task MarkDisconnectedCoreAsync(CancellationToken cancellationToken)
+    private Task MarkDisconnectedCoreAsync(CancellationToken cancellationToken)
     {
-        var definition = _definition;
-        var coordinator = _coordinator;
-        if (definition == null || coordinator == null)
-            return;
-
-        SetSynchronization(false);
-        _feedbackStates.Clear();
+        cancellationToken.ThrowIfCancellationRequested();
         var correlationId = Guid.NewGuid();
-        foreach (var block in definition.Blocks)
-        {
-            await coordinator.ObserveBlockAsync(
-                block.Id,
-                BlockOccupancy.Unknown,
-                correlationId,
-                cancellationToken).ConfigureAwait(false);
-        }
-
-        await coordinator.MarkDisconnectedAsync(correlationId, cancellationToken).ConfigureAwait(false);
-    }
-
-    private void UpdateSynchronization(Guid correlationId)
-    {
-        var state = Current;
-        var synchronized = state.Turnouts.Values.All(turnout =>
-                               turnout.Lifecycle == TurnoutLifecycle.Confirmed)
-                           && state.Blocks.Values.All(block =>
-                               block.Occupancy is BlockOccupancy.Free or BlockOccupancy.Occupied);
-        bool changed;
         lock (_stateSync)
         {
-            changed = _isSynchronized != synchronized;
-            _isSynchronized = synchronized;
+            if (_coordinator == null)
+                return Task.CompletedTask;
+            _feedbackStates.Clear();
+            _deferredTurnoutObservations?.Clear();
+            _coordinator.MarkDisconnected(correlationId);
+            RefreshState();
+            _isSynchronized = false;
         }
-
-        if (changed)
-            PublishSnapshot(correlationId, synchronized ? "interlocking.synchronized" : "interlocking.unsynchronized");
+        PublishSnapshot(correlationId, "interlocking.disconnected");
+        return Task.CompletedTask;
     }
 
-    private void SetState(InterlockingRuntimeState state, bool synchronized)
+    // Caller holds _stateSync; snapshots are copied before publication.
+    private void RefreshState()
     {
+        if (_definition == null || _coordinator == null)
+            return;
+        _current = InterlockingRuntimeState.Create(
+            _current.Revision + 1,
+            ProjectTurnouts(_coordinator),
+            _definition.Blocks.Select(block => new BlockRuntimeState(block.Id, ProjectOccupancy(block))),
+            _current.Signals.Values,
+            _processedObservations);
+        _isSynchronized = _z21.IsConnected &&
+            _current.Turnouts.Values.All(turnout => turnout.Lifecycle == TurnoutLifecycle.Confirmed) &&
+            _current.Blocks.Values.All(block => block.Occupancy is BlockOccupancy.Free or BlockOccupancy.Occupied);
+    }
+
+    private static IEnumerable<TurnoutRuntimeState> ProjectTurnouts(SemanticTurnoutRuntimeCoordinator coordinator) =>
+        coordinator.Snapshot.Values.Select(state => new TurnoutRuntimeState(
+            state.TurnoutId, state.Lifecycle, state.RequestedPosition, state.ConfirmedPosition));
+
+    private void PublishSnapshot(Guid correlationId, string code)
+    {
+        InterlockingRuntimeSnapshotChangedEvent snapshotEvent;
         lock (_stateSync)
-        {
-            _current = state;
-            _isSynchronized = synchronized;
-        }
+            snapshotEvent = new InterlockingRuntimeSnapshotChangedEvent(_current, _isSynchronized, correlationId, code);
+        _eventBus.Publish(snapshotEvent);
     }
 
-    private void SetSynchronization(bool synchronized)
-    {
-        lock (_stateSync)
-            _isSynchronized = synchronized;
-    }
+    private TurnoutCoordinatorResult Rejected(string code, string message, Guid correlationId) =>
+        new(TurnoutCoordinatorStatus.Rejected, code, message, correlationId, Current);
 
-    private void PublishSnapshot(Guid correlationId, string code) =>
-        _eventBus.Publish(new InterlockingRuntimeSnapshotChangedEvent(
-            Current,
-            IsSynchronized,
-            correlationId,
-            code));
-
-    private async Task<RouteCoordinatorResult> ExecuteRouteCommandAsync(
-        Func<InterlockingRouteCoordinator, CancellationToken, Task<RouteCoordinatorResult>> command,
-        Guid correlationId,
-        CancellationToken cancellationToken,
-        bool requireSynchronization = true)
-    {
-        await WhenIdleAsync(cancellationToken).ConfigureAwait(false);
-        var coordinator = _coordinator;
-        if (coordinator == null)
-            return Rejected("interlocking.inactive", "No interlocking definition is active.", correlationId);
-        if (requireSynchronization && !IsSynchronized)
-            return Rejected("interlocking.unsynchronized", "Route commands require a complete live interlocking snapshot.", correlationId);
-        return await command(coordinator, cancellationToken).ConfigureAwait(false);
-    }
-
-    private RouteCoordinatorResult Rejected(string code, string message, Guid correlationId) =>
-        new(RouteCoordinatorStatus.Rejected, code, message, correlationId, Current);
-
-    private TurnoutCoordinatorResult TurnoutRejected(string code, string message, Guid correlationId) =>
-        new(RouteCoordinatorStatus.Rejected, code, message, correlationId, Current);
-
-    private void ThrowIfDisposed()
-    {
+    private void ThrowIfDisposed() =>
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposeStarted) != 0, this);
-    }
 
-    private sealed record RuntimeWorkItem(
-        Func<CancellationToken, Task> Callback,
-        TaskCompletionSource? Completion);
-
+    private sealed record RuntimeWorkItem(Func<CancellationToken, Task> Callback, TaskCompletionSource? Completion);
 }

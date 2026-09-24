@@ -50,7 +50,7 @@ internal sealed class InfoPageMarkupTests
         // Assert
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(visibleText.Contains("interlocking", StringComparison.OrdinalIgnoreCase), Is.True);
+            Assert.That(visibleText.Contains("direct turnout and signal controls", StringComparison.OrdinalIgnoreCase), Is.True);
             Assert.That(visibleText.Contains("Recorder", StringComparison.Ordinal), Is.True);
             Assert.That(visibleText.Contains("authenticated pairing", StringComparison.OrdinalIgnoreCase), Is.True);
             Assert.That(visibleText.Contains("trusted private LAN", StringComparison.Ordinal), Is.True);

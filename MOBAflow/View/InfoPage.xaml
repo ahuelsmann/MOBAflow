@@ -73,7 +73,7 @@
                                 Text="MOBAflow Desktop" />
                             <TextBlock
                                 Style="{StaticResource InfoBodyTextStyle}"
-                                Text="The Windows control center creates, operates and monitors layouts. It includes train control, rolling-stock and maintenance records, journeys and timetables, workflows, track plans, signal-box and interlocking controls, monitoring, and the Recorder with isolated replay." />
+                                Text="The Windows control center creates, operates and monitors layouts. It includes train control, rolling-stock and maintenance records, journeys and timetables, workflows, track plans, direct turnout and signal controls, block occupancy, monitoring, and the Recorder with isolated replay." />
                         </StackPanel>
 
                         <StackPanel Spacing="4">
@@ -121,7 +121,7 @@
                             Text="&#x2022; Journeys, feedback sequences, timetable decisions and visual workflow automation" />
                         <TextBlock
                             Style="{StaticResource InfoBodyTextStyle}"
-                            Text="&#x2022; Track-plan editing, topology validation, signal-box operation and fail-safe interlocking controls" />
+                            Text="&#x2022; Track-plan editing, topology validation, direct turnout and signal controls, and block occupancy observations" />
                         <TextBlock
                             Style="{StaticResource InfoBodyTextStyle}"
                             Text="&#x2022; Event recording with filtered export and structurally isolated replay" />
@@ -141,7 +141,7 @@
                             Text="Safety and network scope" />
                         <TextBlock
                             Style="{StaticResource InfoBodyTextStyle}"
-                            Text="MOBAflow can send commands to real model railroad hardware. Verify routes, signals and safe stopping behavior before operating a layout." />
+                            Text="MOBAflow can send commands to real model railroad hardware. It does not reserve routes, lock turnouts or prevent collisions. The operator is responsible for safe operation, including signal settings and stopping behavior." />
                         <TextBlock
                             Style="{StaticResource InfoBodyTextStyle}"
                             Text="MOBAflow, MOBAsmart, MOBApi and MOBAdisplay are intended for a trusted private LAN. Direct exposure of MOBApi or display endpoints to the public internet is unsupported." />

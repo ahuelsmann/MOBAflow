@@ -24,31 +24,6 @@ internal sealed class InterlockingDefinitionValidatorTests
     }
 
     [Test]
-    public void Validate_ContradictoryAndMissingReferences_ReturnsStableActionableFindings()
-    {
-        var project = CreateValidProject();
-        var route = project.Interlocking.Routes.Single();
-        route.PathElementIds.Add(Guid.Parse("00000000-0000-0000-0000-000000000099"));
-        route.TurnoutRequirements.Add(new RouteTurnoutRequirement
-        {
-            TurnoutId = route.TurnoutRequirements.Single().TurnoutId,
-            Position = TurnoutPosition.DivergingLeft
-        });
-
-        var first = _validator.Validate(project);
-        route.TurnoutRequirements.Reverse();
-        var second = _validator.Validate(project);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(first.IsValid, Is.False);
-            Assert.That(first.Findings.Select(finding => finding.Code), Does.Contain("route.path.missing"));
-            Assert.That(first.Findings.Select(finding => finding.Code), Does.Contain("route.turnout.contradictory"));
-            Assert.That(second.Findings.Select(finding => finding.Id), Is.EqualTo(first.Findings.Select(finding => finding.Id)));
-        });
-    }
-
-    [Test]
     public void Validate_BindingToUnknownPresentation_ReturnsBothMissingReferences()
     {
         var project = CreateValidProject();
@@ -64,47 +39,16 @@ internal sealed class InterlockingDefinitionValidatorTests
     }
 
     [Test]
-    public void Validate_DisconnectedRouteAndMissingClearObservation_ReturnsSafetyFindings()
+    public void Validate_MissingClearObservation_ReturnsActionableFinding()
     {
         var project = CreateValidProject();
-        project.Interlocking.Connections.RemoveAt(0);
         project.Interlocking.Blocks.Single().FeedbackInputs.RemoveAll(input => input.Role == BlockFeedbackRole.Clear);
 
         var report = _validator.Validate(project);
 
         Assert.That(
             report.Findings.Select(finding => finding.Code),
-            Is.SupersetOf(new[] { "route.path.disconnected", "block.feedback.clear.missing" }));
-    }
-
-    [Test]
-    public void Validate_InvalidRouteSignalRequirements_ReturnsActionableFindings()
-    {
-        var project = CreateValidProject();
-        var route = project.Interlocking.Routes.Single();
-        var signalRequirement = route.SignalRequirements.Single();
-        signalRequirement.ProceedAspect = SignalAspect.Hp0;
-        route.SignalRequirements.Add(new RouteSignalRequirement
-        {
-            SignalId = signalRequirement.SignalId,
-            ProceedAspect = SignalAspect.Ks1
-        });
-        route.SignalRequirements.Add(new RouteSignalRequirement
-        {
-            SignalId = Guid.Parse("00000000-0000-0000-0000-000000000099"),
-            ProceedAspect = SignalAspect.Ks1
-        });
-
-        var report = _validator.Validate(project);
-
-        Assert.That(
-            report.Findings.Select(finding => finding.Code),
-            Is.SupersetOf(new[]
-            {
-                "route.signal.duplicate",
-                "route.signal.missing",
-                "route.signal.proceed.safe"
-            }));
+            Does.Contain("block.feedback.clear.missing"));
     }
 
     private static Project CreateValidProject()
@@ -112,7 +56,6 @@ internal sealed class InterlockingDefinitionValidatorTests
         var turnoutId = Guid.Parse("00000000-0000-0000-0000-000000000001");
         var signalId = Guid.Parse("00000000-0000-0000-0000-000000000002");
         var blockId = Guid.Parse("00000000-0000-0000-0000-000000000003");
-        var routeId = Guid.Parse("00000000-0000-0000-0000-000000000004");
         var trackSegmentId = Guid.Parse("00000000-0000-0000-0000-000000000005");
         var signalBoxElementId = Guid.Parse("00000000-0000-0000-0000-000000000006");
 
@@ -182,34 +125,6 @@ internal sealed class InterlockingDefinitionValidatorTests
                 [
                     new OperationalConnection { FromOperationalId = signalId, ToOperationalId = turnoutId },
                     new OperationalConnection { FromOperationalId = turnoutId, ToOperationalId = blockId }
-                ],
-                Routes =
-                [
-                    new RouteDefinition
-                    {
-                        Id = routeId,
-                        Name = "N1 to platform",
-                        EntryElementId = signalId,
-                        ExitElementId = blockId,
-                        PathElementIds = [turnoutId],
-                        TurnoutRequirements =
-                        [
-                            new RouteTurnoutRequirement
-                            {
-                                TurnoutId = turnoutId,
-                                Position = TurnoutPosition.Straight
-                            }
-                        ],
-                        ProtectedBlockIds = [blockId],
-                        SignalRequirements =
-                        [
-                            new RouteSignalRequirement
-                            {
-                                SignalId = signalId,
-                                ProceedAspect = SignalAspect.Ks1
-                            }
-                        ]
-                    }
                 ],
                 Bindings =
                 [

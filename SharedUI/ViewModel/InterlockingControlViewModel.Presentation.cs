@@ -4,7 +4,6 @@ namespace Moba.SharedUI.ViewModel;
 
 using Backend.Service.Interlocking;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using Domain;
 
 /// <summary>
@@ -16,8 +15,7 @@ public enum SelectedOperationalContext
     Unbound,
     Turnout,
     Block,
-    Signal,
-    Route
+    Signal
 }
 
 public sealed partial class InterlockingControlViewModel
@@ -35,7 +33,6 @@ public sealed partial class InterlockingControlViewModel
         SelectedOperationalContext.Turnout => SelectedTurnout,
         SelectedOperationalContext.Block => SelectedBlock,
         SelectedOperationalContext.Signal => SelectedSignal,
-        SelectedOperationalContext.Route => SelectedRoute,
         _ => null
     };
 
@@ -67,7 +64,7 @@ public sealed partial class InterlockingControlViewModel
 
     public string AvailabilityText => (IsSynchronized, SelectedObject?.IsFaulted) switch
     {
-        (false, _) => "Offline",
+        (false, _) => "Incomplete",
         (_, true) => "Fault",
         _ => "Synchronized"
     };
@@ -78,7 +75,7 @@ public sealed partial class InterlockingControlViewModel
     public string SafetySeverity => AvailabilityText switch
     {
         "Fault" => "error",
-        "Offline" => "warning",
+        "Incomplete" => "warning",
         _ => "success"
     };
 
@@ -96,8 +93,6 @@ public sealed partial class InterlockingControlViewModel
 
     public bool IsSignalContext => SelectedContext == SelectedOperationalContext.Signal;
 
-    public bool IsRouteContext => SelectedContext == SelectedOperationalContext.Route;
-
     public bool IsUnboundContext => SelectedContext == SelectedOperationalContext.Unbound;
 
     public bool IsStraightActionVisible => SupportsTurnoutPosition(TurnoutPosition.Straight);
@@ -107,89 +102,12 @@ public sealed partial class InterlockingControlViewModel
     public bool IsDivergingRightActionVisible => SupportsTurnoutPosition(TurnoutPosition.DivergingRight);
 
     public bool HasLiveActionControls =>
-        IsRouteContext ||
         IsStraightActionVisible ||
         IsDivergingLeftActionVisible ||
         IsDivergingRightActionVisible;
 
     public bool ShowNoAuthorizedLiveActionMessage =>
         HasOperationalSelection && !HasLiveActionControls;
-
-    public RouteLifecycle? SelectedRouteLifecycle =>
-        SelectedRoute != null &&
-        _projectedState.Routes.TryGetValue(SelectedRoute.Id, out var route)
-            ? route.Lifecycle
-            : null;
-
-    public bool IsPreviewRouteVisible => SelectedRouteLifecycle == RouteLifecycle.Available;
-
-    public bool IsCancelRouteVisible =>
-        SelectedRouteLifecycle is RouteLifecycle.Selected or RouteLifecycle.Setting;
-
-    public bool CancelRouteRequiresConfirmation =>
-        SelectedRouteLifecycle == RouteLifecycle.Setting;
-
-    public bool IsRoutineCancelRouteVisible =>
-        SelectedRouteLifecycle == RouteLifecycle.Selected;
-
-    public bool IsRoutineCancelRouteAvailable =>
-        IsSynchronized && IsRoutineCancelRouteVisible;
-
-    public string RoutineCancelRouteDisabledReason => IsRoutineCancelRouteAvailable
-        ? "Cancels the selected route before hardware dispatch."
-        : "Cancel is unavailable while the interlocking is offline.";
-
-    public bool IsReconcileRouteVisible =>
-        SelectedRouteLifecycle is RouteLifecycle.Failed or RouteLifecycle.Conflicting;
-
-    public bool ReconcileRouteRequiresConfirmation => IsReconcileRouteVisible;
-
-    public bool IsSafeStopRouteVisible =>
-        SelectedRouteLifecycle is RouteLifecycle.Setting
-            or RouteLifecycle.Established
-            or RouteLifecycle.Occupied
-            or RouteLifecycle.Releasing
-            or RouteLifecycle.Failed;
-
-    public bool IsReleaseRouteVisible =>
-        SelectedRouteLifecycle is RouteLifecycle.Established or RouteLifecycle.Occupied;
-
-    public bool CanReleaseRoute =>
-        IsSynchronized &&
-        IsReleaseRouteVisible &&
-        AreProtectedBlocksExplicitlyFree();
-
-    public string ReleaseRouteDisabledReason => CanReleaseRoute
-        ? string.Empty
-        : "Release is available only when every protected block is explicitly free.";
-
-    public string PrimaryRouteActionLabel => PrimaryRouteAction.Label;
-
-    public IAsyncRelayCommand? PrimaryRouteActionCommand => PrimaryRouteAction.Command;
-
-    private RouteActionPresentation PrimaryRouteAction => SelectedRouteLifecycle switch
-    {
-        RouteLifecycle.Available => new("Select route", SelectRouteCommand),
-        RouteLifecycle.Selected => new("Set route", SetRouteCommand),
-        RouteLifecycle.Setting => new("Cancel setting", CancelRouteCommand),
-        RouteLifecycle.Established or RouteLifecycle.Occupied when CanReleaseRoute =>
-            new("Release route", ReleaseRouteCommand),
-        RouteLifecycle.Established or RouteLifecycle.Occupied or RouteLifecycle.Releasing =>
-            new("Safe stop", SafeStopRouteCommand),
-        RouteLifecycle.Failed or RouteLifecycle.Conflicting => new("Reconcile route", ReconcileRouteCommand),
-        _ => new("No route action", null)
-    };
-
-    public bool IsPrimaryRouteActionAvailable =>
-        IsSynchronized && PrimaryRouteActionCommand != null;
-
-    public string PrimaryRouteActionDisabledReason =>
-        (IsPrimaryRouteActionAvailable, IsSynchronized) switch
-        {
-            (true, _) => string.Empty,
-            (_, false) => "Live actions are unavailable while the interlocking is offline.",
-            _ => "No lifecycle action is available for the selected route."
-        };
 
     partial void OnSelectedTurnoutChanged(InterlockingItemViewState? value) =>
         ProjectDirectSelection(value, SelectedOperationalContext.Turnout);
@@ -199,9 +117,6 @@ public sealed partial class InterlockingControlViewModel
 
     partial void OnSelectedSignalChanged(InterlockingItemViewState? value) =>
         ProjectDirectSelection(value, SelectedOperationalContext.Signal);
-
-    partial void OnSelectedRouteChanged(InterlockingItemViewState? value) =>
-        ProjectDirectSelection(value, SelectedOperationalContext.Route);
 
     partial void OnSelectedOperationalElementChanged(OperationalElementOption? value)
     {
@@ -238,7 +153,6 @@ public sealed partial class InterlockingControlViewModel
             SelectedTurnout = Turnouts.FirstOrDefault(item => item.Id == operationalId);
             SelectedBlock = Blocks.FirstOrDefault(item => item.Id == operationalId);
             SelectedSignal = Signals.FirstOrDefault(item => item.Id == operationalId);
-            SelectedRoute = Routes.FirstOrDefault(item => item.Id == operationalId);
             SelectedOperationalElement = OperationalElements.FirstOrDefault(item => item.Id == operationalId);
             SelectedContext = ResolveSelectedContext();
         }
@@ -261,9 +175,7 @@ public sealed partial class InterlockingControlViewModel
         if (SelectedSignal != null)
             return SelectedOperationalContext.Signal;
 
-        return SelectedRoute != null
-            ? SelectedOperationalContext.Route
-            : SelectedOperationalContext.Unbound;
+        return SelectedOperationalContext.Unbound;
     }
 
     private void ClearOperationalSelection(SelectedOperationalContext context)
@@ -274,7 +186,6 @@ public sealed partial class InterlockingControlViewModel
             SelectedTurnout = null;
             SelectedBlock = null;
             SelectedSignal = null;
-            SelectedRoute = null;
             SelectedOperationalElement = null;
             SelectedContext = context;
         }
@@ -307,19 +218,6 @@ public sealed partial class InterlockingControlViewModel
             .Commands.Any(command => command.Position == position) == true;
     }
 
-    private bool AreProtectedBlocksExplicitlyFree()
-    {
-        if (SelectedRoute == null)
-            return false;
-
-        var route = CurrentProject?.Interlocking.Routes
-            .FirstOrDefault(candidate => candidate.Id == SelectedRoute.Id);
-        return route != null &&
-            route.ProtectedBlockIds.All(blockId =>
-                _projectedState.Blocks.TryGetValue(blockId, out var block) &&
-                block.Occupancy == BlockOccupancy.Free);
-    }
-
     private void NotifyPresentationChanged()
     {
         OnPropertyChanged(nameof(SelectedObject));
@@ -335,35 +233,11 @@ public sealed partial class InterlockingControlViewModel
         OnPropertyChanged(nameof(IsTurnoutContext));
         OnPropertyChanged(nameof(IsBlockContext));
         OnPropertyChanged(nameof(IsSignalContext));
-        OnPropertyChanged(nameof(IsRouteContext));
         OnPropertyChanged(nameof(IsUnboundContext));
         OnPropertyChanged(nameof(IsStraightActionVisible));
         OnPropertyChanged(nameof(IsDivergingLeftActionVisible));
         OnPropertyChanged(nameof(IsDivergingRightActionVisible));
         OnPropertyChanged(nameof(HasLiveActionControls));
         OnPropertyChanged(nameof(ShowNoAuthorizedLiveActionMessage));
-        OnPropertyChanged(nameof(SelectedRouteLifecycle));
-        OnPropertyChanged(nameof(IsPreviewRouteVisible));
-        OnPropertyChanged(nameof(IsCancelRouteVisible));
-        OnPropertyChanged(nameof(CancelRouteRequiresConfirmation));
-        OnPropertyChanged(nameof(IsRoutineCancelRouteVisible));
-        OnPropertyChanged(nameof(IsRoutineCancelRouteAvailable));
-        OnPropertyChanged(nameof(RoutineCancelRouteDisabledReason));
-        OnPropertyChanged(nameof(IsReconcileRouteVisible));
-        OnPropertyChanged(nameof(ReconcileRouteRequiresConfirmation));
-        OnPropertyChanged(nameof(IsSafeStopRouteVisible));
-        OnPropertyChanged(nameof(IsReleaseRouteVisible));
-        OnPropertyChanged(nameof(CanReleaseRoute));
-        OnPropertyChanged(nameof(ReleaseRouteDisabledReason));
-        OnPropertyChanged(nameof(PrimaryRouteActionLabel));
-        OnPropertyChanged(nameof(PrimaryRouteActionCommand));
-        OnPropertyChanged(nameof(IsPrimaryRouteActionAvailable));
-        OnPropertyChanged(nameof(PrimaryRouteActionDisabledReason));
-        CancelRouteCommand.NotifyCanExecuteChanged();
-        ReleaseRouteCommand.NotifyCanExecuteChanged();
-        SafeStopRouteCommand.NotifyCanExecuteChanged();
-        ReconcileRouteCommand.NotifyCanExecuteChanged();
     }
-
-    private readonly record struct RouteActionPresentation(string Label, IAsyncRelayCommand? Command);
 }

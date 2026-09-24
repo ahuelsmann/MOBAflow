@@ -91,7 +91,7 @@ public class Project
     public List<LocomotiveWhistleRule> LocomotiveWhistleRules { get; set; }
 
     /// <summary>
-    /// Gets or sets the shared operational definitions for turnout, block, route, and signal control.
+    /// Gets or sets the shared operational definitions for turnout and signal control and block observations.
     /// </summary>
     public InterlockingDefinition Interlocking { get; set; }
 
