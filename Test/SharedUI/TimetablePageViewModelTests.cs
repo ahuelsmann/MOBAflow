@@ -325,8 +325,7 @@ internal sealed class TimetablePageViewModelTests
                 [project.Journeys[0].Id] = new JourneyRuntimeSnapshot
                 {
                     JourneyId = project.Journeys[0].Id,
-                    CurrentStationName = "Central stop",
-                    CurrentFeedbackIndex = 2
+                    CurrentStationName = "Central stop"
                 }
             }
         }));
@@ -334,7 +333,7 @@ internal sealed class TimetablePageViewModelTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(context.ViewModel.Services.Single().ProgressText, Is.EqualTo("Central stop (step 3)"));
+            Assert.That(context.ViewModel.Services.Single().ProgressText, Is.EqualTo("Central stop"));
             Assert.That(projection.CallCount, Is.Zero);
         });
     }

@@ -3,13 +3,16 @@
 namespace Moba.Backend.Service;
 
 using Interface;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 /// <summary>Provides per-source FIFO execution with independent cancellation ownership.</summary>
-public sealed class WorkflowExecutionCoordinator : IWorkflowExecutionCoordinator
+public sealed partial class WorkflowExecutionCoordinator : IWorkflowExecutionCoordinator
 {
     private readonly object _sync = new();
     private readonly IWorkflowService _workflowService;
     private readonly TimeProvider _timeProvider;
+    private readonly ILogger _logger;
     private readonly Dictionary<string, QueuedEntry> _sourceTails = new(StringComparer.Ordinal);
     private readonly Dictionary<Guid, HashSet<QueuedEntry>> _ownerEntries = [];
     private bool _disposed;
@@ -17,13 +20,16 @@ public sealed class WorkflowExecutionCoordinator : IWorkflowExecutionCoordinator
     /// <summary>Creates a workflow execution coordinator.</summary>
     /// <param name="workflowService">Validated graph executor.</param>
     /// <param name="timeProvider">Time source used for cancellable source delays.</param>
-    public WorkflowExecutionCoordinator(IWorkflowService workflowService, TimeProvider timeProvider)
+    /// <param name="logger">Logger for completion callback failures.</param>
+    public WorkflowExecutionCoordinator(IWorkflowService workflowService, TimeProvider timeProvider,
+        ILogger? logger = null)
     {
         ArgumentNullException.ThrowIfNull(workflowService);
         ArgumentNullException.ThrowIfNull(timeProvider);
 
         _workflowService = workflowService;
         _timeProvider = timeProvider;
+        _logger = logger ?? NullLogger.Instance;
     }
 
     /// <inheritdoc />
@@ -118,15 +124,37 @@ public sealed class WorkflowExecutionCoordinator : IWorkflowExecutionCoordinator
                 await Task.Delay(execution.Delay, _timeProvider, entry.Cancellation.Token).ConfigureAwait(false);
             }
 
-            return await _workflowService.ExecuteAsync(execution.Request, entry.Cancellation.Token).ConfigureAwait(false);
+            var request = execution.RequestFactory();
+            var succeeded = false;
+            try
+            {
+                var result = await _workflowService.ExecuteAsync(request, entry.Cancellation.Token).ConfigureAwait(false);
+                succeeded = result.Status == WorkflowExecutionStatus.Succeeded && !entry.Cancellation.IsCancellationRequested;
+                return result;
+            }
+            finally
+            {
+                if (execution.OnCompleted is not null)
+                {
+                    try
+                    {
+                        await execution.OnCompleted(succeeded).ConfigureAwait(false);
+                    }
+                    catch (Exception ex) when (ex is not OutOfMemoryException and not AccessViolationException)
+                    {
+                        // Recoverable callback failures must not replace the executor's result or exception.
+                        LogCompletionFailed(_logger, ex, execution.WorkflowId);
+                    }
+                }
+            }
         }
         catch (OperationCanceledException) when (entry.Cancellation.IsCancellationRequested)
         {
             return new WorkflowExecutionResult
             {
                 ExecutionId = Guid.NewGuid(),
-                WorkflowId = execution.Request.Workflow.Id,
-                SourceCorrelationId = execution.Request.SourceCorrelationId,
+                WorkflowId = execution.WorkflowId,
+                SourceCorrelationId = execution.SourceCorrelationId,
                 Status = WorkflowExecutionStatus.Cancelled
             };
         }
@@ -136,6 +164,9 @@ public sealed class WorkflowExecutionCoordinator : IWorkflowExecutionCoordinator
             entry.Cancellation.Dispose();
         }
     }
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Workflow {WorkflowId} completion callback failed")]
+    private static partial void LogCompletionFailed(ILogger logger, Exception exception, Guid workflowId);
 
     private static async Task AwaitPredecessorAsync(Task predecessor)
     {

@@ -4,193 +4,303 @@ namespace Moba.SharedUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Domain;
-using Domain.Enum;
+using Interface;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Text.Json;
 
-public sealed record EventElementDescriptor(string Id, string Name, string Description, uint DefaultRepeatCount);
-
-/// <summary>Edits the feedback sequence of the journey selected in the shared application context.</summary>
-public sealed partial class EventManagerViewModel : ObservableObject
+/// <summary>Edits the InPort count events of the selected journey.</summary>
+public sealed partial class EventManagerViewModel : ObservableObject, IDisposable
 {
-    private readonly MainWindowViewModel _main;
+    private readonly IProjectContext _context;
     private readonly Stack<string> _undo = [];
     private readonly Stack<string> _redo = [];
+    private bool _notifyingJourney;
+    private bool _disposed;
 
     [ObservableProperty] private JourneyViewModel? _selectedJourney;
-    [ObservableProperty] private JourneyFeedbackStepViewModel? _selectedStep;
+    [ObservableProperty] private JourneyEventViewModel? _selectedEvent;
     [ObservableProperty] private uint _defaultInPort = 1;
-    [ObservableProperty] private string _workflowSearchText = string.Empty;
-    [ObservableProperty] private string _stationSearchText = string.Empty;
 
     public EventManagerViewModel(MainWindowViewModel main)
+        : this(main, main.WorkflowLibrary)
     {
-        _main = main;
-        ToolboxElements =
-        [
-            new("single", "Single Feedback", "One matching feedback activation", 1),
-            new("repeat", "Repeat Feedback", "Wait for multiple matching activations", 10)
-        ];
-        _main.PropertyChanged += OnMainPropertyChanged;
-        SelectedJourney = _main.SelectedJourney;
+        MainWindow = main;
+        NotifyState();
+    }
+
+    public EventManagerViewModel(IProjectContext context, WorkflowLibraryViewModel workflowLibrary)
+    {
+        _context = context;
+        WorkflowLibrary = workflowLibrary;
+        if (_context is INotifyPropertyChanging changingContext) changingContext.PropertyChanging += OnContextPropertyChanging;
+        _context.PropertyChanged += OnContextPropertyChanged;
+        WorkflowLibrary.PropertyChanged += OnWorkflowLibraryPropertyChanged;
+        SelectedJourney = _context.SelectedJourney;
         Refresh();
     }
 
-    public ObservableCollection<JourneyFeedbackStepViewModel> Steps { get; } = [];
-    public IReadOnlyList<EventElementDescriptor> ToolboxElements { get; }
-    public IEnumerable<JourneyViewModel> Journeys => _main.SelectedProject?.Journeys ?? [];
-    public WorkflowLibraryViewModel WorkflowLibrary => _main.WorkflowLibrary;
-    public IEnumerable<WorkflowViewModel> Workflows => WorkflowLibrary.FilteredWorkflows;
-    public IEnumerable<StationAssignmentOption> Stations
+    public MainWindowViewModel? MainWindow { get; }
+    public WorkflowLibraryViewModel WorkflowLibrary { get; }
+    public ObservableCollection<JourneyEventViewModel> Events { get; } = [];
+    public IEnumerable<JourneyViewModel> Journeys => _context.SelectedProject?.Journeys ?? [];
+    public string EventCountLabel => Events.Count == 1 ? "1 event" : $"{Events.Count} events";
+    public bool IsEmptyPlan => SelectedJourney != null && Events.Count == 0;
+    public bool HasCommandStatus => !string.IsNullOrWhiteSpace(MainWindow?.JourneyCommandStatus);
+    public bool CanEdit => this.SelectedJourney != null;
+    public bool CanUndo => CanEdit && _undo.Count > 0;
+    public bool CanRedo => CanEdit && _redo.Count > 0;
+    public bool CanEditSelectedEvent => CanEdit && SelectedEvent != null;
+
+    public string PlanStatus => this.SelectedJourney switch
     {
-        get
-        {
-            var options = new List<StationAssignmentOption> { new("Next stop", JourneyStopTransitionMode.Next) };
-            options.AddRange((SelectedJourney?.Model.Stations ?? [])
-                .Where(station => string.IsNullOrWhiteSpace(StationSearchText) || station.Name.Contains(StationSearchText, StringComparison.OrdinalIgnoreCase))
-                .Select(station => new StationAssignmentOption(station.Name, JourneyStopTransitionMode.SpecificStation, station)));
-            return options;
-        }
-    }
-    public bool CanUndo => _undo.Count > 0;
-    public bool CanRedo => _redo.Count > 0;
+        null => "Select a journey to edit its events.",
+        { IsActive: false } => "Journey inactive. Activate it to evaluate its events on incoming feedback.",
+        _ => "Each event runs its workflow when its InPort counter reaches the count. Counters start at zero after a reset."
+    };
+
+    partial void OnSelectedJourneyChanging(JourneyViewModel? value) => SelectedEvent?.CommitCountCommand.Execute(null);
 
     partial void OnSelectedJourneyChanged(JourneyViewModel? oldValue, JourneyViewModel? newValue)
     {
-        if (oldValue != null) oldValue.PropertyChanged -= OnSelectedJourneyPropertyChanged;
-        if (_main.SelectedJourney != newValue) _main.SelectedJourney = newValue;
-        if (newValue != null) newValue.PropertyChanged += OnSelectedJourneyPropertyChanged;
+        if (oldValue != null) oldValue.PropertyChanged -= OnJourneyPropertyChanged;
+        if (_context.SelectedJourney != newValue) _context.SelectedJourney = newValue;
+        if (newValue != null) newValue.PropertyChanged += OnJourneyPropertyChanged;
         _undo.Clear();
         _redo.Clear();
         Refresh();
-        OnPropertyChanged(nameof(Stations));
     }
 
-    partial void OnSelectedStepChanged(JourneyFeedbackStepViewModel? value)
+    partial void OnSelectedEventChanging(JourneyEventViewModel? oldValue, JourneyEventViewModel? newValue)
     {
-        _ = value;
-        WorkflowLibrary.SelectedStep = null;
+        // Rebuilt/undone plans discard obsolete drafts; ordinary selection commits the existing row.
+        if (oldValue != null && Events.Contains(oldValue) && SelectedJourney is { } journey
+            && journey.Model.EventPlan.Events.Contains(oldValue.Model))
+            oldValue.CommitCountCommand.Execute(null);
     }
 
-    partial void OnWorkflowSearchTextChanged(string value)
+    partial void OnSelectedEventChanged(JourneyEventViewModel? oldValue, JourneyEventViewModel? newValue)
     {
-        WorkflowLibrary.SearchText = value;
-        OnPropertyChanged(nameof(Workflows));
-    }
-    partial void OnStationSearchTextChanged(string value) { _ = value; OnPropertyChanged(nameof(Stations)); }
-
-    [RelayCommand]
-    public void AddElement(EventElementDescriptor? descriptor)
-    {
-        if (descriptor is null) return;
-
-        InsertElement(descriptor, SelectedStep == null ? Steps.Count : Steps.IndexOf(SelectedStep) + 1);
+        if (oldValue != null) oldValue.IsSelected = false;
+        if (newValue != null) newValue.IsSelected = true;
+        NotifyCommands();
     }
 
-    public void InsertElement(EventElementDescriptor descriptor, int index)
+    [RelayCommand(CanExecute = nameof(CanEdit))]
+    private void AddEvent() => InsertEvent(null, Events.Count);
+
+    public void InsertEvent(WorkflowViewModel? workflow, int index)
     {
-        if (SelectedJourney == null) return;
+        var plan = SelectedJourney?.Model.EventPlan;
+        if (plan == null || (workflow != null && !IsAvailableWorkflow(workflow))) return;
+        SelectedEvent?.CommitCountCommand.Execute(null);
         CaptureUndo();
-        var step = new JourneyFeedbackStep { InPort = Math.Clamp(DefaultInPort, 1u, 512u), Index = descriptor.DefaultRepeatCount };
-        index = Math.Clamp(index, 0, SelectedJourney.Model.FeedbackSequence.Count);
-        SelectedJourney.Model.FeedbackSequence.Insert(index, step);
-        Refresh(step.Id);
+        var inPort = Math.Clamp(DefaultInPort, 1u, 512u);
+        var previousCount = Events.Where(item => item.InPort == inPort).Select(item => item.Count).DefaultIfEmpty(0UL).Max();
+        var item = new JourneyEvent
+        {
+            InPort = inPort,
+            Count = previousCount == ulong.MaxValue ? previousCount : previousCount + 1,
+            WorkflowId = workflow?.Model.Id
+        };
+        plan.Events.Insert(Math.Clamp(index, 0, plan.Events.Count), item);
+        CompleteEdit(item.Id);
     }
 
-    [RelayCommand]
-    private void DeleteStep(JourneyFeedbackStepViewModel? step)
+    public bool IsAvailableWorkflow(WorkflowViewModel workflow) =>
+        _context.SelectedProject?.Model.Workflows.Any(item => item.Id == workflow.Model.Id) == true;
+
+    public bool ContainsEvent(JourneyEventViewModel item) => Events.Contains(item);
+
+    [RelayCommand(CanExecute = nameof(CanEditSelectedEvent))]
+    private void DuplicateSelectedEvent()
     {
-        if (SelectedJourney == null || step == null) return;
-        CaptureUndo();
-        SelectedJourney.Model.FeedbackSequence.Remove(step.Model);
-        Refresh();
+        if (SelectedEvent != null) MoveOrCopyEvent(SelectedEvent, Events.IndexOf(SelectedEvent) + 1, true);
     }
 
-    public void MoveStep(JourneyFeedbackStepViewModel step, int targetIndex)
+    [RelayCommand(CanExecute = nameof(CanEditSelectedEvent))]
+    private void DeleteSelectedEvent()
     {
-        if (SelectedJourney == null) return;
-        var sourceIndex = SelectedJourney.Model.FeedbackSequence.IndexOf(step.Model);
-        targetIndex = Math.Clamp(targetIndex, 0, SelectedJourney.Model.FeedbackSequence.Count);
-        if (sourceIndex < 0 || sourceIndex == targetIndex || sourceIndex + 1 == targetIndex) return;
+        var plan = SelectedJourney?.Model.EventPlan;
+        var selectedEvent = SelectedEvent;
+        if (!CanEdit || plan == null || selectedEvent == null) return;
+        selectedEvent.CommitCountCommand.Execute(null);
         CaptureUndo();
-        SelectedJourney.Model.FeedbackSequence.RemoveAt(sourceIndex);
-        if (targetIndex > sourceIndex) targetIndex--;
-        targetIndex = Math.Clamp(targetIndex, 0, SelectedJourney.Model.FeedbackSequence.Count);
-        SelectedJourney.Model.FeedbackSequence.Insert(targetIndex, step.Model);
-        Refresh(step.Model.Id);
+        plan.Events.Remove(selectedEvent.Model);
+        CompleteEdit();
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanMoveUp))]
+    private void MoveSelectedEventUp()
+    {
+        if (SelectedEvent != null) MoveOrCopyEvent(SelectedEvent, Events.IndexOf(SelectedEvent) - 1, false);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanMoveDown))]
+    private void MoveSelectedEventDown()
+    {
+        if (SelectedEvent != null) MoveOrCopyEvent(SelectedEvent, Events.IndexOf(SelectedEvent) + 2, false);
+    }
+
+    private bool CanMoveUp() => CanEdit && SelectedEvent is { } item && Events.IndexOf(item) > 0;
+    private bool CanMoveDown() => CanEdit && SelectedEvent is { } item && Events.IndexOf(item) < Events.Count - 1;
+
+    public void MoveOrCopyEvent(JourneyEventViewModel item, int targetIndex, bool copy)
+    {
+        var plan = SelectedJourney?.Model.EventPlan;
+        if (!CanEdit || plan == null || !ContainsEvent(item)) return;
+        var events = plan.Events;
+        var sourceIndex = events.IndexOf(item.Model);
+        targetIndex = Math.Clamp(targetIndex, 0, events.Count);
+        if (!copy && (sourceIndex == targetIndex || sourceIndex + 1 == targetIndex)) return;
+        SelectedEvent?.CommitCountCommand.Execute(null);
+        CaptureUndo();
+        var model = item.Model;
+        if (copy)
+            model = new JourneyEvent { InPort = model.InPort, Count = model.Count, WorkflowId = model.WorkflowId, Enabled = model.Enabled };
+        else
+        {
+            events.RemoveAt(sourceIndex);
+            if (targetIndex > sourceIndex) targetIndex--;
+        }
+        events.Insert(targetIndex, model);
+        CompleteEdit(model.Id);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanUndo))]
     private void Undo()
     {
-        if (SelectedJourney == null || _undo.Count == 0) return;
-        _redo.Push(SerializeSequence());
-        RestoreSequence(_undo.Pop());
+        if (!CanUndo) return;
+        _redo.Push(SerializePlan());
+        RestorePlan(_undo.Pop());
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanRedo))]
     private void Redo()
     {
-        if (SelectedJourney == null || _redo.Count == 0) return;
-        _undo.Push(SerializeSequence());
-        RestoreSequence(_redo.Pop());
+        if (!CanRedo) return;
+        _undo.Push(SerializePlan());
+        RestorePlan(_redo.Pop());
     }
 
-    public void CaptureUndo()
+    private void CaptureUndo()
     {
-        if (SelectedJourney == null) return;
-        var snapshot = SerializeSequence();
+        if (!CanEdit) return;
+        var snapshot = SerializePlan();
         if (_undo.TryPeek(out var previous) && previous == snapshot) return;
         _undo.Push(snapshot);
         _redo.Clear();
-        NotifyHistoryChanged();
+        NotifyCommands();
+    }
+
+    private void CompleteEdit(Guid? selectId = null)
+    {
+        Refresh(selectId);
+        NotifyJourneyChanged();
+    }
+
+    private void NotifyJourneyChanged()
+    {
+        _notifyingJourney = true;
+        try { SelectedJourney?.NotifyEventPlanChanged(); }
+        finally { _notifyingJourney = false; }
+        NotifyState();
     }
 
     private void Refresh(Guid? selectId = null)
     {
-        Steps.Clear();
-        if (SelectedJourney != null)
+        selectId ??= SelectedEvent?.Model.Id;
+        Events.Clear();
+        if (SelectedJourney != null && _context.SelectedProject != null)
         {
-            foreach (var step in SelectedJourney.Model.FeedbackSequence)
-                Steps.Add(new JourneyFeedbackStepViewModel(step, _main.SelectedProject!.Model, SelectedJourney.Model, CaptureUndo));
+            foreach (var item in SelectedJourney.Model.EventPlan.Events)
+                Events.Add(new JourneyEventViewModel(item, _context.SelectedProject.Model, () => CanEdit,
+                    CaptureUndo, NotifyJourneyChanged));
         }
-        SelectedStep = selectId.HasValue ? Steps.FirstOrDefault(step => step.Model.Id == selectId) : Steps.FirstOrDefault();
-        UpdateRuntimeProgress();
+        SelectedEvent = Events.FirstOrDefault(item => item.Model.Id == selectId) ?? Events.FirstOrDefault();
+        NotifyState();
+    }
+
+    private string SerializePlan() => JsonSerializer.Serialize(this.SelectedJourney?.Model.EventPlan, JsonOptions.Compact);
+
+    private void RestorePlan(string json)
+    {
+        var journey = SelectedJourney;
+        if (journey == null) return;
+        journey.Model.EventPlan = JsonSerializer.Deserialize<JourneyEventPlan>(json, JsonOptions.Compact)
+            ?? throw new InvalidOperationException("The saved event plan could not be restored.");
+        CompleteEdit();
+    }
+
+    private void NotifyState()
+    {
         OnPropertyChanged(nameof(Journeys));
-        OnPropertyChanged(nameof(Workflows));
-        NotifyHistoryChanged();
+        OnPropertyChanged(nameof(EventCountLabel));
+        OnPropertyChanged(nameof(IsEmptyPlan));
+        OnPropertyChanged(nameof(HasCommandStatus));
+        OnPropertyChanged(nameof(CanEdit));
+        OnPropertyChanged(nameof(PlanStatus));
+        foreach (var item in Events) item.RefreshEditState();
+        NotifyCommands();
     }
 
-    private string SerializeSequence() => JsonSerializer.Serialize(SelectedJourney!.Model.FeedbackSequence, JsonOptions.Compact);
-    private void RestoreSequence(string json)
+    private void NotifyCommands()
     {
-        SelectedJourney!.Model.FeedbackSequence = JsonSerializer.Deserialize<List<JourneyFeedbackStep>>(json, JsonOptions.Compact) ?? [];
-        Refresh();
-    }
-
-    private void NotifyHistoryChanged()
-    {
+        OnPropertyChanged(nameof(CanEditSelectedEvent));
         OnPropertyChanged(nameof(CanUndo));
         OnPropertyChanged(nameof(CanRedo));
+        AddEventCommand.NotifyCanExecuteChanged();
+        DeleteSelectedEventCommand.NotifyCanExecuteChanged();
+        DuplicateSelectedEventCommand.NotifyCanExecuteChanged();
+        MoveSelectedEventUpCommand.NotifyCanExecuteChanged();
+        MoveSelectedEventDownCommand.NotifyCanExecuteChanged();
         UndoCommand.NotifyCanExecuteChanged();
         RedoCommand.NotifyCanExecuteChanged();
     }
 
-    private void OnMainPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void OnContextPropertyChanging(object? sender, PropertyChangingEventArgs e)
     {
-        if (e.PropertyName == nameof(MainWindowViewModel.SelectedJourney)) SelectedJourney = _main.SelectedJourney;
-        if (e.PropertyName == nameof(MainWindowViewModel.SelectedProject)) Refresh();
+        // Commit while the main window still observes the old journey for runtime updates and auto-save.
+        if (e.PropertyName is nameof(IProjectContext.SelectedJourney) or nameof(IProjectContext.SelectedProject))
+            this.SelectedEvent?.CommitCountCommand.Execute(null);
     }
 
-    private void OnSelectedJourneyPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void OnContextPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(JourneyViewModel.CurrentFeedbackIndex) or nameof(JourneyViewModel.CurrentStepOccurrence))
-            UpdateRuntimeProgress();
+        if (e.PropertyName == nameof(MainWindowViewModel.JourneyCommandStatus)) OnPropertyChanged(nameof(HasCommandStatus));
+        if (e.PropertyName == nameof(IProjectContext.SelectedJourney)) SelectedJourney = _context.SelectedJourney;
+        if (e.PropertyName == nameof(IProjectContext.SelectedProject))
+        {
+            SelectedJourney = _context.SelectedJourney;
+            Refresh();
+        }
     }
 
-    private void UpdateRuntimeProgress()
+    private void OnJourneyPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        for (var index = 0; index < Steps.Count; index++)
-            Steps[index].UpdateRuntimeProgress(index == SelectedJourney?.CurrentFeedbackIndex, SelectedJourney?.CurrentStepOccurrence ?? 0);
+        if (e.PropertyName == nameof(JourneyViewModel.EventPlan) && !_notifyingJourney)
+        {
+            _undo.Clear();
+            _redo.Clear();
+            Refresh();
+        }
+        else if (e.PropertyName == nameof(JourneyViewModel.IsActive)) OnPropertyChanged(nameof(PlanStatus));
+    }
+
+    private void OnWorkflowLibraryPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (!string.IsNullOrEmpty(e.PropertyName) && e.PropertyName != nameof(WorkflowLibraryViewModel.Workflows)) return;
+        foreach (var item in Events) item.RefreshWorkflows();
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        if (_context is INotifyPropertyChanging changingContext) changingContext.PropertyChanging -= OnContextPropertyChanging;
+        _context.PropertyChanged -= OnContextPropertyChanged;
+        WorkflowLibrary.PropertyChanged -= OnWorkflowLibraryPropertyChanged;
+        if (SelectedJourney != null) SelectedJourney.PropertyChanged -= OnJourneyPropertyChanged;
+        GC.SuppressFinalize(this);
     }
 }

@@ -38,7 +38,7 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton<IFileSystem>(SystemFileSystem.Instance);
         services.TryAddSingleton<IMultiplexerProvider, DefaultMultiplexerProvider>();
         services.TryAddSingleton(TimeProvider.System);
-        services.TryAddSingleton<IVehicleUsageService, VehicleUsageService>();
+        services.TryAddSingleton<InPortCounterService>();
         services.TryAddSingleton<IVehicleMaintenanceService, VehicleMaintenanceService>();
         services.TryAddSingleton<IDecoderCvService, DecoderCvService>();
         services.TryAddSingleton<ILocomotiveLibraryService, LocomotiveLibraryService>();
@@ -79,7 +79,6 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton<IProjectValidator, ProjectValidator>();
         services.TryAddSingleton<IJourneyStopTransitionService, JourneyStopTransitionService>();
         services.TryAddSingleton<IJourneyRuntimeStateStore, FileJourneyRuntimeStateStore>();
-        services.TryAddSingleton<IVehicleUsageCheckpointStore, FileVehicleUsageCheckpointStore>();
         services.TryAddSingleton<AnnouncementService>();
         services.TryAddSingleton<IAnnouncementService>(sp => sp.GetRequiredService<AnnouncementService>());
         services.TryAddSingleton<IWorkflowEffectPlanner, WorkflowEffectPlanner>();
@@ -123,15 +122,19 @@ public static class MobaBackendServiceCollectionExtensions
             journeyManagerFactory: new JourneyManagerFactory(
                 sp.GetRequiredService<IZ21>(),
                 sp.GetRequiredService<IWorkflowService>(),
-                sp.GetRequiredService<IJourneyStopTransitionService>(),
-                sp.GetRequiredService<IJourneyRuntimeStateStore>(),
-                sp.GetService<ILogger<JourneyManager>>(),
-                timeProvider: sp.GetRequiredService<TimeProvider>(),
-                eventBus: sp.GetService<IEventBus>()),
+                new JourneyManagerDependencies
+                {
+                    StopTransitionService = sp.GetRequiredService<IJourneyStopTransitionService>(),
+                    RuntimeStateStore = sp.GetRequiredService<IJourneyRuntimeStateStore>(),
+                    TimeProvider = sp.GetRequiredService<TimeProvider>(),
+                    EventBus = sp.GetService<IEventBus>(),
+                    InPortCounterService = sp.GetRequiredService<InPortCounterService>()
+                },
+                sp.GetService<ILogger<JourneyManager>>()),
             z21Discovery: sp.GetRequiredService<IZ21DiscoveryService>(),
-            vehicleUsageCheckpointStore: sp.GetRequiredService<IVehicleUsageCheckpointStore>(),
             timeProvider: sp.GetRequiredService<TimeProvider>(),
-            interlockingRuntime: sp.GetRequiredService<IInterlockingRuntime>()));
+            interlockingRuntime: sp.GetRequiredService<IInterlockingRuntime>(),
+            inPortCounterService: sp.GetRequiredService<InPortCounterService>()));
         services.TryAddSingleton<IRuntimeSnapshotProvider>(sp => sp.GetRequiredService<IMobaRuntime>());
         services.TryAddSingleton<IRecordingReplaySafetyGate, RecordingReplaySafetyGate>();
         services.TryAddSingleton<IRecordingReplayService, RecordingReplayService>();

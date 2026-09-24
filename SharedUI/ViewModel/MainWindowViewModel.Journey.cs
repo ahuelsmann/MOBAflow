@@ -2,10 +2,12 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Interface;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Domain;
 using Domain.Enum;
 using Helper;
+using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// MainWindowViewModel - Journey and Station Management
@@ -13,6 +15,12 @@ using Helper;
 /// </summary>
 public partial class MainWindowViewModel
 {
+    [ObservableProperty]
+    private string _journeyCommandStatus = string.Empty;
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "{Operation} failed")]
+    private static partial void LogJourneyCommandFailure(ILogger logger, Exception exception, string operation);
+
     #region Journey Factory
     /// <summary>
     /// Creates a JourneyViewModel with SessionState.
@@ -168,8 +176,7 @@ public partial class MainWindowViewModel
     {
         if (SelectedJourney == null) return;
 
-        SelectedJourney.ResetCommand.Execute(null);
-        await _runtimeCommandGateway.ResetJourneyAsync(SelectedJourney.Model.Id).ConfigureAwait(false);
+        await _runtimeCommandGateway.ResetJourneyAsync(SelectedJourney.Model.Id).ConfigureAwait(true);
     }
 
     private bool CanResetJourneyCounter() => SelectedJourney != null;

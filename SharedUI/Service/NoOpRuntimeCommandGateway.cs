@@ -23,6 +23,9 @@ internal sealed class NoOpRuntimeCommandGateway : IRuntimeCommandGateway
 
     public Task ResetJourneyAsync(Guid journeyId, CancellationToken cancellationToken = default) => Task.CompletedTask;
 
+    public Task ResetInPortCountersAsync(CancellationToken cancellationToken = default) =>
+        Task.FromException(new InvalidOperationException("No counter runtime is available."));
+
     public Task SetSignalAspectAsync(Guid signalId, SignalAspect aspect, CancellationToken cancellationToken = default) =>
         Task.CompletedTask;
 

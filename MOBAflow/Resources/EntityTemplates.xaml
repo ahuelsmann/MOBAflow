@@ -30,39 +30,10 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
                         <TextBlock
-                            Grid.Row="0"
-                            Grid.Column="0"
-                            Text="Feedback index:" />
-                        <TextBlock
-                            Grid.Row="0"
-                            Grid.Column="1"
-                            FontWeight="SemiBold"
-                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                            Text="{Binding CurrentFeedbackIndex, Mode=OneWay}" />
-
-                        <TextBlock
-                            Grid.Row="1"
-                            Grid.Column="0"
-                            Text="Next InPort:" />
-                        <TextBlock
-                            Grid.Row="1"
-                            Grid.Column="1"
-                            FontWeight="SemiBold"
-                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                            Text="{Binding NextFeedbackInPort, Mode=OneWay}" />
-
-                        <TextBlock
-                            Grid.Row="2"
                             Grid.Column="0"
                             Text="Current Station:" />
                         <TextBlock
-                            Grid.Row="2"
                             Grid.Column="1"
                             FontWeight="SemiBold"
                             Foreground="{ThemeResource AccentFillColorDefaultBrush}"
@@ -85,31 +56,14 @@
                     Text="{Binding Description, Mode=TwoWay}"
                     TextWrapping="Wrap" />
 
-                <StackPanel Spacing="8">
-                    <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Feedback Sequence" />
-                    <Button Command="{Binding AddFeedbackStepCommand}" Content="Add feedback step" />
-                    <ListView x:Name="FeedbackStepList" ItemsSource="{Binding FeedbackSteps}">
-                        <ListView.ItemTemplate>
-                            <DataTemplate>
-                                <Grid Padding="4" ColumnSpacing="8">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="2*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <NumberBox Grid.Column="0" Header="InPort" Minimum="1" Value="{Binding InPort, Mode=TwoWay}" />
-                                    <ComboBox Grid.Column="1" Header="Workflow" DisplayMemberPath="Name" ItemsSource="{Binding AvailableWorkflows}" SelectedValue="{Binding WorkflowId, Mode=TwoWay}" SelectedValuePath="Id" />
-                                    <Button
-                                        Grid.Column="2"
-                                        VerticalAlignment="Bottom"
-                                        Command="{Binding DataContext.DeleteFeedbackStepCommand, ElementName=FeedbackStepList}"
-                                        CommandParameter="{Binding}"
-                                        Content="Delete" />
-                                </Grid>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
-                </StackPanel>
+                <!--  Active  -->
+                <ToggleSwitch
+                    Header="Active"
+                    IsOn="{Binding IsActive, Mode=TwoWay}"
+                    OffContent="Events are ignored"
+                    OnContent="Events run on incoming feedback" />
+
+                <TextBlock Text="Configure this journey's events in Event Manager." TextWrapping="Wrap" />
 
                 <!--  FirstPos  -->
                 <NumberBox

@@ -7,6 +7,7 @@ using Moba.Backend.Service;
 using Moba.Domain;
 
 using Moq;
+using Microsoft.Extensions.Logging;
 
 /// <summary>Verifies the reusable source-ordering and cancellation boundary.</summary>
 [TestFixture]
@@ -28,7 +29,8 @@ public sealed class WorkflowExecutionCoordinatorTests
         {
             SourceKey = "feedback:1",
             OwnerId = cancelledOwner,
-            Request = cancelledRequest,
+            WorkflowId = cancelledRequest.Workflow.Id,
+            RequestFactory = () => cancelledRequest,
             Delay = TimeSpan.FromHours(1)
         });
         coordinator.CancelOwner(cancelledOwner);
@@ -36,7 +38,8 @@ public sealed class WorkflowExecutionCoordinatorTests
         {
             SourceKey = "feedback:2",
             OwnerId = Guid.NewGuid(),
-            Request = successfulRequest
+            WorkflowId = successfulRequest.Workflow.Id,
+            RequestFactory = () => successfulRequest
         });
 
         var cancelledResult = await cancelled.WaitAsync(TimeSpan.FromSeconds(1));
@@ -95,13 +98,98 @@ public sealed class WorkflowExecutionCoordinatorTests
         service.Verify(value => value.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    private static QueuedWorkflowExecution CreateQueued(string sourceKey, TimeSpan delay = default) => new()
+    [Test]
+    public async Task CompletionFailureReleasesFollowingExecutionAfterCallbackFinishes()
     {
-        SourceKey = sourceKey,
-        OwnerId = Guid.NewGuid(),
-        Request = CreateRequest(),
-        Delay = delay
-    };
+        var service = new Mock<IWorkflowService>();
+        var executions = 0;
+        service.Setup(value => value.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
+            .Returns((WorkflowExecutionRequest request, CancellationToken _) =>
+            {
+                executions++;
+                return Task.FromResult(Succeeded(request));
+            });
+        using var coordinator = new WorkflowExecutionCoordinator(service.Object, TimeProvider.System);
+        var completing = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var first = coordinator.EnqueueAsync(CreateQueued("feedback:1") with
+        {
+            OnCompleted = async _ =>
+            {
+                completing.TrySetResult();
+                await release.Task.ConfigureAwait(false);
+                throw new InvalidOperationException("Expected completion failure");
+            }
+        });
+        await completing.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        var second = coordinator.EnqueueAsync(CreateQueued("feedback:1"));
+        Assert.That(executions, Is.EqualTo(1));
+        release.TrySetResult();
+
+        var firstResult = await first.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        Assert.That(firstResult.Status, Is.EqualTo(WorkflowExecutionStatus.Succeeded));
+        var result = await second.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.Status, Is.EqualTo(WorkflowExecutionStatus.Succeeded));
+            Assert.That(executions, Is.EqualTo(2));
+        }
+    }
+
+    [Test]
+    public void FailedExecutorStillRunsCompletionCallback()
+    {
+        var service = new Mock<IWorkflowService>();
+        service.Setup(value => value.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Expected execution failure"));
+        using var coordinator = new WorkflowExecutionCoordinator(service.Object, TimeProvider.System);
+        var completed = false;
+        var execution = coordinator.EnqueueAsync(CreateQueued("feedback:1") with
+        {
+            OnCompleted = succeeded =>
+            {
+                Assert.That(succeeded, Is.False);
+                completed = true;
+                return Task.CompletedTask;
+            }
+        });
+
+        Assert.ThrowsAsync<InvalidOperationException>(() => execution.WaitAsync(TimeSpan.FromSeconds(5)));
+        Assert.That(completed, Is.True);
+    }
+
+    [Test]
+    public void CompletionFailureIsLoggedWithoutMaskingExecutorFailure()
+    {
+        using var assertions = Assert.EnterMultipleScope();
+        var service = new Mock<IWorkflowService>();
+        var failure = new IOException("Executor failure");
+        service.Setup(value => value.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(failure);
+        var logger = new Mock<ILogger>();
+        logger.Setup(value => value.IsEnabled(LogLevel.Error)).Returns(true);
+        using var coordinator = new WorkflowExecutionCoordinator(service.Object, TimeProvider.System, logger.Object);
+        var execution = coordinator.EnqueueAsync(CreateQueued("journey:test") with
+        {
+            OnCompleted = _ => throw new InvalidOperationException("Completion failure")
+        });
+        Assert.That(Assert.ThrowsAsync<IOException>(() => execution.WaitAsync(TimeSpan.FromSeconds(5))), Is.SameAs(failure));
+        Assert.That(logger.Invocations.Count(call => call.Method.Name == nameof(ILogger.Log)), Is.EqualTo(1));
+    }
+
+    private static QueuedWorkflowExecution CreateQueued(string sourceKey, TimeSpan delay = default)
+    {
+        var request = CreateRequest();
+        return new QueuedWorkflowExecution
+        {
+            SourceKey = sourceKey,
+            OwnerId = Guid.NewGuid(),
+            WorkflowId = request.Workflow.Id,
+            SourceCorrelationId = request.SourceCorrelationId,
+            RequestFactory = () => request,
+            Delay = delay
+        };
+    }
 
     private static WorkflowExecutionRequest CreateRequest()
     {

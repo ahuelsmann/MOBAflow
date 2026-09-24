@@ -26,6 +26,7 @@ internal sealed class RecordingRuntimeCommandGatewayTests
         await gateway.SetTrackPowerAsync(true);
         await gateway.SimulateFeedbackAsync(12);
         await gateway.ResetJourneyAsync(journeyId);
+        await gateway.ResetInPortCountersAsync();
         await gateway.SetSignalAspectAsync(signalId, Enum.GetValues<SignalAspect>()[0]);
         await gateway.SetLocomotiveDriveAsync(3, 42, true);
         await gateway.SetLocomotiveFunctionAsync(3, 5, true);
@@ -40,6 +41,7 @@ internal sealed class RecordingRuntimeCommandGatewayTests
             "command.track-power",
             "command.simulate-feedback",
             "command.journey-reset",
+            "command.inport-counters-reset",
             "command.signal-aspect",
             "command.locomotive-drive",
             "command.locomotive-function",
@@ -77,6 +79,11 @@ internal sealed class RecordingRuntimeCommandGatewayTests
         var serializer = provider.GetRequiredService<RecordingArtifactSerializer>();
         var imported = serializer.Import(serializer.SerializeToUtf8(artifact));
         Assert.That(imported.IsValid, Is.True, () => string.Join("; ", imported.Errors.Select(error => error.Message)));
+        var isolatedRuntime = new IsolatedReplayRuntime();
+        foreach (var request in recordedCommands.Where(entry => entry.ReplayApplicability == RecordingReplayApplicability.ReplayApplicable))
+        {
+            Assert.That(isolatedRuntime.Apply(request).Succeeded, Is.True, request.TypeKey);
+        }
     }
 
     [Test]
@@ -147,6 +154,8 @@ internal sealed class RecordingRuntimeCommandGatewayTests
         public Task SimulateFeedbackAsync(int inPort, CancellationToken cancellationToken = default) => ExecuteAsync();
 
         public Task ResetJourneyAsync(Guid journeyId, CancellationToken cancellationToken = default) => ExecuteAsync();
+
+        public Task ResetInPortCountersAsync(CancellationToken cancellationToken = default) => ExecuteAsync();
 
         public Task SetSignalAspectAsync(
             Guid signalId,

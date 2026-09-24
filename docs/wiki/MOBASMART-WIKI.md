@@ -18,8 +18,7 @@ Z21 <---- direct UDP ----> MOBAsmart local runtime
 
 - Direct Z21 feedback drives the Counter tab.
 - Locomotive commands prefer the local Z21 route when it is connected.
-- MOBApi supplies the active solution, fleet, photos, feedback sequences and
-  runtime snapshots.
+- MOBApi supplies the active solution, fleet, photos and runtime snapshots.
 - Signal-box commands use the MOBAflow session when it is active.
 - The mobile cache supplies last-known project data during startup or temporary
   network loss; it is not authoritative for live state.

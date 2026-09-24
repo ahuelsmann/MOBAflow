@@ -276,11 +276,11 @@
                 <TextBlock
                     VerticalAlignment="Center"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Text="Counter:" />
+                    Text="Status:" />
                 <TextBlock
                     VerticalAlignment="Center"
                     FontWeight="SemiBold"
-                    Text="{x:Bind ViewModel.CounterText, Mode=OneWay}" />
+                    Text="{x:Bind ViewModel.ActivityText, Mode=OneWay}" />
             </StackPanel>
 
             <!--  Behavior on Last Stop  -->
@@ -300,22 +300,6 @@
                     VerticalAlignment="Center"
                     FontWeight="SemiBold"
                     Text="{x:Bind ViewModel.BehaviorOnLastStopText, Mode=OneWay}" />
-            </StackPanel>
-
-            <!--  InPort  -->
-            <StackPanel
-                Grid.Column="4"
-                Orientation="Horizontal"
-                Spacing="8">
-                <TextBlock
-                    VerticalAlignment="Center"
-                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                    Text="InPort:" />
-                <TextBlock
-                    VerticalAlignment="Center"
-                    FontWeight="SemiBold"
-                    Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                    Text="{x:Bind ViewModel.JourneyInPort, Mode=OneWay}" />
             </StackPanel>
         </Grid>
     </Grid>

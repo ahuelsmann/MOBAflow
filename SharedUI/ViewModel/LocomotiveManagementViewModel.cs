@@ -132,7 +132,7 @@ public sealed partial class LocomotiveManagementViewModel : ObservableObject
             return;
         }
 
-        foreach (var status in _maintenanceService.Evaluate(maintenance, locomotive.Usage, now ?? DateTimeOffset.UtcNow))
+        foreach (var status in _maintenanceService.Evaluate(maintenance, now ?? DateTimeOffset.UtcNow))
             MaintenancePlans.Add(status);
     }
 

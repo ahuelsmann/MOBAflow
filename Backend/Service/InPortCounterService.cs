@@ -1,0 +1,260 @@
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+namespace Moba.Backend.Service;
+
+using Common.Configuration;
+using Common.Runtime;
+using Interface;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+
+/// <summary>One accepted activation and its immutable global counter value.</summary>
+public sealed class InPortCountedEventArgs(InPortCounterSnapshot snapshot, Guid correlationId, long generation = 0) : EventArgs
+{
+    /// <summary>Counter value after accepting this activation.</summary>
+    public InPortCounterSnapshot Snapshot { get; } = snapshot;
+
+    /// <summary>Source activation identity propagated to workflow execution.</summary>
+    public Guid CorrelationId { get; } = correlationId;
+
+    /// <summary>Counter generation, changed by an explicit reset.</summary>
+    public long Generation { get; } = generation;
+}
+
+/// <summary>
+/// Owns application-lifetime input counts independently of projects, journeys, and UI pages.
+/// Only an explicit reset clears counts.
+/// </summary>
+public sealed partial class InPortCounterService : IDisposable
+{
+    private readonly Lock _sync = new();
+    private readonly IZ21 _z21;
+    private readonly AppSettings _settings;
+    private readonly TimeProvider _timeProvider;
+    private readonly ILogger<InPortCounterService> _logger;
+    private readonly Dictionary<uint, InPortCounterSnapshot> _counters = [];
+    private readonly Queue<InPortCountedEventArgs> _pendingCounts = new();
+    private EventHandler<InPortCountedEventArgs>? _journeyFeedbackHandler;
+    private long _generation;
+    private bool _publishingCounts;
+    private bool _disposed;
+
+    /// <summary>Subscribes once to source activations for this application lifetime.</summary>
+    public InPortCounterService(
+        IZ21 z21,
+        AppSettings settings,
+        TimeProvider? timeProvider = null,
+        ILogger<InPortCounterService>? logger = null)
+    {
+        ArgumentNullException.ThrowIfNull(z21);
+        ArgumentNullException.ThrowIfNull(settings);
+        _z21 = z21;
+        _settings = settings;
+        _timeProvider = timeProvider ?? TimeProvider.System;
+        _logger = logger ?? NullLogger<InPortCounterService>.Instance;
+        for (uint inPort = 1; inPort <= settings.Counter.CountOfFeedbackPoints; inPort++)
+        {
+            _counters[inPort] = new InPortCounterSnapshot(inPort, 0, null, null);
+        }
+
+        _z21.Received += OnFeedbackReceived;
+    }
+
+    /// <summary>Raised once for each activation accepted by the configured timer filter.</summary>
+    public event EventHandler<InPortCountedEventArgs>? Counted;
+
+    /// <summary>Raised when counts change.</summary>
+    public event EventHandler? SnapshotChanged;
+
+    /// <summary>Atomically replaces the sole journey evaluator for this application's active project.</summary>
+    internal void SetJourneyFeedbackHandler(EventHandler<InPortCountedEventArgs> handler)
+    {
+        lock (_sync)
+        {
+            _journeyFeedbackHandler = handler;
+        }
+    }
+
+    /// <summary>Releases an evaluator without removing a replacement installed by a newer project.</summary>
+    internal void RemoveJourneyFeedbackHandler(EventHandler<InPortCountedEventArgs> handler)
+    {
+        lock (_sync)
+        {
+            if (_journeyFeedbackHandler == handler)
+                _journeyFeedbackHandler = null;
+        }
+    }
+
+    /// <summary>Changes with every explicit reset so queued counts from before the reset can be ignored.</summary>
+    public long Generation
+    {
+        get
+        {
+            lock (_sync)
+            {
+                return _generation;
+            }
+        }
+    }
+
+    /// <summary>Returns detached, immutable statistics ordered by input number.</summary>
+    public IReadOnlyList<InPortCounterSnapshot> GetSnapshot()
+    {
+        lock (_sync)
+        {
+            return Array.AsReadOnly(_counters.Values.OrderBy(counter => counter.InPort).ToArray());
+        }
+    }
+
+    /// <summary>Queues work for a current activation atomically with respect to counter resets.</summary>
+    internal void QueueIfCurrent(long generation, System.Action enqueue)
+    {
+        lock (_sync)
+        {
+            if (!_disposed && generation == _generation)
+            {
+                enqueue();
+            }
+        }
+    }
+
+    /// <summary>Resets all counts and timer history.</summary>
+    public void ResetAll()
+    {
+        lock (_sync)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            foreach (var inPort in _counters.Keys.ToArray())
+            {
+                _counters[inPort] = new InPortCounterSnapshot(inPort, 0, null, null);
+            }
+
+            _generation++;
+            _pendingCounts.Clear();
+        }
+
+        PublishSnapshotChanged();
+    }
+
+    private void OnFeedbackReceived(FeedbackResult feedback)
+    {
+        bool startPublishing;
+        lock (_sync)
+        {
+            if (_disposed || feedback.InPort <= 0)
+            {
+                return;
+            }
+
+            var inPort = checked((uint)feedback.InPort);
+            _counters.TryGetValue(inPort, out var previous);
+            var now = _timeProvider.GetLocalNow();
+            var elapsed = previous?.LastFeedbackTime is DateTimeOffset lastFeedbackTime
+                ? now - lastFeedbackTime
+                : (TimeSpan?)null;
+            if (_settings.Counter.UseTimerFilter
+                && elapsed.HasValue
+                && elapsed.Value.TotalSeconds < _settings.Counter.TimerIntervalSeconds)
+            {
+                return;
+            }
+
+            // Do not wrap a saturated counter back to zero and accidentally match a new event.
+            if (previous?.Count == ulong.MaxValue)
+            {
+                return;
+            }
+
+            var snapshot = new InPortCounterSnapshot(inPort, (previous?.Count ?? 0) + 1, now, elapsed);
+            _counters[inPort] = snapshot;
+            _pendingCounts.Enqueue(new InPortCountedEventArgs(snapshot, feedback.CorrelationId, _generation));
+            startPublishing = !_publishingCounts;
+            _publishingCounts = true;
+        }
+
+        if (startPublishing)
+        {
+            PublishPendingCounts();
+        }
+    }
+
+    private void PublishPendingCounts()
+    {
+        while (true)
+        {
+            InPortCountedEventArgs next;
+            EventHandler<InPortCountedEventArgs>? journeyHandler;
+            lock (_sync)
+            {
+                if (!_pendingCounts.TryDequeue(out next!))
+                {
+                    _publishingCounts = false;
+                    return;
+                }
+
+                journeyHandler = _journeyFeedbackHandler;
+            }
+
+            foreach (var subscriber in Delegate.EnumerateInvocationList(Counted))
+            {
+                InvokeCountedSubscriber(subscriber, next);
+            }
+
+            if (journeyHandler is not null)
+                InvokeCountedSubscriber(journeyHandler, next);
+
+            PublishSnapshotChanged();
+        }
+    }
+
+    private void InvokeCountedSubscriber(EventHandler<InPortCountedEventArgs> subscriber, InPortCountedEventArgs next)
+    {
+        try
+        {
+            subscriber(this, next);
+        }
+        catch (Exception ex)
+        {
+            LogCountedSubscriberFailed(_logger, ex, next.Snapshot.InPort);
+        }
+    }
+
+    private void PublishSnapshotChanged()
+    {
+        foreach (var subscriber in Delegate.EnumerateInvocationList(SnapshotChanged))
+        {
+            try
+            {
+                subscriber(this, EventArgs.Empty);
+            }
+            catch (Exception ex)
+            {
+                LogSnapshotSubscriberFailed(_logger, ex);
+            }
+        }
+    }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "InPort counter subscriber failed for input {InPort}")]
+    private static partial void LogCountedSubscriberFailed(ILogger logger, Exception exception, uint inPort);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "InPort counter snapshot subscriber failed")]
+    private static partial void LogSnapshotSubscriberFailed(ILogger logger, Exception exception);
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        lock (_sync)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
+            _pendingCounts.Clear();
+            _journeyFeedbackHandler = null;
+        }
+
+        _z21.Received -= OnFeedbackReceived;
+        GC.SuppressFinalize(this);
+    }
+}

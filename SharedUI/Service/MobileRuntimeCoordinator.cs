@@ -50,6 +50,13 @@ public sealed class MobileRuntimeCoordinator : IRuntimeCommandGateway, IMobileRu
         _localGateway.ResetJourneyAsync(journeyId, cancellationToken);
 
     /// <inheritdoc />
+    public Task ResetInPortCountersAsync(CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return _localGateway.ResetInPortCountersAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
     public Task SetSignalAspectAsync(Guid signalId, SignalAspect aspect, CancellationToken cancellationToken = default)
     {
         if (_mobaflowSessionActive)
@@ -106,4 +113,5 @@ public sealed class MobileRuntimeCoordinator : IRuntimeCommandGateway, IMobileRu
         bool queue = false,
         CancellationToken cancellationToken = default) =>
         _localGateway.SendTurnoutCommandAsync(decoderAddress, output, activate, queue, cancellationToken);
+
 }

@@ -4,7 +4,7 @@ namespace Moba.Backend.Service;
 using Domain;
 using System.Text.Json;
 
-public sealed record JourneyRuntimeCheckpoint(int CurrentFeedbackIndex, uint CurrentStepOccurrence, Guid JourneyRunId);
+public sealed record JourneyRuntimeCheckpoint(Guid? CurrentStationId, Guid JourneyRunId, bool IsCompleted);
 
 public interface IJourneyRuntimeStateStore
 {
@@ -20,7 +20,7 @@ public sealed class NullJourneyRuntimeStateStore : IJourneyRuntimeStateStore
     public void Reset(Guid projectId, Guid journeyId) { }
 }
 
-/// <summary>Persists journey sequence progress independently from editable solution data.</summary>
+/// <summary>Persists the current journey stop independently from editable solution data.</summary>
 public sealed class FileJourneyRuntimeStateStore : IJourneyRuntimeStateStore
 {
     private readonly object _lock = new();
@@ -43,7 +43,7 @@ public sealed class FileJourneyRuntimeStateStore : IJourneyRuntimeStateStore
         lock (_lock)
         {
             var data = Read();
-            data[Key(projectId, state.JourneyId)] = new(state.CurrentFeedbackIndex, state.CurrentStepOccurrence, state.RunId);
+            data[Key(projectId, state.JourneyId)] = new(state.CurrentStationId, state.RunId, state.IsCompleted);
             Write(data);
         }
     }

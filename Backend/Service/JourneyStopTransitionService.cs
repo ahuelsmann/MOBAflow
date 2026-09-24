@@ -42,6 +42,15 @@ public sealed class JourneyStopTransitionService : IJourneyStopTransitionService
         }
 
         var target = journey.Stations[targetIndex];
+        if (targetIndex < journey.Stations.Count - 1)
+        {
+            state.IsJourneyCompletionRequested = false;
+            if (state.IsCompleted && previous?.Id != target.Id)
+            {
+                state.IsCompleted = false;
+                state.RunId = Guid.NewGuid();
+            }
+        }
         state.CurrentStationId = target.Id;
         state.CurrentStationName = target.Name;
         state.CurrentPos = targetIndex;

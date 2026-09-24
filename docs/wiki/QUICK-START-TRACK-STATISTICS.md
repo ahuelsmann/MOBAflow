@@ -43,9 +43,10 @@ interval that is too long can also hide legitimate laps.
 
 ## Relationship to journeys
 
-Standalone statistics do not require a solution. Journeys use their own ordered
-`FeedbackSequence`, edited in the desktop Event Manager; they no longer depend
-on one global `Journey.InPort` value.
+Standalone statistics do not require a solution. The same InPort counters drive
+journey events: an active journey runs an event's workflow when the event's InPort
+counter reaches its configured count. Resetting the counters therefore also lets
+journey events run again. Events are edited in the desktop Event Manager.
 
 ## Related documentation
 

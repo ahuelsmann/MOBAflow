@@ -9,6 +9,11 @@ namespace Moba.Backend.Service;
 /// </summary>
 public class JourneySessionState
 {
+    // Invalidates callbacks captured before an explicit journey reset.
+    internal long ResetVersion { get; set; }
+
+    internal JourneySessionState Snapshot() => (JourneySessionState)MemberwiseClone();
+
     /// <summary>Stable identity for the current execution of this journey.</summary>
     public Guid RunId { get; set; } = Guid.NewGuid();
 
@@ -26,12 +31,6 @@ public class JourneySessionState
     /// <summary>Identifier of the current stop. This is stable when stop names or ordering change.</summary>
     public Guid? CurrentStationId { get; set; }
 
-    /// <summary>Zero-based index of the next expected feedback sequence step.</summary>
-    public int CurrentFeedbackIndex { get; set; }
-
-    /// <summary>Number of matching activations already accepted by the current feedback step.</summary>
-    public uint CurrentStepOccurrence { get; set; }
-
     /// <summary>
     /// Current position (index) in the journey's station list.
     /// Managed by JourneyManager during journey execution.
@@ -45,13 +44,15 @@ public class JourneySessionState
     public DateTime? LastFeedbackTime { get; set; }
 
     /// <summary>
-    /// Indicates whether this journey is actively running.
-    /// Set to true when journey starts, false when stopped or completed.
+    /// Indicates whether the runtime evaluates this journey's events (mirrors <c>Journey.IsActive</c>).
     /// </summary>
     public bool IsActive { get; set; }
 
     /// <summary>Signals that a next-stop action reached the end of the stop list.</summary>
     public bool IsJourneyCompletionRequested { get; set; }
+
+    /// <summary>Whether completion has already been reported for the current run identity.</summary>
+    public bool IsCompleted { get; set; }
 
     /// <summary>
     /// Resets the session state to initial values.
@@ -60,13 +61,12 @@ public class JourneySessionState
     public void Reset(int firstPos = 0)
     {
         RunId = Guid.NewGuid();
+        ResetVersion++;
         CurrentPos = firstPos;
         CurrentStationName = string.Empty;
         CurrentStationId = null;
-        CurrentFeedbackIndex = 0;
-        CurrentStepOccurrence = 0;
         LastFeedbackTime = null;
-        IsActive = true;
         IsJourneyCompletionRequested = false;
+        IsCompleted = false;
     }
 }

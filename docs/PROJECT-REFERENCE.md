@@ -113,7 +113,7 @@ each project can contain:
 - locomotive maintenance plans, decoder snapshots and whistle rules;
 - stations and platforms;
 - workflows;
-- journeys with ordered stations and explicit `FeedbackSequence` steps;
+- journeys with ordered stations, an `IsActive` flag and a `JourneyEventPlan`;
 - a `TrackPlanDocument`;
 - a `SignalBoxPlan`;
 - dated timetable services and their project-wide turnaround policy; and
@@ -124,10 +124,16 @@ shared master data loaded through `MasterDataStore`.
 
 ### Journeys and feedback
 
-`Journey.FeedbackSequence` replaces the older single-input journey model. Each
-`JourneyFeedbackStep` represents an ordered feedback occurrence and its stop
-transition behavior. Runtime progress is stored separately by
-`JourneyRuntimeStateStore` and exposed through snapshots and MOBApi.
+`InPortCounterService` counts accepted activations per InPort for the application
+session; only an explicit reset sets the counters back to zero. A journey's
+`EventPlan` holds independent `JourneyEvent` entries (InPort, count, optional
+workflow, enabled). For every accepted activation, `JourneyManager` evaluates all
+journeys marked `IsActive` and starts the workflow of each enabled event whose
+InPort counter has just reached its count. Virtual stops change only through the
+`ChangeJourneyStop` workflow action; `BehaviorOnLastStop` either keeps the last
+stop or continues at the first stop. There are no follow-up journeys. The current
+stop is stored separately by `JourneyRuntimeStateStore` and exposed through
+snapshots and MOBApi.
 
 Timetable definitions remain part of the solution. Operator holds,
 cancellations, actual times and live train/journey assignments are stored in a
@@ -139,10 +145,10 @@ The high-level flow is:
 
 ```text
 Z21 feedback
-  -> JourneyManager
-  -> match next feedback-sequence step
-  -> update JourneySessionState
-  -> optional station transition/workflow
+  -> InPortCounterService (session count per InPort)
+  -> JourneyManager (all active journeys)
+  -> events whose InPort count matches
+  -> workflow, optional ChangeJourneyStop
   -> publish snapshot and progress
 ```
 
@@ -192,10 +198,14 @@ in-memory `WorkflowTraceStore` retains at most 100 executions and 10,000 entries
 by default. Trace persistence is deliberately outside `solution.json`.
 
 EventManagerPage and WorkflowsPage use the same `WorkflowLibraryViewModel` and
-the authoritative wrappers from `ProjectViewModel.Workflows`. Both surfaces
-therefore share selection, create/duplicate/delete, typed step editing,
-validation, dry-run, trace, autosave, and reference-safe assignment state.
-Deleting a workflow is blocked while any feedback or nested-workflow reference
+the authoritative wrappers from `ProjectViewModel.Workflows`. EventManagerPage
+shows compact event rows, a searchable workflow Values panel and selected
+event Properties. It toggles the journey's active flag, resets the InPort
+counters and supports workflow assignment and event move/copy with undo/redo.
+Events stay editable while a journey is active; each change is re-applied to the
+runtime. WorkflowsPage owns workflow authoring,
+validation, dry-run and trace; both pages share the library and autosave state.
+Deleting a workflow is blocked while any journey-event or nested-workflow reference
 remains. The current JSON schema is the direct Workflow 2.0 shape; there is no
 Workflow 1.x compatibility executor or migration layer.
 
@@ -267,7 +277,6 @@ MOBApi maps controllers plus two SignalR hubs.
 | `GET /api/runtime/commands/pending` | Consume pending commands |
 | `GET /api/runtime/journeys/{id}/feedback-progress` | Read journey progress |
 | `POST /api/runtime/journeys/{id}/feedback-progress/reset` | Reset journey progress |
-| `GET/PUT /api/projects/{projectId}/journeys/{journeyId}/feedback-sequence` | Read/update a feedback sequence |
 | `POST /api/clients/register` | Register a client |
 | `POST /api/clients/unregister` | Unregister a client |
 | `GET /api/photos/health` | Photo service health |

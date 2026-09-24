@@ -6,12 +6,9 @@ namespace Moba.Domain.Enum;
 /// </summary>
 public enum BehaviorOnLastStop
 {
-    /// <summary>No follow-up action is taken at the final station.</summary>
+    /// <summary>The journey remains at its final station.</summary>
     None,
 
-    /// <summary>Restart the journey from the first station.</summary>
+    /// <summary>Continue from the first station.</summary>
     BeginAgainFromFistStop,
-
-    /// <summary>Switch to another journey identified by <see cref="Journey.NextJourneyId"/>.</summary>
-    GotoJourney,
 }

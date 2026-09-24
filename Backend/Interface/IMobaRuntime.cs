@@ -25,6 +25,9 @@ public interface IConnectionRuntime
 
     Task ActivateProjectAsync(Project editableProject, CancellationToken cancellationToken = default);
 
+    /// <summary>Updates one journey's event configuration without restarting project execution.</summary>
+    Task UpdateJourneyEventsAsync(Project editableProject, Guid journeyId, CancellationToken cancellationToken = default);
+
     Task ConnectAsync(CancellationToken cancellationToken = default);
 
     Task DisconnectAsync(CancellationToken cancellationToken = default);
@@ -59,6 +62,8 @@ public interface ISignalTurnoutRuntime
 
     Task ResetJourneyAsync(Guid journeyId, CancellationToken cancellationToken = default);
 
+    Task ResetInPortCountersAsync(CancellationToken cancellationToken = default);
+
     Task SetSignalAspectAsync(SbSignal signal, CancellationToken cancellationToken = default);
 
     Task SetSignalAspectAsync(Guid signalId, SignalAspect signalAspect, CancellationToken cancellationToken = default);
@@ -79,16 +84,6 @@ public interface ITrafficMonitor
 }
 
 /// <summary>
-/// Active-consist selection and explicit usage checkpoint commands.
-/// </summary>
-public interface IVehicleUsageRuntime
-{
-    Task SetActiveTrainAsync(Guid? trainId, CancellationToken cancellationToken = default);
-
-    Task CheckpointUsageAsync(CancellationToken cancellationToken = default);
-}
-
-/// <summary>
 /// Backward-compatible aggregate facade for existing runtime consumers.
 /// Prefer the narrower role interfaces for new code.
 /// </summary>
@@ -97,7 +92,6 @@ public interface IMobaRuntime :
     IConnectionRuntime,
     ILocomotiveRuntime,
     ISignalTurnoutRuntime,
-    ITrafficMonitor,
-    IVehicleUsageRuntime
+    ITrafficMonitor
 {
 }

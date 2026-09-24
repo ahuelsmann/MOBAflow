@@ -41,9 +41,8 @@ public sealed class JourneyMapViewModel : ObservableObject
                     OnPropertyChanged(nameof(HasSelectedJourney));
                     OnPropertyChanged(nameof(RouteStations));
                     OnPropertyChanged(nameof(ProgressText));
-                    OnPropertyChanged(nameof(CounterText));
+                    OnPropertyChanged(nameof(ActivityText));
                     OnPropertyChanged(nameof(BehaviorOnLastStopText));
-                    OnPropertyChanged(nameof(JourneyInPort));
                     break;
             }
         };
@@ -107,15 +106,14 @@ public sealed class JourneyMapViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Counter text (e.g., "Lap 1/2").
+    /// Whether the selected journey's events are evaluated on incoming feedback.
     /// </summary>
-    public string CounterText
+    public string ActivityText => SelectedJourney switch
     {
-        get
-        {
-            return SelectedJourney == null ? "-" : $"Step {SelectedJourney.CurrentFeedbackIndex + 1}";
-        }
-    }
+        null => "-",
+        { IsActive: true } => "Active",
+        _ => "Inactive"
+    };
 
     /// <summary>
     /// Behavior on last stop description.
@@ -125,17 +123,6 @@ public sealed class JourneyMapViewModel : ObservableObject
         get
         {
             return SelectedJourney == null ? "-" : SelectedJourney.BehaviorOnLastStop.ToString();
-        }
-    }
-
-    /// <summary>
-    /// Journey InPort (sensor address).
-    /// </summary>
-    public string JourneyInPort
-    {
-        get
-        {
-            return SelectedJourney?.NextFeedbackInPort?.ToString() ?? "-";
         }
     }
     #endregion
@@ -165,9 +152,9 @@ public sealed class JourneyMapViewModel : ObservableObject
             OnPropertyChanged(nameof(ProgressText));
         }
 
-        if (e.PropertyName == nameof(JourneyViewModel.CurrentFeedbackIndex))
+        if (e.PropertyName == nameof(JourneyViewModel.IsActive))
         {
-            OnPropertyChanged(nameof(CounterText));
+            OnPropertyChanged(nameof(ActivityText));
         }
     }
 

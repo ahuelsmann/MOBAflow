@@ -167,7 +167,6 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         _projectContext = projectContext;
 
         _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
-        _eventBusSubscriptions.Add(_eventBus.Subscribe<FeedbackReceivedEvent>(OnFeedbackReceived));
         _eventBusSubscriptions.Add(_eventBus.Subscribe<SolutionSyncedEvent>(OnSolutionSyncedForSignalBox));
         _eventBusSubscriptions.Add(_eventBus.Subscribe<SolutionSyncedEvent>(OnSolutionSyncedForControlTab));
         _eventBusSubscriptions.Add(_eventBus.Subscribe<RemotePairingCompletedEvent>(OnRemotePairingCompleted));
@@ -1170,10 +1169,10 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private double _timerIntervalSeconds = 2.0;
 
-    // O(1) lookup for high-frequency feedback updates.
-    private Dictionary<int, InPortStatistic> _statisticsByInPort = [];
+    private IReadOnlyList<InPortCounterSnapshot> _localCounters = [];
 
-    private readonly FeedbackCounterEngine _feedbackCounterEngine = new();
+    [ObservableProperty]
+    public partial string CounterResetError { get; set; } = string.Empty;
 
     partial void OnCountOfFeedbackPointsChanged(int value)
     {
@@ -1219,7 +1218,6 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     private void InitializeStatistics()
     {
         var updatedStatistics = new ObservableCollection<InPortStatistic>();
-        var updatedByInPort = new Dictionary<int, InPortStatistic>();
         for (int i = 1; i <= CountOfFeedbackPoints; i++)
         {
             var statistic = new InPortStatistic
@@ -1230,29 +1228,41 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
                 TargetLapCount = GlobalTargetLapCount
             };
             updatedStatistics.Add(statistic);
-            updatedByInPort[i] = statistic;
         }
 
         _uiDispatcher.InvokeOnUi(() =>
         {
             // Replace the collection instance atomically to avoid MAUI BindableLayout reentrancy glitches.
             Statistics = updatedStatistics;
-            _statisticsByInPort = updatedByInPort;
+            ApplyLocalCounters();
         });
 
     }
 
     [RelayCommand]
-    private void ResetCounters()
+    private async Task ResetCounters()
     {
-        foreach (var stat in Statistics)
+        CounterResetError = string.Empty;
+        try
         {
-            stat.Count = 0;
-            stat.LastFeedbackTime = null;
-            stat.LastLapTime = TimeSpan.Zero;
-            stat.HasReceivedFirstLap = false;
+            if (_runtimeCommandGateway is not null)
+                await _runtimeCommandGateway.ResetInPortCountersAsync(CancellationToken.None).ConfigureAwait(true);
+            else
+                await _mobaRuntime.ResetInPortCountersAsync(CancellationToken.None).ConfigureAwait(true);
+
+            _localCounters = _mobaRuntime.Current.InPortCounters;
+            ApplyLocalCounters();
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException and not AccessViolationException)
+        {
+            // Report recoverable failures at the UI boundary; fatal process failures must propagate.
+            CounterResetError = ex.Message;
+            LogCounterResetFailed(_logger, ex);
         }
     }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Resetting local InPort counters failed")]
+    private static partial void LogCounterResetFailed(ILogger logger, Exception exception);
 
     [RelayCommand(CanExecute = nameof(CanDecrementFeedbackPoints))]
     private void DecrementFeedbackPoints()
@@ -1379,6 +1389,8 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
 
     private void ApplyLocalRuntimeSnapshot(MobaRuntimeSnapshot snapshot)
     {
+        _localCounters = snapshot.InPortCounters;
+        ApplyLocalCounters();
         var previousConnectionState = IsConnected;
         var projection = RuntimeSnapshotProjector.ProjectMaui(snapshot, previousConnectionState);
         var status = projection.Status;
@@ -1498,16 +1510,15 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         }
     }
 
-    private void OnFeedbackReceived(FeedbackReceivedEvent e)
+    private void ApplyLocalCounters()
     {
-        ApplyFeedbackReceived(e.InPort);
-    }
-
-    private void ApplyFeedbackReceived(int inPort)
-    {
-        if (_statisticsByInPort.TryGetValue(inPort, out var stat))
+        foreach (var stat in Statistics)
         {
-            _feedbackCounterEngine.ApplyFeedback(stat, UseTimerFilter, TimerIntervalSeconds);
+            var counter = _localCounters.FirstOrDefault(item => item.InPort == stat.InPort);
+            stat.Count = counter?.Count ?? 0;
+            stat.LastFeedbackTime = counter?.LastFeedbackTime?.UtcDateTime;
+            stat.LastLapTime = counter?.LastLapTime;
+            stat.HasReceivedFirstLap = counter?.Count > 0;
         }
     }
 
