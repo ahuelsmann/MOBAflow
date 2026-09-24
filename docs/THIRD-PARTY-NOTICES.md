@@ -83,7 +83,7 @@ The following table is regenerated from the centrally managed versions in [`Dire
 | `Serilog`, `Serilog.Extensions.Logging`, `Serilog.Sinks.Async`, `Serilog.Sinks.Debug`, `Serilog.Sinks.File`, `Serilog.Enrichers.*` | `4.4.0`, `10.0.0`, `2.1.0`, `3.0.0`, `7.0.0`, `3.0.1`–`4.0.0` | `Common`, `MOBAflow` | Structured logging, async/file/debug sinks, and log enrichment. |
 | `SkiaSharp`, `System.Drawing.Common` | `4.150.1`, `10.0.10` | `MOBAdisplay`, `MOBAflow` | Display frame rendering and image conversion utilities. |
 | `coverlet.collector`, `Microsoft.NET.Test.Sdk`, `NUnit`, `NUnit.Analyzers`, `NUnit3TestAdapter`, `Moq` | `10.0.1`, `18.8.1`, `4.6.1`, `4.15.0`, `6.3.0`, `4.20.72` | `Test` | Test execution, coverage collection, analyzers, and mocking. |
-| `MinVer` | `7.0.0` | Build-wide via `Directory.Build.props` | Semantic version generation from git tags during builds. |
+| `MinVer` | `8.0.0` | Build-wide via `Directory.Build.props` | Semantic version generation from git tags during builds. |
 
 ---
 
