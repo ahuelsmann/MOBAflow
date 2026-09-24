@@ -9,7 +9,7 @@ public interface IJourneyStopTransitionService
     JourneyStopTransitionResult Apply(Journey journey, JourneySessionState state, JourneyStopTransition transition);
 }
 
-public sealed record JourneyStopTransitionResult(Station? PreviousStation, Station? CurrentStation, bool Changed, bool CompletionRequested);
+public sealed record JourneyStopTransitionResult(Station? PreviousStation, Station? CurrentStation, bool Changed);
 
 /// <summary>Applies journey stop transitions consistently for feedback steps and workflow actions.</summary>
 public sealed class JourneyStopTransitionService : IJourneyStopTransitionService
@@ -23,7 +23,7 @@ public sealed class JourneyStopTransitionService : IJourneyStopTransitionService
         var previous = ResolveCurrentStation(journey, state);
         if (transition.Mode == JourneyStopTransitionMode.None)
         {
-            return new(previous, previous, false, false);
+            return new(previous, previous, false);
         }
 
         var targetIndex = transition.Mode == JourneyStopTransitionMode.Next
@@ -32,8 +32,7 @@ public sealed class JourneyStopTransitionService : IJourneyStopTransitionService
 
         if (targetIndex >= journey.Stations.Count && transition.Mode == JourneyStopTransitionMode.Next)
         {
-            state.IsJourneyCompletionRequested = true;
-            return new(previous, previous, false, true);
+            return new(previous, previous, false);
         }
 
         if (targetIndex < 0 || targetIndex >= journey.Stations.Count)
@@ -42,19 +41,10 @@ public sealed class JourneyStopTransitionService : IJourneyStopTransitionService
         }
 
         var target = journey.Stations[targetIndex];
-        if (targetIndex < journey.Stations.Count - 1)
-        {
-            state.IsJourneyCompletionRequested = false;
-            if (state.IsCompleted && previous?.Id != target.Id)
-            {
-                state.IsCompleted = false;
-                state.RunId = Guid.NewGuid();
-            }
-        }
         state.CurrentStationId = target.Id;
         state.CurrentStationName = target.Name;
         state.CurrentPos = targetIndex;
-        return new(previous, target, previous?.Id != target.Id, false);
+        return new(previous, target, previous?.Id != target.Id);
     }
 
     private static int ResolveCurrentIndex(Journey journey, JourneySessionState state) =>

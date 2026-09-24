@@ -1,8 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Domain;
 
-using Moba.Domain.Enum;
-
 [TestFixture]
 internal class JourneyTests
 {
@@ -35,8 +33,6 @@ internal class JourneyTests
         Assert.That(journey.Stations, Is.Empty);
         Assert.That(journey.EventPlan.Events, Is.Empty);
         Assert.That(journey.IsActive, Is.False);
-        Assert.That(journey.BehaviorOnLastStop, Is.EqualTo(BehaviorOnLastStop.None));
-        Assert.That(journey.FirstPos, Is.EqualTo(0u));
     }
 
     [Test]
@@ -54,8 +50,6 @@ internal class JourneyTests
             Stations = stations,
             IsActive = true,
             EventPlan = new JourneyEventPlan { Events = [new JourneyEvent { InPort = 42 }] },
-            BehaviorOnLastStop = BehaviorOnLastStop.BeginAgainFromFistStop,
-            FirstPos = 2
         };
 
         Assert.That(journey.Id, Is.EqualTo(id));
@@ -66,8 +60,6 @@ internal class JourneyTests
         Assert.That(journey.IsActive, Is.True);
         Assert.That(journey.EventPlan.Events.Single().InPort, Is.EqualTo(42u));
         Assert.That(journey.EventPlan.Events.Single().Count, Is.EqualTo(1UL));
-        Assert.That(journey.BehaviorOnLastStop, Is.EqualTo(BehaviorOnLastStop.BeginAgainFromFistStop));
-        Assert.That(journey.FirstPos, Is.EqualTo(2u));
     }
 
     [Test]
@@ -82,17 +74,5 @@ internal class JourneyTests
 
         journey.Stations.Remove(station);
         Assert.That(journey.Stations, Is.Empty);
-    }
-
-    [Test]
-    public void BehaviorOnLastStop_AllValuesSupported()
-    {
-        var journey = new Journey();
-
-        journey.BehaviorOnLastStop = BehaviorOnLastStop.None;
-        Assert.That(journey.BehaviorOnLastStop, Is.EqualTo(BehaviorOnLastStop.None));
-
-        journey.BehaviorOnLastStop = BehaviorOnLastStop.BeginAgainFromFistStop;
-        Assert.That(journey.BehaviorOnLastStop, Is.EqualTo(BehaviorOnLastStop.BeginAgainFromFistStop));
     }
 }

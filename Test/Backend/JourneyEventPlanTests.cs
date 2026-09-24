@@ -142,14 +142,13 @@ public sealed class JourneyEventPlanTests
     }
 
     [Test]
-    public async Task StopActionsChangeStopsAndLastStopCompletesWithoutDeactivating()
+    public async Task NextStopActionsStayAtLastStopWithoutDeactivating()
     {
         using var fixture = new EventPlanFixture();
         var first = new Station { Name = "A" };
         var second = new Station { Name = "B" };
         var third = new Station { Name = "C" };
         fixture.Journey.Stations = [first, second, third];
-        fixture.Journey.BehaviorOnLastStop = BehaviorOnLastStop.None;
         using var manager = fixture.CreateManager();
         var stations = new List<Guid>();
         manager.StationChanged += (_, args) => stations.Add(args.Station.Id);
@@ -161,32 +160,76 @@ public sealed class JourneyEventPlanTests
         Assert.Multiple(() =>
         {
             Assert.That(stations, Is.EqualTo(new[] { second.Id, third.Id }));
-            Assert.That(state.IsCompleted, Is.True);
             Assert.That(state.CurrentStationId, Is.EqualTo(third.Id));
             Assert.That(state.IsActive, Is.True);
         });
     }
 
     [Test]
-    public async Task BeginAgainFromFirstStopContinuesAtTheFirstStopWithANewRun()
+    public async Task LaterRulesStillRunAtTheLastStopAndUnmatchedCountsDoNothing()
     {
         using var fixture = new EventPlanFixture();
-        var first = new Station { Name = "A" };
-        fixture.Journey.Stations = [first, new Station { Name = "B" }];
-        fixture.Journey.BehaviorOnLastStop = BehaviorOnLastStop.BeginAgainFromFistStop;
-        using var manager = fixture.CreateManager();
-        var initialRunId = manager.GetState(fixture.Journey.Id)!.RunId;
+        var terminal = new Station { Name = "Terminal" };
+        fixture.Journey.Stations = [new Station { Name = "First" }, terminal];
+        fixture.Journey.EventPlan.Events.Add(new JourneyEvent { Count = 3, WorkflowId = fixture.Workflow.Id });
         fixture.SetupNextStopActions(times: 2);
 
-        await fixture.RaiseAsync(1, manager);
-
-        var state = manager.GetState(fixture.Journey.Id)!;
-        Assert.Multiple(() =>
+        for (var count = 1; count <= 5; count++)
         {
-            Assert.That(state.CurrentStationId, Is.EqualTo(first.Id));
-            Assert.That(state.CurrentPos, Is.Zero);
-            Assert.That(state.RunId, Is.Not.EqualTo(initialRunId));
-        });
+            await fixture.RaiseAsync(1).ConfigureAwait(false);
+        }
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(fixture.Requests, Has.Count.EqualTo(2));
+            Assert.That(fixture.Manager.GetState(fixture.Journey.Id)!.CurrentStationId, Is.EqualTo(terminal.Id));
+            Assert.That(fixture.Manager.GetState(fixture.Journey.Id)!.IsActive, Is.True);
+            Assert.That(fixture.Counters.GetSnapshot().Single().Count, Is.EqualTo(5UL));
+        }
+    }
+
+    [Test]
+    public async Task ExplicitStopSelectionReturnsToFirstStopWithoutResettingCounts()
+    {
+        using var fixture = new EventPlanFixture();
+        var first = new Station { Name = "First" };
+        fixture.Journey.Stations = [first, new Station { Name = "Terminal" }];
+        fixture.SetupNextStopActions(times: 2);
+        await fixture.RaiseAsync(1).ConfigureAwait(false);
+        fixture.Journey.EventPlan.Events.Add(new JourneyEvent { Count = 2, WorkflowId = fixture.Workflow.Id });
+        fixture.WorkflowService.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((WorkflowExecutionRequest request, CancellationToken _) =>
+            {
+                request.Context.ApplyJourneyStopTransition!(new JourneyStopTransition
+                {
+                    Mode = JourneyStopTransitionMode.SpecificStation, StationId = first.Id
+                });
+                return Success(request);
+            });
+
+        await fixture.RaiseAsync(1).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(fixture.Manager.GetState(fixture.Journey.Id)!.CurrentStationId, Is.EqualTo(first.Id));
+            Assert.That(fixture.Counters.GetSnapshot().Single().Count, Is.EqualTo(2UL));
+        }
+    }
+
+    [Test]
+    public async Task NextStopWithoutStationsLeavesTheJourneyActive()
+    {
+        using var fixture = new EventPlanFixture();
+        fixture.SetupNextStopActions(times: 1);
+
+        await fixture.RaiseAsync(1).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(fixture.Manager.GetState(fixture.Journey.Id)!.CurrentStationId, Is.Null);
+            Assert.That(fixture.Manager.GetState(fixture.Journey.Id)!.IsActive, Is.True);
+            Assert.That(fixture.Requests, Has.Count.EqualTo(1));
+        }
     }
 
     [Test]
@@ -309,48 +352,10 @@ public sealed class JourneyEventPlanTests
     }
 
     [Test]
-    public async Task CompletionIsReportedOnceEvenAfterProjectReactivation()
-    {
-        using var fixture = new EventPlanFixture();
-        fixture.Journey.Stations = [new Station { Name = "Terminal" }];
-        fixture.Journey.BehaviorOnLastStop = BehaviorOnLastStop.None;
-        fixture.Journey.EventPlan.Events.Add(new JourneyEvent { InPort = 1, Count = 2, WorkflowId = fixture.Workflow.Id });
-        var store = new InMemoryJourneyRuntimeStateStore();
-        var completed = new List<Guid>();
-        var eventBus = new Mock<IEventBus>();
-        eventBus.Setup(bus => bus.Publish(It.IsAny<JourneyRuntimeTransitionEvent>()))
-            .Callback<JourneyRuntimeTransitionEvent>(transition =>
-            {
-                if (transition.Kind == JourneyRuntimeTransitionKind.Completed)
-                    completed.Add(transition.JourneyRunId);
-            });
-        fixture.SetupNextStopActions(times: 1);
-        using (var manager = fixture.CreateManager(store, eventBus.Object))
-        {
-            await fixture.RaiseAsync(1, manager).ConfigureAwait(false);
-            await fixture.RaiseAsync(1, manager).ConfigureAwait(false);
-        }
-        fixture.Counters.ResetAll();
-        using var restored = fixture.CreateManager(store, eventBus.Object);
-        await fixture.RaiseAsync(1, restored).ConfigureAwait(false);
-
-        Assert.That(completed, Has.Count.EqualTo(1));
-
-        restored.Reset(fixture.Journey);
-        await fixture.RaiseAsync(1, restored).ConfigureAwait(false);
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(completed, Has.Count.EqualTo(2));
-            Assert.That(completed, Is.Unique);
-        }
-    }
-
-    [Test]
     public async Task RemovedCheckpointedStopFallsBackToFirstPositionWithANewIdentity()
     {
         using var fixture = new EventPlanFixture();
         fixture.Journey.Stations = [new Station { Name = "Old terminal" }];
-        fixture.Journey.BehaviorOnLastStop = BehaviorOnLastStop.None;
         var store = new InMemoryJourneyRuntimeStateStore();
         Guid oldRunId;
         using (var manager = fixture.CreateManager(store))
@@ -368,7 +373,6 @@ public sealed class JourneyEventPlanTests
         {
             Assert.That(state.CurrentStationId, Is.EqualTo(replacement.Id));
             Assert.That(state.RunId, Is.Not.EqualTo(oldRunId));
-            Assert.That(state.IsCompleted, Is.False);
         }
     }
 
@@ -458,130 +462,6 @@ public sealed class JourneyEventPlanTests
         }
 
         await Task.WhenAll(blockedProcessing, otherProcessing).WaitAsync(TimeSpan.FromSeconds(5));
-    }
-
-    [TestCase(WorkflowExecutionStatus.Failed)]
-    [TestCase(WorkflowExecutionStatus.Cancelled)]
-    public async Task UnsuccessfulWorkflowDiscardsCompletionRequest(WorkflowExecutionStatus status)
-    {
-        using var fixture = new EventPlanFixture();
-        fixture.Journey.Stations = [new Station { Name = "Terminal" }];
-        fixture.Journey.BehaviorOnLastStop = BehaviorOnLastStop.None;
-        fixture.Journey.EventPlan.Events.Add(new JourneyEvent { Count = 2, WorkflowId = fixture.Workflow.Id });
-        fixture.WorkflowService.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
-            .Returns(async (WorkflowExecutionRequest request, CancellationToken token) =>
-            {
-                await new ChangeJourneyStopWorkflowActionHandler().ExecuteAsync(NextStopAction(), request.Context, token).ConfigureAwait(false);
-                return Success(request) with { Status = status };
-            });
-        await fixture.RaiseAsync(1).ConfigureAwait(false);
-        Assert.That(fixture.Manager.GetState(fixture.Journey.Id)!.IsJourneyCompletionRequested, Is.False);
-        fixture.WorkflowService.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((WorkflowExecutionRequest request, CancellationToken _) => Success(request));
-        await fixture.RaiseAsync(1).ConfigureAwait(false);
-        Assert.That(fixture.Manager.GetState(fixture.Journey.Id)!.IsCompleted, Is.False);
-    }
-
-    [Test]
-    public async Task ExecutorExceptionDiscardsCompletionRequest()
-    {
-        using var fixture = new EventPlanFixture();
-        fixture.Journey.Stations = [new Station { Name = "Terminal" }];
-        fixture.WorkflowService.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
-            .Returns(async (WorkflowExecutionRequest request, CancellationToken token) =>
-            {
-                await new ChangeJourneyStopWorkflowActionHandler().ExecuteAsync(NextStopAction(), request.Context, token).ConfigureAwait(false);
-                throw new IOException("Execution failed");
-            });
-        Assert.ThrowsAsync<IOException>(() => fixture.RaiseAsync(1));
-        Assert.That(fixture.Manager.GetState(fixture.Journey.Id)!.IsJourneyCompletionRequested, Is.False);
-        fixture.WorkflowService.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((WorkflowExecutionRequest request, CancellationToken _) => Success(request));
-        fixture.Counters.ResetAll();
-        await fixture.RaiseAsync(1).ConfigureAwait(false);
-        Assert.That(fixture.Manager.GetState(fixture.Journey.Id)!.IsCompleted, Is.False);
-    }
-
-    [Test]
-    public async Task ResetDuringPendingCompletionDoesNotPublishCompletion()
-    {
-        using var assertions = Assert.EnterMultipleScope();
-        using var fixture = new EventPlanFixture();
-        fixture.Journey.Stations = [new Station { Name = "Terminal" }];
-        var bus = new Mock<IEventBus>();
-        using var manager = fixture.CreateManager(eventBus: bus.Object);
-        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        fixture.WorkflowService.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
-            .Returns(async (WorkflowExecutionRequest request, CancellationToken token) =>
-            {
-                await new ChangeJourneyStopWorkflowActionHandler().ExecuteAsync(NextStopAction(), request.Context, token).ConfigureAwait(false);
-                started.TrySetResult();
-                await Task.Delay(Timeout.InfiniteTimeSpan, token).ConfigureAwait(false);
-                return Success(request);
-            });
-        InPortCounterServiceTests.Raise(fixture.Z21, 1);
-        var processing = manager.LastProcessing;
-        await started.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
-        manager.Reset(fixture.Journey);
-        await processing.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
-        bus.Verify(value => value.Publish(It.Is<JourneyRuntimeTransitionEvent>(transition =>
-            transition.Kind == JourneyRuntimeTransitionKind.Completed)), Times.Never);
-        Assert.That(manager.GetState(fixture.Journey.Id)!.IsJourneyCompletionRequested, Is.False);
-    }
-
-    [Test]
-    public async Task ReturningFromCompletedTerminalAllowsAnotherCompletion()
-    {
-        using var assertions = Assert.EnterMultipleScope();
-        using var fixture = new EventPlanFixture();
-        var first = new Station { Name = "First" };
-        fixture.Journey.Stations = [first, new Station { Name = "Terminal" }];
-        fixture.Journey.BehaviorOnLastStop = BehaviorOnLastStop.None;
-        fixture.SetupNextStopActions(2);
-        await fixture.RaiseAsync(1).ConfigureAwait(false);
-        var state = fixture.Manager.GetState(fixture.Journey.Id)!;
-        var completedRun = state.RunId;
-        Assert.That(state.IsCompleted, Is.True);
-        fixture.WorkflowService.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((WorkflowExecutionRequest request, CancellationToken _) =>
-            {
-                request.Context.ApplyJourneyStopTransition!(new JourneyStopTransition
-                {
-                    Mode = JourneyStopTransitionMode.SpecificStation, StationId = first.Id
-                });
-                return Success(request);
-            });
-        fixture.Counters.ResetAll();
-        await fixture.RaiseAsync(1).ConfigureAwait(false);
-        Assert.That(state.IsCompleted, Is.False);
-        Assert.That(state.RunId, Is.Not.EqualTo(completedRun));
-        fixture.SetupNextStopActions(2);
-        fixture.Counters.ResetAll();
-        await fixture.RaiseAsync(1).ConfigureAwait(false);
-        Assert.That(state.IsCompleted, Is.True);
-    }
-
-    [Test]
-    public async Task ReturningBeforeWorkflowEndsDiscardsPendingCompletion()
-    {
-        using var assertions = Assert.EnterMultipleScope();
-        using var fixture = new EventPlanFixture();
-        var first = new Station { Name = "First" };
-        fixture.Journey.Stations = [first, new Station { Name = "Terminal" }];
-        fixture.WorkflowService.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((WorkflowExecutionRequest request, CancellationToken _) =>
-            {
-                var move = request.Context.ApplyJourneyStopTransition!;
-                move(new JourneyStopTransition { Mode = JourneyStopTransitionMode.Next });
-                move(new JourneyStopTransition { Mode = JourneyStopTransitionMode.Next });
-                move(new JourneyStopTransition { Mode = JourneyStopTransitionMode.SpecificStation, StationId = first.Id });
-                return Success(request);
-            });
-        await fixture.RaiseAsync(1).ConfigureAwait(false);
-        var state = fixture.Manager.GetState(fixture.Journey.Id)!;
-        Assert.That(state.CurrentStationId, Is.EqualTo(first.Id));
-        Assert.That(state.IsCompleted, Is.False);
-        Assert.That(state.IsJourneyCompletionRequested, Is.False);
     }
 
     [Test]
@@ -700,7 +580,7 @@ public sealed class JourneyEventPlanTests
         public JourneyRuntimeCheckpoint? Load(Guid projectId, Guid journeyId) => _checkpoints.GetValueOrDefault(journeyId);
 
         public void Save(Guid projectId, JourneySessionState state) =>
-            _checkpoints[state.JourneyId] = new JourneyRuntimeCheckpoint(state.CurrentStationId, state.RunId, state.IsCompleted);
+            _checkpoints[state.JourneyId] = new JourneyRuntimeCheckpoint(state.CurrentStationId, state.RunId);
 
         public void Reset(Guid projectId, Guid journeyId) => _checkpoints.Remove(journeyId);
     }

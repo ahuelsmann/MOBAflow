@@ -4,15 +4,17 @@
 
 **Source Issue**: #124
 
+**MVP Scope Issue**: #144
+
 **Created**: 2026-09-10
 
 **Revised**: 2026-09-24. The operator simplified the feature: no legacy feedback sequences, no follow-up
 journeys, no runtime start/stop and no per-run baselines. Journeys carry a persisted active flag, and events match
-absolute InPort session counts.
+absolute InPort session counts. The MVP removes remaining automatic completion/restart rules and configurable first positions.
 
 The operator also removed vehicle operating-time and usage statistics from this delivery. Follow-up
 [issue #143](https://github.com/ahuelsmann/MOBAflow/issues/143) defers any future reconsideration;
-it does not authorize implementation. Calendar-based maintenance remains available.
+it does not authorize implementation. Remaining calendar maintenance is removed separately under #147; route reservations under #146. Neither is part of the 1.0 MVP.
 
 **Status**: Simplification implemented locally; remote quality gate open
 
@@ -88,8 +90,8 @@ The Event Manager presents InPort, count and workflow in each row. Drag and drop
 - Invalid ports, zero counts and unavailable workflows cannot silently run. Disabled events never run.
 - Equal-condition rows each run once in stored order.
 - A failed workflow is not retried.
-- A final stop action requests completion. Only successful workflow completion confirms it; failure, cancellation and journey reset discard the request. Then the journey stays at its last stop or continues at the first stop, depending on `BehaviorOnLastStop`. The journey stays active.
-- An explicit move from a completed terminal stop to an earlier stop permits a new completion. Counter reset alone does not change stop/completion state.
+- There is no journey completion, automatic restart or follow-up journey. Moving next at the last stop (or with no stops) leaves the current stop unchanged. Later matching rules still run; unmatched higher counts do nothing.
+- A workflow can explicitly select an earlier stop. Stop changes never reset InPort counts.
 - Re-applying the project to the runtime keeps the current stop through the runtime checkpoint and keeps the counters.
 
 ## Requirements
@@ -104,11 +106,11 @@ The Event Manager presents InPort, count and workflow in each row. Drag and drop
 - **FR-006**: Change virtual stops only through existing workflow actions, without resetting counts.
 - **FR-007**: Provide a compact editor with workflow assignment/creation and row reordering by drag and drop, plus keyboard-accessible add/assign/duplicate/move/delete controls.
 - **FR-008**: Reuse arbitrary workflows, English labels, theme resources and visible validation feedback.
-- **FR-009**: Do not collect, persist or display vehicle operating time, completed-trip totals or distance statistics. Remove their checkpoints, corrections and usage-based maintenance intervals without migration; retain functional InPort counters and calendar-based maintenance.
+- **FR-009**: Do not collect, persist or display vehicle operating time, completed-trip totals or distance statistics. Remove their checkpoints, corrections and usage-based maintenance intervals without migration; retain functional InPort counters. Remove remaining calendar maintenance separately under #147.
 
 ### Key Entities
 
-- **Journey**: Virtual stop sequence/current stop, active flag, event plan and last-stop behavior.
+- **Journey**: Virtual stop sequence/current stop, active flag and event plan.
 - **InPort session counters**: Shared real-activation totals since application start or the last reset.
 - **Event plan/event**: Presentation-ordered independent port/count-to-workflow mappings.
 - **Workflow**: Existing arbitrary action composition, optionally changing a stop.

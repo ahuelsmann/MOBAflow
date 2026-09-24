@@ -65,21 +65,6 @@
 
                 <TextBlock Text="Configure this journey's events in Event Manager." TextWrapping="Wrap" />
 
-                <!--  FirstPos  -->
-                <NumberBox
-                    Header="First Position"
-                    Minimum="0"
-                    SpinButtonPlacementMode="Inline"
-                    Value="{Binding FirstPos, Mode=TwoWay}" />
-
-                <!--  Behavior On Last Stop  -->
-                <ComboBox
-                    HorizontalAlignment="Stretch"
-                    Header="Behavior On Last Stop"
-                    ItemsSource="{Binding BehaviorOnLastStopValues}"
-                    SelectedItem="{Binding BehaviorOnLastStop, Mode=TwoWay}" />
-
-
                 <!--  Text-to-Speech Template  -->
                 <TextBox
                     Height="120"

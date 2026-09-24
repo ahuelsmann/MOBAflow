@@ -13,12 +13,6 @@ public enum JourneyRuntimeTransitionKind
     /// <summary>The current station changed.</summary>
     StopChanged,
 
-    /// <summary>The journey run reached its terminal stop.</summary>
-    Completed,
-
-    /// <summary>The same journey restarted with a new run identity.</summary>
-    Restarted,
-
     /// <summary>The operator reset the journey to its initial state.</summary>
     Reset
 }

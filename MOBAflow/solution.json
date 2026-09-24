@@ -487,9 +487,7 @@
                 "enabled": true
               }
             ]
-          },
-          "behaviorOnLastStop": 0,
-          "firstPos": 0
+          }
         },
         {
           "id": "f12ab3c4-d5e6-4789-a012-345678901234",
@@ -576,9 +574,7 @@
             }
           ],
           "isActive": false,
-          "eventPlan": { "events": [] },
-          "behaviorOnLastStop": 0,
-          "firstPos": 0
+          "eventPlan": { "events": [] }
         },
         {
           "id": "f14ab3c4-d5e6-4789-a014-345678901234",
@@ -687,9 +683,7 @@
             }
           ],
           "isActive": false,
-          "eventPlan": { "events": [] },
-          "behaviorOnLastStop": 0,
-          "firstPos": 0
+          "eventPlan": { "events": [] }
         }
       ],
       "stations": [

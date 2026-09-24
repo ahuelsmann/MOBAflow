@@ -42,7 +42,6 @@ public sealed class JourneyMapViewModel : ObservableObject
                     OnPropertyChanged(nameof(RouteStations));
                     OnPropertyChanged(nameof(ProgressText));
                     OnPropertyChanged(nameof(ActivityText));
-                    OnPropertyChanged(nameof(BehaviorOnLastStopText));
                     break;
             }
         };
@@ -115,16 +114,6 @@ public sealed class JourneyMapViewModel : ObservableObject
         _ => "Inactive"
     };
 
-    /// <summary>
-    /// Behavior on last stop description.
-    /// </summary>
-    public string BehaviorOnLastStopText
-    {
-        get
-        {
-            return SelectedJourney == null ? "-" : SelectedJourney.BehaviorOnLastStop.ToString();
-        }
-    }
     #endregion
 
     private void AttachToSelectedJourney()

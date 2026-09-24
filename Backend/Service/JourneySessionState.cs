@@ -48,25 +48,16 @@ public class JourneySessionState
     /// </summary>
     public bool IsActive { get; set; }
 
-    /// <summary>Signals that a next-stop action reached the end of the stop list.</summary>
-    public bool IsJourneyCompletionRequested { get; set; }
-
-    /// <summary>Whether completion has already been reported for the current run identity.</summary>
-    public bool IsCompleted { get; set; }
-
     /// <summary>
     /// Resets the session state to initial values.
     /// </summary>
-    /// <param name="firstPos">The initial position to reset to (from Journey.FirstPos)</param>
-    public void Reset(int firstPos = 0)
+    public void Reset()
     {
         RunId = Guid.NewGuid();
         ResetVersion++;
-        CurrentPos = firstPos;
+        CurrentPos = 0;
         CurrentStationName = string.Empty;
         CurrentStationId = null;
         LastFeedbackTime = null;
-        IsJourneyCompletionRequested = false;
-        IsCompleted = false;
     }
 }

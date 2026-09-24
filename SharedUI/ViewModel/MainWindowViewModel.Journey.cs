@@ -5,7 +5,6 @@ using Backend.Interface;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Domain;
-using Domain.Enum;
 using Helper;
 using Microsoft.Extensions.Logging;
 
@@ -111,7 +110,7 @@ public partial class MainWindowViewModel
         var journey = EntityEditorHelper.AddEntity(
             SelectedProject.Model.Journeys,
             SelectedProject.Journeys,
-            () => new Journey { Name = "New Journey", BehaviorOnLastStop = BehaviorOnLastStop.None },
+            () => new Journey { Name = "New Journey" },
             model => CreateJourneyViewModel(model));
 
         SelectedJourney = journey;

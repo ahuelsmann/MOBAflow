@@ -13,7 +13,7 @@ Mobile counter display and reset always use the local runtime, including while a
 | Activate project | Re-create journey evaluation from the saved active flags and event plans; keep counters and checkpointed stops. |
 | Update journey events | Copy the addressed journey's active flag and event plan, including current workflow definitions for future executions; preserve accepted workflows and their definitions, stop state and interlocking. |
 
-An enabled event runs its workflow when `session count(port) == event count`. Workflows of one journey run in order; different journeys are independent. No historical catch-up, phase inference or train attribution is performed. Equal-condition rows use stored order.
+An enabled event runs its workflow when `session count(port) == event count`. Workflows of one journey run in order; different journeys are independent. No historical catch-up, phase inference or train attribution is performed. Equal-condition rows use stored order. Higher counts without matching rules do nothing; journeys do not complete or restart automatically. A next-stop action at the end leaves the stop unchanged, while an explicit target-stop action can select any configured stop. Neither action resets counters.
 
 | Editor action | Result |
 | --- | --- |

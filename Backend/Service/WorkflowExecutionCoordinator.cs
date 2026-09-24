@@ -3,16 +3,13 @@
 namespace Moba.Backend.Service;
 
 using Interface;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 
 /// <summary>Provides per-source FIFO execution with independent cancellation ownership.</summary>
-public sealed partial class WorkflowExecutionCoordinator : IWorkflowExecutionCoordinator
+public sealed class WorkflowExecutionCoordinator : IWorkflowExecutionCoordinator
 {
     private readonly object _sync = new();
     private readonly IWorkflowService _workflowService;
     private readonly TimeProvider _timeProvider;
-    private readonly ILogger _logger;
     private readonly Dictionary<string, QueuedEntry> _sourceTails = new(StringComparer.Ordinal);
     private readonly Dictionary<Guid, HashSet<QueuedEntry>> _ownerEntries = [];
     private bool _disposed;
@@ -20,16 +17,13 @@ public sealed partial class WorkflowExecutionCoordinator : IWorkflowExecutionCoo
     /// <summary>Creates a workflow execution coordinator.</summary>
     /// <param name="workflowService">Validated graph executor.</param>
     /// <param name="timeProvider">Time source used for cancellable source delays.</param>
-    /// <param name="logger">Logger for completion callback failures.</param>
-    public WorkflowExecutionCoordinator(IWorkflowService workflowService, TimeProvider timeProvider,
-        ILogger? logger = null)
+    public WorkflowExecutionCoordinator(IWorkflowService workflowService, TimeProvider timeProvider)
     {
         ArgumentNullException.ThrowIfNull(workflowService);
         ArgumentNullException.ThrowIfNull(timeProvider);
 
         _workflowService = workflowService;
         _timeProvider = timeProvider;
-        _logger = logger ?? NullLogger.Instance;
     }
 
     /// <inheritdoc />
@@ -125,28 +119,7 @@ public sealed partial class WorkflowExecutionCoordinator : IWorkflowExecutionCoo
             }
 
             var request = execution.RequestFactory();
-            var succeeded = false;
-            try
-            {
-                var result = await _workflowService.ExecuteAsync(request, entry.Cancellation.Token).ConfigureAwait(false);
-                succeeded = result.Status == WorkflowExecutionStatus.Succeeded && !entry.Cancellation.IsCancellationRequested;
-                return result;
-            }
-            finally
-            {
-                if (execution.OnCompleted is not null)
-                {
-                    try
-                    {
-                        await execution.OnCompleted(succeeded).ConfigureAwait(false);
-                    }
-                    catch (Exception ex) when (ex is not OutOfMemoryException and not AccessViolationException)
-                    {
-                        // Recoverable callback failures must not replace the executor's result or exception.
-                        LogCompletionFailed(_logger, ex, execution.WorkflowId);
-                    }
-                }
-            }
+            return await _workflowService.ExecuteAsync(request, entry.Cancellation.Token).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (entry.Cancellation.IsCancellationRequested)
         {
@@ -164,9 +137,6 @@ public sealed partial class WorkflowExecutionCoordinator : IWorkflowExecutionCoo
             entry.Cancellation.Dispose();
         }
     }
-
-    [LoggerMessage(Level = LogLevel.Error, Message = "Workflow {WorkflowId} completion callback failed")]
-    private static partial void LogCompletionFailed(ILogger logger, Exception exception, Guid workflowId);
 
     private static async Task AwaitPredecessorAsync(Task predecessor)
     {
