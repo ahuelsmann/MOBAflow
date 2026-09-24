@@ -136,12 +136,12 @@ public sealed class InterlockingRuntimeService : IInterlockingRuntime
             {
                 if (coordinator == null)
                     return Rejected("interlocking.inactive", "No operational definition is active.", correlationId);
-                var execution = await QueueAndWaitAsync<Task<TurnoutRuntimeTransition>?>(
-                    _ => BeginTurnoutDispatch(coordinator, turnoutId, position, correlationId, operationCancellation.Token),
+                var execution = await QueueAndWaitAsync<Task<TurnoutRuntimeTransition?>>(
+                    _ => BeginTurnoutDispatchAsync(coordinator, turnoutId, position, correlationId, operationCancellation.Token),
                     operationCancellation.Token).ConfigureAwait(false);
-                if (execution == null)
-                    return ProjectChanged(correlationId);
                 var transition = await execution.ConfigureAwait(false);
+                if (transition == null)
+                    return ProjectChanged(correlationId);
                 if (Volatile.Read(ref _disposeStarted) != 0)
                     return Rejected("turnout.shutdown", "The operational runtime is shutting down.", correlationId);
                 return await QueueAndWaitAsync(
@@ -155,7 +155,7 @@ public sealed class InterlockingRuntimeService : IInterlockingRuntime
         }
     }
 
-    private Task<TurnoutRuntimeTransition>? BeginTurnoutDispatch(
+    private async Task<TurnoutRuntimeTransition?> BeginTurnoutDispatchAsync(
         SemanticTurnoutRuntimeCoordinator coordinator,
         Guid turnoutId,
         TurnoutPosition position,
@@ -182,7 +182,7 @@ public sealed class InterlockingRuntimeService : IInterlockingRuntime
             if (stillRequested)
                 PublishSnapshot(correlationId, "turnout.command.requested");
         }
-        return execution;
+        return await execution.ConfigureAwait(false);
     }
 
     private TurnoutCoordinatorResult CompleteTurnoutDispatch(
