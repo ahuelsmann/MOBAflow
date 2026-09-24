@@ -2672,21 +2672,7 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
-      "path": "Test/Backend/InterlockingRouteCoordinatorTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1812",
       "path": "Test/Backend/InterlockingRuntimeServiceTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1812",
-      "path": "Test/Backend/InterlockingSafetyEngineTests.cs",
       "count": 1
     },
     {
@@ -3009,13 +2995,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/Backend/Z21ProtocolTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1812",
-      "path": "Test/Backend/Z21SignalEffectGatewayTests.cs",
       "count": 1
     },
     {
@@ -4030,13 +4009,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1826",
-      "path": "Test/Backend/InterlockingRouteCoordinatorTests.cs",
-      "count": 5
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1826",
       "path": "Test/TrackPlanRenderer/TrackLayoutArchitectureTests.cs",
       "count": 2
     },
@@ -4493,7 +4465,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1861",
       "path": "Test/Backend/InterlockingDefinitionValidatorTests.cs",
-      "count": 3
+      "count": 1
     },
     {
       "project": "Test",
@@ -4667,13 +4639,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2000",
-      "path": "Test/Backend/InterlockingRouteCoordinatorTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA2000",
       "path": "Test/Backend/InterlockingRuntimeServiceTests.cs",
       "count": 1
     },
@@ -4809,13 +4774,6 @@
       "ruleId": "CA2007",
       "path": "Test/Backend/InPortCounterServiceTests.cs",
       "count": 7
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA2007",
-      "path": "Test/Backend/InterlockingRouteCoordinatorTests.cs",
-      "count": 53
     },
     {
       "project": "Test",
@@ -4991,13 +4949,6 @@
       "ruleId": "CA2007",
       "path": "Test/Backend/Z21EventPipelineTests.cs",
       "count": 13
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA2007",
-      "path": "Test/Backend/Z21SignalEffectGatewayTests.cs",
-      "count": 3
     },
     {
       "project": "Test",
@@ -6306,14 +6257,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2056",
       "path": "Test/Backend/InterlockingDefinitionValidatorTests.cs",
-      "count": 2
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/Backend/InterlockingRouteCoordinatorTests.cs",
-      "count": 16
+      "count": 1
     },
     {
       "project": "Test",
@@ -6321,13 +6265,6 @@
       "ruleId": "NUnit2056",
       "path": "Test/Backend/InterlockingRuntimeServiceTests.cs",
       "count": 4
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/Backend/InterlockingSafetyEngineTests.cs",
-      "count": 13
     },
     {
       "project": "Test",

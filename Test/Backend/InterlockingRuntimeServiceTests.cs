@@ -274,6 +274,52 @@ internal sealed class InterlockingRuntimeServiceTests
         Assert.That(snapshots.Select(item => item.Snapshot.Revision), Is.Unique);
     }
 
+    [TestCase(false, false, TurnoutCoordinatorStatus.Accepted)]
+    [TestCase(true, false, TurnoutCoordinatorStatus.Rejected)]
+    [TestCase(false, true, TurnoutCoordinatorStatus.Failed)]
+    public async Task ConfirmationDuringDispatch_PreservesDispatchOutcome(
+        bool disconnect, bool failDispatch, TurnoutCoordinatorStatus expectedStatus)
+    {
+        var fixture = CreateFixture();
+        var runtime = fixture.Runtime;
+        await using var runtimeLifetime = runtime.ConfigureAwait(false);
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        fixture.Z21.Setup(z21 => z21.SetTurnoutAsync(100, 0, true, false, It.IsAny<CancellationToken>()))
+            .Returns(async (int address, int output, bool activate, bool queue, CancellationToken token) =>
+            {
+                started.TrySetResult();
+                await release.Task.WaitAsync(token).ConfigureAwait(false);
+                if (failDispatch)
+                    throw new InvalidOperationException("Synthetic dispatch failure.");
+            });
+        await runtime.ActivateAsync(fixture.Definition).ConfigureAwait(false);
+        var command = runtime.SetTurnoutAsync(fixture.TurnoutId, TurnoutPosition.Straight, Guid.NewGuid());
+        try
+        {
+            await started.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            fixture.EventBus.Publish(new TurnoutInfoChangedEvent(500, true, Guid.NewGuid()));
+            fixture.EventBus.Publish(new FeedbackStateChangedEvent(10, true, Guid.NewGuid()));
+            await runtime.WhenIdleAsync().WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            Assert.That(runtime.Current.Blocks[fixture.BlockId].Occupancy, Is.EqualTo(BlockOccupancy.Free));
+            if (disconnect)
+            {
+                fixture.EventBus.Publish(new Z21ConnectionLostEvent());
+                await runtime.WhenIdleAsync().WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            }
+        }
+        finally
+        {
+            release.TrySetResult();
+        }
+        var result = await command.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        using var assertions = Assert.EnterMultipleScope();
+        Assert.That(result.State.Turnouts[fixture.TurnoutId].Lifecycle,
+            Is.EqualTo(disconnect ? TurnoutLifecycle.Unknown : TurnoutLifecycle.Confirmed));
+        Assert.That(result.Status, Is.EqualTo(expectedStatus));
+    }
+
     [Test]
     public async Task ProjectActivation_DiscardsOldCommandCompletion()
     {
@@ -290,11 +336,18 @@ internal sealed class InterlockingRuntimeServiceTests
             });
         await runtime.ActivateAsync(fixture.Definition).ConfigureAwait(false);
         var command = runtime.SetTurnoutAsync(fixture.TurnoutId, TurnoutPosition.Straight, Guid.NewGuid());
-        await started.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
-        await runtime.WhenIdleAsync().ConfigureAwait(false);
-        await runtime.ActivateAsync(new InterlockingDefinition()).ConfigureAwait(false);
-        var replacement = runtime.Current;
-        release.TrySetResult();
+        InterlockingRuntimeState replacement;
+        try
+        {
+            await started.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            await runtime.WhenIdleAsync().WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            await runtime.ActivateAsync(new InterlockingDefinition()).WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            replacement = runtime.Current;
+        }
+        finally
+        {
+            release.TrySetResult();
+        }
         var result = await command.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
 
         using var assertions = Assert.EnterMultipleScope();

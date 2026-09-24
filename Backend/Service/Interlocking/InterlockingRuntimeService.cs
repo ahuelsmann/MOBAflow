@@ -31,6 +31,7 @@ public sealed class InterlockingRuntimeService : IInterlockingRuntime
 
     private InterlockingDefinition? _definition;
     private SemanticTurnoutRuntimeCoordinator? _coordinator;
+    private List<TurnoutInfoChangedEvent>? _deferredTurnoutObservations;
     private CancellationTokenSource _projectCancellation = new();
     private InterlockingRuntimeState _current = InterlockingRuntimeState.Empty;
     private bool _isSynchronized;
@@ -90,6 +91,7 @@ public sealed class InterlockingRuntimeService : IInterlockingRuntime
                 _projectCancellation = new CancellationTokenSource();
                 _definition = definition;
                 _coordinator = coordinator;
+                _deferredTurnoutObservations = null;
                 _feedbackStates.Clear();
                 _processedObservations.Clear();
                 _isSynchronized = false;
@@ -144,6 +146,7 @@ public sealed class InterlockingRuntimeService : IInterlockingRuntime
                     {
                         if (!ReferenceEquals(coordinator, _coordinator))
                             return Task.CompletedTask;
+                        _deferredTurnoutObservations = [];
                     }
                     // Start dispatch in order, but let observations continue while hardware is awaited.
                     execution = coordinator.RequestAsync(turnoutId, position, correlationId, operationCancellation.Token);
@@ -176,6 +179,19 @@ public sealed class InterlockingRuntimeService : IInterlockingRuntime
                             result = ProjectChanged(correlationId);
                             return Task.CompletedTask;
                         }
+                        // The semantic coordinator accepts confirmations only after dispatch.
+                        // Preserve their order without holding up block or disconnect observations.
+                        var awaitingConfirmation = transition.Status == TurnoutRuntimeTransitionStatus.Accepted &&
+                            transition.State.Lifecycle == TurnoutLifecycle.Pending;
+                        foreach (var observation in _deferredTurnoutObservations ?? [])
+                        {
+                            var observed = coordinator.ObserveFeedback(
+                                    observation.FunctionAddress, observation.OutputPosition, observation.CorrelationId)
+                                .FirstOrDefault(item => item.State.TurnoutId == turnoutId);
+                            if (awaitingConfirmation && observed != null)
+                                transition = observed;
+                        }
+                        _deferredTurnoutObservations = null;
                         RefreshState();
                         result = new TurnoutCoordinatorResult(
                             CommandStatus(transition), transition.Code, transition.Message, correlationId, _current);
@@ -297,10 +313,18 @@ public sealed class InterlockingRuntimeService : IInterlockingRuntime
             if (_coordinator == null || observation.CorrelationId == Guid.Empty ||
                 !_processedObservations.Add(observation.CorrelationId))
                 return Task.CompletedTask;
+            if (observation.IsSwitched && _deferredTurnoutObservations != null)
+            {
+                _deferredTurnoutObservations.Add(observation);
+                return Task.CompletedTask;
+            }
             if (observation.IsSwitched)
                 _coordinator.ObserveFeedback(observation.FunctionAddress, observation.OutputPosition, observation.CorrelationId);
             else
+            {
+                _deferredTurnoutObservations?.Clear();
                 _coordinator.MarkDisconnected(observation.CorrelationId);
+            }
             RefreshState();
         }
         PublishSnapshot(observation.CorrelationId, "turnout.observed");
@@ -362,6 +386,7 @@ public sealed class InterlockingRuntimeService : IInterlockingRuntime
             if (_coordinator == null)
                 return Task.CompletedTask;
             _feedbackStates.Clear();
+            _deferredTurnoutObservations?.Clear();
             _coordinator.MarkDisconnected(correlationId);
             RefreshState();
             _isSynchronized = false;
