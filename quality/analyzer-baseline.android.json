@@ -103,13 +103,6 @@
       "project": "Backend",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "Backend/Service/Interlocking/InterlockingRouteCoordinator.cs",
-      "count": 2
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
       "path": "Backend/Service/Interlocking/InterlockingRuntimeService.cs",
       "count": 2
     },
@@ -119,13 +112,6 @@
       "ruleId": "CA1031",
       "path": "Backend/Service/Interlocking/SemanticTurnoutCommandService.cs",
       "count": 2
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
-      "path": "Backend/Service/Interlocking/Z21SignalEffectGateway.cs",
-      "count": 1
     },
     {
       "project": "Backend",
@@ -313,21 +299,7 @@
       "project": "Backend",
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
-      "path": "Backend/Service/Interlocking/InterlockingSafetyEngine.cs",
-      "count": 10
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
       "path": "Backend/Service/Interlocking/SemanticTurnoutCommandService.cs",
-      "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
-      "path": "Backend/Service/Interlocking/Z21SignalEffectGateway.cs",
       "count": 1
     },
     {
@@ -648,13 +620,6 @@
     {
       "project": "Backend",
       "targetFramework": "net10.0",
-      "ruleId": "CA1826",
-      "path": "Backend/Service/Interlocking/InterlockingRouteCoordinator.cs",
-      "count": 2
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
       "ruleId": "CA1848",
       "path": "Backend/Manager/PlatformManager.cs",
       "count": 2
@@ -824,28 +789,7 @@
       "project": "Backend",
       "targetFramework": "net10.0",
       "ruleId": "CA1859",
-      "path": "Backend/Service/Interlocking/InterlockingConflictAnalyzer.cs",
-      "count": 2
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1859",
-      "path": "Backend/Service/Interlocking/InterlockingSafetyEngine.cs",
-      "count": 3
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1859",
       "path": "Backend/Service/Interlocking/SemanticTurnoutCommandService.cs",
-      "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1859",
-      "path": "Backend/Service/Interlocking/Z21SignalEffectGateway.cs",
       "count": 1
     },
     {
@@ -1174,13 +1118,6 @@
       "project": "Backend",
       "targetFramework": "net10.0",
       "ruleId": "IDE0290",
-      "path": "Backend/Service/Interlocking/InterlockingRouteCoordinator.cs",
-      "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0290",
       "path": "Backend/Service/Interlocking/SemanticTurnoutCommandService.cs",
       "count": 1
     },
@@ -1281,13 +1218,6 @@
       "ruleId": "IDE0290",
       "path": "Backend/Service/Z21Monitor.cs",
       "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0330",
-      "path": "Backend/Service/Interlocking/InterlockingRouteCoordinator.cs",
-      "count": 3
     },
     {
       "project": "Backend",
@@ -1721,7 +1651,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1002",
       "path": "Domain/Interlocking/InterlockingDefinition.cs",
-      "count": 19
+      "count": 13
     },
     {
       "project": "Domain",
@@ -1910,7 +1840,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2227",
       "path": "Domain/Interlocking/InterlockingDefinition.cs",
-      "count": 19
+      "count": 13
     },
     {
       "project": "Domain",
