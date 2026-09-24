@@ -46,9 +46,8 @@ delivery status.
 The Windows control center is where layouts are created, operated and monitored.
 
 - Control locomotive speed, direction and functions F0-F31.
-- Manage locomotives, passenger and goods wagons, train consists, usage-based
-  maintenance plans, auditable counter corrections, decoder snapshots and
-  printable locomotive passports.
+- Manage locomotives, passenger and goods wagons, train consists, calendar-based
+  maintenance plans, decoder snapshots and printable locomotive passports.
 - Create stations and journeys; inspect progress in the Journey Map and edit
   each journey's InPort count events in the Event Manager.
 - Coordinate dated services, delays, conflicts and dispatcher decisions in the

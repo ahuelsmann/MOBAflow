@@ -39,7 +39,6 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton<IMultiplexerProvider, DefaultMultiplexerProvider>();
         services.TryAddSingleton(TimeProvider.System);
         services.TryAddSingleton<InPortCounterService>();
-        services.TryAddSingleton<IVehicleUsageService, VehicleUsageService>();
         services.TryAddSingleton<IVehicleMaintenanceService, VehicleMaintenanceService>();
         services.TryAddSingleton<IDecoderCvService, DecoderCvService>();
         services.TryAddSingleton<ILocomotiveLibraryService, LocomotiveLibraryService>();
@@ -80,7 +79,6 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton<IProjectValidator, ProjectValidator>();
         services.TryAddSingleton<IJourneyStopTransitionService, JourneyStopTransitionService>();
         services.TryAddSingleton<IJourneyRuntimeStateStore, FileJourneyRuntimeStateStore>();
-        services.TryAddSingleton<IVehicleUsageCheckpointStore, FileVehicleUsageCheckpointStore>();
         services.TryAddSingleton<AnnouncementService>();
         services.TryAddSingleton<IAnnouncementService>(sp => sp.GetRequiredService<AnnouncementService>());
         services.TryAddSingleton<IWorkflowEffectPlanner, WorkflowEffectPlanner>();
@@ -134,7 +132,6 @@ public static class MobaBackendServiceCollectionExtensions
                 },
                 sp.GetService<ILogger<JourneyManager>>()),
             z21Discovery: sp.GetRequiredService<IZ21DiscoveryService>(),
-            vehicleUsageCheckpointStore: sp.GetRequiredService<IVehicleUsageCheckpointStore>(),
             timeProvider: sp.GetRequiredService<TimeProvider>(),
             interlockingRuntime: sp.GetRequiredService<IInterlockingRuntime>(),
             inPortCounterService: sp.GetRequiredService<InPortCounterService>()));

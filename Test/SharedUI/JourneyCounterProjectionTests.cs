@@ -129,10 +129,7 @@ public sealed class JourneyCounterProjectionTests
             Runtime.Setup(runtime => runtime.GetTrafficPackets()).Returns(Array.Empty<Z21TrafficPacket>());
             Runtime.Setup(runtime => runtime.ActivateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
-            Runtime.Setup(runtime => runtime.CheckpointUsageAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
             Runtime.Setup(runtime => runtime.DisconnectAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-            Runtime.Setup(runtime => runtime.SetActiveTrainAsync(It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
-                .Returns(Task.CompletedTask);
             Gateway.Setup(gateway => gateway.ResetInPortCountersAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
             var dispatcher = new Mock<IUiDispatcher>();
             dispatcher.Setup(candidate => candidate.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());

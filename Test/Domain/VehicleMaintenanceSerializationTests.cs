@@ -22,8 +22,8 @@ internal sealed class VehicleMaintenanceSerializationTests
                     Id = planId,
                     Name = "Coupler inspection",
                     Category = MaintenanceCategory.Other,
-                    IntervalCompletedTrips = 12,
-                    CompletedTripsAtLastCompletion = 3
+                    IntervalDays = 12,
+                    LastCompletedAt = DateTimeOffset.Parse("2026-07-16T08:00:00Z", System.Globalization.CultureInfo.InvariantCulture)
                 }
             ]
         };
@@ -38,9 +38,9 @@ internal sealed class VehicleMaintenanceSerializationTests
         Assert.Multiple(() =>
         {
             Assert.That(restoredLocomotive.Maintenance!.Plans.Single().Id, Is.EqualTo(planId));
-            Assert.That(restoredLocomotive.Maintenance.Plans.Single().IntervalCompletedTrips, Is.EqualTo(12));
+            Assert.That(restoredLocomotive.Maintenance.Plans.Single().IntervalDays, Is.EqualTo(12));
             Assert.That(restoredWagon.Maintenance!.Plans.Single().Name, Is.EqualTo("Coupler inspection"));
-            Assert.That(restoredWagon.Maintenance.Plans.Single().CompletedTripsAtLastCompletion, Is.EqualTo(3));
+            Assert.That(restoredWagon.Maintenance.Plans.Single().LastCompletedAt, Is.EqualTo(maintenance.Plans.Single().LastCompletedAt));
         });
     }
 

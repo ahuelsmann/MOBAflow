@@ -30,7 +30,6 @@ public sealed partial class MobaRuntimeService
             ? MobaRuntimeStatusFormatter.GetConnectedStatusText(_settings.Z21.CurrentIpAddress)
             : MobaRuntimeStatusFormatter.GetDisconnectedStatusText(_isManualDisconnectRequested);
 
-        UpdateVehicleUsageRuntimeState();
         PublishSnapshot();
     }
 
@@ -44,8 +43,7 @@ public sealed partial class MobaRuntimeService
         _isProgrammingModeActive = false;
         _statusText = "Connection lost - reconnect required";
         TriggerFailSafe("Unexpected loss of the Z21 connection.");
-        UpdateVehicleUsageRuntimeState();
-        CheckpointVehicleUsage(publishSnapshot: true);
+        PublishSnapshot();
     }
 
     private void OnZ21SystemStateChanged(SystemState systemState)
@@ -67,7 +65,6 @@ public sealed partial class MobaRuntimeService
         _vccVoltage = systemState.VccVoltage;
         _statusText = MobaRuntimeStatusFormatter.BuildSystemStateStatusText(systemState);
 
-        UpdateVehicleUsageRuntimeState();
         PublishSnapshot();
     }
 
@@ -77,7 +74,6 @@ public sealed partial class MobaRuntimeService
         _isEmergencyStopActive = xBusStatus.EmergencyStop;
         _isShortCircuitActive = xBusStatus.ShortCircuit;
         _isProgrammingModeActive = xBusStatus.Programming;
-        UpdateVehicleUsageRuntimeState();
         PublishSnapshot();
     }
 
@@ -114,16 +110,6 @@ public sealed partial class MobaRuntimeService
             new DateTimeOffset(occurredAt)));
     }
 
-    private void OnJourneyCompleted(object? sender, Moba.Backend.Manager.JourneyCompletedEventArgs args)
-    {
-        _ = sender;
-        if (_vehicleUsageTracker.RecordJourneyCompleted(args.JourneyRunId))
-        {
-            PublishSnapshot();
-            PublishVehicleUsageCheckpointCommitted();
-        }
-    }
-
     private void OnZ21LocomotiveInfoChanged(LocoInfo locoInfo)
     {
         ArgumentNullException.ThrowIfNull(locoInfo);
@@ -142,8 +128,6 @@ public sealed partial class MobaRuntimeService
                 : locoInfo.Functions
         };
 
-        SelectActiveTrainForLocomotive(locoInfo.Address, locoInfo.Speed);
-        UpdateVehicleUsageRuntimeState();
         PublishSnapshot();
     }
 

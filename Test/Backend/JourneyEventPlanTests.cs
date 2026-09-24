@@ -152,9 +152,7 @@ public sealed class JourneyEventPlanTests
         fixture.Journey.BehaviorOnLastStop = BehaviorOnLastStop.None;
         using var manager = fixture.CreateManager();
         var stations = new List<Guid>();
-        var completed = new List<Guid>();
         manager.StationChanged += (_, args) => stations.Add(args.Station.Id);
-        manager.JourneyCompleted += (_, args) => completed.Add(args.JourneyRunId);
         fixture.SetupNextStopActions(times: 3);
 
         await fixture.RaiseAsync(1, manager);
@@ -163,7 +161,7 @@ public sealed class JourneyEventPlanTests
         Assert.Multiple(() =>
         {
             Assert.That(stations, Is.EqualTo(new[] { second.Id, third.Id }));
-            Assert.That(completed, Is.EqualTo(new[] { state.RunId }));
+            Assert.That(state.IsCompleted, Is.True);
             Assert.That(state.CurrentStationId, Is.EqualTo(third.Id));
             Assert.That(state.IsActive, Is.True);
         });
@@ -319,16 +317,21 @@ public sealed class JourneyEventPlanTests
         fixture.Journey.EventPlan.Events.Add(new JourneyEvent { InPort = 1, Count = 2, WorkflowId = fixture.Workflow.Id });
         var store = new InMemoryJourneyRuntimeStateStore();
         var completed = new List<Guid>();
+        var eventBus = new Mock<IEventBus>();
+        eventBus.Setup(bus => bus.Publish(It.IsAny<JourneyRuntimeTransitionEvent>()))
+            .Callback<JourneyRuntimeTransitionEvent>(transition =>
+            {
+                if (transition.Kind == JourneyRuntimeTransitionKind.Completed)
+                    completed.Add(transition.JourneyRunId);
+            });
         fixture.SetupNextStopActions(times: 1);
-        using (var manager = fixture.CreateManager(store))
+        using (var manager = fixture.CreateManager(store, eventBus.Object))
         {
-            manager.JourneyCompleted += (_, args) => completed.Add(args.JourneyRunId);
             await fixture.RaiseAsync(1, manager).ConfigureAwait(false);
             await fixture.RaiseAsync(1, manager).ConfigureAwait(false);
         }
         fixture.Counters.ResetAll();
-        using var restored = fixture.CreateManager(store);
-        restored.JourneyCompleted += (_, args) => completed.Add(args.JourneyRunId);
+        using var restored = fixture.CreateManager(store, eventBus.Object);
         await fixture.RaiseAsync(1, restored).ConfigureAwait(false);
 
         Assert.That(completed, Has.Count.EqualTo(1));

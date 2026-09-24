@@ -11,6 +11,13 @@
 
 ## Phase 1: Analysis and setup
 
+### Current operator follow-up: remove vehicle statistics (2026-09-24)
+
+- [x] T033 Remove vehicle usage tracking, checkpoints, contracts, persistence hooks and UI; preserve InPort counters and calendar maintenance. Defer any future statistics to #143.
+- [x] T034 Remove obsolete usage tests and schema/sample fields; adapt calendar-maintenance regressions.
+- [x] T035 Validate the removal with full Release suites: portable 1,698 passed / 4 skipped; Windows 1,756 passed / 0 skipped. Android Release build and AAB validation passed. Review the final source diff and decreased analyzer inventories. No local Sonar code analysis or application launch.
+- [ ] T036 Confirm current GitHub/SonarCloud checks after publication; keep PR #125 Draft while its separate runtime review findings remain open.
+
 - [x] T001 Record approved requirements and compatibility in `specs/001-journey-event-plan/spec.md` and `plan.md` using repository templates.
 - [x] T002 Define runnable validation and manual acceptance in `specs/001-journey-event-plan/quickstart.md`.
 - [x] T003 Create authoritative issue #124, reference it in `specs/001-journey-event-plan/spec.md` and `plan.md`, and pass actual issue-body and PR governance validation.

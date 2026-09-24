@@ -18,8 +18,6 @@ public interface IJourneyManager : IDisposable
 
     event EventHandler<JourneyFeedbackEventArgs>? FeedbackReceived;
 
-    event EventHandler<JourneyCompletedEventArgs>? JourneyCompleted;
-
     JourneySessionState? GetState(Guid journeyId);
 
     void Reset(Journey journey);

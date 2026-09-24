@@ -14,9 +14,6 @@ internal static class MobaRuntimeSnapshotBuilder
     public static MobaRuntimeSnapshot Create(
         MobaRuntimeTelemetryState telemetry,
         ActiveProjectContext? activeProjectContext,
-        Guid? activeTrainId,
-        IReadOnlyDictionary<Guid, VehicleUsageRuntimeSnapshot> vehicleUsage,
-        VehicleUsageRuntimeDiagnosticsSnapshot vehicleUsageDiagnostics,
         IReadOnlyList<InPortCounterSnapshot>? inPortCounters = null)
     {
         var journeyStates = CreateJourneySnapshots(activeProjectContext);
@@ -104,9 +101,6 @@ internal static class MobaRuntimeSnapshotBuilder
             InPortCounters = inPortCounters ?? [],
             LocomotiveStates = new Dictionary<int, LocomotiveRuntimeSnapshot>(telemetry.LocomotiveStates),
             LocomotiveFleet = locomotiveFleet,
-            VehicleUsage = vehicleUsage,
-            ActiveTrainId = activeTrainId,
-            VehicleUsageDiagnostics = vehicleUsageDiagnostics,
             SignalBoxElements = signalBoxElements,
             CreatedAt = DateTimeOffset.Now
         };

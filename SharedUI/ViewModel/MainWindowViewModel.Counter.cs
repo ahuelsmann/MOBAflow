@@ -144,14 +144,6 @@ public partial class MainWindowViewModel
     /// Subscribes to PropertyChanged for auto-save (Project + all Workflows).
     /// Auto-selects first journey if available.
     /// </summary>
-    partial void OnSelectedProjectChanging(ProjectViewModel? value)
-    {
-        _ = value;
-        var checkpointTask = _mobaRuntime.CheckpointUsageAsync();
-        SynchronizeVehicleUsageFromRuntime();
-        ObserveBackgroundTask(checkpointTask, "Checkpoint project usage before selection change");
-    }
-
     partial void OnSelectedProjectChanged(ProjectViewModel? value)
     {
         _locomotiveWhistleAutomation?.Activate(value?.Model);

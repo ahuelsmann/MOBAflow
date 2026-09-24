@@ -72,9 +72,6 @@ public partial class JourneyManager : IJourneyManager
     /// </summary>
     public event EventHandler<JourneyFeedbackEventArgs>? FeedbackReceived;
 
-    /// <summary>Raised exactly once when a journey run reaches its terminal stop.</summary>
-    public event EventHandler<JourneyCompletedEventArgs>? JourneyCompleted;
-
     /// <summary>
     /// Raises the StationChanged event. Protected for testing purposes.
     /// </summary>
@@ -287,11 +284,6 @@ public partial class JourneyManager : IJourneyManager
             state.IsCompleted = true;
             LogLastStationReached(_logger, journey.Name);
             PublishTransition(journey, state, JourneyRuntimeTransitionKind.Completed);
-            JourneyCompleted?.Invoke(this, new JourneyCompletedEventArgs
-            {
-                JourneyId = journey.Id,
-                JourneyRunId = state.RunId
-            });
 
             if (journey.BehaviorOnLastStop == BehaviorOnLastStop.BeginAgainFromFistStop)
             {

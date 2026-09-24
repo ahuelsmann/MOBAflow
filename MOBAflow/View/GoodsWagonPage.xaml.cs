@@ -49,7 +49,6 @@ internal sealed partial class GoodsWagonPage
     {
         ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
-        Maintenance.Activate();
         RefreshMaintenance();
         RestoreLayout();
     }
@@ -58,7 +57,6 @@ internal sealed partial class GoodsWagonPage
     {
         _ = sender;
         _ = e;
-        Maintenance.Deactivate();
         HandlePageUnloadedAsync().Observe(ex => _logger?.LogWarning(ex, "Persist layout on unload failed"));
     }
 

@@ -81,16 +81,6 @@ public interface ITrafficMonitor
 }
 
 /// <summary>
-/// Active-consist selection and explicit usage checkpoint commands.
-/// </summary>
-public interface IVehicleUsageRuntime
-{
-    Task SetActiveTrainAsync(Guid? trainId, CancellationToken cancellationToken = default);
-
-    Task CheckpointUsageAsync(CancellationToken cancellationToken = default);
-}
-
-/// <summary>
 /// Backward-compatible aggregate facade for existing runtime consumers.
 /// Prefer the narrower role interfaces for new code.
 /// </summary>
@@ -99,7 +89,6 @@ public interface IMobaRuntime :
     IConnectionRuntime,
     ILocomotiveRuntime,
     ISignalTurnoutRuntime,
-    ITrafficMonitor,
-    IVehicleUsageRuntime
+    ITrafficMonitor
 {
 }
