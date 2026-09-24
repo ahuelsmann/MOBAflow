@@ -68,7 +68,7 @@ public sealed class WorkflowLibraryViewModelTests
         var journey = new Journey
         {
             Name = "Regional",
-            FeedbackSequence = [new JourneyFeedbackStep { InPort = 1, WorkflowId = target.Id }, new JourneyFeedbackStep { InPort = 2, WorkflowId = target.Id }]
+            EventPlan = new JourneyEventPlan { Events = [new JourneyEvent { InPort = 1, Count = 3, WorkflowId = target.Id }, new JourneyEvent { InPort = 2, Count = 5, WorkflowId = target.Id }] }
         };
         var project = new ProjectViewModel(new Project { Workflows = [target], Journeys = [journey] });
         var context = new TestProjectContext(project);
@@ -79,7 +79,7 @@ public sealed class WorkflowLibraryViewModelTests
         {
             Assert.That(project.Model.Workflows, Does.Contain(target));
             Assert.That(library.DeletionReferences, Has.Count.EqualTo(2));
-            Assert.That(library.LastDeletionBlockMessage, Does.Contain("Regional").And.Contain("Feedback step 1").And.Contain("Feedback step 2"));
+            Assert.That(library.LastDeletionBlockMessage, Does.Contain("Regional").And.Contain("InPort 1, count 3").And.Contain("InPort 2, count 5"));
             Assert.That(dialog.LastTitle, Is.EqualTo("Workflow is in use"));
             Assert.That(context.SaveCount, Is.Zero);
         }

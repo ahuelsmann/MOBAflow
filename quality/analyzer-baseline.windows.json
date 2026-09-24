@@ -495,13 +495,6 @@
       "project": "MOBAflow",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1515",
-      "path": "MOBAflow/Behavior/StationDropBehavior.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1515",
       "path": "MOBAflow/Behavior/WorkflowDropBehavior.cs",
       "count": 1
     },
@@ -979,13 +972,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1822",
       "path": "MOBAflow/Service/TrainClassResolverService.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1822",
-      "path": "MOBAflow/View/EventManagerPage.xaml.cs",
       "count": 1
     },
     {
@@ -1931,7 +1917,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CsWinRT1030",
       "path": "MOBAflow/View/EventManagerPage.xaml.cs",
-      "count": 2
+      "count": 3
     },
     {
       "project": "MOBAflow",
@@ -2177,13 +2163,6 @@
       "ruleId": "IDE0053",
       "path": "MOBAflow/View/TrackPlanPage.xaml.cs",
       "count": 2
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "IDE0260",
-      "path": "MOBAflow/View/EventManagerPage.xaml.cs",
-      "count": 1
     },
     {
       "project": "MOBAflow",
@@ -2463,7 +2442,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1307",
       "path": "Test/Backend/ProjectValidatorTests.cs",
-      "count": 6
+      "count": 5
     },
     {
       "project": "Test",
@@ -2504,7 +2483,21 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1515",
-      "path": "Test/Backend/JourneyManagerFeedbackTests.cs",
+      "path": "Test/Backend/InPortCounterServiceTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1515",
+      "path": "Test/Backend/JourneyEventPlanAcceptanceTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1515",
+      "path": "Test/Backend/JourneyEventPlanTests.cs",
       "count": 1
     },
     {
@@ -2546,6 +2539,20 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1515",
+      "path": "Test/SharedUI/EventManagerEventPlanTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1515",
+      "path": "Test/SharedUI/JourneyCounterProjectionTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1515",
       "path": "Test/SharedUI/WorkflowLibraryViewModelTests.cs",
       "count": 1
     },
@@ -2553,8 +2560,15 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1707",
-      "path": "Test/Backend/JourneyManagerFeedbackTests.cs",
-      "count": 13
+      "path": "Test/Backend/InPortCounterServiceTests.cs",
+      "count": 8
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1707",
+      "path": "Test/Backend/JourneyEventPlanAcceptanceTests.cs",
+      "count": 3
     },
     {
       "project": "Test",
@@ -2583,6 +2597,20 @@
       "ruleId": "CA1707",
       "path": "Test/SharedUI/DisplayViewModelTests.cs",
       "count": 14
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1707",
+      "path": "Test/SharedUI/EventManagerEventPlanTests.cs",
+      "count": 7
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1707",
+      "path": "Test/SharedUI/JourneyCounterProjectionTests.cs",
+      "count": 5
     },
     {
       "project": "Test",
@@ -2700,6 +2728,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/Backend/MobaRuntimeEventPlanTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/Backend/MobaRuntimeServiceAutoConnectDiscoveryTests.cs",
       "count": 1
     },
@@ -2722,13 +2757,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/Backend/MobaRuntimeServiceTrackPowerTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1812",
-      "path": "Test/Backend/MobaRuntimeServiceVehicleUsageTests.cs",
       "count": 1
     },
     {
@@ -2862,20 +2890,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/Backend/VehicleMaintenanceServiceTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1812",
-      "path": "Test/Backend/VehicleUsageRuntimeTrackerTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1812",
-      "path": "Test/Backend/VehicleUsageServiceTests.cs",
       "count": 1
     },
     {
@@ -3344,13 +3358,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
-      "path": "Test/Domain/VehicleUsageSerializationTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1812",
       "path": "Test/Domain/WorkflowActionJsonConverterTests.cs",
       "count": 1
     },
@@ -3597,13 +3604,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/SharedUI/FeedbackCounterEngineTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1812",
-      "path": "Test/SharedUI/JourneyFeedbackStepViewModelTests.cs",
       "count": 1
     },
     {
@@ -4072,13 +4072,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1849",
-      "path": "Test/Backend/MobaRuntimeServiceVehicleUsageTests.cs",
-      "count": 4
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1849",
       "path": "Test/Backend/RecordingSessionServiceTests.cs",
       "count": 1
     },
@@ -4478,15 +4471,15 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1861",
-      "path": "Test/Backend/InterlockingDefinitionValidatorTests.cs",
-      "count": 3
+      "path": "Test/Backend/InPortCounterServiceTests.cs",
+      "count": 2
     },
     {
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1861",
-      "path": "Test/Backend/JourneyManagerFeedbackTests.cs",
-      "count": 2
+      "path": "Test/Backend/InterlockingDefinitionValidatorTests.cs",
+      "count": 3
     },
     {
       "project": "Test",
@@ -4779,6 +4772,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2007",
+      "path": "Test/Backend/InPortCounterServiceTests.cs",
+      "count": 7
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA2007",
       "path": "Test/Backend/InterlockingRouteCoordinatorTests.cs",
       "count": 53
     },
@@ -4793,8 +4793,15 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2007",
-      "path": "Test/Backend/JourneyManagerFeedbackTests.cs",
-      "count": 20
+      "path": "Test/Backend/JourneyEventPlanAcceptanceTests.cs",
+      "count": 9
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA2007",
+      "path": "Test/Backend/JourneyEventPlanTests.cs",
+      "count": 30
     },
     {
       "project": "Test",
@@ -4816,6 +4823,13 @@
       "ruleId": "CA2007",
       "path": "Test/Backend/MasterDataStoreUpdateTests.cs",
       "count": 3
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA2007",
+      "path": "Test/Backend/MobaRuntimeEventPlanTests.cs",
+      "count": 4
     },
     {
       "project": "Test",
@@ -4844,13 +4858,6 @@
       "ruleId": "CA2007",
       "path": "Test/Backend/MobaRuntimeServiceTrackPowerTests.cs",
       "count": 5
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA2007",
-      "path": "Test/Backend/MobaRuntimeServiceVehicleUsageTests.cs",
-      "count": 3
     },
     {
       "project": "Test",
@@ -5080,6 +5087,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2007",
+      "path": "Test/SharedUI/JourneyCounterProjectionTests.cs",
+      "count": 7
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA2007",
       "path": "Test/SharedUI/LocomotiveManagementViewModelTests.cs",
       "count": 10
     },
@@ -5116,7 +5130,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2007",
       "path": "Test/SharedUI/MobileRuntimeCoordinatorTests.cs",
-      "count": 4
+      "count": 7
     },
     {
       "project": "Test",
@@ -5151,14 +5165,14 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2007",
       "path": "Test/SharedUI/RecordingRuntimeCommandGatewayTests.cs",
-      "count": 14
+      "count": 15
     },
     {
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2007",
       "path": "Test/SharedUI/RollingStockMaintenanceViewModelTests.cs",
-      "count": 5
+      "count": 3
     },
     {
       "project": "Test",
@@ -5241,8 +5255,15 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CsWinRT1028",
-      "path": "Test/Backend/JourneyManagerFeedbackTests.cs",
-      "count": 1
+      "path": "Test/Backend/JourneyEventPlanAcceptanceTests.cs",
+      "count": 2
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CsWinRT1028",
+      "path": "Test/Backend/JourneyEventPlanTests.cs",
+      "count": 2
     },
     {
       "project": "Test",
@@ -5292,6 +5313,13 @@
       "ruleId": "CsWinRT1028",
       "path": "Test/Mocks/FakeUdpClientWrapper.cs",
       "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CsWinRT1028",
+      "path": "Test/SharedUI/EventManagerEventPlanTests.cs",
+      "count": 2
     },
     {
       "project": "Test",
@@ -5584,13 +5612,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "IDE0290",
-      "path": "Test/Backend/JourneyManagerFeedbackTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "IDE0290",
       "path": "Test/Backend/WorkflowActionHandlersTests.cs",
       "count": 1
     },
@@ -5667,9 +5688,9 @@
     {
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2045",
-      "path": "Test/Backend/JourneyManagerFeedbackTests.cs",
-      "count": 4
+      "ruleId": "NUnit1028",
+      "path": "Test/Backend/InPortCounterServiceTests.cs",
+      "count": 2
     },
     {
       "project": "Test",
@@ -5677,13 +5698,6 @@
       "ruleId": "NUnit2045",
       "path": "Test/Backend/MasterDataStoreTests.cs",
       "count": 4
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2045",
-      "path": "Test/Backend/MobaRuntimeServiceVehicleUsageTests.cs",
-      "count": 1
     },
     {
       "project": "Test",
@@ -5879,7 +5893,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2045",
       "path": "Test/Domain/JourneyTests.cs",
-      "count": 4
+      "count": 3
     },
     {
       "project": "Test",
@@ -5962,7 +5976,7 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2045",
-      "path": "Test/SharedUI/JourneyFeedbackStepViewModelTests.cs",
+      "path": "Test/SharedUI/EventManagerEventPlanTests.cs",
       "count": 4
     },
     {
@@ -6027,13 +6041,6 @@
       "ruleId": "NUnit2045",
       "path": "Test/SharedUI/OperatingStateEvaluatorTests.cs",
       "count": 2
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2045",
-      "path": "Test/SharedUI/RollingStockMaintenanceViewModelTests.cs",
-      "count": 1
     },
     {
       "project": "Test",
@@ -6235,6 +6242,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2056",
+      "path": "Test/Backend/InPortCounterServiceTests.cs",
+      "count": 3
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "NUnit2056",
       "path": "Test/Backend/InterlockingDefinitionValidatorTests.cs",
       "count": 2
     },
@@ -6263,8 +6277,15 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2056",
-      "path": "Test/Backend/JourneyManagerFeedbackTests.cs",
-      "count": 5
+      "path": "Test/Backend/JourneyEventPlanAcceptanceTests.cs",
+      "count": 3
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "NUnit2056",
+      "path": "Test/Backend/JourneyEventPlanTests.cs",
+      "count": 4
     },
     {
       "project": "Test",
@@ -6298,14 +6319,14 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2056",
-      "path": "Test/Backend/MobaRuntimeServiceProjectIsolationTests.cs",
+      "path": "Test/Backend/MobaRuntimeEventPlanTests.cs",
       "count": 1
     },
     {
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2056",
-      "path": "Test/Backend/MobaRuntimeServiceVehicleUsageTests.cs",
+      "path": "Test/Backend/MobaRuntimeServiceProjectIsolationTests.cs",
       "count": 1
     },
     {
@@ -6391,27 +6412,6 @@
       "ruleId": "NUnit2056",
       "path": "Test/Backend/TimetableRuntimeProjectionServiceTests.cs",
       "count": 4
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/Backend/VehicleMaintenanceServiceTests.cs",
-      "count": 5
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/Backend/VehicleUsageRuntimeTrackerTests.cs",
-      "count": 5
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/Backend/VehicleUsageServiceTests.cs",
-      "count": 2
     },
     {
       "project": "Test",
@@ -6620,6 +6620,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2056",
+      "path": "Test/Domain/JourneyTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "NUnit2056",
       "path": "Test/Domain/JsonOptionsTests.cs",
       "count": 3
     },
@@ -6677,13 +6684,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2056",
       "path": "Test/Domain/VehicleMaintenanceSerializationTests.cs",
-      "count": 2
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/Domain/VehicleUsageSerializationTests.cs",
       "count": 2
     },
     {
@@ -6788,7 +6788,21 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2056",
+      "path": "Test/SharedUI/EventManagerEventPlanTests.cs",
+      "count": 5
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "NUnit2056",
       "path": "Test/SharedUI/FeedbackCounterEngineTests.cs",
+      "count": 4
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "NUnit2056",
+      "path": "Test/SharedUI/JourneyCounterProjectionTests.cs",
       "count": 4
     },
     {
@@ -6804,13 +6818,6 @@
       "ruleId": "NUnit2056",
       "path": "Test/SharedUI/MainWindowDiagnosticsTests.cs",
       "count": 2
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/SharedUI/MainWindowViewModelShutdownTests.cs",
-      "count": 1
     },
     {
       "project": "Test",
@@ -6880,7 +6887,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2056",
       "path": "Test/SharedUI/RollingStockMaintenanceViewModelTests.cs",
-      "count": 7
+      "count": 2
     },
     {
       "project": "Test",
@@ -7026,13 +7033,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit4002",
-      "path": "Test/Domain/JourneyTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit4002",
       "path": "Test/MOBAdisplay/Rgb565ConverterTests.cs",
       "count": 1
     },
@@ -7061,13 +7061,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit4002",
-      "path": "Test/SharedUI/RollingStockMaintenanceViewModelTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit4002",
       "path": "Test/SharedUI/TrainControlViewModelCleanupTests.cs",
       "count": 1
     },
@@ -7077,13 +7070,6 @@
       "ruleId": "NUnit4002",
       "path": "Test/TrackPlanRenderer/TrackPlanFeedbackHighlighterTests.cs",
       "count": 6
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit4002",
-      "path": "Test/Unit/DomainDefaultsTests.cs",
-      "count": 1
     }
   ]
 }

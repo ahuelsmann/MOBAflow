@@ -46,11 +46,10 @@ delivery status.
 The Windows control center is where layouts are created, operated and monitored.
 
 - Control locomotive speed, direction and functions F0-F31.
-- Manage locomotives, passenger and goods wagons, train consists, usage-based
-  maintenance plans, auditable counter corrections, decoder snapshots and
-  printable locomotive passports.
-- Create stations, journeys and ordered feedback sequences; inspect progress in
-  the Journey Map and edit feedback behavior in the Event Manager.
+- Manage locomotives, passenger and goods wagons, train consists, calendar-based
+  maintenance plans, decoder snapshots and printable locomotive passports.
+- Create stations and journeys; inspect progress in the Journey Map and edit
+  each journey's InPort count events in the Event Manager.
 - Coordinate dated services, delays, conflicts and dispatcher decisions in the
   preview Timetable page.
 - Build reusable workflows for commands, audio, announcements, signals, scripts,
@@ -86,7 +85,7 @@ MOBApi.
 
 MOBApi is the local bridge between MOBAflow, MOBAsmart and other integrations. It
 provides REST endpoints and SignalR hubs for solution synchronization, runtime
-snapshots, remote commands, journey progress, feedback sequences, client status
+snapshots, remote commands, journey progress, client status
 and photos. MOBAsmart can discover it automatically on the same LAN.
 
 MOBApi can run by itself or be started automatically by MOBAflow.
@@ -109,7 +108,7 @@ hardware color-test only.
 | Area | What it adds to an operating session |
 | --- | --- |
 | Z21 integration | Direct UDP control, feedback events, track power and live telemetry |
-| Journeys | Ordered stations, feedback sequences, progress persistence and end-of-journey behavior |
+| Journeys | Ordered stations, active flag, InPort count events, progress persistence and end-of-journey behavior |
 | Timetable | Dated services, live progress, deterministic delays, conflict explanations and dispatcher decisions |
 | Event Manager | Visual editing of feedback steps and stop transitions |
 | Workflows | Reusable ordered action lists triggered by layout events |

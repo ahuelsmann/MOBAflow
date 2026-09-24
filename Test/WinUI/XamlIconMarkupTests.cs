@@ -7,8 +7,9 @@ using System.Xml.Linq;
 [TestFixture]
 internal sealed class XamlIconMarkupTests
 {
-    [TestCase("WorkflowsPage.xaml")]
-    public void MoveActionDownButton_ShouldUseExplicitFluentFontIcon(string pageFileName)
+    [TestCase("EventManagerPage.xaml", "MoveSelectedEventDownCommand")]
+    [TestCase("WorkflowsPage.xaml", "MoveSelectedActionDownCommand")]
+    public void MoveDownButton_ShouldUseExplicitFluentFontIcon(string pageFileName, string commandName)
     {
         // Arrange
         var repositoryRoot = FindRepositoryRoot();
@@ -19,8 +20,7 @@ internal sealed class XamlIconMarkupTests
             .Descendants()
             .Single(element =>
                 element.Name.LocalName == "AppBarButton"
-                && element.Attribute("Label")?.Value.Contains("Move", StringComparison.Ordinal) == true
-                && element.Attribute("Label")?.Value.Contains("down", StringComparison.OrdinalIgnoreCase) == true);
+                && element.Attribute("Command")?.Value.Contains(commandName, StringComparison.Ordinal) == true);
         var fontIcon = moveDownButton
             .Descendants()
             .Single(element => element.Name.LocalName == "FontIcon");

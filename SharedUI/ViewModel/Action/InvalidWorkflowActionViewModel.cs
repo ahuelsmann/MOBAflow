@@ -7,5 +7,5 @@ using Domain;
 public sealed class InvalidWorkflowActionViewModel(WorkflowAction action) : WorkflowActionViewModel(action, action.Type)
 {
     /// <summary>Gets the recovery instruction displayed instead of a typed payload editor.</summary>
-    public string ValidationHint => "This action is invalid or unsupported. Remove it and add a new action with the required settings.";
+    public string ValidationHint { get; } = "This action is invalid or unsupported. Remove it and add a new action with the required settings.";
 }

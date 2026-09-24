@@ -78,7 +78,7 @@ are the immutable boundary exposed to UI consumers.
 - IMobaRuntime / MobaRuntimeService (authoritative runtime owner)
 - `WorkflowService` (validated ordered action execution and dry-run planning)
 - `WorkflowValidator` and `WorkflowEffectPlanner`
-- `WorkflowExecutionCoordinator` (per-feedback-source FIFO execution)
+- `WorkflowExecutionCoordinator` (FIFO execution per journey)
 - `WorkflowTraceStore` (bounded in-memory lifecycle projection)
 - `ActionExecutor` and typed action handlers (live effects only)
 - `MasterDataStore` (shared cities/locomotives/multiplex master JSON, e.g. `data.json`)
@@ -223,8 +223,9 @@ A workflow is a reusable ordered list of actions. An event triggers it and suppl
 ```mermaid
 classDiagram
     Project "1" --> "*" Workflow : library
-    Journey "1" --> "*" JourneyFeedbackStep : event assignments
-    JourneyFeedbackStep "*" --> "0..1" Workflow : WorkflowId
+    Journey "1" *-- "1" JourneyEventPlan
+    JourneyEventPlan "1" *-- "*" JourneyEvent : event assignments
+    JourneyEvent "*" --> "0..1" Workflow : WorkflowId
     Workflow "1" *-- "*" WorkflowAction : ordered Actions
     WorkflowAction --> ActionType
     WorkflowAction --> ActionExecutionContext : uses during execution
@@ -234,13 +235,14 @@ classDiagram
     ActionExecutionContext --> Platform : CurrentPlatform
 ```
 
-`Workflow`, `WorkflowAction`, `JourneyFeedbackStep`, `Journey`, `Station` and `Platform`
+`Workflow`, `WorkflowAction`, `JourneyEventPlan`, `JourneyEvent`, `Journey`, `Station` and `Platform`
 are persisted Domain classes. `ActionExecutionContext` is an existing Backend runtime
 class; `IEvent` belongs to Common. Event assignments own the workflow reference;
 a workflow does not own its triggers and can be reused by multiple assignments.
 
-- JourneyManager captures event, correlation, journey and current stop information.
-  `WorkflowExecutionCoordinator` preserves FIFO execution per feedback source.
+- JourneyManager captures the event, correlation and journey; it resolves the current
+  stop when the queued execution starts, after the previous execution finishes.
+  `WorkflowExecutionCoordinator` preserves FIFO execution per journey.
 - `WorkflowValidator` checks identifiers, a nonempty action list, typed payloads
   and nonnegative delays. Invalid drafts elsewhere in the library do not block a valid run.
 - `WorkflowService` awaits each action in list order and its optional `DelayAfterMs`.

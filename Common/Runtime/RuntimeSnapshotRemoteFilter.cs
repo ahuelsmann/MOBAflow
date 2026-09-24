@@ -39,6 +39,7 @@ public static class RuntimeSnapshotRemoteFilter
             LastFailSafeAt = snapshot.LastFailSafeAt,
             IsOperatorAckRequired = snapshot.IsOperatorAckRequired,
             JourneyStates = snapshot.JourneyStates,
+            InPortCounters = snapshot.InPortCounters,
             LocomotiveStates = new Dictionary<int, LocomotiveRuntimeSnapshot>(),
             LocomotiveFleet = snapshot.LocomotiveFleet,
             SignalBoxElements = snapshot.SignalBoxElements,

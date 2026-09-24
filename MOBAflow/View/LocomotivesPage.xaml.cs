@@ -54,7 +54,6 @@ internal sealed partial class LocomotivesPage
     {
         ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
-        Maintenance.Activate();
         ObserveSelectedLocomotive();
         RefreshManagement();
         RefreshMaintenance();
@@ -65,7 +64,6 @@ internal sealed partial class LocomotivesPage
     {
         _ = sender;
         _ = e;
-        Maintenance.Deactivate();
         HandlePageUnloadedAsync().Observe(ex => _logger?.LogWarning(ex, "Persist layout on unload failed"));
     }
 

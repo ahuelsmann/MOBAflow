@@ -142,27 +142,36 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
         // Arrange
         var z21Mock = CreateZ21Mock();
         var eventBus = new EventBus(Mock.Of<ILogger<EventBus>>());
-        using var runtime = CreateRuntime(z21Mock.Object, eventBus: eventBus);
         var first = new Station { Id = Guid.NewGuid(), Name = "First" };
         var reached = new Station { Id = Guid.NewGuid(), Name = "Reached" };
+        var stopAction = new WorkflowAction
+        {
+            Type = ActionType.ChangeJourneyStop,
+            ChangeJourneyStop = new ChangeJourneyStopActionPayload { MoveToNextStop = false, TargetStationId = reached.Id }
+        };
+        var workflow = new Workflow { Name = "Reach stop", Actions = [stopAction] };
+        var workflowService = new Mock<IWorkflowService>();
+        workflowService.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
+            .Returns(async (WorkflowExecutionRequest request, CancellationToken cancellationToken) =>
+            {
+                await new ChangeJourneyStopWorkflowActionHandler().ExecuteAsync(stopAction, request.Context, cancellationToken).ConfigureAwait(false);
+                return new WorkflowExecutionResult
+                {
+                    ExecutionId = Guid.NewGuid(),
+                    WorkflowId = request.Workflow.Id,
+                    SourceCorrelationId = request.SourceCorrelationId,
+                    Status = WorkflowExecutionStatus.Succeeded
+                };
+            });
+        using var runtime = CreateRuntime(z21Mock.Object, workflowService.Object, eventBus: eventBus);
         var journey = new Journey
         {
             Id = Guid.NewGuid(),
+            IsActive = true,
             Stations = [first, reached],
-            FeedbackSequence =
-            [
-                new JourneyFeedbackStep
-                {
-                    InPort = 1,
-                    StopTransition = new JourneyStopTransition
-                    {
-                        Mode = JourneyStopTransitionMode.SpecificStation,
-                        StationId = reached.Id
-                    }
-                }
-            ]
+            EventPlan = new JourneyEventPlan { Events = [new JourneyEvent { InPort = 1, Count = 1, WorkflowId = workflow.Id }] }
         };
-        var project = new Project { Id = Guid.NewGuid(), Name = "Runtime event", Journeys = [journey] };
+        var project = new Project { Id = Guid.NewGuid(), Name = "Runtime event", Journeys = [journey], Workflows = [workflow] };
         var reachedEvent = new TaskCompletionSource<JourneyStationReachedEvent>(TaskCreationOptions.RunContinuationsAsynchronously);
         eventBus.Subscribe<JourneyStationReachedEvent>(@event => reachedEvent.TrySetResult(@event));
         await runtime.ActivateProjectAsync(project);
@@ -256,14 +265,11 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
             [
                 new Journey
                 {
-                    FeedbackSequence =
-                    [
-                        new JourneyFeedbackStep
-                        {
-                            InPort = (uint)inPort,
-                            WorkflowId = workflow.Id
-                        }
-                    ]
+                    IsActive = true,
+                    EventPlan = new JourneyEventPlan
+                    {
+                        Events = [new JourneyEvent { InPort = (uint)inPort, Count = 1, WorkflowId = workflow.Id }]
+                    }
                 }
             ]
         };

@@ -49,8 +49,11 @@ internal sealed class WorkflowSequenceExecutionTests
 
         var result = await new WorkflowService(executor.Object).ExecuteAsync(Request(clone)).ConfigureAwait(false);
 
-        Assert.That(result.Status, Is.EqualTo(WorkflowExecutionStatus.NotStarted));
-        Assert.That(result.ValidationIssues, Is.Not.Empty);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.Status, Is.EqualTo(WorkflowExecutionStatus.NotStarted));
+            Assert.That(result.ValidationIssues, Is.Not.Empty);
+        }
         executor.VerifyNoOtherCalls();
     }
 

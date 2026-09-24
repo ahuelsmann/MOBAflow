@@ -71,10 +71,8 @@
           "InPort": 1,
           "IsUsingTimerToIgnoreFeedbacks": false,
           "IntervalForTimerToIgnoreFeedbacks": 0.0,
-          "BehaviorOnLastStop": 0,
           "CurrentPos": 0,
-          "CurrentCounter": 0,
-          "FirstPos": 0
+          "CurrentCounter": 0
         }
       ],
       "Cities": []

@@ -39,8 +39,11 @@ internal class WorkflowViewModelTests
         }
 
         editor.DeleteActionCommand.Execute(invalid);
-        Assert.That(new WorkflowValidator().Validate(project).Issues, Is.Empty);
-        Assert.That(editor.Actions.Single(), Is.TypeOf<ChangeJourneyStopViewModel>());
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(new WorkflowValidator().Validate(project).Issues, Is.Empty);
+            Assert.That(editor.Actions.Single(), Is.TypeOf<ChangeJourneyStopViewModel>());
+        }
     }
 
     [Test]

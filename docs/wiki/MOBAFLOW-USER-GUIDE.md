@@ -47,22 +47,23 @@ such as invalid references or conflicting data.
 MOBAflow reports digital-address conflicts in project diagnostics. Resolve them
 before operating the affected locomotives.
 
-### Stations, journeys and feedback sequences
+### Stations, journeys and events
 
 **Stations** are reusable project entities with platforms and optional city
 metadata. **Journeys** reference an ordered list of those stations.
 
-A journey advances through an explicit **feedback sequence**. Each step records
-the expected feedback input and can be associated with a station transition.
-This allows repeated inputs and route changes to be represented without relying
-on one global journey input.
+A journey is either **active** or inactive. When feedback arrives, MOBAflow
+evaluates the events of every active journey. Each event assigns a workflow to an
+InPort and a count. MOBAflow counts every InPort separately from application start
+until you reset the counters; an event runs when its InPort counter reaches the
+configured count. List order does not define the trigger sequence.
 
-Use **Event Manager** to edit the ordered feedback steps visually. Journey
-progress is kept in runtime state and synchronized through MOBApi for connected
-mobile clients. **Journey Map** visualizes the active route and progress.
+Use **Event Manager** to edit a journey's events. **Journey Map** visualizes the
+route and progress.
 
-At the last stop, a journey can stop, restart or continue with another journey,
-depending on its configured behavior.
+Stops change only through the **Change journey stop** workflow action. At the last
+stop, a journey either stays there or continues at the first stop, depending on its
+configured behavior.
 
 ### Workflows
 
@@ -94,10 +95,20 @@ Earlier graph workflows must be recreated as action lists. Conditions, parallel
 branches, nested workflows, and retry policies are no longer supported. Existing
 complex definitions are not automatically flattened into a different sequence.
 
-Use **Event Manager** when authoring in journey context. It exposes the same
-workflow collection and selection, so edits made on either page are immediately
-visible on the other. Select a journey feedback occurrence and choose **Assign
-selected workflow to feedback step** to link it.
+Use **Event Manager** to assign existing workflows to journey events. Compact rows
+show the InPort, trigger count and workflow. Use **+** / **-** above the list to add
+or delete events, and edit the selected event in **Properties**. **Values** contains
+the searchable workflow library: drop a workflow onto a row to assign it, or onto
+the free area to create an event. Double-clicking a workflow assigns it to the
+selected event as well. Drag an event to reorder it; hold **Ctrl** to copy it.
+Use **Values panel** and **Properties panel** in the event command bar's **More**
+menu to toggle either panel with the keyboard.
+
+Use the **Active** switch to activate or deactivate the selected journey; the
+setting is saved with the solution. Events remain editable while a journey is
+active, and changes take effect immediately. **Journey options** offers **Reset
+all InPort counters**, which starts counting from zero again. Stop changes are
+workflow actions; an event does not advance a stop implicitly. Workflow authoring and diagnostics remain on the **Workflows** page.
 
 Choose **Validate** before operating a workflow. Validation checks identifiers,
 the action list, and action settings without running any actions. Invalid or
@@ -176,7 +187,7 @@ MOBApi process and publish the current solution, runtime settings and snapshots.
 MOBAsmart then discovers the endpoint on the LAN.
 
 The bridge supports solution synchronization, runtime state, remote commands,
-journey progress, feedback sequences, client registration and rolling-stock
+journey progress, client registration and rolling-stock
 photos. Protected desktop-host communication and certificate-pinned MOBAsmart
 pairing are available while authenticated remote-read and command enforcement
 is still being completed. The bridge is designed for a trusted private LAN and
@@ -195,8 +206,10 @@ The Track Plan page supports the shortcuts implemented directly by that editor:
 | Ctrl+1 | Reset zoom to 100% |
 | R | Disconnect the selected track connection |
 
-The Event Manager also supports Delete for the selected feedback step. Other
-global shortcuts are not currently defined.
+With an Event Manager row focused, **Up/Down/Home/End** navigate, **Delete** removes
+the event, **Ctrl+Delete** removes its workflow, **Ctrl+D** duplicates it and
+**Alt+Up/Down** move it. These shortcuts do not delete events while a property input
+is focused. Other global shortcuts are not currently defined.
 
 ## Troubleshooting
 
@@ -217,8 +230,9 @@ global shortcuts are not currently defined.
 ### A journey does not advance
 
 - Confirm that the journey is active.
-- Compare incoming feedback in **Monitor** with the ordered sequence in
-  **Event Manager**.
+- Compare incoming feedback in **Monitor** with the InPort and count configured in
+  **Event Manager**. Counts are measured since application start or the last explicit
+  counter reset, independently of when a journey was activated.
 - Check project diagnostics for missing stations or invalid references.
 - Review timer filtering if legitimate events arrive very close together.
 

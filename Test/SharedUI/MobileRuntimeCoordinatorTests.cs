@@ -13,6 +13,53 @@ using Moq;
 internal sealed class MobileRuntimeCoordinatorTests
 {
     [Test]
+    public async Task CounterReset_UsesLocalRuntimeWithoutRemoteSession()
+    {
+        using var cancellation = new CancellationTokenSource();
+        var token = cancellation.Token;
+        var runtime = new Mock<IMobaRuntime>(MockBehavior.Strict);
+        runtime.Setup(value => value.ResetInPortCountersAsync(token)).Returns(Task.CompletedTask);
+        var remote = new Mock<IRuntimeHubRemoteClient>(MockBehavior.Strict);
+        var coordinator = new MobileRuntimeCoordinator(runtime.Object, remote.Object);
+
+        await coordinator.ResetInPortCountersAsync(token);
+
+        runtime.VerifyAll();
+        remote.VerifyNoOtherCalls();
+    }
+
+    [Test]
+    public async Task CounterReset_UsesLocalRuntimeEvenWithRemoteSession()
+    {
+        var runtime = new Mock<IMobaRuntime>(MockBehavior.Strict);
+        runtime.Setup(value => value.ResetInPortCountersAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var remote = new Mock<IRuntimeHubRemoteClient>(MockBehavior.Strict);
+        var coordinator = new MobileRuntimeCoordinator(runtime.Object, remote.Object);
+        coordinator.SetMobaflowSessionActive(true);
+        coordinator.SetLocalZ21Connected(true);
+
+        await coordinator.ResetInPortCountersAsync();
+
+        runtime.Verify(value => value.ResetInPortCountersAsync(It.IsAny<CancellationToken>()), Times.Once);
+        remote.VerifyNoOtherCalls();
+    }
+
+    [Test]
+    public void CancelledCounterReset_DoesNotReachRuntime()
+    {
+        var runtime = new Mock<IMobaRuntime>(MockBehavior.Strict);
+        var remote = new Mock<IRuntimeHubRemoteClient>(MockBehavior.Strict);
+        var coordinator = new MobileRuntimeCoordinator(runtime.Object, remote.Object);
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        Assert.ThrowsAsync<OperationCanceledException>(async () => await coordinator.ResetInPortCountersAsync(cancellation.Token));
+
+        runtime.VerifyNoOtherCalls();
+        remote.VerifyNoOtherCalls();
+    }
+
+    [Test]
     public void PreferRemoteRuntime_IsTrue_WhenMobaflowSessionActive()
     {
         var mobaRuntime = new Mock<IMobaRuntime>().Object;

@@ -1,8 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Domain;
 
-using Enum;
-
 /// <summary>
 /// Journey - Pure Data Object (POCO).
 /// </summary>
@@ -17,7 +15,7 @@ public class Journey
         Name = "New Journey";
         Description = string.Empty;
         Stations = [];
-        FeedbackSequence = [];
+        EventPlan = new JourneyEventPlan();
         Text = string.Empty;
     }
 
@@ -47,24 +45,12 @@ public class Journey
     public List<Station> Stations { get; set; }
 
     /// <summary>
-    /// Gets or sets the ordered feedback occurrences relevant for this journey.
-    /// Each occurrence is intentionally explicit so a route may change to another track at any time.
+    /// Gets or sets whether the runtime evaluates this journey's events on incoming feedback.
     /// </summary>
-    public List<JourneyFeedbackStep> FeedbackSequence { get; set; }
+    public bool IsActive { get; set; }
 
     /// <summary>
-    /// Gets or sets the behavior when the last station of the journey is reached.
+    /// Gets or sets the feedback events, each matched against the InPort session counter.
     /// </summary>
-    public BehaviorOnLastStop BehaviorOnLastStop { get; set; }
-
-    /// <summary>
-    /// Reference to next journey ID (for chaining journeys)
-    /// Used when BehaviorOnLastStop == GotoJourney
-    /// </summary>
-    public Guid? NextJourneyId { get; set; }
-
-    /// <summary>
-    /// First position index (default: 0)
-    /// </summary>
-    public uint FirstPos { get; set; }
+    public JourneyEventPlan EventPlan { get; set; }
 }

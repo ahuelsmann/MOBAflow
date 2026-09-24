@@ -155,7 +155,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         WorkflowLibrary.PropertyChanged += OnWorkflowLibraryPropertyChanged;
 
         _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
-        _eventBusSubscriptions.Add(_eventBus.Subscribe<VehicleUsageCheckpointCommittedEvent>(OnVehicleUsageCheckpointCommitted));
         ApplyRuntimeSnapshot(_mobaRuntime.Current);
 
         Solution = solution;
@@ -167,7 +166,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         IsDarkMode = settings.Application.IsDarkMode;
         InitializeLayoutPanelStates();
 
-        _eventBusSubscriptions.Add(eventBus.Subscribe<FeedbackReceivedEvent>(e => UpdateTrackStatistics((uint)e.InPort)));
         _eventBusSubscriptions.Add(eventBus.Subscribe<PostStartupStatusEvent>(e => UpdatePostStartupInitializationStatus(e.IsRunning, e.StatusText)));
         _eventBusSubscriptions.Add(eventBus.Subscribe<RestApiStatusChangedEvent>(OnRestApiStatusChanged));
         _eventBusSubscriptions.Add(eventBus.Subscribe<MobaflowSyncDiagnosticsChangedEvent>(OnMobaflowSyncDiagnosticsChanged));
@@ -176,6 +174,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         InitializeTrafficMonitor();
 
         InitializeStatisticsFromFeedbackPoints();
+        ApplyJourneyRuntimeSnapshots(_latestRuntimeSnapshot.JourneyStates);
+        NotifyRuntimeCommandStatesChanged();
 
         InitializeFeatureToggleItems();
 
@@ -491,20 +491,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         if (_isShuttingDown)
         {
             return true;
-        }
-
-        BeginSuppressSolutionAutoSave();
-        try
-        {
-            await _mobaRuntime.CheckpointUsageAsync().ConfigureAwait(false);
-            if (SynchronizeVehicleUsageFromRuntime())
-            {
-                MarkSolutionDirty();
-            }
-        }
-        finally
-        {
-            EndSuppressSolutionAutoSave();
         }
 
         if (HasUnsavedChanges)

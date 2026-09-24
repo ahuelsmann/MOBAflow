@@ -75,6 +75,9 @@ public class ActionExecutionContext
 
     /// <summary>Gets or sets the one-based feedback input that triggered the workflow.</summary>
     public uint? FeedbackInPort { get; set; }
+
+    /// <summary>Applies a stop action through the owning journey run's cancellation and notification boundary.</summary>
+    public Func<JourneyStopTransition, JourneyStopTransitionResult>? ApplyJourneyStopTransition { get; init; }
 }
 
 /// <summary>
@@ -104,6 +107,9 @@ public sealed class ActionExecutionContextState
 
     /// <summary>Gets the one-based feedback input that triggered the workflow.</summary>
     public uint? FeedbackInPort { get; init; }
+
+    /// <summary>Optional active-run boundary for stop actions.</summary>
+    public Func<JourneyStopTransition, JourneyStopTransitionResult>? ApplyJourneyStopTransition { get; init; }
 }
 
 /// <summary>
@@ -123,7 +129,8 @@ public sealed class ActionExecutionContextFactory(ActionExecutionContext service
         CurrentPlatform = services.CurrentPlatform,
         JourneyTemplateText = services.JourneyTemplateText,
         CurrentStationIndex = services.CurrentStationIndex,
-        FeedbackInPort = services.FeedbackInPort
+        FeedbackInPort = services.FeedbackInPort,
+        ApplyJourneyStopTransition = services.ApplyJourneyStopTransition
     });
 
     public ActionExecutionContext Create(ActionExecutionContextState? state = null)
@@ -144,7 +151,8 @@ public sealed class ActionExecutionContextFactory(ActionExecutionContext service
             CurrentPlatform = state?.CurrentPlatform,
             JourneyTemplateText = state?.JourneyTemplateText,
             CurrentStationIndex = state?.CurrentStationIndex,
-            FeedbackInPort = state?.FeedbackInPort
+            FeedbackInPort = state?.FeedbackInPort,
+            ApplyJourneyStopTransition = state?.ApplyJourneyStopTransition
         };
     }
 }

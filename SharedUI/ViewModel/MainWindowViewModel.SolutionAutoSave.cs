@@ -2,9 +2,7 @@
 
 namespace Moba.SharedUI.ViewModel;
 
-using Common.Events;
 using Common.Extension;
-using Common.Runtime;
 
 using Microsoft.Extensions.Logging;
 
@@ -77,14 +75,16 @@ public partial class MainWindowViewModel
     /// <summary>
     /// Called when SelectedJourney changes. Subscribes to PropertyChanged for auto-save.
     /// </summary>
-    partial void OnSelectedJourneyChanged(JourneyViewModel? value)
+    partial void OnSelectedJourneyChanged(JourneyViewModel? oldValue, JourneyViewModel? newValue)
     {
-        if (value != null)
+        if (oldValue != null) oldValue.PropertyChanged -= OnViewModelPropertyChanged;
+        if (newValue != null)
         {
-            value.PropertyChanged += OnViewModelPropertyChanged;
+            newValue.PropertyChanged += OnViewModelPropertyChanged;
         }
 
         ResetJourneyCommand.NotifyCanExecuteChanged();
+        ResetJourneyCounterCommand.NotifyCanExecuteChanged();
     }
 
     /// <summary>
@@ -112,96 +112,21 @@ public partial class MainWindowViewModel
         // Ignore UI-only or runtime-backed properties that must not persist the whole solution.
         if (e.PropertyName is { } name &&
             (name is "IsSelected" or "IsExpanded" or "IsHighlighted" or "IsCurrentStation"
-             or "CurrentStation" or "CurrentStepOccurrence" or "CurrentPos"))
+             or "CurrentStation" or "CurrentPos"))
         {
             return;
+        }
+
+        // The runtime executes an isolated copy, so journey activation and event edits must be re-applied.
+        if (sender is JourneyViewModel journey && SelectedProject is { } project
+            && e.PropertyName is nameof(JourneyViewModel.IsActive) or nameof(JourneyViewModel.EventPlan))
+        {
+            ObserveBackgroundTask(_mobaRuntime.UpdateJourneyEventsAsync(project.Model, journey.Model.Id), "Update journey events");
         }
 
         RefreshProjectDiagnostics();
         SaveSolutionInternalAsync().Observe(ex => _logger.LogWarning(ex, "Auto-save solution failed"));
     }
-
-    private void OnVehicleUsageCheckpointCommitted(VehicleUsageCheckpointCommittedEvent checkpoint)
-    {
-        if (SelectedProject?.Model.Id != checkpoint.ProjectId ||
-            _isShuttingDown ||
-            Volatile.Read(ref _solutionAutoSaveSuppressionCount) > 0)
-        {
-            return;
-        }
-
-        if (SynchronizeVehicleUsage(checkpoint.Usage))
-        {
-            SaveSolutionInternalAsync().Observe(ex =>
-                _logger.LogWarning(ex, "Persisting vehicle usage checkpoint to the solution failed"));
-        }
-    }
-
-    private bool SynchronizeVehicleUsageFromRuntime() => SynchronizeVehicleUsage(_mobaRuntime.Current.VehicleUsage);
-
-    private bool SynchronizeVehicleUsage(IReadOnlyDictionary<Guid, VehicleUsageRuntimeSnapshot> runtimeUsage)
-    {
-        var project = SelectedProject?.Model;
-        if (project == null)
-        {
-            return false;
-        }
-
-        var changed = false;
-        foreach (var (vehicleId, usageSnapshot) in runtimeUsage)
-        {
-            Domain.VehicleUsageData? usage = null;
-            if (project.Locomotives.FirstOrDefault(vehicle => vehicle.Id == vehicleId) is { } locomotive)
-            {
-                usage = locomotive.Usage;
-                if (usage == null && HasRecordedUsage(usageSnapshot))
-                {
-                    usage = locomotive.Usage = new Domain.VehicleUsageData();
-                    changed = true;
-                }
-            }
-            else if (project.PassengerWagons.FirstOrDefault(vehicle => vehicle.Id == vehicleId) is { } passengerWagon)
-            {
-                usage = passengerWagon.Usage;
-                if (usage == null && HasRecordedUsage(usageSnapshot))
-                {
-                    usage = passengerWagon.Usage = new Domain.VehicleUsageData();
-                    changed = true;
-                }
-            }
-            else if (project.GoodsWagons.FirstOrDefault(vehicle => vehicle.Id == vehicleId) is { } goodsWagon)
-            {
-                usage = goodsWagon.Usage;
-                if (usage == null && HasRecordedUsage(usageSnapshot))
-                {
-                    usage = goodsWagon.Usage = new Domain.VehicleUsageData();
-                    changed = true;
-                }
-            }
-
-            if (usage == null)
-            {
-                continue;
-            }
-
-            if (usage.TrackedOperatingSeconds != usageSnapshot.TrackedOperatingSeconds)
-            {
-                usage.TrackedOperatingSeconds = usageSnapshot.TrackedOperatingSeconds;
-                changed = true;
-            }
-
-            if (usage.TrackedCompletedTrips != usageSnapshot.TrackedCompletedTrips)
-            {
-                usage.TrackedCompletedTrips = usageSnapshot.TrackedCompletedTrips;
-                changed = true;
-            }
-        }
-
-        return changed;
-    }
-
-    private static bool HasRecordedUsage(VehicleUsageRuntimeSnapshot usage) =>
-        usage.TrackedOperatingSeconds != 0 || usage.TrackedCompletedTrips != 0;
 
     /// <summary>
     /// Increments suppression counter so <see cref="OnViewModelPropertyChanged"/> does not trigger auto-save.
