@@ -1,5 +1,10 @@
 # Tasks: Journey event plans
 
+> **Superseded in part (2026-09-24):** Legacy feedback sequences, follow-up journeys, runtime start/stop and
+> per-run count baselines were removed. Journeys now carry a persisted active flag and events match absolute InPort
+> session counts. [spec.md](spec.md), [data-model.md](data-model.md) and [contracts/event-plan.md](contracts/event-plan.md)
+> describe the current behavior; this file records the earlier increment.
+
 **Input**: [spec.md](spec.md), [plan.md](plan.md), [data-model.md](data-model.md), [contracts/event-plan.md](contracts/event-plan.md)
 
 **Tests**: Required for every changed behavior. Checked implementation/test-authoring tasks mean the code is present; execution/build/manual/publication gates remain separately unchecked until their final evidence is available.

@@ -1,5 +1,10 @@
 # Validation guide: Journey event plans
 
+> **Superseded in part (2026-09-24):** Legacy feedback sequences, follow-up journeys, runtime start/stop and
+> per-run count baselines were removed. Journeys now carry a persisted active flag and events match absolute InPort
+> session counts. [spec.md](spec.md), [data-model.md](data-model.md) and [contracts/event-plan.md](contracts/event-plan.md)
+> describe the current behavior; this file records the earlier increment.
+
 Run from the dedicated worktree. These are required checks, not claims they have passed; see [tasks.md](tasks.md) for evidence status.
 
 ## Automated validation

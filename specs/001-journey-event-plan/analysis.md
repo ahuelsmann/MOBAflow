@@ -1,5 +1,10 @@
 # Specification analysis and convergence record
 
+> **Superseded in part (2026-09-24):** Legacy feedback sequences, follow-up journeys, runtime start/stop and
+> per-run count baselines were removed. Journeys now carry a persisted active flag and events match absolute InPort
+> session counts. [spec.md](spec.md), [data-model.md](data-model.md) and [contracts/event-plan.md](contracts/event-plan.md)
+> describe the current behavior; this file records the earlier increment.
+
 **Date**: 2026-09-10
 
 **Scope**: `spec.md`, `plan.md`, `tasks.md`, implementation convergence and constitution alignment. Runtime baseline tests, focused tests after UI refinement and Windows compile are verified; remaining acceptance/publication gates are recorded explicitly.

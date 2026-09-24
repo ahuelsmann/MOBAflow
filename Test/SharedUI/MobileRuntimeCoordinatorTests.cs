@@ -13,20 +13,15 @@ using Moq;
 internal sealed class MobileRuntimeCoordinatorTests
 {
     [Test]
-    public async Task JourneyLifecycleCommands_UseLocalRuntimeWithoutRemoteSession()
+    public async Task CounterReset_UsesLocalRuntimeWithoutRemoteSession()
     {
-        var journeyId = Guid.NewGuid();
         using var cancellation = new CancellationTokenSource();
         var token = cancellation.Token;
         var runtime = new Mock<IMobaRuntime>(MockBehavior.Strict);
-        runtime.Setup(value => value.StartJourneyAsync(journeyId, token)).Returns(Task.CompletedTask);
-        runtime.Setup(value => value.StopJourneyAsync(journeyId, token)).Returns(Task.CompletedTask);
         runtime.Setup(value => value.ResetInPortCountersAsync(token)).Returns(Task.CompletedTask);
         var remote = new Mock<IRuntimeHubRemoteClient>(MockBehavior.Strict);
         var coordinator = new MobileRuntimeCoordinator(runtime.Object, remote.Object);
 
-        await coordinator.StartJourneyAsync(journeyId, token);
-        await coordinator.StopJourneyAsync(journeyId, token);
         await coordinator.ResetInPortCountersAsync(token);
 
         runtime.VerifyAll();
@@ -34,42 +29,30 @@ internal sealed class MobileRuntimeCoordinatorTests
     }
 
     [Test]
-    public void JourneyLifecycleCommands_RejectRemoteSessionWithoutMutatingLocalRuntime()
+    public void CounterReset_RejectsRemoteSessionWithoutMutatingLocalRuntime()
     {
         var runtime = new Mock<IMobaRuntime>(MockBehavior.Strict);
         var remote = new Mock<IRuntimeHubRemoteClient>(MockBehavior.Strict);
         var coordinator = new MobileRuntimeCoordinator(runtime.Object, remote.Object);
         coordinator.SetMobaflowSessionActive(true);
         coordinator.SetLocalZ21Connected(true);
-        var journeyId = Guid.NewGuid();
 
-        Assert.Multiple(() =>
-        {
-            Assert.ThrowsAsync<NotSupportedException>(async () => await coordinator.StartJourneyAsync(journeyId));
-            Assert.ThrowsAsync<NotSupportedException>(async () => await coordinator.StopJourneyAsync(journeyId));
-            Assert.ThrowsAsync<NotSupportedException>(async () => await coordinator.ResetInPortCountersAsync());
-        });
+        Assert.ThrowsAsync<NotSupportedException>(async () => await coordinator.ResetInPortCountersAsync());
 
         runtime.VerifyNoOtherCalls();
         remote.VerifyNoOtherCalls();
     }
 
     [Test]
-    public void CancelledJourneyLifecycleCommands_DoNotReachRuntime()
+    public void CancelledCounterReset_DoesNotReachRuntime()
     {
         var runtime = new Mock<IMobaRuntime>(MockBehavior.Strict);
         var remote = new Mock<IRuntimeHubRemoteClient>(MockBehavior.Strict);
         var coordinator = new MobileRuntimeCoordinator(runtime.Object, remote.Object);
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();
-        var journeyId = Guid.NewGuid();
 
-        Assert.Multiple(() =>
-        {
-            Assert.ThrowsAsync<OperationCanceledException>(async () => await coordinator.StartJourneyAsync(journeyId, cancellation.Token));
-            Assert.ThrowsAsync<OperationCanceledException>(async () => await coordinator.StopJourneyAsync(journeyId, cancellation.Token));
-            Assert.ThrowsAsync<OperationCanceledException>(async () => await coordinator.ResetInPortCountersAsync(cancellation.Token));
-        });
+        Assert.ThrowsAsync<OperationCanceledException>(async () => await coordinator.ResetInPortCountersAsync(cancellation.Token));
 
         runtime.VerifyNoOtherCalls();
         remote.VerifyNoOtherCalls();

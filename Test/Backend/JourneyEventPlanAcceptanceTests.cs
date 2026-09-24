@@ -13,23 +13,16 @@ using System.Collections.Concurrent;
 public sealed class JourneyEventPlanAcceptanceTests
 {
     [Test]
-    public async Task SparsePlan_ExecutesOnlyConfiguredWorkflowsAtTwoThreeAndFiveSinceStart()
+    public async Task SparsePlan_ExecutesOnlyConfiguredWorkflowsAtTwoThreeAndFiveSinceReset()
     {
         using var fixture = new AcceptanceFixture();
         var signal = fixture.AddWorkflow("Set signal");
         var announcement = fixture.AddWorkflow("Station announcement");
         var changeStop = fixture.AddWorkflow("Change virtual stop");
-        var journey = fixture.AddJourney("Oval journey",
+        fixture.AddJourney("Oval journey",
             new JourneyEvent { InPort = 1, Count = 2, WorkflowId = signal.Id },
             new JourneyEvent { InPort = 1, Count = 3, WorkflowId = announcement.Id },
             new JourneyEvent { InPort = 1, Count = 5, WorkflowId = changeStop.Id });
-        for (var count = 0; count < 42; count++)
-        {
-            await fixture.RaiseAsync(1);
-        }
-
-        await fixture.Manager.StartJourneyAsync(journey);
-        Assert.That(fixture.Manager.GetState(journey.Id)!.CurrentEventBases[1], Is.EqualTo(42UL));
         var expectedAfterEachActivation = new[]
         {
             Array.Empty<Guid>(),
@@ -49,39 +42,20 @@ public sealed class JourneyEventPlanAcceptanceTests
         Assert.Multiple(() =>
         {
             Assert.That(fixture.Requests, Has.Count.EqualTo(3));
-            Assert.That(fixture.Counters.GetSnapshot().Single().Count, Is.EqualTo(48UL));
-            Assert.That(fixture.Manager.GetState(journey.Id)!.IsActive, Is.True);
+            Assert.That(fixture.Counters.GetSnapshot().Single().Count, Is.EqualTo(6UL));
         });
     }
 
     [Test]
-    public async Task ThreeParallelJourneys_UseIndependentPortsAndStartValuesWithoutResettingEachOther()
+    public async Task ThreeParallelJourneys_UseIndependentPortsOfTheSharedSessionCounters()
     {
         using var fixture = new AcceptanceFixture();
         var workflow = fixture.AddWorkflow("Parallel track event");
         var first = fixture.AddJourney("Track one", new JourneyEvent { InPort = 1, Count = 2, WorkflowId = workflow.Id });
         var second = fixture.AddJourney("Track two", new JourneyEvent { InPort = 2, Count = 1, WorkflowId = workflow.Id });
         var third = fixture.AddJourney("Track three", new JourneyEvent { InPort = 3, Count = 3, WorkflowId = workflow.Id });
-        foreach (var port in new[] { 1, 2, 2, 3, 2, 1, 2 })
-        {
-            await fixture.RaiseAsync(port);
-        }
 
-        await fixture.Manager.StartJourneyAsync(first);
-        await fixture.RaiseAsync(1);
-        await fixture.RaiseAsync(2);
-        await fixture.Manager.StartJourneyAsync(second);
-        await fixture.RaiseAsync(3);
-        await fixture.Manager.StartJourneyAsync(third);
-        Assert.Multiple(() =>
-        {
-            Assert.That(fixture.Manager.GetState(first.Id)!.CurrentEventBases[1], Is.EqualTo(2UL));
-            Assert.That(fixture.Manager.GetState(second.Id)!.CurrentEventBases[2], Is.EqualTo(5UL));
-            Assert.That(fixture.Manager.GetState(third.Id)!.CurrentEventBases[3], Is.EqualTo(2UL));
-            Assert.That(fixture.Requests, Is.Empty);
-        });
-
-        foreach (var port in new[] { 3, 2, 1, 3, 3 })
+        foreach (var port in new[] { 3, 2, 1, 3, 1, 3 })
         {
             await fixture.RaiseAsync(port);
         }
@@ -91,15 +65,8 @@ public sealed class JourneyEventPlanAcceptanceTests
             Assert.That(fixture.Requests.Select(request => request.Context.CurrentJourney!.Id),
                 Is.EqualTo(new[] { second.Id, first.Id, third.Id }));
             Assert.That(fixture.Counters.GetSnapshot().Select(snapshot => (snapshot.InPort, snapshot.Count)),
-                Is.EquivalentTo(new[] { (1U, 4UL), (2U, 6UL), (3U, 5UL) }));
-            Assert.That(fixture.Counters.TryResetAll(), Is.False);
+                Is.EquivalentTo(new[] { (1U, 2UL), (2U, 1UL), (3U, 3UL) }));
         });
-
-        await fixture.Manager.StopJourneyAsync(first);
-        await fixture.Manager.StopJourneyAsync(second);
-        Assert.That(fixture.Counters.TryResetAll(), Is.False);
-        await fixture.Manager.StopJourneyAsync(third);
-        Assert.That(fixture.Counters.TryResetAll(), Is.True);
     }
 
     [Test]
@@ -109,11 +76,10 @@ public sealed class JourneyEventPlanAcceptanceTests
         var switchTrack = fixture.AddWorkflow("Switch track");
         var announcement = fixture.AddWorkflow("Second track announcement");
         var changeStop = fixture.AddWorkflow("Second track stop");
-        var journey = fixture.AddJourney("Connected tracks",
+        fixture.AddJourney("Connected tracks",
             new JourneyEvent { InPort = 1, Count = 3, WorkflowId = switchTrack.Id },
             new JourneyEvent { InPort = 2, Count = 1, WorkflowId = announcement.Id },
             new JourneyEvent { InPort = 2, Count = 2, WorkflowId = changeStop.Id });
-        await fixture.Manager.StartJourneyAsync(journey);
 
         await fixture.RaiseAsync(2);
         Assert.That(fixture.Requests.Select(request => request.Workflow.Id), Is.EqualTo(new[] { announcement.Id }));
@@ -136,15 +102,18 @@ public sealed class JourneyEventPlanAcceptanceTests
     {
         private readonly Mock<IZ21> _z21 = new();
         private readonly Project _project = new();
+        private readonly Mock<IWorkflowService> _workflows = new();
+        private ObservableJourneyManager? _manager;
         public InPortCounterService Counters { get; }
-        public ObservableJourneyManager Manager { get; }
+
+        // Created on first use so that it sees every journey added by the test.
+        public ObservableJourneyManager Manager => _manager ??= new ObservableJourneyManager(_z21.Object, _project, _workflows.Object, Counters);
         public ConcurrentQueue<WorkflowExecutionRequest> Requests { get; } = new();
 
         public AcceptanceFixture()
         {
             Counters = new InPortCounterService(_z21.Object, new AppSettings { Counter = { UseTimerFilter = false } });
-            var workflows = new Mock<IWorkflowService>();
-            workflows.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
+            _workflows.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
                 .Returns((WorkflowExecutionRequest request, CancellationToken _) =>
                 {
                     Requests.Enqueue(request);
@@ -156,7 +125,6 @@ public sealed class JourneyEventPlanAcceptanceTests
                         Status = WorkflowExecutionStatus.Succeeded
                     });
                 });
-            Manager = new ObservableJourneyManager(_z21.Object, _project, workflows.Object, Counters);
         }
 
         public Workflow AddWorkflow(string name)
@@ -168,20 +136,21 @@ public sealed class JourneyEventPlanAcceptanceTests
 
         public Journey AddJourney(string name, params JourneyEvent[] events)
         {
-            var journey = new Journey { Name = name, EventPlan = new JourneyEventPlan { Events = [.. events] } };
+            var journey = new Journey { Name = name, IsActive = true, EventPlan = new JourneyEventPlan { Events = [.. events] } };
             _project.Journeys.Add(journey);
             return journey;
         }
 
         public async Task RaiseAsync(int inPort)
         {
+            var manager = Manager;
             InPortCounterServiceTests.Raise(_z21, inPort);
-            await Manager.LastProcessing.WaitAsync(TimeSpan.FromSeconds(5));
+            await manager.LastProcessing.WaitAsync(TimeSpan.FromSeconds(5));
         }
 
         public void Dispose()
         {
-            Manager.Dispose();
+            _manager?.Dispose();
             Counters.Dispose();
         }
     }

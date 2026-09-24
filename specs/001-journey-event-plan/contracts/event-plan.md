@@ -2,17 +2,17 @@
 
 Use existing runtime and gateway boundaries, preserving local/remote routing. Remote views observe the owning host's counters rather than creating separate counters.
 
-In this increment, mobile start/stop/counter-reset execute locally only when no remote session owns the view. An active remote session returns a clear unsupported-operation error directing the user to the MOBAflow host; it must never silently invoke the local runtime. Existing remote command routes are unchanged.
+Mobile counter reset executes locally only when no remote session owns the view. An active remote session returns a clear unsupported-operation error directing the user to the MOBAflow host; it must never silently invoke the local runtime.
 
 | Operation | Behavior |
 | --- | --- |
-| Accepted activation | Increment matching InPort once, then evaluate active runs against their baselines. |
+| Accepted activation | Increment the matching InPort once, then evaluate the events of all active journeys. |
 | Read counter snapshot | Stable snapshot; unknown ports are zero. |
-| Start journey | Atomically capture counters and register active run; reject changed journey/shared-workflow definitions while another event-plan run is active. |
-| Stop journey | Prevent further dispatch; preserve totals and existing workflow cancellation behavior. |
-| Reset counters | Reject during any active journey; otherwise clear only on explicit user command. |
+| Reset counters | Clear all counts on explicit user command; allowed at any time. |
+| Reset journey | Cancel the journey's running workflows and return it to its first stop; counters are unchanged. |
+| Activate project | Re-create journey evaluation from the saved active flags and event plans; keep counters and checkpointed stops. |
 
-For each enabled row, `relative count = session count(port) - starting count(port)`. Dispatch once when its positive threshold is reached, marking dispatch before awaiting work. No historical catch-up, phase inference or train attribution is performed. Equal-condition rows use stored order.
+An enabled event runs its workflow when `session count(port) == event count`. Workflows of one journey run in order; different journeys are independent. No historical catch-up, phase inference or train attribution is performed. Equal-condition rows use stored order.
 
 | Editor action | Result |
 | --- | --- |
@@ -21,8 +21,6 @@ For each enabled row, `relative count = session count(port) - starting count(por
 | Move controls / row drag | Change display order, preserving trigger values. |
 | Duplicate | Copy settings to a new identity. |
 | Delete | Remove row. |
-| Adopt event plan | Explicitly create an empty plan and preserve legacy reference. |
+| Active switch | Persist the journey's active flag and re-apply the project to the runtime. |
 
-All edits obey the active-run guard and existing observable/auto-save behavior. Unsupported drop payloads produce no mutation. Drop handlers translate input; ViewModels own behavior. Labels use English and explain `Count since start` and independent triggers.
-
-Project/editor activation is deferred while an event-plan run remains active. Starting an unchanged journey still works; changed or newly added definitions become startable after all event-plan runs stop and pending definitions are applied. Existing active runs and session counters are preserved throughout. The shared journey template hides its legacy feedback editor for event-plan journeys and directs the operator to Event Manager.
+All edits follow the existing observable/auto-save behavior. Unsupported drop payloads produce no mutation. Drop handlers translate input; ViewModels own behavior. Labels use English.

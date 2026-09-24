@@ -20,10 +20,9 @@ internal class JourneyDefaultsTests
         Assert.That(journey.Stations, Is.Not.Null);
         Assert.That(journey.Stations, Is.Empty);
         Assert.That(journey.BehaviorOnLastStop, Is.EqualTo(BehaviorOnLastStop.None));
-        Assert.That(journey.NextJourneyId, Is.Null);
         Assert.That(journey.FirstPos, Is.EqualTo(0u));
-        Assert.That(journey.FeedbackSequence, Is.Not.Null);
-        Assert.That(journey.FeedbackSequence, Is.Empty);
+        Assert.That(journey.IsActive, Is.False);
+        Assert.That(journey.EventPlan.Events, Is.Empty);
     }
 }
 

@@ -289,9 +289,6 @@ public class FeatureToggleSettings
     /// <summary>Gets or sets an optional label suffix for the Event Manager page.</summary>
     public string EventManagerPageLabel { get; set; } = "Preview";
 
-    /// <summary>Enable feedback-sequence V2 runtime behavior.</summary>
-    public bool UseFeedbackSequenceV2Runtime { get; set; } = true;
-
     /// <summary>Enable the visual timeline editor on the Event Manager page.</summary>
     public bool IsEventManagerVisualEditorAvailable { get; set; } = true;
 

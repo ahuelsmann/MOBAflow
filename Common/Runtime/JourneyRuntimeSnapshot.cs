@@ -23,18 +23,6 @@ public sealed class JourneyRuntimeSnapshot
     /// <summary>Gets the stable identifier of the current stop, if one is selected.</summary>
     public Guid? CurrentStationId { get; init; }
 
-    /// <summary>Gets the zero-based index of the next expected feedback sequence entry.</summary>
-    public int CurrentFeedbackIndex { get; init; }
-
-    /// <summary>Gets the number of accepted activations for the current feedback step.</summary>
-    public uint CurrentStepOccurrence { get; init; }
-
-    /// <summary>Gets the repeat count required by the current feedback step.</summary>
-    public uint CurrentStepRepeatCount { get; init; } = 1;
-
-    /// <summary>Gets the InPort expected by the current feedback step.</summary>
-    public uint? ExpectedInPort { get; init; }
-
     /// <summary>
     /// Gets the current position index.
     /// </summary>
@@ -49,9 +37,4 @@ public sealed class JourneyRuntimeSnapshot
     /// Gets a value indicating whether the journey is active.
     /// </summary>
     public bool IsActive { get; init; }
-
-    public bool IsEventPlan { get; init; }
-
-    /// <summary>Counter values captured when the current event-plan run started.</summary>
-    public IReadOnlyDictionary<uint, ulong> StartCounterValues { get; init; } = new Dictionary<uint, ulong>();
 }

@@ -26,8 +26,6 @@ internal sealed class RecordingRuntimeCommandGatewayTests
         await gateway.SetTrackPowerAsync(true);
         await gateway.SimulateFeedbackAsync(12);
         await gateway.ResetJourneyAsync(journeyId);
-        await gateway.StartJourneyAsync(journeyId);
-        await gateway.StopJourneyAsync(journeyId);
         await gateway.ResetInPortCountersAsync();
         await gateway.SetSignalAspectAsync(signalId, Enum.GetValues<SignalAspect>()[0]);
         await gateway.SetLocomotiveDriveAsync(3, 42, true);
@@ -43,8 +41,6 @@ internal sealed class RecordingRuntimeCommandGatewayTests
             "command.track-power",
             "command.simulate-feedback",
             "command.journey-reset",
-            "command.journey-start",
-            "command.journey-stop",
             "command.inport-counters-reset",
             "command.signal-aspect",
             "command.locomotive-drive",
@@ -158,10 +154,6 @@ internal sealed class RecordingRuntimeCommandGatewayTests
         public Task SimulateFeedbackAsync(int inPort, CancellationToken cancellationToken = default) => ExecuteAsync();
 
         public Task ResetJourneyAsync(Guid journeyId, CancellationToken cancellationToken = default) => ExecuteAsync();
-
-        public Task StartJourneyAsync(Guid journeyId, CancellationToken cancellationToken = default) => ExecuteAsync();
-
-        public Task StopJourneyAsync(Guid journeyId, CancellationToken cancellationToken = default) => ExecuteAsync();
 
         public Task ResetInPortCountersAsync(CancellationToken cancellationToken = default) => ExecuteAsync();
 

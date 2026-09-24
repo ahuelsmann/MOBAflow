@@ -214,7 +214,7 @@ public partial class MainWindowViewModel
 
     #region Counter Commands
 
-    [RelayCommand(CanExecute = nameof(CanResetCounters))]
+    [RelayCommand]
     private async Task ResetCounters()
     {
         try
@@ -228,8 +228,6 @@ public partial class MainWindowViewModel
             LogJourneyCommandFailure(_logger, ex, "Resetting InPort counters");
         }
     }
-
-    private bool CanResetCounters() => _latestRuntimeSnapshot.CanResetInPortCounters;
 
     #endregion
 

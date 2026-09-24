@@ -6,7 +6,6 @@ using Common.Runtime;
 using Interface;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using System.Collections.Frozen;
 
 /// <summary>One accepted activation and its immutable global counter value.</summary>
 public sealed class InPortCountedEventArgs(InPortCounterSnapshot snapshot, Guid correlationId, long generation = 0) : EventArgs
@@ -23,7 +22,7 @@ public sealed class InPortCountedEventArgs(InPortCounterSnapshot snapshot, Guid 
 
 /// <summary>
 /// Owns application-lifetime input counts independently of projects, journeys, and UI pages.
-/// Only an explicit reset clears counts; registering a journey captures its bases atomically.
+/// Only an explicit reset clears counts.
 /// </summary>
 public sealed partial class InPortCounterService : IDisposable
 {
@@ -33,7 +32,6 @@ public sealed partial class InPortCounterService : IDisposable
     private readonly TimeProvider _timeProvider;
     private readonly ILogger<InPortCounterService> _logger;
     private readonly Dictionary<uint, InPortCounterSnapshot> _counters = [];
-    private readonly HashSet<Guid> _activeRegistrations = [];
     private readonly Queue<InPortCountedEventArgs> _pendingCounts = new();
     private long _generation;
     private bool _publishingCounts;
@@ -63,17 +61,17 @@ public sealed partial class InPortCounterService : IDisposable
     /// <summary>Raised once for each activation accepted by the configured timer filter.</summary>
     public event EventHandler<InPortCountedEventArgs>? Counted;
 
-    /// <summary>Raised when counts or permission to reset them change.</summary>
+    /// <summary>Raised when counts change.</summary>
     public event EventHandler? SnapshotChanged;
 
-    /// <summary>Whether a journey currently prevents an explicit counter reset.</summary>
-    public bool HasActiveJourneys
+    /// <summary>Changes with every explicit reset so queued counts from before the reset can be ignored.</summary>
+    public long Generation
     {
         get
         {
             lock (_sync)
             {
-                return _activeRegistrations.Count != 0;
+                return _generation;
             }
         }
     }
@@ -87,17 +85,12 @@ public sealed partial class InPortCounterService : IDisposable
         }
     }
 
-    /// <summary>Resets counts and timer history only when no journey is active.</summary>
-    public bool TryResetAll()
+    /// <summary>Resets all counts and timer history.</summary>
+    public void ResetAll()
     {
         lock (_sync)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
-            if (_activeRegistrations.Count != 0)
-            {
-                return false;
-            }
-
             foreach (var inPort in _counters.Keys.ToArray())
             {
                 _counters[inPort] = new InPortCounterSnapshot(inPort, 0, null, null);
@@ -108,39 +101,6 @@ public sealed partial class InPortCounterService : IDisposable
         }
 
         PublishSnapshotChanged();
-        return true;
-    }
-
-    internal InPortCounterRun BeginJourneyRun()
-    {
-        InPortCounterRun run;
-        lock (_sync)
-        {
-            ObjectDisposedException.ThrowIf(_disposed, this);
-            var registrationId = Guid.NewGuid();
-            _activeRegistrations.Add(registrationId);
-            run = new InPortCounterRun(
-                registrationId,
-                _counters.ToFrozenDictionary(pair => pair.Key, pair => pair.Value.Count),
-                _generation);
-        }
-
-        PublishSnapshotChanged();
-        return run;
-    }
-
-    internal void EndJourneyRun(Guid registrationId)
-    {
-        bool changed;
-        lock (_sync)
-        {
-            changed = _activeRegistrations.Remove(registrationId);
-        }
-
-        if (changed)
-        {
-            PublishSnapshotChanged();
-        }
     }
 
     private void OnFeedbackReceived(FeedbackResult feedback)
@@ -254,5 +214,3 @@ public sealed partial class InPortCounterService : IDisposable
         GC.SuppressFinalize(this);
     }
 }
-
-internal sealed record InPortCounterRun(Guid RegistrationId, IReadOnlyDictionary<uint, ulong> Bases, long Generation);

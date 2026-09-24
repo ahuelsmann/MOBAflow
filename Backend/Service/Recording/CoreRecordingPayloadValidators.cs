@@ -58,9 +58,6 @@ internal static class CoreRecordingPayloadValidators
             (JourneyIdProperty, IsGuid),
             ("journeyRunId", IsGuid),
             ("kind", IsJourneyTransitionKind),
-            ("feedbackIndex", IsNonNegativeInt32),
-            ("currentOccurrence", IsUInt32),
-            ("requiredOccurrences", IsUInt32),
             ("inPort", IsNullablePositiveInt32),
             ("stationId", IsNullableGuid),
             ("stationIndex", IsStationIndex),
@@ -81,8 +78,6 @@ internal static class CoreRecordingPayloadValidators
         Schema("command.track-power.request", ("isOn", IsBoolean)),
         Schema("command.simulate-feedback.request", ("inPort", IsPositiveInt32)),
         Schema("command.journey-reset.request", (JourneyIdProperty, IsGuid)),
-        Schema("command.journey-start.request", (JourneyIdProperty, IsGuid)),
-        Schema("command.journey-stop.request", (JourneyIdProperty, IsGuid)),
         Schema("command.inport-counters-reset.request"),
         Schema("command.signal-aspect.request", ("signalId", IsGuid), ("aspect", IsBoundedString)),
         Schema(
@@ -107,10 +102,6 @@ internal static class CoreRecordingPayloadValidators
         DisplaySchema("command.simulate-feedback.failure", (OutcomeProperty, IsFailureOutcome)),
         DisplaySchema("command.journey-reset.result", (OutcomeProperty, IsSucceededOutcome)),
         DisplaySchema("command.journey-reset.failure", (OutcomeProperty, IsFailureOutcome)),
-        DisplaySchema("command.journey-start.result", (OutcomeProperty, IsSucceededOutcome)),
-        DisplaySchema("command.journey-start.failure", (OutcomeProperty, IsFailureOutcome)),
-        DisplaySchema("command.journey-stop.result", (OutcomeProperty, IsSucceededOutcome)),
-        DisplaySchema("command.journey-stop.failure", (OutcomeProperty, IsFailureOutcome)),
         DisplaySchema("command.inport-counters-reset.result", (OutcomeProperty, IsSucceededOutcome)),
         DisplaySchema("command.inport-counters-reset.failure", (OutcomeProperty, IsFailureOutcome)),
         DisplaySchema("command.signal-aspect.result", (OutcomeProperty, IsSucceededOutcome)),
@@ -159,8 +150,6 @@ internal static class CoreRecordingPayloadValidators
 
     private static bool IsStationIndex(JsonElement value) =>
         value.TryGetInt32(out var number) && number >= -1;
-
-    private static bool IsUInt32(JsonElement value) => value.TryGetUInt32(out _);
 
     private static bool IsGuid(JsonElement value) =>
         value.ValueKind == JsonValueKind.String && Guid.TryParse(value.GetString(), out var id) && id != Guid.Empty;

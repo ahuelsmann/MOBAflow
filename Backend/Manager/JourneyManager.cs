@@ -2,9 +2,10 @@
 
 namespace Moba.Backend.Manager;
 
+using Common.Configuration;
 using Common.Events;
 using Common.Extension;
-using Common.Configuration;
+
 using Domain;
 using Domain.Enum;
 
@@ -39,24 +40,19 @@ public sealed class JourneyManagerDependencies
 
     /// <summary>Gets the application-owned input counter service.</summary>
     public InPortCounterService? InPortCounterService { get; init; }
-
-    /// <summary>Gets the runtime start boundary used to validate automatic journey changes.</summary>
-    public Func<Guid, Task>? StartJourneyAsync { get; init; }
 }
 
 /// <summary>
-/// Manages the execution of workflows and their actions related to a journey or stop (station) based on feedback events (track feedback points).
+/// Evaluates the events of all active journeys against the InPort session counters and runs their workflows.
 /// Platform-independent: No UI thread dispatching (that's handled by platform-specific ViewModels).
 /// Uses SessionState to separate runtime state from domain objects.
 /// </summary>
 public partial class JourneyManager : IJourneyManager
 {
     private readonly Lock _stateSync = new();
-    private readonly IZ21 _z21;
     private readonly ActionExecutionContextFactory _executionContextFactory;
     private readonly IWorkflowExecutionCoordinator _executionCoordinator;
     private readonly bool _ownsExecutionCoordinator;
-    private readonly Func<Guid, Task>? _startJourneyAsync;
     private readonly Dictionary<Guid, JourneySessionState> _states = [];
     private readonly Project _project;
     private readonly ILogger<JourneyManager> _logger;
@@ -74,8 +70,7 @@ public partial class JourneyManager : IJourneyManager
     public event EventHandler<StationChangedEventArgs>? StationChanged;
 
     /// <summary>
-    /// Event raised when a journey receives a feedback (counter incremented).
-    /// Fired on every feedback, not just when a station is reached.
+    /// Event raised when a journey event matched an InPort count or the journey state otherwise changed.
     /// </summary>
     public event EventHandler<JourneyFeedbackEventArgs>? FeedbackReceived;
 
@@ -101,11 +96,12 @@ public partial class JourneyManager : IJourneyManager
     /// <summary>
     /// Initializes a new instance of the JourneyManager class.
     /// </summary>
-    /// <param name="z21">Z21 command station for receiving feedback events</param>
+    /// <param name="z21">Z21 command station used by the default counter service and action context</param>
     /// <param name="project">Project containing journeys, stations, and workflows for reference resolution</param>
     /// <param name="workflowService">Service for executing workflows</param>
     /// <param name="executionContext">Optional execution context; if null, a new context with Z21 will be created</param>
     /// <param name="logger">Optional logger for structured diagnostics</param>
+    /// <param name="dependencies">Optional collaborators</param>
     public JourneyManager(
         IZ21 z21,
         Project project,
@@ -115,13 +111,11 @@ public partial class JourneyManager : IJourneyManager
         JourneyManagerDependencies? dependencies = null)
     {
         dependencies ??= new JourneyManagerDependencies();
-        _z21 = z21;
         _project = project;
         _logger = logger ?? NullLogger<JourneyManager>.Instance;
         _stopTransitionService = dependencies.StopTransitionService ?? new JourneyStopTransitionService();
         _runtimeStateStore = dependencies.RuntimeStateStore ?? new NullJourneyRuntimeStateStore();
         _eventBus = dependencies.EventBus;
-        _startJourneyAsync = dependencies.StartJourneyAsync;
         _ownsExecutionCoordinator = dependencies.ExecutionCoordinator is null;
         _ownsInPortCounterService = dependencies.InPortCounterService is null;
         _inPortCounterService = dependencies.InPortCounterService
@@ -130,73 +124,51 @@ public partial class JourneyManager : IJourneyManager
         _executionCoordinator = dependencies.ExecutionCoordinator
             ?? new WorkflowExecutionCoordinator(workflowService, dependencies.TimeProvider ?? TimeProvider.System);
 
-        // Initialize SessionState for all journeys
         foreach (var journey in project.Journeys)
         {
+            var checkpoint = _runtimeStateStore.Load(project.Id, journey.Id);
+            var position = checkpoint is not null && checkpoint.CurrentPos >= 0 && checkpoint.CurrentPos < journey.Stations.Count
+                ? checkpoint.CurrentPos
+                : (int)journey.FirstPos;
+            var station = journey.Stations.ElementAtOrDefault(position);
             _states[journey.Id] = new JourneySessionState
             {
                 JourneyId = journey.Id,
-                CurrentPos = (int)journey.FirstPos,
-                CurrentStationId = journey.Stations.ElementAtOrDefault((int)journey.FirstPos)?.Id,
-                CurrentStationName = journey.Stations.ElementAtOrDefault((int)journey.FirstPos)?.Name ?? string.Empty,
-                IsActive = journey.EventPlan is null
+                RunId = checkpoint is null || checkpoint.JourneyRunId == Guid.Empty ? Guid.NewGuid() : checkpoint.JourneyRunId,
+                CurrentPos = position,
+                CurrentStationId = station?.Id,
+                CurrentStationName = station?.Name ?? string.Empty,
+                IsActive = journey.IsActive
             };
-            var checkpoint = _runtimeStateStore.Load(project.Id, journey.Id);
-            if (checkpoint != null && journey.EventPlan is null)
-            {
-                _states[journey.Id].CurrentFeedbackIndex = Math.Clamp(checkpoint.CurrentFeedbackIndex, 0, journey.FeedbackSequence.Count);
-                _states[journey.Id].CurrentStepOccurrence = checkpoint.CurrentStepOccurrence;
-                _states[journey.Id].RunId = checkpoint.JourneyRunId == Guid.Empty
-                    ? Guid.NewGuid()
-                    : checkpoint.JourneyRunId;
-            }
-
-            if (_states[journey.Id].IsActive)
-            {
-                RegisterCounterRun(journey.Id, _states[journey.Id]);
-            }
         }
 
         _inPortCounterService.Counted += OnInPortCounted;
-        _z21.Received += OnZ21FeedbackReceived;
     }
 
-    /// <inheritdoc/>
-    private void OnZ21FeedbackReceived(FeedbackResult feedback)
+    private void OnInPortCounted(object? sender, InPortCountedEventArgs args)
     {
-        ProcessFeedbackAsync(feedback).Observe(ex => _logger.LogWarning(ex, "Journey feedback processing failed for InPort {InPort}", feedback.InPort));
+        ProcessCountedFeedbackAsync(args).Observe(ex =>
+            LogEventProcessingFailed(_logger, ex, args.Snapshot.InPort));
     }
 
-    protected virtual async Task ProcessFeedbackAsync(FeedbackResult feedback)
+    /// <summary>Starts the workflows of all enabled events of active journeys that match this InPort count.</summary>
+    protected virtual async Task ProcessCountedFeedbackAsync(InPortCountedEventArgs args)
     {
+        ArgumentNullException.ThrowIfNull(args);
         var queuedExecutions = new List<Task<WorkflowExecutionResult>>();
         lock (_stateSync)
         {
-            if (_disposed)
+            // Counts queued before an explicit reset belong to the previous session.
+            if (_disposed || args.Generation != _inPortCounterService.Generation)
             {
-                _logger.LogWarning("JourneyManager already disposed - ignoring feedback");
                 return;
             }
 
-            _logger.LogInformation("Feedback received: InPort {InPort}", feedback.InPort);
-
             foreach (var journey in _project.Journeys)
             {
-                if (journey.EventPlan is not null
-                    || !_states.TryGetValue(journey.Id, out var state) || !state.IsActive)
+                if (_states.TryGetValue(journey.Id, out var state) && state.IsActive)
                 {
-                    continue;
-                }
-
-                var expectedStep = GetExpectedStep(journey, state);
-                if (expectedStep == null || expectedStep.InPort != feedback.InPort)
-                {
-                    continue;
-                }
-
-                if (TryHandleFeedback(journey, expectedStep, feedback, out var queuedExecution))
-                {
-                    queuedExecutions.Add(queuedExecution);
+                    QueueMatchingEvents(journey, state, args, queuedExecutions);
                 }
             }
         }
@@ -207,172 +179,143 @@ public partial class JourneyManager : IJourneyManager
         }
     }
 
-    private bool TryHandleFeedback(
+    private void QueueMatchingEvents(
         Journey journey,
-        JourneyFeedbackStep feedbackStep,
-        FeedbackResult feedback,
-        [NotNullWhen(true)] out Task<WorkflowExecutionResult>? queuedExecution)
+        JourneySessionState state,
+        InPortCountedEventArgs args,
+        List<Task<WorkflowExecutionResult>> queuedExecutions)
     {
-        var state = _states[journey.Id];
-
-        state.CurrentStepOccurrence++;
-        _runtimeStateStore.Save(_project.Id, state);
-        state.LastFeedbackTime = DateTime.Now;
-        _logger.LogInformation(
-            "Journey '{Journey}': Feedback step {FeedbackIndex} at InPort {InPort}",
-            journey.Name,
-            state.CurrentFeedbackIndex,
-            feedbackStep.InPort);
-
-        PublishTransition(
-            journey,
-            state,
-            JourneyRuntimeTransitionKind.FeedbackAccepted,
-            feedbackStep,
-            checked((int)feedbackStep.InPort));
-
-        // Fire FeedbackReceived event on every feedback (for UI counter updates)
-        OnFeedbackReceived(new JourneyFeedbackEventArgs
+        foreach (var journeyEvent in journey.EventPlan.Events)
         {
-            JourneyId = journey.Id,
-            SessionState = state
-        });
-
-        if (state.CurrentStepOccurrence < Math.Max(feedbackStep.Index, 1u))
-        {
-            queuedExecution = null;
-            return false;
-        }
-
-        ApplyStopTransition(journey, feedbackStep, state);
-
-        queuedExecution = null;
-        if (feedbackStep.WorkflowId.HasValue)
-        {
-            QueueFeedbackWorkflow(journey, feedbackStep, feedback, out queuedExecution);
-        }
-
-        state.CurrentFeedbackIndex++;
-        state.CurrentStepOccurrence = 0;
-        _runtimeStateStore.Save(_project.Id, state);
-
-        if (state.IsJourneyCompletionRequested)
-        {
-            state.IsJourneyCompletionRequested = false;
-            HandleLastStation(journey);
-        }
-
-        OnFeedbackReceived(new JourneyFeedbackEventArgs { JourneyId = journey.Id, SessionState = state });
-        return queuedExecution != null;
-    }
-
-    private JourneyFeedbackStep? GetExpectedStep(Journey journey, JourneySessionState state)
-    {
-        while (state.CurrentFeedbackIndex < journey.FeedbackSequence.Count)
-        {
-            var step = journey.FeedbackSequence[state.CurrentFeedbackIndex];
-            if (step.Enabled)
+            if (!journeyEvent.Enabled || journeyEvent.InPort != args.Snapshot.InPort || journeyEvent.Count != args.Snapshot.Count)
             {
-                return ConditionsMatch(step, state) ? step : null;
+                continue;
             }
 
-            state.CurrentFeedbackIndex++;
-            state.CurrentStepOccurrence = 0;
-        }
+            state.LastFeedbackTime = args.Snapshot.LastFeedbackTime?.LocalDateTime;
+            PublishTransition(journey, state, JourneyRuntimeTransitionKind.FeedbackAccepted, checked((int)journeyEvent.InPort));
+            OnFeedbackReceived(new JourneyFeedbackEventArgs { JourneyId = journey.Id, SessionState = state });
 
-        return null;
+            if (journeyEvent.WorkflowId is not Guid workflowId)
+            {
+                continue;
+            }
+
+            var workflow = _project.Workflows.FirstOrDefault(candidate => candidate.Id == workflowId);
+            if (workflow is null)
+            {
+                LogWorkflowNotFound(_logger, workflowId, journey.Name);
+                continue;
+            }
+
+            var inPort = journeyEvent.InPort;
+            queuedExecutions.Add(_executionCoordinator.EnqueueAsync(new QueuedWorkflowExecution
+            {
+                // Workflows of one journey share its stop state and run in order; other journeys stay independent.
+                SourceKey = $"journey:{journey.Id}",
+                OwnerId = journey.Id,
+                ContextFactory = () => CreateWorkflowContext(journey, state, inPort),
+                OnCompleted = () => CompleteJourneyIfRequested(journey, state),
+                Request = new WorkflowExecutionRequest
+                {
+                    Project = _project,
+                    Workflow = workflow,
+                    Context = CreateWorkflowContext(journey, state, inPort),
+                    Mode = WorkflowRunMode.Live,
+                    SourceCorrelationId = args.CorrelationId
+                }
+            }));
+        }
     }
 
-    private static bool ConditionsMatch(JourneyFeedbackStep step, JourneySessionState state) =>
-        step.Conditions.All(condition => condition.Type switch
-        {
-            JourneyFeedbackConditionType.CurrentStationIs => condition.StationId == state.CurrentStationId,
-            _ => false
-        });
-
-    private void ApplyStopTransition(Journey journey, JourneyFeedbackStep step, JourneySessionState state)
+    private ActionExecutionContext CreateWorkflowContext(Journey journey, JourneySessionState state, uint inPort)
     {
-        var result = _stopTransitionService.Apply(journey, state, step.StopTransition);
-        if (result.Changed && result.CurrentStation != null)
+        lock (_stateSync)
         {
-            PublishTransition(journey, state, JourneyRuntimeTransitionKind.StopChanged, step);
-            OnStationChanged(new StationChangedEventArgs
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            TryGetCurrentStation(journey, state, out var currentStation);
+            return _executionContextFactory.Create(new ActionExecutionContextState
             {
-                JourneyId = journey.Id,
-                Station = result.CurrentStation,
-                SessionState = state
+                CurrentProject = _project,
+                CurrentJourney = journey,
+                CurrentJourneySessionState = state,
+                CurrentStation = currentStation,
+                JourneyTemplateText = journey.Text,
+                CurrentStationIndex = currentStation is null ? 1 : journey.Stations.IndexOf(currentStation) + 1,
+                FeedbackInPort = inPort,
+                ApplyJourneyStopTransition = transition => ApplyStopTransition(journey, state, transition)
             });
         }
     }
 
-    private void HandleLastStation(Journey journey)
+    private JourneyStopTransitionResult ApplyStopTransition(Journey journey, JourneySessionState state, JourneyStopTransition transition)
     {
-        var state = _states[journey.Id];
-
-        _logger.LogInformation("Last station of journey '{Journey}' reached", journey.Name);
-
-        PublishTransition(journey, state, JourneyRuntimeTransitionKind.Completed);
-
-        JourneyCompleted?.Invoke(this, new JourneyCompletedEventArgs
+        lock (_stateSync)
         {
-            JourneyId = journey.Id,
-            JourneyRunId = state.RunId
-        });
-
-        switch (journey.BehaviorOnLastStop)
-        {
-            case BehaviorOnLastStop.BeginAgainFromFistStop:
-                _logger.LogInformation("Journey will restart from beginning");
-                state.RunId = Guid.NewGuid();
-                state.CurrentPos = 0;
-                state.CurrentStationId = journey.Stations.FirstOrDefault()?.Id;
-                state.CurrentStationName = journey.Stations.FirstOrDefault()?.Name ?? string.Empty;
-                PublishTransition(journey, state, JourneyRuntimeTransitionKind.Restarted);
-                break;
-
-            case BehaviorOnLastStop.GotoJourney:
-                if (journey.NextJourneyId.HasValue)
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            var result = _stopTransitionService.Apply(journey, state, transition);
+            if (result.Changed && result.CurrentStation is not null)
+            {
+                PublishTransition(journey, state, JourneyRuntimeTransitionKind.StopChanged);
+                OnStationChanged(new StationChangedEventArgs
                 {
-                    TryActivateNextJourney(journey.NextJourneyId.Value);
-                }
-                else
-                {
-                    _logger.LogWarning("NextJourneyId not set for journey '{Journey}'", journey.Name);
-                }
-                break;
+                    JourneyId = journey.Id,
+                    Station = result.CurrentStation,
+                    SessionState = state
+                });
+            }
 
-            case BehaviorOnLastStop.None:
-                _logger.LogInformation("Journey stops");
-                state.IsActive = false;
-                ReleaseCounterRun(journey.Id);
-                PublishTransition(journey, state, JourneyRuntimeTransitionKind.Stopped);
-                break;
+            _runtimeStateStore.Save(_project.Id, state);
+            return result;
         }
-        _runtimeStateStore.Save(_project.Id, state);
     }
 
-    private bool TryGetCurrentStation(
+    /// <summary>Completes a journey after the workflow that moved past its last stop has finished.</summary>
+    private Task CompleteJourneyIfRequested(Journey journey, JourneySessionState state)
+    {
+        lock (_stateSync)
+        {
+            if (_disposed || !state.IsJourneyCompletionRequested)
+            {
+                return Task.CompletedTask;
+            }
+
+            state.IsJourneyCompletionRequested = false;
+            LogLastStationReached(_logger, journey.Name);
+            PublishTransition(journey, state, JourneyRuntimeTransitionKind.Completed);
+            JourneyCompleted?.Invoke(this, new JourneyCompletedEventArgs
+            {
+                JourneyId = journey.Id,
+                JourneyRunId = state.RunId
+            });
+
+            if (journey.BehaviorOnLastStop == BehaviorOnLastStop.BeginAgainFromFistStop)
+            {
+                var firstStation = journey.Stations.FirstOrDefault();
+                state.RunId = Guid.NewGuid();
+                state.CurrentPos = 0;
+                state.CurrentStationId = firstStation?.Id;
+                state.CurrentStationName = firstStation?.Name ?? string.Empty;
+                PublishTransition(journey, state, JourneyRuntimeTransitionKind.Restarted);
+            }
+
+            _runtimeStateStore.Save(_project.Id, state);
+            OnFeedbackReceived(new JourneyFeedbackEventArgs { JourneyId = journey.Id, SessionState = state });
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private static bool TryGetCurrentStation(
         Journey journey,
         JourneySessionState state,
         [NotNullWhen(true)] out Station? currentStation)
     {
-        if (journey.Stations.Count == 0)
-        {
-            _logger.LogWarning("Journey '{Journey}' has no stations configured", journey.Name);
-            currentStation = null;
-            return false;
-        }
-
         var currentStationIndex = state.CurrentStationId.HasValue
             ? journey.Stations.FindIndex(station => station.Id == state.CurrentStationId!.Value)
             : state.CurrentPos;
         if (currentStationIndex < 0 || currentStationIndex >= journey.Stations.Count)
         {
-            _logger.LogWarning(
-                "CurrentPos {CurrentPos} is out of range for journey '{Journey}' (station count: {Count})",
-                currentStationIndex,
-                journey.Name,
-                journey.Stations.Count);
             currentStation = null;
             return false;
         }
@@ -381,126 +324,30 @@ public partial class JourneyManager : IJourneyManager
         return true;
     }
 
-    private void QueueFeedbackWorkflow(
-        Journey journey,
-        JourneyFeedbackStep feedbackStep,
-        FeedbackResult feedback,
-        out Task<WorkflowExecutionResult>? queuedExecution)
-    {
-        var workflowId = feedbackStep.WorkflowId ?? throw new InvalidOperationException("A feedback workflow requires an identifier.");
-        var workflow = _project.Workflows.FirstOrDefault(w => w.Id == workflowId);
-        if (workflow == null)
-        {
-            _logger.LogWarning("Workflow with ID {WorkflowId} not found", workflowId);
-            queuedExecution = null;
-            return;
-        }
-
-        TryGetCurrentStation(journey, _states[journey.Id], out var currentStation);
-
-        var stationIndex = currentStation == null ? 0 : journey.Stations.IndexOf(currentStation) + 1;
-        var executionContext = _executionContextFactory.Create(new ActionExecutionContextState
-        {
-            CurrentProject = _project,
-            CurrentJourney = journey,
-            CurrentJourneySessionState = _states[journey.Id],
-            CurrentStation = currentStation,
-            JourneyTemplateText = journey.Text,
-            CurrentStationIndex = stationIndex > 0 ? stationIndex : 1,
-            FeedbackInPort = feedbackStep.InPort
-        });
-
-        queuedExecution = _executionCoordinator.EnqueueAsync(new QueuedWorkflowExecution
-        {
-            SourceKey = $"z21-feedback:{feedback.InPort}",
-            OwnerId = journey.Id,
-            Delay = TimeSpan.FromMilliseconds(Math.Max(feedbackStep.DelayMs, 0)),
-            Request = new WorkflowExecutionRequest
-            {
-                Project = _project,
-                Workflow = workflow,
-                Context = executionContext,
-                Mode = WorkflowRunMode.Live,
-                SourceCorrelationId = feedback.CorrelationId
-            }
-        });
-    }
-
-    private void TryActivateNextJourney(Guid nextJourneyId)
-    {
-        var nextJourney = _project.Journeys.FirstOrDefault(j => j.Id == nextJourneyId);
-        if (nextJourney == null || !_states.TryGetValue(nextJourney.Id, out var nextState))
-        {
-            _logger.LogWarning("NextJourney with ID {NextJourneyId} not found or state missing", nextJourneyId);
-            return;
-        }
-
-        _logger.LogInformation("Switching to journey: {Journey}", nextJourney.Name);
-        if (nextJourney.EventPlan is not null)
-        {
-            if (_startJourneyAsync is not null)
-            {
-                StartNextJourneyAsync(nextJourneyId).Observe(ex => LogAutomaticStartFailed(_logger, ex, nextJourneyId));
-                return;
-            }
-
-            if (!nextState.IsActive)
-            {
-                StartJourneyCore(nextJourney);
-            }
-
-            return;
-        }
-        nextState.CurrentPos = (int)nextJourney.FirstPos;
-        nextState.CurrentStationId = nextJourney.Stations.ElementAtOrDefault((int)nextJourney.FirstPos)?.Id;
-        nextState.CurrentStationName = nextJourney.Stations.ElementAtOrDefault((int)nextJourney.FirstPos)?.Name ?? string.Empty;
-        nextState.CurrentFeedbackIndex = 0;
-        nextState.CurrentStepOccurrence = 0;
-        nextState.RunId = Guid.NewGuid();
-        nextState.IsActive = true;
-        RegisterCounterRun(nextJourney.Id, nextState);
-        _logger.LogInformation("Journey '{Journey}' activated at position {Position}", nextJourney.Name, nextState.CurrentPos);
-        PublishTransition(nextJourney, nextState, JourneyRuntimeTransitionKind.Activated);
-    }
-
     /// <summary>
-    /// Resets a specific journey to its initial state.
+    /// Resets a specific journey to its first stop.
     /// </summary>
     /// <param name="journey">The journey to reset</param>
     public void Reset(Journey journey)
     {
+        ArgumentNullException.ThrowIfNull(journey);
         lock (_stateSync)
         {
-            ResetCore(journey);
-        }
-    }
+            _executionCoordinator.CancelOwner(journey.Id);
+            if (!_states.TryGetValue(journey.Id, out var state))
+            {
+                return;
+            }
 
-    private void ResetCore(Journey journey)
-    {
-        _executionCoordinator.CancelOwner(journey.Id);
-        if (journey.EventPlan is not null)
-        {
-            ReleaseCounterRun(journey.Id);
-        }
-        _eventPlanRuns.Remove(journey.Id);
-        if (_states.TryGetValue(journey.Id, out var state))
-        {
+            var station = journey.Stations.ElementAtOrDefault((int)journey.FirstPos);
             state.CurrentPos = (int)journey.FirstPos;
-            state.CurrentStationId = journey.Stations.ElementAtOrDefault((int)journey.FirstPos)?.Id;
-            state.CurrentStationName = journey.Stations.ElementAtOrDefault((int)journey.FirstPos)?.Name ?? string.Empty;
-            state.CurrentFeedbackIndex = 0;
-            state.CurrentStepOccurrence = 0;
+            state.CurrentStationId = station?.Id;
+            state.CurrentStationName = station?.Name ?? string.Empty;
+            state.LastFeedbackTime = null;
             state.RunId = Guid.NewGuid();
             state.IsJourneyCompletionRequested = false;
-            state.IsActive = journey.EventPlan is null;
-            state.CurrentEventBases = System.Collections.Frozen.FrozenDictionary<uint, ulong>.Empty;
-            state.CompletedEventIds = Array.Empty<Guid>();
-            if (state.IsActive)
-            {
-                RegisterCounterRun(journey.Id, state);
-            }
             _runtimeStateStore.Reset(_project.Id, journey.Id);
-            _logger.LogInformation("Journey '{Journey}' reset to position {Position}", journey.Name, state.CurrentPos);
+            LogJourneyReset(_logger, journey.Name, state.CurrentPos);
             PublishTransition(journey, state, JourneyRuntimeTransitionKind.Reset);
         }
     }
@@ -509,7 +356,6 @@ public partial class JourneyManager : IJourneyManager
         Journey journey,
         JourneySessionState state,
         JourneyRuntimeTransitionKind kind,
-        JourneyFeedbackStep? feedbackStep = null,
         int? inPort = null)
     {
         if (_eventBus is null) return;
@@ -522,9 +368,6 @@ public partial class JourneyManager : IJourneyManager
             journey.Id,
             state.RunId,
             kind,
-            state.CurrentFeedbackIndex,
-            state.CurrentStepOccurrence,
-            feedbackStep is null ? 0u : Math.Max(feedbackStep.Index, 1u),
             inPort,
             state.CurrentStationId,
             stationIndex >= 0 && stationIndex < journey.Stations.Count ? stationIndex : -1,
@@ -551,21 +394,12 @@ public partial class JourneyManager : IJourneyManager
         {
             Reset(journey);
         }
-        _logger.LogInformation("All journeys reset");
     }
 
     /// <inheritdoc />
     public void CancelPendingWork()
     {
-        lock (_stateSync)
-        {
-            foreach (var run in _eventPlanRuns.Values.ToArray())
-            {
-                StopJourneyCore(run.Journey);
-            }
-
-            _executionCoordinator.CancelPending();
-        }
+        _executionCoordinator.CancelPending();
     }
 
     public void Dispose()
@@ -592,7 +426,6 @@ public partial class JourneyManager : IJourneyManager
 
             _disposed = true;
             _inPortCounterService.Counted -= OnInPortCounted;
-            _z21.Received -= OnZ21FeedbackReceived;
             if (_ownsExecutionCoordinator)
             {
                 _executionCoordinator.Dispose();
@@ -604,16 +437,23 @@ public partial class JourneyManager : IJourneyManager
                     _executionCoordinator.CancelOwner(journeyId);
                 }
             }
-            foreach (var journeyId in _counterRuns.Keys.ToArray())
-            {
-                ReleaseCounterRun(journeyId);
-            }
 
-            _eventPlanRuns.Clear();
             if (_ownsInPortCounterService)
             {
                 _inPortCounterService.Dispose();
             }
         }
     }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Journey event processing failed for InPort {InPort}")]
+    private static partial void LogEventProcessingFailed(ILogger logger, Exception exception, uint inPort);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Workflow {WorkflowId} of journey '{Journey}' was not found")]
+    private static partial void LogWorkflowNotFound(ILogger logger, Guid workflowId, string journey);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Last station of journey '{Journey}' reached")]
+    private static partial void LogLastStationReached(ILogger logger, string journey);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Journey '{Journey}' reset to position {Position}")]
+    private static partial void LogJourneyReset(ILogger logger, string journey, int position);
 }

@@ -53,33 +53,29 @@ public sealed class InPortCounterServiceTests
             Assert.That(counters.GetSnapshot().Single().LastLapTime, Is.EqualTo(TimeSpan.FromSeconds(10)));
         });
 
-        Assert.That(counters.TryResetAll(), Is.True);
+        counters.ResetAll();
         Assert.That(counters.GetSnapshot().Single().LastFeedbackTime, Is.Null);
         Raise(z21, 1);
         Assert.That(counters.GetSnapshot().Single().Count, Is.EqualTo(1UL));
     }
 
     [Test]
-    public async Task Reset_IsRejectedWhileAnyNewOrLegacyJourneyIsActive()
+    public void Reset_IsAllowedWhileJourneysAreActive()
     {
         var z21 = new Mock<IZ21>();
         using var counters = CreateCounters(z21);
-        var newJourney = new Journey { EventPlan = new JourneyEventPlan() };
-        var legacyJourney = new Journey { FeedbackSequence = [new JourneyFeedbackStep { InPort = 1 }] };
-        var project = new Project { Journeys = [newJourney, legacyJourney] };
+        var project = new Project { Journeys = [new Journey { IsActive = true }] };
         using var manager = new JourneyManager(z21.Object, project, Mock.Of<IWorkflowService>(),
             dependencies: new JourneyManagerDependencies { InPortCounterService = counters });
         Raise(z21, 1);
-        Assert.That(counters.TryResetAll(), Is.False, "Legacy journeys can execute immediately.");
-        await manager.StartJourneyAsync(newJourney);
-        await manager.StopJourneyAsync(legacyJourney);
-        Assert.That(counters.TryResetAll(), Is.False, "The new journey still owns its captured count bases.");
-        await manager.StopJourneyAsync(newJourney);
+        var generation = counters.Generation;
+
+        counters.ResetAll();
+
         Assert.Multiple(() =>
         {
-            Assert.That(counters.GetSnapshot().Single().Count, Is.EqualTo(1UL));
-            Assert.That(counters.TryResetAll(), Is.True);
             Assert.That(counters.GetSnapshot().Single().Count, Is.Zero);
+            Assert.That(counters.Generation, Is.EqualTo(generation + 1));
         });
     }
 
@@ -157,7 +153,7 @@ public sealed class InPortCounterServiceTests
     }
 
     [Test]
-    public async Task ResetThenStart_RejectsAnOldActivationStillBeingDelivered()
+    public async Task Reset_IgnoresAnOldActivationStillBeingDelivered()
     {
         var z21 = new Mock<IZ21>();
         using var counters = CreateCounters(z21);
@@ -174,18 +170,33 @@ public sealed class InPortCounterServiceTests
                 }
             }
         };
+        var workflow = new Workflow();
         var journey = new Journey
         {
-            EventPlan = new JourneyEventPlan { Events = [new JourneyEvent { InPort = 1, Count = 1 }] }
+            IsActive = true,
+            EventPlan = new JourneyEventPlan { Events = [new JourneyEvent { InPort = 1, Count = 1, WorkflowId = workflow.Id }] }
         };
-        using var manager = new JourneyManager(z21.Object, new Project { Journeys = [journey] }, Mock.Of<IWorkflowService>(),
-            dependencies: new JourneyManagerDependencies { InPortCounterService = counters });
+        var executions = new ConcurrentQueue<WorkflowExecutionRequest>();
+        var workflowService = new Mock<IWorkflowService>();
+        workflowService.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((WorkflowExecutionRequest request, CancellationToken _) =>
+            {
+                executions.Enqueue(request);
+                return new WorkflowExecutionResult
+                {
+                    ExecutionId = Guid.NewGuid(),
+                    WorkflowId = request.Workflow.Id,
+                    SourceCorrelationId = request.SourceCorrelationId,
+                    Status = WorkflowExecutionStatus.Succeeded
+                };
+            });
+        using var manager = new JourneyManager(z21.Object, new Project { Journeys = [journey], Workflows = [workflow] },
+            workflowService.Object, dependencies: new JourneyManagerDependencies { InPortCounterService = counters });
         var oldActivation = Task.Run(() => Raise(z21, 1));
         try
         {
             await firstEntered.Task.WaitAsync(TimeSpan.FromSeconds(5));
-            Assert.That(counters.TryResetAll(), Is.True);
-            await manager.StartJourneyAsync(journey);
+            counters.ResetAll();
         }
         finally
         {
@@ -193,9 +204,8 @@ public sealed class InPortCounterServiceTests
             await oldActivation.WaitAsync(TimeSpan.FromSeconds(5));
         }
 
-        Assert.That(manager.GetState(journey.Id)!.CompletedEventIds, Is.Empty);
-        Raise(z21, 1);
-        Assert.That(manager.GetState(journey.Id)!.CompletedEventIds, Has.Count.EqualTo(1));
+        await Task.Delay(100);
+        Assert.That(executions, Is.Empty);
     }
 
     [Test]

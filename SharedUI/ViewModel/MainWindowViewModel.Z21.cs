@@ -72,14 +72,7 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private async Task SimulateFeedback()
     {
-        uint? selectedInPort = SelectedJourney?.NextFeedbackInPort;
-
-        int inPort;
-        if (selectedInPort.HasValue)
-        {
-            inPort = unchecked((int)selectedInPort.Value);
-        }
-        else if (!int.TryParse(SimulateInPort, out inPort))
+        if (!int.TryParse(SimulateInPort, out var inPort))
         {
             StatusText = "Invalid InPort number";
             return;
@@ -88,7 +81,7 @@ public partial class MainWindowViewModel
         await _runtimeCommandGateway.SimulateFeedbackAsync(inPort).ConfigureAwait(false);
     }
 
-    private bool CanResetJourney() => SelectedJourney != null && !SelectedJourney.IsEventPlanRunning;
+    private bool CanResetJourney() => SelectedJourney != null;
 
     [RelayCommand(CanExecute = nameof(CanResetJourney))]
     private async Task ResetJourney()
@@ -169,7 +162,6 @@ public partial class MainWindowViewModel
 
             ApplyJourneyRuntimeSnapshots(snapshot.JourneyStates);
             ApplyInPortCounterSnapshot(snapshot);
-            OnPropertyChanged(nameof(IsAnyEventPlanRunning));
 
             if (SignalBoxRuntimeSync.ApplyToPlan(SelectedProject?.Model.SignalBoxPlan, snapshot.SignalBoxElements))
             {
@@ -210,10 +202,6 @@ public partial class MainWindowViewModel
         SetTrackPowerCommand.NotifyCanExecuteChanged();
         ResetJourneyCommand.NotifyCanExecuteChanged();
         ResetJourneyCounterCommand.NotifyCanExecuteChanged();
-        StartJourneyCommand.NotifyCanExecuteChanged();
-        StopJourneyCommand.NotifyCanExecuteChanged();
-        ResetCountersCommand.NotifyCanExecuteChanged();
-        DeleteJourneyCommand.NotifyCanExecuteChanged();
         AcknowledgeOperatingStateCommand.NotifyCanExecuteChanged();
     }
     #endregion

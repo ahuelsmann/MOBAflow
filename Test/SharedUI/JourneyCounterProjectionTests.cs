@@ -59,31 +59,20 @@ public sealed class JourneyCounterProjectionTests
     }
 
     [Test]
-    public async Task ResetPermission_UpdatesCommandAndWaitsForAuthoritativeResetSnapshot()
+    public async Task ResetCounters_IsAlwaysAvailableAndWaitsForAuthoritativeResetSnapshot()
     {
-        await using var fixture = new ProjectionFixture();
-        var changes = 0;
-        fixture.ViewModel.ResetCountersCommand.CanExecuteChanged += (_, _) => changes++;
-        fixture.Publish(new MobaRuntimeSnapshot
-        {
-            CanResetInPortCounters = false,
-            InPortCounters = [new InPortCounterSnapshot(1, 18, null, null)]
-        });
-        Assert.That(fixture.ViewModel.ResetCountersCommand.CanExecute(null), Is.False);
+        var journey = CreateJourney("Active");
+        journey.IsActive = true;
+        await using var fixture = new ProjectionFixture(new Solution { Projects = [new Project { Journeys = [journey] }] });
+        fixture.Publish(new MobaRuntimeSnapshot { InPortCounters = [new InPortCounterSnapshot(1, 18, null, null)] });
 
-        fixture.Publish(new MobaRuntimeSnapshot
-        {
-            CanResetInPortCounters = true,
-            InPortCounters = [new InPortCounterSnapshot(1, 18, null, null)]
-        });
         Assert.That(fixture.ViewModel.ResetCountersCommand.CanExecute(null), Is.True);
         await fixture.ViewModel.ResetCountersCommand.ExecuteAsync(null);
         Assert.That(fixture.ViewModel.Statistics.Single(item => item.InPort == 1).Count, Is.EqualTo(18));
-        fixture.Publish(new MobaRuntimeSnapshot { CanResetInPortCounters = true });
+        fixture.Publish(MobaRuntimeSnapshot.Empty);
 
         Assert.Multiple(() =>
         {
-            Assert.That(changes, Is.GreaterThanOrEqualTo(2));
             Assert.That(fixture.ViewModel.Statistics.Single(item => item.InPort == 1).Count, Is.Zero);
             Assert.That(fixture.ViewModel.JourneyCommandStatus, Is.EqualTo("InPort counters reset."));
         });
@@ -91,126 +80,41 @@ public sealed class JourneyCounterProjectionTests
     }
 
     [Test]
-    public async Task StartAndStop_RouteSelectedJourneyAndLockTheEventEditorWhileRunning()
+    public async Task ActiveFlag_IsPersistedOnTheJourneyAndReappliedToTheRuntime()
     {
         var journey = CreateJourney("Regional");
         await using var fixture = new ProjectionFixture(new Solution { Projects = [new Project { Journeys = [journey] }] });
-        using var editor = new EventManagerViewModel(fixture.ViewModel);
-        var calls = new List<string>();
-        fixture.Runtime.Setup(runtime => runtime.ActivateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()))
-            .Callback(() => calls.Add("activate"))
-            .Returns(Task.CompletedTask);
-        fixture.Gateway.Setup(gateway => gateway.StartJourneyAsync(journey.Id, It.IsAny<CancellationToken>()))
-            .Callback(() =>
-            {
-                calls.Add("start");
-                fixture.Publish(JourneySnapshot(journey.Id, true));
-            })
-            .Returns(Task.CompletedTask);
-        fixture.Gateway.Setup(gateway => gateway.StopJourneyAsync(journey.Id, It.IsAny<CancellationToken>()))
-            .Callback(() => fixture.Publish(JourneySnapshot(journey.Id, false)))
-            .Returns(Task.CompletedTask);
+        fixture.Runtime.Invocations.Clear();
 
-        Assert.That(fixture.ViewModel.StartJourneyCommand.CanExecute(null), Is.True);
-        await fixture.ViewModel.StartJourneyCommand.ExecuteAsync(null);
-        editor.Events.Single().Count = 9;
-        Assert.Multiple(() =>
-        {
-            Assert.That(calls, Is.EqualTo(new[] { "activate", "start" }));
-            Assert.That(fixture.ViewModel.SelectedJourney!.IsRunning, Is.True);
-            Assert.That(fixture.ViewModel.StartJourneyCommand.CanExecute(null), Is.False);
-            Assert.That(fixture.ViewModel.StopJourneyCommand.CanExecute(null), Is.True);
-            Assert.That(editor.CanEdit, Is.False);
-            Assert.That(journey.EventPlan!.Events.Single().Count, Is.EqualTo(2));
-        });
+        fixture.ViewModel.SelectedJourney!.IsActive = true;
 
-        await fixture.ViewModel.StopJourneyCommand.ExecuteAsync(null);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(fixture.ViewModel.SelectedJourney!.IsRunning, Is.False);
-            Assert.That(fixture.ViewModel.StartJourneyCommand.CanExecute(null), Is.True);
-            Assert.That(fixture.ViewModel.StopJourneyCommand.CanExecute(null), Is.False);
-            Assert.That(editor.CanEdit, Is.True);
-        });
-        fixture.Gateway.Verify(gateway => gateway.StartJourneyAsync(journey.Id, It.IsAny<CancellationToken>()), Times.Once);
-        fixture.Gateway.Verify(gateway => gateway.StopJourneyAsync(journey.Id, It.IsAny<CancellationToken>()), Times.Once);
+        Assert.That(journey.IsActive, Is.True);
+        fixture.Runtime.Verify(runtime => runtime.ActivateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
-    public async Task OtherRunningJourney_KeepsSelectedStoppedPlanReadOnly()
+    public async Task EventEdits_StayEditableForActiveJourneysAndAreReappliedToTheRuntime()
     {
-        var running = CreateJourney("Running");
-        var selected = CreateJourney("Selected");
-        await using var fixture = new ProjectionFixture(new Solution
-        {
-            Projects = [new Project { Journeys = [running, selected] }]
-        });
-        using var editor = new EventManagerViewModel(fixture.ViewModel);
-        fixture.Publish(JourneySnapshot(running.Id, true));
-        fixture.ViewModel.SelectedJourney = fixture.ViewModel.SelectedProject!.Journeys.Single(item => item.Id == selected.Id);
-
-        editor.AddEventCommand.Execute(null);
-        editor.Events.Single().Count = 8;
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(fixture.ViewModel.SelectedJourney.IsRunning, Is.False);
-            Assert.That(fixture.ViewModel.IsAnyEventPlanRunning, Is.True);
-            Assert.That(editor.CanEdit, Is.False);
-            Assert.That(selected.EventPlan!.Events, Has.Count.EqualTo(1));
-            Assert.That(selected.EventPlan.Events.Single().Count, Is.EqualTo(2));
-        });
-    }
-
-    [Test]
-    public async Task ExistingRuntimeSnapshot_ProjectsRunningStateWhenSolutionWrappersAreCreated()
-    {
-        var journey = CreateJourney("Already running");
-        await using var fixture = new ProjectionFixture(
-            new Solution { Projects = [new Project { Journeys = [journey] }] }, JourneySnapshot(journey.Id, true));
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(fixture.ViewModel.SelectedJourney!.IsRunning, Is.True);
-            Assert.That(fixture.ViewModel.SelectedJourney.IsEventPlanRunning, Is.True);
-            Assert.That(fixture.ViewModel.StartJourneyCommand.CanExecute(null), Is.False);
-            Assert.That(fixture.ViewModel.StopJourneyCommand.CanExecute(null), Is.True);
-            Assert.That(fixture.ViewModel.ResetCountersCommand.CanExecute(null), Is.False);
-        });
-    }
-
-    [Test]
-    public async Task FailedStart_ReportsFailureWithoutInventingRunningState()
-    {
-        var journey = CreateJourney("Unavailable");
+        var journey = CreateJourney("Regional");
+        journey.IsActive = true;
         await using var fixture = new ProjectionFixture(new Solution { Projects = [new Project { Journeys = [journey] }] });
-        fixture.Gateway.Setup(gateway => gateway.StartJourneyAsync(journey.Id, It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("Runtime is unavailable."));
+        using var editor = new EventManagerViewModel(fixture.ViewModel);
+        fixture.Runtime.Invocations.Clear();
 
-        await fixture.ViewModel.StartJourneyCommand.ExecuteAsync(null);
+        editor.Events.Single().Count = 9;
 
         Assert.Multiple(() =>
         {
-            Assert.That(fixture.ViewModel.JourneyCommandStatus, Is.EqualTo("Runtime is unavailable."));
-            Assert.That(fixture.ViewModel.SelectedJourney!.IsRunning, Is.False);
-            Assert.That(fixture.ViewModel.StartJourneyCommand.CanExecute(null), Is.True);
+            Assert.That(editor.CanEdit, Is.True);
+            Assert.That(journey.EventPlan.Events.Single().Count, Is.EqualTo(9));
         });
+        fixture.Runtime.Verify(runtime => runtime.ActivateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     private static Journey CreateJourney(string name) => new()
     {
         Name = name,
         EventPlan = new JourneyEventPlan { Events = [new() { InPort = 1, Count = 2 }] }
-    };
-
-    private static MobaRuntimeSnapshot JourneySnapshot(Guid id, bool active) => new()
-    {
-        CanResetInPortCounters = !active,
-        JourneyStates = new Dictionary<Guid, JourneyRuntimeSnapshot>
-        {
-            [id] = new() { JourneyId = id, IsActive = active, IsEventPlan = true }
-        }
     };
 
     private sealed class ProjectionFixture : IAsyncDisposable

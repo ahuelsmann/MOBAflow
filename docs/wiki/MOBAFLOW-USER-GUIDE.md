@@ -47,25 +47,23 @@ such as invalid references or conflicting data.
 MOBAflow reports digital-address conflicts in project diagnostics. Resolve them
 before operating the affected locomotives.
 
-### Stations, journeys and feedback sequences
+### Stations, journeys and events
 
 **Stations** are reusable project entities with platforms and optional city
 metadata. **Journeys** reference an ordered list of those stations.
 
-A journey advances through an explicit **feedback sequence**. Each step records
-the expected feedback input and can be associated with a station transition.
-This allows repeated inputs and route changes to be represented without relying
-on one global journey input.
+A journey is either **active** or inactive. When feedback arrives, MOBAflow
+evaluates the events of every active journey. Each event assigns a workflow to an
+InPort and a count. MOBAflow counts every InPort separately from application start
+until you reset the counters; an event runs when its InPort counter reaches the
+configured count. List order does not define the trigger sequence.
 
-Use **Event Manager** to edit a journey's event plan. Each event assigns a workflow
-to an InPort and a count since that journey started. Counts are independent for
-each InPort; list order does not define the trigger sequence. Existing feedback
-sequences remain stored. **Create event plan** explicitly switches to an empty
-event plan without converting repeat counts or deleting the saved sequence.
-**Journey Map** visualizes the route and progress.
+Use **Event Manager** to edit a journey's events. **Journey Map** visualizes the
+route and progress.
 
-At the last stop, a journey can stop, restart or continue with another journey,
-depending on its configured behavior.
+Stops change only through the **Change journey stop** workflow action. At the last
+stop, a journey either stays there or continues at the first stop, depending on its
+configured behavior.
 
 ### Workflows
 
@@ -105,13 +103,13 @@ the searchable workflow library: drop a workflow onto a row to assign it, or ont
 the free area to create an event. Double-clicking a workflow assigns it to the
 selected event as well. Drag an event to reorder it; hold **Ctrl** to copy it.
 Use **Values panel** and **Properties panel** in the event command bar's **More**
-menu to toggle either panel with the keyboard, including while a journey runs.
+menu to toggle either panel with the keyboard.
 
-Use **Start journey** and **Stop** for the selected journey. Event editing is locked
-while an event-plan journey is running, but rows remain selectable for inspection.
-**Journey options** offers **Reset all InPort counters** only when the runtime allows
-it. Stop changes are workflow actions; an event does not advance a stop
-implicitly. Workflow authoring and diagnostics remain on the **Workflows** page.
+Use the **Active** switch to activate or deactivate the selected journey; the
+setting is saved with the solution. Events remain editable while a journey is
+active, and changes take effect immediately. **Journey options** offers **Reset
+all InPort counters**, which starts counting from zero again. Stop changes are
+workflow actions; an event does not advance a stop implicitly. Workflow authoring and diagnostics remain on the **Workflows** page.
 
 Choose **Validate** before operating a workflow. Validation reports structural,
 reference, payload, retry, recursion, and parallel-resource conflicts without
@@ -189,7 +187,7 @@ MOBApi process and publish the current solution, runtime settings and snapshots.
 MOBAsmart then discovers the endpoint on the LAN.
 
 The bridge supports solution synchronization, runtime state, remote commands,
-journey progress, feedback sequences, client registration and rolling-stock
+journey progress, client registration and rolling-stock
 photos. Protected desktop-host communication and certificate-pinned MOBAsmart
 pairing are available while authenticated remote-read and command enforcement
 is still being completed. The bridge is designed for a trusted private LAN and

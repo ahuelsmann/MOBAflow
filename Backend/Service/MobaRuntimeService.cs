@@ -32,8 +32,6 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
     private readonly VehicleUsageRuntimeTracker _vehicleUsageTracker;
     private readonly InPortCounterService _inPortCounters;
     private readonly bool _ownsInPortCounters;
-    private Domain.Project? _pendingProject;
-    private readonly SemaphoreSlim _journeyCommandLock = new(1, 1);
 
     private ActiveProjectContext? _activeProjectContext;
     private Timer? _z21AutoConnectTimer;
@@ -193,7 +191,6 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         ReplaceActiveProjectContext(null);
         _inPortCounters.SnapshotChanged -= OnJourneyRuntimeChanged;
         if (_ownsInPortCounters) _inPortCounters.Dispose();
-        _journeyCommandLock.Dispose();
         _startLock.Dispose();
     }
 
@@ -256,8 +253,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
             usage.ActiveTrainId,
             usage.Usage,
             usage.Diagnostics,
-            _inPortCounters.GetSnapshot(),
-            !_inPortCounters.HasActiveJourneys);
+            _inPortCounters.GetSnapshot());
     }
 
     private void UpdateVehicleUsageRuntimeState()

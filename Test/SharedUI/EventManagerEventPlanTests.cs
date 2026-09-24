@@ -1,20 +1,16 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.SharedUI;
 
-using Moba.Backend.Service;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
-using Moq;
 using System.ComponentModel;
-using System.Text.Json;
 
 [TestFixture]
 public sealed class EventManagerEventPlanTests
 {
-    [TestCase(false)]
-    [TestCase(true)]
-    public void SelectingRowIsViewStateOnlyEvenWhileRunning(bool running)
+    [Test]
+    public void SelectingRowIsViewStateOnly()
     {
         using var fixture = new EditorFixture(new Journey
         {
@@ -22,7 +18,6 @@ public sealed class EventManagerEventPlanTests
         });
         var first = fixture.Editor.Events[0];
         var second = fixture.Editor.Events[1];
-        fixture.JourneyViewModel.UpdateFromSessionState(new JourneySessionState { JourneyId = fixture.Journey.Id, IsActive = running });
 
         fixture.Editor.SelectedEvent = second;
 
@@ -31,7 +26,7 @@ public sealed class EventManagerEventPlanTests
             Assert.That(first.IsSelected, Is.False);
             Assert.That(second.IsSelected, Is.True);
             Assert.That(fixture.Editor.Events.Count(item => item.IsSelected), Is.EqualTo(1));
-            Assert.That(fixture.Editor.CanEditSelectedEvent, Is.EqualTo(!running));
+            Assert.That(fixture.Editor.CanEditSelectedEvent, Is.True);
             Assert.That(fixture.ChangeNotifications, Is.Zero);
             Assert.That(fixture.Editor.CanUndo, Is.False);
         }
@@ -84,45 +79,6 @@ public sealed class EventManagerEventPlanTests
     }
 
     [Test]
-    public void RunningJourneyBlocksAssignmentsMoveCopyAndHistoryWhileAllowingSelection()
-    {
-        var workflow = new Workflow { Name = "Arrival" };
-        using var fixture = new EditorFixture(new Journey
-        {
-            EventPlan = new JourneyEventPlan { Events = [new() { WorkflowId = workflow.Id }, new() { Count = 5 }] }
-        }, workflow);
-        fixture.Editor.AddEventCommand.Execute(null);
-        fixture.Editor.UndoCommand.Execute(null);
-        var first = fixture.Editor.Events[0];
-        var second = fixture.Editor.Events[1];
-        var snapshot = JsonSerializer.Serialize(fixture.Journey.EventPlan);
-        var changes = fixture.ChangeNotifications;
-        fixture.JourneyViewModel.UpdateFromSessionState(new JourneySessionState { JourneyId = fixture.Journey.Id, IsActive = true });
-
-        fixture.Editor.SelectedEvent = second;
-        second.AssignWorkflowCommand.Execute(fixture.Project.Workflows.Single());
-        first.RemoveWorkflowCommand.Execute(null);
-        second.CountText = "42";
-        second.WorkflowId = workflow.Id;
-        second.Enabled = false;
-        fixture.Editor.InsertEvent(fixture.Project.Workflows.Single(), 0);
-        fixture.Editor.MoveOrCopyEvent(second, 0, false);
-        fixture.Editor.MoveOrCopyEvent(second, 0, true);
-        fixture.Editor.UndoCommand.Execute(null);
-        fixture.Editor.RedoCommand.Execute(null);
-
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(JsonSerializer.Serialize(fixture.Journey.EventPlan), Is.EqualTo(snapshot));
-            Assert.That(fixture.ChangeNotifications, Is.EqualTo(changes));
-            Assert.That(second.IsSelected, Is.True);
-            Assert.That(first.IsSelected, Is.False);
-            Assert.That(first.RemoveWorkflowCommand.CanExecute(null), Is.False);
-            Assert.That(second.AssignWorkflowCommand.CanExecute(null), Is.False);
-        }
-    }
-
-    [Test]
     public void MoveEvent_PreservesSparseCountsAndStableIdentifiers()
     {
         using var fixture = new EditorFixture(new Journey
@@ -139,7 +95,7 @@ public sealed class EventManagerEventPlanTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(fixture.Journey.EventPlan!.Events.Select(item => item.Count), Is.EqualTo(new ulong[] { 5, 2, 3 }));
+            Assert.That(fixture.Journey.EventPlan.Events.Select(item => item.Count), Is.EqualTo(new ulong[] { 5, 2, 3 }));
             Assert.That(fixture.Editor.SelectedEvent!.Model.Id, Is.EqualTo(id));
             Assert.That(fixture.Journey.EventPlan.Events, Has.Count.EqualTo(3));
             Assert.That(fixture.ChangeNotifications, Is.EqualTo(1));
@@ -161,7 +117,7 @@ public sealed class EventManagerEventPlanTests
 
         fixture.Editor.MoveOrCopyEvent(original, 1, true);
 
-        var copy = fixture.Journey.EventPlan!.Events[1];
+        var copy = fixture.Journey.EventPlan.Events[1];
         Assert.Multiple(() =>
         {
             Assert.That(copy.Id, Is.Not.EqualTo(original.Model.Id));
@@ -190,77 +146,31 @@ public sealed class EventManagerEventPlanTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(fixture.Journey.EventPlan!.Events[0].Count, Is.EqualTo(5));
+            Assert.That(fixture.Journey.EventPlan.Events[0].Count, Is.EqualTo(5));
             Assert.That(fixture.Journey.EventPlan.Events[0].WorkflowId, Is.EqualTo(workflow.Id));
             Assert.That(fixture.ChangeNotifications, Is.EqualTo(6));
         });
     }
 
     [Test]
-    public async Task LegacyPlan_CannotBeEditedOrConvertedWithoutConfirmation()
+    public void ActiveJourney_RemainsEditable()
     {
-        var legacy = new JourneyFeedbackStep { InPort = 4, Index = 10 };
-        var dialog = new Mock<IDialogService>();
-        dialog.Setup(service => service.ShowConfirmationAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), true)).ReturnsAsync(false);
-        using var fixture = new EditorFixture(new Journey { FeedbackSequence = [legacy] }, dialog: dialog.Object);
-
-        fixture.Editor.AddEventCommand.Execute(null);
-        await fixture.Editor.CreateEventPlanCommand.ExecuteAsync(null);
-
-        Assert.Multiple(() =>
+        using var fixture = new EditorFixture(new Journey
         {
-            Assert.That(fixture.Editor.IsLegacyJourney, Is.True);
-            Assert.That(fixture.Editor.CanEdit, Is.False);
-            Assert.That(fixture.Journey.EventPlan, Is.Null);
-            Assert.That(fixture.Journey.FeedbackSequence.Single(), Is.SameAs(legacy));
-            Assert.That(fixture.ChangeNotifications, Is.Zero);
+            IsActive = true,
+            EventPlan = new JourneyEventPlan { Events = [new() { Count = 2 }] }
         });
-    }
-
-    [Test]
-    public async Task CreateEventPlan_KeepsLegacySequenceWithoutReinterpretingRepeatCounts()
-    {
-        var journey = new Journey { FeedbackSequence = [new() { InPort = 1, Index = 10 }] };
-        var original = JsonSerializer.Serialize(journey.FeedbackSequence);
-        var dialog = new Mock<IDialogService>();
-        dialog.Setup(service => service.ShowConfirmationAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), true)).ReturnsAsync(true);
-        using var fixture = new EditorFixture(journey, dialog: dialog.Object);
-
-        await fixture.Editor.CreateEventPlanCommand.ExecuteAsync(null);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(journey.EventPlan, Is.Not.Null);
-            Assert.That(journey.EventPlan!.Events, Is.Empty);
-            Assert.That(JsonSerializer.Serialize(journey.FeedbackSequence), Is.EqualTo(original));
-            Assert.That(fixture.Editor.CanEdit, Is.True);
-            Assert.That(fixture.ChangeNotifications, Is.EqualTo(1));
-        });
-    }
-
-    [Test]
-    public void RunningJourney_BlocksCommandsAndDirectRowEdits()
-    {
-        using var fixture = new EditorFixture(new Journey { EventPlan = new JourneyEventPlan { Events = [new() { Count = 2 }] } });
         var row = fixture.Editor.Events.Single();
-        fixture.JourneyViewModel.UpdateFromSessionState(new JourneySessionState { JourneyId = fixture.Journey.Id, IsActive = true });
 
-        fixture.Editor.AddEventCommand.Execute(null);
-        fixture.Editor.DuplicateSelectedEventCommand.Execute(null);
-        fixture.Editor.DeleteSelectedEventCommand.Execute(null);
         row.Count = 9;
-        row.InPort = 5;
+        fixture.Editor.AddEventCommand.Execute(null);
 
         Assert.Multiple(() =>
         {
-            Assert.That(fixture.Editor.CanEdit, Is.False);
-            Assert.That(fixture.Editor.AddEventCommand.CanExecute(null), Is.False);
-            Assert.That(fixture.Journey.EventPlan!.Events, Has.Count.EqualTo(1));
-            Assert.That(row.Model.Count, Is.EqualTo(2));
-            Assert.That(row.Model.InPort, Is.EqualTo(1));
-            Assert.That(fixture.ChangeNotifications, Is.Zero);
+            Assert.That(fixture.Editor.CanEdit, Is.True);
+            Assert.That(fixture.Journey.EventPlan.Events, Has.Count.EqualTo(2));
+            Assert.That(row.Model.Count, Is.EqualTo(9));
+            Assert.That(fixture.ChangeNotifications, Is.EqualTo(2));
         });
     }
 
@@ -278,7 +188,7 @@ public sealed class EventManagerEventPlanTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(fixture.Journey.EventPlan!.Events, Has.Count.EqualTo(3));
+            Assert.That(fixture.Journey.EventPlan.Events, Has.Count.EqualTo(3));
             Assert.That(fixture.Journey.EventPlan.Events[2].InPort, Is.EqualTo(2));
             Assert.That(fixture.Journey.EventPlan.Events[2].Count, Is.EqualTo(4));
             Assert.That(fixture.Journey.EventPlan.Events[2].WorkflowId, Is.EqualTo(workflow.Id));
@@ -316,14 +226,14 @@ public sealed class EventManagerEventPlanTests
 
     private sealed class EditorFixture : IDisposable
     {
-        public EditorFixture(Journey journey, Workflow? workflow = null, IDialogService? dialog = null)
+        public EditorFixture(Journey journey, Workflow? workflow = null)
         {
             Journey = journey;
             Project = new ProjectViewModel(new Project { Journeys = [journey], Workflows = workflow == null ? [] : [workflow] });
             JourneyViewModel = Project.Journeys.Single();
             Context = new TestProjectContext(Project, JourneyViewModel);
-            Library = new WorkflowLibraryViewModel(Context, dialog);
-            Editor = new EventManagerViewModel(Context, Library, dialog);
+            Library = new WorkflowLibraryViewModel(Context, null);
+            Editor = new EventManagerViewModel(Context, Library);
             JourneyViewModel.PropertyChanged += OnJourneyChanged;
         }
 

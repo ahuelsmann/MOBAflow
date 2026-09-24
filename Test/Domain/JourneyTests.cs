@@ -7,18 +7,16 @@ using Moba.Domain.Enum;
 internal class JourneyTests
 {
     [Test]
-    public void EventPlanRoundTripPreservesSparseCountsAndLegacyRemainsUnconverted()
+    public void EventPlanRoundTripPreservesSparseCountsAndActiveFlag()
     {
-        var legacy = System.Text.Json.JsonSerializer.Deserialize<Journey>("{\"FeedbackSequence\":[{\"InPort\":1,\"Index\":3}]}")!;
-        Assert.That(legacy.EventPlan, Is.Null);
-        Assert.That(legacy.FeedbackSequence.Single().Index, Is.EqualTo(3));
         var workflowId = Guid.NewGuid();
-        var journey = new Journey { EventPlan = new JourneyEventPlan { Events =
+        var journey = new Journey { IsActive = true, EventPlan = new JourneyEventPlan { Events =
             [new JourneyEvent { InPort = 2, Count = ulong.MaxValue, WorkflowId = workflowId }] } };
         var copy = System.Text.Json.JsonSerializer.Deserialize<Journey>(System.Text.Json.JsonSerializer.Serialize(journey))!;
         Assert.Multiple(() =>
         {
-            Assert.That(copy.EventPlan!.Events.Single().Count, Is.EqualTo(ulong.MaxValue));
+            Assert.That(copy.IsActive, Is.True);
+            Assert.That(copy.EventPlan.Events.Single().Count, Is.EqualTo(ulong.MaxValue));
             Assert.That(copy.EventPlan.Events.Single().WorkflowId, Is.EqualTo(workflowId));
             Assert.That(copy.EventPlan.Events.Single().Id, Is.EqualTo(journey.EventPlan.Events.Single().Id));
         });
@@ -35,10 +33,9 @@ internal class JourneyTests
         Assert.That(journey.Text, Is.EqualTo(string.Empty));
         Assert.That(journey.Stations, Is.Not.Null);
         Assert.That(journey.Stations, Is.Empty);
-        Assert.That(journey.FeedbackSequence, Is.Not.Null);
-        Assert.That(journey.FeedbackSequence, Is.Empty);
+        Assert.That(journey.EventPlan.Events, Is.Empty);
+        Assert.That(journey.IsActive, Is.False);
         Assert.That(journey.BehaviorOnLastStop, Is.EqualTo(BehaviorOnLastStop.None));
-        Assert.That(journey.NextJourneyId, Is.Null);
         Assert.That(journey.FirstPos, Is.EqualTo(0u));
     }
 
@@ -46,7 +43,6 @@ internal class JourneyTests
     public void Properties_CanBeSet()
     {
         var id = Guid.NewGuid();
-        var nextJourneyId = Guid.NewGuid();
         var stations = new List<Station> { new() };
 
         var journey = new Journey
@@ -56,9 +52,9 @@ internal class JourneyTests
             Description = "Test Description",
             Text = "Some text",
             Stations = stations,
-            FeedbackSequence = [new JourneyFeedbackStep { InPort = 42 }],
-            BehaviorOnLastStop = BehaviorOnLastStop.GotoJourney,
-            NextJourneyId = nextJourneyId,
+            IsActive = true,
+            EventPlan = new JourneyEventPlan { Events = [new JourneyEvent { InPort = 42 }] },
+            BehaviorOnLastStop = BehaviorOnLastStop.BeginAgainFromFistStop,
             FirstPos = 2
         };
 
@@ -67,10 +63,10 @@ internal class JourneyTests
         Assert.That(journey.Description, Is.EqualTo("Test Description"));
         Assert.That(journey.Text, Is.EqualTo("Some text"));
         Assert.That(journey.Stations, Is.SameAs(stations));
-        Assert.That(journey.FeedbackSequence.Single().InPort, Is.EqualTo(42u));
-        Assert.That(journey.FeedbackSequence.Single().Index, Is.EqualTo(1u));
-        Assert.That(journey.BehaviorOnLastStop, Is.EqualTo(BehaviorOnLastStop.GotoJourney));
-        Assert.That(journey.NextJourneyId, Is.EqualTo(nextJourneyId));
+        Assert.That(journey.IsActive, Is.True);
+        Assert.That(journey.EventPlan.Events.Single().InPort, Is.EqualTo(42u));
+        Assert.That(journey.EventPlan.Events.Single().Count, Is.EqualTo(1UL));
+        Assert.That(journey.BehaviorOnLastStop, Is.EqualTo(BehaviorOnLastStop.BeginAgainFromFistStop));
         Assert.That(journey.FirstPos, Is.EqualTo(2u));
     }
 
@@ -98,8 +94,5 @@ internal class JourneyTests
 
         journey.BehaviorOnLastStop = BehaviorOnLastStop.BeginAgainFromFistStop;
         Assert.That(journey.BehaviorOnLastStop, Is.EqualTo(BehaviorOnLastStop.BeginAgainFromFistStop));
-
-        journey.BehaviorOnLastStop = BehaviorOnLastStop.GotoJourney;
-        Assert.That(journey.BehaviorOnLastStop, Is.EqualTo(BehaviorOnLastStop.GotoJourney));
     }
 }

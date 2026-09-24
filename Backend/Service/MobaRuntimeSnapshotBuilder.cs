@@ -17,8 +17,7 @@ internal static class MobaRuntimeSnapshotBuilder
         Guid? activeTrainId,
         IReadOnlyDictionary<Guid, VehicleUsageRuntimeSnapshot> vehicleUsage,
         VehicleUsageRuntimeDiagnosticsSnapshot vehicleUsageDiagnostics,
-        IReadOnlyList<InPortCounterSnapshot>? inPortCounters = null,
-        bool canResetInPortCounters = true)
+        IReadOnlyList<InPortCounterSnapshot>? inPortCounters = null)
     {
         var journeyStates = CreateJourneySnapshots(activeProjectContext);
         var signalBoxElements = new List<SignalBoxElementRuntimeSnapshot>();
@@ -103,7 +102,6 @@ internal static class MobaRuntimeSnapshotBuilder
             IsOperatorAckRequired = telemetry.IsOperatorAckRequired,
             JourneyStates = journeyStates,
             InPortCounters = inPortCounters ?? [],
-            CanResetInPortCounters = canResetInPortCounters,
             LocomotiveStates = new Dictionary<int, LocomotiveRuntimeSnapshot>(telemetry.LocomotiveStates),
             LocomotiveFleet = locomotiveFleet,
             VehicleUsage = vehicleUsage,
@@ -130,9 +128,6 @@ internal static class MobaRuntimeSnapshotBuilder
                 continue;
             }
 
-            var feedbackStep = journey.EventPlan == null
-                ? journey.FeedbackSequence.ElementAtOrDefault(state.CurrentFeedbackIndex)
-                : null;
             snapshots[journey.Id] = new JourneyRuntimeSnapshot
             {
                 JourneyId = journey.Id,
@@ -140,14 +135,8 @@ internal static class MobaRuntimeSnapshotBuilder
                 CurrentPos = state.CurrentPos,
                 CurrentStationName = state.CurrentStationName,
                 CurrentStationId = state.CurrentStationId,
-                CurrentFeedbackIndex = state.CurrentFeedbackIndex,
-                CurrentStepOccurrence = state.CurrentStepOccurrence,
-                CurrentStepRepeatCount = feedbackStep?.Index ?? 1,
-                ExpectedInPort = feedbackStep?.InPort,
                 LastFeedbackTime = state.LastFeedbackTime,
-                IsActive = state.IsActive,
-                IsEventPlan = journey.EventPlan != null,
-                StartCounterValues = new Dictionary<uint, ulong>(state.CurrentEventBases)
+                IsActive = state.IsActive
             };
         }
 

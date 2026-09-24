@@ -9,11 +9,10 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Text.Json;
 
-/// <summary>Edits independent count conditions for the selected journey.</summary>
+/// <summary>Edits the InPort count events of the selected journey.</summary>
 public sealed partial class EventManagerViewModel : ObservableObject, IDisposable
 {
     private readonly IProjectContext _context;
-    private readonly IDialogService? _dialogService;
     private readonly Stack<string> _undo = [];
     private readonly Stack<string> _redo = [];
     private bool _notifyingJourney;
@@ -23,17 +22,16 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
     [ObservableProperty] private JourneyEventViewModel? _selectedEvent;
     [ObservableProperty] private uint _defaultInPort = 1;
 
-    public EventManagerViewModel(MainWindowViewModel main, IDialogService? dialogService = null)
-        : this(main, main.WorkflowLibrary, dialogService)
+    public EventManagerViewModel(MainWindowViewModel main)
+        : this(main, main.WorkflowLibrary)
     {
         MainWindow = main;
         NotifyState();
     }
 
-    public EventManagerViewModel(IProjectContext context, WorkflowLibraryViewModel workflowLibrary, IDialogService? dialogService)
+    public EventManagerViewModel(IProjectContext context, WorkflowLibraryViewModel workflowLibrary)
     {
         _context = context;
-        _dialogService = dialogService;
         WorkflowLibrary = workflowLibrary;
         _context.PropertyChanged += OnContextPropertyChanged;
         WorkflowLibrary.PropertyChanged += OnWorkflowLibraryPropertyChanged;
@@ -45,33 +43,20 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
     public WorkflowLibraryViewModel WorkflowLibrary { get; }
     public ObservableCollection<JourneyEventViewModel> Events { get; } = [];
     public IEnumerable<JourneyViewModel> Journeys => _context.SelectedProject?.Journeys ?? [];
-    public bool HasEventPlan => this.SelectedJourney?.Model.EventPlan != null;
     public string EventCountLabel => Events.Count == 1 ? "1 event" : $"{Events.Count} events";
-    public bool IsEmptyPlan => HasEventPlan && Events.Count == 0;
-    public bool HasPlanNotice => !HasEventPlan || SelectedJourney is { IsRunning: true } || MainWindow is { IsAnyEventPlanRunning: true };
+    public bool IsEmptyPlan => SelectedJourney != null && Events.Count == 0;
     public bool HasCommandStatus => !string.IsNullOrWhiteSpace(MainWindow?.JourneyCommandStatus);
-    public bool IsLegacyJourney => SelectedJourney != null && !HasEventPlan;
-    public bool CanEdit => HasEventPlan && SelectedJourney is { IsRunning: false } && MainWindow is not { IsAnyEventPlanRunning: true };
-    public bool CanCreateEventPlan => IsLegacyJourney && SelectedJourney is { IsRunning: false } && MainWindow is not { IsAnyEventPlanRunning: true };
+    public bool CanEdit => SelectedJourney != null;
     public bool CanUndo => CanEdit && _undo.Count > 0;
     public bool CanRedo => CanEdit && _redo.Count > 0;
     public bool CanEditSelectedEvent => CanEdit && SelectedEvent != null;
-    public string LegacyStatus => this.SelectedJourney is { Model.EventPlan: null } journey
-        ? $"This journey uses its saved feedback sequence ({journey.Model.FeedbackSequence.Count} steps). Create an event plan to configure counts since journey start."
-        : string.Empty;
 
-    public string PlanStatus
+    public string PlanStatus => SelectedJourney switch
     {
-        get
-        {
-            if (SelectedJourney == null) return "Select a journey to edit its event plan.";
-            if (SelectedJourney.IsRunning) return "Journey running. Stop the journey before editing its event plan.";
-            if (MainWindow is { IsAnyEventPlanRunning: true }) return "Another journey is running. Stop it before editing event plans.";
-            return HasEventPlan
-                ? $"{Events.Count} events. Counts are measured separately for each InPort, since journey start."
-                : LegacyStatus;
-        }
-    }
+        null => "Select a journey to edit its events.",
+        { IsActive: false } => "Journey inactive. Activate it to evaluate its events on incoming feedback.",
+        _ => "Each event runs its workflow when its InPort counter reaches the count. Counters start at zero after a reset."
+    };
 
     partial void OnSelectedJourneyChanged(JourneyViewModel? oldValue, JourneyViewModel? newValue)
     {
@@ -90,32 +75,13 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
         NotifyCommands();
     }
 
-    [RelayCommand(CanExecute = nameof(CanCreateEventPlan))]
-    private async Task CreateEventPlanAsync()
-    {
-        var journey = SelectedJourney;
-        if (!CanCreateEventPlan || journey == null) return;
-        if (journey.Model.FeedbackSequence.Count > 0)
-        {
-            if (_dialogService == null) return;
-            var confirmed = await _dialogService.ShowConfirmationAsync(
-                "Create event plan",
-                "This journey will use the new event plan instead of its saved feedback sequence. The original sequence is kept, but its repeat counts are not converted. Create an empty event plan?",
-                "Create event plan", "Cancel").ConfigureAwait(true);
-            if (!confirmed || SelectedJourney != journey || !CanCreateEventPlan) return;
-        }
-        journey.Model.EventPlan = new JourneyEventPlan();
-        Refresh();
-        NotifyJourneyChanged();
-    }
-
     [RelayCommand(CanExecute = nameof(CanEdit))]
     private void AddEvent() => InsertEvent(null, Events.Count);
 
     public void InsertEvent(WorkflowViewModel? workflow, int index)
     {
         var plan = SelectedJourney?.Model.EventPlan;
-        if (!CanEdit || plan == null || (workflow != null && !IsAvailableWorkflow(workflow))) return;
+        if (plan == null || (workflow != null && !IsAvailableWorkflow(workflow))) return;
         CaptureUndo();
         var inPort = Math.Clamp(DefaultInPort, 1u, 512u);
         var previousCount = Events.Where(item => item.InPort == inPort).Select(item => item.Count).DefaultIfEmpty(0UL).Max();
@@ -231,7 +197,7 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
     {
         selectId ??= SelectedEvent?.Model.Id;
         Events.Clear();
-        if (SelectedJourney?.Model.EventPlan != null && _context.SelectedProject != null)
+        if (SelectedJourney != null && _context.SelectedProject != null)
         {
             foreach (var item in SelectedJourney.Model.EventPlan.Events)
                 Events.Add(new JourneyEventViewModel(item, _context.SelectedProject.Model, () => CanEdit,
@@ -255,15 +221,10 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
     private void NotifyState()
     {
         OnPropertyChanged(nameof(Journeys));
-        OnPropertyChanged(nameof(HasEventPlan));
         OnPropertyChanged(nameof(EventCountLabel));
         OnPropertyChanged(nameof(IsEmptyPlan));
-        OnPropertyChanged(nameof(HasPlanNotice));
         OnPropertyChanged(nameof(HasCommandStatus));
-        OnPropertyChanged(nameof(IsLegacyJourney));
         OnPropertyChanged(nameof(CanEdit));
-        OnPropertyChanged(nameof(CanCreateEventPlan));
-        OnPropertyChanged(nameof(LegacyStatus));
         OnPropertyChanged(nameof(PlanStatus));
         foreach (var item in Events) item.RefreshEditState();
         NotifyCommands();
@@ -274,7 +235,6 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
         OnPropertyChanged(nameof(CanEditSelectedEvent));
         OnPropertyChanged(nameof(CanUndo));
         OnPropertyChanged(nameof(CanRedo));
-        CreateEventPlanCommand.NotifyCanExecuteChanged();
         AddEventCommand.NotifyCanExecuteChanged();
         DeleteSelectedEventCommand.NotifyCanExecuteChanged();
         DuplicateSelectedEventCommand.NotifyCanExecuteChanged();
@@ -287,7 +247,6 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
     private void OnContextPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(MainWindowViewModel.JourneyCommandStatus)) OnPropertyChanged(nameof(HasCommandStatus));
-        if (e.PropertyName == nameof(MainWindowViewModel.IsAnyEventPlanRunning)) NotifyState();
         if (e.PropertyName == nameof(IProjectContext.SelectedJourney)) SelectedJourney = _context.SelectedJourney;
         if (e.PropertyName == nameof(IProjectContext.SelectedProject))
         {
@@ -304,7 +263,7 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
             _redo.Clear();
             Refresh();
         }
-        else if (e.PropertyName == nameof(JourneyViewModel.IsRunning)) NotifyState();
+        else if (e.PropertyName == nameof(JourneyViewModel.IsActive)) OnPropertyChanged(nameof(PlanStatus));
     }
 
     private void OnWorkflowLibraryPropertyChanged(object? sender, PropertyChangedEventArgs e)

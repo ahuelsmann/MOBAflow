@@ -272,7 +272,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
       "path": "Backend/Manager/JourneyManager.cs",
-      "count": 3
+      "count": 1
     },
     {
       "project": "Backend",
@@ -628,13 +628,6 @@
       "project": "Backend",
       "targetFramework": "net10.0",
       "ruleId": "CA1822",
-      "path": "Backend/Manager/JourneyManager.cs",
-      "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1822",
       "path": "Backend/Service/Recording/RecordingArtifactSerializer.cs",
       "count": 1
     },
@@ -665,13 +658,6 @@
       "ruleId": "CA1826",
       "path": "Backend/Service/Interlocking/InterlockingRouteCoordinator.cs",
       "count": 2
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "Backend/Manager/JourneyManager.cs",
-      "count": 16
     },
     {
       "project": "Backend",
@@ -938,13 +924,6 @@
       "ruleId": "CA1862",
       "path": "Backend/Service/Recording/RecordingArtifactSerializer.Import.cs",
       "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
-      "path": "Backend/Manager/JourneyManager.cs",
-      "count": 6
     },
     {
       "project": "Backend",
@@ -1784,20 +1763,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1002",
       "path": "Domain/Journey.cs",
-      "count": 2
-    },
-    {
-      "project": "Domain",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1002",
-      "path": "Domain/JourneyEventPlan.cs",
       "count": 1
     },
     {
       "project": "Domain",
       "targetFramework": "net10.0",
       "ruleId": "CA1002",
-      "path": "Domain/JourneyFeedbackStep.cs",
+      "path": "Domain/JourneyEventPlan.cs",
       "count": 1
     },
     {
@@ -1987,20 +1959,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2227",
       "path": "Domain/Journey.cs",
-      "count": 2
-    },
-    {
-      "project": "Domain",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2227",
-      "path": "Domain/JourneyEventPlan.cs",
       "count": 1
     },
     {
       "project": "Domain",
       "targetFramework": "net10.0",
       "ruleId": "CA2227",
-      "path": "Domain/JourneyFeedbackStep.cs",
+      "path": "Domain/JourneyEventPlan.cs",
       "count": 1
     },
     {
@@ -2391,13 +2356,6 @@
     {
       "project": "MOBApi",
       "targetFramework": "net10.0",
-      "ruleId": "CA1002",
-      "path": "MOBApi/Controllers/FeedbackSequencesController.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBApi",
-      "targetFramework": "net10.0",
       "ruleId": "CA1014",
       "path": "<no-location>",
       "count": 1
@@ -2499,13 +2457,6 @@
       "ruleId": "CA1515",
       "path": "MOBApi/Controllers/ControlPlaneSecurityController.cs",
       "count": 14
-    },
-    {
-      "project": "MOBApi",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1515",
-      "path": "MOBApi/Controllers/FeedbackSequencesController.cs",
-      "count": 1
     },
     {
       "project": "MOBApi",
@@ -3197,13 +3148,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Journey.cs",
-      "count": 2
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Settings.cs",
       "count": 2
     },
@@ -3442,13 +3386,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1305",
-      "path": "SharedUI/ViewModel/JourneyMapViewModel.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1305",
       "path": "SharedUI/ViewModel/MauiViewModel.cs",
       "count": 1
     },
@@ -3541,13 +3478,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1822",
       "path": "SharedUI/ViewModel/Action/WorkflowActionViewModelFactory.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1822",
-      "path": "SharedUI/ViewModel/JourneyFeedbackStepViewModel.cs",
       "count": 1
     },
     {
@@ -3968,7 +3898,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "SharedUI/ViewModel/WorkflowLibraryViewModel.cs",
-      "count": 7
+      "count": 6
     },
     {
       "project": "SharedUI",
@@ -4093,13 +4023,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0007",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Z21.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0007",
       "path": "SharedUI/ViewModel/MauiViewModel.cs",
       "count": 1
     },
@@ -4213,13 +4136,6 @@
       "targetFramework": "net10.0",
       "ruleId": "IDE0290",
       "path": "SharedUI/ViewModel/FunctionButtonViewModel.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0290",
-      "path": "SharedUI/ViewModel/JourneyFeedbackStepViewModel.cs",
       "count": 1
     },
     {
@@ -4766,7 +4682,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1307",
       "path": "Test/Backend/ProjectValidatorTests.cs",
-      "count": 6
+      "count": 5
     },
     {
       "project": "Test",
@@ -4849,13 +4765,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1515",
-      "path": "Test/Backend/JourneyManagerFeedbackTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1515",
       "path": "Test/Backend/WorkflowExecutionCoordinatorTests.cs",
       "count": 1
     },
@@ -4926,20 +4835,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1707",
-      "path": "Test/Backend/JourneyEventPlanTests.cs",
-      "count": 11
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1707",
-      "path": "Test/Backend/JourneyManagerFeedbackTests.cs",
-      "count": 13
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1707",
       "path": "Test/Backend/WorkflowExecutionCoordinatorTests.cs",
       "count": 3
     },
@@ -4969,14 +4864,14 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1707",
       "path": "Test/SharedUI/EventManagerEventPlanTests.cs",
-      "count": 9
+      "count": 7
     },
     {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1707",
       "path": "Test/SharedUI/JourneyCounterProjectionTests.cs",
-      "count": 7
+      "count": 5
     },
     {
       "project": "Test",
@@ -5046,13 +4941,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/Backend/InterlockingSafetyEngineTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
-      "path": "Test/Backend/JourneyCompletionRegressionTests.cs",
       "count": 1
     },
     {
@@ -5983,13 +5871,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/SharedUI/JourneyFeedbackStepViewModelTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
       "path": "Test/SharedUI/JourneyMapViewModelTests.cs",
       "count": 1
     },
@@ -6858,13 +6739,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1861",
-      "path": "Test/Backend/JourneyManagerFeedbackTests.cs",
-      "count": 2
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1861",
       "path": "Test/Backend/LocomotiveLibraryServiceTests.cs",
       "count": 1
     },
@@ -6964,13 +6838,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1861",
       "path": "Test/MOBApi/ControlPlaneSecurityTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1861",
-      "path": "Test/SharedUI/JourneyCounterProjectionTests.cs",
       "count": 1
     },
     {
@@ -7153,7 +7020,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "Test/Backend/InPortCounterServiceTests.cs",
-      "count": 10
+      "count": 7
     },
     {
       "project": "Test",
@@ -7174,21 +7041,14 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "Test/Backend/JourneyEventPlanAcceptanceTests.cs",
-      "count": 22
+      "count": 9
     },
     {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "Test/Backend/JourneyEventPlanTests.cs",
-      "count": 57
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2007",
-      "path": "Test/Backend/JourneyManagerFeedbackTests.cs",
-      "count": 20
+      "count": 31
     },
     {
       "project": "Test",
@@ -7216,7 +7076,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "Test/Backend/MobaRuntimeEventPlanTests.cs",
-      "count": 16
+      "count": 4
     },
     {
       "project": "Test",
@@ -7474,15 +7334,8 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
-      "path": "Test/SharedUI/EventManagerEventPlanTests.cs",
-      "count": 2
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2007",
       "path": "Test/SharedUI/JourneyCounterProjectionTests.cs",
-      "count": 12
+      "count": 7
     },
     {
       "project": "Test",
@@ -7524,7 +7377,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "Test/SharedUI/MobileRuntimeCoordinatorTests.cs",
-      "count": 13
+      "count": 7
     },
     {
       "project": "Test",
@@ -7559,7 +7412,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "Test/SharedUI/RecordingRuntimeCommandGatewayTests.cs",
-      "count": 17
+      "count": 15
     },
     {
       "project": "Test",
@@ -7838,13 +7691,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "IDE0290",
-      "path": "Test/Backend/JourneyManagerFeedbackTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0290",
       "path": "Test/Backend/WorkflowActionHandlersTests.cs",
       "count": 1
     },
@@ -7922,36 +7768,8 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2045",
-      "path": "Test/Backend/InPortCounterServiceTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2045",
-      "path": "Test/Backend/JourneyEventPlanTests.cs",
-      "count": 4
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2045",
-      "path": "Test/Backend/JourneyManagerFeedbackTests.cs",
-      "count": 4
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2045",
       "path": "Test/Backend/MasterDataStoreTests.cs",
       "count": 4
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2045",
-      "path": "Test/Backend/MobaRuntimeEventPlanTests.cs",
-      "count": 1
     },
     {
       "project": "Test",
@@ -8168,7 +7986,7 @@
       "targetFramework": "net10.0",
       "ruleId": "NUnit2045",
       "path": "Test/Domain/JourneyTests.cs",
-      "count": 5
+      "count": 3
     },
     {
       "project": "Test",
@@ -8259,13 +8077,6 @@
       "targetFramework": "net10.0",
       "ruleId": "NUnit2045",
       "path": "Test/SharedUI/EventManagerEventPlanTests.cs",
-      "count": 4
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2045",
-      "path": "Test/SharedUI/JourneyFeedbackStepViewModelTests.cs",
       "count": 4
     },
     {
@@ -8560,20 +8371,13 @@
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
       "path": "Test/Backend/JourneyEventPlanAcceptanceTests.cs",
-      "count": 4
+      "count": 3
     },
     {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
       "path": "Test/Backend/JourneyEventPlanTests.cs",
-      "count": 6
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/Backend/JourneyManagerFeedbackTests.cs",
       "count": 5
     },
     {
@@ -8609,7 +8413,7 @@
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
       "path": "Test/Backend/MobaRuntimeEventPlanTests.cs",
-      "count": 2
+      "count": 1
     },
     {
       "project": "Test",
@@ -9113,7 +8917,7 @@
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
       "path": "Test/SharedUI/EventManagerEventPlanTests.cs",
-      "count": 7
+      "count": 5
     },
     {
       "project": "Test",
@@ -9127,7 +8931,7 @@
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
       "path": "Test/SharedUI/JourneyCounterProjectionTests.cs",
-      "count": 8
+      "count": 4
     },
     {
       "project": "Test",
@@ -9183,7 +8987,7 @@
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
       "path": "Test/SharedUI/MobileRuntimeCoordinatorTests.cs",
-      "count": 3
+      "count": 1
     },
     {
       "project": "Test",

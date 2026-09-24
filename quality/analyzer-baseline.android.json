@@ -272,7 +272,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1062",
       "path": "Backend/Manager/JourneyManager.cs",
-      "count": 3
+      "count": 1
     },
     {
       "project": "Backend",
@@ -628,13 +628,6 @@
       "project": "Backend",
       "targetFramework": "net10.0",
       "ruleId": "CA1822",
-      "path": "Backend/Manager/JourneyManager.cs",
-      "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1822",
       "path": "Backend/Service/Recording/RecordingArtifactSerializer.cs",
       "count": 1
     },
@@ -665,13 +658,6 @@
       "ruleId": "CA1826",
       "path": "Backend/Service/Interlocking/InterlockingRouteCoordinator.cs",
       "count": 2
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
-      "path": "Backend/Manager/JourneyManager.cs",
-      "count": 16
     },
     {
       "project": "Backend",
@@ -938,13 +924,6 @@
       "ruleId": "CA1862",
       "path": "Backend/Service/Recording/RecordingArtifactSerializer.Import.cs",
       "count": 1
-    },
-    {
-      "project": "Backend",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1873",
-      "path": "Backend/Manager/JourneyManager.cs",
-      "count": 6
     },
     {
       "project": "Backend",
@@ -1784,20 +1763,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1002",
       "path": "Domain/Journey.cs",
-      "count": 2
-    },
-    {
-      "project": "Domain",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1002",
-      "path": "Domain/JourneyEventPlan.cs",
       "count": 1
     },
     {
       "project": "Domain",
       "targetFramework": "net10.0",
       "ruleId": "CA1002",
-      "path": "Domain/JourneyFeedbackStep.cs",
+      "path": "Domain/JourneyEventPlan.cs",
       "count": 1
     },
     {
@@ -1987,20 +1959,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2227",
       "path": "Domain/Journey.cs",
-      "count": 2
-    },
-    {
-      "project": "Domain",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2227",
-      "path": "Domain/JourneyEventPlan.cs",
       "count": 1
     },
     {
       "project": "Domain",
       "targetFramework": "net10.0",
       "ruleId": "CA2227",
-      "path": "Domain/JourneyFeedbackStep.cs",
+      "path": "Domain/JourneyEventPlan.cs",
       "count": 1
     },
     {
@@ -3106,13 +3071,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Journey.cs",
-      "count": 2
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Settings.cs",
       "count": 2
     },
@@ -3351,13 +3309,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1305",
-      "path": "SharedUI/ViewModel/JourneyMapViewModel.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1305",
       "path": "SharedUI/ViewModel/MauiViewModel.cs",
       "count": 1
     },
@@ -3450,13 +3401,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1822",
       "path": "SharedUI/ViewModel/Action/WorkflowActionViewModelFactory.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1822",
-      "path": "SharedUI/ViewModel/JourneyFeedbackStepViewModel.cs",
       "count": 1
     },
     {
@@ -3877,7 +3821,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "SharedUI/ViewModel/WorkflowLibraryViewModel.cs",
-      "count": 7
+      "count": 6
     },
     {
       "project": "SharedUI",
@@ -4002,13 +3946,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "IDE0007",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Z21.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0007",
       "path": "SharedUI/ViewModel/MauiViewModel.cs",
       "count": 1
     },
@@ -4122,13 +4059,6 @@
       "targetFramework": "net10.0",
       "ruleId": "IDE0290",
       "path": "SharedUI/ViewModel/FunctionButtonViewModel.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0290",
-      "path": "SharedUI/ViewModel/JourneyFeedbackStepViewModel.cs",
       "count": 1
     },
     {

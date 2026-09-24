@@ -101,7 +101,7 @@ public sealed partial class JourneyEventViewModel : ObservableObject
         : "Choose a workflow";
     public string InPortText => $"InPort {InPort}";
     public string CountLabel => $"At count {Count.ToString(CultureInfo.InvariantCulture)}";
-    public string AutomationName => $"InPort {InPort}, count {Count} since journey start, workflow {WorkflowName}, {(Enabled ? "enabled" : "disabled")}";
+    public string AutomationName => $"InPort {InPort}, count {Count}, workflow {WorkflowName}, {(Enabled ? "enabled" : "disabled")}";
 
     [RelayCommand(CanExecute = nameof(CanEdit))]
     private void AssignWorkflow(WorkflowViewModel? workflow)

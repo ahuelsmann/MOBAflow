@@ -24,10 +24,6 @@ public interface IJourneyManager : IDisposable
 
     void Reset(Journey journey);
 
-    Task StartJourneyAsync(Journey journey, CancellationToken cancellationToken = default);
-
-    Task StopJourneyAsync(Journey journey, CancellationToken cancellationToken = default);
-
     void CancelPendingWork();
 }
 
@@ -69,7 +65,7 @@ public sealed class JourneyManagerFactory(
     }
 
     public IJourneyManager Create(Project project, ActionExecutionContext executionContext,
-        InPortCounterService? counters = null, Func<Guid, Task>? startJourneyAsync = null) =>
+        InPortCounterService? counters = null) =>
         new JourneyManager(
             z21,
             project,
@@ -83,8 +79,7 @@ public sealed class JourneyManagerFactory(
                 TimeProvider = _dependencies.TimeProvider,
                 EventBus = _dependencies.EventBus,
                 ExecutionCoordinator = _dependencies.ExecutionCoordinator,
-                InPortCounterService = counters ?? _dependencies.InPortCounterService,
-                StartJourneyAsync = startJourneyAsync ?? _dependencies.StartJourneyAsync
+                InPortCounterService = counters ?? _dependencies.InPortCounterService
             });
 }
 

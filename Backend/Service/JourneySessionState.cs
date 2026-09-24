@@ -9,13 +9,6 @@ namespace Moba.Backend.Service;
 /// </summary>
 public class JourneySessionState
 {
-    /// <summary>Global input counts captured atomically when this run started.</summary>
-    public IReadOnlyDictionary<uint, ulong> CurrentEventBases { get; internal set; }
-        = System.Collections.Frozen.FrozenDictionary<uint, ulong>.Empty;
-
-    /// <summary>Detached snapshot of event identifiers already triggered in this run.</summary>
-    public IReadOnlyList<Guid> CompletedEventIds { get; internal set; } = Array.Empty<Guid>();
-
     /// <summary>Stable identity for the current execution of this journey.</summary>
     public Guid RunId { get; set; } = Guid.NewGuid();
 
@@ -33,12 +26,6 @@ public class JourneySessionState
     /// <summary>Identifier of the current stop. This is stable when stop names or ordering change.</summary>
     public Guid? CurrentStationId { get; set; }
 
-    /// <summary>Zero-based index of the next expected feedback sequence step.</summary>
-    public int CurrentFeedbackIndex { get; set; }
-
-    /// <summary>Number of matching activations already accepted by the current feedback step.</summary>
-    public uint CurrentStepOccurrence { get; set; }
-
     /// <summary>
     /// Current position (index) in the journey's station list.
     /// Managed by JourneyManager during journey execution.
@@ -52,8 +39,7 @@ public class JourneySessionState
     public DateTime? LastFeedbackTime { get; set; }
 
     /// <summary>
-    /// Indicates whether this journey is actively running.
-    /// Set to true when journey starts, false when stopped or completed.
+    /// Indicates whether the runtime evaluates this journey's events (mirrors <c>Journey.IsActive</c>).
     /// </summary>
     public bool IsActive { get; set; }
 
@@ -70,12 +56,7 @@ public class JourneySessionState
         CurrentPos = firstPos;
         CurrentStationName = string.Empty;
         CurrentStationId = null;
-        CurrentFeedbackIndex = 0;
-        CurrentStepOccurrence = 0;
         LastFeedbackTime = null;
-        IsActive = true;
         IsJourneyCompletionRequested = false;
-        CurrentEventBases = System.Collections.Frozen.FrozenDictionary<uint, ulong>.Empty;
-        CompletedEventIds = Array.Empty<Guid>();
     }
 }

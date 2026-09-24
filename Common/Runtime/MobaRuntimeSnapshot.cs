@@ -122,9 +122,6 @@ public sealed class MobaRuntimeSnapshot
     /// <summary>Application-session activation counters, independent of the selected project.</summary>
     public IReadOnlyList<InPortCounterSnapshot> InPortCounters { get; init; } = [];
 
-    /// <summary>False while an executable journey owns a counter baseline.</summary>
-    public bool CanResetInPortCounters { get; init; } = true;
-
     /// <summary>
     /// Gets the current runtime state of all active journeys.
     /// </summary>

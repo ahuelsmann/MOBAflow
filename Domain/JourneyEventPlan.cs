@@ -8,14 +8,14 @@ public sealed class JourneyEventPlan
     public List<JourneyEvent> Events { get; set; } = [];
 }
 
-/// <summary>Starts a workflow when an InPort reaches a count relative to the journey start.</summary>
+/// <summary>Starts a workflow when an InPort session counter reaches a count.</summary>
 public sealed class JourneyEvent
 {
     public Guid Id { get; set; } = Guid.NewGuid();
 
     public uint InPort { get; set; } = 1;
 
-    /// <summary>One-based activation count since this journey run started.</summary>
+    /// <summary>One-based InPort count since the last explicit counter reset.</summary>
     public ulong Count { get; set; } = 1;
 
     public Guid? WorkflowId { get; set; }

@@ -85,8 +85,6 @@ public partial class MainWindowViewModel
         }
 
         ResetJourneyCommand.NotifyCanExecuteChanged();
-        StartJourneyCommand.NotifyCanExecuteChanged();
-        StopJourneyCommand.NotifyCanExecuteChanged();
         ResetJourneyCounterCommand.NotifyCanExecuteChanged();
     }
 
@@ -115,11 +113,15 @@ public partial class MainWindowViewModel
         // Ignore UI-only or runtime-backed properties that must not persist the whole solution.
         if (e.PropertyName is { } name &&
             (name is "IsSelected" or "IsExpanded" or "IsHighlighted" or "IsCurrentStation"
-             or "CurrentStation" or "CurrentStepOccurrence" or "CurrentPos" or "CurrentStepRepeatCount"
-             or "CurrentFeedbackIndex" or "NextFeedbackInPort" or "IsRunning" or "IsEventPlanRunning"
-             or "HasEventPlan" or "UsesFeedbackSequence"))
+             or "CurrentStation" or "CurrentPos"))
         {
             return;
+        }
+
+        // The runtime executes an isolated copy, so journey activation and event edits must be re-applied.
+        if (sender is JourneyViewModel && e.PropertyName is nameof(JourneyViewModel.IsActive) or nameof(JourneyViewModel.EventPlan))
+        {
+            ObserveBackgroundTask(RefreshActiveProjectRuntimeAsync(), "Activate project runtime");
         }
 
         RefreshProjectDiagnostics();
