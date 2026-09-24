@@ -21,7 +21,7 @@ FR-004 to T009; FR-005 to T005/T009. All outcomes and edge cases have a check. N
 Independent test: all three vehicle kinds can be searched, selected, added, renamed, deleted and saved;
 project switches refresh lists; decoder backups and passports survive; no maintenance is emitted.
 
-- [x] T004 [US1] Add inventory and JSON regressions in `Test/SharedUI/RollingStockInventoryTests.cs` and `Test/Domain/RollingStockSerializationTests.cs`.
+- [x] T004 [US1] Add inventory and JSON regressions in `Test/SharedUI/MainWindowViewModelPhotoAssignmentTests.cs` and `Test/Domain/LocomotiveLifecycleSerializationTests.cs`.
 - [x] T005 [US1] Remove maintenance models/service/DI and schema in `Domain/`, `Backend/Service/VehicleMaintenanceService.cs`, `Backend/Extensions/MobaBackendServiceCollectionExtensions.cs`, `MOBAflow/Build/Schemas/solution.schema.json`.
 - [x] T006 [US1] Remove maintenance from `SharedUI/ViewModel/LocomotiveManagementViewModel.cs`, `Backend/Service/LocomotiveLibraryService.cs` and `Backend/Service/LocomotivePassportHtmlRenderer.cs`; adapt mixed tests under `Test/`.
 - [x] T007 [US1] Delete `SharedUI/ViewModel/RollingStockMaintenanceViewModel.cs`, `MOBAflow/Controls/RollingStockMaintenancePanel.xaml` and code-behind; reconnect `MOBAflow/View/LocomotivesPage.xaml`, `PassengerWagonPage.xaml`, `GoodsWagonPage.xaml` and their code-behind; remove WinUI DI registration.

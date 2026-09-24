@@ -7,17 +7,44 @@ Run from this dedicated worktree. Coordinate substantial builds with the master 
 
 1. Run focused inventory, serialization, decoder/passport, DI and solution transport/cache regressions.
 2. Run `dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0`.
-3. Build MOBApi; restore/build MOBAflow with FastDebug, BuildMOBApiDependency=false and
-   CopyMOBApiToOutput=false. Restore/build MOBAsmart net10.0-android with FastDebug.
+3. Build the Windows Release test graph with normal MOBAflow/MOBApi dependencies and
+   MobaAnalyzerGate=true. Restore/publish MOBAsmart net10.0-android in Release with the analyzer gate.
 4. Run relevant Windows-target regressions; inspect schema and documentation.
 5. Run line-ending/governance checks, secrets scans and review the complete diff.
 6. Publish a draft PR only after integrating main. Verify CI and current-commit SonarCloud with zero
    OPEN/CONFIRMED findings. Master coordinates the final merge after #146.
 
-Manual acceptance (requires separate launch permission): on each vehicle page, search, add, select,
-rename, delete, switch projects and reload saved data in Light/Dark. Verify photos, decoder backup and
-passport export remain available and no maintenance control remains. No hardware action is required.
+Manual acceptance remains open. The user authorized an isolated synthetic-data inspection without
+layout connectivity; application launch awaits the centrally coordinated computer-use slot.
+Inspect `LocomotivesPage`,
+`PassengerWagonPage` and `GoodsWagonPage` in both Light and Dark themes:
+
+- Empty inventory/no selection and an inventory with a selected vehicle: the list and Properties pane
+  remain usable, with no maintenance filter, panel, calendar or empty space left by their removal.
+- Search with matches, no matches and surrounding spaces; add and delete while a search is active.
+- Rename a selected vehicle while it still matches the search: selection and the editor remain visible.
+  Rename it so it no longer matches: the filtered list updates correctly.
+- Switch projects and reload saved data: no selection from the previous project remains, and vehicle
+  edits persist. Verify the remaining master-data and photo controls on all three pages.
+- On the locomotive page, inspect decoder CV import/export, feedback whistle rule editing and printable
+  locomotive passport export. The passport contains no maintenance rows. Do not exercise live functions.
+
+No application launch or hardware action has been performed for this acceptance check.
 
 ## Recorded results
 
-Portable validation: 43 focused tests passed, followed by 1686 passed / 4 skipped / 0 failed in the full net10.0 suite. Skips: missing bundled-photo folder and three opt-in integration tests requiring MOBApi on localhost:5001. The incremental build (including MOBApi) passed without compiler warnings. Spec Kit governance, line endings and schema JSON checks passed. Windows/Android builds, analyzer baselines, CI/Sonar and Light/Dark acceptance remain pending. No app launch or hardware action is authorized.
+Portable validation: 43 focused tests passed, followed by 1686 passed / 4 skipped / 0 failed in the full
+net10.0 suite. Skips: missing bundled-photo folder and three opt-in integration tests requiring MOBApi
+on localhost:5001. After the review fixes for stable selection and trimmed search, 32 focused tests
+passed with no skips. Those regression methods were subsequently moved into existing fixtures;
+their final Windows validation passed: 1750 tests passed, with zero failures and zero skips (58 seconds).
+The Windows Release test build, including WinUI XAML and normal MOBApi dependencies, passed. The
+tested state was commit `dd18c8f6b6e85424718290400d441a5799d20784` plus the unchanged review/test/docs patch
+with SHA256 `E02A20B1DAD714A075AE79DE51CCD83FC4666A30EF635D8AB79625B6753E0FAF`.
+The Windows analyzer comparison contains only expected maintenance-related decreases, with no new
+or increased diagnostic groups. Android Release rebuild/publication passed; `scripts/Test-AndroidAppBundle.ps1`
+validated both published AAB files, including the required arm64-v8a and x86_64 libraries. Spec Kit
+governance, line endings and schema JSON checks passed. Final analyzer baselines,
+CI/Sonar and Light/Dark acceptance remain pending. The final baselines require complete fresh outputs
+after integrating the centrally coordinated main changes; the separate Android output folder alone
+does not contain SARIF for shared projects reused incrementally. No app launch or hardware action has occurred.

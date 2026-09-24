@@ -47,7 +47,7 @@ Controls, Extensions and Build/Schemas/, Test/, README.md, docs/ and the superse
 
 ## Validation Strategy
 
-- Regression fixtures: RollingStockInventoryTests (list/search/selection/autosave), rolling-stock serialization,
+- Regression fixtures: MainWindowViewModelPhotoAssignmentTests (list/search/selection/autosave), rolling-stock serialization,
   LocomotiveLifecycleSerializationTests, LocomotiveLibraryServiceTests,
   LocomotivePassportHtmlRendererTests, LocomotiveManagementViewModelTests,
   MobaBackendServiceCollectionExtensionsTests, SolutionControllerTests, MobileSolutionStoreTests and SolutionRemoteLoaderTests.
