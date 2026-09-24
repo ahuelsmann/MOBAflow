@@ -11,8 +11,8 @@ and apply to coding agents across Windows and Linux.
   needs authorization that the user has not already given. Continue independent work while blocked.
 - Make the smallest cohesive change that solves the problem. Preserve unrelated user edits and existing contracts;
   avoid incidental cleanup, speculative abstractions, dependency upgrades, and repository-wide formatting.
-- Build the smallest core that meets the request. Ask before adding mechanics the request does not name, such as
-  runtime lifecycle commands, chaining/follow-up behavior, per-run state or deferred-apply logic.
+  Ask before adding mechanics the request does not name, such as runtime lifecycle commands, chaining/follow-up
+  behavior, per-run state or deferred-apply logic.
 - Inspect affected code, callers, and tests before editing. Plan briefly for multi-file or risky work; simple fixes
   need no formal plan. Use tools available in the session; no particular planning or diagnostic tool is required.
 - Read only the applicable guidance linked in the [instruction index](.github/instructions/instructions-index.md).
@@ -34,8 +34,9 @@ and apply to coding agents across Windows and Linux.
 - Never launch MOBAflow without explicit user approval. Build, restore and test requests alone do not authorize
   starting the WinUI executable, debugger, watch process or launch-based UI automation.
 - MOBAflow has no released users yet: do not add legacy paths, serialized-format compatibility, migrations or
-  adoption flows. Replace a superseded model and remove its code, tests, API endpoints and docs in the same change;
-  only the current solution schema is supported.
+  adoption flows. Replace a superseded model and remove its code, tests, API endpoints and docs in the same change.
+  Keep `Solution.CurrentSchemaVersion` unless the task requires a bump; removed JSON fields are ignored on load.
+  Remove legacy paths that already exist only in a dedicated change, not as incidental cleanup.
 - SonarQube before PR review: attempt local analysis against the actual base, create PRs as drafts, and require a
   green SonarCloud check with zero OPEN/CONFIRMED PR issues before marking ready. Follow
   [the Sonar policy](.github/instructions/sonarqube-pre-pr.instructions.md); preserve existing analyzer baseline gates.
