@@ -15,7 +15,7 @@ internal sealed partial class TimetablePage
     private readonly AppSettings _settings;
     private readonly ISettingsService? _settingsService;
     private readonly ILogger<TimetablePage>? _logger;
-    private bool _isCompactLayout;
+    private bool? _isCompactLayout;
 
     public TimetablePageViewModel ViewModel { get; }
 
@@ -39,7 +39,7 @@ internal sealed partial class TimetablePage
     {
         _ = sender;
         _ = e;
-        if (!_isCompactLayout) RestoreColumnWidths();
+        if (_isCompactLayout != true) RestoreColumnWidths();
         UpdateResponsiveLayout();
         try
         {
@@ -61,7 +61,7 @@ internal sealed partial class TimetablePage
         var compact = ActualWidth < 1000;
         if (compact == _isCompactLayout) return;
 
-        if (compact) RememberColumnWidths();
+        if (compact && _isCompactLayout == false) RememberColumnWidths();
         _isCompactLayout = compact;
         ServicesColumn.MinWidth = compact ? 0 : 280;
         DetailsColumn.MinWidth = compact ? 0 : 360;
@@ -92,7 +92,7 @@ internal sealed partial class TimetablePage
 
     private void RememberColumnWidths()
     {
-        if (_isCompactLayout) return;
+        if (_isCompactLayout != false) return;
         var total = ServicesColumn.ActualWidth + DetailsColumn.ActualWidth;
         if (total <= 0) return;
         _settings.Layout.TimetablePage.ServicesColumnStarValue = ServicesColumn.ActualWidth / total;

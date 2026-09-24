@@ -340,6 +340,63 @@ internal sealed class TimetablePageViewModelTests
         }
     }
 
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task RefreshSameProject_Should_ClearCachedServicesAndNotifyClearedIssues(bool failLoad)
+    {
+        var project = CreateProject();
+        var issue = new TimetableIssue(TimetableIssueKind.PlatformConflict, project.TimetableServices[0].Id, null, "Overlap");
+        var operations = new Mock<ITimetableOperationsService>();
+        operations.Setup(value => value.GetStatesAsync(project.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<TimetableServiceState>());
+        using var context = CreateContext(project, operations.Object, new TimetableEvaluationResult([issue]));
+        await context.ViewModel.RefreshAsync().ConfigureAwait(false);
+        SelectFirstServiceAndCall(context.ViewModel);
+        var clearedIssuesNotified = false;
+        context.ViewModel.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(TimetablePageViewModel.HasIssues) && !context.ViewModel.HasIssues)
+                clearedIssuesNotified = true;
+        };
+        var pendingLoad = new TaskCompletionSource<IReadOnlyList<TimetableServiceState>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        operations.Setup(value => value.GetStatesAsync(project.Id, It.IsAny<CancellationToken>()))
+            .Returns(pendingLoad.Task);
+
+        var refresh = context.ViewModel.RefreshAsync();
+        var notifiedBeforeFiltering = clearedIssuesNotified;
+        context.ViewModel.FilterText = "Express";
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(notifiedBeforeFiltering, Is.True);
+            Assert.That(context.ViewModel.Issues, Is.Empty);
+            Assert.That(context.ViewModel.HasIssues, Is.False);
+            Assert.That(context.ViewModel.Services, Is.Empty);
+            Assert.That(context.ViewModel.Calls, Is.Empty);
+            Assert.That(context.ViewModel.HasServices, Is.False);
+            Assert.That(context.ViewModel.SaveDefinitionCommand.CanExecute(null), Is.False);
+            Assert.That(context.ViewModel.HoldSelectedServiceCommand.CanExecute(null), Is.False);
+        }
+
+        if (failLoad)
+        {
+            pendingLoad.SetException(new IOException("State load failed"));
+            await Assert.ThatAsync(() => refresh.WaitAsync(TimeSpan.FromSeconds(5)), Throws.TypeOf<IOException>()).ConfigureAwait(false);
+        }
+        else
+        {
+            pendingLoad.SetResult([]);
+            await refresh.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        }
+
+        context.ViewModel.ResetFiltersCommand.Execute(null);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(context.ViewModel.Services, Has.Count.EqualTo(failLoad ? 0 : 1));
+            Assert.That(context.ViewModel.HasIssues, Is.EqualTo(!failLoad));
+            Assert.That(context.ViewModel.HoldSelectedServiceCommand.CanExecute(null), Is.False);
+        }
+    }
+
     [Test]
     public async Task RefreshFromPreviousProject_Should_NotOverwriteCurrentProject()
     {

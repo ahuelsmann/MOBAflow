@@ -36,7 +36,6 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
     private readonly SemaphoreSlim _projectionGate = new(1, 1);
     private bool _disposed;
     private List<TimetableServiceRowViewModel> _allRows = [];
-    private Project? _boardProject;
     private int _refreshVersion;
     private MobaRuntimeSnapshot _latestSnapshot = MobaRuntimeSnapshot.Empty;
 
@@ -165,12 +164,8 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
         SelectedService = null;
         SelectedCall = null;
 
-        if (project is null || !ReferenceEquals(project, _boardProject))
-        {
-            _allRows = [];
-            _boardProject = project;
-            NotifyBoardStateChanged();
-        }
+        _allRows = [];
+        NotifyBoardStateChanged();
 
         if (project is null)
         {
