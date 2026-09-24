@@ -110,7 +110,7 @@ also connects to `/runtime-hub` and the MOBApi REST surface:
 each project can contain:
 
 - locomotives, passenger wagons, goods wagons and train consists;
-- locomotive maintenance plans, decoder snapshots and whistle rules;
+- locomotive decoder snapshots and whistle rules;
 - stations and platforms;
 - workflows;
 - journeys with ordered stations, an `IsActive` flag and a `JourneyEventPlan`;

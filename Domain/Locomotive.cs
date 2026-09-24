@@ -115,13 +115,6 @@ public class Locomotive
     public string? PhotoPath { get; set; }
 
     /// <summary>
-    /// Optional maintenance history and recurring calendar-based service plans.
-    /// Missing data remains valid for projects created before this feature.
-    /// </summary>
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public VehicleMaintenanceData? Maintenance { get; set; }
-
-    /// <summary>
     /// Optional installed decoder profile and validated CV backup snapshots.
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

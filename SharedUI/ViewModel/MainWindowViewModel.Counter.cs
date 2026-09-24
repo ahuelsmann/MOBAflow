@@ -144,9 +144,10 @@ public partial class MainWindowViewModel
     /// Subscribes to PropertyChanged for auto-save (Project + all Workflows).
     /// Auto-selects first journey if available.
     /// </summary>
-    partial void OnSelectedProjectChanged(ProjectViewModel? value)
+    partial void OnSelectedProjectChanged(ProjectViewModel? oldValue, ProjectViewModel? newValue)
     {
-        _locomotiveWhistleAutomation?.Activate(value?.Model);
+        ObserveRollingStockProject(oldValue, newValue);
+        _locomotiveWhistleAutomation?.Activate(newValue?.Model);
         RefreshProjectDiagnostics();
 
         // Statistics are replaced (new ObservableCollection), not mutated in place,
@@ -155,35 +156,35 @@ public partial class MainWindowViewModel
         ApplyJourneyRuntimeSnapshots(_latestRuntimeSnapshot.JourneyStates);
 
         // Subscribe to PropertyChanged for auto-save
-        if (value != null)
+        if (newValue != null)
         {
-            value.PropertyChanged += OnViewModelPropertyChanged;
+            newValue.PropertyChanged += OnViewModelPropertyChanged;
 
             // Subscribe to PropertyChanged events for all workflows (including newly loaded ones)
-            foreach (var workflow in value.Workflows)
+            foreach (var workflow in newValue.Workflows)
             {
                 // Avoid duplicate subscriptions
                 workflow.PropertyChanged -= OnViewModelPropertyChanged;
                 workflow.PropertyChanged += OnViewModelPropertyChanged;
             }
 
-            foreach (var train in value.Trains)
+            foreach (var train in newValue.Trains)
             {
                 train.PropertyChanged -= OnViewModelPropertyChanged;
                 train.PropertyChanged += OnViewModelPropertyChanged;
             }
 
             // Auto-select first journey when project is selected
-            if (value.Journeys.Count > 0)
+            if (newValue.Journeys.Count > 0)
             {
-                SelectedJourney = value.Journeys.FirstOrDefault();
+                SelectedJourney = newValue.Journeys.FirstOrDefault();
             }
             else
             {
                 SelectedJourney = null;
             }
 
-            SelectedTrain = value.Trains.FirstOrDefault();
+            SelectedTrain = newValue.Trains.FirstOrDefault();
 
             OnPropertyChanged(nameof(FilteredTrains));
             OnPropertyChanged(nameof(FilteredLocomotiveLibrary));

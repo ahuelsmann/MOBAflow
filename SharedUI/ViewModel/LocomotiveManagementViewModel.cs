@@ -17,13 +17,12 @@ public sealed record AddressFindingViewModel(
     IReadOnlyList<Guid> TargetIds);
 
 /// <summary>
-/// Presentation-only projection for locomotive quality, maintenance, decoder and passport data.
+/// Presentation-only projection for locomotive quality, decoder and passport data.
 /// All business rules remain in backend services.
 /// </summary>
 public sealed partial class LocomotiveManagementViewModel : ObservableObject
 {
     private readonly IDigitalAddressConflictDetector _conflictDetector;
-    private readonly IVehicleMaintenanceService _maintenanceService;
     private readonly ILocomotiveLibraryService _libraryService;
     private readonly ILocomotivePassportHtmlRenderer? _passportRenderer;
     private readonly IDecoderCvService? _decoderCvService;
@@ -34,7 +33,6 @@ public sealed partial class LocomotiveManagementViewModel : ObservableObject
 
     public LocomotiveManagementViewModel(
         IDigitalAddressConflictDetector conflictDetector,
-        IVehicleMaintenanceService maintenanceService,
         ILocomotiveLibraryService libraryService,
         ILocomotivePassportHtmlRenderer? passportRenderer = null,
         IDecoderCvService? decoderCvService = null,
@@ -42,7 +40,6 @@ public sealed partial class LocomotiveManagementViewModel : ObservableObject
         IProjectContext? projectContext = null)
     {
         _conflictDetector = conflictDetector ?? throw new ArgumentNullException(nameof(conflictDetector));
-        _maintenanceService = maintenanceService ?? throw new ArgumentNullException(nameof(maintenanceService));
         _libraryService = libraryService ?? throw new ArgumentNullException(nameof(libraryService));
         _passportRenderer = passportRenderer;
         _decoderCvService = decoderCvService;
@@ -51,8 +48,6 @@ public sealed partial class LocomotiveManagementViewModel : ObservableObject
     }
 
     public ObservableCollection<AddressFindingViewModel> AddressFindings { get; } = [];
-
-    public ObservableCollection<MaintenancePlanStatus> MaintenancePlans { get; } = [];
 
     public ObservableCollection<DecoderCvSnapshot> DecoderSnapshots { get; } = [];
 
@@ -67,9 +62,6 @@ public sealed partial class LocomotiveManagementViewModel : ObservableObject
     private LocomotivePassport? _passport;
 
     [ObservableProperty]
-    private string? _maintenanceValidationMessage;
-
-    [ObservableProperty]
     private string? _operationStatus;
 
     [ObservableProperty]
@@ -79,17 +71,15 @@ public sealed partial class LocomotiveManagementViewModel : ObservableObject
 
     public string AddressFindingSummary => $"{AddressFindingCount} finding(s) require attention.";
 
-    public void SetContext(Project? project, Locomotive? locomotive, DateTimeOffset? now = null)
+    public void SetContext(Project? project, Locomotive? locomotive)
     {
         AddressFindings.Clear();
-        MaintenancePlans.Clear();
         DecoderSnapshots.Clear();
         WhistleRules.Clear();
         SelectedWhistleRule = null;
         Passport = null;
         _project = project;
         _locomotive = locomotive;
-        MaintenanceValidationMessage = null;
 
         if (project is not null)
         {
@@ -121,54 +111,6 @@ public sealed partial class LocomotiveManagementViewModel : ObservableObject
                      .OrderByDescending(snapshot => snapshot.CapturedAt)
                      .ThenBy(snapshot => snapshot.Id) ?? Enumerable.Empty<DecoderCvSnapshot>())
             DecoderSnapshots.Add(snapshot);
-
-        if (locomotive.Maintenance is not { } maintenance)
-            return;
-
-        var errors = _maintenanceService.Validate(maintenance);
-        if (errors.Count != 0)
-        {
-            MaintenanceValidationMessage = string.Join(" ", errors);
-            return;
-        }
-
-        foreach (var status in _maintenanceService.Evaluate(maintenance, now ?? DateTimeOffset.UtcNow))
-            MaintenancePlans.Add(status);
-    }
-
-    [RelayCommand]
-    private async Task AddMaintenancePlanAsync()
-    {
-        if (_locomotive is null)
-            return;
-        _locomotive.Maintenance ??= new VehicleMaintenanceData();
-        _locomotive.Maintenance.Plans.Add(new VehicleMaintenancePlan
-        {
-            Name = "New maintenance reminder",
-            Category = MaintenanceCategory.Inspection,
-            LastCompletedAt = DateTimeOffset.UtcNow,
-            IntervalDays = 365
-        });
-        SetContext(_project, _locomotive);
-        await SaveChangesAsync();
-        OperationStatus = "Maintenance reminder added.";
-    }
-
-    [RelayCommand]
-    private async Task AddMaintenanceEntryAsync()
-    {
-        if (_locomotive is null)
-            return;
-        _locomotive.Maintenance ??= new VehicleMaintenanceData();
-        _locomotive.Maintenance.Entries.Add(new VehicleMaintenanceEntry
-        {
-            Description = "Maintenance performed",
-            Category = MaintenanceCategory.Inspection,
-            PerformedAt = DateTimeOffset.UtcNow
-        });
-        SetContext(_project, _locomotive);
-        await SaveChangesAsync();
-        OperationStatus = "Maintenance entry added.";
     }
 
     [RelayCommand]

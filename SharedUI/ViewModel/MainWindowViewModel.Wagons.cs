@@ -11,6 +11,8 @@ using Domain;
 using Microsoft.Extensions.Logging;
 
 using System.Diagnostics;
+using System.Collections.Specialized;
+using System.ComponentModel;
 
 /// <summary>
 /// MainWindowViewModel - Locomotive/Wagon Management Partial.
@@ -51,40 +53,101 @@ public partial class MainWindowViewModel
     [ObservableProperty]
     private string _goodsWagonSearchText = string.Empty;
 
-    partial void OnSelectedLocomotiveChanged(LocomotiveViewModel? value)
+    partial void OnSelectedLocomotiveChanged(LocomotiveViewModel? oldValue, LocomotiveViewModel? newValue)
     {
-        AttachLocomotivePhotoCommand(value);
+        AttachLocomotivePhotoCommand(newValue);
         DeleteLocomotiveCommand.NotifyCanExecuteChanged();
 
+        if (oldValue != null)
+            oldValue.PropertyChanged -= OnRollingStockPropertyChanged;
+
         // Subscribe to PropertyChanged for auto-save
-        if (value != null)
+        if (newValue != null)
         {
-            value.PropertyChanged += OnViewModelPropertyChanged;
+            newValue.PropertyChanged += OnRollingStockPropertyChanged;
         }
     }
 
-    partial void OnSelectedPassengerWagonChanged(PassengerWagonViewModel? value)
+    partial void OnSelectedPassengerWagonChanged(PassengerWagonViewModel? oldValue, PassengerWagonViewModel? newValue)
     {
-        AttachWagonPhotoCommand(value);
+        AttachWagonPhotoCommand(newValue);
         DeletePassengerWagonCommand.NotifyCanExecuteChanged();
 
+        if (oldValue != null)
+            oldValue.PropertyChanged -= OnRollingStockPropertyChanged;
+
         // Subscribe to PropertyChanged for auto-save
-        if (value != null)
+        if (newValue != null)
         {
-            value.PropertyChanged += OnViewModelPropertyChanged;
+            newValue.PropertyChanged += OnRollingStockPropertyChanged;
         }
     }
 
-    partial void OnSelectedGoodsWagonChanged(GoodsWagonViewModel? value)
+    partial void OnSelectedGoodsWagonChanged(GoodsWagonViewModel? oldValue, GoodsWagonViewModel? newValue)
     {
-        AttachWagonPhotoCommand(value);
+        AttachWagonPhotoCommand(newValue);
         DeleteGoodsWagonCommand.NotifyCanExecuteChanged();
 
+        if (oldValue != null)
+            oldValue.PropertyChanged -= OnRollingStockPropertyChanged;
+
         // Subscribe to PropertyChanged for auto-save
-        if (value != null)
+        if (newValue != null)
         {
-            value.PropertyChanged += OnViewModelPropertyChanged;
+            newValue.PropertyChanged += OnRollingStockPropertyChanged;
         }
+    }
+
+    private void ObserveRollingStockProject(ProjectViewModel? oldProject, ProjectViewModel? project)
+    {
+        if (oldProject is not null)
+        {
+            oldProject.PropertyChanged -= OnViewModelPropertyChanged;
+            oldProject.Locomotives.CollectionChanged -= OnRollingStockCollectionChanged;
+            oldProject.PassengerWagons.CollectionChanged -= OnRollingStockCollectionChanged;
+            oldProject.GoodsWagons.CollectionChanged -= OnRollingStockCollectionChanged;
+        }
+
+        SelectedLocomotive = null;
+        SelectedPassengerWagon = null;
+        SelectedGoodsWagon = null;
+
+        if (project is not null)
+        {
+            project.Locomotives.CollectionChanged += OnRollingStockCollectionChanged;
+            project.PassengerWagons.CollectionChanged += OnRollingStockCollectionChanged;
+            project.GoodsWagons.CollectionChanged += OnRollingStockCollectionChanged;
+        }
+
+        NotifyRollingStockLibrariesChanged();
+    }
+
+    private void OnRollingStockCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        var project = SelectedProject;
+        if (SelectedLocomotive is { } locomotive && project?.Locomotives.Contains(locomotive) != true)
+            SelectedLocomotive = null;
+        if (SelectedPassengerWagon is { } passengerWagon && project?.PassengerWagons.Contains(passengerWagon) != true)
+            SelectedPassengerWagon = null;
+        if (SelectedGoodsWagon is { } goodsWagon && project?.GoodsWagons.Contains(goodsWagon) != true)
+            SelectedGoodsWagon = null;
+
+        NotifyRollingStockLibrariesChanged();
+    }
+
+    private void OnRollingStockPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(LocomotiveViewModel.Name))
+            NotifyRollingStockLibrariesChanged();
+
+        OnViewModelPropertyChanged(sender, e);
+    }
+
+    private void NotifyRollingStockLibrariesChanged()
+    {
+        OnPropertyChanged(nameof(FilteredLocomotiveLibrary));
+        OnPropertyChanged(nameof(FilteredPassengerWagonLibrary));
+        OnPropertyChanged(nameof(FilteredGoodsWagonLibrary));
     }
 
     private void AttachWagonPhotoCommand(WagonViewModel? wagonVm)
@@ -267,6 +330,7 @@ public partial class MainWindowViewModel
         AttachLocomotivePhotoCommand(SelectedLocomotive);
 
         _logger.LogInformation("Added new locomotive: {Name}", locomotive.Name);
+        ObserveBackgroundTask(SaveSolutionInternalAsync(), "Save rolling stock");
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteLocomotive))]
@@ -297,6 +361,7 @@ public partial class MainWindowViewModel
         }
 
         _logger.LogInformation("Deleted locomotive: {Name}", locomotiveName);
+        ObserveBackgroundTask(SaveSolutionInternalAsync(), "Save rolling stock");
     }
 
     private bool CanDeleteLocomotive() => SelectedLocomotive != null;
@@ -324,6 +389,7 @@ public partial class MainWindowViewModel
         AttachWagonPhotoCommand(SelectedPassengerWagon);
 
         _logger.LogInformation("Added new passenger wagon: {Name}", wagon.Name);
+        ObserveBackgroundTask(SaveSolutionInternalAsync(), "Save rolling stock");
     }
 
     [RelayCommand(CanExecute = nameof(CanDeletePassengerWagon))]
@@ -332,12 +398,16 @@ public partial class MainWindowViewModel
         if (SelectedPassengerWagon?.Model == null || SelectedProject?.Model == null)
             return;
 
-        var wagonName = SelectedPassengerWagon.Name;
-        SelectedProject.PassengerWagons.Remove(SelectedPassengerWagon);
-        SelectedProject.Model.PassengerWagons.Remove((PassengerWagon)SelectedPassengerWagon.Model);
-        SelectedPassengerWagon = null;
+        var selectedWagon = SelectedPassengerWagon;
+        var project = SelectedProject;
+        var wagonName = selectedWagon.Name;
+        project.PassengerWagons.Remove(selectedWagon);
+        project.Model.PassengerWagons.Remove((PassengerWagon)selectedWagon.Model);
+        if (ReferenceEquals(SelectedPassengerWagon, selectedWagon))
+            SelectedPassengerWagon = null;
 
         _logger.LogInformation("Deleted passenger wagon: {Name}", wagonName);
+        ObserveBackgroundTask(SaveSolutionInternalAsync(), "Save rolling stock");
     }
 
     private bool CanDeletePassengerWagon() => SelectedPassengerWagon != null;
@@ -365,6 +435,7 @@ public partial class MainWindowViewModel
         AttachWagonPhotoCommand(SelectedGoodsWagon);
 
         _logger.LogInformation("Added new goods wagon: {Name}", wagon.Name);
+        ObserveBackgroundTask(SaveSolutionInternalAsync(), "Save rolling stock");
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteGoodsWagon))]
@@ -373,12 +444,16 @@ public partial class MainWindowViewModel
         if (SelectedGoodsWagon?.Model == null || SelectedProject?.Model == null)
             return;
 
-        var wagonName = SelectedGoodsWagon.Name;
-        SelectedProject.GoodsWagons.Remove(SelectedGoodsWagon);
-        SelectedProject.Model.GoodsWagons.Remove((GoodsWagon)SelectedGoodsWagon.Model);
-        SelectedGoodsWagon = null;
+        var selectedWagon = SelectedGoodsWagon;
+        var project = SelectedProject;
+        var wagonName = selectedWagon.Name;
+        project.GoodsWagons.Remove(selectedWagon);
+        project.Model.GoodsWagons.Remove((GoodsWagon)selectedWagon.Model);
+        if (ReferenceEquals(SelectedGoodsWagon, selectedWagon))
+            SelectedGoodsWagon = null;
 
         _logger.LogInformation("Deleted goods wagon: {Name}", wagonName);
+        ObserveBackgroundTask(SaveSolutionInternalAsync(), "Save rolling stock");
     }
 
     private bool CanDeleteGoodsWagon() => SelectedGoodsWagon != null;

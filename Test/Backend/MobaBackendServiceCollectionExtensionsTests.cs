@@ -40,6 +40,8 @@ internal sealed class MobaBackendServiceCollectionExtensionsTests
             Assert.That(provider.GetService<IWorkflowService>(), Is.InstanceOf<WorkflowService>());
             Assert.That(provider.GetService<IProjectValidator>(), Is.InstanceOf<ProjectValidator>());
             Assert.That(provider.GetService<IProjectDiagnosticsService>(), Is.InstanceOf<ProjectDiagnosticsService>());
+            Assert.That(provider.GetService<ILocomotiveLibraryService>(), Is.InstanceOf<LocomotiveLibraryService>());
+            Assert.That(provider.GetService<ILocomotivePassportHtmlRenderer>(), Is.InstanceOf<LocomotivePassportHtmlRenderer>());
         });
     }
 

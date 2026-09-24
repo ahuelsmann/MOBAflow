@@ -73,7 +73,7 @@
                                 Text="MOBAflow Desktop" />
                             <TextBlock
                                 Style="{StaticResource InfoBodyTextStyle}"
-                                Text="The Windows control center creates, operates and monitors layouts. It includes train control, rolling-stock and maintenance records, journeys and timetables, workflows, track plans, signal-box and interlocking controls, monitoring, and the Recorder with isolated replay." />
+                                Text="The Windows control center creates, operates and monitors layouts. It includes train control, rolling-stock records, journeys and timetables, workflows, track plans, signal-box and interlocking controls, monitoring, and the Recorder with isolated replay." />
                         </StackPanel>
 
                         <StackPanel Spacing="4">
@@ -115,7 +115,7 @@
                             Text="&#x2022; Direct Z21 control, feedback events, track power and live telemetry" />
                         <TextBlock
                             Style="{StaticResource InfoBodyTextStyle}"
-                            Text="&#x2022; Locomotive functions F0-F31, fleet photos, maintenance history and decoder records" />
+                            Text="&#x2022; Locomotive functions F0-F31, fleet photos and decoder records" />
                         <TextBlock
                             Style="{StaticResource InfoBodyTextStyle}"
                             Text="&#x2022; Journeys, feedback sequences, timetable decisions and visual workflow automation" />

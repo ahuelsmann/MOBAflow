@@ -14,18 +14,6 @@ public enum DecoderProtocol
     Mfx
 }
 
-[JsonConverter(typeof(JsonStringEnumConverter))]
-public enum MaintenanceCategory
-{
-    Inspection,
-    Cleaning,
-    Lubrication,
-    Repair,
-    Decoder,
-    WheelService,
-    Other
-}
-
 /// <summary>
 /// Optional decoder inventory and CV backup data for a locomotive.
 /// </summary>

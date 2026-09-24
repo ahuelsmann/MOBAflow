@@ -10,8 +10,6 @@ using Microsoft.UI.Xaml.Controls;
 
 using Moba.SharedUI.ViewModel;
 
-using Domain.Enum;
-
 using SharedUI.Interface;
 
 internal sealed partial class GoodsWagonPage
@@ -22,20 +20,16 @@ internal sealed partial class GoodsWagonPage
 
     public MainWindowViewModel ViewModel { get; }
 
-    public RollingStockMaintenanceViewModel Maintenance { get; }
-
     private double _listExpandedWidth = 250;
     private GridLength _propertiesExpandedWidth = new(1, GridUnitType.Star);
 
     public GoodsWagonPage(
         MainWindowViewModel viewModel,
-        RollingStockMaintenanceViewModel maintenance,
         AppSettings settings,
         ISettingsService? settingsService = null,
         ILogger<GoodsWagonPage>? logger = null)
     {
         ViewModel = viewModel;
-        Maintenance = maintenance;
         _settings = settings;
         _settingsService = settingsService;
         _logger = logger;
@@ -49,7 +43,6 @@ internal sealed partial class GoodsWagonPage
     {
         ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
-        RefreshMaintenance();
         RestoreLayout();
     }
 
@@ -87,20 +80,7 @@ internal sealed partial class GoodsWagonPage
         {
             ApplyStarColumnState(ViewModel.IsGoodsWagonPropertiesExpanded, ColProperties, ref _propertiesExpandedWidth);
         }
-        else if (e.PropertyName is nameof(ViewModel.SelectedProject)
-                 or nameof(ViewModel.SelectedGoodsWagon)
-                 or nameof(ViewModel.GoodsWagonSearchText))
-        {
-            RefreshMaintenance();
-        }
     }
-
-    private void RefreshMaintenance()
-        => Maintenance.SetContext(
-            ViewModel.SelectedProject,
-            TrainVehicleKind.GoodsWagon,
-            ViewModel.SelectedGoodsWagon,
-            ViewModel.GoodsWagonSearchText);
 
     private void RestoreLayout()
     {
