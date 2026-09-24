@@ -19,6 +19,8 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
 {
     private readonly Workflow _model;
     private readonly HashSet<WorkflowActionViewModel> _subscribedActions = [];
+    // Preserve original entries, including JSON nulls, while providing removable editor rows.
+    private readonly Dictionary<WorkflowActionViewModel, WorkflowAction> _originalActions = [];
     private readonly WorkflowActionViewModelFactory _actionViewModelFactory;
 
     /// <summary>Creates authoritative action wrappers in persisted list order.</summary>
@@ -29,7 +31,13 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
         _model.Actions ??= [];
         _actionViewModelFactory = new WorkflowActionViewModelFactory(
             ioService ?? new NullIoService(), soundPlayer, loggerFactory?.CreateLogger<CommandViewModel>());
-        Actions = new ObservableCollection<WorkflowActionViewModel>(model.Actions.Select(_actionViewModelFactory.CreateViewModel));
+        Actions = [];
+        foreach (var action in model.Actions)
+        {
+            var editor = _actionViewModelFactory.CreateViewModel(action);
+            _originalActions.Add(editor, action);
+            Actions.Add(editor);
+        }
         RefreshActionSubscriptions();
         Actions.CollectionChanged += OnActionsChanged;
         UpdateActionNumbers();
@@ -102,7 +110,9 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
     {
         for (var index = 0; index < Actions.Count; index++)
             Actions[index].Number = (uint)index + 1;
-        _model.Actions = Actions.Select(action => action.ToWorkflowAction()).ToList();
+        _model.Actions = Actions.Select(action => _originalActions.GetValueOrDefault(action, action.ToWorkflowAction())).ToList();
+        foreach (var removed in _originalActions.Keys.Where(action => !Actions.Contains(action)).ToArray())
+            _originalActions.Remove(removed);
         OnPropertyChanged(nameof(Actions));
         OnPropertyChanged(nameof(ActionSummary));
     }

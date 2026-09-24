@@ -160,14 +160,19 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     }
 
     /// <summary>Gets whether action editing has a selected workflow.</summary>
-    public bool HasWorkflowSelection => SelectedWorkflow != null;
+    public bool HasWorkflowSelection => this.SelectedWorkflow != null;
 
     /// <summary>Gets guidance for the current action-list state.</summary>
-    public string ActionListHint => _projectContext.SelectedProject == null
-        ? "Select a project to manage workflows."
-        : SelectedWorkflow == null ? "Create or select a workflow."
-        : SelectedWorkflow.Actions.Count == 0 ? "Add your first action. Earlier graph workflows must be recreated as action lists."
-        : "Actions run from top to bottom. Each action receives the triggering event and its related context.";
+    public string ActionListHint
+    {
+        get
+        {
+            if (_projectContext.SelectedProject == null) return "Select a project to manage workflows.";
+            if (SelectedWorkflow == null) return "Create or select a workflow.";
+            if (SelectedWorkflow.Actions.Count == 0) return "Add your first action. Earlier graph workflows must be recreated as action lists.";
+            return "Actions run from top to bottom. Each action receives the triggering event and its related context.";
+        }
+    }
 
     /// <summary>Shows general settings independently of action selection.</summary>
     [RelayCommand(CanExecute = nameof(HasSelectedWorkflow))]
@@ -212,9 +217,14 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
         NotifyActionCommands();
     }
 
-    private bool HasSelectedAction() => SelectedAction != null && SelectedWorkflow?.Actions.Contains(SelectedAction) == true;
-    private bool CanMoveActionUp() => HasSelectedAction() && SelectedWorkflow!.Actions.IndexOf(SelectedAction!) > 0;
-    private bool CanMoveActionDown() => HasSelectedAction() && SelectedWorkflow!.Actions.IndexOf(SelectedAction!) < SelectedWorkflow.Actions.Count - 1;
+    private bool HasSelectedAction() => this.SelectedAction is { } action && this.SelectedWorkflow is { } workflow && workflow.Actions.Contains(action);
+    private bool CanMoveActionUp() => this.SelectedAction is { } action && this.SelectedWorkflow is { } workflow && workflow.Actions.IndexOf(action) > 0;
+    private bool CanMoveActionDown()
+    {
+        if (SelectedAction is not { } action || SelectedWorkflow is not { } workflow) return false;
+        var index = workflow.Actions.IndexOf(action);
+        return index >= 0 && index < workflow.Actions.Count - 1;
+    }
 
     private void NotifyActionCommands()
     {
@@ -610,9 +620,9 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
         Validate();
         if (e.PropertyName == nameof(WorkflowViewModel.Name))
             OnPropertyChanged(nameof(FilteredWorkflows));
-        if (ReferenceEquals(sender, SelectedWorkflow))
+        if (SelectedWorkflow is { } selectedWorkflow && ReferenceEquals(sender, selectedWorkflow))
         {
-            if (SelectedAction != null && !SelectedWorkflow!.Actions.Contains(SelectedAction))
+            if (SelectedAction != null && !selectedWorkflow.Actions.Contains(SelectedAction))
                 SelectedAction = null;
             OnPropertyChanged(nameof(ActionListHint));
             NotifyActionCommands();
@@ -652,7 +662,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
             ?? throw new InvalidOperationException("Workflow duplication could not deserialize the cloned action list.");
         duplicate.Id = Guid.NewGuid();
         foreach (var action in duplicate.Actions)
-            action.Id = Guid.NewGuid();
+            if (action != null) action.Id = Guid.NewGuid();
         return duplicate;
     }
 

@@ -3,6 +3,7 @@ namespace Moba.Test.SharedUI;
 
 using Moba.Domain;
 using Moba.Domain.Enum;
+using Moba.Backend.Service;
 using Moba.SharedUI.ViewModel;
 using Moba.SharedUI.ViewModel.Action;
 
@@ -12,6 +13,44 @@ using Moba.SharedUI.ViewModel.Action;
 [TestFixture]
 internal class WorkflowViewModelTests
 {
+    [TestCase("null")]
+    [TestCase("{\"type\":999,\"name\":\"Unknown\"}")]
+    [TestCase("{\"type\":\"ChangeJourneyStop\"}")]
+    public void InvalidPersistedAction_CanBeLoadedReorderedAndRemovedWithoutRepairingIt(string actionJson)
+    {
+        var workflow = System.Text.Json.JsonSerializer.Deserialize<Workflow>(
+            "{\"actions\":[" + actionJson + "]}", JsonOptions.Default)
+            ?? throw new InvalidOperationException("Test workflow could not be loaded.");
+        var original = workflow.Actions[0];
+        var project = new Project { Workflows = [workflow] };
+        var editor = new ProjectViewModel(project).Workflows.Single();
+        var invalid = editor.Actions.Single();
+
+        editor.AddActionCommand.Execute(ActionType.ChangeJourneyStop);
+        editor.MoveAction(invalid, 1);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(invalid, Is.TypeOf<InvalidWorkflowActionViewModel>());
+            Assert.That(workflow.Actions[1], Is.SameAs(original));
+            Assert.That(new WorkflowValidator().Validate(project).Issues, Is.Not.Empty);
+            Assert.That(System.Text.Json.JsonSerializer.Serialize(workflow.Actions[1]),
+                Is.EqualTo(System.Text.Json.JsonSerializer.Serialize(original)));
+        }
+
+        editor.DeleteActionCommand.Execute(invalid);
+        Assert.That(new WorkflowValidator().Validate(project).Issues, Is.Empty);
+        Assert.That(editor.Actions.Single(), Is.TypeOf<ChangeJourneyStopViewModel>());
+    }
+
+    [Test]
+    public void NewlyAddedScriptWithEmptySettings_StillHasEditableTypedPayload()
+    {
+        var editor = new WorkflowViewModel(new Workflow());
+        editor.AddActionCommand.Execute(ActionType.ExecuteScript);
+        Assert.That(editor.Actions.Single(), Is.TypeOf<PowerShellActionViewModel>());
+    }
+
     private Workflow _workflow = null!;
     private WorkflowViewModel _viewModel = null!;
 

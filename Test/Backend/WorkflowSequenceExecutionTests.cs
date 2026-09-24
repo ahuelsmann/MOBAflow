@@ -12,6 +12,49 @@ using Moq;
 internal sealed class WorkflowSequenceExecutionTests
 {
     [Test]
+    public async Task FailedActionTracePreservesElapsedTime()
+    {
+        var clock = new MOBAdisplay.ManualTimeProvider();
+        var trace = new WorkflowTraceStore();
+        var executor = new Executor((_, _, _) =>
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(275));
+            throw new InvalidOperationException("Failure after some work");
+        });
+        var service = new WorkflowService(executor, new WorkflowServiceDependencies
+        {
+            Validator = new WorkflowValidator(), EffectPlanner = new WorkflowEffectPlanner(),
+            TraceStore = trace, TimeProvider = clock
+        });
+
+        await service.ExecuteAsync(Request(new Workflow { Actions = [Command("Fail")] })).ConfigureAwait(false);
+
+        Assert.That(trace.GetEntries().Single(entry => entry.Kind == WorkflowLifecycleKind.StepFailed).Elapsed,
+            Is.EqualTo(TimeSpan.FromMilliseconds(275)));
+    }
+
+    [TestCase("{\"type\":\"ChangeJourneyStop\"}")]
+    [TestCase("{\"id\":\"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee\",\"type\":\"ChangeJourneyStop\"}")]
+    [TestCase("{\"id\":\"not-a-guid\",\"type\":\"ChangeJourneyStop\",\"changeJourneyStop\":{}}")]
+    [TestCase("{\"type\":\"ChangeJourneyStop\",\"changeJourneyStop\":{}}")]
+    public async Task InvalidPersistedAction_RemainsRejectedAfterRuntimeJsonClone(string actionJson)
+    {
+        var workflow = System.Text.Json.JsonSerializer.Deserialize<Workflow>(
+            "{\"actions\":[" + actionJson + "]}", JsonOptions.Default)
+            ?? throw new InvalidOperationException("Test workflow could not be loaded.");
+        var clone = System.Text.Json.JsonSerializer.Deserialize<Workflow>(
+            System.Text.Json.JsonSerializer.Serialize(workflow, JsonOptions.Default), JsonOptions.Default)
+            ?? throw new InvalidOperationException("Test workflow could not be cloned.");
+        var executor = new Mock<IActionExecutor>(MockBehavior.Strict);
+
+        var result = await new WorkflowService(executor.Object).ExecuteAsync(Request(clone)).ConfigureAwait(false);
+
+        Assert.That(result.Status, Is.EqualTo(WorkflowExecutionStatus.NotStarted));
+        Assert.That(result.ValidationIssues, Is.Not.Empty);
+        executor.VerifyNoOtherCalls();
+    }
+
+    [Test]
     public async Task ListOrderIsAuthoritativeAndEachActionIsAwaited()
     {
         var first = Command("First", 9);

@@ -77,7 +77,7 @@ are the immutable boundary exposed to UI consumers.
 - IZ21 (Z21 Control Station Communication)
 - IMobaRuntime / MobaRuntimeService (authoritative runtime owner)
 - `WorkflowService` (validated ordered action execution and dry-run planning)
-- `WorkflowValidator`, `WorkflowConditionEvaluator`, and `WorkflowEffectPlanner`
+- `WorkflowValidator` and `WorkflowEffectPlanner`
 - `WorkflowExecutionCoordinator` (per-feedback-source FIFO execution)
 - `WorkflowTraceStore` (bounded in-memory lifecycle projection)
 - `ActionExecutor` and typed action handlers (live effects only)

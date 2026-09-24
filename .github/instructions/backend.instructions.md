@@ -28,7 +28,7 @@ compilation branches out of this layer.
 - Distinguish editable UI state from observed hardware state. Preserve the runtime's existing pending-command
   reconciliation, fail-safe behavior and operator acknowledgement; avoid blanket changes to optimistic state.
 - Extend existing workflow action handlers and execution context construction. Preserve failure propagation,
-  action ordering and the difference between sequential and parallel execution.
+  ordered action execution and the context supplied by the triggering event.
 
 Use the relevant runtime/workflow tests and fake I/O under `Test/` for validation. For packet or connection
 changes, also read [Z21 guidance](z21-backend.instructions.md).

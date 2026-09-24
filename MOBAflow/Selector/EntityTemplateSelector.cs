@@ -93,6 +93,9 @@ public partial class EntityTemplateSelector : DataTemplateSelector
 
     public DataTemplate? ChangeJourneyStopActionTemplate { get; set; }
 
+    /// <summary>Gets or sets the recovery template for invalid persisted actions.</summary>
+    public DataTemplate? InvalidActionTemplate { get; set; }
+
     /// <summary>
     /// Fallback DataTemplate for unknown types
     /// </summary>
@@ -118,6 +121,7 @@ public partial class EntityTemplateSelector : DataTemplateSelector
             PowerShellActionViewModel => PowerShellActionTemplate,
             TrainDestinationDisplayViewModel => TrainDestinationDisplayActionTemplate,
             ChangeJourneyStopViewModel => ChangeJourneyStopActionTemplate,
+            InvalidWorkflowActionViewModel => InvalidActionTemplate,
             WorkflowActionViewModel => ActionTemplate,  // Generic fallback
             WorkflowAction => ActionTemplate,  // Domain object fallback
             _ => DefaultTemplate

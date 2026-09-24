@@ -731,6 +731,14 @@
     </DataTemplate>
 
     <!--  Generic Action Template (Fallback)  -->
+    <DataTemplate x:Key="InvalidActionTemplate">
+        <StackPanel Padding="0,0,16,16" Spacing="12">
+            <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Invalid action" />
+            <TextBlock Text="{Binding Name}" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding ValidationHint}" TextWrapping="Wrap" />
+        </StackPanel>
+    </DataTemplate>
+
     <DataTemplate x:Key="ActionTemplate">
         <ScrollViewer>
             <StackPanel Padding="0,0,16,16" Spacing="16">
@@ -1084,6 +1092,7 @@
     <selector:EntityTemplateSelector
         x:Key="EntityTemplateSelector"
         ActionTemplate="{StaticResource ActionTemplate}"
+        InvalidActionTemplate="{StaticResource InvalidActionTemplate}"
         AnnouncementActionTemplate="{StaticResource AnnouncementActionTemplate}"
         AudioActionTemplate="{StaticResource AudioActionTemplate}"
         CommandActionTemplate="{StaticResource CommandActionTemplate}"

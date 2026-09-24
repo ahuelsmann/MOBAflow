@@ -66,16 +66,12 @@ depending on its configured behavior.
 
 ### Workflows
 
-Workflow 2.0 represents automation as a graph of typed steps:
+A workflow is a reusable, ordered list of actions. An event triggers the workflow
+and supplies its execution context, including the related journey and current stop
+when available. The same workflow can be assigned to several events.
 
-- **Action** performs one configured action and continues to its next step.
-- **Delay** waits for the configured milliseconds before continuing.
-- **Condition** selects a true or false target from feedback, journey, or station context.
-- **Parallel** runs named branches and waits at an explicit join step.
-- **Nested workflow** calls another workflow and then continues.
-- **Terminate** ends the run as succeeded, cancelled, or failed.
-
-Action steps currently support:
+Actions run from top to bottom. Each action finishes before the next starts;
+**Delay after** adds a pause in milliseconds after that action. Actions currently support:
 
 - spoken announcement;
 - WAV audio playback;
@@ -89,28 +85,32 @@ The matrix action type exists in the data model but does not currently have a
 runtime handler.
 
 Use **Workflows** for library-focused authoring. Create or duplicate a workflow,
-add and reorder steps, select a step, and edit its typed properties in the
-editor pane. Set every successor, branch, join, nested-workflow, and failure
-target to a valid step or workflow ID. The first step is the workflow entry by
-default. Deleting a referenced workflow is blocked until every Event Manager or
-nested-workflow reference is removed or reassigned.
+add and reorder actions, select an action, and edit its settings in the properties
+pane. Use the up/down commands or drag an action to change its execution order.
+Workflow settings contain its name and description. Deleting a referenced workflow
+is blocked until its event assignments are removed or reassigned.
+
+Earlier graph workflows must be recreated as action lists. Conditions, parallel
+branches, nested workflows, and retry policies are no longer supported. Existing
+complex definitions are not automatically flattened into a different sequence.
 
 Use **Event Manager** when authoring in journey context. It exposes the same
 workflow collection and selection, so edits made on either page are immediately
 visible on the other. Select a journey feedback occurrence and choose **Assign
 selected workflow to feedback step** to link it.
 
-Choose **Validate** before operating a workflow. Validation reports structural,
-reference, payload, retry, recursion, and parallel-resource conflicts without
-running the graph. Choose **Dry run** to traverse a valid graph and list planned
+Choose **Validate** before operating a workflow. Validation checks identifiers,
+the action list, and action settings without running any actions. Invalid or
+unsupported actions can be removed and recreated in the editor.
+Choose **Dry run** to list a valid workflow's planned
 effects without waiting or contacting Z21, audio, speech, scripts, displays, or
 journey mutation handlers. **Recent trace** shows correlated lifecycle entries
 for the selected workflow; traces are memory-only and reset with the process.
 
 Execution stops safely when it is cancelled, the project changes, the runtime
-disconnects, or the application shuts down. A step-specific failure policy
-overrides the workflow default and can stop, continue, follow a failure branch,
-or retry a bounded number of times.
+disconnects, or the application shuts down. An action failure stops the workflow;
+later actions do not run. Review the trace, correct the action settings, and let
+a subsequent event start a new execution.
 
 ### Track Plan
 
@@ -224,12 +224,12 @@ global shortcuts are not currently defined.
 
 ### A workflow fails
 
-- Run **Validate** and resolve every reported step/reference issue first.
-- Use **Dry run** to confirm the selected branch and planned effects without
+- Run **Validate** and resolve every reported action issue first.
+- Use **Dry run** to confirm the action order and planned effects without
   contacting external systems.
 - Confirm that payloads and referenced files exist and that required
   station/journey/feedback context is available.
-- Review **Recent trace** for the failing workflow and step, then check
+- Review **Recent trace** for the failing workflow and action, then check
   **Monitor** and **Messages** for the corresponding external-system error.
 
 ## More documentation
