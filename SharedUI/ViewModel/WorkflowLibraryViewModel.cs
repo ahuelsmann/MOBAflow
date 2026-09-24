@@ -647,8 +647,8 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
         var duplicate = JsonSerializer.Deserialize<Workflow>(json, JsonOptions.Compact)
             ?? throw new InvalidOperationException("Workflow duplication could not deserialize the cloned action list.");
         duplicate.Id = Guid.NewGuid();
-        foreach (var action in duplicate.Actions)
-            if (action != null) action.Id = Guid.NewGuid();
+        foreach (var action in duplicate.Actions.Where(action => action != null))
+            action.Id = Guid.NewGuid();
         return duplicate;
     }
 
