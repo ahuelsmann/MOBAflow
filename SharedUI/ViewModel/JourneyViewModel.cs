@@ -9,7 +9,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using Domain;
-using Domain.Enum;
 
 using Interface;
 
@@ -158,12 +157,6 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     }
 
     /// <summary>
-    /// Gets the possible values for <see cref="BehaviorOnLastStop"/> for ComboBox binding.
-    /// </summary>
-    public IEnumerable<BehaviorOnLastStop> BehaviorOnLastStopValues =>
-        Enum.GetValues<BehaviorOnLastStop>();
-
-    /// <summary>
     /// Gets the current station name from the runtime session state.
     /// </summary>
     public string CurrentStation => _state.CurrentStationName;
@@ -217,7 +210,7 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     /// </summary>
     public void ResetRuntimeState()
     {
-        _state.Reset((int)_journey.FirstPos);
+        _state.Reset();
 
         foreach (var stationVm in Stations)
         {
@@ -230,30 +223,12 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
 
     /// <summary>
     /// Resets the journey to its initial state.
-    /// Clears counter, position, and station highlighting.
+    /// Clears the projected position and station highlighting.
     /// </summary>
     [RelayCommand]
     private void Reset()
     {
         ResetRuntimeState();
-    }
-
-    /// <summary>
-    /// Gets or sets the behavior when the journey reaches the last stop.
-    /// </summary>
-    public BehaviorOnLastStop BehaviorOnLastStop
-    {
-        get => _journey.BehaviorOnLastStop;
-        set => SetProperty(_journey.BehaviorOnLastStop, value, _journey, (m, v) => m.BehaviorOnLastStop = v);
-    }
-
-    /// <summary>
-    /// Gets or sets the initial position index used when resetting the journey.
-    /// </summary>
-    public uint FirstPos
-    {
-        get => _journey.FirstPos;
-        set => SetProperty(_journey.FirstPos, value, _journey, (m, v) => m.FirstPos = v);
     }
 
     /// <summary>

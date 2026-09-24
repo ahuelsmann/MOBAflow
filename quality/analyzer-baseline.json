@@ -3435,13 +3435,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1822",
-      "path": "SharedUI/ViewModel/JourneyViewModel.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1822",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Journey.cs",
       "count": 2
     },
@@ -6964,7 +6957,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "Test/Backend/JourneyEventPlanTests.cs",
-      "count": 31
+      "count": 30
     },
     {
       "project": "Test",
@@ -8273,7 +8266,7 @@
       "targetFramework": "net10.0",
       "ruleId": "NUnit2056",
       "path": "Test/Backend/JourneyEventPlanTests.cs",
-      "count": 5
+      "count": 4
     },
     {
       "project": "Test",
@@ -9028,13 +9021,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "NUnit4002",
-      "path": "Test/Domain/JourneyTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "NUnit4002",
       "path": "Test/Domain/WorkflowTests.cs",
       "count": 2
     },
@@ -9085,7 +9071,7 @@
       "targetFramework": "net10.0",
       "ruleId": "NUnit4002",
       "path": "Test/Unit/DomainDefaultsTests.cs",
-      "count": 3
+      "count": 2
     },
     {
       "project": "TrackLibrary.Base",

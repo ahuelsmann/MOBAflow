@@ -130,8 +130,9 @@ session; only an explicit reset sets the counters back to zero. A journey's
 workflow, enabled). For every accepted activation, `JourneyManager` evaluates all
 journeys marked `IsActive` and starts the workflow of each enabled event whose
 InPort counter has just reached its count. Virtual stops change only through the
-`ChangeJourneyStop` workflow action; `BehaviorOnLastStop` either keeps the last
-stop or continues at the first stop. There are no follow-up journeys. The current
+`ChangeJourneyStop` workflow action. Moving beyond the last stop leaves it unchanged.
+There is no automatic completion, restart or follow-up journey. Counts without a
+matching rule do nothing; the journey remains active. The current
 stop is stored separately by `JourneyRuntimeStateStore` and exposed through
 snapshots and MOBApi.
 

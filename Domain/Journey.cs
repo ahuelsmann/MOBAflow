@@ -1,8 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Domain;
 
-using Enum;
-
 /// <summary>
 /// Journey - Pure Data Object (POCO).
 /// </summary>
@@ -55,14 +53,4 @@ public class Journey
     /// Gets or sets the feedback events, each matched against the InPort session counter.
     /// </summary>
     public JourneyEventPlan EventPlan { get; set; }
-
-    /// <summary>
-    /// Gets or sets the behavior when the last station of the journey is reached.
-    /// </summary>
-    public BehaviorOnLastStop BehaviorOnLastStop { get; set; }
-
-    /// <summary>
-    /// First position index (default: 0)
-    /// </summary>
-    public uint FirstPos { get; set; }
 }

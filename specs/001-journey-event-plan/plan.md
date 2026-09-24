@@ -13,7 +13,11 @@
 
 **Status**: Implemented locally; issue linked and portable tests/Windows compile passed; manual acceptance and remote quality gate open
 
-## Summary
+## MVP simplification (2026-09-24)
+
+**GitHub Issue**: #144. Remove `BehaviorOnLastStop`, `FirstPos`, completion/restart state and the unused completion callback. Keep active/inactive matching, current-stop selection, explicit reset and workflow FIFO. Update domain/UI/contracts/sample data together; replace obsolete completion tests with last-stop, later-rule and explicit-return regressions. Validate the full portable/Windows suites and affected Android consumer. Reserving routes (#146), all maintenance (#147) and a possible counter-setting action are separate work.
+
+## Summary (earlier increment)
 
 Current removal scope (operator decision, 2026-09-24): remove vehicle usage models, runtime tracking/checkpoints,
 snapshot fields, autosave hooks, UI counters/corrections and usage-based maintenance intervals. Retain calendar

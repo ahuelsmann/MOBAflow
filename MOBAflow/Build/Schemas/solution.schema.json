@@ -168,7 +168,6 @@
                 "inPort": { "type": ["integer", "null"] },
                 "isUsingTimerToIgnoreFeedbacks": { "type": "boolean" },
                 "intervalForTimerToIgnoreFeedbacks": { "type": ["number", "null"] },
-                "behaviorOnLastStop": { "type": "integer" },
                 "stations": {
                   "type": "array",
                   "minItems": 1,

@@ -22,9 +22,6 @@ public sealed record QueuedWorkflowExecution
 
     /// <summary>Creates the request once, after preceding source work completes.</summary>
     public required Func<WorkflowExecutionRequest> RequestFactory { get; init; }
-
-    /// <summary>Runs after a started executor finishes; true means success without cancellation.</summary>
-    public Func<bool, Task>? OnCompleted { get; init; }
 }
 
 /// <summary>Orders workflow executions per source without blocking unrelated sources.</summary>

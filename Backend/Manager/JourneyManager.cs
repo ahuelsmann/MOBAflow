@@ -7,7 +7,6 @@ using Common.Events;
 using Common.Extension;
 
 using Domain;
-using Domain.Enum;
 
 using Interface;
 
@@ -119,13 +118,13 @@ public partial class JourneyManager : IJourneyManager
             ?? new InPortCounterService(z21, new AppSettings { Counter = { UseTimerFilter = false } }, dependencies.TimeProvider);
         _executionContextFactory = new ActionExecutionContextFactory(executionContext ?? new ActionExecutionContext { Z21 = z21 });
         _executionCoordinator = dependencies.ExecutionCoordinator
-            ?? new WorkflowExecutionCoordinator(workflowService, dependencies.TimeProvider ?? TimeProvider.System, _logger);
+            ?? new WorkflowExecutionCoordinator(workflowService, dependencies.TimeProvider ?? TimeProvider.System);
 
         foreach (var journey in project.Journeys)
         {
             var checkpoint = _runtimeStateStore.Load(project.Id, journey.Id);
             var checkpointPosition = journey.Stations.FindIndex(station => station.Id == checkpoint?.CurrentStationId);
-            var position = checkpointPosition >= 0 ? checkpointPosition : (int)journey.FirstPos;
+            var position = checkpointPosition >= 0 ? checkpointPosition : 0;
             var station = journey.Stations.ElementAtOrDefault(position);
             _states[journey.Id] = new JourneySessionState
             {
@@ -134,8 +133,7 @@ public partial class JourneyManager : IJourneyManager
                 CurrentPos = position,
                 CurrentStationId = station?.Id,
                 CurrentStationName = station?.Name ?? string.Empty,
-                IsActive = journey.IsActive,
-                IsCompleted = checkpointPosition >= 0 && checkpoint!.IsCompleted
+                IsActive = journey.IsActive
             };
         }
 
@@ -253,7 +251,6 @@ public partial class JourneyManager : IJourneyManager
                 OwnerId = journey.Id,
                 WorkflowId = workflow.Id,
                 SourceCorrelationId = args.CorrelationId,
-                OnCompleted = succeeded => CompleteJourneyIfRequested(journey, state, resetVersion, succeeded),
                 RequestFactory = () => new WorkflowExecutionRequest
                 {
                     Project = executionProject,
@@ -310,48 +307,6 @@ public partial class JourneyManager : IJourneyManager
         return result;
     }
 
-    /// <summary>Completes a journey after the workflow that moved past its last stop has finished.</summary>
-    private Task CompleteJourneyIfRequested(Journey journey, JourneySessionState state, long resetVersion, bool succeeded)
-    {
-        JourneySessionState completed;
-        JourneySessionState snapshot;
-        lock (_stateSync)
-        {
-            if (_disposed || state.ResetVersion != resetVersion || !state.IsJourneyCompletionRequested)
-            {
-                return Task.CompletedTask;
-            }
-
-            state.IsJourneyCompletionRequested = false;
-            if (!succeeded || state.IsCompleted)
-            {
-                return Task.CompletedTask;
-            }
-
-            state.IsCompleted = true;
-            LogLastStationReached(_logger, journey.Name);
-            completed = state.Snapshot();
-
-            if (journey.BehaviorOnLastStop == BehaviorOnLastStop.BeginAgainFromFistStop)
-            {
-                var firstStation = journey.Stations.FirstOrDefault();
-                state.RunId = Guid.NewGuid();
-                state.IsCompleted = false;
-                state.CurrentPos = 0;
-                state.CurrentStationId = firstStation?.Id;
-                state.CurrentStationName = firstStation?.Name ?? string.Empty;
-            }
-
-            _runtimeStateStore.Save(_project.Id, state);
-            snapshot = state.Snapshot();
-        }
-
-        PublishTransition(journey, completed, JourneyRuntimeTransitionKind.Completed);
-        if (snapshot.RunId != completed.RunId) PublishTransition(journey, snapshot, JourneyRuntimeTransitionKind.Restarted);
-        OnFeedbackReceived(new JourneyFeedbackEventArgs { JourneyId = journey.Id, SessionState = snapshot });
-        return Task.CompletedTask;
-    }
-
     private static Station? GetCurrentStation(Journey journey, JourneySessionState state)
     {
         var currentStationIndex = state.CurrentStationId.HasValue
@@ -380,14 +335,12 @@ public partial class JourneyManager : IJourneyManager
                 return;
             }
 
-            var station = journey.Stations.ElementAtOrDefault((int)journey.FirstPos);
-            state.CurrentPos = (int)journey.FirstPos;
+            var station = journey.Stations.FirstOrDefault();
+            state.CurrentPos = 0;
             state.CurrentStationId = station?.Id;
             state.CurrentStationName = station?.Name ?? string.Empty;
             state.LastFeedbackTime = null;
             state.RunId = Guid.NewGuid();
-            state.IsJourneyCompletionRequested = false;
-            state.IsCompleted = false;
             state.ResetVersion++;
             _executionCoordinator.CancelOwner(journey.Id);
             _runtimeStateStore.Reset(_project.Id, journey.Id);
@@ -495,9 +448,6 @@ public partial class JourneyManager : IJourneyManager
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Workflow {WorkflowId} of journey '{Journey}' was not found")]
     private static partial void LogWorkflowNotFound(ILogger logger, Guid workflowId, string journey);
-
-    [LoggerMessage(Level = LogLevel.Information, Message = "Last station of journey '{Journey}' reached")]
-    private static partial void LogLastStationReached(ILogger logger, string journey);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Journey '{Journey}' reset to position {Position}")]
     private static partial void LogJourneyReset(ILogger logger, string journey, int position);

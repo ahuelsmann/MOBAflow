@@ -94,3 +94,11 @@ Parallel examples: T014 editor tests alongside T007 backend matching; T018 seria
 ## Evidence
 
 2026-09-10: Twenty-four of 26 tasks are checked. Runtime baseline full suite: 1,710 passed, zero failed, four skipped, 1,714 total, 45 seconds; `Test/TestResults/event-plan-portable.trx`. Three skips require running MOBApi; one requires bundled photos. After UI refinement, 18 focused tests passed and the final Windows FastDebug build passed with zero warnings/errors in 1 minute 29 seconds. Secrets/line-ending checks across 62 files, staged checks and `git diff --check` passed. Additional Windows-specific runtime tests were not run. Issue #124 and issue/PR governance are complete. Local Sonar was attempted with zero secrets issues but 62 agentic capability failures (403 Forbidden), so no green analysis is claimed. T017 and T025 remain open for full manual acceptance and the remote Sonar/PR gate.
+
+
+## MVP rule-only journeys (#144, 2026-09-24)
+
+- [x] T037 Remove end-behavior configuration, completion/restart state and the unused coordinator callback from model, runtime, UI, samples and schema.
+- [x] T038 Replace completion tests with regressions for later matches at the last stop, no-op next-stop actions and explicit return without counter reset.
+- [x] T039 Align current specification, data model and runtime contract with the operator's rule-only decision.
+- [x] T040 Validate the final source: portable Release 1,706 passed / 4 skipped; Windows Release 1,764 passed / 0 skipped; Windows and Android Release builds and AAB validation passed. Analyzer references only decrease (portable 4,247; Windows 3,024; Android 1,947 diagnostics). Secrets, line endings, Spec Kit and final diff checks passed. Live UI/theme checks remain unperformed because application launch is not authorized; GitHub CI/SonarCloud are separate publication gates.
