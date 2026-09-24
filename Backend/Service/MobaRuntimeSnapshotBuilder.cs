@@ -120,17 +120,17 @@ internal static class MobaRuntimeSnapshotBuilder
             return snapshots;
         }
 
-        foreach (var journey in activeProjectContext.ActiveProject.Journeys)
+        foreach (var journeyId in activeProjectContext.ActiveProject.Journeys.Select(journey => journey.Id))
         {
-            var state = activeProjectContext.JourneyManager.GetState(journey.Id);
+            var state = activeProjectContext.JourneyManager.GetState(journeyId);
             if (state == null)
             {
                 continue;
             }
 
-            snapshots[journey.Id] = new JourneyRuntimeSnapshot
+            snapshots[journeyId] = new JourneyRuntimeSnapshot
             {
-                JourneyId = journey.Id,
+                JourneyId = journeyId,
                 JourneyRunId = state.RunId,
                 CurrentPos = state.CurrentPos,
                 CurrentStationName = state.CurrentStationName,

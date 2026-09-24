@@ -16,8 +16,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 using Service;
 
-using System.Diagnostics.CodeAnalysis;
-
 /// <summary>
 /// Groups optional journey runtime collaborators so the manager constructor stays focused on required dependencies.
 /// </summary>
@@ -233,7 +231,7 @@ public partial class JourneyManager : IJourneyManager
         lock (_stateSync)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
-            TryGetCurrentStation(journey, state, out var currentStation);
+            var currentStation = GetCurrentStation(journey, state);
             return _executionContextFactory.Create(new ActionExecutionContextState
             {
                 CurrentProject = _project,
@@ -306,22 +304,17 @@ public partial class JourneyManager : IJourneyManager
         return Task.CompletedTask;
     }
 
-    private static bool TryGetCurrentStation(
-        Journey journey,
-        JourneySessionState state,
-        [NotNullWhen(true)] out Station? currentStation)
+    private static Station? GetCurrentStation(Journey journey, JourneySessionState state)
     {
         var currentStationIndex = state.CurrentStationId.HasValue
             ? journey.Stations.FindIndex(station => station.Id == state.CurrentStationId!.Value)
             : state.CurrentPos;
         if (currentStationIndex < 0 || currentStationIndex >= journey.Stations.Count)
         {
-            currentStation = null;
-            return false;
+            return null;
         }
 
-        currentStation = journey.Stations[currentStationIndex];
-        return true;
+        return journey.Stations[currentStationIndex];
     }
 
     /// <summary>

@@ -66,7 +66,12 @@ internal sealed partial class EventManagerPage
 
     private static double ValidStarValue(double value, double fallback) => double.IsFinite(value) && value > 0 ? value : fallback;
 
-    private void OnPanelExpansionChanged(DependencyObject sender, DependencyProperty property) => ApplyResponsiveLayout();
+    private void OnPanelExpansionChanged(DependencyObject sender, DependencyProperty property)
+    {
+        _ = sender;
+        _ = property;
+        ApplyResponsiveLayout();
+    }
 
     private void OnPageSizeChanged(object sender, SizeChangedEventArgs e)
     {
@@ -101,12 +106,24 @@ internal sealed partial class EventManagerPage
 
     private void ApplyEditorLayout()
     {
+        ApplyEditorPanelPlacement();
+        ApplyEditorColumnWidths();
+        LibrarySplitter.Visibility = _isWide && ValuesPanel.IsExpanded ? Visibility.Visible : Visibility.Collapsed;
+        PropertiesSplitter.Visibility = _isWide && ValuesPanel.IsExpanded && PropertiesPanel.IsExpanded ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void ApplyEditorPanelPlacement()
+    {
         Grid.SetColumnSpan(PlanArea, _isWide ? 1 : 5);
         Grid.SetRow(ValuesPanel, _isWide ? 0 : 1);
         Grid.SetColumn(ValuesPanel, _isWide ? 2 : 0);
         Grid.SetColumnSpan(ValuesPanel, _isWide ? 1 : 3);
         Grid.SetRow(PropertiesPanel, _isWide ? 0 : 1);
         CompactPanelsRow.Height = _isWide ? new GridLength(0) : new GridLength(1, GridUnitType.Star);
+    }
+
+    private void ApplyEditorColumnWidths()
+    {
         EventPlanColumn.Width = new GridLength(_isWide ? _eventPlanStarValue : 1, GridUnitType.Star);
         EventPlanColumn.MinWidth = _isWide ? 280 : 160;
         WorkflowLibraryColumn.MinWidth = _isWide ? 32 : 0;
@@ -116,8 +133,6 @@ internal sealed partial class EventManagerPage
         var propertiesWidth = _isWide ? _propertiesStarValue : 1;
         PropertiesColumn.Width = PropertiesPanel.IsExpanded
             ? new GridLength(propertiesWidth, GridUnitType.Star) : GridLength.Auto;
-        LibrarySplitter.Visibility = _isWide && ValuesPanel.IsExpanded ? Visibility.Visible : Visibility.Collapsed;
-        PropertiesSplitter.Visibility = _isWide && ValuesPanel.IsExpanded && PropertiesPanel.IsExpanded ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)

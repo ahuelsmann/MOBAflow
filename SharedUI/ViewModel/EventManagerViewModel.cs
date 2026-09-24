@@ -46,12 +46,12 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
     public string EventCountLabel => Events.Count == 1 ? "1 event" : $"{Events.Count} events";
     public bool IsEmptyPlan => SelectedJourney != null && Events.Count == 0;
     public bool HasCommandStatus => !string.IsNullOrWhiteSpace(MainWindow?.JourneyCommandStatus);
-    public bool CanEdit => SelectedJourney != null;
+    public bool CanEdit => this.SelectedJourney != null;
     public bool CanUndo => CanEdit && _undo.Count > 0;
     public bool CanRedo => CanEdit && _redo.Count > 0;
     public bool CanEditSelectedEvent => CanEdit && SelectedEvent != null;
 
-    public string PlanStatus => SelectedJourney switch
+    public string PlanStatus => this.SelectedJourney switch
     {
         null => "Select a journey to edit its events.",
         { IsActive: false } => "Journey inactive. Activate it to evaluate its events on incoming feedback.",

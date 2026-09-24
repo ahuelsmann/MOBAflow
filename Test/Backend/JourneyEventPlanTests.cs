@@ -321,10 +321,20 @@ public sealed class JourneyEventPlanTests
         var blockedProcessing = manager.LastProcessing;
 
         InPortCounterServiceTests.Raise(fixture.Z21, 2);
+        var otherProcessing = manager.LastProcessing;
 
-        await otherStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
-        releaseFirst.TrySetResult();
-        await blockedProcessing.WaitAsync(TimeSpan.FromSeconds(5));
+        try
+        {
+            await otherStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.That(blockedProcessing.IsCompleted, Is.False,
+                "The other journey must start while the first journey's workflow is still blocked.");
+        }
+        finally
+        {
+            releaseFirst.TrySetResult();
+        }
+
+        await Task.WhenAll(blockedProcessing, otherProcessing).WaitAsync(TimeSpan.FromSeconds(5));
     }
 
     private static WorkflowAction NextStopAction() => new()
