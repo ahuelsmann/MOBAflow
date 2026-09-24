@@ -6,6 +6,7 @@ using Moba.Backend.Interface;
 using Moba.Backend.Service;
 using Moba.Backend.Service.Validation;
 using Moba.Domain;
+using Moba.Domain.Enum;
 
 /// <summary>
 /// Tests for <see cref="ProjectValidator"/> and its <see cref="ProjectValidationResult"/>.
@@ -106,7 +107,7 @@ internal sealed class ProjectValidatorTests
         var solution = new Solution();
         var project = CreateMinimalValidProject();
         project.Trains.Add(new Train());
-        project.Workflows.Add(new Workflow());
+        project.Workflows.Add(new Workflow { Actions = [new WorkflowAction { Type = ActionType.Command, Command = new() { BytesBase64 = "AA==" } }] });
         project.PassengerWagons.Add(new PassengerWagon());
         project.GoodsWagons.Add(new GoodsWagon());
         project.SignalBoxPlan = new SignalBoxPlan();
@@ -147,21 +148,19 @@ internal sealed class ProjectValidatorTests
     }
 
     [Test]
-    public void ValidateCompleteness_InvalidWorkflowGraph_IncludesStableWorkflowCodeAndStep()
+    public void ValidateCompleteness_InvalidWorkflowAction_IncludesStableWorkflowCodeAndAction()
     {
         // Arrange
         var project = CreateMinimalValidProject();
         var stepId = Guid.NewGuid();
         project.Workflows.Add(new Workflow
         {
-            EntryStepId = stepId,
-            Steps =
+            Actions =
             [
-                new WorkflowDelayStep
+                new WorkflowAction
                 {
                     Id = stepId,
-                    DelayMs = -1,
-                    NextStepId = Guid.NewGuid()
+                    DelayAfterMs = -1
                 }
             ]
         });
@@ -172,7 +171,7 @@ internal sealed class ProjectValidatorTests
         // Assert
         Assert.That(result.Messages.Any(message =>
             message.Level == ValidationLevel.Error &&
-            message.Text.Contains(WorkflowValidationCodes.InvalidStepPayload) &&
+            message.Text.Contains(WorkflowValidationCodes.InvalidActionPayload) &&
             message.Text.Contains(stepId.ToString())), Is.True);
     }
 

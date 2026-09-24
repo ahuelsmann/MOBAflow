@@ -2,6 +2,7 @@
 namespace Moba.Backend.Service;
 
 using Domain;
+using Common.Events;
 
 using Interface;
 
@@ -14,6 +15,12 @@ using Sound;
 /// </summary>
 public class ActionExecutionContext
 {
+    /// <summary>Gets the event that triggered this invocation.</summary>
+    public IEvent? SourceEvent { get; init; }
+
+    /// <summary>Gets the event definition or assignment identifier.</summary>
+    public Guid? SourceEventDefinitionId { get; init; }
+
     /// <summary>
     /// Z21 command station interface for sending commands.
     /// </summary>
@@ -78,6 +85,12 @@ public class ActionExecutionContext
 /// </summary>
 public sealed class ActionExecutionContextState
 {
+    /// <summary>Gets the event that triggered this invocation.</summary>
+    public IEvent? SourceEvent { get; init; }
+
+    /// <summary>Gets the event definition or assignment identifier.</summary>
+    public Guid? SourceEventDefinitionId { get; init; }
+
     public Project? CurrentProject { get; init; }
 
     public Journey? CurrentJourney { get; init; }
@@ -104,12 +117,30 @@ public sealed class ActionExecutionContextState
 /// </summary>
 public sealed class ActionExecutionContextFactory(ActionExecutionContext services)
 {
+    /// <summary>Copies invocation fields into a new context while sharing service dependencies.</summary>
+    public ActionExecutionContext CreateForExecution() => Create(new ActionExecutionContextState
+    {
+        SourceEvent = services.SourceEvent,
+        SourceEventDefinitionId = services.SourceEventDefinitionId,
+        CurrentProject = services.CurrentProject,
+        CurrentJourney = services.CurrentJourney,
+        CurrentJourneySessionState = services.CurrentJourneySessionState,
+        CurrentStation = services.CurrentStation,
+        CurrentPlatform = services.CurrentPlatform,
+        JourneyTemplateText = services.JourneyTemplateText,
+        CurrentStationIndex = services.CurrentStationIndex,
+        FeedbackInPort = services.FeedbackInPort,
+        ApplyJourneyStopTransition = services.ApplyJourneyStopTransition
+    });
+
     public ActionExecutionContext Create(ActionExecutionContextState? state = null)
     {
         ArgumentNullException.ThrowIfNull(services);
 
         return new ActionExecutionContext
         {
+            SourceEvent = state?.SourceEvent,
+            SourceEventDefinitionId = state?.SourceEventDefinitionId,
             Z21 = services.Z21,
             SpeakerEngine = services.SpeakerEngine,
             SoundPlayer = services.SoundPlayer,

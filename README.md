@@ -111,7 +111,7 @@ hardware color-test only.
 | Journeys | Ordered stations, active flag, InPort count events, progress persistence and end-of-journey behavior |
 | Timetable | Dated services, live progress, deterministic delays, conflict explanations and dispatcher decisions |
 | Event Manager | Visual editing of feedback steps and stop transitions |
-| Workflows | Sequential or parallel actions triggered by layout events |
+| Workflows | Reusable ordered action lists triggered by layout events |
 | Rolling stock | Locomotives, wagons, consists, photos, runtime-derived usage, maintenance history and decoder records |
 | Track plan | AnyRail import, drag and drop, snapping, topology validation, Undo/Redo and SVG export |
 | Signal box | Signals, switches, routes and Viessmann aspect control |

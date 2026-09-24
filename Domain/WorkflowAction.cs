@@ -25,7 +25,7 @@ public class WorkflowAction
     /// <summary>
     /// Execution order number (1-based).
     /// Automatically updated when actions are reordered via drag drop.
-    /// Used for sorting actions before execution.
+    /// Display ordinal; the workflow action list determines execution order.
     /// </summary>
     public uint Number { get; set; }
 
@@ -34,14 +34,15 @@ public class WorkflowAction
     /// </summary>
     public ActionType Type { get; set; }
 
+    /// <summary>Gets whether the payload required by the declared action type is present.</summary>
+    [JsonIgnore]
+    public bool HasPayload => WorkflowActionPayloadDescriptors.Find(Type)?.HasPayload(this) ?? false;
+
     /// <summary>
     /// Delay in milliseconds for timing control.
     ///
-    /// Sequential Mode: Pause AFTER this action completes (before next action starts).
+    /// Pause AFTER this action completes (before the next action starts).
     /// - Use for: Adding silence between actions (e.g., wait 1s after Gong before Announcement)
-    ///
-    /// Parallel Mode: Start offset FROM previous action (cumulative).
-    /// - Use for: Staggered overlapping effects (e.g., Gong at t=0, Announcement at t+500ms)
     ///
     /// Default: 0 (no delay)
     /// </summary>

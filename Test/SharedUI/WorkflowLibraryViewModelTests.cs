@@ -9,148 +9,119 @@ using Moba.Domain;
 using Moba.Domain.Enum;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
-using Moba.SharedUI.ViewModel.WorkflowSteps;
+using Moba.SharedUI.ViewModel.Action;
 
 using Moq;
 
 using System.ComponentModel;
 using System.Text.Json;
 
-/// <summary>Verifies shared workflow catalog identity, graph operations, references, and save coordination.</summary>
+/// <summary>Verifies shared workflow catalog identity, action operations, references, and save coordination.</summary>
 [TestFixture]
 public sealed class WorkflowLibraryViewModelTests
 {
     [Test]
-    public async Task CreateWorkflowCommand_AddsValidMinimalGraphThroughProjectWrapper()
+    public async Task CreateWorkflowCommand_AddsEmptyActionListThroughProjectWrapper()
     {
-        var projectViewModel = new ProjectViewModel(new Project());
-        var context = new TestProjectContext(projectViewModel);
+        var project = new ProjectViewModel(new Project());
+        var context = new TestProjectContext(project);
         using var library = new WorkflowLibraryViewModel(context, new TestDialogService(true));
-
         await library.CreateWorkflowCommand.ExecuteAsync(null);
-
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
-            Assert.That(projectViewModel.Model.Workflows, Has.Count.EqualTo(1));
-            Assert.That(projectViewModel.Workflows, Has.Count.EqualTo(1));
-            Assert.That(library.SelectedWorkflow, Is.SameAs(projectViewModel.Workflows.Single()));
-            Assert.That(library.SelectedWorkflow!.Model.EntryStepId, Is.EqualTo(library.SelectedWorkflow.Model.Steps!.Single().Id));
-            Assert.That(library.SelectedWorkflow.Steps.Single(), Is.TypeOf<WorkflowTerminateStepViewModel>());
+            Assert.That(project.Model.Workflows, Has.Count.EqualTo(1));
+            Assert.That(library.SelectedWorkflow, Is.SameAs(project.Workflows.Single()));
+            Assert.That(library.SelectedWorkflow!.Actions, Is.Empty);
+            Assert.That(library.SelectedEditorObject, Is.SameAs(library.SelectedWorkflow));
             Assert.That(context.SaveCount, Is.EqualTo(1));
-        });
+        }
     }
 
     [Test]
-    public async Task DuplicateSelectedWorkflowCommand_RemapsInternalGraphAndActionIdentifiers()
+    public async Task DuplicateSelectedWorkflowCommand_ClonesPayloadAndRemapsIdentifiers()
     {
-        var action = new WorkflowActionStep
-        {
-            Name = "Action",
-            Action = new WorkflowAction
-            {
-                Name = "Command",
-                Type = ActionType.Command,
-                Command = new CommandActionPayload { BytesBase64 = "AA==" }
-            }
-        };
-        var terminate = new WorkflowTerminateStep { Name = "Done" };
-        action.NextStepId = terminate.Id;
-        var source = new Workflow
-        {
-            Name = "Source",
-            EntryStepId = action.Id,
-            Steps = [action, terminate]
-        };
-        var projectViewModel = new ProjectViewModel(new Project { Workflows = [source] });
-        var context = new TestProjectContext(projectViewModel);
+        var action = Command("Command");
+        var source = new Workflow { Name = "Source", Actions = [action, Command("Second")] };
+        var project = new ProjectViewModel(new Project { Workflows = [source] });
+        var context = new TestProjectContext(project);
         using var library = new WorkflowLibraryViewModel(context, new TestDialogService(true));
-
         await library.DuplicateSelectedWorkflowCommand.ExecuteAsync(null);
-
         var duplicate = library.SelectedWorkflow!.Model;
-        var duplicateAction = (WorkflowActionStep)duplicate.Steps![0];
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(duplicate.Id, Is.Not.EqualTo(source.Id));
-            Assert.That(duplicate.Steps.Select(step => step.Id), Is.All.Not.EqualTo(action.Id).And.Not.EqualTo(terminate.Id));
-            Assert.That(duplicate.EntryStepId, Is.EqualTo(duplicateAction.Id));
-            Assert.That(duplicateAction.NextStepId, Is.EqualTo(duplicate.Steps[1].Id));
-            Assert.That(duplicateAction.Action!.Id, Is.Not.EqualTo(action.Action!.Id));
-            Assert.That(projectViewModel.Workflows, Has.Count.EqualTo(2));
+            Assert.That(duplicate.Actions.Select(item => item.Id).Intersect(source.Actions.Select(item => item.Id)), Is.Empty);
+            Assert.That(duplicate.Actions.Select(item => item.Name), Is.EqualTo(source.Actions.Select(item => item.Name)));
+            Assert.That(duplicate.Actions[0].Command, Is.Not.SameAs(action.Command));
+            Assert.That(duplicate.Actions[0].Command!.BytesBase64, Is.EqualTo(action.Command!.BytesBase64));
+            Assert.That(project.Workflows, Has.Count.EqualTo(2));
             Assert.That(context.SaveCount, Is.EqualTo(1));
-        });
+        }
+        duplicate.Actions[0].Command!.BytesBase64 = "AQID";
+        Assert.That(action.Command!.BytesBase64, Is.EqualTo("AA=="));
     }
 
     [Test]
-    public async Task DeleteSelectedWorkflowCommand_BlocksAndReportsEveryReference()
+    public async Task DeleteSelectedWorkflowCommand_BlocksAndReportsMultipleEventAssignments()
     {
-        var target = new Workflow { Name = "Target", Steps = [] };
-        var nested = new WorkflowNestedStep { Name = "Call target", WorkflowId = target.Id };
-        var caller = new Workflow { Name = "Caller", EntryStepId = nested.Id, Steps = [nested] };
+        var target = new Workflow { Name = "Target" };
         var journey = new Journey
         {
             Name = "Regional",
-            EventPlan = new JourneyEventPlan { Events = [new JourneyEvent { InPort = 2, Count = 5, WorkflowId = target.Id }] }
+            EventPlan = new JourneyEventPlan { Events = [new JourneyEvent { InPort = 1, Count = 3, WorkflowId = target.Id }, new JourneyEvent { InPort = 2, Count = 5, WorkflowId = target.Id }] }
         };
-        var projectViewModel = new ProjectViewModel(new Project
-        {
-            Workflows = [target, caller],
-            Journeys = [journey]
-        });
-        var context = new TestProjectContext(projectViewModel);
+        var project = new ProjectViewModel(new Project { Workflows = [target], Journeys = [journey] });
+        var context = new TestProjectContext(project);
         var dialog = new TestDialogService(true);
         using var library = new WorkflowLibraryViewModel(context, dialog);
-
         await library.DeleteSelectedWorkflowCommand.ExecuteAsync(null);
-
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
-            Assert.That(projectViewModel.Model.Workflows, Does.Contain(target));
+            Assert.That(project.Model.Workflows, Does.Contain(target));
             Assert.That(library.DeletionReferences, Has.Count.EqualTo(2));
-            Assert.That(library.LastDeletionBlockMessage, Does.Contain("InPort 2, count 5"));
-            Assert.That(library.LastDeletionBlockMessage, Does.Contain("Regional"));
-            Assert.That(library.LastDeletionBlockMessage, Does.Contain("Caller"));
+            Assert.That(library.LastDeletionBlockMessage, Does.Contain("Regional").And.Contain("InPort 1, count 3").And.Contain("InPort 2, count 5"));
             Assert.That(dialog.LastTitle, Is.EqualTo("Workflow is in use"));
             Assert.That(context.SaveCount, Is.Zero);
-        });
+        }
     }
 
     [Test]
     public async Task DeleteSelectedWorkflowCommand_DeletesConfirmedUnreferencedWorkflow()
     {
-        var workflow = new Workflow { Name = "Unused", Steps = [] };
+        var workflow = new Workflow { Name = "Unused" };
         var projectViewModel = new ProjectViewModel(new Project { Workflows = [workflow] });
         var context = new TestProjectContext(projectViewModel);
         using var library = new WorkflowLibraryViewModel(context, new TestDialogService(true));
 
         await library.DeleteSelectedWorkflowCommand.ExecuteAsync(null);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(projectViewModel.Model.Workflows, Is.Empty);
             Assert.That(projectViewModel.Workflows, Is.Empty);
             Assert.That(library.SelectedWorkflow, Is.Null);
             Assert.That(context.SaveCount, Is.EqualTo(1));
-        });
+        }
     }
 
     [Test]
-    public async Task NestedStepChange_PropagatesToLibraryAutoSave()
+    public async Task ActionSettingsChange_PropagatesToLibraryAutoSave()
     {
-        var delay = new WorkflowDelayStep { Name = "Wait", DelayMs = 100 };
-        var workflow = new Workflow { EntryStepId = delay.Id, Steps = [delay] };
+        var delay = Command("Wait");
+        delay.DelayAfterMs = 100;
+        var workflow = new Workflow { Actions = [delay] };
         var projectViewModel = new ProjectViewModel(new Project { Workflows = [workflow] });
         var context = new TestProjectContext(projectViewModel);
         using var library = new WorkflowLibraryViewModel(context, new TestDialogService(true));
 
-        ((WorkflowDelayStepViewModel)library.SelectedWorkflow!.Steps.Single()).DelayMs = 200;
+        library.SelectedWorkflow!.Actions.Single().DelayAfterMs = 200;
         await context.Saved.Task.WaitAsync(TimeSpan.FromSeconds(1));
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
-            Assert.That(delay.DelayMs, Is.EqualTo(200));
+            Assert.That(delay.DelayAfterMs, Is.EqualTo(200));
             Assert.That(context.SaveCount, Is.EqualTo(1));
-        });
+        }
     }
 
     [Test]
@@ -166,17 +137,17 @@ public sealed class WorkflowLibraryViewModelTests
 
         projectViewModel.Refresh();
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(projectViewModel.Workflows[1], Is.SameAs(selected));
             Assert.That(library.SelectedWorkflow, Is.SameAs(selected));
-        });
+        }
     }
 
     [Test]
     public void ValidateCommand_ProjectsNavigationReadyIssuesForSelectedWorkflow()
     {
-        var workflow = new Workflow { Name = "Invalid", Steps = [] };
+        var workflow = new Workflow { Name = "Invalid" };
         var projectViewModel = new ProjectViewModel(new Project { Workflows = [workflow] });
         using var library = new WorkflowLibraryViewModel(
             new TestProjectContext(projectViewModel),
@@ -190,31 +161,95 @@ public sealed class WorkflowLibraryViewModelTests
     }
 
     [Test]
-    public void GraphOrderAndReferences_SurviveSaveAndReopen()
+    public void ReorderingPreservesSelectionAndPersistsExecutionOrder()
     {
-        var first = new WorkflowDelayStep { Name = "First", DelayMs = 20 };
-        var second = new WorkflowTerminateStep { Name = "Second" };
-        first.NextStepId = second.Id;
-        var workflow = new Workflow { EntryStepId = first.Id, Steps = [first, second] };
-        var project = new Project { Workflows = [workflow] };
-
-        var json = JsonSerializer.Serialize(project, JsonOptions.Compact);
-        var reopened = JsonSerializer.Deserialize<Project>(json, JsonOptions.Compact)!;
-        var reopenedViewModel = new ProjectViewModel(reopened).Workflows.Single();
-
-        Assert.Multiple(() =>
+        var first = Command("First");
+        var second = Command("Second");
+        var project = new ProjectViewModel(new Project { Workflows = [new Workflow { Actions = [first, second] }] });
+        using var library = new WorkflowLibraryViewModel(new TestProjectContext(project), new TestDialogService(true));
+        var selected = library.SelectedAction;
+        library.MoveSelectedActionDownCommand.Execute(null);
+        var reopened = JsonSerializer.Deserialize<Project>(JsonSerializer.Serialize(project.Model, JsonOptions.Compact), JsonOptions.Compact)!;
+        using (Assert.EnterMultipleScope())
         {
-            Assert.That(reopenedViewModel.Steps.Select(step => step.Name), Is.EqualTo(new[] { "First", "Second" }));
-            Assert.That(reopenedViewModel.EntryStepId, Is.EqualTo(reopenedViewModel.Steps[0].Id));
-            Assert.That(reopenedViewModel.Steps[0].NextStepId, Is.EqualTo(reopenedViewModel.Steps[1].Id));
-        });
+            Assert.That(reopened.Workflows[0].Actions.Select(action => action.Id), Is.EqualTo(new[] { second.Id, first.Id }));
+            Assert.That(reopened.Workflows[0].Actions.Select(action => action.Number), Is.EqualTo(new uint[] { 1, 2 }));
+            Assert.That(library.SelectedAction, Is.SameAs(selected));
+            Assert.That(library.MoveSelectedActionDownCommand.CanExecute(null), Is.False);
+            Assert.That(library.MoveSelectedActionUpCommand.CanExecute(null), Is.True);
+        }
+    }
+
+    [Test]
+    public void ActionEditingDoesNotResetCatalogSelectionAndSelectsNewAction()
+    {
+        var project = new ProjectViewModel(new Project { Workflows = [new Workflow()] });
+        using var library = new WorkflowLibraryViewModel(new TestProjectContext(project), new TestDialogService(true));
+        var workflow = library.SelectedWorkflow;
+        // A ListView can clear selection when its ItemsSource is replaced.
+        library.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(library.FilteredWorkflows)) library.SelectedWorkflow = null;
+        };
+        library.AddActionCommand.Execute(ActionType.Command);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(library.SelectedWorkflow, Is.SameAs(workflow));
+            Assert.That(library.SelectedAction, Is.SameAs(workflow!.Actions.Single()));
+            Assert.That(library.SelectedEditorObject, Is.SameAs(library.SelectedAction));
+        }
+        library.ShowWorkflowSettingsCommand.Execute(null);
+        Assert.That(library.SelectedEditorObject, Is.SameAs(workflow));
+        library.SelectActionCommand.Execute(workflow!.Actions[0]);
+        library.DeleteSelectedActionCommand.Execute(null);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(workflow.Model.Actions, Is.Empty);
+            Assert.That(library.SelectedAction, Is.Null);
+            Assert.That(library.DeleteSelectedActionCommand.CanExecute(null), Is.False);
+        }
+    }
+
+    [TestCase(ActionType.Announcement)]
+    [TestCase(ActionType.Audio)]
+    [TestCase(ActionType.Command)]
+    [TestCase(ActionType.SelectSignalAspect)]
+    [TestCase(ActionType.ExecuteScript)]
+    [TestCase(ActionType.TrainDestinationDisplay)]
+    [TestCase(ActionType.ChangeJourneyStop)]
+    public void AddActionProvidesTypedEditor(ActionType type)
+    {
+        var project = new ProjectViewModel(new Project { Workflows = [new Workflow()] });
+        using var library = new WorkflowLibraryViewModel(new TestProjectContext(project), new TestDialogService(true));
+        library.AddActionCommand.Execute(type);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(library.SelectedAction, Is.Not.Null);
+            Assert.That(library.SelectedAction!.Type, Is.EqualTo(type));
+            Assert.That(library.SelectedAction.GetType(), Is.Not.EqualTo(typeof(WorkflowActionViewModel)));
+            Assert.That(project.Model.Workflows[0].Actions.Single().Type, Is.EqualTo(type));
+        }
+    }
+
+    [Test]
+    public void ProjectChangeClearsPreviousActionSelection()
+    {
+        var project = new ProjectViewModel(new Project { Workflows = [new Workflow { Actions = [Command("First")] }] });
+        var context = new TestProjectContext(project);
+        using var library = new WorkflowLibraryViewModel(context, new TestDialogService(true));
+        context.SelectedProject = null;
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(library.SelectedWorkflow, Is.Null);
+            Assert.That(library.SelectedAction, Is.Null);
+            Assert.That(library.AddActionCommand.CanExecute(ActionType.Command), Is.False);
+        }
     }
 
     [Test]
     public async Task DryRunSelectedWorkflowCommand_PlansWithoutRequestingLiveExecution()
     {
-        var terminate = new WorkflowTerminateStep { Name = "Done" };
-        var workflow = new Workflow { Name = "Preview", EntryStepId = terminate.Id, Steps = [terminate] };
+        var workflow = new Workflow { Name = "Preview", Actions = [Command("Preview")] };
         var project = new Project { Workflows = [workflow] };
         var projectViewModel = new ProjectViewModel(project);
         var plannedEffect = new WorkflowPlannedEffect(
@@ -249,7 +284,7 @@ public sealed class WorkflowLibraryViewModelTests
 
         await library.DryRunSelectedWorkflowCommand.ExecuteAsync(null);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(capturedRequest, Is.Not.Null);
             Assert.That(capturedRequest!.Mode, Is.EqualTo(WorkflowRunMode.DryRun));
@@ -258,7 +293,7 @@ public sealed class WorkflowLibraryViewModelTests
             Assert.That(library.PlannedEffects, Is.EqualTo(new[] { plannedEffect }));
             Assert.That(library.LastDryRunStatus, Is.EqualTo(nameof(WorkflowExecutionStatus.Succeeded)));
             Assert.That(library.IsDryRunRunning, Is.False);
-        });
+        }
         workflowService.Verify(
             service => service.ExecuteAsync(
                 It.IsAny<WorkflowExecutionRequest>(),
@@ -295,15 +330,14 @@ public sealed class WorkflowLibraryViewModelTests
     }
 
     [Test]
-    public void NavigateToValidationIssueCommand_SelectsAffectedWorkflowAndStep()
+    public void NavigateToValidationIssueCommand_SelectsAffectedWorkflowAndAction()
     {
         var firstWorkflow = new Workflow { Name = "First" };
-        var affectedStep = new WorkflowDelayStep { Name = "Affected" };
+        var affectedStep = Command("Affected");
         var affectedWorkflow = new Workflow
         {
             Name = "Affected workflow",
-            EntryStepId = affectedStep.Id,
-            Steps = [affectedStep]
+            Actions = [affectedStep]
         };
         var projectViewModel = new ProjectViewModel(new Project
         {
@@ -313,21 +347,59 @@ public sealed class WorkflowLibraryViewModelTests
             new TestProjectContext(projectViewModel),
             new TestDialogService(true));
         var issue = new WorkflowValidationIssue(
-            WorkflowValidationCodes.InvalidStepPayload,
+            WorkflowValidationCodes.InvalidActionPayload,
             WorkflowValidationSeverity.Error,
             affectedWorkflow.Id,
             affectedStep.Id,
-            "steps[0].delayMs",
+            "actions[0].delayAfterMs",
             "Delay is invalid.");
 
         library.NavigateToValidationIssueCommand.Execute(issue);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(library.SelectedWorkflow!.Model, Is.SameAs(affectedWorkflow));
-            Assert.That(library.SelectedStep!.Model, Is.SameAs(affectedStep));
-        });
+            Assert.That(library.SelectedAction!.ToWorkflowAction(), Is.SameAs(affectedStep));
+        }
     }
+
+    [Test]
+    public void ClearingActionsDetachesRemovedActionAndSavesEmptyList()
+    {
+        var project = new ProjectViewModel(new Project { Workflows = [new Workflow { Actions = [Command("First")] }] });
+        var context = new TestProjectContext(project);
+        using var library = new WorkflowLibraryViewModel(context, new TestDialogService(true));
+        var oldAction = library.SelectedAction!;
+        library.SelectedWorkflow!.Actions.Clear();
+        var savesAfterClear = context.SaveCount;
+        oldAction.Name = "Detached";
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(project.Model.Workflows[0].Actions, Is.Empty);
+            Assert.That(library.SelectedAction, Is.Null);
+            Assert.That(savesAfterClear, Is.GreaterThan(0));
+            Assert.That(context.SaveCount, Is.EqualTo(savesAfterClear));
+        }
+    }
+
+    [Test]
+    public void EmptyProjectChangesRefreshGuidanceAndCreationAvailability()
+    {
+        var context = new TestProjectContext(new ProjectViewModel(new Project()));
+        using var library = new WorkflowLibraryViewModel(context, new TestDialogService(true));
+        var guidanceChanged = false;
+        library.PropertyChanged += (_, e) => guidanceChanged |= e.PropertyName == nameof(library.ActionListHint);
+        context.SelectedProject = null;
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(guidanceChanged, Is.True);
+            Assert.That(library.CreateWorkflowCommand.CanExecute(null), Is.False);
+        }
+        context.SelectedProject = new ProjectViewModel(new Project());
+        Assert.That(library.CreateWorkflowCommand.CanExecute(null), Is.True);
+    }
+
+    private static WorkflowAction Command(string name) => new() { Name = name, Type = ActionType.Command, Command = new() { BytesBase64 = "AA==" } };
 
     private static WorkflowLifecycleEvent CreateLifecycleEvent(Guid workflowId, long sequence) => new()
     {

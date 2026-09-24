@@ -61,10 +61,6 @@ internal class WorkflowDefaultsTests
         Assert.That(workflow.Description, Is.EqualTo(string.Empty));
         Assert.That(workflow.Actions, Is.Not.Null);
         Assert.That(workflow.Actions, Is.Empty);
-        Assert.That(workflow.ExecutionMode, Is.EqualTo(WorkflowExecutionMode.Sequential));
-        Assert.That(workflow.InPort, Is.EqualTo(0u));
-        Assert.That(workflow.IsUsingTimerToIgnoreFeedbacks, Is.False);
-        Assert.That(workflow.IntervalForTimerToIgnoreFeedbacks, Is.EqualTo(0d));
     }
 }
 

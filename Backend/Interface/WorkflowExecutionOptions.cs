@@ -8,7 +8,7 @@ namespace Moba.Backend.Interface;
 public readonly record struct WorkflowExecutionOptions
 {
     /// <summary>
-    /// Gets the superseded Workflow 1.x stop flag. Workflow 2.0 error policies are authoritative.
+    /// Gets the retained caller option. Ordered workflows always stop at the first failed action.
     /// </summary>
     public bool StopOnFirstActionFailure { get; init; }
 }

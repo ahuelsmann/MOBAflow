@@ -255,7 +255,7 @@ public partial class JourneyManager : IJourneyManager
                 {
                     Project = executionProject,
                     Workflow = workflow,
-                    Context = CreateWorkflowContext(executionProject, journey, state, inPort, resetVersion),
+                    Context = CreateWorkflowContext(executionProject, journey, state, inPort, resetVersion, journeyEvent.Id, args.CorrelationId),
                     Mode = WorkflowRunMode.Live,
                     SourceCorrelationId = args.CorrelationId
                 }
@@ -263,7 +263,7 @@ public partial class JourneyManager : IJourneyManager
         }
     }
 
-    private ActionExecutionContext CreateWorkflowContext(Project executionProject, Journey journey, JourneySessionState state, uint inPort, long resetVersion)
+    private ActionExecutionContext CreateWorkflowContext(Project executionProject, Journey journey, JourneySessionState state, uint inPort, long resetVersion, Guid eventId, Guid correlationId)
     {
         lock (_stateSync)
         {
@@ -279,6 +279,8 @@ public partial class JourneyManager : IJourneyManager
                 JourneyTemplateText = journey.Text,
                 CurrentStationIndex = currentStation is null ? 1 : journey.Stations.IndexOf(currentStation) + 1,
                 FeedbackInPort = inPort,
+                SourceEvent = new FeedbackReceivedEvent((int)inPort, correlationId),
+                SourceEventDefinitionId = eventId,
                 ApplyJourneyStopTransition = transition => ApplyStopTransition(journey, state, transition, resetVersion)
             });
         }
