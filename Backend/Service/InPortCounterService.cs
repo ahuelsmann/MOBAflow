@@ -33,6 +33,7 @@ public sealed partial class InPortCounterService : IDisposable
     private readonly ILogger<InPortCounterService> _logger;
     private readonly Dictionary<uint, InPortCounterSnapshot> _counters = [];
     private readonly Queue<InPortCountedEventArgs> _pendingCounts = new();
+    private EventHandler<InPortCountedEventArgs>? _journeyFeedbackHandler;
     private long _generation;
     private bool _publishingCounts;
     private bool _disposed;
@@ -63,6 +64,25 @@ public sealed partial class InPortCounterService : IDisposable
 
     /// <summary>Raised when counts change.</summary>
     public event EventHandler? SnapshotChanged;
+
+    /// <summary>Atomically replaces the sole journey evaluator for this application's active project.</summary>
+    internal void SetJourneyFeedbackHandler(EventHandler<InPortCountedEventArgs> handler)
+    {
+        lock (_sync)
+        {
+            _journeyFeedbackHandler = handler;
+        }
+    }
+
+    /// <summary>Releases an evaluator without removing a replacement installed by a newer project.</summary>
+    internal void RemoveJourneyFeedbackHandler(EventHandler<InPortCountedEventArgs> handler)
+    {
+        lock (_sync)
+        {
+            if (_journeyFeedbackHandler == handler)
+                _journeyFeedbackHandler = null;
+        }
+    }
 
     /// <summary>Changes with every explicit reset so queued counts from before the reset can be ignored.</summary>
     public long Generation
@@ -162,6 +182,7 @@ public sealed partial class InPortCounterService : IDisposable
         while (true)
         {
             InPortCountedEventArgs next;
+            EventHandler<InPortCountedEventArgs>? journeyHandler;
             lock (_sync)
             {
                 if (!_pendingCounts.TryDequeue(out next!))
@@ -169,21 +190,31 @@ public sealed partial class InPortCounterService : IDisposable
                     _publishingCounts = false;
                     return;
                 }
+
+                journeyHandler = _journeyFeedbackHandler;
             }
 
             foreach (var subscriber in Delegate.EnumerateInvocationList(Counted))
             {
-                try
-                {
-                    subscriber(this, next);
-                }
-                catch (Exception ex)
-                {
-                    LogCountedSubscriberFailed(_logger, ex, next.Snapshot.InPort);
-                }
+                InvokeCountedSubscriber(subscriber, next);
             }
 
+            if (journeyHandler is not null)
+                InvokeCountedSubscriber(journeyHandler, next);
+
             PublishSnapshotChanged();
+        }
+    }
+
+    private void InvokeCountedSubscriber(EventHandler<InPortCountedEventArgs> subscriber, InPortCountedEventArgs next)
+    {
+        try
+        {
+            subscriber(this, next);
+        }
+        catch (Exception ex)
+        {
+            LogCountedSubscriberFailed(_logger, ex, next.Snapshot.InPort);
         }
     }
 
@@ -220,6 +251,7 @@ public sealed partial class InPortCounterService : IDisposable
 
             _disposed = true;
             _pendingCounts.Clear();
+            _journeyFeedbackHandler = null;
         }
 
         _z21.Received -= OnFeedbackReceived;

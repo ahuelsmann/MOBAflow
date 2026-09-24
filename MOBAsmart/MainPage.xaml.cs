@@ -202,10 +202,10 @@ public partial class CounterPage
             return;
         }
 
-        await _viewModel.ResetCountersCommand.ExecuteAsync(null);
+        await _viewModel.ResetCountersCommand.ExecuteAsync(null).ConfigureAwait(true);
         if (!string.IsNullOrEmpty(_viewModel.CounterResetError))
         {
-            await FindHostPage().DisplayAlertAsync("Reset failed", _viewModel.CounterResetError, "OK");
+            await FindHostPage().DisplayAlertAsync("Reset failed", _viewModel.CounterResetError, "OK").ConfigureAwait(true);
         }
     }
 

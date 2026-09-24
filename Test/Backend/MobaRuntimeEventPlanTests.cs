@@ -3,6 +3,7 @@ namespace Moba.Test.Backend;
 
 using Microsoft.Extensions.Logging.Abstractions;
 using Moba.Backend.Interface;
+using Moba.Backend.Manager;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
 using Moba.Domain;
@@ -11,6 +12,75 @@ using Moq;
 [TestFixture]
 internal sealed class MobaRuntimeEventPlanTests
 {
+    [TestCase(false, false)]
+    [TestCase(true, false)]
+    [TestCase(true, true)]
+    public void OverlappingProjectManagersDeliverEachActivationAtMostOnce(bool replaceDuringNotification, bool disposeDuringNotification)
+    {
+        var z21 = new Mock<IZ21>();
+        using var counters = new InPortCounterService(z21.Object, new AppSettings { Counter = { UseTimerFilter = false } });
+        var workflow = new Workflow();
+        var journey = new Journey
+        {
+            IsActive = true,
+            EventPlan = new JourneyEventPlan
+            {
+                Events = [new JourneyEvent { Count = 1, WorkflowId = workflow.Id }, new JourneyEvent { Count = 2, WorkflowId = workflow.Id }]
+            }
+        };
+        var oldProject = new Project { Name = "Old", Journeys = [journey], Workflows = [workflow] };
+        var newProject = new Project { Name = "New", Journeys = [journey], Workflows = [workflow] };
+        var queuedProjects = new List<Guid>();
+        var coordinator = new Mock<IWorkflowExecutionCoordinator>();
+        coordinator.Setup(value => value.EnqueueAsync(It.IsAny<QueuedWorkflowExecution>(), It.IsAny<CancellationToken>()))
+            .Returns((QueuedWorkflowExecution execution, CancellationToken _) =>
+            {
+                queuedProjects.Add(execution.Request.Project.Id);
+                return Task.FromResult(new WorkflowExecutionResult
+                {
+                    ExecutionId = Guid.NewGuid(),
+                    WorkflowId = workflow.Id,
+                    SourceCorrelationId = execution.Request.SourceCorrelationId,
+                    Status = WorkflowExecutionStatus.Succeeded
+                });
+            });
+        var dependencies = new JourneyManagerDependencies { InPortCounterService = counters, ExecutionCoordinator = coordinator.Object };
+        using var oldManager = new JourneyManager(z21.Object, oldProject, Mock.Of<IWorkflowService>(), dependencies: dependencies);
+        JourneyManager? newManager = null;
+        try
+        {
+            if (replaceDuringNotification)
+                counters.Counted += (_, args) =>
+                {
+                    if (args.Snapshot.Count == 1)
+                    {
+                        newManager = new JourneyManager(z21.Object, newProject, Mock.Of<IWorkflowService>(), dependencies: dependencies);
+                        if (disposeDuringNotification)
+                            oldManager.Dispose();
+                    }
+                };
+            else
+                newManager = new JourneyManager(z21.Object, newProject, Mock.Of<IWorkflowService>(), dependencies: dependencies);
+
+            Feedback(z21, 1);
+            List<Guid> expectedProjects = disposeDuringNotification
+                ? []
+                : [replaceDuringNotification ? oldProject.Id : newProject.Id];
+            Assert.That(queuedProjects, Is.EqualTo(expectedProjects),
+                "Replacing and disposing a project may cancel its assigned activation, but must never deliver it twice.");
+
+            oldManager.Dispose();
+            Feedback(z21, 1);
+            expectedProjects.Add(newProject.Id);
+            Assert.That(queuedProjects, Is.EqualTo(expectedProjects),
+                "Disposing the old manager must not unsubscribe its replacement.");
+        }
+        finally
+        {
+            newManager?.Dispose();
+        }
+    }
+
     [TestCase(false)]
     [TestCase(true)]
     public async Task CountersSurviveProjectActivationAndResetOnlyExplicitly(bool useCustomFactory)

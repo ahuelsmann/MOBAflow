@@ -230,8 +230,9 @@ is focused. Other global shortcuts are not currently defined.
 ### A journey does not advance
 
 - Confirm that the journey is active.
-- Compare incoming feedback in **Monitor** with the InPort and count since journey
-  start configured in **Event Manager**.
+- Compare incoming feedback in **Monitor** with the InPort and count configured in
+  **Event Manager**. Counts are measured since application start or the last explicit
+  counter reset, independently of when a journey was activated.
 - Check project diagnostics for missing stations or invalid references.
 - Review timer filtering if legitimate events arrive very close together.
 

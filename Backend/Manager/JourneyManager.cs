@@ -140,7 +140,7 @@ public partial class JourneyManager : IJourneyManager
             };
         }
 
-        _inPortCounterService.Counted += OnInPortCounted;
+        _inPortCounterService.SetJourneyFeedbackHandler(OnInPortCounted);
     }
 
     private void OnInPortCounted(object? sender, InPortCountedEventArgs args)
@@ -426,7 +426,7 @@ public partial class JourneyManager : IJourneyManager
             }
 
             _disposed = true;
-            _inPortCounterService.Counted -= OnInPortCounted;
+            _inPortCounterService.RemoveJourneyFeedbackHandler(OnInPortCounted);
             if (_ownsExecutionCoordinator)
             {
                 _executionCoordinator.Dispose();
