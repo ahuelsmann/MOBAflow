@@ -22,6 +22,8 @@ public interface IJourneyManager : IDisposable
 
     void Reset(Journey journey);
 
+    void UpdateEvents(Project definitions, Guid journeyId);
+
     void CancelPendingWork();
 }
 

@@ -25,6 +25,9 @@ public interface IConnectionRuntime
 
     Task ActivateProjectAsync(Project editableProject, CancellationToken cancellationToken = default);
 
+    /// <summary>Updates one journey's event configuration without restarting project execution.</summary>
+    Task UpdateJourneyEventsAsync(Project editableProject, Guid journeyId, CancellationToken cancellationToken = default);
+
     Task ConnectAsync(CancellationToken cancellationToken = default);
 
     Task DisconnectAsync(CancellationToken cancellationToken = default);

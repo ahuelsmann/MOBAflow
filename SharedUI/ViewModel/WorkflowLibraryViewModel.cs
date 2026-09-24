@@ -526,7 +526,7 @@ public sealed partial class WorkflowLibraryViewModel : ObservableObject, IDispos
     private void OnWorkflowPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         _ = sender;
-        _ = e;
+        if (e.PropertyName == nameof(WorkflowViewModel.Name)) OnPropertyChanged(nameof(Workflows));
         Validate();
         OnPropertyChanged(nameof(FilteredWorkflows));
         if (!_suppressAutoSave)

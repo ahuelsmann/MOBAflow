@@ -233,12 +233,7 @@ public partial class MainWindowViewModel
         foreach (var counter in snapshot.InPortCounters)
         {
             var stat = this.Statistics.FirstOrDefault(s => s.InPort == counter.InPort);
-            if (stat == null)
-            {
-                stat = new InPortStatistic { InPort = checked((int)counter.InPort),
-                    Name = $"Feedback Point {counter.InPort}", TargetLapCount = GlobalTargetLapCount };
-                Statistics.Add(stat);
-            }
+            if (stat == null) continue;
             stat.Count = counter.Count;
             stat.LastFeedbackTime = counter.LastFeedbackTime?.UtcDateTime;
             stat.LastLapTime = counter.LastLapTime;

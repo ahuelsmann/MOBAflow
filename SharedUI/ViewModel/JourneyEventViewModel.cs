@@ -67,7 +67,6 @@ public sealed partial class JourneyEventViewModel : ObservableObject
         set
         {
             if (!CanEdit || !SetProperty(ref _countText, value)) return;
-            if (ulong.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var count) && count > 0) Count = count;
             OnPropertyChanged(nameof(CountValidationMessage));
             OnPropertyChanged(nameof(HasCountValidationError));
         }
@@ -78,6 +77,13 @@ public sealed partial class JourneyEventViewModel : ObservableObject
             ? string.Empty : "Enter a valid whole count of 1 or more.";
 
     public bool HasCountValidationError => CountValidationMessage.Length != 0;
+
+    [RelayCommand(CanExecute = nameof(CanEdit))]
+    private void CommitCount()
+    {
+        if (ulong.TryParse(_countText, NumberStyles.None, CultureInfo.InvariantCulture, out var count) && count > 0)
+            Count = count;
+    }
 
     public Guid? WorkflowId
     {
@@ -117,6 +123,7 @@ public sealed partial class JourneyEventViewModel : ObservableObject
         OnPropertyChanged(nameof(CanEdit));
         AssignWorkflowCommand.NotifyCanExecuteChanged();
         RemoveWorkflowCommand.NotifyCanExecuteChanged();
+        CommitCountCommand.NotifyCanExecuteChanged();
     }
 
     public void RefreshWorkflows()

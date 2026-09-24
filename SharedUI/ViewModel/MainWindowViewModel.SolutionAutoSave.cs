@@ -75,11 +75,12 @@ public partial class MainWindowViewModel
     /// <summary>
     /// Called when SelectedJourney changes. Subscribes to PropertyChanged for auto-save.
     /// </summary>
-    partial void OnSelectedJourneyChanged(JourneyViewModel? value)
+    partial void OnSelectedJourneyChanged(JourneyViewModel? oldValue, JourneyViewModel? newValue)
     {
-        if (value != null)
+        if (oldValue != null) oldValue.PropertyChanged -= OnViewModelPropertyChanged;
+        if (newValue != null)
         {
-            value.PropertyChanged += OnViewModelPropertyChanged;
+            newValue.PropertyChanged += OnViewModelPropertyChanged;
         }
 
         ResetJourneyCommand.NotifyCanExecuteChanged();
@@ -117,9 +118,10 @@ public partial class MainWindowViewModel
         }
 
         // The runtime executes an isolated copy, so journey activation and event edits must be re-applied.
-        if (sender is JourneyViewModel && e.PropertyName is nameof(JourneyViewModel.IsActive) or nameof(JourneyViewModel.EventPlan))
+        if (sender is JourneyViewModel journey && SelectedProject is { } project
+            && e.PropertyName is nameof(JourneyViewModel.IsActive) or nameof(JourneyViewModel.EventPlan))
         {
-            ObserveBackgroundTask(RefreshActiveProjectRuntimeAsync(), "Activate project runtime");
+            ObserveBackgroundTask(_mobaRuntime.UpdateJourneyEventsAsync(project.Model, journey.Model.Id), "Update journey events");
         }
 
         RefreshProjectDiagnostics();

@@ -30,6 +30,9 @@ it does not authorize implementation. Calendar-based maintenance remains availab
 
 **Compatibility Surface**: None required. MOBAflow has no users yet; the legacy `FeedbackSequence`, `NextJourneyId`, `BehaviorOnLastStop.GotoJourney` and the feedback-sequence REST endpoint are removed without migration.
 
+The current prerelease schema number stays unchanged for this PR. The operator intends to begin the supported
+format at schema version 1 with release 1.0; this does not introduce backwards compatibility or migration.
+
 ## User Scenarios & Testing
 
 ### User Story 1 - Run a virtual journey over repeated laps (Priority: P1)
@@ -76,6 +79,7 @@ The Event Manager presents InPort, count and workflow in each row. Drag and drop
 3. Drag a row or use move controls to change stored presentation order without changing its trigger or creating an execution dependency.
 4. Add, assignment, duplication, movement and deletion are possible using keyboard-accessible controls.
 5. Events stay editable while a journey is active; changes and the active flag are saved and re-applied to the runtime immediately.
+6. Committed event/active-flag edits update only that journey's configuration; accepted workflows, other journeys and interlocking reservations remain intact. A count text draft commits on Enter or focus loss as one undoable edit.
 
 ### Edge Cases
 
@@ -84,7 +88,8 @@ The Event Manager presents InPort, count and workflow in each row. Drag and drop
 - Invalid ports, zero counts and unavailable workflows cannot silently run. Disabled events never run.
 - Equal-condition rows each run once in stored order.
 - A failed workflow is not retried.
-- A final stop action requests completion. The running workflow finishes first; then the journey stays at its last stop or continues at the first stop, depending on `BehaviorOnLastStop`. The journey stays active.
+- A final stop action requests completion. Only successful workflow completion confirms it; failure, cancellation and journey reset discard the request. Then the journey stays at its last stop or continues at the first stop, depending on `BehaviorOnLastStop`. The journey stays active.
+- An explicit move from a completed terminal stop to an earlier stop permits a new completion. Counter reset alone does not change stop/completion state.
 - Re-applying the project to the runtime keeps the current stop through the runtime checkpoint and keeps the counters.
 
 ## Requirements

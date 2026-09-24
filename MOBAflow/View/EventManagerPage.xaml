@@ -194,6 +194,7 @@
                             <NumberBox Header="InPort" Minimum="1" Maximum="512" SpinButtonPlacementMode="Inline"
                                        Value="{Binding InPort, Mode=TwoWay}" IsEnabled="{x:Bind ViewModel.CanEditSelectedEvent, Mode=OneWay}" />
                             <TextBox Header="InPort count" Text="{Binding CountText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     LostFocus="OnCountLostFocus" KeyDown="OnCountKeyDown"
                                      InputScope="Number" IsEnabled="{x:Bind ViewModel.CanEditSelectedEvent, Mode=OneWay}" />
                             <TextBlock Text="{Binding CountValidationMessage}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"
                                        Foreground="{ThemeResource SystemFillColorCriticalBrush}"

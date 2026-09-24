@@ -88,7 +88,7 @@ public sealed partial class MobaRuntimeService
     private void OnJourneyRuntimeChanged(object? sender, EventArgs args)
     {
         _ = sender;
-        _ = args;
+        if (args is Manager.JourneyFeedbackEventArgs { IsCounterFeedback: true }) return;
         PublishSnapshot();
     }
 

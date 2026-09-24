@@ -53,8 +53,18 @@ public sealed class JourneyCounterProjectionTests
         Assert.Multiple(() =>
         {
             Assert.That(fixture.ViewModel.Statistics.Single(item => item.InPort == 1).Count, Is.EqualTo(42));
-            Assert.That(fixture.ViewModel.Statistics.Single(item => item.InPort == 7).Count, Is.EqualTo(19));
+            Assert.That(fixture.ViewModel.Statistics.Any(item => item.InPort == 7), Is.False);
         });
+        var collectionChanges = 0;
+        fixture.ViewModel.Statistics.CollectionChanged += (_, _) => collectionChanges++;
+        fixture.Publish(new MobaRuntimeSnapshot
+        {
+            InPortCounters = [new InPortCounterSnapshot(1, 43, null, null), new InPortCounterSnapshot(7, 19, null, null)]
+        });
+        Assert.That(collectionChanges, Is.Zero);
+        fixture.Settings.Counter.CountOfFeedbackPoints = 7;
+        fixture.ViewModel.InitializeStatisticsFromFeedbackPoints();
+        Assert.That(fixture.ViewModel.Statistics.Single(item => item.InPort == 7).Count, Is.EqualTo(19));
         fixture.Gateway.Verify(gateway => gateway.ResetInPortCountersAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -89,7 +99,9 @@ public sealed class JourneyCounterProjectionTests
         fixture.ViewModel.SelectedJourney!.IsActive = true;
 
         Assert.That(journey.IsActive, Is.True);
-        fixture.Runtime.Verify(runtime => runtime.ActivateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()), Times.Once);
+        fixture.Runtime.Verify(runtime => runtime.UpdateJourneyEventsAsync(It.IsAny<Project>(), journey.Id,
+            It.IsAny<CancellationToken>()), Times.Once);
+        fixture.Runtime.Verify(runtime => runtime.ActivateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]
@@ -108,7 +120,56 @@ public sealed class JourneyCounterProjectionTests
             Assert.That(editor.CanEdit, Is.True);
             Assert.That(journey.EventPlan.Events.Single().Count, Is.EqualTo(9));
         });
-        fixture.Runtime.Verify(runtime => runtime.ActivateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()), Times.Once);
+        fixture.Runtime.Verify(runtime => runtime.UpdateJourneyEventsAsync(It.IsAny<Project>(), journey.Id,
+            It.IsAny<CancellationToken>()), Times.Once);
+        fixture.Runtime.Verify(runtime => runtime.ActivateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task ReselectingJourneyDoesNotDuplicateConfigurationUpdates()
+    {
+        var first = CreateJourney("First");
+        var second = CreateJourney("Second");
+        var fixture = new ProjectionFixture(new Solution { Projects = [new Project { Journeys = [first, second] }] });
+        await using var fixtureLifetime = fixture.ConfigureAwait(false);
+        var journeys = fixture.ViewModel.SelectedProject!.Journeys;
+        fixture.ViewModel.SelectedJourney = journeys[1];
+        fixture.ViewModel.SelectedJourney = journeys[0];
+        fixture.ViewModel.SelectedJourney = journeys[1];
+        fixture.ViewModel.SelectedJourney = journeys[0];
+        fixture.Runtime.Invocations.Clear();
+
+        fixture.ViewModel.SelectedJourney.IsActive = true;
+
+        fixture.Runtime.Verify(runtime => runtime.UpdateJourneyEventsAsync(It.IsAny<Project>(), first.Id,
+            It.IsAny<CancellationToken>()), Times.Once);
+        journeys[1].IsActive = true;
+        fixture.Runtime.Verify(runtime => runtime.UpdateJourneyEventsAsync(It.IsAny<Project>(), second.Id,
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task MainWindowSelectionCommitsThePreviousDraftToItsRuntime()
+    {
+        var first = CreateJourney("First");
+        var second = CreateJourney("Second");
+        var fixture = new ProjectionFixture(new Solution { Projects = [new Project { Journeys = [first, second] }] });
+        await using var fixtureLifetime = fixture.ConfigureAwait(false);
+        using var editor = new EventManagerViewModel(fixture.ViewModel);
+        fixture.ViewModel.CurrentSolutionPath = "projection-test.json";
+        editor.Events.Single().CountText = "25";
+        fixture.Runtime.Invocations.Clear();
+        fixture.Io.Invocations.Clear();
+
+        fixture.ViewModel.SelectedJourney = fixture.ViewModel.SelectedProject!.Journeys[1];
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(first.EventPlan.Events.Single().Count, Is.EqualTo(25));
+            fixture.Runtime.Verify(runtime => runtime.UpdateJourneyEventsAsync(It.IsAny<Project>(), first.Id,
+                It.IsAny<CancellationToken>()), Times.Once);
+            fixture.Io.Verify(io => io.SaveAsync(It.IsAny<Solution>(), "projection-test.json"), Times.Once);
+        }
     }
 
     private static Journey CreateJourney(string name) => new()
@@ -133,11 +194,11 @@ public sealed class JourneyCounterProjectionTests
             Gateway.Setup(gateway => gateway.ResetInPortCountersAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
             var dispatcher = new Mock<IUiDispatcher>();
             dispatcher.Setup(candidate => candidate.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());
-            var io = new Mock<IIoService>();
+            var io = Io;
             io.Setup(service => service.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()))
                 .ReturnsAsync((true, "projection-test.json", null));
             io.Setup(service => service.SaveAsAsync(It.IsAny<Solution>())).ReturnsAsync((true, "projection-test.json", null));
-            Settings.Counter.CountOfFeedbackPoints = 2;
+            Settings.Counter.CountOfFeedbackPoints = 7;
             ViewModel = new MainWindowViewModel(new LayoutColumnWidthsViewModel(), Runtime.Object, _eventBus,
                 dispatcher.Object, Settings, solution ?? new Solution { Projects = [new Project()] },
                 new ActionExecutionContext { Z21 = Mock.Of<IZ21>() }, NullLogger<MainWindowViewModel>.Instance,
@@ -145,6 +206,7 @@ public sealed class JourneyCounterProjectionTests
         }
 
         public Mock<IMobaRuntime> Runtime { get; } = new();
+        public Mock<IIoService> Io { get; } = new();
         public Mock<IRuntimeCommandGateway> Gateway { get; } = new();
         public MainWindowViewModel ViewModel { get; }
         public AppSettings Settings { get; } = new();

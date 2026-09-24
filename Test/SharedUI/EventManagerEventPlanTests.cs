@@ -134,6 +134,7 @@ public sealed class EventManagerEventPlanTests
         var workflow = new Workflow { Name = "Signal" };
         using var fixture = new EditorFixture(new Journey { EventPlan = new JourneyEventPlan { Events = [new()] } }, workflow);
         fixture.Editor.Events[0].CountText = "5";
+        fixture.Editor.Events[0].CommitCountCommand.Execute(null);
         fixture.Editor.Events[0].AssignWorkflowCommand.Execute(fixture.Project.Workflows.Single());
 
         fixture.Editor.UndoCommand.Execute(null);
@@ -201,17 +202,96 @@ public sealed class EventManagerEventPlanTests
         using var fixture = new EditorFixture(new Journey { EventPlan = new JourneyEventPlan { Events = [new()] } });
         var row = fixture.Editor.Events.Single();
         row.CountText = "18446744073709551615";
+        row.CommitCountCommand.Execute(null);
         Assert.That(row.Model.Count, Is.EqualTo(ulong.MaxValue));
         row.CountText = "18446744073709551616";
+        row.CommitCountCommand.Execute(null);
         Assert.That(row.CountValidationMessage, Is.Not.Empty);
         Assert.That(row.HasCountValidationError, Is.True);
         row.CountText = "0";
+        row.CommitCountCommand.Execute(null);
         Assert.That(row.CountValidationMessage, Is.Not.Empty);
         Assert.That(row.Model.Count, Is.EqualTo(ulong.MaxValue));
         row.CountText = "5";
+        row.CommitCountCommand.Execute(null);
         Assert.That(row.CountValidationMessage, Is.Empty);
         Assert.That(row.HasCountValidationError, Is.False);
         Assert.That(row.Model.Count, Is.EqualTo(5));
+    }
+
+    [Test]
+    public void CountDraftCommitsOnceAndCreatesOneUndoStep()
+    {
+        using var assertions = Assert.EnterMultipleScope();
+        using var fixture = new EditorFixture(new Journey { EventPlan = new JourneyEventPlan { Events = [new()] } });
+        var row = fixture.Editor.Events.Single();
+        row.CountText = "2";
+        row.CountText = "25";
+        row.CountText = "250";
+        Assert.That(row.Model.Count, Is.EqualTo(1));
+        Assert.That(fixture.ChangeNotifications, Is.Zero);
+
+        row.CommitCountCommand.Execute(null);
+        row.CommitCountCommand.Execute(null);
+        Assert.That(row.Model.Count, Is.EqualTo(250));
+        Assert.That(fixture.ChangeNotifications, Is.EqualTo(1));
+        fixture.Editor.UndoCommand.Execute(null);
+        Assert.That(fixture.Editor.Events.Single().Count, Is.EqualTo(1));
+        Assert.That(fixture.Editor.UndoCommand.CanExecute(null), Is.False);
+    }
+
+    [Test]
+    public void ChangingSelectionCommitsOnlyThePreviousCountDraft()
+    {
+        using var assertions = Assert.EnterMultipleScope();
+        using var fixture = new EditorFixture(new Journey { EventPlan = new JourneyEventPlan { Events = [new(), new() { Count = 3 }] } });
+        var first = fixture.Editor.Events[0];
+        var second = fixture.Editor.Events[1];
+        first.CountText = "25";
+        fixture.Editor.SelectedEvent = second;
+        Assert.That(first.Count, Is.EqualTo(25));
+        Assert.That(second.Count, Is.EqualTo(3));
+        Assert.That(fixture.ChangeNotifications, Is.EqualTo(1));
+        fixture.Editor.UndoCommand.Execute(null);
+        Assert.That(fixture.Editor.Events[0].Count, Is.EqualTo(1));
+        Assert.That(fixture.Editor.Events[1].Count, Is.EqualTo(3));
+        Assert.That(fixture.Editor.CanUndo, Is.False);
+    }
+
+    [Test]
+    public void ChangingJourneyCommitsItsPreviousCountDraft()
+    {
+        using var assertions = Assert.EnterMultipleScope();
+        using var fixture = new EditorFixture(new Journey { EventPlan = new JourneyEventPlan { Events = [new()] } });
+        fixture.Editor.Events[0].CountText = "25";
+        fixture.Context.SelectedJourney = new JourneyViewModel(new Journey(), fixture.Project.Model);
+        Assert.That(fixture.Journey.EventPlan.Events[0].Count, Is.EqualTo(25));
+        Assert.That(fixture.ChangeNotifications, Is.EqualTo(1));
+        Assert.That(fixture.Editor.CanUndo, Is.False);
+    }
+
+    [Test]
+    public void WorkflowSearchDoesNotRefreshEventRowsButRenameDoes()
+    {
+        using var assertions = Assert.EnterMultipleScope();
+        var workflow = new Workflow { Name = "Arrival" };
+        using var fixture = new EditorFixture(new Journey
+        {
+            EventPlan = new JourneyEventPlan { Events = [new() { WorkflowId = workflow.Id }] }
+        }, workflow);
+        var row = fixture.Editor.Events.Single();
+        var notifications = new List<string?>();
+        row.PropertyChanged += (_, args) => notifications.Add(args.PropertyName);
+        fixture.Library.SearchText = "Arr";
+        fixture.Library.SelectedWorkflow = fixture.Project.Workflows.Single();
+        Assert.That(notifications, Is.Empty);
+
+        fixture.Project.Workflows.Single().Name = "Departure";
+        Assert.That(notifications, Does.Contain(nameof(JourneyEventViewModel.WorkflowName)));
+        Assert.That(row.WorkflowName, Is.EqualTo("Departure"));
+        notifications.Clear();
+        fixture.Project.Workflows.Clear();
+        Assert.That(notifications, Does.Contain(nameof(JourneyEventViewModel.AvailableWorkflows)));
     }
 
     [Test]

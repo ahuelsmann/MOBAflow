@@ -33,6 +33,7 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
     {
         _context = context;
         WorkflowLibrary = workflowLibrary;
+        if (_context is INotifyPropertyChanging changingContext) changingContext.PropertyChanging += OnContextPropertyChanging;
         _context.PropertyChanged += OnContextPropertyChanged;
         WorkflowLibrary.PropertyChanged += OnWorkflowLibraryPropertyChanged;
         SelectedJourney = _context.SelectedJourney;
@@ -58,6 +59,8 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
         _ => "Each event runs its workflow when its InPort counter reaches the count. Counters start at zero after a reset."
     };
 
+    partial void OnSelectedJourneyChanging(JourneyViewModel? value) => SelectedEvent?.CommitCountCommand.Execute(null);
+
     partial void OnSelectedJourneyChanged(JourneyViewModel? oldValue, JourneyViewModel? newValue)
     {
         if (oldValue != null) oldValue.PropertyChanged -= OnJourneyPropertyChanged;
@@ -66,6 +69,14 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
         _undo.Clear();
         _redo.Clear();
         Refresh();
+    }
+
+    partial void OnSelectedEventChanging(JourneyEventViewModel? oldValue, JourneyEventViewModel? newValue)
+    {
+        // Rebuilt/undone plans discard obsolete drafts; ordinary selection commits the existing row.
+        if (oldValue != null && Events.Contains(oldValue)
+            && SelectedJourney?.Model.EventPlan.Events.Contains(oldValue.Model) == true)
+            oldValue.CommitCountCommand.Execute(null);
     }
 
     partial void OnSelectedEventChanged(JourneyEventViewModel? oldValue, JourneyEventViewModel? newValue)
@@ -82,6 +93,7 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
     {
         var plan = SelectedJourney?.Model.EventPlan;
         if (plan == null || (workflow != null && !IsAvailableWorkflow(workflow))) return;
+        SelectedEvent?.CommitCountCommand.Execute(null);
         CaptureUndo();
         var inPort = Math.Clamp(DefaultInPort, 1u, 512u);
         var previousCount = Events.Where(item => item.InPort == inPort).Select(item => item.Count).DefaultIfEmpty(0UL).Max();
@@ -112,6 +124,7 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
         var plan = SelectedJourney?.Model.EventPlan;
         var selectedEvent = SelectedEvent;
         if (!CanEdit || plan == null || selectedEvent == null) return;
+        selectedEvent.CommitCountCommand.Execute(null);
         CaptureUndo();
         plan.Events.Remove(selectedEvent.Model);
         CompleteEdit();
@@ -140,6 +153,7 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
         var sourceIndex = events.IndexOf(item.Model);
         targetIndex = Math.Clamp(targetIndex, 0, events.Count);
         if (!copy && (sourceIndex == targetIndex || sourceIndex + 1 == targetIndex)) return;
+        SelectedEvent?.CommitCountCommand.Execute(null);
         CaptureUndo();
         var model = item.Model;
         if (copy)
@@ -244,6 +258,13 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
         RedoCommand.NotifyCanExecuteChanged();
     }
 
+    private void OnContextPropertyChanging(object? sender, PropertyChangingEventArgs e)
+    {
+        // Commit while the main window still observes the old journey for runtime updates and auto-save.
+        if (e.PropertyName is nameof(IProjectContext.SelectedJourney) or nameof(IProjectContext.SelectedProject))
+            SelectedEvent?.CommitCountCommand.Execute(null);
+    }
+
     private void OnContextPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(MainWindowViewModel.JourneyCommandStatus)) OnPropertyChanged(nameof(HasCommandStatus));
@@ -268,6 +289,7 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
 
     private void OnWorkflowLibraryPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (!string.IsNullOrEmpty(e.PropertyName) && e.PropertyName != nameof(WorkflowLibraryViewModel.Workflows)) return;
         foreach (var item in Events) item.RefreshWorkflows();
     }
 
@@ -275,6 +297,7 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
     {
         if (_disposed) return;
         _disposed = true;
+        if (_context is INotifyPropertyChanging changingContext) changingContext.PropertyChanging -= OnContextPropertyChanging;
         _context.PropertyChanged -= OnContextPropertyChanged;
         WorkflowLibrary.PropertyChanged -= OnWorkflowLibraryPropertyChanged;
         if (SelectedJourney != null) SelectedJourney.PropertyChanged -= OnJourneyPropertyChanged;

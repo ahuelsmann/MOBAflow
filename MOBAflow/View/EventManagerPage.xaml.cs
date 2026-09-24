@@ -49,6 +49,18 @@ internal sealed partial class EventManagerPage
 
     public EventManagerViewModel ViewModel { get; }
 
+    private void OnCountLostFocus(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: JourneyEventViewModel row }) row.CommitCountCommand.Execute(null);
+    }
+
+    private void OnCountKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key != VirtualKey.Enter) return;
+        OnCountLostFocus(sender, e);
+        e.Handled = true;
+    }
+
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         var layout = _settings.Layout.EventManagerPage;

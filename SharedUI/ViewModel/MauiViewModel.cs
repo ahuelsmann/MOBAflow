@@ -1253,8 +1253,9 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             _localCounters = _mobaRuntime.Current.InPortCounters;
             ApplyLocalCounters();
         }
-        catch (Exception ex) when (ex is InvalidOperationException or OperationCanceledException)
+        catch (Exception ex) when (ex is not OutOfMemoryException and not AccessViolationException)
         {
+            // Report recoverable failures at the UI boundary; fatal process failures must propagate.
             CounterResetError = ex.Message;
             LogCounterResetFailed(_logger, ex);
         }

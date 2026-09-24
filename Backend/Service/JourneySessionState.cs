@@ -9,6 +9,11 @@ namespace Moba.Backend.Service;
 /// </summary>
 public class JourneySessionState
 {
+    // Invalidates callbacks captured before an explicit journey reset.
+    internal long ResetVersion { get; set; }
+
+    internal JourneySessionState Snapshot() => (JourneySessionState)MemberwiseClone();
+
     /// <summary>Stable identity for the current execution of this journey.</summary>
     public Guid RunId { get; set; } = Guid.NewGuid();
 
@@ -56,6 +61,7 @@ public class JourneySessionState
     public void Reset(int firstPos = 0)
     {
         RunId = Guid.NewGuid();
+        ResetVersion++;
         CurrentPos = firstPos;
         CurrentStationName = string.Empty;
         CurrentStationId = null;

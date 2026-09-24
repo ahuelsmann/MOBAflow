@@ -53,6 +53,7 @@ public partial class JourneyManager : IJourneyManager
     private readonly bool _ownsExecutionCoordinator;
     private readonly Dictionary<Guid, JourneySessionState> _states = [];
     private readonly Project _project;
+    private Project _executionProject;
     private readonly ILogger<JourneyManager> _logger;
     private readonly IJourneyStopTransitionService _stopTransitionService;
     private readonly IJourneyRuntimeStateStore _runtimeStateStore;
@@ -107,6 +108,7 @@ public partial class JourneyManager : IJourneyManager
     {
         dependencies ??= new JourneyManagerDependencies();
         _project = project;
+        _executionProject = project;
         _logger = logger ?? NullLogger<JourneyManager>.Instance;
         _stopTransitionService = dependencies.StopTransitionService ?? new JourneyStopTransitionService();
         _runtimeStateStore = dependencies.RuntimeStateStore ?? new NullJourneyRuntimeStateStore();
@@ -117,7 +119,7 @@ public partial class JourneyManager : IJourneyManager
             ?? new InPortCounterService(z21, new AppSettings { Counter = { UseTimerFilter = false } }, dependencies.TimeProvider);
         _executionContextFactory = new ActionExecutionContextFactory(executionContext ?? new ActionExecutionContext { Z21 = z21 });
         _executionCoordinator = dependencies.ExecutionCoordinator
-            ?? new WorkflowExecutionCoordinator(workflowService, dependencies.TimeProvider ?? TimeProvider.System);
+            ?? new WorkflowExecutionCoordinator(workflowService, dependencies.TimeProvider ?? TimeProvider.System, _logger);
 
         foreach (var journey in project.Journeys)
         {
@@ -140,6 +142,33 @@ public partial class JourneyManager : IJourneyManager
         _inPortCounterService.SetJourneyFeedbackHandler(OnInPortCounted);
     }
 
+    /// <inheritdoc />
+    public void UpdateEvents(Project definitions, Guid journeyId)
+    {
+        ArgumentNullException.ThrowIfNull(definitions);
+        lock (_stateSync)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            var definition = definitions.Journeys.Find(item => item.Id == journeyId);
+            var journey = _project.Journeys.Find(item => item.Id == journeyId);
+            if (definitions.Id != _project.Id || definition is null || journey is null
+                || !_states.TryGetValue(journeyId, out var state)) return;
+
+            journey.EventPlan = new JourneyEventPlan
+            {
+                Events = definition.EventPlan.Events.Select(item => new JourneyEvent
+                {
+                    Id = item.Id, InPort = item.InPort, Count = item.Count,
+                    WorkflowId = item.WorkflowId, Enabled = item.Enabled
+                }).ToList()
+            };
+            journey.IsActive = definition.IsActive;
+            state.IsActive = definition.IsActive;
+            // Definitions are isolated by the runtime. Accepted executions keep their previous snapshot.
+            _executionProject = definitions;
+        }
+    }
+
     private void OnInPortCounted(object? sender, InPortCountedEventArgs args)
     {
         ProcessCountedFeedbackAsync(args).Observe(ex =>
@@ -151,6 +180,7 @@ public partial class JourneyManager : IJourneyManager
     {
         ArgumentNullException.ThrowIfNull(args);
         var queuedExecutions = new List<Task<WorkflowExecutionResult>>();
+        var matches = new List<(Journey Journey, JourneySessionState State, JourneyEvent[] Events, JourneySessionState Snapshot, Project Definitions)>();
         lock (_stateSync)
         {
             // Counts queued before an explicit reset belong to the previous session.
@@ -163,8 +193,26 @@ public partial class JourneyManager : IJourneyManager
             {
                 if (_states.TryGetValue(journey.Id, out var state) && state.IsActive)
                 {
-                    QueueMatchingEvents(journey, state, args, queuedExecutions);
+                    var events = journey.EventPlan.Events.Where(item => item.Enabled
+                        && item.InPort == args.Snapshot.InPort && item.Count == args.Snapshot.Count).ToArray();
+                    if (events.Length == 0) continue;
+                    state.LastFeedbackTime = args.Snapshot.LastFeedbackTime?.LocalDateTime;
+                    matches.Add((journey, state, events, state.Snapshot(), _executionProject));
                 }
+            }
+        }
+
+        foreach (var match in matches)
+        {
+            PublishTransition(match.Journey, match.Snapshot, JourneyRuntimeTransitionKind.FeedbackAccepted, (int)args.Snapshot.InPort);
+            OnFeedbackReceived(new JourneyFeedbackEventArgs
+            {
+                JourneyId = match.Journey.Id, SessionState = match.Snapshot, IsCounterFeedback = true
+            });
+            lock (_stateSync)
+            {
+                if (_disposed || match.State.ResetVersion != match.Snapshot.ResetVersion) continue;
+                QueueMatchingEvents(match.Journey, match.State, match.Events, match.Definitions, args, queuedExecutions);
             }
         }
 
@@ -177,26 +225,19 @@ public partial class JourneyManager : IJourneyManager
     private void QueueMatchingEvents(
         Journey journey,
         JourneySessionState state,
+        JourneyEvent[] events,
+        Project executionProject,
         InPortCountedEventArgs args,
         List<Task<WorkflowExecutionResult>> queuedExecutions)
     {
-        foreach (var journeyEvent in journey.EventPlan.Events)
+        foreach (var journeyEvent in events)
         {
-            if (!journeyEvent.Enabled || journeyEvent.InPort != args.Snapshot.InPort || journeyEvent.Count != args.Snapshot.Count)
-            {
-                continue;
-            }
-
-            state.LastFeedbackTime = args.Snapshot.LastFeedbackTime?.LocalDateTime;
-            PublishTransition(journey, state, JourneyRuntimeTransitionKind.FeedbackAccepted, checked((int)journeyEvent.InPort));
-            OnFeedbackReceived(new JourneyFeedbackEventArgs { JourneyId = journey.Id, SessionState = state });
-
             if (journeyEvent.WorkflowId is not Guid workflowId)
             {
                 continue;
             }
 
-            var workflow = _project.Workflows.FirstOrDefault(candidate => candidate.Id == workflowId);
+            var workflow = executionProject.Workflows.FirstOrDefault(candidate => candidate.Id == workflowId);
             if (workflow is null)
             {
                 LogWorkflowNotFound(_logger, workflowId, journey.Name);
@@ -204,18 +245,20 @@ public partial class JourneyManager : IJourneyManager
             }
 
             var inPort = journeyEvent.InPort;
+            var resetVersion = state.ResetVersion;
             _inPortCounterService.QueueIfCurrent(args.Generation, () => queuedExecutions.Add(_executionCoordinator.EnqueueAsync(new QueuedWorkflowExecution
             {
                 // Workflows of one journey share its stop state and run in order; other journeys stay independent.
                 SourceKey = $"journey:{journey.Id}",
                 OwnerId = journey.Id,
-                ContextFactory = () => CreateWorkflowContext(journey, state, inPort),
-                OnCompleted = () => CompleteJourneyIfRequested(journey, state),
-                Request = new WorkflowExecutionRequest
+                WorkflowId = workflow.Id,
+                SourceCorrelationId = args.CorrelationId,
+                OnCompleted = succeeded => CompleteJourneyIfRequested(journey, state, resetVersion, succeeded),
+                RequestFactory = () => new WorkflowExecutionRequest
                 {
-                    Project = _project,
+                    Project = executionProject,
                     Workflow = workflow,
-                    Context = CreateWorkflowContext(journey, state, inPort),
+                    Context = CreateWorkflowContext(executionProject, journey, state, inPort, resetVersion),
                     Mode = WorkflowRunMode.Live,
                     SourceCorrelationId = args.CorrelationId
                 }
@@ -223,67 +266,71 @@ public partial class JourneyManager : IJourneyManager
         }
     }
 
-    private ActionExecutionContext CreateWorkflowContext(Journey journey, JourneySessionState state, uint inPort)
+    private ActionExecutionContext CreateWorkflowContext(Project executionProject, Journey journey, JourneySessionState state, uint inPort, long resetVersion)
     {
         lock (_stateSync)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             var currentStation = GetCurrentStation(journey, state);
+            if (state.ResetVersion != resetVersion) throw new OperationCanceledException("Journey was reset.");
             return _executionContextFactory.Create(new ActionExecutionContextState
             {
-                CurrentProject = _project,
+                CurrentProject = executionProject,
                 CurrentJourney = journey,
                 CurrentJourneySessionState = state,
                 CurrentStation = currentStation,
                 JourneyTemplateText = journey.Text,
                 CurrentStationIndex = currentStation is null ? 1 : journey.Stations.IndexOf(currentStation) + 1,
                 FeedbackInPort = inPort,
-                ApplyJourneyStopTransition = transition => ApplyStopTransition(journey, state, transition)
+                ApplyJourneyStopTransition = transition => ApplyStopTransition(journey, state, transition, resetVersion)
             });
         }
     }
 
-    private JourneyStopTransitionResult ApplyStopTransition(Journey journey, JourneySessionState state, JourneyStopTransition transition)
+    private JourneyStopTransitionResult ApplyStopTransition(Journey journey, JourneySessionState state, JourneyStopTransition transition, long resetVersion)
     {
+        JourneyStopTransitionResult result;
+        JourneySessionState snapshot;
         lock (_stateSync)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
-            var result = _stopTransitionService.Apply(journey, state, transition);
-            if (result.Changed && result.CurrentStation is not null)
-            {
-                PublishTransition(journey, state, JourneyRuntimeTransitionKind.StopChanged);
-                OnStationChanged(new StationChangedEventArgs
-                {
-                    JourneyId = journey.Id,
-                    Station = result.CurrentStation,
-                    SessionState = state
-                });
-            }
-
+            if (state.ResetVersion != resetVersion) throw new OperationCanceledException("Journey was reset.");
+            result = _stopTransitionService.Apply(journey, state, transition);
             _runtimeStateStore.Save(_project.Id, state);
-            return result;
+            snapshot = state.Snapshot();
         }
+        if (result.Changed && result.CurrentStation is not null)
+        {
+            PublishTransition(journey, snapshot, JourneyRuntimeTransitionKind.StopChanged);
+            OnStationChanged(new StationChangedEventArgs
+            {
+                JourneyId = journey.Id, Station = result.CurrentStation, SessionState = snapshot
+            });
+        }
+        return result;
     }
 
     /// <summary>Completes a journey after the workflow that moved past its last stop has finished.</summary>
-    private Task CompleteJourneyIfRequested(Journey journey, JourneySessionState state)
+    private Task CompleteJourneyIfRequested(Journey journey, JourneySessionState state, long resetVersion, bool succeeded)
     {
+        JourneySessionState completed;
+        JourneySessionState snapshot;
         lock (_stateSync)
         {
-            if (_disposed || !state.IsJourneyCompletionRequested)
+            if (_disposed || state.ResetVersion != resetVersion || !state.IsJourneyCompletionRequested)
             {
                 return Task.CompletedTask;
             }
 
             state.IsJourneyCompletionRequested = false;
-            if (state.IsCompleted)
+            if (!succeeded || state.IsCompleted)
             {
                 return Task.CompletedTask;
             }
 
             state.IsCompleted = true;
             LogLastStationReached(_logger, journey.Name);
-            PublishTransition(journey, state, JourneyRuntimeTransitionKind.Completed);
+            completed = state.Snapshot();
 
             if (journey.BehaviorOnLastStop == BehaviorOnLastStop.BeginAgainFromFistStop)
             {
@@ -293,13 +340,15 @@ public partial class JourneyManager : IJourneyManager
                 state.CurrentPos = 0;
                 state.CurrentStationId = firstStation?.Id;
                 state.CurrentStationName = firstStation?.Name ?? string.Empty;
-                PublishTransition(journey, state, JourneyRuntimeTransitionKind.Restarted);
             }
 
             _runtimeStateStore.Save(_project.Id, state);
-            OnFeedbackReceived(new JourneyFeedbackEventArgs { JourneyId = journey.Id, SessionState = state });
+            snapshot = state.Snapshot();
         }
 
+        PublishTransition(journey, completed, JourneyRuntimeTransitionKind.Completed);
+        if (snapshot.RunId != completed.RunId) PublishTransition(journey, snapshot, JourneyRuntimeTransitionKind.Restarted);
+        OnFeedbackReceived(new JourneyFeedbackEventArgs { JourneyId = journey.Id, SessionState = snapshot });
         return Task.CompletedTask;
     }
 
@@ -323,9 +372,9 @@ public partial class JourneyManager : IJourneyManager
     public void Reset(Journey journey)
     {
         ArgumentNullException.ThrowIfNull(journey);
+        JourneySessionState snapshot;
         lock (_stateSync)
         {
-            _executionCoordinator.CancelOwner(journey.Id);
             if (!_states.TryGetValue(journey.Id, out var state))
             {
                 return;
@@ -339,10 +388,13 @@ public partial class JourneyManager : IJourneyManager
             state.RunId = Guid.NewGuid();
             state.IsJourneyCompletionRequested = false;
             state.IsCompleted = false;
+            state.ResetVersion++;
+            _executionCoordinator.CancelOwner(journey.Id);
             _runtimeStateStore.Reset(_project.Id, journey.Id);
             LogJourneyReset(_logger, journey.Name, state.CurrentPos);
-            PublishTransition(journey, state, JourneyRuntimeTransitionKind.Reset);
+            snapshot = state.Snapshot();
         }
+        PublishTransition(journey, snapshot, JourneyRuntimeTransitionKind.Reset);
     }
 
     private void PublishTransition(

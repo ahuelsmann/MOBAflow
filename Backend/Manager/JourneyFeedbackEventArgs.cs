@@ -10,6 +10,9 @@ using Service;
 /// </summary>
 public class JourneyFeedbackEventArgs : EventArgs
 {
+    /// <summary>Whether the counter service will publish the snapshot for this accepted input.</summary>
+    public bool IsCounterFeedback { get; init; }
+
     /// <summary>
     /// Unique identifier of the journey that received feedback.
     /// </summary>

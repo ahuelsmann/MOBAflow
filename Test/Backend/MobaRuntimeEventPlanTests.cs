@@ -6,6 +6,7 @@ using Moba.Backend.Interface;
 using Moba.Backend.Manager;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
+using Moba.Common.Events;
 using Moba.Domain;
 using Moq;
 
@@ -35,12 +36,12 @@ internal sealed class MobaRuntimeEventPlanTests
         coordinator.Setup(value => value.EnqueueAsync(It.IsAny<QueuedWorkflowExecution>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((QueuedWorkflowExecution execution, CancellationToken _) =>
             {
-                queuedProjects.Add(execution.Request.Project.Id);
+                queuedProjects.Add(execution.RequestFactory().Project.Id);
                 return new WorkflowExecutionResult
                 {
                     ExecutionId = Guid.NewGuid(),
                     WorkflowId = workflow.Id,
-                    SourceCorrelationId = execution.Request.SourceCorrelationId,
+                    SourceCorrelationId = execution.SourceCorrelationId,
                     Status = WorkflowExecutionStatus.Succeeded
                 };
             });
@@ -135,6 +136,94 @@ internal sealed class MobaRuntimeEventPlanTests
         });
     }
 
+    [Test]
+    public async Task UpdatingJourneyEventsPreservesOtherWorkflowsAndInterlocking()
+    {
+        var z21 = new Mock<IZ21>();
+        z21.SetupGet(value => value.IsConnected).Returns(true);
+        var interlocking = new Mock<IInterlockingRuntime>();
+        var workflow = new Workflow { Name = "Original" };
+        var first = new Journey { IsActive = true, EventPlan = new JourneyEventPlan { Events = [new() { WorkflowId = workflow.Id }] } };
+        var second = new Journey();
+        var project = new Project { Journeys = [first, second], Workflows = [workflow] };
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var finished = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var secondStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        CancellationToken firstCancellation = default;
+        var workflows = new Mock<IWorkflowService>();
+        workflows.Setup(value => value.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
+            .Returns(async (WorkflowExecutionRequest request, CancellationToken token) =>
+            {
+                if (request.Context.CurrentJourney!.Id == first.Id)
+                {
+                    firstCancellation = token;
+                    started.TrySetResult();
+                    await release.Task.WaitAsync(token).ConfigureAwait(false);
+                    Assert.That(request.Project.Workflows.Single().Name, Is.EqualTo("Original"));
+                    finished.TrySetResult();
+                }
+                else
+                {
+                    Assert.That(request.Workflow.Name, Is.EqualTo("Added later"));
+                    secondStarted.TrySetResult();
+                }
+                return new WorkflowExecutionResult
+                {
+                    ExecutionId = Guid.NewGuid(), WorkflowId = request.Workflow.Id,
+                    SourceCorrelationId = request.SourceCorrelationId, Status = WorkflowExecutionStatus.Succeeded
+                };
+            });
+        using var runtime = CreateRuntime(z21.Object, workflowService: workflows.Object, interlocking: interlocking.Object);
+        await runtime.ActivateProjectAsync(project).ConfigureAwait(false);
+        Feedback(z21, 1);
+        await started.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        try
+        {
+            var added = new Workflow { Name = "Added later" };
+            project.Workflows.Add(added);
+            workflow.Name = "Changed";
+            var plan = new JourneyEventPlan { Events = [new() { Count = 2, WorkflowId = added.Id }] };
+            second.IsActive = true;
+            second.EventPlan = plan;
+            await runtime.UpdateJourneyEventsAsync(project, second.Id).ConfigureAwait(false);
+            plan.Events[0].Count = 9;
+            added.Name = "Unsaved change";
+            Assert.That(firstCancellation.IsCancellationRequested, Is.False);
+            Feedback(z21, 1);
+            await secondStarted.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            Assert.That(runtime.Current.InPortCounters.Single(counter => counter.InPort == 1).Count, Is.EqualTo(2));
+            interlocking.Verify(value => value.ActivateAsync(It.IsAny<InterlockingDefinition>(), It.IsAny<CancellationToken>()), Times.Once);
+            interlocking.Verify(value => value.SynchronizeAsync(It.IsAny<CancellationToken>()), Times.Once);
+        }
+        finally
+        {
+            release.TrySetResult();
+        }
+        await finished.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+    }
+
+    [Test]
+    public async Task MatchingRowsAndJourneysPublishOneCounterSnapshot()
+    {
+        var z21 = new Mock<IZ21>();
+        var bus = new Mock<IEventBus>();
+        using var runtime = CreateRuntime(z21.Object, eventBus: bus.Object);
+        await runtime.ActivateProjectAsync(new Project
+        {
+            Journeys =
+            [
+                new Journey { IsActive = true, EventPlan = new JourneyEventPlan { Events = [new(), new()] } },
+                new Journey { IsActive = true, EventPlan = new JourneyEventPlan { Events = [new()] } }
+            ]
+        }).ConfigureAwait(false);
+        bus.Invocations.Clear();
+
+        Feedback(z21, 1);
+
+        bus.Verify(value => value.Publish(It.IsAny<RuntimeSnapshotChangedEvent>()), Times.Once);
+    }
+
     private static async Task WaitUntilAsync(Func<bool> condition)
     {
         var timeout = DateTime.UtcNow.AddSeconds(5);
@@ -145,13 +234,15 @@ internal sealed class MobaRuntimeEventPlanTests
         }
     }
 
-    private static MobaRuntimeService CreateRuntime(IZ21 z21, bool useCustomFactory = false, IWorkflowService? workflowService = null)
+    private static MobaRuntimeService CreateRuntime(IZ21 z21, bool useCustomFactory = false, IWorkflowService? workflowService = null,
+        IInterlockingRuntime? interlocking = null, IEventBus? eventBus = null)
     {
         var workflows = workflowService ?? Mock.Of<IWorkflowService>();
         return new MobaRuntimeService(z21, workflows,
             new ActionExecutionContextFactory(new ActionExecutionContext { Z21 = z21 }),
             new AppSettings { Counter = new CounterSettings { CountOfFeedbackPoints = 3, UseTimerFilter = false } },
             NullLogger<MobaRuntimeService>.Instance,
+            eventBus: eventBus, interlockingRuntime: interlocking,
             journeyManagerFactory: useCustomFactory ? new Moba.Backend.Manager.JourneyManagerFactory(z21, workflows) : null);
     }
 

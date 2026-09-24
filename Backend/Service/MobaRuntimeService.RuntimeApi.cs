@@ -51,11 +51,20 @@ public sealed partial class MobaRuntimeService
         PublishSnapshot();
     }
 
-    /// <summary>
-    /// Creates an isolated runtime copy of the editor project using the canonical JSON serialization
-    /// (the same converters used for solution save/load), guaranteeing a deep, structurally identical
-    /// clone with preserved entity Ids.
-    /// </summary>
+    /// <inheritdoc />
+    public Task UpdateJourneyEventsAsync(Project editableProject, Guid journeyId, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentNullException.ThrowIfNull(editableProject);
+        var context = _activeProjectContext;
+        if (context?.ActiveProject.Id != editableProject.Id) return Task.CompletedTask;
+
+        context.JourneyManager.UpdateEvents(CloneForRuntime(editableProject), journeyId);
+        PublishSnapshot();
+        return Task.CompletedTask;
+    }
+
+    /// <summary>Creates an isolated runtime copy using the canonical JSON serialization with preserved entity Ids.</summary>
     private static Project CloneForRuntime(Project editableProject)
     {
         var json = JsonSerializer.Serialize(editableProject, JsonOptions.Compact);

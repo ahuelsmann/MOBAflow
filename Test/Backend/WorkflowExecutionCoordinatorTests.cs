@@ -7,6 +7,7 @@ using Moba.Backend.Service;
 using Moba.Domain;
 
 using Moq;
+using Microsoft.Extensions.Logging;
 
 /// <summary>Verifies the reusable source-ordering and cancellation boundary.</summary>
 [TestFixture]
@@ -28,7 +29,8 @@ public sealed class WorkflowExecutionCoordinatorTests
         {
             SourceKey = "feedback:1",
             OwnerId = cancelledOwner,
-            Request = cancelledRequest,
+            WorkflowId = cancelledRequest.Workflow.Id,
+            RequestFactory = () => cancelledRequest,
             Delay = TimeSpan.FromHours(1)
         });
         coordinator.CancelOwner(cancelledOwner);
@@ -36,7 +38,8 @@ public sealed class WorkflowExecutionCoordinatorTests
         {
             SourceKey = "feedback:2",
             OwnerId = Guid.NewGuid(),
-            Request = successfulRequest
+            WorkflowId = successfulRequest.Workflow.Id,
+            RequestFactory = () => successfulRequest
         });
 
         var cancelledResult = await cancelled.WaitAsync(TimeSpan.FromSeconds(1));
@@ -111,7 +114,7 @@ public sealed class WorkflowExecutionCoordinatorTests
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var first = coordinator.EnqueueAsync(CreateQueued("feedback:1") with
         {
-            OnCompleted = async () =>
+            OnCompleted = async _ =>
             {
                 completing.TrySetResult();
                 await release.Task.ConfigureAwait(false);
@@ -123,7 +126,8 @@ public sealed class WorkflowExecutionCoordinatorTests
         Assert.That(executions, Is.EqualTo(1));
         release.TrySetResult();
 
-        Assert.ThrowsAsync<InvalidOperationException>(() => first.WaitAsync(TimeSpan.FromSeconds(5)));
+        var firstResult = await first.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        Assert.That(firstResult.Status, Is.EqualTo(WorkflowExecutionStatus.Succeeded));
         var result = await second.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
         using (Assert.EnterMultipleScope())
         {
@@ -142,8 +146,9 @@ public sealed class WorkflowExecutionCoordinatorTests
         var completed = false;
         var execution = coordinator.EnqueueAsync(CreateQueued("feedback:1") with
         {
-            OnCompleted = () =>
+            OnCompleted = succeeded =>
             {
+                Assert.That(succeeded, Is.False);
                 completed = true;
                 return Task.CompletedTask;
             }
@@ -153,13 +158,38 @@ public sealed class WorkflowExecutionCoordinatorTests
         Assert.That(completed, Is.True);
     }
 
-    private static QueuedWorkflowExecution CreateQueued(string sourceKey, TimeSpan delay = default) => new()
+    [Test]
+    public void CompletionFailureIsLoggedWithoutMaskingExecutorFailure()
     {
-        SourceKey = sourceKey,
-        OwnerId = Guid.NewGuid(),
-        Request = CreateRequest(),
-        Delay = delay
-    };
+        using var assertions = Assert.EnterMultipleScope();
+        var service = new Mock<IWorkflowService>();
+        var failure = new IOException("Executor failure");
+        service.Setup(value => value.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(failure);
+        var logger = new Mock<ILogger>();
+        logger.Setup(value => value.IsEnabled(LogLevel.Error)).Returns(true);
+        using var coordinator = new WorkflowExecutionCoordinator(service.Object, TimeProvider.System, logger.Object);
+        var execution = coordinator.EnqueueAsync(CreateQueued("journey:test") with
+        {
+            OnCompleted = _ => throw new InvalidOperationException("Completion failure")
+        });
+        Assert.That(Assert.ThrowsAsync<IOException>(() => execution.WaitAsync(TimeSpan.FromSeconds(5))), Is.SameAs(failure));
+        Assert.That(logger.Invocations.Count(call => call.Method.Name == nameof(ILogger.Log)), Is.EqualTo(1));
+    }
+
+    private static QueuedWorkflowExecution CreateQueued(string sourceKey, TimeSpan delay = default)
+    {
+        var request = CreateRequest();
+        return new QueuedWorkflowExecution
+        {
+            SourceKey = sourceKey,
+            OwnerId = Guid.NewGuid(),
+            WorkflowId = request.Workflow.Id,
+            SourceCorrelationId = request.SourceCorrelationId,
+            RequestFactory = () => request,
+            Delay = delay
+        };
+    }
 
     private static WorkflowExecutionRequest CreateRequest()
     {

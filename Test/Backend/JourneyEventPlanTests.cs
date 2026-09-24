@@ -460,6 +460,149 @@ public sealed class JourneyEventPlanTests
         await Task.WhenAll(blockedProcessing, otherProcessing).WaitAsync(TimeSpan.FromSeconds(5));
     }
 
+    [TestCase(WorkflowExecutionStatus.Failed)]
+    [TestCase(WorkflowExecutionStatus.Cancelled)]
+    public async Task UnsuccessfulWorkflowDiscardsCompletionRequest(WorkflowExecutionStatus status)
+    {
+        using var fixture = new EventPlanFixture();
+        fixture.Journey.Stations = [new Station { Name = "Terminal" }];
+        fixture.Journey.BehaviorOnLastStop = BehaviorOnLastStop.None;
+        fixture.Journey.EventPlan.Events.Add(new JourneyEvent { Count = 2, WorkflowId = fixture.Workflow.Id });
+        fixture.WorkflowService.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
+            .Returns(async (WorkflowExecutionRequest request, CancellationToken token) =>
+            {
+                await new ChangeJourneyStopWorkflowActionHandler().ExecuteAsync(NextStopAction(), request.Context, token).ConfigureAwait(false);
+                return Success(request) with { Status = status };
+            });
+        await fixture.RaiseAsync(1).ConfigureAwait(false);
+        Assert.That(fixture.Manager.GetState(fixture.Journey.Id)!.IsJourneyCompletionRequested, Is.False);
+        fixture.WorkflowService.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((WorkflowExecutionRequest request, CancellationToken _) => Success(request));
+        await fixture.RaiseAsync(1).ConfigureAwait(false);
+        Assert.That(fixture.Manager.GetState(fixture.Journey.Id)!.IsCompleted, Is.False);
+    }
+
+    [Test]
+    public async Task ExecutorExceptionDiscardsCompletionRequest()
+    {
+        using var fixture = new EventPlanFixture();
+        fixture.Journey.Stations = [new Station { Name = "Terminal" }];
+        fixture.WorkflowService.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
+            .Returns(async (WorkflowExecutionRequest request, CancellationToken token) =>
+            {
+                await new ChangeJourneyStopWorkflowActionHandler().ExecuteAsync(NextStopAction(), request.Context, token).ConfigureAwait(false);
+                throw new IOException("Execution failed");
+            });
+        Assert.ThrowsAsync<IOException>(() => fixture.RaiseAsync(1));
+        Assert.That(fixture.Manager.GetState(fixture.Journey.Id)!.IsJourneyCompletionRequested, Is.False);
+        fixture.WorkflowService.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((WorkflowExecutionRequest request, CancellationToken _) => Success(request));
+        fixture.Counters.ResetAll();
+        await fixture.RaiseAsync(1).ConfigureAwait(false);
+        Assert.That(fixture.Manager.GetState(fixture.Journey.Id)!.IsCompleted, Is.False);
+    }
+
+    [Test]
+    public async Task ResetDuringPendingCompletionDoesNotPublishCompletion()
+    {
+        using var assertions = Assert.EnterMultipleScope();
+        using var fixture = new EventPlanFixture();
+        fixture.Journey.Stations = [new Station { Name = "Terminal" }];
+        var bus = new Mock<IEventBus>();
+        using var manager = fixture.CreateManager(eventBus: bus.Object);
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        fixture.WorkflowService.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
+            .Returns(async (WorkflowExecutionRequest request, CancellationToken token) =>
+            {
+                await new ChangeJourneyStopWorkflowActionHandler().ExecuteAsync(NextStopAction(), request.Context, token).ConfigureAwait(false);
+                started.TrySetResult();
+                await Task.Delay(Timeout.InfiniteTimeSpan, token).ConfigureAwait(false);
+                return Success(request);
+            });
+        InPortCounterServiceTests.Raise(fixture.Z21, 1);
+        var processing = manager.LastProcessing;
+        await started.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        manager.Reset(fixture.Journey);
+        await processing.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        bus.Verify(value => value.Publish(It.Is<JourneyRuntimeTransitionEvent>(transition =>
+            transition.Kind == JourneyRuntimeTransitionKind.Completed)), Times.Never);
+        Assert.That(manager.GetState(fixture.Journey.Id)!.IsJourneyCompletionRequested, Is.False);
+    }
+
+    [Test]
+    public async Task ReturningFromCompletedTerminalAllowsAnotherCompletion()
+    {
+        using var assertions = Assert.EnterMultipleScope();
+        using var fixture = new EventPlanFixture();
+        var first = new Station { Name = "First" };
+        fixture.Journey.Stations = [first, new Station { Name = "Terminal" }];
+        fixture.Journey.BehaviorOnLastStop = BehaviorOnLastStop.None;
+        fixture.SetupNextStopActions(2);
+        await fixture.RaiseAsync(1).ConfigureAwait(false);
+        var state = fixture.Manager.GetState(fixture.Journey.Id)!;
+        var completedRun = state.RunId;
+        Assert.That(state.IsCompleted, Is.True);
+        fixture.WorkflowService.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((WorkflowExecutionRequest request, CancellationToken _) =>
+            {
+                request.Context.ApplyJourneyStopTransition!(new JourneyStopTransition
+                {
+                    Mode = JourneyStopTransitionMode.SpecificStation, StationId = first.Id
+                });
+                return Success(request);
+            });
+        fixture.Counters.ResetAll();
+        await fixture.RaiseAsync(1).ConfigureAwait(false);
+        Assert.That(state.IsCompleted, Is.False);
+        Assert.That(state.RunId, Is.Not.EqualTo(completedRun));
+        fixture.SetupNextStopActions(2);
+        fixture.Counters.ResetAll();
+        await fixture.RaiseAsync(1).ConfigureAwait(false);
+        Assert.That(state.IsCompleted, Is.True);
+    }
+
+    [Test]
+    public async Task ReturningBeforeWorkflowEndsDiscardsPendingCompletion()
+    {
+        using var assertions = Assert.EnterMultipleScope();
+        using var fixture = new EventPlanFixture();
+        var first = new Station { Name = "First" };
+        fixture.Journey.Stations = [first, new Station { Name = "Terminal" }];
+        fixture.WorkflowService.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((WorkflowExecutionRequest request, CancellationToken _) =>
+            {
+                var move = request.Context.ApplyJourneyStopTransition!;
+                move(new JourneyStopTransition { Mode = JourneyStopTransitionMode.Next });
+                move(new JourneyStopTransition { Mode = JourneyStopTransitionMode.Next });
+                move(new JourneyStopTransition { Mode = JourneyStopTransitionMode.SpecificStation, StationId = first.Id });
+                return Success(request);
+            });
+        await fixture.RaiseAsync(1).ConfigureAwait(false);
+        var state = fixture.Manager.GetState(fixture.Journey.Id)!;
+        Assert.That(state.CurrentStationId, Is.EqualTo(first.Id));
+        Assert.That(state.IsCompleted, Is.False);
+        Assert.That(state.IsJourneyCompletionRequested, Is.False);
+    }
+
+    [Test]
+    public async Task FeedbackSubscriberCanReadStateOnAnotherThread()
+    {
+        using var fixture = new EventPlanFixture();
+        var readable = false;
+        fixture.Manager.FeedbackReceived += (_, _) =>
+        {
+            using var observed = new ManualResetEventSlim();
+            _ = Task.Run(() =>
+            {
+                fixture.Manager.GetState(fixture.Journey.Id);
+                observed.Set();
+            });
+            readable = observed.Wait(TimeSpan.FromSeconds(5));
+        };
+        await fixture.RaiseAsync(1).ConfigureAwait(false);
+        Assert.That(readable, Is.True, "External subscribers must run outside the manager lock.");
+    }
+
     private static WorkflowAction NextStopAction() => new()
     {
         Type = ActionType.ChangeJourneyStop,

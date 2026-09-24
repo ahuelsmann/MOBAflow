@@ -231,13 +231,14 @@ internal sealed class MauiViewModelInitializationTests
         dependencies.MobaRuntimeMock.Verify(value => value.ResetInPortCountersAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    [Test]
-    public async Task FailedCounterResetPreservesCountsAndReportsTheError()
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task FailedCounterResetPreservesCountsAndReportsTheError(bool unexpected)
     {
         var dependencies = CreateDependencies();
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         dependencies.MobaRuntimeMock.Setup(value => value.ResetInPortCountersAsync(It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("Reset unavailable"));
+            .ThrowsAsync(unexpected ? new IOException("Reset unavailable") : new InvalidOperationException("Reset unavailable"));
         var viewModel = CreateViewModel(dependencies, eventBus);
         viewModel.CountOfFeedbackPoints = 1;
         eventBus.Publish(new RuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
