@@ -46,7 +46,7 @@ description: "MOBAflow task list template for feature implementation"
 - [ ] T004 [P] Add failing tests for shared behavior in `Test/[exact path]`
 - [ ] T005 Implement the shared behavior in [exact path]
 
-**Checkpoint**: Shared behavior passes focused tests and preserves compatibility.
+**Checkpoint**: Shared behavior passes focused tests.
 
 ---
 
@@ -96,11 +96,10 @@ description: "MOBAflow task list template for feature implementation"
 - [ ] TXXX Run `dotnet test Test/Test.csproj`
 - [ ] TXXX [P] Run exact affected project builds, including required Windows/Android builds on matching hosts
 - [ ] TXXX [P] Validate Light and Dark themes for changed UI
-- [ ] TXXX [P] Verify compatibility for JSON, configuration defaults, APIs, protocols, and persisted layouts as applicable
+- [ ] TXXX [P] Remove superseded models, fields, endpoints, tests, and docs; verify configuration defaults and persisted layouts still load
 - [ ] TXXX Update root documentation, changelog, and public API XML documentation as applicable
 - [ ] TXXX Run `sonar analyze secrets` over all changed files
-- [ ] TXXX Attempt local Sonar analysis against the actual PR base
-- [ ] TXXX Create the pull request as a draft and verify a green SonarCloud result with zero `OPEN` or `CONFIRMED` issues before review
+- [ ] TXXX Create the pull request as a draft; run Sonar code analysis only through GitHub CI and verify a green result for the current PR commit with zero `OPEN` or `CONFIRMED` issues before review
 - [ ] TXXX Create dependency-ordered GitHub task issues with `$speckit-taskstoissues` when issue-level tracking is required
 - [ ] TXXX Re-run the Constitution Check and record any approved exceptions
 

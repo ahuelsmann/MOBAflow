@@ -118,15 +118,16 @@ public sealed class WorkflowExecutionCoordinator : IWorkflowExecutionCoordinator
                 await Task.Delay(execution.Delay, _timeProvider, entry.Cancellation.Token).ConfigureAwait(false);
             }
 
-            return await _workflowService.ExecuteAsync(execution.Request, entry.Cancellation.Token).ConfigureAwait(false);
+            var request = execution.RequestFactory();
+            return await _workflowService.ExecuteAsync(request, entry.Cancellation.Token).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (entry.Cancellation.IsCancellationRequested)
         {
             return new WorkflowExecutionResult
             {
                 ExecutionId = Guid.NewGuid(),
-                WorkflowId = execution.Request.Workflow.Id,
-                SourceCorrelationId = execution.Request.SourceCorrelationId,
+                WorkflowId = execution.WorkflowId,
+                SourceCorrelationId = execution.SourceCorrelationId,
                 Status = WorkflowExecutionStatus.Cancelled
             };
         }

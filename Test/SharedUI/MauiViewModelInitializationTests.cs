@@ -168,10 +168,99 @@ internal sealed class MauiViewModelInitializationTests
         dependencies.NetworkNotifierMock.Verify(notifier => notifier.StopListening(), Times.Once);
     }
 
+    [Test]
+    public void CounterSnapshotsUseOnlyLocalRuntimeAndSurviveCollectionRecreation()
+    {
+        var dependencies = CreateDependencies();
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var viewModel = CreateViewModel(dependencies, eventBus, runtimeHubRemoteClient: Mock.Of<IRuntimeHubRemoteClient>());
+        viewModel.CountOfFeedbackPoints = 1;
+        var lastFeedback = DateTimeOffset.UtcNow;
+        var local = new MobaRuntimeSnapshot
+        {
+            InPortCounters = [new InPortCounterSnapshot(1, 5, lastFeedback, TimeSpan.FromSeconds(20))]
+        };
+        eventBus.Publish(new RuntimeSnapshotChangedEvent(local));
+        eventBus.Publish(new RuntimeSnapshotChangedEvent(local));
+        eventBus.Publish(new RemoteRuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
+        {
+            InPortCounters = [new InPortCounterSnapshot(1, 99, lastFeedback, null)]
+        }));
+        viewModel.IncrementFeedbackPointsCommand.Execute(null);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.Statistics[0].Count, Is.EqualTo(5));
+            Assert.That(viewModel.Statistics[0].LastFeedbackTime, Is.EqualTo(lastFeedback.UtcDateTime));
+            Assert.That(viewModel.Statistics[0].LastLapTime, Is.EqualTo(TimeSpan.FromSeconds(20)));
+            Assert.That(viewModel.Statistics[1].Count, Is.Zero);
+            Assert.That(eventBus.GetSubscriberCount<FeedbackReceivedEvent>(), Is.Zero);
+        }
+        eventBus.Publish(new RuntimeSnapshotChangedEvent(MobaRuntimeSnapshot.Empty));
+        Assert.That(viewModel.Statistics.All(stat => stat.Count == 0 && !stat.HasReceivedFirstLap), Is.True);
+    }
+
+    [Test]
+    public async Task CounterResetWaitsForTheGatewayAndProjectsTheConfirmedLocalCount()
+    {
+        var dependencies = CreateDependencies();
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        var gateway = new Mock<IRuntimeCommandGateway>();
+        var resetCompleted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        gateway.Setup(value => value.ResetInPortCountersAsync(It.IsAny<CancellationToken>())).Returns(resetCompleted.Task);
+        var viewModel = CreateViewModel(dependencies, eventBus, runtimeCommandGateway: gateway.Object);
+        viewModel.CountOfFeedbackPoints = 1;
+        eventBus.Publish(new RuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
+        {
+            InPortCounters = [new InPortCounterSnapshot(1, 7, null, null)]
+        }));
+
+        var reset = viewModel.ResetCountersCommand.ExecuteAsync(null);
+        try
+        {
+            Assert.That(viewModel.Statistics.Single().Count, Is.EqualTo(7));
+        }
+        finally
+        {
+            resetCompleted.TrySetResult();
+            await reset.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(true);
+        }
+
+        Assert.That(viewModel.Statistics.Single().Count, Is.Zero);
+        gateway.Verify(value => value.ResetInPortCountersAsync(It.IsAny<CancellationToken>()), Times.Once);
+        dependencies.MobaRuntimeMock.Verify(value => value.ResetInPortCountersAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task FailedCounterResetPreservesCountsAndReportsTheError(bool unexpected)
+    {
+        var dependencies = CreateDependencies();
+        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        dependencies.MobaRuntimeMock.Setup(value => value.ResetInPortCountersAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(unexpected ? new IOException("Reset unavailable") : new InvalidOperationException("Reset unavailable"));
+        var viewModel = CreateViewModel(dependencies, eventBus);
+        viewModel.CountOfFeedbackPoints = 1;
+        eventBus.Publish(new RuntimeSnapshotChangedEvent(new MobaRuntimeSnapshot
+        {
+            InPortCounters = [new InPortCounterSnapshot(1, 7, null, null)]
+        }));
+
+        await viewModel.ResetCountersCommand.ExecuteAsync(null).ConfigureAwait(true);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(viewModel.Statistics.Single().Count, Is.EqualTo(7));
+            Assert.That(viewModel.CounterResetError, Is.EqualTo("Reset unavailable"));
+        }
+    }
+
     private MauiViewModel CreateViewModel(
         TestDependencies dependencies,
         IEventBus? eventBus = null,
-        RemoteControlSessionService? remoteControlSessionService = null)
+        RemoteControlSessionService? remoteControlSessionService = null,
+        IRuntimeCommandGateway? runtimeCommandGateway = null,
+        IRuntimeHubRemoteClient? runtimeHubRemoteClient = null)
     {
         var viewModel = new MauiViewModel(
             dependencies.MobaRuntimeMock.Object,
@@ -186,6 +275,8 @@ internal sealed class MauiViewModelInitializationTests
             NullLogger<MauiViewModel>.Instance,
             eventBus ?? new EventBus(NullLogger<EventBus>.Instance),
             dependencies.RestApiClientRegistrationMock.Object,
+            runtimeHubRemoteClient: runtimeHubRemoteClient,
+            runtimeCommandGateway: runtimeCommandGateway,
             remoteControlSessionService: remoteControlSessionService);
 
         _createdViewModels.Add(viewModel);

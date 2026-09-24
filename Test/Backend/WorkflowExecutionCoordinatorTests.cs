@@ -28,7 +28,8 @@ public sealed class WorkflowExecutionCoordinatorTests
         {
             SourceKey = "feedback:1",
             OwnerId = cancelledOwner,
-            Request = cancelledRequest,
+            WorkflowId = cancelledRequest.Workflow.Id,
+            RequestFactory = () => cancelledRequest,
             Delay = TimeSpan.FromHours(1)
         });
         coordinator.CancelOwner(cancelledOwner);
@@ -36,7 +37,8 @@ public sealed class WorkflowExecutionCoordinatorTests
         {
             SourceKey = "feedback:2",
             OwnerId = Guid.NewGuid(),
-            Request = successfulRequest
+            WorkflowId = successfulRequest.Workflow.Id,
+            RequestFactory = () => successfulRequest
         });
 
         var cancelledResult = await cancelled.WaitAsync(TimeSpan.FromSeconds(1));
@@ -95,13 +97,19 @@ public sealed class WorkflowExecutionCoordinatorTests
         service.Verify(value => value.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    private static QueuedWorkflowExecution CreateQueued(string sourceKey, TimeSpan delay = default) => new()
+    private static QueuedWorkflowExecution CreateQueued(string sourceKey, TimeSpan delay = default)
     {
-        SourceKey = sourceKey,
-        OwnerId = Guid.NewGuid(),
-        Request = CreateRequest(),
-        Delay = delay
-    };
+        var request = CreateRequest();
+        return new QueuedWorkflowExecution
+        {
+            SourceKey = sourceKey,
+            OwnerId = Guid.NewGuid(),
+            WorkflowId = request.Workflow.Id,
+            SourceCorrelationId = request.SourceCorrelationId,
+            RequestFactory = () => request,
+            Delay = delay
+        };
+    }
 
     private static WorkflowExecutionRequest CreateRequest()
     {

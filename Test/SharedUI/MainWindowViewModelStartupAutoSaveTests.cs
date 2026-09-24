@@ -12,7 +12,6 @@ using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Common.Runtime;
 using Moba.Domain;
-using Moba.Domain.Enum;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
 
@@ -24,7 +23,7 @@ using Moq;
 internal partial class MainWindowViewModelShutdownTests
 {
     [Test]
-    public void Constructor_DoesNotSaveUnnamedSolution_WhenInitialRuntimeActivationCommitsUsageCheckpoint()
+    public void Constructor_DoesNotSaveUnnamedSolution_DuringInitialRuntimeActivation()
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
         var runtime = CreateRuntimeMock();
@@ -32,11 +31,6 @@ internal partial class MainWindowViewModelShutdownTests
 
         runtime
             .Setup(candidate => candidate.ActivateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()))
-            .Callback<Project, CancellationToken>((project, _) =>
-                eventBus.Publish(new VehicleUsageCheckpointCommittedEvent(
-                    project.Id,
-                    DateTimeOffset.UtcNow,
-                    new Dictionary<Guid, VehicleUsageRuntimeSnapshot>())))
             .Returns(Task.CompletedTask);
 
         _ = CreateViewModel(runtime.Object, eventBus, ioService.Object);
@@ -196,49 +190,6 @@ internal partial class MainWindowViewModelShutdownTests
     }
 
     [Test]
-    public void UsageCheckpointWithChangedCounters_AutoSavesToKnownPath()
-    {
-        var locomotive = new Locomotive { Usage = new VehicleUsageData() };
-        var project = new Project { Locomotives = [locomotive] };
-        var solution = new Solution { Projects = [project] };
-        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        var runtime = CreateRuntimeMock();
-        var ioService = new Mock<IIoService>();
-        ioService
-            .Setup(candidate => candidate.SaveAsync(solution, "existing.json"))
-            .ReturnsAsync((true, "existing.json", null));
-        var viewModel = CreateViewModel(runtime.Object, eventBus, ioService.Object, solution);
-        viewModel.CurrentSolutionPath = "existing.json";
-
-        eventBus.Publish(new VehicleUsageCheckpointCommittedEvent(
-            project.Id,
-            DateTimeOffset.UtcNow,
-            new Dictionary<Guid, VehicleUsageRuntimeSnapshot>
-            {
-                [locomotive.Id] = new()
-                {
-                    VehicleId = locomotive.Id,
-                    VehicleKind = TrainVehicleKind.Locomotive,
-                    TrackedOperatingSeconds = 42,
-                    TrackedCompletedTrips = 3
-                }
-            }));
-
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(locomotive.Usage!.TrackedOperatingSeconds, Is.EqualTo(42));
-            Assert.That(locomotive.Usage.TrackedCompletedTrips, Is.EqualTo(3));
-            Assert.That(viewModel.HasUnsavedChanges, Is.False);
-        }
-        ioService.Verify(
-            candidate => candidate.SaveAsync(solution, "existing.json"),
-            Times.Once);
-        ioService.Verify(
-            candidate => candidate.SaveAsAsync(It.IsAny<Solution>()),
-            Times.Never);
-    }
-
-    [Test]
     public async Task PrepareForShutdownAsync_StopsShutdown_WhenUnnamedSolutionSaveIsCancelled()
     {
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
@@ -256,47 +207,6 @@ internal partial class MainWindowViewModelShutdownTests
         runtime.Verify(
             candidate => candidate.DisconnectAsync(It.IsAny<CancellationToken>()),
             Times.Never);
-    }
-
-    [Test]
-    public async Task PrepareForShutdownAsync_SavesChangedUsageExactlyOnce_ToKnownPath()
-    {
-        var locomotive = new Locomotive { Usage = new VehicleUsageData() };
-        var project = new Project { Locomotives = [locomotive] };
-        var solution = new Solution { Projects = [project] };
-        var usage = new Dictionary<Guid, VehicleUsageRuntimeSnapshot>
-        {
-            [locomotive.Id] = new()
-            {
-                VehicleId = locomotive.Id,
-                VehicleKind = TrainVehicleKind.Locomotive,
-                TrackedOperatingSeconds = 42
-            }
-        };
-        var runtimeSnapshot = new MobaRuntimeSnapshot { VehicleUsage = usage };
-        var eventBus = new EventBus(NullLogger<EventBus>.Instance);
-        var runtime = CreateRuntimeMock();
-        runtime.SetupGet(candidate => candidate.Current).Returns(runtimeSnapshot);
-        runtime
-            .Setup(candidate => candidate.CheckpointUsageAsync(It.IsAny<CancellationToken>()))
-            .Callback(() => eventBus.Publish(new VehicleUsageCheckpointCommittedEvent(
-                project.Id,
-                DateTimeOffset.UtcNow,
-                usage)))
-            .Returns(Task.CompletedTask);
-        var ioService = new Mock<IIoService>();
-        ioService
-            .Setup(candidate => candidate.SaveAsync(solution, "existing.json"))
-            .ReturnsAsync((true, "existing.json", null));
-        var viewModel = CreateViewModel(runtime.Object, eventBus, ioService.Object, solution);
-        viewModel.CurrentSolutionPath = "existing.json";
-
-        var result = await viewModel.PrepareForShutdownAsync().ConfigureAwait(false);
-
-        Assert.That(result, Is.True);
-        ioService.Verify(
-            candidate => candidate.SaveAsync(solution, "existing.json"),
-            Times.Once);
     }
 
     private static MainWindowViewModel CreateViewModel(
@@ -334,13 +244,7 @@ internal partial class MainWindowViewModelShutdownTests
             .Setup(candidate => candidate.ActivateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         runtime
-            .Setup(candidate => candidate.CheckpointUsageAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        runtime
             .Setup(candidate => candidate.DisconnectAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        runtime
-            .Setup(candidate => candidate.SetActiveTrainAsync(It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         return runtime;
     }

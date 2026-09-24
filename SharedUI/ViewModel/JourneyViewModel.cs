@@ -9,7 +9,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using Domain;
-using Domain.Enum;
 
 using Interface;
 
@@ -69,6 +68,21 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     /// Gets the unique identifier of the journey.
     /// </summary>
     public Guid Id => _journey.Id;
+
+    /// <summary>
+    /// Gets or sets whether the runtime evaluates this journey's events on incoming feedback.
+    /// </summary>
+    public bool IsActive
+    {
+        get => _journey.IsActive;
+        set => SetProperty(_journey.IsActive, value, _journey, (m, v) => m.IsActive = v);
+    }
+
+    /// <summary>Gets the journey's feedback events.</summary>
+    public JourneyEventPlan EventPlan => _journey.EventPlan;
+
+    /// <summary>Notifies bindings and auto-save after the event plan was edited in place.</summary>
+    public void NotifyEventPlanChanged() => OnPropertyChanged(nameof(EventPlan));
 
     /// <summary>
     /// Gets or sets the display name of the journey.
@@ -143,33 +157,15 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     }
 
     /// <summary>
-    /// Gets the possible values for <see cref="BehaviorOnLastStop"/> for ComboBox binding.
-    /// </summary>
-    public IEnumerable<BehaviorOnLastStop> BehaviorOnLastStopValues =>
-        Enum.GetValues<BehaviorOnLastStop>();
-
-    /// <summary>
     /// Gets the current station name from the runtime session state.
     /// </summary>
     public string CurrentStation => _state.CurrentStationName;
-
-    /// <summary>Gets the progress within the currently expected feedback step.</summary>
-    public uint CurrentStepOccurrence => _state.CurrentStepOccurrence;
-
-    /// <summary>Gets the repeat count required by the currently expected feedback step.</summary>
-    public uint CurrentStepRepeatCount => _journey.FeedbackSequence.ElementAtOrDefault(_state.CurrentFeedbackIndex)?.Index ?? 1;
 
     /// <summary>
     /// Gets the current station index within the journey from the runtime session state.
     /// Read-only from the ViewModel perspective – updated via runtime snapshots.
     /// </summary>
     public int CurrentPos => _state.CurrentPos;
-
-    /// <summary>Gets the index of the next expected feedback sequence entry.</summary>
-    public int CurrentFeedbackIndex => _state.CurrentFeedbackIndex;
-
-    /// <summary>Gets the InPort expected by the next feedback sequence entry, if any.</summary>
-    public uint? NextFeedbackInPort => _journey.FeedbackSequence.ElementAtOrDefault(_state.CurrentFeedbackIndex)?.InPort;
 
     /// <summary>
     /// Updates the local SessionState from a runtime projection and notifies UI.
@@ -180,8 +176,6 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
         _state.CurrentPos = state.CurrentPos;
         _state.CurrentStationName = state.CurrentStationName;
         _state.CurrentStationId = state.CurrentStationId;
-        _state.CurrentFeedbackIndex = state.CurrentFeedbackIndex;
-        _state.CurrentStepOccurrence = state.CurrentStepOccurrence;
         _state.LastFeedbackTime = state.LastFeedbackTime;
         _state.IsActive = state.IsActive;
 
@@ -189,11 +183,7 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
 
         // Notify UI about property changes
         OnPropertyChanged(nameof(CurrentStation));
-        OnPropertyChanged(nameof(CurrentStepOccurrence));
-        OnPropertyChanged(nameof(CurrentStepRepeatCount));
         OnPropertyChanged(nameof(CurrentPos));
-        OnPropertyChanged(nameof(CurrentFeedbackIndex));
-        OnPropertyChanged(nameof(NextFeedbackInPort));
     }
 
     /// <summary>
@@ -206,19 +196,13 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
         _state.CurrentPos = snapshot.CurrentPos;
         _state.CurrentStationName = snapshot.CurrentStationName;
         _state.CurrentStationId = snapshot.CurrentStationId;
-        _state.CurrentFeedbackIndex = snapshot.CurrentFeedbackIndex;
-        _state.CurrentStepOccurrence = snapshot.CurrentStepOccurrence;
         _state.LastFeedbackTime = snapshot.LastFeedbackTime;
         _state.IsActive = snapshot.IsActive;
 
         UpdateStationHighlights(snapshot.CurrentPos);
 
         OnPropertyChanged(nameof(CurrentStation));
-        OnPropertyChanged(nameof(CurrentStepOccurrence));
-        OnPropertyChanged(nameof(CurrentStepRepeatCount));
         OnPropertyChanged(nameof(CurrentPos));
-        OnPropertyChanged(nameof(CurrentFeedbackIndex));
-        OnPropertyChanged(nameof(NextFeedbackInPort));
     }
 
     /// <summary>
@@ -226,7 +210,7 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     /// </summary>
     public void ResetRuntimeState()
     {
-        _state.Reset((int)_journey.FirstPos);
+        _state.Reset();
 
         foreach (var stationVm in Stations)
         {
@@ -234,56 +218,17 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
         }
 
         OnPropertyChanged(nameof(CurrentStation));
-        OnPropertyChanged(nameof(CurrentStepOccurrence));
-        OnPropertyChanged(nameof(CurrentStepRepeatCount));
         OnPropertyChanged(nameof(CurrentPos));
-        OnPropertyChanged(nameof(CurrentFeedbackIndex));
-        OnPropertyChanged(nameof(NextFeedbackInPort));
     }
 
     /// <summary>
     /// Resets the journey to its initial state.
-    /// Clears counter, position, and station highlighting.
+    /// Clears the projected position and station highlighting.
     /// </summary>
     [RelayCommand]
     private void Reset()
     {
         ResetRuntimeState();
-    }
-
-    /// <summary>
-    /// Gets or sets the behavior when the journey reaches the last stop.
-    /// </summary>
-    public BehaviorOnLastStop BehaviorOnLastStop
-    {
-        get => _journey.BehaviorOnLastStop;
-        set => SetProperty(_journey.BehaviorOnLastStop, value, _journey, (m, v) => m.BehaviorOnLastStop = v);
-    }
-
-    /// <summary>
-    /// Gets or sets the identifier of the next journey to start after this one finishes.
-    /// </summary>
-    public Guid? NextJourneyId
-    {
-        get => _journey.NextJourneyId;
-        set => SetProperty(_journey.NextJourneyId, value, _journey, (m, v) => m.NextJourneyId = v);
-    }
-
-    /// <summary>
-    /// Gets the next journey instance resolved from the project for UI display.
-    /// </summary>
-    public Journey? NextJourney =>
-        _journey.NextJourneyId.HasValue
-            ? _project.Journeys.FirstOrDefault(j => j.Id == _journey.NextJourneyId.Value)
-            : null;
-
-    /// <summary>
-    /// Gets or sets the initial position index used when resetting the journey.
-    /// </summary>
-    public uint FirstPos
-    {
-        get => _journey.FirstPos;
-        set => SetProperty(_journey.FirstPos, value, _journey, (m, v) => m.FirstPos = v);
     }
 
     /// <summary>

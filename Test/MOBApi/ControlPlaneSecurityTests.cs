@@ -1847,7 +1847,6 @@ internal sealed partial class ControlPlaneSecurityTests
         Assert.That(aborted, Is.True);
     }
 
-    [TestCase(typeof(FeedbackSequencesController), nameof(FeedbackSequencesController.Get))]
     [TestCase(typeof(JourneyProgressController), nameof(JourneyProgressController.Get))]
     [TestCase(typeof(PhotosController), nameof(PhotosController.GetFile))]
     [TestCase(typeof(RuntimeController), nameof(RuntimeController.GetMeta))]
@@ -1870,7 +1869,6 @@ internal sealed partial class ControlPlaneSecurityTests
     [TestCase(typeof(ClientsController), nameof(ClientsController.Register), ControlPlaneCapabilities.ClientPresence)]
     [TestCase(typeof(ClientsController), nameof(ClientsController.Unregister), ControlPlaneCapabilities.ClientPresence)]
     [TestCase(typeof(PhotosController), nameof(PhotosController.Upload), ControlPlaneCapabilities.PhotoWrite)]
-    [TestCase(typeof(FeedbackSequencesController), nameof(FeedbackSequencesController.Put), ControlPlaneCapabilities.HostPublish)]
     [TestCase(typeof(JourneyProgressController), nameof(JourneyProgressController.Reset), ControlPlaneCapabilities.RuntimeControl)]
     [TestCase(typeof(RuntimeCommandsController), nameof(RuntimeCommandsController.EnqueueSignalAspect), ControlPlaneCapabilities.RuntimeControl)]
     [TestCase(typeof(RuntimeCommandsController), nameof(RuntimeCommandsController.EnqueueLocomotiveDrive), ControlPlaneCapabilities.RuntimeControl)]

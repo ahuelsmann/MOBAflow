@@ -11,11 +11,17 @@ public sealed record QueuedWorkflowExecution
     /// <summary>Gets the runtime owner used for targeted cancellation, such as a journey identifier.</summary>
     public required Guid OwnerId { get; init; }
 
-    /// <summary>Gets the immutable workflow request captured when the source event was accepted.</summary>
-    public required WorkflowExecutionRequest Request { get; init; }
+    /// <summary>Gets the workflow identity, including when queued execution is cancelled before starting.</summary>
+    public required Guid WorkflowId { get; init; }
+
+    /// <summary>Gets the accepted activation's correlation identity.</summary>
+    public Guid SourceCorrelationId { get; init; }
 
     /// <summary>Gets the delay applied before the workflow starts.</summary>
     public TimeSpan Delay { get; init; }
+
+    /// <summary>Creates the request once, after preceding source work completes.</summary>
+    public required Func<WorkflowExecutionRequest> RequestFactory { get; init; }
 }
 
 /// <summary>Orders workflow executions per source without blocking unrelated sources.</summary>

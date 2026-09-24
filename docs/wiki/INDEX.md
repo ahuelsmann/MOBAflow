@@ -7,7 +7,7 @@ railroad around a Roco Z21 command station.
 
 | App or component | Use it for | Guide |
 | --- | --- | --- |
-| **MOBAflow Desktop** | Create and operate layouts on Windows: rolling stock, journeys, feedback sequences, workflows, track plans, signal boxes, monitoring and displays | [MOBAflow user guide](MOBAFLOW-USER-GUIDE.md) |
+| **MOBAflow Desktop** | Create and operate layouts on Windows: rolling stock, journeys, journey events, workflows, track plans, signal boxes, monitoring and displays | [MOBAflow user guide](MOBAFLOW-USER-GUIDE.md) |
 | **MOBAsmart** | Operate from Android: lap counter, Z21 status and power, mobile signal box, locomotive fleet and train control | [MOBAsmart user guide](MOBASMART-USER-GUIDE.md) |
 | **MOBApi** | Connect MOBAflow and MOBAsmart on the local network and expose REST/SignalR integration points | [Project reference](../PROJECT-REFERENCE.md#mobapi-endpoints) |
 | **Remote display stack** | Develop and test RGB565 rendering, UDP transport and ESP32-S3 receiver firmware (preview integration) | [Display protocol](../../MOBAdisplay/docs/protocol.md) |

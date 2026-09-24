@@ -90,7 +90,7 @@ public sealed class WorkflowLibraryViewModelTests
         var journey = new Journey
         {
             Name = "Regional",
-            FeedbackSequence = [new JourneyFeedbackStep { InPort = 1, WorkflowId = target.Id }]
+            EventPlan = new JourneyEventPlan { Events = [new JourneyEvent { InPort = 2, Count = 5, WorkflowId = target.Id }] }
         };
         var projectViewModel = new ProjectViewModel(new Project
         {
@@ -107,6 +107,7 @@ public sealed class WorkflowLibraryViewModelTests
         {
             Assert.That(projectViewModel.Model.Workflows, Does.Contain(target));
             Assert.That(library.DeletionReferences, Has.Count.EqualTo(2));
+            Assert.That(library.LastDeletionBlockMessage, Does.Contain("InPort 2, count 5"));
             Assert.That(library.LastDeletionBlockMessage, Does.Contain("Regional"));
             Assert.That(library.LastDeletionBlockMessage, Does.Contain("Caller"));
             Assert.That(dialog.LastTitle, Is.EqualTo("Workflow is in use"));
