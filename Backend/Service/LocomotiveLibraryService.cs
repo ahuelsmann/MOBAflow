@@ -107,7 +107,7 @@ public sealed class LocomotiveLibraryService : ILocomotiveLibraryService
                 latestEntry.Description);
         MaintenanceDueState? maintenanceState = locomotive.Maintenance is { Plans.Count: > 0 } maintenanceData
             && _maintenanceService.Validate(maintenanceData).Count == 0
-                ? _maintenanceService.Evaluate(maintenanceData, locomotive.Usage, _timeProvider.GetUtcNow())
+                ? _maintenanceService.Evaluate(maintenanceData, _timeProvider.GetUtcNow())
                     .Select(status => status.State)
                     .DefaultIfEmpty(MaintenanceDueState.NotScheduled)
                     .Max()

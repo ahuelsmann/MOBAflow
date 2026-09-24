@@ -72,14 +72,7 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private async Task SimulateFeedback()
     {
-        uint? selectedInPort = SelectedJourney?.NextFeedbackInPort;
-
-        int inPort;
-        if (selectedInPort.HasValue)
-        {
-            inPort = unchecked((int)selectedInPort.Value);
-        }
-        else if (!int.TryParse(SimulateInPort, out inPort))
+        if (!int.TryParse(SimulateInPort, out var inPort))
         {
             StatusText = "Invalid InPort number";
             return;
@@ -95,8 +88,7 @@ public partial class MainWindowViewModel
     {
         if (SelectedJourney == null) return;
 
-        SelectedJourney.ResetCommand.Execute(null);
-        await _runtimeCommandGateway.ResetJourneyAsync(SelectedJourney.Model.Id).ConfigureAwait(false);
+        await ResetJourneyCounter().ConfigureAwait(true);
     }
 
     [RelayCommand(CanExecute = nameof(CanToggleTrackPower))]
@@ -145,6 +137,7 @@ public partial class MainWindowViewModel
         SuppressOperatingStateRecompute = true;
         try
         {
+            _latestRuntimeSnapshot = snapshot;
             var status = RuntimeSnapshotProjector.ProjectStatus(snapshot);
             IsConnected = status.IsConnected;
             IsTrackPowerOn = status.IsTrackPowerOn;
@@ -168,6 +161,7 @@ public partial class MainWindowViewModel
             IsOperatorAckRequired = status.IsOperatorAckRequired;
 
             ApplyJourneyRuntimeSnapshots(snapshot.JourneyStates);
+            ApplyInPortCounterSnapshot(snapshot);
 
             if (SignalBoxRuntimeSync.ApplyToPlan(SelectedProject?.Model.SignalBoxPlan, snapshot.SignalBoxElements))
             {

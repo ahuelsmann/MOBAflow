@@ -11,6 +11,8 @@ and apply to coding agents across Windows and Linux.
   needs authorization that the user has not already given. Continue independent work while blocked.
 - Make the smallest cohesive change that solves the problem. Preserve unrelated user edits and existing contracts;
   avoid incidental cleanup, speculative abstractions, dependency upgrades, and repository-wide formatting.
+  Ask before adding mechanics the request does not name, such as runtime lifecycle commands, chaining/follow-up
+  behavior, per-run state or deferred-apply logic.
 - Inspect affected code, callers, and tests before editing. Plan briefly for multi-file or risky work; simple fixes
   need no formal plan. Use tools available in the session; no particular planning or diagnostic tool is required.
 - Read only the applicable guidance linked in the [instruction index](.github/instructions/instructions-index.md).
@@ -31,12 +33,21 @@ and apply to coding agents across Windows and Linux.
   A user-requested synchronization of the shared checkout can be prepared there and then fast-forwarded into that checkout.
 - Never launch MOBAflow without explicit user approval. Build, restore and test requests alone do not authorize
   starting the WinUI executable, debugger, watch process or launch-based UI automation.
-- SonarQube before PR review: attempt local analysis against the actual base, create PRs as drafts, and require a
-  green SonarCloud check with zero OPEN/CONFIRMED PR issues before marking ready. Follow
+- MOBAflow has no released users yet: do not add legacy paths, serialized-format compatibility, migrations or
+  adoption flows. Replace a superseded model and remove its code, tests, API endpoints and docs in the same change.
+  Keep `Solution.CurrentSchemaVersion` unless the task requires a bump; removed JSON fields are ignored on load.
+  Remove legacy paths that already exist only in a dedicated change, not as incidental cleanup.
+- SonarQube before PR review: run code analysis only through the GitHub PR pipeline, create PRs as drafts, and
+  require a green SonarCloud check on the current PR commit with zero OPEN/CONFIRMED PR issues before marking ready.
+  Do not run local Sonar/Vortex code analysis or install analysis hooks. Local secrets scans remain required. Follow
   [the Sonar policy](.github/instructions/sonarqube-pre-pr.instructions.md); preserve existing analyzer baseline gates.
 - Balanced secrets scanning: scan likely secret-bearing files before reading and changed files before commits/PRs.
   If the scanner is unavailable, continue ordinary development, avoid sensitive files and record the limitation
   before publication. If a scan finds a secret, stop handling that file and report it without exposing its value.
+- After patches, generators or scripts change text files, run `scripts/Test-LineEndings.ps1 -Path <changed-paths>`.
+  Use `-Fix` to normalize those files according to `.gitattributes`, then check again. Preserve LF exceptions,
+  encoding and final-newline presence. Before committing, run `scripts/Test-LineEndings.ps1 -Staged`;
+  the installed pre-commit hook checks both staged files on disk and mixed line endings in the index.
 - Standalone Markdown plans belong in `plans/`; remove completed plans, retaining Git history and closed GitHub issues.
   Spec Kit artifacts remain under `specs/`. Use [Spec Kit governance](.github/instructions/spec-kit-governance.instructions.md)
   for product behavior and cross-cutting features; this does not require a standalone plan for every small fix.
@@ -84,7 +95,7 @@ Do not assume every directory is an active project or discover projects inside `
 - Persist resizable star columns as `*ColumnStarValue`; use pixels only for intentionally fixed columns.
   When changing XAML files, ensure active pages remain included in XAML compilation; do not hide compiler errors
   by adding `<Page Remove="..."/>` for an active page.
-- Preserve config defaults, serialized compatibility and safe locomotive startup (speed zero, no restored movement).
+- Preserve config defaults and safe locomotive startup (speed zero, no restored movement).
   Reuse `PhotoPathHelper`, `DiscoveryResponseParser`, and `MasterDataStore` instead of duplicating their logic.
 
 For runtime ownership, DI entry points and regression tests, see

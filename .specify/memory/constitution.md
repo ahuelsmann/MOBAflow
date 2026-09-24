@@ -1,24 +1,19 @@
 <!--
 Sync Impact Report
-- Version change: 1.0.0 -> 1.1.0
+- Version change: 2.0.0 -> 3.0.0
 - Modified principles:
-  - IV. Specifications Must Be Testable and Compatible ->
-    IV. Specifications, Plans, and Issues Must Be Traceable
-- Added principles:
-  - VI. Quality Gates Protect the Main Branch
-- Added governance:
-  - standalone plan location and lifecycle
-  - GitHub issue traceability
-  - balanced secrets scanning
-  - local Sonar and remote SonarCloud PR gates
+  - VI. Quality Gates Protect the Main Branch: Sonar code analysis runs only in
+    GitHub CI; the duplicate local analysis prerequisite is removed. Local secrets
+    scanning, builds, tests, and analyzer baseline checks remain required.
 - Templates updated:
-  - ✅ .specify/templates/overrides/spec-template.md
   - ✅ .specify/templates/overrides/plan-template.md
   - ✅ .specify/templates/overrides/tasks-template.md
 - Runtime guidance updated:
   - ✅ AGENTS.md
-  - ✅ .github/copilot-instructions.md
-  - ✅ docs/SPEC-KIT.md
+  - ✅ .github/instructions/sonarqube-pre-pr.instructions.md
+  - ✅ .github/PULL_REQUEST_TEMPLATE.md
+- Migration note: existing plans follow this CI-only Sonar policy; obsolete local
+  Sonar code-analysis tasks must not be executed. Historical validation records remain unchanged.
 - Follow-up TODOs: none
 -->
 # MOBAflow Constitution
@@ -62,11 +57,12 @@ platforms. Every specification and implementation plan MUST reference its
 authoritative GitHub issue. Spec Kit feature artifacts remain together below
 `specs/NNN-feature-name/`; standalone project, quality, refactoring, and roadmap
 plans belong in `plans/`. Completed standalone plans MUST be deleted because Git
-history and closed GitHub issues retain the record. Plans MUST identify
-compatibility effects on existing JSON data, configuration defaults, public
-APIs, Z21 behavior, and persisted layouts. Breaking changes require an explicit
-migration path and justification. Existing defaults and serialized data MUST
-remain compatible unless the approved specification deliberately changes them.
+history and closed GitHub issues retain the record. Plans MUST state the effects
+on existing JSON data, configuration defaults, public APIs, Z21 behavior, and
+persisted layouts. MOBAflow has no released users yet: superseded models, fields,
+and endpoints MUST be removed in the same change rather than kept for
+compatibility, and no migration layer is added. Configuration defaults and safe
+locomotive startup remain protected.
 
 ### V. Prefer Simple, Traceable Changes
 
@@ -83,9 +79,10 @@ Changed files likely to contain secrets MUST pass `sonar analyze secrets` before
 they are read, and all changed files MUST pass a secrets scan before commit and
 PR publication. Ordinary source, tests, Markdown, schemas, and checked-in
 templates do not require individual pre-read scans unless context indicates
-secret material. Every PR MUST be created as a draft. Local Sonar analysis MUST
-be attempted against the actual PR base, and the PR MUST remain a draft until
-the remote SonarCloud check is green with zero `OPEN` or `CONFIRMED` issues.
+secret material. Sonar code analysis MUST run only through GitHub CI; local
+Sonar/Vortex code analysis and analysis hooks MUST NOT be run or installed.
+Every PR MUST be created as a draft and remain a draft until the SonarCloud check
+for its current commit is green with zero `OPEN` or `CONFIRMED` issues.
 Valid findings MUST NOT be suppressed, excluded, or hidden by lowering a gate.
 
 ## Technical and Product Constraints
@@ -111,8 +108,8 @@ Valid findings MUST NOT be suppressed, excluded, or hidden by lowering a gate.
 Work follows the repository's six-step workflow: analyse, research, plan,
 implement, validate, and document. Spec Kit maps to it as follows:
 
-1. `$speckit-specify` records user value, scope, compatibility, and acceptance
-   criteria.
+1. `$speckit-specify` records user value, scope, data and API effects, and
+   acceptance criteria.
 2. `$speckit-clarify` resolves material ambiguity before technical design.
 3. `$speckit-plan` records architecture, platform scope, risks, and validation.
 4. `$speckit-tasks` creates traceable implementation and mandatory test tasks.
@@ -122,9 +119,9 @@ implement, validate, and document. Spec Kit maps to it as follows:
    approved task list when issue-level execution tracking is needed.
 8. Validation includes relevant targeted builds, `dotnet test Test/Test.csproj`,
    formatting/static checks, Light/Dark theme checks, changed-file secrets
-   scanning, and local Sonar analysis against the actual PR base.
+   scanning, and SonarCloud code analysis through GitHub CI only.
 9. Every PR is created as a draft and remains draft until SonarCloud is green
-   with zero `OPEN` or `CONFIRMED` issues.
+   for its current commit with zero `OPEN` or `CONFIRMED` issues.
 10. Documentation and changelog updates are included whenever behavior or the
     contributor workflow changes.
 
@@ -144,4 +141,4 @@ semantic versioning: MAJOR for incompatible governance changes, MINOR for new or
 materially expanded principles, and PATCH for clarifications. Every plan and
 review MUST verify compliance; unresolved violations block implementation.
 
-**Version**: 1.1.0 | **Ratified**: 2026-07-19 | **Last Amended**: 2026-07-24
+**Version**: 3.0.0 | **Ratified**: 2026-07-19 | **Last Amended**: 2026-09-24

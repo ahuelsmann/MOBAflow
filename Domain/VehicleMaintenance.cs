@@ -13,13 +13,13 @@ public sealed class VehicleMaintenanceData
     public List<VehicleMaintenanceEntry> Entries { get; set; } = [];
 
     /// <summary>
-    /// Gets or sets recurring calendar- and usage-based plans.
+    /// Gets or sets recurring calendar-based plans.
     /// </summary>
     public List<VehicleMaintenancePlan> Plans { get; set; } = [];
 }
 
 /// <summary>
-/// Describes one performed maintenance task and its lifetime-counter snapshot.
+/// Describes one performed maintenance task.
 /// </summary>
 public sealed class VehicleMaintenanceEntry
 {
@@ -31,19 +31,13 @@ public sealed class VehicleMaintenanceEntry
 
     public string Description { get; set; } = string.Empty;
 
-    public long? OperatingSecondsAtService { get; set; }
-
-    public long? CompletedTripsAtService { get; set; }
-
-    public decimal? DistanceKilometresAtService { get; set; }
-
     public MoneyAmount? Cost { get; set; }
 
     public string? Notes { get; set; }
 }
 
 /// <summary>
-/// Defines one maintenance task that becomes due when its first configured interval is reached.
+/// Defines one maintenance task that becomes due when its calendar interval is reached.
 /// </summary>
 public sealed class VehicleMaintenancePlan
 {
@@ -55,19 +49,7 @@ public sealed class VehicleMaintenancePlan
 
     public int? IntervalDays { get; set; }
 
-    public long? IntervalOperatingSeconds { get; set; }
-
-    public long? IntervalCompletedTrips { get; set; }
-
-    public decimal? IntervalDistanceKilometres { get; set; }
-
     public DateTimeOffset? LastCompletedAt { get; set; }
-
-    public long? OperatingSecondsAtLastCompletion { get; set; }
-
-    public long? CompletedTripsAtLastCompletion { get; set; }
-
-    public decimal? DistanceKilometresAtLastCompletion { get; set; }
 }
 
 public sealed class MoneyAmount

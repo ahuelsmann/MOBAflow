@@ -14,5 +14,8 @@
         "**/.nuget": true,
         "**/bin": true,
         "**/obj": true
-    }
+    },
+    "csharp-dev-tools.solutionViewer.selectedWorkspaceSolutions": [
+        "Moba.slnx"
+    ]
 }

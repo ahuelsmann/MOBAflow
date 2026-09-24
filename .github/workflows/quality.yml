@@ -26,6 +26,14 @@ jobs:
         shell: pwsh
         run: ./scripts/Test-InstructionConsistency.ps1
 
+      - name: Validate line endings
+        shell: pwsh
+        run: ./scripts/Test-LineEndings.ps1
+
+      - name: Test line-ending guard
+        shell: pwsh
+        run: ./scripts/Test-LineEndings.Tests.ps1
+
   desktop:
     name: Windows desktop build, tests, and coverage
     runs-on: windows-latest

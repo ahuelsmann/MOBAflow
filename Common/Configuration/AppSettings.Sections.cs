@@ -289,9 +289,6 @@ public class FeatureToggleSettings
     /// <summary>Gets or sets an optional label suffix for the Event Manager page.</summary>
     public string EventManagerPageLabel { get; set; } = "Preview";
 
-    /// <summary>Enable feedback-sequence V2 runtime behavior.</summary>
-    public bool UseFeedbackSequenceV2Runtime { get; set; } = true;
-
     /// <summary>Enable the visual timeline editor on the Event Manager page.</summary>
     public bool IsEventManagerVisualEditorAvailable { get; set; } = true;
 
@@ -682,6 +679,9 @@ public class JourneysPageLayoutSettings
 
 public class EventManagerPageLayoutSettings
 {
+    public double EventPlanColumnStarValue { get; set; } = 2;
+    public double WorkflowLibraryColumnStarValue { get; set; } = 1;
+    public double PropertiesColumnStarValue { get; set; } = 1.2;
     public bool IsToolboxExpanded { get; set; } = true;
     public bool IsValuesExpanded { get; set; } = true;
     public bool IsPropertiesExpanded { get; set; } = true;

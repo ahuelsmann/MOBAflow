@@ -10,6 +10,9 @@ using Service;
 /// </summary>
 public class JourneyFeedbackEventArgs : EventArgs
 {
+    /// <summary>Whether the counter service will publish the snapshot for this accepted input.</summary>
+    public bool IsCounterFeedback { get; init; }
+
     /// <summary>
     /// Unique identifier of the journey that received feedback.
     /// </summary>
@@ -20,14 +23,4 @@ public class JourneyFeedbackEventArgs : EventArgs
     /// ViewModels can read this to update UI with current counter value.
     /// </summary>
     public required JourneySessionState SessionState { get; init; }
-}
-
-/// <summary>
-/// Event arguments for one authoritative journey-run completion transition.
-/// </summary>
-public sealed class JourneyCompletedEventArgs : EventArgs
-{
-    public required Guid JourneyId { get; init; }
-
-    public required Guid JourneyRunId { get; init; }
 }

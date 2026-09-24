@@ -14,40 +14,14 @@ internal static class MobaRuntimeSnapshotBuilder
     public static MobaRuntimeSnapshot Create(
         MobaRuntimeTelemetryState telemetry,
         ActiveProjectContext? activeProjectContext,
-        Guid? activeTrainId,
-        IReadOnlyDictionary<Guid, VehicleUsageRuntimeSnapshot> vehicleUsage,
-        VehicleUsageRuntimeDiagnosticsSnapshot vehicleUsageDiagnostics)
+        IReadOnlyList<InPortCounterSnapshot>? inPortCounters = null)
     {
-        var journeyStates = new Dictionary<Guid, JourneyRuntimeSnapshot>();
+        var journeyStates = CreateJourneySnapshots(activeProjectContext);
         var signalBoxElements = new List<SignalBoxElementRuntimeSnapshot>();
         var locomotiveFleet = new List<LocomotiveFleetSnapshot>();
 
         if (activeProjectContext != null)
         {
-            foreach (var journey in activeProjectContext.ActiveProject.Journeys)
-            {
-                var state = activeProjectContext.JourneyManager.GetState(journey.Id);
-                if (state == null)
-                {
-                    continue;
-                }
-
-                journeyStates[journey.Id] = new JourneyRuntimeSnapshot
-                {
-                    JourneyId = journey.Id,
-                    JourneyRunId = state.RunId,
-                    CurrentPos = state.CurrentPos,
-                    CurrentStationName = state.CurrentStationName,
-                    CurrentStationId = state.CurrentStationId,
-                    CurrentFeedbackIndex = state.CurrentFeedbackIndex,
-                    CurrentStepOccurrence = state.CurrentStepOccurrence,
-                    CurrentStepRepeatCount = journey.FeedbackSequence.ElementAtOrDefault(state.CurrentFeedbackIndex)?.RepeatCount ?? 1,
-                    ExpectedInPort = journey.FeedbackSequence.ElementAtOrDefault(state.CurrentFeedbackIndex)?.InPort,
-                    LastFeedbackTime = state.LastFeedbackTime,
-                    IsActive = state.IsActive
-                };
-            }
-
             foreach (var element in activeProjectContext.ActiveProject.SignalBoxPlan?.Elements ?? [])
             {
                 switch (element)
@@ -124,14 +98,43 @@ internal static class MobaRuntimeSnapshotBuilder
             LastFailSafeAt = telemetry.LastFailSafeAt,
             IsOperatorAckRequired = telemetry.IsOperatorAckRequired,
             JourneyStates = journeyStates,
+            InPortCounters = inPortCounters ?? [],
             LocomotiveStates = new Dictionary<int, LocomotiveRuntimeSnapshot>(telemetry.LocomotiveStates),
             LocomotiveFleet = locomotiveFleet,
-            VehicleUsage = vehicleUsage,
-            ActiveTrainId = activeTrainId,
-            VehicleUsageDiagnostics = vehicleUsageDiagnostics,
             SignalBoxElements = signalBoxElements,
             CreatedAt = DateTimeOffset.Now
         };
+    }
+
+    private static Dictionary<Guid, JourneyRuntimeSnapshot> CreateJourneySnapshots(ActiveProjectContext? activeProjectContext)
+    {
+        var snapshots = new Dictionary<Guid, JourneyRuntimeSnapshot>();
+        if (activeProjectContext == null)
+        {
+            return snapshots;
+        }
+
+        foreach (var journeyId in activeProjectContext.ActiveProject.Journeys.Select(journey => journey.Id))
+        {
+            var state = activeProjectContext.JourneyManager.GetState(journeyId);
+            if (state == null)
+            {
+                continue;
+            }
+
+            snapshots[journeyId] = new JourneyRuntimeSnapshot
+            {
+                JourneyId = journeyId,
+                JourneyRunId = state.RunId,
+                CurrentPos = state.CurrentPos,
+                CurrentStationName = state.CurrentStationName,
+                CurrentStationId = state.CurrentStationId,
+                LastFeedbackTime = state.LastFeedbackTime,
+                IsActive = state.IsActive
+            };
+        }
+
+        return snapshots;
     }
 }
 

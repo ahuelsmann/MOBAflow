@@ -1,11 +1,12 @@
-# Normalize text files in the repository and use native line endings on checkout.
-* text=auto
+# Normalize repository text to LF and use CRLF in working directories on every platform.
+* text=auto eol=crlf
 
 # Preserve line endings required by platform-specific files.
 *.bat text eol=crlf
 *.cmd text eol=crlf
 *.sln text eol=crlf
 *.sh text eol=lf
+.githooks/* text eol=lf
 
 # Spec Kit manifests hash file bytes; keep managed assets stable across platforms.
 .agents/skills/speckit-*/SKILL.md text eol=lf

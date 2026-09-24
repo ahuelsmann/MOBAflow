@@ -28,18 +28,13 @@ public sealed partial class MobaRuntimeService
         // into the running session, and runtime mutations never touch the live editor model.
         // Entity Ids are preserved by the round-trip, so snapshots and journey reset still resolve
         // against the same Ids the editor exposes.
-        CheckpointVehicleUsage(publishSnapshot: true);
         var activeProject = CloneForRuntime(editableProject);
-        var journeyManager = _journeyManagerFactory.Create(activeProject, _executionContextFactory.Create());
+        var journeyManager = _journeyManagerFactory.Create(activeProject, _executionContextFactory.Create(), _inPortCounters);
         journeyManager.StationChanged += OnJourneyStationChanged;
         journeyManager.FeedbackReceived += OnJourneyRuntimeChanged;
-        journeyManager.JourneyCompleted += OnJourneyCompleted;
 
         var nextContext = new ActiveProjectContext(activeProject, journeyManager);
         ReplaceActiveProjectContext(nextContext);
-        _vehicleUsageTracker.Activate(activeProject);
-        UpdateVehicleUsageRuntimeState();
-        StartVehicleUsageCheckpointTimer();
 
         if (_interlockingRuntime != null)
         {
@@ -54,14 +49,22 @@ public sealed partial class MobaRuntimeService
             activeProject.Journeys.Count);
 
         PublishSnapshot();
-        CheckpointVehicleUsage(publishSnapshot: false, publishCommittedEvent: false);
     }
 
-    /// <summary>
-    /// Creates an isolated runtime copy of the editor project using the canonical JSON serialization
-    /// (the same converters used for solution save/load), guaranteeing a deep, structurally identical
-    /// clone with preserved entity Ids.
-    /// </summary>
+    /// <inheritdoc />
+    public Task UpdateJourneyEventsAsync(Project editableProject, Guid journeyId, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentNullException.ThrowIfNull(editableProject);
+        var context = _activeProjectContext;
+        if (context?.ActiveProject.Id != editableProject.Id) return Task.CompletedTask;
+
+        context.JourneyManager.UpdateEvents(CloneForRuntime(editableProject), journeyId);
+        PublishSnapshot();
+        return Task.CompletedTask;
+    }
+
+    /// <summary>Creates an isolated runtime copy using the canonical JSON serialization with preserved entity Ids.</summary>
     private static Project CloneForRuntime(Project editableProject)
     {
         var json = JsonSerializer.Serialize(editableProject, JsonOptions.Compact);
@@ -113,7 +116,6 @@ public sealed partial class MobaRuntimeService
         try
         {
             _activeProjectContext?.JourneyManager.CancelPendingWork();
-            CheckpointVehicleUsage(publishSnapshot: true);
             _isManualDisconnectRequested = true;
             _isZ21Connecting = false;
             _isOperatorAckRequired = false;
@@ -124,7 +126,6 @@ public sealed partial class MobaRuntimeService
 
             _isConnected = false;
             _isTrackPowerOn = false;
-            UpdateVehicleUsageRuntimeState();
             _statusText = "Disconnected";
             PublishSnapshot();
         }
@@ -178,8 +179,6 @@ public sealed partial class MobaRuntimeService
         };
 
         MarkLocomotiveDriveCommand(address);
-        SelectActiveTrainForLocomotive(address, speed);
-        UpdateVehicleUsageRuntimeState();
         PublishSnapshot();
     }
 
@@ -248,23 +247,6 @@ public sealed partial class MobaRuntimeService
     }
 
     /// <inheritdoc />
-    public Task SetActiveTrainAsync(Guid? trainId, CancellationToken cancellationToken = default)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        _vehicleUsageTracker.SetActiveTrain(trainId);
-        PublishSnapshot();
-        return Task.CompletedTask;
-    }
-
-    /// <inheritdoc />
-    public Task CheckpointUsageAsync(CancellationToken cancellationToken = default)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        CheckpointVehicleUsage(publishSnapshot: true);
-        return Task.CompletedTask;
-    }
-
-    /// <inheritdoc />
     public Task AcknowledgeFailSafeAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -324,6 +306,15 @@ public sealed partial class MobaRuntimeService
 
         _activeProjectContext.JourneyManager.Reset(journey);
         _statusText = $"Journey '{journey.Name}' reset";
+        PublishSnapshot();
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public Task ResetInPortCountersAsync(CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        _inPortCounters.ResetAll();
         PublishSnapshot();
         return Task.CompletedTask;
     }
