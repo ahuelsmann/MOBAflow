@@ -49,7 +49,7 @@ internal sealed class WorkflowActionJsonConverterTests
     }
 
     [Test]
-    public void Deserialize_InvalidMetadata_UsesSafeDefaults()
+    public void Deserialize_InvalidMetadata_RemainsInvalid()
     {
         const string json = """
             {
@@ -66,10 +66,10 @@ internal sealed class WorkflowActionJsonConverterTests
         Assert.Multiple(() =>
         {
             Assert.That(action, Is.Not.Null);
-            Assert.That(action!.Id, Is.Not.EqualTo(Guid.Empty));
+            Assert.That(action!.Id, Is.EqualTo(Guid.Empty));
             Assert.That(action.Name, Is.Empty);
             Assert.That(action.Number, Is.Zero);
-            Assert.That(action.Type, Is.EqualTo(ActionType.Command));
+            Assert.That(action.Type, Is.EqualTo((ActionType)(-1)));
             Assert.That(action.DelayAfterMs, Is.Zero);
         });
     }
@@ -117,7 +117,7 @@ internal sealed class WorkflowActionJsonConverterTests
     [TestCase(ActionType.SelectSignalAspect, "selectSignalAspect")]
     [TestCase(ActionType.TrainDestinationDisplay, "trainDestinationDisplay")]
     [TestCase(ActionType.ChangeJourneyStop, "changeJourneyStop")]
-    public void Serialize_DeclaredTypeWithoutPayload_WritesDefaultPayload(ActionType type, string payloadProperty)
+    public void Serialize_DeclaredTypeWithoutPayload_DoesNotInventPayload(ActionType type, string payloadProperty)
     {
         // Arrange
         var id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
@@ -142,7 +142,7 @@ internal sealed class WorkflowActionJsonConverterTests
             Assert.That(root.GetProperty("number").GetUInt32(), Is.EqualTo(7));
             Assert.That(root.GetProperty("type").GetInt32(), Is.EqualTo((int)type));
             Assert.That(root.GetProperty("delayAfterMs").GetInt32(), Is.EqualTo(250));
-            Assert.That(root.GetProperty(payloadProperty).ValueKind, Is.EqualTo(JsonValueKind.Object));
+            Assert.That(root.TryGetProperty(payloadProperty, out _), Is.False);
         });
     }
 
@@ -171,7 +171,7 @@ internal sealed class WorkflowActionJsonConverterTests
     }
 
     [Test]
-    public void Serialize_DeclaredType_WritesOnlyDeclaredPayloadExactlyOnce()
+    public void Serialize_DeclaredType_PreservesEveryPresentPayload()
     {
         var action = new WorkflowAction
         {
@@ -187,7 +187,7 @@ internal sealed class WorkflowActionJsonConverterTests
             .Select(property => property.Name)
             .ToArray();
 
-        Assert.That(payloadProperties, Is.EqualTo(new[] { "command" }));
+        Assert.That(payloadProperties, Is.EqualTo(new[] { "command", "audio" }));
     }
 
     [Test]

@@ -30,12 +30,17 @@ public sealed class WorkflowActionViewModelFactory(
         return descriptor.CreateDefaultAction(number);
     }
 
-    public WorkflowActionViewModel CreateViewModel(WorkflowAction action)
+    public WorkflowActionViewModel CreateViewModel(WorkflowAction? action)
     {
-        ArgumentNullException.ThrowIfNull(action);
+        if (action == null)
+            return new InvalidWorkflowActionViewModel(new WorkflowAction
+            {
+                Id = Guid.Empty, Type = (ActionType)(-1), Name = "Missing action"
+            });
 
-        if (!_descriptors.TryGetValue(action.Type, out var descriptor))
-            throw new NotSupportedException($"Action type {action.Type} is not supported");
+        if (!_descriptors.TryGetValue(action.Type, out var descriptor) ||
+            !action.HasPayload)
+            return new InvalidWorkflowActionViewModel(action);
 
         return descriptor.CreateViewModel(action);
     }

@@ -19,10 +19,6 @@ internal class WorkflowTests
         Assert.That(workflow.Description, Is.EqualTo(string.Empty));
         Assert.That(workflow.Actions, Is.Not.Null);
         Assert.That(workflow.Actions, Is.Empty);
-        Assert.That(workflow.ExecutionMode, Is.EqualTo(WorkflowExecutionMode.Sequential));
-        Assert.That(workflow.InPort, Is.EqualTo(0u));
-        Assert.That(workflow.IsUsingTimerToIgnoreFeedbacks, Is.False);
-        Assert.That(workflow.IntervalForTimerToIgnoreFeedbacks, Is.EqualTo(0.0));
     }
 
     [Test]
@@ -37,20 +33,12 @@ internal class WorkflowTests
             Name = "Arrival Workflow",
             Description = "Announcement on arrival",
             Actions = actions,
-            ExecutionMode = WorkflowExecutionMode.Parallel,
-            InPort = 8,
-            IsUsingTimerToIgnoreFeedbacks = true,
-            IntervalForTimerToIgnoreFeedbacks = 2000.0
         };
 
         Assert.That(workflow.Id, Is.EqualTo(id));
         Assert.That(workflow.Name, Is.EqualTo("Arrival Workflow"));
         Assert.That(workflow.Description, Is.EqualTo("Announcement on arrival"));
         Assert.That(workflow.Actions, Is.SameAs(actions));
-        Assert.That(workflow.ExecutionMode, Is.EqualTo(WorkflowExecutionMode.Parallel));
-        Assert.That(workflow.InPort, Is.EqualTo(8u));
-        Assert.That(workflow.IsUsingTimerToIgnoreFeedbacks, Is.True);
-        Assert.That(workflow.IntervalForTimerToIgnoreFeedbacks, Is.EqualTo(2000.0));
     }
 
     [Test]
@@ -69,18 +57,6 @@ internal class WorkflowTests
 
         workflow.Actions.Remove(action);
         Assert.That(workflow.Actions, Is.Empty);
-    }
-
-    [Test]
-    public void ExecutionMode_AllValuesSupported()
-    {
-        var workflow = new Workflow();
-
-        workflow.ExecutionMode = WorkflowExecutionMode.Sequential;
-        Assert.That(workflow.ExecutionMode, Is.EqualTo(WorkflowExecutionMode.Sequential));
-
-        workflow.ExecutionMode = WorkflowExecutionMode.Parallel;
-        Assert.That(workflow.ExecutionMode, Is.EqualTo(WorkflowExecutionMode.Parallel));
     }
 
     [Test]
@@ -129,57 +105,5 @@ internal class WorkflowTests
         Assert.That(action!.Type, Is.EqualTo(ActionType.Command));
         Assert.That(action.DelayAfterMs, Is.EqualTo(100));
         Assert.That(action.Audio, Is.Null);
-    }
-
-    [Test]
-    public void SerializeDeserialize_PreservesWorkflowMetadataAndPersistedStepOrder()
-    {
-        // Arrange
-        var workflowId = Guid.NewGuid();
-        var firstPersistedStepId = Guid.NewGuid();
-        var secondPersistedStepId = Guid.NewGuid();
-        var workflow = new Workflow
-        {
-            Id = workflowId,
-            Name = "Arrival workflow",
-            Description = "Runs when the train arrives",
-            EntryStepId = firstPersistedStepId,
-            DefaultErrorPolicy = new WorkflowErrorPolicy { Behavior = WorkflowFailureBehavior.Stop },
-            Steps =
-            [
-                new WorkflowDelayStep
-                {
-                    Id = firstPersistedStepId,
-                    Name = "Persisted first",
-                    DelayMs = 20,
-                    NextStepId = secondPersistedStepId
-                },
-                new WorkflowTerminateStep
-                {
-                    Id = secondPersistedStepId,
-                    Name = "Persisted second",
-                    Result = WorkflowTerminationResult.Succeeded
-                }
-            ]
-        };
-
-        // Act
-        var json = JsonSerializer.Serialize(workflow, JsonOptions.Default);
-        var roundTripped = JsonSerializer.Deserialize<Workflow>(json, JsonOptions.Default);
-
-        // Assert
-        Assert.That(roundTripped, Is.Not.Null);
-        Assert.Multiple(() =>
-        {
-            Assert.That(roundTripped!.Id, Is.EqualTo(workflowId));
-            Assert.That(roundTripped.Name, Is.EqualTo("Arrival workflow"));
-            Assert.That(roundTripped.Description, Is.EqualTo("Runs when the train arrives"));
-            Assert.That(roundTripped.EntryStepId, Is.EqualTo(firstPersistedStepId));
-            Assert.That(roundTripped.Steps!.Select(step => step.Id),
-                Is.EqualTo(new[] { firstPersistedStepId, secondPersistedStepId }));
-            Assert.That(json, Does.Not.Contain("\"actions\""));
-            Assert.That(json, Does.Not.Contain("\"executionMode\""));
-            Assert.That(json, Does.Not.Contain("\"inPort\""));
-        });
     }
 }

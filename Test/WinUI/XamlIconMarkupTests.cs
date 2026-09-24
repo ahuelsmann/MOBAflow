@@ -8,7 +8,7 @@ using System.Xml.Linq;
 internal sealed class XamlIconMarkupTests
 {
     [TestCase("EventManagerPage.xaml", "MoveSelectedEventDownCommand")]
-    [TestCase("WorkflowsPage.xaml", "MoveStepDownCommand")]
+    [TestCase("WorkflowsPage.xaml", "MoveSelectedActionDownCommand")]
     public void MoveDownButton_ShouldUseExplicitFluentFontIcon(string pageFileName, string commandName)
     {
         // Arrange

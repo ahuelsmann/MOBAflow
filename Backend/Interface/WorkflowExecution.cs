@@ -12,7 +12,7 @@ public enum WorkflowRunMode
     /// <summary>Invoke live action handlers.</summary>
     Live,
 
-    /// <summary>Traverse the graph and plan effects without invoking live handlers or waiting.</summary>
+    /// <summary>Visit actions in list order and plan effects without invoking live handlers or waiting.</summary>
     DryRun
 }
 
@@ -32,16 +32,16 @@ public enum WorkflowExecutionStatus
     Failed
 }
 
-/// <summary>Contains all immutable input required to execute one Workflow 2.0 graph.</summary>
+/// <summary>Contains all immutable input required to execute one ordered workflow.</summary>
 public sealed record WorkflowExecutionRequest
 {
-    /// <summary>Gets the project snapshot containing nested workflow definitions.</summary>
+    /// <summary>Gets the project containing the reusable workflow definitions.</summary>
     public required Project Project { get; init; }
 
-    /// <summary>Gets the root workflow to execute.</summary>
+    /// <summary>Gets the workflow to execute.</summary>
     public required Workflow Workflow { get; init; }
 
-    /// <summary>Gets the captured action and condition context.</summary>
+    /// <summary>Gets the captured event and action context.</summary>
     public required ActionExecutionContext Context { get; init; }
 
     /// <summary>Gets whether this run is live or side-effect-free.</summary>
@@ -69,7 +69,7 @@ public sealed record WorkflowExecutionResult
     /// <summary>Gets validation issues that prevented execution.</summary>
     public IReadOnlyList<WorkflowValidationIssue> ValidationIssues { get; init; } = [];
 
-    /// <summary>Gets effects projected by a dry run in deterministic traversal order.</summary>
+    /// <summary>Gets effects projected by a dry run in execution order.</summary>
     public IReadOnlyList<WorkflowPlannedEffect> PlannedEffects { get; init; } = [];
 
     /// <summary>Gets sanitized failure detail when the workflow failed.</summary>

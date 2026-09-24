@@ -3,9 +3,9 @@ namespace Moba.Test.SharedUI;
 
 using Moba.Domain;
 using Moba.Domain.Enum;
+using Moba.Backend.Service;
 using Moba.SharedUI.ViewModel;
 using Moba.SharedUI.ViewModel.Action;
-using Moba.SharedUI.ViewModel.WorkflowSteps;
 
 /// <summary>
 /// Tests for WorkflowViewModel - ViewModel wrapper for Workflow domain model.
@@ -13,6 +13,47 @@ using Moba.SharedUI.ViewModel.WorkflowSteps;
 [TestFixture]
 internal class WorkflowViewModelTests
 {
+    [TestCase("null")]
+    [TestCase("{\"type\":999,\"name\":\"Unknown\"}")]
+    [TestCase("{\"type\":\"ChangeJourneyStop\"}")]
+    public void InvalidPersistedAction_CanBeLoadedReorderedAndRemovedWithoutRepairingIt(string actionJson)
+    {
+        var workflow = System.Text.Json.JsonSerializer.Deserialize<Workflow>(
+            "{\"actions\":[" + actionJson + "]}", JsonOptions.Default)
+            ?? throw new InvalidOperationException("Test workflow could not be loaded.");
+        var original = workflow.Actions[0];
+        var project = new Project { Workflows = [workflow] };
+        var editor = new ProjectViewModel(project).Workflows.Single();
+        var invalid = editor.Actions.Single();
+
+        editor.AddActionCommand.Execute(ActionType.ChangeJourneyStop);
+        editor.MoveAction(invalid, 1);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(invalid, Is.TypeOf<InvalidWorkflowActionViewModel>());
+            Assert.That(workflow.Actions[1], Is.SameAs(original));
+            Assert.That(new WorkflowValidator().Validate(project).Issues, Is.Not.Empty);
+            Assert.That(System.Text.Json.JsonSerializer.Serialize(workflow.Actions[1]),
+                Is.EqualTo(System.Text.Json.JsonSerializer.Serialize(original)));
+        }
+
+        editor.DeleteActionCommand.Execute(invalid);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(new WorkflowValidator().Validate(project).Issues, Is.Empty);
+            Assert.That(editor.Actions.Single(), Is.TypeOf<ChangeJourneyStopViewModel>());
+        }
+    }
+
+    [Test]
+    public void NewlyAddedScriptWithEmptySettings_StillHasEditableTypedPayload()
+    {
+        var editor = new WorkflowViewModel(new Workflow());
+        editor.AddActionCommand.Execute(ActionType.ExecuteScript);
+        Assert.That(editor.Actions.Single(), Is.TypeOf<PowerShellActionViewModel>());
+    }
+
     private Workflow _workflow = null!;
     private WorkflowViewModel _viewModel = null!;
 
@@ -24,10 +65,6 @@ internal class WorkflowViewModelTests
             Id = Guid.NewGuid(),
             Name = "Test Workflow",
             Description = "Test Description",
-            ExecutionMode = WorkflowExecutionMode.Sequential,
-            InPort = 5,
-            IsUsingTimerToIgnoreFeedbacks = true,
-            IntervalForTimerToIgnoreFeedbacks = 1500.0
         };
         _viewModel = new WorkflowViewModel(_workflow);
     }
@@ -38,10 +75,6 @@ internal class WorkflowViewModelTests
         Assert.That(_viewModel.Id, Is.EqualTo(_workflow.Id));
         Assert.That(_viewModel.Name, Is.EqualTo("Test Workflow"));
         Assert.That(_viewModel.Description, Is.EqualTo("Test Description"));
-        Assert.That(_viewModel.ExecutionMode, Is.EqualTo(WorkflowExecutionMode.Sequential));
-        Assert.That(_viewModel.InPort, Is.EqualTo(5u));
-        Assert.That(_viewModel.IsUsingTimerToIgnoreFeedbacks, Is.True);
-        Assert.That(_viewModel.IntervalForTimerToIgnoreFeedbacks, Is.EqualTo(1500.0));
     }
 
     [Test]
@@ -64,47 +97,6 @@ internal class WorkflowViewModelTests
         _viewModel.Description = "Updated Description";
 
         Assert.That(_workflow.Description, Is.EqualTo("Updated Description"));
-    }
-
-    [Test]
-    public void ExecutionMode_SetValue_UpdatesModel()
-    {
-        _viewModel.ExecutionMode = WorkflowExecutionMode.Parallel;
-
-        Assert.That(_workflow.ExecutionMode, Is.EqualTo(WorkflowExecutionMode.Parallel));
-    }
-
-    [Test]
-    public void InPort_SetValue_UpdatesModel()
-    {
-        _viewModel.InPort = 42;
-
-        Assert.That(_workflow.InPort, Is.EqualTo(42u));
-    }
-
-    [Test]
-    public void IsUsingTimerToIgnoreFeedbacks_SetValue_UpdatesModel()
-    {
-        _viewModel.IsUsingTimerToIgnoreFeedbacks = false;
-
-        Assert.That(_workflow.IsUsingTimerToIgnoreFeedbacks, Is.False);
-    }
-
-    [Test]
-    public void IntervalForTimerToIgnoreFeedbacks_SetValue_UpdatesModel()
-    {
-        _viewModel.IntervalForTimerToIgnoreFeedbacks = 2500.0;
-
-        Assert.That(_workflow.IntervalForTimerToIgnoreFeedbacks, Is.EqualTo(2500.0));
-    }
-
-    [Test]
-    public void ExecutionModeValues_ContainsAllEnumValues()
-    {
-        var values = _viewModel.ExecutionModeValues.ToList();
-
-        Assert.That(values, Does.Contain(WorkflowExecutionMode.Sequential));
-        Assert.That(values, Does.Contain(WorkflowExecutionMode.Parallel));
     }
 
     [Test]
@@ -224,99 +216,6 @@ internal class WorkflowViewModelTests
         {
             Assert.That(firstAccess, Is.SameAs(secondAccess));
             Assert.That(firstAccess.Model, Is.SameAs(workflow));
-        });
-    }
-
-    [Test]
-    public void Constructor_CreatesTypedStepWrappersInPersistedOrder()
-    {
-        var delay = new WorkflowDelayStep { Name = "Wait", DelayMs = 250 };
-        var terminate = new WorkflowTerminateStep { Name = "Done" };
-        var workflow = new Workflow { EntryStepId = delay.Id, Steps = [delay, terminate] };
-
-        var viewModel = new WorkflowViewModel(workflow);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(viewModel.Steps, Has.Count.EqualTo(2));
-            Assert.That(viewModel.Steps[0], Is.TypeOf<WorkflowDelayStepViewModel>());
-            Assert.That(viewModel.Steps[1], Is.TypeOf<WorkflowTerminateStepViewModel>());
-            Assert.That(viewModel.Steps.Select(step => step.Model), Is.EqualTo(workflow.Steps));
-        });
-    }
-
-    [Test]
-    public void NestedStepPropertyChanged_PropagatesAsStepsChange()
-    {
-        var delay = new WorkflowDelayStep { DelayMs = 250 };
-        var viewModel = new WorkflowViewModel(new Workflow { EntryStepId = delay.Id, Steps = [delay] });
-        var changes = 0;
-        viewModel.PropertyChanged += (_, args) =>
-        {
-            if (args.PropertyName == nameof(WorkflowViewModel.Steps)) changes++;
-        };
-
-        ((WorkflowDelayStepViewModel)viewModel.Steps.Single()).DelayMs = 500;
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(delay.DelayMs, Is.EqualTo(500));
-            Assert.That(changes, Is.EqualTo(1));
-        });
-    }
-
-    [Test]
-    public void AddStepCommand_AppendsTypedNodeAndConnectsLinearTail()
-    {
-        var first = new WorkflowDelayStep { Name = "First" };
-        var workflow = new Workflow { EntryStepId = first.Id, Steps = [first] };
-        var viewModel = new WorkflowViewModel(workflow);
-
-        viewModel.AddStepCommand.Execute(WorkflowStepKind.Terminate);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(workflow.Steps, Has.Count.EqualTo(2));
-            Assert.That(workflow.Steps![1], Is.TypeOf<WorkflowTerminateStep>());
-            Assert.That(first.NextStepId, Is.EqualTo(workflow.Steps[1].Id));
-            Assert.That(viewModel.Steps[1].Model, Is.SameAs(workflow.Steps[1]));
-        });
-    }
-
-    [Test]
-    public void MoveStep_PreservesExactModelAndWrapperOrder()
-    {
-        var first = new WorkflowDelayStep { Name = "First" };
-        var second = new WorkflowDelayStep { Name = "Second" };
-        var third = new WorkflowTerminateStep { Name = "Third" };
-        var workflow = new Workflow { EntryStepId = first.Id, Steps = [first, second, third] };
-        var viewModel = new WorkflowViewModel(workflow);
-
-        viewModel.MoveStep(viewModel.Steps[2], 0);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(workflow.Steps, Is.EqualTo(new WorkflowStep[] { third, first, second }));
-            Assert.That(viewModel.Steps.Select(step => step.Model), Is.EqualTo(workflow.Steps));
-        });
-    }
-
-    [Test]
-    public void MoveStepCommands_ReorderPersistedGraphWithinBounds()
-    {
-        var first = new WorkflowDelayStep { Name = "First" };
-        var second = new WorkflowDelayStep { Name = "Second" };
-        var third = new WorkflowTerminateStep { Name = "Third" };
-        var workflow = new Workflow { EntryStepId = first.Id, Steps = [first, second, third] };
-        var viewModel = new WorkflowViewModel(workflow);
-
-        viewModel.MoveStepUpCommand.Execute(viewModel.Steps[1]);
-        viewModel.MoveStepDownCommand.Execute(viewModel.Steps[1]);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(workflow.Steps, Is.EqualTo(new WorkflowStep[] { second, third, first }));
-            Assert.That(viewModel.Steps.Select(step => step.Model), Is.EqualTo(workflow.Steps));
         });
     }
 

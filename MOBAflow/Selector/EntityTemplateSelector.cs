@@ -9,7 +9,6 @@ using Microsoft.UI.Xaml.Controls;
 using Moba.SharedUI.ViewModel;
 
 using SharedUI.ViewModel.Action;
-using SharedUI.ViewModel.WorkflowSteps;
 
 /// <summary>
 /// Selects the appropriate DataTemplate based on the type of entity.
@@ -94,17 +93,8 @@ public partial class EntityTemplateSelector : DataTemplateSelector
 
     public DataTemplate? ChangeJourneyStopActionTemplate { get; set; }
 
-    public DataTemplate? WorkflowActionStepTemplate { get; set; }
-
-    public DataTemplate? WorkflowDelayStepTemplate { get; set; }
-
-    public DataTemplate? WorkflowConditionStepTemplate { get; set; }
-
-    public DataTemplate? WorkflowParallelStepTemplate { get; set; }
-
-    public DataTemplate? WorkflowNestedStepTemplate { get; set; }
-
-    public DataTemplate? WorkflowTerminateStepTemplate { get; set; }
+    /// <summary>Gets or sets the recovery template for invalid persisted actions.</summary>
+    public DataTemplate? InvalidActionTemplate { get; set; }
 
     /// <summary>
     /// Fallback DataTemplate for unknown types
@@ -124,12 +114,6 @@ public partial class EntityTemplateSelector : DataTemplateSelector
             PassengerWagonViewModel => WagonTemplate,
             GoodsWagonViewModel => WagonTemplate,
             ProjectViewModel => ProjectTemplate,
-            WorkflowActionStepViewModel => WorkflowActionStepTemplate,
-            WorkflowDelayStepViewModel => WorkflowDelayStepTemplate,
-            WorkflowConditionStepViewModel => WorkflowConditionStepTemplate,
-            WorkflowParallelStepViewModel => WorkflowParallelStepTemplate,
-            WorkflowNestedStepViewModel => WorkflowNestedStepTemplate,
-            WorkflowTerminateStepViewModel => WorkflowTerminateStepTemplate,
             AnnouncementViewModel => AnnouncementActionTemplate,
             AudioViewModel => AudioActionTemplate,
             CommandViewModel => CommandActionTemplate,
@@ -137,6 +121,7 @@ public partial class EntityTemplateSelector : DataTemplateSelector
             PowerShellActionViewModel => PowerShellActionTemplate,
             TrainDestinationDisplayViewModel => TrainDestinationDisplayActionTemplate,
             ChangeJourneyStopViewModel => ChangeJourneyStopActionTemplate,
+            InvalidWorkflowActionViewModel => InvalidActionTemplate,
             WorkflowActionViewModel => ActionTemplate,  // Generic fallback
             WorkflowAction => ActionTemplate,  // Domain object fallback
             _ => DefaultTemplate
