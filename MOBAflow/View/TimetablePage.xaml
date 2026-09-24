@@ -10,347 +10,353 @@
     DataContext="{x:Bind ViewModel}"
     mc:Ignorable="d">
 
-    <Grid Padding="24" RowSpacing="16">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-
-        <Grid ColumnSpacing="16">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <StackPanel Spacing="4">
-                <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Timetable" />
-                <TextBlock
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Text="Plan services and manage the current operating session."
-                    TextWrapping="Wrap" />
-            </StackPanel>
-            <StackPanel Grid.Column="1" VerticalAlignment="Center" Orientation="Horizontal" Spacing="8">
-                <Button Command="{x:Bind ViewModel.RefreshCommand}" Content="Refresh" />
-                <Button
-                    Command="{x:Bind ViewModel.AddServiceCommand}"
-                    Content="Add service"
-                    Style="{StaticResource AccentButtonStyle}"
-                    Visibility="{x:Bind ViewModel.HasServices, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
-            </StackPanel>
-        </Grid>
-
-        <ScrollViewer
-            Grid.Row="1"
-            HorizontalScrollMode="Disabled"
-            VerticalScrollBarVisibility="Auto"
-            Visibility="{x:Bind ViewModel.HasServices, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
-            <StackPanel MaxWidth="440" Margin="24,48" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="16">
-                <FontIcon FontSize="40" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Glyph="&#xE787;" />
-                <TextBlock
-                    HorizontalAlignment="Center"
-                    Style="{StaticResource SubtitleTextBlockStyle}"
-                    Text="{x:Bind ViewModel.EmptyStateTitle, Mode=OneWay}" />
-                <TextBlock
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Text="{x:Bind ViewModel.EmptyStateDescription, Mode=OneWay}"
-                    TextAlignment="Center"
-                    TextWrapping="Wrap" />
-                <Button
-                    HorizontalAlignment="Center"
-                    Command="{x:Bind ViewModel.AddServiceCommand}"
-                    Content="Add service"
-                    Style="{StaticResource AccentButtonStyle}"
-                    Visibility="{x:Bind ViewModel.HasProject, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
-            </StackPanel>
-        </ScrollViewer>
-
-        <Grid
-            x:Name="BoardGrid"
-            Grid.Row="1"
-            ColumnSpacing="12"
-            Visibility="{x:Bind ViewModel.HasServices, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition x:Name="ServicesColumn" Width="2*" MinWidth="280" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition x:Name="DetailsColumn" Width="3*" MinWidth="360" />
-            </Grid.ColumnDefinitions>
+    <ScrollViewer HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto">
+        <Grid x:Name="PageContent" Padding="24" RowSpacing="16" MinHeight="{Binding ActualHeight, ElementName=PageRoot}">
             <Grid.RowDefinitions>
-                <RowDefinition x:Name="ServicesRow" Height="*" />
-                <RowDefinition x:Name="DetailsRow" Height="0" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <Grid
-                Padding="16"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                CornerRadius="8"
-                RowSpacing="12">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-                <Grid ColumnSpacing="12">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Services" />
+            <Grid x:Name="PageHeader" ColumnSpacing="16" SizeChanged="OnContentSizeChanged">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Spacing="4">
+                    <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Timetable" />
                     <TextBlock
-                        Grid.Column="1"
-                        VerticalAlignment="Center"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="{x:Bind ViewModel.ServiceCountText, Mode=OneWay}" />
-                </Grid>
-                <Grid Grid.Row="1" ColumnSpacing="8" RowSpacing="8">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
+                        Text="Plan services and manage the current operating session."
+                        TextWrapping="Wrap" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Orientation="Horizontal" Spacing="8">
+                    <Button Command="{x:Bind ViewModel.RefreshCommand}" Content="Refresh" />
+                    <Button
+                        Command="{x:Bind ViewModel.AddServiceCommand}"
+                        Content="Add service"
+                        Style="{StaticResource AccentButtonStyle}"
+                        Visibility="{x:Bind ViewModel.HasServices, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                </StackPanel>
+            </Grid>
+
+            <ScrollViewer
+                Grid.Row="1"
+                HorizontalScrollMode="Disabled"
+                VerticalScrollBarVisibility="Auto"
+                Visibility="{x:Bind ViewModel.HasServices, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
+                <StackPanel MaxWidth="440" Margin="24,48" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="16">
+                    <FontIcon FontSize="40" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Glyph="&#xE787;" />
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        Style="{StaticResource SubtitleTextBlockStyle}"
+                        Text="{x:Bind ViewModel.EmptyStateTitle, Mode=OneWay}" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{x:Bind ViewModel.EmptyStateDescription, Mode=OneWay}"
+                        TextAlignment="Center"
+                        TextWrapping="Wrap" />
+                    <Button
+                        HorizontalAlignment="Center"
+                        Command="{x:Bind ViewModel.AddServiceCommand}"
+                        Content="Add service"
+                        Style="{StaticResource AccentButtonStyle}"
+                        Visibility="{x:Bind ViewModel.HasProject, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                </StackPanel>
+            </ScrollViewer>
+
+            <Grid
+                x:Name="BoardGrid"
+                Grid.Row="1"
+                ColumnSpacing="12"
+                Visibility="{x:Bind ViewModel.HasServices, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition x:Name="ServicesColumn" Width="2*" MinWidth="280" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition x:Name="DetailsColumn" Width="3*" MinWidth="360" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition x:Name="ServicesRow" Height="*" />
+                    <RowDefinition x:Name="DetailsRow" Height="0" />
+                </Grid.RowDefinitions>
+
+                <Grid
+                    Padding="16"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="8"
+                    RowSpacing="12">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <ComboBox
-                        HorizontalAlignment="Stretch"
-                        Header="Filter by"
-                        ItemsSource="{x:Bind ViewModel.FocusOptions}"
-                        SelectedItem="{x:Bind ViewModel.SelectedFocus, Mode=TwoWay}" />
-                    <Button
-                        Grid.Column="1"
-                        VerticalAlignment="Bottom"
-                        Command="{x:Bind ViewModel.ResetFiltersCommand}"
-                        Content="Clear"
-                        AutomationProperties.Name="Clear timetable filters" />
-                    <TextBox
-                        Grid.Row="1"
-                        Grid.ColumnSpan="2"
-                        VerticalAlignment="Top"
-                        AutomationProperties.Name="Search services in the selected filter"
-                        PlaceholderText="{x:Bind ViewModel.SearchPlaceholder, Mode=OneWay}"
-                        Text="{x:Bind ViewModel.FilterText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                        Visibility="{x:Bind ViewModel.IsTimeWindowFilter, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}" />
-                    <NumberBox
-                        Grid.Row="1"
-                        Grid.ColumnSpan="2"
-                        Header="Upcoming hours"
-                        Minimum="1"
-                        SpinButtonPlacementMode="Compact"
-                        ToolTipService.ToolTip="Includes services from one hour ago through the next specified hours."
-                        Value="{x:Bind ViewModel.TimeWindowHours, Mode=TwoWay}"
-                        Visibility="{x:Bind ViewModel.IsTimeWindowFilter, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
-                </Grid>
-                <ListView
-                    Grid.Row="2"
-                    HorizontalContentAlignment="Stretch"
-                    AutomationProperties.Name="Timetable services"
-                    ItemsSource="{x:Bind ViewModel.Services, Mode=OneWay}"
-                    SelectedItem="{x:Bind ViewModel.SelectedService, Mode=TwoWay}">
-                    <ListView.ItemTemplate>
-                        <DataTemplate x:DataType="vm:TimetableServiceRowViewModel">
-                            <Grid Padding="4,8" ColumnSpacing="12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Spacing="4">
-                                    <TextBlock FontWeight="SemiBold" Text="{x:Bind ServiceNumber, Mode=OneWay}" TextTrimming="CharacterEllipsis" />
-                                    <TextBlock Text="{x:Bind Name, Mode=OneWay}" TextTrimming="CharacterEllipsis" />
-                                    <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind Schedule}" />
-                                    <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind TrainName}" TextTrimming="CharacterEllipsis" />
-                                    <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind JourneyName}" TextTrimming="CharacterEllipsis" />
-                                    <TextBlock
-                                        Style="{StaticResource CaptionTextBlockStyle}"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        Text="{x:Bind ProgressText, Mode=OneWay}"
-                                        TextTrimming="CharacterEllipsis" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="1" HorizontalAlignment="Right" Spacing="4">
-                                    <TextBlock Style="{StaticResource CaptionTextBlockStyle}" Text="{x:Bind ServiceDateText}" />
-                                    <TextBlock FontWeight="SemiBold" Text="{x:Bind BoardStatus}" />
-                                    <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind DelayText}" />
-                                </StackPanel>
-                            </Grid>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
-                <StackPanel
-                    Grid.Row="2"
-                    Margin="8,24"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Spacing="8"
-                    Visibility="{x:Bind ViewModel.HasNoMatchingServices, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <TextBlock FontWeight="SemiBold" Text="No matching services" TextAlignment="Center" />
-                    <TextBlock
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="Change your search or clear the filters."
-                        TextAlignment="Center"
-                        TextWrapping="Wrap" />
-                    <Button HorizontalAlignment="Center" Command="{x:Bind ViewModel.ResetFiltersCommand}" Content="Clear filters" />
-                </StackPanel>
-            </Grid>
-
-            <Grid
-                x:Name="DetailsPanel"
-                Grid.Column="2"
-                Padding="16"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                CornerRadius="8">
-                <StackPanel
-                    MaxWidth="320"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Spacing="8"
-                    Visibility="{x:Bind ViewModel.HasServiceSelection, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
-                    <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Select a service" TextAlignment="Center" />
-                    <TextBlock
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="Choose a service to edit its details, view station stops and manage its operation."
-                        TextAlignment="Center"
-                        TextWrapping="Wrap" />
-                </StackPanel>
-                <ScrollViewer
-                    HorizontalScrollMode="Disabled"
-                    VerticalScrollBarVisibility="Auto"
-                    Visibility="{x:Bind ViewModel.HasServiceSelection, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <StackPanel Spacing="16">
-                        <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Service details" />
-                        <Grid ColumnSpacing="12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" MinWidth="120" />
-                                <ColumnDefinition Width="2*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBox Header="Service number" Text="{x:Bind ViewModel.SelectedService.ServiceNumber, Mode=TwoWay}" />
-                            <TextBox Grid.Column="1" Header="Name" Text="{x:Bind ViewModel.SelectedService.Name, Mode=TwoWay}" />
-                        </Grid>
-                        <Button Command="{x:Bind ViewModel.SaveDefinitionCommand}" Content="Save definition" />
-
-                        <StackPanel Spacing="8">
-                            <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Service operation" />
-                            <CommandBar HorizontalContentAlignment="Left" DefaultLabelPosition="Right" OverflowButtonVisibility="Auto">
-                                <AppBarButton Command="{x:Bind ViewModel.HoldSelectedServiceCommand}" Label="Hold 5 min" />
-                                <AppBarButton Command="{x:Bind ViewModel.ReleaseSelectedServiceCommand}" Label="Release" />
-                                <AppBarButton Command="{x:Bind ViewModel.CompleteSelectedServiceCommand}" Label="Complete" />
-                                <CommandBar.SecondaryCommands>
-                                    <AppBarButton Command="{x:Bind ViewModel.ReassignSelectedTrainCommand}" Label="Next train" />
-                                    <AppBarButton Command="{x:Bind ViewModel.ReassignSelectedJourneyCommand}" Label="Next journey" />
-                                    <AppBarButton Command="{x:Bind ViewModel.CancelSelectedServiceCommand}" Label="Cancel service" />
-                                    <AppBarButton Command="{x:Bind ViewModel.DeleteSelectedServiceCommand}" Label="Delete definition" />
-                                </CommandBar.SecondaryCommands>
-                            </CommandBar>
-                        </StackPanel>
-
-                        <StackPanel Spacing="8">
-                            <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Station stops" />
-                            <TextBlock
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="Select a stop to record arrival or departure."
-                                TextWrapping="Wrap"
-                                Visibility="{x:Bind ViewModel.HasCallSelection, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}" />
-                            <CommandBar
-                                HorizontalContentAlignment="Left"
-                                DefaultLabelPosition="Right"
-                                OverflowButtonVisibility="Auto"
-                                Visibility="{x:Bind ViewModel.HasCallSelection, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                                <AppBarButton Command="{x:Bind ViewModel.RecordArrivalCommand}" Label="Record arrival" />
-                                <AppBarButton Command="{x:Bind ViewModel.RecordDepartureCommand}" Label="Record departure" />
-                                <CommandBar.SecondaryCommands>
-                                    <AppBarButton Command="{x:Bind ViewModel.ReassignSelectedPlatformCommand}" Label="Next platform" />
-                                    <AppBarButton Command="{x:Bind ViewModel.ShiftSelectedCallEarlierCommand}" Label="Shift 5 min earlier" />
-                                    <AppBarButton Command="{x:Bind ViewModel.ShiftSelectedCallLaterCommand}" Label="Shift 5 min later" />
-                                </CommandBar.SecondaryCommands>
-                            </CommandBar>
-                            <ListView
-                                HorizontalContentAlignment="Stretch"
-                                AutomationProperties.Name="Station stops for the selected service"
-                                ItemsSource="{x:Bind ViewModel.Calls, Mode=OneWay}"
-                                SelectedItem="{x:Bind ViewModel.SelectedCall, Mode=TwoWay}"
-                                ScrollViewer.VerticalScrollMode="Disabled"
-                                ScrollViewer.VerticalScrollBarVisibility="Disabled">
-                                <ListView.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:TimetableCallRowViewModel">
-                                        <StackPanel Padding="4,8" Spacing="8">
-                                            <Grid ColumnSpacing="12">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock FontWeight="SemiBold" Text="{x:Bind StationName}" TextTrimming="CharacterEllipsis" />
-                                                <TextBlock
-                                                    Grid.Column="1"
-                                                    HorizontalAlignment="Right"
-                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                    Text="{x:Bind PlatformName}"
-                                                    TextTrimming="CharacterEllipsis" />
-                                            </Grid>
-                                            <Grid ColumnSpacing="12" RowSpacing="4">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-                                                <Grid.RowDefinitions>
-                                                    <RowDefinition Height="Auto" />
-                                                    <RowDefinition Height="Auto" />
-                                                    <RowDefinition Height="Auto" />
-                                                </Grid.RowDefinitions>
-                                                <TextBlock Grid.Column="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Arrival" />
-                                                <TextBlock Grid.Column="2" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Departure" />
-                                                <TextBlock Grid.Row="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Planned" />
-                                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{x:Bind ScheduledArrival}" />
-                                                <TextBlock Grid.Row="1" Grid.Column="2" Text="{x:Bind ScheduledDeparture}" />
-                                                <TextBlock Grid.Row="2" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Actual" />
-                                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{x:Bind ActualArrival}" />
-                                                <TextBlock Grid.Row="2" Grid.Column="2" Text="{x:Bind ActualDeparture}" />
-                                            </Grid>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ListView.ItemTemplate>
-                            </ListView>
-                        </StackPanel>
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Services" />
+                        <TextBlock
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="{x:Bind ViewModel.ServiceCountText, Mode=OneWay}" />
+                    </Grid>
+                    <Grid Grid.Row="1" ColumnSpacing="8" RowSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <ComboBox
+                            HorizontalAlignment="Stretch"
+                            Header="Filter by"
+                            ItemsSource="{x:Bind ViewModel.FocusOptions}"
+                            SelectedItem="{x:Bind ViewModel.SelectedFocus, Mode=TwoWay}" />
+                        <Button
+                            Grid.Column="1"
+                            VerticalAlignment="Bottom"
+                            Command="{x:Bind ViewModel.ResetFiltersCommand}"
+                            Content="Clear"
+                            AutomationProperties.Name="Clear timetable filters" />
+                        <TextBox
+                            Grid.Row="1"
+                            Grid.ColumnSpan="2"
+                            VerticalAlignment="Top"
+                            AutomationProperties.Name="Search services in the selected filter"
+                            PlaceholderText="{x:Bind ViewModel.SearchPlaceholder, Mode=OneWay}"
+                            Text="{x:Bind ViewModel.FilterText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            Visibility="{x:Bind ViewModel.IsTimeWindowFilter, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}" />
+                        <NumberBox
+                            Grid.Row="1"
+                            Grid.ColumnSpan="2"
+                            Header="Upcoming hours"
+                            Minimum="1"
+                            SpinButtonPlacementMode="Compact"
+                            ToolTipService.ToolTip="Includes services from one hour ago through the next specified hours."
+                            Value="{x:Bind ViewModel.TimeWindowHours, Mode=TwoWay}"
+                            Visibility="{x:Bind ViewModel.IsTimeWindowFilter, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    </Grid>
+                    <ListView
+                        Grid.Row="2"
+                        HorizontalContentAlignment="Stretch"
+                        AutomationProperties.Name="Timetable services"
+                        ItemsSource="{x:Bind ViewModel.Services, Mode=OneWay}"
+                        SelectedItem="{x:Bind ViewModel.SelectedService, Mode=TwoWay}">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="vm:TimetableServiceRowViewModel">
+                                <Grid Padding="4,8" ColumnSpacing="12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Spacing="4">
+                                        <TextBlock FontWeight="SemiBold" Text="{x:Bind ServiceNumber, Mode=OneWay}" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{x:Bind Name, Mode=OneWay}" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind Schedule}" />
+                                        <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind TrainName}" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind JourneyName}" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock
+                                            Style="{StaticResource CaptionTextBlockStyle}"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Text="{x:Bind ProgressText, Mode=OneWay}"
+                                            TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" HorizontalAlignment="Right" Spacing="4">
+                                        <TextBlock Style="{StaticResource CaptionTextBlockStyle}" Text="{x:Bind ServiceDateText}" />
+                                        <TextBlock FontWeight="SemiBold" Text="{x:Bind BoardStatus}" />
+                                        <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind DelayText}" />
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                    <StackPanel
+                        Grid.Row="2"
+                        Margin="8,24"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Spacing="8"
+                        Visibility="{x:Bind ViewModel.HasNoMatchingServices, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBlock FontWeight="SemiBold" Text="No matching services" TextAlignment="Center" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="Change your search or clear the filters."
+                            TextAlignment="Center"
+                            TextWrapping="Wrap" />
+                        <Button HorizontalAlignment="Center" Command="{x:Bind ViewModel.ResetFiltersCommand}" Content="Clear filters" />
                     </StackPanel>
-                </ScrollViewer>
-            </Grid>
+                </Grid>
 
-            <controls:GridSplitter
-                x:Name="BoardSplitter"
-                Grid.Column="1"
-                Width="4"
-                HorizontalAlignment="Stretch"
-                ResizeBehavior="PreviousAndNext" />
-        </Grid>
+                <Grid
+                    x:Name="DetailsPanel"
+                    Grid.Column="2"
+                    Padding="16"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="8">
+                    <StackPanel
+                        MaxWidth="320"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Spacing="8"
+                        Visibility="{x:Bind ViewModel.HasServiceSelection, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
+                        <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Select a service" TextAlignment="Center" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="Choose a service to edit its details, view station stops and manage its operation."
+                            TextAlignment="Center"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                    <ScrollViewer
+                        HorizontalScrollMode="Disabled"
+                        VerticalScrollBarVisibility="Auto"
+                        Visibility="{x:Bind ViewModel.HasServiceSelection, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <StackPanel Spacing="16">
+                            <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Service details" />
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" MinWidth="120" />
+                                    <ColumnDefinition Width="2*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox Header="Service number" Text="{x:Bind ViewModel.SelectedService.ServiceNumber, Mode=TwoWay}" />
+                                <TextBox Grid.Column="1" Header="Name" Text="{x:Bind ViewModel.SelectedService.Name, Mode=TwoWay}" />
+                            </Grid>
+                            <Button Command="{x:Bind ViewModel.SaveDefinitionCommand}" Content="Save definition" />
 
-        <Expander
-            Grid.Row="2"
-            HorizontalAlignment="Stretch"
-            HorizontalContentAlignment="Stretch"
-            Header="{x:Bind ViewModel.ValidationSummary, Mode=OneWay}"
-            Visibility="{x:Bind ViewModel.HasIssues, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-            <ScrollViewer MaxHeight="160" VerticalScrollBarVisibility="Auto">
-                <ItemsControl ItemsSource="{x:Bind ViewModel.Issues, Mode=OneWay}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="vm:TimetableIssueRowViewModel">
-                            <StackPanel Padding="8" Spacing="4">
-                                <TextBlock FontWeight="SemiBold" Text="{x:Bind Kind}" />
-                                <TextBlock Text="{x:Bind Message}" TextWrapping="Wrap" />
+                            <StackPanel Spacing="8">
+                                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Service operation" />
+                                <CommandBar HorizontalContentAlignment="Left" DefaultLabelPosition="Right" OverflowButtonVisibility="Auto">
+                                    <AppBarButton Command="{x:Bind ViewModel.HoldSelectedServiceCommand}" Label="Hold 5 min" />
+                                    <AppBarButton Command="{x:Bind ViewModel.ReleaseSelectedServiceCommand}" Label="Release" />
+                                    <AppBarButton Command="{x:Bind ViewModel.CompleteSelectedServiceCommand}" Label="Complete" />
+                                    <CommandBar.SecondaryCommands>
+                                        <AppBarButton Command="{x:Bind ViewModel.ReassignSelectedTrainCommand}" Label="Next train" />
+                                        <AppBarButton Command="{x:Bind ViewModel.ReassignSelectedJourneyCommand}" Label="Next journey" />
+                                        <AppBarButton Command="{x:Bind ViewModel.CancelSelectedServiceCommand}" Label="Cancel service" />
+                                        <AppBarButton Command="{x:Bind ViewModel.DeleteSelectedServiceCommand}" Label="Delete definition" />
+                                    </CommandBar.SecondaryCommands>
+                                </CommandBar>
+                            </StackPanel>
+
+                            <StackPanel Spacing="8">
+                                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Station stops" />
                                 <TextBlock
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Text="{x:Bind Reference}"
-                                    TextWrapping="Wrap" />
+                                    Text="Select a stop to record arrival or departure."
+                                    TextWrapping="Wrap"
+                                    Visibility="{x:Bind ViewModel.HasCallSelection, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}" />
+                                <CommandBar
+                                    HorizontalContentAlignment="Left"
+                                    DefaultLabelPosition="Right"
+                                    OverflowButtonVisibility="Auto"
+                                    Visibility="{x:Bind ViewModel.HasCallSelection, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <AppBarButton Command="{x:Bind ViewModel.RecordArrivalCommand}" Label="Record arrival" />
+                                    <AppBarButton Command="{x:Bind ViewModel.RecordDepartureCommand}" Label="Record departure" />
+                                    <CommandBar.SecondaryCommands>
+                                        <AppBarButton Command="{x:Bind ViewModel.ReassignSelectedPlatformCommand}" Label="Next platform" />
+                                        <AppBarButton Command="{x:Bind ViewModel.ShiftSelectedCallEarlierCommand}" Label="Shift 5 min earlier" />
+                                        <AppBarButton Command="{x:Bind ViewModel.ShiftSelectedCallLaterCommand}" Label="Shift 5 min later" />
+                                    </CommandBar.SecondaryCommands>
+                                </CommandBar>
+                                <ListView
+                                    HorizontalContentAlignment="Stretch"
+                                    AutomationProperties.Name="Station stops for the selected service"
+                                    ItemsSource="{x:Bind ViewModel.Calls, Mode=OneWay}"
+                                    SelectedItem="{x:Bind ViewModel.SelectedCall, Mode=TwoWay}"
+                                    ScrollViewer.VerticalScrollMode="Disabled"
+                                    ScrollViewer.VerticalScrollBarVisibility="Disabled">
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:TimetableCallRowViewModel">
+                                            <StackPanel Padding="4,8" Spacing="8">
+                                                <Grid ColumnSpacing="12">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock FontWeight="SemiBold" Text="{x:Bind StationName}" TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock
+                                                        Grid.Column="1"
+                                                        HorizontalAlignment="Right"
+                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                        Text="{x:Bind PlatformName}"
+                                                        TextTrimming="CharacterEllipsis" />
+                                                </Grid>
+                                                <Grid ColumnSpacing="12" RowSpacing="4">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                    </Grid.RowDefinitions>
+                                                    <TextBlock Grid.Column="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Arrival" />
+                                                    <TextBlock Grid.Column="2" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Departure" />
+                                                    <TextBlock Grid.Row="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Planned" />
+                                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{x:Bind ScheduledArrival}" />
+                                                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{x:Bind ScheduledDeparture}" />
+                                                    <TextBlock Grid.Row="2" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Actual" />
+                                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{x:Bind ActualArrival}" />
+                                                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{x:Bind ActualDeparture}" />
+                                                </Grid>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
                             </StackPanel>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
-        </Expander>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
 
-        <TextBlock
-            Grid.Row="3"
-            AutomationProperties.LiveSetting="Polite"
-            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-            Text="{x:Bind ViewModel.StatusText, Mode=OneWay}"
-            TextWrapping="Wrap"
-            Visibility="{x:Bind ViewModel.HasStatusMessage, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
-    </Grid>
+                <controls:GridSplitter
+                    x:Name="BoardSplitter"
+                    Grid.Column="1"
+                    Width="4"
+                    HorizontalAlignment="Stretch"
+                    ResizeBehavior="PreviousAndNext" />
+            </Grid>
+
+            <Expander
+                x:Name="ValidationPanel"
+                SizeChanged="OnContentSizeChanged"
+                Grid.Row="2"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Stretch"
+                Header="{x:Bind ViewModel.ValidationSummary, Mode=OneWay}"
+                Visibility="{x:Bind ViewModel.HasIssues, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                <ScrollViewer MaxHeight="160" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{x:Bind ViewModel.Issues, Mode=OneWay}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:TimetableIssueRowViewModel">
+                                <StackPanel Padding="8" Spacing="4">
+                                    <TextBlock FontWeight="SemiBold" Text="{x:Bind Kind}" />
+                                    <TextBlock Text="{x:Bind Message}" TextWrapping="Wrap" />
+                                    <TextBlock
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Text="{x:Bind Reference}"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Expander>
+
+            <TextBlock
+                x:Name="StatusMessage"
+                SizeChanged="OnContentSizeChanged"
+                Grid.Row="3"
+                AutomationProperties.LiveSetting="Polite"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Text="{x:Bind ViewModel.StatusText, Mode=OneWay}"
+                TextWrapping="Wrap"
+                Visibility="{x:Bind ViewModel.HasStatusMessage, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+        </Grid>
+    </ScrollViewer>
 </Page>

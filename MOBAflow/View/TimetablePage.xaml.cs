@@ -56,9 +56,18 @@ internal sealed partial class TimetablePage
         if (IsLoaded) UpdateResponsiveLayout();
     }
 
+    private void OnContentSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (IsLoaded) UpdateResponsiveLayout();
+    }
+
     private void UpdateResponsiveLayout()
     {
         var compact = ActualWidth < 1000;
+        var surroundingHeight = PageHeader.ActualHeight + ValidationPanel.ActualHeight + StatusMessage.ActualHeight
+            + PageContent.Padding.Top + PageContent.Padding.Bottom + (PageContent.RowSpacing * 3);
+        // Keep the list viewport bounded and reachable when the page needs to scroll.
+        BoardGrid.Height = Math.Max(compact ? 800 : 360, ActualHeight - surroundingHeight);
         if (compact == _isCompactLayout) return;
 
         if (compact && _isCompactLayout == false) RememberColumnWidths();
