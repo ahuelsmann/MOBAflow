@@ -37,8 +37,9 @@ and apply to coding agents across Windows and Linux.
   adoption flows. Replace a superseded model and remove its code, tests, API endpoints and docs in the same change.
   Keep `Solution.CurrentSchemaVersion` unless the task requires a bump; removed JSON fields are ignored on load.
   Remove legacy paths that already exist only in a dedicated change, not as incidental cleanup.
-- SonarQube before PR review: attempt local analysis against the actual base, create PRs as drafts, and require a
-  green SonarCloud check with zero OPEN/CONFIRMED PR issues before marking ready. Follow
+- SonarQube before PR review: run code analysis only through the GitHub PR pipeline, create PRs as drafts, and
+  require a green SonarCloud check on the current PR commit with zero OPEN/CONFIRMED PR issues before marking ready.
+  Do not run local Sonar/Vortex code analysis or install analysis hooks. Local secrets scans remain required. Follow
   [the Sonar policy](.github/instructions/sonarqube-pre-pr.instructions.md); preserve existing analyzer baseline gates.
 - Balanced secrets scanning: scan likely secret-bearing files before reading and changed files before commits/PRs.
   If the scanner is unavailable, continue ordinary development, avoid sensitive files and record the limitation
