@@ -7,23 +7,11 @@ namespace Moba.Common.Events;
 /// </summary>
 public enum JourneyRuntimeTransitionKind
 {
-    /// <summary>A configured feedback occurrence was accepted.</summary>
+    /// <summary>A configured journey event matched an InPort count.</summary>
     FeedbackAccepted,
 
     /// <summary>The current station changed.</summary>
     StopChanged,
-
-    /// <summary>The journey run reached its terminal stop.</summary>
-    Completed,
-
-    /// <summary>The same journey restarted with a new run identity.</summary>
-    Restarted,
-
-    /// <summary>A linked journey became active.</summary>
-    Activated,
-
-    /// <summary>The journey became inactive after completion.</summary>
-    Stopped,
 
     /// <summary>The operator reset the journey to its initial state.</summary>
     Reset
@@ -36,9 +24,6 @@ public enum JourneyRuntimeTransitionKind
 /// <param name="JourneyId">Journey identifier.</param>
 /// <param name="JourneyRunId">Stable identity of the current journey run.</param>
 /// <param name="Kind">Authoritative transition kind.</param>
-/// <param name="FeedbackIndex">Zero-based feedback step being processed or expected next.</param>
-/// <param name="CurrentOccurrence">Accepted occurrence count for the feedback step.</param>
-/// <param name="RequiredOccurrences">Occurrences required to complete the feedback step.</param>
 /// <param name="InPort">Optional one-based feedback input port.</param>
 /// <param name="StationId">Optional current station identifier.</param>
 /// <param name="StationIndex">Zero-based current station index, or -1 when unavailable.</param>
@@ -48,9 +33,6 @@ public sealed record JourneyRuntimeTransitionEvent(
     Guid JourneyId,
     Guid JourneyRunId,
     JourneyRuntimeTransitionKind Kind,
-    int FeedbackIndex,
-    uint CurrentOccurrence,
-    uint RequiredOccurrences,
     int? InPort,
     Guid? StationId,
     int StationIndex,

@@ -637,7 +637,7 @@ public sealed partial class TimetableServiceRowViewModel : ObservableObject
 
     private static string FormatProgress(MobaRuntimeSnapshot snapshot, Guid journeyId)
         => snapshot.JourneyStates.TryGetValue(journeyId, out var journeyState)
-            ? $"{journeyState.CurrentStationName} (step {journeyState.CurrentFeedbackIndex + 1})"
+            ? journeyState.CurrentStationName
             : "No live progress";
 
     partial void OnServiceNumberChanged(string value) => Model.ServiceNumber = value;
