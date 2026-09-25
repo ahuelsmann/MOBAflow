@@ -29,7 +29,8 @@ function Get-GitHubTarget([string] $Remote) {
 $script:root = Get-GitValue @('rev-parse', '--show-toplevel')
 $branch = Get-GitValue @('symbolic-ref', '--quiet', '--short', 'HEAD') -Optional
 $tracking = if ($branch) { Get-GitValue @('config', '--get', "branch.$branch.remote") -Optional }
-if ($tracking) {
+# '.' means the branch tracks another local branch, which names no remote.
+if ($tracking -and $tracking -ne '.') {
     $target = Get-GitHubTarget $tracking
     if (-not $target) { throw 'The tracking remote is not a supported GitHub URL. Resolve the destination explicitly.' }
 } else {

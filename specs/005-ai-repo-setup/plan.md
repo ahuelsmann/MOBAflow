@@ -22,7 +22,7 @@ Preserve Sonar remote result access, secrets scanning and local integration cust
 Global settings, live railroad actions and repository administration changes are excluded.
 
 ## Constitution Check
-Passed before research and after design against constitution 3.1.0, amended by P1.
+Passed before research and after design against constitution 4.0.0, amended by P1.
 - Architecture, EventBus, async, UI and data constraints: no product changes.
 - Scope-based validation: isolated helper regression tests and structural checks.
 - Traceability: Issue145 and specs/005-ai-repo-setup.

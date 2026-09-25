@@ -10,7 +10,7 @@
 Source: Issue145 and the approved plans/ai-repo-setup.md. This is development tooling and guidance work.
 Product JSON, configuration defaults, public APIs, Z21 behavior and persisted layouts stay unchanged.
 Windows and Linux development checks apply; no UI, application launch or hardware checks are needed.
-Follow AGENTS.md and constitution 3.1.0; local evidence, agent probes and current-commit CI remain separate.
+Follow AGENTS.md and constitution 4.0.0; local evidence, agent probes and current-commit CI remain separate.
 
 ## User Scenarios & Testing
 
