@@ -35,10 +35,12 @@ PowerShell 7 (`pwsh`) wird für die lokalen Prüfungen benötigt. Einmal pro Klo
 ./scripts/Install-GitHooks.ps1
 ```
 
-Die Hooks blockieren normale Commits auf `main` und Pushes mit Ziel `main`, auch von einem anderen
-lokalen Branch aus. Vor einem Commit prüfen sie außerdem die vorgemerkten Dateien auf der Festplatte
-und auf gemischte Zeilenenden im Git-Index. Sie verändern und stagen keine Dateien. Andere Hooks bleiben
-erhalten; bei einem eigenen `pre-commit`- oder `pre-push`-Hook bricht die Installation ab.
+Die Hooks blockieren Commits und Merge-Commits auf `main` sowie Pushes mit Ziel `main` zu jedem Remote,
+auch von einem anderen lokalen Branch aus. Fast-Forwards bleiben erlaubt. Git bietet für `cherry-pick`
+und `revert` keinen blockierenden Hook; solche lokalen Commits auf `main` stoppt erst der Push-Hook.
+Vor einem Commit prüfen die Hooks außerdem die vorgemerkten Dateien auf der Festplatte und auf gemischte
+Zeilenenden im Git-Index. Sie verändern und stagen keine Dateien. Andere Hooks bleiben erhalten; bei einem
+eigenen `pre-commit`-, `pre-merge-commit`- oder `pre-push`-Hook bricht die Installation ab.
 Verknüpfte Worktrees teilen sich die installierten Hooks. Ältere Branches ohne Prüfskript verwenden
 eine bei der Installation hinterlegte Kopie. Nach Änderungen am Hook die Installation erneut ausführen.
 

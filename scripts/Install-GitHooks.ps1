@@ -13,7 +13,7 @@ if ($configured -and $configured -ne '.git/hooks' -and $configured -ne $hooksDir
     throw "Existing custom core.hooksPath must be integrated manually: $configured"
 }
 $destination = Join-Path $hooksDirectory 'pre-commit'
-$pushDestination = Join-Path $hooksDirectory 'pre-push'
+$guardDestinations = @('pre-push', 'pre-merge-commit') | ForEach-Object { Join-Path $hooksDirectory $_ }
 $fallback = Join-Path $hooksDirectory 'mobaflow-line-endings.ps1'
 if ((Test-Path -LiteralPath $fallback) -and
     -not ([IO.File]::ReadAllText($fallback)).Contains('# MOBAflow managed line-ending checker')) {
@@ -26,19 +26,23 @@ if (Test-Path -LiteralPath $destination) {
     }
 }
 # Validate every destination before replacing any managed file.
-if ((Test-Path -LiteralPath $pushDestination) -and
-    -not ([IO.File]::ReadAllText($pushDestination)).Contains('# MOBAflow managed main protection hook')) {
-    throw "Existing pre-push hook must be integrated manually: $pushDestination"
+foreach ($guardDestination in $guardDestinations) {
+    if ((Test-Path -LiteralPath $guardDestination) -and
+        -not ([IO.File]::ReadAllText($guardDestination)).Contains('# MOBAflow managed main protection hook')) {
+        throw "Existing $(Split-Path -Leaf $guardDestination) hook must be integrated manually: $guardDestination"
+    }
 }
 # Keep all other hooks. An absolute path also works in linked worktrees, where .git is a file.
 [void] [IO.Directory]::CreateDirectory($hooksDirectory)
 Copy-Item -LiteralPath (Join-Path $repositoryRoot '.githooks/pre-commit') -Destination $destination
-Copy-Item -LiteralPath (Join-Path $repositoryRoot '.githooks/pre-push') -Destination $pushDestination
+foreach ($guardDestination in $guardDestinations) {
+    Copy-Item -LiteralPath (Join-Path $repositoryRoot ".githooks/$(Split-Path -Leaf $guardDestination)") -Destination $guardDestination
+}
 Copy-Item -LiteralPath (Join-Path $repositoryRoot 'scripts/Test-LineEndings.ps1') -Destination $fallback
 if (-not $IsWindows) {
-    & chmod +x $destination $pushDestination
+    & chmod +x $destination @guardDestinations
     if ($LASTEXITCODE -ne 0) { throw 'Could not make the hook executable.' }
 }
 git -C $repositoryRoot config --local core.hooksPath $hooksDirectory
 if ($LASTEXITCODE -ne 0) { throw 'Could not configure core.hooksPath.' }
-Write-Host "Installed main protection and line-ending hooks: $destination, $pushDestination"
+Write-Host "Installed main protection and line-ending hooks: $(@($destination) + $guardDestinations -join ', ')"

@@ -60,7 +60,9 @@ try {
         Copy-Item -LiteralPath (Join-Path $sourceRoot "scripts/$name") -Destination (Join-Path $fixture "scripts/$name")
     }
     Copy-Item -LiteralPath (Join-Path $sourceRoot '.githooks/pre-commit') -Destination (Join-Path $fixture '.githooks/pre-commit')
-    Copy-Item -LiteralPath (Join-Path $sourceRoot '.githooks/pre-push') -Destination (Join-Path $fixture '.githooks/pre-push')
+    foreach ($name in @('pre-push', 'pre-merge-commit')) {
+        Copy-Item -LiteralPath (Join-Path $sourceRoot ".githooks/$name") -Destination (Join-Path $fixture ".githooks/$name")
+    }
     Write-Text '.gitattributes' "* text=auto eol=crlf`r`n*.sh text eol=lf`r`n.githooks/* text eol=lf`r`n*.bin binary`r`n"
     Write-Text 'example space ü.cs' "first`r`nsecond`nlast"
     $result = Check
@@ -109,6 +111,7 @@ try {
     Write-Text '.git/hooks/pre-push' '# Existing user push hook'
     $result = Invoke-Process 'pwsh' $installArgs
     Assert-True ($result.Code -ne 0 -and -not (Test-Path -LiteralPath $hookPath) -and
+        -not (Test-Path -LiteralPath (Join-Path $fixture '.git/hooks/pre-merge-commit')) -and
         [IO.File]::ReadAllText((Join-Path $fixture '.git/hooks/pre-push')) -ceq '# Existing user push hook') 'Installer partially installed hooks or overwrote a custom push hook.'
     Remove-Item -LiteralPath (Join-Path $fixture '.git/hooks/pre-push')
     $result = Invoke-Process 'pwsh' $installArgs
@@ -126,6 +129,18 @@ try {
     Assert-True ($result.Code -ne 0 -and $result.Output.Contains('Direct commits on main are blocked')) 'Commit on main was allowed.'
     $null = Git @('switch', '--detach')
     $result = Invoke-Process 'git' @('commit', '--allow-empty', '-m', 'test: detached checkout')
+    Assert-True ($result.Code -eq 0) $result.Output
+    $detached = (Git @('rev-parse', 'HEAD')).Trim()
+    # Merge commits run pre-merge-commit instead of pre-commit; fast-forwards create no commit.
+    $null = Git @('switch', 'main')
+    $result = Invoke-Process 'git' @('merge', '--no-ff', '-m', 'test: blocked main merge', $detached)
+    Assert-True ($result.Code -ne 0 -and $result.Output.Contains('Merge commits on main are blocked')) 'Merge commit on main was allowed.'
+    $null = Git @('merge', '--abort')
+    $null = Git @('switch', 'feature/hook-tests')
+    $result = Invoke-Process 'git' @('merge', '--no-ff', '-m', 'test: feature merge', $detached)
+    Assert-True ($result.Code -eq 0) $result.Output
+    $null = Git @('switch', 'main')
+    $result = Invoke-Process 'git' @('merge', '--ff-only', 'feature/hook-tests')
     Assert-True ($result.Code -eq 0) $result.Output
     $null = Git @('switch', 'feature/hook-tests')
     $remote = Join-Path $fixture 'remote.git'
