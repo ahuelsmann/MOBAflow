@@ -147,7 +147,7 @@ The server assigns an immutable credential ID and principal type. A client-suppl
 ### Host bootstrap credential
 
 - MOBAflow generates a fresh 256-bit bootstrap secret for every MOBApi child-process launch.
-- The secret is delivered through a current-user-only inherited handle or named-pipe bootstrap channel. It is not placed in command-line arguments, committed configuration, normal environment diagnostics, or logs.
+- The secret is delivered through a current-user-only named-pipe bootstrap channel with fresh pipe names for each launch. It is not placed in command-line arguments, committed configuration, normal environment diagnostics, or logs.
 - MOBApi retains only an in-memory verifier. The bootstrap endpoint is HTTPS, loopback-only, single-use, and rate-limited.
 - A successful exchange issues a short-lived host access token and process-bound renewal credential. Both become invalid when MOBApi exits or when the owning MOBAflow process disconnects permanently.
 - A standalone MOBApi instance has no host authority until an owner completes an explicit local enrollment flow. Loopback alone never grants the `host` principal.
@@ -209,7 +209,7 @@ The final policy applies to all routes even when a reverse proxy or loopback con
 
 | REST operation | Capability or state | Notes |
 | --- | --- | --- |
-| `GET /api/photos/health` | Anonymous, minimal, rate-limited | Reports process readiness and security protocol version only; no client, runtime, address, or credential data |
+| `GET /api/photos/health` | Anonymous, minimal, rate-limited | Reports reachability and the fixed service name `MOBAflow MOBApi`; no version, server-instance identity, client, runtime, address, or credential data |
 | Pairing exchange endpoint | Active pairing window | Anonymous bootstrap over fingerprint-pinned TLS; separately throttled |
 | Token refresh endpoint | Valid rotating refresh credential | Never accepts an access token in place of the refresh credential |
 | `GET /api/status` | `controlplane.read` | Connected-client details are protected state |

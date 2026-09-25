@@ -5773,13 +5773,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2045",
-      "path": "Test/Common/RestApiDiscoveryCandidateBuilderTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2045",
       "path": "Test/Common/RestApiRecentEndpointHistoryTests.cs",
       "count": 3
     },

@@ -305,8 +305,26 @@ public class RestApiDiscoveryService : IRestDiscoveryService, IAuthenticatedRest
             var multicastEndpoint = new IPEndPoint(multicastAddress, DiscoveryResponseParser.MulticastPort);
             var broadcastEndpoint = new IPEndPoint(IPAddress.Broadcast, DiscoveryResponseParser.MulticastPort);
 
-            await udpClient.SendAsync(requestBytes, requestBytes.Length, multicastEndpoint).ConfigureAwait(false);
-            await udpClient.SendAsync(requestBytes, requestBytes.Length, broadcastEndpoint).ConfigureAwait(false);
+            var localAddresses = LanIpv4AddressHelper.GetCandidateLocalIpv4Addresses();
+            var unicastEndpoints = RestApiDiscoveryCandidateBuilder
+                .BuildAuthenticatedUdpUnicastCandidates(_appSettings.RestApi, localAddresses)
+                .Select(address => new IPEndPoint(address, DiscoveryResponseParser.MulticastPort));
+            var requestEndpoints = new[] { multicastEndpoint, broadcastEndpoint }
+                .Concat(unicastEndpoints);
+
+            foreach (var requestEndpoint in requestEndpoints)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                try
+                {
+                    await udpClient.SendAsync(requestBytes, requestEndpoint, cancellationToken)
+                        .ConfigureAwait(false);
+                }
+                catch (SocketException)
+                {
+                    // Continue with unicast targets when multicast or broadcast is unavailable.
+                }
+            }
 
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             cts.CancelAfter(MulticastReceiveTimeoutMs);
@@ -317,11 +335,19 @@ public class RestApiDiscoveryService : IRestDiscoveryService, IAuthenticatedRest
                 {
                     var result = await udpClient.ReceiveAsync(cts.Token).ConfigureAwait(false);
                     var response = Encoding.UTF8.GetString(result.Buffer).TrimEnd('\0').Trim();
+                    if (!DiscoveryResponseParser.TryParse(response, out MobApiDiscoveryEndpoint? endpoint)
+                        || endpoint == null)
+                    {
+                        continue;
+                    }
 
-                    if (DiscoveryResponseParser.TryParse(response, out MobApiDiscoveryEndpoint? endpoint)
-                        && endpoint != null
-                        && await ProbeMobApiHealthAsync(endpoint.IpAddress, endpoint.HttpPort, SubnetProbeRequestTimeoutMs, cts.Token)
-                            .ConfigureAwait(false) != null)
+                    var healthyIp = await ProbeMobApiHealthAsync(
+                            endpoint.IpAddress,
+                            endpoint.HttpPort,
+                            SubnetProbeRequestTimeoutMs,
+                            cts.Token)
+                        .ConfigureAwait(false);
+                    if (healthyIp != null)
                     {
                         return endpoint;
                     }

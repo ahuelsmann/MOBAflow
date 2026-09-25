@@ -178,7 +178,7 @@ public sealed class RestApiProcessService : IRestApiPairingEndpointProvider, IDi
                 };
 
                 _process.Start();
-                bootstrapChannel?.CompleteHandleTransfer();
+                bootstrapChannel?.CompleteProcessStart();
                 _logger.LogInformation("MOBApi process started (port {Port}), PID {Pid}", port, _process.Id);
 
                 (string Secret, HostBootstrapPipeResponse Response)? bootstrap = null;

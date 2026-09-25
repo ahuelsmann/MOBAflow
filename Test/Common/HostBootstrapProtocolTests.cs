@@ -36,7 +36,7 @@ internal sealed class HostBootstrapProtocolTests
     }
 
     [Test]
-    public async Task ParentChannel_Should_RejectExchangeBeforeHandleTransfer()
+    public async Task ParentChannel_Should_RejectExchangeBeforeProcessStart()
     {
         await using var parent = new HostBootstrapParentChannel();
 
@@ -47,11 +47,11 @@ internal sealed class HostBootstrapProtocolTests
     }
 
     [Test]
-    public async Task ParentChannel_Should_HandleTransferIdempotently_AndHonorCancellation()
+    public async Task ParentChannel_Should_CompleteProcessStartIdempotently_AndHonorCancellation()
     {
         await using var parent = new HostBootstrapParentChannel();
-        parent.CompleteHandleTransfer();
-        parent.CompleteHandleTransfer();
+        parent.CompleteProcessStart();
+        parent.CompleteProcessStart();
 
         using var canceled = new CancellationTokenSource();
         canceled.Cancel();
@@ -118,6 +118,27 @@ internal sealed class HostBootstrapProtocolTests
         await using var parent = new HostBootstrapParentChannel();
 
         Assert.That(() => parent.Configure(null!), Throws.ArgumentNullException);
+    }
+
+    [Test]
+    public async Task ParentChannel_Configure_Should_UseProcessIndependentPipeNames()
+    {
+        var parent = new HostBootstrapParentChannel();
+        await using var parentLifetime = parent.ConfigureAwait(false);
+        var startInfo = new ProcessStartInfo();
+
+        parent.Configure(startInfo);
+
+        var requestPipe = startInfo.Environment[HostBootstrapProtocol.RequestPipeEnvironmentVariable];
+        var responsePipe = startInfo.Environment[HostBootstrapProtocol.ResponsePipeEnvironmentVariable];
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(requestPipe, Does.StartWith("mobaflow-host-bootstrap-request-"));
+            Assert.That(responsePipe, Does.StartWith("mobaflow-host-bootstrap-response-"));
+            Assert.That(requestPipe, Is.Not.EqualTo(responsePipe));
+            Assert.That(long.TryParse(requestPipe, out _), Is.False);
+            Assert.That(long.TryParse(responsePipe, out _), Is.False);
+        }
     }
 
     private static IDisposable ApplyBootstrapEnvironment(ProcessStartInfo startInfo)

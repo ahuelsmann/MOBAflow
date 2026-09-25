@@ -8,7 +8,7 @@ using System.Text.Json;
 namespace Moba.Common.Security;
 
 /// <summary>
-/// Defines the inherited anonymous-pipe protocol used to enroll the local MOBAflow host.
+/// Defines the one-launch named-pipe protocol used to enroll the local MOBAflow host.
 /// </summary>
 public static class HostBootstrapProtocol
 {
@@ -42,41 +42,46 @@ public sealed record HostTokenResponse(
 /// </summary>
 public sealed class HostBootstrapParentChannel : IAsyncDisposable
 {
-    private readonly AnonymousPipeServerStream _requestPipe = new(PipeDirection.Out, HandleInheritability.Inheritable);
-    private readonly AnonymousPipeServerStream _responsePipe = new(PipeDirection.In, HandleInheritability.Inheritable);
+    private readonly string _requestPipeName = CreatePipeName("request");
+    private readonly string _responsePipeName = CreatePipeName("response");
+    private readonly NamedPipeServerStream _requestPipe;
+    private readonly NamedPipeServerStream _responsePipe;
     private string? _secret = HostBootstrapProtocol.CreateSecret();
-    private bool _handlesTransferred;
+    private bool _childProcessStarted;
+
+    public HostBootstrapParentChannel()
+    {
+        _requestPipe = CreateServerPipe(_requestPipeName, PipeDirection.Out);
+        _responsePipe = CreateServerPipe(_responsePipeName, PipeDirection.In);
+    }
 
     public void Configure(ProcessStartInfo startInfo)
     {
         ArgumentNullException.ThrowIfNull(startInfo);
-        startInfo.Environment[HostBootstrapProtocol.RequestPipeEnvironmentVariable] = _requestPipe.GetClientHandleAsString();
-        startInfo.Environment[HostBootstrapProtocol.ResponsePipeEnvironmentVariable] = _responsePipe.GetClientHandleAsString();
+        startInfo.Environment[HostBootstrapProtocol.RequestPipeEnvironmentVariable] = _requestPipeName;
+        startInfo.Environment[HostBootstrapProtocol.ResponsePipeEnvironmentVariable] = _responsePipeName;
         startInfo.Environment[HostBootstrapProtocol.ParentProcessEnvironmentVariable] = Environment.ProcessId.ToString(
             System.Globalization.CultureInfo.InvariantCulture);
     }
 
-    public void CompleteHandleTransfer()
+    public void CompleteProcessStart()
     {
-        if (_handlesTransferred)
-            return;
-
-        _requestPipe.DisposeLocalCopyOfClientHandle();
-        _responsePipe.DisposeLocalCopyOfClientHandle();
-        _handlesTransferred = true;
+        _childProcessStarted = true;
     }
 
     public async Task<(string Secret, HostBootstrapPipeResponse Response)> ExchangeAsync(
         CancellationToken cancellationToken)
     {
-        if (!_handlesTransferred || string.IsNullOrEmpty(_secret))
-            throw new InvalidOperationException("The bootstrap pipe handles have not been transferred to the child process.");
+        if (!_childProcessStarted || string.IsNullOrEmpty(_secret))
+            throw new InvalidOperationException("The bootstrap channel has not been transferred to the child process.");
 
+        await _requestPipe.WaitForConnectionAsync(cancellationToken).ConfigureAwait(false);
         var request = new HostBootstrapPipeRequest(_secret, Environment.ProcessId);
         await JsonSerializer.SerializeAsync(_requestPipe, request, cancellationToken: cancellationToken).ConfigureAwait(false);
         await _requestPipe.FlushAsync(cancellationToken).ConfigureAwait(false);
         await _requestPipe.DisposeAsync().ConfigureAwait(false);
 
+        await _responsePipe.WaitForConnectionAsync(cancellationToken).ConfigureAwait(false);
         var response = await JsonSerializer.DeserializeAsync<HostBootstrapPipeResponse>(
             _responsePipe,
             cancellationToken: cancellationToken).ConfigureAwait(false)
@@ -91,20 +96,31 @@ public sealed class HostBootstrapParentChannel : IAsyncDisposable
         _responsePipe.Dispose();
         return ValueTask.CompletedTask;
     }
+
+    private static string CreatePipeName(string direction)
+        => $"mobaflow-host-bootstrap-{direction}-{Guid.NewGuid():N}";
+
+    private static NamedPipeServerStream CreateServerPipe(string name, PipeDirection direction)
+        => new(
+            name,
+            direction,
+            maxNumberOfServerInstances: 1,
+            PipeTransmissionMode.Byte,
+            PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
 }
 
 /// <summary>
-/// Owns the child side of the inherited bootstrap channel.
+/// Owns the child side of the named bootstrap channel.
 /// </summary>
 public sealed class HostBootstrapChildChannel : IAsyncDisposable
 {
-    private readonly AnonymousPipeClientStream _requestPipe;
-    private readonly AnonymousPipeClientStream _responsePipe;
+    private readonly NamedPipeClientStream _requestPipe;
+    private readonly NamedPipeClientStream _responsePipe;
 
-    private HostBootstrapChildChannel(string requestHandle, string responseHandle)
+    private HostBootstrapChildChannel(string requestPipeName, string responsePipeName)
     {
-        _requestPipe = new AnonymousPipeClientStream(PipeDirection.In, requestHandle);
-        _responsePipe = new AnonymousPipeClientStream(PipeDirection.Out, responseHandle);
+        _requestPipe = CreateClientPipe(requestPipeName, PipeDirection.In);
+        _responsePipe = CreateClientPipe(responsePipeName, PipeDirection.Out);
     }
 
     public static HostBootstrapChildChannel? TryOpenFromEnvironment()
@@ -122,6 +138,7 @@ public sealed class HostBootstrapChildChannel : IAsyncDisposable
 
     public async Task<HostBootstrapPipeRequest> ReadRequestAsync(CancellationToken cancellationToken)
     {
+        await _requestPipe.ConnectAsync(cancellationToken).ConfigureAwait(false);
         var request = await JsonSerializer.DeserializeAsync<HostBootstrapPipeRequest>(
             _requestPipe,
             cancellationToken: cancellationToken).ConfigureAwait(false)
@@ -134,6 +151,7 @@ public sealed class HostBootstrapChildChannel : IAsyncDisposable
 
     public async Task WriteResponseAsync(HostBootstrapPipeResponse response, CancellationToken cancellationToken)
     {
+        await _responsePipe.ConnectAsync(cancellationToken).ConfigureAwait(false);
         await JsonSerializer.SerializeAsync(_responsePipe, response, cancellationToken: cancellationToken).ConfigureAwait(false);
         await _responsePipe.FlushAsync(cancellationToken).ConfigureAwait(false);
         await _responsePipe.DisposeAsync().ConfigureAwait(false);
@@ -144,4 +162,7 @@ public sealed class HostBootstrapChildChannel : IAsyncDisposable
         await _requestPipe.DisposeAsync().ConfigureAwait(false);
         await _responsePipe.DisposeAsync().ConfigureAwait(false);
     }
+
+    private static NamedPipeClientStream CreateClientPipe(string name, PipeDirection direction)
+        => new(".", name, direction, PipeOptions.Asynchronous);
 }
