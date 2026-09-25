@@ -176,6 +176,17 @@ class GitTests(unittest.TestCase):
         self.git("remote", "set-url", "two", "https://example.invalid/owner/two")
         self.assertNotEqual(0, self.resolve().returncode)
 
+    def test_local_tracking_uses_unique_github_remote(self):
+        self.git("remote", "add", "github", "https://github.com/owner/repo")
+        base = self.git("branch", "--show-current")
+        self.git("checkout", "--quiet", "-b", "feature", "--track", base)
+        self.assertEqual(".", self.git("config", "--get", "branch.feature.remote"))
+        result = self.resolve()
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual("owner/repo", json.loads(result.stdout)["repository"])
+        self.git("remote", "add", "other", "https://github.com/owner/other")
+        self.assertNotEqual(0, self.resolve().returncode)
+
     def test_worktree_root_and_marker_isolation(self):
         self.git("remote", "add", "github", "https://github.com/owner/repo")
         second = Path(self.temp.name) / "second worktree"

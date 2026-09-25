@@ -1,21 +1,3 @@
-<!--
-Sync Impact Report
-- Version change: 3.0.0 -> 3.1.0
-- Modified principles:
-  - III. Validation follows the affected behavior and platform, as defined in AGENTS.md.
-    Documentation-only changes use structural checks; executable tooling gets isolated tests.
-    Broad product suites remain required for affected runtime and integration boundaries.
-- Templates updated:
-  - ✅ .specify/templates/overrides/plan-template.md
-  - ✅ .specify/templates/overrides/tasks-template.md
-- Runtime guidance updated:
-  - ✅ AGENTS.md
-  - ✅ .github/instructions/sonarqube-pre-pr.instructions.md
-  - ✅ .github/PULL_REQUEST_TEMPLATE.md
-- Migration note: select validation for existing plans using AGENTS.md's change matrix.
-  Historical validation records remain unchanged. The CI-only Sonar policy is unchanged.
-- Follow-up TODOs: none
--->
 # MOBAflow Constitution
 
 ## Core Principles
@@ -143,4 +125,4 @@ semantic versioning: MAJOR for incompatible governance changes, MINOR for new or
 materially expanded principles, and PATCH for clarifications. Every plan and
 review MUST verify compliance; unresolved violations block implementation.
 
-**Version**: 3.1.0 | **Ratified**: 2026-07-19 | **Last Amended**: 2026-09-25
+**Version**: 4.0.0 | **Ratified**: 2026-07-19 | **Last Amended**: 2026-09-25
