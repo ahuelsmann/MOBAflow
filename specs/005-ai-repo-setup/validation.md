@@ -29,6 +29,10 @@ No extension hooks are configured. Feature directory 005 was the next free local
   Final local run: 20 tests passed in 61.659 seconds.
 
 ## Fresh-context acceptance
+Fresh local clone of implementation commit 0858efb0: AI setup structural check and instruction
+consistency passed without personal skills or task-worktree artifacts. Temporary repository tests
+also verified separate markers and root selection in two Git worktrees.
+
 Codex CLI0.155.0-alpha.16.4 with a new empty task-local CODEX_HOME reports “Not logged in”.
 Personal credentials, plugins and global skills were not copied.
 Therefore fully authenticated fresh-client discovery/invocation probes remain open.
