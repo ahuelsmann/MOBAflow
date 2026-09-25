@@ -19,7 +19,7 @@ function Invoke-Process([string] $Program, [string[]] $Arguments) {
     $start.UseShellExecute = $false
     $start.RedirectStandardOutput = $true
     $start.RedirectStandardError = $true
-    # Tests may themselves run from a Git hook; never reuse the parent's index or Git directory.
+    # Tests may run inside another Git process (for example rebase --exec); never reuse its index or Git directory.
     foreach ($key in @('GIT_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE', 'GIT_COMMON_DIR')) {
         [void] $start.Environment.Remove($key)
     }
