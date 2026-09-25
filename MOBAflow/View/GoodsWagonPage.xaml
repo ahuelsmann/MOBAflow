@@ -55,7 +55,6 @@
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
@@ -66,18 +65,10 @@
                         QueryIcon="Find"
                         Text="{x:Bind ViewModel.GoodsWagonSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-                    <ComboBox
-                        Grid.Row="1"
-                        Margin="0,0,0,8"
-                        AutomationProperties.Name="Maintenance status filter"
-                        DisplayMemberPath="Label"
-                        ItemsSource="{x:Bind Maintenance.FilterOptions, Mode=OneWay}"
-                        SelectedItem="{x:Bind Maintenance.SelectedFilter, Mode=TwoWay}" />
-
                     <ListView
-                        Grid.Row="2"
+                        Grid.Row="1"
                         IsItemClickEnabled="True"
-                        ItemsSource="{x:Bind Maintenance.VisibleGoodsWagons, Mode=OneWay}"
+                        ItemsSource="{x:Bind ViewModel.FilteredGoodsWagonLibrary, Mode=OneWay}"
                         SelectedItem="{x:Bind ViewModel.SelectedGoodsWagon, Mode=TwoWay}"
                         SelectionMode="Single">
                         <ListView.ContextFlyout>
@@ -145,7 +136,6 @@
                             Content="{x:Bind ViewModel.SelectedGoodsWagon, Mode=OneWay}"
                             ContentTemplateSelector="{StaticResource EntityTemplateSelector}"
                             Visibility="{x:Bind ViewModel.SelectedGoodsWagon, Mode=OneWay, Converter={StaticResource NullableConverter}}" />
-                        <controls:RollingStockMaintenancePanel ViewModel="{x:Bind Maintenance, Mode=OneWay}" />
                     </StackPanel>
                 </ScrollViewer>
             </controls:CollapsibleColumnProperties.PanelContent>

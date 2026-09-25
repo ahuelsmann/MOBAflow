@@ -14,7 +14,7 @@ absolute InPort session counts. The MVP removes remaining automatic completion/r
 
 The operator also removed vehicle operating-time and usage statistics from this delivery. Follow-up
 [issue #143](https://github.com/ahuelsmann/MOBAflow/issues/143) defers any future reconsideration;
-it does not authorize implementation. Remaining calendar maintenance is removed separately under #147; route reservations were removed under #146. Neither is part of the 1.0 MVP.
+it does not authorize implementation. Calendar maintenance is removed by [#147](../004-remove-maintenance/spec.md); route reservations were removed under #146. Neither is part of the 1.0 MVP.
 
 **Status**: Simplification implemented locally; remote quality gate open
 
@@ -106,7 +106,7 @@ The Event Manager presents InPort, count and workflow in each row. Drag and drop
 - **FR-006**: Change virtual stops only through existing workflow actions, without resetting counts.
 - **FR-007**: Provide a compact editor with workflow assignment/creation and row reordering by drag and drop, plus keyboard-accessible add/assign/duplicate/move/delete controls.
 - **FR-008**: Reuse arbitrary workflows, English labels, theme resources and visible validation feedback.
-- **FR-009**: Do not collect, persist or display vehicle operating time, completed-trip totals or distance statistics. Remove their checkpoints, corrections and usage-based maintenance intervals without migration; retain functional InPort counters. Remove remaining calendar maintenance separately under #147.
+- **FR-009**: Do not collect, persist or display vehicle operating time, completed-trip totals or distance statistics. Remove their checkpoints, corrections and usage-based maintenance intervals without migration; retain functional InPort counters. Calendar maintenance is removed by [#147](../004-remove-maintenance/spec.md).
 
 ### Key Entities
 

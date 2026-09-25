@@ -20,9 +20,9 @@
 ## Summary (earlier increment)
 
 Current removal scope (operator decision, 2026-09-24): remove vehicle usage models, runtime tracking/checkpoints,
-snapshot fields, autosave hooks, UI counters/corrections and usage-based maintenance intervals. Retain calendar
-maintenance and functional InPort counters. Remove obsolete tests and sample/schema fields; validate the remaining
-calendar behavior and affected consumers. Future statistics are deferred to #143, not implemented by this plan.
+snapshot fields, autosave hooks, UI counters/corrections and usage-based maintenance intervals. Retain functional InPort counters. Calendar maintenance retained during #125 is removed by
+[#147](../004-remove-maintenance/spec.md). Remove obsolete tests and sample/schema fields; validate the remaining
+vehicle data and affected consumers. Future statistics are deferred to #143, not implemented by this plan.
 
 Keep session InPort counters separate from virtual stops. Each explicit run snapshots counters, evaluates independent start-relative events once and reuses the workflow runner. Preserve an explicit legacy path. Simplify Event Manager to plan rows with a workflow palette, drag and drop and equivalent commands.
 

@@ -10,8 +10,6 @@ using Microsoft.UI.Xaml.Controls;
 
 using Moba.SharedUI.ViewModel;
 
-using Domain.Enum;
-
 using SharedUI.Interface;
 
 internal sealed partial class LocomotivesPage
@@ -25,22 +23,18 @@ internal sealed partial class LocomotivesPage
 
     public LocomotiveManagementViewModel Management { get; }
 
-    public RollingStockMaintenanceViewModel Maintenance { get; }
-
     private double _listExpandedWidth = 250;
     private GridLength _propertiesExpandedWidth = new(1, GridUnitType.Star);
 
     public LocomotivesPage(
         MainWindowViewModel viewModel,
         LocomotiveManagementViewModel management,
-        RollingStockMaintenanceViewModel maintenance,
         AppSettings settings,
         ISettingsService? settingsService = null,
         ILogger<LocomotivesPage>? logger = null)
     {
         ViewModel = viewModel;
         Management = management;
-        Maintenance = maintenance;
         _settings = settings;
         _settingsService = settingsService;
         _logger = logger;
@@ -56,7 +50,6 @@ internal sealed partial class LocomotivesPage
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
         ObserveSelectedLocomotive();
         RefreshManagement();
-        RefreshMaintenance();
         RestoreLayout();
     }
 
@@ -101,7 +94,6 @@ internal sealed partial class LocomotivesPage
         {
             ObserveSelectedLocomotive();
             RefreshManagement();
-            RefreshMaintenance();
         }
     }
 
@@ -141,13 +133,6 @@ internal sealed partial class LocomotivesPage
 
     private void RefreshManagement()
         => Management.SetContext(ViewModel.SelectedProject?.Model, ViewModel.SelectedLocomotive?.Model);
-
-    private void RefreshMaintenance()
-        => Maintenance.SetContext(
-            ViewModel.SelectedProject,
-            TrainVehicleKind.Locomotive,
-            ViewModel.SelectedLocomotive,
-            ViewModel.LocomotiveSearchText);
 
     private void RestoreLayout()
     {

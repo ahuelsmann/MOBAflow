@@ -39,7 +39,6 @@ public static class MobaBackendServiceCollectionExtensions
         services.TryAddSingleton<IMultiplexerProvider, DefaultMultiplexerProvider>();
         services.TryAddSingleton(TimeProvider.System);
         services.TryAddSingleton<InPortCounterService>();
-        services.TryAddSingleton<IVehicleMaintenanceService, VehicleMaintenanceService>();
         services.TryAddSingleton<IDecoderCvService, DecoderCvService>();
         services.TryAddSingleton<ILocomotiveLibraryService, LocomotiveLibraryService>();
         services.TryAddSingleton<ILocomotivePassportHtmlRenderer, LocomotivePassportHtmlRenderer>();

@@ -9,6 +9,11 @@ the version tags follow [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+### Removed
+
+- Vehicle maintenance plans, calendar reminders, history and status filters for all rolling stock.
+  Vehicle inventory, decoder/CV backups and locomotive passports remain available.
+
 ### Added
 
 - Event Manager for visually editing ordered journey feedback sequences.
