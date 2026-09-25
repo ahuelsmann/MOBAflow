@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-09-25",
+  "skills": [
+    {
+      "name": "speckit-analyze",
+      "path": ".agents/skills/speckit-analyze",
+      "source": "https://github.com/github/spec-kit",
+      "revision": "v1.0.11",
+      "license": "MIT",
+      "manifest": ".specify/integrations/codex.manifest.json",
+      "localChanges": "None."
+    },
+    {
+      "name": "speckit-checklist",
+      "path": ".agents/skills/speckit-checklist",
+      "source": "https://github.com/github/spec-kit",
+      "revision": "v1.0.11",
+      "license": "MIT",
+      "manifest": ".specify/integrations/codex.manifest.json",
+      "localChanges": "None."
+    },
+    {
+      "name": "speckit-clarify",
+      "path": ".agents/skills/speckit-clarify",
+      "source": "https://github.com/github/spec-kit",
+      "revision": "v1.0.11",
+      "license": "MIT",
+      "manifest": ".specify/integrations/codex.manifest.json",
+      "localChanges": "None."
+    },
+    {
+      "name": "speckit-constitution",
+      "path": ".agents/skills/speckit-constitution",
+      "source": "https://github.com/github/spec-kit",
+      "revision": "v1.0.11",
+      "license": "MIT",
+      "manifest": ".specify/integrations/codex.manifest.json",
+      "localChanges": "None."
+    },
+    {
+      "name": "speckit-converge",
+      "path": ".agents/skills/speckit-converge",
+      "source": "https://github.com/github/spec-kit",
+      "revision": "v1.0.11",
+      "license": "MIT",
+      "manifest": ".specify/integrations/codex.manifest.json",
+      "localChanges": "None."
+    },
+    {
+      "name": "speckit-implement",
+      "path": ".agents/skills/speckit-implement",
+      "source": "https://github.com/github/spec-kit",
+      "revision": "v1.0.11",
+      "license": "MIT",
+      "manifest": ".specify/integrations/codex.manifest.json",
+      "localChanges": "None."
+    },
+    {
+      "name": "speckit-plan",
+      "path": ".agents/skills/speckit-plan",
+      "source": "https://github.com/github/spec-kit",
+      "revision": "v1.0.11",
+      "license": "MIT",
+      "manifest": ".specify/integrations/codex.manifest.json",
+      "localChanges": "None."
+    },
+    {
+      "name": "speckit-specify",
+      "path": ".agents/skills/speckit-specify",
+      "source": "https://github.com/github/spec-kit",
+      "revision": "v1.0.11",
+      "license": "MIT",
+      "manifest": ".specify/integrations/codex.manifest.json",
+      "localChanges": "None."
+    },
+    {
+      "name": "speckit-tasks",
+      "path": ".agents/skills/speckit-tasks",
+      "source": "https://github.com/github/spec-kit",
+      "revision": "v1.0.11",
+      "license": "MIT",
+      "manifest": ".specify/integrations/codex.manifest.json",
+      "localChanges": "None."
+    },
+    {
+      "name": "speckit-taskstoissues",
+      "path": ".agents/skills/speckit-taskstoissues",
+      "source": "https://github.com/github/spec-kit",
+      "revision": "v1.0.11",
+      "license": "MIT",
+      "manifest": ".specify/integrations/codex.manifest.json",
+      "localChanges": "Uses scripts/Resolve-GitHubRepository.ps1; expected managed-file modification; see docs/SPEC-KIT.md."
+    },
+    {
+      "name": "audit-code-quality",
+      "path": ".agents/skills/audit-code-quality",
+      "source": "local",
+      "revision": "issue-145",
+      "license": "MIT",
+      "localChanges": "Repository-specific audit; narrowed trigger, CI-only Sonar. Global duplicate may still exist outside this repo."
+    },
+    {
+      "name": "mobaflow-code-review",
+      "path": ".agents/skills/mobaflow-code-review",
+      "source": "https://github.com/mattpocock/skills/tree/c55ee46073ed923f86ce59a5eb3b6d895095d1b7/skills/engineering/code-review",
+      "revision": "c55ee46073ed923f86ce59a5eb3b6d895095d1b7",
+      "license": ".agents/skills/mobaflow-code-review/LICENSE",
+      "localChanges": "Adapted for MOBAflow instructions, scoped validation, native available tools and explicit launch/hardware authorization; removed required delegation/foreign bootstrap and Bash loop dependency."
+    },
+    {
+      "name": "mobaflow-diagnosing-bugs",
+      "path": ".agents/skills/mobaflow-diagnosing-bugs",
+      "source": "https://github.com/mattpocock/skills/tree/c55ee46073ed923f86ce59a5eb3b6d895095d1b7/skills/engineering/diagnosing-bugs",
+      "revision": "c55ee46073ed923f86ce59a5eb3b6d895095d1b7",
+      "license": ".agents/skills/mobaflow-diagnosing-bugs/LICENSE",
+      "localChanges": "Adapted for MOBAflow instructions, scoped validation, native available tools and explicit launch/hardware authorization; removed required delegation/foreign bootstrap and Bash loop dependency."
+    }
+  ]
+}

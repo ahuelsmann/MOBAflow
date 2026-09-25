@@ -2,10 +2,10 @@
 
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/145
 **Spec Kit**: Required
-**Status**: Proposed
+**Status**: Implementing
 **Datum**: 2026-09-25
-**Planungsbasis**: `github/main` bei `d0ffddc41efdd9aa422c1a2f7a48de67b5445e8b`
-**Planungsbranch**: `codex/ai-repo-setup-plan`
+**Planungsbasis**: `github/main` bei `2b65379fb4f4c6cb23394ea9d44467c6801f027f`
+**Planungsbranch**: `codex/issue-145-ai-repo-setup`
 
 ## Ziel und Umfang
 
@@ -13,13 +13,14 @@ Ein frischer Klon und jeder getrennte Git-Worktree sollen der KI dieselben verst
 passenden Skills und verlässlichen Prüfabläufe bereitstellen. Die Einrichtung soll ohne Andreas' persönliche
 Skillinstallation nachvollziehbar sein. Dateizugriffe müssen zum aktiven Arbeitsverzeichnis passen.
 
-Dieser Plan beschreibt die Umsetzung. Er ändert selbst keine Konfiguration und ersetzt weder die
-Spec-Kit-Spezifikation noch deren Aufgabenliste. Die Umsetzung beginnt mit den unten genannten Vorarbeiten.
-Der Planungs-PR sichert ausschließlich dieses Dokument. Alle 35 Aufgaben bleiben offen; weder ihre Umsetzung
-noch die Schließung von Issue #145 sind Bestandteil dieses PRs. Merge und Worktree-Bereinigung erfolgen zentral.
+Dieser Plan verfolgt die Umsetzung. Er ersetzt weder die
+Spec-Kit-Spezifikation noch deren Aufgabenliste. Der aktuelle Fortschritt ist unten und in der Spec-Kit-Aufgabenliste vermerkt.
+Der ursprüngliche Plan wurde mit PR #150 veröffentlicht. Am 25.09.2026 wurde auf Benutzerwunsch die Prüfung
+der GitHub-Pipelines als P7 ergänzt und P2 verständlicher beschrieben. Die Umsetzung wurde am 25.09.2026 freigegeben;
+Issue #145 bleibt bis zur Abnahme offen. Spezifikation, Aufgaben und Nachweise liegen unter `specs/005-ai-repo-setup/`.
 
 Im Umfang liegen `AGENTS.md`, README und Contributor-Einstieg, Fachanweisungen, Spec-Kit-Integration,
-Repository-Skills, MCP-Konfiguration und deren strukturelle Validierung.
+Repository-Skills, MCP-Konfiguration und deren strukturelle Validierung sowie die Prüfung der GitHub-Pipelines.
 
 Nicht im Umfang liegen Produktfunktionen, Änderungen an Journey-/Workflow-Verhalten, App-Starts,
 Hardwareaktionen, ein Austausch der bestehenden CI-Plattform oder eine pauschale Aktualisierung aller
@@ -30,6 +31,8 @@ Die optionale Einführung von `domain-modeling` bleibt eine spätere Entscheidun
 
 - Das Audit vom 24.09.2026 untersuchte zunächst den lokalen Hauptcheckout bei `698c4c8b`; der ursprüngliche
   Plan beruhte auf `57b96c1f`. Am 25.09.2026 wurde er gegen GitHub `main` bei `d0ffddc4` abgeglichen.
+  Die Planergänzung zu GitHub-Pipelines basiert auf dem anschließend aktualisierten Hauptstand `010caeb5`.
+  Die folgenden Auditbefunde wurden dadurch nicht erneut vollständig geprüft.
 - Bereits umgesetzt durch PR #138: Sonar-Codeanalyse läuft ausschließlich in GitHub CI. Lokale
   Sonar-/Vortex-Codeanalyse und deren Analysehooks sind ausgeschlossen; lokale Geheimnisscans bleiben erforderlich.
   Diese Regel gilt bereits in `AGENTS.md`, der Sonar-Anweisung, der Constitution und den lokalen Spec-Kit-Vorlagen.
@@ -57,14 +60,15 @@ Die optionale Einführung von `domain-modeling` bleibt eine spätere Entscheidun
 
 ## Vorarbeiten vor der Umsetzung
 
-- [ ] V1: Issue #145, aktuellen Hauptstand und parallele Änderungen an denselben Dateien abgleichen.
+- [x] V1: Issue #145, aktuellen Hauptstand und parallele Änderungen an denselben Dateien abgleichen.
   Auf einer eigenen `codex/`-Branch in einem sauberen Worktree arbeiten; keine persönlichen Konfigurationen kopieren.
-- [ ] V2: Mit dem bestehenden Spec-Kit-Ablauf eine kollisionsfrei nummerierte Feature-Spezifikation unter
+- [x] V2: Mit dem bestehenden Spec-Kit-Ablauf eine kollisionsfrei nummerierte Feature-Spezifikation unter
   `specs/NNN-ai-repo-setup/` erstellen. Issue #145 referenzieren. Den tatsächlichen Pfad anschließend hier eintragen.
-  Anforderungen: Skill-Erkennung, Worktree-Isolation, Anweisungskonsistenz, reproduzierbare Updates und Offline-Prüfbarkeit.
-- [ ] V3: Spezifikation, technischer Plan, Aufgaben und Konsistenzanalyse abschließen. Offene technische Fragen
+  Anforderungen: Skill-Erkennung, Worktree-Isolation, Anweisungskonsistenz, reproduzierbare Updates,
+  Offline-Prüfbarkeit und nachvollziehbare GitHub-Prüfabläufe.
+- [x] V3: Spezifikation, technischer Plan, Aufgaben und Konsistenzanalyse abschließen. Offene technische Fragen
   durch Dokumentation und kleine lokale Proben klären; nur echte Umfangsentscheidungen an den Benutzer geben.
-- [ ] V4: Aktuelle offizielle Codex-/Copilot-Konfigurationsschemata und die Herkunft der zu übernehmenden Skills
+- [x] V4: Aktuelle offizielle Codex-/Copilot-Konfigurationsschemata und die Herkunft der zu übernehmenden Skills
   erneut prüfen. Die im Audit ermittelte Zielversion 1.0.11 festhalten; neuere Releases nicht stillschweigend übernehmen.
 
 ## Reihenfolge und Abhängigkeiten
@@ -72,35 +76,37 @@ Die optionale Einführung von `domain-modeling` bleibt eine spätere Entscheidun
 | Paket | Priorität | Voraussetzung | Ergebnis |
 | --- | --- | --- | --- |
 | P1 Anweisungen vereinheitlichen | Hoch | V1-V4 | Eine eindeutige Projekt- und Prüfpolitik |
-| P2 Werkzeugkonfiguration bereinigen | Hoch | P1 | Portabler, auf den aktiven Worktree begrenzter Zugriff |
+| P2 KI-Werkzeuge im richtigen Arbeitsordner einrichten | Hoch | P1 | Benötigte Werkzeuge greifen auf den aktiven Worktree zu |
 | P3 Spec Kit aktualisieren | Hoch | P1 | Gepinnte Integration mit funktionierender Remoteauflösung |
 | P4 Projektskills einbinden | Mittel | P1, P3 | Zwei gezielte Skills ohne Namenskollisionen |
 | P5 Einstieg und Herkunft dokumentieren | Mittel | P2-P4 | Reproduzierbares Onboarding und nachvollziehbare Quellen |
-| P6 Gesamtvalidierung abschließen | Hoch | P1-P5 | Nachweise aus frischem Klon, Worktree und CI |
+| P7 GitHub-Pipelines prüfen | Hoch | P1 | Belegte Bewertung von Auslösern, Pflichtprüfungen und Laufzeiten |
+| P6 Gesamtvalidierung abschließen | Hoch | P1-P5, P7 | Nachweise aus frischem Klon, Worktree und CI |
 
 Prüfungen entstehen mit dem jeweiligen Paket. P6 führt die Nachweise zusammen und wiederholt bereits
 bestandene Prüfungen nur bei zwischenzeitlichen Änderungen oder offenen Risiken.
+P7 behält als nachträglich ergänztes Paket seine Nummer und wird vor dem Abschluss von P6 ausgewertet.
 
 ## P1: Anweisungen vereinheitlichen
 
 **Dateien:** `AGENTS.md`, `.github/copilot-instructions.md`, `.github/instructions/`,
 `.specify/memory/constitution.md`, `.specify/templates/overrides/`, `CONTRIBUTING.md`.
 
-- [ ] P1.1: `AGENTS.md` als gemeinsame Quelle für Arbeitsablauf, Architekturgrenzen und Prüfauswahl erhalten.
+- [x] P1.1: `AGENTS.md` als gemeinsame Quelle für Arbeitsablauf, Architekturgrenzen und Prüfauswahl erhalten.
   Copilot-Einstieg und Instruction-Index bleiben kurze Verweise. Kein vollständiges Regelwerk duplizieren.
-- [ ] P1.2: Constitution, Plan- und Aufgabenvorlagen an die bestehende Prüftabelle anpassen:
+- [x] P1.2: Constitution, Plan- und Aufgabenvorlagen an die bestehende Prüftabelle anpassen:
   Dokumentationsprüfungen für Dokumentation, betroffene Tests und Builds für Verhalten, breitere Prüfungen für
   gemeinsame Laufzeitgrenzen. Die Pflicht zu aussagekräftigen Regressionstests bleibt erhalten.
   Constitution-Version und Auswirkungsnotiz nach den vorhandenen Regeln aktualisieren.
-- [ ] P1.3: Die bereits umgesetzten Regeln aus PR #138 (Sonar ausschließlich über GitHub CI) und PR #134
+- [x] P1.3: Die bereits umgesetzten Regeln aus PR #138 (Sonar ausschließlich über GitHub CI) und PR #134
   (keine neuen Legacy-/Migrationspfade oder nicht angeforderten Zusatzmechanismen) beibehalten.
   Offen bleibt die Prüfung des Spec-Kit-Leitfadens und importierter Skills auf entgegenstehende Anweisungen.
-- [ ] P1.4: Große Fluent-/Naming-Anweisungen auf MOBAflow-spezifische Entscheidungen konzentrieren.
+- [x] P1.4: Große Fluent-/Naming-Anweisungen auf MOBAflow-spezifische Entscheidungen konzentrieren.
   Wiederholte Beispiele bei Bedarf in verlinkte Referenzdokumente verschieben, vorhandene Referenzorte bevorzugen.
   Keine willkürliche Zeilenobergrenze einführen; relevante Architektur- und Sicherheitsregeln erhalten.
-- [ ] P1.5: Das Auto-Save-Beispiel mit dem tatsächlichen Abonnement-/Abmeldeverhalten abgleichen und durch einen
+- [x] P1.5: Das Auto-Save-Beispiel mit dem tatsächlichen Abonnement-/Abmeldeverhalten abgleichen und durch einen
   korrekten Quellverweis oder ein vollständiges Muster ersetzen. Markdown-Codeblöcke der Kommentaranweisung korrigieren.
-- [ ] P1.6: Den Unterschied zwischen der mitgegebenen globalen Scanregel und der Repository-Regel dokumentieren.
+- [x] P1.6: Den Unterschied zwischen der mitgegebenen globalen Scanregel und der Repository-Regel dokumentieren.
   Eine lokale Projektdokumentation kann globale Vorgaben nicht abschalten. Eine Änderung außerhalb des Repositorys
   gegebenenfalls separat benennen; die Umsetzung hängt nicht davon ab, globale Einstellungen zu verändern.
 
@@ -108,23 +114,33 @@ bestandene Prüfungen nur bei zwischenzeitlichen Änderungen oder offenen Risike
 Prüfliste ableiten. Fachdateien haben passende Geltungsbereiche und gültige lokale Links. Historische Inhalte
 werden nicht als aktuelle Pflichten dargestellt. Es werden keine Tests erstellt, die lediglich Dokumenttext nachbilden.
 
-## P2: Werkzeugkonfiguration portabel machen
+## P2: KI-Werkzeuge im richtigen Arbeitsordner einrichten
+
+Gemeint sind zusätzliche Zugänge, über die ein KI-Assistent zum Beispiel Dateien lesen, suchen oder auf
+GitHub zugreifen kann. MCP ist die technische Schnittstelle für solche Werkzeuge. Geprüft wird, welche
+Zugänge tatsächlich gebraucht werden, wie sie starten und auf welchen Projektordner sie zugreifen.
+
+Konkretes Beispiel aus dem Audit: Ein Dateizugriff ist fest auf den Hauptcheckout eingestellt. Arbeitet die
+KI in einem getrennten Worktree, könnte sie dadurch Dateien aus dem falschen Arbeitsstand lesen oder ändern.
+Benötigte Dateizugriffe sollen deshalb dem aktiven Worktree folgen. Doppelte oder ungenutzte Anbindungen
+entfallen erst nach Prüfung ihres Einsatzes; erforderliche Zugänge bleiben erhalten. Dazu gehört auch die
+Prüfung, ob die Azure-DevOps-Anbindung angesichts des GitHub-Umzugs noch gebraucht wird.
 
 **Dateien:** `.codex/config.toml`, `.mcp.json`, `.codex/hooks.json`, vorhandenes Secrets-Hook-Skript;
 ein Startskript nur, falls für einen tatsächlich benötigten MCP-Client erforderlich.
 
-- [ ] P2.1: Pro Client erfassen, welche Repository-Konfiguration er tatsächlich lädt und welche Werkzeuge bereits
+- [x] P2.1: Pro Client erfassen, welche Repository-Konfiguration er tatsächlich lädt und welche Werkzeuge bereits
   nativ verfügbar sind. Repository-Einrichtung von persönlichen Plugin-/Connector-Installationen unterscheiden.
-- [ ] P2.2: Azure DevOps aus der standardmäßigen Repository-MCP-Einrichtung entfernen, soweit kein aktueller
+- [x] P2.2: Azure DevOps aus der standardmäßigen Repository-MCP-Einrichtung entfernen, soweit kein aktueller
   Repository-Ablauf darauf angewiesen ist. Vorhandene Legacy-Builddefinitionen bleiben außerhalb dieses Pakets.
-- [ ] P2.3: Für Codex vorhandene native Datei-, Such- und Webwerkzeuge bevorzugen; redundante Filesystem-/Ripgrep-/Fetch-MCPs
+- [x] P2.3: Für Codex vorhandene native Datei-, Such- und Webwerkzeuge bevorzugen; redundante Filesystem-/Ripgrep-/Fetch-MCPs
   nur behalten, wenn ein konkreter Client sie benötigt. Keine neuen Server ohne nachgewiesenen Bedarf hinzufügen.
-- [ ] P2.4: Für verbleibende Dateiserver den erlaubten Wurzelpfad aus dem aktiven Worktree bestimmen.
+- [x] P2.4: Für verbleibende Dateiserver den erlaubten Wurzelpfad aus dem aktiven Worktree bestimmen.
   Nur vom Client unterstützte Variablen verwenden; andernfalls einen kleinen geprüften Starter einsetzen.
   Fehlender Projektkontext muss sichtbar scheitern, statt auf den Hauptcheckout zurückzufallen.
-- [ ] P2.5: Behaltene externe Server auf geprüfte Versionen festlegen und Voraussetzungen dokumentieren.
+- [x] P2.5: Behaltene externe Server auf geprüfte Versionen festlegen und Voraussetzungen dokumentieren.
   Unbelegte Umgebungsvariablen nicht als Sicherheitskontrolle darstellen. Keine Tokens in Repository-Dateien.
-- [ ] P2.6: Den Secrets-Hook auf Pfadauflösung, unterstützte Betriebssysteme, fehlende Werkzeuge und sichtbare
+- [x] P2.6: Den Secrets-Hook auf Pfadauflösung, unterstützte Betriebssysteme, fehlende Werkzeuge und sichtbare
   Fehler prüfen. Die bestehende Regel für nicht verfügbare Scanner erhalten. Hook-Vertrauen ist ein lokaler
   Einrichtungszustand und wird nicht allein aus dem Vorhandensein von `hooks.json` abgeleitet.
 
@@ -137,20 +153,20 @@ ausdrücklich unterstützten Plattformen. Nicht verfügbare Plattformtests werde
 
 **Dateien:** `.specify/`, `.agents/skills/speckit-*/`, `docs/SPEC-KIT.md`, gegebenenfalls gezielte Hilfsskripte.
 
-- [ ] P3.1: Vorherige CLI-/Integrationsversion, verwaltete Dateien, lokale Overrides und das dokumentierte
+- [x] P3.1: Vorherige CLI-/Integrationsversion, verwaltete Dateien, lokale Overrides und das dokumentierte
   `common.ps1`-Refactoring erfassen. Zunächst mit einer isolierten Installation der gepinnten Zielversion arbeiten.
   Eine persönliche CLI-Installation nicht als versteckte Voraussetzung verändern.
-- [ ] P3.2: Integration mit den unterstützten Aktualisierungsbefehlen auf 1.0.11 bringen. Constitution,
+- [x] P3.2: Integration mit den unterstützten Aktualisierungsbefehlen auf 1.0.11 bringen. Constitution,
   MOBAflow-Vorlagen und bestehende Quellenanpassungen gezielt erhalten beziehungsweise neu anwenden.
   Änderungen an verwalteten Dateien und Manifesten mit dem vorgesehenen Verfahren nachvollziehbar halten.
   Keine Prüfsummen manipulieren, nur um einen sauberen Status vorzutäuschen.
-- [ ] P3.3: Für `speckit-taskstoissues` die tatsächliche GitHub-Remoteadresse verwenden. Zuerst den
+- [x] P3.3: Für `speckit-taskstoissues` die tatsächliche GitHub-Remoteadresse verwenden. Zuerst den
   konfigurierten Tracking-Remote bevorzugen, andernfalls genau einen passenden GitHub-Remote auswählen.
   Bei Mehrdeutigkeit oder fehlendem GitHub-Remote verständlich abbrechen. Weder Name `origin` noch Host/Repository
   dürfen stillschweigend angenommen werden. Eine unterstützte lokale Vorlage/Anpassung samt Herkunft dokumentieren.
-- [ ] P3.4: Remoteauflösung mit `github`, `origin`, SSH-/HTTPS-Adressen, fehlendem Remote und mehreren Remotes
+- [x] P3.4: Remoteauflösung mit `github`, `origin`, SSH-/HTTPS-Adressen, fehlendem Remote und mehreren Remotes
   gegen temporäre lokale Git-Repositories prüfen. Keine echten GitHub-Issues für Tests erzeugen.
-- [ ] P3.5: Integrationsstatus, PowerShell-Syntax, Vorlagenauflösung und Governance prüfen. Den eigenen
+- [x] P3.5: Integrationsstatus, PowerShell-Syntax, Vorlagenauflösung und Governance prüfen. Den eigenen
   Spec-Kit-Ablauf durch eine isolierte Probe testen; Feature-Metadaten der laufenden Aufgabe nicht überschreiben.
 
 **Abnahme:** Zielversionen und lokale Anpassungen sind dokumentiert; keine unerklärten fehlenden, veränderten
@@ -162,19 +178,19 @@ Die Remote-Proben bestehen und die Vorlagen verwenden die in P1 beschlossene Pr�
 **Neue Verzeichnisse:** `.agents/skills/mobaflow-code-review/`, `.agents/skills/mobaflow-diagnosing-bugs/`.
 **Bestehender Skill:** `.agents/skills/audit-code-quality/`.
 
-- [ ] P4.1: Die geprüften Community-Vorlagen für Review und Diagnose als Ausgangspunkt auswählen und notwendige
+- [x] P4.1: Die geprüften Community-Vorlagen für Review und Diagnose als Ausgangspunkt auswählen und notwendige
   Begleitdateien mitnehmen. Herkunft, Lizenz und lokale Änderungen erfassen. Neue eindeutige Namen vermeiden
   Kollisionen mit persönlich installierten `code-review`- und `diagnosing-bugs`-Skills.
-- [ ] P4.2: `mobaflow-code-review` prüft einen festgelegten Diff gegen Anforderungen und relevante Projektregeln.
+- [x] P4.2: `mobaflow-code-review` prüft einen festgelegten Diff gegen Anforderungen und relevante Projektregeln.
   Der normale Review verändert keine Dateien. Die Ausgabe nennt belegte Fehler mit Datei, Auswirkung und
   Prüfnachweis; eine fehlerfreie Prüfung erfindet keine Beanstandungen. Ein Review erfordert nicht automatisch
   mehrere Agenten, Installationen oder einen vollständigen Repository-Audit.
-- [ ] P4.3: `mobaflow-diagnosing-bugs` führt über Reproduktion, Eingrenzung, Hypothese und gezielte Validierung.
+- [x] P4.3: `mobaflow-diagnosing-bugs` führt über Reproduktion, Eingrenzung, Hypothese und gezielte Validierung.
   Es nutzt vorhandene Fakes für Z21-/Runtime-Probleme und startet die App oder Hardware nicht ohne Freigabe.
   Die Anweisung berücksichtigt .NET 10, NUnit, PowerShell und die lokalen Architekturgrenzen.
-- [ ] P4.4: Kurze Beschreibungen mit klaren Auslösern und Abgrenzung verfassen. Routinemäßige Bestätigungen und
+- [x] P4.4: Kurze Beschreibungen mit klaren Auslösern und Abgrenzung verfassen. Routinemäßige Bestätigungen und
   fremde Werkzeugannahmen entfernen. Eine echte ungeklärte fachliche Entscheidung bleibt ein Rückfragegrund.
-- [ ] P4.5: `audit-code-quality` auf aktuelle CI-only-Sonar-Regeln und engere Auslöser prüfen. Seine aufwendige
+- [x] P4.5: `audit-code-quality` auf aktuelle CI-only-Sonar-Regeln und engere Auslöser prüfen. Seine aufwendige
   Komplettprüfung darf nicht durch eine gewöhnliche kleine Review-Anfrage ausgelöst werden.
   Eine vorhandene globale Namensdublette im Leitfaden kenntlich machen, ohne die globale Installation zu verändern.
 
@@ -187,15 +203,15 @@ und eine Nicht-Auslöser-Aufgabe geprüft; sichere Diagnosen funktionieren mit k
 **Dateien:** `README.md`, `CONTRIBUTING.md`, `docs/AI-DEVELOPMENT.md` (neu), `docs/SPEC-KIT.md`,
 `.agents/skills/sources.json` (neu), `skills/README.md` (neu).
 
-- [ ] P5.1: In README einen kurzen Einstieg zur KI-Entwicklung mit Links auf `AGENTS.md` und den Leitfaden ergänzen.
+- [x] P5.1: In README einen kurzen Einstieg zur KI-Entwicklung mit Links auf `AGENTS.md` und den Leitfaden ergänzen.
   Voraussetzungen und Builddetails nicht aus mehreren Dokumenten duplizieren.
-- [ ] P5.2: Der Leitfaden erklärt Ersteinrichtung, gezielte Skillaufrufe, persönliche gegenüber eingebundenen
+- [x] P5.2: Der Leitfaden erklärt Ersteinrichtung, gezielte Skillaufrufe, persönliche gegenüber eingebundenen
   Skills, Worktrees, Prüfungen und den Aktualisierungsablauf. Beispiele müssen mit den tatsächlich verfügbaren
   Werkzeugen funktionieren. Die Hardwarefreigabe bleibt eindeutig.
-- [ ] P5.3: Ein kleines maschinenlesbares Quellenverzeichnis für aktive Projektskills anlegen: Name, Pfad,
+- [x] P5.3: Ein kleines maschinenlesbares Quellenverzeichnis für aktive Projektskills anlegen: Name, Pfad,
   Quellen-URL oder `local`, feste Revision/Version, Prüfdatum und Verweis auf lokale Anpassungen/Lizenz.
   Vorhandene Spec-Kit-Manifeste referenzieren, statt deren Dateihashes in einem zweiten System zu duplizieren.
-- [ ] P5.4: Die übrige Sammlung unter `skills/` als Referenzbestand kennzeichnen und ihren Updatezustand erläutern.
+- [x] P5.4: Die übrige Sammlung unter `skills/` als Referenzbestand kennzeichnen und ihren Updatezustand erläutern.
   Persönliche, experimentelle und veraltete Skills werden nicht automatisch aktiviert oder ungeprüft gelöscht.
   Ungeklärte Quellen wie `windows-app-developer` werden als ungeklärt ausgewiesen.
 
@@ -208,14 +224,14 @@ werden als allgemeine Installationsanleitung ausgegeben.
 **Dateien:** vorhandene Prüfskripte in `scripts/`, `.github/workflows/quality.yml`, bei Bedarf ein kleiner
 `Test-AiRepositorySetup.ps1`-Prüfer und zugehörige isolierte Funktionstests.
 
-- [ ] P6.1: Den vorhandenen Instruction-Check um strukturelle Prüfungen ergänzen: lokale Linkziele,
+- [x] P6.1: Den vorhandenen Instruction-Check um strukturelle Prüfungen ergänzen: lokale Linkziele,
   erforderliche Skill-Metadaten, eindeutige aktive Skillnamen, vorhandene Quellenregistrierung und parsebare Konfiguration.
   Den Geltungsbereich auf aktive Anweisungen und Skills begrenzen. Keine bloßen Dokumenttext-Tests hinzufügen
   und keine automatische inhaltliche Widerspruchsfreiheit versprechen.
-- [ ] P6.2: Kleine Negativ-Fixtures für die neue Prüflogik verwenden: fehlender Link, doppelte Skillnamen,
+- [x] P6.2: Kleine Negativ-Fixtures für die neue Prüflogik verwenden: fehlender Link, doppelte Skillnamen,
   ungültige Konfiguration und falsche Worktreeauflösung müssen reproduzierbar scheitern.
   Bestehende Prüfer erweitern, bevor eine neue Infrastruktur oder Abhängigkeit eingeführt wird.
-- [ ] P6.3: Automatisierbare Prüfungen in den bestehenden Instruction-Consistency-CI-Job integrieren.
+- [x] P6.3: Automatisierbare Prüfungen in den bestehenden Instruction-Consistency-CI-Job integrieren.
   Sie benötigen weder persönliche Zugangsdaten noch lokale Sonar-Codeanalyse oder einen laufenden MCP-Server.
 - [ ] P6.4: In einem frischen Klon mit isoliertem Benutzerkontext und einem zweiten Worktree eine Agentenprobe
   durchführen: Dokumentationsaufgabe, begrenztes Review und simulierte Fehlerdiagnose. Skill-Erkennung, geladene
@@ -226,6 +242,37 @@ werden als allgemeine Installationsanleitung ausgegeben.
 
 **Abnahme:** Alle anwendbaren lokalen Struktur- und Funktionstests bestehen. CI- und manuelle Agentenproben
 werden getrennt ausgewiesen. Eine lediglich statisch gültige Hook-/MCP-Datei gilt nicht als erfolgreich aktivierter Dienst.
+
+## P7: GitHub-Pipelines prüfen
+
+**Quellen:** `.github/workflows/`, dort aufgerufene Skripte und Buildkonfigurationen, tatsächliche
+GitHub-Actions-Läufe sowie Branchschutz/Rulesets und erforderliche Statusprüfungen auf GitHub.
+Fehlende Leserechte werden als offene Prüfung ausgewiesen.
+
+- [x] P7.1: Aktive Workflows und Jobs erfassen: Aufgabe, Auslöser (`pull_request`, `push`, manuell),
+  Branch-/Pfadfilter, Abhängigkeiten und verwendete Runner. Dokumentieren, welche Prüfungen bei reinen
+  Dokumentationsänderungen, gemeinsamem .NET-Code, WinUI und Android Release/AAB tatsächlich starten sollen.
+- [x] P7.2: Workflow-Ergebnisse mit den auf GitHub verlangten Statusprüfungen abgleichen. Prüfen, ob Filter,
+  bedingte Jobs oder geänderte Jobnamen Pflichtprüfungen dauerhaft ausstehend lassen oder unbeabsichtigt umgehen.
+  SonarCloud und bestehende Qualitäts-/Analyzer-Grenzen erhalten; Prüfpflichten nicht zur Beschleunigung abschwächen.
+- [x] P7.3: Repräsentative aktuelle und abgeschlossene Läufe anhand von Commit, Zeitstempeln und Logs untersuchen.
+  Wartezeit auf Runner, laufende Arbeit und fehlenden Fortschritt unterscheiden; Job-Zeitlimits,
+  Parallelitäts-/Abbruchregeln und Wiederholungen prüfen. Den vom Benutzer verlinkten
+  [Android-Release-AAB-Job zu PR #154](https://github.com/ahuelsmann/MOBAflow/actions/runs/36130988570/job/108057952187?pr=154)
+  als konkreten Untersuchungsfall einbeziehen. Der Link allein belegt weder einen Hänger noch den aktuellen Status.
+- [x] P7.4: SDK-/Workload-Versionen, Restore-/Build-/Publish-Schritte, Cache-Schlüssel, Berechtigungen,
+  Secret-Verwendung und Action-Versionen auf Reproduzierbarkeit und unnötige Arbeit prüfen.
+  Für Android sicherstellen, dass Release/AAB und die Bundle-Prüfung tatsächlich ausgeführt werden;
+  ein FastDebug-Build ersetzt diesen Nachweis nicht. Zugangsdaten nicht ausgeben.
+- [x] P7.5: Ergebnisse mit Workflow-/Job-Verweis, beobachtetem Verhalten und konkreter Empfehlung festhalten.
+  Den KI-Leitfaden um das Lesen der Pipeline-Ergebnisse und den Umgang mit ausstehenden oder fehlgeschlagenen
+  Prüfungen ergänzen. Notwendige Pipelineänderungen als eigene überprüfbare Aufgaben festhalten;
+  dieser Prüfauftrag löst keine pauschalen Workflowänderungen oder Jobabbrüche aus.
+
+**Abnahme:** Eine Übersicht ordnet jedem Änderungstyp die erwarteten Prüfungen zu. Relevante Befunde sind
+durch Konfiguration oder konkrete Läufe belegt; Laufzeitprobleme werden nicht allein aus dem Status
+„läuft noch“ abgeleitet. Erfolgreiche, fehlgeschlagene, übersprungene und noch ausstehende Prüfungen werden
+getrennt für den aktuellen PR-Commit ausgewiesen. Notwendige Folgearbeiten haben klare Abschlusskriterien.
 
 ## Prüfkommandos und Nachweise
 

@@ -30,6 +30,11 @@ MOBAflow turns feedback from a Roco Z21 layout into useful actions: advance a
 journey, run a workflow, play an announcement or update a signal. Project data
 and layout communication stay on the local network.
 
+## AI-assisted development
+
+Start with [AGENTS.md](AGENTS.md) and the [AI development guide](docs/AI-DEVELOPMENT.md)
+for worktree setup, repository skills, tool prerequisites and validation.
+
 ## Current Progress
 
 MOBAflow is currently moving toward its first stable release. The ongoing work

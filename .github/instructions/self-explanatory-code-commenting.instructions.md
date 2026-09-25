@@ -29,7 +29,8 @@ This applies to all hand-written `.cs` files. Exclude generated files (`*.g.cs`,
 
 ## Annotations (use sparingly)
 
-`TODO:`, `FIXME:`, `HACK:`, `NOTE:`, `WARNING:`, `SECURITY:`
+Use `NOTE:`, `WARNING:` or `SECURITY:` only for a concrete constraint. Track unfinished work in GitHub issues,
+not source-code TODO comments, as required by the project constitution.
 
 ## Avoid
 
@@ -38,10 +39,8 @@ This applies to all hand-written `.cs` files. Exclude generated files (`*.g.cs`,
 - Dead code comments
 - Changelog in comments (use Git)
 
-```text
-
 ### Divider Comments
-```javascript
+```csharp
 // Bad: Don't use decorative comments
 //=====================================
 // UTILITY FUNCTIONS

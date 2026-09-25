@@ -26,6 +26,12 @@ jobs:
         shell: pwsh
         run: ./scripts/Test-InstructionConsistency.ps1
 
+      - name: Validate AI repository setup
+        run: python3 scripts/Test-AiRepositorySetup.py
+
+      - name: Test AI repository setup helpers
+        run: python3 scripts/Test-AiRepositorySetup.Tests.py
+
       - name: Validate line endings
         shell: pwsh
         run: ./scripts/Test-LineEndings.ps1
