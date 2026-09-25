@@ -22,6 +22,7 @@ public partial class MainWindowViewModel
     private const string LocomotivesPageTag = "locomotives";
     private const string PassengerWagonsPageTag = "passengerwagons";
     private const string GoodsWagonsPageTag = "goodswagons";
+    private const string SaveRollingStockOperation = "Save rolling stock";
 
     private string? _activePhotoAssignmentPageTag;
 
@@ -125,11 +126,11 @@ public partial class MainWindowViewModel
     private void OnRollingStockCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         var project = SelectedProject;
-        if (SelectedLocomotive is { } locomotive && project?.Locomotives.Contains(locomotive) != true)
+        if (SelectedLocomotive is { } locomotive && (project is null || !project.Locomotives.Contains(locomotive)))
             SelectedLocomotive = null;
-        if (SelectedPassengerWagon is { } passengerWagon && project?.PassengerWagons.Contains(passengerWagon) != true)
+        if (SelectedPassengerWagon is { } passengerWagon && (project is null || !project.PassengerWagons.Contains(passengerWagon)))
             SelectedPassengerWagon = null;
-        if (SelectedGoodsWagon is { } goodsWagon && project?.GoodsWagons.Contains(goodsWagon) != true)
+        if (SelectedGoodsWagon is { } goodsWagon && (project is null || !project.GoodsWagons.Contains(goodsWagon)))
             SelectedGoodsWagon = null;
 
         NotifyRollingStockLibrariesChanged();
@@ -338,7 +339,7 @@ public partial class MainWindowViewModel
         AttachLocomotivePhotoCommand(SelectedLocomotive);
 
         _logger.LogInformation("Added new locomotive: {Name}", locomotive.Name);
-        ObserveBackgroundTask(SaveSolutionInternalAsync(), "Save rolling stock");
+        ObserveBackgroundTask(SaveSolutionInternalAsync(), SaveRollingStockOperation);
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteLocomotive))]
@@ -369,7 +370,7 @@ public partial class MainWindowViewModel
         }
 
         _logger.LogInformation("Deleted locomotive: {Name}", locomotiveName);
-        ObserveBackgroundTask(SaveSolutionInternalAsync(), "Save rolling stock");
+        ObserveBackgroundTask(SaveSolutionInternalAsync(), SaveRollingStockOperation);
     }
 
     private bool CanDeleteLocomotive() => SelectedLocomotive != null;
@@ -397,7 +398,7 @@ public partial class MainWindowViewModel
         AttachWagonPhotoCommand(SelectedPassengerWagon);
 
         _logger.LogInformation("Added new passenger wagon: {Name}", wagon.Name);
-        ObserveBackgroundTask(SaveSolutionInternalAsync(), "Save rolling stock");
+        ObserveBackgroundTask(SaveSolutionInternalAsync(), SaveRollingStockOperation);
     }
 
     [RelayCommand(CanExecute = nameof(CanDeletePassengerWagon))]
@@ -415,7 +416,7 @@ public partial class MainWindowViewModel
             SelectedPassengerWagon = null;
 
         _logger.LogInformation("Deleted passenger wagon: {Name}", wagonName);
-        ObserveBackgroundTask(SaveSolutionInternalAsync(), "Save rolling stock");
+        ObserveBackgroundTask(SaveSolutionInternalAsync(), SaveRollingStockOperation);
     }
 
     private bool CanDeletePassengerWagon() => SelectedPassengerWagon != null;
@@ -443,7 +444,7 @@ public partial class MainWindowViewModel
         AttachWagonPhotoCommand(SelectedGoodsWagon);
 
         _logger.LogInformation("Added new goods wagon: {Name}", wagon.Name);
-        ObserveBackgroundTask(SaveSolutionInternalAsync(), "Save rolling stock");
+        ObserveBackgroundTask(SaveSolutionInternalAsync(), SaveRollingStockOperation);
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteGoodsWagon))]
@@ -461,7 +462,7 @@ public partial class MainWindowViewModel
             SelectedGoodsWagon = null;
 
         _logger.LogInformation("Deleted goods wagon: {Name}", wagonName);
-        ObserveBackgroundTask(SaveSolutionInternalAsync(), "Save rolling stock");
+        ObserveBackgroundTask(SaveSolutionInternalAsync(), SaveRollingStockOperation);
     }
 
     private bool CanDeleteGoodsWagon() => SelectedGoodsWagon != null;
