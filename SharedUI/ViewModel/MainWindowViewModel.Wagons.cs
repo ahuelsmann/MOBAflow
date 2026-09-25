@@ -157,11 +157,14 @@ public partial class MainWindowViewModel
 
         wagonVm.BrowsePhotoCommand = new AsyncRelayCommand(async () =>
         {
+            var solution = Solution;
+            var project = SelectedProject?.Model;
             var photoPath = await _ioService.BrowseForPhotoAsync();
             if (string.IsNullOrEmpty(photoPath)) return;
+            if (project is null || !ReferenceEquals(Solution, solution) || !solution.Projects.Contains(project)) return;
 
             var saved = await _ioService.SavePhotoAsync(photoPath, "wagons", wagonVm.Model.Id);
-            if (saved != null)
+            if (saved != null && ReferenceEquals(Solution, solution) && solution.Projects.Contains(project))
             {
                 if (wagonVm.PhotoPath == saved)
                 {
@@ -172,6 +175,7 @@ public partial class MainWindowViewModel
                     wagonVm.PhotoPath = saved;
                 }
 
+                await SaveSolutionInternalAsync().ConfigureAwait(false);
                 _logger.LogInformation("Photo saved for wagon: {Name}", wagonVm.Name);
             }
         });
@@ -212,11 +216,14 @@ public partial class MainWindowViewModel
 
         locoVm.BrowsePhotoCommand = new AsyncRelayCommand(async () =>
         {
+            var solution = Solution;
+            var project = SelectedProject?.Model;
             var photoPath = await _ioService.BrowseForPhotoAsync();
             if (string.IsNullOrEmpty(photoPath)) return;
+            if (project is null || !ReferenceEquals(Solution, solution) || !solution.Projects.Contains(project)) return;
 
             var saved = await _ioService.SavePhotoAsync(photoPath, "locomotives", locoVm.Model.Id);
-            if (saved != null)
+            if (saved != null && ReferenceEquals(Solution, solution) && solution.Projects.Contains(project))
             {
                 if (locoVm.PhotoPath == saved)
                 {
@@ -227,6 +234,7 @@ public partial class MainWindowViewModel
                     locoVm.PhotoPath = saved;
                 }
 
+                await SaveSolutionInternalAsync().ConfigureAwait(false);
                 _logger.LogInformation("Photo saved for locomotive: {Name}", locoVm.Name);
             }
         });

@@ -18,6 +18,7 @@ using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
 
 using Moq;
+using CommunityToolkit.Mvvm.Input;
 
 [TestFixture]
 internal sealed class MainWindowViewModelPhotoAssignmentTests
@@ -261,7 +262,85 @@ internal sealed class MainWindowViewModelPhotoAssignmentTests
         _ => viewModel.FilteredGoodsWagonLibrary
     };
 
-    private static MainWindowViewModel CreateViewModel(Project project, Action<string> save)
+    [TestCase(TrainVehicleKind.Locomotive, "selection")]
+    [TestCase(TrainVehicleKind.PassengerWagon, "selection")]
+    [TestCase(TrainVehicleKind.GoodsWagon, "selection")]
+    [TestCase(TrainVehicleKind.Locomotive, "project")]
+    [TestCase(TrainVehicleKind.PassengerWagon, "project")]
+    [TestCase(TrainVehicleKind.GoodsWagon, "project")]
+    [TestCase(TrainVehicleKind.Locomotive, "solution")]
+    [TestCase(TrainVehicleKind.PassengerWagon, "solution")]
+    [TestCase(TrainVehicleKind.GoodsWagon, "solution")]
+    public async Task BrowsePhoto_WhenContextChangesDuringCopy_PersistsOnlyInOriginalSolution(
+        TrainVehicleKind kind, string change)
+    {
+        var project = new Project();
+        var savedJson = string.Empty;
+        var copy = new TaskCompletionSource<string?>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var io = new Mock<IIoService>();
+        io.Setup(value => value.BrowseForPhotoAsync()).ReturnsAsync("source.png");
+        io.Setup(value => value.SavePhotoAsync("source.png", It.IsAny<string>(), It.IsAny<Guid>()))
+            .Returns(copy.Task);
+        var viewModel = CreateViewModel(project, json => savedJson = json, io);
+        AddCommand(viewModel, kind).Execute(null);
+        var original = Selection(viewModel, kind);
+        var browse = original is LocomotiveViewModel locomotive
+            ? locomotive.BrowsePhotoCommand
+            : ((WagonViewModel)original!).BrowsePhotoCommand;
+        var pending = ((IAsyncRelayCommand)browse!).ExecuteAsync(null);
+        Assert.That(pending.IsCompleted, Is.False);
+
+        if (change != "selection")
+        {
+            var nextProject = new Project();
+            if (change == "solution")
+            {
+                // Loading replaces projects in the existing singleton Solution instance.
+                viewModel.Solution.Projects.Clear();
+                viewModel.CurrentSolutionPath = "other.json";
+            }
+            viewModel.Solution.Projects.Add(nextProject);
+            viewModel.SelectedProject = new ProjectViewModel(nextProject);
+        }
+        AddCommand(viewModel, kind).Execute(null);
+        savedJson = string.Empty;
+        io.Invocations.Clear();
+
+        copy.SetResult("imported.png");
+        await pending.ConfigureAwait(false);
+
+        var photoPath = original is LocomotiveViewModel originalLocomotive
+            ? originalLocomotive.PhotoPath
+            : ((WagonViewModel)original!).PhotoPath;
+        if (change == "solution")
+        {
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(photoPath, Is.Null);
+                Assert.That(savedJson, Is.Empty);
+            }
+            io.Verify(value => value.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()), Times.Never);
+        }
+        else
+        {
+            var restored = JsonSerializer.Deserialize<Solution>(savedJson, JsonOptions.Default)!;
+            var restoredProject = restored.Projects.Single(value => value.Id == project.Id);
+            var restoredPath = kind switch
+            {
+                TrainVehicleKind.Locomotive => restoredProject.Locomotives[0].PhotoPath,
+                TrainVehicleKind.PassengerWagon => restoredProject.PassengerWagons[0].PhotoPath,
+                _ => restoredProject.GoodsWagons[0].PhotoPath
+            };
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(photoPath, Is.EqualTo("imported.png"));
+                Assert.That(restoredPath, Is.EqualTo("imported.png"));
+            }
+            io.Verify(value => value.SaveAsync(viewModel.Solution, "inventory.json"), Times.Once);
+        }
+    }
+
+    private static MainWindowViewModel CreateViewModel(Project project, Action<string> save, Mock<IIoService>? io = null)
     {
         var runtime = new Mock<IMobaRuntime>();
         runtime.SetupGet(value => value.Current).Returns(MobaRuntimeSnapshot.Empty);
@@ -270,7 +349,7 @@ internal sealed class MainWindowViewModelPhotoAssignmentTests
             .Returns(Task.CompletedTask);
         var dispatcher = new Mock<IUiDispatcher>();
         dispatcher.Setup(value => value.InvokeOnUi(It.IsAny<Action>())).Callback<Action>(action => action());
-        var io = new Mock<IIoService>();
+        io ??= new Mock<IIoService>();
         io.Setup(value => value.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()))
             .Callback((Solution solution, string _) => save(JsonSerializer.Serialize(solution, JsonOptions.Default)))
             .ReturnsAsync((Solution _, string path) => (true, (string?)path, (string?)null));
