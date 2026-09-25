@@ -2,7 +2,7 @@
 
 MOBAflow uses [GitHub Spec Kit](https://github.com/github/spec-kit) for
 specification-driven feature development. The repository is initialized with
-Spec Kit 1.0.4, the Codex skills integration, and PowerShell workflow scripts.
+Spec Kit 1.0.11, the Codex skills integration, and PowerShell workflow scripts.
 
 ## Install the CLI
 
@@ -10,7 +10,7 @@ Install `uv`, then install the repository's pinned Spec Kit version:
 
 ```powershell
 winget install --id astral-sh.uv -e
-uv tool install specify-cli --from "git+https://github.com/github/spec-kit.git@v1.0.4"
+uv tool install specify-cli --from "git+https://github.com/github/spec-kit.git@v1.0.11"
 specify version
 ```
 
@@ -78,7 +78,7 @@ specify check
 ```
 
 `specify integration status` should report `codex` as the default integration
-with no missing or modified managed files. The project-specific template
+with no missing or unexplained modified managed files. Issue145 intentionally retains two managed-file adaptations: common.ps1 registry helpers and taskstoissues remote selection. Their upstream manifest hashes are preserved, so status reports two modified files; review these differences rather than hiding them by rewriting hashes. The project-specific template
 overrides under `.specify/templates/overrides/` are intentionally not managed by
 the CLI and survive integration upgrades.
 
@@ -102,6 +102,30 @@ Commit the resulting integration changes so every contributor uses the same
 agent workflow.
 
 ## Upgrade Spec Kit
+
+### Isolated update and local adaptations (1.0.11)
+
+Use an isolated CLI without replacing your personal installation:
+
+```powershell
+uv tool run --from git+https://github.com/github/spec-kit.git@v1.0.11 specify version
+uv tool run --from git+https://github.com/github/spec-kit.git@v1.0.11 specify integration upgrade codex
+uv tool run --from git+https://github.com/github/spec-kit.git@v1.0.11 specify integration status
+```
+
+Start in the task worktree, retain a reviewed diff/backup and inspect generated files before proceeding.
+Do not force an update over unreviewed local changes. Preserve the constitution and template overrides.
+After an upgrade, reapply and test these two local adaptations:
+
+- `common.ps1`: extension registry validation and shared preset registry helpers from the prior integration.
+  Preserve new upstream feature-resolution behavior, including `SPECIFY_FEATURE_NO_PERSIST`.
+- `speckit-taskstoissues/SKILL.md`: use `scripts/Resolve-GitHubRepository.ps1`, not a fixed `origin` URL.
+
+The upstream manifests intentionally report these two files as modified. This is an explained state;
+never edit hashes merely to make status look clean. Run `python scripts/Test-AiRepositorySetup.Tests.py`
+and review the two diffs. Refresh skill provenance and the pinned version together.
+
+### Optional personal CLI update
 
 Upgrade deliberately and keep the repository version pinned:
 
@@ -127,7 +151,7 @@ and avoids reporting line-ending conversions as local customizations.
 MOBAflow maintains a local refactoring in `common.ps1` that separates extension
 registry validation from ordering and shares preset-registry resolution between
 the template resolvers to satisfy the Sonar complexity and duplication limits. Its
-installed-file checksum is recorded in `speckit.manifest.json`. Recheck this
+upstream checksum remains in `speckit.manifest.json`; the expected modification is documented here. Recheck this
 refactoring after an integration upgrade, which can replace managed scripts.
 
 The constitution command now updates the constitution and its impact report only;

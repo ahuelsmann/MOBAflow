@@ -1,21 +1,3 @@
-<!--
-Sync Impact Report
-- Version change: 2.0.0 -> 3.0.0
-- Modified principles:
-  - VI. Quality Gates Protect the Main Branch: Sonar code analysis runs only in
-    GitHub CI; the duplicate local analysis prerequisite is removed. Local secrets
-    scanning, builds, tests, and analyzer baseline checks remain required.
-- Templates updated:
-  - ✅ .specify/templates/overrides/plan-template.md
-  - ✅ .specify/templates/overrides/tasks-template.md
-- Runtime guidance updated:
-  - ✅ AGENTS.md
-  - ✅ .github/instructions/sonarqube-pre-pr.instructions.md
-  - ✅ .github/PULL_REQUEST_TEMPLATE.md
-- Migration note: existing plans follow this CI-only Sonar policy; obsolete local
-  Sonar code-analysis tasks must not be executed. Historical validation records remain unchanged.
-- Follow-up TODOs: none
--->
 # MOBAflow Constitution
 
 ## Core Principles
@@ -40,14 +22,16 @@ MUST be English; announcement voice and language remain user-configurable.
 
 ### III. Tests Are a Delivery Requirement
 
-Every new or changed behavior MUST have an automated unit or integration test.
-Tests use NUnit, Moq, and established fakes such as `FakeUdpClientWrapper`, follow
-Arrange-Act-Assert, and cover regression-prone parsing, paths, configuration,
-serialization, and state transitions. Platform UI changes MUST cover testable
-logic below the UI layer and document focused manual checks where automation is
-not practical. `dotnet test Test/Test.csproj` MUST pass before a feature is
-considered complete; platform-specific build limitations MUST be stated rather
-than silently skipped.
+Validation MUST follow the change matrix in `AGENTS.md`. Changed behavior needs
+meaningful regression coverage; do not add tests that duplicate implementation or
+assert documentation wording. Product tests use NUnit, Moq and established fakes
+such as `FakeUdpClientWrapper`. Executable development tooling uses isolated
+functional tests. Documentation-only edits require diff, link and command review
+and the applicable instruction/governance checks, not .NET builds or tests.
+Platform UI changes MUST cover testable logic below the UI layer and document
+focused manual checks where automation is not practical. Broaden checks for
+runtime, DI, EventBus, persistence, protocols and build-graph changes as required
+by AGENTS.md. Platform limitations and zero-test runs MUST NOT be reported as passes.
 
 ### IV. Specifications, Plans, and Issues Must Be Traceable
 
@@ -117,9 +101,9 @@ implement, validate, and document. Spec Kit maps to it as follows:
 6. `$speckit-implement` executes tasks without bypassing repository rules.
 7. `$speckit-taskstoissues` creates dependency-ordered GitHub issues from the
    approved task list when issue-level execution tracking is needed.
-8. Validation includes relevant targeted builds, `dotnet test Test/Test.csproj`,
-   formatting/static checks, Light/Dark theme checks, changed-file secrets
-   scanning, and SonarCloud code analysis through GitHub CI only.
+8. Select builds, tests and manual checks from the change matrix in `AGENTS.md`.
+   Include Light/Dark checks for UI changes, applicable structural checks,
+   changed-file secrets scanning, and SonarCloud code analysis through GitHub CI only.
 9. Every PR is created as a draft and remains draft until SonarCloud is green
    for its current commit with zero `OPEN` or `CONFIRMED` issues.
 10. Documentation and changelog updates are included whenever behavior or the
@@ -141,4 +125,4 @@ semantic versioning: MAJOR for incompatible governance changes, MINOR for new or
 materially expanded principles, and PATCH for clarifications. Every plan and
 review MUST verify compliance; unresolved violations block implementation.
 
-**Version**: 3.0.0 | **Ratified**: 2026-07-19 | **Last Amended**: 2026-09-24
+**Version**: 4.0.0 | **Ratified**: 2026-07-19 | **Last Amended**: 2026-09-25

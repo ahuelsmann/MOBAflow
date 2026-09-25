@@ -6,6 +6,10 @@ Benutzer-Dokumentation findest du im Ordner `docs/wiki/`.
 
 ## 1. Getting Started
 
+Für KI-gestützte Arbeit zuerst [AGENTS.md](AGENTS.md) und den
+[KI-Entwicklungsleitfaden](docs/AI-DEVELOPMENT.md) lesen. Dort stehen Worktree-Auswahl,
+aktive Projektskills, Werkzeugvoraussetzungen und die passenden Prüfungen.
+
 ### Repository klonen und bauen
 
 ```bash
