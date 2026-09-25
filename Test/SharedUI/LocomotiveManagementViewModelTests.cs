@@ -17,15 +17,10 @@ internal sealed class LocomotiveManagementViewModelTests
     {
         var multiplexer = new Mock<IMultiplexerProvider>();
         var detector = new DigitalAddressConflictDetector(multiplexer.Object);
-        var maintenanceService = new VehicleMaintenanceService();
         var locomotive = new Locomotive
         {
             Name = "First",
             DigitalAddress = 5,
-            Maintenance = new VehicleMaintenanceData
-            {
-                Plans = [new VehicleMaintenancePlan { Name = "Annual", LastCompletedAt = new DateTimeOffset(2025, 7, 16, 0, 0, 0, TimeSpan.Zero), IntervalDays = 365 }]
-            },
             Decoder = new LocomotiveDecoderProfile
             {
                 CvSnapshots = [new DecoderCvSnapshot { Name = "Current" }]
@@ -33,15 +28,14 @@ internal sealed class LocomotiveManagementViewModelTests
         };
         var conflicting = new Locomotive { Name = "Second", DigitalAddress = 5 };
         var project = new Project { Locomotives = [locomotive, conflicting] };
-        var viewModel = new LocomotiveManagementViewModel(detector, maintenanceService, new LocomotiveLibraryService(maintenanceService));
+        var viewModel = new LocomotiveManagementViewModel(detector, new LocomotiveLibraryService());
 
-        viewModel.SetContext(project, locomotive, new DateTimeOffset(2026, 7, 16, 0, 0, 0, TimeSpan.Zero));
+        viewModel.SetContext(project, locomotive);
 
         Assert.Multiple(() =>
         {
             Assert.That(viewModel.AddressFindings, Has.Count.EqualTo(1));
             Assert.That(viewModel.AddressFindings[0].TargetIds, Is.EquivalentTo(new[] { locomotive.Id, conflicting.Id }));
-            Assert.That(viewModel.MaintenancePlans.Single().State, Is.EqualTo(MaintenanceDueState.Due));
             Assert.That(viewModel.DecoderSnapshots.Single().Name, Is.EqualTo("Current"));
             Assert.That(viewModel.Passport!.LocomotiveId, Is.EqualTo(locomotive.Id));
         });
@@ -55,7 +49,6 @@ internal sealed class LocomotiveManagementViewModelTests
             .Returns(new DigitalAddressConflictReport([], []));
         var viewModel = new LocomotiveManagementViewModel(
             detector.Object,
-            new VehicleMaintenanceService(),
             new LocomotiveLibraryService());
 
         viewModel.SetContext(new Project(), new Locomotive());
@@ -65,13 +58,12 @@ internal sealed class LocomotiveManagementViewModelTests
         {
             Assert.That(viewModel.Passport, Is.Null);
             Assert.That(viewModel.AddressFindings, Is.Empty);
-            Assert.That(viewModel.MaintenancePlans, Is.Empty);
             Assert.That(viewModel.DecoderSnapshots, Is.Empty);
         });
     }
 
     [Test]
-    public async Task ManagementCommands_AddPersistedMaintenanceAndDisabledWhistleConfiguration()
+    public async Task ManagementCommands_PersistDisabledWhistleConfiguration()
     {
         var detector = new Mock<IDigitalAddressConflictDetector>();
         detector.Setup(candidate => candidate.Detect(It.IsAny<Project>()))
@@ -83,19 +75,14 @@ internal sealed class LocomotiveManagementViewModelTests
         projectContext.Setup(candidate => candidate.SaveSolutionInternalAsync()).Returns(Task.CompletedTask);
         var viewModel = new LocomotiveManagementViewModel(
             detector.Object,
-            new VehicleMaintenanceService(),
             new LocomotiveLibraryService(),
             projectContext: projectContext.Object);
         viewModel.SetContext(project, locomotive);
 
-        await viewModel.AddMaintenancePlanCommand.ExecuteAsync(null);
-        await viewModel.AddMaintenanceEntryCommand.ExecuteAsync(null);
         await viewModel.AddWhistleRuleCommand.ExecuteAsync(null);
 
         Assert.Multiple(() =>
         {
-            Assert.That(locomotive.Maintenance!.Plans, Has.Count.EqualTo(1));
-            Assert.That(locomotive.Maintenance.Entries, Has.Count.EqualTo(1));
             Assert.That(project.LocomotiveWhistleRules.Single().LocomotiveId, Is.EqualTo(locomotive.Id));
             Assert.That(project.LocomotiveWhistleRules.Single().Enabled, Is.False);
             Assert.That(viewModel.WhistleRules, Has.Count.EqualTo(1));
@@ -108,7 +95,7 @@ internal sealed class LocomotiveManagementViewModelTests
             Assert.That(project.LocomotiveWhistleRules, Is.Empty);
             Assert.That(viewModel.WhistleRules, Is.Empty);
         });
-        projectContext.Verify(candidate => candidate.SaveSolutionInternalAsync(), Times.Exactly(4));
+        projectContext.Verify(candidate => candidate.SaveSolutionInternalAsync(), Times.Exactly(2));
     }
 
     [Test]
@@ -134,7 +121,6 @@ internal sealed class LocomotiveManagementViewModelTests
         var project = new Project { Locomotives = [locomotive] };
         var viewModel = new LocomotiveManagementViewModel(
             detector.Object,
-            new VehicleMaintenanceService(),
             new LocomotiveLibraryService(),
             new LocomotivePassportHtmlRenderer(),
             new DecoderCvService(),
@@ -179,7 +165,6 @@ internal sealed class LocomotiveManagementViewModelTests
         var project = new Project { Locomotives = [locomotive] };
         var viewModel = new LocomotiveManagementViewModel(
             detector.Object,
-            new VehicleMaintenanceService(),
             new LocomotiveLibraryService(),
             decoderCvService: cvService,
             filePicker: picker.Object);
@@ -216,7 +201,6 @@ internal sealed class LocomotiveManagementViewModelTests
         var locomotive = new Locomotive();
         var viewModel = new LocomotiveManagementViewModel(
             detector.Object,
-            new VehicleMaintenanceService(),
             new LocomotiveLibraryService(),
             decoderCvService: new DecoderCvService(),
             filePicker: picker.Object,

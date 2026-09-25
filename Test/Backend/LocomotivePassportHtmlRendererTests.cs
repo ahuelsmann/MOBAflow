@@ -31,6 +31,8 @@ internal sealed class LocomotivePassportHtmlRendererTests
             Assert.That(html, Does.Contain("A&amp;B"));
             Assert.That(html, Does.Not.Contain("<script>alert"));
             Assert.That(html, Does.Not.Contain("secret.jpg"));
+            Assert.That(html, Does.Not.Contain("Maintenance state"));
+            Assert.That(html, Does.Not.Contain("Latest maintenance"));
             Assert.That(html, Does.Not.Contain("http://"));
             Assert.That(html, Does.Not.Contain("https://"));
         });

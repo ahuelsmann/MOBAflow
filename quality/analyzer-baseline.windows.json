@@ -1867,13 +1867,6 @@
       "project": "MOBAflow",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CsWinRT1030",
-      "path": "MOBAflow/Controls/RollingStockMaintenancePanel.xaml.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1030",
       "path": "MOBAflow/Controls/SignalBox/SignalBoxCanvasControl.xaml.cs",
       "count": 1
     },
@@ -2875,13 +2868,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
-      "path": "Test/Backend/VehicleMaintenanceServiceTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1812",
       "path": "Test/Backend/WorkflowActionHandlersTests.cs",
       "count": 1
     },
@@ -3330,13 +3316,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
-      "path": "Test/Domain/VehicleMaintenanceSerializationTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1812",
       "path": "Test/Domain/WorkflowActionJsonConverterTests.cs",
       "count": 1
     },
@@ -3716,13 +3695,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/SharedUI/RemotePairingViewModelTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1812",
-      "path": "Test/SharedUI/RollingStockMaintenanceViewModelTests.cs",
       "count": 1
     },
     {
@@ -4576,13 +4548,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1861",
-      "path": "Test/SharedUI/RollingStockMaintenanceViewModelTests.cs",
-      "count": 4
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1861",
       "path": "Test/SharedUI/RuntimeJsonSerializerTests.cs",
       "count": 3
     },
@@ -5046,7 +5011,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2007",
       "path": "Test/SharedUI/LocomotiveManagementViewModelTests.cs",
-      "count": 10
+      "count": 8
     },
     {
       "project": "Test",
@@ -5117,13 +5082,6 @@
       "ruleId": "CA2007",
       "path": "Test/SharedUI/RecordingRuntimeCommandGatewayTests.cs",
       "count": 15
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA2007",
-      "path": "Test/SharedUI/RollingStockMaintenanceViewModelTests.cs",
-      "count": 3
     },
     {
       "project": "Test",
@@ -6620,13 +6578,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2056",
-      "path": "Test/Domain/VehicleMaintenanceSerializationTests.cs",
-      "count": 2
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2056",
       "path": "Test/Domain/WorkflowActionJsonConverterTests.cs",
       "count": 4
     },
@@ -6818,13 +6769,6 @@
       "ruleId": "NUnit2056",
       "path": "Test/SharedUI/RecordingRuntimeCommandGatewayTests.cs",
       "count": 4
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/SharedUI/RollingStockMaintenanceViewModelTests.cs",
-      "count": 2
     },
     {
       "project": "Test",

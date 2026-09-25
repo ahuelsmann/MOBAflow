@@ -68,12 +68,11 @@ internal sealed class LocomotiveLibraryServiceTests
         {
             Assert.That(passport.LocomotiveId, Is.EqualTo(locomotive.Id));
             Assert.That(passport.Decoder, Is.Null);
-            Assert.That(passport.LatestMaintenance, Is.Null);
         });
     }
 
     [Test]
-    public void BuildPassport_ProjectsDecoderAndLatestMaintenance()
+    public void BuildPassport_ProjectsDecoder()
     {
         var locomotive = new Locomotive
         {
@@ -84,26 +83,6 @@ internal sealed class LocomotiveLibraryServiceTests
                 Model = "LokSound",
                 FirmwareVersion = "1.2",
                 Protocol = DecoderProtocol.Dcc
-            },
-            Maintenance = new VehicleMaintenanceData
-            {
-                Entries =
-                [
-                    new VehicleMaintenanceEntry
-                    {
-                        Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-                        PerformedAt = new DateTimeOffset(2026, 6, 1, 0, 0, 0, TimeSpan.Zero),
-                        Category = MaintenanceCategory.Cleaning,
-                        Description = "Old"
-                    },
-                    new VehicleMaintenanceEntry
-                    {
-                        Id = Guid.Parse("22222222-2222-2222-2222-222222222222"),
-                        PerformedAt = new DateTimeOffset(2026, 7, 1, 0, 0, 0, TimeSpan.Zero),
-                        Category = MaintenanceCategory.Lubrication,
-                        Description = "Latest"
-                    }
-                ]
             }
         };
 
@@ -112,7 +91,8 @@ internal sealed class LocomotiveLibraryServiceTests
         Assert.Multiple(() =>
         {
             Assert.That(passport.Decoder!.Protocol, Is.EqualTo(DecoderProtocol.Dcc));
-            Assert.That(passport.LatestMaintenance!.Description, Is.EqualTo("Latest"));
+            Assert.That(passport.Decoder.Model, Is.EqualTo("LokSound"));
+            Assert.That(passport.Decoder.FirmwareVersion, Is.EqualTo("1.2"));
         });
     }
 

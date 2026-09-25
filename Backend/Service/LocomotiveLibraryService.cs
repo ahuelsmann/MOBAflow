@@ -13,19 +13,13 @@ public sealed record LocomotiveLibraryEntry(
     uint? DigitalAddress,
     string? Manufacturer,
     string? ArticleNumber,
-    bool HasDecoderProfile,
-    bool HasMaintenanceHistory);
+    bool HasDecoderProfile);
 
 public sealed record LocomotiveDecoderSummary(
     string? Manufacturer,
     string? Model,
     string? FirmwareVersion,
     DecoderProtocol Protocol);
-
-public sealed record LocomotiveMaintenanceSummary(
-    DateTimeOffset PerformedAt,
-    MaintenanceCategory Category,
-    string Description);
 
 /// <summary>
 /// Structured passport content. It intentionally contains neither URLs nor QR payloads.
@@ -38,9 +32,7 @@ public sealed record LocomotivePassport(
     string? Manufacturer,
     string? ArticleNumber,
     LocomotiveDecoderSummary? Decoder,
-    LocomotiveMaintenanceSummary? LatestMaintenance,
-    int DecoderSnapshotCount,
-    MaintenanceDueState? MaintenanceState);
+    int DecoderSnapshotCount);
 
 public interface ILocomotiveLibraryService
 {
@@ -54,17 +46,6 @@ public interface ILocomotiveLibraryService
 /// </summary>
 public sealed class LocomotiveLibraryService : ILocomotiveLibraryService
 {
-    private readonly IVehicleMaintenanceService _maintenanceService;
-    private readonly TimeProvider _timeProvider;
-
-    public LocomotiveLibraryService(
-        IVehicleMaintenanceService? maintenanceService = null,
-        TimeProvider? timeProvider = null)
-    {
-        _maintenanceService = maintenanceService ?? new VehicleMaintenanceService();
-        _timeProvider = timeProvider ?? TimeProvider.System;
-    }
-
     public IReadOnlyList<LocomotiveLibraryEntry> BuildLibrary(Project project)
     {
         ArgumentNullException.ThrowIfNull(project);
@@ -76,8 +57,7 @@ public sealed class LocomotiveLibraryService : ILocomotiveLibraryService
                 locomotive.DigitalAddress,
                 locomotive.Manufacturer,
                 locomotive.ArticleNumber,
-                locomotive.Decoder is not null,
-                locomotive.Maintenance?.Entries.Count > 0))
+                locomotive.Decoder is not null))
             .OrderBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
             .ThenBy(entry => entry.LocomotiveId)
             .ToArray();
@@ -95,24 +75,6 @@ public sealed class LocomotiveLibraryService : ILocomotiveLibraryService
                 locomotive.Decoder.FirmwareVersion,
                 locomotive.Decoder.Protocol);
 
-        var latestEntry = locomotive.Maintenance?.Entries
-            .OrderByDescending(entry => entry.PerformedAt)
-            .ThenBy(entry => entry.Id)
-            .FirstOrDefault();
-        var maintenance = latestEntry is null
-            ? null
-            : new LocomotiveMaintenanceSummary(
-                latestEntry.PerformedAt,
-                latestEntry.Category,
-                latestEntry.Description);
-        MaintenanceDueState? maintenanceState = locomotive.Maintenance is { Plans.Count: > 0 } maintenanceData
-            && _maintenanceService.Validate(maintenanceData).Count == 0
-                ? _maintenanceService.Evaluate(maintenanceData, _timeProvider.GetUtcNow())
-                    .Select(status => status.State)
-                    .DefaultIfEmpty(MaintenanceDueState.NotScheduled)
-                    .Max()
-                : null;
-
         return new LocomotivePassport(
             locomotive.Id,
             locomotive.Name,
@@ -120,8 +82,6 @@ public sealed class LocomotiveLibraryService : ILocomotiveLibraryService
             locomotive.Manufacturer,
             locomotive.ArticleNumber,
             decoder,
-            maintenance,
-            locomotive.Decoder?.CvSnapshots.Count ?? 0,
-            maintenanceState);
+            locomotive.Decoder?.CvSnapshots.Count ?? 0);
     }
 }

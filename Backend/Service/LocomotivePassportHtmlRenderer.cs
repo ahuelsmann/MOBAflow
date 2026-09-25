@@ -31,8 +31,6 @@ public sealed class LocomotivePassportHtmlRenderer : ILocomotivePassportHtmlRend
         AppendRow(builder, "Decoder", passport.Decoder is null ? null : $"{passport.Decoder.Manufacturer} {passport.Decoder.Model}".Trim());
         AppendRow(builder, "Decoder protocol", passport.Decoder?.Protocol);
         AppendRow(builder, "CV snapshots", passport.DecoderSnapshotCount);
-        AppendRow(builder, "Maintenance state", passport.MaintenanceState);
-        AppendRow(builder, "Latest maintenance", passport.LatestMaintenance?.Description);
         builder.AppendLine("</dl></body></html>");
         return builder.ToString();
 

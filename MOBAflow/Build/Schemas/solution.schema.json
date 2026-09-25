@@ -54,8 +54,7 @@
                 },
                 "colorPrimary": { "type": ["integer", "null"] },
                 "colorSecondary": { "type": ["integer", "null"] },
-                "isPushing": { "type": "boolean" },
-                "maintenance": { "$ref": "#/definitions/vehicleMaintenance" }
+                "isPushing": { "type": "boolean" }
               }
             }
           },
@@ -68,8 +67,7 @@
               "required": ["id", "name"],
               "properties": {
                 "id": { "type": "string", "format": "uuid" },
-                "name": { "type": "string" },
-                "maintenance": { "$ref": "#/definitions/vehicleMaintenance" }
+                "name": { "type": "string" }
               }
             }
           },
@@ -82,8 +80,7 @@
               "required": ["id", "name"],
               "properties": {
                 "id": { "type": "string", "format": "uuid" },
-                "name": { "type": "string" },
-                "maintenance": { "$ref": "#/definitions/vehicleMaintenance" }
+                "name": { "type": "string" }
               }
             }
           },
@@ -425,52 +422,6 @@
     },
     "turnoutPosition": {
       "enum": ["Straight", "DivergingLeft", "DivergingRight"]
-    },
-    "vehicleMaintenance": {
-      "type": "object",
-      "required": ["entries", "plans"],
-      "properties": {
-        "entries": {
-          "type": "array",
-          "items": { "$ref": "#/definitions/vehicleMaintenanceEntry" }
-        },
-        "plans": {
-          "type": "array",
-          "items": { "$ref": "#/definitions/vehicleMaintenancePlan" }
-        }
-      }
-    },
-    "vehicleMaintenanceEntry": {
-      "type": "object",
-      "required": ["id", "performedAt", "category", "description"],
-      "properties": {
-        "id": { "type": "string", "format": "uuid" },
-        "performedAt": { "type": "string", "format": "date-time" },
-        "category": { "$ref": "#/definitions/maintenanceCategory" },
-        "description": { "type": "string", "minLength": 1 },
-        "cost": {
-          "type": ["object", "null"],
-          "properties": {
-            "amount": { "type": "number" },
-            "currency": { "type": "string", "pattern": "^[A-Z]{3}$" }
-          }
-        },
-        "notes": { "type": ["string", "null"] }
-      }
-    },
-    "vehicleMaintenancePlan": {
-      "type": "object",
-      "required": ["id", "category", "name", "intervalDays"],
-      "properties": {
-        "id": { "type": "string", "format": "uuid" },
-        "category": { "$ref": "#/definitions/maintenanceCategory" },
-        "name": { "type": "string", "minLength": 1 },
-        "intervalDays": { "type": "integer", "minimum": 1 },
-        "lastCompletedAt": { "type": ["string", "null"], "format": "date-time" }
-      }
-    },
-    "maintenanceCategory": {
-      "enum": ["Inspection", "Cleaning", "Lubrication", "Repair", "Decoder", "WheelService", "Other"]
     }
   }
 }

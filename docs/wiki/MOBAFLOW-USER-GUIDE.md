@@ -37,7 +37,7 @@ such as invalid references or conflicting data.
 ### Rolling stock and trains
 
 - **Locomotives:** maintain names, digital addresses, photos and function
-  assignments. The management area also supports maintenance plans, decoder/CV
+  assignments. The management area also supports decoder/CV
   snapshots and printable locomotive passports.
 - **Passenger Wagons** and **Goods Wagons:** maintain the wagon libraries.
 - **Trains:** compose ordered consists from locomotives and both wagon types.
