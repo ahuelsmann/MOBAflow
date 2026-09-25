@@ -6,7 +6,6 @@
 *.cmd text eol=crlf
 *.sln text eol=crlf
 *.sh text eol=lf
-.githooks/* text eol=lf
 
 # Spec Kit manifests hash file bytes; keep managed assets stable across platforms.
 .agents/skills/speckit-*/SKILL.md text eol=lf
