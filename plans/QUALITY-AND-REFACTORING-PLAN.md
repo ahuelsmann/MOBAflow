@@ -6,7 +6,7 @@
 ## Purpose
 
 This is the single technical umbrella plan for the MOBAflow quality and
-refactoring programme RF-01 through RF-30.
+refactoring programme RF-01 through RF-31.
 
 GitHub issue #47 owns programme status, priority, milestones, child tracking,
 acceptance criteria, and completion evidence. This plan owns the stable
@@ -37,7 +37,7 @@ acceptance evidence live only in GitHub issue #47 and its child issues.
 
 ### This umbrella plan owns
 
-- stable technical outcomes for RF-01 through RF-30;
+- stable technical outcomes for RF-01 through RF-31;
 - hard and recommended dependencies between packages;
 - downstream consumers and cross-package sequencing;
 - programme-wide risks, stop conditions, and rollback principles;
@@ -86,9 +86,9 @@ identifiers, enums and payload sizes) before they enter the runtime, and the
 remote command queue stays bounded. ESP32 provisioning protection from RF-02/#48
 is unaffected by this decision.
 
-## Architecture principles for RF-19 through RF-30
+## Architecture principles for RF-19 through RF-31
 
-The architecture review of 2026-09-25 added RF-19 through RF-30. They share
+The architecture review of 2026-09-25 added RF-19 through RF-31. They share
 these target rules, which keep the solution object-oriented and understandable
 for human developers:
 
@@ -101,7 +101,12 @@ for human developers:
 - Commands reach the runtime through exactly one port.
 - Domain classes own the rules that need only domain data.
 - A project's name, root namespace and responsibility match. `SharedUI` holds
-  only code that both UI hosts use.
+  platform-neutral presentation logic so the portable test run covers it;
+  ViewModels used by only one host live in a `Desktop` or `Mobile` folder and
+  namespace inside `SharedUI`.
+- Each notification mechanism has one documented purpose: EventBus for
+  cross-component runtime events, immutable snapshots for runtime state, C#
+  events inside one component and `PropertyChanged` only for data binding.
 - Solution-wide architecture tests enforce the project and namespace rules.
 
 ## Execution model
@@ -153,6 +158,7 @@ dependencies.
 | RF-28 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | The track plan has one model and editor boundary; the WinUI page is a thin adapter. |
 | RF-29 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Platform-specific sound and file services live in platform adapters with one role per class. |
 | RF-30 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Repository, documentation and test layout let a developer find product code, docs and tests directly. |
+| RF-31 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | The remaining oversized code-behind and recording classes are split by responsibility. |
 
 The phrase "until child creation" is traceability, not workflow status. Issue #47
 remains authoritative for whether a child package is proposed, active, blocked,
@@ -252,8 +258,9 @@ After characterization tests, separate:
 4. solution synchronization;
 5. photo capture and upload orchestration;
 6. application and network lifecycle handling;
-7. move the remaining mobile root ViewModel from `SharedUI` into `MOBAsmart`,
-   because no other host uses it.
+7. move the remaining mobile root ViewModel into the `Mobile` folder and
+   namespace of `SharedUI`; it stays in `SharedUI` because the portable test run
+   excludes `MOBAsmart` by default.
 
 Acceptance anchor: the root mobile ViewModel is a composition boundary rather
 than the owner of networking, storage, runtime projection, and UI state
@@ -354,14 +361,17 @@ overflow stays bounded; Windows and Android builds and affected tests pass.
 
 Sequence:
 
-1. record the intended project dependency direction and the namespace-to-project
-   rule in `docs/ARCHITECTURE.md`;
+1. record the intended project dependency direction, the namespace-to-project
+   rule and the purpose of each notification mechanism in
+   `docs/ARCHITECTURE.md`;
 2. extend the existing `TrackLayoutArchitectureTests` approach to all projects;
 3. start with rules the current code satisfies, and add every further rule in
    the package that makes it pass.
 
 Acceptance anchor: a forbidden project reference or namespace leak fails the
-test suite with a message that names the rule.
+test suite with a message that names the rule; the documented notification
+rules name an owner mechanism for runtime events, runtime state, component
+events and binding.
 
 ### RF-21: Remove dead and misplaced code
 
@@ -381,8 +391,9 @@ behavior and tests; builds of all affected targets pass.
 
 Sequence:
 
-1. decide between `IRuntimeCommandGateway` and the unused role interfaces of
-   `IMobaRuntime`, and name each role after what it really does;
+1. keep `IRuntimeCommandGateway` as the command port, because it already
+   carries the local, recording and remote routing that AGENTS.md requires;
+   ViewModels read runtime state through `IRuntimeSnapshotProvider`;
 2. route every ViewModel command through the chosen port and register its
    local, recording and remote implementations only in the hosts;
 3. remove the unused interfaces, the backward-compatible aggregate comment and
@@ -429,9 +440,12 @@ Proceed project by project, starting with `Backend` and ending with the hosts:
    null objects in the host;
 2. remove `?? new` fallbacks and convenience constructors such as the second
    `MobaRuntimeService` and `JourneyManagerFactory` constructors;
-3. replace mutable static hooks such as `LanIpv4AddressHelper.AugmentAddresses`
+3. stop ViewModels from creating Backend services such as `WorkflowValidator`
+   or receiving the runtime `ActionExecutionContext`; inject the narrow service
+   they need instead;
+4. replace mutable static hooks such as `LanIpv4AddressHelper.AugmentAddresses`
    and `SegmentPlanPathBuilder.ScaleMmToPx` with injected services;
-4. let the existing DI container validators cover every changed registration.
+5. let the existing DI container validators cover every changed registration.
 
 Acceptance anchor: constructors show every real dependency; tests use explicit
 fakes; the DI validators for WinUI and MAUI pass.
@@ -506,11 +520,40 @@ Sequence:
    desktop tests and integration tests; move `Test/Analysis` out of the test
    project;
 4. align root namespaces with project names (`MOBAflow`, `MOBAsmart`,
-   `MOBAdisplay`) and folder names (`Converter`/`Converters`, `Interface`).
+   `MOBAdisplay`) and folder names (`Converter`/`Converters`, `Interface`);
+5. move single-host ViewModels and services such as `DisplayViewModel`,
+   `RecorderPageViewModel`, `InterlockingControlViewModel` and the mobile
+   session services into `Desktop` or `Mobile` folders of `SharedUI`.
 
 Acceptance anchor: a new developer finds the architecture, build and test
 entry points from `README.md`; each test project builds for its own targets;
 CI runs every test project.
+
+### RF-31: Reduce the remaining oversized classes
+
+After characterization tests, split by responsibility:
+
+1. `HelpPage.xaml.cs`: move navigation and section state into a ViewModel and
+   panel layout persistence into the RF-24 layout service;
+2. `SignalBoxPropertiesControl.xaml.cs` and `MainWindow.xaml.cs`: keep only
+   view lifecycle and visual adaptation in code-behind;
+3. `RecordingSessionService` and the recording artifact import: separate
+   session lifecycle, event capture and file format handling.
+
+Acceptance anchor: each resulting class has one reason to change; code-behind
+contains no feature behavior; recording round-trip tests pass unchanged.
+
+## Spec Kit classification of RF-19 through RF-31
+
+Each child issue declares its `Spec Kit workflow` when it is created:
+
+- RF-19: `Required before implementation`, because it changes user-visible
+  behavior in MOBAflow, MOBAsmart and MOBApi (connection setup, pairing UI,
+  HTTP transport) and the API contract.
+- RF-20 through RF-31: `Not applicable - behavior-preserving refactoring
+  governed by this plan's anchor and an issue-specific plan where required`.
+  A child that changes user-visible behavior or a persisted format is
+  reclassified as `Required before implementation`.
 
 ## Dependency graph
 
@@ -546,6 +589,7 @@ CI runs every test project.
 | RF-28 | None | RF-20 | Track-plan maintainability |
 | RF-29 | None | None | Android package size and file-service clarity |
 | RF-30 | None | RF-20, RF-26 | Contributor orientation |
+| RF-31 | None | RF-24 | Maintainability of remaining hotspots |
 
 The explicit issue #34 unblock path is:
 
@@ -584,9 +628,9 @@ conditions.
 
 ### Milestone 5: Clarify responsibilities and structure
 
-RF-19 through RF-30 remove the withdrawn control plane and apply the
+RF-19 through RF-31 remove the withdrawn control plane and apply the
 architecture principles above. Recommended order: RF-19 and RF-20 first, then
-RF-21 and RF-22, then RF-23 before RF-24, with RF-25 through RF-30 following
+RF-21 and RF-22, then RF-23 before RF-24, with RF-25 through RF-31 following
 their recommended prerequisites. Every extraction starts with
 characterization tests and ends with deletion of the superseded path.
 
@@ -629,7 +673,7 @@ Before commit or pull request:
 - every changed file passes the deterministic secrets scan;
 - a positive secret finding is a hard stop: do not read, commit, or publish the
   file; rotate the credential at its source and remove it;
-- local Sonar analysis targets the actual pull-request base;
+- code analysis runs only through the GitHub pull-request pipeline (SonarCloud);
 - actionable findings are fixed rather than hidden through gate reduction,
   broad suppression, or changed-file exclusion;
 - affected automated tests and clean builds pass.
@@ -704,7 +748,7 @@ Before implementation, each plan-required child plan must contain:
 8. automated test strategy with exact commands and expected results;
 9. manual and hardware acceptance requirements or a reasoned not-applicable
    statement;
-10. secrets, local Sonar, draft-PR, remote SonarCloud, and CI gates;
+10. secrets, draft-PR, remote SonarCloud, and CI gates;
 11. independently reviewable delivery slices and evidence ownership;
 12. completion cleanup, including deletion of the standalone plan after the
     issue closes.
@@ -722,7 +766,7 @@ The programme may close only when GitHub issue #47 demonstrates:
 - analyzer, dependency, formatting, coverage, mutation, Sonar, and secrets gates
   are enforced as agreed;
 - hardware-control commands are validated and bounded at the API boundary;
-- RF-19 through RF-30 meet their acceptance anchors or child acceptance criteria;
+- RF-19 through RF-31 meet their acceptance anchors or child acceptance criteria;
 - event ordering, overload, cancellation, and shutdown are deterministic;
 - platform-neutral behavior has moved out of the identified UI hotspots;
 - critical workflows have accessibility, theme, manual, and hardware evidence;
