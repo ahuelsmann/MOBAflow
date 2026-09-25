@@ -52,6 +52,37 @@ internal sealed class RestApiDiscoveryCandidateBuilderTests
     }
 
     [Test]
+    public void BuildAuthenticatedUdpUnicastCandidates_IncludesPcWhenMulticastIsUnavailable()
+    {
+        var settings = new RestApiSettings();
+        var phoneAddresses = new[] { IPAddress.Parse("192.168.0.35") };
+
+        var candidates = RestApiDiscoveryCandidateBuilder.BuildAuthenticatedUdpUnicastCandidates(
+            settings,
+            phoneAddresses);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(candidates, Does.Contain(IPAddress.Parse("192.168.0.27")));
+            Assert.That(candidates, Does.Not.Contain(IPAddress.Parse("192.168.0.35")));
+            Assert.That(candidates, Has.Count.EqualTo(253));
+        });
+    }
+
+    [Test]
+    public void BuildAuthenticatedUdpUnicastCandidates_DoesNotScanPublicSubnets()
+    {
+        var settings = new RestApiSettings();
+        var localAddresses = new[] { IPAddress.Parse("203.0.113.20") };
+
+        var candidates = RestApiDiscoveryCandidateBuilder.BuildAuthenticatedUdpUnicastCandidates(
+            settings,
+            localAddresses);
+
+        Assert.That(candidates, Is.Empty);
+    }
+
+    [Test]
     public void BuildSubnetFromAnchor_IncludesPcOnSameSubnetAsZ21()
     {
         var anchor = IPAddress.Parse("192.168.0.111");
@@ -81,9 +112,27 @@ internal sealed class RestApiDiscoveryCandidateBuilderTests
     [Test]
     public void MobApiHealthProbe_AcceptsMobApiPayload()
     {
-        const string body = """{"service":"MOBAflow MOBAapi","status":"healthy","version":"1.0.0"}""";
+        const string body = """{"service":"MOBAflow MOBApi","status":"healthy","version":"1.0.0"}""";
 
-        Assert.That(MobApiHealthProbe.IsHealthyResponse(body), Is.True);
-        Assert.That(MobApiHealthProbe.IsHealthyResponse("""{"status":"ok"}"""), Is.False);
+        Assert.Multiple(() =>
+        {
+            Assert.That(MobApiHealthProbe.IsHealthyResponse(body), Is.True);
+            Assert.That(MobApiHealthProbe.IsHealthyResponse("""{"status":"ok"}"""), Is.False);
+            Assert.That(MobApiHealthProbe.IsHealthyResponse("""{"service":"other","status":"healthy"}"""), Is.False);
+            Assert.That(MobApiHealthProbe.IsHealthyResponse("""{"status":1}"""), Is.False);
+            Assert.That(MobApiHealthProbe.IsHealthyResponse("""{"status":"healthy","other":true}"""), Is.False);
+            Assert.That(MobApiHealthProbe.IsHealthyResponse("not-json"), Is.False);
+        });
+    }
+
+    [TestCase("{\"status\":\"healthy\"}")]
+    [TestCase("{\"service\":\"MOBAflow MOBApi\",\"status\":\"unhealthy\"}")]
+    [TestCase("{\"service\":\"Other MOBAflow Service\",\"status\":\"healthy\"}")]
+    [TestCase("{\"service\":42,\"status\":\"healthy\"}")]
+    [TestCase("[\"MOBAflow MOBApi\",\"healthy\"]")]
+    [TestCase("MOBAflow healthy")]
+    public void MobApiHealthProbe_RejectsMissingOrInvalidServiceIdentity(string body)
+    {
+        Assert.That(MobApiHealthProbe.IsHealthyResponse(body), Is.False);
     }
 }

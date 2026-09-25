@@ -9,7 +9,7 @@ namespace Moba.Test.MOBApi;
 internal sealed class PhotosControllerTests
 {
     [Test]
-    public void Health_ExposesOnlyMinimalReachability()
+    public void Health_ExposesReachabilityAndServiceIdentity()
     {
         var controller = new PhotosController();
 
@@ -18,7 +18,8 @@ internal sealed class PhotosControllerTests
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(body.EnumerateObject().Count(), Is.EqualTo(1));
+            Assert.That(body.EnumerateObject().Count(), Is.EqualTo(2));
+            Assert.That(body.GetProperty("service").GetString(), Is.EqualTo("MOBAflow MOBApi"));
             Assert.That(body.GetProperty("status").GetString(), Is.EqualTo("healthy"));
         }
     }

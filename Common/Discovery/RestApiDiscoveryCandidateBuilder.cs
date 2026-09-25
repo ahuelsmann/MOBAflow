@@ -68,6 +68,26 @@ public static class RestApiDiscoveryCandidateBuilder
     }
 
     /// <summary>
+    /// Builds private LAN targets for authenticated UDP discovery when multicast or broadcast
+    /// traffic is filtered by the access point. Recent endpoints remain first, followed by the
+    /// local /24 subnet in proximity order and an explicitly saved endpoint.
+    /// </summary>
+    public static IReadOnlyList<IPAddress> BuildAuthenticatedUdpUnicastCandidates(
+        RestApiSettings settings,
+        IReadOnlyList<IPAddress> localAddresses)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(localAddresses);
+
+        var privateLocalAddresses = localAddresses
+            .Where(SubnetCandidateBuilder.IsPrivateIPv4)
+            .ToList();
+        var subnetCandidates = SubnetCandidateBuilder.BuildCandidates(privateLocalAddresses);
+
+        return BuildFullProbeOrder(settings, privateLocalAddresses, subnetCandidates);
+    }
+
+    /// <summary>
     /// All host addresses in the same /24 as <paramref name="anchor"/> (excluding network/broadcast).
     /// Used when Z21 is reachable: MOBAflow is typically on the same subnet.
     /// </summary>
