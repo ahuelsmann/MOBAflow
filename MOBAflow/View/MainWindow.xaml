@@ -30,8 +30,8 @@
             </TitleBar.IconSource>
         </TitleBar>
 
-        <!--  NavigationView with Auto pane display mode for responsive behavior  -->
-        <!--  See class NavigationRegistration  -->
+        <!--  Navigation adapts automatically to the available width.  -->
+        <!--  Pages: NavigationRegistration; visibility and badges: NavigationItemFactory.  -->
         <NavigationView
             x:Name="MainNavigation"
             Grid.Row="1"

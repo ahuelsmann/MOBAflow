@@ -197,10 +197,13 @@ public sealed class NavigationItemFactory
     }
 
     /// <summary>
-    /// Gets the Feature Toggle value from settings.
+    /// Shows every page in debug builds; otherwise reads the Feature Toggle from settings.
     /// </summary>
     private bool GetFeatureToggleValue(string key)
     {
+#if DEBUG
+        return true;
+#else
         var property = typeof(FeatureToggleSettings).GetProperty(key);
         if (property == null)
         {
@@ -208,5 +211,6 @@ public sealed class NavigationItemFactory
         }
 
         return property.GetValue(_settings.FeatureToggles) as bool? ?? true;
+#endif
     }
 }
