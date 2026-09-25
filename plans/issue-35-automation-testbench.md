@@ -1,7 +1,7 @@
 # Issue #35 Automation Testbench Implementation Plan
 
 **GitHub Issue**: #35
-**Spec Kit**: Not applicable - Issue #35 was planned before Spec Kit adoption and remains governed by this existing issue-specific implementation plan.
+**Spec Kit**: Required
 
 ## Document status
 
@@ -58,8 +58,9 @@ Implementation must not begin until all gates applicable to the selected slice a
 | G4 | The post-#32 schema baseline is version 4. The optional initialized scenario collection remains additive under the repository JSON compatibility rules; recheck immediately before the persistence slice, and require an approved upgrade path for any final breaking change. | Persistence slice |
 | G5 | The implementation workspace passes the mandatory secret scan and the current local instruction/plan consolidation is reconciled. | Any local file read or edit |
 | G6 | The plan is linked from open Issue #35 and `plan-required` remains present until implementation completion. | Implementation start |
+| G7 | The Spec Kit flow for Issue #35 (specification, clarification, tasks and analysis under `specs/NNN-automation-testbench/`) is complete, reconciled with this plan and linked from the issue. | Implementation start |
 
-Research and plan refinement may continue before G1. No production-code or characterization-test implementation starts before G1, G3, G5, and G6. G2 is satisfied but its merged contracts must be re-verified after the remaining programme gate lands.
+Research and plan refinement may continue before G1. No production-code or characterization-test implementation starts before G1, G3, G5, G6, and G7. G2 is satisfied but its merged contracts must be re-verified immediately before implementation.
 
 ## Dependencies and sequencing
 
@@ -674,5 +675,6 @@ During delivery:
 - [x] Local instruction and plan consolidation reconciled
 - [x] Plan reviewed and linked from Issue #35
 - [x] `plan-required` present
+- [ ] Spec Kit flow complete and linked from Issue #35 (G7)
 - [ ] Slice 1 affected files re-verified immediately before implementation
 - [ ] No unrelated working-tree changes overlap the implementation slice
