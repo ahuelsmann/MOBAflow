@@ -175,7 +175,7 @@ public partial class MainWindowViewModel
                     wagonVm.PhotoPath = saved;
                 }
 
-                await SaveSolutionInternalAsync().ConfigureAwait(false);
+                ObserveBackgroundTask(SaveSolutionInternalAsync(), "Save vehicle photo");
                 _logger.LogInformation("Photo saved for wagon: {Name}", wagonVm.Name);
             }
         });
@@ -234,7 +234,7 @@ public partial class MainWindowViewModel
                     locoVm.PhotoPath = saved;
                 }
 
-                await SaveSolutionInternalAsync().ConfigureAwait(false);
+                ObserveBackgroundTask(SaveSolutionInternalAsync(), "Save vehicle photo");
                 _logger.LogInformation("Photo saved for locomotive: {Name}", locoVm.Name);
             }
         });

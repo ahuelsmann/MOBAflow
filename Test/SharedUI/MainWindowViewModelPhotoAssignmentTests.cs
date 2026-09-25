@@ -271,6 +271,9 @@ internal sealed class MainWindowViewModelPhotoAssignmentTests
     [TestCase(TrainVehicleKind.Locomotive, "solution")]
     [TestCase(TrainVehicleKind.PassengerWagon, "solution")]
     [TestCase(TrainVehicleKind.GoodsWagon, "solution")]
+    [TestCase(TrainVehicleKind.Locomotive, "failure")]
+    [TestCase(TrainVehicleKind.PassengerWagon, "failure")]
+    [TestCase(TrainVehicleKind.GoodsWagon, "failure")]
     public async Task BrowsePhoto_WhenContextChangesDuringCopy_PersistsOnlyInOriginalSolution(
         TrainVehicleKind kind, string change)
     {
@@ -290,7 +293,7 @@ internal sealed class MainWindowViewModelPhotoAssignmentTests
         var pending = ((IAsyncRelayCommand)browse!).ExecuteAsync(null);
         Assert.That(pending.IsCompleted, Is.False);
 
-        if (change != "selection")
+        if (change is "project" or "solution")
         {
             var nextProject = new Project();
             if (change == "solution")
@@ -305,6 +308,11 @@ internal sealed class MainWindowViewModelPhotoAssignmentTests
         AddCommand(viewModel, kind).Execute(null);
         savedJson = string.Empty;
         io.Invocations.Clear();
+        if (change == "failure")
+        {
+            io.Setup(value => value.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()))
+                .ThrowsAsync(new IOException("Photo persistence test failure"));
+        }
 
         copy.SetResult("imported.png");
         await pending.ConfigureAwait(false);
@@ -320,6 +328,17 @@ internal sealed class MainWindowViewModelPhotoAssignmentTests
                 Assert.That(savedJson, Is.Empty);
             }
             io.Verify(value => value.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()), Times.Never);
+        }
+        else if (change == "failure")
+        {
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(photoPath, Is.EqualTo("imported.png"));
+                Assert.That(savedJson, Is.Empty);
+                Assert.That(viewModel.HasUnsavedChanges, Is.True);
+                Assert.That(viewModel.SolutionSaveState, Is.EqualTo(SolutionSaveState.NotSaved));
+                Assert.That(viewModel.SolutionSaveStatusText, Does.Contain("Photo persistence test failure"));
+            }
         }
         else
         {
