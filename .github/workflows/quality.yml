@@ -263,6 +263,11 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      # An SDK in Program Files also installs every workload registered by the image's Visual Studio.
+      - name: Use a job-local .NET install
+        shell: pwsh
+        run: Add-Content -LiteralPath $env:GITHUB_ENV -Value "DOTNET_INSTALL_DIR=$env:RUNNER_TEMP\dotnet"
+
       - name: Install .NET SDK
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
@@ -278,9 +283,9 @@ jobs:
           restore-keys: |
             nuget-${{ runner.os }}-android-
 
-      - name: Restore MAUI Android workload
+      - name: Install MAUI Android workload
         shell: pwsh
-        run: dotnet workload restore MOBAsmart/MOBAsmart.csproj --skip-manifest-update
+        run: dotnet workload install maui-android --skip-manifest-update
 
       - name: Restore Android dependency graph
         shell: pwsh
