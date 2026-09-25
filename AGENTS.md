@@ -29,7 +29,7 @@ and apply to coding agents across Windows and Linux.
 - GitHub is the only Git host. Inspect `git remote -v` and branch tracking before synchronizing; use the configured
   GitHub remote rather than assuming `origin` or restoring an Azure remote.
 - Never commit directly on `main` or push changes directly to `main`. Implementations, bug fixes and other
-  repository changes require a task branch and a pull request. Do not bypass local hooks or GitHub protection.
+  repository changes require a task branch and a pull request. Do not bypass GitHub branch protection.
   The shared `main` checkout may be fast-forwarded to changes already merged through GitHub.
 - Isolate independent write tasks with Git worktrees: use a dedicated task branch/worktree as specified in
   [.github/instructions/git-worktree-isolation.instructions.md](.github/instructions/git-worktree-isolation.instructions.md).
@@ -50,7 +50,7 @@ and apply to coding agents across Windows and Linux.
 - After patches, generators or scripts change text files, run `scripts/Test-LineEndings.ps1 -Path <changed-paths>`.
   Use `-Fix` to normalize those files according to `.gitattributes`, then check again. Preserve LF exceptions,
   encoding and final-newline presence. Before committing, run `scripts/Test-LineEndings.ps1 -Staged`;
-  the installed pre-commit hook checks both staged files on disk and mixed line endings in the index.
+  it checks both staged files on disk and mixed line endings in the index.
 - Standalone Markdown plans belong in `plans/`; remove completed plans, retaining Git history and closed GitHub issues.
   Spec Kit artifacts remain under `specs/`. Use [Spec Kit governance](.github/instructions/spec-kit-governance.instructions.md)
   for product behavior and cross-cutting features; this does not require a standalone plan for every small fix.

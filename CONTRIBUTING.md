@@ -27,22 +27,18 @@ Diese Variante ist für Edit/Build-Zyklen gedacht. Für vollständige App-Starts
 Release-Validierung bleibt der normale Build maßgeblich. Details stehen in
 `docs/BUILD-PERFORMANCE.md`.
 
-### Lokaler Branch-Schutz und einheitliche Zeilenenden
+### Einheitliche Zeilenenden
 
-PowerShell 7 (`pwsh`) wird für die lokalen Prüfungen benötigt. Einmal pro Klon installieren:
+PowerShell 7 (`pwsh`) wird für die lokalen Prüfungen benötigt. Ein frisch geklontes Repository braucht
+keine Einrichtungsschritte; das Repository verwendet keine Git-Hooks. CI prüft die Zeilenenden bei
+jedem Pull Request. Vor einem Commit die vorgemerkten Dateien prüfen:
 
 ```powershell
-./scripts/Install-GitHooks.ps1
+./scripts/Test-LineEndings.ps1 -Staged
 ```
 
-Die Hooks blockieren Commits und Merge-Commits auf `main` sowie Pushes mit Ziel `main` zu jedem Remote,
-auch von einem anderen lokalen Branch aus. Fast-Forwards bleiben erlaubt. Git bietet für `cherry-pick`
-und `revert` keinen blockierenden Hook; solche lokalen Commits auf `main` stoppt erst der Push-Hook.
-Vor einem Commit prüfen die Hooks außerdem die vorgemerkten Dateien auf der Festplatte und auf gemischte
-Zeilenenden im Git-Index. Sie verändern und stagen keine Dateien. Andere Hooks bleiben erhalten; bei einem
-eigenen `pre-commit`-, `pre-merge-commit`- oder `pre-push`-Hook bricht die Installation ab.
-Verknüpfte Worktrees teilen sich die installierten Hooks. Ältere Branches ohne Prüfskript verwenden
-eine bei der Installation hinterlegte Kopie. Nach Änderungen am Hook die Installation erneut ausführen.
+Die Prüfung umfasst die vorgemerkten Dateien auf der Festplatte und gemischte Zeilenenden im Git-Index.
+Sie verändert und staged keine Dateien.
 
 Nach Änderungen durch Patches, Generatoren oder andere Werkzeuge:
 
@@ -52,7 +48,7 @@ Nach Änderungen durch Patches, Generatoren oder andere Werkzeuge:
 ```
 
 Ohne `-Path` werden alle versionierten und nicht ignorierten neuen Dateien geprüft; `-Fix` normalisiert
-sie. CRLF ist der Standard. LF-Ausnahmen aus `.gitattributes` (Shell-Skripte, Git-Hooks und verwaltete
+sie. CRLF ist der Standard. LF-Ausnahmen aus `.gitattributes` (Shell-Skripte und verwaltete
 Spec-Kit-Dateien) bleiben erhalten, ebenso Kodierung und das Vorhandensein eines letzten Zeilenumbruchs.
 Binärdateien werden übersprungen. Der Git-Index speichert normalisierte Textdateien weiterhin mit LF.
 CI ergänzt diese lokale Prüfung, kann aber Mischungen, die Git beim Staging bereits beseitigt hat,
@@ -86,12 +82,11 @@ Repository-Änderungen dürfen weder direkt auf `main` committet noch dorthin ge
 Arbeite in einem eigenen Branch und Worktree; aktualisiere den lokalen `main` nur per Fast-Forward
 auf bereits über GitHub integrierte Änderungen.
 
-GitHub erzwingt die PR-Pflicht auch für Administratoren und sperrt Force-Pushes sowie das Löschen
-von `main`. Eine zusätzliche Freigabe durch einen zweiten Menschen ist derzeit nicht vorgeschrieben.
-Lokale Hooks müssen je Klon installiert werden und sind technisch umgehbar; die verbindliche
-Push-Sperre liegt deshalb auf GitHub. Hooks und Branch-Schutz dürfen nicht umgangen werden.
-Diese Branch-Regel legt keine verpflichtenden CI-Checks fest; die bestehende Sonar- und
-Validierungspflicht aus [AGENTS.md](AGENTS.md) gilt weiterhin.
+GitHub erzwingt die PR-Pflicht auch für Administratoren, verlangt vor dem Merge grüne Checks
+(alle Jobs aus `.github/workflows/quality.yml` sowie SonarCloud) und sperrt Force-Pushes sowie das
+Löschen von `main`. Eine zusätzliche Freigabe durch einen zweiten Menschen ist derzeit nicht
+vorgeschrieben. Der Branch-Schutz darf nicht umgangen werden. Die Sonar- und Validierungspflicht aus
+[AGENTS.md](AGENTS.md) gilt weiterhin.
 
 - **Bugs melden / Features vorschlagen**
   - GitHub Issues: `https://github.com/ahuelsmann/MOBAflow/issues`
