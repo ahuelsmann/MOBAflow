@@ -1,5 +1,6 @@
 #!/bin/sh
 # MOBAflow managed line-ending hook
+# Keep the marker above unchanged: Install-GitHooks.ps1 uses it to recognize installed copies.
 branch=$(git symbolic-ref --quiet HEAD)
 status=$?
 if [ "$status" -gt 1 ]; then
