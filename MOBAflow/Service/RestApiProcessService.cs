@@ -178,7 +178,6 @@ public sealed class RestApiProcessService : IRestApiPairingEndpointProvider, IDi
                 };
 
                 _process.Start();
-                bootstrapChannel?.CompleteProcessStart();
                 _logger.LogInformation("MOBApi process started (port {Port}), PID {Pid}", port, _process.Id);
 
                 (string Secret, HostBootstrapPipeResponse Response)? bootstrap = null;
@@ -186,7 +185,8 @@ public sealed class RestApiProcessService : IRestApiPairingEndpointProvider, IDi
                 {
                     using var bootstrapTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                     bootstrapTimeout.CancelAfter(TimeSpan.FromSeconds(15));
-                    bootstrap = await bootstrapChannel.ExchangeAsync(bootstrapTimeout.Token).ConfigureAwait(false);
+                    bootstrap = await bootstrapChannel.ExchangeAsync(_process, bootstrapTimeout.Token)
+                        .ConfigureAwait(false);
                 }
 
                 if (bootstrap.HasValue)

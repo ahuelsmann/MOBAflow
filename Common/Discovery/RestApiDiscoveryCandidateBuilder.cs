@@ -68,11 +68,11 @@ public static class RestApiDiscoveryCandidateBuilder
     }
 
     /// <summary>
-    /// Builds private LAN targets for authenticated UDP discovery when multicast or broadcast
-    /// traffic is filtered by the access point. Recent endpoints remain first, followed by the
-    /// local /24 subnet in proximity order and an explicitly saved endpoint.
+    /// Builds the private LAN probe order for the device's own /24 subnets: recent endpoints first,
+    /// then the local subnets in proximity order and an explicitly saved endpoint. Used for the HTTP
+    /// subnet scan and for unicast UDP discovery when multicast or broadcast is filtered.
     /// </summary>
-    public static IReadOnlyList<IPAddress> BuildAuthenticatedUdpUnicastCandidates(
+    public static IReadOnlyList<IPAddress> BuildLocalSubnetProbeOrder(
         RestApiSettings settings,
         IReadOnlyList<IPAddress> localAddresses)
     {

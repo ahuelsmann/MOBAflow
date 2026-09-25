@@ -47,7 +47,6 @@ public sealed class HostBootstrapParentChannel : IAsyncDisposable
     private readonly NamedPipeServerStream _requestPipe;
     private readonly NamedPipeServerStream _responsePipe;
     private string? _secret = HostBootstrapProtocol.CreateSecret();
-    private bool _childProcessStarted;
 
     public HostBootstrapParentChannel()
     {
@@ -64,29 +63,49 @@ public sealed class HostBootstrapParentChannel : IAsyncDisposable
             System.Globalization.CultureInfo.InvariantCulture);
     }
 
-    public void CompleteProcessStart()
-    {
-        _childProcessStarted = true;
-    }
-
+    /// <summary>
+    /// Exchanges the bootstrap secret with the started child process. Only that process (or its direct
+    /// child when started through <c>dotnet run</c>) may connect, and the exchange fails as soon as it exits.
+    /// </summary>
     public async Task<(string Secret, HostBootstrapPipeResponse Response)> ExchangeAsync(
+        Process childProcess,
         CancellationToken cancellationToken)
     {
-        if (!_childProcessStarted || string.IsNullOrEmpty(_secret))
-            throw new InvalidOperationException("The bootstrap channel has not been transferred to the child process.");
+        ArgumentNullException.ThrowIfNull(childProcess);
+        if (string.IsNullOrEmpty(_secret))
+            throw new InvalidOperationException("The bootstrap channel has already been disposed.");
 
-        await _requestPipe.WaitForConnectionAsync(cancellationToken).ConfigureAwait(false);
-        var request = new HostBootstrapPipeRequest(_secret, Environment.ProcessId);
-        await JsonSerializer.SerializeAsync(_requestPipe, request, cancellationToken: cancellationToken).ConfigureAwait(false);
-        await _requestPipe.FlushAsync(cancellationToken).ConfigureAwait(false);
-        await _requestPipe.DisposeAsync().ConfigureAwait(false);
+        var childProcessId = GetStartedProcessId(childProcess);
+        using var exchangeCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        var exitMonitor = CancelWhenExitedAsync(childProcess, exchangeCancellation.Cancel, exchangeCancellation.Token);
+        try
+        {
+            await ConnectExpectedClientAsync(_requestPipe, childProcessId, exchangeCancellation.Token)
+                .ConfigureAwait(false);
+            var request = new HostBootstrapPipeRequest(_secret, Environment.ProcessId);
+            await JsonSerializer.SerializeAsync(_requestPipe, request, cancellationToken: exchangeCancellation.Token)
+                .ConfigureAwait(false);
+            await _requestPipe.FlushAsync(exchangeCancellation.Token).ConfigureAwait(false);
+            await _requestPipe.DisposeAsync().ConfigureAwait(false);
 
-        await _responsePipe.WaitForConnectionAsync(cancellationToken).ConfigureAwait(false);
-        var response = await JsonSerializer.DeserializeAsync<HostBootstrapPipeResponse>(
-            _responsePipe,
-            cancellationToken: cancellationToken).ConfigureAwait(false)
-            ?? throw new InvalidDataException("MOBApi returned an empty host bootstrap response.");
-        return (_secret, response);
+            await ConnectExpectedClientAsync(_responsePipe, childProcessId, exchangeCancellation.Token)
+                .ConfigureAwait(false);
+            var response = await JsonSerializer.DeserializeAsync<HostBootstrapPipeResponse>(
+                _responsePipe,
+                cancellationToken: exchangeCancellation.Token).ConfigureAwait(false)
+                ?? throw new InvalidDataException("MOBApi returned an empty host bootstrap response.");
+            return (_secret, response);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested && childProcess.HasExited)
+        {
+            throw new InvalidOperationException(
+                $"MOBApi exited with code {childProcess.ExitCode} before completing the host bootstrap.");
+        }
+        finally
+        {
+            await exchangeCancellation.CancelAsync().ConfigureAwait(false);
+            await exitMonitor.ConfigureAwait(false);
+        }
     }
 
     public ValueTask DisposeAsync()
@@ -95,6 +114,40 @@ public sealed class HostBootstrapParentChannel : IAsyncDisposable
         _requestPipe.Dispose();
         _responsePipe.Dispose();
         return ValueTask.CompletedTask;
+    }
+
+    private static int GetStartedProcessId(Process process)
+    {
+        try
+        {
+            return process.Id;
+        }
+        catch (InvalidOperationException exception)
+        {
+            throw new InvalidOperationException("The bootstrap child process has not been started.", exception);
+        }
+    }
+
+    private static async Task CancelWhenExitedAsync(Process process, Action cancel, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+            cancel();
+        }
+        catch (OperationCanceledException)
+        {
+            // The exchange finished or was canceled first.
+        }
+    }
+
+    private static async Task ConnectExpectedClientAsync(
+        NamedPipeServerStream pipe,
+        int expectedProcessId,
+        CancellationToken cancellationToken)
+    {
+        await pipe.WaitForConnectionAsync(cancellationToken).ConfigureAwait(false);
+        HostBootstrapPipeClientVerifier.EnsureExpectedClient(pipe, expectedProcessId);
     }
 
     private static string CreatePipeName(string direction)
@@ -125,15 +178,15 @@ public sealed class HostBootstrapChildChannel : IAsyncDisposable
 
     public static HostBootstrapChildChannel? TryOpenFromEnvironment()
     {
-        var requestHandle = Environment.GetEnvironmentVariable(HostBootstrapProtocol.RequestPipeEnvironmentVariable);
-        var responseHandle = Environment.GetEnvironmentVariable(HostBootstrapProtocol.ResponsePipeEnvironmentVariable);
+        var requestPipeName = Environment.GetEnvironmentVariable(HostBootstrapProtocol.RequestPipeEnvironmentVariable);
+        var responsePipeName = Environment.GetEnvironmentVariable(HostBootstrapProtocol.ResponsePipeEnvironmentVariable);
         Environment.SetEnvironmentVariable(HostBootstrapProtocol.RequestPipeEnvironmentVariable, null);
         Environment.SetEnvironmentVariable(HostBootstrapProtocol.ResponsePipeEnvironmentVariable, null);
         Environment.SetEnvironmentVariable(HostBootstrapProtocol.ParentProcessEnvironmentVariable, null);
 
-        return string.IsNullOrWhiteSpace(requestHandle) || string.IsNullOrWhiteSpace(responseHandle)
+        return string.IsNullOrWhiteSpace(requestPipeName) || string.IsNullOrWhiteSpace(responsePipeName)
             ? null
-            : new HostBootstrapChildChannel(requestHandle, responseHandle);
+            : new HostBootstrapChildChannel(requestPipeName, responsePipeName);
     }
 
     public async Task<HostBootstrapPipeRequest> ReadRequestAsync(CancellationToken cancellationToken)
@@ -164,5 +217,5 @@ public sealed class HostBootstrapChildChannel : IAsyncDisposable
     }
 
     private static NamedPipeClientStream CreateClientPipe(string name, PipeDirection direction)
-        => new(".", name, direction, PipeOptions.Asynchronous);
+        => new(".", name, direction, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
 }
