@@ -61,12 +61,12 @@ internal sealed class RestApiDiscoveryCandidateBuilderTests
             settings,
             phoneAddresses);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(candidates, Does.Contain(IPAddress.Parse("192.168.0.27")));
             Assert.That(candidates, Does.Not.Contain(IPAddress.Parse("192.168.0.35")));
             Assert.That(candidates, Has.Count.EqualTo(253));
-        });
+        }
     }
 
     [Test]
@@ -114,7 +114,7 @@ internal sealed class RestApiDiscoveryCandidateBuilderTests
     {
         const string body = """{"service":"MOBAflow MOBApi","status":"healthy","version":"1.0.0"}""";
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(MobApiHealthProbe.IsHealthyResponse(body), Is.True);
             Assert.That(MobApiHealthProbe.IsHealthyResponse("""{"status":"ok"}"""), Is.False);
@@ -122,7 +122,7 @@ internal sealed class RestApiDiscoveryCandidateBuilderTests
             Assert.That(MobApiHealthProbe.IsHealthyResponse("""{"status":1}"""), Is.False);
             Assert.That(MobApiHealthProbe.IsHealthyResponse("""{"status":"healthy","other":true}"""), Is.False);
             Assert.That(MobApiHealthProbe.IsHealthyResponse("not-json"), Is.False);
-        });
+        }
     }
 
     [TestCase("{\"status\":\"healthy\"}")]

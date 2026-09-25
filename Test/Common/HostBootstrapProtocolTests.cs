@@ -123,7 +123,8 @@ internal sealed class HostBootstrapProtocolTests
     [Test]
     public async Task ParentChannel_Configure_Should_UseProcessIndependentPipeNames()
     {
-        await using var parent = new HostBootstrapParentChannel();
+        var parent = new HostBootstrapParentChannel();
+        await using var parentLifetime = parent.ConfigureAwait(false);
         var startInfo = new ProcessStartInfo();
 
         parent.Configure(startInfo);
