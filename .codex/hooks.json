@@ -2,11 +2,11 @@
   "hooks": {
     "UserPromptSubmit": [
       {
-        "matcher": "*",
         "hooks": [
           {
             "type": "command",
-            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \".codex/hooks/sonar-secrets/build-scripts/prompt-secrets.ps1\"",
+            "command": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.codex/hooks/sonar-secrets/build-scripts/prompt-secrets.ps1\"",
+            "commandWindows": "pwsh -NoProfile -Command \"$root = git rev-parse --show-toplevel; if ($LASTEXITCODE -ne 0) { exit 2 }; & (Join-Path $root '.codex/hooks/sonar-secrets/build-scripts/prompt-secrets.ps1')\"",
             "timeout": 60
           }
         ]

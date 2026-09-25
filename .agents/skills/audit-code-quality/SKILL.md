@@ -1,6 +1,6 @@
 ---
 name: audit-code-quality
-description: Perform a read-only, repository-wide code-quality audit against official and authoritative standards, including ISO/IEC 25010, Microsoft .NET analyzers and design guidance, .NET testing guidance, NIST SSDF, Windows accessibility guidance, and C++ Core Guidelines where applicable. Use when Codex must assess an entire repository or codebase, establish a quality baseline, review maintainability, reliability, security, architecture, tests, coverage, dependencies, C#/XAML/C/C++ code, or produce an evidence-backed quality report without changing code.
+description: Perform an explicitly requested, read-only repository-wide quality audit with an evidence-backed report. Use for whole-codebase assessment or a quality baseline; ordinary focused reviews and individual bug diagnoses do not trigger this audit.
 ---
 
 # Audit Code Quality
@@ -46,7 +46,7 @@ Run, when supported and already configured:
 3. Unit and integration tests using the repository's documented command.
 4. Coverage collection using the repository's configured collector and thresholds.
 5. Dependency vulnerability auditing, including transitive dependencies.
-6. Existing mutation tests, architecture tests, lint tools, Sonar, CodeQL, or firmware checks.
+6. Existing mutation tests, architecture tests, lint tools or firmware checks; read SonarCloud/CodeQL results from GitHub CI. Never run local Sonar/Vortex code analysis or install analysis hooks. Local deterministic secrets scans remain required.
 7. Code metrics already available in the environment: maintainability index, cyclomatic complexity, class coupling, inheritance depth, and source lines.
 
 Do not install tools, update packages, restore prohibited solution graphs, start external services, or change configuration solely for the audit without explicit permission. If a check cannot run, state `Not verified`, give the exact reason, and use narrower evidence without treating absence of evidence as a pass.

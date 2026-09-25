@@ -9,7 +9,7 @@ description: "MOBAflow task list template for feature implementation"
 
 **Prerequisites**: `spec.md` and `plan.md` are required; use `research.md`, `data-model.md`, `contracts/`, and `quickstart.md` when present.
 
-**Tests**: Test tasks are MANDATORY for every new or changed behavior. Platform UI work also needs testable logic below the UI layer and focused manual checks where automation is impractical.
+**Tests**: Select meaningful regression tests for changed behavior using the change matrix in `AGENTS.md`. Documentation-only edits use structural checks, not .NET builds/tests. Executable development tooling uses isolated functional tests. Platform UI work also needs testable logic below the UI layer and focused manual checks where automation is impractical.
 
 **Organization**: Group tasks by user story so each story remains independently implementable and testable.
 
@@ -93,9 +93,9 @@ description: "MOBAflow task list template for feature implementation"
 
 ## Final Phase: Validation and Documentation
 
-- [ ] TXXX Run `dotnet test Test/Test.csproj`
-- [ ] TXXX [P] Run exact affected project builds, including required Windows/Android builds on matching hosts
-- [ ] TXXX [P] Validate Light and Dark themes for changed UI
+- [ ] TXXX Run relevant tests or documentation/structural checks selected from `AGENTS.md`; a filtered test run must execute intended tests
+- [ ] TXXX [P] Run affected project builds when code/build behavior changes, on matching hosts
+- [ ] TXXX [P] Validate Light and Dark themes when UI changes
 - [ ] TXXX [P] Remove superseded models, fields, endpoints, tests, and docs; verify configuration defaults and persisted layouts still load
 - [ ] TXXX Update root documentation, changelog, and public API XML documentation as applicable
 - [ ] TXXX Run `sonar analyze secrets` over all changed files

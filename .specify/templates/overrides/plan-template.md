@@ -46,8 +46,8 @@
 - [ ] UI behavior uses ViewModel commands; UI resources support Light and Dark themes.
 - [ ] All user-visible UI strings are English.
 - [ ] Data and API effects are explicit; superseded models are removed without legacy paths or migrations.
-- [ ] Automated tests cover every new or changed behavior.
-- [ ] Validation commands match the affected platforms and include `dotnet test Test/Test.csproj`.
+- [ ] Meaningful regression tests cover changed behavior; documentation-only edits use structural checks.
+- [ ] Validation commands follow the change matrix in `AGENTS.md` and match the affected platforms.
 - [ ] The design reuses established services, helpers, DI patterns, and serializers.
 - [ ] The specification and plan reference the authoritative GitHub issue.
 - [ ] Spec Kit artifacts remain below `specs/`; any standalone plan belongs in `plans/`.
