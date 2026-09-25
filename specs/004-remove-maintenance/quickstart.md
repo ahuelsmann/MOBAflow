@@ -12,7 +12,7 @@ Run from this dedicated worktree. Coordinate substantial builds with the master 
 4. Run relevant Windows-target regressions; inspect schema and documentation.
 5. Run line-ending/governance checks, secrets scans and review the complete diff.
 6. Publish a draft PR only after integrating main. Verify CI and current-commit SonarCloud with zero
-   OPEN/CONFIRMED findings. Master coordinates the final merge after #146.
+   OPEN/CONFIRMED findings. Master coordinates the final merge.
 
 The authorized isolated synthetic-data inspection was completed without layout connectivity.
 The following checklist defines the vehicle-page states; see the recorded scope and results below.
@@ -33,21 +33,23 @@ Only the isolated test copy was launched for this acceptance check. No hardware 
 
 ## Recorded results
 
-Portable validation: 43 focused tests passed, followed by 1686 passed / 4 skipped / 0 failed in the full
-net10.0 suite. Skips: missing bundled-photo folder and three opt-in integration tests requiring MOBApi
-on localhost:5001. After the review fixes for stable selection and trimmed search, 32 focused tests
-passed with no skips. Those regression methods were subsequently moved into existing fixtures;
-their final Windows validation passed: 1750 tests passed, with zero failures and zero skips (58 seconds).
-The Windows Release test build, including WinUI XAML and normal MOBApi dependencies, passed. The
-tested state was commit `dd18c8f6b6e85424718290400d441a5799d20784` plus the unchanged review/test/docs patch
-with SHA256 `E02A20B1DAD714A075AE79DE51CCD83FC4666A30EF635D8AB79625B6753E0FAF`.
-The Windows analyzer comparison contains only expected maintenance-related decreases, with no new
-or increased diagnostic groups. Android Release rebuild/publication passed; `scripts/Test-AndroidAppBundle.ps1`
-validated both published AAB files, including the required arm64-v8a and x86_64 libraries. Spec Kit
-governance, line endings and schema JSON checks passed. Final analyzer baselines,
-CI/Sonar remain pending. The final baselines require complete fresh outputs
-after integrating the centrally coordinated main changes; the separate Android output folder alone
-does not contain SARIF for shared projects reused incrementally.
+Final integration includes main `d0ffddc41efdd9aa422c1a2f7a48de67b5445e8b` (including the workflow,
+reservation, timetable and dependency changes). The final application code is
+`706fc3a9a43ef948a13688dde811d216e4acd889`.
+
+- Portable Release: 1685 passed / 4 skipped / 0 failed. The four skips are the missing bundled-photo
+  folder check and three opt-in MOBApi integration tests requiring a server on localhost:5001.
+- Focused inventory/photo regressions: 29 passed, including all three vehicle kinds during delayed
+  photo copying with a changed selection, changed project, replaced solution or a persistence failure.
+- Windows Release build passed; all 1743 Windows tests passed, with no skips or failures.
+- Android Release publication produced both AAB files; both passed the bundle structure and ABI checks.
+- Portable analyzer baseline matches 3999 diagnostics in 1268 groups. Its changes only remove or
+  reduce maintenance-related allowances. Windows and Android comparisons likewise contain only
+  reductions; their baselines were updated without new or increased allowances.
+- Independent Standards and Spec reviews are complete with zero open findings on the final code.
+  The photo persistence and error-observation findings were fixed and regression-tested.
+- JSON schema parsing, Spec Kit governance and the changed-file secrets/line-ending checks passed.
+  Draft publication and current-commit GitHub CI/Sonar evidence remain pending.
 
 Native UI acceptance on the code committed in `441cdb2170533a88bf7ff77a5f8e177dee61afd3` passed:
 
@@ -66,9 +68,3 @@ Isolation used a separate Release binary copy, own settings/photos/logs, two syn
 synthetic vehicles and inactive journeys. The invalid nonblank Z21 address prevented connection and discovery;
 REST auto-start, REST connection and health checks were disabled. No operator data or secrets were copied.
 The native Computer Use provider confirmed the test instance absent after shutdown; its slot was released.
-
-After integrating main `29f56176aa699ffd14a2b96c9b98a54a5c342f90` (workflow action sequences), the portable
-Release test-project rebuild passed. All 56 focused vehicle, persistence, DI and workflow boundary tests
-passed with no failures or skips. The complete fresh portable SARIF comparison showed only expected
-maintenance-related decreases, with no new or increased groups. Final Windows/Android runs and baseline
-updates are deliberately deferred until the additional #146 integration, as centrally coordinated.
