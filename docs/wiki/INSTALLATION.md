@@ -50,7 +50,7 @@ dotnet run --project MOBAflow/MOBAflow.csproj
 For Android:
 
 ```powershell
-dotnet restore MOBAsmart/MOBAsmart.csproj -f net10.0-android
+dotnet restore MOBAsmart/MOBAsmart.csproj
 dotnet build MOBAsmart/MOBAsmart.csproj -f net10.0-android
 ```
 

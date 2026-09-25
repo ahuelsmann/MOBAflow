@@ -188,10 +188,14 @@ MOBAsmart then discovers the endpoint on the LAN.
 
 The bridge supports solution synchronization, runtime state, remote commands,
 journey progress, client registration and rolling-stock
-photos. Protected desktop-host communication and certificate-pinned MOBAsmart
-pairing are available while authenticated remote-read and command enforcement
-is still being completed. The bridge is designed for a trusted private LAN and
-must not be exposed to the public internet.
+photos. Protected desktop-host communication, certificate-pinned MOBAsmart
+pairing and authenticated remote reads are implemented. Remote control commands
+require authorization. Anonymous read-only compatibility remains available
+until the installation meets the release, observation and evidence conditions
+for disabling it. Unified command admission and final cleanup remain planned;
+see the [project reference](../PROJECT-REFERENCE.md#mobapi-endpoints). The bridge
+is designed for a trusted private LAN and must not be exposed to the public
+internet.
 
 ## Useful Track Plan keys
 
