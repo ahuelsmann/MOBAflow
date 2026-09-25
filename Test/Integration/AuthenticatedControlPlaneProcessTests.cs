@@ -39,9 +39,10 @@ internal sealed class AuthenticatedControlPlaneProcessTests
         Directory.CreateDirectory(storageDirectory);
         try
         {
-            await using var server = await MobaApiProcess
+            var server = await MobaApiProcess
                 .StartAsync(storageDirectory, httpPort, httpsPort)
                 .ConfigureAwait(false);
+            await using var serverLifetime = server.ConfigureAwait(false);
 
             using var health = await server
                 .SendAnonymousAsync(HttpMethod.Get, MobApiHealthProbe.HealthPath)
@@ -78,9 +79,10 @@ internal sealed class AuthenticatedControlPlaneProcessTests
         Directory.CreateDirectory(storageDirectory);
         try
         {
-            await using var server = await MobaApiProcess
+            var server = await MobaApiProcess
                 .StartAsync(storageDirectory, httpPort, httpsPort)
                 .ConfigureAwait(false);
+            await using var serverLifetime = server.ConfigureAwait(false);
 
             using var status = await server
                 .SendAnonymousAsync(HttpMethod.Get, "api/status")
