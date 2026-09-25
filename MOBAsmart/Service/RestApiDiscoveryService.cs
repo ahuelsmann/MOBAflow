@@ -317,7 +317,7 @@ public class RestApiDiscoveryService : IRestDiscoveryService, IAuthenticatedRest
                 cancellationToken.ThrowIfCancellationRequested();
                 try
                 {
-                    await udpClient.SendAsync(requestBytes, requestBytes.Length, requestEndpoint)
+                    await udpClient.SendAsync(requestBytes, requestEndpoint, cancellationToken)
                         .ConfigureAwait(false);
                 }
                 catch (SocketException)
