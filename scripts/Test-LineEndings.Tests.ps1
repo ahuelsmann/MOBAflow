@@ -50,7 +50,7 @@ function Write-Text([string] $Name, [string] $Text) {
 }
 
 try {
-    $null = Git @('init', '--quiet')
+    $null = Git @('init', '--quiet', '--initial-branch=feature/hook-tests')
     $null = Git @('config', 'core.autocrlf', 'true')
     $null = Git @('config', 'user.name', 'Line ending tests')
     $null = Git @('config', 'user.email', 'line-endings@example.invalid')
@@ -60,6 +60,7 @@ try {
         Copy-Item -LiteralPath (Join-Path $sourceRoot "scripts/$name") -Destination (Join-Path $fixture "scripts/$name")
     }
     Copy-Item -LiteralPath (Join-Path $sourceRoot '.githooks/pre-commit') -Destination (Join-Path $fixture '.githooks/pre-commit')
+    Copy-Item -LiteralPath (Join-Path $sourceRoot '.githooks/pre-push') -Destination (Join-Path $fixture '.githooks/pre-push')
     Write-Text '.gitattributes' "* text=auto eol=crlf`r`n*.sh text eol=lf`r`n.githooks/* text eol=lf`r`n*.bin binary`r`n"
     Write-Text 'example space ü.cs' "first`r`nsecond`nlast"
     $result = Check
@@ -105,6 +106,11 @@ try {
     $result = Invoke-Process 'pwsh' $installArgs
     Assert-True ($result.Code -ne 0 -and [IO.File]::ReadAllText($hookPath) -ceq '# Existing user hook') 'Installer overwrote an existing hook.'
     Remove-Item -LiteralPath $hookPath
+    Write-Text '.git/hooks/pre-push' '# Existing user push hook'
+    $result = Invoke-Process 'pwsh' $installArgs
+    Assert-True ($result.Code -ne 0 -and -not (Test-Path -LiteralPath $hookPath) -and
+        [IO.File]::ReadAllText((Join-Path $fixture '.git/hooks/pre-push')) -ceq '# Existing user push hook') 'Installer partially installed hooks or overwrote a custom push hook.'
+    Remove-Item -LiteralPath (Join-Path $fixture '.git/hooks/pre-push')
     $result = Invoke-Process 'pwsh' $installArgs
     Assert-True ($result.Code -eq 0) $result.Output
     $result = Invoke-Process 'git' @('commit', '-m', 'test: reject mixed working copy')
@@ -113,6 +119,39 @@ try {
     Assert-True ($result.Code -eq 0) $result.Output
     $result = Invoke-Process 'git' @('commit', '-m', 'test: accept normalized working copy')
     Assert-True ($result.Code -eq 0) $result.Output
+
+    # Exercise real Git commands against a local bare remote, never the project remote.
+    $null = Git @('switch', '-c', 'main')
+    $result = Invoke-Process 'git' @('commit', '--allow-empty', '-m', 'test: blocked main commit')
+    Assert-True ($result.Code -ne 0 -and $result.Output.Contains('Direct commits on main are blocked')) 'Commit on main was allowed.'
+    $null = Git @('switch', '--detach')
+    $result = Invoke-Process 'git' @('commit', '--allow-empty', '-m', 'test: detached checkout')
+    Assert-True ($result.Code -eq 0) $result.Output
+    $null = Git @('switch', 'feature/hook-tests')
+    $remote = Join-Path $fixture 'remote.git'
+    $null = Git @('init', '--bare', '--quiet', $remote)
+    $null = Git @('remote', 'add', 'fixture', $remote)
+    $result = Invoke-Process 'git' @('push', 'fixture', 'HEAD:refs/heads/feature/hook-tests')
+    Assert-True ($result.Code -eq 0) $result.Output
+    foreach ($refspec in @('main:main', 'HEAD:refs/heads/main', '+feature/hook-tests:main')) {
+        $result = Invoke-Process 'git' @('push', 'fixture', $refspec)
+        Assert-True ($result.Code -ne 0 -and $result.Output.Contains('Direct pushes to main are blocked')) "Push allowed: $refspec"
+    }
+    $result = Invoke-Process 'git' @('push', 'fixture', 'HEAD:refs/heads/allowed', 'HEAD:refs/heads/main')
+    Assert-True ($result.Code -ne 0 -and $result.Output.Contains('Direct pushes to main are blocked')) 'Multi-ref push to main was allowed.'
+    $null = Git @('--git-dir', $remote, 'update-ref', 'refs/heads/main', (Git @('rev-parse', 'HEAD')).Trim())
+    $result = Invoke-Process 'git' @('push', 'fixture', '--delete', 'main')
+    Assert-True ($result.Code -ne 0 -and $result.Output.Contains('Direct pushes to main are blocked')) 'Main deletion was allowed.'
+    $result = Invoke-Process 'git' @('push', 'fixture', '--delete', 'feature/hook-tests')
+    Assert-True ($result.Code -eq 0) $result.Output
+    # Reinstallation must preserve a managed guard and continue to work in linked worktrees.
+    $result = Invoke-Process 'pwsh' $installArgs
+    Assert-True ($result.Code -eq 0) $result.Output
+    $linked = Join-Path $fixture 'linked'
+    $null = Git @('worktree', 'add', '--quiet', $linked, 'main')
+    $result = Invoke-Process 'git' @('-C', $linked, 'commit', '--allow-empty', '-m', 'test: blocked linked main')
+    Assert-True ($result.Code -ne 0 -and $result.Output.Contains('Direct commits on main are blocked')) 'Linked main worktree was unprotected.'
+    $null = Git @('worktree', 'remove', $linked)
 
     # Preserve a deliberately malformed index blob even after the working file has been fixed.
     [IO.File]::AppendAllText((Join-Path $fixture '.gitattributes'), "raw.cs -text`r`n")
@@ -136,7 +175,7 @@ try {
     $null = Git @('add', 'example space ü.cs')
     $result = Invoke-Process 'git' @('commit', '-m', 'test: fallback checker rejects mixed working copy')
     Assert-True ($result.Code -ne 0 -and $result.Output.Contains('Invalid line endings:')) 'Installed fallback checker was not executed.'
-    Write-Host "Line-ending regression tests passed: $checks assertions."
+    Write-Host "Git hook and line-ending regression tests passed: $checks assertions."
 }
 finally {
     # This exact GUID directory was created by this test; never delete a caller-supplied path.

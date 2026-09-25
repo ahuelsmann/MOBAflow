@@ -13,6 +13,7 @@ if ($configured -and $configured -ne '.git/hooks' -and $configured -ne $hooksDir
     throw "Existing custom core.hooksPath must be integrated manually: $configured"
 }
 $destination = Join-Path $hooksDirectory 'pre-commit'
+$pushDestination = Join-Path $hooksDirectory 'pre-push'
 $fallback = Join-Path $hooksDirectory 'mobaflow-line-endings.ps1'
 if ((Test-Path -LiteralPath $fallback) -and
     -not ([IO.File]::ReadAllText($fallback)).Contains('# MOBAflow managed line-ending checker')) {
@@ -24,14 +25,20 @@ if (Test-Path -LiteralPath $destination) {
         throw "Existing pre-commit hook must be integrated manually: $destination"
     }
 }
+# Validate every destination before replacing any managed file.
+if ((Test-Path -LiteralPath $pushDestination) -and
+    -not ([IO.File]::ReadAllText($pushDestination)).Contains('# MOBAflow managed main protection hook')) {
+    throw "Existing pre-push hook must be integrated manually: $pushDestination"
+}
 # Keep all other hooks. An absolute path also works in linked worktrees, where .git is a file.
 [void] [IO.Directory]::CreateDirectory($hooksDirectory)
 Copy-Item -LiteralPath (Join-Path $repositoryRoot '.githooks/pre-commit') -Destination $destination
+Copy-Item -LiteralPath (Join-Path $repositoryRoot '.githooks/pre-push') -Destination $pushDestination
 Copy-Item -LiteralPath (Join-Path $repositoryRoot 'scripts/Test-LineEndings.ps1') -Destination $fallback
 if (-not $IsWindows) {
-    & chmod +x $destination
+    & chmod +x $destination $pushDestination
     if ($LASTEXITCODE -ne 0) { throw 'Could not make the hook executable.' }
 }
 git -C $repositoryRoot config --local core.hooksPath $hooksDirectory
 if ($LASTEXITCODE -ne 0) { throw 'Could not configure core.hooksPath.' }
-Write-Host "Installed line-ending pre-commit hook: $destination"
+Write-Host "Installed main protection and line-ending hooks: $destination, $pushDestination"

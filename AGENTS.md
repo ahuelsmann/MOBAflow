@@ -28,6 +28,9 @@ and apply to coding agents across Windows and Linux.
 
 - GitHub is the only Git host. Inspect `git remote -v` and branch tracking before synchronizing; use the configured
   GitHub remote rather than assuming `origin` or restoring an Azure remote.
+- Never commit directly on `main` or push changes directly to `main`. Implementations, bug fixes and other
+  repository changes require a task branch and a pull request. Do not bypass local hooks or GitHub protection.
+  The shared `main` checkout may be fast-forwarded to changes already merged through GitHub.
 - Isolate independent write tasks with Git worktrees: use a dedicated task branch/worktree as specified in
   [.github/instructions/git-worktree-isolation.instructions.md](.github/instructions/git-worktree-isolation.instructions.md).
   A user-requested synchronization of the shared checkout can be prepared there and then fast-forwarded into that checkout.

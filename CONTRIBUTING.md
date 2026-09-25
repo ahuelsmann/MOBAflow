@@ -27,7 +27,7 @@ Diese Variante ist für Edit/Build-Zyklen gedacht. Für vollständige App-Starts
 Release-Validierung bleibt der normale Build maßgeblich. Details stehen in
 `docs/BUILD-PERFORMANCE.md`.
 
-### Einheitliche Zeilenenden
+### Lokaler Branch-Schutz und einheitliche Zeilenenden
 
 PowerShell 7 (`pwsh`) wird für die lokalen Prüfungen benötigt. Einmal pro Klon installieren:
 
@@ -35,10 +35,11 @@ PowerShell 7 (`pwsh`) wird für die lokalen Prüfungen benötigt. Einmal pro Klo
 ./scripts/Install-GitHooks.ps1
 ```
 
-Der Hook prüft vor einem Commit die vorgemerkten Dateien auf der Festplatte und auf gemischte
-Zeilenenden im Git-Index. Er verändert und staged keine Dateien. Andere Hooks bleiben erhalten;
-bei einem bereits vorhandenen eigenen `pre-commit`-Hook bricht die Installation ab.
-Verknüpfte Worktrees teilen sich den installierten Hook. Ältere Branches ohne Prüfskript verwenden
+Die Hooks blockieren normale Commits auf `main` und Pushes mit Ziel `main`, auch von einem anderen
+lokalen Branch aus. Vor einem Commit prüfen sie außerdem die vorgemerkten Dateien auf der Festplatte
+und auf gemischte Zeilenenden im Git-Index. Sie verändern und stagen keine Dateien. Andere Hooks bleiben
+erhalten; bei einem eigenen `pre-commit`- oder `pre-push`-Hook bricht die Installation ab.
+Verknüpfte Worktrees teilen sich die installierten Hooks. Ältere Branches ohne Prüfskript verwenden
 eine bei der Installation hinterlegte Kopie. Nach Änderungen am Hook die Installation erneut ausführen.
 
 Nach Änderungen durch Patches, Generatoren oder andere Werkzeuge:
@@ -77,6 +78,18 @@ die vorhandenen Azure-DevOps-Pipelines bleiben als zusätzlicher Build- und
 Release-Weg erhalten.
 
 ## 3. Wie du beitragen kannst
+
+Änderungen an `main` laufen immer über einen Pull Request. Implementierungen, Bugfixes und andere
+Repository-Änderungen dürfen weder direkt auf `main` committet noch dorthin gepusht werden.
+Arbeite in einem eigenen Branch und Worktree; aktualisiere den lokalen `main` nur per Fast-Forward
+auf bereits über GitHub integrierte Änderungen.
+
+GitHub erzwingt die PR-Pflicht auch für Administratoren und sperrt Force-Pushes sowie das Löschen
+von `main`. Eine zusätzliche Freigabe durch einen zweiten Menschen ist derzeit nicht vorgeschrieben.
+Lokale Hooks müssen je Klon installiert werden und sind technisch umgehbar; die verbindliche
+Push-Sperre liegt deshalb auf GitHub. Hooks und Branch-Schutz dürfen nicht umgangen werden.
+Diese Branch-Regel legt keine verpflichtenden CI-Checks fest; die bestehende Sonar- und
+Validierungspflicht aus [AGENTS.md](AGENTS.md) gilt weiterhin.
 
 - **Bugs melden / Features vorschlagen**
   - GitHub Issues: `https://github.com/ahuelsmann/MOBAflow/issues`

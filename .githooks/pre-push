@@ -1,0 +1,10 @@
+#!/bin/sh
+# MOBAflow managed main protection hook
+# Check destinations, including feature:main, HEAD:main and deletion refspecs.
+while read -r local_ref local_oid remote_ref remote_oid; do
+    if [ "$remote_ref" = refs/heads/main ]; then
+        echo "Direct pushes to main are blocked. Push your task branch and open a pull request." >&2
+        exit 1
+    fi
+done
+exit 0

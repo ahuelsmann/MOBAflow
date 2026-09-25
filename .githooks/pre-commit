@@ -1,5 +1,14 @@
 #!/bin/sh
 # MOBAflow managed line-ending hook
+branch=$(git symbolic-ref --quiet HEAD)
+status=$?
+if [ "$status" -gt 1 ]; then
+    exit "$status"
+fi
+if [ "$branch" = refs/heads/main ]; then
+    echo "Direct commits on main are blocked. Use a task worktree/branch and a pull request." >&2
+    exit 1
+fi
 root=$(git rev-parse --show-toplevel) || exit 1
 script="$root/scripts/Test-LineEndings.ps1"
 # Older linked worktrees can use the installed copy until their branch includes the script.
