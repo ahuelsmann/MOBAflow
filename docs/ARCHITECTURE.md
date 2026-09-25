@@ -445,12 +445,14 @@ services.AddTransient<JourneyPage>();        // Platform-specific Pages
 services.AddSingleton<NavigationService>();  // WinUI Navigation
 services.AddSingleton<IIoService, IoService>(); // File Operations
 
-// Plugins
-var pluginLoader = new PluginLoader(...);
-pluginLoader.LoadPluginsAsync(services);      // Discover & Register
-
 var provider = services.BuildServiceProvider();
 ```
+
+Desktop pages are registered in
+[`NavigationRegistration`](../MOBAflow/Service/NavigationRegistration.cs).
+External DLL discovery and plugin loading are not implemented.
+`PostStartupInitializationService.InitializePluginsAsync` currently publishes
+status messages only; it does not load or initialize external plugins.
 
 ### Resolution Example
 
@@ -497,11 +499,6 @@ If Z21 Connection Fails:
   • UI shows "Disconnected" status
   • Commands are disabled
   • No actions can execute
-    
-If DLL is corrupted:
-  • Error logged
-  • Next DLL is attempted
-  • App always runs
 ```
 
 ### Logging Strategy
@@ -513,15 +510,12 @@ Critical: App won't start
 
 Error: Feature won't work
   └─ Z21 connection lost
-  └─ Plugin DLL corrupt
 
 Warning: Unexpected but recoverable
-  └─ Duplicate page tag in plugin
   └─ Missing configuration value
 
 Info: Normal operations
   └─ Z21 connected
-  └─ Plugin loaded
   └─ Command executed
 
 Debug: Diagnostic info
@@ -590,7 +584,6 @@ The architecture supports:
 
 - ✅ **New UI Platforms** - Just implement UI layer above SharedUI
 - ✅ **New Services** - Add to Backend, register in DI
-- ✅ **New Plugins** - Drop DLL in Plugins folder
 - ✅ **Protocol Upgrades** - Encapsulated in IZ21
 - ✅ **Configuration Expansion** - AppSettings extensible
 - ✅ **Domain Evolution** - Models can change independently
