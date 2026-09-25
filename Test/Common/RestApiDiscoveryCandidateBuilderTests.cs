@@ -52,12 +52,12 @@ internal sealed class RestApiDiscoveryCandidateBuilderTests
     }
 
     [Test]
-    public void BuildAuthenticatedUdpUnicastCandidates_IncludesPcWhenMulticastIsUnavailable()
+    public void BuildLocalSubnetProbeOrder_IncludesPcOnPhoneSubnet()
     {
         var settings = new RestApiSettings();
         var phoneAddresses = new[] { IPAddress.Parse("192.168.0.35") };
 
-        var candidates = RestApiDiscoveryCandidateBuilder.BuildAuthenticatedUdpUnicastCandidates(
+        var candidates = RestApiDiscoveryCandidateBuilder.BuildLocalSubnetProbeOrder(
             settings,
             phoneAddresses);
 
@@ -70,12 +70,12 @@ internal sealed class RestApiDiscoveryCandidateBuilderTests
     }
 
     [Test]
-    public void BuildAuthenticatedUdpUnicastCandidates_DoesNotScanPublicSubnets()
+    public void BuildLocalSubnetProbeOrder_DoesNotScanPublicSubnets()
     {
         var settings = new RestApiSettings();
         var localAddresses = new[] { IPAddress.Parse("203.0.113.20") };
 
-        var candidates = RestApiDiscoveryCandidateBuilder.BuildAuthenticatedUdpUnicastCandidates(
+        var candidates = RestApiDiscoveryCandidateBuilder.BuildLocalSubnetProbeOrder(
             settings,
             localAddresses);
 

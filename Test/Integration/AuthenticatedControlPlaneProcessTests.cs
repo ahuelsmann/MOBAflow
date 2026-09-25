@@ -26,39 +26,19 @@ internal sealed class AuthenticatedControlPlaneProcessTests
     [CancelAfter(45_000)]
     public async Task HealthEndpoint_ShouldMatchMobAsmartDiscoveryContract()
     {
-        var storageDirectory = Path.Combine(
-            Path.GetTempPath(),
-            "MOBAflow",
-            "authenticated-control-plane-tests",
-            Guid.NewGuid().ToString("N"));
-        var httpPort = GetAvailablePort();
-        var httpsPort = GetAvailablePort();
-        while (httpsPort == httpPort)
-            httpsPort = GetAvailablePort();
+        using var environment = IsolatedServerEnvironment.Create();
+        var server = await MobaApiProcess.StartAsync(environment).ConfigureAwait(false);
+        await using var serverLifetime = server.ConfigureAwait(false);
 
-        Directory.CreateDirectory(storageDirectory);
-        try
+        using var health = await server
+            .SendAnonymousAsync(HttpMethod.Get, MobApiHealthProbe.HealthPath)
+            .ConfigureAwait(false);
+        var body = await health.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
         {
-            var server = await MobaApiProcess
-                .StartAsync(storageDirectory, httpPort, httpsPort)
-                .ConfigureAwait(false);
-            await using var serverLifetime = server.ConfigureAwait(false);
-
-            using var health = await server
-                .SendAnonymousAsync(HttpMethod.Get, MobApiHealthProbe.HealthPath)
-                .ConfigureAwait(false);
-            var body = await health.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-            using (Assert.EnterMultipleScope())
-            {
-                Assert.That(health.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-                Assert.That(MobApiHealthProbe.IsHealthyResponse(body), Is.True);
-            }
-        }
-        finally
-        {
-            if (Directory.Exists(storageDirectory))
-                Directory.Delete(storageDirectory, recursive: true);
+            Assert.That(health.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(MobApiHealthProbe.IsHealthyResponse(body), Is.True);
         }
     }
 
@@ -66,90 +46,52 @@ internal sealed class AuthenticatedControlPlaneProcessTests
     [CancelAfter(45_000)]
     public async Task Bootstrap_ShouldComplete_WhenStandardStreamsAreNotRedirected()
     {
-        var storageDirectory = Path.Combine(
-            Path.GetTempPath(),
-            "MOBAflow",
-            "authenticated-control-plane-tests",
-            Guid.NewGuid().ToString("N"));
-        var httpPort = GetAvailablePort();
-        var httpsPort = GetAvailablePort();
-        while (httpsPort == httpPort)
-            httpsPort = GetAvailablePort();
+        // The other process tests redirect standard streams to capture diagnostics; this one keeps the
+        // default handles, like the WinUI host, so the bootstrap cannot depend on redirected streams.
+        using var environment = IsolatedServerEnvironment.Create();
+        var server = await MobaApiProcess
+            .StartAsync(environment, redirectStandardStreams: false)
+            .ConfigureAwait(false);
+        await using var serverLifetime = server.ConfigureAwait(false);
 
-        Directory.CreateDirectory(storageDirectory);
-        try
-        {
-            var server = await MobaApiProcess
-                .StartAsync(storageDirectory, httpPort, httpsPort)
-                .ConfigureAwait(false);
-            await using var serverLifetime = server.ConfigureAwait(false);
-
-            using var status = await server
-                .SendAnonymousAsync(HttpMethod.Get, "api/status")
-                .ConfigureAwait(false);
-
-            Assert.That(status.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-        }
-        finally
-        {
-            if (Directory.Exists(storageDirectory))
-                Directory.Delete(storageDirectory, recursive: true);
-        }
+        Assert.That(server.HostToken.AccessToken, Is.Not.Empty);
     }
 
     [Test]
     [CancelAfter(120_000)]
     public async Task CompatibilityStatus_Should_BeHostOnlyAndExposeBoundedEvidence()
     {
-        var storageDirectory = Path.Combine(
-            Path.GetTempPath(),
-            "MOBAflow",
-            "authenticated-control-plane-tests",
-            Guid.NewGuid().ToString("N"));
-        var httpPort = GetAvailablePort();
-        var httpsPort = GetAvailablePort();
-        while (httpsPort == httpPort)
-            httpsPort = GetAvailablePort();
-
-        Directory.CreateDirectory(storageDirectory);
-        try
+        using var environment = IsolatedServerEnvironment.Create();
+        var server = await MobaApiProcess
+            .StartAsync(environment)
+            .ConfigureAwait(false);
+        await using (server.ConfigureAwait(false))
         {
-            var server = await MobaApiProcess
-                .StartAsync(storageDirectory, httpPort, httpsPort)
+            using var compatibilityRead = await server
+                .SendAnonymousAsync(HttpMethod.Get, "api/runtime/snapshot")
                 .ConfigureAwait(false);
-            await using (server.ConfigureAwait(false))
-            {
-                using var compatibilityRead = await server
-                    .SendAnonymousAsync(HttpMethod.Get, "api/runtime/snapshot")
-                    .ConfigureAwait(false);
-                using var anonymousStatus = await server
-                    .SendAnonymousAsync(HttpMethod.Get, "api/control-plane/security/compatibility")
-                    .ConfigureAwait(false);
-                using var hostStatus = await server
-                    .SendHostAsync(HttpMethod.Get, "api/control-plane/security/compatibility")
-                    .ConfigureAwait(false);
-                var responseBody = await hostStatus.Content.ReadAsStringAsync().ConfigureAwait(false);
-                using var body = JsonDocument.Parse(responseBody);
+            using var anonymousStatus = await server
+                .SendAnonymousAsync(HttpMethod.Get, "api/control-plane/security/compatibility")
+                .ConfigureAwait(false);
+            using var hostStatus = await server
+                .SendHostAsync(HttpMethod.Get, "api/control-plane/security/compatibility")
+                .ConfigureAwait(false);
+            var responseBody = await hostStatus.Content.ReadAsStringAsync().ConfigureAwait(false);
+            using var body = JsonDocument.Parse(responseBody);
 
-                using (Assert.EnterMultipleScope())
-                {
-                    Assert.That(compatibilityRead.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
-                    Assert.That(anonymousStatus.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
-                    Assert.That(hostStatus.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-                    Assert.That(responseBody, Does.Not.Contain("token").IgnoreCase);
-                    Assert.That(responseBody, Does.Not.Contain("snapshot").IgnoreCase);
-                    Assert.That(responseBody, Does.Not.Contain("hardware").IgnoreCase);
-                    Assert.That(
-                        body.RootElement.GetProperty("telemetry").GetProperty("outcomes").GetArrayLength(),
-                        Is.GreaterThanOrEqualTo(1));
-                    Assert.That(body.RootElement.TryGetProperty("readiness", out _), Is.True);
-                }
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(compatibilityRead.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+                Assert.That(anonymousStatus.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+                Assert.That(hostStatus.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+                Assert.That(responseBody, Does.Not.Contain("token").IgnoreCase);
+                Assert.That(responseBody, Does.Not.Contain("snapshot").IgnoreCase);
+                Assert.That(responseBody, Does.Not.Contain("hardware").IgnoreCase);
+                Assert.That(
+                    body.RootElement.GetProperty("telemetry").GetProperty("outcomes").GetArrayLength(),
+                    Is.GreaterThanOrEqualTo(1));
+                Assert.That(body.RootElement.TryGetProperty("readiness", out _), Is.True);
             }
-        }
-        finally
-        {
-            if (Directory.Exists(storageDirectory))
-                Directory.Delete(storageDirectory, recursive: true);
         }
     }
 
@@ -157,26 +99,13 @@ internal sealed class AuthenticatedControlPlaneProcessTests
     [CancelAfter(120_000)]
     public async Task AuthenticatedReads_ShouldRemainEquivalent_AfterReconnectAndServerRestart()
     {
-        var storageDirectory = Path.Combine(
-            Path.GetTempPath(),
-            "MOBAflow",
-            "authenticated-control-plane-tests",
-            Guid.NewGuid().ToString("N"));
-        var httpPort = GetAvailablePort();
-        var httpsPort = GetAvailablePort();
-        while (httpsPort == httpPort)
-            httpsPort = GetAvailablePort();
-
-        Directory.CreateDirectory(storageDirectory);
+        using var environment = IsolatedServerEnvironment.Create();
         SignalRReconnectProbe? reconnectProbe = null;
         try
         {
             TokenResponse deviceToken;
             string fingerprint;
-            await using (var firstServer = await MobaApiProcess.StartAsync(
-                             storageDirectory,
-                             httpPort,
-                             httpsPort))
+            await using (var firstServer = await MobaApiProcess.StartAsync(environment))
             {
                 fingerprint = firstServer.PublicKeyFingerprint;
                 deviceToken = await firstServer.PairReadOnlyClientAsync();
@@ -190,10 +119,7 @@ internal sealed class AuthenticatedControlPlaneProcessTests
                 Assert.That(firstSignalRSnapshot, Is.EqualTo(restSnapshot));
             }
 
-            await using (var restartedServer = await MobaApiProcess.StartAsync(
-                             storageDirectory,
-                             httpPort,
-                             httpsPort))
+            await using (var restartedServer = await MobaApiProcess.StartAsync(environment))
             {
                 Assert.That(restartedServer.PublicKeyFingerprint, Is.EqualTo(fingerprint));
                 await reconnectProbe.WaitForReconnectAsync();
@@ -211,8 +137,6 @@ internal sealed class AuthenticatedControlPlaneProcessTests
         {
             if (reconnectProbe is not null)
                 await reconnectProbe.DisposeAsync();
-            if (Directory.Exists(storageDirectory))
-                Directory.Delete(storageDirectory, recursive: true);
         }
     }
 
@@ -227,6 +151,44 @@ internal sealed class AuthenticatedControlPlaneProcessTests
         finally
         {
             listener.Stop();
+        }
+    }
+
+    private sealed class IsolatedServerEnvironment : IDisposable
+    {
+        private IsolatedServerEnvironment(string storageDirectory, int httpPort, int httpsPort)
+        {
+            StorageDirectory = storageDirectory;
+            HttpPort = httpPort;
+            HttpsPort = httpsPort;
+        }
+
+        public string StorageDirectory { get; }
+
+        public int HttpPort { get; }
+
+        public int HttpsPort { get; }
+
+        public static IsolatedServerEnvironment Create()
+        {
+            var storageDirectory = Path.Combine(
+                Path.GetTempPath(),
+                "MOBAflow",
+                "authenticated-control-plane-tests",
+                Guid.NewGuid().ToString("N"));
+            var httpPort = GetAvailablePort();
+            var httpsPort = GetAvailablePort();
+            while (httpsPort == httpPort)
+                httpsPort = GetAvailablePort();
+
+            Directory.CreateDirectory(storageDirectory);
+            return new IsolatedServerEnvironment(storageDirectory, httpPort, httpsPort);
+        }
+
+        public void Dispose()
+        {
+            if (Directory.Exists(StorageDirectory))
+                Directory.Delete(StorageDirectory, recursive: true);
         }
     }
 
@@ -252,10 +214,12 @@ internal sealed class AuthenticatedControlPlaneProcessTests
         public string PublicKeyFingerprint { get; }
 
         public static async Task<MobaApiProcess> StartAsync(
-            string storageDirectory,
-            int httpPort,
-            int httpsPort)
+            IsolatedServerEnvironment environment,
+            bool redirectStandardStreams = true)
         {
+            var storageDirectory = environment.StorageDirectory;
+            var httpPort = environment.HttpPort;
+            var httpsPort = environment.HttpsPort;
             var repositoryRoot = FindRepositoryRoot();
             var configuration = new DirectoryInfo(AppContext.BaseDirectory).Parent?.Name
                 ?? throw new InvalidOperationException("Unable to determine the test build configuration.");
@@ -270,12 +234,15 @@ internal sealed class AuthenticatedControlPlaneProcessTests
                 throw new FileNotFoundException("Build MOBApi before running the process integration test.", assemblyPath);
 
             await using var bootstrapChannel = new HostBootstrapParentChannel();
+            var output = new List<string>();
             var startInfo = new ProcessStartInfo
             {
                 FileName = "dotnet",
                 WorkingDirectory = Path.GetDirectoryName(assemblyPath)!,
                 UseShellExecute = false,
-                CreateNoWindow = true
+                CreateNoWindow = true,
+                RedirectStandardOutput = redirectStandardStreams,
+                RedirectStandardError = redirectStandardStreams
             };
             startInfo.ArgumentList.Add(assemblyPath);
             startInfo.Environment["MOBAFLOW_DISCOVERY_IN_WINUI"] = "1";
@@ -287,18 +254,24 @@ internal sealed class AuthenticatedControlPlaneProcessTests
             bootstrapChannel.Configure(startInfo);
 
             var process = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
+            process.OutputDataReceived += (_, args) => RecordOutput(output, args.Data);
+            process.ErrorDataReceived += (_, args) => RecordOutput(output, args.Data);
             try
             {
                 if (!process.Start())
                     throw new InvalidOperationException("MOBApi process did not start.");
-                bootstrapChannel.CompleteProcessStart();
+                if (redirectStandardStreams)
+                {
+                    process.BeginOutputReadLine();
+                    process.BeginErrorReadLine();
+                }
 
                 using var startupTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-                var bootstrap = await bootstrapChannel.ExchangeAsync(startupTimeout.Token);
+                var bootstrap = await bootstrapChannel.ExchangeAsync(process, startupTimeout.Token);
                 var client = CreatePinnedClient(httpsPort, bootstrap.Response.PublicKeyFingerprint);
                 try
                 {
-                    await WaitUntilReachableAsync(client, process, startupTimeout.Token);
+                    await WaitUntilReachableAsync(client, process, output, startupTimeout.Token);
                     var hostToken = await PostAndReadAsync<HostBootstrapRequest, HostTokenResponse>(
                         client,
                         "api/control-plane/host/bootstrap",
@@ -317,7 +290,9 @@ internal sealed class AuthenticatedControlPlaneProcessTests
             {
                 await StopProcessAsync(process);
                 process.Dispose();
-                throw new InvalidOperationException("MOBApi process startup failed.", exception);
+                throw new InvalidOperationException(
+                    $"MOBApi process startup failed. Output: {FormatOutput(output)}",
+                    exception);
             }
         }
 
@@ -428,13 +403,15 @@ internal sealed class AuthenticatedControlPlaneProcessTests
         private static async Task WaitUntilReachableAsync(
             HttpClient client,
             Process process,
+            List<string> output,
             CancellationToken cancellationToken)
         {
             while (!cancellationToken.IsCancellationRequested)
             {
                 if (process.HasExited)
                 {
-                    throw new InvalidOperationException($"MOBApi exited with code {process.ExitCode}.");
+                    throw new InvalidOperationException(
+                        $"MOBApi exited with code {process.ExitCode}. Output: {FormatOutput(output)}");
                 }
 
                 try
@@ -508,6 +485,24 @@ internal sealed class AuthenticatedControlPlaneProcessTests
             }
 
             throw new DirectoryNotFoundException("Unable to locate the MOBAflow repository root.");
+        }
+
+        private static void RecordOutput(List<string> output, string? line)
+        {
+            if (string.IsNullOrWhiteSpace(line))
+                return;
+            lock (output)
+            {
+                output.Add(line);
+                if (output.Count > 100)
+                    output.RemoveAt(0);
+            }
+        }
+
+        private static string FormatOutput(List<string> output)
+        {
+            lock (output)
+                return output.Count == 0 ? "(not captured)" : string.Join(Environment.NewLine, output);
         }
 
         private static async Task StopProcessAsync(Process process)

@@ -17,12 +17,14 @@ using System.Text;
 
 /// <summary>
 /// Discovers the MOBAflow REST API (MOBApi) on the LAN for MOBAsmart.
-/// Order: recent/nearby HTTP probe, UDP multicast/broadcast, anchor subnet HTTP, then full /24 HTTP scan.
+/// Order: recent/nearby HTTP probe, UDP multicast/broadcast (then unicast to the local /24), anchor subnet HTTP,
+/// then full /24 HTTP scan.
 /// </summary>
 public class RestApiDiscoveryService : IRestDiscoveryService, IAuthenticatedRestDiscoveryService
 {
     private const int QuickProbeTimeoutMs = 350;
     private const int SubnetProbeBatchSize = 16;
+    private const int MulticastOnlyReceiveTimeoutMs = 500;
 #if ANDROID
     private const int MulticastReceiveTimeoutMs = 2500;
     private const int AndroidQuickProbeTimeoutMs = 900;
@@ -58,7 +60,10 @@ public class RestApiDiscoveryService : IRestDiscoveryService, IAuthenticatedRest
     public async Task<MobApiDiscoveryEndpoint?> DiscoverAuthenticatedServerAsync(
         CancellationToken cancellationToken = default)
     {
-        var endpoint = await TryDiscoverEndpointByUdpAsync(cancellationToken).ConfigureAwait(false);
+        var endpoint = await TryDiscoverEndpointByUdpAsync(
+                LanIpv4AddressHelper.GetCandidateLocalIpv4Addresses(),
+                cancellationToken)
+            .ConfigureAwait(false);
         return endpoint is
         {
             ProtocolVersion: >= DiscoveryResponseParser.CurrentProtocolVersion,
@@ -81,7 +86,7 @@ public class RestApiDiscoveryService : IRestDiscoveryService, IAuthenticatedRest
         var localAddresses = LanIpv4AddressHelper.GetCandidateLocalIpv4Addresses();
 
         var quickTask = TryDiscoverByQuickHttpProbeAsync(localAddresses, restPort, cancellationToken);
-        var udpTask = TryDiscoverByUdpAsync(cancellationToken);
+        var udpTask = TryDiscoverByUdpAsync(localAddresses, cancellationToken);
 
         var firstFinished = await Task.WhenAny(quickTask, udpTask).ConfigureAwait(false);
         var firstResult = await firstFinished.ConfigureAwait(false);
@@ -140,7 +145,7 @@ public class RestApiDiscoveryService : IRestDiscoveryService, IAuthenticatedRest
 
         try
         {
-            var udp = await TryDiscoverByUdpAsync(cancellationToken).ConfigureAwait(false);
+            var udp = await TryDiscoverByUdpAsync(localAddresses, cancellationToken).ConfigureAwait(false);
             if (udp.ip != null && udp.port.HasValue)
             {
                 return udp;
@@ -273,13 +278,17 @@ public class RestApiDiscoveryService : IRestDiscoveryService, IAuthenticatedRest
 #endif
     }
 
-    private async Task<(string? ip, int? port)> TryDiscoverByUdpAsync(CancellationToken cancellationToken)
+    private async Task<(string? ip, int? port)> TryDiscoverByUdpAsync(
+        IReadOnlyList<IPAddress> localAddresses,
+        CancellationToken cancellationToken)
     {
-        var endpoint = await TryDiscoverEndpointByUdpAsync(cancellationToken).ConfigureAwait(false);
+        var endpoint = await TryDiscoverEndpointByUdpAsync(localAddresses, cancellationToken).ConfigureAwait(false);
         return endpoint is null ? (null, null) : (endpoint.IpAddress, endpoint.HttpPort);
     }
 
-    private async Task<MobApiDiscoveryEndpoint?> TryDiscoverEndpointByUdpAsync(CancellationToken cancellationToken)
+    private async Task<MobApiDiscoveryEndpoint?> TryDiscoverEndpointByUdpAsync(
+        IReadOnlyList<IPAddress> localAddresses,
+        CancellationToken cancellationToken)
     {
 #if ANDROID
         AcquireMulticastLock();
@@ -305,60 +314,27 @@ public class RestApiDiscoveryService : IRestDiscoveryService, IAuthenticatedRest
             var multicastEndpoint = new IPEndPoint(multicastAddress, DiscoveryResponseParser.MulticastPort);
             var broadcastEndpoint = new IPEndPoint(IPAddress.Broadcast, DiscoveryResponseParser.MulticastPort);
 
-            var localAddresses = LanIpv4AddressHelper.GetCandidateLocalIpv4Addresses();
+            await SendDiscoveryRequestsAsync(
+                    udpClient,
+                    requestBytes,
+                    [multicastEndpoint, broadcastEndpoint],
+                    cancellationToken)
+                .ConfigureAwait(false);
+            var endpoint = await ReceiveHealthyEndpointAsync(udpClient, MulticastOnlyReceiveTimeoutMs, cancellationToken)
+                .ConfigureAwait(false);
+            if (endpoint != null)
+            {
+                return endpoint;
+            }
+
+            // Access points often filter multicast and broadcast: ask the local subnet hosts directly.
             var unicastEndpoints = RestApiDiscoveryCandidateBuilder
-                .BuildAuthenticatedUdpUnicastCandidates(_appSettings.RestApi, localAddresses)
+                .BuildLocalSubnetProbeOrder(_appSettings.RestApi, localAddresses)
                 .Select(address => new IPEndPoint(address, DiscoveryResponseParser.MulticastPort));
-            var requestEndpoints = new[] { multicastEndpoint, broadcastEndpoint }
-                .Concat(unicastEndpoints);
-
-            foreach (var requestEndpoint in requestEndpoints)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                try
-                {
-                    await udpClient.SendAsync(requestBytes, requestEndpoint, cancellationToken)
-                        .ConfigureAwait(false);
-                }
-                catch (SocketException)
-                {
-                    // Continue with unicast targets when multicast or broadcast is unavailable.
-                }
-            }
-
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            cts.CancelAfter(MulticastReceiveTimeoutMs);
-
-            try
-            {
-                while (!cts.Token.IsCancellationRequested)
-                {
-                    var result = await udpClient.ReceiveAsync(cts.Token).ConfigureAwait(false);
-                    var response = Encoding.UTF8.GetString(result.Buffer).TrimEnd('\0').Trim();
-                    if (!DiscoveryResponseParser.TryParse(response, out MobApiDiscoveryEndpoint? endpoint)
-                        || endpoint == null)
-                    {
-                        continue;
-                    }
-
-                    var healthyIp = await ProbeMobApiHealthAsync(
-                            endpoint.IpAddress,
-                            endpoint.HttpPort,
-                            SubnetProbeRequestTimeoutMs,
-                            cts.Token)
-                        .ConfigureAwait(false);
-                    if (healthyIp != null)
-                    {
-                        return endpoint;
-                    }
-                }
-            }
-            catch (OperationCanceledException)
-            {
-            }
-            catch (SocketException socketException) when (socketException.SocketErrorCode == SocketError.TimedOut)
-            {
-            }
+            await SendDiscoveryRequestsAsync(udpClient, requestBytes, unicastEndpoints, cancellationToken)
+                .ConfigureAwait(false);
+            return await ReceiveHealthyEndpointAsync(udpClient, MulticastReceiveTimeoutMs, cancellationToken)
+                .ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -376,21 +352,79 @@ public class RestApiDiscoveryService : IRestDiscoveryService, IAuthenticatedRest
         return null;
     }
 
+    private static async Task SendDiscoveryRequestsAsync(
+        UdpClient udpClient,
+        byte[] requestBytes,
+        IEnumerable<IPEndPoint> requestEndpoints,
+        CancellationToken cancellationToken)
+    {
+        foreach (var requestEndpoint in requestEndpoints)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            try
+            {
+                await udpClient.SendAsync(requestBytes, requestEndpoint, cancellationToken).ConfigureAwait(false);
+            }
+            catch (SocketException)
+            {
+                // Continue with the remaining targets when multicast, broadcast or one host is unreachable.
+            }
+        }
+    }
+
+    private async Task<MobApiDiscoveryEndpoint?> ReceiveHealthyEndpointAsync(
+        UdpClient udpClient,
+        int timeoutMs,
+        CancellationToken cancellationToken)
+    {
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        cts.CancelAfter(timeoutMs);
+
+        try
+        {
+            while (!cts.Token.IsCancellationRequested)
+            {
+                var result = await udpClient.ReceiveAsync(cts.Token).ConfigureAwait(false);
+                var response = Encoding.UTF8.GetString(result.Buffer).TrimEnd('\0').Trim();
+                if (!DiscoveryResponseParser.TryParse(response, out MobApiDiscoveryEndpoint? endpoint)
+                    || endpoint == null)
+                {
+                    continue;
+                }
+
+                // The receive window bounds waiting for replies, not the health probe of a received reply.
+                var healthyIp = await ProbeMobApiHealthAsync(
+                        endpoint.IpAddress,
+                        endpoint.HttpPort,
+                        SubnetProbeRequestTimeoutMs,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+                if (healthyIp != null)
+                {
+                    return endpoint;
+                }
+            }
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+        }
+        catch (SocketException socketException) when (socketException.SocketErrorCode == SocketError.TimedOut)
+        {
+        }
+
+        return null;
+    }
+
     private async Task<(string? ip, int? port)> TryDiscoverBySubnetHttpProbeAsync(
         IReadOnlyList<IPAddress> localAddresses,
         int restPort,
         CancellationToken cancellationToken)
     {
-        var subnetCandidates = SubnetCandidateBuilder.BuildCandidates(localAddresses);
-        if (subnetCandidates.Count == 0)
+        var ordered = RestApiDiscoveryCandidateBuilder.BuildLocalSubnetProbeOrder(_appSettings.RestApi, localAddresses);
+        if (ordered.Count == 0)
         {
             return (null, null);
         }
-
-        var ordered = RestApiDiscoveryCandidateBuilder.BuildFullProbeOrder(
-            _appSettings.RestApi,
-            localAddresses,
-            subnetCandidates);
 
         foreach (var batch in ordered.Chunk(SubnetProbeBatchSize))
         {

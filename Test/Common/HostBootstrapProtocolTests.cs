@@ -39,25 +39,96 @@ internal sealed class HostBootstrapProtocolTests
     public async Task ParentChannel_Should_RejectExchangeBeforeProcessStart()
     {
         await using var parent = new HostBootstrapParentChannel();
+        using var notStarted = new Process();
 
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         Assert.That(
-            async () => await parent.ExchangeAsync(timeout.Token),
+            async () => await parent.ExchangeAsync(notStarted, timeout.Token).ConfigureAwait(false),
             Throws.TypeOf<InvalidOperationException>());
     }
 
     [Test]
-    public async Task ParentChannel_Should_CompleteProcessStartIdempotently_AndHonorCancellation()
+    public async Task ParentChannel_Should_HonorCancellation()
     {
         await using var parent = new HostBootstrapParentChannel();
-        parent.CompleteProcessStart();
-        parent.CompleteProcessStart();
+        using var currentProcess = Process.GetCurrentProcess();
 
         using var canceled = new CancellationTokenSource();
-        canceled.Cancel();
+        await canceled.CancelAsync().ConfigureAwait(false);
         Assert.That(
-            async () => await parent.ExchangeAsync(canceled.Token),
+            async () => await parent.ExchangeAsync(currentProcess, canceled.Token).ConfigureAwait(false),
             Throws.InstanceOf<OperationCanceledException>());
+    }
+
+    [Test]
+    [CancelAfter(10_000)]
+    public async Task ParentAndChildChannels_Should_ExchangeBootstrapMaterialWithoutInheritedHandles()
+    {
+        var parent = new HostBootstrapParentChannel();
+        await using var parentLifetime = parent.ConfigureAwait(false);
+        var startInfo = new ProcessStartInfo();
+        parent.Configure(startInfo);
+        using var environment = ApplyBootstrapEnvironment(startInfo);
+        var child = HostBootstrapChildChannel.TryOpenFromEnvironment();
+        Assert.That(child, Is.Not.Null);
+        var openedChild = child!;
+        await using var childLifetime = openedChild.ConfigureAwait(false);
+        using var currentProcess = Process.GetCurrentProcess();
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+
+        var childSide = Task.Run(async () =>
+        {
+            var childRequest = await openedChild.ReadRequestAsync(timeout.Token).ConfigureAwait(false);
+            await openedChild.WriteResponseAsync(new HostBootstrapPipeResponse("fingerprint", "instance"), timeout.Token)
+                .ConfigureAwait(false);
+            return childRequest;
+        });
+        var (secret, response) = await parent.ExchangeAsync(currentProcess, timeout.Token).ConfigureAwait(false);
+        var request = await childSide.ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(request.Secret, Is.EqualTo(secret));
+            Assert.That(request.ParentProcessId, Is.EqualTo(Environment.ProcessId));
+            Assert.That(response, Is.EqualTo(new HostBootstrapPipeResponse("fingerprint", "instance")));
+        }
+    }
+
+    [Test]
+    [CancelAfter(10_000)]
+    public async Task ParentChannel_Should_FailFast_WhenChildProcessExitsBeforeConnecting()
+    {
+        var parent = new HostBootstrapParentChannel();
+        await using var parentLifetime = parent.ConfigureAwait(false);
+        using var exitedProcess = Process.Start(new ProcessStartInfo("dotnet", "--version")
+        {
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true
+        })!;
+        await exitedProcess.WaitForExitAsync().ConfigureAwait(false);
+
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+        Assert.That(
+            async () => await parent.ExchangeAsync(exitedProcess, timeout.Token).ConfigureAwait(false),
+            Throws.TypeOf<InvalidOperationException>().With.Message.Contains("exited with code"));
+        Assert.That(timeout.IsCancellationRequested, Is.False);
+    }
+
+    [TestCase(100, null, 100, true)]
+    [TestCase(200, 100, 100, true)]
+    [TestCase(200, 300, 100, false)]
+    [TestCase(200, null, 100, false)]
+    [TestCase(0, 0, 0, false)]
+    public void PipeClientVerifier_Should_AcceptOnlyLaunchedProcessOrItsDirectChild(
+        int clientProcessId,
+        int? clientParentProcessId,
+        int expectedProcessId,
+        bool expected)
+    {
+        Assert.That(
+            HostBootstrapPipeClientVerifier.IsExpectedClient(clientProcessId, clientParentProcessId, expectedProcessId),
+            Is.EqualTo(expected));
     }
 
     [Test]

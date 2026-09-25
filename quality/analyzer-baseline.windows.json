@@ -4031,7 +4031,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1849",
       "path": "Test/Common/HostBootstrapProtocolTests.cs",
-      "count": 3
+      "count": 2
     },
     {
       "project": "Test",
@@ -4892,7 +4892,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2007",
       "path": "Test/Common/HostBootstrapProtocolTests.cs",
-      "count": 10
+      "count": 8
     },
     {
       "project": "Test",

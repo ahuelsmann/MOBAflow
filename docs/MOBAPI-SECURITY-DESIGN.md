@@ -147,7 +147,7 @@ The server assigns an immutable credential ID and principal type. A client-suppl
 ### Host bootstrap credential
 
 - MOBAflow generates a fresh 256-bit bootstrap secret for every MOBApi child-process launch.
-- The secret is delivered through a current-user-only named-pipe bootstrap channel with fresh pipe names for each launch. It is not placed in command-line arguments, committed configuration, normal environment diagnostics, or logs.
+- The secret is delivered through a current-user-only named-pipe bootstrap channel with fresh pipe names for each launch. On Windows, MOBAflow accepts only the launched MOBApi process (or its direct child when started through `dotnet run`) as pipe client and fails the bootstrap when that process exits first. The secret is not placed in command-line arguments, committed configuration, normal environment diagnostics, or logs.
 - MOBApi retains only an in-memory verifier. The bootstrap endpoint is HTTPS, loopback-only, single-use, and rate-limited.
 - A successful exchange issues a short-lived host access token and process-bound renewal credential. Both become invalid when MOBApi exits or when the owning MOBAflow process disconnects permanently.
 - A standalone MOBApi instance has no host authority until an owner completes an explicit local enrollment flow. Loopback alone never grants the `host` principal.
