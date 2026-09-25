@@ -84,7 +84,7 @@ public sealed class JourneyCounterProjectionTests
         Assert.Multiple(() =>
         {
             Assert.That(fixture.ViewModel.Statistics.Single(item => item.InPort == 1).Count, Is.Zero);
-            Assert.That(fixture.ViewModel.JourneyCommandStatus, Is.EqualTo("InPort counters reset."));
+            Assert.That(fixture.ViewModel.CounterCommandStatus, Is.EqualTo("InPort counters reset."));
         });
         fixture.Gateway.Verify(gateway => gateway.ResetInPortCountersAsync(It.IsAny<CancellationToken>()), Times.Once);
     }

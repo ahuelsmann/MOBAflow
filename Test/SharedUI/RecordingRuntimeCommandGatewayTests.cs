@@ -157,6 +157,10 @@ internal sealed class RecordingRuntimeCommandGatewayTests
 
         public Task ResetInPortCountersAsync(CancellationToken cancellationToken = default) => ExecuteAsync();
 
+        public Task SetInPortCounterAsync(uint inPort, ulong value, CancellationToken cancellationToken = default) => ExecuteAsync();
+
+        public Task ResetInPortCounterAsync(uint inPort, CancellationToken cancellationToken = default) => ExecuteAsync();
+
         public Task SetSignalAspectAsync(
             Guid signalId,
             SignalAspect aspect,

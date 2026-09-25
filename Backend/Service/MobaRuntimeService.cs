@@ -147,6 +147,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
             }
 
             cancellationToken.ThrowIfCancellationRequested();
+            await _inPortCounters.InitializeAsync(cancellationToken).ConfigureAwait(false);
             PublishSnapshot();
             BeginAutoConnectToZ21();
             _started = true;
@@ -233,6 +234,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         return MobaRuntimeSnapshotBuilder.Create(
             telemetry,
             _activeProjectContext,
-            _inPortCounters.GetSnapshot());
+            _inPortCounters.GetSnapshot(),
+            _inPortCounters.PersistenceError);
     }
 }

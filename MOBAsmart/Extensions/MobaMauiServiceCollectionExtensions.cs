@@ -4,6 +4,7 @@ namespace Moba.MAUI.Extensions;
 
 using Backend;
 using Backend.Interface;
+using Backend.Service;
 using Common.Configuration;
 using Common.Discovery;
 using Common.Events;
@@ -46,6 +47,8 @@ public static class MobaMauiServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddSingleton<AppSettings>();
+        services.AddSingleton<IInPortCounterStore>(_ => new FileInPortCounterStore(
+            Path.Combine(FileSystem.AppDataDirectory, "inport-counters.json")));
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddLogging();
         services.AddSingleton<ISoundPlayer, NullSoundPlayer>();

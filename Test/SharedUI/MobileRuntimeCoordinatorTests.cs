@@ -13,6 +13,23 @@ using Moq;
 internal sealed class MobileRuntimeCoordinatorTests
 {
     [Test]
+    public async Task IndividualCounterCommands_RemainLocalWithRemoteSession()
+    {
+        var runtime = new Mock<IMobaRuntime>(MockBehavior.Strict);
+        runtime.Setup(value => value.SetInPortCounterAsync(2, ulong.MaxValue, default)).Returns(Task.CompletedTask);
+        runtime.Setup(value => value.ResetInPortCounterAsync(2, default)).Returns(Task.CompletedTask);
+        var remote = new Mock<IRuntimeHubRemoteClient>(MockBehavior.Strict);
+        var coordinator = new MobileRuntimeCoordinator(runtime.Object, remote.Object);
+        coordinator.SetMobaflowSessionActive(true);
+
+        await coordinator.SetInPortCounterAsync(2, ulong.MaxValue);
+        await coordinator.ResetInPortCounterAsync(2);
+
+        runtime.VerifyAll();
+        remote.VerifyNoOtherCalls();
+    }
+
+    [Test]
     public async Task CounterReset_UsesLocalRuntimeWithoutRemoteSession()
     {
         using var cancellation = new CancellationTokenSource();
