@@ -140,14 +140,14 @@ Current boundary:
 
 Implementation decisions:
 
-- create a fresh 256-bit bootstrap secret for each MOBApi child launch and transfer it through an inherited anonymous-pipe handle; command-line arguments, committed configuration, and ordinary environment variables never carry the secret;
+- create a fresh 256-bit bootstrap secret for each MOBApi child launch and transfer it through a current-user-only named pipe with a fresh name; command-line arguments, committed configuration, and ordinary environment variables never carry the secret;
 - bind a dedicated HTTPS loopback endpoint alongside the unchanged HTTP LAN endpoint, using the protected server identity introduced in Slice 2;
 - return the expected server-certificate fingerprint through the bootstrap channel so MOBAflow can pin the HTTPS endpoint before sending the secret;
 - keep the host access token and rotating renewal credential in memory in both processes; they are not added to the persistent device registry and become invalid when the MOBApi process or host session ends;
 - require `host.publish` for solution, runtime-settings, and snapshot writes, and `host.consume` for command consumption and host hub registration;
 - retain loopback checks as an additional transport constraint, never as an authorization substitute;
 - supply the same bearer token to host REST requests and SignalR through a refresh-aware in-memory session service;
-- do not reuse a separately started MOBApi process as an implicitly trusted host: without the inherited bootstrap channel, host publication remains disabled.
+- do not reuse a separately started MOBApi process as an implicitly trusted host: without the per-launch bootstrap channel, host publication remains disabled.
 
 Validation evidence:
 
