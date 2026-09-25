@@ -1,4 +1,3 @@
-# MOBAflow managed line-ending checker
 [CmdletBinding()]
 param(
     [string] $RepositoryRoot = (Split-Path -Parent $PSScriptRoot),

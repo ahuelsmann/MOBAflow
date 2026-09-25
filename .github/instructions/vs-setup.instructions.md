@@ -238,9 +238,6 @@ dotnet build
 # 5. Run tests
 dotnet test
 
-# 6. Configure git hooks
-git config core.hooksPath .git/hooks
-
 # You're ready to go! 🚀
 ```
 

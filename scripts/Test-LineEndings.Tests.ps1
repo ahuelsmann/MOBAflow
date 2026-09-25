@@ -19,7 +19,7 @@ function Invoke-Process([string] $Program, [string[]] $Arguments) {
     $start.UseShellExecute = $false
     $start.RedirectStandardOutput = $true
     $start.RedirectStandardError = $true
-    # Tests may themselves run from a Git hook; never reuse the parent's index or Git directory.
+    # Tests may run inside another Git process (for example rebase --exec); never reuse its index or Git directory.
     foreach ($key in @('GIT_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE', 'GIT_COMMON_DIR')) {
         [void] $start.Environment.Remove($key)
     }
@@ -55,12 +55,8 @@ try {
     $null = Git @('config', 'user.name', 'Line ending tests')
     $null = Git @('config', 'user.email', 'line-endings@example.invalid')
     [void] [IO.Directory]::CreateDirectory((Join-Path $fixture 'scripts'))
-    [void] [IO.Directory]::CreateDirectory((Join-Path $fixture '.githooks'))
-    foreach ($name in @('Test-LineEndings.ps1', 'Install-GitHooks.ps1')) {
-        Copy-Item -LiteralPath (Join-Path $sourceRoot "scripts/$name") -Destination (Join-Path $fixture "scripts/$name")
-    }
-    Copy-Item -LiteralPath (Join-Path $sourceRoot '.githooks/pre-commit') -Destination (Join-Path $fixture '.githooks/pre-commit')
-    Write-Text '.gitattributes' "* text=auto eol=crlf`r`n*.sh text eol=lf`r`n.githooks/* text eol=lf`r`n*.bin binary`r`n"
+    Copy-Item -LiteralPath (Join-Path $sourceRoot 'scripts/Test-LineEndings.ps1') -Destination (Join-Path $fixture 'scripts/Test-LineEndings.ps1')
+    Write-Text '.gitattributes' "* text=auto eol=crlf`r`n*.sh text eol=lf`r`n*.bin binary`r`n"
     Write-Text 'example space ü.cs' "first`r`nsecond`nlast"
     $result = Check
     Assert-True ($result.Code -eq 1 -and $result.Output.Contains('working directory: mixed')) 'Mixed working file was not rejected.'
@@ -97,28 +93,17 @@ try {
     $result = Check @('-Staged')
     Assert-True ($result.Code -eq 1 -and $result.Output.Contains('working directory: mixed')) 'Staged check ignored the working copy.'
     $result = Check @('-Staged', '-Fix')
-    Assert-True ($result.Code -ne 0) 'Hook mode unexpectedly allowed writes.'
+    Assert-True ($result.Code -ne 0) 'Staged mode unexpectedly allowed writes.'
 
-    $hookPath = Join-Path $fixture '.git/hooks/pre-commit'
-    Write-Text '.git/hooks/pre-commit' '# Existing user hook'
-    $installArgs = @('-NoProfile', '-File', (Join-Path $fixture 'scripts/Install-GitHooks.ps1'))
-    $result = Invoke-Process 'pwsh' $installArgs
-    Assert-True ($result.Code -ne 0 -and [IO.File]::ReadAllText($hookPath) -ceq '# Existing user hook') 'Installer overwrote an existing hook.'
-    Remove-Item -LiteralPath $hookPath
-    $result = Invoke-Process 'pwsh' $installArgs
-    Assert-True ($result.Code -eq 0) $result.Output
-    $result = Invoke-Process 'git' @('commit', '-m', 'test: reject mixed working copy')
-    Assert-True ($result.Code -ne 0 -and $result.Output.Contains('Invalid line endings:')) 'Git did not execute the installed hook.'
     $result = Check @('-Fix')
     Assert-True ($result.Code -eq 0) $result.Output
-    $result = Invoke-Process 'git' @('commit', '-m', 'test: accept normalized working copy')
-    Assert-True ($result.Code -eq 0) $result.Output
+    $null = Git @('commit', '-m', 'test: add normalized working copy')
 
     # Preserve a deliberately malformed index blob even after the working file has been fixed.
     [IO.File]::AppendAllText((Join-Path $fixture '.gitattributes'), "raw.cs -text`r`n")
     Write-Text 'raw.cs' "first`r`nsecond`n"
     $null = Git @('add', 'raw.cs')
-    Write-Text '.gitattributes' "* text=auto eol=crlf`r`n*.sh text eol=lf`r`n.githooks/* text eol=lf`r`n*.bin binary`r`n"
+    Write-Text '.gitattributes' "* text=auto eol=crlf`r`n*.sh text eol=lf`r`n*.bin binary`r`n"
     $result = Check @('-Path', 'raw.cs', '-Fix')
     Assert-True ($result.Code -eq 0) $result.Output
     $result = Check @('-Staged')
@@ -130,12 +115,6 @@ try {
     $null = Git @('rm', 'raw.cs')
     $result = Check @('-Staged')
     Assert-True ($result.Code -eq 0) 'Staged deletion failed.'
-    # The installed checker also protects older worktrees lacking the repository script.
-    Remove-Item -LiteralPath (Join-Path $fixture 'scripts/Test-LineEndings.ps1')
-    Write-Text 'example space ü.cs' "first`r`nsecond`nchanged"
-    $null = Git @('add', 'example space ü.cs')
-    $result = Invoke-Process 'git' @('commit', '-m', 'test: fallback checker rejects mixed working copy')
-    Assert-True ($result.Code -ne 0 -and $result.Output.Contains('Invalid line endings:')) 'Installed fallback checker was not executed.'
     Write-Host "Line-ending regression tests passed: $checks assertions."
 }
 finally {
