@@ -60,7 +60,7 @@ The pinned .NET SDK and the MAUI Android workload are prerequisites. From a
 clean checkout, run the same restore, publish, and bundle validation used by CI:
 
 ```powershell
-dotnet workload install maui-android --skip-manifest-update
+dotnet workload restore MOBAsmart/MOBAsmart.csproj --skip-manifest-update
 dotnet restore MOBAsmart/MOBAsmart.csproj `
   --property:Configuration=Release `
   --force-evaluate

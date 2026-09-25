@@ -283,9 +283,9 @@ jobs:
           restore-keys: |
             nuget-${{ runner.os }}-android-
 
-      - name: Install MAUI Android workload
+      - name: Restore MAUI Android workload
         shell: pwsh
-        run: dotnet workload install maui-android --skip-manifest-update
+        run: dotnet workload restore MOBAsmart/MOBAsmart.csproj --skip-manifest-update
 
       - name: Restore Android dependency graph
         shell: pwsh
