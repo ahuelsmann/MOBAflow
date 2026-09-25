@@ -1,5 +1,8 @@
 # Issue #35 Automation Testbench Implementation Plan
 
+**GitHub Issue**: #35
+**Spec Kit**: Not applicable - Issue #35 was planned before Spec Kit adoption and remains governed by this existing issue-specific implementation plan.
+
 ## Document status
 
 - Status: Proposed; implementation blocked by the readiness gates below
