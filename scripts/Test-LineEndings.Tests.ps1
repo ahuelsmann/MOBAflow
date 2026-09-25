@@ -19,7 +19,7 @@ function Invoke-Process([string] $Program, [string[]] $Arguments) {
     $start.UseShellExecute = $false
     $start.RedirectStandardOutput = $true
     $start.RedirectStandardError = $true
-    # Tests may themselves run from a Git hook; never reuse the parent's index or Git directory.
+    # Tests may run inside another Git process (for example rebase --exec); never reuse its index or Git directory.
     foreach ($key in @('GIT_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE', 'GIT_COMMON_DIR')) {
         [void] $start.Environment.Remove($key)
     }
@@ -50,20 +50,13 @@ function Write-Text([string] $Name, [string] $Text) {
 }
 
 try {
-    $null = Git @('init', '--quiet', '--initial-branch=feature/hook-tests')
+    $null = Git @('init', '--quiet')
     $null = Git @('config', 'core.autocrlf', 'true')
     $null = Git @('config', 'user.name', 'Line ending tests')
     $null = Git @('config', 'user.email', 'line-endings@example.invalid')
     [void] [IO.Directory]::CreateDirectory((Join-Path $fixture 'scripts'))
-    [void] [IO.Directory]::CreateDirectory((Join-Path $fixture '.githooks'))
-    foreach ($name in @('Test-LineEndings.ps1', 'Install-GitHooks.ps1')) {
-        Copy-Item -LiteralPath (Join-Path $sourceRoot "scripts/$name") -Destination (Join-Path $fixture "scripts/$name")
-    }
-    Copy-Item -LiteralPath (Join-Path $sourceRoot '.githooks/pre-commit') -Destination (Join-Path $fixture '.githooks/pre-commit')
-    foreach ($name in @('pre-push', 'pre-merge-commit')) {
-        Copy-Item -LiteralPath (Join-Path $sourceRoot ".githooks/$name") -Destination (Join-Path $fixture ".githooks/$name")
-    }
-    Write-Text '.gitattributes' "* text=auto eol=crlf`r`n*.sh text eol=lf`r`n.githooks/* text eol=lf`r`n*.bin binary`r`n"
+    Copy-Item -LiteralPath (Join-Path $sourceRoot 'scripts/Test-LineEndings.ps1') -Destination (Join-Path $fixture 'scripts/Test-LineEndings.ps1')
+    Write-Text '.gitattributes' "* text=auto eol=crlf`r`n*.sh text eol=lf`r`n*.bin binary`r`n"
     Write-Text 'example space ü.cs' "first`r`nsecond`nlast"
     $result = Check
     Assert-True ($result.Code -eq 1 -and $result.Output.Contains('working directory: mixed')) 'Mixed working file was not rejected.'
@@ -100,79 +93,17 @@ try {
     $result = Check @('-Staged')
     Assert-True ($result.Code -eq 1 -and $result.Output.Contains('working directory: mixed')) 'Staged check ignored the working copy.'
     $result = Check @('-Staged', '-Fix')
-    Assert-True ($result.Code -ne 0) 'Hook mode unexpectedly allowed writes.'
+    Assert-True ($result.Code -ne 0) 'Staged mode unexpectedly allowed writes.'
 
-    $hookPath = Join-Path $fixture '.git/hooks/pre-commit'
-    Write-Text '.git/hooks/pre-commit' '# Existing user hook'
-    $installArgs = @('-NoProfile', '-File', (Join-Path $fixture 'scripts/Install-GitHooks.ps1'))
-    $result = Invoke-Process 'pwsh' $installArgs
-    Assert-True ($result.Code -ne 0 -and [IO.File]::ReadAllText($hookPath) -ceq '# Existing user hook') 'Installer overwrote an existing hook.'
-    Remove-Item -LiteralPath $hookPath
-    Write-Text '.git/hooks/pre-push' '# Existing user push hook'
-    $result = Invoke-Process 'pwsh' $installArgs
-    Assert-True ($result.Code -ne 0 -and -not (Test-Path -LiteralPath $hookPath) -and
-        -not (Test-Path -LiteralPath (Join-Path $fixture '.git/hooks/pre-merge-commit')) -and
-        [IO.File]::ReadAllText((Join-Path $fixture '.git/hooks/pre-push')) -ceq '# Existing user push hook') 'Installer partially installed hooks or overwrote a custom push hook.'
-    Remove-Item -LiteralPath (Join-Path $fixture '.git/hooks/pre-push')
-    $result = Invoke-Process 'pwsh' $installArgs
-    Assert-True ($result.Code -eq 0) $result.Output
-    $result = Invoke-Process 'git' @('commit', '-m', 'test: reject mixed working copy')
-    Assert-True ($result.Code -ne 0 -and $result.Output.Contains('Invalid line endings:')) 'Git did not execute the installed hook.'
     $result = Check @('-Fix')
     Assert-True ($result.Code -eq 0) $result.Output
-    $result = Invoke-Process 'git' @('commit', '-m', 'test: accept normalized working copy')
-    Assert-True ($result.Code -eq 0) $result.Output
-
-    # Exercise real Git commands against a local bare remote, never the project remote.
-    $null = Git @('switch', '-c', 'main')
-    $result = Invoke-Process 'git' @('commit', '--allow-empty', '-m', 'test: blocked main commit')
-    Assert-True ($result.Code -ne 0 -and $result.Output.Contains('Direct commits on main are blocked')) 'Commit on main was allowed.'
-    $null = Git @('switch', '--detach')
-    $result = Invoke-Process 'git' @('commit', '--allow-empty', '-m', 'test: detached checkout')
-    Assert-True ($result.Code -eq 0) $result.Output
-    $detached = (Git @('rev-parse', 'HEAD')).Trim()
-    # Merge commits run pre-merge-commit instead of pre-commit; fast-forwards create no commit.
-    $null = Git @('switch', 'main')
-    $result = Invoke-Process 'git' @('merge', '--no-ff', '-m', 'test: blocked main merge', $detached)
-    Assert-True ($result.Code -ne 0 -and $result.Output.Contains('Merge commits on main are blocked')) 'Merge commit on main was allowed.'
-    $null = Git @('merge', '--abort')
-    $null = Git @('switch', 'feature/hook-tests')
-    $result = Invoke-Process 'git' @('merge', '--no-ff', '-m', 'test: feature merge', $detached)
-    Assert-True ($result.Code -eq 0) $result.Output
-    $null = Git @('switch', 'main')
-    $result = Invoke-Process 'git' @('merge', '--ff-only', 'feature/hook-tests')
-    Assert-True ($result.Code -eq 0) $result.Output
-    $null = Git @('switch', 'feature/hook-tests')
-    $remote = Join-Path $fixture 'remote.git'
-    $null = Git @('init', '--bare', '--quiet', $remote)
-    $null = Git @('remote', 'add', 'fixture', $remote)
-    $result = Invoke-Process 'git' @('push', 'fixture', 'HEAD:refs/heads/feature/hook-tests')
-    Assert-True ($result.Code -eq 0) $result.Output
-    foreach ($refspec in @('main:main', 'HEAD:refs/heads/main', '+feature/hook-tests:main')) {
-        $result = Invoke-Process 'git' @('push', 'fixture', $refspec)
-        Assert-True ($result.Code -ne 0 -and $result.Output.Contains('Direct pushes to main are blocked')) "Push allowed: $refspec"
-    }
-    $result = Invoke-Process 'git' @('push', 'fixture', 'HEAD:refs/heads/allowed', 'HEAD:refs/heads/main')
-    Assert-True ($result.Code -ne 0 -and $result.Output.Contains('Direct pushes to main are blocked')) 'Multi-ref push to main was allowed.'
-    $null = Git @('--git-dir', $remote, 'update-ref', 'refs/heads/main', (Git @('rev-parse', 'HEAD')).Trim())
-    $result = Invoke-Process 'git' @('push', 'fixture', '--delete', 'main')
-    Assert-True ($result.Code -ne 0 -and $result.Output.Contains('Direct pushes to main are blocked')) 'Main deletion was allowed.'
-    $result = Invoke-Process 'git' @('push', 'fixture', '--delete', 'feature/hook-tests')
-    Assert-True ($result.Code -eq 0) $result.Output
-    # Reinstallation must preserve a managed guard and continue to work in linked worktrees.
-    $result = Invoke-Process 'pwsh' $installArgs
-    Assert-True ($result.Code -eq 0) $result.Output
-    $linked = Join-Path $fixture 'linked'
-    $null = Git @('worktree', 'add', '--quiet', $linked, 'main')
-    $result = Invoke-Process 'git' @('-C', $linked, 'commit', '--allow-empty', '-m', 'test: blocked linked main')
-    Assert-True ($result.Code -ne 0 -and $result.Output.Contains('Direct commits on main are blocked')) 'Linked main worktree was unprotected.'
-    $null = Git @('worktree', 'remove', $linked)
+    $null = Git @('commit', '-m', 'test: add normalized working copy')
 
     # Preserve a deliberately malformed index blob even after the working file has been fixed.
     [IO.File]::AppendAllText((Join-Path $fixture '.gitattributes'), "raw.cs -text`r`n")
     Write-Text 'raw.cs' "first`r`nsecond`n"
     $null = Git @('add', 'raw.cs')
-    Write-Text '.gitattributes' "* text=auto eol=crlf`r`n*.sh text eol=lf`r`n.githooks/* text eol=lf`r`n*.bin binary`r`n"
+    Write-Text '.gitattributes' "* text=auto eol=crlf`r`n*.sh text eol=lf`r`n*.bin binary`r`n"
     $result = Check @('-Path', 'raw.cs', '-Fix')
     Assert-True ($result.Code -eq 0) $result.Output
     $result = Check @('-Staged')
@@ -184,13 +115,7 @@ try {
     $null = Git @('rm', 'raw.cs')
     $result = Check @('-Staged')
     Assert-True ($result.Code -eq 0) 'Staged deletion failed.'
-    # The installed checker also protects older worktrees lacking the repository script.
-    Remove-Item -LiteralPath (Join-Path $fixture 'scripts/Test-LineEndings.ps1')
-    Write-Text 'example space ü.cs' "first`r`nsecond`nchanged"
-    $null = Git @('add', 'example space ü.cs')
-    $result = Invoke-Process 'git' @('commit', '-m', 'test: fallback checker rejects mixed working copy')
-    Assert-True ($result.Code -ne 0 -and $result.Output.Contains('Invalid line endings:')) 'Installed fallback checker was not executed.'
-    Write-Host "Git hook and line-ending regression tests passed: $checks assertions."
+    Write-Host "Line-ending regression tests passed: $checks assertions."
 }
 finally {
     # This exact GUID directory was created by this test; never delete a caller-supplied path.

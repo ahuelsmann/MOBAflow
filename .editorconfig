@@ -15,7 +15,7 @@ insert_final_newline = false
 end_of_line = lf
 
 # Match Git's LF exceptions, including byte-stable Spec Kit assets.
-[{.githooks/*,.agents/skills/speckit-*/SKILL.md,.specify/.gitignore,.specify/scripts/**,.specify/templates/*.md}]
+[{.agents/skills/speckit-*/SKILL.md,.specify/.gitignore,.specify/scripts/**,.specify/templates/*.md}]
 end_of_line = lf
 
 # ReSharper team-shared settings file
