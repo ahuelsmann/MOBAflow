@@ -9,6 +9,7 @@ internal static class CoreRecordingPayloadValidators
 {
     private const string OutcomeProperty = "outcome";
     private const string JourneyIdProperty = "journeyId";
+    private const string InPortProperty = "inPort";
 
     public static IReadOnlyList<IRecordingPayloadValidator> Create() =>
     [
@@ -31,7 +32,7 @@ internal static class CoreRecordingPayloadValidators
             ("vccVoltage", IsInt32),
             ("centralState", IsInt32),
             ("centralStateEx", IsInt32)),
-        Schema("z21.feedback.activated", ("inPort", IsPositiveInt32)),
+        Schema("z21.feedback.activated", (InPortProperty, IsPositiveInt32)),
         Schema(
             "z21.signal-aspect.changed",
             ("signalId", IsInt32),
@@ -58,7 +59,7 @@ internal static class CoreRecordingPayloadValidators
             (JourneyIdProperty, IsGuid),
             ("journeyRunId", IsGuid),
             ("kind", IsJourneyTransitionKind),
-            ("inPort", IsNullablePositiveInt32),
+            (InPortProperty, IsNullablePositiveInt32),
             ("stationId", IsNullableGuid),
             ("stationIndex", IsStationIndex),
             ("isActive", IsBoolean)),
@@ -76,9 +77,11 @@ internal static class CoreRecordingPayloadValidators
             ("elapsedTicks", IsNullableNonNegativeInt64),
             ("result", IsNullableWorkflowResult)),
         Schema("command.track-power.request", ("isOn", IsBoolean)),
-        Schema("command.simulate-feedback.request", ("inPort", IsPositiveInt32)),
+        Schema("command.simulate-feedback.request", (InPortProperty, IsPositiveInt32)),
         Schema("command.journey-reset.request", (JourneyIdProperty, IsGuid)),
         Schema("command.inport-counters-reset.request"),
+        Schema("command.inport-counter-set.request", (InPortProperty, IsPositiveInt32), ("value", IsUInt64)),
+        Schema("command.inport-counter-reset.request", (InPortProperty, IsPositiveInt32)),
         Schema("command.signal-aspect.request", ("signalId", IsGuid), ("aspect", IsBoundedString)),
         Schema(
             "command.locomotive-drive.request",
@@ -96,22 +99,17 @@ internal static class CoreRecordingPayloadValidators
             ("output", IsNonNegativeInt32),
             ("activate", IsBoolean),
             ("queue", IsBoolean)),
-        DisplaySchema("command.track-power.result", (OutcomeProperty, IsSucceededOutcome)),
-        DisplaySchema("command.track-power.failure", (OutcomeProperty, IsFailureOutcome)),
-        DisplaySchema("command.simulate-feedback.result", (OutcomeProperty, IsSucceededOutcome)),
-        DisplaySchema("command.simulate-feedback.failure", (OutcomeProperty, IsFailureOutcome)),
-        DisplaySchema("command.journey-reset.result", (OutcomeProperty, IsSucceededOutcome)),
-        DisplaySchema("command.journey-reset.failure", (OutcomeProperty, IsFailureOutcome)),
-        DisplaySchema("command.inport-counters-reset.result", (OutcomeProperty, IsSucceededOutcome)),
-        DisplaySchema("command.inport-counters-reset.failure", (OutcomeProperty, IsFailureOutcome)),
-        DisplaySchema("command.signal-aspect.result", (OutcomeProperty, IsSucceededOutcome)),
-        DisplaySchema("command.signal-aspect.failure", (OutcomeProperty, IsFailureOutcome)),
-        DisplaySchema("command.locomotive-drive.result", (OutcomeProperty, IsSucceededOutcome)),
-        DisplaySchema("command.locomotive-drive.failure", (OutcomeProperty, IsFailureOutcome)),
-        DisplaySchema("command.locomotive-function.result", (OutcomeProperty, IsSucceededOutcome)),
-        DisplaySchema("command.locomotive-function.failure", (OutcomeProperty, IsFailureOutcome)),
-        DisplaySchema("command.turnout.result", (OutcomeProperty, IsSucceededOutcome)),
-        DisplaySchema("command.turnout.failure", (OutcomeProperty, IsFailureOutcome))
+        ..CommandOutcomeSchemas(
+            "command.track-power",
+            "command.simulate-feedback",
+            "command.journey-reset",
+            "command.inport-counters-reset",
+            "command.inport-counter-set",
+            "command.inport-counter-reset",
+            "command.signal-aspect",
+            "command.locomotive-drive",
+            "command.locomotive-function",
+            "command.turnout")
     ];
 
     private static IRecordingPayloadValidator Schema(
@@ -123,6 +121,14 @@ internal static class CoreRecordingPayloadValidators
         string typeKey,
         params (string Name, Func<JsonElement, bool> Validate)[] properties) =>
         new RecordingPayloadSchemaValidator(typeKey, RecordingReplayApplicability.DisplayOnly, properties);
+
+    // Every recorded command writes a display-only succeeded result or failure outcome.
+    private static IEnumerable<IRecordingPayloadValidator> CommandOutcomeSchemas(params string[] commandKeys) =>
+        commandKeys.SelectMany(commandKey => new[]
+        {
+            DisplaySchema(commandKey + ".result", (OutcomeProperty, IsSucceededOutcome)),
+            DisplaySchema(commandKey + ".failure", (OutcomeProperty, IsFailureOutcome))
+        });
 
     private static bool IsBoolean(JsonElement value) =>
         value.ValueKind is JsonValueKind.True or JsonValueKind.False;
@@ -140,6 +146,9 @@ internal static class CoreRecordingPayloadValidators
 
     private static bool IsPositiveInt64(JsonElement value) =>
         value.TryGetInt64(out var number) && number > 0;
+
+    private static bool IsUInt64(JsonElement value) =>
+        value.ValueKind == JsonValueKind.Number && value.TryGetUInt64(out _);
 
     private static bool IsNullablePositiveInt32(JsonElement value) =>
         value.ValueKind == JsonValueKind.Null || IsPositiveInt32(value);
