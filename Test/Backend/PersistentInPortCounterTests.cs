@@ -119,6 +119,33 @@ internal sealed class PersistentInPortCounterTests
     }
 
     [Test]
+    public async Task FeedbackBufferedDuringLoadIsDiscardedWhenItsInputIsRemovedAndReadded()
+    {
+        var loaded = new TaskCompletionSource<IReadOnlyDictionary<uint, ulong>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var store = new Mock<IInPortCounterStore>();
+        store.Setup(value => value.LoadAsync(default)).Returns(loaded.Task);
+        store.Setup(value => value.SaveAsync(It.IsAny<IReadOnlyDictionary<uint, ulong>>(), default)).Returns(Task.CompletedTask);
+        var settings = Settings(2);
+        var z21 = new Mock<IZ21>();
+        await using var counters = new InPortCounterService(z21.Object, settings, store: store.Object);
+        var activatedInputs = new List<uint>();
+        counters.Counted += (_, args) => activatedInputs.Add(args.Snapshot.InPort);
+        var initialization = counters.InitializeAsync();
+        InPortCounterServiceTests.Raise(z21, 1);
+        InPortCounterServiceTests.Raise(z21, 2);
+        settings.Counter.CountOfFeedbackPoints = 1;
+        settings.Counter.CountOfFeedbackPoints = 2;
+        loaded.SetResult(new Dictionary<uint, ulong> { [1] = 5 });
+        await initialization;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(activatedInputs, Is.EqualTo(new uint[] { 1 }), "The removed input's old activation must not run.");
+            Assert.That(counters.GetSnapshot().Select(item => item.Count), Is.EqualTo(new ulong[] { 6, 0 }));
+        }
+    }
+
+    [Test]
     public async Task SlowSaveCoalescesConcurrentChangesAndFlushWaitsForLatestValue()
     {
         var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
