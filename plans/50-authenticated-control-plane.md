@@ -5,7 +5,10 @@
 **GitHub Issue**: https://github.com/ahuelsmann/MOBAflow/issues/50
 **Spec Kit**: Not applicable - RF-03 began before Spec Kit adoption and remains governed by this existing issue-specific sliced implementation plan.
 
-- Status: Slices 1 through 4e merged; corrective Slice 4f active; Slices 5 and 6 planned
+- Status: Withdrawn on 2026-09-25. MOBAflow targets private home networks and
+  intentionally has no authentication, user management or pairing. RF-19 in the
+  [quality plan](QUALITY-AND-REFACTORING-PLAN.md) removes the merged slices,
+  this plan and the security design record. Do not start new slices.
 - Parent programme: https://github.com/ahuelsmann/MOBAflow/issues/47
 - Security design record: [MOBApi Security Design](../docs/MOBAPI-SECURITY-DESIGN.md)
 - Status and acceptance criteria source: GitHub issue #50
