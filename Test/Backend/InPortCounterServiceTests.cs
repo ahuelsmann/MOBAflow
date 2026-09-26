@@ -17,7 +17,7 @@ public sealed class InPortCounterServiceTests
     public void AcceptedActivations_CountEachInputIndependentlyAndPreservePreviousSnapshots()
     {
         var z21 = new Mock<IZ21>();
-        using var counters = CreateCounters(z21);
+        using var counters = CreateCounters(z21, 3);
         Raise(z21, 2);
         var first = counters.GetSnapshot();
         Raise(z21, 3);
@@ -26,8 +26,8 @@ public sealed class InPortCounterServiceTests
         Assert.Multiple(() =>
         {
             Assert.That(counters.GetSnapshot().Select(value => (value.InPort, value.Count)),
-                Is.EqualTo(new[] { (2u, 2UL), (3u, 1UL) }));
-            Assert.That(first.Single().Count, Is.EqualTo(1UL));
+                Is.EqualTo(new[] { (1u, 0UL), (2u, 2UL), (3u, 1UL) }));
+            Assert.That(first.Single(counter => counter.InPort == 2).Count, Is.EqualTo(1UL));
         });
     }
 
@@ -36,7 +36,7 @@ public sealed class InPortCounterServiceTests
     {
         var z21 = new Mock<IZ21>();
         var clock = new CounterTimeProvider();
-        var settings = new AppSettings { Counter = { UseTimerFilter = true, TimerIntervalSeconds = 10 } };
+        var settings = new AppSettings { Counter = { CountOfFeedbackPoints = 1, UseTimerFilter = true, TimerIntervalSeconds = 10 } };
         using var counters = new InPortCounterService(z21.Object, settings, clock);
         var accepted = 0;
         counters.Counted += (_, _) => accepted++;
@@ -221,8 +221,8 @@ public sealed class InPortCounterServiceTests
         Assert.That(delivered, Is.EqualTo(new[] { 1UL, 2UL }));
     }
 
-    private static InPortCounterService CreateCounters(Mock<IZ21> z21) =>
-        new(z21.Object, new AppSettings { Counter = { UseTimerFilter = false } });
+    private static InPortCounterService CreateCounters(Mock<IZ21> z21, int inputCount = 1) =>
+        new(z21.Object, new AppSettings { Counter = { CountOfFeedbackPoints = inputCount, UseTimerFilter = false } });
 
     internal static void Raise(Mock<IZ21> z21, int inPort) =>
         z21.Raise(source => source.Received += null, CreateFeedback(inPort));
