@@ -173,9 +173,11 @@ MOBAflow, MOBAsmart and MOBApi are intended for a trusted private LAN and must
 not be exposed to the public internet. MOBApi's authenticated control-plane
 rollout includes protected desktop-host communication, certificate-pinned
 MOBAsmart pairing, authenticated REST/SignalR reads and authorization for remote
-control commands. Anonymous read-only compatibility remains available until an
-installation completes the migration gate. Unified command admission and final
-cleanup remain planned; see the [project reference](docs/PROJECT-REFERENCE.md#mobapi-endpoints).
+control commands. Reads remain available without credentials, and every remote
+command is validated before it reaches MOBAflow. Because MOBAflow targets a
+private household, the remaining authentication and pairing are being removed
+([#165](https://github.com/ahuelsmann/MOBAflow/issues/165)); see the
+[project reference](docs/PROJECT-REFERENCE.md#mobapi-endpoints).
 
 MOBAflow is an independent open-source project. Product names and trademarks
 belong to their respective owners; see the
