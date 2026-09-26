@@ -202,7 +202,23 @@ public class CounterSettings
     /// Example: If you have 3 feedback points, set this to 3 → Statistics will show InPorts 1, 2, 3.
     /// Note: InPort 0 means "disabled" or "not in use". InPort 1 = Feedback Point 1 (simple 1:1 mapping).
     /// </summary>
-    public int CountOfFeedbackPoints { get; set; }
+    public int CountOfFeedbackPoints
+    {
+        get => _countOfFeedbackPoints;
+        set
+        {
+            // Clamp instead of throwing so a hand-edited settings file cannot fail the whole settings load.
+            value = Math.Max(value, 0);
+            if (_countOfFeedbackPoints == value) return;
+            _countOfFeedbackPoints = value;
+            FeedbackPointsChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    private int _countOfFeedbackPoints;
+
+    /// <summary>Raised when the configured local input inventory changes.</summary>
+    public event EventHandler? FeedbackPointsChanged;
 
     /// <summary>
     /// Global target lap count for all tracks (default: 10).

@@ -17,6 +17,46 @@ public sealed class JourneyEventPlanTests
     private static readonly string[] ExpectedTransitionOrder = ["transition:FeedbackAccepted:1", "callback"];
 
     [Test]
+    public async Task SettingACounterDoesNotRunEventsButARealActivationCanReachTheTargetAgain()
+    {
+        using var fixture = new EventPlanFixture();
+        await fixture.RaiseAsync(1);
+        fixture.Counters.Set(1, 1);
+        Assert.That(fixture.Requests, Has.Count.EqualTo(1));
+        fixture.Counters.Set(1, 0);
+        await fixture.RaiseAsync(1);
+        Assert.That(fixture.Requests, Has.Count.EqualTo(2));
+    }
+
+    [Test]
+    public async Task RemovingAndReaddingAnInputDoesNotReviveItsOldActivation()
+    {
+        using var fixture = new EventPlanFixture();
+        var removeInput = true;
+        fixture.Manager.FeedbackReceived += (_, _) =>
+        {
+            if (!removeInput) return;
+            fixture.Settings.Counter.CountOfFeedbackPoints = 0;
+            fixture.Settings.Counter.CountOfFeedbackPoints = 2;
+        };
+        await fixture.RaiseAsync(1);
+        Assert.That(fixture.Requests, Is.Empty);
+        removeInput = false;
+        await fixture.RaiseAsync(1);
+        Assert.That(fixture.Requests, Has.Count.EqualTo(1));
+    }
+
+    [TestCase(1u, 0)]
+    [TestCase(2u, 1)]
+    public async Task CorrectingAnInputInvalidatesOnlyThatInputsUndeliveredActivation(uint correctedInput, int expectedExecutions)
+    {
+        using var fixture = new EventPlanFixture();
+        fixture.Manager.FeedbackReceived += (_, _) => fixture.Counters.Set(correctedInput, 50);
+        await fixture.RaiseAsync(1);
+        Assert.That(fixture.Requests, Has.Count.EqualTo(expectedExecutions));
+    }
+
+    [Test]
     public async Task OrderedActionsPreserveEventContextAndPublishStopChangesThroughManager()
     {
         using var fixture = new EventPlanFixture();
@@ -71,7 +111,7 @@ public sealed class JourneyEventPlanTests
         {
             Assert.That(fixture.Manager.GetState(fixture.Journey.Id)!.IsActive, Is.False);
             Assert.That(fixture.Requests, Is.Empty);
-            Assert.That(fixture.Counters.GetSnapshot().Single().Count, Is.EqualTo(1UL));
+            Assert.That(fixture.Counters.GetSnapshot().Single(counter => counter.InPort == 1).Count, Is.EqualTo(1UL));
         });
     }
 
@@ -229,7 +269,7 @@ public sealed class JourneyEventPlanTests
             Assert.That(fixture.Requests, Has.Count.EqualTo(2));
             Assert.That(fixture.Manager.GetState(fixture.Journey.Id)!.CurrentStationId, Is.EqualTo(terminal.Id));
             Assert.That(fixture.Manager.GetState(fixture.Journey.Id)!.IsActive, Is.True);
-            Assert.That(fixture.Counters.GetSnapshot().Single().Count, Is.EqualTo(5UL));
+            Assert.That(fixture.Counters.GetSnapshot().Single(counter => counter.InPort == 1).Count, Is.EqualTo(5UL));
         }
     }
 
@@ -257,7 +297,7 @@ public sealed class JourneyEventPlanTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(fixture.Manager.GetState(fixture.Journey.Id)!.CurrentStationId, Is.EqualTo(first.Id));
-            Assert.That(fixture.Counters.GetSnapshot().Single().Count, Is.EqualTo(2UL));
+            Assert.That(fixture.Counters.GetSnapshot().Single(counter => counter.InPort == 1).Count, Is.EqualTo(2UL));
         }
     }
 
@@ -548,6 +588,7 @@ public sealed class JourneyEventPlanTests
         private TestableJourneyManager? _manager;
 
         public Mock<IZ21> Z21 { get; } = new();
+        public AppSettings Settings { get; } = new() { Counter = { CountOfFeedbackPoints = 2, UseTimerFilter = false } };
         public Mock<IWorkflowService> WorkflowService { get; } = new();
         public Workflow Workflow { get; } = new() { Name = "Event workflow" };
         public Journey Journey { get; }
@@ -567,7 +608,7 @@ public sealed class JourneyEventPlanTests
                 }
             };
             Project = new Project { Journeys = [Journey], Workflows = [Workflow] };
-            Counters = new InPortCounterService(Z21.Object, new AppSettings { Counter = { UseTimerFilter = false } });
+            Counters = new InPortCounterService(Z21.Object, Settings);
             WorkflowService.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
                 .Returns((WorkflowExecutionRequest request, CancellationToken _) =>
                 {

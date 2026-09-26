@@ -423,6 +423,8 @@
                                         <RowDefinition Height="Auto" />
                                         <RowDefinition Height="Auto" />
                                         <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
                                     </Grid.RowDefinitions>
 
                                     <!--  Title: Name (if available) or "InPort X"  -->
@@ -494,6 +496,16 @@
                                                 Text="{x:Bind LastFeedbackTimeFormatted, Mode=OneWay}" />
                                         </StackPanel>
                                     </Grid>
+                                    <StackPanel Grid.Row="5" Orientation="Horizontal" Spacing="8">
+                                        <TextBox Width="240" PlaceholderText="New counter value"
+                                                 AutomationProperties.Name="New counter value"
+                                                 Text="{x:Bind CounterValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                        <Button Content="Set" Command="{x:Bind SetCounterCommand}" />
+                                        <Button Content="Reset" Command="{x:Bind ResetCounterCommand}" />
+                                    </StackPanel>
+                                    <TextBlock Grid.Row="6" Text="{x:Bind CounterError, Mode=OneWay}"
+                                               TextWrapping="Wrap"
+                                               Foreground="{ThemeResource MobaFeedbackCardForegroundBrush}" />
                                 </Grid>
                             </Border>
                         </DataTemplate>
@@ -501,6 +513,10 @@
                 </ItemsRepeater>
 
                 <!--  Reset Button  -->
+                <TextBlock Text="{x:Bind ViewModel.CounterPersistenceError, Mode=OneWay}"
+                           TextWrapping="Wrap" />
+                <TextBlock Text="{x:Bind ViewModel.CounterCommandStatus, Mode=OneWay}"
+                           TextWrapping="Wrap" />
                 <Button
                     MinWidth="200"
                     HorizontalAlignment="Center"

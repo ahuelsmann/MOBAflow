@@ -147,6 +147,8 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
             }
 
             cancellationToken.ThrowIfCancellationRequested();
+            // An unreadable counter file is reported in the snapshot and must not block startup.
+            await _inPortCounters.TryInitializeAsync(cancellationToken).ConfigureAwait(false);
             PublishSnapshot();
             BeginAutoConnectToZ21();
             _started = true;
@@ -233,6 +235,7 @@ public sealed partial class MobaRuntimeService : IMobaRuntime, IDisposable
         return MobaRuntimeSnapshotBuilder.Create(
             telemetry,
             _activeProjectContext,
-            _inPortCounters.GetSnapshot());
+            _inPortCounters.GetSnapshot(),
+            _inPortCounters.PersistenceError);
     }
 }

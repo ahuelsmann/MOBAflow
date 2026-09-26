@@ -17,6 +17,10 @@ public interface IRuntimeCommandGateway
 
     Task ResetInPortCountersAsync(CancellationToken cancellationToken = default);
 
+    Task SetInPortCounterAsync(uint inPort, ulong value, CancellationToken cancellationToken = default);
+
+    Task ResetInPortCounterAsync(uint inPort, CancellationToken cancellationToken = default);
+
     Task SetSignalAspectAsync(Guid signalId, SignalAspect aspect, CancellationToken cancellationToken = default);
 
     Task SetLocomotiveDriveAsync(int address, int speed, bool forward, CancellationToken cancellationToken = default);
