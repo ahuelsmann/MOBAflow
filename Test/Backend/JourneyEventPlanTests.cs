@@ -17,7 +17,7 @@ public sealed class JourneyEventPlanTests
     private static readonly string[] ExpectedTransitionOrder = ["transition:FeedbackAccepted:1", "callback"];
 
     [Test]
-    public async Task SettingACounter_DoesNotRunEventsButARealActivationCanReachTheTargetAgain()
+    public async Task SettingACounterDoesNotRunEventsButARealActivationCanReachTheTargetAgain()
     {
         using var fixture = new EventPlanFixture();
         await fixture.RaiseAsync(1);
@@ -29,7 +29,7 @@ public sealed class JourneyEventPlanTests
     }
 
     [Test]
-    public async Task RemovingAndReaddingAnInput_DoesNotReviveItsOldActivation()
+    public async Task RemovingAndReaddingAnInputDoesNotReviveItsOldActivation()
     {
         using var fixture = new EventPlanFixture();
         var removeInput = true;
@@ -48,7 +48,7 @@ public sealed class JourneyEventPlanTests
 
     [TestCase(1u, 0)]
     [TestCase(2u, 1)]
-    public async Task CorrectingAnInput_InvalidatesOnlyThatInputsUndeliveredActivation(uint correctedInput, int expectedExecutions)
+    public async Task CorrectingAnInputInvalidatesOnlyThatInputsUndeliveredActivation(uint correctedInput, int expectedExecutions)
     {
         using var fixture = new EventPlanFixture();
         fixture.Manager.FeedbackReceived += (_, _) => fixture.Counters.Set(correctedInput, 50);

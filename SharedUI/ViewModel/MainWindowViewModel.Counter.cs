@@ -26,11 +26,13 @@ public partial class MainWindowViewModel
     [ObservableProperty]
     private ObservableCollection<InPortStatistic> _statistics = [];
 
+    /// <summary>Operator-visible failure to load or save the local counter file.</summary>
     [ObservableProperty]
-    private string _counterPersistenceError = string.Empty;
+    public partial string CounterPersistenceError { get; set; } = string.Empty;
 
+    /// <summary>Result of the last reset-all counter command.</summary>
     [ObservableProperty]
-    private string _counterCommandStatus = string.Empty;
+    public partial string CounterCommandStatus { get; set; } = string.Empty;
 
     /// <summary>
     /// Global target lap count for all tracks.

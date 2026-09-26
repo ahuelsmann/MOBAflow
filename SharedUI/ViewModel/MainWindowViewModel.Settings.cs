@@ -673,6 +673,13 @@ public partial class MainWindowViewModel
         get => _settings.Counter.CountOfFeedbackPoints;
         set
         {
+            // A cleared NumberBox reports NaN, which would convert to zero and remove every saved counter.
+            if (!double.IsFinite(value) || value < 0)
+            {
+                OnPropertyChanged();
+                return;
+            }
+
             if (_settings.Counter.CountOfFeedbackPoints != (int)value)
             {
                 _settings.Counter.CountOfFeedbackPoints = (int)value;

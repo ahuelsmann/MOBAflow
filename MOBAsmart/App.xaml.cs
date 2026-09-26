@@ -263,7 +263,7 @@ public partial class App
                     await viewModel.DisconnectCommand.ExecuteAsync(null);
                 }
             }
-            await _services.GetRequiredService<Moba.Backend.Service.InPortCounterService>().DisposeAsync();
+            await _services.GetRequiredService<Moba.Backend.Service.InPortCounterService>().DisposeAsync().ConfigureAwait(false);
         }
         catch (Exception)
         {

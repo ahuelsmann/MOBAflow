@@ -10,21 +10,18 @@ using System.Globalization;
 /// Represents lap statistics for a single InPort (track).
 /// Used by OverviewPage in WinUI, MAUI, and WebApp.
 /// </summary>
-public partial class InPortStatistic : ObservableObject
+/// <param name="commands">Optional local counter commands; without them the row is read-only.</param>
+public partial class InPortStatistic(IRuntimeCommandGateway? commands = null) : ObservableObject
 {
-    private readonly IRuntimeCommandGateway? _commands;
+    private readonly IRuntimeCommandGateway? _commands = commands;
 
-    /// <summary>Creates a statistics projection with optional local counter commands.</summary>
-    public InPortStatistic(IRuntimeCommandGateway? commands = null)
-    {
-        _commands = commands;
-    }
-
+    /// <summary>Unsigned integer text entered for a counter correction.</summary>
     [ObservableProperty]
-    private string _counterValue = string.Empty;
+    public partial string CounterValue { get; set; } = string.Empty;
 
+    /// <summary>Validation or command failure for this input's correction.</summary>
     [ObservableProperty]
-    private string _counterError = string.Empty;
+    public partial string CounterError { get; set; } = string.Empty;
 
     /// <summary>Whether the input can be edited by this statistics view.</summary>
     public bool CanEditCounter => _commands is not null;
@@ -38,7 +35,7 @@ public partial class InPortStatistic : ObservableObject
             return;
         }
 
-        await ChangeCounterAsync(() => _commands!.SetInPortCounterAsync(checked((uint)InPort), value));
+        await ChangeCounterAsync(() => _commands!.SetInPortCounterAsync(checked((uint)InPort), value)).ConfigureAwait(true);
     }
 
     [RelayCommand(CanExecute = nameof(CanEditCounter))]

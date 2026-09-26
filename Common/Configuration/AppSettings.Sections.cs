@@ -207,7 +207,8 @@ public class CounterSettings
         get => _countOfFeedbackPoints;
         set
         {
-            ArgumentOutOfRangeException.ThrowIfNegative(value);
+            // Clamp instead of throwing so a hand-edited settings file cannot fail the whole settings load.
+            value = Math.Max(value, 0);
             if (_countOfFeedbackPoints == value) return;
             _countOfFeedbackPoints = value;
             FeedbackPointsChanged?.Invoke(this, EventArgs.Empty);

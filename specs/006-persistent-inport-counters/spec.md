@@ -28,6 +28,9 @@ lifetime described in spec 001.
 - A real activation reaching an event-plan target again may execute that event again.
 - Persist accepted feedback and explicit changes in order with atomic file replacement.
   Expose persistence errors; never silently replace unreadable state with zero counts.
+- An unreadable counter file disables counting but never blocks runtime start or Z21
+  connection. An explicit reset-all is the operator's recovery and replaces the file.
+- Clearing the feedback point count field keeps the configured inventory.
 
 ## Acceptance
 

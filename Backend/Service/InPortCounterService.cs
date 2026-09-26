@@ -152,11 +152,21 @@ public sealed partial class InPortCounterService : IDisposable, IAsyncDisposable
         PublishSnapshotChanged();
     }
 
-    /// <summary>Resets all counts and timer history.</summary>
+    /// <summary>Resets all counts and timer history; also replaces saved counts that could not be loaded.</summary>
     public void ResetAll()
     {
         lock (_sync)
         {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            if (!_initialized && _loadFailed)
+            {
+                // The explicit reset is the operator's recovery from an unreadable counter file.
+                ReconcileInputsLocked();
+                _initialized = true;
+                _loadFailed = false;
+                _persistenceError = null;
+            }
+
             EnsureInitialized();
             foreach (var inPort in _counters.Keys.ToArray())
             {
@@ -183,7 +193,8 @@ public sealed partial class InPortCounterService : IDisposable, IAsyncDisposable
 
             if (!_initialized)
             {
-                _feedbackBeforeLoad.Enqueue((feedback, _timeProvider.GetLocalNow()));
+                // After a failed load, activations cannot be counted against unknown saved values.
+                if (!_loadFailed) _feedbackBeforeLoad.Enqueue((feedback, _timeProvider.GetLocalNow()));
                 return;
             }
 

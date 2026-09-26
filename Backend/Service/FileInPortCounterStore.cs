@@ -14,8 +14,9 @@ public sealed class FileInPortCounterStore(string path) : IInPortCounterStore
     {
         try
         {
-            await using var stream = new FileStream(_path, FileMode.Open, FileAccess.Read, FileShare.Read,
+            var stream = new FileStream(_path, FileMode.Open, FileAccess.Read, FileShare.Read,
                 4096, FileOptions.Asynchronous);
+            await using var streamScope = stream.ConfigureAwait(false);
             using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
             if (document.RootElement.ValueKind != JsonValueKind.Object)
                 throw new InvalidDataException("The counter file must contain an object of input numbers and counts.");
@@ -49,8 +50,9 @@ public sealed class FileInPortCounterStore(string path) : IInPortCounterStore
         var temporaryPath = _path + "." + Guid.NewGuid().ToString("N") + ".tmp";
         try
         {
-            await using (var stream = new FileStream(temporaryPath, FileMode.CreateNew, FileAccess.Write,
-                             FileShare.None, 4096, FileOptions.Asynchronous | FileOptions.WriteThrough))
+            var stream = new FileStream(temporaryPath, FileMode.CreateNew, FileAccess.Write,
+                FileShare.None, 4096, FileOptions.Asynchronous | FileOptions.WriteThrough);
+            await using (stream.ConfigureAwait(false))
             {
                 await JsonSerializer.SerializeAsync(stream, counts, cancellationToken: cancellationToken).ConfigureAwait(false);
                 await stream.FlushAsync(cancellationToken).ConfigureAwait(false);

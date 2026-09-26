@@ -19,6 +19,16 @@ reaching an event target again, stale activation isolation, feedback buffering w
 original arrival times, coalesced writes, persistence barriers under continuing
 feedback, corrupt input files, write failure/recovery, and mobile command routing.
 
+## Review follow-up (2026-09-26)
+
+- The cross-platform and Windows analyzer gates (`-p:MobaAnalyzerGate=true`, Release)
+  match their refreshed baselines; production diagnostics were fixed and only test-project
+  entries (CA2007, CA1812, CsWinRT1030) were added, following existing test conventions.
+- Added regressions for an unreadable file not blocking runtime start/connect, reset-all
+  recovery, and a cleared (NaN) feedback point count. The net10.0 suite excluding LiveE2E
+  passed with 1,732 tests and one skipped; the Android Release publish matched the
+  MOBAsmart analyzer baseline.
+
 ## Remaining acceptance
 
 - GitHub CI and Sonar quality gate for the published PR commit.
@@ -31,7 +41,9 @@ feedback, corrupt input files, write failure/recovery, and mobile command routin
 ## Storage behavior
 
 Each host registers its own application-data `inport-counters.json`. A missing file
-starts new counters at zero. An unreadable file is reported and remains untouched.
+starts new counters at zero. An unreadable file is reported and remains untouched;
+counting stays disabled while runtime start and Z21 connection continue. Reset-all
+explicitly replaces it with zero counts and resumes counting.
 Only counts persist; filter/lap timestamps start fresh on app startup and after an
 explicit correction. Removing an input deletes its saved count. Re-adding it starts
 at zero. Asynchronous writes use atomic replacement; abrupt process termination can

@@ -69,6 +69,21 @@ public sealed class JourneyCounterProjectionTests
     }
 
     [Test]
+    public async Task ClearedFeedbackPointCountKeepsConfiguredInputs()
+    {
+        await using var fixture = new ProjectionFixture();
+
+        // A cleared NumberBox reports NaN; converting it would remove every saved counter.
+        fixture.ViewModel.CountOfFeedbackPoints = double.NaN;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(fixture.Settings.Counter.CountOfFeedbackPoints, Is.EqualTo(7));
+            Assert.That(fixture.ViewModel.CountOfFeedbackPoints, Is.EqualTo(7));
+        }
+    }
+
+    [Test]
     public async Task ResetCounters_IsAlwaysAvailableAndWaitsForAuthoritativeResetSnapshot()
     {
         var journey = CreateJourney("Active");

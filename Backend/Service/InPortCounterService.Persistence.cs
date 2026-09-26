@@ -8,9 +8,10 @@ using Microsoft.Extensions.Logging;
 public sealed partial class InPortCounterService
 {
     private readonly IInPortCounterStore? _store;
-    private readonly SemaphoreSlim _loadLock = new(1, 1);
     private readonly Queue<(FeedbackResult Feedback, DateTimeOffset ReceivedAt)> _feedbackBeforeLoad = new();
+    private Task<bool>? _loadTask;
     private bool _initialized;
+    private bool _loadFailed;
     private bool _saving;
     private Dictionary<uint, ulong>? _pendingSave;
     private Task _saveTask = Task.CompletedTask;
@@ -26,53 +27,87 @@ public sealed partial class InPortCounterService
     }
 
     /// <summary>Restores counts before publishing any activations received during loading.</summary>
+    /// <exception cref="InvalidOperationException">The saved counts could not be loaded.</exception>
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
-        await _loadLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        if (!await TryInitializeAsync(cancellationToken).ConfigureAwait(false))
+            throw new InvalidOperationException(PersistenceError);
+    }
+
+    /// <summary>
+    /// Restores counts, reporting an unreadable store through <see cref="PersistenceError"/> instead of throwing
+    /// so the runtime can still start and connect. Counting stays disabled until a later load succeeds or
+    /// <see cref="ResetAll"/> explicitly replaces the saved counts.
+    /// </summary>
+    public Task<bool> TryInitializeAsync(CancellationToken cancellationToken = default)
+    {
+        Task<bool> load;
+        lock (_sync)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            if (_initialized) return Task.FromResult(true);
+
+            // Concurrent callers share one load; the next caller retries a failed load.
+            // Task.Run keeps store continuations and subscriber callbacks outside this lock.
+            if (_loadTask is null || _loadTask.IsCompleted) _loadTask = Task.Run(LoadSavedCountsAsync);
+            load = _loadTask;
+        }
+
+        return load.WaitAsync(cancellationToken);
+    }
+
+    private async Task<bool> LoadSavedCountsAsync()
+    {
+        IReadOnlyDictionary<uint, ulong> saved;
         try
         {
+            saved = await _store!.LoadAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            LogCounterLoadFailed(_logger, ex);
             lock (_sync)
             {
-                ObjectDisposedException.ThrowIf(_disposed, this);
-                if (_initialized) return;
-            }
-
-            var saved = await _store!.LoadAsync(cancellationToken).ConfigureAwait(false);
-            bool startPublishing;
-            lock (_sync)
-            {
-                ObjectDisposedException.ThrowIf(_disposed, this);
-                ReconcileInputsLocked();
-                foreach (var inPort in _counters.Keys.ToArray())
-                    _counters[inPort] = new InPortCounterSnapshot(inPort, saved.GetValueOrDefault(inPort), null, null);
-                _initialized = true;
-                _persistenceError = null;
-                while (_feedbackBeforeLoad.TryDequeue(out var pending))
-                    AcceptFeedbackLocked(pending.Feedback, pending.ReceivedAt);
-                QueueSaveLocked();
-                startPublishing = !_publishingCounts && _pendingCounts.Count > 0;
-                if (startPublishing) _publishingCounts = true;
+                _loadFailed = true;
+                // Activations cannot be counted against unknown saved values.
+                _feedbackBeforeLoad.Clear();
+                _persistenceError = "Could not load InPort counters: " + ex.Message
+                    + " Reset all counters to replace the saved counts.";
             }
 
             PublishSnapshotChanged();
-            if (startPublishing) PublishPendingCounts();
+            return false;
         }
-        catch (Exception ex) when (ex is not OperationCanceledException and not ObjectDisposedException)
+
+        bool startPublishing;
+        lock (_sync)
         {
-            lock (_sync) { _persistenceError = "Could not load InPort counters: " + ex.Message; }
-            PublishSnapshotChanged();
-            throw;
+            if (_disposed) return false;
+            // An explicit reset may already have replaced unreadable counts during this retry.
+            if (_initialized) return true;
+            ReconcileInputsLocked();
+            foreach (var inPort in _counters.Keys.ToArray())
+                _counters[inPort] = new InPortCounterSnapshot(inPort, saved.GetValueOrDefault(inPort), null, null);
+            _initialized = true;
+            _loadFailed = false;
+            _persistenceError = null;
+            while (_feedbackBeforeLoad.TryDequeue(out var pending))
+                AcceptFeedbackLocked(pending.Feedback, pending.ReceivedAt);
+            QueueSaveLocked();
+            startPublishing = !_publishingCounts && _pendingCounts.Count > 0;
+            if (startPublishing) _publishingCounts = true;
         }
-        finally
-        {
-            _loadLock.Release();
-        }
+
+        PublishSnapshotChanged();
+        if (startPublishing) PublishPendingCounts();
+        return true;
     }
 
     private void EnsureInitialized()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        if (!_initialized) throw new InvalidOperationException("InPort counters have not been loaded yet.");
+        if (!_initialized)
+            throw new InvalidOperationException(_loadFailed ? _persistenceError : "InPort counters have not been loaded yet.");
     }
 
     private void OnFeedbackPointsChanged(object? sender, EventArgs args)
@@ -136,7 +171,7 @@ public sealed partial class InPortCounterService
             {
                 await _store!.SaveAsync(next).ConfigureAwait(false);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OutOfMemoryException)
             {
                 error = "Could not save InPort counters: " + ex.Message;
                 LogCounterSaveFailed(_logger, ex);
@@ -182,16 +217,23 @@ public sealed partial class InPortCounterService
     }
 
     /// <summary>Stops accepting feedback and drains the final saved state.</summary>
+    /// <remarks>
+    /// Persistence errors are already logged and shown; rethrowing them here would abort the disposal of
+    /// other services during application shutdown. No save is queued after <see cref="Dispose"/>, and the
+    /// writer never faults, so awaiting it drains every accepted change.
+    /// </remarks>
     public async ValueTask DisposeAsync()
     {
         Dispose();
         Task pending;
         lock (_sync) { pending = _saveTask; }
         await pending.ConfigureAwait(false);
-        await FlushAsync().ConfigureAwait(false);
         GC.SuppressFinalize(this);
     }
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Local InPort counter persistence failed")]
     private static partial void LogCounterSaveFailed(ILogger logger, Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Local InPort counters could not be loaded; counting is disabled")]
+    private static partial void LogCounterLoadFailed(ILogger logger, Exception exception);
 }

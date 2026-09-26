@@ -6,10 +6,10 @@ using Moba.SharedUI.ViewModel;
 using Moq;
 
 [TestFixture]
-public sealed class InPortCounterEditingTests
+internal sealed class InPortCounterEditingTests
 {
     [Test]
-    public async Task Editing_PreservesFullIntegerPrecisionAndDoesNotCreateFeedback()
+    public async Task EditingPreservesFullIntegerPrecisionAndDoesNotCreateFeedback()
     {
         var commands = new Mock<IRuntimeCommandGateway>(MockBehavior.Strict);
         commands.Setup(value => value.SetInPortCounterAsync(2, ulong.MaxValue, default)).Returns(Task.CompletedTask);
@@ -29,7 +29,7 @@ public sealed class InPortCounterEditingTests
     [TestCase("1.5")]
     [TestCase("1e3")]
     [TestCase("18446744073709551616")]
-    public async Task InvalidInput_DoesNotReachRuntime(string input)
+    public async Task InvalidInputDoesNotReachRuntime(string input)
     {
         var commands = new Mock<IRuntimeCommandGateway>(MockBehavior.Strict);
         var row = new InPortStatistic(commands.Object) { InPort = 1, CounterValue = input };
@@ -39,16 +39,16 @@ public sealed class InPortCounterEditingTests
     }
 
     [Test]
-    public async Task FailedSave_IsShownAndRetainsTheEnteredValue()
+    public async Task FailedSaveIsShownAndRetainsTheEnteredValue()
     {
         var commands = new Mock<IRuntimeCommandGateway>();
         commands.Setup(value => value.SetInPortCounterAsync(1, 14, default)).ThrowsAsync(new IOException("Counter save failed."));
         var row = new InPortStatistic(commands.Object) { InPort = 1, CounterValue = "14" };
         await row.SetCounterCommand.ExecuteAsync(null);
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(row.CounterError, Is.EqualTo("Counter save failed."));
             Assert.That(row.CounterValue, Is.EqualTo("14"));
-        });
+        }
     }
 }

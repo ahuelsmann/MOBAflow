@@ -1,16 +1,17 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Backend;
 
+using Microsoft.Extensions.Logging;
 using Moba.Backend.Interface;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
 using Moq;
 
 [TestFixture]
-public sealed class PersistentInPortCounterTests
+internal sealed class PersistentInPortCounterTests
 {
     [Test]
-    public async Task InventoryChanges_AreImmediatePreserveExistingCountsAndPersistRemoval()
+    public async Task InventoryChangesAreImmediatePreserveExistingCountsAndPersistRemoval()
     {
         var settings = Settings(2);
         var z21 = new Mock<IZ21>();
@@ -27,17 +28,17 @@ public sealed class PersistentInPortCounterTests
         InPortCounterServiceTests.Raise(z21, 3);
         await counters.FlushAsync();
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(store.Counts, Is.EquivalentTo(new Dictionary<uint, ulong> { [1] = 42, [2] = 0 }));
             Assert.That(activations, Is.Zero);
-        });
+        }
         settings.Counter.CountOfFeedbackPoints = 3;
         Assert.That(counters.GetSnapshot().Single(item => item.InPort == 3).Count, Is.Zero);
     }
 
     [Test]
-    public async Task FileStore_RestartRestoresExactValuesWithoutFeedbackOrTimerHistory()
+    public async Task FileStoreRestartRestoresExactValuesWithoutFeedbackOrTimerHistory()
     {
         var directory = Path.Combine(Path.GetTempPath(), "moba-counter-test-" + Guid.NewGuid());
         var store = new FileInPortCounterStore(Path.Combine(directory, "inport-counters.json"));
@@ -56,12 +57,12 @@ public sealed class PersistentInPortCounterTests
             var activations = 0;
             restarted.Counted += (_, _) => activations++;
             await restarted.InitializeAsync();
-            Assert.Multiple(() =>
+            using (Assert.EnterMultipleScope())
             {
                 Assert.That(restarted.GetSnapshot().Select(item => item.Count), Is.EqualTo(new ulong[] { ulong.MaxValue, 37, 0 }));
                 Assert.That(restarted.GetSnapshot().All(item => item.LastFeedbackTime is null && item.LastLapTime is null), Is.True);
                 Assert.That(activations, Is.Zero);
-            });
+            }
             InPortCounterServiceTests.Raise(z21, 1);
             Assert.That(activations, Is.Zero, "A saturated counter must not wrap around.");
         }
@@ -72,7 +73,7 @@ public sealed class PersistentInPortCounterTests
     }
 
     [Test]
-    public async Task IndependentStores_DoNotShareCountsAndExplicitResetsSurviveRestart()
+    public async Task IndependentStoresDoNotShareCountsAndExplicitResetsSurviveRestart()
     {
         var firstStore = new MemoryStore();
         var secondStore = new MemoryStore();
@@ -90,15 +91,15 @@ public sealed class PersistentInPortCounterTests
         first.ResetAll();
         await first.FlushAsync();
         await second.FlushAsync();
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(firstStore.Counts.Values, Is.All.Zero);
             Assert.That(secondStore.Counts[1], Is.EqualTo(81UL));
-        });
+        }
     }
 
     [Test]
-    public async Task FeedbackDuringLoad_IsAppliedAfterRestorationInArrivalOrder()
+    public async Task FeedbackDuringLoadIsAppliedAfterRestorationInArrivalOrder()
     {
         var loaded = new TaskCompletionSource<IReadOnlyDictionary<uint, ulong>>(TaskCreationOptions.RunContinuationsAsynchronously);
         var store = new Mock<IInPortCounterStore>();
@@ -118,7 +119,7 @@ public sealed class PersistentInPortCounterTests
     }
 
     [Test]
-    public async Task SlowSave_CoalescesConcurrentChangesAndFlushWaitsForLatestValue()
+    public async Task SlowSaveCoalescesConcurrentChangesAndFlushWaitsForLatestValue()
     {
         var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -152,7 +153,7 @@ public sealed class PersistentInPortCounterTests
     }
 
     [Test]
-    public async Task FeedbackBufferedDuringLoad_UsesArrivalTimesForTimerFiltering()
+    public async Task FeedbackBufferedDuringLoadUsesArrivalTimesForTimerFiltering()
     {
         var loaded = new TaskCompletionSource<IReadOnlyDictionary<uint, ulong>>(TaskCreationOptions.RunContinuationsAsynchronously);
         var store = new Mock<IInPortCounterStore>();
@@ -172,15 +173,15 @@ public sealed class PersistentInPortCounterTests
         InPortCounterServiceTests.Raise(z21, 1);
         loaded.SetResult(new Dictionary<uint, ulong> { [1] = 10 });
         await initialization;
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(counters.GetSnapshot().Single().Count, Is.EqualTo(12UL));
             Assert.That(counters.GetSnapshot().Single().LastLapTime, Is.EqualTo(TimeSpan.FromSeconds(10)));
-        });
+        }
     }
 
     [Test]
-    public async Task FailedWrite_IsVisibleAndNextMutationCanPersistTheCurrentValue()
+    public async Task FailedWriteIsVisibleAndNextMutationCanPersistTheCurrentValue()
     {
         var store = new MemoryStore { FailWrites = true };
         using var counters = new InPortCounterService(Mock.Of<IZ21>(), Settings(1), store: store);
@@ -191,15 +192,15 @@ public sealed class PersistentInPortCounterTests
         store.FailWrites = false;
         counters.Set(1, 13);
         await counters.FlushAsync();
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(counters.PersistenceError, Is.Null);
             Assert.That(store.Counts[1], Is.EqualTo(13UL));
-        });
+        }
     }
 
     [Test]
-    public async Task Flush_CompletesOnceItsValueIsSavedEvenWhenLaterFeedbackIsStillSaving()
+    public async Task FlushCompletesOnceItsValueIsSavedEvenWhenLaterFeedbackIsStillSaving()
     {
         var firstEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var releaseFirst = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -247,7 +248,7 @@ public sealed class PersistentInPortCounterTests
     [TestCase("{\"0\":5}")]
     [TestCase("{\"1\":18446744073709551616}")]
     [TestCase("incomplete {")]
-    public async Task InvalidFile_IsReportedAndNeverOverwritten(string json)
+    public async Task InvalidFileIsReportedAndNeverOverwritten(string json)
     {
         var path = Path.Combine(Path.GetTempPath(), "moba-counter-test-" + Guid.NewGuid() + ".json");
         await File.WriteAllTextAsync(path, json);
@@ -256,13 +257,71 @@ public sealed class PersistentInPortCounterTests
             using var counters = new InPortCounterService(Mock.Of<IZ21>(), Settings(1), store: new FileInPortCounterStore(path));
             Assert.CatchAsync<Exception>(async () => await counters.InitializeAsync());
             Assert.Throws<InvalidOperationException>(() => counters.Set(1, 0));
-            Assert.That(counters.PersistenceError, Does.Contain("Could not load"));
-            Assert.That(await File.ReadAllTextAsync(path), Is.EqualTo(json));
+            var content = await File.ReadAllTextAsync(path);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(counters.PersistenceError, Does.Contain("Could not load"));
+                Assert.That(content, Is.EqualTo(json));
+            }
         }
         finally
         {
             File.Delete(path);
         }
+    }
+
+    [Test]
+    public async Task ResetAllReplacesUnreadableCountsAndResumesCounting()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "moba-counter-test-" + Guid.NewGuid() + ".json");
+        await File.WriteAllTextAsync(path, "incomplete {");
+        try
+        {
+            var z21 = new Mock<IZ21>();
+            using var counters = new InPortCounterService(z21.Object, Settings(2), store: new FileInPortCounterStore(path));
+            var activations = 0;
+            counters.Counted += (_, _) => activations++;
+            Assert.That(await counters.TryInitializeAsync(), Is.False);
+            InPortCounterServiceTests.Raise(z21, 1);
+            Assert.That(activations, Is.Zero, "Activations must not be counted against unknown saved values.");
+
+            counters.ResetAll();
+            InPortCounterServiceTests.Raise(z21, 1);
+            await counters.FlushAsync();
+
+            var saved = await new FileInPortCounterStore(path).LoadAsync();
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(activations, Is.EqualTo(1));
+                Assert.That(counters.PersistenceError, Is.Null);
+                Assert.That(counters.GetSnapshot().Select(item => item.Count), Is.EqualTo(new ulong[] { 1, 0 }));
+                Assert.That(saved, Is.EquivalentTo(new Dictionary<uint, ulong> { [1] = 1, [2] = 0 }));
+            }
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Test]
+    public async Task UnreadableCountsDoNotBlockRuntimeStartOrConnect()
+    {
+        var store = new Mock<IInPortCounterStore>();
+        store.Setup(value => value.LoadAsync(default)).ThrowsAsync(new InvalidDataException("Broken counter file."));
+        var z21 = new Mock<IZ21>();
+        z21.SetupGet(value => value.TrafficMonitor).Returns((Z21Monitor?)null);
+        var settings = Settings(1);
+        settings.Z21.CurrentIpAddress = string.Empty;
+        using var counters = new InPortCounterService(z21.Object, settings, store: store.Object);
+        using var runtime = new MobaRuntimeService(z21.Object, Mock.Of<IWorkflowService>(),
+            new ActionExecutionContext { Z21 = z21.Object }, settings, Mock.Of<ILogger<MobaRuntimeService>>(),
+            inPortCounterService: counters);
+
+        await runtime.StartAsync();
+        await runtime.ConnectAsync();
+
+        Assert.That(runtime.Current.InPortCounterPersistenceError, Does.Contain("Broken counter file."));
     }
 
     private static AppSettings Settings(int count) => new() { Counter = { CountOfFeedbackPoints = count, UseTimerFilter = false } };
