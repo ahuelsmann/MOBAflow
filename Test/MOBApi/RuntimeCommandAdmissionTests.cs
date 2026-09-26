@@ -11,6 +11,8 @@ using Moba.MOBApi.Service;
 
 using Moq;
 
+using System.Globalization;
+
 /// <summary>
 /// Verifies that remote commands are validated once and queued with a bound, on REST and SignalR alike.
 /// </summary>
@@ -140,6 +142,23 @@ internal sealed class RuntimeCommandAdmissionTests
         fixture.HostProxy.Verify(
             proxy => proxy.SendCoreAsync(It.IsAny<string>(), It.IsAny<object?[]>(), It.IsAny<CancellationToken>()),
             Times.Never);
+    }
+
+    [Test]
+    public async Task HubSignalAspect_WithHost_ForwardsTheValidatedAspectName()
+    {
+        var fixture = new HubFixture(hostConnectionId: "host-1");
+        var signalId = Guid.NewGuid();
+
+        await fixture.Hub.SetSignalAspect(signalId.ToString("N"), ((int)SignalAspect.Zs1).ToString(CultureInfo.InvariantCulture))
+            .ConfigureAwait(false);
+
+        fixture.HostProxy.Verify(
+            proxy => proxy.SendCoreAsync(
+                RuntimeHubMethods.ExecuteSetSignalAspect,
+                It.Is<object?[]>(args => (string?)args[0] == signalId.ToString() && (string?)args[1] == nameof(SignalAspect.Zs1)),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     private static RuntimeCommandEnvelope ValidDrive(int address) => new()

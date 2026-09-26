@@ -149,7 +149,7 @@ public sealed class RuntimeHub : Hub
                     SignalId = parsedSignalId,
                     SignalAspect = parsedAspect
                 },
-                () => TryForwardSetSignalAspectAsync(signalId, aspect))
+                () => TryForwardSetSignalAspectAsync(parsedSignalId.ToString(), parsedAspect.ToString()))
             .ConfigureAwait(false);
     }
 
