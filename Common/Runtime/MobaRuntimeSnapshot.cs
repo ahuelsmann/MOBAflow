@@ -119,8 +119,11 @@ public sealed class MobaRuntimeSnapshot
     /// </summary>
     public bool IsOperatorAckRequired { get; init; }
 
-    /// <summary>Application-session activation counters, independent of the selected project.</summary>
+    /// <summary>Local application activation counters, independent of the selected project.</summary>
     public IReadOnlyList<InPortCounterSnapshot> InPortCounters { get; init; } = [];
+
+    /// <summary>Operator-visible failure to load or save local counts, if any.</summary>
+    public string? InPortCounterPersistenceError { get; init; }
 
     /// <summary>
     /// Gets the current runtime state of all active journeys.

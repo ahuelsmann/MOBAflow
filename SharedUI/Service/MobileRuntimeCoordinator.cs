@@ -57,6 +57,14 @@ public sealed class MobileRuntimeCoordinator : IRuntimeCommandGateway, IMobileRu
     }
 
     /// <inheritdoc />
+    public Task SetInPortCounterAsync(uint inPort, ulong value, CancellationToken cancellationToken = default) =>
+        _localGateway.SetInPortCounterAsync(inPort, value, cancellationToken);
+
+    /// <inheritdoc />
+    public Task ResetInPortCounterAsync(uint inPort, CancellationToken cancellationToken = default) =>
+        _localGateway.ResetInPortCounterAsync(inPort, cancellationToken);
+
+    /// <inheritdoc />
     public Task SetSignalAspectAsync(Guid signalId, SignalAspect aspect, CancellationToken cancellationToken = default)
     {
         if (_mobaflowSessionActive)

@@ -42,7 +42,7 @@ public sealed class JourneyEventPlanAcceptanceTests
         Assert.Multiple(() =>
         {
             Assert.That(fixture.Requests, Has.Count.EqualTo(3));
-            Assert.That(fixture.Counters.GetSnapshot().Single().Count, Is.EqualTo(6UL));
+            Assert.That(fixture.Counters.GetSnapshot().Single(counter => counter.InPort == 1).Count, Is.EqualTo(6UL));
         });
     }
 
@@ -112,7 +112,7 @@ public sealed class JourneyEventPlanAcceptanceTests
 
         public AcceptanceFixture()
         {
-            Counters = new InPortCounterService(_z21.Object, new AppSettings { Counter = { UseTimerFilter = false } });
+            Counters = new InPortCounterService(_z21.Object, new AppSettings { Counter = { CountOfFeedbackPoints = 3, UseTimerFilter = false } });
             _workflows.Setup(service => service.ExecuteAsync(It.IsAny<WorkflowExecutionRequest>(), It.IsAny<CancellationToken>()))
                 .Returns((WorkflowExecutionRequest request, CancellationToken _) =>
                 {

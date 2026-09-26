@@ -71,6 +71,18 @@ public sealed class RecordingRuntimeCommandGateway : IRuntimeCommandGateway
             cancellationToken);
 
     /// <inheritdoc />
+    public Task SetInPortCounterAsync(uint inPort, ulong value, CancellationToken cancellationToken = default) =>
+        ExecuteAsync(
+            Command("command.inport-counter-set", JsonSerializer.SerializeToElement(new { inPort, value }), "Set InPort counter"),
+            token => _inner.SetInPortCounterAsync(inPort, value, token), cancellationToken);
+
+    /// <inheritdoc />
+    public Task ResetInPortCounterAsync(uint inPort, CancellationToken cancellationToken = default) =>
+        ExecuteAsync(
+            Command("command.inport-counter-reset", JsonSerializer.SerializeToElement(new { inPort }), "Reset InPort counter"),
+            token => _inner.ResetInPortCounterAsync(inPort, token), cancellationToken);
+
+    /// <inheritdoc />
     public Task SetSignalAspectAsync(
         Guid signalId,
         SignalAspect aspect,

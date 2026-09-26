@@ -105,6 +105,9 @@ public static class MobaWinUiServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddSingleton<Solution>();
+        services.AddSingleton<IInPortCounterStore>(_ => new FileInPortCounterStore(
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "MOBAflow", "inport-counters.json")));
         services.AddMobaBackendServices();
         services.AddSingleton(sp => new AnnouncementService(
             sp.GetRequiredService<ISpeakerEngineFactory>(),

@@ -75,6 +75,8 @@ public sealed partial class MobaRuntimeService
     /// <inheritdoc />
     public async Task ConnectAsync(CancellationToken cancellationToken = default)
     {
+        // An unreadable counter file is reported in the snapshot and must not prevent Z21 control.
+        await _inPortCounters.TryInitializeAsync(cancellationToken).ConfigureAwait(false);
         if (!TryGetConfiguredEndpoint(out var address, out var port, out var errorMessage))
         {
             _isZ21Connecting = false;
@@ -311,13 +313,27 @@ public sealed partial class MobaRuntimeService
     }
 
     /// <inheritdoc />
-    public Task ResetInPortCountersAsync(CancellationToken cancellationToken = default)
+    public async Task ResetInPortCountersAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        // A failed load is not fatal here: resetting all counts replaces the unreadable saved state.
+        await _inPortCounters.TryInitializeAsync(cancellationToken).ConfigureAwait(false);
         _inPortCounters.ResetAll();
-        PublishSnapshot();
-        return Task.CompletedTask;
+        await _inPortCounters.FlushAsync(cancellationToken).ConfigureAwait(false);
     }
+
+    /// <inheritdoc />
+    public async Task SetInPortCounterAsync(uint inPort, ulong value, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        await _inPortCounters.InitializeAsync(cancellationToken).ConfigureAwait(false);
+        _inPortCounters.Set(inPort, value);
+        await _inPortCounters.FlushAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public Task ResetInPortCounterAsync(uint inPort, CancellationToken cancellationToken = default) =>
+        SetInPortCounterAsync(inPort, 0, cancellationToken);
 
     /// <inheritdoc />
     public async Task SetSignalAspectAsync(SbSignal signal, CancellationToken cancellationToken = default)

@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 /// <summary>One accepted activation and its immutable global counter value.</summary>
-public sealed class InPortCountedEventArgs(InPortCounterSnapshot snapshot, Guid correlationId, long generation = 0) : EventArgs
+public sealed class InPortCountedEventArgs(InPortCounterSnapshot snapshot, Guid correlationId, long generation = 0, long inputRevision = 0) : EventArgs
 {
     /// <summary>Counter value after accepting this activation.</summary>
     public InPortCounterSnapshot Snapshot { get; } = snapshot;
@@ -18,13 +18,16 @@ public sealed class InPortCountedEventArgs(InPortCounterSnapshot snapshot, Guid 
 
     /// <summary>Counter generation, changed by an explicit reset.</summary>
     public long Generation { get; } = generation;
+
+    /// <summary>Input revision, changed by a correction or removal of this input.</summary>
+    public long InputRevision { get; } = inputRevision;
 }
 
 /// <summary>
 /// Owns application-lifetime input counts independently of projects, journeys, and UI pages.
 /// Only an explicit reset clears counts.
 /// </summary>
-public sealed partial class InPortCounterService : IDisposable
+public sealed partial class InPortCounterService : IDisposable, IAsyncDisposable
 {
     private readonly Lock _sync = new();
     private readonly IZ21 _z21;
@@ -32,6 +35,7 @@ public sealed partial class InPortCounterService : IDisposable
     private readonly TimeProvider _timeProvider;
     private readonly ILogger<InPortCounterService> _logger;
     private readonly Dictionary<uint, InPortCounterSnapshot> _counters = [];
+    private readonly Dictionary<uint, long> _inputRevisions = [];
     private readonly Queue<InPortCountedEventArgs> _pendingCounts = new();
     private EventHandler<InPortCountedEventArgs>? _journeyFeedbackHandler;
     private long _generation;
@@ -43,7 +47,8 @@ public sealed partial class InPortCounterService : IDisposable
         IZ21 z21,
         AppSettings settings,
         TimeProvider? timeProvider = null,
-        ILogger<InPortCounterService>? logger = null)
+        ILogger<InPortCounterService>? logger = null,
+        IInPortCounterStore? store = null)
     {
         ArgumentNullException.ThrowIfNull(z21);
         ArgumentNullException.ThrowIfNull(settings);
@@ -51,11 +56,14 @@ public sealed partial class InPortCounterService : IDisposable
         _settings = settings;
         _timeProvider = timeProvider ?? TimeProvider.System;
         _logger = logger ?? NullLogger<InPortCounterService>.Instance;
+        _store = store;
+        _initialized = store is null;
         for (uint inPort = 1; inPort <= settings.Counter.CountOfFeedbackPoints; inPort++)
         {
             _counters[inPort] = new InPortCounterSnapshot(inPort, 0, null, null);
         }
 
+        _settings.Counter.FeedbackPointsChanged += OnFeedbackPointsChanged;
         _z21.Received += OnFeedbackReceived;
     }
 
@@ -106,23 +114,60 @@ public sealed partial class InPortCounterService : IDisposable
     }
 
     /// <summary>Queues work for a current activation atomically with respect to counter resets.</summary>
-    internal void QueueIfCurrent(long generation, System.Action enqueue)
+    internal void QueueIfCurrent(InPortCountedEventArgs activation, System.Action enqueue)
     {
         lock (_sync)
         {
-            if (!_disposed && generation == _generation)
+            if (IsCurrent(activation))
             {
                 enqueue();
             }
         }
     }
 
-    /// <summary>Resets all counts and timer history.</summary>
+    /// <summary>Checks whether an activation still belongs to the current input value.</summary>
+    internal bool IsCurrent(InPortCountedEventArgs activation)
+    {
+        lock (_sync)
+        {
+            return !_disposed && activation.Generation == _generation
+                && _counters.ContainsKey(activation.Snapshot.InPort)
+                && activation.InputRevision == _inputRevisions.GetValueOrDefault(activation.Snapshot.InPort);
+        }
+    }
+
+    /// <summary>Corrects one configured count without publishing a feedback activation.</summary>
+    public void Set(uint inPort, ulong value)
+    {
+        lock (_sync)
+        {
+            EnsureInitialized();
+            if (!_counters.ContainsKey(inPort))
+                throw new ArgumentOutOfRangeException(nameof(inPort), "The input is not configured.");
+            _counters[inPort] = new InPortCounterSnapshot(inPort, value, null, null);
+            _inputRevisions[inPort] = _inputRevisions.GetValueOrDefault(inPort) + 1;
+            QueueSaveLocked();
+        }
+
+        PublishSnapshotChanged();
+    }
+
+    /// <summary>Resets all counts and timer history; also replaces saved counts that could not be loaded.</summary>
     public void ResetAll()
     {
         lock (_sync)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
+            if (!_initialized && _loadFailed)
+            {
+                // The explicit reset is the operator's recovery from an unreadable counter file.
+                ReconcileInputsLocked();
+                _initialized = true;
+                _loadFailed = false;
+                _persistenceError = null;
+            }
+
+            EnsureInitialized();
             foreach (var inPort in _counters.Keys.ToArray())
             {
                 _counters[inPort] = new InPortCounterSnapshot(inPort, 0, null, null);
@@ -130,6 +175,7 @@ public sealed partial class InPortCounterService : IDisposable
 
             _generation++;
             _pendingCounts.Clear();
+            QueueSaveLocked();
         }
 
         PublishSnapshotChanged();
@@ -145,36 +191,49 @@ public sealed partial class InPortCounterService : IDisposable
                 return;
             }
 
-            var inPort = checked((uint)feedback.InPort);
-            _counters.TryGetValue(inPort, out var previous);
-            var now = _timeProvider.GetLocalNow();
-            var elapsed = previous?.LastFeedbackTime is DateTimeOffset lastFeedbackTime
-                ? now - lastFeedbackTime
-                : (TimeSpan?)null;
-            if (_settings.Counter.UseTimerFilter
-                && elapsed.HasValue
-                && elapsed.Value.TotalSeconds < _settings.Counter.TimerIntervalSeconds)
+            if (!_initialized)
             {
+                // After a failed load, activations cannot be counted against unknown saved values.
+                if (!_loadFailed) _feedbackBeforeLoad.Enqueue((feedback, _timeProvider.GetLocalNow()));
                 return;
             }
 
-            // Do not wrap a saturated counter back to zero and accidentally match a new event.
-            if (previous?.Count == ulong.MaxValue)
-            {
-                return;
-            }
-
-            var snapshot = new InPortCounterSnapshot(inPort, (previous?.Count ?? 0) + 1, now, elapsed);
-            _counters[inPort] = snapshot;
-            _pendingCounts.Enqueue(new InPortCountedEventArgs(snapshot, feedback.CorrelationId, _generation));
-            startPublishing = !_publishingCounts;
-            _publishingCounts = true;
+            AcceptFeedbackLocked(feedback, _timeProvider.GetLocalNow());
+            startPublishing = !_publishingCounts && _pendingCounts.Count > 0;
+            if (startPublishing) _publishingCounts = true;
         }
 
         if (startPublishing)
         {
             PublishPendingCounts();
         }
+    }
+
+    private void AcceptFeedbackLocked(FeedbackResult feedback, DateTimeOffset now)
+    {
+        var inPort = checked((uint)feedback.InPort);
+        if (!_counters.TryGetValue(inPort, out var previous)) return;
+        var elapsed = previous.LastFeedbackTime is DateTimeOffset lastFeedbackTime
+            ? now - lastFeedbackTime
+            : (TimeSpan?)null;
+        if (_settings.Counter.UseTimerFilter
+            && elapsed.HasValue
+            && elapsed.Value.TotalSeconds < _settings.Counter.TimerIntervalSeconds)
+        {
+            return;
+        }
+
+        // Do not wrap a saturated counter back to zero and accidentally match a new event.
+        if (previous.Count == ulong.MaxValue)
+        {
+            return;
+        }
+
+        var snapshot = new InPortCounterSnapshot(inPort, previous.Count + 1, now, elapsed);
+        _counters[inPort] = snapshot;
+        QueueSaveLocked();
+        _pendingCounts.Enqueue(new InPortCountedEventArgs(snapshot, feedback.CorrelationId, _generation,
+            _inputRevisions.GetValueOrDefault(inPort)));
     }
 
     private void PublishPendingCounts()
@@ -251,10 +310,12 @@ public sealed partial class InPortCounterService : IDisposable
 
             _disposed = true;
             _pendingCounts.Clear();
+            _feedbackBeforeLoad.Clear();
             _journeyFeedbackHandler = null;
         }
 
         _z21.Received -= OnFeedbackReceived;
+        _settings.Counter.FeedbackPointsChanged -= OnFeedbackPointsChanged;
         GC.SuppressFinalize(this);
     }
 }

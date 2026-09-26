@@ -26,6 +26,14 @@ public partial class MainWindowViewModel
     [ObservableProperty]
     private ObservableCollection<InPortStatistic> _statistics = [];
 
+    /// <summary>Operator-visible failure to load or save the local counter file.</summary>
+    [ObservableProperty]
+    public partial string CounterPersistenceError { get; set; } = string.Empty;
+
+    /// <summary>Result of the last reset-all counter command.</summary>
+    [ObservableProperty]
+    public partial string CounterCommandStatus { get; set; } = string.Empty;
+
     /// <summary>
     /// Global target lap count for all tracks.
     /// When changed, updates all existing statistics.
@@ -90,7 +98,7 @@ public partial class MainWindowViewModel
         {
             for (int i = 1; i <= count; i++)
             {
-                list.Add(new InPortStatistic
+                list.Add(new InPortStatistic(_runtimeCommandGateway)
                 {
                     InPort = i,
                     Name = $"Feedback Point {i}",
@@ -213,11 +221,11 @@ public partial class MainWindowViewModel
         try
         {
             await _runtimeCommandGateway.ResetInPortCountersAsync().ConfigureAwait(true);
-            JourneyCommandStatus = "InPort counters reset.";
+            CounterCommandStatus = "InPort counters reset.";
         }
         catch (Exception ex)
         {
-            JourneyCommandStatus = ex.Message;
+            CounterCommandStatus = ex.Message;
             LogJourneyCommandFailure(_logger, ex, "Resetting InPort counters");
         }
     }
@@ -231,6 +239,7 @@ public partial class MainWindowViewModel
     /// </summary>
     private void ApplyInPortCounterSnapshot(MobaRuntimeSnapshot snapshot)
     {
+        CounterPersistenceError = snapshot.InPortCounterPersistenceError ?? string.Empty;
         foreach (var counter in snapshot.InPortCounters)
         {
             var stat = this.Statistics.FirstOrDefault(s => s.InPort == counter.InPort);

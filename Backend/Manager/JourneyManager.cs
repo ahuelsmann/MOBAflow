@@ -182,7 +182,7 @@ public partial class JourneyManager : IJourneyManager
         lock (_stateSync)
         {
             // Counts queued before an explicit reset belong to the previous session.
-            if (_disposed || args.Generation != _inPortCounterService.Generation)
+            if (_disposed || !_inPortCounterService.IsCurrent(args))
             {
                 return;
             }
@@ -244,7 +244,7 @@ public partial class JourneyManager : IJourneyManager
 
             var inPort = journeyEvent.InPort;
             var resetVersion = state.ResetVersion;
-            _inPortCounterService.QueueIfCurrent(args.Generation, () => queuedExecutions.Add(_executionCoordinator.EnqueueAsync(new QueuedWorkflowExecution
+            _inPortCounterService.QueueIfCurrent(args, () => queuedExecutions.Add(_executionCoordinator.EnqueueAsync(new QueuedWorkflowExecution
             {
                 // Workflows of one journey share its stop state and run in order; other journeys stay independent.
                 SourceKey = $"journey:{journey.Id}",

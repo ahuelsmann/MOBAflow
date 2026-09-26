@@ -223,6 +223,7 @@ public partial class App
     protected override void OnSleep()
     {
         base.OnSleep();
+        _services.GetRequiredService<Moba.Backend.Service.InPortCounterService>().FlushAsync().Observe();
     }
 
     /// <inheritdoc />
@@ -262,6 +263,7 @@ public partial class App
                     await viewModel.DisconnectCommand.ExecuteAsync(null);
                 }
             }
+            await _services.GetRequiredService<Moba.Backend.Service.InPortCounterService>().DisposeAsync().ConfigureAwait(false);
         }
         catch (Exception)
         {
