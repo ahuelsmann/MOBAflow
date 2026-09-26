@@ -10,7 +10,7 @@ using System.Net;
 
 [ApiController]
 [Route("api/runtime/journeys/{journeyId:guid}/feedback-progress")]
-public sealed class JourneyProgressController(IRuntimeSnapshotCache snapshotCache, IRuntimeCommandQueue commandQueue) : ControllerBase
+public sealed class JourneyProgressController(IRuntimeSnapshotCache snapshotCache, IRuntimeCommandAdmission commandAdmission) : ControllerBase
 {
     [HttpGet]
     [Authorize(Policy = ControlPlaneCapabilities.Read)]
@@ -28,8 +28,9 @@ public sealed class JourneyProgressController(IRuntimeSnapshotCache snapshotCach
     public IActionResult Reset(Guid journeyId)
     {
         if (!IsLocalhostRequest()) return Forbid();
-        commandQueue.Enqueue(new RuntimeCommandEnvelope { Type = RuntimeCommandType.ResetJourney, JourneyId = journeyId });
-        return Accepted();
+        return commandAdmission
+            .Enqueue(new RuntimeCommandEnvelope { Type = RuntimeCommandType.ResetJourney, JourneyId = journeyId })
+            .ToActionResult(this);
     }
 
     private bool IsLocalhostRequest() => HttpContext.Connection.RemoteIpAddress is { } remote

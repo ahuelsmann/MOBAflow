@@ -23,7 +23,7 @@ public sealed class RuntimeHub : Hub
     private readonly ISolutionCache _solutionCache;
     private readonly IRuntimeHostRegistry _hostRegistry;
     private readonly IRuntimeBroadcastMetrics _broadcastMetrics;
-    private readonly IRuntimeCommandQueue _commandQueue;
+    private readonly IRuntimeCommandAdmission _commandAdmission;
     private readonly IControlPlaneHubConnectionRegistry _connectionRegistry;
     private readonly IHostCredentialService? _hostCredentialService;
 
@@ -32,7 +32,7 @@ public sealed class RuntimeHub : Hub
         ISolutionCache solutionCache,
         IRuntimeHostRegistry hostRegistry,
         IRuntimeBroadcastMetrics broadcastMetrics,
-        IRuntimeCommandQueue commandQueue,
+        IRuntimeCommandAdmission commandAdmission,
         IControlPlaneHubConnectionRegistry connectionRegistry,
         IHostCredentialService? hostCredentialService = null)
     {
@@ -40,7 +40,7 @@ public sealed class RuntimeHub : Hub
         _solutionCache = solutionCache;
         _hostRegistry = hostRegistry;
         _broadcastMetrics = broadcastMetrics;
-        _commandQueue = commandQueue;
+        _commandAdmission = commandAdmission;
         _connectionRegistry = connectionRegistry;
         _hostCredentialService = hostCredentialService;
     }
@@ -132,14 +132,9 @@ public sealed class RuntimeHub : Hub
     [Authorize(Policy = ControlPlaneCapabilities.RuntimeControl)]
     public async Task SetSignalAspect(string signalId, string aspect)
     {
-        if (!Guid.TryParse(signalId, out _))
+        if (!Guid.TryParse(signalId, out var parsedSignalId))
         {
             throw new HubException("Invalid signal id.");
-        }
-
-        if (await TryForwardSetSignalAspectAsync(signalId, aspect).ConfigureAwait(false))
-        {
-            return;
         }
 
         if (!Enum.TryParse<Domain.SignalAspect>(aspect, out var parsedAspect))
@@ -147,46 +142,45 @@ public sealed class RuntimeHub : Hub
             throw new HubException("Invalid signal aspect.");
         }
 
-        _commandQueue.Enqueue(new RuntimeCommandEnvelope
-        {
-            Type = RuntimeCommandType.SetSignalAspect,
-            SignalId = Guid.Parse(signalId),
-            SignalAspect = parsedAspect
-        });
+        await AdmitAsync(
+                new RuntimeCommandEnvelope
+                {
+                    Type = RuntimeCommandType.SetSignalAspect,
+                    SignalId = parsedSignalId,
+                    SignalAspect = parsedAspect
+                },
+                () => TryForwardSetSignalAspectAsync(parsedSignalId.ToString(), parsedAspect.ToString()))
+            .ConfigureAwait(false);
     }
 
     [Authorize(Policy = ControlPlaneCapabilities.RuntimeControl)]
     public async Task SetLocomotiveDrive(int address, int speed, bool forward)
     {
-        if (await TryForwardSetLocomotiveDriveAsync(address, speed, forward).ConfigureAwait(false))
-        {
-            return;
-        }
-
-        _commandQueue.Enqueue(new RuntimeCommandEnvelope
-        {
-            Type = RuntimeCommandType.SetLocomotiveDrive,
-            LocomotiveAddress = address,
-            Speed = speed,
-            Forward = forward
-        });
+        await AdmitAsync(
+                new RuntimeCommandEnvelope
+                {
+                    Type = RuntimeCommandType.SetLocomotiveDrive,
+                    LocomotiveAddress = address,
+                    Speed = speed,
+                    Forward = forward
+                },
+                () => TryForwardSetLocomotiveDriveAsync(address, speed, forward))
+            .ConfigureAwait(false);
     }
 
     [Authorize(Policy = ControlPlaneCapabilities.RuntimeControl)]
     public async Task SetLocomotiveFunction(int address, int functionIndex, bool isOn)
     {
-        if (await TryForwardSetLocomotiveFunctionAsync(address, functionIndex, isOn).ConfigureAwait(false))
-        {
-            return;
-        }
-
-        _commandQueue.Enqueue(new RuntimeCommandEnvelope
-        {
-            Type = RuntimeCommandType.SetLocomotiveFunction,
-            LocomotiveAddress = address,
-            FunctionIndex = functionIndex,
-            FunctionIsOn = isOn
-        });
+        await AdmitAsync(
+                new RuntimeCommandEnvelope
+                {
+                    Type = RuntimeCommandType.SetLocomotiveFunction,
+                    LocomotiveAddress = address,
+                    FunctionIndex = functionIndex,
+                    FunctionIsOn = isOn
+                },
+                () => TryForwardSetLocomotiveFunctionAsync(address, functionIndex, isOn))
+            .ConfigureAwait(false);
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
@@ -201,6 +195,31 @@ public sealed class RuntimeHub : Hub
         _connectionRegistry.Unregister(Context);
 
         await base.OnDisconnectedAsync(exception).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Validates a remote command, forwards it to the connected host, or queues it when no host is connected.
+    /// </summary>
+    private async Task AdmitAsync(RuntimeCommandEnvelope command, Func<Task<bool>> tryForwardToHost)
+    {
+        var validation = _commandAdmission.Validate(command);
+        if (!validation.IsAccepted)
+        {
+            throw new HubException(validation.Error);
+        }
+
+        if (await tryForwardToHost().ConfigureAwait(false))
+        {
+            return;
+        }
+
+        var queued = _commandAdmission.Enqueue(command);
+        if (!queued.IsAccepted)
+        {
+            throw new HubException(queued.Status == RuntimeCommandAdmissionStatus.QueueFull
+                ? "Command queue is full."
+                : queued.Error);
+        }
     }
 
     private async Task<bool> TryForwardSetSignalAspectAsync(string signalId, string aspect)
