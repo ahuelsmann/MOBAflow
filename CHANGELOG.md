@@ -26,6 +26,9 @@ the version tags follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- MOBApi validates remote locomotive, function, signal and journey-reset commands
+  before they reach MOBAflow and rejects invalid values; its fallback command queue
+  holds at most 128 commands and rejects further commands while full.
 - Journeys now use explicit ordered feedback steps instead of one global
   `Journey.InPort` trigger.
 - Stations remain physical project entities; the former virtual-station and
