@@ -95,7 +95,7 @@ internal sealed class RuntimeCommandsControllerTests
     private static RuntimeCommandsController CreateController(int capacity)
     {
         var queue = new RuntimeCommandQueue(capacity);
-        return new RuntimeCommandsController(new RuntimeCommandAdmission(queue), queue);
+        return new RuntimeCommandsController(new RuntimeCommandAdmission(queue));
     }
 
     private static ControllerContext LoopbackContext()

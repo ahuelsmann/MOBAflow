@@ -22,12 +22,10 @@ using System.Net;
 public class RuntimeCommandsController : ControllerBase
 {
     private readonly IRuntimeCommandAdmission _commandAdmission;
-    private readonly IRuntimeCommandQueue _commandQueue;
 
-    public RuntimeCommandsController(IRuntimeCommandAdmission commandAdmission, IRuntimeCommandQueue commandQueue)
+    public RuntimeCommandsController(IRuntimeCommandAdmission commandAdmission)
     {
         _commandAdmission = commandAdmission;
-        _commandQueue = commandQueue;
     }
 
     [HttpPost("signal-aspect")]
@@ -85,14 +83,16 @@ public class RuntimeCommandsController : ControllerBase
 
     [HttpGet("pending")]
     [Authorize(Policy = ControlPlaneCapabilities.HostConsume)]
-    public IActionResult DequeuePending()
+    public IActionResult DequeuePending([FromServices] IRuntimeCommandQueue commandQueue)
     {
+        ArgumentNullException.ThrowIfNull(commandQueue);
+
         if (!IsLocalhostRequest())
         {
             return Forbid();
         }
 
-        if (!_commandQueue.TryDequeue(out var command) || command == null)
+        if (!commandQueue.TryDequeue(out var command) || command == null)
         {
             return NoContent();
         }
