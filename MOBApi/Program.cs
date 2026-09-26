@@ -45,6 +45,7 @@ builder.Services.AddSingleton<IRuntimeHostRegistry, RuntimeHostRegistry>();
 builder.Services.AddSingleton<IRuntimeRemoteRegistry, RuntimeRemoteRegistry>();
 builder.Services.AddSingleton<IRuntimeBroadcastMetrics, RuntimeBroadcastMetrics>();
 builder.Services.AddSingleton<IRuntimeCommandQueue, RuntimeCommandQueue>();
+builder.Services.AddSingleton<IRuntimeCommandAdmission, RuntimeCommandAdmission>();
 
 // When started by WinUI, discovery runs in WinUI (MOBAFLOW_DISCOVERY_IN_WINUI=1); otherwise run discovery here
 if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("MOBAFLOW_DISCOVERY_IN_WINUI")))
