@@ -6719,7 +6719,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "Test/Backend/PersistentInPortCounterTests.cs",
-      "count": 43
+      "count": 45
     },
     {
       "project": "Test",
@@ -7013,7 +7013,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "Test/SharedUI/RecordingRuntimeCommandGatewayTests.cs",
-      "count": 15
+      "count": 17
     },
     {
       "project": "Test",

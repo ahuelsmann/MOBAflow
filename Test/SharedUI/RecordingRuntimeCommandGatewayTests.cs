@@ -27,6 +27,8 @@ internal sealed class RecordingRuntimeCommandGatewayTests
         await gateway.SimulateFeedbackAsync(12);
         await gateway.ResetJourneyAsync(journeyId);
         await gateway.ResetInPortCountersAsync();
+        await gateway.SetInPortCounterAsync(2, ulong.MaxValue);
+        await gateway.ResetInPortCounterAsync(2);
         await gateway.SetSignalAspectAsync(signalId, Enum.GetValues<SignalAspect>()[0]);
         await gateway.SetLocomotiveDriveAsync(3, 42, true);
         await gateway.SetLocomotiveFunctionAsync(3, 5, true);
@@ -42,6 +44,8 @@ internal sealed class RecordingRuntimeCommandGatewayTests
             "command.simulate-feedback",
             "command.journey-reset",
             "command.inport-counters-reset",
+            "command.inport-counter-set",
+            "command.inport-counter-reset",
             "command.signal-aspect",
             "command.locomotive-drive",
             "command.locomotive-function",
@@ -79,8 +83,13 @@ internal sealed class RecordingRuntimeCommandGatewayTests
         var serializer = provider.GetRequiredService<RecordingArtifactSerializer>();
         var imported = serializer.Import(serializer.SerializeToUtf8(artifact));
         Assert.That(imported.IsValid, Is.True, () => string.Join("; ", imported.Errors.Select(error => error.Message)));
+        var importedRequests = imported.Artifact!.Entries
+            .Where(entry => entry.Source == "runtime-command-gateway" && entry.TypeKey.EndsWith(".request", StringComparison.Ordinal))
+            .ToArray();
+        Assert.That(importedRequests, Has.Length.EqualTo(expectedCommandKeys.Length));
         var isolatedRuntime = new IsolatedReplayRuntime();
-        foreach (var request in recordedCommands.Where(entry => entry.ReplayApplicability == RecordingReplayApplicability.ReplayApplicable))
+        // Replay persisted entries: a request type without a payload validator is imported as display-only.
+        foreach (var request in importedRequests)
         {
             Assert.That(isolatedRuntime.Apply(request).Succeeded, Is.True, request.TypeKey);
         }

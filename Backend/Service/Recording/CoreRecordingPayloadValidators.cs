@@ -79,6 +79,8 @@ internal static class CoreRecordingPayloadValidators
         Schema("command.simulate-feedback.request", ("inPort", IsPositiveInt32)),
         Schema("command.journey-reset.request", (JourneyIdProperty, IsGuid)),
         Schema("command.inport-counters-reset.request"),
+        Schema("command.inport-counter-set.request", ("inPort", IsPositiveInt32), ("value", IsUInt64)),
+        Schema("command.inport-counter-reset.request", ("inPort", IsPositiveInt32)),
         Schema("command.signal-aspect.request", ("signalId", IsGuid), ("aspect", IsBoundedString)),
         Schema(
             "command.locomotive-drive.request",
@@ -104,6 +106,10 @@ internal static class CoreRecordingPayloadValidators
         DisplaySchema("command.journey-reset.failure", (OutcomeProperty, IsFailureOutcome)),
         DisplaySchema("command.inport-counters-reset.result", (OutcomeProperty, IsSucceededOutcome)),
         DisplaySchema("command.inport-counters-reset.failure", (OutcomeProperty, IsFailureOutcome)),
+        DisplaySchema("command.inport-counter-set.result", (OutcomeProperty, IsSucceededOutcome)),
+        DisplaySchema("command.inport-counter-set.failure", (OutcomeProperty, IsFailureOutcome)),
+        DisplaySchema("command.inport-counter-reset.result", (OutcomeProperty, IsSucceededOutcome)),
+        DisplaySchema("command.inport-counter-reset.failure", (OutcomeProperty, IsFailureOutcome)),
         DisplaySchema("command.signal-aspect.result", (OutcomeProperty, IsSucceededOutcome)),
         DisplaySchema("command.signal-aspect.failure", (OutcomeProperty, IsFailureOutcome)),
         DisplaySchema("command.locomotive-drive.result", (OutcomeProperty, IsSucceededOutcome)),
@@ -140,6 +146,9 @@ internal static class CoreRecordingPayloadValidators
 
     private static bool IsPositiveInt64(JsonElement value) =>
         value.TryGetInt64(out var number) && number > 0;
+
+    private static bool IsUInt64(JsonElement value) =>
+        value.ValueKind == JsonValueKind.Number && value.TryGetUInt64(out _);
 
     private static bool IsNullablePositiveInt32(JsonElement value) =>
         value.ValueKind == JsonValueKind.Null || IsPositiveInt32(value);
