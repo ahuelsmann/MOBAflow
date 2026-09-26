@@ -1334,7 +1334,7 @@ internal sealed partial class ControlPlaneSecurityTests
             new Mock<ISolutionCache>().Object,
             new Mock<IRuntimeHostRegistry>().Object,
             new Mock<IRuntimeBroadcastMetrics>().Object,
-            new Mock<IRuntimeCommandQueue>().Object,
+            new Mock<IRuntimeCommandAdmission>().Object,
             connectionRegistry)
         {
             Context = callerContext.Object,
@@ -1375,7 +1375,7 @@ internal sealed partial class ControlPlaneSecurityTests
             new Mock<ISolutionCache>().Object,
             new Mock<IRuntimeHostRegistry>().Object,
             new Mock<IRuntimeBroadcastMetrics>().Object,
-            new Mock<IRuntimeCommandQueue>().Object,
+            new Mock<IRuntimeCommandAdmission>().Object,
             connectionRegistry.Object)
         {
             Context = callerContext.Object,

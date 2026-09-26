@@ -21,82 +21,78 @@ using System.Net;
 [Route("api/runtime/commands")]
 public class RuntimeCommandsController : ControllerBase
 {
-    private readonly IRuntimeCommandQueue _commandQueue;
+    private readonly IRuntimeCommandAdmission _commandAdmission;
 
-    public RuntimeCommandsController(IRuntimeCommandQueue commandQueue)
+    public RuntimeCommandsController(IRuntimeCommandAdmission commandAdmission)
     {
-        _commandQueue = commandQueue;
+        _commandAdmission = commandAdmission;
     }
 
     [HttpPost("signal-aspect")]
     [Authorize(Policy = ControlPlaneCapabilities.RuntimeControl)]
     public IActionResult EnqueueSignalAspect([FromBody] SetSignalAspectRequest? request)
     {
-        if (request == null || request.SignalId == Guid.Empty)
+        if (request == null)
         {
             return BadRequest(new { error = "SignalId is required." });
         }
 
-        _commandQueue.Enqueue(new RuntimeCommandEnvelope
+        return _commandAdmission.Enqueue(new RuntimeCommandEnvelope
         {
             Type = RuntimeCommandType.SetSignalAspect,
             SignalId = request.SignalId,
             SignalAspect = request.Aspect
-        });
-
-        return Accepted();
+        }).ToActionResult(this);
     }
 
     [HttpPost("locomotive/drive")]
     [Authorize(Policy = ControlPlaneCapabilities.RuntimeControl)]
     public IActionResult EnqueueLocomotiveDrive([FromBody] SetLocomotiveDriveRequest? request)
     {
-        if (request == null || request.Address <= 0)
+        if (request == null)
         {
             return BadRequest(new { error = "Address is required." });
         }
 
-        _commandQueue.Enqueue(new RuntimeCommandEnvelope
+        return _commandAdmission.Enqueue(new RuntimeCommandEnvelope
         {
             Type = RuntimeCommandType.SetLocomotiveDrive,
             LocomotiveAddress = request.Address,
             Speed = request.Speed,
             Forward = request.Forward
-        });
-
-        return Accepted();
+        }).ToActionResult(this);
     }
 
     [HttpPost("locomotive/function")]
     [Authorize(Policy = ControlPlaneCapabilities.RuntimeControl)]
     public IActionResult EnqueueLocomotiveFunction([FromBody] SetLocomotiveFunctionRequest? request)
     {
-        if (request == null || request.Address <= 0)
+        if (request == null)
         {
             return BadRequest(new { error = "Address is required." });
         }
 
-        _commandQueue.Enqueue(new RuntimeCommandEnvelope
+        return _commandAdmission.Enqueue(new RuntimeCommandEnvelope
         {
             Type = RuntimeCommandType.SetLocomotiveFunction,
             LocomotiveAddress = request.Address,
             FunctionIndex = request.FunctionIndex,
             FunctionIsOn = request.IsOn
-        });
-
-        return Accepted();
+        }).ToActionResult(this);
     }
 
     [HttpGet("pending")]
     [Authorize(Policy = ControlPlaneCapabilities.HostConsume)]
-    public IActionResult DequeuePending()
+    public IActionResult DequeuePending([FromServices] IRuntimeCommandQueue commandQueue)
     {
+        ArgumentNullException.ThrowIfNull(commandQueue);
+
         if (!IsLocalhostRequest())
         {
             return Forbid();
         }
 
-        if (!_commandQueue.TryDequeue(out var command) || command == null)
+        if (!commandQueue.TryDequeue(out var command) || command == null)
         {
             return NoContent();
         }
