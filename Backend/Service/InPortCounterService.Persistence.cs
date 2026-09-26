@@ -49,7 +49,9 @@ public sealed partial class InPortCounterService
 
             // Concurrent callers share one load; the next caller retries a failed load.
             // Task.Run keeps store continuations and subscriber callbacks outside this lock.
-            if (_loadTask is null || _loadTask.IsCompleted) _loadTask = Task.Run(LoadSavedCountsAsync);
+            // One caller's cancellation only ends its own wait, never the shared load.
+            if (_loadTask is null || _loadTask.IsCompleted)
+                _loadTask = Task.Run(LoadSavedCountsAsync, CancellationToken.None);
             load = _loadTask;
         }
 
