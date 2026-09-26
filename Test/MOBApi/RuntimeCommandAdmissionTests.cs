@@ -76,12 +76,51 @@ internal sealed class RuntimeCommandAdmissionTests
         Assert.That(result.Status, Is.EqualTo(RuntimeCommandAdmissionStatus.QueueFull));
     }
 
-    [Test]
-    public void HubDrive_WithInvalidSpeed_IsRejectedAndNeverForwarded()
+    [TestCase(HubCommand.Drive, RuntimeHubMethods.ExecuteSetLocomotiveDrive)]
+    [TestCase(HubCommand.Function, RuntimeHubMethods.ExecuteSetLocomotiveFunction)]
+    [TestCase(HubCommand.SignalAspect, RuntimeHubMethods.ExecuteSetSignalAspect)]
+    public async Task HubCommand_ValidWithHost_IsForwardedAndNotQueued(HubCommand command, string hostMethod)
     {
         var fixture = new HubFixture(hostConnectionId: "host-1");
 
-        Assert.ThrowsAsync<HubException>(() => fixture.Hub.SetLocomotiveDrive(3, 500, forward: true));
+        await fixture.InvokeValidAsync(command).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            fixture.HostProxy.Verify(
+                proxy => proxy.SendCoreAsync(hostMethod, It.IsAny<object?[]>(), It.IsAny<CancellationToken>()),
+                Times.Once);
+            Assert.That(fixture.Queue.TryDequeue(out _), Is.False);
+        }
+    }
+
+    [TestCase(HubCommand.Drive)]
+    [TestCase(HubCommand.Function)]
+    [TestCase(HubCommand.SignalAspect)]
+    public async Task HubCommand_ValidWithoutHost_IsQueuedWithItsPayload(HubCommand command)
+    {
+        var fixture = new HubFixture(hostConnectionId: null);
+
+        await fixture.InvokeValidAsync(command).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(fixture.Queue.TryDequeue(out var queued), Is.True);
+            Assert.That(Payload(queued), Is.EqualTo(HubFixture.ExpectedValid(command)));
+        }
+    }
+
+    [TestCase(HubCommand.Drive, "host-1")]
+    [TestCase(HubCommand.Function, "host-1")]
+    [TestCase(HubCommand.SignalAspect, "host-1")]
+    [TestCase(HubCommand.Drive, null)]
+    [TestCase(HubCommand.Function, null)]
+    [TestCase(HubCommand.SignalAspect, null)]
+    public void HubCommand_Invalid_IsRejectedAndNeitherForwardedNorQueued(HubCommand command, string? hostConnectionId)
+    {
+        var fixture = new HubFixture(hostConnectionId);
+
+        Assert.ThrowsAsync<HubException>(() => fixture.InvokeInvalidAsync(command));
 
         using (Assert.EnterMultipleScope())
         {
@@ -92,56 +131,23 @@ internal sealed class RuntimeCommandAdmissionTests
         }
     }
 
-    [Test]
-    public async Task HubDrive_WithHost_IsForwardedAndNotQueued()
+    [TestCase(HubCommand.Drive)]
+    [TestCase(HubCommand.Function)]
+    [TestCase(HubCommand.SignalAspect)]
+    public async Task HubCommand_WhenQueueIsFull_IsRejectedAndNotQueued(HubCommand command)
     {
-        var fixture = new HubFixture(hostConnectionId: "host-1");
+        var fixture = new HubFixture(hostConnectionId: null, queueCapacity: 1);
+        await fixture.InvokeValidAsync(command).ConfigureAwait(false);
 
-        await fixture.Hub.SetLocomotiveDrive(3, 40, forward: true).ConfigureAwait(false);
+        var exception = Assert.ThrowsAsync<HubException>(() => fixture.InvokeValidAsync(command, variant: 1));
 
         using (Assert.EnterMultipleScope())
         {
-            fixture.HostProxy.Verify(
-                proxy => proxy.SendCoreAsync(
-                    RuntimeHubMethods.ExecuteSetLocomotiveDrive,
-                    It.IsAny<object?[]>(),
-                    It.IsAny<CancellationToken>()),
-                Times.Once);
+            Assert.That(exception?.Message, Is.EqualTo("Command queue is full."));
+            Assert.That(fixture.Queue.TryDequeue(out var accepted), Is.True);
+            Assert.That(Payload(accepted), Is.EqualTo(HubFixture.ExpectedValid(command)));
             Assert.That(fixture.Queue.TryDequeue(out _), Is.False);
         }
-    }
-
-    [Test]
-    public async Task HubFunction_WithoutHost_IsQueued()
-    {
-        var fixture = new HubFixture(hostConnectionId: null);
-
-        await fixture.Hub.SetLocomotiveFunction(3, 5, isOn: true).ConfigureAwait(false);
-
-        Assert.That(fixture.Queue.TryDequeue(out var queued) ? queued?.FunctionIndex : null, Is.EqualTo(5));
-    }
-
-    [Test]
-    public async Task HubFunction_WhenQueueIsFull_IsRejected()
-    {
-        var fixture = new HubFixture(hostConnectionId: null, queueCapacity: 1);
-        await fixture.Hub.SetLocomotiveFunction(3, 1, isOn: true).ConfigureAwait(false);
-
-        var exception = Assert.ThrowsAsync<HubException>(() => fixture.Hub.SetLocomotiveFunction(3, 2, isOn: true));
-
-        Assert.That(exception?.Message, Is.EqualTo("Command queue is full."));
-    }
-
-    [Test]
-    public void HubSignalAspect_WithUndefinedAspect_IsRejectedAndNeverForwarded()
-    {
-        var fixture = new HubFixture(hostConnectionId: "host-1");
-
-        Assert.ThrowsAsync<HubException>(() => fixture.Hub.SetSignalAspect(Guid.NewGuid().ToString(), "999"));
-
-        fixture.HostProxy.Verify(
-            proxy => proxy.SendCoreAsync(It.IsAny<string>(), It.IsAny<object?[]>(), It.IsAny<CancellationToken>()),
-            Times.Never);
     }
 
     [Test]
@@ -161,6 +167,10 @@ internal sealed class RuntimeCommandAdmissionTests
             Times.Once);
     }
 
+    /// <summary>Clears the generated command id and timestamp so only the command payload is compared.</summary>
+    private static RuntimeCommandEnvelope? Payload(RuntimeCommandEnvelope? command) =>
+        command is null ? null : command with { CommandId = Guid.Empty, CreatedAt = default };
+
     private static RuntimeCommandEnvelope ValidDrive(int address) => new()
     {
         Type = RuntimeCommandType.SetLocomotiveDrive,
@@ -168,6 +178,13 @@ internal sealed class RuntimeCommandAdmissionTests
         Speed = 10,
         Forward = true
     };
+
+    internal enum HubCommand
+    {
+        Drive,
+        Function,
+        SignalAspect
+    }
 
     private sealed class HubFixture
     {
@@ -195,6 +212,57 @@ internal sealed class RuntimeCommandAdmissionTests
         }
 
         public RuntimeHub Hub { get; }
+
+        /// <summary>
+        /// Expected queued payload for a valid command; each <paramref name="variant"/> differs in every field.
+        /// </summary>
+        public static RuntimeCommandEnvelope ExpectedValid(HubCommand command, int variant = 0) => command switch
+        {
+            HubCommand.Drive => new RuntimeCommandEnvelope
+            {
+                Type = RuntimeCommandType.SetLocomotiveDrive,
+                LocomotiveAddress = 3 + variant,
+                Speed = 40 + variant,
+                Forward = variant == 0
+            },
+            HubCommand.Function => new RuntimeCommandEnvelope
+            {
+                Type = RuntimeCommandType.SetLocomotiveFunction,
+                LocomotiveAddress = 3 + variant,
+                FunctionIndex = 5 + variant,
+                FunctionIsOn = variant == 0
+            },
+            _ => new RuntimeCommandEnvelope
+            {
+                Type = RuntimeCommandType.SetSignalAspect,
+                SignalId = new Guid(variant + 1, 0, 0, new byte[8]),
+                SignalAspect = variant == 0 ? SignalAspect.Hp0 : SignalAspect.Ks1
+            }
+        } with { CommandId = Guid.Empty, CreatedAt = default };
+
+        public Task InvokeValidAsync(HubCommand command, int variant = 0)
+        {
+            var expected = ExpectedValid(command, variant);
+            return command switch
+            {
+                HubCommand.Drive => Hub.SetLocomotiveDrive(
+                    expected.LocomotiveAddress!.Value,
+                    expected.Speed!.Value,
+                    expected.Forward!.Value),
+                HubCommand.Function => Hub.SetLocomotiveFunction(
+                    expected.LocomotiveAddress!.Value,
+                    expected.FunctionIndex!.Value,
+                    expected.FunctionIsOn!.Value),
+                _ => Hub.SetSignalAspect(expected.SignalId!.Value.ToString(), expected.SignalAspect!.Value.ToString())
+            };
+        }
+
+        public Task InvokeInvalidAsync(HubCommand command) => command switch
+        {
+            HubCommand.Drive => Hub.SetLocomotiveDrive(3, 500, forward: true),
+            HubCommand.Function => Hub.SetLocomotiveFunction(3, 32, isOn: true),
+            _ => Hub.SetSignalAspect(Guid.NewGuid().ToString(), "999")
+        };
 
         public RuntimeCommandQueue Queue { get; }
 
