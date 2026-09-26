@@ -1,0 +1,184 @@
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+
+namespace Moba.Test.MOBApi;
+
+using Microsoft.AspNetCore.SignalR;
+
+using Moba.Common.Runtime;
+using Moba.MOBApi.Hubs;
+using Moba.MOBApi.Security;
+using Moba.MOBApi.Service;
+
+using Moq;
+
+/// <summary>
+/// Verifies that remote commands are validated once and queued with a bound, on REST and SignalR alike.
+/// </summary>
+[TestFixture]
+internal sealed class RuntimeCommandAdmissionTests
+{
+    [Test]
+    public void Queue_RejectsCommands_WhenCapacityIsReached()
+    {
+        var queue = new RuntimeCommandQueue(capacity: 2);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(queue.TryEnqueue(ValidDrive(1)), Is.True);
+            Assert.That(queue.TryEnqueue(ValidDrive(2)), Is.True);
+            Assert.That(queue.TryEnqueue(ValidDrive(3)), Is.False);
+        }
+    }
+
+    [Test]
+    public void Queue_KeepsFirstInFirstOutOrder()
+    {
+        var queue = new RuntimeCommandQueue(capacity: 4);
+        queue.TryEnqueue(ValidDrive(1));
+        queue.TryEnqueue(ValidDrive(2));
+
+        queue.TryDequeue(out var first);
+        queue.TryDequeue(out var second);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(first?.LocomotiveAddress, Is.EqualTo(1));
+            Assert.That(second?.LocomotiveAddress, Is.EqualTo(2));
+        }
+    }
+
+    [Test]
+    public void Enqueue_InvalidCommand_IsRejectedAndNotQueued()
+    {
+        var queue = new RuntimeCommandQueue(capacity: 4);
+        var admission = new RuntimeCommandAdmission(queue);
+
+        var result = admission.Enqueue(ValidDrive(0));
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.Status, Is.EqualTo(RuntimeCommandAdmissionStatus.Invalid));
+            Assert.That(result.Error, Is.Not.Empty);
+            Assert.That(queue.TryDequeue(out _), Is.False);
+        }
+    }
+
+    [Test]
+    public void Enqueue_WhenQueueIsFull_ReturnsQueueFull()
+    {
+        var admission = new RuntimeCommandAdmission(new RuntimeCommandQueue(capacity: 1));
+        admission.Enqueue(ValidDrive(1));
+
+        var result = admission.Enqueue(ValidDrive(2));
+
+        Assert.That(result.Status, Is.EqualTo(RuntimeCommandAdmissionStatus.QueueFull));
+    }
+
+    [Test]
+    public void HubDrive_WithInvalidSpeed_IsRejectedAndNeverForwarded()
+    {
+        var fixture = new HubFixture(hostConnectionId: "host-1");
+
+        Assert.ThrowsAsync<HubException>(() => fixture.Hub.SetLocomotiveDrive(3, 500, forward: true));
+
+        using (Assert.EnterMultipleScope())
+        {
+            fixture.HostProxy.Verify(
+                proxy => proxy.SendCoreAsync(It.IsAny<string>(), It.IsAny<object?[]>(), It.IsAny<CancellationToken>()),
+                Times.Never);
+            Assert.That(fixture.Queue.TryDequeue(out _), Is.False);
+        }
+    }
+
+    [Test]
+    public async Task HubDrive_WithHost_IsForwardedAndNotQueued()
+    {
+        var fixture = new HubFixture(hostConnectionId: "host-1");
+
+        await fixture.Hub.SetLocomotiveDrive(3, 40, forward: true).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            fixture.HostProxy.Verify(
+                proxy => proxy.SendCoreAsync(
+                    RuntimeHubMethods.ExecuteSetLocomotiveDrive,
+                    It.IsAny<object?[]>(),
+                    It.IsAny<CancellationToken>()),
+                Times.Once);
+            Assert.That(fixture.Queue.TryDequeue(out _), Is.False);
+        }
+    }
+
+    [Test]
+    public async Task HubFunction_WithoutHost_IsQueued()
+    {
+        var fixture = new HubFixture(hostConnectionId: null);
+
+        await fixture.Hub.SetLocomotiveFunction(3, 5, isOn: true).ConfigureAwait(false);
+
+        Assert.That(fixture.Queue.TryDequeue(out var queued) ? queued?.FunctionIndex : null, Is.EqualTo(5));
+    }
+
+    [Test]
+    public async Task HubFunction_WhenQueueIsFull_IsRejected()
+    {
+        var fixture = new HubFixture(hostConnectionId: null, queueCapacity: 1);
+        await fixture.Hub.SetLocomotiveFunction(3, 1, isOn: true).ConfigureAwait(false);
+
+        var exception = Assert.ThrowsAsync<HubException>(() => fixture.Hub.SetLocomotiveFunction(3, 2, isOn: true));
+
+        Assert.That(exception?.Message, Is.EqualTo("Command queue is full."));
+    }
+
+    [Test]
+    public void HubSignalAspect_WithUndefinedAspect_IsRejectedAndNeverForwarded()
+    {
+        var fixture = new HubFixture(hostConnectionId: "host-1");
+
+        Assert.ThrowsAsync<HubException>(() => fixture.Hub.SetSignalAspect(Guid.NewGuid().ToString(), "999"));
+
+        fixture.HostProxy.Verify(
+            proxy => proxy.SendCoreAsync(It.IsAny<string>(), It.IsAny<object?[]>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    private static RuntimeCommandEnvelope ValidDrive(int address) => new()
+    {
+        Type = RuntimeCommandType.SetLocomotiveDrive,
+        LocomotiveAddress = address,
+        Speed = 10,
+        Forward = true
+    };
+
+    private sealed class HubFixture
+    {
+        public HubFixture(string? hostConnectionId, int queueCapacity = 8)
+        {
+            Queue = new RuntimeCommandQueue(queueCapacity);
+            var hostRegistry = new Mock<IRuntimeHostRegistry>();
+            hostRegistry.SetupGet(registry => registry.HostConnectionId).Returns(hostConnectionId);
+            HostProxy
+                .Setup(proxy => proxy.SendCoreAsync(It.IsAny<string>(), It.IsAny<object?[]>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+            var clients = new Mock<IHubCallerClients>();
+            clients.Setup(candidate => candidate.Client(It.IsAny<string>())).Returns(HostProxy.Object);
+
+            Hub = new RuntimeHub(
+                new Mock<IRuntimeSnapshotCache>().Object,
+                new Mock<ISolutionCache>().Object,
+                hostRegistry.Object,
+                new Mock<IRuntimeBroadcastMetrics>().Object,
+                new RuntimeCommandAdmission(Queue),
+                new Mock<IControlPlaneHubConnectionRegistry>().Object)
+            {
+                Clients = clients.Object
+            };
+        }
+
+        public RuntimeHub Hub { get; }
+
+        public RuntimeCommandQueue Queue { get; }
+
+        public Mock<ISingleClientProxy> HostProxy { get; } = new();
+    }
+}
