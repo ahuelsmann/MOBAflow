@@ -36,7 +36,7 @@ The current trust checks are insufficient for a hardware control plane:
 
 ## Scope and non-goals
 
-This decision covers authentication and authorization for MOBApi REST and SignalR operations that observe or mutate solution, runtime, client, photo, or hardware-control state. It also covers the local MOBAflow host identity, MOBAsmart credential handling, throttling, bounded command admission, security telemetry, compatibility migration, and rollback.
+This decision covers authentication and authorization for MOBApi REST and SignalR operations that observe or mutate solution, runtime, client, photo, or hardware-control state. It also covers the local MOBAflow host identity, MOBAsmart credential handling, throttling, bounded command admission, security telemetry, and rollback.
 
 This decision does not cover:
 
@@ -219,7 +219,7 @@ The final policy applies to all routes even when a reverse proxy or loopback con
 | `POST /api/photos/upload` | `photo.write` | Existing 10 MiB file cap remains; content signature must match an allowed image type |
 | `GET /api/runtime-settings` | `controlplane.read` | Z21 address is protected control-plane information |
 | `PUT /api/runtime-settings` | `host.publish` | Loopback is an additional transport restriction, not authorization |
-| `GET /api/runtime/meta` | `controlplane.read` | No anonymous compatibility after enforcement |
+| `GET /api/runtime/meta` | `controlplane.read` | Anonymous reads allowed |
 | `GET /api/runtime/snapshot` | `controlplane.read` | Response remains remotely filtered where required |
 | `PUT /api/runtime/snapshot` | `host.publish` | Loopback plus capability; size and schema validated |
 | `GET /api/runtime/journeys/{id}/feedback-progress` | `controlplane.read` | Journey ID must resolve in the active snapshot |
@@ -426,46 +426,11 @@ Initial metrics are counters for each outcome plus gauges for active authenticat
 
 ## Compatibility migration
 
-Migration is staged so new clients can work with old servers while a new server never silently restores anonymous hardware control.
-
-### Phase 0: Design and inventory
-
-This document and its issue plan are delivered. Runtime behavior is unchanged.
-
-### Phase 1: Additive security foundation
-
-- Add protected server identity, credential registry, token service, policies, telemetry, and public health capability advertisement.
-- Keep existing endpoints behaviorally unchanged only inside development/test while policy parity tests are built.
-- No client receives or logs a production credential yet.
-
-### Phase 2: Protect the host
-
-- MOBAflow and MOBApi establish the per-launch host identity.
-- Host publication, command consumption, host hub registration, pairing administration, and credential administration require host capabilities.
-- Loopback-only checks remain as defense in depth but no longer authorize by themselves.
-- Failure to establish the host identity disables remote control and publication, not local Z21 operation.
-
-### Phase 3: Ship pairing-capable clients
-
-- MOBAsmart understands HTTPS discovery, fingerprint pinning, pairing, secure storage, token refresh, and authenticated SignalR reconnect.
-- A new client may use the existing unauthenticated protocol only with an explicitly detected legacy server and only before it has ever paired with that server instance.
-- After successful pairing, the client records a no-downgrade marker and never falls back to HTTP or anonymous access for that instance.
-- The existing preferences client ID remains display metadata and is not converted into authority.
-
-### Phase 4: Enforce control and migrate reads
-
-- All runtime commands, photo writes, host operations, and security administration require credentials with no compatibility bypass.
-- Anonymous control returns `401`; a read-only principal attempting control returns `403`.
-- Anonymous reads remain available. The planned measured read migration was withdrawn and
-  removed by RF-19 slice 2 ([#165](https://github.com/ahuelsmann/MOBAflow/issues/165)).
-
-### Phase 5: Remove legacy access
-
-- Disable and remove `LegacyAnonymousReads` after migration telemetry and support evidence meet the issue gate.
-- Remove HTTP LAN binding and legacy anonymous client registration.
-- Update user guidance and operational runbooks.
-
-Compatibility never includes anonymous control, host publication, queue consumption, pairing administration, credential administration, or automatic trust of a changed certificate fingerprint.
+Retired. The staged migration towards authenticated-only reads, including the legacy anonymous
+read mode, observation window, readiness evidence and the related telemetry and cleanup phases,
+was withdrawn with RF-03 and removed by RF-19 slice 2
+([#165](https://github.com/ahuelsmann/MOBAflow/issues/165)). Reads stay available without
+credentials.
 
 ## Rollback
 
@@ -511,9 +476,9 @@ The design supports functional rollback without reintroducing anonymous hardware
 
 - all required failure categories create structured events and bounded-cardinality metrics;
 - canary tokens, secrets, query strings, and bodies never appear in captured logs;
-- legacy read mode cannot enable a write or command path;
+- anonymous reads cannot enable a write or command path;
 - security-store and server-identity failures disable remote control while local runtime remains usable;
-- migration and rollback tests cover a legacy client, paired client, rotated server identity, and revoked device.
+- rollback tests cover a paired client, rotated server identity, and revoked device.
 
 ## Options considered
 
@@ -556,8 +521,7 @@ Costs and constraints:
 - MOBApi needs persistent protected security state and an HTTPS identity;
 - MOBAflow and MOBAsmart require coordinated authentication and reconnect changes;
 - users must pair devices and re-pair after security reset or emergency identity rotation;
-- active SignalR connections require live-state checks and connection tracking;
-- compatibility requires a staged release and owner-visible migration state.
+- active SignalR connections require live-state checks and connection tracking.
 
 ## Authoritative references
 
