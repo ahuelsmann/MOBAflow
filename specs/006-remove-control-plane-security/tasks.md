@@ -78,7 +78,7 @@ structural search finds no security types.
 
 ### Tests for User Story 1
 
-- [ ] T017 [P] [US1] Add anonymous-access tests for read, host publish and command endpoints in `Test/MOBApi/SolutionControllerTests.cs`, `Test/MOBApi/StatusControllerTests.cs` and `Test/MOBApi/RuntimeCommandsControllerTests.cs`
+- [ ] T017 [P] [US1] Add anonymous-access tests for read, host publish, command and photo upload endpoints in `Test/MOBApi/SolutionControllerTests.cs`, `Test/MOBApi/StatusControllerTests.cs`, `Test/MOBApi/RuntimeCommandsControllerTests.cs` and `Test/MOBApi/PhotosControllerTests.cs`
 - [ ] T018 [P] [US1] Update discovery tests without identity fields in `Test/Common/DiscoveryResponseParserTests.cs`
 - [ ] T019 [P] [US1] Update host-service and mobile initialization tests in `Test/MOBAflow/RestApiStatusServiceTests.cs` and `Test/SharedUI/MauiViewModelInitializationTests.cs`
 
