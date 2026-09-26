@@ -32,6 +32,12 @@ public sealed class LocalRuntimeCommandGateway : IRuntimeCommandGateway
     public Task ResetInPortCountersAsync(CancellationToken cancellationToken = default) =>
         _mobaRuntime.ResetInPortCountersAsync(cancellationToken);
 
+    public Task SetInPortCounterAsync(uint inPort, ulong value, CancellationToken cancellationToken = default) =>
+        _mobaRuntime.SetInPortCounterAsync(inPort, value, cancellationToken);
+
+    public Task ResetInPortCounterAsync(uint inPort, CancellationToken cancellationToken = default) =>
+        _mobaRuntime.ResetInPortCounterAsync(inPort, cancellationToken);
+
     public Task SetSignalAspectAsync(Guid signalId, SignalAspect aspect, CancellationToken cancellationToken = default)
     {
         return _mobaRuntime.SetSignalAspectAsync(signalId, aspect, cancellationToken);

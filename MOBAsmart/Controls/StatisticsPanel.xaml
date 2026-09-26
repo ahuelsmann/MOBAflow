@@ -40,6 +40,8 @@
                     VerticalOptions="Center" />
             </Grid>
 
+            <Label Text="{Binding CounterPersistenceError}" TextColor="{DynamicResource TextPrimary}" />
+            <Label Text="{Binding CounterResetError}" TextColor="{DynamicResource TextPrimary}" />
             <CollectionView
                 ItemsSource="{Binding Statistics}"
                 SelectionMode="None">
@@ -58,7 +60,7 @@
                             BackgroundColor="{DynamicResource SurfaceDark}"
                             StrokeShape="RoundRectangle 8"
                             StrokeThickness="0">
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
                                 <Border
                                     x:Name="CountBadge"
                                     Grid.Column="0"
@@ -166,6 +168,15 @@
                                             WidthRequest="35" />
                                     </Grid>
                                 </Grid>
+                                <Grid Grid.Row="1" Grid.ColumnSpan="2" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                                    <Entry Grid.Column="0" Text="{Binding CounterValue, Mode=TwoWay}"
+                                           Placeholder="New value" Keyboard="Numeric"
+                                           SemanticProperties.Description="New counter value" />
+                                    <Button Grid.Column="1" Text="Set" Command="{Binding SetCounterCommand}" />
+                                    <Button Grid.Column="2" Text="Reset" Command="{Binding ResetCounterCommand}" />
+                                </Grid>
+                                <Label Grid.Row="2" Grid.ColumnSpan="2" Text="{Binding CounterError}"
+                                       TextColor="{DynamicResource TextPrimary}" />
                             </Grid>
                         </Border>
                     </DataTemplate>

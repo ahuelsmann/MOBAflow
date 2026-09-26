@@ -231,6 +231,12 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
                 .ConfigureAwait(false);
         }
 
+        await _uiDispatcher.InvokeOnUiAsync(() =>
+        {
+            LoadSettingsIntoViewModel();
+            return Task.CompletedTask;
+        }).ConfigureAwait(false);
+
         await _mobaRuntime.StartAsync(_applicationLifetimeCts.Token).ConfigureAwait(false);
 
         _networkProfileChangeNotifier.NetworkProfilePossiblyChanged += OnNetworkProfilePossiblyChanged;
@@ -238,7 +244,6 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
 
         await _uiDispatcher.InvokeOnUiAsync(() =>
         {
-            LoadSettingsIntoViewModel();
             ApplyLocalRuntimeSnapshot(_mobaRuntime.Current);
             InitializeStatistics();
             return Task.CompletedTask;
@@ -1174,6 +1179,9 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial string CounterResetError { get; set; } = string.Empty;
 
+    [ObservableProperty]
+    public partial string CounterPersistenceError { get; set; } = string.Empty;
+
     partial void OnCountOfFeedbackPointsChanged(int value)
     {
         _logger.LogTrace("OnCountOfFeedbackPointsChanged: {Value}", value);
@@ -1220,7 +1228,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         var updatedStatistics = new ObservableCollection<InPortStatistic>();
         for (int i = 1; i <= CountOfFeedbackPoints; i++)
         {
-            var statistic = new InPortStatistic
+            var statistic = new InPortStatistic(_runtimeCommandGateway ?? new LocalRuntimeCommandGateway(_mobaRuntime))
             {
                 InPort = i,
                 Name = $"Track {i}",
@@ -1389,6 +1397,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
 
     private void ApplyLocalRuntimeSnapshot(MobaRuntimeSnapshot snapshot)
     {
+        CounterPersistenceError = snapshot.InPortCounterPersistenceError ?? string.Empty;
         _localCounters = snapshot.InPortCounters;
         ApplyLocalCounters();
         var previousConnectionState = IsConnected;

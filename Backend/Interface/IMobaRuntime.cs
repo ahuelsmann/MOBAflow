@@ -64,6 +64,10 @@ public interface ISignalTurnoutRuntime
 
     Task ResetInPortCountersAsync(CancellationToken cancellationToken = default);
 
+    Task SetInPortCounterAsync(uint inPort, ulong value, CancellationToken cancellationToken = default);
+
+    Task ResetInPortCounterAsync(uint inPort, CancellationToken cancellationToken = default);
+
     Task SetSignalAspectAsync(SbSignal signal, CancellationToken cancellationToken = default);
 
     Task SetSignalAspectAsync(Guid signalId, SignalAspect signalAspect, CancellationToken cancellationToken = default);

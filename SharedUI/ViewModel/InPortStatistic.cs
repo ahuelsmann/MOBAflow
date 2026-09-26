@@ -2,13 +2,60 @@
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Interface;
+using System.Globalization;
 
 /// <summary>
 /// Represents lap statistics for a single InPort (track).
 /// Used by OverviewPage in WinUI, MAUI, and WebApp.
 /// </summary>
-public partial class InPortStatistic : ObservableObject
+/// <param name="commands">Optional local counter commands; without them the row is read-only.</param>
+public partial class InPortStatistic(IRuntimeCommandGateway? commands = null) : ObservableObject
 {
+    private readonly IRuntimeCommandGateway? _commands = commands;
+
+    /// <summary>Unsigned integer text entered for a counter correction.</summary>
+    [ObservableProperty]
+    public partial string CounterValue { get; set; } = string.Empty;
+
+    /// <summary>Validation or command failure for this input's correction.</summary>
+    [ObservableProperty]
+    public partial string CounterError { get; set; } = string.Empty;
+
+    /// <summary>Whether the input can be edited by this statistics view.</summary>
+    public bool CanEditCounter => _commands is not null;
+
+    [RelayCommand(CanExecute = nameof(CanEditCounter))]
+    private async Task SetCounterAsync()
+    {
+        if (!ulong.TryParse(CounterValue?.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var value))
+        {
+            CounterError = "Enter a whole number from 0 to 18446744073709551615.";
+            return;
+        }
+
+        await ChangeCounterAsync(() => _commands!.SetInPortCounterAsync(checked((uint)InPort), value)).ConfigureAwait(true);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanEditCounter))]
+    private Task ResetCounterAsync() =>
+        ChangeCounterAsync(() => _commands!.ResetInPortCounterAsync(checked((uint)InPort)));
+
+    private async Task ChangeCounterAsync(Func<Task> change)
+    {
+        CounterError = string.Empty;
+        try
+        {
+            await change().ConfigureAwait(true);
+            CounterValue = string.Empty;
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException and not AccessViolationException)
+        {
+            CounterError = ex.Message;
+        }
+    }
+
     [ObservableProperty]
     private int _inPort;
 

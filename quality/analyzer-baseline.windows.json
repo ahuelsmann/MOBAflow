@@ -2756,6 +2756,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/Backend/PersistentInPortCounterTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/Backend/ProjectDiagnosticsServiceTests.cs",
       "count": 1
     },
@@ -3562,6 +3569,13 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/SharedUI/FeedbackCounterEngineTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/InPortCounterEditingTests.cs",
       "count": 1
     },
     {
@@ -4724,7 +4738,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2007",
       "path": "Test/Backend/JourneyEventPlanTests.cs",
-      "count": 30
+      "count": 35
     },
     {
       "project": "Test",
@@ -4781,6 +4795,13 @@
       "ruleId": "CA2007",
       "path": "Test/Backend/MobaRuntimeServiceTrackPowerTests.cs",
       "count": 5
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA2007",
+      "path": "Test/Backend/PersistentInPortCounterTests.cs",
+      "count": 43
     },
     {
       "project": "Test",
@@ -5003,8 +5024,15 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2007",
+      "path": "Test/SharedUI/InPortCounterEditingTests.cs",
+      "count": 4
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA2007",
       "path": "Test/SharedUI/JourneyCounterProjectionTests.cs",
-      "count": 7
+      "count": 8
     },
     {
       "project": "Test",
@@ -5046,7 +5074,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2007",
       "path": "Test/SharedUI/MobileRuntimeCoordinatorTests.cs",
-      "count": 7
+      "count": 9
     },
     {
       "project": "Test",
@@ -5257,6 +5285,13 @@
       "ruleId": "CsWinRT1030",
       "path": "Test/Backend/AnnouncementServiceTests.cs",
       "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CsWinRT1030",
+      "path": "Test/Backend/PersistentInPortCounterTests.cs",
+      "count": 2
     },
     {
       "project": "Test",

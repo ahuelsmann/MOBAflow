@@ -1,5 +1,9 @@
 # Feature Specification: Journey event plans
 
+> Counter lifetime update (2026-09-25): [Persistent local InPort counters](../006-persistent-inport-counters/spec.md)
+> supersedes the startup-zero/session-only counter requirements below. Journey event
+> matching remains based on the current local application's absolute input count.
+
 **Feature Directory**: `001-journey-event-plan`
 
 **Source Issue**: #124
