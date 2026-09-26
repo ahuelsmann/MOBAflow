@@ -8,7 +8,7 @@
 
 **Status**: Ready for tasks
 
-**Input**: Feature specification from `specs/006-remove-control-plane-security/spec.md`
+**Input**: Feature specification from `specs/007-remove-control-plane-security/spec.md`
 
 ## Summary
 
@@ -72,7 +72,7 @@ deleted. ESP32 provisioning (RF-02) is excluded.
 ### Documentation (this feature)
 
 ```text
-specs/006-remove-control-plane-security/
+specs/007-remove-control-plane-security/
 |-- spec.md
 |-- plan.md
 |-- research.md

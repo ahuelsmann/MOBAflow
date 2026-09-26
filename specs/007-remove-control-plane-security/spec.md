@@ -1,6 +1,6 @@
 # Feature Specification: Remove the MOBApi control-plane security
 
-**Feature Directory**: `006-remove-control-plane-security`
+**Feature Directory**: `007-remove-control-plane-security`
 
 **Source Issue**: https://github.com/ahuelsmann/MOBAflow/issues/165
 

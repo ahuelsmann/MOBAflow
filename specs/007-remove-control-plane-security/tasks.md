@@ -5,7 +5,7 @@ description: "Task list for removing the MOBApi control-plane security"
 
 # Tasks: Remove the MOBApi control-plane security
 
-**Input**: Design documents from `specs/006-remove-control-plane-security/`
+**Input**: Design documents from `specs/007-remove-control-plane-security/`
 
 **GitHub Issue**: #165
 
@@ -25,8 +25,8 @@ Documentation edits use structural checks.
 
 ## Phase 1: Analysis and Setup
 
-- [ ] T001 Re-verify the inventory in `specs/006-remove-control-plane-security/research.md` against current `main` before each slice
-- [ ] T002 Confirm the focused test filters in `specs/006-remove-control-plane-security/quickstart.md` execute tests
+- [ ] T001 Re-verify the inventory in `specs/007-remove-control-plane-security/research.md` against current `main` before each slice
+- [ ] T002 Confirm the focused test filters in `specs/007-remove-control-plane-security/quickstart.md` execute tests
 
 ---
 
@@ -52,7 +52,7 @@ on both transports.
 - [ ] T010 [US2] Route REST commands through admission in `MOBApi/Controllers/RuntimeCommandsController.cs` and `MOBApi/Controllers/JourneyProgressController.cs`
 - [ ] T011 [US2] Route SignalR commands through admission before forwarding in `MOBApi/Hubs/RuntimeHub.cs`
 - [ ] T012 [US2] Record the command validation and bounded queue under `Unreleased` in `CHANGELOG.md`
-- [ ] T013 [US2] Validate slice 1 with the MOBApi build and focused plus portable test runs from `specs/006-remove-control-plane-security/quickstart.md`
+- [ ] T013 [US2] Validate slice 1 with the MOBApi build and focused plus portable test runs from `specs/007-remove-control-plane-security/quickstart.md`
 
 **Checkpoint**: Slice 1 PR is green in CI and SonarCloud.
 
@@ -115,8 +115,8 @@ structural search finds no security types.
 
 ### Validation
 
-- [ ] T044 Run the structural search, portable tests, Windows tests and the MOBApi, MOBAflow and MOBAsmart builds from `specs/006-remove-control-plane-security/quickstart.md`
-- [ ] T045 Record actual results and pending manual checks in `specs/006-remove-control-plane-security/quickstart.md`
+- [ ] T044 Run the structural search, portable tests, Windows tests and the MOBApi, MOBAflow and MOBAsmart builds from `specs/007-remove-control-plane-security/quickstart.md`
+- [ ] T045 Record actual results and pending manual checks in `specs/007-remove-control-plane-security/quickstart.md`
 
 ---
 

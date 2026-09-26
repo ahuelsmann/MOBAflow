@@ -337,7 +337,7 @@ RF-07, and RF-19 guarantees without reopening their implementation scope.
 ### RF-19: Remove the MOBApi control-plane security
 
 Child issue [#165](https://github.com/ahuelsmann/MOBAflow/issues/165) owns this package. Its Spec Kit
-feature [specs/006-remove-control-plane-security](../specs/006-remove-control-plane-security/spec.md)
+feature [specs/007-remove-control-plane-security](../specs/007-remove-control-plane-security/spec.md)
 holds the specification, plan and tasks; the provisional anchor moved there.
 
 ### RF-20: Solution-wide architecture guards
