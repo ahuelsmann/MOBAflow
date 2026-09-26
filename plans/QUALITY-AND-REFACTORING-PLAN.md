@@ -81,9 +81,10 @@ certificate pinning. Installations that need these capabilities fork the
 repository. RF-19 removes the already merged control-plane code.
 
 Robustness at the API boundary is not a security feature and remains in scope:
-MOBApi validates command values (addresses, speeds, function indices,
-identifiers, enums and payload sizes) before they enter the runtime, and the
-remote command queue stays bounded. ESP32 provisioning protection from RF-02/#48
+MOBApi must validate command values (addresses, speeds, function indices,
+identifiers and enums) before they enter the runtime, and the remote command
+queue must be bounded. Neither exists yet; RF-19 adds both before it removes
+the security code. ESP32 provisioning protection from RF-02/#48
 is unaffected by this decision.
 
 ## Architecture principles for RF-19 through RF-31
@@ -146,7 +147,7 @@ dependencies.
 | RF-16 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Critical workflows pass accessibility, keyboard, contrast, and theme acceptance. |
 | RF-17 | [#116](https://github.com/ahuelsmann/MOBAflow/issues/116) | Repository guidance and executable engineering gates describe the same rules. |
 | RF-18 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Critical throughput, load, telemetry, recovery, and endurance behavior is measured. |
-| RF-19 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | MOBApi and its clients contain no authentication, pairing or credential code; command validation and queue bounds remain. |
+| RF-19 | [#165](https://github.com/ahuelsmann/MOBAflow/issues/165) | MOBApi and its clients contain no authentication, pairing or credential code; every remote command is validated and the command queue is bounded. |
 | RF-20 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Architecture tests enforce the project dependency and namespace rules of the whole solution. |
 | RF-21 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Unused and misplaced types are removed or moved to the project that owns them. |
 | RF-22 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | ViewModels send runtime commands through one port without compatibility facades or local fallbacks. |
@@ -335,27 +336,9 @@ RF-07, and RF-19 guarantees without reopening their implementation scope.
 
 ### RF-19: Remove the MOBApi control-plane security
 
-Sequence:
-
-1. characterize the command validation and queue bounds that remain, so their
-   behavior survives the removal;
-2. remove the anonymous-read migration (`CompatibilityRead*`) and the GitHub
-   issue evidence verifier;
-3. remove pairing, QR codes, credentials, access tokens, protected document
-   storage, host enrollment and host bootstrap verification from MOBApi,
-   `Common/Security`, MOBAflow and MOBAsmart;
-4. replace HTTPS server identity and certificate pinning with plain HTTP on the
-   local network, and simplify discovery and client registration;
-5. remove the pairing and security UI, settings, tests, analyzer-baseline
-   entries, `plans/50-authenticated-control-plane.md` and
-   `docs/MOBAPI-SECURITY-DESIGN.md`; state the operating scope in `README.md`,
-   `SECURITY.md`, `docs/ARCHITECTURE.md`, `docs/PROJECT-REFERENCE.md` and the
-   user guides.
-
-Acceptance anchor: no authentication, authorization, pairing, credential or
-certificate code remains; MOBAflow and MOBAsmart connect to MOBApi without
-setup steps; invalid command values are rejected before the runtime and queue
-overflow stays bounded; Windows and Android builds and affected tests pass.
+Child issue [#165](https://github.com/ahuelsmann/MOBAflow/issues/165) owns this package. Its Spec Kit
+feature [specs/006-remove-control-plane-security](../specs/006-remove-control-plane-security/spec.md)
+holds the specification, plan and tasks; the provisional anchor moved there.
 
 ### RF-20: Solution-wide architecture guards
 
