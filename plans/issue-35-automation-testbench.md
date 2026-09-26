@@ -1,5 +1,8 @@
 # Issue #35 Automation Testbench Implementation Plan
 
+**GitHub Issue**: #35
+**Spec Kit**: Required
+
 ## Document status
 
 - Status: Proposed; implementation blocked by the readiness gates below
@@ -49,14 +52,15 @@ Implementation must not begin until all gates applicable to the selected slice a
 
 | Gate | Requirement | Blocks |
 | --- | --- | --- |
-| G1 | RF-01 through RF-05 are complete according to the approved refactoring sequence. RF-01, RF-02, RF-04, and RF-05 are complete; RF-03/#50 remains open. | All implementation beyond research |
+| G1 | RF-01 through RF-05 are complete or withdrawn according to the approved refactoring sequence. RF-01, RF-02, RF-04, and RF-05 are complete; RF-03/#50 was withdrawn on 2026-09-25 (private home-network scope, see RF-19). | All implementation beyond research |
 | G2 | Issue #32 Workflow 2.0 domain/executor contracts and structured lifecycle-event shape are stable. Satisfied by merged PR #74; the testbench must consume those contracts rather than recreate them. | Satisfied; re-verify at implementation start |
 | G3 | The isolated-runtime and external-effect contracts in this plan are accepted. | Runtime and handler changes |
 | G4 | The post-#32 schema baseline is version 4. The optional initialized scenario collection remains additive under the repository JSON compatibility rules; recheck immediately before the persistence slice, and require an approved upgrade path for any final breaking change. | Persistence slice |
 | G5 | The implementation workspace passes the mandatory secret scan and the current local instruction/plan consolidation is reconciled. | Any local file read or edit |
 | G6 | The plan is linked from open Issue #35 and `plan-required` remains present until implementation completion. | Implementation start |
+| G7 | The Spec Kit flow for Issue #35 (specification, clarification, tasks and analysis under `specs/NNN-automation-testbench/`) is complete, reconciled with this plan and linked from the issue. | Implementation start |
 
-Research and plan refinement may continue before G1. No production-code or characterization-test implementation starts before G1, G3, G5, and G6. G2 is satisfied but its merged contracts must be re-verified after the remaining programme gate lands.
+Research and plan refinement may continue before G1. No production-code or characterization-test implementation starts before G1, G3, G5, G6, and G7. G2 is satisfied but its merged contracts must be re-verified immediately before implementation.
 
 ## Dependencies and sequencing
 
@@ -64,12 +68,12 @@ Research and plan refinement may continue before G1. No production-code or chara
 
 - RF-04 Ordered Z21 event pipeline: satisfied by #43; its bounded FIFO and failure-isolation behavior remains the production-parity event source.
 - Workflow 2.0 domain, executor, cancellation, retry, failure-policy, dry-run, and lifecycle contracts: satisfied by #32/PR #74 and now owned by `WorkflowService`, `WorkflowExecutionCoordinator`, and `WorkflowLifecycleEvent`.
-- RF-03/#50: not a direct testbench code dependency, but it remains the final open RF-01-through-RF-05 programme gate and therefore blocks implementation under G1.
+- RF-03/#50: withdrawn; it no longer gates implementation under G1. Its removal package RF-19 is not a testbench code dependency.
 - Current schema: post-#32 version 4 is the confirmed baseline. The scenario collection is still additive, but the classification is repeated immediately before Slice 6.
 
 ### Program sequencing dependencies
 
-The repository quality plan places RF-01 through RF-05 before broad feature development. RF-03/#50 is the only remaining open package. It is a governance/release-program gate even though it is not a direct technical dependency of the testbench.
+The repository quality plan places RF-01 through RF-05 before broad feature development. RF-03/#50 was withdrawn, so this programme gate no longer blocks the testbench.
 
 ### Soft dependencies and consumers
 
@@ -436,7 +440,7 @@ Existing workflow, journey, schema, DI, and integration fixtures receive focused
 
 Goal: make the existing execution behavior explicit before changing seams.
 
-- Rebase after RF-03/#50 closes the final programme gate, then re-verify every affected file against current `main`.
+- Rebase onto current `main` immediately before the slice, then re-verify every affected file.
 - Add the pre-change characterization coverage listed above for live parallel lifecycle ordering, shallow context sharing, action planning/effect paths, journey transitions, controlled whistle time, EventBus ordering assumptions, and DI multiplicity.
 - Finalize `IWorkflowEffectSink`, time, correlation, and cancellation contracts without changing user-visible behavior.
 - Inventory every external action type and document its current production effect path plus the approved target sink operation.
@@ -640,7 +644,7 @@ Implementation is not complete until the following sequence is documented with e
 | Risk | Mitigation |
 | --- | --- |
 | Live side effect escapes isolation | Dedicated fail-closed runtime scope, negative DI tests, recording-only sink, zero-I/O assertions |
-| Post-#32 or RecorderPage contract drift invalidates the runner | Rebase after RF-03 and immediately before each slice; consume the merged Workflow 2.0 executor and reuse compatible RecorderPage contracts without duplicating either engine |
+| Post-#32 or RecorderPage contract drift invalidates the runner | Rebase immediately before each slice; consume the merged Workflow 2.0 executor and reuse compatible RecorderPage contracts without duplicating either engine |
 | Real time leaks into deterministic paths | TimeProvider and cancellation characterization; analyzer/code-search validation for wall-clock calls |
 | Parallel actions produce unstable traces | Stable logical operation keys, quiescence barriers, deterministic merge points, then final sequence allocation |
 | Script handler launches a process | Move process creation behind production effect sink; recording sink has no process dependency |
@@ -664,12 +668,13 @@ During delivery:
 
 ## Implementation start checklist
 
-- [ ] RF-01 through RF-05 complete; only RF-03/#50 remains open
+- [x] RF-01 through RF-05 complete or withdrawn (RF-03/#50 withdrawn on 2026-09-25)
 - [x] Issue #32 executor/lifecycle contracts stable through merged PR #74
 - [x] Post-#32 schema version 4 and additive scenario-collection classification confirmed; repeat before Slice 6
 - [x] Mandatory local secret scan succeeds
 - [x] Local instruction and plan consolidation reconciled
 - [x] Plan reviewed and linked from Issue #35
 - [x] `plan-required` present
-- [ ] Slice 1 affected files re-verified after RF-03/#50 and immediately before implementation
+- [ ] Spec Kit flow complete and linked from Issue #35 (G7)
+- [ ] Slice 1 affected files re-verified immediately before implementation
 - [ ] No unrelated working-tree changes overlap the implementation slice
