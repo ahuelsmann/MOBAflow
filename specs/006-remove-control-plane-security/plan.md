@@ -117,7 +117,8 @@ transports share.
    and the bounded queue; route REST commands, journey reset and SignalR commands through it before
    forwarding or queueing. Independent of the removal.
 2. **Read migration** (FR-001): delete `CompatibilityRead*`, the evidence verifier, their middleware,
-   endpoints, registration and tests.
+   endpoints, registration and tests, and remove their descriptions from README, reference, user guide
+   and security design record.
 3. **Control-plane removal** (FR-002 to FR-005, FR-008 to FR-011): delete the remaining security code
    across MOBApi, Common, SharedUI, MOBAflow and MOBAsmart; switch every client to plain HTTP; remove
    packages, settings, UI, tests and baseline entries; update documentation and delete the RF-03 plan and
@@ -128,14 +129,18 @@ Each slice is its own draft PR, builds on its own and keeps the apps connectable
 ## Validation Strategy
 
 - **Automated tests**: new `RuntimeCommandValidatorTests` (limits and enum values),
-  `RuntimeCommandAdmissionTests` (REST and SignalR equivalence, queue full, nothing forwarded when
-  invalid) and anonymous-access checks in the existing `Test/MOBApi` controller tests; update
+  `RuntimeCommandAdmissionTests` (REST and `RuntimeHub` equivalence for drive, function and signal,
+  queue full, nothing forwarded when invalid), anonymous-access checks in the existing `Test/MOBApi`
+  controller tests and a new `ClientsControllerTests`; `MobApiProcessTests` replaces the authenticated
+  process fixture and keeps its health, discovery and restart/reconnect cases; update
   `DiscoveryResponseParserTests`, `RestApiStatusServiceTests` and `MauiViewModelInitializationTests`;
   delete the security-only fixtures listed in research.
+- **Documentation**: `CHANGELOG.md` is updated in every slice that changes behavior (constitution,
+  workflow item 10); `docs/THIRD-PARTY-NOTICES.md` loses ZXing with the package.
 - **Builds**: `dotnet build MOBApi/MOBApi.csproj` for slices 1 and 2; slice 3 additionally builds
   MOBAflow (FastDebug) and MOBAsmart (Android FastDebug) as listed in [quickstart.md](quickstart.md).
-- **Manual checks**: connection, remote driving and the settings page in Light and Dark theme, only
-  after explicit approval to start the apps.
+- **Manual checks**: connection, remote driving, the MOBAflow settings page and the MOBAsmart tab
+  navigation in Light and Dark theme, only after explicit approval to start the apps.
 - **Regression checks**: discovery, manual address, solution sync, runtime snapshot, photo upload,
   configuration defaults and `AutoStartWebApp`.
 - **Secrets scan**: every changed file before each commit and PR.

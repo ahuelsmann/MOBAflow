@@ -16,6 +16,13 @@
   camera permission is also used by the locomotive photo capture and therefore stays.
 - Discovery, manual address entry and recent addresses already exist in MOBAsmart and predate pairing.
 - `JourneyProgressController` contains a loopback check outside the security folder.
+- `ClientsController.Register/Unregister` and `RuntimeHub.RegisterRemote` derive the client identity
+  from the credential claim; without authentication they must use the request `ClientId` instead.
+- `Test/Integration/AuthenticatedControlPlaneProcessTests.cs` also holds the only real-process health,
+  discovery-contract and server-restart/SignalR-reconnect coverage; these cases are kept without
+  credentials when the fixture is replaced.
+- The README, `docs/PROJECT-REFERENCE.md`, the MOBAflow user guide and the security design record
+  describe the read migration; they change in the slice that removes it.
 
 ## Decisions
 
@@ -43,8 +50,11 @@
 - **Rationale**: SignalR currently bypasses all checks. One place keeps REST and SignalR equivalent
   and is easy to test. `Common/Runtime` already owns the envelope, and MOBApi must not reference
   `Backend`.
-- **Limits**: Locomotive address 1-9999, speed 0-126, function index 0-31, non-empty signal and
-  journey identifiers, defined enum values. These match the Z21 backend's argument checks.
+- **Limits**: Locomotive address 1-9999, speed 0-126, function index 0-31, non-empty GUIDs for signal
+  and journey identifiers, defined enum values. These match the Z21 backend's argument checks. All
+  fields have fixed-size types, so no payload-size limit is added; framework message limits stay.
+- **Ordering**: With a connected runtime host, admitted SignalR commands are forwarded directly in
+  arrival order; the bounded queue applies only to commands admitted while no host is connected.
 - **Alternatives considered**: Data annotations on request models (rejected: SignalR arguments are not
   model-bound); reusing Backend limits directly (rejected: layer rule).
 
@@ -61,6 +71,7 @@
 
 1. Command admission (validator, admission service, bounded queue) on the current code. Additive and
    independently releasable; protects behavior before the removal.
-2. Remove the read migration and the GitHub issue evidence verifier (server-only).
+2. Remove the read migration and the GitHub issue evidence verifier on the server, together with the
+   documentation that describes them.
 3. Remove the remaining control-plane security across all hosts, including UI, settings, tests,
    analyzer-baseline entries, packages and documentation.

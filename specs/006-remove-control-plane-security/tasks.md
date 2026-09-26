@@ -12,8 +12,9 @@ description: "Task list for removing the MOBApi control-plane security"
 **Prerequisites**: [spec.md](spec.md), [plan.md](plan.md), [research.md](research.md),
 [data-model.md](data-model.md), [contracts/mobapi-api.md](contracts/mobapi-api.md), [quickstart.md](quickstart.md)
 
-**Tests**: Admission, queue bounds and anonymous access get regression tests. Security-only tests are
-deleted with the code they cover. Documentation edits use structural checks.
+**Tests**: Admission on REST and SignalR, queue bounds, anonymous access and the real-process
+restart behavior get regression tests. Security-only tests are deleted with the code they cover.
+Documentation edits use structural checks.
 
 **Organization**: Phases follow the three delivery slices of the plan; each slice is one draft PR.
 
@@ -31,7 +32,7 @@ deleted with the code they cover. Documentation edits use structural checks.
 
 ## Phase 2: Slice 1 - Command admission (User Story 2, Priority P1)
 
-**Goal**: Every remote command is validated once and queued with a bound, on REST and SignalR.
+**Goal**: Every remote command is validated once on REST and SignalR; queued commands are bounded.
 
 **Independent Test**: Valid commands reach the host or queue; invalid ones and a full queue are rejected
 on both transports.
@@ -41,15 +42,17 @@ on both transports.
 - [ ] T003 [P] [US2] Add validation tests for every command type and limit in `Test/Common/RuntimeCommandValidatorTests.cs`
 - [ ] T004 [P] [US2] Add admission tests for invalid values, queue full and no forwarding of invalid commands in `Test/MOBApi/RuntimeCommandAdmissionTests.cs`
 - [ ] T005 [P] [US2] Add REST status-code tests (`400`, `429`, `202`) for commands and journey reset in `Test/MOBApi/RuntimeCommandsControllerTests.cs`
+- [ ] T006 [US2] Add `RuntimeHub` cases for `SetLocomotiveDrive`, `SetLocomotiveFunction` and `SetSignalAspect` in `Test/MOBApi/RuntimeCommandAdmissionTests.cs`: valid commands are forwarded to a connected host or queued without one; invalid values and a full queue throw `HubException` and are neither forwarded nor queued
 
 ### Implementation for User Story 2
 
-- [ ] T006 [US2] Add `RuntimeCommandValidator` next to the envelope in `Common/Runtime/RuntimeCommandValidator.cs`
-- [ ] T007 [US2] Bound the queue to 128 entries with non-blocking `TryEnqueue` in `MOBApi/Service/RuntimeCommandQueue.cs`
-- [ ] T008 [US2] Add the admission service and its DI registration in `MOBApi/Service/RuntimeCommandAdmission.cs` and `MOBApi/Program.cs`
-- [ ] T009 [US2] Route REST commands through admission in `MOBApi/Controllers/RuntimeCommandsController.cs` and `MOBApi/Controllers/JourneyProgressController.cs`
-- [ ] T010 [US2] Route SignalR commands through admission before forwarding in `MOBApi/Hubs/RuntimeHub.cs`
-- [ ] T011 [US2] Validate slice 1 with the MOBApi build and focused plus portable test runs from `specs/006-remove-control-plane-security/quickstart.md`
+- [ ] T007 [US2] Add `RuntimeCommandValidator` next to the envelope in `Common/Runtime/RuntimeCommandValidator.cs`
+- [ ] T008 [US2] Bound the queue to 128 entries with non-blocking `TryEnqueue` in `MOBApi/Service/RuntimeCommandQueue.cs`
+- [ ] T009 [US2] Add the admission service and its DI registration in `MOBApi/Service/RuntimeCommandAdmission.cs` and `MOBApi/Program.cs`
+- [ ] T010 [US2] Route REST commands through admission in `MOBApi/Controllers/RuntimeCommandsController.cs` and `MOBApi/Controllers/JourneyProgressController.cs`
+- [ ] T011 [US2] Route SignalR commands through admission before forwarding in `MOBApi/Hubs/RuntimeHub.cs`
+- [ ] T012 [US2] Record the command validation and bounded queue under `Unreleased` in `CHANGELOG.md`
+- [ ] T013 [US2] Validate slice 1 with the MOBApi build and focused plus portable test runs from `specs/006-remove-control-plane-security/quickstart.md`
 
 **Checkpoint**: Slice 1 PR is green in CI and SonarCloud.
 
@@ -57,13 +60,14 @@ on both transports.
 
 ## Phase 3: Slice 2 - Remove the read migration (User Story 1, Priority P1)
 
-**Goal**: No anonymous-read migration or GitHub evidence lookup remains.
+**Goal**: No anonymous-read migration or GitHub evidence lookup remains, in code or documentation.
 
-- [ ] T012 [US1] Delete `MOBApi/Security/CompatibilityRead*.cs` and `MOBApi/Security/GitHubIssueEvidenceVerifier.cs`
-- [ ] T013 [US1] Remove the read-migration middleware, endpoints and registrations from `MOBApi/Program.cs`, `MOBApi/Controllers/ControlPlaneSecurityController.cs` and `MOBApi/Security/ControlPlaneSecurityServiceCollectionExtensions.cs`
-- [ ] T014 [US1] Delete the read-migration test cases in `Test/MOBApi/ControlPlaneSecurityTests.cs` and `Test/Integration/AuthenticatedControlPlaneProcessTests.cs`
-- [ ] T015 [US1] Remove analyzer-baseline entries of the deleted files in `quality/analyzer-baseline*.json`
-- [ ] T016 [US1] Validate slice 2 with the MOBApi build and the portable test run
+- [ ] T014 [US1] Delete `MOBApi/Security/CompatibilityRead*.cs` and `MOBApi/Security/GitHubIssueEvidenceVerifier.cs`
+- [ ] T015 [US1] Remove the read-migration middleware, endpoints and registrations from `MOBApi/Program.cs`, `MOBApi/Controllers/ControlPlaneSecurityController.cs`, `MOBApi/Hubs/RuntimeHub.cs` and `MOBApi/Security/ControlPlaneSecurityServiceCollectionExtensions.cs`
+- [ ] T016 [US1] Delete the read-migration test cases in `Test/MOBApi/ControlPlaneSecurityTests.cs` and `CompatibilityStatus_Should_BeHostOnlyAndExposeBoundedEvidence` in `Test/Integration/AuthenticatedControlPlaneProcessTests.cs`
+- [ ] T017 [US1] Remove the read-migration descriptions from `README.md`, `docs/PROJECT-REFERENCE.md`, `docs/wiki/MOBAFLOW-USER-GUIDE.md` and `docs/MOBAPI-SECURITY-DESIGN.md`, and record the removal in `CHANGELOG.md`
+- [ ] T018 [US1] Remove analyzer-baseline entries of the deleted files in `quality/analyzer-baseline*.json`
+- [ ] T019 [US1] Validate slice 2 with the MOBApi build, the portable test run and a search for `CompatibilityRead` and read migration in code and documentation
 
 **Checkpoint**: Slice 2 PR is green in CI and SonarCloud.
 
@@ -78,49 +82,53 @@ structural search finds no security types.
 
 ### Tests for User Story 1
 
-- [ ] T017 [P] [US1] Add anonymous-access tests for read, host publish, command and photo upload endpoints in `Test/MOBApi/SolutionControllerTests.cs`, `Test/MOBApi/StatusControllerTests.cs`, `Test/MOBApi/RuntimeCommandsControllerTests.cs` and `Test/MOBApi/PhotosControllerTests.cs`
-- [ ] T018 [P] [US1] Update discovery tests without identity fields in `Test/Common/DiscoveryResponseParserTests.cs`
-- [ ] T019 [P] [US1] Update host-service and mobile initialization tests in `Test/MOBAflow/RestApiStatusServiceTests.cs` and `Test/SharedUI/MauiViewModelInitializationTests.cs`
+- [ ] T020 [P] [US1] Add anonymous-access tests for read, host publish, command and photo upload endpoints in `Test/MOBApi/SolutionControllerTests.cs`, `Test/MOBApi/StatusControllerTests.cs`, `Test/MOBApi/RuntimeCommandsControllerTests.cs` and `Test/MOBApi/PhotosControllerTests.cs`
+- [ ] T021 [P] [US1] Add anonymous register and unregister tests, including `400` for a missing `ClientId`, in `Test/MOBApi/ClientsControllerTests.cs`
+- [ ] T022 [P] [US1] Update discovery tests without identity fields in `Test/Common/DiscoveryResponseParserTests.cs`
+- [ ] T023 [P] [US1] Update host-service and mobile initialization tests in `Test/MOBAflow/RestApiStatusServiceTests.cs` and `Test/SharedUI/MauiViewModelInitializationTests.cs`
+- [ ] T024 [US1] Replace `Test/Integration/AuthenticatedControlPlaneProcessTests.cs` with `Test/Integration/MobApiProcessTests.cs`: keep the real-process health and discovery contract and the server-restart and SignalR-reconnect cases over plain HTTP without credentials; drop the bootstrap and pairing cases
 
 ### Implementation for User Story 1
 
-- [ ] T020 [US1] Delete the remaining files in `MOBApi/Security/`, `MOBApi/Controllers/ControlPlaneSecurityController.cs` and `MOBApi/Controllers/HostEnrollmentController.cs`
-- [ ] T021 [US1] Remove policies and loopback checks from `MOBApi/Controllers/*.cs` and `MOBApi/Hubs/*.cs`
-- [ ] T022 [US1] Remove the HTTPS listener, host bootstrap, authentication and authorization from `MOBApi/Program.cs`
-- [ ] T023 [US1] Remove identity fields from `Common/Discovery/MobApiUdpDiscoveryResponder.cs`, `Common/Discovery/DiscoveryResponseParser.cs`, `MOBApi/Service/UdpDiscoveryService.cs` and `MOBAflow/Service/UdpDiscoveryResponder.cs`
-- [ ] T024 [US1] Delete `Common/Security/` and `Common/Events/RemotePairingCompletedEvent.cs`
-- [ ] T025 [US1] Delete `MOBAflow/Service/HostControlPlaneSession.cs`, `MOBAflow/Service/RestApiPairingHost.cs`, `MOBAflow/Service/RestApiQrCodeImageFactory.cs` and `MOBAflow/ViewModel/RestApiPairingViewModel.cs`
-- [ ] T026 [US1] Switch `MOBAflow/Service/RestApiProcessService.cs`, `RestApiSolutionSyncService.cs`, `RestApiRuntimeHubService.cs`, `RestApiRuntimeCommandConsumerService.cs`, `RuntimeHubHostClient.cs`, `PhotoHubClient.cs` and `FirewallHelper.cs` to plain HTTP without host session
-- [ ] T027 [US1] Remove the pairing section from `MOBAflow/View/SettingsPage.xaml`, `MOBAflow/View/SettingsPage.xaml.cs` and `MOBAflow/Controls/SelectedObjectWorkbench.xaml`, and registrations from `MOBAflow/Extensions/MobaWinUiServiceCollectionExtensions.cs`
-- [ ] T028 [US1] Delete `SharedUI/ViewModel/RemotePairingViewModel.cs` and `SharedUI/Interface/IPairingCameraAccess.cs`; remove pairing code from `SharedUI/ViewModel/MauiViewModel.cs`, `SharedUI/Service/SolutionRemoteLoader.cs`, `SharedUI/Interface/IPhotoServices.cs` and `SharedUI/ViewModel/InterlockingControlViewModel.Presentation.cs`
-- [ ] T029 [US1] Delete `MOBAsmart/Service/PinnedRemoteControlTransport.cs`, `MauiRemoteControlCredentialStore.cs`, `PairingCameraAccess.cs` and `MOBAsmart/View/PairingPage.xaml(.cs)`
-- [ ] T030 [US1] Use plain HTTP clients in `MOBAsmart/Service/RuntimeHubRemoteClient.cs`, `MobiLanHttpClientFactory.cs` and `RestApiDiscoveryService.cs`; remove pairing from `MOBAsmart/Controls/AppBottomTabBar.xaml(.cs)`, `MOBAsmart/View/AppTabHostPage.xaml.cs`, `MOBAsmart/MauiProgram.cs` and `MOBAsmart/Extensions/*.cs`
-- [ ] T031 [US1] Remove `ZXing.Net` and `ZXing.Net.Maui.Controls` from `MOBAflow/MOBAflow.csproj`, `MOBAsmart/MOBAsmart.csproj` and `Directory.Packages.props`
-- [ ] T032 [US1] Delete security-only tests `Test/MOBApi/ControlPlaneSecurityTests.cs`, `Test/MOBApi/HostCredentialServiceTests.cs`, `Test/Common/RemoteControlClientSecurityTests.cs`, `Test/Common/HostBootstrapProtocolTests.cs`, `Test/SharedUI/RemotePairingViewModelTests.cs`, `Test/Integration/AuthenticatedControlPlaneProcessTests.cs` and `Test/MOBAsmart/PinnedRemoteControlTransportTests.cs`
-- [ ] T033 [US1] Remove analyzer-baseline entries of deleted files in `quality/analyzer-baseline*.json`
+- [ ] T025 [US1] Delete the remaining files in `MOBApi/Security/`, `MOBApi/Controllers/ControlPlaneSecurityController.cs` and `MOBApi/Controllers/HostEnrollmentController.cs`
+- [ ] T026 [US1] Remove policies and loopback checks from `MOBApi/Controllers/*.cs` and `MOBApi/Hubs/*.cs`
+- [ ] T027 [US1] Derive the client identity from the trimmed, non-empty request `ClientId` instead of the credential claim in `MOBApi/Controllers/ClientsController.cs` (`Register`, `Unregister`) and `MOBApi/Hubs/RuntimeHub.cs` (`RegisterRemote`); reject a missing `ClientId` with `400` or `HubException`
+- [ ] T028 [US1] Remove the HTTPS listener, host bootstrap, authentication and authorization from `MOBApi/Program.cs`
+- [ ] T029 [US1] Remove identity fields from `Common/Discovery/MobApiUdpDiscoveryResponder.cs`, `Common/Discovery/DiscoveryResponseParser.cs`, `MOBApi/Service/UdpDiscoveryService.cs` and `MOBAflow/Service/UdpDiscoveryResponder.cs`
+- [ ] T030 [US1] Delete `Common/Security/` and `Common/Events/RemotePairingCompletedEvent.cs`
+- [ ] T031 [US1] Delete `MOBAflow/Service/HostControlPlaneSession.cs`, `MOBAflow/Service/RestApiPairingHost.cs`, `MOBAflow/Service/RestApiQrCodeImageFactory.cs` and `MOBAflow/ViewModel/RestApiPairingViewModel.cs`
+- [ ] T032 [US1] Switch `MOBAflow/Service/RestApiProcessService.cs`, `RestApiSolutionSyncService.cs`, `RestApiRuntimeHubService.cs`, `RestApiRuntimeCommandConsumerService.cs`, `RuntimeHubHostClient.cs`, `PhotoHubClient.cs` and `FirewallHelper.cs` to plain HTTP without host session
+- [ ] T033 [US1] Remove the pairing section from `MOBAflow/View/SettingsPage.xaml`, `MOBAflow/View/SettingsPage.xaml.cs` and `MOBAflow/Controls/SelectedObjectWorkbench.xaml`, and registrations from `MOBAflow/Extensions/MobaWinUiServiceCollectionExtensions.cs`
+- [ ] T034 [US1] Delete `SharedUI/ViewModel/RemotePairingViewModel.cs` and `SharedUI/Interface/IPairingCameraAccess.cs`; remove pairing code from `SharedUI/ViewModel/MauiViewModel.cs`, `SharedUI/Service/SolutionRemoteLoader.cs`, `SharedUI/Interface/IPhotoServices.cs` and `SharedUI/ViewModel/InterlockingControlViewModel.Presentation.cs`
+- [ ] T035 [US1] Delete `MOBAsmart/Service/PinnedRemoteControlTransport.cs`, `MauiRemoteControlCredentialStore.cs`, `PairingCameraAccess.cs` and `MOBAsmart/View/PairingPage.xaml(.cs)`
+- [ ] T036 [US1] Use plain HTTP clients in `MOBAsmart/Service/RuntimeHubRemoteClient.cs`, `MobiLanHttpClientFactory.cs` and `RestApiDiscoveryService.cs`; remove pairing from `MOBAsmart/Controls/AppBottomTabBar.xaml(.cs)`, `MOBAsmart/View/AppTabHostPage.xaml.cs`, `MOBAsmart/MauiProgram.cs` and `MOBAsmart/Extensions/*.cs`
+- [ ] T037 [US1] Remove `ZXing.Net` and `ZXing.Net.Maui.Controls` from `MOBAflow/MOBAflow.csproj`, `MOBAsmart/MOBAsmart.csproj` and `Directory.Packages.props`, and their entries from `docs/THIRD-PARTY-NOTICES.md`
+- [ ] T038 [US1] Delete security-only tests `Test/MOBApi/ControlPlaneSecurityTests.cs`, `Test/MOBApi/HostCredentialServiceTests.cs`, `Test/Common/RemoteControlClientSecurityTests.cs`, `Test/Common/HostBootstrapProtocolTests.cs`, `Test/SharedUI/RemotePairingViewModelTests.cs` and `Test/MOBAsmart/PinnedRemoteControlTransportTests.cs`
+- [ ] T039 [US1] Remove analyzer-baseline entries of deleted files in `quality/analyzer-baseline*.json`
 
 ### Implementation for User Story 3
 
-- [ ] T034 [P] [US3] State the operating scope and fork recommendation in `README.md` and `SECURITY.md`
-- [ ] T035 [P] [US3] Remove pairing and credential content from `docs/ARCHITECTURE.md`, `docs/PROJECT-REFERENCE.md` and `docs/wiki/*.md`
-- [ ] T036 [US3] Delete `docs/MOBAPI-SECURITY-DESIGN.md` and `plans/50-authenticated-control-plane.md`; point RF-19 in `plans/QUALITY-AND-REFACTORING-PLAN.md` to this feature
+- [ ] T040 [P] [US3] State the operating scope and fork recommendation in `README.md` and `SECURITY.md`
+- [ ] T041 [P] [US3] Remove pairing and credential content from `docs/ARCHITECTURE.md`, `docs/PROJECT-REFERENCE.md` and `docs/wiki/*.md`
+- [ ] T042 [US3] Delete `docs/MOBAPI-SECURITY-DESIGN.md` and `plans/50-authenticated-control-plane.md`; point RF-19 in `plans/QUALITY-AND-REFACTORING-PLAN.md` to this feature
+- [ ] T043 [US3] Record the removal of pairing, credentials, the HTTPS port and the QR code under `Unreleased` in `CHANGELOG.md`
 
 ### Validation
 
-- [ ] T037 Run the structural search, portable tests, Windows tests and the MOBApi, MOBAflow and MOBAsmart builds from `specs/006-remove-control-plane-security/quickstart.md`
-- [ ] T038 Record actual results and pending manual checks in `specs/006-remove-control-plane-security/quickstart.md`
+- [ ] T044 Run the structural search, portable tests, Windows tests and the MOBApi, MOBAflow and MOBAsmart builds from `specs/006-remove-control-plane-security/quickstart.md`
+- [ ] T045 Record actual results and pending manual checks in `specs/006-remove-control-plane-security/quickstart.md`
 
 ---
 
 ## Phase 5: Publication gates (every slice)
 
-- [ ] T039 Run `scripts/Test-LineEndings.ps1 -Staged`, `scripts/Test-SpecKitGovernance.ps1 -Mode PullRequest -BaseRef github/main` and the secrets scan of every changed file
-- [ ] T040 Keep each slice PR draft until the GitHub Sonar quality gate (SonarCloud) is green with zero OPEN/CONFIRMED issues on its current commit
-- [ ] T041 Close #165 after slice 3 merges and mark RF-19 complete in #47
+- [ ] T046 Run `scripts/Test-LineEndings.ps1 -Staged`, `scripts/Test-SpecKitGovernance.ps1 -Mode PullRequest -BaseRef github/main` and the secrets scan of every changed file
+- [ ] T047 Keep each slice PR draft until the GitHub Sonar quality gate (SonarCloud) is green with zero OPEN/CONFIRMED issues on its current commit
+- [ ] T048 Close #165 after slice 3 merges and mark RF-19 complete in #47
 
 ## Dependencies
 
-- Slice 1 (T003-T011) has no dependency and starts first.
-- Slice 2 (T012-T016) is independent of slice 1 but is merged after it.
-- Slice 3 (T017-T038) requires slice 2 to be merged.
+- Slice 1 (T003-T013) has no dependency and starts first.
+- Slice 2 (T014-T019) is independent of slice 1 but is merged after it.
+- Slice 3 (T020-T045) requires slice 2 to be merged.
 - Manual checks from the quickstart need explicit approval to start the apps.

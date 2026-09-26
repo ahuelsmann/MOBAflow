@@ -7,13 +7,14 @@ authorized by this feature; the manual checks below need a separate approval.
 
 ```text
 dotnet build MOBApi/MOBApi.csproj
-dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0 --filter "FullyQualifiedName~RuntimeCommandAdmission|FullyQualifiedName~RuntimeCommandsController|FullyQualifiedName~RuntimeHub"
+dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0 --filter "FullyQualifiedName~RuntimeCommandValidator|FullyQualifiedName~RuntimeCommandAdmission|FullyQualifiedName~RuntimeCommandsController"
 dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0
 ```
 
-Slice 3 additionally needs both UI hosts:
+Slice 3 additionally runs the anonymous-access and process fixtures and needs both UI hosts:
 
 ```text
+dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0 --filter "FullyQualifiedName~ClientsController|FullyQualifiedName~MobApiProcess|FullyQualifiedName~DiscoveryResponseParser"
 dotnet restore MOBAflow/MOBAflow.csproj
 dotnet build MOBAflow/MOBAflow.csproj -c FastDebug --no-restore -p:BuildMOBApiDependency=false -p:CopyMOBApiToOutput=false
 dotnet test Test/Test.csproj -f net10.0-windows10.0.22621.0 -p:IncludeMobaSmartTests=false
@@ -35,10 +36,14 @@ A filtered run must execute tests; zero executed tests is not a pass.
 ## Manual checks (after approval to start the apps)
 
 1. Start MOBAflow with `AutoStartWebApp` on; start MOBAsmart on a phone in the same network with no
-   stored address. Discovery connects without any pairing prompt; solution and runtime state appear.
-2. Enter the PC address manually on a second phone; it connects and stores the address as recent.
+   stored address and switch on the MOBAflow connection (it is off by default). Discovery connects
+   without any pairing prompt; solution and runtime state appear.
+2. On a second phone, switch on the MOBAflow connection and enter the PC address manually; it connects
+   and stores the address as recent.
 3. Drive a locomotive and switch a function from MOBAsmart; MOBAflow executes the commands.
 4. Check the MOBAflow settings page in Light and Dark theme: no pairing or credential section remains.
+5. Check MOBAsmart in Light and Dark theme: the bottom tab bar has no pairing tab, and every remaining
+   tab opens its intended page and shows the correct selection state.
 
 ## Results
 

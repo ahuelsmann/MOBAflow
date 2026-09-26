@@ -115,8 +115,9 @@ pinning or the RF-03 rollout, and the scope statement is present in README and S
 
 - MOBAflow runs with the web API disabled (`AutoStartWebApp` off): MOBAsmart cannot connect, exactly as
   today without pairing; no new switch is introduced.
-- Several phones connect at the same time: each can read and control; commands still pass through the
-  one bounded queue in arrival order.
+- Several phones connect at the same time: each can read and control. While the MOBAflow runtime host is
+  connected through SignalR, every admitted command is forwarded to it immediately in arrival order; only
+  while no host is connected are commands held in the one bounded queue, in arrival order.
 - MOBAflow restarts MOBApi: MOBAsmart reconnects through its existing reconnect logic without any
   credential renewal.
 - A request carries an old bearer token or pairing header from an earlier build: the header is ignored
@@ -143,11 +144,13 @@ pinning or the RF-03 rollout, and the scope statement is present in README and S
   credential store.
 - **FR-005**: MOBAflow and MOBAsmart MUST remove the pairing and credential management UI, the QR code
   display and scanning, and the related settings and permissions.
-- **FR-006**: MOBApi MUST validate locomotive addresses, speeds, function indices, signal identifiers
-  and aspects, identifiers and payload sizes for every remote command on REST and SignalR before the
-  command reaches the runtime, and MUST reject invalid values with a client error.
-- **FR-007**: The remote command queue MUST be bounded and MUST reject commands when full instead
-  of growing or silently dropping accepted commands.
+- **FR-006**: MOBApi MUST validate locomotive addresses, speeds, function indices, signal aspects and
+  signal and journey identifiers (non-empty GUIDs) for every remote command on REST and SignalR before the
+  command is forwarded or queued, and MUST reject invalid values with a client error. Every command field
+  has a fixed-size type; the existing ASP.NET Core request and SignalR message size limits stay unchanged
+  and no additional payload limit is introduced.
+- **FR-007**: The remote command queue, which holds commands while no runtime host is connected, MUST be
+  bounded and MUST reject commands when full instead of growing or silently dropping accepted commands.
 - **FR-008**: Removed security code MUST leave no disabled, hidden or compatibility path, and no
   migration of earlier credential data. Superseded tests, analyzer-baseline entries, the RF-03 plan and
   the security design record MUST be removed in the same change.
@@ -161,7 +164,7 @@ pinning or the RF-03 rollout, and the scope statement is present in README and S
 ### Key Entities *(include if feature involves data)*
 
 - **Remote command**: a drive, function, signal or journey-reset request from a remote client; validated
-  at the API boundary and queued in bounded order.
+  at the API boundary, then forwarded to the connected runtime host or held in the bounded queue.
 - **Discovery response**: the announcement that lets MOBAsmart find MOBAflow; carries address and port,
   without identity or fingerprint.
 - **Connection settings**: the address, port, recent addresses and connection toggle on the phone; no
@@ -178,8 +181,9 @@ pinning or the RF-03 rollout, and the scope statement is present in README and S
   and SignalR, and a full queue rejects further commands.
 - **SC-004**: MOBAflow and MOBAsmart ship no QR-code library and request no camera permission for
   connecting.
-- **SC-005**: Current documentation contains no instructions for pairing or credentials and states the
-  home-network scope in README and SECURITY.md.
+- **SC-005**: Current documentation contains no instructions for MOBApi pairing or control-plane
+  credentials and states the home-network scope in README and SECURITY.md. Unrelated credential guidance,
+  such as ESP32 Wi-Fi provisioning or generic secret handling in SECURITY.md, remains.
 
 ## Assumptions
 

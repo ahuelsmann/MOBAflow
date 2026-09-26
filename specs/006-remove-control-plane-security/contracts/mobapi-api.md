@@ -17,6 +17,8 @@
   `api/solution` (meta, get, put), `api/status`, `api/photos/health|file|upload`,
   `api/runtime/journeys/{id}/feedback-progress` (get, reset), `api/runtime/commands/*`.
 - Hubs `/runtime-hub` and `/photos-hub` with their existing methods.
+- `api/clients/register|unregister` and `RegisterRemote` identify the client by the request `ClientId`;
+  a missing `ClientId` returns `400` or throws `HubException`.
 
 ## Remote commands
 
@@ -26,7 +28,9 @@
 | REST `api/runtime/journeys/{id}/feedback-progress/reset` | `400` for an empty identifier | `429` with `{ "error": "queue_full" }` | `202` (unchanged) |
 | SignalR `SetLocomotiveDrive`, `SetLocomotiveFunction`, `SetSignalAspect` | `HubException` with reason | `HubException` "Command queue is full." | completes |
 
-Both transports validate before forwarding to the host or queueing.
+Both transports validate before forwarding to the host or queueing. With a connected runtime host,
+admitted SignalR commands are forwarded directly; the bounded queue holds commands only while no host
+is connected.
 
 ## Discovery response
 
