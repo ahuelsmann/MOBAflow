@@ -29,6 +29,13 @@ feedback, corrupt input files, write failure/recovery, and mobile command routin
   passed with 1,732 tests and one skipped; the Android Release publish matched the
   MOBAsmart analyzer baseline.
 
+## Codex review follow-up (2026-09-26)
+
+- Feedback buffered while counts load keeps its input revision; removing and re-adding
+  the input before loading completes discards the old activation.
+- Set/reset counter command payloads are registered for recording import, so exported
+  recordings keep them replay-applicable. Both regressions fail without their fix.
+
 ## Remaining acceptance
 
 - GitHub CI and Sonar quality gate for the published PR commit.

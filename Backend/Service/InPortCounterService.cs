@@ -194,7 +194,14 @@ public sealed partial class InPortCounterService : IDisposable, IAsyncDisposable
             if (!_initialized)
             {
                 // After a failed load, activations cannot be counted against unknown saved values.
-                if (!_loadFailed) _feedbackBeforeLoad.Enqueue((feedback, _timeProvider.GetLocalNow()));
+                // The captured revision lets removing the input during loading invalidate the activation.
+                var inPort = checked((uint)feedback.InPort);
+                if (!_loadFailed && _counters.ContainsKey(inPort))
+                {
+                    _feedbackBeforeLoad.Enqueue((feedback, _timeProvider.GetLocalNow(),
+                        _inputRevisions.GetValueOrDefault(inPort)));
+                }
+
                 return;
             }
 

@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 public sealed partial class InPortCounterService
 {
     private readonly IInPortCounterStore? _store;
-    private readonly Queue<(FeedbackResult Feedback, DateTimeOffset ReceivedAt)> _feedbackBeforeLoad = new();
+    private readonly Queue<(FeedbackResult Feedback, DateTimeOffset ReceivedAt, long InputRevision)> _feedbackBeforeLoad = new();
     private Task<bool>? _loadTask;
     private bool _initialized;
     private bool _loadFailed;
@@ -94,7 +94,11 @@ public sealed partial class InPortCounterService
             _loadFailed = false;
             _persistenceError = null;
             while (_feedbackBeforeLoad.TryDequeue(out var pending))
-                AcceptFeedbackLocked(pending.Feedback, pending.ReceivedAt);
+            {
+                // Removing (and re-adding) the input while loading invalidates its buffered activations.
+                if (_inputRevisions.GetValueOrDefault((uint)pending.Feedback.InPort) == pending.InputRevision)
+                    AcceptFeedbackLocked(pending.Feedback, pending.ReceivedAt);
+            }
             QueueSaveLocked();
             startPublishing = !_publishingCounts && _pendingCounts.Count > 0;
             if (startPublishing) _publishingCounts = true;
