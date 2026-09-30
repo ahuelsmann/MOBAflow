@@ -2,6 +2,7 @@
 
 namespace Moba.WinUI.Service;
 
+using Common.Discovery;
 using Backend.Interface;
 
 using Common.Runtime;
@@ -37,7 +38,7 @@ public sealed class RuntimeHubHostClient : IRuntimeHubHostClient
 
     public async Task ConnectAsync(string serverIp, int serverPort, CancellationToken cancellationToken = default)
     {
-        var hubUrl = new Uri($"http://{serverIp}:{serverPort}/runtime-hub");
+        var hubUrl = new MobApiEndpoint(serverIp, serverPort).Resolve("runtime-hub");
         _logger?.LogInformation("Connecting to RuntimeHub: {HubUrl}", hubUrl);
 
         _hubConnection = new HubConnectionBuilder()

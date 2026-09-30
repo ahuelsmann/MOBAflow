@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
 
+using Common.Discovery;
 using SharedUI.Interface;
 
 using System.Text.Json;
@@ -31,7 +32,7 @@ public sealed class RuntimeSettingsClient : IRuntimeSettingsClient
 
         try
         {
-            var url = new Uri($"http://{serverIp.Trim()}:{serverPort}/api/runtime-settings");
+            var url = new MobApiEndpoint(serverIp, serverPort).Resolve("api/runtime-settings");
             using var response = await _httpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {

@@ -74,7 +74,7 @@ public class PhotoUploadService : IPhotoUploadService
             form.Add(new StringContent(category), "category");
             form.Add(new StringContent(entityId.ToString()), "entityId");
 
-            var url = new Uri($"http://{serverIp}:{serverPort}/api/photos/upload");
+            var url = new MobApiEndpoint(serverIp, serverPort).Resolve("api/photos/upload");
             using var response = await _httpClient.PostAsync(url, form).ConfigureAwait(false);
 
             if (response.IsSuccessStatusCode)
@@ -165,7 +165,7 @@ public class PhotoUploadService : IPhotoUploadService
     {
         try
         {
-            var url = $"http://{serverIp}:{serverPort}{MobApiHealthProbe.HealthPath}";
+            var url = new MobApiEndpoint(serverIp, serverPort).Resolve(MobApiHealthProbe.HealthPath);
 
             using var cts = new CancellationTokenSource(timeout ?? TimeSpan.FromSeconds(5));
             using var response = await _lanHealthHttpClient

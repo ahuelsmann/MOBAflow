@@ -133,13 +133,13 @@ internal class DiscoveryResponseParserTests
     {
         var response = DiscoveryResponseParser.CreateResponse(" 192.168.1.20 ", 5001);
 
-        var success = DiscoveryResponseParser.TryParse(response, out MobApiDiscoveryEndpoint? endpoint);
+        var success = DiscoveryResponseParser.TryParse(response, out MobApiEndpoint? endpoint);
 
         Assert.Multiple(() =>
         {
             Assert.That(response, Is.EqualTo("MOBAFLOW_REST_API|192.168.1.20|5001"));
             Assert.That(success, Is.True);
-            Assert.That(endpoint, Is.EqualTo(new MobApiDiscoveryEndpoint("192.168.1.20", 5001)));
+            Assert.That(endpoint, Is.EqualTo(new MobApiEndpoint("192.168.1.20", 5001)));
         });
     }
 
@@ -148,7 +148,7 @@ internal class DiscoveryResponseParserTests
     {
         var response = "MOBAFLOW_REST_API|192.168.1.20|5001|2|5002|d3ae2669706c4b7391167df884017420|ABCDEF";
 
-        var success = DiscoveryResponseParser.TryParse(response, out MobApiDiscoveryEndpoint? endpoint);
+        var success = DiscoveryResponseParser.TryParse(response, out MobApiEndpoint? endpoint);
 
         Assert.That(success, Is.False);
         Assert.That(endpoint, Is.Null);

@@ -211,7 +211,7 @@ public sealed class RestApiProcessService : IDisposable
             using var client = new HttpClient();
             client.Timeout = TimeSpan.FromSeconds(2);
             var response = await client.GetAsync(
-                $"http://127.0.0.1:{port}/api/status",
+                MobApiEndpoint.Local(port).Resolve("api/status"),
                 cancellationToken).ConfigureAwait(false);
             return response.IsSuccessStatusCode;
         }

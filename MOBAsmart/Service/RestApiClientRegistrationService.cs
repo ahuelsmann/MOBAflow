@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
 
+using Common.Discovery;
 using SharedUI.Interface;
 
 using System.Text;
@@ -41,7 +42,7 @@ public sealed class RestApiClientRegistrationService : IRestApiClientRegistratio
 
         try
         {
-            var url = new Uri($"http://{serverIp}:{serverPort}/api/clients/register");
+            var url = new MobApiEndpoint(serverIp, serverPort).Resolve("api/clients/register");
             using var response = await _httpClient.PostAsync(url, content).ConfigureAwait(false);
             return response.IsSuccessStatusCode;
         }

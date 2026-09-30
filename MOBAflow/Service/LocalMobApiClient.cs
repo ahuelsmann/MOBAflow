@@ -2,6 +2,7 @@
 
 namespace Moba.WinUI.Service;
 
+using Common.Discovery;
 using Common.Configuration;
 
 /// <summary>
@@ -14,7 +15,7 @@ public sealed partial class LocalMobApiClient(AppSettings appSettings) : IDispos
     private readonly HttpClient _httpClient = new();
 
     /// <summary>Base address of the local MOBApi process, for example <c>http://127.0.0.1:5001/</c>.</summary>
-    public Uri BaseUri => new($"http://127.0.0.1:{Port}/");
+    public Uri BaseUri => MobApiEndpoint.Local(Port).BaseUri;
 
     private int Port => appSettings.RestApi.Port > 0 ? appSettings.RestApi.Port : DefaultPort;
 

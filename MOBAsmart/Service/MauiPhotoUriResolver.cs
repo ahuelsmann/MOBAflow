@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
 
+using Common.Discovery;
 using Common.Path;
 using Common.Configuration;
 
@@ -35,7 +36,7 @@ public sealed class MauiPhotoUriResolver : IPhotoUriResolver
         }
 
         using var response = await _httpClient
-            .GetAsync(new Uri($"http://{serverIp}:{serverPort}/{requestPath}"), cancellationToken)
+            .GetAsync(new MobApiEndpoint(serverIp, serverPort).Resolve(requestPath), cancellationToken)
             .ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {

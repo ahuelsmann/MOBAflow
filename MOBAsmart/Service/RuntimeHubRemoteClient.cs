@@ -2,6 +2,7 @@
 
 namespace Moba.MAUI.Service;
 
+using Common.Discovery;
 using Common.Runtime;
 
 using Domain;
@@ -79,7 +80,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
             _hubConnection = null;
         }
 
-        var hubUrl = new Uri($"http://{serverIp}:{serverPort}/runtime-hub");
+        var hubUrl = new MobApiEndpoint(serverIp, serverPort).Resolve("runtime-hub");
         _logger?.LogInformation("Connecting to RuntimeHub remote: {HubUrl}", hubUrl);
 
         _hubConnection = new HubConnectionBuilder()
@@ -329,5 +330,5 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
         }
     }
 
-    private Uri BuildApiUri(string relativePath) => new($"http://{_serverIp}:{_serverPort}/{relativePath}");
+    private Uri BuildApiUri(string relativePath) => new MobApiEndpoint(_serverIp, _serverPort).Resolve(relativePath);
 }

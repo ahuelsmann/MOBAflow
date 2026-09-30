@@ -37,7 +37,7 @@ public static class DiscoveryResponseParser
     /// <summary>
     /// Tries to parse a discovery response into a MOBApi endpoint.
     /// </summary>
-    public static bool TryParse(string? response, out MobApiDiscoveryEndpoint? endpoint)
+    public static bool TryParse(string? response, out MobApiEndpoint? endpoint)
     {
         endpoint = null;
 
@@ -59,7 +59,7 @@ public static class DiscoveryResponseParser
         if (!int.TryParse(parts[2].Trim(), out var portValue) || !IsValidPort(portValue))
             return false;
 
-        endpoint = new MobApiDiscoveryEndpoint(ipPart, portValue);
+        endpoint = new MobApiEndpoint(ipPart, portValue);
         return true;
     }
 
@@ -77,8 +77,3 @@ public static class DiscoveryResponseParser
 
     private static bool IsValidPort(int port) => port is > 0 and < 65536;
 }
-
-/// <summary>
-/// Describes a MOBApi endpoint announced on the local network.
-/// </summary>
-public sealed record MobApiDiscoveryEndpoint(string IpAddress, int HttpPort);

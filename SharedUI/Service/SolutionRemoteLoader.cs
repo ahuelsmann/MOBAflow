@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.Service;
 
+using Common.Discovery;
 using Backend.Interface;
 
 using Common.Events;
@@ -225,7 +226,7 @@ public sealed class SolutionRemoteLoader : ISolutionRemoteLoader, IDisposable
 
     private async Task<SolutionMetaResponse?> TryGetMetaAsync(string serverIp, int serverPort, CancellationToken cancellationToken)
     {
-        var url = $"http://{serverIp.Trim()}:{serverPort}/api/solution/meta";
+        var url = new MobApiEndpoint(serverIp, serverPort).Resolve("api/solution/meta");
         try
         {
             using var response = await _httpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
@@ -248,7 +249,7 @@ public sealed class SolutionRemoteLoader : ISolutionRemoteLoader, IDisposable
 
     private async Task<string?> TryGetSolutionJsonAsync(string serverIp, int serverPort, CancellationToken cancellationToken)
     {
-        var url = $"http://{serverIp.Trim()}:{serverPort}/api/solution";
+        var url = new MobApiEndpoint(serverIp, serverPort).Resolve("api/solution");
         try
         {
             using var response = await _httpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);

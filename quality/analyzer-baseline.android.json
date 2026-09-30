@@ -2461,20 +2461,6 @@
     {
       "project": "MOBAsmart",
       "targetFramework": "net10.0-android",
-      "ruleId": "CA2234",
-      "path": "MOBAsmart/Service/PhotoUploadService.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
-      "ruleId": "CA2234",
-      "path": "MOBAsmart/Service/RestApiDiscoveryService.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
       "ruleId": "IDE0005",
       "path": "MOBAsmart/MainPage.xaml.cs",
       "count": 1
@@ -3486,13 +3472,6 @@
       "ruleId": "CA2227",
       "path": "SharedUI/ViewModel/SpeakerEngineConfigurationViewModel.cs",
       "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2234",
-      "path": "SharedUI/Service/SolutionRemoteLoader.cs",
-      "count": 2
     },
     {
       "project": "SharedUI",
