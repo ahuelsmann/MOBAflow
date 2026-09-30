@@ -49,10 +49,6 @@ git push origin 0.2.1
 
 Running Release Studio again for the same tag updates the assets of an existing draft. It refuses to modify a published release. Delete an unwanted draft manually only after confirming that no one is reviewing it.
 
-## Relationship to Azure DevOps
-
-The existing Azure DevOps release pipeline remains available while Release Studio is evaluated. Do not remove it until at least one GitHub-native release has been built, manually verified, and published successfully.
-
 ## Troubleshooting
 
 ### The tag is lightweight
