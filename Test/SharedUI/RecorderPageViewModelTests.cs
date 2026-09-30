@@ -2,6 +2,7 @@
 
 namespace Moba.Test.SharedUI;
 
+using global::Moba.Backend.Interface;
 using global::Moba.Backend.Service.Recording;
 using global::Moba.Common.Recording;
 using global::Moba.SharedUI.Interface;
@@ -53,17 +54,27 @@ internal sealed class RecorderPageViewModelTests
     {
         var session = new RecordingSessionService(TimeProvider.System);
         await using var sessionLifetime = session.ConfigureAwait(false);
-        using var viewModel = CreateViewModel(session);
+        var probe = new OverlappingReadProbe(session);
+        await using var probeLifetime = probe.ConfigureAwait(false);
+        using var viewModel = CreateViewModel(probe);
         viewModel.StartCommand.Execute(null);
 
-        // Markers raise StatusChanged on several worker threads at once, so timeline refreshes are requested
-        // while another refresh is still reading; the UI dispatcher must serialize them without duplicates.
-        Parallel.For(0, 200, index => session.AddMarker($"Marker {index}"));
+        // The first marker's timeline read is held open on a worker thread while a second marker raises
+        // StatusChanged from the test thread. The UI dispatcher must not start a second refresh meanwhile.
+        probe.HoldNextRead();
+        var firstMarker = Task.Run(() => session.AddMarker("First"));
+        Assert.That(probe.WaitUntilReadIsHeld(), Is.True, "The first timeline read was never reached.");
+        session.AddMarker("Second");
+        await firstMarker.ConfigureAwait(false);
         await viewModel.StopCommand.ExecuteAsync(null).ConfigureAwait(false);
 
-        Assert.That(
-            viewModel.TimelineEntries.Select(entry => entry.Sequence),
-            Is.EqualTo(session.CurrentArtifact!.Entries.Select(entry => entry.Sequence)));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(probe.MaxConcurrentReads, Is.EqualTo(1));
+            Assert.That(
+                viewModel.TimelineEntries.Select(entry => entry.Sequence),
+                Is.EqualTo(session.CurrentArtifact!.Entries.Select(entry => entry.Sequence)));
+        }
     }
 
     [Test]
@@ -211,7 +222,7 @@ internal sealed class RecorderPageViewModelTests
     }
 
     private static RecorderPageViewModel CreateViewModel(
-        RecordingSessionService session,
+        IRecordingSessionService session,
         StubRecordingFileService? fileService = null,
         StubRecordingReplayService? replayService = null) =>
         new(
@@ -286,6 +297,93 @@ internal sealed class RecorderPageViewModelTests
             null,
             new RecordingArtifactOptions(entryCount, 1_000_000),
             entries);
+    }
+
+    /// <summary>
+    /// Forwards to a real session but can hold one timeline read open and records how many reads overlap.
+    /// </summary>
+    private sealed class OverlappingReadProbe(IRecordingSessionService inner) : IRecordingSessionService
+    {
+        private static readonly TimeSpan HoldTimeout = TimeSpan.FromMilliseconds(500);
+        private readonly ManualResetEventSlim _readHeld = new();
+        private readonly ManualResetEventSlim _overlappingReadStarted = new();
+        private int _holdNextRead;
+        private int _activeReads;
+        private int _maxConcurrentReads;
+
+        public int MaxConcurrentReads => Volatile.Read(ref _maxConcurrentReads);
+
+        public RecordingSessionSnapshot CurrentStatus => inner.CurrentStatus;
+
+        public RecordingArtifact? CurrentArtifact => inner.CurrentArtifact;
+
+        public event Action<RecordingSessionSnapshot>? StatusChanged
+        {
+            add => inner.StatusChanged += value;
+            remove => inner.StatusChanged -= value;
+        }
+
+        public void HoldNextRead() => Volatile.Write(ref _holdNextRead, 1);
+
+        public bool WaitUntilReadIsHeld() => _readHeld.Wait(TimeSpan.FromSeconds(10));
+
+        public IReadOnlyList<RecordingEntry> ReadEntries(long afterSequence, int maxCount)
+        {
+            var activeReads = Interlocked.Increment(ref _activeReads);
+            try
+            {
+                UpdateMaxConcurrentReads(activeReads);
+                if (activeReads > 1) _overlappingReadStarted.Set();
+                if (Interlocked.Exchange(ref _holdNextRead, 0) == 1)
+                {
+                    // A serializing dispatcher keeps any other refresh out until this bounded hold ends.
+                    _readHeld.Set();
+                    _overlappingReadStarted.Wait(HoldTimeout);
+                }
+
+                return inner.ReadEntries(afterSequence, maxCount);
+            }
+            finally
+            {
+                Interlocked.Decrement(ref _activeReads);
+            }
+        }
+
+        public RecordingOperationResult Start(RecordingSessionStartRequest request) => inner.Start(request);
+
+        public RecordingOperationResult Pause() => inner.Pause();
+
+        public RecordingOperationResult Resume() => inner.Resume();
+
+        public RecordingOperationResult AddMarker(string text) => inner.AddMarker(text);
+
+        public RecordingOperationResult AddNote(string text) => inner.AddNote(text);
+
+        public RecordingSubmissionResult TryRecord(RecordingEntryProjection projection) => inner.TryRecord(projection);
+
+        public Task<RecordingStopResult> StopAsync(CancellationToken cancellationToken = default) =>
+            inner.StopAsync(cancellationToken);
+
+        public RecordingOperationResult Import(RecordingArtifact artifact) => inner.Import(artifact);
+
+        // Releases only the probe's wait handles; the test owns and disposes the wrapped session.
+        public ValueTask DisposeAsync()
+        {
+            _readHeld.Dispose();
+            _overlappingReadStarted.Dispose();
+            return ValueTask.CompletedTask;
+        }
+
+        private void UpdateMaxConcurrentReads(int activeReads)
+        {
+            var observed = Volatile.Read(ref _maxConcurrentReads);
+            while (activeReads > observed)
+            {
+                var previous = Interlocked.CompareExchange(ref _maxConcurrentReads, activeReads, observed);
+                if (previous == observed) return;
+                observed = previous;
+            }
+        }
     }
 
     private sealed class StubRecordingReplayService : IRecordingReplayService
