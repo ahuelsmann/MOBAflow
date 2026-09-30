@@ -82,7 +82,7 @@
                                 Text="MOBAsmart" />
                             <TextBlock
                                 Style="{StaticResource InfoBodyTextStyle}"
-                                Text="The Android companion provides lap counting, locomotive control, the synchronized signal box, fleet information and photo capture close to the layout. Explicit pairing and pinned server identity establish trust with MOBApi." />
+                                Text="The Android companion provides lap counting, locomotive control, the synchronized signal box, fleet information and photo capture close to the layout. It connects to MOBApi on the home network without pairing or sign-in." />
                         </StackPanel>
 
                         <StackPanel Spacing="4">
@@ -130,7 +130,7 @@
                             Text="&#x2022; Offline Piper TTS, Windows Speech announcements and reusable audio actions" />
                         <TextBlock
                             Style="{StaticResource InfoBodyTextStyle}"
-                            Text="&#x2022; Mobile synchronization, authenticated pairing and preview-stage remote displays" />
+                            Text="&#x2022; Mobile synchronization without pairing and preview-stage remote displays" />
                     </StackPanel>
                 </Border>
 

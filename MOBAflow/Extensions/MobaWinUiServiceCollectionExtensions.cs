@@ -31,7 +31,6 @@ using Sound;
 using TrackLibrary.PikoA;
 using TrackPlan.Renderer;
 using View;
-using ViewModel;
 
 /// <summary>
 /// Dependency injection registrations for the MOBAflow WinUI host.
@@ -129,8 +128,7 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton<IPhotoStorageService>(sp => sp.GetRequiredService<IIoService>());
         services.AddSingleton<IRecordingFileService, RecordingFileService>();
         services.AddSingletonWithInterface<PhotoHubClient, IPhotoHubClient>();
-        services.AddSingleton<HostControlPlaneSession>();
-        services.AddSingleton<IHostControlPlaneClient>(sp => sp.GetRequiredService<HostControlPlaneSession>());
+        services.AddSingleton<LocalMobApiClient>();
         services.AddSingletonWithInterface<RuntimeHubHostClient, IRuntimeHubHostClient>();
         services.AddSingleton<RestApiRuntimeHubService>();
         services.AddSingleton<RestApiRuntimeCommandConsumerService>();
@@ -160,10 +158,6 @@ public static class MobaWinUiServiceCollectionExtensions
         });
 
         services.AddSingleton<RestApiProcessService>();
-        services.AddSingleton<IRestApiPairingEndpointProvider>(sp => sp.GetRequiredService<RestApiProcessService>());
-        services.AddSingleton<IRestApiPairingHost, RestApiPairingHost>();
-        services.AddSingleton<IRestApiQrCodeImageFactory, RestApiQrCodeImageFactory>();
-        services.AddSingleton<RestApiPairingViewModel>();
         services.AddSingleton<RestApiSolutionSyncService>();
 
         return services;

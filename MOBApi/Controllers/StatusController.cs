@@ -1,10 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MOBApi.Controllers;
 
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Security;
 using Service;
 
 /// <summary>
@@ -42,17 +40,8 @@ public class StatusController : ControllerBase
     /// Returns REST API status and list of connected clients (e.g. MAUI app).
     /// </summary>
     [HttpGet]
-    [Authorize(Policy = ControlPlaneCapabilities.Read)]
     public IActionResult GetStatus([FromServices] IConfiguration configuration)
     {
-        if (HttpContext.User.Identity?.IsAuthenticated != true)
-        {
-            return Ok(new
-            {
-                status = "running"
-            });
-        }
-
         var port = GetPortFromConfig(configuration);
         _clientRegistry.PruneExpired(ClientExpiryMinutes);
 

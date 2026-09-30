@@ -3,7 +3,6 @@ namespace Moba.WinUI.Service;
 
 using Common.Configuration;
 using Common.Discovery;
-using Common.Security;
 
 using Microsoft.Extensions.Logging;
 
@@ -15,7 +14,7 @@ using System.Diagnostics;
 /// Starts the standalone MOBApi project process when "Auto-start REST API" is enabled.
 /// WinUI then uses the MOBApi process for status, clients, and MAUI discovery.
 /// </summary>
-public sealed class RestApiProcessService : IRestApiPairingEndpointProvider, IDisposable
+public sealed class RestApiProcessService : IDisposable
 {
     private const string SolutionFileName = "Moba.slnx";
     private const string RuntimeDirectoryName = "MOBApi";
@@ -30,11 +29,9 @@ public sealed class RestApiProcessService : IRestApiPairingEndpointProvider, IDi
     private readonly ISettingsService? _settingsService;
     private readonly ILogger<RestApiProcessService> _logger;
     private readonly ILogger<UdpDiscoveryResponder> _discoveryLogger;
-    private readonly HostControlPlaneSession? _hostSession;
     private Process? _process;
     private MobaApiRuntimeDeployment? _runtimeDeployment;
     private UdpDiscoveryResponder? _udpResponder;
-    private AuthenticatedEndpointMetadata? _authenticatedEndpoint;
     private bool _disposed;
     private readonly SemaphoreSlim _startLock = new(1, 1);
 
@@ -42,37 +39,18 @@ public sealed class RestApiProcessService : IRestApiPairingEndpointProvider, IDi
         AppSettings appSettings,
         ILogger<RestApiProcessService> logger,
         ILogger<UdpDiscoveryResponder> discoveryLogger,
-        ISettingsService? settingsService = null,
-        HostControlPlaneSession? hostSession = null)
+        ISettingsService? settingsService = null)
     {
         _appSettings = appSettings;
         _settingsService = settingsService;
         _logger = logger;
         _discoveryLogger = discoveryLogger;
-        _hostSession = hostSession;
     }
 
     /// <summary>
     /// True when the MOBApi process has been started and not yet stopped.
     /// </summary>
     public bool IsRunning => _process != null && !_process.HasExited;
-
-    /// <summary>
-    /// Returns the private LAN endpoint and pinned identity used for QR pairing, when available.
-    /// </summary>
-    public MobApiDiscoveryEndpoint? GetAuthenticatedPairingEndpoint()
-    {
-        var endpoint = _authenticatedEndpoint;
-        return endpoint is null
-            ? null
-            : new MobApiDiscoveryEndpoint(
-                MobApiDiscoveryAddressResolver.GetLocalIpAddress(),
-                endpoint.HttpPort,
-                endpoint.HttpsPort,
-                endpoint.ServerInstanceId,
-                endpoint.ServerPublicKeyFingerprint,
-                DiscoveryResponseParser.CurrentProtocolVersion);
-    }
 
     /// <summary>
     /// Starts the MOBApi project process when "Auto-start REST API" is enabled.
@@ -103,7 +81,7 @@ public sealed class RestApiProcessService : IRestApiPairingEndpointProvider, IDi
             }
 
             // Ensure Windows Firewall allows UDP discovery (21106) and REST API (TCP port) so MAUI can connect
-            FirewallHelper.EnsureFirewallRulesExist(port, port + 1, _logger);
+            FirewallHelper.EnsureFirewallRulesExist(port, _logger);
 
             // Prefer MOBApi next to WinUI (copied by build); fall back to repo-root convention
             var (dllPath, workingDir, usePreBuilt) = ResolveMobaApiPaths();
@@ -133,7 +111,6 @@ public sealed class RestApiProcessService : IRestApiPairingEndpointProvider, IDi
 
             try
             {
-                await using var bootstrapChannel = _hostSession is null ? null : new HostBootstrapParentChannel();
                 _process = new Process
                 {
                     StartInfo = new ProcessStartInfo
@@ -153,9 +130,6 @@ public sealed class RestApiProcessService : IRestApiPairingEndpointProvider, IDi
                     Common.Path.PhotoPathHelper.ResolvePhotoBaseDirectory(_appSettings.Application.PhotoStoragePath);
                 _process.StartInfo.EnvironmentVariables["MOBAFLOW_HTTP_PORT"] = port.ToString(
                     System.Globalization.CultureInfo.InvariantCulture);
-                _process.StartInfo.EnvironmentVariables["MOBAFLOW_HOST_HTTPS_PORT"] = (port + 1).ToString(
-                    System.Globalization.CultureInfo.InvariantCulture);
-                bootstrapChannel?.Configure(_process.StartInfo);
 
                 _process.Exited += (sender, _) =>
                 {
@@ -180,27 +154,7 @@ public sealed class RestApiProcessService : IRestApiPairingEndpointProvider, IDi
                 _process.Start();
                 _logger.LogInformation("MOBApi process started (port {Port}), PID {Pid}", port, _process.Id);
 
-                (string Secret, HostBootstrapPipeResponse Response)? bootstrap = null;
-                if (bootstrapChannel is not null)
-                {
-                    using var bootstrapTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                    bootstrapTimeout.CancelAfter(TimeSpan.FromSeconds(15));
-                    bootstrap = await bootstrapChannel.ExchangeAsync(_process, bootstrapTimeout.Token)
-                        .ConfigureAwait(false);
-                }
-
-                if (bootstrap.HasValue)
-                {
-                    StartDiscoveryResponder(
-                        port,
-                        port + 1,
-                        bootstrap.Value.Response.ServerInstanceId,
-                        bootstrap.Value.Response.PublicKeyFingerprint);
-                }
-                else
-                {
-                    StartDiscoveryResponder(port);
-                }
+                StartDiscoveryResponder(port);
 
                 // Wait for the REST API to become reachable (poll up to 30s) so WinUI continues only when the server is ready
                 const int pollIntervalMs = 300;
@@ -212,14 +166,6 @@ public sealed class RestApiProcessService : IRestApiPairingEndpointProvider, IDi
                     waited += pollIntervalMs;
                     if (await IsApiReachableAsync(port, cancellationToken).ConfigureAwait(false))
                     {
-                        if (bootstrap.HasValue && _hostSession is not null)
-                        {
-                            await _hostSession.EnrollAsync(
-                                port + 1,
-                                bootstrap.Value.Response.PublicKeyFingerprint,
-                                bootstrap.Value.Secret,
-                                cancellationToken).ConfigureAwait(false);
-                        }
                         _logger.LogInformation("MOBApi became reachable after {Ms}ms", waited);
                         ApiBecameReachable?.Invoke(this, port);
                         break;
@@ -244,7 +190,6 @@ public sealed class RestApiProcessService : IRestApiPairingEndpointProvider, IDi
     {
         try
         {
-            _authenticatedEndpoint = null;
             _udpResponder?.Stop();
             _udpResponder?.Dispose();
             _udpResponder = new UdpDiscoveryResponder(_discoveryLogger, port);
@@ -253,36 +198,6 @@ public sealed class RestApiProcessService : IRestApiPairingEndpointProvider, IDi
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "UDP Discovery responder could not start");
-        }
-    }
-
-    private void StartDiscoveryResponder(
-        int httpPort,
-        int httpsPort,
-        string serverInstanceId,
-        string serverPublicKeyFingerprint)
-    {
-        try
-        {
-            _udpResponder?.Stop();
-            _udpResponder?.Dispose();
-            _udpResponder = new UdpDiscoveryResponder(
-                _discoveryLogger,
-                httpPort,
-                httpsPort,
-                serverInstanceId,
-                serverPublicKeyFingerprint);
-            _udpResponder.Start();
-            _authenticatedEndpoint = new AuthenticatedEndpointMetadata(
-                httpPort,
-                httpsPort,
-                serverInstanceId,
-                serverPublicKeyFingerprint);
-        }
-        catch (Exception ex)
-        {
-            _authenticatedEndpoint = null;
-            _logger.LogWarning(ex, "Failed to start authenticated UDP discovery responder");
         }
     }
 
@@ -316,7 +231,6 @@ public sealed class RestApiProcessService : IRestApiPairingEndpointProvider, IDi
             _udpResponder?.Stop();
             _udpResponder?.Dispose();
             _udpResponder = null;
-            _authenticatedEndpoint = null;
         }
         catch (Exception ex)
         {
@@ -347,7 +261,6 @@ public sealed class RestApiProcessService : IRestApiPairingEndpointProvider, IDi
         }
 
         DisposeRuntimeDeployment();
-        _hostSession?.Reset();
     }
 
     private static string GetRuntimeRootDirectory()
@@ -385,12 +298,6 @@ public sealed class RestApiProcessService : IRestApiPairingEndpointProvider, IDi
         }
         return null;
     }
-
-    private sealed record AuthenticatedEndpointMetadata(
-        int HttpPort,
-        int HttpsPort,
-        string ServerInstanceId,
-        string ServerPublicKeyFingerprint);
 
     /// <summary>
     /// Resolves path to MOBApi.dll or MOBApi.csproj and working directory.

@@ -26,19 +26,14 @@ Z21 <---- direct UDP ----> MOBAsmart local runtime
 ## Discovery and transport
 
 MOBAsmart discovers MOBApi with the shared discovery protocol and falls back to
-bounded LAN probing. Discovery advertises the compatibility HTTP endpoint and
-the certificate-pinned HTTPS identity used by the explicit pairing flow. The
-normal MOBApi HTTP port is `5001`; authenticated transport uses the advertised
-HTTPS endpoint.
+bounded LAN probing. Discovery advertises the MOBApi address and HTTP port
+(normally `5001`). All traffic uses plain HTTP without sign-in.
 
 The runtime connection uses:
 
 - REST for health, solution data, runtime settings, snapshots and commands;
 - `/runtime-hub` for live runtime and solution notifications; and
 - `/photos-hub` plus photo endpoints for rolling-stock images.
-
-Authenticated remote reads and commands are still being rolled out, so pairing
-does not yet replace every compatibility connection path.
 
 Local-network VPNs, Android proxy routing and guest Wi-Fi isolation can prevent
 discovery even when both devices appear to have internet access.

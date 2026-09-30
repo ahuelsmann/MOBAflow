@@ -4,18 +4,13 @@ namespace Moba.MOBApi.Hubs;
 
 using Common.Runtime;
 
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
-using Moba.MOBApi.Security;
 using Moba.MOBApi.Service;
-
-using System.Net;
 
 /// <summary>
 /// SignalR hub for MOBAflow runtime snapshots and remote control commands.
 /// </summary>
-[Authorize(Policy = ControlPlaneCapabilities.Read)]
 public sealed class RuntimeHub : Hub
 {
     private const string RuntimeRemoteGroup = "runtime-remote";
@@ -24,8 +19,7 @@ public sealed class RuntimeHub : Hub
     private readonly IRuntimeHostRegistry _hostRegistry;
     private readonly IRuntimeBroadcastMetrics _broadcastMetrics;
     private readonly IRuntimeCommandAdmission _commandAdmission;
-    private readonly IControlPlaneHubConnectionRegistry _connectionRegistry;
-    private readonly IHostCredentialService? _hostCredentialService;
+    private readonly IRuntimeRemoteRegistry _remoteRegistry;
 
     public RuntimeHub(
         IRuntimeSnapshotCache snapshotCache,
@@ -33,48 +27,32 @@ public sealed class RuntimeHub : Hub
         IRuntimeHostRegistry hostRegistry,
         IRuntimeBroadcastMetrics broadcastMetrics,
         IRuntimeCommandAdmission commandAdmission,
-        IControlPlaneHubConnectionRegistry connectionRegistry,
-        IHostCredentialService? hostCredentialService = null)
+        IRuntimeRemoteRegistry remoteRegistry)
     {
         _snapshotCache = snapshotCache;
         _solutionCache = solutionCache;
         _hostRegistry = hostRegistry;
         _broadcastMetrics = broadcastMetrics;
         _commandAdmission = commandAdmission;
-        _connectionRegistry = connectionRegistry;
-        _hostCredentialService = hostCredentialService;
+        _remoteRegistry = remoteRegistry;
     }
 
-    public override Task OnConnectedAsync()
-    {
-        _connectionRegistry.RegisterReadConnection(Context);
-        return base.OnConnectedAsync();
-    }
-
-    [Authorize(Policy = ControlPlaneCapabilities.HostConsume)]
     public async Task RegisterHost()
     {
-        if (!IsLocalhostConnection())
-        {
-            throw new HubException("Only localhost connections may register as runtime host.");
-        }
-
         _hostRegistry.SetHost(Context.ConnectionId);
-        _hostCredentialService?.ConfirmHostConnection();
         await Groups.AddToGroupAsync(Context.ConnectionId, "runtime-host").ConfigureAwait(false);
         await BroadcastSessionStateAsync().ConfigureAwait(false);
     }
 
     public async Task RegisterRemote(string clientId)
     {
-        var credentialId = Context.UserIdentifier;
-        var presenceId = string.IsNullOrWhiteSpace(credentialId) ? clientId?.Trim() : credentialId;
+        var presenceId = clientId?.Trim();
         if (string.IsNullOrWhiteSpace(presenceId))
         {
-            throw new HubException("ClientId is required for an anonymous read connection.");
+            throw new HubException("ClientId is required.");
         }
 
-        _connectionRegistry.RegisterRemote(Context, presenceId);
+        _remoteRegistry.Register(Context.ConnectionId, presenceId);
 
         await Groups.AddToGroupAsync(Context.ConnectionId, RuntimeRemoteGroup).ConfigureAwait(false);
 
@@ -93,7 +71,6 @@ public sealed class RuntimeHub : Hub
         await Clients.Caller.SendAsync(RuntimeHubMethods.SessionStateChanged, BuildSessionOperational()).ConfigureAwait(false);
     }
 
-    [Authorize(Policy = ControlPlaneCapabilities.HostPublish)]
     public async Task PushSnapshot(string snapshotJson)
     {
         EnsureHost();
@@ -108,7 +85,6 @@ public sealed class RuntimeHub : Hub
         _broadcastMetrics.RecordSnapshotBroadcast(System.Text.Encoding.UTF8.GetByteCount(broadcastJson));
     }
 
-    [Authorize(Policy = ControlPlaneCapabilities.RuntimeControl)]
     public async Task SetSignalAspect(string signalId, string aspect)
     {
         if (!Guid.TryParse(signalId, out var parsedSignalId))
@@ -132,7 +108,6 @@ public sealed class RuntimeHub : Hub
             .ConfigureAwait(false);
     }
 
-    [Authorize(Policy = ControlPlaneCapabilities.RuntimeControl)]
     public async Task SetLocomotiveDrive(int address, int speed, bool forward)
     {
         await AdmitAsync(
@@ -147,7 +122,6 @@ public sealed class RuntimeHub : Hub
             .ConfigureAwait(false);
     }
 
-    [Authorize(Policy = ControlPlaneCapabilities.RuntimeControl)]
     public async Task SetLocomotiveFunction(int address, int functionIndex, bool isOn)
     {
         await AdmitAsync(
@@ -167,11 +141,10 @@ public sealed class RuntimeHub : Hub
         if (_hostRegistry.IsHost(Context.ConnectionId))
         {
             _hostRegistry.ClearHost(Context.ConnectionId);
-            _hostCredentialService?.BeginDisconnectGrace();
             await BroadcastSessionStateAsync().ConfigureAwait(false);
         }
 
-        _connectionRegistry.Unregister(Context);
+        _remoteRegistry.Unregister(Context.ConnectionId);
 
         await base.OnDisconnectedAsync(exception).ConfigureAwait(false);
     }
@@ -263,11 +236,5 @@ public sealed class RuntimeHub : Hub
         await Clients.Group(RuntimeRemoteGroup)
             .SendAsync(RuntimeHubMethods.SessionStateChanged, BuildSessionOperational())
             .ConfigureAwait(false);
-    }
-
-    private bool IsLocalhostConnection()
-    {
-        var remoteIp = Context.GetHttpContext()?.Connection.RemoteIpAddress;
-        return remoteIp != null && IPAddress.IsLoopback(remoteIp);
     }
 }

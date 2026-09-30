@@ -41,7 +41,5 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
     <PackageVersion Include="MinVer" Version="8.0.0" />
     <PackageVersion Include="SkiaSharp" Version="4.152.1" />
-    <PackageVersion Include="ZXing.Net" Version="0.16.11" />
-    <PackageVersion Include="ZXing.Net.Maui.Controls" Version="0.10.4" />
   </ItemGroup>
 </Project>

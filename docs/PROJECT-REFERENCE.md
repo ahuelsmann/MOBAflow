@@ -288,20 +288,14 @@ MOBApi maps controllers plus two SignalR hubs.
 
 The default HTTP port is `5001`. `UdpDiscoveryService` runs in standalone MOBApi
 unless `MOBAFLOW_DISCOVERY_IN_WINUI` indicates that the WinUI host owns
-discovery. Version 2 discovery also advertises the persistent server identity,
-LAN HTTPS endpoint and SHA-256 public-key fingerprint. The desktop host uses a
-protected bootstrap channel. MOBAsmart pairs by scanning a QR code containing
-the endpoint and pinned server identity, comparing the confirmation code, and
-obtaining approval in MOBAflow.
+discovery. Discovery responses carry the address and HTTP port
+(`MOBAFLOW_REST_API|ip|port`).
 
-Authenticated REST and SignalR reads are implemented, and remote control
-commands require authorization. Reads remain available without credentials.
-Every remote command passes one admission step that validates its values before
-it is forwarded to MOBAflow or queued; the fallback queue holds at most 128
-commands. MOBAflow targets a private household, so the remaining authentication,
-pairing and certificate pinning are being removed by RF-19
-([#165](https://github.com/ahuelsmann/MOBAflow/issues/165),
-[specification](../specs/007-remove-control-plane-security/spec.md)).
+MOBApi has no authentication: every REST and SignalR operation is available over
+plain HTTP to every device in the home network, as described in the
+[operating model](../SECURITY.md#operating-model). Every remote command passes one
+admission step that validates its values before it is forwarded to MOBAflow or
+queued; the fallback queue holds at most 128 commands.
 
 MOBAflow starts MOBApi from an isolated copy of its build output so updates and
 cleanup do not race the running process.
@@ -320,7 +314,7 @@ Page availability and Preview labels are controlled by
 
 ### MOBAsmart tabs
 
-MOBAsmart exposes five tabs: Counter, SignalBox, Engines, Control and Pairing.
+MOBAsmart exposes four tabs: Counter, SignalBox, Engines and Control.
 The pages are mounted lazily by `AppTabHostPage` to reduce startup work.
 
 ## Configuration

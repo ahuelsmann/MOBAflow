@@ -5,10 +5,8 @@ namespace Moba.Test.MOBAflow;
 using Moba.Backend.Interface;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
-using Moba.Common.Discovery;
 using Moba.Common.Events;
 using Moba.Common.Runtime;
-using Moba.Common.Security;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
@@ -18,15 +16,10 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 
 using Moq;
-using System.Net;
-using System.Net.Http.Json;
 
 [TestFixture]
 internal sealed partial class RestApiStatusServiceTests
 {
-    private const string PairingFingerprint =
-        "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
-
     [Test]
     public void GetToggleablePages_Should_CoverEveryRegisteredFeaturePage_WhenNavigationIsRegistered()
     {
@@ -47,66 +40,8 @@ internal sealed partial class RestApiStatusServiceTests
             Assert.That(toggleablePages.Select(page => page.Title), Does.Contain("Recorder"));
         }
     }
-
     [Test]
-    public async Task OpenAdminPairingAsync_Should_CreateValidatedQrPayload_WhenEndpointMatches()
-    {
-        using var response = CreateOpenPairingResponse(PairingFingerprint);
-        string? lastRequestUri = null;
-        var client = RestApiPairingTestClientFactory.Create(
-            response,
-            uri => lastRequestUri = uri);
-        var host = new RestApiPairingHost(
-            client,
-            new FakeEndpointProvider(CreatePairingEndpoint(PairingFingerprint)));
-
-        var invitation = await host.OpenAdminPairingAsync().ConfigureAwait(true);
-        var decoded = RemotePairingQrCode.Decode(invitation.EncodedQrPayload);
-
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(lastRequestUri, Is.EqualTo("api/control-plane/security/pairing/open"));
-            Assert.That(decoded.IsSuccess, Is.True);
-            Assert.That(decoded.Invitation?.IpAddress, Is.EqualTo("192.168.0.27"));
-            Assert.That(decoded.Invitation?.HttpPort, Is.EqualTo(5001));
-            Assert.That(decoded.Invitation?.HttpsPort, Is.EqualTo(5002));
-            Assert.That(invitation.ToString(), Does.Not.Contain(new string('B', 43)));
-        }
-    }
-
-    [Test]
-    public void OpenAdminPairingAsync_Should_RejectFingerprintMismatch()
-    {
-        using var response = CreateOpenPairingResponse(new string('C', 64));
-        var client = RestApiPairingTestClientFactory.Create(response, _ => { });
-        var host = new RestApiPairingHost(
-            client,
-            new FakeEndpointProvider(CreatePairingEndpoint(PairingFingerprint)));
-
-        Assert.That(
-            async () => await host.OpenAdminPairingAsync().ConfigureAwait(true),
-            Throws.TypeOf<InvalidDataException>());
-    }
-
-    [Test]
-    public async Task ApproveAsync_Should_SendHostOnlyDecisionRoute()
-    {
-        using var response = new HttpResponseMessage(HttpStatusCode.NoContent);
-        string? lastRequestUri = null;
-        var client = RestApiPairingTestClientFactory.Create(response, uri => lastRequestUri = uri);
-        var host = new RestApiPairingHost(
-            client,
-            new FakeEndpointProvider(CreatePairingEndpoint(PairingFingerprint)));
-        var requestId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee").ToString("N");
-
-        await host.ApproveAsync(requestId).ConfigureAwait(true);
-
-        Assert.That(
-            lastRequestUri,
-            Is.EqualTo($"api/control-plane/security/pairing/requests/{requestId}/approve"));
-    }
-    [Test]
-    public async Task RefreshAsync_Should_DisplayEffectivePort_WhenAnonymousStatusOmitsPort()
+    public async Task RefreshAsync_Should_DisplayEffectivePort_WhenStatusOmitsPort()
     {
         // Arrange
         const string statusJson = """
@@ -196,11 +131,13 @@ internal sealed partial class RestApiStatusServiceTests
             appSettings,
             NullLogger<RestApiProcessService>.Instance,
             NullLogger<UdpDiscoveryResponder>.Instance);
+        using var mobApiClient = new LocalMobApiClient(appSettings);
         var runtimeHubService = new RestApiRuntimeHubService(
             runtimeHubHostClient.Object,
             mobaRuntime.Object,
             eventBus,
-            NullLogger<RestApiRuntimeHubService>.Instance);
+            NullLogger<RestApiRuntimeHubService>.Instance,
+            mobApiClient);
 
         var mainWindowViewModel = CreateMainWindowViewModel(appSettings, mobaRuntime, eventBus);
         var solutionSyncService = new RestApiSolutionSyncService(
@@ -209,7 +146,8 @@ internal sealed partial class RestApiStatusServiceTests
             mainWindowViewModel,
             restApiProcessService,
             eventBus,
-            NullLogger<RestApiSolutionSyncService>.Instance);
+            NullLogger<RestApiSolutionSyncService>.Instance,
+            mobApiClient);
 
         var statusHttpClient = new HttpClient(statusHandler);
         var statusService = new RestApiStatusService(
@@ -234,25 +172,6 @@ internal sealed partial class RestApiStatusServiceTests
             photoHubClient,
             runtimeHubHostClient);
     }
-
-    private static HttpResponseMessage CreateOpenPairingResponse(string fingerprint) =>
-        new(HttpStatusCode.OK)
-        {
-            Content = JsonContent.Create(new
-            {
-                pairingSecret = new string('B', 43),
-                serverPublicKeyFingerprint = fingerprint,
-                expiresAt = DateTimeOffset.UtcNow.AddMinutes(2)
-            })
-        };
-
-    private static MobApiDiscoveryEndpoint CreatePairingEndpoint(string fingerprint) => new(
-        "192.168.0.27",
-        5001,
-        5002,
-        Guid.Parse("11111111-2222-3333-4444-555555555555").ToString("N"),
-        fingerprint,
-        DiscoveryResponseParser.CurrentProtocolVersion);
 
     private static MainWindowViewModel CreateMainWindowViewModel(
         AppSettings appSettings,
@@ -315,12 +234,6 @@ internal sealed partial class RestApiStatusServiceTests
         }
     }
 
-    private sealed class FakeEndpointProvider(MobApiDiscoveryEndpoint endpoint)
-        : IRestApiPairingEndpointProvider
-    {
-        public MobApiDiscoveryEndpoint? GetAuthenticatedPairingEndpoint() => endpoint;
-    }
-
     private sealed record TestDependencies(
         RestApiStatusService StatusService,
         RestApiRuntimeHubService RuntimeHubService,
@@ -339,33 +252,6 @@ internal sealed partial class RestApiStatusServiceTests
             RestApiProcessService.Dispose();
             StatusHttpClient.Dispose();
         }
-    }
-}
-
-internal static class RestApiPairingTestClientFactory
-{
-    internal static IHostControlPlaneClient Create(
-        HttpResponseMessage response,
-        Action<string?> capture)
-    {
-        return new RestApiPairingTestClient(response, capture);
-    }
-}
-
-internal sealed class RestApiPairingTestClient(
-    HttpResponseMessage response,
-    Action<string?> capture) : IHostControlPlaneClient
-{
-    public bool IsEnrolled => true;
-
-    public Task<HttpResponseMessage> SendAsync(
-        HttpRequestMessage request,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(request);
-        cancellationToken.ThrowIfCancellationRequested();
-        capture(request.RequestUri?.ToString());
-        return Task.FromResult(response);
     }
 }
 #endif

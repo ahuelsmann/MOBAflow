@@ -2,18 +2,14 @@
 namespace Moba.MOBApi.Controllers;
 
 using Common.Runtime;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Moba.MOBApi.Security;
 using Moba.MOBApi.Service;
-using System.Net;
 
 [ApiController]
 [Route("api/runtime/journeys/{journeyId:guid}/feedback-progress")]
 public sealed class JourneyProgressController(IRuntimeSnapshotCache snapshotCache, IRuntimeCommandAdmission commandAdmission) : ControllerBase
 {
     [HttpGet]
-    [Authorize(Policy = ControlPlaneCapabilities.Read)]
     public IActionResult Get(Guid journeyId)
     {
         if (!snapshotCache.TryGet(out var entry)) return NotFound(new { error = "No runtime snapshot available yet." });
@@ -24,15 +20,10 @@ public sealed class JourneyProgressController(IRuntimeSnapshotCache snapshotCach
     }
 
     [HttpPost("reset")]
-    [Authorize(Policy = ControlPlaneCapabilities.RuntimeControl)]
     public IActionResult Reset(Guid journeyId)
     {
-        if (!IsLocalhostRequest()) return Forbid();
         return commandAdmission
             .Enqueue(new RuntimeCommandEnvelope { Type = RuntimeCommandType.ResetJourney, JourneyId = journeyId })
             .ToActionResult(this);
     }
-
-    private bool IsLocalhostRequest() => HttpContext.Connection.RemoteIpAddress is { } remote
-        && (IPAddress.IsLoopback(remote) || remote.Equals(HttpContext.Connection.LocalIpAddress));
 }

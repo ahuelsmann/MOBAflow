@@ -20,7 +20,7 @@ using System.Text;
 /// Order: recent/nearby HTTP probe, UDP multicast/broadcast (then unicast to the local /24), anchor subnet HTTP,
 /// then full /24 HTTP scan.
 /// </summary>
-public class RestApiDiscoveryService : IRestDiscoveryService, IAuthenticatedRestDiscoveryService
+public class RestApiDiscoveryService : IRestDiscoveryService
 {
     private const int QuickProbeTimeoutMs = 350;
     private const int SubnetProbeBatchSize = 16;
@@ -55,25 +55,6 @@ public class RestApiDiscoveryService : IRestDiscoveryService, IAuthenticatedRest
         string? subnetAnchorIp = null,
         CancellationToken cancellationToken = default) =>
         DiscoverServerAsync(subnetAnchorIp, cancellationToken);
-
-    /// <inheritdoc />
-    public async Task<MobApiDiscoveryEndpoint?> DiscoverAuthenticatedServerAsync(
-        CancellationToken cancellationToken = default)
-    {
-        var endpoint = await TryDiscoverEndpointByUdpAsync(
-                LanIpv4AddressHelper.GetCandidateLocalIpv4Addresses(),
-                cancellationToken)
-            .ConfigureAwait(false);
-        return endpoint is
-        {
-            ProtocolVersion: >= DiscoveryResponseParser.CurrentProtocolVersion,
-            HttpsPort: > 0,
-            ServerInstanceId: not null,
-            ServerPublicKeyFingerprint: not null
-        }
-            ? endpoint
-            : null;
-    }
 
     /// <summary>
     /// Fast discovery path: recent IPs and UDP only (no full subnet scan).

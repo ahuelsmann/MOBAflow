@@ -30,14 +30,19 @@ internal sealed class RuntimeSettingsControllerTests
     }
 
     [Test]
-    public void PutRuntimeSettings_ReturnsForbid_WhenRemoteIsNotLocalhost()
+    public void PutRuntimeSettings_StoresEndpoint_WhenCalledFromAnotherDevice()
     {
         var controller = CreateController(_cache, IPAddress.Parse("192.168.1.10"));
         var request = new RuntimeSettingsRequest { Z21IpAddress = "192.168.0.111", Z21Port = 21105 };
 
         var result = controller.PutRuntimeSettings(request);
 
-        Assert.That(result, Is.InstanceOf<ForbidResult>());
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            Assert.That(_cache.TryGetZ21Endpoint(out var ip, out _), Is.True);
+            Assert.That(ip, Is.EqualTo("192.168.0.111"));
+        }
     }
 
     [Test]

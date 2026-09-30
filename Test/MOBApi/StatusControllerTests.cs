@@ -129,7 +129,7 @@ internal sealed class StatusControllerTests
     }
 
     [Test]
-    public void GetStatus_ReturnsOnlyMinimalHealth_WhenCallerIsAnonymous()
+    public void GetStatus_ReturnsFullStatus_WithoutCredentials()
     {
         var controller = new StatusController(
             new ClientRegistry(),
@@ -163,10 +163,10 @@ internal sealed class StatusControllerTests
         Assert.Multiple(() =>
         {
             Assert.That(root.GetProperty("status").GetString(), Is.EqualTo("running"));
-            Assert.That(root.TryGetProperty("port", out _), Is.False);
-            Assert.That(root.TryGetProperty("connectedClients", out _), Is.False);
-            Assert.That(root.TryGetProperty("runtime", out _), Is.False);
-            Assert.That(root.TryGetProperty("solution", out _), Is.False);
+            Assert.That(root.GetProperty("port").GetInt32(), Is.EqualTo(5001));
+            Assert.That(root.TryGetProperty("connectedClients", out _), Is.True);
+            Assert.That(root.TryGetProperty("runtime", out _), Is.True);
+            Assert.That(root.TryGetProperty("solution", out _), Is.True);
         });
     }
 }

@@ -39,7 +39,7 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
     private readonly ILogger<RestApiSolutionSyncService> _logger;
 
-    private readonly HostControlPlaneSession? _hostSession;
+    private readonly LocalMobApiClient _mobApiClient;
 
     private readonly object _debounceLock = new();
 
@@ -90,13 +90,15 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         ILogger<RestApiSolutionSyncService> logger,
 
-        HostControlPlaneSession? hostSession = null)
+        LocalMobApiClient mobApiClient)
 
     {
 
         ArgumentNullException.ThrowIfNull(solution);
 
         ArgumentNullException.ThrowIfNull(appSettings);
+
+        ArgumentNullException.ThrowIfNull(mobApiClient);
 
         ArgumentNullException.ThrowIfNull(mainWindowViewModel);
 
@@ -116,7 +118,7 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         _logger = logger;
 
-        _hostSession = hostSession;
+        _mobApiClient = mobApiClient;
 
         mainWindowViewModel.SolutionLoaded += OnSolutionChanged;
 
@@ -272,12 +274,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         var port = _appSettings.RestApi.Port > 0 ? _appSettings.RestApi.Port : 5001;
 
-        if (_hostSession?.IsEnrolled != true)
-        {
-            RecordSolutionPush(false);
-            return;
-        }
-
         if (_solution.SchemaVersion != Solution.CurrentSchemaVersion)
         {
             _solution.SchemaVersion = Solution.CurrentSchemaVersion;
@@ -309,7 +305,7 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         {
 
-            using var response = await _hostSession.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            using var response = await _mobApiClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
             if (response.IsSuccessStatusCode)
 
@@ -381,11 +377,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
     {
 
-        if (_hostSession?.IsEnrolled != true)
-        {
-            return;
-        }
-
         var z21Ip = _appSettings.Z21.CurrentIpAddress?.Trim();
 
         if (string.IsNullOrEmpty(z21Ip))
@@ -434,7 +425,7 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         {
 
-            using var response = await _hostSession.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            using var response = await _mobApiClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
             if (response.IsSuccessStatusCode)
 

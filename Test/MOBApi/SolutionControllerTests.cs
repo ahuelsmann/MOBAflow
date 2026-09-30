@@ -46,14 +46,19 @@ internal sealed class SolutionControllerTests
     }
 
     [Test]
-    public async Task PutSolution_ReturnsForbid_WhenRemoteIsNotLocalhost()
+    public async Task PutSolution_StoresSolution_WhenCalledFromAnotherDevice()
     {
         var controller = CreateController(_cache, IPAddress.Parse("192.168.1.10"));
         SetRequestBody(controller, ValidSolutionJson);
 
         var result = await controller.PutSolution(CancellationToken.None);
 
-        Assert.That(result, Is.InstanceOf<ForbidResult>());
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            Assert.That(_cache.TryGet(out var entry), Is.True);
+            Assert.That(entry.Json, Is.EqualTo(ValidSolutionJson));
+        }
     }
 
     [Test]

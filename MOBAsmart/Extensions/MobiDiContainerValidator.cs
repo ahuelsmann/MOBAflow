@@ -46,7 +46,6 @@ public static class MobiDiContainerValidator
         _ = services.GetRequiredService<MobiStartupService>();
         _ = services.GetRequiredService<MauiViewModel>();
         _ = services.GetRequiredService<TrainControlViewModel>();
-        _ = services.GetRequiredService<RemotePairingViewModel>();
         _ = services.GetRequiredService<RemoteRuntimeBridge>();
         _ = services.GetRequiredService<IMobaRuntime>();
         _ = services.GetRequiredService<IRuntimeCommandGateway>();
@@ -60,7 +59,6 @@ public static class MobiDiContainerValidator
         _ = services.GetRequiredService<SignalBoxPage>();
         _ = services.GetRequiredService<EnginePage>();
         _ = services.GetRequiredService<ControlPage>();
-        _ = services.GetRequiredService<PairingPage>();
         _ = services.GetRequiredService<AppShell>();
     }
 }

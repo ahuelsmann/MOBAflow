@@ -2,9 +2,7 @@
 
 namespace Moba.MAUI.Service;
 
-using Common.Configuration;
 using Common.Runtime;
-using Common.Security;
 
 using Domain;
 
@@ -21,11 +19,8 @@ using System.Text.Json;
 /// </summary>
 public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
 {
-    private readonly IRemoteControlAuthenticatedHttpClient _authenticatedHttpClient;
-    private readonly IRemoteControlHttpClientFactory _authenticatedHttpClientFactory;
-    private readonly AppSettings _appSettings;
+    private readonly HttpClient _httpClient;
     private readonly ILogger<RuntimeHubRemoteClient>? _logger;
-    private readonly RemoteControlSessionService _sessionService;
     private HubConnection? _hubConnection;
     private bool _hasActiveHost;
     private string _serverIp = string.Empty;
@@ -33,20 +28,11 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
     private string _clientId = string.Empty;
 
     public RuntimeHubRemoteClient(
-        AppSettings appSettings,
-        RemoteControlSessionService sessionService,
-        IRemoteControlAuthenticatedHttpClient authenticatedHttpClient,
-        IRemoteControlHttpClientFactory authenticatedHttpClientFactory,
+        IHttpClientFactory httpClientFactory,
         ILogger<RuntimeHubRemoteClient>? logger = null)
     {
-        ArgumentNullException.ThrowIfNull(appSettings);
-        ArgumentNullException.ThrowIfNull(sessionService);
-        ArgumentNullException.ThrowIfNull(authenticatedHttpClient);
-        ArgumentNullException.ThrowIfNull(authenticatedHttpClientFactory);
-        _appSettings = appSettings;
-        _sessionService = sessionService;
-        _authenticatedHttpClient = authenticatedHttpClient;
-        _authenticatedHttpClientFactory = authenticatedHttpClientFactory;
+        ArgumentNullException.ThrowIfNull(httpClientFactory);
+        _httpClient = httpClientFactory.CreateClient(MobiHttpClientNames.Platform);
         _logger = logger;
     }
 
@@ -68,11 +54,6 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
         bool forceReconnect = false)
     {
         _clientId = clientId;
-
-        var connection = await _sessionService
-            .GetConnectionSessionAsync(TimeSpan.FromSeconds(30), cancellationToken)
-            .ConfigureAwait(false)
-            ?? throw new RemoteCredentialRejectedException();
 
         if (!forceReconnect
             && _hubConnection != null
@@ -98,30 +79,11 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
             _hubConnection = null;
         }
 
-        var httpsPort = connection.Endpoint.HttpsPort
-            ?? throw new InvalidOperationException("The authenticated MOBApi endpoint requires an HTTPS port.");
-        var hubUrl = new Uri(
-            new UriBuilder(
-                Uri.UriSchemeHttps,
-                connection.Endpoint.IpAddress,
-                httpsPort).Uri,
-            "runtime-hub");
+        var hubUrl = new Uri($"http://{serverIp}:{serverPort}/runtime-hub");
         _logger?.LogInformation("Connecting to RuntimeHub remote: {HubUrl}", hubUrl);
 
         _hubConnection = new HubConnectionBuilder()
-            .WithUrl(hubUrl, options =>
-            {
-                options.AccessTokenProvider = GetAccessTokenAsync;
-                options.Headers[PinnedRemoteControlTransport.ClientReleaseHeaderName] =
-                    PinnedRemoteControlTransport.ClientRelease;
-                options.HttpMessageHandlerFactory = _ =>
-                    _authenticatedHttpClientFactory.CreateHandler(connection.Endpoint);
-                options.WebSocketConfiguration = webSocketOptions =>
-                {
-                    webSocketOptions.RemoteCertificateValidationCallback = (_, certificate, _, _) =>
-                        _authenticatedHttpClientFactory.ValidateServerCertificate(connection.Endpoint, certificate);
-                };
-            })
+            .WithUrl(hubUrl, options => options.HttpMessageHandlerFactory = _ => MobiLanHttpClientFactory.CreateLanSignalRHandler())
             .WithAutomaticReconnect(
             [
                 TimeSpan.Zero,
@@ -242,6 +204,7 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
             _hubConnection = null;
         }
 
+        _httpClient.Dispose();
         GC.SuppressFinalize(this);
     }
 
@@ -249,8 +212,8 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
     {
         var json = JsonSerializer.Serialize(body);
         using var content = new StringContent(json, Encoding.UTF8, "application/json");
-        using var response = await _authenticatedHttpClient
-            .PostAsync($"api/runtime/commands/{relativePath}", content, cancellationToken)
+        using var response = await _httpClient
+            .PostAsync(BuildApiUri($"api/runtime/commands/{relativePath}"), content, cancellationToken)
             .ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
     }
@@ -340,8 +303,8 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
 
         try
         {
-            using var response = await _authenticatedHttpClient
-                .GetAsync("api/runtime/snapshot", cancellationToken)
+            using var response = await _httpClient
+                .GetAsync(BuildApiUri("api/runtime/snapshot"), cancellationToken)
                 .ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
@@ -366,12 +329,5 @@ public sealed class RuntimeHubRemoteClient : IRuntimeHubRemoteClient
         }
     }
 
-    private async Task<string?> GetAccessTokenAsync()
-    {
-        var connection = await _sessionService
-            .GetConnectionSessionAsync(TimeSpan.FromSeconds(30))
-            .ConfigureAwait(false)
-            ?? throw new RemoteCredentialRejectedException();
-        return connection.AccessSession.AccessToken;
-    }
+    private Uri BuildApiUri(string relativePath) => new($"http://{_serverIp}:{_serverPort}/{relativePath}");
 }

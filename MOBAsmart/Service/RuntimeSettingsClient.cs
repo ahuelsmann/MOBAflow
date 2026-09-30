@@ -1,8 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
 
-using Common.Security;
-
 using SharedUI.Interface;
 
 using System.Text.Json;
@@ -12,11 +10,12 @@ using System.Text.Json;
 /// </summary>
 public sealed class RuntimeSettingsClient : IRuntimeSettingsClient
 {
-    private readonly IRemoteControlAuthenticatedHttpClient _httpClient;
+    private readonly HttpClient _httpClient;
 
-    public RuntimeSettingsClient(IRemoteControlAuthenticatedHttpClient httpClient)
+    public RuntimeSettingsClient(IHttpClientFactory httpClientFactory)
     {
-        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        ArgumentNullException.ThrowIfNull(httpClientFactory);
+        _httpClient = httpClientFactory.CreateClient(MobiHttpClientNames.Platform);
     }
 
     /// <inheritdoc />
@@ -32,9 +31,8 @@ public sealed class RuntimeSettingsClient : IRuntimeSettingsClient
 
         try
         {
-            using var response = await _httpClient
-                .GetAsync("api/runtime-settings", cancellationToken)
-                .ConfigureAwait(false);
+            var url = new Uri($"http://{serverIp.Trim()}:{serverPort}/api/runtime-settings");
+            using var response = await _httpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
                 return (null, null);
