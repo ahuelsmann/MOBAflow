@@ -27,16 +27,15 @@ public class ClientsController : ControllerBase
     [HttpPost("register")]
     public IActionResult Register([FromBody] RegisterClientRequest? request)
     {
-        var clientId = request?.ClientId?.Trim();
-        if (string.IsNullOrWhiteSpace(clientId))
+        if (request is null || string.IsNullOrWhiteSpace(request.ClientId))
         {
             return BadRequest(new { error = "ClientId is required." });
         }
 
         var info = new ConnectedClientInfo
         {
-            ClientId = clientId,
-            DeviceName = request?.DeviceName?.Trim() ?? "MOBAsmart",
+            ClientId = request.ClientId.Trim(),
+            DeviceName = request.DeviceName?.Trim() ?? "MOBAsmart",
             ConnectedAt = DateTime.UtcNow
         };
         _clientRegistry.Add(info);
@@ -49,13 +48,12 @@ public class ClientsController : ControllerBase
     [HttpPost("unregister")]
     public IActionResult Unregister([FromBody] UnregisterClientRequest? request)
     {
-        var clientId = request?.ClientId?.Trim();
-        if (string.IsNullOrWhiteSpace(clientId))
+        if (request is null || string.IsNullOrWhiteSpace(request.ClientId))
         {
             return BadRequest(new { error = "ClientId is required." });
         }
 
-        _clientRegistry.Remove(clientId);
+        _clientRegistry.Remove(request.ClientId.Trim());
         return Ok(new { unregistered = true });
     }
 }
