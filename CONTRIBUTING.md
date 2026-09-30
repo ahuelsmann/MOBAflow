@@ -75,9 +75,7 @@ dotnet test Test/Test.csproj
 Bitte lies mindestens `README.md` und `docs/ARCHITECTURE.md`, bevor du größere Änderungen machst.
 
 **Repository:** Code, Issues und Pull Requests auf [GitHub](https://github.com/ahuelsmann/MOBAflow).
-GitHub Actions enthält die öffentlichen Qualitäts- und Release-Workflows;
-die vorhandenen Azure-DevOps-Pipelines bleiben als zusätzlicher Build- und
-Release-Weg erhalten.
+GitHub Actions enthält die öffentlichen Qualitäts- und Release-Workflows.
 
 ## 3. Wie du beitragen kannst
 
