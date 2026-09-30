@@ -57,6 +57,10 @@ jobs:
         shell: pwsh
         run: ./scripts/Test-MutationLaneCoverage.ps1
 
+      - name: Test analyzer baseline guard
+        shell: pwsh
+        run: ./scripts/Test-AnalyzerBaseline.Tests.ps1
+
       - name: Restore desktop test graph
         shell: pwsh
         run: dotnet restore Test/Test.csproj -p:IncludeMobaSmartTests=false

@@ -257,8 +257,23 @@ function Get-BaselineMismatch(
         return $null
     }
 
-    $direction = if ($current -gt $expected) { "new or increased" } else { "removed or decreased" }
-    return "$direction diagnostic: expected=$expected current=$current $Key"
+    $increased = $current -gt $expected
+    $direction = if ($increased) { "new or increased" } else { "removed or decreased" }
+    return [pscustomobject]@{
+        Increased = $increased
+        Text = "$direction diagnostic: expected=$expected current=$current $Key"
+    }
+}
+
+function Write-StaleBaselineWarning(
+    [string] $ResolvedBaselinePath,
+    [string[]] $Decreases) {
+    $message = "Analyzer baseline '$ResolvedBaselinePath' is stale: $($Decreases.Count) entries were removed or decreased. " +
+        "Refresh it with -UpdateBaseline so a later regression cannot reuse the freed headroom."
+    Write-Warning "$message`n - $($Decreases -join "`n - ")"
+    if ($env:GITHUB_ACTIONS -eq "true") {
+        Write-Host "::warning title=Stale analyzer baseline::$message"
+    }
 }
 
 function Write-Baseline(
@@ -295,7 +310,7 @@ function Compare-Baseline(
     $expectedByKey = ConvertTo-EntryCountMap @($baseline.diagnostics)
     $currentByKey = ConvertTo-EntryCountMap $CurrentEntries
     $keys = @($expectedByKey.Keys + $currentByKey.Keys | Sort-Object -Unique)
-    $failures = @(
+    $mismatches = @(
         foreach ($key in $keys) {
             $mismatch = Get-BaselineMismatch `
                 -Key $key `
@@ -307,6 +322,13 @@ function Compare-Baseline(
         }
     )
 
+    # Fixed warnings must not block a change; only new or increased diagnostics fail the gate.
+    $decreases = @($mismatches | Where-Object { -not $_.Increased } | ForEach-Object { $_.Text })
+    if ($decreases.Count -gt 0) {
+        Write-StaleBaselineWarning -ResolvedBaselinePath $ResolvedBaselinePath -Decreases $decreases
+    }
+
+    $failures = @($mismatches | Where-Object { $_.Increased } | ForEach-Object { $_.Text })
     if ($failures.Count -gt 0) {
         throw "Analyzer baseline mismatch. Refresh the baseline in the same reviewed change:`n - $($failures -join "`n - ")"
     }
@@ -315,10 +337,10 @@ function Compare-Baseline(
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
 $resolvedSarifRoot = Resolve-InputPath -RepositoryRoot $repositoryRoot -Path $SarifRoot
 $resolvedBaselinePath = Resolve-InputPath -RepositoryRoot $repositoryRoot -Path $BaselinePath
-$diagnostics = Get-SarifDiagnostics `
+$diagnostics = @(Get-SarifDiagnostics `
     -RepositoryRoot $repositoryRoot `
-    -ResolvedSarifRoot $resolvedSarifRoot
-$entries = ConvertTo-BaselineEntries $diagnostics
+    -ResolvedSarifRoot $resolvedSarifRoot)
+$entries = @(ConvertTo-BaselineEntries $diagnostics)
 
 if ($UpdateBaseline) {
     Write-Baseline -ResolvedBaselinePath $resolvedBaselinePath -Entries $entries
@@ -326,5 +348,5 @@ if ($UpdateBaseline) {
 }
 else {
     Compare-Baseline -ResolvedBaselinePath $resolvedBaselinePath -CurrentEntries $entries
-    Write-Host "Analyzer baseline matches $($diagnostics.Count) diagnostics in $($entries.Count) groups."
+    Write-Host "Analyzer baseline accepts $($diagnostics.Count) diagnostics in $($entries.Count) groups."
 }

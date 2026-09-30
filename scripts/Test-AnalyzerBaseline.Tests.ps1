@@ -123,9 +123,19 @@ try {
     } "new diagnostic"
 
     Write-SampleSarif @()
-    Assert-Fails {
-        & $scriptPath -SarifRoot $testRoot -BaselinePath $baselinePath
+    Assert-Succeeds {
+        & $scriptPath -SarifRoot $testRoot -BaselinePath $baselinePath 3> $null
     } "removed diagnostic without baseline refresh"
+    $staleWarnings = @(& $scriptPath -SarifRoot $testRoot -BaselinePath $baselinePath 3>&1 |
+        Where-Object { $_ -is [Management.Automation.WarningRecord] })
+    if ($staleWarnings.Count -ne 1 -or -not $staleWarnings[0].Message.Contains("removed or decreased")) {
+        throw "Expected one stale-baseline warning for a removed diagnostic."
+    }
+
+    Write-SampleSarif @($secondResult)
+    Assert-Fails {
+        & $scriptPath -SarifRoot $testRoot -BaselinePath $baselinePath 3> $null
+    } "new diagnostic while another was removed"
 
     Set-Content -LiteralPath $sarifPath -Value "{ invalid" -Encoding utf8NoBOM
     Assert-Fails {
