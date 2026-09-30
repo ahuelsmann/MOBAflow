@@ -88,6 +88,8 @@ jobs:
           --logger trx
           --results-directory artifacts/TestResults
 
+      # Publish restores itself: the Test.csproj restore above rewrites the referenced MOBApi assets without
+      # the win-x64 target, so a --no-restore publish fails with NETSDK1047.
       - name: Publish MOBAflow
         shell: pwsh
         run: >-
@@ -95,7 +97,6 @@ jobs:
           --configuration Release
           --runtime win-x64
           --self-contained true
-          --no-restore
           --output artifacts/MOBAflow-win-x64
 
       - name: Publish bundled MOBApi

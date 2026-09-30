@@ -9,7 +9,7 @@
 
 ### 1. **SonarQube Integration** (HIGH PRIORITY – planned)
 
-**Current CI:** SonarCloud analyzes pull requests through its GitHub integration; builds, tests and analyzer baselines run in [`.github/workflows/quality.yml`](../workflows/quality.yml).
+**Current CI:** SonarCloud reports its analysis as a GitHub pull request check.
 
 **Optional future:** GitHub Actions workflow (not in repository). Example path if added later:
 `/.github/workflows/sonarqube.yml`
