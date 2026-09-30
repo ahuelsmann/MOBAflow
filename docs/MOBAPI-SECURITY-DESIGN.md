@@ -2,7 +2,7 @@
 
 ## Record status
 
-- Status: Proposed for implementation
+- Status: Withdrawn with RF-03 on 2026-09-25; RF-19 ([#165](https://github.com/ahuelsmann/MOBAflow/issues/165)) removes the implementation and this record
 - Decision owner: RF-03, [GitHub issue #50](https://github.com/ahuelsmann/MOBAflow/issues/50)
 - Parent programme: [GitHub issue #47](https://github.com/ahuelsmann/MOBAflow/issues/47)
 - Implementation plan: [RF-03 Authenticated MOBApi Control Plane](../plans/50-authenticated-control-plane.md)
@@ -36,7 +36,7 @@ The current trust checks are insufficient for a hardware control plane:
 
 ## Scope and non-goals
 
-This decision covers authentication and authorization for MOBApi REST and SignalR operations that observe or mutate solution, runtime, client, photo, or hardware-control state. It also covers the local MOBAflow host identity, MOBAsmart credential handling, throttling, bounded command admission, security telemetry, compatibility migration, and rollback.
+This decision covers authentication and authorization for MOBApi REST and SignalR operations that observe or mutate solution, runtime, client, photo, or hardware-control state. It also covers the local MOBAflow host identity, MOBAsmart credential handling, throttling, bounded command admission, security telemetry, and rollback.
 
 This decision does not cover:
 
@@ -219,7 +219,7 @@ The final policy applies to all routes even when a reverse proxy or loopback con
 | `POST /api/photos/upload` | `photo.write` | Existing 10 MiB file cap remains; content signature must match an allowed image type |
 | `GET /api/runtime-settings` | `controlplane.read` | Z21 address is protected control-plane information |
 | `PUT /api/runtime-settings` | `host.publish` | Loopback is an additional transport restriction, not authorization |
-| `GET /api/runtime/meta` | `controlplane.read` | No anonymous compatibility after enforcement |
+| `GET /api/runtime/meta` | `controlplane.read` | Anonymous reads allowed |
 | `GET /api/runtime/snapshot` | `controlplane.read` | Response remains remotely filtered where required |
 | `PUT /api/runtime/snapshot` | `host.publish` | Loopback plus capability; size and schema validated |
 | `GET /api/runtime/journeys/{id}/feedback-progress` | `controlplane.read` | Journey ID must resolve in the active snapshot |
@@ -426,64 +426,11 @@ Initial metrics are counters for each outcome plus gauges for active authenticat
 
 ## Compatibility migration
 
-Migration is staged so new clients can work with old servers while a new server never silently restores anonymous hardware control.
-
-### Phase 0: Design and inventory
-
-This document and its issue plan are delivered. Runtime behavior is unchanged.
-
-### Phase 1: Additive security foundation
-
-- Add protected server identity, credential registry, token service, policies, telemetry, and public health capability advertisement.
-- Keep existing endpoints behaviorally unchanged only inside development/test while policy parity tests are built.
-- No client receives or logs a production credential yet.
-
-### Phase 2: Protect the host
-
-- MOBAflow and MOBApi establish the per-launch host identity.
-- Host publication, command consumption, host hub registration, pairing administration, and credential administration require host capabilities.
-- Loopback-only checks remain as defense in depth but no longer authorize by themselves.
-- Failure to establish the host identity disables remote control and publication, not local Z21 operation.
-
-### Phase 3: Ship pairing-capable clients
-
-- MOBAsmart understands HTTPS discovery, fingerprint pinning, pairing, secure storage, token refresh, and authenticated SignalR reconnect.
-- A new client may use the existing unauthenticated protocol only with an explicitly detected legacy server and only before it has ever paired with that server instance.
-- After successful pairing, the client records a no-downgrade marker and never falls back to HTTP or anonymous access for that instance.
-- The existing preferences client ID remains display metadata and is not converted into authority.
-
-### Phase 4: Enforce control and migrate reads
-
-- All runtime commands, photo writes, host operations, and security administration require credentials with no compatibility bypass.
-- Anonymous control returns `401`; a read-only principal attempting control returns `403`.
-- Anonymous reads remain available during the measured compatibility window, but expose no client,
-  version, server-identity, runtime, hardware, or security details through the public health surface.
-- MOBAsmart sends the non-secret `X-MOBAflow-Client-Release` header on authenticated REST and
-  SignalR traffic. Enforcement requires matching traffic from the selected stable release on both
-  transports, fourteen consecutive defect-free days, no open critical authentication, refresh,
-  reconnect, or read-parity defect, and a concrete readiness-evidence comment in issue #50.
-- MOBApi resolves that comment through the public GitHub API both when evidence is recorded and
-  immediately before enforcement. The comment must have been created after the fourteen-day window
-  completed and contain these exact lines: `Slice 4e readiness evidence`,
-  `Stable client release: <selected release>`, and `Observation result: passed`. A missing, deleted,
-  stale, malformed, or temporarily unverifiable comment blocks enforcement.
-- Fixing a critical defect restarts the full observation window. Elapsed time without matching
-  authenticated traffic can never complete the gate.
-- After enforcement, legacy REST and SignalR entry points return the same machine-readable
-  `client_upgrade_required` reason instead of silently restoring anonymous access.
-- Pairing readiness and the migration gate are visible before anonymous reads are disabled for
-  upgraded installations.
-- The host-only `GET /api/control-plane/security/compatibility` endpoint combines bounded,
-  process-local outcome counters with the persisted migration status. It is an operator view over
-  the same protected gate and cannot enable or roll back anonymous access by itself.
-
-### Phase 5: Remove legacy access
-
-- Disable and remove `LegacyAnonymousReads` after migration telemetry and support evidence meet the issue gate.
-- Remove HTTP LAN binding and legacy anonymous client registration.
-- Update user guidance and operational runbooks.
-
-Compatibility never includes anonymous control, host publication, queue consumption, pairing administration, credential administration, or automatic trust of a changed certificate fingerprint.
+Retired. The staged migration towards authenticated-only reads, including the legacy anonymous
+read mode, observation window, readiness evidence and the related telemetry and cleanup phases,
+was withdrawn with RF-03 and removed by RF-19 slice 2
+([#165](https://github.com/ahuelsmann/MOBAflow/issues/165)). Reads stay available without
+credentials.
 
 ## Rollback
 
@@ -491,14 +438,6 @@ The design supports functional rollback without reintroducing anonymous hardware
 
 - This design-only slice can be reverted with no runtime effect.
 - Authentication components remain additive until host and remote parity tests pass.
-- After enforcement, a local administrator may activate anonymous read-only rollback for at most
-  seven days. The protected expiry survives restart, expires automatically, emits an immediate audit
-  warning, a startup warning while active, and an operational gauge. It has no effect on command,
-  host, photo-write, pairing-administration, credential-administration, or security endpoints.
-- Enforcement also writes the independent protected `read-migration-enforced.dat` marker. If the
-  detailed `read-migration.dat` document is later lost, restart still denies anonymous reads. If the
-  detailed document or marker is unreadable, authorization fails closed. Losing the entire security
-  directory is an explicit security reset, not an approved rollback procedure.
 - If authentication, TLS identity, revocation checks, or command admission is unhealthy, MOBApi disables remote control and reports degraded minimal health. MOBAflow continues local Z21 operation.
 - Rolling back a client does not delete server revocation state or the no-downgrade marker. A legacy client that cannot authenticate must remain disconnected.
 - Rolling back across a credential-registry schema requires a tested read-compatible migration or an explicit security reset; it never treats unreadable state as an empty allow-all store.
@@ -537,9 +476,9 @@ The design supports functional rollback without reintroducing anonymous hardware
 
 - all required failure categories create structured events and bounded-cardinality metrics;
 - canary tokens, secrets, query strings, and bodies never appear in captured logs;
-- legacy read mode cannot enable a write or command path;
+- anonymous reads cannot enable a write or command path;
 - security-store and server-identity failures disable remote control while local runtime remains usable;
-- migration and rollback tests cover a legacy client, paired client, rotated server identity, and revoked device.
+- rollback tests cover a paired client, rotated server identity, and revoked device.
 
 ## Options considered
 
@@ -582,8 +521,7 @@ Costs and constraints:
 - MOBApi needs persistent protected security state and an HTTPS identity;
 - MOBAflow and MOBAsmart require coordinated authentication and reconnect changes;
 - users must pair devices and re-pair after security reset or emergency identity rotation;
-- active SignalR connections require live-state checks and connection tracking;
-- compatibility requires a staged release and owner-visible migration state.
+- active SignalR connections require live-state checks and connection tracking.
 
 ## Authoritative references
 

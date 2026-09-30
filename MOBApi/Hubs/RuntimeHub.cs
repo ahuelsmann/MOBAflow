@@ -68,24 +68,13 @@ public sealed class RuntimeHub : Hub
     public async Task RegisterRemote(string clientId)
     {
         var credentialId = Context.UserIdentifier;
-        var isAnonymousCompatibility = string.IsNullOrWhiteSpace(credentialId);
         var presenceId = string.IsNullOrWhiteSpace(credentialId) ? clientId?.Trim() : credentialId;
         if (string.IsNullOrWhiteSpace(presenceId))
         {
-            throw new HubException("ClientId is required for a compatibility read connection.");
+            throw new HubException("ClientId is required for an anonymous read connection.");
         }
 
-        _connectionRegistry.RegisterRemote(Context, presenceId, isAnonymousCompatibility);
-
-        if (isAnonymousCompatibility &&
-            await _connectionRegistry.EvaluateAnonymousReadAsync(
-                    CompatibilityReadTransport.SignalR,
-                    Context.ConnectionAborted)
-                .ConfigureAwait(false) == CompatibilityReadDecision.UpgradeRequired)
-        {
-            _connectionRegistry.Unregister(Context);
-            throw new HubException("A current authenticated client is required for read access.");
-        }
+        _connectionRegistry.RegisterRemote(Context, presenceId);
 
         await Groups.AddToGroupAsync(Context.ConnectionId, RuntimeRemoteGroup).ConfigureAwait(false);
 
@@ -102,16 +91,6 @@ public sealed class RuntimeHub : Hub
         }
 
         await Clients.Caller.SendAsync(RuntimeHubMethods.SessionStateChanged, BuildSessionOperational()).ConfigureAwait(false);
-
-        if (!string.IsNullOrWhiteSpace(credentialId))
-        {
-            await _connectionRegistry.RecordAuthenticatedReadAsync(
-                    credentialId,
-                    CompatibilityReadTransport.SignalR,
-                    Context.GetHttpContext()?.Request.Headers[CompatibilityReadHeaders.ClientRelease].FirstOrDefault(),
-                    CancellationToken.None)
-                .ConfigureAwait(false);
-        }
     }
 
     [Authorize(Policy = ControlPlaneCapabilities.HostPublish)]

@@ -209,11 +209,11 @@ MOBAflow sends commands to real model railroad hardware. Read the
 your layout.
 
 MOBAflow, MOBAsmart and MOBApi are intended for a **trusted private LAN** and
-must not be exposed to the public internet. Protected desktop communication,
-certificate-pinned mobile pairing and authorization for remote commands are
-implemented. Anonymous read-only compatibility remains until an installation
-completes the migration gate; unified command admission and final cleanup are
-still planned. See the [current security status](docs/PROJECT-REFERENCE.md#mobapi-endpoints)
+must not be exposed to the public internet. Reads remain available without
+credentials, and every remote command is validated before it reaches MOBAflow.
+Because MOBAflow targets a private household, the remaining authentication and
+pairing are being removed ([#165](https://github.com/ahuelsmann/MOBAflow/issues/165)).
+See the [current security status](docs/PROJECT-REFERENCE.md#mobapi-endpoints)
 for details.
 
 ## License

@@ -11,6 +11,9 @@ the version tags follow [Semantic Versioning](https://semver.org/).
 
 ### Removed
 
+- The MOBApi anonymous-read migration, including its observation window, readiness
+  evidence endpoints and the runtime lookup of GitHub issue comments. Reading without
+  credentials stays available.
 - Vehicle maintenance plans, calendar reminders, history and status filters for all rolling stock.
   Vehicle inventory, decoder/CV backups and locomotive passports remain available.
 

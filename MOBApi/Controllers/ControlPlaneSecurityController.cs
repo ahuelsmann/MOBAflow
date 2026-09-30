@@ -112,26 +112,15 @@ public sealed class ControlPlanePairingController : ControllerBase
 public sealed class ControlPlaneSecurityController : ControllerBase
 {
     private readonly ICredentialRegistry _credentialRegistry;
-    private readonly ICompatibilityReadMigration _readMigration;
     private readonly IPairingService _pairingService;
 
     public ControlPlaneSecurityController(
         ICredentialRegistry credentialRegistry,
-        IPairingService pairingService,
-        ICompatibilityReadMigration readMigration)
+        IPairingService pairingService)
     {
         _credentialRegistry = credentialRegistry;
         _pairingService = pairingService;
-        _readMigration = readMigration;
     }
-
-    [HttpGet("compatibility")]
-    [ProducesResponseType(typeof(CompatibilityStatusResponse), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetCompatibilityStatus(
-        CancellationToken cancellationToken) =>
-        Ok(new CompatibilityStatusResponse(
-            await _readMigration.GetTelemetryAsync(cancellationToken).ConfigureAwait(false),
-            await _readMigration.GetStatusAsync(cancellationToken).ConfigureAwait(false)));
 
     [HttpPost("pairing/open")]
     public async Task<ActionResult<PairingWindowResult>> OpenPairing(
@@ -200,162 +189,6 @@ public sealed class ControlPlaneSecurityController : ControllerBase
             ? NoContent()
             : NotFound();
     }
-
-    /// <summary>Starts the fourteen-day readiness window for a stable client release.</summary>
-    [HttpPost("read-migration/window")]
-    public async Task<IActionResult> BeginReadinessWindow(
-        BeginReadinessWindowRequest request,
-        CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(request);
-        try
-        {
-            await _readMigration
-                .BeginReadinessWindowAsync(request.StableClientRelease, cancellationToken)
-                .ConfigureAwait(false);
-            return NoContent();
-        }
-        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
-        {
-            return exception is InvalidOperationException
-                ? Conflict(new ProblemDetails { Title = exception.Message })
-                : BadRequest(new ProblemDetails { Title = exception.Message });
-        }
-    }
-
-    /// <summary>Returns the current authenticated-read migration gate status.</summary>
-    [HttpGet("read-migration")]
-    public async Task<ActionResult<CompatibilityReadMigrationStatus>> GetReadMigrationStatus(
-        CancellationToken cancellationToken) =>
-        await _readMigration.GetStatusAsync(cancellationToken).ConfigureAwait(false);
-
-    /// <summary>Returns bounded, process-local compatibility-read telemetry.</summary>
-    [HttpGet("read-migration/telemetry")]
-    public async Task<ActionResult<CompatibilityReadTelemetry>> GetReadMigrationTelemetry(
-        CancellationToken cancellationToken) =>
-        await _readMigration.GetTelemetryAsync(cancellationToken).ConfigureAwait(false);
-
-    /// <summary>Records a critical defect fix and restarts the full readiness window.</summary>
-    [HttpPost("read-migration/critical-defect-fixed")]
-    public async Task<IActionResult> RecordCriticalDefectFixed(
-        RecordCriticalDefectFixedRequest request,
-        CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(request);
-        try
-        {
-            await _readMigration
-                .RecordCriticalDefectFixedAsync(request.DefectCode, cancellationToken)
-                .ConfigureAwait(false);
-            return NoContent();
-        }
-        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
-        {
-            return exception is InvalidOperationException
-                ? Conflict(new ProblemDetails { Title = exception.Message })
-                : BadRequest(new ProblemDetails { Title = exception.Message });
-        }
-    }
-
-    /// <summary>Records a critical defect that blocks authenticated-read enforcement.</summary>
-    [HttpPost("read-migration/critical-defect")]
-    public async Task<IActionResult> RecordCriticalDefect(
-        RecordCriticalDefectRequest request,
-        CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(request);
-        try
-        {
-            await _readMigration
-                .RecordCriticalDefectAsync(request.DefectCode, cancellationToken)
-                .ConfigureAwait(false);
-            return NoContent();
-        }
-        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
-        {
-            return exception is InvalidOperationException
-                ? Conflict(new ProblemDetails { Title = exception.Message })
-                : BadRequest(new ProblemDetails { Title = exception.Message });
-        }
-    }
-
-    /// <summary>Verifies and records the exact issue #50 readiness evidence comment.</summary>
-    [HttpPost("read-migration/evidence")]
-    public async Task<IActionResult> RecordReadinessEvidence(
-        RecordReadinessEvidenceRequest request,
-        CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(request);
-        try
-        {
-            await _readMigration
-                .RecordIssueEvidenceAsync(request.EvidenceReference, cancellationToken)
-                .ConfigureAwait(false);
-            return NoContent();
-        }
-        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
-        {
-            return exception is InvalidOperationException
-                ? Conflict(new ProblemDetails { Title = exception.Message })
-                : BadRequest(new ProblemDetails { Title = exception.Message });
-        }
-    }
-
-    /// <summary>Enables authenticated-only reads after every readiness gate passes.</summary>
-    [HttpPost("read-migration/enforce")]
-    public async Task<IActionResult> EnableAuthenticatedReads(CancellationToken cancellationToken)
-    {
-        try
-        {
-            if (await _readMigration.EnableAuthenticatedReadsAsync(cancellationToken).ConfigureAwait(false))
-                return NoContent();
-        }
-        catch (InvalidOperationException exception)
-        {
-            return Conflict(new ProblemDetails
-            {
-                Title = "Authenticated-read evidence could not be revalidated.",
-                Detail = exception.Message
-            });
-        }
-
-        var status = await _readMigration.GetStatusAsync(cancellationToken).ConfigureAwait(false);
-        return Conflict(new ProblemDetails
-        {
-            Title = "Authenticated reads cannot be enforced yet.",
-            Detail = status.BlockingReason.ToString()
-        });
-    }
-
-    /// <summary>Activates the persisted anonymous read-only rollback for at most seven days.</summary>
-    [HttpPost("read-migration/rollback")]
-    public async Task<IActionResult> ActivateAnonymousReadRollback(
-        ActivateAnonymousReadRollbackRequest request,
-        CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(request);
-        if (request.DurationHours is < 1 or > 168)
-        {
-            return BadRequest(new ProblemDetails
-            {
-                Title = "Anonymous read-only rollback must last between 1 and 168 hours."
-            });
-        }
-
-        var activated = await _readMigration
-            .ActivateAnonymousReadRollbackAsync(TimeSpan.FromHours(request.DurationHours), cancellationToken)
-            .ConfigureAwait(false);
-        if (activated)
-            return NoContent();
-
-        var status = await _readMigration.GetStatusAsync(cancellationToken).ConfigureAwait(false);
-        return Conflict(new ProblemDetails
-        {
-            Title = status.RollbackConsumed
-                ? "Anonymous read-only rollback is already active or has already been consumed."
-                : "Anonymous read-only rollback requires authenticated-read enforcement."
-        });
-    }
 }
 
 public sealed record RefreshTokenRequest(string CredentialId, string RefreshToken);
@@ -367,21 +200,6 @@ public sealed record OpenPairingRequest(ControlPlaneRole AllowedRole);
 public sealed record RevokeCredentialRequest(string Reason);
 
 public sealed record ChangeCredentialRoleRequest(ControlPlaneRole Role);
-
-/// <summary>Starts observation for a stable client release identifier.</summary>
-public sealed record BeginReadinessWindowRequest(string StableClientRelease);
-
-/// <summary>Records a critical defect that blocks migration readiness.</summary>
-public sealed record RecordCriticalDefectRequest(string DefectCode);
-
-/// <summary>Records a critical defect fix and restarts observation.</summary>
-public sealed record RecordCriticalDefectFixedRequest(string DefectCode);
-
-/// <summary>Links the migration gate to a concrete readiness-evidence comment in issue #50.</summary>
-public sealed record RecordReadinessEvidenceRequest(string EvidenceReference);
-
-/// <summary>Requests a time-bounded anonymous read-only rollback.</summary>
-public sealed record ActivateAnonymousReadRollbackRequest(int DurationHours);
 
 public sealed record TokenResponse(
     string CredentialId,

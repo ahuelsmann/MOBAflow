@@ -15,7 +15,6 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Net.Sockets;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Channels;
 
 [TestFixture]
@@ -55,44 +54,6 @@ internal sealed class AuthenticatedControlPlaneProcessTests
         await using var serverLifetime = server.ConfigureAwait(false);
 
         Assert.That(server.HostToken.AccessToken, Is.Not.Empty);
-    }
-
-    [Test]
-    [CancelAfter(120_000)]
-    public async Task CompatibilityStatus_Should_BeHostOnlyAndExposeBoundedEvidence()
-    {
-        using var environment = IsolatedServerEnvironment.Create();
-        var server = await MobaApiProcess
-            .StartAsync(environment)
-            .ConfigureAwait(false);
-        await using (server.ConfigureAwait(false))
-        {
-            using var compatibilityRead = await server
-                .SendAnonymousAsync(HttpMethod.Get, "api/runtime/snapshot")
-                .ConfigureAwait(false);
-            using var anonymousStatus = await server
-                .SendAnonymousAsync(HttpMethod.Get, "api/control-plane/security/compatibility")
-                .ConfigureAwait(false);
-            using var hostStatus = await server
-                .SendHostAsync(HttpMethod.Get, "api/control-plane/security/compatibility")
-                .ConfigureAwait(false);
-            var responseBody = await hostStatus.Content.ReadAsStringAsync().ConfigureAwait(false);
-            using var body = JsonDocument.Parse(responseBody);
-
-            using (Assert.EnterMultipleScope())
-            {
-                Assert.That(compatibilityRead.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
-                Assert.That(anonymousStatus.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
-                Assert.That(hostStatus.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-                Assert.That(responseBody, Does.Not.Contain("token").IgnoreCase);
-                Assert.That(responseBody, Does.Not.Contain("snapshot").IgnoreCase);
-                Assert.That(responseBody, Does.Not.Contain("hardware").IgnoreCase);
-                Assert.That(
-                    body.RootElement.GetProperty("telemetry").GetProperty("outcomes").GetArrayLength(),
-                    Is.GreaterThanOrEqualTo(1));
-                Assert.That(body.RootElement.TryGetProperty("readiness", out _), Is.True);
-            }
-        }
     }
 
     [Test]
@@ -456,9 +417,6 @@ internal sealed class AuthenticatedControlPlaneProcessTests
             HttpContent? content = null)
         {
             var request = new HttpRequestMessage(method, path) { Content = content };
-            request.Headers.TryAddWithoutValidation(
-                CompatibilityReadHeaders.ClientRelease,
-                "MOBAsmart 1.0.0");
             if (!string.IsNullOrWhiteSpace(accessToken))
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             return request;
@@ -544,7 +502,6 @@ internal sealed class AuthenticatedControlPlaneProcessTests
                 .WithUrl(hubUrl, options =>
                 {
                     options.AccessTokenProvider = () => Task.FromResult<string?>(accessToken);
-                    options.Headers[CompatibilityReadHeaders.ClientRelease] = "MOBAsmart 1.0.0";
                     options.Transports = HttpTransportType.LongPolling;
                     options.HttpMessageHandlerFactory = _ => MobaApiProcess.CreatePinnedHandler(fingerprint);
                 })

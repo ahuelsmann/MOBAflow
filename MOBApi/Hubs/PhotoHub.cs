@@ -14,29 +14,8 @@ public sealed class PhotoHub(IControlPlaneHubConnectionRegistry connectionRegist
 {
     public override async Task OnConnectedAsync()
     {
-        var credentialId = Context.UserIdentifier;
         connectionRegistry.RegisterReadConnection(Context);
-        if (Context.User?.Identity?.IsAuthenticated != true &&
-            await connectionRegistry.EvaluateAnonymousReadAsync(
-                    CompatibilityReadTransport.SignalR,
-                    Context.ConnectionAborted)
-                .ConfigureAwait(false) == CompatibilityReadDecision.UpgradeRequired)
-        {
-            connectionRegistry.Unregister(Context);
-            Context.Abort();
-            return;
-        }
-
         await base.OnConnectedAsync().ConfigureAwait(false);
-        if (!string.IsNullOrWhiteSpace(credentialId))
-        {
-            await connectionRegistry.RecordAuthenticatedReadAsync(
-                    credentialId,
-                    CompatibilityReadTransport.SignalR,
-                    Context.GetHttpContext()?.Request.Headers[CompatibilityReadHeaders.ClientRelease].FirstOrDefault(),
-                    CancellationToken.None)
-                .ConfigureAwait(false);
-        }
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
