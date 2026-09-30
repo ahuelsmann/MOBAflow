@@ -265,7 +265,7 @@ function Get-BaselineMismatch(
     }
 }
 
-function Write-StaleBaselineWarning(
+function Show-StaleBaselineWarning(
     [string] $ResolvedBaselinePath,
     [string[]] $Decreases) {
     $message = "Analyzer baseline '$ResolvedBaselinePath' is stale: $($Decreases.Count) entries were removed or decreased. " +
@@ -325,7 +325,7 @@ function Compare-Baseline(
     # Fixed warnings must not block a change; only new or increased diagnostics fail the gate.
     $decreases = @($mismatches | Where-Object { -not $_.Increased } | ForEach-Object { $_.Text })
     if ($decreases.Count -gt 0) {
-        Write-StaleBaselineWarning -ResolvedBaselinePath $ResolvedBaselinePath -Decreases $decreases
+        Show-StaleBaselineWarning -ResolvedBaselinePath $ResolvedBaselinePath -Decreases $decreases
     }
 
     $failures = @($mismatches | Where-Object { $_.Increased } | ForEach-Object { $_.Text })
