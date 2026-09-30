@@ -80,7 +80,8 @@ internal sealed class RecorderPageViewModelTests
     [Test]
     public async Task MarkersCommittedBeforePendingCapturedEntries_Should_NotHideCapturedEntriesFromTimeline()
     {
-        await using var session = new RecordingSessionService(TimeProvider.System);
+        var session = new RecordingSessionService(TimeProvider.System);
+        await using var sessionLifetime = session.ConfigureAwait(false);
         using var viewModel = CreateViewModel(session);
         viewModel.StartCommand.Execute(null);
 
@@ -102,7 +103,7 @@ internal sealed class RecorderPageViewModelTests
             viewModel.AddMarkerCommand.Execute(null);
         }
 
-        await viewModel.StopCommand.ExecuteAsync(null);
+        await viewModel.StopCommand.ExecuteAsync(null).ConfigureAwait(false);
 
         Assert.That(
             viewModel.TimelineEntries.Select(entry => entry.Sequence),

@@ -15,6 +15,10 @@ internal sealed class RecordingSessionServiceTests
     private static readonly DateTimeOffset StartTime =
         new(2026, 7, 21, 10, 0, 0, TimeSpan.Zero);
 
+    private static readonly long[] SequencesBeforePendingEntry = [1, 2];
+    private static readonly long[] SequencesAfterPendingEntryCommit = [3, 4];
+    private static readonly string[] TypeKeysAfterPendingEntryCommit = ["test.event", "recorder.marker"];
+
     [Test]
     public async Task Session_Should_RecordLifecycleAnnotationsAndPauseInterval()
     {
@@ -289,7 +293,8 @@ internal sealed class RecordingSessionServiceTests
     [Test]
     public async Task ReadEntries_Should_WithholdCommittedEntriesAfterAPendingCapturedEntry()
     {
-        await using var service = new RecordingSessionService(new MutableTimeProvider(StartTime));
+        var service = new RecordingSessionService(new MutableTimeProvider(StartTime));
+        await using var serviceLifetime = service.ConfigureAwait(false);
         service.Start(new RecordingSessionStartRequest("Pending", "1.0"));
         using var consumerBlocked = new ManualResetEventSlim();
         using var releaseConsumer = new ManualResetEventSlim();
@@ -315,12 +320,12 @@ internal sealed class RecordingSessionServiceTests
             Is.True);
         var afterCommit = service.ReadEntries(whilePending[^1].Sequence, 10);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
-            Assert.That(whilePending.Select(entry => entry.Sequence), Is.EqualTo(new long[] { 1, 2 }));
-            Assert.That(afterCommit.Select(entry => entry.Sequence), Is.EqualTo(new long[] { 3, 4 }));
-            Assert.That(afterCommit.Select(entry => entry.TypeKey), Is.EqualTo(new[] { "test.event", "recorder.marker" }));
-        });
+            Assert.That(whilePending.Select(entry => entry.Sequence), Is.EqualTo(SequencesBeforePendingEntry));
+            Assert.That(afterCommit.Select(entry => entry.Sequence), Is.EqualTo(SequencesAfterPendingEntryCommit));
+            Assert.That(afterCommit.Select(entry => entry.TypeKey), Is.EqualTo(TypeKeysAfterPendingEntryCommit));
+        }
     }
 
     [Test]
