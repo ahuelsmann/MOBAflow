@@ -127,10 +127,24 @@ builds and validates the MOBAsmart Release AAB in a separate mandatory job, and
 retains the reports and packages. Mobile tests remain an explicit opt-in graph
 with `IncludeMobaSmartTests=true`.
 
+Pull requests that change only documentation paths (`docs/`, `plans/`, `specs/`,
+`.specify/`, root Markdown files and GitHub guidance) skip the desktop, display,
+Android and mutation jobs; `scripts/Get-QualityChangeScope.ps1` owns that list.
+GitHub reports those skipped jobs as successful required checks. Pushes to
+`main`, manual runs and every other change still run the complete workflow.
+
 The workflow enforces a coverage ratchet from `Test/coverage-thresholds.json`.
 The thresholds are per production assembly as well as global, so an improvement
 in one project cannot hide a regression in another. Generated `obj` sources are
 excluded; handwritten application code remains part of the measurement.
+
+The analyzer baselines in `quality/` must match exactly, so fixed diagnostics
+also fail the gate until the baseline is refreshed. When the only difference is
+removed or decreased diagnostics, the failed run attaches the refreshed file as
+the `refreshed-analyzer-baselines-desktop-*` or `-android-*` artifact. Review it,
+copy it over the matching file in `quality/` and run
+`scripts/Test-LineEndings.ps1 -Path <file> -Fix`. New or increased diagnostics
+never produce a refreshed file; fix them instead.
 
 Run the same checks locally after producing a Release Cobertura report:
 

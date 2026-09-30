@@ -31,12 +31,11 @@ Status on 2026-08-02:
   configuration controls are removed. ViewModel and endpoint/client tests
   cover unconfigured, invalid, offline, unsupported, stale, reboot, and
   successful operation paths without an ESP32.
-- WP6 adds a permanent `display-protocol` GitHub Actions job for the legacy
-  cutover invariant, .NET conformance tests, native PlatformIO tests, the
-  ESP32-S3 build, firmware SHA-256 recording, and firmware artifact upload.
-  `scripts/Test-DisplayProtocolCutover.ps1` passes locally and prevents the
-  removed legacy sender, parser, metadata, and synchronous frame paths from
-  returning.
+- WP6 adds a permanent `display-protocol` GitHub Actions job for .NET
+  conformance tests, native PlatformIO tests, the ESP32-S3 build, firmware
+  SHA-256 recording, and firmware artifact upload. The temporary cutover guard
+  for the removed legacy sender, parser, metadata, and synchronous frame paths
+  was retired after the cutover; no legacy path remains to guard.
 - The final full .NET runs pass 1,591 net10.0 tests with four existing skips
   (1,595 total) and all 1,644 Windows tests. The focused WP5 suite passes all
   53 tests. The MOBAflow FastDebug build passes with zero warnings and errors.
