@@ -18,7 +18,8 @@ example version into release notes.
 
 ## Create a release tag
 
-From a trusted maintainer workstation:
+From a trusted maintainer workstation. Replace `origin` in the following commands
+with the name of your GitHub remote if it differs (`git remote -v` lists it):
 
 ```powershell
 git switch main
