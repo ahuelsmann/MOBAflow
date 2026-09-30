@@ -18,7 +18,8 @@ example version into release notes.
 
 ## Create a release tag
 
-From a trusted maintainer workstation:
+From a trusted maintainer workstation. Replace `origin` in the following commands
+with the name of your GitHub remote if it differs (`git remote -v` lists it):
 
 ```powershell
 git switch main
@@ -57,9 +58,7 @@ dotnet minver
 
 - `.github/workflows/release-studio.yml` validates an existing signed tag,
   builds/tests the Windows app and creates or updates a draft GitHub Release.
-- `.azure-pipelines/release.yml` remains an additional maintainer-controlled
-  release path.
-- Neither path should silently invent or rewrite a release tag.
+- The workflow must not silently invent or rewrite a release tag.
 
 See [Release Studio](RELEASE-STUDIO.md) for the artifact and manual verification
 checklist.

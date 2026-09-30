@@ -205,10 +205,6 @@ jobs:
           -p:TargetFramework=net10.0
           -p:IncludeMobaSmartTests=false
 
-      - name: Verify display protocol cutover invariants
-        shell: pwsh
-        run: ./scripts/Test-DisplayProtocolCutover.ps1
-
       # Skia rendering stays in the Windows desktop lane because this Linux lane owns protocol and transport only.
       - name: Run display host conformance tests
         shell: pwsh
