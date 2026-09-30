@@ -7,7 +7,7 @@ It does not create tags and it never publishes a release automatically.
 ## Prerequisites
 
 - The release commit is on the remote repository.
-- The commit titles since the previous version tag follow Conventional Commits (`feat:`, `fix:`, `refactor:` and so on). Release Studio turns them into the draft notes with git-cliff and the `cliff.toml` of the default branch; `CHANGELOG.md` is not used for the notes.
+- The commit titles since the previous version tag follow Conventional Commits (`feat:`, `fix:`, `refactor:` and so on). Release Studio turns them into the draft notes with git-cliff and the `cliff.toml` of the default branch. A stable tag covers all commits since the previous stable tag, including those already listed for its release candidates; `CHANGELOG.md` is not used for the notes.
 - The plain Semantic Version tag exists without a `v` prefix, for example `0.2.1`.
 - The tag is annotated and signed with a key that GitHub recognizes as verified.
 
@@ -47,7 +47,7 @@ git push origin 0.2.1
 
 ## Safe re-runs
 
-Running Release Studio again for the same tag updates the assets of an existing draft. It refuses to modify a published release. Delete an unwanted draft manually only after confirming that no one is reviewing it.
+Running Release Studio again for the same tag updates the assets of an existing draft and keeps its notes, including your edits; the freshly generated notes are only in the job summary and the workflow artifact. It refuses to modify a published release. Delete an unwanted draft manually only after confirming that no one is reviewing it.
 
 ## Troubleshooting
 
