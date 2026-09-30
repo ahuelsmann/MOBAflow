@@ -51,14 +51,15 @@ internal sealed class RecorderPageViewModelTests
     [Test]
     public async Task StatusCallbacksFromConcurrentThreads_Should_ShowEveryEntryOnceInSequenceOrder()
     {
-        await using var session = new RecordingSessionService(TimeProvider.System);
+        var session = new RecordingSessionService(TimeProvider.System);
+        await using var sessionLifetime = session.ConfigureAwait(false);
         using var viewModel = CreateViewModel(session);
         viewModel.StartCommand.Execute(null);
 
         // Markers raise StatusChanged on several worker threads at once, so timeline refreshes are requested
         // while another refresh is still reading; the UI dispatcher must serialize them without duplicates.
         Parallel.For(0, 200, index => session.AddMarker($"Marker {index}"));
-        await viewModel.StopCommand.ExecuteAsync(null);
+        await viewModel.StopCommand.ExecuteAsync(null).ConfigureAwait(false);
 
         Assert.That(
             viewModel.TimelineEntries.Select(entry => entry.Sequence),
