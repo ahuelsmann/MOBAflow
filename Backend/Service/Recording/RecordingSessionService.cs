@@ -100,8 +100,16 @@ public sealed class RecordingSessionService : IRecordingSessionService
         lock (_gate)
         {
             IEnumerable<RecordingEntry> source = _artifact is null ? _entries : _artifact.Entries;
+
+            // Control entries are committed directly while captured entries wait in the channel, so a later
+            // sequence can be committed before an earlier one. Return only the gap-free prefix below the oldest
+            // pending entry; otherwise a reader that continues after the last returned sequence skips it forever.
+            // Draining, a fault or the completed artifact clears the pending entries, so reads never stall.
+            var lastReadableSequence = _artifact is null && _pendingEntries.Count > 0
+                ? _pendingEntries.Keys.Min() - 1
+                : long.MaxValue;
             return source
-                .Where(entry => entry.Sequence > afterSequence)
+                .Where(entry => entry.Sequence > afterSequence && entry.Sequence <= lastReadableSequence)
                 .OrderBy(entry => entry.Sequence)
                 .Take(maxCount)
                 .ToArray();

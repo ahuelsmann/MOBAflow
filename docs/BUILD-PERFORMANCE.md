@@ -127,6 +127,12 @@ builds and validates the MOBAsmart Release AAB in a separate mandatory job, and
 retains the reports and packages. Mobile tests remain an explicit opt-in graph
 with `IncludeMobaSmartTests=true`.
 
+Pull requests that change only documentation paths (`docs/`, `plans/`, `specs/`,
+`.specify/`, root Markdown files and GitHub guidance) skip the desktop, display,
+Android and mutation jobs; `scripts/Get-QualityChangeScope.ps1` owns that list.
+GitHub reports those skipped jobs as successful required checks. Pushes to
+`main`, manual runs and every other change still run the complete workflow.
+
 The workflow enforces a coverage ratchet from `Test/coverage-thresholds.json`.
 The thresholds are per production assembly as well as global, so an improvement
 in one project cannot hide a regression in another. Generated `obj` sources are
