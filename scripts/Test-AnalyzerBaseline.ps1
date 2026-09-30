@@ -309,7 +309,13 @@ function Compare-Baseline(
 
     $expectedByKey = ConvertTo-EntryCountMap @($baseline.diagnostics)
     $currentByKey = ConvertTo-EntryCountMap $CurrentEntries
-    $keys = @($expectedByKey.Keys + $currentByKey.Keys | Sort-Object -Unique)
+    # A run without any diagnostic usually means the analyzers did not run; it must not pass as a reduction.
+    if ($expectedByKey.Count -gt 0 -and $currentByKey.Count -eq 0) {
+        throw "Analyzer baseline '$ResolvedBaselinePath' expects diagnostics, but the SARIF reports none. " +
+            "Check that the analyzers ran; refresh the baseline with -UpdateBaseline only when every diagnostic was fixed."
+    }
+
+    $keys =@($expectedByKey.Keys + $currentByKey.Keys | Sort-Object -Unique)
     $mismatches = @(
         foreach ($key in $keys) {
             $mismatch = Get-BaselineMismatch `

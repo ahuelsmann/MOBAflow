@@ -69,6 +69,9 @@ function Assert-Fails([scriptblock] $Action, [string] $Scenario) {
     }
 }
 
+# Sample reductions must not emit real stale-baseline annotations into the surrounding workflow run.
+$savedGitHubActions = $env:GITHUB_ACTIONS
+$env:GITHUB_ACTIONS = $null
 try {
     New-Item -ItemType Directory -Path $sarifDirectory -Force | Out-Null
     $firstResult = New-SampleResult `
@@ -122,7 +125,21 @@ try {
         & $scriptPath -SarifRoot $testRoot -BaselinePath $baselinePath
     } "new diagnostic"
 
+    Write-SampleSarif @($secondResult)
+    Assert-Fails {
+        & $scriptPath -SarifRoot $testRoot -BaselinePath $baselinePath 3> $null
+    } "new diagnostic while another was removed"
+
     Write-SampleSarif @()
+    Assert-Fails {
+        & $scriptPath -SarifRoot $testRoot -BaselinePath $baselinePath 3> $null
+    } "no diagnostics although the baseline expects some"
+
+    Write-SampleSarif @($firstResult, $secondResult)
+    Assert-Succeeds {
+        & $scriptPath -SarifRoot $testRoot -BaselinePath $baselinePath -UpdateBaseline
+    } "baseline refresh with two diagnostics"
+    Write-SampleSarif @($firstResult)
     Assert-Succeeds {
         & $scriptPath -SarifRoot $testRoot -BaselinePath $baselinePath 3> $null
     } "removed diagnostic without baseline refresh"
@@ -131,11 +148,6 @@ try {
     if ($staleWarnings.Count -ne 1 -or -not $staleWarnings[0].Message.Contains("removed or decreased")) {
         throw "Expected one stale-baseline warning for a removed diagnostic."
     }
-
-    Write-SampleSarif @($secondResult)
-    Assert-Fails {
-        & $scriptPath -SarifRoot $testRoot -BaselinePath $baselinePath 3> $null
-    } "new diagnostic while another was removed"
 
     Set-Content -LiteralPath $sarifPath -Value "{ invalid" -Encoding utf8NoBOM
     Assert-Fails {
@@ -156,6 +168,7 @@ try {
     Write-Host "Analyzer baseline self-tests passed."
 }
 finally {
+    $env:GITHUB_ACTIONS = $savedGitHubActions
     if (Test-Path -LiteralPath $testRoot) {
         Remove-Item -LiteralPath $testRoot -Recurse -Force
     }
