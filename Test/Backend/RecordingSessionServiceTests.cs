@@ -287,6 +287,43 @@ internal sealed class RecordingSessionServiceTests
     }
 
     [Test]
+    public async Task ReadEntries_Should_WithholdCommittedEntriesAfterAPendingCapturedEntry()
+    {
+        await using var service = new RecordingSessionService(new MutableTimeProvider(StartTime));
+        service.Start(new RecordingSessionStartRequest("Pending", "1.0"));
+        using var consumerBlocked = new ManualResetEventSlim();
+        using var releaseConsumer = new ManualResetEventSlim();
+        var notificationCount = 0;
+        service.StatusChanged += _ =>
+        {
+            // The first notification after Start comes from the consumer once it committed sequence 2;
+            // holding it there keeps the next captured entry pending in the channel.
+            if (Interlocked.Increment(ref notificationCount) != 1) return;
+            consumerBlocked.Set();
+            releaseConsumer.Wait(TimeSpan.FromSeconds(10));
+        };
+
+        service.TryRecord(CreateProjection(1));
+        Assert.That(consumerBlocked.Wait(TimeSpan.FromSeconds(10)), Is.True);
+        service.TryRecord(CreateProjection(2));
+        service.AddMarker("Committed before the pending entry");
+
+        var whilePending = service.ReadEntries(0, 10);
+        releaseConsumer.Set();
+        Assert.That(
+            SpinWait.SpinUntil(() => service.CurrentStatus.PendingEntryCount == 0, TimeSpan.FromSeconds(10)),
+            Is.True);
+        var afterCommit = service.ReadEntries(whilePending[^1].Sequence, 10);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(whilePending.Select(entry => entry.Sequence), Is.EqualTo(new long[] { 1, 2 }));
+            Assert.That(afterCommit.Select(entry => entry.Sequence), Is.EqualTo(new long[] { 3, 4 }));
+            Assert.That(afterCommit.Select(entry => entry.TypeKey), Is.EqualTo(new[] { "test.event", "recorder.marker" }));
+        });
+    }
+
+    [Test]
     public async Task ReadEntries_Should_RejectInvalidBounds()
     {
         await using var service = new RecordingSessionService(new MutableTimeProvider(StartTime));
