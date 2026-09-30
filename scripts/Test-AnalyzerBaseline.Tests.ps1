@@ -7,6 +7,7 @@ $testRoot = Join-Path $repositoryRoot ".agent-build/analyzer-baseline-tests/$([G
 $sarifDirectory = Join-Path $testRoot "Sample/obj/analyzers/Release/net10.0"
 $sarifPath = Join-Path $sarifDirectory "Sample.sarif"
 $baselinePath = Join-Path $testRoot "baseline.json"
+$refreshedPath = Join-Path $testRoot "refreshed/baseline.json"
 
 function Write-SampleSarif([object[]] $Results) {
     $document = [ordered]@{
@@ -122,10 +123,37 @@ try {
         & $scriptPath -SarifRoot $testRoot -BaselinePath $baselinePath
     } "new diagnostic"
 
+    Write-SampleSarif @($secondResult)
+    Assert-Fails {
+        & $scriptPath -SarifRoot $testRoot -BaselinePath $baselinePath -RefreshedBaselinePath $refreshedPath
+    } "new diagnostic while another was removed"
+    if (Test-Path -LiteralPath $refreshedPath) {
+        throw "Expected no refreshed baseline when a diagnostic is new."
+    }
+
     Write-SampleSarif @()
     Assert-Fails {
         & $scriptPath -SarifRoot $testRoot -BaselinePath $baselinePath
+    } "no diagnostics although the baseline expects some"
+
+    Write-SampleSarif @($firstResult, $secondResult)
+    Assert-Succeeds {
+        & $scriptPath -SarifRoot $testRoot -BaselinePath $baselinePath -UpdateBaseline
+    } "baseline refresh with two diagnostics"
+    Write-SampleSarif @($firstResult)
+    Assert-Fails {
+        & $scriptPath -SarifRoot $testRoot -BaselinePath $baselinePath
     } "removed diagnostic without baseline refresh"
+    Assert-Fails {
+        & $scriptPath -SarifRoot $testRoot -BaselinePath $baselinePath -RefreshedBaselinePath $refreshedPath
+    } "removed diagnostic with refreshed baseline output"
+    Assert-Succeeds {
+        & $scriptPath -SarifRoot $testRoot -BaselinePath $refreshedPath
+    } "refreshed baseline matches the current diagnostics"
+    $refreshed = Get-Content -Raw -LiteralPath $refreshedPath | ConvertFrom-Json
+    if (@($refreshed.diagnostics).Count -ne 1 -or $refreshed.diagnostics[0].ruleId -ne "CA1001") {
+        throw "Expected the refreshed baseline to contain only the remaining CA1001 diagnostic."
+    }
 
     Set-Content -LiteralPath $sarifPath -Value "{ invalid" -Encoding utf8NoBOM
     Assert-Fails {
