@@ -57,9 +57,7 @@ dotnet minver
 
 - `.github/workflows/release-studio.yml` validates an existing signed tag,
   builds/tests the Windows app and creates or updates a draft GitHub Release.
-- `.azure-pipelines/release.yml` remains an additional maintainer-controlled
-  release path.
-- Neither path should silently invent or rewrite a release tag.
+- It must not silently invent or rewrite a release tag.
 
 See [Release Studio](RELEASE-STUDIO.md) for the artifact and manual verification
 checklist.

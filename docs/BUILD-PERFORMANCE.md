@@ -120,10 +120,7 @@ Open `build.binlog` with [MSBuild Structured Log Viewer](https://msbuildlog.com/
 
 ## CI note
 
-Azure DevOps PR validation builds MOBAflow + Test in Release with SonarQube and
-coverage. That pipeline is intentionally slower than local FastDebug iteration.
-
-The public, authoritative pull-request check is `.github/workflows/quality.yml`.
+The authoritative pull-request check is `.github/workflows/quality.yml`.
 It builds the explicit Windows desktop graph with `IncludeMobaSmartTests=false`,
 runs NUnit with Cobertura coverage, audits the resolved transitive NuGet graph,
 builds and validates the MOBAsmart Release AAB in a separate mandatory job, and

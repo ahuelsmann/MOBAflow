@@ -33,7 +33,6 @@ MutationTest/           Focused Stryker.NET lanes
 docs/                   User, developer, legal and protocol documentation
 plans/                  Standalone project, quality, refactoring and roadmap plans
 .github/workflows/      Public quality, pages and release workflows
-.azure-pipelines/       Additional Azure DevOps quality/release workflows
 ```
 
 ## Architecture
@@ -356,8 +355,7 @@ fast local configurations, and coverage commands. For `dotnet restore`, `-f`
 means `--force`; use `--framework` with `dotnet build` or `dotnet publish` when
 framework selection is required.
 
-Public checks are defined in `.github/workflows/`; additional Azure DevOps
-pipelines remain under `.azure-pipelines/`.
+All CI and release checks are defined in `.github/workflows/`.
 
 ## Legal and third-party surface
 
