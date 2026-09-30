@@ -73,7 +73,7 @@ Do not assume every directory is an active project or discover projects inside `
 | `Sound/`, `TrackLibrary.Base/`, `TrackLibrary.PikoA/`, `TrackPlan.Renderer/` | Audio, track catalogues and rendering |
 | `Test/` | NUnit tests, Moq, test doubles and fixtures; `Analysis/` has separate helper projects |
 | `docs/`, `scripts/`, `.vscode/tasks.json` | Architecture/user docs and development workflows |
-| `.github/workflows/` | GitHub CI and release definitions; `.azure-pipelines/` contains retained legacy definitions |
+| `.github/workflows/` | GitHub CI and release definitions |
 
 ## Architecture constraints
 

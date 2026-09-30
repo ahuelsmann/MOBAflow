@@ -9,7 +9,7 @@
 
 ### 1. **SonarQube Integration** (HIGH PRIORITY – planned)
 
-**Current CI:** SonarCloud analysis runs in [`.azure-pipelines/quality.yml`](../../.azure-pipelines/quality.yml).
+**Current CI:** SonarCloud reports its analysis as a GitHub pull request check.
 
 **Optional future:** GitHub Actions workflow (not in repository). Example path if added later:
 `/.github/workflows/sonarqube.yml`

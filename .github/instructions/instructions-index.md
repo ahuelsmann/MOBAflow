@@ -31,7 +31,6 @@ relevant files explicitly. Examples illustrate patterns; current source code def
 - [Project overview](../../README.md), [architecture documentation](../../docs/ARCHITECTURE.md),
   [project reference](../../docs/PROJECT-REFERENCE.md), [build performance](../../docs/BUILD-PERFORMANCE.md)
 - [Validation entry points](quick-reference.md), [GitHub CI](../workflows/quality.yml).
-  `.azure-pipelines/` contains retained legacy definitions, not a second Git remote or default workflow.
 - [Visual Studio setup](vs-setup.instructions.md) is optional environment guidance.
 - `copilot-tips.instructions.md`, `future-enhancements.instructions.md`, `visual-summary.md` and
   `summary-hooks-packages-sonarqube.md` are historical/reference material, not active task requirements or a backlog.

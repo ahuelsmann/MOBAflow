@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Used by dotnet-coverage collect -s (e.g. in Azure Pipeline quality.yml).
+<!-- Used by dotnet-coverage collect -s.
      Format: Visual Studio Code Coverage / runsettings. See:
      https://learn.microsoft.com/en-us/dotnet/core/additional-tools/dotnet-coverage -->
 <Configuration>
