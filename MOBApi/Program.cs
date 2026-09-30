@@ -66,7 +66,6 @@ app.Lifetime.ApplicationStopping.Register(hostCredentialService.Revoke);
 
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseMiddleware<CompatibilityReadObservationMiddleware>();
 
 app.MapControllers();
 app.MapHub<PhotoHub>("/photos-hub");

@@ -62,12 +62,12 @@ on both transports.
 
 **Goal**: No anonymous-read migration or GitHub evidence lookup remains, in code or documentation.
 
-- [ ] T014 [US1] Delete `MOBApi/Security/CompatibilityRead*.cs` and `MOBApi/Security/GitHubIssueEvidenceVerifier.cs`
-- [ ] T015 [US1] Remove the read-migration middleware, endpoints and registrations from `MOBApi/Program.cs`, `MOBApi/Controllers/ControlPlaneSecurityController.cs`, `MOBApi/Hubs/RuntimeHub.cs` and `MOBApi/Security/ControlPlaneSecurityServiceCollectionExtensions.cs`
-- [ ] T016 [US1] Delete the read-migration test cases in `Test/MOBApi/ControlPlaneSecurityTests.cs` and `CompatibilityStatus_Should_BeHostOnlyAndExposeBoundedEvidence` in `Test/Integration/AuthenticatedControlPlaneProcessTests.cs`
-- [ ] T017 [US1] Remove the read-migration descriptions from `README.md`, `docs/PROJECT-REFERENCE.md`, `docs/wiki/MOBAFLOW-USER-GUIDE.md` and `docs/MOBAPI-SECURITY-DESIGN.md`, and record the removal in `CHANGELOG.md`
-- [ ] T018 [US1] Remove analyzer-baseline entries of the deleted files in `quality/analyzer-baseline*.json`
-- [ ] T019 [US1] Validate slice 2 with the MOBApi build, the portable test run and a search for `CompatibilityRead` and read migration in code and documentation
+- [x] T014 [US1] Delete `MOBApi/Security/CompatibilityRead*.cs` and `MOBApi/Security/GitHubIssueEvidenceVerifier.cs`
+- [x] T015 [US1] Remove the read-migration middleware, endpoints and registrations from `MOBApi/Program.cs`, `MOBApi/Controllers/ControlPlaneSecurityController.cs`, `MOBApi/Hubs/RuntimeHub.cs` and `MOBApi/Security/ControlPlaneSecurityServiceCollectionExtensions.cs`
+- [x] T016 [US1] Delete the read-migration test cases in `Test/MOBApi/ControlPlaneSecurityTests.cs` and `CompatibilityStatus_Should_BeHostOnlyAndExposeBoundedEvidence` in `Test/Integration/AuthenticatedControlPlaneProcessTests.cs`
+- [x] T017 [US1] Remove the read-migration descriptions from `README.md`, `docs/PROJECT-REFERENCE.md`, `docs/wiki/MOBAFLOW-USER-GUIDE.md` and `docs/MOBAPI-SECURITY-DESIGN.md`, and record the removal in `CHANGELOG.md`
+- [x] T018 [US1] Remove analyzer-baseline entries of the deleted files in `quality/analyzer-baseline*.json`
+- [x] T019 [US1] Validate slice 2 with the MOBApi build, the portable test run and a search for `CompatibilityRead` and read migration in code and documentation
 
 **Checkpoint**: Slice 2 PR is green in CI and SonarCloud.
 

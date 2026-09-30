@@ -7,7 +7,7 @@
 - NuGet package versions: `Directory.Packages.props`; build defaults: `Directory.Build.props`.
 - Local tasks: `.vscode/tasks.json`; check arguments against the project before reuse.
 - Desktop build/tests/coverage and analyzer baselines: [GitHub quality workflow](../workflows/quality.yml).
-- Release definitions: `.github/workflows/release-studio.yml`; `.azure-pipelines/` is retained legacy material.
+- Release definitions: `.github/workflows/release-studio.yml`.
 - Commits and PRs: [secrets scanning and Sonar gates](sonarqube-pre-pr.instructions.md).
 - Configuration JSON validation: `MOBAflow/Build/ValidateJsonConfiguration.targets`.
 - Open work: GitHub issues, milestones and Kanban. Historical tooling proposals do not authorize dependency installation

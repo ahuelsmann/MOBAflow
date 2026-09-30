@@ -157,7 +157,7 @@ $projects = foreach ($project in $projectFiles) {
     }
 }
 
-$qualityPathPattern = "(?i)(^|/)(\.editorconfig|global\.json|Directory\.(Build|Packages|Solution)\.(props|targets)|AGENTS\.md)$|(^|/)\.github/(copilot-instructions\.md|instructions/.*\.md|workflows/.*)$|(^|/)\.azure-pipelines/.*$|(^|/)scripts/[^/]*(quality|test|coverage|mutation|analy|security|format|build)[^/]*$|(^|/)(test|tests|mutationtest)/(.*runsettings|.*thresholds.*\.json|mutation-lanes\.json|stryker-config\.json|.*\.(cs|fs|vb)proj)$"
+$qualityPathPattern = "(?i)(^|/)(\.editorconfig|global\.json|Directory\.(Build|Packages|Solution)\.(props|targets)|AGENTS\.md)$|(^|/)\.github/(copilot-instructions\.md|instructions/.*\.md|workflows/.*)$|(^|/)scripts/[^/]*(quality|test|coverage|mutation|analy|security|format|build)[^/]*$|(^|/)(test|tests|mutationtest)/(.*runsettings|.*thresholds.*\.json|mutation-lanes\.json|stryker-config\.json|.*\.(cs|fs|vb)proj)$"
 $qualityConfiguration = @($fileRecords |
     Where-Object { $_.Path -match $qualityPathPattern } |
     Select-Object -ExpandProperty Path |

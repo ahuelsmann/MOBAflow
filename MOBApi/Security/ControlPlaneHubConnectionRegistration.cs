@@ -13,38 +13,24 @@ namespace Moba.MOBApi.Security;
 public interface IControlPlaneHubConnectionRegistry
 {
     /// <summary>
-    /// Tracks an authenticated hub connection for credential revocation or an anonymous read connection for migration revocation.
+    /// Tracks an authenticated hub connection for credential revocation; anonymous read connections are not tracked.
     /// </summary>
     void RegisterReadConnection(HubCallerContext context);
 
     /// <summary>
-    /// Records a runtime-remote presence. During the migration window, this may be a legacy anonymous client.
+    /// Records a runtime-remote presence, identified by its credential or, for anonymous readers, by its client ID.
     /// </summary>
-    void RegisterRemote(HubCallerContext context, string credentialId, bool isAnonymousCompatibility);
+    void RegisterRemote(HubCallerContext context, string presenceId);
 
     /// <summary>
     /// Removes all security and runtime-presence state for a disconnected hub.
     /// </summary>
     void Unregister(HubCallerContext context);
-
-    /// <summary>Revalidates an anonymous hub read after connection registration.</summary>
-    Task<CompatibilityReadDecision> EvaluateAnonymousReadAsync(
-        CompatibilityReadTransport transport,
-        CancellationToken cancellationToken);
-
-    /// <summary>Records a successful authenticated hub read.</summary>
-    Task RecordAuthenticatedReadAsync(
-        string credentialId,
-        CompatibilityReadTransport transport,
-        string? clientRelease,
-        CancellationToken cancellationToken);
 }
 
 internal sealed class ControlPlaneHubConnectionRegistry(
     IRuntimeRemoteRegistry remoteRegistry,
-    IControlPlaneConnectionRevoker connectionRevoker,
-    ICompatibilityReadConnectionRevoker compatibilityReadConnectionRevoker,
-    ICompatibilityReadMigration readMigration) : IControlPlaneHubConnectionRegistry
+    IControlPlaneConnectionRevoker connectionRevoker) : IControlPlaneHubConnectionRegistry
 {
     public void RegisterReadConnection(HubCallerContext context)
     {
@@ -55,8 +41,6 @@ internal sealed class ControlPlaneHubConnectionRegistry(
         if (string.IsNullOrWhiteSpace(credentialId) ||
             !long.TryParse(expiresAtValue, NumberStyles.None, CultureInfo.InvariantCulture, out var expiresAtUnixSeconds))
         {
-            if (context.User?.Identity?.IsAuthenticated != true)
-                compatibilityReadConnectionRevoker.Register(context.ConnectionId, context.Abort);
             return;
         }
 
@@ -67,33 +51,14 @@ internal sealed class ControlPlaneHubConnectionRegistry(
             context.Abort);
     }
 
-    public void RegisterRemote(HubCallerContext context, string credentialId, bool isAnonymousCompatibility)
+    public void RegisterRemote(HubCallerContext context, string presenceId)
     {
-        remoteRegistry.Register(context.ConnectionId, credentialId);
-        if (isAnonymousCompatibility)
-            compatibilityReadConnectionRevoker.Register(context.ConnectionId, context.Abort);
+        remoteRegistry.Register(context.ConnectionId, presenceId);
     }
 
     public void Unregister(HubCallerContext context)
     {
         remoteRegistry.Unregister(context.ConnectionId);
         connectionRevoker.Unregister(context.ConnectionId);
-        compatibilityReadConnectionRevoker.Unregister(context.ConnectionId);
     }
-
-    public Task<CompatibilityReadDecision> EvaluateAnonymousReadAsync(
-        CompatibilityReadTransport transport,
-        CancellationToken cancellationToken) =>
-        readMigration.EvaluateAnonymousReadAsync(transport, cancellationToken);
-
-    public Task RecordAuthenticatedReadAsync(
-        string credentialId,
-        CompatibilityReadTransport transport,
-        string? clientRelease,
-        CancellationToken cancellationToken) =>
-        readMigration.RecordAuthenticatedReadAsync(
-            credentialId,
-            transport,
-            clientRelease,
-            cancellationToken);
 }

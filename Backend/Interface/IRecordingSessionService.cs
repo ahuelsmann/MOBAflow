@@ -26,6 +26,8 @@ public interface IRecordingSessionService : IRecordingStatusSource, IAsyncDispos
 
     /// <summary>
     /// Reads an ordered, immutable journal page after the supplied sequence without exposing mutable session state.
+    /// While accepted entries are still pending, later committed entries are withheld until the gap is closed,
+    /// so a reader can continue after the last returned sequence without skipping entries.
     /// </summary>
     /// <param name="afterSequence">Exclusive lower sequence boundary. Use zero to read from the beginning.</param>
     /// <param name="maxCount">Maximum number of entries to return.</param>

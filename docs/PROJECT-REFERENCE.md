@@ -33,7 +33,6 @@ MutationTest/           Focused Stryker.NET lanes
 docs/                   User, developer, legal and protocol documentation
 plans/                  Standalone project, quality, refactoring and roadmap plans
 .github/workflows/      Public quality, pages and release workflows
-.azure-pipelines/       Additional Azure DevOps quality/release workflows
 ```
 
 ## Architecture
@@ -295,15 +294,13 @@ the endpoint and pinned server identity, comparing the confirmation code, and
 obtaining approval in MOBAflow.
 
 Authenticated REST and SignalR reads are implemented, and remote control
-commands require authorization. Anonymous read-only compatibility is governed
-by `CompatibilityReadMigration`: disabling it requires a stable client release,
-a full 14-day observation window with authenticated traffic on both transports,
-no open critical migration defects, and verified issue evidence. The presence
-of this code does not establish that an installation has completed that gate.
-The compatibility HTTP path remains; unified command admission and final
-enforcement/cleanup are still planned. See the
-[control-plane rollout plan](../plans/50-authenticated-control-plane.md) for the
-remaining delivery and operational gates.
+commands require authorization. Reads remain available without credentials.
+Every remote command passes one admission step that validates its values before
+it is forwarded to MOBAflow or queued; the fallback queue holds at most 128
+commands. MOBAflow targets a private household, so the remaining authentication,
+pairing and certificate pinning are being removed by RF-19
+([#165](https://github.com/ahuelsmann/MOBAflow/issues/165),
+[specification](../specs/007-remove-control-plane-security/spec.md)).
 
 MOBAflow starts MOBApi from an isolated copy of its build output so updates and
 cleanup do not race the running process.
@@ -358,8 +355,9 @@ fast local configurations, and coverage commands. For `dotnet restore`, `-f`
 means `--force`; use `--framework` with `dotnet build` or `dotnet publish` when
 framework selection is required.
 
-Public checks are defined in `.github/workflows/`; additional Azure DevOps
-pipelines remain under `.azure-pipelines/`.
+Repository-defined CI and release workflows live in `.github/workflows/`.
+SonarCloud, CodeQL default setup and Dependabot run as hosted GitHub
+integrations without a workflow file in the repository.
 
 ## Legal and third-party surface
 
