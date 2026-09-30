@@ -132,6 +132,14 @@ The thresholds are per production assembly as well as global, so an improvement
 in one project cannot hide a regression in another. Generated `obj` sources are
 excluded; handwritten application code remains part of the measurement.
 
+The analyzer baselines in `quality/` must match exactly, so fixed diagnostics
+also fail the gate until the baseline is refreshed. When the only difference is
+removed or decreased diagnostics, the failed run attaches the refreshed file as
+the `refreshed-analyzer-baselines-desktop-*` or `-android-*` artifact. Review it,
+copy it over the matching file in `quality/` and run
+`scripts/Test-LineEndings.ps1 -Path <file> -Fix`. New or increased diagnostics
+never produce a refreshed file; fix them instead.
+
 Run the same checks locally after producing a Release Cobertura report:
 
 ```powershell

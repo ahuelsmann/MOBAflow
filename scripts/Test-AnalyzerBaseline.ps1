@@ -3,6 +3,10 @@ param(
 
     [string] $BaselinePath = "quality/analyzer-baseline.json",
 
+    # When the only mismatch is removed or decreased diagnostics, write the refreshed baseline here so it can be
+    # reviewed and copied over the stale one. New or increased diagnostics never produce a refreshed file.
+    [string] $RefreshedBaselinePath,
+
     [switch] $UpdateBaseline
 )
 
@@ -265,17 +269,6 @@ function Get-BaselineMismatch(
     }
 }
 
-function Show-StaleBaselineWarning(
-    [string] $ResolvedBaselinePath,
-    [string[]] $Decreases) {
-    $message = "Analyzer baseline '$ResolvedBaselinePath' is stale: $($Decreases.Count) entries were removed or decreased. " +
-        "Refresh it with -UpdateBaseline so a later regression cannot reuse the freed headroom."
-    Write-Warning "$message`n - $($Decreases -join "`n - ")"
-    if ($env:GITHUB_ACTIONS -eq "true") {
-        Write-Host "::warning title=Stale analyzer baseline::$message"
-    }
-}
-
 function Write-Baseline(
     [string] $ResolvedBaselinePath,
     [object[]] $Entries) {
@@ -297,7 +290,8 @@ function Write-Baseline(
 
 function Compare-Baseline(
     [string] $ResolvedBaselinePath,
-    [object[]] $CurrentEntries) {
+    [object[]] $CurrentEntries,
+    [string] $ResolvedRefreshedBaselinePath) {
     if (-not (Test-Path -LiteralPath $ResolvedBaselinePath)) {
         throw "Analyzer baseline '$ResolvedBaselinePath' does not exist. Run with -UpdateBaseline."
     }
@@ -315,7 +309,7 @@ function Compare-Baseline(
             "Check that the analyzers ran; refresh the baseline with -UpdateBaseline only when every diagnostic was fixed."
     }
 
-    $keys =@($expectedByKey.Keys + $currentByKey.Keys | Sort-Object -Unique)
+    $keys = @($expectedByKey.Keys + $currentByKey.Keys | Sort-Object -Unique)
     $mismatches = @(
         foreach ($key in $keys) {
             $mismatch = Get-BaselineMismatch `
@@ -328,21 +322,32 @@ function Compare-Baseline(
         }
     )
 
-    # Fixed warnings must not block a change; only new or increased diagnostics fail the gate.
-    $decreases = @($mismatches | Where-Object { -not $_.Increased } | ForEach-Object { $_.Text })
-    if ($decreases.Count -gt 0) {
-        Show-StaleBaselineWarning -ResolvedBaselinePath $ResolvedBaselinePath -Decreases $decreases
+    if ($mismatches.Count -eq 0) {
+        return
     }
 
-    $failures = @($mismatches | Where-Object { $_.Increased } | ForEach-Object { $_.Text })
-    if ($failures.Count -gt 0) {
-        throw "Analyzer baseline mismatch. Refresh the baseline in the same reviewed change:`n - $($failures -join "`n - ")"
+    $failures = @($mismatches | ForEach-Object { $_.Text })
+    $message = "Analyzer baseline mismatch. Refresh the baseline in the same reviewed change:`n - $($failures -join "`n - ")"
+    $onlyReductions = @($mismatches | Where-Object { $_.Increased }).Count -eq 0
+    if ($onlyReductions -and -not [string]::IsNullOrWhiteSpace($ResolvedRefreshedBaselinePath)) {
+        Write-Baseline -ResolvedBaselinePath $ResolvedRefreshedBaselinePath -Entries $CurrentEntries
+        $message += "`nOnly removed or decreased diagnostics differ. A refreshed baseline was written to " +
+            "'$ResolvedRefreshedBaselinePath'; in CI it is attached to the run as the refreshed analyzer baseline artifact. " +
+            "Review it and replace '$ResolvedBaselinePath' with it."
     }
+
+    throw $message
 }
 
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
 $resolvedSarifRoot = Resolve-InputPath -RepositoryRoot $repositoryRoot -Path $SarifRoot
 $resolvedBaselinePath = Resolve-InputPath -RepositoryRoot $repositoryRoot -Path $BaselinePath
+$resolvedRefreshedBaselinePath = if ([string]::IsNullOrWhiteSpace($RefreshedBaselinePath)) {
+    ""
+}
+else {
+    Resolve-InputPath -RepositoryRoot $repositoryRoot -Path $RefreshedBaselinePath
+}
 $diagnostics = @(Get-SarifDiagnostics `
     -RepositoryRoot $repositoryRoot `
     -ResolvedSarifRoot $resolvedSarifRoot)
@@ -353,6 +358,9 @@ if ($UpdateBaseline) {
     Write-Host "Wrote analyzer baseline with $($diagnostics.Count) diagnostics in $($entries.Count) groups."
 }
 else {
-    Compare-Baseline -ResolvedBaselinePath $resolvedBaselinePath -CurrentEntries $entries
-    Write-Host "Analyzer baseline accepts $($diagnostics.Count) diagnostics in $($entries.Count) groups."
+    Compare-Baseline `
+        -ResolvedBaselinePath $resolvedBaselinePath `
+        -CurrentEntries $entries `
+        -ResolvedRefreshedBaselinePath $resolvedRefreshedBaselinePath
+    Write-Host "Analyzer baseline matches $($diagnostics.Count) diagnostics in $($entries.Count) groups."
 }

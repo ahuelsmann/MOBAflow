@@ -7,6 +7,7 @@ $testRoot = Join-Path $repositoryRoot ".agent-build/analyzer-baseline-tests/$([G
 $sarifDirectory = Join-Path $testRoot "Sample/obj/analyzers/Release/net10.0"
 $sarifPath = Join-Path $sarifDirectory "Sample.sarif"
 $baselinePath = Join-Path $testRoot "baseline.json"
+$refreshedPath = Join-Path $testRoot "refreshed/baseline.json"
 
 function Write-SampleSarif([object[]] $Results) {
     $document = [ordered]@{
@@ -69,9 +70,6 @@ function Assert-Fails([scriptblock] $Action, [string] $Scenario) {
     }
 }
 
-# Sample reductions must not emit real stale-baseline annotations into the surrounding workflow run.
-$savedGitHubActions = $env:GITHUB_ACTIONS
-$env:GITHUB_ACTIONS = $null
 try {
     New-Item -ItemType Directory -Path $sarifDirectory -Force | Out-Null
     $firstResult = New-SampleResult `
@@ -127,12 +125,15 @@ try {
 
     Write-SampleSarif @($secondResult)
     Assert-Fails {
-        & $scriptPath -SarifRoot $testRoot -BaselinePath $baselinePath 3> $null
+        & $scriptPath -SarifRoot $testRoot -BaselinePath $baselinePath -RefreshedBaselinePath $refreshedPath
     } "new diagnostic while another was removed"
+    if (Test-Path -LiteralPath $refreshedPath) {
+        throw "Expected no refreshed baseline when a diagnostic is new."
+    }
 
     Write-SampleSarif @()
     Assert-Fails {
-        & $scriptPath -SarifRoot $testRoot -BaselinePath $baselinePath 3> $null
+        & $scriptPath -SarifRoot $testRoot -BaselinePath $baselinePath
     } "no diagnostics although the baseline expects some"
 
     Write-SampleSarif @($firstResult, $secondResult)
@@ -140,13 +141,18 @@ try {
         & $scriptPath -SarifRoot $testRoot -BaselinePath $baselinePath -UpdateBaseline
     } "baseline refresh with two diagnostics"
     Write-SampleSarif @($firstResult)
-    Assert-Succeeds {
-        & $scriptPath -SarifRoot $testRoot -BaselinePath $baselinePath 3> $null
+    Assert-Fails {
+        & $scriptPath -SarifRoot $testRoot -BaselinePath $baselinePath
     } "removed diagnostic without baseline refresh"
-    $staleWarnings = @(& $scriptPath -SarifRoot $testRoot -BaselinePath $baselinePath 3>&1 |
-        Where-Object { $_ -is [Management.Automation.WarningRecord] })
-    if ($staleWarnings.Count -ne 1 -or -not $staleWarnings[0].Message.Contains("removed or decreased")) {
-        throw "Expected one stale-baseline warning for a removed diagnostic."
+    Assert-Fails {
+        & $scriptPath -SarifRoot $testRoot -BaselinePath $baselinePath -RefreshedBaselinePath $refreshedPath
+    } "removed diagnostic with refreshed baseline output"
+    Assert-Succeeds {
+        & $scriptPath -SarifRoot $testRoot -BaselinePath $refreshedPath
+    } "refreshed baseline matches the current diagnostics"
+    $refreshed = Get-Content -Raw -LiteralPath $refreshedPath | ConvertFrom-Json
+    if (@($refreshed.diagnostics).Count -ne 1 -or $refreshed.diagnostics[0].ruleId -ne "CA1001") {
+        throw "Expected the refreshed baseline to contain only the remaining CA1001 diagnostic."
     }
 
     Set-Content -LiteralPath $sarifPath -Value "{ invalid" -Encoding utf8NoBOM
@@ -168,7 +174,6 @@ try {
     Write-Host "Analyzer baseline self-tests passed."
 }
 finally {
-    $env:GITHUB_ACTIONS = $savedGitHubActions
     if (Test-Path -LiteralPath $testRoot) {
         Remove-Item -LiteralPath $testRoot -Recurse -Force
     }
