@@ -15,6 +15,10 @@ internal sealed class RecordingSessionServiceTests
     private static readonly DateTimeOffset StartTime =
         new(2026, 7, 21, 10, 0, 0, TimeSpan.Zero);
 
+    private static readonly long[] SequencesBeforePendingEntry = [1, 2];
+    private static readonly long[] SequencesAfterPendingEntryCommit = [3, 4];
+    private static readonly string[] TypeKeysAfterPendingEntryCommit = ["test.event", "recorder.marker"];
+
     [Test]
     public async Task Session_Should_RecordLifecycleAnnotationsAndPauseInterval()
     {
@@ -284,6 +288,44 @@ internal sealed class RecordingSessionServiceTests
             Assert.That(secondPage[0].TypeKey, Is.EqualTo("recorder.note"));
             Assert.That(secondPage[0].Sequence, Is.GreaterThan(firstPage[^1].Sequence));
         });
+    }
+
+    [Test]
+    public async Task ReadEntries_Should_WithholdCommittedEntriesAfterAPendingCapturedEntry()
+    {
+        var service = new RecordingSessionService(new MutableTimeProvider(StartTime));
+        await using var serviceLifetime = service.ConfigureAwait(false);
+        service.Start(new RecordingSessionStartRequest("Pending", "1.0"));
+        using var consumerBlocked = new ManualResetEventSlim();
+        using var releaseConsumer = new ManualResetEventSlim();
+        var notificationCount = 0;
+        service.StatusChanged += _ =>
+        {
+            // The first notification after Start comes from the consumer once it committed sequence 2;
+            // holding it there keeps the next captured entry pending in the channel.
+            if (Interlocked.Increment(ref notificationCount) != 1) return;
+            consumerBlocked.Set();
+            releaseConsumer.Wait(TimeSpan.FromSeconds(10));
+        };
+
+        service.TryRecord(CreateProjection(1));
+        Assert.That(consumerBlocked.Wait(TimeSpan.FromSeconds(10)), Is.True);
+        service.TryRecord(CreateProjection(2));
+        service.AddMarker("Committed before the pending entry");
+
+        var whilePending = service.ReadEntries(0, 10);
+        releaseConsumer.Set();
+        Assert.That(
+            SpinWait.SpinUntil(() => service.CurrentStatus.PendingEntryCount == 0, TimeSpan.FromSeconds(10)),
+            Is.True);
+        var afterCommit = service.ReadEntries(whilePending[^1].Sequence, 10);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(whilePending.Select(entry => entry.Sequence), Is.EqualTo(SequencesBeforePendingEntry));
+            Assert.That(afterCommit.Select(entry => entry.Sequence), Is.EqualTo(SequencesAfterPendingEntryCommit));
+            Assert.That(afterCommit.Select(entry => entry.TypeKey), Is.EqualTo(TypeKeysAfterPendingEntryCommit));
+        }
     }
 
     [Test]

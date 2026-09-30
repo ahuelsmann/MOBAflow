@@ -78,6 +78,39 @@ internal sealed class RecorderPageViewModelTests
     }
 
     [Test]
+    public async Task MarkersCommittedBeforePendingCapturedEntries_Should_NotHideCapturedEntriesFromTimeline()
+    {
+        var session = new RecordingSessionService(TimeProvider.System);
+        await using var sessionLifetime = session.ConfigureAwait(false);
+        using var viewModel = CreateViewModel(session);
+        viewModel.StartCommand.Execute(null);
+
+        // Captured entries wait in the ingestion channel while markers are committed directly, so a marker can
+        // become readable before the captured entry with the lower sequence; the timeline must still show both.
+        for (var index = 0; index < 200; index++)
+        {
+            session.TryRecord(new RecordingEntryProjection(
+                "runtime",
+                "unit-test",
+                "runtime.test",
+                "information",
+                null,
+                null,
+                JsonSerializer.SerializeToElement(new { index }),
+                $"Captured {index}",
+                RecordingReplayApplicability.DisplayOnly));
+            viewModel.AnnotationText = $"Marker {index}";
+            viewModel.AddMarkerCommand.Execute(null);
+        }
+
+        await viewModel.StopCommand.ExecuteAsync(null).ConfigureAwait(false);
+
+        Assert.That(
+            viewModel.TimelineEntries.Select(entry => entry.Sequence),
+            Is.EqualTo(session.CurrentArtifact!.Entries.Select(entry => entry.Sequence)));
+    }
+
+    [Test]
     public async Task ImportAndExportCommands_Should_RoundTripCompletedArtifactBoundary()
     {
         await using var source = new RecordingSessionService(TimeProvider.System);
