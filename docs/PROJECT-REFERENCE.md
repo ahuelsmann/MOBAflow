@@ -355,7 +355,9 @@ fast local configurations, and coverage commands. For `dotnet restore`, `-f`
 means `--force`; use `--framework` with `dotnet build` or `dotnet publish` when
 framework selection is required.
 
-All CI and release checks are defined in `.github/workflows/`.
+Repository-defined CI and release workflows live in `.github/workflows/`.
+SonarCloud, CodeQL default setup and Dependabot run as hosted GitHub
+integrations without a workflow file in the repository.
 
 ## Legal and third-party surface
 
