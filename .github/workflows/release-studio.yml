@@ -37,12 +37,16 @@ jobs:
           fetch-depth: 1
           ref: ${{ github.event.repository.default_branch }}
           path: trusted-workflow
-          sparse-checkout: scripts/Validate-ReleaseTag.ps1
+          sparse-checkout: |
+            scripts/Validate-ReleaseTag.ps1
+            cliff.toml
           sparse-checkout-cone-mode: false
 
-      - name: Stage trusted release validator
+      - name: Stage trusted release validator and notes configuration
         shell: pwsh
-        run: Copy-Item trusted-workflow/scripts/Validate-ReleaseTag.ps1 "$env:RUNNER_TEMP/Validate-ReleaseTag.ps1"
+        run: |
+          Copy-Item trusted-workflow/scripts/Validate-ReleaseTag.ps1 "$env:RUNNER_TEMP/Validate-ReleaseTag.ps1"
+          Copy-Item trusted-workflow/cliff.toml "$env:RUNNER_TEMP/cliff.toml"
 
       - name: Check out the requested tag
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -60,6 +64,24 @@ jobs:
           -Tag $env:RELEASE_TAG
           -Repository '${{ github.repository }}'
           -Token $env:GH_TOKEN
+
+      # The notes list the Conventional Commit titles since the previous version tag; the maintainer
+      # edits them in the draft before publishing.
+      - name: Generate release notes with git-cliff
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force artifacts | Out-Null
+          python -m venv "$env:RUNNER_TEMP/git-cliff"
+          & "$env:RUNNER_TEMP/git-cliff/Scripts/python.exe" -m pip install --disable-pip-version-check --quiet git-cliff==2.14.2
+          if ($LASTEXITCODE -ne 0) { throw 'Could not install git-cliff.' }
+          & "$env:RUNNER_TEMP/git-cliff/Scripts/git-cliff.exe" `
+            --config "$env:RUNNER_TEMP/cliff.toml" `
+            --current `
+            --strip header `
+            --output artifacts/RELEASE-NOTES.md
+          if ($LASTEXITCODE -ne 0) { throw 'git-cliff could not generate the release notes.' }
+          if ((Get-Item artifacts/RELEASE-NOTES.md).Length -eq 0) { throw 'git-cliff produced empty release notes.' }
+          Get-Content artifacts/RELEASE-NOTES.md -Raw | Add-Content $env:GITHUB_STEP_SUMMARY
 
       - name: Install .NET SDK
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
@@ -137,7 +159,6 @@ jobs:
           Compress-Archive -Path artifacts/MOBAflow-win-x64/* -DestinationPath $archive -CompressionLevel Optimal
           $hash = (Get-FileHash -Path $archive -Algorithm SHA256).Hash.ToLowerInvariant()
           "$hash  $(Split-Path -Leaf $archive)" | Set-Content artifacts/SHA256SUMS.txt -Encoding utf8NoBOM
-          Copy-Item CHANGELOG.md artifacts/RELEASE-NOTES.md
 
       - name: Validate archive and checksum
         shell: pwsh

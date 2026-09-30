@@ -1,13 +1,13 @@
 # Release Studio
 
-Release Studio turns an existing signed MOBAflow version tag into a reviewable draft GitHub Release. It validates the tag, builds and tests the Windows application, packages the self-contained x64 output, creates a checksum, and attaches the artifacts to a draft release.
+Release Studio turns an existing signed MOBAflow version tag into a reviewable draft GitHub Release. It validates the tag, generates release notes from the commit history, builds and tests the Windows application, packages the self-contained x64 output, creates a checksum, and attaches the artifacts to a draft release.
 
 It does not create tags and it never publishes a release automatically.
 
 ## Prerequisites
 
 - The release commit is on the remote repository.
-- `CHANGELOG.md` describes the release-worthy changes.
+- The commit titles since the previous version tag follow Conventional Commits (`feat:`, `fix:`, `refactor:` and so on). Release Studio turns them into the draft notes with git-cliff and the `cliff.toml` of the default branch; `CHANGELOG.md` is not used for the notes.
 - The plain Semantic Version tag exists without a `v` prefix, for example `0.2.1`.
 - The tag is annotated and signed with a key that GitHub recognizes as verified.
 
@@ -29,7 +29,7 @@ git push origin 0.2.1
 5. Start the workflow and review every completed step.
 6. Download and test the workflow artifact when an additional local check is useful.
 7. Open the generated draft under **Releases**.
-8. Review the generated notes, attached ZIP, and `SHA256SUMS.txt`.
+8. Edit the generated notes into user-facing wording, then review the attached ZIP and `SHA256SUMS.txt`. Preview the notes locally with `git cliff --unreleased --strip header` before tagging.
 9. Publish the draft only after the release candidate has passed manual application and hardware checks.
 
 ## Release checklist
