@@ -90,6 +90,10 @@ jobs:
         shell: pwsh
         run: ./scripts/Test-MutationLaneCoverage.ps1
 
+      - name: Test analyzer baseline guard
+        shell: pwsh
+        run: ./scripts/Test-AnalyzerBaseline.Tests.ps1
+
       - name: Restore desktop test graph
         shell: pwsh
         run: dotnet restore Test/Test.csproj -p:IncludeMobaSmartTests=false
@@ -111,7 +115,8 @@ jobs:
             -p:UseSharedCompilation=false
           ./scripts/Test-AnalyzerBaseline.ps1 `
             -SarifRoot artifacts/analyzers/Release/net10.0 `
-            -BaselinePath quality/analyzer-baseline.json
+            -BaselinePath quality/analyzer-baseline.json `
+            -RefreshedBaselinePath artifacts/refreshed-baselines/analyzer-baseline.json
 
       - name: Build desktop test graph
         shell: pwsh
@@ -132,6 +137,17 @@ jobs:
           ./scripts/Test-AnalyzerBaseline.ps1
           -SarifRoot artifacts/analyzers/Release/net10.0-windows10.0.22621.0
           -BaselinePath quality/analyzer-baseline.windows.json
+          -RefreshedBaselinePath artifacts/refreshed-baselines/analyzer-baseline.windows.json
+
+      # Written only when the sole mismatch is fixed diagnostics; copy it over the file in quality/ after review.
+      - name: Archive refreshed analyzer baselines
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: refreshed-analyzer-baselines-desktop-${{ github.run_number }}
+          path: artifacts/refreshed-baselines/*.json
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: Audit resolved NuGet dependency graph
         shell: pwsh
@@ -368,6 +384,17 @@ jobs:
           ./scripts/Test-AnalyzerBaseline.ps1
           -SarifRoot artifacts/analyzers/Release
           -BaselinePath quality/analyzer-baseline.android.json
+          -RefreshedBaselinePath artifacts/refreshed-baselines/analyzer-baseline.android.json
+
+      # Written only when the sole mismatch is fixed diagnostics; copy it over the file in quality/ after review.
+      - name: Archive refreshed analyzer baselines
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: refreshed-analyzer-baselines-android-${{ github.run_number }}
+          path: artifacts/refreshed-baselines/*.json
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: Validate Android Release AAB
         shell: pwsh
