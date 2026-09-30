@@ -11,7 +11,7 @@ It does not create tags and it never publishes a release automatically.
 - The plain Semantic Version tag exists without a `v` prefix, for example `0.2.1`.
 - The tag is annotated and signed with a key that GitHub recognizes as verified.
 
-Create and push the tag from a trusted maintainer workstation:
+Create and push the tag from a trusted maintainer workstation. Replace `origin` with the name of your GitHub remote if it differs (`git remote -v` lists it):
 
 ```powershell
 git switch main
@@ -48,10 +48,6 @@ git push origin 0.2.1
 ## Safe re-runs
 
 Running Release Studio again for the same tag updates the assets of an existing draft. It refuses to modify a published release. Delete an unwanted draft manually only after confirming that no one is reviewing it.
-
-## Relationship to Azure DevOps
-
-The existing Azure DevOps release pipeline remains available while Release Studio is evaluated. Do not remove it until at least one GitHub-native release has been built, manually verified, and published successfully.
 
 ## Troubleshooting
 

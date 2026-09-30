@@ -27,7 +27,7 @@ Resolve ambiguity explicitly before creating issues. Never guess `origin`.
 | Clients reading .mcp.json | Empty mcpServers map | No extra server needed for this repository baseline; native tools remain available |
 
 Filesystem, ripgrep and fetch MCP wrappers duplicated native tools. Their defaults and the unused Azure DevOps
-connection were removed. Retained legacy Azure build definitions are historical files, not required tool connections.
+connection were removed.
 Personal plugins/connectors and credentials are not shared by these files or changed by repository updates.
 A client lacking native capabilities needs an explicitly configured and tested alternative; empty MCP config
 does not promise every client has the same tools.

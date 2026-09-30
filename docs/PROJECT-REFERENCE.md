@@ -33,7 +33,6 @@ MutationTest/           Focused Stryker.NET lanes
 docs/                   User, developer, legal and protocol documentation
 plans/                  Standalone project, quality, refactoring and roadmap plans
 .github/workflows/      Public quality, pages and release workflows
-.azure-pipelines/       Additional Azure DevOps quality/release workflows
 ```
 
 ## Architecture
@@ -356,8 +355,9 @@ fast local configurations, and coverage commands. For `dotnet restore`, `-f`
 means `--force`; use `--framework` with `dotnet build` or `dotnet publish` when
 framework selection is required.
 
-Public checks are defined in `.github/workflows/`; additional Azure DevOps
-pipelines remain under `.azure-pipelines/`.
+Repository-defined CI and release workflows live in `.github/workflows/`.
+SonarCloud, CodeQL default setup and Dependabot run as hosted GitHub
+integrations without a workflow file in the repository.
 
 ## Legal and third-party surface
 
