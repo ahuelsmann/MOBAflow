@@ -1,10 +1,11 @@
 # git-cliff configuration for MOBAflow
 # https://git-cliff.org/docs/configuration/
 #
+# Release Studio uses this file from the default branch to generate the draft release notes
+# for the tagged version (git cliff --current --strip header). CHANGELOG.md stays hand-curated.
+#
 # Usage:
-#   git cliff --unreleased          # Preview unreleased changes
-#   git cliff --unreleased -o CHANGELOG.md   # Write to file (prepends)
-#   git cliff -o CHANGELOG.md  # Regenerate full changelog
+#   git cliff --unreleased --strip header   # Preview the notes of the next release
 
 [changelog]
 header = """# Changelog
@@ -45,21 +46,24 @@ commit_preprocessors = [
 commit_parsers = [
     { message = "^feat", group = "<!-- 0 -->Added" },
     { message = "^fix", group = "<!-- 1 -->Fixed" },
-    { message = "^docs", group = "<!-- 2 -->Documentation" },
+    { message = "(?i)^docs", group = "<!-- 2 -->Documentation" },
     { message = "^style", group = "<!-- 3 -->Changed" },
     { message = "^refactor", group = "<!-- 3 -->Changed" },
     { message = "^perf", group = "<!-- 3 -->Changed" },
     { message = "^test", group = "<!-- 4 -->Tests" },
     { message = "^chore\\(release\\)", skip = true },
     { message = "^chore\\(deps\\)", group = "<!-- 5 -->Dependencies" },
+    { message = "^build\\(deps\\)", group = "<!-- 5 -->Dependencies" },
+    { message = "^build", group = "<!-- 6 -->Build" },
+    { message = "^ci", group = "<!-- 6 -->CI" },
     { message = "^chore", group = "<!-- 6 -->Chore" },
     { message = "^revert", group = "<!-- 7 -->Reverted" },
     { body = ".*BREAKING CHANGE", group = "<!-- 8 -->Breaking" },
     { message = "^BREAKING CHANGE", group = "<!-- 8 -->Breaking" },
 ]
 protect_breaking_commits = false
-filter_commits = false
-tag_pattern = "[0-9].*"
+filter_commits = true
+tag_pattern = "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?$"
 skip_tags = ""
 ignore_tags = ""
 topo_order = false
