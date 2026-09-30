@@ -49,6 +49,23 @@ internal sealed class RecorderPageViewModelTests
     }
 
     [Test]
+    public async Task StatusCallbacksFromConcurrentThreads_Should_ShowEveryEntryOnceInSequenceOrder()
+    {
+        await using var session = new RecordingSessionService(TimeProvider.System);
+        using var viewModel = CreateViewModel(session);
+        viewModel.StartCommand.Execute(null);
+
+        // Markers raise StatusChanged on several worker threads at once, so timeline refreshes are requested
+        // while another refresh is still reading; the UI dispatcher must serialize them without duplicates.
+        Parallel.For(0, 200, index => session.AddMarker($"Marker {index}"));
+        await viewModel.StopCommand.ExecuteAsync(null);
+
+        Assert.That(
+            viewModel.TimelineEntries.Select(entry => entry.Sequence),
+            Is.EqualTo(session.CurrentArtifact!.Entries.Select(entry => entry.Sequence)));
+    }
+
+    [Test]
     public async Task ImportAndExportCommands_Should_RoundTripCompletedArtifactBoundary()
     {
         await using var source = new RecordingSessionService(TimeProvider.System);
@@ -201,7 +218,7 @@ internal sealed class RecorderPageViewModelTests
             replayService ?? new StubRecordingReplayService(),
             fileService ?? new StubRecordingFileService(),
             new StubRecordingContextProvider(),
-            new ImmediateUiDispatcher(),
+            new SerializedUiDispatcher(),
             NullLogger<RecorderPageViewModel>.Instance);
 
     private static RecordingArtifact CreateEntityFilterArtifact(Guid journeyId)
@@ -377,18 +394,33 @@ internal sealed class RecorderPageViewModelTests
             new(Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"), "Test project");
     }
 
-    private sealed class ImmediateUiDispatcher : IUiDispatcher
+    /// <summary>
+    /// Runs actions inline but never concurrently, like the single WinUI UI thread. The recording consumer
+    /// raises StatusChanged from a thread-pool thread, so an unsynchronized inline dispatcher would run the
+    /// ViewModel's timeline refresh on two threads at once, which production never does.
+    /// </summary>
+    private sealed class SerializedUiDispatcher : IUiDispatcher
     {
-        public void InvokeOnUi(Action action) => action();
+        private readonly Lock _uiThread = new();
+
+        public void InvokeOnUi(Action action) => Run(action);
 
         public Task InvokeOnUiAsync(Func<Task> asyncAction) => asyncAction();
 
         public Task<T> InvokeOnUiAsync<T>(Func<Task<T>> asyncFunc) => asyncFunc();
 
-        public void InvokeOnUiHighPriority(Action action) => action();
+        public void InvokeOnUiHighPriority(Action action) => Run(action);
 
-        public void InvokeOnUiLowPriority(Action action) => action();
+        public void InvokeOnUiLowPriority(Action action) => Run(action);
 
         public Task InvokeOnUiAsync(Func<Task> asyncAction, UiPriority priority) => asyncAction();
+
+        private void Run(Action action)
+        {
+            lock (_uiThread)
+            {
+                action();
+            }
+        }
     }
 }
