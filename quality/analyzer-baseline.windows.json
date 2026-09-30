@@ -1720,7 +1720,7 @@
       "project": "MOBAflow",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA5392",
-      "path": ".nuget/packages/microsoft.windowsappsdk.foundation/2.3.5/include/UndockedRegFreeWinRT-AutoInitializer.cs",
+      "path": ".nuget/packages/microsoft.windowsappsdk.foundation/2.3.12/include/UndockedRegFreeWinRT-AutoInitializer.cs",
       "count": 1
     },
     {
