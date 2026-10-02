@@ -48,7 +48,6 @@
         <PackageReference Include="Serilog.Enrichers.Process" />
         <PackageReference Include="Serilog.Enrichers.Thread" />
         <PackageReference Include="SkiaSharp" />
-        <PackageReference Include="ZXing.Net" />
     </ItemGroup>
     <!-- Project References -->
     <ItemGroup>

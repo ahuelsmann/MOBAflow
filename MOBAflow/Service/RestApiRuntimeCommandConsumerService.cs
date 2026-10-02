@@ -19,7 +19,7 @@ public sealed class RestApiRuntimeCommandConsumerService : IDisposable
 {
     private readonly IRuntimeCommandGateway _runtimeCommandGateway;
     private readonly ILogger<RestApiRuntimeCommandConsumerService> _logger;
-    private readonly HostControlPlaneSession? _hostSession;
+    private readonly LocalMobApiClient _mobApiClient;
     private readonly PeriodicTimer _timer;
     private readonly CancellationTokenSource _cts = new();
     private bool _disposed;
@@ -27,11 +27,11 @@ public sealed class RestApiRuntimeCommandConsumerService : IDisposable
     public RestApiRuntimeCommandConsumerService(
         IRuntimeCommandGateway runtimeCommandGateway,
         ILogger<RestApiRuntimeCommandConsumerService> logger,
-        HostControlPlaneSession? hostSession = null)
+        LocalMobApiClient mobApiClient)
     {
         _runtimeCommandGateway = runtimeCommandGateway;
         _logger = logger;
-        _hostSession = hostSession;
+        _mobApiClient = mobApiClient ?? throw new ArgumentNullException(nameof(mobApiClient));
         _timer = new PeriodicTimer(TimeSpan.FromMilliseconds(500));
         _ = ConsumeLoopAsync(_cts.Token);
     }
@@ -57,11 +57,8 @@ public sealed class RestApiRuntimeCommandConsumerService : IDisposable
 
     private async Task ProcessNextCommandAsync(CancellationToken cancellationToken)
     {
-        if (_hostSession?.IsEnrolled != true)
-            return;
-
         using var request = new HttpRequestMessage(HttpMethod.Get, "api/runtime/commands/pending");
-        using var response = await _hostSession.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        using var response = await _mobApiClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
         if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
         {

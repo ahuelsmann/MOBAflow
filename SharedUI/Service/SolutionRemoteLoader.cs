@@ -1,10 +1,10 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.Service;
 
+using Common.Discovery;
 using Backend.Interface;
 
 using Common.Events;
-using Common.Security;
 using Common.Validation;
 
 using Domain;
@@ -32,7 +32,6 @@ public sealed class SolutionRemoteLoader : ISolutionRemoteLoader, IDisposable
     private readonly IEventBus _eventBus;
     private readonly ILogger<SolutionRemoteLoader> _logger;
     private readonly HttpClient _httpClient;
-    private readonly IRemoteControlAuthenticatedHttpClient? _authenticatedHttpClient;
     private readonly IUiDispatcher? _uiDispatcher;
     private readonly SemaphoreSlim _syncLock = new(1, 1);
     private DateTimeOffset? _lastSyncedAt;
@@ -46,8 +45,7 @@ public sealed class SolutionRemoteLoader : ISolutionRemoteLoader, IDisposable
         HttpClient httpClient,
         IMobileRuntimeCoordinator? mobileRuntimeCoordinator = null,
         IUiDispatcher? uiDispatcher = null,
-        IMobileSolutionStore? mobileSolutionStore = null,
-        IRemoteControlAuthenticatedHttpClient? authenticatedHttpClient = null)
+        IMobileSolutionStore? mobileSolutionStore = null)
     {
         ArgumentNullException.ThrowIfNull(mobaRuntime);
         ArgumentNullException.ThrowIfNull(mobileSolutionContext);
@@ -62,7 +60,6 @@ public sealed class SolutionRemoteLoader : ISolutionRemoteLoader, IDisposable
         _eventBus = eventBus;
         _logger = logger;
         _httpClient = httpClient;
-        _authenticatedHttpClient = authenticatedHttpClient;
         _uiDispatcher = uiDispatcher;
     }
 
@@ -229,14 +226,10 @@ public sealed class SolutionRemoteLoader : ISolutionRemoteLoader, IDisposable
 
     private async Task<SolutionMetaResponse?> TryGetMetaAsync(string serverIp, int serverPort, CancellationToken cancellationToken)
     {
-        var url = $"http://{serverIp.Trim()}:{serverPort}/api/solution/meta";
+        var url = new MobApiEndpoint(serverIp, serverPort).Resolve("api/solution/meta");
         try
         {
-            using var response = _authenticatedHttpClient is null
-                ? await _httpClient.GetAsync(url, cancellationToken).ConfigureAwait(false)
-                : await _authenticatedHttpClient
-                    .GetAsync("api/solution/meta", cancellationToken)
-                    .ConfigureAwait(false);
+            using var response = await _httpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
             if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
                 return null;
@@ -247,8 +240,7 @@ public sealed class SolutionRemoteLoader : ISolutionRemoteLoader, IDisposable
             return await JsonSerializer.DeserializeAsync<SolutionMetaResponse>(stream, MetaJsonOptions, cancellationToken)
                 .ConfigureAwait(false);
         }
-        catch (Exception ex) when (
-            ex is HttpRequestException or TaskCanceledException or JsonException or RemoteCredentialRejectedException)
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
         {
             _logger.LogDebug(ex, "Solution meta request failed for {Url}", url);
             return null;
@@ -257,14 +249,10 @@ public sealed class SolutionRemoteLoader : ISolutionRemoteLoader, IDisposable
 
     private async Task<string?> TryGetSolutionJsonAsync(string serverIp, int serverPort, CancellationToken cancellationToken)
     {
-        var url = $"http://{serverIp.Trim()}:{serverPort}/api/solution";
+        var url = new MobApiEndpoint(serverIp, serverPort).Resolve("api/solution");
         try
         {
-            using var response = _authenticatedHttpClient is null
-                ? await _httpClient.GetAsync(url, cancellationToken).ConfigureAwait(false)
-                : await _authenticatedHttpClient
-                    .GetAsync("api/solution", cancellationToken)
-                    .ConfigureAwait(false);
+            using var response = await _httpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
             if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
                 return null;
@@ -273,8 +261,7 @@ public sealed class SolutionRemoteLoader : ISolutionRemoteLoader, IDisposable
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
         }
-        catch (Exception ex) when (
-            ex is HttpRequestException or TaskCanceledException or RemoteCredentialRejectedException)
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
             _logger.LogDebug(ex, "Solution download failed for {Url}", url);
             return null;

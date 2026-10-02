@@ -2,13 +2,10 @@
 
 namespace Moba.MOBApi.Controllers;
 
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using Models;
-using Security;
 using Service;
-using System.Security.Claims;
 
 /// <summary>
 /// Register/unregister MAUI (or other) clients for the Overview page.
@@ -28,19 +25,17 @@ public class ClientsController : ControllerBase
     /// Registers a client (e.g. MAUI app). Call when the app connects to the REST API.
     /// </summary>
     [HttpPost("register")]
-    [Authorize(Policy = ControlPlaneCapabilities.ClientPresence)]
     public IActionResult Register([FromBody] RegisterClientRequest? request)
     {
-        var credentialId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrWhiteSpace(credentialId))
+        if (request is null || string.IsNullOrWhiteSpace(request.ClientId))
         {
-            return Unauthorized();
+            return BadRequest(new { error = "ClientId is required." });
         }
 
         var info = new ConnectedClientInfo
         {
-            ClientId = credentialId,
-            DeviceName = request?.DeviceName?.Trim() ?? "MOBAsmart",
+            ClientId = request.ClientId.Trim(),
+            DeviceName = request.DeviceName?.Trim() ?? "MOBAsmart",
             ConnectedAt = DateTime.UtcNow
         };
         _clientRegistry.Add(info);
@@ -51,16 +46,14 @@ public class ClientsController : ControllerBase
     /// Unregisters a client. Call when the app disconnects or closes.
     /// </summary>
     [HttpPost("unregister")]
-    [Authorize(Policy = ControlPlaneCapabilities.ClientPresence)]
     public IActionResult Unregister([FromBody] UnregisterClientRequest? request)
     {
-        var credentialId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrWhiteSpace(credentialId))
+        if (request is null || string.IsNullOrWhiteSpace(request.ClientId))
         {
-            return Unauthorized();
+            return BadRequest(new { error = "ClientId is required." });
         }
 
-        _clientRegistry.Remove(credentialId);
+        _clientRegistry.Remove(request.ClientId.Trim());
         return Ok(new { unregistered = true });
     }
 }

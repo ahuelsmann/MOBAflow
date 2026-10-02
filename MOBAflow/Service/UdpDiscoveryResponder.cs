@@ -12,31 +12,10 @@ using Microsoft.Extensions.Logging;
 /// Listens for UDP Multicast discovery requests from MAUI clients and responds with server IP + Port.
 /// Runs alongside the MOBApi REST host to enable automatic server discovery on the local network.
 /// </summary>
-public sealed partial class UdpDiscoveryResponder : IDisposable
+public sealed partial class UdpDiscoveryResponder(ILogger<UdpDiscoveryResponder> logger, int restApiPort) : IDisposable
 {
-    private readonly ILogger<UdpDiscoveryResponder> _logger;
-    private readonly MobApiUdpDiscoveryResponder _responder;
-
-    public UdpDiscoveryResponder(ILogger<UdpDiscoveryResponder> logger, int restApiPort)
-    {
-        _logger = logger;
-        _responder = new MobApiUdpDiscoveryResponder(restApiPort);
-    }
-
-    public UdpDiscoveryResponder(
-        ILogger<UdpDiscoveryResponder> logger,
-        int restApiPort,
-        int httpsPort,
-        string serverInstanceId,
-        string serverPublicKeyFingerprint)
-    {
-        _logger = logger;
-        _responder = new MobApiUdpDiscoveryResponder(
-            restApiPort,
-            httpsPort,
-            serverInstanceId,
-            serverPublicKeyFingerprint);
-    }
+    private readonly ILogger<UdpDiscoveryResponder> _logger = logger;
+    private readonly MobApiUdpDiscoveryResponder _responder = new(restApiPort);
 
     /// <summary>
     /// Starts the UDP Discovery responder.

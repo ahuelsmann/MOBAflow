@@ -1229,13 +1229,6 @@
     {
       "project": "Common",
       "targetFramework": "net10.0",
-      "ruleId": "CA1001",
-      "path": "Common/Security/RemoteControlClientSecurity.cs",
-      "count": 1
-    },
-    {
-      "project": "Common",
-      "targetFramework": "net10.0",
       "ruleId": "CA1002",
       "path": "Common/Configuration/AppSettings.Sections.cs",
       "count": 2
@@ -1266,13 +1259,6 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1008",
       "path": "Common/Configuration/TrainControlSettings.cs",
-      "count": 1
-    },
-    {
-      "project": "Common",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1008",
-      "path": "Common/Security/RemoteControlClientSecurity.cs",
       "count": 1
     },
     {
@@ -1320,23 +1306,9 @@
     {
       "project": "Common",
       "targetFramework": "net10.0",
-      "ruleId": "CA1032",
-      "path": "Common/Security/RemoteControlClientSecurity.cs",
-      "count": 2
-    },
-    {
-      "project": "Common",
-      "targetFramework": "net10.0",
       "ruleId": "CA1034",
       "path": "Common/Display/FunctionBacklightColor.cs",
       "count": 1
-    },
-    {
-      "project": "Common",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1062",
-      "path": "Common/Discovery/DiscoveryResponseParser.cs",
-      "count": 2
     },
     {
       "project": "Common",
@@ -1532,13 +1504,6 @@
       "targetFramework": "net10.0",
       "ruleId": "IDE0290",
       "path": "Common/Recording/RecordingSession.cs",
-      "count": 1
-    },
-    {
-      "project": "Common",
-      "targetFramework": "net10.0",
-      "ruleId": "IDE0290",
-      "path": "Common/Security/RemoteControlClientSecurity.cs",
       "count": 1
     },
     {
@@ -2175,13 +2140,6 @@
       "project": "MOBAsmart",
       "targetFramework": "net10.0-android",
       "ruleId": "CA1031",
-      "path": "MOBAsmart/Service/MauiRemoteControlCredentialStore.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
-      "ruleId": "CA1031",
       "path": "MOBAsmart/Service/MobiAndroidPermissions.cs",
       "count": 1
     },
@@ -2245,13 +2203,6 @@
       "project": "MOBAsmart",
       "targetFramework": "net10.0-android",
       "ruleId": "CA1062",
-      "path": "MOBAsmart/Service/PinnedRemoteControlTransport.cs",
-      "count": 3
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
-      "ruleId": "CA1062",
       "path": "MOBAsmart/Service/UiDispatcher.cs",
       "count": 1
     },
@@ -2281,13 +2232,6 @@
       "targetFramework": "net10.0-android",
       "ruleId": "CA1724",
       "path": "MOBAsmart/App.xaml.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
-      "ruleId": "CA1812",
-      "path": "MOBAsmart/Service/PinnedRemoteControlTransport.cs",
       "count": 1
     },
     {
@@ -2385,13 +2329,6 @@
       "project": "MOBAsmart",
       "targetFramework": "net10.0-android",
       "ruleId": "CA1859",
-      "path": "MOBAsmart/Service/PinnedRemoteControlTransport.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
-      "ruleId": "CA1859",
       "path": "MOBAsmart/Service/RestApiDiscoveryService.cs",
       "count": 2
     },
@@ -2461,13 +2398,6 @@
     {
       "project": "MOBAsmart",
       "targetFramework": "net10.0-android",
-      "ruleId": "CA2000",
-      "path": "MOBAsmart/Service/PinnedRemoteControlTransport.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
       "ruleId": "CA2007",
       "path": "MOBAsmart/App.xaml.cs",
       "count": 1
@@ -2526,20 +2456,6 @@
       "targetFramework": "net10.0-android",
       "ruleId": "CA2008",
       "path": "MOBAsmart/Service/MobiStartupService.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
-      "ruleId": "CA2234",
-      "path": "MOBAsmart/Service/PhotoUploadService.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
-      "ruleId": "CA2234",
-      "path": "MOBAsmart/Service/RestApiDiscoveryService.cs",
       "count": 1
     },
     {
@@ -2609,35 +2525,7 @@
       "project": "MOBAsmart",
       "targetFramework": "net10.0-android",
       "ruleId": "IDE0290",
-      "path": "MOBAsmart/Service/MauiPhotoUriResolver.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
-      "ruleId": "IDE0290",
-      "path": "MOBAsmart/Service/MauiRemoteControlCredentialStore.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
-      "ruleId": "IDE0290",
       "path": "MOBAsmart/Service/MobiStartupService.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
-      "ruleId": "IDE0290",
-      "path": "MOBAsmart/Service/RestApiClientRegistrationService.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAsmart",
-      "targetFramework": "net10.0-android",
-      "ruleId": "IDE0290",
-      "path": "MOBAsmart/Service/RuntimeSettingsClient.cs",
       "count": 1
     },
     {
@@ -2898,13 +2786,6 @@
       "ruleId": "CA1031",
       "path": "SharedUI/ViewModel/RecorderPageViewModel.cs",
       "count": 4
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1031",
-      "path": "SharedUI/ViewModel/RemotePairingViewModel.cs",
-      "count": 3
     },
     {
       "project": "SharedUI",
@@ -3591,13 +3472,6 @@
       "ruleId": "CA2227",
       "path": "SharedUI/ViewModel/SpeakerEngineConfigurationViewModel.cs",
       "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA2234",
-      "path": "SharedUI/Service/SolutionRemoteLoader.cs",
-      "count": 2
     },
     {
       "project": "SharedUI",

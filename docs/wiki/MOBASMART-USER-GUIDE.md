@@ -22,14 +22,15 @@ MOBAsmart uses two related connections:
 | **Z21** | Direct feedback, telemetry, track power and low-latency locomotive commands |
 | **MOBAflow** | Solution/fleet sync, photos, signal-box plan, runtime snapshots and remote command fallback through MOBApi |
 
-The app discovers the Z21 on the LAN. MOBAflow is trusted once by scanning the
-short-lived QR code under **MOBAflow Settings / REST API**. The MOBAflow
-connection can then be enabled or disabled with the switch on the Counter tab.
+The app discovers the Z21 and MOBAflow on the LAN and tries recently found
+addresses first; tap the MOBAflow status to search again. There is no manual
+address entry. The MOBAflow connection is enabled or disabled
+with the switch on the Counter tab.
 
 When both routes are available, locomotive commands prefer the direct local Z21
 connection. Signal-box and shared domain state use the active MOBAflow session.
 
-## The five tabs
+## The four tabs
 
 ### Counter
 
@@ -76,17 +77,6 @@ The Control tab is the mobile throttle:
 Controls are available when the app can execute through a local Z21 connection
 or an active MOBAflow runtime session.
 
-### Pairing
-
-The Pairing tab contains one primary action: **Scan MOBAflow QR code**. The QR
-code supplies the private-LAN endpoint and pinned server identity without manual
-typing or fingerprint comparison. Every paired MOBAsmart installation receives
-administrator access for viewing and controlling the layout.
-
-After scanning, compare the six-digit confirmation code shown by both apps and
-approve the device under **MOBAflow Settings / REST API**. MOBAsmart stores the
-protected credential and starts solution and runtime synchronization immediately.
-
 ## Background operation
 
 MOBAsmart uses an Android foreground service while a Z21 or MOBAflow session
@@ -129,7 +119,6 @@ when the SignalR connection is available.
 ### Signal Box or Engines is empty
 
 - Open a MOBAflow solution and select a project containing the relevant data.
-- Open Pairing and confirm that the device reports **Connected administrator**.
 - Confirm that MOBAsmart has connected to MOBApi and the runtime hub.
 - For Signal Box, verify that the selected project has a signal-box plan.
 - Reconnect once to refresh an older mobile cache.

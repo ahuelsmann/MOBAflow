@@ -1,8 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
 
-using Common.Security;
-
+using Common.Discovery;
 using SharedUI.Interface;
 
 using System.Text;
@@ -16,12 +15,12 @@ public sealed class RestApiClientRegistrationService : IRestApiClientRegistratio
     private const string ClientIdKey = "MOBAflow.RestApi.ClientId";
     private const string DeviceNameDefault = "MOBAsmart";
 
-    private readonly IRemoteControlAuthenticatedHttpClient _authenticatedHttpClient;
+    private readonly HttpClient _httpClient;
 
-    public RestApiClientRegistrationService(IRemoteControlAuthenticatedHttpClient authenticatedHttpClient)
+    public RestApiClientRegistrationService(IHttpClientFactory httpClientFactory)
     {
-        _authenticatedHttpClient = authenticatedHttpClient
-            ?? throw new ArgumentNullException(nameof(authenticatedHttpClient));
+        ArgumentNullException.ThrowIfNull(httpClientFactory);
+        _httpClient = httpClientFactory.CreateClient(MobiHttpClientNames.LanHealth);
         ClientId = GetOrCreateClientId();
     }
 
@@ -43,9 +42,8 @@ public sealed class RestApiClientRegistrationService : IRestApiClientRegistratio
 
         try
         {
-            using var response = await _authenticatedHttpClient
-                .PostAsync("api/clients/register", content)
-                .ConfigureAwait(false);
+            var url = new MobApiEndpoint(serverIp, serverPort).Resolve("api/clients/register");
+            using var response = await _httpClient.PostAsync(url, content).ConfigureAwait(false);
             return response.IsSuccessStatusCode;
         }
         catch (Exception)

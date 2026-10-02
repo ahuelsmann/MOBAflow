@@ -93,7 +93,7 @@ The **local API** connects MOBAflow, MOBAsmart and other integrations through
 REST endpoints and SignalR updates. It shares project data, runtime snapshots,
 journey progress and photos, and relays remote commands to the desktop runtime.
 MOBAflow can start it automatically, or it can run as a separate process.
-MOBAsmart discovers it on the same LAN and supports QR-code pairing.
+MOBAsmart discovers it automatically on the same LAN.
 
 MOBApi is a bridge to the desktop runtime, not a standalone layout controller.
 
@@ -145,7 +145,7 @@ standalone hardware color test.
 MOBAflow uses .NET 10. The desktop targets `net10.0-windows10.0.22621.0`;
 MOBAsmart targets `net10.0-android`. See the
 [installation guide](docs/wiki/INSTALLATION.md) for platform setup, mobile
-pairing and troubleshooting.
+connection and troubleshooting.
 
 ### Build the Windows app
 
@@ -174,7 +174,7 @@ dotnet run --project MOBAflow/MOBAflow.csproj
 3. Create a solution or open the included sample, then select a project.
 4. Connect to the Z21 and verify feedback and telemetry in **Overview** or
    **Monitor** before operating trains.
-5. To add MOBAsmart, follow the [Android setup and pairing steps](docs/wiki/INSTALLATION.md#first-android-start).
+5. To add MOBAsmart, follow the [Android setup steps](docs/wiki/INSTALLATION.md#first-android-start).
 
 Keep the PC, Z21 and phone on the same trusted private LAN. Guest Wi-Fi,
 client isolation and firewall rules can prevent discovery or communication.
@@ -208,13 +208,12 @@ MOBAflow sends commands to real model railroad hardware. Read the
 [hardware and liability notes](docs/HARDWARE-DISCLAIMER.md) before operating
 your layout.
 
-MOBAflow, MOBAsmart and MOBApi are intended for a **trusted private LAN** and
-must not be exposed to the public internet. Reads remain available without
-credentials, and every remote command is validated before it reaches MOBAflow.
-Because MOBAflow targets a private household, the remaining authentication and
-pairing are being removed ([#165](https://github.com/ahuelsmann/MOBAflow/issues/165)).
-See the [current security status](docs/PROJECT-REFERENCE.md#mobapi-endpoints)
-for details.
+MOBAflow, MOBAsmart and MOBApi are intended for a private household on a
+**trusted private LAN** and must not be exposed to the public internet. They have
+no sign-in, user management or pairing: every device in the home network can read
+the layout state and send commands, and MOBApi validates every remote command
+before it reaches MOBAflow. If you need authentication or user management, fork
+the repository and add it there. See the [security policy](SECURITY.md#operating-model).
 
 ## License
 

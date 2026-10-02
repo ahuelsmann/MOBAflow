@@ -139,7 +139,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1031",
       "path": "MOBAflow/Service/RestApiProcessService.cs",
-      "count": 7
+      "count": 6
     },
     {
       "project": "MOBAflow",
@@ -803,7 +803,7 @@
       "project": "MOBAflow",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1515",
-      "path": "MOBAflow/Service/HostControlPlaneSession.cs",
+      "path": "MOBAflow/Service/LocalMobApiClient.cs",
       "count": 1
     },
     {
@@ -1070,7 +1070,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1848",
       "path": "MOBAflow/Service/RestApiProcessService.cs",
-      "count": 17
+      "count": 16
     },
     {
       "project": "MOBAflow",
@@ -1105,7 +1105,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1848",
       "path": "MOBAflow/Service/RuntimeHubHostClient.cs",
-      "count": 6
+      "count": 5
     },
     {
       "project": "MOBAflow",
@@ -1447,13 +1447,6 @@
       "project": "MOBAflow",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2000",
-      "path": "MOBAflow/Service/HostControlPlaneSession.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA2000",
       "path": "MOBAflow/View/TrackPlanPage.xaml.cs",
       "count": 1
     },
@@ -1498,13 +1491,6 @@
       "ruleId": "CA2007",
       "path": "MOBAflow/Service/RecordingFileService.cs",
       "count": 2
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA2007",
-      "path": "MOBAflow/Service/RestApiProcessService.cs",
-      "count": 1
     },
     {
       "project": "MOBAflow",
@@ -1691,20 +1677,6 @@
     {
       "project": "MOBAflow",
       "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA2234",
-      "path": "MOBAflow/Service/RestApiProcessService.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA2234",
-      "path": "MOBAflow/Service/RestApiStatusService.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2249",
       "path": "MOBAflow/Converter/PhotoPathToImageConverter.cs",
       "count": 1
@@ -1818,13 +1790,6 @@
       "project": "MOBAflow",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CsWinRT1028",
-      "path": "MOBAflow/Service/HostControlPlaneSession.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1028",
       "path": "MOBAflow/Service/RestApiProcessService.cs",
       "count": 1
     },
@@ -1883,13 +1848,6 @@
       "ruleId": "CsWinRT1030",
       "path": "MOBAflow/Service/FeatureTogglePageProvider.cs",
       "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1030",
-      "path": "MOBAflow/Service/HostControlPlaneSession.cs",
-      "count": 2
     },
     {
       "project": "MOBAflow",
@@ -2002,13 +1960,6 @@
       "ruleId": "IDE0005",
       "path": "MOBAflow/Converter/BoolToPickerStateBrushConverter.cs",
       "count": 2
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "IDE0005",
-      "path": "MOBAflow/Service/HostControlPlaneSession.cs",
-      "count": 1
     },
     {
       "project": "MOBAflow",
@@ -2308,13 +2259,6 @@
       "project": "MOBAflow",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "IDE0330",
-      "path": "MOBAflow/Service/HostControlPlaneSession.cs",
-      "count": 1
-    },
-    {
-      "project": "MOBAflow",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "IDE0330",
       "path": "MOBAflow/Service/RestApiRuntimeHubService.cs",
       "count": 2
     },
@@ -2461,13 +2405,6 @@
     {
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1308",
-      "path": "Test/Common/RemoteControlClientSecurityTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1512",
       "path": "Test/MOBAdisplay/ManualTimeProvider.cs",
       "count": 1
@@ -2512,13 +2449,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1515",
       "path": "Test/Domain/MatrixImageTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1515",
-      "path": "Test/MOBApi/ControlPlaneSecurityTests.cs",
       "count": 1
     },
     {
@@ -3057,13 +2987,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/HostBootstrapProtocolTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1812",
       "path": "Test/Common/JsonValidationServiceTests.cs",
       "count": 1
     },
@@ -3113,6 +3036,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/Common/MobApiEndpointTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/Common/MobileBackgroundKeepAlivePolicyTests.cs",
       "count": 1
     },
@@ -3149,13 +3079,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/Common/RecordingFilterTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1812",
-      "path": "Test/Common/RemoteControlClientSecurityTests.cs",
       "count": 1
     },
     {
@@ -3519,7 +3442,7 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
-      "path": "Test/MOBApi/HostCredentialServiceTests.cs",
+      "path": "Test/MOBApi/ClientsControllerTests.cs",
       "count": 1
     },
     {
@@ -3576,7 +3499,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/MOBApi/StatusControllerTests.cs",
-      "count": 2
+      "count": 3
     },
     {
       "project": "Test",
@@ -3716,13 +3639,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
       "path": "Test/SharedUI/RecordingRuntimeCommandGatewayTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1812",
-      "path": "Test/SharedUI/RemotePairingViewModelTests.cs",
       "count": 1
     },
     {
@@ -4058,13 +3974,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1849",
-      "path": "Test/Common/HostBootstrapProtocolTests.cs",
-      "count": 2
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1849",
       "path": "Test/MOBAdisplay/DisplayProtocolClientTests.cs",
       "count": 1
     },
@@ -4394,13 +4303,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1859",
-      "path": "Test/Common/HostBootstrapProtocolTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1859",
       "path": "Test/MOBAdisplay/DisplayPayloadCodecTests.cs",
       "count": 1
     },
@@ -4555,13 +4457,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1861",
-      "path": "Test/MOBApi/ControlPlaneSecurityTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA1861",
       "path": "Test/SharedUI/JourneyMapViewModelTests.cs",
       "count": 1
     },
@@ -4625,13 +4520,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2000",
-      "path": "Test/Common/RemoteControlClientSecurityTests.cs",
-      "count": 3
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA2000",
       "path": "Test/MOBAflow/MobaWinUiServiceCollectionExtensionsTests.cs",
       "count": 5
     },
@@ -4675,7 +4563,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2000",
       "path": "Test/SharedUI/SolutionRemoteLoaderTests.cs",
-      "count": 30
+      "count": 27
     },
     {
       "project": "Test",
@@ -4919,20 +4807,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2007",
-      "path": "Test/Common/HostBootstrapProtocolTests.cs",
-      "count": 8
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA2007",
-      "path": "Test/Common/RemoteControlClientSecurityTests.cs",
-      "count": 23
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA2007",
       "path": "Test/Common/TaskExtensionsTests.cs",
       "count": 1
     },
@@ -5005,20 +4879,6 @@
       "ruleId": "CA2007",
       "path": "Test/MOBAflow/WinUiShutdownCoordinatorTests.cs",
       "count": 3
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA2007",
-      "path": "Test/MOBApi/ControlPlaneSecurityTests.cs",
-      "count": 62
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CA2007",
-      "path": "Test/MOBApi/HostCredentialServiceTests.cs",
-      "count": 15
     },
     {
       "project": "Test",
@@ -5123,7 +4983,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA2007",
       "path": "Test/SharedUI/SolutionRemoteLoaderTests.cs",
-      "count": 14
+      "count": 13
     },
     {
       "project": "Test",
@@ -5213,20 +5073,6 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CsWinRT1028",
-      "path": "Test/Common/HostBootstrapProtocolTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1028",
-      "path": "Test/Common/RemoteControlClientSecurityTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1028",
       "path": "Test/MOBAdisplay/ManualTimeProvider.cs",
       "count": 1
     },
@@ -5235,20 +5081,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CsWinRT1028",
       "path": "Test/MOBAflow/RestApiRuntimeHubServiceTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1028",
-      "path": "Test/MOBApi/ControlPlaneSecurityTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1028",
-      "path": "Test/MOBApi/HostCredentialServiceTests.cs",
       "count": 1
     },
     {
@@ -5270,7 +5102,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CsWinRT1028",
       "path": "Test/SharedUI/SolutionRemoteLoaderTests.cs",
-      "count": 2
+      "count": 1
     },
     {
       "project": "Test",
@@ -5325,21 +5157,7 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CsWinRT1030",
-      "path": "Test/Common/RemoteControlClientSecurityTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1030",
       "path": "Test/MOBAdisplay/UdpDisplayDatagramTransportTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "CsWinRT1030",
-      "path": "Test/MOBApi/ControlPlaneSecurityTests.cs",
       "count": 1
     },
     {
@@ -5403,13 +5221,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "IDE0005",
       "path": "Test/Common/SignalBoxSnapshotMergeTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "IDE0005",
-      "path": "Test/MOBAflow/RestApiRuntimeHubServiceTests.cs",
       "count": 1
     },
     {
@@ -5585,20 +5396,6 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "IDE0290",
       "path": "Test/MOBAflow/UiDispatcherTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "IDE0290",
-      "path": "Test/MOBApi/ControlPlaneSecurityTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "IDE0290",
-      "path": "Test/MOBApi/HostCredentialServiceTests.cs",
       "count": 1
     },
     {
@@ -6439,7 +6236,7 @@
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "NUnit2056",
       "path": "Test/Common/DiscoveryResponseParserTests.cs",
-      "count": 2
+      "count": 1
     },
     {
       "project": "Test",
@@ -6454,13 +6251,6 @@
       "ruleId": "NUnit2056",
       "path": "Test/Common/FeatureToggleRegistryTests.cs",
       "count": 7
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/Common/HostBootstrapProtocolTests.cs",
-      "count": 2
     },
     {
       "project": "Test",
@@ -6489,13 +6279,6 @@
       "ruleId": "NUnit2056",
       "path": "Test/Common/RecordingFilterTests.cs",
       "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/Common/RemoteControlClientSecurityTests.cs",
-      "count": 14
     },
     {
       "project": "Test",
@@ -6664,20 +6447,6 @@
       "ruleId": "NUnit2056",
       "path": "Test/MOBAflow/UiDispatcherTests.cs",
       "count": 2
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/MOBApi/ControlPlaneSecurityTests.cs",
-      "count": 12
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0-windows10.0.22621.0",
-      "ruleId": "NUnit2056",
-      "path": "Test/MOBApi/HostCredentialServiceTests.cs",
-      "count": 4
     },
     {
       "project": "Test",

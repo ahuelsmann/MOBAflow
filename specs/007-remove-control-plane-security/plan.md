@@ -141,7 +141,7 @@ Each slice is its own draft PR, builds on its own and keeps the apps connectable
   MOBAflow (FastDebug) and MOBAsmart (Android FastDebug) as listed in [quickstart.md](quickstart.md).
 - **Manual checks**: connection, remote driving, the MOBAflow settings page and the MOBAsmart tab
   navigation in Light and Dark theme, only after explicit approval to start the apps.
-- **Regression checks**: discovery, manual address, solution sync, runtime snapshot, photo upload,
+- **Regression checks**: discovery, stored address, solution sync, runtime snapshot, photo upload,
   configuration defaults and `AutoStartWebApp`.
 - **Secrets scan**: every changed file before each commit and PR.
 - **Sonar gates**: GitHub SonarCloud check green with zero OPEN/CONFIRMED issues on each slice PR.

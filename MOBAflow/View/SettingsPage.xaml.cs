@@ -22,21 +22,18 @@ using SharedUI.ViewModel;
 internal sealed partial class SettingsPage
 {
     public MainWindowViewModel ViewModel { get; }
-    public RestApiPairingViewModel PairingViewModel { get; }
     private readonly ISettingsService? _settingsService;
     private readonly AppSettings? _settings;
     private readonly ILogger<SettingsPage>? _logger;
     private readonly INavigationService? _navigationService;
     public SettingsPage(
         MainWindowViewModel viewModel,
-        RestApiPairingViewModel pairingViewModel,
         ISettingsService? settingsService = null,
         AppSettings? settings = null,
         ILogger<SettingsPage>? logger = null,
         INavigationService? navigationService = null)
     {
         ViewModel = viewModel;
-        PairingViewModel = pairingViewModel;
         _settingsService = settingsService;
         _settings = settings;
         _logger = logger;

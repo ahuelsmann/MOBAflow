@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.SignalR;
 
 using Moba.Common.Runtime;
 using Moba.MOBApi.Hubs;
-using Moba.MOBApi.Security;
 using Moba.MOBApi.Service;
 
 using Moq;
@@ -205,7 +204,7 @@ internal sealed class RuntimeCommandAdmissionTests
                 hostRegistry.Object,
                 new Mock<IRuntimeBroadcastMetrics>().Object,
                 new RuntimeCommandAdmission(Queue),
-                new Mock<IControlPlaneHubConnectionRegistry>().Object)
+                new Mock<IRuntimeRemoteRegistry>().Object)
             {
                 Clients = clients.Object
             };

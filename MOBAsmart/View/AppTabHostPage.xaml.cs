@@ -7,7 +7,7 @@ using SharedUI.ViewModel;
 using MauiView = Microsoft.Maui.Controls.View;
 public partial class AppTabHostPage
 {
-    private const int TabCount = 5;
+    private const int TabCount = 4;
     private const double SwipeThreshold = 60;
     private readonly IServiceProvider _serviceProvider;
     private readonly MauiViewModel _mauiViewModel;
@@ -16,7 +16,6 @@ public partial class AppTabHostPage
     private SignalBoxPage? _signalBoxPage;
     private EnginePage? _enginePage;
     private ControlPage? _controlPage;
-    private PairingPage? _pairingPage;
     private readonly MauiView?[] _tabViews = new MauiView?[TabCount];
     private int _activeTabIndex = AppBottomTabBar.CounterTabIndex;
     private bool _initialTabScheduled;
@@ -134,9 +133,6 @@ public partial class AppTabHostPage
                 GetControlPage().ActivateTab();
                 _trainControlViewModel.ResumeUpdates();
                 break;
-            case AppBottomTabBar.PairingTabIndex:
-                GetPairingPage().ActivateTab();
-                break;
         }
 
         UpdateMauiViewModelTabState(tabIndex);
@@ -171,7 +167,6 @@ public partial class AppTabHostPage
             AppBottomTabBar.SignalBoxTabIndex => (MauiView)(_signalBoxPage ??= _serviceProvider.GetRequiredService<SignalBoxPage>()),
             AppBottomTabBar.EnginesTabIndex => (MauiView)GetEnginePage(),
             AppBottomTabBar.ControlTabIndex => (MauiView)GetControlPage(),
-            AppBottomTabBar.PairingTabIndex => (MauiView)GetPairingPage(),
             _ => (MauiView)GetCounterPage()
         };
         tabView.HorizontalOptions = LayoutOptions.Fill;
@@ -198,6 +193,4 @@ public partial class AppTabHostPage
         _enginePage ??= _serviceProvider.GetRequiredService<EnginePage>();
     private ControlPage GetControlPage() =>
         _controlPage ??= _serviceProvider.GetRequiredService<ControlPage>();
-    private PairingPage GetPairingPage() =>
-        _pairingPage ??= _serviceProvider.GetRequiredService<PairingPage>();
 }

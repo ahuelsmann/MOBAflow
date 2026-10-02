@@ -8,7 +8,6 @@ using Backend.Service;
 using Common.Configuration;
 using Common.Discovery;
 using Common.Events;
-using Common.Security;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Storage;
@@ -68,18 +67,6 @@ public static class MobaMauiServiceCollectionExtensions
         services.AddMobiHttpClients();
         services.AddSingleton<RestApiDiscoveryService>();
         services.AddSingleton<IRestDiscoveryService>(sp => sp.GetRequiredService<RestApiDiscoveryService>());
-        services.AddSingleton<IAuthenticatedRestDiscoveryService>(sp => sp.GetRequiredService<RestApiDiscoveryService>());
-        services.AddSingleton<ISecureStorage>(_ => SecureStorage.Default);
-        services.AddSingleton<IRemoteControlCredentialStore, MauiRemoteControlCredentialStore>();
-        services.AddSingleton<PinnedRemoteControlTransport>();
-        services.AddSingleton<IRemoteControlTransport>(sp =>
-            sp.GetRequiredService<PinnedRemoteControlTransport>());
-        services.AddSingleton<IRemoteControlHttpClientFactory>(sp =>
-            sp.GetRequiredService<PinnedRemoteControlTransport>());
-        services.AddSingleton<RemoteControlSessionService>();
-        services.AddSingleton<RemoteControlAuthenticatedHttpClient>();
-        services.AddSingleton<IRemoteControlAuthenticatedHttpClient>(sp =>
-            sp.GetRequiredService<RemoteControlAuthenticatedHttpClient>());
         services.AddSingleton<IPhotoUploadService, PhotoUploadService>();
         services.AddSingleton<IPhotoCaptureService, PhotoCaptureService>();
         services.AddSingleton<IPhotoUriResolver, MauiPhotoUriResolver>();
@@ -120,8 +107,7 @@ public static class MobaMauiServiceCollectionExtensions
             sp.GetRequiredService<IHttpClientFactory>().CreateClient(MobiHttpClientNames.Platform),
             sp.GetRequiredService<IMobileRuntimeCoordinator>(),
             sp.GetRequiredService<IUiDispatcher>(),
-            sp.GetRequiredService<IMobileSolutionStore>(),
-            sp.GetRequiredService<IRemoteControlAuthenticatedHttpClient>()));
+            sp.GetRequiredService<IMobileSolutionStore>()));
         services.AddSingleton<ISolutionRemoteLoader>(sp => sp.GetRequiredService<SolutionRemoteLoader>());
 
         return services;
@@ -154,10 +140,7 @@ public static class MobaMauiServiceCollectionExtensions
             sp.GetRequiredService<IRuntimeCommandGateway>(),
             sp.GetRequiredService<IMobileRuntimeCoordinator>(),
             sp.GetRequiredService<IProjectContext>(),
-            sp.GetRequiredService<IBackgroundService>(),
-            sp.GetRequiredService<RemoteControlSessionService>()));
-        services.AddSingleton<RemotePairingViewModel>();
-        services.AddSingleton<IPairingCameraAccess, PairingCameraAccess>();
+            sp.GetRequiredService<IBackgroundService>()));
         services.AddSingleton(new TrainControlViewModelOptions
         {
             HybridRuntimeSnapshots = true,
@@ -195,7 +178,6 @@ public static class MobaMauiServiceCollectionExtensions
         services.AddTransient<SignalBoxPage>();
         services.AddTransient<EnginePage>();
         services.AddTransient<ControlPage>();
-        services.AddTransient<PairingPage>();
 
         return services;
     }

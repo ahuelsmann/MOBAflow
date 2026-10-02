@@ -2,6 +2,7 @@
 
 namespace Moba.WinUI.Service;
 
+using Common.Discovery;
 using Backend.Interface;
 
 using Common.Runtime;
@@ -21,48 +22,27 @@ public sealed class RuntimeHubHostClient : IRuntimeHubHostClient
     private readonly IMobaRuntime _mobaRuntime;
     private readonly IRuntimeCommandGateway _runtimeCommandGateway;
     private readonly ILogger<RuntimeHubHostClient>? _logger;
-    private readonly HostControlPlaneSession? _hostSession;
     private HubConnection? _hubConnection;
 
     public RuntimeHubHostClient(
         IMobaRuntime mobaRuntime,
         IRuntimeCommandGateway runtimeCommandGateway,
-        ILogger<RuntimeHubHostClient>? logger = null,
-        HostControlPlaneSession? hostSession = null)
+        ILogger<RuntimeHubHostClient>? logger = null)
     {
         _mobaRuntime = mobaRuntime;
         _runtimeCommandGateway = runtimeCommandGateway;
         _logger = logger;
-        _hostSession = hostSession;
     }
 
     public bool IsConnected => _hubConnection?.State == HubConnectionState.Connected;
 
     public async Task ConnectAsync(string serverIp, int serverPort, CancellationToken cancellationToken = default)
     {
-        _ = serverIp;
-        _ = serverPort;
-        if (_hostSession?.IsEnrolled != true)
-        {
-            _logger?.LogDebug("RuntimeHub host connection skipped because local host enrollment is unavailable");
-            return;
-        }
-
-        var hubUrl = new Uri(_hostSession.BaseUri, "runtime-hub");
+        var hubUrl = new MobApiEndpoint(serverIp, serverPort).Resolve("runtime-hub");
         _logger?.LogInformation("Connecting to RuntimeHub: {HubUrl}", hubUrl);
 
         _hubConnection = new HubConnectionBuilder()
-            .WithUrl(hubUrl, options =>
-            {
-                options.AccessTokenProvider = async () =>
-                    await _hostSession.GetAccessTokenAsync(CancellationToken.None).ConfigureAwait(false);
-                options.HttpMessageHandlerFactory = _ => _hostSession.CreatePinnedHttpMessageHandler();
-                options.WebSocketConfiguration = socketOptions =>
-                {
-                    socketOptions.RemoteCertificateValidationCallback = (_, certificate, _, _) =>
-                        _hostSession.ValidateServerCertificate(certificate);
-                };
-            })
+            .WithUrl(hubUrl)
             .WithAutomaticReconnect(
             [
                 TimeSpan.Zero,
