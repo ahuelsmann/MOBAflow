@@ -33,7 +33,8 @@ snapshots to it and consumes remote commands from it.
 
 Dependencies point from the hosts towards `Domain`. Each project lists its
 direct project references; a project may also reference any project it already
-reaches through these edges, never one above it.
+reaches through these edges, never one above it. The architecture test reads
+this table, so it is the single source of these rules.
 
 | Project | Root namespace | References |
 | --- | --- | --- |
@@ -54,13 +55,16 @@ Further rules:
 
 - Only `MOBAflow` uses WinUI and only `MOBAsmart` uses MAUI. Every other
   project stays platform-neutral.
+- Project references point to projects in `Moba.slnx`. The rules also apply
+  to `Directory.Build.props`, `Directory.Build.targets` and imported build files.
 - Every namespace declared in a project starts with the root namespace in the
   table. The only known exception are the `Moba.TrackPlan.Renderer` types in
   `TrackLibrary.PikoA`, which RF-21 moves.
-- A new project needs a row here and an entry in the architecture test.
+- A new project needs a row in this table.
 
-`Test/Architecture/SolutionArchitectureTests.cs` enforces these rules from the
-project files and sources; a failure message names the broken rule.
+`Test/Architecture/SolutionArchitectureTests.cs` enforces these rules from this
+table, the project and build files, and the C# syntax of the sources; a failure
+message names the broken rule.
 
 ### Track-plan dependency rule
 
