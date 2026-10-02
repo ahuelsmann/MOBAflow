@@ -155,7 +155,9 @@ Run the same checks locally after producing a Release Cobertura report:
 
 The mutation lane registry is `MutationTest/mutation-lanes.json`. It fails when
 a test fixture is added outside a registered lane. Lanes marked `planned` are
-visible but do not yet claim mutation coverage. The active Domain lane runs in
+visible but do not yet claim mutation coverage. The `architecture` lane has
+no production project: its tests read project files and sources, so code
+mutations do not exercise them. The active Domain lane runs in
 CI with a 60 percent break threshold:
 
 ```powershell
