@@ -91,7 +91,7 @@
                                 Text="MOBApi" />
                             <TextBlock
                                 Style="{StaticResource InfoBodyTextStyle}"
-                                Text="The local REST and SignalR bridge synchronizes solution and runtime state between MOBAflow, MOBAsmart and approved integrations. Its authenticated control-plane foundation protects sensitive host operations while compatibility migration continues." />
+                                Text="The local REST and SignalR bridge synchronizes solution and runtime state between MOBAflow, MOBAsmart and other integrations. It serves plain HTTP without sign-in to devices on the home network." />
                         </StackPanel>
 
                         <StackPanel Spacing="4">

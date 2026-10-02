@@ -42,7 +42,7 @@ public class StatusController : ControllerBase
     [HttpGet]
     public IActionResult GetStatus([FromServices] IConfiguration configuration)
     {
-        var port = GetPortFromConfig(configuration);
+        var port = MobApiHttpPort.Resolve(configuration);
         _clientRegistry.PruneExpired(ClientExpiryMinutes);
 
         return Ok(new
@@ -60,20 +60,5 @@ public class StatusController : ControllerBase
                 _snapshotCache),
             solution = RuntimeStatusBuilder.BuildSolutionStatus(_solutionCache)
         });
-    }
-
-    private static int GetPortFromConfig(IConfiguration configuration)
-    {
-        var url = configuration["Kestrel:Endpoints:Http:Url"];
-        if (!string.IsNullOrEmpty(url) && url.Contains(':', StringComparison.Ordinal))
-        {
-            var part = url.Split(':').LastOrDefault()?.TrimEnd('/');
-            if (part != null && int.TryParse(part, out var p))
-            {
-                return p;
-            }
-        }
-
-        return 5001;
     }
 }

@@ -38,8 +38,8 @@ A filtered run must execute tests; zero executed tests is not a pass.
 1. Start MOBAflow with `AutoStartWebApp` on; start MOBAsmart on a phone in the same network with no
    stored address and switch on the MOBAflow connection (it is off by default). Discovery connects
    without any pairing prompt; solution and runtime state appear.
-2. On a second phone, switch on the MOBAflow connection and enter the PC address manually; it connects
-   and stores the address as recent.
+2. Restart MOBAsmart on the same phone; it reconnects to the stored address without another pairing or
+   setup step.
 3. Drive a locomotive and switch a function from MOBAsmart; MOBAflow executes the commands.
 4. Check the MOBAflow settings page in Light and Dark theme: no pairing or credential section remains.
 5. Check MOBAsmart in Light and Dark theme: the bottom tab bar has no pairing tab, and every remaining

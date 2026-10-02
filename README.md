@@ -93,7 +93,7 @@ The **local API** connects MOBAflow, MOBAsmart and other integrations through
 REST endpoints and SignalR updates. It shares project data, runtime snapshots,
 journey progress and photos, and relays remote commands to the desktop runtime.
 MOBAflow can start it automatically, or it can run as a separate process.
-MOBAsmart discovers it on the same LAN or connects to a manually entered address.
+MOBAsmart discovers it automatically on the same LAN.
 
 MOBApi is a bridge to the desktop runtime, not a standalone layout controller.
 

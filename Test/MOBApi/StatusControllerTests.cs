@@ -96,7 +96,7 @@ internal sealed class StatusControllerTests
         };
 
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["Kestrel:Endpoints:Http:Url"] = "http://127.0.0.1:5001" })
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["urls"] = "http://127.0.0.1:5001" })
             .Build();
 
         var result = controller.GetStatus(configuration);
@@ -147,7 +147,7 @@ internal sealed class StatusControllerTests
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["Kestrel:Endpoints:Http:Url"] = "http://127.0.0.1:5001"
+                ["MOBAFLOW_HTTP_PORT"] = "5010"
             })
             .Build();
 
@@ -163,10 +163,32 @@ internal sealed class StatusControllerTests
         Assert.Multiple(() =>
         {
             Assert.That(root.GetProperty("status").GetString(), Is.EqualTo("running"));
-            Assert.That(root.GetProperty("port").GetInt32(), Is.EqualTo(5001));
+            Assert.That(root.GetProperty("port").GetInt32(), Is.EqualTo(5010));
             Assert.That(root.TryGetProperty("connectedClients", out _), Is.True);
             Assert.That(root.TryGetProperty("runtime", out _), Is.True);
             Assert.That(root.TryGetProperty("solution", out _), Is.True);
         });
+    }
+}
+
+[TestFixture]
+internal sealed class MobApiHttpPortTests
+{
+    [TestCase("5010", null, 5010)]
+    [TestCase(null, "http://0.0.0.0:5020", 5020)]
+    [TestCase(null, "https://0.0.0.0:5443;http://0.0.0.0:5030", 5030)]
+    [TestCase("0", "http://0.0.0.0:5040", 5040)]
+    [TestCase(null, null, MobApiHttpPort.Default)]
+    public void Resolve_UsesEnvironmentPortThenHttpUrlThenDefault(string? httpPort, string? urls, int expected)
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["MOBAFLOW_HTTP_PORT"] = httpPort,
+                ["urls"] = urls
+            })
+            .Build();
+
+        Assert.That(MobApiHttpPort.Resolve(configuration), Is.EqualTo(expected));
     }
 }

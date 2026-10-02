@@ -6,7 +6,7 @@ using Moba.MOBApi.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var httpPort = ResolveHttpPort(builder.Configuration);
+var httpPort = MobApiHttpPort.Resolve(builder.Configuration);
 builder.WebHost.ConfigureKestrel(options => options.Listen(IPAddress.Any, httpPort));
 
 builder.Services.AddControllers();
@@ -32,22 +32,3 @@ app.MapHub<PhotoHub>("/photos-hub");
 app.MapHub<RuntimeHub>("/runtime-hub");
 
 await app.RunAsync().ConfigureAwait(false);
-
-static int ResolveHttpPort(IConfiguration configuration)
-{
-    var configuredPort = configuration.GetValue<int?>("MOBAFLOW_HTTP_PORT");
-    if (configuredPort is > 0 and < 65536)
-        return configuredPort.Value;
-
-    var urls = configuration["urls"];
-    if (!string.IsNullOrWhiteSpace(urls))
-    {
-        foreach (var value in urls.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-        {
-            if (Uri.TryCreate(value, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttp)
-                return uri.Port;
-        }
-    }
-
-    return 5001;
-}

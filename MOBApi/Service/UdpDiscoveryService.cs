@@ -21,7 +21,7 @@ internal class UdpDiscoveryService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var restPort = ResolveRestApiPort();
+        var restPort = MobApiHttpPort.Resolve(_configuration);
         _logger.LogInformation(
             "UDP Discovery starting on Multicast {MulticastAddress}:{Port}",
             DiscoveryResponseParser.MulticastAddress,
@@ -40,21 +40,6 @@ internal class UdpDiscoveryService : BackgroundService
         {
             _logger.LogInformation("UDP Discovery stopped");
         }
-    }
-
-    private int ResolveRestApiPort()
-    {
-        var configuredPort = _configuration.GetValue<int?>("MOBAFLOW_HTTP_PORT");
-        if (configuredPort is > 0 and < 65536)
-            return configuredPort.Value;
-
-        var kestrelUrl = _configuration["Kestrel:Endpoints:Http:Url"] ?? "http://localhost:5001";
-        if (Uri.TryCreate(kestrelUrl, UriKind.Absolute, out var uri))
-        {
-            return uri.Port;
-        }
-
-        return 5001;
     }
 
     public override void Dispose()

@@ -84,8 +84,8 @@ API.
    service uses the notification while a session is active.
 3. Wait for the Z21 status to become ON.
 4. Enable the **MOBAflow** switch. MOBAsmart discovers MOBApi on the LAN and
-   synchronizes the current solution. If discovery finds nothing, enter the PC
-   address manually; MOBAsmart remembers recently used addresses.
+   synchronizes the current solution. It remembers the addresses it found and
+   tries them first next time; tap the MOBAflow status to search again.
 5. Android asks for camera permission only when you take photos for upload.
 
 See the [MOBAsmart guide](MOBASMART-USER-GUIDE.md) for the connection model and

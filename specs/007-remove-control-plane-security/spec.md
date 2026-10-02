@@ -42,20 +42,20 @@ Solution JSON, Z21 behavior, safe locomotive startup and persisted layouts are u
   remote command queue) stay limited to the same PC? → A: No. Every device in the home network may call
   every operation; no source-address check remains.
 - Q: Should MOBAflow keep an address-only QR code? → A: No. The QR code is removed completely;
-  MOBAsmart connects through discovery, manual entry or a recent address.
+  MOBAsmart connects through LAN discovery, which tries recently found addresses first.
 
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Connect MOBAsmart without setup steps (Priority: P1)
 
 An operator starts MOBAflow on the home PC and opens MOBAsmart on a phone in the same home network.
-MOBAsmart finds MOBAflow automatically, or the operator enters the PC address once, and the phone shows
+MOBAsmart finds MOBAflow automatically through LAN discovery, and the phone shows
 the current solution and runtime state. No pairing, QR scan, approval or certificate step exists.
 
 **Why this priority**: This is the everyday connection path and the reason for the scope decision.
 
 **Independent Test**: With MOBApi running and no stored pairing data, start a MOBAsmart client against it
-by discovery and by a manually entered address; both reach the solution, runtime snapshot and settings.
+by discovery and by a recently found address; both reach the solution, runtime snapshot and settings.
 
 **Acceptance Scenarios**:
 
@@ -139,8 +139,8 @@ pinning or the RF-03 rollout, and the scope statement is present in README and S
 - **FR-003**: MOBApi MUST serve all remaining REST and SignalR operations over plain HTTP on its
   configured port without credentials; the HTTPS listener, server identity and certificate pinning MUST
   be removed from MOBApi, MOBAflow and MOBAsmart.
-- **FR-004**: MOBAsmart MUST connect through the existing discovery, a manually entered address or a
-  recent address, with no pairing screen, QR scanning, camera permission request for pairing or
+- **FR-004**: MOBAsmart MUST connect through the existing LAN discovery, which tries recently found
+  addresses first, with no pairing screen, QR scanning, camera permission request for pairing or
   credential store.
 - **FR-005**: MOBAflow and MOBAsmart MUST remove the pairing and credential management UI, the QR code
   display and scanning, and the related settings and permissions.
@@ -189,7 +189,9 @@ pinning or the RF-03 rollout, and the scope statement is present in README and S
 
 - The home network is trusted; any device in it may read and control the layout. The maintainer accepted
   this on 2026-09-25 (#50 closed as not planned).
-- The existing discovery, manual address entry and recent addresses remain the connection mechanisms.
+- The existing LAN discovery (multicast, subnet probe, recently found addresses first) remains the only
+  connection mechanism. MOBAsmart has no manual address entry; the maintainer decided on 2026-09-30 not
+  to add one.
 - `AutoStartWebApp` remains the way to disable network access to MOBAflow.
 - Validation limits follow the Z21 backend: locomotive address 1-9999, speed 0-126, functions F0-F31.
 - Research on 2026-09-26 showed that today only required fields are checked on REST, SignalR commands
