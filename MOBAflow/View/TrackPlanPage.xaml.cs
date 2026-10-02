@@ -24,7 +24,6 @@ using SharedUI.Interface;
 using SharedUI.Service;
 using SharedUI.ViewModel;
 using TrackLibrary.PikoA;
-using TrackPlan.Renderer;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.System;

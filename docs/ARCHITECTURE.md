@@ -58,8 +58,7 @@ Further rules:
 - Project references point to projects in `Moba.slnx`. The rules also apply
   to `Directory.Build.props`, `Directory.Build.targets` and imported build files.
 - Every namespace declared in a project starts with the root namespace in the
-  table. The only known exception are the `Moba.TrackPlan.Renderer` types in
-  `TrackLibrary.PikoA`, which RF-21 moves.
+  table.
 - A new project needs a row in this table.
 
 `Test/Architecture/SolutionArchitectureTests.cs` enforces these rules from this

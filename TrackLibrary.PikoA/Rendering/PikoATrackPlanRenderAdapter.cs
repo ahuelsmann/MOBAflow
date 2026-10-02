@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.TrackPlan.Renderer;
+namespace Moba.TrackLibrary.PikoA;
 
-using TrackLibrary.PikoA;
+using Moba.TrackPlan.Renderer;
 
 /// <summary>Adapts Piko A placements to the library-neutral renderer scene.</summary>
 public static class TrackPlanRenderSceneBuilder
