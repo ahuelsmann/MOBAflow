@@ -29,6 +29,39 @@ snapshots to it and consumes remote commands from it.
 
 ## 🏗️ Architecture Layers
 
+### Project dependency rules
+
+Dependencies point from the hosts towards `Domain`. Each project lists its
+direct project references; a project may also reference any project it already
+reaches through these edges, never one above it.
+
+| Project | Root namespace | References |
+| --- | --- | --- |
+| `Domain` | `Moba.Domain` | none |
+| `TrackLibrary.Base` | `Moba.TrackLibrary.Base` | none |
+| `Common` | `Moba.Common` | `Domain` |
+| `Sound` | `Moba.Sound` | `Common` |
+| `Backend` | `Moba.Backend` | `Common`, `Domain`, `Sound` |
+| `TrackPlan.Renderer` | `Moba.TrackPlan.Renderer` | `TrackLibrary.Base` |
+| `TrackLibrary.PikoA` | `Moba.TrackLibrary.PikoA` | `TrackLibrary.Base`, `Domain`, `TrackPlan.Renderer` |
+| `MOBAdisplay` | `Moba.Display` | `Domain` |
+| `MOBApi` | `Moba.MOBApi` | `Common` |
+| `SharedUI` | `Moba.SharedUI` | `Backend`, `Common`, `MOBAdisplay`, `TrackPlan.Renderer`, `TrackLibrary.PikoA` |
+| `MOBAflow` (WinUI host) | `Moba.WinUI` | `Backend`, `Common`, `MOBApi`, `SharedUI`, `TrackLibrary.Base`, `TrackPlan.Renderer`, `TrackLibrary.PikoA`, `MOBAdisplay` |
+| `MOBAsmart` (MAUI host) | `Moba.MAUI` | `SharedUI`, `Common`, `Sound` |
+
+Further rules:
+
+- Only `MOBAflow` uses WinUI and only `MOBAsmart` uses MAUI. Every other
+  project stays platform-neutral.
+- Every namespace declared in a project starts with the root namespace in the
+  table. The only known exception are the `Moba.TrackPlan.Renderer` types in
+  `TrackLibrary.PikoA`, which RF-21 moves.
+- A new project needs a row here and an entry in the architecture test.
+
+`Test/Architecture/SolutionArchitectureTests.cs` enforces these rules from the
+project files and sources; a failure message names the broken rule.
+
 ### Track-plan dependency rule
 
 Track-plan code follows an explicit inward dependency direction:
@@ -547,6 +580,21 @@ Observable Property Update
   ↓
 UI Re-renders
 ```
+
+### Notification mechanisms
+
+Each kind of change has one owner mechanism:
+
+| Change | Mechanism | Example |
+| --- | --- | --- |
+| Runtime events (something happened: feedback, connection, track power) | `IEventBus` events in `Common/Events` and `Backend/Events` | `FeedbackReceivedEvent` |
+| Runtime state (what is true now) | Immutable snapshots read from `IRuntimeSnapshotProvider.Current`; changes are announced on the EventBus | `MobaRuntimeSnapshot`, `RuntimeSnapshotChangedEvent` |
+| Component events (inside one service or control and its direct owner) | Plain C# `event` | `InPortCounterService.SnapshotChanged` |
+| UI binding | `INotifyPropertyChanged` through CommunityToolkit observable properties | ViewModel properties |
+
+New code uses the mechanism of the row its change belongs to. A C# event stays
+between a component and its direct owner, for example `InPortCounterService`
+and `MobaRuntimeService`.
 
 ---
 
