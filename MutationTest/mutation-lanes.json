@@ -76,6 +76,12 @@
       "status": "planned",
       "test-directories": ["Test/MOBAsmart"],
       "production-projects": ["MOBAsmart/MOBAsmart.csproj"]
+    },
+    {
+      "name": "architecture",
+      "status": "planned",
+      "test-directories": ["Test/Architecture"],
+      "production-projects": []
     }
   ]
 }
