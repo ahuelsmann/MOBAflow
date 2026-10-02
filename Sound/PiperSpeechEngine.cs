@@ -2,7 +2,6 @@
 
 namespace Moba.Sound;
 
-using Common.Speech;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;

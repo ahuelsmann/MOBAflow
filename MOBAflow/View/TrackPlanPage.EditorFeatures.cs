@@ -9,6 +9,7 @@ using Microsoft.UI.Xaml.Input;
 
 using System.Diagnostics;
 
+using TrackLibrary.PikoA;
 using TrackPlan.Renderer;
 
 using Windows.System;
