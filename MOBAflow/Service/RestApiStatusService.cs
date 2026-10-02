@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
+using Common.Discovery;
 using Backend.Interface;
 
 using Common.Configuration;
@@ -173,7 +174,7 @@ public sealed class RestApiStatusService : IAsyncDisposable
             return;
         var port = _appSettings.RestApi.Port;
         if (port <= 0) port = 5001;
-        var url = $"http://127.0.0.1:{port}/api/status";
+        var url = MobApiEndpoint.Local(port).Resolve("api/status");
         try
         {
             var response = await _httpClient.GetAsync(url, _disposeCts.Token);

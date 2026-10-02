@@ -78,7 +78,6 @@ The following table is regenerated from the centrally managed versions in [`Dire
 | `Microsoft.Extensions.*` | `10.0.10` | `Common`, `Backend`, `Sound`, `SharedUI`, `Test` | Logging, dependency injection, and options. |
 | `Microsoft.Maui.Controls` | `10.0.90` | `MOBAsmart` | Core .NET MAUI UI framework for the Android client. |
 | `Xamarin.AndroidX.Startup.StartupRuntime` | `1.2.0.8` | `MOBAsmart` | AndroidX startup integration for MAUI initialization providers. |
-| `ZXing.Net` | `0.16.11` | `MOBAflow` | Referenced by the WinUI host for planned barcode/QR features; no active app surface currently uses it. |
 | `System.Speech`, `System.Windows.Extensions` | `10.0.10` | `Sound` | Windows text-to-speech and Windows-specific audio APIs. |
 | `Serilog`, `Serilog.Extensions.Logging`, `Serilog.Sinks.Async`, `Serilog.Sinks.Debug`, `Serilog.Sinks.File`, `Serilog.Enrichers.*` | `4.4.0`, `10.0.0`, `2.1.0`, `3.0.0`, `7.0.0`, `3.0.1`–`4.0.0` | `Common`, `MOBAflow` | Structured logging, async/file/debug sinks, and log enrichment. |
 | `SkiaSharp`, `System.Drawing.Common` | `4.150.1`, `10.0.10` | `MOBAdisplay`, `MOBAflow` | Display frame rendering and image conversion utilities. |

@@ -38,8 +38,8 @@ A filtered run must execute tests; zero executed tests is not a pass.
 1. Start MOBAflow with `AutoStartWebApp` on; start MOBAsmart on a phone in the same network with no
    stored address and switch on the MOBAflow connection (it is off by default). Discovery connects
    without any pairing prompt; solution and runtime state appear.
-2. On a second phone, switch on the MOBAflow connection and enter the PC address manually; it connects
-   and stores the address as recent.
+2. Restart MOBAsmart on the same phone; it reconnects to the stored address without another pairing or
+   setup step.
 3. Drive a locomotive and switch a function from MOBAsmart; MOBAflow executes the commands.
 4. Check the MOBAflow settings page in Light and Dark theme: no pairing or credential section remains.
 5. Check MOBAsmart in Light and Dark theme: the bottom tab bar has no pairing tab, and every remaining
@@ -47,4 +47,20 @@ A filtered run must execute tests; zero executed tests is not a pass.
 
 ## Results
 
-Record the actual command results, skipped lanes and remaining manual checks here during delivery.
+Slice 1 (#167, #170) and slice 2 (#171) recorded their results in their pull requests.
+
+Slice 3, local run on Windows 11 on 2026-09-30:
+
+- MOBApi build: 0 warnings, 0 errors. MOBAflow FastDebug build: 0 warnings, 0 errors.
+  MOBAsmart Android FastDebug build: 0 errors, 45 warnings (unchanged from `main`).
+- Portable suite: 1,631 passed, 4 skipped (three live E2E tests need a manually started MOBApi,
+  one photo test needs bundled photos). `MobApiProcessTests` ran all three real-process cases.
+- Windows suite: 1,685 passed, 0 skipped.
+- Analyzer gates reproduced locally for `net10.0`, `net10.0-windows10.0.22621.0` and the Android
+  Release build (full rebuilds); all three baselines only shrink apart from new test fixtures
+  and one CA1515 entry for the public `LocalMobApiClient`.
+- All MOBApi request URIs are built by `MobApiEndpoint`; SonarCloud S5332 (plain HTTP) is expected
+  there by the operating model and is accepted in SonarCloud rather than suppressed in code.
+- Structural search: no authentication, pairing, credential, certificate or ZXing code remains;
+  remaining hits are unrelated (multiplexer address pairing, display test fingerprints).
+- Pending: manual checks 1-5 above, because starting the apps was not authorized.

@@ -31,11 +31,13 @@ internal sealed class RestApiRuntimeHubServiceTests
             .Returns(MobaRuntimeSnapshot.Empty);
 
         var eventBus = new EventBus(NullLogger<EventBus>.Instance);
+        using var mobApiClient = new LocalMobApiClient(new AppSettings());
         var service = new RestApiRuntimeHubService(
             runtimeHubHostClient.Object,
             mobaRuntime.Object,
             eventBus,
-            NullLogger<RestApiRuntimeHubService>.Instance);
+            NullLogger<RestApiRuntimeHubService>.Instance,
+            mobApiClient);
 
         eventBus.Publish(new RuntimeSnapshotChangedEvent(MobaRuntimeSnapshot.Empty));
 

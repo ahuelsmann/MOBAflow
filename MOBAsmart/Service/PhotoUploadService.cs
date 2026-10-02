@@ -2,7 +2,6 @@
 namespace Moba.MAUI.Service;
 
 using Common.Discovery;
-using Common.Security;
 
 using SharedUI.Interface;
 
@@ -19,17 +18,14 @@ public class PhotoUploadService : IPhotoUploadService
     /// LAN health checks bypass the platform <see cref="HttpClient"/> handler so Android does not route
     /// private IPs through a system proxy/VPN (avoids <c>SocksSocketImpl</c> / failed connects in logs).
     /// </summary>
-    private readonly IRemoteControlAuthenticatedHttpClient _authenticatedHttpClient;
     private readonly HttpClient _lanHealthHttpClient;
+    private readonly HttpClient _httpClient;
 
-    public PhotoUploadService(
-        IHttpClientFactory httpClientFactory,
-        IRemoteControlAuthenticatedHttpClient authenticatedHttpClient)
+    public PhotoUploadService(IHttpClientFactory httpClientFactory)
     {
         ArgumentNullException.ThrowIfNull(httpClientFactory);
-        _authenticatedHttpClient = authenticatedHttpClient
-            ?? throw new ArgumentNullException(nameof(authenticatedHttpClient));
         _lanHealthHttpClient = httpClientFactory.CreateClient(MobiHttpClientNames.LanHealth);
+        _httpClient = httpClientFactory.CreateClient(MobiHttpClientNames.Platform);
     }
 
     /// <summary>
@@ -78,9 +74,8 @@ public class PhotoUploadService : IPhotoUploadService
             form.Add(new StringContent(category), "category");
             form.Add(new StringContent(entityId.ToString()), "entityId");
 
-            using var response = await _authenticatedHttpClient
-                .PostAsync("api/photos/upload", form)
-                .ConfigureAwait(false);
+            var url = new MobApiEndpoint(serverIp, serverPort).Resolve("api/photos/upload");
+            using var response = await _httpClient.PostAsync(url, form).ConfigureAwait(false);
 
             if (response.IsSuccessStatusCode)
             {
@@ -170,7 +165,7 @@ public class PhotoUploadService : IPhotoUploadService
     {
         try
         {
-            var url = $"http://{serverIp}:{serverPort}{MobApiHealthProbe.HealthPath}";
+            var url = new MobApiEndpoint(serverIp, serverPort).Resolve(MobApiHealthProbe.HealthPath);
 
             using var cts = new CancellationTokenSource(timeout ?? TimeSpan.FromSeconds(5));
             using var response = await _lanHealthHttpClient

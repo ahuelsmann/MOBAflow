@@ -129,66 +129,35 @@ internal class DiscoveryResponseParserTests
     }
 
     [Test]
-    public void TryParse_Current_response_returns_https_identity_metadata()
+    public void CreateResponse_roundtrips_through_TryParse()
     {
-        const string instanceId = "d3ae2669706c4b7391167df884017420";
-        const string fingerprint = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF";
-        var response = DiscoveryResponseParser.CreateResponse(
-            "192.168.1.20",
-            5001,
-            5002,
-            instanceId,
-            fingerprint);
+        var response = DiscoveryResponseParser.CreateResponse(" 192.168.1.20 ", 5001);
 
-        var success = DiscoveryResponseParser.TryParse(response, out MobApiDiscoveryEndpoint? endpoint);
+        var success = DiscoveryResponseParser.TryParse(response, out MobApiEndpoint? endpoint);
 
         Assert.Multiple(() =>
         {
+            Assert.That(response, Is.EqualTo("MOBAFLOW_REST_API|192.168.1.20|5001"));
             Assert.That(success, Is.True);
-            Assert.That(endpoint?.IpAddress, Is.EqualTo("192.168.1.20"));
-            Assert.That(endpoint?.HttpPort, Is.EqualTo(5001));
-            Assert.That(endpoint?.HttpsPort, Is.EqualTo(5002));
-            Assert.That(endpoint?.ServerInstanceId, Is.EqualTo(instanceId));
-            Assert.That(endpoint?.ServerPublicKeyFingerprint, Is.EqualTo(fingerprint));
-            Assert.That(endpoint?.ProtocolVersion, Is.EqualTo(DiscoveryResponseParser.CurrentProtocolVersion));
+            Assert.That(endpoint, Is.EqualTo(new MobApiEndpoint("192.168.1.20", 5001)));
         });
     }
 
     [Test]
-    public void TryParse_Current_response_preserves_legacy_http_result()
+    public void TryParse_Response_with_additional_fields_returns_false()
     {
-        var response = DiscoveryResponseParser.CreateResponse(
-            "10.0.0.10",
-            5001,
-            5002,
-            "d3ae2669706c4b7391167df884017420",
-            "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF");
+        var response = "MOBAFLOW_REST_API|192.168.1.20|5001|2|5002|d3ae2669706c4b7391167df884017420|ABCDEF";
 
-        var success = DiscoveryResponseParser.TryParse(response, out var ip, out var port);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(success, Is.True);
-            Assert.That(ip, Is.EqualTo("10.0.0.10"));
-            Assert.That(port, Is.EqualTo(5001));
-        });
-    }
-
-    [TestCase("3", "5002", "d3ae2669706c4b7391167df884017420", "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF")]
-    [TestCase("2", "0", "d3ae2669706c4b7391167df884017420", "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF")]
-    [TestCase("2", "5002", "not-a-guid", "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF")]
-    [TestCase("2", "5002", "d3ae2669706c4b7391167df884017420", "not-a-fingerprint")]
-    public void TryParse_Invalid_current_metadata_returns_false(
-        string version,
-        string httpsPort,
-        string instanceId,
-        string fingerprint)
-    {
-        var response = $"MOBAFLOW_REST_API|192.168.1.20|5001|{version}|{httpsPort}|{instanceId}|{fingerprint}";
-
-        var success = DiscoveryResponseParser.TryParse(response, out MobApiDiscoveryEndpoint? endpoint);
+        var success = DiscoveryResponseParser.TryParse(response, out MobApiEndpoint? endpoint);
 
         Assert.That(success, Is.False);
         Assert.That(endpoint, Is.Null);
+    }
+
+    [TestCase(0)]
+    [TestCase(65536)]
+    public void CreateResponse_Invalid_port_throws(int port)
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => DiscoveryResponseParser.CreateResponse("192.168.1.20", port));
     }
 }

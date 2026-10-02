@@ -1,10 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MOBApi.Controllers;
 
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
-using Moba.MOBApi.Security;
 
 using Models;
 using Service;
@@ -30,7 +27,6 @@ public class RuntimeSettingsController : ControllerBase
     /// Returns the Z21 endpoint configured in MOBAflow when available.
     /// </summary>
     [HttpGet]
-    [Authorize(Policy = ControlPlaneCapabilities.Read)]
     public IActionResult GetRuntimeSettings()
     {
         if (!_runtimeSettingsCache.TryGetZ21Endpoint(out var ipAddress, out var port))
@@ -45,13 +41,8 @@ public class RuntimeSettingsController : ControllerBase
     /// Receives runtime settings from MOBAflow WinUI (localhost only).
     /// </summary>
     [HttpPut]
-    [Authorize(Policy = ControlPlaneCapabilities.HostPublish)]
     public IActionResult PutRuntimeSettings([FromBody] RuntimeSettingsRequest? request)
     {
-        if (!IsLocalhostRequest())
-        {
-            return Forbid();
-        }
 
         if (request == null || string.IsNullOrWhiteSpace(request.Z21IpAddress))
         {
@@ -71,27 +62,5 @@ public class RuntimeSettingsController : ControllerBase
 
         _runtimeSettingsCache.SetZ21Endpoint(request.Z21IpAddress, port);
         return Ok(new { z21IpAddress = request.Z21IpAddress.Trim(), z21Port = port });
-    }
-
-    private bool IsLocalhostRequest()
-    {
-        var remote = HttpContext.Connection.RemoteIpAddress;
-        if (remote == null)
-        {
-            return false;
-        }
-
-        if (IPAddress.IsLoopback(remote))
-        {
-            return true;
-        }
-
-        if (remote.IsIPv4MappedToIPv6)
-        {
-            remote = remote.MapToIPv4();
-            return IPAddress.IsLoopback(remote);
-        }
-
-        return false;
     }
 }

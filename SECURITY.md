@@ -25,6 +25,24 @@ If GitHub Private Vulnerability Reporting is unavailable, open a public issue
 that asks the maintainers for a private security contact. Do not include
 vulnerability details in that issue.
 
+## Operating Model
+
+MOBAflow is designed for a private household on a trusted home network.
+MOBAflow, MOBAsmart and MOBApi intentionally provide no sign-in, user management,
+pairing or transport encryption: every device in the same network can read the
+layout state and send commands. MOBApi validates every remote command and bounds
+its command queue; these checks protect the layout from invalid values, not from
+untrusted users.
+
+- Do not expose MOBApi or the MOBAflow PC to the public internet, for example
+  through port forwarding.
+- Keep devices you do not trust in a separate network.
+- If your installation needs authentication, authorization or user management,
+  fork the repository and add them in your fork.
+
+Reports that only describe the absence of authentication on the local network
+describe intended behavior and are not treated as vulnerabilities.
+
 ## Supported Versions and Scope
 
 Security fixes target `main` and the latest tagged release when a supported

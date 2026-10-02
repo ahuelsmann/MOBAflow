@@ -25,7 +25,7 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
     private readonly IMobaRuntime _mobaRuntime;
     private readonly IEventBus _eventBus;
     private readonly ILogger<RestApiRuntimeHubService> _logger;
-    private readonly HostControlPlaneSession? _hostSession;
+    private readonly LocalMobApiClient _mobApiClient;
     private readonly object _debounceLock = new();
     private readonly Guid _subscriptionId;
     private CancellationTokenSource? _debounceCts;
@@ -87,13 +87,13 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
         IMobaRuntime mobaRuntime,
         IEventBus eventBus,
         ILogger<RestApiRuntimeHubService> logger,
-        HostControlPlaneSession? hostSession = null)
+        LocalMobApiClient mobApiClient)
     {
         _runtimeHubHostClient = runtimeHubHostClient;
         _mobaRuntime = mobaRuntime;
         _eventBus = eventBus;
         _logger = logger;
-        _hostSession = hostSession;
+        _mobApiClient = mobApiClient ?? throw new ArgumentNullException(nameof(mobApiClient));
         _subscriptionId = _eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged);
     }
 
@@ -221,13 +221,10 @@ public sealed class RestApiRuntimeHubService : IAsyncDisposable
 
     private async Task<bool> PushSnapshotRestFallbackAsync(MobaRuntimeSnapshot snapshot, CancellationToken cancellationToken)
     {
-        if (_hostSession?.IsEnrolled != true)
-            return false;
-
         var json = RuntimeJsonSerializer.Serialize(snapshot);
         using var content = new StringContent(json, Encoding.UTF8, "application/json");
         using var request = new HttpRequestMessage(HttpMethod.Put, "api/runtime/snapshot") { Content = content };
-        using var response = await _hostSession.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        using var response = await _mobApiClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
             _logger.LogDebug("Runtime REST snapshot push returned {StatusCode}", (int)response.StatusCode);

@@ -14,7 +14,9 @@
   `ConcurrentQueue`. Neither protection named in the scope decision exists yet.
 - ZXing is used only for the pairing QR code (MOBAflow generation, MOBAsmart scanning). The Android
   camera permission is also used by the locomotive photo capture and therefore stays.
-- Discovery, manual address entry and recent addresses already exist in MOBAsmart and predate pairing.
+- LAN discovery (multicast, subnet probe, recently found addresses first) exists in MOBAsmart and
+  predates pairing. MOBAsmart has no manual address entry; pairing was the only other way to supply an
+  address.
 - `JourneyProgressController` contains a loopback check outside the security folder.
 - `ClientsController.Register/Unregister` and `RuntimeHub.RegisterRemote` derive the client identity
   from the credential claim; without authentication they must use the request `ClientId` instead.

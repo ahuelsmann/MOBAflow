@@ -188,13 +188,10 @@ MOBAsmart then discovers the endpoint on the LAN.
 
 The bridge supports solution synchronization, runtime state, remote commands,
 journey progress, client registration and rolling-stock
-photos. Protected desktop-host communication, certificate-pinned MOBAsmart
-pairing and authenticated remote reads are implemented. Remote control commands
-require authorization. Reading remains possible without pairing, and MOBApi
-rejects remote commands with invalid values. Pairing and sign-in are being
-removed because MOBAflow targets a private household; see the
-[project reference](../PROJECT-REFERENCE.md#mobapi-endpoints). The bridge
-is designed for a trusted private LAN and must not be exposed to the public
+photos. It needs no pairing or sign-in: every device in the home network can
+connect, and MOBApi rejects remote commands with invalid values. See the
+[project reference](../PROJECT-REFERENCE.md#mobapi-endpoints). The bridge is
+designed for a trusted private LAN and must not be exposed to the public
 internet.
 
 ## Useful Track Plan keys

@@ -1,10 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MOBApi.Controllers;
 
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Security;
 using Service;
 
 /// <summary>
@@ -42,18 +40,9 @@ public class StatusController : ControllerBase
     /// Returns REST API status and list of connected clients (e.g. MAUI app).
     /// </summary>
     [HttpGet]
-    [Authorize(Policy = ControlPlaneCapabilities.Read)]
     public IActionResult GetStatus([FromServices] IConfiguration configuration)
     {
-        if (HttpContext.User.Identity?.IsAuthenticated != true)
-        {
-            return Ok(new
-            {
-                status = "running"
-            });
-        }
-
-        var port = GetPortFromConfig(configuration);
+        var port = MobApiHttpPort.Resolve(configuration);
         _clientRegistry.PruneExpired(ClientExpiryMinutes);
 
         return Ok(new
@@ -71,20 +60,5 @@ public class StatusController : ControllerBase
                 _snapshotCache),
             solution = RuntimeStatusBuilder.BuildSolutionStatus(_solutionCache)
         });
-    }
-
-    private static int GetPortFromConfig(IConfiguration configuration)
-    {
-        var url = configuration["Kestrel:Endpoints:Http:Url"];
-        if (!string.IsNullOrEmpty(url) && url.Contains(':', StringComparison.Ordinal))
-        {
-            var part = url.Split(':').LastOrDefault()?.TrimEnd('/');
-            if (part != null && int.TryParse(part, out var p))
-            {
-                return p;
-            }
-        }
-
-        return 5001;
     }
 }

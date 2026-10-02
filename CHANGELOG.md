@@ -11,6 +11,11 @@ the version tags follow [Semantic Versioning](https://semver.org/).
 
 ### Removed
 
+- Sign-in, pairing and credentials between MOBAflow, MOBAsmart and MOBApi, including
+  the pairing QR code, the MOBAsmart Pairing tab, the HTTPS port with certificate
+  pinning and the desktop host enrollment. MOBAflow targets a private household:
+  every device in the home network connects over plain HTTP without setup steps.
+  Installations that need authentication fork the repository.
 - The MOBApi anonymous-read migration, including its observation window, readiness
   evidence endpoints and the runtime lookup of GitHub issue comments. Reading without
   credentials stays available.

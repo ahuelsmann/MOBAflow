@@ -9,14 +9,10 @@ using Domain;
 using Hubs;
 
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-
-using Moba.MOBApi.Security;
 
 using Service;
 
-using System.Net;
 using System.Text.Json;
 
 /// <summary>
@@ -42,7 +38,6 @@ public class SolutionController : ControllerBase
     /// Returns metadata for polling without transferring the full solution JSON.
     /// </summary>
     [HttpGet("meta")]
-    [Authorize(Policy = ControlPlaneCapabilities.Read)]
     public IActionResult GetMeta()
     {
         if (!_solutionCache.TryGet(out var entry))
@@ -57,7 +52,6 @@ public class SolutionController : ControllerBase
     /// Returns the cached solution JSON for MOBAsmart.
     /// </summary>
     [HttpGet]
-    [Authorize(Policy = ControlPlaneCapabilities.Read)]
     public IActionResult GetSolution()
     {
         if (!_solutionCache.TryGet(out var entry))
@@ -72,13 +66,8 @@ public class SolutionController : ControllerBase
     /// Receives solution JSON from MOBAflow WinUI (localhost only).
     /// </summary>
     [HttpPut]
-    [Authorize(Policy = ControlPlaneCapabilities.HostPublish)]
     public async Task<IActionResult> PutSolution(CancellationToken cancellationToken)
     {
-        if (!IsLocalhostRequest())
-        {
-            return Forbid();
-        }
 
         using var reader = new StreamReader(Request.Body);
         var json = await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
@@ -161,21 +150,5 @@ public class SolutionController : ControllerBase
             schemaVersion,
             firstProjectName = entry.ActiveProjectName ?? firstProjectName
         };
-    }
-
-    private bool IsLocalhostRequest()
-    {
-        var remoteIp = HttpContext.Connection.RemoteIpAddress;
-        if (remoteIp == null)
-        {
-            return false;
-        }
-
-        if (IPAddress.IsLoopback(remoteIp))
-        {
-            return true;
-        }
-
-        return remoteIp.Equals(HttpContext.Connection.LocalIpAddress);
     }
 }

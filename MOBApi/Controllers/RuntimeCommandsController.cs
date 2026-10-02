@@ -6,13 +6,9 @@ using Common.Runtime;
 
 using Domain;
 
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Moba.MOBApi.Security;
 using Moba.MOBApi.Service;
-
-using System.Net;
 
 /// <summary>
 /// REST fallback for remote runtime commands when SignalR forwarding is unavailable.
@@ -29,7 +25,6 @@ public class RuntimeCommandsController : ControllerBase
     }
 
     [HttpPost("signal-aspect")]
-    [Authorize(Policy = ControlPlaneCapabilities.RuntimeControl)]
     public IActionResult EnqueueSignalAspect([FromBody] SetSignalAspectRequest? request)
     {
         if (request == null)
@@ -46,7 +41,6 @@ public class RuntimeCommandsController : ControllerBase
     }
 
     [HttpPost("locomotive/drive")]
-    [Authorize(Policy = ControlPlaneCapabilities.RuntimeControl)]
     public IActionResult EnqueueLocomotiveDrive([FromBody] SetLocomotiveDriveRequest? request)
     {
         if (request == null)
@@ -64,7 +58,6 @@ public class RuntimeCommandsController : ControllerBase
     }
 
     [HttpPost("locomotive/function")]
-    [Authorize(Policy = ControlPlaneCapabilities.RuntimeControl)]
     public IActionResult EnqueueLocomotiveFunction([FromBody] SetLocomotiveFunctionRequest? request)
     {
         if (request == null)
@@ -82,15 +75,9 @@ public class RuntimeCommandsController : ControllerBase
     }
 
     [HttpGet("pending")]
-    [Authorize(Policy = ControlPlaneCapabilities.HostConsume)]
     public IActionResult DequeuePending([FromServices] IRuntimeCommandQueue commandQueue)
     {
         ArgumentNullException.ThrowIfNull(commandQueue);
-
-        if (!IsLocalhostRequest())
-        {
-            return Forbid();
-        }
 
         if (!commandQueue.TryDequeue(out var command) || command == null)
         {
@@ -98,22 +85,6 @@ public class RuntimeCommandsController : ControllerBase
         }
 
         return Ok(command);
-    }
-
-    private bool IsLocalhostRequest()
-    {
-        var remoteIp = HttpContext.Connection.RemoteIpAddress;
-        if (remoteIp == null)
-        {
-            return false;
-        }
-
-        if (IPAddress.IsLoopback(remoteIp))
-        {
-            return true;
-        }
-
-        return remoteIp.Equals(HttpContext.Connection.LocalIpAddress);
     }
 
     public sealed record SetSignalAspectRequest(Guid SignalId, SignalAspect Aspect);

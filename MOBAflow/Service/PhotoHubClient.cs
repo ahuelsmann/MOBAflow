@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
+using Common.Discovery;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
 
@@ -55,7 +56,7 @@ public class PhotoHubClient : IPhotoHubClient
                 _hubConnection = null;
             }
 
-            var hubUrl = $"http://{serverIp}:{serverPort}/photos-hub";
+            var hubUrl = new MobApiEndpoint(serverIp, serverPort).Resolve("photos-hub");
             _logger?.LogInformation("🔗 Connecting to PhotoHub: {HubUrl}", hubUrl);
 
             _hubConnection = new HubConnectionBuilder()

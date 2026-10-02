@@ -1,8 +1,9 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
 
+using Common.Discovery;
 using Common.Path;
-using Common.Security;
+using Common.Configuration;
 
 using SharedUI.Interface;
 
@@ -11,12 +12,14 @@ using SharedUI.Interface;
 /// </summary>
 public sealed class MauiPhotoUriResolver : IPhotoUriResolver
 {
-    private readonly IRemoteControlAuthenticatedHttpClient _authenticatedHttpClient;
+    private readonly HttpClient _httpClient;
+    private readonly AppSettings _settings;
 
-    public MauiPhotoUriResolver(IRemoteControlAuthenticatedHttpClient authenticatedHttpClient)
+    public MauiPhotoUriResolver(IHttpClientFactory httpClientFactory, AppSettings settings)
     {
-        _authenticatedHttpClient = authenticatedHttpClient
-            ?? throw new ArgumentNullException(nameof(authenticatedHttpClient));
+        ArgumentNullException.ThrowIfNull(httpClientFactory);
+        _httpClient = httpClientFactory.CreateClient(MobiHttpClientNames.Platform);
+        _settings = settings ?? throw new ArgumentNullException(nameof(settings));
     }
 
     /// <inheritdoc />
@@ -25,13 +28,15 @@ public sealed class MauiPhotoUriResolver : IPhotoUriResolver
         CancellationToken cancellationToken = default)
     {
         var requestPath = RemotePhotoUriBuilder.BuildRelativeApiPath(relativePhotoPath);
-        if (requestPath is null)
+        var serverIp = _settings.RestApi.CurrentIpAddress?.Trim();
+        var serverPort = _settings.RestApi.Port;
+        if (requestPath is null || string.IsNullOrEmpty(serverIp) || serverPort <= 0)
         {
             return null;
         }
 
-        using var response = await _authenticatedHttpClient
-            .GetAsync(requestPath, cancellationToken)
+        using var response = await _httpClient
+            .GetAsync(new MobApiEndpoint(serverIp, serverPort).Resolve(requestPath), cancellationToken)
             .ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {

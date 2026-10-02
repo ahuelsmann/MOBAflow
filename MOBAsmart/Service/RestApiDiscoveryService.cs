@@ -20,7 +20,7 @@ using System.Text;
 /// Order: recent/nearby HTTP probe, UDP multicast/broadcast (then unicast to the local /24), anchor subnet HTTP,
 /// then full /24 HTTP scan.
 /// </summary>
-public class RestApiDiscoveryService : IRestDiscoveryService, IAuthenticatedRestDiscoveryService
+public class RestApiDiscoveryService : IRestDiscoveryService
 {
     private const int QuickProbeTimeoutMs = 350;
     private const int SubnetProbeBatchSize = 16;
@@ -55,25 +55,6 @@ public class RestApiDiscoveryService : IRestDiscoveryService, IAuthenticatedRest
         string? subnetAnchorIp = null,
         CancellationToken cancellationToken = default) =>
         DiscoverServerAsync(subnetAnchorIp, cancellationToken);
-
-    /// <inheritdoc />
-    public async Task<MobApiDiscoveryEndpoint?> DiscoverAuthenticatedServerAsync(
-        CancellationToken cancellationToken = default)
-    {
-        var endpoint = await TryDiscoverEndpointByUdpAsync(
-                LanIpv4AddressHelper.GetCandidateLocalIpv4Addresses(),
-                cancellationToken)
-            .ConfigureAwait(false);
-        return endpoint is
-        {
-            ProtocolVersion: >= DiscoveryResponseParser.CurrentProtocolVersion,
-            HttpsPort: > 0,
-            ServerInstanceId: not null,
-            ServerPublicKeyFingerprint: not null
-        }
-            ? endpoint
-            : null;
-    }
 
     /// <summary>
     /// Fast discovery path: recent IPs and UDP only (no full subnet scan).
@@ -286,7 +267,7 @@ public class RestApiDiscoveryService : IRestDiscoveryService, IAuthenticatedRest
         return endpoint is null ? (null, null) : (endpoint.IpAddress, endpoint.HttpPort);
     }
 
-    private async Task<MobApiDiscoveryEndpoint?> TryDiscoverEndpointByUdpAsync(
+    private async Task<MobApiEndpoint?> TryDiscoverEndpointByUdpAsync(
         IReadOnlyList<IPAddress> localAddresses,
         CancellationToken cancellationToken)
     {
@@ -372,7 +353,7 @@ public class RestApiDiscoveryService : IRestDiscoveryService, IAuthenticatedRest
         }
     }
 
-    private async Task<MobApiDiscoveryEndpoint?> ReceiveHealthyEndpointAsync(
+    private async Task<MobApiEndpoint?> ReceiveHealthyEndpointAsync(
         UdpClient udpClient,
         int timeoutMs,
         CancellationToken cancellationToken)
@@ -386,7 +367,7 @@ public class RestApiDiscoveryService : IRestDiscoveryService, IAuthenticatedRest
             {
                 var result = await udpClient.ReceiveAsync(cts.Token).ConfigureAwait(false);
                 var response = Encoding.UTF8.GetString(result.Buffer).TrimEnd('\0').Trim();
-                if (!DiscoveryResponseParser.TryParse(response, out MobApiDiscoveryEndpoint? endpoint)
+                if (!DiscoveryResponseParser.TryParse(response, out MobApiEndpoint? endpoint)
                     || endpoint == null)
                 {
                     continue;
@@ -469,7 +450,7 @@ public class RestApiDiscoveryService : IRestDiscoveryService, IAuthenticatedRest
         {
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             cts.CancelAfter(timeoutMs);
-            var url = $"http://{ip}:{port}{MobApiHealthProbe.HealthPath}";
+            var url = new MobApiEndpoint(ip, port).Resolve(MobApiHealthProbe.HealthPath);
             using var response = await _lanProbeHttpClient
                 .GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cts.Token)
                 .ConfigureAwait(false);
