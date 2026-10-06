@@ -2,6 +2,7 @@
 namespace Moba.Test.SharedUI;
 
 using Microsoft.Extensions.Logging.Abstractions;
+using Moba.Test.Helpers;
 using Moba.Backend.Interface;
 using Moba.Backend.Model;
 using Moba.Backend.Service;
@@ -215,7 +216,7 @@ public sealed class JourneyCounterProjectionTests
             io.Setup(service => service.SaveAsAsync(It.IsAny<Solution>())).ReturnsAsync((true, "projection-test.json", null));
             Settings.Counter.CountOfFeedbackPoints = 7;
             ViewModel = new MainWindowViewModel(new LayoutColumnWidthsViewModel(), Runtime.Object, Runtime.Object, Runtime.Object, Gateway.Object, _eventBus,
-                dispatcher.Object, Settings, solution ?? new Solution { Projects = [new Project()] },
+                dispatcher.Object, Settings, TestSolutionSessions.Create(solution ?? new Solution { Projects = [new Project()] }, dispatcher.Object, Runtime.Object, io.Object),
                 new ActionExecutionContext { Z21 = Mock.Of<IZ21>() }, NullLogger<MainWindowViewModel>.Instance,
                 io.Object);
         }

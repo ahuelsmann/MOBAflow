@@ -2,6 +2,7 @@
 namespace Moba.Test.SharedUI;
 
 using Microsoft.Extensions.Logging;
+using Moba.Test.Helpers;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
 using Moba.Common.Events;
@@ -30,7 +31,7 @@ internal class JourneyMapViewModelTests
         var mainViewModel = CreateMainWindowViewModel();
         mainViewModel.SelectedProject = projectViewModel;
         mainViewModel.SelectedJourney = projectViewModel.Journeys.Single();
-        var viewModel = new JourneyMapViewModel(mainViewModel);
+        var viewModel = new JourneyMapViewModel(mainViewModel.SolutionSession);
 
         Assert.That(viewModel.RouteStations.Select(station => station.Name), Is.EqualTo(new[] { "Bielefeld", "Herford" }));
         Assert.That(viewModel.ProgressText, Is.EqualTo("Station 1 of 2"));
@@ -57,7 +58,7 @@ internal class JourneyMapViewModelTests
             eventBusMock.Object,
             dispatcherMock.Object,
             new AppSettings(),
-            new Solution(),
+            TestSolutionSessions.Create(new Solution(), dispatcherMock.Object, runtimeMock.Object),
             new ActionExecutionContext
             {
                 Z21 = new Mock<IZ21>().Object

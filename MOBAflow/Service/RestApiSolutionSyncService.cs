@@ -3,14 +3,13 @@
 namespace Moba.WinUI.Service;
 
 using Common.Configuration;
+using SharedUI.Interface;
 
 using Common.Events;
 
 using Domain;
 
 using Microsoft.Extensions.Logging;
-
-using SharedUI.ViewModel;
 
 using System.ComponentModel;
 
@@ -33,7 +32,7 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
     private readonly AppSettings _appSettings;
 
-    private readonly MainWindowViewModel _mainWindowViewModel;
+    private readonly ISolutionSession _solutionSession;
 
     private readonly IEventBus _eventBus;
 
@@ -82,7 +81,7 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         AppSettings appSettings,
 
-        MainWindowViewModel mainWindowViewModel,
+        ISolutionSession solutionSession,
 
         RestApiProcessService restApiProcessService,
 
@@ -100,7 +99,7 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         ArgumentNullException.ThrowIfNull(mobApiClient);
 
-        ArgumentNullException.ThrowIfNull(mainWindowViewModel);
+        ArgumentNullException.ThrowIfNull(solutionSession);
 
         ArgumentNullException.ThrowIfNull(restApiProcessService);
 
@@ -112,7 +111,7 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         _appSettings = appSettings;
 
-        _mainWindowViewModel = mainWindowViewModel;
+        _solutionSession = solutionSession;
 
         _eventBus = eventBus;
 
@@ -120,11 +119,11 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         _mobApiClient = mobApiClient;
 
-        mainWindowViewModel.SolutionLoaded += OnSolutionChanged;
+        solutionSession.SolutionLoaded += OnSolutionChanged;
 
-        mainWindowViewModel.SolutionSaving += OnSolutionChanged;
+        solutionSession.SolutionSaving += OnSolutionChanged;
 
-        mainWindowViewModel.PropertyChanged += OnMainWindowViewModelPropertyChanged;
+        solutionSession.PropertyChanged += OnSolutionSessionPropertyChanged;
 
         restApiProcessService.ApiBecameReachable += OnApiBecameReachable;
 
@@ -134,9 +133,9 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
     private void OnSolutionChanged(object? sender, EventArgs e) => QueuePush();
 
-    private void OnMainWindowViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void OnSolutionSessionPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(MainWindowViewModel.SelectedProject))
+        if (e.PropertyName == nameof(ISolutionSession.SelectedProject))
         {
             QueuePush();
         }
@@ -266,7 +265,7 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
     {
 
-        var solutionPath = _mainWindowViewModel.CurrentSolutionPath;
+        var solutionPath = _solutionSession.CurrentSolutionPath;
         if (string.IsNullOrWhiteSpace(solutionPath))
         {
             solutionPath = "mobaflow://in-memory";
@@ -293,7 +292,7 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         request.Headers.TryAddWithoutValidation("X-MOBAflow-Solution-Path", solutionPath);
 
-        var activeProjectName = _mainWindowViewModel.SelectedProject?.Name;
+        var activeProjectName = _solutionSession.SelectedProject?.Name;
         if (!string.IsNullOrWhiteSpace(activeProjectName))
         {
             request.Headers.TryAddWithoutValidation("X-MOBAflow-Active-Project", activeProjectName);

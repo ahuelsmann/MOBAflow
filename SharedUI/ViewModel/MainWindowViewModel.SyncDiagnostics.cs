@@ -115,8 +115,6 @@ public partial class MainWindowViewModel
         UpdateSolutionLoadedStatus();
     }
 
-    partial void OnCurrentSolutionPathChanged(string? value) => UpdateSolutionLoadedStatus();
-
     private void UpdateSolutionLoadedStatus()
     {
         if (string.IsNullOrWhiteSpace(CurrentSolutionPath))

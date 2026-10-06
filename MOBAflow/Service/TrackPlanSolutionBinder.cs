@@ -3,9 +3,9 @@
 namespace Moba.WinUI.Service;
 
 using Common.Extension;
+using SharedUI.Interface;
 using Domain;
 using Moba.SharedUI.Service;
-using Moba.SharedUI.ViewModel;
 using System.ComponentModel;
 using TrackLibrary.PikoA;
 
@@ -24,29 +24,29 @@ public sealed class TrackPlanSolutionBinder
 {
     private readonly EditableTrackPlan _plan;
     private readonly TrackPlanEditorService _editorService;
-    private readonly MainWindowViewModel _mainViewModel;
+    private readonly ISolutionSession _solutionSession;
     private bool _suppressPlanChanged;
 
     public TrackPlanSolutionBinder(
         EditableTrackPlan plan,
         TrackPlanEditorService editorService,
-        MainWindowViewModel mainViewModel)
+        ISolutionSession solutionSession)
     {
         _plan = plan ?? throw new ArgumentNullException(nameof(plan));
         _editorService = editorService ?? throw new ArgumentNullException(nameof(editorService));
-        _mainViewModel = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
+        _solutionSession = solutionSession ?? throw new ArgumentNullException(nameof(solutionSession));
     }
 
     /// <summary>
     /// Activates the two-way binding. Call once during application startup
-    /// (after MainWindowViewModel + EditableTrackPlan are available).
+    /// (after the solution session and EditableTrackPlan are available).
     /// </summary>
     public void Activate()
     {
         _plan.PlanChanged += OnPlanChanged;
-        _mainViewModel.SolutionLoaded += OnSolutionLoaded;
-        _mainViewModel.SolutionSaving += OnSolutionSaving;
-        _mainViewModel.PropertyChanged += OnMainViewModelPropertyChanged;
+        _solutionSession.SolutionLoaded += OnSolutionLoaded;
+        _solutionSession.SolutionSaving += OnSolutionSaving;
+        _solutionSession.PropertyChanged += OnSolutionSessionPropertyChanged;
 
         // Initial pull from whatever project is already selected at startup.
         LoadFromSelectedProject();
@@ -80,7 +80,7 @@ public sealed class TrackPlanSolutionBinder
 
     private void PushPlanToSelectedProject()
     {
-        var project = _mainViewModel.SelectedProject?.Model;
+        var project = _solutionSession.SelectedProject?.Model;
         if (project == null)
             return;
 
@@ -91,7 +91,7 @@ public sealed class TrackPlanSolutionBinder
 
     private async Task SaveAndMarkCleanAsync(long changeVersion)
     {
-        await _mainViewModel.SaveSolutionInternalAsync().ConfigureAwait(true);
+        await _solutionSession.SaveSolutionInternalAsync().ConfigureAwait(true);
         _editorService.MarkClean(changeVersion);
     }
 
@@ -102,10 +102,10 @@ public sealed class TrackPlanSolutionBinder
         LoadFromSelectedProject();
     }
 
-    private void OnMainViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void OnSolutionSessionPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         _ = sender;
-        if (e.PropertyName == nameof(MainWindowViewModel.SelectedProject))
+        if (e.PropertyName == nameof(ISolutionSession.SelectedProject))
         {
             LoadFromSelectedProject();
         }
@@ -113,7 +113,7 @@ public sealed class TrackPlanSolutionBinder
 
     private void LoadFromSelectedProject()
     {
-        var project = _mainViewModel.SelectedProject?.Model;
+        var project = _solutionSession.SelectedProject?.Model;
         if (project == null)
             return;
 

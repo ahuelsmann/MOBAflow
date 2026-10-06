@@ -152,7 +152,7 @@ public partial class MainWindowViewModel
     /// Subscribes to PropertyChanged for auto-save (Project + all Workflows).
     /// Auto-selects first journey if available.
     /// </summary>
-    partial void OnSelectedProjectChanged(ProjectViewModel? oldValue, ProjectViewModel? newValue)
+    private void HandleSelectedProjectChanged(ProjectViewModel? oldValue, ProjectViewModel? newValue)
     {
         ObserveRollingStockProject(oldValue, newValue);
         _locomotiveWhistleAutomation?.Activate(newValue?.Model);

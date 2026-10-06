@@ -2,6 +2,7 @@
 namespace Moba.WinUI.ViewModel;
 
 using Common.Extension;
+using SharedUI.Interface;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -12,8 +13,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.UI;
 using Microsoft.UI.Xaml.Media;
 
-using Moba.SharedUI.ViewModel;
-
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 
@@ -21,7 +20,7 @@ using Windows.UI;
 
 public sealed partial class MatrixPageViewModel : ObservableObject, IDisposable
 {
-    private readonly MainWindowViewModel? mainWindowViewModel;
+    private readonly ISolutionSession? solutionSession;
     private readonly ILogger<MatrixPageViewModel>? logger;
     private bool isLoading;
     private bool isDisposed;
@@ -39,13 +38,13 @@ public sealed partial class MatrixPageViewModel : ObservableObject, IDisposable
         SelectedColorBrush = new SolidColorBrush(SelectedColor);
     }
 
-    public MatrixPageViewModel(MainWindowViewModel mainWindowViewModel, ILogger<MatrixPageViewModel> logger)
+    public MatrixPageViewModel(ISolutionSession solutionSession, ILogger<MatrixPageViewModel> logger)
         : this()
     {
-        this.mainWindowViewModel = mainWindowViewModel;
+        this.solutionSession = solutionSession;
         this.logger = logger;
-        this.mainWindowViewModel.SolutionLoaded += OnSolutionLoaded;
-        this.mainWindowViewModel.PropertyChanged += OnMainWindowViewModelPropertyChanged;
+        this.solutionSession.SolutionLoaded += OnSolutionLoaded;
+        this.solutionSession.PropertyChanged += OnSolutionSessionPropertyChanged;
         LoadFromSelectedProject();
     }
 
@@ -87,9 +86,9 @@ public sealed partial class MatrixPageViewModel : ObservableObject, IDisposable
         LoadFromSelectedProject();
     }
 
-    private void OnMainWindowViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void OnSolutionSessionPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(MainWindowViewModel.SelectedProject))
+        if (e.PropertyName == nameof(ISolutionSession.SelectedProject))
         {
             LoadFromSelectedProject();
         }
@@ -107,7 +106,7 @@ public sealed partial class MatrixPageViewModel : ObservableObject, IDisposable
 
             Matrices.Clear();
 
-            var project = mainWindowViewModel?.SelectedProject?.Model;
+            var project = solutionSession?.SelectedProject?.Model;
             if (project != null)
             {
                 project.Matrices ??= [];
@@ -128,7 +127,7 @@ public sealed partial class MatrixPageViewModel : ObservableObject, IDisposable
 
     private void SaveMatricesToProject()
     {
-        var project = mainWindowViewModel?.SelectedProject?.Model;
+        var project = solutionSession?.SelectedProject?.Model;
         if (project == null)
         {
             return;
@@ -174,7 +173,7 @@ public sealed partial class MatrixPageViewModel : ObservableObject, IDisposable
 
     private void QueueSaveSolution()
     {
-        mainWindowViewModel?.SaveSolutionInternalAsync().Observe(ex => logger?.LogWarning(ex, "Auto-save matrix changes failed"));
+        solutionSession?.SaveSolutionInternalAsync().Observe(ex => logger?.LogWarning(ex, "Auto-save matrix changes failed"));
     }
 
     public void Dispose()
@@ -186,10 +185,10 @@ public sealed partial class MatrixPageViewModel : ObservableObject, IDisposable
 
         isDisposed = true;
 
-        if (mainWindowViewModel != null)
+        if (solutionSession != null)
         {
-            mainWindowViewModel.SolutionLoaded -= OnSolutionLoaded;
-            mainWindowViewModel.PropertyChanged -= OnMainWindowViewModelPropertyChanged;
+            solutionSession.SolutionLoaded -= OnSolutionLoaded;
+            solutionSession.PropertyChanged -= OnSolutionSessionPropertyChanged;
         }
 
         foreach (var matrix in Matrices)

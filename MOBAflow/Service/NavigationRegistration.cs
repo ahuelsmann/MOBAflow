@@ -121,7 +121,7 @@ internal static class NavigationRegistration
 
         services.AddSingleton<MatrixPage>();
         services.AddSingleton(sp => new MatrixPageViewModel(
-            sp.GetRequiredService<MainWindowViewModel>(),
+            sp.GetRequiredService<ISolutionSession>(),
             sp.GetRequiredService<ILogger<MatrixPageViewModel>>()));
         pages.Add(new PageMetadata(
             Tag: "matrix",

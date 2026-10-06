@@ -2574,7 +2574,7 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1001",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.Commands.cs",
+      "path": "SharedUI/Service/SolutionSession.cs",
       "count": 1
     },
     {
@@ -3394,7 +3394,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA2007",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Solution.cs",
-      "count": 2
+      "count": 1
     },
     {
       "project": "SharedUI",
@@ -3786,7 +3786,7 @@
       "targetFramework": "net10.0",
       "ruleId": "MVVMTK0042",
       "path": "SharedUI/ViewModel/MainWindowViewModel.cs",
-      "count": 33
+      "count": 27
     },
     {
       "project": "SharedUI",

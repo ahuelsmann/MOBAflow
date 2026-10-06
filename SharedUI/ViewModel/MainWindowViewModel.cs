@@ -30,13 +30,14 @@ using System.Collections.ObjectModel;
 /// Core ViewModel for main window functionality.
 /// Partial classes handle: Selection, Solution, SolutionAutoSave, Journey, Workflow, Train, Z21, Settings.
 /// </summary>
-public sealed partial class MainWindowViewModel : ObservableObject, IProjectContext
+public sealed partial class MainWindowViewModel : ObservableObject
 {
     #region Fields
     private const int ShutdownDisconnectTimeoutSeconds = 5;
 
     // Core Services (required)
     private readonly IIoService _ioService;
+    private readonly ISolutionSession _session;
     private readonly IRuntimeSnapshotProvider _runtimeSnapshots;
     private readonly IConnectionRuntime _runtimeConnection;
     private readonly ITrafficMonitor _trafficMonitor;
@@ -44,7 +45,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
     private readonly IUiDispatcher _uiDispatcher;
     private readonly IEventBus _eventBus;
     private readonly ILogger<MainWindowViewModel> _logger;
-    private readonly ILoggerFactory? _loggerFactory;
 
     // Configuration
     private readonly AppSettings _settings;
@@ -57,9 +57,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
     private readonly IFeatureTogglePageProvider? _featureTogglePageProvider;
     private readonly IDialogService? _dialogService;
     private readonly ILocomotiveWhistleAutomationService? _locomotiveWhistleAutomation;
-
-    // Execution Context (contains all action execution dependencies)
-    private readonly ActionExecutionContext _executionContext;
 
     // Layout column widths (observable, bound from grid columns; loaded from settings so UI reflects persisted values)
     private readonly LayoutColumnWidthsViewModel _layoutColumnWidths;
@@ -81,7 +78,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
     /// <param name="eventBus">The event bus used to subscribe to backend domain events.</param>
     /// <param name="uiDispatcher">Dispatcher used to marshal callbacks onto the UI thread.</param>
     /// <param name="settings">Application-wide settings object.</param>
-    /// <param name="solution">The currently loaded solution with all projects.</param>
+    /// <param name="solutionSession">Owns the loaded solution, its persistence and the project and journey selection.</param>
     /// <param name="executionContext">Execution context containing shared dependencies for workflow actions.</param>
     /// <param name="logger">Logger used for diagnostic output.</param>
     /// <param name="ioService">Optional IO service implementation (null uses <see cref="NullIoService"/>).</param>
@@ -101,7 +98,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         IEventBus eventBus,
         IUiDispatcher uiDispatcher,
         AppSettings settings,
-        Solution solution,
+        ISolutionSession solutionSession,
         ActionExecutionContext executionContext,
         ILogger<MainWindowViewModel> logger,
         IIoService? ioService = null,  // Optional for WebApp/MAUI
@@ -125,11 +122,12 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         ArgumentNullException.ThrowIfNull(eventBus);
         ArgumentNullException.ThrowIfNull(uiDispatcher);
         ArgumentNullException.ThrowIfNull(settings);
-        ArgumentNullException.ThrowIfNull(solution);
+        ArgumentNullException.ThrowIfNull(solutionSession);
         ArgumentNullException.ThrowIfNull(executionContext);
         ArgumentNullException.ThrowIfNull(logger);
 
         _ioService = ioService ?? new NullIoService();  // Use null object pattern
+        _session = solutionSession;
         _runtimeSnapshots = runtimeSnapshots;
         _runtimeConnection = runtimeConnection;
         _trafficMonitor = trafficMonitor;
@@ -138,21 +136,19 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         _eventBus = eventBus;
         _settings = settings;
         _logger = logger;
-        _loggerFactory = loggerFactory;
         _layoutColumnWidths = layoutColumnWidths;
         _layoutColumnWidths.LoadFrom(settings.Layout);
         _cityLibraryService = cityLibraryService;
         _settingsService = settingsService;
         _announcementService = announcementService;
         _speechTestAction = speechTestAction;
-        _executionContext = executionContext;
         _featureTogglePageProvider = featureTogglePageProvider;
         _dialogService = dialogService;
         _locomotiveWhistleAutomation = locomotiveWhistleAutomation;
         _projectDiagnosticsService = projectDiagnosticsService;
 
         WorkflowLibrary = new WorkflowLibraryViewModel(
-            this,
+            _session,
             dialogService,
             new WorkflowValidator(),
             loggerFactory?.CreateLogger<WorkflowLibraryViewModel>(),
@@ -168,7 +164,13 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
         ApplyRuntimeSnapshot(_runtimeSnapshots.Current);
 
-        Solution = solution;
+        AttachSolutionSession();
+        _observedSelectedProject = _session.SelectedProject;
+        HandleSelectedProjectChanged(null, _observedSelectedProject);
+        SaveSolutionCommand.NotifyCanExecuteChanged();
+        ConnectCommand.NotifyCanExecuteChanged();
+        OnPropertyChanged(nameof(SelectedProject));
+        LoadCities();
 
         GlobalTargetLapCount = settings.Counter.TargetLapCount;
         UseTimerFilter = settings.Counter.UseTimerFilter;
@@ -195,18 +197,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
     #endregion
 
     #region Properties
-    [ObservableProperty]
-    private Solution _solution;
-
-    [ObservableProperty]
-    private string? _currentSolutionPath;
-
-    /// <summary>
-    /// Indicates whether the in-memory solution contains changes that have not been persisted.
-    /// </summary>
-    [ObservableProperty]
-    public partial bool HasUnsavedChanges { get; set; }
-
     [ObservableProperty]
     private bool _isDarkMode = true;  // Dark theme is default for WinUI
 
@@ -245,12 +235,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
     }
 
     /// <summary>
-    /// Indicates whether a solution with projects is currently loaded.
-    /// </summary>
-    [ObservableProperty]
-    private bool _hasSolution;
-
-    /// <summary>
     /// Health status message for Speech Service (Azure).
     /// Updated by HealthCheckService via event.
     /// </summary>
@@ -268,17 +252,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
     /// </summary>
     [ObservableProperty]
     private string _speechHealthColor = "SystemFillColorCautionBrush";
-
-    [ObservableProperty]
-    private SolutionViewModel? _solutionViewModel;
-
-    [ObservableProperty]
-    private ProjectViewModel? _selectedProject;
-
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(AddStationCommand))]
-    [NotifyCanExecuteChangedFor(nameof(AddStationFromCityCommand))]
-    private JourneyViewModel? _selectedJourney;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(DeleteStationCommand))]
@@ -413,19 +386,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
     [RelayCommand]
     private void AddProject()
     {
-        // Solution is always available (DI singleton), so is SolutionViewModel
-        var project = new Project { Name = "New Project" };
-        Solution.Projects.Add(project);
-
-        // Create ViewModel and add to SolutionViewModel
-        var projectVm = new ProjectViewModel(project, _uiDispatcher, _ioService, _executionContext.SoundPlayer, _loggerFactory);
-        SolutionViewModel!.Projects.Add(projectVm);
-
-        // Select the newly created project
-        SelectedProject = projectVm;
-
-        // Update HasSolution flag
-        HasSolution = true;
+        _session.AddProject(new Project { Name = "New Project" });
 
         SaveSolutionCommand.NotifyCanExecuteChanged();
         DeleteProjectCommand.NotifyCanExecuteChanged();
@@ -466,25 +427,13 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
             }
         }
 
-        // Store reference to deleted project
         var deletedProject = SelectedProject;
 
-        // Remove from Domain model
-        Solution.Projects.Remove(deletedProject.Model);
-
-        // Remove from SolutionViewModel's Projects collection
-        SolutionViewModel!.Projects.Remove(deletedProject);
-
-        // Clear all detail selections after removing project
-        // This prevents showing stale data from the deleted project
+        // Clear all detail selections first; this prevents showing stale data from the deleted project.
         ClearAllSelections();
 
-        // Select first project if available, otherwise clear
-        SelectedProject = SolutionViewModel.Projects.FirstOrDefault();
-        if (SelectedProject == null)
-        {
-            HasSolution = false;
-        }
+        // Removes the project and selects the first remaining one.
+        _session.RemoveProject(deletedProject);
 
         SaveSolutionCommand.NotifyCanExecuteChanged();
         DeleteProjectCommand.NotifyCanExecuteChanged();
@@ -506,9 +455,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
 
         if (HasUnsavedChanges)
         {
-            var saved = await SaveSolutionCoreAsync(
-                    CurrentSolutionPath,
-                    allowPathSelection: string.IsNullOrWhiteSpace(CurrentSolutionPath))
+            var saved = await _session
+                .SaveAsync(allowPathSelection: string.IsNullOrWhiteSpace(CurrentSolutionPath))
                 .ConfigureAwait(false);
             if (!saved)
             {
@@ -540,7 +488,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
             _logger.LogError(ex, "Error during Z21 disconnect");
         }
 
-        await DrainAndDisposeSolutionSaveSemaphoreAsync().ConfigureAwait(false);
+        await _session.DrainPendingSaveAsync().ConfigureAwait(false);
         return true;
     }
 
@@ -552,6 +500,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         }
 
         _isShuttingDown = true;
+        _session.BeginShutdown();
         WorkflowLibrary.PropertyChanged -= OnWorkflowLibraryPropertyChanged;
         WorkflowLibrary.Dispose();
         foreach (var subscriptionId in _eventBusSubscriptions)

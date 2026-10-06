@@ -5,7 +5,6 @@ namespace Moba.WinUI.Service;
 using Common.Recording;
 
 using SharedUI.Interface;
-using SharedUI.ViewModel;
 
 using System.Reflection;
 
@@ -14,11 +13,11 @@ using System.Reflection;
 /// </summary>
 internal sealed class WinUiRecordingContextProvider : IRecordingContextProvider
 {
-    private readonly MainWindowViewModel _mainWindowViewModel;
+    private readonly ISolutionSession _solutionSession;
 
-    public WinUiRecordingContextProvider(MainWindowViewModel mainWindowViewModel)
+    public WinUiRecordingContextProvider(ISolutionSession solutionSession)
     {
-        _mainWindowViewModel = mainWindowViewModel ?? throw new ArgumentNullException(nameof(mainWindowViewModel));
+        _solutionSession = solutionSession ?? throw new ArgumentNullException(nameof(solutionSession));
     }
 
     /// <inheritdoc />
@@ -27,7 +26,7 @@ internal sealed class WinUiRecordingContextProvider : IRecordingContextProvider
     /// <inheritdoc />
     public RecordingProjectIdentity? GetProjectIdentity()
     {
-        var project = _mainWindowViewModel.SelectedProject?.Model;
+        var project = _solutionSession.SelectedProject?.Model;
         return project is null ? null : new RecordingProjectIdentity(project.Id, project.Name);
     }
 

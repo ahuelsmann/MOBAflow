@@ -9,7 +9,6 @@ using Domain;
 using Helper;
 
 using System.Collections.ObjectModel;
-using System.Threading;
 
 public partial class MainWindowViewModel
 {
@@ -56,7 +55,7 @@ public partial class MainWindowViewModel
 
     private void SelectedTrain_VehiclesModified(object? sender, EventArgs e)
     {
-        if (Volatile.Read(ref _solutionAutoSaveSuppressionCount) > 0)
+        if (_session.IsAutoSaveSuppressed)
         {
             return;
         }

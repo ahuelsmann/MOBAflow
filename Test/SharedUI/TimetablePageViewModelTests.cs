@@ -3,6 +3,7 @@ namespace Moba.Test.SharedUI;
 
 using Microsoft.Extensions.Logging;
 
+using Moba.Test.Helpers;
 using Moba.Backend.Interface;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
@@ -712,14 +713,14 @@ internal sealed class TimetablePageViewModelTests
             eventBus,
             dispatcher.Object,
             new AppSettings(),
-            new Solution { Projects = [project] },
+            TestSolutionSessions.Create(new Solution { Projects = [project] }, dispatcher.Object, runtime.Object),
             new ActionExecutionContext { Z21 = Mock.Of<IZ21>() },
             Mock.Of<ILogger<MainWindowViewModel>>());
         var evaluation = new StubEvaluationService(evaluationResult ?? new TimetableEvaluationResult([]));
         var timing = new StubTimingService(delay ?? TimeSpan.Zero);
         var runtimeProjection = projection ?? new RecordingProjectionService();
         var viewModel = new TimetablePageViewModel(
-            mainWindow,
+            mainWindow.SolutionSession,
             evaluation,
             operations,
             timing,

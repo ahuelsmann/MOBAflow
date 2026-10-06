@@ -2,6 +2,7 @@
 namespace Moba.Test.SharedUI;
 
 using Microsoft.Extensions.Logging.Abstractions;
+using Moba.Test.Helpers;
 using Moba.Backend.Interface;
 using Moba.Backend.Model;
 using Moba.Backend.Service;
@@ -108,7 +109,7 @@ internal sealed class MainWindowViewModelSignalBoxTests
             new Mock<IEventBus>().Object,
             dispatcher.Object,
             new AppSettings(),
-            new Solution { Projects = [project] },
+            TestSolutionSessions.Create(new Solution { Projects = [project] }, dispatcher.Object, runtime.Object),
             new ActionExecutionContext { Z21 = new Mock<IZ21>().Object },
             NullLogger<MainWindowViewModel>.Instance)
         {
