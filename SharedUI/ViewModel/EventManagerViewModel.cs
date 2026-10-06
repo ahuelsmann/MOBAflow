@@ -23,9 +23,10 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
     [ObservableProperty] private uint _defaultInPort = 1;
 
     public EventManagerViewModel(MainWindowViewModel main)
-        : this(main, main.WorkflowLibrary)
+        : this(main.SolutionSession, main.WorkflowLibrary)
     {
         MainWindow = main;
+        main.PropertyChanged += OnMainWindowPropertyChanged;
         NotifyState();
     }
 
@@ -267,13 +268,17 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
 
     private void OnContextPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(MainWindowViewModel.JourneyCommandStatus)) OnPropertyChanged(nameof(HasCommandStatus));
         if (e.PropertyName == nameof(IProjectContext.SelectedJourney)) SelectedJourney = _context.SelectedJourney;
         if (e.PropertyName == nameof(IProjectContext.SelectedProject))
         {
             SelectedJourney = _context.SelectedJourney;
             Refresh();
         }
+    }
+
+    private void OnMainWindowPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(MainWindowViewModel.JourneyCommandStatus)) OnPropertyChanged(nameof(HasCommandStatus));
     }
 
     private void OnJourneyPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -299,6 +304,7 @@ public sealed partial class EventManagerViewModel : ObservableObject, IDisposabl
         _disposed = true;
         if (_context is INotifyPropertyChanging changingContext) changingContext.PropertyChanging -= OnContextPropertyChanging;
         _context.PropertyChanged -= OnContextPropertyChanged;
+        if (MainWindow != null) MainWindow.PropertyChanged -= OnMainWindowPropertyChanged;
         WorkflowLibrary.PropertyChanged -= OnWorkflowLibraryPropertyChanged;
         if (SelectedJourney != null) SelectedJourney.PropertyChanged -= OnJourneyPropertyChanged;
         GC.SuppressFinalize(this);

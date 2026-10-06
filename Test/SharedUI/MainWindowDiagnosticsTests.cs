@@ -3,6 +3,7 @@
 namespace Moba.Test.SharedUI;
 
 using Microsoft.Extensions.Logging;
+using Moba.Test.Helpers;
 using Moba.Backend.Interface;
 using Moba.Backend.Service;
 using Moba.Backend.Service.Validation;
@@ -107,7 +108,7 @@ internal sealed class MainWindowDiagnosticsTests
             new Mock<IEventBus>().Object,
             dispatcher.Object,
             new AppSettings(),
-            solution,
+            TestSolutionSessions.Create(solution, dispatcher.Object, runtime.Object),
             new ActionExecutionContext { Z21 = new Mock<IZ21>().Object },
             new Mock<ILogger<MainWindowViewModel>>().Object,
             projectDiagnosticsService: diagnostics);

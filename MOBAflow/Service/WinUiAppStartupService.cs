@@ -200,7 +200,7 @@ internal sealed class WinUiAppStartupService
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
             await postStartupService.InitializeAsync(cts.Token).ConfigureAwait(false);
 
-            await AutoLoadLastSolutionAsync(services, mainWindow.ViewModel, logger).ConfigureAwait(false);
+            await AutoLoadLastSolutionAsync(services, mainWindow.ViewModel.SolutionSession, logger).ConfigureAwait(false);
 
             logger.LogInformation(
                 "[Startup] Post-startup pipeline completed in {ElapsedMs}ms",
@@ -214,7 +214,7 @@ internal sealed class WinUiAppStartupService
 
     private static async Task AutoLoadLastSolutionAsync(
         IServiceProvider services,
-        MainWindowViewModel mainWindowViewModel,
+        ISolutionSession solutionSession,
         ILogger<App> logger)
     {
         try
@@ -246,7 +246,7 @@ internal sealed class WinUiAppStartupService
             }
 
             logger.LogInformation("Auto-loading last solution: {LastPath}", lastPath);
-            await mainWindowViewModel.LoadSolutionFromPathAsync(lastPath).ConfigureAwait(false);
+            await solutionSession.LoadSolutionFromPathAsync(lastPath).ConfigureAwait(false);
             logger.LogInformation("Auto-load completed: {LastPath}", lastPath);
         }
         catch (Exception ex)

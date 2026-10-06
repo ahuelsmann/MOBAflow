@@ -3,6 +3,7 @@ namespace Moba.Test.SharedUI;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Moba.Test.Helpers;
 using Moba.Backend.Events;
 using Moba.Backend.Interface;
 using Moba.Backend.Model;
@@ -116,7 +117,7 @@ internal partial class MainWindowViewModelShutdownTests
             eventBus ?? new Mock<IEventBus>().Object,
             uiDispatcherMock.Object,
             new AppSettings(),
-            new Solution(),
+            TestSolutionSessions.Create(new Solution(), uiDispatcherMock.Object, mobaRuntimeMock.Object),
             new ActionExecutionContext
             {
                 Z21 = new Mock<IZ21>().Object

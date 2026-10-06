@@ -248,6 +248,17 @@ public static class MobaWinUiServiceCollectionExtensions
 
         services.AddSingleton<LayoutColumnWidthsViewModel>();
         services.AddSingleton<LocomotiveManagementViewModel>();
+        services.AddSingleton(sp => new SolutionSession(
+            sp.GetRequiredService<Solution>(),
+            sp.GetRequiredService<IIoService>(),
+            sp.GetRequiredService<IUiDispatcher>(),
+            sp.GetRequiredService<IConnectionRuntime>(),
+            sp.GetRequiredService<ILogger<SolutionSession>>(),
+            sp.GetRequiredService<ActionExecutionContext>().SoundPlayer,
+            sp.GetRequiredService<ILoggerFactory>()));
+        services.AddSingleton<ISolutionSession>(sp => sp.GetRequiredService<SolutionSession>());
+        services.AddSingleton<IJourneySelectionContext>(sp => sp.GetRequiredService<SolutionSession>());
+        services.AddSingleton<IProjectContext>(sp => sp.GetRequiredService<SolutionSession>());
         services.AddSingleton(sp => new MainWindowViewModel(
             sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
             sp.GetRequiredService<IRuntimeSnapshotProvider>(),
@@ -257,7 +268,7 @@ public static class MobaWinUiServiceCollectionExtensions
             sp.GetRequiredService<IEventBus>(),
             sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<AppSettings>(),
-            sp.GetRequiredService<Solution>(),
+            sp.GetRequiredService<ISolutionSession>(),
             sp.GetRequiredService<ActionExecutionContext>(),
             sp.GetRequiredService<ILogger<MainWindowViewModel>>(),
             sp.GetRequiredService<IIoService>(),
@@ -277,8 +288,6 @@ public static class MobaWinUiServiceCollectionExtensions
             workflowService: sp.GetRequiredService<IWorkflowService>(),
             workflowTraceStore: sp.GetRequiredService<IWorkflowTraceStore>()));
 
-        services.AddSingleton<IJourneySelectionContext>(sp => sp.GetRequiredService<MainWindowViewModel>());
-        services.AddSingleton<IProjectContext>(sp => sp.GetRequiredService<MainWindowViewModel>());
         services.AddSingleton<IRecordingContextProvider, WinUiRecordingContextProvider>();
         services.AddTransient<InterlockingControlViewModel>();
         services.AddTransient<TrackPlanPageViewModels>();

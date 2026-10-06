@@ -2,6 +2,7 @@
 namespace Moba.SharedUI.ViewModel;
 
 using System.Collections.ObjectModel;
+using Interface;
 using System.ComponentModel;
 
 using Backend.Interface;
@@ -23,7 +24,7 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
 {
     private const string TimeWindowFocus = "Time window";
 
-    private readonly MainWindowViewModel _mainWindow;
+    private readonly ISolutionSession _solutionSession;
     private readonly ITimetableEvaluationService _evaluation;
     private readonly ITimetableOperationsService _operations;
     private readonly ITimetableTimingService _timing;
@@ -41,7 +42,7 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
 
     /// <summary>Initializes the timetable page state and runtime subscriptions.</summary>
     public TimetablePageViewModel(
-        MainWindowViewModel mainWindow,
+        ISolutionSession solutionSession,
         ITimetableEvaluationService evaluation,
         ITimetableOperationsService operations,
         ITimetableTimingService timing,
@@ -50,7 +51,7 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
         ILogger<TimetablePageViewModel> logger,
         TimeProvider timeProvider)
     {
-        _mainWindow = mainWindow ?? throw new ArgumentNullException(nameof(mainWindow));
+        _solutionSession = solutionSession ?? throw new ArgumentNullException(nameof(solutionSession));
         _evaluation = evaluation ?? throw new ArgumentNullException(nameof(evaluation));
         _operations = operations ?? throw new ArgumentNullException(nameof(operations));
         _timing = timing ?? throw new ArgumentNullException(nameof(timing));
@@ -59,7 +60,7 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
 
-        _mainWindow.PropertyChanged += OnMainWindowPropertyChanged;
+        _solutionSession.PropertyChanged += OnMainWindowPropertyChanged;
         _runtimeSubscription = _eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged);
         _stationReachedSubscription = _eventBus.Subscribe<JourneyStationReachedEvent>(OnJourneyStationReached);
     }
@@ -113,7 +114,7 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
     [NotifyPropertyChangedFor(nameof(HasStatusMessage))]
     private string _statusText = "Ready";
 
-    public bool HasProject => _mainWindow.SelectedProject is not null;
+    public bool HasProject => _solutionSession.SelectedProject is not null;
 
     public bool HasServices => _allRows.Count > 0;
 
@@ -239,7 +240,7 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
             ]
         };
         project.TimetableServices.Add(definition);
-        await _mainWindow.SaveSolutionInternalAsync();
+        await _solutionSession.SaveSolutionInternalAsync();
         ResetFilters();
         await RefreshAsync();
         SelectedService = Services.FirstOrDefault(service => service.Id == definition.Id);
@@ -252,7 +253,7 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
         var project = CurrentProject;
         if (project is null || SelectedService is null) return;
         project.TimetableServices.Remove(SelectedService.Model);
-        await _mainWindow.SaveSolutionInternalAsync();
+        await _solutionSession.SaveSolutionInternalAsync();
         await RefreshAsync();
         StatusText = "Service deleted";
     }
@@ -348,7 +349,7 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
         if (SelectedCall is null) return;
         SelectedCall.Model.ScheduledArrival = SelectedCall.Model.ScheduledArrival.AddMinutes(minutes);
         SelectedCall.Model.ScheduledDeparture = SelectedCall.Model.ScheduledDeparture.AddMinutes(minutes);
-        await _mainWindow.SaveSolutionInternalAsync();
+        await _solutionSession.SaveSolutionInternalAsync();
         await RefreshAndReselectAsync(SelectedService!.Id, SelectedCall.Id);
         StatusText = $"Scheduled call shifted by {minutes} minutes";
     }
@@ -372,7 +373,7 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
     private async Task SaveDefinitionAsync()
     {
         if (SelectedService is null) return;
-        await _mainWindow.SaveSolutionInternalAsync();
+        await _solutionSession.SaveSolutionInternalAsync();
         await RefreshAndReselectAsync(SelectedService?.Id, SelectedCall?.Id);
         StatusText = "Timetable definition saved";
     }
@@ -417,12 +418,12 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
     {
         if (_disposed) return;
         _disposed = true;
-        _mainWindow.PropertyChanged -= OnMainWindowPropertyChanged;
+        _solutionSession.PropertyChanged -= OnMainWindowPropertyChanged;
         _eventBus.Unsubscribe(_runtimeSubscription);
         _eventBus.Unsubscribe(_stationReachedSubscription);
     }
 
-    private Project? CurrentProject => _mainWindow.SelectedProject?.Model;
+    private Project? CurrentProject => _solutionSession.SelectedProject?.Model;
 
     private bool HasSelectedService() => SelectedService is not null;
 
@@ -559,7 +560,7 @@ public sealed partial class TimetablePageViewModel : ObservableObject, IDisposab
     private async void OnMainWindowPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         _ = sender;
-        if (e.PropertyName != nameof(MainWindowViewModel.SelectedProject)) return;
+        if (e.PropertyName != nameof(ISolutionSession.SelectedProject)) return;
         OnPropertyChanged(nameof(HasProject));
         AddServiceCommand.NotifyCanExecuteChanged();
         StatusText = "Ready";

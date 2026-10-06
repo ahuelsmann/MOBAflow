@@ -4,6 +4,7 @@ namespace Moba.Test.SharedUI;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
+using Moba.Test.Helpers;
 using Moba.Backend.Interface;
 using Moba.Backend.Model;
 using Moba.Backend.Service;
@@ -75,7 +76,7 @@ internal sealed class TrainControlViewModelCleanupTests
             runtimeMock.Object,
             new LocalRuntimeCommandGateway(runtimeMock.Object),
             settingsServiceMock.Object,
-            mainWindowViewModel,
+            mainWindowViewModel?.SolutionSession,
             NullLogger<TrainControlViewModel>.Instance,
             null,
             eventBus ?? new EventBus(NullLogger<EventBus>.Instance));
@@ -101,7 +102,7 @@ internal sealed class TrainControlViewModelCleanupTests
             new EventBus(NullLogger<EventBus>.Instance),
             uiDispatcherMock.Object,
             new AppSettings(),
-            new Solution(),
+            TestSolutionSessions.Create(new Solution(), uiDispatcherMock.Object, runtimeMock.Object),
             new ActionExecutionContext { Z21 = new Mock<IZ21>().Object },
             new Mock<ILogger<MainWindowViewModel>>().Object);
     }

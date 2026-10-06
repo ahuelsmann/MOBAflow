@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.MOBAflow;
 
+using Moba.Test.Helpers;
 using Moba.Backend.Interface;
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
@@ -144,7 +145,7 @@ internal sealed partial class RestApiStatusServiceTests
         var solutionSyncService = new RestApiSolutionSyncService(
             new Solution(),
             appSettings,
-            mainWindowViewModel,
+            mainWindowViewModel.SolutionSession,
             restApiProcessService,
             eventBus,
             NullLogger<RestApiSolutionSyncService>.Instance,
@@ -193,7 +194,7 @@ internal sealed partial class RestApiStatusServiceTests
             eventBus,
             uiDispatcher.Object,
             appSettings,
-            new Solution(),
+            TestSolutionSessions.Create(new Solution(), uiDispatcher.Object, mobaRuntime.Object),
             new ActionExecutionContext
             {
                 Z21 = new Mock<IZ21>().Object

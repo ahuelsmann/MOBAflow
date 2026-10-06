@@ -8,13 +8,13 @@ Input: [spec.md](spec.md), [plan.md](plan.md), [research.md](research.md).
 
 ## Slice 1 - Solution session (no behavior change)
 
-- [ ] T001 Add characterization tests for solution load, save, auto-save, dirty state and project/journey selection in `Test/SharedUI/SolutionSessionTests.cs`
-- [ ] T002 Create `ISolutionSession` (extends `IProjectContext`) and `SolutionSession` in `SharedUI`; move solution ownership, selection, dirty state and auto-save from `MainWindowViewModel`
-- [ ] T003 Make `MainWindowViewModel` delegate to the session; register `SolutionSession` as `ISolutionSession`, `IProjectContext` and `IJourneySelectionContext` in MOBAflow DI
-- [ ] T004 Inject the session instead of `MainWindowViewModel` into `PostStartupInitializationService`, `RestApiSolutionSyncService`, `RestApiStatusService`, `TrackPlanSolutionBinder`, `WinUiAppStartupService`, `WinUiRecordingContextProvider`, `NavigationRegistration`
-- [ ] T005 Inject the session instead of `MainWindowViewModel` into `EventManagerViewModel`, `MonitorPageViewModel`, `TimetablePageViewModel`, `TrainControlViewModel`, `MatrixPageViewModel` and `MOBAsmart/Platforms/Android/MainActivity`
-- [ ] T006 Add an architecture test that no service or ViewModel depends on `MainWindowViewModel`, listing the WinUI pages left for RF-24
-- [ ] T007 Run the portable and Windows test suites and the analyzer gates for validation; secrets scan and line endings
+- [x] T001 Add characterization tests for solution load, save, auto-save, dirty state and project/journey selection in `Test/SharedUI/SolutionSessionTests.cs`
+- [x] T002 Create `ISolutionSession` (extends `IProjectContext`) and `SolutionSession` in `SharedUI`; move solution ownership, selection, dirty state and auto-save from `MainWindowViewModel`
+- [x] T003 Make `MainWindowViewModel` delegate to the session; register `SolutionSession` as `ISolutionSession`, `IProjectContext` and `IJourneySelectionContext` in MOBAflow DI
+- [x] T004 Inject the session instead of `MainWindowViewModel` into `PostStartupInitializationService`, `RestApiSolutionSyncService`, `RestApiStatusService`, `TrackPlanSolutionBinder`, `WinUiAppStartupService`, `WinUiRecordingContextProvider`, `NavigationRegistration`
+- [x] T005 Inject the session instead of `MainWindowViewModel` into `EventManagerViewModel`, `MonitorPageViewModel`, `TimetablePageViewModel`, `TrainControlViewModel`, `MatrixPageViewModel` and `MOBAsmart/Platforms/Android/MainActivity`
+- [x] T006 Add an architecture test that no service or ViewModel depends on `MainWindowViewModel`, listing the WinUI pages left for RF-24
+- [x] T007 Run the portable and Windows test suites and the analyzer gates for validation; secrets scan and line endings
 - [ ] T008 Open the slice PR as draft; Sonar quality gate (SonarCloud) green with zero open issues before review
 
 ## Slice 2 - No runtime copy

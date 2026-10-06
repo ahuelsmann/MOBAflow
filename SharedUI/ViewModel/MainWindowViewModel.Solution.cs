@@ -7,377 +7,176 @@ using Domain;
 
 using Interface;
 
-using Service;
+using System.ComponentModel;
 
 /// <summary>
-/// MainWindowViewModel - Solution and Project Management
-/// Handles solution lifecycle (New, Load, Save) and project management.
+/// MainWindowViewModel - Solution and Project Management.
+/// The <see cref="ISolutionSession"/> owns the solution, its persistence and the project/journey selection;
+/// this partial exposes them for XAML binding and keeps the page-level reactions.
 /// </summary>
 public partial class MainWindowViewModel
 {
+    private ProjectViewModel? _observedSelectedProject;
+    private JourneyViewModel? _observedSelectedJourney;
+
     #region Solution Events
     /// <summary>
     /// Raised before saving the Solution. Subscribers should sync their data to Domain models.
     /// </summary>
-    public event EventHandler? SolutionSaving;
+    public event EventHandler? SolutionSaving
+    {
+        add => _session.SolutionSaving += value;
+        remove => _session.SolutionSaving -= value;
+    }
 
     /// <summary>
     /// Raised after loading a Solution. Subscribers should load their data from Domain models.
     /// </summary>
-    public event EventHandler? SolutionLoaded;
+    public event EventHandler? SolutionLoaded
+    {
+        add => _session.SolutionLoaded += value;
+        remove => _session.SolutionLoaded -= value;
+    }
+    #endregion
+
+    #region Session-backed state
+    /// <summary>Gets the solution session that owns the loaded solution.</summary>
+    public ISolutionSession SolutionSession => _session;
+
+    /// <summary>Gets the loaded solution.</summary>
+    public Solution Solution => _session.Solution;
+
+    /// <summary>Gets or sets the file the solution was loaded from or saved to.</summary>
+    public string? CurrentSolutionPath
+    {
+        get => _session.CurrentSolutionPath;
+        set => _session.CurrentSolutionPath = value;
+    }
+
+    /// <summary>Gets whether the solution has changes that were not written yet.</summary>
+    public bool HasUnsavedChanges => _session.HasUnsavedChanges;
+
+    /// <summary>Gets whether the solution contains at least one project.</summary>
+    public bool HasSolution => _session.HasSolution;
+
+    /// <summary>Gets the view model of the loaded solution.</summary>
+    public SolutionViewModel? SolutionViewModel => _session.SolutionViewModel;
+
+    /// <summary>Gets or sets the selected project.</summary>
+    public ProjectViewModel? SelectedProject
+    {
+        get => _session.SelectedProject;
+        set => _session.SelectedProject = value;
+    }
+
+    /// <summary>Gets or sets the selected journey.</summary>
+    public JourneyViewModel? SelectedJourney
+    {
+        get => _session.SelectedJourney;
+        set => _session.SelectedJourney = value;
+    }
+
+    /// <summary>Gets the current non-interactive solution persistence state.</summary>
+    public SolutionSaveState SolutionSaveState => _session.SolutionSaveState;
+
+    /// <summary>Gets an actionable, non-modal description of the current persistence state.</summary>
+    public string SolutionSaveStatusText => _session.SolutionSaveStatusText;
+
+    private void AttachSolutionSession()
+    {
+        _session.PropertyChanged += OnSolutionSessionPropertyChanged;
+        _session.SolutionReplacing += OnSolutionReplacing;
+        _session.SolutionLoaded += OnSessionSolutionLoaded;
+    }
+
+    private void OnSolutionSessionPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        switch (e.PropertyName)
+        {
+            case nameof(ISolutionSession.SelectedProject):
+                var oldProject = _observedSelectedProject;
+                _observedSelectedProject = _session.SelectedProject;
+                OnPropertyChanged(nameof(SelectedProject));
+                HandleSelectedProjectChanged(oldProject, _observedSelectedProject);
+                break;
+            case nameof(ISolutionSession.SelectedJourney):
+                var oldJourney = _observedSelectedJourney;
+                _observedSelectedJourney = _session.SelectedJourney;
+                OnPropertyChanged(nameof(SelectedJourney));
+                AddStationCommand.NotifyCanExecuteChanged();
+                AddStationFromCityCommand.NotifyCanExecuteChanged();
+                HandleSelectedJourneyChanged(oldJourney, _observedSelectedJourney);
+                break;
+            case nameof(ISolutionSession.CurrentSolutionPath):
+                OnPropertyChanged(nameof(CurrentSolutionPath));
+                UpdateSolutionLoadedStatus();
+                break;
+            case nameof(ISolutionSession.HasUnsavedChanges):
+            case nameof(ISolutionSession.HasSolution):
+            case nameof(ISolutionSession.SolutionViewModel):
+            case nameof(ISolutionSession.SolutionSaveState):
+            case nameof(ISolutionSession.SolutionSaveStatusText):
+            case nameof(ISolutionSession.Solution):
+                OnPropertyChanged(e.PropertyName);
+                break;
+        }
+    }
+
+    private void OnSolutionReplacing(object? sender, EventArgs e) => ClearPageSelections();
+
+    private void OnSessionSolutionLoaded(object? sender, EventArgs e)
+    {
+        SaveSolutionCommand.NotifyCanExecuteChanged();
+        ConnectCommand.NotifyCanExecuteChanged();
+        LoadCities();
+    }
     #endregion
 
     #region Solution Management
-    partial void OnSolutionChanged(Solution value)
-    {
-        // Ensure Solution always has at least one project
-        if (value.Projects.Count == 0)
-        {
-            value.Projects.Add(new Project { Name = "(Untitled Project)" });
-        }
-
-        SolutionViewModel = new SolutionViewModel(value, _uiDispatcher, _ioService, _executionContext.SoundPlayer, _loggerFactory);
-        HasSolution = value.Projects.Count > 0;
-
-        // Auto-select first project if no project is selected
-        if (SelectedProject == null)
-        {
-            SelectedProject = SolutionViewModel.Projects.FirstOrDefault();
-        }
-
-        // NOTE: JourneyManager initialization moved to ApplyLoadedSolution()
-        // This ensures JourneyManager is always initialized with the REAL loaded project,
-        // not the empty default project created here.
-
-        SaveSolutionCommand.NotifyCanExecuteChanged();
-        ConnectCommand.NotifyCanExecuteChanged();
-        OnPropertyChanged(nameof(SelectedProject));
-
-        LoadCities();
-    }
-
     [RelayCommand(CanExecute = nameof(CanSaveSolution))]
     private async Task SaveSolutionAsync()
     {
-        await SaveSolutionCoreAsync(CurrentSolutionPath, allowPathSelection: true);
+        await _session.SaveAsync(allowPathSelection: true);
     }
 
     /// <summary>
     /// Marks the solution as changed and persists it without opening a file picker.
     /// </summary>
-    public async Task SaveSolutionInternalAsync()
-    {
-        MarkSolutionDirty();
-        var requestVersion = BeginSolutionAutoSaveRequest();
+    public Task SaveSolutionInternalAsync() => _session.SaveSolutionInternalAsync();
 
-        // Skip if IoService not available (WebApp/MAUI)
-        if (_ioService is NullIoService)
-        {
-            SetSolutionSaveStatus(SolutionSaveState.NotSaved, "Not saved");
-            return;
-        }
-
-        var currentPath = CurrentSolutionPath;
-        if (_isShuttingDown || string.IsNullOrWhiteSpace(currentPath))
-        {
-            SetSolutionSaveStatus(
-                SolutionSaveState.NotSaved,
-                string.IsNullOrWhiteSpace(currentPath)
-                    ? "Not saved - choose Save As"
-                    : "Not saved - application is shutting down");
-            return;
-        }
-
-        try
-        {
-            await SaveSolutionCoreAsync(
-                currentPath,
-                allowPathSelection: false,
-                requestVersion).ConfigureAwait(false);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
-                                   or InvalidOperationException or NotSupportedException)
-        {
-            if (IsLatestSolutionAutoSaveRequest(requestVersion))
-            {
-                SetSolutionSaveStatus(SolutionSaveState.NotSaved, $"Not saved - {ex.Message}");
-            }
-
-            throw;
-        }
-    }
-
-    /// <inheritdoc />
-    public async Task<SolutionSaveResult> SaveSolutionWithStatusAsync()
-    {
-        await SaveSolutionInternalAsync().ConfigureAwait(false);
-        return await _uiDispatcher.InvokeOnUiAsync(() => Task.FromResult(
-            new SolutionSaveResult(SolutionSaveState, SolutionSaveStatusText))).ConfigureAwait(false);
-    }
-
-    private async Task<bool> SaveSolutionCoreAsync(
-        string? currentPath,
-        bool allowPathSelection,
-        long? autoSaveRequestVersion = null)
-    {
-        if (_ioService is NullIoService || _isShuttingDown)
-            return false;
-
-        if (!await TryEnterSolutionSaveAsync().ConfigureAwait(false))
-            return false;
-
-        try
-        {
-            // Notify subscribers to sync their data before saving
-            SolutionSaving?.Invoke(this, EventArgs.Empty);
-
-            var result = await SaveSolutionAtPathAsync(
-                currentPath,
-                allowPathSelection).ConfigureAwait(false);
-            return CompleteSolutionSave(result, autoSaveRequestVersion);
-        }
-        finally
-        {
-            ReleaseSolutionSaveSemaphore();
-        }
-    }
-
-    private async Task<bool> TryEnterSolutionSaveAsync()
-    {
-        try
-        {
-            await _solutionSaveSemaphore.WaitAsync().ConfigureAwait(false);
-            return true;
-        }
-        catch (ObjectDisposedException)
-        {
-            return false;
-        }
-    }
-
-    private async Task<(bool success, string? path, string? error)> SaveSolutionAtPathAsync(
-        string? currentPath,
-        bool allowPathSelection)
-    {
-        if (!string.IsNullOrWhiteSpace(currentPath))
-            return await _ioService.SaveAsync(Solution, currentPath).ConfigureAwait(false);
-
-        if (allowPathSelection)
-            return await _ioService.SaveAsAsync(Solution).ConfigureAwait(false);
-
-        return (false, null, null);
-    }
-
-    private bool CompleteSolutionSave(
-        (bool success, string? path, string? error) result,
-        long? autoSaveRequestVersion)
-    {
-        if (result.success && result.path != null)
-        {
-            ApplySuccessfulSolutionSave(result.path, autoSaveRequestVersion);
-            return true;
-        }
-
-        if (!string.IsNullOrEmpty(result.error))
-            throw new InvalidOperationException($"Failed to save solution: {result.error}");
-
-        return false;
-    }
-
-    private void ApplySuccessfulSolutionSave(string path, long? autoSaveRequestVersion)
-    {
-        var isLatestAutoSave = !autoSaveRequestVersion.HasValue ||
-            IsLatestSolutionAutoSaveRequest(autoSaveRequestVersion.Value);
-        // Marshal to UI thread to update observable properties bound to UI
-        _uiDispatcher.InvokeOnUi(() =>
-        {
-            CurrentSolutionPath = path;
-            HasUnsavedChanges = !isLatestAutoSave;
-            SolutionSaveState = isLatestAutoSave
-                ? SolutionSaveState.Saved
-                : SolutionSaveState.Saving;
-            SolutionSaveStatusText = isLatestAutoSave ? "Saved" : "Saving";
-        });
-    }
-
-    private void ReleaseSolutionSaveSemaphore()
-    {
-        try
-        {
-            _solutionSaveSemaphore.Release();
-        }
-        catch (ObjectDisposedException)
-        {
-            // Semaphore was disposed during shutdown while this save was finishing.
-        }
-    }
-
-    private void MarkSolutionDirty()
-    {
-        _uiDispatcher.InvokeOnUi(() => HasUnsavedChanges = true);
-    }
+    /// <summary>
+    /// Persists solution changes and returns the resulting host persistence status.
+    /// </summary>
+    public Task<SolutionSaveResult> SaveSolutionWithStatusAsync() => _session.SaveSolutionWithStatusAsync();
 
     [RelayCommand]
-    private async Task NewSolutionAsync()
-    {
-        if (HasUnsavedChanges &&
-            !await SaveSolutionCoreAsync(CurrentSolutionPath, allowPathSelection: true))
-        {
-            return;
-        }
-
-        BeginSuppressSolutionAutoSave();
-        try
-        {
-            // Clear existing Solution (DI singleton)
-            Solution.Projects.Clear();
-            Solution.Name = "New Solution";
-
-            // Add default project
-            var newProject = new Project
-            {
-                Name = "New Project",
-                Journeys = [],
-                Workflows = [],
-                Trains = []
-            };
-            Solution.Projects.Add(newProject);
-
-            SolutionViewModel?.Refresh();
-
-            CurrentSolutionPath = null;
-            MarkSolutionDirty();
-            SetSolutionSaveStatus(SolutionSaveState.NotSaved, "Not saved - choose Save As");
-
-            // ✅ Clear all selections to reset property panels across all pages
-            ClearAllSelections();
-
-            await _runtimeConnection.ActivateProjectAsync(newProject).ConfigureAwait(false);
-
-            SaveSolutionCommand.NotifyCanExecuteChanged();
-            ConnectCommand.NotifyCanExecuteChanged();
-
-            SolutionLoaded?.Invoke(this, EventArgs.Empty);
-        }
-        finally
-        {
-            EndSuppressSolutionAutoSave();
-        }
-    }
+    private Task NewSolutionAsync() => _session.NewSolutionAsync();
 
     [RelayCommand]
-    private async Task LoadSolutionAsync()
-    {
-        // Skip if IoService not available (WebApp/MAUI)
-        if (_ioService is NullIoService)
-            return;
-
-        var (loadedSolution, path, error) = await _ioService.LoadAsync().ConfigureAwait(false);
-
-        if (!string.IsNullOrEmpty(error))
-        {
-            throw new InvalidOperationException($"Failed to load solution: {error}");
-        }
-
-        if (loadedSolution != null && path != null)
-        {
-            // Marshal to UI thread to update observable properties bound to UI
-            _uiDispatcher.InvokeOnUi(() => ApplyLoadedSolution(loadedSolution, path));
-        }
-    }
+    private Task LoadSolutionAsync() => _session.LoadSolutionAsync();
 
     /// <summary>
     /// Loads a solution from a specific file path.
     /// Used by auto-load functionality to ensure the same code path as manual loading.
     /// </summary>
-    public async Task LoadSolutionFromPathAsync(string filePath)
-    {
-        // Skip if IoService not available (WebApp/MAUI)
-        if (_ioService is NullIoService)
-            return;
+    public Task LoadSolutionFromPathAsync(string filePath) => _session.LoadSolutionFromPathAsync(filePath);
 
-        var (loadedSolution, path, error) = await _ioService.LoadFromPathAsync(filePath).ConfigureAwait(false);
-
-        if (!string.IsNullOrEmpty(error))
-        {
-            throw new InvalidOperationException($"Failed to load solution: {error}");
-        }
-
-        if (loadedSolution != null && path != null)
-        {
-            // Marshal to UI thread to update observable properties bound to UI
-            _uiDispatcher.InvokeOnUi(() => ApplyLoadedSolution(loadedSolution, path));
-        }
-    }
-
-    /// <summary>
-    /// Applies a loaded solution to the ViewModel.
-    /// Single source of truth for all solution loading operations.
-    /// </summary>
-    private void ApplyLoadedSolution(Solution loadedSolution, string path)
-    {
-        BeginSuppressSolutionAutoSave();
-        try
-        {
-            // ✅ Clear all selections first to prevent stale data from previous solution
-            ClearAllSelections();
-
-            Solution.Projects.Clear();
-            foreach (var project in loadedSolution.Projects)
-            {
-                Solution.Projects.Add(project);
-            }
-
-            Solution.Name = loadedSolution.Name;
-            SolutionViewModel?.Refresh();
-
-            CurrentSolutionPath = path;
-            HasUnsavedChanges = false;
-            SolutionSaveState = SolutionSaveState.Saved;
-            SolutionSaveStatusText = "Saved";
-            HasSolution = Solution.Projects.Count > 0;
-
-            if (Solution.Projects.Count > 0)
-            {
-                // Auto-select first project after loading
-                SelectedProject = SolutionViewModel?.Projects.FirstOrDefault();
-
-                ObserveBackgroundTask(_runtimeConnection.ActivateProjectAsync(Solution.Projects[0]), "Activate project runtime");
-            }
-
-            SaveSolutionCommand.NotifyCanExecuteChanged();
-            ConnectCommand.NotifyCanExecuteChanged();
-            LoadCities();
-
-            OnPropertyChanged(nameof(Solution));
-
-            // Notify subscribers to load their data after loading
-            SolutionLoaded?.Invoke(this, EventArgs.Empty);
-        }
-        finally
-        {
-            EndSuppressSolutionAutoSave();
-        }
-    }
-
-    private bool CanSaveSolution() => _ioService is not NullIoService;
+    private bool CanSaveSolution() => _session.CanSave;
 
     /// <summary>
     /// Clears all selections across all pages to reset property panels.
-    /// This ensures property panels show "No item selected" instead of stale data.
-    /// 
-    /// Called in the following scenarios:
-    /// - Creating a new solution (NewSolutionAsync)
-    /// - Loading a solution from file (ApplyLoadedSolution)
-    /// - Deleting the currently selected project (DeleteProject)
+    /// Called when the session replaces the solution and when the selected project is deleted.
     /// </summary>
     private void ClearAllSelections()
     {
-        // Solution Page
         SelectedProject = null;
-
-        // Journeys Page
         SelectedJourney = null;
+        ClearPageSelections();
+    }
+
+    private void ClearPageSelections()
+    {
+        // Journeys Page
         SelectedStation = null;
         JourneysPageSelectedObject = null;
 

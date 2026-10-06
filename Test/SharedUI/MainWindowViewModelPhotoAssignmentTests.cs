@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Windows.Input;
 using Microsoft.Extensions.Logging.Abstractions;
+using Moba.Test.Helpers;
 using Moba.Domain.Enum;
 
 using Moba.Backend.Interface;
@@ -118,7 +119,7 @@ internal sealed class MainWindowViewModelPhotoAssignmentTests
             eventBusMock.Object,
             uiDispatcherMock.Object,
             new AppSettings(),
-            new Solution(),
+            TestSolutionSessions.Create(new Solution(), uiDispatcherMock.Object, mobaRuntimeMock.Object),
             new ActionExecutionContext
             {
                 Z21 = new Mock<IZ21>().Object
@@ -378,7 +379,7 @@ internal sealed class MainWindowViewModelPhotoAssignmentTests
             .ReturnsAsync((Solution _, string path) => (true, (string?)path, (string?)null));
         var viewModel = new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(), runtime.Object, runtime.Object, runtime.Object, new LocalRuntimeCommandGateway(runtime.Object), new Mock<IEventBus>().Object,
-            dispatcher.Object, new AppSettings(), new Solution { Projects = [project] },
+            dispatcher.Object, new AppSettings(), TestSolutionSessions.Create(new Solution { Projects = [project] }, dispatcher.Object, runtime.Object, io.Object),
             new ActionExecutionContext { Z21 = new Mock<IZ21>().Object },
             NullLogger<MainWindowViewModel>.Instance, io.Object)
         {

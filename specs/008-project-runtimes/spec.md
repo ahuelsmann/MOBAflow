@@ -175,7 +175,8 @@ and the switch warning; no page still says to enter the Z21 address in the app s
 
 - **FR-001**: A solution session MUST own the loaded solution, the selected project and journey, the dirty state and
   auto-save; ViewModels and host services MUST reach the solution only through it. Besides the shell, only WinUI pages
-  that bind their XAML to `MainWindowViewModel` may still depend on it until RF-24 gives them page ViewModels.
+  that bind their XAML to `MainWindowViewModel` and the few consumers of other shell state named in the architecture
+  test may still depend on it until RF-24 gives them page ViewModels.
 - **FR-002**: The session MUST create one runtime per project of the loaded solution and discard all of them when the
   solution is switched or closed.
 - **FR-003**: Each project MUST store its Z21 address and port; the app settings MUST no longer hold a Z21 address,
