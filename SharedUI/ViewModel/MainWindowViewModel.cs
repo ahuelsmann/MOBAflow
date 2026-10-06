@@ -45,7 +45,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly IUiDispatcher _uiDispatcher;
     private readonly IEventBus _eventBus;
     private readonly ILogger<MainWindowViewModel> _logger;
-    private readonly ILoggerFactory? _loggerFactory;
 
     // Configuration
     private readonly AppSettings _settings;
@@ -58,9 +57,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly IFeatureTogglePageProvider? _featureTogglePageProvider;
     private readonly IDialogService? _dialogService;
     private readonly ILocomotiveWhistleAutomationService? _locomotiveWhistleAutomation;
-
-    // Execution Context (contains all action execution dependencies)
-    private readonly ActionExecutionContext _executionContext;
 
     // Layout column widths (observable, bound from grid columns; loaded from settings so UI reflects persisted values)
     private readonly LayoutColumnWidthsViewModel _layoutColumnWidths;
@@ -140,14 +136,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _eventBus = eventBus;
         _settings = settings;
         _logger = logger;
-        _loggerFactory = loggerFactory;
         _layoutColumnWidths = layoutColumnWidths;
         _layoutColumnWidths.LoadFrom(settings.Layout);
         _cityLibraryService = cityLibraryService;
         _settingsService = settingsService;
         _announcementService = announcementService;
         _speechTestAction = speechTestAction;
-        _executionContext = executionContext;
         _featureTogglePageProvider = featureTogglePageProvider;
         _dialogService = dialogService;
         _locomotiveWhistleAutomation = locomotiveWhistleAutomation;

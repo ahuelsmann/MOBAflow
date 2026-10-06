@@ -122,7 +122,7 @@ public partial class MainWindowViewModel
         }
     }
 
-    private void OnSolutionReplacing(object? sender, EventArgs e) => ClearPageSelections();
+    private void OnSolutionReplacing(object? sender, EventArgs e) => ClearAllSelections();
 
     private void OnSessionSolutionLoaded(object? sender, EventArgs e)
     {
@@ -171,11 +171,7 @@ public partial class MainWindowViewModel
     {
         SelectedProject = null;
         SelectedJourney = null;
-        ClearPageSelections();
-    }
 
-    private void ClearPageSelections()
-    {
         // Journeys Page
         SelectedStation = null;
         JourneysPageSelectedObject = null;
