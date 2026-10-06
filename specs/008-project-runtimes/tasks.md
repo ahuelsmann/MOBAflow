@@ -15,7 +15,7 @@ Input: [spec.md](spec.md), [plan.md](plan.md), [research.md](research.md).
 - [ ] T005 Inject the session instead of `MainWindowViewModel` into `EventManagerViewModel`, `MonitorPageViewModel`, `TimetablePageViewModel`, `TrainControlViewModel`, `MatrixPageViewModel` and `MOBAsmart/Platforms/Android/MainActivity`
 - [ ] T006 Add an architecture test that no service or ViewModel depends on `MainWindowViewModel`, listing the WinUI pages left for RF-24
 - [ ] T007 Run the portable and Windows test suites and the analyzer gates for validation; secrets scan and line endings
-- [ ] T008 Open the slice PR as draft; SonarCloud green with zero open issues before review
+- [ ] T008 Open the slice PR as draft; Sonar quality gate (SonarCloud) green with zero open issues before review
 
 ## Slice 2 - No runtime copy
 
@@ -23,7 +23,7 @@ Input: [spec.md](spec.md), [plan.md](plan.md), [research.md](research.md).
 - [ ] T010 Hold runtime values (signal aspect, current station, journey progress, counters) by id in the runtime
 - [ ] T011 Read master data from the session's project; remove `CloneForRuntime`, `UpdateJourneyEventsAsync` and `UpdateSignalBoxAsync` and their callers
 - [ ] T012 Test that editor changes keep running workflows, journey progress and aspects; run suites and analyzer gates for validation
-- [ ] T013 Slice PR with SonarCloud green and zero open issues
+- [ ] T013 Slice PR with the Sonar quality gate (SonarCloud) green and zero open issues
 
 ## Slice 3 - Runtime and Z21 per project
 
@@ -34,7 +34,7 @@ Input: [spec.md](spec.md), [plan.md](plan.md), [research.md](research.md).
 - [ ] T018 Per-project counter store and duplicate-Z21 diagnostics (later runtime does not connect)
 - [ ] T019 Switch/close warning dialog and speed 0 for every known locomotive before discarding runtimes
 - [ ] T020 Tests with two fake Z21 endpoints: independence, conflict, takeover, switch and cancel; run suites and analyzer gates for validation
-- [ ] T021 Slice PR with SonarCloud green and zero open issues
+- [ ] T021 Slice PR with the Sonar quality gate (SonarCloud) green and zero open issues
 
 ## Slice 4 - MOBApi and MOBAsmart
 
@@ -42,10 +42,10 @@ Input: [spec.md](spec.md), [plan.md](plan.md), [research.md](research.md).
 - [ ] T023 MOBAflow applies remote commands to the named project's runtime only
 - [ ] T024 MOBAsmart project selection and per-project Z21 address for the direct connection
 - [ ] T025 Tests for project routing and MOBAsmart selection; run suites, Android build and analyzer gates for validation
-- [ ] T026 Slice PR with SonarCloud green and zero open issues
+- [ ] T026 Slice PR with the Sonar quality gate (SonarCloud) green and zero open issues
 
 ## Slice 5 - Documentation
 
 - [ ] T027 Update `docs/wiki/MOBAFLOW-USER-GUIDE.md`, `INSTALLATION.md` and `MOBASMART-USER-GUIDE.md`: one runtime and one Z21 per project, per-project Z21 setting, switch warning
 - [ ] T028 Update `docs/ARCHITECTURE.md` and `CHANGELOG.md`; validate links and instruction consistency
-- [ ] T029 Final PR closes #191 with SonarCloud green and zero open issues; record manual checks still pending approval
+- [ ] T029 Final PR closes #191 with the Sonar quality gate (SonarCloud) green and zero open issues; record manual checks still pending approval
