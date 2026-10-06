@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.TrackPlan.Renderer;
+namespace Moba.TrackLibrary.PikoA;
 
-using TrackLibrary.PikoA;
+using Moba.TrackPlan.Renderer;
 
 /// <summary>Adapts Piko A placements to the library-neutral renderer scene.</summary>
 public static class TrackPlanRenderSceneBuilder
@@ -36,24 +36,5 @@ public static class TrackPlanRenderSceneBuilder
             : [];
 
         return new TrackPlanRenderScene(items, validationMarkers, ports);
-    }
-}
-
-/// <summary>Compatibility adapter for rendering Piko A placements.</summary>
-public static class PikoAPlacedTrackPlanSvgRendererExtensions
-{
-    public static string Render(
-        this PlacedTrackPlanSvgRenderer renderer,
-        IReadOnlyList<PlacedSegment> placements,
-        double trackOpacity = 0.8,
-        bool showGrid = false,
-        bool showPorts = false)
-    {
-        ArgumentNullException.ThrowIfNull(renderer);
-        ArgumentNullException.ThrowIfNull(placements);
-        return renderer.Render(
-            TrackPlanRenderSceneBuilder.Build(placements, includePorts: showPorts),
-            trackOpacity,
-            showGrid);
     }
 }

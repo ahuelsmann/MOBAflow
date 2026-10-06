@@ -1,11 +1,11 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.TrackPlan.Renderer;
+namespace Moba.TrackLibrary.PikoA;
 
 using System.Globalization;
 using System.Text;
 
+using Moba.TrackPlan.Renderer;
 using TrackLibrary.Base;
-using TrackLibrary.PikoA;
 
 /// <summary>
 /// Result of <see cref="TrackPlanSvgRenderer.Render"/>: SVG string and placements for Win2D.

@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.Common.Speech;
+namespace Moba.Sound;
 
 using System.Globalization;
 using System.Text.RegularExpressions;

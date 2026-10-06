@@ -1521,13 +1521,6 @@
       "count": 1
     },
     {
-      "project": "Common",
-      "targetFramework": "net10.0",
-      "ruleId": "SYSLIB1045",
-      "path": "Common/Speech/PiperPronunciationNormalizer.cs",
-      "count": 3
-    },
-    {
       "project": "Domain",
       "targetFramework": "net10.0",
       "ruleId": "CA1002",
@@ -4020,6 +4013,13 @@
       "count": 1
     },
     {
+      "project": "Sound",
+      "targetFramework": "net10.0",
+      "ruleId": "SYSLIB1045",
+      "path": "Sound/PiperPronunciationNormalizer.cs",
+      "count": 3
+    },
+    {
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1001",
@@ -4793,13 +4793,6 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
-      "path": "Test/Common/PiperPronunciationNormalizerTests.cs",
-      "count": 1
-    },
-    {
-      "project": "Test",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1812",
       "path": "Test/Common/RecordingArtifactTests.cs",
       "count": 1
     },
@@ -5445,6 +5438,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/Sound/PcmWavePostProcessorTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/Sound/PiperPronunciationNormalizerTests.cs",
       "count": 1
     },
     {

@@ -39,16 +39,6 @@ internal sealed partial class SolutionArchitectureTests
         ["MAUI"] = "MOBAsmart",
     };
 
-    /// <summary>
-    /// Known namespace exceptions, each removed by the named refactoring package.
-    /// Key: project; value: namespaces outside the project root that are tolerated until then.
-    /// </summary>
-    private static readonly Dictionary<string, string[]> KnownNamespaceExceptions = new(StringComparer.Ordinal)
-    {
-        // RF-21 moves these renderer types into a Moba.TrackLibrary.PikoA namespace.
-        ["TrackLibrary.PikoA"] = ["Moba.TrackPlan.Renderer"],
-    };
-
     [Test]
     public void DocumentedTable_MatchesSolutionProjects()
     {
@@ -152,10 +142,9 @@ internal sealed partial class SolutionArchitectureTests
         var violations = new List<string>();
         foreach (var project in LoadSolutionProjects())
         {
-            var tolerated = KnownNamespaceExceptions.GetValueOrDefault(project.Name, []);
             foreach (var (file, declaredNamespace) in ReadNamespaceDeclarations(project))
             {
-                if (!IsBelow(declaredNamespace, project.RootNamespace) && !tolerated.Contains(declaredNamespace, StringComparer.Ordinal))
+                if (!IsBelow(declaredNamespace, project.RootNamespace))
                 {
                     violations.Add($"{file}: namespace {declaredNamespace} (root {project.RootNamespace})");
                 }
@@ -167,25 +156,6 @@ internal sealed partial class SolutionArchitectureTests
             Is.Empty,
             "Namespace rule: every namespace declared in a project starts with that project's root namespace. "
             + "Violations: " + string.Join("; ", violations));
-    }
-
-    [Test]
-    public void KnownNamespaceExceptions_AreStillNeeded()
-    {
-        var stale = new List<string>();
-        foreach (var project in LoadSolutionProjects().Where(project => KnownNamespaceExceptions.ContainsKey(project.Name)))
-        {
-            var declared = ReadNamespaceDeclarations(project).Select(declaration => declaration.Namespace).ToHashSet(StringComparer.Ordinal);
-            stale.AddRange(KnownNamespaceExceptions[project.Name]
-                .Where(exception => !declared.Contains(exception))
-                .Select(exception => $"{project.Name}: {exception}"));
-        }
-
-        Assert.That(
-            stale,
-            Is.Empty,
-            "Namespace rule: remove resolved entries from SolutionArchitectureTests.KnownNamespaceExceptions: "
-            + string.Join("; ", stale));
     }
 
     private static IEnumerable<(string Framework, string Evidence)> UiFrameworkUsage(BuildDefinition build)

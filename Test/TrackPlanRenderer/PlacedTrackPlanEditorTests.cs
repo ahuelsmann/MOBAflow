@@ -128,7 +128,9 @@ internal class PlacedTrackPlanEditorTests
             new(new WR(), 100, 40, 15)
         };
 
-        var svg = new PlacedTrackPlanSvgRenderer().Render(placements, trackOpacity: 0.65, showGrid: true, showPorts: true);
+        var scene = TrackPlanRenderSceneBuilder.Build(placements, includePorts: true);
+
+        var svg = new PlacedTrackPlanSvgRenderer().Render(scene, trackOpacity: 0.65, showGrid: true);
 
         Assert.That(svg, Does.Contain("<svg"));
         Assert.That(svg, Does.Contain("stroke-opacity=\"0.65\""));
