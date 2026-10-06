@@ -214,10 +214,10 @@ public sealed class JourneyCounterProjectionTests
                 .ReturnsAsync((true, "projection-test.json", null));
             io.Setup(service => service.SaveAsAsync(It.IsAny<Solution>())).ReturnsAsync((true, "projection-test.json", null));
             Settings.Counter.CountOfFeedbackPoints = 7;
-            ViewModel = new MainWindowViewModel(new LayoutColumnWidthsViewModel(), Runtime.Object, _eventBus,
+            ViewModel = new MainWindowViewModel(new LayoutColumnWidthsViewModel(), Runtime.Object, Runtime.Object, Runtime.Object, Gateway.Object, _eventBus,
                 dispatcher.Object, Settings, solution ?? new Solution { Projects = [new Project()] },
                 new ActionExecutionContext { Z21 = Mock.Of<IZ21>() }, NullLogger<MainWindowViewModel>.Instance,
-                io.Object, runtimeCommandGateway: Gateway.Object);
+                io.Object);
         }
 
         public Mock<IMobaRuntime> Runtime { get; } = new();

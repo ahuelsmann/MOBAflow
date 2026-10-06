@@ -249,6 +249,7 @@ internal sealed class SolutionRemoteLoaderTests
 
         var trainControl = new TrainControlViewModel(
             runtimeMock.Object,
+            new LocalRuntimeCommandGateway(runtimeMock.Object),
             settingsMock.Object,
             mobileContext,
             NullLogger<TrainControlViewModel>.Instance,

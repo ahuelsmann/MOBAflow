@@ -22,17 +22,11 @@ using System.Linq;
 
 sealed partial class SignalBoxPage
 {
-    private static readonly Action<ILogger, Exception?> LogPropertyPersistenceFailure =
+    private static readonly Action<ILogger, Exception?> LogSignalBoxChangeFailure =
         LoggerMessage.Define(
             LogLevel.Warning,
-            new EventId(1, nameof(LogPropertyPersistenceFailure)),
-            "Persist signal-box property change failed");
-
-    private static readonly Action<ILogger, Exception?> LogSignalAspectFailure =
-        LoggerMessage.Define(
-            LogLevel.Warning,
-            new EventId(2, nameof(LogSignalAspectFailure)),
-            "Set signal aspect failed");
+            new EventId(1, nameof(LogSignalBoxChangeFailure)),
+            "Apply signal-box property change failed");
 
     private readonly AppSettings _settings;
     private readonly ISettingsService? _settingsService;
@@ -399,30 +393,19 @@ sealed partial class SignalBoxPage
             _planViewModel?.RefreshElementVisual(args.Element);
         }
 
-        if (args.RequiresPersistence)
+        if (args.RequiresPersistence || args.RequiresSignalCommand)
         {
-            ViewModel.SaveSolutionInternalAsync().Observe(LogPropertyPersistenceException);
-        }
-
-        if (args.RequiresSignalCommand && args.Element is SbSignal signal)
-        {
-            ViewModel.SetSignalAspectAsync(signal).Observe(LogSignalAspectException);
+            ViewModel
+                .ApplySignalBoxElementChangeAsync(args.Element, args.RequiresPersistence, args.RequiresSignalCommand)
+                .Observe(LogSignalBoxChangeException);
         }
     }
 
-    private void LogPropertyPersistenceException(Exception exception)
+    private void LogSignalBoxChangeException(Exception exception)
     {
         if (_logger is not null)
         {
-            LogPropertyPersistenceFailure(_logger, exception);
-        }
-    }
-
-    private void LogSignalAspectException(Exception exception)
-    {
-        if (_logger is not null)
-        {
-            LogSignalAspectFailure(_logger, exception);
+            LogSignalBoxChangeFailure(_logger, exception);
         }
     }
 

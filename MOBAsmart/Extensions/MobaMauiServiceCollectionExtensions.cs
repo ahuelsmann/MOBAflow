@@ -121,7 +121,10 @@ public static class MobaMauiServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddSingleton<MauiViewModel>(sp => new MauiViewModel(
-            sp.GetRequiredService<IMobaRuntime>(),
+            sp.GetRequiredService<IRuntimeSnapshotProvider>(),
+            sp.GetRequiredService<IConnectionRuntime>(),
+            sp.GetRequiredService<ITrafficMonitor>(),
+            sp.GetRequiredService<IRuntimeCommandGateway>(),
             sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<AppSettings>(),
             sp.GetRequiredService<ISettingsService>(),
@@ -137,7 +140,6 @@ public static class MobaMauiServiceCollectionExtensions
             sp.GetRequiredService<ISolutionRemoteLoader>(),
             sp.GetRequiredService<IMobileSolutionStore>(),
             sp.GetRequiredService<IRuntimeHubRemoteClient>(),
-            sp.GetRequiredService<IRuntimeCommandGateway>(),
             sp.GetRequiredService<IMobileRuntimeCoordinator>(),
             sp.GetRequiredService<IProjectContext>(),
             sp.GetRequiredService<IBackgroundService>()));
@@ -149,14 +151,15 @@ public static class MobaMauiServiceCollectionExtensions
         services.AddSingleton<TrainControlViewModel>(sp =>
         {
             var coordinator = sp.GetRequiredService<IMobileRuntimeCoordinator>();
+            // Locomotive commands use the coordinator directly and are not recorded yet (issue #188).
             return new TrainControlViewModel(
-                sp.GetRequiredService<IMobaRuntime>(),
+                sp.GetRequiredService<IRuntimeSnapshotProvider>(),
+                coordinator,
                 sp.GetRequiredService<ISettingsService>(),
                 sp.GetRequiredService<IProjectContext>(),
                 sp.GetRequiredService<ILogger<TrainControlViewModel>>(),
                 sp.GetRequiredService<IUiDispatcher>(),
                 sp.GetRequiredService<IEventBus>(),
-                runtimeCommandGateway: sp.GetRequiredService<IRuntimeCommandGateway>(),
                 mobileRuntimeCoordinator: coordinator,
                 options: sp.GetRequiredService<TrainControlViewModelOptions>());
         });

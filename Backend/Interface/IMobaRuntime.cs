@@ -17,7 +17,8 @@ public interface IRuntimeSnapshotProvider
 }
 
 /// <summary>
-/// Runtime lifecycle and Z21 connection commands.
+/// Runtime lifecycle and Z21 connection. ViewModels may use this role; operator commands go through the
+/// runtime command gateway instead.
 /// </summary>
 public interface IConnectionRuntime
 {
@@ -31,10 +32,6 @@ public interface IConnectionRuntime
     Task ConnectAsync(CancellationToken cancellationToken = default);
 
     Task DisconnectAsync(CancellationToken cancellationToken = default);
-
-    Task SetTrackPowerAsync(bool isOn, CancellationToken cancellationToken = default);
-
-    Task AcknowledgeFailSafeAsync(CancellationToken cancellationToken = default);
 
     Task RequestSystemStateAsync(CancellationToken cancellationToken = default);
 }
@@ -54,10 +51,14 @@ public interface ILocomotiveRuntime
 }
 
 /// <summary>
-/// Signal, turnout and journey command role of the runtime.
+/// Layout control commands: track power, fail-safe, feedback simulation, journeys, counters, signals and turnouts.
 /// </summary>
-public interface ISignalTurnoutRuntime
+public interface ILayoutControlRuntime
 {
+    Task SetTrackPowerAsync(bool isOn, CancellationToken cancellationToken = default);
+
+    Task AcknowledgeFailSafeAsync(CancellationToken cancellationToken = default);
+
     Task SimulateFeedbackAsync(int inPort, CancellationToken cancellationToken = default);
 
     Task ResetJourneyAsync(Guid journeyId, CancellationToken cancellationToken = default);
@@ -67,8 +68,6 @@ public interface ISignalTurnoutRuntime
     Task SetInPortCounterAsync(uint inPort, ulong value, CancellationToken cancellationToken = default);
 
     Task ResetInPortCounterAsync(uint inPort, CancellationToken cancellationToken = default);
-
-    Task SetSignalAspectAsync(SbSignal signal, CancellationToken cancellationToken = default);
 
     Task SetSignalAspectAsync(Guid signalId, SignalAspect signalAspect, CancellationToken cancellationToken = default);
 
@@ -88,14 +87,15 @@ public interface ITrafficMonitor
 }
 
 /// <summary>
-/// Backward-compatible aggregate facade for existing runtime consumers.
-/// Prefer the narrower role interfaces for new code.
+/// Complete runtime surface for hosts, runtime command gateways and runtime services.
+/// ViewModels depend on <see cref="IRuntimeSnapshotProvider"/>, <see cref="IConnectionRuntime"/> and
+/// <see cref="ITrafficMonitor"/> and send commands through the runtime command gateway.
 /// </summary>
 public interface IMobaRuntime :
     IRuntimeSnapshotProvider,
     IConnectionRuntime,
     ILocomotiveRuntime,
-    ISignalTurnoutRuntime,
+    ILayoutControlRuntime,
     ITrafficMonitor
 {
 }

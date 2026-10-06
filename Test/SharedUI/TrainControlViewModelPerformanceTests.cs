@@ -13,6 +13,7 @@ using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Common.Runtime;
 using Moba.SharedUI.Interface;
+using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 
 using Moq;
@@ -92,8 +93,10 @@ internal sealed class TrainControlViewModelPerformanceTests
         IEventBus? eventBus = null,
         MobaRuntimeSnapshot? initialSnapshot = null)
     {
+        var runtime = mobaRuntime ?? CreateConnectedRuntimeMock(initialSnapshot).Object;
         return new TrainControlViewModel(
-            mobaRuntime ?? CreateConnectedRuntimeMock(initialSnapshot).Object,
+            runtime,
+            new LocalRuntimeCommandGateway(runtime),
             CreateSettingsServiceMock().Object,
             eventBus: eventBus ?? new EventBus(NullLogger<EventBus>.Instance));
     }

@@ -658,6 +658,7 @@ internal sealed class MauiViewModelMobaflowOfflineTests
 
         var trainControlViewModel = new TrainControlViewModel(
             runtimeMock.Object,
+            coordinator,
             CreateSettingsServiceMock().Object,
             eventBus: eventBus,
             mobileRuntimeCoordinator: coordinator,
@@ -729,6 +730,9 @@ internal sealed class MauiViewModelMobaflowOfflineTests
 
         var viewModel = new MauiViewModel(
             runtimeMock.Object,
+            runtimeMock.Object,
+            runtimeMock.Object,
+            runtimeCommandGateway ?? mobileRuntimeCoordinator ?? (IRuntimeCommandGateway)new LocalRuntimeCommandGateway(runtimeMock.Object),
             uiDispatcherMock.Object,
             settings ?? new AppSettings(),
             CreateSettingsServiceMock().Object,
@@ -740,7 +744,6 @@ internal sealed class MauiViewModelMobaflowOfflineTests
             NullLogger<MauiViewModel>.Instance,
             eventBus,
             runtimeHubRemoteClient: runtimeHubRemoteClient,
-            runtimeCommandGateway: runtimeCommandGateway ?? mobileRuntimeCoordinator,
             mobileRuntimeCoordinator: mobileRuntimeCoordinator,
             projectContext: projectContext);
 

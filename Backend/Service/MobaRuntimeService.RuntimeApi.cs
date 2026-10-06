@@ -336,7 +336,7 @@ public sealed partial class MobaRuntimeService
         SetInPortCounterAsync(inPort, 0, cancellationToken);
 
     /// <inheritdoc />
-    public async Task SetSignalAspectAsync(SbSignal signal, CancellationToken cancellationToken = default)
+    private async Task SetSignalAspectAsync(SbSignal signal, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(signal);
 

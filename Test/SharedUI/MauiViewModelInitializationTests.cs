@@ -9,6 +9,7 @@ using Moba.Common.Discovery;
 using Moba.Common.Events;
 using Moba.Common.Runtime;
 using Moba.SharedUI.Interface;
+using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 
 using Moq;
@@ -222,6 +223,9 @@ internal sealed class MauiViewModelInitializationTests
     {
         var viewModel = new MauiViewModel(
             dependencies.MobaRuntimeMock.Object,
+            dependencies.MobaRuntimeMock.Object,
+            dependencies.MobaRuntimeMock.Object,
+            runtimeCommandGateway ?? new LocalRuntimeCommandGateway(dependencies.MobaRuntimeMock.Object),
             dependencies.UiDispatcherMock.Object,
             dependencies.Settings,
             dependencies.SettingsServiceMock.Object,
@@ -233,8 +237,7 @@ internal sealed class MauiViewModelInitializationTests
             NullLogger<MauiViewModel>.Instance,
             eventBus ?? new EventBus(NullLogger<EventBus>.Instance),
             dependencies.RestApiClientRegistrationMock.Object,
-            runtimeHubRemoteClient: runtimeHubRemoteClient,
-            runtimeCommandGateway: runtimeCommandGateway);
+            runtimeHubRemoteClient: runtimeHubRemoteClient);
 
         _createdViewModels.Add(viewModel);
         return viewModel;

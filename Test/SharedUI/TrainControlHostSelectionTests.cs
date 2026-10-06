@@ -59,6 +59,7 @@ internal sealed class TrainControlHostSelectionTests
 
         var winUiViewModel = new TrainControlViewModel(
             runtimeMock.Object,
+            new LocalRuntimeCommandGateway(runtimeMock.Object),
             settingsServiceMock.Object,
             projectContext,
             eventBus: eventBus,
@@ -68,6 +69,7 @@ internal sealed class TrainControlHostSelectionTests
 
         var mauiViewModel = new TrainControlViewModel(
             runtimeMock.Object,
+            new LocalRuntimeCommandGateway(runtimeMock.Object),
             settingsServiceMock.Object,
             projectContext,
             eventBus: eventBus,

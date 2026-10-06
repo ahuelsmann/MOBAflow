@@ -62,8 +62,13 @@ ViewModels (RF-24).
   stale for the `Guid` path, because signal-box edits do not update the
   runtime copy (station, train and journey edits do). The maintainer asked for
   the simplest model; the proposal is a single `Guid` command plus updating the
-  runtime copy on signal-box edits. **Open decision**, so the signal-box path is
-  not part of slice 1.
+  runtime copy on signal-box edits. **Decision (maintainer, 2026-10-06)**: the
+  gateway keeps its single `Guid` signal command; a persisted signal-box property
+  change saves the solution and re-activates the project before an aspect is
+  sent. RF-23 replaces the copy (see the decisions recorded in #47).
+- MOBAsmart passes `MobileRuntimeCoordinator` instead of the recording gateway
+  to `TrainControlViewModel` and the signal box, so their commands are not
+  recorded. RF-22 keeps this routing explicit in DI; #188 covers it.
 - Tests: 24 ViewModel constructions in 18 test files; 55 test files reference
   `IMobaRuntime`, mostly through `Mock<IMobaRuntime>`, which implements every role.
 
@@ -71,7 +76,8 @@ ViewModels (RF-24).
 
 - **Port**: keep `IRuntimeCommandGateway` (maintainer decision on the anchor).
   Add `SetAllLocomotiveFunctionsOffAsync`, `RequestLocomotiveInfoAsync` and
-  `AcknowledgeFailSafeAsync`; the signal-box path follows the open decision above.
+  `AcknowledgeFailSafeAsync`. The signal-box editor sends id and aspect; the
+  runtime's `SbSignal` overload becomes private.
 - **Routing of the added commands** stays as today: the local gateway calls the
   runtime; `MobileRuntimeCoordinator` sends them to the local runtime, except
   all functions off with an active MOBAflow session, which it sends as 32 single
@@ -146,6 +152,7 @@ SonarCloud with zero open issues before review.
 2. **Roles and required gateway**: introduce `ILayoutControlRuntime`, narrow
    ViewModel dependencies, make the gateway required, remove the
    `new LocalRuntimeCommandGateway(...)` and `MauiViewModel` fallbacks, route
-   the signal-box path as decided, update tests and DI.
+   the signal-box editor through the gateway with the project refresh, update
+   tests and DI.
 3. **Guard and documentation**: architecture test, `docs/ARCHITECTURE.md`
    command path, `IMobaRuntime` comment; delete this plan when #187 closes.

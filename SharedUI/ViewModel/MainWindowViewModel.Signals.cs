@@ -19,15 +19,42 @@ public partial class MainWindowViewModel
     public event EventHandler? SignalBoxRuntimeStateChanged;
 
     /// <summary>
-    /// Sets a multiplex signal aspect via Z21 turnout commands.
-    /// Automatically calculates the correct DCC address and polarity based on the multiplexer mapping.
+    /// Sends the signal's current aspect through the runtime command gateway.
+    /// The runtime resolves the signal by id in the active project.
     /// </summary>
-    /// <param name="signal">The signal element with multiplex configuration (Multiplexer, MainSignal, BaseAddress)</param>
+    /// <param name="signal">The signal whose <see cref="SbSignal.SignalAspect"/> is sent.</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    public async Task SetSignalAspectAsync(SbSignal signal, CancellationToken cancellationToken = default)
+    public Task SetSignalAspectAsync(SbSignal signal, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(signal);
-        await _mobaRuntime.SetSignalAspectAsync(signal, cancellationToken).ConfigureAwait(false);
+        return _runtimeCommandGateway.SetSignalAspectAsync(signal.Id, signal.SignalAspect, cancellationToken);
+    }
+
+    /// <summary>
+    /// Applies a property change made in the signal-box editor: persists the solution, refreshes the runtime
+    /// project so it knows the changed configuration, and sends the signal aspect when requested.
+    /// </summary>
+    /// <param name="element">The changed signal-box element.</param>
+    /// <param name="requiresPersistence">Whether the change alters stored configuration.</param>
+    /// <param name="requiresSignalCommand">Whether the change requests a signal aspect on the layout.</param>
+    public async Task ApplySignalBoxElementChangeAsync(SbElement element, bool requiresPersistence, bool requiresSignalCommand)
+    {
+        ArgumentNullException.ThrowIfNull(element);
+
+        if (requiresPersistence)
+        {
+            await SaveSolutionInternalAsync().ConfigureAwait(false);
+            if (SelectedProject is { } project)
+            {
+                // The runtime executes a copy of the project; refresh it like station and journey edits do.
+                await _runtimeConnection.ActivateProjectAsync(project.Model).ConfigureAwait(false);
+            }
+        }
+
+        if (requiresSignalCommand && element is SbSignal signal)
+        {
+            await SetSignalAspectAsync(signal).ConfigureAwait(false);
+        }
     }
 
     /// <summary>

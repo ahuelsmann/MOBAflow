@@ -72,7 +72,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        await _mobaRuntime.ActivateProjectAsync(SelectedProject.Model).ConfigureAwait(false);
+        await _runtimeConnection.ActivateProjectAsync(SelectedProject.Model).ConfigureAwait(false);
     }
 
     partial void OnTrainSearchTextChanged(string value)

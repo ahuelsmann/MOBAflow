@@ -237,7 +237,7 @@ public sealed partial class MauiViewModel
                 return _cachedRemoteLocomotiveFleet;
             }
 
-            var liveRuntimeFleet = _mobaRuntime.Current.LocomotiveFleet;
+            var liveRuntimeFleet = _runtimeSnapshots.Current.LocomotiveFleet;
             if (liveRuntimeFleet.Count > 0)
             {
                 return liveRuntimeFleet;
@@ -255,7 +255,7 @@ public sealed partial class MauiViewModel
             return _cachedRemoteLocomotiveFleet;
         }
 
-        var localFleet = _mobaRuntime.Current.LocomotiveFleet;
+        var localFleet = _runtimeSnapshots.Current.LocomotiveFleet;
         if (localFleet.Count > 0)
         {
             return localFleet;
@@ -279,7 +279,7 @@ public sealed partial class MauiViewModel
             return true;
         }
 
-        if (_mobaRuntime.Current.LocomotiveFleet.Count > 0)
+        if (_runtimeSnapshots.Current.LocomotiveFleet.Count > 0)
         {
             return true;
         }

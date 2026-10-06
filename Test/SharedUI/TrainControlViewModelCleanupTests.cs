@@ -12,6 +12,7 @@ using Moba.Common.Events;
 using Moba.Common.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
+using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 
 using Moq;
@@ -72,6 +73,7 @@ internal sealed class TrainControlViewModelCleanupTests
 
         return new TrainControlViewModel(
             runtimeMock.Object,
+            new LocalRuntimeCommandGateway(runtimeMock.Object),
             settingsServiceMock.Object,
             mainWindowViewModel,
             NullLogger<TrainControlViewModel>.Instance,
@@ -93,6 +95,9 @@ internal sealed class TrainControlViewModelCleanupTests
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             runtimeMock.Object,
+            runtimeMock.Object,
+            runtimeMock.Object,
+            new LocalRuntimeCommandGateway(runtimeMock.Object),
             new EventBus(NullLogger<EventBus>.Instance),
             uiDispatcherMock.Object,
             new AppSettings(),

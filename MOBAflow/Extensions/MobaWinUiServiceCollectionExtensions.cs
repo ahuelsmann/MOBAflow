@@ -250,7 +250,10 @@ public static class MobaWinUiServiceCollectionExtensions
         services.AddSingleton<LocomotiveManagementViewModel>();
         services.AddSingleton(sp => new MainWindowViewModel(
             sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
-            sp.GetRequiredService<IMobaRuntime>(),
+            sp.GetRequiredService<IRuntimeSnapshotProvider>(),
+            sp.GetRequiredService<IConnectionRuntime>(),
+            sp.GetRequiredService<ITrafficMonitor>(),
+            sp.GetRequiredService<IRuntimeCommandGateway>(),
             sp.GetRequiredService<IEventBus>(),
             sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<AppSettings>(),
@@ -271,7 +274,6 @@ public static class MobaWinUiServiceCollectionExtensions
             },
             locomotiveWhistleAutomation: sp.GetService<ILocomotiveWhistleAutomationService>(),
             projectDiagnosticsService: sp.GetRequiredService<IProjectDiagnosticsService>(),
-            runtimeCommandGateway: sp.GetRequiredService<IRuntimeCommandGateway>(),
             workflowService: sp.GetRequiredService<IWorkflowService>(),
             workflowTraceStore: sp.GetRequiredService<IWorkflowTraceStore>()));
 
@@ -289,13 +291,13 @@ public static class MobaWinUiServiceCollectionExtensions
             Host = TrainControlHost.WinUi
         });
         services.AddSingleton(sp => new TrainControlViewModel(
-            sp.GetRequiredService<IMobaRuntime>(),
+            sp.GetRequiredService<IRuntimeSnapshotProvider>(),
+            sp.GetRequiredService<IRuntimeCommandGateway>(),
             sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<IProjectContext>(),
             sp.GetService<ILogger<TrainControlViewModel>>(),
             sp.GetService<IUiDispatcher>(),
             sp.GetRequiredService<IEventBus>(),
-            sp.GetRequiredService<IRuntimeCommandGateway>(),
             functionAppearancePicker: sp.GetRequiredService<IFunctionAppearancePicker>(),
             options: sp.GetRequiredService<TrainControlViewModelOptions>()));
 

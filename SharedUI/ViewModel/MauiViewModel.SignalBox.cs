@@ -152,9 +152,7 @@ public sealed partial class MauiViewModel
     }
 
     private IRuntimeCommandGateway ResolveRuntimeCommandGateway() =>
-        _mobileRuntimeCoordinator
-        ?? _runtimeCommandGateway
-        ?? CreateLocalRuntimeCommandGateway();
+        _mobileRuntimeCoordinator ?? _runtimeCommandGateway;
 
     private SignalBoxElementRuntimeSnapshot ApplyPendingSignalAspect(SignalBoxElementRuntimeSnapshot snapshot)
     {
@@ -184,9 +182,6 @@ public sealed partial class MauiViewModel
 
         return snapshot with { SignalAspect = pending };
     }
-
-    private IRuntimeCommandGateway CreateLocalRuntimeCommandGateway() =>
-        new LocalRuntimeCommandGateway(_mobaRuntime);
 }
 
 public sealed partial class MauiSignalBoxElementViewModel : ObservableObject
