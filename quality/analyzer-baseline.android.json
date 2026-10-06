@@ -3569,7 +3569,7 @@
       "targetFramework": "net10.0",
       "ruleId": "IDE0007",
       "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
-      "count": 7
+      "count": 6
     },
     {
       "project": "SharedUI",

@@ -1656,7 +1656,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     {
         try
         {
-            await _mobaRuntime.RequestLocomotiveInfoAsync(LocoAddress);
+            await _runtimeCommandGateway.RequestLocomotiveInfoAsync(LocoAddress);
             StatusMessage = $"Requesting loco {LocoAddress}...";
         }
         catch (Exception ex)
@@ -2116,23 +2116,8 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         }
     }
 
-    private async Task SendAllFunctionsOffAsync(CancellationToken cancellationToken)
-    {
-        if (_mobileRuntimeCoordinator?.PreferRemoteRuntime == true)
-        {
-            for (int functionIndex = 0; functionIndex <= 31; functionIndex++)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                await _runtimeCommandGateway
-                    .SetLocomotiveFunctionAsync(LocoAddress, functionIndex, false, cancellationToken)
-                    .ConfigureAwait(false);
-            }
-
-            return;
-        }
-
-        await _mobaRuntime.SetAllLocomotiveFunctionsOffAsync(LocoAddress, cancellationToken).ConfigureAwait(false);
-    }
+    private Task SendAllFunctionsOffAsync(CancellationToken cancellationToken) =>
+        _runtimeCommandGateway.SetAllLocomotiveFunctionsOffAsync(LocoAddress, cancellationToken);
 
     private bool GetFunctionState(int functionNumber) =>
         functionNumber >= 0 && functionNumber < Functions.Count && Functions[functionNumber].IsOn;

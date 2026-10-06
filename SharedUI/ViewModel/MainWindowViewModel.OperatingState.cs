@@ -120,7 +120,7 @@ public partial class MainWindowViewModel
         if (!IsConnected)
             return;
 
-        await _mobaRuntime.AcknowledgeFailSafeAsync().ConfigureAwait(false);
+        await _runtimeCommandGateway.AcknowledgeFailSafeAsync().ConfigureAwait(false);
     }
 
     private bool CanAcknowledgeOperatingState() => IsOperatorAckRequired && IsConnected;

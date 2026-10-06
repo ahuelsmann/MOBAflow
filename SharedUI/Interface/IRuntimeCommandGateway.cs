@@ -11,6 +11,9 @@ public interface IRuntimeCommandGateway
 {
     Task SetTrackPowerAsync(bool isOn, CancellationToken cancellationToken = default);
 
+    /// <summary>Clears the latched fail-safe state after the connection has recovered.</summary>
+    Task AcknowledgeFailSafeAsync(CancellationToken cancellationToken = default);
+
     Task SimulateFeedbackAsync(int inPort, CancellationToken cancellationToken = default);
 
     Task ResetJourneyAsync(Guid journeyId, CancellationToken cancellationToken = default);
@@ -26,6 +29,12 @@ public interface IRuntimeCommandGateway
     Task SetLocomotiveDriveAsync(int address, int speed, bool forward, CancellationToken cancellationToken = default);
 
     Task SetLocomotiveFunctionAsync(int address, int functionIndex, bool isOn, CancellationToken cancellationToken = default);
+
+    /// <summary>Switches every function (F0-F31) of a locomotive off.</summary>
+    Task SetAllLocomotiveFunctionsOffAsync(int address, CancellationToken cancellationToken = default);
+
+    /// <summary>Asks the command station to report the current state of a locomotive.</summary>
+    Task RequestLocomotiveInfoAsync(int address, CancellationToken cancellationToken = default);
 
     Task SendTurnoutCommandAsync(
         int decoderAddress,

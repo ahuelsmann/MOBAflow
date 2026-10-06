@@ -59,21 +59,24 @@ ViewModels (RF-24).
 - The `SbSignal` overload uses the editor's signal configuration, while the
   `Guid` overload uses the runtime's deep copy of the last activated project.
   A signal that was just added or edited in the editor is therefore unknown or
-  stale for the `Guid` path. The gateway gets an `SbSignal` overload so the
-  editor behavior stays identical.
+  stale for the `Guid` path, because signal-box edits do not update the
+  runtime copy (station, train and journey edits do). The maintainer asked for
+  the simplest model; the proposal is a single `Guid` command plus updating the
+  runtime copy on signal-box edits. **Open decision**, so the signal-box path is
+  not part of slice 1.
 - Tests: 24 ViewModel constructions in 18 test files; 55 test files reference
   `IMobaRuntime`, mostly through `Mock<IMobaRuntime>`, which implements every role.
 
 ## Design decisions
 
 - **Port**: keep `IRuntimeCommandGateway` (maintainer decision on the anchor).
-  Add `SetAllLocomotiveFunctionsOffAsync`, `RequestLocomotiveInfoAsync`,
-  `AcknowledgeFailSafeAsync` and `SetSignalAspectAsync(SbSignal)`.
+  Add `SetAllLocomotiveFunctionsOffAsync`, `RequestLocomotiveInfoAsync` and
+  `AcknowledgeFailSafeAsync`; the signal-box path follows the open decision above.
 - **Routing of the added commands** stays as today: the local gateway calls the
-  runtime; `MobileRuntimeCoordinator` sends them to the local runtime
-  (`SbSignal`: remote by id and aspect when a MOBAflow session is active, like
-  the `Guid` overload); the recording gateway passes them through **without**
-  recording until #188.
+  runtime; `MobileRuntimeCoordinator` sends them to the local runtime, except
+  all functions off with an active MOBAflow session, which it sends as 32 single
+  function commands (moved there from `TrainControlViewModel`); the recording
+  gateway passes them through **without** recording until #188.
 - **Roles** (maintainer decision 2026-10-06: narrow roles):
   - `IConnectionRuntime` keeps lifecycle and connection only: `StartAsync`,
     `ActivateProjectAsync`, `UpdateJourneyEventsAsync`, `ConnectAsync`,
@@ -99,7 +102,11 @@ ViewModel-specific aggregate interface (rejected: it would recreate a facade).
 ## Compatibility, security and telemetry
 
 No persisted format, API endpoint or setting changes. MOBApi is untouched.
-Recorder output stays identical until #188. Logging and telemetry do not change.
+Recorder output stays identical until #188, with one accepted exception: in
+MOBAsmart with an active MOBAflow session, "all functions off" was recorded as
+32 single function commands because the loop ran above the recording gateway;
+it now runs in `MobileRuntimeCoordinator` below it and is not recorded until
+#188 adds an "all functions off" entry. Logging and telemetry do not change.
 
 ## Risks, stop conditions and rollback
 
@@ -108,7 +115,7 @@ Recorder output stays identical until #188. Logging and telemetry do not change.
 - DI resolution gaps: the WinUI and MAUI container validators resolve every role
   and the gateway; both run in tests.
 - Stop condition: any change to recorder output or MOBAsmart routing beyond
-  this plan. Rollback: revert the slice PR; slices are independent.
+  the exception documented above. Rollback: revert the slice PR; slices are independent.
 
 ## Automated tests
 
@@ -134,11 +141,11 @@ hardware actions are not authorized by this plan.
 Each slice is a draft PR with secrets scan, line-ending check, green CI and
 SonarCloud with zero open issues before review.
 
-1. **Port completion**: add the four commands to the gateway and all
-   implementations; route the bypassing ViewModel calls; remove the
-   `MauiViewModel` fallbacks.
+1. **Port completion**: add the three commands to the gateway and all
+   implementations; route the bypassing ViewModel calls.
 2. **Roles and required gateway**: introduce `ILayoutControlRuntime`, narrow
    ViewModel dependencies, make the gateway required, remove the
-   `new LocalRuntimeCommandGateway(...)` fallbacks, update tests and DI.
+   `new LocalRuntimeCommandGateway(...)` and `MauiViewModel` fallbacks, route
+   the signal-box path as decided, update tests and DI.
 3. **Guard and documentation**: architecture test, `docs/ARCHITECTURE.md`
    command path, `IMobaRuntime` comment; delete this plan when #187 closes.
