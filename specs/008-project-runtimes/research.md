@@ -24,8 +24,9 @@ Findings on `main` at `0113551f` (2026-10-06).
 - `MobaRuntimeService.ActivateProjectAsync` replaces the active project with a JSON copy (`CloneForRuntime`).
   Station, train and journey edits re-activate the project; journey event edits and (since RF-22) signal-box edits
   use targeted updates (`UpdateJourneyEventsAsync`, `UpdateSignalBoxAsync`).
-- The selected project is activated only on solution load and when a journey, station or train is added; selecting
-  another project does not activate it (#190).
+- The runtime executes the project selected in the UI: selecting a project activates it
+  (`OnSelectedProjectChanged` -> `RefreshActiveProjectRuntimeAsync`), and adding a journey, station or train
+  re-activates it. Looking at another project therefore stops the running one without a warning (#190).
 - Z21 address, port and recent addresses live in `AppSettings.Z21` (`Common/Configuration/AppSettings.Sections.cs`).
 - Feedback counters persist through `FileInPortCounterStore` to one file for the whole app.
 
