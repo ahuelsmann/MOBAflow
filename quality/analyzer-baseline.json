@@ -4268,6 +4268,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/Architecture/RuntimeCommandPathArchitectureTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/Architecture/SolutionArchitectureTests.cs",
       "count": 1
     },

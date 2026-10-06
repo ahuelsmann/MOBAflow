@@ -2553,6 +2553,13 @@
       "project": "Test",
       "targetFramework": "net10.0-windows10.0.22621.0",
       "ruleId": "CA1812",
+      "path": "Test/Architecture/RuntimeCommandPathArchitectureTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0-windows10.0.22621.0",
+      "ruleId": "CA1812",
       "path": "Test/Architecture/SolutionArchitectureTests.cs",
       "count": 1
     },

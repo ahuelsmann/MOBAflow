@@ -171,7 +171,8 @@ public interface IWorkflowService
 
 - MainWindowViewModel (App State Management)
 - Page-specific ViewModels (JourneyViewModel, WorkflowViewModel, etc.)
-- ViewModels consume `IMobaRuntime` directly (no separate `IMobaClient` facade)
+- ViewModels read runtime state through narrow runtime roles and send commands through
+  `IRuntimeCommandGateway` (see [Runtime command path](#runtime-command-path))
 - MVVM Commands & Converters
 - Observable Property Definitions
 
@@ -236,9 +237,10 @@ IZ21 / JourneyManager / WorkflowService
 
 **ViewModel wiring:**
 
-- `MainWindowViewModel`, `TrainControlViewModel`, and `MauiViewModel` take
-  `IMobaRuntime` from DI (WinUI / MAUI hosts register `MobaRuntimeService` as the
-  singleton implementation)
+- `MainWindowViewModel`, `TrainControlViewModel`, and `MauiViewModel` take the
+  runtime roles they read (`IRuntimeSnapshotProvider`, `IConnectionRuntime`,
+  `ITrafficMonitor`) and a required `IRuntimeCommandGateway` from DI; the hosts
+  register `MobaRuntimeService` as the singleton behind every role
 - Journey-related UI still receives state from snapshots rather than owning
   `JourneyManager` directly
 
@@ -583,6 +585,33 @@ Observable Property Update
   ↓
 UI Re-renders
 ```
+
+### Runtime command path
+
+Every operator command from a ViewModel (track power, fail-safe acknowledgement,
+locomotive drive and functions, signals, turnouts, counters, journey reset) goes
+through one port, `IRuntimeCommandGateway`:
+
+```text
+ViewModel ──► IRuntimeCommandGateway
+                 MOBAflow:  RecordingRuntimeCommandGateway ─► LocalRuntimeCommandGateway ─► runtime
+                 MOBAsmart: RecordingRuntimeCommandGateway ─► MobileRuntimeCoordinator ─► local Z21 or MOBAflow
+```
+
+- The hosts create and register the gateway; ViewModels receive it in their
+  constructor and never create one.
+- ViewModels read state through `IRuntimeSnapshotProvider`, run lifecycle and
+  connection steps (start, activate project, connect, disconnect) through
+  `IConnectionRuntime`, and use `ITrafficMonitor` for diagnostics. The command
+  roles `ILocomotiveRuntime` and `ILayoutControlRuntime` and the complete
+  `IMobaRuntime` are reserved for hosts, gateways and runtime services.
+- The signal-box editor sends signal id and aspect; a persisted signal-box
+  change re-activates the project first, because the runtime executes a copy.
+- `Test/Architecture/RuntimeCommandPathArchitectureTests.cs` fails when a
+  ViewModel uses a command role or creates a gateway.
+- Not yet recorded: fail-safe acknowledgement, all functions off, locomotive
+  info and the MOBAsmart throttle and signal box, which use the coordinator
+  directly (issue #188).
 
 ### Notification mechanisms
 
