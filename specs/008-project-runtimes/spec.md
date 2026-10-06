@@ -174,8 +174,8 @@ and the switch warning; no page still says to enter the Z21 address in the app s
 ### Functional Requirements
 
 - **FR-001**: A solution session MUST own the loaded solution, the selected project and journey, the dirty state and
-  auto-save; ViewModels, pages and host services MUST reach the solution only through it. Only the shell may depend on
-  `MainWindowViewModel`.
+  auto-save; ViewModels and host services MUST reach the solution only through it. Besides the shell, only WinUI pages
+  that bind their XAML to `MainWindowViewModel` may still depend on it until RF-24 gives them page ViewModels.
 - **FR-002**: The session MUST create one runtime per project of the loaded solution and discard all of them when the
   solution is switched or closed.
 - **FR-003**: Each project MUST store its Z21 address and port; the app settings MUST no longer hold a Z21 address,
@@ -217,7 +217,8 @@ and the switch warning; no page still says to enter the Z21 address in the app s
 - **SC-002**: Confirming a switch sends speed 0 to 100% of known locomotives before any runtime is discarded;
   cancelling changes nothing.
 - **SC-003**: Editing master data while a workflow runs cancels 0 workflows and resets 0 journeys.
-- **SC-004**: No type except the shell depends on `MainWindowViewModel`, checked by an architecture test.
+- **SC-004**: No service or ViewModel depends on `MainWindowViewModel`, checked by an architecture test; the remaining
+  WinUI page dependencies are listed in the test and removed by RF-24.
 - **SC-005**: The wiki pages describe the rule; no page tells the user to enter the Z21 address in the app settings.
 
 ## Assumptions
