@@ -19,33 +19,35 @@ using Moq;
 [TestFixture]
 internal sealed class MainWindowViewModelSignalBoxTests
 {
-    private static readonly string[] RefreshThenAspect = ["activate", "aspect"];
+    private static readonly string[] UpdateThenAspect = ["update", "aspect"];
 
     [Test]
-    public async Task ApplySignalBoxElementChange_WithPersistence_RefreshesRuntimeProjectBeforeSendingAspect()
+    public async Task ApplySignalBoxElementChange_WithPersistence_UpdatesRuntimeSignalBoxBeforeSendingAspect()
     {
         var project = new Project();
         var signal = new SbSignal { SignalAspect = Enum.GetValues<SignalAspect>()[^1] };
         var calls = new List<string>();
         var runtime = CreateRuntime();
-        runtime.Setup(value => value.ActivateProjectAsync(project, It.IsAny<CancellationToken>()))
-            .Callback(() => calls.Add("activate"))
+        runtime.Setup(value => value.UpdateSignalBoxAsync(project, It.IsAny<CancellationToken>()))
+            .Callback(() => calls.Add("update"))
             .Returns(Task.CompletedTask);
         var gateway = new Mock<IRuntimeCommandGateway>();
         gateway.Setup(value => value.SetSignalAspectAsync(signal.Id, signal.SignalAspect, It.IsAny<CancellationToken>()))
             .Callback(() => calls.Add("aspect"))
             .Returns(Task.CompletedTask);
         var viewModel = CreateViewModel(project, runtime, gateway);
-        calls.Clear();
+        runtime.Invocations.Clear();
 
         await viewModel.ApplySignalBoxElementChangeAsync(signal, requiresPersistence: true, requiresSignalCommand: true)
             .ConfigureAwait(false);
 
-        Assert.That(calls, Is.EqualTo(RefreshThenAspect));
+        Assert.That(calls, Is.EqualTo(UpdateThenAspect));
+        runtime.Verify(value => value.ActivateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()), Times.Never,
+            "A signal-box change must not re-activate the project.");
     }
 
     [Test]
-    public async Task ApplySignalBoxElementChange_AspectOnly_SendsAspectWithoutRefreshingRuntime()
+    public async Task ApplySignalBoxElementChange_AspectOnly_SendsAspectWithoutUpdatingRuntime()
     {
         var project = new Project();
         var signal = new SbSignal { SignalAspect = Enum.GetValues<SignalAspect>()[0] };
@@ -58,7 +60,28 @@ internal sealed class MainWindowViewModelSignalBoxTests
             .ConfigureAwait(false);
 
         gateway.Verify(value => value.SetSignalAspectAsync(signal.Id, signal.SignalAspect, It.IsAny<CancellationToken>()), Times.Once);
-        runtime.Verify(value => value.ActivateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()), Times.Never);
+        runtime.Verify(value => value.UpdateSignalBoxAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task ApplySignalBoxElementChange_AspectWaitsForPendingConfigurationUpdate()
+    {
+        var project = new Project();
+        var signal = new SbSignal { SignalAspect = Enum.GetValues<SignalAspect>()[0] };
+        var update = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var runtime = CreateRuntime();
+        runtime.Setup(value => value.UpdateSignalBoxAsync(project, It.IsAny<CancellationToken>())).Returns(update.Task);
+        var gateway = new Mock<IRuntimeCommandGateway>();
+        var viewModel = CreateViewModel(project, runtime, gateway);
+
+        var configurationChange = viewModel.ApplySignalBoxElementChangeAsync(signal, requiresPersistence: true, requiresSignalCommand: false);
+        var aspectChange = viewModel.ApplySignalBoxElementChangeAsync(signal, requiresPersistence: false, requiresSignalCommand: true);
+        gateway.Verify(value => value.SetSignalAspectAsync(It.IsAny<Guid>(), It.IsAny<SignalAspect>(), It.IsAny<CancellationToken>()), Times.Never);
+
+        update.SetResult();
+        await Task.WhenAll(configurationChange, aspectChange).ConfigureAwait(false);
+
+        gateway.Verify(value => value.SetSignalAspectAsync(signal.Id, signal.SignalAspect, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     private static Mock<IMobaRuntime> CreateRuntime()

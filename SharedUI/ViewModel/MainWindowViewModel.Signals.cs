@@ -18,6 +18,9 @@ public partial class MainWindowViewModel
     /// </summary>
     public event EventHandler? SignalBoxRuntimeStateChanged;
 
+    // Signal-box editor changes run one after another so an aspect never overtakes a configuration update.
+    private Task _signalBoxChanges = Task.CompletedTask;
+
     /// <summary>
     /// Sends the signal's current aspect through the runtime command gateway.
     /// The runtime resolves the signal by id in the active project.
@@ -31,29 +34,49 @@ public partial class MainWindowViewModel
     }
 
     /// <summary>
-    /// Applies a property change made in the signal-box editor: persists the solution, refreshes the runtime
-    /// project so it knows the changed configuration, and sends the signal aspect when requested.
+    /// Applies a property change made in the signal-box editor: updates the runtime's signal-box configuration,
+    /// sends the signal aspect when requested and persists the solution. Changes run in call order.
     /// </summary>
     /// <param name="element">The changed signal-box element.</param>
     /// <param name="requiresPersistence">Whether the change alters stored configuration.</param>
     /// <param name="requiresSignalCommand">Whether the change requests a signal aspect on the layout.</param>
-    public async Task ApplySignalBoxElementChangeAsync(SbElement element, bool requiresPersistence, bool requiresSignalCommand)
+    public Task ApplySignalBoxElementChangeAsync(SbElement element, bool requiresPersistence, bool requiresSignalCommand)
     {
         ArgumentNullException.ThrowIfNull(element);
+        var change = ApplySignalBoxElementChangeAfterAsync(
+            _signalBoxChanges,
+            element,
+            requiresPersistence,
+            SelectedProject?.Model,
+            requiresSignalCommand);
+        _signalBoxChanges = change;
+        return change;
+    }
 
-        if (requiresPersistence)
+    private async Task ApplySignalBoxElementChangeAfterAsync(
+        Task previousChange,
+        SbElement element,
+        bool requiresPersistence,
+        Project? project,
+        bool requiresSignalCommand)
+    {
+        // A failed earlier change was reported to its own caller; it must not block later changes.
+        await Task.WhenAny(previousChange).ConfigureAwait(false);
+
+        if (requiresPersistence && project is not null)
         {
-            await SaveSolutionInternalAsync().ConfigureAwait(false);
-            if (SelectedProject is { } project)
-            {
-                // The runtime executes a copy of the project; refresh it like station and journey edits do.
-                await _runtimeConnection.ActivateProjectAsync(project.Model).ConfigureAwait(false);
-            }
+            // The runtime executes a copy of the project; update only its signal-box configuration.
+            await _runtimeConnection.UpdateSignalBoxAsync(project).ConfigureAwait(false);
         }
 
         if (requiresSignalCommand && element is SbSignal signal)
         {
             await SetSignalAspectAsync(signal).ConfigureAwait(false);
+        }
+
+        if (requiresPersistence)
+        {
+            await SaveSolutionInternalAsync().ConfigureAwait(false);
         }
     }
 
@@ -67,7 +90,8 @@ public partial class MainWindowViewModel
 
         try
         {
-            await SetSignalAspectAsync(signal).ConfigureAwait(false);
+            await ApplySignalBoxElementChangeAsync(signal, requiresPersistence: false, requiresSignalCommand: true)
+                .ConfigureAwait(false);
         }
         catch (Exception ex)
         {

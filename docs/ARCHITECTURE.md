@@ -605,8 +605,11 @@ ViewModel ──► IRuntimeCommandGateway
   `IConnectionRuntime`, and use `ITrafficMonitor` for diagnostics. The command
   roles `ILocomotiveRuntime` and `ILayoutControlRuntime` and the complete
   `IMobaRuntime` are reserved for hosts, gateways and runtime services.
-- The signal-box editor sends signal id and aspect; a persisted signal-box
-  change re-activates the project first, because the runtime executes a copy.
+- The signal-box editor sends signal id and aspect. Because the runtime
+  executes a copy of the project, a persisted signal-box change first replaces
+  only the runtime's signal-box configuration (`IConnectionRuntime.UpdateSignalBoxAsync`);
+  journeys and workflows keep running. Editor changes run in call order, so an
+  aspect never overtakes a configuration update.
 - `Test/Architecture/RuntimeCommandPathArchitectureTests.cs` fails when a
   ViewModel uses a command role or creates a gateway.
 - Not yet recorded: fail-safe acknowledgement, all functions off, locomotive
