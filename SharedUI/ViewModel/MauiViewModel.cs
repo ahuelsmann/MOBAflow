@@ -1033,7 +1033,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
 
         try
         {
-            await _runtimeConnection.ConnectAsync().ConfigureAwait(false);
+            await _runtimeConnection.ConnectAsync(CancellationToken.None).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -1046,7 +1046,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     private async Task DisconnectAsync()
     {
         _shouldReconnectLocalZ21OnResume = false;
-        await _runtimeConnection.DisconnectAsync().ConfigureAwait(false);
+        await _runtimeConnection.DisconnectAsync(CancellationToken.None).ConfigureAwait(false);
         _uiDispatcher.InvokeOnUi(() => Z21ConnectionStatus = null);
         RequestBackgroundServiceSync();
     }
