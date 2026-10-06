@@ -40,6 +40,11 @@ public sealed class RecordingRuntimeCommandGateway : IRuntimeCommandGateway
             cancellationToken);
 
     /// <inheritdoc />
+    /// <remarks>Not recorded yet; see issue #188.</remarks>
+    public Task AcknowledgeFailSafeAsync(CancellationToken cancellationToken = default) =>
+        _inner.AcknowledgeFailSafeAsync(cancellationToken);
+
+    /// <inheritdoc />
     public Task SimulateFeedbackAsync(int inPort, CancellationToken cancellationToken = default) =>
         ExecuteAsync(
             Command(
@@ -123,6 +128,16 @@ public sealed class RecordingRuntimeCommandGateway : IRuntimeCommandGateway
                 $"Set locomotive {address} function {functionIndex}"),
             token => _inner.SetLocomotiveFunctionAsync(address, functionIndex, isOn, token),
             cancellationToken);
+
+    /// <inheritdoc />
+    /// <remarks>Not recorded yet; see issue #188.</remarks>
+    public Task SetAllLocomotiveFunctionsOffAsync(int address, CancellationToken cancellationToken = default) =>
+        _inner.SetAllLocomotiveFunctionsOffAsync(address, cancellationToken);
+
+    /// <inheritdoc />
+    /// <remarks>Not recorded yet; see issue #188.</remarks>
+    public Task RequestLocomotiveInfoAsync(int address, CancellationToken cancellationToken = default) =>
+        _inner.RequestLocomotiveInfoAsync(address, cancellationToken);
 
     /// <inheritdoc />
     public Task SendTurnoutCommandAsync(

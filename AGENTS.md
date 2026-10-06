@@ -79,8 +79,9 @@ Do not assume every directory is an active project or discover projects inside `
 
 - Keep `Domain`, `Common`, `Backend`, and shared UI logic free of WinUI/MAUI types. Adapt OS-specific behavior in
   platform services; use existing I/O interfaces and constructor injection. Follow existing service lifetimes.
-- Shared ViewModels use `IMobaRuntime` and, where present, `IRuntimeCommandGateway`. Preserve local/remote routing;
-  do not reintroduce `IMobaClient` as the shared runtime boundary or duplicate runtime ownership in a ViewModel.
+- Shared ViewModels read runtime state through `IRuntimeSnapshotProvider`, `IConnectionRuntime` and `ITrafficMonitor`
+  and send every operator command through the required `IRuntimeCommandGateway`; hosts create and register gateways.
+  Preserve local/remote routing; do not reintroduce `IMobaClient` or duplicate runtime ownership in a ViewModel.
 - Z21 publishes from background work. UI hosts register `AddEventBusWithUiDispatch()`, whose
   `SharedUI/Service/UiThreadEventBusDecorator.cs` marshals publishing to the UI thread. EventBus handlers using
   that decorated bus update UI state directly. Do not add dispatcher calls there. Raw Z21 callbacks, timers and

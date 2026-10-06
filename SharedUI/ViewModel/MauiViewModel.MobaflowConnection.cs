@@ -321,7 +321,7 @@ public sealed partial class MauiViewModel
     /// Uses runtime snapshot connection state so coordinator routing stays accurate before UI properties catch up.
     /// </summary>
     private bool ResolveLocalZ21ConnectedForCoordinator() =>
-        IsConnected || _mobaRuntime.Current.IsConnected;
+        IsConnected || _runtimeSnapshots.Current.IsConnected;
 
     private void UpdateRuntimeCoordinatorState()
     {
@@ -408,7 +408,7 @@ public sealed partial class MauiViewModel
 
         {
 
-            await _mobaRuntime
+            await _runtimeConnection
 
                 .ActivateProjectAsync(project, _applicationLifetimeCts.Token)
 

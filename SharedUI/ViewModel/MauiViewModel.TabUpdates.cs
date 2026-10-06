@@ -144,7 +144,7 @@ public sealed partial class MauiViewModel
 
         if (_cachedRemoteSignalBoxElements is { Count: > 0 })
         {
-            var local = _mobaRuntime.Current.SignalBoxElements;
+            var local = _runtimeSnapshots.Current.SignalBoxElements;
             if (local.Count > 0)
             {
                 return SignalBoxSnapshotMerge.MergeAspectsFromCache(local, _cachedRemoteSignalBoxElements);
@@ -153,7 +153,7 @@ public sealed partial class MauiViewModel
             return _cachedRemoteSignalBoxElements;
         }
 
-        return _mobaRuntime.Current.SignalBoxElements;
+        return _runtimeSnapshots.Current.SignalBoxElements;
     }
 
     private IReadOnlyList<SignalBoxElementRuntimeSnapshot> BuildSignalBoxSnapshotsFromProjectContext()
@@ -170,7 +170,7 @@ public sealed partial class MauiViewModel
             return _cachedRemoteSignalBoxElements;
         }
 
-        var localElements = _mobaRuntime.Current.SignalBoxElements;
+        var localElements = _runtimeSnapshots.Current.SignalBoxElements;
         if (localElements.Count > 0)
         {
             return localElements;
@@ -307,7 +307,7 @@ public sealed partial class MauiViewModel
             return true;
         }
 
-        return _mobaRuntime.Current.SignalBoxElements.Count > 0;
+        return _runtimeSnapshots.Current.SignalBoxElements.Count > 0;
     }
 
     private void RequestSignalBoxSnapshotRefresh()

@@ -150,7 +150,7 @@ dependencies.
 | RF-19 | [#165](https://github.com/ahuelsmann/MOBAflow/issues/165) | MOBApi and its clients contain no authentication, pairing or credential code; every remote command is validated and the command queue is bounded. |
 | RF-20 | [#183](https://github.com/ahuelsmann/MOBAflow/issues/183) | Architecture tests enforce the project dependency and namespace rules of the whole solution. |
 | RF-21 | [#185](https://github.com/ahuelsmann/MOBAflow/issues/185) | Unused and misplaced types are removed or moved to the project that owns them. |
-| RF-22 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | ViewModels send runtime commands through one port without compatibility facades or local fallbacks. |
+| RF-22 | [#187](https://github.com/ahuelsmann/MOBAflow/issues/187) | ViewModels send runtime commands through one port without compatibility facades or local fallbacks. |
 | RF-23 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | A dedicated solution session owns the loaded solution, selection, dirty state and auto-save. |
 | RF-24 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | `MainWindowViewModel` is a shell; each page area has its own focused ViewModel. |
 | RF-25 | [#47](https://github.com/ahuelsmann/MOBAflow/issues/47) until child creation | Constructors declare real dependencies; no hidden optional services, fallbacks or mutable static hooks. |

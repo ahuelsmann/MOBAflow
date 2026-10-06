@@ -15,6 +15,7 @@ using Moba.Common.Events;
 using Moba.Common.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
+using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 
 using Moq;
@@ -111,6 +112,9 @@ internal sealed class MainWindowViewModelPhotoAssignmentTests
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             mobaRuntimeMock.Object,
+            mobaRuntimeMock.Object,
+            mobaRuntimeMock.Object,
+            new LocalRuntimeCommandGateway(mobaRuntimeMock.Object),
             eventBusMock.Object,
             uiDispatcherMock.Object,
             new AppSettings(),
@@ -373,7 +377,7 @@ internal sealed class MainWindowViewModelPhotoAssignmentTests
             .Callback((Solution solution, string _) => save(JsonSerializer.Serialize(solution, JsonOptions.Default)))
             .ReturnsAsync((Solution _, string path) => (true, (string?)path, (string?)null));
         var viewModel = new MainWindowViewModel(
-            new LayoutColumnWidthsViewModel(), runtime.Object, new Mock<IEventBus>().Object,
+            new LayoutColumnWidthsViewModel(), runtime.Object, runtime.Object, runtime.Object, new LocalRuntimeCommandGateway(runtime.Object), new Mock<IEventBus>().Object,
             dispatcher.Object, new AppSettings(), new Solution { Projects = [project] },
             new ActionExecutionContext { Z21 = new Mock<IZ21>().Object },
             NullLogger<MainWindowViewModel>.Instance, io.Object)

@@ -25,7 +25,7 @@ public partial class MainWindowViewModel
     {
         _eventBusSubscriptions.Add(_eventBus.Subscribe<Z21TrafficPacketLoggedEvent>(OnTrafficPacketLogged));
 
-        foreach (var packet in _mobaRuntime.GetTrafficPackets())
+        foreach (var packet in _trafficMonitor.GetTrafficPackets())
         {
             TrafficPackets.Add(packet);
         }
@@ -52,7 +52,7 @@ public partial class MainWindowViewModel
     private void ClearTrafficMonitor()
     {
         TrafficPackets.Clear();
-        _mobaRuntime.ClearTrafficMonitor();
+        _trafficMonitor.ClearTrafficMonitor();
     }
     #endregion
 
@@ -60,13 +60,13 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanConnect))]
     private async Task ConnectAsync()
     {
-        await _mobaRuntime.ConnectAsync().ConfigureAwait(false);
+        await _runtimeConnection.ConnectAsync().ConfigureAwait(false);
     }
 
     [RelayCommand(CanExecute = nameof(CanDisconnect))]
     private async Task DisconnectAsync()
     {
-        await _mobaRuntime.DisconnectAsync().ConfigureAwait(false);
+        await _runtimeConnection.DisconnectAsync().ConfigureAwait(false);
     }
 
     [RelayCommand]
@@ -110,7 +110,7 @@ public partial class MainWindowViewModel
         // Trigger a status update request to the Z21
         if (IsConnected)
         {
-            _mobaRuntime.RequestSystemStateAsync()
+            _runtimeConnection.RequestSystemStateAsync()
                 .Observe(ex => _logger.LogWarning(ex, "Requesting Z21 system state failed"));
         }
     }

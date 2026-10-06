@@ -3169,13 +3169,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1859",
-      "path": "SharedUI/ViewModel/MauiViewModel.SignalBox.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1859",
       "path": "SharedUI/ViewModel/WorkflowLibraryViewModel.cs",
       "count": 1
     },
@@ -3443,7 +3436,7 @@
       "targetFramework": "net10.0",
       "ruleId": "IDE0007",
       "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
-      "count": 7
+      "count": 6
     },
     {
       "project": "SharedUI",
@@ -4270,6 +4263,13 @@
       "ruleId": "CA1806",
       "path": "Test/Backend/Z21MessageParserLocoFunctionsTests.cs",
       "count": 2
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/Architecture/RuntimeCommandPathArchitectureTests.cs",
+      "count": 1
     },
     {
       "project": "Test",
@@ -5255,6 +5255,13 @@
       "project": "Test",
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
+      "path": "Test/SharedUI/MainWindowViewModelSignalBoxTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
       "path": "Test/SharedUI/MauiViewModelControlTabTests.cs",
       "count": 1
     },
@@ -5333,6 +5340,13 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1812",
       "path": "Test/SharedUI/RecordingRuntimeCommandGatewayTests.cs",
+      "count": 1
+    },
+    {
+      "project": "Test",
+      "targetFramework": "net10.0",
+      "ruleId": "CA1812",
+      "path": "Test/SharedUI/RuntimeCommandGatewayRoutingTests.cs",
       "count": 1
     },
     {
@@ -5627,7 +5641,7 @@
       "targetFramework": "net10.0",
       "ruleId": "CA1849",
       "path": "Test/Backend/MobaRuntimeServiceProjectIsolationTests.cs",
-      "count": 4
+      "count": 5
     },
     {
       "project": "Test",

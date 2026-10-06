@@ -79,6 +79,51 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
     }
 
     [Test]
+    public async Task UpdateSignalBoxAsync_KeepsRunningWorkflowAndAppliesSignalChanges()
+    {
+        var z21Mock = CreateZ21Mock();
+        var (workflowService, started, cancelled) = CreateBlockingWorkflowService();
+        using var runtime = CreateRuntime(z21Mock.Object, workflowService.Object);
+        var project = CreateWorkflowProject(1);
+        project.SignalBoxPlan = new SignalBoxPlan();
+        await runtime.ActivateProjectAsync(project).ConfigureAwait(false);
+        z21Mock.Raise(value => value.Received += null, new FeedbackResult(BuildFeedbackPacketForInPort(1)));
+        await started.Task.WaitAsync(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        var signal = new SbSignal { Name = "A1" };
+        project.SignalBoxPlan.Elements.Add(signal);
+
+        await runtime.UpdateSignalBoxAsync(project).ConfigureAwait(false);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(cancelled.Task.IsCompleted, Is.False, "A signal-box update must not cancel running workflows.");
+            Assert.That(runtime.Current.SignalBoxElements.Select(element => element.ElementId), Does.Contain(signal.Id));
+        }
+    }
+
+    [Test]
+    public async Task UpdateSignalBoxAsync_KeepsCurrentSignalAspects()
+    {
+        var z21Mock = CreateZ21Mock();
+        using var runtime = CreateRuntime(z21Mock.Object);
+        var signal = new SbSignal { Name = "A1" };
+        var project = new Project { Name = "Editor", SignalBoxPlan = new SignalBoxPlan { Elements = [signal] } };
+        var runtimeAspect = Enum.GetValues<SignalAspect>()[^1];
+        await runtime.ActivateProjectAsync(project).ConfigureAwait(false);
+        await runtime.SetSignalAspectAsync(signal.Id, runtimeAspect).ConfigureAwait(false);
+        signal.Name = "A1 renamed";
+
+        await runtime.UpdateSignalBoxAsync(project).ConfigureAwait(false);
+
+        var element = runtime.Current.SignalBoxElements.Single(item => item.ElementId == signal.Id);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(element.Name, Is.EqualTo("A1 renamed"));
+            Assert.That(element.SignalAspect, Is.EqualTo(runtimeAspect));
+        }
+    }
+
+    [Test]
     public async Task DisconnectAsync_CancelsActiveProjectWorkflow()
     {
         var z21Mock = CreateZ21Mock();

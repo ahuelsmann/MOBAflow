@@ -1,8 +1,11 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.SharedUI;
 
+using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
+
+using Moq;
 
 [TestFixture]
 internal sealed class FeedbackCounterEngineTests
@@ -13,7 +16,7 @@ internal sealed class FeedbackCounterEngineTests
         // Arrange
         var timeProvider = new TestTimeProvider(new DateTimeOffset(2026, 7, 19, 12, 0, 0, TimeSpan.Zero));
         var engine = new FeedbackCounterEngine(timeProvider);
-        var statistic = new InPortStatistic { InPort = 3 };
+        var statistic = new InPortStatistic(Mock.Of<IRuntimeCommandGateway>()) { InPort = 3 };
 
         // Act
         var result = engine.ApplyFeedback(statistic, useTimerFilter: true, timerIntervalSeconds: 10);
@@ -35,7 +38,7 @@ internal sealed class FeedbackCounterEngineTests
         // Arrange
         var timeProvider = new TestTimeProvider(new DateTimeOffset(2026, 7, 19, 12, 0, 0, TimeSpan.Zero));
         var engine = new FeedbackCounterEngine(timeProvider);
-        var statistic = new InPortStatistic { InPort = 3 };
+        var statistic = new InPortStatistic(Mock.Of<IRuntimeCommandGateway>()) { InPort = 3 };
         engine.ApplyFeedback(statistic, useTimerFilter: true, timerIntervalSeconds: 10);
         timeProvider.Advance(TimeSpan.FromSeconds(4));
 
@@ -59,7 +62,7 @@ internal sealed class FeedbackCounterEngineTests
         // Arrange
         var timeProvider = new TestTimeProvider(new DateTimeOffset(2026, 7, 19, 12, 0, 0, TimeSpan.Zero));
         var engine = new FeedbackCounterEngine(timeProvider);
-        var statistic = new InPortStatistic { InPort = 3 };
+        var statistic = new InPortStatistic(Mock.Of<IRuntimeCommandGateway>()) { InPort = 3 };
         engine.ApplyFeedback(statistic, useTimerFilter: true, timerIntervalSeconds: 10);
         timeProvider.Advance(TimeSpan.FromSeconds(12));
 
@@ -83,7 +86,7 @@ internal sealed class FeedbackCounterEngineTests
         // Arrange
         var timeProvider = new TestTimeProvider(new DateTimeOffset(2026, 7, 19, 12, 0, 0, TimeSpan.Zero));
         var engine = new FeedbackCounterEngine(timeProvider);
-        var statistic = new InPortStatistic { InPort = 3 };
+        var statistic = new InPortStatistic(Mock.Of<IRuntimeCommandGateway>()) { InPort = 3 };
         engine.ApplyFeedback(statistic, useTimerFilter: false, timerIntervalSeconds: 10);
         timeProvider.Advance(TimeSpan.FromSeconds(1));
 

@@ -252,7 +252,7 @@ public partial class MainWindowViewModel
             // ✅ Clear all selections to reset property panels across all pages
             ClearAllSelections();
 
-            await _mobaRuntime.ActivateProjectAsync(newProject).ConfigureAwait(false);
+            await _runtimeConnection.ActivateProjectAsync(newProject).ConfigureAwait(false);
 
             SaveSolutionCommand.NotifyCanExecuteChanged();
             ConnectCommand.NotifyCanExecuteChanged();
@@ -342,7 +342,7 @@ public partial class MainWindowViewModel
                 // Auto-select first project after loading
                 SelectedProject = SolutionViewModel?.Projects.FirstOrDefault();
 
-                ObserveBackgroundTask(_mobaRuntime.ActivateProjectAsync(Solution.Projects[0]), "Activate project runtime");
+                ObserveBackgroundTask(_runtimeConnection.ActivateProjectAsync(Solution.Projects[0]), "Activate project runtime");
             }
 
             SaveSolutionCommand.NotifyCanExecuteChanged();

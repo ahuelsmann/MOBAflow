@@ -37,7 +37,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
 
     // Core Services (required)
     private readonly IIoService _ioService;
-    private readonly IMobaRuntime _mobaRuntime;
+    private readonly IRuntimeSnapshotProvider _runtimeSnapshots;
+    private readonly IConnectionRuntime _runtimeConnection;
+    private readonly ITrafficMonitor _trafficMonitor;
     private readonly IRuntimeCommandGateway _runtimeCommandGateway;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly IEventBus _eventBus;
@@ -72,7 +74,10 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
     /// Initializes a new instance of the <see cref="MainWindowViewModel"/> class with all required backend services and configuration.
     /// </summary>
     /// <param name="layoutColumnWidths">Observable column widths loaded from settings and bound by layout panels.</param>
-    /// <param name="mobaRuntime">The in-process MOBA runtime (Z21, project activation, snapshots).</param>
+    /// <param name="runtimeSnapshots">Read access to runtime snapshots.</param>
+    /// <param name="runtimeConnection">Runtime lifecycle and Z21 connection.</param>
+    /// <param name="trafficMonitor">Z21 traffic monitor and polling diagnostics.</param>
+    /// <param name="runtimeCommandGateway">Route for every operator command (local, recorded or remote).</param>
     /// <param name="eventBus">The event bus used to subscribe to backend domain events.</param>
     /// <param name="uiDispatcher">Dispatcher used to marshal callbacks onto the UI thread.</param>
     /// <param name="settings">Application-wide settings object.</param>
@@ -84,13 +89,15 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
     /// <param name="settingsService">Optional settings service used to persist changes.</param>
     /// <param name="announcementService">Optional announcement service for text-to-speech announcements.</param>
     /// <param name="featureTogglePageProvider">Optional provider for feature toggle page metadata.</param>
-    /// <param name="runtimeCommandGateway">Optional explicit command route used by UI control actions.</param>
     /// <param name="loggerFactory">Optional factory used to create loggers for nested view models (e.g. workflow command encoding).</param>
     /// <param name="dialogService">Optional dialog service for showing confirmation dialogs (WinUI only).</param>
     /// <param name="speechTestAction">Optional direct speech test action for the selected speaker engine.</param>
     public MainWindowViewModel(
         LayoutColumnWidthsViewModel layoutColumnWidths,
-        IMobaRuntime mobaRuntime,
+        IRuntimeSnapshotProvider runtimeSnapshots,
+        IConnectionRuntime runtimeConnection,
+        ITrafficMonitor trafficMonitor,
+        IRuntimeCommandGateway runtimeCommandGateway,
         IEventBus eventBus,
         IUiDispatcher uiDispatcher,
         AppSettings settings,
@@ -107,12 +114,14 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         Func<string, Task>? speechTestAction = null,
         ILocomotiveWhistleAutomationService? locomotiveWhistleAutomation = null,
         IProjectDiagnosticsService? projectDiagnosticsService = null,
-        IRuntimeCommandGateway? runtimeCommandGateway = null,
         IWorkflowService? workflowService = null,
         IWorkflowTraceStore? workflowTraceStore = null)
     {
         ArgumentNullException.ThrowIfNull(layoutColumnWidths);
-        ArgumentNullException.ThrowIfNull(mobaRuntime);
+        ArgumentNullException.ThrowIfNull(runtimeSnapshots);
+        ArgumentNullException.ThrowIfNull(runtimeConnection);
+        ArgumentNullException.ThrowIfNull(trafficMonitor);
+        ArgumentNullException.ThrowIfNull(runtimeCommandGateway);
         ArgumentNullException.ThrowIfNull(eventBus);
         ArgumentNullException.ThrowIfNull(uiDispatcher);
         ArgumentNullException.ThrowIfNull(settings);
@@ -121,8 +130,10 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         ArgumentNullException.ThrowIfNull(logger);
 
         _ioService = ioService ?? new NullIoService();  // Use null object pattern
-        _mobaRuntime = mobaRuntime;
-        _runtimeCommandGateway = runtimeCommandGateway ?? new LocalRuntimeCommandGateway(mobaRuntime);
+        _runtimeSnapshots = runtimeSnapshots;
+        _runtimeConnection = runtimeConnection;
+        _trafficMonitor = trafficMonitor;
+        _runtimeCommandGateway = runtimeCommandGateway;
         _uiDispatcher = uiDispatcher;
         _eventBus = eventBus;
         _settings = settings;
@@ -155,7 +166,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
         WorkflowLibrary.PropertyChanged += OnWorkflowLibraryPropertyChanged;
 
         _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
-        ApplyRuntimeSnapshot(_mobaRuntime.Current);
+        ApplyRuntimeSnapshot(_runtimeSnapshots.Current);
 
         Solution = solution;
 
@@ -514,7 +525,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IProjectCont
 
         try
         {
-            await _mobaRuntime.DisconnectAsync(cancellationTokenSource.Token).ConfigureAwait(false);
+            await _runtimeConnection.DisconnectAsync(cancellationTokenSource.Token).ConfigureAwait(false);
         }
         catch (TaskCanceledException ex)
         {

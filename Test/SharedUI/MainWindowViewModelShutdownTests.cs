@@ -12,6 +12,7 @@ using Moba.Common.Events;
 using Moba.Common.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
+using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 using Moq;
 
@@ -109,6 +110,9 @@ internal partial class MainWindowViewModelShutdownTests
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             mobaRuntimeMock.Object,
+            mobaRuntimeMock.Object,
+            mobaRuntimeMock.Object,
+            new LocalRuntimeCommandGateway(mobaRuntimeMock.Object),
             eventBus ?? new Mock<IEventBus>().Object,
             uiDispatcherMock.Object,
             new AppSettings(),

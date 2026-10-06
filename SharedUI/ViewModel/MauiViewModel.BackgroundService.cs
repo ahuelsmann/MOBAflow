@@ -101,7 +101,7 @@ public sealed partial class MauiViewModel
             if (_shouldReconnectLocalZ21OnResume
                 && !IsConnected
                 && !string.IsNullOrWhiteSpace(Z21IpAddress)
-                && !_mobaRuntime.Current.IsConnected)
+                && !_runtimeSnapshots.Current.IsConnected)
             {
                 await ConnectCommand.ExecuteAsync(null).ConfigureAwait(false);
             }

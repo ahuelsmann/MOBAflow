@@ -237,6 +237,7 @@ internal sealed class TrainControlViewModelLocomotiveListTests
 
         return new TrainControlViewModel(
             runtimeMock.Object,
+            new LocalRuntimeCommandGateway(runtimeMock.Object),
             settingsMock.Object,
             projectContext,
             NullLogger<TrainControlViewModel>.Instance,
@@ -253,6 +254,7 @@ internal sealed class TrainControlViewModelLocomotiveListTests
 
         return new TrainControlViewModel(
             runtimeMock.Object,
+            new LocalRuntimeCommandGateway(runtimeMock.Object),
             settingsMock.Object,
             projectContext: null,
             NullLogger<TrainControlViewModel>.Instance,

@@ -9,6 +9,7 @@ using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Common.Runtime;
 using Moba.SharedUI.Interface;
+using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 
 using Moq;
@@ -55,6 +56,7 @@ internal sealed class TrainControlViewModelSpeedTests
 
         return new TrainControlViewModel(
             runtimeMock.Object,
+            new LocalRuntimeCommandGateway(runtimeMock.Object),
             settingsServiceMock.Object,
             null,
             NullLogger<TrainControlViewModel>.Instance,

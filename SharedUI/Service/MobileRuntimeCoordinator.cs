@@ -42,6 +42,10 @@ public sealed class MobileRuntimeCoordinator : IRuntimeCommandGateway, IMobileRu
         _localGateway.SetTrackPowerAsync(isOn, cancellationToken);
 
     /// <inheritdoc />
+    public Task AcknowledgeFailSafeAsync(CancellationToken cancellationToken = default) =>
+        _localGateway.AcknowledgeFailSafeAsync(cancellationToken);
+
+    /// <inheritdoc />
     public Task SimulateFeedbackAsync(int inPort, CancellationToken cancellationToken = default) =>
         _localGateway.SimulateFeedbackAsync(inPort, cancellationToken);
 
@@ -112,6 +116,27 @@ public sealed class MobileRuntimeCoordinator : IRuntimeCommandGateway, IMobileRu
 
         return NoOpRuntimeCommandGateway.Instance.SetLocomotiveFunctionAsync(address, functionIndex, isOn, cancellationToken);
     }
+
+    /// <inheritdoc />
+    public async Task SetAllLocomotiveFunctionsOffAsync(int address, CancellationToken cancellationToken = default)
+    {
+        // MOBApi has no all-off operation; with an active MOBAflow session every function is switched off singly.
+        if (!_mobaflowSessionActive)
+        {
+            await _localGateway.SetAllLocomotiveFunctionsOffAsync(address, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        for (var functionIndex = 0; functionIndex <= 31; functionIndex++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await SetLocomotiveFunctionAsync(address, functionIndex, false, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    /// <inheritdoc />
+    public Task RequestLocomotiveInfoAsync(int address, CancellationToken cancellationToken = default) =>
+        _localGateway.RequestLocomotiveInfoAsync(address, cancellationToken);
 
     /// <inheritdoc />
     public Task SendTurnoutCommandAsync(

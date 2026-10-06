@@ -42,7 +42,7 @@ using System.ComponentModel;
 /// </summary>
 public sealed partial class TrainControlViewModel : ObservableObject, IDisposable
 {
-    private readonly IMobaRuntime _mobaRuntime;
+    private readonly IRuntimeSnapshotProvider _runtimeSnapshots;
     private readonly IRuntimeCommandGateway _runtimeCommandGateway;
     private readonly ISettingsService _settingsService;
     private readonly ILogger<TrainControlViewModel>? _logger;
@@ -743,45 +743,38 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     /// <summary>
     /// Initializes a new instance of the <see cref="TrainControlViewModel"/> class that implements the digital throttle UI.
     /// </summary>
-    /// <param name="mobaRuntime">In-process MOBA runtime (Z21, locomotive commands, snapshots).</param>
+    /// <param name="runtimeSnapshots">Read access to runtime snapshots.</param>
+    /// <param name="runtimeCommandGateway">Route for locomotive commands (local, recorded or remote).</param>
     /// <param name="settingsService">Service used to persist train control options.</param>
     /// <param name="projectContext">Optional project context used to access the current project and journey.</param>
     /// <param name="logger">Optional logger for diagnostics.</param>
     /// <param name="uiDispatcher">Optional UI dispatcher for updating UI-bound properties.</param>
     /// <param name="eventBus">Event bus for runtime snapshot updates.</param>
-    /// <param name="runtimeCommandGateway">Optional gateway for locomotive commands (defaults to local runtime).</param>
     /// <param name="useRemoteRuntimeSnapshots">When true, locomotive state is driven by MOBAflow snapshots via MOBApi.</param>
     /// <param name="options">Optional host-specific options; overrides <paramref name="useRemoteRuntimeSnapshots"/> when set.</param>
     /// <param name="mobileRuntimeCoordinator">Optional MOBAsmart coordinator for hybrid local/remote snapshot routing.</param>
     /// <param name="functionAppearancePicker">Optional WinUI picker for locomotive function appearance editing.</param>
     public TrainControlViewModel(
-        IMobaRuntime mobaRuntime,
+        IRuntimeSnapshotProvider runtimeSnapshots,
+        IRuntimeCommandGateway runtimeCommandGateway,
         ISettingsService settingsService,
         IProjectContext? projectContext = null,
         ILogger<TrainControlViewModel>? logger = null,
         IUiDispatcher? uiDispatcher = null,
         IEventBus eventBus = null!,
-        IRuntimeCommandGateway? runtimeCommandGateway = null,
         bool useRemoteRuntimeSnapshots = false,
         TrainControlViewModelOptions? options = null,
         IMobileRuntimeCoordinator? mobileRuntimeCoordinator = null,
         IFunctionAppearancePicker? functionAppearancePicker = null)
     {
-        ArgumentNullException.ThrowIfNull(mobaRuntime);
+        ArgumentNullException.ThrowIfNull(runtimeSnapshots);
+        ArgumentNullException.ThrowIfNull(runtimeCommandGateway);
         ArgumentNullException.ThrowIfNull(settingsService);
         ArgumentNullException.ThrowIfNull(eventBus);
-        _mobaRuntime = mobaRuntime;
+        _runtimeSnapshots = runtimeSnapshots;
         _functionAppearancePicker = functionAppearancePicker;
-        if (mobileRuntimeCoordinator != null)
-        {
-            _mobileRuntimeCoordinator = mobileRuntimeCoordinator;
-            _runtimeCommandGateway = mobileRuntimeCoordinator;
-        }
-        else
-        {
-            _mobileRuntimeCoordinator = runtimeCommandGateway as IMobileRuntimeCoordinator;
-            _runtimeCommandGateway = runtimeCommandGateway ?? new LocalRuntimeCommandGateway(mobaRuntime);
-        }
+        _runtimeCommandGateway = runtimeCommandGateway;
+        _mobileRuntimeCoordinator = mobileRuntimeCoordinator ?? runtimeCommandGateway as IMobileRuntimeCoordinator;
         _settingsService = settingsService;
         _projectContext = projectContext;
         _logger = logger;
@@ -798,7 +791,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
             _eventBusSubscriptions.Add(_eventBus.Subscribe<RemoteRuntimeSnapshotChangedEvent>(OnRemoteRuntimeSnapshotChanged));
             _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeCommandAvailabilityChangedEvent>(OnRuntimeCommandAvailabilityChanged));
-            ApplyRuntimeSnapshot(_mobaRuntime.Current);
+            ApplyRuntimeSnapshot(_runtimeSnapshots.Current);
         }
         else if (_useRemoteRuntimeSnapshots)
         {
@@ -808,7 +801,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         else
         {
             _eventBusSubscriptions.Add(_eventBus.Subscribe<RuntimeSnapshotChangedEvent>(OnRuntimeSnapshotChanged));
-            ApplyRuntimeSnapshot(_mobaRuntime.Current);
+            ApplyRuntimeSnapshot(_runtimeSnapshots.Current);
         }
 
         _eventBusSubscriptions.Add(_eventBus.Subscribe<SolutionSyncedEvent>(_ => OnSolutionSynced()));
@@ -868,9 +861,9 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
                     .Select(CreateLocomotiveViewModelFromFleetSnapshot)
                     .ToList();
             }
-            else if (_mobaRuntime.Current.LocomotiveFleet.Count > 0)
+            else if (_runtimeSnapshots.Current.LocomotiveFleet.Count > 0)
             {
-                sourceItems = _mobaRuntime.Current.LocomotiveFleet
+                sourceItems = _runtimeSnapshots.Current.LocomotiveFleet
                     .OrderBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
                     .Select(CreateLocomotiveViewModelFromFleetSnapshot)
                     .ToList();
@@ -1030,7 +1023,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
 
         if (_hybridRuntimeSnapshots || !_useRemoteRuntimeSnapshots)
         {
-            ApplyRuntimeSnapshot(_mobaRuntime.Current);
+            ApplyRuntimeSnapshot(_runtimeSnapshots.Current);
         }
     }
 
@@ -1656,7 +1649,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     {
         try
         {
-            await _mobaRuntime.RequestLocomotiveInfoAsync(LocoAddress);
+            await _runtimeCommandGateway.RequestLocomotiveInfoAsync(LocoAddress);
             StatusMessage = $"Requesting loco {LocoAddress}...";
         }
         catch (Exception ex)
@@ -2116,23 +2109,8 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
         }
     }
 
-    private async Task SendAllFunctionsOffAsync(CancellationToken cancellationToken)
-    {
-        if (_mobileRuntimeCoordinator?.PreferRemoteRuntime == true)
-        {
-            for (int functionIndex = 0; functionIndex <= 31; functionIndex++)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                await _runtimeCommandGateway
-                    .SetLocomotiveFunctionAsync(LocoAddress, functionIndex, false, cancellationToken)
-                    .ConfigureAwait(false);
-            }
-
-            return;
-        }
-
-        await _mobaRuntime.SetAllLocomotiveFunctionsOffAsync(LocoAddress, cancellationToken).ConfigureAwait(false);
-    }
+    private Task SendAllFunctionsOffAsync(CancellationToken cancellationToken) =>
+        _runtimeCommandGateway.SetAllLocomotiveFunctionsOffAsync(LocoAddress, cancellationToken);
 
     private bool GetFunctionState(int functionNumber) =>
         functionNumber >= 0 && functionNumber < Functions.Count && Functions[functionNumber].IsOn;
@@ -2249,7 +2227,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
     {
         if (_hybridRuntimeSnapshots && UsesLocalZ21LocomotiveFeedback)
         {
-            return _mobaRuntime.Current;
+            return _runtimeSnapshots.Current;
         }
 
         if (_hybridRuntimeSnapshots
@@ -2259,7 +2237,7 @@ public sealed partial class TrainControlViewModel : ObservableObject, IDisposabl
             return _lastRemoteRuntimeSnapshot;
         }
 
-        return _mobaRuntime.Current;
+        return _runtimeSnapshots.Current;
     }
 
     private void MarkLocalFunctionCommand(int address, int functionIndex)

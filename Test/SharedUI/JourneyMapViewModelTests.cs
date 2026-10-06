@@ -7,6 +7,7 @@ using Moba.Common.Configuration;
 using Moba.Common.Events;
 using Moba.Common.Runtime;
 using Moba.SharedUI.Interface;
+using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 using Moq;
 
@@ -50,6 +51,9 @@ internal class JourneyMapViewModelTests
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             runtimeMock.Object,
+            runtimeMock.Object,
+            runtimeMock.Object,
+            new LocalRuntimeCommandGateway(runtimeMock.Object),
             eventBusMock.Object,
             dispatcherMock.Object,
             new AppSettings(),

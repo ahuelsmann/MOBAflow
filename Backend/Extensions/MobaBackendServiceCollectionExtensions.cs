@@ -133,6 +133,8 @@ public static class MobaBackendServiceCollectionExtensions
             interlockingRuntime: sp.GetRequiredService<IInterlockingRuntime>(),
             inPortCounterService: sp.GetRequiredService<InPortCounterService>()));
         services.TryAddSingleton<IRuntimeSnapshotProvider>(sp => sp.GetRequiredService<IMobaRuntime>());
+        services.TryAddSingleton<IConnectionRuntime>(sp => sp.GetRequiredService<IMobaRuntime>());
+        services.TryAddSingleton<ITrafficMonitor>(sp => sp.GetRequiredService<IMobaRuntime>());
         services.TryAddSingleton<IRecordingReplaySafetyGate, RecordingReplaySafetyGate>();
         services.TryAddSingleton<IRecordingReplayService, RecordingReplayService>();
         services.TryAddSingleton<IRecordingReplayStatusSource>(sp => sp.GetRequiredService<IRecordingReplayService>());

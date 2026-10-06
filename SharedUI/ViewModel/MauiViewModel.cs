@@ -25,7 +25,9 @@ using System.Collections.ObjectModel;
 /// </summary>
 public sealed partial class MauiViewModel : ObservableObject, IDisposable
 {
-    private readonly IMobaRuntime _mobaRuntime;
+    private readonly IRuntimeSnapshotProvider _runtimeSnapshots;
+    private readonly IConnectionRuntime _runtimeConnection;
+    private readonly ITrafficMonitor _trafficMonitor;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly AppSettings _settings;
     private readonly ISettingsService _settingsService;
@@ -38,7 +40,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     private readonly ISolutionRemoteLoader? _solutionRemoteLoader;
     private readonly IMobileSolutionStore? _mobileSolutionStore;
     private readonly IRuntimeHubRemoteClient? _runtimeHubRemoteClient;
-    private readonly IRuntimeCommandGateway? _runtimeCommandGateway;
+    private readonly IRuntimeCommandGateway _runtimeCommandGateway;
     private readonly IMobileRuntimeCoordinator? _mobileRuntimeCoordinator;
     private readonly IBackgroundService? _backgroundService;
     private readonly INetworkProfileChangeNotifier _networkProfileChangeNotifier;
@@ -88,7 +90,10 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     /// <summary>
     /// Initializes a new instance of the <see cref="MauiViewModel"/> class for the MAUI mobile client.
     /// </summary>
-    /// <param name="mobaRuntime">In-process MOBA runtime (Z21, snapshots, feedback).</param>
+    /// <param name="runtimeSnapshots">Read access to runtime snapshots.</param>
+    /// <param name="runtimeConnection">Runtime lifecycle and Z21 connection.</param>
+    /// <param name="trafficMonitor">Z21 traffic monitor and polling diagnostics.</param>
+    /// <param name="runtimeCommandGateway">Route for every operator command (local, recorded or remote).</param>
     /// <param name="uiDispatcher">Dispatcher used to marshal updates back to the MAUI UI thread.</param>
     /// <param name="settings">Application settings used to initialize default values.</param>
     /// <param name="settingsService">Service used to persist updated settings.</param>
@@ -104,12 +109,14 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     /// <param name="solutionRemoteLoader">Optional: syncs the MOBAflow solution from MOBApi into the local runtime.</param>
     /// <param name="mobileSolutionStore">Optional: persists synced solution and signal-box data for offline use.</param>
     /// <param name="runtimeHubRemoteClient">Optional: SignalR client for remote runtime snapshots (MOBAsmart).</param>
-    /// <param name="runtimeCommandGateway">Optional: routes control commands to MOBAflow via MOBApi (MOBAsmart).</param>
     /// <param name="mobileRuntimeCoordinator">Optional: MOBAsmart hybrid local/remote runtime routing.</param>
     /// <param name="projectContext">Optional: synced MOBAflow solution for Control tab fleet list (MOBAsmart).</param>
     /// <param name="backgroundService">Optional: Android foreground service for background keep-alive (MOBAsmart).</param>
     public MauiViewModel(
-        IMobaRuntime mobaRuntime,
+        IRuntimeSnapshotProvider runtimeSnapshots,
+        IConnectionRuntime runtimeConnection,
+        ITrafficMonitor trafficMonitor,
+        IRuntimeCommandGateway runtimeCommandGateway,
         IUiDispatcher uiDispatcher,
         AppSettings settings,
         ISettingsService settingsService,
@@ -125,12 +132,14 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         ISolutionRemoteLoader? solutionRemoteLoader = null,
         IMobileSolutionStore? mobileSolutionStore = null,
         IRuntimeHubRemoteClient? runtimeHubRemoteClient = null,
-        IRuntimeCommandGateway? runtimeCommandGateway = null,
         IMobileRuntimeCoordinator? mobileRuntimeCoordinator = null,
         IProjectContext? projectContext = null,
         IBackgroundService? backgroundService = null)
     {
-        ArgumentNullException.ThrowIfNull(mobaRuntime);
+        ArgumentNullException.ThrowIfNull(runtimeSnapshots);
+        ArgumentNullException.ThrowIfNull(runtimeConnection);
+        ArgumentNullException.ThrowIfNull(trafficMonitor);
+        ArgumentNullException.ThrowIfNull(runtimeCommandGateway);
         ArgumentNullException.ThrowIfNull(uiDispatcher);
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(settingsService);
@@ -141,7 +150,9 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         ArgumentNullException.ThrowIfNull(networkProfileChangeNotifier);
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(eventBus);
-        _mobaRuntime = mobaRuntime;
+        _runtimeSnapshots = runtimeSnapshots;
+        _runtimeConnection = runtimeConnection;
+        _trafficMonitor = trafficMonitor;
         _uiDispatcher = uiDispatcher;
         _settings = settings;
         _settingsService = settingsService;
@@ -206,14 +217,14 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             return Task.CompletedTask;
         }).ConfigureAwait(false);
 
-        await _mobaRuntime.StartAsync(_applicationLifetimeCts.Token).ConfigureAwait(false);
+        await _runtimeConnection.StartAsync(_applicationLifetimeCts.Token).ConfigureAwait(false);
 
         _networkProfileChangeNotifier.NetworkProfilePossiblyChanged += OnNetworkProfilePossiblyChanged;
         _networkProfileChangeNotifier.StartListening();
 
         await _uiDispatcher.InvokeOnUiAsync(() =>
         {
-            ApplyLocalRuntimeSnapshot(_mobaRuntime.Current);
+            ApplyLocalRuntimeSnapshot(_runtimeSnapshots.Current);
             InitializeStatistics();
             return Task.CompletedTask;
         }).ConfigureAwait(false);
@@ -229,7 +240,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
                 "Restore MOBAflow session on startup");
         }
 
-        _mobaRuntime.SetSystemStatePollingInterval(5);
+        _trafficMonitor.SetSystemStatePollingInterval(5);
     }
 
     /// <summary>
@@ -262,12 +273,12 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             // Let runtime auto-connect try the saved IP before running multicast discovery.
             await Task.Delay(TimeSpan.FromMilliseconds(1500)).ConfigureAwait(false);
 
-            if (!_mobaRuntime.Current.IsConnected && IsMobaflowConnectionEnabled)
+            if (!_runtimeSnapshots.Current.IsConnected && IsMobaflowConnectionEnabled)
             {
                 await TryApplyZ21EndpointFromMobaFlowAsync(force: true).ConfigureAwait(false);
             }
 
-            if (!_mobaRuntime.Current.IsConnected)
+            if (!_runtimeSnapshots.Current.IsConnected)
             {
                 var z21Ip = await _z21DiscoveryService
                     .DiscoverZ21Async(Z21IpAddress, CancellationToken.None)
@@ -1022,7 +1033,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
 
         try
         {
-            await _mobaRuntime.ConnectAsync().ConfigureAwait(false);
+            await _runtimeConnection.ConnectAsync(CancellationToken.None).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -1035,14 +1046,14 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
     private async Task DisconnectAsync()
     {
         _shouldReconnectLocalZ21OnResume = false;
-        await _mobaRuntime.DisconnectAsync().ConfigureAwait(false);
+        await _runtimeConnection.DisconnectAsync(CancellationToken.None).ConfigureAwait(false);
         _uiDispatcher.InvokeOnUi(() => Z21ConnectionStatus = null);
         RequestBackgroundServiceSync();
     }
 
     private async Task TryApplyZ21EndpointFromMobaFlowAsync(bool force = false)
     {
-        if (_runtimeSettingsClient == null || IsConnected || _mobaRuntime.Current.IsConnected)
+        if (_runtimeSettingsClient == null || IsConnected || _runtimeSnapshots.Current.IsConnected)
         {
             return;
         }
@@ -1106,14 +1117,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
             _hideZ21TelemetryUntilTrackPowerOff = false;
         }
 
-        if (_runtimeCommandGateway is not null)
-        {
-            await _runtimeCommandGateway.SetTrackPowerAsync(turnOn).ConfigureAwait(false);
-        }
-        else
-        {
-            await _mobaRuntime.SetTrackPowerAsync(turnOn).ConfigureAwait(false);
-        }
+        await _runtimeCommandGateway.SetTrackPowerAsync(turnOn).ConfigureAwait(false);
     }
 
     private void ClearZ21TelemetryValues()
@@ -1197,7 +1201,7 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         var updatedStatistics = new ObservableCollection<InPortStatistic>();
         for (int i = 1; i <= CountOfFeedbackPoints; i++)
         {
-            var statistic = new InPortStatistic(_runtimeCommandGateway ?? new LocalRuntimeCommandGateway(_mobaRuntime))
+            var statistic = new InPortStatistic(_runtimeCommandGateway)
             {
                 InPort = i,
                 Name = $"Track {i}",
@@ -1222,12 +1226,9 @@ public sealed partial class MauiViewModel : ObservableObject, IDisposable
         CounterResetError = string.Empty;
         try
         {
-            if (_runtimeCommandGateway is not null)
-                await _runtimeCommandGateway.ResetInPortCountersAsync(CancellationToken.None).ConfigureAwait(true);
-            else
-                await _mobaRuntime.ResetInPortCountersAsync(CancellationToken.None).ConfigureAwait(true);
+            await _runtimeCommandGateway.ResetInPortCountersAsync(CancellationToken.None).ConfigureAwait(true);
 
-            _localCounters = _mobaRuntime.Current.InPortCounters;
+            _localCounters = _runtimeSnapshots.Current.InPortCounters;
             ApplyLocalCounters();
         }
         catch (Exception ex) when (ex is not OutOfMemoryException and not AccessViolationException)

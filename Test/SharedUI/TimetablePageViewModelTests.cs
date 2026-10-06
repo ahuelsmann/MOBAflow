@@ -10,6 +10,7 @@ using Moba.Common.Events;
 using Moba.Common.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
+using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 
 using Moq;
@@ -705,6 +706,9 @@ internal sealed class TimetablePageViewModelTests
         var mainWindow = new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             runtime.Object,
+            runtime.Object,
+            runtime.Object,
+            new LocalRuntimeCommandGateway(runtime.Object),
             eventBus,
             dispatcher.Object,
             new AppSettings(),

@@ -500,6 +500,7 @@ internal sealed class MauiViewModelControlTabTests
         settingsMock.Setup(service => service.GetSettings()).Returns(new AppSettings());
         return new TrainControlViewModel(
             runtimeMock.Object,
+            new LocalRuntimeCommandGateway(runtimeMock.Object),
             settingsMock.Object,
             projectContext ?? new MobileSolutionContext(),
             NullLogger<TrainControlViewModel>.Instance,
@@ -529,6 +530,9 @@ internal sealed class MauiViewModelControlTabTests
             .Callback<Action>(action => action());
         return new MauiViewModel(
             mobaRuntime ?? runtimeMock!.Object,
+            mobaRuntime ?? runtimeMock!.Object,
+            mobaRuntime ?? runtimeMock!.Object,
+            new LocalRuntimeCommandGateway(mobaRuntime ?? runtimeMock!.Object),
             uiDispatcherMock.Object,
             new AppSettings(),
             new Mock<ISettingsService>().Object,

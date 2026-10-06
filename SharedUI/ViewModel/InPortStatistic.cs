@@ -10,10 +10,10 @@ using System.Globalization;
 /// Represents lap statistics for a single InPort (track).
 /// Used by OverviewPage in WinUI, MAUI, and WebApp.
 /// </summary>
-/// <param name="commands">Optional local counter commands; without them the row is read-only.</param>
-public partial class InPortStatistic(IRuntimeCommandGateway? commands = null) : ObservableObject
+/// <param name="commands">Runtime command gateway used for counter corrections.</param>
+public partial class InPortStatistic(IRuntimeCommandGateway commands) : ObservableObject
 {
-    private readonly IRuntimeCommandGateway? _commands = commands;
+    private readonly IRuntimeCommandGateway _commands = commands ?? throw new ArgumentNullException(nameof(commands));
 
     /// <summary>Unsigned integer text entered for a counter correction.</summary>
     [ObservableProperty]
@@ -23,10 +23,7 @@ public partial class InPortStatistic(IRuntimeCommandGateway? commands = null) : 
     [ObservableProperty]
     public partial string CounterError { get; set; } = string.Empty;
 
-    /// <summary>Whether the input can be edited by this statistics view.</summary>
-    public bool CanEditCounter => _commands is not null;
-
-    [RelayCommand(CanExecute = nameof(CanEditCounter))]
+    [RelayCommand]
     private async Task SetCounterAsync()
     {
         if (!ulong.TryParse(CounterValue?.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var value))
@@ -35,12 +32,12 @@ public partial class InPortStatistic(IRuntimeCommandGateway? commands = null) : 
             return;
         }
 
-        await ChangeCounterAsync(() => _commands!.SetInPortCounterAsync(checked((uint)InPort), value)).ConfigureAwait(true);
+        await ChangeCounterAsync(() => _commands.SetInPortCounterAsync(checked((uint)InPort), value)).ConfigureAwait(true);
     }
 
-    [RelayCommand(CanExecute = nameof(CanEditCounter))]
+    [RelayCommand]
     private Task ResetCounterAsync() =>
-        ChangeCounterAsync(() => _commands!.ResetInPortCounterAsync(checked((uint)InPort)));
+        ChangeCounterAsync(() => _commands.ResetInPortCounterAsync(checked((uint)InPort)));
 
     private async Task ChangeCounterAsync(Func<Task> change)
     {

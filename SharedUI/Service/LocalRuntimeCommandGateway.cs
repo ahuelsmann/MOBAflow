@@ -23,6 +23,9 @@ public sealed class LocalRuntimeCommandGateway : IRuntimeCommandGateway
     public Task SetTrackPowerAsync(bool isOn, CancellationToken cancellationToken = default) =>
         _mobaRuntime.SetTrackPowerAsync(isOn, cancellationToken);
 
+    public Task AcknowledgeFailSafeAsync(CancellationToken cancellationToken = default) =>
+        _mobaRuntime.AcknowledgeFailSafeAsync(cancellationToken);
+
     public Task SimulateFeedbackAsync(int inPort, CancellationToken cancellationToken = default) =>
         _mobaRuntime.SimulateFeedbackAsync(inPort, cancellationToken);
 
@@ -52,6 +55,12 @@ public sealed class LocalRuntimeCommandGateway : IRuntimeCommandGateway
     {
         return _mobaRuntime.SetLocomotiveFunctionAsync(address, functionIndex, isOn, cancellationToken);
     }
+
+    public Task SetAllLocomotiveFunctionsOffAsync(int address, CancellationToken cancellationToken = default) =>
+        _mobaRuntime.SetAllLocomotiveFunctionsOffAsync(address, cancellationToken);
+
+    public Task RequestLocomotiveInfoAsync(int address, CancellationToken cancellationToken = default) =>
+        _mobaRuntime.RequestLocomotiveInfoAsync(address, cancellationToken);
 
     public Task SendTurnoutCommandAsync(
         int decoderAddress,

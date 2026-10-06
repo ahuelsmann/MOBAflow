@@ -160,6 +160,8 @@ internal sealed class RecordingRuntimeCommandGatewayTests
 
         public Task SetTrackPowerAsync(bool isOn, CancellationToken cancellationToken = default) => ExecuteAsync();
 
+        public Task AcknowledgeFailSafeAsync(CancellationToken cancellationToken = default) => ExecuteAsync();
+
         public Task SimulateFeedbackAsync(int inPort, CancellationToken cancellationToken = default) => ExecuteAsync();
 
         public Task ResetJourneyAsync(Guid journeyId, CancellationToken cancellationToken = default) => ExecuteAsync();
@@ -186,6 +188,11 @@ internal sealed class RecordingRuntimeCommandGatewayTests
             int functionIndex,
             bool isOn,
             CancellationToken cancellationToken = default) => ExecuteAsync();
+
+        public Task SetAllLocomotiveFunctionsOffAsync(int address, CancellationToken cancellationToken = default) =>
+            ExecuteAsync();
+
+        public Task RequestLocomotiveInfoAsync(int address, CancellationToken cancellationToken = default) => ExecuteAsync();
 
         public Task SendTurnoutCommandAsync(
             int decoderAddress,

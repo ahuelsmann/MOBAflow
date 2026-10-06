@@ -19,6 +19,8 @@ internal sealed class NoOpRuntimeCommandGateway : IRuntimeCommandGateway
 
     public Task SetTrackPowerAsync(bool isOn, CancellationToken cancellationToken = default) => Task.CompletedTask;
 
+    public Task AcknowledgeFailSafeAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+
     public Task SimulateFeedbackAsync(int inPort, CancellationToken cancellationToken = default) => Task.CompletedTask;
 
     public Task ResetJourneyAsync(Guid journeyId, CancellationToken cancellationToken = default) => Task.CompletedTask;
@@ -40,6 +42,10 @@ internal sealed class NoOpRuntimeCommandGateway : IRuntimeCommandGateway
 
     public Task SetLocomotiveFunctionAsync(int address, int functionIndex, bool isOn, CancellationToken cancellationToken = default) =>
         Task.CompletedTask;
+
+    public Task SetAllLocomotiveFunctionsOffAsync(int address, CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+    public Task RequestLocomotiveInfoAsync(int address, CancellationToken cancellationToken = default) => Task.CompletedTask;
 
     public Task SendTurnoutCommandAsync(
         int decoderAddress,

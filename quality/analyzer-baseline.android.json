@@ -3295,13 +3295,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1859",
-      "path": "SharedUI/ViewModel/MauiViewModel.SignalBox.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1859",
       "path": "SharedUI/ViewModel/WorkflowLibraryViewModel.cs",
       "count": 1
     },
@@ -3569,7 +3562,7 @@
       "targetFramework": "net10.0",
       "ruleId": "IDE0007",
       "path": "SharedUI/ViewModel/TrainControlViewModel.cs",
-      "count": 7
+      "count": 6
     },
     {
       "project": "SharedUI",

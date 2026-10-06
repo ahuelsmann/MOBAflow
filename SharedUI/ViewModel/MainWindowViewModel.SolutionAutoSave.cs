@@ -121,7 +121,7 @@ public partial class MainWindowViewModel
         if (sender is JourneyViewModel journey && SelectedProject is { } project
             && e.PropertyName is nameof(JourneyViewModel.IsActive) or nameof(JourneyViewModel.EventPlan))
         {
-            ObserveBackgroundTask(_mobaRuntime.UpdateJourneyEventsAsync(project.Model, journey.Model.Id), "Update journey events");
+            ObserveBackgroundTask(_runtimeConnection.UpdateJourneyEventsAsync(project.Model, journey.Model.Id), "Update journey events");
         }
 
         RefreshProjectDiagnostics();

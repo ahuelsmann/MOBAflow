@@ -9,6 +9,7 @@ using Moba.Common.Events;
 using Moba.Common.Runtime;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
+using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 using Moba.WinUI.Service;
 
@@ -186,6 +187,9 @@ internal sealed partial class RestApiStatusServiceTests
         return new MainWindowViewModel(
             new LayoutColumnWidthsViewModel(),
             mobaRuntime.Object,
+            mobaRuntime.Object,
+            mobaRuntime.Object,
+            new LocalRuntimeCommandGateway(mobaRuntime.Object),
             eventBus,
             uiDispatcher.Object,
             appSettings,

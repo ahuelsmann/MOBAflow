@@ -461,6 +461,9 @@ internal sealed class MauiViewModelPerformanceTests
 
         var viewModel = new MauiViewModel(
             mobaRuntimeMock.Object,
+            mobaRuntimeMock.Object,
+            mobaRuntimeMock.Object,
+            runtimeCommandGateway ?? new LocalRuntimeCommandGateway(mobaRuntimeMock.Object),
             uiDispatcherMock.Object,
             appSettings,
             CreateSettingsServiceMock(appSettings).Object,
@@ -472,7 +475,6 @@ internal sealed class MauiViewModelPerformanceTests
             NullLogger<MauiViewModel>.Instance,
             eventBus,
             runtimeHubRemoteClient: runtimeHubRemoteClient,
-            runtimeCommandGateway: runtimeCommandGateway,
             mobileRuntimeCoordinator: mobileRuntimeCoordinator);
 
         _createdViewModels.Add(viewModel);

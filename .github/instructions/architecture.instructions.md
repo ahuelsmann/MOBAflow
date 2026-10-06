@@ -10,17 +10,20 @@ Use [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md) for broader context and v
 
 ## Runtime and events
 
-- [IMobaRuntime](../../Backend/Interface/IMobaRuntime.cs) combines connection, locomotive, signal/journey and
-  snapshot roles. Its snapshot property is `Current` via `IRuntimeSnapshotProvider`.
+- [IMobaRuntime](../../Backend/Interface/IMobaRuntime.cs) combines the snapshot, connection, locomotive,
+  layout-control and traffic-monitor roles for hosts, gateways and runtime services. Its snapshot property is
+  `Current` via `IRuntimeSnapshotProvider`.
 - [MobaRuntimeService](../../Backend/Service/MobaRuntimeService.cs) owns the active project execution context.
   Its partials separate `RuntimeApi`, `Z21Handlers` and `AutoConnect`.
   [MobaRuntimeSnapshotBuilder](../../Backend/Service/MobaRuntimeSnapshotBuilder.cs) and
   [MobaRuntimeStatusFormatter](../../Backend/Service/MobaRuntimeStatusFormatter.cs) hold extracted helpers.
 - Treat [MobaRuntimeSnapshot](../../Common/Runtime/MobaRuntimeSnapshot.cs) as read-only query state; route mutations
   through runtime commands. Keep editable project models separate from active runtime execution state.
-- Shared ViewModels depend on this runtime boundary. Preserve
-  [IRuntimeCommandGateway](../../SharedUI/Interface/IRuntimeCommandGateway.cs) where commands can target local or
-  remote runtimes, and [MobileRuntimeCoordinator](../../SharedUI/Service/MobileRuntimeCoordinator.cs) routing.
+- Shared ViewModels depend only on `IRuntimeSnapshotProvider`, `IConnectionRuntime` and `ITrafficMonitor` and send
+  operator commands through the required
+  [IRuntimeCommandGateway](../../SharedUI/Interface/IRuntimeCommandGateway.cs); preserve its recording and
+  [MobileRuntimeCoordinator](../../SharedUI/Service/MobileRuntimeCoordinator.cs) routing.
+  `Test/Architecture/RuntimeCommandPathArchitectureTests.cs` guards this path.
 - Z21 raw callbacks reach the runtime in the background; UI EventBus subscriptions go through
   [UiThreadEventBusDecorator](../../SharedUI/Service/UiThreadEventBusDecorator.cs).
   Its `Publish` queues through `InvokeOnUiLowPriority`; subscribers need no second dispatch.

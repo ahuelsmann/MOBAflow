@@ -64,6 +64,33 @@ public sealed partial class MobaRuntimeService
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc />
+    public Task UpdateSignalBoxAsync(Project editableProject, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentNullException.ThrowIfNull(editableProject);
+        var context = _activeProjectContext;
+        if (context?.ActiveProject.Id != editableProject.Id) return Task.CompletedTask;
+
+        var signalBox = CloneForRuntime(editableProject).SignalBoxPlan;
+        var running = context.ActiveProject.SignalBoxPlan;
+        if (signalBox is not null && running is not null)
+        {
+            // Aspects are runtime state; configuration changes must not reset them.
+            foreach (var signal in signalBox.Elements.OfType<SbSignal>())
+            {
+                if (running.FindElement(signal.Id) is SbSignal current)
+                {
+                    signal.SignalAspect = current.SignalAspect;
+                }
+            }
+        }
+
+        context.ActiveProject.SignalBoxPlan = signalBox;
+        PublishSnapshot();
+        return Task.CompletedTask;
+    }
+
     /// <summary>Creates an isolated runtime copy using the canonical JSON serialization with preserved entity Ids.</summary>
     private static Project CloneForRuntime(Project editableProject)
     {
@@ -336,7 +363,7 @@ public sealed partial class MobaRuntimeService
         SetInPortCounterAsync(inPort, 0, cancellationToken);
 
     /// <inheritdoc />
-    public async Task SetSignalAspectAsync(SbSignal signal, CancellationToken cancellationToken = default)
+    private async Task SetSignalAspectAsync(SbSignal signal, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(signal);
 
