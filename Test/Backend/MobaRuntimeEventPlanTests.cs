@@ -186,7 +186,7 @@ internal sealed class MobaRuntimeEventPlanTests
             var plan = new JourneyEventPlan { Events = [new() { Count = 2, WorkflowId = added.Id }] };
             second.IsActive = true;
             second.EventPlan = plan;
-            await runtime.UpdateJourneyEventsAsync(project, second.Id).ConfigureAwait(false);
+            await runtime.UpdateProjectAsync(project).ConfigureAwait(false);
             plan.Events[0].Count = 9;
             added.Name = "Unsaved change";
             Assert.That(firstCancellation.IsCancellationRequested, Is.False);

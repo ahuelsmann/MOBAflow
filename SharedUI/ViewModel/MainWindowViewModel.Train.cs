@@ -61,7 +61,18 @@ public partial class MainWindowViewModel
         }
 
         ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
-        ObserveBackgroundTask(RefreshActiveProjectRuntimeAsync(), "Refresh active train runtime");
+        RefreshProjectRuntimeSnapshot();
+    }
+
+    /// <summary>
+    /// Refreshes the runtime's snapshot of the selected project after an editor change, without re-activation.
+    /// </summary>
+    private void RefreshProjectRuntimeSnapshot()
+    {
+        if (SelectedProject is { } project)
+        {
+            ObserveBackgroundTask(_runtimeConnection.UpdateProjectAsync(project.Model), "Update project runtime");
+        }
     }
 
     private async Task RefreshActiveProjectRuntimeAsync()

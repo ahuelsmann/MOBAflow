@@ -203,6 +203,18 @@ internal sealed partial class SolutionSessionTests
     }
 
     [Test]
+    public void SelectedProjectEdit_RefreshesTheRuntimeSnapshotWithoutReactivation()
+    {
+        var session = CreateSession(new Solution(), out _, out var runtime);
+        runtime.Invocations.Clear();
+
+        session.SelectedProject!.Name = "Renamed";
+
+        runtime.Verify(value => value.UpdateProjectAsync(session.SelectedProject.Model, It.IsAny<CancellationToken>()), Times.Once);
+        runtime.Verify(value => value.ActivateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
     public void TrackedChanges_IgnoreUiOnlyPropertiesSuppressionAndUntracking()
     {
         var session = CreateSession(new Solution(), out _, out _);

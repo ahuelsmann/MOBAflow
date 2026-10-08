@@ -51,8 +51,7 @@ public partial class JourneyManager : IJourneyManager
     private readonly IWorkflowExecutionCoordinator _executionCoordinator;
     private readonly bool _ownsExecutionCoordinator;
     private readonly Dictionary<Guid, JourneySessionState> _states = [];
-    private readonly Project _project;
-    private Project _executionProject;
+    private Project _project;
     private readonly ILogger<JourneyManager> _logger;
     private readonly IJourneyStopTransitionService _stopTransitionService;
     private readonly IJourneyRuntimeStateStore _runtimeStateStore;
@@ -107,7 +106,6 @@ public partial class JourneyManager : IJourneyManager
     {
         dependencies ??= new JourneyManagerDependencies();
         _project = project;
-        _executionProject = project;
         _logger = logger ?? NullLogger<JourneyManager>.Instance;
         _stopTransitionService = dependencies.StopTransitionService ?? new JourneyStopTransitionService();
         _runtimeStateStore = dependencies.RuntimeStateStore ?? new NullJourneyRuntimeStateStore();
@@ -122,49 +120,68 @@ public partial class JourneyManager : IJourneyManager
 
         foreach (var journey in project.Journeys)
         {
-            var checkpoint = _runtimeStateStore.Load(project.Id, journey.Id);
-            var checkpointPosition = journey.Stations.FindIndex(station => station.Id == checkpoint?.CurrentStationId);
-            var position = checkpointPosition >= 0 ? checkpointPosition : 0;
-            var station = journey.Stations.ElementAtOrDefault(position);
-            _states[journey.Id] = new JourneySessionState
-            {
-                JourneyId = journey.Id,
-                RunId = checkpointPosition < 0 || checkpoint!.JourneyRunId == Guid.Empty ? Guid.NewGuid() : checkpoint.JourneyRunId,
-                CurrentPos = position,
-                CurrentStationId = station?.Id,
-                CurrentStationName = station?.Name ?? string.Empty,
-                IsActive = journey.IsActive
-            };
+            _states[journey.Id] = CreateInitialState(project.Id, journey);
         }
 
         _inPortCounterService.SetJourneyFeedbackHandler(OnInPortCounted);
     }
 
     /// <inheritdoc />
-    public void UpdateEvents(Project definitions, Guid journeyId)
+    public void UpdateDefinitions(Project definitions)
     {
         ArgumentNullException.ThrowIfNull(definitions);
         lock (_stateSync)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
-            var definition = definitions.Journeys.Find(item => item.Id == journeyId);
-            var journey = _project.Journeys.Find(item => item.Id == journeyId);
-            if (definitions.Id != _project.Id || definition is null || journey is null
-                || !_states.TryGetValue(journeyId, out var state)) return;
+            if (definitions.Id != _project.Id) return;
 
-            journey.EventPlan = new JourneyEventPlan
+            var journeyIds = definitions.Journeys.Select(journey => journey.Id).ToHashSet();
+            foreach (var removedId in _states.Keys.Where(id => !journeyIds.Contains(id)).ToList())
             {
-                Events = definition.EventPlan.Events.Select(item => new JourneyEvent
+                _executionCoordinator.CancelOwner(removedId);
+                _states.Remove(removedId);
+            }
+
+            foreach (var journey in definitions.Journeys)
+            {
+                if (!_states.TryGetValue(journey.Id, out var state))
                 {
-                    Id = item.Id, InPort = item.InPort, Count = item.Count,
-                    WorkflowId = item.WorkflowId, Enabled = item.Enabled
-                }).ToList()
-            };
-            journey.IsActive = definition.IsActive;
-            state.IsActive = definition.IsActive;
-            // Definitions are isolated by the runtime. Accepted executions keep their previous snapshot.
-            _executionProject = definitions;
+                    _states[journey.Id] = CreateInitialState(definitions.Id, journey);
+                    continue;
+                }
+
+                // Progress is kept by stop id; the stop's position and name follow the edited journey.
+                state.IsActive = journey.IsActive;
+                var position = state.CurrentStationId is Guid stationId
+                    ? journey.Stations.FindIndex(station => station.Id == stationId)
+                    : -1;
+                if (position >= 0)
+                {
+                    state.CurrentPos = position;
+                    state.CurrentStationName = journey.Stations[position].Name;
+                }
+            }
+
+            // Accepted executions keep the snapshot they started with.
+            _project = definitions;
         }
+    }
+
+    private JourneySessionState CreateInitialState(Guid projectId, Journey journey)
+    {
+        var checkpoint = _runtimeStateStore.Load(projectId, journey.Id);
+        var checkpointPosition = journey.Stations.FindIndex(station => station.Id == checkpoint?.CurrentStationId);
+        var position = checkpointPosition >= 0 ? checkpointPosition : 0;
+        var station = journey.Stations.ElementAtOrDefault(position);
+        return new JourneySessionState
+        {
+            JourneyId = journey.Id,
+            RunId = checkpointPosition < 0 || checkpoint!.JourneyRunId == Guid.Empty ? Guid.NewGuid() : checkpoint.JourneyRunId,
+            CurrentPos = position,
+            CurrentStationId = station?.Id,
+            CurrentStationName = station?.Name ?? string.Empty,
+            IsActive = journey.IsActive
+        };
     }
 
     private void OnInPortCounted(object? sender, InPortCountedEventArgs args)
@@ -195,7 +212,7 @@ public partial class JourneyManager : IJourneyManager
                         && item.InPort == args.Snapshot.InPort && item.Count == args.Snapshot.Count).ToArray();
                     if (events.Length == 0) continue;
                     state.LastFeedbackTime = args.Snapshot.LastFeedbackTime?.LocalDateTime;
-                    matches.Add((journey, state, events, state.Snapshot(), _executionProject));
+                    matches.Add((journey, state, events, state.Snapshot(), _project));
                 }
             }
         }

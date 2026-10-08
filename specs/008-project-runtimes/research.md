@@ -49,9 +49,16 @@ Findings on `main` at `0113551f` (2026-10-06).
   selected project (FR-009) without a project identifier on every event.
 - **No copy**: the runtime keeps runtime values (signal aspect, current station, counters) in runtime state keyed by
   id and reads master data from the session's project; `CloneForRuntime`, `UpdateJourneyEventsAsync` and
-  `UpdateSignalBoxAsync` disappear (FR-007, FR-008). Open risk: the runtime reads master data on the Z21 event
-  pipeline while the editor writes on the UI thread. Slice 2 starts by characterizing these reads and records the
-  synchronization rule in the plan before the copy is removed; slice 1 does not depend on it.
+  `UpdateSignalBoxAsync` disappear (FR-007, FR-008).
+- **Synchronization rule (slice 2, maintainer decision 2026-10-08)**: `JourneyManager` reads journeys, event plans
+  and stations on the Z21 pipeline, and workflows read stations, journey texts and the workflow list for seconds
+  on background threads, while the editor changes the same lists on the UI thread. Sharing one object would race
+  (`Collection was modified`, half-applied edits). The runtime therefore keeps an invisible definitions snapshot
+  that `IConnectionRuntime.UpdateProjectAsync` refreshes after every saved change without re-activation. Runtime
+  values stay keyed by id (`JourneySessionState`, signal aspects); a running workflow keeps the snapshot it started
+  with. `UpdateJourneyEventsAsync` and `UpdateSignalBoxAsync` are replaced by `UpdateProjectAsync`; adding
+  journeys, stations or trains no longer re-activates the project. The interlocking definition still changes only
+  on activation.
 - **Pages**: WinUI pages keep binding to `MainWindowViewModel` until RF-24 introduces page ViewModels; RF-23 moves
   services and ViewModels to the session and guards that with an architecture test.
 

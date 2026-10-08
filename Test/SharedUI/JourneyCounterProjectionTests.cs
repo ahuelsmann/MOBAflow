@@ -106,7 +106,7 @@ public sealed class JourneyCounterProjectionTests
     }
 
     [Test]
-    public async Task ActiveFlag_IsPersistedOnTheJourneyAndReappliedToTheRuntime()
+    public async Task ActiveFlag_IsPersistedOnTheJourneyAndRefreshesTheRuntimeSnapshot()
     {
         var journey = CreateJourney("Regional");
         await using var fixture = new ProjectionFixture(new Solution { Projects = [new Project { Journeys = [journey] }] });
@@ -115,13 +115,12 @@ public sealed class JourneyCounterProjectionTests
         fixture.ViewModel.SelectedJourney!.IsActive = true;
 
         Assert.That(journey.IsActive, Is.True);
-        fixture.Runtime.Verify(runtime => runtime.UpdateJourneyEventsAsync(It.IsAny<Project>(), journey.Id,
-            It.IsAny<CancellationToken>()), Times.Once);
+        fixture.Runtime.Verify(runtime => runtime.UpdateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()), Times.Once);
         fixture.Runtime.Verify(runtime => runtime.ActivateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]
-    public async Task EventEdits_StayEditableForActiveJourneysAndAreReappliedToTheRuntime()
+    public async Task EventEdits_StayEditableForActiveJourneysAndRefreshTheRuntimeSnapshot()
     {
         var journey = CreateJourney("Regional");
         journey.IsActive = true;
@@ -136,8 +135,7 @@ public sealed class JourneyCounterProjectionTests
             Assert.That(editor.CanEdit, Is.True);
             Assert.That(journey.EventPlan.Events.Single().Count, Is.EqualTo(9));
         });
-        fixture.Runtime.Verify(runtime => runtime.UpdateJourneyEventsAsync(It.IsAny<Project>(), journey.Id,
-            It.IsAny<CancellationToken>()), Times.Once);
+        fixture.Runtime.Verify(runtime => runtime.UpdateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()), Times.Once);
         fixture.Runtime.Verify(runtime => runtime.ActivateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -157,11 +155,10 @@ public sealed class JourneyCounterProjectionTests
 
         fixture.ViewModel.SelectedJourney.IsActive = true;
 
-        fixture.Runtime.Verify(runtime => runtime.UpdateJourneyEventsAsync(It.IsAny<Project>(), first.Id,
-            It.IsAny<CancellationToken>()), Times.Once);
+        fixture.Runtime.Verify(runtime => runtime.UpdateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()), Times.Once);
         journeys[1].IsActive = true;
-        fixture.Runtime.Verify(runtime => runtime.UpdateJourneyEventsAsync(It.IsAny<Project>(), second.Id,
-            It.IsAny<CancellationToken>()), Times.Never);
+        fixture.Runtime.Verify(runtime => runtime.UpdateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()), Times.Once,
+            "An unselected journey is not observed, so it causes no further update.");
     }
 
     [Test]
@@ -182,8 +179,7 @@ public sealed class JourneyCounterProjectionTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(first.EventPlan.Events.Single().Count, Is.EqualTo(25));
-            fixture.Runtime.Verify(runtime => runtime.UpdateJourneyEventsAsync(It.IsAny<Project>(), first.Id,
-                It.IsAny<CancellationToken>()), Times.Once);
+            fixture.Runtime.Verify(runtime => runtime.UpdateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()), Times.Once);
             fixture.Io.Verify(io => io.SaveAsync(It.IsAny<Solution>(), "projection-test.json"), Times.Once);
         }
     }

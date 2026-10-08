@@ -17,12 +17,12 @@ Input: [spec.md](spec.md), [plan.md](plan.md), [research.md](research.md).
 - [x] T007 Run the portable and Windows test suites and the analyzer gates for validation; secrets scan and line endings
 - [ ] T008 Open the slice PR as draft; Sonar quality gate (SonarCloud) green with zero open issues before review
 
-## Slice 2 - No runtime copy
+## Slice 2 - Live definitions snapshot
 
-- [ ] T009 Characterize runtime master-data reads on the Z21 pipeline and record the synchronization rule in `plan.md`
-- [ ] T010 Hold runtime values (signal aspect, current station, journey progress, counters) by id in the runtime
-- [ ] T011 Read master data from the session's project; remove `CloneForRuntime`, `UpdateJourneyEventsAsync` and `UpdateSignalBoxAsync` and their callers
-- [ ] T012 Test that editor changes keep running workflows, journey progress and aspects; run suites and analyzer gates for validation
+- [x] T009 Characterize runtime master-data reads on the Z21 pipeline and record the synchronization rule in `research.md`
+- [x] T010 Add `IConnectionRuntime.UpdateProjectAsync` and `IJourneyManager.UpdateDefinitions`: refresh the definitions snapshot, keep journey progress, running workflows and signal aspects by id
+- [x] T011 Refresh the snapshot from the session after every saved change; replace `UpdateJourneyEventsAsync`, `UpdateSignalBoxAsync` and the re-activations after adding journeys, stations or trains
+- [x] T012 Test that editor changes keep running workflows, journey progress and aspects; run suites and analyzer gates for validation
 - [ ] T013 Slice PR with the Sonar quality gate (SonarCloud) green and zero open issues
 
 ## Slice 3 - Runtime and Z21 per project

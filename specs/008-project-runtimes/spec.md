@@ -59,6 +59,14 @@ startup (speed zero, no restored movement) is unchanged.
   project's Z21 directly and shows its state from MOBAflow.
 - Q: How is the work delivered? → A: One specification, implemented in reviewable slices.
 
+### Session 2026-10-08
+
+- Q: The runtime reads journeys, stations and workflows on background threads while the editor changes them on
+  the UI thread; sharing one object would race. How do they meet? → A: The runtime keeps an invisible snapshot
+  of the master data that is refreshed immediately after every saved change, without re-activation. Journey
+  progress, running workflows and signal aspects are kept by id; a running workflow finishes with the master
+  data it started with. For the user there is one project and no stale data.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Operate two layouts at the same time (Priority: P1)
@@ -187,8 +195,10 @@ and the switch warning; no page still says to enter the Z21 address in the app s
 - **FR-006**: Before a switch or close with running runtimes, MOBAflow MUST show a warning; after confirmation every
   known locomotive of every runtime MUST receive speed 0 before the runtimes are discarded; cancelling MUST keep the
   current state.
-- **FR-007**: The runtime MUST read master data from the project and MUST NOT keep a copy of the project; runtime
-  values MUST be held by the runtime keyed by entity id and MUST NOT be written into the saved solution.
+- **FR-007**: The runtime MUST see every saved editor change immediately: it reads master data from a snapshot of
+  the project that is refreshed after each saved change without re-activation, so editor and runtime threads never
+  share mutable objects. Runtime values MUST be held by the runtime keyed by entity id and MUST NOT be written into
+  the saved solution.
 - **FR-008**: Editor changes to master data MUST take effect without re-activating the project and without cancelling
   running workflows or resetting journey progress.
 - **FR-009**: MOBAflow runtime pages and the status bar MUST show the runtime of the selected project.
