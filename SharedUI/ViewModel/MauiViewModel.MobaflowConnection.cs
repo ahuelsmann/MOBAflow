@@ -108,12 +108,12 @@ public sealed partial class MauiViewModel
             }
 
             // Reconnect may repeat with unchanged endpoint; use the normal health-check timeout.
-            var reachable = await RefreshRestApiReachableAsync(useConnectTimeout: false).ConfigureAwait(false);
+            var reachable = await RefreshRestApiReachableAsync(cancellationToken, useConnectTimeout: false).ConfigureAwait(false);
             if (!reachable)
             {
                 var anchor = string.IsNullOrWhiteSpace(Z21IpAddress) ? null : Z21IpAddress.Trim();
                 await TryDiscoverMobaflowFastAsync(anchor, cancellationToken).ConfigureAwait(false);
-                reachable = await RefreshRestApiReachableAsync(useConnectTimeout: false).ConfigureAwait(false);
+                reachable = await RefreshRestApiReachableAsync(cancellationToken, useConnectTimeout: false).ConfigureAwait(false);
             }
 
             if (!reachable)
@@ -165,14 +165,14 @@ public sealed partial class MauiViewModel
                     await TryDiscoverMobaflowFastAsync(anchor, cancellationToken).ConfigureAwait(false);
                 }
 
-                reachable = await RefreshRestApiReachableAsync(useConnectTimeout: attempt == 0)
+                reachable = await RefreshRestApiReachableAsync(cancellationToken, useConnectTimeout: attempt == 0)
                     .ConfigureAwait(false);
             }
 
             if (!reachable)
             {
                 await DiscoverMobaflowEndpointAsync(fullScan: true, anchor, cancellationToken).ConfigureAwait(false);
-                reachable = await RefreshRestApiReachableAsync(useConnectTimeout: false).ConfigureAwait(false);
+                reachable = await RefreshRestApiReachableAsync(cancellationToken, useConnectTimeout: false).ConfigureAwait(false);
             }
 
             var hubConnected = !reachable
