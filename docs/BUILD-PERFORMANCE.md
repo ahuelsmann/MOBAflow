@@ -143,10 +143,24 @@ excluded; handwritten application code remains part of the measurement.
 The analyzer baselines in `quality/` must match exactly, so fixed diagnostics
 also fail the gate until the baseline is refreshed. When the only difference is
 removed or decreased diagnostics, the failed run attaches the refreshed file as
-the `refreshed-analyzer-baselines-desktop-*` or `-android-*` artifact. Review it,
-copy it over the matching file in `quality/` and run
+the `refreshed-analyzer-baselines-desktop-*` artifact. Review it, copy it over
+the matching file in `quality/` and run
 `scripts/Test-LineEndings.ps1 -Path <file> -Fix`. New or increased diagnostics
 never produce a refreshed file; fix them instead.
+
+While the Android Release AAB job is disabled, CI does not check
+`quality/analyzer-baseline.android.json`. When a change touches code that
+MOBAsmart compiles, refresh and check it locally with the MAUI Android workload
+installed:
+
+```powershell
+Remove-Item -Recurse -Force artifacts/analyzers -ErrorAction SilentlyContinue
+dotnet build MOBAsmart/MOBAsmart.csproj -f net10.0-android -c Release --no-incremental -m:1 -p:MobaAnalyzerGate=true -p:UseSharedCompilation=false
+./scripts/Test-AnalyzerBaseline.ps1 -SarifRoot artifacts/analyzers/Release -BaselinePath quality/analyzer-baseline.android.json
+```
+
+Add `-UpdateBaseline` only when the reported difference is removed or decreased
+diagnostics; fix new or increased diagnostics instead.
 
 Run the same checks locally after producing a Release Cobertura report:
 
