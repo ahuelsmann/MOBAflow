@@ -1,14 +1,13 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 // Test value calculator for Z21Command.BuildSetTurnout
 const int decoderAddress = 203;
-const int output = 0;
 
 // Calculate FAdr (corrected)
 int fAdr = decoderAddress - 1;
 byte adrMsb = (byte)((fAdr >> 8) & 0xFF);
 byte adrLsb = (byte)(fAdr & 0xFF);
 
-foreach (var activate in new[] { false, true })
+foreach (var (output, activate) in new[] { (0, false), (0, true), (1, false), (1, true) })
 {
     // Calculate command byte: 10Q0A00P
     byte cmdByte = (byte)(
