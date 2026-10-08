@@ -4,12 +4,14 @@ namespace Moba.Backend.Discovery;
 using Common.Discovery;
 using Protocol;
 
+using System.Buffers.Binary;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Sockets;
 
 /// <summary>
-/// Discovers a Z21 command station on the local network by scanning the subnet for UDP ports 21105/21106
-/// and verifying responses with the Z21 handshake (LAN_SYSTEMSTATE_GETDATA).
+/// Discovers Z21 command stations on the local network by scanning the subnet for UDP ports 21105/21106
+/// and verifying responses with the Z21 handshake (LAN_SYSTEMSTATE_GETDATA) or serial-number request.
 /// </summary>
 public sealed class Z21DiscoveryService : IZ21DiscoveryService
 {
@@ -19,6 +21,8 @@ public sealed class Z21DiscoveryService : IZ21DiscoveryService
     /// <summary>After sending to all candidates, wait this long for the first response.</summary>
     private const int ReceiveAnyTimeoutMs = 2000;
     private const int PreferredProbeTimeoutMs = 800;
+    /// <summary>After asking all candidates for their serial number, collect answers for this long.</summary>
+    private const int CollectResponsesTimeoutMs = 2000;
 
     /// <inheritdoc />
     public async Task<string?> DiscoverZ21Async(string? preferredIpAddress = null, CancellationToken cancellationToken = default)
@@ -52,6 +56,94 @@ public sealed class Z21DiscoveryService : IZ21DiscoveryService
             return null;
         }
     }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<DiscoveredZ21>> DiscoverAllAsync(CancellationToken cancellationToken = default)
+    {
+        var found = new Dictionary<string, DiscoveredZ21>(StringComparer.Ordinal);
+        foreach (var port in DiscoveryPorts)
+        {
+            var responses = await CollectSerialNumberResponsesAsync(port, cancellationToken).ConfigureAwait(false);
+            foreach (var z21 in responses)
+            {
+                found.TryAdd(z21.IpAddress, z21);
+            }
+        }
+
+        return [.. found.Values.OrderBy(z21 => ToSortKey(z21.IpAddress))];
+    }
+
+    /// <summary>
+    /// Reads a LAN_GET_SERIAL_NUMBER answer; other packets are ignored.
+    /// </summary>
+    public static bool TryReadSerialNumberResponse(byte[] data, IPEndPoint sender, [NotNullWhen(true)] out DiscoveredZ21? z21)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+        ArgumentNullException.ThrowIfNull(sender);
+        z21 = null;
+        if (!Z21MessageParser.IsSerialNumber(data) || !Z21MessageParser.TryParseSerialNumber(data, out var serialNumber))
+        {
+            return false;
+        }
+
+        z21 = new DiscoveredZ21(sender.Address.ToString(), sender.Port, serialNumber);
+        return true;
+    }
+
+    private static async Task<List<DiscoveredZ21>> CollectSerialNumberResponsesAsync(int port, CancellationToken cancellationToken)
+    {
+        var found = new List<DiscoveredZ21>();
+        var candidates = SubnetCandidateBuilder.BuildCandidates(LanIpv4AddressHelper.GetCandidateLocalIpv4Addresses());
+        if (candidates.Count == 0)
+        {
+            return found;
+        }
+
+        var request = Z21Command.BuildGetSerialNumber();
+        using var udp = new UdpClient();
+        udp.Client.SendTimeout = SendReceiveTimeoutMs;
+        foreach (var ip in candidates)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            try
+            {
+                await udp.SendAsync(request, new IPEndPoint(ip, port), cancellationToken).ConfigureAwait(false);
+            }
+            catch (SocketException)
+            {
+                // Skip unreachable; continue with others
+            }
+        }
+
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        cts.CancelAfter(CollectResponsesTimeoutMs);
+        try
+        {
+            while (!cts.IsCancellationRequested)
+            {
+                var result = await udp.ReceiveAsync(cts.Token).ConfigureAwait(false);
+                if (TryReadSerialNumberResponse(result.Buffer, result.RemoteEndPoint, out var z21))
+                {
+                    found.Add(z21);
+                }
+            }
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            // The collection window is over.
+        }
+        catch (SocketException)
+        {
+            // Keep the answers received so far.
+        }
+
+        return found;
+    }
+
+    private static uint ToSortKey(string ipAddress)
+        => IPAddress.TryParse(ipAddress, out var address) && address.AddressFamily == AddressFamily.InterNetwork
+            ? BinaryPrimitives.ReadUInt32BigEndian(address.GetAddressBytes())
+            : uint.MaxValue;
 
     private static async Task<string?> ScanSubnetsAsync(int port, CancellationToken cancellationToken)
     {

@@ -23,6 +23,27 @@ internal class ProjectTests
         Assert.That(project.Journeys, Is.Not.Null);
         Assert.That(project.Journeys, Is.Empty);
         Assert.That(project.SignalBoxPlan, Is.Null);
+        Assert.That(project.Z21.IpAddress, Is.Empty, "A new project has no Z21 assigned.");
+        Assert.That(project.Z21.Port, Is.EqualTo(Z21Endpoint.DefaultPort));
+    }
+
+    [Test]
+    public void Z21Endpoint_RoundTripsAndDefaultsWhenMissing()
+    {
+        var project = new Project { Z21 = { IpAddress = "192.168.0.111", Port = 21106, SerialNumber = 12345 } };
+
+        var restored = System.Text.Json.JsonSerializer.Deserialize<Project>(
+            System.Text.Json.JsonSerializer.Serialize(project, JsonOptions.Compact), JsonOptions.Compact)!;
+        var withoutZ21 = System.Text.Json.JsonSerializer.Deserialize<Project>("{\"Name\":\"Old\"}", JsonOptions.Compact)!;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(restored.Z21.IpAddress, Is.EqualTo("192.168.0.111"));
+            Assert.That(restored.Z21.Port, Is.EqualTo(21106));
+            Assert.That(restored.Z21.SerialNumber, Is.EqualTo(12345u));
+            Assert.That(withoutZ21.Z21.IpAddress, Is.Empty);
+            Assert.That(withoutZ21.Z21.Port, Is.EqualTo(Z21Endpoint.DefaultPort));
+        }
     }
 
     [Test]

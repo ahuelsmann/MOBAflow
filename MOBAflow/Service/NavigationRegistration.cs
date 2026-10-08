@@ -60,6 +60,7 @@ internal static class NavigationRegistration
         services.AddSingleton<PassengerWagonPage>();
         pages.Add(new PageMetadata("passengerwagons", "Passenger Wagons", "\uE7C0", typeof(PassengerWagonPage), NavigationCategory.Solution, 26, "IsPassengerWagonsPageAvailable", "PassengerWagonsPageLabel", null, false));
 
+        services.AddSingleton<Z21AssignmentViewModel>();
         services.AddSingleton<SolutionPage>();
         pages.Add(new PageMetadata("solution", "Solution", "\uE8B7", typeof(SolutionPage), NavigationCategory.Solution, 10, "IsSolutionPageAvailable", "SolutionPageLabel", null, false));
 

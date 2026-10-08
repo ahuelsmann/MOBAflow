@@ -748,7 +748,9 @@ public class SolutionPageLayoutSettings
 {
     public bool IsProjectListExpanded { get; set; } = true;
     public bool IsPropertiesExpanded { get; set; } = true;
+    public bool IsZ21FinderExpanded { get; set; } = true;
     public double ProjectListColumnStarValue { get; set; } = 1;
+    public double Z21FinderColumnStarValue { get; set; } = 1;
     public double PropertiesColumnStarValue { get; set; } = 2.2;
 }
 
