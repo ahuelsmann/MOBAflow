@@ -103,7 +103,8 @@ public partial class MainWindowViewModel
                 OnPropertyChanged(nameof(SelectedJourney));
                 AddStationCommand.NotifyCanExecuteChanged();
                 AddStationFromCityCommand.NotifyCanExecuteChanged();
-                HandleSelectedJourneyChanged();
+                ResetJourneyCommand.NotifyCanExecuteChanged();
+                ResetJourneyCounterCommand.NotifyCanExecuteChanged();
                 break;
             case nameof(ISolutionSession.CurrentSolutionPath):
                 OnPropertyChanged(nameof(CurrentSolutionPath));

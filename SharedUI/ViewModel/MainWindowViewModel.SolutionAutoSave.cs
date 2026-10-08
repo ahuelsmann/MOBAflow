@@ -11,15 +11,6 @@ using System.ComponentModel;
 public partial class MainWindowViewModel
 {
     /// <summary>
-    /// Called when SelectedJourney changes. The session tracks the journey for auto-save.
-    /// </summary>
-    private void HandleSelectedJourneyChanged()
-    {
-        ResetJourneyCommand.NotifyCanExecuteChanged();
-        ResetJourneyCounterCommand.NotifyCanExecuteChanged();
-    }
-
-    /// <summary>
     /// Called when SelectedStation changes. Tracks the station for auto-save.
     /// </summary>
     partial void OnSelectedStationChanged(StationViewModel? value)
