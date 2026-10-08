@@ -108,12 +108,16 @@ internal sealed partial class SolutionPage
 
     private void Z21ListView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
     {
-        if (e.Items.FirstOrDefault() is Z21AssignmentCandidate z21)
+        // A running search rebuilds the list; only current entries can be dragged.
+        if (Z21Assignment.IsSearching || e.Items.FirstOrDefault() is not Z21AssignmentCandidate z21)
         {
-            e.Data.Properties.Add(Z21DragKey, z21);
-            e.Data.RequestedOperation = DataPackageOperation.Link;
-            e.Data.SetText(z21.Title);
+            e.Cancel = true;
+            return;
         }
+
+        e.Data.Properties.Add(Z21DragKey, z21);
+        e.Data.RequestedOperation = DataPackageOperation.Link;
+        e.Data.SetText(z21.Title);
     }
 
     private void Z21ListView_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
@@ -126,14 +130,20 @@ internal sealed partial class SolutionPage
 
     private void ProjectListView_DragOver(object sender, DragEventArgs e)
     {
-        if (!e.DataView.Properties.ContainsKey(Z21DragKey))
+        if (!e.DataView.Properties.TryGetValue(Z21DragKey, out var value) || value is not Z21AssignmentCandidate z21)
         {
             return;
         }
 
         var project = ProjectAt(e.OriginalSource);
-        e.AcceptedOperation = project is null ? DataPackageOperation.None : DataPackageOperation.Link;
-        e.DragUIOverride.Caption = project is null ? "Drop on a project" : $"Assign to {project.Name}";
+        var canAssign = project is not null && Z21Assignment.CanAssignToProject(z21, project);
+        e.AcceptedOperation = canAssign ? DataPackageOperation.Link : DataPackageOperation.None;
+        e.DragUIOverride.Caption = (project, canAssign) switch
+        {
+            (null, _) => "Drop on a project",
+            (_, false) => "Another project uses this Z21",
+            _ => $"Assign to {project.Name}"
+        };
         e.DragUIOverride.IsCaptionVisible = true;
         e.DragUIOverride.IsContentVisible = true;
         e.DragUIOverride.IsGlyphVisible = true;

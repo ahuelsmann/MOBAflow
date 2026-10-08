@@ -67,14 +67,22 @@ public sealed partial class Z21AssignmentViewModel : ObservableObject
     public partial string StatusText { get; private set; } = "Search the network to list the Z21 command stations.";
 
     /// <summary>
+    /// Gets a value indicating whether the Z21 may be assigned to the project, that is, no other project uses it.
+    /// </summary>
+    public bool CanAssignToProject(Z21AssignmentCandidate candidate, ProjectViewModel project)
+    {
+        ArgumentNullException.ThrowIfNull(candidate);
+        ArgumentNullException.ThrowIfNull(project);
+        return FindOwner(candidate.IpAddress) is not { } owner || ReferenceEquals(owner, project);
+    }
+
+    /// <summary>
     /// Assigns a found Z21 to a project and selects that project; the project's previous Z21 becomes available again.
     /// </summary>
     /// <returns><see langword="true"/> when the Z21 was assigned; <see langword="false"/> when another project uses it.</returns>
     public bool AssignToProject(Z21AssignmentCandidate candidate, ProjectViewModel project)
     {
-        ArgumentNullException.ThrowIfNull(candidate);
-        ArgumentNullException.ThrowIfNull(project);
-        if (FindOwner(candidate.IpAddress) is { } owner && !ReferenceEquals(owner, project))
+        if (!CanAssignToProject(candidate, project))
         {
             return false;
         }
