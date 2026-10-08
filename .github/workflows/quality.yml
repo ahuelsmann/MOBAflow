@@ -306,7 +306,9 @@ jobs:
   android-release:
     name: Android Release AAB
     needs: changes
-    if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
+    # Disabled while MOBAsmart is not distributed; retain the required check name.
+    # Re-enable the code-change condition when Android release distribution starts.
+    if: ${{ false }}
     runs-on: windows-latest
     timeout-minutes: 60
 
