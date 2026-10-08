@@ -23,13 +23,13 @@ internal sealed class MainWindowViewModelSignalBoxTests
     private static readonly string[] UpdateThenAspect = ["update", "aspect"];
 
     [Test]
-    public async Task ApplySignalBoxElementChange_WithPersistence_UpdatesRuntimeSignalBoxBeforeSendingAspect()
+    public async Task ApplySignalBoxElementChange_WithPersistence_RefreshesRuntimeSnapshotBeforeSendingAspect()
     {
         var project = new Project();
         var signal = new SbSignal { SignalAspect = Enum.GetValues<SignalAspect>()[^1] };
         var calls = new List<string>();
         var runtime = CreateRuntime();
-        runtime.Setup(value => value.UpdateSignalBoxAsync(project, It.IsAny<CancellationToken>()))
+        runtime.Setup(value => value.UpdateProjectAsync(project, It.IsAny<CancellationToken>()))
             .Callback(() => calls.Add("update"))
             .Returns(Task.CompletedTask);
         var gateway = new Mock<IRuntimeCommandGateway>();
@@ -61,7 +61,7 @@ internal sealed class MainWindowViewModelSignalBoxTests
             .ConfigureAwait(false);
 
         gateway.Verify(value => value.SetSignalAspectAsync(signal.Id, signal.SignalAspect, It.IsAny<CancellationToken>()), Times.Once);
-        runtime.Verify(value => value.UpdateSignalBoxAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()), Times.Never);
+        runtime.Verify(value => value.UpdateProjectAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]
@@ -71,7 +71,7 @@ internal sealed class MainWindowViewModelSignalBoxTests
         var signal = new SbSignal { SignalAspect = Enum.GetValues<SignalAspect>()[0] };
         var update = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var runtime = CreateRuntime();
-        runtime.Setup(value => value.UpdateSignalBoxAsync(project, It.IsAny<CancellationToken>())).Returns(update.Task);
+        runtime.Setup(value => value.UpdateProjectAsync(project, It.IsAny<CancellationToken>())).Returns(update.Task);
         var gateway = new Mock<IRuntimeCommandGateway>();
         var viewModel = CreateViewModel(project, runtime, gateway);
 

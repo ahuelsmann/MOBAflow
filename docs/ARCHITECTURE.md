@@ -246,13 +246,21 @@ IZ21 / JourneyManager / WorkflowService
 
 **Editor vs runtime state (done):**
 
-- `MobaRuntimeService.ActivateProjectAsync` now executes against an **isolated deep
-  copy** of the editor `Project` (`CloneForRuntime`, JSON round-trip via
-  `JsonOptions.Compact`). Editor edits made after activation no longer leak into the
-  running session, and runtime mutations never touch the live editor model.
+- The runtime reads master data from a **snapshot** of the editor `Project`
+  (`CloneForRuntime`, JSON round-trip via `JsonOptions.Compact`), because it reads
+  journeys, stations and workflows on background threads while the editor changes
+  them on the UI thread. Runtime mutations never touch the editor model.
+- The solution session refreshes the snapshot after every saved change through
+  `IConnectionRuntime.UpdateProjectAsync`, without re-activation: journey progress
+  (`JourneySessionState`, kept by stop id), running workflows and signal aspects are
+  kept; a running workflow finishes with the snapshot it started with. Adding or
+  removing journeys, stations or trains no longer restarts the project; only
+  selecting another project or loading a solution activates one. The interlocking
+  definition still changes only on activation.
 - Entity Ids are preserved by the round-trip, so snapshots and journey reset keep
   resolving against the Ids the editor exposes.
-- Covered by `Test/Backend/MobaRuntimeServiceProjectIsolationTests.cs`.
+- Covered by `Test/Backend/MobaRuntimeServiceProjectIsolationTests.cs` and
+  `Test/Backend/MobaRuntimeEventPlanTests.cs`.
 
 ### Workflow execution boundary
 
@@ -606,8 +614,8 @@ ViewModel ──► IRuntimeCommandGateway
   roles `ILocomotiveRuntime` and `ILayoutControlRuntime` and the complete
   `IMobaRuntime` are reserved for hosts, gateways and runtime services.
 - The signal-box editor sends signal id and aspect. Because the runtime
-  executes a copy of the project, a persisted signal-box change first replaces
-  only the runtime's signal-box configuration (`IConnectionRuntime.UpdateSignalBoxAsync`);
+  executes a copy of the project, a persisted signal-box change first refreshes
+  the runtime's project snapshot (`IConnectionRuntime.UpdateProjectAsync`);
   journeys and workflows keep running. Editor changes run in call order, so an
   aspect never overtakes a configuration update.
 - `Test/Architecture/RuntimeCommandPathArchitectureTests.cs` fails when a

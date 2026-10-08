@@ -22,7 +22,11 @@ public interface IJourneyManager : IDisposable
 
     void Reset(Journey journey);
 
-    void UpdateEvents(Project definitions, Guid journeyId);
+    /// <summary>
+    /// Replaces the master-data snapshot. Journey progress is kept by id; new journeys start at their first stop,
+    /// removed journeys are dropped and their pending workflows cancelled.
+    /// </summary>
+    void UpdateDefinitions(Project definitions);
 
     void CancelPendingWork();
 }

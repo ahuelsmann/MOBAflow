@@ -115,7 +115,7 @@ public partial class MainWindowViewModel
 
         SelectedJourney = journey;
         OnPropertyChanged(nameof(FilteredJourneys));
-        ObserveBackgroundTask(_runtimeConnection.ActivateProjectAsync(SelectedProject.Model), "Activate project runtime");
+        ObserveBackgroundTask(_runtimeConnection.UpdateProjectAsync(SelectedProject.Model), "Update project runtime");
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteJourney))]
@@ -130,7 +130,7 @@ public partial class MainWindowViewModel
             () => SelectedJourney = null);
 
         OnPropertyChanged(nameof(FilteredJourneys));
-        ObserveBackgroundTask(_runtimeConnection.ActivateProjectAsync(SelectedProject.Model), "Activate project runtime");
+        ObserveBackgroundTask(_runtimeConnection.UpdateProjectAsync(SelectedProject.Model), "Update project runtime");
     }
 
     private bool CanDeleteJourney() => SelectedJourney != null;

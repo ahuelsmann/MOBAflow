@@ -39,6 +39,12 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
         "IsSelected", "IsExpanded", "IsHighlighted", "IsCurrentStation", "CurrentStation", "CurrentPos",
     };
 
+    private static readonly Action<ILogger, Exception?> LogRuntimeUpdateFailed =
+        LoggerMessage.Define(
+            LogLevel.Warning,
+            new EventId(3, nameof(LogRuntimeUpdateFailed)),
+            "Update project runtime failed");
+
     private static readonly Action<ILogger, Exception?> LogProjectActivationFailed =
         LoggerMessage.Define(
             LogLevel.Warning,
@@ -381,6 +387,12 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
         if (IsAutoSaveSuppressed || (e.PropertyName is { } name && NonPersistentProperties.Contains(name)))
         {
             return;
+        }
+
+        // The runtime reads a snapshot of the project; refresh it so the change takes effect immediately.
+        if (SelectedProject is { } project)
+        {
+            _runtimeConnection.UpdateProjectAsync(project.Model).Observe(ex => LogRuntimeUpdateFailed(_logger, ex));
         }
 
         ModelChanged?.Invoke(sender, e);

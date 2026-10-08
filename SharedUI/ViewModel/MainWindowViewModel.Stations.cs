@@ -70,7 +70,7 @@ public partial class MainWindowViewModel
         var stationVm = new StationViewModel(station, SelectedProject.Model);
         SelectedProject.Stations.Add(stationVm);
         SelectedProjectStation = stationVm;
-        ObserveBackgroundTask(_runtimeConnection.ActivateProjectAsync(SelectedProject.Model), "Activate project runtime");
+        ObserveBackgroundTask(_runtimeConnection.UpdateProjectAsync(SelectedProject.Model), "Update project runtime");
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteProjectStation))]
@@ -82,7 +82,7 @@ public partial class MainWindowViewModel
         SelectedProject.Stations.Remove(SelectedProjectStation);
         SelectedProjectStation = null;
         SelectedProjectStationPlatform = null;
-        ObserveBackgroundTask(_runtimeConnection.ActivateProjectAsync(SelectedProject.Model), "Activate project runtime");
+        ObserveBackgroundTask(_runtimeConnection.UpdateProjectAsync(SelectedProject.Model), "Update project runtime");
     }
 
     [RelayCommand(CanExecute = nameof(CanAddPlatformToProjectStation))]
@@ -98,7 +98,7 @@ public partial class MainWindowViewModel
         SelectedProjectStation.Model.Platforms.Add(platform);
         SelectedProjectStation.RefreshPlatforms();
         SelectedProjectStationPlatform = SelectedProjectStation.Platforms.LastOrDefault();
-        ObserveBackgroundTask(_runtimeConnection.ActivateProjectAsync(SelectedProject.Model), "Activate project runtime");
+        ObserveBackgroundTask(_runtimeConnection.UpdateProjectAsync(SelectedProject.Model), "Update project runtime");
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteProjectStationPlatform))]
@@ -114,7 +114,7 @@ public partial class MainWindowViewModel
 
         SelectedProjectStation.RefreshPlatforms();
         SelectedProjectStationPlatform = null;
-        ObserveBackgroundTask(_runtimeConnection.ActivateProjectAsync(SelectedProject.Model), "Activate project runtime");
+        ObserveBackgroundTask(_runtimeConnection.UpdateProjectAsync(SelectedProject.Model), "Update project runtime");
     }
 
     private bool CanAddProjectStation() => SelectedProject != null;

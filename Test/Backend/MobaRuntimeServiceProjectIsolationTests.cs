@@ -79,7 +79,7 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
     }
 
     [Test]
-    public async Task UpdateSignalBoxAsync_KeepsRunningWorkflowAndAppliesSignalChanges()
+    public async Task UpdateProjectAsync_KeepsRunningWorkflowAndAppliesSignalChanges()
     {
         var z21Mock = CreateZ21Mock();
         var (workflowService, started, cancelled) = CreateBlockingWorkflowService();
@@ -92,17 +92,17 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
         var signal = new SbSignal { Name = "A1" };
         project.SignalBoxPlan.Elements.Add(signal);
 
-        await runtime.UpdateSignalBoxAsync(project).ConfigureAwait(false);
+        await runtime.UpdateProjectAsync(project).ConfigureAwait(false);
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(cancelled.Task.IsCompleted, Is.False, "A signal-box update must not cancel running workflows.");
+            Assert.That(cancelled.Task.IsCompleted, Is.False, "A project update must not cancel running workflows.");
             Assert.That(runtime.Current.SignalBoxElements.Select(element => element.ElementId), Does.Contain(signal.Id));
         }
     }
 
     [Test]
-    public async Task UpdateSignalBoxAsync_KeepsCurrentSignalAspects()
+    public async Task UpdateProjectAsync_KeepsCurrentSignalAspects()
     {
         var z21Mock = CreateZ21Mock();
         using var runtime = CreateRuntime(z21Mock.Object);
@@ -113,7 +113,7 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
         await runtime.SetSignalAspectAsync(signal.Id, runtimeAspect).ConfigureAwait(false);
         signal.Name = "A1 renamed";
 
-        await runtime.UpdateSignalBoxAsync(project).ConfigureAwait(false);
+        await runtime.UpdateProjectAsync(project).ConfigureAwait(false);
 
         var element = runtime.Current.SignalBoxElements.Single(item => item.ElementId == signal.Id);
         using (Assert.EnterMultipleScope())
@@ -121,6 +121,48 @@ internal sealed class MobaRuntimeServiceProjectIsolationTests
             Assert.That(element.Name, Is.EqualTo("A1 renamed"));
             Assert.That(element.SignalAspect, Is.EqualTo(runtimeAspect));
         }
+    }
+
+    [Test]
+    public async Task UpdateProjectAsync_KeepsJourneyRunsAndFollowsEditedJourneys()
+    {
+        var z21Mock = CreateZ21Mock();
+        using var runtime = CreateRuntime(z21Mock.Object);
+        var kept = new Journey { Name = "Kept", Stations = [new Station { Name = "A" }, new Station { Name = "B" }] };
+        var removed = new Journey { Name = "Removed" };
+        var project = new Project { Name = "Editor", Journeys = [kept, removed] };
+        await runtime.ActivateProjectAsync(project).ConfigureAwait(false);
+        var runBefore = runtime.Current.JourneyStates[kept.Id].JourneyRunId;
+
+        kept.Stations[0].Name = "A renamed";
+        kept.Stations.Insert(0, new Station { Name = "New first stop" });
+        project.Journeys.Remove(removed);
+        var added = new Journey { Name = "Added", Stations = [new Station { Name = "C" }] };
+        project.Journeys.Add(added);
+        await runtime.UpdateProjectAsync(project).ConfigureAwait(false);
+
+        var states = runtime.Current.JourneyStates;
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(states[kept.Id].JourneyRunId, Is.EqualTo(runBefore), "An update must not restart a journey.");
+            Assert.That(states[kept.Id].CurrentStationName, Is.EqualTo("A renamed"), "Progress follows the stop by id.");
+            Assert.That(states[kept.Id].CurrentPos, Is.EqualTo(1));
+            Assert.That(states.ContainsKey(removed.Id), Is.False);
+            Assert.That(states[added.Id].CurrentStationName, Is.EqualTo("C"));
+        }
+    }
+
+    [Test]
+    public async Task UpdateProjectAsync_IgnoresAnotherProject()
+    {
+        var z21Mock = CreateZ21Mock();
+        using var runtime = CreateRuntime(z21Mock.Object);
+        var project = new Project { Name = "Active", Journeys = [new Journey { Name = "J1" }] };
+        await runtime.ActivateProjectAsync(project).ConfigureAwait(false);
+
+        await runtime.UpdateProjectAsync(new Project { Name = "Other", Journeys = [new Journey(), new Journey()] }).ConfigureAwait(false);
+
+        Assert.That(runtime.Current.JourneyStates, Has.Count.EqualTo(1));
     }
 
     [Test]

@@ -28,8 +28,8 @@ no hardware actions without separate approval
 ## Constitution Check
 
 - **I. Architecture and threading**: session and runtime scope live in `Backend`/`SharedUI` without WinUI or MAUI
-  types; the UI keeps receiving events through the UI-thread event bus. The master-data read rule (slice 2) is
-  decided before the copy is removed. PASS.
+  types; the UI keeps receiving events through the UI-thread event bus. Editor and runtime threads never share
+  mutable master data (definitions snapshot, slice 2). PASS.
 - **II. Async and UI behavior**: switch and close sequences are async, cancellable before confirmation and never block
   on `.Result`. PASS.
 - **III. Tests**: every slice adds characterization or behavior tests with fake Z21 endpoints; an architecture test
@@ -73,9 +73,11 @@ Each slice is one reviewable PR on its own branch from `main`; this branch carri
 1. **Solution session (no behavior change)**: move solution ownership, selection, dirty state and auto-save from
    `MainWindowViewModel` into `SolutionSession`; inject it into host services and ViewModels; architecture test for
    FR-001 with the WinUI page exemption list. Characterization tests for load, save, auto-save and selection first.
-2. **No runtime copy**: characterize master-data reads on the Z21 pipeline, record the synchronization rule here,
-   then hold runtime values by id and remove `CloneForRuntime`, `UpdateJourneyEventsAsync` and
-   `UpdateSignalBoxAsync`.
+2. **Live definitions snapshot**: the runtime reads master data from a snapshot refreshed by
+   `IConnectionRuntime.UpdateProjectAsync` after every saved change (synchronization rule in
+   [research.md](research.md)); journey progress, running workflows and signal aspects are kept by id;
+   `UpdateJourneyEventsAsync`, `UpdateSignalBoxAsync` and the re-activations after adding journeys, stations or
+   trains are removed.
 3. **Runtime and Z21 per project**: Z21 endpoint in `Project`, `Z21ConnectionRegistry`, `ProjectRuntimeFactory`,
    one runtime scope per project, per-project counters, conflict diagnostics, selected-project event forwarding,
    switch/close warning with speed 0. Fixes #190.

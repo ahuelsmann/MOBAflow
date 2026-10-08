@@ -61,7 +61,10 @@ public partial class MainWindowViewModel
         }
 
         ObserveBackgroundTask(SaveSolutionInternalAsync(), "Auto-save solution");
-        ObserveBackgroundTask(RefreshActiveProjectRuntimeAsync(), "Refresh active train runtime");
+        if (SelectedProject is { } project)
+        {
+            ObserveBackgroundTask(_runtimeConnection.UpdateProjectAsync(project.Model), "Update project runtime");
+        }
     }
 
     private async Task RefreshActiveProjectRuntimeAsync()
