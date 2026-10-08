@@ -59,6 +59,21 @@ startup (speed zero, no restored movement) is unchanged.
   project's Z21 directly and shows its state from MOBAflow.
 - Q: How is the work delivered? → A: One specification, implemented in reviewable slices.
 
+### Session 2026-10-08
+
+- Q: The runtime reads journeys, stations and workflows on background threads while the editor changes them on
+  the UI thread; sharing one object would race. How do they meet? → A: The runtime keeps an invisible snapshot
+  of the master data that is refreshed immediately after every saved change, without re-activation. Journey
+  progress, running workflows and signal aspects are kept by id; a running workflow finishes with the master
+  data it started with. For the user there is one project and no stale data.
+- Q: How does a project get its Z21? → A: A Z21 finder on the solution page searches the network for every Z21
+  and lists IP address and serial number. The user drags a Z21 that no project uses yet onto a project (or
+  double-clicks it for the selected project); the address can also be typed in the project properties. Each Z21
+  belongs to one project. MOBAflow never searches or replaces a project's Z21 on its own, because with several
+  Z21 on the network an automatic search could connect a project to another layout.
+- Q: Which project is "active"? → A: Only MOBAsmart selects one project. In MOBAflow every project runs with its
+  own Z21 at the same time; the project selected in the UI only decides what the pages show.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Operate two layouts at the same time (Priority: P1)
@@ -180,15 +195,18 @@ and the switch warning; no page still says to enter the Z21 address in the app s
 - **FR-002**: The session MUST create one runtime per project of the loaded solution and discard all of them when the
   solution is switched or closed.
 - **FR-003**: Each project MUST store its Z21 address and port; the app settings MUST no longer hold a Z21 address,
-  port or recent-address list.
+  port or recent-address list. MOBAflow MUST offer a network search that lists every Z21 with IP address and serial
+  number and lets the user assign a Z21 that no other project uses; it MUST NOT assign or replace a Z21 by itself.
 - **FR-004**: Each runtime MUST use only its project's Z21; two projects with the same address MUST be reported in
   project diagnostics, and the later runtime MUST NOT connect while the conflict exists.
 - **FR-005**: A runtime created again for a project whose Z21 is still connected MUST take over that connection.
 - **FR-006**: Before a switch or close with running runtimes, MOBAflow MUST show a warning; after confirmation every
   known locomotive of every runtime MUST receive speed 0 before the runtimes are discarded; cancelling MUST keep the
   current state.
-- **FR-007**: The runtime MUST read master data from the project and MUST NOT keep a copy of the project; runtime
-  values MUST be held by the runtime keyed by entity id and MUST NOT be written into the saved solution.
+- **FR-007**: The runtime MUST see every saved editor change immediately: it reads master data from a snapshot of
+  the project that is refreshed after each saved change without re-activation, so editor and runtime threads never
+  share mutable objects. Runtime values MUST be held by the runtime keyed by entity id and MUST NOT be written into
+  the saved solution.
 - **FR-008**: Editor changes to master data MUST take effect without re-activating the project and without cancelling
   running workflows or resetting journey progress.
 - **FR-009**: MOBAflow runtime pages and the status bar MUST show the runtime of the selected project.

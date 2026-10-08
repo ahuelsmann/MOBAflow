@@ -65,8 +65,8 @@ public partial class MainWindowViewModel
 
         if (requiresPersistence && project is not null)
         {
-            // The runtime executes a copy of the project; update only its signal-box configuration.
-            await _runtimeConnection.UpdateSignalBoxAsync(project).ConfigureAwait(false);
+            // Refresh the runtime's project snapshot so the aspect uses the edited configuration.
+            await _runtimeConnection.UpdateProjectAsync(project).ConfigureAwait(false);
         }
 
         if (requiresSignalCommand && element is SbSignal signal)

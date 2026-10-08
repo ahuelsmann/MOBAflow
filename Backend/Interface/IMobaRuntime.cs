@@ -26,14 +26,12 @@ public interface IConnectionRuntime
 
     Task ActivateProjectAsync(Project editableProject, CancellationToken cancellationToken = default);
 
-    /// <summary>Updates one journey's event configuration without restarting project execution.</summary>
-    Task UpdateJourneyEventsAsync(Project editableProject, Guid journeyId, CancellationToken cancellationToken = default);
-
     /// <summary>
-    /// Replaces the signal-box configuration of the active project without restarting project execution.
-    /// Journeys and workflows keep running; current signal aspects are kept.
+    /// Refreshes the runtime's snapshot of the active project's master data after an editor change, without
+    /// restarting project execution. Journey progress, running workflows and current signal aspects are kept;
+    /// a running workflow finishes with the master data it started with. Ignored for another project.
     /// </summary>
-    Task UpdateSignalBoxAsync(Project editableProject, CancellationToken cancellationToken = default);
+    Task UpdateProjectAsync(Project editableProject, CancellationToken cancellationToken = default);
 
     Task ConnectAsync(CancellationToken cancellationToken = default);
 

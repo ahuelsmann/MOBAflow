@@ -22,17 +22,8 @@ public partial class MainWindowViewModel
     }
 
     /// <summary>
-    /// Shell reactions to a persisted model change reported by the solution session, before it saves.
+    /// Shell reaction to a persisted model change reported by the solution session, before it saves.
+    /// The session already refreshes the runtime's project snapshot.
     /// </summary>
-    private void OnSolutionModelChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        // The runtime executes an isolated copy, so journey activation and event edits must be re-applied.
-        if (sender is JourneyViewModel journey && SelectedProject is { } project
-            && e.PropertyName is nameof(JourneyViewModel.IsActive) or nameof(JourneyViewModel.EventPlan))
-        {
-            ObserveBackgroundTask(_runtimeConnection.UpdateJourneyEventsAsync(project.Model, journey.Model.Id), "Update journey events");
-        }
-
-        RefreshProjectDiagnostics();
-    }
+    private void OnSolutionModelChanged(object? sender, PropertyChangedEventArgs e) => RefreshProjectDiagnostics();
 }

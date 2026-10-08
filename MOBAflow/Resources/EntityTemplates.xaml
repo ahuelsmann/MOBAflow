@@ -367,6 +367,31 @@
                 </StackPanel>
 
                 <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
+
+                <!--  Z21 command station  -->
+                <StackPanel Spacing="8">
+                    <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Z21 command station" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="Each project controls its own Z21. Drag a Z21 from the Z21 Finder onto the project or enter its address."
+                        TextWrapping="Wrap" />
+                    <TextBox
+                        Header="IP address"
+                        PlaceholderText="No Z21 assigned"
+                        Text="{Binding Z21IpAddress, Mode=TwoWay}" />
+                    <NumberBox
+                        Header="Port"
+                        Maximum="65535"
+                        Minimum="1"
+                        SpinButtonPlacementMode="Hidden"
+                        Value="{Binding Z21Port, Mode=TwoWay}" />
+                    <TextBox
+                        Header="Serial number"
+                        IsReadOnly="True"
+                        PlaceholderText="Unknown"
+                        Text="{Binding Z21SerialNumber, Mode=OneWay}" />
+                    <Button Command="{Binding RemoveZ21Command}" Content="Remove Z21" />
+                </StackPanel>
             </StackPanel>
         </ScrollViewer>
     </DataTemplate>

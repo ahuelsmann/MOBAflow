@@ -52,29 +52,16 @@ public sealed partial class MobaRuntimeService
     }
 
     /// <inheritdoc />
-    public Task UpdateJourneyEventsAsync(Project editableProject, Guid journeyId, CancellationToken cancellationToken = default)
+    public Task UpdateProjectAsync(Project editableProject, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentNullException.ThrowIfNull(editableProject);
         var context = _activeProjectContext;
         if (context?.ActiveProject.Id != editableProject.Id) return Task.CompletedTask;
 
-        context.JourneyManager.UpdateEvents(CloneForRuntime(editableProject), journeyId);
-        PublishSnapshot();
-        return Task.CompletedTask;
-    }
-
-    /// <inheritdoc />
-    public Task UpdateSignalBoxAsync(Project editableProject, CancellationToken cancellationToken = default)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        ArgumentNullException.ThrowIfNull(editableProject);
-        var context = _activeProjectContext;
-        if (context?.ActiveProject.Id != editableProject.Id) return Task.CompletedTask;
-
-        var signalBox = CloneForRuntime(editableProject).SignalBoxPlan;
+        var definitions = CloneForRuntime(editableProject);
         var running = context.ActiveProject.SignalBoxPlan;
-        if (signalBox is not null && running is not null)
+        if (definitions.SignalBoxPlan is { } signalBox && running is not null)
         {
             // Aspects are runtime state; configuration changes must not reset them.
             foreach (var signal in signalBox.Elements.OfType<SbSignal>())
@@ -86,7 +73,7 @@ public sealed partial class MobaRuntimeService
             }
         }
 
-        context.ActiveProject.SignalBoxPlan = signalBox;
+        context.ReplaceDefinitions(definitions);
         PublishSnapshot();
         return Task.CompletedTask;
     }
