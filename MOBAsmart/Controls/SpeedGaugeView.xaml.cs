@@ -410,7 +410,7 @@ public partial class SpeedGaugeView
             var normalized = Math.Clamp(AnimatedNormalized, 0, 1);
             var isIdle = DisplayKmh == 0 && Value <= 0.001;
             var contentAlpha = ResolveContentAlpha(isIdle);
-            var vmaxRatio = gaugeMax > 0 ? Math.Clamp((double)VmaxKmh / gaugeMax, 0, 1) : 0.5;
+            var vmaxRatio = Math.Clamp((double)VmaxKmh / gaugeMax, 0, 1);
             var isOverVmax = DisplayKmh > VmaxKmh && VmaxKmh > 0;
             canvas.StrokeSize = stroke;
             canvas.StrokeLineCap = LineCap.Round;
@@ -530,7 +530,7 @@ public partial class SpeedGaugeView
                 canvas.FontSize = (isMajor ? 14f : 11f) * scale;
                 canvas.Font = isMajor
                     ? Microsoft.Maui.Graphics.Font.DefaultBold
-                    : Microsoft.Maui.Graphics.Font.DefaultBold;
+                    : Microsoft.Maui.Graphics.Font.Default;
                 canvas.DrawString(
                     labelText,
                     boxX,
