@@ -4,6 +4,8 @@ namespace Moba.SharedUI.Interface;
 
 using Domain;
 
+using System.ComponentModel;
+
 using ViewModel;
 
 /// <summary>
@@ -20,6 +22,12 @@ public interface ISolutionSession : IProjectContext
 
     /// <summary>Raised before the session replaces the loaded solution, so dependent selections can be cleared.</summary>
     event EventHandler? SolutionReplacing;
+
+    /// <summary>
+    /// Raised for a persisted model change observed by auto-save, before the solution is saved.
+    /// The sender is the changed view model.
+    /// </summary>
+    event PropertyChangedEventHandler? ModelChanged;
 
     /// <summary>Gets the loaded solution (one instance for the application lifetime, replaced in place).</summary>
     Solution Solution { get; }
@@ -57,6 +65,15 @@ public interface ISolutionSession : IProjectContext
 
     /// <summary>Removes <paramref name="project"/> from the solution and selects the first remaining project.</summary>
     void RemoveProject(ProjectViewModel project);
+
+    /// <summary>
+    /// Saves the solution whenever <paramref name="source"/> reports a model change. The selected project with its
+    /// workflows and trains and the selected journey are tracked automatically. Tracking twice has no extra effect.
+    /// </summary>
+    void TrackChanges(INotifyPropertyChanged source);
+
+    /// <summary>Stops saving on changes of <paramref name="source"/>.</summary>
+    void UntrackChanges(INotifyPropertyChanged source);
 
     /// <summary>Suppresses property-driven auto-save until the returned scope is disposed.</summary>
     IDisposable SuppressAutoSave();

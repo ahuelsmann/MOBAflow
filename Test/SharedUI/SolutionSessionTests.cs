@@ -17,7 +17,7 @@ using Moq;
 /// project and journey selection.
 /// </summary>
 [TestFixture]
-internal sealed class SolutionSessionTests
+internal sealed partial class SolutionSessionTests
 {
     private static readonly string[] LoadedProjectNames = ["A", "B"];
 
@@ -186,6 +186,45 @@ internal sealed class SolutionSessionTests
         }
     }
 
+    [Test]
+    public void SelectedProjectEdit_RaisesModelChangedAndMarksSolutionDirty()
+    {
+        var session = CreateSession(new Solution(), out _, out _);
+        var changes = new List<string?>();
+        session.ModelChanged += (_, e) => changes.Add(e.PropertyName);
+
+        session.SelectedProject!.Name = "Renamed";
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(changes, Does.Contain(nameof(ProjectViewModel.Name)));
+            Assert.That(session.HasUnsavedChanges, Is.True);
+        }
+    }
+
+    [Test]
+    public void TrackedChanges_IgnoreUiOnlyPropertiesSuppressionAndUntracking()
+    {
+        var session = CreateSession(new Solution(), out _, out _);
+        var source = new ChangeSource();
+        var changes = 0;
+        session.ModelChanged += (_, _) => changes++;
+        session.TrackChanges(source);
+        session.TrackChanges(source);
+
+        source.Raise("IsExpanded");
+        using (session.SuppressAutoSave())
+        {
+            source.Raise("Name");
+        }
+
+        source.Raise("Name");
+        session.UntrackChanges(source);
+        source.Raise("Name");
+
+        Assert.That(changes, Is.EqualTo(1), "Only one persisted change while tracked, not suppressed and not UI-only.");
+    }
+
     private static SolutionSession CreateSession(
         Solution solution,
         out Mock<IIoService> io,
@@ -205,5 +244,13 @@ internal sealed class SolutionSessionTests
             dispatcher.Object,
             runtime.Object,
             NullLogger<SolutionSession>.Instance);
+    }
+
+    private sealed partial class ChangeSource : System.ComponentModel.INotifyPropertyChanged
+    {
+        public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
+
+        public void Raise(string propertyName) =>
+            PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
     }
 }

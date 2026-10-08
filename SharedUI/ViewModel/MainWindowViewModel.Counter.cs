@@ -149,7 +149,6 @@ public partial class MainWindowViewModel
     /// <summary>
     /// Called when SelectedProject changes.
     /// Re-initializes track statistics based on the new project's FeedbackPoints.
-    /// Subscribes to PropertyChanged for auto-save (Project + all Workflows).
     /// Auto-selects first journey if available.
     /// </summary>
     private void HandleSelectedProjectChanged(ProjectViewModel? oldValue, ProjectViewModel? newValue)
@@ -163,25 +162,8 @@ public partial class MainWindowViewModel
         InitializeStatisticsFromFeedbackPoints();
         ApplyJourneyRuntimeSnapshots(_latestRuntimeSnapshot.JourneyStates);
 
-        // Subscribe to PropertyChanged for auto-save
         if (newValue != null)
         {
-            newValue.PropertyChanged += OnViewModelPropertyChanged;
-
-            // Subscribe to PropertyChanged events for all workflows (including newly loaded ones)
-            foreach (var workflow in newValue.Workflows)
-            {
-                // Avoid duplicate subscriptions
-                workflow.PropertyChanged -= OnViewModelPropertyChanged;
-                workflow.PropertyChanged += OnViewModelPropertyChanged;
-            }
-
-            foreach (var train in newValue.Trains)
-            {
-                train.PropertyChanged -= OnViewModelPropertyChanged;
-                train.PropertyChanged += OnViewModelPropertyChanged;
-            }
-
             // Auto-select first journey when project is selected
             if (newValue.Journeys.Count > 0)
             {

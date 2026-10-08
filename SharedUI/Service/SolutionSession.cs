@@ -16,6 +16,8 @@ using Microsoft.Extensions.Logging;
 
 using Sound;
 
+using System.ComponentModel;
+
 using ViewModel;
 
 /// <summary>
@@ -25,6 +27,18 @@ using ViewModel;
 /// </summary>
 public sealed partial class SolutionSession : ObservableObject, ISolutionSession
 {
+    private static readonly Action<ILogger, Exception?> LogAutoSaveFailed =
+        LoggerMessage.Define(
+            LogLevel.Warning,
+            new EventId(2, nameof(LogAutoSaveFailed)),
+            "Auto-save solution failed");
+
+    /// <summary>View-model properties that are UI-only or runtime-backed and must not persist the solution.</summary>
+    private static readonly HashSet<string> NonPersistentProperties = new(StringComparer.Ordinal)
+    {
+        "IsSelected", "IsExpanded", "IsHighlighted", "IsCurrentStation", "CurrentStation", "CurrentPos",
+    };
+
     private static readonly Action<ILogger, Exception?> LogProjectActivationFailed =
         LoggerMessage.Define(
             LogLevel.Warning,
@@ -98,6 +112,9 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
 
     /// <inheritdoc />
     public event EventHandler? SolutionReplacing;
+
+    /// <inheritdoc />
+    public event PropertyChangedEventHandler? ModelChanged;
 
     /// <inheritdoc />
     public Solution Solution { get; }
@@ -277,6 +294,21 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
     }
 
     /// <inheritdoc />
+    public void TrackChanges(INotifyPropertyChanged source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        source.PropertyChanged -= OnTrackedModelPropertyChanged;
+        source.PropertyChanged += OnTrackedModelPropertyChanged;
+    }
+
+    /// <inheritdoc />
+    public void UntrackChanges(INotifyPropertyChanged source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        source.PropertyChanged -= OnTrackedModelPropertyChanged;
+    }
+
+    /// <inheritdoc />
     public IDisposable SuppressAutoSave()
     {
         Interlocked.Increment(ref _autoSaveSuppressionCount);
@@ -305,6 +337,54 @@ public sealed partial class SolutionSession : ObservableObject, ISolutionSession
         }
 
         _saveSemaphore.Dispose();
+    }
+
+    partial void OnSelectedProjectChanged(ProjectViewModel? oldValue, ProjectViewModel? newValue)
+    {
+        if (oldValue != null)
+        {
+            UntrackChanges(oldValue);
+        }
+
+        if (newValue == null)
+        {
+            return;
+        }
+
+        TrackChanges(newValue);
+        foreach (var workflow in newValue.Workflows)
+        {
+            TrackChanges(workflow);
+        }
+
+        foreach (var train in newValue.Trains)
+        {
+            TrackChanges(train);
+        }
+    }
+
+    partial void OnSelectedJourneyChanged(JourneyViewModel? oldValue, JourneyViewModel? newValue)
+    {
+        if (oldValue != null)
+        {
+            UntrackChanges(oldValue);
+        }
+
+        if (newValue != null)
+        {
+            TrackChanges(newValue);
+        }
+    }
+
+    private void OnTrackedModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (IsAutoSaveSuppressed || (e.PropertyName is { } name && NonPersistentProperties.Contains(name)))
+        {
+            return;
+        }
+
+        ModelChanged?.Invoke(sender, e);
+        SaveSolutionInternalAsync().Observe(ex => LogAutoSaveFailed(_logger, ex));
     }
 
     private void ApplyLoadResult(Solution? loadedSolution, string? path, string? error)

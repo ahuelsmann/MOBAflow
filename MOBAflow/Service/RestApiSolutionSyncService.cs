@@ -28,8 +28,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
     private const int DebounceMilliseconds = 500;
 
-    private readonly Solution _solution;
-
     private readonly AppSettings _appSettings;
 
     private readonly ISolutionSession _solutionSession;
@@ -77,8 +75,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
     public RestApiSolutionSyncService(
 
-        Solution solution,
-
         AppSettings appSettings,
 
         ISolutionSession solutionSession,
@@ -93,8 +89,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
     {
 
-        ArgumentNullException.ThrowIfNull(solution);
-
         ArgumentNullException.ThrowIfNull(appSettings);
 
         ArgumentNullException.ThrowIfNull(mobApiClient);
@@ -106,8 +100,6 @@ public sealed class RestApiSolutionSyncService : IDisposable
         ArgumentNullException.ThrowIfNull(eventBus);
 
         ArgumentNullException.ThrowIfNull(logger);
-
-        _solution = solution;
 
         _appSettings = appSettings;
 
@@ -273,12 +265,12 @@ public sealed class RestApiSolutionSyncService : IDisposable
 
         var port = _appSettings.RestApi.Port > 0 ? _appSettings.RestApi.Port : 5001;
 
-        if (_solution.SchemaVersion != Solution.CurrentSchemaVersion)
+        if (_solutionSession.Solution.SchemaVersion != Solution.CurrentSchemaVersion)
         {
-            _solution.SchemaVersion = Solution.CurrentSchemaVersion;
+            _solutionSession.Solution.SchemaVersion = Solution.CurrentSchemaVersion;
         }
 
-        var json = JsonSerializer.Serialize(_solution, JsonOptions.Default);
+        var json = JsonSerializer.Serialize(_solutionSession.Solution, JsonOptions.Default);
 
         using var content = new StringContent(json, Encoding.UTF8, "application/json");
 

@@ -3183,13 +3183,6 @@
       "project": "SharedUI",
       "targetFramework": "net10.0",
       "ruleId": "CA1848",
-      "path": "SharedUI/ViewModel/MainWindowViewModel.SolutionAutoSave.cs",
-      "count": 1
-    },
-    {
-      "project": "SharedUI",
-      "targetFramework": "net10.0",
-      "ruleId": "CA1848",
       "path": "SharedUI/ViewModel/MainWindowViewModel.Wagons.cs",
       "count": 19
     },
