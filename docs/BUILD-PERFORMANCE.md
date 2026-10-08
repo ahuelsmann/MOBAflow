@@ -129,6 +129,16 @@ but the job is skipped without allocating a runner. Re-enable its code-change
 condition when Android release distribution starts. Mobile tests remain an
 explicit opt-in graph with `IncludeMobaSmartTests=true`.
 
+The Linux display job also runs the MOBApi process integration tests
+(`MobApiProcessTests`, `RuntimeHubLiveE2ETests`) in the `net10.0` target. Each
+fixture starts the built MOBApi as an isolated process on a free local port, so
+no running server or hardware is needed. `scripts/Test-TestRunResults.ps1`
+fails the step when a selected test is skipped or too few tests run. Locally:
+
+```powershell
+dotnet test Test/Test.csproj -p:TargetFrameworks=net10.0 -f net10.0 --filter "FullyQualifiedName~Moba.Test.Integration.MobApiProcessTests|FullyQualifiedName~Moba.Test.Integration.RuntimeHubLiveE2ETests"
+```
+
 Pull requests that change only documentation paths (`docs/`, `plans/`, `specs/`,
 `.specify/`, root Markdown files and GitHub guidance) skip the desktop, display,
 Android and mutation jobs; `scripts/Get-QualityChangeScope.ps1` owns that list.
