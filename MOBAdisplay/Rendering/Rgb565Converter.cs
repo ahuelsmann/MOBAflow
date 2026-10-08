@@ -1,11 +1,13 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 using SkiaSharp;
 
+using System.Runtime.InteropServices;
+
 namespace Moba.Display.Rendering;
 
 public static class Rgb565Converter
 {
-    public static unsafe void Convert(SKBitmap bitmap, Span<byte> destinationRgb565)
+    public static void Convert(SKBitmap bitmap, Span<byte> destinationRgb565)
     {
         ArgumentNullException.ThrowIfNull(bitmap);
 
@@ -16,7 +18,7 @@ public static class Rgb565Converter
             throw new ArgumentException("Destination buffer is too small.", nameof(destinationRgb565));
         }
 
-        var src = (uint*)bitmap.GetPixels().ToPointer();
+        var src = MemoryMarshal.Cast<byte, uint>(bitmap.GetPixelSpan());
         var pos = 0;
         for (var i = 0; i < pixelCount; i++)
         {

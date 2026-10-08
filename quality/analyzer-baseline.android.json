@@ -4125,13 +4125,6 @@
       "count": 1
     },
     {
-      "project": "Sound",
-      "targetFramework": "net10.0",
-      "ruleId": "SYSLIB1045",
-      "path": "Sound/PiperPronunciationNormalizer.cs",
-      "count": 3
-    },
-    {
       "project": "TrackLibrary.Base",
       "targetFramework": "net10.0",
       "ruleId": "CA1014",

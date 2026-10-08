@@ -11,6 +11,9 @@ using System.Text.RegularExpressions;
 /// </summary>
 public static partial class PiperPronunciationNormalizer
 {
+    // Announcement texts are short; the limit only stops a pathological user replacement from hanging speech.
+    private static readonly TimeSpan RegexTimeout = TimeSpan.FromSeconds(1);
+
     private static readonly (string Pattern, string Replacement)[] BuiltInAbbreviationRules =
     [
         (@"\bHbf\.?\b", "Hauptbahnhof"),
@@ -70,7 +73,8 @@ public static partial class PiperPronunciationNormalizer
                 text,
                 Regex.Escape(source.Trim()),
                 target.Trim(),
-                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
+                RegexTimeout);
         }
 
         return text;
@@ -80,7 +84,7 @@ public static partial class PiperPronunciationNormalizer
     {
         foreach (var (pattern, replacement) in BuiltInAbbreviationRules)
         {
-            text = Regex.Replace(text, pattern, replacement, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+            text = Regex.Replace(text, pattern, replacement, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, RegexTimeout);
         }
 
         return text;
@@ -102,9 +106,9 @@ public static partial class PiperPronunciationNormalizer
     private static string NormalizePunctuation(string text)
     {
         text = text.Replace(';', ',');
-        text = Regex.Replace(text, @"\.{2,}", ".");
-        text = Regex.Replace(text, @"(?<=\w):(?=\S)", ": ");
-        text = Regex.Replace(text, @"(?<=\w),(?=\S)", ", ");
+        text = Regex.Replace(text, @"\.{2,}", ".", RegexOptions.None, RegexTimeout);
+        text = Regex.Replace(text, @"(?<=\w):(?=\S)", ": ", RegexOptions.None, RegexTimeout);
+        text = Regex.Replace(text, @"(?<=\w),(?=\S)", ", ", RegexOptions.None, RegexTimeout);
         return text;
     }
 
