@@ -60,12 +60,16 @@ public partial class MainWindowViewModel
         DeleteLocomotiveCommand.NotifyCanExecuteChanged();
 
         if (oldValue != null)
+        {
             oldValue.PropertyChanged -= OnRollingStockPropertyChanged;
+            _session.UntrackChanges(oldValue);
+        }
 
-        // Subscribe to PropertyChanged for auto-save
+        // Refresh library filters and track the item for auto-save
         if (newValue != null)
         {
             newValue.PropertyChanged += OnRollingStockPropertyChanged;
+            _session.TrackChanges(newValue);
         }
     }
 
@@ -75,12 +79,16 @@ public partial class MainWindowViewModel
         DeletePassengerWagonCommand.NotifyCanExecuteChanged();
 
         if (oldValue != null)
+        {
             oldValue.PropertyChanged -= OnRollingStockPropertyChanged;
+            _session.UntrackChanges(oldValue);
+        }
 
-        // Subscribe to PropertyChanged for auto-save
+        // Refresh library filters and track the item for auto-save
         if (newValue != null)
         {
             newValue.PropertyChanged += OnRollingStockPropertyChanged;
+            _session.TrackChanges(newValue);
         }
     }
 
@@ -90,12 +98,16 @@ public partial class MainWindowViewModel
         DeleteGoodsWagonCommand.NotifyCanExecuteChanged();
 
         if (oldValue != null)
+        {
             oldValue.PropertyChanged -= OnRollingStockPropertyChanged;
+            _session.UntrackChanges(oldValue);
+        }
 
-        // Subscribe to PropertyChanged for auto-save
+        // Refresh library filters and track the item for auto-save
         if (newValue != null)
         {
             newValue.PropertyChanged += OnRollingStockPropertyChanged;
+            _session.TrackChanges(newValue);
         }
     }
 
@@ -103,7 +115,6 @@ public partial class MainWindowViewModel
     {
         if (oldProject is not null)
         {
-            oldProject.PropertyChanged -= OnViewModelPropertyChanged;
             oldProject.Locomotives.CollectionChanged -= OnRollingStockCollectionChanged;
             oldProject.PassengerWagons.CollectionChanged -= OnRollingStockCollectionChanged;
             oldProject.GoodsWagons.CollectionChanged -= OnRollingStockCollectionChanged;
@@ -140,8 +151,6 @@ public partial class MainWindowViewModel
     {
         if (e.PropertyName == nameof(LocomotiveViewModel.Name))
             NotifyRollingStockLibrariesChanged();
-
-        OnViewModelPropertyChanged(sender, e);
     }
 
     private void NotifyRollingStockLibrariesChanged()

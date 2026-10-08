@@ -143,7 +143,6 @@ internal sealed partial class RestApiStatusServiceTests
 
         var mainWindowViewModel = CreateMainWindowViewModel(appSettings, mobaRuntime, eventBus);
         var solutionSyncService = new RestApiSolutionSyncService(
-            new Solution(),
             appSettings,
             mainWindowViewModel.SolutionSession,
             restApiProcessService,

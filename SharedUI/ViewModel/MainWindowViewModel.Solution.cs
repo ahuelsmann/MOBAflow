@@ -17,7 +17,6 @@ using System.ComponentModel;
 public partial class MainWindowViewModel
 {
     private ProjectViewModel? _observedSelectedProject;
-    private JourneyViewModel? _observedSelectedJourney;
 
     #region Solution Events
     /// <summary>
@@ -87,6 +86,7 @@ public partial class MainWindowViewModel
         _session.PropertyChanged += OnSolutionSessionPropertyChanged;
         _session.SolutionReplacing += OnSolutionReplacing;
         _session.SolutionLoaded += OnSessionSolutionLoaded;
+        _session.ModelChanged += OnSolutionModelChanged;
     }
 
     private void OnSolutionSessionPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -100,12 +100,10 @@ public partial class MainWindowViewModel
                 HandleSelectedProjectChanged(oldProject, _observedSelectedProject);
                 break;
             case nameof(ISolutionSession.SelectedJourney):
-                var oldJourney = _observedSelectedJourney;
-                _observedSelectedJourney = _session.SelectedJourney;
                 OnPropertyChanged(nameof(SelectedJourney));
                 AddStationCommand.NotifyCanExecuteChanged();
                 AddStationFromCityCommand.NotifyCanExecuteChanged();
-                HandleSelectedJourneyChanged(oldJourney, _observedSelectedJourney);
+                HandleSelectedJourneyChanged();
                 break;
             case nameof(ISolutionSession.CurrentSolutionPath):
                 OnPropertyChanged(nameof(CurrentSolutionPath));

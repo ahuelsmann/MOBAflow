@@ -36,7 +36,7 @@ public partial class MainWindowViewModel
         SelectedProjectStationPlatform = null;
         if (value != null)
         {
-            value.PropertyChanged += OnViewModelPropertyChanged;
+            _session.TrackChanges(value);
         }
     }
 
@@ -45,7 +45,7 @@ public partial class MainWindowViewModel
         if (value != null)
         {
             StationsPageSelectedObject = value;
-            value.PropertyChanged += OnViewModelPropertyChanged;
+            _session.TrackChanges(value);
         }
         else if (SelectedProjectStation != null)
         {

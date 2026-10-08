@@ -2,62 +2,39 @@
 
 namespace Moba.SharedUI.ViewModel;
 
-using Common.Extension;
-
-using Microsoft.Extensions.Logging;
-
 using System.ComponentModel;
 
 /// <summary>
-/// MainWindowViewModel — property-change hook that triggers solution auto-save through the solution session.
+/// MainWindowViewModel — page-level auto-save tracking and the shell's reactions to persisted model changes.
+/// The solution session owns the auto-save observer.
 /// </summary>
 public partial class MainWindowViewModel
 {
     /// <summary>
-    /// Called when SelectedJourney changes. Subscribes to PropertyChanged for auto-save.
+    /// Called when SelectedJourney changes. The session tracks the journey for auto-save.
     /// </summary>
-    private void HandleSelectedJourneyChanged(JourneyViewModel? oldValue, JourneyViewModel? newValue)
+    private void HandleSelectedJourneyChanged()
     {
-        if (oldValue != null) oldValue.PropertyChanged -= OnViewModelPropertyChanged;
-        if (newValue != null)
-        {
-            newValue.PropertyChanged += OnViewModelPropertyChanged;
-        }
-
         ResetJourneyCommand.NotifyCanExecuteChanged();
         ResetJourneyCounterCommand.NotifyCanExecuteChanged();
     }
 
     /// <summary>
-    /// Called when SelectedStation changes. Subscribes to PropertyChanged for auto-save.
+    /// Called when SelectedStation changes. Tracks the station for auto-save.
     /// </summary>
     partial void OnSelectedStationChanged(StationViewModel? value)
     {
         if (value != null)
         {
-            value.PropertyChanged += OnViewModelPropertyChanged;
+            _session.TrackChanges(value);
         }
     }
 
     /// <summary>
-    /// Generic handler for ViewModel PropertyChanged events.
-    /// Triggers auto-save for any model property change.
+    /// Shell reactions to a persisted model change reported by the solution session, before it saves.
     /// </summary>
-    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void OnSolutionModelChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (_session.IsAutoSaveSuppressed)
-        {
-            return;
-        }
-
-        // Ignore UI-only or runtime-backed properties that must not persist the whole solution.
-        if (e.PropertyName is { } name &&
-            (name is "IsSelected" or "IsExpanded" or "IsHighlighted" or "IsCurrentStation"
-             or "CurrentStation" or "CurrentPos"))
-        {
-            return;
-        }
-
         // The runtime executes an isolated copy, so journey activation and event edits must be re-applied.
         if (sender is JourneyViewModel journey && SelectedProject is { } project
             && e.PropertyName is nameof(JourneyViewModel.IsActive) or nameof(JourneyViewModel.EventPlan))
@@ -66,6 +43,5 @@ public partial class MainWindowViewModel
         }
 
         RefreshProjectDiagnostics();
-        SaveSolutionInternalAsync().Observe(ex => _logger.LogWarning(ex, "Auto-save solution failed"));
     }
 }

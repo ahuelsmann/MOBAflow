@@ -44,7 +44,7 @@ public partial class MainWindowViewModel
 
         if (value != null)
         {
-            value.PropertyChanged += OnViewModelPropertyChanged;
+            _session.TrackChanges(value);
             value.VehiclesModified += SelectedTrain_VehiclesModified;
             value.RefreshVehicleItems();
         }
