@@ -13,4 +13,11 @@ public interface IZ21DiscoveryService
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The IP address of the first responding Z21, or null if none found.</returns>
     Task<string?> DiscoverZ21Async(string? preferredIpAddress = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Searches the local network for every Z21 that answers, so each one can be assigned to its own project.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The responding Z21 command stations, one entry per IP address, ordered by IP address.</returns>
+    Task<IReadOnlyList<DiscoveredZ21>> DiscoverAllAsync(CancellationToken cancellationToken = default);
 }

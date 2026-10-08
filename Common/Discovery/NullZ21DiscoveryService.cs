@@ -9,4 +9,8 @@ public sealed class NullZ21DiscoveryService : IZ21DiscoveryService
     /// <inheritdoc />
     public Task<string?> DiscoverZ21Async(string? preferredIpAddress = null, CancellationToken cancellationToken = default)
         => Task.FromResult<string?>(null);
+
+    /// <inheritdoc />
+    public Task<IReadOnlyList<DiscoveredZ21>> DiscoverAllAsync(CancellationToken cancellationToken = default)
+        => Task.FromResult<IReadOnlyList<DiscoveredZ21>>([]);
 }

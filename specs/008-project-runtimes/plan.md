@@ -78,9 +78,13 @@ Each slice is one reviewable PR on its own branch from `main`; this branch carri
    [research.md](research.md)); journey progress, running workflows and signal aspects are kept by id;
    `UpdateJourneyEventsAsync`, `UpdateSignalBoxAsync` and the re-activations after adding journeys, stations or
    trains are removed.
-3. **Runtime and Z21 per project**: Z21 endpoint in `Project`, `Z21ConnectionRegistry`, `ProjectRuntimeFactory`,
-   one runtime scope per project, per-project counters, conflict diagnostics, selected-project event forwarding,
-   switch/close warning with speed 0. Fixes #190.
+3. **Runtime and Z21 per project**, in three PRs:
+   - 3a: Z21 endpoint in `Project`, network search for every Z21 (IP address and serial number) and the Z21 finder
+     column on the solution page (drag a Z21 onto a project). Additive; the runtime still connects as before.
+   - 3b: `Z21ConnectionRegistry`, `ProjectRuntimeFactory`, one runtime scope per project connecting to its
+     project's Z21, per-project counters, conflict diagnostics, selected-project event forwarding; the Z21 address
+     leaves the MOBAflow settings and the runtime no longer searches by itself. Fixes #190.
+   - 3c: switch/close warning with speed 0, also before a project's Z21 address changes.
 4. **MOBApi and MOBAsmart**: project identifier in commands, snapshots and runtime settings; MOBAsmart project
    selection and per-project Z21 address.
 5. **Documentation**: user wiki, `docs/ARCHITECTURE.md`, CHANGELOG.

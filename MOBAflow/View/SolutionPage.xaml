@@ -18,6 +18,11 @@
                 MinWidth="32" />
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition
+                x:Name="ColZ21Finder"
+                Width="1*"
+                MinWidth="32" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition
                 x:Name="ColProperties"
                 Width="2.2*"
                 MinWidth="32" />
@@ -49,6 +54,9 @@
 
             <controls:CollapsibleColumnCollection.PanelContent>
                 <ListView
+                    AllowDrop="True"
+                    DragOver="ProjectListView_DragOver"
+                    Drop="ProjectListView_Drop"
                     IsItemClickEnabled="True"
                     ItemsSource="{x:Bind ViewModel.SolutionViewModel.Projects, Mode=OneWay}"
                     SelectedItem="{x:Bind ViewModel.SelectedProject, Mode=TwoWay}"
@@ -65,10 +73,16 @@
                                     Margin="0,0,8,0"
                                     FontSize="16"
                                     Glyph="&#xE8F1;" />
-                                <TextBlock
+                                <StackPanel
                                     Grid.Column="1"
                                     VerticalAlignment="Center"
-                                    Text="{x:Bind Name, Mode=OneWay}" />
+                                    Spacing="2">
+                                    <TextBlock Text="{x:Bind Name, Mode=OneWay}" />
+                                    <TextBlock
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Style="{StaticResource CaptionTextBlockStyle}"
+                                        Text="{x:Bind Z21Summary, Mode=OneWay}" />
+                                </StackPanel>
                             </Grid>
                         </DataTemplate>
                     </ListView.ItemTemplate>
@@ -83,9 +97,65 @@
             HorizontalAlignment="Left"
             ResizeBehavior="PreviousAndNext" />
 
+        <!--  Z21 Finder  -->
+        <controls:CollapsibleColumnHelper
+            Grid.Column="2"
+            Glyph="&#xE968;"
+            Header="Z21 Finder"
+            IsExpanded="{x:Bind Z21Assignment.IsFinderExpanded, Mode=TwoWay}">
+            <controls:CollapsibleColumnHelper.HeaderActions>
+                <Button
+                    Padding="4"
+                    Command="{x:Bind Z21Assignment.SearchCommand}"
+                    ToolTipService.ToolTip="Search the network for Z21 command stations">
+                    <FontIcon FontSize="14" Glyph="&#xE72C;" />
+                </Button>
+            </controls:CollapsibleColumnHelper.HeaderActions>
+            <controls:CollapsibleColumnHelper.PanelContent>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" VerticalScrollMode="Auto">
+                    <StackPanel Spacing="8">
+                        <ProgressBar IsIndeterminate="True" Visibility="{x:Bind Z21Assignment.IsSearching, Mode=OneWay}" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="{x:Bind Z21Assignment.StatusText, Mode=OneWay}"
+                            TextWrapping="Wrap" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="Drag onto a project or double-click to assign. Each Z21 belongs to one project."
+                            TextWrapping="Wrap" />
+                        <ListView
+                            CanDragItems="True"
+                            DoubleTapped="Z21ListView_DoubleTapped"
+                            DragItemsStarting="Z21ListView_DragItemsStarting"
+                            ItemsSource="{x:Bind Z21Assignment.UnassignedZ21s, Mode=OneWay}"
+                            SelectionMode="Single">
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="viewmodel:Z21AssignmentCandidate">
+                                    <StackPanel Padding="6" Spacing="2">
+                                        <TextBlock Text="{x:Bind Title}" />
+                                        <TextBlock
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Style="{StaticResource CaptionTextBlockStyle}"
+                                            Text="{x:Bind Detail}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </StackPanel>
+                </ScrollViewer>
+            </controls:CollapsibleColumnHelper.PanelContent>
+        </controls:CollapsibleColumnHelper>
+
+        <controls1:GridSplitter
+            Grid.Column="3"
+            Width="4"
+            HorizontalAlignment="Left"
+            ResizeBehavior="PreviousAndNext" />
+
         <!--  Properties Panel  -->
         <controls:CollapsibleColumnProperties
-            Grid.Column="2"
+            Grid.Column="4"
             Glyph="&#xE946;"
             Header="Properties"
             IsExpanded="{x:Bind ViewModel.IsProjectPropertiesExpanded, Mode=TwoWay}">
