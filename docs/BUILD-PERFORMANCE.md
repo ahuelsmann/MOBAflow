@@ -57,7 +57,7 @@ Use reliable deploy when fast deploy behaves inconsistently on a device.
 **Clean Release AAB:**
 
 The pinned .NET SDK and the MAUI Android workload are prerequisites. From a
-clean checkout, run the same restore, publish, and bundle validation used by CI:
+clean checkout, run the restore, publish, and bundle validation defined in the disabled CI job:
 
 ```powershell
 dotnet workload restore MOBAsmart/MOBAsmart.csproj --skip-manifest-update
@@ -123,15 +123,17 @@ Open `build.binlog` with [MSBuild Structured Log Viewer](https://msbuildlog.com/
 The public, authoritative pull-request check is `.github/workflows/quality.yml`.
 It builds the explicit Windows desktop graph with `IncludeMobaSmartTests=false`,
 runs NUnit with Cobertura coverage, audits the resolved transitive NuGet graph,
-builds and validates the MOBAsmart Release AAB in a separate mandatory job, and
-retains the reports and packages. Mobile tests remain an explicit opt-in graph
-with `IncludeMobaSmartTests=true`.
+and retains the reports and packages. The Android Release AAB job is disabled
+while MOBAsmart is not distributed. Its required check name remains in place,
+but the job is skipped without allocating a runner. Re-enable its code-change
+condition when Android release distribution starts. Mobile tests remain an
+explicit opt-in graph with `IncludeMobaSmartTests=true`.
 
 Pull requests that change only documentation paths (`docs/`, `plans/`, `specs/`,
 `.specify/`, root Markdown files and GitHub guidance) skip the desktop, display,
 Android and mutation jobs; `scripts/Get-QualityChangeScope.ps1` owns that list.
 GitHub reports those skipped jobs as successful required checks. Pushes to
-`main`, manual runs and every other change still run the complete workflow.
+`main`, manual runs and every other change run all enabled jobs.
 
 The workflow enforces a coverage ratchet from `Test/coverage-thresholds.json`.
 The thresholds are per production assembly as well as global, so an improvement
@@ -141,10 +143,24 @@ excluded; handwritten application code remains part of the measurement.
 The analyzer baselines in `quality/` must match exactly, so fixed diagnostics
 also fail the gate until the baseline is refreshed. When the only difference is
 removed or decreased diagnostics, the failed run attaches the refreshed file as
-the `refreshed-analyzer-baselines-desktop-*` or `-android-*` artifact. Review it,
-copy it over the matching file in `quality/` and run
+the `refreshed-analyzer-baselines-desktop-*` artifact. Review it, copy it over
+the matching file in `quality/` and run
 `scripts/Test-LineEndings.ps1 -Path <file> -Fix`. New or increased diagnostics
 never produce a refreshed file; fix them instead.
+
+While the Android Release AAB job is disabled, CI does not check
+`quality/analyzer-baseline.android.json`. When a change touches code that
+MOBAsmart compiles, refresh and check it locally with the MAUI Android workload
+installed:
+
+```powershell
+Remove-Item -Recurse -Force artifacts/analyzers -ErrorAction SilentlyContinue
+dotnet build MOBAsmart/MOBAsmart.csproj -f net10.0-android -c Release --no-incremental -m:1 -p:MobaAnalyzerGate=true -p:UseSharedCompilation=false
+./scripts/Test-AnalyzerBaseline.ps1 -SarifRoot artifacts/analyzers/Release -BaselinePath quality/analyzer-baseline.android.json
+```
+
+Add `-UpdateBaseline` only when the reported difference is removed or decreased
+diagnostics; fix new or increased diagnostics instead.
 
 Run the same checks locally after producing a Release Cobertura report:
 
