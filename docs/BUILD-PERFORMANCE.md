@@ -135,6 +135,16 @@ Android and mutation jobs; `scripts/Get-QualityChangeScope.ps1` owns that list.
 GitHub reports those skipped jobs as successful required checks. Pushes to
 `main`, manual runs and every other change run all enabled jobs.
 
+Code changes also select two expensive parts by the paths they read. The
+ESP32 firmware steps (PlatformIO install, native tests, build and archive) run
+only when `MOBAdisplay/esp32/` changes. Domain mutation testing runs only when
+`Domain/`, its linked tests, `MutationTest/` or the .NET build configuration
+change. A path outside the known .NET areas, such as a workflow, a script or a
+new top-level folder, runs both. The jobs keep their required check names;
+skipped steps and a skipped job count as successful.
+`scripts/Get-QualityChangeScope.Tests.ps1` checks these rules, including every
+source the mutation project compiles.
+
 The workflow enforces a coverage ratchet from `Test/coverage-thresholds.json`.
 The thresholds are per production assembly as well as global, so an improvement
 in one project cannot hide a regression in another. Generated `obj` sources are
