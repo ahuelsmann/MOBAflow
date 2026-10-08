@@ -12,6 +12,29 @@ Product JSON, configuration defaults, public APIs, Z21 behavior and persisted la
 Windows and Linux development checks apply; no UI, application launch or hardware checks are needed.
 Follow AGENTS.md and constitution 4.0.0; local evidence, agent probes and current-commit CI remain separate.
 
+## Clarifications
+
+### Session 2026-10-08 (open, answers from the maintainer required)
+
+Remaining acceptance after PR #156 and #157 were merged. Each question lists the recommended answer.
+
+- Q1: Which clients count as "supported" for the final fresh-client probe (T019, SC-003)? -> Recommended: Codex
+  CLI and Claude Code, because both work on this repository today and read `AGENTS.md`; other clients are out of
+  scope.
+- Q2: Who runs the authenticated probe, given that an isolated `CODEX_HOME` has no login and personal credentials
+  must not be copied? -> Recommended: the maintainer runs the documented probe once per client in a fresh clone
+  and worktree and pastes the result into `validation.md`; the agent prepares the script and checklist.
+- Q3: Where do the pipeline follow-ups CI-01 to CI-06 from `pipeline-review.md` belong now that #197 exists? ->
+  Recommended: CI-05 (scoped docs-only CI, delivered by #175 and extended by #197 CI-3) and CI-06 (main Sonar gate,
+  #197 CI-1) move to #197; CI-01 (branch protection), CI-02 (spec-kit-governance `issues: write` at workflow
+  level), CI-03 (timeouts for Pages and stale jobs) and CI-04 (SDK and workload pins) become one small follow-up
+  issue; #145 closes once P6 is accepted.
+- Q4: May CI-01 configure branch protection for `main` (required checks, review and bypass rules)? ->
+  Recommended: yes, in a separately approved step after #197 settles the required check names, because changing
+  repository administration needs your explicit approval.
+- Q5: Does `AGENTS.md` keep the sentence "tuned for GPT-6 Astra"? -> Recommended: replace it with a neutral
+  sentence that the instructions apply to every coding agent, since Claude Code also works on the repository.
+
 ## User Scenarios & Testing
 
 ### User Story 1 - Reliable isolated work (Priority: P1)
